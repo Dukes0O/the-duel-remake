@@ -30,13 +30,21 @@ const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 // The bucket fitted at the pad: a load already on the hook, resting where
 // the hook hangs. Its load point is the top ring, 3.8 m above the bucket's
 // bottom, so on the ground the ring sits 3.8 m up.
-export function createBucket({damage = 0, x = 0, z = 0, heading = 0, ground = null} = {}) {
+// litres: the Lab's Bigger bucket (800); left out, the plain 600-litre bucket, which gets no `litres` field.
+export function createBucket({damage = 0, x = 0, z = 0, heading = 0, ground = null, litres = BUCKET.litres} = {}) {
   const load = createLoad({id: BUCKET.id, massKg: BUCKET.emptyKg, x, z, heading, ground, restHeight: BUCKET.hang});
-  return Object.assign(load, {hooked: true, bucket: true, water: 0, damage: clamp(damage | 0, 0, 3),
+  Object.assign(load, {hooked: true, bucket: true, water: 0, damage: clamp(damage | 0, 0, 3),
     pouring: false, poured: 0, filling: 0, dipped: false, dentedThisDip: false, announcedFull: false, parcels: []});
+  if (litres !== BUCKET.litres && Number.isFinite(litres) && litres > 0) load.litres = litres;
+  return load;
 }
 
-export const bucketHolds = bucket => BUCKET.holds[bucket.damage];
+// What this bucket holds by damage; a bigger bucket holds the same share more.
+export const bucketHolds = bucket => bucket.litres ? BUCKET.holds[bucket.damage] * bucket.litres / BUCKET.litres : BUCKET.holds[bucket.damage];
+// The Lab's Retardant tank: a 600-litre load, filled only at the home pad (heli-session.js loadBucket). While it is
+// aboard `bucket.contents` is 'retardant'; it falls like water and its patches say so. Lakes never refill it, and
+// once it is emptied the bucket is a water bucket again.
+export const RETARDANT_LITRES = 600;
 
 // Sets the water aboard (kept within what the bucket holds) and the mass the
 // cable reads each step.
@@ -122,6 +130,7 @@ export const aimRingRadius = (tier = 0) => DROP_AIM_RINGS[clamp(tier | 0, 0, DRO
 // Returns {events, patches}.
 export function stepBucket(bucket, {ground = null, wind = null, pour = false} = {}, dt = HELI_STEP) {
   const events = [], patches = [];
+  const retardant = bucket.contents === 'retardant';
   const bottom = bucket.y - BUCKET.hang;
   const surface = ground?.water ? ground.water(bucket.x, bucket.z) : null;
   const depth = surface === null || surface === undefined ? -Infinity : surface - bottom;
@@ -140,7 +149,7 @@ export function stepBucket(bucket, {ground = null, wind = null, pour = false} = 
       events.push({type: 'bucketFast', speed});
       if (damageBucket(bucket, HIT_DAMAGE.cargoLight)) events.push({type: 'bucketDamaged', damage: bucket.damage, cause: 'water'});
     }
-    if (depth >= BUCKET.minDepth - 1e-9 && speed <= BUCKET.fastSpeed && bucket.water < bucketHolds(bucket)) {
+    if (depth >= BUCKET.minDepth - 1e-9 && speed <= BUCKET.fastSpeed && bucket.water < bucketHolds(bucket) && !retardant) {
       const rate = BUCKET.fillRate * Math.min(1, depth / BUCKET.fullDepth) * (speed > BUCKET.slowSpeed ? 0.5 : 1);
       setBucketWater(bucket, bucket.water + rate * dt);
       bucket.filling = rate;
@@ -156,7 +165,7 @@ export function stepBucket(bucket, {ground = null, wind = null, pour = false} = 
   // Pouring: 400 litres a second while held, in parcels of 25 that start at
   // the bucket's bottom with its position and speed.
   const pouring = !!pour && bucket.water > 0;
-  if (pouring !== bucket.pouring) events.push({type: pouring ? 'pourStart' : 'pourStop'});
+  if (pouring !== bucket.pouring) events.push({type: pouring ? 'pourStart' : 'pourStop', ...(retardant ? {retardant: true} : {})});
   bucket.pouring = pouring;
   if (pouring) {
     const out = Math.min(bucket.water, BUCKET.pourRate * dt);
@@ -169,7 +178,7 @@ export function stepBucket(bucket, {ground = null, wind = null, pour = false} = 
   while (bucket.poured >= BUCKET.parcelLitres - 1e-9 || (bucket.poured > 1e-6 && (!pouring || bucket.water <= 0))) {
     const litres = Math.min(BUCKET.parcelLitres, bucket.poured);
     bucket.poured = bucket.poured - litres < 1e-6 ? 0 : bucket.poured - litres;
-    bucket.parcels.push({x: bucket.x, y: bottom, z: bucket.z, vx: bucket.vx, vy: bucket.vy, vz: bucket.vz, litres, from: bottom});
+    bucket.parcels.push({x: bucket.x, y: bottom, z: bucket.z, vx: bucket.vx, vy: bucket.vy, vz: bucket.vz, litres, from: bottom, ...(retardant ? {retardant: true} : {})});
   }
 
   // Falling water. A parcel lands where its path meets the ground or the
@@ -180,9 +189,10 @@ export function stepBucket(bucket, {ground = null, wind = null, pour = false} = 
     const floor = landingHeight(ground, parcel.x, parcel.z);
     if (parcel.y > floor) { still.push(parcel); continue; }
     const drop = Math.max(0, parcel.from - floor);
-    patches.push({x: parcel.x, z: parcel.z, litres: parcel.litres * keptShare(drop), radius: wetRadius(drop)});
+    patches.push({x: parcel.x, z: parcel.z, litres: parcel.litres * keptShare(drop), radius: wetRadius(drop), ...(parcel.retardant ? {retardant: true} : {})});
   }
   bucket.parcels = still;
+  if (retardant && bucket.water <= 0) delete bucket.contents;
   return {events, patches};
 }
 

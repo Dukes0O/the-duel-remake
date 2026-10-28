@@ -1,4 +1,4 @@
-import {point} from '../combat-weapons.js';
+import {point} from '../combat-actors.js';
 import {combatShielded} from '../combat-armor.js';
 import {outOfPlay} from '../combat-teams.js';
 import {addHazard, hazardsFor, carBodyPoint} from './hazards.js';

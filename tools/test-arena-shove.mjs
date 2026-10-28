@@ -9,7 +9,7 @@ import {applyArmorDamage} from '../src/combat-armor.js';
 import {actorBody} from '../src/vehicle-knock.js';
 import {solveVehicleImpact, yawInertia} from '../src/vehicle-collision.js';
 import {vehicleContactEnvelope} from '../src/npc-yielding.js';
-import {pilotStep} from '../src/arena/arena-pilot.js';
+import {pilotStep, arenaCarSpec} from '../src/arena/arena-pilot.js';
 import {arenaTargetOutOfPlay} from '../src/combat-teams.js';
 import {thinkBrain} from '../src/arena/arena-brains.js';
 import {containInArena, floorLimit, worldPose} from '../src/arena/arena-floor.js';
@@ -92,17 +92,18 @@ export function ram(attackingCar, targetCar, role, kind, mph, fps = 120) {
   const envelope = vehicleContactEnvelope(attacker, target, duel._vehicleSpec(attacker), duel._vehicleSpec(target));
   pose(attacker, target.s - envelope.length - .02, target.lateral);
   holdIdle(duel, attacker);
-  // A real drive/pilot step produces the sweep. The 1.1-mph margin keeps its
-  // measured incoming closing speed at or above the accepted threshold despite
-  // one native drag/brake tick; no target is moved to manufacture displacement.
-  attacker.speedMph = mph + 1.1;
+  // One real drive/pilot step produces the sweep. Budget the native brake
+  // tick: the factory-maxed fan car can shed more than the old 1.1 mph margin.
+  // The required contact speed and target pose are unchanged.
+  const approachMph = mph + runupMargin(duel, attacker);
+  attacker.speedMph = approachMph;
   const initial = worldPose(duel, target), armor = target.armor, attackerArmor = attacker.armor;
   const protection = participant(duel, target).protectedSec;
   if (attacker === duel.state) duel._drive(DT);
   else {
     const at = worldPose(duel, attacker);
     pilotStep(duel, attacker, {x: at.x + Math.sin(at.heading) * 30,
-      z: at.z + Math.cos(at.heading) * 30, speedMph: mph + 1.1, boost: false}, DT);
+      z: at.z + Math.cos(at.heading) * 30, speedMph: approachMph, boost: false}, DT);
     holdIdle(duel, attacker);
   }
   const incomingMph = attacker.speedMph * Math.cos(attacker.headingError || 0);
@@ -126,6 +127,25 @@ export function ram(attackingCar, targetCar, role, kind, mph, fps = 120) {
     incomingMph, kinetic, firstKnock, initialTimer, ticks,
     trace: digest({state: duel.state, moved: +moved.toFixed(8), air: +air.toFixed(8)})};
 }
+
+function runupMargin(duel, attacker) {
+  // The player coasts; CPU wall sense may apply one full native brake step.
+  if (attacker === duel.state) return 1.1;
+  return Math.max(1.1, DRIVE.brakeAccel * arenaCarSpec(duel, attacker).braking * DT + .01);
+}
+
+test('run-up covers native fan braking without changing any earlier car', () => {
+  for (const car of CARS_IN_GAME) {
+    const cpu = arena(car, 'falcone_f42', 'player-target');
+    const margin = runupMargin(cpu.duel, cpu.attacker);
+    if (car === 'mcmurtry_speirling') {
+      ok(margin > DRIVE.brakeAccel * arenaCarSpec(cpu.duel, cpu.attacker).braking * DT,
+        'the fan keeps positive closing-speed headroom after one full brake step');
+    } else eq(margin, 1.1, car + ': earlier run-up is unchanged');
+    const player = arena(car, 'falcone_f42', 'player-attacker');
+    eq(runupMargin(player.duel, player.attacker), 1.1, car + ': player coasts as before');
+  }
+});
 
 for (const kind of fixture.sittingStates) for (const role of fixture.roles) for (const [mph, metres] of fixture.minimums) {
   test(kind + '/' + role + ': every playable mass pair at ' + mph + '+ mph moves at least ' + metres + ' m', () => {
@@ -176,8 +196,13 @@ for (const fps of [30, 60, 144]) for (const kind of fixture.sittingStates) {
   });
 }
 
-// The nine cars of the released game, before the first medal car (the Enzo).
-const RELEASED_CARS = CARS_IN_GAME.filter(car => car !== 'ferrari_enzo');
+// The nine cars of the released game, before the first medal car (the Enzo),
+// the ten with the Enzo, and the eleven with the F1, before the Bolide.
+const RELEASED_CARS = CARS_IN_GAME.filter(car => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car));
+const ENZO_ERA_CARS = CARS_IN_GAME.filter(car => !['mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car));
+const F1_ERA_CARS = CARS_IN_GAME.filter(car => !['bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car));
+const BOLIDE_ERA_CARS = CARS_IN_GAME.filter(car => !['falcone_sirena', 'mcmurtry_speirling'].includes(car));
+const SIRENA_ERA_CARS = CARS_IN_GAME.filter(car => car !== 'mcmurtry_speirling');
 export function solverControl(cars = CARS_IN_GAME) {
   const results = [];
   for (const attackingCar of cars) for (const targetCar of cars) {
@@ -197,7 +222,11 @@ export function solverControl(cars = CARS_IN_GAME) {
 
 test('released solver all-mass rear/side/corner fingerprint stays unchanged', () => {
   eq(solverControl(RELEASED_CARS), fixture.solverFingerprint, 'global released rigid-body solver cannot change for an arena fix');
-  eq(solverControl(), fixture.solverFingerprintWithEnzo, 'the same solver with the Enzo added to every mass pair');
+  eq(solverControl(ENZO_ERA_CARS), fixture.solverFingerprintWithEnzo, 'the same solver with the Enzo added to every mass pair');
+  eq(solverControl(F1_ERA_CARS), fixture.solverFingerprintWithF1, 'the F1 joins every mass pair without changing historical solver pins');
+  eq(solverControl(BOLIDE_ERA_CARS), fixture.solverFingerprintWithBolide, 'the same solver with the Bolide added to every mass pair');
+  eq(solverControl(SIRENA_ERA_CARS), fixture.solverFingerprintWithSirena, 'the Sirena joins every mass pair without changing historical solver pins');
+  eq(solverControl(), fixture.solverFingerprintWithSpeirling, 'the fan joins every current mass pair without changing historical solver pins');
 });
 
 test('released solver conserves linear momentum and never adds energy', () => {
@@ -239,7 +268,8 @@ function wallRam(attackingCar, targetCar, role, kind, mph, side, tangentRadians 
   pose(attacker, target.s, target.lateral, side * Math.PI / 2 - tangentRadians);
   const envelope = vehicleContactEnvelope(attacker, target, duel._vehicleSpec(attacker), duel._vehicleSpec(target));
   pose(attacker, target.s, target.lateral - side * (envelope.width + .02), side * Math.PI / 2 - tangentRadians);
-  holdIdle(duel, attacker); attacker.speedMph = (mph + 1.1) / Math.cos(tangentRadians);
+  const approachMph = mph + runupMargin(duel, attacker);
+  holdIdle(duel, attacker); attacker.speedMph = approachMph / Math.cos(tangentRadians);
   const before = worldPose(duel, target), armor = target.armor, attackerArmor = attacker.armor,
     timer = target.combatWreckTimer, protection = participant(duel, target).protectedSec,
     frame = duel.course.at(target.s), events = [];
@@ -250,7 +280,7 @@ function wallRam(attackingCar, targetCar, role, kind, mph, side, tangentRadians 
   else {
     const at = worldPose(duel, attacker);
     pilotStep(duel, attacker, {x: at.x + Math.sin(at.heading) * 30,
-      z: at.z + Math.cos(at.heading) * 30, speedMph: mph + 1.1, boost: false}, DT);
+      z: at.z + Math.cos(at.heading) * 30, speedMph: approachMph, boost: false}, DT);
     holdIdle(duel, attacker);
   }
   const body = actorBody(duel, attacker), incomingMph = side *

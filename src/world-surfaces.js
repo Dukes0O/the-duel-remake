@@ -1,7 +1,11 @@
+import { rampCoordinates, rampGrade } from './deep/deep-ramp.js'; // DEEP-RAMP-2
+import { computeNormalsFast } from './fast-normals.js';
 import * as THREE from 'three';
 import { terrainStyleAt } from './terrain-style.js';
 import { createPolylineIndex } from './polyline-index.js';
 import { ribbonGroundAt } from './ribbon-ground.js';
+import { seedGroundRow } from './rendered-ground.js';
+import { seedFarTerrain, farTerrainCornerHeight } from './far-terrain-surface.js';
 import { freestyleTerrainGeometry, freestyleFarGeometry } from './freestyle-scene.js';
 
 // Pure sampled surfaces and shared source textures. Course owns all route and
@@ -40,7 +44,7 @@ export function strip(course, left, right, y, start=0, end=course.length, ground
       if(n&&j){const a=n*columns+j;indices.push(a-columns-1,a-1,a-columns,a-columns,a-1,a);}}
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); computeNormalsFast(g); return g;
 }
 
 
@@ -113,8 +117,23 @@ function gravelTrap(course, colour, weights) {
   }
 }
 
+// Run a slice generator to its end and return its result: the geometry builders below are written as generators that
+// pause after each row so a preload can spread them over several frames; called here they run straight through.
+export function drain(steps) {
+  let step;
+  while (!(step = steps.next()).done);
+  return step.value;
+}
+
 export function terrainGeometry(course) {
+  return drain(terrainGeometrySlices(course));
+}
+
+// The ribbon of near ground. Yields after each row of vertices (and each edge step of the continuous backing).
+export function* terrainGeometrySlices(course) {
   if(course.def.practice)return freestyleTerrainGeometry(course);
+  // DEEP-RAMP-2: fit from the untouched source surface, not pre-graded vertices.
+  const naturalCourse = naturalRampTerrain(course);
   const v = [], colors = [], uv = [], weights = [], groups = TERRAIN_THEMES.map(()=>[]);
   // Keep the road extrusion narrower than the tightest bend radius. Wider
   // strips fold back across the road; the outer landscape uses a world grid.
@@ -133,19 +152,60 @@ export function terrainGeometry(course) {
       if(course.def.offroad){const segments=Math.ceil(cut.halfWidth*2);for(let i=0;i<=segments;i++)offsets.push(center-cut.halfWidth+cut.halfWidth*2*i/segments);}}
     offsets.sort((a,b)=>a-b);
     const style=terrainStyleAt(course,s);base.copy(style.color);const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(Math.max(0,s-terrainStep)))];
+    const rowPoints=new Float32Array(offsets.length*3);
     offsets.forEach((off, j) => {
-      const p = ribbonGroundAt(course,s,off),wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
+      const p = ribbonGroundAt(naturalCourse,s,off);rowPoints[3*j]=p.x;rowPoints[3*j+1]=p.y;rowPoints[3*j+2]=p.z;const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
       col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
+    seedGroundRow(course,s,offsets,rowPoints);
+    yield;
   }
+  if(course.def.scenery?.continuousGround){
+    // Close the exposed sides of an upper road's ribbon onto the continuous
+    // backing. From a lower switchback its single-sided top is invisible.
+    // Bury the whole lower edge, including between grid diagonals. Sampling
+    // only its endpoints can leave air where the backing drops between them.
+    const floor=Math.min(...course.samples.map(p=>p.y))-256;
+    for(const side of [-1,1]){
+      let previous=ribbonGroundAt(course,0,side*64);
+      for(let s=terrainStep;s<course.length;s+=terrainStep){
+        const next=ribbonGroundAt(course,s,side*64),points=[previous,next];
+        previous=next;
+        yield;
+        // An outer edge can fold across a lower hairpin. Never drop a wall
+        // through that road (or the Gallery's parallel open branch).
+        let crossesRoad=false;
+        for(let t=0;t<=1;t+=.125){
+          const x=points[0].x+(points[1].x-points[0].x)*t,z=points[0].z+(points[1].z-points[0].z)*t;
+          const near=course.nearest(x,z);
+          if(near.distance<course.roadHalfWidthAt(near.s)+8||course.surfaceAt(near.s,near.lateral).road){crossesRoad=true;break;}
+        }
+        if(crossesRoad)continue;
+        const start=v.length/3,style=terrainStyleAt(course,s);
+        for(const p of points)for(const y of [p.y,floor]){
+          v.push(p.x,y,p.z);uv.push(p.x/22,p.z/22);weights.push(...style.weights);colors.push(style.color.r,style.color.g,style.color.b);
+        }
+        const indices=groups[TERRAIN_THEMES.indexOf(course.themeAt(s))];
+        if(side<0)indices.push(start,start+1,start+2,start+2,start+1,start+3);
+        else indices.push(start+2,start+1,start,start+3,start+1,start+2);
+      }
+    }
+  }
+  yield;
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); g.computeVertexNormals(); return g;
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3)); setMaterialGroups(g,groups); cutHiddenRoadGround(g,course); fitMuddyHollowGround(g,course,0); fitDeepRampGround(g,course); computeNormalsFast(g); return g;
 }
 
 export function farTerrainGeometry(course) {
+  return drain(farTerrainGeometrySlices(course));
+}
+
+// The far hills' grid. Yields after each grid row.
+export function* farTerrainGeometrySlices(course) {
   if(course.def.practice)return freestyleFarGeometry(course);
+  const naturalCourse = naturalRampTerrain(course); // DEEP-RAMP-2
   const grid=(course.def.kind==='chase'||course.def.layout==='city')?8:course.def.arena||course.def.expansion||course.def.terrainHalfWidth===64?16:32;
   const route=course.samples.filter((_,i)=>i%4===0),last=course.samples.at(-1);
   if(route.at(-1)!==last)route.push(last);
@@ -154,20 +214,47 @@ export function farTerrainGeometry(course) {
   const minX=Math.floor((Math.min(...route.map(p=>p.x))-extent)/grid)*grid,maxX=Math.max(...route.map(p=>p.x))+extent;
   const minZ=Math.floor((Math.min(...route.map(p=>p.z))-extent)/grid)*grid,maxZ=Math.max(...route.map(p=>p.z))+extent;
   const columns=Math.ceil((maxX-minX)/grid)+1,rows=Math.ceil((maxZ-minZ)/grid)+1;
-  const v=[],uv=[],colors=[],weights=[],distances=[],groups=TERRAIN_THEMES.map(()=>[]),base=new THREE.Color(groundTint(course)),col=new THREE.Color();
+  // The rectangular grid's size is known: write the final buffers directly,
+  // rounding each attribute to Float32 exactly as the old final copy did.
+  const count=columns*rows;
+  const v=new Float32Array(count*3),uv=new Float32Array(count*2);
+  const colors=new Float32Array(count*3),weights=new Float32Array(count*3);
+  const distances=new Float64Array(count),groups=TERRAIN_THEMES.map(()=>[]);
+  const base=new THREE.Color(groundTint(course)),col=new THREE.Color();
+  // The corners as computed, before the hidden-road cut and the muddy-hollow fit move any of them: the height reader wants these.
+  const heights=new Float32Array(columns*rows);
+  const gap=course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80;
   for(let j=0;j<rows;j++)for(let i=0;i<columns;i++){
-    const x=minX+i*grid,z=minZ+j*grid,{index,t,distanceSq:best}=routeIndex.query(x,z);
+    const x=minX+i*grid,z=minZ+j*grid,{index,t,distanceSq:best}=routeIndex.lookup(x,z);
     const a=route[index-1],b=route[index],dx=b.x-a.x,dz=b.z-a.z,px=x-a.x-t*dx,pz=z-a.z-t*dz;
     const roadS=a.s+(b.s-a.s)*t,off=Math.sqrt(best)*Math.sign(px*dz-pz*dx);
     const wave=Math.sin(roadS*.012+off*.017)*Math.cos(roadS*.004-off*.031);
-    v.push(x,(course.farGroundY?course.farGroundY(x,z,roadS,off):course.groundAt(roadS,off).y)-.15,z);uv.push(x/22,z/22);distances.push(Math.sqrt(best));
-    const style=terrainStyleAt(course,roadS);weights.push(...style.weights);base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));const trap=gravelWeights(course,roadS,off);fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);woodland(course,col,roadS,off);gravelTrap(course,col,trap);colors.push(col.r,col.g,col.b);
-    if(i&&j){const a=j*columns+i,quad=[a-columns-1,a-1,a-columns,a];
+    const k=j*columns+i,cornerY=farTerrainCornerHeight(naturalCourse,x,z,roadS,off,grid);
+    heights[k]=cornerY;v[k*3]=x;v[k*3+1]=cornerY;v[k*3+2]=z;
+    uv[k*2]=x/22;uv[k*2+1]=z/22;distances[k]=Math.sqrt(best);
+    const style=terrainStyleAt(course,roadS);
+    weights[k*3]=style.weights[0];weights[k*3+1]=style.weights[1];weights[k*3+2]=style.weights[2];
+    base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));
+    const trap=gravelWeights(course,roadS,off);
+    fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);
+    woodland(course,col,roadS,off);gravelTrap(course,col,trap);
+    colors[k*3]=col.r;colors[k*3+1]=col.g;colors[k*3+2]=col.b;
+    if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.
-      if(quad.every(k=>distances[k]>(course.def.arena?18:(course.def.expansion||course.def.terrainHalfWidth===64)?40:(course.def.kind==='chase'||course.def.layout==='city')?50:80)))groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(quad[0],quad[1],quad[2],quad[2],quad[1],quad[3]);
+      if(course.def.scenery?.continuousGround||distances[k0]>gap&&distances[k1]>gap&&distances[k2]>gap&&distances[a]>gap)groups[TERRAIN_THEMES.indexOf(course.themeAt(roadS))].push(k0,k1,k2,k2,k1,a);
     }
+    if(i===columns-1)yield;
   }
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setAttribute('biomeWeights',new THREE.Float32BufferAttribute(weights,3));setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);fitMuddyHollowGround(g,course,-.15);g.computeVertexNormals();return g;
+  yield;
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(v,3));
+  g.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  g.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  g.setAttribute('biomeWeights',new THREE.BufferAttribute(weights,3));
+  setMaterialGroups(g,groups);cutHiddenRoadGround(g,course);
+  fitMuddyHollowGround(g,course,-.15);fitDeepRampGround(g,course);computeNormalsFast(g);
+  seedFarTerrain(course,grid,Math.round(minX/grid),Math.round(minZ/grid),columns,rows,heights,distances);
+  return g;
 }
 
 // Coarse radial/grid triangles bridge across a narrow wash. Replace only
@@ -358,7 +445,21 @@ export function hiddenRoadGroundGeometry(course) {
   geometry.setIndex(indices); geometry.computeVertexNormals(); return geometry;
 }
 
-function setMaterialGroups(geometry,groups){const indices=[];groups.forEach((group,material)=>{geometry.addGroup(indices.length,group.length,material);for(const index of group)indices.push(index);});geometry.setIndex(indices);}
+function setMaterialGroups(geometry,groups){
+  let count=0,maxIndex=0;
+  for(const group of groups){
+    count+=group.length;
+    for(const index of group)if(index>maxIndex)maxIndex=index;
+  }
+  // Match Three's setIndex(array) choice, including its reserved 65535 value.
+  const indices=maxIndex>=65535?new Uint32Array(count):new Uint16Array(count);
+  let offset=0;
+  groups.forEach((group,material)=>{
+    geometry.addGroup(offset,group.length,material);
+    indices.set(group,offset);offset+=group.length;
+  });
+  geometry.setIndex(new THREE.BufferAttribute(indices,1));
+}
 
 const groundMaps = new Map();
 let meadowMap;
@@ -391,4 +492,68 @@ export function addTrailShoulder(group,course,side,trailMaterial){
   const alpha=new THREE.DataTexture(pixels,64,1);alpha.channel=1;alpha.needsUpdate=true;alpha.magFilter=alpha.minFilter=THREE.LinearFilter;
   const mat=trailMaterial.clone();mat.transparent=true;mat.depthWrite=false;mat.alphaMap=alpha;
   const mesh=new THREE.Mesh(geo,mat);mesh.receiveShadow=true;group.add(mesh);
+}
+
+// DEEP-RAMP-2: split overlapping triangles at the cutting boundaries, then grade.
+// Vertices outside the cutting retain their source plane and all source attributes.
+function fitDeepRampGround(geometry, course) {
+  const ramp = course.deepRamp;
+  if (!ramp) return;
+  const attributes = Object.entries(geometry.attributes);
+  const arrays = Object.fromEntries(attributes.map(([name, a]) => [name, Array.from(a.array)]));
+  const position = geometry.attributes.position, end = ramp.points.at(-1).horizontal + 6;
+  const source = geometry.index.array, indices = [], groups = [];
+  const vertex = index => ({ index, ...rampCoordinates(ramp, { x: position.getX(index), z: position.getZ(index) }) });
+  const mix = (a, b, t) => {
+    const index = arrays.position.length / 3;
+    for (const [name, attribute] of attributes) for (let k = 0; k < attribute.itemSize; k++) {
+      const values = arrays[name], left = values[a.index * attribute.itemSize + k], right = values[b.index * attribute.itemSize + k];
+      values.push(left + (right - left) * t);
+    }
+    return { index, along: a.along + (b.along - a.along) * t, side: a.side + (b.side - a.side) * t };
+  };
+  const split = (polygon, axis, boundary) => {
+    const halves = [[], []];
+    for (let i = 0; i < polygon.length; i++) {
+      const a = polygon[i], b = polygon[(i + 1) % polygon.length];
+      const da = a[axis] - boundary, db = b[axis] - boundary;
+      if (da <= 0) halves[0].push(a);
+      if (da >= 0) halves[1].push(a);
+      if (da * db < 0) { const crossing = mix(a, b, da / (da - db)); halves[0].push(crossing); halves[1].push(crossing); }
+    }
+    return halves.filter(part => part.length >= 3);
+  };
+  const fitted = new Set();
+  for (const group of geometry.groups) {
+    const start = indices.length;
+    for (let i = group.start; i < group.start + group.count; i += 3) {
+      const triangle = [vertex(source[i]), vertex(source[i+1]), vertex(source[i+2])];
+      if (Math.max(...triangle.map(v => v.along)) < 0 || Math.min(...triangle.map(v => v.along)) > end ||
+          Math.max(...triangle.map(v => v.side)) < -14 || Math.min(...triangle.map(v => v.side)) > 14) {
+        indices.push(...triangle.map(v => v.index)); continue;
+      }
+      let polygons = [triangle];
+      for (const [axis, boundary] of [['along',0],['along',end-6],['along',end],['side',-14],['side',-9],['side',9],['side',14]])
+        polygons = polygons.flatMap(polygon => split(polygon, axis, boundary));
+      for (const polygon of polygons) {
+        for (const v of polygon) fitted.add(v.index);
+        for (let k = 1; k < polygon.length - 1; k++) indices.push(polygon[0].index, polygon[k].index, polygon[k+1].index);
+      }
+    }
+    groups.push({ start, count: indices.length - start, materialIndex: group.materialIndex });
+  }
+  for (const index of fitted) {
+    const a = arrays.position, point = { x: a[index*3], z: a[index*3+2] };
+    a[index*3+1] = rampGrade(ramp, point, a[index*3+1]);
+  }
+  for (const [name, attribute] of attributes) geometry.setAttribute(name,
+    new THREE.BufferAttribute(new attribute.array.constructor(arrays[name]), attribute.itemSize, attribute.normalized));
+  geometry.setIndex(indices); geometry.clearGroups();
+  for (const group of groups) geometry.addGroup(group.start, group.count, group.materialIndex);
+}
+
+// DEEP-RAMP-2: a read-only sampling view; course feature placement and RNG stay owned by Course.
+function naturalRampTerrain(course) {
+  if (!course.deepNaturalGroundAt) return course;
+  return Object.create(course, { groundAt: { value: course.deepNaturalGroundAt } });
 }

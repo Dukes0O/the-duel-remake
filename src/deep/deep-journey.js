@@ -1,8 +1,12 @@
 // Journey architecture only. Real content providers are installed by DEEP-TRAIL.
 import { SEA_LEVEL } from '../coastal-water.js';
-import { buildDeepRamp } from './deep-ramp.js';
+import { buildDeepRamp, rampGrade, rampOpening, rampClearsScenery } from './deep-ramp.js';
 import { defineZone } from './deep-zone.js';
 import { createZoneFloor, ZONE_SPAN } from './zone-floor.js';
+import { createZoneFrame } from './zone-frame.js'; // DEEP-TRAIL-JOINTS
+// DEEP-EXPLORER
+import {deepRocks, driveIntoDeepRocks} from './deep-rocks.js';
+import {flushDeepChart} from './deep-story.js';
 
 const NEUTRAL = Object.freeze({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false, interact: false });
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -33,19 +37,28 @@ export function installDeepCourse(course, { providers = [], enabled = false, kit
           zone.ramp.endDepth !== 8 || Math.hypot(first.x - end.x, first.z - end.z) > 1e-6 || first.depth !== 8)
         throw new Error('Deep provider must match the resolved ramp and its bottom in this route frame.');
       if (mode === 'grandprix' && !found.includes(zone.id)) continue;
-      const original={surfaceAt:course.surfaceAt,groundAt:course.groundAt,gripKindAt:course.gripKindAt};
+      const original={obstaclesNear:course.obstaclesNear,surfaceAt:course.surfaceAt,groundAt:course.groundAt,gripKindAt:course.gripKindAt};
       Object.defineProperties(course, {
+        // DEEP-RAMP-2: the drawn opening and collision opening share one predicate.
+        obstaclesNear:{configurable:true,value:function(...args){
+          return original.obstaclesNear.apply(this,args).filter(obstacle => !rampOpening(this,obstacle) && !(['tree','rock'].includes(obstacle.kind) && rampClearsScenery(this,obstacle)));
+        }},
         surfaceAt:{configurable:true,value:function(distance,lateral=0){
           const rampPoint=deepRampGround(this,distance,lateral);
           return rampPoint?{road:true,mainRoad:false,shortcutId:'deep-ramp',roadHalfWidth:this.roadHalfWidthAt(distance),deepRamp:true}:original.surfaceAt.call(this,distance,lateral);
         }},
         groundAt:{configurable:true,value:function(distance,lateral=0){
-          return deepRampGround(this,distance,lateral)??original.groundAt.call(this,distance,lateral);
+          // DEEP-RAMP-2: grade the apron as well as the full deck.
+          const point = original.groundAt.call(this, distance, lateral);
+          return { ...point, y: rampGrade(this.deepRamp, point, point.y) };
         }},
         gripKindAt:{configurable:true,value:function(distance,lateral=0){
           const rampPoint=deepRampGround(this,distance,lateral);
           return rampPoint&&rampPoint.progress>=this.deepRamp.shoreline.center.progress?'sea-floor':original.gripKindAt.call(this,distance,lateral);
         }},
+        // DEEP-RAMP-2: render source planes before grading, so outside triangles stay exact.
+        deepNaturalGroundAt: { value: original.groundAt, configurable: true },
+        deepNaturalSurfaceAt: { value: original.surfaceAt, configurable: true },
         deepRamp: { value: ramp, configurable: true },
         deepZone: { value: Object.freeze({ zone, floor: createZoneFloor(zone) }), configurable: true },
       });
@@ -106,25 +119,25 @@ export function deepProtected(duel) {
 }
 function zoneCourse(runtime) {
   const floor = runtime.floor, empty = [];
+  // DEEP-TRAIL-JOINTS: a frame whose world position has no jump at the trail's joints.
+  const frame = createZoneFrame(floor, runtime.zone.trail);
   const phase = value => ((value % floor.length) + floor.length) % floor.length;
   const at = distance => {
-    const frame = floor.frameAt(distance);
-    return { x: frame.x, y: SEA_LEVEL + floor.trailHeight(distance), z: frame.z,
-      heading: Math.atan2(frame.tx, frame.tz), curvature: 0, s: distance };
+    const centre = frame.centre(distance);
+    return { x: centre.x, y: SEA_LEVEL + floor.trailHeight(distance), z: centre.z,
+      heading: frame.heading(distance), curvature: 0, s: distance };
   };
   const worldAt = (distance, lateral = 0) => {
-    const point = floor.pointAt(distance, lateral);
-    return { ...point, y: SEA_LEVEL + floor.floorHeight(point.x, point.z), heading: at(distance).heading };
+    const point = frame.worldAt(distance, lateral);
+    return { ...point, y: SEA_LEVEL + floor.floorHeight(point.x, point.z), heading: frame.heading(distance) };
   };
   return { def: Object.freeze({ id: runtime.zone.id, kind: 'deep', theme: 'coast', airborne: true, closed: true }),
     length: floor.length, raceLength: floor.length, seed: runtime.raceCourse.seed, closed: true,
     features: { obstacles: empty, mountains: empty, shortcuts: empty, ramps: empty }, phase, at, worldAt, groundAt: worldAt,
     nearest(x, z, reference) {
-      const sample = floor.sample(x, z);
-      if (!sample) return { s: NaN, lateral: NaN, distance: Infinity };
-      let s = sample.along;
-      if (Number.isFinite(reference)) s += Math.round((reference - s) / floor.length) * floor.length;
-      return { ...at(s), s, lateral: sample.lateral, distance: sample.distance };
+      const found = frame.nearest(x, z, reference);
+      if (!found) return { s: NaN, lateral: NaN, distance: Infinity };
+      return { ...at(found.s), s: found.s, lateral: found.lateral, distance: found.distance };
     },
     roadHalfWidthAt(distance) { const frame = floor.frameAt(distance); return floor.sample(frame.x, frame.z).width / 2; },
     surfaceAt(distance, lateral) { return { road: true, mainRoad: true, shortcutId: null,
@@ -134,6 +147,7 @@ function zoneCourse(runtime) {
   };
 }
 export function clearDeepJourney(duel) {
+  flushDeepChart(duel); // DEEP-EXPLORER: keep the last stretch when leaving by menu
   if (duel.deepRuntime && duel.course === duel.deepRuntime.zoneCourse) duel.course = duel.deepRuntime.raceCourse;
   delete duel.state.deepJourney;
   duel.deepRuntime = null;
@@ -142,6 +156,7 @@ export function initializeDeepJourney(duel) {
   const resolved = duel.course.deepZone;
   if (!resolved) { duel.deepRuntime = null; return; }
   duel.deepRuntime = { ...resolved, ramp: duel.course.deepRamp, raceCourse: duel.course, zoneCourse: null };
+  duel.deepRuntime.rocks = []; // DEEP-ROCKS-PUSH: the run's own rocks are laid out when the dive starts
 }
 function changePhase(duel, phase) {
   const journey = duel.state.deepJourney;
@@ -175,16 +190,33 @@ function placeRamp(duel, progress) {
   const near = runtime.raceCourse.nearest(point.x, point.z, state.s);
   state.prevS = state.s; state.prevLateral = state.lateral;
   state.s = near.s; state.lateral = near.lateral; state.groundHeight = point.y;
-  state.headingError = wrap(point.heading - runtime.raceCourse.at(state.s).heading);
+  // DEEP-RAMP-2: ease from the straight deck into the preserved offshore trail direction during the locked dive.
+  const turn = clamp((progress - runtime.ramp.shoreline.center.progress) /
+    (runtime.ramp.length - runtime.ramp.shoreline.center.progress), 0, 1);
+  const heading = point.heading + wrap((runtime.ramp.diveHeading ?? point.heading) - point.heading) * turn * turn * (3 - 2 * turn);
+  state.headingError = wrap(heading - runtime.raceCourse.at(state.s).heading);
   state.airborne = false; state.airHeight = state.prevAirHeight = 0; state._jumpY = null;
   state.speedMph = 0; state.yawVelocity = state.pushVelocity = state.slipAngle = 0; if (Object.hasOwn(state, 'tyreSlip')) state.tyreSlip = 0;
+  state.terrainPitch = state.terrainRoll = null; duel._terrainPose(); // DEEP-RAMP-2
   state.deepJourney.progress = progress;
 }
 function exit(duel) {
+  flushDeepChart(duel); // DEEP-EXPLORER
   const journey = duel.state.deepJourney;
   duel.emit({ deepExited: { zoneId: journey.zoneId }, deepReturn: { journeyId: journey.id } });
   clearDeepJourney(duel);
   duel.state.status = 'menu'; duel.state.paused = false; duel.setInput(NEUTRAL);
+}
+// DEEP-EXPLORER: always available in a committed dive, wherever the car is.
+// Uses the existing top-of-ramp placement and the same return as driving up.
+export function surfaceDeep(duel) {
+  const journey = duel.state.deepJourney;
+  if (!admitted(duel) || !journey?.committed || duel.state.paused ||
+      !['underwater', 'ascending'].includes(journey.phase)) return false;
+  duel.course = duel.deepRuntime.raceCourse;
+  placeRamp(duel, 0);
+  exit(duel);
+  return true;
 }
 export function stepDeepJourney(duel, dt) {
   const journey = duel.state.deepJourney, runtime = duel.deepRuntime;
@@ -206,8 +238,9 @@ export function stepDeepJourney(duel, dt) {
     placeRamp(duel, journey.diveFrom + (runtime.ramp.length - journey.diveFrom) * amount);
     if (journey.diveElapsed < 2) return true;
     runtime.zoneCourse = zoneCourse(runtime); duel.course = runtime.zoneCourse;
+    runtime.rocks = deepRocks(runtime.zone, runtime.floor); runtime.rockEpisode = null; // DEEP-ROCKS-PUSH: fresh from the zone seed every dive
     Object.assign(duel.state, { s: 0, prevS: 0, lateral: 0, prevLateral: 0,
-      headingError: wrap(runtime.ramp.heading - duel.course.at(0).heading), groundHeight: SEA_LEVEL - 8 });
+      headingError: 0, groundHeight: SEA_LEVEL - 8 });
     changePhase(duel, 'underwater');
     return true;
   }
@@ -227,7 +260,9 @@ export function stepDeepJourney(duel, dt) {
     const top=rampNear(runtime.ramp,duel.course.worldAt(duel.state.s,duel.state.lateral));
     if(top&&top.progress<=1){exit(duel);return true;}
   }
-  duel._drive(dt);
+  const explorerStart = journey.phase === 'underwater' ? duel.course.worldAt(duel.state.s, duel.state.lateral) : null; // DEEP-EXPLORER
+  if (!stepRampDriving(duel, dt)) duel._drive(dt); // DEEP-RAMP-2
+  if (explorerStart) driveIntoDeepRocks(duel, explorerStart, dt); // DEEP-ROCKS-PUSH
   duel.state.groundHeight=duel._supportAt(duel.state.s,duel.state.lateral).y;
   duel._jump(duel.state, dt, journey.elapsedSec);
   const point = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -252,4 +287,56 @@ export function deepEnvironment(duel) {
   if(!deepProtected(duel))return {};
   const point=duel.course.groundAt(duel.state.s,duel.state.lateral);
   return {deepDepth:Math.max(0,SEA_LEVEL-point.y)};
+}
+
+// DEEP-RAMP-2: constrained driving on the deck only. Underwater driving is unchanged.
+export function stepRampDriving(duel, dt) {
+  if (!admitted(duel) || duel.course !== duel.deepRuntime.raceCourse ||
+      duel.state.impactTimer > 0 || duel.state.tumble || duel.state.onFoot) return false;
+  const s = duel.state, ramp = duel.deepRuntime.ramp;
+  const at = rampNear(ramp, duel.course.worldAt(s.s, s.lateral));
+  if (!at) return false;
+  const facing = Math.cos(duel.course.at(s.s).heading + s.headingError - ramp.heading) >= 0 ? 1 : -1;
+  s.prevS = s.s; s.prevLateral = s.lateral; s.prevGroundHeight = s.groundHeight;
+  if (s.speedMph === 0 && s.input.brake > .1 && !s.input.throttle) {
+    s.reverseHoldSec += dt;
+    if (s.reverseHoldSec >= .35) s.gear = -1;
+  } else s.reverseHoldSec = 0;
+  let speed = s.speedMph;
+  if (s.gear < 0) speed = s.input.throttle ? Math.min(0, speed + 45 * dt) : speed - s.input.brake * 12 * dt;
+  else speed = s.input.brake ? Math.max(0, speed - s.input.brake * 45 * dt) : speed + s.input.throttle * 12 * dt;
+  if (!s.input.throttle && !s.input.brake) speed *= Math.exp(-.3 * dt);
+  speed = clamp(speed, -18, 18);
+  if (s.gear < 0 && speed === 0 && s.input.throttle) s.gear = 0;
+  const travel = speed * .44704 * dt;
+  const progress = at.progress + travel * facing;
+  const side = clamp(at.lateral - s.input.steer * travel * .3, -ramp.width / 2 + 2, ramp.width / 2 - 2);
+  const point = rampAt(ramp, progress, side);
+  // Extend a small step beyond the top so Turn back can rejoin the road.
+  if (progress < 0) { point.x += Math.sin(ramp.heading) * progress; point.z += Math.cos(ramp.heading) * progress; }
+  const near = duel.course.nearest(point.x, point.z, s.s);
+  s.s = near.s; s.lateral = near.lateral; s.groundHeight = point.y;
+  const target = ramp.heading + (facing < 0 ? Math.PI : 0);
+  const heading = duel.course.at(s.prevS).heading + s.headingError;
+  s.headingError = wrap(heading + wrap(target - heading) * (1 - Math.exp(-6 * dt)) - duel.course.at(s.s).heading);
+  s.speedMph = speed; s.boosting = false; s.revs = Math.abs(speed) / 25;
+  s.yawVelocity = s.pushVelocity = s.slipAngle = s.roughness = 0;
+  if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
+  s.airborne = false; s.airHeight = s.prevAirHeight = 0; s._jumpY = null;
+  s.steerVisual = s.input.steer * .3;
+  s.terrainPitch = s.terrainRoll = null; duel._terrainPose(); // DEEP-RAMP-2: replace any prior hillside attitude.
+  return true;
+}
+
+// DEEP-RAMP-2: a read-only high chase along the cutting, easing at both ends.
+export function rampChaseCamera(duel) {
+  const runtime = duel.deepRuntime;
+  if (!runtime || duel.course !== runtime.raceCourse || !admitted(duel)) return null;
+  const ramp = runtime.ramp, point = duel.course.worldAt(duel.state.s, duel.state.lateral), at = rampNear(ramp, point);
+  if (!at) return null;
+  const smooth = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  const blend = smooth(at.progress / 10) * smooth((at.y - SEA_LEVEL + 6) / 6);
+  const behind = rampAt(ramp, at.progress - 12), ahead = rampAt(ramp, at.progress + 20);
+  return { blend, position: { x: behind.x, y: behind.y + 8, z: behind.z },
+    target: { x: ahead.x, y: ahead.y + 1, z: ahead.z }, fov: 58 };
 }

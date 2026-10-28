@@ -71,7 +71,7 @@ export const CARS = {
     name:'Koenigsegg Jesko Absolut',homage:'Jesko Absolut-inspired hypercar',gearbox:'manual',
     unlockRequirement:'max-all-other-cars',factoryMaxed:true,
     // Arcade base tuning: the included level-three upgrades apply exactly once.
-    topSpeed:298,accel:10.8,grip:1.12,braking:1.5,
+    topSpeed:298,accel:9.9,grip:1.12,braking:1.5,
     gears:[60,105,150,188,221,247,269,284,298],
     color:0xe7e9e7,accent:0x27c8bb,offRoadGrip:.64,offRoadSpeed:65,offRoadScrub:.48,mass:1390,
     collision:{halfWidth:1.05,halfLength:2.475},height:1.25,kind:'hypercar',
@@ -87,6 +87,46 @@ export const CARS = {
     color:0xb3121a,accent:0x16181b,offRoadGrip:.62,offRoadSpeed:58,offRoadScrub:.56,mass:1365,
     collision:{halfWidth:1.02,halfLength:2.35},height:1.15,kind:'hypercar',
   },
+  // Earned car 2: light, naturally aspirated road car; factory tuning adds
+  // to these approved base figures for a fully tuned top speed of 240 mph.
+  mclaren_f1: {
+    name:'McLaren F1',homage:'F1-inspired three-seat V12 road car',gearbox:'manual',
+    unlockRequirement:{kind:'medals',medals:12},factoryMaxed:true,
+    topSpeed:217.2,accel:9.1,grip:1.02,braking:1.16,gears:[58,98,134,169,197,217.2],
+    color:0xb8bdc2,accent:0x202329,offRoadGrip:.63,offRoadSpeed:60,offRoadScrub:.54,mass:1140,
+    collision:{halfWidth:1,halfLength:2.14},height:1.14,kind:'hypercar',
+  },
+  // Earned car 3 (EARN-CAR-3, docs/EARNED_CARS.md section 4): a medal car,
+  // never bought, earned at 24 medals with 6 gold. Base figures; the factory
+  // tuning applies on top, so the tuned top speed is 278 x 1.105, about 307
+  // mph, below the Jesko's. Height is the body's; the wing stands above it.
+  bugatti_bolide: {
+    name:'Bugatti Bolide',homage:'Bolide-inspired track hypercar',gearbox:'manual',
+    unlockRequirement:{kind:'medals',medals:24,gold:6},factoryMaxed:true,
+    topSpeed:278,accel:9.5,grip:1.15,braking:1.45,gears:[67,110,154,191,225,255,278],
+    color:0x1f4fa8,accent:0x111316,offRoadGrip:.58,offRoadSpeed:50,offRoadScrub:.64,mass:1450,
+    collision:{halfWidth:1.05,halfLength:2.5},height:1.05,kind:'hypercar',
+    boostCapacity:1.35,nitroAcceleration:1.35,nitroSpeedBonus:.025,
+  },
+  // The Falcone Sirena (SIRENA-CAR, docs/THE_DEEP.md 6.1 and 12): the 1966 Coast Cup racer raised from the
+  // Kelp Coast. The Viper Prototype's figures with top speed and acceleration 8% lower, grip equal, braking 10%
+  // lower, about 800 kg (810: the arena's 40 mph junk-shove guard needs the hulk to move 2 m and 800 moves it 1.976). Never bought: it is owned only once the Lab restores it and adds it to `unlockedCars`.
+  falcone_sirena: {
+    name:'Falcone Sirena',homage:'1966 sports-racing coupe',gearbox:'manual',
+    unlockRequirement:'sirena-restored',
+    topSpeed:213.44,accel:8.096,grip:1.13,braking:1.116,gears:[55.2,95.68,133.4,164.68,193.2,213.44],
+    color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:810,
+    collision:{halfWidth:1.1,halfLength:2.45},height:1.06,kind:'prototype',
+  },
+  // LAB-FAN: built on the fan bench, never bought from the garage.
+  mcmurtry_speirling: {
+    name: 'McMurtry Spéirling', homage: 'Electric fan car', gearbox: 'single', electric: true,
+    unlockRequirement: 'lab-built', factoryMaxed: true,
+    topSpeed: 190, accel: 9, grip: 1, fanGrip: 1, braking: 2.2, gears: [190],
+    color: 0x527080, accent: 0xf1f3f5, mass: 1000,
+    offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62,
+    collision: {halfWidth: .805, halfLength: 1.602}, height: 1.142, kind: 'prototype',
+  },
 };
 export const DEFAULT_CAR = 'falcone_f42';
 
@@ -95,10 +135,12 @@ export const DIFFICULTY = {
   casual: { name: 'Casual', autoShift: true, engineBlow: false, rivalSkill: 0.78, trafficDensity: 0.7 },
   pro:    { name: 'Pro',    autoShift: false, engineBlow: true, rivalSkill: 0.92, trafficDensity: 1.0 },
 };
+// launch: the CPU's pull-away strength as a multiple of the player's DRIVE.accelScale. FIX-LAUNCH
+// slowed the player's launch; Medium and Hard are acceleration-limited and fell behind, so they keep more.
 export const CPU_DIFFICULTY = {
-  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600},
-  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000},
-  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500},
+  easy:{name:'Easy',skill:.73,cornerSkill:.78,winReward:600,launch:1},
+  medium:{name:'Medium',skill:.88,cornerSkill:.91,winReward:1000,launch:1.3},
+  hard:{name:'Hard',skill:1.02,cornerSkill:1,winReward:1500,launch:1.6},
 };
 export const DEFAULT_CPU_DIFFICULTY='easy';
 export const DEFAULT_DIFFICULTY = 'casual';
@@ -139,7 +181,7 @@ export const COURSE = [
   {id:'ridge-rally',layout:'ridge',layoutVersion:4,theme:'alpine',stage:5,name:'Ridge Rally',lengthU:3520,closed:true,laps:2,kind:'rally',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:true,speedLimitMph:100,sections:[{theme:'desert',name:'Dry Creek Trail',share:.42},{theme:'alpine',name:'Timberline Ridge',share:.58}]},
   {id:'titan-stunt-trial',layoutVersion:1,theme:'arena',stage:6,name:'Titan Stunt Trial',lengthU:1120,closed:true,laps:2,kind:'arena',arena:true,requiredCar:'titan_monster',hasRadar:false,hasRival:false,speedLimitMph:100,stuntTrial:{jumps:4,crushes:4,timeLimitSec:{easy:95,medium:75,hard:62}},sections:[{theme:'arena',name:'Titan Stunt Trial',share:1}]},
   {id:'neon-drift-trial',layout:'city',layoutVersion:1,timeOfDay:'night',theme:'city',stage:7,name:'Neon Drift Trial',lengthU:2880,closed:true,laps:2,kind:'drift',requiredCar:'banshee_muscle',persistentVehicle:true,crashPenaltySec:8,hasRadar:false,hasRival:false,speedLimitMph:65,driftTrial:{targets:{easy:3500,medium:5000,hard:6000},timeLimitSec:{easy:150,medium:125,hard:110}},sections:[{theme:'city',name:'Neon District',share:.5},{theme:'city',name:'Harbor Slide',share:.5}]},
-  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:10,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
+  {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
   // Authored circuits (src/circuits/) are appended, never inserted, so saved
@@ -155,6 +197,7 @@ export const POLICE = {
   trapWindowU: 40,        // trap measures speed within this span past it
   pursuitCatchU: 14,      // pursuer within this distance = caught/ticket
   pursuitSpeedMph: 150,   // pursuer cruise speed
+  chasePaceBase: .34,     // chase pursuer cruise = top speed x (this + .15 x CPU skill); was .42 before FIX-LAUNCH slowed the player's laps by about a fifth
   pursuitStartGapU: 120,  // player's head start when the pursuit begins
   escapeAheadU: 1200,     // open this gap to shake the pursuer
   ticketBaseFine: 150,
@@ -193,7 +236,13 @@ export const DRIVE = {
   dragCoeff: 0.6,         // passive deceleration
   offRoadGrip: 0.74,     // enough steering authority to return from the shoulder
   offRoadScrub: 0.48,
-  accelScale: 5.2,        // immediate arcade launch; falls off near redline
+  accelScale: 2.5,        // gentler launch (FIX-LAUNCH); falls off near redline
+  arenaAccelScale: 5.2,   // arenas keep the old quick launch: their jumps, shoves and balance were tuned on it
+  recoveryAccelScale: 5.2, // after a crash recovery the car pulls away with the old launch (crashLaunchSec or 60 mph)
+  crashLaunchSec: 3,      // how long that quick pull-away may last
+  // FUN-TITAN-LAUNCH: the Titan drives up onto a car it flattens and the car is a ramp. Launch speed in m/s is
+  // mph x climbMps, capped; the game's jump gravity is 18 m/s2, so 30 mph gives about 3.2 m and 1.2 s of air.
+  titanCarRamp: Object.freeze({ minMph: 15, climbMps: .36, maxMps: 16 }),
   gearCeilFrac: 1.04,     // throttle stops adding speed past gearMax * this
   redlineWarnFrac: 0.92,  // tach shows red from this rev fraction
   overRevFrac: 1.02,      // sustained revs above this can blow the engine (Pro)
@@ -233,6 +282,9 @@ export const TYRE_SLIP = Object.freeze({
   driftAskLow: 1.10,
   driftLiftSlip: 1.20,
   driftRecoveryMeters: 2,
+  // The Neon Drift Trial under the sliding-tyre rules keeps the old quick launch, as arenas do (TYRE-SLIP-DRIFT-RETUNE):
+  // the drift line, scrub and chain thresholds above were tuned on it. It lives here, not in DRIVE, so DRIVE stays byte for byte.
+  driftTrialAccelScale: 5.2,
   headroom: 1.25, width: .25, brakeUse: .6, riseRate: 12, fallRate: 8,
   minSpeedMph: 15, minWorldSpeed: 8, quietSlip: .9, soundWidth: .35,
   angleAtQuiet: .045, angleAtPeak: .075,
@@ -284,11 +336,18 @@ export function steerForYaw(desiredYaw, {speedMph, grip = 1, traction = 1, car =
   return tyreClamp(-tyreClamp(desiredYaw, -peakYaw, peakYaw) / Math.max(.05, steerGain), -1, 1);
 }
 
+// Launch strength for the course being driven: arenas keep their old value.
+export const launchScale = (course, recovering = false, slipRules = false) => course?.def?.arena === true ? DRIVE.arenaAccelScale
+  : slipRules === true && course?.def?.kind === 'drift' ? TYRE_SLIP.driftTrialAccelScale
+  : recovering ? DRIVE.recoveryAccelScale : DRIVE.accelScale;
+export const boostLaunch = course => course?.def?.arena === true ? BOOST.arenaAccelMphPerSec : BOOST.accelMphPerSec;
+
 export const BOOST = {
   drainPerSec: 0.19,
   refillPerSec: 0.028,
   nearMissRefill: 0.22,
-  accelMphPerSec: 42,
+  accelMphPerSec: 20.2,
+  arenaAccelMphPerSec: 42, // nitro push on an arena floor, the old value
   topSpeedMult: 1.12,
   minSpeedMph: 25,
 };

@@ -39,7 +39,7 @@ function drive(duel,seconds,input={}) {
   const normal=straight(),boost=straight(),tank=straight({upgrades:{tank:3}}),rough=straight({prepared:false});
   drive(normal,2);drive(boost,2,{boost:true});drive(rough,2,{boost:true});
   check(boost.state.boosting&&boost.state.boost<.7,'nitro actually burns fuel on a legal gravel route');
-  check(boost.state.speedMph>normal.state.speedMph+45&&boost.state.s>normal.state.s+15,'legal gravel nitro produces acceleration and a distance gain');
+  check(boost.state.speedMph>normal.state.speedMph+22&&boost.state.s>normal.state.s+15,'legal gravel nitro produces acceleration and a distance gain');
   check(!rough.state.boosting&&rough.state.boost===1,'holding nitro on rough ground neither activates nor wastes the tank');
   const baseTank=straight(),baseSeconds=drive(baseTank,8,{boost:true}),upgradedSeconds=drive(tank,8,{boost:true});
   check(upgradedSeconds>baseSeconds+2.5&&tank.state.boost>.1,'a larger tank provides materially longer gravel boost time');

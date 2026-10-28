@@ -1,0 +1,44 @@
+/* DEEP-SIRENA-VIEW: the dive's sonar ring, Ana's caption strip, the sea-life card
+   (the garage's .deep-log-card, sliding in) and the Coast Cup title card. */
+.sirena-hud{position:absolute;inset:0;z-index:30;pointer-events:none;color:#e8f3ef;font-family:'Segoe UI',system-ui,sans-serif}
+.sirena-hud [hidden]{display:none!important}
+.sirena-sonar{position:absolute;right:4%;bottom:16%;width:120px;height:120px;border-radius:50%;border:1px solid #8fd9cf66;background:radial-gradient(circle,#0b2b3299 0,#04161c66 70%)}
+.sirena-sonar>i{position:absolute;inset:50%;border-radius:50%;border:2px solid #9ff2e4}
+.sirena-sonar.ping>i{animation:sirena-ring 1.4s ease-out forwards}
+@keyframes sirena-ring{from{inset:50%;opacity:1}to{inset:-6%;opacity:0}}
+.sirena-blip{position:absolute;left:calc(50% - 6px);top:calc(50% - 6px);width:12px;height:12px;border-radius:50%;background:#ffd36a;box-shadow:0 0 10px #ffd36a}
+.sirena-sonar>span{position:absolute;left:0;right:0;bottom:-24px;text-align:center;font-size:13px;font-weight:700;letter-spacing:.5px;text-shadow:0 1px 4px #000c}
+.sirena-log{position:absolute;right:3%;top:16%;width:230px;animation:sirena-slide .45s ease-out}
+.sirena-log .deep-log-card{box-shadow:0 .6rem 2rem #000b}
+@keyframes sirena-slide{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+.sirena-caption{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:min(44rem,calc(100% - 2rem));margin:0;padding:.7rem 1rem;background:#061820d9;border-left:3px solid #8fd9cf;border-radius:.25rem;font-size:15px;line-height:1.45}
+.sirena-caption small{display:block;font-size:9px;letter-spacing:1.6px;color:#8fd9cf;margin-bottom:.2rem}
+.sirena-title{position:absolute;left:50%;top:30%;transform:translateX(-50%);text-align:center;padding:1.4rem 2.6rem;background:#050d10e6;border-top:2px solid #c9a14a;border-bottom:2px solid #c9a14a}
+.sirena-title.sirena-title-cup{left:auto;right:5%;top:34%;transform:none}
+.sirena-title p{margin:0;font-size:11px;letter-spacing:4px;color:#e6c27a}
+.sirena-title h2{margin:.4rem 0 0;font-size:30px;font-style:italic;letter-spacing:-.5px}
+.deep-map{position:absolute;left:35px;bottom:139px;width:40vh;box-sizing:border-box;padding:10px;background:#071e25df;border:1px solid #87ada25c;border-radius:3px;pointer-events:auto}
+.deep-map header{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #87ada240;padding-bottom:6px}
+.deep-map header b{font-size:10px;letter-spacing:1.4px}
+.deep-map button{font:11px 'Segoe UI',sans-serif;color:#d2e8df;background:#18373d;border:1px solid #87ada25c;border-radius:3px;padding:4px 7px;cursor:pointer}
+.deep-map canvas{display:block;width:100%;height:auto}
+.deep-map-home{margin-top:6px}
+.deep-map-bearing{display:flex;align-items:center;gap:8px;margin-top:6px;color:#e5be78;font-size:12px}
+.deep-map-bearing i{display:inline-block;font-style:normal;font-size:23px;line-height:24px}
+/* DEEP-EXPLORER: the survey chart and Ana's checklist share one folding panel. */
+.deep-map{width:510px;max-width:42vw;bottom:125px;max-height:calc(100vh - 145px);overflow:hidden;background:#0b242bef;color:#ece5c8}
+.deep-objectives{max-height:155px;overflow-y:auto;border-top:1px solid #bdb68b66;margin-top:8px;padding-top:7px}
+.deep-objectives h3{margin:0 0 7px;font:italic 16px Georgia,serif;color:#ede0b4}
+.deep-chart-percent{float:right;font:11px 'Segoe UI',sans-serif;color:#b8cebe}
+.deep-objectives ol{margin:0;padding:0;list-style:none}
+.deep-objectives li{margin:0 0 6px;border-left:2px solid #bdb68b55;padding-left:7px;font:11px 'Segoe UI',sans-serif}
+.deep-objectives li b{font-weight:600}.deep-objectives li small{display:block;font-size:10px;line-height:1.35;color:#aec3b8;margin-top:2px}
+.deep-objectives li.done{color:#b6d8a3;border-color:#87b783}
+.deep-chart-key{font:10px/1.5 'Segoe UI',sans-serif;color:#cebe91;margin:7px 0 0}
+.deep-map .deep-surface{float:right;background:#dbc18b;color:#182d31;font-weight:700}
+.deep-objective-tick{position:absolute;top:22%;left:50%;transform:translateX(-50%);padding:9px 18px;background:#102c30e8;border:1px solid #d3c28c;color:#f0e1b3;font:16px Georgia,serif}
+
+/* DEEP-EXPLORER: one-second logging ring sits beside, clear of the driving view. */
+.deep-logging{position:absolute;right:4%;top:43%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#102a35e8;border:1px solid #abbead88;border-radius:4px;font:14px Georgia,serif;color:#f0e1b3}
+.deep-logging>i{display:block;width:34px;height:34px;border-radius:50%;position:relative}
+.deep-logging>i:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#102a35}

@@ -18,9 +18,25 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   If a card cannot meet its acceptance with the tools we have (free services,
   this laptop, SPEC 0.11's three-round art cap), stop, write why in the change
   note and ask Kyle. Never ship a placeholder or stub as the finished thing.
+- Cloud sessions (Kyle, 24 October 2026): `integration/wasteland` is GitHub's
+  front branch, so a cloud session starts from it. Cards with
+  `owner: claude-cloud` are built there. A cloud session works only on its
+  card's `cloud/<card>` branch, pushes that branch and opens a pull request
+  into `integration/wasteland`; it never merges, never pushes `integration`
+  or `master`, and never touches the live game. It runs the lane tier and
+  `npm run build` and lists in the change note any suite it could not run
+  there. The laptop merges after its own lane tier, build and any look check.
+- Questions from a cloud session: nobody reads its chat. Never stop to ask in
+  chat. Write the question to `docs/board/questions/<CARD>.md` on your branch
+  (what you need decided, the options, your recommended pick), commit and push
+  at once. Carry on with your recommended pick if the work can continue, and
+  say so in the file; stop only if it truly cannot. Claude answers by message
+  to the session and deletes the file when the card merges.
 
 ## Never
 
+- Do not "fix" anything listed under "Keep these" in `docs/board/decisions.md`
+  (fun that looks like a bug, kept on purpose for Kyle and his son).
 - Do not edit or build in `C:\Users\kyleb\dev\the-duel-remake` except as the
   Release Manager after the release gate. That folder serves the live game.
 - Do not use port 5174 for development or QA. Do not refresh a live race.
@@ -50,8 +66,10 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
 This is a game for two people on one laptop. These rules win over any older
 text in the playbook, SPEC or cards that asks for more checking or recording.
 
-1. Keep the lane tier and build before every merge, and a full-tier pass that
-   covers every release (rule 19). They protect the live game and saves.
+1. Check once, sized to the change ("Gates" below, Kyle 24 October 2026): the
+   builder runs the card's checks, lane tier and build; the merge runs only
+   what the builder could not. A full-tier pass covers every release (rule
+   19). They protect the live game and saves.
 2. Run the full tier inside the full check (rule 13) and, alone (no other
    gates, browser checks or builds at the same time), before every release,
    not on a merge count or clock. Always with `--jobs 4`.
@@ -75,10 +93,10 @@ team's merges back for hours):
 
 7. Only frame timing needs a quiet laptop. Lane gates, builds, balance runs
    and browser checks that do not time frames run alongside each other, at
-   most three at once across all teams (Kyle, 12 October 2026: lane runs are
-   small now), each with `--jobs 4` or fewer. A frame measurement waits until
+   most two at once across all teams (Kyle, 24 October 2026: three at once
+   caused timeouts that cost reruns), each with `--jobs 4` or fewer. A frame measurement waits until
    no gate, build, balance run or browser check is going, and nobody starts
-   one while it runs. The full tier on a release commit still runs alone (rule 1).
+   one while it runs. The full tier on a release commit still runs alone (rule 2).
    Every chat takes a turn the same way: `docs/FACTORY.md` section 8.
 8. A frame check is simple: one run per quality (Performance and High) at the
    track's busiest view with eight cars, passing at delivered p95 at most
@@ -106,10 +124,14 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
 
 11. Test by what changed. The lane tier runs the smoke set, the replay and
     world-signature guards, and the suites that import a changed file or
-    name its path within two steps. Deeper effects are the full check's job.
-12. Merge as soon as it is green: one lane tier, a build and one review where
-    rule 17 asks for one. A merge with no conflict does not run the lane tier
-    again; a conflict fix runs it once more. Two clean lanes never wait for
+    name its path within two steps, never through a hub (a module that
+    imports 20 or more game files) and never for importing a shared file
+    (`docs/CODEX_PLAYBOOK.md` section 7). Deeper effects are the full
+    check's job.
+12. Merge as soon as it is green: the builder's one lane tier and build, and
+    one review where rule 17 asks for one. A merge with no conflict in code
+    does not run the lane tier again; a code conflict fixed at merge reruns
+    only the suites for those files ("Gates"). Two clean lanes never wait for
     each other.
 13. Heavy checks run as one batch, the full check: full tier, frame check
     (rule 8), combat balance on current rules (`combat-balance.mjs --check`),
@@ -118,7 +140,7 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     continue while it runs. Only its frame step needs the laptop to itself;
     builders pause gates, builds and browser checks for that step only, about
     15 minutes. Its other stages run alongside builders and each counts as one
-    of the three heavy jobs (rule 7). A full-check failure names the first
+    of the two heavy jobs (rule 7). A full-check failure names the first
     merge after the last green full check; its fix goes first and other
     merges continue. Run `node tools/full-check.mjs --idle-awake --no-push`.
     The tool checks a detached copy of the starting integration commit;
@@ -188,17 +210,48 @@ and any card, playbook or SPEC text that asks for Kyle's word or a repeated run.
     changed since the last pass, and in the daily full check. A frame-check
     pass counts while the scene and its code are unchanged. The release note
     names the passed commit and what changed since.
+20. Kyle follows the build in Cockpit, project "The Duel"
+    (`pers-the-duel`), one task per piece of work grouped by lane. Each
+    task's notes name its board cards, and `tools/cockpit-sync.py` sets each
+    task's status from the board, so nobody updates Cockpit by hand. Run it
+    after every merge batch and at session end, through
+    `C:\Users\kyleb\dev\command-center\scripts\run_command_center_postgres.ps1`
+    with the script's full path; it never blocks a merge. When it lists a
+    card with no task, name the card in a task's notes or add a task
+    (Kyle, 12 October 2026; merged 25 October).
 
 ## Gates (SPEC 0.5)
 
-- Before **every** merge into integration, including docs-only, tuning-only
-  and doc-plus-code changes: `node tools/run-tests.mjs --tier lane --changed --jobs 8`
-  and `npm run build`. Run these in the lane before review and verify current
-  passing evidence before merging; rerun after changes or conflict fixes, not
-  after a conflict-free merge (rule 12).
-- Full tier: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`,
-  inside the full check (rule 13), and alone before every release. A real failure stops feature merges until a fix lands; an
-  unreliable check follows rule 3 above.
+Right-sized checks (Kyle, 24 October 2026; replaces "lane tier before every
+merge"). Test once, at the size of the change:
+
+- **The card names its checks.** Before code, each card lists the one to
+  three checks that prove its claim (new or existing) and the laptop-only
+  checks it needs (browser scenario, look, frame). Write a new test only when
+  it proves the card's point; prefer checking behaviour over pinning exact
+  numbers.
+- **The builder runs them once**, cloud or lane, on a branch with current
+  `integration/wasteland` merged in: the card's checks, the lane tier
+  (`node tools/run-tests.mjs --tier lane --changed --jobs 8`) and
+  `npm run build`, recorded in the change note.
+- **The merge does not repeat them.** When the builder's lane tier and build
+  passed and the merge into integration has no conflict in code, the laptop
+  runs only what the builder could not: the laptop-only suites
+  (`test-course-kit`, `test-earned-cars-ui`, `test-medals`,
+  `test-drive-through`, `test-full-check`, `test-salt-flats`,
+  `test-salt-flats-art`) when the change touches their areas, the card's
+  browser scenario and look, and `npm run build` on the merged result. A code
+  conflict resolved at merge reruns only the suites for those files.
+- **Notes, docs and board-only changes:** `tools/test-board.mjs` and
+  `tools/test-repo-hygiene.mjs`.
+- **At most two heavy runs on the laptop at once.** A timeout while the laptop
+  is busy is rerun once alone and is not a failure.
+- **Full tier once a night** (the scheduled full check) and before every
+  release. It is where the slow, broad suites run. A real failure stops
+  feature merges until a fix lands; an unreliable check follows rule 3 above.
+- **Deliberate changes that move pinned numbers** (replays, lap times,
+  counts) re-record them with a one-line reason each in the change note; that
+  is not weakening a test.
 - Release: a full-tier pass that covers the release commit under rule 19 (on
   that commit, or on an earlier one with only rule 19's allowed changes
   since). Keep the full

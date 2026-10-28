@@ -23,10 +23,22 @@ const isObject = value => value !== null && typeof value === 'object' && !Array.
 const count = value => Number.isSafeInteger(value) ? Math.max(0, Math.min(MAX_COUNT, value)) : 0;
 const validId = value => typeof value === 'string' && value.length >= 1 && value.length <= 80 && ID_PATTERN.test(value);
 const validCourse = value => typeof value === 'string' && COURSE.some(stage => stage.id === value);
+// A car can stand on a course or on the Table, the pilot's air-only mesa, which is no registry course (MAP-SECRETS).
+// Calls, rescues, jobs and scars still name courses only.
+const validPlace = value => validCourse(value) || value === 'the-table';
+const copyPlainFields = value => {
+  const copy = {};
+  for (const [key, field] of Object.entries(value)) {
+    if (key === '__proto__' || field === undefined) continue;
+    try { copy[key] = structuredClone(field); } catch { /* not save data */ }
+  }
+  return copy;
+};
 const validCar = value => typeof value === 'string' && Object.hasOwn(CARS, value);
 const tenthsOf = kg => Math.max(0, Math.min(TANK_TENTHS, Math.round(Number(kg) * 10)));
 // 1.5 credits per kilogram is 0.15 credits per tenth, rounded up to a whole credit.
-const priceOfTenths = tenths => Math.ceil(tenths * 15 / 100);
+// `rate` is the price in tenths of a credit per kilogram (15 for the home pump).
+const priceOfTenths = (tenths, rate = 15) => Math.ceil(tenths * rate / 100);
 
 export function createHeli() {
   return {version: HELI_SAVE_VERSION, fuelKg: 0,
@@ -36,7 +48,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map', 'returnLoads', 'logbook']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -52,12 +64,27 @@ export function normalizeHeli(value) {
     done: [...new Set((Array.isArray(jobs.done) ? jobs.done : []).filter(validId))].slice(0, 10)};
   if (isObject(value.carsAt)) {
     for (const [car, course] of Object.entries(value.carsAt))
-      if (validCar(car) && validCourse(course)) heli.carsAt[car] = course;
+      if (validCar(car) && validPlace(course)) heli.carsAt[car] = course;
   }
   heli.refuels = count(value.refuels);
   heli.flights = count(value.flights);
+  if (isObject(value.returnLoads)) {
+    heli.returnLoads = {};
+    for (const [place, day] of Object.entries(value.returnLoads))
+      if (validPlace(place) && place !== 'tremblant-woods' && Number.isSafeInteger(day) && day >= 0 && day <= MAX_COUNT)
+        heli.returnLoads[place] = day;
+  }
+  if (isObject(value.logbook)) {
+    const book = value.logbook, jobs = isObject(book.jobs) ? book.jobs : {};
+    heli.logbook = {...copyPlainFields(book), flights: count(book.flights),
+      jobs: {...copyPlainFields(jobs), ...Object.fromEntries(['car', 'crate', 'fire', 'rescue', 'ski'].map(k => [k, count(jobs[k])]))},
+      visited: [...new Set((Array.isArray(book.visited) ? book.visited : []).filter(id => validPlace(id) || id === 'titan-stadium'))],
+      awarded: Math.min(5, count(book.awarded))};
+  }
   normalizeFireFields(value, heli);
   normalizeSkinFields(value, heli);
+  if (Object.hasOwn(value, 'ski')) { const ski = normalizeSki(value.ski); if (ski) heli.ski = ski; }
+  if (Object.hasOwn(value, 'map')) { const map = normalizeMapRecord(value.map); if (map) heli.map = map; }
   // Keys from a newer game are kept as they are (a copy), so going back one
   // release loses nothing (docs/HELI_FIRE.md section 12). A known field that
   // failed its checks is dropped, never copied.
@@ -78,22 +105,26 @@ const off = profile => ({ok: false, reason: NOT_AVAILABLE, profile});
 const failure = (profile, reason) => ({ok: false, reason, profile});
 const withHeli = (profile, heli) => ({...profile, heli});
 
-// kg may be Infinity, which means fill up. The first tank is free.
-export function buyFuel(profile, kg, {enabled} = {}) {
+// kg may be Infinity, which means fill up. The first tank is free. pricePerKg is
+// the pump's price in credits a kilogram where it is not the home pump's 1.5 (the
+// pilot's map has dearer pads, docs/PILOT_MAP.md section 4); left out, nothing changes.
+// A price is kept to a tenth of a credit (1.55 reads as 1.6); one that is not a positive number is 1.5.
+export function buyFuel(profile, kg, {enabled, pricePerKg} = {}) {
   if (enabled !== true) return off(profile);
+  const rate = Number.isFinite(pricePerKg) && pricePerKg > 0 ? Math.max(1, Math.round(pricePerKg * 10)) : 15;
   const heli = heliOf(profile), have = tenthsOf(heli.fuelKg), space = TANK_TENTHS - have;
   if (space <= 0) return failure(profile, 'The tank is full.');
   // Round down to a whole tenth, so asking for 0.19 kg buys 0.1 kg and never more than was asked.
   const asked = Number(kg) > 0 ? Math.floor(Math.min(Number(kg), HELI_MONEY.tankKg) * 10 + 1e-9) : 0;
   const wanted = Math.min(space, asked);
   if (wanted < 1) return failure(profile, 'Choose how much fuel to buy.');
-  let tenths = wanted, cost = heli.refuels === 0 ? 0 : priceOfTenths(tenths);
+  let tenths = wanted, cost = heli.refuels === 0 ? 0 : priceOfTenths(tenths, rate);
   const wallet = credits(profile);
   if (cost > wallet) {
     // Buy only what the credits pay for.
-    tenths = Math.floor(wallet * 20 / 3);
+    tenths = Math.floor(wallet * 100 / rate);
     if (tenths <= 0) return failure(profile, 'You need 1 more credit.');
-    cost = priceOfTenths(tenths);
+    cost = priceOfTenths(tenths, rate);
   }
   const bought = {...heli, fuelKg: (have + tenths) / 10, refuels: Math.min(MAX_COUNT, heli.refuels + 1)};
   return {ok: true, profile: {...withHeli(profile, bought), credits: wallet - cost}, kg: tenths / 10, cost,
@@ -162,12 +193,15 @@ export function finishLesson(profile, lesson, {enabled} = {}) {
 
 export function placeCar(profile, carId, courseId, {enabled} = {}) {
   if (enabled !== true) return off(profile);
-  if (!validCar(carId) || !validCourse(courseId)) return failure(profile, 'That car or course is not known.');
+  if (!validCar(carId) || !validPlace(courseId)) return failure(profile, 'That car or course is not known.');
   const heli = heliOf(profile);
   return {ok: true, profile: withHeli(profile, {...heli, carsAt: {...heli.carsAt, [carId]: courseId}})};
 }
 
-export function carAt(profile, carId, fallback = 'tremblant-woods') {
+// Where a car stands before the helicopter has ever moved it: the home pad's course, except for the
+// Sirena, which the Lab trucks to Pacific Canyon for the Coast Cup (docs/THE_DEEP.md 6.2).
+export const FIRST_PLACE = Object.freeze({falcone_sirena: 'pacific-canyon'});
+export function carAt(profile, carId, fallback = FIRST_PLACE[carId] ?? 'tremblant-woods') {
   const heli = heliOf(profile);
   return validCar(carId) && Object.hasOwn(heli.carsAt, carId) ? heli.carsAt[carId] : fallback;
 }
@@ -251,6 +285,8 @@ export const MAX_SCARS = 4;
 // A fire holds at most 80 burning and burnt cells; damp lasts at most 2 steps.
 export const MAX_FIRE_CELLS = 80;
 const MAX_DAMP_STEPS = 2;
+const MAX_RETARDANT_LITRES = 1000;
+const TREATED_LITRES = 150;
 const FIRE_OFF = 'Forest fires are not available yet.';
 // A cell is (i + 512) x 1024 + (j + 512) for grid column i and row j.
 const MAX_CELL = 1024 * 1024 - 1;
@@ -346,8 +382,15 @@ function normalizeFire(value) {
   const lit = new Set([...gone, ...burning.map(([cell]) => cell)]);
   const damp = cellPairs(value.damp, steps => Number.isSafeInteger(steps) ? Math.max(1, Math.min(MAX_DAMP_STEPS, steps)) : 1)
     .filter(([cell]) => !lit.has(cell)).slice(0, MAX_FIRE_CELLS);
+  // The Lab's retardant (heli-fire.js applyRetardant): litres on each forest cell, kept only once some has landed.
+  // Cells that are fully treated (150 litres, heli-fire.js RETARDANT) are kept before partly coated ones, so the cap
+  // never turns a treated cell back into one that can burn.
+  const coated = cellPairs(value.retardant, litres => tenth(litres, MAX_RETARDANT_LITRES)).filter(([cell, litres]) => litres > 0 && !lit.has(cell));
+  const retardant = [...coated.filter(([, litres]) => litres >= TREATED_LITRES), ...coated.filter(([, litres]) => litres < TREATED_LITRES)]
+    .slice(0, MAX_FIRE_CELLS).sort((a, b) => a[0] - b[0]);
   return {id: value.id, courseId: value.courseId, seed: seed32(value.seed), startDay: count(value.startDay),
-    steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp};
+    steps: count(value.steps), engineSeconds: tenth(value.engineSeconds, MAX_COUNT), burning, burnt, damp,
+    ...(retardant.length ? {retardant} : {})};
 }
 
 // A burn or scar with a broken day is dropped, never moved to day 0, so the
@@ -382,7 +425,8 @@ function normalizeFireFields(value, heli) {
 // The H3 fields of a stored helicopter, each only when it is there and an
 // object (section 10). Unknown skins are dropped; a worn skin that is not
 // owned reads as stock; a fresh skin is owned and not the one worn.
-const skinList = list => [...new Set((Array.isArray(list) ? list : []).filter(kind => SKIN_KINDS.includes(kind)))];
+export const RANK_SKIN_KINDS = Object.freeze(['rank-student', 'rank-private', 'rank-commercial', 'rank-mountain', 'rank-chief']);
+const skinList = list => [...new Set((Array.isArray(list) ? list : []).filter(kind => SKIN_KINDS.includes(kind) || RANK_SKIN_KINDS.includes(kind)))];
 function normalizeSkins(value) {
   const owned = skinList(value.owned);
   const worn = owned.includes(value.worn) ? value.worn : 'stock';
@@ -398,6 +442,161 @@ function normalizeSkinFields(value, heli) {
 }
 
 const fireOff = profile => ({ok: false, reason: FIRE_OFF, profile});
+
+// ---- Heli-skiing (docs/HELI_SKIING.md sections 7 and 9) ------------------------------------------------------------
+// profile.heli.ski = {version: 1, best: {<run>: number}, medal: {<run>: 1..3}, paid: {<run>: 1..3}, stashes: [<id>]},
+// optional: an older save has none and never gains one until something is skied. `best` is the best time (seconds, less is
+// better) on a timed run or the best score (points, more is better) on a judged one; `medal` the best medal (1 bronze,
+// 2 silver, 3 gold); `paid` the highest medal already paid for. Zero entries are not stored. Names this game does not
+// know (a later game's runs and stashes) are kept as they are and never paid.
+export const SKI_RUNS = Object.freeze(['slalom', 'gs', 'moguls', 'aerials', 'powder']);
+const SKI_TIMED = Object.freeze(['slalom', 'gs']);
+const SKI_JUDGED = Object.freeze(['moguls', 'aerials']);
+export const SKI_STASHES = Object.freeze(['north-shelf', 'ridge-pocket', 'lower-meadow']);
+// What the medals pay in all, by medal (none, bronze, silver, gold): 150, then 150 more, then 200 more. A stash pays 100, once.
+export const SKI_MONEY = Object.freeze({medalTotal: Object.freeze([0, 150, 300, 500]), stash: 100});
+const SKI_SAVE_VERSION = 1;
+const MAX_SKI_NAMES = 64;
+const NOT_SKIING = 'Heli-skiing is not available yet.';
+const SKI_NEWER = 'This skiing progress belongs to another version.';
+const SKI_KEYS = new Set(['version', 'best', 'medal', 'paid', 'stashes']);
+const hundredth = value => Math.round(value * 100) / 100;
+const tenthOf = value => Math.round(value * 10) / 10;
+const SKI_BEST_MAX = 1_000_000;
+
+// A version this game cannot read because it is later than 1 (a later game's number, even a text or fractional one).
+const laterVersion = version => ['number', 'string', 'bigint'].includes(typeof version) && Number(version) > SKI_SAVE_VERSION;
+
+// A newer game's record is returned exactly as it was (and never written over); null when there is none to keep.
+// The names this game knows are never cut to make room for a later game's: only the unknown ones are capped.
+function normalizeSki(value) {
+  if (!isObject(value)) return null;
+  if (laterVersion(value.version)) {
+    try { return structuredClone(value); } catch { return value; }
+  }
+  if (value.version !== SKI_SAVE_VERSION) return null;
+  const ski = {version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []};
+  const skiName = name => validId(name) && name !== '__proto__';
+  const known = new Set([...SKI_RUNS, ...SKI_STASHES]);
+  const capped = (list, nameOf) => {
+    const usable = list.filter(item => skiName(nameOf(item)));
+    return [...usable.filter(item => known.has(nameOf(item))), ...usable.filter(item => !known.has(nameOf(item))).slice(0, MAX_SKI_NAMES)];
+  };
+  const names = map => capped(isObject(map) ? Object.entries(map) : [], ([name]) => name);
+  for (const [run, number] of names(value.best)) {
+    if (typeof number !== 'number' || !Number.isFinite(number) || !(number > 0) || number > SKI_BEST_MAX) continue;
+    const kept = SKI_JUDGED.includes(run) ? tenthOf(number) : hundredth(number);
+    if (kept > 0) ski.best[run] = kept;
+  }
+  const whole = number => Number.isSafeInteger(number) && number >= 1 && number <= 3 ? number : 0;
+  for (const [run, number] of names(value.paid)) if (whole(number)) ski.paid[run] = whole(number);
+  for (const [run, number] of names(value.medal)) if (whole(number)) ski.medal[run] = whole(number);
+  // A medal that was paid for was earned.
+  for (const [run, number] of Object.entries(ski.paid)) if (!(ski.medal[run] >= number)) ski.medal[run] = number;
+  ski.stashes = capped([...new Set(Array.isArray(value.stashes) ? value.stashes : [])], id => id);
+  for (const key of Object.keys(value)) {
+    if (SKI_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
+    try { ski[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
+  }
+  return ski;
+}
+
+// ---- The pilot's map (docs/PILOT_MAP.md section 6, MAP-SECRETS) ------------------------------------------------------
+// profile.heli.map = {version: 1, seen: [<place>], found: [<secret>], table: boolean}, optional: an older save has none and
+// never gains one until something is found. Names this game does not know (a later game's places and secrets) are kept
+// as they are and mean nothing. A later version of the record is returned exactly as it was and every write over it is
+// refused, as is a write over a later helicopter (map-secrets.js does the writing and reading; this is the save's shape).
+export const MAP_SAVE_VERSION = 1;
+const MAP_KEYS = new Set(['version', 'seen', 'found', 'table']);
+const MAX_MAP_NAMES = 128;
+const MAP_NEWER = 'This map belongs to another version.';
+function normalizeMapRecord(value) {
+  if (!isObject(value)) return null;
+  if (laterVersion(value.version)) {
+    try { return structuredClone(value); } catch { return value; }
+  }
+  if (value.version !== MAP_SAVE_VERSION) return null;
+  const names = list => [...new Set((Array.isArray(list) ? list : []).filter(id => validId(id) && id !== '__proto__'))].slice(0, MAX_MAP_NAMES);
+  const map = {version: MAP_SAVE_VERSION, seen: names(value.seen), found: names(value.found), table: value.table === true};
+  for (const key of Object.keys(value)) {
+    if (MAP_KEYS.has(key) || key === '__proto__' || value[key] === undefined) continue;
+    try { map[key] = structuredClone(value[key]); } catch { /* not plain data: dropped */ }
+  }
+  return map;
+}
+// The record this game can read: a version 1 record, or an empty one (none stored, or a later game's).
+export function mapRecordOf(profile) {
+  const map = heliOf(profile).map;
+  return map && map.version === MAP_SAVE_VERSION ? map : {version: MAP_SAVE_VERSION, seen: [], found: [], table: false};
+}
+// Why a write over the map record must be refused (a later game's record, or a later game's helicopter), or null.
+export function mapBlocked(profile) {
+  const stored = isObject(profile) && isObject(profile.heli) ? profile.heli : null;
+  if (stored && laterVersion(stored.version)) return MAP_NEWER;
+  const map = heliOf(profile).map;
+  return map && map.version !== MAP_SAVE_VERSION ? MAP_NEWER : null;
+}
+// The profile with this map record in its helicopter, or the same profile with a reason when the write is refused.
+export function writeMapRecord(profile, map, extra = {}) {
+  const reason = mapBlocked(profile);
+  if (reason) return {ok: false, reason, profile};
+  return {ok: true, profile: {...profile, ...extra, heli: {...heliOf(profile), map: normalizeMapRecord({...map, version: MAP_SAVE_VERSION})}}};
+}
+
+const createSki = () => ({version: SKI_SAVE_VERSION, best: {}, medal: {}, paid: {}, stashes: []});
+// What has been skied (an empty record for a save with none, or with a newer game's record that this game cannot read).
+export function skiOf(profile) {
+  const ski = heliOf(profile).ski;
+  return ski && ski.version === SKI_SAVE_VERSION ? ski : createSki();
+}
+
+const skiOff = profile => ({ok: false, reason: NOT_SKIING, profile});
+// Writing is refused over a record this game cannot read: a later game's ski record, or a later game's helicopter.
+function skiBlocked(profile) {
+  const stored = isObject(profile) && isObject(profile.heli) ? profile.heli : null;
+  if (stored && laterVersion(stored.version)) return SKI_NEWER;
+  const ski = heliOf(profile).ski;
+  return ski && ski.version !== SKI_SAVE_VERSION ? SKI_NEWER : null;
+}
+function paidProfile(profile, heli, ski, pay) {
+  const wallet = credits(profile);
+  return {...profile, credits: Math.min(MAX_CREDITS, wallet + pay), heli: {...heli, ski}};
+}
+
+// A finished run: result is {time, medal} for the timed runs (slalom, gs) and {points, medal} for the judged ones (moguls,
+// aerials), the medal being the ski rules' own (ski-score.js timedMedal and judgedMedal, 0 to 3). Keeps the best time or
+// score, raises the medal, and pays the difference up to that medal once (150, 300, 500 in all). Powder has no result.
+// Returns {ok, profile, paid, improved, raised, medal}.
+export function recordRun(profile, run, result, {enabled} = {}) {
+  if (enabled !== true) return skiOff(profile);
+  const blocked = skiBlocked(profile);
+  if (blocked) return failure(profile, blocked);
+  const timed = SKI_TIMED.includes(run), judged = SKI_JUDGED.includes(run);
+  if (!timed && !judged) return failure(profile, run === 'powder' ? 'The powder run has no time or score.' : 'That is not a run.');
+  const value = isObject(result) ? result[timed ? 'time' : 'points'] : undefined, medal = isObject(result) ? result.medal : undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > SKI_BEST_MAX || (timed && value === 0) ||
+      !Number.isSafeInteger(medal) || medal < 0 || medal > 3) return failure(profile, 'That is not a result.');
+  const heli = heliOf(profile), ski = skiOf(profile), kept = timed ? hundredth(value) : tenthOf(value);
+  const before = ski.best[run], improved = before === undefined || (timed ? kept < before : kept > before);
+  const next = {...ski, best: {...ski.best}, medal: {...ski.medal}, paid: {...ski.paid}};
+  if (improved && kept > 0) next.best[run] = kept;
+  const oldMedal = ski.medal[run] ?? 0, newMedal = Math.max(oldMedal, medal);
+  if (newMedal > 0) next.medal[run] = newMedal;
+  const owed = Math.max(0, SKI_MONEY.medalTotal[newMedal] - SKI_MONEY.medalTotal[ski.paid[run] ?? 0]);
+  if (owed > 0) next.paid[run] = newMedal;
+  return {ok: true, profile: paidProfile(profile, heli, next, owed), paid: owed, improved: improved && kept > 0, raised: newMedal > oldMedal, medal: newMedal};
+}
+
+// A powder stash found: 100 credits, once for each of the three.
+export function findStash(profile, id, {enabled} = {}) {
+  if (enabled !== true) return skiOff(profile);
+  const blocked = skiBlocked(profile);
+  if (blocked) return failure(profile, blocked);
+  if (!SKI_STASHES.includes(id)) return failure(profile, 'That is not a stash.');
+  const heli = heliOf(profile), ski = skiOf(profile);
+  if (ski.stashes.includes(id)) return {ok: true, profile, paid: 0, found: false};
+  return {ok: true, profile: paidProfile(profile, heli, {...ski, stashes: [...ski.stashes, id]}, SKI_MONEY.stash), paid: SKI_MONEY.stash, found: true};
+}
 
 export const missionsOf = profile => heliOf(profile).missions ?? createMissions();
 export const fireOf = profile => heliOf(profile).fire ?? null;

@@ -2528,65 +2528,43 @@
     },
     {
       "id": "deep-silver-school",
-      "card": "DEEP-ART-SRC",
+      "card": "DEEP-ART-FINAL",
       "family": "deep-creature",
       "deepId": "silver-school",
-      "sourcePage": "https://poly.pizza/m/uassUTYYae",
-      "previewImage": "https://static.poly.pizza/66fbd4f3-2901-4fc0-8ee1-9e21a96efc7c.jpg",
-      "author": "Quaternius",
+      "status": "working-art",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-24",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "working-art",
-      "downloaded": true,
-      "sha256": "1e56926aa21c7cdab721937d35caf77fa13356a27e1a814f4b82212e1d0bc6b8",
-      "downloadedFrom": "https://static.poly.pizza/66fbd4f3-2901-4fc0-8ee1-9e21a96efc7c.glb",
-      "checked": "2026-10-12",
-      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\silver-school",
-      "files": [
-        {
-          "path": "source.glb",
-          "sha256": "1e56926aa21c7cdab721937d35caf77fa13356a27e1a814f4b82212e1d0bc6b8"
-        },
-        {
-          "path": "source-page.html",
-          "sha256": "94be2da8eb6e24a88c3d9285f160d557a5c7b9f42af46d919c469e598be64923"
-        },
-        {
-          "path": "metadata.json",
-          "sha256": "cfc7c57f37bd1170f7431d1f501a74a985b88190f9440ac64f6a9719cd61e64b"
-        },
-        {
-          "path": "preview.jpg",
-          "sha256": "b88ff11aabe5160682f74efa4bf61fa6f38db42b968e00272872d1ce1446d958"
-        }
-      ],
-      "fit": "Claude-approved round-two fit; Silver-blue vertex paint; one metric mesh ready for renderer instancing.",
-      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
-      "changes": "Silver-blue vertex paint; one metric mesh ready for renderer instancing.",
+      "author": "Original geometry authored for The Duel",
+      "licenseEvidence": "Original scripted geometry in tools/blender/deep-art-fit.py; no donor mesh, scan or texture used.",
+      "risk": "The Deep stays behind the-deep dev until Kyle plays it. Shown at the log card and in the water in the DEEP-ART-FINAL round sheets; no gameplay or frame acceptance.",
+      "sourceTriangles": null,
+      "files": [],
+      "sourceBytes": 0,
+      "sourceKind": "original scripted geometry",
+      "recipe": "tools/blender/deep-art-fit.py",
+      "fit": "A 32 cm sardine: slim silver body, dark blue-green back, pale belly, gill cover, forked tail, dorsal and anal fins. One mesh, 567 triangles, for the school to instance.",
+      "changes": "A 32 cm sardine: slim silver body, dark blue-green back, pale belly, gill cover, forked tail, dorsal and anal fins. One mesh, 567 triangles, for the school to instance.",
       "runtime": [
         "public/assets/models/deep/silver-school.glb"
       ],
-      "sourceTriangles": 888,
-      "sourceBytes": 45428,
-      "sourceClips": [],
-      "embeddedOnly": true,
-      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
+      "decision": "Kyle, 24 October 2026: sardine, sea lion, otter and whale remade as original models (DEEP-ART-FINAL); donor meshes dropped.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/silver-school.glb",
-          "sha256": "7b8180bf0e648fb3c5d05378de635bcfb4b2f330acebbbb44ac7d4c7debbbb39",
-          "bytes": 44380,
-          "triangles": 888,
+          "sha256": "2e6a9462a9311beb0e2836a0426de9b480204ab275de9a3eed7eaf783ad4544b",
+          "bytes": 22348,
+          "triangles": 567,
           "dimensionsMetres": [
-            0.05103026703000069,
+            0.0560000017285347,
             0.3199999928474426,
-            0.12876597046852112
+            0.10000000149011612
           ],
           "clips": []
         }
-      ],
-      "recipe": "tools/blender/deep-art-fit.py"
+      ]
     },
     {
       "id": "deep-reef-fish",
@@ -2844,67 +2822,87 @@
     },
     {
       "id": "deep-sea-lion",
-      "card": "DEEP-ART-SRC",
+      "card": "DEEP-ART-FINAL",
       "family": "deep-creature",
       "deepId": "sea-lion",
-      "sourcePage": "https://poly.pizza/m/45HRvXYpvUG",
-      "previewImage": "https://static.poly.pizza/570f5f67-006c-4483-a05e-14d0400587dd.jpg",
-      "author": "Poly by Google",
-      "license": "CC-BY-3.0",
-      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
-      "licenseEvidence": "Published source page and cached model metadata state CC-BY 3.0.",
       "status": "working-art",
-      "downloaded": true,
-      "sha256": "acc5c8a6b14c643827a7cda2931ea09a7a467a5245a8f2f6fe86e607ed53b6e4",
-      "downloadedFrom": "https://static.poly.pizza/570f5f67-006c-4483-a05e-14d0400587dd.glb",
-      "checked": "2026-10-12",
-      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\sea-lion",
-      "files": [
-        {
-          "path": "source.glb",
-          "sha256": "acc5c8a6b14c643827a7cda2931ea09a7a467a5245a8f2f6fe86e607ed53b6e4"
-        },
-        {
-          "path": "source-page.html",
-          "sha256": "8e75704fdb41b31b9a1444881eef12a4d5595b1fd444fd4206404b613ea603f1"
-        },
-        {
-          "path": "metadata.json",
-          "sha256": "94f2d232cfeb0e8c6e907a8fca5ab457b2aea919599e97d4ebe94eebb77f6460"
-        },
-        {
-          "path": "preview.jpg",
-          "sha256": "d0b2b14c28876c3b2c53a6b75f4ce1b1f22f35e02ba1628b3fc88facb9664c7a"
-        }
-      ],
-      "fit": "Claude-approved round-two fit; Donor reclined into a glide; muted brown paint and glide-body-wave morph.",
-      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
-      "changes": "Donor reclined into a glide; muted brown paint and glide-body-wave morph.",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-24",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author": "Original geometry authored for The Duel",
+      "licenseEvidence": "Original scripted geometry in tools/blender/deep-art-fit.py; no donor mesh, scan or texture used.",
+      "risk": "The Deep stays behind the-deep dev until Kyle plays it. Shown at the log card and in the water in the DEEP-ART-FINAL round sheets; no gameplay or frame acceptance.",
+      "sourceTriangles": null,
+      "files": [],
+      "sourceBytes": 0,
+      "sourceKind": "original scripted geometry",
+      "recipe": "tools/blender/deep-art-fit.py",
+      "fit": "A 2.3 m California sea lion in a glide: deep chest, thick neck, sloped forehead with a tan crest, ears, big dark eyes, whiskers, long foreflippers and two trailing hind flippers; body-wave clip.",
+      "changes": "A 2.3 m California sea lion in a glide: deep chest, thick neck, sloped forehead with a tan crest, ears, big dark eyes, whiskers, long foreflippers and two trailing hind flippers; body-wave clip.",
       "runtime": [
         "public/assets/models/deep/sea-lion.glb"
       ],
-      "sourceTriangles": 714,
-      "sourceBytes": 431424,
-      "sourceClips": [],
-      "embeddedOnly": true,
-      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
+      "decision": "Kyle, 24 October 2026: sardine, sea lion, otter and whale remade as original models (DEEP-ART-FINAL); donor meshes dropped.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/sea-lion.glb",
-          "sha256": "b96f32e99a96827c3da3e6102a3baca1fcbe7fe49352224f0ceeacd16994a29c",
-          "bytes": 105748,
-          "triangles": 714,
+          "sha256": "6fa79c61653dd1cfc0a4d8a82af6cdda2bba8dcd8b29f075e960a5085336c527",
+          "bytes": 94784,
+          "triangles": 2100,
           "dimensionsMetres": [
-            2.4199624061584473,
-            2.9373562335968018,
-            0.3988056480884552
+            1.3619990348815918,
+            2.634068489074707,
+            0.5684525966644287
           ],
           "clips": [
             "glide-body-wave"
           ]
         }
+      ]
+    },
+    {
+      "id": "deep-otter",
+      "card": "DEEP-ART-FINAL",
+      "family": "deep-creature",
+      "deepId": "otter",
+      "status": "working-art",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-24",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author": "Original geometry authored for The Duel",
+      "licenseEvidence": "Original scripted geometry in tools/blender/deep-art-fit.py; no donor mesh, scan or texture used.",
+      "risk": "The Deep stays behind the-deep dev until Kyle plays it. Shown at the log card and in the water in the DEEP-ART-FINAL round sheets; no gameplay or frame acceptance.",
+      "sourceTriangles": null,
+      "files": [],
+      "sourceBytes": 0,
+      "sourceKind": "original scripted geometry",
+      "recipe": "tools/blender/deep-art-fit.py",
+      "fit": "A 1.3 m sea otter floating on its back: pale head, dark frosted fur, rounded furry arms and paws on the chest, hind flippers, whiskers, wrapped in kelp; float-paddle clip.",
+      "changes": "A 1.3 m sea otter floating on its back: pale head, dark frosted fur, rounded furry arms and paws on the chest, hind flippers, whiskers, wrapped in kelp; float-paddle clip.",
+      "runtime": [
+        "public/assets/models/deep/otter.glb"
       ],
-      "recipe": "tools/blender/deep-art-fit.py"
+      "decision": "Kyle, 24 October 2026: sardine, sea lion, otter and whale remade as original models (DEEP-ART-FINAL); donor meshes dropped.",
+      "runtimeFiles": [
+        {
+          "path": "public/assets/models/deep/otter.glb",
+          "sha256": "fe3093462dde188eb2504f20e72232e462df04517069c8ea73a882c41fc6e176",
+          "bytes": 149396,
+          "triangles": 2964,
+          "dimensionsMetres": [
+            0.810699999332428,
+            1.5759999752044678,
+            0.4841333031654358
+          ],
+          "clips": [
+            "float-paddle"
+          ]
+        }
+      ]
     },
     {
       "id": "deep-crab",
@@ -3265,69 +3263,45 @@
     },
     {
       "id": "deep-whale",
-      "card": "DEEP-ART-SRC",
+      "card": "DEEP-ART-FINAL",
       "family": "deep-creature",
       "deepId": "whale",
-      "sourcePage": "https://poly.pizza/m/JGFwp6xWgk",
-      "previewImage": "https://static.poly.pizza/7300e697-2543-4a9a-a77d-dedf29251fd7.jpg",
-      "author": "Quaternius",
+      "status": "working-art",
+      "downloaded": false,
+      "sha256": null,
+      "checked": "2026-10-24",
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "licenseEvidence": "Published source page and cached model metadata state CC0 1.0.",
-      "status": "working-art",
-      "downloaded": true,
-      "sha256": "153d6814c67039378fce22d4c347ed35d7febf2bedac866de91cf9b5dd7945f2",
-      "downloadedFrom": "https://static.poly.pizza/7300e697-2543-4a9a-a77d-dedf29251fd7.glb",
-      "checked": "2026-10-12",
-      "library": "C:\\Users\\kyleb\\dev\\art-library\\deep-art-src\\whale",
-      "files": [
-        {
-          "path": "source.glb",
-          "sha256": "153d6814c67039378fce22d4c347ed35d7febf2bedac866de91cf9b5dd7945f2"
-        },
-        {
-          "path": "source-page.html",
-          "sha256": "ad20edd9301721301c8e9cb82e775782dfe04c0c8dcec3d59b13100d6b13f5cc"
-        },
-        {
-          "path": "metadata.json",
-          "sha256": "abf6754c0b737b5d7d3db65cc19a369b6d2e761630b7607a6c17dc8929d57458"
-        },
-        {
-          "path": "preview.jpg",
-          "sha256": "e059d2f420f722475ab7875de1e1a3c5cf24cbdc9f0b0b1bc0874abe9e4258fa"
-        }
-      ],
-      "fit": "Claude-approved round-two fit; Metric root fit; natural material colours and original Swim clip retained.",
-      "risk": "Not release-accepted. The Deep cannot go live with these working models; no placement, behavior, gameplay or frame acceptance.",
-      "changes": "Metric root fit; natural material colours and original Swim clip retained.",
+      "author": "Original geometry authored for The Duel",
+      "licenseEvidence": "Original scripted geometry in tools/blender/deep-art-fit.py; no donor mesh, scan or texture used.",
+      "risk": "The Deep stays behind the-deep dev until Kyle plays it. Shown at the log card and in the water in the DEEP-ART-FINAL round sheets; no gameplay or frame acceptance.",
+      "sourceTriangles": null,
+      "files": [],
+      "sourceBytes": 0,
+      "sourceKind": "original scripted geometry",
+      "recipe": "tools/blender/deep-art-fit.py",
+      "fit": "A 14 m gray whale: mottled slate skin with pale scars and barnacle patches, short paddle flippers, a low hump and tail knuckles instead of a dorsal fin, throat grooves, notched flukes; tail-pump clip.",
+      "changes": "A 14 m gray whale: mottled slate skin with pale scars and barnacle patches, short paddle flippers, a low hump and tail knuckles instead of a dorsal fin, throat grooves, notched flukes; tail-pump clip.",
       "runtime": [
         "public/assets/models/deep/whale.glb"
       ],
-      "sourceTriangles": 447,
-      "sourceBytes": 68764,
-      "sourceClips": [
-        "Armature|Swim"
-      ],
-      "embeddedOnly": true,
-      "decision": "Kyle, 13 October evening: working art only behind the-deep dev; none accepted as finished art. DEEP-ART-FINAL follows the storyboard. Three-round cap reached.",
+      "decision": "Kyle, 24 October 2026: sardine, sea lion, otter and whale remade as original models (DEEP-ART-FINAL); donor meshes dropped.",
       "runtimeFiles": [
         {
           "path": "public/assets/models/deep/whale.glb",
-          "sha256": "5be16b84467631a9a35d2d33850a5270ad6233d69c5ac7a11468211ef0e1da77",
-          "bytes": 70920,
-          "triangles": 444,
+          "sha256": "7cc18c4f40f3717f21170c58428c590643fd415ee45474ce096a49c0a40df885",
+          "bytes": 159716,
+          "triangles": 3820,
           "dimensionsMetres": [
-            5.602141380310059,
-            14,
-            4.48344612121582
+            5.796392440795898,
+            14.184242248535156,
+            2.5390408039093018
           ],
           "clips": [
-            "Armature|Swim"
+            "Swim"
           ]
         }
-      ],
-      "recipe": "tools/blender/deep-art-fit.py"
+      ]
     },
     {
       "id": "deep-octopus",

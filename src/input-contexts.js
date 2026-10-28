@@ -5,10 +5,13 @@ const carKeyboard = Object.freeze({
   Escape: 'pause', KeyP: 'pause', ...cameras,
   Digit1: 'weapon:ufo', Digit2: 'weapon:bomb', Digit3: 'weapon:crossbow', Digit4: 'weapon:star',
   KeyM: 'mute', KeyE: 'shift-up', KeyQ: 'shift-down', KeyH: 'help',
+  KeyU: 'deep-surface', // DEEP-EXPLORER: surface from anywhere in the dive
+  KeyR: 'deep-ping', // DEEP-SIRENA-VIEW: the sonar; nothing happens unless the car is under water
 });
 const carGamepad = Object.freeze([
   [9, 'pause'], [8, 'help'], [3, 'camera-cycle'], [5, 'shift-up'], [4, 'shift-down'],
   [12, 'weapon:ufo'], [15, 'weapon:bomb'], [13, 'weapon:crossbow'], [14, 'weapon:star'],
+  [1, 'deep-ping'],
 ]);
 const carHeld = Object.freeze({
   throttle: Object.freeze(['ArrowUp', 'KeyW']),
@@ -43,7 +46,8 @@ export const INPUT_CONTEXTS = Object.freeze({
   // answers the radio (gamepad: the right shoulder, since Y is the camera),
   // and holding H pours while the bucket is fitted.
   heli: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', KeyH: 'heli-hook', KeyP: 'heli-autopilot',
-    KeyC: 'heli-camera', KeyM: 'mute', Enter: 'heli-cruise', KeyR: 'heli-radio' }),
+    KeyC: 'heli-camera', KeyM: 'mute', Enter: 'heli-cruise', KeyR: 'heli-radio',
+    KeyN: 'heli-map' /* MAP-VIEW: the pilot's map */ }),
     gamepad: Object.freeze([[9, 'pause'], [2, 'heli-hook'], [3, 'heli-camera'], [1, 'heli-autopilot'], [0, 'heli-cruise'], [5, 'heli-radio']]),
     held: Object.freeze({ liftUp: Object.freeze(['KeyW']), liftDown: Object.freeze(['KeyS']),
       pitchForward: Object.freeze(['ArrowUp']), pitchBack: Object.freeze(['ArrowDown']),

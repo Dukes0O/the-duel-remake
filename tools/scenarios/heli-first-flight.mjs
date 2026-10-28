@@ -10,15 +10,17 @@ export async function run(context) {
   await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`,
   'menu ready', 90_000);
-  // A Jesko owner on a course the Jesko has not been flown to: START is
+  // An Enzo owner on a course the Enzo has not been flown to: START is
   // closed and the note says why (special cars travel only by air).
   await context.evaluate(`(() => { const app = window.__qaApp;
-    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])]};
-    app._saveProfile(); app.menuCar = 'koenigsegg_jesko'; })()`);
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])]};
+    app._saveProfile(); app.menuCar = 'ferrari_enzo'; })()`);
   await context.waitFor(`document.querySelector('.start-note')?.textContent.includes('travels only by air') && document.querySelector('#start-engine').disabled`,
     'the air-only note on the menu', 30_000);
   await context.screenshot('menu-air-only-note');
-  await context.evaluate(`(() => { window.__qaApp.menuCar = 'falcone_f42'; })()`);
+  await context.evaluate(`(() => { const app = window.__qaApp;
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'koenigsegg_jesko'])]};
+    app._saveProfile(); app.menuCar = 'koenigsegg_jesko'; })()`);
   await context.waitFor(`!document.querySelector('.start-note')?.textContent.includes('travels only by air') && !document.querySelector('#start-engine').disabled`,
     'the note goes with another car', 60_000);
   const button = await context.evaluate(`(() => { const b = document.querySelector('#heli-visit'); return b && !b.hidden; })()`);
@@ -54,6 +56,51 @@ export async function run(context) {
   await context.screenshot('heli-pause');
   if (!pause) throw Error('The helicopter pause screen should offer BACK TO FLYING and no RESTART RUN.');
   await context.evaluate(`window.__qaApp._inputAction('pause')`);
+  // Carry lesson: fly native session inputs to a grounded, hooked crate.
+  // Prepare only this throwaway memory profile with lessons 1-3 complete.
+  await context.evaluate(`(() => {
+    const app = window.__qaApp; app.returnToMenu();
+    app.profile = {...app.profile, heli: {...app.profile.heli, fuelKg: 300,
+      lessons: {liftoff: true, hover: true, landing: true, carry: false}}};
+    app._saveProfile(); app.visitHeli();
+  })()`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='heli' && window.__qaApp.visualReady`, 'carry practice at the home pad', 120_000);
+  await context.evaluate(`(() => {
+    const app = window.__qaApp, session = app.heliSession;
+    const pilot = (v, t, speed = 4) => {
+      const h = v.heli, fx = Math.sin(h.heading), fz = Math.cos(h.heading);
+      const dx = t.x - h.x, dz = t.z - h.z, d = Math.hypot(dx, dz), want = Math.min(speed, d * .4);
+      const ex = (d > .01 ? dx / d * want : 0) - h.vx, ez = (d > .01 ? dz / d * want : 0) - h.vz;
+      const clamp = n => Math.max(-1, Math.min(1, n));
+      return {pitch: clamp((ex * fx + ez * fz) * .25), roll: clamp((-ex * fz + ez * fx) * .25),
+        lift: t.y === undefined ? -1 : clamp((t.y - h.y) * .3 - h.vy * .3), yaw: 0};
+    };
+    const fly = (seconds, target, speed, until) => {
+      for (let i = 0; i < seconds * 120; i++) {
+        const v = session.view();
+        app._heliEvents(session.step(pilot(v, target(v), speed)));
+        if (until?.(session.view())) return;
+      }
+    };
+    const started = session.startLesson('carry');
+    if (!started.ok) throw Error('Could not start the carrying lesson: ' + started.reason);
+    const crate = session.view().loads.find(l => l.id === 'crate'), target = session.view().lesson.target;
+    fly(60, () => ({...crate, y: crate.y + 15.2}), 3, v => Math.hypot(v.heli.x - crate.x, v.heli.z - crate.z) < 1 && Math.abs(v.heli.y - crate.y - 15.2) < .6 && Math.hypot(v.heli.vx, v.heli.vz) < .5);
+    if (session.pressHook()?.type !== 'hooked') throw Error('Could not hook the practice crate');
+    fly(10, v => ({x: v.heli.x, z: v.heli.z, y: v.heli.groundY + 40}), 4);
+    fly(120, () => ({...target, y: target.y + 40}), 8, v => Math.hypot(v.heli.x - target.x, v.heli.z - target.z) < 2 && Math.hypot(v.heli.vx, v.heli.vz) < .6);
+    fly(60, () => ({...target, y: target.y + .7 + 14.6}), 1, v => v.lesson?.guidance?.ready);
+    if (!session.view().lesson?.guidance?.ready) throw Error('The carried crate did not reach the green state');
+    app.heliCamera = 0;
+    document.querySelector('details')?.removeAttribute('open');
+  })()`);
+  await context.waitFor(`document.querySelector('.heli-carry-guidance')?.textContent === 'On the mark. Press H to let go.'`, 'green carry guidance', 10_000);
+  await context.screenshot('heli-carry-green');
+  await context.evaluate(`(() => {
+    const app = window.__qaApp, session = app.heliSession;
+    session.pressHook(); app._heliEvents(session.step({}));
+    if (session.view().lesson) throw Error('Green crate release should pass');
+  })()`);
   if (process.env.HELI_FROM_ABOVE !== '0') {
     // Each destination from 150 m: climb at home, then cruise to the others.
     await context.evaluate(`(() => { window.__qaApp.heliCamera = 0; window.__qaApp.keys = {KeyW: true}; })()`);

@@ -1,3 +1,4 @@
+import {achievementShelf} from './achievements.js';
 import {CUPS, normalizeCups, cupStandings, cupAvailability, cupBonus} from './grand-prix-cups.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const difficulty=cpu=>({easy:'Easy',medium:'Medium',hard:'Hard'}[cpu]||'');
@@ -38,4 +39,15 @@ export function cupResultPanel(result,{enabled=false}={}){
     summary.standings.map(row=>'<li>'+escape(row.you?'YOU':row.name)+' · '+row.points+' points</li>').join('')+'</ol>'+
     (summary.finished?'<p>CUP BONUS +'+(Number.isSafeInteger(summary.bonus)?summary.bonus:0)+' CR'+
       (summary.trophy?' · TROPHY EARNED':'')+'</p>':'<p>Continue your cup from Courses in the main menu.</p>')+'</section>';
+}
+
+export function achievementsPanel(profile, options = {}) {
+  const rows = achievementShelf(profile, options);
+  if (!rows.length) return '';
+  return '<section class="paint-panel achievement-shelf" aria-label="Achievements"><div class="paint-heading"><h3>ACHIEVEMENTS</h3></div><ul class="achievement-tiles">' + rows.map(row =>
+    '<li class="achievement-tile' + (row.earned ? ' earned' : '') + '" data-achievement="' + row.id + '">' +
+    '<span class="achievement-medallion" aria-hidden="true"></span><div><h4>' + escape(row.name) + '</h4><p>' +
+    (row.earned ? 'EARNED' + (row.at ? ' &middot; <time datetime="' + new Date(row.at).toISOString() + '">' +
+      new Date(row.at).toISOString().slice(0, 10) + '</time>' : '') : '<em>' + escape(row.hint) + '</em>') +
+    '</p></div></li>').join('') + '</ul></section>';
 }

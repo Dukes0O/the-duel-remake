@@ -189,10 +189,27 @@ export function gridPose(slot) {
     lateral: (right ? 1 : -1) * FIELD.gridLateral };
 }
 
+// GP-PASSING-2 step A: with `cpu-racecraft` every car's nitro stays locked until
+// it has passed the apex of the first braking zone on lap 1 (F1 keeps its
+// overtaking aid off at the start too). Station of that apex, from the front grid slot.
+function firstApexStation(duel) {
+  const s = duel.state, front = Math.max(s.s, ...s.opponents.map(r => r.s));
+  const profile = buildSpeedProfile(racingLineFor(duel.course), duel.car);
+  const phase = duel.course.phase(front), length = duel.course.length;
+  const ahead = profile.corners.map(corner => ({corner, distance: (corner.entryS - phase + length) % length}))
+    .filter(row => row.distance > 1).sort((a, b) => a.distance - b.distance)[0];
+  return ahead ? front + ahead.distance + (ahead.corner.apexS - ahead.corner.entryS + length) % length : front;
+}
+
+export function nitroLocked(actor, field) {
+  return field?.nitroArmS !== undefined && !actor.completedLaps && actor.s < field.nitroArmS;
+}
+
 // ---- building the field --------------------------------------------------
 
 export function initializeField(duel) {
   const s = duel.state, course = duel.course;
+  const racecraft = duel.featureFlags.enabled('cpu-racecraft');
   // GP staging leaves the timing origin and visible line at zero.
   const gridSetback = s.mode === 'grandprix'
     ? course.def.id === 'azure-riviera' ? -400 : course.def.id === 'panorama-ridge' ? -43 : 0
@@ -235,7 +252,10 @@ export function initializeField(duel) {
       field: {
         index, slot: slotOf[index], skillRoll: 1 + jitter, reaction, rng: (rng.float() * 4294967296) >>> 0,
         formAmp: tuning.form * (course.def.fieldForm ?? 1), formPeriod: 25 + rng.float() * 30, formPhase: rng.float() * Math.PI * 2,
-        traits: { ...racer.traits }, bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
+        // GP-WIDE-START: formation state exists only with the development switch.
+        traits: { ...racer.traits }, ...(racecraft ? {racecraft:true,
+          gridStartS:pose.s+gridSetback+gridStart, startLateral:pose.lateral} : {}),
+        bias: 0, intent: pose.lateral, pass: null, passCool: 0, passes: { start: 0, done: 0, timeout: 0, stalled: 0, edge: 0, dives: 0 }, diveKey: null, tow: 0, mistake: null,
         zoneKey: null, rolledKey: null, defendKey: null, defendSide: 0, lateBrake: 0, stuck: 0, offSec: 0,
         recoveries: 0, crashes: 0, knocked: false, cooldownSeen: 0, hits: 0, moveSpeed: 0,
       },
@@ -253,6 +273,7 @@ export function initializeField(duel) {
     stats: { passes: 0, passesAfterStart: 0, passTimes: [], crashes: [], playerCrashes: 0, recoveries: 0, finishTimes: {} },
     pairs: {}, lastPosition: size, pace: tuning.pace,
     deferFinish: false,
+    ...(racecraft ? {nitroArmS: firstApexStation(duel)} : {}),
   };
   s.countdown = FIELD.lights * FIELD.lightSec + hold;
   s.lapsTotal = duel.course.def.laps || FIELD.laps;

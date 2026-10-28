@@ -7,7 +7,15 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {fieldHudMarkup, presentField} from './screen-field.js';
 import {gripReadout} from './race-surfaces.js';
 import {pitView} from './pit-lane.js';
+import {nitroLocked} from './race-field.js';
 const escapeText = value => String(value).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
+// GP-PASSING-2: the nitro label. Nitro is locked on lap 1 until the first braking zone's apex.
+// The router renames the label to `nitro-label` at startup and writes it through this function.
+export function nitroHudLabel(s) {
+  const armS = s.field?.nitroArmS;
+  if (armS === undefined) return 'NITRO';
+  return nitroLocked(s, s.field) ? 'NITRO LOCKED' : !s.completedLaps && s.s - armS < 150 ? 'NITRO ARMED' : 'NITRO';
+}
 export function hudMarkup() {
   return `  <section id="race-hud" class="hud" aria-label="Race information" hidden>
     <div class="race-progress"><i id="progress-fill"></i>
@@ -235,9 +243,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     ui['crash-flash'].hidden=!crash;
     const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
-    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+    // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
+    const boatRamp=!!app.duel.course.deepRamp&&!!app.duel.course.surfaceAt(s.s,s.lateral).deepRamp;
+    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
     ui['race-callout'].hidden=!callout||!!s.paused;
-    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
+    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
     text('callout-text',callout);
     ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
@@ -252,6 +262,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     routeMap.update(app.duel.course,s);
     const practice=!!app.duel.stageDef.practice;
     ui.stage.classList.toggle('is-practice',practice);
+    // A driving lesson is a private Time Trial: its ghost banner, lap and style readouts do not apply.
+    ui.stage.classList.toggle('is-lesson',!!app.duel.drivingLesson);
     text('race-time-label',practice?'NO TIMER · NO REWARDS':'RACE TIME');
     if(practice){
       text('race-time','FREE PRACTICE');

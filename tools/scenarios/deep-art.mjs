@@ -7,7 +7,7 @@ import {join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','crab',
+const ids=['silver-school','reef-fish','turtle','ray','manta','sea-lion','otter','crab',
   'moray','grouper','reef-shark','jellyfish','whale','octopus','wreck-hull','giant-clam','anchor','sunken-boat'];
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 
@@ -23,7 +23,7 @@ function helpers(){
 
 export async function run(context){
   const manifest=JSON.parse(await readFile(join(root,'public/assets/models/deep/manifest.json'),'utf8'));
-  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact seventeen-role working-art manifest required');
+  if(JSON.stringify(manifest.models.map(m=>m.id))!==JSON.stringify(ids))throw Error('Exact eighteen-role working-art manifest required');
   const report={photographyOnly:true,actualLookTest:true,quality:'high',frameMeasurement:false,
     runtimeSceneInstall:false,storage:'existing isolated in-memory helper',views:[],sourceFiles:{}};
   for(const path of ['tools/scenarios/deep-art.mjs','tools/deep-look.js','tools/blender/deep-art-fit.py','tools/blender/deep-art-sheet.py','public/assets/models/deep/manifest.json'])

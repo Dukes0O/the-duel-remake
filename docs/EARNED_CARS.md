@@ -27,11 +27,12 @@ cards are in section 9; Kyle's answers are in section 10.
   difficulty, but not the mode, so an old Grand Prix win cannot be told from
   a Duel win. The Grand Prix podium set (P4-CAREER) counts only from the day
   it shipped for the same reason.
-- **Special cars travel only by air** (Kyle, 14 October 2026;
-  `docs/HELICOPTER.md` section 5). `AIR_ONLY_CARS` in
-  `src/heli/heli-jobs.js` holds the Jesko. With the `helicopter` switch on, a
-  special car races only where it was last set down, starting at Tremblant
-  Woods. Kestrel One lifts at most 1,500 kg.
+- **Medal cars travel only by air** (`docs/HELICOPTER.md` section 5).
+  `AIR_ONLY_CARS` in `src/heli/heli-jobs.js` holds medal cars and the restored
+  Sirena. With the helicopter on, they race only where last set down. Medal
+  cars start at Tremblant Woods; the Sirena starts at Pacific Canyon.
+  Kyle, 25 October 2026: the Jesko races everywhere again, in every mode.
+  Kestrel One lifts at most 1,500 kg.
 - **A Grand Prix in a car outside the road class** (the Jesko, the Titan)
   fills the field with copies of the player's own car (`chooseCars` in
   `src/race-field.js`), so an earned car's model is drawn eight times.
@@ -40,8 +41,8 @@ cards are in section 9; Kyle's answers are in section 10.
 
 - T-013: "Earned cars: medal sheets (wins, difficulty levels, Duel and Grand
   Prix)". Builds on how the Koenigsegg unlocks. Touches saves.
-- 14 October: special cars travel only by air, starting with the Jesko;
-  earned cars from the medal sheets join that list.
+- 25 October: the Jesko leaves the air-only list. Medal cars and the restored
+  Sirena keep the fly-it-there rule. This replaces the 14 October Jesko rule.
 - Keep it small and fun for a parent and a child taking turns on one
   keyboard. Existing saves never lose a car or credits.
 - 14 October, on this packet: the three cars are confirmed (Ferrari Enzo,
@@ -118,7 +119,7 @@ car's own sheet counts too):
 | Car | Earned at | The car (Kyle confirmed, 14 October) |
 | --- | --- | --- |
 | Earned car 1 | 6 medals | Ferrari Enzo |
-| Earned car 2 | 15 medals | McLaren F1 |
+| Earned car 2 | 12 medals | McLaren F1 |
 | Earned car 3 | 24 medals, 6 of them gold | Bugatti Bolide |
 
 How fast that comes, for a new player with only the two starter cars:
@@ -129,8 +130,12 @@ How fast that comes, for a new player with only the two starter cars:
   starters alone reach 4 medals (6 with two Hard wins), and car 1 needs a
   third car or Hard wins. The first prize
   comes early, so a child feels the system work.
-- **Car 2** needs more than two cars or some Hard wins: the starters' full
-  sheets make 12. It rewards trying new cars and harder rivals.
+- **Car 2** (12 medals; Claude, 28 October 2026, lowered from 15 after the
+  finishing pass) needs a new car or harder rivals: the two starters' full
+  sheets make exactly 12, so a parent can earn it with no purchase by winning
+  Hard and Medium everywhere, and an Easy-only child needs about five cars
+  (two Easy medals each). At 15 an Easy-only child with three purchases
+  never reached it; at 12 that child gets it in about 39 wins.
 - **Car 3** needs six Hard wins, in six different car and row pairs. It is
   the long goal; a parent can reach it, and a child grows into it.
 
@@ -181,7 +186,10 @@ keyboard work as today: pick your player, then race.
   boxes in two rows (DUEL, GRAND PRIX) and three columns (EASY, MEDIUM,
   HARD). A won box shows the medal disc in its colour with the win count; an
   empty box shows a faint ring and "WIN ON MEDIUM". Under it, one line for
-  all cars: "ALL CARS: 11 MEDALS · NEXT CAR AT 15".
+  all cars: "ALL CARS: 11 MEDALS · NEXT CAR AT 12".
+- **Medal chip** (Claude, 28 October 2026): near the top of the car panel, by
+  the build name, "MEDALS 5/6 · NEXT CAR AT 6" ("NEXT CAR AT 24 WITH 6
+  GOLD" for the last car). Clicking it scrolls to the medal sheet.
 - With the `grand-prix-career` switch off, the Grand Prix row reads "OPENS
   WITH THE GRAND PRIX CAREER" and its boxes stay empty.
 - **Car list:** an earned car not yet earned shows "MEDALS 4/6" in place of
@@ -199,12 +207,18 @@ keyboard work as today: pick your player, then race.
 ### 5.2 The results screen
 
 - **New medal** (a box filled for the first time): one line under the
-  bonuses, "NEW MEDAL · SILVER · AURORA GTR · DUEL · MEDIUM · +250 CR".
+  bonuses, "NEW MEDAL · SILVER · AURORA GTR · DUEL · MEDIUM · +250 CR", with
+  a small medal dot (bronze, silver or gold, as on the sheet) before it.
   The general bonus list leaves the medal out so it shows once.
-- **New car earned:** "NEW CAR EARNED · FERRARI ENZO · IN YOUR GARAGE".
-  With the helicopter on: "KESTREL ONE WILL BRING IT TO TREMBLANT WOODS".
+- **New car earned** (Claude, 28 October 2026, replacing the two small
+  lines): its own card under the medal line. "NEW CAR EARNED", the car's name
+  large (the size of the race time), and a line under it: "Earned with 6
+  medals. Kestrel One will bring it to Tremblant Woods." with the helicopter
+  on, "Earned with 6 medals. In your garage now." with it off (the Bolide
+  reads "24 medals, 6 of them gold"). The headline takes the Grand Prix size
+  so the Unlock button stays on screen at 1280 x 720.
 - **Sound:** the existing `interface.bonus` cue, once per results screen,
-  when either line shows. No new sound.
+  when the medal line or the car card shows. No new sound.
 - A win that only adds to a count shows nothing new here; the sheet shows it.
 
 ### 5.3 The menu

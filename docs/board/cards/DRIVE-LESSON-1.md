@@ -288,3 +288,15 @@ it around, inside `drive-lessons.js` only:
    instructor counts all three cones stays.
 One bounded attempt, then stop and report the per-corner cone points and
 results as before.
+
+## Claude answers - late-try acceptance changed, 24 October
+
+(Answer to the builder's question file, recorded here at Claude's instruction.)
+Option 1 approved. The red board stays 25 m after cone 1. The late-try
+acceptance becomes: the late try screeches for at least 0.5 s and its radio line
+plays; the "loses 0.25 s or ends at a wall/off-road" clause is removed. Why: on
+these tyres braking later never costs time (0.26 to 0.83 s faster until the
+wall; Beaver Hairpin from 45 m, The Cutting from 55 m after cone 1), and an
+instructor braking at full strength still lost by 0.26 to 0.64 s. Nothing else
+is loosened. Beaver Hairpin's right try must still pass with the instructor's
+own line and speed plan; it does (see the change note).

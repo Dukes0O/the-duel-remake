@@ -1,6 +1,6 @@
 // D0 DEEP-LOOK: the pure parts of the underwater look, with no graphics.
 // Depth colour curve, fish parting rule, hard caps, trail shape, and the proof
-// that nothing in the game reaches the new code yet.
+// that only approved adapters reach the Deep code.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -197,9 +197,9 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   assert.deepEqual([...kelpStemGeometry().attributes.position.array], [...stem.attributes.position.array]); checks++;
 }
 
-// ---- only approved development adapters reach it -----------------------
+// ---- only approved adapters reach it -----------------------
 {
-  check(FEATURE_STATES['the-deep'] === 'dev', 'the-deep is a development switch (off in the game)');
+  check(FEATURE_STATES['the-deep'] === 'on', 'the-deep is released (on in the game)');
   const root = fileURLToPath(new URL('../', import.meta.url));
   const walk = (dir, out = []) => {
     for (const name of readdirSync(dir)) {
@@ -210,6 +210,13 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
   };
   // Director-granted contracts; every other Deep module/specifier stays isolated.
   const approvedImports = new Set([
+    // DEEP-RAMP-2: exact terrain cutting, turn-off, camera and acceptance hooks. No wildcard access.
+    ...['world.js','world-surfaces.js','world-props.js','landscape-detail.js'].map(name => `src/${name}|./deep/deep-ramp.js`),
+    'src/render3d.js|./deep/deep-journey.js',
+    'tools/test-deep-ramp.mjs|../src/deep/deep-journey.js',
+    'tools/test-deep-ramp.mjs|../src/deep/zones/kelp-coast.js',
+    // Existing released results-screen hint wiring was missing from this list.
+    'src/screen-results.js|./deep/deep-hints.js',
     'src/deep/deep-ramp.js|../pacific-coast-layout.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-ui.js',
     'tools/test-deep-zone.mjs|../src/deep/deep-zone.js',
@@ -233,7 +240,59 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     'tools/test-deep-zone-format.mjs|../src/deep/deep-zone.js',
     'tools/test-deep-zone-format.mjs|../src/deep/zone-floor.js',
     'tools/test-deep-ramp.mjs|../src/deep/deep-ramp.js',
+    'src/main.js|./deep/zones/kelp-coast.js',
+    // DEEP-RADIO: Ana's phone lines join the sound bank; the phone chain is rendered and tested in Node.
+    'src/sound-bank.js|./deep/deep-phone-lines.js',
+    'tools/audio/build-deep-phone.mjs|../../src/deep/deep-phone-lines.js',
+    'tools/audio/render-deep-phone.mjs|../../src/deep/deep-phone.js',
+    'tools/test-deep-phone.mjs|../src/deep/deep-phone-lines.js',
+    'tools/test-deep-phone.mjs|../src/deep/deep-phone.js',
+    'tools/test-deep-kelp-coast.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-kelp-coast.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-kelp-coast.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-sirena.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-discovery.js',
+    'tools/test-deep-sirena.mjs|../src/deep/deep-sirena.js',
+    'src/progression.js|./deep/sirena-car.js',
+    'tools/test-sirena-car.mjs|../src/deep/sirena-car.js',
+    'src/lab/restore.js|../deep/sirena-car.js',
+    'tools/test-lab-restore.mjs|../src/deep/sirena-car.js',
+    'tools/test-sirena-car.mjs|../src/deep/deep-sirena.js',
+    // DEEP-LOG: the garage log page and pearl white (its named hooks), its test and its picture recipe.
+    'src/screen-garage.js|./deep/deep-log.js',
+    'src/paint-presets.js|./deep/deep-log.js',
+    ...['deep-ramp', 'deep-zone', 'zones/kelp-coast', 'deep-phone-lines', 'deep-log'].map(name => `tools/test-deep-log.mjs|../src/deep/${name}.js`),
+    'tools/scenarios/deep-log-pictures.mjs|../../src/deep/deep-log.js',
+    // DEEP-SIRENA-VIEW: the one wiring card for the story (its named hooks) and its test.
+    'src/game.js|./deep/deep-story.js',
+    'src/app.js|./deep/deep-sirena.js',
+    'src/app.js|./deep/deep-log.js',
+    'src/render3d.js|./deep/sirena-view.js',
+    'src/screen-router.js|./deep/sirena-view.js',
+    'src/screen-router.js|./deep/sirena-ui.css',
+    'src/screen-garage.js|./deep/sirena-car.js',
+    ...['zones/kelp-coast', 'deep-sirena', 'deep-phone-lines', 'deep-story', 'sirena-view', 'deep-discovery']
+      .map(name => `tools/test-deep-story.mjs|../src/deep/${name}.js`),
+    // DEEP-LIFE: the sea life's checks run its rules and drawing code in Node on the real Kelp Coast.
+    'tools/test-deep-life.mjs|../src/deep/deep-ramp.js',
+    'tools/test-deep-life.mjs|../src/deep/deep-zone.js',
+    'tools/test-deep-life.mjs|../src/deep/zones/kelp-coast.js',
+    'tools/test-deep-life.mjs|../src/deep/zone-floor.js',
+    'tools/test-deep-life.mjs|../src/deep/water-shader.js',
+    'tools/test-deep-life.mjs|../src/deep/fish-rules.js',
+    'tools/test-deep-life.mjs|../src/deep/fish-school.js',
+    'tools/test-deep-life.mjs|../src/deep/sea-life-rules.js',
+    'tools/test-deep-life.mjs|../src/deep/sea-life.js',
+    // DEEP-PLAYTEST-1: read-only map test and the released dive-kit results notice.
+    'tools/test-deep-map.mjs|../src/deep/deep-map.js',
+    'tools/test-deep-map.mjs|../src/deep/zones/kelp-coast.js',
+    'src/screen-results.js|./deep/deep-hints.js',
   ]);
+  // DEEP-EXPLORER: exact imports for this card's headless acceptance suite.
+  for (const name of ['zones/kelp-coast','deep-journey','deep-chart','deep-discovery','deep-objectives','deep-map','deep-rocks','deep-sirena','deep-log','sirena-view','sea-life-rules','deep-story'])
+    approvedImports.add(`tools/test-deep-explorer.mjs|../src/deep/${name}.js`);
   const importers = walk(join(root, 'src')).filter(path => !path.replaceAll('\\', '/').includes('/src/deep/'))
     .concat(walk(join(root, 'tools')).filter(path => !/deep-look|test-deep-look/.test(path)))
     .filter(path => {
@@ -249,7 +308,7 @@ const weighted = (p, a) => Math.hypot(p.x - a.x, (p.y - a.y) * VERTICAL_WEIGHT, 
     });
   assert.deepEqual(importers, [], `no unapproved src/deep imports: ${importers.join(', ')}`); checks++;
   const flags = readFileSync(join(root, 'src/feature-flags.js'), 'utf8');
-  check(/'the-deep':\s*'dev'/.test(flags), 'the switch is declared in src/feature-flags.js');
+  check(/'the-deep':\s*'on'/.test(flags), 'the switch is declared in src/feature-flags.js');
 }
 
 console.log(`D0 DEEP-LOOK: ${checks} checks passed.`);

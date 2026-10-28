@@ -6,6 +6,13 @@ import {contactFixture} from './warlord-reward.mjs';
 // samples are transferred unchanged; values outside [-1,1] are never clipped.
 async function captureNative(contactSource) {
   const sleep = ms => new Promise(done => setTimeout(done, ms));
+  // Capture lengths are counted in audio time. A busy laptop can let the audio
+  // clock fall behind the wall clock, so each capture window waits on the audio
+  // clock it measures, never on a timer. The cap only stops a stuck context.
+  const untilAudioTime = async (ctx, time) => {
+    const give = Date.now() + 15000;
+    while (ctx.currentTime < time && Date.now() < give) await sleep(10);
+  };
   const old = window.__qaApp;
   old.stop(); old.audio.setPaused(true);
   const app = new old.constructor(); window.__qaApp = app;
@@ -153,7 +160,7 @@ async function captureNative(contactSource) {
         if(!app.duel.fireWeapon('crossbow'))throw Error('Actual stress weapon launch failed.');
       }
     };
-    app.start();await sleep(3200);app.stop();app.onFrame=null;
+    app.start();await untilAudioTime(context,began+3.2);app.stop();app.onFrame=null;
     for(const track of Object.values(tracks))track.stop();
     await sleep(40);
     rows.push({name,began,contactAt:contactAt-began,stressAt:stressAt==null?null:stressAt-began,
@@ -185,13 +192,13 @@ async function captureNative(contactSource) {
     {numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[2]});
   referenceOutput.connect(referenceTap);referenceTap.connect(qctx.destination);
   referenceTap.port.onmessage=e=>referenceChunks.push(e.data);
-  const qbegan=qctx.currentTime;tone.start();await sleep(1100);tone.stop();
+  const qbegan=qctx.currentTime;tone.start();await untilAudioTime(qctx,qbegan+1.1);tone.stop();
   quiet.output.disconnect(tap);tap.disconnect();tap.port.close();await sleep(40);
   referenceOutput.disconnect();referenceTap.disconnect();referenceTap.port.close();
   const quietTrack=encode(qchunks,qbegan),referenceTrack=encode(referenceChunks,qbegan);await qctx.close();
   // The actual pause API fades the complete output and clears owned voices.
   const pausedStart=context.currentTime,paused=meter(audio.output);
-  audio.setPaused(true);await sleep(350);paused.stop();await sleep(40);
+  audio.setPaused(true);await untilAudioTime(context,pausedStart+.35);paused.stop();await sleep(40);
   const cleanup={paused:audio.paused,projectileVoices:audio.projectileVoices.size,
     mixerVoices:[...audio.mixer.voices.values()].reduce((n,set)=>n+set.size,0),hiddenRoadVoices:audio.hiddenRoadVoices.size,
     track:encode(paused.chunks,pausedStart)};

@@ -78,7 +78,7 @@ test('ordinary and pre-gate races have no armor before gate discovery', () => {
   }
 });
 
-test('all ten car masses and both clamps set the exact base maximum armor', async () => {
+test('all eleven car masses and both clamps set the exact base maximum armor', async () => {
   const {maxArmorForMass} = await import('../src/combat-armor.js');
   const expected = {
     falcone_f42: 100,
@@ -91,6 +91,10 @@ test('all ten car masses and both clamps set the exact base maximum armor', asyn
     titan_monster: 160,
     koenigsegg_jesko: 97.90917677394559,
     ferrari_enzo: 97.02470357310182,
+    mclaren_f1: 88.66830868758714,
+    bugatti_bolide: 100,
+    mcmurtry_speirling: 83.04547985373998,
+    falcone_sirena: 80, // the Sirena (810 kg), a new car: the same mass rule, nothing else moved
   };
   assert.deepEqual(Object.keys(CARS).sort(), Object.keys(expected).sort(),
     'every selectable car must have an armor expectation');

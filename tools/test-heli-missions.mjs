@@ -457,8 +457,8 @@ check('a call taken by another crew: no pay, no charge, a quiet spell as if it h
   assert.equal(same.missions.call.kind, 'hiker');
 });
 
-check('the clocks: 15, 12, 12 and 25 minutes, in one table', () => {
-  assert.deepEqual({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 720, supply: 1500});
+check('the clocks: 15, 12, 15 and 31 minutes, in one table', () => {
+  assert.deepEqual({...RESCUE_CLOCKS}, {hiker: 900, avalanche: 720, hoist: 900, supply: 1860});
   assert.deepEqual([...CASUALTY_KINDS], ['hiker', 'avalanche', 'hoist']);
   assert.equal(DUSK_SECONDS, 180);
   assert.equal(rescueLimit('hiker'), 900);
@@ -519,7 +519,8 @@ check('getting cold: an unhurt casualty is hurt at two thirds of the clock, once
 
 check('out of time: the clock stops at its limit and says so', () => {
   for (const kind of RESCUE_KINDS) {
-    const start = beginRescue(answeredCall(kind), RESCUE_ON), limit = RESCUE_CLOCKS[kind];
+    // The limit is the row of the course the call is at (Summit Run has its own rows, RESCUE-SUMMIT-TUNE).
+    const start = beginRescue(answeredCall(kind), RESCUE_ON), limit = rescueLimit(kind, null, ALL[kind][0]);
     assert.equal(tickRescue(start, limit - 1, RESCUE_ON).expired, false, kind);
     const done = tickRescue(start, limit + 100, RESCUE_ON);
     assert.deepEqual([done.expired, done.missions.rescue.clockSeconds, clockLeft(done.missions.rescue)], [true, limit, 0], kind);

@@ -1,0 +1,360 @@
+// DEEP-SIRENA-VIEW (docs/THE_DEEP.md 6.2 to 6.7): the Kelp Coast story in a real
+// dive, headless: the badge, the sonar, the lift bags, the Sirena, the sea-life
+// log and Ana's lines in order; the App pays and saves each once. Memory-only.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {Duel} from '../src/game.js';
+import {ROUTE_VARIANTS} from '../src/route-variants.js';
+import {kelpCoastProvider} from '../src/deep/zones/kelp-coast.js';
+import {SIRENA, SIRENA_FINDS} from '../src/deep/deep-sirena.js';
+import {DEEP_PHONE_LINES} from '../src/deep/deep-phone-lines.js';
+import {deepStoryView} from '../src/deep/deep-story.js';
+import {controlsHelp} from '../src/controls-help.js';
+import {keyboardAction} from '../src/input-contexts.js';
+
+const DT = 1 / 120;
+const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
+
+function race(route, {enabled = true, deepSave = null, deepFound = []} = {}) {
+  const duel = new Duel({seed: route.seed, deepProviders: [kelpCoastProvider], featureFlags: {'the-deep': enabled}});
+  duel.startCampaign({seed: route.seed, car: 'falcone_f42', mode: 'duel', deepKit: true, opponentCount: 1,
+    fieldSize: 2, fieldSeed: route.seed, playerId: 'node-qa', deepSave, deepFound});
+  Object.assign(duel.state, {status: 'racing', countdown: 0});
+  return duel;
+}
+function rampPoint(ramp, progress) {
+  for (let i = 1; i < ramp.points.length; i++) {
+    const a = ramp.points[i - 1], b = ramp.points[i];
+    if (progress > b.progress && i < ramp.points.length - 1) continue;
+    const t = (progress - a.progress) / (b.progress - a.progress);
+    return {x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: a.z + (b.z - a.z) * t};
+  }
+}
+function dive(duel) {
+  const ramp = duel.course.deepRamp, point = rampPoint(ramp, ramp.shoreline.center.progress - .04);
+  const near = duel.course.nearest(point.x, point.z), frame = duel.course.at(near.s);
+  Object.assign(duel.state, {s: near.s, prevS: near.s, lateral: near.lateral, prevLateral: near.lateral,
+    headingError: wrap(ramp.heading - frame.heading), speedMph: 35, groundHeight: point.y, airHeight: 0,
+    prevAirHeight: 0, airborne: false, impactTimer: 0, yawVelocity: 0, steerVisual: 0, slipAngle: 0, pushVelocity: 0, _jumpY: null});
+  duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+  duel.step(DT);
+  assert.equal(duel.chooseDeep('dive'), true);
+  for (let i = 0; i < 3 * 120; i++) duel.step(DT);
+  assert.equal(duel.state.deepJourney.phase, 'underwater');
+}
+// Put the stopped car on the sea floor at a world point (as if driven there).
+function park(duel, x, z) {
+  const near = duel.course.nearest(x, z, duel.state.s);
+  Object.assign(duel.state, {s: near.s, prevS: near.s, lateral: near.lateral, prevLateral: near.lateral, speedMph: 0,
+    yawVelocity: 0, pushVelocity: 0, airborne: false, airHeight: 0, _jumpY: null});
+  duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+}
+function hold(duel, seconds, lift = false) {
+  for (let t = 0; t < seconds; t += DT) {
+    duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: lift});
+    Object.assign(duel.state, {speedMph: 0});
+    duel.step(DT);
+  }
+}
+const findAt = (duel, id) => duel.deepStory.sirena.finds.find(find => find.id === id);
+function record(duel) {
+  const log = [];
+  duel.onChange((state, event) => {
+    for (const key of ['deepRaised', 'deepSonar', 'deepLift', 'deepLogged', 'deepPearl', 'deepPhone'])
+      if (event[key]) log.push(key === 'deepPhone' ? event.deepPhone.line : key === 'deepRaised' ? 'raised:' + event.deepRaised.find :
+        key === 'deepLogged' ? 'logged:' + event.deepLogged.creature : key === 'deepPearl' ? 'pearl:' + event.deepPearl.pearl : key);
+  });
+  return log;
+}
+
+test('a first dive plays the whole Sirena story with Ana in order: badge, sonar, four parts, the car', () => {
+  const duel = race(ROUTE_VARIANTS[0]), log = record(duel);
+  dive(duel);
+  hold(duel, DT);
+  assert.deepEqual(log.splice(0), ['deep.ana.hello', 'deep.ana.legend'], 'the first dive: Ana calls');
+  const badge = findAt(duel, 'sirena-badge');
+  park(duel, badge.x, badge.z); hold(duel, 1.2);
+  assert.deepEqual(log.splice(0), ['raised:sirena-badge', 'deep.ana.badge']);
+  assert.equal(duel.deepPing(), true);
+  assert.deepEqual(log.splice(0), ['deepSonar', 'deep.ana.sonar'], 'the first ping gives the 1,500 m line');
+  assert.equal(duel.deepPing(), false, 'one ping every 1.5 s');
+  for (const [index, id] of ['sirena-steering-wheel', 'sirena-wheel', 'sirena-bonnet', 'sirena-door'].entries()) {
+    const part = findAt(duel, id);
+    park(duel, part.x, part.z); hold(duel, DT);
+    if (index === 0) assert.deepEqual(log.splice(0), ['deep.ana.bag'], 'Ana says how to bag the first part');
+    hold(duel, SIRENA.liftSeconds + .1, true);
+    const expected = ['deepLift', 'raised:' + id, 'deep.ana.part', ...(index === 3 ? ['deep.ana.deep'] : [])];
+    assert.deepEqual(log.splice(0).filter(line => !line.startsWith('logged:') && !line.startsWith('pearl:') &&
+      !['deep.ana.log', 'deep.ana.otter', 'deep.ana.pearl'].includes(line)), expected, id);
+  }
+  const car = findAt(duel, 'sirena-car');
+  park(duel, car.x, car.z); hold(duel, DT);
+  assert.ok(log.splice(0).includes('deep.ana.car'), "Ana: that's her");
+  hold(duel, SIRENA.carLiftSeconds + .1, true);
+  assert.deepEqual(log.splice(0).filter(line => !line.startsWith('logged:') && !line.startsWith('pearl:')),
+    ['deepLift', 'raised:sirena-car', 'deep.ana.raised', 'deep.ana.lab']);
+  assert.deepEqual(deepStoryView(duel).finds, [], 'nothing left on the sea floor');
+  for (const line of new Set(['hello', 'legend', 'badge', 'sonar', 'bag', 'part', 'deep', 'car', 'raised', 'lab']))
+    assert.ok(DEEP_PHONE_LINES['deep.ana.' + line], line + ' is recorded');
+});
+
+test('the way back up after the first part: the Norseman line once', () => {
+  const duel = race(ROUTE_VARIANTS[1], {deepSave: {raised: ['sirena-badge'], sonar: true}, deepFound: ['kelp-coast']}), log = record(duel);
+  dive(duel); hold(duel, DT);
+  assert.deepEqual(log.splice(0), [], 'not a first dive: no hello');
+  const part = findAt(duel, 'sirena-bonnet');
+  park(duel, part.x, part.z); hold(duel, SIRENA.liftSeconds + .2, true);
+  assert.ok(log.includes('raised:sirena-bonnet'));
+  log.length = 0;
+  const ramp = duel.deepRuntime.ramp, end = ramp.points.at(-1);
+  park(duel, end.x, end.z);
+  Object.assign(duel.state, {headingError: wrap(ramp.heading + Math.PI - duel.course.at(duel.state.s).heading), speedMph: 6});
+  duel.setInput({throttle: .4, brake: 0, steer: 0, boost: false});
+  for (let i = 0; i < 30 && duel.state.deepJourney?.phase === 'underwater'; i++) duel.step(DT);
+  assert.equal(duel.state.deepJourney?.phase, 'ascending');
+  duel.step(DT); duel.step(DT);
+  assert.deepEqual(log.filter(line => line.startsWith('deep.ana.')), ['deep.ana.norseman']);
+});
+
+test('the sea-life log runs in the dive: a creature spot logs, a pearl is found', () => {
+  const duel = race(ROUTE_VARIANTS[2], {deepFound: ['kelp-coast']}), log = record(duel);
+  dive(duel); hold(duel, DT);
+  const spot = duel.deepStory.log.spots.find(row => row.creature === 'turtle'), pearl = duel.deepStory.log.pearls[0];
+  park(duel, spot.x, spot.z); hold(duel, 1.1);
+  assert.ok(log.includes('logged:turtle'));
+  park(duel, pearl.x, pearl.z); hold(duel, 1.1);
+  assert.ok(log.includes('pearl:' + pearl.pearl));
+});
+
+test('the switch off: no story, no events, no keys; R pings only under water; help lists R and F there', () => {
+  const off = race(ROUTE_VARIANTS[0], {enabled: false, deepSave: {raised: []}}), log = record(off);
+  for (let i = 0; i < 240; i++) off.step(DT);
+  assert.equal(off.deepStory, null); assert.equal(off.deepPing(), false); assert.deepEqual(log, []);
+  assert.equal(keyboardAction('car', 'KeyR'), 'deep-ping');
+  const duel = race(ROUTE_VARIANTS[0]);
+  assert.equal(duel.deepPing(), false, 'R on the road does nothing');
+  assert.ok(!controlsHelp(duel).rows.some(([keys]) => keys === 'R'), 'not listed on the road');
+  dive(duel); hold(duel, DT);
+  const rows = controlsHelp(duel).rows.map(([keys]) => keys);
+  assert.ok(rows.includes('R') && rows.includes('F'), 'listed while diving');
+  assert.deepEqual(SIRENA_FINDS.length, 6);
+});
+
+test('memory-only App pays and saves each raise, log and pearl once, and passes Ana the log lines', async () => {
+  const {App} = await import('../src/app.js');
+  const {createFeatureFlags} = await import('../src/feature-flags.js');
+  const savedStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage'), values = new Map();
+  const savedCancel = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+  Object.defineProperty(globalThis, 'cancelAnimationFrame', {configurable: true, value: () => {}});
+  Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: {
+    getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key)}});
+  let app;
+  try {
+    app = new App({deepProviders: [kelpCoastProvider]});
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'the-deep': true}});
+    app.audio.flags = app.duel.featureFlags;
+    app.profile = {...app.profile, credits: 1000, deep: {kit: true, found: ['kelp-coast']}}; app._saveProfile();
+    app.startCampaign({mode: 'duel', seed: ROUTE_VARIANTS[0].seed, opponentCount: 1});
+    Object.assign(app.duel.state, {status: 'racing', countdown: 0});
+    app._markActiveRace(app.duel.state);
+    const lines = [];
+    app.duel.onChange((state, event) => { if (event.deepPhone) lines.push(event.deepPhone.line); });
+    dive(app.duel); hold(app.duel, DT);
+    assert.deepEqual(app.profile.deep.places, ['ramp-shallows'], 'first place saved on entry');
+    const bank = app.profile.credits;
+    const badge = findAt(app.duel, 'sirena-badge');
+    park(app.duel, badge.x, badge.z); hold(app.duel, 1.2);
+    assert.equal(app.profile.credits, bank + 100, 'the badge pays 100 once');
+    assert.deepEqual(app.profile.deep.raised, ['sirena-badge']); assert.equal(app.profile.deep.sonar, true);
+    hold(app.duel, 2);
+    assert.equal(app.profile.credits, bank + 100, 'standing there pays nothing more');
+    const spot = app.duel.deepStory.log.spots.find(row => row.creature === 'otter');
+    park(app.duel, spot.x, spot.z); hold(app.duel, 1.1);
+    assert.ok(app.profile.deep.places.includes('kelp-forest'), 'forest saved separately');
+    assert.equal(app.profile.credits, bank + 150); assert.deepEqual(app.profile.deep.logged, ['otter']);
+    assert.ok(lines.includes('deep.ana.otter'), 'the App passes the otter line to the phone');
+    const saved = JSON.parse([...values.values()].find(text => text.includes('sirena-badge')));
+    assert.ok(JSON.stringify(saved).includes('"otter"'), 'written to the (memory) save');
+  } finally {
+    app?.dispose();
+    if (savedStorage) Object.defineProperty(globalThis, 'localStorage', savedStorage); else delete globalThis.localStorage;
+    if (savedCancel) Object.defineProperty(globalThis, 'cancelAnimationFrame', savedCancel); else delete globalThis.cancelAnimationFrame;
+  }
+});
+
+test('place titles: first entry only, wrapped range, paused and saved visits', () => {
+  const duel = race(ROUTE_VARIANTS[0]), events = [];
+  duel.onChange((state, event) => { if (event.deepPlace) events.push(event.deepPlace); });
+  dive(duel);
+  const zone = duel.deepRuntime.zone;
+  assert.equal(events[0].place.id, 'ramp-shallows');
+  assert.equal(events[0].title, true, 'shallows range wraps through index zero');
+  for (const place of zone.places) {
+    // DEEP-RAMP-2: sample inside the entry segment; the new world frame can round an exact vertex just before the boundary.
+    const a=zone.trail[place.fromIndex], b=zone.trail[(place.fromIndex+1)%zone.trail.length];
+    const point={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
+    park(duel, point.x, point.z); hold(duel, DT);
+  }
+  const titled = events.filter(event => event.title).map(event => event.place.id);
+  assert.deepEqual(titled, zone.places.map(place => place.id));
+  const point = zone.trail[0];
+  park(duel, point.x, point.z); hold(duel, .2);
+  assert.equal(events.at(-1).title, false, 'returning has no title');
+  assert.equal(events.filter(event => event.title).length, 3, 'standing still never repeats');
+  const saved = race(ROUTE_VARIANTS[0], {deepSave: {places: titled}}), revisits = [];
+  saved.onChange((state, event) => { if (event.deepPlace) revisits.push(event.deepPlace); });
+  dive(saved);
+  for (const place of saved.deepRuntime.zone.places) {
+    // DEEP-RAMP-2: the same interior-entry fixture for saved revisits.
+    const trail=saved.deepRuntime.zone.trail,a=trail[place.fromIndex],b=trail[(place.fromIndex+1)%trail.length];
+    const point={x:(a.x+b.x)/2,z:(a.z+b.z)/2};
+    park(saved, point.x, point.z); hold(saved, DT);
+  }
+  assert.ok(revisits.length > 0 && revisits.every(event => !event.title), 'saved places never titled again');
+  saved.state.paused = true;
+  const count = revisits.length;
+  park(saved, point.x, point.z); saved.step(DT);
+  assert.equal(revisits.length, count, 'no place event while paused');
+});
+
+test('place HUD shows the authored name for three seconds and holds captions', async () => {
+  const {createSirenaHud} = await import('../src/deep/sirena-view.js');
+  const elements = new Map();
+  const element = () => ({hidden: true, textContent: '', append() {}, remove() {},
+    getContext() { return {}; }, addEventListener() {}, removeEventListener() {},
+    querySelector(selector) { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); }});
+  const host = element(); host.ownerDocument = {createElement: element};
+  let listener, clock = 1, blocked, on = true;
+  const hud = createSirenaHud({host, now: () => clock,
+    app: {getDeepDiscovery: () => ({enabled: on}), duel: {state: {}, onChange(fn) {listener = fn;}}},
+    phone: {say() {}, clear() {}, dispose() {}, update(options) {blocked = options.blocked; return {text: 'Ana'};}}});
+  listener({}, {deepPlace: {place: {id: 'kelp-forest', name: 'The Kelp Forest'}, title: true}});
+  hud.update();
+  assert.equal(elements.get('h2').textContent, 'The Kelp Forest');
+  assert.equal(elements.get('.sirena-title').hidden, false);
+  assert.equal(blocked, true); assert.equal(elements.get('.sirena-caption').hidden, true);
+  clock = 3.99; hud.update(); assert.equal(blocked, true);
+  clock = 4; hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  assert.equal(blocked, false); assert.equal(elements.get('.sirena-caption').hidden, false);
+  listener({}, {deepPlace: {place: {name: 'Saved'}, title: false}});
+  hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  on = false;
+  listener({}, {deepPlace: {place: {name: 'Off'}, title: true}});
+  hud.update(); assert.equal(elements.get('.sirena-title').hidden, true);
+  hud.dispose();
+});
+
+test("Ana's phone: one line at a time in order, a caption even without sound, and none over a title card", async () => {
+  const {createAnaPhone, sonarText} = await import('../src/deep/sirena-view.js');
+  let clock = 0;
+  const phone = createAnaPhone({audio: null, now: () => clock});
+  assert.equal(phone.say('deep.ana.hello'), true); assert.equal(phone.say('deep.ana.legend'), true);
+  assert.equal(phone.say('deep.ana.hello'), false, 'a line already waiting is not queued twice');
+  assert.equal(phone.say('deep.ana.nope'), false);
+  assert.equal(phone.update({blocked: true}), null, 'nothing over a title card');
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  clock = 3; assert.equal(phone.update().id, 'deep.ana.hello', 'still speaking');
+  clock = 30; assert.equal(phone.update(), null, 'a short breath between lines');
+  clock = 31; assert.equal(phone.update().id, 'deep.ana.legend');
+  assert.ok(phone.update().text.includes('1966'), 'the caption is the line');
+  phone.say('deep.ana.part'); phone.say('deep.ana.deep');
+  clock = 60; phone.update(); clock = 61; assert.equal(phone.update().id, 'deep.ana.part');
+  phone.clear({keepCurrent: true});
+  assert.equal(phone.update().id, 'deep.ana.part', 'a quit lets the line being said finish');
+  clock = 90; phone.update(); clock = 91;
+  assert.equal(phone.update(), null, 'the lines not yet started are dropped');
+  assert.equal(sonarText({deepSonar: {blip: {distance: 41.6}}}), '42 m');
+  assert.equal(sonarText({deepSonar: {blip: null}}), 'No echo');
+});
+
+test('the garage: the Sirena under a sheet while waiting, restored, then the plaque; nothing before she is raised', async () => {
+  const {createGarageScreen} = await import('../src/screen-garage.js');
+  const {createProfile} = await import('../src/progression.js');
+  const {deepDiscoverySnapshot} = await import('../src/deep/deep-discovery.js');
+  let profile = createProfile(), enabled = true;
+  const app = {player: {name: 'QA'}, getDeepDiscovery: () => deepDiscoverySnapshot(profile, 'qa', enabled)};
+  const render = createGarageScreen({app, profile: () => profile, credits: String, escapeHTML: String,
+    getGarageCar: () => 'falcone_f42', getGarageMessage: () => '', arrow: '', action: () => '', clamp: value => value});
+  assert.ok(!render().includes('FALCONE SIRENA'), 'not before she is raised');
+  profile = {...profile, deep: {raised: [...SIRENA_FINDS]}};
+  assert.ok(render().includes('data-sirena="waiting"') && render().includes('Needs the Lab') && render().includes('sirena-sheet'));
+  profile = {...profile, unlockedCars: [...profile.unlockedCars, 'falcone_sirena']};
+  assert.ok(render().includes('data-sirena="restored"'));
+  profile = {...profile, deep: {...profile.deep, coastCup: true}};
+  assert.ok(render().includes('COAST CUP · 1966 to 2026: finished'));
+  enabled = false;
+  assert.ok(!render().includes('FALCONE SIRENA'), 'the switch off hides it');
+});
+
+test('a title pauses a caption already in progress and preserves its remaining time', async () => {
+  const {createAnaPhone} = await import('../src/deep/sirena-view.js');
+  let clock = 0;
+  const phone = createAnaPhone({now: () => clock});
+  phone.say('deep.ana.hello');
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  clock = 1;
+  assert.equal(phone.update({blocked: true}), null);
+  clock = 101;
+  assert.equal(phone.update({blocked: true}), null);
+  assert.equal(phone.update().id, 'deep.ana.hello', 'the title consumes no caption time');
+  clock = 102;
+  assert.equal(phone.update().id, 'deep.ana.hello');
+  phone.dispose();
+});
+
+test('title interruption resumes audio once, including a buffer decoded during or after the title', async () => {
+  const {createAnaPhone} = await import('../src/deep/sirena-view.js');
+  const originalFetch = globalThis.fetch;
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+  for (const decodeWhileBlocked of [true, false]) {
+    let resolveFetch, clock = 0;
+    const voices = [], decoded = {duration: 20};
+    const param = () => ({value: 0, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}});
+    const node = () => ({gain:param(),frequency:param(),Q:param(),delayTime:param(),
+      connect() {}, disconnect() {}, start(...args) {if(this.buffer===decoded)voices.push({source:this,args});},
+      stop() {this.stopped=true;}});
+    const context = {state:'running', currentTime:0, sampleRate:100,
+      createGain:node,createDelay:node,createOscillator:node,createBiquadFilter:node,createWaveShaper:node,createBufferSource:node,
+      createBuffer:(_,length)=>({getChannelData:()=>new Float32Array(length)}),decodeAudioData:async()=>decoded};
+    const phone = createAnaPhone({now:()=>clock,audio:{context,flags:{enabled:()=>true}}});
+    globalThis.fetch = () => new Promise(resolve => {resolveFetch=resolve;});
+    try {
+      phone.say('deep.ana.hello');phone.update();
+      clock=1;phone.update({blocked:true});
+      if(!decodeWhileBlocked){clock=4;phone.update();}
+      resolveFetch({ok:true,arrayBuffer:async()=>new ArrayBuffer(1)});await flush();
+      if(decodeWhileBlocked){assert.equal(voices.length,0);clock=4;phone.update();await flush();}
+      assert.equal(voices.length,1,'one voice starts after delayed decode');
+      context.currentTime=2;clock=6;assert.equal(phone.update({blocked:true}),null);
+      assert.equal(voices[0].source.stopped,true,'active voice stops for title');
+      clock=9;phone.update();await flush();
+      assert.equal(voices.length,2,'one resumed voice');
+      assert.equal(voices[1].args[1],2,'resume at two seconds, without repeating the line');
+    } finally {phone.dispose();globalThis.fetch=originalFetch;}
+  }
+});
+
+test('an uncollected pearl has a floor glint that disappears only after the rules collect it', async () => {
+  const THREE = await import('three');
+  const {createSirenaScene} = await import('../src/deep/sirena-view.js');
+  const savedDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  Object.defineProperty(globalThis, 'document', {configurable:true,value:{createElement:()=>({getContext:()=>({
+    createRadialGradient:()=>({addColorStop(){}}),fillRect(){}})})}});
+  let scene;
+  try {
+    const log = {pearls:[{pearl:'kelp-1',x:10,z:20}],found:new Set()};
+    const duel = {deepStory:{log,sirena:{finds:[],raised:[],sonar:false}}};
+    scene = createSirenaScene({scene:new THREE.Scene(),zone:{places:[]},
+      deep:{shape:{floorHeight:()=>-8},look:{applyTo(){}}},load:async()=>({scene:new THREE.Group()})});
+    scene.update({duel,seconds:.1});
+    const marker=scene.group.getObjectByName('Pearl glint: kelp-1');
+    assert.equal(marker.visible,true);assert.ok(marker.material.opacity>0);
+    assert.deepEqual(marker.position.toArray(),[10,-7.75,20]);
+    assert.equal(log.found.size,0,'drawing never collects a pearl');
+    log.found.add('kelp-1');scene.update({duel,seconds:.1});
+    assert.equal(marker.visible,false);
+  } finally {
+    scene?.dispose();
+    if(savedDocument)Object.defineProperty(globalThis,'document',savedDocument);else delete globalThis.document;
+  }
+});

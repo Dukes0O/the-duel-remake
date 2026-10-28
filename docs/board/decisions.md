@@ -4,6 +4,16 @@ Standing decisions D1-D7 are approved in [SPEC.md](../../SPEC.md), section 15.
 This log is for choices the spec does not settle. Record the choice, reason,
 and how to reverse it before continuing.
 
+## Keep these: fun that looks like a bug (Kyle, 24 October 2026)
+
+Never "fix" these. A card that would change one must say so and ask Claude first.
+
+- **Summit Run hillside:** fly off the edge and you can drive along the side of
+  the mountain and jump back up onto the course. Keep it driveable.
+- **Monster truck big air:** the Titan launches off cars it drives over
+  (restored by FUN-TITAN-LAUNCH).
+
+
 ## 2026-09-22 PDT — FND-10/FND-11 order
 
 - Decision: Use FND-10's integrated seven historical fixtures as the
@@ -1530,3 +1540,16 @@ and policy into CIRCUITS section 7b. Use that layout once it lands.
 
 Renderer changes wait for Track Script, then Day/Night, then Dossier.
 Day/Night and Dossier remain waiting on that shared renderer dependency.
+
+## Kyle, 25 October 2026
+
+- Voice lines ship without Kyle listening first. Voice is not a focus; a
+  green release does not wait on a listening pass.
+- Racecraft preview: the acceleration and nitro changes are right. The field
+  still files into one lane off the start, which Kyle expected fixed:
+  GP-WIDE-START goes ahead now on its 24 October design.
+- The Koenigsegg Jesko races on every course and in every mode again (Kyle,
+  25 October 2026: Gratian could no longer use it). It leaves the air-only
+  list; the medal cars and the restored Sirena keep the fly-it-there rule.
+- Ski radio lines stay as on-screen text for now; no voice credits spent on
+  them (Kyle, 26 October 2026). Heli-skiing does not wait on voice.

@@ -9,38 +9,16 @@ test('the Wasteland switches are released and the Experimental panel is gone', (
   // Released on 9 October 2026: Convoy Raid, Tollkeeper, Baron Blackiron, Warlord cards,
   // Arsenal wave three, Fight Voices, computer crews, Ambush Alley and Gunn.
   // Released on 10 October 2026: seeker rockets.
-  assert.deepEqual(FEATURE_STATES, {
-    'seeker-rockets': 'on',
-    'convoy-raid': 'on',
-    'bounty-hunt': 'on', 'career-backup': 'dev', 'hidden-road': 'on',
-    'fuel-run': 'on',
-    arsenal: 'on',
-    'salt-flats': 'on', 'crew-gear': 'on',
-    'fight-voices': 'on',
-    'arsenal-wave3': 'on',
-    'cpu-crews': 'on',
-    'ambush-alley': 'on',
-    gunn: 'on',
-    tollkeeper: 'on',
-    blackiron: 'on',
-    'warlord-cards': 'on',
-    ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
-    'lap-choice': 'on',
-    snowmen: 'on',
-    yeti: 'on',
-    'rival-voices': 'dev',
-    'grand-prix-career': 'dev',
-    'grand-prix': 'on', // Phase 4 (P4-FIELD): released 11 October 2026
-    'snow-world': 'dev', // Phase 4: development switch
-    'the-deep': 'dev', // The Deep (D0 DEEP-LOOK): the hidden underwater world, off, nothing reaches it yet
-    helicopter: 'on', // The helicopter (HELI-MODE): Kestrel One, H1 First flight, released 14 October 2026
-    'forest-fire': 'on', // H2 Fire: forest fires and burnt courses, released 15 October 2026
-    'tyre-slip': 'dev', // New tyre model remains private preview only.
-    'earned-cars': 'dev', // Earned cars and medal sheets (EARN-MEDALS), off in the game
-    rescue: 'dev', // H4 Rescue (RESCUE-SAVE): rescue save fields, off in the game
-    wildlife: 'dev', // H3 Wildlife (SKIN-SAVE): animals and the wildlife count, off in the game
-    'heli-skins': 'dev', // H3 Skins (SKIN-SAVE): skin, dirt and survey save fields, off in the game
-  });
+  // The complete switch list is pinned once, in test-feature-flags. This suite
+  // checks the Wasteland switches it exists for.
+  for (const name of ['seeker-rockets', 'convoy-raid', 'bounty-hunt', 'hidden-road', 'fuel-run', 'arsenal',
+    'salt-flats', 'crew-gear', 'fight-voices', 'arsenal-wave3', 'cpu-crews', 'ambush-alley', 'gunn',
+    'tollkeeper', 'blackiron', 'warlord-cards'])
+    assert.equal(FEATURE_STATES[name], 'on', name + ' is released');
+  assert.equal(FEATURE_STATES['career-backup'], 'dev');
+  for (const manifest of CIRCUIT_MANIFESTS) assert.equal(FEATURE_STATES[manifest.flag], manifest.state, manifest.id);
+  for (const retired of ['wasteland2', 'warlords', 'scrapdome', 'experimental'])
+    assert.equal(Object.hasOwn(FEATURE_STATES, retired), false, retired + ' has no switch');
   const flags = createFeatureFlags({ storage: null, qa: false });
   assert.equal(flags.enabled('wasteland2'), false);
   assert.equal(flags.enabled('hidden-road'), true);

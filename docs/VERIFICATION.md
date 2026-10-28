@@ -1,5 +1,131 @@
 # Remake verification
 
+## Release preparation, 25 October 2026
+
+Prepared for Claude, the Release Manager. This is a record of the work and
+checks since the Summit release at `9279efa4`, through `7ebd219f` on
+integration/wasteland. It covers all 81 change notes named by
+`git log --name-only 9279efa4..HEAD -- docs/changes/`. Release
+(Claude, Release Manager, 25 October 2026): The Deep switched on and the Jesko
+freed; CPU racecraft stays dev (Ardennes full-field player crash, card
+GP-RACECRAFT-ARDENNES). Full tier on release commit `2b4d3926`: 509 passed,
+0 failed, 0 not run (2,313 s). Since then only docs changed. Frame check for
+The Deep at the kelp forest: High and Performance delivered p95 16.8 ms. Night
+browser run 140/147: deep-art-final-sheet now manual-only, audio-race fixed
+(QA-AUDIO-RACE-LAUNCH), lap-telemetry, p4-daynight and track-kits are older
+failures on QA cards. Staged build and installation checks follow below.
+
+### What players get now
+
+The current switch list keeps the helicopter, Summit, Yeti and ordinary
+Grand Prix on. Fixes without a new switch reach those existing features:
+grass, tufts and grit sit on the drawn ground and off every road; road
+acceleration is gentler with quick crash recovery; the helicopter hook has
+a wider catch window, a guide ring and pilot hints; the Titan launches off
+cars again. Chase police and Easy Checkpoint Rush follow the slower launch.
+Summit's world builds faster without a scenery change. The Yeti is paler at
+night, and Harbour and Panorama have written passing-zone notes.
+
+Course-view, yard, Yeti and race-audio checks were repaired. The scripted
+demonstration driver can turn out of scenery pockets. These changes do not
+turn on the new feature families below.
+
+**Switched on in this release:** The Deep (`the-deep`): drive down the old ramp at Pacific Canyon into the Kelp Coast, meet Ana, log the sea life, find pearls, raise the lost Falcone Sirena with sonar and lift bags, and race the Coast Cup. Also the Koenigsegg Jesko races on every course and in every mode again (Kyle, for Gratian). CPU racecraft and the wide start wait for the next release (an Ardennes crash to fix first).
+
+### Built but switched off
+
+Checked against [the switch list](../src/feature-flags.js) and the course
+switches it reads. All the following remain development-only:
+
+- The Lab: benches, challenges, upgrades, radio, Sirena restoration, tuning and lap pay; fan car art is built, registration is still to come (`lab`, `lab-tuning`).
+- The Deep: Kelp Coast trail, sea life and log, pearls, radio, sonar, lift bags, Sirena car, armour and Coast Cup (`the-deep`).
+- Heli-skiing: five runs, art, flight handovers, snow, medals and saves (`heli-skiing`).
+- The pilot's map: places, travel, scouting, secret routes, the Table and reverse-route Team Room notes (`pilot-map` and each secret course's own switch).
+- Driving lessons: all four lessons, instructor, road markers, radio, board, results and saves (`driving-lessons`, with `tyre-slip`; gears also needs `engine-curve`).
+- Sliding tyres: grip, steering, sound and the Drift Trial launch adjustment (`tyre-slip`).
+- Engine curve: pull by revs and gear, automatic shifting and separate best laps (`engine-curve`).
+- Racecraft: rival nitro, pace and first-lap defence; the four proposed passing moves remain disabled (`cpu-racecraft`).
+- Earned cars: McLaren F1 and Bugatti Bolide models, armour and medal access (`earned-cars`).
+- Helicopter rescues: mission rules, saves, board, drawings, autopilot, Summit arrivals, clocks and fuel stops (`rescue`).
+- Helicopter wildlife and skins: surveys, pay, paint, gear, dirt, washing and saves (`wildlife`, `heli-skins`).
+
+### Last night's full check and follow-ups
+
+[Night report](board/checks/night-2026-10-24.md) and
+[detailed results](board/checks/night-2026-10-24.json), source
+`1d5ad5895a6e8c6b85c26b5022b0191083411d17`, run overnight on 24 to 25 October:
+full tier **509/509**, no failures or unrun suites, four jobs; combat balance
+passed on current rules. Browser batch **140/147**, so the batch failed.
+
+The four behaviour or readiness failures and their follow-up cards were:
+
+| Browser check | Result and follow-up |
+| --- | --- |
+| `audio-race` | New after FIX-LAUNCH (`46c6d520`); QA-AUDIO-RACE-LAUNCH moved the bomb probe to 4 s, kept the crossbow at 1 s and kept every assertion. Race audio and listening then passed three times. |
+| `lap-telemetry` | Timed out waiting for the High Team Room comparison; QA-BROWSER-SWEEP. Also failed alone and on older `bab0036b`. |
+| `p4-daynight` | Timed out waiting for the native path and rear-view frame; QA-BROWSER-SWEEP. Also failed alone and on `bab0036b`. |
+| `track-kits` | Timed out waiting for the High kit world and shader preparation; QA-HARBOUR-ROAD-CLEARANCE, tracked by QA-BROWSER-SWEEP. Also failed alone and on `bab0036b`. |
+
+The other three batch failures were `audio-baseline` (repeat-control check,
+QA-AUDIO-BASELINE-CONTROL), `deep-art-final-sheet` (a picture recipe needing
+manual inputs, made manual-only in `9c1211d0`) and `frame-pacing` (the batch
+could not reuse the frame evidence). They remain part of the original seven;
+the follow-ups do not rewrite the 140/147 result.
+
+The original High frame run failed at 34.3 ms with Claude's browser tab open;
+Performance was 18.2 ms. World builds were 415/387 ms and full first loads
+4.20/3.64 s. After closing that tab, the separate run of `frame-pacing`,
+`tremblant-snow` and `tremblant-views` passed alone, as recorded in the
+[run log](board/run-log.md). That log gives no replacement timing numbers,
+so none are inferred here.
+
+Since the full-tier source, changes through `7ebd219f` are board and notes,
+the manual-only art-recipe listing, and the race-audio probe fix. No game
+source changed. The audio fix passed its 16-suite lane check, replay checks
+and production build. Its separate crash-audio wrapper passed 23/23 twice,
+then 22/23 while the laptop was busy, then 23/23 alone on the permitted
+rerun. No sound limit or assertion changed. The run log's shorthand that all
+three audio checks passed three times is qualified by this
+[actual receipt](changes/QA-AUDIO-RACE-LAUNCH.md). This preparation does not
+claim that the remaining browser failures are cleared.
+
+### Merge evidence since Summit
+
+The [run log](board/run-log.md) records each merge's checks and conflicts.
+The grouped receipts below cover the change notes; counts are the recorded
+results, not fresh runs. Builds passed unless a limitation is stated.
+
+| Work | Recorded merge checks and limits |
+| --- | --- |
+| Grass and ground lookup | FIX-GRASS-GROUND checked every road and the Tremblant hairpin picture. PERF-GROUND-ROWS checked 35,076 heights, all 20 courses' drawn data, replays, world composition and Windows/art suites. Drawn values stayed identical after the speed-up; its laptop timing was left to the full check. |
+| Gentler launch and Titan air | FIX-LAUNCH: launch, replays, Windows suites, lessons, checkpoint recovery, campaigns and race field. DEMO-DRIVER-UNSTUCK then cleared the Hard seed 1993 combat failure. FUN-TITAN-LAUNCH, SKI-SAVE and TYRE-SLIP-DRIFT-RETUNE: combined 44 suites, combat balance and build. Titan at 30 mph: 1.3 s airborne, 3.7 m high. Drift recovery: 4,828 points, assertions unchanged. |
+| Hook, Yeti and Team Room | FIX-HELI-HOOK: builder 204/204 and first-flight browser check; combined helicopter suites passed. YETI-FUR-TINT: accepted first picture round. TEAMROOM-VARIANT-NOTES: 51/51, Team Room browser check and wording review; reference laps unchanged. Only parent-course passing notes reach players now. |
+| Summit loading | SUMMIT-BUILD-TIME: High 1,444 to 845 ms, Performance 1,451 to 890 ms; first loads 7.3/5.0 to 6.7/4.4 s. Drawn data matched across 26 builds. These are construction measurements, not a frame pass. |
+| Scenario and test repairs | QA-ARDENNES-FRAME-READINESS restored 32 Ardennes pictures, Panorama, Stavelot and existing Grand Prix. FIX-MANIFEST-AWAIT removed the underlying loading loop; 15 suites and all five affected browser checks, including Yeti, passed. QA-YARD-HOME-AIR-ONLY passed the Jesko refusal; QA-YETI-THREE passed the encounter. QA-TEST-AUDIT: Windows-only suites, test runner, helicopter, board, placement and build; Claude reviewed changed and removed checks. QA-AUDIO-RACE-LAUNCH evidence is above. |
+| Rescue family | RESCUE-SAVE: 283/284, missing preview switch fixed and its suite passed. RESCUE-ENGINE 140/140, HOOKS 154/154, AUTOPILOT 156/156, VIEW 161/161, FINISH part 1 50/50. Save and money reviews cleared; final look round 3 accepted. SUMMIT-HELI-RESCUES 140/140, SUMMIT-TUNE 148/148, SUMMIT-ARRIVAL 145/145, with combined helicopter checks. Final flying, frame and fuel-routing work remains on RESCUE-FINISH. |
+| Wildlife and skins | SKIN-SAVE 284/284, SKIN-RULES 23/23, WILD-SURVEY 141/141, SKIN-GEAR 38/38, SKIN-HOOKS 158/158; save, money and code reviews cleared after recorded fixes. Combined helicopter checks passed; switch-off comparisons held. |
+| Sliding tyres and racecraft | TYRE-SLIP: final conflict checks 19/19 and build, code/save review clear, released driving comparisons held. GP-RACECRAFT: switch, preview and race-field checks after merge conflict. GP-PASSING-2: Windows, race field, switches, replays and existing Grand Prix; a throwing nitro label was fixed. None of the four passing types passed its batch, so they remain disabled; wider-start work is separate. |
+| Driving lessons and engine | DRIVE-LESSON-1 24/24; lesson 2, HUD, lesson 4 and helipad work passed their lesson and browser checks. SAVE-2 had an independent save review. LINES-2 supplied 32 radio takes. ENGINE-CURVE passed engine, launch, replay, lesson, field and Windows checks plus existing Grand Prix. DRIVE-LESSON-3: 17 suites and reviewed assertion change. VIEW-2: 43/43, both browser checks and look; the faint ice sign remains on DRIVE-LESSONS-FINISH-2. |
+| Earned cars | EARN-CAR-2 builder 399/399; EARN-CAR-3 401/401. Combined vehicle, medal, earned-car screen, lesson, helicopter and switch checks passed. Eight-car Panorama timing remains on EARN-FINISH. |
+| The Deep and Sirena | DEEP-TRAIL 29/29. SIRENA-ART 39/39; SIRENA-CAR passed in the 63-suite map/Lab/car batch. DEEP-SIRENA had an independent save review and ten Deep suites plus save checks. DEEP-LOG, LIFE and SIRENA-VIEW passed their Deep, save, Windows and browser checks; VIEW used 26 suites. RADIO supplied 16 Ana lines. SIRENA-KIT look accepted. ART-FINAL 57/57 and both browser checks; VIEW-2's combined merge added 28 Deep/lesson/save/Lab/replay checks. Final frame timing remains on FINISH-DEEP. |
+| The Lab | ART and BENCHES passed their model/rules checks; RULES and HELI passed save and helicopter suites with save reviews. HELI-CHALLENGES passed helicopter/Lab suites and first flight; its practice fire was moved after the first layout proved unwinnable. SNOW passed in the 63-suite combined batch; RADIO supplied 54 lines. VIEW: 45 suites and three browser checks. RESTORE: save/pay review, Lab/Deep/save suites and two browser checks, look round 2. TUNE: save/pay review, combined lane 632 checks and build after a duplicate import was fixed. TUNE-VIEW: 91 suites, scenario and look. FAN-ART: 41 suites, build and combined car/Lab/replay checks; registration remains LAB-FAN. Bench framing remains LAB-FINISH. |
+| Heli-skiing | RULES and RUNS passed ski, helicopter and switch checks. ART accepted round 2. SAVE had a save review and the combined 44-suite pass. HELI: 41 suites and first flight. VIEW: 45 suites and ski, map, first-flight and Yeti browser checks after conflicts; look round 2. Pickup-pad placement remains SKI-FINISH. |
+| Pilot's map and secret routes | ART accepted after three rounds, ART-2 after two. DATA and DESTINATIONS passed combined helicopter, map, lesson, Lab and Windows suites. SECRETS part 1: 37 suites, first flight and Team Room; part 2: map/save/helicopter suites and save review. VIEW: 42 suites, first flight and corrected map browser check; look round 1. |
+| Build tracking | COCKPIT-TRACKING links board cards to Cockpit tasks and preserves chosen final statuses; failures warn without blocking a merge. The 24 October cleanup records an earlier full 463/463 on `8b3be049`; it is not a substitute for last night's result. |
+
+Change-note handling follows the Summit release: its collection commit
+`f63b602a` kept the feature notes. Nearby releases deleted their temporary
+RELEASE-FIRE and RELEASE-ARDENNES installation notes, rather than sweeping
+all feature notes. The 81 source notes are retained here, including their
+reviews, changed-test reasons and unfinished acceptance work. No assets,
+code, saves or change notes were removed by this preparation.
+
+Preparation checks: `node tools/test-repo-hygiene.mjs` passed (size targets
+are advisory); `node tools/test-board.mjs` passed all 191 checks.
+`node tools/build-status.mjs` refreshed the required status snapshot and
+reported the full tier as stale for this branch's current commit. The
+historical results above apply to their named sources.
+
 ## Summit Run installed, 16 October 2026
 
 Release Manager: Claude, under AGENTS rule 18 (Kyle: "Follow rule 18 and
@@ -1223,3 +1349,156 @@ Browser scenarios convoy-raid, gunn, blackiron, arena-ambush-alley, cpu-crews,
 arsenal-wave3, new-warlords, fight-voices and frame-pacing all passed with
 memory-only saves, no warnings and no issues. Release evidence is recorded in
 docs/board/run-log.md.
+
+## Release, 25 October 2026 evening (Claude, Release Manager)
+
+Release commit `7516eedf` plus these notes: `cpu-racecraft` switched on with
+the wide start and the lane-holding fix (GP-RACECRAFT-ARDENNES), and The
+Deep's DEEP-PLAYTEST-1, DEEP-RAMP-2 and DEEP-EXPLORER. Full tier on 7516eedf:
+511 passed, 0 failed, 0 not run (1,436 s). Frame checks run alone with the
+graphics card idle: deep-frames (kelp forest, High and Performance) and the
+eight-car grand-prix recipe both pass their 18.5 ms limits. Racecraft batch
+(360 races): Panorama 8+-crash races 12 to 5, mean crashes down on all three
+courses, Pacific race time up to 3.10% (accepted).
+
+## Release, 25 October 2026 night: Story release 2 (Claude, Release Manager)
+
+`lab` and `lab-tuning` switched on (LAB-LIVE, LAB-LIVE-FIX). Full tier on
+release commit `4a53aa1f`: 515 passed, 0 failed, 0 not run (1,465 s). The
+first full tier on 499a742c failed four suites the switch-on exposed; fixed
+forward in LAB-LIVE-FIX and reviewed. Frame check, eight Speirlings, run
+alone with the graphics card idle: High 18.4 ms, Performance 18.3 ms (limit
+18.5); only a sound recipe and tests changed since. Scripted player pass: all
+16 Lab lessons pass with simple play (LAB-CHALLENGE-EASE).
+
+## Release, 26 October 2026 early morning: live fixes (Claude, Release Manager)
+
+HELI-CARRY-CLEAR (helicopter lesson 4) and SAVE-RECORDS-IDB (ghosts and
+telemetry in IndexedDB, reserve removed, independent save review clear).
+Also merged but behind dev switches: SKI-PICKUP, SKI-AUDIO effects,
+LESSONS-ICE-GATE, driving lesson 1 failure wording. Full tier on release
+commit `591d9245`: 516 passed, 0 failed, 0 not run (1,475 s). No frame check:
+race scenes are unchanged since the 25 October passes (rule 19); lesson 4
+adds one ring to a lesson view, far below the busiest race view.
+
+## Release, 26 October 2026 afternoon (Claude, Release Manager)
+
+HELI-LANDED, HELI-RETURN-LOADS, GP-CAREER-LIVE (`grand-prix-career` on),
+GHOST-SAVE-MESSAGE, SUMMIT-TUNNEL-WALL, SUMMIT-GROUND-GAPS. Also merged
+behind dev switches: LAB-WALK, lesson 1 Beaver fix, map, ski and rescue
+finishing passes. Full tier on de0555b0: 518 passed, 2 failed
+(`test-terrain`, `test-map-destinations` expected the pre-fix Summit ground);
+both updated with a reviewed note (only Summit changed, 3 heights by at most
+0.17 m) on 301e61c0, where they and the lane tier for those changes (9/9)
+pass; no game code changed after the full tier (rule 19). Frame check,
+Summit, eight cars, headed, alone, GPU idle: p95 16.8 ms High and
+Performance; world build 1,051 / 1,013 ms, over the 1 s limit, shipped as a
+warning by Director decision (SUMMIT-BUILD-TIME-2).
+
+## Release, 26 October 2026 evening: Summit finish (Claude, Release Manager)
+
+SUMMIT-FINISH-AREA (look accepted at round 3) and SUMMIT-BUILD-TIME-2. Also
+merged behind dev switches: HELI-LOGBOOK, ski tuning, LAB-LESSON-FRAME,
+LAB-LIFT-2. Full tier on f514c859: 525 passed, 1 failed
+(`test-audio-crash-peak`, no audio change; its one rerun on the same commit
+passed, rule 3; QA-AUDIO-CRASH-PEAK-AGAIN). Frame check, Summit, eight cars,
+headed, alone, laptop panel off, GPU idle: p95 16.8 ms at both qualities
+(pass); world build High 1,036 ms, Performance 984 ms then 2,589 ms on the
+rerun: a warning, shipped by Director decision as on 16 October; follow-up
+SUMMIT-BUILD-TIME-3.
+
+## Release, 26 October 2026 night (Claude, Release Manager)
+
+GO-LIVE-EVENING (`driving-lessons`, `heli-logbook`, `heli-skiing`, `rescue`
+on; `tyre-slip` stays dev, lessons keep their own sliding rules), lab-2 with
+LAB-BRIAN-FIX, LAB-LESSONS-WORKSHOP and LAB-LESSONS-FLYING, plus
+DRIVE-LESSON-ANY-COURSE, the ski tuning and rescue margins. Full tier on
+release commit 4e94aed2, run alone: 528 passed, 0 failed, 0 not run (1,801 s).
+No frame check this release: no timing recipe exists for the ski and rescue
+views (HELI-VIEW-FRAMES); race scenes are unchanged since the evening Summit
+check (rule 19). Released at Kyle's direction to test in the real game.
+
+## Release, 27 October 2026 (Claude, Release Manager)
+
+LAB-LESSONS-SNOW and LAB-LESSONS-TUNNEL (lab-2 on). Full tier on release
+commit 3dd322a4, run alone: 530 passed, 0 failed, 0 not run (2,477 s). No
+frame check: race scenes unchanged since the 26 October Summit check (rule 19).
+
+## Release, 27 October 2026 morning (Claude, Release Manager)
+
+LESSON-INSTRUCTOR-ANY-CAR and HELI-SUMMIT-LANDED, both live fixes from Kyle's
+play. Rule 19: the last full-tier pass is 3dd322a4 (530/530); since then only
+`src/lessons/drive-lessons.js`, `src/heli/heli-ui.js`, two lines of
+`src/app.js`, their tests and docs changed (no core, save shape or physics).
+Lane tier for each change: 34/34 and 42/42; on the merged commit the lesson,
+helicopter view and mode suites pass and the build passes. The every-car
+instructor suite passes 196/196. No frame check: no scene changed.
+
+## Release, 27 October 2026 afternoon (Claude, Release Manager)
+
+LESSONS-V2-RULES and LESSONS-V2-VIEW (driving lessons, second version;
+`driving-lessons` stays on). Full tier on release commit 9d521bb0, run alone:
+532 passed, 0 failed, 0 not run (1,823 s). Every-car instructor suite
+196/196. No frame check: lesson drawing is new but lessons are not races and
+race scenes are unchanged since the 26 October Summit check (rule 19).
+Brian's new lines follow in LESSONS-V2-LINES.
+
+## Release, 27 October 2026 evening (Claude, Release Manager)
+
+LESSONS-V2-LINES: 22 new instructor lines, 47 old lines and files removed.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532); since then only the
+lesson radio code in `src/lessons/` and `src/app.js`, the voice files, the
+audio catalog, two lesson tests and docs changed (no core, save shape or
+physics). Lane tier 97/97 in the lane; on merged commit 39107cda the lesson
+lines suite (314 checks), lesson run suite, every-car instructor suite
+(196/196) and build pass. No frame check: no scene changed.
+
+## Release, 27 October 2026 night (Claude, Release Manager)
+
+LESSONS-V2-FINISH part 1 (Kyle's play: full runs, any step again; room to beat
+the instructor; Woods braking road) and DEEP-ROCKS-PUSH, with the test-only
+merges HELI-VIEW-FRAMES, QA-AUDIO-CRASH-PEAK-AGAIN and QA-SUMMIT-GLACIER-EDGE.
+Rule 19: the last full-tier pass is 9d521bb0 (532/532). Since then the game
+changes are lesson code (`src/lessons/`, the lesson lines of `src/app.js` and
+one lesson line of `src/game.js`) and the Deep's rocks (`src/deep/`); no save
+shape, physics or race rule changed. Lane tiers: lessons 39/39 (every-car
+instructor suite 196/196), rocks 157/157 with replay fingerprints and world
+signatures unchanged; builds pass. The nightly full check covers the whole
+tier tonight. No frame check: no race scene changed.
+
+## Release, 28 October 2026 (Claude, Release Manager)
+
+MAP-FINISH: the `pilot-map` switch goes on (the map's build items merged 26
+October; Claude judged the look sheet). Rule 19: since the last full-tier pass
+(9d521bb0) the only new change is the switch and its three switch-state
+assertions; lane tier 37/37 and build pass; map suites 499, 300 and 529
+checks. The nightly full check covers the whole tier. No frame check: no race
+scene changed.
+
+## Release, 28 October 2026 early (Claude, Release Manager)
+
+DEEP-TRAIL-JOINTS: the Deep's frame turns smoothly at trail joints and its
+nearest point is the exact inverse. Rule 19: since 9d521bb0 the only new game
+change is in `src/deep/`; lane tier 156/156 with replay and world-signature
+guards passing; build passes. The nightly full check covers the whole tier.
+No frame check: no race scene changed.
+
+## Release, 28 October 2026 night (Claude, Release Manager)
+
+Fix forward for DEEP-TRAIL-JOINTS (live since 05:37: the dive ended on the
+first throttle; found by test-deep-kelp-coast, which the joints lane tier did
+not select). Also FINISH-DEEP place titles with the Coast Cup card fix and the
+EARN-FINISH night pass (behind `earned-cars`, still dev). Rule 19: game
+changes since 9d521bb0 are in `src/deep/`, `src/lessons/`, lesson lines of
+`src/app.js` and `src/game.js`, the earned-car view and one config number
+behind a dev switch; no save shape, physics or race rule. On the merged
+commit every `tools/test-deep-*.mjs` passes by hand; lane tiers: joints fix
+26/26, Deep titles 48/48, earned cars 80/81 (the one failure was this fault).
+The nightly full check covers the whole tier.
+
+## Release, 28 October 2026 night, later (Claude, Release Manager)
+
+LAB-RESTORE-PASSED (walking Lab bench flow; no save change). Rule 19: since
+the last release only `src/lab/lab-view.js`, `src/lab/lab-markup.js`, the
+lab-restore recipe and one test changed; lane tier 29/29, build and the
+lab-restore and lab-fan-view browser recipes pass.

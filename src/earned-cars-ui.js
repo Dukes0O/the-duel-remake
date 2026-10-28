@@ -10,7 +10,9 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
 // With the switch off the medal cars appear nowhere; every list is today's.
-export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && (enabled === true || !medalRequirement(id));
+// The Falcone Sirena (SIRENA-CAR) is on no list yet: it exists only once the Lab restores it, and its garage sheet and
+// place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
+export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && (enabled === true || !medalRequirement(id));
 export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
 export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
 
@@ -70,18 +72,37 @@ export function medalUnlockCard(profile, carId, { helicopter = false } = {}) {
 
 export const MEDAL_REWARD_NOTE = 'MEDAL REWARD · Arrives fully tuned. No upgrades needed.';
 
-// Plain text lines for the results screen; the caller escapes them.
-export function medalResultLines(result, { helicopter = false } = {}) {
+// The new medal's text line for the results screen (the caller escapes it and
+// draws the medal dot before it). A newly earned car has its own card instead.
+export function medalResultLines(result) {
   const lines = [];
   const medal = result?.medal;
   if (medal && Object.hasOwn(CARS, medal.car)) {
     lines.push(`NEW MEDAL · ${medal.colour.toUpperCase()} · ${CARS[medal.car].name.toUpperCase()} · ` +
       `${ROW_NAMES[medal.row]} · ${medal.level.toUpperCase()}${medal.bonus > 0 ? ` · +${medal.bonus} CR` : ''}`);
   }
+  return lines;
+}
+
+// One card for each car this race earned: its name, and a short line under it.
+export function earnedCarCards(result, { helicopter = false } = {}) {
+  const cards = [];
   for (const id of result?.earnedCars ?? []) {
     if (!Object.hasOwn(CARS, id)) continue;
-    lines.push(`NEW CAR EARNED · ${CARS[id].name.toUpperCase()} · IN YOUR GARAGE`);
-    if (helicopter) lines.push('KESTREL ONE WILL BRING IT TO TREMBLANT WOODS');
+    const rule = medalRequirement(id);
+    const earned = rule ? `Earned with ${rule.medals} medals${rule.gold ? `, ${rule.gold} of them gold` : ''}. ` : '';
+    cards.push({ id, name: CARS[id].name.toUpperCase(),
+      text: earned + (helicopter ? 'Kestrel One will bring it to Tremblant Woods.' : 'In your garage now.') });
   }
-  return lines;
+  return cards;
+}
+
+// A small chip near the top of the garage car panel: medals toward the next
+// car. Clicking it scrolls to the medal sheet (the router handles the click).
+export function medalChip(profile) {
+  const totals = medalTotals(profile), next = nextMedalCar(profile), rule = next ? medalRequirement(next) : null;
+  const label = rule
+    ? `MEDALS ${Math.min(totals.medals, rule.medals)}/${rule.medals} · NEXT CAR AT ${rule.medals}${rule.gold ? ` WITH ${rule.gold} GOLD` : ''}`
+    : `MEDALS ${totals.medals} · EVERY EARNED CAR WON`;
+  return `<button type="button" class="medal-chip" data-action="medal-sheet" aria-label="Show the medal sheet. ${label.toLowerCase()}">${label}</button>`;
 }

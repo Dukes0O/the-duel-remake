@@ -60,7 +60,7 @@ check(!/new |\.push\(|\.map\(|\.filter\(|\.sort\(|\.slice\(|\.toFixed\(|JSON\.|d
 const renderer=readFileSync(new URL('../src/render3d.js',import.meta.url),'utf8');
 check(/function frame\(now = performance\.now\(\),measure=false(?:,presentation=\{\})?\)/.test(renderer)&&/frame\(t,true\)/.test(renderer),'only RAF opts into metrics; manual debug calls default out');
 check(/const capture=measure&&!document\.hidden/.test(renderer),'hidden draws are not recorded');
-check(/if\(!prepareVehicle\(carKey\)\)\{frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'asset loading breaks the interval anchor');
+check(/if\(!prepareVehicle\(carKey,\{finish:modelFinish\}\)\)\{frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'asset loading breaks the interval anchor');
 check(/if\(!warmup\.canDraw\(warmupKey\)\)\{rearView\.hide\(\);frameMetrics\.suspend\(\);adaptiveResolution\.reset\(\);return;\}/.test(renderer),'shader warmup hides the mirror and breaks the interval anchor');
 check(/loadingFrame=firstWorldFrame\|\|metricsChanged/.test(renderer),'first loading and configuration-change frames do not pollute steady-state metrics');
 function coversCpuRenderBoundary(source) {

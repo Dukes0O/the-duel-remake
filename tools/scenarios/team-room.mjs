@@ -47,7 +47,8 @@ async function setup(context, quality) {
     // Disposable, memory-only purchase fixture; every picture uses earned access.
     // Variant ownership also needs its actual manifest's parent GP podium.
     app.profile={...app.profile,credits:50000,grandPrixPodiums:[...new Set([...(app.profile.grandPrixPodiums??[]),
-      ...${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='default-gp-podium').map(row=>row.unlock.defaultEventId))}])]};app._saveProfile();
+      ...${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='default-gp-podium').map(row=>row.unlock.defaultEventId))}])],
+      heli:{...(app.profile.heli??{version:1}),map:{version:1,seen:[],found:${JSON.stringify(CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='spotted-from-air').map(row=>row.id))},table:false}}};app._saveProfile();
     for(const index of [...document.querySelector('#scene-select').options].map(option=>Number(option.value))){
       const course=app.getMenuCourse(index);
       if(course && !course.def.practice && !course.def.arena && course.closed!==false) {

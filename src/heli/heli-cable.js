@@ -17,9 +17,14 @@ export const CABLE = Object.freeze({
   swingDamping: 0.12,
   // The load point sits this far above the ground when the car rests on it.
   restHeight: 0.7,
-  hookReach: 3,
-  hookHeightSlack: 2,
-  hookSpeed: 1.5,
+  // The hook takes a load within 4 m sideways, 3.5 m up or down and 2.5 m/s
+  // (FIX-HELI-HOOK, 24 October 2026: the old 3 m, 2 m and 1.5 m/s asked for
+  // a near-perfect hover nobody could hold).
+  hookReach: 4,
+  hookHeightSlack: 3.5,
+  hookSpeed: 2.5,
+  // The ground ring under a load shows within this far sideways of the hook.
+  guideReach: 10,
   groundFriction: 0.7,
   loadRadius: 1.2,
   setDownSpeed: 1,
@@ -45,11 +50,12 @@ export function carMassKg(carId) {
 }
 
 // Can Kestrel One lift this car in H1?
-export function liftCheck(carId) {
+// hookLimitKg: the Lab's Heavy hook (2,000 kg) when owned; left out, the base 1,500 kg.
+export function liftCheck(carId, hookLimitKg = KESTREL.hookLimitKg) {
   const massKg = carMassKg(carId);
   if (massKg === null) return {ok: false, massKg, reason: 'Unknown car.'};
   if (carId === 'titan_monster') return {ok: false, massKg, reason: 'Too heavy for any helicopter here.'};
-  if (massKg > KESTREL.hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
+  if (massKg > hookLimitKg) return {ok: false, massKg, reason: "Needs the Lab's lift upgrade."};
   return {ok: true, massKg, reason: null};
 }
 
@@ -102,14 +108,26 @@ export function reelWinch(winch, gear, command = 0, dt = HELI_STEP, load = null)
   return winch.length;
 }
 
+// Why H would not hook this load now, or null when it would. The reasons
+// come in the order a pilot fixes them: 'slowDown' (relative speed), then
+// 'lower' or 'higher' (metres: how far to bring the hook level with the
+// load), then 'closer' (sideways). A load already on the hook gives 'hooked'.
+export function hookRefusal(heli, load, opts) {
+  if (load.hooked) return {reason: 'hooked'};
+  const hook = hookPoint(heli, opts);
+  const relSpeed = Math.hypot(heli.vx - load.vx, heli.vy - load.vy, heli.vz - load.vz);
+  if (relSpeed > CABLE.hookSpeed) return {reason: 'slowDown'};
+  const rise = hook.y - load.y;
+  if (Math.abs(rise) > CABLE.hookHeightSlack)
+    return {reason: rise > 0 ? 'lower' : 'higher', metres: Math.max(1, Math.round(Math.abs(rise)))};
+  if (Math.hypot(hook.x - load.x, hook.z - load.z) > reachOf(opts)) return {reason: 'closer'};
+  return null;
+}
+
 // Is the hook close enough, and the helicopter slow enough, to hook this
 // load with H?
 export function canHook(heli, load, opts) {
-  if (load.hooked) return false;
-  const hook = hookPoint(heli, opts);
-  const relSpeed = Math.hypot(heli.vx - load.vx, heli.vy - load.vy, heli.vz - load.vz);
-  return Math.hypot(hook.x - load.x, hook.z - load.z) <= reachOf(opts) &&
-    Math.abs(hook.y - load.y) <= CABLE.hookHeightSlack && relSpeed <= CABLE.hookSpeed;
+  return hookRefusal(heli, load, opts) === null;
 }
 
 export function hook(heli, load, opts) {

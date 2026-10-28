@@ -179,8 +179,8 @@ test('the Jesko still asks for the eight bought cars, exactly as before', () => 
     {...createProfile(), unlockedCars: bought, upgrades: maxed},
     {...createProfile(), unlockedCars: bought.slice(0, 7), upgrades: maxed},
     {...createProfile(), unlockedCars: [...bought, 'koenigsegg_jesko'], upgrades: {}}];
-  assert.deepEqual(bought, Object.keys(CARS).filter(car => car !== 'koenigsegg_jesko' && car !== 'ferrari_enzo'),
-    'the list is every car but the Jesko and the Enzo (an earned car never joins it), as before');
+  assert.deepEqual(bought, Object.keys(CARS).filter(car => !['koenigsegg_jesko', 'ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car)),
+    'the list is every car but the Jesko, the medal cars and the Lab-restored Sirena (an earned car never joins it), as before');
   assert.deepEqual(garages.map(garage => completionCarProgress(garage)).map(({maxed, total, eligible}) => [maxed, total, eligible]),
     [[0, 8, false], [8, 8, true], [7, 8, false], [0, 8, false]]);
   assert.equal(normalizeProfile(garages[2]).unlockedCars.includes('koenigsegg_jesko'), false);
@@ -224,7 +224,7 @@ test('one named player\'s wins never reach another\'s sheet', () => {
   assert.equal(Object.hasOwn(activePlayer(registry).profile, 'medals'), false);
 });
 
-// Only the first medal car (the Enzo) exists in the game so far, so this runs a
+// The final medal car is still to come, so this runs a
 // scratch copy of the code with three test cars added to its config, for the
 // 6, 15 and 24 rungs. Nothing is added to src/.
 test('medal cars are earned at 6, 15 and 24 (6 gold), arrive fully tuned and are never taken back', async () => {
@@ -256,7 +256,7 @@ import assert from 'node:assert/strict';
 import {COURSE} from './src/config.js';
 import {MEDAL_CARS, medalTotals} from './src/medals.js';
 import {createProfile, normalizeProfile, settleRace, unlockCar, completionCarProgress, getUpgradeLevels} from './src/progression.js';
-assert.deepEqual(MEDAL_CARS, ['ferrari_enzo', 'medal_test_a', 'medal_test_b', 'medal_test_c']);
+assert.deepEqual(MEDAL_CARS, ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c']);
 assert.equal(completionCarProgress(createProfile()).total, 8, 'medal cars never join the Jesko list');
 const sheet = cars => ({version: 1, cars});
 const owns = (profile, car) => profile.unlockedCars.includes(car);
@@ -287,6 +287,7 @@ assert.ok(owns(fiveGold, 'medal_test_b')); assert.equal(owns(fiveGold, 'medal_te
 assert.equal(unlockCar(fiveGold, 'medal_test_c').reason, '24 medals needed, you have 29; 6 of them gold, you have 5.');
 const sixGold = normalizeProfile({...createProfile(), medals: sheet(rows(6))});
 assert.ok(owns(sixGold, 'medal_test_c')); assert.ok(fullyTuned(sixGold, 'medal_test_c'));
+assert.ok(owns(sixGold, 'bugatti_bolide') && !owns(fiveGold, 'bugatti_bolide'), 'the real Bolide follows the same 24-with-6-gold rule');
 // Once earned, never taken back, even with an empty sheet.
 const kept = normalizeProfile({...createProfile(), unlockedCars: ['falcone_f42', 'stuttgart_959s', 'medal_test_c']});
 assert.ok(owns(kept, 'medal_test_c'));
@@ -316,4 +317,27 @@ console.log('scratch medal cars passed');
       Buffer.from(script, 'utf16le').toString('base64')], {windowsHide: true, encoding: 'utf8'});
     assert.equal(cleanup.status, 0, cleanup.stderr);
   }
+});
+
+// The production F1 grant crosses the real 12-medal threshold in a real result (Claude, 28 October 2026: lowered from 15).
+test('the real F1 is earned on the twelfth medal, factory tuned and free', () => {
+  const eleven = normalizeProfile({...createProfile(), medals: {version: 1, cars: {
+    falcone_f42: {duel: [1, 1, 1], grandprix: [1, 1, 1]},
+    stuttgart_959s: {duel: [1, 1, 1], grandprix: [1, 1, 0]},
+  }}});
+  assert.deepEqual(medals.medalTotals(eleven), {medals: 11, gold: 3});
+  assert.equal(eleven.unlockedCars.includes('mclaren_f1'), false);
+  const early = unlockCar(eleven, 'mclaren_f1');
+  assert.equal(early.ok, false); assert.equal(early.cost, 0);
+  assert.equal(early.reason, '12 medals needed, you have 11.');
+  const won = settleRace(eleven, finish({runId: 'f1-twelfth', car: 'falcone_heritage', cpuDifficulty: 'hard'}));
+  assert.deepEqual(medals.medalTotals(won.profile), {medals: 12, gold: 4});
+  assert.deepEqual(won.earnedCars, ['mclaren_f1']);
+  assert.ok(won.profile.unlockedCars.includes('mclaren_f1'));
+  assert.equal(Object.keys(won.profile.upgrades.mclaren_f1).length, 7);
+  assert.ok(Object.values(won.profile.upgrades.mclaren_f1).every(level => level === 3));
+  assert.equal(won.profile.credits, eleven.credits + won.reward, 'the grant charges no credits');
+  assert.equal(unlockCar(won.profile, 'mclaren_f1').reason, 'This car is already in your garage.');
+  const kept = normalizeProfile({...won.profile, medals: {version: 1, cars: {}}});
+  assert.ok(kept.unlockedCars.includes('mclaren_f1'), 'empty sheets never take an earned F1 back');
 });

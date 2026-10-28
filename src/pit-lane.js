@@ -2,6 +2,8 @@
 import {normalizeTyre, gripFor} from './race-surfaces.js';
 import {makeRng} from './rng.js';
 import {DRIVE} from './config.js';
+import {LAB_TUNE} from './lab/lab-tune.js'; // LAB-TUNE
+import {fuelBoardText} from './lab/tune-view.js'; // LAB-TUNE-VIEW
 
 export const PIT = Object.freeze({
   width: 9, limitMph: 60 / 1.609344, stopMph: 5 / 1.609344, serviceSec: 4, taper: 60,
@@ -123,6 +125,7 @@ export function stepPitService(duel, actor, dt) {
       Math.abs(actor.speedMph) < PIT.stopMph) {
     pit.phase = 'servicing';
     pit.elapsed = 0;
+    if (player && actor.fuel) pit.service = PIT.serviceSec + LAB_TUNE.fuel.stopSec; // LAB-TUNE: the fuel stop takes 5 s longer
     pit.anchorS = actor.s;
     pit.anchorLateral = actor.lateral;
     pit.anchorHeading = actor.headingError;
@@ -134,8 +137,10 @@ export function stepPitService(duel, actor, dt) {
   actor.speedMph = 0;
   actor.boosting = false;
   actor.yawVelocity = actor.pushVelocity = actor.reverseHoldSec = 0;
-  pit.elapsed = Math.min(PIT.serviceSec, pit.elapsed + dt);
-  if (pit.elapsed + 1e-9 >= PIT.serviceSec) {
+  const service = pit.service ?? PIT.serviceSec; // LAB-TUNE
+  pit.elapsed = Math.min(service, pit.elapsed + dt);
+  if (pit.elapsed + 1e-9 >= service) {
+    if (player && actor.fuel) { actor.fuel.leftM = actor.fuel.tankM; actor.fuel.dry = false; } // LAB-TUNE: the tank is full again
     actor.tyre = pit.fit;
     actor.boost = 1;
     pit.phase = 'ready';
@@ -155,13 +160,14 @@ export function pitView(duel) {
   const lane = duel.course?.pitLane, s = duel.state;
   if (!lane || s.status !== 'racing') return null;
   const pit = s.pit, fit = (pit?.fit ?? otherTyre(s.tyre)).toUpperCase();
+  const fuel = fuelBoardText(s.fuel); // LAB-TUNE-VIEW: '' unless the player carries a tank
   if (pit?.phase === 'servicing') return {
-    text: `FITTING ${fit} TYRES · ${(PIT.serviceSec - pit.elapsed).toFixed(1)} S`, phase: pit.phase,
+    text: `FITTING ${fit} TYRES${fuel ? ' AND FUEL' : ''} · ${((pit.service ?? PIT.serviceSec) - pit.elapsed).toFixed(1)} S`, phase: pit.phase, // LAB-TUNE
   };
   if (pit?.phase === 'ready') return {text: 'GO', phase: pit.phase};
   if(pit&&lane.limiterStart!==undefined){
     const limit=pitSpeedLimitAt(duel.course,s.s,s.lateral);
-    return {text:`${limit===null?'PIT LANE':`${Math.round(limit*1.609344)} KM/H`} · STOP IN YOUR BOX · ${fit} TYRES`,phase:'lane'};
+    return {text:`${limit===null?'PIT LANE':`${Math.round(limit*1.609344)} KM/H`} · STOP IN YOUR BOX · ${fit} TYRES${fuel ? ` · ${fuel}` : ''}`,phase:'lane'};
   }
   if (pit) return {text: `60 KM/H · STOP IN YOUR BOX · ${fit} TYRES`, phase: 'lane'};
   let approach = lane.entry - duel.course.phase(s.s);

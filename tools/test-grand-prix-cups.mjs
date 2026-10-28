@@ -130,7 +130,7 @@ test('native App cup admission and saved continuation do not bypass car transpor
   try{
     for(const id of CUPS[0].events)if(!COURSE.some(row=>row.id===id))COURSE.push(ALL_CIRCUITS.find(row=>row.id===id));
     await withReferenceApp(async app=>{
-      app.duel.featureFlags=createFeatureFlags({storage:null,qa:false});
+      app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,overrides:{'grand-prix-career':false}});
       assert.equal(app.startCup('mountain').ok,false,'off in production');
       app.duel.featureFlags=createFeatureFlags({storage:null,qa:true,search:'?flags=grand-prix-career,summit-run'});
       assert.equal(app.startCup('mountain').ok,false,'unowned courses remain locked');
@@ -146,9 +146,15 @@ test('native App cup admission and saved continuation do not bypass car transpor
       app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'koenigsegg_jesko']};app._saveProfile();
       app.setRaceSettings({car:'koenigsegg_jesko'});
       assert.equal(app.getRaceChoices().car,'koenigsegg_jesko');
+      app.profile={...app.profile,heli:{version:1,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
+      assert.equal(app.startCup('mountain').ok,true,'the Jesko enters the owned Mountain Cup away from its saved position');
+      assert.equal(app.profile.cups.active.car,'koenigsegg_jesko');
+      assert.equal(app.abandonCup().ok,true);
+      app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'ferrari_enzo']};app._saveProfile();
+      app.setRaceSettings({car:'ferrari_enzo'});
       const refusal=app.startCup('night');assert.equal(refusal.ok,false);
       assert.match(refusal.reason,/travels only by air/);
-      assert.equal(app.profile.cups.active,null,'unlocking an air-only car cannot place it at Harbour');
+      assert.equal(app.profile.cups.active,null,'unlocking a medal car cannot place it at Harbour');
     });
   }finally{COURSE.splice(0,COURSE.length,...before);}
 });

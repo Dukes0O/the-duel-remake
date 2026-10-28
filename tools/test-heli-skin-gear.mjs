@@ -52,7 +52,7 @@ function cableScenario(gear) {
   const load = createLoad({id: 'viper_proto', massKg: 940, x: 1, z: 1, ground: flat});
   const out = [];
   out.push(hookPoint(heli, gear), canHook({...heli, y: 15.5}, load, gear), canHook({...heli, x: 2.9, y: 15.5}, load, gear),
-    canHook({...heli, x: 3.5, z: 1, y: 15.5}, load, gear), canHook({...heli, x: 4.9, z: 1, y: 15.5}, load, gear));
+    canHook({...heli, x: 3.5, z: 1, y: 15.5}, load, gear), canHook({...heli, x: 5.4, z: 1, y: 15.5}, load, gear));
   const rest = {x: 1, y: 15.5, z: 1, vx: 0, vy: 0, vz: 0};
   out.push(hook(rest, load, gear));
   for (let i = 0; i < 360; i++) {
@@ -157,8 +157,9 @@ export const runScenarios = gear => Object.fromEntries(Object.entries(SCENARIOS)
 
 
 // Taken on f0bd1edb, before any gear existed: `node tools/test-heli-skin-gear.mjs --print`
-// on that commit gave these numbers.
-const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 3394331381, search: 880789153, survey: 1445790162, camera: 2660321039};
+// on that commit gave these numbers. RESCUE-FINISH re-records search only
+// for the closer hiker clue; gear-off equality still compares every result.
+const BEFORE = {cable: 1196926726, bucket: 2443027711, rescue: 3394331381, search: 4001410629, survey: 1445790162, camera: 2660321039};
 if (process.argv.includes('--print')) { console.log(JSON.stringify(runScenarios(undefined))); process.exit(0); }
 
 const KINDS = ['stock', 'fire', 'medevac', 'rescue', 'wildlife', 'supply', 'tv'];
@@ -184,7 +185,7 @@ for (const kind of KINDS) {
 // The unworn numbers the rules fall back on are the packets' base kit.
 eq(CABLE.length, BASE_GEAR.lineMax, 'the fixed line is the base kit line');
 eq(CABLE.length, BASE_GEAR.lineMin, 'the base kit line does not reel');
-eq(CABLE.hookReach, BASE_GEAR.hookReach, 'hook reach 3 m');
+eq(CABLE.hookReach, BASE_GEAR.hookReach, 'hook reach 4 m');
 eq(KESTREL.hookLimitKg, BASE_GEAR.hookLimitKg, 'hook limit 1,500 kg');
 eq(KESTREL.hookLimitKg, GEAR['strong-hook'].effect.hookLimitKg ?? KESTREL.hookLimitKg, 'the stronger hook does not lift more');
 eq(SURVEY.countReach, BASE_GEAR.countReach, 'count reach 60 m');
@@ -432,16 +433,16 @@ const stockGear = gearFor('stock');
 {
   const crate = (id, x = 0, z = 0) => createSupplyCrate({id, set: 'summitRun', x, z, ground: flat});
   const hooked = (id, x = 0, z = 0) => { const c = crate(id, x, z); c.hooked = true; return c; };
-  // The stronger hook reaches 5 m, the old one 3 m; the limit stays 1,500 kg.
-  const car = createLoad({id: 'viper_proto', massKg: 940, x: 4, z: 0, ground: flat});
+  // The stronger hook reaches 6.7 m, the plain one 4 m; the limit stays 1,500 kg.
+  const car = createLoad({id: 'viper_proto', massKg: 940, x: 5.5, z: 0, ground: flat});
   const heli = {x: 0, y: 15.7, z: 0, vx: 0, vy: 0, vz: 0};
   for (const gear of [undefined, stockGear, gearFor('supply', false), fireGear]) {
-    eq(canHook(heli, car, gear), false, '4 m sideways: out of the old hook\'s reach');
+    eq(canHook(heli, car, gear), false, '5.5 m sideways: out of the plain hook\'s reach');
     eq(hook(heli, car, gear).ok, false, 'and it will not hook');
   }
-  eq(canHook(heli, car, supplyGear), true, 'the stronger hook reaches 4 m');
-  eq(canHook({...heli, x: -1.1}, car, supplyGear), false, '5.1 m is too far');
-  eq(canHook({...heli, x: -1}, car, supplyGear), true, '5 m is within reach');
+  eq(canHook(heli, car, supplyGear), true, 'the stronger hook reaches 5.5 m');
+  eq(canHook({...heli, x: -1.3}, car, supplyGear), false, '6.8 m is too far');
+  eq(canHook({...heli, x: -1}, car, supplyGear), true, '6.5 m is within reach');
   eq(hook(heli, car, supplyGear).ok, true, 'the stronger hook hooks it');
   eq(supplyGear.hookLimitKg, 1500, 'the hook limit stays 1,500 kg');
   const heavy = createLoad({id: 'big', massKg: 1501, x: 0, z: 0, ground: flat});
@@ -458,7 +459,7 @@ const stockGear = gearFor('stock');
     const got = hookCrates(heliAt, crates, gear);
     eq([got.ok, got.crates.map(c => c.id), crates[0].massKg], [true, ['food'], 300], 'no net: the nearest crate only');
     eq(crates[1].netted, undefined, 'and the other is left');
-    eq(hookCrates(heliAt, yard([['food', 4, 0]]), gear).ok, false, 'no net: 4 m is out of the plain hook\'s reach');
+    eq(hookCrates(heliAt, yard([['food', 4.5, 0]]), gear).ok, false, 'no net: 4.5 m is out of the plain hook\'s reach');
   }
   {
     const crates = yard([['fuel', 14, 0], ['medicine', 8, 0], ['food', 2, 0]]);

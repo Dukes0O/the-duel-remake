@@ -50,7 +50,7 @@ section 0.6 into board cards before starting other new work.
 | On-foot camera | **First person by default**, with an **overhead option**: behind and above the fighter, looking down at an angle. Both stay playable until Kyle picks after trying them | First person only |
 | Tone | **Gritty, no blood.** Heavier explosions, scorched and burning wrecks, tumbling knockdowns. Fighters get back up or respawn. No blood, injuries or gore | Assumption 5, cartoon arcade tone |
 | Career | **A separate Wasteland career** with its own currency, **scrap**, and a **territory map** held by the warlords (0.4) | Assumption 8 and Q3, credits only |
-| Build tracking | Proportionate testing, but never blind: a minimum check before every merge, a full run on a schedule and before every release, one status page, and backups (0.5) | Focused checks only after `e34f2cc` |
+| Build tracking | Checks sized to the change: the builder checks once, the merge runs only what the builder could not, a full run nightly and before every release, one status page, and backups (0.5) | Focused checks only after `e34f2cc` |
 
 ### 0.2 The Hidden Road: how players find the Wasteland
 
@@ -211,13 +211,13 @@ hours while about 15 features merged on top, and the last live release shipped
 with one failing test. Nothing in normal play broke, but nobody knew. From now
 on:
 
-- **Before every merge into integration:** the lane tier
-  (`node tools/run-tests.mjs --tier lane --changed --jobs 8`, about 5 minutes)
-  and `npm run build`. Always, including tuning-only and doc-plus-code changes.
-- **Full tier** (`--tier full --jobs 4 --keep-going`, run alone): at the end
-  of every session and overnight run and before every release. A real failure
-  stops feature merges until a fix lands (4.5); an unreliable check gets one
-  rerun (AGENTS.md, Build more, record less, 4 October 2026).
+- **Checks sized to the change** (Kyle, 24 October 2026): each card names the
+  checks that prove it; the builder runs them, the lane tier and the build
+  once; the merge runs only what the builder could not (laptop-only suites,
+  browser scenarios, looks) and the build. Docs-only changes get the board and
+  placement checks. The full tier runs once a night and before every release;
+  a real failure stops feature merges until a fix lands. Details in AGENTS.md,
+  "Gates".
 - **Before every release:** the full tier on the exact commit being released.
   No exception for small or tuning-only changes.
 - **One status page.** `tools/build-status.mjs` writes `docs/board/STATUS.md`:
@@ -228,9 +228,9 @@ on:
   of every session.
 - **Balance with the new rules on.** `tools/combat-balance.mjs` also runs with
   `wasteland2` on. Its win-rate and hit targets apply to both.
-- **Backups.** Push `integration/wasteland` as well as `master` to GitHub after
-  each green full run, and bring GitHub's `main` in line with `master` (it is 60
-  commits behind). Waits for Kyle's OK (D8).
+- **Backups.** Push `integration/wasteland` after merges and `master` after
+  each release. `integration/wasteland` is GitHub's front branch; `main` was
+  removed on 24 October 2026.
 - **Tidy lane folders.** Remove merged lane worktrees with `git worktree remove`
   (never forced), keeping their branches.
 

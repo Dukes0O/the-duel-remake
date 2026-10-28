@@ -37,7 +37,8 @@ function memoryBackups(){
 }
 const dir=new URL('./fixtures/saves/',import.meta.url);
 const fixtures=readdirSync(fileURLToPath(dir)).filter(name=>name.endsWith('.json')).sort();
-assert.equal(fixtures.length,15);
+// The exact roster is pinned once, in test-save-fixtures; here every fixture must back up.
+assert.ok(fixtures.length>=15,'no historical save fixture is skipped');
 for(const name of fixtures){
   const fixture=JSON.parse(readFileSync(new URL(name,dir),'utf8'));
   const source=memoryStorage(Object.fromEntries(Object.entries(fixture.storage).map(([key,value])=>[key,JSON.stringify(value)])));
@@ -152,7 +153,7 @@ const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 const preflight=main.indexOf('await backupBeforeMigration(undefined,backupStore)');
 const budgetGate=main.indexOf('budgetStorage=await prepareCareerBudget(');
 const virtualPreflight=main.indexOf('await backupBeforeMigration(budgetStorage.storage,backupStore)');
-const appConstruction=main.indexOf('export const app = new App()');
+const appConstruction=main.indexOf('export const app = new App(');
 assert.ok(preflight>=0&&budgetGate>preflight&&virtualPreflight>budgetGate&&appConstruction>virtualPreflight,
   'browser entry backs up both raw and imported older careers before App can migrate');
 await assert.rejects(importCareer(file,{storage:current,backupStore:{save:async()=>{throw new Error('IDB failed');}}}),/IDB failed/);

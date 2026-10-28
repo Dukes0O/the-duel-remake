@@ -1,0 +1,222 @@
+{
+ "pacific-canyon": {
+  "near": "0a63c09576e55d66e0b7e17ff6540082052693a2acb0bdbd46a62fea5de4e38a",
+  "far": "d30aa98b1c81e3381ca0618809e45c2445ed1e2bdb06a81b0a034c3fa0308bf4",
+  "scenery": "001559d0376b0215e2b018e658324900424050c6d57bcc0b2764dc40a102613c",
+  "cells": 158,
+  "roadAvoid": {
+   "placed": 10040,
+   "moved": 102,
+   "dropped": 0
+  }
+ },
+ "high-country": {
+  "near": "e0bb545d61d2214933ba18ed81af8b3de51642f53db746a1b3cafb3e2b99ba1b",
+  "far": "c2f1fac875aedd9265a68bd4d34c129aebdd146622ac9e89b46e550d7e9974b4",
+  "scenery": "2d4feb607c09d65fbf6669cf7c28a167f2e56129bddcf93a916682efb2d3b08a",
+  "cells": 198,
+  "roadAvoid": {
+   "placed": 12770,
+   "moved": 135,
+   "dropped": 0
+  }
+ },
+ "harbor-highlands": {
+  "near": "ba88b87d8a3e6f3ff71d61b875c619a5a5b9e7e1eb2bddfc56d990d9bbf63f79",
+  "far": "c3a776053376d9fc37457d70aa9981d0d93150493419be53f200804821d1f1f4",
+  "scenery": "e45e5965196e28bc3eada17f20bb1157e8f2b91c10df0313ab99b3f607463b2c",
+  "cells": 171,
+  "roadAvoid": {
+   "placed": 11148,
+   "moved": 107,
+   "dropped": 0
+  }
+ },
+ "midnight-chase": {
+  "near": "8fdeadd9d4633d155cd2a68eb038c74a266ad5068c67f4b35772a0927f56f927",
+  "far": "0db71d94201ecf5e40f638de4b378f2bcd8a0cbb69bd3c0d4f34d9b7348d5695",
+  "scenery": "b77bf614a65d292f4f4d4f8a5619d4113f8ceae899c57150b733216b4ebfd425",
+  "cells": 89,
+  "roadAvoid": {
+   "placed": 2700,
+   "moved": 94,
+   "dropped": 0
+  }
+ },
+ "ridge-rally": {
+  "near": "e8bf96460faf352d829da00dd79c05ef99eb23daf42a6c09d9c782432b2c6513",
+  "far": "0938889c8f130514df6b68d1969dafd9710d6e82faf3c36a4aca8c044a0de0a9",
+  "scenery": "133fe610628e7906643eac651d057cb1e7de0e08b168788249acc70c6e2127e9",
+  "cells": 143,
+  "roadAvoid": {
+   "placed": 11090,
+   "moved": 21,
+   "dropped": 0
+  }
+ },
+ "neon-drift-trial": {
+  "near": "8fdeadd9d4633d155cd2a68eb038c74a266ad5068c67f4b35772a0927f56f927",
+  "far": "0db71d94201ecf5e40f638de4b378f2bcd8a0cbb69bd3c0d4f34d9b7348d5695",
+  "scenery": "abdbbe798a63ba219700525623204ddd93ebd48229a3a25c75b383afe363125b",
+  "cells": 90,
+  "roadAvoid": {
+   "placed": 2700,
+   "moved": 95,
+   "dropped": 0
+  }
+ },
+ "timberline-rush": {
+  "near": "f33923f53164d1254744e20216e349c1c62d81c5efd8db12ee7055c59165f382",
+  "far": "9fd41fcebb389d3bc68a88aba984378493060ef9d5b3bd51723faf5c2320f290",
+  "scenery": "de449ed994815b560873c3f0b9484c4b803dc2cd78b26adf9f61f121742ff6db",
+  "cells": 150,
+  "roadAvoid": {
+   "placed": 11825,
+   "moved": 22,
+   "dropped": 0
+  }
+ },
+ "eifel-crown": {
+  "near": "e37765c57c0d2c7c1355e48bc04584070a8947f1ae962d34f25e5b8497fea69d",
+  "far": "7dd30e92f5f88cd617aa3c248b88c5fbd4b373f5b2030a1782a5bdfd19ecba16",
+  "scenery": "7f11c2211b8bba36bd75f2c67485468440760f171349bb301d87ab6f5eaafe53",
+  "cells": 204,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 91,
+   "dropped": 0
+  }
+ },
+ "alpine-serpent": {
+  "near": "4871689222c3c4d8eac5e156b2d3bee6df5822e33cb7ddf2a90791d27b4ced07",
+  "far": "1e35f9fc386faf003fa225372ace3372c12bf0321abb3fc420b96ce6d690b59d",
+  "scenery": "0050f5375da00038002dea72305c98fb599c97003480a320bf9230a4fe68a6eb",
+  "cells": 185,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 95,
+   "dropped": 0
+  }
+ },
+ "azure-riviera": {
+  "near": "15c01da91f9e1c4b757f83998dfe96940e83553d4509b70d24bbb4605ffcad2d",
+  "far": "69a14f5f31617494e11cbd4d9a20bd25fa47c0d8abb859afb83497eda522c8ab",
+  "scenery": "6feadea2835874d50271a3fe3de53d9a46e198b89e4189bcc877ef39dd319b69",
+  "cells": 172,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 96,
+   "dropped": 0
+  }
+ },
+ "red-mesa": {
+  "near": "4daa5a7f0198921feadc791d219f5c55dad2a7da361ca383843a759745826b83",
+  "far": "bd6b5fbc48877beb0d6d065d6fad7c2517c47a96982c08081897464e97996e86",
+  "scenery": "d4321e65478252e39dd0cced3addc6a63d10223e9cc7d10c3da5673823f9f9da",
+  "cells": 147,
+  "roadAvoid": {
+   "placed": 5000,
+   "moved": 81,
+   "dropped": 0
+  }
+ },
+ "neon-docks": {
+  "near": "b6734713cfb9fc6fb6d74ad0641275495375ce4025984078e40e1222f4ef4d8a",
+  "far": "e88679e6337eb18571f51683205c410e9ebae8073f8d113b48bfad3199c9882a",
+  "scenery": "35a3b514ce52effe550882f099af2ebeba725c497cfad157404c33ecffeda348",
+  "cells": 164,
+  "roadAvoid": {
+   "placed": 5772,
+   "moved": 96,
+   "dropped": 0
+  }
+ },
+ "cloudbreak-skyway": {
+  "near": "ef323bdf6b95c7dd42856f0ef8dd155131ff05f00c2b8295887137c0ad3382b4",
+  "far": "496efbe0aa9b9966caa4fdd43eef838ec99a3bd61c5bdd5240fe368efb3436db",
+  "scenery": "e27c00f2b536b8edde5b07dfed494c6b79d88d031d4bfec3def481f3a754da83",
+  "cells": 192,
+  "roadAvoid": {
+   "placed": 12665,
+   "moved": 101,
+   "dropped": 0
+  }
+ },
+ "tremblant-woods": {
+  "near": "22d695efa02801d9616c2d6c920cdf49c115670abe96cd6bc3e6eb5dd116d525",
+  "far": "291aeff06861890cd0946e0536285aa9abc103c26737327d4039cf5af1566746",
+  "scenery": "48d61a8eab50273c12bf4c8195dd8aa4978d03e882b352f5273624b1d65d5ba1",
+  "cells": 161,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 165,
+   "dropped": 0
+  }
+ },
+ "tremblant-snow": {
+  "near": "3e71f4c9d14b9f4a800eb265850c9c21131e6f385be74ae9d264cb5bcc4d700f",
+  "far": "0de5f83e541806c2cb136286435c2a47ff66108510fde23f712e2ca0e6e37fb8",
+  "scenery": "bfa742d940d4870d9ca50d2cb2bb13d8d878d0e1b32b97499bfd1133cc55bc5c",
+  "cells": 161,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 155,
+   "dropped": 0
+  }
+ },
+ "harbour-lights": {
+  "near": "9203c3ba9c262ba7081d8c028aa9e9690e678b80e1115d7b53e6eba7e30f851a",
+  "far": "e30547d91137800c0ecb286e5de1e2be7fc297af3b77e6ba21c9e0fe3d54e270",
+  "scenery": "9c47213eef5081f9cabdd56f2762b59c6b4844f37805e56b88486573bc41dc18",
+  "cells": 127,
+  "roadAvoid": {
+   "placed": 2700,
+   "moved": 49,
+   "dropped": 4
+  }
+ },
+ "panorama-ridge": {
+  "near": "0d29f82f412ce482cd37c346e452e08a3a636949eeae695e8de03b6161f80c1e",
+  "far": "0569fb193da5fea2a589bf7d880efbd4faccfb85ab8d84ca4a736e82782bc596",
+  "scenery": "87097c533fdcc60b86dec575d7d99e41573c062956aab10a1502922956b4a423",
+  "cells": 172,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 103,
+   "dropped": 0
+  }
+ },
+ "summit-run": {
+  "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
+  "far": "3f03c09d0643c936132cd55d157ee6217fe455f840ff7ce17e60f79cbb6d26ca",
+  "scenery": "28f7b419f2e9a3bbc46296fffc8e2444a5f4dbde5db75ebb40a8778cb0264d0c",
+  "cells": 392,
+  "roadAvoid": {
+   "placed": 12690,
+   "moved": 276,
+   "dropped": 0
+  }
+ },
+ "ardennes-forest": {
+  "near": "2a33e128d3a1646e7f76b71fa54b99801be932336230f3cc95b95674415ce1c2",
+  "far": "49a3dd9ec4d1e50e7d2cd32d3e9383fd0b5c5f18cee2ad2468df0bf97d2908bc",
+  "scenery": "bd881e9d52d755b7efa3cf4ec39bd36661bf433420417d424c1d500c12f45835",
+  "cells": 232,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 192,
+   "dropped": 2
+  }
+ },
+ "summit-time-attack": {
+  "near": "845626385552bc485e8bc20d8c602a88011bc9b1e7ce7845c0d0af8f2dafbeb8",
+  "far": "3f03c09d0643c936132cd55d157ee6217fe455f840ff7ce17e60f79cbb6d26ca",
+  "scenery": "28f7b419f2e9a3bbc46296fffc8e2444a5f4dbde5db75ebb40a8778cb0264d0c",
+  "cells": 392,
+  "roadAvoid": {
+   "placed": 12690,
+   "moved": 276,
+   "dropped": 0
+  }
+ }
+}

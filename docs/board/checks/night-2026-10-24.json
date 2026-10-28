@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "date": "2026-10-24",
+  "source": "1d5ad5895a6e8c6b85c26b5022b0191083411d17",
+  "started": "2026-10-25T06:40:11.845Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo/full.log",
+      "started": "2026-10-25T06:40:14.646Z",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "passed": 509,
+        "failed": 0,
+        "unrun": 0,
+        "total": 509
+      },
+      "failureNames": [],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo/full-tier.json",
+      "finished": "2026-10-25T07:03:21.734Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--scenarios",
+        "frame-pacing,tremblant-snow,tremblant-views",
+        "--timing-only",
+        "--headed",
+        "--jobs",
+        "1",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-8MgYrK/source/.evidence/2026-10-24/FAC-03/night-F1vgTo/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo/frames.log",
+      "started": "2026-10-25T07:03:21.734Z",
+      "passed": false,
+      "exitCode": 1,
+      "warnings": [],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 34.29999999999927,
+          "worldBuildMs": 415,
+          "constructionMs": 4203.899999991059
+        },
+        {
+          "quality": "Performance",
+          "p95": 18.200000000000728,
+          "worldBuildMs": 387,
+          "constructionMs": 3638.300000011921
+        }
+      ],
+      "reportError": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "finished": "2026-10-25T07:05:04.318Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo/combat.log",
+      "started": "2026-10-25T07:05:04.318Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-10-25T07:10:01.050Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-8MgYrK/source/.evidence/2026-10-24/FAC-03/night-F1vgTo/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo/browser.log",
+      "started": "2026-10-25T07:10:01.050Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 140,
+        "failed": 7,
+        "total": 147
+      },
+      "failureNames": [
+        "browser: audio-baseline",
+        "browser: audio-race",
+        "browser: deep-art-final-sheet",
+        "browser: frame-pacing",
+        "browser: lap-telemetry",
+        "browser: p4-daynight",
+        "browser: track-kits"
+      ],
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "finished": "2026-10-25T08:45:13.600Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "frames",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: audio-baseline",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: audio-race",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: deep-art-final-sheet",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: frame-pacing",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: lap-telemetry",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: p4-daynight",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: track-kits",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nAudio race did not capture a real blast with spatial geometry.\nDUEL_FINAL_LIFE must name the deep-life output folder.\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for high real Team Room comparison.\nTimed out waiting for native path and current rear-view frame.\nTimed out waiting for high complete native kit world and shader preparation.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-24/FAC-03/night-F1vgTo",
+  "finished": "2026-10-25T08:45:15.790Z",
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-10-24.json",
+      "docs/board/checks/night-2026-10-24.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}

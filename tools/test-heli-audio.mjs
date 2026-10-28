@@ -121,7 +121,8 @@ assert.deepEqual([...WILDLIFE_CUE_IDS].sort(), Object.keys(HELI_LIBRARY_CUES).fi
 assert.equal(WILDLIFE_CUE_IDS.length, 11);
 assert.deepEqual(Object.keys(HELI_TONE_CUES).sort(), [
   'heli.fuel.low', 'heli.radio.click', 'heli.radio.hiss', 'heli.rotor.low',
-  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick'].sort());
+  'heli.fire.alert', 'heli.aim.lock', 'heli.badge', 'heli.beacon.beep', 'heli.clock.tick', 'heli.buoy-hit', 'heli.retardant', 'heli.found',
+  'map.open', 'map.close', 'map.pin'].sort());
 assert.equal(HELI_CUES['heli.fire.crackle'].volume, .5, 'the crackle sits under the rotor');
 // The alert stays no louder than the low-fuel chime: the click cue it was first
 // matched to is never played (the radio chain makes its own click).
@@ -137,7 +138,7 @@ const buses = {
   'heli.cable.creak': 'vehicle', 'heli.hook.release': 'vehicle', 'heli.setdown.thud': 'vehicle',
   'heli.fuel.low': 'interface', 'heli.rotor.low': 'interface', 'heli.radio.click': 'interface',
   'heli.fire.crackle': 'ambience', 'heli.fire.hiss': 'ambience', 'heli.bucket.scoop': 'vehicle', 'heli.bucket.pour': 'vehicle',
-  'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface',
+  'heli.bucket.dent': 'vehicle', 'heli.fire.alert': 'interface', 'heli.aim.lock': 'interface', 'heli.badge': 'interface', 'heli.found': 'interface', 'map.open': 'interface', 'map.close': 'interface', 'map.pin': 'interface',
   'heli.flare': 'ambience', 'heli.snow.dig': 'vehicle', 'heli.rescue.clip': 'vehicle', 'heli.beacon.beep': 'interface', 'heli.clock.tick': 'interface',
   'heli.survey.click': 'interface', 'heli.wash': 'vehicle', 'heli.winch': 'vehicle',
   ...Object.fromEntries(['moose', 'wolf', 'bear', 'kookaburra', 'cockatoo', 'sheep', 'marmot', 'raven'].map(s => ['heli.animal.' + s, 'ambience'])),

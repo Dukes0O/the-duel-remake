@@ -8,8 +8,11 @@ import {CARS} from '../config.js';
 import {makeRng} from '../rng.js';
 import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
+// pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
+// functions after both have loaded, so the pair is safe in either order.
+import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
 
-import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS} from './heli-save.js';
+import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
 
 export const HOME_COURSE = 'tremblant-woods';
@@ -33,8 +36,42 @@ export const SUMMIT_RUN = Object.freeze({id: 'summit-run', name: 'Summit Run', b
   mapKm: Object.freeze({x: -10, z: 12}), home: false});
 export const HELI_DESTINATIONS_WITH_SUMMIT = Object.freeze({...HELI_DESTINATIONS, [SUMMIT_RUN.id]: SUMMIT_RUN});
 
-// The destinations to use: pass the summit-run switch as {summitRun}.
-export const destinationsFor = ({summitRun = false} = {}) => summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
+// The pilot's map (docs/PILOT_MAP.md): with the `pilot-map` switch on, every place
+// on the map is a destination (the Table, which is air only, joins once the pilot has seen it:
+// the `table` option, MAP-SECRETS) except those the landing-zone search finds no circle for (LEFT_OFF in
+// pilot-map-data.js). A place faces its neighbours by where it is drawn (the Neon districts share
+// one table point). The four original destinations keep their records, so their
+// answers are the same objects as before; Summit Run still needs its own switch.
+// Built when first asked for, since pilot-map-data.js loads this file too.
+let pilotTables = null;
+function pilotDestinations(summitRun, withTable = false) {
+  pilotTables ??= {};
+  const key = `${summitRun ? 'withSummit' : 'without'}${withTable ? '+table' : ''}`;
+  if (pilotTables[key]) return pilotTables[key];
+  const known = summitRun ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
+  const table = {};
+  // A destination is named by its course id, which the game loads (the Titan stadium is its Monster Arena).
+  for (const place of PLACES) {
+    if (place.air || LEFT_OFF.includes(place.id)) continue;
+    const id = place.courses[0];
+    if (id === SUMMIT_RUN.id && !summitRun) continue;
+    table[id] = known[id] ?? Object.freeze({id, name: place.name, baseAltitude: PLACE_ALTITUDES[place.id], mapKm: place.drawAt, home: false});
+  }
+  if (withTable) {
+    const mesa = placeById('the-table');
+    table['the-table'] = Object.freeze({id: 'the-table', name: mesa.name, baseAltitude: PLACE_ALTITUDES['the-table'], mapKm: mesa.drawAt, home: false});
+  }
+  return (pilotTables[key] = Object.freeze(table));
+}
+// Every name the game can show for a destination, whatever is switched on (titles of jobs already taken).
+const nameOf = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
+// The map's place for a destination (its course id), for the map's distances and legs.
+const placeKey = courseId => placeOfCourse(courseId)?.id ?? courseId;
+
+// The destinations to use: pass the summit-run switch as {summitRun} and the
+// pilot-map switch as {pilotMap}.
+export const destinationsFor = ({summitRun = false, pilotMap = false, table = false} = {}) =>
+  pilotMap === true ? pilotDestinations(summitRun === true, table === true) : summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
 
 // Fuel for each cruise leg, either way.
 const LEG_FUEL = Object.freeze({
@@ -54,8 +91,11 @@ export function legKey(from, to) {
   return [from, to].sort().join('|');
 }
 
-export function legFuelKg(from, to, {summitRun = false} = {}) {
+export function legFuelKg(from, to, {summitRun = false, pilotMap = false, table = false} = {}) {
   if (from === to) return null;
+  // With the pilot's map on, a leg between two destinations is the map's: the old table
+  // legs keep their numbers and every other pair is 12 kg a km plus 5 (pilot-map-data.js).
+  if (pilotMap === true && Object.hasOwn(pilotDestinations(summitRun === true, table === true), from) && Object.hasOwn(pilotDestinations(summitRun === true, table === true), to)) return legFuelKgMap(placeKey(from), placeKey(to));
   const key = legKey(from, to);
   return LEG_FUEL[key] ?? (summitRun === true ? SUMMIT_LEG_FUEL[key] : undefined) ?? null;
 }
@@ -70,11 +110,11 @@ export function bearing(from, to, options = {}) {
   return length > 0 ? {x: dx / length, z: dz / length} : null;
 }
 
-// Special cars travel only by air (Kyle, 14 October 2026): with the
-// helicopter switch on, one races only on the course where it was last set
-// down, starting at the home pad. The cars earned with medals
-// (docs/EARNED_CARS.md) are special cars too.
-export const AIR_ONLY_CARS = Object.freeze(['koenigsegg_jesko', ...MEDAL_CARS]);
+// Medal cars, the Lab-built Speirling and the restored Sirena travel only by air: with the
+// helicopter on, they race only where last set down. Medal cars start at the
+// home pad; the Sirena starts at Pacific Canyon (heli-save FIRST_PLACE).
+// Kyle, 25 October 2026: the Jesko races anywhere again, regardless of carsAt.
+export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena', 'mcmurtry_speirling']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
@@ -103,8 +143,9 @@ export const REAL_PAY_BONUS = 1.25;
 export const JOBS_PER_DAY = 3;
 
 // The customers' cars: every car Kestrel One can lift in H1, except the
-// special cars that travel only by air, so a customer's car is never one.
-export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id)));
+// medal cars, Sirena and garage-completion reward. The Jesko's racing freedom
+// does not change the existing customer pool or seeded dispatch jobs.
+export const JOB_CARS = Object.freeze(Object.keys(CARS).filter(id => liftCheck(id).ok && !isAirOnlyCar(id) && id !== 'koenigsegg_jesko'));
 
 const JOB_SEED = 0x4b455354;
 
@@ -112,19 +153,41 @@ const JOB_SEED = 0x4b455354;
 // {id: 'd<day>-<n>', carId, from, to, pay}, pay before the Real bonus. The
 // routes are shuffled so the board's order changes from day to day, and no
 // car is asked for twice on one board.
-export function dayJobs(day) {
+export function dayJobs(day, {pilotMap = false, owned = []} = {}) {
   const number = Number.isSafeInteger(day) && day >= 0 ? day : 0;
   const rng = makeRng((JOB_SEED ^ number) >>> 0);
-  const routes = [...JOB_ROUTES];
+  const routes = pilotMap === true ? mapRoutes(owned) : [...JOB_ROUTES];
   for (let i = routes.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
     [routes[i], routes[j]] = [routes[j], routes[i]];
   }
   const cars = [...JOB_CARS];
-  return Object.freeze(routes.map((route, index) => {
+  return Object.freeze(routes.slice(0, JOBS_PER_DAY).map((route, index) => {
     const carId = cars.splice(rng.int(0, cars.length - 1), 1)[0];
     return Object.freeze({id: `d${number}-${index + 1}`, carId, from: route.from, to: route.to, pay: route.pay});
   }));
+}
+
+// ---- jobs on the pilot's map (docs/PILOT_MAP.md section 4) -----------------------
+// With the map on, a job may name any destination the player owns. The routes are
+// the three original ones (their pays stay) followed by every other ordered pair of
+// owned destinations whose legs each fit a full tank; pay by straight-line map
+// distance: 300 under 5 km, 450 from 5 to under 12, 600 from 12 to under 20, 800 beyond.
+export const MAP_JOB_PAY = Object.freeze([Object.freeze({under: 5, pay: 300}), Object.freeze({under: 12, pay: 450}),
+  Object.freeze({under: 20, pay: 600}), Object.freeze({under: Infinity, pay: 800})]);
+export const mapJobPay = km => MAP_JOB_PAY.find(row => km < row.under).pay;
+function mapRoutes(owned) {
+  const routes = [...JOB_ROUTES];
+  const seen = new Set(routes.map(route => `${route.from}>${route.to}`));
+  const ids = [...new Set(owned)].filter(id => Object.hasOwn(pilotDestinations(true), id));
+  for (const from of ids) for (const to of ids) {
+    if (from === to || seen.has(`${from}>${to}`)) continue;
+    // Both legs (to the pick-up, then to the drop-off) must be flyable on one full tank.
+    if (legFuelKgMap(placeKey(from), placeKey(to)) > 400) continue;
+    seen.add(`${from}>${to}`);
+    routes.push(Object.freeze({from, to, pay: mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)))}));
+  }
+  return routes;
 }
 
 export function jobPay(job, mode = 'assisted') {
@@ -133,7 +196,59 @@ export function jobPay(job, mode = 'assisted') {
 
 // "Fly the Falcone F42 to Tremblant Snow".
 export function jobTitle(job) {
-  return `Fly the ${CARS[job.carId]?.name ?? job.carId} to ${HELI_DESTINATIONS[job.to]?.name ?? job.to}`;
+  return `Fly the ${CARS[job.carId]?.name ?? job.carId} to ${nameOf(job.to)}`;
+}
+
+const RETURN_SENDERS = Object.freeze({
+  'tremblant-snow': 'The lodge sends empty gas bottles.',
+  'panorama-ridge': 'The ranger post sends sample boxes.',
+  'summit-run': 'The hut sends laundry.',
+  'pacific-canyon': "Ana's field station sends sample crates for the lab in town.",
+});
+
+// Claude, 26 October: cover premium fuel at either end with a 25% margin,
+// or pay 60% of the same leg's car job, whichever is greater, rounded up to 10.
+export function returnLoadPay(from, to, options = {}) {
+  const fuel = legFuelKg(from, to, options);
+  if (fuel === null || fuel > HELI_MONEY.tankKg) return null;
+  const original = JOB_ROUTES.find(route => legKey(route.from, route.to) === legKey(from, to));
+  const carPay = original?.pay ?? mapJobPay(mapDistanceKm(placeKey(from), placeKey(to)));
+  const price = Math.max(HELI_MONEY.creditsPerKg, fuelPadAt(placeKey(from))?.pricePerKg ?? 0,
+    fuelPadAt(placeKey(to))?.pricePerKg ?? 0);
+  return Math.ceil(Math.max(0.6 * carPay, 1.25 * fuel * price) / 10) * 10;
+}
+
+// No ownership or wallet enters the seed: the same place has the same load
+// all play day. Legs beyond a full tank never go on this small board.
+export function returnLoadJob(day, from, options = {}) {
+  const places = destinationsFor(options);
+  if (from === HOME_COURSE || !Object.hasOwn(places, from)) return null;
+  const number = Number.isSafeInteger(day) && day >= 0 ? day : 0;
+  let seed = (0x43524154 ^ number) >>> 0;
+  for (const letter of from) seed = (Math.imul(seed, 31) ^ letter.charCodeAt(0)) >>> 0;
+  const rng = makeRng(seed);
+  // Discovering the hidden Table in flight must not redraw an advertised
+  // job. It offers outbound crates once known, but is never a drop-off.
+  const routes = Object.keys(places).filter(to => to !== from && to !== 'the-table').map(to => {
+    return {to, pay: returnLoadPay(from, to, options)};
+  }).filter(route => route.pay !== null);
+  if (!routes.length) return null;
+  const route = routes[rng.int(0, routes.length - 1)];
+  return Object.freeze({id: `return-${number}-${from}`, kind: 'returnLoad', day: number, from, to: route.to,
+    pay: route.pay, massKg: rng.int(300, 600), sender: RETURN_SENDERS[from] ?? `The ${nameOf(from)} pad sends supplies.`});
+}
+
+export const returnLoadTitle = job => `Crate from ${nameOf(job.from)} to ${nameOf(job.to)}`;
+
+export function finishReturnLoad(profile, job, mode = 'assisted', options = {}) {
+  const heli = heliOf(profile);
+  const expected = returnLoadJob(heli.playDay.count, job?.from, options);
+  if (!expected || expected.id !== job?.id || heli.returnLoads?.[expected.from] === expected.day)
+    return {ok: false, profile};
+  const wallet = Number.isFinite(profile?.credits) ? Math.max(0, Math.floor(profile.credits)) : 0;
+  const total = Math.min(1_000_000_000, wallet + jobPay(expected, mode));
+  return {ok: true, paid: total - wallet, profile: {...profile, credits: total,
+    heli: {...heli, returnLoads: {...heli.returnLoads, [expected.from]: expected.day}}}};
 }
 
 // ---- the car recovery job (docs/HELI_RESCUE.md section 5.3) --------------

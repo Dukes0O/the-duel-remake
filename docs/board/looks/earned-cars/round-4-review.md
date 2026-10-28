@@ -1,6 +1,6 @@
 # EARN-CAR-1 Ferrari Enzo, Claude's original model: rounds 1 to 4 (14 October 2026)
 
-Sheet: removed 15 October 2026, replaced by `round-5.jpg` (the car in the game)
+Sheet: removed 15 October 2026, replaced by round 5's (the car in the game, since removed too)
 to keep the looks folder under its 20 MB budget. It showed the front
 three-quarter, side, rear three-quarter and a front close-up,
 rendered in Blender from the game's own builder (`src/enzo-vehicle.js`,

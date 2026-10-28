@@ -40,7 +40,7 @@ void main() {
   gl_FragColor = vec4(c.rgb * vTint, c.a * vAlpha);
 }`;
 
-function spriteLayer(THREE, capacity, blending, nearFade = [0, 0]) {
+export function spriteLayer(THREE, capacity, blending, nearFade = [0, 0]) {
   const geometry = new THREE.BufferGeometry();
   const make = (name, size) => geometry.setAttribute(name, new THREE.BufferAttribute(new Float32Array(capacity * size), size).setUsage(THREE.DynamicDrawUsage));
   make('position', 3); make('size', 1); make('rect', 4); make('alpha', 1); make('tint', 3);
@@ -198,7 +198,7 @@ export function createFireView({THREE, scene, load = defaultLoad, quality = 'hig
       bucket.root.rotation.set(0, b.heading || 0, 0);
       bucket.body.visible = b.damage === 0;
       bucket.dented.visible = b.damage > 0;
-      const fill = b.holds > 0 ? Math.min(1, b.water / 600) : 0;
+      const fill = b.holds > 0 ? Math.min(1, b.water / Math.max(600, b.holds)) : 0; // LAB-VIEW: a bigger bucket fills the bar; a smaller one reads as before
       bucket.water.visible = fill > .02;
       bucket.water.position.y = bucket.waterY - BODY * (1 - fill);
     }

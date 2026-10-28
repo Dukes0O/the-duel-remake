@@ -4,12 +4,15 @@
 // The model loads when the renderer starts; until it arrives (a moment,
 // it is small and local) the helicopter is simply not drawn.
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {LESSON_RULES} from './heli-lessons.js';
 import {heliCameraPose} from './heli-camera.js';
 import {createVehicleAssets} from '../vehicle-assets.js';
 import {createFireView} from './heli-fire-view.js';
 import {createRescueView} from './heli-rescue-view.js';
+import {createRankPaint} from './heli-rank-paint.js';
 
 const CABLE_LENGTH = 15;
+const GUIDE_WAIT = 0xf4f1e8, GUIDE_READY = 0x3ddc5a;
 
 // Kestrel One: Claude's original model (tools/blender/kestrel-one.py, review
 // in docs/board/looks/kestrel-one/). Metres, +Y up, nose toward +Z, origin
@@ -51,6 +54,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   group.add(body);
   const parts = {model: null, rotor: null, tail: null, hook: null, status: 'idle', error: ''};
   let disposed = false;
+  const rankPaint = createRankPaint({THREE});
   // The model loads on the first helicopter frame, so a player who never
   // flies (or has the switch off) never downloads it.
   const ensureModel = () => {
@@ -66,6 +70,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     parts.status = parts.rotor && parts.tail && parts.hook ? 'ready' : 'error';
     if (parts.status === 'error') parts.error = 'Kestrel One is missing a named node';
     body.add(model);
+    rankPaint.attach(model);
     }).catch(error => {
       parts.status = 'error'; parts.error = String(error?.message || error);
       console.warn(`Kestrel One did not load: ${parts.error}`);
@@ -74,7 +79,9 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   const hookWorld = new THREE.Vector3();
   const cableGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, -CABLE_LENGTH, 0)]);
   const cable = new THREE.Line(cableGeometry, new THREE.LineBasicMaterial({color: 0x111111}));
-  const hookMesh = new THREE.Mesh(new THREE.SphereGeometry(.18, 8, 6), new THREE.MeshStandardMaterial({color: 0x8a6d1f, metalness: .6, roughness: .4}));
+  // About half a metre across, in high-visibility orange, so it can be seen
+  // from the cockpit views against grass, snow and rock (FIX-HELI-HOOK).
+  const hookMesh = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshStandardMaterial({color: 0xff7a1a, emissive: 0x401800, metalness: .3, roughness: .5}));
   const zoneRing = ring(THREE, 12, 0xf2c14e);
   const padMark = new THREE.Group();
   for (const [w, d, x] of [[.5, 4, -1.2], [.5, 4, 1.2], [2, .5, 0]]) {
@@ -83,8 +90,48 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     bar.position.x = x;
     padMark.add(bar);
   }
-  const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, 10, 0xffcf3f);
-  group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing);
+  const hoverRing = ring(THREE, 4, 0x9fd4ff), targetRing = ring(THREE, LESSON_RULES.carry.radius, 0xffcf3f);
+  targetRing.name = 'Carry target';
+  const targetCentre = new THREE.Mesh(new THREE.CircleGeometry(.45, 16), targetRing.material);
+  targetCentre.rotation.x = -Math.PI / 2;
+  group.add(targetCentre);
+  let targetSurface = null;
+  // The hook guide: a ring on the ground under the load the hook is near,
+  // white while H would not take it and green when it would (the session's
+  // hookGuide decides; this only draws it).
+  const guideRing = ring(THREE, 2.2, GUIDE_WAIT);
+  guideRing.visible = false;
+  group.add(cable, hookMesh, zoneRing, padMark, hoverRing, targetRing, guideRing);
+  // LAB-VIEW: the Lab challenge's props (view.challenge.props): the buoys, the smoke marker and the practice fire's cells.
+  // Pooled meshes made on demand; drawing only.
+  const labProps = new THREE.Group();
+  labProps.name = 'Lab challenge';
+  group.add(labProps);
+  const labPool = [];
+  const labMake = kind => kind === 'buoy' ? new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 8), new THREE.MeshStandardMaterial({color: 0xffcf3f, roughness: .5}))
+    : kind === 'splash' ? ring(THREE, 3, 0xefffff)
+    : kind === 'smoke' ? new THREE.Mesh(new THREE.CylinderGeometry(1.5, 4, 40, 10), new THREE.MeshBasicMaterial({color: 0xcfcac0, transparent: true, opacity: .5, depthWrite: false}))
+    : new THREE.Mesh(new THREE.BoxGeometry(18, .6, 18), new THREE.MeshBasicMaterial({color: 0x2f6b32, transparent: true, opacity: .55, depthWrite: false}));
+  function labDraw(props) {
+    const list = props ?? [];
+    list.forEach((prop, index) => {
+      let mesh = labPool[index];
+      if (!mesh || mesh.userData.kind !== prop.kind) {
+        if (mesh) { labProps.remove(mesh); mesh.traverse(child => { child.geometry?.dispose(); child.material?.dispose(); }); }
+        mesh = labMake(prop.kind);
+        if (prop.kind === 'buoy') mesh.add(ring(THREE, prop.radius, 0xffcf3f));
+        mesh.userData.kind = prop.kind;
+        labPool[index] = mesh;
+        labProps.add(mesh);
+      }
+      mesh.visible = true;
+      const lift = prop.kind === 'smoke' ? 20 : prop.kind === 'fire' ? .4 : .2;
+      mesh.position.set(prop.x, (prop.y ?? 0) + lift, prop.z);
+      if (prop.kind === 'buoy') mesh.material.color.setHex(prop.hit ? 0x4fd16a : 0xffcf3f);
+      else if (prop.kind === 'fire') mesh.material.color.setHex(prop.burnt ? 0x1b1b1b : prop.percent > 0 ? 0xff6a1a : prop.road ? 0xb59d70 : 0x2f6b32);
+    });
+    for (let index = list.length; index < labPool.length; index++) labPool[index].visible = false;
+  }
   // Cars and crates other than the player's own car (the race renderer
   // draws that one): the game's own car models, made on demand.
   const others = new Map();
@@ -123,6 +170,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     update(view, {cameraIndex = 0, dt = 1 / 60} = {}) {
       if (!view?.heli) { group.visible = false; fire.hide(); rescue?.hide(); return null; }
       ensureModel();
+      rankPaint.update(view.logbook?.paint ?? view.skins?.worn);
       // Nothing of the helicopter (cable and rings included) shows until
       // the model is in.
       group.visible = parts.status === 'ready';
@@ -152,7 +200,28 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       hoverRing.visible = view.lesson?.id === 'hover' || view.lesson?.id === 'landing';
       targetRing.visible = view.lesson?.id === 'carry' && !!view.lesson.target;
       if (view.zone) hoverRing.position.set(view.zone.x, view.zone.y + .12, view.zone.z);
-      if (targetRing.visible) targetRing.position.set(view.lesson.target.x, view.lesson.target.y + .1, view.lesson.target.z);
+      targetCentre.visible = targetRing.visible;
+      if (targetRing.visible) {
+        const target = view.lesson.target;
+        targetRing.position.set(target.x, target.y + .15, target.z);
+        targetCentre.position.copy(targetRing.position);
+        targetRing.material.color.setHex(view.lesson.guidance?.ready ? GUIDE_READY : 0xffcf3f);
+        if (targetSurface !== target.surface) {
+          targetSurface = target.surface;
+          const vertices = targetRing.geometry.attributes.position;
+          // Before the X rotation, local Z becomes positive world Y.
+          for (let i = 0; i < vertices.count; i++) vertices.setZ(i, targetSurface?.[i] ?? 0);
+          vertices.needsUpdate = true;
+          targetRing.geometry.computeBoundingSphere();
+        }
+      }
+      const guide = view.hookGuide;
+      guideRing.visible = !!guide;
+      if (guide) {
+        guideRing.position.set(guide.x, guide.y + .14, guide.z);
+        guideRing.material.color.setHex(guide.ready ? GUIDE_READY : GUIDE_WAIT);
+        guideRing.material.opacity = guide.ready ? .8 : .55;
+      }
       points.setXYZ(0, top.x, top.y, top.z);
       points.setXYZ(1, end.x, end.y, end.z);
       points.needsUpdate = true;
@@ -163,6 +232,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.position.set(view.zone.x, view.zone.y + .1, view.zone.z);
         padMark.visible = view.courseId === 'tremblant-woods';
       }
+      labDraw(view.challenge?.props); // LAB-VIEW
       fire.update(view, {dt});
       if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});
@@ -180,6 +250,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     get modelError() { return parts.error; },
     dispose() {
       disposed = true;
+      rankPaint.dispose();
       // Car models share their geometry and materials with the race's own
       // cars, so only the helicopter's own parts are freed.
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);

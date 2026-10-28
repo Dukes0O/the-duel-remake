@@ -102,34 +102,38 @@ test('switch off: the same race adds no sheet, no medal and no cue', () => {
   });
 });
 
-// The Enzo (EARN-CAR-1) is the first medal car in the game. With the switch off
-// it appears nowhere, so every list is exactly the nine cars of today.
-test('the Enzo is the one medal car: hidden everywhere while the switch is off, shown while on', () => {
-  const today = Object.keys(CARS).filter(id => id !== 'ferrari_enzo');
-  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => id !== 'ferrari_enzo'));
-  assert.deepEqual(shownCars(true), Object.entries(CARS));
+// Every real medal car stay hidden behind earned-cars, including owned cars.
+test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, shown while on', () => {
+  const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
+  // The Falcone Sirena (SIRENA-CAR) is on no list until DEEP-SIRENA-VIEW lists it once the Lab restores it.
+  const sirena = 'falcone_sirena';
+  const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling');
+  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling'));
+  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena && id !== 'mcmurtry_speirling'));
   assert.deepEqual(shownCarIds(false), today);
-  assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', 'ferrari_enzo']);
-  assert.equal(JOB_CARS.includes('ferrari_enzo'), false, 'never a customer car');
+  assert.deepEqual(AIR_ONLY_CARS, [...medalCars, sirena, 'mcmurtry_speirling']);
+  assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
   const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0},
     arrow: '', sound: true, escapeHTML: String, earnedCars: on});
-  assert.equal(markup(false).includes('ferrari_enzo'), false, 'the menu car picker hides the Enzo');
-  assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\'s');
-  assert.ok(markup(true).includes('<option value="ferrari_enzo">'));
-  assert.ok(markup(true).includes(' 8 EARNABLE CARS'));
+  for (const id of medalCars) {
+    assert.equal(markup(false).includes(id), false, 'the menu car picker hides ' + id);
+    assert.ok(markup(true).includes('<option value="' + id + '">'));
+  }
+  assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the switch-off earnable count stays unchanged');
+  assert.ok(markup(true).includes(' 10 EARNABLE CARS'));
   const flags = {};
   const app = {_switches: () => ({enabled: name => flags[name] === true}), player: {name: 'Tester'}, profileSaved: true, duel: {state: {}}};
-  const saved = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, 'ferrari_enzo']};
+  const saved = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, ...medalCars]};
   const garage = createGarageScreen({app, profile: () => saved, credits: String, escapeHTML: String,
     getGarageCar: () => 'falcone_f42', getGarageMessage: () => '', arrow: '', action: (label, verb) => '<button data-action="' + verb + '">' + label + '</button>',
     clamp: value => Math.max(0, Math.min(1, value))});
-  assert.equal(garage().includes('ferrari_enzo'), false, 'the garage list hides the Enzo, even for a save that owns it');
+  for (const id of medalCars) assert.equal(garage().includes(id), false, 'the garage hides an owned ' + id);
   flags['earned-cars'] = true;
-  assert.ok(garage().includes('data-garage-car="ferrari_enzo"'), 'and shows it while on');
-  assert.ok(garage().includes('Ferrari Enzo'));
+  for (const id of medalCars) assert.ok(garage().includes('data-garage-car="' + id + '"'), 'the garage shows ' + id + ' while on');
+  assert.ok(garage().includes('Ferrari Enzo') && garage().includes('McLaren F1') && garage().includes('Bugatti Bolide'));
 });
 
-// The other two rungs do not exist yet, so the screens are also checked on a
+// The final rung does not exist yet, so the screens are also checked on a
 // scratch copy of the code with three test cars. Nothing is added to src/.
 test('medal cars: hidden while off; labels, locked pages, rewards and air-only while on', async () => {
   await mkdir(join(root, '.qa-dist'), {recursive: true});
@@ -152,12 +156,12 @@ test('medal cars: hidden while off; labels, locked pages, rewards and air-only w
 import assert from 'node:assert/strict';
 import {CARS, COURSE} from './src/config.js';
 import {createProfile, normalizeProfile, settleRace} from './src/progression.js';
-import {shownCars, shownCarIds, medalResultLines} from './src/earned-cars-ui.js';
+import {shownCars, shownCarIds, medalResultLines, earnedCarCards, medalChip} from './src/earned-cars-ui.js';
 import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
-const medalCars = ['ferrari_enzo', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
-const today = Object.keys(CARS).filter(id => !medalCars.includes(id));
+const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
+const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling'); // the Sirena is on no list until DEEP-SIRENA-VIEW
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);
 assert.deepEqual(shownCarIds(true), [...today, ...medalCars]);
@@ -166,9 +170,9 @@ const markup = on => screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 
 assert.equal(markup(false).includes('medal_test_a'), false, 'the menu car picker hides medal cars while off');
 assert.ok(markup(true).includes('<option value="medal_test_a">'));
 assert.ok(markup(false).includes(' 7 EARNABLE CARS'), 'the earnable count is today\\'s while off');
-assert.ok(markup(true).includes(' 11 EARNABLE CARS'));
+assert.ok(markup(true).includes(' 13 EARNABLE CARS'));
 // Air only, never a customer's car.
-assert.deepEqual(AIR_ONLY_CARS, ['koenigsegg_jesko', ...medalCars]);
+assert.deepEqual(AIR_ONLY_CARS, [...medalCars, 'falcone_sirena', 'mcmurtry_speirling']);
 assert.ok(medalCars.every(id => !JOB_CARS.includes(id)));
 // The garage, with the real renderer.
 const flags = {};
@@ -180,6 +184,7 @@ const garage = createGarageScreen({app, profile: () => saved, credits: value => 
 let html = garage();
 assert.equal(html.includes('data-garage-car="medal_test_a"'), false, 'the garage list hides medal cars while off');
 assert.equal(html.includes('MEDAL SHEET'), false, 'no medal panel while off');
+assert.equal(html.includes('medal-chip'), false, 'no medal chip while off');
 flags['earned-cars'] = true;
 html = garage();
 assert.ok(html.includes('MEDALS 0/6'));
@@ -200,13 +205,23 @@ const pacific = COURSE.findIndex(course => course.id === 'pacific-canyon');
 const win = settleRace(saved, {runId: 'ui-grant', stageIndex: pacific, car: 'stuttgart_959s', mode: 'duel', difficulty: 'casual',
   cpuDifficulty: 'easy', seed: 1989, laps: 2, completed: true, won: true, timeSec: 180, lapTimes: [90, 90], earnedCarsEnabled: true});
 assert.deepEqual(win.earnedCars, ['ferrari_enzo', 'medal_test_a']);
-assert.deepEqual(medalResultLines(win, {helicopter: true}), ['NEW MEDAL · BRONZE · STUTTGART 959-S · DUEL · EASY · +150 CR',
-  'NEW CAR EARNED · FERRARI ENZO · IN YOUR GARAGE', 'KESTREL ONE WILL BRING IT TO TREMBLANT WOODS',
-  'NEW CAR EARNED · MEDAL TEST A · IN YOUR GARAGE', 'KESTREL ONE WILL BRING IT TO TREMBLANT WOODS']);
-assert.deepEqual(medalResultLines(win).length, 3, 'no helicopter lines with the helicopter off');
+// Claude, 28 October 2026: a newly earned car has its own card (name, then a short line), not two small lines.
+// The medal line stays a single line (its colour dot is drawn by the results screen).
+assert.deepEqual(medalResultLines(win), ['NEW MEDAL · BRONZE · STUTTGART 959-S · DUEL · EASY · +150 CR']);
+assert.deepEqual(earnedCarCards(win, {helicopter: true}), [
+  {id: 'ferrari_enzo', name: 'FERRARI ENZO', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'},
+  {id: 'medal_test_a', name: 'MEDAL TEST A', text: 'Earned with 6 medals. Kestrel One will bring it to Tremblant Woods.'}]);
+assert.deepEqual(earnedCarCards(win).map(card => card.text), ['Earned with 6 medals. In your garage now.', 'Earned with 6 medals. In your garage now.']);
+assert.equal(earnedCarCards({earnedCars: ['bugatti_bolide']})[0].text, 'Earned with 24 medals, 6 of them gold. In your garage now.');
+assert.deepEqual(earnedCarCards({}), []);
 saved = win.profile; garageCar = 'medal_test_a'; html = garage();
+assert.ok(html.includes('data-action="medal-sheet"') && html.includes('MEDALS 6/12 · NEXT CAR AT 12'), 'the garage has the medal chip near the build name');
+assert.ok(medalChip(saved).includes('MEDALS 6/12'));
+assert.equal(medalChip(createProfile()).includes('MEDALS 0/6 · NEXT CAR AT 6'), true);
 assert.ok(html.includes('MEDAL REWARD · Arrives fully tuned.'), 'the owned medal car has its own reward note');
-assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 15'));
+// The next car is the first unowned medal car in config order: the real F1
+// (12 medals) comes before the Bolide (24 with 6 gold) and the scratch cars here.
+assert.ok(html.includes('MEDAL SHEET') && html.includes('NEXT CAR AT 12'));
 garageCar = 'koenigsegg_jesko'; html = garage();
 assert.ok(html.includes('GARAGE COMPLETION REWARD') || html.includes('MAX OTHER CARS'), 'the Jesko keeps its own page');
 // The menu: a hidden car is never the menu car or the rival's car.

@@ -15,7 +15,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'arena-ambush-alley', 'arena-fuel-run', 'arena-pit', 'arena-shove',
   'armor-kit-visuals', 'arsenal-core', 'blackiron', 'combat-armor-frame-pacing',
   'combat-ramming', 'convoy-frames', 'convoy-raid', 'convoy-tanker-art',
-  'crew-fighters', 'first-person-gear', 'first-person-polish', 'frame-pacing',
+  'crew-fighters', 'deep-frames', 'first-person-gear', 'first-person-polish', 'frame-pacing',
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',
@@ -50,7 +50,7 @@ export function parseSuiteArguments(args) {
   if (options.all === !!options.names)
     throw Error('Usage: node tools/run-browser-scenarios.mjs --all|--scenarios NAMES [--jobs 1..4] [--output-dir .evidence/PATH]');
   if (options.timingOnly) {
-    if (!options.names || options.names.some(name => !['frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
+    if (!options.names || options.names.some(name => !['deep-frames','frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
       throw Error('--timing-only requires explicit existing frame recipe names.');
     options.headed = true;
   }
@@ -67,7 +67,7 @@ export async function namedScenarios({includeManual = false} = {}) {
   return (await readdir(scenarioDir))
     .filter(file => /^[a-z][a-z0-9-]*\.mjs$/.test(file) && !['smoke.mjs', 'review-sheet.mjs'].includes(file))
     .filter(file => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, file.slice(0, -4)))
-    .filter(file => includeManual || file !== 'rustwall-frame.mjs')
+    .filter(file => includeManual || !['rustwall-frame.mjs', 'yeti-fur-tint.mjs', 'deep-art-final-sheet.mjs', 'heli-logbook-art.mjs'].includes(file))
     .map(file => file.slice(0, -4))
     .sort();
 }

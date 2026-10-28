@@ -83,3 +83,20 @@ Listening is complete. What remains is the real in-game mix, now that DEEP-ZONE 
 ## Native mix dependency — 13 October evening
 
 The eight cues and round-two listening are accepted. The remaining real Kelp Coast mix is blocked on DEEP-TRAIL, which waits for Kyle's storyboard. Production main creates App without Deep providers; App defaults to an empty list, and installDeepCourse returns before installing a journey when no provider is supplied. The test-only kelp provider is not authored playable content. Real place, log and pearl events therefore cannot be exercised in a Kelp Coast journey yet. Keep the native mix check open; do not add placeholder content or claim the isolated listening reel proves it. Existing source, assets, gains and mastering remain unchanged.
+
+## Claude, 24 October 2026: four more cues for the story
+
+DEEP-TRAIL now brings the real Kelp Coast, so the in-game mix can happen. Add
+the four cues of THE_DEEP 10.1 in this card (take `sound-bank` again for
+them): `deep.sonar` (a clean, short ping, about 1.5 kHz, 0.3 s, a slight
+ring), `deep.echo` (a quieter, duller tick of the same pitch, played after the
+real echo time in the `deepSonar` payload), `deep.liftbag` (air rushing into
+a bag for 3 s, then bubbles rising away) and `deep.raised` (a low, slow swell
+of about 4 s as the car breaks free of the sand). Built from recipes like the
+first eight; one listening packet to Claude, at most three rounds.
+
+## Done (Claude, 25 October 2026)
+
+Kyle waived listening passes ("voice isn't something we're really working
+much on, so we'll just release"). The eight cues merged in b635b88b with
+measured loudness and peaks inside the card's limits; the card is done.

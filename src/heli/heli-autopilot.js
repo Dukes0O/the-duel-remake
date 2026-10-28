@@ -4,7 +4,7 @@
 // cable barely swings) and stops in a hover 20 m above the landing zone.
 // Landing and setting down stay with the pilot in H1. Any control beyond
 // 30% hands control straight back. Pure: it only turns state into targets.
-import {GRAVITY, HELI_STEP, HORIZONTAL_DRAG, heliMass} from './heli-flight.js';
+import {GRAVITY, HELI_STEP, HORIZONTAL_DRAG, KESTREL, heliMass} from './heli-flight.js';
 
 const DEG = Math.PI / 180;
 
@@ -28,8 +28,47 @@ export const AUTOPILOT = Object.freeze({
   antiSway: 0.5,
 });
 
+// Climbing a mountain (RESCUE-SUMMIT-TUNE). When the straight line to the goal
+// would pass within `near` metres of a mountain (ground `rise` metres above the
+// ground under the helicopter that reaches its own height), the autopilot holds at least
+// `over` metres above the highest ground in the next `reach` metres of the path
+// (never closer than `endMargin` to the goal, where the usual approach takes
+// over), capped by the flying ceiling and by the height the thin air still lets
+// the helicopter hold. Where the straight line already clears the ground
+// nothing here applies, and nothing changes.
+export const FOLLOW = Object.freeze({near: 60, rise: 200, over: 80, reach: 600, step: 40, endMargin: 120, every: 60, holdMargin: 1.1});
+const followCache = new WeakMap();
+
 const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+// The highest y the helicopter can still hold a hover at in thin air.
+function thrustCeiling(state) {
+  const need = FOLLOW.holdMargin * heliMass(state) * GRAVITY / (KESTREL.maxThrust * (state.upgrades?.thrustFactor ?? 1));
+  return need >= 1 ? -Infinity : -(state.upgrades?.altitudeScaleM ?? KESTREL.airScaleHeight) * Math.log(need) - state.altitudeOffset;
+}
+
+// The floor the climb needs now, or -Infinity when the straight line is clear.
+function followFloor(state, target, distance, hoverY, hang, ground, ceiling) {
+  if (!ground || distance <= FOLLOW.endMargin + FOLLOW.step) return -Infinity;
+  const ux = (target.x - state.x) / distance, uz = (target.z - state.z) / distance, last = distance - FOLLOW.endMargin;
+  const highestAt = s => { const x = state.x + ux * s, z = state.z + uz * s; return ground.highest ? ground.highest(x, z, 6) : ground.height(x, z); };
+  // A mountain: ground ahead that stands `rise` metres over the ground under the helicopter, reaches
+  // its own height and comes within `near` of the line. The hills of the other courses are lower.
+  let tight = false;
+  for (let s = FOLLOW.step; s <= last && !tight; s += FOLLOW.step) {
+    const top = highestAt(s);
+    tight = top > state.groundY + FOLLOW.rise && top > state.y && top + FOLLOW.near > state.y + (hoverY - state.y) * s / distance;
+  }
+  if (!tight) return -Infinity;
+  const thin = thrustCeiling(state);
+  let floor = -Infinity;
+  for (let s = 0; s <= Math.min(FOLLOW.reach, last); s += FOLLOW.step) {
+    const top = Math.min(thin, ceiling ? ceiling(state.x + ux * s, state.z + uz * s) - 5 : Infinity);
+    floor = Math.max(floor, Math.min(highestAt(s) + FOLLOW.over + hang, top));
+  }
+  return floor;
+}
 
 export function createAutopilot() {
   return {engaged: false, holdY: 0, holdHeading: 0, target: null, arrived: false, cruiseY: 0, speed: 0};
@@ -41,6 +80,7 @@ export function setAutopilotTarget(autopilot, target) {
   autopilot.target = ok ? {x: target.x, z: target.z, groundY: target.groundY} : null;
   autopilot.arrived = false;
   autopilot.speed = null;
+  followCache.delete(autopilot);
 }
 
 export function toggleAutopilot(autopilot, state) {
@@ -64,7 +104,8 @@ export function wantsControl(controls = {}) {
 // of the ground on the way.
 // load: the hooked load {vx, vz} when one hangs; the autopilot leans the
 // hook toward the load's swing, which damps it.
-export function autopilotStep(autopilot, state, controls, {ground = null, hang = 0, load = null, dt = HELI_STEP} = {}) {
+// ceiling: (x, z) -> the top of the flying area there, or left out for none.
+export function autopilotStep(autopilot, state, controls, {ground = null, hang = 0, load = null, ceiling = null, dt = HELI_STEP} = {}) {
   const events = [];
   if (!autopilot.engaged) return {commands: null, events};
   if (wantsControl(controls) || state.crashed || state.onGround && !autopilot.target) {
@@ -79,8 +120,18 @@ export function autopilotStep(autopilot, state, controls, {ground = null, hang =
     const x = state.x + state.vx * seconds, z = state.z + state.vz * seconds;
     highest = Math.max(highest, ground ? (ground.highest ? ground.highest(x, z, 6) : ground.height(x, z)) : state.groundY);
   }
-  const floor = highest + AUTOPILOT.clearance + hang;
+  let floor = highest + AUTOPILOT.clearance + hang;
   const target = autopilot.target;
+  if (target) {
+    // Looked at twice a second, not every step.
+    const hoverNow = target.groundY + AUTOPILOT.hoverAbove + hang, away = Math.hypot(target.x - state.x, target.z - state.z);
+    let cache = followCache.get(autopilot);
+    if (!cache || ++cache.count >= FOLLOW.every) {
+      cache = {count: 0, floor: followFloor(state, target, away, hoverNow, hang, ground, ceiling)};
+      followCache.set(autopilot, cache);
+    }
+    if (away > 60) floor = Math.max(floor, cache.floor);
+  }
   if (!target) {
     const climb = clamp(0.5 * (Math.max(autopilot.holdY, floor) - state.y), -AUTOPILOT.maxSink, AUTOPILOT.maxClimb);
     const yawRate = clamp(1.5 * wrap(autopilot.holdHeading - state.heading), -AUTOPILOT.turnRate, AUTOPILOT.turnRate);

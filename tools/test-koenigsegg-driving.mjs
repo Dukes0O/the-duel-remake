@@ -17,7 +17,8 @@ for(const [other,spec]of Object.entries(CARS).filter(([other])=>other!==key)){
   const max=upgradedCar(spec,levels);
   check(tuned.topSpeed>max.topSpeed,`${other}: the Jesko is faster even than this fully upgraded car`);
   check(tuned.accel>max.accel,`${other}: the Jesko has more engine acceleration`);
-  check(tuned.braking>max.braking,`${other}: the Jesko has stronger brakes`);
+  // LAB-FAN: the electric fan car has the game's strongest brakes.
+  if(other!=='mcmurtry_speirling')check(tuned.braking>max.braking,`${other}: the Jesko has stronger brakes among petrol cars`);
   check(tuned.grip>=max.grip,`${other}: the Jesko has top-tier corner grip`);
   check(tuned.boostCapacity>max.boostCapacity,`${other}: the Jesko carries a larger nitro tank`);
 }
@@ -81,9 +82,13 @@ for(const car of Object.keys(CARS)){
 }
 const reward=benchmark.find(row=>row.car===key);
 for(const row of benchmark.filter(row=>row.car!==key)){
-  check(reward.brakingMeters<row.brakingMeters,`${row.car}: Jesko stops in less distance from 100 mph`);
-  check(reward.nitroSeconds>row.nitroSeconds*1.3,`${row.car}: Jesko nitro lasts substantially longer`);
-  check(reward.burstGain>row.burstGain*1.2,`${row.car}: Jesko has a stronger measured nitro impulse`);
+  if(row.car!=='mcmurtry_speirling')check(reward.brakingMeters<row.brakingMeters,`${row.car}: Jesko stops in less distance from 100 mph among petrol cars`);
+  // A car with its own enlarged boost tank (the Bolide, EARN-CAR-3, 1.35
+  // against the Jesko's 1.4) must only be beaten; every other car, the Enzo
+  // included, by the same wide margin as before.
+  const bigTank=(CARS[row.car].boostCapacity??1)>1;
+  check(reward.nitroSeconds>row.nitroSeconds*(bigTank?1:1.3),`${row.car}: Jesko nitro lasts ${bigTank?'longer':'substantially longer'}`);
+  check(reward.burstGain>row.burstGain*(bigTank?1:1.2),`${row.car}: Jesko has a stronger measured nitro impulse`);
 }
 
 // Real garage purchases in private memory, followed by two input-only Pacific
@@ -95,8 +100,6 @@ try{
   for(const car of Object.keys(CAR_PRICES))check(buyer.unlockCar(car).ok,'test wallet buys an ordinary catalog car');
   for(const [car,spec]of Object.entries(CARS).filter(([,spec])=>!spec.unlockRequirement))for(const type of Object.keys(UPGRADE_TYPES))for(let level=0;level<3;level++)check(buyer.purchaseUpgrade(car,type).ok,'normal garage API builds the qualifying fleet');
   check(isCarUnlocked(buyer.profile,key),'the final upgrade earns the reward');same(getUpgradeLevels(buyer.profile,key),levels,'the earned reward comes fully upgraded');
-  // The Jesko travels only by air: record it as flown to the first course.
-  buyer.profile={...buyer.profile,heli:{version:1,carsAt:{[key]:COURSE[0].id}}};buyer._saveProfile();
   const options={startStage:0,car:key,mode:'timetrial',difficulty:'casual',cpuDifficulty:'medium',routeVariant:'route_a'},runs=[];
   for(const fps of [30,144]){
     const app=new App();app.autopilot=true;app._scriptedCrashDone=true;
@@ -113,7 +116,6 @@ try{
   console.log(`Jesko input-only Pacific race: ${runs[0].time}s, ${runs[0].steps} fixed steps, ${runs[0].crashes} crashes, exact 30/144 FPS trajectory.`);
   for(const [startStage,event]of COURSE.entries())if(event.expansion){
     const app=new App();check(app.purchaseCourse(event.id).ok,`${event.id}: normal credits unlock this course`);
-    app.profile={...app.profile,heli:{version:1,carsAt:{[key]:event.id}}};app._saveProfile();// flown here
     check(app.startCampaign({...options,startStage,mode:'duel',cpuDifficulty:'easy'}),`${event.id}: the owned reward enters this owned course`);
     app.autopilot=true;app._scriptedCrashDone=true;const s=app.duel.state;
     let missedGates=0;app.duel.onChange((_,change)=>{if(change.checkpointReset)missedGates++;});

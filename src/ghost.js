@@ -62,7 +62,16 @@ export function setGhostArchive(storage,rows){
 }
 export function clearGhostArchive(storage){archiveViews.delete(storage);}
 export function loadGhosts(storage){try{const target=storage??globalThis.localStorage,raw=target?.getItem(GHOST_KEY),value=raw?JSON.parse(raw):createGhostStore(),archive=archiveViews.get(target);return normalizeGhostStore(archive?{...value,archivedRecords:[...(value.archivedRecords??[]),...archive.rows]}:value);}catch{return createGhostStore();}}
-export function saveGhosts(store,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;const normalized=normalizeGhostStore(store),archive=archiveViews.get(target);if(archive&&JSON.stringify(normalized.archivedRecords)!==JSON.stringify(archive.normalized))return false;target.setItem(GHOST_KEY,JSON.stringify(archive?{...normalized,archivedRecords:[]}:normalized));return true;}catch{return false;}}
+export function saveGhosts(store,storage){
+  try{
+    const target=storage??globalThis.localStorage;
+    if(!target)return false;
+    const normalized=normalizeGhostStore(store),archive=archiveViews.get(target);
+    if(archive&&JSON.stringify(normalized.archivedRecords)!==JSON.stringify(archive.normalized))return false;
+    const saved=target.setItem(GHOST_KEY,JSON.stringify(archive?{...normalized,archivedRecords:[]}:normalized));
+    return saved?.then?saved.then(()=>true,()=>false):true;
+  }catch{return false;}
+}
 export function readGhostEnabled(storage){try{return (storage??globalThis.localStorage)?.getItem(GHOST_ENABLED_KEY)!=='false';}catch{return true;}}
 export function saveGhostEnabled(enabled,storage){try{const target=storage??globalThis.localStorage;if(!target)return false;target.setItem(GHOST_ENABLED_KEY,String(!!enabled));return true;}catch{return false;}}
 export function findGhost(store,playerId,options){const key=ghostKey(playerId,options);return key?store.records.find(record=>currentRecord(record)&&record.key===key)||null:null;}

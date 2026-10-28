@@ -2,6 +2,245 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The Lab's benches after a passed lesson, 28 October 2026
+
+### What players get now
+
+- **A passed lesson's bench opens straight to its action:** the Rust bench
+  goes straight to Restore the Sirena, and the wind tunnel's secret fan
+  REVERSE is reachable again. "Replay the lesson" is one button away.
+
+## The Deep works again, and Kelp Coast titles, 28 October 2026
+
+### What players get now
+
+- **Diving works again:** the 05:37 build turned the car toward the ramp at
+  the start of a dive, so the first throttle ended it. The car now starts
+  facing along the trail, and still never jumps away from the trail.
+- **Kelp Coast place titles** the first time you reach each place, and the
+  Coast Cup card no longer covers the results text.
+- Earned cars (still switched off): the F1 comes at 12 medals, a won car gets
+  its own card on the results screen, and the garage shows your medal count.
+
+## No more jumps in the Deep, 28 October 2026
+
+### What players get now
+
+- **Driving across the open sea floor is smooth:** the car no longer jumps
+  sideways (up to 62 m at the sharpest bend) when you drive far from the
+  trail. With the rock fix, nothing underwater moves the car except driving.
+
+## The pilot's map, 28 October 2026
+
+### What players get now
+
+- **The pilot's map in the helicopter (N):** every course on one chart, click
+  a place to fly there, fuel you need for each leg, fuel pads, secret signs to
+  find from the air, and the Table on the way to Pacific Canyon.
+
+## Lessons you can finish, and the Deep's rocks, 27 October 2026 (night)
+
+### What players get now
+
+- **A lesson run always goes to the finish line.** Walls, trips off the road
+  and stops make a run not clean, but you keep driving; the result card judges
+  the whole run.
+- **Go back to any step.** The four steps are buttons, during a run and on the
+  result card: watch again, follow the ghost again, or repeat a step.
+- **Room to beat the instructor in every car.** His time is always at least
+  7% (Casual) or 4% (Pro) slower than a perfect run of his line in your car.
+- **Woods braking has its own road:** Beaver Run, Beaver Hairpin, the long
+  Timber Straight into Devil's Chicane, Lodge Bend and the Final Turn.
+- **The Deep's sea-floor rocks:** small ones bounce you off, large ones get
+  pushed aside; no rock stops the car dead or moves it somewhere else.
+
+## Brian's new lesson lines, 27 October 2026 (evening)
+
+### What players get now
+
+- **Brian speaks the second-version lessons:** an intro for each lesson, a
+  line at the start of each step, advice for each kind of miss (braked late
+  or early, too fast, tyres slid, off the road) and a pass line. His words
+  match the text on screen.
+
+## Driving lessons, second version, 27 October 2026
+
+### What players get now
+
+- **Each driving lesson is a real stretch of road:** 30 to 48 seconds and up
+  to nine corners, starting at race speed. Panorama lesson 1 runs from
+  Mountain Straight through The Cutting and the Esses to Forrest Elbow.
+- **A briefing before you drive:** a map with the line, the brake zones and
+  each corner's target speed, the words explained with pictures, and what
+  passes each step.
+- **Four steps:** Watch me (the instructor drives your car, first the late
+  brake, then clean), Follow me (his ghost ahead), Your turn, Beat me.
+- **On the road and screen:** the line painted green, white and red, brake
+  zones with the target speed, a target box beside the speedometer in km/h,
+  the gap to the instructor and a light for each corner.
+- **Fair passing:** a clean run faster than the instructor always passes; a
+  second faster earns gold. The result card shows every corner and one line
+  of advice.
+
+## Lesson and Summit landing fixes, 27 October 2026 (morning)
+
+### What players get now
+
+- **Driving lessons start in every car**, including the Koenigsegg Jesko at
+  Panorama Ridge. If a lesson ever cannot start, it says so in plain words.
+- **Landing at Summit Run** now shows the arrival panel: Race here, Shut down
+  and the crate board. During a rescue call or ski drop it says what is
+  waiting.
+
+## All sixteen Lab lessons, 27 October 2026
+
+### What players get now
+
+- **The Lab's Snow and Wind tunnel corners:** launch angles and ski wax, then
+  grip, downforce, braking, suspension and fuel. Every one of Brian's sixteen
+  lessons is now rebuilt in the walkable Lab.
+
+## Lessons, logbook, skiing, rescue and the new Lab, 26 October 2026 (night)
+
+### What players get now
+
+- **Driving lessons** (INSTRUCTOR on the menu): the instructor drives a
+  corner first, then you try it the wrong way and the right way. Lesson 1
+  runs at The Cutting or Beaver Hairpin, whether or not you own the course.
+- **Kestrel One's logbook:** five real pilot ranks from Student pilot to
+  Chief pilot, each with its own paint for the helicopter, and Gus
+  Lindqvist's old logbooks on the shelf at the pad, each pointing at
+  something real out in the world.
+- **Heli-skiing** at Summit Run and Tremblant Snow: slalom (with a gentle
+  line assist on Casual), giant slalom, moguls, aerials and the powder bowl.
+- **Rescues:** hikers, avalanches, a hoist and supply runs, with clear
+  directions to the fuel truck when you need it.
+- **The new Lab:** walk Brian's hangar, talk to Brian (E), click where you
+  want to go, and eight rebuilt lessons in the Workshop and Flying corners.
+
+## Summit finish, 26 October 2026 (evening)
+
+### What players get now
+
+- **A real finish at the top of Summit Run:** a timber gantry with SUMMIT
+  across it, a red timber hut and a domed observatory with warm windows, a
+  car park past the line to stop in, and the helipad with its H and windsock.
+- Summit loads a little faster before the countdown.
+
+## Fixes and Grand Prix pay, 26 October 2026 (afternoon)
+
+### What players get now
+
+- **Grand Prix pays.** Every finishing place earns credits (a win pays the
+  same as a Duel win on that course; Pro doubles it; no loss charge), and
+  Grand Prix records, ghosts and the cups are on.
+- **Landing somewhere means something.** Set the helicopter down at a place
+  and a panel says where you are and what is there: a car of yours parked
+  there, jobs leaving from there, **Race here** or **Shut down**. The pause
+  screen shows the helicopter keys during a flight.
+- **Return loads.** Every pad away from home has one crate job a day, sent by
+  someone who lives there (the lodge's empty gas bottles, the rangers' sample
+  boxes, Ana's crates), and it always pays more than its fuel.
+- **Summit Run:** the hillside under the upper roads is back (no more
+  floating trees, edge lines or cliff slabs), and you can no longer drive
+  out through the side of the snow shed.
+- **Saved ghosts:** the results screen no longer says a ghost failed to save
+  while it is still saving.
+
+## Fixes, 26 October 2026 (early morning)
+
+### What players get now
+
+- **Helicopter lesson 4 is clear.** The target is a full circle that turns
+  green when the crate is over it, the lesson says when to lower and when to
+  let go, and a missed try says what went wrong.
+- **Saves no longer fill up.** Ghost laps and race data are stored in the
+  browser's larger database instead of the small save area, so the "storage
+  budget is full" message should not return. Existing saves, records and
+  backups move over safely on first load. If space ever does run short, the
+  message names what is taking it.
+
+## Story release 2: the Lab and the Sirena, 25 October 2026 (night)
+
+### What players get now
+
+- **The Lab is open.** Brian's workshop (THE LAB tab in the garage, or the
+  door on the helipad board): sixteen lessons, each a bench you can run and a
+  true explanation, with a challenge that opens an upgrade. Every challenge is
+  passable with steady, simple play.
+- **Tuning.** Tyre pressure, wing, brake balance, springs and fuel, each a
+  trade; a tuned Time Trial lap 1% faster than your stock lap pays 400 once
+  per course.
+- **The secret.** Pass all five wind-tunnel lessons and look closely at the
+  tunnel dial. The McMurtry Speirling, built for 15,000.
+- **The Sirena, all the way.** Raise her from the Kelp Coast; in the Lab, Get
+  her running (1,000) and she joins your garage as found, crusted with
+  barnacles, shells and seaweed; race her like that, or buy the Restored 1966
+  finish (1,500) and keep both. The Coast Cup runs in either finish.
+- **Achievements** on a shelf in the garage: Raised from the Deep, She runs
+  again, Wreck racer, the two Coast Cups and Restored.
+
+## Racecraft and The Deep's explorer, 25 October 2026 (evening)
+
+### What players get now
+
+- **Grand Prix racecraft is on.** Computer cars pass when they are quicker,
+  use nitro and defend on the first lap, and nitro stays locked until the
+  first corner for everyone. The field now starts wide, holding its grid lanes
+  for the first 200 m, and a computer car never steers into a car alongside it.
+- **The Deep, from Kyle and Gratian's first dive:** a 12 m concrete boat ramp
+  cut into the hill with a signed turn-off and a guided, straight descent; a
+  better camera on the ramp; seabed bumps no longer launch the car; a Surface
+  button (U) from anywhere; solid rocks; the cartographer's chart that fills in
+  as you explore and is saved; finds pinned where you found them; Ana's list of
+  goals with ticks and hints; creatures log when you hold close to the animal
+  itself, with a logging ring; the dive kit after 3 Pacific Canyon finishes and
+  a "New in the garage" note when it arrives.
+
+## Fixes and work in progress, 25 October 2026
+
+### What players get now
+
+Grass, tufts and grit sit on the ground you see and stay off every road,
+including hairpins and shortcuts. Road cars accelerate more gently, taking
+about 2.4 to 4.2 seconds to reach 60 mph. After a crash you still get a quick
+pull-away. Arenas keep their lively starts. Chase police have been adjusted
+to the slower pace, and Easy Checkpoint Rush gives more time after each gate.
+
+The helicopter hook catches cargo more easily. A ring under a nearby load
+turns green when it is ready, and a missed H press tells you to move closer,
+change height or slow down. The Titan monster truck takes big air off cars
+again, with a BIG AIR callout when it lands.
+
+Summit's world builds in about 0.85 to 0.89 seconds, down from about 1.45,
+with the same scenery. The first load can still take longer while files
+arrive. The Yeti's pale fur is easier to see against snow at night. Team Room
+passing-zone flags on Harbour Lights and Panorama Ridge now have written
+driving notes.
+
+The automatic checks for the helicopter yard, Yeti, course views and race
+sound have also been repaired. The demonstration driver can turn out of a
+pocket of scenery when stuck.
+
+**Switched on in this release:** The Deep (`the-deep`): drive down the old ramp at Pacific Canyon into the Kelp Coast, meet Ana, log the sea life, find pearls, raise the lost Falcone Sirena with sonar and lift bags, and race the Coast Cup. Also the Koenigsegg Jesko races on every course and in every mode again (Kyle, for Gratian). CPU racecraft and the wide start wait for the next release (an Ardennes crash to fix first).
+
+### Built but switched off
+
+These features remain behind development switches. They are not available
+in the normal game yet, and some still need finishing checks.
+
+- The Lab: experiments, helicopter challenges and upgrades, Sirena restoration, tuning and its lap bonus; the fan car model and blueprint are built, but the car still needs adding to the game.
+- The Deep: the Kelp Coast dive, sea life, pearls, Ana's radio, sonar and lift bags, the lost Sirena and its Coast Cup.
+- Heli-skiing: five Summit runs, drops and pickups, changing snow, medals, saved bests and group jobs.
+- The pilot's map: click-to-fly travel, scouting, five secret course versions, the Table and notes for the reverse routes.
+- Driving lessons: braking, racing lines, gears and snow, with an instructor, cones, radio and saved progress.
+- Sliding tyres: grip loss, tyre sound and steering feel, with the Drift Trial's quick launch kept.
+- Engine curve: engine pull follows revs and gears, with separate best laps for these rules.
+- Racecraft: computer rivals use nitro and defend on the first lap; the four new passing moves remain disabled.
+- Earned cars: the McLaren F1 and Bugatti Bolide, unlocked by medals.
+- Helicopter rescues: hikers, avalanches, hoists and supplies, including Summit flights, fuel stops and car recovery.
+- Helicopter wildlife and skins: counting jobs, earned or bought paint, special gear, dirt and washing.
+
 ## Summit Run – 16 October 2026
 
 A new Grand Prix course: one long climb from the desert to a snowy summit, about

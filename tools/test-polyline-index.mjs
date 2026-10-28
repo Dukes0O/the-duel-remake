@@ -23,6 +23,8 @@ function compare(points,positions,label){
   for(const[x,z]of positions){
     const result=index.query(x,z);equal(result,brute(points,x,z),`${label}: exact segment, t and squared distance`);
     equal(result,brute(points,x,z,true),`${label}: exact Course exponent arithmetic`);queries++;
+    // `lookup` is the same answer without a fresh object (hot loops use it), whatever the queries before it were.
+    const hit=index.lookup(x,z);equal({index:hit.index,t:hit.t,distanceSq:hit.distanceSq},result,`${label}: lookup agrees with query`);
   }
   equal(JSON.stringify(points),before,'Index construction and queries do not mutate source points');return index;
 }
@@ -36,6 +38,14 @@ const retained=snapshot.query(7,3);snapshot.query(-1,-5);equal(retained,{index:1
 const tiePoints=[];for(let i=0;i<24;i++)tiePoints.push({x:i%2?100:-100,z:i%4<2?0:20});
 compare(Object.freeze(tiePoints.map(Object.freeze)),[[0,0],[0,10],[0,20],[-100,0],[100,0],[0,1e15]],'overlaps and exact equidistant ties');
 equal(createPolylineIndex(tiePoints).query(0,0).index,1,'Spatial traversal retains the first source segment on exact ties');
+// The index keeps the last answer as its first guess for the next query; a guess never changes an answer. Ask the same
+// points in different orders (near the route, then far away, then back) and compare each to the full scan.
+{
+  const route=Array.from({length:200},(_,i)=>({x:i*3,z:40*Math.sin(i*.2)})),guessed=createPolylineIndex(route);
+  const places=[[0,0],[300,-90],[10,5],[590,40],[-4e4,7e4],[55,41],[56,41],[300,-90],[300.0001,-90],[120,300],[0,0]];
+  for(const order of[places,[...places].reverse(),[places[4],places[0],places[4],places[8],places[2]]])
+    for(const[x,z]of order){equal(guessed.query(x,z),brute(route,x,z),'The previous answer never changes the next one');queries++;}
+}
 compare([{x:-1e12,z:0},{x:1e12,z:0},...Array.from({length:40},(_,i)=>({x:1e12+i*.5,z:2+i}))],[[0,1],[1e11,.001],[-1e12,-5],[1e12,1],[1e15,1e15],[-1e15,-1e15]],'very long segments and far queries');
 compare([{x:1,z:1},{x:1,z:1},{x:5,z:1},{x:5,z:1},{x:1,z:1}],[[1,1],[3,2],[5,1],[0,0]],'mixed degenerate, endpoint and retraced segments');
 compare([{x:0,z:0},{x:10,z:0}],[[Number.MAX_VALUE,0],[0,-Number.MAX_VALUE]],'finite queries whose squared distances overflow');

@@ -203,7 +203,26 @@ export function rescueConditions({summitRun = false} = {}) {
 // The mission clock in seconds of simulated time (section 3.4). It counts
 // from the answer, in the air or on the ground, and a cruise leg adds its
 // flying time. The supply run has no casualty, so nobody gets cold.
-export const RESCUE_CLOCKS = Object.freeze({hiker: 900, avalanche: 720, hoist: 720, supply: 1500});
+export const RESCUE_CLOCKS = Object.freeze({hiker: 900, avalanche: 720, hoist: 900, supply: 1860});
+// Summit Run's own rows (RESCUE-SUMMIT-TUNE): the slopes and the hut are high on
+// the mountain and a cruise leg from the home pad comes first. Only the kinds
+// that can be set there have a row; every other course keeps the rows above.
+export const SUMMIT_COURSE = 'summit-run';
+// Each is the steady scripted pilot's time flown end to end from the home pad (cruise leg
+// included, a fill at the lodge's truck on the way) times 1.55, rounded up to 30 s: supply
+// 1,720 s -> 2,670 s, avalanche 1,450 s -> 2,250 s (tools/test-heli-summit-tune.mjs flies
+// them and keeps 35% of the clock in hand).
+export const SUMMIT_CLOCKS = Object.freeze({avalanche: 2250, supply: 2670});
+export const clockBase = (kind, courseId) => courseId === SUMMIT_COURSE && Object.hasOwn(SUMMIT_CLOCKS, kind) ? SUMMIT_CLOCKS[kind] : RESCUE_CLOCKS[kind] ?? 0;
+// A call or rescue stored at Summit Run, met with rescues on and the Summit
+// switch off (a dev case), is dropped quietly: no call, no pay, no charge, and
+// the count is left where it was so the next call rings as usual.
+export function dropSummitCall(missions, {rescue = false, summitRun = false} = {}) {
+  if (rescue !== true || summitRun === true) return missions;
+  const atSummit = item => item?.courseId === SUMMIT_COURSE;
+  if (!atSummit(missions.call) && !atSummit(missions.rescue)) return missions;
+  return {...missions, call: atSummit(missions.call) ? null : missions.call, rescue: atSummit(missions.rescue) ? null : missions.rescue};
+}
 export const CASUALTY_KINDS = Object.freeze(['hiker', 'avalanche', 'hoist']);
 // The hiker's light dims over the clock's last 3 minutes (drawing only).
 export const DUSK_SECONDS = 180;
@@ -271,8 +290,9 @@ export function beginRescue(missions, {rescue = false} = {}) {
 // gear is the worn gear's numbers (heli-skins.js gearStats): the search and
 // rescue skin's searchlight runs the hiker search 8 minutes on into the night.
 // Left out, or the base kit, the limit is the clock above.
-export const rescueLimit = (kind, gear) => searchLimit(RESCUE_CLOCKS[kind] ?? 0, kind, gear);
-export const clockLeft = (r, gear) => Math.max(0, rescueLimit(r.kind, gear) - r.clockSeconds);
+// courseId picks Summit Run's row; left out, or any other course, it is the row above.
+export const rescueLimit = (kind, gear, courseId) => searchLimit(clockBase(kind, courseId), kind, gear);
+export const clockLeft = (r, gear) => Math.max(0, rescueLimit(r.kind, gear, r.courseId) - r.clockSeconds);
 // 0 in daylight to 1 at dark: the hiker's last 3 minutes. Drawing only. Dark
 // falls at the plain clock whatever gear is worn; the searchlight only
 // lengthens the search into the night.
@@ -286,10 +306,10 @@ export const duskOf = r => r.kind === 'hiker' ? Math.max(0, Math.min(1, 1 - cloc
 export function tickRescue(missions, seconds, {rescue = false, gear = null} = {}) {
   const r = rescueOf(missions, {rescue});
   if (!r || !(seconds > 0)) return {missions, cold: false, expired: !!r && clockLeft(r, gear) <= 0};
-  const limit = rescueLimit(r.kind, gear), clockSeconds = Math.min(limit, r.clockSeconds + seconds);
+  const limit = rescueLimit(r.kind, gear, r.courseId), clockSeconds = Math.min(limit, r.clockSeconds + seconds);
   let condition = r.condition, cold = false;
   // The casualty gets cold two thirds into the plain clock, searchlight or not.
-  if (CASUALTY_KINDS.includes(r.kind) && waitHurt(CONDITIONS[condition], clockSeconds, rescueLimit(r.kind)).cold) { condition = 1; cold = true; }
+  if (CASUALTY_KINDS.includes(r.kind) && waitHurt(CONDITIONS[condition], clockSeconds, rescueLimit(r.kind, null, r.courseId)).cold) { condition = 1; cold = true; }
   return {missions: {...missions, rescue: {...r, clockSeconds, condition}}, cold, expired: clockSeconds >= limit - 1e-9};
 }
 
