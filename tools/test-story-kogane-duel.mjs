@@ -48,11 +48,12 @@ const FIRST_HAIRPIN = 'Cedar Hairpin';
 
 // One race. `solo` runs Daichi alone: the player stays 40 m behind him, so the catch-up rule is neutral, and the run ends
 // when he crosses the line. Otherwise the driver races him to the finish.
-function race({level, skill = .95, upgrade, solo = false, noNitro = false, car = 'stuttgart_959s', seed = 1989}) {
+function race({level, skill = .95, upgrade, solo = false, noNitro = false, nitro, car = 'stuttgart_959s', seed = 1989}) {
   const app = new App();
   app._refreshPlayer(); app.seed = seed; app.cpuDifficulty = level;
   const start = koganeDuelStart(level);
   if (upgrade != null) start.rival = {...start.rival, upgradeLevel: upgrade};
+  if (nitro != null) start.rival = {...start.rival, nitroScale: nitro};
   const stage = courseIndex(raceCourseId);
   app.duel.startCampaign({...start, car, difficulty: 'casual', driverId: 'club', startStage: stage, seed, playerId: app.player.id, upgrades: {}});
   const d = app.duel, s = d.state, daichi = s.opponents[0];
@@ -177,6 +178,12 @@ noGrant(base, win({rival: {...daichiRival('easy'), upgradeLevel: 3}}), 'another 
 noGrant(base, win({rival: {...daichiRival('easy'), car: 'stuttgart_959s'}}), 'another rival car');
 noGrant(base, win({rival: {...daichiRival('easy'), driverId: 'mara_vale'}}), 'another rival driver');
 noGrant(base, win({rival: null}), 'no rival settings');
+{
+  const hardWin = {cpuDifficulty: 'hard', rival: daichiRival('hard')};
+  ok(settleRace(base, win({...hardWin, runId: 'h1'})).storyCar === KOGANE_SKYLINE, 'Hard Daichi, with his reduced nitro, is a valid rival');
+  noGrant(base, win({cpuDifficulty: 'hard', rival: {...daichiRival('hard'), nitroScale: undefined}}), 'a Hard rival with full nitro');
+  noGrant(base, win({cpuDifficulty: 'hard', rival: {...daichiRival('hard'), nitroScale: .9}}), 'a Hard rival with another nitro share');
+}
 noGrant(base, win({cpuDifficulty: 'medium'}), 'a level that does not match Daichi\'s tuning');
 noGrant(base, win({cpuDifficulty: 'brutal'}), 'an unknown level');
 noGrant(createProfile(), win(), 'a player who has not started the story');
@@ -233,24 +240,24 @@ if (!rates) {
   const bands = {easy: [.85, 1], medium: [.35, .60], hard: [.10, .30]};
   const lesson = rates === 'lesson', level = lesson ? 'easy' : rates;
   assert.ok(LEVELS.includes(level), 'Choose easy, medium, hard or lesson.');
-  const count = lesson ? 10 : 30, range = lesson ? LESSON_RANGE : SKILL_RANGE, upgrade = argNumber('--upgrade'), noNitro = process.argv.includes('--no-nitro'), fixed = argNumber('--skill');
+  const count = lesson ? 10 : 30, range = lesson ? LESSON_RANGE : SKILL_RANGE, upgrade = argNumber('--upgrade'), noNitro = process.argv.includes('--no-nitro'), nitro = argNumber('--nitro'), fixed = argNumber('--skill');
   const rows = [];
   for (let index = 0; index < count; index++) {
     const skill = fixed ?? skillFor(index, count, range);
-    rows.push({duel: race({level, skill, upgrade, noNitro, seed: 1989 + index}), solo: null});
+    rows.push({duel: race({level, skill, upgrade, noNitro, nitro, seed: 1989 + index}), solo: null});
   }
   const wins = rows.filter(row => row.duel.won).length, rate = wins / count;
   const duels = rows.map(row => row.duel);
   // Daichi finishes when he crosses the line, or when the driver wins while he is still running and has not stopped.
   const finished = duels.filter(row => (row.daichiFinished || row.won && !row.stuck) && row.hairpinHits === 0).length;
-  const solo = race({level, upgrade, noNitro, solo: true});
+  const solo = race({level, upgrade, noNitro, nitro, solo: true});
   console.log(`${lesson ? 'lesson-pace driver on Easy' : level} on ${raceCourseId}, tuning ${duels[0].upgrade}, ${count} duels`);
   console.log(`  driver skill ${range.map(v => v.toFixed(2)).join(' to ')}${fixed ? ` (fixed ${fixed})` : ''}; wins ${wins}/${count} = ${Math.round(rate * 100)}%`);
   console.log(`  times: driver ${Math.min(...duels.map(r => r.timeSec)).toFixed(1)} to ${Math.max(...duels.map(r => r.timeSec)).toFixed(1)} s; Daichi alone ${solo.daichiTime?.toFixed(1)} s`);
   console.log(`  Daichi: finished or running at the end ${finished}/${count}; wall hits ${duels.reduce((n, r) => n + r.hits, 0)}, resets ${duels.reduce((n, r) => n + r.resets, 0)}, ` +
     `at the first hairpin ${duels.reduce((n, r) => n + r.hairpinHits, 0)}, stuck in ${duels.filter(r => r.stuck).length}`);
   console.log('  win by skill: ' + duels.map(r => `${r.skill.toFixed(3)}${r.won ? 'W' : 'L'}`).join(' '));
-  if (fixed == null && upgrade == null && !noNitro) {
+  if (fixed == null && upgrade == null && !noNitro && nitro == null) {
     if (lesson) ok(wins >= 9, `the lesson-pace driver wins Easy at least 9 of 10 (${wins})`);
     else ok(rate >= bands[level][0] && rate <= bands[level][1], `${level} win rate ${Math.round(rate * 100)}% is inside ${bands[level].map(v => v * 100).join(' to ')}%`);
     ok(finished / count >= .95, `Daichi finishes at least 95% of ${level} races (${finished}/${count})`);

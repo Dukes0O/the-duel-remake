@@ -10,9 +10,12 @@ export const KOGANE_DUEL_COURSE = 'kogane-pass-night';
 export const DAICHI_UPGRADE_LEVEL = Object.freeze({easy: 0, medium: 2, hard: 0});
 
 // The rival settings the game already has (`startCampaign({rival})`). Club driver: no skill bonus.
+// Hard keeps only part of the nitro's speed gain (`nitroScale`, src/sim-rival.js): with all of it Hard is out of reach of any driver.
+export const DAICHI_NITRO_SCALE = Object.freeze({hard: .5});
 export function daichiRival(level) {
   return Object.hasOwn(DAICHI_UPGRADE_LEVEL, level)
-    ? {car: KOGANE_SKYLINE, driverId: 'club', upgradeLevel: DAICHI_UPGRADE_LEVEL[level]} : null;
+    ? {car: KOGANE_SKYLINE, driverId: 'club', upgradeLevel: DAICHI_UPGRADE_LEVEL[level],
+      ...(Object.hasOwn(DAICHI_NITRO_SCALE, level) ? {nitroScale: DAICHI_NITRO_SCALE[level]} : {})} : null;
 }
 
 // What "Race Daichi" passes to startCampaign for a CPU level (the road and the player's own car come from the setup).
@@ -30,7 +33,7 @@ export function levelStart(duel) {
   return true;
 }
 
-const sameRival = (a, b) => !!a && !!b && a.car === b.car && a.driverId === b.driverId && a.upgradeLevel === b.upgradeLevel;
+const sameRival = (a, b) => !!a && !!b && a.car === b.car && a.driverId === b.driverId && a.upgradeLevel === b.upgradeLevel && a.nitroScale === b.nitroScale;
 
 // Called by settleRace once per race, after its own checks, with the profile it has built and `won` meaning a valid win.
 // Returns null when nothing is granted. Otherwise {profile, level, storyCar | storyOwned}. The mark of a race that
