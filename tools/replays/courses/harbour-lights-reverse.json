@@ -1,0 +1,19 @@
+{
+  "eventId": "harbour-lights-reverse",
+  "cases": [
+    {
+      "id": "harbour-lights-reverse-duel",
+      "eventId": "harbour-lights-reverse",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "harbour-lights-reverse-duel": {
+      "30": "38196bdb11c114aaff6d08111a76e5db86ed4929f1fddf5b7cc8d45eb062983b",
+      "60": "38196bdb11c114aaff6d08111a76e5db86ed4929f1fddf5b7cc8d45eb062983b",
+      "144": "38196bdb11c114aaff6d08111a76e5db86ed4929f1fddf5b7cc8d45eb062983b"
+    }
+  }
+}

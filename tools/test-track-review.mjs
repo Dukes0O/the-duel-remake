@@ -193,3 +193,22 @@ try {await withReferenceApp(async app=>{
  equal([s.stageCrashes,s.majorCrashes],[0,0],'no contact/crash is hidden by the pose reset');
  console.log(JSON.stringify({reviewRunup:{steps,s:c.phase(s.s),mph:s.speedMph,maxHeight,airborne:s.airborne}}));
 });} finally {if(fixtureAdded)assert.equal(COURSE.pop(),ARDENNES_FOREST,'temporary actual dev definition is restored');}
+
+// The browser review's disposable profile enters a variant through its real unlock rule. A secret found from the air
+// once stayed shut because the profile only held the old podium, so the browser could not start the course.
+{
+  const {isCourseUnlocked}=await import('../src/course-access.js'),{createProfile}=await import('../src/progression.js');
+  const {heliOf}=await import('../src/heli/heli-save.js');
+  const secret={id:'harbour-lights-dusk',flag:'harbour-lights-dusk'};
+  const added=!COURSE.some(row=>row.id===secret.id),found=await import('../src/circuits/harbour-lights-dusk.js');
+  if(added)COURSE.push(found.HARBOUR_LIGHTS_DUSK);
+  try{
+    const data={courseId:secret.id,defaultEventId:'harbour-lights',
+      fixtureHeli:{...heliOf({}),map:{version:1,seen:[],found:[secret.id],table:false}}};
+    assert.equal(isCourseUnlocked(createProfile(),secret.id),false,'a fresh profile has not found it');
+    assert.equal(isCourseUnlocked(placement.reviewProfile(createProfile(),data),secret.id),true,'the review profile has found it');
+    assert.equal(isCourseUnlocked(placement.reviewProfile(createProfile(),{...data,fixtureHeli:null}),secret.id),false,
+      'without the map record the profile does not open a secret');
+    console.log('Track review: browser profile opens a secret found from the air.');
+  }finally{if(added)COURSE.pop();}
+}

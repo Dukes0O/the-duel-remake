@@ -12,6 +12,8 @@ import {supportsRouteVariants,getRouteVariantForSeed} from '../src/route-variant
 import {syncRaceChoiceButtons} from '../src/race-settings-ui.js';
 import {COURSE_PRICES,isCourseUnlocked} from '../src/course-access.js';
 import {formatSpeed} from '../src/speed-format.js';
+import {heliOf} from '../src/heli/heli-save.js';
+import {SECRET_IDS} from '../src/heli/map-secrets.js';
 
 let checks=0;
 const check=(value,label)=>{assert.ok(value,label);checks++;};
@@ -22,11 +24,13 @@ try{
   const app=new App();
   // Vehicle eligibility is independent of the course-purchase regression suite.
   const allCourses={version:1,unlocked:COURSE.map(course=>course.id)};
-  app.profile.courses=allCourses;app._saveProfile();
+  // The five secret courses open only once found from the air, so this profile has found them too.
+  const foundAll={heli:{...heliOf(createProfile()),map:{version:1,seen:[],found:[...SECRET_IDS],table:false}}};
+  app.profile.courses=allCourses;app.profile.heli=foundAll.heli;app._saveProfile();
   for(const [startStage,event]of COURSE.entries()){
     app.setRaceSettings({startStage,car:'stuttgart_959s'});same(app.getRaceChoices().startStage,startStage,'every course is visible before buying the recommended vehicle');same(app.getRaceChoices().car,'stuttgart_959s','course selection keeps the chosen starter');
     check(app.startCampaign(),'every course accepts an owned starter');same(app.duel.state.car,'stuttgart_959s','physics does not replace the starter');same(app.duel.state.stageIndex,startStage,'entry does not redirect to an easier course');app.returnToMenu();
-    const normalized=normalizeRaceSettings({eventId:event.id,car:'titan_monster'},{...createProfile(),courses:allCourses});same(normalized.eventId,event.id,'locked-car settings do not lock their owned course');same(normalized.car,'falcone_f42','locked-car settings cannot grant the recommended car');
+    const normalized=normalizeRaceSettings({eventId:event.id,car:'titan_monster'},{...createProfile(),courses:allCourses,...foundAll});same(normalized.eventId,event.id,'locked-car settings do not lock their owned course');same(normalized.car,'falcone_f42','locked-car settings cannot grant the recommended car');
     check(app.startCampaign({startStage,car:'titan_monster'}),'locked vehicle request retains the existing safe starter fallback');same(app.duel.state.car,'falcone_f42','no course can bypass vehicle ownership');app.returnToMenu();
   }
   same(app.profile.credits,0,'course entry and countdown cancellation do not change the wallet');same(Object.keys(app.profile.personalBests).length,0,'countdown entry cannot fabricate records');
@@ -56,7 +60,7 @@ try{
   }
   same(airOnlyRefusals,3*(COURSE.length-1),'the Enzo, the F1 and the Bolide each start on exactly one course, where they sit');
   // An old helicopter position must not restrict any Jesko mode on any course.
-  app.profile={...app.profile,heli:{version:1,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
+  app.profile={...app.profile,heli:{...foundAll.heli,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
   check(app._switches().enabled('helicopter'),'the helicopter is on for the Jesko regression');
   for(const [startStage,event]of COURSE.entries())for(const mode of ['duel','timetrial','grandprix','wasteland']){
     check(app.startCampaign({car:'koenigsegg_jesko',startStage,mode}),`Jesko starts ${mode} at ${event.id} without transport`);

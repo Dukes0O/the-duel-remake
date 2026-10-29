@@ -22,17 +22,17 @@ import {createProfile} from '../src/progression.js';
 const lighting = [[PANORAMA_RIDGE_NIGHT, nightManifest, PANORAMA_RIDGE, 'night', 7],
   [HARBOUR_LIGHTS_DUSK, duskManifest, HARBOUR_LIGHTS, 'dusk', 8]];
 
-test('lighting variants append as separate dev events with access found from the air', () => {
-  const off = createFeatureFlags({storage: null, qa: false, search: ''});
-  const on = createFeatureFlags({storage: null, qa: false, search: '', overrides: Object.fromEntries(lighting.map(([d]) => [d.flag, true]))});
-  const defaultIds = circuitDefinitions(off).map(d => d.id);
-  const qaIds = circuitDefinitions(on).map(d => d.id);
+test('lighting variants are separate released events with access found from the air', () => {
+  const ordinary = createFeatureFlags({storage: null, qa: false, search: ''});
+  const off = createFeatureFlags({storage: null, qa: false, search: '', overrides: Object.fromEntries(lighting.map(([d]) => [d.flag, false]))});
+  const defaultIds = circuitDefinitions(ordinary).map(d => d.id);
+  const offIds = circuitDefinitions(off).map(d => d.id);
   for (const [definition, manifest, parent, , order] of lighting) {
-    assert.equal(manifest.state, 'dev');assert.equal(manifest.price, 0);
+    assert.equal(manifest.state, 'on');assert.equal(manifest.price, 0);
     assert.equal(manifest.releaseOrder, order);assert.equal(definition.flag, definition.id);
     assert.equal(definition.stage, parent.stage, 'same physical generation identity');
     assert.deepEqual(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: parent.id});
-    assert.ok(!defaultIds.includes(definition.id));assert.ok(qaIds.includes(definition.id));
+    assert.ok(defaultIds.includes(definition.id), 'the ordinary game has it');assert.ok(!offIds.includes(definition.id), 'its own switch can still hide it');
     assert.equal(CIRCUIT_ENTRIES.find(e => e.manifest.id === definition.id).definition, definition);
     const added = !COURSE.includes(definition);if (added) COURSE.push(definition);
     try {
@@ -87,7 +87,7 @@ test('released parents keep exact pre-edit road, ground and obstacle fingerprint
 test('reverse roads and terrain follow the physical donor, with rebuilt boards, kerbs and full pit', () => {
   reverses.forEach((module, n) => {
     const d = module.definition, parent = parents[n], before = JSON.stringify(parent);
-    assert.equal(module.manifest.state, 'dev');assert.equal(module.manifest.releaseOrder, 9 + n);
+    assert.equal(module.manifest.state, 'on');assert.equal(module.manifest.releaseOrder, 9 + n);
     assert.deepEqual(module.manifest.unlock, {kind: 'spotted-from-air', defaultEventId: parent.id});
     for (const seed of [1989, 42, 17]) {
       const c = new Course(d, seed), donor = new Course(parent, seed), offset = d.terrainDonor.offset;
