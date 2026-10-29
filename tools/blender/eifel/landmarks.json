@@ -1,0 +1,102 @@
+{
+  "card": "EIFEL-CROWN-C5",
+  "round": 1,
+  "units": "metres",
+  "up": "Y",
+  "source": "Original shapes made by tools/blender/eifel/landmarks.py; no outside models or textures.",
+  "models": [
+    {
+      "id": "eifel-castle",
+      "budget": [
+        7000,
+        2000
+      ],
+      "files": [
+        {
+          "path": "eifel-castle.glb",
+          "triangles": 2102,
+          "size": [
+            47.704,
+            48.321,
+            50.071
+          ],
+          "bytes": 128124,
+          "sha256": "a999e2ef18966b3375568802f93c1acab99741941b7fe1c742a9c0173e19c247"
+        },
+        {
+          "path": "eifel-castle-lod.glb",
+          "triangles": 760,
+          "size": [
+            48.201,
+            48.1,
+            54.447
+          ],
+          "bytes": 52444,
+          "sha256": "f8f742646a50f202d76ffae070d59924522094db015bf88cf5102a06738ace8c"
+        }
+      ]
+    },
+    {
+      "id": "dam-wall",
+      "budget": [
+        2500,
+        800
+      ],
+      "files": [
+        {
+          "path": "dam-wall.glb",
+          "triangles": 288,
+          "size": [
+            14.0,
+            13.45,
+            12.3
+          ],
+          "bytes": 21760,
+          "sha256": "256faa23c9e521d9fb2024f0cc42d02ec2401710abeda74588e435157b14ce6c"
+        },
+        {
+          "path": "dam-wall-lod.glb",
+          "triangles": 66,
+          "size": [
+            14.0,
+            12.7,
+            12.0
+          ],
+          "bytes": 7096,
+          "sha256": "ff0ead5a452e596f6fa6e163d6b2246b2a774224a3f10ab8e1c4d4d92b5f3e24"
+        }
+      ]
+    },
+    {
+      "id": "eifel-lodge",
+      "budget": [
+        1500,
+        500
+      ],
+      "files": [
+        {
+          "path": "eifel-lodge.glb",
+          "triangles": 876,
+          "size": [
+            13.6,
+            11.4,
+            13.597
+          ],
+          "bytes": 54988,
+          "sha256": "f8f44be7a6abcf7aec59538adf17a3f37aa5cc91baa2429f1d5097c12e85062e"
+        },
+        {
+          "path": "eifel-lodge-lod.glb",
+          "triangles": 210,
+          "size": [
+            13.6,
+            11.4,
+            13.597
+          ],
+          "bytes": 18220,
+          "sha256": "7c59a0522dbcd77c9103bcff77e26cf22217ef7a7b01bac2e743c65596955306"
+        }
+      ]
+    }
+  ]
+}

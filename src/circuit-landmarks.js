@@ -59,6 +59,62 @@ diffuseColor.rgb*=mix(shade*tint,vec3(.36,.34,.31),mortar);`);
   };
   return material;
 }
+// Half-timbered walls (EIFEL-CROWN-C5): pale plaster in a frame of dark oak, as in the Eifel's old villages.
+// Drawn in the wall's own metres (the unit box scaled by its instance), so every house shows posts about 1.5 m
+// apart, a sill, a floor beam at each storey and a plate under the eaves, with a brace in each bay; the plaster
+// takes the instance colour. Faces turned up or down stay plain.
+function timberMaterial(name, color) {
+  const material = new THREE.MeshStandardMaterial({name, color, roughness: .92});
+  material.customProgramCacheKey = () => 'circuit-landmark-half-timber-v1';
+  material.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader.replace('#include <common>',
+      `#include <common>
+varying vec3 vTimberPos;
+varying vec3 vTimberSize;
+varying vec3 vTimberNormal;`).replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+vec3 timberSize=vec3(1.0);
+#ifdef USE_INSTANCING
+timberSize=vec3(length(instanceMatrix[0].xyz),length(instanceMatrix[1].xyz),length(instanceMatrix[2].xyz));
+#endif
+vTimberSize=timberSize;
+vTimberPos=(position+vec3(.5))*timberSize;
+vTimberNormal=normal;`);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>',
+      `#include <common>
+varying vec3 vTimberPos;
+varying vec3 vTimberSize;
+varying vec3 vTimberNormal;`).replace('#include <color_fragment>',
+      `#include <color_fragment>
+vec3 tn=abs(vTimberNormal);
+if(tn.y<.5){
+  bool alongX=tn.z>tn.x;
+  float u=alongX?vTimberPos.x:vTimberPos.z;
+  float w=alongX?vTimberSize.x:vTimberSize.z;
+  float v=vTimberPos.y, h=vTimberSize.y;
+  float bays=max(1.0,floor(w/1.5+.5));
+  float bay=w/bays;
+  float post=abs(mod(u+bay*.5,bay)-bay*.5);
+  float edgeU=min(u,w-u);
+  float storeys=max(1.0,floor(h/3.0+.5));
+  float storey=h/storeys;
+  float rail=abs(mod(v+storey*.5,storey)-storey*.5);
+  float timber=0.0;
+  float beam=.085;
+  if(post<beam||edgeU<.17) timber=1.0;
+  if(rail<beam||v<.2||h-v<.2) timber=1.0;
+  // A brace rising from each post across the bay, the other way in alternate bays.
+  float k=floor(u/bay);
+  float local=u-k*bay;
+  float within=mod(v,storey);
+  float lean=mod(k,2.0)<1.0?local/bay:1.0-local/bay;
+  float brace=abs(within-lean*storey*.8-storey*.1);
+  if(brace<.07 && within>.2 && within<storey-.2 && local>.15 && local<bay-.15) timber=1.0;
+  diffuseColor.rgb=mix(diffuseColor.rgb*vec3(1.0,.985,.95),vec3(.045,.032,.024),timber);
+}`);
+  };
+  return material;
+}
 function block(group, width, height, depth, x, y, z, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
   mesh.position.set(x, y, z); mesh.castShadow = mesh.receiveShadow = true; group.add(mesh);
@@ -114,6 +170,8 @@ const TOWN_WALLS = [0xe2d9c3, 0xd8c99a, 0xf0ece2, 0xa9b59a, 0x9fb0b8, 0xb5654d, 
 const TOWN_ROOFS = [0x7d8388, 0x8c4a35, 0x4f5b4c, 0x6b7177, 0x9a9c98];
 // Ardennes stone (ARDENNES-STAVELOT-STONE): grey-brown rubble and slate-grey stone, pale blue-stone frames.
 const STONE_WALLS = [0x6e665a, 0x625c53, 0x77705f, 0x5a5955, 0x6a645b, 0x5f5d58];
+// Eifel plaster: whitewash, cream and a weathered grey-white, with the odd faded ochre.
+const PLASTERS = [0x938f84, 0x888372, 0x9c998e, 0x7f7a6a, 0x8f866c, 0x7c7d75];
 function gableGeometry() {
   // A unit gable roof: ridge along x at height 1, eaves at y = 0, from z = -0.5 to 0.5, x from -0.5 to 0.5.
   const shape = new THREE.Shape(); shape.moveTo(-.5, 0); shape.lineTo(.5, 0); shape.lineTo(0, 1); shape.closePath();
@@ -177,19 +235,20 @@ function town(course, spec) {
   if (!Array.isArray(roofColours) || spec.roofColours !== undefined &&
       (roofColours.length < 2 || roofColours.length > 3 || roofColours.some(colour => !Number.isSafeInteger(colour) || colour < 0 || colour > 0xffffff)))
     throw new Error('Invalid circuit landmark roof palette.');
-  if (spec.houseStyle !== undefined && spec.houseStyle !== 'ardennes-stone') throw new Error('Invalid circuit landmark house style.');
-  const stoneStyle = spec.houseStyle === 'ardennes-stone';
+  if (spec.houseStyle !== undefined && spec.houseStyle !== 'ardennes-stone' && spec.houseStyle !== 'half-timber') throw new Error('Invalid circuit landmark house style.');
+  const stoneStyle = spec.houseStyle === 'ardennes-stone', timberStyle = spec.houseStyle === 'half-timber';
   const streets = spec.streets === undefined ? null : townStreetRows(course, spec.streets);
   const box = new THREE.BoxGeometry(1, 1, 1), gable = gableGeometry(), post = new THREE.CylinderGeometry(.07, .07, 1, 6);
-  const walls = stoneStyle ? rubbleMaterial('town rubble stone', 0xffffff) : weatheredMaterial('town weatherboard', 0xffffff);
-  const roofs = stoneStyle ? weatheredMaterial('town roof slate', 0xffffff) : weatheredMaterial('town roof iron', 0xffffff, .45);
+  const walls = stoneStyle ? rubbleMaterial('town rubble stone', 0xffffff) : timberStyle ? timberMaterial('town half-timber plaster', 0xffffff) : weatheredMaterial('town weatherboard', 0xffffff);
+  const roofs = stoneStyle || timberStyle ? weatheredMaterial('town roof slate', 0xffffff) : weatheredMaterial('town roof iron', 0xffffff, .45);
+  const plain = timberStyle ? weatheredMaterial('town plaster gable', 0xffffff) : walls;
   const frames = weatheredMaterial('town blue stone frames', 0x6d706d);
   const stone = weatheredMaterial('town stone footing', 0x77726a), timber = weatheredMaterial('town dark timber', 0x3b2e25);
   const brick = weatheredMaterial('town chimney brick', 0x7a4232), steel = weatheredMaterial('town lamp post', 0x4d555b, .6);
   const lit = new THREE.MeshStandardMaterial({name: 'town window', color: 0x34302a, roughness: .3});
   const dark = new THREE.MeshStandardMaterial({name: 'town unlit pane', color: 0x1f2326, roughness: .25, metalness: .2});
   const lampGlass = new THREE.MeshStandardMaterial({name: 'town lamp window', color: 0x8a7a5a, roughness: .4});
-  const rows = {footings: [], walls: [], roofs: [], verandas: [], posts: [], doors: [], chimneys: [], lit: [], dark: [], poles: [], heads: [], frames: [], gables: [], steps: []};
+  const rows = {footings: [], walls: [], roofs: [], verandas: [], posts: [], doors: [], chimneys: [], lit: [], dark: [], poles: [], heads: [], frames: [], gables: [], steps: [], timbers: []};
   const hash = n => {const x = Math.sin(n * 91.7 + 17.3) * 24634.6345; return x - Math.floor(x);};
   const heightAt = (x, z) => {
     const near = course.nearest(x, z);
@@ -258,8 +317,45 @@ function town(course, spec) {
       const stack = pitch + 1.3;
       put(rows.chimneys, -width / 2 + .45, floor + wall - .1 + stack / 2, 0, .8, stack, .9, {colour: STONE_WALLS[Math.floor(hash(i + 7) * STONE_WALLS.length)]});
     }
+    // Half-timber: a stone plinth, plaster and dark oak up to a steep slate roof, the gable to the street with
+    // its tie beam and king post showing, small windows in dark frames, a plain stone stack.
+    function timberHouse() {
+      const roofColour = roofColours[Math.floor(hash(i + 40) * roofColours.length)];
+      const pitch = Math.min(depth, width) * .85, front = depth / 2, back = -depth / 2;
+      const plaster = PLASTERS[Math.floor(hash(i) * PLASTERS.length)];
+      put(rows.footings, 0, low + footing / 2 - .2, 0, width + .3, footing + .4, depth + .3, {colour: 0x58544d});
+      put(rows.walls, 0, floor + wall / 2, 0, width, wall, depth, {colour: plaster});
+      put(rows.roofs, 0, floor + wall, 0, depth + .9, pitch, width + .7, {colour: roofColour, spin: Math.PI / 2});
+      // Plaster gable ends under the slates, with the tie beam and king post in oak.
+      put(rows.gables, 0, floor + wall - .01, 0, depth + .92, pitch * width / (width + .7), width, {colour: plaster, spin: Math.PI / 2});
+      for (const end of [front + .02, back - .02]) {
+        put(rows.timbers, 0, floor + wall + .08, end, width, .16, .16);
+        put(rows.timbers, 0, floor + wall + pitch * .36, end, .16, pitch * .72, .16);
+      }
+      put(rows.doors, width * .18, floor + 1.05, front + .1, .95, 2.0, .1);
+      put(rows.timbers, width * .18, floor + 2.1, front + .05, 1.25, .2, .2);
+      let stepGround = Infinity;
+      for (const [x, z] of [[-.65, 0], [.65, 0], [-.65, .7], [.65, .7], [0, .35]]) {
+        const px = width * .18 + x, pz = front + .15 + z;
+        stepGround = Math.min(stepGround, heightAt(centre.x + px * cos + pz * sin, centre.z - px * sin + pz * cos));
+      }
+      const stepHeight = floor - stepGround + .2;
+      put(rows.steps, width * .18, stepGround - .2 + stepHeight / 2, front + .5, 1.3, stepHeight, .7, {colour: 0x58544d});
+      const across = width > 7.5 ? [-width * .32, -width * .02] : [-width * .28];
+      for (let storey = 0; storey < storeys; storey++) for (const x of storey ? [...across, width * .3] : [...across, width * .4]) {
+        const glow = hash(i * 7 + storey * 3 + (x > 0 ? 1 : 0)) < .62;
+        put(rows.timbers, x, floor + 1.55 + storey * 3, front + .03, 1.15, 1.4, .06);
+        put(glow ? rows.lit : rows.dark, x, floor + 1.55 + storey * 3, front + .06, .9, 1.15, .06);
+      }
+      for (const side of [-1, 1]) put(hash(i * 11 + side) < .5 ? rows.lit : rows.dark, side * (width / 2 + .04), floor + 1.55, 0, .08, 1.15, .9);
+      for (let storey = 0; storey < storeys; storey++) for (const x of [-width * .25, width * .25])
+        put(hash(i * 13 + storey * 5 + (x > 0 ? 1 : 0)) < .6 ? rows.lit : rows.dark, x, floor + 1.55 + storey * 3, back - .05, .9, 1.15, .06);
+      const stack = pitch + 1.2;
+      put(rows.chimneys, -width / 2 + .45, floor + wall - .1 + stack / 2, 0, .95, stack, 1.0, {colour: 0x3a3834});
+    }
     const roofColour = roofColours[Math.floor(hash(i + 40) * roofColours.length)];
     if (stoneStyle) { stoneHouse(); return; }
+    if (timberStyle) { timberHouse(); return; }
     put(rows.footings, 0, low + footing / 2 - .2, 0, width + .3, footing + .4, depth + .3);
     put(rows.walls, 0, floor + wall / 2, 0, width, wall, depth, {colour: TOWN_WALLS[Math.floor(hash(i) * TOWN_WALLS.length)]});
     put(rows.roofs, 0, floor + wall, 0, depth + .8, Math.min(depth, width) * .42, width + .8, {colour: roofColour, spin: Math.PI / 2});
@@ -305,16 +401,17 @@ function town(course, spec) {
     mesh.name = name; mesh.castShadow = shadows; mesh.receiveShadow = true;
     mesh.computeBoundingBox(); mesh.computeBoundingSphere(); group.add(mesh);
   };
-  build('town footings', box, stoneStyle ? walls : stone, rows.footings);
+  build('town footings', box, stoneStyle ? walls : timberStyle ? plain : stone, rows.footings);
   build('town houses', box, walls, rows.walls);
   build('town roofs', gable, roofs, rows.roofs);
-  build('town stone gables', gable, walls, rows.gables);
+  build('town stone gables', gable, plain, rows.gables);
+  build('town oak timbers', box, timber, rows.timbers, false);
   build('town verandas', box, roofs, rows.verandas);
   build('town veranda posts', post, timber, rows.posts);
   build('town doors', box, timber, rows.doors, false);
-  build('town chimneys', box, stoneStyle ? walls : brick, rows.chimneys);
+  build('town chimneys', box, stoneStyle ? walls : timberStyle ? plain : brick, rows.chimneys);
   build('town window frames', box, frames, rows.frames);
-  build('town door steps', box, walls, rows.steps);
+  build('town door steps', box, timberStyle ? plain : walls, rows.steps);
   build('town lit windows', box, lit, rows.lit, false);
   build('town dark windows', box, dark, rows.dark, false);
   build('town lamp posts', post, steel, rows.poles);

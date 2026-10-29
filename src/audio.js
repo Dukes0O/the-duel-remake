@@ -275,6 +275,7 @@ export class EngineAudio {
         .filter(
           ([id, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
             (cue.flag !== 'kogane-pass' || this.flags.enabled('kogane-pass')) &&
+            (cue.flag !== 'eifel-crown' || this.flags.enabled('eifel-crown')) &&
             cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' && cue.flag !== 'lab' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&

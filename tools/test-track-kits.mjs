@@ -60,10 +60,10 @@ const course = {
   nearest: (x, z) => ({s: z, lateral: x}), roadHalfWidthAt: () => 7,
 };
 const originalKitIds = TRACK_KIT_IDS.slice(0, 35);
-assert.equal(TRACK_KIT_IDS.length, 52);
+assert.equal(TRACK_KIT_IDS.length, 55);
 assert.deepEqual(TRACK_KIT_IDS.slice(35), ['stone-stream-bridge', 'forest-footbridge', 'forest-timing-tower', 'ardennes-beech', 'summit-finish',
   'armco-white', 'stone-retaining-wall', 'curve-mirror', 'chevron-board', 'tea-house', 'vending-row', 'drystone-wall', 'hedge-row',
-  'torii', 'torii-small', 'stone-lantern', 'kogane-car-park']);
+  'torii', 'torii-small', 'stone-lantern', 'kogane-car-park', 'eifel-castle', 'dam-wall', 'eifel-lodge']);
 assert.deepEqual(originalKitIds, [
   'start-gantry','pit-garage','pit-wall','grandstand','armco','concrete-wall',
   'catch-fence','tyre-wall','braking-board-150','braking-board-100','braking-board-50',

@@ -28,7 +28,7 @@ export const FIRE = Object.freeze({
 
 // Which courses have a burnt look made (FIRE-BURNT-LOOK; section 14). A course
 // joins by getting its set under public/assets/burnt/<course>/.
-export const BURNT_LOOKS = Object.freeze(['tremblant-woods', 'kogane-pass']);
+export const BURNT_LOOKS = Object.freeze(['tremblant-woods', 'kogane-pass', 'eifel-crown']);
 
 // The Lab's Retardant tank (docs/LAB.md 4.1): 150 litres treat a cell, and a treated forest cell cannot catch fire
 // for the rest of that fire. Retardant never puts flames out and never lowers a cell that is already burning.

@@ -19,6 +19,17 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createTrackKits, normalizeKitPlacements} from '../src/track-kits.js';
 import {KIT_FOOTPRINTS} from '../src/kit-footprints.js';
 import {beechTreePlacements} from '../src/vegetation.js';
+import * as THREE from 'three';
+import {addCircuitLandmarks} from '../src/circuit-landmarks.js';
+import {renderedGroundHeight} from '../src/rendered-ground.js';
+import {hillHeight, hillReach, hillLocal} from '../src/circuit-hills.js';
+import {groundFromCourse} from '../src/heli/heli-ground.js';
+import {isDestination} from '../src/heli/heli-jobs.js';
+import {courseSite} from '../src/heli/heli-session.js';
+import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells} from '../src/heli/heli-fire.js';
+import {burnableCourses} from '../src/heli/heli-fire-run.js';
+import {SOUND_BANK, AMBIENCE} from '../src/sound-bank.js';
+import {measureLoudness} from './audio/measurements.mjs';
 
 const road = buildTrackScript(EIFEL_CROWN);
 const named = name => road.pieces.find(piece => piece.name === name);
@@ -274,7 +285,9 @@ test('the new wall and hedge are original recipe output inside their triangle an
 
 test('every scenery row uses an approved kit, stays off the road and run-off, and leaves corner exits open', () => {
   const allowed = new Set(['start-gantry', 'pit-garage', 'grandstand', 'armco', 'tyre-wall', 'marshal-post',
-    'braking-board-150', 'braking-board-100', 'braking-board-50', 'drystone-wall', 'hedge-row']);
+    'braking-board-150', 'braking-board-100', 'braking-board-50', 'drystone-wall', 'hedge-row',
+    // C5 landmarks: the castle on its crag, the dam wall of the reservoir and the timber lodge.
+    'eifel-castle', 'dam-wall', 'eifel-lodge']);
   assert.ok(placements.every(row => allowed.has(row.id)));
   assert.equal(normalizeKitPlacements(scenery, placements).length, placements.length);
   for (const row of placements.filter(row => ['armco', 'tyre-wall', 'drystone-wall', 'hedge-row'].includes(row.id))) {
@@ -340,11 +353,172 @@ test('green and white kerbs, dark wet road, dull beech leaves and mixed forest a
   assert.ok(far <= 5000, `far trees ${far}`);
   // Nothing planted in the rooms kept for the castle, village and reservoir (C5), nor the ridge meadows.
   const rooms = [
-    [named('Castle Bend').s1 - 40, named('Wall Left').s1 + 40, -260, -90],
+    // C5 narrowed the castle and reservoir rooms to the ground each really uses (the slopes beyond are wooded again)
+    // and opened a window through the wood on the inside of Reservoir Right.
+    [named('Castle Bend').s1 - 40, named('Wall Left').s1 + 40, -235, -90],
     [named('Castle Bend').s1 + 60, named('Beech Right').s0 + 80, -64, -12],
-    [named('Reservoir Right').s0 - 120, named('Reservoir Right').s1 + 110, -260, -80],
+    [named('Reservoir Right').s0 - 120, named('Reservoir Right').s1 + 110, -150, -66],
+    [named('Reservoir Right').s0 - 220, named('Reservoir Right').s1 + 110, -66, -12],
     [named('Crown Climb').s0 - 30, named('Ridge Top').s1 + 30, -44, 44],
   ];
   for (const tree of scenery.features.trees) for (const [s0, s1, from, to] of rooms)
     assert.ok(!(tree.s >= s0 && tree.s <= s1 && tree.off >= from && tree.off <= to), `tree ${tree.id} stands in a kept-open room`);
+});
+
+// ---------------------------------------------------------------------------
+// C5 landmarks, water and sound
+
+const landmarkModels = JSON.parse(readFileSync(new URL('./blender/eifel/landmarks.json', import.meta.url), 'utf8')).models;
+
+test('the castle, dam module and lodge are original recipe output inside their triangle and file budgets', () => {
+  const budgets = {'eifel-castle': [7000, 2000], 'dam-wall': [2500, 800], 'eifel-lodge': [1500, 500]};
+  assert.deepEqual(landmarkModels.map(model => model.id), Object.keys(budgets));
+  for (const model of landmarkModels) for (const [i, file] of model.files.entries()) {
+    const bytes = readFileSync(new URL(file.path, KITS));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path + ' is the recipe output');
+    const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString('utf8'));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices ?? primitive.attributes.POSITION].count / 3, 0);
+    assert.equal(triangles, file.triangles);
+    assert.ok(triangles > 0 && triangles <= budgets[model.id][i], `${file.path}: triangle cap ${budgets[model.id][i]}`);
+    assert.ok(file.bytes < 250000, `${file.path}: file budget`);
+  }
+});
+
+test('the castle stands on a level crag hill outside Wall Left, 90 to 260 m out, off the road and its sightlines', () => {
+  const castle = placements.find(row => row.id === 'eifel-castle');
+  const hill = EIFEL_CROWN.hills[0], wall = named('Wall Left');
+  assert.ok(castle.s > named('Castle Bend').s1 && castle.s < wall.s1, 'between Castle Bend and the end of Wall Left');
+  assert.ok(castle.lateral < -90 && castle.lateral > -260, 'outside the left turn, 90 to 260 m out');
+  assert.equal(castle.s, hill.s);
+  assert.equal(castle.lateral, hill.lateral);
+  assert.ok(hill.height >= 24 && hill.height <= 50, 'the crag hill is 24 to 50 m above the valley floor');
+  // The hill's own top is level under the whole rock foot, and the castle's foot is bedded into it a little.
+  const at = scenery.groundAt(hill.s, hill.lateral);
+  const top = at.y + .06 + hillHeight(hill, 0, 0);
+  const drawn = renderedGroundHeight(scenery, {...at, s: hill.s, off: hill.lateral}, {requireSurface: true});
+  const bed = drawn + castle.lift;
+  assert.ok(bed < top && top - bed < 3.5, `rock foot ${(top - bed).toFixed(2)} m into the hill top`);
+  for (const [du, dv] of [[0, 0], [14, 0], [-14, 0], [0, 14], [0, -14]])
+    assert.ok(Math.abs(hillHeight(hill, du, dv) - hillHeight(hill, 0, 0)) < .001, 'level hill top');
+  const foot = 22 * [castle.scale].flat()[0];
+  assert.ok(foot < hill.pads[0].radius + hill.pads[0].blend * .5, 'the rock foot stands on the level top and its easing');
+  // Nothing of the hill lies over the road's ribbon (64 m each side) or the run-off.
+  assert.ok(Math.abs(hill.lateral) - hill.across > 40, 'hill foot well clear of the road');
+  for (let s = hill.s - hill.along; s <= hill.s + hill.along; s += 10) {
+    assert.ok(hillReach(hill, ...hillLocal(hill, s, -40)) >= 1, 'no hill in the first wood beside the road');
+    assert.ok(hillHeight(hill, ...hillLocal(hill, s, -52)) < .5, 'the crag hill starts beyond 52 m, well off the road and its run-off');
+  }
+});
+
+test('the reservoir is reflective circuit water over a basin on the inside of Reservoir Right, never across the road', () => {
+  const lake = EIFEL_CROWN.basins[0], bend = named('Reservoir Right');
+  assert.ok(EIFEL_CROWN.water && EIFEL_CROWN.effects.lake === undefined, 'the existing reflective circuit water, no flat sheet');
+  assert.ok(lake.lateral < 0 && lake.lateral + lake.across * 1.2 < -60 && lake.lateral - lake.across * 1.2 > -260, 'on the right, 60 to 260 m out');
+  assert.ok(lake.s > bend.s0 - 100 && lake.s < bend.s1 + 120);
+  const ground = groundFromCourse(scenery);
+  const centre = scenery.worldAt(lake.s, lake.lateral);
+  const level = ground.water(centre.x, centre.z);
+  assert.ok(Number.isFinite(level), 'the bucket can scoop from the reservoir');
+  for (let s = 0; s < scenery.length; s += 4) {
+    const p = scenery.worldAt(s, 0);
+    assert.equal(ground.water(p.x, p.z), null, 'water never crosses the road');
+  }
+  assert.ok(level - ground.height(centre.x, centre.z) > 3, 'a basin a few metres deep');
+  // The dam closes the far end: its modules stand end to end across the shore, facing the water.
+  const dam = placements.filter(row => row.id === 'dam-wall');
+  assert.ok(dam.length >= 3 && dam.every(row => row.s === dam[0].s && row.heading === Math.PI));
+  assert.ok(dam[0].s > lake.s + lake.along * .8 && dam[0].s < lake.s + lake.along * 1.2, 'at the far (downstream) end');
+  const laterals = dam.map(row => row.lateral).sort((a, b) => a - b);
+  for (let i = 1; i < laterals.length; i++) assert.ok(Math.abs(laterals[i] - laterals[i - 1] - 13.7) < .01, 'modules join end to end');
+  for (const row of dam) {
+    assert.ok(Math.abs(row.lateral) > road.halfWidthAt(row.s) + 60, 'the dam is far from the road');
+    const bedAt = renderedGroundHeight(scenery, {...scenery.groundAt(row.s, row.lateral), s: row.s, off: row.lateral}, {requireSurface: true});
+    assert.ok(Math.abs(bedAt - level) < 6, 'standing on ground near the water level');
+  }
+});
+
+test('the half-timbered village lies right of Village Street, 12 to 64 m out, with a church and garden walls', () => {
+  const town = EIFEL_CROWN.circuitLandmarks.find(row => row.type === 'town'), church = EIFEL_CROWN.circuitLandmarks.find(row => row.type === 'church');
+  assert.equal(town.houseStyle, 'half-timber');
+  assert.ok(town.houses.length >= 12 && town.houses.length <= 120, `houses ${town.houses.length}`);
+  assert.equal(town.streets.length, 2, 'two short streets');
+  const wall = named('Wall Left'), street = named('Village Street');
+  for (const house of town.houses) {
+    assert.ok(house.s >= wall.s0 && house.s <= street.s1, 'along Wall Left and Village Street');
+    assert.ok(house.lateral < -12 - 4 && house.lateral > -64, `house ${house.lateral.toFixed(1)} m out, inside the cleared strip`);
+    assert.ok(house.storeys === 1 || house.storeys === 2);
+  }
+  assert.equal(church.churchStyle, 'stone');
+  assert.ok(church.lateral < -30 && church.lateral > -64);
+  // The drawn world: houses, timbers and church ground themselves on the real surface and clear every road segment.
+  const world = new THREE.Group();
+  addCircuitLandmarks(world, scenery);
+  const drawn = world.getObjectByName('eifel-village');
+  assert.equal(drawn.getObjectByName('town houses').count, town.houses.length);
+  assert.ok(drawn.getObjectByName('town oak timbers').count > town.houses.length * 3, 'oak timbers on the gables, doors and windows');
+  assert.ok(world.getObjectByName('eifel-church'));
+  const walls = placements.filter(row => row.id === 'drystone-wall' && row.s > wall.s0 + 100 && row.s < street.s1 && row.lateral < -30);
+  assert.ok(walls.length > 20, 'garden walls along the street');
+  for (const row of walls) {
+    assert.ok(Math.abs(row.lateral) > 30 && Math.abs(row.lateral) < 60, 'garden walls stand along the village street');
+    assert.equal(row.solid, true);
+  }
+});
+
+test('the timber lodge stands on the open ground left of the start straight, clear of the heli landing circle', () => {
+  const lodge = placements.find(row => row.id === 'eifel-lodge');
+  assert.ok(lodge.s > 40 && lodge.s < 150 && lodge.lateral > 30 && lodge.lateral < 70);
+  assert.equal(lodge.heading, -Math.PI / 2, 'facing the road');
+  assert.ok(placements.some(row => row.id === 'grandstand'), 'the stands stay');
+  assert.equal(placements.filter(row => row.id === 'ski-lodge').length, 0, 'the snow-roofed ski lodge is not used');
+});
+
+test('the forest burns: the course meets every fire rule, reservoir water included; the released road does not', () => {
+  const ground = groundFromCourse(scenery);
+  const flags = {pilotMap: true, summitRun: true};
+  assert.ok(isDestination('eifel-crown', flags), 'Eifel Crown is already a place on the pilot map');
+  const site = courseSite(scenery, ground, 'eifel-crown', flags);
+  assert.equal(ground.water(site.zone.x, site.zone.z), null, 'a dry landing circle');
+  for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8)
+    assert.ok(Math.abs(ground.height(site.zone.x + Math.cos(angle) * site.zone.radius, site.zone.z + Math.sin(angle) * site.zone.radius) - site.zone.y) <= 1.5,
+      'a level landing circle');
+  assert.ok(site.zone.radius >= 12);
+  const grid = fireGrid(scenery, ground, site);
+  assert.ok(grid.forest >= FIRE.minForestCells, `forest cells ${grid.forest}`);
+  const check = courseBurnCheck(scenery, ground, grid);
+  assert.deepEqual({forest: check.forest, destination: check.destination, water: check.water, look: check.look},
+    {forest: true, destination: true, water: true, look: true});
+  assert.ok(check.ok);
+  assert.ok(BURNT_LOOKS.includes('eifel-crown'));
+  assert.ok(startCells(scenery, ground, grid).length > 0, 'connected forest can host a fire');
+  assert.equal(burnableCourses({}, id => id === 'eifel-crown' ? {course: scenery, ground, grid} : null,
+    {enabled: true, owns: id => isDestination(id, flags)}).join(), 'eifel-crown');
+  // The released road has no reservoir: it can never burn, however the switches are set.
+  const released = new Course(EXPANSION_COURSES.find(row => row.id === 'eifel-crown'), 1989), releasedGround = groundFromCourse(released);
+  const releasedCheck = courseBurnCheck(released, releasedGround, fireGrid(released, releasedGround, courseSite(released, releasedGround, 'eifel-crown', flags)));
+  assert.equal(releasedCheck.water, false);
+  assert.equal(releasedCheck.ok, false);
+});
+
+test('Eifel has its own forest and birds bed and one church bell, named like the other courses, at the forest bed level', () => {
+  assert.equal(EIFEL_CROWN.ambience, 'eifel');
+  assert.deepEqual(AMBIENCE.eifel && [AMBIENCE.eifel.file, AMBIENCE.eifel.gain, AMBIENCE.eifel.flag], ['ambience-eifel.flac', .15, 'eifel-crown']);
+  const bell = SOUND_BANK['landmark.village-bell'];
+  assert.deepEqual([bell.file, bell.flag], ['landmark-village-bell.flac', 'eifel-crown']);
+  assert.equal(EXPANSION_COURSES.find(row => row.id === 'eifel-crown').ambience, undefined, 'the released road keeps the forest bed');
+  const town = EIFEL_CROWN.circuitLandmarks.find(row => row.type === 'town');
+  assert.equal(EIFEL_CROWN.landmarkSound.cue, 'landmark.village-bell');
+  assert.equal(EIFEL_CROWN.landmarkSound.reach, 150);
+  assert.ok(Math.abs(EIFEL_CROWN.landmarkSound.s - town.s) < 1, 'heard within 150 m of the village middle');
+  const reference = measureLoudness(readFileSync(new URL('../public/assets/audio/ambience-forest.flac', import.meta.url)));
+  const bed = measureLoudness(readFileSync(new URL('../public/assets/audio/ambience-eifel.flac', import.meta.url)));
+  assert.ok(Math.abs(bed.integratedLufs - reference.integratedLufs) <= 1, 'within 1 dB of the forest bed at the same gain');
+  assert.ok(bed.truePeakDbtp <= -.4);
+  const bellLevel = measureLoudness(readFileSync(new URL('../public/assets/audio/landmark-village-bell.flac', import.meta.url)));
+  // A soft bell: at its cue volume at least 12 dB under the engine bed's -16 LUFS loudness target (the packet's rule),
+  // and still audible, no more than 20 dB under the forest bed at its own gain.
+  const bellDelivered = bellLevel.integratedLufs + 20 * Math.log10(bell.volume);
+  assert.ok(bellDelivered <= -16 - 12, `bell ${bellDelivered.toFixed(1)} LUFS at its cue volume`);
+  assert.ok(bellDelivered >= reference.integratedLufs + 20 * Math.log10(.15) - 20 - 1e-9, 'audible against the bed');
 });
