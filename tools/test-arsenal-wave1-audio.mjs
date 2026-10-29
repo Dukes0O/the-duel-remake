@@ -205,7 +205,9 @@ check('released sound-bank entries and other exports stay exact', () => {
     // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries;
     // LAB-LIVE-FIX adds the Speirling to this pin, with every earlier voice unchanged.
     // Skyline is new; its exact row is checked by test-audio. Keep this old hash.
-    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'nissan_skyline_gtr_r34'].includes(id))) : value]))),
+    // KOGANE-PASS-C5 adds the two Kogane beds to AMBIENCE (derived from the bank); every earlier bed is unchanged.
+    [key, key === 'CAR_VOICES' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'nissan_skyline_gtr_r34'].includes(id))) :
+      key === 'AMBIENCE' ? Object.fromEntries(Object.entries(value).filter(([id]) => !['kogane', 'kogane-night'].includes(id))) : value]))),
     '4f41cdd93762f37b875ab7d52675a32c67cfd2335775b697503a934f48010a6b',
     'existing sound-bank exports remain exact');
 });

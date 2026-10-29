@@ -8,6 +8,7 @@ import {measureCue, wavBytes} from './audio/render-lab-cues.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
 import { App } from '../src/app.js';
 import { CARS, COURSE } from '../src/config.js';
+import {KOGANE_PASS} from '../src/circuits/kogane-pass.js';
 
 let checks = 0,
   commands = 0;
@@ -1519,6 +1520,42 @@ check(
 }
 
 console.log(seamRows.join('\n'));
+{
+  const course = {def:KOGANE_PASS,length:4684,closed:false};
+  const levels = {};
+  let bells = 0;
+  const rig = {ambience:Object.fromEntries(['alpine','kogane','kogane-night'].map(id =>
+    [id,{gain:{gain:{setTargetAtTime:value=>{levels[id]=value;}}}}])),
+    landmarkHeard:new WeakSet(),cueBuffers:{'landmark.shrine-bell':{}},
+    _playCue:id=>{check(id==='landmark.shrine-bell','the authored shrine bell cue');bells++;return {};}};
+  const car = {status:'racing',paused:false,speedMph:0,input:{throttle:0},s:0};
+  const settle = () => EngineAudio.prototype._updateAmbience.call(rig,car,{course,biome:'alpine'},0);
+  settle();
+  check(levels.kogane===.14 && levels['kogane-night']===0 && levels.alpine===0,
+    'course selects the evening bed at dusk without the generic forest');
+  car.s=2050;settle();
+  check(levels.kogane>0 && levels['kogane-night']>0 &&
+    Math.abs(levels.kogane+levels['kogane-night']-.14)<1e-9,'cicadas fade as night crickets rise');
+  car.s=2700;settle();
+  check(levels.kogane===0 && levels['kogane-night']===.14,'night has no evening cicadas');
+  car.s=140;
+  const before=JSON.stringify(car);settle();settle();
+  check(bells===1 && JSON.stringify(car)===before,'one bell near the torii without changing race state');
+  car.s=500;settle();car.s=140;settle();
+  check(bells===1,'revisiting the torii never repeats the bell');
+  car.paused=true;settle();
+  check(Object.values(levels).every(value=>value===0),'pause silences both course layers');
+  car.paused=false;
+  EngineAudio.prototype._updateAmbience.call(rig,car,{course:{...course},biome:'alpine'},0);
+  check(bells===2,'a new course instance with the reused race state hears its own bell');
+  const reference=measureLoudness(fs.readFileSync(new URL('../public/assets/audio/ambience-forest.flac',import.meta.url)));
+  for(const file of ['ambience-kogane.flac','ambience-kogane-night.flac']) {
+    const measured=measureLoudness(fs.readFileSync(new URL('../public/assets/audio/'+file,import.meta.url)));
+    check(measured.available && measured.truePeakDbtp<=-0.4,'Kogane bed has decoded peak headroom');
+    check(Math.abs(measured.integratedLufs+20*Math.log10(.14)-
+      reference.integratedLufs-20*Math.log10(.15))<=1,'Kogane bed within 1 dB of forest at authored gains');
+  }
+}
 console.log(
   `Six-second PCM mixes at three band transitions and full speed across the ${Object.keys(CARS).length} roster cars plus Skyline: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`,
 );

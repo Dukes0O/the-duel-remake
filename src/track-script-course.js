@@ -308,7 +308,7 @@ function scatterScenery(course) {
         }
       }
     }
-    for (const side of [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
+    for (const side of band.sides ?? [-1, 1]) for (let base = 6; base < course.length - 6; base += spacing) for (let row = 0; row < rows; row++) {
       const s = base + (random.float() - .5) * spacing * jitter, depth = from + (to - from) * (row + random.float()) / rows;
       if(authoredRanges){
         const range=authoredRanges.find(range=>s>=range.from&&s<=range.to);
@@ -346,9 +346,16 @@ function scatterScenery(course) {
   };
   const forest = course.def.scenery?.forest;
   if (forest) plantBand(forest, makeRng(0x6f7265 ^ (course.def.stage + 1) * 0x9e37), 'forest');
+  // A shore forest (`scenery.shoreForest`, KOGANE-PASS-C5): a third band for the slope across a lake, authored
+  // by its `ranges`, its `sides` (-1 right, 1 left) and its own `clear` stretches that keep it out of the water.
+  // It has its own random stream and names (`shore-forest-N`) and is planted after the others, so a circuit
+  // without one is exactly as it was.
   const farForest = course.def.scenery?.farForest;
   if (farForest) plantBand(farForest, makeRng(0x666172 ^ (course.def.stage + 1) * 0x7f4a7c15), 'far-forest',
     {zones: farForest.clear ?? [], drawnGround: true});
+  const shoreForest = course.def.scenery?.shoreForest;
+  if (shoreForest) plantBand(shoreForest, makeRng(0x73686f ^ (course.def.stage + 1) * 0x2545f491), 'shore-forest',
+    {zones: shoreForest.clear ?? [], drawnGround: true});
   // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
   // `colours` (red, gold and orange multipliers for the pine crowns), picked
   // from the tree's place along the road so the same trees turn on every build.

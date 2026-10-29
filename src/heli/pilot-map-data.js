@@ -35,7 +35,7 @@ export const PLACE_ALTITUDES = Object.freeze({
   'ridge-rally': 700, 'timberline-rush': 1400, 'high-country': 900, 'red-mesa': 1200,
   'pacific-canyon': 40, 'harbour-lights': 5, 'harbor-highlands': 30, 'neon-docks': 5,
   'neon-drift-trial': 5, 'midnight-chase': 5, 'titan-stadium': 20, 'azure-riviera': 15,
-  'the-table': 1100,
+  'the-table': 1100, 'kogane-pass': 1300,
 });
 
 // Places the landing-zone search finds no clear, level 12 m circle for. They are
@@ -72,9 +72,16 @@ export const PLACES = Object.freeze([
   place('the-table', 'The Table', [], at(-16, -3), 'A lone mesa in the desert', {air: true}),
 ]);
 
+// Dev places (KOGANE-PASS-C5). Like Summit Run, a dev course joins the map only through an
+// option (`koganePass` in heli-jobs.js destinationsFor); with the switch off it is in no table,
+// leg, chart or logbook. Names and altitudes can still be looked up by id.
+export const KOGANE_PLACE = place('kogane-pass', 'Kogane Pass', ['kogane-pass'],
+  at(22, 2), 'Forested volcano east of the harbour');
+export const DEV_PLACES = Object.freeze([KOGANE_PLACE]);
+
 export const PLACE_IDS = Object.freeze(PLACES.map(p => p.id));
-export const placeById = id => PLACES.find(p => p.id === id) ?? null;
-export const placeOfCourse = courseId => PLACES.find(p => p.courses.includes(courseId)) ?? null;
+export const placeById = id => PLACES.find(p => p.id === id) ?? DEV_PLACES.find(p => p.id === id) ?? null;
+export const placeOfCourse = courseId => PLACES.find(p => p.courses.includes(courseId)) ?? DEV_PLACES.find(p => p.courses.includes(courseId)) ?? null;
 export const nudgeKm = p => Math.hypot(p.drawAt.x - p.at.x, p.drawAt.z - p.at.z);
 
 // ---- Fuel (section 4) --------------------------------------------------------
@@ -191,6 +198,12 @@ export const REGIONS = Object.freeze([
   region('lake-ardennes', 'lake', 'Ardennes mere', blob(4.4, 9.8, 1.1, 0.7, 2.2, 16)),
   region('lake-tarn', 'lake', 'High tarn', blob(-5.6, 17.4, 0.6, 0.45, 3.3, 12)),
   region('the-table-mesa', 'mesa', 'The Table', blob(-16, -3, 0.45, 0.4, 1.4, 12)),
+]);
+// Regions of the dev places, drawn only while their place is on the chart.
+export const DEV_REGIONS = Object.freeze([
+  region('kogane-forest', 'forest', 'Kogane forest', blob(22, 2, 2.4, 3.2, 2.6), {place: 'kogane-pass'}),
+  region('kogane-volcano', 'mountain', 'Kogane volcano', blob(22, 2.6, 1.5, 1.8, 3.2), {metres: 1300, place: 'kogane-pass'}),
+  region('kogane-lake', 'lake', 'Kogane crater lake', blob(22, 2, .45, .3, .7, 16), {place: 'kogane-pass'}),
 ]);
 
 // Rivers: from the high ground to the coast, [x, z] points.

@@ -8322,6 +8322,199 @@
         }
       },
       "file": "src/sound-bank.js"
+    },
+    {
+      "source": "freesound",
+      "key": "670520",
+      "cue": "ambience.kogane",
+      "title": "Cicadas in Japanese Park 20210826_132934.m4a",
+      "author": "gaijinbuzz",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/gaijinbuzz/sounds/670520/",
+      "download": "https://cdn.freesound.org/previews/670/670520_12855464-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 43.0293,
+      "file": "freesound/670520-cicadas-in-japanese-park-20210826-132934-m4a.ogg",
+      "sha256": "9fca49978edb0b88d43d0945d5294ce9d42a2dde0baa4af4b8b4d94940cdf02d",
+      "bytes": 939853,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "freesound",
+      "key": "734642",
+      "cue": "ambience.kogane",
+      "title": "Night crickets",
+      "author": "Vrymaa",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Vrymaa/sounds/734642/",
+      "download": "https://cdn.freesound.org/previews/734/734642_13973196-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 33.6071,
+      "file": "freesound/734642-night-crickets.ogg",
+      "sha256": "a874d547ab9e3086bfd5bb8a7abb55c648dfba1cbb3dec2b328dc4d679fddf84",
+      "bytes": 367904,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "freesound",
+      "key": "584269",
+      "cue": "ambience.kogane",
+      "title": "Small brook, stream, water sound",
+      "author": "SamsterBirdies",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/SamsterBirdies/sounds/584269/",
+      "download": "https://cdn.freesound.org/previews/584/584269_5487341-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 72.7977,
+      "file": "freesound/584269-small-brook-stream-water-sound.ogg",
+      "sha256": "cca479328721ac0fbe74a1788baa261d9b4871767f874752d135493a7c32abda",
+      "bytes": 2968921,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "mix",
+      "key": "ambience.kogane",
+      "cue": "ambience.kogane",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/ambience-kogane.flac",
+      "sha256": "b4c7b5ea20adae1b29314d4f98110b499bbb06fc23eefece73ad0f17e584193b",
+      "bytes": 1363336,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "670520",
+            "584269",
+            "609952"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 24,
+          "circularCrossfadeSeconds": 1,
+          "gain": 0.14,
+          "targetLufs": -27.030735532451136,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -27.03,
+          "truePeakDbtp": -11.97,
+          "loudnessRangeLu": 3.4,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "source": "mix",
+      "key": "ambience.kogane-night",
+      "cue": "ambience.kogane-night",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/ambience-kogane-night.flac",
+      "sha256": "ad3ad071866ce9169e0bb5ee3dd91381e774e6a137198b494829faaace4b00bd",
+      "bytes": 1205017,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "734642",
+            "584269",
+            "609952"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 24,
+          "circularCrossfadeSeconds": 1,
+          "gain": 0.14,
+          "targetLufs": -27.030735532451136,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -27.04,
+          "truePeakDbtp": -5.49,
+          "loudnessRangeLu": 3,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "source": "mix",
+      "key": "landmark.shrine-bell",
+      "cue": "landmark.shrine-bell",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/landmark-shrine-bell.flac",
+      "sha256": "a8272e5df92f4e6080a271535e70b457940a02970ef3e4fe4ca2e2663f21aa4e",
+      "bytes": 106388,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "350616"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 5.839166666666666,
+          "circularCrossfadeSeconds": 0,
+          "gain": null,
+          "targetLufs": null,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -22.68,
+          "truePeakDbtp": -3.1,
+          "loudnessRangeLu": 15.1,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
     }
   ]
 }

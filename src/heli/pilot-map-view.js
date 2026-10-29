@@ -8,7 +8,7 @@
 // paints it on a 2D canvas; createPilotMapUi mounts both in the page.
 import traced from '../generated/pilot-map.json' with {type: 'json'};
 import {featureFlags} from '../feature-flags.js';
-import {PILOT_MAP, PLACES, placeById, placeOfCourse, fuelPadAt, legFuelKgMap, reachKm, MAP_SHAPES, placeOutline, LEFT_OFF} from './pilot-map-data.js';
+import {PILOT_MAP, PLACES, DEV_PLACES, DEV_REGIONS, placeById, placeOfCourse, fuelPadAt, legFuelKgMap, reachKm, MAP_SHAPES, placeOutline, LEFT_OFF} from './pilot-map-data.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {isCarUnlocked} from '../progression.js';
 import {CARS} from '../config.js';
@@ -70,7 +70,8 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
   const heliPoint = view?.heli
     ? {x: roundKm(heliPlace.drawAt.x + view.heli.x / 1000), z: roundKm(heliPlace.drawAt.z + view.heli.z / 1000), heading: view.heli.heading ?? 0}
     : null;
-  const places = PLACES.filter(place => !place.air || tableSeen).map(place => {
+  // A dev place (Kogane Pass) is on the chart only while it is a destination, as Summit Run's switch does.
+  const places = [...PLACES, ...DEV_PLACES].filter(place => place.air ? tableSeen : !DEV_PLACES.includes(place) || destinations.has(destinationOf(place))).map(place => {
     const id = destinationOf(place);
     const isHere = here?.id === place.id;
     const owned = place.air ? true : place.courses.some(course => profile ? isCourseUnlocked(profile, course) : false);
@@ -182,7 +183,8 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
   path(ctx, project, MAP_SHAPES.land); ctx.fillStyle = PAPER; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.stroke();
   // Regions: tints, and thin contours with their heights.
   ctx.font = `italic ${Math.max(10, k * 0.55)}px Georgia, serif`; ctx.textAlign = 'center';
-  for (const region of MAP_SHAPES.regions) {
+  const shownPlaces = new Set(model.places.map(place => place.id));
+  for (const region of [...MAP_SHAPES.regions, ...DEV_REGIONS.filter(item => shownPlaces.has(item.place))]) {
     path(ctx, project, region.points);
     if (region.kind === 'mountain') {
       ctx.strokeStyle = 'rgba(122,84,52,.7)'; ctx.lineWidth = 0.9; ctx.stroke();
@@ -209,7 +211,7 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
   }
   // Course outlines: ink if owned, grey if not, black if burnt.
   const byId = new Map(model.places.map(place => [place.id, place]));
-  for (const place of PLACES) {
+  for (const place of [...PLACES, ...DEV_PLACES]) {
     const shown = byId.get(place.id), outline = placeOutline(chartOutlines, place.id);
     if (!shown || !outline) continue;
     path(ctx, project, outline.points, outline.closed);

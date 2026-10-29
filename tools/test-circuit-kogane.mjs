@@ -10,6 +10,12 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {normalizeKitPlacements} from '../src/track-kits.js';
 import {planWaterside} from '../src/waterside-scenery.js';
+import {groundFromCourse} from '../src/heli/heli-ground.js';
+import {destinationsFor, isDestination} from '../src/heli/heli-jobs.js';
+import {courseSite} from '../src/heli/heli-session.js';
+import {fireGrid, courseBurnCheck, startCells} from '../src/heli/heli-fire.js';
+import {burnableCourses} from '../src/heli/heli-fire-run.js';
+import {PLACES, placeOfCourse, KOGANE_PLACE, PLACE_ALTITUDES} from '../src/heli/pilot-map-data.js';
 
 const road = buildTrackScript(KOGANE_PASS);
 assert.equal(road.closed, false);
@@ -54,7 +60,8 @@ for (let s = 0; s < course.length; s += 4) {
 }
 const allowed = new Set(['armco-white', 'concrete-wall', 'start-gantry', 'braking-board-150', 'braking-board-100', 'braking-board-50',
   'stone-retaining-wall', 'curve-mirror', 'chevron-board', 'tea-house', 'vending-row',
-  'autumn-tree-copper', 'autumn-tree-golden', 'shopfront-a', 'shopfront-b', 'lantern-string']);
+  'autumn-tree-copper', 'autumn-tree-golden', 'shopfront-a', 'shopfront-b', 'lantern-string',
+  'torii', 'torii-small', 'stone-lantern', 'kogane-car-park']);
 assert.ok(KOGANE_PASS.kitPlacements.every(row => allowed.has(row.id)));
 assert.equal(normalizeKitPlacements(course, KOGANE_PASS.kitPlacements).length, KOGANE_PASS.kitPlacements.length);
 for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'armco-white')) {
@@ -80,9 +87,12 @@ const lamps = planWaterside(course).lamps;
 assert.ok(lamps.length > 30);
 assert.ok(lamps.every(row => row.s >= 3270 && row.s < course.length && row.colour === 0xffa23c));
 const models = JSON.parse(readFileSync(new URL('./blender/kogane/scenery.json', import.meta.url))).models;
+models.push(...JSON.parse(readFileSync(new URL('./blender/kogane/landmarks.json', import.meta.url))).models);
 const budgets = {'armco-white': [156, 72], 'stone-retaining-wall': [600, 200],
   'curve-mirror': [400, 150], 'chevron-board': [200, 100],
-  'tea-house': [4500, 1400], 'vending-row': [1500, 500]};
+  'tea-house': [4500, 1400], 'vending-row': [1500, 500],
+  'torii': [1800, 600], 'torii-small': [1800, 600], 'stone-lantern': [700, 250],
+  'kogane-car-park': [150, 150]};
 assert.deepEqual(models.map(model => model.id), Object.keys(budgets));
 for (const model of models) for (const [i, file] of model.files.entries()) {
   const bytes = readFileSync(new URL('../public/assets/models/circuits/kits/' + file.path, import.meta.url));
@@ -94,6 +104,68 @@ for (const model of models) for (const [i, file] of model.files.entries()) {
   assert.ok(triangles > 0 && triangles <= budgets[model.id][i], `${file.path}: approved triangle cap`);
   assert.ok(file.bytes < 250000, `${file.path}: kit file budget`);
 }
+const ground = groundFromCourse(course);
+const lake = KOGANE_PASS.basins[0];
+assert.ok(KOGANE_PASS.water, 'the existing reflective circuit water draws the lake');
+assert.equal(KOGANE_PASS.effects.lake, undefined, 'no second flat lake sheet');
+assert.ok(lake.lateral < 0, 'lake on the right');
+const centre = course.worldAt(lake.s, lake.lateral);
+assert.ok(Number.isFinite(ground.water(centre.x, centre.z)), 'bucket can scoop from the lake');
+for (let s = 0; s < 730; s += 4) {
+  const p = course.worldAt(s, 0);
+  assert.equal(ground.water(p.x, p.z), null, 'lake never crosses the road');
+}
+const gate = KOGANE_PASS.kitPlacements.find(row => row.id === 'torii');
+const foot = course.worldAt(gate.s, gate.lateral);
+const water = ground.water(foot.x, foot.z);
+assert.ok(Number.isFinite(water) && water-ground.height(foot.x,foot.z) > 0 &&
+  water-ground.height(foot.x,foot.z) < 1, 'torii grounded in shallow water');
+for (const row of KOGANE_PASS.kitPlacements.filter(row => /torii|stone-lantern/.test(row.id))) {
+  assert.ok(Math.abs(row.lateral) > 12, 'landmarks clear of road and bend sightline');
+}
+// The far shore is wooded: cedar and maple stand on the slope, none in the water.
+const shoreTrees = course.features.trees.filter(tree => tree.id.startsWith('shore-forest-'));
+assert.ok(shoreTrees.length > 400, 'cedar slope across the lake');
+assert.ok(shoreTrees.every(tree => ground.water(tree.x, tree.z) === null), 'no cedar in the water');
+const farMaples = KOGANE_PASS.kitPlacements.filter(row => row.lateral < -200 && /autumn-tree/.test(row.id));
+assert.ok(farMaples.length > 30, 'autumn maples across the lake');
+for (const row of farMaples) {
+  const p = course.worldAt(row.s, row.lateral);
+  assert.equal(ground.water(p.x, p.z), null, 'no maple in the water');
+}
+assert.ok(KOGANE_PASS.effects.backdrop.hills.length >= 4, 'wooded hills behind the far shore');
+// Like Summit Run, Kogane Pass is a destination only through its own option.
+const off = {pilotMap: true, summitRun: true}, on = {...off, koganePass: true};
+assert.equal(destinationsFor(off)['kogane-pass'], undefined, 'off switch hides the map place');
+assert.equal(destinationsFor({koganePass: true})['kogane-pass'], undefined, 'needs the pilot map too');
+assert.ok(destinationsFor(on)['kogane-pass'], 'option lists the place');
+assert.equal(destinationsFor(on)['kogane-pass'].baseAltitude, 1300);
+assert.equal(destinationsFor(on)['kogane-pass'].mapKm, KOGANE_PLACE.drawAt);
+assert.equal(placeOfCourse('kogane-pass'), KOGANE_PLACE);
+assert.equal(PLACE_ALTITUDES['kogane-pass'], 1300);
+assert.ok(!PLACES.includes(KOGANE_PLACE), 'the released place table is untouched');
+const hiddenOwner = id => isDestination(id, off);
+assert.deepEqual(burnableCourses({}, id => {if (id === 'kogane-pass') throw Error('hidden course loaded'); return null;},
+  {enabled: true, owns: hiddenOwner}), [], 'off switch blocks fire eligibility');
+assert.deepEqual(burnableCourses({}, id => {throw Error('unowned course loaded: ' + id);},
+  {enabled: true, owns: () => false}), [], 'unowned course is never loaded');
+// With the option on, the helicopter site, landing circle and fire work.
+const site = courseSite(course, ground, 'kogane-pass', on);
+for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+  const p = course.worldAt(lake.s + Math.cos(angle) * lake.along, lake.lateral + Math.sin(angle) * lake.across);
+  assert.ok(p.x >= site.area.minX && p.x <= site.area.maxX && p.z >= site.area.minZ && p.z <= site.area.maxZ,
+    'lake inside flying area');
+}
+assert.equal(ground.water(site.zone.x, site.zone.z), null, 'landing circle is dry');
+for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+  assert.ok(Math.abs(ground.height(site.zone.x + Math.cos(angle) * site.zone.radius,
+    site.zone.z + Math.sin(angle) * site.zone.radius) - site.zone.y) <= 1.5, 'landing circle level');
+}
+const grid = fireGrid(course, ground, site);
+assert.ok(courseBurnCheck(course, ground, grid).ok, 'course can burn');
+assert.ok(startCells(course, ground, grid).length > 0, 'connected forest can host a fire');
+assert.equal(burnableCourses({}, id => id === 'kogane-pass' ? {course, ground, grid} : null,
+  {enabled: true, owns: id => isDestination(id, on)}).join(), 'kogane-pass');
 assert.equal(manifest.state, 'dev');
 assert.equal(manifest.grandPrix, true);
 assert.equal(COURSE_PRICES['kogane-pass'], 2200);

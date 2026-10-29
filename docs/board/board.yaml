@@ -400,8 +400,9 @@ tasks:
     lane: "ART"
     size: "M"
     status: "in-progress"
+    claimed_by: "Codex, lane codex/kogane-c5, 28 October 2026"
     needs: []
-    locks: []
+    locks: [sound-bank, track-kit-placement]
     details: "docs/board/cards/KOGANE-PASS-C5.md"
 
   - id: KOGANE-PASS-C6

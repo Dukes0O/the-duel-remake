@@ -7,7 +7,8 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
-import {PILOT_MAP, PLACES} from '../src/heli/pilot-map-data.js';
+import {PILOT_MAP, PLACES, DEV_PLACES} from '../src/heli/pilot-map-data.js';
+import {ALL_CIRCUITS} from '../src/circuits/index.js';
 import {CIRCUIT_ENTRIES} from '../src/circuit-manifests.js';
 import {EXPANSION_COURSES} from '../src/expansion-courses.js';
 
@@ -73,12 +74,13 @@ export function traceCourse(def, {sizeKm = PILOT_MAP.outlineKm, tolerance = TRAC
 // place with several courses is traced from its first.
 export function buildPilotMap() {
   const outlines = {};
-  for (const place of PLACES) {
+  // Dev places (Kogane Pass) keep their outline ready for the chart while their option is off.
+  for (const place of [...PLACES, ...DEV_PLACES]) {
     if (!place.courses.length) continue;
     // Keep the released outline while a replacement road is still a preview.
     const replacement = CIRCUIT_ENTRIES.find(row => row.manifest.id === place.courses[0] && row.manifest.slot !== undefined && row.manifest.state !== 'on');
     const def = replacement ? EXPANSION_COURSES.find(row => row.id === replacement.manifest.id)
-      : COURSE.find(course => course.id === place.courses[0]);
+      : COURSE.find(course => course.id === place.courses[0]) ?? ALL_CIRCUITS.find(course => course.id === place.courses[0]);
     if (!def) throw new Error(`${place.id}: no course ${place.courses[0]} in the registry`);
     outlines[place.id] = traceCourse(def);
   }
