@@ -14,6 +14,7 @@ import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup} from '../src/heli/heli-board.js';
 import {mapModel, placeNote} from '../src/heli/pilot-map-view.js';
 import {STORY_JOB_ID, STORY_NIGHT, STORY_CRATE_KG, storyJob, storyOffered, finishStorySupplies} from '../src/heli/heli-story.js';
+import * as wildlife from '../src/wildlife.js';
 import {readKoganeLetter, markKoganeLesson, markKoganeSupplies, koganeStep, storyOf} from '../src/story/story-save.js';
 
 let checks = 0;
@@ -185,6 +186,8 @@ const storyRow = session => session.boardJobs().find(job => job.id === STORY_JOB
   same(done.profile.credits, base.credits + 2650, 'credits rise by that');
   same(heliOf(done.profile).jobs, {day: 1, taken: null, done: [STORY_JOB_ID]}, 'the day\'s job list marks it done and nothing is in hand');
   ok(heliOf(done.profile).map.found.includes(STORY_NIGHT) && done.found, 'the Night version is found from the air');
+  same(heliOf(done.profile).fuelKg, 400, 'the tea house fills the tank');
+  ok(heliOf(base).fuelKg < 400, 'which was not full before');
   ok(storyOf(done.profile).kogane.supplies === true && koganeStep(done.profile) === 'duel', 'the story mark rises: the duel is next');
   ok(base.credits === 3000 && heliOf(base).jobs.taken === STORY_JOB_ID && !Object.hasOwn(heliOf(base), 'map'), 'the profile it was given is not changed');
 
@@ -340,6 +343,67 @@ function setDown(session) {
   same([done.pay, done.bonus, done.clean], [2100, 0, false], 'the base pay only, because a repair was charged');
   same(session.profile.credits, mid + 2100 - end.filter(e => e.type === 'charged').reduce((sum, e) => sum + e.charged, 0), 'credits rise by 2,100, less any repair charged on the way');
   same(koganeStep(session.profile), 'duel', 'the story moves on');
+}
+
+// Dropping the job while the crate hangs on the cable, then taking it again: the crate on the cable is the job's again.
+{
+  const session = newSession();
+  ok(session.takeJob(STORY_JOB_ID).ok);
+  overCrate(session);
+  session.takeEvents();
+  ok(session.pressHook()?.type === 'hooked', 'hook the crate');
+  run(session, 60, v => pilot(v, {x: v.zone.x, z: v.zone.z, y: v.zone.y + 16}, {speed: 3}), v => Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 1);
+  run(session, 60, v => pilot(v, {x: v.zone.x, z: v.zone.z, y: v.zone.y}, {speed: 1}), v => v.heli.onGround);
+  ok(session.view().heli.onGround, 'down on the pad with the crate still on the cable');
+  ok(session.dropJob().dropped, 'hand the job back');
+  const loads = () => session.view().loads.filter(load => load.id === 'crate');
+  ok(loads().length === 1 && loads()[0].hooked && !loads()[0].storyJob, "the crate stays on the hook, no longer the job's");
+  ok(session.takeJob(STORY_JOB_ID).ok, 'take the job again');
+  ok(loads().length === 1 && loads()[0].hooked && loads()[0].storyJob, 'the crate on the hook belongs to the job again, and no second crate is laid');
+  same(session.destination, 'kogane-pass', 'and the way to Kogane Pass is set');
+  // The same, with the crate let go on the pad before the job is taken again.
+  session.pressHook();
+  ok(session.dropJob().dropped, 'hand it back again');
+  ok(session.takeJob(STORY_JOB_ID).ok && loads().length === 1 && loads()[0].storyJob, 'a crate left on the pad belongs to the job again too');
+}
+
+// The wildlife count cannot be taken over the story job.
+{
+  const session = createHeliSession({profile: profileAt('supplies'), enabled: true, wildlifeEnabled: true, pilotMapEnabled: true, koganePassEnabled: true,
+    koganeStoryEnabled: true, loadCourse, carId: 'falcone_f42', today: DAY1,
+    wildlife, surveyStand: () => null});
+  session.start();
+  ok(session.takeJob(STORY_JOB_ID).ok, 'the story job is in hand');
+  const count = session.boardJobs().find(job => job.survey);
+  ok(count, 'a wildlife count is on the board');
+  const refused = session.takeJob(count.id);
+  ok(!refused.ok && /story job/.test(refused.reason) && heliOf(session.profile).jobs.taken === STORY_JOB_ID, 'the wildlife count is refused while it is');
+}
+
+// A crash costs the clean bonus: the crate is laid again at the pad, but the job's mark is the session's, not the crate's.
+{
+  const session = newSession();
+  ok(session.takeJob(STORY_JOB_ID).ok);
+  // Up, then fast and down into the ground.
+  const seen = run(session, 8, () => ({lift: 1}));
+  seen.push(...run(session, 4, () => ({lift: 0.3, pitch: 1}), v => v.heli.vz * 0 + Math.hypot(v.heli.vx, v.heli.vz) > 25));
+  seen.push(...run(session, 30, () => ({lift: -1, pitch: 1, roll: 0, yaw: 0}), (v, events) => events.some(e => e.type === 'crashed')));
+  seen.push(...run(session, 6, () => ({}), (v, events) => v.phase === 'flying'));
+  ok(seen.some(e => e.type === 'crashed'), 'the helicopter crashed');
+  same(heliOf(session.profile).jobs.taken, STORY_JOB_ID, 'the job stays in hand');
+  ok(session.view().loads.some(load => load.storyJob), 'and a crate is by the pad again');
+  overCrate(session);
+  session.takeEvents();
+  ok(session.pressHook()?.type === 'hooked', 'hook the new crate');
+  carryToKogane(session);
+  const {released, log} = setDown(session);
+  same(released?.type, 'released', 'set down gently');
+  const done = log.find(e => e.type === 'jobDone');
+  ok(done, 'it is done');
+  same([done.pay, done.bonus, done.clean], [2100, 0, false], 'the base pay only: a crash ends the clean bonus');
+  const fuel = log.find(e => e.type === 'teaHouseFuel');
+  ok(fuel && fuel.kg > 0 && Math.abs(session.view().heli.fuelKg - HELI_MONEY.tankKg) < 0.01, 'the tea house filled the tank');
+  same(heliOf(session.profile).fuelKg, HELI_MONEY.tankKg, 'and the save says a full tank');
 }
 
 // ---- the pilot's map ----------------------------------------------------------------------------------------------------------

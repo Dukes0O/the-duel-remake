@@ -38,15 +38,30 @@ Card row: `docs/story/kogane-invitation.md` section 12. Branch `claude/story-del
   400 kg tank. The three Kogane chart regions (forest, volcano, lake) moved with it so the chart stays whole. The place's one-line
   description now reads "east of the home valley" (it said "east of the harbour").
 - `tools/test-heli-mode.mjs`: the import list gains `../story/story-save.js` (the one story file the helicopter rules read).
-- `tools/test-heli-story.mjs` (new): 130 checks, memory only. See Tests.
+- `tools/test-heli-story.mjs` (new): 157 checks, memory only. See Tests.
+
+## Review fixes (coordinator's review, 29 October)
+
+- **Clean bonus and a crash.** The clean mark is now the session's (`storyMark`, set when the job is taken, like `jobMark` for car
+  jobs), not the crate's. A crash, a drop or a knock since the job was taken ends the bonus however many crates were laid. A crash then
+  a clean delivery pays the base 2,100 only (test).
+- **Drop while hooked, then retake.** Taking the job again re-tags a crate left on the cable or beside the pad as the job's (and sets
+  the way to Kogane when it is on the cable); otherwise a fresh crate is laid. No second crate (test).
+- **The wildlife count and the story job.** `takeSurvey` now refuses while the story job is in hand: "Finish or drop the story job
+  first." (test).
+- **The tea house fills the tank** (Claude's design call). `finishStorySupplies` sets the saved tank to full, the session fills the
+  live helicopter to match and says so with a `teaHouseFuel` event; `heli-ui.js` has one line to word it ("The tea house fills the
+  tank: N kg"). A child no longer waits for the fuel truck on the story trip. Tested at the profile and in flight.
+- `docs/changes/KOGANE-PASS-C5.md` now says (14, 0.5), not (22, 2).
+- Left as notes, as asked: the logbook's second write, the circle's distance from the tea house, and the 128-name limit on the map record.
 
 ## Choices to know about
 
 - **Why 14 km and not 16.** Sixteen km is the most the leg rule allows (2 x 197 kg). In a real flight the helicopter also burns about
   50 kg getting to the area edge at each end (my test pilot used 56 kg at the home pad and 48 kg between the arrival point and the
   circle). So at 15.5 km the pilot arrives with about 97 kg and the way home needs 195: not enough. At 14 km the legs are 175 kg and the
-  margin is 50 kg, enough for a quick flyer. A slow flyer will still run short; the fuel truck (calls when the tank is empty) is the
-  existing answer. There is no pump at Kogane. A card to add one, or to bring the place closer, is Claude's call.
+  margin is 50 kg, enough for a quick flyer. The way home no longer depends on it: the tea house fills the tank when the
+  crate is down (see Review fixes). Only a flyer who burns the tank down before delivering can still run short.
 - **The landing circle is not at the tea house.** The circle is found by the existing search at s 0, lateral 30 (beside the start
   line). The tea house stands at s 110, lateral 22, so the circle is about 110 m from it, past the "within about 60 m" the packet
   wanted (Open 1). Not changed here; `src/circuits/kogane-pass.js` and `courseSite` are not mine. The pin says "Daichi's tea house".
@@ -66,14 +81,15 @@ night the same way. So "at dusk" is right and no scene light setting is needed. 
 
 ## Tests
 
-- `node tools/test-heli-story.mjs`: 130 checks pass. They cover: pay 2,100 and bonus 550 from the race rate (Real 2,625 and 688);
+- `node tools/test-heli-story.mjs`: 157 checks pass. They cover: pay 2,100 and bonus 550 from the race rate (Real 2,625 and 688);
   Kogane within 16 km, east, both legs inside one tank; the lift margin at 1,300 m; the offer rules (switch off or missing, wrong
   steps, carry lesson not done, newer story, no Kogane or no pilot's map); the seeded rows identical with and without the story; the
   board markup; taking, taking twice, one job at a time, Drop job and taking again; the pure finish (pay, done list, Night found,
   story mark, input not changed, once only, step and day checks, Real, not clean, credit cap, found earlier, other finds kept, newer
   helicopter record, refused story mark undoes the pay); two real flights home to Kogane (a clean set-down pays 2,650, finds the Night
   version, moves the story to the duel, counts one crate job and no car job, cannot be taken or paid again; a crate let go from 6 m is
-  charged, pays nothing, keeps the job, then pays the base 2,100); the map pin and the found star.
+  charged, pays nothing, keeps the job, then pays the base 2,100; a crash then a delivery pays the base and the tank is filled); a
+  retake after a hooked drop; the wildlife count refused; the map pin and the found star.
 - `test-heli-mode` (265), `test-heli-jobs` (5,946), `test-pilot-map` (310), `test-heli-view` (359), `test-heli-fire-session` (80) pass.
 - Lane tier and build: see the foot of this note.
 
@@ -94,5 +110,3 @@ a removal.
   (HOOKS), plus the Story card's "Finish Brian's flying lessons at the helipad first" line (SCREENS, which can read
   `koganeStep` and the lessons).
 - The circle-to-tea-house distance (see Choices) and a fuel answer for the trip home (see Choices).
-
-Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`): 65 passed, 0 failed. `npm run build`: built.
