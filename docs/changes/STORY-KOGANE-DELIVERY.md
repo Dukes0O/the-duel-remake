@@ -112,3 +112,7 @@ a removal.
 - The circle-to-tea-house distance (see Choices) and a fuel answer for the trip home (see Choices).
 
 Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`), after the review fixes: 65 passed, 0 failed. `npm run build`: built.
+
+## Claude's review (28 October 2026, night)
+
+Independent pay review: one real fault (clean bonus survived a crash); fixed with a session-level storyMark and a crash-then-deliver test, confirmed by Claude. Also fixed: retake after drop, survey blocked during the job, tea house fills the tank (Claude's design call). Rule 18: test-heli-mode import list gains story-save.js only. Kogane moved to 14 km east on the pilot's map.
