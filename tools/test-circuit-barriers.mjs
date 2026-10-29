@@ -16,6 +16,7 @@ import {buildKitPlacements} from '../src/circuit-kit-layout.js';
 // drove through them. A circuit marks such a kit piece `solid: true`
 // (src/track-script-course.js) and the piece becomes a box the size of the piece.
 const manifest = JSON.parse(readFileSync(new URL('../public/assets/models/circuits/kits/manifest.json', import.meta.url), 'utf8'));
+const koganeModels = JSON.parse(readFileSync(new URL('./blender/kogane/scenery.json', import.meta.url), 'utf8')).models;
 const course = new Course(TREMBLANT_WOODS, 1989), placements = TREMBLANT_WOODS.kitPlacements;
 const BARRIERS = ['armco', 'tyre-wall', 'catch-fence'];
 const half = s => course.roadHalfWidthAt(s);
@@ -23,8 +24,11 @@ const depthOf = piece => KIT_FOOTPRINTS[piece.id].depth * (Array.isArray(piece.s
 
 test('the footprints are the sizes in the kit manifest', () => {
   for (const [id, foot] of Object.entries(KIT_FOOTPRINTS)) {
-    const piece = manifest.pieces.find(item => item.id === id);
-    assert.ok(piece, `${id} is in the manifest`);
+    const piece = manifest.pieces.find(item => item.id === id) ??
+      koganeModels.find(item => item.id === id)?.files[0];
+    // Kogane's measured recipe table is the source for its new barrier sizes;
+    // the original P4 manifest and its exact donor set remain unchanged.
+    assert.ok(piece, `${id} has measured asset metadata`);
     for (const [i, key] of ['width', 'height', 'depth'].entries()) assert.ok(Math.abs(piece.size[i] - foot[key]) < .02, `${id} ${key}`);
   }
 });

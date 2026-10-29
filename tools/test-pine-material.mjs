@@ -83,6 +83,27 @@ try{
   disposeTree(groups[0]);check(disposals[0]===1&&disposals[1]===0,'disposing a world releases its needle texture once without damaging another world');
   check(barkDisposals[0]===1&&barkDisposals[1]===0,'shared color/bump bark texture disposes once, not twice, without touching the next world');
   disposeTree(groups[1]);check(disposals[1]===1&&barkDisposals[1]===1,'the other world releases its own needle and bark textures once');
+  // Kogane's lamp wash must preserve the original crown lighting and create
+  // assets once, even when distant crowns span several cells.
+  const washed = new THREE.Group(), beforeLoads = loads.length;
+  const litTrees = [...trees, ...trees.map((tree, i) => ({...tree, x: 500 + i * 500, farForest: true}))];
+  addPineTrees(washed, litTrees, {def: {scenery: {lampWash: {pools: [[0, 0]], radius: 17}}}});
+  check(loads.length === beforeLoads + 2, 'one bark and needle texture pair for all near and far lamp-washed cells');
+  const nearMaterial = washed.children.find(mesh => mesh.name.startsWith('Pine crowns')).material;
+  const farMaterial = washed.children.find(mesh => mesh.name.startsWith('Far pine crowns')).material;
+  const nearShader = {uniforms: {}, vertexShader: originalVertex, fragmentShader: originalFragment};
+  const farShader = {uniforms: {}, vertexShader: originalVertex, fragmentShader: originalFragment};
+  nearMaterial.onBeforeCompile(nearShader); farMaterial.onBeforeCompile(farShader);
+  check(nearShader.vertexShader.includes('pineCrownNormal') && nearShader.fragmentShader.includes('pineLowerShade'),
+    'lamp wash preserves original crown normal smoothing and lower shade');
+  check(nearShader.vertexShader.includes('vWashPool') && !farShader.vertexShader.includes('vWashPool'),
+    'only near trees receive lamp pools; distant crowns keep their original shader');
+  const needleMap = nearMaterial.map, washedBarkMap = washed.children.find(mesh => mesh.name.startsWith('Pine trunks')).material.map;
+  let needleDisposed = 0, barkDisposed = 0;
+  needleMap.addEventListener('dispose', () => needleDisposed++);
+  washedBarkMap.addEventListener('dispose', () => barkDisposed++);
+  disposeTree(washed);
+  check(needleDisposed === 1 && barkDisposed === 1, 'lamp-washed world releases shared near/far textures once');
   assets.crown.dispose();assets.trunk.dispose();assets.bark.dispose();assets.bark.map.dispose();assets.needles.dispose();assets.needles.map.dispose();
   console.log(`Pine lighting: minimum upward component ${minimumUp.toFixed(3)}, maximum radial component ${maximumRadial.toFixed(3)}, front/back error ${maxSideError}, camera error ${maxCameraError.toExponential(2)}.`);
 }finally{THREE.TextureLoader.prototype.load=loader;}

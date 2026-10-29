@@ -292,9 +292,9 @@ export function addTrackScriptScene(group, course, {snow = false, roadMaterial} 
       }
     }
   }
-  addWalls(group, course);
+  if (!course.def.kitSafetyWalls) addWalls(group, course);
   addEscapeRoads(group, course);
-  addKerbs(group, course);
+  if (course.def.roadKerbs !== false) addKerbs(group, course);
   addBoards(group, course);
   addPit(group, course, roadMaterial);
   addCircuitEffects(group, course);

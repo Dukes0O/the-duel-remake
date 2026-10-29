@@ -83,7 +83,7 @@ export function checkGround(course,runtime){
   return{issues,roadSamples,objects};
 }
 
-const BARRIERS=new Set(['armco','tyre-wall','catch-fence','concrete-wall','pit-wall']);
+const BARRIERS=new Set(['armco-white','stone-retaining-wall','armco','tyre-wall','catch-fence','concrete-wall','pit-wall']);
 export function barrierCases(course){
   const placements=course.def.kitPlacements??[],pieces=course.script?.pieces??[];
   if(course.def.id==='tremblant-woods'){

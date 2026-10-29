@@ -1,0 +1,194 @@
+{
+  "round": 2,
+  "units": "metres",
+  "up": "Y",
+  "source": "Original shapes; armco-white reuses current armco geometry.",
+  "models": [
+    {
+      "id": "armco-white",
+      "budget": [
+        156,
+        72
+      ],
+      "files": [
+        {
+          "path": "armco-white.glb",
+          "triangles": 156,
+          "size": [
+            4.0,
+            0.8499999642372131,
+            0.34900031983852386
+          ],
+          "bytes": 35316,
+          "sha256": "dd734a1d6d72b8c30b26e4f78342dca068487eaf67fb5d5bf1b0364354846cc6"
+        },
+        {
+          "path": "armco-white-lod.glb",
+          "triangles": 72,
+          "size": [
+            4.0,
+            0.8499999642372131,
+            0.34000033140182495
+          ],
+          "bytes": 28284,
+          "sha256": "8d1a61facec687463aa55917af448899ca397a018f22ca0eeeeb2070a84edb59"
+        }
+      ]
+    },
+    {
+      "id": "stone-retaining-wall",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "stone-retaining-wall.glb",
+          "triangles": 552,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7960000038146973
+          ],
+          "bytes": 71388,
+          "sha256": "38214bb620029467d362d8da69fbd22e5ae0b4f0b258c55c3597d2a86ad8cf36"
+        },
+        {
+          "path": "stone-retaining-wall-lod.glb",
+          "triangles": 180,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7960000038146973
+          ],
+          "bytes": 44412,
+          "sha256": "cc6d1e8a14cd94ecfc2d9ce8346a427059459dacca3ed6df804a017e06117784"
+        }
+      ]
+    },
+    {
+      "id": "curve-mirror",
+      "budget": [
+        400,
+        150
+      ],
+      "files": [
+        {
+          "path": "curve-mirror.glb",
+          "triangles": 220,
+          "size": [
+            0.9599999785423279,
+            3.680000066757202,
+            0.2849999964237213
+          ],
+          "bytes": 17712,
+          "sha256": "320862d2c010a930169e90bfacfb29d618c07836978bd187f6c7dca018e1ba00"
+        },
+        {
+          "path": "curve-mirror-lod.glb",
+          "triangles": 96,
+          "size": [
+            0.9599999785423279,
+            3.680000066757202,
+            0.2849999964237213
+          ],
+          "bytes": 10444,
+          "sha256": "1caf2428bbe8d1d2238fad3310f171e258039c1f780a81f5ee71c0970a59dd68"
+        }
+      ]
+    },
+    {
+      "id": "chevron-board",
+      "budget": [
+        200,
+        100
+      ],
+      "files": [
+        {
+          "path": "chevron-board.glb",
+          "triangles": 28,
+          "size": [
+            1.100000023841858,
+            2.2249999046325684,
+            0.07099999859929085
+          ],
+          "bytes": 4876,
+          "sha256": "47d4df8991b54c6e9f24cb5de1fa004091976c3946bbfc6eed40b34d3411f6de"
+        },
+        {
+          "path": "chevron-board-lod.glb",
+          "triangles": 28,
+          "size": [
+            1.100000023841858,
+            2.2249999046325684,
+            0.07099999859929085
+          ],
+          "bytes": 4888,
+          "sha256": "ce9d2d61c5a173767f0f715016abff000c87d0dc7105b64eabbe64c777aa3018"
+        }
+      ]
+    },
+    {
+      "id": "tea-house",
+      "budget": [
+        4500,
+        1400
+      ],
+      "files": [
+        {
+          "path": "tea-house.glb",
+          "triangles": 2076,
+          "size": [
+            9.399999618530273,
+            4.2099995613098145,
+            7.358639240264893
+          ],
+          "bytes": 151064,
+          "sha256": "c9d8301d16b20fbd4b10454664354f6af5c38e715eb4443b475d6527322aefb8"
+        },
+        {
+          "path": "tea-house-lod.glb",
+          "triangles": 396,
+          "size": [
+            9.399999618530273,
+            4.2099995613098145,
+            7.300000190734863
+          ],
+          "bytes": 33476,
+          "sha256": "56bccacd60729d587f966a1d27ef9f2fa95f9902c6935228232906824070883f"
+        }
+      ]
+    },
+    {
+      "id": "vending-row",
+      "budget": [
+        1500,
+        500
+      ],
+      "files": [
+        {
+          "path": "vending-row.glb",
+          "triangles": 612,
+          "size": [
+            4.199999809265137,
+            2.565000057220459,
+            1.600000023841858
+          ],
+          "bytes": 49500,
+          "sha256": "c8728bf5ead5b28d2b50f42c62667607fc97b43f4d021322d5d6e45f1e5240ca"
+        },
+        {
+          "path": "vending-row-lod.glb",
+          "triangles": 468,
+          "size": [
+            4.199999809265137,
+            2.565000057220459,
+            1.600000023841858
+          ],
+          "bytes": 39540,
+          "sha256": "99b2b9402fa83259f63a0976a4d2f15e2e815f541ef8c1690ef60fc1452b6d63"
+        }
+      ]
+    }
+  ]
+}
