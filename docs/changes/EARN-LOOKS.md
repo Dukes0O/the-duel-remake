@@ -115,3 +115,7 @@ Budgets (all under the Jesko's 73,600 triangles and 66 draws): Enzo 64,710 /
   raised bonnet ridge and rounded fenders, the F1's broad roof and tall front
   wings, and the Bolide's hard nose shield and angled windscreen.
 - Not merged. Ready for Claude's review of the sheets.
+
+## Claude's review (28 October 2026, night)
+
+Accepted as an improvement, not as release quality (Claude, look judge): Enzo 2.5, F1 2.5, Bolide 3 of 5 against the photos. Dimensions, wheels, collision and contracts unchanged; within budgets. Changed assertion: the hygiene placement rule allows the three named photo-round sheets under docs/board/looks/earned-cars/; any other picture outside public/ is still refused. Next step for Kyle: the Skyline method (body lofted from photo outlines as a Blender GLB) for these three.
