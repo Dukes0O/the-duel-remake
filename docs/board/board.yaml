@@ -419,7 +419,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "backlog"
+    status: "in-progress"
     needs: []
     locks: []
     details: "docs/board/cards/KOGANE-PASS-C5.md"
