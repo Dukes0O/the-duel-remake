@@ -1441,3 +1441,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V5 (Codex; lane 76/76, build, skyline-audio scenario pass on fb0aee24; engine within 0.52 dB).
 - 28 Oct night: merged KOGANE-PASS-C4 (Codex; lane 137/137 (world-signature and replay guards exact), drive-through, 1,232 placement checks, build pass on 453876e4; round 2 accepted).
 - 28 Oct night: merged KOGANE-PASS-C3-DIAG (Codex; lane 21/21, build, drive-through pass on 760fd27b; pace not yet accepted).
+- 28 Oct night: merged GROUND-ROWS-VARIANTS (Claude; test-ground-rows-exact passes on 25 courses; 55 lines added, none changed).
