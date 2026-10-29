@@ -52,6 +52,8 @@ export const FEATURE_STATES = Object.freeze({
   'pilot-map': 'on',
   // MENU-FRONT-DOOR: the main menu as a front door (Drive card, Next up, eight doors). Off in the game until Kyle has tried it.
   'menu-front-door': 'dev',
+  // STORY-KOGANE-SCREENS: the Kogane Invitation story (docs/story/kogane-invitation.md). Off in the game; also needs Kogane Pass and its Night version, the Nissan Skyline, the helicopter, the pilot's map and driving lessons.
+  'kogane-invitation': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

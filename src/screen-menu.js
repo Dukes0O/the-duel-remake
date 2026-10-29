@@ -17,6 +17,8 @@ import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {frontDoorMarkup} from './menu-front-door.js';
+import {createStoryUi, storyOn, storyButtonMarkup, syncStoryButton} from './story/story-ui.js';
+import {KOGANE_SKYLINE} from './story/story-save.js';
 
 // frontDoor is null with the 'menu-front-door' switch off: the markup is then exactly today's.
 export function screenMarkup({choices, arrow, sound, escapeHTML, earnedCars = false, frontDoor = null}) {
@@ -40,6 +42,20 @@ return `<div id="stage" class="in-menu"><div id="view3d" aria-label="Three-dimen
 export function createMenuScreen(ctx) {
   const {app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time} = ctx;
   const refreshEntryReward=ctx.onEntryReward||updateEntryReward;
+  // STORY-KOGANE-SCREENS: the Story button (and its red dot) and the Story card, only with the switch on. The button also
+  // answers any [data-story-open] control, such as the front door's Next up card and the garage panel.
+  let storyButton=null,storyUi=null;
+  if(storyOn(app)&&root?.querySelector){
+    const anchor=['#heli-visit','#driving-instructor','#start-engine'].map(id=>root.querySelector(id)).find(Boolean);
+    anchor?.insertAdjacentHTML('afterend',storyButtonMarkup());
+    storyButton=root.querySelector('#story-visit');
+    if(storyButton)ui['story-visit']=storyButton;
+    const press=id=>()=>root.querySelector(id)?.click();
+    storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),
+      actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]')}});
+    root.addEventListener('click',event=>{if(event.target.closest?.('[data-story-open]'))storyUi.open();});
+  }
+  function syncStory(){syncStoryButton(storyButton,storyOn(app)?storyUi?.view():null);}
   let previousSetupCourse;
 function updateMenuCar() {
   const earnedOn = app._switches?.().enabled('earned-cars') === true;
@@ -50,18 +66,25 @@ function updateMenuCar() {
     const option = root.ownerDocument.createElement('option'); option.value='mcmurtry_speirling'; option.textContent=CARS.mcmurtry_speirling.name; ui['car-select'].append(option);
   } else if(!fanOn) fanOption?.remove?.();
   const sirenaOn = app._switches?.().enabled('lab')===true && app._switches?.().enabled('the-deep')===true && isCarUnlocked(profile(),'falcone_sirena');
+  const storyCarsOn = storyOn(app);
   const sirenaOption = [...ui['car-select'].options].find(option=>option.value==='falcone_sirena');
   if(sirenaOn && !sirenaOption) {
     const option = root.ownerDocument.createElement('option'); option.value='falcone_sirena'; option.textContent=CARS.falcone_sirena.name; ui['car-select'].append(option);
   } else if(!sirenaOn) sirenaOption?.remove?.();
+  // STORY-KOGANE-SCREENS: the Nissan Skyline is a prize, not a shop car. It joins the picker only once the player owns it.
+  const skylineOn = storyCarsOn && Object.hasOwn(CARS,KOGANE_SKYLINE) && isCarUnlocked(profile(),KOGANE_SKYLINE);
+  const skylineOption = [...ui['car-select'].options].find(option=>option.value===KOGANE_SKYLINE);
+  if(skylineOn && !skylineOption) {
+    const option = root.ownerDocument.createElement('option'); option.value=KOGANE_SKYLINE; option.textContent=CARS[KOGANE_SKYLINE].name; ui['car-select'].append(option);
+  } else if(storyCarsOn && !skylineOn) skylineOption?.remove?.();
   // A car hidden by the earned-cars switch is never the menu car or the rival's car.
-  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || sirenaOn && choices.car==='falcone_sirena' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
+  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn, storyCarsOn) || skylineOn && choices.car===KOGANE_SKYLINE || sirenaOn && choices.car==='falcone_sirena' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
   if (choices.rival?.car && choices.rival.car !== 'match' && !isShownCar(choices.rival.car, earnedOn)) choices.rival = {...choices.rival, car: 'match'};
   const car = applyDriverModifiers(upgradedCar(CARS[choices.car], getUpgradeLevels(profile(), choices.car)),getEquippedDriverId(profile()),choices.car);
   app.duel.state.car = choices.car; app.menuCar = choices.car;
   text('car-speed', speedKph(car.topSpeed)); text('car-gears', String(car.gears.length).padStart(2,'0'));
   text('car-character', car.grip >= .9 ? 'PLANTED' : 'UNTAMED');
-  const carIds = [...shownCarIds(earnedOn), ...(sirenaOn?['falcone_sirena']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
+  const carIds = [...shownCarIds(earnedOn, storyCarsOn), ...(skylineOn?[KOGANE_SKYLINE]:[]), ...(sirenaOn?['falcone_sirena']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
   text('garage-count', `${String(carIds.indexOf(choices.car)+1).padStart(2,'0')} / ${String(carIds.length).padStart(2,'0')}`);
   text('menu-credits', `${credits(profile().credits)} CR`);
   for(const option of ui['car-select'].options){const key=option.value,progress=completionCarProgress(profile(),key),locked=medalProgressLabel(profile(),key)??(progress.total?`MAX OTHER CARS ${progress.maxed}/${progress.total}`:`${credits(CAR_PRICES[key])} CR`);option.textContent=isCarUnlocked(profile(),key)?CARS[key].name:`${CARS[key].name} · LOCKED · ${locked}`;}
@@ -163,6 +186,7 @@ function updateMenuScene() {
   if(ui['wasteland-visit'])ui['wasteland-visit'].hidden=!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu;
   // The helicopter (docs/HELICOPTER.md): only with its switch on.
   if(ui['heli-visit'])ui['heli-visit'].hidden=!app.heliAvailable?.();
+  syncStory();
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
   if(choices.mode==='grandprix'){
