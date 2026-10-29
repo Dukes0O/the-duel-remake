@@ -97,7 +97,8 @@ beaver remains small at the fixed 14 m camera. No art pass is claimed.
 - git diff --check: PASS.
 The user explicitly renewed waiting and retries for shared slots, so the
 previous queue timeout did not end this continuation. No check used more
-than two workers. The queue wait was retried until capacity opened. No browser scenario, frame measurement or real-save access.
+than two workers. The queue wait was retried until capacity opened.
+No browser scenario, frame measurement or real-save access.
 
 The independent source review recorded on 30474271 remains applicable:
 this continuation changes no recipe or test source. Its root-path fix was
@@ -117,10 +118,12 @@ The existing default round 1 output plans remain unchanged.
 
 The four round 1 runtime exports are replaced in place by their round 2
 exports. The rebuilt moose already replaced its failed predecessor in
-30474271. Round 1's sheet will be recycled after the round 2 commit, as the
-brief requires. Own temporary render output, motion montages, logs, launchers
-and the production build will be recycled after their results are recorded.
+30474271. Round 1's sheet was recycled after round 2 was committed as
+800c7f98, as the brief requires. Own temporary render output, motion
+montages, logs, launchers, production build and the salt-flats suite's new
+98rTyh fixture folder were recycled after their results were recorded.
 No .evidence folder was created or traversed. No licensed original,
 existing evidence folder or other scratchpad file is removed. Cockpit sync
-is deferred to the Director under the lane-only boundary; no shared board
-status was changed.
+is deferred to the Director under the lane-only boundary. STATUS was
+refreshed only in this lane, with other lane working-file inspections skipped
+and no live root supplied. No integration board or Cockpit entry changed.
