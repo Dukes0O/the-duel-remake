@@ -1,0 +1,19 @@
+{
+  "eventId": "kogane-pass-reverse",
+  "cases": [
+    {
+      "id": "kogane-pass-reverse-duel",
+      "eventId": "kogane-pass-reverse",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "kogane-pass-reverse-duel": {
+      "30": "1283237861f390931e24491f8bda8967ca9826d785052d09d4660e584e892bba",
+      "60": "1283237861f390931e24491f8bda8967ca9826d785052d09d4660e584e892bba",
+      "144": "1283237861f390931e24491f8bda8967ca9826d785052d09d4660e584e892bba"
+    }
+  }
+}

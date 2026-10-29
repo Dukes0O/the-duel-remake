@@ -47,8 +47,10 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
         'panorama-ridge-reverse': ['panorama-ridge'],
         'harbour-lights-reverse': ['harbour-lights'],
         'tremblant-woods-reverse': ['tremblant-woods'],
+        'kogane-pass-night': ['kogane-pass'],
+        'kogane-pass-reverse': ['kogane-pass'],
       }[circuit.id];
-      assert.ok(expected,'only the five approved children are found from the air');
+      assert.ok(expected,'only the seven approved children are found from the air');
       assert.deepEqual(manifest.unlock,{kind:'spotted-from-air',defaultEventId:expected[0]});
       assert.deepEqual([manifest.price,COURSE_PRICES[circuit.id],manifest.grandPrix],[0,0,true]);
       assert.ok(manifest.releaseOrder > CIRCUIT_MANIFESTS.find(row => row.id === expected[0]).releaseOrder,
