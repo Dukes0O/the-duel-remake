@@ -60,8 +60,7 @@ export const STORY_LETTER = Object.freeze({
 });
 
 // Section 6.2: recorded lines the story reuses (no new voice). Ids exist in
-// DRIVE_RADIO_LINES (src/lessons/drive-radio-lines.js) or HELI_RADIO_LINES
-// (src/heli/heli-radio-lines.js). `then` is the caption that follows the recorded line.
+// DRIVE_RADIO_LINES (the driving lessons' radio file) or HELI_RADIO_LINES (the helicopter's radio file). `then` is the caption that follows the recorded line.
 export const STORY_REUSED_LINES = Object.freeze([
   Object.freeze({moment: 'The lesson opens, and each run', voice: 'Brian', ids: Object.freeze([
     'drive.radio.v2.corner.intro', 'drive.radio.v2.shared.watch', 'drive.radio.v2.shared.follow',
