@@ -9,7 +9,9 @@ export function normalizeRival(value) {
   const car=Object.hasOwn(CARS,v.car)?v.car:'match';
   const driverId=normalizeDriverId(v.driverId);
   const upgradeLevel=Number.isFinite(v.upgradeLevel)?Math.max(0,Math.min(3,Math.floor(v.upgradeLevel))):0;
-  return car==='match'&&driverId==='club'&&upgradeLevel===0?null:{car,driverId,upgradeLevel};
+  // `nitroScale` is optional (the Night Duel's Daichi): the share of the nitro's speed gain a rival keeps. Absent for every other rival.
+  const nitroScale=Number.isFinite(v.nitroScale)&&v.nitroScale>=0&&v.nitroScale<1?v.nitroScale:null;
+  return car==='match'&&driverId==='club'&&upgradeLevel===0&&nitroScale==null?null:{car,driverId,upgradeLevel,...(nitroScale==null?{}:{nitroScale})};
 }
 export function rivalSignature(result) {
   const stage=COURSE[result.stageIndex],rival=normalizeRival(result.rivalSettings??result.rival);
