@@ -422,7 +422,7 @@ export function driveLessonCompletion(run,state,playerId){
     run.plan?.car!==state.car||run.plan?.difficulty!==state.difficulty||run.plan?.driverId!==state.driverId||
     !lesson||!Object.hasOwn(DRIVE_LESSON_VIEW,lesson.id)||!passed(lesson)||
     !Number.isFinite(lesson.bestMargin)||lesson.bestMargin<=0)return null;
-  return {id:lesson.id,carId:state.car,marginSeconds:lesson.bestMargin};
+  return {id:lesson.id,courseId:run.plan.courseId,carId:state.car,marginSeconds:lesson.bestMargin};
 }
 
 

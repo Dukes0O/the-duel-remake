@@ -10,11 +10,17 @@ const BEAVER = ['Ridge Corner', 'Beaver Kink', 'Beaver Hairpin'];
 export const LESSON_TURN_NAMES = Object.freeze({
   'summit-run': Object.freeze({'Picnic Bend': 4462, 'Engineer Bend': 5380, 'Glacier Exit': 8754,
     'Whiteout Bend': 9439, 'Gallery Bend 1': 10570, 'Gallery Bend 2': 11170}),
+  // The two bends the Kogane Pass script leaves unnamed: R43 after Cedar Hairpin, L44 after Maple Hairpin.
+  'kogane-pass': Object.freeze({'Cedar Bend': 1206, 'Maple Bend': 1782}),
 });
 export const DRIVE_LESSON_CORNERS = Object.freeze([
   sectionRow('panorama-ridge', PANORAMA, 'Griffin Bend', -700, 'Forrest Elbow', 60),
   sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
   sectionRow('ardennes-forest', ['Les Combes', 'Combes Exit', 'Malmedy', 'Riverside', 'Woodland Left', 'Fagnes', 'Fagnes Exit'], 'Kestrel Straight', 0, 'Fagnes Exit', 60),
+  // Brian's Hairpin Lesson (docs/story/kogane-invitation.md 8.1). The board lists it only while the course itself exists,
+  // which is while the kogane-pass switch is on.
+  sectionRow('kogane-pass', ['Car Park Corner', 'Cedar Hairpin', 'Cedar Bend', 'Maple Hairpin', 'Maple Bend', 'Tea House Hairpin'],
+    'Shrine Straight', 0, 'Tea House Hairpin', 60),
 ]);
 
 export const DRIVE_LESSON_STEPS = Object.freeze([
