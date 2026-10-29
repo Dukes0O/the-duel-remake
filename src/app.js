@@ -584,22 +584,14 @@ export class App {
       if(!driveLessonCompletion(run,state,this.player.id))return;
       const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId,{engineCurve:completion.id==='gears'}); // a gearbox lesson can only have run on the engine curve
       if(result.ok){
-        // STORY-KOGANE-HOOKS: passing "Beat me" on the Kogane row marks the story's lesson step (that row only, and only with the switch on).
-        let next=result.profile,storyLesson=false;
-        if(this._storyOn()&&completion.id==='corner'&&completion.courseId==='kogane-pass'){
-          const marked=markKoganeLesson(next);
-          if(marked.ok&&marked.changed){next=marked.profile;storyLesson=true;}
-        }
-        this.profile=next;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward??run.reward;run.rewardMargin=completion.marginSeconds;
+        // STORY-KOGANE-HOOKS: passing "Beat me" on the Kogane row also marks the story's lesson step (a bare host has no story).
+        const story=this._storyLessonPass?.(result,completion);
+        this.profile=story?.profile??result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward??run.reward;run.rewardMargin=completion.marginSeconds;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
         // Brian's recorded pass line only when the reward is new; the caption that points on to the helipad always follows.
-        if(run.saved&&response.radio&&!(storyLesson&&result.reward==null))this._sayDriveLesson(response.radio);
-        if(run.saved&&storyLesson){
-          this._storyBonus();
-          if(result.reward!=null)(this._driveLessonRadioQueue??Promise.resolve()).then(()=>this._storySay('story.kogane.brian.pass'));
-          else this._storySay('story.kogane.brian.pass');
-        }
+        if(run.saved&&response.radio&&!story?.skipPassLine)this._sayDriveLesson(response.radio);
+        if(run.saved&&story)this._storyLessonSaid(result);
       }
       else this.driveLessonMessage=result.reason;
       if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
@@ -713,9 +705,11 @@ export class App {
     return this._storyRadio??=createStoryRadio({
       getChain:()=>{
         if(!this.audio.context)return null;
-        this.audio._syncMixer?.();
-        const target=this.audio.mixer?.output('interface.bonus')||this.audio.buses?.voice||this.audio.master;
-        return this._storyRadioChain??=createRadioChain(this.audio.context,target);
+        try{
+          this.audio._syncMixer?.();
+          const target=this.audio.mixer?.output('interface.bonus')||this.audio.buses?.voice||this.audio.master;
+          return this._storyRadioChain??=createRadioChain(this.audio.context,target);
+        }catch{return null;}
       },
       show:(id,text,readMs)=>{this.storyCaption={id,text,readMs};this.duel.emit({storyCaption:id});},
       hide:id=>{if(this.storyCaption?.id===id){this.storyCaption=null;this.duel.emit({storyCaption:null});}},
@@ -732,6 +726,19 @@ export class App {
   }
   // The finished-step chime (interface.bonus), once per step.
   _storyBonus(){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.bonus');}
+  // "Beat me" passed: only on the Kogane row of the first lesson, and only while the switch is on, the story's lesson step is marked
+  // (in the same profile change as the lesson's own reward). Null for every other pass.
+  _storyLessonPass(result,completion){
+    if(!this._storyOn()||completion.id!=='corner'||completion.courseId!=='kogane-pass')return null;
+    const marked=markKoganeLesson(result.profile);
+    return marked.ok&&marked.changed?{profile:marked.profile,skipPassLine:result.reward==null}:null;
+  }
+  // The chime and Brian's caption once the mark is saved. When the lesson's reward is new his recorded line plays first and the caption follows it.
+  _storyLessonSaid(result){
+    this._storyBonus();
+    if(result.reward!=null)(this._driveLessonRadioQueue??Promise.resolve()).then(()=>this._storySay('story.kogane.brian.pass'));
+    else this._storySay('story.kogane.brian.pass');
+  }
   // The next time the main menu opens after the win, Ana calls (once; her mark rises as she starts).
   storyMenuOpened(){
     if(!this._storyAvailable()||koganeStep(this.profile)!=='ana')return false;
