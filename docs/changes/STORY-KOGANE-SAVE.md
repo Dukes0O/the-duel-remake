@@ -54,3 +54,5 @@ Nothing. No old code, test or doc is replaced by this card.
 
 - The independent save review that rule 17 asks for.
 - The `kogane-invitation` switch (see above).
+
+Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`): 200 passed, 0 failed. `npm run build`: passed.
