@@ -179,7 +179,7 @@ def wall_picture(seeds, seed, width, height):
     grain = fbm(rs, width, height, 14, 9)
     speck = noise(rs, width, height, 90, 56)
     streak = noise(rs, width, height, 70, 3)           # long vertical weathering streaks
-    base = .15 * tone * (.8 + .5 * grain) * (.9 + .2 * speck) * (.88 + .24 * streak)
+    base = .2 * tone * (.8 + .5 * grain) * (.9 + .2 * speck) * (.88 + .24 * streak)
     colour = np.stack([base * (1 + .07 * warm), base * (1 + .01 * warm), base * (1 - .06 * warm)], -1)
     # Light from above: the upper rim of each stone catches it, the lower rim is in shade.
     rim = np.clip(1 - edge / .07, 0, 1)
@@ -188,7 +188,7 @@ def wall_picture(seeds, seed, width, height):
     damp = fbm(rs, width, height, 6, 4)
     wet = np.exp(-(WALL_H - gz) / .38) * .55 + np.exp(-gz / .3) * .5 + np.exp(-edge / .05) * .3
     moss = np.clip((damp + wet - .8) * 5, 0, 1) * (gz < WALL_H + .02)
-    mossy = np.stack([.03 + .05 * damp, .075 + .09 * damp, .012 + .02 * damp], -1) * (.75 + .5 * speck)[..., None]
+    mossy = np.stack([.05 + .07 * damp, .11 + .13 * damp, .015 + .025 * damp], -1) * (.75 + .5 * speck)[..., None]
     colour = colour * (1 - moss[..., None] * .92) + mossy * moss[..., None] * .92
     # Dark mortar in the joints, then the coping strip on top.
     joint = np.clip((.02 + .014 * (speck - .5) - edge) / .012, 0, 1)
