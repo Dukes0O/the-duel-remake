@@ -389,7 +389,7 @@ tasks:
     owner: "claude"
     lane: "FINISH"
     size: "M"
-    status: "ready"
+    status: "in-progress"
     needs: []
     locks: []
     details: "docs/board/cards/KOGANE-PASS-C6.md"
