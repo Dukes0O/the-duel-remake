@@ -18,7 +18,9 @@ const equal = (actual, expected, message) => { assert.deepEqual(actual, expected
 equal(REFERENCE_POLICY, {car: 'stuttgart_959s', driver: 'club', cpu: 'medium',
   fixtureVersion: 1, warmupLaps: 1, timedLaps: 2, sampleMetres: 20}, 'Reference policy matches CIRCUITS 7b.1');
 const definitionsBefore = JSON.stringify(COURSE);
-const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(row => [row.id, row])).values()];
+// Published records follow the installed definition of a slotted course.
+// A dev replacement gets its own new reference in C3, before it is released.
+const definitions = [...new Map([...ALL_CIRCUITS, ...COURSE].map(row => [row.id, row])).values()];
 const targets = referenceTargets();
 const expectedKeys = definitions.filter(definition => definition.closed !== false).flatMap(definition =>
   (supportsRouteVariants(definition) ? getRouteVariants(definition).map(route => route.id) : ['fixed']).map(route => definition.id + '|' + route));

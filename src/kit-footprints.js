@@ -4,6 +4,8 @@
 // `solid: true` and src/track-script-course.js turns it into a box a car hits:
 // `width` along the piece's own x axis, `height` up, `depth` through it.
 export const KIT_FOOTPRINTS = Object.freeze({
+  'armco-white': { width: 4, height: .85, depth: .349 },
+  'stone-retaining-wall': { width: 4, height: 2.54, depth: .796 },
   'armco': { width: 4, height: .85, depth: .349 },
   'tyre-wall': { width: 4, height: 1, depth: .8 },
   'catch-fence': { width: 4, height: 3.7, depth: .38 },

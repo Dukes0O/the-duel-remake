@@ -38,7 +38,10 @@ test('one exact immutable membership source preserves both existing field export
   assert.equal(career.GRAND_PRIX_COURSES, field.GRAND_PRIX_COURSES);
   assert.equal(career.grandPrixCourse, field.grandPrixCourse);
   assert.equal(Object.isFrozen(career.GRAND_PRIX_COURSES), true);
-  assert.deepEqual(career.GRAND_PRIX_COURSES, oldField.GRAND_PRIX_COURSES);
+  // The old formula reads today's manifests and appends a slotted replacement
+  // twice. Preserve its exact membership and order, with each course once.
+  assert.deepEqual(career.GRAND_PRIX_COURSES, [...new Set(oldField.GRAND_PRIX_COURSES)]);
+  assert.equal(new Set(career.GRAND_PRIX_COURSES).size, career.GRAND_PRIX_COURSES.length);
   for (const definition of [...COURSE, ...CIRCUIT_MANIFESTS, {id: 'unknown'}, null])
     assert.equal(career.grandPrixCourse(definition), oldField.grandPrixCourse(definition));
 });

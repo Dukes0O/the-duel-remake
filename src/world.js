@@ -102,7 +102,12 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false,preload
       const edge = new THREE.Mesh(strip(course, s=>side*(course.roadHalfWidthAt(s)-(race?.55:.45)), s=>side*(course.roadHalfWidthAt(s)-.28), .057), race?white:cream);
       edge.userData.roadMarking = 'edge';group.add(edge);
       if(!race){
-        const centre = new THREE.Mesh(strip(course, side * .12, side * .22, .058), yellow);
+        // One solid yellow centre line for the Japanese mountain pass.
+        // Keep the default double line on every existing road.
+        if (course.def.markings === 'single-yellow' && side < 0) continue;
+        const single = course.def.markings === 'single-yellow';
+        const centre = new THREE.Mesh(strip(course, single ? -.075 : side * .12,
+          single ? .075 : side * .22, .058), yellow);
         centre.userData.roadMarking = 'centre';group.add(centre);
       }
     }

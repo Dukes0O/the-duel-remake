@@ -74,7 +74,7 @@ const sessionAt = (courseId, {profile = profileWith(), secrets = ALL_SECRETS, pi
     const variant = ALL_CIRCUITS.find(def => def.id === sign.id), manifest = CIRCUIT_MANIFESTS.find(row => row.id === sign.id);
     ok(variant && manifest, `${sign.id} is a registered variant`);
     same(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: sign.course}, `${sign.id} is found from the air on ${sign.course}`);
-    same([manifest.price, manifest.state], [0, 'dev'], `${sign.id} is free and still a dev course`);
+    same([manifest.price, manifest.state], [0, 'on'], `${sign.id} is free and released, found only from the air`);
     const {course, ground} = loadCourse(sign.course);
     ok(signClear(course, ground, sign.x, sign.z), `${sign.id}: its sign stands off the road, in the dry, clear of scenery`);
     const lateral = Math.abs(course.nearest(sign.x, sign.z).lateral);

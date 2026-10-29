@@ -44,7 +44,9 @@ function roadBlocksView(course, pose, featureS) {
   return false;
 }
 
-const definitions = [...new Map([...COURSE, ...ALL_CIRCUITS].map(entry => [entry.id, entry])).values()];
+// Dossiers use published references for the installed road. A slotted dev
+// replacement gets its reference and dossier checks in C3.
+const definitions = [...new Map([...ALL_CIRCUITS, ...COURSE].map(entry => [entry.id, entry])).values()];
 let flagCount = 0, cornerCount = 0;
 const problems = [];
 for (const target of referenceTargets(definitions)) {

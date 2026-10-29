@@ -8,14 +8,15 @@ export function copyCourseDescriptor(parent, changes) {
   return Object.freeze(Object.defineProperties({}, descriptors));
 }
 
-export function lightVariant(parent, parentManifest, {id, name, look, releaseOrder}) {
+// `state` is the release switch: a new variant stays 'dev' (hidden) until its own module turns it 'on'.
+export function lightVariant(parent, parentManifest, {id, name, look, releaseOrder, state = 'dev'}) {
   if (!['night', 'dusk'].includes(look)) throw Error('A lighting variant needs the existing night or dusk look.');
   const lightPath = Object.freeze({axis: parent.lightPath?.axis ?? 'distance',
     ...(parent.lightPath?.palette ? {palette: parent.lightPath.palette} : {}),
     keyframes: Object.freeze([Object.freeze({at: 0, look})])});
   const definition = copyCourseDescriptor(parent, {id, name, flag: id, defaultMood: 'clear',
     timeOfDay: look === 'night' ? 'night' : undefined, lightPath});
-  const manifest = Object.freeze({id, flag: id, state: 'dev', price: 0, grandPrix: true, releaseOrder,
+  const manifest = Object.freeze({id, flag: id, state, price: 0, grandPrix: true, releaseOrder,
     driver: parentManifest.driver,
     unlock: Object.freeze({kind: 'spotted-from-air', defaultEventId: parent.id})});
   return Object.freeze({definition, manifest});
@@ -24,7 +25,7 @@ export function lightVariant(parent, parentManifest, {id, name, look, releaseOrd
 
 // Reverse coordinates follow native reversePieces, including the shifted start.
 // Road-space longitudinal and lateral axes both flip; the world rotates by PI.
-export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, scriptStart = parent.scriptStart, placements}) {
+export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, state = 'dev', scriptStart = parent.scriptStart, placements}) {
   const road = buildTrackScript(parent), length = road.length;
   const offset = scriptStart - parent.scriptStart;
   const wrap = s => ((s % length) + length) % length;
@@ -91,7 +92,7 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
     return kits;
   }};
   definition = Object.freeze(Object.defineProperties({}, descriptors));
-  const manifest = Object.freeze({id, flag: id, state: 'dev', price: 0, grandPrix: true, releaseOrder,
+  const manifest = Object.freeze({id, flag: id, state, price: 0, grandPrix: true, releaseOrder,
     driver: parentManifest.driver, unlock: Object.freeze({kind: 'spotted-from-air', defaultEventId: parent.id})});
   return Object.freeze({definition, manifest});
 }

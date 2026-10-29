@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { decodeAudioBytes, readRuntimeWav } from './audio/codec.mjs';
 import { EngineAudio, combatAudioSpace } from '../src/audio.js';
+import {SOUND_BANK, CAR_VOICES} from '../src/sound-bank.js';
+import {measureCue, wavBytes} from './audio/render-lab-cues.mjs';
+import {measureLoudness} from './audio/measurements.mjs';
 import { App } from '../src/app.js';
 import { CARS, COURSE } from '../src/config.js';
 
@@ -489,7 +492,7 @@ for (const asset of ambientManifest.sources) {
   );
 }
 const rates = new Map();
-for (const car of Object.keys(CARS)) {
+for (const car of [...Object.keys(CARS), 'nissan_skyline_gtr_r34']) {
   const st = state({ car });
   for (let n = 0; n < 180; n++) {
     context.advance(1 / 60);
@@ -780,7 +783,7 @@ for (const [file, limit] of [
   );
 }
 let maximumBlendSwing = 0;
-for (const car of Object.keys(CARS))
+for (const car of [...Object.keys(CARS), 'nissan_skyline_gtr_r34'])
   for (const targetRpm of [0.31, 0.545, 0.735, 1]) {
     const st = state({ car, revs: (targetRpm - 0.18) / 0.82 });
     for (let i = 0; i < 100; i++) {
@@ -1425,9 +1428,99 @@ check(
 
 }
 
+// Skyline uses the same decoded donor and controlled audio fixture as the roster.
+{
+  const car = 'nissan_skyline_gtr_r34', rig = await makeAudio();
+  let enabled = true, grouped = false;
+  rig.audio.flags = {enabled: name => (name === 'nissan-skyline' && enabled) || (name === 'hidden-road' && grouped)};
+  const settle = (values = {}, frames = 90) => {
+    for (let i = 0; i < frames; i++) {
+      rig.context.advance(1 / 60);
+      rig.audio.update(state({car, ...values}));
+    }
+  };
+  assert.deepEqual(CAR_VOICES[car], {pitch:.96, brightness:1.03, gain:.98,
+    accent:1, exhaust:.16, intake:.13, turbo:true});
+  const levels = [];
+  for (const other of [...Object.keys(CARS), car]) {
+    settle({car:other});
+    levels.push({car:other, db:20*Math.log10(rmsOf(renderEngine(rig.audio, 6)))});
+  }
+  const skyline = levels.at(-1);
+  check(levels.every(row => Math.abs(row.db - skyline.db) < 1),
+    'Skyline dry engine matches each roster car within 1 dB');
+  const loop = rig.audio.turboLoop;
+  check(loop.gain.connections.includes(rig.audio.vehicleBus),
+    'flat mixer routes the whistle to the existing vehicle output');
+  check(loop && loop.osc.frequency.value === 7000 && loop.gain.gain.value > 0,
+    'registered continuous turbo reaches 7 kHz under full load');
+  settle({}, 10);
+  check(rig.audio.turboLoop === loop, 'steady load reuses one turbo oscillator');
+  grouped = true; settle({},1);
+  check(rig.audio.mixer.grouped && !loop.gain.connections.includes(rig.audio.vehicleBus) &&
+    rig.audio.mixer.buses.engine.connections.includes(rig.audio.vehicleBus),
+    'grouped mixer keeps the same whistle on the audible engine bus');
+  grouped = false; settle({},1);
+  const whistleDb = 20*Math.log10(loop.gain.gain.value / Math.SQRT2);
+  check(whistleDb - skyline.db <= -20, 'whistle remains at least 20 dB below engine bed');
+  const played = [], play = rig.audio._playCue.bind(rig.audio);
+  rig.audio._playCue = (id, options) => {played.push(id); return play(id, options);};
+  const lift = (values = {}) => settle({...values, input:{throttle:0, brake:0}}, 1);
+  lift();
+  check(played.filter(id => id === 'vehicle.blowoff').length === 1,
+    'high-rev throttle lift plays registered blow-off');
+  const releaseSources = [...rig.audio.activeShots].filter(row => row.source.buffer === rig.audio.noiseBuffer);
+  check(releaseSources.some(row => row.source.started > rig.context.currentTime + .2),
+    'blow-off flutter has delayed noise pulses');
+  settle({}, 1); lift();
+  check(played.filter(id => id === 'vehicle.blowoff').length === 1,
+    'repeated lift inside 1.2 seconds is suppressed');
+  settle({}, 90); rig.audio.event({shift:3}); settle({}, 1);
+  check(played.filter(id => id === 'vehicle.blowoff').length === 1,
+    'gear event alone never fires blow-off');
+  lift();
+  check(played.filter(id => id === 'vehicle.blowoff').length === 2,
+    'new lift after cooldown fires once');
+  settle({revs:.55}); lift({revs:.55});
+  check(played.filter(id => id === 'vehicle.blowoff').length === 2,
+    'low-rev lift does not fire blow-off');
+  settle({input:{throttle:.69,brake:0}}); lift();
+  check(played.filter(id => id === 'vehicle.blowoff').length === 2,
+    'less than 70 percent throttle cannot arm blow-off');
+  settle({revs:.8});
+  for (const throttle of [.9,.6,.3,0]) settle({revs:.8,input:{throttle,brake:0}},1);
+  check(played.filter(id => id === 'vehicle.blowoff').length === 3,
+    'gradual analog release retains high-load arming until lift');
+  settle({input:{throttle:.35,brake:0}});
+  check(!rig.audio.turboLoop, 'whistle retires at low load');
+  for (const reason of ['off','other-car','impact','pause','mute','menu','stage']) {
+    settle();
+    const old = rig.audio.turboLoop;
+    check(!!old, reason + ' starts with a turbo loop');
+    if (reason === 'off') {enabled=false; settle({},1); enabled=true;}
+    if (reason === 'other-car') settle({car:'falcone_f42'},1);
+    if (reason === 'impact') settle({impactTimer:1,impactStrength:1,impactDuration:1},1);
+    if (reason === 'pause') rig.audio.setPaused(true);
+    if (reason === 'mute') rig.audio.setMuted(true);
+    if (reason === 'menu') rig.audio.event({menu:true});
+    if (reason === 'stage') rig.audio.event({stageLoaded:0});
+    check(!rig.audio.turboLoop && old.osc.stopAt <= rig.context.currentTime + .041,
+      reason + ' stops and releases turbo resources');
+    rig.audio.setMuted(false); rig.audio.setPaused(false);
+  }
+  const blowoff = measureCue(SOUND_BANK['vehicle.blowoff']);
+  const liftPeak = rig.audio.samples.lift.getChannelData(0).reduce((peak,x)=>Math.max(peak,Math.abs(x)),0) * .25;
+  check(blowoff.truePeakDbtp <= 20*Math.log10(liftPeak) - 3,
+    'blow-off peak stays at least 3 dB below existing lift accent');
+  const whistle = measureLoudness(wavBytes(Float32Array.from({length:48000*6},
+    (_,i) => Math.sin(i*2*Math.PI*7000/48000)*SOUND_BANK['vehicle.turbo-whistle'].volume)));
+  console.log('Skyline loudness: ' + JSON.stringify({levels,whistleDb,whistleBelowEngineDb:whistleDb-skyline.db,
+    whistle,blowoff,liftPeakDb:20*Math.log10(liftPeak)}));
+}
+
 console.log(seamRows.join('\n'));
 console.log(
-  `Six-second PCM mixes at three band transitions and full speed across all ${Object.keys(CARS).length} cars: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`,
+  `Six-second PCM mixes at three band transitions and full speed across the ${Object.keys(CARS).length} roster cars plus Skyline: maximum 100ms envelope swing ${maximumBlendSwing.toFixed(2)}dB.`,
 );
 console.log(
   `Audio/PCM: ${checks} checks passed; ${commands.toLocaleString()} finite automation commands. Actual PCM decoded; no listening claim.`,

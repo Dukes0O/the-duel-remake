@@ -683,8 +683,10 @@ The Wall; the tightest radius is 16 m (La Fontaine). Map:
 | Summit Run | Race (default), Time Attack |
 
 Reverse uses the track script's reverse build; braking boards, kerbs and
-pit lanes follow the new direction. A track's variants unlock when you
-finish its default event in the top three. Each event is its own entry in
+pit lanes follow the new direction. The five Night, Dusk and Reverse events
+are free, and each opens when you find its sign from the helicopter over its
+default course (docs/PILOT_MAP.md section 5).
+Each event is its own entry in
 `COURSE` with a stable id (`panorama-ridge`, `panorama-ridge-night`,
 `panorama-ridge-reverse`, and so on), appended after the existing events.
 

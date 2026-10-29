@@ -1435,3 +1435,13 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EARN-FINISH (lane tier 59/59, build, earned and cup suites, heli-mode 263, earned-cars scenario pass on 6f596bb2; earned-cars stays dev until its frame checks).
 - 28 Oct night: merged LINE-PACKETS (docs only; lane tier 11/11, build pass on 9f3101f8).
 - 28 Oct night: merged LINE-REFS (Codex; docs only; lane 13/13, build pass; Claude accepted the three reference sheets).
+- 28 Oct night: merged KOGANE-PASS-C2 (Codex; lane 49/49, build, course test, test-circuits, drive-through and scenario pass on 662f9ea9).
+- 28 Oct night: merged VARIANTS-RELEASE (lane tier 81/81, test-circuits, build, five track reviews pass on e8edb32e; frame checks pending).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V4 (Codex; lane 238/238, preview 23/23, build pass on e5ba98d0).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V5 (Codex; lane 76/76, build, skyline-audio scenario pass on fb0aee24; engine within 0.52 dB).
+- 28 Oct night: merged KOGANE-PASS-C4 (Codex; lane 137/137 (world-signature and replay guards exact), drive-through, 1,232 placement checks, build pass on 453876e4; round 2 accepted).
+- 28 Oct night: merged KOGANE-PASS-C3-DIAG (Codex; lane 21/21, build, drive-through pass on 760fd27b; pace not yet accepted).
+- 28 Oct night: merged GROUND-ROWS-VARIANTS (Claude; test-ground-rows-exact passes on 25 courses; 55 lines added, none changed).
+- 28 Oct night: merged EIFEL-CROWN-C2 (Codex then Claude; lane 323/324 after the config conflict fix (the one failure, test-ground-rows-exact, was the integration fault fixed by GROUND-ROWS-VARIANTS), drive-through all difficulties, test-circuits, build).
+- 28 Oct night: merged WILD-ART-SRC (Codex; lane 86/86, Blender checks, build pass on 21f92304; round 3 accepted; other regions still to come).
+- 28 Oct night: merged STORY-KOGANE-PACKET (docs only; hygiene passes; open items for the 7:30 review with Kyle).

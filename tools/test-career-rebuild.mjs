@@ -78,8 +78,13 @@ for (const name of ['Dukes00', 'Spikey Ferns']) {
     for (const id of Object.keys(DRIVERS)) assert.ok(isDriverUnlocked(profile, id), id);
     const released = COURSE.filter(course => !course.practice &&
       (!CIRCUIT_MANIFESTS.some(item => item.id === course.id) || FEATURE_STATES[CIRCUIT_MANIFESTS.find(item => item.id === course.id).flag] === 'on'));
-    assert.ok(released.length >= 21);
-    for (const course of released) assert.ok(isCourseUnlocked(profile, course), course.id);
+    // The five secret courses open only when found from the helicopter, so a restored career does not hold them yet.
+    const secret = released.filter(course => CIRCUIT_MANIFESTS.find(item => item.id === course.id)?.unlock?.kind === 'spotted-from-air');
+    const bought = released.filter(course => !secret.includes(course));
+    assert.ok(bought.length >= 21);
+    for (const course of bought) assert.ok(isCourseUnlocked(profile, course), course.id);
+    assert.equal(secret.length, 5, 'the five secret courses are released');
+    for (const course of secret) assert.equal(isCourseUnlocked(profile, course), false, course.id + ' waits to be found from the air');
     for (const car of profile.unlockedCars) {
       assert.deepEqual(getPaintState(profile, car).owned, ['factory', 'copper_metallic', 'glacier_satin'], car + ' paints');
     }

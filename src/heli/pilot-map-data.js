@@ -48,9 +48,9 @@ const place = (id, name, courses, table, region, extra = {}) => Object.freeze({
 // The table of section 2. `at` is the plan; `drawAt` is where the outline is
 // drawn (the same unless the drawer moved it to keep outlines apart).
 export const PLACES = Object.freeze([
-  place('tremblant-woods', 'Tremblant Woods', ['tremblant-woods'], at(0, 0), 'Forest valley, a lake', {home: true}),
+  place('tremblant-woods', 'Tremblant Woods', ['tremblant-woods', 'tremblant-woods-reverse'], at(0, 0), 'Forest valley, a lake', {home: true}),
   place('tremblant-snow', 'Tremblant Snow', ['tremblant-snow'], at(0.5, 1.9), 'Just north, under snow'),
-  place('panorama-ridge', 'Panorama Ridge', ['panorama-ridge'], at(-6, 7), 'A ridge above the valley'),
+  place('panorama-ridge', 'Panorama Ridge', ['panorama-ridge', 'panorama-ridge-night', 'panorama-ridge-reverse'], at(-6, 7), 'A ridge above the valley'),
   place('summit-run', 'Summit Run', ['summit-run', 'summit-time-attack'], at(-10, 12), 'The high peak'),
   place('ardennes-forest', 'Ardennes Forest', ['ardennes-forest'], at(8, 4), 'Wooded hills to the east'),
   place('eifel-crown', 'Eifel Crown', ['eifel-crown'], at(12, 9), 'Beyond the Ardennes'),
@@ -61,7 +61,7 @@ export const PLACES = Object.freeze([
   place('high-country', 'High Country Grand Tour', ['high-country'], at(-24, 14), 'Canyon to alps to the north-west coast', {coast: true}),
   place('red-mesa', 'Red Mesa Corkscrew', ['red-mesa'], at(-18, 2), 'Red desert mesas'),
   place('pacific-canyon', 'Pacific Canyon Circuit', ['pacific-canyon'], at(-22, -8), 'Desert canyon to the west coast', {coast: true}),
-  place('harbour-lights', 'Harbour Lights', ['harbour-lights'], at(14, -10), 'The harbour city'),
+  place('harbour-lights', 'Harbour Lights', ['harbour-lights', 'harbour-lights-dusk', 'harbour-lights-reverse'], at(14, -10), 'The harbour city'),
   place('harbor-highlands', 'Harbor & Highlands', ['harbor-highlands'], at(18, -6), 'The city\'s hills and night coast road', {coast: true}),
   place('neon-docks', 'Neon Docks Circuit', ['neon-docks'], at(16, -12), 'City districts by the docks'),
   place('neon-drift-trial', 'Neon Drift Trial', ['neon-drift-trial'], at(16, -12), 'City districts by the docks', {drawAt: at(17.6, -12.8)}),

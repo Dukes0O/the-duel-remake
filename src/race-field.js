@@ -83,7 +83,7 @@ export const RACERS = Object.freeze([
 // Heritage and the Aurora are more than three times as heavy to draw, and
 // eight cars on screen must stay within the frame limit.
 const ROAD_CLASS = Object.freeze(['falcone_f42', 'falcone_heritage', 'stuttgart_959s', 'aurora_gt',
-  'dusthawk_rally', 'banshee_muscle', 'viper_proto']);
+  'dusthawk_rally', 'banshee_muscle', 'viper_proto', 'nissan_skyline_gtr_r34']);
 const ROAD_CARS = Object.freeze(['falcone_f42', 'stuttgart_959s', 'dusthawk_rally', 'banshee_muscle', 'viper_proto']);
 // What each racer would like to drive, then how to choose when that is out of range.
 const CAR_WISH = Object.freeze({
