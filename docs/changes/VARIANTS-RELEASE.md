@@ -167,3 +167,7 @@ suites, build and browser scenarios are listed in the hand-off report.
 
 Nothing. The temporary picture scenario used for the look sheet
 (`tools/scenarios/variants-pictures.mjs`) was deleted again after use.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review and rule 18 written review). Five versions on, free and found from the air as designed 15 October (the registry forbids a price on an unlock-rule course); they show as LOCKED with the hint until found. Five world signatures refreshed only because the 24 October grass change never reached these off courses: proved by building with switches off (identical new values) and bisect to 1508d596; pictures checked. Changed assertions follow the five being on (counts 23 to 28, replay cases 25 to 30) and are reasoned in the note; none loosened. Drive-through findings match the released parents (shared Panorama fence kit). map-finish fails identically on the base commit (card QA-MAP-FINISH-TABLE). Frame checks run tonight before release.
