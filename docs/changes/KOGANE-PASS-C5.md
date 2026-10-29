@@ -187,3 +187,6 @@ file, duplicate burnt set or backup asset is retained. Freesound sources stay
 in the outside sound library (re-fetchable), not the repository. The review
 evidence (`.evidence/2026-10-28/kogane-c5*`) is deleted once Claude's verdict
 is in.
+## Claude's review (28 October 2026, night)
+
+Accepted on round 2 pictures (Claude, look judge): torii reads from the start and Torii Bend; reflective rippled lake; cedar and maple far shore; tea house, lanterns. Open: the torii does not mirror in the water (sky-only reflection). Code (independent review): reflective circuit water reused; new optional shoreForest band and drawn backdrop hill option, defaults unchanged; Kogane pilot place in DEV_PLACES behind a koganePass option like Summit, with the helicopter guard unchanged. Sound beds at -27 LUFS, bell peak raised in the recipe. Changed assertions (rule 18): audio pins leave out only the new Kogane beds and cues and keep their old hashes; pilot-map outline test lists dev places after road places; hygiene sheet name. Nothing loosened.
