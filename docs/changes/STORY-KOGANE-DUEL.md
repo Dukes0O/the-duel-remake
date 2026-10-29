@@ -108,3 +108,7 @@ None. No existing test was edited. No shared number (`CPU_DIFFICULTY`, `DIFFICUL
 ## Removed
 
 Nothing is removed. The packet's first guess for Daichi's tuning (0, 1, 2) is replaced by the measured values above.
+
+## Claude's review (28 October 2026, night)
+
+Independent review: approve, no faults (ordinary races settle unchanged, grant cannot be farmed, nitroScale absent is bit-for-bit identical, replays 270 pass). Curve on the day road: Easy 100%, lesson 10/10, Medium 37%, Hard 23% (nitro share .65, Claude's call). For HOOKS: restart must keep story and call levelStart; never save the story rival as the player's setup; rivalSignature ignores nitroScale; rerun the curve on kogane-pass-night.
