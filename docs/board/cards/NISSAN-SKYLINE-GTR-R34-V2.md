@@ -40,3 +40,18 @@ No frame check. No new game event or sound cue in this shape stage.
 The round also owns tools/art/skyline-review.py and tools/art/skyline-sheet.py, repeatable review recipes
 using the existing car-review renderer and Pillow sheet composition. The
 requested nissan-skyline-gtr-r34 sheet folder supersedes the packet alias.
+
+## Assertion review for Claude before merge
+
+The requested dev-switch registration also needs the strict catalogue row in
+tools/test-feature-flags.mjs: fixed switch count 41 to 42, with nissan-skyline
+added to the names required to remain dev. No existing switch state or retired
+name guard is removed. The initial lane gate exposed this through course-kit.
+The new model suite separately proves production denies the car and private
+QA admits it explicitly. Please record AGENTS 18's written assertion review
+here before merge. The builder has prepared this exact correction for review.
+
+The dev registration also extends the existing PREVIEW_FLAGS row in this
+lane's start-preview.bat. Its unchanged test requires every dev switch there.
+Only nissan-skyline is appended; the launcher is never executed in this job.
+No port, folder, player setup or preview behaviour changes.
