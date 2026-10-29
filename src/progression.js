@@ -6,6 +6,7 @@ import {validRaceLaps, distanceFinishingPay} from './lap-choice.js';
 import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
 import {settleCoastCup} from './deep/sirena-car.js';
 import {normalizeHeli} from './heli/heli-save.js';
+import {normalizeStory} from './story/story-save.js';
 import {normalizeLab} from './lab/lab-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
@@ -174,6 +175,7 @@ export function normalizeProfile(value) {
   if (Object.hasOwn(value, 'deep')) profile.deep = normalizeDeep(value.deep);
   if (Object.hasOwn(value, 'heli')) profile.heli = normalizeHeli(value.heli);
   if (Object.hasOwn(value, 'drivingLessons')) profile.drivingLessons = normalizeDrivingLessons(value.drivingLessons);
+  if (Object.hasOwn(value, 'story')) profile.story = normalizeStory(value.story);
   if (Object.hasOwn(value, 'lab')) profile.lab = normalizeLab(value.lab);
   if (Object.hasOwn(value, 'intel')) profile.intel = normalizeIntel(value.intel);
   if (Object.hasOwn(value, 'cups')) profile.cups = normalizeCups(value.cups);

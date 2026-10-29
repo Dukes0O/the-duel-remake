@@ -1,0 +1,51 @@
+{
+  "shape": "story-kogane-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "kogane-qa",
+      "players": [
+        {
+          "id": "kogane-qa",
+          "name": "Kogane QA",
+          "profile": {
+            "version": 2,
+            "credits": 4200,
+            "heli": {
+              "version": 1,
+              "fuelKg": 200,
+              "lessons": {"liftoff": true, "hover": true, "landing": true, "carry": true},
+              "playDay": {"last": "2026-10-29", "count": 9},
+              "jobs": {"day": 9, "taken": null, "done": []},
+              "carsAt": {"falcone_f42": "the-table"},
+              "refuels": 3,
+              "flights": 6,
+              "map": {"version": 1, "seen": ["the-table"], "found": ["kogane-pass-night"], "table": true}
+            },
+            "story": {
+              "version": 1,
+              "kogane": {"read": true, "lesson": true, "supplies": true, "laterStep": {"keep": true}},
+              "laterStory": {"keep": [1, 2]}
+            }
+          }
+        },
+        {
+          "id": "kogane-old",
+          "name": "Kogane Old",
+          "profile": {
+            "version": 2,
+            "credits": 900
+          }
+        }
+      ]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.story.kogane.lesson", "equals": true},
+    {"path": "players.0.profile.story.kogane.supplies", "equals": true},
+    {"path": "players.0.profile.story.kogane.laterStep", "equals": {"keep": true}},
+    {"path": "players.0.profile.story.laterStory", "equals": {"keep": [1, 2]}},
+    {"path": "players.0.profile.heli.map.found", "includes": "kogane-pass-night"},
+    {"path": "players.1.profile.credits", "equals": 900}
+  ]
+}
