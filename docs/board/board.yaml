@@ -349,7 +349,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/EIFEL-CROWN-C3.md"
@@ -359,7 +359,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "backlog"
+    status: "in-progress"
     needs: []
     locks: []
     details: "docs/board/cards/EIFEL-CROWN-C4.md"
