@@ -129,7 +129,7 @@ export async function run(c) {
   const creditsBefore=await c.evaluate('window.__qaApp.profile.credits');
   await fly(c,tableZone,{height:0,land:true});
   const landing=await c.evaluate('({view:window.__qaApp.heliView(),credits:window.__qaApp.profile.credits})');
-  if(!landing.view.secrets.table || landing.credits-creditsBefore!==500) throw Error('Table landing reward/logbook missing');
+  if(!landing.view.secrets.table || landing.credits-creditsBefore!==1750) throw Error('Table landing reward/logbook missing');
   await c.waitFor("!!document.querySelector('.pilot-map-logbook') && !document.querySelector('.pilot-map-logbook').hidden",'logbook visible',10000);
   await c.screenshot('table-landed-logbook');
   await c.evaluate('window.__mapLabels=[];window.__qaApp.setHeliMap(true)');
