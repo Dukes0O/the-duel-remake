@@ -7,6 +7,7 @@
 // mapModel is plain data for the chart (testable without graphics); drawChart
 // paints it on a 2D canvas; createPilotMapUi mounts both in the page.
 import traced from '../generated/pilot-map.json' with {type: 'json'};
+import {featureFlags} from '../feature-flags.js';
 import {PILOT_MAP, PLACES, placeById, placeOfCourse, fuelPadAt, legFuelKgMap, reachKm, MAP_SHAPES, placeOutline, LEFT_OFF} from './pilot-map-data.js';
 import {isCourseUnlocked} from '../course-access.js';
 import {isCarUnlocked} from '../progression.js';
@@ -16,6 +17,10 @@ import {carAt} from './heli-save.js';
 import {SECRET_SIGNS, TABLE_ID} from './map-secrets.js';
 
 export const MAP_KEY = 'N';
+const chartOutlines = {...traced, outlines: {...traced.outlines,
+  ...Object.fromEntries(Object.entries(traced.previews ?? {}).filter(([, row]) => featureFlags.enabled(row.flag))
+    .map(([id, row]) => [id, row.outline])),
+}};
 // The bush pilot's last page (docs/PILOT_MAP.md 5.2), shown as a card on the Table.
 export const LOGBOOK_CARD = Object.freeze({
   title: 'THE LOGBOOK · LAST PAGE, 1966',
@@ -205,7 +210,7 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
   // Course outlines: ink if owned, grey if not, black if burnt.
   const byId = new Map(model.places.map(place => [place.id, place]));
   for (const place of PLACES) {
-    const shown = byId.get(place.id), outline = placeOutline(traced, place.id);
+    const shown = byId.get(place.id), outline = placeOutline(chartOutlines, place.id);
     if (!shown || !outline) continue;
     path(ctx, project, outline.points, outline.closed);
     ctx.lineJoin = 'round';
