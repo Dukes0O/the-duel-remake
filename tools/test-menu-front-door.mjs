@@ -83,19 +83,17 @@ test('next up from sample saves', () => {
   assert.equal(chooseNextUp({...empty, course: null}).kind, 'none');
 });
 
-test('next up reads the hold, the helicopter job and the sea log from a save', () => {
-  const profile = {...createProfile(), wasteland: {...createProfile().wasteland, territories: {sal: {hold: 75, claimed: false}, gunn: {hold: 100, claimed: true}}},
-    deep: {logged: ['silver-school']}};
-  const flags = flagsOn(['the-deep']);
-  const closed = frontDoorFacts({profile, flags, wastelandOpen: false, heliOn: true});
+test('next up reads the hold, the helicopter job and the sea log', () => {
+  const profile = {...createProfile(), wasteland: {...createProfile().wasteland, territories: {sal: {hold: 75, claimed: false}, gunn: {hold: 100, claimed: true}}}};
+  const extras = {heliJob: {name: 'Recover the Falcone F42 from Panorama Ridge'}, seaCreature: {id: 'reef-fish', name: 'Reef fish'}};
+  const closed = frontDoorFacts({profile, flags: flagsOn([]), wastelandOpen: false, heliOn: true, ...extras});
   assert.equal(closed.hold, null, 'no hold line while the Wasteland is shut');
-  assert.equal(closed.creature.id, 'reef-fish');
-  const open = frontDoorFacts({profile, flags, wastelandOpen: true, heliOn: true});
+  const open = frontDoorFacts({profile, flags: flagsOn([]), wastelandOpen: true, heliOn: true, ...extras});
   assert.equal(open.hold.name, 'Sawtooth Sal');
   assert.equal(chooseNextUp(open).kind, 'hold');
-  assert.equal(chooseNextUp({...open, hold: null}).kind, 'creature');
-  const nodeep = frontDoorFacts({profile: {...profile, deep: {}}, flags, wastelandOpen: true, heliOn: true});
-  assert.equal(nodeep.creature, null, 'the Deep stays hidden until a first creature is logged');
+  assert.equal(chooseNextUp({...open, hold: null}).kind, 'heli');
+  assert.equal(chooseNextUp({...open, hold: null, heliJob: null}).kind, 'creature');
+  assert.equal(frontDoorFacts({profile, flags: flagsOn([]), wastelandOpen: true, heliOn: false, ...extras}).heliJob, null, 'no helicopter line with the helicopter off');
 });
 
 test('drive summary reads in plain words', () => {

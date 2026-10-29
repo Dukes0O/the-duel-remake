@@ -18,10 +18,10 @@ import {chosenRaceLaps, supportsLapChoice, raceDistance} from './lap-choice.js';
 import {labOf} from './lab/lab-save.js'; // LAB-TUNE
 import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // LAB-TUNE
 import {usableTune} from './lab/tune-view.js'; // LAB-TUNE-VIEW
-import {deepDiscoverySnapshot,rememberDeep,rememberChart} from './deep/deep-discovery.js'; // DEEP-EXPLORER: chart save hook
+import {deepDiscoverySnapshot,rememberDeep,rememberChart,normalizeDeep} from './deep/deep-discovery.js'; // DEEP-EXPLORER: chart save hook
 // DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
 import {raiseFind} from './deep/deep-sirena.js';
-import {recordLogged,recordPearl,phoneLineFor} from './deep/deep-log.js';
+import {recordLogged,recordPearl,phoneLineFor,DEEP_CREATURES} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
 import {skiKeys, SKI_CAMERA_VIEWS, skiDeepSnow} from './ski/ski-view.js'; // SKI-VIEW: the ski keys and cameras
@@ -43,7 +43,7 @@ function fireSounds(view) {
 }
 // H2 Fire: today's date as the play day note reads it.
 const todayString = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-import {isAirOnlyCar,HOME_COURSE,HELI_DESTINATIONS} from './heli/heli-jobs.js';
+import {isAirOnlyCar,HOME_COURSE,HELI_DESTINATIONS,recoveryJobOf,recoveryTitle} from './heli/heli-jobs.js';
 // MAP-VIEW: the pilot's map.
 import {SECRET_IDS} from './heli/map-secrets.js';
 import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
@@ -2097,6 +2097,15 @@ export class App {
   // Open means open on the menu: starting a race or a flight closes it, and it never reopens by itself.
   get labOpen(){if(this._labOpen===true&&this.duel.state.status!=='menu')this._labOpen=false;return this._labOpen===true;}
   set labOpen(value){this._labOpen=value===true;}
+  // MENU-FRONT-DOOR: two facts the menu's Next up line needs from the helicopter and the sea log. Reads only.
+  menuNextUpExtras(){
+    const flags=this._switches(),heliOn=this.heliAvailable?.()===true;
+    const wreck=heliOn?recoveryJobOf(this.profile,{enabled:flags.enabled('rescue')===true}):null;
+    const logged=normalizeDeep(this.profile?.deep).logged??[];
+    // The sea log is suggested only after a first creature is logged, so the hidden world stays hidden.
+    const creature=heliOn&&flags.enabled('the-deep')===true&&logged.length?Object.values(DEEP_CREATURES).find(item=>!logged.includes(item.id)):null;
+    return {heliJob:wreck?{name:recoveryTitle(wreck)}:null,seaCreature:creature?{id:creature.id,name:creature.name}:null};
+  }
   labAvailable(){return !!this.player&&this._switches().enabled('lab')===true;}
   openLab(){
     if(this.duel.state.status!=='menu'||!this.labAvailable()||this.labOpen===true)return false;

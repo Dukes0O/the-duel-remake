@@ -86,7 +86,7 @@ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 const frontDoorOn=app._switches?.().enabled('menu-front-door')===true;
 const currentDoorFacts=()=>frontDoorFacts({profile:profile(),flags:app._switches?.(),
   wastelandOpen:hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu===true,heliOn:app.heliAvailable?.()===true,
-  labOn:app.labAvailable?.()===true,lessonsOn:app.drivingLessonsAvailable?.()===true});
+  labOn:app.labAvailable?.()===true,lessonsOn:app.drivingLessonsAvailable?.()===true,...app.menuNextUpExtras?.()});
 root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});

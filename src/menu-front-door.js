@@ -5,9 +5,6 @@ import {COURSE} from './config.js';
 import {COURSE_PRICES, isCourseUnlocked, courseUnlockRequirement} from './course-access.js';
 import {lessonRows} from './lab/lab-lessons.js';
 import {TERRITORIES} from './wasteland-career.js';
-import {recoveryJobOf, recoveryTitle} from './heli/heli-jobs.js';
-import {DEEP_CREATURES} from './deep/deep-log.js';
-import {normalizeDeep} from './deep/deep-discovery.js';
 import {DRIVE_LESSON_ORDER, driveLessonAccess, normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 
 const LESSON_NAMES = Object.freeze({corner: 'driving lesson 1, cornering', line: 'driving lesson 2, the racing line',
@@ -15,7 +12,7 @@ const LESSON_NAMES = Object.freeze({corner: 'driving lesson 1, cornering', line:
 const MODE_NAMES = Object.freeze({duel: 'Rival duel', wasteland: 'Mad Max duel', timetrial: 'Time trial', grandprix: 'Grand Prix'});
 
 // What the save says, in plain facts. flags is anything with enabled(name).
-export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = false, labOn = false, lessonsOn = false} = {}) {
+export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = false, labOn = false, lessonsOn = false, heliJob = null, seaCreature = null} = {}) {
   const credits = Math.floor(profile?.credits || 0);
   const labLesson = labOn ? lessonRows(profile, flags).find(row => row.open && !row.done) ?? null : null;
   const course = COURSE.find(item => !item.practice && COURSE_PRICES[item.id] > 0 && !courseUnlockRequirement(item)
@@ -26,19 +23,14 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
   // A Wasteland boss whose hold is three quarters won and not yet claimed.
   const holdId = wastelandOpen ? Object.entries(profile?.wasteland?.territories ?? {}).find(([id, row]) =>
     Object.hasOwn(TERRITORIES, id) && row?.claimed !== true && row?.hold >= 75 && row?.hold < 100)?.[0] ?? null : null;
-  const wreck = heliOn ? recoveryJobOf(profile, {enabled: flags?.enabled?.('rescue') === true}) : null;
-  // The sea log is only suggested once the player has logged a first creature, so the hidden world stays hidden.
-  const logged = normalizeDeep(profile?.deep).logged ?? [];
-  const seaCreature = heliOn && flags?.enabled?.('the-deep') === true && logged.length
-    ? Object.values(DEEP_CREATURES).find(creature => !logged.includes(creature.id)) ?? null : null;
   return {
     labOn, lessonsOn, heliOn, wastelandOpen,
     labLesson: labLesson ? {id: labLesson.id, name: labLesson.name} : null,
     course: course ? {id: course.id, name: course.name, price: COURSE_PRICES[course.id]} : null,
     hold: holdId ? {id: holdId, name: TERRITORIES[holdId].name} : null,
-    heliJob: wreck ? {name: recoveryTitle(wreck)} : null,
+    heliJob: heliOn && heliJob ? {name: heliJob.name} : null,
     driveLesson: lessonId ? {id: lessonId, name: LESSON_NAMES[lessonId]} : null,
-    creature: seaCreature ? {id: seaCreature.id, name: seaCreature.name} : null,
+    creature: seaCreature ? {id: seaCreature.id, name: seaCreature.name} : null, // the game says it; src/deep stays behind its own guard
   };
 }
 
