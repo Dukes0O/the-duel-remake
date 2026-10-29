@@ -114,3 +114,7 @@ paths and creation times established that this gate created them. The safer
 cleanup then passed. Existing empty scratch/evidence containers were retained. The
 named Claude scratchpad copy is delivery evidence;
 nothing in that scratchpad is deleted or moved.
+
+## Claude's review (28 October 2026, night)
+
+Accepted on round 2 pictures (Claude, look judge): white steel rail on posts, mossy retaining walls, curve mirrors and chevrons at the hairpins, maples in autumn colour among cedars, sodium pools on the lower road. Polish for C6: the wall texture reads as regular tiles. Code (independent review): six new kits with LOD, shared scene files changed only for new kit ids and the night wash; world signatures and replay fingerprints exact, so no live course changed. Changed counts: track kit list 40 to 46 for the six new kits only; drive-through barrier tables gain the new ids with limits unchanged (Claude approved).
