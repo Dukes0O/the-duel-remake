@@ -318,7 +318,7 @@ function applyKitLook(look,model,own) {
     if (!node.isMesh) return;
     if (look.leafColour !== undefined) {
       const materials = [].concat(node.material || []).map(source => {
-        if (!/-leaves-|-leaf-cluster-/.test(source.name)) return source;
+        if (!/-leaves-|-leaf-cluster-|^summer beech leaves$/.test(source.name)) return source;
         if (!leaves.has(source)) {
           const material = source.clone();
           material.color.setHex(look.leafColour);

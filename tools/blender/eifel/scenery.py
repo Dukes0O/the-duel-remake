@@ -110,37 +110,45 @@ def wall(low):
                 [(1, 1, -1), (-1, 1, -1), (-1, 1, 1), (1, 1, 1)], [(-1, 1, -1), (-1, -1, -1), (-1, -1, 1), (-1, 1, 1)],
                 [(1, -1, -1), (1, 1, -1), (1, 1, 1), (1, -1, 1)]):
         b.quad([corners[p] for p in pts], EARTH)
-    courses = 3 if low else 5
-    per_course = 2 if low else 5
+    courses = 2 if low else 4
     course_height = height / courses
     for face in (-1, 1):
         for r in range(courses):
-            # Each course is shorter and set in a little, so the face leans back like a real batter.
+            # Each course is set in a little, so the face leans back like a real batter.
             depth_here = (foot - (foot - top_depth) * (r + .5) / courses) / 2
             x = -2.0
             while x < 2.0 - .05:
-                width = (4.0 / per_course) * rng.uniform(.55, 1.45)
+                # Stones differ a lot in size, sit proud or sunk, and tilt a little: rough, not machined.
+                width = rng.uniform(1.1, 2.0) if low else rng.uniform(.3, 1.15)
                 width = min(width, 2.0 - x)
-                if 2.0 - (x + width) < .22:
+                if 2.0 - (x + width) < .2:
                     width = 2.0 - x
                 kind = rng.random()
-                slot = (LICHEN if kind < .12 else MOSS if kind < .17 and r < 2 else rng.randrange(4))
-                tall = course_height * rng.uniform(.7, 1.12)
-                thick = rng.uniform(.10, .19)
-                proud = rng.uniform(-.03, .05)
-                lift = rng.uniform(-.015, .035)
-                b.box((x + width / 2, face * (depth_here - thick / 2 + proud), r * course_height + tall / 2 + lift),
-                      (width - .05, thick, tall - .045), slot, yaw=rng.uniform(-.03, .03),
+                slot = (LICHEN if kind < .13 else MOSS if kind < .24 and r < 3 else rng.randrange(4))
+                tall = course_height * rng.uniform(.62, 1.4)
+                thick = rng.uniform(.10, .22)
+                proud = rng.uniform(-.04, .07)
+                base = max(0, r * course_height + rng.uniform(-.05, .05))
+                b.box((x + width / 2, face * (depth_here - thick / 2 + proud), base + tall / 2),
+                      (width - .04, thick, tall - .03), slot, yaw=rng.uniform(-.07, .07), roll=rng.uniform(-.06, .06),
                       skip=('bottom', 'back' if face < 0 else 'front'))
                 x += width
-    # Cope stones standing on edge along the top.
-    count = 3 if low else 8
-    for i in range(count):
-        width = 4.0 / count
-        tall = rng.uniform(.14, .30)
-        b.box((-2 + width * (i + .5), 0, height + tall / 2 - .02),
-              (width - .03, top_depth + rng.uniform(.0, .06), tall), COPE if i % 3 else rng.randrange(4),
-              yaw=rng.uniform(-.03, .03), skip=('bottom',))
+    # A ragged top: cope stones of different widths and heights, some leaning, a gap here and there,
+    # and cushions of moss on a few of them.
+    x = -2.0
+    while x < 2.0 - .1:
+        width = min(rng.uniform(.5, 1.3) if low else rng.uniform(.22, .65), 2.0 - x)
+        if rng.random() < .1 and not low and x > -1.8:
+            x += width
+            continue
+        tall = rng.uniform(.12, .40)
+        b.box((x + width / 2, rng.uniform(-.03, .03), height + tall / 2 - .03),
+              (width - .03, top_depth + rng.uniform(.0, .08), tall), COPE if rng.random() < .5 else rng.randrange(4),
+              yaw=rng.uniform(-.06, .06), roll=rng.uniform(-.28, .28), skip=('bottom',))
+        if not low and rng.random() < .32:
+            b.box((x + width / 2, rng.uniform(-.05, .05), height + tall - .005),
+                  (width * rng.uniform(.5, .9), top_depth * .8, .04), MOSS, skip=('bottom',))
+        x += width
     return b.build('drystone-wall')
 
 
@@ -156,7 +164,7 @@ def hedge(low):
             (.11, 1.74), (.29, 1.60), (.39, 1.30), (.42, .85), (.40, .35), (.36, 0)]
     if low:
         ring = [(-.36, 0), (-.42, .80), (-.32, 1.45), (-.10, 1.72), (.10, 1.72), (.32, 1.45), (.42, .80), (.36, 0)]
-    segments = 6 if low else 15
+    segments = 6 if low else 18
     grid = []
     for i in range(segments + 1):
         x = -2 + 4 * i / segments
@@ -165,7 +173,7 @@ def hedge(low):
             # Lumps of leaf: pushed out and in along the ring, never at the base, and nothing at the two ends
             # so a row of pieces meets without a gap.
             end = 0 if i in (0, segments) else 1
-            bump = 0 if y0 == 0 else rng.uniform(-.05, .06) * end
+            bump = 0 if y0 == 0 else rng.uniform(-.03, .035) * end
             lean = Vector((z0, y0 - .9)).normalized() if abs(z0) + abs(y0 - .9) else Vector((0, 1))
             row.append((x, z0 + lean.x * bump, y0 + lean.y * bump))
         grid.append(row)
@@ -174,7 +182,9 @@ def hedge(low):
         for j in range(n - 1):
             a, c = grid[i][j], grid[i][j + 1]
             d, e = grid[i + 1][j], grid[i + 1][j + 1]
-            slot = BROWN if rng.random() < .03 else rng.randrange(4)
+            # Two close greens in large soft blotches, not a different colour on every face.
+            wave = math.sin(i * .55 + j * 1.3) + math.sin(i * .21 - j * .7 + 1.0)
+            slot = BROWN if rng.random() < .012 else (0 if wave < -.7 else 1 if wave < .2 else 3 if wave < 1.0 else 2)
             b.quad([(a[0], a[1], a[2]), (d[0], d[1], d[2]), (e[0], e[1], e[2]), (c[0], c[1], c[2])], slot)
     # End caps close the mass (a hedge ends somewhere); drawn as fans of quads.
     for i, flip in ((0, True), (segments, False)):

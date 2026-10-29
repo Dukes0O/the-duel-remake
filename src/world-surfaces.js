@@ -80,6 +80,18 @@ function woodland(course, colour, s, off) {
   colour.b *= 1 + (wood.green[2] + (pick[2] - wood.green[2]) * turn - 1) * weight;
 }
 
+// A damp verge (`groundLeaves.verge`: { colour, from, to, fade }): a darker, wetter strip of grass
+// from `from` to `to` metres beyond the road edge, easing in and out over `fade` metres, where a
+// roadside ditch would run. Colour only.
+function vergeTint(course, colour, s, off) {
+  const verge = course.def.groundLeaves?.verge;
+  if (!verge) return;
+  const edge = Math.abs(off) - course.roadHalfWidthAt(s), fade = verge.fade ?? 4;
+  const weight = leafSmooth((edge - verge.from) / fade) * (1 - leafSmooth((edge - verge.to) / fade));
+  if (weight <= 0) return;
+  colour.r *= 1 + (verge.colour[0] - 1) * weight; colour.g *= 1 + (verge.colour[1] - 1) * weight; colour.b *= 1 + (verge.colour[2] - 1) * weight;
+}
+
 // Gravel traps (`groundLeaves.gravel`: { colour, width, fade, ends, grass, to }): the
 // ground on both sides of each scripted turn, from the road edge out `width`
 // metres, is tinted darker and greyer than the grass, easing out over `fade`
@@ -156,7 +168,7 @@ export function* terrainGeometrySlices(course) {
     offsets.forEach((off, j) => {
       const p = ribbonGroundAt(naturalCourse,s,off);rowPoints[3*j]=p.x;rowPoints[3*j+1]=p.y;rowPoints[3*j+2]=p.z;const wave=Math.sin(s*.012+off*.017)*Math.cos(s*.004-off*.031);
       v.push(p.x,p.y,p.z); uv.push(p.x/22,p.z/22);weights.push(...style.weights);
-      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
+      col.copy(base).multiplyScalar(.86 + .13 * wave + .07 * Math.sin(s * .025)); const trap = gravelWeights(course, s, off); fallenLeaves(course, col, s, off, trap ? 1 - trap.trap - trap.meadow * .7 : 1); woodland(course, col, s, off); vergeTint(course, col, s, off); gravelTrap(course, col, trap); colors.push(col.r, col.g, col.b);
       if (row && j) { const a = row * offsets.length + j; indices.push(a - offsets.length - 1, a - 1, a - offsets.length, a - offsets.length, a - 1, a); }
     });
     seedGroundRow(course,s,offsets,rowPoints);
@@ -237,7 +249,7 @@ export function* farTerrainGeometrySlices(course) {
     base.copy(style.color);col.copy(base).multiplyScalar(.86+.13*wave+.07*Math.sin(roadS*.025));
     const trap=gravelWeights(course,roadS,off);
     fallenLeaves(course,col,roadS,off,trap?1-trap.trap-trap.meadow*.7:1);
-    woodland(course,col,roadS,off);gravelTrap(course,col,trap);
+    woodland(course,col,roadS,off);vergeTint(course,col,roadS,off);gravelTrap(course,col,trap);
     colors[k*3]=col.r;colors[k*3+1]=col.g;colors[k*3+2]=col.b;
     if(i&&j){const a=j*columns+i,k0=a-columns-1,k1=a-1,k2=a-columns;
       // Leave a gap safely covered by the narrow, precisely fitted road strip.

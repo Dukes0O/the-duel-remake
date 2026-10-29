@@ -14,25 +14,25 @@
       "files": [
         {
           "path": "drystone-wall.glb",
-          "triangles": 522,
+          "triangles": 492,
           "size": [
             4.0,
-            1.245,
-            0.626
+            1.347,
+            0.691
           ],
-          "bytes": 35048,
-          "sha256": "c1f9b2fe0894e7b28463ca9c1a81270d7901e71e2cc6db48f8b16eb9e8409b34"
+          "bytes": 33444,
+          "sha256": "8ccf03ab865665e41a66977953b4ad1cddb1b7e46f11968661bd0bd8065fb13d"
         },
         {
           "path": "drystone-wall-lod.glb",
-          "triangles": 176,
+          "triangles": 146,
           "size": [
             4.0,
-            1.297,
-            0.628
+            1.406,
+            0.64
           ],
-          "bytes": 16048,
-          "sha256": "f53b4def14f61b1e537fea7284d80fd14f8d0eac438abf136aa42545e5ab4885"
+          "bytes": 14264,
+          "sha256": "66857848aaaa765b38dd2b1c527aea46075c251b78257cd790deb402d45a4e69"
         }
       ]
     },
@@ -45,25 +45,25 @@
       "files": [
         {
           "path": "hedge-row.glb",
-          "triangles": 350,
+          "triangles": 416,
           "size": [
             4.0,
-            1.786,
-            0.942
+            1.767,
+            0.906
           ],
-          "bytes": 22584,
-          "sha256": "afd87613137a890532a2e8f06a8a6355ce368181f5a92420f41b7faecdd1fb4c"
+          "bytes": 26688,
+          "sha256": "b04dfaae70b0a37ed3187f68cc4c64687a3742f44344145ba89121a376b94bb6"
         },
         {
           "path": "hedge-row-lod.glb",
           "triangles": 96,
           "size": [
             4.0,
-            1.769,
-            0.956
+            1.748,
+            0.908
           ],
-          "bytes": 9416,
-          "sha256": "17404bef183d6e8afeb7bc461887ef21485d2506c2405726a5ea36f041bef0b9"
+          "bytes": 9136,
+          "sha256": "e0a0889a0cfe2e2b933dfbd307d5d7a5ea0e183d2ade756b50de69862e4c43a6"
         }
       ]
     }

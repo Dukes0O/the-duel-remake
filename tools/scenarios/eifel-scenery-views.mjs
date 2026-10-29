@@ -7,16 +7,16 @@ import {nativeBundle} from './p4-panorama.mjs';
 // Each view: where the camera stands and what it looks at, as [piece, metres from the piece start,
 // metres across the road (left is positive), metres above the ground]. `at: 'start'` is the line.
 const views = [
-  {name: 'start', eye: ['Lodge Straight', 18, 5, 2.6], target: ['Lodge Straight', 170, -2, 3]},
-  {name: 'forest-esses', eye: ['Third Ess', -30, 1.5, 2.8], target: ['Third Ess', 80, -4, 2.2]},
+  {name: 'start', eye: ['Lodge Straight', 100, 4, 2.6], target: ['Start Kink', 120, -2, 3]},
+  {name: 'forest-esses', eye: ['Forest Dip', -30, 1.5, 2.6], target: ['Forest Dip', 110, -2, 2.2]},
   {name: 'ridge-meadows', eye: ['Crown Climb', 20, 2, 3.4], target: ['Crown Climb', 230, 6, 4.2]},
   {name: 'drystone-wall', eye: ['Ridge Top', 10, 14, 1.4], target: ['Ridge Top', 50, 24, 1.1]},
   {name: 'village-street', eye: ['Village Street', 0, 2, 2.6], target: ['Village Street', 130, 2, 3]},
-  {name: 'valley-sweep', eye: ['Valley Brow', 120, 3, 3.6], target: ['Valley Brow', 330, -10, 2.8]},
+  {name: 'valley-sweep', eye: ['Pine Right', 140, 1.5, 2.8], target: ['Pine Right', 290, -2, 2.4]},
 ];
 
 export async function run(context) {
-  const report = {course: 'eifel-crown', card: 'EIFEL-CROWN-C4', round: 1, storage: 'memory-only', frameTiming: false, captures: []};
+  const report = {course: 'eifel-crown', card: 'EIFEL-CROWN-C4', round: 2, storage: 'memory-only', frameTiming: false, captures: []};
   try {
     await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
     await context.navigate('/tools/menu-check.html?flags=eifel-crown');

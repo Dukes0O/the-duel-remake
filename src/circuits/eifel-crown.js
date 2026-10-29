@@ -142,6 +142,7 @@ function fields() {
     ...fieldLine(hedge, ridge[0], middleRidge, -1, {gapEvery: 128}),
     ...fieldLine(wall, middleRidge, ridge[1], -1, {gapEvery: 128}));
   for (const [i, at] of [ridge[0] + 70, ridge[0] + 190, ridge[0] + 310].entries()) out.push(...crossLine(wall, at, i % 2 ? 1 : -1));
+  for (const [i, at] of [ridge[0] + 130, ridge[0] + 250].entries()) out.push(...crossLine(hedge, at, i % 2 ? -1 : 1, {to: 50}));
   // Village Street: the field side is the left; the right is kept open for the village (C5).
   out.push(...fieldLine(wall, street[0], street[1], 1, {gapEvery: 90}),
     ...fieldLine(hedge, street[0], street[1], 1, {out: FIELD_OFFSET + .95, gapEvery: 90}));
@@ -150,13 +151,12 @@ function fields() {
   const middle = (hatch[0] + hatch[1]) / 2;
   out.push(...fieldLine(hedge, hatch[0], middle, 1, {gapEvery: 110}), ...fieldLine(wall, middle, hatch[1], 1, {gapEvery: 110}),
     ...fieldLine(wall, hatch[0], middle, -1, {gapEvery: 110}), ...fieldLine(hedge, middle, hatch[1], -1, {gapEvery: 110}));
-  for (const [i, at] of [hatch[0] + 90, hatch[0] + 230, hatch[0] + 370].entries())
-    out.push(...crossLine(hedge, at, i % 2 ? 1 : -1, {to: 44}));
+  for (const [i, at] of [hatch[0] + 60, hatch[0] + 150, hatch[0] + 230, hatch[0] + 310, hatch[0] + 400].entries())
+    out.push(...crossLine(i % 2 ? wall : hedge, at, i % 2 ? 1 : -1, {to: 50}));
   return out;
 }
 
-// Beeches stand only in the back rows of the wood (26 m or more beyond the road edge);
-// the first rows next to the road stay spruce.
+// Beeches stand among the spruce in the groves below, from the first row of the wood outward.
 const BEECH_GROVES = [['Spruce Bend', .5], ['First Ess', .6], ['Third Ess', .5], ['Forest Dip', .5],
   ['Crag Corner', .6], ['Pine Right', .5], ['Valley Brow', .3]];
 
@@ -178,22 +178,26 @@ export const EIFEL_CROWN = Object.freeze({
     shadeRanges: Object.freeze([['Third Ess', 'Fourth Ess'], ['Pine Right', 'Valley Brow']].map(([from, to]) =>
       Object.freeze({from: named(from).s0, to: named(to).s1})))}),
   // The beech kit shared with Ardennes, mixed into the wooded slopes.
-  beech: Object.freeze({scales: Object.freeze([.9, 1, 1.1]), setback: 26,
+  beech: Object.freeze({scales: Object.freeze([.9, 1, 1.1]), setback: 0,
     groves: Object.freeze(BEECH_GROVES.map(([name, fraction]) => {
       const piece = named(name);
-      return Object.freeze({s: piece.s0 + (piece.s1 - piece.s0) * fraction, reach: 32});
+      return Object.freeze({s: piece.s0 + (piece.s1 - piece.s0) * fraction, reach: 20});
     }))}),
+  // The duller green of beech leaves under a grey sky (the kit's leaf material, tinted).
+  kitLook: Object.freeze({'ardennes-beech': Object.freeze({leafColour: 0x66755c})}),
   scenery: Object.freeze({trees: 500, rocks: 80, mountains: false,
-    // Dense dark spruce close behind the verge on the wooded slopes.
-    forest: Object.freeze({from: 18, to: 58, spacing: 3.6, rows: 8, thin: .14,
-      scale: Object.freeze([1.1, 2.1]), jitter: .8}),
-    // Wooded hills beyond, in groves with meadow between them.
-    farForest: Object.freeze({from: 60, to: 220, thin: .5, scale: Object.freeze([1.4, 2.6]), jitter: .8,
-      groves: Object.freeze({every: 20, chance: .34, radius: Object.freeze([20, 42]), spacing: 5, crowd: 1.5, size: .3,
+    // Dense dark spruce right behind the verge: the first row stands 14 m past the edge, just
+    // beyond the 12 m run-off, and the wood is seven rows deep, crowns touching.
+    forest: Object.freeze({from: 14, to: 38, spacing: 3, rows: 7, thin: .05,
+      scale: Object.freeze([1, 1.8]), jitter: .8, crowd: 2.2, insideOpen: 22}),
+    // Wooded hills beyond, in broad groves with little meadow between them.
+    farForest: Object.freeze({from: 60, to: 340, thin: .3, scale: Object.freeze([1.4, 2.6]), jitter: .8,
+      groves: Object.freeze({every: 24, chance: .5, radius: Object.freeze([30, 56]), spacing: 8, crowd: 1.5, size: .3,
         lone: 5, minGrove: 6, rise: 6})}),
     clear: Object.freeze([
       // The start: paddock, grid and the lodge's meadow (C5).
-      Object.freeze({s0: 0, s1: 300, from: -60, to: 55}),
+      Object.freeze({s0: 0, s1: 150, from: -60, to: 55}),
+      Object.freeze({s0: 150, s1: 300, from: 12, to: 55}),
       Object.freeze({s0: road.length - 110, s1: road.length, from: -60, to: 55}),
       // The ridge meadows: the forest opens out to 44 m on both sides and stands behind the field
       // boundaries; the far hills stay wooded.
@@ -209,7 +213,12 @@ export const EIFEL_CROWN = Object.freeze({
   }),
   // The ground reads darker and damper than the generic green: a cool wash beyond the verge,
   // and a dark meadow tint beside each corner (colour only).
-  groundLeaves: Object.freeze({strength: 0,
+  groundLeaves: Object.freeze({strength: .55, reach: 70, far: .6,
+    // Patches of lighter hay and darker damp grass break up the meadows.
+    colours: Object.freeze([Object.freeze([1.12, 1.06, .8]), Object.freeze([.86, .96, .8]), Object.freeze([1.04, 1.1, .84]),
+      Object.freeze([.8, .9, .76])]),
+    // Where a roadside ditch would run: a dark, wet strip of grass between the run-off and the trees.
+    verge: Object.freeze({colour: Object.freeze([.6, .74, .56]), from: 3, to: 12, fade: 4}),
     wood: Object.freeze({green: Object.freeze([.84, .95, .78]), colours: Object.freeze([Object.freeze([.84, .95, .78])]), share: .02, from: -50}),
     gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]), width: 12, fade: 8, ends: 24,
       grass: Object.freeze([.78, .92, .72]), to: 55})}),

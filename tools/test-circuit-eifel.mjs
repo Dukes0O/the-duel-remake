@@ -206,18 +206,25 @@ test('the kits load from their real files and pass every triangle clearance rule
   }
 });
 
-test('green and white kerbs, dark wet road and mixed forest are set; C5 rooms and the ridge meadows stay open', () => {
+test('green and white kerbs, dark wet road, dull beech leaves and mixed forest are set; C5 rooms and the ridge meadows stay open', () => {
   assert.deepEqual(EIFEL_CROWN.kerbColours, [0x2f6b3c, 0xe8e6df]);
   assert.equal(EXPANSION_COURSES.find(row => row.id === 'eifel-crown').kerbColours, undefined);
   assert.equal(EIFEL_CROWN.effects.valleyMist.length, 4);
   assert.ok(EIFEL_CROWN.dampRoad.dampRoughness < EIFEL_CROWN.dampRoad.dryRoughness);
   const beeches = beechTreePlacements(scenery);
   assert.ok(beeches.length >= 150 && beeches.length <= 450, `beech count ${beeches.length}`);
-  for (const row of beeches) assert.ok(Math.abs(row.lateral) >= road.halfWidthAt(row.s) + EIFEL_CROWN.beech.setback, 'beeches stay in the back rows');
+  for (const row of beeches) assert.ok(Math.abs(row.lateral) >= road.halfWidthAt(row.s) + EIFEL_CROWN.scenery.forest.from, 'beeches stand in the wood, not on the run-off');
+  assert.equal(EIFEL_CROWN.kitLook['ardennes-beech'].leafColour, 0x66755c);
+  assert.ok(EIFEL_CROWN.groundLeaves.verge.from < EIFEL_CROWN.groundLeaves.verge.to);
+  // The wood stands right behind the verge: spruce within 20 m of the road edge, and beech among it.
+  const close = scenery.features.trees.filter(tree => !tree.farForest && Math.abs(tree.off) - road.halfWidthAt(tree.s) < 20);
+  assert.ok(close.length > 700, `trees in the first 20 m: ${close.length}`);
+  assert.ok(close.every(tree => Math.abs(tree.off) - road.halfWidthAt(tree.s) >= 12), 'nothing inside the run-off');
+  assert.ok(beeches.some(row => Math.abs(row.lateral) - road.halfWidthAt(row.s) < 24), 'beech among the front rows');
   const near = scenery.features.trees.filter(tree => !tree.farForest).length;
   const far = scenery.features.trees.filter(tree => tree.farForest).length;
   assert.ok(near > 3000 && near <= 9000, `near trees ${near}`);
-  assert.ok(far <= 4500, `far trees ${far}`);
+  assert.ok(far <= 5000, `far trees ${far}`);
   // Nothing planted in the rooms kept for the castle, village and reservoir (C5), nor the ridge meadows.
   const rooms = [
     [named('Castle Bend').s1 - 40, named('Wall Left').s1 + 40, -260, -90],

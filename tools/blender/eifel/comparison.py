@@ -17,12 +17,12 @@ args = p.parse_args()
 output = args.output or Path('docs/board/looks/eifel-crown/round-%d.jpg' % args.round)
 
 rows = [
-    ('Start', 'start', '02.png', 'Grid on the Lodge Straight: gantry, garages, stands. Green and white kerbs begin at Start Kink. Lodge is C5.'),
-    ('Forest esses', 'forest-esses', '02.png', 'Dense dark spruce close behind the Armco, beech groves set back, damp dark road.'),
-    ('Crown ridge meadows', 'ridge-meadows', '01.png', 'Forest opens to meadow: drystone wall with hedge on the left, hedge and wall on the right, woods behind.'),
-    ('Drystone wall field edge', 'drystone-wall', '04.png', 'New wall piece with moss and cope stones, clipped hedge behind it.'),
-    ('Village Street before the village', 'village-street', '03.png', 'Field wall and hedge on the left. The right is left open for the C5 village; the castle crag goes beyond.'),
-    ('Valley Sweep', 'valley-sweep', '05.png', 'Spruce and beech on the wooded valley side; the reservoir basin on the right is left clear for C5.'),
+    ('Start and Start Kink', 'start', '02.png', 'Grid on the Lodge Straight, then the forest closes in behind the Armco. Lodge is C5.'),
+    ('Forest esses', 'forest-esses', '02.png', 'Spruce right behind the Armco, rows deep, beech among them in a duller green, damp verge.'),
+    ('Crown ridge meadows', 'ridge-meadows', '01.png', 'Meadow patches, wall and hedge lines, cross hedges, wooded far hills.'),
+    ('Drystone wall field edge', 'drystone-wall', '04.png', 'Rougher wall: uneven courses, moss, ragged top; softer hedge behind it.'),
+    ('Village Street before the village', 'village-street', '03.png', 'Field wall and hedge on the left. The right is open for the C5 village; castle crag beyond.'),
+    ('Valley Sweep', 'valley-sweep', '05.png', 'Wooded valley side close to the road; the reservoir basin on the right is left clear for C5.'),
 ]
 W, ROW, GAME, REF = 1340, 500, (780, 440), (440, 440)
 canvas = Image.new('RGB', (W, 120 + ROW * len(rows)), '#e8e7e0')
