@@ -1446,3 +1446,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged WILD-ART-SRC (Codex; lane 86/86, Blender checks, build pass on 21f92304; round 3 accepted; other regions still to come).
 - 28 Oct night: merged STORY-KOGANE-PACKET (docs only; hygiene passes; open items for the 7:30 review with Kyle).
 - 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V2 (lane 72/72 after Claude's conflict fix, build, 294 model checks; round 4 accepted for shape).
+- 28 Oct night: merged EIFEL-CROWN-C4 (lane 202/203 (test-track-kits passes alone in 442 s, too slow for the lane run), drive-through, test-circuits, ground rows, world composition pass on 85851163; round 2 accepted).
