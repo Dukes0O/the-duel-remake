@@ -31,3 +31,7 @@ Switch: `menu-front-door`, state `dev` (off in the game). With it off the menu m
 ## Removed
 
 Nothing removed. With the switch on, the small top-bar logo, the "CHOOSE YOUR WEAPON" heading, the footer controls strip and build stamp, and the old Wasteland, Helipad and Instructor buttons are not shown on the first screen; they are replaced by the doors. Delete the old versions when the switch turns fully on.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: switch off leaves today's menu; shared-file changes read only and guarded by the switch; rule 18: switch count 42 to 43 follows the new switch, nothing loosened. First slice, UNFINISHED (last-race line, drawer covers doors, Wasteland badge, look review). Six suites blocked only by Recycle Bin cleanup in the lane folder were rerun in integration after merge.
