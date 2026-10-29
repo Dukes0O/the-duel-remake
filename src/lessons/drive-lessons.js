@@ -474,8 +474,8 @@ export async function sectionPlanFor(duel, row, pace, {middle = false, dry = fal
   const turns = row.cornerNames.map(piece);
   const points = {turnInS: turns[0].s0, apexS: turns[0].s0 + (turns[0].s1 - turns[0].s0) * .55,
     exitS: turns.at(-1).s1, dir: turns[0].dir};
-  const outsideClear = course.def.id === 'tremblant-snow' ? 4.5 : row.courseId === 'harbour-lights' ? 2 : 2.9;
-  const apexClear = row.courseId === 'harbour-lights' ? 1.5 : 2.5;
+  const outsideClear = course.def.id === 'tremblant-snow' ? 4.5 : row.courseId === 'harbour-lights' ? 2 : row.courseId === 'kogane-pass' ? 3.4 : 2.9;
+  const apexClear = row.courseId === 'harbour-lights' ? 1.5 : row.courseId === 'kogane-pass' ? 3.4 : 2.5;
   const waypoints = [{s: startS, lateral: -turns[0].dir * (course.roadHalfWidthAt(startS) - outsideClear)}];
   for (let i = 0; i < turns.length; i++) {
     const turn = turns[i], previous = turns[i - 1], next = turns[i + 1];
@@ -673,7 +673,7 @@ async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty 
       yawVelocity: state.yawVelocity, ...(isGears ? {gear: state.gear, revs: state.revs} : {})};
   };
   const off = duel.onChange((current, event) => {
-    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});
+    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) {console.error('EV',JSON.stringify(event),current.s.toFixed(1),current.lateral.toFixed(2),current.speedMph.toFixed(1),'pace',pace);faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});}
   });
   let ticks = 0, frames = 0;
   poses.push(capture(0));
