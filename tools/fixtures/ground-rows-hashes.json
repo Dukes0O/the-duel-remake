@@ -218,5 +218,60 @@
    "moved": 276,
    "dropped": 0
   }
+ },
+ "panorama-ridge-night": {
+  "near": "0d29f82f412ce482cd37c346e452e08a3a636949eeae695e8de03b6161f80c1e",
+  "far": "0569fb193da5fea2a589bf7d880efbd4faccfb85ab8d84ca4a736e82782bc596",
+  "scenery": "87097c533fdcc60b86dec575d7d99e41573c062956aab10a1502922956b4a423",
+  "cells": 172,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 103,
+   "dropped": 0
+  }
+ },
+ "harbour-lights-dusk": {
+  "near": "9203c3ba9c262ba7081d8c028aa9e9690e678b80e1115d7b53e6eba7e30f851a",
+  "far": "e30547d91137800c0ecb286e5de1e2be7fc297af3b77e6ba21c9e0fe3d54e270",
+  "scenery": "9c47213eef5081f9cabdd56f2762b59c6b4844f37805e56b88486573bc41dc18",
+  "cells": 127,
+  "roadAvoid": {
+   "placed": 2700,
+   "moved": 49,
+   "dropped": 4
+  }
+ },
+ "panorama-ridge-reverse": {
+  "near": "9adfbfbbacfa2056cbb4667fc95b38ab842819aaf3a4e632e17ac21348bfdd82",
+  "far": "4649c79b4912b4aa84110cd6b4b814e5235eaaeb4ef67642b88db682f5696ebc",
+  "scenery": "866948160f46039dd26c98ab4c654347731bbc0ac3594501e3f93494b4d6fab4",
+  "cells": 174,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 108,
+   "dropped": 0
+  }
+ },
+ "harbour-lights-reverse": {
+  "near": "ba00215331dea2f3a7b6e323fadff56d25f5e552491469f33311d9193c2d47b5",
+  "far": "d50e3a663a2aae76ebd0ec1b8dc900316373efcc29b03968c16dbcc1fa394279",
+  "scenery": "3a7172982bc4d4a86a100856608b19a237723611c0ab198c5a2faa882b37cb07",
+  "cells": 122,
+  "roadAvoid": {
+   "placed": 2700,
+   "moved": 46,
+   "dropped": 3
+  }
+ },
+ "tremblant-woods-reverse": {
+  "near": "5036f95d6f268a21d4e287a4616b32100051c212af4954814eb5941516074caa",
+  "far": "3b1b847586fd97d5fc4e440cce46e8a1ddd72b35b7cc721e2906291244c852db",
+  "scenery": "eb61ff8b15e8285313df2615179e37677a92db35f2141e7c2e44fa65d82a21a7",
+  "cells": 160,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 151,
+   "dropped": 0
+  }
  }
 }
