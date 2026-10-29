@@ -120,3 +120,7 @@ Stream under Forest Dip is C5 too.
 Nothing replaced yet: the old Eifel scenery stays with the released entry until C7. Scratch
 captures, test copies and `.qa-dist` helpers made here were deleted; Claude's scratchpad was
 not touched except the one named sheet.
+
+## Claude's review (28 October 2026, night)
+
+Accepted on round 2 pictures (Claude, look judge): forest esses and Valley Sweep run through dense spruce behind the Armco with duller beech among them; walls rough with moss; green and white kerbs. Polish for C6: the open start meadow and smooth far hills. Code (independent review): tree planting gains a crowd spacing and inside-corner distance, colour-only verge option, beech groves for eifel-crown, kerbColours setting; all defaults unchanged, world signatures and replay fingerprints exact. Changed assertions (rule 18): kit count 46 to 48 for two new kits; Eifel far-tree cap 4,500 to 5,000 for the wider far band; beech setback measured from the wood's first row; damp-road list adds eifel-crown; course-ground probe uses eight named corners. Nothing loosened.
