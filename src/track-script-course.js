@@ -313,6 +313,8 @@ function scatterScenery(course) {
         const range=authoredRanges.find(range=>s>=range.from&&s<=range.to);
         if(!range)continue;
         if(range.fadeOut>0&&random.float()>Math.min(1,(range.to-s)/range.fadeOut))continue;
+        // `fadeIn`: the same thinning at the start of the range (a reversed road meets the wood at its far end).
+        if(range.fadeIn>0&&random.float()>Math.min(1,(s-range.from)/range.fadeIn))continue;
       }
       // The rows thin out toward the back, so the wood has an edge.
       if (random.float() < thin * (depth - from) / Math.max(1, to - from)) continue;
