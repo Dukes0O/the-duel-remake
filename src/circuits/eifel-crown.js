@@ -35,7 +35,7 @@ const roadDefinition = defineScriptedCourse({
     ['straight', 98, {climb: -18.9}],
     ['turn', 'R', 56.5, 85, {climb: -17.8, name: 'Castle Bend'}],
     ['straight', 106, {climb: -11}],
-    ['turn', 'L', 87, 105, {climb: -2, name: 'Wall Left'}],
+    ['turn', 'L', 87, 108, {climb: -2, name: 'Wall Left'}],
     ['straight', 170, {climb: 11.6, name: 'Village Street'}],
     ['turn', 'R', 48.5, 130, {climb: 16.5, name: 'Beech Right'}],
     ['straight', 142, {climb: 17}],

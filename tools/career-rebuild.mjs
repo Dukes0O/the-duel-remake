@@ -39,13 +39,14 @@ const WINNING_CAR = 'falcone_f42';
 const FIGHT_LEVEL = 'easy';
 const MAXED = Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3]));
 
-// Released switches only: a course behind a development switch is not unlockable today.
+// Appended courses need a released switch. A slotted preview replaces an
+// already released course, whose ownership remains available with preview off.
 const flags = createFeatureFlags({storage: null, qa: false, search: ''});
 export function unlockableCourseIds() {
   return COURSE.filter(course => {
     const manifest = CIRCUIT_MANIFESTS.find(item => item.id === course.id);
     return !course.practice && Object.hasOwn(COURSE_PRICES, course.id) && !courseUnlockRequirement(course) &&
-      (!manifest || flags.enabled(manifest.flag));
+      (!manifest || manifest.slot !== undefined || flags.enabled(manifest.flag));
   }).map(course => course.id);
 }
 // The cars a new career can reach by buying: the roster without earned (medal, Deep, Lab) cars.
