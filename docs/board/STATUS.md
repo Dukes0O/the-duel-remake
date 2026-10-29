@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-29T00:23:07.562Z
+Observed at: 2026-10-29T01:06:52.982Z
 
-Observation commit: 593f6df5a70f080ee6a9edea4875ae32c119f979
+Observation commit: 7c741343d245dcbdd93e6e8d97bb0bd0a645dbef
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 593f6df5a70f080ee6a9edea4875ae32c119f979
+Integration HEAD: 7c741343d245dcbdd93e6e8d97bb0bd0a645dbef
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -32,8 +32,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/eifel-c2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2 |
 | codex/kogane-c4 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4 |
 | codex/perf-high-night | 13 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
-| codex/skyline-v2 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v2 |
-| codex/skyline-v4 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4 |
+| codex/skyline-v2 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v2 |
+| codex/skyline-v5 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v5 |
 | codex/wild-art-src | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -42,10 +42,11 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/eifel-c2 | unknown | 2026-10-28T17:07:21-07:00 | 0 | last commit 2026-10-28T17:07:21-07:00 | docs/board/STATUS.md, docs/board/cards/EIFEL-CROWN-C2.md, docs/changes/EIFEL-CROWN-C2.md, src/circuit-manifests.js, src/circuits/eifel-crown.js |
-| codex/kogane-c4 | unknown | 2026-10-28T16:47:07-07:00 | 0 | last commit 2026-10-28T16:47:07-07:00 | docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/run-log.md, docs/changes/KOGANE-PASS-C2.md, src/circuits/kogane-pass.js |
-| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 13 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/wild-art-src | WILD-ART-SRC | 2026-10-28T17:09:50-07:00 | 0 | last commit 2026-10-28T17:09:50-07:00 | docs/board/STATUS.md, docs/board/cards/WILD-ART-SRC.md, docs/board/looks/wildlife/north-woods-round-1.jpg, docs/board/looks/wildlife/north-woods-round-2.md, docs/changes/WILD-ART-SRC.md |
+| codex/eifel-c2 | unknown | 2026-10-28T17:07:21-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/EIFEL-CROWN-C2.md, docs/changes/EIFEL-CROWN-C2.md, src/circuit-manifests.js, src/circuits/eifel-crown.js |
+| codex/kogane-c4 | unknown | 2026-10-28T17:33:31-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/KOGANE-PASS-C4.md, docs/board/looks/kogane-pass/round-1.jpg |
+| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 13 | inspection skipped by request; uncommitted state unknown | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/skyline-v5 | unknown | 2026-10-28T17:54:58-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/NISSAN-SKYLINE-GTR-R34-V4.md, docs/board/cards/QA-MAP-FINISH-TABLE.md |
+| codex/wild-art-src | WILD-ART-SRC | 2026-10-28T17:09:50-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/WILD-ART-SRC.md, docs/board/looks/wildlife/north-woods-round-1.jpg, docs/board/looks/wildlife/north-woods-round-2.md, docs/changes/WILD-ART-SRC.md |
 
 ## Size targets
 
@@ -58,10 +59,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 33,136,529 B | +261,984 B | 20,000,000 B |
+| Review `looks/` | 33,134,641 B | -1,888 B | 20,000,000 B |
 | Added bytes in last merge | 123,865 B | +0 B | 5,000,000 B |
 | All `public/` | 348,530,686 B | +0 B | unavailable |
-| Git objects | 800,772,096 B | +1,243,136 B | unavailable |
+| Git objects | 802,587,648 B | +461,824 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -70,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: c16caedfb776e3645223bcb848939b4c4a1f0f35
 - Local main: missing
-- Local integration/wasteland: 0d89f56b4a18607c2b46c20a1892bf057dfb8fda
+- Local integration/wasteland: 81777c200c9a3af8d37c5306e153ec807412b891
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -81,8 +82,3 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/integration/wasteland: behind local; cached commit fc0e532534d14b432126d4412d069ed8f48afced.
 
 Issue: Circuit manifest harbour-lights-dusk.js has unknown or malformed literal metadata.
-Issue: codex/eifel-c2: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2
-Issue: codex/kogane-c4: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4
-Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
-Issue: codex/skyline-v4: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4
-Issue: codex/wild-art-src: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src

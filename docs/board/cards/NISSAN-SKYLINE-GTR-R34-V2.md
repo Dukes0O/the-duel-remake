@@ -55,3 +55,22 @@ The dev registration also extends the existing PREVIEW_FLAGS row in this
 lane's start-preview.bat. Its unchanged test requires every dev switch there.
 Only nissan-skyline is appended; the launcher is never executed in this job.
 No port, folder, player setup or preview behaviour changes.
+
+## Round 2 decisions (28 October 2026)
+
+Claude round 1 verdict: FAIL, it reads as a generic old saloon, not an R34.
+Follow the latest brief: lower and move the cabin forward, flatten the bonnet
+and raise the blunt nose, flare the arches, enlarge the silver wheels, use
+black window seals, and replace twin tips with one large right-side exhaust.
+The latest brief controls over round 1's packet choices. Keep the left seat,
+red calipers, dev registration and the 60,000 triangle / 56 draw budget.
+The one outlet has one boost flame. Height and wheel-radius assertions will
+follow the revised geometry with unchanged tolerances. Existing damage,
+clearance, grounding and isolation assertions remain.
+Checks: headless model contract, four matched reference/model views and
+self-score, lane tier jobs 2, production build. No browser or frame check.
+Stop after round 2 and leave the art verdict to Claude.
+
+Round 2 independent code review: clear after correcting the exhaust position
+to clear the diffuser within the unchanged length tolerance, and moving black
+window seals into the glass edges so the painted pillars do not cover them.

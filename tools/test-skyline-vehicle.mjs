@@ -20,7 +20,7 @@ equal(data.size, SKYLINE_VEHICLE_DIMENSIONS.nissan_skyline_gtr_r34, 'Model dimen
 equal(data.paint.color.getHex(), 0x1b3d8c, 'Default Bayside Blue paint');
 equal(data.wheels.length, 4, 'Four animated wheels');
 equal(data.wheelPivots.filter(p => p.userData.front).length, 2, 'Only two front steering pivots');
-ok(data.driver && data.steeringPivot && data.brakeLights.length > 0 && data.boostFlames.length === 2, 'Driver, steering, brake and boost hooks exist');
+ok(data.driver && data.steeringPivot && data.brakeLights.length > 0 && data.boostFlames.length === 1, 'Driver, steering, brake and boost hooks exist');
 near(data.driver.position.x, .34, 1e-12, 'Driver uses the left seat');
 near(data.steeringPivot.position.x, .34, 1e-12, 'Steering wheel uses the left seat');
 
@@ -37,17 +37,17 @@ vehicle.traverseVisible(mesh => {
 const size = bounds.getSize(new THREE.Vector3());
 near(size.x, 1.96, .025, 'Model width matches its collision footprint');
 near(size.z, 4.60, .06, 'Model length matches its collision footprint');
-near(size.y, 1.38, .025, 'Solid coupe roof matches declared height');
+near(size.y, 1.25, .025, 'Solid coupe roof matches declared height');
 ok(triangles <= 60000 && draws <= 56, `Budget: ${triangles} triangles / ${draws} draws`);
 
 const paint = data.damageMeshes.filter(({mesh}) => mesh.material === data.paint).map(({mesh}) => mesh);
 const ray = new THREE.Raycaster();
 const roof = new THREE.Box3().setFromObject(data.driver);
-ray.set(new THREE.Vector3(.34, 2, -.26), new THREE.Vector3(0,-1,0));
+ray.set(new THREE.Vector3(.34, 2, .02), new THREE.Vector3(0,-1,0));
 const roofHit = ray.intersectObjects(paint)[0];
 ok(roofHit && roof.max.y < roofHit.point.y - .02, 'Helmet clears the actual solid roof by at least 2 cm');
 for (const side of [-1,1]) {
-  ray.set(new THREE.Vector3(side*.61,.665,4),new THREE.Vector3(0,0,-1));
+  ray.set(new THREE.Vector3(side*.61,.755,4),new THREE.Vector3(0,0,-1));
   const lamps = data.damageMeshes.filter(({mesh}) => mesh.material.name === 'Headlamp lenses').map(({mesh})=>mesh);
   ok(lamps.includes(ray.intersectObjects([...paint,...lamps])[0]?.object), 'Front lens is exposed');
   for(const x of [.45,.70]) {
@@ -66,10 +66,10 @@ updateDriver(data.driver, 0);
 const grounding = prepareVehicleGrounding(vehicle);
 near(grounding.contactY, 0, .001, 'All tires touch local y=0');
 equal(grounding.wheels.length, 4, 'All four wheels support grounding');
-for (const wheel of grounding.wheels) near(wheel.radius, .34, .001, 'Actual tire radius');
+for (const wheel of grounding.wheels) near(wheel.radius, .37, .001, 'Actual tire radius');
 placeGroundedVehicle(vehicle, { x: 2, y: 5, z: 7, heading: 1.2 }, 0, 1);
 near(vehicle.position.y + grounding.contactY, 5 + TIRE_CLEARANCE, .0001, 'World grounding adds only tire clearance');
-for (const wheel of data.wheels) near(wheel.rotation.x, 1 / .34, .001, 'Wheel travel uses actual radius');
+for (const wheel of data.wheels) near(wheel.rotation.x, 1 / .37, .001, 'Wheel travel uses actual radius');
 vehicle.position.set(0, 0, 0); vehicle.rotation.set(0, 0, 0);
 for (const wheel of data.wheels) wheel.rotation.set(0, 0, 0);
 vehicle.updateMatrixWorld(true);
