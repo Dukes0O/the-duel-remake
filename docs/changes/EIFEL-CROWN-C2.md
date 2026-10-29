@@ -159,3 +159,7 @@ lane's older board under the lane-only brief. No merge, push or C3 work.
 Session-end status snapshot refreshed in this lane, with all other lane
 inspections skipped and no live-root inspection. Repository placement and
 git diff whitespace checks passed.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review; rule 18 written review; save review of the recipe change). New eifel-crown circuit file with slot 9: it replaces the live Eifel only while its dev switch is on, so the live game is unchanged. Count tests now leave slotted courses out of the appended list, with the same exact values. tools/career-rebuild.mjs keeps the released Eifel ownership while the slotted preview is dev; the shipped restore data and its exact-match test are byte for byte unchanged. Road widened at the one Easy corner; raw traffic drive-through clean. Config conflict with the Skyline import resolved by Claude. Before Eifel's new layout goes live, Kyle decides (it archives old Eifel bests).
