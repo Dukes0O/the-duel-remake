@@ -1445,3 +1445,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EIFEL-CROWN-C2 (Codex then Claude; lane 323/324 after the config conflict fix (the one failure, test-ground-rows-exact, was the integration fault fixed by GROUND-ROWS-VARIANTS), drive-through all difficulties, test-circuits, build).
 - 28 Oct night: merged WILD-ART-SRC (Codex; lane 86/86, Blender checks, build pass on 21f92304; round 3 accepted; other regions still to come).
 - 28 Oct night: merged STORY-KOGANE-PACKET (docs only; hygiene passes; open items for the 7:30 review with Kyle).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V2 (lane 72/72 after Claude's conflict fix, build, 294 model checks; round 4 accepted for shape).
