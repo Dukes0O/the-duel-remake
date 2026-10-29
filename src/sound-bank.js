@@ -269,6 +269,16 @@ export const SOUND_BANK = {
     duck: 'voice',
     flag: 'hidden-road',
   }),
+  'vehicle.turbo-whistle': cue('engine', {
+    flag: 'nissan-skyline', volume: .012, limit: 1, loop: true,
+    oscillator: {type: 'sine', lowHz: 4000, highHz: 7000},
+  }),
+  'vehicle.blowoff': cue('engine', {
+    flag: 'nissan-skyline', volume: .08, limit: 1,
+    layers: [noise(5000, .34, .7, 'highpass'),
+      {...noise(3200, .1, .45, 'bandpass'), delay: .12},
+      {...noise(2500, .08, .35, 'bandpass'), delay: .24}],
+  }),
   'vehicle.rival-engine': cue('engine', {
     flag: 'rival-voices', donor: 'loadHigh', toneHz: 86,
     volume: .35, priority: 40, limit: 3, loop: true,
@@ -775,6 +785,10 @@ const FALCONE_VOICE = {
   intake: 0.09,
 };
 export const CAR_VOICES = {
+  nissan_skyline_gtr_r34: {
+    pitch: .96, brightness: 1.03, gain: .98, accent: 1,
+    exhaust: .16, intake: .13, turbo: true,
+  },
   falcone_f42: FALCONE_VOICE,
   falcone_heritage: FALCONE_VOICE,
   stuttgart_959s: {

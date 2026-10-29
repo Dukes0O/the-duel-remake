@@ -8235,6 +8235,93 @@
       "sha256": "674f51a95f846da8658f6eaa84f162b006b67b79a7786762aef07acca4dd1ec7",
       "bytes": 99935,
       "generated": "2026-10-27"
+    },
+    {
+      "source": "synthesis",
+      "key": "vehicle.turbo-whistle",
+      "cue": "vehicle.turbo-whistle",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "src/audio.js",
+        "recipe": {
+          "bus": "engine",
+          "volume": 0.012,
+          "pitchRange": [
+            1,
+            1
+          ],
+          "volumeRange": [
+            1,
+            1
+          ],
+          "priority": 50,
+          "limit": 1,
+          "spatial": null,
+          "duck": null,
+          "flag": "nissan-skyline",
+          "loop": true,
+          "oscillator": {
+            "type": "sine",
+            "lowHz": 4000,
+            "highHz": 7000
+          }
+        }
+      },
+      "file": "src/sound-bank.js"
+    },
+    {
+      "source": "synthesis",
+      "key": "vehicle.blowoff",
+      "cue": "vehicle.blowoff",
+      "license": "CC0-1.0",
+      "author": "The Duel",
+      "processing": {
+        "script": "src/audio.js",
+        "recipe": {
+          "bus": "engine",
+          "volume": 0.08,
+          "pitchRange": [
+            1,
+            1
+          ],
+          "volumeRange": [
+            1,
+            1
+          ],
+          "priority": 50,
+          "limit": 1,
+          "spatial": null,
+          "duck": null,
+          "flag": "nissan-skyline",
+          "layers": [
+            {
+              "kind": "noise",
+              "frequency": 5000,
+              "duration": 0.34,
+              "volume": 0.7,
+              "type": "highpass"
+            },
+            {
+              "kind": "noise",
+              "frequency": 3200,
+              "duration": 0.1,
+              "volume": 0.45,
+              "type": "bandpass",
+              "delay": 0.12
+            },
+            {
+              "kind": "noise",
+              "frequency": 2500,
+              "duration": 0.08,
+              "volume": 0.35,
+              "type": "bandpass",
+              "delay": 0.24
+            }
+          ]
+        }
+      },
+      "file": "src/sound-bank.js"
     }
   ]
 }
