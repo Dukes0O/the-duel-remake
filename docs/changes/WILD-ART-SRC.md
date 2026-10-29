@@ -93,3 +93,7 @@ production build and salt-flats-tests-tcwkAH fixture directory. No .evidence
 folder was created. No existing source cache, evidence or scratchpad file was
 removed. The exact requested scratchpad sheet copy remains in place.
 Cockpit sync stays with the Director under the lane-only boundary.
+
+## Claude's review (28 October 2026, night)
+
+Accepted on pictures over three rounds (Claude, look judge): deer, bear, beaver and wolf passed in round 2, the moose in round 3 (hump, dewlap, palmate antlers from the skull, long muzzle). CC0 Quaternius deer, moose donor and wolf; CC-BY 3.0 Poly by Google bear and beaver, credited. All under 5,000 triangles, 1K coats. Not placed in races yet (WILD-VIEW). Changed pins (rule 18): the P4 kits and tanker source checks leave out only the four new wildlife provenance rows and keep their old hash values exactly.
