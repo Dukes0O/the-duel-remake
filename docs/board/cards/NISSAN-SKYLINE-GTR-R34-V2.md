@@ -74,3 +74,19 @@ Stop after round 2 and leave the art verdict to Claude.
 Round 2 independent code review: clear after correcting the exhaust position
 to clear the diffuser within the unchanged length tolerance, and moving black
 window seals into the glass edges so the painted pillars do not cover them.
+
+## Round 3 decision, final round (28 October 2026)
+
+Claude scores round 2 NOT YET, about 2.5/5. The latest brief authorizes a
+Blender recipe and runtime GLB. Use the existing preload then synchronous
+factory contract, as on the Speirling. No primitive fallback body. The shell
+is one connected subdivided mesh, with glass regions, rounded shoulders,
+integrated roof and painted pillars. Decimate after subdivision to budget.
+Keep the existing private instance damage, wheel and driver hooks.
+Owned files extend to tools/blender/cars/nissan-skyline-gtr-r34.py and
+public/assets/models/unlocks/nissan_skyline_gtr_r34.glb. Existing loader and
+review hooks stay owned, including tools/art/skyline-export.mjs for the
+preloaded runtime review export. Add a Skyline-specific export mode to its review
+recipe without changing the shared exporter. Checks: headless GLB, loader
+and damage contract; matched reference sheet including top view; lane jobs 2
+and build. No frame measurement or new sound event. Stop after round 3.

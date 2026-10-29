@@ -1,6 +1,6 @@
-"""Render front, rear, side and three-quarter views of the code-built R34.
+"""Render front, rear, side and three-quarter views of the runtime R34.
 
-Export with tools/art/car-review-export.mjs, then run Blender with:
+Export with tools/art/skyline-export.mjs, then run Blender with:
   --background --factory-startup --python tools/art/skyline-review.py --
   --root <lane> --glb <review.glb> --out <evidence folder>
 Compose with: python tools/art/skyline-sheet.py <evidence folder>
@@ -8,10 +8,11 @@ Use --paths-only with normal Python to inspect output paths without rendering.
 """
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
-VIEW_NAMES = ('front', 'rear', 'side', 'three-quarter')
+VIEW_NAMES = ('front', 'rear', 'side', 'three-quarter', 'top')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
@@ -84,6 +85,7 @@ views = (
     ('rear', Vector((0, 1, .055)), 1.70, .70),
     ('side', Vector((1, 0, .025)), 1.95, .70),
     ('three-quarter', Vector((.72, -1, .23)), 1.95, .65),
+    ('top', Vector((0, -.001, 1)), 1.95, .65),
 )
 for name, direction, factor, look in views:
     camera.data.type = 'PERSP' if name == 'three-quarter' else 'ORTHO'
@@ -91,7 +93,8 @@ for name, direction, factor, look in views:
     target = Vector((centre.x, centre.y, lo.z + look))
     camera.location = target + direction.normalized() * length * factor
     camera.rotation_euler = (target - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    if name == 'top':
+        camera.rotation_euler.rotate_axis('Z', math.pi / 2)
     scene.render.filepath = str(out / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 print('rendered', len(views), 'views to', out)
-

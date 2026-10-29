@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-29T01:06:52.982Z
+Observed at: 2026-10-29T02:21:22.012Z
 
-Observation commit: 7c741343d245dcbdd93e6e8d97bb0bd0a645dbef
+Observation commit: c8b1a0d25fd54163aa1b372c22fe6e5beb199149
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7c741343d245dcbdd93e6e8d97bb0bd0a645dbef
+Integration HEAD: c8b1a0d25fd54163aa1b372c22fe6e5beb199149
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,10 +30,9 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/eifel-c2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2 |
-| codex/kogane-c4 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4 |
+| codex/kogane-c5 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c5 |
 | codex/perf-high-night | 13 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/skyline-v2 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v2 |
-| codex/skyline-v5 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v5 |
 | codex/wild-art-src | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -42,11 +41,10 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/eifel-c2 | unknown | 2026-10-28T17:07:21-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/EIFEL-CROWN-C2.md, docs/changes/EIFEL-CROWN-C2.md, src/circuit-manifests.js, src/circuits/eifel-crown.js |
-| codex/kogane-c4 | unknown | 2026-10-28T17:33:31-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/KOGANE-PASS-C4.md, docs/board/looks/kogane-pass/round-1.jpg |
+| codex/eifel-c2 | unknown | 2026-10-28T18:36:21-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C2.md, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/NISSAN-SKYLINE-GTR-R34-V4.md |
+| codex/kogane-c5 | unknown | 2026-10-28T19:13:26-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/KOGANE-PASS-C4.md |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 13 | inspection skipped by request; uncommitted state unknown | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/skyline-v5 | unknown | 2026-10-28T17:54:58-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/NISSAN-SKYLINE-GTR-R34-V4.md, docs/board/cards/QA-MAP-FINISH-TABLE.md |
-| codex/wild-art-src | WILD-ART-SRC | 2026-10-28T17:09:50-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/WILD-ART-SRC.md, docs/board/looks/wildlife/north-woods-round-1.jpg, docs/board/looks/wildlife/north-woods-round-2.md, docs/changes/WILD-ART-SRC.md |
+| codex/wild-art-src | WILD-ART-SRC | 2026-10-28T18:49:10-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/WILD-ART-SRC.md, docs/board/looks/wildlife/north-woods-round-2.jpg, docs/board/looks/wildlife/north-woods-round-2.md, docs/changes/WILD-ART-SRC.md |
 
 ## Size targets
 
@@ -59,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 33,134,641 B | -1,888 B | 20,000,000 B |
+| Review `looks/` | 33,166,465 B | -12 B | 20,000,000 B |
 | Added bytes in last merge | 123,865 B | +0 B | 5,000,000 B |
-| All `public/` | 348,530,686 B | +0 B | unavailable |
-| Git objects | 802,587,648 B | +461,824 B | unavailable |
+| All `public/` | 348,774,426 B | +0 B | unavailable |
+| Git objects | 810,217,472 B | +2,375,680 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +69,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: c16caedfb776e3645223bcb848939b4c4a1f0f35
 - Local main: missing
-- Local integration/wasteland: 81777c200c9a3af8d37c5306e153ec807412b891
+- Local integration/wasteland: 3d77d074ced0cd1fc09bca183143c4400ebf9465
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
