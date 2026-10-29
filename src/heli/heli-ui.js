@@ -86,6 +86,7 @@ export function noticeText(event) {
         cargoHeavy: 'Cargo hit', cargoWreck: 'Cargo wrecked', fuelTruck: 'Fuel truck', bucket: 'Bucket repair'}[event.kind] ?? 'Repair';
       return `${what}: ${event.charged} credits${event.forgiven ? ` (${event.forgiven} forgiven)` : ''}`;
     }
+    case 'teaHouseFuel': return event.kg > 0 ? `The tea house fills the tank: ${fmt(event.kg, 1)} kg` : null;
     case 'fuelBought': return event.cost ? `Fuel: ${fmt(event.kg, 1)} kg for ${event.cost} credits` : `Fuel: ${fmt(event.kg, 1)} kg, the first tank is free`;
     case 'cruiseRefused': return `Not enough fuel for that leg: it needs ${event.needKg} kg`;
     case 'cannotLift': return event.reason;

@@ -23,14 +23,16 @@ export function atAnyPad(view) {
 // The wildlife count (docs/HELI_WILDLIFE.md section 4) pays the same in
 // Assisted and Real, from 200 to 600 credits by how near the estimate is.
 function jobRow(job, mode, {survey = null, skins = null} = {}) {
-  const own = job.own === true, count = job.survey === true;
+  // The story's job (STORY-KOGANE-DELIVERY) has its own title and a crate waiting by the pad, like the recovery job's car on the slope.
+  const own = job.own === true, count = job.survey === true, story = !!job.story;
   const state = job.done ? 'done' : job.taken ? 'taken' : 'open';
   const pay = own ? 'No pay' : count ? payWords(job.payNow ?? job.pay, {upTo: true}) : `${payWords(job.payNow ?? job.pay, {bonus: job.cleanBonus ?? 0})}${mode === 'real' ? ' (Real pays 25% more)' : ''}`;
   const pickUp = !own && !count && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
-  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery || count ? job.title : jobTitle(job);
+  const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery || count || story ? job.title : jobTitle(job);
   let button = '';
   // The recovery job (section 5.3) is taken and dropped like the day's jobs.
-  const note = job.recovery && !job.taken ? `<span class="heli-board-note">Hook the car on the slope</span>` : '';
+  const note = job.recovery && !job.taken ? `<span class="heli-board-note">Hook the car on the slope</span>`
+    : story && !job.taken ? `<span class="heli-board-note">Race tyres and tea-house supplies: hook the crate by the pad</span>` : '';
   if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
   else if (job.done) button = `<span class="heli-board-note">Done today</span>`;
   else if (job.taken) button = `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="drop">Drop job</button>`;

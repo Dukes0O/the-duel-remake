@@ -81,7 +81,7 @@ loading an owned course for fire calls. That one-line session hook is needed
 to keep Kogane out when the pilot map is off. Fire messages use the pilot place
 name. No save field or pay number changes.
 
-The pilot place is at (22, 2), east of the harbour, altitude 1,300 m. Its
+The pilot place is at (14, 0.5), east of the home valley (moved from (22, 2) by STORY-KOGANE-DELIVERY), altitude 1,300 m. Its
 forest, volcano and lake regions follow its dev switch. Only the parent course
 is listed now. C7 adds the variants when their files exist. The pilot outline
 builder retains a hidden Kogane outline for preview; existing outlines stay
