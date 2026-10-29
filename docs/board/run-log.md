@@ -1449,3 +1449,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EIFEL-CROWN-C4 (lane 202/203 (test-track-kits passes alone in 442 s, too slow for the lane run), drive-through, test-circuits, ground rows, world composition pass on 85851163; round 2 accepted).
 - 28 Oct night: merged EARN-LOOKS (lane 37/38 then the hygiene fix passes alone; build, car suites, enzo-look, mclaren-f1-look, earned-cars scenarios pass on 7514f049; earned-cars stays dev).
 - 28 Oct night: merged KOGANE-PASS-C5 (lane 239/239; recheck after kit merge passes).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V3 (lane 54/55 then hygiene fix; Skyline vehicle 329 and handling, vehicle-assets, earned-cars-ui, build rerun by Claude after the node_modules repair and the hygiene merge).
