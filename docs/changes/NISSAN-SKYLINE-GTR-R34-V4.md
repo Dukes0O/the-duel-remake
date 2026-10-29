@@ -140,3 +140,7 @@ by V3 when the accepted body is registered. Scratch fitting output is
 recycled after recording the fit. No review pictures or evidence folders
 are needed for this handling stage. Continuation build output and temporary
 PATH shim were recycled after recording the results.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent code review, rule 17; rule 18 written review). Car numbers from the packet behind the nissan-skyline dev switch; all-wheel-drive grip applies only to a car with awd: true; excludeFromCompletion keeps the Jesko list at eight; ROAD_CLASS only. Replay fingerprints and every other car unchanged. The feature-flag count moves 41 to 42 only for the new switch; the dev list gains nissan-skyline. Nothing loosened. 959-S body stands in until V3.
