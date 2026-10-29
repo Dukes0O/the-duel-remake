@@ -78,23 +78,72 @@ const starts = [0, 730, 2360, 3230, road.length];
 const names = ['Summit Lake', 'Cedar Switchbacks', 'Maple Terraces', 'Village Run'];
 const walls = buildKitPlacements(base, {walls: {wall: 'concrete-wall'}});
 
+// Wall pieces are cut to the drawn wall, not to the road centre line (KOGANE-WALL). The shared layout
+// spaces kit pieces by distance along the centre line and stretches each to fit. On the outside of a
+// hairpin the wall is half as long again as the centre line (gaps between concrete blocks of up to 1.8 m),
+// and on a straight a stone piece was stretched four times its own length. Each piece is cut into parts
+// laid end to end along the wall as it really runs, each close to the length the model was made for.
+const wallPoint = (s, lateral) => {
+  const p = Math.min(road.length, Math.max(0, s)), i = Math.min(road.samples.length - 2, Math.floor(p / road.step));
+  const a = road.samples[i], b = road.samples[i + 1], t = (p - a.s) / road.step;
+  const heading = a.heading + (b.heading - a.heading) * t;
+  return {x: a.x + (b.x - a.x) * t + Math.cos(heading) * lateral, z: a.z + (b.z - a.z) * t - Math.sin(heading) * lateral};
+};
+const wallRun = (from, to, lateral) => {
+  const steps = Math.max(2, Math.ceil((to - from) / .5));
+  let sum = 0, last = wallPoint(from, lateral);
+  for (let i = 1; i <= steps; i++) {
+    const at = wallPoint(from + (to - from) * i / steps, lateral);
+    sum += Math.hypot(at.x - last.x, at.z - last.z);
+    last = at;
+  }
+  return sum;
+};
+const cutWall = (row, aim, overlap) => {
+  const size = 4 * row.scale[0] + .1, from = row.s - size / 2, run = wallRun(from, from + size, row.lateral);
+  const low = Math.max(1, Math.floor(run / aim)), high = low + 1;
+  const count = Math.abs(Math.log(run / low / aim)) < Math.abs(Math.log(run / high / aim)) ? low : high;
+  return Array.from({length: count}, (_, i) => ({...row, s: from + size * (i + .5) / count,
+    scale: [(run / count + overlap) / 4, row.scale[1], row.scale[2]]}));
+};
+const wallHash = n => { const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); };
+const STONE_VARIANTS = ['stone-retaining-wall', 'stone-retaining-wall-b', 'stone-retaining-wall-c'];
+
 // Preserve the script collision and inner faces. Concrete is limited to the
 // outside of tight hairpins. Everywhere else the downhill edge stays open.
-const safety = walls.map(row => {
+const safety = walls.flatMap(row => {
   const piece = road.pieceAt(row.s);
   const side = Math.sign(row.lateral);
   const uphill = piece.kind === 'turn' ? piece.dir : 1;
   const hairpin = piece.kind === 'turn' && piece.radius < 30;
-  if (hairpin && side === -piece.dir) return row;
-  if (row.s >= 730 && side === uphill && !hairpin) {
-    return {...row, id: 'stone-retaining-wall',
-      lateral: side * (road.halfWidthAt(row.s) + 1 + .796 / 2),
-      heading: side > 0 ? -Math.PI / 2 : Math.PI / 2};
+  if (hairpin && side === -piece.dir) {
+    // Blocks overlap by 12 cm and every other one stands 1 cm further out, so the corner between two
+    // blocks on the curve is closed and the overlapped faces do not flicker. The wall behind is unchanged.
+    return cutWall(row, 3.4, .12).map((part, i) => ({...part, lateral: part.lateral + side * (i % 2) * .01}));
   }
-  return {...row, id: 'armco-white',
+  if (row.s >= 730 && side === uphill && !hairpin) {
+    return cutWall({...row, id: 'stone-retaining-wall',
+      lateral: side * (road.halfWidthAt(row.s) + 1 + .796 / 2),
+      heading: side > 0 ? -Math.PI / 2 : Math.PI / 2}, 4, .05);
+  }
+  return [{...row, id: 'armco-white',
     lateral: side * (road.halfWidthAt(row.s) + 1 + .349 / 2),
-    heading: side > 0 ? -Math.PI / 2 : Math.PI / 2};
+    heading: side > 0 ? -Math.PI / 2 : Math.PI / 2}];
 });
+// Three stone patterns, picked by a fixed pseudo-random draw that never repeats the one before on the
+// same side, and now and then avoids the one before that too, so a run of wall shows no tiling.
+for (const side of [-1, 1]) {
+  let before = -1, earlier = -1, count = 0;
+  for (const row of safety.filter(row => row.id === 'stone-retaining-wall' && Math.sign(row.lateral) === side)
+      .sort((a, b) => a.s - b.s)) {
+    const draw = wallHash(count++ + side * 1000);
+    const options = [0, 1, 2].filter(v => v !== before && !(v === earlier && wallHash(count + 77) < .5));
+    const pick = options[Math.floor(draw * options.length)];
+    row.id = STONE_VARIANTS[pick];
+    earlier = before;
+    before = pick;
+  }
+}
 
 const roadside = [];
 for (const piece of road.pieces.filter(piece => piece.name?.endsWith('Hairpin'))) {
@@ -218,12 +267,14 @@ export const KOGANE_PASS = defineScriptedCourse({
     'lantern-string': {glow: .8},
     'torii': {wash: {colour: 0xffa86c, strength: .22, height: 9, floor: .1}},
     'stone-retaining-wall': {wash: sodiumWash},
+    'stone-retaining-wall-b': {wash: sodiumWash},
+    'stone-retaining-wall-c': {wash: sodiumWash},
     'armco-white': {wash: sodiumWash},
     'curve-mirror': {wash: {colour: 0xffca85, strength: .24, height: 4, floor: .08}},
     'chevron-board': {wash: {colour: 0xffca85, strength: .24, height: 3, floor: .08}},
   },
   mergeKitMeshes: ['tea-house', 'vending-row', 'shopfront-a', 'shopfront-b',
-    'curve-mirror', 'stone-retaining-wall', 'armco-white'],
+    'curve-mirror', ...STONE_VARIANTS, 'armco-white'],
   effects: {backdrop, valleyMist: [
     {s: 2490, lateral: -46, along: 100, across: 24, count: 10,
       height: 1.5, opacity: .10, colour: 0xabb9bd, fadeEnd: 1},

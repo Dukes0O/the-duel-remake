@@ -292,7 +292,7 @@ export const EIFEL_CROWN = Object.freeze({
     // Dense dark spruce right behind the verge: the first row stands 14 m past the edge, just
     // beyond the 12 m run-off, and the wood is seven rows deep, crowns touching.
     forest: Object.freeze({from: 14, to: 38, spacing: 3, rows: 7, thin: .05,
-      scale: Object.freeze([1, 1.8]), jitter: .8, crowd: 2.2, insideOpen: 22}),
+      scale: Object.freeze([1, 1.8]), jitter: .8, crowd: 2.2}),
     // Wooded hills beyond, in broad groves with little meadow between them.
     farForest: Object.freeze({from: 60, to: 340, thin: .3, scale: Object.freeze([1.4, 2.6]), jitter: .8,
       groves: Object.freeze({every: 24, chance: .5, radius: Object.freeze([30, 56]), spacing: 8, crowd: 1.5, size: .3,

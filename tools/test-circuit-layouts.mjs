@@ -181,7 +181,10 @@ for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
     // forward road, and the reversed Beaver Hairpin on packed snow is a different corner (P4-VARIANTS builds
     // and tests reversed winter circuits with their own surfaces).
     for (const reverse of courseHasWinterSurfaces(circuit) ? [false] : [false, true]) {
-      const def = reverse ? { ...circuit, id: `${circuit.id}-reverse-test`, reverse: true } : circuit;
+      // A two-way road (Eifel Crown keeps its oncoming traffic) is driven here without the traffic: this check is about
+      // the road, and this driver never steers round an oncoming car (it hit one four times a lap on Eifel's crests).
+      const road = circuit.noTraffic ? circuit : { ...circuit, noTraffic: true };
+      const def = reverse ? { ...road, id: `${circuit.id}-reverse-test`, reverse: true } : road;
       // The reverse build is driven alone: the existing rival was never taught a hairpin (P4-FIELD).
       // A winter circuit is driven on winter tyres, as a player would choose them on the setup.
       const slot = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id).slot;
