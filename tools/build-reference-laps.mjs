@@ -299,7 +299,9 @@ export async function runReferenceWorker({targets = referenceTargets(), catalogO
 }
 
 export async function buildReferenceSet({targets = referenceTargets(), run = buildReferenceRecord, onRecord = () => {}, retainPoses = false, flags = []} = {}) {
-  if (run === buildReferenceRecord && (flags.length || targets.some(target => !COURSE.some(definition => definition.id === target.eventId)))) {
+  // A course still behind its switch that stands in for a released one (a `slot`) is also built in the worker, where its switch is on.
+  const replacedBySwitch = target => ALL_CIRCUITS.some(circuit => circuit.id === target.eventId && COURSE.some(definition => definition.id === circuit.id && definition !== circuit));
+  if (run === buildReferenceRecord && (flags.length || targets.some(target => !COURSE.some(definition => definition.id === target.eventId) || replacedBySwitch(target)))) {
     // Reject typos here rather than recursively starting another worker.
     const known = new Set(referenceTargets().map(target => target.eventId));
     const missing = targets.find(target => !known.has(target.eventId));

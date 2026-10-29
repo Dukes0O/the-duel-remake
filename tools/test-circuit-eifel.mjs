@@ -3,7 +3,8 @@ import test from 'node:test';
 import {EIFEL_CROWN, manifest} from '../src/circuits/eifel-crown.js';
 import {buildTrackScript} from '../src/track-script.js';
 import {Course} from '../src/course.js';
-import {COURSE} from '../src/config.js';
+import {COURSE, DRIVE} from '../src/config.js';
+import {courseForGrandPrix} from '../src/race-field.js';
 import {applyCircuits} from '../src/circuits/index.js';
 import {registerCircuits, CIRCUIT_ENTRIES} from '../src/circuit-manifests.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
@@ -21,6 +22,107 @@ import {beechTreePlacements} from '../src/vegetation.js';
 
 const road = buildTrackScript(EIFEL_CROWN);
 const named = name => road.pieces.find(piece => piece.name === name);
+
+// C3's full seeded field check is explicit because it is much longer than the
+// road tests. From PowerShell:
+//   node tools/test-circuit-eifel.mjs --pace [easy|medium|hard] [--races N]
+// It runs the field-balance harness (tools/race-field-balance.mjs, as
+// tools/ardennes-field-rate.mjs does) with the manifest's Stuttgart 959-S as
+// the player, driven along the racing line at the manifest skill, and seven
+// computer cars, memory-only saves. Then it exits without running the road
+// tests. --races N is only for tuning; the acceptance is 30 per difficulty.
+// The racing-line driver does not watch the car ahead, so on its own it drives
+// into slower cars and the computer cars it hits count as computer crashes.
+// This test gives it the same following limit the field-balance test driver
+// uses (tools/race-field-balance.mjs): it never drives into the car ahead in
+// its lane. No shared driver file changes.
+function keepBehindCarAhead(app) {
+  const racingLine = app._driveAutopilot;
+  app._driveAutopilot = function(dt) {
+    racingLine.call(this, dt);
+    const duel = this.duel, state = duel.state;
+    if (state.status !== 'racing' || state.impactTimer > 0) return;
+    let cap = Infinity;
+    for (const other of state.opponents) {
+      if (other.finished || other.crushed) continue;
+      const ahead = duel.relativeS(other.s, state.s) - state.s;
+      if (ahead <= 0 || ahead > 160 || Math.abs(other.lateral - state.lateral) > 2.9) continue;
+      const comfortable = DRIVE.brakeAccel * duel.car.braking * .62 * DRIVE.mphToWorld;
+      const lead = other.speedMph * DRIVE.mphToWorld;
+      const room = Math.max(0, ahead - 4.7 - 2.2) + lead * lead / (2 * comfortable * 1.15);
+      cap = Math.min(cap, comfortable * (-.22 + Math.sqrt(.22 * .22 + 2 * room / comfortable)) / DRIVE.mphToWorld);
+    }
+    if (state.speedMph > cap)
+      duel.setInput({throttle: 0, brake: Math.max(state.input.brake, Math.min(1, (state.speedMph - cap) / 12)),
+        steer: state.input.steer, boost: false});
+  };
+}
+if (process.argv.includes('--pace')) {
+  const {runRace, summarize, checkTargets} = await import('./race-field-balance.mjs');
+  const {App} = await import('../src/app.js');
+  const {useRacingLine} = await import('./track-script-drive.mjs');
+  const after = process.argv[process.argv.indexOf('--pace') + 1];
+  const difficulties = after && !after.startsWith('--') ? [after] : ['easy', 'medium', 'hard'];
+  assert.ok(difficulties.every(cpu => ['easy', 'medium', 'hard'].includes(cpu)));
+  const raceArg = process.argv.indexOf('--races');
+  const races = raceArg < 0 ? 30 : Number(process.argv[raceArg + 1]);
+  assert.ok(Number.isInteger(races) && races > 0 && races <= 30);
+  // The new road stands in slot 9 for the run, as the switch would put it.
+  COURSE[9] = EIFEL_CROWN;
+  let activeApp;
+  const originalStart = App.prototype.startCampaign;
+  App.prototype.startCampaign = function(options) { activeApp = this; return originalStart.call(this, options); };
+  const rows = [];
+  for (const cpuDifficulty of difficulties) {
+    for (let index = 0; index < races; index++) {
+      let crashes = 0, installed = false;
+      const result = runRace(cpuDifficulty, index, {
+        course: manifest.id, car: manifest.driver.car, fieldSize: 7,
+        onStep: duel => {
+          // The Grand Prix copy of the definition carries the pace row, so compare the road itself.
+          assert.equal(duel.course.def.layoutVersion, 3, 'the race runs on the new road');
+          assert.equal(duel.course.def.script, EIFEL_CROWN.script, 'the race runs on the new road');
+          assert.equal(duel.state.field.size, 8, 'the player and seven computer cars');
+          if (!installed) {
+            assert.equal(duel.state.status, 'countdown', 'the driver is installed before go');
+            assert.equal(duel, activeApp.duel);
+            useRacingLine(activeApp, manifest.driver.skill);
+            keepBehindCarAhead(activeApp);
+            installed = true;
+          }
+          crashes = duel.state.field.stats.crashes.filter(row => row.index >= 0).length;
+        },
+      });
+      rows.push({...result, computerCrashes: crashes});
+      console.log(JSON.stringify({difficulty: cpuDifficulty, index, time: result.playerTime,
+        position: result.position, finished: result.finished, passes: result.passes,
+        computerCrashes: crashes, pileUp: result.pileUp, wallSec: result.wallSec}));
+    }
+  }
+  const summary = summarize(rows);
+  // The packet's 3 computer passes per Medium race is reported below, not asserted: it is not in this card's brief.
+  const failures = checkTargets(summary).filter(line => !/passes between computer racers/.test(line));
+  // Grand Prix balance asks a little more of Medium and Hard than the pilot track's bands: the overlap of both.
+  const bands = {medium: .4, hard: .15};
+  for (const [cpu, low] of Object.entries(bands))
+    if (summary[cpu] && summary[cpu].winRate < low - 1e-9)
+      failures.push(`${cpu}: the test driver won ${(summary[cpu].winRate * 100).toFixed(0)}% (Grand Prix balance asks at least ${low * 100}%)`);
+  const detail = {};
+  for (const cpu of difficulties) {
+    const group = rows.filter(row => row.cpuDifficulty === cpu);
+    const complete = group.filter(row => row.finished === row.racers).length;
+    if (races === 30 && complete < 29) failures.push(`${cpu}: every computer must finish in at least 29 of 30 races (${complete})`);
+    const crashes = group.reduce((sum, row) => sum + row.computerCrashes, 0);
+    if (crashes > group.length / 10) failures.push(`${cpu}: ${crashes} computer crashes in ${group.length} races (at most 1 per 10)`);
+    const times = group.map(row => row.playerTime);
+    detail[cpu] = {complete, computerCrashes: crashes, wins: group.filter(row => row.won).length,
+      playerTime: {min: Math.min(...times), max: Math.max(...times), mean: times.reduce((sum, time) => sum + time, 0) / times.length}};
+  }
+  App.prototype.startCampaign = originalStart;
+  console.log(JSON.stringify({summary, detail, failures}));
+  if (failures.length) console.log('MISSES TARGET:\n' + failures.join('\n'));
+  process.exit(failures.length ? 1 : 0);
+}
 
 test('Eifel keeps its identity and closes the approved 34-piece road at 14 m wide', () => {
   assert.deepEqual([EIFEL_CROWN.id, EIFEL_CROWN.stage, EIFEL_CROWN.layoutSeed, EIFEL_CROWN.layoutVersion],
@@ -96,6 +198,17 @@ test('preview replaces only slot 9 and switch off retains the released road exac
     assert.equal(course.def, EIFEL_CROWN);
     assert.ok(course.racingLine);
   }
+});
+
+test('the Grand Prix pace row follows the new road only; the released road keeps its own row', () => {
+  const released = courseForGrandPrix(EXPANSION_COURSES.find(row => row.id === 'eifel-crown'));
+  const added = courseForGrandPrix(EIFEL_CROWN);
+  assert.deepEqual(released.fieldPace, {easy: .934, medium: .903, hard: .881});
+  assert.equal(released.fieldFollow, undefined);
+  assert.deepEqual(added.fieldPace, {easy: .94, medium: .858, hard: .86});
+  assert.equal(added.fieldAggression, 1.4);
+  assert.equal(added.fieldFollow.firstLap.margin, 5);
+  assert.equal(added.grandPrix, true);
 });
 
 test('pilot map retains the released outline and rebuilds the preview from the new road', () => {

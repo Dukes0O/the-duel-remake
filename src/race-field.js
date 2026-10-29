@@ -502,6 +502,9 @@ export function fieldView(state) {
 const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, halfWidth: 1});
 const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
+// EIFEL-CROWN-C3: the new road has real braking corners, so the field keeps more room to the car ahead.
+const EIFEL_GP_FIELD_FOLLOW = Object.freeze({reaction: .4, margin: 3.5, comfort: .5, leadBraking: 1.6, wallRoom: 1,
+  firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 const EXISTING_GP_TUNING = Object.freeze({
   'cloudbreak-skyway': Object.freeze({
     fieldPace: Object.freeze({easy: .981, medium: .948, hard: .934}), fieldAggression: .85,
@@ -518,6 +521,11 @@ const EXISTING_GP_TUNING = Object.freeze({
   'eifel-crown': Object.freeze({
     fieldPace: Object.freeze({easy: .934, medium: .903, hard: .881}), fieldAggression: 1.4,
   }),
+  // The new Eifel road (layoutVersion 3, behind its switch) has its own row; the released road keeps the row above.
+  'eifel-crown@3': Object.freeze({
+    fieldPace: Object.freeze({easy: .94, medium: .858, hard: .86}), fieldAggression: 1.4,
+    fieldFollow: EIFEL_GP_FIELD_FOLLOW,
+  }),
   'harbor-highlands': Object.freeze({
     fieldPace: Object.freeze({easy: 1.085, medium: 1.043, hard: 1.035}), fieldAggression: 1.6,
   }),
@@ -531,7 +539,7 @@ const EXISTING_GP_TUNING = Object.freeze({
 export function courseForGrandPrix(def) {
   // An authored circuit may set its own Grand Prix length (`grandPrixLaps`).
   return { ...def, laps: def.grandPrixLaps ?? FIELD.laps, hasRadar: false, grandPrix: true,
-    ...EXISTING_GP_TUNING[def.id],
+    ...(EXISTING_GP_TUNING[`${def.id}@${def.layoutVersion}`] ?? EXISTING_GP_TUNING[def.id]),
     ...(def.id === 'azure-riviera' ? {
       grandPrixEntryWidth: AZURE_GP_ENTRY_WIDTH,
       fieldFollow: AZURE_GP_FIELD_FOLLOW,
