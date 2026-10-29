@@ -22,7 +22,7 @@ async function loadFactory(loadAsset) {
   return options => createSkylineVehicle(options, scene);
 }
 export const SKYLINE_VEHICLE_DIMENSIONS = Object.freeze({
-  nissan_skyline_gtr_r34: Object.freeze({ width: 1.96, length: 4.60, height: 1.25, wheelRadius: .37 }),
+  nissan_skyline_gtr_r34: Object.freeze({ width: 1.96, length: 4.60, height: 1.36, wheelRadius: .37 }),
 });
 const { materials, batch, cylinder, cockpit, wheels, exhaust, rearPlate } = originalVehicleParts;
 const AXLES = [1.32, -1.345];
@@ -41,71 +41,35 @@ export function createSkylineVehicle({ key = 'nissan_skyline_gtr_r34', color = 0
   Object.assign(data, {
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...SKYLINE_VEHICLE_DIMENSIONS[key] },
-    damageSpace: { scale: [.88, .86, 1], offset: [0, 0, 0], frontGlassZ: 1.00, rearGlassZ: -1.28 },
+    damageSpace: { scale: [.88, .85, 1], offset: [0, 0, 0], frontGlassZ: .40, rearGlassZ: -1.26 },
   });
   // Flatten each GLB primitive into the existing material batch. Every instance
   // gets private geometry and paint; no source buffers enter the damage system.
+  const shellMaterial = { skyline_paint: m.paint, skyline_trim: m.carbon, skyline_glass: m.glass, skyline_lens: m.headlight, skyline_alloy: m.alloy };
   source.traverse(node => {
     if (!node.isMesh) return;
     const geometry = node.geometry.clone().applyMatrix4(node.matrixWorld);
-    b.add(geometry, node.material.name === 'skyline_paint' ? m.paint : m.glass);
+    b.add(geometry, shellMaterial[node.material.name] ?? m.glass);
     geometry.dispose();
   });
-  b.box(m.carbon, [1.42,.055,2.0], [0,.29,-.15], [0,0,0], .01);
-  windowTrim(b, m);
+  cockpit(vehicle, b, m, [.34,.015,.02], .9);
+  noseDetails(b, m);
+  tailDetails(b, m);
   for (const side of [-1,1]) {
-    b.tube(m.carbon,[[side*.59,.904,1.1],[side*.57,.918,1.4],[side*.64,.91,1.98]],.003,16);
+    // Door mirror on a short arm, set in front of the door glass.
+    b.box(m.paint,[.17,.09,.18],[side*.885,1.0,.45],[0,side*.12,0],.035);
+    b.box(m.paint,[.10,.032,.12],[side*.77,.96,.48],[0,0,0],.012);
+    b.box(m.darkAlloy,[.13,.068,.008],[side*.885,1.0,.36],[0,side*.12,0],.003);
   }
-  cockpit(vehicle, b, m, [.34,.015,.02], .84);
+  // Wing on two uprights below the roofline, a swept blade with end plates.
+  b.box(m.paint,[1.22,.05,.34],[0,1.172,-2.09],[.08,0,0],.02);
   for (const side of [-1,1]) {
-    b.box(m.paint,[.095,.095,1.92],[side*.9,.23,-.01],[0,0,0],.018);
-    b.box(m.carbon,[.014,.018,.19],[side*.907,.79,-.45],[0,0,0],.005);
-    b.tube(m.carbon,[[side*.898,.79,-.59],[side*.902,.36,-.61],[side*.9,.32,.72]],.004,12);
-    b.box(m.paint,[.17,.09,.23],[side*.895,.96,1.00],[0,side*.10,0],.025);
-    b.box(m.alloy,[.125,.055,.008],[side*.895,.964,.88],[0,side*.10,0],.009);
-    // Long angular housings turn rearward around the front wing. The outside
-    // corner is higher and behind the inner tip, rather than a separate box.
-    const outline = [[.365,.704,2.294],[.825,.724,2.265],[.888,.805,2.12],[.857,.828,2.19],[.41,.802,2.295]];
-    const lens = outline.map(([x,y,z])=>[side*x,y,z]);
-    shapedLens(b,m.carbon,lens,1.075,-.009);
-    shapedLens(b,m.headlight,lens,1,0);
-    for (const dx of [-.115,.065]) {
-      cylinder(b,m.carbon,.044,.012,[side*(.61+dx),.755,2.299],[Math.PI/2,0,0],24);
-      const ring = new THREE.TorusGeometry(.041,.005,6,24);
-      b.add(ring,m.alloy,[side*(.61+dx),.755,2.307]); ring.dispose();
-      cylinder(b,m.headlight,.031,.008,[side*(.61+dx),.755,2.311],[Math.PI/2,0,0],24);
-    }
-    b.box(m.carbon,[.29,.13,.016],[side*.699,.36,2.16],[0,0,0],.009);
-    cylinder(b,m.carbon,.052,.024,[side*.72,.54,2.287],[Math.PI/2,0,0],24);
-    cylinder(b,m.headlight,.038,.016,[side*.72,.54,2.304],[Math.PI/2,0,0],24);
-    // Door shut line and the smooth flare built into the continuous body.
-    b.tube(m.carbon,[[side*.835,.853,1.03],[side*.915,.66,.78],[side*.916,.31,.70],[side*.91,.265,-.64],[side*.912,.67,-.77],[side*.83,.85,-.71]],.0035,36);
-    b.tube(m.paint,[[side*.917,.69,-.94],[side*.90,.67,0],[side*.932,.70,.93]],.006,24);
-    // Outer lamps are larger, the signature four circles on a blue rear panel.
-    for (const [x,r] of [[.70,.111],[.45,.083]]) {
-      cylinder(b,m.carbon,r+.013,.026,[side*x,.72,-2.253],[Math.PI/2,0,0],32);
-      cylinder(b,m.brake,r,.015,[side*x,.72,-2.273],[Math.PI/2,0,0],32);
-      const ring = new THREE.TorusGeometry(r*.79,r*.095,8,32);
-      b.add(ring,m.brake,[side*x,.72,-2.289]); ring.dispose();
-    }
-    b.box(m.paint,[.075,.18,.19],[side*.64,.995,-1.97],[.14,0,0],.009);
-    b.box(m.alloy,[.014,.05,.06],[side*.684,1.065,-1.97],[0,0,0],.002);
+    b.box(m.paint,[.016,.10,.30],[side*.61,1.17,-2.09],[.08,0,0],.006);
+    b.box(m.paint,[.06,.24,.27],[side*.39,1.06,-2.10],[-.1,0,0],.014);
   }
-  b.box(m.paint,[1.78,.055,.24],[0,1.105,-1.99],[-.06,0,0],.018);
-  b.box(m.paint,[1.61,.265,.025],[0,.715,-2.231],[0,0,0],.032);
-  b.box(m.carbon,[.66,.13,.02],[0,.746,2.18],[0,0,0],.009);
-  b.box(m.carbon,[1.0,.25,.025],[0,.40,2.12],[0,0,0],.015);
-  for (let i=0;i<8;i++) b.box(m.darkAlloy,[.85,.008,.008],[0,.295+i*.029,2.144],[0,0,0],0);
-  for (const x of [-.35,-.18,0,.18,.35]) b.box(m.darkAlloy,[.008,.21,.008],[x,.40,2.15],[0,0,0],0);
-  b.box(m.paint,[1.77,.055,.12],[0,.205,2.23],[0,0,0],.012);
-  b.box(m.carbon,[1.68,.026,.17],[0,.174,2.21],[0,0,0],.008);
-  for (let i=0;i<5;i++) b.box(m.darkAlloy,[.62,.007,.008],[0,.695+i*.025,2.204],[0,0,0],0);
-  for (const x of [-.26,-.13,0,.13,.26]) b.box(m.darkAlloy,[.007,.12,.008],[x,.746,2.209],[0,0,0],0);
-  b.box(m.carbon,[1.48,.16,.025],[0,.31,-2.29],[0,0,0],.01);
-  rearPlate(b,m,.46,-2.306,.36,.17);
   // Independent red caliper material; the silver wheel trim stays silver.
   const caliper = m.accent.clone(); caliper.color.setHex(0xb51e20);
-  wheels(vehicle,{...m,accent:caliper},{radius:.37,width:.28,track:.84,axles:AXLES,spokes:0,roadSmooth:true});
+  wheels(vehicle,{...m,accent:caliper},{radius:.37,width:.28,track:.74,axles:AXLES,spokes:0,roadSmooth:true});
   // Larger alloy diameter with a low-profile tyre, without changing its contact.
   for (const wheel of data.wheels) {
     wheel.traverse(mesh => {
@@ -113,11 +77,41 @@ export function createSkylineVehicle({ key = 'nissan_skyline_gtr_r34', color = 0
     });
     alloySpokes(wheel, m.alloy);
   }
-  exhaust(vehicle,b,m,[[-.64,.27,-2.214]],.085);
+  exhaust(vehicle,b,m,[[-.39,.32,-2.17]],.065);
   b.finish(data);
   prepareVehicleDamage(vehicle);
   vehicle.updateMatrixWorld(true);
   return vehicle;
+}
+
+function noseDetails(b, m) {
+  for (const side of [-1,1]) {
+    // Side duct fill.
+    b.box(m.carbon,[.20,.09,.02],[side*.525,.325,2.19],[0,0,0],.01);
+    for (let i=0;i<3;i++) b.box(m.darkAlloy,[.18,.007,.008],[side*.525,.29+i*.035,2.203],[0,0,0],0);
+  }
+  // Lower intake and upper grille: dark backing with fine slats.
+  b.box(m.carbon,[.64,.19,.02],[0,.345,2.19],[0,0,0],.012);
+  for (let i=0;i<6;i++) b.box(m.darkAlloy,[.60,.008,.008],[0,.27+i*.03,2.205],[0,0,0],0);
+  for (const x of [-.24,-.12,0,.12,.24]) b.box(m.darkAlloy,[.007,.17,.008],[x,.345,2.208],[0,0,0],0);
+  b.box(m.carbon,[.58,.09,.02],[0,.628,2.16],[0,0,0],.01);
+  for (let i=0;i<4;i++) b.box(m.darkAlloy,[.55,.007,.008],[0,.595+i*.022,2.174],[0,0,0],0);
+  for (const x of [-.22,-.11,0,.11,.22]) b.box(m.darkAlloy,[.006,.075,.008],[x,.628,2.178],[0,0,0],0);
+  // Black front lip.
+  b.box(m.carbon,[1.30,.022,.10],[0,.152,2.24],[0,0,0],.008);
+}
+
+// Four round tail lamps in the recessed panel: large red outers, smaller inners.
+function tailDetails(b, m) {
+  for (const side of [-1,1]) {
+    for (const [x,r] of [[.58,.075],[.405,.058]]) {
+      cylinder(b,m.carbon,r+.012,.03,[side*x,.84,-2.17],[Math.PI/2,0,0],32);
+      cylinder(b,m.brake,r,.015,[side*x,.84,-2.19],[Math.PI/2,0,0],32);
+      const ring = new THREE.TorusGeometry(r*.79,r*.095,8,32);
+      b.add(ring,m.brake,[side*x,.84,-2.2]); ring.dispose();
+    }
+  }
+  rearPlate(b,m,.50,-2.304,.33,.17);
 }
 
 function alloySpokes(wheel, material) {
@@ -146,34 +140,4 @@ function alloySpokes(wheel, material) {
   const old = mesh.geometry;
   mesh.geometry = mergeGeometries([old,...parts]);
   old.dispose(); parts.forEach(g=>g.dispose());
-}
-
-// Convex five-sided lens, triangulated about its centre with matching winding.
-function shapedLens(b, material, outline, scale, depth) {
-  const centre = new THREE.Vector3();
-  for (const point of outline) centre.add(new THREE.Vector3(...point));
-  centre.multiplyScalar(1 / outline.length);
-  const points = outline.map(point => new THREE.Vector3(...point).sub(centre).multiplyScalar(scale).add(centre));
-  const positions = [];
-  for (let i=0;i<points.length;i++) {
-    const a=points[i], c=points[(i+1)%points.length];
-    const ordered = outline[0][0] > 0 ? [centre,a,c] : [centre,c,a];
-    for (const p of ordered) positions.push(p.x,p.y,p.z+depth);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  g.computeVertexNormals(); b.add(g,material); g.dispose();
-}
-
-function windowTrim(b,m) {
-  for (const side of [-1,1]) {
-    // Black rubber follows the inset glass edges. Broad painted A and C
-    // pillars are part of the shell, continuous with the roof and quarters.
-    const corners = [[side*.782,.875,.96],[side*.688,1.208,.49],[side*.684,1.212,-.66],[side*.775,.89,-.97]];
-    for (let i=0;i<corners.length;i++) b.tube(m.carbon,[corners[i],corners[(i+1)%corners.length]],.012,12);
-    b.tube(m.carbon,[[side*.783,.887,-.34],[side*.692,1.205,-.34]],.023,8);
-  }
-  for (const [z,y,w] of [[1.045,.928,.72],[.59,1.224,.625],[-.79,1.205,.63],[-1.39,.925,.72]]) {
-    b.tube(m.carbon,[[-w,y,z],[0,y+.01,z],[w,y,z]],.009,24);
-  }
 }

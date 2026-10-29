@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--glb', required=True)
 parser.add_argument('--out', required=True)
-parser.add_argument('--size', default='960x600')
+parser.add_argument('--size', default='1260x800')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
@@ -80,16 +80,20 @@ camera.data.lens = 62
 
 # Views: (name, direction from the car's centre, distance factor, look height).
 # Blender -Y is the car's front.
+# Each view takes the picture shape of its reference so the car fills the frame alike.
+ASPECT = {'front': 1.5, 'rear': 1.333, 'side': 2.0, 'three-quarter': 1.5, 'top': 1.6}
+ORTHO = {'front': 2.45, 'rear': 2.4, 'side': 4.95, 'top': 5.1}
 views = (
-    ('front', Vector((0, -1, .055)), 1.70, .70),
+    ('front', Vector((0, -1, .055)), 1.70, .66),
     ('rear', Vector((0, 1, .055)), 1.70, .70),
-    ('side', Vector((1, 0, .025)), 1.95, .70),
-    ('three-quarter', Vector((.72, -1, .23)), 1.95, .65),
+    ('side', Vector((1, 0, .025)), 1.95, .66),
+    ('three-quarter', Vector((.72, -1, .23)), 1.85, .62),
     ('top', Vector((0, -.001, 1)), 1.95, .65),
 )
 for name, direction, factor, look in views:
+    scene.render.resolution_x, scene.render.resolution_y = width, round(width / ASPECT[name])
     camera.data.type = 'PERSP' if name == 'three-quarter' else 'ORTHO'
-    camera.data.ortho_scale = 2.65 if name in ('front', 'rear') else 5.1
+    camera.data.ortho_scale = ORTHO.get(name, 5.1)
     target = Vector((centre.x, centre.y, lo.z + look))
     camera.location = target + direction.normalized() * length * factor
     camera.rotation_euler = (target - camera.location).to_track_quat('-Z', 'Y').to_euler()

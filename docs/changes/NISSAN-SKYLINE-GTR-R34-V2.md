@@ -1,98 +1,75 @@
-# NISSAN-SKYLINE-GTR-R34-V2: final shape round 3
+# NISSAN-SKYLINE-GTR-R34-V2: shape round 4
 
-Status: round 3 complete for review; self-verdict NOT YET, 3/5 resemblance. Flag: nissan-skyline, dev. No shop entry.
+Status: round 4 complete for review; self-verdict 3.5 of 5 resemblance. Flag: nissan-skyline, dev. No shop entry.
 
 ## Changed
 
-Claude scored round 2 NOT YET, about 2.5/5. Its self-score of 4 was too high.
-The final round replaces the code-built body and floating roof with an original
-Blender shell. A connected cage carries the bonnet, shoulders, flared arches,
-glass regions, painted pillars and solid roof. Subdivision rounds the surfaces;
-decimation reduces the runtime mesh. Rounded boolean cuts make actual front
-intake, grille, lamp and rear-panel recesses. The body has a central bonnet
-bulge. The details retain a wide wing on two boot uprights below the roof,
-single right exhaust and the left-seat driver. Six thick silver spokes sit
-in dark barrels with visible tyre sidewalls. Angular headlight lenses sweep
-back around the wings, above corner fog lamps and the black lip.
+Kyle brought the car back after Claude scored round 3 at 3 of 5 (boxy saloon
+cabin and roof, arches not flared, rear deck too tall and square). The body is
+now lofted from outlines measured off the reference pictures, not from guessed
+boxes.
 
-The existing registry now preloads the local GLB, using the Speirling pattern.
-Instances remain synchronous after loading. Missing or failed models return
-no car; explicit retry is supported. Each car has private geometry, paint,
-damage and reset buffers. No primitive fallback, new dependency, simulation,
-world, sound, event, save, reward or other car change.
+- `tools/art/skyline-outlines.py` (Pillow and numpy only) thresholds the car
+  against the grey background and writes `tools/blender/cars/r34-outlines.json`:
+  roofline and underside nose to tail, window openings, half width at each
+  height from the front and rear, scaled to 4.60 x 1.785 x 1.36 m, wheelbase
+  2.665 m, with a camera-distance correction for the front and rear pictures.
+- `tools/blender/cars/nissan-skyline-gtr-r34.py` lofts one cross-section every
+  1.2 to 2.6 cm from those outlines, cuts flared rounded arches with dark wheel
+  houses and rolled lips, sets dark window panes with black seals onto the
+  painted glasshouse, lays the headlamp lenses, projector circles and fog lamps
+  on the nose, adds door, bonnet and handle details, then collapses flat areas
+  to a 12,000 triangle shell. The runtime GLB is rebuilt from it.
+- `src/skyline-vehicle.js` maps the new shell materials (paint, glass, trim,
+  lens, alloy), moves the mirrors, wing, tail lamps, grille fill and front lip
+  to the measured shape, and sets the wheel track so the tyres sit inside the
+  flares. The old trim tubes, skirt boxes, floor plate and flat lens code are removed.
+- `tools/art/skyline-silhouette.mjs` and `tools/art/skyline-overlay.py` project
+  the model back over each reference and score the silhouette overlap.
+  `tools/art/skyline-review.py` now renders each view in its reference's
+  picture shape; `tools/art/skyline-sheet.py` composes the round sheet.
 
 ## Checks
 
-The final headless contract passes 294 checks, at 55,688 visible triangles
-and 52 draws. No player storage accessed. The unchanged checks first caught
-a 1.2783 m trim height, 63,534-triangle candidate and too few side fracture
-samples. Straight fitted trim, lower export density and a visual damage-space
-y scale of .86 place those samples inside the new glazing. All original
-height, budget, fracture, dent, crush and grounding assertions now pass.
+Silhouette overlap with the references (1 is exact): side 0.96, front 0.89,
+rear 0.89. The headless contract passes 294 checks at 57,708 visible triangles
+and 52 draws (limits 60,000 and 56). No player storage accessed. Sheet:
+`docs/board/looks/nissan-skyline-gtr-r34/round-4.jpg`, copied to the scratchpad
+as `skyline-v2-round4.jpg`. No browser or frame check applies to a shape round.
 
-The final five-view sheet is 287,563 bytes. It was inspected against all four
-supplied reference views. Top view has no supplied reference and is labelled.
-Self-verdict: NOT YET, resemblance 3/5, static readability 3.5, grounding 4,
-studio consistency 3.5 and geometry cost 4. No driving, frame-cost or release
-claim. The square bumper, lens detail, angular glasshouse, uneven panel
-reflections and simple rear wing remain below the reference. See the final
-review note for the five differences. Stop after round 3 of 3.
-
-The exact requested scratchpad file is copied and byte-identical by SHA-256:
-051e2f407591f2cef13aea123653b961466944311ce6cb2444dd903e845331a3.
-
-Independent code review is clear after fixing a real decimation fault: Blender
-collapse mode ignores material delimiters. Zero-weight border vertices now
-protect the glass outline. The reviewer confirmed this fix and checked the
-new six-spoke geometry, reflected winding, merging, private buffers and loader.
-
-The PowerShell lane gate passes: 72 suites, zero failed and zero not run,
-1,119.16 seconds, jobs 2. Replay fingerprints pass 225 checks across 25 cases
-and 23 events; combat replay passes 12 across four encounters. All 47
-immutable-feature and exact complete-scene guards pass. No pins re-recorded.
-Production build passes: 600 modules, 1.20 seconds. Existing mixed-import and
-chunk-size warnings remain. Linked dependencies have no vite.cmd, so a
-lane-only command shim calls the installed Vite CLI with its native config
-loader, keeping all output inside .qa-dist/skyline-round3. No dependency or
-shared-folder write. An optional production-copy checksum was not verified:
-Get-FileHash was unavailable in the non-elevated shell, and the temporary
-build was recycled. This is not included in the passing-check evidence.
-No browser or frame measurement applies to this shape round. Shared slots
-caused long waits; no competing job was stopped.
+The PowerShell lane gate (`--tier lane --changed --jobs 2 --keep-going`) passes:
+72 suites, 0 failed, 0 not run, 983 seconds. Replay fingerprints pass 225
+checks across 25 cases; all 47 immutable-feature and exact complete-scene
+guards pass. No pins re-recorded. The production build passes (Vite run
+through node, since the linked dependencies have no `.bin`), writing only to
+`.qa-dist/skyline-round4`, which is deleted afterwards. No dependency or
+shared-folder write.
 
 ## Changed assertions
 
-The former registry expectation of immediate readiness is replaced with
-idle/loading/ready checks because the authorized GLB route requires preloading.
-Added checks prove no primitive substitute, shared concurrent promise, cached
-failure, explicit retry and missing-material rejection. All existing dimension,
-helmet clearance, exposed lamps, damage, fracture, exact reset, sibling
-isolation, grounding, tumble and 60,000 triangle / 56 draw assertions remain.
-No tolerances are relaxed. Claude's written review remains required before
-merge, including the earlier round's geometry and flag-catalogue changes.
+All tolerances are unchanged. Claude's written review is required before merge.
 
-Earlier rounds on this branch changed model height 1.38 to 1.25 m, tyre radius
-.34 to .37 m and wheel travel to use .37 m, with unchanged tolerances. The
-roof ray follows the forward seat, headlight rays follow the raised lenses,
-and exactly one boost flame follows the requested single exhaust. The shared
-flag test count is 41 to 42, requiring nissan-skyline to stay dev; no existing
-switch state or retired-name guard is removed. These earlier assertion changes
-also await Claude's written review on the card before merge.
+- Model height 1.25 to 1.36 m, in `SKYLINE_VEHICLE_DIMENSIONS` and the test.
+  The real car is 1.36 m and the photo outline gives 1.36.
+- Front lens ray: x .61, y .755 becomes x .46, y .655 (lens position from the
+  front photo). Tail lamp rays: x .45 and .70, y .72 become x .405 and .58,
+  y .84 (lamp positions from the rear photo). Both still require the lamp to be
+  hit before any paint.
+- Wheel track .84 to .74 in the model (not an assertion). The tyres stood 9 cm
+  outside the body; they now sit inside the flares. The 1.96 m width assertion
+  is met by the mirrors.
+- Earlier rounds' height, tyre-radius, flag-catalogue and single-exhaust
+  changes still await review on the card.
 
 ## Removed
 
-The old sculpted code shell, flat roof and stick pillars are replaced in this
-round. The GLB recipe is kept, with the runtime GLB, without a blend file.
-Round-2.jpg is recycled. The superseded review note is replaced by the
-matching round-3-review.md, carrying Claude's 2.5/5 verdict and the current
-findings. Raw round 3 evidence, gate/build logs, the temporary production build and
-lane-only command shim are recycled after recording the results. Only the
-final sheet remains as review output. The runtime GLB is 243,740 bytes.
+The round-3 sheet and review note (replaced by round 4's), the round-3 loft with
+subdivision and ratio decimation, the glass-as-face-region rule, the floor plate,
+skirt boxes, window trim tubes and flat shaped-lens code. The runtime GLB and the
+outline file are kept; no blend file. Raw review output is deleted after the
+verdict is written.
 
 ## Handoff
 
-Stop after round 3 of 3. Claude judges the final art. No merge, push, release,
-frame timing, integration-folder action or live-game action is authorized.
-
-Director handles Cockpit sync on merge. This job is restricted to lane writes
-and the one named scratchpad copy. STATUS omits all other lane inspections.
+Stop after round 4. Claude judges the art. No merge, push, release, frame timing,
+integration-folder action or live-game action is authorized.

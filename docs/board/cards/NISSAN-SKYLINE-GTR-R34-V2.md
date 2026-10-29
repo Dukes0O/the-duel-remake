@@ -90,3 +90,27 @@ preloaded runtime review export. Add a Skyline-specific export mode to its revie
 recipe without changing the shared exporter. Checks: headless GLB, loader
 and damage contract; matched reference sheet including top view; lane jobs 2
 and build. No frame measurement or new sound event. Stop after round 3.
+
+## Round 4 decision (28 October 2026, Kyle brought the car back)
+
+Claude scored round 3 at 3 of 5: closer at the front, but a boxy saloon cabin
+and roof, arches that did not flare and a tall square rear deck. New method
+(Claude): shape from the photo outlines. `tools/art/skyline-outlines.py` measures
+the side, front and rear pictures into `tools/blender/cars/r34-outlines.json`;
+the Blender recipe lofts the body from them, cuts flared rounded arches, sets
+dark window panes into a painted glasshouse and lays the lenses on the nose.
+`tools/art/skyline-overlay.py` checks the model outline against each picture.
+
+Result: silhouette overlap side 0.96, front 0.89, rear 0.89. Builder self-score
+3.5 of 5; the five largest remaining differences are in
+`docs/board/looks/nissan-skyline-gtr-r34/round-4-review.md`. Sheet:
+`docs/board/looks/nissan-skyline-gtr-r34/round-4.jpg`.
+
+Assertion review for Claude, all with unchanged tolerances: declared and
+asserted height 1.25 to 1.36 m (the real car; the photo outline gives 1.36 and
+Claude's brief names it); the front lens ray moves from x .61, y .755 to x .46,
+y .655 and the tail lamp rays from x .45 and .70, y .72 to x .405 and .58,
+y .84, because the lamps now sit where the photos put them. The wheel track
+moves from .84 to .74 so the tyres sit inside the flares (they stood 9 cm
+outside the body); the 1.96 m width is now set by the mirrors, as before.
+Stop after round 4 and leave the art verdict to Claude.

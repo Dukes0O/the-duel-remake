@@ -43,7 +43,7 @@ vehicle.traverseVisible(mesh => {
 const size = bounds.getSize(new THREE.Vector3());
 near(size.x, 1.96, .025, 'Model width matches its collision footprint');
 near(size.z, 4.60, .06, 'Model length matches its collision footprint');
-near(size.y, 1.25, .025, 'Solid coupe roof matches declared height');
+near(size.y, 1.36, .025, 'Solid coupe roof matches declared height');
 ok(triangles <= 60000 && draws <= 56, `Budget: ${triangles} triangles / ${draws} draws`);
 
 const paint = data.damageMeshes.filter(({mesh}) => mesh.material === data.paint).map(({mesh}) => mesh);
@@ -53,11 +53,11 @@ ray.set(new THREE.Vector3(.34, 2, .02), new THREE.Vector3(0,-1,0));
 const roofHit = ray.intersectObjects(paint)[0];
 ok(roofHit && roof.max.y < roofHit.point.y - .02, 'Helmet clears the actual solid roof by at least 2 cm');
 for (const side of [-1,1]) {
-  ray.set(new THREE.Vector3(side*.61,.755,4),new THREE.Vector3(0,0,-1));
+  ray.set(new THREE.Vector3(side*.46,.655,4),new THREE.Vector3(0,0,-1));
   const lamps = data.damageMeshes.filter(({mesh}) => mesh.material.name === 'Headlamp lenses').map(({mesh})=>mesh);
   ok(lamps.includes(ray.intersectObjects([...paint,...lamps])[0]?.object), 'Front lens is exposed');
-  for(const x of [.45,.70]) {
-    ray.set(new THREE.Vector3(side*x,.72,-4),new THREE.Vector3(0,0,1));
+  for(const x of [.405,.58]) {
+    ray.set(new THREE.Vector3(side*x,.84,-4),new THREE.Vector3(0,0,1));
     ok(data.brakeLights.includes(ray.intersectObjects([...paint,...data.brakeLights])[0]?.object), 'Round tail lamp is exposed');
   }
 }
