@@ -1443,3 +1443,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged KOGANE-PASS-C3-DIAG (Codex; lane 21/21, build, drive-through pass on 760fd27b; pace not yet accepted).
 - 28 Oct night: merged GROUND-ROWS-VARIANTS (Claude; test-ground-rows-exact passes on 25 courses; 55 lines added, none changed).
 - 28 Oct night: merged EIFEL-CROWN-C2 (Codex then Claude; lane 323/324 after the config conflict fix (the one failure, test-ground-rows-exact, was the integration fault fixed by GROUND-ROWS-VARIANTS), drive-through all difficulties, test-circuits, build).
+- 28 Oct night: merged WILD-ART-SRC (Codex; lane 86/86, Blender checks, build pass on 21f92304; round 3 accepted; other regions still to come).
