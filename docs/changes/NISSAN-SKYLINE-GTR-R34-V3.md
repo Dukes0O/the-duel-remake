@@ -99,3 +99,7 @@ builds them). Raw review output under `.evidence` is deleted after the verdict.
 
 Stop after round 1. Claude judges the art; at most two more rounds remain. No merge,
 push, release, frame timing, integration-folder action or live-game action is authorized.
+
+## Claude's review (28 October 2026, night)
+
+Accepted for round 1 at 3.5 of 5 (Claude, look judge): creases, deep fascia, headlamp pockets, rear lamp pods, high brake light, diffuser, single exhaust, shaped mirrors, wing and wipers; four paints. Open polish: lumpy nose corners and rear quarters from the loft, plain wheels. Changed assertions (rule 18): wheel radius .37 to .34 to match the photo (nothing in the simulation reads it); inner rear-lamp probe ray moved onto the new lamp ring, still requiring a brake light before paint; hygiene allows v-numbered round sheets. Nothing loosened.
