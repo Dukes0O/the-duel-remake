@@ -50,6 +50,8 @@ export const FEATURE_STATES = Object.freeze({
   'lab-tuning': 'on',
   // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Released 28 October 2026; works only with the helicopter on.
   'pilot-map': 'on',
+  // MENU-FRONT-DOOR: the main menu as a front door (Drive card, Next up, eight doors). Off in the game until Kyle has tried it.
+  'menu-front-door': 'dev',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 
