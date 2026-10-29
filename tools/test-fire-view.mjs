@@ -188,7 +188,7 @@ const scale = (mesh, i) => { const m = new THREE.Matrix4(); mesh.getMatrixAt(i, 
   const {crowns} = pines(scene, [[5,5], [25,5], [45,5]]);
   const look = createBurntLook({THREE, scene, load: {
     model: url => {requests.push(url); return parseFile(url);},
-    texture: url => {requests.push(url); return Promise.resolve(new THREE.Texture());},
+    texture: (_three, url) => {requests.push(url); return Promise.resolve(new THREE.Texture());},
   }});
   const scar = {stage:'black', smoke:false, scars:[], live:[]};
   look.apply({course, look:scar});

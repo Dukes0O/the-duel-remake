@@ -179,7 +179,7 @@ export const KOGANE_PASS = defineScriptedCourse({
   kitPlacements: [
     ...safety, ...roadside, ...maples, ...village,
     {id: 'kogane-car-park', s: 110, lateral: 26, heading: Math.PI / 2},
-    {id: 'torii', s: 168, lateral: -43, heading: Math.PI / 2, clear: 10},
+    {id: 'torii', s: 168, lateral: -40, heading: Math.PI / 2, clear: 10},
     {id: 'torii-small', s: 370, lateral: 20, heading: Math.PI / 2, clear: 5},
     ...[88, 101, 132, 143].map(s => ({id: 'stone-lantern', s,
       lateral: 14, heading: 0, clear: 2})),

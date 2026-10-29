@@ -18,7 +18,7 @@ rows = [
     ('Lakeside start at dusk', 'c5-start', '02.png', 'Native dusk. Torii stands in the near shallows on the right.'),
     ('Torii Bend', 'c5-torii-bend', '02.png', 'View back across the lake from the bend. Road and sightline remain clear.'),
     ('Summit car park', 'c5-car-park', '05.png', 'C4 tea house and vending, C5 stone lanterns and paved parking apron.'),
-    ('Lake and start from above', 'c5-overhead', '02.png', 'The basin, shore, start straight and the car park in one native view.'),
+    ('Lake and start from above', 'c5-overhead-daylight-exposure', '02.png', 'Same overhead camera with exposure raised for review: basin, shore, torii, start straight, car park.'),
 ]
 canvas = Image.new('RGB', (1600, 2440), '#e8e7e0')
 d = ImageDraw.Draw(canvas)

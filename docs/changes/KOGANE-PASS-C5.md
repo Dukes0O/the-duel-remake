@@ -1,7 +1,29 @@
 # KOGANE-PASS-C5
 
-Status: blocked source handoff, not ready to merge. Kind: landmark, water and sound.
-Flag: kogane-pass (dev). No art round was rendered.
+Status: round 1 sheet ready for Claude's verdict; not merged. Kind: landmark, water and sound.
+Flag: kogane-pass (dev). Round 1 sheet: docs/board/looks/kogane-pass/c5-round-1.jpg.
+
+## Resumed run (Claude, 28 October 2026)
+
+Kept from Codex's blocked work: all of the sections below (lake basin, hill
+pads, torii and lantern recipes, fire hooks, pilot place, sound recipe,
+selector and bell logic, tests). Changed on resume:
+
+- Merged integration/wasteland (C3 and other work); one board conflict fixed.
+- Built the four kits with Blender, re-fetched the three Freesound sources
+  (same hashes as catalogued) and rendered the three sound files.
+- The lake torii is drawn 1.45 times the base size (about 16 m wide, 11 m tall)
+  and stands at lateral -40 (was -43), so it reads from the start straight.
+- The bell source was far too quiet (peak -30 dB, so inaudible at cue volume
+  .16). The recipe now brings its peak to .7 first; the cue volume is unchanged.
+- 	ools/test-circuit-kogane.mjs: the helicopter site, landing circle, lake
+  inside the flying area and fire checks need the dev switch on, so they moved
+  into the existing switch-on child process. The switch-off facts (hidden map
+  place, hidden fire destination, never loading an unowned course) stay in the
+  main process. Nothing was loosened; the same assertions all still run.
+- Views scenario: the overhead is higher and wider and has an exposure-only
+  companion (same as the C4 views) so the lake reads on the sheet.
+- Comparison sheet made, 358 KB.
 
 ## Changes
 
@@ -30,49 +52,39 @@ The sound source recipe mixes verified CC0 Japanese park cicadas, brook and
 forest into an evening loop, then night crickets, brook and forest into a
 night loop. Static gain matches the forest reference at authored gain .14.
 A one-second circular overlap joins each loop. The existing CC0 bell is
-slowed and filtered for the shrine strike. These recipes have not run yet.
+slowed and filtered for the shrine strike. The recipes have now run.
 The course selects its bed through its existing audio environment. The light
 path fades cicadas into night crickets from dusk to night. Bell identity uses
 the course instance, since the game reuses its race-state object between races.
 
 ## Checks and review
 
-Early geometry probe: dry 12 m landing circle at s 0, lateral 30; 1,085 forest
-cells; 210 eligible fire starts; lake inside the flying area; torii feet about
-0.55 m under water. These are source probes, not a finished browser verdict.
+Early geometry probe (Codex): dry 12 m landing circle at s 0, lateral 30;
+1,085 forest cells; 210 eligible fire starts; lake inside the flying area;
+torii feet about 0.55 m under water. The Kogane course test now confirms the
+same facts.
 
-Independent reviewer found two faults: the expected kit tail missed the four
-appended ids, and the apron exceeded its level terrace. Both are fixed and
-confirmed. The revised apron corner height differences stay below 0.30 m,
-inside the existing 0.45 m placement threshold. Reviewer also confirmed map
-switch isolation and the actual-destination filter. No heavy checks were run
-by the reviewer. Audio review found the reused-state bell bug; the fix and
-test now use a fresh course with the same state object. Reviewer confirmed
-the fix, source checks, circular seam math and dusk blending. Sound character,
-species and the packet's faint frog layer still need Claude's listening verdict.
-The current recipe has no separate frog recording.
+Codex's independent review found two faults (kit tail ids, apron over its
+terrace), both fixed and confirmed; it also confirmed map switch isolation,
+the actual-destination filter, the bell reused-state fix and the circular seam
+math. All 20 prior pilot outlines and file metadata match HEAD exactly.
 
-Syntax checks passed for 15 original changed JavaScript files and two Python
-recipes, then for the changed audio renderer, audio recipe and audio test.
-git diff --check passed. Source probes are not gate passes. The lane plan
-selected 97 suites before the audio changes. All 20 prior pilot outlines and
-file metadata match HEAD exactly; independent review confirmed this.
-
-The shared heavy-job limit prevented every export and gate. Read-only process
-checks repeatedly found two other jobs. The final exporter waited another
-12 minutes and ended at its bounded limit without running Blender. Stop under
-the 30-minute tool-problem rule. No other job was stopped. Not run: Blender
-export, audio export and loudness/seam measurements, the Kogane course test,
-drive-through, browser look, lane tier, and npm run build. No comparison sheet
-or scratchpad copy exists. No frame measurement was started. This branch
-must not merge until these tasks finish.
-
-Resume with the committed recipes, the existing private memory-only browser
-harness at jobs 1, and lane tier jobs 2. Use Vite's supported config loader
-runner option for lane builds to avoid writing config caches through the
-shared node_modules link. Re-fetch only the three catalogued source ids into
-lane scratch or the authorized sound library before running build-kogane.mjs.
-
+Run on resume (jobs 2 for tests, 1 for the browser, no frame timing):
+- `node tools/test-circuit-kogane.mjs`: passed (both handling modes finish, no
+  crashes or resets).
+- `node tools/test-circuits.mjs`: passed. `node tools/test-drive-through.mjs`:
+  7 of 7 passed. `node tools/test-audio.mjs`: 601 checks passed.
+- Browser scenario `kogane-c5-views`: passed, four native High views and the
+  overhead exposure companion, memory-only.
+- Lane tier (`--changed --jobs 2 --keep-going`, 148 suites): 145 passed, 3 failed
+  on the first full run for the reasons under Changed assertions; one more
+  failure (the fire-view mock) was fixed before it. All four suites pass on
+  the final files (run singly). `npm run build`: built. Browser scenario
+  `kogane-views` (C4 round 2): passed, 8 screenshots, no warnings.
+- Sound loudness: evening and night beds both measure -27.0 LUFS integrated
+  (the forest reference level at gain .14); bell peak -3.1 dBTP at source.
+  Listening verdict (cicada species, the packet's faint frog layer) still needs
+  Claude; no frog recording was sourced.
 ## Audio sourcing
 
 The existing local library has the forest reference and a single CC0 bell,
@@ -114,10 +126,27 @@ silence, a single bell across revisits, a new race using the same state,
 and delivered loudness within 1 dB of the forest reference. No previous audio
 assertion changes.
 
+## Changed assertions found by the lane tier (resume run)
+
+- `tools/test-arsenal-wave1-audio.mjs`: the pinned hash of the non-bank sound
+  exports now leaves out the two new Kogane beds in `AMBIENCE` (derived from
+  the bank), the same way it already leaves out newer car voices. Every
+  earlier bed is still pinned. Nothing loosened.
+- `tools/test-p4-audio.mjs`: the pre-P4 bank hash and the pre-P4 catalog hash
+  leave out the three new cue ids (`ambience.kogane`,
+  `ambience.kogane-night`, `landmark.shrine-bell`) and their catalog rows,
+  as for the Skyline cues. Every earlier row is still pinned.
+- `tools/test-heli-mode.mjs`: the pure-rules import list lets only
+  `pilot-map-data.js` import `../feature-flags.js` (it lists the dev place
+  behind the switch). No other helicopter file gains that import.
+- `tools/test-fire-view.mjs`: the new Kogane mock took the texture loader's
+  arguments in the wrong order; fixed (the new test, not an old assertion).
+
 ## Removed
 
 No original or superseded runtime asset was removed. New models reuse C4's
 existing recipe helpers by approach, without replacing its models. No blend
-file, duplicate burnt set or backup asset is retained. Owned source downloads,
-probe, plan and launch helpers are recycled after recording these results.
-No evidence folder, comparison sheet or Claude scratchpad file was created.
+file, duplicate burnt set or backup asset is retained. Freesound sources stay
+in the outside sound library (re-fetchable), not the repository. The review
+evidence (`.evidence/2026-10-28/kogane-c5*`) is deleted once Claude's verdict
+is in.

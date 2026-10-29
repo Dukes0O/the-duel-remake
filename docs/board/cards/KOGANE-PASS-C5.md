@@ -49,14 +49,9 @@ The course names ambience.kogane in its own definition. The audio renderer
 reads that choice from its existing course input. Bell is once per race near
 the torii, not once per loop. Stop after the first sheet for Claude's verdict.
 
-## Blocked handoff, 28 October 2026
+## Round 1 delivered, 28 October 2026
 
-Source and recipes are committed for continuation, not ready to merge.
-Two other heavy jobs occupied the shared slots throughout this lane's wait.
-The final bounded exporter wait ended without starting Blender. Stop under
-the tool-problem limit. Exports, measurements, browser look, comparison sheet,
-lane gate and production build remain unrun. Claude should resume this lane
-when a shared slot is available; keep the same round 1.
-The Freesound download rejection was resolved using SPEC 0.9's explicit
-authorization. No download approval remains needed. See the change note for
-source ids, checks and the unfinished work.
+Claude resumed the blocked lane, kept the committed recipes, built the models
+and sound files, ran the checks and made the first sheet
+(`docs/board/looks/kogane-pass/c5-round-1.jpg`). Waiting for Claude's verdict
+on round 1. See the change note for results.

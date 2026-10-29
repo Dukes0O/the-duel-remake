@@ -7,7 +7,7 @@ import {nativeBundle} from './p4-panorama.mjs';
 const views = [
   {name: 'c5-start', at: 45, from: [45, -2, 2.7], to: [168, -43, 4]},
   {name: 'c5-car-park', at: 100, from: [83, 3, 4], to: [113, 22, 2]},
-  {name: 'c5-overhead', at: 140, from: [230, -80, 260], to: [220, -75, 0]},
+  {name: 'c5-overhead', at: 140, from: [150, -60, 380], to: [185, -45, 0], daylight: true},
   {name: 'c5-torii-bend', at: 320, from: [320, -1, 3.5], to: [168, -43, 3]},
 ];
 
@@ -74,6 +74,23 @@ export async function run(context) {
       })()`);
       await context.screenshot('kogane-'+view.name);
       report.captures.push({name:view.name,file:'kogane-'+view.name+'.png',...progress,...facts});
+      if (view.daylight) {
+        // Exposure-only companion for the overhead, as in the C4 views: same camera,
+        // geometry, race and profile; only the tone exposure is raised so the lake reads.
+        const exposure = await context.evaluate(`(() => {
+          const r=window.__render.renderer, a=window.__qaApp;
+          window.__koganeExposureDescriptor=Object.getOwnPropertyDescriptor(r,'toneMappingExposure');
+          window.__koganeNativeExposure=r.toneMappingExposure;
+          Object.defineProperty(r,'toneMappingExposure',{configurable:true,get:()=>8,set:()=>{}});
+          const before=JSON.stringify(a.duel.state),profile=JSON.stringify(a.profile);
+          window.__render.renderFrame();
+          if(before!==JSON.stringify(a.duel.state)||profile!==JSON.stringify(a.profile))throw Error('Exposure view mutated state');
+          return {nativeExposure:window.__koganeNativeExposure,reviewExposure:r.toneMappingExposure};
+        })()`);
+        await context.screenshot('kogane-'+view.name+'-daylight-exposure');
+        await context.evaluate(`Object.defineProperty(window.__render.renderer,'toneMappingExposure',window.__koganeExposureDescriptor);window.__render.renderFrame();`);
+        report.captures.push({name:view.name+'-daylight-exposure',...progress,...facts,...exposure});
+      }
     }
     report.passed=true;
     console.log('Four native Kogane C5 views captured; no frame timing.');

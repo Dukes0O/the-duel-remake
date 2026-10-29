@@ -79,11 +79,13 @@ def torii(low, small=False):
     beam('vermilion upper beam',10.4,.94,6.75,.48,.38,red,4 if low else 12)
     beam('curved dark roof',11,1.12,7.23,.20,.42,edge,4 if low else 12)
     box('unlettered bronze plaque',(0,-.49,6.3),(.7,.10,1.0),gold)
-    if small:
-        for o in bpy.context.scene.objects:
-            if o.type == 'MESH':
-                o.scale *= .45
-                o.location *= .45
+    # The lake gate is drawn 1.45 times the base size (16 m wide, 11 m tall) so it
+    # reads from the start straight; the shrine gate by the bend is 0.45 of base.
+    factor = .45 if small else 1.45
+    for o in bpy.context.scene.objects:
+        if o.type == 'MESH':
+            o.scale *= factor
+            o.location *= factor
 
 
 def lantern(low):

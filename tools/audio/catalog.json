@@ -8373,6 +8373,148 @@
       "sha256": "cca479328721ac0fbe74a1788baa261d9b4871767f874752d135493a7c32abda",
       "bytes": 2968921,
       "fetched": "2026-10-29"
+    },
+    {
+      "source": "mix",
+      "key": "ambience.kogane",
+      "cue": "ambience.kogane",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/ambience-kogane.flac",
+      "sha256": "b4c7b5ea20adae1b29314d4f98110b499bbb06fc23eefece73ad0f17e584193b",
+      "bytes": 1363336,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "670520",
+            "584269",
+            "609952"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 24,
+          "circularCrossfadeSeconds": 1,
+          "gain": 0.14,
+          "targetLufs": -27.030735532451136,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -27.03,
+          "truePeakDbtp": -11.97,
+          "loudnessRangeLu": 3.4,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "source": "mix",
+      "key": "ambience.kogane-night",
+      "cue": "ambience.kogane-night",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/ambience-kogane-night.flac",
+      "sha256": "ad3ad071866ce9169e0bb5ee3dd91381e774e6a137198b494829faaace4b00bd",
+      "bytes": 1205017,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "734642",
+            "584269",
+            "609952"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 24,
+          "circularCrossfadeSeconds": 1,
+          "gain": 0.14,
+          "targetLufs": -27.030735532451136,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -27.04,
+          "truePeakDbtp": -5.49,
+          "loudnessRangeLu": 3,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "source": "mix",
+      "key": "landmark.shrine-bell",
+      "cue": "landmark.shrine-bell",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/landmark-shrine-bell.flac",
+      "sha256": "a8272e5df92f4e6080a271535e70b457940a02970ef3e4fe4ca2e2663f21aa4e",
+      "bytes": 106388,
+      "processing": {
+        "script": "tools/audio/build-kogane.mjs",
+        "recipe": {
+          "sources": [
+            "350616"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 5.839166666666666,
+          "circularCrossfadeSeconds": 0,
+          "gain": null,
+          "targetLufs": null,
+          "eveningToNight": "course light path, dusk .55 to night 1",
+          "bell": "one near-torii strike per race"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -22.68,
+          "truePeakDbtp": -3.1,
+          "loudnessRangeLu": 15.1,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
     }
   ]
 }

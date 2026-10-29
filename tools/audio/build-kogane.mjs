@@ -42,6 +42,9 @@ export function buildKogane(sourceRoot = resolve(ROOT,'.qa-dist/kogane-c5-source
       const raw = ffmpeg(['-i',main.path,'-af','asetrate=28800,aresample=48000,lowpass=f=1800,volume=0.55',
         '-ac','1','-ar',String(RATE),'-f','f32le','pipe:1']);
       samples = Array.from({length:raw.length/4},(_,i)=>raw.readFloatLE(i*4));
+      // The source strike is very quiet; bring its peak to .7 so the cue volume sets how soft it plays.
+      const top = samples.reduce((p,v)=>Math.max(p,Math.abs(v)),0);
+      samples = samples.map(v=>v*.7/top);
     } else {
       const args = [main.path,stream.path,forest.path].flatMap(path => ['-stream_loop','-1','-i',path]);
       const raw = ffmpeg([...args,'-filter_complex',
