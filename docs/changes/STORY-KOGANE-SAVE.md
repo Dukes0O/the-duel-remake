@@ -56,3 +56,7 @@ Nothing. No old code, test or doc is replaced by this card.
 - The `kogane-invitation` switch (see above).
 
 Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`): 200 passed, 0 failed. `npm run build`: passed.
+
+## Claude's review (28 October 2026, night)
+
+Independent save review: approve, no faults (old saves load unchanged, newer story kept, marks only rise, grant cannot duplicate). Rule 18: the fixture count 23 to 24 follows the added fixture; nothing loosened. For HOOKS: write the lesson mark only while kogane-invitation is on; add that switch as dev with its count change; handle koganeStep null.
