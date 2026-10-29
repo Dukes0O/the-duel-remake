@@ -167,3 +167,7 @@ Run from PowerShell with `--jobs 2` or fewer, memory-only saves.
 
 Nothing is replaced by this card. A temporary debug line added during the
 Titan search was removed again before the final commit.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: row of four corners and two hairpins (time limit, 31 to 71 s), all 14 cars pass Casual and Pro; Kogane-only 3.4 m line margin; rule 18: completion record gains courseId, nothing loosened. Follow-ups: caption says three hairpins (now two); Maple Hairpin plans 1 mph in the F42.
