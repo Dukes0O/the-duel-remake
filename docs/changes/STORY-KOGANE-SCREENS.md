@@ -42,3 +42,7 @@ Built against the plain object of `docs/story/kogane-invitation.md` 12.1, `app.s
 ## Removed
 
 Nothing removed. The Skyline's shop-style listing is replaced by "listed only once owned" for the story, in the same change; V6 removes the planned price and Buy path.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: everything behind kogane-invitation (dev); car lists unchanged with it off (story defaults false); rule 18: switch count 43 to 44 and the dev list gain the new switch, nothing loosened. Layout not yet seen on screen (FINISH).
