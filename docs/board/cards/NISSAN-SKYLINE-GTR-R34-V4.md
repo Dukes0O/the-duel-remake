@@ -40,12 +40,17 @@ No new sound event.
 
 ## Director handoff
 
-Handling and engine fit complete; independent review clear. Build passes.
-All 235 lane suites covered: 234 pass, preview-launcher fails because its
-dev flag list lacks nissan-skyline. Replay and world guards pass unchanged.
-See docs/changes/NISSAN-SKYLINE-GTR-R34-V4.md for full results.
+Handling and engine fit complete; independent review clear. The approved
+preview flag append is complete. Fresh lane gate passes 238/238 with jobs 2
+and keep-going, and production build passes. Replay and world guards pass
+unchanged. See docs/changes/NISSAN-SKYLINE-GTR-R34-V4.md for results and the
+41 to 42 switch-count reason for Claude's written assertion review.
 
-Scope request: allow the single PREVIEW_FLAGS append in start-preview.bat.
-This file is outside the packet's V4 ownership, so it has not been edited.
-Also needs Claude's written assertion review: switch count 41 to 42 is
-only the new dev switch, with the dev-state assertion strengthened to name it.
+## Approved scope extension (28 October 2026)
+
+Claude approved the preview launcher extension in Kyle's continuation brief.
+Append `nissan-skyline` to `start-preview.bat`'s explicit non-course flag list,
+like the other dev cars. `tools/preview-flags.mjs` supplies only course flags
+and needs no change. Check the existing preview-launcher suite, the lane tier
+with jobs 2 and keep-going, and the production build. No browser or frame
+check applies to this flag-list change.

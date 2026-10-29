@@ -103,16 +103,40 @@ The first lane run passed the released road full-state fingerprints and
 combat replay fingerprints (12 checks across four encounters). Final replay
 and world-signature guards passed unchanged.
 
-## Pending Director action
+## Preview launcher continuation (28 October 2026)
 
-V4 is not ready for integration until the preview flag hook is added.
-The requested one-line scope extension is pending. No test was weakened
-to bypass it. Claude's written review of the switch-count assertion is
-also pending. The source and independent review are otherwise complete.
+Claude approved the scope extension in Kyle's continuation brief. Added
+`nissan-skyline` to `start-preview.bat`'s explicit non-course flag list,
+exactly like the existing dev cars. The generated list in
+`tools/preview-flags.mjs` contains course flags only and needs no change.
+The existing preview entry still installs memory-only saves before startup.
+
+- `node tools/test-preview-launcher.mjs`: PASS, 23 checks, zero failures.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`
+  from PowerShell: PASS, 238/238, zero failed or not run, 1354.41 s.
+  This covers all previous 235 suites plus the launcher change's additional
+  selected suites. Skyline handling, engine curve, feature flags, preview
+  launcher, replay guard and exact world guards all pass. No fingerprint
+  or signature changed.
+- `npm run build`: PASS, 599 modules, Vite build 1.06 s. The linked
+  dependencies still lack `.bin/vite.cmd`, so a temporary lane-local PATH
+  shim invokes the installed Vite CLI with its native config loader.
+  No dependency or package-script change. Existing chunk-size and mixed-import
+  warnings remain. The shim and generated build output were recycled.
+- STATUS refreshed in this lane with all other lane inspections skipped.
+  No live-folder inspection, browser scenario, frame measurement, merge,
+  push or Cockpit write. Tests use memory-only saves.
+
+No assertions changed in this continuation. The earlier exact switch-count
+change from 41 to 42 is solely the new car's `nissan-skyline` switch. The
+added dev-state assertion names that switch. Neither change relaxes a check.
+Claude's written assertion review remains pending before integration.
+No merge or push was performed.
 
 ## Removed
 
 Nothing replaced in the released game. The temporary dev donor is removed
 by V3 when the accepted body is registered. Scratch fitting output is
 recycled after recording the fit. No review pictures or evidence folders
-are needed for this handling stage.
+are needed for this handling stage. Continuation build output and temporary
+PATH shim were recycled after recording the results.

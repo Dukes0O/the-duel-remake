@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-29T00:19:27.997Z
+Observed at: 2026-10-29T00:53:43.865Z
 
-Observation commit: 7f5aed70036b1b27df1ea03fa81dceeb5e7d4d76
+Observation commit: a23493462cbfea3c698f83845894487f20d8a33d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7f5aed70036b1b27df1ea03fa81dceeb5e7d4d76
+Integration HEAD: a23493462cbfea3c698f83845894487f20d8a33d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -33,7 +33,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/kogane-c4 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c4 |
 | codex/perf-high-night | 13 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/skyline-v2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v2 |
-| codex/skyline-v4 | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4 |
+| codex/skyline-v4 | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v4 |
 | codex/wild-art-src | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
@@ -43,9 +43,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/eifel-c2 | unknown | 2026-10-28T17:07:21-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/EIFEL-CROWN-C2.md, docs/changes/EIFEL-CROWN-C2.md, src/circuit-manifests.js, src/circuits/eifel-crown.js |
-| codex/kogane-c4 | unknown | 2026-10-28T16:47:07-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/run-log.md, docs/changes/KOGANE-PASS-C2.md, src/circuits/kogane-pass.js |
+| codex/kogane-c4 | unknown | 2026-10-28T17:33:31-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/KOGANE-PASS-C2.md, docs/board/cards/KOGANE-PASS-C4.md, docs/board/looks/kogane-pass/round-1.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 13 | inspection skipped by request; uncommitted state unknown | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/skyline-v2 | unknown | 2026-10-28T16:43:17-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/cards/NISSAN-SKYLINE-GTR-R34-V2.md, docs/changes/NISSAN-SKYLINE-GTR-R34-V2.md, src/feature-flags.js, src/skyline-vehicle.js, src/vehicle-assets.js |
+| codex/skyline-v2 | unknown | 2026-10-28T17:23:29-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/NISSAN-SKYLINE-GTR-R34-V2.md, docs/board/looks/nissan-skyline-gtr-r34/review.md, docs/board/looks/nissan-skyline-gtr-r34/round-1.jpg, docs/changes/NISSAN-SKYLINE-GTR-R34-V2.md |
 | codex/wild-art-src | WILD-ART-SRC | 2026-10-28T17:09:50-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/board/STATUS.md, docs/board/cards/WILD-ART-SRC.md, docs/board/looks/wildlife/north-woods-round-1.jpg, docs/board/looks/wildlife/north-woods-round-2.md, docs/changes/WILD-ART-SRC.md |
 
 ## Size targets
@@ -60,9 +60,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 32,874,545 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 123,865 B | -192,717 B | 5,000,000 B |
+| Added bytes in last merge | 123,865 B | +0 B | 5,000,000 B |
 | All `public/` | 348,530,686 B | +0 B | unavailable |
-| Git objects | 800,772,096 B | +7,424,000 B | unavailable |
+| Git objects | 802,125,824 B | +723,968 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +71,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: c16caedfb776e3645223bcb848939b4c4a1f0f35
 - Local main: missing
-- Local integration/wasteland: 0d89f56b4a18607c2b46c20a1892bf057dfb8fda
+- Local integration/wasteland: 2b0b3683dd3dd7ecbd39b803473aa0e2cccc29b7
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
