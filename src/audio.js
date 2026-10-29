@@ -9,6 +9,7 @@ import {
   CAR_VOICES,
 } from './sound-bank.js';
 import { deepEngineCutoff } from './deep/deep-audio.js';
+import {sampleCourseLightPath} from './light-path.js';
 import { SoundMixer } from './sound-mixer.js';
 import { createAudioOutput } from './audio-output.js';
 import { featureFlags } from './feature-flags.js';
@@ -103,6 +104,7 @@ export class EngineAudio {
     this.pendingGatekeeper = null;
     this.sampleStatus = 'locked';
     this.ambience = {};
+    this.landmarkHeard = new WeakSet();
     this.ambienceStatus = 'locked';
     this._ambiencePromise = null;
     this.smoothedLoad = 0;
@@ -272,6 +274,7 @@ export class EngineAudio {
       Object.entries(SOUND_BANK)
         .filter(
           ([id, cue]) => (cue.file || cue.files) && !cue.sample && !cue.biome &&
+            (cue.flag !== 'kogane-pass' || this.flags.enabled('kogane-pass')) &&
             cue.flag !== 'the-deep' && cue.flag !== 'helicopter' && cue.flag !== 'driving-lessons' && cue.flag !== 'lab' &&
             (!pending || cue.flag === 'grand-prix') &&
             (cue.flag !== 'fight-voices' || this.flags.enabled('fight-voices')) &&
@@ -360,7 +363,7 @@ export class EngineAudio {
     if (this._ambiencePromise) return this._ambiencePromise;
     this.ambienceStatus = 'loading';
     this._ambiencePromise = Promise.allSettled(
-      Object.entries(AMBIENCE).map(async ([biome, def]) => {
+      Object.entries(AMBIENCE).filter(([,def]) => !def.flag || this.flags.enabled(def.flag)).map(async ([biome, def]) => {
         const response = await fetch(`/assets/audio/${def.file}`);
         if (!response.ok) throw Error(def.file);
         const buffer = await this.context.decodeAudioData(
@@ -406,13 +409,23 @@ export class EngineAudio {
       (1 - speed * 0.38) *
       (1 - load * 0.2) *
       (1 - clamp(Number(environment.tunnel) || 0, 0, 1) * 0.88);
+    const chosen = environment.course?.def.ambience ?? environment.biome;
+    const bed = AMBIENCE[chosen];
+    const night = bed?.nightBiome ? clamp(((sampleCourseLightPath(environment.course,
+      {distance:st.s})?.settings.nightAmount ?? (environment.night ? 1 : 0)) - bed.nightFrom) /
+      (1-bed.nightFrom), 0, 1) : 0;
     for (const [biome, layer] of Object.entries(this.ambience)) {
       const selected =
-        environment.biome === biome &&
+        chosen === biome &&
         !(biome === 'alpine' && environment.night);
-      const target = active && selected ? AMBIENCE[biome].gain * duck : 0;
+      const share = selected ? 1-night : biome === bed?.nightBiome ? night : 0;
+      const target = active ? AMBIENCE[biome].gain * duck * share : 0;
       layer.gain.gain.setTargetAtTime(target, t, st.paused ? 0.025 : 0.65);
     }
+    const landmark = environment.course?.def.landmarkSound;
+    if (active && st.status === 'racing' && !this.muted && !this.paused && landmark &&
+        Math.abs(st.s-landmark.s) <= landmark.reach && !this.landmarkHeard.has(environment.course) &&
+        this.cueBuffers[landmark.cue] && this._playCue(landmark.cue)) this.landmarkHeard.add(environment.course);
   }
 
   _sample(

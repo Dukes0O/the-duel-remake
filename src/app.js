@@ -1762,6 +1762,7 @@ export class App {
     if (fireOn) this.heliAudio.preloadFire?.();
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode, difficulty: this._raceSettings.difficulty,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
+      koganePassEnabled: this._switches().enabled('kogane-pass') === true,
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
       // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),

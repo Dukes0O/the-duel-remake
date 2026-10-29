@@ -44,6 +44,26 @@ const base = {
   fieldFollow: {leadBraking: 1.6, wallRoom: 1, firstLap: {margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4}},
 };
 const road = buildTrackScript(base);
+// Negative lateral is the right-hand shore in the script coordinate system.
+// The basin is dug into the ground and also draws the water (circuit-water.js).
+const LAKE = {id: 'kogane-crater-lake', s: 230, lateral: -126,
+  along: 215, across: 100, surface: -3, depth: 8, bank: .16,
+  blend: 40, keep: 12, colour: 0x143c4e, shallow: 0x5e9a94};
+// Rounded wooded hills across the lake (the existing backdrop hills, as on Tremblant Woods):
+// cedar green with patches of autumn red and gold, up to the ridgeline.
+const farHill = (s, lateral, along, across, height) => {
+  const at = road.samples[Math.round(s / road.step)];
+  return {x: at.x + Math.cos(at.heading) * lateral, z: at.z - Math.sin(at.heading) * lateral,
+    angle: at.heading, along, across, height, cell: 10, drawn: true};
+};
+const backdrop = {
+  // A low front row covers the bare slope from the shore, with two taller ridges behind it.
+  hills: [farHill(0, -400, 300, 190, 60), farHill(260, -410, 330, 200, 75),
+    farHill(520, -400, 300, 190, 60), farHill(120, -640, 380, 200, 130),
+    farHill(420, -650, 380, 200, 120)],
+  colours: {forest: [0x2f5f2c, 0x3a7032, 0x275428, 0x44702f],
+    autumn: [0xc8501c, 0xb83a28, 0xe0a82c, 0xc4661e], share: .4, cut: .5},
+};
 const starts = [0, 730, 2360, 3230, road.length];
 const names = ['Summit Lake', 'Cedar Switchbacks', 'Maple Terraces', 'Village Run'];
 const walls = buildKitPlacements(base, {walls: {wall: 'concrete-wall'}});
@@ -95,6 +115,35 @@ for (let s = 120, index = 0; s < road.length - 90; s += 22, index++) {
   }
 }
 
+// Autumn maples on the far shore of the lake, in loose groves up the slope: the same C4 maple
+// kit as the road verges, in the lake's own frame so none stands in the water.
+const farMaples = [];
+const unit = n => { const v = Math.sin(n * 12.9898 + 4.1414) * 43758.5453; return v - Math.floor(v); };
+for (let s = 10, i = 0; s <= 460; s += 17) {
+  const reach = (s - LAKE.s) / LAKE.along;
+  if (Math.abs(reach) >= .93) continue;
+  const shore = LAKE.lateral - LAKE.across * Math.sqrt(1 - reach * reach);
+  for (let row = 0; row < 7; row++, i++) {
+    // Groves: a slow wave along the shore leaves clearings, and the rows thin out up the slope.
+    const grove = .55 + .3 * Math.sin(s * .031 + row * .4) + .2 * Math.sin(s * .011 - row * .9);
+    if (unit(i) > grove * (1 - row * .09)) continue;
+    farMaples.push({id: i % 3 ? 'autumn-tree-copper' : 'autumn-tree-golden',
+      s: s + (unit(i + 500) - .5) * 9, lateral: shore - 10 - row * 15 - unit(i + 900) * 9,
+      heading: i * 2.4, scale: 1.1 + unit(i + 1300) * .8, clear: 2});
+  }
+}
+
+// Cedar on the slope across the lake (`scenery.shoreForest`): stretches that keep it out of the water,
+// each starting a little beyond the far shore at its most distant point.
+const shoreClear = [];
+for (let s0 = 0; s0 < 580; s0 += 20) {
+  const farShore = s => {
+    const reach = (s - LAKE.s) / LAKE.along;
+    return Math.abs(reach) >= 1 ? -150 : LAKE.lateral - LAKE.across * Math.sqrt(1 - reach * reach);
+  };
+  shoreClear.push({s0, s1: s0 + 20, from: Math.min(farShore(s0), farShore(s0 + 20)) - 6, to: 500});
+}
+
 const village = buildKitPlacements(base, {rows: [
   {from: 3620, to: 3920, side: 1, pieces: ['shopfront-a', 'shopfront-b'],
     setback: 9, gap: 17, density: .72, scale: [.55, .7]},
@@ -112,6 +161,16 @@ const sodiumWash = {colour: 0xffac55, strength: .85, height: 12, floor: .02,
 
 export const KOGANE_PASS = defineScriptedCourse({
   ...base,
+  ambience: 'kogane',
+  landmarkSound: {cue: 'landmark.shrine-bell', s: 168, reach: 40},
+  // The existing reflective circuit water (src/circuit-water.js) lies over the basin: it
+  // mirrors the dusk sky and the torii with a slow ripple.
+  water: {glitter: false},
+  basins: [LAKE],
+  // Level existing ground for the summit car park and the helicopter circle.
+  hills: [{s: 65, lateral: 39, along: 80, across: 32, height: 0, runs: [],
+    pads: [{du: -45, dv: 6, radius: 24, blend: 10},
+      {du: 45, dv: -13, radius: 18.2, blend: 2.5}]}],
   sections: names.map((name, i) => ({name, theme: 'alpine', share: (starts[i + 1] - starts[i]) / road.length})),
   lightPath: {axis: 'distance', wrap: false, keyframes: [
     {at: 0, look: 'dusk'}, {at: 1500, look: 'dusk'}, {at: 2600, look: 'night'},
@@ -124,6 +183,8 @@ export const KOGANE_PASS = defineScriptedCourse({
   scenery: {lampWash: sodiumWash, trees: 350, rocks: 100, mountains: false, continuousGround: true,
     forest: {from: 3.5, to: 60, spacing: 4.2, rows: 9, thin: .12, jitter: .9,
       scale: [1.2, 2.0]},
+    shoreForest: {from: 205, to: 345, spacing: 4.5, rows: 16, thin: .1, jitter: .9, scale: [1.5, 2.6],
+      sides: [-1], ranges: [{from: 0, to: 580, fadeOut: 60}], clear: shoreClear},
     farForest: {from: 60, to: 150, spacing: 12, rows: 5, thin: .5, jitter: .9, scale: [1.6, 2.7]},
     clear: [
       ...road.pieces.filter(piece => piece.name?.endsWith('Hairpin')).map(piece => ({
@@ -132,6 +193,7 @@ export const KOGANE_PASS = defineScriptedCourse({
       })),
       {s0: 0, s1: 730, from: -180, to: -10},
       {s0: 65, s1: 150, from: 10, to: 38},
+      {s0: 0, s1: 65, from: 10, to: 82},
       {s0: 3570, s1: 3930, from: 10, to: 33},
     ]},
   kitLook: {
@@ -140,6 +202,7 @@ export const KOGANE_PASS = defineScriptedCourse({
     'shopfront-a': {wash: {colour: 0xffc281, strength: .35, height: 6, floor: .08}},
     'shopfront-b': {wash: {colour: 0xffc281, strength: .35, height: 6, floor: .08}},
     'lantern-string': {glow: .8},
+    'torii': {wash: {colour: 0xffa86c, strength: .22, height: 9, floor: .1}},
     'stone-retaining-wall': {wash: sodiumWash},
     'armco-white': {wash: sodiumWash},
     'curve-mirror': {wash: {colour: 0xffca85, strength: .24, height: 4, floor: .08}},
@@ -147,7 +210,7 @@ export const KOGANE_PASS = defineScriptedCourse({
   },
   mergeKitMeshes: ['tea-house', 'vending-row', 'shopfront-a', 'shopfront-b',
     'curve-mirror', 'stone-retaining-wall', 'armco-white'],
-  effects: {valleyMist: [
+  effects: {backdrop, valleyMist: [
     {s: 2490, lateral: -46, along: 100, across: 24, count: 10,
       height: 1.5, opacity: .10, colour: 0xabb9bd, fadeEnd: 1},
   ]},
@@ -164,7 +227,14 @@ export const KOGANE_PASS = defineScriptedCourse({
       colour: 0xd1eeed, size: 1, strength: .7},
   ],
   kitPlacements: [
-    ...safety, ...roadside, ...maples, ...village,
+    ...safety, ...roadside, ...maples, ...farMaples, ...village,
+    {id: 'kogane-car-park', s: 110, lateral: 26, heading: Math.PI / 2},
+    {id: 'torii', s: 168, lateral: -40, heading: Math.PI / 2, clear: 10},
+    {id: 'torii-small', s: 370, lateral: 20, heading: Math.PI / 2, clear: 5},
+    ...[88, 101, 132, 143].map(s => ({id: 'stone-lantern', s,
+      lateral: 14, heading: 0, clear: 2})),
+    ...[358, 382].map(s => ({id: 'stone-lantern', s,
+      lateral: 18, heading: 0, clear: 2})),
     {id: 'tea-house', s: 110, lateral: 22, heading: -Math.PI / 2, clear: 12},
     {id: 'vending-row', s: 124, lateral: 17, heading: -Math.PI / 2, clear: 5},
     {id: 'lantern-string', s: 110, lateral: 18.5, heading: -Math.PI / 2, lift: 1.2},

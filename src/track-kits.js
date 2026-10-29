@@ -18,6 +18,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'stone-stream-bridge','forest-footbridge','forest-timing-tower','ardennes-beech','summit-finish',
   'armco-white','stone-retaining-wall','curve-mirror','chevron-board','tea-house','vending-row',
   'drystone-wall','hedge-row',
+  'torii','torii-small','stone-lantern','kogane-car-park',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();

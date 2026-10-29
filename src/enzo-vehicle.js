@@ -22,6 +22,7 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   m.paint.name = 'Enzo red body'; m.paint.roughness = .26; m.paint.metalness = .36;
   m.accent.name = 'Enzo black trim'; m.glass.color.setHex(0x1e2a2e); m.glass.opacity = .62;
   m.carbon.color.setHex(0x16181b); m.carbon.roughness = .42;
+  m.darkAlloy.color.setHex(0x9aa1a5); m.darkAlloy.roughness = .3; // the real car's silver twin-spoke wheels; dark intakes use carbon
   Object.assign(data, {
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...ENZO_VEHICLE_DIMENSIONS[key] },
@@ -29,16 +30,18 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     damageSpace: { scale: [.92, .80, 1.0], offset: [0, 0, 0], frontGlassZ: .92, rearGlassZ: -.98 },
   });
 
-  // Stations: [z, half width, floor, shoulder, crown, crown half width]. At the
-  // front the shoulder stands above the crown, so the fenders rise either side
-  // of a lower central beak; behind the cabin the crown climbs into the deck.
+  // Stations: [z, half width, floor, shoulder, crown, crown half width]. The
+  // wedge is wide and low: high front fenders crest over the wheels either side
+  // of a lower centre line, the beak drops steeply to a broad blunt face, the
+  // belt stays near .80 along the doors, and behind the cabin two tall rear
+  // haunches stand either side of the engine cover and fall to a short tail.
   sculpt(b, m.paint, [
-    [-2.35, .78, .30, .68, .72, .56], [-2.20, .87, .26, .75, .79, .63],
-    [-1.85, .96, .22, .80, .83, .69], [-1.35, 1.01, .19, .80, .84, .68],
-    [-.90, 1.00, .18, .77, .80, .64], [-.30, .97, .17, .70, .72, .62],
-    [.40, .95, .17, .67, .68, .60], [.95, .98, .17, .71, .58, .54],
-    [1.35, 1.00, .17, .76, .50, .44], [1.80, .97, .16, .74, .42, .36],
-    [2.15, .80, .17, .62, .35, .27], [2.35, .42, .19, .40, .30, .20],
+    [-2.35, .90, .26, .62, .64, .70], [-2.20, .97, .22, .70, .70, .70],
+    [-1.85, 1.01, .19, .82, .76, .56], [-1.35, 1.015, .19, .86, .78, .52],
+    [-.90, 1.00, .18, .82, .80, .62], [-.30, .98, .17, .74, .78, .66],
+    [.40, .97, .17, .72, .78, .68], [.95, .99, .17, .80, .80, .62],
+    [1.35, 1.01, .17, .85, .80, .54], [1.80, .99, .17, .78, .70, .46],
+    [2.15, .90, .19, .62, .54, .36], [2.35, .74, .22, .52, .48, .28],
   ], AXLES, .35, .35, { width: .60, y: .56, back: -.88, front: .94 });
   b.box(m.carbon, [1.18, .05, 1.62], [0, .33, .02], [0, 0, 0], .012);
   buildCanopy(b, m);
@@ -48,24 +51,22 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     b.tube(m.accent, [[side * .60, .80, .66], [side * .72, .84, .66], [side * .82, .88, .61]], .013, 8);
     b.box(m.paint, [.13, .06, .15], [side * .84, .905, .585], [0, side * -.10, 0], .026);
     b.box(m.alloy, [.105, .038, .008], [side * .84, .908, .508], [0, side * -.10, 0], .009);
-    // Front corner intakes under the raised fenders, either side of the beak.
+    // Two big black intakes in the broad nose face, either side of the beak.
     panel(b, m.carbon, side > 0
-      ? [[.30, .19, 2.30], [.76, .20, 2.12], [.74, .40, 2.10], [.32, .34, 2.28]]
-      : [[-.32, .34, 2.28], [-.74, .40, 2.10], [-.76, .20, 2.12], [-.30, .19, 2.30]]);
-    for (let i = 0; i < 4; i++) b.box(m.darkAlloy, [.012, .17, .02], [side * (.40 + i * .09), .29, 2.24 - i * .045], [0, side * -.38, 0], .002);
+      ? [[.10, .26, 2.352], [.64, .27, 2.352], [.62, .43, 2.352], [.12, .44, 2.352]]
+      : [[-.12, .44, 2.352], [-.62, .43, 2.352], [-.64, .27, 2.352], [-.10, .26, 2.352]]);
     // Four round tail lamps, two each side, with the brake glow behind them.
-    for (const x of [.38, .66]) {
-      cylinder(b, m.carbon, .095, .05, [side * x, .64, -2.33], [Math.PI / 2, 0, 0], 24);
-      const lamp = new THREE.TorusGeometry(.068, .018, 8, 28);
-      b.add(lamp, m.brake, [side * x, .64, -2.35]); lamp.dispose();
-      cylinder(b, m.brake, .045, .012, [side * x, .64, -2.345], [Math.PI / 2, 0, 0], 20);
+    for (const x of [.54, .78]) {
+      cylinder(b, m.carbon, .118, .05, [side * x, .60, -2.33], [Math.PI / 2, 0, 0], 28);
+      const lamp = new THREE.TorusGeometry(.086, .02, 8, 30);
+      b.add(lamp, m.brake, [side * x, .60, -2.347]); lamp.dispose();
+      cylinder(b, m.brake, .056, .012, [side * x, .60, -2.347], [Math.PI / 2, 0, 0], 22);
     }
     // Rocker panel and the lower door crease.
     b.box(m.carbon, [.07, .06, 2.0], [side * .985, .215, -.05], [0, 0, 0], .018);
   }
   // The beak: a narrow nose with its own splitter and a dark centre intake.
-  b.box(m.carbon, [1.56, .04, .18], [0, .175, 2.06], [0, 0, 0], .02);
-  b.box(m.carbon, [.34, .09, .05], [0, .26, 2.32], [-.08, 0, 0], .02);
+  b.box(m.carbon, [1.62, .04, .20], [0, .185, 2.25], [0, 0, 0], .02);
   // Short tail: integrated lip spoiler, a black rear panel and a deep diffuser.
   b.box(m.paint, [1.50, .06, .16], [0, .815, -2.285], [-.18, 0, 0], .02);
   b.box(m.carbon, [1.40, .20, .04], [0, .46, -2.325], [0, 0, 0], .02);
@@ -85,8 +86,8 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
 // A teardrop canopy set forward: glass all round a small painted roof, the
 // roof line flowing back into the engine cover. [z, half width, base, top].
 const canopySections = [
-  [-.98, .40, .84, .88], [-.70, .54, .78, 1.00], [-.35, .63, .73, 1.10],
-  [0, .66, .71, 1.14], [.35, .65, .70, 1.10], [.65, .58, .69, .96], [.94, .44, .68, .72],
+  [-.98, .42, .80, .86], [-.70, .58, .76, .99], [-.35, .67, .72, 1.10],
+  [0, .70, .70, 1.14], [.35, .69, .70, 1.10], [.65, .62, .72, .98], [.94, .48, .74, .84],
 ];
 function canopyPoint(z, angle, lift = 0) {
   const last = canopySections.length - 1;
@@ -120,14 +121,26 @@ function buildCanopy(b, m) {
 function fittedDetails(vehicle, m) {
   vehicle.updateMatrixWorld(true);
   const skins = vehicle.userData.damageMeshes.filter(({ mesh }) => mesh.material === m.paint).map(({ mesh }) => mesh), b = batch(vehicle);
+  const ray = new THREE.Raycaster();
   const patch = (corners, axis, side = 1, material = m.carbon, lift = .004) => fitSurfacePatch(skins, b, material, corners, axis, side, .64, lift);
   for (const side of [-1, 1]) {
     // Long dark headlamp recesses in the tops of the front fenders; the lamps themselves are built
     // below as real lenses and a running-light strip inside them, not painted shapes.
     patch([[side * .56, 2.10], [side * .74, 2.04], [side * .90, 1.62], [side * .88, 1.38], [side * .74, 1.40], [side * .62, 1.80]], 'top');
     // The side scoops: a deep dark intake behind each door, swept up at the back.
-    patch([[.26, -.05], [.30, -.55], [.46, -1.02], [.66, -.98], [.62, -.55], [.52, -.10]], 'side', side);
-    patch([[.30, -.10], [.34, -.55], [.48, -.94], [.52, -.90], [.42, -.52], [.36, -.12]], 'side', side, m.darkAlloy, .008);
+    patch([[.46, -.84], [.44, -.92], [.46, -1.08], [.74, -1.10], [.80, -.92], [.68, -.84]], 'side', side);
+    patch([[.48, -.88], [.47, -.95], [.49, -1.04], [.70, -1.06], [.74, -.94], [.65, -.88]], 'side', side, m.carbon, .008);
+    // Door outline and sill line, projected onto the curved flank.
+    for (const points of [[[.26, .26], [.52, .28], [.74, .24]], [[.26, -.80], [.50, -.82], [.72, -.84]], [[.25, .26], [.25, -.30], [.25, -.80]]]) {
+      const seam = [];
+      for (let segment = 0; segment < points.length - 1; segment++) for (let j = 0; j <= 5; j++) {
+        const t = j / 5, y = THREE.MathUtils.lerp(points[segment][0], points[segment + 1][0], t), z = THREE.MathUtils.lerp(points[segment][1], points[segment + 1][1], t);
+        ray.set(new THREE.Vector3(side * 3, y, z), new THREE.Vector3(-side, 0, 0));
+        const hit = ray.intersectObjects(skins, false)[0];
+        if (hit && hit.point.x * side > .7) seam.push([hit.point.x + side * .004, y, z]);
+      }
+      if (seam.length > 1) b.tube(m.carbon, seam, .0045, seam.length);
+    }
     // Bonnet vents either side of the beak.
     patch([[side * .16, 1.62], [side * .34, 1.60], [side * .32, 1.20], [side * .17, 1.24]], 'top');
   }
@@ -135,7 +148,6 @@ function fittedDetails(vehicle, m) {
   patch([[-.46, -1.06], [.46, -1.06], [.40, -1.96], [-.40, -1.96]], 'top');
   patch([[-.38, -1.14], [.38, -1.14], [.33, -1.88], [-.33, -1.88]], 'top', 1, m.glass, .011);
   // Engine cover louvres either side, fitted to the curved deck.
-  const ray = new THREE.Raycaster();
   for (const side of [-1, 1]) for (let i = 0; i < 6; i++) {
     const z = -1.16 - i * .12, x = side * .66;
     ray.set(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));

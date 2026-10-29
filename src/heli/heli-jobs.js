@@ -10,7 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 // pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
 // functions after both have loaded, so the pair is safe in either order.
-import {PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
+import {PLACES, DEV_PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
@@ -45,14 +45,15 @@ export const HELI_DESTINATIONS_WITH_SUMMIT = Object.freeze({...HELI_DESTINATIONS
 // answers are the same objects as before; Summit Run still needs its own switch.
 // Built when first asked for, since pilot-map-data.js loads this file too.
 let pilotTables = null;
-function pilotDestinations(summitRun, withTable = false) {
+function pilotDestinations(summitRun, withTable = false, koganePass = false) {
   pilotTables ??= {};
-  const key = `${summitRun ? 'withSummit' : 'without'}${withTable ? '+table' : ''}`;
+  const key = `${summitRun ? 'withSummit' : 'without'}${withTable ? '+table' : ''}${koganePass ? '+kogane' : ''}`;
   if (pilotTables[key]) return pilotTables[key];
   const known = summitRun ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
   const table = {};
   // A destination is named by its course id, which the game loads (the Titan stadium is its Monster Arena).
-  for (const place of PLACES) {
+  // Kogane Pass (KOGANE-PASS-C5) joins only through its own option, like Summit Run.
+  for (const place of koganePass ? [...PLACES, ...DEV_PLACES] : PLACES) {
     if (place.air || LEFT_OFF.includes(place.id)) continue;
     const id = place.courses[0];
     if (id === SUMMIT_RUN.id && !summitRun) continue;
@@ -69,10 +70,11 @@ const nameOf = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id
 // The map's place for a destination (its course id), for the map's distances and legs.
 const placeKey = courseId => placeOfCourse(courseId)?.id ?? courseId;
 
-// The destinations to use: pass the summit-run switch as {summitRun} and the
-// pilot-map switch as {pilotMap}.
-export const destinationsFor = ({summitRun = false, pilotMap = false, table = false} = {}) =>
-  pilotMap === true ? pilotDestinations(summitRun === true, table === true) : summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
+// The destinations to use: pass the summit-run switch as {summitRun}, the
+// pilot-map switch as {pilotMap} and the kogane-pass switch as {koganePass}
+// (Kogane Pass is a map place only, so it needs the pilot map too).
+export const destinationsFor = ({summitRun = false, pilotMap = false, table = false, koganePass = false} = {}) =>
+  pilotMap === true ? pilotDestinations(summitRun === true, table === true, koganePass === true) : summitRun === true ? HELI_DESTINATIONS_WITH_SUMMIT : HELI_DESTINATIONS;
 
 // Fuel for each cruise leg, either way.
 const LEG_FUEL = Object.freeze({
@@ -92,11 +94,11 @@ export function legKey(from, to) {
   return [from, to].sort().join('|');
 }
 
-export function legFuelKg(from, to, {summitRun = false, pilotMap = false, table = false} = {}) {
+export function legFuelKg(from, to, {summitRun = false, pilotMap = false, table = false, koganePass = false} = {}) {
   if (from === to) return null;
   // With the pilot's map on, a leg between two destinations is the map's: the old table
   // legs keep their numbers and every other pair is 12 kg a km plus 5 (pilot-map-data.js).
-  if (pilotMap === true && Object.hasOwn(pilotDestinations(summitRun === true, table === true), from) && Object.hasOwn(pilotDestinations(summitRun === true, table === true), to)) return legFuelKgMap(placeKey(from), placeKey(to));
+  if (pilotMap === true && Object.hasOwn(pilotDestinations(summitRun === true, table === true, koganePass === true), from) && Object.hasOwn(pilotDestinations(summitRun === true, table === true, koganePass === true), to)) return legFuelKgMap(placeKey(from), placeKey(to));
   const key = legKey(from, to);
   return LEG_FUEL[key] ?? (summitRun === true ? SUMMIT_LEG_FUEL[key] : undefined) ?? null;
 }
