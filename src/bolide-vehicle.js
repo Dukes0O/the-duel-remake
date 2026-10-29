@@ -38,12 +38,12 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
   // lower central channel, and behind the cockpit the deck climbs high and
   // stays high to a tall, square tail.
   sculpt(b, m.paint, [
-    [-2.38, .88, .30, .66, .71, .70], [-2.22, .99, .25, .74, .79, .74],
-    [-1.85, 1.02, .21, .80, .84, .66], [-1.33, 1.03, .19, .81, .83, .58],
-    [-.85, .99, .18, .73, .80, .50], [-.30, .93, .17, .62, .66, .52],
-    [.40, .92, .17, .60, .60, .54], [.95, .98, .17, .72, .50, .46],
-    [1.42, 1.02, .17, .81, .44, .40], [1.85, .99, .16, .73, .38, .34],
-    [2.20, .88, .16, .50, .36, .28], [2.38, .58, .17, .40, .37, .24],
+    [-2.38, .90, .30, .70, .73, .70], [-2.22, 1.00, .25, .80, .82, .74],
+    [-1.85, 1.03, .21, .90, .86, .64], [-1.33, 1.03, .19, .92, .84, .56],
+    [-.85, .99, .18, .76, .80, .50], [-.30, .93, .17, .62, .66, .52],
+    [.40, .92, .17, .60, .60, .54], [.95, .98, .17, .76, .50, .46],
+    [1.42, 1.03, .17, .88, .46, .40], [1.85, 1.00, .16, .80, .38, .34],
+    [2.20, .90, .16, .56, .36, .28], [2.38, .62, .17, .42, .38, .24],
   ], AXLES, .36, .36, { width: .52, y: .52, back: -.76, front: .82 });
   b.box(m.carbon, [1.10, .05, 1.54], [0, .32, .03], [0, 0, 0], .012);
   buildCanopy(b, m);
@@ -131,10 +131,10 @@ function buildCanopy(b, m) {
     const hoop = []; for (let i = 0; i <= 22; i++) hoop.push(canopyPoint(z, Math.PI * i / 22, .008));
     b.tube(m.carbon, hoop, .015, 22);
   }
-  // The roof scoop: a raised intake on the roof's back half, open to the front.
+  // The roof scoop: a big airbox on the roof, open to the front, as on the car.
   const [, top] = canopyPoint(-.10, Math.PI / 2, .006);
-  b.box(m.paint, [.18, .04, .30], [0, top + .004, -.20], [-.10, 0, 0], .018);
-  panel(b, m.darkAlloy, [[-.075, top - .006, -.052], [.075, top - .006, -.052], [.075, top + .02, -.055], [-.075, top + .02, -.055]]);
+  b.box(m.paint, [.36, .095, .52], [0, top + .05, -.22], [-.06, 0, 0], .03);
+  panel(b, m.darkAlloy, [[-.14, top + .004, .04], [.14, top + .004, .04], [.14, top + .088, .035], [-.14, top + .088, .035]]);
 }
 
 function fittedDetails(vehicle, m) {
@@ -154,24 +154,13 @@ function fittedDetails(vehicle, m) {
     // rear intake, cut into the blue flank above the carbon.
     patch([[.44, .88], [.42, .30], [.45, -.55], [.56, -.92], [.66, -.88], [.58, -.40], [.54, .30], [.56, .86]], 'side', side);
     patch([[.46, .80], [.45, .30], [.48, -.50], [.56, -.82], [.61, -.80], [.54, -.40], [.51, .30], [.53, .78]], 'side', side, m.darkAlloy, .008);
-    // Louvres over the front wheels.
-    // Headlamps fitted to the nose corners, facing out along the surface: a
-    // dark bezel and an X of two slim lit bars.
-    ray.set(new THREE.Vector3(side * .64, .35, 5), new THREE.Vector3(0, 0, -1));
-    const face = ray.intersectObjects(skins, false)[0];
-    if (face) {
-      const normal = face.face.normal.clone().transformDirection(face.object.matrixWorld);
-      const holder = new THREE.Object3D();
-      holder.position.copy(face.point).addScaledVector(normal, .008);
-      holder.lookAt(holder.position.clone().add(normal));
-      b.box(m.carbon, [.26, .09, .03], holder.position.toArray(), holder.rotation.toArray().slice(0, 3), .02);
-      for (const tilt of [-.40, .40]) {
-        const bar = holder.clone();
-        bar.rotateZ(tilt);
-        bar.position.addScaledVector(normal, .018);
-        b.box(m.headlight, [.20, .014, .01], bar.position.toArray(), bar.rotation.toArray().slice(0, 3), .004);
-      }
-    }
+    // Headlamps: an X of two slim lit slashes across the top of each front fender.
+    const crest = [.66, .80, .94].map(x => surfaceY(side * x, 1.78)).filter(y => y !== null), fenderY = crest.length ? Math.max(...crest) : null;
+    if (fenderY !== null) for (const yaw of [-.62, .62]) b.box(m.headlight, [.40, .016, .034], [side * .80, fenderY + .012, 1.78], [0, yaw * side, 0], .008);
+    // Two big dark intakes on the bonnet, in the channel beside the fender crest.
+    patch([[side * .20, 1.72], [side * .55, 1.74], [side * .56, 1.06], [side * .22, 1.00]], 'top', 1, m.carbon, .006, .1);
+    // The rear fender's tall end plate, rising to meet the wing.
+    b.box(m.carbon, [.045, .26, 1.00], [side * .975, .97, -1.64], [.10, 0, 0], .02);
   }
   // The nose and tail in bare carbon below the lamps, with open intakes at
   // the nose corners either side of the horseshoe.
