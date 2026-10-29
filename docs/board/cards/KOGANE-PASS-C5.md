@@ -49,9 +49,9 @@ The course names ambience.kogane in its own definition. The audio renderer
 reads that choice from its existing course input. Bell is once per race near
 the torii, not once per loop. Stop after the first sheet for Claude's verdict.
 
-## Round 1 delivered, 28 October 2026
+## Round 2 delivered, 28 October 2026
 
-Claude resumed the blocked lane, kept the committed recipes, built the models
-and sound files, ran the checks and made the first sheet
-(`docs/board/looks/kogane-pass/c5-round-1.jpg`). Waiting for Claude's verdict
-on round 1. See the change note for results.
+Claude's round 1 verdict is in `docs/board/looks/kogane-pass/c5-review.md`. Round 2
+(`docs/board/looks/kogane-pass/c5-round-2.jpg`) changes the lake water and the far
+shore and keeps the helicopter guard unchanged. Waiting for Claude's verdict on round 2.
+See the change note.

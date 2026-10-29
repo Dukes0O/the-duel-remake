@@ -3,7 +3,35 @@
 Status: round 1 sheet ready for Claude's verdict; not merged. Kind: landmark, water and sound.
 Flag: kogane-pass (dev). Round 1 sheet: docs/board/looks/kogane-pass/c5-round-1.jpg.
 
-## Resumed run (Claude, 28 October 2026)
+## Round 2 (Claude, 28 October 2026)
+
+Status: round 2 sheet ready for Claude's verdict; not merged. Sheet:
+`docs/board/looks/kogane-pass/c5-round-2.jpg` (the round 1 sheet is deleted).
+Round 1 verdict and these changes are in `docs/board/looks/kogane-pass/c5-review.md`.
+
+- Lake: now drawn by the existing reflective circuit water (`water: {glitter: false}`
+  on the course, the same system Harbour Lights and Ardennes use), so it ripples and
+  mirrors the dusk sky. The old flat lake sheet (`effects.lake`) is removed (replace
+  means remove). Paler shallows colour. The torii has no true mirror image: the
+  existing water reflects only the sky picture.
+- Far shore: `scenery.shoreForest` is a new optional third tree band in
+  `src/track-script-course.js` (own random stream, names `shore-forest-N`, `sides`
+  option on the band; no other course sets it, so other courses are unchanged). It
+  plants cedar on the slope across the lake, kept out of the water by authored
+  stretches. About 830 cedar, 90 autumn maples (the C4 maple kit) in groves, and five
+  existing wooded backdrop hills (`effects.backdrop`). Backdrop hills gain an optional
+  `drawn: true` (stand on the ground as drawn); default unchanged.
+- Guard: `tools/test-heli-mode.mjs` is back exactly as it was. The pilot map no
+  longer reads the feature switch. `KOGANE_PLACE` is in a new `DEV_PLACES` list, outside
+  `PLACES`; it joins destinations only through a new `koganePass` option beside
+  `summitRun` (`destinationsFor`, `legFuelKg`, `courseSite`, the session's `koganePassEnabled`
+  from the `kogane-pass` switch, `courseBurnCheck`) and is drawn on the chart only
+  while it is a destination. The released place table, logbook places and every
+  existing table, leg and answer are untouched.
+- The Kogane course test now runs the helicopter checks in the main process with the
+  option, instead of a switch-on child process, and adds far shore checks.
+
+## Resumed run (round 1, Claude, 28 October 2026)
 
 Kept from Codex's blocked work: all of the sections below (lake basin, hill
 pads, torii and lantern recipes, fire hooks, pilot place, sound recipe,
@@ -136,9 +164,7 @@ assertion changes.
   leave out the three new cue ids (`ambience.kogane`,
   `ambience.kogane-night`, `landmark.shrine-bell`) and their catalog rows,
   as for the Skyline cues. Every earlier row is still pinned.
-- `tools/test-heli-mode.mjs`: the pure-rules import list lets only
-  `pilot-map-data.js` import `../feature-flags.js` (it lists the dev place
-  behind the switch). No other helicopter file gains that import.
+- `tools/test-heli-mode.mjs`: not changed (round 1 loosened its import guard; round 2 reverted that).
 - `tools/test-fire-view.mjs`: the new Kogane mock took the texture loader's
   arguments in the wrong order; fixed (the new test, not an old assertion).
 

@@ -17,7 +17,7 @@
 //   effects.backdrop  { hills: [{ x, z, along, across, height, angle, runs }], colours }
 //     Rounded wooded hills far behind the scenery, in place of the grey peaks.
 //     Each stands at a point on the map (x, z), is turned `angle` radians (its
-//     `along` axis runs toward +z at angle 0) and carries forest colour with
+//     `along` axis runs toward +z at angle 0; `drawn: true` stands it on the ground as drawn) and carries forest colour with
 //     patches of autumn (`colours.forest`, `colours.autumn`) and pale ski runs.
 //   effects.lake.frozen  true: the lake is a frozen sheet (glossy blue-grey ice, snow-white toward the
 //     shore, no mist) instead of water; `colour` and `shallow` then colour the ice and the snow on it.
@@ -392,7 +392,11 @@ export function backdropGeometry(course, hill, colours = {}) {
     const du = (i / nu * 2 - 1) * hill.along, dv = (j / nv * 2 - 1) * hill.across;
     const x = centre.x + sin * du + cos * dv, z = centre.z + cos * du - sin * dv;
     const near = course.nearest(x, z), rise = backdropRise(hill, du, dv);
-    positions.push(x, (course.farGroundY ? course.farGroundY(x, z, near.s, near.lateral) : course.groundAt(near.s, near.lateral).y) + .1 + rise, z); uvs.push(x / CROWN_TILE, z / CROWN_TILE);
+    // `hill.drawn: true` stands the hill on the ground as it is drawn, which beyond the first band can lie metres
+    // above the course's own ground (Kogane Pass's far shore); without it the hill is exactly as before.
+    const floor = hill.drawn ? renderedGroundHeight(course, { x, z, s: near.s, off: near.lateral })
+      : course.farGroundY ? course.farGroundY(x, z, near.s, near.lateral) : course.groundAt(near.s, near.lateral).y;
+    positions.push(x, floor + .1 + rise, z); uvs.push(x / CROWN_TILE, z / CROWN_TILE);
     // Forest floor in big clumps, autumn where a slow swell is high, speckle from the cell.
     const clump = noise(x * .03, z * .03), swell = noise(x * .012 + 7, z * .012 + 3) + .5 * (noise(x * .04, z * .04) - .5);
     mix.copy(forest[Math.floor(clump * forest.length * .999)]).multiplyScalar(.82 + .36 * hash(Math.round(x / cell), Math.round(z / cell)));

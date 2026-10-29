@@ -98,7 +98,7 @@ function clearCircle(course, ground, x, z, radius, flatness) {
 // The ocean's surface, metres (the same level as src/coastal-water.js; a test keeps them equal).
 export const SEA_LEVEL = -15;
 
-export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false, pilotMap = false, table = false} = {}) {
+export function courseSite(course, ground, courseId, {summitRun = false, summitRescue = false, pilotMap = false, table = false, koganePass = false} = {}) {
   const radius = HELI_SESSION.zoneRadius;
   let zone = null;
   search: for (const s of [0, 20, -20, 40, -40, 60, -60, 90, -90, 120, -120, 160, -160, 200, -200]) {
@@ -146,9 +146,9 @@ export function courseSite(course, ground, courseId, {summitRun = false, summitR
   if (courseId === HOME_COURSE && (!crate || !target)) throw new Error('No room for the carrying lesson at the home pad');
   // The area covers the course, the pad and every arrival point, with a margin.
   const xs = course.samples.map(p => p.x), zs = course.samples.map(p => p.z);
-  for (const other of Object.keys(destinationsFor({summitRun, pilotMap, table}))) {
+  for (const other of Object.keys(destinationsFor({summitRun, pilotMap, table, koganePass}))) {
     if (other === courseId) continue;
-    const point = arrivalPoint(zone, bearing(courseId, other, {summitRun, pilotMap, table}));
+    const point = arrivalPoint(zone, bearing(courseId, other, {summitRun, pilotMap, table, koganePass}));
     xs.push(point.x); zs.push(point.z);
   }
   const m = HELI_SESSION.areaMargin;
@@ -199,7 +199,7 @@ export function insideArea(area, x, y, z, ground = null) {
 // "Lesson here" is never offered.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
-  summitRunEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
+  summitRunEnabled = false, koganePassEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
   drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
@@ -212,7 +212,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // owned destinations and scouting. With it off, left out, every answer is what it was.
   const pilotOn = pilotMapEnabled === true;
   // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
-  const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, get table() { return tableKnown(); }} : {summitRun: summitOn};
+  // Kogane Pass (KOGANE-PASS-C5) is a map place, so it joins only with the pilot map and its own switch on.
+  const koganeOn = pilotOn && koganePassEnabled === true;
+  const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, koganePass: koganeOn, get table() { return tableKnown(); }} : {summitRun: summitOn};
   const logbookOn = logbookEnabled === true;
   let logbookAirborne = false, rankCheckedSave = null;
   const rankNotices = [];
@@ -356,7 +358,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   const rescueOn = rescueEnabled === true && fireEnabled === true;
   const rflag = {rescue: rescueOn};
   // Summit Run's rescues (SUMMIT-HELI-RESCUES) need both switches: only then does its ceiling follow the ground.
-  const siteFlag = pilotOn ? {summitRun: summitOn, summitRescue: summitOn && rescueOn, pilotMap: true} : {summitRun: summitOn, summitRescue: summitOn && rescueOn};
+  const siteFlag = pilotOn ? {summitRun: summitOn, summitRescue: summitOn && rescueOn, pilotMap: true, koganePass: koganeOn} : {summitRun: summitOn, summitRescue: summitOn && rescueOn};
   // The Table's own area has the arrival point toward every place, itself being on the map by then.
   const siteFlagOf = courseId => courseId === TABLE_ID ? {...siteFlag, table: true} : siteFlag;
   // A call or rescue stored at Summit Run, met with the Summit switch off, is dropped quietly (RESCUE-SUMMIT-TUNE).

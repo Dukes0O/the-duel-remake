@@ -7,7 +7,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
-import {PILOT_MAP, PLACES, KOGANE_PLACE} from '../src/heli/pilot-map-data.js';
+import {PILOT_MAP, PLACES, DEV_PLACES} from '../src/heli/pilot-map-data.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
 
 export const OUTLINE_FILE = fileURLToPath(new URL('../src/generated/pilot-map.json', import.meta.url));
@@ -72,9 +72,8 @@ export function traceCourse(def, {sizeKm = PILOT_MAP.outlineKm, tolerance = TRAC
 // place with several courses is traced from its first.
 export function buildPilotMap() {
   const outlines = {};
-  // Keep the dev outline ready for preview without exposing its map place.
-  const places = PLACES.some(place => place.id === KOGANE_PLACE.id) ? PLACES : [...PLACES, KOGANE_PLACE];
-  for (const place of places) {
+  // Dev places (Kogane Pass) keep their outline ready for the chart while their option is off.
+  for (const place of [...PLACES, ...DEV_PLACES]) {
     if (!place.courses.length) continue;
     const def = COURSE.find(course => course.id === place.courses[0]) ??
       ALL_CIRCUITS.find(course => course.id === place.courses[0]);

@@ -11,22 +11,23 @@ p = argparse.ArgumentParser()
 p.add_argument('--captures', required=True, type=Path)
 p.add_argument('--references', type=Path,
                default=Path('C:/Users/kyleb/dev/art-library/kogane-pass/reference'))
-p.add_argument('--output', type=Path, default=Path('docs/board/looks/kogane-pass/c5-round-1.jpg'))
+p.add_argument('--output', type=Path, default=Path('docs/board/looks/kogane-pass/c5-round-2.jpg'))
 args = p.parse_args()
 
 rows = [
     ('Lakeside start at dusk', 'c5-start', '02.png', 'Native dusk. Torii stands in the near shallows on the right.'),
+    ('Across the lake', 'c5-far-shore', '02.png', 'Cedar and autumn maple slope behind the far shore; water with ripple and sky reflection.'),
     ('Torii Bend', 'c5-torii-bend', '02.png', 'View back across the lake from the bend. Road and sightline remain clear.'),
     ('Summit car park', 'c5-car-park', '05.png', 'C4 tea house and vending, C5 stone lanterns and paved parking apron.'),
     ('Lake and start from above', 'c5-overhead-daylight-exposure', '02.png', 'Same overhead camera with exposure raised for review: basin, shore, torii, start straight, car park.'),
 ]
-canvas = Image.new('RGB', (1600, 2440), '#e8e7e0')
+canvas = Image.new('RGB', (1600, 3010), '#e8e7e0')
 d = ImageDraw.Draw(canvas)
 fontpath = Path('C:/Windows/Fonts/arial.ttf')
 font = ImageFont.truetype(str(fontpath), 21)
 title = ImageFont.truetype(str(fontpath), 31)
 small = ImageFont.truetype(str(fontpath), 18)
-d.text((22, 15), 'KOGANE PASS / C5 LANDMARK AND LAKE / ROUND 1', font=title, fill='#172323')
+d.text((22, 15), 'KOGANE PASS / C5 LANDMARK AND LAKE / ROUND 2', font=title, fill='#172323')
 d.text((22, 58), 'Native High quality views | Memory-only saves | No frame timing | Claude to judge', font=font, fill='#33403d')
 d.text((22, 88), 'GAME', font=font, fill='#172323')
 d.text((930, 88), 'APPROVED GENERATED REFERENCE', font=font, fill='#172323')
@@ -43,7 +44,7 @@ for i, (label, name, reference, note) in enumerate(rows):
 args.output.parent.mkdir(parents=True, exist_ok=True)
 # Four native views beside the approved generated reference pictures.
 # Preserve whole frames; lower the sheet resolution rather than crop scenery.
-canvas = canvas.resize((1360, 2074), Image.Resampling.LANCZOS)
+canvas = canvas.resize((1280, 2408), Image.Resampling.LANCZOS)
 for quality in [82, 74, 66, 58, 50, 44, 38, 32, 26]:
     canvas.save(args.output, 'JPEG', quality=quality, optimize=True)
     if args.output.stat().st_size <= 500000:

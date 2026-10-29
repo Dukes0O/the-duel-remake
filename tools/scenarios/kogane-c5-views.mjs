@@ -8,6 +8,7 @@ const views = [
   {name: 'c5-start', at: 45, from: [45, -2, 2.7], to: [168, -43, 4]},
   {name: 'c5-car-park', at: 100, from: [83, 3, 4], to: [113, 22, 2]},
   {name: 'c5-overhead', at: 140, from: [150, -60, 380], to: [185, -45, 0], daylight: true},
+  {name: 'c5-far-shore', at: 60, from: [60, -3, 3], to: [250, -230, 60], daylight: true},
   {name: 'c5-torii-bend', at: 320, from: [320, -1, 3.5], to: [168, -43, 3]},
 ];
 

@@ -10,7 +10,6 @@
 // registry (src/config.js COURSE). Three places hold more than one course:
 // the Titan stadium (three arenas) and Summit Run (and its Time Attack).
 import {legFuelKg} from './heli-jobs.js';
-import {featureFlags} from '../feature-flags.js';
 
 export const PILOT_MAP = Object.freeze({
   version: 1,
@@ -45,8 +44,6 @@ export const LEFT_OFF = Object.freeze(['ardennes-forest']);
 const place = (id, name, courses, table, region, extra = {}) => Object.freeze({
   id, name, courses: Object.freeze(courses), at: table, drawAt: extra.drawAt ?? table, region, air: false, ...extra,
 });
-export const KOGANE_PLACE = place('kogane-pass', 'Kogane Pass', ['kogane-pass'],
-  at(22, 2), 'Forested volcano east of the harbour');
 
 // The table of section 2. `at` is the plan; `drawAt` is where the outline is
 // drawn (the same unless the drawer moved it to keep outlines apart).
@@ -73,12 +70,18 @@ export const PLACES = Object.freeze([
   place('azure-riviera', 'Azure Riviera', ['azure-riviera'], at(6, -16), 'The soft south coast'),
   // Air only (section 5.2): not on the map at first, no road to trace.
   place('the-table', 'The Table', [], at(-16, -3), 'A lone mesa in the desert', {air: true}),
-  ...(featureFlags.enabled('kogane-pass') ? [KOGANE_PLACE] : []),
 ]);
 
+// Dev places (KOGANE-PASS-C5). Like Summit Run, a dev course joins the map only through an
+// option (`koganePass` in heli-jobs.js destinationsFor); with the switch off it is in no table,
+// leg, chart or logbook. Names and altitudes can still be looked up by id.
+export const KOGANE_PLACE = place('kogane-pass', 'Kogane Pass', ['kogane-pass'],
+  at(22, 2), 'Forested volcano east of the harbour');
+export const DEV_PLACES = Object.freeze([KOGANE_PLACE]);
+
 export const PLACE_IDS = Object.freeze(PLACES.map(p => p.id));
-export const placeById = id => PLACES.find(p => p.id === id) ?? null;
-export const placeOfCourse = courseId => PLACES.find(p => p.courses.includes(courseId)) ?? null;
+export const placeById = id => PLACES.find(p => p.id === id) ?? DEV_PLACES.find(p => p.id === id) ?? null;
+export const placeOfCourse = courseId => PLACES.find(p => p.courses.includes(courseId)) ?? DEV_PLACES.find(p => p.courses.includes(courseId)) ?? null;
 export const nudgeKm = p => Math.hypot(p.drawAt.x - p.at.x, p.drawAt.z - p.at.z);
 
 // ---- Fuel (section 4) --------------------------------------------------------
@@ -177,11 +180,6 @@ export const SEA_DEPTHS = Object.freeze([
 // the height they stand for, metres), lake, mesa.
 const region = (id, kind, name, points, extra = {}) => Object.freeze({id, kind, name, points, ...extra});
 export const REGIONS = Object.freeze([
-  ...(featureFlags.enabled('kogane-pass') ? [
-    region('kogane-forest', 'forest', 'Kogane forest', blob(22, 2, 2.4, 3.2, 2.6)),
-    region('kogane-volcano', 'mountain', 'Kogane volcano', blob(22, 2.6, 1.5, 1.8, 3.2), {metres: 1300}),
-    region('kogane-lake', 'lake', 'Kogane crater lake', blob(22, 2, .45, .3, .7, 16)),
-  ] : []),
   region('tremblant-valley', 'forest', 'Tremblant valley', blob(2, 3, 8, 7, 0.4)),
   region('ardennes-hills', 'forest', 'Ardennes hills', blob(9.5, 5.5, 4.6, 4, 1.7)),
   region('eifel-hills', 'forest', 'Eifel hills', blob(13.5, 10.5, 3.6, 3.4, 2.9)),
@@ -200,6 +198,12 @@ export const REGIONS = Object.freeze([
   region('lake-ardennes', 'lake', 'Ardennes mere', blob(4.4, 9.8, 1.1, 0.7, 2.2, 16)),
   region('lake-tarn', 'lake', 'High tarn', blob(-5.6, 17.4, 0.6, 0.45, 3.3, 12)),
   region('the-table-mesa', 'mesa', 'The Table', blob(-16, -3, 0.45, 0.4, 1.4, 12)),
+]);
+// Regions of the dev places, drawn only while their place is on the chart.
+export const DEV_REGIONS = Object.freeze([
+  region('kogane-forest', 'forest', 'Kogane forest', blob(22, 2, 2.4, 3.2, 2.6), {place: 'kogane-pass'}),
+  region('kogane-volcano', 'mountain', 'Kogane volcano', blob(22, 2.6, 1.5, 1.8, 3.2), {metres: 1300, place: 'kogane-pass'}),
+  region('kogane-lake', 'lake', 'Kogane crater lake', blob(22, 2, .45, .3, .7, 16), {place: 'kogane-pass'}),
 ]);
 
 // Rivers: from the high ground to the coast, [x, z] points.

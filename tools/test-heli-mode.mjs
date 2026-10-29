@@ -429,8 +429,7 @@ for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['buga
     // MAP-DESTINATIONS: the pilot's map data is a helicopter file (it does not start with heli-); the session lists a
     // course's corner names for scouting with the game's own corner detection (track-analysis.js, pure rules).
     // MAP-SECRETS: the secret signs, the Table and the map record are pure rules in map-secrets.js.
-    // KOGANE-PASS-C5: only the pilot map data may read the feature switch, to list the dev course's place.
-    ok(imports.every(spec => spec.startsWith('./heli-') || (name === 'pilot-map-data.js' && spec === '../feature-flags.js') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
+    ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
       '../course-closures.js', '../circuit-hills.js', '../medals.js', '../lessons/lesson-core.js', '../lab/lab-heli.js',
       './pilot-map-data.js', './map-secrets.js', '../track-analysis.js', '../ski/ski-session.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);

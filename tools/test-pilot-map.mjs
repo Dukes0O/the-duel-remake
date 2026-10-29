@@ -9,7 +9,7 @@ import {KESTREL} from '../src/heli/heli-flight.js';
 import {HELI_DESTINATIONS_WITH_SUMMIT, legFuelKg} from '../src/heli/heli-jobs.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {
-  PILOT_MAP, PLACES, KOGANE_PLACE, PLACE_IDS, FUEL_PADS, LEG_RULE, MAP_SHAPES, SEA_DEPTHS, REGIONS, RIVERS, MAP_ROADS,
+  PILOT_MAP, PLACES, DEV_PLACES, PLACE_IDS, FUEL_PADS, LEG_RULE, MAP_SHAPES, SEA_DEPTHS, REGIONS, RIVERS, MAP_ROADS,
   placeById, placeOfCourse, nudgeKm, fuelPadAt, mapDistanceKm, legFuelKgMap, nearestFuelPad, reachKm, placeOutline,
 } from '../src/heli/pilot-map-data.js';
 import {buildPilotMap, serialise, OUTLINE_FILE, traceCourse} from './build-pilot-map.mjs';
@@ -137,9 +137,7 @@ const generated = JSON.parse(readFileSync(OUTLINE_FILE, 'utf8'));
 {
   const fresh = buildPilotMap();
   ok(readFileSync(OUTLINE_FILE, 'utf8') === serialise(fresh), 'the generated file matches a fresh build');
-  same(Object.keys(generated.outlines), [...PLACES.filter(place => place.courses.length).map(place => place.id),
-    ...(PLACES.includes(KOGANE_PLACE) ? [] : [KOGANE_PLACE.id])],
-    'an outline for every place with a road and the hidden Kogane preview, in table order');
+  same(Object.keys(generated.outlines), [...PLACES, ...DEV_PLACES].filter(place => place.courses.length).map(place => place.id), 'an outline for every place with a road, then the dev places, in table order');
   same([generated.version, generated.sizeKm, generated.seed], [1, 1.2, 1989], 'file version, outline size and course seed');
   for (const place of PLACES.filter(place => place.courses.length)) {
     const outline = generated.outlines[place.id];

@@ -93,7 +93,7 @@ export function burnCheck({courseId, snow, forestCells, destination, water}) {
 // destination, a lake to scoop from, and a burnt look made.
 export function courseBurnCheck(course, ground, grid) {
   return burnCheck({courseId: course.def?.id, snow: !!course.def?.snowWorld, forestCells: grid.forest,
-    destination: isDestination(course.def?.id, {pilotMap: true, summitRun: true}),
+    destination: isDestination(course.def?.id, {pilotMap: true, summitRun: true, koganePass: true}),
     water: (course.def?.basins ?? []).length > 0 && typeof ground.water === 'function'});
 }
 
