@@ -85,12 +85,8 @@ if (!preview) {
       assert.ok(Number.isFinite(fitted[mark]) && Math.abs(fitted[mark] / oldTimes[mark] - 1) <= .02,
         `engine level ${level}: ${marks[mark]} mph within 2%`);
   }
-  assert.equal(assets.source(id), 'skyline-preview');
-  assert.equal(assets.status(id), 'ready');
-  const body = assets.create(id);
-  assert.equal(body.userData.vehicleKey, id);
-  assert.equal(body.userData.wheels.length, 4);
-  const {disposeTree} = await import('../src/world.js');
-  disposeTree(body);
-  console.log('Skyline config, pace, surfaces, completion, lift, field and dev-only donor: PASS');
+  // The real Skyline body (V2) replaced the 959-S stand-in; loading it, its four wheels and its parts are checked in
+  // tools/test-skyline-vehicle.mjs, so this suite checks only that the car is routed to that body.
+  assert.equal(assets.source(id), 'skyline');
+  console.log('Skyline config, pace, surfaces, completion, lift, field and body routing: PASS');
 }

@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { ROAD_SHOULDER_WIDTH } from './config.js';
 import { addCourseLandmarks } from './course-landmarks.js';
 import { addLandscapeDetail } from './landscape-detail.js';
-import { addPineTrees } from './vegetation.js';
+import { addPineTrees, usesBeeches } from './vegetation.js';
 import { addDesertCacti } from './desert-detail.js';
 import { addSceneryDetail } from './scenery-detail.js';
 import { addRaceStructures } from './race-structures.js';
@@ -336,7 +336,7 @@ function addLandscape(group,course,trackKits){
   addMountainLandscape(group,course);
   const trees=course.features.trees.filter(tree=>!rampClearsScenery(course,tree)); // DEEP-RAMP-2
   const pine=course.def.theme!=='desert';
-  if(pine)return course.def.id==='ardennes-forest'&&course.def.beech
+  if(pine)return usesBeeches(course)
     ?addPineTrees(group,trees,course,{kits:trackKits}):addPineTrees(group,trees,course);
   else return addDesertCacti(group,course);
 }

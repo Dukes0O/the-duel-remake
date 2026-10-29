@@ -99,6 +99,19 @@ export function barrierCases(course){
       ['The Spur, catch fence',1770,fenceSide(1700,1809)],
       ['Timber Straight, catch fence',named('Timber Straight').s0+60,fenceSide(named('Timber Straight').s0,named('Timber Straight').s0+140)]];
   }
+  if(course.def.id==='eifel-crown'){
+    // Like Tremblant: probe the middle of named corners. A car sliding out from near the end of a rail run
+    // passes beyond the rail's end by design, so every-nth-row sampling would test luck, not the barrier.
+    const named=name=>pieces.find(row=>row.name===name),middle=(piece,share=.5)=>piece.s0+(piece.s1-piece.s0)*share;
+    return[['First Ess, armco',middle(named('First Ess')),-named('First Ess').dir],
+      ['Second Ess, armco',middle(named('Second Ess')),-named('Second Ess').dir],
+      ['Fourth Ess, armco',middle(named('Fourth Ess')),-named('Fourth Ess').dir],
+      ['Esses Exit, armco',middle(named('Esses Exit')),-named('Esses Exit').dir],
+      ['Crag Corner, armco',middle(named('Crag Corner')),-named('Crag Corner').dir],
+      ['Castle Bend, armco',middle(named('Castle Bend')),-named('Castle Bend').dir],
+      ['Wall Left, armco',middle(named('Wall Left')),-named('Wall Left').dir],
+      ['Last Turn, tyre wall',middle(named('Last Turn'),.4),-named('Last Turn').dir]];
+  }
   const drawn=placements.filter(row=>BARRIERS.has(row.id));
   return drawn.filter((row,index)=>index%Math.max(1,Math.ceil(drawn.length/8))===0)
     .slice(0,8).map(row=>[row.id,row.s,Math.sign(row.lateral)]);

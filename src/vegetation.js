@@ -30,9 +30,13 @@ export function finishVegetationCell(mesh, key, entries) {
   return mesh;
 }
 
+// The courses whose forest mixes in beeches (`beech` on the course): the beech kit is shared.
+const BEECH_COURSES = new Set(['ardennes-forest', 'eifel-crown']);
+export const usesBeeches = course => BEECH_COURSES.has(course?.def?.id) && !!course.def.beech;
+
 // Presentation-only replacement of existing Ardennes trees; never draws simulation RNG.
 export function beechTreePlacements(course) {
-  const spec=course?.def?.id==='ardennes-forest' ? course.def.beech : null;
+  const spec=usesBeeches(course) ? course.def.beech : null;
   if (!spec) return [];
   if (!Array.isArray(spec.groves) || !spec.groves.length || spec.groves.some(grove =>
       ![grove.s,grove.reach].every(Number.isFinite) || grove.s<0 || grove.s>=course.length || grove.reach<=0) ||

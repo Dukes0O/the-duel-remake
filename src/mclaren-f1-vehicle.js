@@ -28,16 +28,18 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     damageSpace: { scale: [.9, .68, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -.97 },
   });
 
-  // A wide rounded nose and nearly level shoulders, with a short rounded tail.
-  // Unlike a racing wedge, the bonnet stays full across its centre. The cabin
-  // opening removes the deck beneath all three seats before the shell is batched.
+  // A smooth teardrop: a wide rounded nose over high front wings, a roof that
+  // runs back into a tall, full engine deck (the haunches stand higher than the
+  // doors), then a short rounded tail. Unlike a racing wedge, the bonnet stays
+  // full across its centre. The cabin opening removes the deck beneath all
+  // three seats before the shell is batched.
   sculpt(b, m.paint, [
-    [-2.12, .74, .27, .57, .60, .57], [-1.99, .88, .21, .67, .68, .64],
-    [-1.65, .97, .19, .72, .73, .68], [-1.30, .995, .18, .75, .75, .69],
-    [-.90, .98, .17, .70, .70, .69], [-.35, .94, .16, .65, .65, .68],
-    [.35, .93, .16, .64, .64, .67], [.90, .97, .17, .68, .65, .67],
-    [1.23, .99, .18, .73, .61, .65], [1.64, .94, .19, .66, .54, .65],
-    [1.94, .84, .21, .54, .48, .60], [2.12, .67, .25, .42, .40, .49],
+    [-2.12, .78, .30, .62, .66, .60], [-1.99, .90, .22, .74, .73, .64],
+    [-1.65, .98, .19, .82, .80, .66], [-1.30, .995, .18, .86, .86, .66],
+    [-.90, .98, .17, .78, .80, .66], [-.35, .94, .16, .70, .66, .68],
+    [.35, .93, .16, .68, .64, .67], [.90, .98, .17, .76, .68, .66],
+    [1.23, 1.0, .18, .82, .74, .62], [1.64, .96, .19, .74, .70, .60],
+    [1.94, .88, .21, .62, .60, .54], [2.12, .70, .25, .46, .45, .42],
   ], AXLES, .335, .335, { width: .70, y: .48, back: -.94, front: .88 });
   b.box(m.carbon, [1.36, .045, 1.76], [0, .27, -.02], [0, 0, 0], .012);
   buildCabin(b, m);
@@ -64,8 +66,8 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     }
   }
   // Restrained front mouth and thin splitter follow the road car's rounded lip.
-  b.box(m.carbon, [1.31, .085, .026], [0, .315, 2.125], [-.08, 0, 0], .025);
-  b.box(m.carbon, [1.52, .026, .15], [0, .215, 2.055], [0, 0, 0], .012);
+  b.box(m.carbon, [1.12, .07, .026], [0, .335, 2.12], [-.08, 0, 0], .03);
+  b.box(m.carbon, [1.34, .022, .12], [0, .225, 2.06], [0, 0, 0], .012);
   b.box(m.carbon, [1.32, .17, .018], [0, .435, -2.122], [0, 0, 0], .02);
   b.box(m.plate, [.40, .10, .009], [0, .46, -2.137], [0, 0, 0], .004);
   b.box(m.carbon, [1.48, .035, .24], [0, .20, -1.99], [.06, 0, 0], .01);
@@ -82,7 +84,7 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
 // The three-seat cabin is a solid painted roof with four bounded glass panes.
 // The old continuous bubble shell is removed: no glazing remains under the roof.
 const CABIN = [
-  [-1.02, .32, .72, .77], [-.80, .55, .69, .97], [-.46, .66, .66, 1.06],
+  [-1.02, .34, .78, .84], [-.80, .55, .72, .98], [-.46, .66, .66, 1.06],
   [-.12, .70, .65, 1.08], [.23, .69, .65, 1.07], [.57, .62, .65, .97], [.90, .45, .65, .68],
 ];
 const ROOF_EDGE = Math.PI * .18, ROOF_BACK = -.64, ROOF_FRONT = .30;
@@ -158,8 +160,8 @@ function fittedDetails(vehicle, m) {
       const y = surfaceY(side * x, z);
       if (y === undefined) continue;
       const rotation = [.78, 0, 0], center = [side * x, y + .018, z];
-      cylinder(b, m.darkAlloy, .033, .016, center, rotation, 20);
-      cylinder(b, m.headlight, .024, .010, [side * x, y + .030, z + .013], rotation, 20);
+      cylinder(b, m.darkAlloy, .046, .016, center, rotation, 24);
+      cylinder(b, m.headlight, .029, .010, [side * x, y + .030, z + .013], rotation, 24);
     }
     // Triangular lower side intake and an inset mesh-like secondary triangle.
     patch([[.31, -.48], [.31, -1.04], [.56, -.95]], 'side', side);

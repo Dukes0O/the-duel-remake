@@ -12,6 +12,12 @@ import {GRAND_PRIX_COURSES} from '../src/grand-prix-career.js';
 import {driveCircuit} from './track-script-drive.mjs';
 import {traceCourse, buildPilotMap} from './build-pilot-map.mjs';
 import {installReferenceFixture} from './build-reference-laps.mjs';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createTrackKits, normalizeKitPlacements} from '../src/track-kits.js';
+import {KIT_FOOTPRINTS} from '../src/kit-footprints.js';
+import {beechTreePlacements} from '../src/vegetation.js';
 
 const road = buildTrackScript(EIFEL_CROWN);
 const named = name => road.pieces.find(piece => piece.name === name);
@@ -123,4 +129,109 @@ test('one native lap stays on the road without crashes on Casual and Pro', () =>
     if (storage) Object.defineProperty(globalThis, 'localStorage', storage);
     else delete globalThis.localStorage;
   }
+});
+
+// ---------------------------------------------------------------------------
+// C4 scenery, round 1
+
+const KITS = new URL('../public/assets/models/circuits/kits/', import.meta.url);
+const scenery = new Course(EIFEL_CROWN, 1989);
+const placements = EIFEL_CROWN.kitPlacements;
+
+test('the new wall and hedge are original recipe output inside their triangle and file budgets', () => {
+  const budgets = {'drystone-wall': [600, 200], 'hedge-row': [500, 200]};
+  const models = JSON.parse(readFileSync(new URL('./blender/eifel/scenery.json', import.meta.url), 'utf8')).models;
+  assert.deepEqual(models.map(model => model.id), Object.keys(budgets));
+  for (const model of models) for (const [i, file] of model.files.entries()) {
+    const bytes = readFileSync(new URL(file.path, KITS));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path + ' is the recipe output');
+    const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString('utf8'));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices ?? primitive.attributes.POSITION].count / 3, 0);
+    assert.equal(triangles, file.triangles);
+    assert.ok(triangles > 0 && triangles <= budgets[model.id][i], `${file.path}: triangle cap ${budgets[model.id][i]}`);
+    assert.ok(file.bytes < 250000, `${file.path}: file budget`);
+  }
+  for (const id of Object.keys(budgets)) {
+    const high = models.find(model => model.id === id).files[0].size;
+    for (const [i, key] of ['width', 'height', 'depth'].entries())
+      assert.ok(Math.abs(high[i] - KIT_FOOTPRINTS[id][key]) < .02, `${id} ${key} matches its solid box`);
+  }
+});
+
+test('every scenery row uses an approved kit, stays off the road and run-off, and leaves corner exits open', () => {
+  const allowed = new Set(['start-gantry', 'pit-garage', 'grandstand', 'armco', 'tyre-wall', 'marshal-post',
+    'braking-board-150', 'braking-board-100', 'braking-board-50', 'drystone-wall', 'hedge-row']);
+  assert.ok(placements.every(row => allowed.has(row.id)));
+  assert.equal(normalizeKitPlacements(scenery, placements).length, placements.length);
+  for (const row of placements.filter(row => ['armco', 'tyre-wall', 'drystone-wall', 'hedge-row'].includes(row.id))) {
+    // The run-off is 12 m: no rail, wall or hedge starts inside it (marshals and boards have their own checks).
+    const inner = Math.abs(row.lateral) - road.halfWidthAt(row.s) - KIT_FOOTPRINTS[row.id].depth / 2;
+    assert.ok(inner >= 12, `${row.id} at s ${row.s.toFixed(0)}: ${inner.toFixed(2)} m from the edge`);
+    assert.equal(row.solid, true);
+  }
+  for (const row of placements.filter(row => ['drystone-wall', 'hedge-row'].includes(row.id) && row.heading !== 0)) {
+    const piece = road.pieceAt(row.s);
+    assert.ok(piece.kind !== 'turn' || piece.radius >= 150 || Math.sign(row.lateral) !== piece.dir,
+      `${row.id} at s ${row.s.toFixed(0)} is not on the inside of a tight corner`);
+  }
+  // Every armco row is on the outside of a corner; the three long bends stay open.
+  for (const row of placements.filter(row => row.id === 'armco')) {
+    const near = road.pieces.filter(piece => piece.kind === 'turn' && piece.radius < 150 &&
+      row.s >= piece.s0 - 16 && row.s <= piece.s1 + 56 && Math.sign(row.lateral) === -piece.dir);
+    assert.ok(near.length, `armco at s ${row.s.toFixed(0)} follows a corner outside`);
+  }
+  const wide = ['Start Kink', 'Hatch Sweep', 'Valley Brow'].map(named);
+  for (const piece of wide) assert.ok(!placements.some(row => row.id === 'armco' && row.s > piece.s0 + 10 && row.s < piece.s1 - 10 &&
+    road.pieceAt(row.s) === piece), piece.name + ' has no rail of its own');
+});
+
+test('the kits load from their real files and pass every triangle clearance rule', async () => {
+  // The model reader looks for `self` (the browser's global); give it ours for this test only.
+  const hadSelf = Object.getOwnPropertyDescriptor(globalThis, 'self');
+  globalThis.self ??= globalThis;
+  const loader = new GLTFLoader();
+  const owner = createTrackKits(scenery, {loadAsset: async path => {
+    const bytes = readFileSync(new URL('../public' + path, import.meta.url));
+    return loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+  }});
+  try {
+    assert.equal(await owner.ready, true, owner.error?.message);
+    const beeches = beechTreePlacements(scenery).length;
+    assert.equal(owner.placements.length, placements.length + beeches);
+    assert.equal(owner.stats.clearance.runtimeSkipped, 0, 'no clearance exemption');
+  } finally {
+    owner.dispose();
+    if (hadSelf) Object.defineProperty(globalThis, 'self', hadSelf); else delete globalThis.self;
+  }
+});
+
+test('green and white kerbs, dark wet road, dull beech leaves and mixed forest are set; C5 rooms and the ridge meadows stay open', () => {
+  assert.deepEqual(EIFEL_CROWN.kerbColours, [0x2f6b3c, 0xe8e6df]);
+  assert.equal(EXPANSION_COURSES.find(row => row.id === 'eifel-crown').kerbColours, undefined);
+  assert.equal(EIFEL_CROWN.effects.valleyMist.length, 4);
+  assert.ok(EIFEL_CROWN.dampRoad.dampRoughness < EIFEL_CROWN.dampRoad.dryRoughness);
+  const beeches = beechTreePlacements(scenery);
+  assert.ok(beeches.length >= 150 && beeches.length <= 450, `beech count ${beeches.length}`);
+  for (const row of beeches) assert.ok(Math.abs(row.lateral) >= road.halfWidthAt(row.s) + EIFEL_CROWN.scenery.forest.from, 'beeches stand in the wood, not on the run-off');
+  assert.equal(EIFEL_CROWN.kitLook['ardennes-beech'].leafColour, 0x66755c);
+  assert.ok(EIFEL_CROWN.groundLeaves.verge.from < EIFEL_CROWN.groundLeaves.verge.to);
+  // The wood stands right behind the verge: spruce within 20 m of the road edge, and beech among it.
+  const close = scenery.features.trees.filter(tree => !tree.farForest && Math.abs(tree.off) - road.halfWidthAt(tree.s) < 20);
+  assert.ok(close.length > 700, `trees in the first 20 m: ${close.length}`);
+  assert.ok(close.every(tree => Math.abs(tree.off) - road.halfWidthAt(tree.s) >= 12), 'nothing inside the run-off');
+  assert.ok(beeches.some(row => Math.abs(row.lateral) - road.halfWidthAt(row.s) < 24), 'beech among the front rows');
+  const near = scenery.features.trees.filter(tree => !tree.farForest).length;
+  const far = scenery.features.trees.filter(tree => tree.farForest).length;
+  assert.ok(near > 3000 && near <= 9000, `near trees ${near}`);
+  assert.ok(far <= 5000, `far trees ${far}`);
+  // Nothing planted in the rooms kept for the castle, village and reservoir (C5), nor the ridge meadows.
+  const rooms = [
+    [named('Castle Bend').s1 - 40, named('Wall Left').s1 + 40, -260, -90],
+    [named('Castle Bend').s1 + 60, named('Beech Right').s0 + 80, -64, -12],
+    [named('Reservoir Right').s0 - 120, named('Reservoir Right').s1 + 110, -260, -80],
+    [named('Crown Climb').s0 - 30, named('Ridge Top').s1 + 30, -44, 44],
+  ];
+  for (const tree of scenery.features.trees) for (const [s0, s1, from, to] of rooms)
+    assert.ok(!(tree.s >= s0 && tree.s <= s1 && tree.off >= from && tree.off <= to), `tree ${tree.id} stands in a kept-open room`);
 });

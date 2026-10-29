@@ -118,7 +118,7 @@ function scatterScenery(course) {
     const p = course.groundAt(s, off), o = { id, kind, s: course.phase(s), off, x: p.x, y: p.y, z: p.z, heading: p.heading + angle, halfX, halfZ, shape: 'box', theme: course.themeAt(s), ...extra };
     f.obstacles.push(o); return o;
   };
-  const roadClear = (s, off, radius = 0, margin = 2) => {
+  const roadClear = (s, off, radius = 0, margin = 2, insideOpen = 30) => {
     if (course.pitLane && s >= course.pitLane.entry - 8 && s <= course.pitLane.exit + 8 &&
       Math.abs(off - course.pitLane.offsetAt(s)) < course.pitLane.width / 2 + radius + margin + 4) return false;
     const p = course.worldAt(s, off), n = course.nearest(p.x, p.z), width = course.roadHalfWidthAt(n.s);
@@ -126,7 +126,7 @@ function scatterScenery(course) {
     if (n.distance < width + room + radius + margin) return false;
     // Keep the inside of every corner open so the exit can be seen.
     const piece = script.pieceAt(n.s);
-    if (piece.kind === 'turn' && side === piece.dir && n.distance < width + 30 + radius) return false;
+    if (piece.kind === 'turn' && side === piece.dir && n.distance < width + insideOpen + radius) return false;
     // Nor in the water of a basin.
     if ((course.def.basins ?? []).some(basin => basinReach(basin, course.phase(n.s) - basin.s, n.lateral - basin.lateral) < 1.15)) return false;
     // Nor on a run-off road or its walls.
@@ -233,7 +233,9 @@ function scatterScenery(course) {
       const phase = course.phase(s);
       return zones.some(zone => phase >= zone.s0 - radius && phase <= zone.s1 + radius && off >= zone.from - radius && off <= zone.to + radius);
     };
-    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9 } = band;
+    // `crowd` (default 3.2) is how many crown widths apart planted trees keep; `insideOpen` (default 30) how many metres
+    // of the inside of a corner stay free for the exit.
+    const { from = 13, to = 30, spacing = 6, rows = 3, thin = .35, scale: scaleRange, clumps, jitter = .9, crowd: crowding = 3.2, insideOpen = 30 } = band;
     const authoredRanges=band.ranges;
     if(authoredRanges&&(!Array.isArray(authoredRanges)||!authoredRanges.length||authoredRanges.some(range=>
       !Number.isFinite(range.from)||!Number.isFinite(range.to)||range.from<0||range.to>course.length||range.to<=range.from)))
@@ -325,7 +327,7 @@ function scatterScenery(course) {
         if (grove < clumps.cut) continue;
         scale *= 1 + (clumps.size ?? 0) * (grove - .5);
       }
-      if (!roadClear(s, off, 0, 1) || cleared(s, off, 2.5 * scale) || zones.length && ownClear(s, off, 2.5 * scale)) continue;
+      if (!roadClear(s, off, 0, 1, insideOpen) || cleared(s, off, 2.5 * scale) || zones.length && ownClear(s, off, 2.5 * scale)) continue;
       const p = course.groundAt(s, off);
       // A far band reaches across to other stretches of the circuit, so it is
       // also measured from the nearest road: at least `from` beyond its edge,
@@ -335,7 +337,7 @@ function scatterScenery(course) {
         if (n.distance - course.roadHalfWidthAt(n.s) < from || cleared(n.s, n.lateral, 2.5 * scale) ||
           zones.length && ownClear(n.s, n.lateral, 2.5 * scale)) continue;
       }
-      if (crowded(p.x, p.z, 3.2 * scale)) continue;
+      if (crowded(p.x, p.z, crowding * scale)) continue;
       claim(p.x, p.z);
       const tree = add(`${prefix}-${serial++}`, 'tree', s, off, .23 * scale, .23 * scale, random.range(0, TAU), { scale });
       if (drawnGround) { tree.y = renderedGroundHeight(course, tree); tree.farForest = true; }

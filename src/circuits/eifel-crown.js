@@ -52,23 +52,177 @@ const roadDefinition = defineScriptedCourse({
 });
 
 const road = buildTrackScript(roadDefinition);
+const named = name => road.pieces.find(piece => piece.name === name);
+const wrap = s => ((s % road.length) + road.length) % road.length;
+const row = (id, s, lateral, extra = {}) => Object.freeze({id, s: wrap(s), lateral, ...extra});
+// A piece lying along the road faces it: -PI/2 on the left (positive lateral), PI/2 on the right.
+const facing = side => side > 0 ? -Math.PI / 2 : Math.PI / 2;
+const edge = (s, out) => road.halfWidthAt(wrap(s)) + out;
+
 // The script's automatic boards are for radii under 40 m. These three named
 // braking corners need their own existing kits, on the outside of the road.
 const boards = ['Crag Corner', 'Castle Bend', 'Last Turn'].flatMap(name => {
-  const corner = road.pieces.find(piece => piece.name === name);
+  const corner = named(name);
   return [150, 100, 50].map(distance => Object.freeze({
     id: `braking-board-${distance}`, s: road.phase(corner.s0 - distance),
     lateral: -corner.dir * (road.halfWidthAt(corner.s0 - distance) + 2.4), heading: Math.PI,
   }));
 });
 
+// ---------------------------------------------------------------------------
+// C4 scenery, round 1 (docs/courses/eifel-crown.md sections 1, 8 and 10).
+// Left is positive lateral. Nothing below stands on the road, inside its 12 m
+// run-off, or on the inside of a corner where it would hide the exit.
+// C5 builds the castle (outside Wall Left), the village (Village Street) and the
+// reservoir (inside Reservoir Right); their ground is kept clear in `clear`.
+
+// A short paddock: gantry on the line, garages on the right, a few stands on the left.
+// The lodge goes on the left beyond the stands (C5), in the open ground cleared there.
+function paddock() {
+  const out = [row('start-gantry', 0, 0, {heading: Math.PI})];
+  for (let s = -50; s < 22; s += 7.5) out.push(row('pit-garage', s, -edge(s, 20), {heading: Math.PI / 2, solid: true}));
+  for (let s = -45; s < 5; s += 15) out.push(row('grandstand', s, edge(s, 24), {heading: -Math.PI / 2, solid: true, crowd: true}));
+  return out;
+}
+
+// Armco on the outside of every corner tighter than a 150 m radius, just beyond the 12 m run-off, from
+// 16 m before the corner to 56 m past it, so a car that slides wide at the exit still meets the rail.
+// Rails of neighbouring corners on the same side join into one run. The long, gentle bends (Start Kink,
+// Hatch Sweep, Valley Brow) stay open, and Last Turn has its tyre wall and marshals instead.
+function safety() {
+  const out = [], runs = {[-1]: [], 1: []};
+  for (const piece of road.pieces.filter(item => item.kind === 'turn' && item.radius < 150 && item.name !== 'Last Turn'))
+    runs[-piece.dir].push([piece.s0 - 16, piece.s1 + 56]);
+  for (const side of [-1, 1]) {
+    const merged = [];
+    for (const [from, to] of runs[side].sort((a, b) => a[0] - b[0])) {
+      if (merged.length && from <= merged.at(-1)[1]) merged.at(-1)[1] = Math.max(merged.at(-1)[1], to);
+      else merged.push([from, to]);
+    }
+    for (const [from, to] of merged)
+      for (let s = Math.ceil(from / 4) * 4; s < to; s += 4)
+        out.push(row('armco', s, side * edge(s, 12.8), {heading: facing(side), solid: true}));
+  }
+  const last = named('Last Turn'), side = -last.dir;
+  for (let s = last.s0 - 12; s < last.s1 + 4; s += 4)
+    out.push(row('tyre-wall', s, side * edge(s, 12.8), {heading: facing(side), solid: true}));
+  for (const at of [last.s0 + 14, last.s0 + 120])
+    out.push(row('marshal-post', at, side * edge(at, 15.5), {heading: facing(side), solid: true}));
+  return out;
+}
+
+// Field edges. A drystone wall (1.2 m) or a clipped hedge (1.8 m) runs 17 m beyond the road
+// edge, with a gateway every so often. Neither is built on the inside of a tight corner, where
+// the hedge would hide the way out. Cross walls divide the meadow into fields.
+const FIELD_OFFSET = 17;
+function fieldLine(id, from, to, side, {out = FIELD_OFFSET, gapEvery = 0, gapLength = 8} = {}) {
+  const rows = [];
+  for (let s = from; s < to; s += 4) {
+    if (gapEvery && (s - from) % gapEvery < gapLength) continue;
+    const piece = road.pieceAt(wrap(s));
+    if (piece.kind === 'turn' && side === piece.dir && piece.radius < 150) continue;
+    rows.push(row(id, s, side * edge(s, out), {heading: facing(side), solid: true}));
+  }
+  return rows;
+}
+function crossLine(id, at, side, {from = FIELD_OFFSET, to = 56} = {}) {
+  const rows = [];
+  for (let out = from + 2; out < to; out += 4) rows.push(row(id, at, side * edge(at, out), {heading: 0, solid: true}));
+  return rows;
+}
+function fields() {
+  const wall = 'drystone-wall', hedge = 'hedge-row', out = [];
+  const ridge = [named('Crown Climb').s0 + 10, named('Ridge Top').s1 - 10];
+  const street = [named('Wall Left').s0 + 70, named('Beech Right').s0 + 40];
+  const hatch = [named('Hatch Sweep').s0 - 10, named('Pine Right').s0 - 14];
+  const middleRidge = (ridge[0] + ridge[1]) / 2;
+  // Crown ridge: wall on the left with a hedge behind it, hedge then wall on the right.
+  out.push(...fieldLine(wall, ridge[0], ridge[1], 1, {gapEvery: 96}),
+    ...fieldLine(hedge, ridge[0], ridge[1], 1, {out: FIELD_OFFSET + .95, gapEvery: 96}),
+    ...fieldLine(hedge, ridge[0], middleRidge, -1, {gapEvery: 128}),
+    ...fieldLine(wall, middleRidge, ridge[1], -1, {gapEvery: 128}));
+  for (const [i, at] of [ridge[0] + 70, ridge[0] + 190, ridge[0] + 310].entries()) out.push(...crossLine(wall, at, i % 2 ? 1 : -1));
+  for (const [i, at] of [ridge[0] + 130, ridge[0] + 250].entries()) out.push(...crossLine(hedge, at, i % 2 ? -1 : 1, {to: 50}));
+  // Village Street: the field side is the left; the right is kept open for the village (C5).
+  out.push(...fieldLine(wall, street[0], street[1], 1, {gapEvery: 90}),
+    ...fieldLine(hedge, street[0], street[1], 1, {out: FIELD_OFFSET + .95, gapEvery: 90}));
+  for (const at of [street[0] + 40, street[0] + 130]) out.push(...crossLine(wall, at, 1));
+  // Hatch Sweep to the Ridge Straight: both sides in turn.
+  const middle = (hatch[0] + hatch[1]) / 2;
+  out.push(...fieldLine(hedge, hatch[0], middle, 1, {gapEvery: 110}), ...fieldLine(wall, middle, hatch[1], 1, {gapEvery: 110}),
+    ...fieldLine(wall, hatch[0], middle, -1, {gapEvery: 110}), ...fieldLine(hedge, middle, hatch[1], -1, {gapEvery: 110}));
+  for (const [i, at] of [hatch[0] + 60, hatch[0] + 150, hatch[0] + 230, hatch[0] + 310, hatch[0] + 400].entries())
+    out.push(...crossLine(i % 2 ? wall : hedge, at, i % 2 ? 1 : -1, {to: 50}));
+  return out;
+}
+
+// Beeches stand among the spruce in the groves below, from the first row of the wood outward.
+const BEECH_GROVES = [['Spruce Bend', .5], ['First Ess', .6], ['Third Ess', .5], ['Forest Dip', .5],
+  ['Crag Corner', .6], ['Pine Right', .5], ['Valley Brow', .3]];
+
 export const EIFEL_CROWN = Object.freeze({
   ...roadDefinition,
-  scenery: Object.freeze({trees: 800, rocks: 80, mountains: false,
-    forest: Object.freeze({from: 23, to: 60, spacing: 3.8, rows: 7, thin: .12,
-      scale: Object.freeze([1.1, 2]), jitter: .8}),
+  // Green and white kerbs (src/track-script-scene.js `kerbColours`).
+  kerbColours: Object.freeze([0x2f6b3c, 0xe8e6df]),
+  // Valley mist in the low places and a dark, damp road under the trees (the existing Ardennes presentation).
+  effects: Object.freeze({
+    valleyMist: Object.freeze([
+      Object.freeze({s: named('Forest Dip').s0 + 30, lateral: 40, along: 90, across: 26, count: 12, height: 2, opacity: .2, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Village Street').s0 + 60, lateral: 46, along: 100, across: 24, count: 10, height: 2, opacity: .1, colour: 0xd1ddda, fadeEnd: 1}),
+      Object.freeze({s: named('Reservoir Right').s0 + 60, lateral: 46, along: 110, across: 26, count: 12, height: 2.5, opacity: .18, colour: 0xd9e3e0, fadeEnd: 1}),
+      Object.freeze({s: named('Esses Exit').s1 + 60, lateral: -44, along: 90, across: 24, count: 10, height: 18, opacity: .14, colour: 0xe4e9e7, fadeEnd: 1}),
+    ]),
   }),
-  kitPlacements: Object.freeze(boards),
+  wetRoad: Object.freeze({performanceShare: .5}),
+  dampRoad: Object.freeze({colour: 0x6e6e6c, dryRoughness: .9, dampRoughness: .84, mist: true,
+    shadeRanges: Object.freeze([['Third Ess', 'Fourth Ess'], ['Pine Right', 'Valley Brow']].map(([from, to]) =>
+      Object.freeze({from: named(from).s0, to: named(to).s1})))}),
+  // The beech kit shared with Ardennes, mixed into the wooded slopes.
+  beech: Object.freeze({scales: Object.freeze([.9, 1, 1.1]), setback: 0,
+    groves: Object.freeze(BEECH_GROVES.map(([name, fraction]) => {
+      const piece = named(name);
+      return Object.freeze({s: piece.s0 + (piece.s1 - piece.s0) * fraction, reach: 20});
+    }))}),
+  // The duller green of beech leaves under a grey sky (the kit's leaf material, tinted).
+  kitLook: Object.freeze({'ardennes-beech': Object.freeze({leafColour: 0x66755c})}),
+  scenery: Object.freeze({trees: 500, rocks: 80, mountains: false,
+    // Dense dark spruce right behind the verge: the first row stands 14 m past the edge, just
+    // beyond the 12 m run-off, and the wood is seven rows deep, crowns touching.
+    forest: Object.freeze({from: 14, to: 38, spacing: 3, rows: 7, thin: .05,
+      scale: Object.freeze([1, 1.8]), jitter: .8, crowd: 2.2, insideOpen: 22}),
+    // Wooded hills beyond, in broad groves with little meadow between them.
+    farForest: Object.freeze({from: 60, to: 340, thin: .3, scale: Object.freeze([1.4, 2.6]), jitter: .8,
+      groves: Object.freeze({every: 24, chance: .5, radius: Object.freeze([30, 56]), spacing: 8, crowd: 1.5, size: .3,
+        lone: 5, minGrove: 6, rise: 6})}),
+    clear: Object.freeze([
+      // The start: paddock, grid and the lodge's meadow (C5).
+      Object.freeze({s0: 0, s1: 150, from: -60, to: 55}),
+      Object.freeze({s0: 150, s1: 300, from: 12, to: 55}),
+      Object.freeze({s0: road.length - 110, s1: road.length, from: -60, to: 55}),
+      // The ridge meadows: the forest opens out to 44 m on both sides and stands behind the field
+      // boundaries; the far hills stay wooded.
+      Object.freeze({s0: named('Crown Climb').s0 - 30, s1: named('Ridge Top').s1 + 30, from: -44, to: 44}),
+      Object.freeze({s0: named('Hatch Sweep').s0 - 30, s1: named('Pine Right').s0 - 8, from: -44, to: 44}),
+      // C5 rooms: the castle crag outside Wall Left, the village on the right of Village Street,
+      // the field side of Village Street, and the reservoir inside Reservoir Right.
+      Object.freeze({s0: named('Castle Bend').s1 - 40, s1: named('Wall Left').s1 + 40, from: -260, to: -90}),
+      Object.freeze({s0: named('Castle Bend').s1 + 60, s1: named('Beech Right').s0 + 80, from: -64, to: -12}),
+      Object.freeze({s0: named('Wall Left').s0 + 40, s1: named('Beech Right').s0 + 80, from: 12, to: 64}),
+      Object.freeze({s0: named('Reservoir Right').s0 - 120, s1: named('Reservoir Right').s1 + 110, from: -260, to: -80}),
+    ]),
+  }),
+  // The ground reads darker and damper than the generic green: a cool wash beyond the verge,
+  // and a dark meadow tint beside each corner (colour only).
+  groundLeaves: Object.freeze({strength: .55, reach: 70, far: .6,
+    // Patches of lighter hay and darker damp grass break up the meadows.
+    colours: Object.freeze([Object.freeze([1.12, 1.06, .8]), Object.freeze([.86, .96, .8]), Object.freeze([1.04, 1.1, .84]),
+      Object.freeze([.8, .9, .76])]),
+    // Where a roadside ditch would run: a dark, wet strip of grass between the run-off and the trees.
+    verge: Object.freeze({colour: Object.freeze([.6, .74, .56]), from: 3, to: 12, fade: 4}),
+    wood: Object.freeze({green: Object.freeze([.84, .95, .78]), colours: Object.freeze([Object.freeze([.84, .95, .78])]), share: .02, from: -50}),
+    gravel: Object.freeze({colour: Object.freeze([.64, .61, .54]), width: 12, fade: 8, ends: 24,
+      grass: Object.freeze([.78, .92, .72]), to: 55})}),
+  kitPlacements: Object.freeze([...paddock(), ...safety(), ...boards, ...fields()]),
 });
 
 export const manifest = Object.freeze({
