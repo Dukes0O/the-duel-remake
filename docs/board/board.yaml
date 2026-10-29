@@ -409,7 +409,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "in-progress"
     needs: []
     locks: []
     details: "docs/board/cards/KOGANE-PASS-C3.md"
