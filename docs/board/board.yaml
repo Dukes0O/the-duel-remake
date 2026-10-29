@@ -389,7 +389,7 @@ tasks:
     owner: "claude"
     lane: "OPS"
     size: "S"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: [release]
     details: "docs/board/cards/KOGANE-PASS-C7.md"
