@@ -1461,3 +1461,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged STORY-KOGANE-LINES (STORY-KOGANE-LINES merged (lane 25/25, build ok)).
 - 28 Oct night: merged STORY-KOGANE-SAVE (STORY-KOGANE-SAVE merged (lane 200/200, fixtures 24, build ok, save review approve)).
 - 28 Oct night: merged STORY-KOGANE-LESSON (STORY-KOGANE-LESSON merged (lane 34/34, every-car 28/28, build ok)).
+- 28 Oct night: merged STORY-CAPTION-TWO-HAIRPINS (STORY-CAPTION-TWO-HAIRPINS merged (lane 22/22, build ok)).
