@@ -1,11 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-// Kogane Pass is behind its dev switch, so the QA switch turns it on before the course list is built.
-Object.defineProperty(globalThis, '__DUEL_QA__', {configurable: true, value: true});
-Object.defineProperty(globalThis, 'location', {configurable: true, value: {search: '?flags=kogane-pass'}});
-const {CARS} = await import('../src/config.js');
-const {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS,
-  DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M, INSTRUCTOR_PACE, MAX_INSTRUCTOR_TRIES} = await import('../src/lessons/drive-lessons.js');
+import './qa-kogane-switch.mjs';
+import {CARS} from '../src/config.js';
+import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS,
+  DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M, INSTRUCTOR_PACE, MAX_INSTRUCTOR_TRIES} from '../src/lessons/drive-lessons.js';
 
 // Lane gates alternate the starter and the fastest road car across lesson roads.
 // Every lesson and road keeps both difficulties. Full and direct runs keep all cars.
