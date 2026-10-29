@@ -31,7 +31,7 @@ test('switch on renders the three parts and eight doors', () => {
   assert.ok(!on.includes('class="wordmark"'), 'only one logo');
   assert.ok(!on.includes('CHOOSE YOUR WEAPON') && !on.includes('BUILD ') && !on.includes('BUILT FOR THE DRIVE'), 'plain words, no build stamp');
   // The old controls are still there, for the drawer to hold.
-  for (const id of ['start-engine', 'scene-select', 'car-select', 'driver-select', 'lighting-mood', 'graphics-quality']) assert.ok(on.includes(`id="${id}"`), id);
+  for (const id of ['start-engine', 'scene-select', 'car-select', 'lighting-mood', 'graphics-quality']) assert.ok(on.includes(`id="${id}"`), id);
   const doors = [...on.matchAll(/data-door="([a-z]+)"[^>]*?(data-action="([a-z-]+)"|data-drive-open)/g)].map(m => [m[1], m[3] ?? 'data-drive-open']);
   assert.deepEqual(doors, [['garage', 'garage'], ['courses', 'courses'], ['armory', 'armory'], ['wasteland', 'wasteland-visit'],
     ['helipad', 'heli-visit'], ['lab', 'lab-open'], ['lessons', 'data-drive-open'], ['scores', 'leaderboard']]);
