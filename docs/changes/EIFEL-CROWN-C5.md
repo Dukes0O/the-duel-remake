@@ -136,3 +136,7 @@ Round 1 checks (superseded by Round 2 checks above). Jobs 2, one browser run at 
 
 Nothing replaced yet: the old Eifel scenery stays with the released entry until C7. Scratch captures, test
 copies, `.qa-dist`, `dist` and `.evidence` made here are deleted at the end. No blend files, no backup copies.
+
+## Claude's review (28 October 2026, night)
+
+Accepted on round 2 pictures (Claude, look judge): castle keep and cliffs above the treeline from the ridge; clustered village with gardens and spire; lodge. Polish for C6: reservoir reads small, roofs lean blue, foothill dome. Code (independent review): new kits castle, lodge, dam, shore-rock; half-timber house style; optional water.ripple with default 1 so other courses are unchanged; fire-ready with the reservoir. Changed assertions (rule 18): kit ids to 58 for new kits; Eifel test rooms follow the new landmarks with added checks; audio pins leave out only the new Eifel bed and bell; burnt-look list adds eifel-crown; hygiene sheet name. Nothing loosened; other courses' signatures exact.
