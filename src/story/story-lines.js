@@ -22,7 +22,7 @@ const line = (who, where, text) => Object.freeze({who, where, text, captionOnly:
 // Section 6.1. Ids are the contract of section 12.1 (`story.kogane.*`).
 export const STORY_CAPTIONS = Object.freeze({
   'story.kogane.brian.intro': line('Brian', 'A note on the lesson\'s opening card (text only, so it does not talk over his recorded intro)',
-    'Daichi Mori sent word. His road has four hairpins, and the brake boards are your friends. We will learn three of them first, while there is still some light.'),
+    'Daichi Mori sent word. His road has four hairpins, and the brake boards are your friends. We will learn two of them first, while there is still some light.'),
   'story.kogane.brian.pass': line('Brian', 'After the Kogane lesson is passed',
     'That was clean. Daichi will be pleased. Tell Roger at the helipad you are ready, because the tea house needs a delivery.'),
   'story.kogane.roger.offer': line('Roger, the dispatcher', 'The text on the pinned job; also shown as a caption when you take it',
