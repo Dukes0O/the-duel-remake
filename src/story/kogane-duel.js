@@ -5,8 +5,9 @@ import {KOGANE_SKYLINE, KOGANE_DUEL_LEVELS, storyOf, storyIsNewer, markKoganeDue
 export const KOGANE_DUEL_MARK = 'kogane-night-duel';
 // The Night version of Kogane Pass (KOGANE-PASS-C7). Only a race on this road can grant.
 export const KOGANE_DUEL_COURSE = 'kogane-pass-night';
-// Easy: untuned Skyline. Medium: tuning level 1 of 3. Hard: level 2. Full tuning is never used.
-export const DAICHI_UPGRADE_LEVEL = Object.freeze({easy: 0, medium: 1, hard: 2});
+// Easy: untuned Skyline. Medium: tuning level 2 of 3. Hard: untuned. Full tuning is never used. These are the levels the 30-duel
+// runs of tools/test-story-kogane-duel.mjs settled on (the packet's first guess was 0, 1, 2); the change note has the numbers.
+export const DAICHI_UPGRADE_LEVEL = Object.freeze({easy: 0, medium: 2, hard: 0});
 
 // The rival settings the game already has (`startCampaign({rival})`). Club driver: no skill bonus.
 export function daichiRival(level) {
