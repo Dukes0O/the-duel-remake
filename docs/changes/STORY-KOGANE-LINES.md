@@ -41,7 +41,7 @@ that. No new sound and no new dependency.
   recorded driving and helicopter lines, the radio keys on then shows then keys
   off then hides in order, and always keys off on leave, pause, stop, mute and
   dispose.
-- Lane tier and build: see the last section.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`): 25 suites passed, 0 failed, including the new one. `npm run build`: built. No assertion was changed.
 
 ## Left for later cards
 
