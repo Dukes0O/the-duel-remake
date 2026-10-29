@@ -1452,3 +1452,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V3 (lane 54/55 then hygiene fix; Skyline vehicle 329 and handling, vehicle-assets, earned-cars-ui, build rerun by Claude after the node_modules repair and the hygiene merge).
 - 28 Oct night: merged QA-MAP-FINISH-TABLE (map-finish passes; lane 21/21, build on 629e3204).
 - 28 Oct night: merged KOGANE-PASS-C3 (lane tier, build, drive-through pass on eabc71a0; 30 seeds: Easy 70%, Medium 33%, Hard 10% test-driver wins, 30/30 computers home).
+- 28 Oct night: merged KOGANE-PASS-C6 (lane 183/183, course test, test-circuits switch on and off, drive-through, world composition, ground rows, build, kogane-finish scenario pass on d309e8da).
