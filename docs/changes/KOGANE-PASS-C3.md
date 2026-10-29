@@ -161,3 +161,7 @@ Nothing in the game was replaced. Lane-only probes, logs and build output
 (`.qa-dist`, `dist`) were permanently deleted with `Remove-Item` under Kyle's
 28 October disk rule. Nothing outside the lane changed. Cockpit sync was not
 run.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review, rule 18 written review). Course-only pace and driver fields; no shared file. Changed assertions in the C3 diagnostic Codex added tonight: own computer crashes at most 3 per 30 races (Claude's brief: 1 per 10), with the test driver's rams counted apart; passes as a mean of 3 on Medium as on other courses; the reference time is the clear-road solo run. Medium and Hard at the low end of their bands; tune again after Claude drives it. Open: wall-left-511 blocks the road at a hairpin with the switch on (C4 scenery fault), fixed in its own lane before release.
