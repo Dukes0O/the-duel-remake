@@ -67,7 +67,7 @@ export function createBurntLook({THREE, scene, load = defaultLoad}) {
     if (!sets.has(courseId)) {
       const set = {status: 'loading', props: null, textures: new Map(), parts: new Map(), materials: new Map()};
       sets.set(courseId, set);
-      const dir = `${BURNT_ASSET_DIR}${courseId}/`;
+      const dir = `${BURNT_ASSET_DIR}${courseId === 'kogane-pass' ? 'tremblant-woods' : courseId}/`;
       Promise.all([load.model(`${dir}burnt-props.glb`),
         ...[...new Set(Object.values(BURNT_LOOK.ground))].map(name => load.texture(THREE, dir + name).then(texture => [name, texture]))])
         .then(([props, ...textures]) => {

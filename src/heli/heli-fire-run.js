@@ -12,6 +12,7 @@ import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, day
 import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS, addScar,
   MISSION_KINDS} from './heli-save.js';
 import {HELI_DESTINATIONS} from './heli-jobs.js';
+import {placeOfCourse} from './pilot-map-data.js';
 import {courseClosed, burnStage} from '../course-closures.js';
 
 // The regrowth stage each piece of Sarah's news belongs to (section 8.4).
@@ -25,7 +26,7 @@ const FLUSH_SECONDS = 10;
 export function burnableCourses(profile, worlds, {enabled, owns = () => true} = {}) {
   const on = {enabled}, fire = fireOf(profile);
   // Only a course with its burnt look made is loaded and checked.
-  return Object.keys(HELI_DESTINATIONS).filter(id => BURNT_LOOKS.includes(id)).filter(id => {
+  return BURNT_LOOKS.filter(id => owns(id)).filter(id => {
     const world = worlds(id);
     if (!world || !courseBurnCheck(world.course, world.ground, world.grid).ok) return false;
     return owns(id) && !courseClosed(profile, id, undefined, on) && !burnStage(profile, id, undefined, on) && fire?.courseId !== id;
@@ -314,7 +315,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
     season() {
       const season = seasonOf(day());
       const snowed = season.name === 'winter' ? (heliOf(getSave()).scars ?? []).find(scar => scar.day === day()) : null;
-      const note = snowed ? `The first snow put out the fire at ${HELI_DESTINATIONS[snowed.courseId]?.name ?? 'the forest'}.` : null;
+      const note = snowed ? `The first snow put out the fire at ${HELI_DESTINATIONS[snowed.courseId]?.name ?? placeOfCourse(snowed.courseId)?.name ?? 'the forest'}.` : null;
       return Object.freeze({...season, note});
     },
     // Today's wind: it moves the falling water and the fire.
@@ -326,7 +327,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
       const wind = windToday();
       const info = {call: call ? Object.freeze({...call}) : null, answerLeft: Math.max(0, answerLeft),
         courseId: burning?.courseId ?? call?.courseId ?? null,
-        courseName: HELI_DESTINATIONS[burning?.courseId ?? call?.courseId]?.name ?? null,
+        courseName: HELI_DESTINATIONS[burning?.courseId ?? call?.courseId]?.name ?? placeOfCourse(burning?.courseId ?? call?.courseId)?.name ?? null,
         shareOut: burning ? shareOut(burning) : 0, cells: burning ? burning.burning.length : 0,
         wind: Object.freeze({name: wind.name, speed: wind.speed, kind: wind.kind, toward: wind.toward}), target: null};
       if (burning) {

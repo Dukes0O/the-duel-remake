@@ -381,6 +381,13 @@ export const SOUND_BANK = {
     cutoff: 4200,
     loop: true,
   }),
+  'ambience.kogane': cue('ambience', {flag: 'kogane-pass', biome: 'kogane',
+    file: 'ambience-kogane.flac', gain: .14, cutoff: 7000, loop: true,
+    nightBiome: 'kogane-night', nightFrom: .55}),
+  'ambience.kogane-night': cue('ambience', {flag: 'kogane-pass', biome: 'kogane-night',
+    file: 'ambience-kogane-night.flac', gain: .14, cutoff: 7000, loop: true}),
+  'landmark.shrine-bell': cue('ambience', {flag: 'kogane-pass',
+    file: 'landmark-shrine-bell.flac', volume: .16, priority: 30, limit: 1}),
   'combat.blast': cue('impacts', {
     sample: 'explosion',
     file: 'catastrophic-blast.flac',

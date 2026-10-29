@@ -8322,6 +8322,57 @@
         }
       },
       "file": "src/sound-bank.js"
+    },
+    {
+      "source": "freesound",
+      "key": "670520",
+      "cue": "ambience.kogane",
+      "title": "Cicadas in Japanese Park 20210826_132934.m4a",
+      "author": "gaijinbuzz",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/gaijinbuzz/sounds/670520/",
+      "download": "https://cdn.freesound.org/previews/670/670520_12855464-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 43.0293,
+      "file": "freesound/670520-cicadas-in-japanese-park-20210826-132934-m4a.ogg",
+      "sha256": "9fca49978edb0b88d43d0945d5294ce9d42a2dde0baa4af4b8b4d94940cdf02d",
+      "bytes": 939853,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "freesound",
+      "key": "734642",
+      "cue": "ambience.kogane",
+      "title": "Night crickets",
+      "author": "Vrymaa",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/Vrymaa/sounds/734642/",
+      "download": "https://cdn.freesound.org/previews/734/734642_13973196-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 33.6071,
+      "file": "freesound/734642-night-crickets.ogg",
+      "sha256": "a874d547ab9e3086bfd5bb8a7abb55c648dfba1cbb3dec2b328dc4d679fddf84",
+      "bytes": 367904,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "freesound",
+      "key": "584269",
+      "cue": "ambience.kogane",
+      "title": "Small brook, stream, water sound",
+      "author": "SamsterBirdies",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/SamsterBirdies/sounds/584269/",
+      "download": "https://cdn.freesound.org/previews/584/584269_5487341-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 72.7977,
+      "file": "freesound/584269-small-brook-stream-water-sound.ogg",
+      "sha256": "cca479328721ac0fbe74a1788baa261d9b4871767f874752d135493a7c32abda",
+      "bytes": 2968921,
+      "fetched": "2026-10-29"
     }
   ]
 }

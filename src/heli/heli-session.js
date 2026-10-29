@@ -393,7 +393,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     return rescueRows;
   };
   const fire = fireEnabled === true ? createFireRun({getSave: () => save, commit, emit, world: fireWorldOf, playerName, today,
-    owns: id => isCourseUnlocked(save, id), rescue: rescueOn, rescueCourses}) : null;
+    owns: id => isDestination(id, dflag) && isCourseUnlocked(save, id), rescue: rescueOn, rescueCourses}) : null;
   const fireFlag = {enabled: fireEnabled === true};
   const bucketLoad = () => loads.find(car => car.bucket) ?? null;
   // The aim ring, worked out 20 times a second; the lock tick plays when it turns on.

@@ -182,4 +182,25 @@ const scale = (mesh, i) => { const m = new THREE.Matrix4(); mesh.getMatrixAt(i, 
   look.dispose();
 }
 
+{
+  const scene = new THREE.Scene(), requests = [];
+  const course = {def: {id: 'kogane-pass'}, samples: []};
+  const {crowns} = pines(scene, [[5,5], [25,5], [45,5]]);
+  const look = createBurntLook({THREE, scene, load: {
+    model: url => {requests.push(url); return parseFile(url);},
+    texture: url => {requests.push(url); return Promise.resolve(new THREE.Texture());},
+  }});
+  const scar = {stage:'black', smoke:false, scars:[], live:[]};
+  look.apply({course, look:scar});
+  await wait(() => look.statusFor('kogane-pass') === 'ready');
+  eq(look.statusFor('kogane-pass'), 'ready', 'Kogane loads the existing burnt art');
+  ok(requests.length > 1 && requests.every(url => url.startsWith('/assets/burnt/tremblant-woods/')),
+    'Kogane references Tremblant props and textures without copies');
+  look.apply({course, look:scar});
+  ok(scale(crowns,0) === 0, 'Kogane burnt tree loses its crown');
+  look.apply({course,look:null});
+  eq(scale(crowns,0),1,'Kogane regrowth restores the tree');
+  look.dispose();
+}
+
 console.log(`test-fire-view: ${checks} checks passed`);
