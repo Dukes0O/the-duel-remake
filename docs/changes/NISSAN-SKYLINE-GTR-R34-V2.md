@@ -73,3 +73,7 @@ verdict is written.
 
 Stop after round 4. Claude judges the art. No merge, push, release, frame timing,
 integration-folder action or live-game action is authorized.
+
+## Claude's review (28 October 2026, night)
+
+Accepted for shape on round 4 (Claude, look judge, Kyle reopened the card): body lofted from outlines measured off the reference pictures, silhouette overlap 0.96 side, 0.89 front and rear; roofline, rear screen, deck and nose follow the photo. Surface detail (creases, fascia depth, tail-lamp pockets, mirrors, wing) is the V3 stage. Changed assertions (rule 18): model height 1.25 to 1.36 m to match the real car; lens and tail-lamp probe rays moved to the new lamp positions, still requiring the lamp before paint; wheel track .84 to .74 so tyres sit inside the body; the handling test now checks routing to the real body, whose loading and four wheels are checked in test-skyline-vehicle. Nothing loosened. Conflict with the 959-S stand-in resolved by Claude, keeping the real body.
