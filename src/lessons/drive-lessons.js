@@ -18,9 +18,9 @@ export const DRIVE_LESSON_CORNERS = Object.freeze([
   sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
   sectionRow('ardennes-forest', ['Les Combes', 'Combes Exit', 'Malmedy', 'Riverside', 'Woodland Left', 'Fagnes', 'Fagnes Exit'], 'Kestrel Straight', 0, 'Fagnes Exit', 60),
   // Brian's Hairpin Lesson (docs/story/kogane-invitation.md 8.1). The board lists it only while the course itself exists,
-  // which is while the kogane-pass switch is on.
-  sectionRow('kogane-pass', ['Car Park Corner', 'Cedar Hairpin', 'Cedar Bend', 'Maple Hairpin', 'Maple Bend', 'Tea House Hairpin'],
-    'Shrine Straight', 0, 'Tea House Hairpin', 60),
+  // which is while the kogane-pass switch is on. Two hairpins, not three: at 14 to 16 m the starter cars crawl through each
+  // hairpin, so six corners took 108 to 111 s and the row is cut to 30 to 75 s for every car (docs/changes/STORY-KOGANE-LESSON.md).
+  sectionRow('kogane-pass', ['Cedar Bend', 'Maple Hairpin', 'Maple Bend', 'Tea House Hairpin'], 'Cedar Descent', -150, 'Tea House Hairpin', 60),
 ]);
 
 export const DRIVE_LESSON_STEPS = Object.freeze([
@@ -673,7 +673,7 @@ async function buildInstructorAttempt({courseId, car, upgrades = {}, difficulty 
       yawVelocity: state.yawVelocity, ...(isGears ? {gear: state.gear, revs: state.revs} : {})};
   };
   const off = duel.onChange((current, event) => {
-    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) {console.error('EV',JSON.stringify(event),current.s.toFixed(1),current.lateral.toFixed(2),current.speedMph.toFixed(1),'pace',pace);faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});}
+    if (event.crash || event.scrape || event.boundaryReset || event.checkpointReset) faults.push({fromS: tickStartS, s: current.s, reason: 'contact/reset'});
   });
   let ticks = 0, frames = 0;
   poses.push(capture(0));
