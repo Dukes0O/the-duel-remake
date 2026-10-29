@@ -1459,3 +1459,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EIFEL-CROWN-C5 (lane 135/135, layouts 18/18, eifel 18/18, circuits, drive-through, world composition, ground rows, audio, build on 55c08bc3; round 2 accepted).
 - 29 Oct 07:45 RELEASE 6f62a2: five course versions on; frames Performance 16.8 ms pass, High 33.3 ms on 4K HDMI (same on 06d5505e, setup not code); Tremblant snow pass.
 - 28 Oct night: merged STORY-KOGANE-LINES (STORY-KOGANE-LINES merged (lane 25/25, build ok)).
+- 28 Oct night: merged STORY-KOGANE-SAVE (STORY-KOGANE-SAVE merged (lane 200/200, fixtures 24, build ok, save review approve)).
