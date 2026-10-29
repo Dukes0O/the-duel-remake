@@ -590,6 +590,11 @@ Release: Claude decides go-live (rule 18) and tells Kyle afterwards, with the
 sheet. This story touches saves only by additive fields and a car id, so it is
 not one of the items that wait for Kyle.
 
+## Decided 29 October 2026 (Kyle, with Claude)
+
+- Kyle: the rival is **Daichi Mori**. Kogane sits **within 16 km** of the home pad, still to the east, so the delivery is one tank out and back.
+- Kyle: the main menu becomes the front door (screens review proposal), built behind a switch. Earned cars get one photo-outline round each.
+- Claude: Daichi gets no nitro on Easy if the lesson-pace driver cannot win Easy 9 in 10 with it. The duel starts level. No extra lesson reward. Garage plaque yes, trophy shelf no. If the helicopter scene cannot take dusk light, the line says "in the evening". The Skyline goes live hidden before `kogane-invitation` turns on, and V7's release names that order.
 ## Open for Claude
 
 1. **Where Kogane sits on the pilot's map, and the landing circle.** KOGANE-PASS-C5
