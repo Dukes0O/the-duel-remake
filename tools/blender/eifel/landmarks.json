@@ -14,25 +14,25 @@
       "files": [
         {
           "path": "eifel-castle.glb",
-          "triangles": 2102,
+          "triangles": 3476,
           "size": [
-            47.704,
-            48.321,
-            50.071
+            53.945,
+            51.4,
+            52.581
           ],
-          "bytes": 128124,
-          "sha256": "a999e2ef18966b3375568802f93c1acab99741941b7fe1c742a9c0173e19c247"
+          "bytes": 220268,
+          "sha256": "48d8de6eb8cda0f4b62bbc611e26a190ca972ca7ebb85b3775cc96bf828bc20e"
         },
         {
           "path": "eifel-castle-lod.glb",
-          "triangles": 760,
+          "triangles": 1012,
           "size": [
-            48.201,
-            48.1,
-            54.447
+            51.975,
+            51.4,
+            54.586
           ],
-          "bytes": 52444,
-          "sha256": "f8f742646a50f202d76ffae070d59924522094db015bf88cf5102a06738ace8c"
+          "bytes": 69556,
+          "sha256": "71fac51cb1c2310b0ab3ef5857b339e6a6d3004e61994e7a9eaa999ab9de82c4"
         }
       ]
     },
@@ -45,25 +45,25 @@
       "files": [
         {
           "path": "dam-wall.glb",
-          "triangles": 288,
+          "triangles": 359,
           "size": [
             14.0,
-            13.45,
-            12.3
+            20.2,
+            12.9
           ],
-          "bytes": 21760,
-          "sha256": "256faa23c9e521d9fb2024f0cc42d02ec2401710abeda74588e435157b14ce6c"
+          "bytes": 26060,
+          "sha256": "dcfc03f1fbf74f874f637d4ac44f4c5b3099ecc614f6d856af56a2f4f8566bf4"
         },
         {
           "path": "dam-wall-lod.glb",
-          "triangles": 66,
+          "triangles": 137,
           "size": [
             14.0,
-            12.7,
-            12.0
+            20.2,
+            12.7
           ],
-          "bytes": 7096,
-          "sha256": "ff0ead5a452e596f6fa6e163d6b2246b2a774224a3f10ab8e1c4d4d92b5f3e24"
+          "bytes": 11480,
+          "sha256": "ea3e25aa1698ef55e098b6940c3bc444a5378072874d921d4c6d3e9d9a025a19"
         }
       ]
     },
@@ -95,6 +95,37 @@
           ],
           "bytes": 18220,
           "sha256": "7c59a0522dbcd77c9103bcff77e26cf22217ef7a7b01bac2e743c65596955306"
+        }
+      ]
+    },
+    {
+      "id": "shore-rock",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "shore-rock.glb",
+          "triangles": 110,
+          "size": [
+            5.551,
+            1.955,
+            5.886
+          ],
+          "bytes": 9260,
+          "sha256": "7282b3e8c438d3835c1f00af7ed9770025cf7744d86fd9bf9521231e7141dd94"
+        },
+        {
+          "path": "shore-rock-lod.glb",
+          "triangles": 40,
+          "size": [
+            6.416,
+            2.398,
+            5.788
+          ],
+          "bytes": 4736,
+          "sha256": "bb0d2555a9a4c2209e3b73d4b3adc1d0de29568c650e70a3e6d5b4ddcb8268c7"
         }
       ]
     }

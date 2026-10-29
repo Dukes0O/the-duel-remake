@@ -12,11 +12,12 @@ import { planWaterside } from './waterside-scenery.js';
 // The moon of P4-DAYNIGHT (src/atmosphere.js): fixed in the sky, west and low.
 const MOON = new THREE.Vector3(-.97, .18, .16).normalize();
 
-function waterMaterial(night, glitter = true) {
+// `ripple` (default 1) scales the slope of the swell: a small number is a calmer reservoir whose sky reflection is not cut into bands.
+function waterMaterial(night, glitter = true, ripple = 1) {
   const time = { value: 0 }, moon = { value: MOON };
   const material = new THREE.MeshStandardMaterial({ name: 'Harbour water', roughness: .16, metalness: .55,
     transparent: true, vertexColors: true, depthWrite: false, side: THREE.DoubleSide, color: 0xffffff, emissive: night ? 0x010306 : 0x000000 });
-  material.customProgramCacheKey = () => `circuit-water-v2-${night}-${glitter}`;
+  material.customProgramCacheKey = () => `circuit-water-v2-${night}-${glitter}` + (ripple === 1 ? '' : `-r${ripple}`);
   material.onBeforeCompile = shader => {
     shader.uniforms.waterTime = time; shader.uniforms.waterMoon = moon;
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWaterWorld;')
@@ -25,7 +26,7 @@ function waterMaterial(night, glitter = true) {
       .replace('#include <normal_fragment_maps>', `
         vec2 sea=vWaterWorld.xz;
         float a=dot(sea,vec2(.17,.23))-waterTime*.7, b=dot(sea,vec2(.41,-.19))-waterTime*1.1;
-        vec2 slope=cos(a)*vec2(.05,.07)+cos(b)*vec2(.04,-.03);
+        vec2 slope=(cos(a)*vec2(.05,.07)+cos(b)*vec2(.04,-.03))*${Number(ripple).toFixed(3)};
         normal=normalize(mat3(viewMatrix)*normalize(vec3(-slope.x,1.0,-slope.y)));
       `)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
@@ -51,7 +52,7 @@ export function addCircuitWater(group, course) {
   const basins = course.def.water ? course.def.basins : null;
   if (!basins?.length) return null;
   const night = course.def.timeOfDay === 'night' || course.def.lightPath?.keyframes?.[0]?.look === 'night';
-  const { material, time } = waterMaterial(night, course.def.water.glitter !== false);
+  const { material, time } = waterMaterial(night, course.def.water.glitter !== false, course.def.water.ripple ?? 1);
   for (const basin of basins) {
     const mesh = new THREE.Mesh(lakeGeometry(course, { ...basin, colour: basin.colour ?? (night ? 0x03070c : 0x1d5c6e), shallow: basin.shallow ?? (night ? 0x07131c : 0x3a8590) }), material);
     mesh.name = `water-${basin.id}`; mesh.receiveShadow = false; mesh.renderOrder = 1;

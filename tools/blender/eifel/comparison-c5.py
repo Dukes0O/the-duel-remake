@@ -17,10 +17,11 @@ args = p.parse_args()
 output = args.output or Path('docs/board/looks/eifel-crown/c5-round-%d.jpg' % args.round)
 
 rows = [
-    ('Castle on its crag, from the ridge', 'castle', '06.png', 'Seen from the Crag Corner approach, across the valley, over the fields.'),
-    ('Castle on its crag, close', 'castle-near', '06.png', 'From the road below Wall Left: keep, round tower and wall stubs on rock.'),
-    ('Half-timbered village along Village Street', 'village', '03.png', 'White plaster and dark oak, slate roofs, church spire, garden walls (right of the road).'),
-    ('Reservoir and concrete dam', 'reservoir', '05.png', 'Reflective reservoir water inside Reservoir Right, dam wall at the far end.'),
+    ('Castle on its crag, from the ridge', 'castle', '06.png', 'From the ridge: keep, tower and cliff crag stand above the hedge line.'),
+    ('Castle on its crag, close', 'castle-near', '06.png', 'From the road below Wall Left: broken cliffs, outcrops, a wall stepping down the rock, trees on the slopes.'),
+    ('Half-timbered village along Village Street', 'village', '03.png', 'Houses at different setbacks and angles, slate roofs, a tall church spire, gardens and trees.'),
+    ('Village from a raised camera (layout)', 'village-above', '03.png', 'Camera 30 m up beside the road, to show the clusters, the lane up the slope and the church.'),
+    ('Reservoir and concrete dam', 'reservoir', '05.png', 'Calm reflective water between rocky, wooded banks, a tall dam with arches and a gate bridge at the far end.'),
     ('Timber lodge at the start', 'lodge', None, 'Log lodge beyond the stands. No lodge picture in the reference set.'),
 ]
 W, ROW, GAME, REF = 1340, 500, (780, 439), (440, 440)

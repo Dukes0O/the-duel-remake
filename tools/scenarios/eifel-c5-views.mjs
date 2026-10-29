@@ -8,16 +8,17 @@ import {nativeBundle} from './p4-panorama.mjs';
 // across the road (left is positive), metres above the ground]; a piece of `null` reads the second number as
 // the distance along the lap.
 const views = [
-  {name: 'castle', eye: ['Ridge Top', 205, -3, 4.2], target: [null, 3050, -110, 60]},
-  {name: 'castle-ridge-b', eye: ['Ridge Top', 150, -3, 4.2], target: [null, 3050, -110, 60]},
-  {name: 'castle-near', eye: [null, 3055, -3, 2.6], target: [null, 3050, -110, 55]},
-  {name: 'village', eye: ['Wall Left', 135, -3, 2.8], target: [null, 3350, -44, 5]},
-  {name: 'reservoir', eye: ['Reservoir Right', 20, -3, 3.4], target: [null, 5290, -108, 3]},
+  {name: 'castle', eye: ['Ridge Top', 205, -3, 4.2], target: [null, 3050, -125, 60]},
+  {name: 'castle-ridge-b', eye: ['Ridge Top', 150, -3, 4.2], target: [null, 3050, -125, 60]},
+  {name: 'castle-near', eye: [null, 3055, -3, 2.6], target: [null, 3050, -125, 60]},
+  {name: 'village', eye: ['Wall Left', 135, -3, 2.8], target: [null, 3350, -52, 5]},
+  {name: 'village-above', eye: ['Village Street', 70, -16, 30], target: [null, 3385, -58, 4]},
+  {name: 'reservoir', eye: ['Reservoir Right', 0, -3, 3.4], target: [null, 5250, -125, 3]},
   {name: 'lodge', eye: ['Lodge Straight', 14, 4, 2.6], target: [null, 84, 54, 5]},
 ];
 
 export async function run(context) {
-  const report = {course: 'eifel-crown', card: 'EIFEL-CROWN-C5', round: 1, storage: 'memory-only', frameTiming: false, captures: []};
+  const report = {course: 'eifel-crown', card: 'EIFEL-CROWN-C5', round: 2, storage: 'memory-only', frameTiming: false, captures: []};
   try {
     await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
     await context.navigate('/tools/menu-check.html?flags=eifel-crown');

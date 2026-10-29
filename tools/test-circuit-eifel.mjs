@@ -287,7 +287,7 @@ test('every scenery row uses an approved kit, stays off the road and run-off, an
   const allowed = new Set(['start-gantry', 'pit-garage', 'grandstand', 'armco', 'tyre-wall', 'marshal-post',
     'braking-board-150', 'braking-board-100', 'braking-board-50', 'drystone-wall', 'hedge-row',
     // C5 landmarks: the castle on its crag, the dam wall of the reservoir and the timber lodge.
-    'eifel-castle', 'dam-wall', 'eifel-lodge']);
+    'eifel-castle', 'dam-wall', 'eifel-lodge', 'shore-rock', 'autumn-tree']);
   assert.ok(placements.every(row => allowed.has(row.id)));
   assert.equal(normalizeKitPlacements(scenery, placements).length, placements.length);
   for (const row of placements.filter(row => ['armco', 'tyre-wall', 'drystone-wall', 'hedge-row'].includes(row.id))) {
@@ -371,7 +371,7 @@ test('green and white kerbs, dark wet road, dull beech leaves and mixed forest a
 const landmarkModels = JSON.parse(readFileSync(new URL('./blender/eifel/landmarks.json', import.meta.url), 'utf8')).models;
 
 test('the castle, dam module and lodge are original recipe output inside their triangle and file budgets', () => {
-  const budgets = {'eifel-castle': [7000, 2000], 'dam-wall': [2500, 800], 'eifel-lodge': [1500, 500]};
+  const budgets = {'eifel-castle': [7000, 2000], 'dam-wall': [2500, 800], 'eifel-lodge': [1500, 500], 'shore-rock': [600, 200]};
   assert.deepEqual(landmarkModels.map(model => model.id), Object.keys(budgets));
   for (const model of landmarkModels) for (const [i, file] of model.files.entries()) {
     const bytes = readFileSync(new URL(file.path, KITS));
@@ -392,12 +392,14 @@ test('the castle stands on a level crag hill outside Wall Left, 90 to 260 m out,
   assert.ok(castle.lateral < -90 && castle.lateral > -260, 'outside the left turn, 90 to 260 m out');
   assert.equal(castle.s, hill.s);
   assert.equal(castle.lateral, hill.lateral);
-  assert.ok(hill.height >= 24 && hill.height <= 50, 'the crag hill is 24 to 50 m above the valley floor');
+  assert.ok(castle.scale[0] >= 2 || [castle.scale].flat()[0] >= 2, 'the castle stands large enough for the keep to show over the trees');
+  assert.ok(hill.height >= 20 && hill.height <= 50, 'the foothill is 20 to 50 m above the valley floor');
   // The hill's own top is level under the whole rock foot, and the castle's foot is bedded into it a little.
   const at = scenery.groundAt(hill.s, hill.lateral);
   const top = at.y + .06 + hillHeight(hill, 0, 0);
   const drawn = renderedGroundHeight(scenery, {...at, s: hill.s, off: hill.lateral}, {requireSurface: true});
-  const bed = drawn + castle.lift;
+  assert.equal(castle.hill, 0, 'lifted onto its hill by the game');
+  const bed = drawn + hillHeight(hill, 0, 0) - castle.sink;
   assert.ok(bed < top && top - bed < 3.5, `rock foot ${(top - bed).toFixed(2)} m into the hill top`);
   for (const [du, dv] of [[0, 0], [14, 0], [-14, 0], [0, 14], [0, -14]])
     assert.ok(Math.abs(hillHeight(hill, du, dv) - hillHeight(hill, 0, 0)) < .001, 'level hill top');
@@ -416,6 +418,8 @@ test('the reservoir is reflective circuit water over a basin on the inside of Re
   assert.ok(EIFEL_CROWN.water && EIFEL_CROWN.effects.lake === undefined, 'the existing reflective circuit water, no flat sheet');
   assert.ok(lake.lateral < 0 && lake.lateral + lake.across * 1.2 < -60 && lake.lateral - lake.across * 1.2 > -260, 'on the right, 60 to 260 m out');
   assert.ok(lake.s > bend.s0 - 100 && lake.s < bend.s1 + 120);
+  assert.ok(lake.along >= 140 && lake.across >= 50, 'a long reservoir filling the valley floor');
+  assert.ok(EIFEL_CROWN.water.ripple <= .25, 'calm water: little swell, so the reflection is not cut into bands');
   const ground = groundFromCourse(scenery);
   const centre = scenery.worldAt(lake.s, lake.lateral);
   const level = ground.water(centre.x, centre.z);
@@ -446,11 +450,12 @@ test('the half-timbered village lies right of Village Street, 12 to 64 m out, wi
   const wall = named('Wall Left'), street = named('Village Street');
   for (const house of town.houses) {
     assert.ok(house.s >= wall.s0 && house.s <= street.s1, 'along Wall Left and Village Street');
-    assert.ok(house.lateral < -12 - 4 && house.lateral > -64, `house ${house.lateral.toFixed(1)} m out, inside the cleared strip`);
+    assert.ok(house.lateral < -22 && house.lateral > -90, `house ${house.lateral.toFixed(1)} m out, inside the cleared strip`);
     assert.ok(house.storeys === 1 || house.storeys === 2);
   }
   assert.equal(church.churchStyle, 'stone');
-  assert.ok(church.lateral < -30 && church.lateral > -64);
+  assert.ok(church.lateral < -30 && church.lateral > -90);
+  assert.ok(church.height >= 34, 'a tall spire, standing above the house roofs');
   // The drawn world: houses, timbers and church ground themselves on the real surface and clear every road segment.
   const world = new THREE.Group();
   addCircuitLandmarks(world, scenery);
@@ -458,12 +463,15 @@ test('the half-timbered village lies right of Village Street, 12 to 64 m out, wi
   assert.equal(drawn.getObjectByName('town houses').count, town.houses.length);
   assert.ok(drawn.getObjectByName('town oak timbers').count > town.houses.length * 3, 'oak timbers on the gables, doors and windows');
   assert.ok(world.getObjectByName('eifel-church'));
-  const walls = placements.filter(row => row.id === 'drystone-wall' && row.s > wall.s0 + 100 && row.s < street.s1 && row.lateral < -30);
-  assert.ok(walls.length > 20, 'garden walls along the street');
-  for (const row of walls) {
-    assert.ok(Math.abs(row.lateral) > 30 && Math.abs(row.lateral) < 60, 'garden walls stand along the village street');
-    assert.equal(row.solid, true);
-  }
+  const walls = placements.filter(row => row.id === 'drystone-wall' && row.s > wall.s0 + 100 && row.s < street.s1 && row.lateral < -22 && row.lateral > -90);
+  const hedges = placements.filter(row => row.id === 'hedge-row' && row.s > wall.s0 + 100 && row.s < street.s1 && row.lateral < -22 && row.lateral > -90);
+  const trees = placements.filter(row => row.id === 'autumn-tree' && row.s > wall.s0 + 100 && row.s < street.s1 && row.lateral < -22 && row.lateral > -90);
+  assert.ok(walls.length >= 8 && hedges.length >= 8 && trees.length >= 10, `gardens: ${walls.length} walls, ${hedges.length} hedges, ${trees.length} trees`);
+  for (const row of [...walls, ...hedges]) assert.equal(row.solid, true);
+  // Not a fence: setbacks differ by 8 m or more, and the houses face every which way.
+  const setbacks = town.houses.map(house => Math.abs(house.lateral));
+  assert.ok(Math.max(...setbacks) - Math.min(...setbacks) > 20, 'varied setbacks');
+  assert.ok(new Set(town.houses.map(house => Math.round(house.heading * 4))).size >= 6, 'houses turned in many directions');
 });
 
 test('the timber lodge stands on the open ground left of the start straight, clear of the heli landing circle', () => {

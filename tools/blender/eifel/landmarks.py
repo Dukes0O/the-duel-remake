@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector
 
 # (High triangles, LOD triangles), from docs/courses/eifel-crown.md section 2.3.
-BUDGETS = {'eifel-castle': (7000, 2000), 'dam-wall': (2500, 800), 'eifel-lodge': (1500, 500)}
+BUDGETS = {'eifel-castle': (7000, 2000), 'dam-wall': (2500, 800), 'eifel-lodge': (1500, 500), 'shore-rock': (600, 200)}
 
 
 def material(name, rgb, rough=1.0):
@@ -132,50 +132,80 @@ def castle(low):
     b = Builder(rock + [moss, grass] + wall + [shadow, ivy, spruce, earth])
     ROCK, MOSS, GRASS, WALL, SHADOW, IVY, SPRUCE, EARTH = 0, 4, 5, 6, 10, 11, 12, 13
 
-    # --- The crag: rings of rock, steep faces with a ledge now and then.
-    sides = 24 if low else 36
-    profile = [(0.0, 22.0), (2.8, 20.4), (3.8, 17.6), (8.6, 16.6), (9.8, 14.9), (14.2, 14.1), (15.6, 12.9),
-               (20.0, 12.6)]
+    # --- The crag: rings of rock with sheer cliff faces on three sides, ledges between them, and broken outcrops.
+    sides = 28 if low else 44
+    profile = [(0.0, 22.0), (2.5, 20.5), (3.6, 18.5), (7.0, 17.5), (9.0, 15.6), (12.0, 15.0), (13.5, 13.4),
+               (17.0, 13.0), (19.5, 12.4), (22.0, 12.2)]
     if low:
-        profile = [(0.0, 22.0), (3.8, 17.6), (9.8, 14.9), (15.6, 12.9), (20.0, 12.6)]
-    wobble = [[rng.uniform(-.14, .14) * (.45 if i == len(profile) - 1 else 1) for _ in range(sides)] for i in range(len(profile))]
-    # A buttress of rock reaching toward the front, where the road sees it, and a shoulder to the back.
+        profile = [(0.0, 22.0), (3.6, 18.5), (9.0, 15.6), (13.5, 13.4), (19.5, 12.4), (22.0, 12.2)]
+    top_height = profile[-1][0]
+    wobble = [[rng.uniform(-.13, .13) * (.35 if i == len(profile) - 1 else 1) for _ in range(sides)] for i in range(len(profile))]
+
+    def radius_at(z):
+        for i in range(len(profile) - 1):
+            (z0, r0), (z1, r1) = profile[i], profile[i + 1]
+            if z0 <= z <= z1:
+                return r0 + (r1 - r0) * (z - z0) / max(1e-6, z1 - z0)
+        return profile[-1][1]
+
     def ring(i):
         z, r = profile[i]
         out = []
         for k in range(sides):
             a = k * 2 * math.pi / sides
-            bulge = 1 + .20 * max(0, math.cos(a + 1.35)) ** 2 + .1 * math.sin(a * 3 + 1.0)
-            rr = r * (bulge if i < len(profile) - 1 else 1 + .06 * math.sin(a * 3 + 1.0)) * (1 + wobble[i][k])
-            zz = z + (rng.uniform(-.5, .5) if 0 < i < len(profile) - 1 else 0)
+            rise = z / top_height
+            # Sheer faces: on three sectors the wall stays close to the foot's width all the way up.
+            sheer = max(0.0, math.sin(a * 3 + 1.0)) ** 1.5
+            rr = r + (19.0 - r) * sheer * rise * (1 if i < len(profile) - 1 else 0)
+            rr *= 1 + .18 * math.sin(a * 2 + 2.1) * min(1, rise * 2) + .07 * math.sin(a * 5 + .4)
+            rr *= 1 + wobble[i][k]
+            zz = z + (rng.uniform(-.8, .8) if 0 < i < len(profile) - 1 else 0)
             out.append((rr * math.cos(a), rr * math.sin(a) - 2.0, zz))
         return out
     rings = [ring(i) for i in range(len(profile))]
     for i in range(len(profile) - 1):
-        ledge = abs(profile[i + 1][1] - profile[i][1]) > 2.2 and profile[i + 1][0] - profile[i][0] < 1.6
+        ledge = abs(profile[i + 1][1] - profile[i][1]) > 1.6 and profile[i + 1][0] - profile[i][0] < 1.6
         for k in range(sides):
             n = (k + 1) % sides
             a, c = rings[i][k], rings[i][n]
             d, e = rings[i + 1][k], rings[i + 1][n]
             roll = rng.random()
-            slot = (MOSS if roll < .35 else GRASS if roll < .6 else ROCK + rng.randrange(4)) if ledge \
-                else (MOSS if (roll < .06 and i > 0) else ROCK + rng.randrange(4))
+            band = (k // 3 + i) % 4
+            slot = (MOSS if roll < .4 else GRASS if roll < .6 else ROCK + band) if ledge \
+                else (MOSS if (roll < .05 and i > 0) else ROCK + (band if roll < .8 else rng.randrange(4)))
             b.quad([a, c, e, d], slot)
     # The top of the crag: the castle floor, a fan of triangles to the middle.
     top = rings[-1]
-    mid = (0, -2.0, profile[-1][0])
+    mid = (0, -2.0, top_height)
     for k in range(sides):
         b.tri([top[k], top[(k + 1) % sides], mid], EARTH)
-    # Boulders at the foot and on the ledges.
-    for _ in range(0 if low else 22):
+    # Broken outcrops: tall angular blocks leaning out of the cliff and standing at its foot.
+    for _ in range(0 if low else 30):
         a = rng.uniform(0, 2 * math.pi)
-        r = rng.uniform(19.0, 22.5)
+        z = rng.uniform(0.0, 17.0)
+        r = radius_at(z) * rng.uniform(.9, 1.04)
+        w = rng.uniform(2.4, 5.5)
+        h = rng.uniform(4.0, 10.0)
+        b.box((r * math.cos(a), r * math.sin(a) - 2.0, z + h * .35), (w, w * rng.uniform(.7, 1.2), h), ROCK + rng.randrange(4),
+              yaw=a + rng.uniform(-.5, .5), roll=rng.uniform(-.22, .22), skip=('bottom',), taper=rng.uniform(.1, .7))
+    for _ in range(0 if low else 18):
+        a = rng.uniform(0, 2 * math.pi)
+        r = rng.uniform(19.0, 24.5)
         z = rng.uniform(-.2, .6)
-        s = rng.uniform(1.0, 2.8)
+        s = rng.uniform(1.4, 3.6)
         b.box((r * math.cos(a), r * math.sin(a) - 2.0, z + s * .4), (s * 1.3, s, s * .8), ROCK + rng.randrange(4),
               yaw=rng.uniform(0, 3.1), roll=rng.uniform(-.2, .2), skip=('bottom',))
+    # A ruined curtain wall stepping down the rock face on the front right, each length lower than the last.
+    aw = -.95
+    steps = 3 if low else 7
+    for j in range(steps):
+        t = j / steps
+        z = top_height - 3.2 - t * (top_height - 4.5)
+        r = radius_at(z) + .6
+        b.box((r * math.cos(aw + .02 * j), r * math.sin(aw + .02 * j) - 2.0, z + 1.6), (4.2, 1.5, 3.4 + rng.uniform(-.6, 1.0)),
+              WALL + j % 4, yaw=aw + math.pi / 2 + rng.uniform(-.2, .2), roll=rng.uniform(-.12, .12), skip=('bottom',))
 
-    top_z = profile[-1][0]
+    top_z = top_height
     ZW = lambda i: WALL + i % 4
 
     # --- The keep: a square tower at the back left, broken at the top and on one corner.
@@ -285,7 +315,17 @@ def castle(low):
               yaw=rng.uniform(0, 3.1), roll=rng.uniform(-.25, .25), skip=('bottom',))
 
     # A few spruce on the crag ledges, and tufts of scrub at the foot.
-    trees = 4 if low else 14
+    # A collar of dark spruce round the foot of the crag, on the level top of the foothill, and a few on the ledges.
+    for i in range(30 if low else 64):
+        a = rng.uniform(0, 2 * math.pi)
+        r = rng.uniform(20.0, 25.6)
+        h = rng.uniform(5.0, 9.5)
+        if low:
+            b.cone((r * math.cos(a), r * math.sin(a) - 2.0, -1.3), h * .3, h, SPRUCE, sides=5)
+        else:
+            b.cone((r * math.cos(a), r * math.sin(a) - 2.0, -1.3), h * .3, h * .62, SPRUCE, sides=6)
+            b.cone((r * math.cos(a), r * math.sin(a) - 2.0, -1.3 + h * .32), h * .22, h * .68, SPRUCE, sides=6)
+    trees = 0 if low else 8
     for _ in range(trees):
         a = rng.uniform(0, 2 * math.pi)
         zi = rng.choice([1, 3, 5])
@@ -310,14 +350,16 @@ def dam(low):
     road = material('dam roadway', (.008, .009, .011))
     steel = material('dam railing', (.02, .022, .022), rough=.7)
     joint = material('dam joint', (.03, .03, .03))
-    b = Builder(concrete + [stain, algae, road, steel, joint])
+    shade = material('dam arch', (.003, .0035, .004))
+    b = Builder(concrete + [stain, algae, road, steel, joint, shade])
     STAIN, ALGAE, ROAD, STEEL, JOINT = 3, 4, 5, 6, 7
+    SHADOW = 8
     L = 14.0
     hx = L / 2
-    crest, face = 9.0, -5.0
+    crest, face = 12.0, -5.0
     # The cross-section, front to back: lake face up, crest across, then the steps down the back.
-    profile = [(face, -2.5), (face, crest), (0.2, crest), (0.2, 6.5), (2.4, 6.5), (2.4, 3.4), (4.6, 3.4), (4.6, 0.0),
-               (7.0, 0.0), (7.0, -2.5)]
+    profile = [(face, -2.5), (face, crest), (0.2, crest), (0.2, 8.5), (2.6, 8.5), (2.6, 4.5), (5.0, 4.5), (5.0, 0.0),
+               (7.6, 0.0), (7.6, -2.5)]
     rows = 2 if low else 5
     for i in range(len(profile) - 1):
         (y0, z0), (y1, z1) = profile[i], profile[i + 1]
@@ -331,6 +373,19 @@ def dam(low):
     for x in (-hx, hx):
         pts = [(x, y, z) for y, z in profile]
         b.ngon(pts if x < 0 else pts[::-1], 3 + 3)
+    # Spillway gates and arches on the face: three bays between four piers, a dark arch in each bay, and above the
+    # crest a gate bridge on the piers with arched openings, as on a big Eifel reservoir.
+    bays = [-hx + 1.2 + (L - 2.4) * (i + .5) / 3 for i in range(3)]
+    for cx in bays:
+        w, h = 2.6, 3.4
+        pts = [(cx - w / 2, face - .03, 0.2), (cx + w / 2, face - .03, 0.2)]
+        arc = [(cx + (w / 2) * math.cos(math.pi * t / 6), face - .03, 0.2 + h + (w / 2) * math.sin(math.pi * t / 6)) for t in range(0, 7)]
+        b.ngon(pts + arc, SHADOW)
+    piers = [-hx + .65, -hx + 1.2 + (L - 2.4) / 3, -hx + 1.2 + (L - 2.4) * 2 / 3, hx - .65]
+    deck_z = crest + 5.2
+    for px in piers:
+        b.box((px, face + 1.2, crest + 2.6), (1.1, 2.2, 5.2), 2, skip=('bottom',))
+    b.box((0, face + 1.2, deck_z + .25), (L, 2.6, .5), 0, skip=('bottom',))
     # Crest roadway between low parapets.
     b.box((0, (face + 0.2) / 2, crest + .05), (L, 0.2 - face - .9, .12), ROAD, skip=('bottom',))
     b.box((0, face + .25, crest + .6), (L, .5, 1.2), 2, skip=('bottom',))
@@ -419,7 +474,30 @@ def lodge(low):
     return b.build('eifel-lodge')
 
 
-MAKERS = {'eifel-castle': castle, 'dam-wall': dam, 'eifel-lodge': lodge}
+# ---------------------------------------------------------------------------
+# Bank rock: a cluster of angular grey slabs, for the rocky banks of the reservoir.
+
+def shore_rock(low):
+    """Five or six tilted slabs of grey greywacke, 7 m across, on a flat base, a pale band along the water
+    side where the level has dropped. Stands on y = 0."""
+    rng = random.Random(41 + low)
+    rock = [material('bank rock ' + str(i), c) for i, c in enumerate([
+        (.017, .018, .018), (.024, .025, .024), (.014, .015, .016), (.03, .03, .028)])]
+    moss = material('bank moss', (.012, .02, .008))
+    b = Builder(rock + [moss])
+    count = 4 if low else 7
+    for i in range(count):
+        a = i * 2 * math.pi / count + rng.uniform(-.3, .3)
+        r = rng.uniform(0, 2.6) * (1 if i else 0)
+        w, d, h = rng.uniform(2.4, 4.2), rng.uniform(1.6, 3.0), rng.uniform(.8, 2.4)
+        b.box((r * math.cos(a), r * math.sin(a), h * .4), (w, d, h), rng.randrange(4), yaw=rng.uniform(0, 3.1),
+              roll=rng.uniform(-.28, .28), skip=('bottom',), taper=rng.uniform(.0, .35))
+        if not low and rng.random() < .5:
+            b.box((r * math.cos(a), r * math.sin(a), h * .8 + .05), (w * .7, d * .7, .12), 4, yaw=rng.uniform(0, 3.1), skip=('bottom',))
+    return b.build('shore-rock')
+
+
+MAKERS = {'eifel-castle': castle, 'dam-wall': dam, 'eifel-lodge': lodge, 'shore-rock': shore_rock}
 
 
 def main():

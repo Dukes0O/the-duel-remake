@@ -20,7 +20,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'drystone-wall','hedge-row',
   'torii','torii-small','stone-lantern','kogane-car-park',
   'stone-retaining-wall-b','stone-retaining-wall-c',
-  'eifel-castle','dam-wall','eifel-lodge',
+  'eifel-castle','dam-wall','eifel-lodge','shore-rock',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
