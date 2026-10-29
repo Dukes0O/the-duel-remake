@@ -177,7 +177,7 @@ noGrant(base, win({rival: {...daichiRival('easy'), upgradeLevel: 3}}), 'another 
 noGrant(base, win({rival: {...daichiRival('easy'), car: 'stuttgart_959s'}}), 'another rival car');
 noGrant(base, win({rival: {...daichiRival('easy'), driverId: 'mara_vale'}}), 'another rival driver');
 noGrant(base, win({rival: null}), 'no rival settings');
-noGrant(base, win({cpuDifficulty: 'hard'}), 'a level that does not match Daichi\'s tuning');
+noGrant(base, win({cpuDifficulty: 'medium'}), 'a level that does not match Daichi\'s tuning');
 noGrant(base, win({cpuDifficulty: 'brutal'}), 'an unknown level');
 noGrant(createProfile(), win(), 'a player who has not started the story');
 noGrant(markKoganeLesson(readKoganeLetter(createProfile()).profile).profile, win(), 'a player who has not delivered the supplies');
