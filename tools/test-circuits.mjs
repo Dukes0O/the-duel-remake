@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
-import {Course} from '../src/course.js';
-import {COURSE,CARS} from '../src/config.js';
-import {sweepObstacle} from '../src/collision.js';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+// The second pass (a child process, so the course list is read once more) switches every dev circuit on the way
+// the QA build does, so a circuit still behind its switch (Kogane Pass) gets the same road checks as the released ones.
+const withPreviews=process.env.DUEL_CIRCUIT_PREVIEWS==='1';
+if(withPreviews){
+ const {CIRCUIT_MANIFESTS}=await import('../src/circuit-manifests.js');
+ globalThis.__DUEL_QA__=true;
+ globalThis.location={search:'?flags='+CIRCUIT_MANIFESTS.map(row=>row.flag).join(',')};
+}
+const {Course}=await import('../src/course.js');
+const {COURSE,CARS}=await import('../src/config.js');
+const {sweepObstacle}=await import('../src/collision.js');
 let checks=0,maxGrade=0,maxExpansionGrade=0;
 const check=(value,message)=>{assert.ok(value,message);checks++;};
 for(const seed of[1989,42,17,2026])for(const def of COURSE){
@@ -53,9 +63,9 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
   const width=course.roadHalfWidthAt(s),previous=course.worldAt(s-4),next=course.worldAt(s+4);
   const grade=Math.abs(next.y-previous.y)/8;
   if(def.expansion||def.script)maxExpansionGrade=Math.max(maxExpansionGrade,grade);else maxGrade=Math.max(maxGrade,grade);
-  // In a hairpin (bend radius under 15 m within the next 8 m) the 4.9 m car body cuts the inside of the bend by about half a metre, so the probe on the
+  // In a hairpin (bend radius of 15 m or tighter within the next 8 m) the 4.9 m car body cuts the inside of the bend by about half a metre, so the probe on the
   // inside is one metre closer to the centre line (RELEASE-HARBOUR: the Lantern Hairpin, 9 m radius). The outside and all other bends keep the full reach.
-  const bend=[0,4,8].map(step=>course.at(s+step).curvature).reduce((worst,k)=>Math.abs(k)>Math.abs(worst)?k:worst),hairpin=Math.abs(bend)>1/15;
+  const bend=[0,4,8].map(step=>course.at(s+step).curvature).reduce((worst,k)=>Math.abs(k)>Math.abs(worst)?k:worst),hairpin=Math.abs(bend)>=1/15-1e-9;
   for(const lateral of[-1,0,1].map(side=>side*(Math.min(5,width-2)-(hairpin&&side&&Math.sign(bend)===side?1:0)))){
    const a=course.worldAt(s,lateral),b=course.worldAt(s+4,lateral);
    const body={halfWidth:1.1,halfLength:2.45};
@@ -112,3 +122,7 @@ for(const seed of[1989,42,17,2026])for(const def of COURSE){
 check(maxGrade<.17,`Maximum road grade remains drivable: ${maxGrade}`);
 check(maxExpansionGrade<.32,`Expansion road grade stays within the authored 32% limit: ${maxExpansionGrade}`);
 console.log(`Circuit geometry: ${checks} checks across ${COURSE.length} events and four seeds; steepest legacy road ${(maxGrade*100).toFixed(1)}%, expansion ${(maxExpansionGrade*100).toFixed(1)}%.`);
+if(!withPreviews){
+ const again=spawnSync(process.execPath,[fileURLToPath(import.meta.url)],{env:{...process.env,DUEL_CIRCUIT_PREVIEWS:'1'},stdio:'inherit'});
+ if(again.status!==0)throw Error('Circuit geometry with the dev circuits switched on failed.');
+}

@@ -122,10 +122,11 @@ def chevron(low):
     steel = mat('sign post', (.38, .40, .38), .65, .65)
     box('post', (0, 0, 1.05), (.065, .065, 2.1), steel)
     box('yellow curve board', (0, 0, 1.8), (1.1, .07, .85), yellow)
-    # Arrow points left in front view; placement rotation chooses the turn.
-    polygon('left chevron', [(.35, -.036, 2.14), (0, -.036, 2.14),
-            (-.38, -.036, 1.8), (0, -.036, 1.46), (.35, -.036, 1.46), (-.03, -.036, 1.8)],
-            [(0, 1, 2, 5), (2, 3, 4, 5)], ink)
+    # Arrow points left in front view and right in back view (KOGANE-PASS-C6): a board for a right-hand turn
+    # is turned round so its back faces the road. Turning a board round alone never changes which way its arrow points.
+    arrow = [(.35, 2.14), (0, 2.14), (-.38, 1.8), (0, 1.46), (.35, 1.46), (-.03, 1.8)]
+    polygon('left chevron', [(x, -.036, z) for x, z in arrow], [(0, 1, 2, 5), (2, 3, 4, 5)], ink)
+    polygon('right chevron (back)', [(x, .036, z) for x, z in arrow], [(5, 2, 1, 0), (5, 4, 3, 2)], ink)
 
 
 def tea(low):

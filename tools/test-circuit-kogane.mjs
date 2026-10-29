@@ -9,6 +9,7 @@ import {driveCircuit} from './track-script-drive.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {normalizeKitPlacements} from '../src/track-kits.js';
+import {renderedGroundHeight} from '../src/rendered-ground.js';
 import {planWaterside} from '../src/waterside-scenery.js';
 import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {destinationsFor, isDestination} from '../src/heli/heli-jobs.js';
@@ -133,6 +134,27 @@ for (const row of farMaples) {
   const p = course.worldAt(row.s, row.lateral);
   assert.equal(ground.water(p.x, p.z), null, 'no maple in the water');
 }
+
+// C6 finishing pass. Every tree stands on the ground that is drawn (on the steep switchbacks the course height formula
+// is tens of metres off there), and no boulder is left standing in a slope.
+for (const tree of course.features.trees) {
+  assert.ok(Math.abs(tree.y - renderedGroundHeight(course, tree)) < .05, tree.id + ' stands on the drawn ground');
+}
+for (const rock of course.features.rocks) {
+  const obstacle = course.features.obstacles.find(o => o.source === rock);
+  assert.ok(obstacle && Math.abs(obstacle.y - renderedGroundHeight(course, obstacle)) <= 1, 'boulder sits on the drawn ground');
+}
+// Curve boards point into the turn: the arrow is left from the front and right from the back, the front
+// faces the road on the right shore (outside of a left turn) and the back on the left shore.
+for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'chevron-board')) {
+  const piece = road.pieceAt(row.s);
+  assert.equal(row.heading, Math.PI / 2);
+  assert.equal(row.lateral < 0 ? 1 : -1, piece.dir, 'chevron arrow points into the turn at ' + row.s.toFixed(0));
+}
+// The finish is marked by the start gantry's twin, just before the end of the road, facing the oncoming cars.
+const gantries = KOGANE_PASS.kitPlacements.filter(row => row.id === 'start-gantry');
+assert.equal(gantries.length, 2);
+assert.ok(gantries.some(row => row.s > road.length - 6 && row.s < road.length && row.heading === Math.PI && row.lateral === 0), 'finish gantry');
 assert.ok(KOGANE_PASS.effects.backdrop.hills.length >= 4, 'wooded hills behind the far shore');
 // Like Summit Run, Kogane Pass is a destination only through its own option.
 const off = {pilotMap: true, summitRun: true}, on = {...off, koganePass: true};
