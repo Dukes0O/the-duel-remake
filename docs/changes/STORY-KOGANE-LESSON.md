@@ -148,8 +148,8 @@ Run from PowerShell with `--jobs 2` or fewer, memory-only saves.
   100% driver beating the instructor, `test-lesson-instructor-any-car` in its
   sample form, `test-drive-lesson-run`, `test-lessons-v2-view`).
 - `node --test --test-name-pattern=kogane-pass tools/test-lesson-instructor-any-car.mjs`
-  (all 14 cars, Casual and Pro, each built twice and compared): see the
-  result line at the end of this note.
+  (all 14 cars, Casual and Pro, each built twice and compared): 28 passed,
+  0 failed.
 - `npm run build`: passed.
 
 ### Changed assertions
