@@ -1,4 +1,4 @@
-// The pilot's map secrets (docs/PILOT_MAP.md section 5): the five secret
+// The pilot's map secrets (docs/PILOT_MAP.md section 5): the secret
 // courses found from the air, the Table, and the map record they keep. Rules
 // only: no graphics, no clock, no randomness. The session (heli-session.js)
 // calls these; the screen draws what they report.
@@ -24,6 +24,10 @@ export const SECRET_SIGNS = Object.freeze([
     sign: 'A chalk start line on the harbour wall, the wrong way round'}),
   Object.freeze({id: 'harbour-lights-dusk', course: 'harbour-lights', name: 'Harbour Lights Dusk', x: -130, z: 270,
     sign: 'A lighthouse on the breakwater whose lamp turns only from the air\'s angle'}),
+  Object.freeze({id: 'kogane-pass-night', course: 'kogane-pass', name: 'Kogane Pass Night', x: 40, z: 124,
+    sign: 'A ring of lantern fires on the car park lawn above the tea house, lit for the night drivers'}),
+  Object.freeze({id: 'kogane-pass-reverse', course: 'kogane-pass', name: 'Kogane Pass Reverse', x: 947.5, z: 1666.2,
+    sign: 'A second start grid painted on the village road at the foot of the mountain, facing back up the climb'}),
 ]);
 export const SECRET_IDS = Object.freeze(SECRET_SIGNS.map(sign => sign.id));
 export const signById = id => SECRET_SIGNS.find(sign => sign.id === id) ?? null;

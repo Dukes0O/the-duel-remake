@@ -20,6 +20,9 @@ export const SIGN_MODELS = Object.freeze({
   'panorama-ridge-night': Object.freeze({file: 'sign-fire-pits', turn: false}),
   'harbour-lights-reverse': Object.freeze({file: 'sign-chalk-line', turn: true}),
   'harbour-lights-dusk': Object.freeze({file: 'sign-lighthouse-window', turn: false}),
+  // Kogane Pass reuses two finished signs: the camp-fire ring (lantern fires at night) and the start grid.
+  'kogane-pass-night': Object.freeze({file: 'sign-fire-pits', turn: false}),
+  'kogane-pass-reverse': Object.freeze({file: 'sign-start-grid', turn: true}),
 });
 // The mesa model (origin in the middle of its flat top, 215 m flat radius, ground level 165 m below) fitted to the
 // Table's rules: its flat top as wide as TABLE.topRadius and its foot at the floor, TABLE.topY below it.

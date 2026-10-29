@@ -333,7 +333,7 @@ try {
 
   // The sign's switch: secretCourses follow the variants' own switches.
   ok(Array.isArray(app._secretCoursesOn()) && app._secretCoursesOn().every(id => SECRET_SIGNS.some(sign => sign.id === id)), 'secretCourses are secret courses');
-  equal(app._secretCoursesOn().length, SECRET_SIGNS.length, 'all five secret courses follow their own switches, now on');
+  equal(app._secretCoursesOn().length, SECRET_SIGNS.length - 2, 'the five released secret courses follow their own switches; the two Kogane Pass versions are still off with Kogane Pass');
   console.log(`test-map-view: ${checks} checks passed`);
 } finally {
   if (saved) Object.defineProperty(globalThis, 'localStorage', saved); else delete globalThis.localStorage;
