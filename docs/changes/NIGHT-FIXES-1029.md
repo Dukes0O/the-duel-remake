@@ -88,3 +88,7 @@ race rules, the saves or any released course moves.
 
 - The `insideOpen` band option in `src/track-script-course.js` and its use in
   `src/circuits/eifel-crown.js` (added by EIFEL-CROWN-C4, no other user).
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review; rule 18 written review of changed test inputs). Eifel keeps the shared 30 m open inside corners; the unused insideOpen option is removed. Three test inputs change, no assertion values: the layouts lap check drives traffic circuits without traffic (the racing-line test driver cannot avoid oncoming cars; new Eifel still carries the old road's oncoming traffic, a design question for C7); test-opponents gives found-from-air courses their find record, as track-review does; Harbour Lights Dusk and Panorama Ridge Reverse join the racing-line driver list like their parents. team-room leaves unreleased slotted courses off. Nothing loosened.
