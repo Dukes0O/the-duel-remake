@@ -40,8 +40,18 @@ const base = {
   laps: 1, grandPrixLaps: 1, fieldSize: 6, gridStartS: 45, defaultMode: 'grandprix',
   hasRival: true, hasRadar: false, noTraffic: true, noCombat: true, airborne: true,
   terrainHalfWidth: 64, markings: 'single-yellow', speedLimitMph: 100, finishArea: true,
-  racingLine: {roadShare: .85, maxSlope: .08, lineMargin: 1.8},
-  fieldFollow: {leadBraking: 1.6, wallRoom: 1, firstLap: {margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4}},
+  // C3 field pace. Summit's line and following are the start, with Harbour's
+  // and Panorama's controls for racing between walls: racers keep 3 m off the
+  // edge, cross a bend by a fifth of its sweep and never turn faster than the
+  // line allows (`holdRacers`, which ended the walls-only crashes). Followers
+  // keep the room a comfortable stop needs (`leadBraking` 1). A wider spread
+  // and form give the field passes, and gentler aggression fewer dives between
+  // walls. One pace per difficulty, found with
+  // `node tools/test-circuit-kogane.mjs --pace` at skill .95.
+  racingLine: {roadShare: .85, maxSlope: .08, lineMargin: 3, lineSwing: .2, holdRacers: true},
+  fieldFollow: {leadBraking: 1, wallRoom: 1, firstLap: {margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4}},
+  fieldPace: {easy: .57, medium: .625, hard: .67},
+  fieldAggression: .7, fieldSpread: 3, fieldForm: 6,
 };
 const road = buildTrackScript(base);
 const starts = [0, 730, 2360, 3230, road.length];
