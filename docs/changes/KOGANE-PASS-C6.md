@@ -82,3 +82,7 @@ scratch output; no sheet is committed.
 - Build (`node node_modules/vite/bin/vite.js build`): built.
 - Browser scenario `kogane-finish`: passed, 40 pictures, 0 warnings, 0 errors.
 - Other courses' world signatures and replay fingerprints are unchanged (the lane guards passed).
+
+## Claude's review (28 October 2026, night)
+
+Approved (Claude, look judge on 12 views; independent review). Changed assertion (rule 18): the road check's hairpin allowance now covers bends of 15 m or tighter (was under 15 m), so the two 15 m hairpins get the same 1 m inside probe as the others; nothing else loosened; test-circuits now also runs every dev circuit switched on. Optional onDrawnGround planting for Kogane only. Open for release: the mossy wall repeats like tiles; concrete block gaps on hairpin outsides; low-detail wall slabs.
