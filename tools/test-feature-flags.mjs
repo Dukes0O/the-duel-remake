@@ -20,8 +20,8 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 41 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
-    && ['snow-world', 'rival-voices', 'earned-cars', 'wildlife', 'heli-skins', 'engine-curve', 'tyre-slip'].every(name => FEATURE_STATES[name] === 'dev')
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 42 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    && ['snow-world', 'rival-voices', 'earned-cars', 'wildlife', 'heli-skins', 'engine-curve', 'tyre-slip', 'nissan-skyline'].every(name => FEATURE_STATES[name] === 'dev')
     && ['lap-choice', 'snowmen', 'the-deep', 'cpu-racecraft', 'lab', 'lab-tuning', 'lab-2', 'rescue', 'heli-logbook', 'heli-skiing', 'driving-lessons', 'pilot-map'].every(name => FEATURE_STATES[name] === 'on')
     && FEATURE_STATES['grand-prix-career'] === 'on' && FEATURE_STATES['grand-prix'] === 'on' && FEATURE_STATES.yeti === 'on'
     && CIRCUIT_MANIFESTS.every(manifest => FEATURE_STATES[manifest.flag] === manifest.state),

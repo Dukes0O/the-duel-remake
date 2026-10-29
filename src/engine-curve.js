@@ -12,6 +12,8 @@
 // K is one scale per car, fitted by `tools/fit-engine-curve.mjs` so that the automatic box gives today's 0 to 60 and
 // 0 to 100 mph. share(revs) is the engine's pull against revs, a fraction of its best.
 
+import {featureFlags} from './feature-flags.js';
+
 export const ENGINE_CURVE = Object.freeze({
   idleShare: .35,        // at no revs
   lowRevs: .30,          // under this, under lowShare of the best
@@ -77,6 +79,9 @@ export const ENGINE_FIT = Object.freeze({
   mclaren_f1: Object.freeze({scale: 0.587}),
   bugatti_bolide: Object.freeze({scale: 0.513, power: 0.41}),
   falcone_sirena: Object.freeze({scale: 0.594, upgraded: [0.591, 0.59, {scale: 0.609, power: 0.27}]}),
+  ...(featureFlags.enabled('nissan-skyline') ? {
+    nissan_skyline_gtr_r34: Object.freeze({scale: 0.601, upgraded: [0.598, 0.596, {scale: 0.613, power: 0.276}]}),
+  } : {}),
 });
 // Tooling only (the fitter tries values before they are written down); the game never calls it.
 const trial = new Map();
