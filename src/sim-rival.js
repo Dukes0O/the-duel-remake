@@ -209,7 +209,9 @@ export function _rival(dt, opponent = this.state.rival) {
   r.boosting=!(arsenalEnabled(this)&&carEffect(r,'disabled'))&&!!s.rivalSettings&&r.boost>.05&&r.speedMph>=BOOST.minSpeedMph&&rivalSurface.boostAllowed&&r.contactCooldown<=0&&[0,40,80,120].every(ahead=>Math.abs(this.course.at(r.s+ahead).curvature)<.0012);
   if(r.boosting){
     r.boost=Math.max(0,r.boost-BOOST.drainPerSec/((1+r.upgrades.nitro*.14)*car.boostCapacity)*dt);
-    target*=BOOST.topSpeedMult+r.upgrades.nitro*.025+(car.nitroSpeedBonus||0);
+    // `nitroScale` (rival settings, optional, story rivals only) keeps that share of the nitro's speed gain and push; absent, nothing changes.
+    const nitroGain=BOOST.topSpeedMult+r.upgrades.nitro*.025+(car.nitroSpeedBonus||0),nitroScale=s.rivalSettings.nitroScale;
+    target*=nitroScale==null?nitroGain:1+(nitroGain-1)*nitroScale;
   }else r.boost=Math.min(1,r.boost+BOOST.refillPerSec*dt);
   if (route) target = Math.min(target, route.targetSpeedMph);
   else {
@@ -300,7 +302,7 @@ export function _rival(dt, opponent = this.state.rival) {
   else {
     const acceleration = car.accel * DRIVE.accelScale * (skill.launch ?? 1) * .85 +
       (r.boosting ? BOOST.accelMphPerSec * (1 + r.upgrades.nitro * .15) *
-        (car.nitroAcceleration || 1) : 0);
+        (car.nitroAcceleration || 1) * (s.rivalSettings.nitroScale ?? 1) : 0);
     r.speedMph += clamp(target - r.speedMph, -DRIVE.brakeAccel * car.braking * dt,
       Math.max(acceleration, cpuCrewPullAwayAcceleration(this, r)) * dt *
         (arsenalEnabled(this) ? carAcceleration(r) : 1));
