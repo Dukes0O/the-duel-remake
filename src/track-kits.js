@@ -19,6 +19,7 @@ export const TRACK_KIT_IDS = Object.freeze([
   'armco-white','stone-retaining-wall','curve-mirror','chevron-board','tea-house','vending-row',
   'drystone-wall','hedge-row',
   'torii','torii-small','stone-lantern','kogane-car-park',
+  'stone-retaining-wall-b','stone-retaining-wall-c',
 ]);
 const approved = new Set(TRACK_KIT_IDS);
 const owners = new WeakMap();
@@ -136,7 +137,7 @@ function validateSource(asset, id) {
   return bounds;
 }
 
-const CONTINUOUS_LININGS = new Set(['armco','armco-white','stone-retaining-wall','concrete-wall','catch-fence','tyre-wall','pit-wall','drystone-wall','hedge-row']);
+const CONTINUOUS_LININGS = new Set(['armco','armco-white','stone-retaining-wall','stone-retaining-wall-b','stone-retaining-wall-c','concrete-wall','catch-fence','tyre-wall','pit-wall','drystone-wall','hedge-row']);
 
 // The base height is shared with the geometry report; model/collider rows stay
 // read only. Lower a continuous lining only when its footprint would float.

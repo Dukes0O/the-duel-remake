@@ -6,6 +6,8 @@
 export const KIT_FOOTPRINTS = Object.freeze({
   'armco-white': { width: 4, height: .85, depth: .349 },
   'stone-retaining-wall': { width: 4, height: 2.54, depth: .796 },
+  'stone-retaining-wall-b': { width: 4, height: 2.54, depth: .796 },
+  'stone-retaining-wall-c': { width: 4, height: 2.54, depth: .796 },
   'drystone-wall': { width: 4, height: 1.347, depth: 0.691 },
   'hedge-row': { width: 4, height: 1.767, depth: 0.906 },
   'armco': { width: 4, height: .85, depth: .349 },

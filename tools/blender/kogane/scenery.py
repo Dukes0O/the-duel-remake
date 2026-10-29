@@ -1,7 +1,7 @@
 """Kogane C4 round 2. Metric original props and reused armco finish.
 
 blender -b --disable-autoexec --python-exit-code 1 --python tools/blender/kogane/scenery.py -- --root .
-For round 2 append --only armco-white stone-retaining-wall.
+To rebuild some models append --only, for example --only stone-retaining-wall stone-retaining-wall-b.
 Writes runtime GLBs and measured settings only, never a blend file.
 Blender axes: X across, -Y front, Z up. glTF converts to Y up.
 """
@@ -9,13 +9,16 @@ import argparse
 import hashlib
 import json
 import math
+import random
 import sys
 from pathlib import Path
 
 import bpy
+import numpy as np
 from mathutils import Vector
 
 BUDGETS = {'armco-white': (156, 72), 'stone-retaining-wall': (600, 200),
+           'stone-retaining-wall-b': (600, 200), 'stone-retaining-wall-c': (600, 200),
            'curve-mirror': (400, 150), 'chevron-board': (200, 100),
            'tea-house': (4500, 1400), 'vending-row': (1500, 500)}
 
@@ -62,43 +65,236 @@ def polygon(name, vertices, faces, m):
     return o
 
 
-def wall(low):
-    mortar = mat('dark volcanic mortar', (.13, .15, .13))
-    stone = [mat('mossy stone '+str(i), c) for i, c in enumerate([
-        (.26, .29, .23), (.32, .33, .29), (.23, .27, .20), (.35, .35, .30)])]
-    moss = mat('moss at damp joints', (.24, .36, .07))
-    # Small baked colour tile: mineral flecks and irregular damp moss patches.
-    # Kept inside the GLB, no runtime procedural shader or external texture.
-    image = bpy.data.images.new('volcanic stone and moss', width=128, height=128)
-    pixels = []
-    for y in range(128):
-        for x in range(128):
-            noise = ((x * 73 + y * 179 + x * y * 13) % 127) / 127
-            damp = math.sin(x * .12 + math.sin(y * .11)) + math.cos(y * .15)
-            colour = (.22, .36, .07) if damp > .85 else (.52, .55, .46)
-            pixels.extend([c * (.68 + noise * .5) for c in colour] + [1])
-    image.pixels = pixels
-    image.pack()
-    for material in stone:
-        nodes = material.node_tree.nodes
-        texture = nodes.new('ShaderNodeTexImage')
-        texture.image = image
-        material.node_tree.links.new(texture.outputs['Color'],
-                                    nodes.get('Principled BSDF').inputs['Base Color'])
-    box('retaining core', (0, 0, 1.22), (4, .72, 2.44), mortar)
-    rows, cols = (3, 4) if low else (5, 7)
-    for r in range(rows):
-        for c in range(cols + r % 2):
-            w, h = 4 / (cols + r % 2), 2.4 / rows
-            # Staggered diagonal-looking joints, subtle varied face depth.
-            x = -2 + (c + .5) * w
-            o = box('weathered stone', (x, -.32 - .018*((r+c)%3), (r+.5)*h),
-                    (w-.045, .10, h-.045), stone[(r*3+c)%4])
-            o.rotation_euler.y = .025 * ((r+c)%3-1)
-    box('worn coping', (0, 0, 2.49), (4, .78, .10), stone[1])
-    if not low:
-        for i in range(7):
-            box('moss seam', (-1.8+i*.55, -.385, .38+(i%4)*.48), (.25, .015, .065), moss)
+# Retaining wall (KOGANE-WALL). Irregular fitted stones in the ishigaki manner: stone shapes come from a
+# staggered, slightly sloping set of seed points (a Voronoi cut of the 4 m piece), so every stone is a
+# different polygon. Each variant has its own seed. The picture on the stones (weathered grey, dark joints,
+# moss patches near the top, the base and in the joints) is baked from the same cut, so the joints on the
+# picture and the joints in the mesh agree. The footprint is the old one exactly: 4 x 2.54 x 0.796 m.
+WALL_VARIANTS = {'stone-retaining-wall': 11, 'stone-retaining-wall-b': 29, 'stone-retaining-wall-c': 47}
+WALL_W, WALL_H = 4.0, 2.44          # the stone face: 4 m wide, from the ground to under the coping
+CORE_FRONT = -.36                   # the front of the core, where the stones sit
+FRONT_MAX = .046                    # the deepest a stone stands out of the core (gives depth .796 with the coping)
+TEX_TOP = 2.6                       # the picture is 2.6 m tall: the stone face plus a strip for the coping
+ANISO = (.5, 1.0)                  # stones are wider than they are tall
+
+
+def wall_seeds(seed):
+    rnd = random.Random(seed)
+    rows, z = [], 0
+    while z < WALL_H - .25:
+        h = rnd.uniform(.26, .6)
+        if WALL_H - (z + h) < .3:
+            h = WALL_H - z
+        rows.append((z, h))
+        z += h
+    seeds = []
+    phase = rnd.uniform(0, 6.28)
+    for index, (z0, h) in enumerate(rows):
+        slope = rnd.uniform(-.07, .07)
+        x = -2 - rnd.uniform(.1, .6)
+        while x < 2.5:
+            width = rnd.choice([rnd.uniform(.35, .6), rnd.uniform(.5, .85), rnd.uniform(.6, 1.0), rnd.uniform(.7, 1.1), rnd.uniform(1.0, 1.7)])
+            cx = x + width / 2
+            # Courses run a little off level, as in a hand-fitted wall.
+            seeds.append((cx, z0 + h / 2 + rnd.uniform(-.14, .14) * h + slope * cx + .08 * math.sin(cx * .8 + phase + index)))
+            x += width
+    return seeds
+
+
+def clip_half(poly, n, c):
+    """Keep the part of a convex polygon where n.p <= c."""
+    out = []
+    for i, a in enumerate(poly):
+        b = poly[(i + 1) % len(poly)]
+        da, db = n[0] * a[0] + n[1] * a[1] - c, n[0] * b[0] + n[1] * b[1] - c
+        if da <= 0:
+            out.append(a)
+        if (da < 0 < db) or (db < 0 < da):
+            t = da / (da - db)
+            out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+    return out
+
+
+def wall_cells(seeds, joint):
+    """One convex polygon per seed inside the 4 x 2.44 m face; the joints between stones are `joint` wide."""
+    w2 = (ANISO[0] ** 2, ANISO[1] ** 2)
+    cells = []
+    for i, a in enumerate(seeds):
+        poly = [(-WALL_W / 2, 0), (WALL_W / 2, 0), (WALL_W / 2, WALL_H), (-WALL_W / 2, WALL_H)]
+        for j, b in enumerate(seeds):
+            if i == j or (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 > 6:
+                continue
+            n = (w2[0] * (b[0] - a[0]), w2[1] * (b[1] - a[1]))
+            length = math.hypot(*n)
+            mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            poly = clip_half(poly, n, n[0] * mid[0] + n[1] * mid[1] - joint * length)
+            if len(poly) < 3:
+                break
+        if len(poly) >= 3:
+            # Drop corners closer than 6 cm so no stone has a needle edge.
+            keep = [p for k, p in enumerate(poly) if math.hypot(p[0] - poly[k - 1][0], p[1] - poly[k - 1][1]) > .06]
+            if len(keep) >= 3:
+                cells.append((a, keep))
+    return cells
+
+
+def noise(rs, width, height, cx, cy):
+    grid = rs.random_sample((cy + 2, cx + 2))
+    ys, xs = np.linspace(0, cy, height), np.linspace(0, cx, width)
+    yi, xi = ys.astype(int), xs.astype(int)
+    fy, fx = ys - yi, xs - xi
+    fy, fx = (fy * fy * (3 - 2 * fy))[:, None], (fx * fx * (3 - 2 * fx))[None, :]
+    g = lambda dy, dx: grid[np.ix_(yi + dy, xi + dx)]
+    return (g(0, 0) * (1 - fx) + g(0, 1) * fx) * (1 - fy) + (g(1, 0) * (1 - fx) + g(1, 1) * fx) * fy
+
+
+def fbm(rs, width, height, cx, cy):
+    total, amp, norm = 0, 1, 0
+    for octave in range(4):
+        total = total + amp * noise(rs, width, height, cx * 2 ** octave, cy * 2 ** octave)
+        norm += amp
+        amp *= .5
+    return total / norm
+
+
+def wall_picture(seeds, seed, width, height):
+    """Baked colour picture of the whole piece: x across 4 m, v up 2.6 m (the top 16 cm strip is the coping)."""
+    rs = np.random.RandomState(seed)
+    xs = -2 + (np.arange(width) + .5) / width * WALL_W
+    zs = (np.arange(height) + .5) / height * TEX_TOP
+    gx, gz = np.meshgrid(xs, zs)
+    sx, sz = np.array([s[0] for s in seeds]), np.array([s[1] for s in seeds])
+    d2 = (ANISO[0] * (gx[..., None] - sx)) ** 2 + (ANISO[1] * (gz[..., None] - sz)) ** 2
+    order = np.argsort(d2, axis=-1)
+    a, b = order[..., 0], order[..., 1]
+    da = np.take_along_axis(d2, a[..., None], -1)[..., 0]
+    db = np.take_along_axis(d2, b[..., None], -1)[..., 0]
+    nx, nz = ANISO[0] ** 2 * (sx[b] - sx[a]), ANISO[1] ** 2 * (sz[b] - sz[a])
+    norm = np.hypot(nx, nz) + 1e-9
+    edge = (db - da) / (2 * norm)                      # metres to the nearest joint line
+    up = nz / norm                                     # +1: the edge above this stone
+    rnd = np.random.RandomState(seed + 5)
+    tone = rnd.uniform(.6, 1.45, len(seeds))[a]        # each stone its own grey
+    warm = rnd.uniform(-1, 1, len(seeds))[a]
+    grain = fbm(rs, width, height, 14, 9)
+    speck = noise(rs, width, height, 90, 56)
+    streak = noise(rs, width, height, 70, 3)           # long vertical weathering streaks
+    base = .2 * tone * (.8 + .5 * grain) * (.9 + .2 * speck) * (.88 + .24 * streak)
+    colour = np.stack([base * (1 + .07 * warm), base * (1 + .01 * warm), base * (1 - .06 * warm)], -1)
+    # Light from above: the upper rim of each stone catches it, the lower rim is in shade.
+    rim = np.clip(1 - edge / .07, 0, 1)
+    colour = colour * (1 + .7 * rim * up)[..., None] * (1 + .35 * np.clip(edge / .22, 0, 1))[..., None]
+    # Moss: damp patches, heavier near the coping, the foot of the wall and along the joints.
+    damp = fbm(rs, width, height, 6, 4)
+    wet = np.exp(-(WALL_H - gz) / .38) * .55 + np.exp(-gz / .3) * .5 + np.exp(-edge / .05) * .3
+    moss = np.clip((damp + wet - .8) * 5, 0, 1) * (gz < WALL_H + .02)
+    mossy = np.stack([.05 + .07 * damp, .11 + .13 * damp, .015 + .025 * damp], -1) * (.75 + .5 * speck)[..., None]
+    colour = colour * (1 - moss[..., None] * .92) + mossy * moss[..., None] * .92
+    # Dark mortar in the joints, then the coping strip on top.
+    joint = np.clip((.02 + .014 * (speck - .5) - edge) / .012, 0, 1)
+    colour = colour * (1 - joint[..., None]) + np.array([.018, .02, .017]) * joint[..., None]
+    cap = gz >= WALL_H
+    cap_grey = (.75 + .5 * grain)[..., None] * np.array([.2, .2, .19])
+    cap_moss = np.clip((damp - .55) * 4, 0, 1)[..., None] * .5
+    cap_colour = cap_grey * (1 - cap_moss) + np.array([.05, .1, .02]) * cap_moss
+    colour = np.where(cap[..., None], cap_colour, colour)
+    out = np.ones((height, width, 4))
+    out[..., :3] = np.clip(colour, 0, 1)
+    return out
+
+
+def planar_uv(mesh):
+    layer = mesh.uv_layers.new(name='UVMap')
+    for polygon in mesh.polygons:
+        for loop in polygon.loop_indices:
+            p = mesh.vertices[mesh.loops[loop].vertex_index].co
+            layer.data[loop].uv = ((p.x + WALL_W / 2) / WALL_W, p.z / TEX_TOP)
+
+
+def wall(low, seed=11):
+    mortar = mat('dark volcanic mortar', (.045, .05, .042))
+    stone = mat('weathered grey stone with moss', (.2, .2, .19), .92)
+    pixels_w, pixels_h = (256, 160) if low else (512, 320)
+    seeds = wall_seeds(seed)
+    picture = bpy.data.images.new('ishigaki stone picture', width=pixels_w, height=pixels_h)
+    picture.pixels.foreach_set(wall_picture(seeds, seed, pixels_w, pixels_h).astype(np.float32).ravel())
+    picture.pack()
+    nodes = stone.node_tree.nodes
+    texture = nodes.new('ShaderNodeTexImage')
+    texture.image = picture
+    stone.node_tree.links.new(texture.outputs['Color'], nodes.get('Principled BSDF').inputs['Base Color'])
+    rnd = random.Random(seed + 1)
+    verts, faces, materials = [], [], []
+
+    def quad_box(x0, x1, y0, y1, z0, z1, m):
+        base = len(verts)
+        verts.extend([(x, y, z) for z in (z0, z1) for y in (y0, y1) for x in (x0, x1)])
+        for f in [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]:
+            faces.append(tuple(base + i for i in f))
+            materials.append(m)
+
+    # The core, then the coping: a few capstones of different length, the highest at exactly 2.54 m.
+    quad_box(-2, 2, CORE_FRONT, -CORE_FRONT, 0, WALL_H, 0)
+    if low:
+        cuts = [-2, rnd.uniform(-.5, .5), 2]
+    else:
+        cuts = [-2, -.95 + rnd.uniform(-.25, .25), .05 + rnd.uniform(-.25, .25), 1.1 + rnd.uniform(-.25, .25), 2]
+    for k in range(len(cuts) - 1):
+        top = 2.54 if k == 0 else rnd.uniform(2.515, 2.54)
+        front = -.39 if k == 1 else -rnd.uniform(.37, .39)
+        back = .39 if k == 0 else rnd.uniform(.37, .39)
+        quad_box(cuts[k] + (0 if k == 0 else .008), cuts[k + 1] - (0 if k == len(cuts) - 2 else .008),
+                 front, back, WALL_H, top, 1)
+    if low:
+        # Far view: the stones are in the picture. One face at the full stone depth carries it.
+        base = len(verts)
+        y = CORE_FRONT - FRONT_MAX
+        verts.extend([(-2, y, 0), (2, y, 0), (2, y, WALL_H), (-2, y, WALL_H)])
+        faces.append(tuple(base + i for i in range(4)))
+        materials.append(1)
+    else:
+        cells = wall_cells(seeds, .014)
+        for cell, outline in cells:
+            cx = sum(p[0] for p in outline) / len(outline)
+            cz = sum(p[1] for p in outline) / len(outline)
+            reach = rnd.uniform(.018, .042)
+            tilt = (rnd.uniform(-.012, .012), rnd.uniform(-.012, .012))
+            outer, inner = [], []
+            for x, z in outline:
+                outer.append(len(verts))
+                verts.append((x, CORE_FRONT, z))
+            for x, z in outline:
+                # Pull the front face in a little from the joint; keep the piece edges and the ground where they are.
+                dx, dz = x - cx, z - cz
+                shrink = 1 - min(.3, .028 / max(.05, min(math.hypot(dx, dz), .3)))
+                ix = x if abs(abs(x) - 2) < 1e-6 else cx + dx * shrink
+                iz = z if (z < 1e-6 or abs(z - WALL_H) < 1e-6) else cz + dz * shrink
+                depth = min(FRONT_MAX, max(.008, reach + tilt[0] * (ix - cx) + tilt[1] * (iz - cz)))
+                inner.append(len(verts))
+                verts.append((ix, CORE_FRONT - depth, iz))
+            n = len(outline)
+            faces.append(tuple(inner))
+            materials.append(1)
+            for i in range(n):
+                j = (i + 1) % n
+                # No side face on the ground line or under the coping; they are never seen.
+                if (outline[i][1] < 1e-6 and outline[j][1] < 1e-6) or (abs(outline[i][1] - WALL_H) < 1e-6 and abs(outline[j][1] - WALL_H) < 1e-6):
+                    continue
+                faces.append((outer[i], outer[j], inner[j], inner[i]))
+                materials.append(1)
+        # The deepest point of the face is exactly 4.6 cm out of the core.
+        front = min(range(len(verts)), key=lambda i: verts[i][1])
+        verts[front] = (verts[front][0], CORE_FRONT - FRONT_MAX, verts[front][2])
+    mesh = bpy.data.meshes.new('retaining wall')
+    mesh.from_pydata(verts, [], faces)
+    mesh.materials.append(mortar)
+    mesh.materials.append(stone)
+    mesh.update()
+    for polygon, index in zip(mesh.polygons, materials):
+        polygon.material_index = index
+    planar_uv(mesh)
+    o = bpy.data.objects.new('retaining wall', mesh)
+    bpy.context.collection.objects.link(o)
 
 
 def mirror(low):
@@ -232,7 +428,10 @@ def main():
                                 vertex.co.z = centre.z + (vertex.co.z - centre.z) * 2.4
 
             else:
-                {'stone-retaining-wall':wall,'curve-mirror':mirror,'chevron-board':chevron,
+                {'stone-retaining-wall':wall,
+                 'stone-retaining-wall-b':lambda low:wall(low, WALL_VARIANTS['stone-retaining-wall-b']),
+                 'stone-retaining-wall-c':lambda low:wall(low, WALL_VARIANTS['stone-retaining-wall-c']),
+                 'curve-mirror':mirror,'chevron-board':chevron,
                  'tea-house':tea,'vending-row':vending}[id](low)
             objects = [o for o in bpy.context.scene.objects if o.type=='MESH']
             bpy.ops.object.select_all(action='DESELECT')
@@ -250,8 +449,10 @@ def main():
             points = [o.matrix_world @ Vector(v) for v in o.bound_box]
             size = [max(v[i] for v in points)-min(v[i] for v in points) for i in [0,2,1]]
             path = runtime/(id+('-lod' if low else '')+'.glb')
+            # The stone pictures are exported as JPEG to keep each wall file small.
             bpy.ops.export_scene.gltf(filepath=str(path), export_format='GLB', export_yup=True,
-                export_cameras=False, export_lights=False, export_animations=False)
+                export_cameras=False, export_lights=False, export_animations=False,
+                export_image_format='JPEG' if id in WALL_VARIANTS else 'AUTO', export_jpeg_quality=82)
             record['files'].append({'path':path.name,'triangles':tris,'size':size,
                 'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
         records.append(record)
