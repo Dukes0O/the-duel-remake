@@ -47,13 +47,15 @@ export const normalizeTyre = value => (value === 'winter' ? 'winter' : 'summer')
 export function surfaceGrip(kind, car = null) {
   const surface = SURFACES[kind] ?? SURFACES.asphalt;
   if (kind === 'gravel' && GRAVEL_FRIENDLY.includes(car?.kind)) return 1;
+  if (kind === 'gravel' && car?.awd === true) return .93;
   return surface.grip;
 }
 
 // Surface grip times tyre, held at 40% or more.
 export function effectiveGrip(kind, tyre = 'summer', car = null) {
   const surface = SURFACES[kind] ?? SURFACES.asphalt, set = TYRES[tyre] ?? TYRES.summer;
-  return Math.max(GRIP_FLOOR, surfaceGrip(kind, car) * set[surface.column]);
+  const awd = car?.awd === true && (kind === 'snow' || kind === 'deep-snow') ? 1.06 : 1;
+  return Math.max(GRIP_FLOOR, surfaceGrip(kind, car) * set[surface.column] * awd);
 }
 
 // Top speed share of the tyre applies on asphalt only (winter rubber gives
