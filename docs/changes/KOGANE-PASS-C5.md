@@ -31,6 +31,17 @@ Round 1 verdict and these changes are in `docs/board/looks/kogane-pass/c5-review
 - The Kogane course test now runs the helicopter checks in the main process with the
   option, instead of a switch-on child process, and adds far shore checks.
 
+Round 2 checks (jobs 2 for tests, 1 for the browser, no frame timing), on the merged
+commit: lane tier `--changed --jobs 2 --keep-going` 239 of 239 passed in one run;
+`test-circuit-kogane`, `test-circuits`, `test-drive-through` (7 of 7) and
+`test-heli-mode` (263 checks, file unchanged from integration) passed; `npm run build`
+built; browser scenarios `kogane-c5-views` and `kogane-views` passed;
+`test-repo-hygiene` passed (it now allows `c5-round-2.jpg`). Changed assertions in
+round 2: `tools/test-pilot-map.mjs` (an outline for every place with a road, then the
+dev places) and `tools/test-repo-hygiene.mjs` (sheet name); nothing loosened.
+Other courses' world signatures and replay fingerprints are unchanged (the lane tier
+guards passed). Not done: frame timing (not asked on an art round).
+
 ## Resumed run (round 1, Claude, 28 October 2026)
 
 Kept from Codex's blocked work: all of the sections below (lake basin, hill
