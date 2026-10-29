@@ -139,8 +139,8 @@ test('Ardennes Forest is a released circuit: stable registration, price, product
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   assert.equal(CIRCUITS.filter(circuit => circuit.id === 'ardennes-forest').length,1);
   assert.equal(COURSE.filter(event => event.id === 'ardennes-forest').length,1);
-  assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id),released);
+  assert.equal(COURSE.length, BASE_COURSE_COUNT + released.filter(id => CIRCUIT_MANIFESTS.find(row => row.id === id).slot === undefined).length);
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id),released.filter(id => CIRCUIT_MANIFESTS.find(row => row.id === id).slot === undefined));
   for(const search of ['', '?flags=ardennes-forest']){
     const player=createFeatureFlags({storage:null,qa:false,search});
     assert.equal(player.enabled('ardennes-forest'),true,'released admission needs no QA URL');

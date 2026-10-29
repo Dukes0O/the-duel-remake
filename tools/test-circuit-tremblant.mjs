@@ -347,7 +347,7 @@ test('tremblant-woods retains its accepted registry identity and access', () => 
   assert.equal(createFeatureFlags({storage:null, qa:false}).enabled(id), true);
   assert.equal(supportsCombat(definition), false);
   assert.equal(definition.noCombat, true); assert.equal(definition.hasRival, true);
-  const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on');
+  const enabled = CIRCUIT_MANIFESTS.filter(row => row.state === 'on' && row.slot === undefined);
   const publicIndex = COURSE.findIndex(row => row.id === id);
   assert.equal(publicIndex, BASE_COURSE_COUNT + enabled.findIndex(row => row.id === id));
   const fresh = createProfile();

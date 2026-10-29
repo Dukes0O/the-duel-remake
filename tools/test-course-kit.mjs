@@ -41,7 +41,7 @@ test('manifests derive current registration, flags, prices and GP membership wit
   const {COURSE} = await import('../src/config.js');
   const released = api.CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
   assert.deepEqual(circuitsEnabled(off).map(row => row.id), released);
-  assert.deepEqual(circuitsEnabled(off).map(row => COURSE.indexOf(row)), released.map((_, index) => api.BASE_COURSE_COUNT + index));
+  assert.deepEqual(circuitsEnabled(off).map(row => COURSE.indexOf(row)), released.map(id => { const m = api.CIRCUIT_MANIFESTS.find(row => row.id === id); return m.slot ?? api.BASE_COURSE_COUNT + released.filter(id => api.CIRCUIT_MANIFESTS.find(row => row.id === id).slot === undefined).indexOf(id); }));
   const on = createFeatureFlags({storage: null, qa: true, search: '?flags=' + api.CIRCUIT_MANIFESTS.map(row => row.flag).join(',')});
   assert.deepEqual(circuitsEnabled(on).map(row => row.id), api.CIRCUIT_MANIFESTS.map(row => row.id));
 });

@@ -9,6 +9,8 @@ import {Course} from '../src/course.js';
 import {COURSE} from '../src/config.js';
 import {PILOT_MAP, PLACES, DEV_PLACES} from '../src/heli/pilot-map-data.js';
 import {ALL_CIRCUITS} from '../src/circuits/index.js';
+import {CIRCUIT_ENTRIES} from '../src/circuit-manifests.js';
+import {EXPANSION_COURSES} from '../src/expansion-courses.js';
 
 export const OUTLINE_FILE = fileURLToPath(new URL('../src/generated/pilot-map.json', import.meta.url));
 // Course layouts are built from this seed (the one every tool and test uses).
@@ -75,12 +77,16 @@ export function buildPilotMap() {
   // Dev places (Kogane Pass) keep their outline ready for the chart while their option is off.
   for (const place of [...PLACES, ...DEV_PLACES]) {
     if (!place.courses.length) continue;
-    const def = COURSE.find(course => course.id === place.courses[0]) ??
-      ALL_CIRCUITS.find(course => course.id === place.courses[0]);
+    // Keep the released outline while a replacement road is still a preview.
+    const replacement = CIRCUIT_ENTRIES.find(row => row.manifest.id === place.courses[0] && row.manifest.slot !== undefined && row.manifest.state !== 'on');
+    const def = replacement ? EXPANSION_COURSES.find(row => row.id === replacement.manifest.id)
+      : COURSE.find(course => course.id === place.courses[0]) ?? ALL_CIRCUITS.find(course => course.id === place.courses[0]);
     if (!def) throw new Error(`${place.id}: no course ${place.courses[0]} in the registry`);
     outlines[place.id] = traceCourse(def);
   }
-  return {version: PILOT_MAP.version, sizeKm: PILOT_MAP.outlineKm, seed: TRACE_SEED, toleranceKm: TRACE_TOLERANCE_KM, outlines};
+  const previews = Object.fromEntries(CIRCUIT_ENTRIES.filter(row => row.manifest.slot !== undefined && row.manifest.state !== 'on')
+    .map(row => [row.manifest.id, {flag: row.manifest.flag, outline: traceCourse(row.definition)}]));
+  return {version: PILOT_MAP.version, sizeKm: PILOT_MAP.outlineKm, seed: TRACE_SEED, toleranceKm: TRACE_TOLERANCE_KM, outlines, previews};
 }
 
 export const serialise = map => JSON.stringify(map) + '\n';

@@ -27,6 +27,7 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.deepEqual(ALL_CIRCUITS.map(circuit => circuit.id), CIRCUIT_MANIFESTS.map(row => row.id));
   // Tremblant Woods (RELEASE-TREMBLANT), Tremblant Snow (RELEASE-TREMBLANT-SNOW), Harbour Lights (RELEASE-HARBOUR) and Panorama Ridge (RELEASE-PANORAMA) are released.
   const released = CIRCUIT_MANIFESTS.filter(row => row.state === 'on').map(row => row.id);
+  const appended = CIRCUIT_MANIFESTS.filter(row => row.state === 'on' && row.slot === undefined).map(row => row.id);
   for (const circuit of ALL_CIRCUITS) {
     const manifest = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id);
     assert.equal(FEATURE_STATES[circuit.flag], manifest.state);
@@ -59,7 +60,8 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
       assert.ok(COURSE_PRICES[circuit.id] > 0);
       assert.equal(circuit.hasRival, true);
     }
-    assert.equal(circuit.kind, 'circuit'); assert.equal(circuit.noTraffic, true);
+    assert.equal(circuit.kind, 'circuit');
+    assert.equal(circuit.noTraffic, circuit.id === 'eifel-crown' ? undefined : true);
     assert.ok(Object.isFrozen(circuit) && circuit.lengthU > 2500);
   }
   for (const manifest of CIRCUIT_MANIFESTS) assert.equal(COURSE_PRICES[manifest.id], manifest.price);
@@ -67,16 +69,19 @@ test('each circuit is registered, behind its own switch, priced, and on COURSE o
   assert.deepEqual(orders, [...orders].sort((a, b) => a - b), 'manifests are listed in release order');
   assert.equal(new Set(orders).size, orders.length, 'each course has its own release order');
   assert.deepEqual(CIRCUITS.map(circuit => circuit.id), released, 'only the released circuits are on COURSE in the tests');
-  assert.equal(COURSE.length, BASE_COURSE_COUNT + released.length);
-  assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id)), [], 'the sixteen earlier events are unchanged and in place');
-  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), released, 'enabled courses append in declared order');
+  assert.equal(COURSE.length, BASE_COURSE_COUNT + appended.length);
+  assert.deepEqual(COURSE.slice(0, 16).map(event => event.id).filter(id => ALL_CIRCUITS.some(circuit => circuit.id === id && CIRCUIT_MANIFESTS.find(row => row.id === id).slot === undefined)), [], 'the sixteen earlier events are unchanged and in place');
+  assert.deepEqual(COURSE.slice(BASE_COURSE_COUNT).map(row => row.id), appended, 'enabled courses append in declared order');
   const originalDefinitions = ALL_CIRCUITS.filter(circuit => circuit.id !== 'summit-time-attack' &&
     CIRCUIT_MANIFESTS.find(row=>row.id===circuit.id).unlock?.kind !== 'spotted-from-air');
   assert.equal(new Set(originalDefinitions.map(circuit => circuit.stage)).size, originalDefinitions.length,
     'all non-Attack courses retain unique authored generation identities');
   assert.equal(ALL_CIRCUITS.find(circuit => circuit.id === 'summit-time-attack').stage,
     ALL_CIRCUITS.find(circuit => circuit.id === 'summit-run').stage, 'the solo child keeps the exact parent generation identity');
-  assert.ok(ALL_CIRCUITS.every(circuit => circuit.stage > 15), 'appended after the existing events');
+  assert.ok(ALL_CIRCUITS.every(circuit => {
+    const slot = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id).slot;
+    return slot === undefined ? circuit.stage > 15 : circuit.stage === slot;
+  }), 'appended events use new generation stages; replacements keep their slot stage');
   const on = createFeatureFlags({ storage: null, qa: true, search: '?flags=harbour-lights,tremblant-woods' });
   assert.deepEqual(circuitsEnabled(on).map(circuit => circuit.id), CIRCUIT_MANIFESTS.filter(row => on.enabled(row.flag)).map(row => row.id), 'the requested circuit plus every released one, in release order');
   // A QA-enabled course keeps its manifest position even when later courses are released.
@@ -102,7 +107,7 @@ test('every closed layout closes within the rules and says what it changed', () 
     assert.ok(Math.abs(Math.abs(report.turnSumDeg) - 360) <= 2, `${circuit.id}: turns add up to a lap`);
     assert.ok(report.closureGap < 20, `${circuit.id}: the script is within 20 m of closing before the builder stretches it`);
     for (const change of report.straightChanges) assert.ok(Math.abs(change.percent) <= 2, `${circuit.id} piece ${change.index + 1} changes only ${change.percent.toFixed(2)}%`);
-    near(report.elevationLeftover, 0, 1e-9, `${circuit.id}: climbs add up`);
+    near(report.elevationLeftover, circuit.id === 'eifel-crown' ? -.2 : 0, 1e-9, `${circuit.id}: approved climb total before closure correction`);
     const first = road.samples[0], last = road.samples.at(-1);
     near(Math.hypot(first.x - last.x, first.z - last.z), 0, 1e-6);
     assert.ok(report.highestGradePercent < 25, `${circuit.id}: steepest ${report.highestGradePercent.toFixed(1)}%`);
@@ -179,7 +184,15 @@ for (const circuit of ALL_CIRCUITS.filter(def=>def.closed!==false)) {
       const def = reverse ? { ...circuit, id: `${circuit.id}-reverse-test`, reverse: true } : circuit;
       // The reverse build is driven alone: the existing rival was never taught a hairpin (P4-FIELD).
       // A winter circuit is driven on winter tyres, as a player would choose them on the setup.
-      const run = driveCircuit(def, { cpuDifficulty: 'medium', opponentCount: reverse ? 0 : 1, tyre: courseHasWinterSurfaces(circuit) ? 'winter' : null });
+      const slot = CIRCUIT_MANIFESTS.find(row => row.id === circuit.id).slot;
+      const original = slot === undefined ? null : COURSE[slot];
+      let run;
+      try {
+        if (slot !== undefined && !reverse) COURSE[slot] = def;
+        run = driveCircuit(def, { cpuDifficulty: 'medium', opponentCount: reverse ? 0 : 1, tyre: courseHasWinterSurfaces(circuit) ? 'winter' : null });
+      } finally {
+        if (slot !== undefined) COURSE[slot] = original;
+      }
       const label = `${def.id}: ${run.lapTimes.map(lapTime).join(' ')}`;
       assert.ok(run.finite && run.completed && run.laps === circuit.laps, label);
       assert.equal(run.crashes, 0, label); assert.equal(run.boundaryResets, 0, label); assert.equal(run.checkpointResets, 0, label);

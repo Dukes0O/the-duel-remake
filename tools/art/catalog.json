@@ -3608,6 +3608,93 @@
         }
       ],
       "recipe": "tools/blender/deep-art-fit.py"
+    },
+    {
+      "id": "wild-north-woods-white-tailed-deer",
+      "card": "WILD-ART-SRC",
+      "family": "wildlife",
+      "sourcePage": "https://poly.pizza/m/T6Cs7tmMHJ",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Poly Pizza source page names creator and licence. Original is SHA256 pinned by recipe.",
+      "status": "round-1-review",
+      "downloaded": true,
+      "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e",
+      "checked": "2026-10-28",
+      "library": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+      "files": [
+        {
+          "path": "quaternius-deer-original.glb",
+          "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e"
+        }
+      ],
+      "changes": "Metric fit, smaller ears and eyes, slimmer lower legs, whitetail antlers, white flag and throat, 1K natural coat, smoother silhouette. Original rig and all clips retained. Also adapted into the round 3 moose with larger proportions, shoulder hump, heavy muzzle, bell and palmate antlers.",
+      "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb"
+    },
+    {
+      "id": "wild-north-woods-eastern-wolf",
+      "card": "WILD-ART-SRC",
+      "family": "wildlife",
+      "sourcePage": "https://poly.pizza/m/P1gU3Qkr9r",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Poly Pizza source page names creator and licence. Original is SHA256 pinned by recipe.",
+      "status": "round-1-review",
+      "downloaded": true,
+      "sha256": "16ac96339d06f7def9af20d5d9b27622d61e53580dab43970c9edb1bffbe8f84",
+      "checked": "2026-10-28",
+      "library": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+      "files": [
+        {
+          "path": "quaternius-wolf-original.glb",
+          "sha256": "16ac96339d06f7def9af20d5d9b27622d61e53580dab43970c9edb1bffbe8f84"
+        }
+      ],
+      "changes": "Metric fit, longer-legged proportions, smaller ears and eyes, grey-brown saddle and natural 1K coat, smoother silhouette. Original rig and all clips retained.",
+      "download": "https://static.poly.pizza/f1d12388-e39b-4157-b32a-646a1d089fc4.glb"
+    },
+    {
+      "id": "wild-north-woods-black-bear",
+      "card": "WILD-ART-SRC",
+      "family": "wildlife",
+      "sourcePage": "https://poly.pizza/m/56ym_pyVnel",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseEvidence": "Poly Pizza source page names creator and licence. Original is SHA256 pinned by recipe.",
+      "status": "round-1-review",
+      "downloaded": true,
+      "sha256": "04b739edaf4758849952757737ab97a7350370bdfbc662a96d7b6d4b75bc43d8",
+      "checked": "2026-10-28",
+      "library": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+      "files": [
+        {
+          "path": "poly-black-bear-original.glb",
+          "sha256": "04b739edaf4758849952757737ab97a7350370bdfbc662a96d7b6d4b75bc43d8"
+        }
+      ],
+      "changes": "Metric fit, muted natural 1K coat, weighted armature and looping Idle/Walk.",
+      "download": "https://static.poly.pizza/cba1e1c9-f4aa-4f12-8d58-2ba5baf1aa2b.glb"
+    },
+    {
+      "id": "wild-north-woods-beaver",
+      "card": "WILD-ART-SRC",
+      "family": "wildlife",
+      "sourcePage": "https://poly.pizza/m/fwtA7VLrXPr",
+      "author": "Poly by Google",
+      "license": "CC-BY-3.0",
+      "licenseEvidence": "Poly Pizza source page names creator and licence. Original is SHA256 pinned by recipe.",
+      "status": "round-1-review",
+      "downloaded": true,
+      "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1",
+      "checked": "2026-10-28",
+      "library": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+      "files": [
+        {
+          "path": "poly-beaver-original.glb",
+          "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
+        }
+      ],
+      "changes": "Approved 1.10 m metric fit with minimum-paw pivot, natural 1K coat, weighted armature and looping Idle/Walk."
     }
   ]
 }
