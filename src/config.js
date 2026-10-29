@@ -2,12 +2,8 @@
 // plausible arcade values invented to fill gaps, frozen here.
 import { EXPANSION_COURSES } from './expansion-courses.js';
 import { FREESTYLE_COURSE } from './freestyle-course.js';
-<<<<<<< HEAD
 import { applyCircuits } from './circuits/index.js';
-=======
-import { CIRCUITS } from './circuits/index.js';
 import { featureFlags } from './feature-flags.js';
->>>>>>> integration/wasteland
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
 export const LIVES = {
