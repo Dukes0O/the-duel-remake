@@ -69,3 +69,10 @@ and are deleted with the lane.
 ## Gates
 
 See the end of this note.
+
+- `tools/test-circuit-kogane.mjs`: passed (Casual 108.35 s, Pro 107.71 s, no crashes or resets) with the new checks.
+- `tools/test-track-kits.mjs`: passed (Kogane 1,955 actual High/LOD placements validated, all courses).
+- `tools/test-circuit-barriers.mjs`: 8 of 8. `tools/test-circuits.mjs`: passed with the switch off (28 events, 208,982 checks) and on (29 events, 216,698 checks).
+- `tools/test-drive-through.mjs`: 7 of 7.
+- Lane tier `--changed --jobs 2 --keep-going`: 80 passed, 0 failed, 0 not run (819 s).
+- `npm run build`: passed.
