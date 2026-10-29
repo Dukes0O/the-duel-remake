@@ -89,3 +89,7 @@ and the exact historical cue exclusions, with no remaining code faults.
 Nothing replaced. No old engine, voice row, cue, recording or recipe removed.
 Raw native recording evidence, QA bundle, production build output and the
 temporary Vite command shim were recycled after their results were recorded.
+
+## Claude's review (28 October 2026, night)
+
+Approved (independent review; rule 18 written review). Engine row matched within 0.52 dB of the other cars; whistle -38.15 LUFS; blow-off peak 5.06 dB under the lift accent. The two changed pins keep their old hashes and only leave the new Skyline entries out, the same pattern as the medal cars; the new row and cues are checked exactly in test-audio. Nothing loosened.
