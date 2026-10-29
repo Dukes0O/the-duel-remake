@@ -33,7 +33,8 @@ const near = (actual, expected, tolerance, label) => {
 const worlds = new Map();
 function loadCourse(id) {
   if (!worlds.has(id)) {
-    const course = new Course(COURSE.find(def => def.id === id), 1989);
+    // A parent still behind its own switch (Kogane Pass) is not in COURSE: read it from the registry.
+    const course = new Course(COURSE.find(def => def.id === id) ?? ALL_CIRCUITS.find(def => def.id === id), 1989);
     worlds.set(id, {course, ground: groundFromCourse(course)});
   }
   return worlds.get(id);
