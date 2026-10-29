@@ -1450,3 +1450,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EARN-LOOKS (lane 37/38 then the hygiene fix passes alone; build, car suites, enzo-look, mclaren-f1-look, earned-cars scenarios pass on 7514f049; earned-cars stays dev).
 - 28 Oct night: merged KOGANE-PASS-C5 (lane 239/239; recheck after kit merge passes).
 - 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V3 (lane 54/55 then hygiene fix; Skyline vehicle 329 and handling, vehicle-assets, earned-cars-ui, build rerun by Claude after the node_modules repair and the hygiene merge).
+- 28 Oct night: merged QA-MAP-FINISH-TABLE (map-finish passes; lane 21/21, build on 629e3204).
