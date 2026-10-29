@@ -419,8 +419,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "blocked"
-    waiting_on: "claude"
+    status: "in-progress"
     claimed_by: "Codex, lane codex/kogane-c5, 28 October 2026"
     needs: []
     locks: [sound-bank, track-kit-placement]
@@ -451,7 +450,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "in-progress"
+    status: "blocked"
     needs: []
     locks: []
     details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V2.md"

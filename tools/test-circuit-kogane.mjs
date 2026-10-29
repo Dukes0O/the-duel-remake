@@ -185,3 +185,53 @@ for (const difficulty of ['casual', 'pro']) {
   console.log(`${difficulty}: ${result.timeSec.toFixed(2)} s, no crashes or resets`);
 }
 console.log(`Kogane road, registration, boards and ${closest.toFixed(2)} m separation passed.`);
+
+// C3's full seeded field check is explicit because it is much longer than
+// the road test. Run with LINE_SKILL=.95 and --pace [easy|medium|hard].
+if (process.argv.includes('--pace')) {
+  assert.equal(Number(process.env.LINE_SKILL), manifest.driver.skill,
+    'set LINE_SKILL to the manifest test-driver skill before the field check');
+  const {runRace, summarize, checkTargets} = await import('./race-field-balance.mjs');
+  const selected = process.argv[process.argv.indexOf('--pace') + 1];
+  const difficulties = selected ? [selected] : ['easy', 'medium', 'hard'];
+  assert.ok(difficulties.every(cpu => ['easy', 'medium', 'hard'].includes(cpu)));
+  const rows = [];
+  let computerCrashes = 0;
+  for (const cpuDifficulty of difficulties) {
+    for (let index = 0; index < 30; index++) {
+      let crashes = 0;
+      const result = runRace(cpuDifficulty, index, {
+        course: manifest.id, car: manifest.driver.car, fieldSize: KOGANE_PASS.fieldSize - 1,
+        onStep: duel => {
+          assert.equal(duel.state.field.size, 6, 'the packet specifies six cars including the player');
+          crashes = duel.state.field.stats.crashes.filter(row => row.index >= 0).length;
+        },
+      });
+      computerCrashes += crashes;
+      rows.push({...result, computerCrashes: crashes});
+      console.log(JSON.stringify({difficulty: cpuDifficulty, index, time: result.playerTime,
+        position: result.position, finished: result.finished, passes: result.passes, computerCrashes: crashes}));
+    }
+  }
+  const summary = summarize(rows);
+  const times = Object.fromEntries(difficulties.map(cpu => {
+    const values = rows.filter(row => row.cpuDifficulty === cpu).map(row => row.playerTime);
+    assert.ok(values.every(Number.isFinite), `${cpu}: the test driver finishes every run`);
+    return [cpu, {min: Math.min(...values), max: Math.max(...values),
+      mean: values.reduce((sum, time) => sum + time, 0) / values.length}];
+  }));
+  const failures = checkTargets(summary);
+  for (const cpu of difficulties) {
+    const group = rows.filter(row => row.cpuDifficulty === cpu);
+    if (group.filter(row => row.finished === 5).length < 29)
+      failures.push(cpu + ': the entire field must finish in at least 29 of 30 races');
+  }
+  for (const row of rows.filter(row => row.cpuDifficulty === 'medium' && row.passes < 3))
+    failures.push('Medium race ' + row.index + ': only ' + row.passes + ' computer passes');
+  if (computerCrashes) failures.push(`${computerCrashes} computer-driver crashes, target zero`);
+  const reference = rows.find(row => row.cpuDifficulty === 'medium' && row.index === 0);
+  if (reference && !(reference.playerTime >= 98 && reference.playerTime <= 106))
+    failures.push(`Medium reference run ${reference.playerTime} s, target 98 to 106 s`);
+  console.log(JSON.stringify({summary, times, computerCrashes, failures}));
+  assert.deepEqual(failures, [], 'Kogane C3 field pace acceptance');
+}
