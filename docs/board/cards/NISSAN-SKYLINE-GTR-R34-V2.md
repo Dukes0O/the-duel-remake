@@ -23,6 +23,94 @@ Before building, copy owned files, contracts, locks and one to three checks from
 Record any browser, look or frame checks needed. Follow the current lane and release gates.
 New events must name their sound cue.
 
-## Claude, 28 October 2026 evening: stopped at the round cap
+## Round 1 scope and decisions (28 October 2026)
 
-Three rounds done (lane codex/skyline-v2, commit c9c19774, Blender recipe body as a GLB, 55,688 triangles). Round 3 is closer at the front (slim headlights, bulged bonnet, intake) but still not an R34: the cabin and roof read as a boxy saloon, the arches do not flare, the rear deck is too tall and square. Honest score 3 of 5. SPEC 0.11 caps art at three rounds, so the card stops here and waits for Kyle: (a) one more round on his word, (b) accept it for now and improve later, or (c) drop the Skyline. The lane stays unmerged; the 959-S body stands in behind the dev switch.
+Kyle requests a code builder instead of a Blender body recipe. Reuse the
+959-S construction helpers and F1 damage contract. The supplied synthetic
+references control proportions; the packet controls red calipers, twin tips,
+five-spoke wheels and left-seat driver. No logos.
+
+Owned: src/skyline-vehicle.js, tools/test-skyline-vehicle.mjs, round sheet and
+review note. Kyle extends the named registration hooks to src/vehicle-assets.js
+and src/feature-flags.js for a dev-only model entry. No config or shop entry.
+Locks: none. Checks: own headless contract and budget test; four matched
+model/reference views and self-review; lane tier jobs 2 and production build.
+No frame check. No new game event or sound cue in this shape stage.
+
+The round also owns tools/art/skyline-review.py and tools/art/skyline-sheet.py, repeatable review recipes
+using the existing car-review renderer and Pillow sheet composition. The
+requested nissan-skyline-gtr-r34 sheet folder supersedes the packet alias.
+
+## Assertion review for Claude before merge
+
+The requested dev-switch registration also needs the strict catalogue row in
+tools/test-feature-flags.mjs: fixed switch count 41 to 42, with nissan-skyline
+added to the names required to remain dev. No existing switch state or retired
+name guard is removed. The initial lane gate exposed this through course-kit.
+The new model suite separately proves production denies the car and private
+QA admits it explicitly. Please record AGENTS 18's written assertion review
+here before merge. The builder has prepared this exact correction for review.
+
+The dev registration also extends the existing PREVIEW_FLAGS row in this
+lane's start-preview.bat. Its unchanged test requires every dev switch there.
+Only nissan-skyline is appended; the launcher is never executed in this job.
+No port, folder, player setup or preview behaviour changes.
+
+## Round 2 decisions (28 October 2026)
+
+Claude round 1 verdict: FAIL, it reads as a generic old saloon, not an R34.
+Follow the latest brief: lower and move the cabin forward, flatten the bonnet
+and raise the blunt nose, flare the arches, enlarge the silver wheels, use
+black window seals, and replace twin tips with one large right-side exhaust.
+The latest brief controls over round 1's packet choices. Keep the left seat,
+red calipers, dev registration and the 60,000 triangle / 56 draw budget.
+The one outlet has one boost flame. Height and wheel-radius assertions will
+follow the revised geometry with unchanged tolerances. Existing damage,
+clearance, grounding and isolation assertions remain.
+Checks: headless model contract, four matched reference/model views and
+self-score, lane tier jobs 2, production build. No browser or frame check.
+Stop after round 2 and leave the art verdict to Claude.
+
+Round 2 independent code review: clear after correcting the exhaust position
+to clear the diffuser within the unchanged length tolerance, and moving black
+window seals into the glass edges so the painted pillars do not cover them.
+
+## Round 3 decision, final round (28 October 2026)
+
+Claude scores round 2 NOT YET, about 2.5/5. The latest brief authorizes a
+Blender recipe and runtime GLB. Use the existing preload then synchronous
+factory contract, as on the Speirling. No primitive fallback body. The shell
+is one connected subdivided mesh, with glass regions, rounded shoulders,
+integrated roof and painted pillars. Decimate after subdivision to budget.
+Keep the existing private instance damage, wheel and driver hooks.
+Owned files extend to tools/blender/cars/nissan-skyline-gtr-r34.py and
+public/assets/models/unlocks/nissan_skyline_gtr_r34.glb. Existing loader and
+review hooks stay owned, including tools/art/skyline-export.mjs for the
+preloaded runtime review export. Add a Skyline-specific export mode to its review
+recipe without changing the shared exporter. Checks: headless GLB, loader
+and damage contract; matched reference sheet including top view; lane jobs 2
+and build. No frame measurement or new sound event. Stop after round 3.
+
+## Round 4 decision (28 October 2026, Kyle brought the car back)
+
+Claude scored round 3 at 3 of 5: closer at the front, but a boxy saloon cabin
+and roof, arches that did not flare and a tall square rear deck. New method
+(Claude): shape from the photo outlines. `tools/art/skyline-outlines.py` measures
+the side, front and rear pictures into `tools/blender/cars/r34-outlines.json`;
+the Blender recipe lofts the body from them, cuts flared rounded arches, sets
+dark window panes into a painted glasshouse and lays the lenses on the nose.
+`tools/art/skyline-overlay.py` checks the model outline against each picture.
+
+Result: silhouette overlap side 0.96, front 0.89, rear 0.89. Builder self-score
+3.5 of 5; the five largest remaining differences are in
+`docs/board/looks/nissan-skyline-gtr-r34/round-4-review.md`. Sheet:
+`docs/board/looks/nissan-skyline-gtr-r34/round-4.jpg`.
+
+Assertion review for Claude, all with unchanged tolerances: declared and
+asserted height 1.25 to 1.36 m (the real car; the photo outline gives 1.36 and
+Claude's brief names it); the front lens ray moves from x .61, y .755 to x .46,
+y .655 and the tail lamp rays from x .45 and .70, y .72 to x .405 and .58,
+y .84, because the lamps now sit where the photos put them. The wheel track
+moves from .84 to .74 so the tyres sit inside the flares (they stood 9 cm
+outside the body); the 1.96 m width is now set by the mirrors, as before.
+Stop after round 4 and leave the art verdict to Claude.
