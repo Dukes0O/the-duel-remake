@@ -22,3 +22,7 @@ Judge: Release Manager.
 Before building, copy owned files, contracts, locks and one to three checks from the approved packet.
 Record any browser, look or frame checks needed. Follow the current lane and release gates.
 New events must name their sound cue.
+
+## Kyle decided (28 October 2026)
+
+Replace the old Eifel Crown with the new layout at release; old Eifel bests and ghosts archive by the layout bump.

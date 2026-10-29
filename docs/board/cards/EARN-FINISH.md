@@ -44,3 +44,7 @@ All three earned cars are merged behind `earned-cars`. Each still owes one
 frame check with the laptop to itself: a Panorama Ridge Grand Prix with a
 field of that car (Enzo, F1, Bolide), High and Performance. Run them here,
 in one quiet window, before the earned-cars release.
+
+## Kyle decided (28 October 2026)
+
+One more round on the three earned cars against reference photos before the earned-cars switch goes on.

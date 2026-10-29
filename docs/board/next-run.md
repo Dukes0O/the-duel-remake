@@ -1,6 +1,36 @@
 # Run, 14 October afternoon to 15 October 2026
 
-## Tonight, 27 to 28 October (Claude, 20:40; wins over every older section)
+## Wednesday 28 October 20:30 to Thursday 29 October 22:00 (Claude; wins over every older section)
+
+Kyle, 28 October evening: an overnight run and a day run, Claude alone
+(Codex is out of quota until about 4 November). Claude's 5-hour windows reset
+about 22:00, 03:00, 08:00, 13:00 and 18:00; the weekly limit resets Thursday
+22:00 and is the real budget, so keep a reserve. A scheduled restart wakes this
+Director session after each reset. Helpers are Sonnet builders in their own
+lanes under `wasteland-integration/`; their briefs forbid cleanup in Claude's
+scratchpad.
+
+Kyle's decisions (28 October evening):
+- Earned cars (Enzo, F1, Bolide): one more round against photos before release.
+- Eifel Crown: the new layout replaces the old one at C7 (old bests archive).
+- The Skyline comes back: round 4 with a new method (shape from photo outlines).
+- The story: "The Kogane Invitation" ties lesson, helicopter, race and car
+  together (packet `docs/story/kogane-invitation.md`, Claude).
+
+Order:
+1. Tonight, building (to about 01:00): Kogane C3 pace, C5 landmark, then C6
+   (Claude drives every sector) and C7 with Night and Reverse; Eifel C4
+   scenery then C5; earned-car photo round; Skyline round 4; the story packet.
+2. Tonight, quiet laptop (about 01:00 to 03:00, nothing else running): full
+   tier on the release commit, frame checks for the five course versions, the
+   Deep shallows, Kogane Pass, and the earned cars' Grand Prix fields; then
+   one release batch.
+3. Thursday: the story missions (lesson, delivery flight, night race, Skyline
+   reward); screens review and main menu upgrade; North woods animals placed
+   at Tremblant (WILD-VIEW); Eifel C6 and C7 if time allows; evening release.
+4. Every window: a short inbox line. Morning summary to Kyle.
+
+## Tonight, 27 to 28 October (Claude, 20:40; older)
 
 Kyle, 27 October evening: a bigger overnight run by Claude alone (Codex may
 not be available), across two Claude windows: 20:40 to 01:30 and 01:30 to
