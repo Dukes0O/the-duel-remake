@@ -11,7 +11,7 @@ export const DAICHI_UPGRADE_LEVEL = Object.freeze({easy: 0, medium: 2, hard: 0})
 
 // The rival settings the game already has (`startCampaign({rival})`). Club driver: no skill bonus.
 // Hard keeps only part of the nitro's speed gain (`nitroScale`, src/sim-rival.js): with all of it Hard is out of reach of any driver.
-export const DAICHI_NITRO_SCALE = Object.freeze({hard: .5});
+export const DAICHI_NITRO_SCALE = Object.freeze({hard: .65});
 export function daichiRival(level) {
   return Object.hasOwn(DAICHI_UPGRADE_LEVEL, level)
     ? {car: KOGANE_SKYLINE, driverId: 'club', upgradeLevel: DAICHI_UPGRADE_LEVEL[level],
