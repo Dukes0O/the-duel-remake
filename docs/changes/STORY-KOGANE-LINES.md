@@ -54,3 +54,7 @@ that. No new sound and no new dependency.
 ## Removed
 
 Nothing removed; nothing was replaced.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: captions word for word, radio always keys off, no race state touched.
