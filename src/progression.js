@@ -7,6 +7,7 @@ import {normalizeDeep, countDeepFinish} from './deep/deep-discovery.js';
 import {settleCoastCup} from './deep/sirena-car.js';
 import {normalizeHeli} from './heli/heli-save.js';
 import {normalizeStory} from './story/story-save.js';
+import {settleKoganeDuel} from './story/kogane-duel.js';
 import {normalizeLab} from './lab/lab-save.js';
 import {normalizeYeti,countYetiFinish,validYetiSeed,isYetiGrandPrixInput} from './yeti.js';
 import {validGrandPrixPosition, grandPrixPositionPay, grandPrixSnowmanPay,
@@ -876,6 +877,9 @@ export function settleRace(profile, result = {}) {
     valid: recordEligible && result.qualifying !== true && result.practice !== true,
     eventId: stageEventId(result.stageIndex), at: updated.history.at(-1).at
   });
+  // The Night Duel (STORY-KOGANE-DUEL): a counted win started from the Story card adds the Skyline once.
+  const storyDuel = settleKoganeDuel(updated, result, {won, stageId: stageEventId(result.stageIndex)});
+  if (storyDuel) updated = storyDuel.profile;
   const owned = updated.unlockedCars;
   if (medalWin && medalWin.profile !== profile)
     updated = grantCompletionCars({ ...updated, medals: medalWin.profile.medals });
@@ -885,6 +889,7 @@ export function settleRace(profile, result = {}) {
     // The medal reports what was paid: nothing in the separate Wasteland career.
     ...(medalsOn ? { medal: newMedal && { ...newMedal, bonus: breakdown.medal }, earnedCars } : {}),
     ...yetiAward,
+    ...(storyDuel ? {storyDuel: storyDuel.level, ...(storyDuel.storyCar ? {storyCar: storyDuel.storyCar} : {storyOwned: true})} : {}),
     ...(coastCup.paid ? {coastCup: {paid: coastCup.paid, events: coastCup.events}} : {}),
     reward,
     ...(separateCareer ? {scrapEarned: career.scrapEarned} : {}),
