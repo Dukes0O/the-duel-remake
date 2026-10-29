@@ -94,3 +94,5 @@ a removal.
   (HOOKS), plus the Story card's "Finish Brian's flying lessons at the helipad first" line (SCREENS, which can read
   `koganeStep` and the lessons).
 - The circle-to-tea-house distance (see Choices) and a fuel answer for the trip home (see Choices).
+
+Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2`): 65 passed, 0 failed. `npm run build`: built.
