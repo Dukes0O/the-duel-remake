@@ -28,7 +28,8 @@ assert.equal(manifest.units, 'metres');
 assert.equal(manifest.up, 'Y');
 assert.deepEqual(manifest.pieces.map(p => p.id).sort(), [...expected].sort());
 const catalog = JSON.parse(readFileSync(join(root, 'tools/art/catalog.json'), 'utf8'));
-const protectedRows = catalog.assets.filter(a => ![
+// Wildlife provenance was added after these protected catalog rows.
+const protectedRows = catalog.assets.filter(a => a.card !== 'WILD-ART-SRC' && ![
   'p4-kenney-racing', 'p4-gp', 'p4-barrier', 'p4-city', 'p4-boats',
   'p4-neon', 'p4-holiday', 'p4-ski', 'p4-nature', 'p4-dome', 'p4-monsters',
 ].includes(a.id));

@@ -1,0 +1,697 @@
+{
+  "version": 1,
+  "group": "north-woods",
+  "status": "round-1-candidates-awaiting-claude",
+  "retrievedAtUtc": "2026-10-15T02:19:19.6940597Z",
+  "cacheRoot": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+  "runtimeInstalled": false,
+  "recipePrepared": true,
+  "limits": {
+    "triangles": 5000,
+    "textureEdge": 1024,
+    "formalRounds": 3,
+    "sheetBytes": 500000
+  },
+  "models": [
+    {
+      "id": "white-tailed-deer",
+      "approvedDonor": "Quaternius Deer, Ultimate Animated Animal Pack",
+      "author": "Quaternius",
+      "source": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "publicFile": "https://drive.google.com/file/d/1iGpXKrqYGyZCPGHPPSuDAoKnOXLhXJ0q/view",
+      "access": "Public download returned Google Drive - Quota exceeded HTML; no model bytes",
+      "downloadReceipt": "quaternius-deer-quota.html",
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "adaptationRequired": [
+        "white tail underside",
+        "white throat patch",
+        "slimmer legs",
+        "natural fur colour and shading"
+      ],
+      "speciesVerified": false,
+      "artAccepted": false,
+      "lastPublicRetry": {
+        "date": "2026-10-28",
+        "bytes": 2040,
+        "sha256": "6fc6eddc845eaa586f2dfeffb3e7220e41e09059573ce9121fdf8e4cefd268bd",
+        "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/T6Cs7tmMHJ",
+        "recipe": "tools/blender/wildlife/white-tailed-deer.py",
+        "candidate": "public/assets/wildlife/white-tailed-deer.glb",
+        "triangles": 4352,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "AnimalArmature|Walk",
+          "AnimalArmature|Jump_toIdle",
+          "AnimalArmature|Idle_HitReact_Right",
+          "AnimalArmature|Idle_HitReact_Left",
+          "AnimalArmature|Idle_Headlow",
+          "AnimalArmature|Idle_2",
+          "AnimalArmature|Idle",
+          "AnimalArmature|Gallop_Jump",
+          "AnimalArmature|Gallop",
+          "AnimalArmature|Eating",
+          "AnimalArmature|Death",
+          "AnimalArmature|Attack_Kick",
+          "AnimalArmature|Attack_Headbutt",
+          "Idle",
+          "Idle_2",
+          "Idle_Headlow",
+          "Walk",
+          "Jump_toIdle",
+          "Idle_HitReact_Right",
+          "Idle_HitReact_Left",
+          "Gallop_Jump",
+          "Gallop",
+          "Eating",
+          "Death",
+          "Attack_Kick",
+          "Attack_Headbutt"
+        ],
+        "sha256": "a1c8d66e58ab814b0cd24ce4c2586584791df1ac3c73e17fb5f81353b49efc46",
+        "artAccepted": false
+      }
+    },
+    {
+      "id": "eastern-wolf",
+      "approvedDonor": "Quaternius Wolf, Ultimate Animated Animal Pack",
+      "author": "Quaternius",
+      "source": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "publicFile": "https://drive.google.com/file/d/1lFQoQ9ln2Z2wGuFFWObj9i5jHqUl_ftG/view",
+      "access": "Public download returned Google Drive - Quota exceeded HTML; no model bytes",
+      "downloadReceipt": "quaternius-wolf-quota.html",
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "adaptationRequired": [
+        "grizzled grey-brown coat",
+        "longer legs",
+        "natural fur colour and shading"
+      ],
+      "speciesVerified": false,
+      "artAccepted": false,
+      "lastPublicRetry": {
+        "date": "2026-10-28",
+        "bytes": 2040,
+        "sha256": "94b1b30ef9f42b17a5005edeeeef0ccea509267fe91eb24128170f16d7c6cbc9",
+        "result": "Google Drive - Quota exceeded HTML; no model bytes"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/P1gU3Qkr9r",
+        "recipe": "tools/blender/wildlife/eastern-wolf.py",
+        "candidate": "public/assets/wildlife/eastern-wolf.glb",
+        "triangles": 4100,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "AnimalArmature|Walk",
+          "AnimalArmature|Jump_ToIdle",
+          "AnimalArmature|Idle_HitReact_Right",
+          "AnimalArmature|Idle_HitReact_Left",
+          "AnimalArmature|Idle_2_HeadLow",
+          "AnimalArmature|Idle_2",
+          "AnimalArmature|Idle",
+          "AnimalArmature|Gallop_Jump",
+          "AnimalArmature|Gallop",
+          "AnimalArmature|Eating",
+          "AnimalArmature|Death",
+          "AnimalArmature|Attack",
+          "Idle",
+          "Idle_2",
+          "Idle_2_HeadLow",
+          "Walk",
+          "Jump_ToIdle",
+          "Idle_HitReact_Right",
+          "Idle_HitReact_Left",
+          "Gallop_Jump",
+          "Gallop",
+          "Eating",
+          "Death",
+          "Attack"
+        ],
+        "sha256": "d34fe2017bfcf65e20453257639ec1453b08bc95c18fc0718f9798b5f417bf0e",
+        "artAccepted": false
+      }
+    },
+    {
+      "id": "moose",
+      "approvedDonor": "Low Poly Moose",
+      "author": "Nioma van der Steen (@fromthestone)",
+      "source": "https://sketchfab.com/3d-models/low-poly-moose-ad0d58f8668f43d5b362d529371a7f6d",
+      "licence": "CC-BY-4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "access": "Public source page available; official model download requires authenticated account; no archive acquired",
+      "sourceReceipt": "nioma-moose-source.html",
+      "publisherMetadata": {
+        "faces": 844,
+        "totalTriangles": 1664,
+        "rigged": true,
+        "animationCount": 1,
+        "description": "A simple walk animation. For our project, Faunawatch.",
+        "textureFiles": [
+          {
+            "name": "textures/moose male texture.png",
+            "width": 1024,
+            "height": 1024
+          }
+        ]
+      },
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "artAccepted": false,
+      "round1": {
+        "source": "original Blender recipe",
+        "recipe": "tools/blender/wildlife/moose.py",
+        "candidate": "public/assets/wildlife/moose.glb",
+        "triangles": 2346,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "2051396acde45f24a099467b0f407bccbdcdf92b2d7fa7bd5a1d6e4daed95aec",
+        "artAccepted": false
+      }
+    },
+    {
+      "id": "black-bear",
+      "approvedDonor": "American Black Bear",
+      "author": "ucdavisterc",
+      "source": "https://sketchfab.com/3d-models/american-black-bear-7c304db470dc4b9f801acf587962f1e5",
+      "licence": "CC-BY-4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "access": "Public source page available; official model download requires authenticated account; no archive acquired",
+      "sourceReceipt": "uc-davis-black-bear-source.html",
+      "publisherMetadata": {
+        "faces": 3028,
+        "totalTriangles": 3028,
+        "rigged": true,
+        "animationCount": 1,
+        "clipNames": null,
+        "textureFiles": [
+          {
+            "name": "textures/Black_bear_mat_BaseColor.png",
+            "width": 2048,
+            "height": 2048
+          },
+          {
+            "name": "textures/Black_bear_mat_Normal.png",
+            "width": 2048,
+            "height": 2048
+          },
+          {
+            "name": "textures/Black_bear_mat_Roughness.png",
+            "width": 2048,
+            "height": 2048
+          }
+        ]
+      },
+      "adaptationRequired": [
+        "reduce each actual texture to at most1024 after archive access and approved export"
+      ],
+      "actualMesh": null,
+      "actualRig": null,
+      "actualClips": null,
+      "actualTextures": null,
+      "artAccepted": false,
+      "round1": {
+        "source": "https://poly.pizza/m/56ym_pyVnel",
+        "recipe": "tools/blender/wildlife/black-bear.py",
+        "candidate": "public/assets/wildlife/black-bear.glb",
+        "triangles": 3000,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "a629df999a7b80a63e23b95a6a37cad7d4cf3401e2d7f02aee163e89bf58773e",
+        "artAccepted": false
+      }
+    },
+    {
+      "id": "beaver",
+      "approvedDonor": "Beaver",
+      "author": "Poly by Google",
+      "source": "https://poly.pizza/m/fwtA7VLrXPr",
+      "licence": "CC-BY-3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "publicDownload": "https://static.poly.pizza/fb953f9b-18e0-4c1e-9df0-dc69d1499aab.glb",
+      "access": "Openly published GLB downloaded without login",
+      "original": {
+        "file": "poly-beaver-original.glb",
+        "bytes": 41468,
+        "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
+      },
+      "actualMesh": {
+        "inspection": "GLB JSON/accessors and embedded PNG header only; no 3D import",
+        "triangles": 568,
+        "vertices": 1122,
+        "meshCount": 1,
+        "primitiveMode": 4,
+        "rawPositionMin": [
+          -18.6143913269043,
+          -19.8521823883057,
+          -55.8140487670898
+        ],
+        "rawPositionMax": [
+          18.6143913269043,
+          19.8521823883057,
+          55.8140487670898
+        ],
+        "physicalScaleVerified": false
+      },
+      "actualRig": {
+        "skins": 0
+      },
+      "actualClips": [],
+      "actualTextures": [
+        {
+          "name": "Tex_Beaver",
+          "mimeType": "image/png",
+          "width": 32,
+          "height": 32,
+          "bytes": 114
+        }
+      ],
+      "artAccepted": false,
+      "adaptationPlan": {
+        "status": "private-generation-structurally-verified-unfitted",
+        "size": 512,
+        "padding": 16,
+        "seed": 1989,
+        "coordinateConvention": "PNG image rows from top-left; retain original glTF UVs and sampler",
+        "tiles": [
+          {
+            "tile": "upper-left",
+            "roleHypothesis": "brown body/head fur",
+            "sourceColour": "#744229",
+            "colour": [
+              116,
+              66,
+              41
+            ],
+            "detail": "fur",
+            "strength": 1.0,
+            "triangles": 316
+          },
+          {
+            "tile": "upper-right",
+            "roleHypothesis": "long negative-Z tail-shaped appendage; actual view still required",
+            "sourceColour": "#837373",
+            "colour": [
+              55,
+              37,
+              28
+            ],
+            "detail": "tail",
+            "strength": 1.0,
+            "triangles": 72
+          },
+          {
+            "tile": "lower-left",
+            "roleHypothesis": "darker underside and limbs",
+            "sourceColour": "#2C1E1E",
+            "colour": [
+              44,
+              30,
+              30
+            ],
+            "detail": "fur",
+            "strength": 0.65,
+            "triangles": 144
+          },
+          {
+            "tile": "lower-right",
+            "roleHypothesis": "dark facial marks",
+            "sourceColour": "#070101",
+            "colour": [
+              7,
+              1,
+              1
+            ],
+            "detail": "marks",
+            "strength": 0.15,
+            "triangles": 36
+          }
+        ],
+        "preserve": [
+          "complete original positions/normals/UV/index binary prefix",
+          "accessor and primitive definitions",
+          "original material and sampler",
+          "original nodes and transforms",
+          "zero skins and clips"
+        ],
+        "uvEvidence": {
+          "crossQuadrantTriangles": 0,
+          "distinctTriangleUVFootprints": 369,
+          "repeatedTriangleUVGroups": 199,
+          "uniqueAsymmetricFurPromised": false
+        },
+        "outputs": {
+          "privateOnly": true,
+          "model": "beaver-source-unfitted.glb",
+          "texture": "beaver-colour.png",
+          "receipt": "manifest.json",
+          "metricFitVerified": false,
+          "groundingVerified": false,
+          "artAccepted": false
+        },
+        "credit": "Beaver by Poly by Google, https://poly.pizza/m/fwtA7VLrXPr, CC BY3.0 https://creativecommons.org/licenses/by/3.0/. Adapted colour atlas; original geometry and UVs retained."
+      },
+      "privateGeneration": {
+        "sourceCommit": "3defc56866ec1a4b3c867b661619cada2d0b23c9",
+        "sourceAfter": "3defc56866ec1a4b3c867b661619cada2d0b23c9",
+        "generationCount": 1,
+        "startedUtc": "2026-10-15T06:52:34.9967132Z",
+        "endedUtc": "2026-10-15T06:52:36.1958063Z",
+        "exitCode": 0,
+        "durationMs": 1166.4748,
+        "threads": 4,
+        "outputLeaf": ".qa-dist/wild-beaver-3defc568",
+        "candidate": {
+          "file": "beaver-source-unfitted.glb",
+          "bytes": 151888,
+          "sha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b"
+        },
+        "texture": {
+          "file": "beaver-colour.png",
+          "bytes": 110530,
+          "sha256": "d5cbdc7f194a1db71679ee3099a2b9472b851aed095bdccb2d1d343e7fd7098d",
+          "width": 512,
+          "height": 512,
+          "mode": "RGBA",
+          "opaque": true,
+          "edgePaddingPixels": 16
+        },
+        "structuralVerification": {
+          "verified": true,
+          "geometryPrefixBytes": 39312,
+          "geometryPrefixSha256": "921dd3810610a2421086d5c16bc3d9176c91eb2ebdf6ae76fb388d2f8561487b",
+          "geometryPrefixByteExact": true,
+          "jsonOnlyImageAndBufferLengthsChanged": true,
+          "embeddedPngByteExact": true,
+          "triangles": 568,
+          "vertices": 1122,
+          "skins": 0,
+          "clips": []
+        },
+        "plannerSuite": {
+          "file": "tools/test-blender-output.mjs",
+          "passed": 1,
+          "total": 1,
+          "durationMs": 5146.5681
+        },
+        "unfitted": true,
+        "axesVerified": false,
+        "groundingVerified": false,
+        "naturalLookVerified": false,
+        "artAccepted": false,
+        "runtimeInstalled": false
+      },
+      "sourceViewPlan": {
+        "status": "complete-source-inspection-not-art-or-fit",
+        "option": "--view-only",
+        "input": ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb",
+        "candidateBytes": 151888,
+        "candidateSha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b",
+        "originalBytes": 41468,
+        "originalSha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1",
+        "output": "new absent private output-dir only",
+        "views": [
+          "plus-x",
+          "minus-x",
+          "plus-z",
+          "minus-z",
+          "plus-y",
+          "minus-y"
+        ],
+        "floor": "actual imported minimum; hidden only for labelled minus-y underside; not fitted feet",
+        "render": {
+          "engine": "CYCLES",
+          "device": "CPU",
+          "threads": 4,
+          "samples": 48,
+          "resolution": [
+            960,
+            600
+          ]
+        },
+        "record": [
+          "source hashes and bytes before/after",
+          "native imported local/world matrices and material bindings before/after",
+          "actual world bounds",
+          "camera/target/floor",
+          "image hashes and errors"
+        ],
+        "label": "SOURCE INSPECTION / UNFITTED / NOT GAME",
+        "modifiesDonor": false,
+        "exportsModel": false,
+        "artAccepted": false,
+        "runtimeInstalled": false,
+        "fitDecisionMissing": [
+          "adult metric size",
+          "anatomical role confirmation",
+          "feet versus tail ground anchor"
+        ],
+        "firstInspection": {
+          "sourceCommit": "4378ebff2f8aeabc453f137c60aa324b48fcf79e",
+          "plannerSuite": {
+            "passed": 1,
+            "failed": 0,
+            "notRun": 0,
+            "durationMs": 7991.3896
+          },
+          "outputLeaf": ".qa-dist/wild-beaver-source-views-4378ebff",
+          "exitCode": 0,
+          "durationMs": 58199.3261,
+          "endedAtUtc": "2026-10-15T07:13:08.9353474Z",
+          "images": 6,
+          "resolution": [
+            960,
+            600
+          ],
+          "sourceHashesUnchanged": true,
+          "importMatricesUnchanged": true,
+          "materialBindingsUnchanged": true,
+          "completeViews": [
+            "plus-x",
+            "minus-x",
+            "plus-z",
+            "minus-z"
+          ],
+          "croppedViews": [
+            "plus-y",
+            "minus-y"
+          ],
+          "rootViewedAll": true,
+          "headTailAxes": "head source +Z, tail source -Z confirmed by actual images",
+          "metricFitVerified": false,
+          "groundingVerified": false,
+          "artAccepted": false
+        },
+        "framing": "ortho width = maximum imported axis span * 1.3 * max(1, actual pixel aspect ratio); all six source-axis views stay bounded",
+        "selectedRetryPlan": {
+          "option": [
+            "--view-only",
+            "--source-view",
+            "plus-y",
+            "--source-view",
+            "minus-y"
+          ],
+          "output": "fresh absent private leaf only",
+          "status": "completed-two-views-without-clipping",
+          "repeatCompleteViews": false,
+          "actual": {
+            "sourceCommit": "c55288dc1a51f627300371869ce138d30434778f",
+            "plannerPassed": 1,
+            "plannerDurationMs": 6022.5055,
+            "renderExitCode": 0,
+            "renderDurationMs": 16451.3943,
+            "endedAtUtc": "2026-10-15T07:23:46.3986756Z",
+            "views": [
+              "plus-y",
+              "minus-y"
+            ],
+            "sha256": [
+              "cbff9d01b161b48516dc4b95251b8dadb64306efed05cda0f0ac647a3b7ace0f",
+              "3314847e40dbf90499ae2595fcde5cef6fae7ec2b36f58aac6de812a18ee344d"
+            ],
+            "sourceAndImportUnchanged": true,
+            "rootViewedUncropped": true
+          }
+        }
+      },
+      "privateFitPlan": {
+        "status": "completed-2026-10-15-reverified-2026-10-28",
+        "option": "--fit-only",
+        "exclusiveWith": [
+          "--view-only",
+          "--source-view"
+        ],
+        "input": ".qa-dist/wild-beaver-3defc568/beaver-source-unfitted.glb",
+        "inputBytes": 151888,
+        "inputSha256": "834d024ab14cc4ec14e7402f28b3ec06df311748c8dd380bf26e306ad0e1705b",
+        "completeBinBytes": 149844,
+        "completeBinSha256": "784a0306ee1adde4e38906adceceb522f3ed00f01334f34ba94a0d464ca096cc",
+        "outputNames": [
+          "beaver-source-fitted.glb",
+          "fit-manifest.json"
+        ],
+        "output": "new absent private leaf only",
+        "targetLengthMetres": 1.1,
+        "axes": "+Y up, +Z head",
+        "transformation": "root uniform scale and Y translation only; complete candidate BIN unchanged",
+        "sourceLength": 111.62809753417969,
+        "uniformScale": 0.009854149844873853,
+        "pawEvidence": {
+          "source": "actual indexed lower-left dark atlas region, u<0.5/v>=0.5; actual imported underside view",
+          "partition": "left/right by X sign; front/rear split at Z20 in measured empty paw gap",
+          "rearMinY": -18.33993911743164,
+          "frontMinY": -18.159942626953125,
+          "minimumPawPivotY": -18.33993911743164,
+          "frontOffsetMetres": 0.0017737123887267027,
+          "allFourPawsCoplanar": false,
+          "frontGapAcceptedAsGroundingTolerance": false
+        },
+        "tailSourceMinY": -19.852182388305664,
+        "predictedTailMinimumMetres": -0.014901871793094785,
+        "tailAllowanceMetres": 0.02,
+        "noPoseTailTiltOrDeformation": true,
+        "runtimeInstalled": false,
+        "artAccepted": false,
+        "gamePlacementVerified": false,
+        "groupRound1": "waits for the other four approved donors"
+      },
+      "privateFitResult": {
+        "path": ".qa-dist/wild-beaver-fit-625b8398/beaver-source-fitted.glb",
+        "bytes": 152000,
+        "sha256": "9b2d4a0989ceb3b5f905b7df58e921bb2e951a248ac4d49279fab31a7a1d5d7b",
+        "completeBinBytes": 149844,
+        "completeBinSha256": "784a0306ee1adde4e38906adceceb522f3ed00f01334f34ba94a0d464ca096cc",
+        "lengthMetres": 1.1,
+        "minimumPawMetres": 0,
+        "frontPawOffsetMetres": 0.0017737123887267003,
+        "tailMinimumMetres": -0.014901871793094795,
+        "actualClips": [],
+        "runtimeInstalled": false,
+        "artAccepted": false,
+        "gamePlacementVerified": false,
+        "reverifiedDate": "2026-10-28"
+      },
+      "round1": {
+        "source": "https://poly.pizza/m/fwtA7VLrXPr",
+        "recipe": "tools/blender/wildlife/beaver.py",
+        "candidate": "public/assets/wildlife/beaver.glb",
+        "triangles": 2600,
+        "textureEdge": 1024,
+        "skins": 1,
+        "clips": [
+          "Idle",
+          "Walk"
+        ],
+        "sha256": "7b0bb896055c5d8c98285718d7c8491436285dec6e12867b5c96b16009e356f3",
+        "artAccepted": false
+      }
+    }
+  ],
+  "downloadPolicySource": "https://sketchfab.com/developers/download-api/downloading-models",
+  "blockedNextStep": "Supply the approved Quaternius Deer/Wolf originals through their publisher, and Kyle-downloaded Nioma moose and UC Davis black bear archives. The one authorised 28 October public retry still returned quota HTML for both Quaternius models. No account, mirror or substitute is authorised. Beaver remains a private static candidate; idle and locomotion are missing. Group round 1 has not started.",
+  "cacheReceipts": [
+    {
+      "file": "CC-BY-3.0-legalcode.html",
+      "bytes": 51105,
+      "sha256": "967a3670bcbfdc50614e71062b18effed899007a0e364541328ebdb863520132"
+    },
+    {
+      "file": "CC-BY-4.0-legalcode.html",
+      "bytes": 48742,
+      "sha256": "58230517b7895aa219ff46a6ed63e67057a1582fb9ea054b16728a8c13525650"
+    },
+    {
+      "file": "CC0-1.0-legalcode.html",
+      "bytes": 32223,
+      "sha256": "b43732f4c1463b087cf10d4daf8d8766514b2bf8f21bc5ef50905f95be227726"
+    },
+    {
+      "file": "nioma-moose-source.html",
+      "bytes": 95110,
+      "sha256": "7808dd8d307536f94e6f6611004f3b8d972b93474c3d5bc9d03cefc6deb7b4fb"
+    },
+    {
+      "file": "poly-beaver-original.glb",
+      "bytes": 41468,
+      "sha256": "37e595b4916758e1c03ef816e4fa4f334e797fa90f095ccdd34832a522d097f1"
+    },
+    {
+      "file": "poly-beaver-source.html",
+      "bytes": 108364,
+      "sha256": "9fe9850f9d0ed9c14c60e33ca2926cf38fcb1c3bae5d83f3c10f2c4ff325cb5f"
+    },
+    {
+      "file": "quaternius-deer-quota.html",
+      "bytes": 2040,
+      "sha256": "2b7f8b6a9ba920c0ccae8edd94948e35702812cd97522eface20f98140cb409f"
+    },
+    {
+      "file": "quaternius-download-listing.html",
+      "bytes": 364344,
+      "sha256": "863fa485b5a569715d4d2d5287514a999d0c3e99097865c57ae62002c7612118"
+    },
+    {
+      "file": "quaternius-gltf-listing.html",
+      "bytes": 419008,
+      "sha256": "0e0d019b71e4db01f72f4b5b62c175a09007d45c59be1a179a8e621acb39f6dc"
+    },
+    {
+      "file": "quaternius-source.html",
+      "bytes": 15479,
+      "sha256": "cff83a95676549b244a26626a77e630d9ac8d95b0348f5e2e2c53ca821af4391"
+    },
+    {
+      "file": "quaternius-wolf-quota.html",
+      "bytes": 2040,
+      "sha256": "9b3a70f708f61bb1b0ddaa6ba798262244ef1c4bfd2978f71f6d9902ab188954"
+    },
+    {
+      "file": "sketchfab-official-download-requirements.html",
+      "bytes": 68634,
+      "sha256": "6ea8fe7ec0c1d08653f3496feb79e6bcc59176c7cedb58911ae6fad40902e769"
+    },
+    {
+      "file": "uc-davis-black-bear-source.html",
+      "bytes": 95444,
+      "sha256": "312996914cb13af286f5721aa07f12e6cbebcc81ef3a343bd37500650c0172ef"
+    }
+  ],
+  "preparedModels": [
+    "beaver"
+  ],
+  "recipe": "tools/blender/wildlife-north-woods.py",
+  "sourceRecheck": {
+    "date": "2026-10-28",
+    "catalogFresh": true,
+    "cacheInspected": "C:/Users/kyleb/dev/art-library/wild-north-woods",
+    "mooseArchivePresent": false,
+    "bearArchivePresent": false,
+    "roundsSubmitted": 0,
+    "sheetCreated": false,
+    "runtimeInstalled": false
+  },
+  "formalRoundsUsed": 1,
+  "round1Sheet": "docs/board/looks/wildlife/north-woods-round-1.jpg"
+}

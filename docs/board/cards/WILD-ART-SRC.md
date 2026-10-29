@@ -1,5 +1,45 @@
 # WILD-ART-SRC
 
+## Current instruction, North woods round 3 of 3
+
+Claude's round 2 verdict: white-tailed deer, black bear, beaver and eastern
+wolf PASS and must remain unchanged. Moose FAIL: antlers resemble a plate
+with spikes and the body a box on thin stilts. Final round rebuilds moose
+from the approved Quaternius deer mesh and rig, retaining Idle and Walk.
+Full design and verdict are in north-woods-round-3.md under the wildlife looks.
+Stop after round 3. Claude judges the submitted sheet; no art pass is inferred.
+
+Claude's written review under rule 18 approves excluding the four new
+WILD-ART-SRC provenance rows from the P4 kits and tanker source protected
+catalog hashes. Keep both old expected hash values exactly. No prior
+catalog row or test tolerance is loosened.
+
+Round 3 sheet submitted with all five animals; the four passed GLBs remain
+byte exact. Lane coverage is green for all 86 suites, including a successful
+rerun of 17 sandbox tool-access failures. Production build passed. Final
+moose art judgment stays with Claude. Full results and removals are in the
+change note; no fourth round starts.
+
+## Current instruction, 28 October donor-first round 1
+
+The user supersedes the stopped original-only plan: use direct free mirrors
+first, then generated photographic references, then original construction only
+where no usable donor exists. Direct Poly Pizza GLBs are accessible for the
+CC0 Quaternius deer and wolf and CC-BY 3.0 Poly by Google black bear. Use the
+already licensed Poly beaver too. Preserve the deer and wolf rigs and clips;
+add weighted Idle/Walk rigs to the static bear and beaver. Original moose
+construction follows the generated species reference. All five use metre
+units, feet pivot, +X forward in Blender, natural muted coats and small eyes.
+The existing Blender-output suite owns path, budget, skin and clip checks.
+Round 1 is a Blender candidate review at 14 m, not course placement.
+
+Round 1 sheet and all five candidates are prepared. Claude judges appearance.
+The lane is not green: the P4 kit and tanker-source tests pin unrelated
+catalog rows, and the four required wildlife sources change those hashes. All 55 prior rows remain
+identical. No assertion was changed. See docs/changes/WILD-ART-SRC.md for the
+exact hashes, checks and review gaps before deciding the catalog-pin update.
+
+
 Source the animals for every course: real, local species, gritty and
 natural, never cartoon. Owner: Codex (ART); Claude judges each round. No
 game code. Design: Kyle's storyboard (14 October 2026), the "Animals by
