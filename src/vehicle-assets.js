@@ -22,7 +22,7 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling 
   const earnedFactories = { ferrari_enzo: createEnzoVehicle, mclaren_f1: createMclarenF1Vehicle, bugatti_bolide: createBolideVehicle, falcone_sirena: createSirenaVehicle };
   const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS };
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
-  const source = key => key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
+  const source = key => key === 'nissan_skyline_gtr_r34' && CARS[key] ? 'skyline-preview' : key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
   function status(key, options) {
     if (isWreck(key, options)) return wreck ? 'ready' : wreckFailed ? 'error' : wreckPending ? 'loading' : 'idle';
     if (source(key) === 'speirling') return speirling ? 'ready' : fanFailed ? 'error' : fanPending ? 'loading' : 'idle';
@@ -66,7 +66,8 @@ export function createVehicleAssets({ loadHero = loadHeroVehicle, loadSpeirling 
   function create(key, options = {}) {
     if (status(key, options) !== 'ready') return null;
     const appearance = { color: CARS[key].color, accent: CARS[key].accent, ...options, key };
-    const vehicle = isWreck(key, options) ? wreck(appearance) : source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
+    // V3 replaces this dev-only donor with the accepted Skyline body.
+    const vehicle = source(key) === 'skyline-preview' ? createClassicVehicle({...appearance, key: 'stuttgart_959s'}) : isWreck(key, options) ? wreck(appearance) : source(key) === 'speirling' ? speirling(appearance) : source(key) === 'classic' ? createClassicVehicle(appearance) : source(key) === 'unlock' ? createUnlockedVehicle(appearance) : source(key) === 'ultimate' ? createKoenigseggVehicle(appearance) : source(key) === 'earned' ? earnedFactories[key](appearance) : hero({ ...appearance, kind: licensedKinds[key] });
     vehicle.userData.vehicleKey = key;
     vehicle.userData.vehicleSource = source(key);
     return vehicle;

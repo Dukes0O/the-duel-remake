@@ -2,7 +2,12 @@
 // plausible arcade values invented to fill gaps, frozen here.
 import { EXPANSION_COURSES } from './expansion-courses.js';
 import { FREESTYLE_COURSE } from './freestyle-course.js';
+<<<<<<< HEAD
 import { applyCircuits } from './circuits/index.js';
+=======
+import { CIRCUITS } from './circuits/index.js';
+import { featureFlags } from './feature-flags.js';
+>>>>>>> integration/wasteland
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
 export const LIVES = {
@@ -127,6 +132,18 @@ export const CARS = {
     offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62,
     collision: {halfWidth: .805, halfLength: 1.602}, height: 1.142, kind: 'prototype',
   },
+  // Handling preview only. V6 adds the shop price and the finished body.
+  ...(featureFlags.enabled('nissan-skyline') ? {
+    nissan_skyline_gtr_r34: {
+      name: 'Nissan Skyline GT-R R34', homage: 'R34-inspired twin-turbo all-wheel-drive coupe', gearbox: 'manual',
+      topSpeed: 205, accel: 8.4, grip: 1.08, braking: 1.12,
+      gears: [55, 95, 133, 167, 190, 205],
+      color: 0x1b3d8c, accent: 0xc7ccd1,
+      offRoadGrip: .90, offRoadSpeed: 105, offRoadScrub: .26, mass: 1560,
+      collision: {halfWidth: 1.0, halfLength: 2.30}, height: 1.37,
+      awd: true, excludeFromCompletion: true,
+    },
+  } : {}),
 };
 export const DEFAULT_CAR = 'falcone_f42';
 

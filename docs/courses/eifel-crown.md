@@ -463,3 +463,82 @@ removed, the full check including frames, then live with the next batch.
 - Kerbs: green and white if a kerb colour setting is a small change at C4; otherwise red and white, noted in the C4 change note.
 - Old Eifel bests and ghosts archive by the layout bump, as GHOSTS.md says; the old Team Room notes go at C7.
 - Release order follows whichever course lane registers first; the packet's numbers are targets.
+
+## C1 reference and reuse
+
+Prepared 28 October 2026 for EIFEL-CROWN-C1. Claude judges this reference handoff.
+No locks. Owned files: this packet (Kyle's explicit extension), the C1 card and
+its change note. Contracts, road numbers and sound cues above stay as approved.
+Checks: source and file-path audit; six-picture coverage and JPG size check;
+board and repository hygiene checks, lane tier with jobs 2, production build.
+No browser or frame check applies to reference-only work.
+
+### Reference set and real-place notes
+
+Folder: `C:/Users/kyleb/dev/art-library/eifel-crown/reference/`.
+`01.png` through `06.png` are the individual pictures.
+`environment-board.png` contains six generated pictures in reading order:
+landforms, forest road edge, village, wall and hedge, reservoir, castle.
+`ref-eifel-crown.jpg` is the labelled contact sheet, at most 500 KB.
+`prompts.json` records the exact built-in imagegen prompt and provenance.
+The pictures are synthetic visual guides. They are not photographs of surveyed
+sites. Published sources below control facts; the packet controls the fictional
+road, weather and landmark composition.
+
+| Source | Real-place note and use |
+| --- | --- |
+| [Eifel National Park, forests](https://www.nationalpark-eifel.de/en/nature-landscapes/habitats/forests/) | Beech is native; planted spruce is also part of the region's forest history. Mix rounded beech crowns behind dark conifers rather than use a pure alpine fir wall. |
+| [Nürburg municipality, castle](https://www.nuerburg.de/ueber-nuerburg/dieburg) | A hilltop castle on a basalt cone. Use a rocky wooded crown and strong keep silhouette for the original castle. |
+| [Eltz Castle, architecture](https://burg-eltz.de/en/the-castle) | Secondary reference for masonry and clustered roof masses. Do not turn the approved crag castle into a copy of Eltz. |
+| [Germany Travel, half-timber towns](https://www.germany.travel/en/cities-culture/half-timbered-architectural-towns.html) | Monschau sits among wooded slopes beside the Rur. Use compact streets with buildings stepping down a valley. |
+| [ISG Monschau, Kirchstraße 6](https://www.isgmonschau.de/denkmaeler/kirchstrasse-6-haus-dr-jascha-braun.html) | Quarry-stone base, half-timber upper walls and a hillside setting provide a specific village material reference. |
+| [ISG Monschau, Holzmarkt 20](https://www.isgmonschau.de/denkmaeler/holzmarkt-20-haus-groener-heute-ferienhaus-auszeit.html) | Timber cladding and exposed frame can coexist. Vary facades without new house meshes for each building. |
+| [Eifel Tourism, Monschau hedges](https://www.eifel.info/en/pois/monschauer-heckenlandschaft-und-vennhoefe) | Beech hedges are a local landscape cue. Prefer long clipped boundaries to ornamental shrubs. |
+| [Eifel National Park, reservoirs](https://www.nationalpark-eifel.de/en/nature-landscapes/habitats/reservoirs/) | The Urft, Obersee and Rur form a reservoir landscape. Use a wooded valley basin and restrained engineered dam, not a natural alpine tarn. |
+| Approved packet sections 1 and 8.2 | Wet tarmac, silver Armco, low stone walls, green-white kerbs and cool overcast light are game art direction. Green-white kerbs are not claimed as a regional standard. |
+| Generated board panels 2 and 4 | Damp grass, verge drainage, rough grey stone and hedge scale studies. These are authored descriptions, not independent location evidence. |
+
+### Verified reuse inventory
+
+Paths were checked in this lane and the external library. The Workspace Catalog
+returned a verified art-library folder and a current, non-stale generation.
+In the table, K means `public/assets/models/circuits/kits/`; all named K models
+also have an existing `-lod.glb` partner. T means `public/assets/textures/`.
+"Fits" is a sourcing choice for Claude to review, not an in-game look verdict.
+
+| Need | Existing path or recipe | Decision |
+| --- | --- | --- |
+| Spruce rows and distant forest | `src/circuits/ardennes-forest.js`, `scenery.forest` and `farForest` | fits after change: original course rows, darker colours, at most 1,000 near trees plus far band |
+| Beech groves | K `ardennes-beech.glb`; Ardennes grove placement | fits after change: dull grey-green leaves through kitLook |
+| Armco | K `armco.glb`; Ardennes safety rows | fits |
+| Brake markers | K `braking-board-150.glb`, `braking-board-100.glb`, `braking-board-50.glb`; Ardennes brakingBoards | fits: rows before the approved named corners |
+| Grid and short paddock | K `start-gantry.glb`, `pit-garage.glb`, `grandstand.glb`, `pit-wall.glb`, `catch-fence.glb` | fits: keep paddock short |
+| Existing lodge | `src/generated/course-landmarks.json`, assets.lodge; K `ski-lodge.glb` | fits after change: preserve old lodge first; .7-scale ski lodge is the approved fallback, subject to Claude's look |
+| Forest Dip stream | K `stone-stream-bridge.glb`; Ardennes basins and effects.stream | fits after change: one shallow channel, grounded bridge |
+| Reservoir and shore | `src/circuits/tremblant-woods.js` LAKE/basins; K `wooden-dock.glb` | fits after change: original shoreline and subdued water |
+| Village placement | `src/circuits/ardennes-forest.js` valleyTown; `src/circuit-landmarks.js` | fits after change: layout only; new half-timber style, at most 120 houses |
+| Damp light and mist | Ardennes dampRoad and effects.valleyMist; `src/expansion-courses.js` overcast mood | fits after change: positions and palette |
+| Marshal and protection | K `marshal-post.glb`, `tyre-wall.glb` | fits: Last Turn outside |
+| Kerbs | `src/track-script.js`, existing road kerbs | fits after change only if cheap generic green-white colour hook; red-white fallback remains Claude-approved |
+| Asphalt and concrete | T `race-asphalt.png`, `sidewalk-concrete.png`, `tunnel-concrete.png` | fits after change: damp roughness; concrete for engineered dam faces, not village stone |
+| Stone and grass | T `granite-cliff.png`, `alpine-granite.png`, `meadow-grass.png`, `mountain-meadow.png` | fits after change: grey rock and damp meadow tones; avoid recognisable alpine snow |
+| Trees and earth detail | T `pine-bark.png`, `pine-bough.png`, `ground-color.jpg`, `ground-normal.jpg`, `ground-roughness.jpg` | fits: reuse maps where already supported; no new texture loader |
+| Burnt forest | `public/assets/burnt/tremblant-woods/burnt-props.glb`, `ground-black.jpg`, `ground-fireweed.jpg`, `ground-shoots.jpg` in the same folder | fits: reference in place, do not copy |
+| Forest bed | `public/assets/audio/ambience-forest.flac`, cue `ambience.forest` in `src/sound-bank.js` | fits unchanged, gain .15 |
+| Secondary forest sound | `public/assets/audio/p4/ambient-forest-morning.ogg` | existing alternative only; do not layer over the approved bed by default |
+| Reusable source rocks, moss and log | `C:/Users/kyleb/dev/art-library/quaternius-ultimate-nature-pack/fbx/`: `Rock_1.fbx`, `Rock_2.fbx`, `Rock_3.fbx`, `Rock_5.fbx`, `Rock_Moss_1.fbx`, `Rock_Moss_2.fbx`, `WoodLog.fbx` | fits after change if extra verge pieces are needed; local License.txt says CC0; existing runtime pieces first |
+
+### What must be new
+
+- Castle on its crag: original `eifel-castle`, High/LOD at most 7,000/2,000 triangles.
+- Half-timber village facade style in the existing house builder, not a new
+  model per house. Stone bases, dark beams, pale plaster and slate roofs.
+- Dam wall 2,500/800; drystone wall piece 600/200; hedge row 500/200.
+  The rock sources can supply material and shape inputs, not a ready-made wall.
+- No new forest, burnt set, road texture or sound bed. The optional
+  `landmark.village-bell` remains C5's conditional choice; it is not sourced or approved here.
+
+The external library's character, vehicle, industrial, ski and Deep packs
+provide no closer castle or half-timber donor than the existing course tools.
+C4/C5 must start from the verified reuse above before making the listed new work.
+No lighthouse or coast dressing belongs in the new valley. C7 owns its removal.

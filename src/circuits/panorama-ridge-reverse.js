@@ -4,7 +4,7 @@ import {buildTrackScript} from '../track-script.js';
 const straight = buildTrackScript(PANORAMA_RIDGE).pieces.find(p => p.name === 'Pit Straight');
 const paddock = new Set(['start-gantry', 'pit-garage', 'grandstand', 'pit-wall']);
 export const {definition, manifest} = reverseVariant(PANORAMA_RIDGE, parentManifest, {
-  id: 'panorama-ridge-reverse', name: 'Panorama Ridge Reverse', releaseOrder: 9,
+  id: 'panorama-ridge-reverse', name: 'Panorama Ridge Reverse', releaseOrder: 9, state: 'on',
   scriptStart: straight.s1 - straight.s0 - PANORAMA_RIDGE.scriptStart,
   placements: (d, {mappedKit}) => {
     const road=buildTrackScript(d);

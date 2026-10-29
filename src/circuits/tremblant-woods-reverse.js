@@ -20,5 +20,5 @@ function reversePlacements(definition, {mappedKit}) {
   return rows;
 }
 export const {definition, manifest} = reverseVariant(TREMBLANT_WOODS, parentManifest, {
-  id: 'tremblant-woods-reverse', name: 'Tremblant Woods Reverse', releaseOrder: 11, placements: reversePlacements,
+  id: 'tremblant-woods-reverse', name: 'Tremblant Woods Reverse', releaseOrder: 11, state: 'on', placements: reversePlacements,
 });

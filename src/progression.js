@@ -356,7 +356,7 @@ export function getUpgradeLevels(profile, car = DEFAULT_CAR) {
 export function completionCarProgress(profile, car = 'koenigsegg_jesko') {
   const required =
     CARS[car]?.unlockRequirement === 'max-all-other-cars'
-      ? Object.keys(CARS).filter(key => key !== car && !CARS[key].unlockRequirement)
+      ? Object.keys(CARS).filter(key => key !== car && !CARS[key].unlockRequirement && !CARS[key].excludeFromCompletion)
       : [];
   const maxed = required.filter(
     key =>

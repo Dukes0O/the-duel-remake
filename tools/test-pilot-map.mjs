@@ -64,8 +64,12 @@ for (const course of COURSE) {
 }
 ok(PLACES.every(place => place.courses.every(id => COURSE.some(course => course.id === id))), 'every course a place names is in the registry');
 same(PLACES.filter(place => place.courses.length > 1).map(place => [place.id, place.courses]),
-  [['summit-run', ['summit-run', 'summit-time-attack']], ['titan-stadium', ['titan-arena', 'titan-stunt-trial', 'titan-freestyle']]],
-  'the places with more than one course: Summit Run and the Titan stadium');
+  [['tremblant-woods', ['tremblant-woods', 'tremblant-woods-reverse']],
+    ['panorama-ridge', ['panorama-ridge', 'panorama-ridge-night', 'panorama-ridge-reverse']],
+    ['summit-run', ['summit-run', 'summit-time-attack']],
+    ['harbour-lights', ['harbour-lights', 'harbour-lights-dusk', 'harbour-lights-reverse']],
+    ['titan-stadium', ['titan-arena', 'titan-stunt-trial', 'titan-freestyle']]],
+  'the places with more than one course: the three with secret variants, Summit Run and the Titan stadium');
 same(PLACES.length, 21, '20 course places and The Table');
 same(PLACES.filter(place => place.air).map(place => place.id), ['the-table'], 'only The Table is air only');
 same(PLACES.find(place => place.air).courses, [], 'and it has no road');

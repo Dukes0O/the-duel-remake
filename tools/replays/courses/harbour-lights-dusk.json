@@ -1,0 +1,19 @@
+{
+  "eventId": "harbour-lights-dusk",
+  "cases": [
+    {
+      "id": "harbour-lights-dusk-duel",
+      "eventId": "harbour-lights-dusk",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "harbour-lights-dusk-duel": {
+      "30": "1f723fe114bb72744eb1db4282d3bc140b32452f8da4a77455d556b89756475f",
+      "60": "1f723fe114bb72744eb1db4282d3bc140b32452f8da4a77455d556b89756475f",
+      "144": "1f723fe114bb72744eb1db4282d3bc140b32452f8da4a77455d556b89756475f"
+    }
+  }
+}

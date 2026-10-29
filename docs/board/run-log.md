@@ -1434,3 +1434,8 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged LINE-STAMP (Codex; lane 20/20, board tests 196, build pass on fc5ea223).
 - 28 Oct night: merged EARN-FINISH (lane tier 59/59, build, earned and cup suites, heli-mode 263, earned-cars scenario pass on 6f596bb2; earned-cars stays dev until its frame checks).
 - 28 Oct night: merged LINE-PACKETS (docs only; lane tier 11/11, build pass on 9f3101f8).
+- 28 Oct night: merged LINE-REFS (Codex; docs only; lane 13/13, build pass; Claude accepted the three reference sheets).
+- 28 Oct night: merged KOGANE-PASS-C2 (Codex; lane 49/49, build, course test, test-circuits, drive-through and scenario pass on 662f9ea9).
+- 28 Oct night: merged VARIANTS-RELEASE (lane tier 81/81, test-circuits, build, five track reviews pass on e8edb32e; frame checks pending).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V4 (Codex; lane 238/238, preview 23/23, build pass on e5ba98d0).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V5 (Codex; lane 76/76, build, skyline-audio scenario pass on fb0aee24; engine within 0.52 dB).

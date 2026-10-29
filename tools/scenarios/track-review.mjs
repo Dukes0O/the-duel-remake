@@ -213,6 +213,15 @@ export function reviewPlacementPlan(course,pointS,mph,mphToWorld,length) {
   return {target:pointS,from:Math.max(0,pointS-run),reportBase:0};
 }
 
+// The disposable profile the review races with: the course owned and, for a variant, its parent and the unlock it really
+// uses (a podium, or the pilot's map record for a secret found from the air). Runs in the page, so it uses nothing outside itself.
+export function reviewProfile(profile, {courseId, defaultEventId, fixtureHeli}) {
+  const parent = defaultEventId ? [defaultEventId] : [];
+  return {...profile, courses: {version: 1, unlocked: [...new Set([...(profile.courses?.unlocked || []), courseId, ...parent])]},
+    grandPrixPodiums: [...new Set([...(profile.grandPrixPodiums || []), ...parent])],
+    ...(fixtureHeli ? {heli: fixtureHeli} : {})};
+}
+
 export async function run(context) {
   let inputPath = process.env[INPUT_ENV];
   if (!inputPath) {
@@ -242,8 +251,7 @@ export async function run(context) {
   await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();a.audio?.setMuted?.(true);a.setGraphicsQuality(${JSON.stringify(data.options.quality)});
     if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('Memory-only storage missing');
     document.head.insertAdjacentHTML('beforeend','<style>details{display:none!important}</style>');
-    a.profile={...a.profile,courses:{version:1,unlocked:[...new Set([...(a.profile.courses?.unlocked||[]),${JSON.stringify(data.courseId)},...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]},
-      grandPrixPodiums:[...new Set([...(a.profile.grandPrixPodiums||[]),...${JSON.stringify(data.defaultEventId ? [data.defaultEventId] : [])}])]};
+    a.profile=(${reviewProfile.toString()})(a.profile,${JSON.stringify({courseId:data.courseId,defaultEventId:data.defaultEventId,fixtureHeli:data.fixtureHeli})});
     if(!a._saveProfile())throw Error('Review fixture could not be saved in temporary storage');})()`);
   // Helpers that live in the page. Targets sit on the second lap so a run-up
   // across the start line never finishes the race.
