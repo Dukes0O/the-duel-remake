@@ -1463,3 +1463,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged STORY-KOGANE-LESSON (STORY-KOGANE-LESSON merged (lane 34/34, every-car 28/28, build ok)).
 - 28 Oct night: merged STORY-CAPTION-TWO-HAIRPINS (STORY-CAPTION-TWO-HAIRPINS merged (lane 22/22, build ok)).
 - 28 Oct night: merged MENU-FRONT-DOOR (MENU-FRONT-DOOR first slice merged, switch dev (lane 56 pass, 6 cleanup-blocked, rerun on integration)).
+- 28 Oct night: merged STORY-KOGANE-SCREENS (STORY-KOGANE-SCREENS merged (lane 87/87, story-ui 429 checks, build ok)).
