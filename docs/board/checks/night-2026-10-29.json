@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "date": "2026-10-29",
+  "source": "39780c46ed9b47ccbc8e4ed788af4abc01cde2ef",
+  "started": "2026-10-29T07:33:45.750Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "started": "2026-10-29T07:33:49.076Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 536,
+        "failed": 4,
+        "unrun": 0,
+        "total": 540
+      },
+      "failureNames": [
+        "full: tools/test-campaigns.mjs [1/8]",
+        "full: tools/test-campaigns.mjs [2/8]",
+        "full: tools/test-circuit-layouts.mjs",
+        "full: tools/test-opponents.mjs"
+      ],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full-tier.json",
+      "error": "Installed tool exited 1. See C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "finished": "2026-10-29T08:19:34.566Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--scenarios",
+        "frame-pacing,tremblant-snow,tremblant-views",
+        "--timing-only",
+        "--headed",
+        "--jobs",
+        "1",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ/frames.log",
+      "started": "2026-10-29T08:19:34.566Z",
+      "passed": false,
+      "exitCode": 1,
+      "warnings": [
+        "Performance: full first-race load 5556.699999988079 ms exceeds 5000 ms (warning only)."
+      ],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 33.30000000000109,
+          "worldBuildMs": 323,
+          "constructionMs": 4494.399999976158
+        },
+        {
+          "quality": "Performance",
+          "p95": 33.30000000000109,
+          "worldBuildMs": 319,
+          "constructionMs": 5556.699999988079
+        }
+      ],
+      "reportError": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "finished": "2026-10-29T08:21:23.643Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ/combat.log",
+      "started": "2026-10-29T08:21:23.643Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-10-29T08:26:36.296Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ/browser.log",
+      "started": "2026-10-29T08:26:36.296Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 172,
+        "failed": 4,
+        "total": 176
+      },
+      "failureNames": [
+        "browser: audio-baseline",
+        "browser: deep-frames",
+        "browser: frame-pacing",
+        "browser: team-room"
+      ],
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nDeep frames require headed mode\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for eifel-crown|fixed dossier.",
+      "finished": "2026-10-29T10:14:29.287Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "full: tools/test-campaigns.mjs [1/8]",
+      "error": "Installed tool exited 1. See C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "full: tools/test-campaigns.mjs [2/8]",
+      "error": "Installed tool exited 1. See C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "full: tools/test-circuit-layouts.mjs",
+      "error": "Installed tool exited 1. See C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "full: tools/test-opponents.mjs",
+      "error": "Installed tool exited 1. See C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-ZKkA2x/source/.evidence/2026-10-29/FAC-03/night-SRNlWJ/full.log",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "frames",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: audio-baseline",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nDeep frames require headed mode\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for eifel-crown|fixed dossier.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: deep-frames",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nDeep frames require headed mode\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for eifel-crown|fixed dossier.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: frame-pacing",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nDeep frames require headed mode\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for eifel-crown|fixed dossier.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: team-room",
+      "error": "Baseline control is not repeatable at the unchanged threshold.\nDeep frames require headed mode\nNight frame reuse requires the same owned evidence leaf.\nTimed out waiting for eifel-crown|fixed dossier.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-10-29/FAC-03/night-SRNlWJ",
+  "finished": "2026-10-29T10:14:31.485Z",
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-10-29.json",
+      "docs/board/checks/night-2026-10-29.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}
