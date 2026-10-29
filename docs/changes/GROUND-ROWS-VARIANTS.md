@@ -7,3 +7,7 @@ Tests: test-ground-rows-exact passes (25 courses).
 ## Removed
 
 Nothing.
+
+## Claude's review (28 October 2026, night)
+
+Fix forward for a suite the VARIANTS-RELEASE lane tier did not select. Only additions to the fixture; existing pins unchanged (rule 18 written review: nothing loosened).
