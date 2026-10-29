@@ -1,4 +1,4 @@
-UNFINISHED: Hard cannot meet its 10 to 30% band with the card's levers (the tuning level, 0 to 3). It wins 3% at best. Claude to decide (section "Open for Claude" below). The lane tier and the build are listed at the end. The hooks for the Story card ("Race Daichi", the level start, the payload fields) belong to STORY-KOGANE-HOOKS.
+UNFINISHED: Hard cannot meet its 10 to 30% band with the card's levers (the tuning level, 0 to 3). It wins 3% at best. Claude to decide (section "Open for Claude" below). The lane tier (201 of 201) and the build pass. The hooks for the Story card ("Race Daichi", the level start, the payload fields) belong to STORY-KOGANE-HOOKS.
 
 # STORY-KOGANE-DUEL: the Night Duel
 
@@ -93,7 +93,8 @@ None. No existing test was edited. No shared number (`CPU_DIFFICULTY`, `DIFFICUL
 ## Checks
 
 - `node tools/test-story-kogane-duel.mjs`: 98 checks pass.
-- Lane tier and build: see the result line added by the last commit below.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 2`: 201 passed, 0 failed (replay and world-signature guards included, unchanged). `npm run build`: passes (the existing chunk-size and dynamic-import warnings only).
+- `--rates easy`, `--rates medium` and `--rates lesson` pass their bands; `--rates hard` fails its band (3%) on purpose, see above. It is not part of the lane tier.
 
 ## Removed
 
