@@ -4,6 +4,10 @@
 import {COURSE} from './config.js';
 import {COURSE_PRICES, isCourseUnlocked, courseUnlockRequirement} from './course-access.js';
 import {lessonRows} from './lab/lab-lessons.js';
+import {TERRITORIES} from './wasteland-career.js';
+import {recoveryJobOf, recoveryTitle} from './heli/heli-jobs.js';
+import {DEEP_CREATURES} from './deep/deep-log.js';
+import {normalizeDeep} from './deep/deep-discovery.js';
 import {DRIVE_LESSON_ORDER, driveLessonAccess, normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
 
 const LESSON_NAMES = Object.freeze({corner: 'driving lesson 1, cornering', line: 'driving lesson 2, the racing line',
@@ -19,13 +23,22 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
   const done = normalizeDrivingLessons(profile?.drivingLessons).done;
   const engineCurve = flags?.enabled?.('engine-curve') === true;
   const lessonId = lessonsOn ? DRIVE_LESSON_ORDER.find(id => done[id] !== true && driveLessonAccess(profile?.drivingLessons, id, {engineCurve}).open) ?? null : null;
+  // A Wasteland boss whose hold is three quarters won and not yet claimed.
+  const holdId = wastelandOpen ? Object.entries(profile?.wasteland?.territories ?? {}).find(([id, row]) =>
+    Object.hasOwn(TERRITORIES, id) && row?.claimed !== true && row?.hold >= 75 && row?.hold < 100)?.[0] ?? null : null;
+  const wreck = heliOn ? recoveryJobOf(profile, {enabled: flags?.enabled?.('rescue') === true}) : null;
+  // The sea log is only suggested once the player has logged a first creature, so the hidden world stays hidden.
+  const logged = normalizeDeep(profile?.deep).logged ?? [];
+  const seaCreature = heliOn && flags?.enabled?.('the-deep') === true && logged.length
+    ? Object.values(DEEP_CREATURES).find(creature => !logged.includes(creature.id)) ?? null : null;
   return {
     labOn, lessonsOn, heliOn, wastelandOpen,
     labLesson: labLesson ? {id: labLesson.id, name: labLesson.name} : null,
     course: course ? {id: course.id, name: course.name, price: COURSE_PRICES[course.id]} : null,
-    hold: null, heliJob: null, // filled in by the game when the Wasteland and the Helipad can say so
+    hold: holdId ? {id: holdId, name: TERRITORIES[holdId].name} : null,
+    heliJob: wreck ? {name: recoveryTitle(wreck)} : null,
     driveLesson: lessonId ? {id: lessonId, name: LESSON_NAMES[lessonId]} : null,
-    creature: null,
+    creature: seaCreature ? {id: seaCreature.id, name: seaCreature.name} : null,
   };
 }
 
@@ -33,10 +46,10 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
 export function chooseNextUp(facts = {}) {
   if (facts.labLesson) return {kind: 'lab', action: 'lab-open', text: `A Lab lesson is open: ${facts.labLesson.name}. Go and try it.`};
   if (facts.course) return {kind: 'course', action: 'courses', text: `You can afford a new course: ${facts.course.name}. See it in Courses.`};
-  if (facts.hold) return {kind: 'hold', action: 'wasteland-visit', text: `${facts.hold.name} is almost yours. Go back and finish it.`};
+  if (facts.hold) return {kind: 'hold', action: 'wasteland-visit', text: `${facts.hold.name}'s hold is nearly yours. Go back to the Wasteland and finish it.`};
   if (facts.heliJob) return {kind: 'heli', action: 'heli-visit', text: `A helicopter job is waiting: ${facts.heliJob.name}.`};
   if (facts.driveLesson) return {kind: 'lesson', attr: 'data-drive-open', text: `Your next lesson is ready: ${facts.driveLesson.name}.`};
-  if (facts.creature) return {kind: 'creature', action: 'heli-visit', text: `Find the next sea creature: ${facts.creature.name}.`};
+  if (facts.creature) return {kind: 'creature', action: 'heli-visit', text: `Find the next sea creature for your log: ${facts.creature.name}.`};
   return {kind: 'none', action: 'courses', text: 'Pick a course, then press START ENGINE.'};
 }
 

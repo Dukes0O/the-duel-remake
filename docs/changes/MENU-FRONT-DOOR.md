@@ -1,4 +1,4 @@
-UNFINISHED: first working slice only. Still to do: the Wasteland "hold close to done", "waiting helicopter job" and "next sea creature" lines in Next up (their facts are empty today, so those steps never match), a look review by Claude, Kyle's try-out, and turning the switch on.
+UNFINISHED: first working slice only. Still to do: the "what happened last time" line (last race or result), a look review by Claude, Kyle's try-out, and turning the switch on.
 
 # MENU-FRONT-DOOR: the main menu as a front door
 
@@ -23,7 +23,7 @@ Switch: `menu-front-door`, state `dev` (off in the game). With it off the menu m
 
 ## Not done
 
-- Next up: facts for the Wasteland hold, the helicopter job and the sea creature are empty (`hold`, `heliJob`, `creature` in `frontDoorFacts`).
+- Next up reads all six steps from the save: Lab lesson, affordable course, Wasteland hold at 75 or more and not claimed, today's helicopter recovery job, next driving lesson, next unlogged sea creature (only after a first one is logged, so the Deep stays hidden). Only the recovery job counts as a "waiting helicopter job" for now.
 - "What happened last time" line (last race or last result).
 - No visual review round; no frame check (rule 9: nothing a player can reach yet).
 

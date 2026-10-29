@@ -83,6 +83,21 @@ test('next up from sample saves', () => {
   assert.equal(chooseNextUp({...empty, course: null}).kind, 'none');
 });
 
+test('next up reads the hold, the helicopter job and the sea log from a save', () => {
+  const profile = {...createProfile(), wasteland: {...createProfile().wasteland, territories: {sal: {hold: 75, claimed: false}, gunn: {hold: 100, claimed: true}}},
+    deep: {logged: ['silver-school']}};
+  const flags = flagsOn(['the-deep']);
+  const closed = frontDoorFacts({profile, flags, wastelandOpen: false, heliOn: true});
+  assert.equal(closed.hold, null, 'no hold line while the Wasteland is shut');
+  assert.equal(closed.creature.id, 'reef-fish');
+  const open = frontDoorFacts({profile, flags, wastelandOpen: true, heliOn: true});
+  assert.equal(open.hold.name, 'Sawtooth Sal');
+  assert.equal(chooseNextUp(open).kind, 'hold');
+  assert.equal(chooseNextUp({...open, hold: null}).kind, 'creature');
+  const nodeep = frontDoorFacts({profile: {...profile, deep: {}}, flags, wastelandOpen: true, heliOn: true});
+  assert.equal(nodeep.creature, null, 'the Deep stays hidden until a first creature is logged');
+});
+
 test('drive summary reads in plain words', () => {
   assert.equal(driveSummary({carName: 'Falcone F42', mode: 'duel', level: 'Rookie'}), 'your Falcone F42 · Rival duel · Rookie');
   assert.ok(!/[—]/.test(driveSummary({carName: 'X', mode: 'timetrial', level: 'Pro'})));
