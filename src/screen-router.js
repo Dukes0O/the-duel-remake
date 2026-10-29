@@ -38,6 +38,7 @@ import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import './screen-menu.css';
+import './screen-front-door.css';
 import './screen-players.css';
 import './screen-leaderboard.css';
 import './screen-garage.css';
