@@ -76,3 +76,7 @@ See the end of this note.
 - `tools/test-drive-through.mjs`: 7 of 7.
 - Lane tier `--changed --jobs 2 --keep-going`: 80 passed, 0 failed, 0 not run (819 s).
 - `npm run build`: passed.
+
+## Claude's review (28 October 2026, night)
+
+Accepted on pictures (Claude, look judge): fitted grey stone with dark joints and moss low and in joints, three patterns never repeated side by side, far pieces keep the stone picture; hairpin concrete overlaps with no gaps. Placement cuts walls into about 4 m pieces along the real wall (912 pieces; frame check before Kogane goes live). Footprint, collision, physical walls unchanged. Changed assertions (rule 18): kit ids 52 to 54 for the two new patterns; Kogane test allows the new ids and adds pattern, stretch and gap checks; hygiene allows the round sheet. Nothing loosened.
