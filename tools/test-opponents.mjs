@@ -7,6 +7,8 @@ import {createHudScreen} from '../src/screen-hud.js';
 import {createResultsScreen} from '../src/screen-results.js';
 import {useRacingLine} from './track-script-drive.mjs';
 import {isSummitAttack} from '../src/summit-attack.js';
+import {CIRCUIT_MANIFESTS} from '../src/circuit-manifests.js';
+import {heliOf} from '../src/heli/heli-save.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -14,7 +16,8 @@ globalThis.cancelAnimationFrame ??= () => {};
 // The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
 // long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
 // Summit uses the same line driver and winter tires as its accepted native run.
-const racingLineDriven = new Set(['harbour-lights', 'summit-run', 'summit-time-attack']);
+// Harbour Lights Dusk is the same road as Harbour Lights; Panorama Ridge Reverse is the stock driver's crash-out (VARIANTS-RELEASE).
+const racingLineDriven = new Set(['harbour-lights', 'harbour-lights-dusk', 'panorama-ridge-reverse', 'summit-run', 'summit-time-attack']);
 
 function crossCircuit(duel, actor) {
   const {course, raceLength} = duel;
@@ -200,6 +203,10 @@ for(const [stageIndex,stage] of COURSE.entries()){
   const app=new App();
   try {
   app.profile.courses={version:1,unlocked:COURSE.map(course=>course.id)};
+  // The five secret course versions open only when found from the helicopter (docs/PILOT_MAP.md section 5): give this
+  // profile the pilot's map record for each, as the track review does.
+  app.profile.heli={...heliOf(app.profile),map:{version:1,seen:[],table:false,
+    found:CIRCUIT_MANIFESTS.filter(row=>row.unlock?.kind==='spotted-from-air').map(row=>row.id)}};
   app._saveProfile();
   check(app.startCampaign({startStage:stageIndex,seed:1989,mode:'duel',difficulty:'casual',opponentCount:3,
     ...(['summit-run','summit-time-attack'].includes(stage.id)?{tyre:'winter'}:{})}),

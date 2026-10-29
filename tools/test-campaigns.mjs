@@ -24,7 +24,9 @@ if(process.env.DUEL_SKIP_CAMPAIGNS){
   // The stock demo driver (src/app.js) looks only 220 m ahead, so it cannot brake in time for Casino Corner at the end of Harbour Lights'
   // long straight or for the 9 m Lantern Hairpin (RELEASE-HARBOUR). That course is driven with the racing-line driver the circuit tests use.
   // Attack uses the same .95 line driver as its accepted one-run baseline.
-  const racingLineDriven=new Set(['harbour-lights','summit-time-attack']);
+  // Harbour Lights Dusk is the same road as Harbour Lights. Panorama Ridge Reverse runs the road the other way round, and the
+  // stock driver crashes out of its new corner sequence (five crashes in two laps), so it too uses the line driver (VARIANTS-RELEASE).
+  const racingLineDriven=new Set(['harbour-lights','harbour-lights-dusk','panorama-ridge-reverse','summit-time-attack']);
   let scenarioIndex=0;
   const runs = [];
   for (const seed of [1, 42, 1989, 2026, 90517]) {
