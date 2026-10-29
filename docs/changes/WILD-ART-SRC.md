@@ -1,7 +1,8 @@
 # WILD-ART-SRC: North woods round 2 of 3
 
-28 October 2026. Partial round 2 preparation; no group sheet submitted. No merge, push,
-course placement or live installation. Round 1 source details remain in Git.
+28 October 2026. Round 2 submitted for Claude's art verdict. Continued
+30474271 without changing its recipes. No merge, push, course placement or
+live installation. Round 1 source details remain in Git.
 
 ## Design and changes
 
@@ -56,61 +57,70 @@ lane does not move either pin. No catalog row changes in round 2.
 
 ## Validation
 
-PARTIAL, NOT GREEN. The shared two-job limit prevented completion. A
-15-minute queued batch obtained one brief slot and completed only the moose.
-The slot closed before the other four animals could start. Combined with
-the preceding process checks and manual waits, this reached the job's
-30-minute tool-problem limit. The batch exited 2 without launching another
-animal. Stopped as the user required; no extra heavy job was started.
+All four unfinished exports completed with Blender background mode and two
+CPU threads. The existing moose export was retained. All five exported GLBs
+were imported for review with --review --round 2. Each Idle and Walk clip
+was sampled at six phases; all bounds were finite. Thirty actual-export
+pictures were inspected with no detached parts or exploded limbs observed.
+The round note records triangle counts, bytes and lowest sampled positions.
+All models stay below 5,000 triangles, with one embedded 1K coat map.
+The deer and wolf retain their donor clips as well as Idle and Walk.
+Beaver nose-to-tail extent in the exported position bounds is 1.098954 m.
+Its tail remains within the already approved 20 mm grass allowance.
 
-- Python syntax parsing: PASS for all wildlife recipes.
-- Pure round 2 output plan: PASS with a root named wildlife-round-1. It
-  preserves that root and plans only its round 2 evidence subfolder.
-- Moose build and exported-GLB review: PASS, Blender CPU with two threads.
-  Actual output: 3,170 triangles, 891,992 bytes, one embedded 1024-square
-  coat map, 17 bones, Idle and Walk. Both clips were sampled at six phases;
-  all bounds finite. Lowest sampled Z: Idle -2.39 mm, Walk +2.09 mm.
-  Side, three-quarter, idle and walk pictures were inspected. No exploded
-  limbs or detached antler palms were seen. This is not an art pass.
-- Other four models: NOT REBUILT. Their source edits are committed, but
-  their runtime candidates remain from round 1. This mixed set is not a
-  finished round 2 and must not merge on this evidence.
-- Required node tools/run-tests.mjs --tier lane --changed --jobs 2:
-  NOT RUN. No shared heavy-job slot was available before the stop limit.
-- npm run build: NOT RUN, for the same reason.
-- Existing test-blender-output, board and repository-hygiene suites:
-  NOT RUN this round. No previous passing result is claimed for these edits.
-- Round 2 sheet and requested scratchpad copy: NOT PRODUCED. Round 1's
-  sheet remains because its replacement has not been produced and committed.
-- No browser scenario, frame timing, real-save access, merge or push.
+The existing sheet.py produced north-woods-round-2.jpg, 337,151 bytes,
+from the actual GLB renders and existing references. It was visually checked
+and copied only to the exact scratchpad filename requested in the brief.
+Both copies have SHA256
+2bd6bcfacb8b14b75508068992671e8240b94fb098fa7f7e1d6df43fa38da36c.
+Claude's full round 1 verdict is in the round 2 note. Round 2 art judgment
+is pending; no round 3 work started. The shapes remain stylised and the
+beaver remains small at the fixed 14 m camera. No art pass is claimed.
 
-To resume, rebuild/review only the four unfinished species with Blender
-background mode, -t 2, tools/blender/wildlife/<id>.py -- --root <lane>;
-review adds --review --round 2. The moose recipe is complete, but its
-pictures were recycled after recording this result and will need rendering
-again for the eventual sheet. Compose with sheet.py --root <lane>
---references C:/Users/kyleb/dev/art-library/wild-north-woods/reference
---round 2, then run the required gates and build under the shared-job cap.
-Both catalog-pin failures still need Claude's written review as described
-above. No pin was moved. No group art round is claimed complete.
+- node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going
+  --json: 84 of 86 suites passed; two failed; zero not run; 794.24 s.
+  Only P4-KITS and tanker-valve-source failed, at the exact catalog pins
+  proved above. The lane is NOT GREEN and must not merge on this evidence.
+- Existing Blender-output suite: 141 checks passed, zero failed. It checks
+  all five actual GLBs, budgets, embedded textures, skins and donor clips.
+- Board: 155 checks passed. Repository placement passed in the lane gate.
+- Replay guard: 225 checks across 25 cases and three FPS values passed.
+  World composition: 47 complete-scene checks across twenty events passed.
+  No replay fixture or world signature was changed or regenerated.
+- Production build: PASS, 599 modules, 1.34 s, using npm.cmd run build --
+  --configLoader runner --outDir .qa-dist/wildlife-build. The plain command
+  first exited 1 before Vite could start because the linked dependencies
+  lack .bin/vite.cmd, as already documented in round 1. A temporary
+  lane-local launcher invokes the existing Vite package. The runner config
+  loader avoids writes through linked node_modules. Existing mixed-import
+  and large-chunk warnings remain. No dependency or shared file was changed.
+- git diff --check: PASS.
+The user explicitly renewed waiting and retries for shared slots, so the
+previous queue timeout did not end this continuation. No check used more
+than two workers. The queue wait was retried until capacity opened. No browser scenario, frame measurement or real-save access.
 
-Independent source review found a round-path substitution bug: replacing
-text in a full path could change a root folder named wildlife-round-1.
-Fixed by constructing only the evidence subfolder from --round. Reviewer
-confirmed the fix with that exact root and marked source CLEAR. Art verdict
-belongs to Claude. No frame timing or game browser is needed for this card.
+The independent source review recorded on 30474271 remains applicable:
+this continuation changes no recipe or test source. Its root-path fix was
+confirmed by that reviewer. The catalog-filter proof was repeated read-only
+and reproduced both old pins exactly when only the four wildlife records
+were excluded. No pin moved.
 
 ## Changed assertions
 
 No existing assertion, tolerance, replay fixture or world signature changed.
-Repository hygiene adds only the user-required exact round 2 JPG path to its
-allowed compressed sheets. It still rejects other raw evidence paths.
+The prior 30474271 commit added only the user-required exact round 2 JPG
+path to the repository hygiene sheet allow-list; this continuation changes
+no test source. It still rejects other raw evidence paths.
 The existing default round 1 output plans remain unchanged.
 
 ## Removed
 
-The failed moose construction and its unused deer branch are replaced by the
-new moose anatomy recipe. Round 1's sheet is retained until a replacement sheet is committed. Own
-round 2 render output, logs and the unused temporary build launcher are
-recycled after recording the partial result. No licensed originals or
-pre-existing evidence folders are removed.
+The four round 1 runtime exports are replaced in place by their round 2
+exports. The rebuilt moose already replaced its failed predecessor in
+30474271. Round 1's sheet will be recycled after the round 2 commit, as the
+brief requires. Own temporary render output, motion montages, logs, launchers
+and the production build will be recycled after their results are recorded.
+No .evidence folder was created or traversed. No licensed original,
+existing evidence folder or other scratchpad file is removed. Cockpit sync
+is deferred to the Director under the lane-only boundary; no shared board
+status was changed.
