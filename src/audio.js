@@ -645,9 +645,10 @@ export class EngineAudio {
     type = 'bandpass',
     destination = this._cueOutput || this.buses?.interface || this.master,
     onEnd = null,
+    delay = 0,
   ) {
     const ctx = this.context,
-      start = ctx.currentTime;
+      start = ctx.currentTime + delay;
     const source = ctx.createBufferSource(),
       filter = ctx.createBiquadFilter(),
       gain = ctx.createGain();
@@ -694,6 +695,7 @@ export class EngineAudio {
         layer.type,
         destination,
         onEnd,
+        layer.delay || 0,
       );
     return this._tone(
       layer.frequency,
@@ -1162,6 +1164,7 @@ export class EngineAudio {
     this._volume();
     if (this.muted) for (const voice of this.activeShots) this._stopShot(voice);
     if (this.muted) {
+      this._clearTurbo();
       this._clearVehicleVoices();
       this._clearGrandPrixVoices();
       this.fightVoices.mute();
@@ -1186,6 +1189,7 @@ export class EngineAudio {
       this.shiftStarted = this.shiftUntil = 0;
     }
     if (this.paused) {
+      this._clearTurbo();
       this._clearVehicleVoices();
       this._clearGrandPrixVoices();
       this.fightVoices.clear();
@@ -1204,6 +1208,56 @@ export class EngineAudio {
       );
   }
 
+  _clearTurbo() {
+    this.turboLoop?.voice.stop();
+    this.turboLoop = null;
+    this.blowoffVoice?.stop();
+    this.blowoffVoice = null;
+    this.turboArmed = false;
+  }
+
+  _updateTurbo(st, running, load, throttle, t) {
+    const enabled = this.carVoice.turbo && this.flags.enabled('nissan-skyline');
+    if (!enabled || !running || this.muted || this.paused) {
+      this._clearTurbo();
+      return;
+    }
+    const def = bank('vehicle.turbo-whistle');
+    if (load > .35 && throttle > .35 && !this.turboLoop) {
+      const osc = this.context.createOscillator(), gain = this.context.createGain();
+      osc.type = def.oscillator.type;
+      gain.gain.value = 0;
+      const voice = this._runCue('vehicle.turbo-whistle', () => {
+        osc.connect(gain);
+        this._connect(gain, this._cueOutput);
+        osc._cueEnd = Infinity;
+        osc.onended = () => { osc.disconnect(); this._disconnect(gain); };
+        this._cueSources.push(osc);
+        osc.start();
+      });
+      this.turboLoop = {osc, gain, voice};
+    }
+    if (this.turboLoop) {
+      const {osc, gain} = this.turboLoop;
+      osc.frequency.setTargetAtTime(def.oscillator.lowHz +
+        clamp(st.revs, 0, 1) * (def.oscillator.highHz - def.oscillator.lowHz), t, .055);
+      gain.gain.setTargetAtTime(def.volume * clamp((load - .35) / .65, 0, 1), t, .045);
+      if (load <= .35 || throttle <= .35) {
+        this.turboLoop.voice.stop();
+        this.turboLoop = null;
+      }
+    }
+    if (st.status === 'racing' || st.status === 'exploring') {
+      if (throttle >= .7 && st.revs > .55) this.turboArmed = true;
+      if (throttle < .2 && this.turboArmed && st.revs > .55 &&
+          t >= (this.nextBlowoff || 0)) {
+        this.blowoffVoice = this._playCue('vehicle.blowoff');
+        this.nextBlowoff = t + 1.2;
+      }
+      if (throttle < .2) this.turboArmed = false;
+    } else this.turboArmed = false;
+  }
+
   update(st, environment = {}) {
     this._syncGrandPrix(st);
     this._syncMixer(st);
@@ -1212,7 +1266,7 @@ export class EngineAudio {
     this._updateProjectiles(st, environment);
     this._updateArsenalFields(st, environment);
     const ctx = this.context;
-    if (!ctx || ctx.state !== 'running') { this._clearVehicleVoices(); return; }
+    if (!ctx || ctx.state !== 'running') { this._clearTurbo(); this._clearVehicleVoices(); return; }
     if (this.paused !== st.paused) this.setPaused(st.paused);
     const t = ctx.currentTime;
     const engineCutoff = cutoff => deepEngineCutoff(
@@ -1462,6 +1516,7 @@ export class EngineAudio {
         0.07,
       );
     }
+    this._updateTurbo(st, running, load, throttle, t);
     if (running && racing && !this.muted) {
       if (
         throttle > 0.6 &&
@@ -1622,7 +1677,7 @@ export class EngineAudio {
   }
 
   event(ev, state, course) {
-    if (ev?.menu) this._clearVehicleVoices();
+    if (ev?.menu) { this._clearTurbo(); this._clearVehicleVoices(); }
     this.fightVoices.event(ev, state);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
@@ -1638,6 +1693,8 @@ export class EngineAudio {
     if (ev?.hiddenRoadPhase?.phase === 'opening')
       this.pendingGatekeeper = ev.hiddenRoadPhase.journeyId;
     if (ev?.stageLoaded != null) {
+      this._clearTurbo();
+      this.nextBlowoff = 0;
       this._clearVehicleVoices();
       this._snowmanAudioStage=(this._snowmanAudioStage ?? 0)+1;
       this._snowmanAudioHits=new Set();
