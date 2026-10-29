@@ -439,7 +439,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "backlog"
+    status: "ready"
     needs: []
     locks: []
     details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V3.md"
