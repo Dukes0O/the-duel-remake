@@ -318,7 +318,7 @@ test('damp pit drawing shares the actual paved material with exact geometry and 
   const {ALL_CIRCUITS}=await import('../src/circuits/index.js');
   const {createPavedRoadMaterial}=await import('../src/road-surface.js');
   const {disposeTree}=await import('../src/world.js');
-  assert.deepEqual(ALL_CIRCUITS.filter(row=>row.dampRoad!==undefined).map(row=>row.id),['ardennes-forest']);
+  assert.deepEqual(ALL_CIRCUITS.filter(row=>row.dampRoad!==undefined).map(row=>row.id),['ardennes-forest','eifel-crown']);
   const load=THREE.TextureLoader.prototype.load;THREE.TextureLoader.prototype.load=function(url){const texture=new THREE.Texture();texture.image={src:url};return texture;};
   try{for(const id of ['ardennes-forest','panorama-ridge','tremblant-snow','summit-run']){
     const course=new Course(ALL_CIRCUITS.find(row=>row.id===id),1989),before=JSON.stringify(course.features);

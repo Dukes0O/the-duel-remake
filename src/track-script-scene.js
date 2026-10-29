@@ -143,7 +143,8 @@ function addWalls(group, course) {
   group.add(mesh);
 }
 
-// Kerbs: red and white blocks two metres long on the edge of the road.
+// Kerbs: red and white blocks two metres long on the edge of the road. A course may
+// choose two other colours with `kerbColours: [first, second]` (Eifel Crown: green and white).
 function addKerbs(group, course) {
   const kerbs = course.features.kerbs ?? [];
   if (!kerbs.length) return;
@@ -165,7 +166,8 @@ function addKerbs(group, course) {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setIndex(indices); geometry.computeVertexNormals();
     return geometry;
   };
-  for (const [parity, color] of [[0, 0xc9332a], [1, 0xe8e6df]]) {
+  const [first = 0xc9332a, second = 0xe8e6df] = course.def.kerbColours ?? [];
+  for (const [parity, color] of [[0, first], [1, second]]) {
     const mesh = new THREE.Mesh(build(parity), new THREE.MeshStandardMaterial({ color, roughness: .75, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, side: THREE.DoubleSide }));
     mesh.name = 'track-kerbs'; mesh.receiveShadow = true; group.add(mesh);
   }

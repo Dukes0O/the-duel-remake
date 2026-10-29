@@ -1,0 +1,71 @@
+{
+  "card": "EIFEL-CROWN-C4",
+  "round": 1,
+  "units": "metres",
+  "up": "Y",
+  "source": "Original shapes made by tools/blender/eifel/scenery.py; no outside models or textures.",
+  "models": [
+    {
+      "id": "drystone-wall",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "drystone-wall.glb",
+          "triangles": 522,
+          "size": [
+            4.0,
+            1.245,
+            0.626
+          ],
+          "bytes": 35048,
+          "sha256": "c1f9b2fe0894e7b28463ca9c1a81270d7901e71e2cc6db48f8b16eb9e8409b34"
+        },
+        {
+          "path": "drystone-wall-lod.glb",
+          "triangles": 176,
+          "size": [
+            4.0,
+            1.297,
+            0.628
+          ],
+          "bytes": 16048,
+          "sha256": "f53b4def14f61b1e537fea7284d80fd14f8d0eac438abf136aa42545e5ab4885"
+        }
+      ]
+    },
+    {
+      "id": "hedge-row",
+      "budget": [
+        500,
+        200
+      ],
+      "files": [
+        {
+          "path": "hedge-row.glb",
+          "triangles": 350,
+          "size": [
+            4.0,
+            1.786,
+            0.942
+          ],
+          "bytes": 22584,
+          "sha256": "afd87613137a890532a2e8f06a8a6355ce368181f5a92420f41b7faecdd1fb4c"
+        },
+        {
+          "path": "hedge-row-lod.glb",
+          "triangles": 96,
+          "size": [
+            4.0,
+            1.769,
+            0.956
+          ],
+          "bytes": 9416,
+          "sha256": "17404bef183d6e8afeb7bc461887ef21485d2506c2405726a5ea36f041bef0b9"
+        }
+      ]
+    }
+  ]
+}
