@@ -1456,3 +1456,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged EIFEL-CROWN-C3-PART (lane 65/65, build, course test 11/11, drive-through, test-circuits switch on and off pass on 1ac7b2c8; C3 stays open).
 - 28 Oct night: merged KOGANE-WALL (lane 80/80, track kits, barriers, test-circuits on and off, drive-through, build pass).
 - 28 Oct night: merged NIGHT-FIXES-1029 (layouts 18/18, eifel, circuits, world composition, ground rows, replays, opponents, campaigns 8/8, team-room scenario, lane 168/169 (drive-through passes from PowerShell), build).
+- 28 Oct night: merged EIFEL-CROWN-C5 (lane 135/135, layouts 18/18, eifel 18/18, circuits, drive-through, world composition, ground rows, audio, build on 55c08bc3; round 2 accepted).
