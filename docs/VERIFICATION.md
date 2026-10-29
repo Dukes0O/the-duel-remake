@@ -1546,3 +1546,15 @@ tools and scenarios changed, no shared core, save shape or physics. Lane
 tiers pass (160, 29, 20, 511); all 17 Deep suites and the build pass on the
 release commit; Deep and Lab scenarios pass; independent reviews done. Deep
 frame check not run (laptop in use); it runs in the nightly full check.
+
+## Release, 29 October 2026 morning (Claude, Release Manager)
+
+VARIANTS-RELEASE, QA-MAP-FINISH-TABLE, NIGHT-FIXES-1029 and the dev-only
+course and car work (Kogane Pass, Eifel Crown, Skyline, earned cars; all
+switched off). No save change. Full tier 540/540 on 382b07e6; since then only
+the story packet (docs) changed (rule 19). Frames, one 4K HDMI monitor,
+laptop panel off: Performance p95 16.8 ms passes; High p95 33.3 ms (p50
+16.7) twice, and identical on 06d5505e, which passed at 18.2 ms on the old
+monitor setup, so the miss is the 4K screen, not the code; Harbour's scene
+is unchanged since that pass (rule 19). Tremblant snow passes. Combat
+balance passes (full check on 39780c46, rules unchanged since).

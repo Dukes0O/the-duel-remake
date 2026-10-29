@@ -2,6 +2,18 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## Five new course versions, 29 October 2026
+
+### What players get now
+
+- **Five new versions of courses you know:** Harbour Lights at dusk,
+  Panorama Ridge at night, and Panorama Ridge, Harbour Lights and
+  Tremblant Woods driven in reverse. Each is free: find its sign from the
+  helicopter over its home course and it opens. Until then it shows as
+  locked with a hint.
+- **The Night Cup** (Harbour Lights, Panorama Ridge Night, Neon Docks) opens
+  once Panorama Ridge Night is found.
+
 ## The Deep's shallows, edge and map, 28 October 2026
 
 ### What players get now
