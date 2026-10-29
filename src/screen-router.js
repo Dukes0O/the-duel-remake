@@ -38,6 +38,7 @@ import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
 import {WEAPON_IDS} from './weapon-upgrades.js';
 import './screen-menu.css';
+import './screen-front-door.css';
 import './screen-players.css';
 import './screen-leaderboard.css';
 import './screen-garage.css';
@@ -51,7 +52,8 @@ import './screen-results.css';
 import './screen-hud.css';
 import './combat-hud.css';
 import './style.css';
-import {CARS, COURSE} from './config.js';
+import {CARS, COURSE, CPU_DIFFICULTY} from './config.js';
+import {frontDoorFacts, chooseNextUp, doorList, doorTile, nextUpMarkup, driveSummary} from './menu-front-door.js';
 import {createProfile, isCarUnlocked} from './progression.js';
 import {RouteMap} from './route-map.js';
 import {CoursePreview} from './course-preview.js';
@@ -80,7 +82,12 @@ const profile = () => app.profile || createProfile();
 const credits = value => Math.floor(value || 0).toLocaleString();
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
-root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true});
+// MENU-FRONT-DOOR: the main menu as a front door, only with its switch on.
+const frontDoorOn=app._switches?.().enabled('menu-front-door')===true;
+const currentDoorFacts=()=>frontDoorFacts({profile:profile(),flags:app._switches?.(),
+  wastelandOpen:hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu===true,heliOn:app.heliAvailable?.()===true,
+  labOn:app.labAvailable?.()===true,lessonsOn:app.drivingLessonsAvailable?.()===true,...app.menuNextUpExtras?.()});
+root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
@@ -109,6 +116,19 @@ combatHelp.textContent=legacyCombatHelp;root.querySelector('.race-setup').append
 root.querySelector('#cpu-target-label').parentElement.insertAdjacentHTML('afterend',`<details id="rival-customization" class="rival-customization"><summary>CUSTOMIZE YOUR RIVAL</summary><div class="setup-line"><label class="field-label" for="rival-car">CAR</label><select id="rival-car"><option value="match">Match my car (default)</option>${shownCars(app._switches?.().enabled('earned-cars')===true).map(([key,car])=>`<option value="${key}">${car.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-driver">DRIVER</label><select id="rival-driver">${Object.values(DRIVERS).map(driver=>`<option value="${driver.id}">${driver.name}</option>`).join('')}</select></div><div class="setup-line"><label class="field-label" for="rival-upgrades">UPGRADES</label><select id="rival-upgrades">${['Stock','Level 1','Level 2','Max / Level 3'].map((label,i)=>`<option value="${i}">${label}</option>`).join('')}</select></div><p id="rival-skill-note" class="event-brief"></p><p class="event-brief">CPU difficulty still controls driving skill. Rival choices do not unlock cars or drivers for you. Custom rival bests are tracked separately.</p></details>`);
 root.querySelector('.boost-readout .field-label').id='nitro-label';
 const ui = Object.fromEntries([...root.querySelectorAll('[id]')].map(el => [el.id, el]));
+function refreshFrontDoor(){
+  if(!frontDoorOn||uiDisposed)return;
+  const facts=currentDoorFacts(),stage=COURSE[choices.startStage]||COURSE[0];
+  ui['fd-course'].textContent=stage.name;
+  ui['fd-summary'].textContent=driveSummary({carName:CARS[choices.car]?.name,mode:choices.mode,level:CPU_DIFFICULTY[choices.cpuDifficulty]?.name});
+  const next=nextUpMarkup(chooseNextUp(facts)),doors=doorList(facts).map(doorTile).join('');
+  if(ui['fd-nextup'].innerHTML!==next)ui['fd-nextup'].innerHTML=next;
+  if(ui['fd-doors'].innerHTML!==doors)ui['fd-doors'].innerHTML=doors;
+}
+if(frontDoorOn){
+  ui['fd-start-slot'].append(ui['start-engine']);
+  ui['fd-options-toggle'].addEventListener('click',()=>{const open=ui['race-options'].hidden;ui['race-options'].hidden=!open;ui['fd-options-toggle'].setAttribute('aria-expanded',String(open));},{signal:domEvents.signal});
+}
 const buildUpdates=createBuildUpdateChecker({
   getStatus:()=>uiDisposed?null:app.duel.state.status,
   signal:domEvents.signal,
@@ -122,7 +142,7 @@ const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textConten
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
 
-const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time});
+const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor});
 const {updateMenuCar, updateMenuScene, updatePlayers} = menuScreen;
 const playerScreen = createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage:()=>playerMessage, getBackupMessage:()=>backupMessage});
 const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML, credits, time});
