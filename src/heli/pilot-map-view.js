@@ -15,6 +15,7 @@ import {CARS} from '../config.js';
 import {AIR_ONLY_CARS} from './heli-jobs.js';
 import {carAt} from './heli-save.js';
 import {SECRET_SIGNS, TABLE_ID} from './map-secrets.js';
+import {STORY_COURSE, STORY_NIGHT, STORY_NIGHT_NAME} from './heli-story.js';
 
 export const MAP_KEY = 'N';
 const chartOutlines = {...traced, outlines: {...traced.outlines,
@@ -59,10 +60,13 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
   }
   const jobsBy = new Map();
   const jobLines = [];
+  // The story's job in hand puts a pin at its drop-off with a few words (STORY-KOGANE-DELIVERY).
+  const pinsBy = new Map();
   for (const job of jobs) {
     if (job.own || job.done || !job.from || !job.to) continue;
     const from = placeOfDestination(job.from), to = placeOfDestination(job.to);
     if (!from || !to) continue;
+    if (job.pin && job.taken === true) pinsBy.set(to.id, job.pin);
     jobLines.push({id: job.id, from: from.id, to: to.id, pay: job.payNow ?? job.pay ?? 0, taken: job.taken === true, fromPoint: from.drawAt, toPoint: to.drawAt});
     for (const id of new Set([from.id, to.id])) jobsBy.set(id, (jobsBy.get(id) ?? 0) + 1);
   }
@@ -86,10 +90,12 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
       chosen: view?.destination === id, legKg, reachable: legKg === null || legKg <= fuelKg,
       pad: pad ? {price: pad.pricePerKg, name: pad.name} : null,
       cars: carsBy.get(place.id) ?? [], jobs: jobsBy.get(place.id) ?? 0,
+      ...(pinsBy.has(place.id) ? {pin: pinsBy.get(place.id)} : {}),
       clues: clues.filter(page => page.place === place.id).map(page => `Gus ${page.year}: ${page.clue}`),
     };
   });
-  const found = (secrets?.found ?? []).map(id => SECRET_SIGNS.find(sign => sign.id === id)).filter(Boolean)
+  // The Night version of Kogane Pass has no sign to spot: the delivery finds it (STORY-KOGANE-DELIVERY), so it is marked the same way.
+  const found = (secrets?.found ?? []).map(id => SECRET_SIGNS.find(sign => sign.id === id) ?? (id === STORY_NIGHT ? {id, name: STORY_NIGHT_NAME, course: STORY_COURSE} : null)).filter(Boolean)
     .map((sign, index) => ({id: sign.id, name: sign.name, place: placeOfCourse(sign.course)?.id ?? null, index}));
   return {
     places, jobLines, heli: heliPoint, here: here?.id ?? null, fuelKg,
@@ -118,6 +124,7 @@ export function placeNote(model, place) {
   if (place.state === 'burnt') parts.push('burnt');
   if (place.clues?.length) parts.push(...place.clues);
   if (place.noLanding) parts.push('no landing zone');
+  if (place.pin) parts.push(place.pin);
   if (place.pad) parts.push(`fuel ${place.pad.price} credits a kg`);
   if (place.legKg !== null) parts.push(`${place.legKg} kg${place.reachable ? '' : ' (beyond your tank)'}`);
   if (place.cars.length) parts.push(place.cars.map(car => car.name).join(', '));
@@ -261,6 +268,11 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     });
     if (place.chosen || place.isHere) {
       ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.strokeStyle = place.chosen ? '#b03c28' : '#254a78'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    // The story's pin: a small red flag by the place, with its few words.
+    if (place.pin) {
+      ctx.fillStyle = '#b03c28'; ctx.fillRect(px + 8, py - 18, 2, 12); ctx.fillRect(px + 10, py - 18, 7, 5);
+      ctx.font = 'bold 10px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillText(place.pin, px + 19, py - 9); ctx.textAlign = 'center';
     }
   });
   // Found secret courses: a pin by their course.

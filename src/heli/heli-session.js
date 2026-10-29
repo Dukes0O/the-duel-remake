@@ -41,6 +41,10 @@ import {SECRET_SIGNS, SPOT, TABLE_ID, TABLE_CALL, TABLE_FOUND_TEXT, createSpotte
 import {sampleCourse, detectCorners, nameFeatures, namedPieces} from '../track-analysis.js';
 import {courseClosed} from '../course-closures.js';
 import {HELI_PAYS} from './heli-pay.js';
+// STORY-KOGANE-DELIVERY: the Kogane Invitation's one dispatch job. The step it waits for and the story's writer come from the
+// story's own save file (the one import of the story the helicopter rules make); heli-story.js imports nothing outside src/heli/.
+import {STORY_JOB_ID, STORY_NIGHT, STORY_NIGHT_NAME, storyOffered, finishStorySupplies} from './heli-story.js';
+import {koganeStep, markKoganeSupplies} from '../story/story-save.js';
 
 export const HELI_SESSION = Object.freeze({
   zoneRadius: CABLE.landingRadius,
@@ -197,10 +201,12 @@ export function insideArea(area, x, y, z, ground = null) {
 // 12.6): the app's answer to "which driving lesson is next on this course for
 // this car", {id, name} or null; left out (the driving-lessons switch off),
 // "Lesson here" is never offered.
+// koganeStoryEnabled (STORY-KOGANE-DELIVERY): the kogane-invitation switch. The story's job, "Supplies for the Summit", is on the
+// board only with it on, with the pilot's map and Kogane Pass on as well, and once the story reaches that step; left out, nothing changes.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
   summitRunEnabled = false, koganePassEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
-  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false} = {}) {
+  drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false, koganeStoryEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
   const flag = {enabled: true};
@@ -214,6 +220,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // The Table joins the destinations once the pilot has seen it (a getter, since the save changes).
   // Kogane Pass (KOGANE-PASS-C5) is a map place, so it joins only with the pilot map and its own switch on.
   const koganeOn = pilotOn && koganePassEnabled === true;
+  const storyOn = koganeOn && koganeStoryEnabled === true;
   const dflag = pilotOn ? {summitRun: summitOn, pilotMap: true, koganePass: koganeOn, get table() { return tableKnown(); }} : {summitRun: summitOn};
   const logbookOn = logbookEnabled === true;
   let logbookAirborne = false, rankCheckedSave = null;
@@ -484,6 +491,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     layCrates();
     if (lesson) endLesson();
     layReturnCrate();
+    layStoryCrate();
     // Leaving the course ends a Lab challenge, except Air and altitude, which is the flight to Summit Run with its crate.
     if (challenge && !(challenge.id === 'altitude' && kept?.labLoad)) endChallenge('left');
     if (autopilot.engaged) setAutopilotTarget(autopilot, destination === courseId ? zoneTarget() : null);
@@ -532,6 +540,23 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // A recovery job's car waits where the wreck lies, on the slope.
     else if (jobCar?.id !== job.id) jobCar = {id: job.id, courseId: job.from, x: job.x ?? null, z: job.z ?? null, heading: 0};
     return job;
+  }
+  // The story's job (STORY-KOGANE-DELIVERY): on the board while the story waits for it, and in hand when the save says so today.
+  // It is not one of the day's seeded jobs, so jobInHand() does not know it.
+  const storyOffer = () => storyOn ? storyOffered({enabled: true, step: koganeStep(save), carryDone: lessonsDone().carry === true}) : null;
+  function storyInHand() {
+    const jobs = heliOf(save).jobs;
+    return jobs.taken === STORY_JOB_ID && jobs.day === playDay() ? storyOffer() : null;
+  }
+  // The crate waits at the home pad's crate spot while the story's job is in hand, unless one is already about (the lesson's, or
+  // the story's own, which may be on the cable).
+  function layStoryCrate() {
+    const job = site?.courseId === HOME_COURSE && site.crate ? storyInHand() : null;
+    if (!job || loads.some(load => load.crate || load.storyJob)) return;
+    const crate = crateLoad();
+    crate.massKg = job.massKg;
+    crate.storyJob = job;
+    loads.push(crate);
   }
   // The customer's car on this course: at its pick-up spot (the pad's parking
   // spot at home, the landing zone elsewhere), on the spare spot when the
@@ -812,6 +837,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   };
   const loadView = car => Object.freeze({id: car.id, x: car.x, y: car.y, z: car.z, heading: car.heading,
     ...(car.returnJob ? {returnJob: car.returnJob} : {}),
+    ...(car.storyJob ? {storyJob: car.storyJob} : {}),
     hooked: car.hooked, onGround: car.onGround, own: !!car.own, job: car.job ?? null});
 
   // A clean release of the job in hand's car inside the drop-off course's
@@ -841,6 +867,32 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     emit({type: 'radio', line: 'heli.radio.job.done'});
   }
 
+  // The story's crate set down cleanly in the Kogane circle: one change pays, finishes the job, finds the Night version and marks the
+  // story. A refusal changes nothing and leaves the job in hand (the crate stays where it is).
+  function deliverStory(crate) {
+    const clean = damageCount === (crate.damageMark ?? damageCount);
+    const done = commit(finishStorySupplies(save, {mode, clean, day: playDay(), step: koganeStep(save), mark: markKoganeSupplies}));
+    if (!done.ok) { emit({type: 'storyBlocked', reason: done.reason}); return; }
+    loads = loads.filter(load => load !== crate);
+    emit({type: 'jobDone', job: done.job, pay: done.pay, bonus: done.bonus, clean});
+    if (done.found) emit({type: 'secretFound', id: STORY_NIGHT, name: STORY_NIGHT_NAME,
+      text: `Found from the air: ${STORY_NIGHT_NAME}. It is in your course list now.`});
+    emit({type: 'radio', line: 'heli.radio.job.done'});
+  }
+
+  // Taking the story's job is the ordinary taken job: one at a time, and Drop job hands it back.
+  function takeStoryJob(job) {
+    const result = commit(takeJobSave(save, job.id, playDay(), flag));
+    if (!result.ok) return result;
+    dropSurvey('other');
+    if (!result.already) {
+      emit({type: 'jobTaken', job});
+      emit({type: 'radio', line: 'heli.radio.job.taken'});
+    }
+    layStoryCrate();
+    return {ok: true, job};
+  }
+
   // ---- lessons (docs/HELICOPTER.md section 7) ----
   const crateLoad = () => {
     const spot = site.crate;
@@ -864,6 +916,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     loads = loads.filter(car => !car.crate);
     lesson = null;
     lessonEvents = [];
+    layStoryCrate();
   }
   function stepLessonNow(dt) {
     const crate = loads.find(car => car.crate) ?? null;
@@ -1727,7 +1780,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
             loads = loads.filter(load => load !== held);
             layReturnCrate();
           }
-        }
+        } else if (held.storyJob && inZone && site.courseId === held.storyJob.to && result.event.type === 'released' && storyInHand()) deliverStory(held);
         return result.event;
       }
       // The car nearest the hook; H elsewhere stays quiet. The worn gear sets the
@@ -1767,6 +1820,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       emit(result.event);
       // The crate is taken at its first hook; a later hook after a drop does not start the count again.
       if (hooked.returnJob) { hooked.damageMark ??= damageCount; aim(hooked.returnJob.to); }
+      if (hooked.storyJob) { hooked.damageMark ??= damageCount; aim(hooked.storyJob.to); }
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);
@@ -1847,7 +1901,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // today's three jobs, each marked taken or done from the save.
     boardJobs() {
       const day = playDay(), jobs = heliOf(save).jobs, sameDay = jobs.day === day;
-      const recovery = rescueOn ? recoveryJobOf(save, {enabled: true}) : null, count = wildOn ? surveyJobOf(save, wildFlag) : null;
+      const recovery = rescueOn ? recoveryJobOf(save, {enabled: true}) : null, count = wildOn ? surveyJobOf(save, wildFlag) : null, story = storyOffer();
       const taken = sameDay ? jobs.taken : null, done = sameDay ? jobs.done : [];
       return Object.freeze([
         Object.freeze({id: 'own', own: true, carId, title: 'Fly my car', pay: 0}),
@@ -1856,6 +1910,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         // After a hoist rescue the driver's car waits on the slope (section 5.3): shown with the day's jobs.
         ...(recovery ? [Object.freeze({...recovery, recovery: true, title: recoveryTitle(recovery), payNow: jobPay(recovery, mode), cleanBonus: jobCleanBonus(recovery, mode),
           taken: recovery.id === taken, done: false})] : []),
+        // The story's job (STORY-KOGANE-DELIVERY), on its own line beside the recovery job; the car jobs and their seeds are untouched.
+        ...(story ? [Object.freeze({...story, title: story.title, payNow: jobPay(story, mode), cleanBonus: jobCleanBonus(story, mode),
+          taken: !!storyInHand(), done: false})] : []),
         // The wildlife count, on its own line below the car jobs (section 4).
         ...(count ? [Object.freeze({...count, survey: true, title: surveyTitle(count), payNow: count.pay, taken: surveyTaken?.id === count.id, done: false})] : []),
       ]);
@@ -1871,6 +1928,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (count && id === count.id) return takeSurvey(count, options);
       if (id === 'own') { dropSurvey('other'); aim(null); return {ok: true, own: true}; }
       if (!lessonsDone().landing) return {ok: false, reason: 'Finish lesson 3, landing, to open the dispatch board.'};
+      const story = storyOffer();
+      if (story && id === story.id) return takeStoryJob(story);
       const day = playDay(), recovery = rescueOn ? recoveryJobOf(save, {enabled: true}) : null;
       const job = dayJobs(day, jobOptions()).find(item => item.id === id) ?? (recovery?.id === id ? recovery : null);
       if (!job) return {ok: false, reason: "That job is not on today's board."};
@@ -1892,13 +1951,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     dropJob() {
       if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The dispatch board is at the home pad.'};
       if (surveyTaken) { dropSurvey('dropped'); aim(null); return {ok: true, dropped: true, survey: true}; }
-      const job = jobInHand();
+      const job = jobInHand() ?? storyInHand();
       const result = commit(dropJobSave(save, flag));
       if (result.ok && result.dropped) {
         if (skiFlight?.kind === 'group') endSkiFlight();
         jobCar = null;
-        loads = loads.filter(car => !car.job || car.hooked);
-        for (const car of loads) car.job = null;
+        loads = loads.filter(car => (!car.job || car.hooked) && (!car.storyJob || car.hooked));
+        for (const car of loads) { car.job = null; if (car.storyJob) car.storyJob = null; }
         aim(null);
         emit({type: 'jobDropped', job});
       }
@@ -2066,6 +2125,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       lesson = createLesson(id, {spot: {x: site.zone.x, z: site.zone.z}, target: site.carryTarget});
       lessonEvents = [];
       if (id === 'carry') {
+        loads = loads.filter(car => !car.storyJob || car.hooked);
         loads.push(crateLoad());
         // Paint follows the terrain. Keep drawing samples out of courseSite's
         // rule data and build them only when this lesson needs its circle.

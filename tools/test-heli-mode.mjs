@@ -429,9 +429,11 @@ for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['buga
     // MAP-DESTINATIONS: the pilot's map data is a helicopter file (it does not start with heli-); the session lists a
     // course's corner names for scouting with the game's own corner detection (track-analysis.js, pure rules).
     // MAP-SECRETS: the secret signs, the Table and the map record are pure rules in map-secrets.js.
+    // STORY-KOGANE-DELIVERY: the session reads the story's step and writes its mark through the one pure file src/story/story-save.js
+    // (it imports only config.js); heli-story.js takes both as arguments and imports nothing outside src/heli/.
     ok(imports.every(spec => spec.startsWith('./heli-') || ['../config.js', '../rendered-ground.js', '../rng.js', '../course-access.js',
       '../course-closures.js', '../circuit-hills.js', '../medals.js', '../lessons/lesson-core.js', '../lab/lab-heli.js',
-      './pilot-map-data.js', './map-secrets.js', '../track-analysis.js', '../ski/ski-session.js'].includes(spec)),
+      './pilot-map-data.js', './map-secrets.js', '../track-analysis.js', '../ski/ski-session.js', '../story/story-save.js'].includes(spec)),
       `${name} imports only helicopter rules (${imports.join(', ')})`);
     ok(!/\bdocument\b|\bwindow\b|Math\.random|Date\.now|new Date|performance\.now|localStorage|requestAnimationFrame|\bcrypto\b|import\s*\(/.test(source),
       `${name} uses no page, clock, storage or randomness`);
