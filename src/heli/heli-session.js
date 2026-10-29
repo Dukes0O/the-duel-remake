@@ -416,7 +416,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
   const lessonsDone = () => heliOf(save).lessons;
   // HELI-PAY-CONTINUE: a delivery is clean when no repair of these kinds was charged since it began.
-  let damageCount = 0, jobMark = 0;
+  let damageCount = 0, jobMark = 0, storyMark = 0;
   const charge = (kind, amount) => {
     if (DAMAGE_KINDS.includes(kind)) damageCount++;
     const result = commit(chargeRepair(save, amount, flag));
@@ -870,10 +870,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // The story's crate set down cleanly in the Kogane circle: one change pays, finishes the job, finds the Night version and marks the
   // story. A refusal changes nothing and leaves the job in hand (the crate stays where it is).
   function deliverStory(crate) {
-    const clean = damageCount === (crate.damageMark ?? damageCount);
+    // Clean means no repair since the job was taken (a crash, a drop or a knock on the way ends it), however many crates were laid.
+    const clean = damageCount === storyMark;
     const done = commit(finishStorySupplies(save, {mode, clean, day: playDay(), step: koganeStep(save), mark: markKoganeSupplies}));
     if (!done.ok) { emit({type: 'storyBlocked', reason: done.reason}); return; }
     loads = loads.filter(load => load !== crate);
+    // The tea house fills the tank, so the story trip never waits for the fuel truck.
+    if (heli) { const before = heli.fuelKg; refuelHeli(heli, heliOf(save).fuelKg); emit({type: 'teaHouseFuel', kg: Math.max(0, heliOf(save).fuelKg - before)}); }
     emit({type: 'jobDone', job: done.job, pay: done.pay, bonus: done.bonus, clean});
     if (done.found) emit({type: 'secretFound', id: STORY_NIGHT, name: STORY_NIGHT_NAME,
       text: `Found from the air: ${STORY_NIGHT_NAME}. It is in your course list now.`});
@@ -886,8 +889,16 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (!result.ok) return result;
     dropSurvey('other');
     if (!result.already) {
+      storyMark = damageCount;
       emit({type: 'jobTaken', job});
       emit({type: 'radio', line: 'heli.radio.job.taken'});
+    }
+    // A crate left over from a dropped job (on the cable or beside the pad) is the job's again; otherwise a fresh one is laid.
+    const left = lesson ? null : loads.find(load => load.crate && !load.storyJob && !load.returnJob && load.id === CRATE.id);
+    if (left) {
+      left.massKg = job.massKg;
+      left.storyJob = job;
+      if (left.hooked) aim(job.to);
     }
     layStoryCrate();
     return {ok: true, job};
@@ -1579,6 +1590,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function takeSurvey(job, {wear = false} = {}) {
     if (!lessonsDone().landing) return {ok: false, reason: 'Finish lesson 3, landing, to open the dispatch board.'};
     if (jobInHand()) return {ok: false, reason: 'Finish or drop your car job first.'};
+    if (storyInHand()) return {ok: false, reason: 'Finish or drop the story job first.'};
     if (surveyTaken?.id === job.id) return {ok: true, already: true, job};
     surveyTaken = job;
     surveyRun = null;
@@ -1820,7 +1832,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       emit(result.event);
       // The crate is taken at its first hook; a later hook after a drop does not start the count again.
       if (hooked.returnJob) { hooked.damageMark ??= damageCount; aim(hooked.returnJob.to); }
-      if (hooked.storyJob) { hooked.damageMark ??= damageCount; aim(hooked.storyJob.to); }
+      if (hooked.storyJob) aim(hooked.storyJob.to);
       if (hooked.own) offer = null;
       const job = hooked.job ? jobInHand() : null;
       if (job?.id === hooked.job) aim(job.to);

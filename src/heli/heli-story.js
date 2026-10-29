@@ -6,7 +6,7 @@
 // the profile: pay, the day's job list, the Night version found and the story mark all happen, or none of them does.
 import {HOME_COURSE, jobPay, jobCleanBonus} from './heli-jobs.js';
 import {payForMinutes, deliveryMinutes} from './heli-pay.js';
-import {heliOf, finishJob, mapRecordOf, mapBlocked, writeMapRecord} from './heli-save.js';
+import {heliOf, finishJob, setFuel, mapRecordOf, mapBlocked, writeMapRecord, HELI_MONEY} from './heli-save.js';
 
 export const STORY_JOB_ID = 'story-kogane-supplies';
 export const STORY_COURSE = 'kogane-pass';
@@ -44,7 +44,8 @@ export function finishStorySupplies(profile, {mode = 'assisted', clean = false, 
   if (!paid.ok) return refuse(paid.reason);
   // The Night version, found from the air. A record already at the save's limit cannot take another name: nothing is written.
   const stored = mapRecordOf(paid.profile), already = stored.found.includes(STORY_NIGHT);
-  let next = paid.profile;
+  // The tea house fills the tank, so the story trip never waits for the fuel truck.
+  let next = setFuel(paid.profile, HELI_MONEY.tankKg, {enabled: true}).profile;
   if (!already) {
     const written = writeMapRecord(next, {...stored, found: [...stored.found, STORY_NIGHT]});
     if (!written.ok || !written.profile.heli.map.found.includes(STORY_NIGHT)) return refuse(written.reason ?? STORY_NEWER);
@@ -53,5 +54,5 @@ export function finishStorySupplies(profile, {mode = 'assisted', clean = false, 
   // The mark must really rise now: a story that already has it (a second finish) pays nothing.
   const marked = mark(next);
   if (!marked?.ok || marked.changed !== true) return refuse(marked?.reason || 'The supplies were already delivered.');
-  return {ok: true, profile: marked.profile, paid: paid.paid, bonus, pay, job, found: !already};
+  return {ok: true, profile: marked.profile, paid: paid.paid, bonus, pay, job, found: !already, tankKg: HELI_MONEY.tankKg};
 }

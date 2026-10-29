@@ -76,7 +76,7 @@ export const PLACES = Object.freeze([
 // option (`koganePass` in heli-jobs.js destinationsFor); with the switch off it is in no table,
 // leg, chart or logbook. Names and altitudes can still be looked up by id.
 // Within 16 km of the home pad and due east of it, so the story's delivery (STORY-KOGANE-DELIVERY) is one tank out and back by the
-// map's leg rule: each leg is 175 kg, and the tank holds 400. (Flying at either end burns fuel too; the fuel truck covers a short tank.)
+// map's leg rule: each leg is 175 kg, and the tank holds 400. (Flying at either end burns fuel too, so the tea house fills the tank after the story delivery.)
 export const KOGANE_PLACE = place('kogane-pass', 'Kogane Pass', ['kogane-pass'],
   at(14, 0.5), 'Forested volcano east of the home valley');
 export const DEV_PLACES = Object.freeze([KOGANE_PLACE]);
