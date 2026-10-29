@@ -513,3 +513,13 @@ tasks:
     needs: [NISSAN-SKYLINE-GTR-R34-V6]
     locks: [release]
     details: "docs/board/cards/NISSAN-SKYLINE-GTR-R34-V7.md"
+
+  - id: QA-MAP-FINISH-TABLE
+    title: "map-finish fails: Table landing reward or logbook missing"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-MAP-FINISH-TABLE.md"
