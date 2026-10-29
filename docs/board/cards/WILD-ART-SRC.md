@@ -1,5 +1,25 @@
 # WILD-ART-SRC
 
+## Current instruction, North woods round 3 of 3
+
+Claude's round 2 verdict: white-tailed deer, black bear, beaver and eastern
+wolf PASS and must remain unchanged. Moose FAIL: antlers resemble a plate
+with spikes and the body a box on thin stilts. Final round rebuilds moose
+from the approved Quaternius deer mesh and rig, retaining Idle and Walk.
+Full design and verdict are in north-woods-round-3.md under the wildlife looks.
+Stop after round 3. Claude judges the submitted sheet; no art pass is inferred.
+
+Claude's written review under rule 18 approves excluding the four new
+WILD-ART-SRC provenance rows from the P4 kits and tanker source protected
+catalog hashes. Keep both old expected hash values exactly. No prior
+catalog row or test tolerance is loosened.
+
+Round 3 sheet submitted with all five animals; the four passed GLBs remain
+byte exact. Lane coverage is green for all 86 suites, including a successful
+rerun of 17 sandbox tool-access failures. Production build passed. Final
+moose art judgment stays with Claude. Full results and removals are in the
+change note; no fourth round starts.
+
 ## Current instruction, 28 October donor-first round 1
 
 The user supersedes the stopped original-only plan: use direct free mirrors

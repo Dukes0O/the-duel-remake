@@ -1,7 +1,7 @@
-"""North woods original moose, shared rig and exported-model review helpers.
+"""North woods donor adaptation, shared rig and exported-model review helpers.
 
 Coordinates are metres, +X forward, Z up; glTF uses Y up.
-The other four species use licensed donors through adapt.py.
+All five species use licensed donors through adapt.py.
 """
 import argparse
 import json
@@ -35,11 +35,9 @@ def cli(species):
     globals().update(Vector=Vector, Quaternion=Quaternion)
     if args.review:
         review(species, root, args.round)
-    elif species != 'moose':
+    else:
         import adapt
         adapt.build(species, Path(plan['glb'][0]), sys.modules[__name__], args.cache)
-    else:
-        build(species, Path(plan['glb'][0]))
 
 
 def material():
@@ -236,76 +234,6 @@ class Animal:
                           (length * .35, width * .29, .024), foot, paw, 3, 8)
 
 
-def moose_anatomy(a):
-    """Adult bull proportions from the round reference, with rooted antler palms."""
-    coat, muzzle = (.035, .024, .016), (.047, .033, .022)
-    dark, lower = (.012, .010, .008), (.23, .19, .14)
-    a.belly = 1.10
-    profiles = [(-1.15, 1.49, .055, .14), (-1.06, 1.52, .22, .34),
-                (-.88, 1.55, .34, .43), (-.60, 1.54, .38, .44),
-                (-.27, 1.56, .40, .47), (.02, 1.64, .40, .55),
-                (.25, 1.74, .39, .65), (.43, 1.77, .35, .67),
-                (.59, 1.73, .30, .61), (.73, 1.62, .22, .47),
-                (.82, 1.54, .12, .30)]
-    a.loft([((x, 0, z), w, h) for x, z, w, h in profiles], coat, 'spine', 20, 'body')
-    a.bone('neck', (.57, 0, 1.73), (.99, 0, 2.08), 'spine')
-    a.bone('head', (.99, 0, 2.08), (1.56, 0, 1.83), 'neck')
-    a.loft([((.58, 0, 1.78), .30, .40), ((.77, 0, 1.94), .26, .34),
-            ((.96, 0, 2.08), .20, .27)], coat, 'neck', 18)
-    # Deep upper lip and a long, downturned Roman nose, below the skull.
-    a.loft([((.93, 0, 2.16), .14, .18), ((1.08, 0, 2.12), .185, .23),
-            ((1.25, 0, 2.00), .18, .235), ((1.43, 0, 1.83), .17, .22),
-            ((1.57, 0, 1.75), .16, .19), ((1.64, 0, 1.77), .13, .14)], muzzle, 'head', 18)
-    a.oval((1.59, 0, 1.70), (.10, .14, .10), muzzle, 'head', 6, 14)
-    # Bell is visibly separated from the muzzle, hanging behind the jaw.
-    a.loft([((.94, 0, 1.94), .115, .13), ((.99, 0, 1.70), .105, .14),
-            ((.94, 0, 1.48), .07, .10), ((.90, 0, 1.38), .015, .025)], dark, 'head', 12)
-    for side in (-1, 1):
-        a.oval((1.13, side * .178, 2.14), (.015, .009, .013), (.006, .005, .003), 'head', 4, 8)
-        a.oval((1.62, side * .126, 1.82), (.038, .009, .021), dark, 'head', 4, 8)
-        a.ear((.96, side * .15, 2.23), (.79, side * .46, 2.49), .26, coat, (.10, .075, .05))
-        # Each beam starts inside its own skull side and merges into its palm.
-        beam = [(1.02, side * .13, 2.23), (.97, side * .29, 2.27),
-                (.85, side * .45, 2.29), (.72, side * .58, 2.34)]
-        a.tube(beam, [.066, .060, .053, .045], (.16, .115, .065), 'head', 10)
-        outline = [(.86, .43, 2.29), (1.04, .62, 2.32), (1.03, .84, 2.44),
-                   (.88, 1.00, 2.57), (.64, 1.08, 2.68), (.39, 1.01, 2.70),
-                   (.22, .84, 2.62), (.33, .63, 2.43), (.57, .50, 2.32)]
-        top = [(x, side * y, z) for x, y, z in outline]
-        bottom = [(x, side * y, z - .045) for x, y, z in outline]
-        count = len(top)
-        # Triangle fans avoid a single large plate's ambiguous triangulation.
-        centre = tuple(sum(p[i] for p in top) / count for i in range(3))
-        vertices = top + bottom + [centre, (centre[0], centre[1], centre[2] - .045)]
-        faces = []
-        for i in range(count):
-            j = (i + 1) % count
-            faces.extend([(2 * count, i, j), (2 * count + 1, count + j, count + i),
-                          (i, count + i, count + j, j)])
-        if side < 0:
-            faces = [tuple(reversed(face)) for face in faces]
-        a.surface(vertices, faces, (.27, .21, .135), 'head')
-        for i in range(1, 8):
-            start = Vector(top[i])
-            end = start + Vector((.02 if i < 4 else -.04, side * .085, .12 + .025 * (i % 3)))
-            a.tube([start, start.lerp(end, .65), end], [.033, .021, .003], (.32, .26, .17), 'head', 7)
-    for hind, x, z in [(True, -.84, 1.57), (False, .49, 1.70)]:
-        for side in (-1, 1):
-            y = side * .26
-            hip = (x, y, z)
-            knee = (x + (.23 if hind else -.09), y, .85)
-            ankle = (x - (.06 if hind else 0), y, .14)
-            toe = (ankle[0] + .04, y, .045)
-            start = len(a.verts)
-            a.leg(('rear' if hind else 'front') + ('.L' if side > 0 else '.R'),
-                  hip, knee, ankle, toe, (.215 if hind else .16, .080, .048), coat, dark, hind, True)
-            for i in range(start, len(a.verts)):
-                if .13 < a.verts[i][2] < .88:
-                    a.colours[i] = a.paint(a.verts[i], lower, 'detail')
-    a.bone('tail', (-1.08, 0, 1.63), (-1.22, 0, 1.43), 'spine')
-    a.loft([((-1.08, 0, 1.63), .055, .06), ((-1.22, 0, 1.43), .04, .025)], coat, 'tail', 10)
-
-
 def rig(a, mesh):
     armature = bpy.data.armatures.new(a.species + ' skeleton')
     obj = bpy.data.objects.new(a.species + ' rig', armature)
@@ -404,45 +332,6 @@ def animate(a, obj):
         bone.scale = (1, 1, 1)
     scene.frame_set(1)
     return obj
-
-
-def build(species, output):
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False)
-    a = Animal(species)
-    a.bone('root', (0, 0, 0), (0, 0, .2))
-    a.bone('spine', (-.3, 0, .5), (.35, 0, .5), 'root')
-    assert species == 'moose'
-    moose_anatomy(a)
-    data = bpy.data.meshes.new(species + ' anatomy')
-    data.from_pydata(a.verts, [], a.faces)
-    data.update()
-    mesh = bpy.data.objects.new(species, data)
-    bpy.context.collection.objects.link(mesh)
-    # Smooth curved anatomy; the low polygon silhouette remains visible.
-    for face in data.polygons:
-        face.use_smooth = True
-    attr = data.color_attributes.new(name='Coat', type='FLOAT_COLOR', domain='POINT')
-    for i, colour in enumerate(a.colours):
-        attr.data[i].color = colour
-    data.materials.append(material())
-    finish_coat(mesh)
-    obj = animate(a, rig(a, mesh))
-    data.calc_loop_triangles()
-    triangles = len(data.loop_triangles)
-    assert triangles <= 5000, (species, triangles)
-    bpy.ops.object.select_all(action='DESELECT')
-    mesh.select_set(True)
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    output.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.export_scene.gltf(filepath=str(output), export_format='GLB', use_selection=True,
-                              export_yup=True, export_animations=True, export_animation_mode='NLA_TRACKS',
-                              export_nla_strips=True, export_skins=True, export_all_vertex_colors=True,
-                              export_force_sampling=True, export_anim_slide_to_zero=True,
-                              export_extras=True, export_cameras=False, export_lights=False)
-    print(json.dumps({'species': species, 'triangles': triangles, 'bones': len(a.bones),
-                      'clips': ['Idle', 'Walk'], 'textures': 1, 'textureEdge': 1024, 'output': str(output)}))
 
 
 def aim(obj, target):

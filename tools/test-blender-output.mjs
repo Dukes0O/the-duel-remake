@@ -370,9 +370,9 @@ try {
           `${name} must animate actual skin joints`);
         assert.ok(clip.samplers.some(s => gltf.accessors[s.input].count > 2));
       }
-      if (generator.script.includes('white-tailed-deer') || generator.script.includes('eastern-wolf')) {
+      if (['white-tailed-deer', 'moose', 'eastern-wolf'].includes(generator.script.split('/').at(-1).slice(0, -3))) {
         const sources = JSON.parse(readFileSync(join(root, 'tools/blender/wildlife/sources.json'), 'utf8'));
-        const source = sources[generator.script.includes('white-tailed-deer') ? 'white-tailed-deer' : 'eastern-wolf'];
+        const source = sources[generator.script.split('/').at(-1).slice(0, -3)];
         for (const name of source.clips) {
           assert.ok(gltf.animations.some(a => a.name === name), `lost donor clip ${name}`);
         }

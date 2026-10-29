@@ -21,7 +21,10 @@ def build(species, output, c, cache):
             for track in obj.animation_data.nla_tracks:
                 track.mute = True
     bpy.context.scene.frame_set(1)
-    if rigs:
+    if species == 'moose':
+        import moose_donor
+        moose_donor.build(mesh, rigs[0], output, c)
+    elif rigs:
         animated_donor(species, mesh, rigs[0], output, c)
     else:
         static_donor(species, mesh, output, c)

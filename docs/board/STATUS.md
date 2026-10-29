@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-10-29T01:48:58.152Z
+Observed at: 2026-10-29T02:50:11.719Z
 
-Observation commit: 800c7f98111aef9205c5faa860f738452324bdef
+Observation commit: 6d81c0fc3ff6aa8832b4c17f767d7ce03b55ea5a
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 800c7f98111aef9205c5faa860f738452324bdef
+Integration HEAD: 6d81c0fc3ff6aa8832b4c17f767d7ce03b55ea5a
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,11 +30,10 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/eifel-c2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-eifel-c2 |
-| codex/kogane-c3 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c3 |
 | codex/kogane-c5 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-kogane-c5 |
 | codex/perf-high-night | 13 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 | codex/skyline-v2 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/codex-skyline-v2 |
-| codex/wild-art-src | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
+| codex/wild-art-src | 0 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/wild-art-src |
 
 ## Unmerged branches for idle review
 
@@ -43,10 +42,9 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
 | codex/eifel-c2 | unknown | 2026-10-28T18:36:21-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/FACTORY.md, docs/README.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C1.md |
-| codex/kogane-c3 | unknown | 2026-10-28T18:30:22-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/FACTORY.md, docs/README.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C1.md |
-| codex/kogane-c5 | unknown | 2026-10-28T18:47:51-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/FACTORY.md, docs/README.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C1.md |
+| codex/kogane-c5 | unknown | 2026-10-28T19:24:26-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/CIRCUITS.md, docs/FACTORY.md, docs/README.md, docs/board/STATUS.md, docs/board/board.yaml |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 13 | inspection skipped by request; uncommitted state unknown | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
-| codex/skyline-v2 | unknown | 2026-10-28T18:07:05-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/FACTORY.md, docs/README.md, docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C1.md |
+| codex/skyline-v2 | unknown | 2026-10-28T19:21:26-07:00 | 0 | inspection skipped by request; uncommitted state unknown | docs/FACTORY.md, docs/README.md, docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/EIFEL-CROWN-C1.md |
 
 ## Size targets
 
@@ -59,10 +57,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 33,215,377 B | +249 B | 20,000,000 B |
+| Review `looks/` | 33,218,819 B | +405 B | 20,000,000 B |
 | Added bytes in last merge | 292,119,270 B | +0 B | 5,000,000 B |
-| All `public/` | 354,452,700 B | -125,896 B | unavailable |
-| Git objects | 807,816,192 B | +7,763,968 B | unavailable |
+| All `public/` | 355,223,164 B | -20 B | unavailable |
+| Git objects | 813,492,224 B | +3,274,752 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -71,7 +69,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: c16caedfb776e3645223bcb848939b4c4a1f0f35
 - Local main: missing
-- Local integration/wasteland: 438a97b50f3bc6b42bae1c834bba8c60ce089936
+- Local integration/wasteland: 840d06943223319a9bbe150957f0c8baf18c9e23
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

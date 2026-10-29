@@ -45,7 +45,7 @@ def main():
             source = Image.open(path).convert('RGB')
             thumb = ImageOps.contain(source, (656, 282), Image.Resampling.LANCZOS)
             sheet.paste(thumb, (12 + col * 680 + (656 - thumb.width) // 2, y + 35 + (282 - thumb.height) // 2))
-    draw.text((28, 1815), 'CC0 Quaternius deer/wolf | CC BY 3.0 Poly by Google bear/beaver | original moose | all coats 1024 x 1024', font=small, fill='#bbc4b7')
+    draw.text((28, 1815), 'CC0 Quaternius deer/moose/wolf | CC BY 3.0 Poly by Google bear/beaver | all coats 1024 x 1024', font=small, fill='#bbc4b7')
     output = root / f'docs/board/looks/wildlife/north-woods-round-{args.round}.jpg'
     output.parent.mkdir(parents=True, exist_ok=True)
     for quality in (88, 84, 80, 76, 72, 68):
