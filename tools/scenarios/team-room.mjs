@@ -5,7 +5,11 @@ import {ALL_CIRCUITS} from '../../src/circuits/index.js';
 import {CIRCUIT_MANIFESTS} from '../../src/circuit-manifests.js';
 import {SNAPSHOT_CHASE} from '../../src/track-analysis.js';
 
-const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.map(circuit => circuit.flag)].join(',');
+// A development course that stands in for a released road (it has a `slot`) is left off: with its switch on the game builds the
+// new road, whose published track reference is not made until it goes live, and the released road's reference would read as stale
+// (EIFEL-CROWN). The Team Room is checked on the road the player has.
+const standsInForReleased = circuit => CIRCUIT_MANIFESTS.some(row => row.id === circuit.id && row.slot !== undefined && row.state !== 'on');
+const entry = '/tools/menu-check.html?flags=' + ['grand-prix', ...ALL_CIRCUITS.filter(circuit => !standsInForReleased(circuit)).map(circuit => circuit.flag)].join(',');
 const ready = `document.readyState==='complete' && window.__qaApp && window.__render &&
   document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled`;
 
