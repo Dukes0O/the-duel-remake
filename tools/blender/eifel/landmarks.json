@@ -1,0 +1,133 @@
+{
+  "card": "EIFEL-CROWN-C5",
+  "round": 1,
+  "units": "metres",
+  "up": "Y",
+  "source": "Original shapes made by tools/blender/eifel/landmarks.py; no outside models or textures.",
+  "models": [
+    {
+      "id": "eifel-castle",
+      "budget": [
+        7000,
+        2000
+      ],
+      "files": [
+        {
+          "path": "eifel-castle.glb",
+          "triangles": 3476,
+          "size": [
+            53.945,
+            51.4,
+            52.581
+          ],
+          "bytes": 220268,
+          "sha256": "48d8de6eb8cda0f4b62bbc611e26a190ca972ca7ebb85b3775cc96bf828bc20e"
+        },
+        {
+          "path": "eifel-castle-lod.glb",
+          "triangles": 1012,
+          "size": [
+            51.975,
+            51.4,
+            54.586
+          ],
+          "bytes": 69556,
+          "sha256": "71fac51cb1c2310b0ab3ef5857b339e6a6d3004e61994e7a9eaa999ab9de82c4"
+        }
+      ]
+    },
+    {
+      "id": "dam-wall",
+      "budget": [
+        2500,
+        800
+      ],
+      "files": [
+        {
+          "path": "dam-wall.glb",
+          "triangles": 359,
+          "size": [
+            14.0,
+            20.2,
+            12.9
+          ],
+          "bytes": 26060,
+          "sha256": "dcfc03f1fbf74f874f637d4ac44f4c5b3099ecc614f6d856af56a2f4f8566bf4"
+        },
+        {
+          "path": "dam-wall-lod.glb",
+          "triangles": 137,
+          "size": [
+            14.0,
+            20.2,
+            12.7
+          ],
+          "bytes": 11480,
+          "sha256": "ea3e25aa1698ef55e098b6940c3bc444a5378072874d921d4c6d3e9d9a025a19"
+        }
+      ]
+    },
+    {
+      "id": "eifel-lodge",
+      "budget": [
+        1500,
+        500
+      ],
+      "files": [
+        {
+          "path": "eifel-lodge.glb",
+          "triangles": 876,
+          "size": [
+            13.6,
+            11.4,
+            13.597
+          ],
+          "bytes": 54988,
+          "sha256": "f8f44be7a6abcf7aec59538adf17a3f37aa5cc91baa2429f1d5097c12e85062e"
+        },
+        {
+          "path": "eifel-lodge-lod.glb",
+          "triangles": 210,
+          "size": [
+            13.6,
+            11.4,
+            13.597
+          ],
+          "bytes": 18220,
+          "sha256": "7c59a0522dbcd77c9103bcff77e26cf22217ef7a7b01bac2e743c65596955306"
+        }
+      ]
+    },
+    {
+      "id": "shore-rock",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "shore-rock.glb",
+          "triangles": 110,
+          "size": [
+            5.551,
+            1.955,
+            5.886
+          ],
+          "bytes": 9260,
+          "sha256": "7282b3e8c438d3835c1f00af7ed9770025cf7744d86fd9bf9521231e7141dd94"
+        },
+        {
+          "path": "shore-rock-lod.glb",
+          "triangles": 40,
+          "size": [
+            6.416,
+            2.398,
+            5.788
+          ],
+          "bytes": 4736,
+          "sha256": "bb0d2555a9a4c2209e3b73d4b3adc1d0de29568c650e70a3e6d5b4ddcb8268c7"
+        }
+      ]
+    }
+  ]
+}

@@ -28,7 +28,7 @@ const newFire = seed => startFire({id: 'fire-1', courseId: 'tremblant-woods', gr
 check('the tuned numbers are the ones on the card', () => {
   assert.deepEqual([FIRE.cell, FIRE.treesPerCell, FIRE.minForestCells, FIRE.baseChance, FIRE.litresPerPoint, FIRE.lostCells, FIRE.lostShare,
     FIRE.spot, FIRE.regionCells, FIRE.stepSeconds, FIRE.dayStepCount], [20, 3, 150, 0.55, 180, 45, 0.4, 3, 2, 200, 3]);
-  assert.deepEqual([...BURNT_LOOKS], ['tremblant-woods', 'kogane-pass']);
+  assert.deepEqual([...BURNT_LOOKS], ['tremblant-woods', 'kogane-pass', 'eifel-crown']);
   for (const [i, j] of [[0, 0], [-512, -512], [511, 511], [-3, 7]]) assert.deepEqual(cellIJ(cellId(i, j)), [i, j]);
 });
 

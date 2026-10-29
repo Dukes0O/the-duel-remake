@@ -8515,6 +8515,131 @@
           }
         }
       }
+    },
+    {
+      "source": "freesound",
+      "key": "853112",
+      "cue": "ambience.eifel",
+      "title": "Birdsong with Blackcap, Nightingale, Robin, Chaffinch and Woodland Birds Ambience",
+      "author": "hoshisato",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/hoshisato/sounds/853112/",
+      "download": "https://cdn.freesound.org/previews/853/853112_17756109-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 98.748,
+      "file": "freesound/853112-birdsong-with-blackcap-nightingale-robin-chaffinch-and-woodl.ogg",
+      "sha256": "433ce02dd0e697dc2c85408c6f8af094232db09a674908e78a6c6767148afbd2",
+      "bytes": 1085611,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "freesound",
+      "key": "846302",
+      "cue": "landmark.village-bell",
+      "title": "Altenthann – Isolated Bavarian Church Bell at Distance (300 m, Open Window, Post‑Rain Ambience) - 260224_002",
+      "author": "TSP-Talk",
+      "license": "CC0 1.0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "page": "https://freesound.org/people/TSP-Talk/sounds/846302/",
+      "download": "https://cdn.freesound.org/previews/846/846302_14079354-hq.ogg",
+      "quality": "preview-hq-ogg",
+      "duration": 25.5075,
+      "file": "freesound/846302-altenthann-isolated-bavarian-church-bell-at-distance-300-m-o.ogg",
+      "sha256": "226668a7d8dd9be98b4e3e2114afc0c8ee101c2a6a93bb6705dd10c3fede0a41",
+      "bytes": 573663,
+      "fetched": "2026-10-29"
+    },
+    {
+      "source": "mix",
+      "key": "ambience.eifel",
+      "cue": "ambience.eifel",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/ambience-eifel.flac",
+      "sha256": "f3fb1d4750ad2ee465622741e7580efe04a195d9ad4f6734bc9ede3211545dcf",
+      "bytes": 1158692,
+      "processing": {
+        "script": "tools/audio/build-eifel.mjs",
+        "recipe": {
+          "sources": [
+            "609952",
+            "853112"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 24,
+          "circularCrossfadeSeconds": 1,
+          "gain": 0.15,
+          "targetLufs": -27.63,
+          "bell": "one church bell per race, heard within 150 m of the village"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -27.63,
+          "truePeakDbtp": -5.3,
+          "loudnessRangeLu": 11.6,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "source": "mix",
+      "key": "landmark.village-bell",
+      "cue": "landmark.village-bell",
+      "license": "CC0 1.0",
+      "author": "The Duel",
+      "file": "public/assets/audio/landmark-village-bell.flac",
+      "sha256": "11c20306b5bca2b527a7d025a1c34fc7f4da6a95a14d066312ed86c480354d60",
+      "bytes": 356654,
+      "processing": {
+        "script": "tools/audio/build-eifel.mjs",
+        "recipe": {
+          "sources": [
+            "846302"
+          ],
+          "rate": 48000,
+          "channels": 1,
+          "duration": 12,
+          "circularCrossfadeSeconds": 0,
+          "gain": null,
+          "targetLufs": null,
+          "bell": "one church bell per race, heard within 150 m of the village"
+        },
+        "loudness": {
+          "available": true,
+          "method": "FFmpeg loudnorm / EBU R128",
+          "integratedLufs": -23.95,
+          "truePeakDbtp": -3.1,
+          "loudnessRangeLu": 12.6,
+          "targets": {
+            "loudness": {
+              "advisory": true,
+              "targetLufs": -16,
+              "toleranceLu": 2,
+              "pass": false
+            },
+            "truePeak": {
+              "advisory": true,
+              "maximumDbtp": -1,
+              "pass": true
+            }
+          }
+        }
+      }
     }
   ]
 }

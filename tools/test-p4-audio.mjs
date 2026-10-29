@@ -20,8 +20,9 @@ const DRIVE_BANK_CUES = new Set(Object.keys(DRIVE_LESSON_CUES));
 const LAB_BANK_CUES = {has: id => id.startsWith('lab.') || id === 'car.sputter' || id === 'car.speirling'};
 // Skyline adds only these two dev cues. Keep every historical object and hash exact.
 const SKYLINE_CUES = new Set(['vehicle.turbo-whistle', 'vehicle.blowoff']);
-// KOGANE-PASS-C5 adds the two Kogane ambience beds and the shrine bell behind the dev switch.
-const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landmark.shrine-bell']);
+// KOGANE-PASS-C5 adds the two Kogane ambience beds and the shrine bell behind the dev switch; EIFEL-CROWN-C5 adds the
+// Eifel forest and birds bed and the village bell behind the Eifel switch. Exactly those are left out here.
+const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landmark.shrine-bell', 'ambience.eifel', 'landmark.village-bell']);
 
 const CUES = [
   'race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final',

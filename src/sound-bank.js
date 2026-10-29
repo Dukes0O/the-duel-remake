@@ -388,6 +388,11 @@ export const SOUND_BANK = {
     file: 'ambience-kogane-night.flac', gain: .14, cutoff: 7000, loop: true}),
   'landmark.shrine-bell': cue('ambience', {flag: 'kogane-pass',
     file: 'landmark-shrine-bell.flac', volume: .16, priority: 30, limit: 1}),
+  // EIFEL-CROWN-C5: the damp forest and its birds, and one church bell heard from the village.
+  'ambience.eifel': cue('ambience', {flag: 'eifel-crown', biome: 'eifel',
+    file: 'ambience-eifel.flac', gain: .15, cutoff: 6500, loop: true}),
+  'landmark.village-bell': cue('ambience', {flag: 'eifel-crown',
+    file: 'landmark-village-bell.flac', volume: .13, priority: 30, limit: 1}),
   'combat.blast': cue('impacts', {
     sample: 'explosion',
     file: 'catastrophic-blast.flac',
