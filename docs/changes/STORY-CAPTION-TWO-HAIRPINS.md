@@ -7,3 +7,7 @@ Tests: `node tools/test-story-lines.mjs` 100 checks pass (it reads the packet ta
 ## Removed
 
 Nothing.
+
+## Claude's review (28 October 2026, night)
+
+Wording only, decided by Claude (rule 17: no review).
