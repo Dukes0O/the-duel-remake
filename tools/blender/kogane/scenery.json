@@ -106,25 +106,25 @@
       "files": [
         {
           "path": "chevron-board.glb",
-          "triangles": 28,
+          "triangles": 32,
           "size": [
             1.100000023841858,
             2.2249999046325684,
-            0.07099999859929085
+            0.07199999690055847
           ],
-          "bytes": 4876,
-          "sha256": "47d4df8991b54c6e9f24cb5de1fa004091976c3946bbfc6eed40b34d3411f6de"
+          "bytes": 5096,
+          "sha256": "68d76b42b47012f014d970c6d691936cd67f53de1c5dbff9d3b64f030bfff067"
         },
         {
           "path": "chevron-board-lod.glb",
-          "triangles": 28,
+          "triangles": 32,
           "size": [
             1.100000023841858,
             2.2249999046325684,
-            0.07099999859929085
+            0.07199999690055847
           ],
-          "bytes": 4888,
-          "sha256": "ce9d2d61c5a173767f0f715016abff000c87d0dc7105b64eabbe64c777aa3018"
+          "bytes": 5108,
+          "sha256": "741cd7fe2eed7e0073b5ead5a39ef6dcf34fdb6178fb1c489e11a635eef55ee9"
         }
       ]
     },

@@ -356,6 +356,23 @@ function scatterScenery(course) {
   const shoreForest = course.def.scenery?.shoreForest;
   if (shoreForest) plantBand(shoreForest, makeRng(0x73686f ^ (course.def.stage + 1) * 0x2545f491), 'shore-forest',
     {zones: shoreForest.clear ?? [], drawnGround: true});
+  // `scenery.onDrawnGround` (KOGANE-PASS-C6): on steep switchbacks the ground drawn beside the road can lie tens of
+  // metres above or below the course's own height formula, which left trees hanging in the air or buried and
+  // boulders standing in the slope. A circuit that sets it plants every tree on the drawn ground and drops a
+  // boulder that would not sit on it (more than a metre off). No other circuit sets it, so none changes.
+  if (course.def.scenery?.onDrawnGround) {
+    for (const tree of f.trees) {
+      const y = renderedGroundHeight(course, tree);
+      if (Number.isFinite(y)) tree.y = y;
+    }
+    f.rocks = f.rocks.filter(rock => {
+      const obstacle = f.obstacles.find(o => o.source === rock);
+      const y = obstacle && renderedGroundHeight(course, obstacle);
+      if (!obstacle || !Number.isFinite(y) || Math.abs(obstacle.y - y) <= 1) return true;
+      f.obstacles.splice(f.obstacles.indexOf(obstacle), 1);
+      return false;
+    });
+  }
   // Autumn (`scenery.autumn`): `share` of every planted tree turns one of the
   // `colours` (red, gold and orange multipliers for the pine crowns), picked
   // from the tree's place along the road so the same trees turn on every build.

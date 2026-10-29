@@ -103,9 +103,12 @@ for (const piece of road.pieces.filter(piece => piece.name?.endsWith('Hairpin'))
   const side = -piece.dir;
   roadside.push({id: 'curve-mirror', s: piece.s0 - 8,
     lateral: side * 9.5, heading: side > 0 ? -Math.PI / 2 : Math.PI / 2});
+  // The board's arrow points left from the front and right from the back (C6). The outside of a left-hand turn
+  // is the right shore: the front faces the road. For a right-hand turn the board is turned round so the
+  // back faces the road and the arrow points right, into the turn.
   for (const t of [.18, .4, .62, .84]) {
     roadside.push({id: 'chevron-board', s: piece.s0 + (piece.s1 - piece.s0) * t,
-      lateral: side * 9.6, heading: side > 0 ? -Math.PI / 2 : Math.PI / 2});
+      lateral: side * 9.6, heading: Math.PI / 2});
   }
 }
 
@@ -191,6 +194,7 @@ export const KOGANE_PASS = defineScriptedCourse({
     strength: .85, reach: 25, far: .08,
     wood: {green: [.32, .47, .3], colours: [[.7, .32, .13], [.8, .5, .18]], share: .42, from: 7}},
   scenery: {lampWash: sodiumWash, trees: 350, rocks: 100, mountains: false, continuousGround: true,
+    onDrawnGround: true,
     forest: {from: 3.5, to: 60, spacing: 4.2, rows: 9, thin: .12, jitter: .9,
       scale: [1.2, 2.0]},
     shoreForest: {from: 205, to: 345, spacing: 4.5, rows: 16, thin: .1, jitter: .9, scale: [1.5, 2.6],
@@ -249,6 +253,8 @@ export const KOGANE_PASS = defineScriptedCourse({
     {id: 'vending-row', s: 124, lateral: 17, heading: -Math.PI / 2, clear: 5},
     {id: 'lantern-string', s: 110, lateral: 18.5, heading: -Math.PI / 2, lift: 1.2},
     {id: 'start-gantry', s: 45, lateral: 0, heading: Math.PI, scale: 1},
+    // The same gantry marks the finish (C6): the race ends at the end of the road, which had no marker.
+    {id: 'start-gantry', s: road.length - 2, lateral: 0, heading: Math.PI, scale: 1},
     ...road.boards.map(board => ({id: `braking-board-${board.distance}`, s: board.s,
       lateral: board.side * (road.halfWidthAt(board.s) + 2.4), heading: Math.PI, scale: 1})),
   ],
