@@ -50,7 +50,8 @@ export function finishStorySupplies(profile, {mode = 'assisted', clean = false, 
     if (!written.ok || !written.profile.heli.map.found.includes(STORY_NIGHT)) return refuse(written.reason ?? STORY_NEWER);
     next = written.profile;
   }
+  // The mark must really rise now: a story that already has it (a second finish) pays nothing.
   const marked = mark(next);
-  if (!marked?.ok) return refuse(marked?.reason ?? 'The story could not be saved.');
+  if (!marked?.ok || marked.changed !== true) return refuse(marked?.reason || 'The supplies were already delivered.');
   return {ok: true, profile: marked.profile, paid: paid.paid, bonus, pay, job, found: !already};
 }

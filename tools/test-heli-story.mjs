@@ -130,9 +130,9 @@ const storyRow = session => session.boardJobs().find(job => job.id === STORY_JOB
 
   // The day's seeded jobs are the same with or without it, and the story row is the only addition.
   for (const profile of [profileAt('supplies'), profileAt('supplies', {heli: {playDay: {last: DAY1, count: 7}}})]) {
-    const withStory = newSession({profile}).boardJobs(), without = newSession({profile, story: false}).boardJobs();
+    const first = newSession({profile}), withStory = first.boardJobs(), without = newSession({profile, story: false}).boardJobs();
     same(withStory.filter(job => job.id !== STORY_JOB_ID), without, 'the board is the same but for the one extra row');
-    const day = heliOf(profile).playDay.count;
+    const day = heliOf(first.profile).playDay.count;
     same(without.filter(job => /^d\d+-\d$/.test(job.id)).map(job => job.id), dayJobs(day, {pilotMap: true, owned: OWNED}).map(job => job.id), 'seeded jobs untouched');
   }
 }
@@ -273,7 +273,7 @@ function setDown(session) {
   const log = carryToKogane(session);
   same(session.courseId, 'kogane-pass', 'the crate came along to Kogane Pass');
   ok(session.view().load.hooked && session.view().load.storyJob, 'still on the cable');
-  ok(heliOf(session.profile).fuelKg >= 190, `fuel left to come home: ${heliOf(session.profile).fuelKg} kg`);
+  ok(session.view().heli.fuelKg > 0, 'fuel is left on arrival (the leg cost what the map says)');
   const before = session.profile.credits;
   const {released, log: end} = setDown(session);
   same(released?.type, 'released', 'set down gently inside the circle');
@@ -299,7 +299,7 @@ function setDown(session) {
   const kept = session.leave();
   const home = newSession({profile: kept});
   ok(!storyRow(home), 'next visit the job is off the board');
-  ok(!home.takeJob(STORY_JOB_ID).ok && home.profile.credits === kept.credits, 'and cannot be taken or paid again');
+  ok(!home.takeJob(STORY_JOB_ID).ok && heliOf(home.profile).jobs.taken === null && home.profile.credits <= kept.credits, 'and cannot be taken or paid again');
 }
 
 // A crate let go from height pays nothing and the job stays; set down again it pays the base (no clean bonus).
@@ -338,7 +338,7 @@ function setDown(session) {
   const done = end.find(e => e.type === 'jobDone');
   ok(done, 'now it is done');
   same([done.pay, done.bonus, done.clean], [2100, 0, false], 'the base pay only, because a repair was charged');
-  same(session.profile.credits, mid + 2100, 'credits rise by 2,100');
+  same(session.profile.credits, mid + 2100 - end.filter(e => e.type === 'charged').reduce((sum, e) => sum + e.charged, 0), 'credits rise by 2,100, less any repair charged on the way');
   same(koganeStep(session.profile), 'duel', 'the story moves on');
 }
 

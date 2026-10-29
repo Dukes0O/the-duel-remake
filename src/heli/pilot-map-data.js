@@ -75,10 +75,10 @@ export const PLACES = Object.freeze([
 // Dev places (KOGANE-PASS-C5). Like Summit Run, a dev course joins the map only through an
 // option (`koganePass` in heli-jobs.js destinationsFor); with the switch off it is in no table,
 // leg, chart or logbook. Names and altitudes can still be looked up by id.
-// Within 16 km of the home pad and due east of it, so the story's delivery (STORY-KOGANE-DELIVERY) is one tank out and back:
-// each leg is 195 kg, and the tank holds 400.
+// Within 16 km of the home pad and due east of it, so the story's delivery (STORY-KOGANE-DELIVERY) is one tank out and back by the
+// map's leg rule: each leg is 175 kg, and the tank holds 400. (Flying at either end burns fuel too; the fuel truck covers a short tank.)
 export const KOGANE_PLACE = place('kogane-pass', 'Kogane Pass', ['kogane-pass'],
-  at(15.5, 1), 'Forested volcano east of the home valley');
+  at(14, 0.5), 'Forested volcano east of the home valley');
 export const DEV_PLACES = Object.freeze([KOGANE_PLACE]);
 
 export const PLACE_IDS = Object.freeze(PLACES.map(p => p.id));
@@ -203,9 +203,9 @@ export const REGIONS = Object.freeze([
 ]);
 // Regions of the dev places, drawn only while their place is on the chart.
 export const DEV_REGIONS = Object.freeze([
-  region('kogane-forest', 'forest', 'Kogane forest', blob(15.5, 1, 2.4, 3.2, 2.6), {place: 'kogane-pass'}),
-  region('kogane-volcano', 'mountain', 'Kogane volcano', blob(15.5, 1.6, 1.5, 1.8, 3.2), {metres: 1300, place: 'kogane-pass'}),
-  region('kogane-lake', 'lake', 'Kogane crater lake', blob(15.5, 1, .45, .3, .7, 16), {place: 'kogane-pass'}),
+  region('kogane-forest', 'forest', 'Kogane forest', blob(14, 0.5, 2.4, 3.2, 2.6), {place: 'kogane-pass'}),
+  region('kogane-volcano', 'mountain', 'Kogane volcano', blob(14, 1.1, 1.5, 1.8, 3.2), {metres: 1300, place: 'kogane-pass'}),
+  region('kogane-lake', 'lake', 'Kogane crater lake', blob(14, 0.5, .45, .3, .7, 16), {place: 'kogane-pass'}),
 ]);
 
 // Rivers: from the high ground to the coast, [x, z] points.
