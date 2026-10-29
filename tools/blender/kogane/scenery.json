@@ -44,25 +44,87 @@
       "files": [
         {
           "path": "stone-retaining-wall.glb",
-          "triangles": 552,
+          "triangles": 420,
           "size": [
             4.0,
             2.5399999618530273,
-            0.7960000038146973
+            0.7959999740123749
           ],
-          "bytes": 71388,
-          "sha256": "38214bb620029467d362d8da69fbd22e5ae0b4f0b258c55c3597d2a86ad8cf36"
+          "bytes": 44424,
+          "sha256": "dc26eca349a58318e30176cb221a1bbf18df0f21d953dd0f04d48a384bec228a"
         },
         {
           "path": "stone-retaining-wall-lod.glb",
-          "triangles": 180,
+          "triangles": 38,
           "size": [
             4.0,
             2.5399999618530273,
-            0.7960000038146973
+            0.7959999740123749
           ],
-          "bytes": 44412,
-          "sha256": "cc6d1e8a14cd94ecfc2d9ce8346a427059459dacca3ed6df804a017e06117784"
+          "bytes": 10592,
+          "sha256": "8651795f507851624d7a48d4a18a6f98e8f965a320524a82d878d26cd7c36e26"
+        }
+      ]
+    },
+    {
+      "id": "stone-retaining-wall-b",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "stone-retaining-wall-b.glb",
+          "triangles": 449,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7959999740123749
+          ],
+          "bytes": 46380,
+          "sha256": "d5d713500b98d586b6fac639877d66f16bac007acbb1b32313b0decf5c79a0a0"
+        },
+        {
+          "path": "stone-retaining-wall-b-lod.glb",
+          "triangles": 38,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7959999740123749
+          ],
+          "bytes": 10668,
+          "sha256": "90cb1798110f947210e394dad3d13e82101900258f0ef2172245dd75e5eca89c"
+        }
+      ]
+    },
+    {
+      "id": "stone-retaining-wall-c",
+      "budget": [
+        600,
+        200
+      ],
+      "files": [
+        {
+          "path": "stone-retaining-wall-c.glb",
+          "triangles": 494,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7959999740123749
+          ],
+          "bytes": 50428,
+          "sha256": "d0f42816c1c05791a78f6749b7ba67e5a10fb14d741f095b13fca27280ca6433"
+        },
+        {
+          "path": "stone-retaining-wall-c-lod.glb",
+          "triangles": 38,
+          "size": [
+            4.0,
+            2.5399999618530273,
+            0.7959999740123749
+          ],
+          "bytes": 10912,
+          "sha256": "ae9c672d615068b58186be6d9fbd4144d34f62686c742c19f026a7e777e291cc"
         }
       ]
     },

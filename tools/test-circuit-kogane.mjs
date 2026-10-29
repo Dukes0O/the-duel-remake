@@ -60,7 +60,7 @@ for (let s = 0; s < course.length; s += 4) {
   assert.ok(course.script.wallSide(s, 1) && course.script.wallSide(s, -1));
 }
 const allowed = new Set(['armco-white', 'concrete-wall', 'start-gantry', 'braking-board-150', 'braking-board-100', 'braking-board-50',
-  'stone-retaining-wall', 'curve-mirror', 'chevron-board', 'tea-house', 'vending-row',
+  'stone-retaining-wall', 'stone-retaining-wall-b', 'stone-retaining-wall-c', 'curve-mirror', 'chevron-board', 'tea-house', 'vending-row',
   'autumn-tree-copper', 'autumn-tree-golden', 'shopfront-a', 'shopfront-b', 'lantern-string',
   'torii', 'torii-small', 'stone-lantern', 'kogane-car-park']);
 assert.ok(KOGANE_PASS.kitPlacements.every(row => allowed.has(row.id)));
@@ -74,9 +74,31 @@ assert.equal(KOGANE_PASS.kitPlacements.filter(row => row.id === 'chevron-board')
 for (const row of KOGANE_PASS.kitPlacements.filter(row => /curve-mirror|chevron-board/.test(row.id))) {
   assert.ok(Math.abs(row.lateral) >= road.halfWidthAt(row.s) + 3, 'hardware beyond wall and road');
 }
-for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'stone-retaining-wall')) {
+const stoneWalls = KOGANE_PASS.kitPlacements.filter(row => row.id.startsWith('stone-retaining-wall'));
+for (const row of stoneWalls) {
   const piece = road.pieceAt(row.s);
   assert.ok(piece.kind !== 'turn' || piece.radius >= 30, 'tall walls leave hairpin sightlines clear');
+}
+// KOGANE-WALL: three stone patterns that never repeat side by side, each piece close to the 4 m it was made
+// for (the shared layout stretched them to 16 m), and concrete blocks laid end to end round the hairpins.
+for (const side of [-1, 1]) {
+  const run = stoneWalls.filter(row => Math.sign(row.lateral) === side).sort((x, y) => x.s - y.s);
+  for (let i = 1; i < run.length; i++) assert.notEqual(run[i].id, run[i - 1].id, `stone pattern repeats at s ${run[i].s.toFixed(0)}`);
+}
+assert.deepEqual([...new Set(stoneWalls.map(row => row.id))].sort(),
+  ['stone-retaining-wall', 'stone-retaining-wall-b', 'stone-retaining-wall-c']);
+assert.ok(stoneWalls.every(row => row.scale[0] > .6 && row.scale[0] < 1.5), 'stone pieces are not stretched');
+const blocks = KOGANE_PASS.kitPlacements.filter(row => row.id === 'concrete-wall');
+const ends = blocks.map(row => {
+  const at = course.groundAt(row.s, row.lateral), heading = at.heading + row.heading, half = 2 * row.scale[0];
+  return {s: row.s, a: [at.x + Math.cos(heading) * half, at.z - Math.sin(heading) * half],
+    b: [at.x - Math.cos(heading) * half, at.z + Math.sin(heading) * half]};
+});
+for (let i = 1; i < ends.length; i++) {
+  if (ends[i].s - ends[i - 1].s > 6) continue;
+  const gap = Math.min(...[[ends[i - 1].a, ends[i].a], [ends[i - 1].a, ends[i].b], [ends[i - 1].b, ends[i].a], [ends[i - 1].b, ends[i].b]]
+    .map(([u, v]) => Math.hypot(u[0] - v[0], u[1] - v[1])));
+  assert.ok(gap < .25, `concrete blocks leave a gap of ${gap.toFixed(2)} m at s ${ends[i].s.toFixed(0)}`);
 }
 assert.equal(KOGANE_PASS.markings, 'single-yellow', 'single Japanese centre line');
 for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'concrete-wall')) {
@@ -90,6 +112,7 @@ assert.ok(lamps.every(row => row.s >= 3270 && row.s < course.length && row.colou
 const models = JSON.parse(readFileSync(new URL('./blender/kogane/scenery.json', import.meta.url))).models;
 models.push(...JSON.parse(readFileSync(new URL('./blender/kogane/landmarks.json', import.meta.url))).models);
 const budgets = {'armco-white': [156, 72], 'stone-retaining-wall': [600, 200],
+  'stone-retaining-wall-b': [600, 200], 'stone-retaining-wall-c': [600, 200],
   'curve-mirror': [400, 150], 'chevron-board': [200, 100],
   'tea-house': [4500, 1400], 'vending-row': [1500, 500],
   'torii': [1800, 600], 'torii-small': [1800, 600], 'stone-lantern': [700, 250],
