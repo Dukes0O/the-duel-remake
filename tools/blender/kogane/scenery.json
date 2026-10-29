@@ -1,5 +1,5 @@
 {
-  "round": 1,
+  "round": 2,
   "units": "metres",
   "up": "Y",
   "source": "Original shapes; armco-white reuses current armco geometry.",
@@ -19,8 +19,8 @@
             0.8499999642372131,
             0.34900031983852386
           ],
-          "bytes": 55168,
-          "sha256": "c3ad3b6d7674a9ff5a8c67be07de6cf2fc1a16592ca4e4de2c7cf616ab9e39fd"
+          "bytes": 35316,
+          "sha256": "dd734a1d6d72b8c30b26e4f78342dca068487eaf67fb5d5bf1b0364354846cc6"
         },
         {
           "path": "armco-white-lod.glb",
@@ -31,7 +31,7 @@
             0.34000033140182495
           ],
           "bytes": 28284,
-          "sha256": "0a3ca402686692ca6cf73f225e28eccd518365bf4b0f03b762e2b91eeac63900"
+          "sha256": "8d1a61facec687463aa55917af448899ca397a018f22ca0eeeeb2070a84edb59"
         }
       ]
     },
@@ -44,25 +44,25 @@
       "files": [
         {
           "path": "stone-retaining-wall.glb",
-          "triangles": 528,
+          "triangles": 552,
           "size": [
             4.0,
             2.5399999618530273,
             0.7960000038146973
           ],
-          "bytes": 42884,
-          "sha256": "413e1e9cd761beb3d70d165922942713ccbd8fc8e128ade98c7efd56888567b9"
+          "bytes": 71388,
+          "sha256": "38214bb620029467d362d8da69fbd22e5ae0b4f0b258c55c3597d2a86ad8cf36"
         },
         {
           "path": "stone-retaining-wall-lod.glb",
-          "triangles": 168,
+          "triangles": 180,
           "size": [
             4.0,
             2.5399999618530273,
             0.7960000038146973
           ],
-          "bytes": 16736,
-          "sha256": "2e4946c5d8362bed5b50f301d4aadf1c40923c1a9840a11525dc6e09df75b8b2"
+          "bytes": 44412,
+          "sha256": "cc6d1e8a14cd94ecfc2d9ce8346a427059459dacca3ed6df804a017e06117784"
         }
       ]
     },

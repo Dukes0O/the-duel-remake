@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {applyNightWash} from './night-wash.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import {COMBAT_TUNING} from './wasteland-tuning.js';
@@ -63,7 +64,21 @@ export function addPineTrees(group, trees, course, {kits} = {}) {
   // Far-band firs (60 m and more from every road) are drawn by their own light meshes below; the first band's cells
   // are exactly what they were before the far band existed.
   const farPines=allPines.filter(tree=>tree.farForest), pines=farPines.length?allPines.filter(tree=>!tree.farForest):allPines;
-  const assets = allPines.length?pineTreeAssets():null, object = new THREE.Object3D();
+  const baseAssets = allPines.length?pineTreeAssets():null;
+  let assets = baseAssets;
+  if (assets && course?.def.scenery?.lampWash) {
+    assets = {...assets, bark: assets.bark.clone(), needles: assets.needles.clone()};
+    for (const [material, original] of [[assets.bark, baseAssets.bark], [assets.needles, baseAssets.needles]]) {
+      material.onBeforeCompile = original.onBeforeCompile;
+      material.customProgramCacheKey = original.customProgramCacheKey.bind(original);
+      material.userData.sharedAsset = false;
+      applyNightWash(material, course.def.scenery.lampWash);
+    }
+    // Texture objects remain owned by the live clones. Retire unused sources.
+    baseAssets.bark.dispose();
+    if (!farPines.length) baseAssets.needles.dispose();
+  }
+  const object = new THREE.Object3D();
   const instances = new Map(), active = new Set(), seen = new Set(), changed = new Set();
   const axis = new THREE.Vector3(), fall = new THREE.Quaternion(), yaw = new THREE.Quaternion(),
     rotation = new THREE.Quaternion(), matrix = new THREE.Matrix4();
@@ -88,7 +103,7 @@ export function addPineTrees(group, trees, course, {kits} = {}) {
   if (farPines.length) {
     const crown = farPineCrown();
     for (const { key, entries } of vegetationCells(farPines, FAR_PINE_CELL_SIZE)) {
-      const crowns = new THREE.InstancedMesh(crown, assets.needles, entries.length);
+      const crowns = new THREE.InstancedMesh(crown, baseAssets.needles, entries.length);
       crowns.name = `Far pine crowns ${key}`;
       if (entries.some(({ feature }) => feature.tint)) {
         crowns.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(entries.length * 3).fill(1), 3);

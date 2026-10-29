@@ -1,4 +1,4 @@
-// C4 round 1 pictures on the actual course. Private memory-only harness.
+// C4 round 2 pictures on the actual course. Private memory-only harness.
 // Uses native progression and existing inspection camera. No frame timing.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -14,7 +14,7 @@ const views = [
 ];
 
 export async function run(context) {
-  const report = {course: 'kogane-pass', round: 1, storage: 'memory-only', frameTiming: false, captures: []};
+  const report = {course: 'kogane-pass', round: 2, storage: 'memory-only', frameTiming: false, captures: []};
   try {
     await context.navigate('/tools/menu-check.html?flags=kogane-pass,grand-prix');
     await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
@@ -61,6 +61,12 @@ export async function run(context) {
         if(!a.inspectionCamera)return true;
         const p=a.inspectionCamera.position,c=window.__render.camera.position;
         return Math.hypot(c.x-p[0],c.y-p[1],c.z-p[2])<.001;})()`, 'camera settled', 10000);
+      await context.waitFor(`(()=>{
+        const a=window.__qaApp, r=window.__render;
+        r.renderFrame();
+        const settings=window.__panQa.sampleCourseLightPath(a.duel.course,{distance:a.duel.state.s}).settings;
+        return Math.abs(r.renderer.toneMappingExposure-settings.exposure)<.02;
+      })()`, 'native light exposure settled', 15000);
       const facts = await context.evaluate(`(() => {
         const a=window.__qaApp,s=a.duel.state,before=JSON.stringify(s),profile=JSON.stringify(a.profile);
         window.__render.renderFrame();
@@ -69,10 +75,27 @@ export async function run(context) {
           camera:window.__render.camera.position.toArray(),stateUnchanged:true};
       })()`);
       await context.screenshot('kogane-'+view.name);
+      if (['hairpin-car', 'stone-wall'].includes(view.name)) {
+        // Exposure-only companion. Preserve the actual authored distance light,
+        // camera, geometry, race and profile. Native-light picture stays above.
+        const exposure = await context.evaluate(`(() => {
+          const r=window.__render.renderer, a=window.__qaApp;
+          window.__koganeExposureDescriptor=Object.getOwnPropertyDescriptor(r,'toneMappingExposure');
+          window.__koganeNativeExposure=r.toneMappingExposure;
+          Object.defineProperty(r,'toneMappingExposure',{configurable:true,get:()=>8,set:()=>{}});
+          const before=JSON.stringify(a.duel.state),profile=JSON.stringify(a.profile);
+          window.__render.renderFrame();
+          if(before!==JSON.stringify(a.duel.state)||profile!==JSON.stringify(a.profile))throw Error('Exposure view mutated state');
+          return {nativeExposure:window.__koganeNativeExposure,reviewExposure:r.toneMappingExposure};
+        })()`);
+        await context.screenshot('kogane-'+view.name+'-daylight-exposure');
+        await context.evaluate(`Object.defineProperty(window.__render.renderer,'toneMappingExposure',window.__koganeExposureDescriptor);window.__render.renderFrame();`);
+        report.captures.push({name:view.name+'-daylight-exposure',...progress,...facts,...exposure});
+      }
       report.captures.push({name:view.name,file:'kogane-'+view.name+'.png',...progress,...facts});
     }
     report.passed=true;
-    console.log('Six native Kogane scenery views captured; no frame timing.');
+    console.log('Six native Kogane scenery views and two exposure companions captured; no frame timing.');
   } finally {
     await writeFile(join(context.outputDir,'kogane-views.json'),JSON.stringify(report,null,2)+'\n');
   }

@@ -70,6 +70,12 @@ for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'stone-reta
   const piece = road.pieceAt(row.s);
   assert.ok(piece.kind !== 'turn' || piece.radius >= 30, 'tall walls leave hairpin sightlines clear');
 }
+assert.equal(KOGANE_PASS.markings, 'single-yellow', 'single Japanese centre line');
+for (const row of KOGANE_PASS.kitPlacements.filter(row => row.id === 'concrete-wall')) {
+  const piece = road.pieceAt(row.s);
+  assert.ok(piece.kind === 'turn' && piece.radius < 30 &&
+    Math.sign(row.lateral) === -piece.dir, 'concrete only outside tight hairpins');
+}
 const lamps = planWaterside(course).lamps;
 assert.ok(lamps.length > 30);
 assert.ok(lamps.every(row => row.s >= 3270 && row.s < course.length && row.colour === 0xffa23c));

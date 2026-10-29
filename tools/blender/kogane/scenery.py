@@ -1,6 +1,7 @@
-"""Kogane C4 round 1. Metric original props and reused armco finish.
+"""Kogane C4 round 2. Metric original props and reused armco finish.
 
 blender -b --disable-autoexec --python-exit-code 1 --python tools/blender/kogane/scenery.py -- --root .
+For round 2 append --only armco-white stone-retaining-wall.
 Writes runtime GLBs and measured settings only, never a blend file.
 Blender axes: X across, -Y front, Z up. glTF converts to Y up.
 """
@@ -65,16 +66,34 @@ def wall(low):
     mortar = mat('dark volcanic mortar', (.13, .15, .13))
     stone = [mat('mossy stone '+str(i), c) for i, c in enumerate([
         (.26, .29, .23), (.32, .33, .29), (.23, .27, .20), (.35, .35, .30)])]
-    moss = mat('moss at damp joints', (.16, .23, .08))
+    moss = mat('moss at damp joints', (.24, .36, .07))
+    # Small baked colour tile: mineral flecks and irregular damp moss patches.
+    # Kept inside the GLB, no runtime procedural shader or external texture.
+    image = bpy.data.images.new('volcanic stone and moss', width=128, height=128)
+    pixels = []
+    for y in range(128):
+        for x in range(128):
+            noise = ((x * 73 + y * 179 + x * y * 13) % 127) / 127
+            damp = math.sin(x * .12 + math.sin(y * .11)) + math.cos(y * .15)
+            colour = (.22, .36, .07) if damp > .85 else (.52, .55, .46)
+            pixels.extend([c * (.68 + noise * .5) for c in colour] + [1])
+    image.pixels = pixels
+    image.pack()
+    for material in stone:
+        nodes = material.node_tree.nodes
+        texture = nodes.new('ShaderNodeTexImage')
+        texture.image = image
+        material.node_tree.links.new(texture.outputs['Color'],
+                                    nodes.get('Principled BSDF').inputs['Base Color'])
     box('retaining core', (0, 0, 1.22), (4, .72, 2.44), mortar)
     rows, cols = (3, 4) if low else (5, 7)
     for r in range(rows):
-        for c in range(cols):
-            w, h = 4 / cols, 2.4 / rows
+        for c in range(cols + r % 2):
+            w, h = 4 / (cols + r % 2), 2.4 / rows
             # Staggered diagonal-looking joints, subtle varied face depth.
             x = -2 + (c + .5) * w
             o = box('weathered stone', (x, -.32 - .018*((r+c)%3), (r+.5)*h),
-                    (w-.035, .10, h-.035), stone[(r*3+c)%4])
+                    (w-.045, .10, h-.045), stone[(r*3+c)%4])
             o.rotation_euler.y = .025 * ((r+c)%3-1)
     box('worn coping', (0, 0, 2.49), (4, .78, .10), stone[1])
     if not low:
@@ -173,25 +192,44 @@ def vending(low):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--root', type=Path, required=True)
+    p.add_argument('--only', nargs='+', choices=list(BUDGETS))
     args = p.parse_args(sys.argv[sys.argv.index('--')+1:])
     root = args.root.resolve()
     runtime = root/'public/assets/models/circuits/kits'
     records = []
+    measured_path = root/'tools/blender/kogane/scenery.json'
+    existing = {model['id']: model for model in json.loads(measured_path.read_text(encoding='utf-8'))['models']} if measured_path.exists() else {}
     for id, caps in BUDGETS.items():
+        if args.only and id not in args.only:
+            records.append(existing[id])
+            continue
         record = {'id': id, 'budget': caps, 'files': []}
         for low in [False, True]:
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
             if id == 'armco-white':
                 bpy.ops.import_scene.gltf(filepath=str(runtime/('armco'+('-lod' if low else '')+'.glb')))
+                orange = mat('orange delineator reflectors', (1, .22, .015), .35, .1, .32)
                 for o in bpy.context.scene.objects:
                     if o.type == 'MESH':
                         for slot in o.material_slots:
-                            m = slot.material.copy()
-                            m.name = 'white weathered armco'
-                            m.diffuse_color = (.83,.84,.78,1)
-                            m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = m.diffuse_color
-                            slot.material = m
+                            if 'fixing' in slot.material.name or 'rust' in slot.material.name:
+                                slot.material = orange
+                            else:
+                                m = slot.material.copy()
+                                m.name = 'white weathered armco'
+                                m.diffuse_color = (.91,.92,.86,1)
+                                m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = m.diffuse_color
+                                m.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .15
+                                slot.material = m
+                        if 'fixing' in o.name:
+                            # Enlarge the donor's fixing faces into orange reflectors.
+                            # Same topology and rail footprint; depth is unchanged.
+                            centre = sum((v.co for v in o.data.vertices), Vector()) / len(o.data.vertices)
+                            for vertex in o.data.vertices:
+                                vertex.co.x = centre.x + (vertex.co.x - centre.x) * 2.4
+                                vertex.co.z = centre.z + (vertex.co.z - centre.z) * 2.4
+
             else:
                 {'stone-retaining-wall':wall,'curve-mirror':mirror,'chevron-board':chevron,
                  'tea-house':tea,'vending-row':vending}[id](low)
@@ -217,7 +255,7 @@ def main():
                 'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
         records.append(record)
     (root/'tools/blender/kogane/scenery.json').write_text(json.dumps({
-        'round':1,'units':'metres','up':'Y','source':'Original shapes; armco-white reuses current armco geometry.',
+        'round':2,'units':'metres','up':'Y','source':'Original shapes; armco-white reuses current armco geometry.',
         'models':records},indent=2)+'\n',encoding='utf-8',newline='\n')
     print(json.dumps(records))
 
