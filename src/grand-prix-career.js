@@ -4,7 +4,7 @@ import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
 export const GRAND_PRIX_COURSES = Object.freeze(['pacific-canyon', 'high-country',
   'harbor-highlands', 'eifel-crown', 'alpine-serpent', 'azure-riviera', 'red-mesa',
   'neon-docks', 'cloudbreak-skyway',
-  ...CIRCUIT_MANIFESTS.filter(manifest => manifest.grandPrix).map(manifest => manifest.id)]);
+  ...CIRCUIT_MANIFESTS.filter(manifest => manifest.grandPrix && manifest.slot === undefined).map(manifest => manifest.id)]);
 export const grandPrixCourse = def => !!def && GRAND_PRIX_COURSES.includes(def.id);
 
 // Approved GP position pay; the existing career owns banking and duplicate keys.

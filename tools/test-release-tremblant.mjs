@@ -144,9 +144,13 @@ for (const file of files) {
   if (rawGhosts) equal(loadGhosts(storage).records.map(row => row.key), rawGhosts.records.map(row => row.key), `${fixture.shape}: ghost keys unchanged`);
 }
 
-// 5. All circuits remain race-only; only the accepted solo Summit child has no rival.
+// 5. Eifel retains combat and traffic; appended circuits remain race-only.
+// Only the accepted solo Summit child has no rival.
 for (const definition of ALL_CIRCUITS) {
-  ok(!supportsCombat(definition) && definition.noCombat === true, 'registered circuits are race-only');
+  if (definition.id === 'eifel-crown') {
+    equal([supportsCombat(definition), definition.noCombat, definition.noTraffic],
+      [true, undefined, undefined], 'slotted Eifel retains the approved combat and traffic');
+  } else ok(!supportsCombat(definition) && definition.noCombat === true, 'appended circuits are race-only');
   if (definition.id === 'summit-time-attack') {
     const manifest = CIRCUIT_MANIFESTS.find(row => row.id === definition.id);
     equal([definition.flag, definition.defaultMode, definition.laps, definition.grandPrixLaps, definition.fieldSize, definition.hasRival, definition.noTraffic],

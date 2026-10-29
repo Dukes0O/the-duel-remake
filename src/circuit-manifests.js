@@ -5,7 +5,7 @@ const NAME = /^[a-z][a-z0-9-]*$/;
 export const BASE_COURSE_COUNT = 16;
 
 export function registerCircuits(modules) {
-  const ids = new Set(), order = new Set();
+  const ids = new Set(), order = new Set(), slots = new Set();
   const entries = modules.filter(module => module.manifest !== undefined ||
     Object.values(module).some(value => value?.kind === 'circuit')).map(module => {
     const m = module.manifest;
@@ -17,6 +17,11 @@ export function registerCircuits(modules) {
       m.driver.controller !== 'racing-line' || !Number.isFinite(m.driver.skill) || m.driver.skill < 0 || m.driver.skill > 1)
       throw Error('Invalid circuit manifest.');
     if (ids.has(m.id) || order.has(m.releaseOrder)) throw Error('Duplicate circuit manifest id or releaseOrder.');
+    if (m.slot !== undefined) {
+      if (!Number.isSafeInteger(m.slot) || m.slot < 0 || m.slot >= BASE_COURSE_COUNT || slots.has(m.slot))
+        throw Error('Invalid or duplicate circuit slot.');
+      slots.add(m.slot);
+    }
     ids.add(m.id); order.add(m.releaseOrder);
     const definition = Object.values(module).find(value => value !== m && value?.id === m.id && value.kind === 'circuit');
     const generationStage = definition?.stage;

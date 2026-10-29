@@ -2,7 +2,7 @@
 // plausible arcade values invented to fill gaps, frozen here.
 import { EXPANSION_COURSES } from './expansion-courses.js';
 import { FREESTYLE_COURSE } from './freestyle-course.js';
-import { CIRCUITS } from './circuits/index.js';
+import { applyCircuits } from './circuits/index.js';
 import { featureFlags } from './feature-flags.js';
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
@@ -185,7 +185,7 @@ export const THEMES = {
 };
 
 // Three two-lap campaign circuits, followed by garage-gated standalone events.
-export const COURSE = [
+export const COURSE = applyCircuits([
   {id:'pacific-canyon',layout:'canyon',layoutVersion:4,theme:'desert',stage:0,name:'Pacific Canyon Circuit',lengthU:4000,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Mojave Canyon',share:.52},{theme:'coast',name:'Pacific Coast',share:.48}]},
   {id:'high-country',layout:'highland',layoutVersion:4,theme:'alpine',stage:1,name:'High Country Grand Tour',lengthU:4800,closed:true,laps:2,hasRadar:false,hasRival:true,speedLimitMph:65,sections:[{theme:'desert',name:'Canyon Ascent',share:.26},{theme:'alpine',name:'Alpine Summit',share:.48},{theme:'coast',name:'Coastal Descent',share:.26}]},
   {id:'harbor-highlands',layout:'harbor',layoutVersion:4,timeOfDay:'night',theme:'city',stage:2,name:'Harbor & Highlands',lengthU:4400,closed:true,laps:2,hasRadar:true,hasRival:true,speedLimitMph:60,sections:[{theme:'city',name:'Harbor District',share:.34},{theme:'alpine',name:'Moonlight Pass',share:.36},{theme:'coast',name:'Coast Road',share:.30}]},
@@ -197,10 +197,8 @@ export const COURSE = [
   {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
-  // Authored circuits (src/circuits/) are appended, never inserted, so saved
-  // careers, records and ghosts of earlier events keep their ids.
-  ...CIRCUITS,
-];
+  // The registry appends new events and replaces explicitly slotted ids.
+]);
 
 // CANON — police: fixed radar traps, escalating detector beep, one pursuer.
 // HOUSE — beep range, pursuit catch model, ticket terms.
