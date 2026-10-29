@@ -12,7 +12,7 @@ import math
 import sys
 from pathlib import Path
 
-VIEW_NAMES = ('front', 'rear', 'side', 'three-quarter', 'top')
+VIEW_NAMES = ('front', 'rear', 'side', 'three-quarter', 'top', 'front-close', 'rear-close')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
@@ -20,6 +20,7 @@ parser.add_argument('--glb', required=True)
 parser.add_argument('--out', required=True)
 parser.add_argument('--size', default='1260x800')
 parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--views', default=','.join(VIEW_NAMES[:5]), help='comma separated view names')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
 out = Path(args.out).resolve()
@@ -81,7 +82,7 @@ camera.data.lens = 62
 # Views: (name, direction from the car's centre, distance factor, look height).
 # Blender -Y is the car's front.
 # Each view takes the picture shape of its reference so the car fills the frame alike.
-ASPECT = {'front': 1.5, 'rear': 1.333, 'side': 2.0, 'three-quarter': 1.5, 'top': 1.6}
+ASPECT = {'front': 1.5, 'rear': 1.333, 'side': 2.0, 'three-quarter': 1.5, 'top': 1.6, 'front-close': 1.5, 'rear-close': 1.5}
 ORTHO = {'front': 2.45, 'rear': 2.4, 'side': 4.95, 'top': 5.1}
 views = (
     ('front', Vector((0, -1, .055)), 1.70, .66),
@@ -89,16 +90,23 @@ views = (
     ('side', Vector((1, 0, .025)), 1.95, .66),
     ('three-quarter', Vector((.72, -1, .23)), 1.85, .62),
     ('top', Vector((0, -.001, 1)), 1.95, .65),
+    ('front-close', Vector((.55, -1, .12)), .62, .48),
+    ('rear-close', Vector((-.5, 1, .14)), .62, .66),
 )
+# Close-ups look at the nose or the tail instead of the middle of the car (fraction of length).
+SHIFT = {'front-close': -.36, 'rear-close': .36}
+chosen = args.views.split(',')
 for name, direction, factor, look in views:
+    if name not in chosen:
+        continue
     scene.render.resolution_x, scene.render.resolution_y = width, round(width / ASPECT[name])
-    camera.data.type = 'PERSP' if name == 'three-quarter' else 'ORTHO'
+    camera.data.type = 'PERSP' if name == 'three-quarter' or name.endswith('-close') else 'ORTHO'
     camera.data.ortho_scale = ORTHO.get(name, 5.1)
-    target = Vector((centre.x, centre.y, lo.z + look))
+    target = Vector((centre.x, centre.y + SHIFT.get(name, 0) * length, lo.z + look))
     camera.location = target + direction.normalized() * length * factor
     camera.rotation_euler = (target - camera.location).to_track_quat('-Z', 'Y').to_euler()
     if name == 'top':
         camera.rotation_euler.rotate_axis('Z', math.pi / 2)
     scene.render.filepath = str(out / f'{name}.png')
     bpy.ops.render.render(write_still=True)
-print('rendered', len(views), 'views to', out)
+print('rendered', len(chosen), 'views to', out)

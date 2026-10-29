@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
-import { createSkylineVehicle as createUnloadedSkylineVehicle, loadSkylineVehicle, SKYLINE_MODEL_URL, SKYLINE_VEHICLE_DIMENSIONS } from '../src/skyline-vehicle.js';
+import { createSkylineVehicle as createUnloadedSkylineVehicle, loadSkylineVehicle, SKYLINE_MODEL_URL, SKYLINE_VEHICLE_DIMENSIONS, SKYLINE_PAINTS } from '../src/skyline-vehicle.js';
+import { applyVehiclePaint } from '../src/vehicle-paint.js';
 import { updateVehicleDamage, updateNpcVehicleDamage } from '../src/vehicles.js';
 import { updateDriver } from '../src/driver.js';
 import { prepareVehicleGrounding, placeGroundedVehicle, applyVehicleTerrainPose, TIRE_CLEARANCE } from '../src/vehicle-grounding.js';
@@ -56,8 +57,9 @@ for (const side of [-1,1]) {
   ray.set(new THREE.Vector3(side*.46,.655,4),new THREE.Vector3(0,0,-1));
   const lamps = data.damageMeshes.filter(({mesh}) => mesh.material.name === 'Headlamp lenses').map(({mesh})=>mesh);
   ok(lamps.includes(ray.intersectObjects([...paint,...lamps])[0]?.object), 'Front lens is exposed');
-  for(const x of [.405,.58]) {
-    ray.set(new THREE.Vector3(side*x,.84,-4),new THREE.Vector3(0,0,1));
+  // The inner lamps now carry an amber turn-signal centre, so the inner probe aims at the red ring above it.
+  for(const [x,y] of [[.42,.884],[.58,.84]]) {
+    ray.set(new THREE.Vector3(side*x,y,-4),new THREE.Vector3(0,0,1));
     ok(data.brakeLights.includes(ray.intersectObjects([...paint,...data.brakeLights])[0]?.object), 'Round tail lamp is exposed');
   }
 }
@@ -72,13 +74,36 @@ updateDriver(data.driver, 0);
 const grounding = prepareVehicleGrounding(vehicle);
 near(grounding.contactY, 0, .001, 'All tires touch local y=0');
 equal(grounding.wheels.length, 4, 'All four wheels support grounding');
-for (const wheel of grounding.wheels) near(wheel.radius, .37, .001, 'Actual tire radius');
+for (const wheel of grounding.wheels) near(wheel.radius, .34, .001, 'Actual tire radius (the photo wheel)');
 placeGroundedVehicle(vehicle, { x: 2, y: 5, z: 7, heading: 1.2 }, 0, 1);
 near(vehicle.position.y + grounding.contactY, 5 + TIRE_CLEARANCE, .0001, 'World grounding adds only tire clearance');
-for (const wheel of data.wheels) near(wheel.rotation.x, 1 / .37, .001, 'Wheel travel uses actual radius');
+for (const wheel of data.wheels) near(wheel.rotation.x, 1 / .34, .001, 'Wheel travel uses actual radius');
 vehicle.position.set(0, 0, 0); vehicle.rotation.set(0, 0, 0);
 for (const wheel of data.wheels) wheel.rotation.set(0, 0, 0);
 vehicle.updateMatrixWorld(true);
+
+// V3 detail: the packet's four finishes, the flake hook, the four tail lamps and the clear lamp covers.
+equal(Object.keys(SKYLINE_PAINTS), ['factory', 'skyline_white', 'skyline_silver', 'skyline_black'], 'Four finishes of the packet');
+equal([SKYLINE_PAINTS.factory.color, SKYLINE_PAINTS.skyline_white.color, SKYLINE_PAINTS.skyline_silver.color, SKYLINE_PAINTS.skyline_black.color], [0x1b3d8c, 0xe8e8e2, 0xb4bac0, 0x16181b], 'Finish colours');
+equal([SKYLINE_PAINTS.factory.metalness, SKYLINE_PAINTS.skyline_white.metalness, SKYLINE_PAINTS.skyline_silver.metalness, SKYLINE_PAINTS.skyline_black.metalness], [.46, .35, .55, .30], 'Finish metalness');
+ok(typeof data.paint.onBeforeCompile === 'function' && data.paint.customProgramCacheKey().includes('flake'), 'Paint carries the metallic flake hook');
+const shaderProbe = { vertexShader: '#include <begin_vertex>', fragmentShader: '#include <color_fragment>' };
+data.paint.onBeforeCompile(shaderProbe);
+ok(shaderProbe.fragmentShader.includes('#include <color_fragment>') && shaderProbe.fragmentShader.includes('flakeGlint'), 'Flake hook keeps the include the wear shader chains onto');
+ok(data.paint.userData.panelWearShader === true, 'Wear shader chained after the flake hook');
+for (const finish of Object.values(SKYLINE_PAINTS)) {
+  const probe = createSkylineVehicle();
+  applyVehiclePaint(probe, finish.id === 'factory' ? null : finish);
+  equal(probe.userData.paint.color.getHex(), finish.color, `${finish.name} applies`);
+  near(probe.userData.paint.metalness, finish.metalness, 1e-9, `${finish.name} metalness`);
+  disposeTree(probe);
+}
+const lampNames = new Set(); data.damageMeshes.forEach(({ mesh }) => lampNames.add(mesh.material.name));
+ok(lampNames.has('Headlamp cover') && lampNames.has('Indicator lamps'), 'Clear lamp covers and indicator lamps exist');
+const redLamps = data.brakeLights.reduce((sum, mesh) => sum + mesh.geometry.attributes.position.count, 0);
+ok(redLamps > 1500, `Four tail lamps, the high brake light and two small lamps are built (${redLamps} vertices)`);
+const tailBox = new THREE.Box3().setFromObject(data.brakeLights[0]);
+ok(tailBox.min.y < .84 && tailBox.max.y > 1.0, 'Brake light mesh spans the tail lamps up to the high brake light');
 
 const clean = { front: 0, rear: 0, left: 0, right: 0 };
 const sibling = createSkylineVehicle({ color: 0x3155aa, accent: 0xc1a427 });
