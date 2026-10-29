@@ -1437,3 +1437,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged LINE-REFS (Codex; docs only; lane 13/13, build pass; Claude accepted the three reference sheets).
 - 28 Oct night: merged KOGANE-PASS-C2 (Codex; lane 49/49, build, course test, test-circuits, drive-through and scenario pass on 662f9ea9).
 - 28 Oct night: merged VARIANTS-RELEASE (lane tier 81/81, test-circuits, build, five track reviews pass on e8edb32e; frame checks pending).
+- 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V4 (Codex; lane 238/238, preview 23/23, build pass on e5ba98d0).
