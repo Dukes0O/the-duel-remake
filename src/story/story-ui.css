@@ -1,0 +1,34 @@
+/* The Kogane Invitation (docs/story/kogane-invitation.md section 3): the Story card, the menu button's red dot,
+   the garage panel and plaque, Daichi's line on the results screen and the Deep log's lead line.
+   The card uses the menu's own look (modal-layer and career-panel) with a small red seal. */
+.story-card{width:min(760px,calc(100% - 60px));color:#eee9dd}
+.story-card .shop-heading{justify-content:space-between}
+.story-letter{position:relative;margin:18px 0 14px;padding:18px 22px 18px 26px;background:linear-gradient(145deg,#efe6cc,#d9ccaa);color:#2b2418;border:1px solid #8a7a52;box-shadow:0 10px 26px #0006}
+.story-letter p{margin:0;font-size:12px;line-height:1.65;font-family:Georgia,'Times New Roman',serif}
+.story-seal{position:absolute;top:-9px;right:18px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e0443a,#8e1a14);box-shadow:0 2px 5px #0006}
+.story-fire{margin:0 0 12px;padding:10px 14px;font-size:11px;line-height:1.5;color:#ffd9b8;background:#4a1d12cc;border-left:4px solid #ff7a3b}
+.story-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.story-step{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid #ddd5bd2d;background:linear-gradient(145deg,#dee8da10,#0a171931)}
+.story-step.is-open{border-color:#d0a55c;background:linear-gradient(145deg,#d0a55c1c,#0a171944)}
+.story-step.is-locked{opacity:.72}
+.story-tick{flex:0 0 22px;width:22px;height:22px;border:1px solid #85938280;border-radius:50%;position:relative}
+.story-step.is-done .story-tick{border-color:#74d6b8;background:#74d6b822}
+.story-step.is-done .story-tick::after{content:'';position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #74d6b8;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.story-step.is-open .story-tick{border-color:#d0a55c;background:#d0a55c33}
+.story-step-words{flex:1;min-width:0}
+.story-step-words b{font-size:13px;font-weight:700;color:#f3eddf}
+.story-state{margin-left:10px;font-size:8px;letter-spacing:1.2px;color:#a5b5a4}
+.story-step.is-open .story-state{color:#e4bd82}
+.story-step-words p{margin:5px 0 0;font-size:10px;line-height:1.55;color:#c9d2c8}
+.story-step-button{flex:0 0 auto;min-width:150px}
+.story-step-button[disabled]{opacity:.5;cursor:not-allowed}
+.story-lead,.deep-log-lead{margin:12px 0 0;font-size:10px;letter-spacing:.6px;line-height:1.5;color:#8f9a92}
+.story-prize{margin:14px 0 0;font-size:10px;letter-spacing:.5px;line-height:1.5;color:#e4bd82}
+.story-garage p{font-size:10px;line-height:1.6;color:#c9d2c8}
+.story-garage-open{margin:8px 0 0}
+.story-plaque-text{display:inline-block;margin:0;padding:10px 16px;font-size:10px;letter-spacing:1px;line-height:1.6;color:#2b2418;background:linear-gradient(145deg,#d8c28a,#a98f52);border:1px solid #6b5628;box-shadow:inset 0 0 0 2px #e9d9a8aa}
+.story-dot{display:inline-block;width:9px;height:9px;margin:0 4px 1px 6px;border-radius:50%;background:#e0443a;box-shadow:0 0 0 2px #e0443a44;vertical-align:middle}
+.story-dot[hidden]{display:none}
+.story-line b{color:#e4bd82}
+.story-car-card b{letter-spacing:1px}
+@media(max-height:800px){.story-letter{padding:12px 18px}.story-letter p{font-size:11px;line-height:1.5}.story-step{padding:9px 12px}}

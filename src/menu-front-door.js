@@ -6,13 +6,14 @@ import {COURSE_PRICES, isCourseUnlocked, courseUnlockRequirement} from './course
 import {lessonRows} from './lab/lab-lessons.js';
 import {TERRITORIES} from './wasteland-career.js';
 import {DRIVE_LESSON_ORDER, driveLessonAccess, normalizeDrivingLessons} from './lessons/drive-lesson-save.js';
+import {storyNextUp} from './story/story-ui.js';
 
 const LESSON_NAMES = Object.freeze({corner: 'driving lesson 1, cornering', line: 'driving lesson 2, the racing line',
   gears: 'driving lesson 3, changing gear', snow: 'driving lesson 4, driving on snow'});
 const MODE_NAMES = Object.freeze({duel: 'Rival duel', wasteland: 'Mad Max duel', timetrial: 'Time trial', grandprix: 'Grand Prix'});
 
 // What the save says, in plain facts. flags is anything with enabled(name).
-export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = false, labOn = false, lessonsOn = false, heliJob = null, seaCreature = null} = {}) {
+export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = false, labOn = false, lessonsOn = false, heliJob = null, seaCreature = null, story = null} = {}) {
   const credits = Math.floor(profile?.credits || 0);
   const labLesson = labOn ? lessonRows(profile, flags).find(row => row.open && !row.done) ?? null : null;
   const course = COURSE.find(item => !item.practice && COURSE_PRICES[item.id] > 0 && !courseUnlockRequirement(item)
@@ -30,6 +31,8 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
     hold: holdId ? {id: holdId, name: TERRITORIES[holdId].name} : null,
     heliJob: heliOn && heliJob ? {name: heliJob.name} : null,
     driveLesson: lessonId ? {id: lessonId, name: LESSON_NAMES[lessonId]} : null,
+    // STORY-KOGANE-SCREENS: the game's plain story object (app.storyProps()); null with the switch off or no story.
+    story: story?.available === true && typeof story.step === 'string' && story.step !== 'done' ? {step: story.step, read: story.read === true} : null,
     creature: seaCreature ? {id: seaCreature.id, name: seaCreature.name} : null, // the game says it; src/deep stays behind its own guard
   };
 }
@@ -37,6 +40,7 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
 // The first match in the ordered list wins. Each answer says where a click goes.
 export function chooseNextUp(facts = {}) {
   if (facts.labLesson) return {kind: 'lab', action: 'lab-open', text: `A Lab lesson is open: ${facts.labLesson.name}. Go and try it.`};
+  if (facts.story && storyNextUp(facts.story)) return storyNextUp(facts.story);
   if (facts.course) return {kind: 'course', action: 'courses', text: `You can afford a new course: ${facts.course.name}. See it in Courses.`};
   if (facts.hold) return {kind: 'hold', action: 'wasteland-visit', text: `${facts.hold.name}'s hold is nearly yours. Go back to the Wasteland and finish it.`};
   if (facts.heliJob) return {kind: 'heli', action: 'heli-visit', text: `A helicopter job is waiting: ${facts.heliJob.name}.`};
@@ -74,7 +78,7 @@ export function doorTile(door) {
 
 export function nextUpMarkup(next) {
   const hook = next.attr ?? `data-action="${next.action}"`;
-  return `<button type="button" id="fd-next" class="front-door-next" ${hook}><span class="field-label">NEXT UP</span><b>${esc(next.text)}</b></button>`;
+  return `<button type="button" id="fd-next" class="front-door-next" ${hook}><span class="field-label">NEXT UP${next.dot ? '<i class="story-dot" aria-label="New message"></i>' : ''}</span><b>${esc(next.text)}</b></button>`;
 }
 
 // The first screen, in three parts. The race controls move into the options drawer; START ENGINE moves into fd-start-slot.

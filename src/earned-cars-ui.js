@@ -2,6 +2,7 @@
 // medal sheet panel, the locked page and the results lines. Markup only; no
 // race state and no save writes.
 import { CARS } from './config.js';
+import { KOGANE_SKYLINE } from './story/story-save.js';
 import { MEDAL_CARS, MEDAL_ROWS, MEDAL_LEVELS, MEDAL_COLOURS, medalRequirement,
   medalCarProgress, medalTotals } from './medals.js';
 
@@ -12,9 +13,12 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
 // With the switch off the medal cars appear nowhere; every list is today's.
 // The Falcone Sirena (SIRENA-CAR) is on no list yet: it exists only once the Lab restores it, and its garage sheet and
 // place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
-export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && (enabled === true || !medalRequirement(id));
-export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
-export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
+// STORY-KOGANE-SCREENS: with the Kogane Invitation on (story), the Nissan Skyline is a prize, not a shop car. It is on
+// no list until the player owns it; the garage and the menu then add it, as they add the Sirena. story is false by
+// default, so every list is today's with the switch off.
+export const isShownCar = (id, enabled, story = false) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && !(story === true && id === KOGANE_SKYLINE) && (enabled === true || !medalRequirement(id));
+export const shownCarIds = (enabled, story = false) => Object.keys(CARS).filter(id => isShownCar(id, enabled, story));
+export const shownCars = (enabled, story = false) => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled, story));
 
 // "MEDALS 4/6", and for a car that needs gold "MEDALS 20/24 · GOLD 4/6".
 export function medalProgressLabel(profile, id) {
