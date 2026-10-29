@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **FULL CHECK STARTING 29 October 00:35 (Claude).** Nightly full check on 62589fdc - full tier, frame check, combat balance, browser scenarios. Start no heavy job until FULL CHECK DONE.
 - **RUN 28 October 20:30 to 29 October 22:00 (Claude, Director).** Overnight and day run, Claude alone (Codex out of quota until about 4 November). Plan: top of docs/board/next-run.md. Quiet laptop for frame checks about 01:00 to 03:00.
 - **RELEASED 28 October night (Claude, Release Manager).** The Deep: clear shallows, no jumps at the sea floor edge, map turns with the car. Lab tunnel pictures clear the dial. Reload any open game tab.
 - **RELEASED 28 October evening (Claude, Release Manager).** Race where you land the helicopter; helicopter jobs pay about race rates and say so. Reload any open game tab.
