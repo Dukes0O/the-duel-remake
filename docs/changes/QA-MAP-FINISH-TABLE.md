@@ -36,3 +36,7 @@ once is held by `test-map-secrets` (second claim returns "already").
 ## Removed
 
 Nothing. The lane's `.qa-dist` and `.evidence` scratch output was deleted.
+
+## Claude's review (28 October 2026, night)
+
+Approved (rule 18 written review): the scenario's exact Table pay changes 500 to 1,750 to follow HELI-PAY-CONTINUE; still exact, still requires the find record and the logbook; paying once stays covered by test-map-secrets. Nothing loosened.
