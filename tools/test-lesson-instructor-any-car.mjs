@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import './qa-kogane-switch.mjs';
 import {CARS} from '../src/config.js';
 import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS,
   DRIVE_SNOW_ROWS, instructorConeDistances, TIP_DISTANCE_M, INSTRUCTOR_PACE, MAX_INSTRUCTOR_TRIES} from '../src/lessons/drive-lessons.js';

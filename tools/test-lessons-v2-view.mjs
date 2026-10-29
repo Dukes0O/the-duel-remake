@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {driveLessonTarget,driveLessonMapMarkup,driveLessonBriefingMarkup,driveLessonPanelMarkup,driveLessonResultMarkup,driveLessonDisplayAdvice} from '../src/lessons/drive-lesson-ui.js';
+import {COURSE} from '../src/config.js';
+import {DRIVE_LESSON_CORNERS} from '../src/lessons/drive-lessons.js';
+import {driveLessonBoardModel,driveLessonCompletion,driveLessonTarget,driveLessonMapMarkup,driveLessonBriefingMarkup,driveLessonPanelMarkup,driveLessonResultMarkup,driveLessonDisplayAdvice} from '../src/lessons/drive-lesson-ui.js';
 const corner={name:'Test bend',kind:'brake',approachS:0,brakeS:100,turnInS:120,turnOutS:160,exitS:180,targetMph:56};
 test('target counts down and colours only the corner speed at the specified thresholds',()=>{
   const lesson={instructor:{corners:[corner]}};
@@ -67,4 +69,16 @@ test('Watch replays the late clip then the clean inputs; views and briefing leav
       app.nextLessonAttempt();assert.equal(app.nextLessonAttempt(),false,'Enter during Watch me does nothing, there is no Skip');assert.equal(app.duel.drivingLesson.lesson.stage,'watch');
     });
   }finally{for(const [k,v]of previous){if(v)Object.defineProperty(globalThis,k,v);else delete globalThis[k];}}
+});
+test('the Kogane hairpin row shows on the board only while the course itself exists, and its completion names the course',()=>{
+  assert.ok(DRIVE_LESSON_CORNERS.some(row=>row.courseId==='kogane-pass'),'the row is defined');
+  assert.equal(COURSE.some(course=>course.id==='kogane-pass'),false,'this run has the Kogane switch off');
+  const off=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:COURSE.map(c=>c.id),ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
+  assert.equal(off.courses.some(course=>course.id==='kogane-pass'),false,'switch off: no Kogane row for players');
+  const on=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:[...COURSE,{id:'kogane-pass',name:'Kogane Pass'}],cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:['kogane-pass'],ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
+  assert.equal(on.courses.some(course=>course.id==='kogane-pass'),true,'course present: the row is listed');
+  const state={playerId:'kyle',car:'falcone_f42',driverId:'club',difficulty:'casual'};
+  const lesson={id:'corner',stage:'beat',phase:'result',done:true,bestMargin:1.5,lastAttempt:{passed:true,finished:true}};
+  const run={ownerId:'kyle',state,plan:{car:'falcone_f42',driverId:'club',difficulty:'casual',courseId:'kogane-pass'},lesson};
+  assert.equal(driveLessonCompletion(run,state,'kyle').courseId,'kogane-pass');
 });

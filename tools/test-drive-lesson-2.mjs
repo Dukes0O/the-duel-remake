@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import './qa-kogane-switch.mjs';
 import {buildInstructorRun, buildLessonDemonstration, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS,
   DRIVE_GEAR_ROWS, DRIVE_SNOW_ROWS, createDriveLesson, stepDriveLesson} from '../src/lessons/drive-lessons.js';
 for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS, line: DRIVE_LINE_ROWS, gears: DRIVE_GEAR_ROWS, snow: DRIVE_SNOW_ROWS}))

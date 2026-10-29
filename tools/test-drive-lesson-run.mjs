@@ -99,8 +99,8 @@ test('native App: Watch replay, any run from the menu, one winning run, once-onl
 test('completion requires the current owner, state, car, driver, difficulty and finished Beat me win', () => {
   const state = {playerId: 'kyle', car: 'falcone', driverId: 'club', difficulty: 'pro'};
   const lesson = {id: 'snow', stage: 'beat', phase: 'result', done: true, bestMargin: 1.2, lastAttempt: {passed: true, finished: true}};
-  const run = {ownerId: 'kyle', state, plan: {car: 'falcone', driverId: 'club', difficulty: 'pro'}, lesson};
-  assert.deepEqual(driveLessonCompletion(run, state, 'kyle'), {id: 'snow', carId: 'falcone', marginSeconds: 1.2});
+  const run = {ownerId: 'kyle', state, plan: {car: 'falcone', driverId: 'club', difficulty: 'pro', courseId: 'tremblant-snow'}, lesson};
+  assert.deepEqual(driveLessonCompletion(run, state, 'kyle'), {id: 'snow', courseId: 'tremblant-snow', carId: 'falcone', marginSeconds: 1.2});
   for (const changed of [{ownerId: 'other'}, {state: {...state}}, {plan: {...run.plan, car: 'other'}},
     {plan: {...run.plan, driverId: 'other'}}, {plan: {...run.plan, difficulty: 'casual'}},
     ...[{stage: 'your-turn'}, {done: false}, {bestMargin: 0}, {lastAttempt: {passed: false, finished: true}},

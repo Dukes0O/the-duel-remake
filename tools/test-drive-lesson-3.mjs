@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import './qa-kogane-switch.mjs';
 import {buildInstructorRun, buildLessonDemonstration, createDriveLesson, stepDriveLesson,
   DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_ROWS, DRIVE_SNOW_ROWS, gearFor} from '../src/lessons/drive-lessons.js';
 test('gear selection keeps the requested revs below the downshift cap', () => {

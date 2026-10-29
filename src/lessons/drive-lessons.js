@@ -10,11 +10,17 @@ const BEAVER = ['Ridge Corner', 'Beaver Kink', 'Beaver Hairpin'];
 export const LESSON_TURN_NAMES = Object.freeze({
   'summit-run': Object.freeze({'Picnic Bend': 4462, 'Engineer Bend': 5380, 'Glacier Exit': 8754,
     'Whiteout Bend': 9439, 'Gallery Bend 1': 10570, 'Gallery Bend 2': 11170}),
+  // The two bends the Kogane Pass script leaves unnamed: R43 after Cedar Hairpin, L44 after Maple Hairpin.
+  'kogane-pass': Object.freeze({'Cedar Bend': 1206, 'Maple Bend': 1782}),
 });
 export const DRIVE_LESSON_CORNERS = Object.freeze([
   sectionRow('panorama-ridge', PANORAMA, 'Griffin Bend', -700, 'Forrest Elbow', 60),
   sectionRow('tremblant-woods', ['Beaver Kink', 'Beaver Hairpin', 'Devil\'s Chicane 1', 'Devil\'s Chicane 2', 'Lodge Bend', 'Final Turn'], 'Beaver Run', 100, 'Final Turn', 60),
   sectionRow('ardennes-forest', ['Les Combes', 'Combes Exit', 'Malmedy', 'Riverside', 'Woodland Left', 'Fagnes', 'Fagnes Exit'], 'Kestrel Straight', 0, 'Fagnes Exit', 60),
+  // Brian's Hairpin Lesson (docs/story/kogane-invitation.md 8.1). The board lists it only while the course itself exists,
+  // which is while the kogane-pass switch is on. Two hairpins, not three: at 14 to 16 m the starter cars crawl through each
+  // hairpin, so six corners took 108 to 111 s and the row is cut to 30 to 75 s for every car (docs/changes/STORY-KOGANE-LESSON.md).
+  sectionRow('kogane-pass', ['Cedar Bend', 'Maple Hairpin', 'Maple Bend', 'Tea House Hairpin'], 'Cedar Descent', -150, 'Tea House Hairpin', 60),
 ]);
 
 export const DRIVE_LESSON_STEPS = Object.freeze([
@@ -468,8 +474,8 @@ export async function sectionPlanFor(duel, row, pace, {middle = false, dry = fal
   const turns = row.cornerNames.map(piece);
   const points = {turnInS: turns[0].s0, apexS: turns[0].s0 + (turns[0].s1 - turns[0].s0) * .55,
     exitS: turns.at(-1).s1, dir: turns[0].dir};
-  const outsideClear = course.def.id === 'tremblant-snow' ? 4.5 : row.courseId === 'harbour-lights' ? 2 : 2.9;
-  const apexClear = row.courseId === 'harbour-lights' ? 1.5 : 2.5;
+  const outsideClear = course.def.id === 'tremblant-snow' ? 4.5 : row.courseId === 'harbour-lights' ? 2 : row.courseId === 'kogane-pass' ? 3.4 : 2.9;
+  const apexClear = row.courseId === 'harbour-lights' ? 1.5 : row.courseId === 'kogane-pass' ? 3.4 : 2.5;
   const waypoints = [{s: startS, lateral: -turns[0].dir * (course.roadHalfWidthAt(startS) - outsideClear)}];
   for (let i = 0; i < turns.length; i++) {
     const turn = turns[i], previous = turns[i - 1], next = turns[i + 1];
