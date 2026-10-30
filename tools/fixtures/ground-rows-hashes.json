@@ -273,5 +273,38 @@
    "moved": 151,
    "dropped": 0
   }
+ },
+ "kogane-pass": {
+  "near": "4b1b55513893d7182ae14f35e90f2fcb74cd3cc19f1c439aa1b55db1509fe2e7",
+  "far": "766058e14209d96d205afc1c97035a596fafe161cfb9c70e085ae878f68e3ef1",
+  "scenery": "edd0741935c6864964a346d9571987b2db19d53631e00b9e32b981c88e206ef5",
+  "cells": 140,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 330,
+   "dropped": 0
+  }
+ },
+ "kogane-pass-night": {
+  "near": "4b1b55513893d7182ae14f35e90f2fcb74cd3cc19f1c439aa1b55db1509fe2e7",
+  "far": "766058e14209d96d205afc1c97035a596fafe161cfb9c70e085ae878f68e3ef1",
+  "scenery": "edd0741935c6864964a346d9571987b2db19d53631e00b9e32b981c88e206ef5",
+  "cells": 140,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 330,
+   "dropped": 0
+  }
+ },
+ "kogane-pass-reverse": {
+  "near": "b081c650806246c76c8952e1a93f5c86d3bbd1d21ad95d6401d15eb2565dc5e2",
+  "far": "a82a9238ca26103750eab60d2cd32aa93e5c2f23e7c74c1cbea7c504857f2b55",
+  "scenery": "3218356d57a05f3947de2860008090d62e389ca4f234afeb3fd7def54dec1c9c",
+  "cells": 143,
+  "roadAvoid": {
+   "placed": 15500,
+   "moved": 343,
+   "dropped": 0
+  }
  }
 }
