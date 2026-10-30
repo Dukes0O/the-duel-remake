@@ -66,25 +66,29 @@ function updateMenuCar() {
     const option = root.ownerDocument.createElement('option'); option.value='mcmurtry_speirling'; option.textContent=CARS.mcmurtry_speirling.name; ui['car-select'].append(option);
   } else if(!fanOn) fanOption?.remove?.();
   const sirenaOn = app._switches?.().enabled('lab')===true && app._switches?.().enabled('the-deep')===true && isCarUnlocked(profile(),'falcone_sirena');
-  const storyCarsOn = storyOn(app);
   const sirenaOption = [...ui['car-select'].options].find(option=>option.value==='falcone_sirena');
   if(sirenaOn && !sirenaOption) {
     const option = root.ownerDocument.createElement('option'); option.value='falcone_sirena'; option.textContent=CARS.falcone_sirena.name; ui['car-select'].append(option);
   } else if(!sirenaOn) sirenaOption?.remove?.();
   // STORY-KOGANE-SCREENS: the Nissan Skyline is a prize, not a shop car. It joins the picker only once the player owns it.
-  const skylineOn = storyCarsOn && Object.hasOwn(CARS,KOGANE_SKYLINE) && isCarUnlocked(profile(),KOGANE_SKYLINE);
+  const skylineOn = Object.hasOwn(CARS,KOGANE_SKYLINE) && isCarUnlocked(profile(),KOGANE_SKYLINE);
   const skylineOption = [...ui['car-select'].options].find(option=>option.value===KOGANE_SKYLINE);
   if(skylineOn && !skylineOption) {
     const option = root.ownerDocument.createElement('option'); option.value=KOGANE_SKYLINE; option.textContent=CARS[KOGANE_SKYLINE].name; ui['car-select'].append(option);
-  } else if(storyCarsOn && !skylineOn) skylineOption?.remove?.();
+  } else if(!skylineOn) skylineOption?.remove?.();
   // A car hidden by the earned-cars switch is never the menu car or the rival's car.
-  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn, storyCarsOn) || skylineOn && choices.car===KOGANE_SKYLINE || sirenaOn && choices.car==='falcone_sirena' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
-  if (choices.rival?.car && choices.rival.car !== 'match' && !isShownCar(choices.rival.car, earnedOn)) choices.rival = {...choices.rival, car: 'match'};
+  if (!isCarUnlocked(profile(), choices.car) || !(isShownCar(choices.car, earnedOn) || skylineOn && choices.car===KOGANE_SKYLINE || sirenaOn && choices.car==='falcone_sirena' || fanOn && choices.car==='mcmurtry_speirling')) choices.car = 'falcone_f42';
+  // The Skyline is the story's prize: a rival car in the player's own setup only once they own it (Daichi is set by the story itself, not here).
+  const rivalSkyline = ui['rival-car'] && [...(ui['rival-car'].options ?? [])].find(option => option.value === KOGANE_SKYLINE);
+  if (skylineOn && ui['rival-car']?.append && !rivalSkyline) {
+    const option = root.ownerDocument.createElement('option'); option.value = KOGANE_SKYLINE; option.textContent = CARS[KOGANE_SKYLINE].name; ui['rival-car'].append(option);
+  } else if (!skylineOn) rivalSkyline?.remove?.();
+  if (choices.rival?.car && choices.rival.car !== 'match' && !(isShownCar(choices.rival.car, earnedOn) || skylineOn && choices.rival.car === KOGANE_SKYLINE)) choices.rival = {...choices.rival, car: 'match'};
   const car = applyDriverModifiers(upgradedCar(CARS[choices.car], getUpgradeLevels(profile(), choices.car)),getEquippedDriverId(profile()),choices.car);
   app.duel.state.car = choices.car; app.menuCar = choices.car;
   text('car-speed', speedKph(car.topSpeed)); text('car-gears', String(car.gears.length).padStart(2,'0'));
   text('car-character', car.grip >= .9 ? 'PLANTED' : 'UNTAMED');
-  const carIds = [...shownCarIds(earnedOn, storyCarsOn), ...(skylineOn?[KOGANE_SKYLINE]:[]), ...(sirenaOn?['falcone_sirena']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
+  const carIds = [...shownCarIds(earnedOn), ...(skylineOn?[KOGANE_SKYLINE]:[]), ...(sirenaOn?['falcone_sirena']:[]), ...(fanOn?['mcmurtry_speirling']:[])];
   text('garage-count', `${String(carIds.indexOf(choices.car)+1).padStart(2,'0')} / ${String(carIds.length).padStart(2,'0')}`);
   text('menu-credits', `${credits(profile().credits)} CR`);
   for(const option of ui['car-select'].options){const key=option.value,progress=completionCarProgress(profile(),key),locked=medalProgressLabel(profile(),key)??(progress.total?`MAX OTHER CARS ${progress.maxed}/${progress.total}`:`${credits(CAR_PRICES[key])} CR`);option.textContent=isCarUnlocked(profile(),key)?CARS[key].name:`${CARS[key].name} · LOCKED · ${locked}`;}

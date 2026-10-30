@@ -13,13 +13,13 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
 // With the switch off the medal cars appear nowhere; every list is today's.
 // The Falcone Sirena (SIRENA-CAR) is on no list yet: it exists only once the Lab restores it, and its garage sheet and
 // place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
-// STORY-KOGANE-SCREENS: with the Kogane Invitation on (story), the Nissan Skyline is a prize, not a shop car. It is on
-// no list until the player owns it; the garage and the menu then add it, as they add the Sirena. story is false by
-// default, so every list is today's with the switch off.
-export const isShownCar = (id, enabled, story = false) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && !(story === true && id === KOGANE_SKYLINE) && (enabled === true || !medalRequirement(id));
-export const shownCarIds = (enabled, story = false) => Object.keys(CARS).filter(id => isShownCar(id, enabled, story));
-export const shownCars = (enabled, story = false) => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled, story));
-
+// NISSAN-SKYLINE-GTR-R34-V6: the Nissan Skyline is the Kogane Invitation's prize (unlockRequirement 'kogane-duel'), never a
+// shop car. It is on no list until the player owns it, as the Sirena is; `wonCars` adds it for an owner.
+export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && id !== KOGANE_SKYLINE && (enabled === true || !medalRequirement(id));
+export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
+export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
+// The story prize cars this player owns, as [id, car] pairs to add after the shown cars (garage, armory, scores, rival picker).
+export const wonCars = profile => Object.entries(CARS).filter(([id]) => id === KOGANE_SKYLINE && profile?.unlockedCars?.includes(id) === true);
 // "MEDALS 4/6", and for a car that needs gold "MEDALS 20/24 · GOLD 4/6".
 export function medalProgressLabel(profile, id) {
   const progress = medalCarProgress(profile, id);

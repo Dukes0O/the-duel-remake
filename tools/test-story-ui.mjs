@@ -25,7 +25,7 @@ const {screenMarkup, createMenuScreen} = await import('../src/screen-menu.js');
 const {createGarageScreen} = await import('../src/screen-garage.js');
 const {createResultsScreen} = await import('../src/screen-results.js');
 const {frontDoorFacts, chooseNextUp, nextUpMarkup, doorList} = await import('../src/menu-front-door.js');
-const {shownCars, shownCarIds, isShownCar} = await import('../src/earned-cars-ui.js');
+const {shownCars, shownCarIds, isShownCar, wonCars} = await import('../src/earned-cars-ui.js');
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -355,10 +355,12 @@ if (!preview) {
       arrow: '', action: (label, verb) => `<button data-action="${verb}">${label}</button>`, clamp: value => Math.max(0, Math.min(1, value))})();
   };
   // Lists.
-  ok(shownCarIds(false).includes(KOGANE_SKYLINE), 'with the story off the Skyline is listed as today');
-  ok(!shownCarIds(false, true).includes(KOGANE_SKYLINE) && !shownCars(true, true).some(([id]) => id === KOGANE_SKYLINE), 'with the story on it is on no list');
-  eq(isShownCar(KOGANE_SKYLINE, false, true), false, 'isShownCar hides it');
-  eq(shownCarIds(false, true).length, shownCarIds(false).length - 1, 'and nothing else');
+  // NISSAN-SKYLINE-GTR-R34-V6: the Skyline is a prize on every list, whatever the story switch says (it was listed with the switch off before).
+  ok(!shownCarIds(false).includes(KOGANE_SKYLINE) && !shownCarIds(true).includes(KOGANE_SKYLINE) && !shownCars(true).some(([id]) => id === KOGANE_SKYLINE), 'the Skyline is on no list');
+  eq(isShownCar(KOGANE_SKYLINE, false), false, 'isShownCar hides it');
+  eq(isShownCar('falcone_f42', false), true, 'and other cars are unaffected');
+  eq(wonCars(createProfile()).length, 0, 'wonCars: nothing for a player without it');
+  eq(wonCars(owned).map(([id]) => id), [KOGANE_SKYLINE], 'wonCars: the Skyline for an owner');
   // The garage.
   let html = garageFor(createProfile(), 'falcone_f42');
   ok(!html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: hidden until owned');
@@ -376,7 +378,7 @@ if (!preview) {
   html = garageFor(wonProfile, KOGANE_SKYLINE, ['nissan-skyline'], props('ana'));
   ok(html.includes(`data-garage-car="${KOGANE_SKYLINE}"`) && !html.includes('Won from') && !html.includes('KOGANE'), 'garage: switch off, an owned Skyline is like any owned car');
   html = garageFor(createProfile(), 'falcone_f42', ['nissan-skyline'], props('duel'));
-  ok(html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: switch off, the list is today\'s');
+  ok(!html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: switch off, an unowned Skyline is still not listed');
   // The Deep log lead line sits in the sea-life log.
   const deepApp = stub(flagsOn, props('done', {lead: true}));
   deepApp.getDeepDiscovery = () => ({enabled: true, kit: true, found: [], hintsShown: []});

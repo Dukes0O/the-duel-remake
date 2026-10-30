@@ -128,10 +128,12 @@ export const CARS = {
     offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62,
     collision: {halfWidth: .805, halfLength: 1.602}, height: 1.142, kind: 'prototype',
   },
-  // Handling preview only. V6 adds the shop price and the finished body.
+  // The Kogane Invitation's prize (docs/story/kogane-invitation.md section 11): never bought, owned only once the Night Duel
+  // grants it. No price, so it is not in CAR_PRICES; unlockRequirement keeps every owned-check from counting it as free.
   ...(featureFlags.enabled('nissan-skyline') ? {
     nissan_skyline_gtr_r34: {
       name: 'Nissan Skyline GT-R R34', homage: 'R34-inspired twin-turbo all-wheel-drive coupe', gearbox: 'manual',
+      unlockRequirement: 'kogane-duel',
       topSpeed: 205, accel: 8.4, grip: 1.08, braking: 1.12,
       gears: [55, 95, 133, 167, 190, 205],
       color: 0x1b3d8c, accent: 0xc7ccd1,
