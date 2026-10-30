@@ -223,6 +223,7 @@ const sodiumWash = {colour: 0xffac55, strength: .85, height: 12, floor: .02,
 // Walls, rails and the autumn trees keep a soft glow of their own colour all along the road, so the roadsides read in
 // the dark away from the lamps too (the lamp pools above only reach the lower road).
 const roadsideGlow = {colour: 0xc9d3e0, strength: .65, height: 12, floor: .5};
+const railGlow = {colour: 0xc9d3e0, strength: .4, height: 12, floor: .4};
 const treeGlow = {colour: 0xffb070, strength: .3, height: 14, floor: .4};
 
 export const KOGANE_PASS = defineScriptedCourse({
@@ -272,7 +273,7 @@ export const KOGANE_PASS = defineScriptedCourse({
     'stone-retaining-wall': {wash: roadsideGlow},
     'stone-retaining-wall-b': {wash: roadsideGlow},
     'stone-retaining-wall-c': {wash: roadsideGlow},
-    'armco-white': {wash: roadsideGlow},
+    'armco-white': {wash: railGlow},
     'curve-mirror': {wash: {colour: 0xffca85, strength: .24, height: 4, floor: .08}},
     'chevron-board': {wash: {colour: 0xffca85, strength: .24, height: 3, floor: .08}},
   },
