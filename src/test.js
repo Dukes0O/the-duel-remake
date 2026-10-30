@@ -31,7 +31,7 @@ eq(COURSE.filter(course => course.kind === 'circuit' && course.expansion && cour
 eq(new Set(COURSE.filter(course => course.kind === 'circuit' && course.expansion && course.closed !== false).map(course => course.id)).size, 6, 'expansion circuits have unique stable identities');
 ok(COURSE.some(course => course.kind === 'arena'), 'the monster arena is a separate event');
 const openEvents = COURSE.filter(course => course.closed === false);
-ok(openEvents.length === 2 && openEvents.some(course => course.id === 'summit-run') && openEvents.some(course => course.id === 'summit-time-attack'), 'Summit and its solo Attack are two distinct open-route events');
+ok(openEvents.length === 5 && ['summit-run', 'summit-time-attack', 'kogane-pass', 'kogane-pass-night', 'kogane-pass-reverse'].every(id => openEvents.some(course => course.id === id)), 'Summit, its solo Attack and Kogane Pass with its Night and Reverse versions are five distinct open-route events');
 for (const definition of COURSE) {
   const course = new Course(definition, 611);
   const start = course.at(0), finish = course.at(course.length), before = course.at(course.length - .01), after = course.at(.01);
