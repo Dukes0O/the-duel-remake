@@ -220,6 +220,10 @@ for (let s = 3280; s <= road.length - 20; s += 40) {
 }
 const sodiumWash = {colour: 0xffac55, strength: .85, height: 12, floor: .02,
   pools: lampPools, radius: 17};
+// Walls, rails and the autumn trees keep a soft glow of their own colour all along the road, so the roadsides read in
+// the dark away from the lamps too (the lamp pools above only reach the lower road).
+const roadsideGlow = {colour: 0xc9d3e0, strength: .65, height: 12, floor: .5};
+const treeGlow = {colour: 0xffb070, strength: .3, height: 14, floor: .4};
 
 export const KOGANE_PASS = defineScriptedCourse({
   ...base,
@@ -234,11 +238,10 @@ export const KOGANE_PASS = defineScriptedCourse({
     pads: [{du: -45, dv: 6, radius: 24, blend: 10},
       {du: 45, dv: -13, radius: 18.2, blend: 2.5}]}],
   sections: names.map((name, i) => ({name, theme: 'alpine', share: (starts[i + 1] - starts[i]) / road.length})),
-  lightPath: {axis: 'distance', wrap: false, keyframes: [
+  lightPath: {axis: 'distance', wrap: false, palette: 'mountain-sunset', keyframes: [
     {at: 0, look: 'dusk'}, {at: 1500, look: 'dusk'}, {at: 2600, look: 'night'},
   ]},
   kitSafetyWalls: true, roadKerbs: false,
-  wetRoad: {performanceShare: .5},
   groundLeaves: {colours: [[1.05, .34, .12], [1.1, .68, .2], [.74, .3, .13]],
     strength: .85, reach: 25, far: .08,
     wood: {green: [.32, .47, .3], colours: [[.7, .32, .13], [.8, .5, .18]], share: .42, from: 7}},
@@ -260,16 +263,16 @@ export const KOGANE_PASS = defineScriptedCourse({
       {s0: 3570, s1: 3930, from: 10, to: 33},
     ]},
   kitLook: {
-    'autumn-tree-copper': {leafColour: 0xcf431a, wash: sodiumWash},
-    'autumn-tree-golden': {leafColour: 0xe7ac28, wash: sodiumWash},
+    'autumn-tree-copper': {leafColour: 0xcf431a, wash: treeGlow},
+    'autumn-tree-golden': {leafColour: 0xe7ac28, wash: treeGlow},
     'shopfront-a': {wash: {colour: 0xffc281, strength: .35, height: 6, floor: .08}},
     'shopfront-b': {wash: {colour: 0xffc281, strength: .35, height: 6, floor: .08}},
     'lantern-string': {glow: .8},
     'torii': {wash: {colour: 0xffa86c, strength: .22, height: 9, floor: .1}},
-    'stone-retaining-wall': {wash: sodiumWash},
-    'stone-retaining-wall-b': {wash: sodiumWash},
-    'stone-retaining-wall-c': {wash: sodiumWash},
-    'armco-white': {wash: sodiumWash},
+    'stone-retaining-wall': {wash: roadsideGlow},
+    'stone-retaining-wall-b': {wash: roadsideGlow},
+    'stone-retaining-wall-c': {wash: roadsideGlow},
+    'armco-white': {wash: roadsideGlow},
     'curve-mirror': {wash: {colour: 0xffca85, strength: .24, height: 4, floor: .08}},
     'chevron-board': {wash: {colour: 0xffca85, strength: .24, height: 3, floor: .08}},
   },
