@@ -1474,3 +1474,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged STORY-KOGANE-FINISH (STORY-KOGANE-FINISH play-through merged (scenario added; release held for F1, F2, F4, F5)).
 - 28 Oct night: merged KOGANE-NIGHT-LIGHT (KOGANE-NIGHT-LIGHT merged (lane 49/49, build ok, look reviewed)).
 - 28 Oct night: merged STORY-KOGANE-FIX-UI (STORY-KOGANE-FIX-UI merged (lane 141/143, the two explained and passing alone; scenario pass; build ok)).
+- 30 Oct: merged KOGANE-RELEASE-SWITCH (rebased onto the night light, Kogane Pass signature recaptured, Claude's assertion review approve; lane 60/60 with one Recycle Bin rerun, build, course suites, story scenario Easy and Hard pass).
