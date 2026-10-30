@@ -1558,3 +1558,15 @@ laptop panel off: Performance p95 16.8 ms passes; High p95 33.3 ms (p50
 monitor setup, so the miss is the 4K screen, not the code; Harbour's scene
 is unchanged since that pass (rule 19). Tremblant snow passes. Combat
 balance passes (full check on 39780c46, rules unchanged since).
+
+## Release, 30 October 2026 (Claude, Release Manager)
+
+KOGANE-RELEASE-SWITCH (Kogane Pass, Night, Reverse, nissan-skyline and
+kogane-invitation on), SKYLINE-FULL-GAME (the Skyline in the helicopter,
+the Wasteland and every asset suite; armour kit look checked) and
+SAVE-BUDGET-FIGURE (4.25 MB before the start-up move, Kyle). No save shape
+change; the two restored careers do not get Kogane Pass. Full tier 547/547 on
+b2c1167c, run alone. Combat balance passes. Story scenario passes on Easy (the
+Skyline won) and Hard (lost; no car, story stays on the duel). Frame check not
+run: Kyle said release without it (30 October); Kogane Pass frames are owed at
+the next full check (KOGANE_FRAMES_ONLY, lane claude/kogane-frames).

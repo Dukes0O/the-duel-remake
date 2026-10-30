@@ -2,6 +2,22 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## The Kogane Invitation, 30 October 2026
+
+### What players get now
+
+- **Kogane Pass**, a Japanese mountain road with a tea house and a lake, for
+  2,200 credits. Its Night and Reverse versions are free: find their signs
+  from the helicopter over Kogane Pass.
+- **The Kogane Invitation**, a story from the new Story button on the menu:
+  Daichi Mori's letter, Brian's two-hairpin lesson on the Kogane road, a
+  supply flight to the tea house, and a night duel against Daichi on Easy,
+  Medium or Hard. Lose and try again any time.
+- **The Nissan Skyline GT-R R34**, Daichi's road car. It is never sold: beat
+  Daichi in the night duel and it is yours, with three paints. It also
+  works in the Wasteland, with its own armour kit, and the helicopter can
+  carry it once the Lab's lift upgrade is fitted.
+
 ## Five new course versions, 29 October 2026
 
 ### What players get now
