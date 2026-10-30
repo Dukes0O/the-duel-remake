@@ -23,7 +23,7 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
   const lessonId = lessonsOn ? DRIVE_LESSON_ORDER.find(id => done[id] !== true && driveLessonAccess(profile?.drivingLessons, id, {engineCurve}).open) ?? null : null;
   // A Wasteland boss whose hold is three quarters won and not yet claimed.
   const holdId = wastelandOpen ? Object.entries(profile?.wasteland?.territories ?? {}).find(([id, row]) =>
-    Object.hasOwn(TERRITORIES, id) && row?.claimed !== true && row?.hold >= 75 && row?.hold < 100)?.[0] ?? null : null;
+    Object.hasOwn(TERRITORIES, id) && row?.claimed !== true && row?.hold >= 75)?.[0] ?? null : null;
   return {
     labOn, lessonsOn, heliOn, wastelandOpen,
     labLesson: labLesson ? {id: labLesson.id, name: labLesson.name} : null,
@@ -55,15 +55,36 @@ export function doorList(facts = {}) {
   const open = (badge, note = '') => ({badge, note, locked: false});
   return [
     {id: 'garage', label: 'Garage', action: 'garage', ...open('READY', 'Cars, paint and tuning')},
-    {id: 'courses', label: 'Courses', action: 'courses', ...(facts.course ? open('NEW', `${facts.course.name} is in reach`) : open('READY', 'Pick where to race'))},
-    {id: 'armory', label: 'Armory', action: 'armory', ...open('READY', 'Weapons for the Wasteland')},
-    {id: 'wasteland', label: 'Wasteland', action: 'wasteland-visit', ...(facts.wastelandOpen ? open(facts.hold ? 'NEW' : 'READY', 'Beyond the Rustwall') : lock('Find the hidden road first'))},
+    {id: 'courses', label: 'Courses', action: 'courses', ...(facts.course ? open('NEW', 'A new course is in reach') : open('READY', 'Pick where to race'))},
+    {id: 'armory', label: 'Armory', action: 'armory', ...open('READY', 'Weapons and armor')},
+    {id: 'wasteland', label: 'Wasteland', action: 'wasteland-visit', ...(facts.wastelandOpen ? facts.hold
+      ? {badge: 'NEARLY WON', tone: 'new', note: `Finish ${facts.hold.name}'s hold`, locked: false} : open('READY', 'Beyond the Rustwall') : lock('Find the hidden road first'))},
     {id: 'helipad', label: 'Helipad', action: 'heli-visit', ...(facts.heliOn ? open(facts.heliJob ? 'NEW' : 'READY', 'Fly the helicopter') : lock('Not open yet'))},
     {id: 'lab', label: 'Lab', action: 'lab-open', ...(facts.labOn ? open(facts.labLesson ? 'NEW' : 'READY', 'Learn, then upgrade') : lock('Not open yet'))},
     {id: 'lessons', label: 'Lessons', attr: 'data-drive-open', ...(facts.lessonsOn ? open(facts.driveLesson ? 'NEW' : 'READY', 'Learn to drive faster') : lock('Not open yet'))},
     {id: 'scores', label: 'Scores', action: 'leaderboard', ...open('READY', 'Best times and points')},
   ];
 }
+
+// "What happened last time" on the chosen course, from the save's race history and personal bests. Read only.
+// A new player (no races at all) gets nothing; a player who has raced elsewhere is told they have not raced here.
+export function lastTimeLine(profile, stageIndex) {
+  const stage = COURSE[stageIndex];
+  if (!stage || stage.practice) return '';
+  const id = String(stage.id || `course-${stageIndex}`);
+  const history = Array.isArray(profile?.history) ? profile.history : [];
+  const row = [...history].reverse().find(item => item?.eventId === id);
+  const times = Object.entries(profile?.personalBests ?? {}).filter(([key, value]) => key.startsWith(`${id}|`) && value > 0).map(([, value]) => value);
+  const best = times.length ? Math.min(...times) : null;
+  if (!row) return best ? `Your best here: ${clock(best)}` : history.length || Object.keys(profile?.personalBests ?? {}).length ? 'You have not raced here yet.' : '';
+  const result = row.abandoned ? 'you left the race early' : row.completed !== true ? 'the race did not finish'
+    : row.won ? `won in ${clock(row.timeSec)}` : `lost, you finished in ${clock(row.timeSec)}`;
+  return `Last time: ${result}${best && row.completed === true ? ` · Best ${clock(best)}` : ''}`;
+}
+const clock = seconds => {
+  const t = Math.floor(Math.max(0, Number(seconds) || 0) * 100);
+  return `${String(Math.floor(t / 6000)).padStart(2, '0')}:${String(Math.floor(t / 100) % 60).padStart(2, '0')}.${String(t % 100).padStart(2, '0')}`;
+};
 
 export function driveSummary({carName = '', mode = 'duel', level = ''} = {}) {
   return ['your ' + carName, MODE_NAMES[mode] ?? mode, level].filter(Boolean).join(' · ');
@@ -73,7 +94,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&': '&amp;
 
 export function doorTile(door) {
   const hook = door.locked ? 'aria-disabled="true" disabled' : door.attr ? door.attr : `data-action="${door.action}"`;
-  return `<button type="button" class="front-door-tile${door.locked ? ' is-locked' : ''}" data-door="${door.id}" ${hook}><b>${esc(door.label)}</b><span class="front-door-note">${esc(door.note)}</span><i class="front-door-badge badge-${door.badge.toLowerCase()}">${door.badge}</i></button>`;
+  return `<button type="button" class="front-door-tile${door.locked ? ' is-locked' : ''}" data-door="${door.id}" ${hook}><b>${esc(door.label)}</b><span class="front-door-note">${esc(door.note)}</span><i class="front-door-badge badge-${(door.tone ?? door.badge).toLowerCase()}">${door.badge}</i></button>`;
 }
 
 export function nextUpMarkup(next) {
@@ -84,7 +105,7 @@ export function nextUpMarkup(next) {
 // The first screen, in three parts. The race controls move into the options drawer; START ENGINE moves into fd-start-slot.
 export function frontDoorMarkup({facts = {}, arrow = ''} = {}) {
   return `<div id="front-door" class="front-door" aria-label="Front door">
-    <section class="front-door-drive" aria-label="Drive"><span class="field-label">DRIVE</span><b id="fd-course" class="front-door-course"></b><p id="fd-summary" class="front-door-summary"></p><div id="fd-start-slot" class="front-door-start"></div><button type="button" id="fd-options-toggle" class="front-door-options-toggle" aria-expanded="false" aria-controls="race-options">Race options</button></section>
+    <section class="front-door-drive" aria-label="Drive"><span class="field-label">DRIVE</span><b id="fd-course" class="front-door-course"></b><p id="fd-summary" class="front-door-summary"></p><p id="fd-last" class="front-door-last" hidden></p><div id="fd-start-slot" class="front-door-start"></div><button type="button" id="fd-options-toggle" class="front-door-options-toggle" aria-expanded="false" aria-controls="race-options">Race options</button></section>
     <section class="front-door-nextup" aria-label="Next up" id="fd-nextup">${nextUpMarkup(chooseNextUp(facts))}</section>
     <nav id="fd-doors" class="front-door-doors" aria-label="Doors">${doorList(facts).map(doorTile).join('')}</nav>
   </div>`;
