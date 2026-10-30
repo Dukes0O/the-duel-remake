@@ -121,6 +121,8 @@ export async function run(context) {
     report.frames.push({name, note, problems: check.out, text: check.text});
     await context.screenshot(name);
   };
+  // With the front door on (released 30 October 2026) the Story door opens the card; the old button sits under it.
+  const openStory = async () => click(await context.evaluate(`!!document.querySelector('#front-door')`) ? '[data-door="story"]' : '#story-visit');
   const click = async selector => {
     const point = await context.evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)});
       if (!node || node.disabled || node.hidden) throw Error('Control unavailable: ' + ${JSON.stringify(selector)});
@@ -173,7 +175,7 @@ export async function run(context) {
   if (stop(2)) return finish();
 
   // 2. The Story card with Daichi's letter.
-  await click('#story-visit');
+  await openStory();
   await context.waitFor(`!!document.querySelector('.story-card')`, 'the Story card', 10_000);
   await shot('02-story-letter', 'Story card, the letter, four parts');
   const read = await app(`({read: app.storyProps().read, step: app.koganeStepNow(), dot: !document.querySelector('#story-visit .story-dot')?.hidden})`);
@@ -228,7 +230,7 @@ export async function run(context) {
   await app(`app.start()`);
   await hidePanels();
   await wait(500);
-  await click('#story-visit');
+  await openStory();
   await context.waitFor(`!!document.querySelector('.story-card')`, 'the Story card again', 10_000);
   await shot('07-story-supplies', 'Story card after the lesson: supplies part open');
   await click('[data-story-step="supplies"]');
@@ -312,7 +314,7 @@ export async function run(context) {
   fact(report.pickedNight.mode === 'duel' && report.pickedNight.pressed.join() === 'duel', 'choosing Kogane Pass Night in the circuit box keeps Rival Duel (got ' + report.pickedNight.pressed + ')');
   await pickCircuit(oldStage);
   await wait(400);
-  await click('#story-visit');
+  await openStory();
   await context.waitFor(`!!document.querySelector('.story-card')`, 'the Story card, duel part', 10_000);
   await shot('14-story-duel', 'Story card: supplies done, Race Daichi open');
   await click('[data-story-step="duel"]');

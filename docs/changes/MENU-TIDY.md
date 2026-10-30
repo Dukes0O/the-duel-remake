@@ -65,3 +65,11 @@ Kyle tried the menu with the `menu-front-door` switch on and asked for two chang
 
 Nothing replaced. The old stacked full-width button layout was a CSS rule inside
 `.course-access-card` and is rewritten in place.
+
+## Front door switched on, and a Story door (Claude, 30 October 2026)
+
+Kyle tried the front door and asked for it to go live after these changes. `menu-front-door` is `on`. The story run found that the old Story button sits under the front door and Next up puts an open Lab lesson first, so the story could vanish from the front door: a ninth door, Story, now leads while the story has something left (NEW for an unread letter or Ana's call), using the same `data-story-open` click; nine doors lay out in five columns.
+
+Changed assertions (Claude's review: each follows the switch-on or the new door; nothing loosened): `test-menu-front-door.mjs` the switch is `on` and an override still turns it off; new test for the Story door. `test-story-ui.mjs` 'still eight doors' becomes the full door list with Story first. `tools/scenarios/story-kogane.mjs` opens the story through the Story door when the front door is on.
+
+Tests: test-menu-front-door 15 pass, test-story-ui 242 pass, story-kogane scenario 28 facts pass through the front door (0 browser errors). Lane tier and build below.

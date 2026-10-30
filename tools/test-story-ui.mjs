@@ -278,7 +278,8 @@ ok(!createFeatureFlags({storage: null, qa: false, overrides: {'kogane-invitation
   const screen = screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0}, arrow: '', sound: true, escapeHTML,
     frontDoor: {facts: facts(props('invite'))}});
   ok(screen.includes('id="fd-next"') && screen.includes('data-story-open') && screen.includes('story-dot'), 'the front door markup carries it');
-  eq(doorList(facts(props('invite'))).length, 8, 'still eight doors');
+  // MENU-TIDY (30 October 2026): the story also gets its own door, first, while it has something left; the eight others are unchanged.
+  eq(doorList(facts(props('invite'))).map(door => door.id), ['story', 'garage', 'courses', 'armory', 'wasteland', 'helipad', 'lab', 'lessons', 'scores'], 'a Story door, then the eight doors');
 }
 
 // 8. Daichi on the results screen -------------------------------------------------------------------------
