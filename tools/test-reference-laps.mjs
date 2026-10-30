@@ -165,6 +165,9 @@ check(duel._police.toString().includes('must not run police'), 'Disposal restore
 // Every new variant must enter through its actual unlock rule: found from the air (the pilot's map record).
 for (const definition of ALL_CIRCUITS.filter(d => CIRCUIT_MANIFESTS.find(m => m.id === d.id)?.unlock?.kind === 'spotted-from-air')) {
   const previousLength = COURSE.length;
+  // A parent still behind its own switch (Kogane Pass) joins the list for this check too, since the variant opens only with it.
+  const parent = ALL_CIRCUITS.find(d => d.id === CIRCUIT_MANIFESTS.find(m => m.id === definition.id).unlock.defaultEventId);
+  if (!COURSE.includes(parent)) COURSE.push(parent);
   if (!COURSE.includes(definition)) COURSE.push(definition);
   try {
     await withReferenceApp(async app => {
@@ -179,7 +182,7 @@ for (const definition of ALL_CIRCUITS.filter(d => CIRCUIT_MANIFESTS.find(m => m.
         check(app.profile.grandPrixPodiums.includes('tremblant-woods'), 'Existing profile results are preserved');
       } finally {eligible.dispose();}
     });
-  } finally {if (COURSE.length !== previousLength) COURSE.pop();}
+  } finally {while (COURSE.length > previousLength) COURSE.pop();}
 }
 
 if (process.argv.includes('--native')) {

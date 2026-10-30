@@ -33,7 +33,8 @@ const near = (actual, expected, tolerance, label) => {
 const worlds = new Map();
 function loadCourse(id) {
   if (!worlds.has(id)) {
-    const course = new Course(COURSE.find(def => def.id === id), 1989);
+    // A parent still behind its own switch (Kogane Pass) is not in COURSE: read it from the registry.
+    const course = new Course(COURSE.find(def => def.id === id) ?? ALL_CIRCUITS.find(def => def.id === id), 1989);
     worlds.set(id, {course, ground: groundFromCourse(course)});
   }
   return worlds.get(id);
@@ -67,14 +68,15 @@ const sessionAt = (courseId, {profile = profileWith(), secrets = ALL_SECRETS, pi
   return session;
 };
 
-// ---- The five signs -------------------------------------------------------------------------------------------
+// ---- The seven signs -------------------------------------------------------------------------------------------
 {
-  same(SECRET_IDS, ['tremblant-woods-reverse', 'panorama-ridge-reverse', 'panorama-ridge-night', 'harbour-lights-reverse', 'harbour-lights-dusk'], 'the five secret courses');
+  same(SECRET_IDS, ['tremblant-woods-reverse', 'panorama-ridge-reverse', 'panorama-ridge-night', 'harbour-lights-reverse', 'harbour-lights-dusk', 'kogane-pass-night', 'kogane-pass-reverse'], 'the seven secret courses');
   for (const sign of SECRET_SIGNS) {
     const variant = ALL_CIRCUITS.find(def => def.id === sign.id), manifest = CIRCUIT_MANIFESTS.find(row => row.id === sign.id);
     ok(variant && manifest, `${sign.id} is a registered variant`);
     same(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: sign.course}, `${sign.id} is found from the air on ${sign.course}`);
-    same([manifest.price, manifest.state], [0, 'on'], `${sign.id} is free and released, found only from the air`);
+    // The two Kogane Pass versions stay behind their switches until Kogane Pass itself is released.
+    same([manifest.price, manifest.state], [0, sign.course === 'kogane-pass' ? 'dev' : 'on'], `${sign.id} is free and, once its course is out, released, found only from the air`);
     const {course, ground} = loadCourse(sign.course);
     ok(signClear(course, ground, sign.x, sign.z), `${sign.id}: its sign stands off the road, in the dry, clear of scenery`);
     const lateral = Math.abs(course.nearest(sign.x, sign.z).lateral);

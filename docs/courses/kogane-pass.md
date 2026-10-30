@@ -459,6 +459,9 @@ the full check including frames; then live with the next batch.
    an open road with a test; if it does not, adding that case in
    `src/circuit-variants.js` is part of C7. If it turns out hard, drop the
    reverse and keep the night version.
+   *Answered 29 October 2026 (KOGANE-PASS-C7-VERSIONS): the open-road case is
+   added to `reverseVariant` and proved in `tools/test-circuit-variants.mjs`; both
+   versions are built behind their switches.*
 3. **Stage and release numbers.** I used stage 22 and release orders 13, 15 and
    16 (14 goes to Eifel Crown Reverse; these are the next free ones today). Take the next free numbers at merge if another
    lane registers first.

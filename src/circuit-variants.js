@@ -25,11 +25,15 @@ export function lightVariant(parent, parentManifest, {id, name, look, releaseOrd
 
 // Reverse coordinates follow native reversePieces, including the shifted start.
 // Road-space longitudinal and lateral axes both flip; the world rotates by PI.
-export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, state = 'dev', scriptStart = parent.scriptStart, placements}) {
-  const road = buildTrackScript(parent), length = road.length;
-  const offset = scriptStart - parent.scriptStart;
+// An open road (one run from start to finish) has no loop to rotate: the new start is the old finish, so a station is
+// simply `length - s`, and the new frame is the old one turned about that point so the reversed road still begins at
+// the origin heading 0 (`place`). `adjust(changes, helpers)` lets a course edit the fields only it has (its sections,
+// sound spot, mist) after the shared mapping is done.
+export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, state = 'dev', scriptStart = parent.scriptStart, placements, adjust}) {
+  const road = buildTrackScript(parent), length = road.length, open = parent.closed === false;
+  const offset = open ? length : scriptStart - parent.scriptStart;
   const wrap = s => ((s % length) + length) % length;
-  const station = s => wrap(offset - s);
+  const station = open ? s => length - s : s => wrap(offset - s);
   const range = (from, to) => {const start = station(to);return [start, start + to - from];};
   const point = p => ({...p, ...(Number.isFinite(p.s) ? {s: station(p.s)} : {}),
     ...(Number.isFinite(p.lateral) ? {lateral: -p.lateral} : {}),
@@ -42,14 +46,22 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
   });
   const sample = road.samples[Math.min(road.count - 1, Math.floor(wrap(offset) / road.step))];
   const next = road.samples[road.samples.indexOf(sample) + 1], t = (wrap(offset) - sample.s) / road.step;
-  const anchor = {x: sample.x + (next.x - sample.x) * t, z: sample.z + (next.z - sample.z) * t};
+  const anchor = open ? {x: road.samples.at(-1).x, z: road.samples.at(-1).z}
+    : {x: sample.x + (next.x - sample.x) * t, z: sample.z + (next.z - sample.z) * t};
+  // A closed loop ends heading as it began, so its reverse is a plain half turn. An open road ends at its own heading
+  // and the reversed road starts at heading 0: turn the world by the difference.
+  const turn = open ? -(road.samples.at(-1).heading + Math.PI) : Math.PI;
+  const place = (x, z) => open
+    ? {x: (x - anchor.x) * Math.cos(turn) + (z - anchor.z) * Math.sin(turn), z: -(x - anchor.x) * Math.sin(turn) + (z - anchor.z) * Math.cos(turn)}
+    : {x: anchor.x - x, z: anchor.z - z};
   const effects = parent.effects && {...parent.effects,
     ...(parent.effects.lake ? {lake: basin(parent.effects.lake)} : {}),
     ...(parent.effects.lift ? {lift: {...parent.effects.lift, s: station(parent.effects.lift.s),
       towers: parent.effects.lift.towers.map(x => -x).reverse(), lines: parent.effects.lift.lines.map(x => -x).reverse()}} : {}),
     ...(parent.effects.backdrop ? {backdrop: {...parent.effects.backdrop, hills: parent.effects.backdrop.hills.map(h => ({...h,
-      x: anchor.x - h.x, z: anchor.z - h.z, angle: (h.angle ?? 0) + Math.PI}))}} : {})};
-  const changes = {id, name, flag: id, reverse: true, scriptStart, intel: undefined, completeTerrainRibbon: true,
+      ...place(h.x, h.z), angle: (h.angle ?? 0) + turn}))}} : {})};
+  let changes = {id, name, flag: id, reverse: true, scriptStart, intel: undefined, completeTerrainRibbon: true,
+    ...(open ? {baseHeight: road.samples.at(-1).y} : {}),
     terrainDonor: Object.freeze({definition: parent, offset}),
     ...(parent.pitLane ? {pitLane: {...parent.pitLane, side: parent.pitLane.side === 'left' ? 'right' : 'left'}} : {}),
     ...(parent.ridgeLandform ? {ridgeLandform: {...parent.ridgeLandform, side: 1,
@@ -63,13 +75,14 @@ export function reverseVariant(parent, parentManifest, {id, name, releaseOrder, 
     ...(parent.streetLight?.sodium ? {streetLight: {...parent.streetLight, sodium: {...parent.streetLight.sodium,
       from: station(parent.streetLight.sodium.to), to: station(parent.streetLight.sodium.from)}}} : {}),
     ...(parent.waterside ? {waterside: {...parent.waterside,
-      lamps: spans(parent.waterside.lamps), palms: spans(parent.waterside.palms),
-      marina: {...parent.waterside.marina, centre: -(parent.waterside.marina.centre ?? 0)},
-      lighthouse: {...parent.waterside.lighthouse, at: parent.waterside.lighthouse.at.map(x => -x)}}} : {}),
+      lamps: spans(parent.waterside.lamps), ...(parent.waterside.palms ? {palms: spans(parent.waterside.palms)} : {}),
+      ...(parent.waterside.marina ? {marina: {...parent.waterside.marina, centre: -(parent.waterside.marina.centre ?? 0)}} : {}),
+      ...(parent.waterside.lighthouse ? {lighthouse: {...parent.waterside.lighthouse, at: parent.waterside.lighthouse.at.map(x => -x)}} : {})}} : {}),
     ...(parent.reviewFrames ? {reviewFrames: parent.reviewFrames.map(f => ({...point(f), label: f.label.replaceAll('on the left','on the right')}))} : {}),
     ...(parent.circuitLandmarks ? {circuitLandmarks: parent.circuitLandmarks.map(p => ({...point(p),
       ...(p.houses ? {houses: p.houses.map(point)} : {}), ...(p.lamps ? {lamps: p.lamps.map(point)} : {}),
       ...(p.id === 'pit-timing' ? {s: 45, lateral: -p.lateral} : {})}))} : {})};
+  if (adjust) changes = adjust(changes, {station, range, spans, place, turn, length});
   let definition = copyCourseDescriptor(parent, changes), kits = null;
   definition = copyCourseDescriptor(definition, {lengthU: buildTrackScript(definition).length});
   const mappedKit = p => {
