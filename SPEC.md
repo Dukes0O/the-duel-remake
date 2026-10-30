@@ -1489,7 +1489,7 @@ Format: **ID Title** · lane · needs · size (S focused session, M two or three
   - Done when: `tools/feel-lab.mjs` records the feel measurements in 10.1. The harness records a real-time scripted race's full audio mix and separate parts, with an aligned event log. `tools/audio-analysis.mjs` measures sync, engine-to-revs tracking, loudness over time, clipping, clicks, panning and variety, and draws spectrogram and loudness images with event markers.
   - Check: deliberately delaying the explosion sound by 100 ms, or freezing engine pitch, makes the analysis fail.
 - [ ] **FND-10 Save fixtures and storage budget** · SAVE · needs FND-05 · M · helpers save_guardian
-  - Done when: `tools/fixtures/saves/` has one fixture per historical save shape (single profile, player list, and each later addition: drivers, courses, race settings, weapons); all load without loss; a storage budget test with maximum content stays under 4 MB for the whole address.
+  - Done when: `tools/fixtures/saves/` has one fixture per historical save shape (single profile, player list, and each later addition: drivers, courses, race settings, weapons); all load without loss; a storage budget test with maximum content stays under 4 MB for the whole address after the start-up move (4.25 MB before it; Kyle, 30 October 2026).
 
 #### Wave 1 – Fix what's broken
 
