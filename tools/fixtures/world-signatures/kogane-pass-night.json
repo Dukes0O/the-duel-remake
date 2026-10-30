@@ -1,11 +1,11 @@
 {
   "kogane-pass-night": {
-    "hash": "41d45bc33931237b9a21feb7d474184aeed7d2a3e067de6025e662ff9e36b825",
-    "nodes": 305,
-    "meshes": 288,
+    "hash": "c6499d1996934952cedfbd6b819076963aeabd93211a6294eacf4281963571a1",
+    "nodes": 304,
+    "meshes": 287,
     "instances": 31457,
-    "geometries": 36,
-    "materials": 29,
+    "geometries": 35,
+    "materials": 28,
     "textures": 15
   }
 }

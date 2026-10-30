@@ -1,11 +1,11 @@
 {
   "kogane-pass-reverse": {
-    "hash": "1dc7109748a2df027ab6c2bbf14c26fc21436f8bb48f83cac96663a5c5167c57",
-    "nodes": 307,
-    "meshes": 290,
+    "hash": "e6f01aa2bd54318f154058ee3bfd357efe162da8e97ddb3f3210223e774a2d33",
+    "nodes": 306,
+    "meshes": 289,
     "instances": 31269,
-    "geometries": 36,
-    "materials": 29,
+    "geometries": 35,
+    "materials": 28,
     "textures": 15
   }
 }
