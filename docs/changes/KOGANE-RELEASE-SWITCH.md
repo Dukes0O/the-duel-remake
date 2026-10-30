@@ -29,7 +29,7 @@ Only what the switch-on requires. Every existing signature, ground-row hash and 
 
 | Fixture | Change | Why |
 | --- | --- | --- |
-| `tools/fixtures/world-signatures/kogane-pass.json` | new | Kogane Pass had no signature because it was dev. First capture at switch-on. |
+| `tools/fixtures/world-signatures/kogane-pass.json` | new | Kogane Pass had no signature because it was dev. First capture at switch-on; recaptured on 30 October after rebasing onto KOGANE-NIGHT-LIGHT, with the same reviewed change as the Night and Reverse refresh (one node, mesh, geometry and material fewer: the dropped wet-road layer; instances and textures unchanged). |
 | `tools/fixtures/world-signatures/kogane-pass-night.json`, `kogane-pass-reverse.json` | none | Captured by the versions card; the scene is unchanged, so the ordinary comparison now runs and passes. |
 | `tools/fixtures/ground-rows-hashes.json` | three entries added (`kogane-pass`, `kogane-pass-night`, `kogane-pass-reverse`) | The ground-rows suite walks every listed course and looks each one up; the versions card said these are added at switch-on. The other entries are byte-identical. |
 | `tools/replays/courses/kogane-pass.json` | new (one duel case, `falcone_f42`, fingerprints at 30, 60 and 144 frames a second) | Every course in the list needs one primary replay case. |
