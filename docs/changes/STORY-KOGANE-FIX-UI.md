@@ -25,7 +25,7 @@ fixes that apply with the switch off too (F7, F8, F10, F12).
   and the app-call workaround are gone.
 - F3 and F11. `src/heli/heli-board.js`, `src/heli/heli-ui.css`: the story row's words ("Race tyres and tea-house supplies: hook the crate by the pad") were
   a second item stacked on the Take job button in the same grid cell, which also squeezed the title. They are now a line of their own under the title,
-  full width. The story row is first in the list while the job is open, with a yellow edge, and once taken the line reads "Fly the crate to Daichi's tea house at Kogane Pass".
+  full width. The story row is first in the list and the dispatch board leads the whole panel while the job is open, with a yellow edge, and once taken the line reads "Fly the crate to Daichi's tea house at Kogane Pass".
 - F7. `src/lessons/drive-lesson-ui.js`: the long dashes between a place and its corners on the lesson board are now " : ", and the empty braking cell
   in the result table says "n/a" instead of a long dash. No long dash is left in `src/lessons`.
 - F9. `src/menu-front-door.js`: a story message with the red dot (Daichi's unread letter, Ana's call) is ranked first on the front door; the rest of the
@@ -36,6 +36,8 @@ fixes that apply with the switch off too (F7, F8, F10, F12).
 - F12. `src/lessons/drive-lesson-ui.css`: on a 740 pixel screen the lesson result card has closer rows, and Leave lesson stays at the bottom of the card as you scroll.
 - Captions. `src/story/story-caption-view.js`: the caption sits at the top of the screen, a little left of centre, 15 px, at most 560 px wide. The top strip between
   the logo and the sound buttons is empty on the menu, garage, lessons, flights and races, so it covers no Story button, plaque, corner list or flight instrument.
+
+- Found by the scenario (not in the fault list): the Skyline had no vehicle socket entry, so its first appearance threw "Unknown vehicle socket layout" in the browser (the harness fails a scenario on any browser error). `src/vehicle-sockets.js` now has its entry, present only with the `nissan-skyline` switch on, as in `src/config.js`. `tools/test-vehicle-sockets.mjs` (keys equal the car list) still passes unchanged.
 
 ## Not done
 

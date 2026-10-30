@@ -66,7 +66,6 @@
 .drive-lesson-runs em { font-style:normal; font-size:12px; color:#6de4a0; }
 .drive-lesson-host button.drive-lesson-suggested strong,.drive-lesson-host button.drive-lesson-suggested em { color:#172027; }
 .drive-lesson-run-keys { display:block; margin:4px 0 8px; font-size:12px; color:#b4c2be; }
-/* The result card on a 720 pixel screen: closer rows, and Leave lesson stays in view at the bottom of the card. */
 @media (max-height:740px) {
   .drive-lesson-result { padding:14px 22px; }
   .drive-lesson-result h2 { margin:0 0 4px; font-size:22px; }
