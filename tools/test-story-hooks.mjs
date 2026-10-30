@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 // The Skyline and the Kogane road exist only while their switches are on; this run asks for them as private QA does.
 globalThis.__DUEL_QA__ = true;
-globalThis.location = {search: '?flags=nissan-skyline,kogane-pass,helicopter,pilot-map,driving-lessons,kogane-invitation'};
+globalThis.location = {search: '?flags=nissan-skyline,kogane-pass,kogane-pass-night,helicopter,pilot-map,driving-lessons,kogane-invitation'};
 globalThis.cancelAnimationFrame ??= () => {};
 const memory = new Map();
 globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v)), removeItem: k => memory.delete(k)};
@@ -15,7 +15,7 @@ const {App} = await import('../src/app.js');
 const {COURSE} = await import('../src/config.js');
 const {createFeatureFlags} = await import('../src/feature-flags.js');
 const {createProfile, normalizeProfile, loadPlayers, isCarUnlocked} = await import('../src/progression.js');
-const {heliOf} = await import('../src/heli/heli-save.js');
+const {heliOf, mapRecordOf, writeMapRecord} = await import('../src/heli/heli-save.js');
 const {STORY_JOB_ID, STORY_NIGHT} = await import('../src/heli/heli-story.js');
 const {koganeStep, storyOf, markKoganeDuel, grantKoganeSkyline, KOGANE_SKYLINE} = await import('../src/story/story-save.js');
 const {KOGANE_DUEL_MARK, KOGANE_DUEL_COURSE, daichiRival} = await import('../src/story/kogane-duel.js');
@@ -25,7 +25,9 @@ const ok = (value, label) => { assert.ok(value, label); checks++; };
 const same = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
 
 // ---- the fixtures ------------------------------------------------------------------------------------------------------------
-const PARTNERS = {'kogane-pass': true, 'nissan-skyline': true, helicopter: true, 'pilot-map': true, 'driving-lessons': true};
+const PARTNERS = {'kogane-pass': true, 'kogane-pass-night': true, 'nissan-skyline': true, helicopter: true, 'pilot-map': true, 'driving-lessons': true};
+// The delivery finds the Night version in the same change as the supplies mark, so a player past it always has it.
+const foundNight = profile => { const map = mapRecordOf(profile); return map.found.includes(STORY_NIGHT) ? profile : writeMapRecord(profile, {...map, found: [...map.found, STORY_NIGHT]}).profile; };
 const flags = (story = true) => createFeatureFlags({storage: null, qa: false, overrides: {...PARTNERS, 'kogane-invitation': story}});
 const TRAINED = Object.freeze({liftoff: true, hover: true, landing: true, carry: true});
 const OWNED = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'kogane-pass'];
@@ -243,7 +245,7 @@ function passLesson(app, {reward = true} = {}) {
 
 // ---- 2. changing the road, the mode or the rival clears the mark -------------------------------------------------------
 {
-  const ready = () => freshApp({edit: profile => ({...profile, story: {version: 1, kogane: {read: true, lesson: true, supplies: true}}})});
+  const ready = () => freshApp({edit: profile => foundNight({...profile, story: {version: 1, kogane: {read: true, lesson: true, supplies: true}}})});
   const startsAsStory = app => {
     ok(app.startCampaign(app.getRaceChoices()), 'started');
     const story = app._storyRace !== null && app.duel.state.rivalSettings?.car === KOGANE_SKYLINE;
@@ -300,7 +302,8 @@ function passLesson(app, {reward = true} = {}) {
   app.returnToMenu();
 
   // A player who has not finished the earlier parts cannot start it.
-  app = freshApp({edit: profile => ({...profile, story: {version: 1, kogane: {read: true, lesson: true}}})});
+  // (given the Night road anyway, so only the story's order can refuse it)
+  app = freshApp({edit: profile => foundNight({...profile, story: {version: 1, kogane: {read: true, lesson: true}}})});
   ok(app.startStoryDuel() === false, 'Race Daichi waits for the supplies');
   ok(app.startCampaign({startStage: COURSE.findIndex(c => c.id === raceRoad), mode: 'duel', story: KOGANE_DUEL_MARK}) && app._storyRace === null, 'and a stray mark does nothing');
 }
@@ -371,7 +374,7 @@ function passLesson(app, {reward = true} = {}) {
 // ---- 4. a newer game's story: no story anywhere ------------------------------------------------------------------------------
 {
   const later = {version: 2, kogane: {read: true, lesson: true, supplies: true, duel: 'hard'}, future: {anything: 1}};
-  const app = freshApp({edit: profile => ({...profile, story: later})});
+  const app = freshApp({edit: profile => foundNight({...profile, story: later})});
   const kept = JSON.stringify(app.profile.story);
   ok(koganeStep(app.profile) === null, 'koganeStep is null for a newer story');
   same(app.storyProps(), {available: false, step: null, read: false, steps: [], fireClosed: null, skylineOwned: false, lead: ''}, 'nothing to show');
@@ -386,7 +389,7 @@ function passLesson(app, {reward = true} = {}) {
 
 // ---- 5. the switch off changes nothing; Kogane not owned ----------------------------------------------------------------------
 {
-  const app = freshApp({story: false});
+  const app = freshApp({story: false, edit: foundNight});
   same(app.storyProps(), {available: false, step: null, read: false, steps: [], fireClosed: null, skylineOwned: false, lead: ''}, 'switch off: no story props');
   ok(app.openStory() === false && app.startStoryDuel() === false && app.koganeStepNow() === null, 'switch off: nothing opens');
   ok(!Object.hasOwn(saved(app), 'story'), 'switch off: no story field is made');

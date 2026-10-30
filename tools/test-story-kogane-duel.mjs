@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 
 // The Skyline is in the car list only while the nissan-skyline switch is on; this run asks for it as private QA does.
 globalThis.__DUEL_QA__ = true;
-globalThis.location = {search: '?flags=nissan-skyline,kogane-pass'};
+globalThis.location = {search: '?flags=nissan-skyline,kogane-pass,kogane-pass-night'};
 globalThis.cancelAnimationFrame ??= () => {};
 const memory = new Map();
 globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v)), removeItem: k => memory.delete(k)};
