@@ -7,8 +7,8 @@ export function mountStoryCaption(app, doc = typeof document !== 'undefined' ? d
   line.id = 'story-caption';
   line.setAttribute('role', 'status');
   line.hidden = true;
-  Object.assign(line.style, {position: 'fixed', left: '50%', bottom: '9%', transform: 'translateX(-50%)', maxWidth: 'min(720px, 90vw)',
-    padding: '10px 16px', background: 'rgba(8, 10, 14, .82)', color: '#f4f1e8', font: '600 17px/1.35 system-ui, sans-serif',
+  Object.assign(line.style, {position: 'fixed', left: '50%', bottom: '2%', transform: 'translateX(-50%)', maxWidth: 'min(660px, 90vw)',
+    padding: '8px 14px', background: 'rgba(8, 10, 14, .86)', color: '#f4f1e8', font: '600 16px/1.3 system-ui, sans-serif',
     borderRadius: '6px', textAlign: 'center', zIndex: '40', pointerEvents: 'none'});
   doc.body.append(line);
   const draw = () => {
