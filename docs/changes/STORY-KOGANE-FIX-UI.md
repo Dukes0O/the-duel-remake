@@ -45,11 +45,10 @@ fixes that apply with the switch off too (F7, F8, F10, F12).
 
 ## Tests
 
-- : passes (28 facts, 22 pictures, 0 browser errors). It now uses the real START button for the Night Duel, checks that picking Kogane Pass Night keeps Rival Duel, that the menu shows the Night road, Rival Duel and the level after Race Daichi, that the story job leads the board and still says where to go once taken.
-- Story screens: 242 checks passed (preview roster).
-Story screens: 206 checks passed.: 2 assertions added (an unread letter and Ana's call come before an open Lab lesson).
-- Lane tier (): 141 of 143 suites passed. The two others, both explained and passing on their own:  read a comment I had put before a rule in the lesson stylesheet as a selector (fixed by moving the comment out; 21 of 21 now pass), and  fails only when started from Git Bash (its tar call), and passes 7 of 7 from PowerShell. A first lane run also stopped on  because the scenario run beside it cleared the shared scratch folder; it passes alone (217 checks).
-- : built.
+- `node tools/browser-harness.mjs scenario story-kogane`: passes (28 facts, 22 pictures, 0 browser errors). It now uses the real START button for the Night Duel, checks that picking Kogane Pass Night keeps Rival Duel, that the menu shows the Night road, Rival Duel and the level after Race Daichi, that the story job leads the board and still says where to go once taken.
+- `node tools/test-story-ui.mjs`: 2 assertions added (an unread letter and Ana's call come before an open Lab lesson).
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): 141 of 143 suites passed. The two others, both explained and passing on their own: `test-drive-lesson-run.mjs` read a comment I had put before a rule in the lesson stylesheet as a selector (fixed by moving the comment out; 21 of 21 now pass), and `test-drive-through.mjs` fails only when started from Git Bash (its tar call), and passes 7 of 7 from PowerShell. A first lane run also stopped on `test-board.mjs` because the scenario run beside it cleared the shared scratch folder; it passes alone (217 checks).
+- `npm run build`: built.
 
 ## Changed assertions
 
