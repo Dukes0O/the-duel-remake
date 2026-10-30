@@ -83,3 +83,5 @@ Nothing is replaced. The old restart behaviour (dropping `story` and the story r
 - "Start the lesson" and "Go to the helipad" open the existing boards; picking the Kogane row there is not done.
 
 Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`): see the line below. `npm run build`: see below.
+
+After the review fixes: lane tier 29 suites passed, 0 failed (--jobs 2); test-story-hooks 141 checks; npm run build built.
