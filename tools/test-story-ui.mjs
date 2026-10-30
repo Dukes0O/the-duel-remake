@@ -23,9 +23,11 @@ const {KOGANE_SKYLINE} = await import('../src/story/story-save.js');
 const {captionText, STORY_LETTER} = await import('../src/story/story-lines.js');
 const {screenMarkup, createMenuScreen} = await import('../src/screen-menu.js');
 const {createGarageScreen} = await import('../src/screen-garage.js');
+const {createArmoryScreen} = await import('../src/screen-armory.js');
+const {createLeaderboardScreen} = await import('../src/screen-leaderboard.js');
 const {createResultsScreen} = await import('../src/screen-results.js');
 const {frontDoorFacts, chooseNextUp, nextUpMarkup, doorList} = await import('../src/menu-front-door.js');
-const {shownCars, shownCarIds, isShownCar} = await import('../src/earned-cars-ui.js');
+const {shownCars, shownCarIds, isShownCar, wonCars} = await import('../src/earned-cars-ui.js');
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -355,10 +357,12 @@ if (!preview) {
       arrow: '', action: (label, verb) => `<button data-action="${verb}">${label}</button>`, clamp: value => Math.max(0, Math.min(1, value))})();
   };
   // Lists.
-  ok(shownCarIds(false).includes(KOGANE_SKYLINE), 'with the story off the Skyline is listed as today');
-  ok(!shownCarIds(false, true).includes(KOGANE_SKYLINE) && !shownCars(true, true).some(([id]) => id === KOGANE_SKYLINE), 'with the story on it is on no list');
-  eq(isShownCar(KOGANE_SKYLINE, false, true), false, 'isShownCar hides it');
-  eq(shownCarIds(false, true).length, shownCarIds(false).length - 1, 'and nothing else');
+  // NISSAN-SKYLINE-GTR-R34-V6: the Skyline is a prize on every list, whatever the story switch says (it was listed with the switch off before).
+  ok(!shownCarIds(false).includes(KOGANE_SKYLINE) && !shownCarIds(true).includes(KOGANE_SKYLINE) && !shownCars(true).some(([id]) => id === KOGANE_SKYLINE), 'the Skyline is on no list');
+  eq(isShownCar(KOGANE_SKYLINE, false), false, 'isShownCar hides it');
+  eq(isShownCar('falcone_f42', false), true, 'and other cars are unaffected');
+  eq(wonCars(createProfile()).length, 0, 'wonCars: nothing for a player without it');
+  eq(wonCars(owned).map(([id]) => id), [KOGANE_SKYLINE], 'wonCars: the Skyline for an owner');
   // The garage.
   let html = garageFor(createProfile(), 'falcone_f42');
   ok(!html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: hidden until owned');
@@ -376,7 +380,7 @@ if (!preview) {
   html = garageFor(wonProfile, KOGANE_SKYLINE, ['nissan-skyline'], props('ana'));
   ok(html.includes(`data-garage-car="${KOGANE_SKYLINE}"`) && !html.includes('Won from') && !html.includes('KOGANE'), 'garage: switch off, an owned Skyline is like any owned car');
   html = garageFor(createProfile(), 'falcone_f42', ['nissan-skyline'], props('duel'));
-  ok(html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: switch off, the list is today\'s');
+  ok(!html.includes(`data-garage-car="${KOGANE_SKYLINE}"`), 'garage: switch off, an unowned Skyline is still not listed');
   // The Deep log lead line sits in the sea-life log.
   const deepApp = stub(flagsOn, props('done', {lead: true}));
   deepApp.getDeepDiscovery = () => ({enabled: true, kit: true, found: [], hintsShown: []});
@@ -402,7 +406,42 @@ if (!preview) {
 ok(picker(owned, false).values.includes(KOGANE_SKYLINE), 'menu: joins the picker once owned');
   const pickerMenu = picker(createProfile());
   ok(pickerMenu.words['garage-count'].startsWith('01 / '), 'menu: the count stays in step');
-  // The results card names the real car.
+  // NISSAN-SKYLINE-GTR-R34-V6: the armory, the scores and the rival picker follow the same rule, whatever the story switch says.
+  const armoryFor = (profile, switches = flagsOn) => createArmoryScreen({profile: () => profile, credits: String, escapeHTML, getGarageMessage: () => '', getArmoryCar: () => 'falcone_f42',
+    kitsEnabled: () => true, featureFlags: stub(switches, null)._switches(), action: () => ''}).yardContent();
+  const carOptions = html => [...html.matchAll(/<option value="([a-z0-9_]+)"/g)].map(match => match[1]);
+  for (const switches of [flagsOn, ['nissan-skyline']]) {
+    ok(!carOptions(armoryFor(createProfile(), switches)).includes(KOGANE_SKYLINE), 'armory: no Skyline for a player without it');
+    ok(carOptions(armoryFor(owned, switches)).includes(KOGANE_SKYLINE), 'armory: the Skyline for an owner');
+  }
+  const scoresFor = (profile, switches = flagsOn) => {
+    const app = stub(switches, null); app.profile = profile; app.player = {id: 'p1', name: 'Tester'}; app.getMenuSeed = () => 1; app.getMenuRouteLabel = () => 'Route'; app.leaderboard = {entries: []};
+    return createLeaderboardScreen({app, boardFilter: {stage: 0, car: '', driverId: 'club', mode: '', laps: 2}, escapeHTML, credits: String, time: String})();
+  };
+  for (const switches of [flagsOn, ['nissan-skyline']]) {
+    ok(!carOptions(scoresFor(createProfile(), switches)).includes(KOGANE_SKYLINE), 'scores: no Skyline in the car list for a player without it');
+    ok(carOptions(scoresFor(owned, switches)).includes(KOGANE_SKYLINE), 'scores: the Skyline for an owner');
+  }
+  ok(!screenMarkup({choices: {car: 'falcone_f42'}, arrow: '', sound: true, escapeHTML, earnedCars: false}).includes(`value="${KOGANE_SKYLINE}"`), 'menu picker markup: no Skyline');
+  eq(shownCars(false).filter(([, car]) => car.price > 0 || car.unlockRequirement).some(([id]) => id === KOGANE_SKYLINE), false, 'EARNABLE CARS does not count the Skyline');
+  // The rival picker: the story sets Daichi itself, so the player's own picker offers the Skyline only to an owner.
+  const rivalPicker = (profile, rival) => {
+    const app = stub(flagsOn, props('duel'));
+    const options = shownCarIds(false).map(value => ({value, remove() { options.splice(options.indexOf(this), 1); }}));
+    const carSelect = {options, value: '', append(option) { options.push({value: option.value}); }};
+    const rivalOptions = [{value: 'match'}, ...shownCars(false).map(([value]) => ({value}))];
+    rivalOptions.forEach(option => { option.remove = function () { rivalOptions.splice(rivalOptions.indexOf(this), 1); }; });
+    const rivalSelect = {options: rivalOptions, value: '', append(option) { rivalOptions.push({value: option.value, remove() { rivalOptions.splice(rivalOptions.indexOf(this), 1); }}); }};
+    const doc = fakeDocument(), root = doc.make(); root.ownerDocument = doc;
+    const choices = {car: 'falcone_f42', ...(rival ? {rival} : {})};
+    createMenuScreen({app, choices, ui: {'car-select': carSelect, 'rival-car': rivalSelect, 'driver-select': {innerHTML: '', value: ''}, 'entry-reward': {}}, profile: () => profile,
+      credits: String, escapeHTML, text() {}, root, coursePreview: {}, time: String, onEntryReward() {}}).updateMenuCar();
+    return {values: rivalOptions.map(option => option.value), choices};
+  };
+  ok(!rivalPicker(createProfile()).values.includes(KOGANE_SKYLINE), 'rival picker: no Skyline for a player without it');
+  ok(rivalPicker(owned).values.includes(KOGANE_SKYLINE), 'rival picker: the Skyline for an owner');
+  eq(rivalPicker(createProfile(), {car: KOGANE_SKYLINE, driverId: 'club', upgradeLevel: 0}).choices.rival.car, 'match', 'a saved Skyline rival falls back to match for a player without it');
+  eq(rivalPicker(owned, {car: KOGANE_SKYLINE, driverId: 'club', upgradeLevel: 0}).choices.rival.car, KOGANE_SKYLINE, 'and is kept for an owner');  // The results card names the real car.
   const results = createResultsScreen({app: stub(flagsOn, null), profile: createProfile, credits: String, escapeHTML, time: String, arrow: ''});
   const winHtml = results({status: 'stage_result', stageIndex: 0, mode: 'duel', cpuDifficulty: 'medium', difficulty: 'casual',
     results: {won: true, story: ui.STORY_RACE_MARK, storyCar: KOGANE_SKYLINE}});

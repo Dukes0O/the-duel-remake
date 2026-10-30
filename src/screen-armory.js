@@ -1,5 +1,5 @@
 import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST} from './weapon-upgrades.js';
-import {shownCars} from './earned-cars-ui.js';
+import {shownCars, wonCars} from './earned-cars-ui.js';
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
 import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitDetails, ownsArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
@@ -60,7 +60,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
       `${equippedDetails.name.toUpperCase()} EQUIPPED (${equipped === 'side-saws'
         ? '1.6× SIDE DAMAGE' : equipped === 'turret-look' ? 'LOOK ONLY' : `+${equippedDetails.armor} ARMOR`})`;
     const equippedText = kitText + (roofLook ? ' / CHROME CROWN' : '');
-    const cars = shownCars(featureFlags?.enabled?.('earned-cars') === true).map(([id, item]) =>
+    const cars = [...shownCars(featureFlags?.enabled?.('earned-cars') === true), ...wonCars(saved)].map(([id, item]) =>
       `<option value="${id}" ${id === car ? 'selected' : ''}>${escapeHTML(item.name)}${isCarUnlocked(saved, id) ? '' : ' · LOCKED'}</option>`).join('');
     const choices = [...Object.entries(ARMOR_KITS), ...earned].map(([id, kit]) => {
       const owned = ownsArmorKit(saved, car, id);

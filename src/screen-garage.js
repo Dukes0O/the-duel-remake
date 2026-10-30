@@ -12,9 +12,8 @@ import {driverPanel, driverSkillLabel} from './driver-ui.js';
 import {getEquippedDriverId, applyDriverModifiers, DRIVERS} from './drivers.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {medalRequirement} from './medals.js';
-import {KOGANE_SKYLINE} from './story/story-save.js';
 import {storyOn, storyView, storyGaragePanel, skylinePlaque, storyLeadLine} from './story/story-ui.js';
-import {shownCars, medalProgressLabel, medalSheetPanel, medalUnlockCard, medalChip, MEDAL_REWARD_NOTE} from './earned-cars-ui.js';
+import {shownCars, wonCars, medalProgressLabel, medalSheetPanel, medalUnlockCard, medalChip, MEDAL_REWARD_NOTE} from './earned-cars-ui.js';
 import {tuneRows, tunePanel, stepIn, resetTuneIn} from './lab/tune-view.js'; // LAB-TUNE-VIEW
 
 export function createGarageScreen({app, profile, credits, escapeHTML, getGarageCar, getGarageMessage, arrow, action, clamp}) {
@@ -76,8 +75,8 @@ function garageScreen() {
   // Earned cars (docs/EARNED_CARS.md): hidden everywhere while the switch is off.
   // STORY-KOGANE-SCREENS: the Skyline is a prize; it is listed only once won, as the Sirena is.
   const storyCarsOn = storyOn(app);
-  const earnedOn = app._switches?.().enabled('earned-cars') === true, listed = shownCars(earnedOn, storyCarsOn);
-  if(storyCarsOn && Object.hasOwn(CARS, KOGANE_SKYLINE) && isCarUnlocked(saved, KOGANE_SKYLINE)) listed.push([KOGANE_SKYLINE, CARS[KOGANE_SKYLINE]]);
+  const earnedOn = app._switches?.().enabled('earned-cars') === true, listed = shownCars(earnedOn);
+  listed.push(...wonCars(saved));
   // LAB-FAN-VIEW: the secret car has no locked garage row.
   if(app._switches?.().enabled('lab')===true && isCarUnlocked(saved,'mcmurtry_speirling')) listed.push(['mcmurtry_speirling',CARS.mcmurtry_speirling]);
   if(app._switches?.().enabled('lab')===true && app._switches?.().enabled('the-deep')===true && isCarUnlocked(saved,'falcone_sirena')) listed.push(['falcone_sirena',CARS.falcone_sirena]);

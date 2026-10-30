@@ -9,7 +9,11 @@ export const PAINT_PRESETS=Object.freeze({
   frost:Object.freeze({id:'frost',name:'Frost',finish:'Frosted reward',price:0,reward:'yeti',appearance:Object.freeze({id:'frost',name:'Frost',color:0xdce8f0,metalness:.1,roughness:.55})}),
   'sea-wreck':Object.freeze({id:'sea-wreck',name:'Sea wreck',finish:'As raised from the sea',price:0,car:'falcone_sirena',appearance:Object.freeze({id:'sea-wreck',name:'Sea wreck',color:0xffffff,metalness:.035,roughness:.94,clearcoat:0,clearcoatRoughness:.14})}),
   'restored-1966':Object.freeze({id:'restored-1966',name:'Restored 1966',finish:'Rebuild and factory red paint',price:1500,car:'falcone_sirena',appearance:Object.freeze({id:'restored-1966',name:'Restored 1966',color:0x9c1217,metalness:.22,roughness:.27,clearcoat:.85,clearcoatRoughness:.14})}),
-  factory:Object.freeze({id:'factory',name:'Factory',finish:'Original finish',price:0,appearance:null}),
+  // The Nissan Skyline's three extra finishes (docs/cars/nissan-skyline-gtr-r34.md 8.2), for that car only. The values equal SKYLINE_PAINTS in
+  // src/skyline-vehicle.js (tools/test-skyline-handling.mjs checks it). Bayside Blue is its factory finish. Appearance only.
+  skyline_white:Object.freeze({id:'skyline_white',name:'Skyline White',finish:'Pearl white',price:250,car:'nissan_skyline_gtr_r34',appearance:Object.freeze({id:'skyline_white',name:'Skyline White',color:0xe8e8e2,metalness:.35,roughness:.29,clearcoat:.9,clearcoatRoughness:.16})}),
+  skyline_silver:Object.freeze({id:'skyline_silver',name:'Sonic Silver',finish:'Light metallic',price:250,car:'nissan_skyline_gtr_r34',appearance:Object.freeze({id:'skyline_silver',name:'Sonic Silver',color:0xb4bac0,metalness:.55,roughness:.26,clearcoat:.9,clearcoatRoughness:.16})}),
+  skyline_black:Object.freeze({id:'skyline_black',name:'Midnight Black',finish:'Deep gloss',price:250,car:'nissan_skyline_gtr_r34',appearance:Object.freeze({id:'skyline_black',name:'Midnight Black',color:0x16181b,metalness:.30,roughness:.2,clearcoat:1,clearcoatRoughness:.1})}),  factory:Object.freeze({id:'factory',name:'Factory',finish:'Original finish',price:0,appearance:null}),
   copper_metallic:Object.freeze({id:'copper_metallic',name:'Copper Metallic',finish:'Warm metallic gloss',price:250,appearance:Object.freeze({id:'copper_metallic',name:'Copper Metallic',color:0xb97046,metalness:.65,roughness:.24,clearcoat:1,clearcoatRoughness:.10})}),
   glacier_satin:Object.freeze({id:'glacier_satin',name:'Glacier Satin',finish:'Pale blue-grey satin',price:400,appearance:Object.freeze({id:'glacier_satin',name:'Glacier Satin',color:0xb9d0d2,metalness:.22,roughness:.48,clearcoat:.35,clearcoatRoughness:.28})}),
   titan_gold:Object.freeze({id:'titan_gold',name:'Hollow Gold',finish:'Gold metallic reward',price:0,reward:'muddy-hollow',car:'titan_monster',appearance:Object.freeze({id:'titan_gold',name:'Hollow Gold',color:0xd8a72e,metalness:.82,roughness:.2,clearcoat:1,clearcoatRoughness:.08})}),
@@ -35,10 +39,11 @@ function rewardIds(profile,car,{muddyHollowEnabled=false,yetiEnabled=false,inclu
     ...(ownsCar(profile,car)&&hasAllPearls(profile)?['pearl_white']:[])];
 }
 const sirenaIds=['sea-wreck','restored-1966'];
+const skylineIds=['skyline_white','skyline_silver','skyline_black'];
 const sirenaOn=options=>options?.labEnabled===true&&options?.deepEnabled===true;
 function allowedIds(profile,car,options){
   if(car==='falcone_sirena'&&sirenaOn(options))return sirenaIds;
-  return [...ordinaryIds,...rewardIds(profile,car,options)];
+  return [...ordinaryIds,...(car==='nissan_skyline_gtr_r34'?skylineIds:[]),...rewardIds(profile,car,options)];
 }
 export function normalizePaintState(value,allowed=ordinaryIds){
   const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
