@@ -37,5 +37,5 @@ export function distanceFinishingPay(oldPay, stage, laps, mode, enabled = false)
 }
 export function raceDistanceLabel(stage, laps, mode) {
   const {kilometres,multiplier} = raceDistance(stage,laps,mode);
-  return `${laps} laps · ${kilometres.toFixed(1)} km · x${multiplier.toFixed(2)}`;
+  return `${laps} ${laps===1?'lap':'laps'} · ${kilometres.toFixed(1)} km · x${multiplier.toFixed(2)}`;
 }

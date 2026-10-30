@@ -279,6 +279,8 @@ ok(!createFeatureFlags({storage: null, qa: true}).enabled('kogane-invitation'), 
     clean(text(html), `${step} Next up`);
   }
   eq(chooseNextUp({...facts(props('lesson')), labLesson: {name: 'Lift and weight'}}).kind, 'lab', 'a Lab lesson still comes first');
+  eq(chooseNextUp({...facts(props('invite')), labLesson: {name: 'Lift and weight'}}).kind, 'story', 'an unread letter comes before an open Lab lesson (F9)');
+  eq(chooseNextUp({...facts(props('ana')), labLesson: {name: 'Lift and weight'}}).kind, 'story', 'Ana message comes before an open Lab lesson (F9)');
   eq(chooseNextUp({...facts(props('lesson')), course: {name: 'High Country'}}).kind, 'story', 'the story comes before a new course');
   const screen = screenMarkup({choices: {car: 'falcone_f42', cpuDifficulty: 'easy', difficulty: 'casual', startStage: 0}, arrow: '', sound: true, escapeHTML,
     frontDoor: {facts: facts(props('invite'))}});

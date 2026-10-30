@@ -38,6 +38,8 @@
 .heli-board .heli-board-pay,.heli-board .heli-board-pickup{grid-column:1;color:var(--muted,#b6b1a5);font-size:11px}
 .heli-board .heli-board-button,.heli-board .heli-board-note{grid-column:2;grid-row:1 / span 2;align-self:center}
 .heli-board .heli-board-done{opacity:.6}
+.heli-board .heli-board-hint{grid-column:1 / -1;color:var(--muted,#b6b1a5);font-size:11px;line-height:1.3}
+.heli-board .heli-board-story{border-left:2px solid #ffcf3f;padding-left:6px}
 .heli-board-title{margin:0;font-size:9px;letter-spacing:2.5px;font-weight:750;color:var(--muted,#b6b1a5)}
 .heli-board-race{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:13px}
 .heli-board-host[hidden]{display:none}

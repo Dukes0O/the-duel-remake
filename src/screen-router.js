@@ -144,7 +144,7 @@ const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textConten
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
 
-const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor});
+const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor, onRaceSetup:()=>refreshRaceSetup()});
 const {updateMenuCar, updateMenuScene, updatePlayers} = menuScreen;
 const playerScreen = createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage:()=>playerMessage, getBackupMessage:()=>backupMessage});
 const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML, credits, time});

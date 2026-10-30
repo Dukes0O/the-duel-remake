@@ -14,7 +14,7 @@ const kilometres = course => (course.lengthU / 1000).toFixed(2).replace(/0$/, ''
 export function grandPrixCourseDescription(course,laps=course.grandPrixLaps||3) {
   const fieldSize = course.fieldSize || 8;
   if (course.closed === false) return `${kilometres(course)} km · ${fieldSize} cars · ONE RUN.`;
-  return `${kilometres(course)} km per lap · ${fieldSize} cars · ${laps} laps.`;
+  return `${kilometres(course)} km per lap · ${fieldSize} cars · ${laps} ${laps===1?'lap':'laps'}.`;
 }
 
 function classicDescription(course,laps) {

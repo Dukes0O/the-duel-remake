@@ -113,7 +113,7 @@ export function driveLessonBoardMarkup(props = {}) {
   const choices = model.courses.map(course => `<label class="drive-lesson-course">
     <input type="radio" name="drive-lesson-course" data-drive-course="${escape(course.id)}"
       ${model.selected?.id === course.id ? 'checked' : ''}>
-    <span>${escape(course.name)} — ${escape(course.cornerName)}</span></label>`).join('');
+    <span>${escape(course.name)} : ${escape(course.cornerName)}</span></label>`).join('');
   const best = model.bestMargin == null || model.byId ? '' : `<p>Best: ${seconds(model.bestMargin)} faster</p>`;
   const car = model.car ? escape(model.car.name) : 'Choose an unlocked car';
   const difficulty = props.difficulty === 'pro' ? 'Pro' : props.difficulty === 'casual' ? 'Casual' : 'Choose a setting';
@@ -124,7 +124,7 @@ export function driveLessonBoardMarkup(props = {}) {
       info.courses.map(course => `<label class="drive-lesson-course">
     <input type="radio" name="drive-lesson-course-${id}" data-drive-lesson="${id}" data-drive-course="${escape(course.id)}"
       ${info.selected?.id === course.id ? 'checked' : ''}>
-    <span>${escape(course.name)} — ${escape(course.cornerName)}</span></label>`).join('')}</fieldset>` : '';
+    <span>${escape(course.name)} : ${escape(course.cornerName)}</span></label>`).join('')}</fieldset>` : '';
     return pick;
   }).join('') : '';
   return `<section class="drive-lesson-board" aria-label="Driving instructor">
@@ -255,7 +255,7 @@ export function driveLessonResultMarkup(props = {}) {
     <h2>${passed(lesson) ? 'Lesson passed' : result.passed ? 'Run passed' : lesson.failed ? 'Try again' : 'Practice complete'}</h2>
     <p>${result.finished ? 'You ' + seconds(result.elapsedSeconds) : 'Did not finish'}. Instructor ${seconds(lesson.instructor.timeSec)}</p>
     ${runPicker(lesson)}
-    <div class="drive-lesson-results-scroll"><table><thead><tr><th>Corner</th><th>Braking</th><th>Speed / target</th><th>Tyres</th></tr></thead><tbody>${rows(result.corners).map(c => `<tr><th>${escape(c.name)}</th><td>${c.checks?.brake == null ? '—' : c.checks.brake ? '✓' : '✗'} ${c.kind === 'flat' ? 'No brake needed' : c.kind === 'lift' ? 'Lift only' : c.brakeDeltaM == null ? 'No brake press' : Math.abs(c.brakeDeltaM).toFixed(0) + ' m ' + (c.brakeDeltaM > 0 ? 'late' : 'early')}</td><td>${c.checks?.speed ? '✓' : '✗'} ${c.minMph == null ? 'Not reached' : speedKph(c.minMph) + ' / ' + formatSpeed(c.targetMph)}</td><td>${c.checks?.quiet ? '✓ Quiet' : '✗ Slid'} / ${(c.screechSeconds ?? 0).toFixed(1)} s</td></tr>`).join('')}</tbody></table></div><p class="drive-lesson-advice">${escape(driveLessonDisplayAdvice(result.corners))}</p>
+    <div class="drive-lesson-results-scroll"><table><thead><tr><th>Corner</th><th>Braking</th><th>Speed / target</th><th>Tyres</th></tr></thead><tbody>${rows(result.corners).map(c => `<tr><th>${escape(c.name)}</th><td>${c.checks?.brake == null ? 'n/a' : c.checks.brake ? '✓' : '✗'} ${c.kind === 'flat' ? 'No brake needed' : c.kind === 'lift' ? 'Lift only' : c.brakeDeltaM == null ? 'No brake press' : Math.abs(c.brakeDeltaM).toFixed(0) + ' m ' + (c.brakeDeltaM > 0 ? 'late' : 'early')}</td><td>${c.checks?.speed ? '✓' : '✗'} ${c.minMph == null ? 'Not reached' : speedKph(c.minMph) + ' / ' + formatSpeed(c.targetMph)}</td><td>${c.checks?.quiet ? '✓ Quiet' : '✗ Slid'} / ${(c.screechSeconds ?? 0).toFixed(1)} s</td></tr>`).join('')}</tbody></table></div><p class="drive-lesson-advice">${escape(driveLessonDisplayAdvice(result.corners))}</p>
     ${driveLessonGold(lesson.bestMargin) ? '<p>Gold</p>' : ''}
     ${passed(lesson) && props.lessonSaveFailed ? '<button type="button" data-drive-action="retry-save">Retry save</button>' : ''}
     <button type="button" data-drive-action="leave">Leave lesson</button></section>`;

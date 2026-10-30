@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { featureFlags } from './feature-flags.js';
 
 // Model-local metres. Every car uses its authored size, then a small adjustment
 // for its nose, roof and body center. +Z is forward on all eleven vehicle models.
@@ -17,6 +18,8 @@ const ADJUSTMENTS = Object.freeze({
   bugatti_bolide: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
   falcone_sirena: Object.freeze({ frontY: 0.34, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }),
   mcmurtry_speirling: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
+  // The Kogane prize car exists only with its switch on (as in config.js); without sockets its first appearance in a race or garage threw.
+  ...(featureFlags.enabled('nissan-skyline') ? { nissan_skyline_gtr_r34: Object.freeze({ frontY: 0.46, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }) } : {}),
 });
 
 export const VEHICLE_SOCKET_KEYS = Object.freeze(Object.keys(ADJUSTMENTS));

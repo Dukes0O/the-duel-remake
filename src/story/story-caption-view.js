@@ -1,4 +1,4 @@
-// The story's caption line (docs/story/kogane-invitation.md section 6): the words of a radio caption, low on the screen, for
+// The story's caption line (docs/story/kogane-invitation.md section 6): the words of a radio caption, at the top of the screen, for
 // their reading time. Words only: nothing here changes a race, a flight or a save. Browser only; a game with no page does not call it.
 // The app keeps the current caption in `app.storyCaption` ({id, text, readMs} or null) and says so with a `storyCaption` event.
 export function mountStoryCaption(app, doc = typeof document !== 'undefined' ? document : null) {
@@ -7,8 +7,10 @@ export function mountStoryCaption(app, doc = typeof document !== 'undefined' ? d
   line.id = 'story-caption';
   line.setAttribute('role', 'status');
   line.hidden = true;
-  Object.assign(line.style, {position: 'fixed', left: '50%', bottom: '2%', transform: 'translateX(-50%)', maxWidth: 'min(660px, 90vw)',
-    padding: '8px 14px', background: 'rgba(8, 10, 14, .86)', color: '#f4f1e8', font: '600 16px/1.3 system-ui, sans-serif',
+  // At the very top, a little left of centre: the strip between the logo and the sound buttons is empty on the menu, the garage, the
+  // lessons, the flights and the races, so the caption covers no button, plaque, list or instrument.
+  Object.assign(line.style, {position: 'fixed', left: '46%', top: '6px', transform: 'translateX(-50%)', maxWidth: 'min(560px, 80vw)',
+    padding: '7px 12px', background: 'rgba(8, 10, 14, .86)', color: '#f4f1e8', font: '600 15px/1.3 system-ui, sans-serif',
     borderRadius: '6px', textAlign: 'center', zIndex: '40', pointerEvents: 'none'});
   doc.body.append(line);
   const draw = () => {

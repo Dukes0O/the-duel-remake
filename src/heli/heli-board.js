@@ -32,7 +32,9 @@ function jobRow(job, mode, {survey = null, skins = null} = {}) {
   let button = '';
   // The recovery job (section 5.3) is taken and dropped like the day's jobs.
   const note = job.recovery && !job.taken ? `<span class="heli-board-note">Hook the car on the slope</span>`
-    : story && !job.taken ? `<span class="heli-board-note">Race tyres and tea-house supplies: hook the crate by the pad</span>` : '';
+    : '';
+  // The story's job keeps its words on a line of their own under the title, before and after it is taken, so the button never sits on them.
+  const hint = story && !job.done ? `<span class="heli-board-hint">${job.taken ? 'Fly the crate to Daichi&#39;s tea house at Kogane Pass' : 'Race tyres and tea-house supplies: hook the crate by the pad'}</span>` : '';
   if (own) button = `<button type="button" class="heli-board-button" data-heli-board="take:own">Fly my car</button>`;
   else if (job.done) button = `<span class="heli-board-note">Done today</span>`;
   else if (job.taken) button = `<button type="button" class="heli-board-button heli-board-drop" data-heli-board="drop">Drop job</button>`;
@@ -48,11 +50,11 @@ function jobRow(job, mode, {survey = null, skins = null} = {}) {
       (survey.canReport ? `<button type="button" class="heli-board-button heli-board-report" data-heli-board="survey-report">Report</button>` : '') + button;
   }
   button = note + button;
-  return `<li class="heli-board-job heli-board-${state}${own ? ' heli-board-own' : ''}" data-job="${esc(job.id)}">` +
+  return `<li class="heli-board-job heli-board-${state}${own ? ' heli-board-own' : ''}${story ? ' heli-board-story' : ''}" data-job="${esc(job.id)}">` +
     `<span class="heli-board-text">${esc(title)}</span>` +
     `<span class="heli-board-pay">${esc(pay)}</span>` +
     (pickUp ? `<span class="heli-board-pickup">${esc(pickUp)}</span>` : '') +
-    `${button}</li>`;
+    `${button}${hint}</li>`;
 }
 
 // H2 Fire (docs/HELI_FIRE.md section 9). The board never lists fires; its
@@ -199,9 +201,12 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
     parts.push('<div class="heli-board-map"><button type="button" class="heli-board-button" data-heli-board="map">Pilot\'s map</button></div>');
   const labPanel = labBox(view, lab);
   if (labPanel) parts.push(labPanel);
-  if (jobs.length && atHomePad(view))
-    parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
-      `${jobs.map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`);
+  if (jobs.length && atHomePad(view)) {
+    const jobsPart = `<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
+      `${[...jobs].sort((a, b) => !!b.story - !!a.story).map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`;
+    // While the story's job is waiting or in hand, the dispatch board leads the panel so the job is the first thing seen.
+    if (jobs.some(job => job.story && !job.done)) parts.unshift(jobsPart); else parts.push(jobsPart);
+  }
   if (offer) {
     const course = HELI_DESTINATIONS[offer.courseId]?.name ?? offer.courseId;
     parts.push(`<div class="heli-board-race"><span class="heli-board-text">${esc(CARS[offer.carId]?.name ?? 'Your car')} is set down at ${esc(course)}.</span>` +

@@ -172,8 +172,8 @@ export function storyResultMarkup(result, {on = false, carName = STORY_PRIZE_NAM
 }
 
 // The Story card on screen. `host` is the stage; `actions` says where each step's button goes
-// (the menu wires the instructor board and the helipad; the duel goes through `app.startStoryDuel()`).
-export function createStoryUi({host, app, actions = {}, onChange = () => {}}) {
+// (the menu wires the instructor board and the helipad; the duel goes through `app.startStoryDuel()`, then `onRaceSetup` lets the menu show it).
+export function createStoryUi({host, app, actions = {}, onChange = () => {}, onRaceSetup = null}) {
   // The look loads only when the Story card exists (the switch is on); tests without a browser skip it.
   if (typeof document !== 'undefined') import('./story-ui.css').catch(() => {});
   let layer = null;
@@ -201,7 +201,7 @@ export function createStoryUi({host, app, actions = {}, onChange = () => {}}) {
       if (target.disabled) return;
       const id = target.dataset.storyStep;
       close();
-      if (id === 'duel') app.startStoryDuel?.();
+      if (id === 'duel') { if (app.startStoryDuel?.()) onRaceSetup?.(); }
       else actions[id]?.();
     });
     layer.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); close(); } });
