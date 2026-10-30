@@ -1472,3 +1472,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged STORY-NIGHT-TESTS (STORY-NIGHT-TESTS merged (lane 19/19, hooks 144 on the Night road, build ok)).
 - 28 Oct night: merged NISSAN-SKYLINE-GTR-R34-V6 (NISSAN-SKYLINE-GTR-R34-V6 merged (lane 88/88, build ok, review approve)).
 - 28 Oct night: merged STORY-KOGANE-FINISH (STORY-KOGANE-FINISH play-through merged (scenario added; release held for F1, F2, F4, F5)).
+- 28 Oct night: merged KOGANE-NIGHT-LIGHT (KOGANE-NIGHT-LIGHT merged (lane 49/49, build ok, look reviewed)).
