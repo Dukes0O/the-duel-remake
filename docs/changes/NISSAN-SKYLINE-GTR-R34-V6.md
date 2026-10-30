@@ -38,3 +38,7 @@ The card was planned as "buy rule, garage and shop". The Kogane story (`docs/sto
 
 - No look check in the browser pane (the FINISH card plays the chain). The armour kit model for the Skyline and the garage preview art belong to other cards.
 - A Skyline owner's rival picker option and the armory entry were tested with plain stand-ins, not seen on screen.
+
+## Claude's review (28 October 2026, night)
+
+Independent review: approve, no faults (only the story grant adds the car; owners keep full use; other cars unchanged; old saves fall back). Rule 18 written review: paint catalog 8 to 11 for the three finishes; story-ui checks now require the Skyline hidden until owned, as the card asks (stricter, not looser); handling test message text only.
