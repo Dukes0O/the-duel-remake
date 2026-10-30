@@ -81,3 +81,6 @@ replay fingerprint moved.
 
 - `wetRoad` on Kogane Pass (its lamp-pool mesh and glossy road). The old
   Kogane signature values for Night and Reverse, replaced.
+## Claude's review (28 October 2026, night)
+
+Claude reviewed the before/after sheet: dusk tea house and heli landing circle now readable, Night walls, rails and trees show at the Tea House hairpin, still night. World signatures for kogane-pass-night and -reverse refreshed after this reviewed visual difference; all others identical. Lost: lamp pools on the village road (wetRoad removed); follow-up: bring pools back without the wet road. No assertion changed.
