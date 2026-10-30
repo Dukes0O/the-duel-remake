@@ -39,8 +39,11 @@ export function frontDoorFacts({profile, flags, wastelandOpen = false, heliOn = 
 
 // The first match in the ordered list wins. Each answer says where a click goes.
 export function chooseNextUp(facts = {}) {
+  // A message waiting (Daichi's unread letter, Ana's call, the ones with the red dot) comes first; the rest of the story follows an open Lab lesson.
+  const story = facts.story ? storyNextUp(facts.story) : null;
+  if (story?.dot) return story;
   if (facts.labLesson) return {kind: 'lab', action: 'lab-open', text: `A Lab lesson is open: ${facts.labLesson.name}. Go and try it.`};
-  if (facts.story && storyNextUp(facts.story)) return storyNextUp(facts.story);
+  if (story) return story;
   if (facts.course) return {kind: 'course', action: 'courses', text: `You can afford a new course: ${facts.course.name}. See it in Courses.`};
   if (facts.hold) return {kind: 'hold', action: 'wasteland-visit', text: `${facts.hold.name}'s hold is nearly yours. Go back to the Wasteland and finish it.`};
   if (facts.heliJob) return {kind: 'heli', action: 'heli-visit', text: `A helicopter job is waiting: ${facts.heliJob.name}.`};
