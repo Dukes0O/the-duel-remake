@@ -79,3 +79,7 @@ None.
 ## Removed
 
 Nothing. The raw pictures of the runs were deleted at the end (`.evidence/`); one contact sheet of the pictures went to Claude's scratchpad.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed the 23-frame sheet: chain plays end to end; story text sizes and caption bar fixed in src/story. Release held: F1 Race Daichi does not refresh the menu, F2 picking the Night road flips to Grand Prix, F4/F5 Kogane night and heli dusk too dark; plus F3, F7, F8, F10, F11, F12 and caption overlaps. The story-kogane scenario fails F2 on purpose until fixed.
