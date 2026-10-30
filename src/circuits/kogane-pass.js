@@ -316,7 +316,7 @@ export const KOGANE_PASS = defineScriptedCourse({
 });
 
 export const manifest = Object.freeze({
-  id: 'kogane-pass', flag: 'kogane-pass', state: 'dev', price: 2200,
+  id: 'kogane-pass', flag: 'kogane-pass', state: 'on', price: 2200,
   grandPrix: true, releaseOrder: 13,
   driver: Object.freeze({car: 'stuttgart_959s', driverId: 'club', controller: 'racing-line', skill: .95}),
 });

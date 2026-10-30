@@ -62,6 +62,6 @@ function climbFields(changes, {station, range, spans, place, length}) {
 }
 
 export const {definition, manifest} = reverseVariant(KOGANE_PASS, parentManifest, {
-  id: 'kogane-pass-reverse', name: 'Kogane Pass Reverse', releaseOrder: 16,
+  id: 'kogane-pass-reverse', name: 'Kogane Pass Reverse', releaseOrder: 16, state: 'on',
   placements: climbPlacements, adjust: climbFields,
 });

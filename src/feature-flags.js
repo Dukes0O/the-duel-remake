@@ -16,7 +16,7 @@ export const FEATURE_STATES = Object.freeze({
   'tyre-slip': 'dev',
   // Engines that pull like real ones (docs/DRIVING_LESSONS.md 12.5): the pull follows revs and the gear. Off in the game.
   'engine-curve': 'dev',
-  'nissan-skyline': 'dev',
+  'nissan-skyline': 'on',
   'driving-lessons': 'on',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'cpu-racecraft': 'on', 'grand-prix-career': 'on', 'snow-world': 'dev',
@@ -31,7 +31,7 @@ export const FEATURE_STATES = Object.freeze({
   'forest-fire': 'on',
   // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
   'earned-cars': 'dev',
-  'nissan-skyline': 'dev',
+  'nissan-skyline': 'on',
   // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Released 26 October 2026; works only with the helicopter on.
   rescue: 'on',
   // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Off in the game.
@@ -53,7 +53,7 @@ export const FEATURE_STATES = Object.freeze({
   // MENU-FRONT-DOOR: the main menu as a front door (Drive card, Next up, eight doors). Off in the game until Kyle has tried it.
   'menu-front-door': 'dev',
   // STORY-KOGANE-SCREENS: the Kogane Invitation story (docs/story/kogane-invitation.md). Off in the game; also needs Kogane Pass and its Night version, the Nissan Skyline, the helicopter, the pilot's map and driving lessons.
-  'kogane-invitation': 'dev',
+  'kogane-invitation': 'on',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

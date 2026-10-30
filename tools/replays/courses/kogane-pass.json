@@ -1,0 +1,19 @@
+{
+  "eventId": "kogane-pass",
+  "cases": [
+    {
+      "id": "kogane-pass-duel",
+      "eventId": "kogane-pass",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "kogane-pass-duel": {
+      "30": "43a90acc2e464b4692ebb57beb7f7eaaf903475f3d27e6a56dc83e2cf284cc69",
+      "60": "43a90acc2e464b4692ebb57beb7f7eaaf903475f3d27e6a56dc83e2cf284cc69",
+      "144": "43a90acc2e464b4692ebb57beb7f7eaaf903475f3d27e6a56dc83e2cf284cc69"
+    }
+  }
+}
