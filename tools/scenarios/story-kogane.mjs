@@ -310,7 +310,7 @@ export async function run(context) {
   await click('[data-story-step="duel"]');
   await wait(900);
   const setup = await app(`({c: app.getRaceChoices(), pending: !!app._storyPending, shown: document.querySelector('#scene-select')?.selectedOptions[0]?.textContent,
-    modes: [...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode), level: [...document.querySelectorAll('[data-cpu-difficulty][aria-pressed="true"]')].map(b => b.dataset.cpuDifficulty)})`);
+    modes: [...new Set([...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode))], level: [...new Set([...document.querySelectorAll('[data-cpu-difficulty][aria-pressed="true"]')].map(b => b.dataset.cpuDifficulty))]})`);
   report.raceDaichiMenu = setup;
   fact(setup.pending && setup.c.mode === 'duel' && setup.c.cpuDifficulty === 'easy', '"Race Daichi" fills the setup in the app: Rival Duel, Easy');
   // F1 and F2: the menu itself shows Kogane Pass Night, Rival Duel and Easy, and the story mark is still on, so START is the story's race.
