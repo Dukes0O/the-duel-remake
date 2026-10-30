@@ -32,6 +32,7 @@
   "solverFingerprintWithBolide": "14125b11b1705eb800aaca2a0e782e3a1bf6247d58c4340d87153c4137a486e3",
   "solverFingerprintWithSirena": "8718807985d0375e7dcff07efe816a417ceead733d46aa118907733e22e50b0b",
   "solverFingerprintWithSpeirling": "4eadd8188e3ccb9ceb4a94c216e9b24273e18d4921d1960081d56d5249f17d00",
+  "solverFingerprintWithSkyline": "f325e0f680c023ec8bb7472ece76eeb8827fde90a16d9b172299ad1231a6bc72",
   "roadTicks": 360,
   "roadControls": [
     {

@@ -163,10 +163,12 @@ for (const pitch of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
 disposeTree(vehicle); disposeTree(sibling);
 const {createVehicleAssets} = await import('../src/vehicle-assets.js');
 const {createFeatureFlags} = await import('../src/feature-flags.js');
-const off = createVehicleAssets({flags:createFeatureFlags({storage:null,qa:false})});
-equal(off.source('nissan_skyline_gtr_r34'),null,'Dev car is unavailable in release');
+// Released on 29 October 2026 (the Kogane release): the ordinary release flags give the car; a forced-off switch still hides it.
+equal(createVehicleAssets({flags:createFeatureFlags({storage:null,qa:false})}).source('nissan_skyline_gtr_r34'),'skyline','Released car is available in the ordinary release');
+const off = createVehicleAssets({flags:createFeatureFlags({storage:null,qa:false,overrides:{'nissan-skyline':false}})});
+equal(off.source('nissan_skyline_gtr_r34'),null,'A switched-off car is unavailable');
 equal(off.create('nissan_skyline_gtr_r34'),null,'Disabled model cannot be constructed through registry');
-const on = createVehicleAssets({loadSkyline: async () => createSkylineVehicle, flags:createFeatureFlags({storage:null,qa:true,search:'?flags=nissan-skyline'})});
+const on = createVehicleAssets({loadSkyline: async () => createSkylineVehicle, flags:createFeatureFlags({storage:null,qa:false})});
 equal(on.status('nissan_skyline_gtr_r34'),'idle','GLB shell starts unloaded');
 equal(on.create('nissan_skyline_gtr_r34'),null,'No fallback body while unloaded');
 const firstLoad = on.load('nissan_skyline_gtr_r34');
@@ -175,10 +177,10 @@ equal(firstLoad,on.load('nissan_skyline_gtr_r34'),'Concurrent loads share one pr
 ok(await firstLoad,'GLB shell loads');
 equal(on.status('nissan_skyline_gtr_r34'),'ready','Preloaded model creates synchronously');
 const registered = on.create('nissan_skyline_gtr_r34');
-equal(registered.name,'nissan_skyline_gtr_r34','Dev registry creates the original body without a shop entry');
+equal(registered.name,'nissan_skyline_gtr_r34','The registry creates the original body without a shop entry');
 disposeTree(registered);
 let attempts = 0;
-const broken = createVehicleAssets({ loadSkyline: async () => { attempts++; throw Error('Expected missing GLB'); }, flags:createFeatureFlags({storage:null,qa:true,search:'?flags=nissan-skyline'}) });
+const broken = createVehicleAssets({ loadSkyline: async () => { attempts++; throw Error('Expected missing GLB'); }, flags:createFeatureFlags({storage:null,qa:false}) });
 ok(!await broken.load('nissan_skyline_gtr_r34'),'Failed import is reported');
 equal(broken.status('nissan_skyline_gtr_r34'),'error','Failed shell stays unavailable');
 equal(broken.create('nissan_skyline_gtr_r34'),null,'Failed import never creates a substitute');

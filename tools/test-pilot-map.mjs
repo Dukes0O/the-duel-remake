@@ -57,19 +57,23 @@ ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 
 
 // ---- Every course on the map once ----------------------------------------------------------
 same(new Set(PLACE_IDS).size, PLACE_IDS.length, 'place ids are unique');
+// Kogane Pass was released on 30 October 2026 but joins the map through the DEV_PLACES list (the way Summit Run once did),
+// so each course is counted over both lists: exactly one place holds it.
+const ALL_PLACES = [...PLACES, ...DEV_PLACES];
 for (const course of COURSE) {
-  const holders = PLACES.filter(place => place.courses.includes(course.id));
+  const holders = ALL_PLACES.filter(place => place.courses.includes(course.id));
   same(holders.length, 1, `${course.id} is on the map once`);
   same(placeOfCourse(course.id), holders[0], `${course.id}: its place is found by course`);
 }
 ok(PLACES.every(place => place.courses.every(id => COURSE.some(course => course.id === id))), 'every course a place names is in the registry');
-same(PLACES.filter(place => place.courses.length > 1).map(place => [place.id, place.courses]),
+same(ALL_PLACES.filter(place => place.courses.length > 1).map(place => [place.id, place.courses]),
   [['tremblant-woods', ['tremblant-woods', 'tremblant-woods-reverse']],
     ['panorama-ridge', ['panorama-ridge', 'panorama-ridge-night', 'panorama-ridge-reverse']],
     ['summit-run', ['summit-run', 'summit-time-attack']],
     ['harbour-lights', ['harbour-lights', 'harbour-lights-dusk', 'harbour-lights-reverse']],
-    ['titan-stadium', ['titan-arena', 'titan-stunt-trial', 'titan-freestyle']]],
-  'the places with more than one course: the three with secret variants, Summit Run and the Titan stadium');
+    ['titan-stadium', ['titan-arena', 'titan-stunt-trial', 'titan-freestyle']],
+    ['kogane-pass', ['kogane-pass', 'kogane-pass-night', 'kogane-pass-reverse']]],
+  'the places with more than one course: the four with secret variants, Summit Run and the Titan stadium');
 same(PLACES.length, 21, '20 course places and The Table');
 same(PLACES.filter(place => place.air).map(place => place.id), ['the-table'], 'only The Table is air only');
 same(PLACES.find(place => place.air).courses, [], 'and it has no road');

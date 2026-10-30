@@ -49,6 +49,7 @@ const table = {
   ferrari_enzo: [1365, true], mclaren_f1: [1140, true],
   bugatti_bolide: [1450, true],
   falcone_sirena: [810, true],
+  nissan_skyline_gtr_r34: [1560, false], // the real weight, over the 1,500 kg hook (docs/cars/nissan-skyline-gtr-r34.md 2.4)
   mcmurtry_speirling: [1000, true],
 };
 for (const [id, [mass, lifts]] of Object.entries(table)) {
@@ -57,6 +58,7 @@ for (const [id, [mass, lifts]] of Object.entries(table)) {
 }
 ok(Object.keys(CARS).every(id => Object.hasOwn(table, id)), 'every car in the game has a helicopter mass');
 ok(/Lab/.test(liftCheck('banshee_muscle').reason), 'the Banshee needs the Lab');
+ok(/Lab/.test(liftCheck('nissan_skyline_gtr_r34').reason), 'the Skyline needs the Lab');
 ok(/Too heavy/.test(liftCheck('titan_monster').reason), 'the Titan never lifts');
 ok(!liftCheck('no_such_car').ok, 'an unknown car does not lift');
 assert.equal(CRATE.massKg, 500, 'the lesson crate'); checks++;

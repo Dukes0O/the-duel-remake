@@ -22,7 +22,8 @@ const ON = {enabled: true};
 // The roster as it was on the commit before this card, for "every other car is unchanged".
 const before = execFileSync('git', ['show', 'dfb420c1:src/config.js'], {encoding: 'utf8'})
   .replace(/(from\s+['"])(\.[^'"]+)(['"])/g, (_, from, path, quote) => from + new URL(path, new URL('../src/config.js', import.meta.url)).href + quote);
-const OTHER_CARS = Object.keys(CARS).filter(id => id !== SIRENA_CAR && id !== 'mcmurtry_speirling');
+// The Skyline joined at the Kogane release (SKYLINE-FULL-GAME); its numbers are held by test-skyline-handling.
+const OTHER_CARS = Object.keys(CARS).filter(id => id !== SIRENA_CAR && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34');
 
 function raisedProfile(extra = {}) {
   let profile = {...createProfile(), credits: 1000, unlockedCars: [...createProfile().unlockedCars]};
@@ -60,7 +61,7 @@ test('no other car changes: numbers and prices are the roster of the commit befo
   const earlier = structuredClone(old.CARS);
   earlier.mclaren_f1.unlockRequirement.medals = 12;
   for (const id of OTHER_CARS) assert.deepEqual(CARS[id], earlier[id], `${id} is unchanged`);
-  assert.equal(Object.keys(CARS).filter(id => id !== 'mcmurtry_speirling').at(-1), SIRENA_CAR);
+  assert.equal(Object.keys(CARS).filter(id => id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34').at(-1), SIRENA_CAR);
   assert.deepEqual(Object.keys(CAR_PRICES), Object.keys(CAR_PRICES).filter(id => id !== SIRENA_CAR && id !== 'mcmurtry_speirling'));
   assert.deepEqual(old.DEFAULT_CAR, 'falcone_f42');
 });

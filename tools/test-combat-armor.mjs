@@ -95,6 +95,7 @@ test('all eleven car masses and both clamps set the exact base maximum armor', a
     bugatti_bolide: 100,
     mcmurtry_speirling: 83.04547985373998,
     falcone_sirena: 80, // the Sirena (810 kg), a new car: the same mass rule, nothing else moved
+    nissan_skyline_gtr_r34: 103.72377109252812, // the Skyline (1,560 kg): 100 * sqrt(1560 / 1450), nothing else moved
   };
   assert.deepEqual(Object.keys(CARS).sort(), Object.keys(expected).sort(),
     'every selectable car must have an armor expectation');

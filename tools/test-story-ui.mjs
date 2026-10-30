@@ -2,17 +2,10 @@
 // red dot, the front door entry, the garage panel and plaque, Daichi's lines on the results screen, the Deep log's lead
 // line and the Skyline hidden until owned. Plain objects and a tiny stand-in page; memory-only; nothing real is read or
 // written. The app's story object is a stub of the shape section 12.1 gives, because the hooks card writes the real one.
-// The Skyline car only exists in the game's preview roster, so those checks run again in a fresh process (--preview).
+// The Skyline is in the released roster (29 October 2026), so its checks run in this same process.
 import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
-import {fileURLToPath} from 'node:url';
 
-const preview = process.argv.includes('--preview');
-if (preview) {
-  globalThis.__DUEL_QA__ = true;
-  globalThis.location = {search: '?flags=nissan-skyline'};
-}
 globalThis.localStorage = {getItem: () => null, setItem() {}};
 
 const {FEATURE_STATES, createFeatureFlags} = await import('../src/feature-flags.js');
@@ -80,9 +73,9 @@ const target = (attr, value) => ({hasAttribute: name => name === attr, dataset: 
 const click = (layer, node) => layer.fire('click', {target: {closest: () => node}});
 
 // 1. The switch ---------------------------------------------------------------------------------
-eq(FEATURE_STATES['kogane-invitation'], 'dev', 'the switch is declared and starts as dev');
-ok(!createFeatureFlags({storage: null, qa: false}).enabled('kogane-invitation'), 'and is off in the game');
-ok(!createFeatureFlags({storage: null, qa: true}).enabled('kogane-invitation'), 'and off in unnamed QA');
+eq(FEATURE_STATES['kogane-invitation'], 'on', 'the switch is released (29 October 2026)');
+ok(createFeatureFlags({storage: null, qa: false}).enabled('kogane-invitation'), 'and is on in the game');
+ok(!createFeatureFlags({storage: null, qa: false, overrides: {'kogane-invitation': false}}).enabled('kogane-invitation'), 'and a forced-off switch still hides it');
 
 // 2. Switch off: nothing shows --------------------------------------------------------------------
 {
@@ -342,15 +335,9 @@ for (const path of ['../src/story/story-ui.js', '../src/story/story-ui.css', '..
   ok(!DASHES.test(source), `${path}: no em dash`);
 }
 
-// 11. The Skyline: hidden until owned, shown after (needs the preview roster, so a fresh process runs these) --------------
-if (!preview) {
-  eq(CARS[KOGANE_SKYLINE], undefined, 'the car is not in the game\'s roster while its own switch is off');
-  const run = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--preview'], {encoding: 'utf8'});
-  process.stdout.write(run.stdout);
-  process.stderr.write(run.stderr);
-  assert.equal(run.status, 0, 'the preview roster checks pass');
-} else {
-  ok(CARS[KOGANE_SKYLINE], 'the preview roster has the Skyline');
+// 11. The Skyline: hidden until owned, shown after ---------------------------------------------------------------------
+{
+  ok(CARS[KOGANE_SKYLINE], 'the released roster has the Skyline');
   const owned = {...createProfile(), unlockedCars: [...createProfile().unlockedCars, KOGANE_SKYLINE]};
   const flagsOn = ['kogane-invitation', 'nissan-skyline'];
   const garageFor = (profile, car, names = flagsOn, storyProps = props('duel')) => {
@@ -450,4 +437,4 @@ ok(picker(owned, false).values.includes(KOGANE_SKYLINE), 'menu: joins the picker
   ok(winHtml.includes(CARS[KOGANE_SKYLINE].name.toUpperCase()), 'results: the card uses the car\'s own name');
 }
 
-console.log(`Story screens: ${checks} checks passed${preview ? ' (preview roster)' : ''}.`);
+console.log(`Story screens: ${checks} checks passed.`);

@@ -124,7 +124,7 @@ async function qualityPass(context, quality) {
 export async function run(context) {
   if(process.env.GFX_KIT_FRAME_COST==='1')return frameCostRun(context);
   for (const quality of ['high', 'performance']) await qualityPass(context, quality);
-  if (process.env.GFX_KIT_FIT_MATRIX === '1' || process.env.GFX_SPEIRLING_KIT === '1')
+  if (process.env.GFX_KIT_FIT_MATRIX === '1' || process.env.GFX_SPEIRLING_KIT === '1' || process.env.GFX_KIT_CAR)
     await fitMatrixPass(context);
 }
 
@@ -258,7 +258,8 @@ async function frameCostRun(context) {
 // keeps the default eight scene/action captures unchanged.
 async function fitMatrixPass(context) {
   const speirling = process.env.GFX_SPEIRLING_KIT === '1';
-  const cars=speirling ? ['mcmurtry_speirling'] : ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
+  // GFX_KIT_CAR=<car id> looks at one car's kit, as the Speirling option does.
+  const cars=process.env.GFX_KIT_CAR ? [process.env.GFX_KIT_CAR] : speirling ? ['mcmurtry_speirling'] : ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt',
     'dusthawk_rally','banshee_muscle','viper_proto','titan_monster',
     'koenigsegg_jesko'];
   await context.navigate('/tools/menu-check.html');

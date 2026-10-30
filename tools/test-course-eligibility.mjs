@@ -42,8 +42,10 @@ try{
   const medalProfile=normalizeProfile({...app.profile,medals:{version:1,cars:{falcone_f42:fullSheet,stuttgart_959s:fullSheet,falcone_heritage:fullSheet,aurora_gt:fullSheet}}});
   Object.assign(app.profile,{medals:medalProfile.medals,unlockedCars:medalProfile.unlockedCars,upgrades:medalProfile.upgrades});app._saveProfile();
   // The Falcone Sirena is owned only once the Lab restores it (SIRENA-CAR), so maxing the fleet never earns it.
-  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena'&&car!=='mcmurtry_speirling');
+  // The Nissan Skyline is won only from the Kogane story (SKYLINE-FULL-GAME), so maxing the fleet never earns it either.
+  const OWNABLE_CARS=Object.keys(CARS).filter(car=>car!=='falcone_sirena'&&car!=='mcmurtry_speirling'&&car!=='nissan_skyline_gtr_r34');
   check(!isCarUnlocked(app.profile,'falcone_sirena'),'maxing the fleet does not earn the Sirena: only the Lab restores it');
+  check(!isCarUnlocked(app.profile,'nissan_skyline_gtr_r34'),'maxing the fleet does not earn the Skyline: only the Kogane story wins it');
   check(OWNABLE_CARS.every(car=>isCarUnlocked(app.profile,car)),'maxing the ordinary fleet earns the completion car, and the medals the Enzo, the F1 and the Bolide, before eligibility checks');
   const bank=app.profile.credits;let airOnlyRefusals=0;
   for(const car of OWNABLE_CARS)for(const [startStage,event]of COURSE.entries()){
@@ -84,7 +86,7 @@ try{
   const ui=Object.fromEntries(['lighting-mood','scene-select','route-choice','tyre-choice','menu-biome-legend','menu-elevation','entry-reward','event-brief','ghost-control','ghost-hint','ghost-toggle','rival-customization','rival-car','rival-driver','rival-upgrades','car-speed','car-gears','car-character','garage-count','menu-credits','car-select','driver-select','driver-skill-note','cpu-target-label','scene-name','scene-length','menu-route-label','menu-shortcuts','menu-relief','menu-location','route-choice-label','ghost-record-label'].map(id=>[id,node()]));
   ui['scene-select'].options=COURSE.map((event,index)=>({value:String(index),disabled:true,textContent:event.name}));
   ui['car-select'].options=Object.keys(CARS).map(value=>({value,textContent:''}));
-  const menu=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:selector=>selector==='#qualifying-choice'?null:{textContent:''}},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}});
+  const menu=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:selector=>selector==='#qualifying-choice'?null:{textContent:'',insertAdjacentHTML(){}},addEventListener(){}},profile:()=>app.profile,text:(id,value)=>{values[id]=String(value);},credits:value=>Math.floor(value||0).toLocaleString(),time:value=>String(value),escapeHTML:value=>String(value),coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}});
   check(typeof menu.updateMenuScene==='function'&&typeof menu.updateMenuCar==='function','production menu exports the actual scene and car presenters');
   for(const car of ['falcone_f42','titan_monster'])for(const [startStage,event]of COURSE.entries()){
     Object.assign(choices,{car,startStage});menu.updateMenuScene();same(choices.car,car,'production course menu never forces a different car');same(choices.startStage,startStage,'production vehicle menu never redirects the course');check(ui['scene-select'].options.every(option=>!option.disabled),'every course option remains available');
