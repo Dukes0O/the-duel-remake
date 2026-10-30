@@ -1475,3 +1475,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged KOGANE-NIGHT-LIGHT (KOGANE-NIGHT-LIGHT merged (lane 49/49, build ok, look reviewed)).
 - 28 Oct night: merged STORY-KOGANE-FIX-UI (STORY-KOGANE-FIX-UI merged (lane 141/143, the two explained and passing alone; scenario pass; build ok)).
 - 30 Oct: merged KOGANE-RELEASE-SWITCH (rebased onto the night light, Kogane Pass signature recaptured, Claude's assertion review approve; lane 60/60 with one Recycle Bin rerun, build, course suites, story scenario Easy and Hard pass).
+- 30 Oct: merged SKYLINE-FULL-GAME (21 of the 22 full-tier failures from the Skyline switch-on; armour kit built by recipe, look checked; lane 67/67, build). test-storage-budget open for Kyle.
