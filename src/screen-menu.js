@@ -170,7 +170,7 @@ function updateMenuScene() {
   const raceLaps=lapChoiceOn?app.getLapChoice(choices.startStage,choices.mode):choices.mode==='grandprix'?stage.grandPrixLaps??3:stage.laps||2;
   if(lapChoiceOn)choices.laps=raceLaps;else delete choices.laps;
   const intro=root.querySelector('.menu-description');
-  if(intro)intro.innerHTML=attack?'One run. Your time.<br>Climb to the summit.':lapChoiceOn?`${raceLaps} laps. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
+  if(intro)intro.innerHTML=attack?'One run. Your time.<br>Climb to the summit.':lapChoiceOn?`${raceLaps} ${raceLaps===1?'lap':'laps'}. New horizons.<br>Build your way to the arena.`:'Two laps. New horizons.<br>Build your way to the arena.';
   const lapControl=ui['lap-choice'];
   if(lapControl){
     lapControl.hidden=!lapChoiceOn;
@@ -182,9 +182,9 @@ function updateMenuScene() {
   for(const button of root.querySelectorAll('[data-route-variant]')){const selected=getRouteVariantForSeed(app.getMenuSeed())?.id===button.dataset.routeVariant;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));}
   for(const option of ui['scene-select'].options){const item=COURSE[Number(option.value)],owned=isCourseUnlocked(profile(),item);option.disabled=!owned;option.textContent=owned?item.name:`${item.name} · LOCKED · ${credits(COURSE_PRICES[item.id])} CR`;}
   const preview=coursePreview.update(app.getMenuCourse(),app.getMenuRouteLabel(),app.getHiddenRoadDiscovery?.());
-  text('scene-name',stage.name);text('scene-length',`${(lapChoiceOn?stage.lengthU*raceLaps/1000:preview.distanceKm).toFixed(1)} KM · ${lapChoiceOn?raceLaps:preview.laps} LAPS`);text('menu-route-label',app.getMenuRouteLabel().toUpperCase());
+  text('scene-name',stage.name);text('scene-length',`${(lapChoiceOn?stage.lengthU*raceLaps/1000:preview.distanceKm).toFixed(1)} KM · ${lapChoiceOn?raceLaps:preview.laps} ${(lapChoiceOn?raceLaps:preview.laps)===1?'LAP':'LAPS'}`);text('menu-route-label',app.getMenuRouteLabel().toUpperCase());
   if(stage.practice)text('scene-length','UNTIMED PLAYGROUND');
-  root.querySelector('.start-note').textContent=stage.practice?'FREE PRACTICE · NO RACE REWARDS':`${lapChoiceOn?raceLaps:2} LAPS · ${shownCars(app._switches?.().enabled('earned-cars')===true).filter(([,car])=>car.price>0||car.unlockRequirement).length} EARNABLE CARS · LOCAL PLAYER PROGRESS`;
+  root.querySelector('.start-note').textContent=stage.practice?'FREE PRACTICE · NO RACE REWARDS':`${lapChoiceOn?raceLaps:2} ${(lapChoiceOn?raceLaps:2)===1?'LAP':'LAPS'} · ${shownCars(app._switches?.().enabled('earned-cars')===true).filter(([,car])=>car.price>0||car.unlockRequirement).length} EARNABLE CARS · LOCAL PLAYER PROGRESS`;
   ui['menu-biome-legend'].innerHTML=preview.biomes.map(biome=>`<span><i style="--biome-color:${biome.color}" aria-hidden="true"></i>${escapeHTML(biome.label)}</span>`).join('');
   text('menu-shortcuts',preview.map.gates.length?`${preview.map.gates.length} GATES PER LAP`:preview.map.branches.length?`${preview.map.branches.length} DASHED SHORTCUT${preview.map.branches.length===1?'':'S'}`:'CLOSED CIRCUIT');ui['menu-elevation'].hidden=!preview.showElevation;text('menu-relief',`${preview.reliefMeters} M HEIGHT RANGE`);
   if(stage.practice)text('menu-shortcuts','JUMPS · CRUSH LANES · 4 KM DRAG STRIP');
@@ -196,8 +196,8 @@ function updateMenuScene() {
   text('menu-location', {desert:'MOJAVE COUNTY, USA',alpine:'THE HIGH ALPINE PASS',coast:'PACIFIC COAST, USA',city:'HARBOR DISTRICT · AFTER DARK'}[stage.theme] || stage.name.toUpperCase());
   updateMenuCar();
   if(choices.mode==='grandprix'){
-    const laps=raceLaps, lapLabel=stage.closed===false?'ONE RUN':laps===3?'THREE LAPS':`${laps} LAPS`;
-    const lapCountLabel=stage.closed===false?'ONE RUN':`${laps} LAPS`, fieldSize=stage.fieldSize??8;
+    const laps=raceLaps, lapLabel=stage.closed===false?'ONE RUN':laps===3?'THREE LAPS':`${laps} ${laps===1?'LAP':'LAPS'}`;
+    const lapCountLabel=stage.closed===false?'ONE RUN':`${laps} ${laps===1?'LAP':'LAPS'}`, fieldSize=stage.fieldSize??8;
     text('cpu-target-label','THE FIELD');text('scene-length',`${(preview.distanceKm/preview.laps*laps).toFixed(1)} KM · ${lapCountLabel}`);
     const racers=(stage.fieldSize??8)===8?'SEVEN':String((stage.fieldSize??8)-1);
     const payEnabled=app._switches?.().enabled('grand-prix-career')===true;
