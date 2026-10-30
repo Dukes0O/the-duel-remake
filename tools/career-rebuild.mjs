@@ -42,10 +42,14 @@ const MAXED = Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, 3
 // Appended courses need a released switch. A slotted preview replaces an
 // already released course, whose ownership remains available with preview off.
 const flags = createFeatureFlags({storage: null, qa: false, search: ''});
+// Courses that went live after the 28 October restore was written. The restore is a record of what the two careers held
+// then, so a later release is bought like any other and never added to it (Kogane Pass, 29 October 2026).
+export const RELEASED_AFTER_RESTORE = Object.freeze(['kogane-pass']);
 export function unlockableCourseIds() {
   return COURSE.filter(course => {
     const manifest = CIRCUIT_MANIFESTS.find(item => item.id === course.id);
     return !course.practice && Object.hasOwn(COURSE_PRICES, course.id) && !courseUnlockRequirement(course) &&
+      !RELEASED_AFTER_RESTORE.includes(course.id) &&
       (!manifest || manifest.slot !== undefined || flags.enabled(manifest.flag));
   }).map(course => course.id);
 }

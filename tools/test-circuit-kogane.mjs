@@ -211,13 +211,13 @@ assert.ok(courseBurnCheck(course, ground, grid).ok, 'course can burn');
 assert.ok(startCells(course, ground, grid).length > 0, 'connected forest can host a fire');
 assert.equal(burnableCourses({}, id => id === 'kogane-pass' ? {course, ground, grid} : null,
   {enabled: true, owns: id => isDestination(id, on)}).join(), 'kogane-pass');
-assert.equal(manifest.state, 'dev');
+assert.equal(manifest.state, 'on');
 assert.equal(manifest.grandPrix, true);
 assert.equal(COURSE_PRICES['kogane-pass'], 2200);
 const flags = overrides => createFeatureFlags({storage: null, qa: true, search: '', overrides});
 assert.ok(!circuitsEnabled(flags({'kogane-pass': false})).some(def => def.id === 'kogane-pass'));
-assert.equal(circuitsEnabled(flags({'kogane-pass': true})).at(-1), KOGANE_PASS);
-assert.ok(!circuitsEnabled(flags({})).includes(KOGANE_PASS), 'dev is hidden by default');
+assert.ok(circuitsEnabled(flags({'kogane-pass': true})).includes(KOGANE_PASS));
+assert.ok(circuitsEnabled(flags({})).includes(KOGANE_PASS), 'released: in the ordinary game');
 
 // Both handling modes drive the actual open endpoint with disposable memory storage.
 for (const difficulty of ['casual', 'pro']) {
