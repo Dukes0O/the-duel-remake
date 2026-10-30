@@ -5,6 +5,7 @@
 // Race Daichi on Easy (the test driver on the racing line), the results with the new car, the garage with the plaque,
 // the menu with Ana's call and the front door. Run:
 //   node tools/browser-harness.mjs scenario story-kogane
+// STORY_LEVEL=medium or hard races Daichi at that level instead; a loss there must leave the story on the duel with no car.
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {build} from 'vite';
@@ -16,6 +17,7 @@ const ready = `document.readyState==='complete' && !!window.__qaApp && document.
   && !document.querySelector('#start-engine')?.disabled`;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const SKYLINE = 'nissan_skyline_gtr_r34';
+const LEVEL = process.env.STORY_LEVEL || 'easy';
 
 // The lesson's faster recorded run and the racing-line test driver, bundled for the page (as the Panorama scenarios do).
 async function helperBundle() {
@@ -297,7 +299,9 @@ export async function run(context) {
   await hidePanels();
   await app(`app.audio.setMuted?.(true)`);
   await wait(400);
-  await app(`app.setRaceSettings({cpuDifficulty: 'easy'})`);
+  // The player's own level button, so the menu's choice and the app's agree (setting it in the app alone is undone by the next menu change).
+  await context.evaluate(`document.querySelector('[data-cpu-difficulty="${LEVEL}"]').click()`);
+  await wait(300);
   // F2: choosing the Night circuit by hand in the box must not turn the challenge into Grand Prix; then the player goes back to the old circuit.
   const oldStage = await app(`app.getRaceChoices().startStage`);
   const pickCircuit = index => context.evaluate(`(() => { const sel = document.querySelector('#scene-select'); sel.value = String(${index}); sel.dispatchEvent(new Event('change', {bubbles: true})); })()`);
@@ -316,10 +320,10 @@ export async function run(context) {
   const setup = await app(`({c: app.getRaceChoices(), pending: !!app._storyPending, shown: document.querySelector('#scene-select')?.selectedOptions[0]?.textContent,
     modes: [...new Set([...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode))], level: [...new Set([...document.querySelectorAll('[data-cpu-difficulty][aria-pressed="true"]')].map(b => b.dataset.cpuDifficulty))]})`);
   report.raceDaichiMenu = setup;
-  fact(setup.pending && setup.c.mode === 'duel' && setup.c.cpuDifficulty === 'easy', '"Race Daichi" fills the setup in the app: Rival Duel, Easy');
+  fact(setup.pending && setup.c.mode === 'duel' && setup.c.cpuDifficulty === LEVEL, '"Race Daichi" fills the setup in the app: Rival Duel, ' + LEVEL);
   // F1 and F2: the menu itself shows Kogane Pass Night, Rival Duel and Easy, and the story mark is still on, so START is the story's race.
-  fact(setup.shown === 'Kogane Pass Night' && setup.modes.join() === 'duel' && setup.level.join() === 'easy',
-    'after "Race Daichi" the menu shows Kogane Pass Night, Rival Duel and Easy (got ' + setup.shown + ', ' + setup.modes + ', ' + setup.level + ')');
+  fact(setup.shown === 'Kogane Pass Night' && setup.modes.join() === 'duel' && setup.level.join() === LEVEL,
+    'after "Race Daichi" the menu shows Kogane Pass Night, Rival Duel and ' + LEVEL + ' (got ' + setup.shown + ', ' + setup.modes + ', ' + setup.level + ')');
   await shot('15-race-setup-shown', 'menu right after Race Daichi: Kogane Pass Night, Rival Duel, Easy');
   // 11. START (the real button), the grid, the road at night.
   await click('#start-engine');
@@ -350,9 +354,14 @@ export async function run(context) {
     owns: app.profile.unlockedCars.filter(id => id === '${SKYLINE}').length, step: app.koganeStepNow(), duel: app.profile.story?.kogane?.duel,
     card: document.querySelector('.story-car-card')?.innerText ?? null, line: document.querySelector('.story-line')?.innerText ?? null})`);
   report.result = result;
-  fact(result.won === true, 'the test driver beat Daichi on Easy');
+  if (LEVEL !== 'easy' && result.won !== true) {
+    fact(result.owns === 0 && result.step === 'duel', 'lost on ' + LEVEL + ': no Skyline and the story stays on Race Daichi (step ' + result.step + ')');
+    await shot('19-results-lost', 'results after losing to Daichi on ' + LEVEL);
+    return finish();
+  }
+  fact(result.won === true, 'the test driver beat Daichi on ' + LEVEL);
   fact(result.owns === 1 && result.car === SKYLINE, 'the Skyline is owned once and the result carries it');
-  fact(result.step === 'ana' && result.duel === 'easy', 'the story moves to Ana (duel marked easy)');
+  fact(result.step === 'ana' && result.duel === LEVEL, 'the story moves to Ana (duel marked ' + LEVEL + ')');
   fact(!!result.card && /NEW CAR/.test(result.card), 'the results show the NEW CAR card');
   await shot('19-results-new-car', 'results: NEW CAR card and Daichi\'s line');
 

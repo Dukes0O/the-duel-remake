@@ -95,3 +95,7 @@ Read every changed assertion against the rebased branch. Each follows from the f
 - Kogane Pass signature recaptured after the rebase onto KOGANE-NIGHT-LIGHT, with the same reviewed difference as the Night and Reverse refresh. Ground rows and replay fingerprints unchanged.
 
 Verdict: approve.
+
+## Story play-through on the switched-on build (30 October 2026)
+
+`tools/scenarios/story-kogane.mjs` gains `STORY_LEVEL` and now picks the level with the menu's own button (setting it in the app alone was undone by the next circuit change, which only showed at a level other than the default Easy). Easy: 28 facts pass, 22 pictures, 0 browser errors, the Skyline won. Hard: 23 facts pass, 0 errors; the test driver lost, no Skyline was given, the story stayed on Race Daichi and Daichi's try-again line showed. No assertion was loosened; the Easy facts are unchanged.
