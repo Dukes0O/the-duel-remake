@@ -59,3 +59,7 @@ Rival Duel and Easy after Race Daichi; picking the Night road keeps Rival Duel; 
 
 - The scenario's deliberate F2 failure and its app-call workaround (`startStoryDuel` plus `startCampaign`).
 - The old bottom-of-screen placement of the story caption.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: F1 Race Daichi refreshes the menu; F2 Night opens on Rival Duel (Grand Prix still offered; other variants unchanged); F3/F11 story row full width, first, says where to go; F7 no long dashes in lessons; F10 '1 lap'; F9 unread letter ranks first; F8/F12 fixed for short screens; captions moved to the top strip; Skyline socket entry behind its switch fixes a browser error. Scenario story-kogane passes 28 facts with the real START. No assertion changed.
