@@ -29,6 +29,9 @@ SIZES = {
     # runtime body export, like the Enzo's and the F1's. Keep it last: a car's place in this list shapes its plates.
     'falcone_sirena': (1.96, 4.45, 1.06),
     'mcmurtry_speirling': (1.610, 3.204, 1.142),
+    # The Nissan Skyline GT-R R34 (SKYLINE-FULL-GAME): the model's own size. Its shell is the unlocks GLB, whose body is the
+    # skyline_paint material. Last, so the cars before it keep their plates.
+    'nissan_skyline_gtr_r34': (1.96, 4.60, 1.36),
 }
 
 # Where the general placement rules would put a plate on a wheel, a car gets its own numbers. The Sirena's wheels stand
@@ -36,6 +39,8 @@ SIZES = {
 # `fenderGrid`; the front one stops where the hood drops away from the fender), its exhaust stacks stand behind the rear
 # wheels and its Raider door sheets stop short of them.
 CAR_RULES = {
+    # The Skyline (SKYLINE-FULL-GAME): see ground_y in body_skin_from_source.
+    'nissan_skyline_gtr_r34': {'shell_ratio': .36, 'ground_y': 0.0, 'raider_doors': [(-.95, -.30), (-.115, .874)]},
     'falcone_sirena': {'quarter': (.70, .78), 'quarter_reach': [(.57, .30), (.57, .57)], 'stack_z': -1.74,
                        'raider_doors': [(-.80, -.30), (-.10, .85)]},
 }
@@ -366,10 +371,13 @@ def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     scale=target_length/max(.001,high[1]-low[1])
     center_x=(low[0]+high[0])/2
     center_y=(low[1]+high[1])/2
+    # The ground is the lowest point of the source unless the car says otherwise: the Skyline's GLB hangs 0.125 m above its
+    # own ground (the wheels are built in code), so its shell is measured from y 0.
+    ground=CAR_RULES.get(car, {}).get('ground_y', low[2])
     verts=[]
     faces=[]
     for obj in meshes:
-        if not any(slot.material and slot.material.name.startswith('Lacquered body')
+        if not any(slot.material and slot.material.name.startswith(('Lacquered body','skyline_paint'))
                    for slot in obj.material_slots):
             continue
         start=len(verts)
@@ -377,7 +385,7 @@ def body_skin_from_source(car, root_path, parent, material, target_length, fit):
             p=obj.matrix_world @ vertex.co
             # Imported glTF is Blender Z-up; the kit child frame is game
             # Y-up/Z-forward. Weld seams before computing the outward offset.
-            verts.append(((p.x-center_x)*scale,(p.z-low[2])*scale,
+            verts.append(((p.x-center_x)*scale,(p.z-ground)*scale,
                           -(p.y-center_y)*scale))
         for polygon in obj.data.polygons:
             if car=='titan_monster':
@@ -400,7 +408,7 @@ def body_skin_from_source(car, root_path, parent, material, target_length, fit):
     finish(obj,'source-fitted-rust-shell',parent,material)
     # Preserve the car shape with fewer faces than the original body.
     modifier=obj.modifiers.new('controlled-retopology','DECIMATE')
-    modifier.ratio=.72 if car=='titan_monster' else .36
+    modifier.ratio=CAR_RULES.get(car, {}).get('shell_ratio', .72 if car=='titan_monster' else .36)
     bpy.context.view_layer.objects.active=obj
     bpy.ops.object.modifier_apply(modifier=modifier.name)
     paint_shell_uv(mesh)
