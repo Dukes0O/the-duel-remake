@@ -340,7 +340,7 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
-    this._clearDriveLesson();this._driveLessonUi?.dispose();this._storyRadio?.dispose();this._storyRadioChain?.dispose?.();this._storyCaptionView?.dispose();
+    this._clearDriveLesson();this._driveLessonUi?.dispose();this._cancelStoryThanks();this._storyRadio?.dispose();this._storyRadioChain?.dispose?.();this._storyCaptionView?.dispose();
     this._leaveHeli();this.deepAudio.dispose();this.heliAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
@@ -670,7 +670,7 @@ export class App {
   }
   // Opening the Story card reads the letter. Only the red dot goes away.
   openStory(){
-    if(!this._storyAvailable())return false;
+    if(this.duel.state.status!=='menu'||!this._storyAvailable())return false;
     this._refreshPlayer();
     const read=readKoganeLetter(this.profile);
     if(!read.ok)return false;
@@ -729,14 +729,16 @@ export class App {
   // "Beat me" passed: only on the Kogane row of the first lesson, and only while the switch is on, the story's lesson step is marked
   // (in the same profile change as the lesson's own reward). Null for every other pass.
   _storyLessonPass(result,completion){
-    if(!this._storyOn()||completion.id!=='corner'||completion.courseId!=='kogane-pass')return null;
+    if(!this._storyAvailable()||completion.id!=='corner'||completion.courseId!=='kogane-pass')return null;
     const marked=markKoganeLesson(result.profile);
     return marked.ok&&marked.changed?{profile:marked.profile,skipPassLine:result.reward==null}:null;
   }
   // The chime and Brian's caption once the mark is saved. When the lesson's reward is new his recorded line plays first and the caption follows it.
   _storyLessonSaid(result){
     this._storyBonus();
-    if(result.reward!=null)(this._driveLessonRadioQueue??Promise.resolve()).then(()=>this._storySay('story.kogane.brian.pass'));
+    // The caption waits for the recorded line, and is dropped if the player leaves the lesson first (leaving ends the lesson's radio epoch).
+    const epoch=this._driveLessonRadioEpoch;
+    if(result.reward!=null)(this._driveLessonRadioQueue??Promise.resolve()).then(()=>{if(epoch===this._driveLessonRadioEpoch&&this.duel.drivingLesson)this._storySay('story.kogane.brian.pass');});
     else this._storySay('story.kogane.brian.pass');
   }
   // The next time the main menu opens after the win, Ana calls (once; her mark rises as she starts).
@@ -750,7 +752,9 @@ export class App {
     return this._storyRadioNow().sayAna();
   }
   // The story's captions stop when the player leaves for a race, a flight or a lesson.
-  _storyLeave(){this._storyRadio?.leave();this.storyCaption=null;}
+  _storyLeave(){this._cancelStoryThanks();this._storyRadio?.leave();this.storyCaption=null;}
+  // Daichi's thanks waits 3.2 s after the crate is down; leaving the flight (or the game) before then drops it.
+  _cancelStoryThanks(){if(this._storyThanks!=null){this._storyUntimer(this._storyThanks);this._storyThanks=null;}}
 
   startCampaign(options = {}) {
     if(this.duel.drivingLesson)this._clearDriveLesson();
@@ -1818,6 +1822,7 @@ export class App {
   _leaveHeli() {
     const session = this.heliSession;
     if (!session) return;
+    this._cancelStoryThanks();
     this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
@@ -1958,7 +1963,8 @@ export class App {
       if (event.type === 'jobTaken' && event.job?.story === 'kogane') this._storySay('story.kogane.roger.offer', {quiet: true});
       if (event.type === 'jobDone' && event.job?.story === 'kogane') {
         this._storyBonus();
-        this._storyTimer(() => this._storySay('story.kogane.daichi.thanks'), 3200);
+        this._cancelStoryThanks();
+        this._storyThanks = this._storyTimer(() => { this._storyThanks = null; this._storySay('story.kogane.daichi.thanks'); }, 3200);
       }
     }
     if (events.length) this.heliLog = [...this.heliLog, ...events].slice(-40);
@@ -2163,6 +2169,7 @@ export class App {
   }
   selectPlayer(id){
     if(this.duel.state.status!=='menu')return false;
+    this._storyPending=null; // the story's race belongs to the player who asked for it
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this._noteFirePlayDay();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }

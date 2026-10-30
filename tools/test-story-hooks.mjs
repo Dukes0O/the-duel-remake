@@ -43,7 +43,8 @@ function freshApp({story = true, owned = true, edit = profile => profile} = {}) 
   // Timers are ours: a caption's end and Daichi's thanks wait here until the test runs them.
   app.timers = [];
   app._storyTimer = (callback, ms) => { app.timers.push({callback, ms}); return app.timers.length; };
-  app._storyUntimer = () => {};
+  app.untimed = [];
+  app._storyUntimer = handle => { app.untimed.push(handle); };
   // Chimes are counted.
   app.cues = [];
   app._storyBonus = () => { app.cues.push('interface.bonus'); };
@@ -271,6 +272,15 @@ function passLesson(app, {reward = true} = {}) {
   ok(plain && app._storyRace === null && app.duel.state.rivalSettings.car === 'banshee_muscle', 'changing the rival clears the mark: the player\'s rival races');
   app.returnToMenu();
 
+  // Switching player cancels the pending mark.
+  app = ready();
+  const owner = app.player.id;
+  ok(app.startStoryDuel(), 'Race Daichi');
+  app.addPlayer('Second player');
+  ok(app.selectPlayer(owner), 'back to the first player');
+  ok(app.startCampaign(app.getRaceChoices()) && app._storyRace === null && app.duel.state.rivalSettings?.car !== KOGANE_SKYLINE, 'selecting a player cancels the mark');
+  app.returnToMenu();
+
   // A menu refresh that sends the same values changes nothing.
   app = ready();
   ok(app.startStoryDuel(), 'Race Daichi');
@@ -308,6 +318,9 @@ function passLesson(app, {reward = true} = {}) {
   ok(app._storyLessonPass(result(), kogane)?.skipPassLine === false, 'a new reward keeps it');
   const off = freshApp({story: false});
   ok(off._storyLessonPass(result(), kogane) === null, 'switch off, Kogane row: not marked');
+  const noSkyline = freshApp();
+  noSkyline.duel.featureFlags = createFeatureFlags({storage: null, qa: false, overrides: {...PARTNERS, 'nissan-skyline': false, 'kogane-invitation': true}});
+  ok(noSkyline._storyLessonPass(result(), kogane) === null, 'switch on but a partner switch off: not marked');
   const done = {...createProfile(), story: {version: 1, kogane: {lesson: true}}};
   ok(app._storyLessonPass({ok: true, reward: null, profile: done}, kogane) === null, 'a second pass changes nothing');
   const later = {...createProfile(), story: {version: 2, kogane: {}, extra: 1}};
@@ -323,6 +336,36 @@ function passLesson(app, {reward = true} = {}) {
   // And an early Kogane lesson with the switch off does not start the chain when it is switched on later.
   quiet.duel.featureFlags = flags(true);
   ok(koganeStep(quiet.profile) === 'invite', 'the chain still starts at the letter');
+}
+
+// ---- 3b. leaving cancels what is waiting ---------------------------------------------------------------------------------------
+{
+  const thanks = {type: 'jobDone', job: {id: STORY_JOB_ID, story: 'kogane'}};
+  const waiting = app => app.timers.filter(timer => timer.ms === 3200);
+  // Daichi's thanks waits 3.2 s; each way out of the flight and out of the game cancels it.
+  let app = freshApp();
+  app._heliEvents([thanks]);
+  ok(waiting(app).length === 1 && app._storyThanks !== null, 'the thanks is waiting');
+  app._storyLeave();
+  ok(app._storyThanks === null && app.untimed.length === 1, 'leaving for a race or a lesson cancels it');
+  app = freshApp();
+  ok(app.visitHeli(), 'the helipad opens');
+  app._heliEvents([thanks]);
+  app.returnToMenu();
+  ok(app._storyThanks === null && app.untimed.length >= 1, 'leaving the flight cancels it');
+  app = freshApp();
+  app._heliEvents([thanks]);
+  app.dispose();
+  ok(app._storyThanks === null && app.untimed.length >= 1, 'closing the game cancels it');
+
+  // Brian's pass caption waits for his recorded line; leaving the lesson first drops it.
+  app = freshApp({edit: profile => ({...profile, story: {version: 1, kogane: {read: true}}})});
+  ok(app.openDrivingLessons() && await app.startLesson({courseId: 'kogane-pass', car: 'falcone_f42', difficulty: 'casual'}), 'the Kogane lesson starts');
+  passLesson(app);
+  ok(saved(app).story.kogane.lesson === true, 'passed');
+  app.returnToMenu();
+  await flush(() => caption(app) === 'story.kogane.brian.pass');
+  ok(caption(app) !== 'story.kogane.brian.pass', 'leaving the lesson before the recorded line ends drops the caption');
 }
 
 // ---- 4. a newer game's story: no story anywhere ------------------------------------------------------------------------------
@@ -364,6 +407,14 @@ function passLesson(app, {reward = true} = {}) {
   partial.duel.featureFlags = createFeatureFlags({storage: null, qa: false, overrides: {...PARTNERS, 'nissan-skyline': false, 'kogane-invitation': true}});
   ok(partial.storyProps().available === false, 'and none while a switch it needs (the Skyline) is off');
 }
+
+  {
+    const racing = freshApp();
+    ok(racing.startCampaign({startStage: COURSE.findIndex(c => c.id === 'pacific-canyon')}), 'a race is on');
+    ok(racing.openStory() === false && !Object.hasOwn(saved(racing), 'story'), 'the letter is not read during a race');
+    racing.returnToMenu();
+    ok(racing.openStory() === true, 'but it is on the menu');
+  }
 
 // ---- 6. the chime and the caption line -------------------------------------------------------------------------------------
 {

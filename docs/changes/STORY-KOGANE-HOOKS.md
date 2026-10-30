@@ -37,11 +37,19 @@ Switch: `kogane-invitation` (dev). With it off, nothing below changes anything.
     a win of an already finished step makes none), once for Ana.
 - `src/story/story-caption-view.js` (new, small): the caption line on the page, browser only. Plain and unstyled beyond a fixed bar low on the
   screen; the look is for the FINISH card to judge.
-- `tools/test-story-hooks.mjs` (new): 126 checks in the real App with memory-only storage.
+- `tools/test-story-hooks.mjs` (new): 141 checks in the real App with memory-only storage.
+
+## Review fixes (coordinator's review, 29 October)
+
+- The lesson mark checks the full story availability (switch and partner switches, Kogane owned), not only the switch. Test: switch on with the Skyline off marks nothing.
+-  works only on the main menu, so a letter is never read during a race. Test.
+- Daichi's 3.2 s thanks is cancelled when the player leaves for a race, a flight or a lesson, when the flight ends, and when the game closes. Tests for all three.
+- Brian's queued pass caption is dropped if the player leaves the lesson before his recorded line ends. Test.
+- Selecting another player clears the pending story mark. Test.
 
 ## Tests
 
-- `node tools/test-story-hooks.mjs`: 126 checks pass (about 25 s). They cover:
+- `node tools/test-story-hooks.mjs`: 141 checks pass (about 25 s). They cover:
   - the chain from a fresh player: the letter, the real Kogane lesson (marks the story and pays the lesson reward once), the real helicopter
     flight (Roger's offer, the crate set down, 2,650 credits, the Night version found, the story mark saved into the app's profile, one chime,
     Daichi's thanks), "Race Daichi" (setup, Daichi's rival, level start, grid line), a restart that keeps the mark, a loss, quitting and
@@ -74,4 +82,4 @@ Nothing is replaced. The old restart behaviour (dropping `story` and the story r
 - Brian's intro note is shown as a caption line; the lesson card itself has no note slot (SCREENS and LESSON files).
 - "Start the lesson" and "Go to the helipad" open the existing boards; picking the Kogane row there is not done.
 
-Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`): 29 suites passed, 0 failed (no suite failed on the Recycle Bin cleanup). `npm run build`: built (the usual chunk-size and dynamic-import warnings only). The deep suites and `test-circuits.mjs` were not run by hand: this card changes no road and no Deep file.
+Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`): see the line below. `npm run build`: see below.
