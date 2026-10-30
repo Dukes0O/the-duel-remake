@@ -12,3 +12,7 @@ None changed. Three setups gain the found Night road so their existing checks st
 ## Removed
 
 Nothing.
+
+## Claude's review (28 October 2026, night)
+
+Claude: test setup only (Night switch on, found Night for players past the delivery); no assertion changed or loosened.
