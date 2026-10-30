@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {screenMarkup} from '../src/screen-menu.js';
-import {frontDoorFacts, chooseNextUp, doorList, driveSummary} from '../src/menu-front-door.js';
+import {readFileSync} from 'node:fs';
+import {frontDoorFacts, chooseNextUp, doorList, doorTile, driveSummary, lastTimeLine} from '../src/menu-front-door.js';
 import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile} from '../src/progression.js';
 import {CPU_DIFFICULTY} from '../src/config.js';
@@ -99,4 +100,68 @@ test('next up reads the hold, the helicopter job and the sea log', () => {
 test('drive summary reads in plain words', () => {
   assert.equal(driveSummary({carName: 'Falcone F42', mode: 'duel', level: 'Rookie'}), 'your Falcone F42 · Rival duel · Rookie');
   assert.ok(!/[—]/.test(driveSummary({carName: 'X', mode: 'timetrial', level: 'Pro'})));
+});
+
+// Round 2: what happened last time, the Wasteland badge and the drawer's place.
+const raced = (rows, best = {}) => ({...createProfile(), history: rows, personalBests: best});
+const row = (extra = {}) => ({key: 'k' + Math.random(), eventId: 'pacific-canyon', car: 'falcone_f42', won: true, completed: true, timeSec: 187.4, cpuDifficulty: 'easy', reward: 600, at: 1, ...extra});
+
+test('last time: a new player sees nothing', () => {
+  assert.equal(lastTimeLine(createProfile(), 0), '');
+  assert.equal(lastTimeLine(null, 0), '');
+  assert.equal(lastTimeLine(createProfile(), 999), '');
+});
+
+test('last time: the latest race on the chosen course, in plain words', () => {
+  assert.equal(lastTimeLine(raced([row()]), 0), 'Last time: won in 03:07.40');
+  assert.equal(lastTimeLine(raced([row({won: true, timeSec: 200}), row({won: false, timeSec: 191.25})]), 0), 'Last time: lost, you finished in 03:11.25');
+  assert.equal(lastTimeLine(raced([row({won: false, completed: false, timeSec: null})]), 0), 'Last time: the race did not finish');
+  assert.equal(lastTimeLine(raced([row({won: false, completed: false, abandoned: true, timeSec: null})]), 0), 'Last time: you left the race early');
+  // Only this course counts; a later race elsewhere does not replace it.
+  assert.equal(lastTimeLine(raced([row(), row({eventId: 'high-country', won: false})]), 0), 'Last time: won in 03:07.40');
+});
+
+test('last time: personal best on the course, and a returning player on a fresh course', () => {
+  const best = {'pacific-canyon|layout:4|seed:1989|laps:2|falcone_f42|duel|casual|easy': 185.1, 'pacific-canyon|layout:4|seed:1989|laps:2|stuttgart_959s|duel|casual|easy': 190};
+  assert.equal(lastTimeLine(raced([row()], best), 0), 'Last time: won in 03:07.40 · Best 03:05.10');
+  assert.equal(lastTimeLine(raced([], best), 0), 'Your best here: 03:05.10');
+  // The best of another course does not leak in.
+  assert.equal(lastTimeLine(raced([], {'high-country|layout:4|x': 150}), 0), 'You have not raced here yet.');
+  assert.equal(lastTimeLine(raced([row()]), 1), 'You have not raced here yet.');
+  for (const line of [lastTimeLine(raced([row()], best), 0), lastTimeLine(raced([row({won: false})]), 0)]) assert.ok(!/[—]/.test(line));
+});
+
+test('last time: the Drive card has its line, hidden until the menu fills it', () => {
+  const on = screenMarkup({...base, frontDoor: {facts: frontDoorFacts({profile: createProfile(), flags: flagsOn([])})}});
+  assert.match(on, /<p id="fd-last" class="front-door-last" hidden><\/p>/);
+  assert.ok(on.indexOf('id="fd-summary"') < on.indexOf('id="fd-last"') && on.indexOf('id="fd-last"') < on.indexOf('id="fd-start-slot"'), 'the line sits between the summary and START ENGINE');
+  assert.ok(!screenMarkup(base).includes('fd-last'), 'switch off: nothing new');
+});
+
+test('the Wasteland door says when a boss hold is nearly done', () => {
+  const profile = hold => ({...createProfile(), wasteland: {...createProfile().wasteland, territories: {sal: hold}}});
+  const door = hold => doorList(frontDoorFacts({profile: profile(hold), flags: flagsOn([]), wastelandOpen: true})).find(item => item.id === 'wasteland');
+  assert.equal(door({hold: 75, claimed: false}).badge, 'NEARLY WON');
+  assert.match(door({hold: 75, claimed: false}).note, /Sawtooth Sal/);
+  assert.equal(door({hold: 100, claimed: false}).badge, 'NEARLY WON', 'a full hold that is not yet claimed is still waiting');
+  assert.equal(door({hold: 50, claimed: false}).badge, 'READY');
+  assert.equal(door({hold: 100, claimed: true}).badge, 'READY');
+  assert.equal(door({hold: 75, claimed: true}).badge, 'READY');
+  // The Wasteland still shut: locked, whatever the save says.
+  const shut = doorList(frontDoorFacts({profile: profile({hold: 75, claimed: false}), flags: flagsOn([]), wastelandOpen: false})).find(item => item.id === 'wasteland');
+  assert.equal(shut.badge, 'LOCKED');
+  // The tile keeps one plain class for the colour and shows the words.
+  const tile = doorTile(door({hold: 75, claimed: false}) && {...door({hold: 75, claimed: false}), id: 'wasteland', label: 'Wasteland', action: 'wasteland-visit'});
+  assert.match(tile, /class="front-door-badge badge-new">NEARLY WON</);
+});
+
+test('the options drawer sits beside the Drive card and above the doors', () => {
+  const css = readFileSync(new URL('../src/screen-front-door.css', import.meta.url), 'utf8');
+  const rule = css.match(/\.front-door-options\{([^}]*)\}/)[1];
+  assert.match(rule, /position:absolute/);
+  assert.match(rule, /grid-area:1\/2\/5\/3/, 'the drawer fills the right column above the doors row');
+  assert.match(rule, /overflow-y:auto/, 'its own contents scroll, not the page');
+  assert.ok(!/bottom:\d+px/.test(rule), 'no fixed offset that could reach under the doors');
+  assert.match(css, /grid-template-areas:'intro \.' 'drive \.' 'next \.' '\. \.' 'doors doors'/);
+  assert.match(css, /\.in-menu \.menu-screen\.front-door-on \.front-door-credits\{position:absolute/, 'the credits link stays out of the grid');
 });

@@ -53,7 +53,7 @@ import './screen-hud.css';
 import './combat-hud.css';
 import './style.css';
 import {CARS, COURSE, CPU_DIFFICULTY} from './config.js';
-import {frontDoorFacts, chooseNextUp, doorList, doorTile, nextUpMarkup, driveSummary} from './menu-front-door.js';
+import {frontDoorFacts, chooseNextUp, doorList, doorTile, nextUpMarkup, driveSummary, lastTimeLine} from './menu-front-door.js';
 import {createProfile, isCarUnlocked} from './progression.js';
 import {RouteMap} from './route-map.js';
 import {CoursePreview} from './course-preview.js';
@@ -121,6 +121,8 @@ function refreshFrontDoor(){
   const facts=currentDoorFacts(),stage=COURSE[choices.startStage]||COURSE[0];
   ui['fd-course'].textContent=stage.name;
   ui['fd-summary'].textContent=driveSummary({carName:CARS[choices.car]?.name,mode:choices.mode,level:CPU_DIFFICULTY[choices.cpuDifficulty]?.name});
+  const last=lastTimeLine(profile(),choices.startStage);
+  ui['fd-last'].textContent=last;ui['fd-last'].hidden=last==='';
   const next=nextUpMarkup(chooseNextUp(facts)),doors=doorList(facts).map(doorTile).join('');
   if(ui['fd-nextup'].innerHTML!==next)ui['fd-nextup'].innerHTML=next;
   if(ui['fd-doors'].innerHTML!==doors)ui['fd-doors'].innerHTML=doors;
