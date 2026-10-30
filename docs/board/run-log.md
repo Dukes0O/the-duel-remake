@@ -1468,3 +1468,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 28 Oct night: merged STORY-KOGANE-DUEL (STORY-KOGANE-DUEL merged (lane 202/202, duel 103, build ok, review approve)).
 - 28 Oct night: merged MENU-FRONT-DOOR (MENU-FRONT-DOOR round 2 merged (lane 42/42, menu 14/14, scenario pass, build ok)).
 - 28 Oct night: merged STORY-KOGANE-HOOKS (STORY-KOGANE-HOOKS merged (lane 29/29, hooks 141, build ok, review approve)).
+- 28 Oct night: merged KOGANE-PASS-C7-VERSIONS (KOGANE-PASS-C7-VERSIONS merged (lane 182/182, course suites by hand pass, build ok)).
