@@ -2,7 +2,13 @@
 .course-access-panel{width:min(900px,94vw);max-height:88vh;overflow-y:auto}
 .course-access-panel>p{font-size:12px;line-height:1.5;color:#b9c9c1}
 .course-access-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.course-access-card{display:flex;flex-direction:column;justify-content:space-between;gap:12px;border:1px solid #789b8840;border-radius:4px;background:#14241e;padding:14px;min-width:0}
+/* Text and map on top, the two buttons side by side underneath (the text spans both columns when a card has no map). */
+.course-access-card{display:grid;grid-template-columns:minmax(0,1fr) 176px;grid-template-rows:1fr auto;gap:12px 10px;border:1px solid #789b8840;border-radius:4px;background:#14241e;padding:14px;min-width:0}
+.course-access-card>div{grid-column:1/-1;grid-row:1;min-width:0}
+.course-access-card.has-map>div{grid-column:1}
+.course-card-map{grid-column:2;grid-row:1;display:block;width:176px;height:110px;border:1px solid #789b8840;border-radius:3px;background:#0f1b16}
+.course-card-map[hidden]{display:none}
+.course-access-card>p{grid-column:1/-1}
 .course-access-card.selected{border-color:#a7d6b4}
 .course-access-card h3{font-size:15px;margin:7px 0;color:#edf8ed}
 .course-access-card p{font-size:11px;line-height:1.5;color:#b9c9c1;margin:5px 0}
@@ -10,7 +16,7 @@
 .course-access-card.course-burnt{background:linear-gradient(160deg,#1b1714f2,#0d0b0af2),#14241e;border-color:#6b5a4a66}
 .course-access-card.course-burnt h3{color:#c9bfb4}
 .course-access-card .course-burnt-note{color:#e0a27a}
-.course-access-card>button{border:1px solid #9bbda455;border-radius:3px;background:#2d4b39;color:#e0f3e4;padding:10px;font-size:10px;font-weight:700;cursor:pointer;min-height:38px}
+.course-access-card>button{grid-row:2;border:1px solid #9bbda455;border-radius:3px;background:#2d4b39;color:#e0f3e4;padding:10px;font-size:10px;font-weight:700;cursor:pointer;min-height:38px}
 .course-access-card>button:disabled{opacity:.5;cursor:default}
 .course-store-button:focus-visible,.course-access-card>button:focus-visible{outline:2px solid #edc689;outline-offset:3px}
 .course-access-message{min-height:18px;color:#edc689!important}

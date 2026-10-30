@@ -39,4 +39,22 @@
 .front-door-options{position:absolute;grid-area:1/2/5/3;inset:0;overflow-y:auto;padding:16px 18px;background:#121916f2;border:1px solid #9b8457;border-top:3px solid #d0a55c;box-shadow:0 12px 36px #000a;z-index:6}
 .front-door-options[hidden]{display:none}
 .front-door-on .front-door-options .race-setup,.front-door-on .front-door-options .garage{position:relative;inset:auto;width:100%;margin:0 0 18px}
+
+/* Compact options: the panel is only as wide as its content, every row has the same label column, and each row's
+   choices follow the label, left aligned. Layout only; every control, id and order is unchanged. */
+.front-door-on .front-door-options{right:auto;width:min(100%,650px)}
+.front-door-on .front-door-options .setup-line{justify-content:flex-start;gap:0}
+.front-door-on .front-door-options .setup-line>.field-label,.front-door-on .front-door-options .player-controls>.field-label,.front-door-on .front-door-options .garage-heading>.field-label,.front-door-on .front-door-options .lighting-control>span,.front-door-on .front-door-options .driver-setup>label>span{flex:0 0 120px;width:120px}
+.front-door-on .front-door-options .player-controls{gap:0}
+.front-door-on .front-door-options .player-controls select{flex:0 1 280px;width:auto;margin-right:9px}
+.front-door-on .front-door-options .scene-line{display:flex}
+.front-door-on .front-door-options .scene-line select{flex:0 1 280px;width:280px;max-width:none}
+.front-door-on .front-door-options .scene-line .course-store-button{margin-left:12px}
+.front-door-on .front-door-options .garage-heading{justify-content:flex-start}
+.front-door-on .front-door-options .garage-heading .graphics-control{margin:0 16px 0 0}
+.front-door-on .front-door-options .garage-heading #garage-count{margin-left:0}
+.front-door-on .front-door-options .car-picker{max-width:480px}
+.front-door-on .front-door-options .lighting-control{justify-content:flex-start;gap:0}
+.front-door-on .front-door-options .driver-setup>label{gap:0}
+.front-door-on .front-door-options .driver-setup select{flex:0 1 280px;width:280px}
 .in-menu .menu-screen.front-door-on .front-door-credits{position:absolute;right:5%;bottom:6px;left:auto;grid-area:auto;padding:0;border:0;background:none;display:block}.front-door-credits a{font-size:11px;color:#b3a98f}
