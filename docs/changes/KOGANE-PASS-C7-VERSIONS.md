@@ -119,3 +119,7 @@ None is loosened; each moves because two courses were added.
 ## Removed
 
 Nothing.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed: Night and Reverse behind dev switches; open-road reverseVariant leaves the five released reverses identical (world signatures and replays unchanged). Rule 18 written review: test-circuit-layouts, test-map-secrets (5 to 7 secrets), test-map-view (released count) and test-reference-laps only add the two new versions and a dev-parent fallback; nothing loosened.
