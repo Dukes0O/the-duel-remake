@@ -83,3 +83,15 @@ All from the lane folder, memory-only saves, no frame timing (AGENTS rule 9 and 
 ## Removed
 
 The "Skyline is absent" branch and the second-process spawn in `tools/test-skyline-handling.mjs`, because the switch it tested is now on.
+
+## Claude's review (30 October 2026, rule 18)
+
+Read every changed assertion against the rebased branch. Each follows from the five switches being on and none accepts more than before:
+
+- Counts (cars 15, courses 31, secret courses 7, open-route events 5, replay cases 33) each rise by exactly what the release adds.
+- `test-skyline-handling.mjs`: the second process existed only to turn the switch on; the same checks now run once in the ordinary game, every one unchanged. The lost "switch off hides the car" case is covered for the switch itself by `test-feature-flags.mjs`. Accepted.
+- `test-lessons-v2-view.mjs` and `test-circuit-kogane.mjs` keep both the absent and present cases, built from the real list. Accepted.
+- Restored careers: agreed, Kogane Pass is not granted to the two restored careers; they buy it like any player. The shipped restore data stays byte-identical and the test proves it.
+- Kogane Pass signature recaptured after the rebase onto KOGANE-NIGHT-LIGHT, with the same reviewed difference as the Night and Reverse refresh. Ground rows and replay fingerprints unchanged.
+
+Verdict: approve.
