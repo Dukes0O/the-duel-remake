@@ -51,7 +51,7 @@ try{
   ui['car-select'].options=Object.keys(CARS).map(value=>({value}));
   let rewardRefreshes=0,opened=0,message='';
   const profile=()=>app.profile,text=(id,value)=>{textValues[id]=String(value);if(id==='entry-reward')rewardRefreshes++;};
-  const paint=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:()=>({textContent:''})},profile,text,credits,escapeHTML,time:String,coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}}).updateMenuCar;
+  const paint=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:()=>({textContent:'',insertAdjacentHTML(){}}),addEventListener(){}},profile,text,credits,escapeHTML,time:String,coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}}).updateMenuCar;
   const root={querySelector:selector=>selector==='.driver-panel'?{setAttribute:(name,value)=>{same([name,value],['open',''],'post-action roster stays open');opened++;}}:null};
   const activate=dataset=>handleDriverAction({dataset},{app,refreshGarage:value=>{message=value;paint();},root,garageCar:choices.car,credits});
   paint();same(ui['driver-select'].value,'club','old and new neutral profiles display Club Driver');

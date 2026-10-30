@@ -133,7 +133,8 @@ const before = await import('data:text/javascript;base64,' + Buffer.from(oldSour
 // The one change since: the McLaren F1 is earned at 12 medals, not 15 (Claude, 28 October 2026, EARN-FINISH).
 const earlierCars = structuredClone(before.CARS);
 earlierCars.mclaren_f1.unlockRequirement.medals = 12;
-assert.deepEqual(Object.fromEntries(Object.entries(CARS).filter(([id]) => id !== FAN_CAR)), earlierCars,
+// The Skyline joined the roster at the Kogane release (SKYLINE-FULL-GAME); tools/test-skyline-handling.mjs holds its numbers.
+assert.deepEqual(Object.fromEntries(Object.entries(CARS).filter(([id]) => id !== FAN_CAR && id !== 'nissan_skyline_gtr_r34')), earlierCars,
   'every earlier car has the exact same data and order');
 
 function launch(id, curve = false) {

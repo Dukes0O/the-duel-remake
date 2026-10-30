@@ -1,12 +1,7 @@
 // STORY-KOGANE-SAVE: the Kogane Invitation's save (docs/story/kogane-invitation.md section 9). Memory-only.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
 
-// The Skyline is in the car list only while the nissan-skyline switch is on; this run asks for it as private QA does.
-globalThis.__DUEL_QA__ = true;
-globalThis.location = {search: '?flags=nissan-skyline'};
 const {createProfile, normalizeProfile, loadPlayers, savePlayers} = await import('../src/progression.js');
 const {CARS} = await import('../src/config.js');
 const {storyOf, koganeStep, readKoganeLetter, markKoganeLesson, markKoganeSupplies, markKoganeDuel, markKoganeAna,
@@ -131,14 +126,20 @@ same(loadPlayers(store).players.find(item => item.id === 'kogane-qa').profile.st
 ok(markKoganeDuel(halfWay, 'easy').profile.story.kogane.laterStep.keep === true, 'a write keeps unknown names');
 ok(!has(loadPlayers(store).players.find(item => item.id === 'kogane-old').profile, 'story'), 'the older player still has no story after saving');
 
-// With the switch off the car is not in this build: the grant refuses, and a saved id is dropped as for any unknown car.
-const off = spawnSync(process.execPath, ['--input-type=module', '-e', `
-  const {createProfile, normalizeProfile} = await import('./src/progression.js');
-  const {grantKoganeSkyline, KOGANE_SKYLINE} = await import('./src/story/story-save.js');
-  const profile = createProfile(), grant = grantKoganeSkyline(profile);
-  console.log(JSON.stringify([grant.ok, grant.changed, grant.profile === profile,
-    normalizeProfile({...profile, unlockedCars: [KOGANE_SKYLINE]}).unlockedCars.includes(KOGANE_SKYLINE)]));
-`], {cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8'});
-same(JSON.parse(off.stdout), [false, false, true, false], `with the switch off the grant refuses ${off.stderr}`);
-
+// The Skyline is released (29 October 2026), so the car is in the ordinary build with no flag asked for. If the car were
+// not in the table (a build without it), the grant refuses, and a saved id is dropped as for any unknown car: tested here by
+// taking the car out of the table for a moment, since a switch cannot be turned off inside a running process.
+{
+  const kept = CARS[KOGANE_SKYLINE], profile = createProfile();
+  const on = grantKoganeSkyline(profile);
+  same([on.ok, on.changed, on.profile === profile], [true, true, false], 'with the car in the build the grant gives it');
+  ok(normalizeProfile({...profile, unlockedCars: [KOGANE_SKYLINE]}).unlockedCars.includes(KOGANE_SKYLINE), 'a saved Skyline id is kept');
+  delete CARS[KOGANE_SKYLINE];
+  try {
+    const grant = grantKoganeSkyline(profile);
+    same([grant.ok, grant.changed, grant.profile === profile,
+      normalizeProfile({...profile, unlockedCars: [KOGANE_SKYLINE]}).unlockedCars.includes(KOGANE_SKYLINE)],
+    [false, false, true, false], 'with the car out of the build the grant refuses and a saved id is dropped');
+  } finally { CARS[KOGANE_SKYLINE] = kept; }
+}
 console.log(`Story save: ${checks} checks passed using memory storage.`);
