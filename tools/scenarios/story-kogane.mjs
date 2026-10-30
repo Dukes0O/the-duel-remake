@@ -294,32 +294,31 @@ export async function run(context) {
   await app(`app.audio.setMuted?.(true)`);
   await wait(400);
   await app(`app.setRaceSettings({cpuDifficulty: 'easy'})`);
+  // F2: choosing the Night circuit by hand in the box must not turn the challenge into Grand Prix; then the player goes back to the old circuit.
+  const oldStage = await app(`app.getRaceChoices().startStage`);
+  const pickCircuit = index => context.evaluate(`(() => { const sel = document.querySelector('#scene-select'); sel.value = String(${index}); sel.dispatchEvent(new Event('change', {bubbles: true})); })()`);
+  const nightStage = await app(`[...document.querySelectorAll('#scene-select option')].findIndex(o => /Kogane Pass Night/.test(o.textContent))`);
+  await pickCircuit(nightStage);
+  await wait(500);
+  report.pickedNight = await app(`({mode: app.getRaceChoices().mode, pressed: [...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode)})`);
+  fact(report.pickedNight.mode === 'duel' && report.pickedNight.pressed.join() === 'duel', 'choosing Kogane Pass Night in the circuit box keeps Rival Duel (got ' + report.pickedNight.pressed + ')');
+  await pickCircuit(oldStage);
+  await wait(400);
   await click('#story-visit');
   await context.waitFor(`!!document.querySelector('.story-card')`, 'the Story card, duel part', 10_000);
   await shot('14-story-duel', 'Story card: supplies done, Race Daichi open');
-  await app(`(() => { window.__rsLog = []; const orig = app.setRaceSettings.bind(app); app.setRaceSettings = patch => { window.__rsLog.push(JSON.stringify(patch)); return orig(patch); }; })()`);
   await click('[data-story-step="duel"]');
   await wait(900);
-  const setup = await app(`({c: app.getRaceChoices(), pending: !!app._storyPending, shown: document.querySelector('#scene-select')?.selectedOptions[0]?.textContent, want: app.getRaceChoices().startStage})`);
+  const setup = await app(`({c: app.getRaceChoices(), pending: !!app._storyPending, shown: document.querySelector('#scene-select')?.selectedOptions[0]?.textContent,
+    modes: [...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode), level: [...document.querySelectorAll('[data-cpu-difficulty][aria-pressed="true"]')].map(b => b.dataset.cpuDifficulty)})`);
+  report.raceDaichiMenu = setup;
   fact(setup.pending && setup.c.mode === 'duel' && setup.c.cpuDifficulty === 'easy', '"Race Daichi" fills the setup in the app: Rival Duel, Easy');
-  // FAULT (reported): the menu screen keeps its own copy of the setup and is not refreshed by "Race Daichi", so the circuit
-  // box still shows the old road and START would race it. The picture is taken as it is, then the player's own step is made
-  // (choosing the circuit in the box), which is what a player has to do today.
-  report.raceDaichiMenu = {circuitShown: setup.shown, appStage: setup.want};
-  await shot('15-race-setup-as-shown', 'menu right after Race Daichi: the circuit box (' + setup.shown + ')');
-  await context.evaluate(`(() => { const sel = document.querySelector('#scene-select'); sel.value = String(window.__qaApp.getRaceChoices().startStage); sel.dispatchEvent(new Event('change', {bubbles: true})); })()`);
-  await wait(900);
-  await shot('15b-race-setup-chosen', 'menu after choosing the Night circuit by hand: Rival Duel, Easy');
-  report.rsLog = await context.evaluate(`window.__rsLog`);
-  report.menuAfterChoosing = await app(`({mode: app.getRaceChoices().mode, pending: !!app._storyPending, modeButtons: [...document.querySelectorAll('[data-mode][aria-pressed="true"]')].map(b => b.dataset.mode)})`);
-  fact(report.menuAfterChoosing.pending, 'choosing the circuit by hand keeps the story mark (FAULT: it does not, the menu switches to ' + report.menuAfterChoosing.mode + ')');
-  // The player's way is closed today, so the race is started as tools/test-story-hooks.mjs does: the app's own two calls.
-  await app(`app.setRaceSettings({mode: 'duel'})`);
-  await app(`app.startStoryDuel()`);
-  report.notes.push('the race was started with the app calls startStoryDuel and startCampaign(getRaceChoices()), not with the START button');
-
-  // 11. START, the grid, the road at night.
-  await app(`app.startCampaign(app.getRaceChoices())`);
+  // F1 and F2: the menu itself shows Kogane Pass Night, Rival Duel and Easy, and the story mark is still on, so START is the story's race.
+  fact(setup.shown === 'Kogane Pass Night' && setup.modes.join() === 'duel' && setup.level.join() === 'easy',
+    'after "Race Daichi" the menu shows Kogane Pass Night, Rival Duel and Easy (got ' + setup.shown + ', ' + setup.modes + ', ' + setup.level + ')');
+  await shot('15-race-setup-shown', 'menu right after Race Daichi: Kogane Pass Night, Rival Duel, Easy');
+  // 11. START (the real button), the grid, the road at night.
+  await click('#start-engine');
   await context.waitFor(`window.__qaApp.duel.state.status !== 'menu'`, 'the race starting', 60_000);
   await context.waitFor(`window.__qaApp.visualReady`, 'the Night scene', 90_000).catch(async () => {
     report.notes.push('the Night scene was not ready after 90 s: ' + JSON.stringify(await context.evaluate(`({ready: window.__qaApp.visualReady, loading: document.querySelector('#renderer-loading')?.hidden, status: window.__qaApp.duel.state.status, running: window.__qaApp.running})`)));

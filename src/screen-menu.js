@@ -51,7 +51,9 @@ export function createMenuScreen(ctx) {
     storyButton=root.querySelector('#story-visit');
     if(storyButton)ui['story-visit']=storyButton;
     const press=id=>()=>root.querySelector(id)?.click();
-    storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),
+    // "Race Daichi" changes the app's setup (road, mode, level): the menu shows it, and the first look at that road is not a change of road by the player.
+    const showStoryRace=()=>{previousSetupCourse=COURSE[app.getRaceChoices().startStage]?.id;ctx.onRaceSetup?.();};
+    storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),onRaceSetup:showStoryRace,
       actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]')}});
     root.addEventListener('click',event=>{if(event.target.closest?.('[data-story-open]'))storyUi.open();});
   }
