@@ -201,9 +201,12 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
     parts.push('<div class="heli-board-map"><button type="button" class="heli-board-button" data-heli-board="map">Pilot\'s map</button></div>');
   const labPanel = labBox(view, lab);
   if (labPanel) parts.push(labPanel);
-  if (jobs.length && atHomePad(view))
-    parts.push(`<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
-      `${[...jobs].sort((a, b) => !!b.story - !!a.story).map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`);
+  if (jobs.length && atHomePad(view)) {
+    const jobsPart = `<div class="heli-board-jobs"><h3 class="heli-board-title">Dispatch board</h3><ul class="heli-board-list">` +
+      `${[...jobs].sort((a, b) => !!b.story - !!a.story).map(job => jobRow(job, mode, {survey: view?.survey ?? null, skins})).join('')}</ul></div>`;
+    // While the story's job is waiting or in hand, the dispatch board leads the panel so the job is the first thing seen.
+    if (jobs.some(job => job.story && !job.done)) parts.unshift(jobsPart); else parts.push(jobsPart);
+  }
   if (offer) {
     const course = HELI_DESTINATIONS[offer.courseId]?.name ?? offer.courseId;
     parts.push(`<div class="heli-board-race"><span class="heli-board-text">${esc(CARS[offer.carId]?.name ?? 'Your car')} is set down at ${esc(course)}.</span>` +
