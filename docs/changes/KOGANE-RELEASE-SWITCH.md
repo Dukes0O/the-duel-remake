@@ -1,0 +1,101 @@
+---
+task: KOGANE-RELEASE-SWITCH
+status: ready-for-release-review
+kind: release
+flag: kogane-pass, kogane-pass-night, kogane-pass-reverse, nissan-skyline, kogane-invitation
+player_facing: yes
+---
+
+# Kogane Pass, its two versions, the Skyline and the Kogane Invitation switched on (29 October 2026)
+
+Prepared on `claude/kogane-switch-on` as a separate commit set for Claude to review and merge.
+Nothing is merged, pushed or released here, and no frame timing was run.
+
+## What is switched on
+
+Five words changed in four files, all from `dev` to `on`:
+
+- `src/circuits/kogane-pass.js`: the manifest state. Kogane Pass keeps its price of 2,200 and its release order of 13.
+- `src/circuits/kogane-pass-night.js` and `src/circuits/kogane-pass-reverse.js`: `state: 'on'` passed to the variant helper. Both stay free (price 0) and are found from the helicopter over Kogane Pass, as the course packet says.
+- `src/feature-flags.js`: `nissan-skyline` and `kogane-invitation` are `on`. The Skyline's switch is written twice in that table (an old duplicate line); both now say `on`, so the table is consistent. The Skyline goes live hidden (it needs `unlockRequirement: 'kogane-duel'`, which is already merged), so turning both on together is the order the story packet asks for (section 14, and "Decided 29 October").
+
+Left as `dev`: `menu-front-door` and every other development switch.
+
+`start-preview.bat` needed no change. It still lists `nissan-skyline` and `kogane-invitation` among its flags (a switch that is already on is harmless there, as with `pilot-map`), and the Kogane course flags are read from the manifests by `tools/preview-flags.mjs`. `test-preview-launcher.mjs` passes.
+
+## Fixtures refreshed, and why
+
+Only what the switch-on requires. Every existing signature, ground-row hash and replay fingerprint stayed identical (proved, see below).
+
+| Fixture | Change | Why |
+| --- | --- | --- |
+| `tools/fixtures/world-signatures/kogane-pass.json` | new | Kogane Pass had no signature because it was dev. First capture at switch-on; recaptured on 30 October after rebasing onto KOGANE-NIGHT-LIGHT, with the same reviewed change as the Night and Reverse refresh (one node, mesh, geometry and material fewer: the dropped wet-road layer; instances and textures unchanged). |
+| `tools/fixtures/world-signatures/kogane-pass-night.json`, `kogane-pass-reverse.json` | none | Captured by the versions card; the scene is unchanged, so the ordinary comparison now runs and passes. |
+| `tools/fixtures/ground-rows-hashes.json` | three entries added (`kogane-pass`, `kogane-pass-night`, `kogane-pass-reverse`) | The ground-rows suite walks every listed course and looks each one up; the versions card said these are added at switch-on. The other entries are byte-identical. |
+| `tools/replays/courses/kogane-pass.json` | new (one duel case, `falcone_f42`, fingerprints at 30, 60 and 144 frames a second) | Every course in the list needs one primary replay case. |
+| `tools/replays/courses/kogane-pass-night.json`, `kogane-pass-reverse.json` | none | Their cases already existed; they load once the courses are in the list, and the recorded fingerprints still match. |
+
+Proof nothing else moved: `node tools/test-replays.mjs --record` rewrote the fingerprints and `git diff` showed no change to any existing file, only the new `kogane-pass.json`. A full scene capture (`test-world-composition.mjs --capture`) compared with the stored signatures gave 30 identical and 1 new (Kogane Pass). `test-ground-rows-exact.mjs --record` changed no existing line.
+
+Counts that moved because the courses are on: the course list goes from 28 to 31 entries, replay cases from 30 to 33, world signatures from 30 to 31 files.
+
+## Changed assertions (reviewed)
+
+Each moves because the courses or switches are now on. None is loosened.
+
+- `tools/test-feature-flags.mjs`: `nissan-skyline` and `kogane-invitation` move from the list that must be `dev` to the list that must be `on`; the message names them as released on 29 October. The total count of switches does not change (the Skyline's duplicate line is still one key).
+- `tools/test-map-secrets.mjs`: the manifest check expected the Kogane two to be `dev` and the other five `on`. It now expects all seven `on`, free, found from the air.
+- `tools/test-map-view.mjs`: (a) the chart now shows every place but the Table, plus Kogane Pass (`PLACES.length - 1 + DEV_PLACES.length`; Kogane joins the chart through the `kogane-pass` switch, which is on); (b) the secret courses following their switches are all seven, not five.
+- `tools/test-course-access.mjs`: the zero-price list also names `kogane-pass-night` and `kogane-pass-reverse` (seven secret courses). Kogane Pass itself is priced, so it is not in that list.
+- `tools/test-skyline-handling.mjs`: the suite used to prove the Skyline is absent in the ordinary game, then re-run itself in a second process with the switch forced on. The Skyline is now in the ordinary game, so the "absent" proof and the second process are removed and the same checks run once, directly. Every other assertion in the file is unchanged and still runs. The "Skyline switched off hides the car" case is no longer testable through the module-level car table because nothing can turn a switch off in that process; `test-feature-flags.mjs` still covers the on and off states of the switch itself.
+
+- `src/test.js`: "Summit and its solo Attack are two distinct open-route events" becomes five open-route events (those two plus Kogane Pass, Night and Reverse, which are all open roads).
+- `tools/test-circuit-kogane.mjs`: the Kogane Pass manifest is `on`; "the course is in the list only when its switch is forced on, and hidden by default" becomes "in the list by default, and an override of false still hides it".
+- `tools/test-circuit-variants.mjs`: Kogane Night and Reverse expect state `on`, and expect to be in the ordinary course list (locked until found from the air) instead of absent.
+- `tools/test-lessons-v2-view.mjs`: the Kogane hairpin row test used to prove the row is absent while the course is absent. Kogane is now in the course list, so the test asserts that, runs the "no Kogane course, no row" case on the list with Kogane taken out, and runs the "course present, row listed" case on the real list.
+- `tools/test-progression.mjs`: the car count is one more (the Skyline, the story's prize).
+- `tools/test-medals.mjs` and `tools/test-earned-cars-ui.mjs`: their expected lists build "every car except the earned ones" from the car table by name; the Skyline joins the excluded names. The code already left it out (it has an earn rule); only the test's own copy of the list lacked it. The Jesko still asks for the same eight bought cars.
+- `tools/test-career-rebuild.mjs` and `tools/career-rebuild.mjs`: see "Decision for Claude" below. The test now expects seven secret courses (not five), and that Kogane Pass (released after the restore) is not in the restored careers.
+
+## Decision for Claude: the restored careers do not get Kogane Pass
+
+The rebuilt careers (Dukes00 and Spikey Ferns, `src/career-restore-2026-10-28.js`) are built from "every released bought course". With Kogane Pass on, that rule would have added a 2,200-credit course to the shipped restore data, which is a save-shaped file. I kept the shipped data byte-identical instead: `tools/career-rebuild.mjs` has a short list, `RELEASED_AFTER_RESTORE = ['kogane-pass']`, that the rebuild skips, and the test checks both that the data still matches the recipe and that Kogane Pass is not in it. The two careers buy it like any player. If you want them to start with it, delete the one list entry, run `node tools/career-rebuild.mjs --module` to regenerate the data, and drop the extra assertion; that is a deliberate grant to two real careers, so I did not make it.
+
+## Checked and needing no change
+
+`test-circuits`, `test-world-composition`, `test-ground-rows-exact`, `test-campaigns`, `test-opponents`, `test-circuit-layouts`, `test-preview-launcher`, `test-reference-laps`, `test-replays`, `test-save-fixtures`, `test-story-hooks`, `test-story-kogane-duel`, `test-heli-story`, `test-drive-lessons` pass with no edit.
+
+## Tests
+
+All from the lane folder, memory-only saves, no frame timing (AGENTS rule 9 and the packet: the Night version's frames belong to the course release).
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`) on the final commit: 60 of 60 passed. No suite failed at its end on the Recycle Bin step.
+- `npm run build`: passed.
+- By hand, all passing on the switched-on code: test-circuits, test-world-composition, test-ground-rows-exact, test-campaigns, test-opponents, test-circuit-layouts, test-feature-flags, test-preview-launcher, test-map-secrets, test-map-view, test-course-access, test-reference-laps, test-replays (297 checks, 33 cases), test-save-fixtures, test-story-hooks, test-story-kogane-duel, test-heli-story, test-skyline-handling, test-drive-lessons, test-circuit-kogane (both handling modes finish the course with no crashes), `node src/test.js` (799 passed).
+- The first lane run found the eight failures that became the changed assertions above; each was a test counting the old dev state.
+
+## Not done here
+
+- No look check in the game and no frame check for Kogane Pass, its two versions or the Skyline in a field. Both belong to Claude's release step.
+- The Kogane place still reaches the pilot's map through `DEV_PLACES` and the `kogane-pass` switch (the way Summit Run did). It works now the switch is on; moving it into `PLACES` would change the leg table for switched-off games and is a separate tidy-up.
+- The story's "Playable when" list (play it end to end on a fresh memory-only career, easy and hard) is Claude's to run before announcing.
+
+## Removed
+
+The "Skyline is absent" branch and the second-process spawn in `tools/test-skyline-handling.mjs`, because the switch it tested is now on.
+
+## Claude's review (30 October 2026, rule 18)
+
+Read every changed assertion against the rebased branch. Each follows from the five switches being on and none accepts more than before:
+
+- Counts (cars 15, courses 31, secret courses 7, open-route events 5, replay cases 33) each rise by exactly what the release adds.
+- `test-skyline-handling.mjs`: the second process existed only to turn the switch on; the same checks now run once in the ordinary game, every one unchanged. The lost "switch off hides the car" case is covered for the switch itself by `test-feature-flags.mjs`. Accepted.
+- `test-lessons-v2-view.mjs` and `test-circuit-kogane.mjs` keep both the absent and present cases, built from the real list. Accepted.
+- Restored careers: agreed, Kogane Pass is not granted to the two restored careers; they buy it like any player. The shipped restore data stays byte-identical and the test proves it.
+- Kogane Pass signature recaptured after the rebase onto KOGANE-NIGHT-LIGHT, with the same reviewed difference as the Night and Reverse refresh. Ground rows and replay fingerprints unchanged.
+
+Verdict: approve.
+
+## Story play-through on the switched-on build (30 October 2026)
+
+`tools/scenarios/story-kogane.mjs` gains `STORY_LEVEL` and now picks the level with the menu's own button (setting it in the app alone was undone by the next circuit change, which only showed at a level other than the default Easy). Easy: 28 facts pass, 22 pictures, 0 browser errors, the Skyline won. Hard: 23 facts pass, 0 errors; the test driver lost, no Skyline was given, the story stayed on Race Daichi and Daichi's try-again line showed. No assertion was loosened; the Easy facts are unchanged.

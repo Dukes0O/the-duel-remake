@@ -20,7 +20,7 @@ for(const course of COURSE){
   same(isCourseUnlocked(fresh,course),course===free,'new career cannot bypass a priced course');
   same(isCourseUnlocked(fresh,course.stage),isCourseUnlocked(fresh,course.id),'stable IDs and indices resolve the same ownership');
 }
-same(COURSE.filter(course=>COURSE_PRICES[course.id]===0).map(course=>course.id),['pacific-canyon','summit-time-attack','panorama-ridge-night','harbour-lights-dusk','panorama-ridge-reverse','harbour-lights-reverse','tremblant-woods-reverse'],'Pacific remains the included earning path; only the parent-owned solo child and the five secret courses (found from the air) also have zero price');
+same(COURSE.filter(course=>COURSE_PRICES[course.id]===0).map(course=>course.id),['pacific-canyon','summit-time-attack','panorama-ridge-night','harbour-lights-dusk','panorama-ridge-reverse','harbour-lights-reverse','tremblant-woods-reverse','kogane-pass-night','kogane-pass-reverse'],'Pacific remains the included earning path; only the parent-owned solo child and the seven secret courses (found from the air) also have zero price');
 same(COURSE.filter(course=>isCourseUnlocked(fresh,course)).map(course=>course.id),['pacific-canyon'],'zero price never grants the solo child to a new career');
 same(normalizeCourseAccess({version:1,unlocked:[free.id,free.id,'bad',paid.id]}),{version:1,unlocked:[free.id,paid.id]},'normalization removes unknown and duplicate unlocks');
 same(normalizeCourseAccess(null,{history:{bad:1},unlockedCars:5,circuitWins:true}),fresh.courses,'malformed legacy evidence is harmless');

@@ -16,7 +16,7 @@ import {PLAYERS_KEY, createProfile, getUpgradeLevels, isCarUnlocked, loadPlayers
 import {TERRITORIES} from '../src/wasteland-career.js';
 import {wastelandUnlocked} from '../src/wasteland-access.js';
 import {WARLORD_LADDER} from '../src/warlords.js';
-import {GRATIAN, KYLE, buildCareerFile} from './career-rebuild.mjs';
+import {GRATIAN, KYLE, RELEASED_AFTER_RESTORE, buildCareerFile} from './career-rebuild.mjs';
 
 function memoryStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -78,12 +78,15 @@ for (const name of ['Dukes00', 'Spikey Ferns']) {
     for (const id of Object.keys(DRIVERS)) assert.ok(isDriverUnlocked(profile, id), id);
     const released = COURSE.filter(course => !course.practice &&
       (!CIRCUIT_MANIFESTS.some(item => item.id === course.id) || FEATURE_STATES[CIRCUIT_MANIFESTS.find(item => item.id === course.id).flag] === 'on'));
-    // The five secret courses open only when found from the helicopter, so a restored career does not hold them yet.
+    // The seven secret courses (the five of 28 October and the two Kogane Pass versions) open only when found from the helicopter, so a restored career does not hold them yet.
     const secret = released.filter(course => CIRCUIT_MANIFESTS.find(item => item.id === course.id)?.unlock?.kind === 'spotted-from-air');
-    const bought = released.filter(course => !secret.includes(course));
+    // A course released after the restore was written (Kogane Pass) is bought like any other, so the restore does not hold it.
+    const later = released.filter(course => RELEASED_AFTER_RESTORE.includes(course.id));
+    const bought = released.filter(course => !secret.includes(course) && !later.includes(course));
     assert.ok(bought.length >= 21);
     for (const course of bought) assert.ok(isCourseUnlocked(profile, course), course.id);
-    assert.equal(secret.length, 5, 'the five secret courses are released');
+    for (const course of later) assert.equal(isCourseUnlocked(profile, course), false, course.id + ' was released after the restore and is not in it');
+    assert.equal(secret.length, 7, 'the seven secret courses are released');
     for (const course of secret) assert.equal(isCourseUnlocked(profile, course), false, course.id + ' waits to be found from the air');
     for (const car of profile.unlockedCars) {
       assert.deepEqual(getPaintState(profile, car).owned, ['factory', 'copper_metallic', 'glacier_satin'], car + ' paints');

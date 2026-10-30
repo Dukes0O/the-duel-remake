@@ -180,21 +180,21 @@ test('Panorama reverse fences stay behind the complete reversed road-width blend
 });
 
 // Kogane Pass (an open road, one run): Night is the parent in the existing night look from the start line, and
-// Reverse is the same mountain climbed from the village. Both are free, found from the air and still behind their own switches.
-test('Kogane Pass Night and Reverse: registered free, found from the air, behind their own switches', async () => {
+// Reverse is the same mountain climbed from the village. Both are free, found from the air and released with Kogane Pass (29 October 2026).
+test('Kogane Pass Night and Reverse: registered free, found from the air, released with Kogane Pass', async () => {
   const {KOGANE_PASS, manifest: parentManifest} = await import('../src/circuits/kogane-pass.js');
   const {KOGANE_PASS_NIGHT, manifest: koganeNight} = await import('../src/circuits/kogane-pass-night.js');
   const koganeReverse = await import('../src/circuits/kogane-pass-reverse.js');
   const ordinary = createFeatureFlags({storage: null, qa: false, search: ''});
   const ids = circuitDefinitions(ordinary).map(d => d.id);
   for (const [definition, manifest, order] of [[KOGANE_PASS_NIGHT, koganeNight, 15], [koganeReverse.definition, koganeReverse.manifest, 16]]) {
-    assert.deepEqual([manifest.state, manifest.price, manifest.grandPrix, manifest.releaseOrder], ['dev', 0, true, order]);
+    assert.deepEqual([manifest.state, manifest.price, manifest.grandPrix, manifest.releaseOrder], ['on', 0, true, order]);
     assert.deepEqual(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: 'kogane-pass'});
     assert.equal(definition.flag, definition.id);assert.equal(definition.stage, KOGANE_PASS.stage);
     assert.ok(manifest.releaseOrder > parentManifest.releaseOrder);
-    assert.ok(!ids.includes(definition.id), 'nobody sees it before Kogane Pass is released');
+    assert.ok(ids.includes(definition.id), 'in the ordinary course list, locked until found from the air');
     const on = createFeatureFlags({storage: null, qa: true, search: '?flags=' + definition.id});
-    assert.ok(circuitDefinitions(on).some(d => d.id === definition.id), 'its own switch turns it on in a QA build');
+    assert.ok(circuitDefinitions(on).some(d => d.id === definition.id), 'its own switch still lists it in a QA build');
   }
 });
 

@@ -12,7 +12,7 @@ import {keyboardAction, INPUT_CONTEXTS} from '../src/input-contexts.js';
 import {controlsHelp} from '../src/controls-help.js';
 import {instrumentsMarkup, controlsMarkup, noticeText, createHeliUi} from '../src/heli/heli-ui.js';
 import {dispatchBoardMarkup, handleBoardAction, atAnyPad} from '../src/heli/heli-board.js';
-import {PLACES, FUEL_PADS, PILOT_MAP, placeById} from '../src/heli/pilot-map-data.js';
+import {PLACES, DEV_PLACES, FUEL_PADS, PILOT_MAP, placeById} from '../src/heli/pilot-map-data.js';
 import {HELI_CUES} from '../src/heli/heli-audio.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {SECRET_SIGNS, TABLE, TABLE_ID} from '../src/heli/map-secrets.js';
@@ -131,7 +131,7 @@ try {
   // The model: places, ownership, pads, legs, reach, the helicopter.
   const profile = () => ({...app.profile, heli: app.heliSession.profile?.heli ?? app.profile.heli});
   const model = mapModel({view: app.heliView(), profile: profile(), jobs: app.heliSession.boardJobs()});
-  equal(model.places.length, PLACES.length - 1, 'every place but the Table (not seen yet) is on the chart');
+  equal(model.places.length, PLACES.length - 1 + DEV_PLACES.length, 'every place but the Table (not seen yet) is on the chart, Kogane Pass with them now it is released');
   ok(!model.places.some(place => place.id === TABLE_ID) && model.table === null, 'the Table is not on the map at first');
   const byId = new Map(model.places.map(place => [place.id, place]));
   equal(byId.get('tremblant-woods').state, 'owned', 'an owned course is ink');
@@ -333,7 +333,7 @@ try {
 
   // The sign's switch: secretCourses follow the variants' own switches.
   ok(Array.isArray(app._secretCoursesOn()) && app._secretCoursesOn().every(id => SECRET_SIGNS.some(sign => sign.id === id)), 'secretCourses are secret courses');
-  equal(app._secretCoursesOn().length, SECRET_SIGNS.length - 2, 'the five released secret courses follow their own switches; the two Kogane Pass versions are still off with Kogane Pass');
+  equal(app._secretCoursesOn().length, SECRET_SIGNS.length, 'all seven secret courses follow their own switches, the two Kogane Pass versions with Kogane Pass');
   console.log(`test-map-view: ${checks} checks passed`);
 } finally {
   if (saved) Object.defineProperty(globalThis, 'localStorage', saved); else delete globalThis.localStorage;

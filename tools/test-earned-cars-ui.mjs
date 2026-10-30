@@ -146,9 +146,9 @@ test('the Enzo, F1 and Bolide stay hidden everywhere while the switch is off, sh
   const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide'];
   // The Falcone Sirena (SIRENA-CAR) is on no list until DEEP-SIRENA-VIEW lists it once the Lab restores it.
   const sirena = 'falcone_sirena';
-  const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling');
-  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling'));
-  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena && id !== 'mcmurtry_speirling'));
+  const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34');
+  assert.deepEqual(shownCars(false), Object.entries(CARS).filter(([id]) => !medalCars.includes(id) && id !== sirena && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
+  assert.deepEqual(shownCars(true), Object.entries(CARS).filter(([id]) => id !== sirena && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'));
   assert.deepEqual(shownCarIds(false), today);
   assert.deepEqual(AIR_ONLY_CARS, [...medalCars, sirena, 'mcmurtry_speirling']);
   assert.ok(medalCars.every(id => !JOB_CARS.includes(id)), 'no earned car is a customer car');
@@ -200,7 +200,7 @@ import {screenMarkup, createMenuScreen} from './src/screen-menu.js';
 import {createGarageScreen} from './src/screen-garage.js';
 import {AIR_ONLY_CARS, JOB_CARS} from './src/heli/heli-jobs.js';
 const medalCars = ['ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'medal_test_a', 'medal_test_b', 'medal_test_c'];
-const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling'); // the Sirena is on no list until DEEP-SIRENA-VIEW
+const today = Object.keys(CARS).filter(id => !medalCars.includes(id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && id !== 'nissan_skyline_gtr_r34'); // the Sirena is on no list until DEEP-SIRENA-VIEW
 // Lists: off is today's, on adds the medal cars.
 assert.deepEqual(shownCarIds(false), today);
 assert.deepEqual(shownCarIds(true), [...today, ...medalCars]);

@@ -1,15 +1,8 @@
-// V4: headless handling checks. The preview roster is loaded in a fresh process.
+// V4: headless handling checks. The Skyline is in the ordinary game from the Kogane release (29 October 2026), so no preview process is needed.
 import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {fileURLToPath} from 'node:url';
 
 const id = 'nissan_skyline_gtr_r34';
-const preview = process.argv.includes('--preview');
-if (preview) {
-  globalThis.__DUEL_QA__ = true;
-  globalThis.location = {search: '?flags=nissan-skyline'};
-}
 // Never use browser storage, including in the dev-flag singleton.
 globalThis.localStorage = {getItem: () => null, setItem() {}};
 const {CARS, COURSE} = await import('../src/config.js');
@@ -24,15 +17,7 @@ assert.equal(completionCarProgress(createProfile()).total, 8);
 assert.equal(CAR_PRICES[id], undefined, 'no price: the Skyline is never bought');
 assert.equal(unlockCar({...createProfile(), credits: 100000}, id).ok, false);
 const assets = createVehicleAssets();
-if (!preview) {
-  assert.equal(featureFlags.enabled('nissan-skyline'), false);
-  assert.equal(CARS[id], undefined);
-  assert.equal(assets.source(id), null);
-  const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--preview'], {encoding: 'utf8'});
-  process.stdout.write(result.stdout);
-  process.stderr.write(result.stderr);
-  assert.equal(result.status, 0, 'dev preview checks pass');
-} else {
+{
   const car = CARS[id];
   assert.equal(featureFlags.enabled('nissan-skyline'), true);
   assert.equal(Object.keys(CARS).at(-1), id, 'append only');
@@ -40,7 +25,7 @@ if (!preview) {
     [205, 8.4, 1.08, 1.12, [55, 95, 133, 167, 190, 205], 1560]);
   assert.equal(car.awd, true);
   assert.equal(car.excludeFromCompletion, true);
-  assert.equal(Object.keys(CARS).length, 15, 'only the preview car adds to the fourteen-car roster');
+  assert.equal(Object.keys(CARS).length, 15, 'only the Skyline adds to the fourteen-car roster');
   const {Course} = await import('../src/course.js');
   const {performanceIndex, chooseCars, chooseRacers} = await import('../src/race-field.js');
   for (const courseId of ['tremblant-woods', 'panorama-ridge', 'ardennes-forest', 'harbour-lights']) {
@@ -75,7 +60,7 @@ if (!preview) {
   assert.equal(JOB_CARS.includes(id), false);
   const {ENGINE_FIT, engineFitFor} = await import('../src/engine-curve.js');
   const {launchTimes} = await import('./fit-engine-curve.mjs');
-  assert.ok(ENGINE_FIT[id], 'the preview has its own engine fit');
+  assert.ok(ENGINE_FIT[id], 'the Skyline has its own engine fit');
   for (let level = 0; level <= 3; level++) {
     const marks = [60, 100, 140, 170, 190];
     const oldTimes = launchTimes(id, marks, {engineLevel: level});
