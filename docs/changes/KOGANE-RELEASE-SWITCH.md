@@ -49,13 +49,30 @@ Each moves because the courses or switches are now on. None is loosened.
 - `tools/test-course-access.mjs`: the zero-price list also names `kogane-pass-night` and `kogane-pass-reverse` (seven secret courses). Kogane Pass itself is priced, so it is not in that list.
 - `tools/test-skyline-handling.mjs`: the suite used to prove the Skyline is absent in the ordinary game, then re-run itself in a second process with the switch forced on. The Skyline is now in the ordinary game, so the "absent" proof and the second process are removed and the same checks run once, directly. Every other assertion in the file is unchanged and still runs. The "Skyline switched off hides the car" case is no longer testable through the module-level car table because nothing can turn a switch off in that process; `test-feature-flags.mjs` still covers the on and off states of the switch itself.
 
+- `src/test.js`: "Summit and its solo Attack are two distinct open-route events" becomes five open-route events (those two plus Kogane Pass, Night and Reverse, which are all open roads).
+- `tools/test-circuit-kogane.mjs`: the Kogane Pass manifest is `on`; "the course is in the list only when its switch is forced on, and hidden by default" becomes "in the list by default, and an override of false still hides it".
+- `tools/test-circuit-variants.mjs`: Kogane Night and Reverse expect state `on`, and expect to be in the ordinary course list (locked until found from the air) instead of absent.
+- `tools/test-lessons-v2-view.mjs`: the Kogane hairpin row test used to prove the row is absent while the course is absent. Kogane is now in the course list, so the test asserts that, runs the "no Kogane course, no row" case on the list with Kogane taken out, and runs the "course present, row listed" case on the real list.
+- `tools/test-progression.mjs`: the car count is one more (the Skyline, the story's prize).
+- `tools/test-medals.mjs` and `tools/test-earned-cars-ui.mjs`: their expected lists build "every car except the earned ones" from the car table by name; the Skyline joins the excluded names. The code already left it out (it has an earn rule); only the test's own copy of the list lacked it. The Jesko still asks for the same eight bought cars.
+- `tools/test-career-rebuild.mjs` and `tools/career-rebuild.mjs`: see "Decision for Claude" below. The test now expects seven secret courses (not five), and that Kogane Pass (released after the restore) is not in the restored careers.
+
+## Decision for Claude: the restored careers do not get Kogane Pass
+
+The rebuilt careers (Dukes00 and Spikey Ferns, `src/career-restore-2026-10-28.js`) are built from "every released bought course". With Kogane Pass on, that rule would have added a 2,200-credit course to the shipped restore data, which is a save-shaped file. I kept the shipped data byte-identical instead: `tools/career-rebuild.mjs` has a short list, `RELEASED_AFTER_RESTORE = ['kogane-pass']`, that the rebuild skips, and the test checks both that the data still matches the recipe and that Kogane Pass is not in it. The two careers buy it like any player. If you want them to start with it, delete the one list entry, run `node tools/career-rebuild.mjs --module` to regenerate the data, and drop the extra assertion; that is a deliberate grant to two real careers, so I did not make it.
+
 ## Checked and needing no change
 
 `test-circuits`, `test-world-composition`, `test-ground-rows-exact`, `test-campaigns`, `test-opponents`, `test-circuit-layouts`, `test-preview-launcher`, `test-reference-laps`, `test-replays`, `test-save-fixtures`, `test-story-hooks`, `test-story-kogane-duel`, `test-heli-story`, `test-drive-lessons` pass with no edit.
 
 ## Tests
 
-See the hand-off report for the lane tier, the build and the by-hand suites. No frame timing was run (AGENTS rule 9 and the packet: the Night version's frames belong to the course release).
+All from the lane folder, memory-only saves, no frame timing (AGENTS rule 9 and the packet: the Night version's frames belong to the course release).
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`) on the final commit: 60 of 60 passed. No suite failed at its end on the Recycle Bin step.
+- `npm run build`: passed.
+- By hand, all passing on the switched-on code: test-circuits, test-world-composition, test-ground-rows-exact, test-campaigns, test-opponents, test-circuit-layouts, test-feature-flags, test-preview-launcher, test-map-secrets, test-map-view, test-course-access, test-reference-laps, test-replays (297 checks, 33 cases), test-save-fixtures, test-story-hooks, test-story-kogane-duel, test-heli-story, test-skyline-handling, test-drive-lessons, test-circuit-kogane (both handling modes finish the course with no crashes), `node src/test.js` (799 passed).
+- The first lane run found the eight failures that became the changed assertions above; each was a test counting the old dev state.
 
 ## Not done here
 
