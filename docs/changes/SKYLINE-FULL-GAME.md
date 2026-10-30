@@ -121,3 +121,7 @@ pm run build: built. The full tier was not rerun here.
   (the `spawnSync` run), with their imports: the Skyline is in the ordinary roster, so they ran the same thing twice.
 - The two-line preview address block in each of those suites (`__DUEL_QA__`, `?flags=nissan-skyline`).
 - Nothing else; no old model or kit is replaced.
+
+## Claude's review (30 October 2026)
+
+Approve for the 21 suites. No game code changed; the gaps were the armour kit (built with the existing recipe, recipe fixed for a body that hangs above its own ground) and test fixtures that never loaded the Skyline's model. Every changed assertion adds the Skyline or leaves it out of a comparison of the older cars, which stay pinned exactly; the titan replay adds one line and every earlier fingerprint is identical; the pilot map test now counts both place lists and would still catch a second copy. Look check: GFX_KIT_CAR=nissan_skyline_gtr_r34 in armor-kit-visuals (new one-car option) shows Scrapper, Raider and Warlord fitted, wheels clear, gritty. test-storage-budget stays open: Kyle's decision (see the inbox).
