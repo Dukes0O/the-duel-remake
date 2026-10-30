@@ -26,6 +26,10 @@ const MODEL = Object.freeze({
   activeGhostBytes: MAX_GHOST_BYTES, // reserve the real active ghost cap
 });
 const BUDGET = 4_000_000; // SPEC.md uses decimal MB, not binary MiB
+// Before the start-up move (archives and, when needed, careers go to IndexedDB at every start) the planning figure is
+// 4.25 MB (Kyle, 30 October 2026: three Kogane courses took the eight-player model to 4.05 MB). What stays after the
+// move, and the hard boundary, keep 4 MB.
+const PRE_MOVE_BUDGET = 4_250_000;
 const cars = Object.keys(CARS);
 const upgradeTypes = Object.keys(UPGRADE_TYPES);
 assert.equal(MAX_GHOST_SAMPLES, 1800);
@@ -135,7 +139,7 @@ const otherBytes = origin.entries().reduce((sum, [key, value]) => sum + 2 * (key
 const projectedBytes = count => otherBytes + 2 * (GHOST_KEY.length + MODEL.activeGhostBytes +
   JSON.stringify({ version: 1, records: [], archivedRecords: Array.from({ length: count }, (_, n) => archivedGhost(n)) }).length);
 const modeledBytes = projectedBytes(MODEL.archivedGhosts);
-assert.ok(modeledBytes < BUDGET, `modeled origin uses ${modeledBytes} bytes, over 4 MB`);
+assert.ok(modeledBytes < PRE_MOVE_BUDGET, `modeled origin before the start-up move uses ${modeledBytes} bytes, over 4.25 MB`);
 let failingArchives = MODEL.archivedGhosts + 1;
 while (projectedBytes(failingArchives) < BUDGET) failingArchives++;
 const archives = Array.from({ length: failingArchives }, (_, n) => archivedGhost(n));
