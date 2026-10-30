@@ -249,7 +249,7 @@ export async function run(context) {
   await wait(600);
   const taken = await app(`({job: app.profile.heli?.jobs?.taken, cap: app.storyCaption?.id ?? null})`);
   fact(taken.job === 'story-kogane-supplies', 'the story job is taken');
-  const takenRow = await context.evaluate(`document.querySelector('[data-job="story-kogane-supplies"]')?.innerText.replace(/\s+/g, ' ') ?? ''`);
+  const takenRow = await context.evaluate(`document.querySelector('[data-job="story-kogane-supplies"]')?.innerText.replace(/\\s+/g, ' ') ?? ''`);
   const firstRow = await context.evaluate(`document.querySelector('.heli-board-jobs li')?.dataset.job ?? ''`);
   fact(/Fly the crate to Daichi's tea house at Kogane Pass/.test(takenRow), 'once taken, the board row still says where to go (F11)');
   fact(firstRow === 'story-kogane-supplies', 'the story job is the first row of the dispatch board (F3)');
