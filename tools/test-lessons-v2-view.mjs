@@ -72,10 +72,11 @@ test('Watch replays the late clip then the clean inputs; views and briefing leav
 });
 test('the Kogane hairpin row shows on the board only while the course itself exists, and its completion names the course',()=>{
   assert.ok(DRIVE_LESSON_CORNERS.some(row=>row.courseId==='kogane-pass'),'the row is defined');
-  assert.equal(COURSE.some(course=>course.id==='kogane-pass'),false,'this run has the Kogane switch off');
-  const off=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:COURSE.map(c=>c.id),ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
-  assert.equal(off.courses.some(course=>course.id==='kogane-pass'),false,'switch off: no Kogane row for players');
-  const on=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:[...COURSE,{id:'kogane-pass',name:'Kogane Pass'}],cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:['kogane-pass'],ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
+  assert.equal(COURSE.some(course=>course.id==='kogane-pass'),true,'Kogane Pass is released and in the course list');
+  const without=COURSE.filter(course=>course.id!=='kogane-pass');
+  const off=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:without,cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:without.map(c=>c.id),ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
+  assert.equal(off.courses.some(course=>course.id==='kogane-pass'),false,'no Kogane course in the list: no Kogane row for players');
+  const on=driveLessonBoardModel({corners:DRIVE_LESSON_CORNERS,courses:COURSE,cars:[{id:'falcone_f42',name:'F42'}],ownedCourseIds:['kogane-pass'],ownedCarIds:['falcone_f42'],carId:'falcone_f42',difficulty:'casual'});
   assert.equal(on.courses.some(course=>course.id==='kogane-pass'),true,'course present: the row is listed');
   const state={playerId:'kyle',car:'falcone_f42',driverId:'club',difficulty:'casual'};
   const lesson={id:'corner',stage:'beat',phase:'result',done:true,bestMargin:1.5,lastAttempt:{passed:true,finished:true}};

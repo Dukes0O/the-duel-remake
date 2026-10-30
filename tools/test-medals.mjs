@@ -179,8 +179,8 @@ test('the Jesko still asks for the eight bought cars, exactly as before', () => 
     {...createProfile(), unlockedCars: bought, upgrades: maxed},
     {...createProfile(), unlockedCars: bought.slice(0, 7), upgrades: maxed},
     {...createProfile(), unlockedCars: [...bought, 'koenigsegg_jesko'], upgrades: {}}];
-  assert.deepEqual(bought, Object.keys(CARS).filter(car => !['koenigsegg_jesko', 'ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling'].includes(car)),
-    'the list is every car but the Jesko, the medal cars and the Lab-restored Sirena (an earned car never joins it), as before');
+  assert.deepEqual(bought, Object.keys(CARS).filter(car => !['koenigsegg_jesko', 'ferrari_enzo', 'mclaren_f1', 'bugatti_bolide', 'falcone_sirena', 'mcmurtry_speirling', 'nissan_skyline_gtr_r34'].includes(car)),
+    'the list is every car but the Jesko, the medal cars, the Lab-restored Sirena and the Skyline prize (an earned car never joins it), as before');
   assert.deepEqual(garages.map(garage => completionCarProgress(garage)).map(({maxed, total, eligible}) => [maxed, total, eligible]),
     [[0, 8, false], [8, 8, true], [7, 8, false], [0, 8, false]]);
   assert.equal(normalizeProfile(garages[2]).unlockedCars.includes('koenigsegg_jesko'), false);
