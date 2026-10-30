@@ -29,8 +29,15 @@ import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
 import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
-import {notePlayDay, buyBack as buyBackSave, fireOf} from './heli/heli-save.js';
-import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks} from './course-closures.js';
+import {notePlayDay, buyBack as buyBackSave, fireOf, heliOf} from './heli/heli-save.js';
+// STORY-KOGANE-HOOKS: the Kogane Invitation (docs/story/kogane-invitation.md), behind the kogane-invitation switch.
+import {koganeStep, storyOf, readKoganeLetter, markKoganeLesson, markKoganeAna, KOGANE_SKYLINE} from './story/story-save.js';
+import {koganeDuelStart, levelStart, KOGANE_DUEL_MARK, KOGANE_DUEL_COURSE} from './story/kogane-duel.js';
+import {createStoryRadio} from './story/story-radio.js';
+import {STORY_LEAD_LINE} from './story/story-ui.js';
+import {normalizeRival} from './rival-settings.js';
+import {mountStoryCaption} from './story/story-caption-view.js';
+import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks, CLOSURE, daysSinceBurn} from './course-closures.js';
 import {groundFromCourse} from './heli/heli-ground.js';
 import {createHeliAudio} from './heli/heli-audio.js';
 import {carAt} from './heli/heli-save.js';
@@ -282,6 +289,9 @@ export class App {
   start() {
     if (this.running) return;
     this.running = true;
+    // STORY-KOGANE-HOOKS: the story's caption line (browser only), and Ana's message if the game opens on the menu after the win.
+    if (this._storyOn() && typeof document !== 'undefined') this._storyCaptionView ??= mountStoryCaption(this);
+    if (this.duel.state.status === 'menu') this.storyMenuOpened();
     const loop = (t) => {
       if (!this.running) return;
       if (this.lastT == null) this.lastT = t;
@@ -330,7 +340,7 @@ export class App {
     return !gate||gate.ready&&gate.state===this.duel.state&&gate.course===this.duel.course;
   }
   dispose(){
-    this._clearDriveLesson();this._driveLessonUi?.dispose();
+    this._clearDriveLesson();this._driveLessonUi?.dispose();this._cancelStoryThanks();this._storyRadio?.dispose();this._storyRadioChain?.dispose?.();this._storyCaptionView?.dispose();
     this._leaveHeli();this.deepAudio.dispose();this.heliAudio.dispose();
     this.duel.clearDeep();
     this.duel.state.hiddenRoadJourney = null;
@@ -505,6 +515,8 @@ export class App {
     this.duel.startCampaign({seed:1989,mode:'timetrial',car,difficulty,driverId,playerId:ownerId,
       startStage:stageIndex,upgrades,opponentCount:0,lesson:plan});
     this._sayDriveLesson(DRIVE_LESSON_VIEW[lessonId].intro);
+    // Brian's note on the Kogane lesson's opening card: words only, so it does not talk over his recorded intro.
+    if(this._storyOn()&&lessonId==='corner'&&courseId==='kogane-pass'&&['invite','lesson'].includes(this.koganeStepNow()))this._storySay('story.kogane.brian.intro',{quiet:true});
     this._driveLessonUi?.update();return true;
   }
   // Enter, R and the highlighted button: start the suggested run. A run in progress is left with Esc, not skipped.
@@ -572,10 +584,14 @@ export class App {
       if(!driveLessonCompletion(run,state,this.player.id))return;
       const result=finishDriveLesson(this.profile,completion.id,completion.marginSeconds,completion.carId,{engineCurve:completion.id==='gears'}); // a gearbox lesson can only have run on the engine curve
       if(result.ok){
-        this.profile=result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward??run.reward;run.rewardMargin=completion.marginSeconds;
+        // STORY-KOGANE-HOOKS: passing "Beat me" on the Kogane row also marks the story's lesson step (a bare host has no story).
+        const story=this._storyLessonPass?.(result,completion);
+        this.profile=story?.profile??result.profile;run.saved=this._saveProfile();run.rewarded=true;run.reward=result.reward??run.reward;run.rewardMargin=completion.marginSeconds;
         this.driveLessonMessage=run.saved?'Lesson progress and reward saved.':
           'Lesson passed for this session. Progress and reward could not be saved. Keep the game open and retry saving; your last saved progress is unchanged.';
-        if(run.saved&&response.radio)this._sayDriveLesson(response.radio);
+        // Brian's recorded pass line only when the reward is new; the caption that points on to the helipad always follows.
+        if(run.saved&&response.radio&&!story?.skipPassLine)this._sayDriveLesson(response.radio);
+        if(run.saved&&story)this._storyLessonSaid(result);
       }
       else this.driveLessonMessage=result.reason;
       if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.win');
@@ -621,6 +637,125 @@ export class App {
     return driveLessonGhostPose(run.plan.instructor.poses,run.lesson.attempt.elapsedSeconds+lead,this.duel.state.car,this.duel.course);
   }
 
+  // ---- The Kogane Invitation (STORY-KOGANE-HOOKS; docs/story/kogane-invitation.md) --------------------------------
+  // Everything here waits for the kogane-invitation switch and its partners. With it off nothing below changes anything.
+  _storyOn(){return this._switches().enabled('kogane-invitation')===true;}
+  // The story shows only when the switch and the features it uses are on, the player owns Kogane Pass, and the save is not from a newer game.
+  _storyAvailable(){
+    const flags=this._switches();
+    return !!this.player&&this._storyOn()&&['kogane-pass','nissan-skyline','helicopter','pilot-map','driving-lessons'].every(name=>flags.enabled(name)===true)&&
+      isCourseUnlocked(this.profile,'kogane-pass')&&koganeStep(this.profile)!==null;
+  }
+  koganeStepNow(){return this._storyAvailable()?koganeStep(this.profile):null;}
+  // The road the Night Duel runs on: the Night version, or the day road while the Night version is not built.
+  _storyCourseId(){return COURSE.some(course=>course.id===KOGANE_DUEL_COURSE)?KOGANE_DUEL_COURSE:'kogane-pass';}
+  // The plain object the Story card and the other screens draw from (docs/story/kogane-invitation.md 12.1).
+  storyProps(){
+    const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
+    if(!this._storyAvailable())return none;
+    const profile=this.profile,step=koganeStep(profile),k=storyOf(profile).kogane,won=typeof k.duel==='string';
+    const carryDone=heliOf(profile).lessons.carry===true;
+    const state=(done,open)=>done?'done':open?'open':'locked';
+    const steps=[
+      {id:'lesson',state:state(k.lesson===true,true),note:'',button:''},
+      {id:'supplies',state:state(k.supplies===true,k.lesson===true),button:'',
+        note:k.lesson===true&&k.supplies!==true&&!carryDone?"Finish Brian's flying lessons at the helipad first, then take the job.":''},
+      {id:'duel',state:state(won,k.supplies===true),note:'',button:''},
+      {id:'ana',state:state(k.ana===true,won),note:'',button:''},
+    ];
+    const fireOn=this._fireOn(),closed=fireOn&&courseClosed(profile,'kogane-pass',undefined,{enabled:true});
+    return {available:true,step,read:k.read===true,steps,
+      fireClosed:closed?{days:Math.max(1,CLOSURE.closedDays-daysSinceBurn(profile,'kogane-pass'))}:null,
+      skylineOwned:isCarUnlocked(profile,KOGANE_SKYLINE),lead:k.ana===true?STORY_LEAD_LINE:''};
+  }
+  // Opening the Story card reads the letter. Only the red dot goes away.
+  openStory(){
+    if(this.duel.state.status!=='menu'||!this._storyAvailable())return false;
+    this._refreshPlayer();
+    const read=readKoganeLetter(this.profile);
+    if(!read.ok)return false;
+    if(read.changed){this.profile=read.profile;this._saveProfile();}
+    return true;
+  }
+  // "Race Daichi": fills the setup (the Night road, Rival Duel, the level already chosen) and marks it as the story's race.
+  // The player still presses START. Changing the road, the mode or the rival before then cancels the mark.
+  startStoryDuel(){
+    if(this.duel.state.status!=='menu'||!this._storyAvailable())return false;
+    this._refreshPlayer();
+    if(!['duel','ana','done'].includes(koganeStep(this.profile)))return false;
+    const courseId=this._storyCourseId(),stage=COURSE.find(course=>course.id===courseId);
+    if(!stage||!isCourseUnlocked(this.profile,stage)||this._fireClosedRefused(stage))return false;
+    this._storyPending=null;
+    this.setRaceSettings({eventId:courseId,mode:'duel'});
+    this._storyPending={courseId};
+    return true;
+  }
+  // Whether a start is the story's race: asked for by the Story card (pending) or by a restart of it (`story` in the options).
+  _storyRunFor(stage,options){
+    if(!this._storyAvailable())return null;
+    const explicit=options.story===KOGANE_DUEL_MARK;
+    if(!explicit&&!(this._storyPending&&options.story===undefined&&this._storyPending.courseId===stage.id))return null;
+    if(stage.id!==this._storyCourseId()||(options.mode??this._raceSettings.mode)!=='duel')return null;
+    if(!['duel','ana','done'].includes(koganeStep(this.profile)))return null;
+    const level=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
+    return koganeDuelStart(level)?{level}:null;
+  }
+  // The story's words: a caption through the radio (the click and hiss of the lessons' radio), no voice file.
+  _storyRadioNow(){
+    return this._storyRadio??=createStoryRadio({
+      getChain:()=>{
+        if(!this.audio.context)return null;
+        try{
+          this.audio._syncMixer?.();
+          const target=this.audio.mixer?.output('interface.bonus')||this.audio.buses?.voice||this.audio.master;
+          return this._storyRadioChain??=createRadioChain(this.audio.context,target);
+        }catch{return null;}
+      },
+      show:(id,text,readMs)=>{this.storyCaption={id,text,readMs};this.duel.emit({storyCaption:id});},
+      hide:id=>{if(this.storyCaption?.id===id){this.storyCaption=null;this.duel.emit({storyCaption:null});}},
+      isMuted:()=>this._storyQuiet===true||!this.audio.context||this.audio.muted===true||this.audio.paused===true,
+      schedule:(callback,ms)=>this._storyTimer(callback,ms),cancel:handle=>this._storyUntimer(handle)});
+  }
+  _storyTimer(callback,ms){return setTimeout(callback,ms);}
+  _storyUntimer(handle){clearTimeout(handle);}
+  // `quiet`: words only, so a caption does not talk over a recorded line.
+  _storySay(id,{quiet=false}={}){
+    if(!this._storyOn())return false;
+    this._storyQuiet=quiet;
+    try{return this._storyRadioNow().say(id);}finally{this._storyQuiet=false;}
+  }
+  // The finished-step chime (interface.bonus), once per step.
+  _storyBonus(){if(this.audio.context&&!this.audio.muted)this.audio._playCue?.('interface.bonus');}
+  // "Beat me" passed: only on the Kogane row of the first lesson, and only while the switch is on, the story's lesson step is marked
+  // (in the same profile change as the lesson's own reward). Null for every other pass.
+  _storyLessonPass(result,completion){
+    if(!this._storyAvailable()||completion.id!=='corner'||completion.courseId!=='kogane-pass')return null;
+    const marked=markKoganeLesson(result.profile);
+    return marked.ok&&marked.changed?{profile:marked.profile,skipPassLine:result.reward==null}:null;
+  }
+  // The chime and Brian's caption once the mark is saved. When the lesson's reward is new his recorded line plays first and the caption follows it.
+  _storyLessonSaid(result){
+    this._storyBonus();
+    // The caption waits for the recorded line, and is dropped if the player leaves the lesson first (leaving ends the lesson's radio epoch).
+    const epoch=this._driveLessonRadioEpoch;
+    if(result.reward!=null)(this._driveLessonRadioQueue??Promise.resolve()).then(()=>{if(epoch===this._driveLessonRadioEpoch&&this.duel.drivingLesson)this._storySay('story.kogane.brian.pass');});
+    else this._storySay('story.kogane.brian.pass');
+  }
+  // The next time the main menu opens after the win, Ana calls (once; her mark rises as she starts).
+  storyMenuOpened(){
+    if(!this._storyAvailable()||koganeStep(this.profile)!=='ana')return false;
+    const marked=markKoganeAna(this.profile);
+    if(!marked.ok||!marked.changed)return false;
+    this.profile=marked.profile;this._saveProfile();
+    this._storyBonus();
+    this._storyQuiet=false;
+    return this._storyRadioNow().sayAna();
+  }
+  // The story's captions stop when the player leaves for a race, a flight or a lesson.
+  _storyLeave(){this._cancelStoryThanks();this._storyRadio?.leave();this.storyCaption=null;}
+  // Daichi's thanks waits 3.2 s after the crate is down; leaving the flight (or the game) before then drops it.
+  _cancelStoryThanks(){if(this._storyThanks!=null){this._storyUntimer(this._storyThanks);this._storyThanks=null;}}
+
   startCampaign(options = {}) {
     if(this.duel.drivingLesson)this._clearDriveLesson();
     this._refreshPlayer();
@@ -645,6 +780,11 @@ export class App {
     this._settledMuddyHollowDeparture = null;
     this._stageStartCrashes=0;
     this._campaignStart=stageIndex;this._runPlayerId=this.player.id;
+    // STORY-KOGANE-HOOKS: the Night Duel. The story's settings replace the options (Daichi, one rival, the level); any other start drops the mark.
+    const storyRun=this._storyRunFor(stage,options);
+    if(storyRun)options={...options,...koganeDuelStart(storyRun.level)};
+    else if(options.story!==undefined)options={...options,story:undefined};
+    this._storyPending=null;this._storyLeave();
     this.cpuDifficulty=['easy','medium','hard'].includes(options.cpuDifficulty)?options.cpuDifficulty:this.cpuDifficulty;
     const mode=isSummitAttack(stage)?'timetrial':stage.practice||['chase','drift','checkpoint'].includes(stage.kind)||stage.stuntTrial?'duel':options.mode??this._raceSettings.mode;
     const yetiSeed=(stage.id==='summit-run'||isSummitAttack(stage))&&this._switches().enabled('summit-run')&&this._switches().enabled('yeti')
@@ -664,7 +804,8 @@ export class App {
     if(mode==='grandprix'&&options.fieldSeed==null)options={...options,fieldSeed:Math.floor(Math.random()*4294967296)>>>0};
     // Winter tyres count only where there is snow or ice to use them on.
     const tyre=options.tyre==='winter'&&courseHasWinterSurfaces(stage)?'winter':'summer';
-    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival,tyre,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
+    // Daichi is the story's rival, never the player's own saved setup.
+    this._rememberRaceSettings({eventId:stage.id,mode,difficulty,car,rival:storyRun?this._raceSettings.rival:rival,tyre,cpuDifficulty:this.cpuDifficulty,routeVariant:supportsRouteVariants(stage)?getRouteVariantForSeed(this.seed)?.id??this.menuRouteId:this.menuRouteId});
     this.menuStage=stageIndex;this.menuCar=car;
     this.audio.unlock();
     this.audio.setPaused(false);
@@ -685,6 +826,8 @@ export class App {
       rival,seed:this.seed,mode,difficulty,car,driverId,startStage:this._campaignStart,upgrades:getUpgradeLevels(this.profile,car),cpuDifficulty:this.cpuDifficulty,playerId:this.player.id});
     this._cupRace=cupRound&&this.duel.state.mode==='grandprix'&&this.duel.state.field?.size===8
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
+    this._storyRace=storyRun?{runId:this.runId,level:storyRun.level}:null;
+    if(storyRun){levelStart(this.duel);this._storySay('story.kogane.daichi.grid');}
     return true;
   }
   nextStage(){
@@ -732,6 +875,12 @@ export class App {
   setRaceSettings(patch={}){
     if(this.duel.state.status!=='menu'||!patch||typeof patch!=='object')return false;
     this._refreshPlayer();const values={...patch};if(Object.hasOwn(values,'startStage'))values.eventId=COURSE[values.startStage]?.id||COURSE[0].id;
+    // The story's race is cancelled when the road, the mode or the rival changes, so it cannot be won by accident.
+    if(this._storyPending){
+      const now=this._raceSettings,rivalOf=value=>JSON.stringify(normalizeRival(value));
+      if((Object.hasOwn(values,'eventId')&&values.eventId!==now.eventId)||(Object.hasOwn(values,'mode')&&values.mode!==now.mode)||
+        (Object.hasOwn(values,'rival')&&rivalOf(values.rival)!==rivalOf(now.rival)))this._storyPending=null;
+    }
     const settings=this._rememberRaceSettings(values);
     const customSeed=Object.hasOwn(values,'routeVariant')?null:this._customMenuSeed;
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
@@ -750,7 +899,9 @@ export class App {
       return this.visitWasteland();
     }
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,laps:this._lapChoices?.get(this._lapChoiceKey(this._campaignStart||0,mode)),rival:this.duel.state.rivalSettings,
+    // A restart of the story's race keeps the mark (and so Daichi at the level raced); it starts level again.
+    const story=this._storyRace?.runId===this.runId&&this.runId?KOGANE_DUEL_MARK:undefined;
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,laps:this._lapChoices?.get(this._lapChoiceKey(this._campaignStart||0,mode)),rival:this.duel.state.rivalSettings,...(story?{story}:{}),
       opponentCount:this.duel.state.opponentCount,fieldSize:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
@@ -1147,6 +1298,10 @@ export class App {
     if(COURSE[state.stageIndex]?.practice||!isCourseUnlocked(this.profile,state.stageIndex))return;
     if(this._runPlayerId!==this.player.id||state.playerId!==this._runPlayerId)return;
     this._refreshPlayer();
+    // STORY-KOGANE-HOOKS: the story's race carries its mark (and Daichi, in `rival`) into the settlement and onto the results card.
+    const storyRace=this._storyRace?.runId===this.runId&&!!this.runId&&state===this.duel.state&&state.mode==='duel'&&
+      state.rivalSettings?.car===KOGANE_SKYLINE&&this._storyOn();
+    const storyBefore=storyRace?koganeStep(this.profile):null;
     const payload={...result,runId:this.runId,stageIndex:state.stageIndex,won:result.won===true,completed:result.completed===true,
       timeSec:result.timeSec??result.stageTimeSec,laps:result.laps??state.completedLaps,seed:state.seed,car:state.car,driverId:state.driverId,mode:state.mode,difficulty:state.difficulty,cpuDifficulty:state.cpuDifficulty||this.cpuDifficulty,
       upgrades:{...state.upgrades},...(state.mode==='grandprix'?{rival:null,rivalSettings:null}:{rival:state.rivalSettings}),weaponLevels:state.weaponLevels,policeEscapes:result.policeEscapes??state.policeEscapes,
@@ -1160,6 +1315,7 @@ export class App {
       ...(state.tyreSlipRules===true&&state.difficulty==='pro'&&COURSE[state.stageIndex]?.kind==='drift'?{tyreSlipRules:true}:{}),
       ...(state.engineCurve===true?{engineCurve:true}:{}),
       intelEnabled:this._switches().enabled('grand-prix')===true,
+      ...(storyRace?{story:KOGANE_DUEL_MARK}:{}),
       clean:result.completed===true&&!result.missedStation&&(result.stageCrashes??state.stageCrashes??0)===0&&(result.majorCrashesBeforeRepair??state.majorCrashes)===this._stageStartCrashes};
     if(this._switches().enabled('lap-choice')&&supportsLapChoice(COURSE[state.stageIndex],state.mode)){
       payload.lapChoiceEnabled=true;
@@ -1168,6 +1324,7 @@ export class App {
     }
     if(yetiFinish)Object.assign(payload,{ownerPlayerId:this._runPlayerId,playerId:state.playerId,
       yetiEnabled:true,yetiSeen:true});
+    if(storyRace)result.story=KOGANE_DUEL_MARK;
     const awarded=settleRace(this.profile,payload);
     if(awarded.achievementsAwarded&&!awarded.awarded){this.profile=awarded.profile;this._saveProfile();}
     if(awarded.yetiAwarded){
@@ -1194,6 +1351,11 @@ export class App {
       if(awarded.medal||awarded.earnedCars?.length){
         Object.assign(result,{medal:awarded.medal,earnedCars:awarded.earnedCars||[]});
         this.audio.event({medalEarned:true},state,this.duel.course);
+      }
+      // The Night Duel (STORY-KOGANE-HOOKS): the Skyline won, or the kind line if it was owned. One chime, only when the step was just finished.
+      if(storyRace&&awarded.storyDuel){
+        Object.assign(result,{storyDuel:awarded.storyDuel,...(awarded.storyCar?{storyCar:awarded.storyCar}:{storyOwned:true})});
+        if(storyBefore==='duel')this._storyBonus();
       }
       if (Number.isSafeInteger(awarded.notorietyEarned)) {
         result.notorietyEarned = awarded.notorietyEarned;
@@ -1660,10 +1822,11 @@ export class App {
   _leaveHeli() {
     const session = this.heliSession;
     if (!session) return;
+    this._cancelStoryThanks();
     this.heliSession = null; this.heliMapOpen = false; // MAP-VIEW
     const left = session.leave();
     const spent = left.credits - (this._heliCreditsAtStart ?? left.credits);
-    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {})};
+    this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(left.heli ? {heli: left.heli} : {}), ...(left.lab ? {lab: left.lab} : {}), ...(left.story ? {story: left.story} : {})};
     this._saveProfile();
     this.heliAudio.stop();
   }
@@ -1745,6 +1908,7 @@ export class App {
   visitHeli({mode = 'assisted'} = {}) {
     if (this.duel.state.status !== 'menu' || !this.heliAvailable()) return false;
     this._refreshPlayer();
+    this._storyPending = null; this._storyLeave();
     const car = this.menuCar, driverId = getEquippedDriverId(this.profile);
     this.runId = this._runPlayerId = this._markedRaceKey = null;
     this.ghostRecorder = this.ghostRecord = this.ghostPose = this.grandPrixLapRecorder = null; this.lapTelemetryRecorder = null; this.ghostStatus = 'none';
@@ -1763,6 +1927,7 @@ export class App {
     this.heliSession = createHeliSession({profile: this.profile, enabled: true, loadCourse, carId: car, mode, difficulty: this._raceSettings.difficulty,
       fireEnabled: fireOn, rescueEnabled: fireOn && this._switches().enabled('rescue') === true, summitRunEnabled: fireOn && this._switches().enabled('rescue') === true && this._switches().enabled('summit-run') === true,
       koganePassEnabled: this._switches().enabled('kogane-pass') === true,
+      koganeStoryEnabled: this._storyAvailable(), // STORY-KOGANE-HOOKS: the story's dispatch job
       drivingLessonAt: this.drivingLessonsAvailable() ? (courseId, carId) => this._heliLessonAt(courseId, carId) : null,
       // MAP-VIEW: the pilot's map switch and the secret courses whose own switches are on.
       pilotMapEnabled: this._switches().enabled('pilot-map') === true, secretCourses: this._secretCoursesOn(),
@@ -1778,7 +1943,8 @@ export class App {
         // credits by the same amount; its heli field is its own.
         const spent = profile.credits - (this._heliCreditsAtStart ?? profile.credits);
         this._heliCreditsAtStart = profile.credits;
-        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {})};
+        // The delivery marks the story in the same change as its pay, so the story field comes back with the helicopter's.
+        this.profile = {...this.profile, credits: Math.max(0, this.profile.credits + spent), ...(profile.heli ? {heli: profile.heli} : {}), ...(profile.lab ? {lab: profile.lab} : {}), ...(profile.story ? {story: profile.story} : {})};
         this._saveProfile();
       }});
     this.setInputContext(null);
@@ -1792,6 +1958,14 @@ export class App {
       else if (event.type === 'radio') this.heliAudio.say(event.line);
       else this.heliAudio.event(event);
       if (event.type === 'crashed') this.heliAudio.say('heli.radio.crash');
+      // STORY-KOGANE-HOOKS: Roger's offer as words when the job is taken (Brian's recorded line plays); the chime and Daichi's thanks
+      // when the crate is down (after Brian's recorded "Delivered" line).
+      if (event.type === 'jobTaken' && event.job?.story === 'kogane') this._storySay('story.kogane.roger.offer', {quiet: true});
+      if (event.type === 'jobDone' && event.job?.story === 'kogane') {
+        this._storyBonus();
+        this._cancelStoryThanks();
+        this._storyThanks = this._storyTimer(() => { this._storyThanks = null; this._storySay('story.kogane.daichi.thanks'); }, 3200);
+      }
     }
     if (events.length) this.heliLog = [...this.heliLog, ...events].slice(-40);
     if (events.length) this.duel.emit({heli: true});
@@ -1995,6 +2169,7 @@ export class App {
   }
   selectPlayer(id){
     if(this.duel.state.status!=='menu')return false;
+    this._storyPending=null; // the story's race belongs to the player who asked for it
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this._noteFirePlayDay();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
@@ -2195,7 +2370,9 @@ export class App {
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     this.audio.setPaused(false);
     if (heliLanding) this.setRaceSettings(heliLanding);
+    this._storyRace = null; this._storyPending = null; // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
+    this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
   }
   get footCameraMode() {
     return wastelandRulesActive(this.duel.state) && this._footCameraMode === 'overhead'
@@ -2284,7 +2461,7 @@ export class App {
     else if (action === 'heli-camera') { this.heliCamera = (this.heliCamera + 1) % (this.heliSession?.cameraCount ?? 4); this.duel.emit({heli: true}); }
     else if (action === 'deep-surface') this.duel.deepSurface(); // DEEP-EXPLORER
     else if (action === 'deep-ping') this.duel.deepPing(); // DEEP-SIRENA-VIEW: R under water
-    else if (action === 'mute') { this.audio.toggleMute(); this.duel.emit({ mute: this.audio.muted }); }
+    else if (action === 'mute') { this.audio.toggleMute(); if (this.audio.muted) this._storyRadio?.mute(); this.duel.emit({ mute: this.audio.muted }); }
     else if (action === 'restart' && this.duel.state.status !== 'menu') this.requestNavigation('restart');
   }
   // SKI-VIEW: the ski box, the run menu and the run's buttons ask here; the session decides and its events play out.
