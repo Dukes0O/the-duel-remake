@@ -85,3 +85,7 @@ Nothing is replaced. The old restart behaviour (dropping `story` and the story r
 Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`): see the line below. `npm run build`: see below.
 
 After the review fixes: lane tier 29 suites passed, 0 failed (--jobs 2); test-story-hooks 141 checks; npm run build built.
+
+## Claude's review (28 October 2026, night)
+
+Independent review: approve, no real faults; five small items fixed with tests (141 checks), confirmed by Claude. No assertion changed. Grant through the app reruns once kogane-pass-night exists (FINISH).
