@@ -1,5 +1,3 @@
-UNFINISHED: test results section still to be filled in (see "Tests").
-
 ---
 task: KOGANE-PASS-C7-VERSIONS
 status: built-behind-switches
@@ -82,7 +80,13 @@ for the climb: it belongs to the old finish, which is now the start.
 
 ## Tests
 
-(to fill in)
+All run from the lane folder, memory-only saves, no frame timing.
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 2 --keep-going`): 182 of 182 passed on the final commit. No suite failed at its end on the Recycle Bin step.
+- `npm run build`: passed.
+- By hand: test-circuits, test-world-composition (with `--capture-new` for the two signatures, then the ordinary run), test-ground-rows-exact, test-campaigns, test-opponents, test-circuit-layouts, test-feature-flags, test-preview-launcher, test-circuit-kogane, test-map-secrets, test-map-view, test-course-eligibility, test-course-access, test-reference-laps: all passed.
+- Also run once with the two courses temporarily switched on (then put back to dev): test-circuits (31 events), test-circuit-layouts, test-circuit-variants, test-replays, test-feature-flags, test-preview-launcher passed, so the courses work as released courses too.
+- New in `tools/test-circuit-variants.mjs`: registration and dev switches, Night dark from the start with the parent's road and kit, Reverse follows the physical mountain (road, height, ground, turns, boards, lake, lamps), kit on real ground, walls beside the road edge, gantries at both ends.
 
 ## Changed assertions (reviewed)
 
@@ -94,6 +98,12 @@ None is loosened; each moves because two courses were added.
   two are expected `dev` (every other is expected `on`).
 - `tools/test-map-view.mjs`: the count of secret courses following their switches
   is the five released, not the seven.
+- `tools/test-map-secrets.mjs`: the course loader falls back to the registry for
+  a parent still behind its switch (Kogane Pass).
+- `tools/test-reference-laps.mjs`: the check that every found-from-the-air
+  version starts through its unlock rule also puts a parent that is still behind
+  its switch into the course list for that check (otherwise the Kogane versions
+  could not open). The check itself is unchanged.
 
 ## Not done here
 
