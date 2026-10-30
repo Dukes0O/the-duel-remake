@@ -44,3 +44,7 @@ Claude reviewed: switch off leaves today's menu; shared-file changes read only a
 - **Tests.** `tools/test-menu-front-door.mjs` grows from 7 to 14: last-time lines for every case, the badge for hold 75, 100, 50 and claimed, the badge class, the drawer's grid area and no fixed offset, the credits link out of the grid. No assertion changed or loosened.
 - **Removed.** Nothing removed. The old fixed-offset drawer rule is replaced by the grid-area one.
 - **Open.** With the switch on, the top bar still has its own ARMORY button next to the Armory door (the top bar is shared with the old menu). Kyle's try-out and the switch turning on remain.
+
+## Claude's review (28 October 2026, night)
+
+Claude reviewed code and the 2x2 look sheet: no overlap, doors full width, drawer right of the Drive card never over the doors, last-time line, NEARLY WON badge. No assertion changed. Switch stays dev until Kyle tries it.
