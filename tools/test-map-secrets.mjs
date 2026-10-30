@@ -75,8 +75,8 @@ const sessionAt = (courseId, {profile = profileWith(), secrets = ALL_SECRETS, pi
     const variant = ALL_CIRCUITS.find(def => def.id === sign.id), manifest = CIRCUIT_MANIFESTS.find(row => row.id === sign.id);
     ok(variant && manifest, `${sign.id} is a registered variant`);
     same(manifest.unlock, {kind: 'spotted-from-air', defaultEventId: sign.course}, `${sign.id} is found from the air on ${sign.course}`);
-    // The two Kogane Pass versions stay behind their switches until Kogane Pass itself is released.
-    same([manifest.price, manifest.state], [0, sign.course === 'kogane-pass' ? 'dev' : 'on'], `${sign.id} is free and, once its course is out, released, found only from the air`);
+    // All seven are released, Kogane Pass and its two versions with the rest (29 October 2026).
+    same([manifest.price, manifest.state], [0, 'on'], `${sign.id} is free and released, found only from the air`);
     const {course, ground} = loadCourse(sign.course);
     ok(signClear(course, ground, sign.x, sign.z), `${sign.id}: its sign stands off the road, in the dry, clear of scenery`);
     const lateral = Math.abs(course.nearest(sign.x, sign.z).lateral);
