@@ -1478,3 +1478,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 30 Oct: merged SKYLINE-FULL-GAME (21 of the 22 full-tier failures from the Skyline switch-on; armour kit built by recipe, look checked; lane 67/67, build). test-storage-budget open for Kyle.
 - 30 Oct: merged SAVE-BUDGET-FIGURE (Kyle: raise the before-move figure to 4.25 MB; lane 18/18, build).
 - 30 Oct: full tier 547/547 on b2c1167c, alone (Kogane release).
+- 30 Oct: merged MENU-TIDY (course maps, compact setup panel, menu-front-door on, Story door; lane 66/66, build, story scenario through the front door).
