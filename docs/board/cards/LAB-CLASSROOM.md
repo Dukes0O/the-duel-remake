@@ -203,7 +203,7 @@ tried the pendulum, and removes the old pendulum lesson files.
 
 ## 7. Look (round 1 of 3)
 
-Sheet: `docs/board/looks/lab-classroom/round-1.jpg`, the same three screens
+Sheet: `docs/board/looks/lab-classroom/round-1.jpg` (note: `round-1-review.md`), the same three screens
 in three looks: A steel workshop, B blueprint, C chalkboard. Claude's pick:
 **A, steel**. It belongs in the hangar (painted steel beam, brass and iron
 weights, a real stopwatch), it is the grittiest, and its colours match the
