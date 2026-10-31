@@ -315,10 +315,10 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
   root.innerHTML = '<div class="deep-logging" hidden><i></i><span></span></div>' + // DEEP-EXPLORER
-    '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip"></b><span></span></div>' +
+    '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip" hidden></b><span>R · sonar</span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
-    '<aside class="deep-map" hidden><header><b>KELP COAST</b><span><button type="button" class="deep-map-orient">Whole coast, north up</button> <button type="button" class="deep-map-toggle">Hide map</button></span></header>' +
+    '<aside class="deep-map" hidden><header><b>KELP COAST</b><span><button type="button" class="deep-map-orient">Turn with the car</button> <button type="button" class="deep-map-toggle">Hide map</button></span></header>' +
     '<canvas width="400" height="250" role="img" aria-label="Sea chart: explored seabed, saved finds, discovered places, ramp and your heading"></canvas>' +
     '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
     // DEEP-EXPLORER: Surface stays visible even when the map is closed.
@@ -347,8 +347,8 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   let mapVisit = null, geometry = null, showMap = true, requested = false, mapDrawAt = -Infinity;
   const toggleMap = () => { showMap = !showMap; canvas.hidden = objectives.hidden = !showMap; toggle.textContent = showMap ? 'Hide map' : 'Show map'; };
   const requestHome = () => { requested = true; };
-  // DEEP-SHALLOWS-FIX: the chart turns with the car; this button shows the whole coast, north up.
-  let headingUp = true;
+  // DEEP-SHALLOWS-FIX: this button turns the chart with the car. Kyle (30 October 2026): it starts north up, as it used to.
+  let headingUp = false;
   const toggleOrient = () => { headingUp = !headingUp; orient.textContent = headingUp ? 'Whole coast, north up' : 'Turn with the car'; mapDrawAt = -Infinity; };
   toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome); orient.addEventListener('click', toggleOrient);
   let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
@@ -428,7 +428,10 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
         }
       }
       edgeNotice.hidden = !(active && d.state.deepJourney?.edgeSec > 0); // DEEP-SHALLOWS-FIX
-      if (t > sonarUntil) sonar.hidden = true;
+      // Kyle (30 October 2026): once the badge gives the sonar, its ring stays on screen for the whole dive. A ping shows its echo for six seconds,
+      // then the ring waits for the next press of R.
+      sonar.hidden = !(active && d.deepStory?.sirena?.sonar === true); // the badge gives the sonar
+      if (sonarUntil && t > sonarUntil) { blip.hidden = true; distance.textContent = 'R · sonar'; sonarUntil = 0; }
       if (t > logUntil) log.hidden = true;
       if (t >= titleUntil || app.getDeepDiscovery()?.enabled !== true) title.hidden = true;
       // DEEP-EXPLORER: no tick or sound interrupts a place title or a log card.
