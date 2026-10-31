@@ -70,6 +70,10 @@ export function hookPromptText(prompt, {keys = JOB_KEYS} = {}) {
   const hook = keys.hook;
   if (prompt.kind === 'release') return prompt.ready ? `Press ${hook} to let go` : `Lower it until it touches, then press ${hook} to let go`;
   if (prompt.ready) return `Press ${hook} to hook`;
+  // H cannot hook this load at all: say why instead of promising a hook.
+  const blocked = {heavy: 'Too heavy to lift', bucket: 'Bucket fitted: take it off at the home pad',
+    rescueLine: 'Rescue line fitted: take it off at the home pad', lesson: 'Finish lesson 4 before carrying cars'}[prompt.blocked];
+  if (prompt.blocked) return blocked ?? null;
   const fix = {slowDown: 'Slow down', lower: `Lower ${prompt.metres} m`, higher: `Higher ${prompt.metres} m`, closer: 'Move closer'}[prompt.reason];
   return fix ? `${fix}, then press ${hook} to hook` : `Press ${hook} to hook`;
 }

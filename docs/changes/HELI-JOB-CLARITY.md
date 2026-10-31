@@ -44,6 +44,9 @@ unchanged (test-heli-job-clarity round trip). An older game copies the unknown k
   resumed pad; D4 every released destination has a car spot outside the landing circle, and the map pick-up car on
   the parking spot; D5 the reach rule numbers, Summit Run to Eifel Crown never offered, every car job and crate over
   40 play days flyable, Drop job anywhere (car job and crate) with no pay or charge and the job back on the board;
+  review fixes: Drop drops the job the card shows (a car job in hand with a crate hooked and set down drops the car
+  job), a load on the cable is set down first, a dropped crate lies on its pad's crate spot again, a retaken car job
+  makes one car, and a barred hook says why (the words and, for lesson 4, in the session);
   D1 and D2 every stage's words; D6 the landed card's ski words.
 - Every helicopter suite by hand (`tools/test-heli*.mjs`, 34 files), `test-pilot-map.mjs`, `test-map-secrets.mjs`,
   `test-heli-story.mjs`: all pass.
@@ -51,6 +54,8 @@ unchanged (test-heli-job-clarity round trip). An older game copies the unknown k
   on the final code. A first run failed 2 (test-drive-lesson-helipad, test-map-view): their small fake page has no
   job-card or prompt element, so the new hosts are now guarded like the arrival host; both pass, then the rerun.
 - `npm run build`: built (the usual chunk-size warning only).
+- After the review fixes: the new suite 1,518 checks, all 38 helicopter, pilot map, map secrets, helipad lesson and map
+  view suites by hand pass; lane tier (`--tier lane --changed --jobs 4`) 104 passed, 0 failed, 0 not run in 742.22s; `npm run build` built.
 - Browser, `tools/scenarios/heli-jobs.mjs` (released switches, memory-only saves, 1366x768): passes. Car job from
   the board (Dusthawk Rally, home pad to Tremblant Snow): card at each stage, hook prompt, carry, release prompt,
   delivered and paid 2,650; home for fuel; the Tremblant Snow crate (524 kg) to Panorama Ridge, paid 2,650; landed,
@@ -64,9 +69,11 @@ unchanged (test-heli-job-clarity round trip). An older game copies the unknown k
 
 - `tools/test-heli-jobs.mjs` "in the landing zone" became "on the parking spot beside the landing zone" plus
   "outside the landing circle": the car's place is the fix for Kyle's report 5 (D4).
-- `tools/test-heli-jobs.mjs` "a return load at <place>" for every place now holds only where a flyable drop-off
-  exists; where none does (Eifel Crown) the test asserts no crate, and every crate's leg is checked flyable. This
-  is report 2's fix (D5); the pay checks are unchanged.
+- `tools/test-heli-jobs.mjs` "a return load at <place>" for every place now holds except at a pinned list of places
+  with no crate, and every crate's leg is checked flyable. The list is pinned exactly (review): with the map on, with
+  or without the Table and Kogane, Eifel Crown, Ridge Rally, High Country and Azure Riviera; with the map off, Summit
+  Run. Even each one's shortest leg plus 80 kg is more than the fuel the pilot can have there (numbers on the card),
+  so none can get a crate with a shorter leg. This is report 2's fix (D5); the pay checks are unchanged.
 - `tools/test-heli-jobs.mjs` supply-call crate test: the session fixture now has the pilot's map on (as released),
   since without the far pumps Summit Run has no flyable crate to stow. Its assertions are unchanged.
 - `tools/test-heli-summit-arrival.mjs` OTHER_ARRIVALS_PIN 624439558 to 1375301816 and
@@ -84,4 +91,6 @@ unchanged (test-heli-job-clarity round trip). An older game copies the unknown k
 ## Not done
 
 - A course bought mid-day can reshuffle the day's car jobs (ids follow the owned list). Not fixed; noted on the card.
+- On the day this ships, the new reach rule redraws some of the map's car jobs, so a job taken before the update may
+  name a different car or route after it (job ids shift once). Accepted by Claude as a one-off.
 - The Fly To panel shows no fuel figure for Summit Run (display only). Noted on the card.

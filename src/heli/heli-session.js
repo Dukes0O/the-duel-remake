@@ -1988,21 +1988,28 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     },
     // HELI-JOB-CLARITY: the job card's Drop job, anywhere in flight or on the ground. No pay and no charge: the job goes
     // back to the board (a crate goes back to its pad). The heli-ski group is aboard, so it is handed back at home only.
+    // It drops exactly the job the card shows (jobStatusNow's order). A job whose load is on the cable is refused: the
+    // load is set down first, so no load is ever left on the cable with no job.
     dropJobHere() {
       if (phase !== 'flying') return {ok: false, reason: 'Drop the job while flying or on the ground.'};
-      if (skiFlight) {
-        if (skiFlight.kind === 'group' && !onHome()) return {ok: false, reason: 'The group is aboard: fly them home to hand the job back.'};
-        if (skiFlight.kind === 'group') commit(dropJobSave(save, flag));
+      const status = jobStatusNow();
+      if (!status) return {ok: true, dropped: false};
+      if (status.kind === 'skiDrop' || status.kind === 'skiGroup') {
+        if (status.kind === 'skiGroup' && !onHome()) return {ok: false, reason: 'The group is aboard: fly them home to hand the job back.'};
+        if (status.kind === 'skiGroup') commit(dropJobSave(save, flag));
         endSkiFlight();
         aim(null);
         emit({type: 'skiFlightDropped'});
         return {ok: true, dropped: true};
       }
-      const crate = crateInHand();
-      if (crate) {
-        loads = loads.filter(load => load !== crate);
+      const load = status.kind === 'crate' ? crateInHand() : status.kind === 'story' ? loads.find(item => item.storyJob) : loads.find(item => item.job === status.id);
+      if (load?.hooked) return {ok: false, reason: 'Set the load down first'};
+      if (status.kind === 'crate') {
+        // The crate goes back to its own pad: laid there again at once when this is its pad, else found there on the next landing.
+        loads = loads.filter(item => item !== load);
         aim(null);
-        emit({type: 'jobDropped', job: crate.returnJob});
+        emit({type: 'jobDropped', job: load.returnJob});
+        if (site.courseId === load.returnJob.from) layReturnCrate();
         return {ok: true, dropped: true};
       }
       return dropTaken();
@@ -2539,7 +2546,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       return Object.freeze({kind: 'release', ready: held.onGround === true});
     }
     const aim = hookAim();
-    if (!aim || aim.refusal?.reason === 'hooked' || (!aim.ready && !aim.refusal)) return null;
+    if (!aim || aim.refusal?.reason === 'hooked') return null;
+    if (aim.barred) return Object.freeze({kind: 'hook', ready: false, blocked: aim.barred});
+    if (!aim.ready && !aim.refusal) return null;
     return Object.freeze({kind: 'hook', ready: aim.ready, ...(aim.ready ? {} : {reason: aim.refusal.reason, ...(aim.refusal.metres ? {metres: aim.refusal.metres} : {})})});
   }
   function returnBoardView() {
@@ -2577,9 +2586,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const opts = net && load.supply ? {...gear, hookReach: NET_REACH} : gear;
     const refusal = hookRefusal(heli, load, opts);
     const limitKg = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : KESTREL.hookLimitKg;
-    const barred = !!bucketLoad() || rescueOn && hNothing(loads) || !(load.massKg <= limitKg) ||
-      !load.crate && !load.supply && (!liftCheck(load.id, liftLimit()).ok || !lessonsDone().carry);
-    return {load, refusal, ready: !refusal && !barred};
+    // HELI-JOB-CLARITY: why H cannot hook it at all (the prompt says so), null when it can once the hook is placed.
+    const barred = bucketLoad() ? 'bucket' : rescueOn && hNothing(loads) ? 'rescueLine' : !(load.massKg <= limitKg) ? 'heavy'
+      : !load.crate && !load.supply && !liftCheck(load.id, liftLimit()).ok ? 'heavy'
+      : !load.crate && !load.supply && !lessonsDone().carry ? 'lesson' : null;
+    return {load, refusal, ready: !refusal && !barred, barred};
   }
   // A failed H press: the reason given (the bucket or the line), else what
   // the hook still needs, as a hookRefused event the panel words and sounds.

@@ -593,6 +593,18 @@ function flyOwnCar({owned}) {
   same(dayJobs(22).map(j => j.id), ['d22-1', 'd22-2', 'd22-3'], 'the board\'s three jobs do not move');
 }
 
+// HELI-JOB-CLARITY: the places with no return crate, pinned. Each one's shortest leg with its 80 kg of flying at the
+// ends is more than the fuel the pilot can have there (kg on the ground, shortest leg): Eifel Crown 135, 110 (to Kogane
+// Pass) or 170 (to Tremblant Snow); Ridge Rally 120, 75; High Country 55, 145; Azure Riviera 195, 125. With the map off
+// Summit Run joins them (160, 90 to Panorama Ridge).
+const NO_CRATE_MAP = Object.freeze(['eifel-crown', 'ridge-rally', 'high-country', 'azure-riviera']);
+for (const options of [{summitRun: true, pilotMap: true}, {summitRun: true, pilotMap: true, table: true},
+  {summitRun: true, pilotMap: true, koganePass: true}, {summitRun: true, pilotMap: true, koganePass: true, table: true}, {summitRun: true}]) {
+  const none = Object.keys(destinationsFor(options)).filter(from => from !== HOME_COURSE &&
+    Array.from({length: 30}, (_, day) => returnLoadJob(day, from, options)).every(job => job === null));
+  same(none, options.pilotMap ? NO_CRATE_MAP : ['summit-run'], `the places with no crate (${JSON.stringify(options)})`);
+}
+
 // Return boards are repeatable, affordable to fly, and independent of car jobs.
 {
   const options = {summitRun: true, pilotMap: true, table: true};
@@ -620,10 +632,9 @@ function flyOwnCar({owned}) {
     const job = returnLoadJob(day, from, options);
     if (from === HOME_COURSE) { same(job, null, 'home keeps its dispatch board'); continue; }
     // HELI-JOB-CLARITY (changed assertion): a crate names only a leg the pilot can fly with the fuel sold on the way
-    // (jobLegFlyable). A place with no such leg (Eifel Crown: the nearest pump leaves too little fuel) offers no crate,
-    // where before every place offered one, Summit Run to Eifel Crown among them (271 kg from a pad with no pump).
-    const flyable = Object.keys(destinationsFor(options)).some(to => to !== 'the-table' && jobLegFlyable(from, to, options) && returnLoadPay(from, to, options) !== null);
-    if (!flyable) { same(job, null, `no flyable drop-off from ${from}, so no crate`); continue; }
+    // (jobLegFlyable). Before, every place offered one, Summit Run to Eifel Crown among them (271 kg from a pad with no
+    // pump). The places that now offer none are pinned (NO_CRATE_MAP): even their shortest leg does not fit.
+    if (NO_CRATE_MAP.includes(from)) { same(job, null, `no crate from ${from}`); continue; }
     ok(job, `a return load at ${from}`);
     ok(jobLegFlyable(from, job.to, options), `the crate from ${from} names a leg the pilot can fly`);
     same(job, returnLoadJob(day, from, options), 'same day and place, same crate');

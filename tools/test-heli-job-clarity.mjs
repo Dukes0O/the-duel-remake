@@ -192,11 +192,59 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   same([status.kind, status.stage, status.from, status.to], ['crate', 'carry', 'tremblant-snow', crate().returnJob.to], 'the crate is the job in hand');
   same(s.hookPrompt(), null, 'no prompt while carrying away from a landing circle');
   const credits = s.profile.credits;
+  same(s.dropJobHere(), {ok: false, reason: 'Set the load down first'}, 'a crate on the cable is set down before the job is dropped');
+  same(s.jobStatus().kind, 'crate', 'the crate is still the job');
+  same(s.pressHook()?.type, 'released', 'set it down');
   ok(s.dropJobHere().dropped, 'drop the crate job');
   same(s.jobStatus(), null, 'no job in hand');
-  ok(!s.view().loads.some(load => load.returnJob), 'the crate goes back');
+  const back = s.view().loads.filter(load => load.returnJob);
+  same(back.length, 1, 'one crate, back at its own pad');
+  const spot = s.view().crate;
+  ok(Math.hypot(back[0].x - spot.x, back[0].z - spot.z) < 0.01 && !back[0].hooked, 'on the crate spot beside the pad, ready to take again');
   same(s.profile.credits, credits, 'no pay and no charge');
   same(heliOf(s.profile).returnLoads, undefined, 'a dropped crate is not done: it can be taken again');
+}
+
+// ---- Review fix: Drop job drops the job the card shows -------------------------------------------------------------
+{
+  // A car job in hand (its pick-up at home), and at Tremblant Snow a crate hooked and set down: the card shows the car
+  // job, so Drop job drops the car job and leaves the crate as the job in hand.
+  const home = session(profileWith({heli: {playDay: {last: DAY1, count: 1}}}));
+  home.start();
+  const job = home.boardJobs().find(item => !item.own && item.carId && item.from === HOME_COURSE);
+  ok(home.takeJob(job.id).ok, 'take a car job');
+  home.start('tremblant-snow');
+  const crate = () => home.view().loads.find(load => load.returnJob);
+  ok(run(home, 60, v => pilot(v, {x: crate().x, z: crate().z, y: crate().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - crate().x, v.heli.z - crate().z) < 1 && Math.abs(v.heli.y - crate().y - 15.2) < .6 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5),
+  'hover over the crate');
+  same(home.pressHook()?.type, 'hooked', 'hook the crate');
+  same(home.pressHook()?.type, 'released', 'set it down');
+  same(home.jobStatus().kind, 'car', 'the card shows the car job');
+  ok(home.dropJobHere().dropped, 'Drop job');
+  same(home.job, null, 'the car job is the one dropped');
+  same(home.jobStatus().kind, 'crate', 'the crate is still in hand');
+}
+
+// ---- Review fix: a hooked car is set down before its job is dropped; retaking makes no second car -------------------
+{
+  const s = session(profileWith({heli: {playDay: {last: DAY1, count: 1}}}));
+  s.start();
+  const job = s.boardJobs().find(item => !item.own && item.carId && item.from === HOME_COURSE);
+  ok(s.takeJob(job.id).ok, 'take a job whose car waits at home');
+  const car = () => s.view().loads.find(load => load.job === job.id);
+  ok(run(s, 60, v => pilot(v, {x: car().x, z: car().z, y: car().y + 15.2}, {speed: 4}),
+    v => Math.hypot(v.heli.x - car().x, v.heli.z - car().z) < 1 && Math.abs(v.heli.y - car().y - 15.2) < .6 && Math.hypot(v.heli.vx, v.heli.vy, v.heli.vz) < .5),
+  'hover over the car');
+  same(s.pressHook()?.type, 'hooked', 'hook the car');
+  same(s.dropJobHere(), {ok: false, reason: 'Set the load down first'}, 'not dropped with the car on the cable');
+  ok(s.job?.id === job.id && car()?.hooked, 'the job and the car on the cable are kept');
+  same(s.pressHook()?.type, 'released', 'set the car down');
+  ok(s.dropJobHere().dropped, 'then the job drops');
+  same(s.view().loads.filter(load => load.id === job.carId && !load.own).length, 0, 'the customer car goes back');
+  run(s, 60, v => pilot(v, {x: v.zone.x, z: v.zone.z, y: v.zone.y - 3, speed: 2}), v => v.heli.onGround && Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 10);
+  ok(s.takeJob(job.id).ok, 'take it again at the pad');
+  same(s.view().loads.filter(load => load.id === job.carId && !load.own).length, 1, 'one customer car, not two');
 }
 
 // ---- D1: the job card's words, one stage at a time (pure) ---------------------------------------------------------
@@ -240,6 +288,19 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   same(hookPromptText({kind: 'release', ready: true}), 'Press H to let go', 'set down in the circle');
   same(hookPromptText({kind: 'release', ready: false}), 'Lower it until it touches, then press H to let go', 'still hanging over the circle');
   same(hookPromptText(null), null, 'nothing near, no prompt');
+  // Review fix: when H cannot hook the load at all, the prompt says why instead of promising a hook.
+  same(hookPromptText({kind: 'hook', ready: false, blocked: 'heavy'}), 'Too heavy to lift', 'too heavy');
+  same(hookPromptText({kind: 'hook', ready: false, blocked: 'bucket'}), 'Bucket fitted: take it off at the home pad', 'bucket fitted');
+  same(hookPromptText({kind: 'hook', ready: false, blocked: 'rescueLine'}), 'Rescue line fitted: take it off at the home pad', 'rescue line fitted');
+  same(hookPromptText({kind: 'hook', ready: false, blocked: 'lesson'}), 'Finish lesson 4 before carrying cars', 'lesson 4 not done');
+  // In the session: a pilot without lesson 4 over their own car is told why, not to lower.
+  const learner = session(normalizeProfile({...profileWith(), heli: {...profileWith().heli, lessons: {liftoff: true, hover: true, landing: true, carry: false}}}));
+  learner.start();
+  const car = () => learner.view().loads.find(load => load.own);
+  run(learner, 30, v => pilot(v, {x: car().x, z: car().z, y: car().y + 25, speed: 4}),
+    v => Math.hypot(v.heli.x - car().x, v.heli.z - car().z) < 1 && Math.hypot(v.heli.vx, v.heli.vz) < .5);
+  same(learner.hookPrompt(), {kind: 'hook', ready: false, blocked: 'lesson'}, 'the session says the hook is barred, and why');
+  same(hookPromptText(learner.hookPrompt()), 'Finish lesson 4 before carrying cars', 'so the prompt never says to lower first');
 }
 
 // ---- D6: the landed card names the ski panel only when it is on screen -----------------------------------------------

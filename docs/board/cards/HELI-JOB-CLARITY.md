@@ -67,8 +67,13 @@ Ridge), flew it with the autopilot and the cruise, and took a ski drop to Summit
    elsewhere a full tank at the nearest pump less that leg and its 80 kg. 80 kg keeps the first slice's round trip
    (Woods to Panorama and back, 120 kg each way) a job. The play-through with the autopilot burned more (107 kg at
    the ends of one leg); the fuel truck stays the backstop. Applied to return crates and to the map's car routes
-   (the three original routes all pass). Effects: no crate from Summit Run with the map off, none from Eifel Crown
-   at all, and Kyle's Summit Run to Eifel Crown crate is never offered. The fuel rules themselves are unchanged.
+   (the three original routes all pass). Effects: with the map on (as released, with or without the Table and Kogane)
+   no crate from Eifel Crown, Ridge Rally, High Country or Azure Riviera; with the map off Summit Run joins them.
+   Kyle's Summit Run to Eifel Crown crate is never offered. These four truly cannot get a crate under the rule:
+   even each one's shortest leg, plus the 80 kg, is more than the fuel the pilot can have there (on the ground,
+   shortest leg: Eifel Crown 135 kg, 110 to Kogane Pass; Ridge Rally 120, 75; High Country 55, 145; Azure Riviera
+   195, 125). Ridge Rally and Azure Riviera are close; a smaller reserve would open them. The fuel rules themselves
+   are unchanged.
 3. **D4 placement and the "never offered" guard.** The customer car waits on the parking spot beside the landing
    circle on every course (home already did). Every destination's site has a parking and spare spot (courseSite
    throws otherwise), and a new test checks every released destination, so no car job can name a pick-up with no
@@ -76,7 +81,12 @@ Ridge), flew it with the autopilot and the cruise, and took a ski drop to Summit
 4. **A crate is a job from its first hook** until delivered or dropped (it was already "taken" at the first hook for
    the clean bonus). It is still not saved: leaving the course without it loses it, as before.
 5. **Drop job anywhere** is a new `dropJobHere()` on the job card. The board's own Drop job stays at the home pad.
-   A dropped crate goes back to its pad; a dropped car job goes back on the board; the heli-ski group, being
+   Drop acts on exactly the job the card shows. A job whose load is on the cable is refused with "Set the load down
+   first", so no load is left on the cable with no job. A dropped crate goes back to its own pad: on its own course
+   it is laid on the crate spot again at once; dropped elsewhere it is laid there on the next landing at its pad
+   (the day's crate stays open). A dropped car job goes back on the board, and retaking it makes one car, not two.
+   The hook prompt says why H cannot hook ("Too heavy to lift", "Bucket fitted: take it off at the home pad",
+   "Rescue line fitted: ...", "Finish lesson 4 before carrying cars") instead of "Lower N m". The heli-ski group, being
    aboard, is handed back at home only (the card shows no Drop button away from home for it).
 6. **D6.** The ski card names the panel only when the run menu is on screen with a run to pick; elsewhere it says
    "Land on a ski pad to ski: the job card on the left shows the nearest." The job card shows the nearest pad with
@@ -88,3 +98,13 @@ Ridge), flew it with the autopilot and the cruise, and took a ski drop to Summit
 - The day's car jobs are drawn from the courses the pilot owns, so buying a course mid-day can reshuffle the
   board and change which job a taken id means. A follow-up card would freeze the owned list for the play day.
 - The Fly To panel shows no fuel figure for Summit Run (it reads legs without the Summit option). Display only.
+
+## Claude answers (31 October 2026)
+
+- **Builder decisions:** all three stand. The 80 kg allowance at the ends of a leg is fair, since the fuel truck catches a pilot who runs dry. A test is the right guard for car placement. Crates still not being saved matches how they worked before.
+- **Changed assertions (rule 18 review):** none are loosened.
+  - `test-heli-jobs`, car placement: the old check that the car is in the circle becomes two checks, one that it is on the parking spot and one that it is outside the circle.
+  - `test-heli-jobs`, crate check: it now also asserts that every crate offered names a leg that can be flown. The only places with no crate are those with no flyable leg, and the test names each one.
+  - `test-heli-jobs`, supply-call test: it turns on the pilot's map, which is how the game is released, and keeps its checks unchanged.
+  - The two Summit pins changed only because Summit Run with the map off no longer lays a crate. The builder confirmed that with the crate rule undone both pins return to their old values. The flights themselves are unchanged.
+- **Approved to merge** after the independent review of the code and the save field.
