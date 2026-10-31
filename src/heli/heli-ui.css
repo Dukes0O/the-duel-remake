@@ -108,7 +108,7 @@
 .heli-shelf button,.heli-rank button{display:block;margin-top:8px;padding:7px 10px;background:#364239;color:#f5eddc;border:1px solid #bda88177;cursor:pointer}
 .heli-shelf button:disabled{opacity:.65;cursor:default}
 /* HELI-JOB-CLARITY: the job in hand, top left, and the hook prompt above the radio line. */
-.heli-job-card{position:absolute;top:96px;left:24px;width:280px;padding:10px 12px;background:#0f1614e6;border:1px solid #ffffff26;border-left:3px solid #ffcf3f;border-radius:6px;pointer-events:auto}
+.heli-job-card{position:absolute;top:122px;left:24px;width:280px;padding:10px 12px;background:#0f1614e6;border:1px solid #ffffff26;border-left:3px solid #ffcf3f;border-radius:6px;pointer-events:auto}
 .heli-job-card>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:#ffcf3f}
 .heli-job-card p{margin:4px 0;font-size:13px;line-height:1.35}
 .heli-job-card .heli-job-what{font-size:14px;font-weight:700}
