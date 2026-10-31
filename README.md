@@ -2,6 +2,19 @@
 
 A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain climbs, traffic, police chases and a monster truck stadium. Win credits, build a garage and compete for local player records.
 
+## A new main menu, 30 October 2026
+
+### What players get now
+
+- **The front door:** the menu opens on your course and car with one START
+  ENGINE button, a Next up card that says what to do next, and doors to the
+  Story, Garage, Courses, Armory, Wasteland, Helipad, Lab, Lessons and Scores.
+  Race options open from the link under START ENGINE.
+- **Your Courses** shows a small map of every course you can buy or race.
+  Courses still to be found from the helicopter keep their secret.
+- **Race options** sit in one compact panel, each choice right next to its
+  name.
+
 ## The Kogane Invitation, 30 October 2026
 
 ### What players get now

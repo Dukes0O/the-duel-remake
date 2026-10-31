@@ -1570,3 +1570,12 @@ b2c1167c, run alone. Combat balance passes. Story scenario passes on Easy (the
 Skyline won) and Hard (lost; no car, story stays on the duel). Frame check not
 run: Kyle said release without it (30 October); Kogane Pass frames are owed at
 the next full check (KOGANE_FRAMES_ONLY, lane claude/kogane-frames).
+
+## Release, 30 October 2026 evening (Claude, Release Manager)
+
+MENU-TIDY: course maps on Your Courses, compact race setup panel,
+menu-front-door on (Kyle tried it and asked for it live after these changes),
+and a Story door. Menu and layout only, no save change. Since the full tier
+pass on b2c1167c only menu files, one switch and their tests changed: lane
+tier 66/66, build, and the Kogane story scenario through the front door (28
+facts, 0 browser errors) (rule 19). No frame check (menu only).
