@@ -51,7 +51,7 @@ export const FEATURE_STATES = Object.freeze({
   // The pilot's map (docs/PILOT_MAP.md): the place table, regions, fuel pads and the new cruise legs. Released 28 October 2026; works only with the helicopter on.
   'pilot-map': 'on',
   // MENU-FRONT-DOOR: the main menu as a front door (Drive card, Next up, eight doors). Off in the game until Kyle has tried it.
-  'menu-front-door': 'on',
+  'menu-front-door': 'dev',
   // STORY-KOGANE-SCREENS: the Kogane Invitation story (docs/story/kogane-invitation.md). Off in the game; also needs Kogane Pass and its Night version, the Nissan Skyline, the helicopter, the pilot's map and driving lessons.
   'kogane-invitation': 'on',
 });
