@@ -8,7 +8,8 @@ import {HELI_STEP, KESTREL, GRAVITY, heliMass, availableThrust, createHeliState,
 import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
-  DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave} from './heli-save.js';
+  DIRT_KINDS, placeCar, carAt, countFlight, takeJob as takeJobSave, dropJob as dropJobSave, finishJob, finishLesson as finishLessonSave,
+  lastPadOf, setLastPad} from './heli-save.js';
 import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs, jobPay, jobCleanBonus, jobTitle, recoveryJob, recoveryJobOf, recoveryTitle, finishRecovery,
   wreckFor, returnLoadJob, returnLoadTitle, finishReturnLoad} from './heli-jobs.js';
 import {isCourseUnlocked} from '../course-access.js';
@@ -498,7 +499,23 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // A job car on the cable that has come back to its pick-up heads for its drop-off.
     if (kept?.job && job?.id === kept.job && courseId === job.from) aim(job.to);
     surveyArrived();
+    // HELI-JOB-CLARITY: a visit's start, or the return home after a crash, stands the helicopter on this pad.
+    if (!arriveFrom) notePad();
     emit({type: 'entered', courseId, arrived: !!arriveFrom});
+  }
+  // HELI-JOB-CLARITY (continuity): the place the helicopter last stood, for the next visit (heli-save lastPad).
+  function notePad() {
+    if (site && heli?.onGround) commit(setLastPad(save, site.courseId, flag));
+  }
+  // Where a new visit starts: the pad where the helicopter last stood. Home for a new or old save, a pilot still in
+  // lessons, a place that is not a destination now, and a taken job that waits at the home pad: the heli-ski group
+  // (it boards there) and the story's crate (it lies beside the home pad). A car job works from any pad.
+  function resumePad() {
+    const pad = lastPadOf(save), jobs = heliOf(save).jobs, day = playDay();
+    if (pad === HOME_COURSE || !LESSON_ORDER.every(id => lessonsDone()[id]) || !isDestination(pad, dflag)) return HOME_COURSE;
+    if (skiOn && jobs.day === day && jobs.taken === skiGroupId(day) && skiGroupDay(day)) return HOME_COURSE;
+    if (storyInHand()) return HOME_COURSE;
+    return pad;
   }
 
   // The player's car, where it was last set down (home if never moved).
@@ -566,7 +583,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (!job || jobCar?.id !== job.id || jobCar.courseId !== courseId) return null;
     let spot = jobCar;
     if (jobCar.x === null) {
-      const usual = courseId === HOME_COURSE ? site.parking : site.zone;
+      // HELI-JOB-CLARITY: the parking spot beside the landing circle on every course. In the circle itself (as it was
+      // away from home) the car stood right under the arriving helicopter, out of the camera's sight.
+      const usual = site.parking;
       spot = loads.some(other => Math.hypot(other.x - usual.x, other.z - usual.z) < 8) ? site.spare : usual;
     }
     const car = createLoad({id: job.carId, massKg: carMassKg(job.carId), x: spot.x, z: spot.z,
@@ -794,6 +813,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
           Math.hypot(heli.x - site.zone.x, heli.z - site.zone.z) <= site.zone.radius)
           commit({ok: true, profile: recordLogbook(save, {flight: site.courseId, enabled: true})});
         logbookAirborne = false;
+        if (event.result !== 'crash') notePad();
         tableLanded(event);
         fire?.landed();
         rescueTouched(event);
@@ -1602,7 +1622,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
 
   const api = {
-    start(courseId = HOME_COURSE) {
+    // courseId left out: where the helicopter last stood (resumePad, HELI-JOB-CLARITY), else the home pad.
+    start(courseId = null) {
       logbookAirborne = false; rankNotices.length = 0; rankCheckedSave = null;
       hookHeld = false; hookReeled = false;
       skiRun = null; skiMeta = null; thinAirSaid = false; lastSkiPad = null;
@@ -1611,11 +1632,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (rescueOn && rescueOf(missionsOf(save), rflag)) { live = {...rescueOf(missionsOf(save), rflag)}; failRescueNow('left'); }
       fire?.start({newDay: noted?.newDay === true});
       destination = null;
-      enter(courseId);
+      enter(courseId ?? resumePad());
       // A call is due on the next flight: work out where rescues can happen now, at the start of the visit, not in mid-air.
       if (rescueOn) { const m = missionsOf(save); if (m.seed !== 0 && m.need > 0 && m.count >= m.need && !m.call && !m.rescue) rescueCourses(); }
       // A new pilot hears the opening: welcome and the controls.
-      if (courseId === HOME_COURSE && LESSON_ORDER.every(id => !lessonsDone()[id])) {
+      if (site.courseId === HOME_COURSE && LESSON_ORDER.every(id => !lessonsDone()[id])) {
         emit({type: 'radio', line: 'heli.radio.welcome'});
         emit({type: 'radio', line: 'heli.radio.controls'});
         emit({type: 'openingOffered'});
@@ -1963,17 +1984,43 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     dropJob() {
       if (phase !== 'flying' || !onHome()) return {ok: false, reason: 'The dispatch board is at the home pad.'};
       if (surveyTaken) { dropSurvey('dropped'); aim(null); return {ok: true, dropped: true, survey: true}; }
-      const job = jobInHand() ?? storyInHand();
-      const result = commit(dropJobSave(save, flag));
-      if (result.ok && result.dropped) {
-        if (skiFlight?.kind === 'group') endSkiFlight();
-        jobCar = null;
-        loads = loads.filter(car => (!car.job || car.hooked) && (!car.storyJob || car.hooked));
-        for (const car of loads) { car.job = null; if (car.storyJob) car.storyJob = null; }
+      return dropTaken();
+    },
+    // HELI-JOB-CLARITY: the job card's Drop job, anywhere in flight or on the ground. No pay and no charge: the job goes
+    // back to the board (a crate goes back to its pad). The heli-ski group is aboard, so it is handed back at home only.
+    // It drops exactly the job the card shows (jobStatusNow's order). A job whose load is on the cable is refused: the
+    // load is set down first, so no load is ever left on the cable with no job.
+    dropJobHere() {
+      if (phase !== 'flying') return {ok: false, reason: 'Drop the job while flying or on the ground.'};
+      const status = jobStatusNow();
+      if (!status) return {ok: true, dropped: false};
+      if (status.kind === 'skiDrop' || status.kind === 'skiGroup') {
+        if (status.kind === 'skiGroup' && !onHome()) return {ok: false, reason: 'The group is aboard: fly them home to hand the job back.'};
+        if (status.kind === 'skiGroup') commit(dropJobSave(save, flag));
+        endSkiFlight();
         aim(null);
-        emit({type: 'jobDropped', job});
+        emit({type: 'skiFlightDropped'});
+        return {ok: true, dropped: true};
       }
-      return result;
+      const load = status.kind === 'crate' ? crateInHand() : status.kind === 'story' ? loads.find(item => item.storyJob) : loads.find(item => item.job === status.id);
+      if (load?.hooked) return {ok: false, reason: 'Set the load down first'};
+      if (status.kind === 'crate') {
+        // The crate goes back to its own pad: laid there again at once when this is its pad, else found there on the next landing.
+        loads = loads.filter(item => item !== load);
+        aim(null);
+        emit({type: 'jobDropped', job: load.returnJob});
+        if (site.courseId === load.returnJob.from) layReturnCrate();
+        return {ok: true, dropped: true};
+      }
+      return dropTaken();
+    },
+    // HELI-JOB-CLARITY: the job in hand for the job card (heli-job-card.js words it), or null.
+    jobStatus() {
+      return jobStatusNow();
+    },
+    // HELI-JOB-CLARITY: the hook prompt (heli-job-card.js words it), or null.
+    hookPrompt() {
+      return hookPromptNow();
     },
     // After the player's own car is set down on an owned course: the course
     // and car for the app's raceHere. Hooking the car again takes it back.
@@ -2431,6 +2478,79 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         loads.slice(1).map(car => `|${car.id}|${spot(car)}`).join('') + (skiRun ? `|ski|${skiRunFingerprint(skiRun)}` : '');
     },
   };
+  // ---- HELI-JOB-CLARITY: the job card and the hook prompt (heli-job-card.js words them) ----
+  function dropTaken() {
+    const job = jobInHand() ?? storyInHand();
+    const result = commit(dropJobSave(save, flag));
+    if (result.ok && result.dropped) {
+      if (skiFlight?.kind === 'group') endSkiFlight();
+      jobCar = null;
+      loads = loads.filter(car => (!car.job || car.hooked) && (!car.storyJob || car.hooked));
+      for (const car of loads) { car.job = null; if (car.storyJob) car.storyJob = null; }
+      aim(null);
+      emit({type: 'jobDropped', job});
+    }
+    return result;
+  }
+  // A crate is the pilot's job from its first hook (pressHook marks it) until it is delivered or dropped.
+  const crateInHand = () => loads.find(load => load.returnJob && load.damageMark !== undefined) ?? null;
+  const inZone = load => !!site && Math.hypot(load.x - site.zone.x, load.z - site.zone.z) <= site.zone.radius;
+  // The ski pads that start a run for the flight in hand (Devils Playground, the summit, the pickup with aerials open).
+  function skiDropPads() {
+    if (!skiFlight) return [];
+    return Object.entries(SKI_PADS).filter(([name]) => SKI_RUN_IDS.some(id => skiRunPad(id) === name &&
+      (id !== 'aerials' || aerialsOpen(save, skiFlags)) && !(skiFlight.kind === 'group' && id === 'powder')))
+      .map(([name, pad]) => ({name, x: pad.x, z: pad.z}));
+  }
+  function jobStatusNow() {
+    if (phase !== 'flying' || !site || !heli) return null;
+    const here = site.courseId, pays = job => ({pay: jobPay(job, mode), bonus: jobCleanBonus(job, mode)});
+    const stageOf = (load, to) => load?.hooked ? (here === to ? (inZone(load) ? 'drop' : 'land') : 'carry') : load ? 'hook' : 'fly';
+    const job = jobInHand();
+    if (job) {
+      const car = loads.find(load => load.job === job.id), stage = stageOf(car, job.to);
+      return Object.freeze({kind: job.kind === 'recovery' ? 'recovery' : 'car', id: job.id, carId: job.carId, from: job.from, to: job.to, ...pays(job),
+        stage, flyTo: stage === 'fly' ? (jobCar?.courseId ?? job.from) : job.to, again: !!car && Number.isFinite(jobCar?.x), here});
+    }
+    const story = storyInHand();
+    if (story) {
+      const crate = loads.find(load => load.storyJob), stage = stageOf(crate, story.to);
+      return Object.freeze({kind: 'story', id: story.id, title: story.title, massKg: story.massKg, from: HOME_COURSE, to: story.to, ...pays(story),
+        stage, flyTo: stage === 'fly' ? HOME_COURSE : story.to, again: false, here});
+    }
+    const crate = crateInHand();
+    if (crate) {
+      const box = crate.returnJob;
+      return Object.freeze({kind: 'crate', id: box.id, massKg: box.massKg, from: box.from, to: box.to, ...pays(box), stage: stageOf(crate, box.to),
+        flyTo: box.to, again: true, here});
+    }
+    if (skiOn && skiFlight) {
+      const group = skiFlight.kind === 'group', base = {kind: group ? 'skiGroup' : 'skiDrop', from: HOME_COURSE, to: SUMMIT_COURSE, here,
+        ...(group ? pays({pay: HELI_SKIING.groupPay}) : {pay: 0, bonus: 0})};
+      if (skiFlight.skied) return Object.freeze({...base, stage: 'flyHome', flyTo: HOME_COURSE});
+      if (here !== SUMMIT_COURSE) return Object.freeze({...base, stage: 'fly', flyTo: SUMMIT_COURSE});
+      const pads = skiDropPads(), padHere = skiPadHere();
+      if (padHere && pads.some(pad => pad.name === padHere)) return Object.freeze({...base, stage: 'ski', pad: padHere, flyTo: SUMMIT_COURSE});
+      const near = pads.map(pad => ({name: pad.name, ...bearingTo(pad.x, pad.z)})).sort((a, b) => a.distance - b.distance);
+      return Object.freeze({...base, stage: 'pad', flyTo: SUMMIT_COURSE, pads: Object.freeze(near.map(pad => Object.freeze({name: pad.name,
+        distance: pad.distance, bearing: pad.bearing})))});
+    }
+    return null;
+  }
+  function hookPromptNow() {
+    if (phase !== 'flying' || !heli || !site) return null;
+    const held = heldLoad();
+    if (held) {
+      // The lesson's own guidance says when to let go; the bucket and the rescue line are not let go with H.
+      if (held.bucket || held.rescue || lesson || !inZone(held)) return null;
+      return Object.freeze({kind: 'release', ready: held.onGround === true});
+    }
+    const aim = hookAim();
+    if (!aim || aim.refusal?.reason === 'hooked') return null;
+    if (aim.barred) return Object.freeze({kind: 'hook', ready: false, blocked: aim.barred});
+    if (!aim.ready && !aim.refusal) return null;
+    return Object.freeze({kind: 'hook', ready: aim.ready, ...(aim.ready ? {} : {reason: aim.refusal.reason, ...(aim.refusal.metres ? {metres: aim.refusal.metres} : {})})});
+  }
   function returnBoardView() {
     const job = returnLoadJob(playDay(), site?.courseId, dflag);
     if (!job) return null;
@@ -2466,9 +2586,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const opts = net && load.supply ? {...gear, hookReach: NET_REACH} : gear;
     const refusal = hookRefusal(heli, load, opts);
     const limitKg = Number.isFinite(gear?.hookLimitKg) ? gear.hookLimitKg : KESTREL.hookLimitKg;
-    const barred = !!bucketLoad() || rescueOn && hNothing(loads) || !(load.massKg <= limitKg) ||
-      !load.crate && !load.supply && (!liftCheck(load.id, liftLimit()).ok || !lessonsDone().carry);
-    return {load, refusal, ready: !refusal && !barred};
+    // HELI-JOB-CLARITY: why H cannot hook it at all (the prompt says so), null when it can once the hook is placed.
+    const barred = bucketLoad() ? 'bucket' : rescueOn && hNothing(loads) ? 'rescueLine' : !(load.massKg <= limitKg) ? 'heavy'
+      : !load.crate && !load.supply && !liftCheck(load.id, liftLimit()).ok ? 'heavy'
+      : !load.crate && !load.supply && !lessonsDone().carry ? 'lesson' : null;
+    return {load, refusal, ready: !refusal && !barred, barred};
   }
   // A failed H press: the reason given (the bucket or the line), else what
   // the hook still needs, as a hookRefused event the panel words and sounds.
