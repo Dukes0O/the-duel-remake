@@ -1579,3 +1579,9 @@ and a Story door. Menu and layout only, no save change. Since the full tier
 pass on b2c1167c only menu files, one switch and their tests changed: lane
 tier 66/66, build, and the Kogane story scenario through the front door (28
 facts, 0 browser errors) (rule 19). No frame check (menu only).
+
+## Release, 30 October 2026 late evening (Claude, Release Manager)
+
+MENU-OLD-BACK: menu-front-door off again (Kyle, for Gratian). Course maps stay.
+Lane tier 39/39, build, Kogane story scenario on the old menu (28 facts, 0
+browser errors). No save change.

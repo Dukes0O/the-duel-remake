@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 30 October late evening (Claude, Release Manager).** The old menu is back (front door off, for Gratian); course maps in Your Courses stay. Reload any open game tab.
 - **RELEASED 30 October evening (Claude, Release Manager).** The new main menu (front door with a Story door), course maps in Your Courses and a compact race setup panel. Reload any open game tab.
 - **RELEASED 30 October (Claude, Release Manager).** Kogane Pass with Night and Reverse, the Kogane Invitation story and the Nissan Skyline (story prize). Kyle waived the frame check; time Kogane Pass at the next full check. Reload any open game tab. The release hold is lifted.
 - **FRAME CHECK SETUP DECIDED 30 October (Kyle: "Use Performance").** On the HDMI Dell alone, Performance gates the frame check (16.8 ms passes); High keeps its 28 October 18.2 ms pass under rule 19 while Harbour's timed scene is unchanged. Do not ask Kyle about the monitors again.
