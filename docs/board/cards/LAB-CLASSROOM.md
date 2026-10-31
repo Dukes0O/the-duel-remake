@@ -111,7 +111,10 @@ model, no new art), a speech bubble and the Help button.
 - **Hints that climb**, one rung per press of Help, and one rung after each
   failed try: nudge, plain instruction, Show me.
 - **Shows you.** At the third rung his pointer moves across the board, does
-  the step (clicks the hook, pulls the weight) and says "Your turn."
+  the step (clicks the hook, lets the weight go) and hands the next part back
+  ("Like that." and the next instruction). Where doing it for the player
+  would teach nothing (tapping along with the swing) he only points, and the
+  green mark flashes when to tap.
 - **Celebrates.** A right guess or a passed try gets a short cheer, a burst
   of sparks on the board and the bonus sound.
 - **Explains wrong guesses** with the two numbers side by side and replays

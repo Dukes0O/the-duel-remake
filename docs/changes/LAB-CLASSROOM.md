@@ -41,6 +41,31 @@ Switch `lab-classroom`, dev: Kyle and Gratian try it in the Preview first.
   added to the list that must stay dev. A new switch, nothing loosened: the
   test now also fails if `lab-classroom` leaks on.
 
+## Review
+
+One independent code review (rule 17). It found ten things; all fixed:
+slow motion now ends with its step; Show me presses the control for the
+player and hands the next part back (it only points for the swing tap); a
+wrong guess replays both swings; the challenge hand-off is covered by the
+scenario and refuses a bench-kind ('inline') challenge with a message;
+Watch again works on Brian's crane; leaving a lesson un-pauses the walk at
+once; a drag ends on a step change, a lost pointer or a button released
+elsewhere; a press that changes nothing is not a mistake, and in the
+short-string try the weight stays light so only one thing changes; Lab
+buttons focused outside the lesson keep their own Enter and Space; Brian's
+portrait renderer is made inside its clean-up. The tests gained checks for
+each, and the drawing test now checks every step draws.
+
 ## Checks
 
 RESULTS
+
+## Tool note (not a code fault)
+
+In this lane, `tools/test-board.mjs` and `tools/test-lab-lessons-flying.mjs`
+fail where they send a fixture folder to the Recycle Bin: Windows refuses
+("Attempted to perform an unauthorized operation") for any folder of many
+files under this lane's `.qa-dist` or `.evidence`, while the same copy in the
+integration folder recycles. The lane folder lacks one sandbox allow entry
+that the integration folder has. Both suites pass in the integration folder
+and are rerun there after the merge.

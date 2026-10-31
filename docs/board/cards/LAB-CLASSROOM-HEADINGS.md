@@ -21,3 +21,6 @@ Checks: in `tools/test-lab-classroom.mjs`, a child who does exactly what each pr
 passes with one press; each wrong guess says why with the real numbers; help climbs to
 Brian's pointer. The `lab-classroom` browser scenario plays this lesson by keyboard alone.
 Lane tier and build. The old lesson files go in LAB-CLASSROOM-LIVE.
+If the challenge is a bench run ('inline' from `onChallenge` in `lab-view.js`), feed the
+classroom's machine runs to it: the pendulum only needed the flying path, and `lesson-ui.js`
+refuses 'inline' with a message until a lesson wires it.
