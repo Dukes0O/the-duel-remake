@@ -1591,3 +1591,11 @@ browser errors). No save change.
 DEEP-SONAR-MAP: sonar ring on screen after the badge, chart north up (Kyle, for
 Gratian). All 17 Deep suites by hand, deep-sirena scenario, lane tier 24/24,
 build. No save change.
+
+## Release, 31 October 2026 (Claude, Release Manager)
+
+HELI-JOB-CLARITY: job card, hook and let-go prompts, start at the last landed
+pad (new optional save field heli.lastPad, independent save review clean), car
+on the parking spot, crates only on flyable legs, Drop job. 38 helicopter suites
+by hand, heli-jobs scenario, lane tier 104/104, build. Five review faults fixed
+before merge.

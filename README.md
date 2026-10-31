@@ -8,6 +8,10 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 - **Your Courses** shows a small map of every course you can buy or race.
   Courses still to be found from the helicopter keep their secret.
+- **Helicopter jobs:** the job you took stays on screen all flight with the
+  next step; H hooks and H lets go, with a prompt near the load; the next trip
+  starts where you last landed; the customer car waits beside the landing
+  circle; jobs only name places you can fuel your way to; Drop job on the card.
 - **The Deep:** once you find the Falcone badge, the sonar ring stays on
   screen for the whole dive (press R to ping), and the sea chart starts north
   up again (its button still turns it with the car).
