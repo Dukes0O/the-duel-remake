@@ -10,7 +10,7 @@ import {liftCheck} from './heli-cable.js';
 import {MEDAL_CARS} from '../medals.js';
 // pilot-map-data.js imports legFuelKg from this file too; each only calls the other's
 // functions after both have loaded, so the pair is safe in either order.
-import {PLACES, DEV_PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, placeOfCourse, placeById, fuelPadAt} from './pilot-map-data.js';
+import {PLACES, DEV_PLACES, PLACE_ALTITUDES, LEFT_OFF, legFuelKgMap, placeOfCourse, placeById, fuelPadAt, FUEL_PADS} from './pilot-map-data.js';
 
 import {carAt, heliOf, missionsOf, setMissions, WRECK_DAYS, HELI_MONEY} from './heli-save.js';
 import {surveyJob, surveyName, reportSurvey, isSurveyRun, SURVEY_NOT_A_RUN} from './heli-survey.js';
@@ -66,6 +66,7 @@ function pilotDestinations(summitRun, withTable = false, koganePass = false) {
   return (pilotTables[key] = Object.freeze(table));
 }
 // Every name the game can show for a destination, whatever is switched on (titles of jobs already taken).
+export const placeName = id => nameOf(id);
 const nameOf = id => HELI_DESTINATIONS_WITH_SUMMIT[id]?.name ?? placeOfCourse(id)?.name ?? placeById(id)?.name ?? id;
 // The map's place for a destination (its course id), for the map's distances and legs.
 const placeKey = courseId => placeOfCourse(courseId)?.id ?? courseId;
@@ -111,6 +112,41 @@ export function bearing(from, to, options = {}) {
   if (!a || !b) return null;
   const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
   return length > 0 ? {x: dx / length, z: dz / length} : null;
+}
+
+// ---- which legs a job may name (HELI-JOB-CLARITY) ---------------------------------
+// A job names only legs the pilot can fly with the fuel the game sells. Fuel is sold at the home pump and, with the pilot's
+// map on, at the far pads (pilot-map-data.js FUEL_PADS; Summit's truck stands there only during a rescue, so it does not
+// count). On the ground at a place with a pump the tank can be full; anywhere else it holds at most a full tank from the
+// nearest pump less that leg and the flying at its two ends. A job's leg, with the flying at its own two ends, must fit
+// in that. JOB_RESERVE_KG is the flying at the two ends of one leg: leaving one area and landing in the next. It is set
+// so the first slice's round trip, Tremblant Woods to Panorama Ridge and back (120 kg each way), stays one tank.
+// A play-through with the autopilot burned more (107 kg at the ends of one leg), so legs offered stay within one tank
+// even then, with the fuel truck as the backstop it always was.
+export const JOB_RESERVE_KG = 80;
+// The places with a pump for these options (course ids): the home pad, and the far pads with the pilot's map on.
+export function pumpCourses(options = {}) {
+  const places = destinationsFor(options), home = [HOME_COURSE];
+  if (options.pilotMap !== true) return home;
+  return [...home, ...FUEL_PADS.filter(pad => !pad.truck && pad.place !== HOME_COURSE)
+    .map(pad => placeById(pad.place)?.courses[0]).filter(id => id && Object.hasOwn(places, id))];
+}
+// The most fuel the pilot can have on the ground at a place (kg), or 0 when no pump's leg reaches it.
+export function fuelOnGround(courseId, options = {}, fuel = (a, b) => legFuelKg(a, b, options)) {
+  const pumps = pumpCourses(options);
+  if (pumps.includes(courseId)) return HELI_MONEY.tankKg;
+  let best = 0;
+  for (const pump of pumps) {
+    const leg = fuel(pump, courseId);
+    if (leg !== null && leg !== undefined) best = Math.max(best, HELI_MONEY.tankKg - leg - JOB_RESERVE_KG);
+  }
+  return best;
+}
+// A job may name a leg when that leg and its two ends fit the fuel the pilot can have on the ground where it starts.
+export function jobLegFlyable(from, to, options = {}, fuel = (a, b) => legFuelKg(a, b, options)) {
+  if (from === to) return false;
+  const leg = fuel(from, to);
+  return leg !== null && leg !== undefined && leg + JOB_RESERVE_KG <= fuelOnGround(from, options, fuel);
 }
 
 // Medal cars, the Lab-built Speirling and the restored Sirena travel only by air: with the
@@ -187,14 +223,16 @@ export function dayJobs(day, {pilotMap = false, owned = []} = {}) {
 // legs: the same minutes-at-the-race-rate pay as the three routes, from the map's leg fuel.
 const mapFuel = (a, b) => legFuelKgMap(placeKey(a), placeKey(b));
 export const mapJobPay = (from, to) => carJobPayFrom(mapFuel, from, to);
+const MAP_OPTIONS = Object.freeze({summitRun: true, pilotMap: true});
 function mapRoutes(owned) {
   const routes = [...JOB_ROUTES];
   const seen = new Set(routes.map(route => `${route.from}>${route.to}`));
   const ids = [...new Set(owned)].filter(id => Object.hasOwn(pilotDestinations(true), id));
   for (const from of ids) for (const to of ids) {
     if (from === to || seen.has(`${from}>${to}`)) continue;
-    // Both legs (to the pick-up, then to the drop-off) must be flyable on one full tank.
-    if (legFuelKgMap(placeKey(from), placeKey(to)) > 400) continue;
+    // HELI-JOB-CLARITY: the pick-up must be reachable and the delivery leg flyable with the fuel sold on the way
+    // (jobLegFlyable), not only shorter than one full tank.
+    if (!jobLegFlyable(from, to, MAP_OPTIONS, mapFuel)) continue;
     seen.add(`${from}>${to}`);
     routes.push(Object.freeze({from, to, pay: mapJobPay(from, to)}));
   }
@@ -244,7 +282,8 @@ export function returnLoadJob(day, from, options = {}) {
   const rng = makeRng(seed);
   // Discovering the hidden Table in flight must not redraw an advertised
   // job. It offers outbound crates once known, but is never a drop-off.
-  const routes = Object.keys(places).filter(to => to !== from && to !== 'the-table').map(to => {
+  // HELI-JOB-CLARITY: only drop-offs the pilot can fly to from here with the fuel sold on the way (jobLegFlyable).
+  const routes = Object.keys(places).filter(to => to !== from && to !== 'the-table' && jobLegFlyable(from, to, options)).map(to => {
     return {to, pay: returnLoadPay(from, to, options)};
   }).filter(route => route.pay !== null);
   if (!routes.length) return null;

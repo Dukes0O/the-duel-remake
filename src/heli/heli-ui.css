@@ -107,3 +107,14 @@
 .heli-gus-page p{font-family:Georgia,serif;font-size:15px;line-height:1.7}
 .heli-shelf button,.heli-rank button{display:block;margin-top:8px;padding:7px 10px;background:#364239;color:#f5eddc;border:1px solid #bda88177;cursor:pointer}
 .heli-shelf button:disabled{opacity:.65;cursor:default}
+/* HELI-JOB-CLARITY: the job in hand, top left, and the hook prompt above the radio line. */
+.heli-job-card{position:absolute;top:122px;left:24px;width:280px;padding:10px 12px;background:#0f1614e6;border:1px solid #ffffff26;border-left:3px solid #ffcf3f;border-radius:6px;pointer-events:auto}
+.heli-job-card>span{font-size:9px;letter-spacing:2.5px;font-weight:750;color:#ffcf3f}
+.heli-job-card p{margin:4px 0;font-size:13px;line-height:1.35}
+.heli-job-card .heli-job-what{font-size:14px;font-weight:700}
+.heli-job-card .heli-job-route,.heli-job-card .heli-job-pay,.heli-job-card .heli-job-note{color:var(--muted,#b6b1a5);font-size:12px}
+.heli-job-card .heli-job-next{margin:8px 0;padding:6px 8px;font-weight:700;background:#ffcf3f1f;border-radius:4px}
+.heli-job-card button{margin-top:4px;padding:5px 9px;font:600 12px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.heli-job-card button:hover{background:#ffffff26}
+.heli-hook-prompt{position:absolute;left:50%;bottom:196px;transform:translateX(-50%);padding:8px 16px;font-size:16px;font-weight:750;background:#0f1614e6;border:1px solid #4fd16a99;border-radius:4px}
+.heli-hook-prompt[hidden]{display:none}

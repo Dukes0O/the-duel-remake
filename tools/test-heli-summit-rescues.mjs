@@ -120,7 +120,10 @@ function summitOnFingerprint() {
 }
 // Taken from the code as it stood before this card (rescue on, Summit Run off; then Summit Run on, rescue off).
 // RESCUE-FINISH re-records rescue-on base clues/sites/clocks; rescue-off stays pinned.
-const OFF_PIN = 2318537187, SUMMIT_ONLY_PIN = 1829644530;
+// HELI-JOB-CLARITY (changed pin, SUMMIT_ONLY_PIN was 1829644530): Summit Run flies exactly as it did; only its return
+// crate is gone, since with the pilot's map off no crate leg from there fits the fuel left on arrival (heli-jobs.js
+// jobLegFlyable). With the crate filter undone this pin comes back to 1829644530.
+const OFF_PIN = 2318537187, SUMMIT_ONLY_PIN = 274976626;
 for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: 'yes'}])
   assert.equal(offFingerprint(extra), OFF_PIN, `with Summit Run off every rescue and flying area is as it was (${JSON.stringify(extra)})`), checks++;
 assert.equal(summitOnFingerprint(), SUMMIT_ONLY_PIN, 'with Summit Run on and rescues off, Summit Run flies exactly as it did'); checks++;
