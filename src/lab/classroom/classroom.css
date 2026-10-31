@@ -1,0 +1,64 @@
+/* LAB-CLASSROOM: the classroom screen over the Lab room (laptop screens only). */
+.lab-classroom { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; gap: 10px; padding: 12px 18px 14px;
+  color: #f5f0dc; font: 18px/1.35 "Segoe UI", sans-serif; background: rgba(9, 12, 13, .78); backdrop-filter: blur(4px); }
+.lab-classroom[hidden], .lab-classroom .lc-cards[hidden] { display: none; }
+.lab-classroom kbd { display: inline-block; min-width: 1.4em; padding: 0 5px; margin-left: 4px; border-radius: 4px; background: #f5f0dc; color: #1d2224;
+  font: 800 .78em/1.5 "Segoe UI", sans-serif; text-align: center; box-shadow: 0 2px 0 #8f9791; }
+.lab-classroom button { font: inherit; color: inherit; cursor: pointer; }
+.lab-classroom button:disabled { cursor: default; }
+.lab-classroom button:focus-visible { outline: 3px solid #edc557; outline-offset: 2px; }
+
+.lc-top { display: flex; align-items: center; gap: 18px; }
+.lc-top h2 { margin: 0; font-size: 24px; color: #edc557; white-space: nowrap; }
+.lc-progress { display: flex; flex: 1; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.lc-progress li { flex: 1; }
+.lc-progress button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 2px solid #4a524e; border-radius: 6px;
+  background: #1d2322; font-size: 15px; font-weight: 600; text-align: left; white-space: nowrap; overflow: hidden; }
+.lc-progress span { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; background: #3a423f; font-size: 13px; font-weight: 800; }
+.lc-progress .done button { border-color: #2f7a4b; }
+.lc-progress .done span { background: #56d683; color: #102015; }
+.lc-progress .current button { border-color: #edc557; background: #3a3420; color: #fff6d8; }
+.lc-progress .current span { background: #edc557; color: #1d2224; }
+.lc-progress button:disabled:not(.current button) { opacity: .65; }
+.lc-leave { padding: 7px 12px; border: 2px solid #8f9791; border-radius: 6px; background: #252c29; font-size: 15px; }
+
+.lc-main { display: flex; flex: 1; min-height: 0; gap: 14px; }
+.lc-board { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; border: 2px solid #4a524e; border-radius: 8px; background: #121718; overflow: hidden; }
+.lc-step { margin: 0; padding: 6px 14px; font-size: 19px; color: #edc557; border-bottom: 1px solid #343c39; }
+.lc-canvas { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; }
+
+.lc-brian { flex: 0 0 300px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; border: 2px solid #4a524e; border-radius: 8px; background: #1d2322; }
+.lc-portrait { width: 132px; height: 132px; border-radius: 50%; border: 5px solid #8f9791; overflow: hidden; background: radial-gradient(#3a4448, #1a1f21);
+  display: grid; place-items: center; transition: border-color .25s, transform .25s; }
+.lc-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.lc-portrait span { font: 800 54px "Segoe UI", sans-serif; color: #8f9791; }
+.lc-portrait[data-mood="cheer"] { border-color: #56d683; transform: scale(1.06); }
+.lc-portrait[data-mood="hint"] { border-color: #edc557; }
+.lc-portrait[data-mood="explain"] { border-color: #f0a148; }
+.lc-name { font-size: 17px; color: #c9cfca; }
+.lc-bubble { position: relative; flex: 0 0 auto; width: 100%; min-height: 110px; max-height: 260px; margin: 6px 0 0; padding: 14px 16px; border-radius: 10px; background: #f5f0dc; color: #1d2224;
+  font-size: 20px; line-height: 1.4; font-weight: 600; overflow: auto; }
+.lc-bubble::before { content: ''; position: absolute; top: -12px; left: 50%; margin-left: -12px; border: 12px solid transparent; border-top: 0; border-bottom-color: #f5f0dc; }
+.lc-help { margin-top: auto; width: 100%; padding: 10px; border: 2px solid #edc557; border-radius: 8px; background: #3a3420; font-weight: 700; }
+.lc-rungs { display: flex; gap: 8px; }
+.lc-rungs i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #edc557; }
+.lc-rungs i.on { background: #edc557; }
+
+.lc-cards { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.lc-asking .lc-portrait { width: 84px; height: 84px; border-width: 4px; }
+.lc-asking .lc-name { display: none; }
+.lc-card { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border: 3px solid #4a524e; border-radius: 8px; background: #252c29; font-size: 17px; font-weight: 700; text-align: left; }
+.lc-card:not(:disabled):hover { border-color: #edc557; }
+.lc-card canvas { flex: none; width: 120px; height: 60px; border-radius: 4px; }
+.lc-card.right { border-color: #56d683; background: #183224; }
+.lc-card.wrong { border-color: #f07a5a; background: #3a2019; }
+.lc-card b { position: absolute; top: -10px; right: 8px; padding: 0 7px; border-radius: 9px; background: #f5f0dc; color: #1d2224; font-size: 12px; }
+
+.lc-bar { display: flex; align-items: center; gap: 16px; padding: 8px 12px; border-radius: 8px; background: #252c29; border-left: 5px solid #edc557; }
+.lc-prompt { flex: 1; margin: 0; font-size: 20px; }
+.lc-prompt b { margin-right: 8px; color: #edc557; text-transform: uppercase; font-size: 14px; letter-spacing: .06em; }
+.lc-actions { display: flex; gap: 10px; }
+.lc-actions button { padding: 9px 14px; border: 2px solid #8f9791; border-radius: 7px; background: #1d2322; font-size: 17px; font-weight: 700; white-space: nowrap; }
+.lc-actions button[aria-pressed="true"] { border-color: #edc557; color: #edc557; }
+.lc-actions .primary { border-color: #edc557; background: #edc557; color: #1d2224; }
+.lc-actions .primary:disabled { border-color: #4a524e; background: #2a302e; color: #7d857f; }

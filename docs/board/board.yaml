@@ -403,3 +403,192 @@ tasks:
     needs: []
     locks: []
     details: "docs/board/cards/QA-MAP-FINISH-TABLE.md"
+
+  - id: LAB-CLASSROOM
+    title: "The Lab as a classroom: audit, teaching design, the pendulum rebuilt"
+    owner: "claude"
+    lane: "UI"
+    size: "L"
+    status: "building"
+    needs: []
+    locks: []
+    claimed_by: "claude-lab-classroom-2026-10-31"
+    branch: "claude/lab-classroom"
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM.md"
+
+  - id: LAB-CLASSROOM-LIVE
+    title: "Pendulum classroom goes live after Kyle and Gratian try it"
+    owner: "claude"
+    lane: "FINISH"
+    size: "S"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-LIVE.md"
+
+  - id: LAB-CLASSROOM-LIFT
+    title: "Lift and weight rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-LIFT.md"
+
+  - id: LAB-CLASSROOM-PROJECTILE
+    title: "Projectile motion rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-PROJECTILE.md"
+
+  - id: LAB-CLASSROOM-HEADINGS
+    title: "Headings and maps rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-HEADINGS.md"
+
+  - id: LAB-CLASSROOM-WAX
+    title: "Ski wax rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-WAX.md"
+
+  - id: LAB-CLASSROOM-FUEL
+    title: "Fuel and weight rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-FUEL.md"
+
+  - id: LAB-CLASSROOM-STRENGTH
+    title: "Strength against weight rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-STRENGTH.md"
+
+  - id: LAB-CLASSROOM-BRAKING
+    title: "Braking rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-BRAKING.md"
+
+  - id: LAB-CLASSROOM-ALTITUDE
+    title: "Air and altitude rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-ALTITUDE.md"
+
+  - id: LAB-CLASSROOM-FIRE
+    title: "Fire triangle rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-FIRE.md"
+
+  - id: LAB-CLASSROOM-DOWNFORCE
+    title: "Downforce rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-DOWNFORCE.md"
+
+  - id: LAB-CLASSROOM-LAUNCH
+    title: "Launch angles rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-LAUNCH.md"
+
+  - id: LAB-CLASSROOM-RUST
+    title: "Rust rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-RUST.md"
+
+  - id: LAB-CLASSROOM-GFORCE
+    title: "G-force rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-GFORCE.md"
+
+  - id: LAB-CLASSROOM-GRIP
+    title: "Grip and slip rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-GRIP.md"
+
+  - id: LAB-CLASSROOM-SUSPENSION
+    title: "Suspension rebuilt as a classroom lesson"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-SUSPENSION.md"

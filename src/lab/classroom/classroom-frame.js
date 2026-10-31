@@ -1,0 +1,96 @@
+// The classroom lesson pattern (docs/board/cards/LAB-CLASSROOM.md sections 2 and 3).
+// Teaching state only: the lesson model, where the player is, Brian's help and
+// whether the player looks stuck. No DOM, no saves, no race state.
+
+export const PARTS = Object.freeze(['Wonder', 'Words', 'Watch', 'Try with help', 'On your own', 'Check', 'Recap']);
+// Brian offers help after this long without progress, and gives the first hint himself after the second.
+export const STUCK_OFFER_S = 12;
+export const STUCK_HINT_S = 25;
+export const SLOW_MOTION = .5;
+// Brian's pointer takes this long to reach the control before he presses it for the player.
+export const SHOW_ME_S = 1.4;
+const HELP_RUNGS = 3;
+
+// lesson: {id, steps: [{id, part, title}], createModel()}. The model owns the step's experiment:
+// enter(index), act(action) -> event, tick(dt) -> event, view({help, assist}) and targetOf(action).
+// Events: {kind: 'right' | 'wrong' | 'pass' | 'fail' | 'progress' | 'sound', say?, sound?}.
+export function createClassroomSession(lesson) {
+  const model = lesson.createModel();
+  let index = 0, furthest = 0, help = 0, idle = 0, offered = false, slow = false, time = 0;
+  let bubble = null, celebrate = null, pointer = null;
+  const done = new Set(), events = [];
+  model.enter(0);
+
+  function handle(event) {
+    if (!event) return;
+    events.push(event);
+    if (event.kind === 'right' || event.kind === 'pass') celebrate = {at: time, big: event.kind === 'pass' || event.big === true};
+    // Any step forward clears the help: the next part starts from a nudge again.
+    if (event.kind === 'right' || event.kind === 'pass' || event.kind === 'progress') { help = 0; pointer = null; }
+    // A failed try climbs one rung, but Brian never takes over by himself: Show me waits for the player.
+    if (event.kind === 'fail') help = Math.min(HELP_RUNGS - 1, help + 1);
+    if (event.kind !== 'sound') { idle = 0; offered = false; bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null; }
+  }
+  const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
+  function enter(i) {
+    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null;
+    model.enter(i);
+  }
+  const current = () => model.view({help, assist: help >= HELP_RUNGS});
+
+  return {
+    lesson,
+    act(action) {
+      if (action === 'next') { const v = current(); if (!v.ready || index + 1 >= lesson.steps.length) return false; done.add(index); enter(index + 1); return true; }
+      if (action === 'help') return this.help();
+      if (action === 'slow') { slow = !slow; return true; }
+      if (action.startsWith('go:')) {
+        const to = Number(action.slice(3));
+        if (!Number.isInteger(to) || to < 0 || to > furthest || to === index) return false;
+        enter(to); return true;
+      }
+      handle(model.act(action));
+      return true;
+    },
+    help() {
+      help = Math.min(HELP_RUNGS, help + 1); idle = 0; offered = true;
+      const v = current();
+      if (help === HELP_RUNGS && v.target) pointer = {action: v.target, at: time};
+      bubble = {text: v.hints[help - 1], mood: 'hint'};
+      return true;
+    },
+    tick(dt) {
+      const step = Math.max(0, Math.min(dt, .1));
+      time += step;
+      handle(model.tick(step * (slow ? SLOW_MOTION : 1)));
+      const v = current();
+      // Show me: the pointer reaches the control, Brian presses it, and hands the next part back.
+      if (pointer && !pointer.done && time - pointer.at >= SHOW_ME_S && v.target === pointer.action && !v.pointOnly) {
+        pointer.done = true;
+        handle(model.act(pointer.action));
+        celebrate = null; help = 0;
+        bubble = {text: `Like that. ${current().say}`, mood: 'talk'};
+        return;
+      }
+      if (!v.waiting) { idle = 0; return; }
+      idle += step;
+      if (idle >= STUCK_OFFER_S && !offered) { offered = true; bubble = {text: 'Stuck? Press H and I will help.', mood: 'hint'}; }
+      if (idle >= STUCK_HINT_S && help === 0) { help = 1; bubble = {text: v.hints[0], mood: 'hint'}; }
+    },
+    takeEvents() { return events.splice(0); },
+    view() {
+      const v = current(), step = lesson.steps[index];
+      return {
+        ...v, index, step, slow, help, time,
+        parts: PARTS.map((name, part) => {
+          const steps = lesson.steps.map((s, i) => ({...s, i})).filter(s => s.part === part);
+          return {name, first: steps[0]?.i ?? null, current: step.part === part, done: steps.length > 0 && steps.every(s => done.has(s.i)), reached: steps.some(s => s.i <= furthest)};
+        }),
+        brian: bubble ?? {text: v.say, mood: v.mood ?? 'talk'},
+        pointer: pointer && v.target === pointer.action ? {...pointer, age: time - pointer.at} : null,
+        celebrate: celebrate && time - celebrate.at < 1.6 ? {...celebrate, age: time - celebrate.at} : null,
+        last: index === lesson.steps.length - 1,
+      };
+    },
+  };
+}
