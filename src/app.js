@@ -1904,7 +1904,7 @@ export class App {
   heliAvailable() {
     return !!this.player && this._switches().enabled('helicopter') === true;
   }
-  // From the main menu to the helipad at Tremblant Woods.
+  // From the main menu to the helipad: where the helicopter last stood, else Tremblant Woods (HELI-JOB-CLARITY).
   visitHeli({mode = 'assisted'} = {}) {
     if (this.duel.state.status !== 'menu' || !this.heliAvailable()) return false;
     this._refreshPlayer();

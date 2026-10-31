@@ -15,6 +15,7 @@ const MAX_CREDITS = 1_000_000_000;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9:_-]+$/;
 const NOT_AVAILABLE = 'The helicopter is not available yet.';
+const HOME_PLACE = 'tremblant-woods';
 const REPAIRS = Object.freeze({hardLanding: HELI_MONEY.hardLanding, crash: HELI_MONEY.crash,
   cargoLight: HELI_MONEY.cargoLight, cargoHeavy: HELI_MONEY.cargoHeavy, cargoWreck: HELI_MONEY.cargoWreck});
 // Fuel is counted in tenths of a kilogram so prices never pick up rounding noise.
@@ -49,7 +50,7 @@ export function createHeli() {
 }
 
 // Every field this game knows, so only a newer game's fields are copied as they are.
-const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map', 'returnLoads', 'logbook']);
+const KNOWN_KEYS = new Set([...Object.keys(createHeli()), 'missions', 'fire', 'burnt', 'scars', 'bucket', 'skins', 'dirt', 'survey', 'ski', 'map', 'returnLoads', 'logbook', 'lastPad']);
 
 export function normalizeHeli(value) {
   if (!isObject(value) || value.version !== HELI_SAVE_VERSION) return createHeli();
@@ -75,6 +76,8 @@ export function normalizeHeli(value) {
       if (validPlace(place) && place !== 'tremblant-woods' && Number.isSafeInteger(day) && day >= 0 && day <= MAX_COUNT)
         heli.returnLoads[place] = day;
   }
+  // HELI-JOB-CLARITY: the place the helicopter last stood (an optional field; a save without it starts at home).
+  if (validPlace(value.lastPad) && value.lastPad !== HOME_PLACE) heli.lastPad = value.lastPad;
   if (isObject(value.logbook)) {
     const book = value.logbook, jobs = isObject(book.jobs) ? book.jobs : {};
     heli.logbook = {...copyPlainFields(book), flights: count(book.flights),
@@ -205,6 +208,20 @@ export const FIRST_PLACE = Object.freeze({falcone_sirena: 'pacific-canyon'});
 export function carAt(profile, carId, fallback = FIRST_PLACE[carId] ?? 'tremblant-woods') {
   const heli = heliOf(profile);
   return validCar(carId) && Object.hasOwn(heli.carsAt, carId) ? heli.carsAt[carId] : fallback;
+}
+
+// HELI-JOB-CLARITY (continuity): where a new helicopter visit starts. The field is written only when the helicopter
+// stands somewhere other than the home pad, so a save that never left home, or an older save, is unchanged and reads as home.
+export function lastPadOf(profile) {
+  return heliOf(profile).lastPad ?? HOME_PLACE;
+}
+export function setLastPad(profile, courseId, {enabled} = {}) {
+  if (enabled !== true) return off(profile);
+  if (!validPlace(courseId)) return failure(profile, 'That place is not known.');
+  const heli = heliOf(profile);
+  if ((heli.lastPad ?? HOME_PLACE) === courseId) return {ok: true, profile};
+  const {lastPad, ...rest} = heli;
+  return {ok: true, profile: withHeli(profile, courseId === HOME_PLACE ? rest : {...rest, lastPad: courseId})};
 }
 
 export function countFlight(profile, {enabled} = {}) {

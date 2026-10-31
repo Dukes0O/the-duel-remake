@@ -22,6 +22,7 @@ import {isCourseUnlocked} from '../course-access.js';
 import {CABLE} from './heli-cable.js';
 import {atAnyPad} from './heli-board.js';
 import {SUMMIT_PADS} from '../ski/runs/summit-zones.js';
+import {jobCardText, jobCardMarkup, hookPromptText, DELIVERED_SECONDS} from './heli-job-card.js'; // HELI-JOB-CLARITY
 
 export const LESSON_TEXT = Object.freeze({
   liftoff: Object.freeze({name: '1 Lift-off', goal: 'Rise to 3 m and hold her there for 5 seconds.'}),
@@ -268,21 +269,24 @@ export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) 
 }
 
 // HELI-LANDED: read-only arrival eligibility, shared by the panel and its actions.
-export function landedArrival(view, profile = null) {
+// skiPanel (HELI-JOB-CLARITY): the ski panel is on screen now with a run to pick; the card says to use it only then.
+export function landedArrival(view, profile = null, {skiPanel = false} = {}) {
   const summitPad = view?.phase === 'flying' && view.courseId === 'summit-run' && view.heli?.onGround &&
     Object.values(SUMMIT_PADS).some(pad => Math.hypot(view.heli.x - pad.x, view.heli.z - pad.z) <= CABLE.landingRadius);
   if (!(atAnyPad(view) || summitPad) || Math.hypot(view.heli.vx ?? 0, view.heli.vy ?? 0, view.heli.vz ?? 0) > CABLE.setDownSpeed ||
       view.lesson || view.challenge || view.job || view.fire?.cells > 0 || view.ski?.run || view.survey?.taken) return null;
   const rescue = view.rescue?.active ?? view.rescue?.call;
   const waiting = rescue ? `${RESCUE_WORDS[rescue.kind] ?? 'Rescue call'} waiting. Finish the rescue or shut down to leave the flight.` :
-    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. Use the ski panel to continue or shut down to leave the flight.` : null;
+    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. ${skiPanel
+      ? 'Use the ski panel to continue or shut down to leave the flight.'
+      : 'Land on a ski pad to ski: the job card on the left shows the nearest. Or shut down to leave the flight.'}` : null;
   const car = view.loads?.find(load => load.own && load.onGround && !load.hooked);
   const unavailable = new Set(view.loads?.filter(load => load.hooked || !load.onGround).map(load => load.id));
   return {courseId: view.courseId, waiting, carId: car?.id ?? Object.entries(profile?.heli?.carsAt ?? {}).find(([id, courseId]) => courseId === view.courseId && !unavailable.has(id))?.[0] ?? null};
 }
 
-export function arrivalMarkup(view, jobs = [], profile = null) {
-  const arrival = landedArrival(view, profile);
+export function arrivalMarkup(view, jobs = [], profile = null, {skiPanel = false} = {}) {
+  const arrival = landedArrival(view, profile, {skiPanel});
   if (!arrival) return '';
   const place = HELI_DESTINATIONS_WITH_SUMMIT[arrival.courseId] ??
     COURSE.find(course => course.id === arrival.courseId) ?? placeOfCourse(arrival.courseId) ?? placeById(arrival.courseId);
@@ -294,7 +298,7 @@ export function arrivalMarkup(view, jobs = [], profile = null) {
   const canRace = raceCourse && unlocked && !arrival.waiting;
   const crate = view.returnLoad;
   const board = !crate ? '' : crate.done ? 'Nothing more today. The board fills again tomorrow.' :
-    `${crate.title} · ${crate.massKg} kg · ${payWords(crate.payNow, {bonus: crate.cleanBonus ?? 0})}. ${crate.sender} Hook the crate beside the pad to take it.`;
+    `${crate.title} · ${crate.massKg} kg · ${payWords(crate.payNow, {bonus: crate.cleanBonus ?? 0})}. ${crate.sender} To take it, hover low over the crate beside the pad and press H.`;
   return `<div class="heli-lessons heli-arrival" role="group" aria-label="Landed at ${escape(place?.name ?? arrival.courseId)}">
     <span>LANDED AT ${escape((place?.name ?? arrival.courseId).toUpperCase())}</span><p>${escape(words)}</p>
     ${board ? `<p>${escape(board)}</p>` : ''}
@@ -384,7 +388,7 @@ export function createHeliUi({host, app, onMenu = null}) {
   section.className = 'heli-panel';
   section.hidden = true;
   section.setAttribute('aria-label', 'Kestrel One');
-  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-shelf-host"></div><div class="heli-arrival-host"></div><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div>';
+  section.innerHTML = '<div class="heli-top"></div><div class="heli-side"><div class="heli-shelf-host"></div><div class="heli-arrival-host"></div><div class="heli-ski-host"></div><div class="heli-controls"></div><div class="heli-lessons-host"></div><div class="heli-board-host" hidden></div></div><div class="heli-notices" aria-live="polite"></div><div class="heli-radio" aria-live="polite" hidden></div><div class="heli-job-host"></div><div class="heli-hook-prompt" role="status" hidden></div>';
   host.append(section);
   const top = section.querySelector('.heli-top'), controls = section.querySelector('.heli-controls');
   const notices = section.querySelector('.heli-notices'), radio = section.querySelector('.heli-radio');
@@ -392,6 +396,9 @@ export function createHeliUi({host, app, onMenu = null}) {
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const arrivalHost = section.querySelector('.heli-arrival-host');
   let lastArrival = '', lastShelf = '';
+  // HELI-JOB-CLARITY: the job card (top left) and the hook prompt (above the radio line).
+  const jobHost = section.querySelector('.heli-job-host'), hookPrompt = section.querySelector('.heli-hook-prompt');
+  let lastJob = '', delivered = null;
   const shelf = section.querySelector('.heli-shelf-host');
   const boardHost = section.querySelector('.heli-board-host');
   const board = createDispatchBoard({root: boardHost, app});
@@ -426,6 +433,14 @@ export function createHeliUi({host, app, onMenu = null}) {
     const paint = event.target.closest('[data-logbook-paint]');
     if (paint) { app.heliSession?.wearLogbookPaint(paint.dataset.logbookPaint); return; }
 
+    const jobButton = event.target.closest('[data-heli-job]');
+    if (jobButton) {
+      const session = app.heliSession, result = session?.dropJobHere?.();
+      if (result && result.ok === false && result.reason) shown.push({text: result.reason, until: performance.now() / 1000 + NOTICE_SECONDS});
+      if (session && app.heliSession === session) app._heliEvents?.(session.takeEvents());
+      jobButton.blur();
+      return;
+    }
     const arrivalButton = event.target.closest('[data-heli-arrival]');
     if (arrivalButton) { if (app.heliLanded?.(arrivalButton.dataset.heliArrival) && app.duel?.state?.status === 'menu') onMenu?.(); return; }
     const skiButton = event.target.closest('[data-ski-board],[data-ski-run],[data-ski-wax],[data-ski-challenge]');
@@ -485,6 +500,7 @@ export function createHeliUi({host, app, onMenu = null}) {
             if (text) radioLine = {text, until: now + RADIO_SECONDS};
           }
           if (event.type === 'crashed') radioLine = {text: HELI_RADIO_LINES['heli.radio.crash'].text, until: now + RADIO_SECONDS};
+          if (event.type === 'jobDone' && Number.isFinite(event.pay)) delivered = {pay: event.pay, until: now + DELIVERED_SECONDS};
         }
         seenLog = log;
       }
@@ -496,14 +512,16 @@ export function createHeliUi({host, app, onMenu = null}) {
       if (dusk > 0) { section.dataset.dusk = 'on'; section.style.setProperty('--heli-dusk', dusk.toFixed(3)); }
       else if (section.dataset.dusk) { delete section.dataset.dusk; section.style.removeProperty('--heli-dusk'); }
       // SKI-VIEW: on skis the instruments, routes, lessons and board give way to the run HUD.
-      if (arrivalHost) lastArrival = set(arrivalHost, arrivalMarkup(view, app.heliSession?.boardJobs?.() ?? [], app.profile), lastArrival);
       const skiing = view.phase === 'skiing';
+      const offers = !skiing ? app.heliSession?.skiOffers?.() ?? null : null;
+      // HELI-JOB-CLARITY: the run menu shows only with a run to pick (the pickup pad starts none until aerials open).
+      const skiPanel = !!offers && (offers.runs.length > 0 || !!offers.challenge);
+      if (arrivalHost) lastArrival = set(arrivalHost, arrivalMarkup(view, app.heliSession?.boardJobs?.() ?? [], app.profile, {skiPanel}), lastArrival);
       (skiing ? hud() : skiHud)?.update(view, now);
       top.hidden = skiing; controls.hidden = skiing; lessonsHost.hidden = skiing;
-      const offers = !skiing ? app.heliSession?.skiOffers?.() ?? null : null;
       if (offers) hud().snow = offers.snow;
       else skiWax = null;
-      const skiBox = skiing ? '' : offers ? skiMenuMarkup(offers, {wax: skiWax})
+      const skiBox = skiing ? '' : skiPanel ? skiMenuMarkup(offers, {wax: skiWax})
         : !view.lesson && atHomePad(view) ? skiBoardMarkup(app.heliSession?.skiBoard?.() ?? null, view.ski?.flight ?? null) : '';
       if (skiBox) hud(); // its stylesheet styles the box too
       if (skiHost) lastSki = set(skiHost, skiBox, lastSki);
@@ -517,6 +535,14 @@ export function createHeliUi({host, app, onMenu = null}) {
         lastControls = controlsHtml;
       } else lastControls = set(controls, controlsHtml, lastControls);
       lastNotices = set(notices, shown.map(item => `<p>${escape(item.text)}</p>`).join(''), lastNotices);
+      // HELI-JOB-CLARITY: the job card, worded from the session's job status; the places in the Fly To list need no map.
+      if (delivered && delivered.until <= now) delivered = null;
+      const flyToList = Array.isArray(view.destinations) ? view.destinations.filter(id => HELI_DESTINATIONS_WITH_SUMMIT[id]) : Object.keys(HELI_DESTINATIONS);
+      const card = skiing ? null : jobCardText(app.heliSession?.jobStatus?.() ?? null, {flyToList, delivered});
+      lastJob = set(jobHost, jobCardMarkup(card), lastJob);
+      const prompt = skiing ? null : hookPromptText(app.heliSession?.hookPrompt?.() ?? null);
+      hookPrompt.hidden = !prompt;
+      if (prompt && hookPrompt.textContent !== prompt) hookPrompt.textContent = prompt;
       const lessonBoard = app.heliSession?.lessonBoard?.() ?? [];
       lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done),
         driving: !view.lesson && atHomePad(view) ? app.heliDrivingBoard?.() ?? null : null, lab: app.labAvailable?.() === true}), lastLessons);

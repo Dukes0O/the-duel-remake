@@ -2,7 +2,7 @@
 // a click handler. HELI-VIEW mounts and styles it with the helicopter's other
 // page parts; class names all start with heli-board. It only reads the
 // session and asks it to take or drop a job, so it never changes race state.
-import {HELI_DESTINATIONS, HOME_COURSE, jobTitle} from './heli-jobs.js';
+import {HOME_COURSE, jobTitle, placeName} from './heli-jobs.js';
 import {CARS} from '../config.js';
 import {HELI_PAYS, payWords} from './heli-pay.js';
 
@@ -27,7 +27,8 @@ function jobRow(job, mode, {survey = null, skins = null} = {}) {
   const own = job.own === true, count = job.survey === true, story = !!job.story;
   const state = job.done ? 'done' : job.taken ? 'taken' : 'open';
   const pay = own ? 'No pay' : count ? payWords(job.payNow ?? job.pay, {upTo: true}) : `${payWords(job.payNow ?? job.pay, {bonus: job.cleanBonus ?? 0})}${mode === 'real' ? ' (Real pays 25% more)' : ''}`;
-  const pickUp = !own && !count && job.from !== HOME_COURSE ? `Pick up at ${HELI_DESTINATIONS[job.from]?.name ?? job.from}` : '';
+  // HELI-JOB-CLARITY: map places by name, never by id.
+  const pickUp = !own && !count && job.from !== HOME_COURSE ? `Pick up at ${placeName(job.from)}` : '';
   const title = own ? `Fly my car${job.carId && CARS[job.carId] ? ` (${CARS[job.carId].name})` : ''}` : job.recovery || count || story ? job.title : jobTitle(job);
   let button = '';
   // The recovery job (section 5.3) is taken and dropped like the day's jobs.
@@ -208,7 +209,7 @@ export function dispatchBoardMarkup(view, {jobs = [], offer = null, mode = 'assi
     if (jobs.some(job => job.story && !job.done)) parts.unshift(jobsPart); else parts.push(jobsPart);
   }
   if (offer) {
-    const course = HELI_DESTINATIONS[offer.courseId]?.name ?? offer.courseId;
+    const course = placeName(offer.courseId);
     parts.push(`<div class="heli-board-race"><span class="heli-board-text">${esc(CARS[offer.carId]?.name ?? 'Your car')} is set down at ${esc(course)}.</span>` +
       `<button type="button" class="heli-board-button heli-board-race-here" data-heli-board="race-here">Race here</button>` +
       (lessonOffer ? `<button type="button" class="heli-board-button heli-board-lesson-here" data-heli-board="lesson-here">Lesson here: ${esc(lessonOffer.name)}</button>` : '') +

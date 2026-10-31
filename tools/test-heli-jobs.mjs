@@ -16,7 +16,7 @@ import {HOME_COURSE, HELI_DESTINATIONS, JOB_ROUTES, JOB_CARS, AIR_ONLY_CARS, isA
   RECOVERY, wreckFor, recoveryJob, recoveryTitle, recoveryJobOf, finishRecovery} from '../src/heli/heli-jobs.js';
 import {createHeliSession} from '../src/heli/heli-session.js';
 import {dispatchBoardMarkup, handleBoardAction, createDispatchBoard, atHomePad} from '../src/heli/heli-board.js';
-import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay} from '../src/heli/heli-jobs.js';
+import {returnLoadJob, returnLoadTitle, finishReturnLoad, returnLoadPay, jobLegFlyable} from '../src/heli/heli-jobs.js';
 import {payForMinutes, deliveryMinutes} from '../src/heli/heli-pay.js';
 import {fuelPadAt, placeOfCourse, mapDistanceKm} from '../src/heli/pilot-map-data.js';
 import {armMissions} from '../src/heli/heli-missions.js';
@@ -188,7 +188,10 @@ function newSession({profile = profileWith(), carId = 'falcone_f42', mode = 'ass
   assert.equal(session.courseId, 'tremblant-snow'); checks++;
   const v = session.view(), car = v.loads.find(l => l.job === job.id);
   ok(car && car.id === job.carId && car.onGround, 'the customer\'s car waits at Tremblant Snow');
-  near(Math.hypot(car.x - v.zone.x, car.z - v.zone.z), 0, 0.01, 'in the landing zone');
+  // HELI-JOB-CLARITY (changed assertion): the car waits on the parking spot beside the landing circle, in sight and
+  // clear of the arriving helicopter, not in the middle of the circle where it stood under the helicopter.
+  near(Math.hypot(car.x - v.parking.x, car.z - v.parking.z), 0, 0.01, 'on the parking spot beside the landing zone');
+  ok(Math.hypot(car.x - v.zone.x, car.z - v.zone.z) > v.zone.radius, 'outside the landing circle');
   ok(session.pressAutopilot() || session.autopilotOn, 'the autopilot is on');
   run(session, 300, () => ({}), (view, seen) => seen.some(e => e.type === 'autopilotArrived'));
   if (session.autopilotOn) session.pressAutopilot();
@@ -616,7 +619,13 @@ function flyOwnCar({owned}) {
   for (let day = 0; day < 30; day++) for (const from of Object.keys(destinationsFor(options))) {
     const job = returnLoadJob(day, from, options);
     if (from === HOME_COURSE) { same(job, null, 'home keeps its dispatch board'); continue; }
+    // HELI-JOB-CLARITY (changed assertion): a crate names only a leg the pilot can fly with the fuel sold on the way
+    // (jobLegFlyable). A place with no such leg (Eifel Crown: the nearest pump leaves too little fuel) offers no crate,
+    // where before every place offered one, Summit Run to Eifel Crown among them (271 kg from a pad with no pump).
+    const flyable = Object.keys(destinationsFor(options)).some(to => to !== 'the-table' && jobLegFlyable(from, to, options) && returnLoadPay(from, to, options) !== null);
+    if (!flyable) { same(job, null, `no flyable drop-off from ${from}, so no crate`); continue; }
     ok(job, `a return load at ${from}`);
+    ok(jobLegFlyable(from, job.to, options), `the crate from ${from} names a leg the pilot can fly`);
     same(job, returnLoadJob(day, from, options), 'same day and place, same crate');
     ok(job.massKg >= 300 && job.massKg <= 600, 'crate within settled weight');
     const fuel = legFuelKg(from, job.to, options);
@@ -715,7 +724,9 @@ for (const held of [false, true]) {
   const profile = setMissions(base, {...armed, count: armed.need,
     call: {kind: 'supply', id: `supply-${armed.draws}`, courseId: 'summit-run', day: 30, answered: false}}, {enabled: true}).profile;
   const session = createHeliSession({profile, enabled: true, loadCourse, loadFireCourse: loadCourse, today: DAY1,
-    fireEnabled: true, rescueEnabled: true, summitRunEnabled: true, playerName: 'Return QA'});
+    // HELI-JOB-CLARITY: the pilot's map on (as released), since without its far pumps no crate leg from Summit Run fits
+    // the fuel left there (jobLegFlyable), so there would be no crate to stow.
+    fireEnabled: true, rescueEnabled: true, summitRunEnabled: true, pilotMapEnabled: true, playerName: 'Return QA'});
   session.start('summit-run');
   const crate = () => session.view().loads.find(load => load.returnJob);
   ok(crate(), 'return crate waits before answering the supply call');
