@@ -539,10 +539,12 @@ export function createHeliUi({host, app, onMenu = null}) {
       if (delivered && delivered.until <= now) delivered = null;
       const flyToList = Array.isArray(view.destinations) ? view.destinations.filter(id => HELI_DESTINATIONS_WITH_SUMMIT[id]) : Object.keys(HELI_DESTINATIONS);
       const card = skiing ? null : jobCardText(app.heliSession?.jobStatus?.() ?? null, {flyToList, delivered});
-      lastJob = set(jobHost, jobCardMarkup(card), lastJob);
+      if (jobHost) lastJob = set(jobHost, jobCardMarkup(card), lastJob);
       const prompt = skiing ? null : hookPromptText(app.heliSession?.hookPrompt?.() ?? null);
-      hookPrompt.hidden = !prompt;
-      if (prompt && hookPrompt.textContent !== prompt) hookPrompt.textContent = prompt;
+      if (hookPrompt) {
+        hookPrompt.hidden = !prompt;
+        if (prompt && hookPrompt.textContent !== prompt) hookPrompt.textContent = prompt;
+      }
       const lessonBoard = app.heliSession?.lessonBoard?.() ?? [];
       lastLessons = set(lessonsHost, lessonsMarkup(view, lessonBoard, {opening: lessonBoard.length > 0 && lessonBoard.every(item => !item.done),
         driving: !view.lesson && atHomePad(view) ? app.heliDrivingBoard?.() ?? null : null, lab: app.labAvailable?.() === true}), lastLessons);
