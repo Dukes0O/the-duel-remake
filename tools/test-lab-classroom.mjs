@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, STUCK_OFFER_S, STUCK_HINT_S, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, LENGTHS, HOOK_X} from '../src/lab/lessons/pendulum-classroom.js';
-import {drawBoard, drawPicture, hitTest, targetPoint, bobPoint} from '../src/lab/lessons/pendulum-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, bobPoint} from '../src/lab/lessons/pendulum-board.js';
 import {stringPeriod} from '../src/lab/benches/pendulum.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 
@@ -221,4 +221,16 @@ test('review fixes: Show me only points where pressing for the player would be w
   assert.equal(v.keys[3], undefined);
   playThroughTo(session, 'word-length');
   assert.equal(session.view().keys[3], 'measure:25', 'the prompt’s "3" picks the longest string');
+});
+
+test('hovering explains the parts of the picture: hooks, weights, stopwatches', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-short');
+  const v = session.view(), [hx, hy] = targetPoint(v, 'hook:5');
+  assert.match(hoverInfo(v, hx, hy), /5 m hook\. Click it, or press 1/);
+  assert.match(hoverInfo(v, ...targetPoint(v, 'weight:heavy')), /200 kg weight\. Click it, or press 5/);
+  const grey = v.pendulums.find(p => p.ghost);
+  assert.match(hoverInfo(v, ...bobPoint(grey)), /grey weight/);
+  assert.match(hoverInfo(v, grey.x - 30, 50), /Stopwatch/);
+  assert.equal(hoverInfo(v, 500, 660), null);
 });

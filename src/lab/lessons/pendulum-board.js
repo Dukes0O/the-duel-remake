@@ -33,6 +33,27 @@ export function hitTest(view, x, y) {
   if (view.keys.Space === 'tap' && x >= 0 && y >= 0 && x <= BOARD.width && y <= BOARD.height) return {action: 'tap'};
   return null;
 }
+// What the mouse is over, in a few words: hovering explains any part of the picture.
+export function hoverInfo(view, x, y) {
+  const near = (point, r) => point && Math.hypot(x - point[0], y - point[1]) <= r;
+  if (view.scene === 'wonder' || view.scene === 'settle' || view.scene === 'recap') return null;
+  for (const p of view.pendulums) {
+    const watchX = p.x - 30;
+    if ((view.stopwatches || view.lap) && near([watchX, WATCH_Y], WATCH_R + 6)) return 'Stopwatch: it stops after one full swing, out and back.';
+    if (near(bobPoint(p), radius(p.weightKg) + 8)) {
+      if (p.ghost) return 'The grey weight: 20 kg on 15 m, to compare with yours.';
+      return `${p.weightKg} kg weight on a ${p.lengthM} m string.` + (hitTest(view, x, y)?.drag ? ' Drag it aside and let go.' : '');
+    }
+  }
+  if (view.keys[4] === 'weight:light') {
+    for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return `${WEIGHTS[name]} kg weight. Click it, or press ${name === 'light' ? 4 : 5}, to hang it.`;
+    for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + 30) return `The ${length} m hook. Click it, or press ${LENGTHS.indexOf(length) + 1}, to hang the weight here.`;
+  }
+  if (y > BEAM_Y - 18 && y < BEAM_Y + 12 && x > 60 && x < 940) return 'The beam: every string hangs from a hook on it.';
+  if (view.startMark && near(bobPoint(view.pendulums[0], Math.abs(view.pendulums[0].amplitude ?? SWING_RAD)), 40)) return 'The green start mark: one swing ends when the weight is back here.';
+  return null;
+}
+
 export function targetPoint(view, action) {
   const [kind, value] = action.split(':');
   if (kind === 'hook') return [HOOK_X[value], PLATE_Y];

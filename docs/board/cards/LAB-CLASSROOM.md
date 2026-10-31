@@ -93,9 +93,13 @@ stays the scaffold.
 9. **Clear controls.** Controls are things on the board you click (hooks,
    weights, the weight itself), each with a key shown beside it. A control
    always shows what is chosen. Nothing cycles, nothing toggles back.
-10. **One keyboard, turns.** Mouse or keys for everything: number keys pick,
-    Space lets go, Enter continues, H asks Brian, Esc leaves. No two-player
-    controls. Laptop screen only.
+10. **Mouse and keyboard, one player at a time.** Everything works with the
+    mouse (click a part of the picture, drag the weight, hover over any part
+    for a few words about it) and with keys (number keys pick, Space lets go,
+    Enter continues, H asks Brian, Esc leaves). Kyle, 31 October 2026: "it can
+    use the mouse too. eventually we'll buy a steering wheel with pedals, but
+    lab lessons won't be a part of that": no steering wheel in the Lab. No
+    two-player controls. Laptop screen only.
 
 ## 3. Brian, the tutor
 

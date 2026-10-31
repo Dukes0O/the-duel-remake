@@ -12,7 +12,9 @@ Switch `lab-classroom`, dev: Kyle and Gratian try it in the Preview first.
   (Wonder, Words, Watch, Try with help, On your own, Check, Recap), a 2D board
   at true scale and real speed, set-up before the guess, guesses shown as
   stopwatch results, wrong guesses explained with the real swing times,
-  every control a thing on the board with its key, keyboard alone or mouse.
+  every control a thing on the board with its key, keyboard alone or mouse;
+  hovering over any part of the picture explains it in a few words (Kyle,
+  31 October: mouse and keyboard, no steering wheel in the Lab).
 - Brian as tutor beside the board: his portrait rendered from his Lab model,
   help that climbs (nudge, plain step, his pointer on the exact control), an
   offer of help after 12 s stuck and a first hint after 25 s, sparks and the

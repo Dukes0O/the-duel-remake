@@ -25,6 +25,9 @@
 .lc-main { display: flex; flex: 1; min-height: 0; gap: 14px; }
 .lc-board { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; border: 2px solid #4a524e; border-radius: 8px; background: #121718; overflow: hidden; }
 .lc-step { margin: 0; padding: 6px 14px; font-size: 19px; color: #edc557; border-bottom: 1px solid #343c39; }
+.lc-hover { position: absolute; z-index: 2; max-width: 300px; margin: 0; padding: 6px 10px; border-radius: 6px; background: #f5f0dc; color: #1d2224;
+  font-size: 16px; font-weight: 600; pointer-events: none; box-shadow: 0 3px 10px rgba(0,0,0,.4); }
+.lc-hover[hidden] { display: none; }
 .lc-canvas { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; }
 
 .lc-brian { flex: 0 0 300px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; border: 2px solid #4a524e; border-radius: 8px; background: #1d2322; }

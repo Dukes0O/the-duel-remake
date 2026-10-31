@@ -17,7 +17,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
-    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><canvas class="lc-canvas" aria-label="Lesson board"></canvas></div>
+    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-brian"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b>
       <p class="lc-bubble" aria-live="polite"></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
@@ -86,12 +86,19 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     // A drag ends without letting go if the button came up somewhere we did not see (another window).
     if (drag && event.buttons === 0) drag = null;
     if (drag) { session.act(`hold:${board.dragAngle(session.view(), drag.id, x, y)}`); return; }
-    canvas.style.cursor = board.hitTest(session.view(), x, y) ? 'pointer' : 'default';
+    const v = session.view();
+    canvas.style.cursor = board.hitTest(v, x, y) ? 'pointer' : 'default';
+    // Hovering explains the part under the mouse.
+    const tip = $('.lc-hover'), text = board.hoverInfo?.(v, x, y) ?? '';
+    if (tip.textContent !== text) tip.textContent = text;
+    tip.hidden = !text;
+    if (text) { const rect = canvas.getBoundingClientRect(); tip.style.left = `${event.clientX - rect.left + 16}px`; tip.style.top = `${event.clientY - rect.top + canvas.offsetTop + 16}px`; }
   }
   function onUp() { if (!drag) return; drag = null; act('release'); }
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', () => { drag = null; });
   canvas.addEventListener('lostpointercapture', () => { drag = null; });
+  canvas.addEventListener('pointerleave', () => { $('.lc-hover').hidden = true; });
   function onClick(event) {
     const action = event.target.closest?.('[data-lc]')?.dataset.lc;
     if (action) { event.stopPropagation(); act(action); }
