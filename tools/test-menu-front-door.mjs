@@ -12,10 +12,9 @@ const choices = {cpuDifficulty: Object.keys(CPU_DIFFICULTY)[0], difficulty: 'cas
 const base = {choices, arrow: '', sound: '', escapeHTML};
 const flagsOn = names => createFeatureFlags({storage: null, overrides: Object.fromEntries(names.map(name => [name, true]))});
 
-test('the switch is declared, on since 30 October 2026, and an override can still turn it off', () => {
-  assert.equal(FEATURE_STATES['menu-front-door'], 'on');
-  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-front-door'), true);
-  assert.equal(createFeatureFlags({storage: null, overrides: {'menu-front-door': false}}).enabled('menu-front-door'), false);
+test('the switch is declared and off (switched back off on 30 October 2026: Gratian wants the old menu)', () => {
+  assert.equal(FEATURE_STATES['menu-front-door'], 'dev');
+  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-front-door'), false);
 });
 
 test('switch off leaves today\'s markup', () => {
