@@ -404,6 +404,16 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-MAP-FINISH-TABLE.md"
 
+  - id: QA-AUDIO-CRASH-PEAK-3
+    title: "test-audio-crash-peak fails once in a full tier, passes on rerun (third time)"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-AUDIO-CRASH-PEAK-3.md"
+
   - id: LAB-CLASSROOM
     title: "The Lab as a classroom: audit, teaching design, the pendulum rebuilt"
     owner: "claude"
