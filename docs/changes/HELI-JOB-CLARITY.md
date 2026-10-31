@@ -47,7 +47,10 @@ unchanged (test-heli-job-clarity round trip). An older game copies the unknown k
   D1 and D2 every stage's words; D6 the landed card's ski words.
 - Every helicopter suite by hand (`tools/test-heli*.mjs`, 34 files), `test-pilot-map.mjs`, `test-map-secrets.mjs`,
   `test-heli-story.mjs`: all pass.
-- Lane tier (`--tier lane --changed --jobs 4 --keep-going`) and `npm run build`: see the last section.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): 104 passed, 0 failed (815 s),
+  on the final code. A first run failed 2 (test-drive-lesson-helipad, test-map-view): their small fake page has no
+  job-card or prompt element, so the new hosts are now guarded like the arrival host; both pass, then the rerun.
+- `npm run build`: built (the usual chunk-size warning only).
 - Browser, `tools/scenarios/heli-jobs.mjs` (released switches, memory-only saves, 1366x768): passes. Car job from
   the board (Dusthawk Rally, home pad to Tremblant Snow): card at each stage, hook prompt, carry, release prompt,
   delivered and paid 2,650; home for fuel; the Tremblant Snow crate (524 kg) to Panorama Ridge, paid 2,650; landed,
