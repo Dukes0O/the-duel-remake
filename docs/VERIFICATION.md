@@ -1585,3 +1585,9 @@ facts, 0 browser errors) (rule 19). No frame check (menu only).
 MENU-OLD-BACK: menu-front-door off again (Kyle, for Gratian). Course maps stay.
 Lane tier 39/39, build, Kogane story scenario on the old menu (28 facts, 0
 browser errors). No save change.
+
+## Release, 30 October 2026 night (Claude, Release Manager)
+
+DEEP-SONAR-MAP: sonar ring on screen after the badge, chart north up (Kyle, for
+Gratian). All 17 Deep suites by hand, deep-sirena scenario, lane tier 24/24,
+build. No save change.

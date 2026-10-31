@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 30 October night (Claude, Release Manager).** The Deep: the sonar ring stays on screen after the badge, and the chart starts north up. Reload any open game tab.
 - **RELEASED 30 October late evening (Claude, Release Manager).** The old menu is back (front door off, for Gratian); course maps in Your Courses stay. Reload any open game tab.
 - **RELEASED 30 October evening (Claude, Release Manager).** The new main menu (front door with a Story door), course maps in Your Courses and a compact race setup panel. Reload any open game tab.
 - **RELEASED 30 October (Claude, Release Manager).** Kogane Pass with Night and Reverse, the Kogane Invitation story and the Nissan Skyline (story prize). Kyle waived the frame check; time Kogane Pass at the next full check. Reload any open game tab. The release hold is lifted.

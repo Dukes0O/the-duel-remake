@@ -8,6 +8,9 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 - **Your Courses** shows a small map of every course you can buy or race.
   Courses still to be found from the helicopter keep their secret.
+- **The Deep:** once you find the Falcone badge, the sonar ring stays on
+  screen for the whole dive (press R to ping), and the sea chart starts north
+  up again (its button still turns it with the car).
 - The menu is the familiar one. A new front door was tried this evening and
   put away again at Gratian's request.
 
