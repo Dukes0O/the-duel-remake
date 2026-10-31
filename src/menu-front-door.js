@@ -52,11 +52,15 @@ export function chooseNextUp(facts = {}) {
   return {kind: 'none', action: 'courses', text: 'Pick a course, then press START ENGINE.'};
 }
 
-// Eight doors. A locked door says why and does nothing.
+// Eight doors, and a ninth, Story, first while the story has something left to do (the old Story button sits under the
+// front door, and Next up puts an open Lab lesson first). A locked door says why and does nothing.
 export function doorList(facts = {}) {
   const lock = reason => ({badge: 'LOCKED', note: reason, locked: true});
   const open = (badge, note = '') => ({badge, note, locked: false});
+  const story = facts.story ? [{id: 'story', label: 'Story', attr: 'data-story-open',
+    ...open(facts.story.read !== true || facts.story.step === 'ana' ? 'NEW' : 'READY', "Daichi's invitation")}] : [];
   return [
+    ...story,
     {id: 'garage', label: 'Garage', action: 'garage', ...open('READY', 'Cars, paint and tuning')},
     {id: 'courses', label: 'Courses', action: 'courses', ...(facts.course ? open('NEW', 'A new course is in reach') : open('READY', 'Pick where to race'))},
     {id: 'armory', label: 'Armory', action: 'armory', ...open('READY', 'Weapons and armor')},

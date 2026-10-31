@@ -77,7 +77,11 @@ function courseCard(profile, course, selected, {teamRoomEnabled, grandPrix, lapC
   const medal=best===null?null:summitAttackMedal(best,course.attackTimes);
   const attackBest=best===null?'':`<p class="course-best">${medal?'BEST '+medal.toUpperCase():'BEST TIME'} · ${best.toFixed(1)} s</p>`;
   const soot = burnt?.closed ? ' course-burnt' : '';
-  return `<article class="course-access-card${selected ? ' selected' : ''}${soot}"><div><span class="field-label">${label}</span><h3>${escape(course.name)}</h3><p>${description}</p>${condition}${recommendation}${attackBest}${burnt?.lines ?? ''}</div>${action}${teamRoom}</article>`;
+  // A small outline map, drawn after the panel opens (src/course-card-maps.js). A secret course nobody has found
+  // from the helicopter yet keeps its hint and shows no map; every other card, locked or not, shows its road.
+  const secret = !owned && requirement?.kind === 'spotted-from-air';
+  const map = secret ? '' : `<canvas class="course-card-map" data-course-map="${escape(course.id)}" width="320" height="200" role="img" aria-label="Outline map of ${escape(course.name)}"></canvas>`;
+  return `<article class="course-access-card${map ? ' has-map' : ''}${selected ? ' selected' : ''}${soot}"><div><span class="field-label">${label}</span><h3>${escape(course.name)}</h3><p>${description}</p>${condition}${recommendation}${attackBest}${burnt?.lines ?? ''}</div>${map}${action}${teamRoom}</article>`;
 }
 
 export function courseAccessPanel(profile, selectedStage = 0, message = '', {

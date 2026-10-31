@@ -12,9 +12,10 @@ const choices = {cpuDifficulty: Object.keys(CPU_DIFFICULTY)[0], difficulty: 'cas
 const base = {choices, arrow: '', sound: '', escapeHTML};
 const flagsOn = names => createFeatureFlags({storage: null, overrides: Object.fromEntries(names.map(name => [name, true]))});
 
-test('the switch is declared and starts off', () => {
-  assert.equal(FEATURE_STATES['menu-front-door'], 'dev');
-  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-front-door'), false);
+test('the switch is declared, on since 30 October 2026, and an override can still turn it off', () => {
+  assert.equal(FEATURE_STATES['menu-front-door'], 'on');
+  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-front-door'), true);
+  assert.equal(createFeatureFlags({storage: null, overrides: {'menu-front-door': false}}).enabled('menu-front-door'), false);
 });
 
 test('switch off leaves today\'s markup', () => {
@@ -164,4 +165,15 @@ test('the options drawer sits beside the Drive card and above the doors', () => 
   assert.ok(!/bottom:\d+px/.test(rule), 'no fixed offset that could reach under the doors');
   assert.match(css, /grid-template-areas:'intro \.' 'drive \.' 'next \.' '\. \.' 'doors doors'/);
   assert.match(css, /\.in-menu \.menu-screen\.front-door-on \.front-door-credits\{position:absolute/, 'the credits link stays out of the grid');
+});
+
+test('a Story door leads while the story has something left, with NEW for a waiting message', () => {
+  const door = story => doorList({story}).find(item => item.id === 'story');
+  assert.equal(doorList({}).length, 8);
+  assert.equal(door(null), undefined);
+  assert.deepEqual([door({step: 'invite', read: false}).badge, door({step: 'lesson', read: true}).badge, door({step: 'ana', read: true}).badge], ['NEW', 'READY', 'NEW']);
+  const doors = doorList({story: {step: 'duel', read: true}});
+  assert.equal(doors.length, 9);
+  assert.equal(doors[0].id, 'story');
+  assert.ok(doorTile(doors[0]).includes('data-story-open') && !doorTile(doors[0]).includes('data-action'));
 });

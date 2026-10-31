@@ -5,6 +5,7 @@ import {createLeaderboardScreen} from '../src/screen-leaderboard.js';
 import {App} from '../src/app.js';
 import {COURSE,DRIVE,LIVES,CARS} from '../src/config.js';
 import {courseAccessPanel,bestSummitAttackTime} from '../src/course-access-ui.js';
+import {courseUnlockRequirement,isCourseUnlocked} from '../src/course-access.js';
 import {createResultsScreen} from '../src/screen-results.js';
 import {DRIVERS} from '../src/drivers.js';
 import {getLeaderboard} from '../src/leaderboard.js';
@@ -26,6 +27,22 @@ try{
   controller.click({dataset:{courseSelect:'high-country'}});same(app.menuStage,0,'locked production select cannot enter a course');same(renders,0,'rejected stale action does not redraw or close the shop');
   controller.click({dataset:{courseUnlock:'high-country'}});same(app.profile.credits,2100,'production purchase debits the catalog price');same(app.menuStage,0,'production purchase does not select');check(controller.open&&controller.message.includes('Select it'),'shop remains open with the separate-selection prompt');
   const purchased=courseAccessPanel(app.profile,0,controller.message);check(purchased.includes('data-course-select="high-country"')&&!purchased.includes('data-course-unlock="high-country"'),'purchased card now offers selection, not another debit');
+  // Course cards carry a small outline map; a secret course not yet found from the helicopter keeps its hint and has none.
+  {
+    const cards=purchased.split('<article ').slice(1),secretOf=(profile,course)=>courseUnlockRequirement(course)?.kind==='spotted-from-air'&&!isCourseUnlocked(profile,course);
+    same(cards.length,COURSE.length,'every course has one card');
+    const hidden=COURSE.filter(course=>secretOf(app.profile,course));check(hidden.length>0,'the catalog has secret courses to check');
+    for(const [index,course] of COURSE.entries()){
+      const card=cards[index],has=card.includes(`data-course-map="${course.id}"`);
+      check(has!==secretOf(app.profile,course),`${course.id} map is shown unless it is a secret not yet found`);
+      check(has===card.includes('course-card-map')&&has===card.includes(' has-map'),`${course.id} map canvas and card class agree`);
+      if(!has)check(card.includes(`<button type="button" disabled aria-label="${courseUnlockRequirement(course).condition}">LOCKED</button>`),`${course.id} keeps its locked hint button`);
+      if(has)check(card.indexOf('</div><canvas')>0&&card.indexOf('<canvas')<card.indexOf('<button'),`${course.id} map sits between the text and the buttons`);
+    }
+    const secret=hidden[0],foundProfile={...app.profile,courses:{version:1,unlocked:[...new Set([...app.profile.courses.unlocked,courseUnlockRequirement(secret).defaultEventId])]},heli:{map:{version:1,found:[secret.id]}}};
+    check(isCourseUnlocked(foundProfile,secret),'the secret course opens once found from the air');
+    check(courseAccessPanel(foundProfile,0,'').includes(`data-course-map="${secret.id}"`),'a found secret course shows its map');
+  }
   controller.click({dataset:{courseUnlock:'high-country'}});same(app.profile.credits,2100,'double click cannot double debit');check(controller.message.includes('already unlocked'),'double click explains existing ownership');
   controller.click({dataset:{courseSelect:'high-country'}});same(app.menuStage,1,'production selection uses normal App settings');same(choices.car,'stuttgart_959s','selecting a course preserves the owned vehicle');check(!controller.open,'successful selection returns to the main menu');same(app.profile.credits,2100,'production selection is free');
   app.startCampaign();const bank=app.profile.credits,settings=JSON.stringify(app.profile.raceSettings),previousRenders=renders;
