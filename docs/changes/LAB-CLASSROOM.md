@@ -60,7 +60,26 @@ each, and the drawing test now checks every step draws.
 
 ## Checks
 
-RESULTS
+- `tools/test-lab-classroom.mjs`: 14/14 (a child who follows each prompt
+  passes with one press; wrong guesses explain with the real times; help
+  climbs to Brian pressing the control; stuck timer; slow motion; every step
+  draws; hover words; each review fix).
+- `tools/scenarios/lab-classroom.mjs`: passes, 24 pictures, no warnings or
+  errors. Walks up with the real keys and E, leaves with Esc, Brian comes to
+  the machine, reopens from the Lab map, plays every step by keyboard, Show
+  me, a wrong guess, Brian's crane, three checks, the recap, then Enter into
+  the helicopter challenge with the key idea card.
+- The other 13 Lab scenarios: all pass with the switch off (the old path).
+- `tools/test-lab-*.mjs`: 21 of 22 pass in the lane; `test-lab-lessons-flying`
+  fails only on the Recycle Bin (tool note below) and passes in integration.
+- Lane tier (`--jobs 4`), after merging integration 86c48d4f: 45 passed, 6
+  failed. Fixed: `test-review-evidence` (the look note is now
+  `round-1-review.md`). The other five (`test-board`, `test-course-kit`,
+  `test-earned-cars-ui`, `test-lab-lessons-flying`, `test-medals`) fail only
+  on the lane's Recycle Bin refusal and are rerun on the merged result in the
+  integration folder.
+- `npm run build`: passes.
+- Look: round 1 judged (steel). No frame timing (rule 9).
 
 ## Tool note (not a code fault)
 

@@ -24,7 +24,10 @@ async function play(c) {
   for (const [code, expression] of [['KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < -3.95`], ['KeyA', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] < -6.7`]]) {
     await c.evaluate(`${canvas}.focus()`);
     await key(code, 'keyDown');
-    try { await c.waitFor(expression, `walk ${code}`, 18_000); } finally { await key(code, 'keyUp'); }
+    try {
+      // Stop on the browser's next frame, not after a slow round trip, so a busy laptop cannot overshoot into a machine.
+      await c.evaluate(`new Promise((resolve, reject) => { const until = performance.now() + 18000; (function step() { if (${expression}) { document.dispatchEvent(new KeyboardEvent('keyup', {code: '${code}', bubbles: true})); resolve(true); } else if (performance.now() > until) reject(Error('Walk ${code} blocked at ' + ${canvas}.dataset.labWalkPosition)); else requestAnimationFrame(step); })(); })`);
+    } finally { await key(code, 'keyUp'); }
     await new Promise(r => setTimeout(r, 500));
   }
   await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Pendulums')`, 'pendulum machine');
