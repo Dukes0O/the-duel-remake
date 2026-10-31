@@ -1483,3 +1483,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 30 Oct: merged DEEP-SONAR-MAP (17 Deep suites by hand, deep-sirena scenario, lane 24/24, build).
 - 31 Oct: merged HELI-JOB-CLARITY (job card, hook prompts, last pad, car on parking spot, flyable crates, drop job; 38 heli suites by hand, heli-jobs scenario, lane 104/104, build; save review clean, five review faults fixed).
 - 31 Oct: full tier on 86c48d4f 547/548; test-audio-crash-peak passed on its one rerun (card QA-AUDIO-CRASH-PEAK-3). Release covered.
+- 31 Oct: merged LAB-CLASSROOM (pendulum rebuilt as a classroom with Brian as tutor, switch lab-classroom dev; audit and 15 lesson cards; lesson suite 14/14, 14 Lab scenarios, lane 45 + 5 Recycle-Bin suites rerun here, build; one review, ten faults fixed).

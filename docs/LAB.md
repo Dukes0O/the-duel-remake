@@ -763,3 +763,16 @@ in section 4. "Try" is what the player handles on the machine itself.
 - Check: "Which wax for minus 15 C powder?"
 - Hint: "Soft wax on cold snow drags. Pick a hard wax for the cold."
 - Card: "Hard wax for cold, soft wax for warm."
+
+## 13. The Lab as a classroom (Kyle, 31 October 2026)
+
+Kyle and Gratian struggled with the pendulum: "super janky... Brian doesn't
+really help much yet. think of the Lab as a real classroom kind of piece of
+software." Lessons are rebuilt one at a time on the classroom pattern in
+`docs/board/cards/LAB-CLASSROOM.md` (sections 2 and 3), behind `lab-classroom`:
+one idea per step; set up, then guess, then run; real-time clocks; a wrong
+guess explained with the real numbers; Brian beside the board as a tutor who
+notices a stuck player, gives help that climbs to pointing at the exact
+control, and cheers right answers; a progress strip and a recap. The pendulum
+is first; section 6 of that card ranks the other fifteen, each with its own
+`LAB-CLASSROOM-<NAME>` card. Section 12's five steps stay the scaffold.

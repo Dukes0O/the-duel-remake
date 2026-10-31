@@ -1,6 +1,8 @@
 import {createLessonSession, lessonDefinition, registeredWords, entryForWord, registerLesson} from './lesson-frame.js';
 import {labNotebookOf, learnLabWord} from './lab-save.js';
 import './lesson-ui.css';
+import {CLASSROOM_LESSONS} from './classroom/classroom-lessons.js';
+import {createClassroomUi} from './classroom/classroom-ui.js';
 
 // Later lessons add a data packet and animation module; no screen edits needed.
 for (const packet of Object.values(import.meta.glob('./lessons/*-lesson.js', {eager: true}))) {
@@ -17,7 +19,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   panel.setAttribute('aria-label', 'Lesson'); stage.append(panel);
   const card = doc.createElement('aside'); card.className = 'lab-key-idea'; card.hidden = true; host.append(card);
   const notebookButton = doc.createElement('button'); notebookButton.className = 'lab-notebook-button'; notebookButton.textContent = 'Notebook'; notebookButton.hidden = true; stage.append(notebookButton);
-  let session = null, entry = null, last = '', hover = null, notebook = false, wordVoice = '', challengeActive = null, lastTime = 0, feedback = '', wasPaused = false;
+  let classroom = null, session = null, entry = null, last = '', hover = null, notebook = false, wordVoice = '', challengeActive = null, lastTime = 0, feedback = '', wasPaused = false;
   const flags = () => app._switches();
   const on = () => flags().enabled('lab-2') === true;
   const learned = () => labNotebookOf(app.profile);
@@ -46,10 +48,10 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   }
   function paint() {
     const v = session?.view();
-    const pause = Boolean(v || hover || notebook);
+    const pause = Boolean(v || hover || notebook || classroom);
     if (pause !== wasPaused) { wasPaused = pause; onPause?.(); }
     panel.hidden = !v && !notebook && !hover;
-    section.classList.toggle('lab-has-lesson', Boolean(v || hover || notebook));
+    section.classList.toggle('lab-has-lesson', pause);
     let html = '';
     if (hover) html = `<h3><u class="lab-word">${escape(hover.word)}</u></h3><p>${escape(hover.meaning)}</p>${button('meaning-close', 'Back')}`;
     else if (notebook) html = `<h3>My Lab notebook</h3><div class="lab-notebook-words">${knownWords().map(w => `<button type="button" class="lab-word" data-word="${w.id}">${escape(w.word)}</button>`).join('') || '<p>New words will go here as you learn.</p>'}</div>${button('notebook-close', 'Close notebook')}`;
@@ -124,7 +126,11 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
     }
     paint();
   }
-  function close() { session = null; entry = null; hover = null; notebook = false; feedback = ''; last = ''; panel.hidden = true; section.classList.remove('lab-has-lesson'); room()?.lesson?.(null); }
+  function close() {
+    classroom?.dispose(); classroom = null; session = null; entry = null; hover = null; notebook = false; feedback = ''; last = ''; panel.hidden = true; section.classList.remove('lab-has-lesson'); room()?.lesson?.(null);
+    // Leaving a lesson un-pauses the walk at once, so a later pause is seen as a change.
+    if (wasPaused) { wasPaused = false; onPause?.(); }
+  }
   notebookButton.onclick = () => { notebook = !notebook; hover = null; paint(); };
   section.addEventListener('click', click); section.addEventListener('pointerover', point); section.addEventListener('focusin', point);
   // Underline learned words in all Lab prose, including Brian and the shop.
@@ -143,14 +149,32 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   }
   return {
     open(id) {
+      // LAB-CLASSROOM: a rebuilt lesson opens as a classroom while its switch is on.
+      const lesson = CLASSROOM_LESSONS[id];
+      if (on() && lesson && flags().enabled('lab-classroom') === true) {
+        close();
+        classroom = createClassroomUi({stage, app, lesson, name: lesson.name, onCue, sayVoice,
+          onLeave: () => { close(); onBack(); },
+          startChallenge: () => {
+            const started = onChallenge(id, {challenging: false, attempts: []});
+            // A bench-kind challenge ('inline') needs the lesson's own machine runs; the classroom lessons so far fly.
+            if (started === 'inline') return {ok: false, reason: 'This challenge runs on the bench. Leave the lesson and use the machine.'};
+            if (!started?.active) return {ok: false, reason: started?.reason};
+            challengeActive = started;
+            card.innerHTML = `<b>${escape(lesson.challengeCard.title)}</b><p>${escape(lesson.challengeCard.text)}</p>`;
+            close(); return {ok: true};
+          }});
+        room()?.lesson?.(null); paint(); return true;
+      }
       const found = lessonDefinition(id); if (!on() || !found) return false;
       close(); entry = found; session = createLessonSession(entry); wordVoice = ''; lastTime = performance.now(); paint(); return true;
     },
-    active: () => Boolean(session || hover || notebook),
+    active: () => Boolean(classroom || session || hover || notebook),
     control(id, value) { if (!session || hover || notebook) return; if (value === undefined) onCue?.('lab.clunk'); session.control(id, value); paint(); },
     decorate,
     tick(visible) {
-      notebookButton.hidden = !visible || !on();
+      notebookButton.hidden = !visible || !on() || Boolean(classroom);
+      classroom?.tick(visible);
       const now = performance.now(), dt = lastTime ? (now - lastTime) / 1000 : 0; lastTime = now;
       if (session && visible) {
         const v = session.view(), lever = v.controls.find(c => c.keyboard === 'vertical');
