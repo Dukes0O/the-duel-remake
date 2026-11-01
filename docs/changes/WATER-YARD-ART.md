@@ -36,7 +36,7 @@ later. Nothing in `src/` changed.
   and fitted valve, cold and lit boiler) holds its own full copy, so the game hides one and
   shows the other.
 - Review sheet: `docs/board/looks/water-works/round-1.jpg` (nine chapters, same view), with
-  `round-1.md` and `round-1-sheet.py` (puts the nine pictures together). The pictures come
+  `round-1-review.md` and `round-1-sheet.py` (puts the nine pictures together). The pictures come
   from `blender -b --python tools/blender/water-works.py -- --root . --render .qa-dist/water-works`.
 - `tools/test-blender-output.mjs` lists the new recipe like the other yard recipe.
 
@@ -60,7 +60,7 @@ Claude judged round 1: the look is right, keep the layout and node names. Round 
 - Ground, in the pictures only: paler dirt, damp patches and tyre ruts.
 - Recipe: `--closeups` renders seven close-ups, `--close-only NAME` and `--no-chapters` for quick
   looks. New `docs/board/looks/water-works/round-2-sheet.py`, `round-2.jpg` (3 by 3, 452 KB),
-  `round-2-close.jpg` (close-ups, 491 KB) and `round-2.md`.
+  `round-2-close.jpg` (close-ups, 491 KB) and `round-2-review.md`.
 - GLB 1,979,172 bytes (under 2 MB); 23,974 triangles for all nodes together.
 
 Round 2 checks: `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs` (see
@@ -78,7 +78,7 @@ Small polish only, as Claude asked:
   camera, so the boiler has no smoke (stained cap and soot band stay).
 - Coals: round flattened mounds, not boxes.
 - Valve wheel: true deep red.
-- Sheet `round-3.jpg` (451 KB), `round-3.md`, `round-3-sheet.py`. GLB 1,957,092 bytes, smaller than
+- Sheet `round-3.jpg` (451 KB), `round-3-review.md`, `round-3-sheet.py`. GLB 1,957,092 bytes, smaller than
   round 2 (1,979,172): texture quality 60 and fewer roof rivets paid for the new shapes.
 
 ## Checks
