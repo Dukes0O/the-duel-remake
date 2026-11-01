@@ -49,4 +49,35 @@ behind `lab-classroom` (on), with no Preview step.
 - `tools/test-lab-lesson-frame.mjs`: the example lesson's id is `fire` now, not `headings` (same
   registry checks).
 
+## Review
+
+The board was looked at as a player in three browser runs before the review. Look fixes: the smoke
+and the lake missing on every step where she turns (the map's places shared a name with Brian's
+pointer), Kestrel One too small and dark from above, a missed try's end hard to see (now a cross
+and its metres), the pad label under her, the ring's labels under her nose line, the ring over the
+ruler on the scale step, the ruler's label on the hut, small card pictures, and a recap idea running
+off its card.
+
+One independent code review (rule 17). Seven faults, all fixed, with tests:
+- Holding → stopped the ruler at 720 m, off its 50 m steps, so ← could never reach 300 m again and
+  Brian called 320 m three squares. It now stops at 700 m.
+- On Heading, Show me could fail for good after a long turn left (the step counted the whole turn);
+  it now passes on 30 degrees turned right since A was last pressed, and Show me turns her right.
+- On the short way round, Show me after a long turn right was told off as the long way; it now
+  starts again from 020 and turns left.
+- The ruler's label showed long decimals while Brian moved it; rounded.
+- During Show me, Brian's bubble named the wrong heading; he says what he is doing while he turns.
+- Practice flights on a far heading left the map; they end and are judged at the map's edge.
+- The change note's checks were empty.
+Smaller notes also fixed: Brian's pointer taps the ring at the heading he wants (a click there turns
+her to it), a click on her body never turns her at random, the ruler's grab area ends at the ruler,
+the hut stands above the ruler, help during the job's flight names Space and the FLOWN number, the
+wonder's help says to wait for her to stop, and Brian says degrees and heading in full.
+
 ## Checks
+- `tools/test-lab-classroom-headings.mjs`: 13/13; all 25 `tools/test-lab-*.mjs` pass.
+- Lane tier (`--changed --jobs 4`): 41/41 before and after the review fixes. `npm run build`: passes.
+- Rule 19: Lab code and its tests since the full tier on c31e8e5a, with HELI-COMPASS (lane tier 73/73)
+  merged before it; no save shape or physics change.
+- All 16 Lab browser scenarios pass, `lab-classroom-headings` (30 pictures, looked at as a player in
+  four runs) and `lab-lesson-frame` with the example lesson at the fire pit among them.

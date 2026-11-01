@@ -46,7 +46,7 @@ This replaces the old map table, whose compass stopped at 359 and whose ruler ne
 | Step | Brian says | The player does | Wrong move, and why |
 | --- | --- | --- | --- |
 | Wonder | The radio says: smoke at heading 070, 550 m from the pad. She flew north and missed it. Which way is 070? | Watches (R replays): she flies 550 m north, the smoke rises off to her right. | |
-| Heading | The way her nose points, in degrees round from north. D turns her right and the number goes up. | D until the gauge passes 030. | A first: "the number went down: A turns her left. Now try D." |
+| Heading | The way her nose points, in degrees round from north. D turns her right and the number goes up. | D, until she has turned 30 degrees right since A was last pressed. | A first: "the number went down: A turns her left. Now try D." |
 | North, east, south, west | North is 000, east 090, south 180, west 270; a whole turn is 360, back to 000. | Turns her to 090, then Space. | Not on 090: "she reads 120: 30 too far right; A turns her back, the number goes down." |
 | Scale | A map's scale says how far one square is on the ground: here 100 m. | Stretches the ruler to the hut (3 squares: 300 m), then Space. | "That is 450 m: four and a half squares. The hut is 3 squares away: 300 m." |
 | Watch | Brian flies a job: the hut at 120, 400 m. | Watches: the gauge climbs from 000 to 120 as she turns, then flown counts to 400 and she is over the hut. Slow motion and Watch again. | |

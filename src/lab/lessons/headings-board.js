@@ -131,7 +131,7 @@ function ruler(ctx, view) {
   ctx.restore();
   const [ex, ey] = rulerEnd(view);
   ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI * 2); ctx.fill();
-  text(ctx, `${Math.round(L)} m`, ex - px * 30 - ux * 20, ey - py * 30 - uy * 20, {size: 18, colour: theme.accent});
+  text(ctx, `${Math.round(L)} m`, ex - px * 30 - ux * 52, ey - py * 30 - uy * 52, {size: 18, colour: theme.accent});
 }
 // Kestrel One from above: nose to her heading, the rotor a turning disc.
 function kestrel(ctx, view) {
