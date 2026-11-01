@@ -584,7 +584,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: "claude (water-road director) 2026-11-01"
     needs: [WATER-SAVE, WATER-LINES, WATER-YARD-ART]
     locks: []
     details: "docs/board/cards/WATER-SCREENS.md"
