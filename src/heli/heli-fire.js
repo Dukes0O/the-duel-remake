@@ -132,9 +132,10 @@ export function dayWind(missionSeed, playDay) {
   const kind = roll < 0.4 ? 'calm' : roll < 0.8 ? 'breeze' : 'windy';
   const speed = round1(kind === 'calm' ? rng.range(0, 1) : kind === 'breeze' ? rng.range(3, 4) : rng.range(6, 8));
   const from = rng.int(0, 7);
-  // North is +z on the course, east is +x; the wind blows toward the opposite point.
+  // The wind blows toward the opposite point. from counts round from north through +x, which on the HEADING
+  // gauge is west, so its name counts the other way (HELI-COMPASS): the fire spreads as it always has.
   const a = from * Math.PI / 4;
-  return Object.freeze({kind, speed, from, name: COMPASS[from], toward: Object.freeze({x: -Math.sin(a), z: -Math.cos(a)})});
+  return Object.freeze({kind, speed, from, name: COMPASS[(8 - from) % 8], toward: Object.freeze({x: -Math.sin(a), z: -Math.cos(a)})});
 }
 
 // A new fire on a course: the start cell and two forest neighbours.

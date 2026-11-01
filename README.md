@@ -6,6 +6,12 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Projectile motion is a classroom now.** Kestrel One flies over
+  the lake and drops a stone or her water: every drop leaves its path and a
+  landing mark in metres. You put a flag where you think the water will land,
+  guess whether a higher let-go carries further, then fly Brian's job: hit the
+  buoy with water at 10 m/s, letting go before you reach it. Space flies and
+  lets go; Brian says how far off a miss was and why.
 - **The Scrapdome Yard says what to do next.** Its Next up line names the
   next warlord to beat and exactly how: how many more wins open the fight and
   where they count, or that the fight is open and which button starts it. It no

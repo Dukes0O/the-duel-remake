@@ -9,7 +9,7 @@ import './classroom.css';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const kbd = key => `<kbd>${escape(key)}</kbd>`;
 const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space',
-  KeyW: 'W', KeyS: 'S', ArrowUp: '↑', ArrowDown: '↓'};
+  KeyW: 'W', KeyS: 'S', KeyA: 'A', KeyD: 'D', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'};
 const SPARK_COLOURS = ['#ffd27a', '#f0a148', '#fff2c8', '#e8803a'];
 
 export function createClassroomUi({stage, app, lesson, name, onLeave, startChallenge, sayVoice = () => {}, onCue = () => {}}) {
@@ -145,6 +145,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       `<button type="button" data-lc="${action}" class="${primary ? 'primary' : ''}" ${disabled ? 'disabled' : ''} ${pressed === null ? '' : `aria-pressed="${pressed}"`}>${escape(label)} ${kbd(key)}</button>`;
     setHtml($('.lc-actions'), 'actions',
       (v.actions.includes('tap') ? button('tap', 'Tap', 'Space') : '') +
+      (v.buttons ?? []).map(b => button(b.action, b.label, b.key)).join('') +
       (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +

@@ -1,18 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
-import * as projectile from '../src/lab/lessons/projectile-lesson.js';
 import * as fire from '../src/lab/lessons/fire-lesson.js';
 import * as altitude from '../src/lab/lessons/altitude-lesson.js';
-import {projectileBench, waterTrace, stoneDrop, stoneFallAfter} from '../src/lab/benches/projectile.js';
 import {fireBench, practiceFire, TAKES_AWAY} from '../src/lab/benches/fire.js';
 import {altitudeBench, SITES} from '../src/lab/benches/altitude.js';
 import {GRAVITY, createHeliState, heliReadout} from '../src/heli/heli-flight.js';
-import {projectileDrawing, FLAG_TOLERANCE_M} from '../src/lab/lessons/projectile-animation.js';
 import {altitudeReading, altitudeDrawing} from '../src/lab/lessons/altitude-animation.js';
 import {fireDrawing} from '../src/lab/lessons/fire-animation.js';
 import {mountMachine} from '../src/lab/lessons/flying-display.js';
-import {Group, PerspectiveCamera, Vector3} from 'three';
+import {Group} from 'three';
 import {mkdirSync, mkdtempSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {inspectRepository} from './test-repo-hygiene.mjs';
@@ -41,19 +38,14 @@ test('the prescribed flying sheet names allow only three JPG rounds and reject r
   } finally { recycleDirectory(root); }
 });
 
-// The pendulum is a classroom lesson (tools/test-lab-classroom.mjs).
-const packets = [projectile, fire, altitude];
+// The pendulum and Projectile motion are classroom lessons (tools/test-lab-classroom*.mjs).
+const packets = [fire, altitude];
 const finish = s => { for (let n = 0; n < 500; n++) s.tick(.1); };
 test('the scale models keep real lengths and anchor at most three labels beside readable moving parts', () => {
-  const drop = projectileDrawing({heightM: 30}, 0, 'pair');
-  assert.equal(drop.objects.find(o => o.id === 'parcel').position[1] - .3, 30 / 10);
-  const end = projectileDrawing({}, 4);
-  assert.ok(end.objects.find(o => o.id === 'parcel').size[0] >= .4);
-  assert.ok(end.objects.filter(o => o.id.startsWith('arc-')).every(o => o.size[0] >= .1));
   const air = altitudeDrawing({}, 0), dots = air.objects.filter(o => o.id.startsWith('air-') && o.shape === 'sphere');
   assert.equal(dots.length, Math.round(36 * air.reading.gameShare));
   assert.ok(dots.every(o => o.size[0] >= .12));
-  for (const d of [drop, air, fireDrawing({}, 0)]) {
+  for (const d of [air, fireDrawing({}, 0)]) {
     assert.ok(d.labels.length <= 3);
     assert.equal(d.labels.length, d.labelPositions.length);
   }
@@ -61,17 +53,8 @@ test('the scale models keep real lengths and anchor at most three labels beside 
     const d = packet.hooks.animations.undefined();
     assert.ok(d.camera && d.objects.length > 0, `${packet.definition.id} keeps its experiment on the final key card`);
   }
-  for (const heightM of [10, 30, 60]) {
-    const d = projectileDrawing({heightM}, 0), view = new PerspectiveCamera(50, 1440 / 900, .1, 100);
-    view.position.set(...d.camera.position); view.lookAt(...d.camera.target); view.updateMatrixWorld(true);
-    const arm = d.objects.find(o => o.id === 'arm-control').position;
-    for (const position of [arm, d.objects.find(o => o.id === 'parcel').position, d.labelPositions[1]]) {
-      const point = new Vector3(...position).project(view);
-      assert.ok(Math.abs(point.x) < .95 && Math.abs(point.y) < .95, `Visible release and height caption at ${heightM} m`);
-    }
-  }
 });
-test('all three packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
+test('both packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
   for (const p of packets) {
     validateLesson(p.definition, p.hooks);
     const s = createLessonSession(p); s.next();
@@ -79,7 +62,6 @@ test('all three packets scaffold real lessons through checks and keep rewards ou
     for (const w of p.definition.worked) { assert.equal(s.view().name, w.name); finish(s); assert.ok(s.next()); }
     for (let i = 0; i < 3; i++) {
       assert.equal(s.view().support, ['guided', 'prompted', 'alone'][i]);
-      if (p === projectile) { s.control('flagM', Math.round(projectileBench.run({heightM: 30, speedMs: 10}).water.distanceM)); s.predict('hit'); }
       if (p === fire) { s.control(['water', 'sand', 'rake'][i]); if (i === 2) s.control('spray'); s.predict(['heat', 'air', 'fuel'][i]); }
       if (p === altitude) { s.control('siteIndex', i); s.predict(['up', 'up', 'down'][i]); }
       assert.ok(s.run()); finish(s); assert.equal(s.view().result.passed, true, p.definition.id); s.next();
@@ -93,35 +75,6 @@ test('all three packets scaffold real lessons through checks and keep rewards ou
     assert.equal(s.view().text, p.definition.challenge.text);
     assert.equal('reward' in s.view(), false);
   }
-});
-
-test('every offered drop height and speed agrees with the challenge aim ring and actual parcel trace', () => {
-  for (let heightM = 10; heightM <= 60; heightM += 5) for (let speedMs = 0; speedMs <= 30; speedMs++) {
-    const r = projectileBench.run({heightM, speedMs});
-    for (let flagM = 0; flagM <= 80; flagM++) {
-      const error = r.water.distanceM - flagM;
-      const actual = Math.abs(error) <= FLAG_TOLERANCE_M ? 'hit' : error < 0 ? 'short' : 'past';
-      for (const prediction of ['short', 'hit', 'past']) {
-        const verdict = projectile.hooks.evaluate({input: {heightM, speedMs, flagM}, prediction});
-        assert.equal(verdict.actual, actual); assert.equal(verdict.passed, prediction === actual && actual === 'hit');
-      }
-    }
-  }
-  for (const [height, speed] of [[10, 0], [30, 10], [60, 30]]) {
-    const trace = waterTrace(height, speed), last = trace.at(-1), r = projectileBench.run({heightM: height, speedMs: speed});
-    assert.equal(last.distanceM, r.water.distanceM); assert.equal(last.seconds, r.water.seconds); assert.equal(last.heightM, 0);
-    const d = projectileDrawing({heightM: height, speedMs: speed}, 4);
-    assert.equal(d.objects.find(o => o.id === 'parcel').position[1], .3);
-    assert.equal(d.objects.find(o => o.id === 'parcel').position[0], -1.3 + last.distanceM * .1);
-  }
-  for (const t of [1, 2, 3]) assert.equal(stoneFallAfter(t), GRAVITY * t * t / 2);
-  assert.equal(stoneDrop(30, 0).seconds, stoneDrop(30, 30).seconds);
-  assert.equal(projectile.definition.checks.every(q => q.correct === 'before'), true);
-  const wonder = projectile.hooks.animations.wonder({time: 4});
-  assert.equal(wonder.mode, 'wonder'); assert.ok(wonder.reading.water.distanceM > wonder.input.flagM);
-  assert.equal(projectile.hooks.animations.gravity({time: 3}).input.heightM, 60);
-  assert.ok(projectile.hooks.animations.gravity({time: 3}).objects.find(o => o.id === 'parcel').position[1] > .3);
-  assert.equal(projectileDrawing({heightM: 60, speedMs: 30}, 4).streams.length, 1);
 });
 
 test('every fire tool removes its real triangle side and both strips stop the seeded spread', () => {

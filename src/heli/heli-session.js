@@ -4,7 +4,7 @@ import {recordLogbook, awardLogbook, logbookView, RANKS} from './heli-logbook.js
 // app gives it a course loader, the player's car, today's date and a way to
 // save the profile; HELI-HOOKS plugs it into the game loop. Same inputs and
 // the same profile give the same flight.
-import {HELI_STEP, KESTREL, GRAVITY, heliMass, availableThrust, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint} from './heli-flight.js';
+import {HELI_STEP, KESTREL, GRAVITY, heliMass, availableThrust, createHeliState, stepHeli, heliReadout, refuelHeli, heliFingerprint, compassBearing} from './heli-flight.js';
 import {AUTOPILOT, createAutopilot, toggleAutopilot, setAutopilotTarget, autopilotStep, wantsControl} from './heli-autopilot.js';
 import {CABLE, createLoad, liftCheck, carMassKg, canHook, hookRefusal, hook, release, stepCable, createWinch, reelWinch, lineLengthOf} from './heli-cable.js';
 import {HELI_MONEY, heliOf, buyFuel, setFuel, chargeRepair, repairCost, fuelTruck, notePlayDay,
@@ -1409,8 +1409,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   }
 
   // What the panel needs (section 7): the clock, the kind, the stage, the place.
-  const bearingTo = (x, z) => ({x, z, distance: Math.hypot(x - heli.x, z - heli.z),
-    bearing: (Math.atan2(x - heli.x, z - heli.z) * 180 / Math.PI + 360) % 360});
+  const bearingTo = (x, z) => ({x, z, distance: Math.hypot(x - heli.x, z - heli.z), bearing: compassBearing(x - heli.x, z - heli.z)});
   function rescueView(fireInfo) {
     const line = lineLoad(), call = callOf(missionsOf(save), rflag);
     const waiting = call && isRescueKind(call.kind) && !call.answered ? Object.freeze({kind: call.kind, courseId: call.courseId,
