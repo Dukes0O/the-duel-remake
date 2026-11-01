@@ -324,7 +324,7 @@ def water_stencil_texture():
     tex = img[::-1].transpose(1, 0, 2)          # [v, u]; text row from top becomes u from the top
     return np.clip(tex, .01, .95)
 
-def save_jpeg(name, arr, quality=66):
+def save_jpeg(name, arr, quality=60):
     h, w, _ = arr.shape
     img = bpy.data.images.new(name, w, h, alpha=False)
     rgba = np.ones((h, w, 4), np.float32)
@@ -355,7 +355,7 @@ TEX = {
 }
 TILE = {k: v[1] for k, v in TEX.items()}
 for k in ('rubber', 'ash', 'rope', 'glass', 'water', 'ember', 'cream', 'smoke', 'watertop', 'stream', 'float',
-          'glow', 'wet', 'bare', 'brightred', 'ember2'):
+          'glow', 'wet', 'bare', 'brightred', 'ember2', 'steel', 'silver'):
     TILE[k] = 1.0
 
 def make_material(name, texture=None, color=None, rough=.92, alpha=None, emit=None, vertex=True):
@@ -408,10 +408,11 @@ MATS['float'] = make_material('float', color=(1.0, .3, .02), rough=.5, vertex=Fa
 MATS['glow'] = make_material('glow', color=(.05, .01, .0), rough=1.0, alpha=.12, vertex=False, emit=((1.0, .22, .0), .7))
 MATS['wet'] = make_material('wet', color=(.055, .04, .028), rough=.3, alpha=.62, vertex=False)
 MATS['bare'] = make_material('bare', color=(.5, .48, .43), rough=.5)
-MATS['brightred'] = make_material('brightred', color=(.55, .018, .01), rough=.42)
+MATS['brightred'] = make_material('brightred', color=(.30, .004, .003), rough=.5)
+MATS['steel'] = make_material('steel', color=(.085, .09, .095), rough=.55)
+MATS['silver'] = make_material('silver', color=(.30, .31, .33), rough=.3)
 MATS['ember'] = make_material('ember', color=(.03, .005, .0), rough=.6, vertex=False, emit=((1.0, .06, .0), .45))
 MATS['ember2'] = make_material('ember2', color=(.05, .02, .0), rough=.6, vertex=False, emit=((1.0, .25, .0), .6))
-MATS['smoke'] = make_material('smoke', color=(.07, .07, .07), alpha=.45, vertex=False)
 
 # ----------------------------------------------------------------- geometry
 # Everything below is written as it looks from the front (viewer at -Z, well on
@@ -535,6 +536,24 @@ class Node:
             if cap and r > 1e-6:
                 pts = [p + (u * math.cos(rot + 2 * math.pi * k / n) + v * math.sin(rot + 2 * math.pi * k / n)) * r for k in range(n)]
                 self.add(mat, pts, [list(range(n))], None, [p1 if end == 0 else p0], False, tint)
+
+    def sphere(self, mat, c, r, n=8, rings=4, squash=1.0, tint=None):
+        c = V(c)
+        verts = [c + V((0, r * squash, 0))]
+        for i in range(1, rings):
+            ph = math.pi * i / rings
+            for k in range(n):
+                th = TAU * k / n
+                verts.append(c + V((r * math.sin(ph) * math.cos(th), r * math.cos(ph) * squash, r * math.sin(ph) * math.sin(th))))
+        verts.append(c - V((0, r * squash, 0)))
+        faces = [[0, 1 + (k + 1) % n, 1 + k] for k in range(n)]
+        for i in range(rings - 2):
+            a = 1 + i * n
+            for k in range(n):
+                faces.append([a + k, a + (k + 1) % n, a + n + (k + 1) % n, a + n + k])
+        last = len(verts) - 1; a = 1 + (rings - 2) * n
+        faces += [[last, a + k, a + (k + 1) % n] for k in range(n)]
+        self.add(mat, verts, faces, None, [c] * len(faces), True, tint)
 
     def disc(self, mat, c, axis, r, n=12, tint=None):
         c = V(c); a = V(axis).normalized()
@@ -930,7 +949,7 @@ def build_pump_house_roof():
     n.sheet('zinc', (-8.1, roof_y(z0), z0), (1, 0, 0), dirv, 2.9, dirv.length, tint=jt(1.0, 1.25), vseg=3, wob=.01)
     n.sheet('plate', (-7.2, roof_y(-.1) + .04, -.1), (1, 0, 0), dirv, 1.0, 1.1, depth=0, tint=1.15)
     for x in (-9.7, -8.6, -7.5, -6.4, -5.5):                    # bright new rivets along each rafter
-        for z in (-1.0, .8, 2.6):
+        for z in (-1.0, 2.0):
             n.bolt('bare', (x, roof_y(z) + .035, z), (0, 1, 0), r=.034, h=.03, n=4)
     for x, z in ((-9.2, .3), (-6.2, 2.2), (-8.9, 2.7), (-6.4, -.1)):
         n.ring('rubber', (x, roof_y(z) + .12, z), (0, 1, -.1), .17, .38, .2, n=12, smooth_=False)
@@ -965,16 +984,16 @@ def pipe_run(n, cut):
         flanges = (-6.0, -3.0, -1.5, 8.4, 11.4)
     else:
         n.tube('plate', [(x, MY, MZ) for x in (-6.2, -3.0, 0.0, 3.0, 6.0, 9.0, 12.2)], MR, n=12, caps=(False, False))
-        n.ring('bare', (4.0, MY, MZ), (1, 0, 0), MR * .9, MR + .12, 1.3, n=12, smooth_=True, tint=1.0)
-        for dx in (-.68, .68):                                     # fresh weld beads
-            n.ring('bare', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .03, MR + .17, .11, n=12, smooth_=True, tint=1.25)
-        for dx in (-.34, 0.0, .34):                                # clamps with lugs and big bolts
-            n.ring('iron', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .1, MR + .2, .12, n=12, smooth_=True, tint=.9)
-            n.box('iron', (4.0 + dx, MY + MR + .21, MZ), (.14, .1, .2))
-            n.bolt('bare', (4.0 + dx, MY + MR + .27, MZ - .06), (0, 1, 0), r=.05, h=.05, n=6)
-            n.bolt('bare', (4.0 + dx, MY + MR + .27, MZ + .06), (0, 1, 0), r=.05, h=.05, n=6)
+        n.ring('steel', (4.0, MY, MZ), (1, 0, 0), MR * .9, MR + .12, 1.3, n=12, smooth_=True, tint=1.0)
+        for dx in (-.68, .68):                                     # fresh weld beads, bright silver
+            n.ring('silver', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .03, MR + .17, .11, n=12, smooth_=True, tint=1.0)
+        for dx in (-.34, 0.0, .34):                                # darker clamps with lugs and big bolts
+            n.ring('iron', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .1, MR + .2, .12, n=12, smooth_=True, tint=.7)
+            n.box('iron', (4.0 + dx, MY + MR + .21, MZ), (.14, .1, .2), tint=.8)
+            n.bolt('silver', (4.0 + dx, MY + MR + .27, MZ - .06), (0, 1, 0), r=.05, h=.05, n=6)
+            n.bolt('silver', (4.0 + dx, MY + MR + .27, MZ + .06), (0, 1, 0), r=.05, h=.05, n=6)
         n.beam('wood', (4.0, 0, MZ), (4.0, MY - MR - .02, MZ), .16, .16, tint=1.5)   # a new prop under the patch
-        n.box('bare', (4.0, MY - MR - .05, MZ), (.5, .05, .36))
+        n.box('steel', (4.0, MY - MR - .05, MZ), (.5, .05, .36))
         flanges = (-6.0, -3.0, -1.5, 8.4, 11.4, 2.4, 6.0)
     for x in flanges:
         flange(n, x)
@@ -1068,8 +1087,8 @@ def boiler_body(n, lit):
     if lit:
         n.box('ember', (BX, .98, 2.39), (.92, .64, .015), tint=1.0)               # deep orange back wall
         n.box('ember2', (BX, .85, 2.385), (.5, .3, .015), tint=1.0)               # hot yellow core
-        for k, (dx, dz, ry) in enumerate(((-.3, 2.3, .5), (.05, 2.28, -.2), (.33, 2.3, .8), (-.05, 2.2, 1.2), (.17, 2.34, .3))):
-            n.box('ember2' if k % 2 else 'ember', (BX + dx, .74, dz), (.3, .12, .12), ry=ry, tint=1.0)
+        for k, (dx, dz) in enumerate(((-.3, 2.3), (.05, 2.28), (.33, 2.3), (-.05, 2.2), (.17, 2.34))):
+            n.sphere('ember2' if k % 2 else 'ember', (BX + dx, .7, dz), .15 + .02 * (k % 2), n=8, rings=3, squash=.6, tint=1.0)   # round coals
         # orange light spilling from the mouth onto the ground and the boiler front
         for k, (ax, az, y_) in enumerate(((2.0, 1.7, .03), (1.4, 1.15, .034), (.8, .65, .038))):
             n.poly('glow', [V((BX + ax * math.cos(TAU * i / 14), y_, 1.0 + az * math.sin(TAU * i / 14))) for i in range(14)], tint=1.0)
@@ -1108,9 +1127,7 @@ def build_boiler_lit():
         n.beam('iron', (BX + .2 * math.cos(t), top, 6.4 + .2 * math.sin(t)), (BX + .05 * math.cos(t), top + .42, 6.4 + .05 * math.sin(t)), .03, .03)
     n.prism('plate', (BX, top + .4, 6.4), (BX, top + .62, 6.4), .46, .0, n=12, tint=.6)    # cap, stained dark by the fire
     n.ring('ash', (BX, top - .05, 6.4), (0, 1, 0), .245, .31, .22, n=12)                   # soot at the top of the stack
-    for k in range(7):                                                                      # a thin dark smoke wisp
-        x0, y0 = BX + k * .2 + .005 * k * k, top + .7 + k * .55
-        n.prism('smoke', (x0, y0, 6.4 + .03 * k), (x0 + .22, y0 + .6, 6.4 + .04 * k), .05 + k * .022, .07 + k * .025, n=6, caps=(False, False))
+    # no smoke: round shapes read as beads from the sheet camera; the stained cap and soot band carry it
     return n
 
 # ---- truck bay and tanker

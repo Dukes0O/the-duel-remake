@@ -1,6 +1,6 @@
 # WATER-YARD-ART
 
-Rounds 1 and 2 of three (card `docs/board/cards/WATER-YARD-ART.md`, packet
+Rounds 1, 2 and 3 of three (card `docs/board/cards/WATER-YARD-ART.md`, packet
 `docs/story/wasteland-water-road.md` sections 2 and 11). Claude (Director), 1 November 2026.
 Not wired into the game: the card that shows the stages in the yard (WATER-SCREENS) comes
 later. Nothing in `src/` changed.
@@ -67,6 +67,20 @@ Round 2 checks: `node tools/test-blender-output.mjs` and `node tools/test-repo-h
 Checks). Round 2 renders waited out the release full tier (hold in the inbox) and the two-heavy-job
 limit.
 
+## Round 3 (1 November 2026, final, round 2 picked)
+
+Small polish only, as Claude asked:
+
+- Patch collar on `pipe-patched`: dark steel grey, bright silver weld beads, darker clamps with
+  silver bolts. New `steel` and `silver` materials; the shared `bare` material stays for the roof
+  rivets and slot rivets.
+- Smoke: the wisp is removed. Soft puffs were tried and looked like a chain of beads from the sheet
+  camera, so the boiler has no smoke (stained cap and soot band stay).
+- Coals: round flattened mounds, not boxes.
+- Valve wheel: true deep red.
+- Sheet `round-3.jpg` (451 KB), `round-3.md`, `round-3-sheet.py`. GLB 1,957,092 bytes, smaller than
+  round 2 (1,979,172): texture quality 60 and fewer roof rivets paid for the new shapes.
+
 ## Checks
 
 - `node tools/test-blender-output.mjs`: 144 checks, 0 failed (the new recipe plans its paths
@@ -93,6 +107,9 @@ Nothing. No old model, test or tool is replaced.
 
 ## Open
 
-- Round 2 of 3 done. Pictures go to Kyle with a pick; round 3 fixes what he marks.
+- All three rounds are used (cap). Remaining weak points: no frame check yet (not wired in), the
+  boiler fire is dim and has no smoke, chapter 8 water details show mainly in close-ups, the ruts and
+  damp patches in the pictures are flat, and the GLB's vertex colours are checked only by a Blender
+  re-import, not in three.js.
 - No frame check yet: the group is not in the game. The wiring card does it.
 - Smoke from the lit boiler is left out on purpose (a flat smoke shape would look cartoonish).
