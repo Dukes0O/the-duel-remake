@@ -1638,3 +1638,19 @@ tier 39/39, build. One review, ten faults fixed. Full tier 556/556 on c31e8e5a
 (run because WATER-SAVE changed the save shape since 86c48d4f); the release
 commit adds only notes. Also carried, behind the water-road switch (dev):
 STORY-MULTI, WATER-LINES, WATER-SAVE and WATER-HOOKS. No live save change.
+
+## Release, 1 November 2026, night (Claude, Release Manager)
+
+HELI-COMPASS: every compass number a pilot reads in a course (fire, rescue, fuel truck, home pad,
+nearest ski pad, survey square) and the wind's name follow the HEADING gauge, and the Headings
+challenge's smoke sits at the gauge's 070 (it was at the mirror reading, 290). A new test flies the
+real challenge on the gauge. Four hashed views re-recorded with reasons (only bearings and the wind
+name moved). Lane tier 73/73, build; one review, three faults fixed.
+
+LAB-CLASSROOM-HEADINGS: Headings and maps as a classroom lesson (a map from above, the HEADING
+gauge, A and D to turn, a ruler in 100 m squares, Brian's job on the challenge's own 070 and 550 m);
+the old Headings lesson removed; the QA example lesson moved to the fire pit. Headings suite 13/13,
+all 25 Lab suites, all 16 Lab scenarios, lane tier 41/41, build. One review, seven faults fixed.
+
+Rule 19: helicopter display and Lab code since the full tier 556/556 on c31e8e5a; no save shape or
+physics change, so the two lane tiers cover it. WATER-EASY (tools only) also merged since. No save change.
