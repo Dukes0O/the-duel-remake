@@ -93,7 +93,7 @@ export async function run(context) {
     // The walking controller must release Tab while a panel owns focus.
     let focusedBack = false;
     for (let t=0;t<35;t++) {
-      focusedBack = await context.evaluate(`document.activeElement?.matches('[data-teach="back"], [data-lab="back"], [data-lab="walk-back"]')`);
+      focusedBack = await context.evaluate(`document.activeElement?.matches('[data-lc="leave"], [data-teach="back"], [data-lab="back"], [data-lab="walk-back"]')`);
       if (focusedBack) break;
       await key('Tab');
     }
