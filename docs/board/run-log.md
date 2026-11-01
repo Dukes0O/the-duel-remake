@@ -1487,3 +1487,14 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 31 Oct: merged and released LAB-CLASSROOM-LIVE (lab-classroom on, old pendulum removed, notebook keeps classroom words, Tab-focused lesson buttons press on Enter; 22 Lab suites, 14 Lab scenarios, lane 45/45, build).
 - 31 Oct: merged and released LAB-CLASSROOM-LIFT (Lift as a classroom, old Lift removed; Lift 11/11, 23 Lab suites, 14 Lab scenarios, lane 30 + 5 rerun here, build; one review, seven faults fixed).
 - 31 Oct: merged The Water Road design (docs/story/wasteland-water-road.md, ten WATER cards; lane 15/15, build).
+- 1 Nov: merged WATER-YARD-NEXT (the yard's Next up line names the next warlord and how to open or start the fight; yard suites 4/4 after review fixes, lane 28/28, build; one review, two faults fixed).
+- 1 Nov: released WATER-YARD-NEXT (build 26.11.01 19:33 UTC, master 7da01733; rule 19 on the full tier of 86c48d4f).
+- 1 Nov: merged STORY-MULTI (story registry for save, lines and cards, chooser; Kogane identical over about 18,700 cases in the save review; story suites and registry 78, lane 57/57, build, Kogane scenario). Goes live with the Water Road.
+- 1 Nov: merged WATER-LINES (eighteen Water Road lines, captions and notes; test 33, lane 25/25, build).
+- 1 Nov: merged WATER-SAVE (story.water, chapters read from the ladder; test 65, fixture roster 25 reviewed, lane 36/36, build; save review, two faults fixed and confirmed).
+- 1 Nov: merged WATER-HOOKS (Water Road jobs through setup, start and settlement; one button per chapter with bars; switch water-road dev; test 93, lane 59/59, build; one review, four faults fixed and confirmed).
+- 1 Nov: merged LAB-CLASSROOM-PROJECTILE (Projectile as a classroom, old Projectile removed; Projectile 15/15, 24 Lab suites, 15 Lab scenarios, lane 39/39, build; one review, ten faults fixed).
+- 1 Nov: full tier 556/556 on c31e8e5a in 5617 s, alone, for the release (save shape changed by WATER-SAVE since 86c48d4f).
+- 1 Nov: released LAB-CLASSROOM-PROJECTILE (build 26.11.01 22:09 UTC, master d0900eba; full tier 556/556 on c31e8e5a, notes only since).
+- 1 Nov: merged HELI-COMPASS (in-course bearings, the wind name and the Headings smoke follow the HEADING gauge; challenges 25/25 with a gauge flight, four pins re-recorded with reasons, lane 73/73, build; one review, three faults fixed). Goes live with Headings.
+- 1 Nov: merged WATER-EASY (child-pace measuring tool; claim not met, 0 to 6 in 10 across 15 cases; the Water Road goes ahead unchanged; EASY-YOUNG-DRIVER opened; lane 18/18, build).

@@ -1618,3 +1618,23 @@ lesson moved to the map table. Lift suite 11/11, all 23 Lab suites, all 14 Lab
 scenarios, lane tier 30 + 5 Recycle Bin suites rerun on the merged result,
 build. One review, seven faults fixed. Rule 19: only Lab code since the full
 tier on 86c48d4f. No save change.
+
+## Release, 1 November 2026 (Claude, Release Manager)
+
+WATER-YARD-NEXT: the yard's Next up line reads the save (next warlord on the
+ladder, wins still needed and where they count, or the open fight and its
+button). New suite test-yard-next 7/7; yard suites 4/4 after the review fixes,
+lane tier 28/28, build. One review, two faults fixed. Rule 19: only yard
+screen code since the full tier on 86c48d4f. No save change.
+
+## Release, 1 November 2026, evening (Claude, Release Manager)
+
+LAB-CLASSROOM-PROJECTILE: Projectile motion as a classroom lesson (Kestrel One
+over the lake, stone and water drops with their paths and landing marks in
+metres, a flag guess, a low or high guess, and Brian's buoy job; every water
+path from the bucket's own parcels); the old Projectile lesson and its drawing
+removed. Projectile suite 15/15, all 24 Lab suites, all 15 Lab scenarios, lane
+tier 39/39, build. One review, ten faults fixed. Full tier 556/556 on c31e8e5a
+(run because WATER-SAVE changed the save shape since 86c48d4f); the release
+commit adds only notes. Also carried, behind the water-road switch (dev):
+STORY-MULTI, WATER-LINES, WATER-SAVE and WATER-HOOKS. No live save change.

@@ -83,11 +83,13 @@ check('the wind: calm, breeze or windy from eight points, the same each play day
   }
   assert(kinds.calm > 330 && kinds.calm < 470 && kinds.breeze > 330 && kinds.breeze < 470 && kinds.windy > 140 && kinds.windy < 260, JSON.stringify(kinds));
   assert.deepEqual(dayWind(42, 3), dayWind(42, 3));
-  // From the north (+z) the wind blows toward -z; from the east toward -x.
+  // From the north (+z) the wind blows toward -z. Its name is the HEADING gauge's (HELI-COMPASS): a wind from +x,
+  // the gauge's west, is W and blows toward -x; one from -x, the gauge's east, is E.
   const days = Array.from({length: 200}, (_, day) => dayWind(42, day));
-  const fromNorth = days.find(wind => wind.from === 0), fromEast = days.find(wind => wind.from === 2);
+  const fromNorth = days.find(wind => wind.from === 0), fromPlusX = days.find(wind => wind.from === 2), fromMinusX = days.find(wind => wind.from === 6);
   assert.deepEqual([fromNorth.name, Math.round(fromNorth.toward.z) || 0, Math.round(fromNorth.toward.x) || 0], ['N', -1, 0]);
-  assert.deepEqual([fromEast.name, Math.round(fromEast.toward.x) || 0, Math.round(fromEast.toward.z) || 0], ['E', -1, 0]);
+  assert.deepEqual([fromPlusX.name, Math.round(fromPlusX.toward.x) || 0, Math.round(fromPlusX.toward.z) || 0], ['W', -1, 0]);
+  assert.deepEqual([fromMinusX.name, Math.round(fromMinusX.toward.x) || 0, Math.round(fromMinusX.toward.z) || 0], ['E', 1, 0]);
 });
 
 check('spread is faster uphill and downwind, and slower when damp', () => {
