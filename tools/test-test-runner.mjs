@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {EventEmitter} from 'node:events';
 import {join,relative,sep} from 'node:path';
-import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,LANE_GUARDS,SHARED_FILES,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
+import {CORE_SUITE,LEGACY_SUITE_ORDER,PROJECT_ROOT,CAMPAIGN_SUITE,CAMPAIGN_SHARDS,INSTRUCTOR_SUITE,INSTRUCTOR_SHARDS,LANE_GUARDS,SHARED_FILES,parseArguments,discoverSuites,selectSuites,selectPlan,localDependencies,suitesForChanges,changedFiles,runSuites,runSuitesConcurrent,main} from './run-tests.mjs';
 
 let checks=0;const same=(actual,expected,label)=>{assert.deepEqual(actual,expected,label);checks++;},check=(value,label)=>{assert.ok(value,label);checks++;};
 same(LEGACY_SUITE_ORDER.length,80,'all 80 original package.json commands are retained');
@@ -129,14 +129,17 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
 }
 // Instructor sampling uses the existing per-suite arguments, only in lane plans.
 {
-  const suite='tools/test-lesson-instructor-any-car.mjs';
+  const suite=INSTRUCTOR_SUITE;
   const task=args=>({suite,label:suite,args});
   for(const options of [{tier:'lane',affected:[suite]},{changed:true,affected:[suite]}])
     same(selectPlan([suite],options),[task(['--sample'])],
       'lane and changed-only plans sample instructor cars');
+  // Shards together cover every car: each shard takes the runs whose index modulo the count is its own.
+  const shards=Array.from({length:INSTRUCTOR_SHARDS},(_,index)=>({suite,
+    label:suite+' ['+(index+1)+'/'+INSTRUCTOR_SHARDS+']',args:['--shard='+(index+1)+'/'+INSTRUCTOR_SHARDS]}));
   for(const options of [{},{tier:'full'},{tier:'merge'},{filters:['lesson-instructor-any-car']}])
-    same(selectPlan([suite],options),[task([])],
-      'full, merge, default and focused plans retain every instructor car');
+    same(selectPlan([suite],options),shards,
+      'full, merge, default and focused plans retain every instructor car across all shards');
 }
 // Titan delegates only a duplicate child that this final plan really owns.
 {
@@ -169,7 +172,9 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(new Set(merge.map(task=>task.suite)).size,actual.length-1,'merge tier retains every other suite once');
   const full=selectPlan(actual,{tier:'full'});
   same(full.filter(task=>task.suite===CAMPAIGN_SUITE).length,CAMPAIGN_SHARDS,'full tier assigns all campaign shards');
-  same(full.length,actual.length-1+CAMPAIGN_SHARDS,'full tier preserves every suite and expands only campaigns');
+  same(full.filter(task=>task.suite===INSTRUCTOR_SUITE).length,INSTRUCTOR_SHARDS,'full tier assigns all instructor shards');
+  same(full.length,actual.length-2+CAMPAIGN_SHARDS+INSTRUCTOR_SHARDS,
+    'full tier preserves every suite and expands only campaigns and instructor cars');
   const lane=selectPlan(actual,{tier:'lane',affected:['tools/test-speed-format.mjs']});
   check(lane.some(task=>task.suite===CORE_SUITE)&&lane.some(task=>task.suite==='tools/test-speed-format.mjs'),'lane tier includes smoke and affected tests');
   check(LANE_GUARDS.every(guard=>lane.some(task=>task.suite===guard)),'every lane runs the replay and world-signature guards');

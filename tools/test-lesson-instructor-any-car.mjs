@@ -10,6 +10,17 @@ import {buildInstructorRun, DRIVE_LESSON_CORNERS, DRIVE_LINE_ROWS, DRIVE_GEAR_RO
 const sample = process.argv.includes('--sample');
 const cars = Object.keys(CARS);
 const sampleCars = ['falcone_f42', 'koenigsegg_jesko'];
+// The full tier splits every car into parallel shards (--shard=K/N): each run goes to shard index % N.
+const shardArgument = process.argv.find(argument => argument.startsWith('--shard='));
+let shard = null;
+if (shardArgument) {
+  const match = /^--shard=(\d+)\/(\d+)$/.exec(shardArgument);
+  if (!match) throw Error('Use --shard=1/N through --shard=N/N.');
+  const number = Number(match[1]), count = Number(match[2]);
+  if (count < 1 || number < 1 || number > count) throw Error('Shard number must be between 1 and shard count.');
+  shard = {index: number - 1, count};
+}
+let runIndex = 0;
 
 // Every native build owns a fresh in-memory Duel, never a player profile or save.
 for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS,
@@ -17,6 +28,7 @@ for (const [lessonId, rows] of Object.entries({corner: DRIVE_LESSON_CORNERS,
   for (const [rowIndex, {courseId}] of rows.entries()) {
     const selectedCars = sample ? [sampleCars[rowIndex % sampleCars.length]] : cars;
     for (const car of selectedCars) for (const difficulty of ['casual', 'pro']) {
+      if (shard && runIndex++ % shard.count !== shard.index) continue;
       test(`${lessonId} ${courseId} ${car} ${difficulty}: clean and repeatable`, async t => {
         const options = {lessonId, courseId, car, difficulty};
         const first = await buildInstructorRun(options);
