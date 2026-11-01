@@ -427,10 +427,11 @@ tasks:
 
   - id: LAB-CLASSROOM-LIFT
     title: "Lift and weight rebuilt as a classroom lesson"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude, lane claude/lab-lift (Codex paused until about 4 November)"
     needs: [LAB-CLASSROOM]
     locks: []
     flag: "lab-classroom"
