@@ -1,6 +1,7 @@
-// Test-only teaching packet: a ball and a fan, not the Lift and weight lesson.
+// Test-only teaching packet: a ball and a fan, not the Headings lesson. It borrows the map table, a machine
+// still on the five-step frame (Lift and the pendulum open as classrooms now).
 export const exampleLesson = {
-  id: 'lift', vocabulary: ['push'],
+  id: 'headings', vocabulary: ['push'],
   wonder: {text: 'Can a fan move this ball?', animation: 'ball', seconds: 2},
   words: [{id: 'push', word: 'Push', meaning: 'A push is a force that moves something away.', animation: 'push'}],
   worked: [

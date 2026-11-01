@@ -55,9 +55,10 @@ export async function run(context) {
   await context.screenshot('corner');
   const before = await context.evaluate(position);
   await tap('KeyE');
-  await context.waitFor(`!!document.querySelector('.lab-teaching:not([hidden])')`, 'E opens the five-step Lift lesson');
+  await context.waitFor(`JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')?.step === 'wonder'`, 'E opens the Lift classroom lesson');
   await context.screenshot('lift-bench');
-  await context.evaluate(`document.querySelector('[data-teach="back"]').click()`);
+  await context.evaluate(`document.querySelector('[data-lc="leave"]').click()`);
+  await context.waitFor(`!document.querySelector('.lab-classroom')`, 'Leave closes the lesson');
   const after = await context.evaluate(position);
   if (before !== after) throw Error('Opening a bench moved the walking camera.');
   // Face Brian from the same approach, rather than moving into his old tiny range.
