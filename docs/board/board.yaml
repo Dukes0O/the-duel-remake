@@ -605,7 +605,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "backlog"
+    status: "building"
+    claimed_by: "claude (water-road director) 2026-11-01"
     needs: [WATER-HOOKS]
     locks: []
     details: "docs/board/cards/WATER-EASY.md"
