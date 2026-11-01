@@ -21,6 +21,9 @@ Review of the changed runner assertions (rule 18), 1 November 2026. In `tools/te
 - "full tier preserves every suite and expands only campaigns" counted `actual.length-1+CAMPAIGN_SHARDS`;
   it now counts `actual.length-2+CAMPAIGN_SHARDS+INSTRUCTOR_SHARDS` and adds a check that the full tier
   holds all four instructor shards. It is exactly as strict: one more suite expands, by its own count.
+- "JSON plan lists the merge suite set" counted `actual.length-1` labels; it now counts
+  `actual.length-2+INSTRUCTOR_SHARDS` and requires each of the four shard labels by name. Stricter
+  than before, since it now names the expanded entries.
 
 Nothing is loosened: the per-run assertions in the instructor suite are untouched, and the lane
 sample check is unchanged.

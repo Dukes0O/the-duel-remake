@@ -413,8 +413,9 @@ for(const replayFailure of [{code:7,signal:null},{code:null,signal:'SIGTERM'}]) 
     {cwd:PROJECT_ROOT,encoding:'utf8',shell:false,windowsHide:true});
   same(listed.status,0,'JSON plan CLI succeeds');
   const plan=JSON.parse(listed.stdout);
-  check(plan.kind==='plan'&&plan.suites.length===actual.length-1&&!plan.suites.some(name=>name.includes('campaigns')),
-    'JSON plan lists the merge suite set without human log text');
+  check(plan.kind==='plan'&&plan.suites.length===actual.length-2+INSTRUCTOR_SHARDS&&!plan.suites.some(name=>name.includes('campaigns'))&&
+    Array.from({length:INSTRUCTOR_SHARDS},(_,index)=>INSTRUCTOR_SUITE+' ['+(index+1)+'/'+INSTRUCTOR_SHARDS+']').every(label=>plan.suites.includes(label)),
+    'JSON plan lists the merge suite set, instructor shards included, without human log text');
   const focused=spawnSync(process.execPath,[runner,'--filter','speed-format','--json'],
     {cwd:PROJECT_ROOT,encoding:'utf8',shell:false,windowsHide:true});
   same(focused.status,0,'JSON focused execution succeeds');
