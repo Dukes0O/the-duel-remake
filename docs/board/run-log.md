@@ -1485,3 +1485,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 31 Oct: full tier on 86c48d4f 547/548; test-audio-crash-peak passed on its one rerun (card QA-AUDIO-CRASH-PEAK-3). Release covered.
 - 31 Oct: merged LAB-CLASSROOM (pendulum rebuilt as a classroom with Brian as tutor, switch lab-classroom dev; audit and 15 lesson cards; lesson suite 14/14, 14 Lab scenarios, lane 45 + 5 Recycle-Bin suites rerun here, build; one review, ten faults fixed).
 - 31 Oct: merged and released LAB-CLASSROOM-LIVE (lab-classroom on, old pendulum removed, notebook keeps classroom words, Tab-focused lesson buttons press on Enter; 22 Lab suites, 14 Lab scenarios, lane 45/45, build).
+- 31 Oct: merged and released LAB-CLASSROOM-LIFT (Lift as a classroom, old Lift removed; Lift 11/11, 23 Lab suites, 14 Lab scenarios, lane 30 + 5 rerun here, build; one review, seven faults fixed).

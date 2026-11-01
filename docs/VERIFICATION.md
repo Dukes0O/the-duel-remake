@@ -1608,3 +1608,13 @@ pendulum lesson removed; classroom words kept in the notebook; Tab-focused
 lesson buttons press on Enter. Lesson suite 14/14, all 22 Lab suites, all 14
 Lab scenarios, lane tier 45/45, build. Rule 19: only Lab code since the full
 tier on 86c48d4f. No save change.
+
+## Release, 31 October 2026, night (Claude, Release Manager)
+
+LAB-CLASSROOM-LIFT: Lift and weight as a classroom lesson (lever with a
+kilogram scale, notches and a stop on the red line; every number from the
+helicopter's own flight rules); the old Lift lesson removed; the QA example
+lesson moved to the map table. Lift suite 11/11, all 23 Lab suites, all 14 Lab
+scenarios, lane tier 30 + 5 Recycle Bin suites rerun on the merged result,
+build. One review, seven faults fixed. Rule 19: only Lab code since the full
+tier on 86c48d4f. No save change.

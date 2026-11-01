@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 31 October night (Claude, Release Manager).** The Lab: Lift and weight opens as the new classroom lesson (lever on W and S, stops on her weight); the old Lift lesson is gone. Reload any open game tab.
 - **RELEASED 31 October evening (Claude, Release Manager).** The Lab: Pendulums opens as the new classroom lesson with Brian as tutor; the old pendulum lesson is gone. Reload any open game tab.
 - **RELEASED 31 October (Claude, Release Manager).** Helicopter jobs: job card on screen, hook prompts, start at the last pad, the car is there to hook, every job can end. Reload any open game tab.
 - **RELEASED 30 October night (Claude, Release Manager).** The Deep: the sonar ring stays on screen after the badge, and the chart starts north up. Reload any open game tab.

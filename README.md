@@ -6,6 +6,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Lift and weight is a classroom now.** Kestrel One on a weighing
+  pad with a collective lever you pull up with W (the helicopter's key) or the
+  mouse; it stops on the red line, her weight, so hovering is easy to find.
+  Lift and weight stay on screen in kilograms, and Brian's job asks how many
+  crates she can lift with the Dusthawk on the hook.
 - **The Lab: Pendulums is a classroom now.** Brian sits beside the lesson as
   your tutor: one idea at a time with a picture, real-time stopwatches, set
   up then guess then let go, and he says why a guess was wrong. Stuck? He
