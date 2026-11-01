@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-11-01T22:11:11.403Z
+Observed at: 2026-11-01T22:57:36.380Z
 
-Observation commit: 7e822f6474e26d2c8fdc77ba8471ef55fa9d4d13
+Observation commit: 2034304ef02b8ba1770cf86e30d2cb0d9d32c52f
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7e822f6474e26d2c8fdc77ba8471ef55fa9d4d13
+Integration HEAD: 2034304ef02b8ba1770cf86e30d2cb0d9d32c52f
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -51,9 +51,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 37,063,947 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 311,896 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 41,287 B | -270,609 B | 5,000,000 B |
 | All `public/` | 362,137,159 B | +0 B | unavailable |
-| Git objects | 814,507,008 B | +193,536 B | unavailable |
+| Git objects | 816,890,880 B | +2,383,872 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -62,7 +62,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: d0900ebaaa82dc5b39b0507a7d1dc9b7c57334b9
 - Local main: missing
-- Local integration/wasteland: 7e822f6474e26d2c8fdc77ba8471ef55fa9d4d13
+- Local integration/wasteland: 2034304ef02b8ba1770cf86e30d2cb0d9d32c52f
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -70,6 +70,6 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit d0900ebaaa82dc5b39b0507a7d1dc9b7c57334b9.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 7e822f6474e26d2c8fdc77ba8471ef55fa9d4d13.
+- Remote origin/integration/wasteland: behind local; cached commit 2b8f4e045a978bb01d372aeca45b2e3cfe162e84.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.

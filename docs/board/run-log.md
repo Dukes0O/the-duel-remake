@@ -1497,3 +1497,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: full tier 556/556 on c31e8e5a in 5617 s, alone, for the release (save shape changed by WATER-SAVE since 86c48d4f).
 - 1 Nov: released LAB-CLASSROOM-PROJECTILE (build 26.11.01 22:09 UTC, master d0900eba; full tier 556/556 on c31e8e5a, notes only since).
 - 1 Nov: merged HELI-COMPASS (in-course bearings, the wind name and the Headings smoke follow the HEADING gauge; challenges 25/25 with a gauge flight, four pins re-recorded with reasons, lane 73/73, build; one review, three faults fixed). Goes live with Headings.
+- 1 Nov: merged WATER-EASY (child-pace measuring tool; claim not met, 0 to 6 in 10 across 15 cases; the Water Road goes ahead unchanged; EASY-YOUNG-DRIVER opened; lane 18/18, build).
