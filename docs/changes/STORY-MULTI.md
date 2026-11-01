@@ -89,3 +89,10 @@ story is added, dropped or rewritten by another's write; loading never makes
 story, is the loading fix above, which it checked on the working tree.
 Not this card's: `app.storyProps` and `app.openStory` ignore the story key;
 WATER-SCREENS makes them read the key when the Water Road registers.
+
+## Final checks
+
+After the fixes and with current integration merged in: lane tier 57/57, build.
+The Kogane browser scenario passed on the first commit; the later save fixes
+leave every Kogane result identical (the save review's side-by-side run), so it
+was not rerun.
