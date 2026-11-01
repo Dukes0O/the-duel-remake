@@ -21,14 +21,3 @@ export function padForces(input = {}, height = 0) {
   return {...load, cargoKg, massKg, weightN, maximumN, liftN,
     hoverCollective: weightN / maximumN, shortKg: Math.max(0, (weightN - liftN) / GRAVITY)};
 }
-export function padOutcome(input) {
-  const f = padForces(input), h = padForces(input, PAD.hoverHeight);
-  // Hover is a narrow visible band, not an equality puzzle with a mouse.
-  // It must both leave the pad and balance at the marked low hover height.
-  if (f.liftN <= f.weightN) return 'down';
-  if (Math.abs(h.liftN - h.weightN) <= h.weightN * .015) return 'hover';
-  return h.liftN < h.weightN ? 'settles' : 'up';
-}
-export function kilogramsToRemove(input, height = PAD.hoverHeight) {
-  return Math.max(1, Math.ceil(padForces({...input, collective: 1}, height).shortKg));
-}

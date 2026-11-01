@@ -44,6 +44,14 @@ export const KEY_IDEAS = Object.freeze([
   {id: 'ease', text: 'In the game: once the car is up, ease back on S until she hovers.'},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Lift must match weight.', text: 'Once the car is up, ease back on S until she holds still.'});
+// The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
+export const WORDS = Object.freeze([
+  {id: 'lift-weight', word: 'Weight', meaning: 'Weight is how hard the Earth pulls something down. We measure it in kilograms.'},
+  {id: 'lift-rotor', word: 'Rotor', meaning: 'The rotor is the long blades on top that spin and throw air down.'},
+  {id: 'lift-lift', word: 'Lift', meaning: 'Lift is the push up the air gives the rotor. We measure it in kilograms too, so you can compare it with weight.'},
+  {id: 'lift-collective', word: 'Collective', meaning: 'The collective is the lever by the pilot’s left hand. Up means more lift: W in the helicopter, S to let it down.'},
+  {id: 'lift-hover', word: 'Hover', meaning: 'To hover is to stay still in the air, with lift exactly as big as weight.'},
+].map(Object.freeze));
 
 // ---- the flight on the pad: the load, the lever and where she is ----
 // h: how high the lifted set is above the pad (the load's bottom, or her skids with no load).
@@ -472,4 +480,4 @@ function caption(st, f) {
   return 'Lift and weight are nearly the same.';
 }
 
-export const lesson = Object.freeze({id: 'lift', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD});
+export const lesson = Object.freeze({id: 'lift', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD, words: WORDS});

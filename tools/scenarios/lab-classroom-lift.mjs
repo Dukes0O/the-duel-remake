@@ -1,5 +1,5 @@
-// LAB-CLASSROOM-LIFT: the Lift and weight classroom played by keyboard alone, from the Lab map to the
-// helicopter challenge, on the harness's memory-only origin. Walking up to a machine is covered by
+// LAB-CLASSROOM-LIFT: the Lift and weight classroom played by keyboard (and one mouse drag of the lever),
+// from the Lab map to the helicopter challenge, on the harness's memory-only origin. Walking up to a machine is covered by
 // tools/scenarios/lab-classroom.mjs.
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
@@ -35,7 +35,15 @@ async function play(c) {
   await next('word-lift');
   await at('word-collective'); await press('KeyW'); await at('word-collective', 's.ready'); await wait(400); await shot('word-collective');
   await next('word-collective');
-  await at('word-hover'); await hold('KeyW'); await at('word-hover', 's.ready'); await wait(1600); await shot('word-hover');
+  // The mouse: drag the lever's handle up onto the red line (it clicks on when close).
+  await at('word-hover');
+  const lever = await c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
+    const left = r.left + (r.width - 1000 * s) / 2, top = r.top + (r.height - 680 * s) / 2, y = kg => top + (575 - kg * 425 / 4000) * s;
+    return {x: left + 100 * s, from: y(1500), to: y(1600)}; })()`);
+  await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: lever.x, y: lever.from, button: 'left', buttons: 1, clickCount: 1});
+  for (let k = 1; k <= 5; k++) { await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: lever.x, y: lever.from + (lever.to - lever.from) * k / 5, button: 'left', buttons: 1}); await wait(40); }
+  await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: lever.x, y: lever.to, button: 'left', buttons: 0, clickCount: 1});
+  await at('word-hover', 's.ready'); await wait(1600); await shot('word-hover');
   await next('word-hover');
   await at('watch-lever'); await wait(7000); await shot('watch-lever-climbs');
   await at('watch-lever', 's.ready'); await shot('watch-lever');
@@ -64,9 +72,20 @@ async function play(c) {
   }
   await at('recap'); await wait(1500); await shot('recap');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
+  // Teaching writes the notebook words and never passes the lesson by itself.
+  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.lift && ['lift-weight', 'lift-lift', 'lift-collective', 'lift-hover'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   // The game challenge goes through the Lab's own path: the helicopter starts with the key idea card.
   await press('Enter');
   await c.waitFor(`!document.querySelector('.lab-classroom') && window.__qaApp.heliSession?.view?.()?.challenge?.id === 'lift'`, 'lift challenge in the helicopter', 60_000);
   await c.waitFor(`!document.querySelector('.lab-key-idea')?.hidden && document.querySelector('.lab-key-idea')?.textContent.includes('Lift must match weight.')`, 'key idea card');
-  await wait(1500); await shot('challenge');
+  await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && document.querySelector('#view3d canvas')?.style.visibility !== 'hidden'`, 'presented challenge world', 120_000);
+  await wait(1500);
+  if (!(await c.evaluate(`(() => {
+    const card = document.querySelector('.lab-key-idea').getBoundingClientRect();
+    return [...document.querySelectorAll('button,input,select,a[href]')].every(el => {
+      const r = el.getBoundingClientRect();
+      return !r.width || !r.height || r.right <= card.left || r.left >= card.right || r.bottom <= card.top || r.top >= card.bottom;
+    });
+  })()`))) throw Error('The key-idea card overlaps an interactive control.');
+  await shot('challenge');
 }
