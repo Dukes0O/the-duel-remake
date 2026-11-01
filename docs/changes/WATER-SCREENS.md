@@ -33,19 +33,33 @@ The Water Road (`docs/story/wasteland-water-road.md` sections 2 and 3). Behind
   stage, stand at (-4, 0, 31) in the yard, and show each chapter's part (patched
   pipe, fuel, valve, roof, lit boiler, truck, one tower level at a time, well water
   and the running tap at the end). Stage = warlord chapters done in order.
-- `tools/test-water-screens.mjs` (new, 50 checks).
+- `tools/test-water-screens.mjs` (new, 51 checks). `tools/scenarios/water-road.mjs` (new): the
+  browser play-through for this card and WATER-FINISH.
 
 ## Checks
 
-- `node tools/test-water-screens.mjs`: 50 checks pass. Story, yard, arena and warlord
+- `node tools/test-water-screens.mjs`: 51 checks pass. Story, yard, arena and warlord
   suites pass unchanged: test-story-ui, test-story-registry, test-story-hooks,
   test-water-hooks, test-yard-next, test-arena-ui, test-warlord-format,
   test-warlord-gunn.
 - Lane tier, build, browser look and the yard frame check: see below.
 
+## Review
+
+One independent review. Three real faults, fixed: the chapter tick and Vesper's line
+could repeat on a rematch for a save that keeps defeats in the older list form (now
+the settlement's own `firstWin`, which reads every form); a warlord's first defeat
+whose save succeeded only on RETRY lost the tick (the retry now shows it); a
+returning player whose note was unread saw a dry yard (the stage now counts warlords
+beaten in order). Merge order: WATER-YARD-ART merges first, since the water works
+model is its file. Checked clean: switch off byte for byte, every button does what it
+says from the menu and the yard, escaping, the per-frame cost.
+
 ## Changed assertions
 
-None.
+None loosened. `tools/test-water-hooks.mjs`: the hand-built fight results in the
+Vesper case now carry the settlement's `firstWin` (true, then false for the
+rematch), because the hook now reads it; the two assertions are unchanged.
 
 ## Removed
 

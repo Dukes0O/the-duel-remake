@@ -214,9 +214,10 @@ export function createWaterRoad(app) {
   // The water works' stage: warlord chapters done in order (0 to 8), or null while the story is not shown.
   // Chapter 0 is Hollis's note, so the first warlord beaten is stage 1.
   function stage() {
-    if (!available()) return null;
-    const at = waterChapter(app.profile);
-    return Number.isInteger(at) ? Math.max(0, Math.min(8, at - 1)) : null;
+    if (!available() || storyIsNewer(app.profile)) return null;
+    // Warlords beaten in ladder order, whether or not Hollis's note is read yet (a returning player's yard is not dry).
+    const at = WATER_CHAPTERS.slice(1).findIndex(chapter => !waterChapterDone(app.profile, chapter.n));
+    return at === -1 ? 8 : at;
   }
   // Leaving to the menu, quitting or a new player: no story job waits or runs.
   function clear() { pending = null; run = null; }

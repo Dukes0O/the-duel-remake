@@ -149,5 +149,6 @@ ok(waterWorksPartVisible('tower', 0) && waterWorksPartVisible('well', 8), 'the a
 same(freshApp({read: false}).waterYardStage(), 0, 'a new story: the dry well');
 same(freshApp({beaten: ['sal', 'dustmonger']}).waterYardStage(), 2, 'two warlords: stage 2');
 same(freshApp({beaten: WARLORD_LADDER}).waterYardStage(), 8, 'all eight: stage 8');
+same(freshApp({read: false, beaten: ['sal', 'dustmonger', 'mirage']}).waterYardStage(), 3, 'a returning player whose note is unread still sees their progress');
 
 console.log(`test-water-screens: ${checks} checks passed`);

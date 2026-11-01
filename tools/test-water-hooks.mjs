@@ -240,18 +240,18 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   intoYard(app);
   const said = [];
   app._storySay = id => { said.push(id); return true; };
-  const winFight = () => {
+  const winFight = firstWin => {
     if (!app.isYardHomeActive()) { app.returnToMenu(); intoYard(app); }
     ok(app.startWarlordFight('blackiron'), 'the Baron\'s fight starts');
     const s = app.duel.state;
-    s.arena.result = {winnerId: 'player', settlementSaved: true};
+    s.arena.result = {winnerId: 'player', settlementSaved: true, firstWin};
     app._waterArenaSettled(s);
   };
-  winFight();
+  winFight(true);
   same(said, ['story.water.vesper.8'], 'Vesper speaks after the first defeat');
   app.profile = {...app.profile, wasteland: {...app.profile.wasteland, warlords: {...app.profile.wasteland.warlords, blackiron: {...app.profile.wasteland.warlords.blackiron, defeated: true}}}};
   app._saveProfile();
-  winFight();
+  winFight(false);
   same(said, ['story.water.vesper.8'], 'and not after a rematch');
 }
 

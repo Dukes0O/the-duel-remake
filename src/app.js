@@ -775,10 +775,10 @@ export class App {
   }
   _waterArenaSettled(state){
     const arena=state?.arena,result=arena?.result;
-    if(arena?.mode!=='warlord'||result?.winnerId!=='player'||result.settlementSaved!==true||
-      this._waterFirstDefeat!==arena.warlordId||!this._waterRoad().available())return;
-    // WATER-SCREENS: the results say which chapter is done; Vesper speaks after the Baron. A rematch says neither.
-    this._waterFirstDefeat=null;
+    // WATER-SCREENS: the results say which chapter is done; Vesper speaks after the Baron. Only the warlord's first defeat
+    // (the settlement's own firstWin, which reads every saved form of a defeat); a rematch says neither.
+    if(arena?.mode!=='warlord'||result?.winnerId!=='player'||result.settlementSaved!==true||result.firstWin!==true||
+      result.waterChapter||!this._waterRoad().available())return;
     result.waterChapter=arena.warlordId;
     if(arena.warlordId==='blackiron')this._storySay('story.water.vesper.8');
   }
@@ -1606,6 +1606,7 @@ export class App {
     const state = this.duel.state, result = state.arena?.result;
     if (state.status !== 'arena_result' || !result?.settlementRetryable) return false;
     const saved = this._settleArenaResult({result}, state);
+    if (saved) this._waterArenaSettled(state); // WATER-SCREENS: a save that succeeds on RETRY still shows the chapter
     this.duel.emit({arenaSettlementRetried: true});
     return saved;
   }
@@ -1852,8 +1853,6 @@ export class App {
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
     const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
-    // A warlord's first defeat finishes its chapter: only that win shows the chapter done (and Vesper after the Baron).
-    this._waterFirstDefeat = warlordId && this.profile.wasteland?.warlords?.[warlordId]?.defeated !== true ? warlordId : null;
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
     if (started && waterLine) this._storySay(waterLine);
