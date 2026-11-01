@@ -86,12 +86,13 @@ test('the words: D counts up, A counts down, east is 090, and the ruler counts s
   session.act('turn:left');
   assert.equal(session.view().gauge, '355', 'past 000 turning left comes 355');
   assert.match(session.view().brian.text, /went down: A turns her left/);
-  turnTo(session, 30);
-  assert.match(session.view().brian.text, /^She reads 030: the number went up as she turned right/);
+  // Six presses of D after A: 30 degrees right since A, from 355 to 025.
+  press(session, 'turn:right', 6);
+  assert.match(session.view().brian.text, /^She reads 025: the number went up as she turned right/);
   session.act('next');
   turnTo(session, 120);
   session.act('fly');
-  assert.match(session.view().brian.text, /She reads 120: 30 too far right\. A turns her back: the number goes down/);
+  assert.match(session.view().brian.text, /She reads 120: 30 degrees too far right\. A turns her back left: the number goes down/);
   assert.equal(session.view().ready, false, 'a wrong heading is not east');
   press(session, 'turn:left', 6); session.act('fly');
   assert.match(session.view().brian.text, /She reads 090|^Right: 090 is east/);
@@ -110,7 +111,7 @@ test('the tries: a wrong heading says how far off and how far it passed; the sho
   assert.equal(session.view().spot.kind, 'smoke'); assert.equal(session.view().target, 'turn:best');
   turnTo(session, 100); session.act('fly'); until(session, v => v.ready);
   const passed = Math.round(JOB.distanceM * Math.sin(30 * Math.PI / 180));
-  assert.match(session.view().brian.text, new RegExp(`^You flew 100: 30 too far right, and passed ${passed} m from the smoke\\. A turns her back`));
+  assert.match(session.view().brian.text, new RegExp(`^You flew heading 100: 30 degrees too far right, and passed ${passed} m from the smoke\\. A turns her back left`));
   assert.equal(session.view().ghosts.length, 0, 'the flight is on the map until she flies again');
   // Fly it again: her last track stays as a faint line.
   press(session, 'turn:left', 6); session.act('fly'); until(session, v => /^Right over the smoke!/.test(v.brian.text));
@@ -129,7 +130,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only s
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   turnTo(session, 80); flyJob(session);
-  assert.match(session.view().brian.text, /^You flew 080: 10 too far right, and stopped \d+ m from the smoke\. Turn her to 070 \(A\)/);
+  assert.match(session.view().brian.text, /^You flew heading 080: 10 degrees too far right, and stopped \d+ m from the smoke\. Turn her to 070 \(A\)/);
   assert.equal(session.view().heli.x, 0, 'she is back on the pad for another go');
   turnTo(session, 70, 'left'); flyJob(session, 450);
   assert.match(session.view().brian.text, /^Right heading, but you stopped after 4\d\d m, \d+ m short\./);
@@ -240,4 +241,49 @@ test('replays: the wonder and the watch start again', () => {
   assert.equal(session.view().gauge, '120');
   session.act('replay');
   assert.equal(session.view().gauge, '000');
+});
+
+test('review fixes: the ruler keeps its 50 m steps, and Show me always works and is never called the long way', () => {
+  const ruler = createClassroomSession(lesson);
+  playThroughTo(ruler, 'word-scale');
+  press(ruler, 'ruler:longer', 20);
+  assert.equal(ruler.view().ruler.length % 50, 0, 'held → stops on a 50 m step');
+  for (let i = 0; i < 20 && ruler.view().ruler.length > 300; i++) ruler.act('ruler:shorter');
+  assert.equal(ruler.view().ruler.length, 300, '← reaches the hut again');
+  // Heading: after a long turn left, Show me still turns her right and passes.
+  const heading = createClassroomSession(lesson);
+  playThroughTo(heading, 'word-heading');
+  press(heading, 'turn:left', 32);
+  for (let i = 0; i < 3; i++) heading.act('help');
+  run(heading, SHOW_ME_S + .2);
+  assert.match(heading.view().brian.text, /^Like that\. Watch: I turn her right/);
+  until(heading, v => v.ready, 5);
+  // The short way round: Show me after turning the long way starts again from 020 and turns left.
+  const wrap = createClassroomSession(lesson);
+  playThroughTo(wrap, 'try-wrap');
+  press(wrap, 'turn:right', 36);
+  for (let i = 0; i < 3; i++) wrap.act('help');
+  run(wrap, SHOW_ME_S + .2);
+  assert.match(wrap.view().brian.text, /^Like that\. Watch: I turn her to 340\./, 'Brian says the heading he turns to');
+  until(wrap, v => v.ready, 20);
+  assert.match(wrap.view().brian.text, /^Right: A turned her left past 000/);
+});
+
+test('review fixes: a practice flight ends at the map’s edge, and Brian’s pointer taps the heading he wants', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-turn');
+  const v = session.view(), [hx, hy] = targetPoint(v, 'fly');
+  assert.equal(v.aim, 70);
+  const at = targetPoint(v, 'turn:best');
+  assert.equal(hitTest(v, ...at)?.drag, 'compass', 'a click where Brian taps turns her');
+  assert.equal(dragAngle(v, 'compass', ...at), 70);
+  assert.equal(hitTest(v, hx, hy)?.action, 'fly', 'her body is Space');
+  turnTo(session, 180); session.act('fly'); until(session, x => x.ready, 20);
+  assert.ok(session.view().heli.y >= -340 - CRUISE_MS * .05, 'she stops at the map’s south edge');
+  assert.match(session.view().brian.text, /^You flew heading 180: 110 degrees too far right/);
+  // On Heading there is no Space: a click on her body does nothing.
+  const word = createClassroomSession(lesson);
+  playThroughTo(word, 'word-heading');
+  const w = word.view(), [wx, wy] = targetPoint(w, 'fly');
+  assert.equal(hitTest(w, wx, wy), null);
 });

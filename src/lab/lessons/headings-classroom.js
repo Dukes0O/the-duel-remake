@@ -8,6 +8,8 @@ import {SMOKE, compassDirection} from '../benches/headings.js';
 // cruise she can reach); one map square; how close counts as over the smoke (the challenge's own ring); the map.
 export const TURN_STEP = 5, TURN_RATE = 60, CRUISE_MS = 50, SQUARE_M = 100, RING_M = SMOKE.radius, RULER_STEP_M = 50;
 export const MAP = Object.freeze({west: -460, east: 720, south: -340, north: 700});
+// The ruler stays on its 50 m steps, so → and ← always reach the hut again.
+const RULER_MAX_M = Math.floor(MAP.east / RULER_STEP_M) * RULER_STEP_M;
 export const JOB = Object.freeze({headingDeg: SMOKE.headingDeg, distanceM: SMOKE.distanceM});
 const HUT = Object.freeze({headingDeg: 90, distanceM: 300});
 const WATCH = Object.freeze({headingDeg: 120, distanceM: 400});
@@ -72,7 +74,7 @@ const turning = (space, target = 'turn:best') => ({keys: {...TURN_KEYS, ...(spac
 // Which way and how far to turn, in the words Brian uses.
 function turnSay(deg, want) {
   const off = offBy(deg, want);
-  return `She reads ${three(deg)}: ${Math.abs(off)} too far ${off > 0 ? 'right. A turns her back: the number goes down' : 'left. D turns her round: the number goes up'}.`;
+  return `She reads ${three(deg)}: ${Math.abs(off)} degrees too far ${off > 0 ? 'right. A turns her back left: the number goes down' : 'left. D turns her right: the number goes up'}.`;
 }
 
 // ---- the checks ----
@@ -113,7 +115,7 @@ export function createModel() {
   // She sits on the pad at (0, 0) map metres, pointing her heading. A flight is straight on her heading.
   function enter(index, keep = {}) {
     m = {index, time: 0, phase: 'ready', heading: 0, x: 0, y: 0, flown: 0, track: [], ghosts: [], ruler: null, target: null, auto: null,
-      say: '', answered: null, firstLeft: false, turned: 0, result: null, lastAt: null, ...keep};
+      say: '', autoSay: '', answered: null, firstLeft: false, turned: 0, rightRun: 0, result: null, lastAt: null, ...keep};
     const id = STEPS[index].id;
     if (id === 'wonder') { m.target = smoke(); m.auto = {turnTo: null, fly: JOB.distanceM, at: .6}; m.phase = 'auto'; }
     if (id === 'word-heading') m.phase = 'turn';
@@ -128,7 +130,8 @@ export function createModel() {
   const smoke = () => ({...pointAt(JOB.headingDeg, JOB.distanceM), kind: 'smoke', label: 'Smoke'});
   // Back on the pad, keeping her heading, with the last flight left on the map as a faint track.
   function home() { if (m.track.length > 1) m.ghosts = [...m.ghosts.slice(-2), m.track]; m.x = 0; m.y = 0; m.flown = 0; m.track = []; }
-  function turn(by) { m.heading = wrap(m.heading + by); m.turned += by; }
+  // turned adds up the whole turn (the long way round is over 180); rightRun is the turn right since A was last pressed.
+  function turn(by) { m.heading = wrap(m.heading + by); m.turned += by; m.rightRun = by > 0 ? m.rightRun + by : by < 0 ? 0 : m.rightRun; }
 
   function act(action) {
     const id = step().id, [kind, value] = action.split(':');
@@ -146,8 +149,8 @@ export function createModel() {
     if (m.phase === 'turn' || (m.phase === 'result' && (id === 'try-turn' || id === 'try-wrap'))) {
       if (kind === 'turn' || kind === 'hold') {
         if (m.phase === 'result') { m.phase = 'turn'; home(); }
-        if (kind === 'turn' && value === 'best') { m.auto = {turnTo: goalHeading(), fly: null, at: 0, then: id === 'word-heading' ? null : 'fly'}; m.phase = 'auto-turn'; return {kind: 'progress', say: `Watch: I turn her to ${three(goalHeading())}.`}; }
-        if (kind === 'hold') { const at = Math.round(Number(value) / TURN_STEP) * TURN_STEP; if (Number.isFinite(at)) { m.turned += offBy(at, m.heading); m.heading = wrap(at); } }
+        if (kind === 'turn' && value === 'best') return showTurn(id);
+        if (kind === 'hold') { const at = Math.round(Number(value) / TURN_STEP) * TURN_STEP; if (Number.isFinite(at)) turn(offBy(at, m.heading)); }
         else turn(value === 'left' ? -TURN_STEP : TURN_STEP);
         return afterTurn(id, value);
       }
@@ -160,13 +163,25 @@ export function createModel() {
     if (m.phase === 'missed' && (kind === 'turn' || kind === 'hold')) { home(); m.phase = 'turn'; return act(action); }
     return null;
   }
-  const goalHeading = () => step().id === 'word-heading' ? 45 : goal().headingDeg;
+  const goalHeading = () => step().id === 'word-heading' ? wrap(m.heading + 45) : goal()?.headingDeg ?? null;
+  // Show me: Brian turns her (right, on Heading; the short way on the try from where it starts) and flies it.
+  function showTurn(id) {
+    if (id === 'word-heading') { m.auto = {turnTo: goalHeading(), way: 'right', fly: null, at: 0}; m.autoSay = 'Watch: I turn her right with D. The number goes up.'; }
+    else {
+      if (id === 'try-wrap') { m.heading = WRAP.startDeg; m.turned = 0; }
+      m.auto = {turnTo: goal().headingDeg, way: id === 'try-wrap' ? 'left' : null, fly: null, at: 0, then: 'fly'};
+      m.autoSay = `Watch: I turn her to ${three(goal().headingDeg)}.`;
+    }
+    m.phase = 'auto-turn';
+    return {kind: 'progress', say: m.autoSay};
+  }
 
   function afterTurn(id, value) {
     if (id === 'word-heading') {
-      if (m.heading >= 30 && m.heading <= 180 && m.turned > 0) {
+      if (m.rightRun >= 30) {
         m.phase = 'result'; seen.add(id);
-        return {kind: 'right', say: `She reads ${three(m.heading)}: the number went up as she turned right. A turns her left, and it goes down.`};
+        m.say = `She reads ${three(m.heading)}: the number went up as she turned right. A turns her left, and it goes down.`;
+        return {kind: 'right', say: m.say};
       }
       if (value === 'left' && !m.firstLeft) { m.firstLeft = true; return {kind: 'progress', say: 'The number went down: A turns her left. Now try D.'}; }
     }
@@ -178,26 +193,26 @@ export function createModel() {
     if (id === 'word-heading') return null;
     if (id === 'word-compass') {
       const off = offBy(m.heading, HUT.headingDeg);
-      if (Math.abs(off) < TURN_STEP) { m.phase = 'result'; seen.add(id); return {kind: 'right', say: 'Right: 090 is east, towards the lake. Keep turning right and 180 is south, 270 west, and 360 is north again: 000.'}; }
+      if (Math.abs(off) < TURN_STEP) { m.phase = 'result'; seen.add(id); m.say = 'Right: 090 is east, towards the lake. Keep turning right and 180 is south, 270 west, and 360 is north again: 000.'; return {kind: 'right', say: m.say}; }
       return {kind: 'fail', say: `${turnSay(m.heading, HUT.headingDeg)} East is 090.`};
     }
     if (brian) { m.auto = {turnTo: goal().headingDeg, fly: goal().distanceM, at: 0, brian: true}; m.phase = 'auto'; return {kind: 'progress', say: `Watch: ${three(goal().headingDeg)}, then I stop at ${metres(goal().distanceM)}.`}; }
-    if (id === 'alone') { m.phase = 'flying'; m.auto = {turnTo: null, fly: Infinity, at: 0}; return {kind: 'progress', say: `Press Space when flown reads ${metres(JOB.distanceM)}.`}; }
+    if (id === 'alone') { m.phase = 'flying'; m.auto = {turnTo: null, fly: Infinity, at: 0}; return {kind: 'progress', say: `Press Space when the FLOWN number reads ${metres(JOB.distanceM)}.`}; }
     m.phase = 'auto'; m.auto = {turnTo: null, fly: goal().distanceM, at: 0, judge: true};
     return {kind: 'progress', say: `${three(m.heading)} for ${metres(goal().distanceM)}. Watch where she goes.`};
   }
   function stop() { m.auto = null; return judgeJob(); }
 
   function rulerAct(kind, value) {
-    if (kind === 'ruler' && value === 'best') { m.auto = {ruler: HUT.distanceM, at: 0}; m.phase = 'auto-ruler'; return {kind: 'progress', say: 'Watch: I stretch it to the hut.'}; }
-    if (kind === 'ruler') { m.ruler = Math.max(RULER_STEP_M, Math.min(MAP.east, m.ruler + (value === 'shorter' ? -RULER_STEP_M : RULER_STEP_M))); return null; }
-    if (kind === 'hold') { const at = Math.round(Number(value) / RULER_STEP_M) * RULER_STEP_M; if (Number.isFinite(at)) m.ruler = Math.max(RULER_STEP_M, Math.min(MAP.east, at)); return null; }
+    if (kind === 'ruler' && value === 'best') { m.auto = {ruler: HUT.distanceM, at: 0}; m.phase = 'auto-ruler'; m.autoSay = 'Watch: I stretch it to the hut.'; return {kind: 'progress', say: m.autoSay}; }
+    if (kind === 'ruler') { m.ruler = Math.max(RULER_STEP_M, Math.min(RULER_MAX_M, m.ruler + (value === 'shorter' ? -RULER_STEP_M : RULER_STEP_M))); return null; }
+    if (kind === 'hold') { const at = Math.round(Number(value) / RULER_STEP_M) * RULER_STEP_M; if (Number.isFinite(at)) m.ruler = Math.max(RULER_STEP_M, Math.min(RULER_MAX_M, at)); return null; }
     if (kind === 'fly') return judgeRuler();
     return null;
   }
   function judgeRuler() {
     const squares = m.ruler / SQUARE_M;
-    if (m.ruler === HUT.distanceM) { m.phase = 'result'; seen.add('word-scale'); return {kind: 'right', say: `Right: three squares, and each square is ${SQUARE_M} m, so the hut is 300 m away.`}; }
+    if (m.ruler === HUT.distanceM) { m.phase = 'result'; seen.add('word-scale'); m.say = `Right: three squares, and each square is ${SQUARE_M} m, so the hut is 300 m away.`; return {kind: 'right', say: m.say}; }
     return {kind: 'fail', say: `That is ${metres(m.ruler)}: ${squareWords(squares)}. The hut is 3 squares away: 300 m.`};
   }
 
@@ -236,6 +251,8 @@ export function createModel() {
       const go = Math.min(CRUISE_MS * dt, a.fly - m.flown), u = pointAt(m.heading, 1);
       m.flown += go; m.x += u.x * go; m.y += u.y * go;
       m.track.push({x: m.x, y: m.y});
+      // A practice flight ends at the map's edge and is judged there; the job's brings her back to the pad.
+      if (a.judge && offMap()) { m.auto = null; return judgeTry(id); }
       if (id === 'alone' && m.phase === 'flying' && offMap()) { m.auto = null; m.phase = 'missed'; home(); return {kind: 'fail', say: `She flew off the map after ${metres(m.ghosts.at(-1) ? lengthOf(m.ghosts.at(-1)) : 0)}. She is back on the pad: press Space to fly again, and stop at ${metres(JOB.distanceM)}.`}; }
       if (m.flown < a.fly - 1e-9) return null;
       m.auto = null;
@@ -254,14 +271,16 @@ export function createModel() {
     const want = goal(), off = offBy(m.heading, want.headingDeg), gap = closest(m.heading, want.distanceM, m.target);
     m.phase = 'result';
     const longWay = id === 'try-wrap' && Math.abs(m.turned) > 180;
-    if (Math.abs(off) < TURN_STEP) {
-      m.result = {right: true}; seen.add(id);
-      if (longWay) return {kind: 'right', say: `That worked, but A was the short way: 40 degrees instead of ${Math.round(Math.abs(m.turned))}. Past 000 the number comes round to 355, then 340.`};
-      if (id === 'try-wrap') return {kind: 'right', say: 'Right: A turned her left past 000, round to 355 and on to 340. Only 40 degrees.'};
-      return {kind: 'right', say: `Right over the smoke! ${three(want.headingDeg)} is its heading, and ${metres(want.distanceM)} took her there.`};
+    seen.add(id);
+    m.result = {right: Math.abs(off) < TURN_STEP};
+    if (m.result.right) {
+      m.say = longWay ? `That worked, but A was the short way: 40 degrees instead of ${Math.round(Math.abs(m.turned))}. Past 000 the number comes round to 355, then 340.`
+        : id === 'try-wrap' ? 'Right: A turned her left past 000, round to 355 and on to 340. Only 40 degrees.'
+        : `Right over the smoke! ${three(want.headingDeg)} is its heading, and ${metres(want.distanceM)} took her there.`;
+      return {kind: 'right', say: m.say};
     }
-    m.result = {right: false}; seen.add(id);
-    return {kind: 'wrong', say: `You flew ${three(m.heading)}: ${Math.abs(off)} too far ${off > 0 ? 'right' : 'left'}, and passed ${metres(gap)} from the smoke. ${off > 0 ? 'A turns her back: the number goes down' : 'D turns her round: the number goes up'}. Press Space to fly it again.`};
+    m.say = `You flew heading ${three(m.heading)}: ${Math.abs(off)} degrees too far ${off > 0 ? 'right' : 'left'}, and passed ${metres(gap)} from the smoke. ${off > 0 ? 'A turns her back left: the number goes down' : 'D turns her right: the number goes up'}. Press Space to fly it again.`;
+    return {kind: 'wrong', say: m.say};
   }
 
   // Brian's job: she stopped over the smoke, or Brian says what to change, with the numbers.
@@ -269,9 +288,9 @@ export function createModel() {
     const gap = Math.hypot(m.x - m.target.x, m.y - m.target.y), off = offBy(m.heading, JOB.headingDeg), flown = m.flown;
     if (gap <= RING_M) { m.phase = 'done'; seen.add('alone'); m.say = `Over the smoke! ${three(m.heading)} for ${metres(flown)}: heading and distance found it. Job done.`; return {kind: 'pass', say: m.say}; }
     m.phase = 'missed'; home();
-    if (Math.abs(off) >= TURN_STEP) m.say = `You flew ${three(m.heading)}: ${Math.abs(off)} too far ${off > 0 ? 'right' : 'left'}, and stopped ${metres(gap)} from the smoke. Turn her to ${three(JOB.headingDeg)} (${off > 0 ? 'A' : 'D'}), then Space to fly.`;
-    else if (flown < JOB.distanceM) m.say = `Right heading, but you stopped after ${metres(flown)}, ${metres(JOB.distanceM - flown)} short. Watch flown and stop at ${metres(JOB.distanceM)}. Space to fly again.`;
-    else m.say = `Right heading, but you stopped after ${metres(flown)}, ${metres(flown - JOB.distanceM)} past it. Stop when flown reads ${metres(JOB.distanceM)}. Space to fly again.`;
+    if (Math.abs(off) >= TURN_STEP) m.say = `You flew heading ${three(m.heading)}: ${Math.abs(off)} degrees too far ${off > 0 ? 'right' : 'left'}, and stopped ${metres(gap)} from the smoke. Turn her to ${three(JOB.headingDeg)} (${off > 0 ? 'A' : 'D'}), then Space to fly.`;
+    else if (flown < JOB.distanceM) m.say = `Right heading, but you stopped after ${metres(flown)}, ${metres(JOB.distanceM - flown)} short. Watch the FLOWN number and stop at ${metres(JOB.distanceM)}. Space to fly again.`;
+    else m.say = `Right heading, but you stopped after ${metres(flown)}, ${metres(flown - JOB.distanceM)} past it. Stop when the FLOWN number reads ${metres(JOB.distanceM)}. Space to fly again.`;
     return {kind: 'fail', say: m.say};
   }
 
@@ -291,11 +310,15 @@ export function createModel() {
     const id = step().id;
     const base = {scene: 'map', time: m.time, heli: {x: m.x, y: m.y, heading: m.heading}, flown: m.phase === 'flying' || m.flown > 0 ? m.flown : null, track: m.track, ghosts: m.ghosts,
       spot: m.target, ruler: m.ruler == null ? null : {heading: m.heading, length: m.ruler}, compass: true, gauge: three(m.heading),
-      keys: {}, repeat: [], buttons: [], cards: [], actions: [], glow: null, waiting: false, ready: seen.has(id), dragCompass: false, dragRuler: false};
+      keys: {}, repeat: [], buttons: [], cards: [], actions: [], glow: null, waiting: false, ready: seen.has(id), dragCompass: false, dragRuler: false,
+      aim: m.phase === 'turn' ? goalHeading() : null};
+    // Brian has the controls (Show me): no keys, and he says what he is doing.
+    if (m.phase === 'auto-turn' || m.phase === 'auto-ruler') return {...base, rose: id === 'word-compass', ...(id === 'word-scale' ? {squares: true, compass: false} : {}),
+      say: m.autoSay, prompt: 'Watch Brian.', hints: ['Watch Brian.', 'Watch the gauge.', 'Wait a moment.']};
     if (id === 'wonder') return {...base, actions: ['replay'],
       say: `The radio says: smoke at heading ${three(JOB.headingDeg)}, ${metres(JOB.distanceM)} from the pad. She flew north, 000, and missed it. Which way is ${three(JOB.headingDeg)}?`,
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or R to watch again.' : 'Watch Kestrel One.',
-      hints: ['Watch which way her nose points, and the number on the gauge.', 'She flew straight up the map, north, and the smoke is off to her right.', 'Press Enter when you are ready to find out.']};
+      hints: ['Watch which way her nose points, and the number on the gauge.', 'She flew straight up the map, north, and the smoke is off to her right.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch until she stops, then press Enter.']};
     if (id === 'word-heading') {
       const done = m.phase === 'result';
       return {...base, ...(done ? {actions: []} : turning(null)),
@@ -321,9 +344,9 @@ export function createModel() {
     if (id === 'watch') {
       const done = seen.has(id);
       return {...base, actions: ['replay', 'slow'],
-        say: done ? `She turned right from 000 to ${three(WATCH.headingDeg)}, then flew ${metres(WATCH.distanceM)}: four squares. A heading and a distance.` : `A job for me: the hut at ${three(WATCH.headingDeg)}, ${metres(WATCH.distanceM)}. Watch the gauge as I turn her, then flown as she goes.`,
-        prompt: done ? 'Press Enter to go on, or R to watch again.' : 'Watch the gauge, then flown.',
-        hints: ['Watch the HEADING gauge count up as she turns right.', 'Then watch flown count the metres.', 'Press R to watch again.']};
+        say: done ? `She turned right from 000 to ${three(WATCH.headingDeg)}, then flew ${metres(WATCH.distanceM)}: four squares. A heading and a distance.` : `A job for me: the hut at ${three(WATCH.headingDeg)}, ${metres(WATCH.distanceM)}. Watch the gauge as I turn her, then the FLOWN number as she goes.`,
+        prompt: done ? 'Press Enter to go on, or R to watch again.' : 'Watch the gauge, then the FLOWN number.',
+        hints: ['Watch the HEADING gauge count up as she turns right.', 'Then watch the FLOWN number count the metres.', 'Press R to watch again.']};
     }
     if (id === 'try-turn' || id === 'try-wrap') {
       const want = goal(), wrapStep = id === 'try-wrap';
@@ -350,13 +373,14 @@ export function createModel() {
   }
 
   function jobView(base) {
-    const hints = [`The smoke is at ${three(JOB.headingDeg)}, ${metres(JOB.distanceM)} away.`, `Turn her until the gauge reads ${three(JOB.headingDeg)}, press Space to fly, and Space again when flown reads ${metres(JOB.distanceM)}.`,
+    const hints = [`The smoke is at ${three(JOB.headingDeg)}, ${metres(JOB.distanceM)} away.`, `Turn her until the gauge reads ${three(JOB.headingDeg)}, press Space to fly, and Space again when the FLOWN number reads ${metres(JOB.distanceM)}.`,
       'Watch my pointer: I will turn her and fly it.'];
     const say = `The real one: smoke at ${three(JOB.headingDeg)}, ${metres(JOB.distanceM)}, and no arrow. Turn her, press Space to fly, and Space again to stop over the smoke.`;
     if (m.phase === 'turn') return {...base, ...turning({action: 'fly', label: 'Fly', key: 'Space'}, 'fly:best'), say, prompt: `Turn her to ${three(JOB.headingDeg)} with A and D, then press Space to fly.`, hints};
     if (m.phase === 'auto-turn' || (m.phase === 'auto' && m.auto?.brian)) return {...base, say: m.phase === 'auto' ? `Watch: ${three(JOB.headingDeg)}, then I stop at ${metres(JOB.distanceM)}.` : `Watch: I turn her to ${three(JOB.headingDeg)}.`,
-      prompt: 'Watch Brian fly it.', hints: ['Watch the gauge.', 'Then watch flown.', 'Watch where I stop.']};
-    if (m.phase === 'flying') return {...base, keys: {Space: 'fly'}, buttons: [{action: 'fly', label: 'Stop', key: 'Space'}], waiting: true, target: null, say: `Stop when flown reads ${metres(JOB.distanceM)}.`, prompt: 'Press Space to stop over the smoke.', hints};
+      prompt: 'Watch Brian fly it.', hints: ['Watch the gauge.', 'Then watch the FLOWN number.', 'Watch where I stop.']};
+    if (m.phase === 'flying') return {...base, keys: {Space: 'fly'}, buttons: [{action: 'fly', label: 'Stop', key: 'Space'}], waiting: true, target: null, say: `Stop when the FLOWN number reads ${metres(JOB.distanceM)}.`, prompt: 'Press Space to stop over the smoke.',
+      hints: [hints[0], 'Watch the FLOWN number on the right.', `Press Space when the FLOWN number reads ${metres(JOB.distanceM)}.`]};
     if (m.phase === 'missed') return {...base, ...turning({action: 'fly', label: 'Fly', key: 'Space'}, 'fly:best'), say: m.say, mood: 'explain', prompt: 'Turn her if you need to, then press Space to fly again.', hints};
     return {...base, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to go on.', hints: ['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.']};
   }

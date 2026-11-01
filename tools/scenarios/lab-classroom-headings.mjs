@@ -68,7 +68,7 @@ async function play(c) {
   await next('watch');
   // The smoke's heading: a miss first (100), then 070.
   await at('try-turn'); await shot('try-turn'); await press('KeyD', 20); await press('Space'); await at('try-turn', 's.ready'); await shot('try-turn-miss');
-  if (!(await bubble()).startsWith('You flew 100: 30 too far right')) throw Error('The miss did not say why: ' + await bubble());
+  if (!(await bubble()).startsWith('You flew heading 100: 30 degrees too far right')) throw Error('The miss did not say why: ' + await bubble());
   await press('KeyA', 6); await press('Space'); await c.waitFor(`document.querySelector('.lc-bubble').textContent.startsWith('Right over the smoke')`, 'on the smoke', 30_000); await shot('try-turn-right');
   await next('try-turn');
   await at('try-wrap'); await shot('try-wrap'); await press('KeyA', 8); await shot('try-wrap-turned'); await press('Space'); await at('try-wrap', 's.ready'); await shot('try-wrap-right');

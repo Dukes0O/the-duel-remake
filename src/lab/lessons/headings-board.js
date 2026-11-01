@@ -23,14 +23,15 @@ export function hitTest(view, x, y) {
   if (view.scene !== 'map') return null;
   const [hx, hy] = heliAt(view), r = Math.hypot(x - hx, y - hy);
   if (view.dragRuler && view.ruler) { const [ex, ey] = rulerEnd(view); if (Math.hypot(x - ex, y - ey) < 34 || onRuler(view, x, y)) return {drag: 'ruler', action: 'release'}; }
-  if (view.keys.Space && r < 24) return {action: view.keys.Space};
+  // Her body is Space where Space flies her; otherwise it is a dead spot, so a click on her never turns her at random.
+  if (r < 24) return view.keys.Space ? {action: view.keys.Space} : null;
   if (view.dragCompass && r < RING + 26) return {drag: 'compass', action: 'release'};
   return null;
 }
 const rulerEnd = view => { const [hx, hy] = heliAt(view), [ux, uy] = nose(view.ruler.heading); return [hx + ux * view.ruler.length * SCALE, hy + uy * view.ruler.length * SCALE]; };
 function onRuler(view, x, y) {
   const [hx, hy] = heliAt(view), [ux, uy] = nose(view.ruler.heading), along = (x - hx) * ux + (y - hy) * uy, across = Math.abs((x - hx) * uy - (y - hy) * ux);
-  return along > 0 && along < 760 && across < 22;
+  return along > 30 && along < view.ruler.length * SCALE + 30 && across < 22;
 }
 export function hoverInfo(view, x, y) {
   if (view.scene !== 'map') return null;
@@ -40,7 +41,7 @@ export function hoverInfo(view, x, y) {
   if (x > 760 && y > 40 && y < 190) return `The HEADING gauge, as in the helicopter: ${view.gauge}.`;
   if (view.spot?.kind === 'smoke' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < RING_M * SCALE + 14) return `The smoke. Within ${RING_M} m of it counts as over it.`;
   if (view.spot?.kind === 'hut' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < 20) return 'A hut in the woods.';
-  if (view.ruler && onRuler(view, x, y)) return `The ruler: ${view.ruler.length} m.`;
+  if (view.ruler && onRuler(view, x, y)) return `The ruler: ${Math.round(view.ruler.length)} m.`;
   if (Math.hypot((x - bx(LAKE.x)) / (LAKE.rx * SCALE), (y - by(LAKE.y)) / (LAKE.ry * SCALE)) < 1) return 'The lake, east of the pad.';
   if (x > PLATE.left && x < PLATE.right && y > PLATE.top && y < PLATE.bottom) return `One square of the map is ${SQUARE_M} m on the ground.`;
   return null;
@@ -48,7 +49,8 @@ export function hoverInfo(view, x, y) {
 export function targetPoint(view, action) {
   if (view.scene !== 'map') return null;
   const [hx, hy] = heliAt(view);
-  if (action.startsWith('turn')) { const [ux, uy] = nose(view.heli.heading); return [hx + ux * RING, hy + uy * RING]; }
+  // Brian taps the ring at the heading he wants, where a click turns her to it.
+  if (action.startsWith('turn')) { const [ux, uy] = nose(view.aim ?? view.heli.heading); return [hx + ux * RING, hy + uy * RING]; }
   if (action.startsWith('ruler')) return view.ruler ? rulerEnd(view) : null;
   return [hx, hy];
 }
@@ -99,8 +101,8 @@ function spot(ctx, t, time) {
     ctx.fillStyle = '#e8803a'; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
   }
   if (t.kind === 'hut') {
-    ctx.fillStyle = '#8a6a48'; ctx.fillRect(x - 11, y - 8, 22, 16);
-    ctx.fillStyle = '#5b3f2a'; ctx.beginPath(); ctx.moveTo(x - 14, y - 7); ctx.lineTo(x, y - 18); ctx.lineTo(x + 14, y - 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a6a48'; ctx.fillRect(x - 11, y - 30, 22, 16);
+    ctx.fillStyle = '#5b3f2a'; ctx.beginPath(); ctx.moveTo(x - 14, y - 29); ctx.lineTo(x, y - 40); ctx.lineTo(x + 14, y - 29); ctx.closePath(); ctx.fill();
   }
   if (t.kind !== 'lake') text(ctx, t.label, x, y + 28, {size: 15, colour: theme.text});
   else text(ctx, t.label, bx(LAKE.x), by(LAKE.y), {size: 16, colour: 'rgba(245,240,220,.8)'});
@@ -129,7 +131,7 @@ function ruler(ctx, view) {
   ctx.restore();
   const [ex, ey] = rulerEnd(view);
   ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI * 2); ctx.fill();
-  text(ctx, `${L} m`, ex - px * 30 - ux * 20, ey - py * 30 - uy * 20, {size: 18, colour: theme.accent});
+  text(ctx, `${Math.round(L)} m`, ex - px * 30 - ux * 20, ey - py * 30 - uy * 20, {size: 18, colour: theme.accent});
 }
 // Kestrel One from above: nose to her heading, the rotor a turning disc.
 function kestrel(ctx, view) {
@@ -200,9 +202,9 @@ function drawMap(ctx, view) {
   plate(ctx, view);
   ctx.save(); ctx.beginPath(); ctx.rect(PLATE.left, PLATE.top, PLATE.right - PLATE.left, PLATE.bottom - PLATE.top); ctx.clip();
   pad(ctx, Math.hypot(view.heli.x, view.heli.y) > 150);
-  if (view.spot) spot(ctx, view.spot, view.time);
   tracks(ctx, view);
   if (view.ruler) ruler(ctx, view);
+  if (view.spot) spot(ctx, view.spot, view.time);
   if (view.compass) compassRing(ctx, view);
   kestrel(ctx, view);
   if (view.glow === 'compass') { const [x, y] = heliAt(view); halo(ctx, x, y, RING + 8, view.time); }
