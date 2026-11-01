@@ -42,3 +42,14 @@ Claude (Director), 1 November 2026. Card `docs/board/cards/HELI-COMPASS.md`.
   open, its hover bearing now differs from the fire and rescue lines. HELI-CHART-MIRROR (Claude) flips the chart.
 
 ## Checks
+- `tools/test-lab-challenges.mjs` 25/25, including the new flight on the gauge (070 reaches the smoke,
+  290 never comes nearer).
+- The four pinned suites, `test-heli-fire.mjs` and the suites that read bearings or wind names
+  (fire view, heli audio, bucket, job clarity, jobs, mode, rescue view, search, survey, Lab view, map
+  destinations, map view, audio) pass.
+- Lane tier (`--changed --jobs 4`): 73/73. `npm run build` (direct Vite): passes.
+- One independent review: the code right; three faults, all fixed (one pin not yet re-recorded, the
+  change note incomplete, a comment above the wrong function). It also found the chart mirror,
+  carded as HELI-CHART-MIRROR.
+- Rule 19: helicopter and Lab code since the full tier on c31e8e5a; no save shape or physics change
+  (the new helpers only read angles), so the lane tier covers it.
