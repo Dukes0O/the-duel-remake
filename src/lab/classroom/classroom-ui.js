@@ -57,6 +57,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.ctrlKey || event.altKey || event.metaKey) return;
     // A focused Lab button outside the lesson keeps its own Enter and Space.
     if (!root.contains(event.target) && event.target.closest?.('button,input,select,textarea,a')) return;
+    // A lesson button reached with Tab presses on Enter or Space (a mouse-clicked one does not hold the keys).
+    if (['Enter', 'NumpadEnter', 'Space'].includes(event.code) && event.target.closest?.('button') && event.target.matches?.(':focus-visible')) return;
     const v = session.view(), name = KEY_NAMES[event.code];
     let action = null;
     if (event.code === 'Escape') action = 'leave';

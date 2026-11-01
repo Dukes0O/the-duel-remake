@@ -79,9 +79,20 @@ async function play(c) {
   }
   await at('recap'); await new Promise(r => setTimeout(r, 1500)); await shot('recap');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
+  // Teaching writes the notebook words and never passes the lesson by itself.
+  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.pendulum && ['pendulum-pendulum', 'pendulum-swing-time', 'pendulum-length'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   // The game challenge goes through the Lab's own path: the helicopter starts with the key idea card.
   await press('Enter');
   await c.waitFor(`!document.querySelector('.lab-classroom') && window.__qaApp.heliSession?.view?.()?.challenge?.id === 'pendulum'`, 'pendulum challenge in the helicopter', 60_000);
   await c.waitFor(`!document.querySelector('.lab-key-idea')?.hidden && document.querySelector('.lab-key-idea')?.textContent.includes('Length sets the swing time.')`, 'key idea card');
-  await new Promise(r => setTimeout(r, 1500)); await shot('challenge');
+  await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && document.querySelector('#view3d canvas')?.style.visibility !== 'hidden'`, 'presented challenge world', 120_000);
+  await new Promise(r => setTimeout(r, 1500));
+  if (!(await c.evaluate(`(() => {
+    const card = document.querySelector('.lab-key-idea').getBoundingClientRect();
+    return [...document.querySelectorAll('button,input,select,a[href]')].every(el => {
+      const r = el.getBoundingClientRect();
+      return !r.width || !r.height || r.right <= card.left || r.left >= card.right || r.bottom <= card.top || r.top >= card.bottom;
+    });
+  })()`))) throw Error('The key-idea card overlaps an interactive control.');
+  await shot('challenge');
 }
