@@ -26,11 +26,23 @@ The Water Road (`docs/story/wasteland-water-road.md` section 9).
 - `tools/fixtures/saves/24-story-water.json`: a player part way along (Sal and the
   Dustmonger beaten, Sal's job won, one note), a Kogane-only player and an older
   player.
-- `tools/test-water-save.mjs` (new, 60 checks).
+- `tools/test-water-save.mjs` (new, 65 checks).
 
 ## Checks
 
-- `node tools/test-water-save.mjs`: 60 checks pass.
+- `node tools/test-water-save.mjs`: 65 checks pass.
+
+## Save review (rule 17)
+
+One independent save review. Two real faults, both fixed and confirmed: a newer
+game's story with no Water Road entry made the chapter reads throw instead of
+refusing (`waterOf` now reads it as empty, and the writers give the newer-version
+refusal first); loading capped a saved note count at 7, which would lower a count a
+later build saved (a higher count is now kept). Also checked: no writer lowers a
+mark, loading with the module imported adds no Water Road to any player, unknown
+names and job ids are kept, the defeat check matches `warlords.js`, and no odd
+career shape throws. To do in WATER-HOOKS: `app.js` imports `water-save.js` so
+every load in the game cleans `story.water` the same way.
 
 ## Changed assertions
 

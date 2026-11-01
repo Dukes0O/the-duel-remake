@@ -97,7 +97,8 @@ ok(!markWaterEnd(ended.profile).changed, 'once');
 // Normalizing: saved names are checked, absent names stay absent, unknown names are kept.
 {
   const odd = normalizeStory({version: 1, water: {read: 'yes', end: 1, jobs: ['sal', 'sal', 3, 'gratian-nine'], notes: 99, keep: {a: 1}}}).water;
-  same(odd, {read: false, end: false, jobs: ['sal', 'gratian-nine'], notes: WATER_NOTE_COUNT, keep: {a: 1}}, 'checked and kept');
+  same(odd, {read: false, end: false, jobs: ['sal', 'gratian-nine'], notes: 99, keep: {a: 1}}, 'checked and kept (a higher count from a later build stays)');
+  same(readWaterNote({...createProfile(), story: {version: 1, water: {notes: 9}}}).profile.story.water.notes, 9, 'a write never lowers a saved count');
   same(normalizeStory({version: 1, water: {notes: -1}}).water, {}, 'a broken count is dropped');
   same(normalizeStory({version: 1, water: {jobs: 'sal'}}).water, {jobs: []}, 'a broken job list reads as none');
   ok(!has(normalizeStory({version: 1, kogane: {}}), 'water'), 'loading does not add the Water Road');
@@ -108,6 +109,10 @@ ok(!markWaterEnd(ended.profile).changed, 'once');
   const newer = {...beat(createProfile(), 'sal'), story: {version: 2, water: {read: true, future: 1}}};
   ok(!readWaterNote(newer).ok && !markWaterJob(newer, 'sal').ok && !markWaterNotes(newer, 1).ok && !markWaterEnd(newer).ok, 'every writer refuses');
   same(waterChapter(newer), null, 'no chapter is shown');
+  for (const bare of [{...createProfile(), story: {version: 2}}, {...createProfile(), story: {version: 3, water: null}}]) {
+    ok(!markWaterJob(bare, 'sal').ok && !waterChapterDone(bare, 0) && !waterJobDone(bare, 1), 'a newer story without a Water Road entry is refused, not a crash');
+    same(markWaterEnd(bare).reason, 'This story belongs to a newer version of the game.', 'and says why');
+  }
   same(normalizeProfile(newer).story, newer.story, 'the newer story is kept exactly');
 }
 

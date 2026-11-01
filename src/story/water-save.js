@@ -39,10 +39,8 @@ function normalizeWater(water) {
   for (const flag of ['read', 'end']) if (Object.hasOwn(water, flag)) water[flag] = water[flag] === true;
   if (Object.hasOwn(water, 'jobs')) water.jobs = Array.isArray(water.jobs)
     ? water.jobs.filter((id, index, list) => typeof id === 'string' && id && list.indexOf(id) === index) : [];
-  if (Object.hasOwn(water, 'notes')) {
-    if (Number.isSafeInteger(water.notes) && water.notes >= 0) water.notes = Math.min(water.notes, WATER_NOTE_COUNT);
-    else delete water.notes;
-  }
+  // A higher count is kept as saved: a later build may show more notes (chapter 9).
+  if (Object.hasOwn(water, 'notes') && !(Number.isSafeInteger(water.notes) && water.notes >= 0)) delete water.notes;
   return water;
 }
 
@@ -69,7 +67,8 @@ registerStory({
 });
 
 // The player's Water Road marks as saved (read only; an absent field reads as empty).
-export const waterOf = profile => storyOf(profile)[WATER_KEY];
+// A newer game's story reads as empty here: nothing is shown from it and nothing written.
+export const waterOf = profile => (storyIsNewer(profile) ? null : storyOf(profile)[WATER_KEY]) ?? {};
 
 // A chapter is done: chapter 0 when the note is read, the others when their warlord is beaten.
 export function waterChapterDone(profile, n) {
@@ -96,8 +95,9 @@ export const waterNotesDue = profile => WATER_CHAPTERS.slice(1, WATER_NOTE_COUNT
   .filter(chapter => waterChapterDone(profile, chapter.n)).length;
 
 export const readWaterNote = profile => writeStory(profile, WATER_KEY, 'read');
-// Marks a chapter's job won. Only while that chapter is open, so a job cannot be won ahead of the story.
+// Marks a chapter's job won, once the chapter before it is done.
 export function markWaterJob(profile, warlordId) {
+  if (storyIsNewer(profile)) return writeStory(profile, WATER_KEY, 'job', warlordId);
   const chapter = WATER_CHAPTERS.find(item => item.warlordId === warlordId);
   if (!chapter?.job) return {ok: false, changed: false, profile, reason: 'That chapter has no job.'};
   if (!waterChapterOpen(profile, chapter.n)) return {ok: false, changed: false, profile, reason: 'Finish the chapter before first.'};
@@ -106,6 +106,7 @@ export function markWaterJob(profile, warlordId) {
 export const markWaterNotes = (profile, count) => writeStory(profile, WATER_KEY, 'notes', count);
 // Hollis's end lines, once all eight warlords are beaten.
 export function markWaterEnd(profile) {
+  if (storyIsNewer(profile)) return writeStory(profile, WATER_KEY, 'end');
   if (waterChapter(profile) !== WATER_CHAPTERS.length) return {ok: false, changed: false, profile, reason: 'Beat Baron Blackiron first.'};
   return writeStory(profile, WATER_KEY, 'end');
 }
