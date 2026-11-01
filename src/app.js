@@ -228,6 +228,8 @@ export class App {
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
       if(event.hiddenRoadArrived)this._waterYardArrived(); // WATER-HOOKS: Hollis's end lines, once
+      // WATER-SCREENS: a story job's radio line plays at GO (a race) or as the fight begins (an arena game), once loaded.
+      if((event.go||event.arenaPhase?.phase==='fight')&&this._waterStartLine){const line=this._waterStartLine;this._waterStartLine=null;this._storySay(line);}
       if (event.stageResult) {
         this._settleResult(event.stageResult,state);
       }
@@ -861,8 +863,8 @@ export class App {
     this._storyRace=storyRun?{runId:this.runId,level:storyRun.level}:null;
     if(storyRun){levelStart(this.duel);this._storySay('story.kogane.daichi.grid');}
     // WATER-HOOKS: a Water Road race, asked for by the Story card (or a restart of one), and its radio line.
-    const waterLine=this._waterRoad().raceStarted({stage,mode:this.duel.state.mode,runId:this.runId,rematch:options.waterRematch===true});
-    if(waterLine)this._storySay(waterLine);
+    // The line waits for GO: while the road loads the player cannot see it yet.
+    this._waterStartLine=this._waterRoad().raceStarted({stage,mode:this.duel.state.mode,runId:this.runId,rematch:options.waterRematch===true});
     return true;
   }
   nextStage(){
@@ -1855,7 +1857,7 @@ export class App {
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
-    if (started && waterLine) this._storySay(waterLine);
+    this._waterStartLine = started ? waterLine : null; // said when the fight begins (see the listener)
     return started;
   }
   // ---- the helicopter --------------------------------------------------
@@ -2420,7 +2422,7 @@ export class App {
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     this.audio.setPaused(false);
     if (heliLanding) this.setRaceSettings(heliLanding);
-    this._storyRace = null; this._storyPending = null; this._water?.clear(); // the story's race ends with the race (quitting grants nothing)
+    this._storyRace = null; this._storyPending = null; this._water?.clear(); this._waterStartLine = null; // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
     this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
   }

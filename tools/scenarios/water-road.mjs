@@ -94,20 +94,25 @@ export async function run(context) {
   const setup = await app(`({stage: app.getRaceChoices().startStage, mode: app.getRaceChoices().mode, pending: app._water?.pending?.mark ?? null})`);
   fact(setup.mode === 'wasteland' && setup.pending === 'sal', 'the setup shows Mad Max Duel on Sal\'s road, waiting for START');
   await shot('03-setup-filled', 'the setup filled: Pacific Canyon, Mad Max Duel');
+  // A young driver picks automatic gears; changing them keeps the story job.
+  await click('[data-difficulty="casual"]');
+  await wait(300);
+  fact(await app(`app._water?.pending?.mark === 'sal'`), 'choosing automatic gears keeps the story job');
 
   // 3. START and the race, driven by the game's autopilot on Easy. Up to three tries.
   let won = false;
   for (let attempt = 1; attempt <= 3 && !won; attempt++) {
     if (attempt > 1) { await toMenu(); await app(`app.waterStep('sal')`); await wait(300); }
     await click('#start-engine');
-    await context.waitFor(`window.__qaApp.duel.state.status === 'countdown' || window.__qaApp.duel.state.status === 'racing'`, 'the race starts', 60_000);
+    await context.waitFor(`window.__qaApp.duel.state.status === 'racing'`, 'GO', 90_000);
     if (attempt === 1) {
-      await wait(800);
-      fact(await app(`app.storyCaption?.id === 'story.water.job.sal'`), 'Hollis\'s radio line shows at the start');
+      await wait(500);
+      fact(await app(`app.storyCaption?.id === 'story.water.job.sal'`), 'Hollis\'s radio line shows at GO');
       await shot('04-race-start-caption', 'the race starts with Hollis on the radio');
     }
-    const result = await context.evaluate(`(() => { const a = window.__qaApp; a.stop?.(); a.autopilot = true;
-      for (let i = 0; i < 30 * 600 && !['stage_result', 'gameover'].includes(a.duel.state.status); i++) a.advance(1 / 30);
+    // The game's own autopilot drives (the assisted player of tools/water-easy-driver.mjs wins this race 10 in 10).
+    const result = await context.evaluate(`(() => { const a = window.__qaApp; a.stop?.(); a.autopilot = true; a._scriptedCrashDone = true;
+      for (let i = 0; i < 60 * 900 && !['stage_result', 'gameover'].includes(a.duel.state.status); i++) a.advance(1 / 60, 1 / 60);
       a.autopilot = false; a.start?.(); const r = a.duel.state.results || {};
       return {status: a.duel.state.status, won: r.won === true, job: r.waterJob ?? null, time: r.timeSec ?? r.stageTimeSec ?? null}; })()`);
     report.races.push(result);
