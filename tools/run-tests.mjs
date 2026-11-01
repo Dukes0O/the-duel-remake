@@ -96,7 +96,7 @@ export const LEGACY_SUITE_ORDER=Object.freeze([
 const HELP=[
   'Usage: node tools/run-tests.mjs [--list] [--filter NAME] [--jobs N] [--keep-going] [--tier lane|merge|full] [--changed] [--json]',
   '',
-  'Each suite runs in its own Node process. Full tier splits the long campaign matrix into eight shards.',
+  'Each suite runs in its own Node process. Full tier splits the long campaign matrix into eight shards and the any-car instructor suite into four.',
   '  --list          Show the selected suites without running them.',
   '  --filter NAME   Match a path substring, ignoring case. Repeat for OR matches.',
   '                  Use "core" to select src/test.js.',
