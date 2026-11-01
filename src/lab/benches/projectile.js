@@ -6,6 +6,10 @@ import {BUCKET, DROP_AIM_RINGS, aimPoint, createBucket, stepBucket} from '../../
 import {control, makeBench} from './bench-core.js';
 
 // The buoy-style target of the bench: 24 m ahead, hit within the largest ring.
+// For the classroom lesson, which reads the helicopter's rules only through this bench.
+export {GRAVITY, HELI_STEP};
+export const WATER_TOP_SPEED_MS = BUCKET.fallSpeed;
+
 export const TARGET = Object.freeze({distanceM: 24, radiusM: DROP_AIM_RINGS[0]});
 
 const controls = [
