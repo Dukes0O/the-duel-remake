@@ -1491,3 +1491,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: released WATER-YARD-NEXT (build 26.11.01 19:33 UTC, master 7da01733; rule 19 on the full tier of 86c48d4f).
 - 1 Nov: merged STORY-MULTI (story registry for save, lines and cards, chooser; Kogane identical over about 18,700 cases in the save review; story suites and registry 78, lane 57/57, build, Kogane scenario). Goes live with the Water Road.
 - 1 Nov: merged WATER-LINES (eighteen Water Road lines, captions and notes; test 33, lane 25/25, build).
+- 1 Nov: merged WATER-SAVE (story.water, chapters read from the ladder; test 65, fixture roster 25 reviewed, lane 36/36, build; save review, two faults fixed and confirmed).
