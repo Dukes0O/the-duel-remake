@@ -25,6 +25,8 @@ The Water Road (`docs/story/wasteland-water-road.md` section 5).
 ## Checks
 
 - `node tools/test-water-lines.mjs`: 33 checks pass.
+- Lane tier: 25 passed, 0 failed, 0 not run. `npm run build` passes.
+- No review: these are the story's words, written and decided by Claude (rule 17).
 
 ## Changed assertions
 
