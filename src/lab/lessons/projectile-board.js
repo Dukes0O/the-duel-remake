@@ -8,7 +8,7 @@ export {BOARD};
 // Pressing on the water moves the flag there at once.
 export const pressMovesDrag = true;
 
-// Metres to board units: the let-go post at x 150, the lake's surface at the ground line.
+// Metres to board units: the let-go post at x 200, the lake's surface at the ground line.
 const POST_X = 200, METRE = 12, WATER_Y = GROUND_Y, HELI = .5, HANG_M = 3.8;
 const bx = m => POST_X + m * METRE, by = h => WATER_Y - h * METRE;
 const COLOURS = ['#f5f0dc', theme.accent, theme.good];
@@ -159,6 +159,7 @@ function marks(ctx, view) {
     text(ctx, k.label, x, WATER_Y - 30 - (i % 2) * 22, {size: 16, colour});
   });
 }
+const beforeBuoy = b => b > 0 ? `let go ${b} m before` : b < 0 ? `let go ${-b} m after` : 'let go over the buoy';
 function letGoMark(ctx, x, label, colour = theme.accent, dy = 52) {
   const cx = bx(x);
   ctx.strokeStyle = colour; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(cx, by(HIGH_M) + 6); ctx.lineTo(cx, WATER_Y - 4); ctx.stroke(); ctx.setLineDash([]);
@@ -202,6 +203,11 @@ function table(ctx, rows) {
     text(ctx, row.value ?? '…', x + w - 14, y + 24 + i * 30, {size: 18, align: 'right', colour: row.value ? theme.good : theme.faint});
   });
 }
+// The board's Space cap, wide enough for its word (keyCap fits one letter).
+function spaceCap(ctx, x, y) {
+  ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 26, y - 10, 52, 20, 3); ctx.fill();
+  ctx.fillStyle = '#1d2224'; ctx.font = '800 13px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Space', x, y + 1);
+}
 function halo(ctx, x, y, r, time) {
   ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.globalAlpha = .55 + .35 * Math.sin(time * 6);
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
@@ -212,7 +218,7 @@ function drawLake(ctx, view) {
   if (view.post) post(ctx);
   if (view.buoy != null) buoy(ctx, view.buoy, view.time);
   if (view.ghostLetGo != null) letGoMark(ctx, view.ghostLetGo, 'at 10 m/s', theme.faint, 96);
-  if (view.letGo != null) letGoMark(ctx, view.letGo, view.ruler === 'buoy' ? `let go ${metres(view.buoy - view.letGo)} before` : view.ghostLetGo != null ? 'at 20 m/s' : 'let go here');
+  if (view.letGo != null) letGoMark(ctx, view.letGo, view.ruler === 'buoy' ? beforeBuoy(Math.round(view.buoy - view.letGo)) : view.ghostLetGo != null ? 'at 20 m/s' : 'let go here');
   if (view.flag != null) flag(ctx, view.flag, view.glow === 'flag', view.time);
   if (view.helis.length && view.helis.every(c => !c.set)) [...new Set(view.helis.map(c => c.h))].forEach((h, i) => height(ctx, h, POST_X + 40 + i * 76));
   drops(ctx, view);
@@ -221,7 +227,7 @@ function drawLake(ctx, view) {
   if (view.underHer) underHer(ctx, view);
   for (const c of view.helis) if (c.x > -14 && c.x < 76) kestrel(ctx, c, view);
   if (view.glow === 'drop' || view.glow === 'drop:best') { const at = targetPoint(view, view.glow); if (at) halo(ctx, ...at, 26, view.time); }
-  if (view.keys.Space && view.helis[0]) { const [kx, ky] = bucketAt(view.helis[0]); keyCap(ctx, kx + 34, ky - 6, 'Space'); }
+  if (view.keys.Space && view.helis[0]) { const [kx, ky] = bucketAt(view.helis[0]); spaceCap(ctx, kx + 46, ky - 6); }
   if (view.dragFlag) { keyCap(ctx, bx(view.flag) - 26, WATER_Y + 52, '←'); keyCap(ctx, bx(view.flag) + 26, WATER_Y + 52, '→'); }
   if (view.clock) clock(ctx, view);
   if (view.table) table(ctx, view.table);

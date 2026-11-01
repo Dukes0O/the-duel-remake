@@ -69,7 +69,7 @@ async function play(c) {
   await next('try-height');
   // Brian's job: an early press falls short and Brian says why; then help climbs to his pointer and Show me hits.
   await at('alone'); await shot('alone');
-  await press('Space'); await wait(800); await press('Space');
+  await press('Space'); await wait(2000); await press('Space');
   await at('alone', 's.help === 1'); await wait(400); await shot('alone-short');
   for (const rung of [2, 3]) { await press('KeyH'); await at('alone', `s.help === ${rung}`); }
   await wait(900); await shot('alone-show-me');

@@ -154,7 +154,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only a
   assert.equal(session.view().marks.at(-1).label, `${said} m short`, 'the mark on the water says what Brian says');
   assert.ok(adds(session.view().brian.text, /^You let go (\d+) m before the buoy\. The water lands (\d+) m ahead, so it fell (\d+) m short\. Let go a little later\./, -1) >= 15);
   assert.ok(!session.view().ready);
-  session.act('drop'); until(session, v => v.phase === undefined && v.prompt === 'Press Space to go round again.', 12);
+  session.act('drop'); until(session, v => v.prompt === 'Press Space to go round again.', 12);
   assert.match(session.view().brian.text, /She flew past without letting go/);
   flyAndLetGo(session, BEST_LET_GO_M + RING_M - .5);
   assert.ok(session.view().ready);
@@ -244,4 +244,76 @@ test('replays: the wonder loops, and the watch steps start again', () => {
   session.act('replay');
   assert.deepEqual(session.view().table.map(r => r.value), [null, null, null]);
   assert.equal(metres(-4.6), '5 m');
+});
+
+test('review fixes: Show me works at any moment of the job, holds the keys while Brian flies, and lands on the board', () => {
+  const inBoard = v => { const [x, y] = targetPoint(v, 'drop:best'); return x > 0 && x < 1000 && y > 0 && y < 680; };
+  const showMe = session => { for (let i = 0; i < 3; i++) session.act('help'); assert.ok(inBoard(session.view()), 'the pointer is on the board'); run(session, SHOW_ME_S + .2); };
+  // Early in a run: Brian takes over, and the child's Space does nothing while he flies.
+  let session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  session.act('drop'); run(session, 1.8);
+  showMe(session);
+  let v = session.view();
+  assert.deepEqual([v.prompt, Object.keys(v.keys).length, v.buttons.length, v.waiting], ['Watch Brian let go.', 0, 0, false]);
+  session.act('drop');
+  until(session, x => x.ready, 10);
+  assert.match(session.view().brian.text, /^Splash on the buoy! You let go 10 m before it/);
+  assert.ok(session.takeEvents().some(e => e.kind === 'pass' && e.sound === 'lab.splash'), 'the job splashes too');
+  // Late in a run: she comes round and Brian flies it from the start.
+  session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  session.act('drop'); until(session, x => x.helis[0].x > BEST_LET_GO_M + 2, 10);
+  showMe(session);
+  until(session, x => x.ready, 12);
+  assert.match(session.view().brian.text, /^Splash on the buoy!/);
+  // After a miss: she is back at the start, where the pointer and a click can reach her.
+  session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  flyAndLetGo(session, JOB.buoyM + 3);
+  v = session.view();
+  assert.ok(v.helis[0].x < 0 && !v.helis[0].set, 'she comes round to the start after a miss');
+  assert.equal(hitTest(v, ...targetPoint(v, 'drop'))?.action, 'drop');
+  showMe(session);
+  until(session, x => x.ready, 12);
+  assert.match(session.view().brian.text, /^Splash on the buoy!/);
+});
+
+test('review fixes: no letting go while she speeds up; misses and hits are judged in the metres Brian says', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  session.act('drop'); run(session, .8); session.act('drop');
+  assert.match(session.view().brian.text, /^Not yet: she is still speeding up\. Let go after she passes the 30 mark\./);
+  assert.equal(session.view().drops.length, 0);
+  // Far off: no "a little" in what to change.
+  until(session, x => x.helis[0].x >= 2, 5); session.act('drop');
+  until(session, x => x.drops.every(d => d.landed), 10);
+  assert.match(session.view().brian.text, /fell \d+ m short\. Let go later\./);
+  // Let go after the buoy: the mark on the water says after, as Brian does.
+  flyAndLetGo(session, JOB.buoyM + 6);
+  assert.match(session.view().brian.text, /^You let go after the buoy\./);
+  const said = [];
+  const ctx = new Proxy({}, {get: (target, name) => name in target ? target[name] : name === 'fillText' ? value => said.push(value)
+    : name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {},
+  set: (target, name, value) => { target[name] = value; return true; }});
+  drawBoard(ctx, session.view(), 1000, 680);
+  assert.ok(said.some(t => /^let go \d+ m after$/.test(t)), said.join(' | '));
+  // The flag is judged in whole metres: 11 to 15 m are all within 2 m of the 13 m Brian says.
+  for (const [flag, right] of [[10, false], [11, true], [15, true], [16, false]]) {
+    const s = createClassroomSession(lesson);
+    playThroughTo(s, 'try-flag');
+    s.act(`hold:${flag}`); s.act('drop'); until(s, x => x.ready, 10);
+    assert.equal(s.view().mood === 'cheer', right, `flag at ${flag} m: ${s.view().brian.text}`);
+  }
+});
+
+test('review fixes: help after a finished step or an answered check names a key that works', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-gravity');
+  session.act('drop'); until(session, v => v.ready, 5);
+  assert.deepEqual(session.view().hints, ['Press R to watch it again.', 'Press Enter to go on.', 'Press Enter to go on.']);
+  session.act('next');
+  playThroughTo(session, 'check-over');
+  session.act('answer:2');
+  assert.equal(session.view().hints[0], 'Press R to watch it again.');
 });

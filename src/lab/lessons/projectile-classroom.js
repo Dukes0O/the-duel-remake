@@ -104,6 +104,10 @@ const HEIGHT_GUESSES = Object.freeze([
 const between = () => `between the ${metres(water(10))} it went at 10 m/s and the ${metres(water(20))} at 20 m/s`;
 const lowHigh = () => `${metres(water(10, LOW_M))} from ${LOW_M} m up, ${metres(water(10))} from ${HIGH_M} m up`;
 
+const SHOWING = 'Watch: I let go 10 m before the buoy.';
+const DONE_HINTS = Object.freeze(['Press R to watch it again.', 'Press Enter to go on.', 'Press Enter to go on.']);
+// The miss Brian says on the job, in whole metres: past is plus, short is minus.
+const missSaid = (d, end) => Math.round(end.distanceM) - Math.round(JOB.buoyM - d.x0);
 // Space sets her off (or lets go); the button says which. Brian's pointer may aim at a better press than the key's.
 const space = (label, target = 'drop') => ({keys: {Space: 'drop'}, buttons: [{action: 'drop', label, key: 'Space'}], waiting: true, target, glow: target});
 
@@ -203,18 +207,22 @@ export function createModel() {
     return null;
   }
 
+  // Brian's job. Space sets her off and Space again lets go; Show me (drop:best) flies a run and lets go
+  // at the right place, from wherever she is: past that place, she comes round and he starts again.
+  const home = () => Object.assign(m.helis[0], heli(JOB.speed, HIGH_M, {release: null}));
   function jobAct(kind, value) {
-    const c = m.helis[0];
+    const c = m.helis[0], best = value === 'best';
     if (kind !== 'drop' || m.phase === 'falling' || m.phase === 'done') return null;
     if (m.phase === 'flying') {
-      if (value === 'best') { if (c.x < BEST_LET_GO_M) m.auto = BEST_LET_GO_M; return null; }
-      letGo(c); m.phase = 'falling';
-      return {kind: 'progress', say: 'Watch the water.'};
+      if (m.auto != null) return null; // Brian is flying this run.
+      if (best && c.x < BEST_LET_GO_M) { m.auto = BEST_LET_GO_M; return {kind: 'progress', say: SHOWING}; }
+      if (!best && c.x < 0) return {kind: 'progress', say: `Not yet: she is still speeding up. Let go after she passes the ${JOB.buoyM} mark.`};
+      if (!best) { letGo(c); m.phase = 'falling'; return {kind: 'progress', say: 'Watch the water.'}; }
     }
-    // Ready, or going round again after a miss: back to the start and away.
-    if (m.phase === 'missed') { Object.assign(c, heli(JOB.speed, HIGH_M, {release: null})); m.drops = []; }
-    m.phase = 'flying'; m.auto = value === 'best' ? BEST_LET_GO_M : null; setOff();
-    return {kind: 'progress', say: value === 'best' ? 'Watch: I let go 10 m before the buoy.' : 'Let go before the buoy: press Space.'};
+    // Ready, going round again after a miss, or Show me too late in a run: from the start and away.
+    home(); m.drops = [];
+    m.phase = 'flying'; m.auto = best ? BEST_LET_GO_M : null; setOff();
+    return {kind: 'progress', say: best ? SHOWING : 'Let go before the buoy: press Space.'};
   }
 
   function tick(dt) {
@@ -231,10 +239,10 @@ export function createModel() {
       if (d.landed) continue;
       d.t = m.time - d.at;
       const end = landing(d.kind, d.h, d.v);
-      if (d.t >= end.seconds) { d.landed = true; m.lastLand = m.time; m.marks.push({...markOf(id, d, end), at: m.time}); out ??= {kind: 'sound', sound: 'lab.splash'}; if (id === 'alone') return judge(d, end); }
+      if (d.t >= end.seconds) { d.landed = true; m.lastLand = m.time; m.marks.push({...markOf(id, d, end), at: m.time}); out ??= {kind: 'sound', sound: 'lab.splash'}; if (id === 'alone') return {...judge(d, end), sound: 'lab.splash'}; }
     }
     if (id === 'alone' && m.phase === 'flying' && m.helis[0].x > END_M) {
-      m.phase = 'missed';
+      m.phase = 'missed'; home();
       return {kind: 'fail', say: 'She flew past without letting go. Press Space to go round again, and let go before the buoy.'};
     }
     if (id === 'wonder') {
@@ -254,7 +262,7 @@ export function createModel() {
       const off = x - m.buoy;
       return {kind: d.kind, x, colour: d.colour, label: Math.abs(off) <= RING_M ? 'on the buoy' : `${metres(off)} ${off > 0 ? 'past' : 'short'}`};
     }
-    if (id === 'alone') { const said = Math.round(end.distanceM) - Math.round(m.buoy - d.x0); return {kind: d.kind, x, colour: d.colour, label: Math.abs(x - m.buoy) <= RING_M ? 'hit!' : `${metres(said)} ${said > 0 ? 'past' : 'short'}`}; }
+    if (id === 'alone') { const said = missSaid(d, end); return {kind: d.kind, x, colour: d.colour, label: Math.abs(said) <= RING_M ? 'hit!' : `${metres(said)} ${said > 0 ? 'past' : 'short'}`}; }
     return {kind: d.kind, x, colour: d.colour, label: metres(end.distanceM)};
   }
 
@@ -269,9 +277,10 @@ export function createModel() {
     if (id === 'word-forward-speed') return {kind: 'right', say: `The stone kept her forward speed, 10 metres every second, so it stayed right under her and landed ${metres(stone.distanceM)} ahead of the post.`};
     if (id === 'word-arc') return {kind: 'right', say: `At 20 m/s the arc is longer: ${metres(stone.distanceM)} ahead, about twice the ${metres(landing('stone', HIGH_M, 10).distanceM)} at 10 m/s. Faster forward speed, further ahead.`};
     if (id === 'try-flag') {
-      const where = water(15), off = where - m.flag;
+      // Judged in the whole metres the board and Brian show: the flag is on a whole metre.
+      const where = water(15), off = Math.round(where) - m.flag;
       m.result = {right: Math.abs(off) <= CLOSE_M};
-      if (m.result.right) return {kind: 'right', say: `Right! The water landed ${metres(where)} ahead, ${Math.abs(off) < .5 ? 'right by' : `${metres(off)} from`} your flag.`};
+      if (m.result.right) return {kind: 'right', say: `Right! The water landed ${metres(where)} ahead, ${off === 0 ? 'right by' : `${metres(off)} from`} your flag.`};
       return {kind: 'wrong', say: off > 0 ? `It landed ${metres(where)} ahead, ${metres(off)} past your flag. At 15 m/s it carries on forward further than that: ${between()}.`
         : `It landed ${metres(where)} ahead, ${metres(off)} short of your flag. Air slows the spray, so it lands short of where a stone would: ${between()}.`};
     }
@@ -291,16 +300,17 @@ export function createModel() {
     return e;
   }
   function judgeSay(d, end) {
-    // The numbers Brian says add up: metres before the buoy, plus the miss, make the metres it carried on.
-    const before = m.buoy - d.x0, miss = d.x0 + end.distanceM - m.buoy, ahead = metres(end.distanceM), said = Math.round(end.distanceM) - Math.round(before);
-    if (Math.abs(miss) <= RING_M) {
+    // Judged on the numbers Brian says, which add up: metres before the buoy, plus the miss, make the metres it carried on.
+    const before = Math.round(m.buoy - d.x0), ahead = metres(end.distanceM), said = missSaid(d, end), little = Math.abs(said) <= 8 ? ' a little' : '';
+    if (Math.abs(said) <= RING_M) {
       m.phase = 'done'; seen.add('alone');
       return {kind: 'pass', say: `Splash on the buoy! You let go ${metres(before)} before it, and the water carried on forward ${ahead}. Job done.`};
     }
-    m.phase = 'missed';
-    if (before <= .5) return {kind: 'fail', say: `You let go ${before < -.5 ? 'after the buoy' : 'right over the buoy'}. The water keeps her forward speed and lands ${ahead} ahead, so it splashed ${metres(said)} past. Let go ${ahead} before the buoy. Press Space to go round again.`};
-    if (miss > 0) return {kind: 'fail', say: `You let go ${metres(before)} before the buoy, but the water lands ${ahead} ahead, so it splashed ${metres(said)} past. Let go a little sooner. Press Space to go round again.`};
-    return {kind: 'fail', say: `You let go ${metres(before)} before the buoy. The water lands ${ahead} ahead, so it fell ${metres(said)} short. Let go a little later. Press Space to go round again.`};
+    // She comes round to the start, ready for another go.
+    m.phase = 'missed'; home();
+    if (before <= 0) return {kind: 'fail', say: `You let go ${before < 0 ? 'after the buoy' : 'right over the buoy'}. The water keeps her forward speed and lands ${ahead} ahead, so it splashed ${metres(said)} past. Let go ${ahead} before the buoy. Press Space to go round again.`};
+    if (said > 0) return {kind: 'fail', say: `You let go ${metres(before)} before the buoy, but the water lands ${ahead} ahead, so it splashed ${metres(said)} past. Let go${little} sooner. Press Space to go round again.`};
+    return {kind: 'fail', say: `You let go ${metres(before)} before the buoy. The water lands ${ahead} ahead, so it fell ${metres(said)} short. Let go${little} later. Press Space to go round again.`};
   }
 
   function replay() {
@@ -339,7 +349,7 @@ export function createModel() {
         ...(ready ? space(id === 'word-gravity' ? 'Let go' : 'Fly') : {}), say,
         prompt: ready ? (id === 'word-gravity' ? 'Let go of the stone: press Space, or click it.' : 'Set her off: press Space. She lets go over the post.')
           : m.phase === 'running' ? 'Watch the stone.' : 'Press Enter to go on, or R to watch again.',
-        hints: id === 'word-gravity' ? ['The stone hangs on her hook.', 'Press Space, or click the stone.', 'Watch my pointer: it is on the stone.']
+        hints: m.phase === 'running' ? ['Watch the stone.', 'Watch the marks beside it.', 'Wait a moment.'] : !ready ? DONE_HINTS : id === 'word-gravity' ? ['The stone hangs on her hook.', 'Press Space, or click the stone.', 'Watch my pointer: it is on the stone.']
           : ['She waits on the left. Space sets her off.', 'Press Space, or click Kestrel One.', 'Watch my pointer: it is on Kestrel One.']};
     }
     if (id === 'watch-water' || id === 'watch-speeds') {
@@ -387,7 +397,7 @@ export function createModel() {
         letGo: answered && id !== 'check-over' ? m.helis[0].release : null, ghostLetGo: answered && id === 'check-faster' ? check.buoy - water(10) : null,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to go on, or R to watch again.' : 'Pick a picture: click it, or press 1, 2 or 3.', hints: check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to go on, or R to watch again.' : 'Pick a picture: click it, or press 1, 2 or 3.', hints: answered ? DONE_HINTS : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS,
       say: 'A dropped thing keeps the forward speed it had, so it lands ahead of where you let go, and it falls faster every second. Air slows a spray of water more than a stone, so water lands shorter.',
@@ -401,7 +411,8 @@ export function createModel() {
     if (m.phase === 'ready') return {...common, ...space('Fly', 'drop:best'),
       say: `A job for you: hit the buoy. She flies at ${JOB.speed} m/s, ${HIGH_M} m up. Let go so the water lands inside the buoy’s ring.`,
       prompt: 'Press Space to set off, then press Space again to let go.', hints};
-    if (m.phase === 'flying') return {...common, keys: {Space: 'drop'}, buttons: [{action: 'drop', label: 'Let go', key: 'Space'}], waiting: true, target: m.auto == null ? 'drop:best' : null,
+    if (m.phase === 'flying' && m.auto != null) return {...common, say: SHOWING, prompt: 'Watch Brian let go.', hints: ['Watch where I let go.', 'I let go 10 m before the buoy.', 'Watch the water.']};
+    if (m.phase === 'flying') return {...common, keys: {Space: 'drop'}, buttons: [{action: 'drop', label: 'Let go', key: 'Space'}], waiting: true, target: 'drop:best',
       say: 'Let go before the buoy!', prompt: 'Press Space to let go.', hints};
     if (m.phase === 'falling') return {...common, say: 'Watch the water.', prompt: 'Watch the water.', hints};
     if (m.phase === 'missed') return {...common, ...space('Go round again', 'drop:best'),
