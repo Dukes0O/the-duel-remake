@@ -573,7 +573,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude (water-road director) 2026-11-01"
     needs: []
     locks: []
     details: "docs/board/cards/WATER-YARD-NEXT.md"
@@ -583,7 +584,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude (water-road director) 2026-11-01"
     needs: []
     locks: [save-shape]
     details: "docs/board/cards/STORY-MULTI.md"
@@ -593,7 +595,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "claude (water-road director) 2026-11-01"
     needs: []
     locks: []
     details: "docs/board/cards/WATER-YARD-ART.md"
