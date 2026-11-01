@@ -47,7 +47,8 @@ Behind the new `water-road` switch, `dev`.
 
 ## Changed assertions
 
-- `tools/test-feature-flags.mjs`: the switch count goes from 45 to 46 and`n  `water-road` joins the switches that stay `dev`. A new switch, nothing loosened.
+- `tools/test-feature-flags.mjs`: the switch count goes from 45 to 46 and
+  `water-road` joins the switches that stay `dev`. A new switch, nothing loosened.
   Claude's review: approved (a pinned count moved by a deliberate new switch).
 
 ## Removed
