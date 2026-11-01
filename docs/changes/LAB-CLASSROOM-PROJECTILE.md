@@ -79,3 +79,14 @@ edge, a Space cap too narrow for its word, and a "right under her" line added to
 speed step).
 
 ## Checks
+- `tools/test-lab-classroom-projectile.mjs`: 15/15; `test-lab-classroom.mjs` 14/14 and
+  `test-lab-classroom-lift.mjs` 11/11 with the shared screen changes; all 24 `tools/test-lab-*.mjs`
+  pass.
+- All 15 Lab scenarios pass. `lab-classroom-projectile` plays the lesson end to end into the
+  helicopter challenge (27 pictures, looked at as a player in three runs). Six scenarios stopped
+  at their build step while the lane tier built in the same folder; rerun alone, all six pass.
+- Lane tier (`--changed --jobs 4`): 39/39. Its first two runs failed `test-heli-mode`: a game
+  file may not name a helicopter file, so the lesson now reads gravity, the step and the water's
+  top speed through `benches/projectile.js`, as Lift reads them through `lift-pad.js`.
+- `npm run build`: passes.
+- Rule 19: only Lab code and its tests changed since the last full tier.
