@@ -73,3 +73,19 @@ which would break the Water Road's "created on first write" rule. The new
 registry test checks both ways; its own first-write check now expects Kogane to
 stay absent (a check of this card, not an existing one). Story suites rerun:
 save, lines, ui, hooks, kogane-duel, heli-story, deep-story and registry (75) pass.
+
+Loading too: `normalizeStory` adds an entry only for a story already saved, and
+for Kogane (`saveEmpty`, its old shape), so loading never makes an empty Water
+Road entry. `storyOf` still reads every registered story, empty when absent.
+
+## Save review (rule 17)
+
+One independent save review ran the old and new save code side by side over
+about 18,700 writer cases and 312 load cases (absent, null, strings, numbers,
+versions 0 to 3, malformed Kogane, extra keys, a `water` key valid or odd),
+comparing results and key order. Kogane matches the old code in every case; no
+story is added, dropped or rewritten by another's write; loading never makes
+`story`. Its one fault, loading adding an empty entry for a second registered
+story, is the loading fix above, which it checked on the working tree.
+Not this card's: `app.storyProps` and `app.openStory` ignore the story key;
+WATER-SCREENS makes them read the key when the Water Road registers.

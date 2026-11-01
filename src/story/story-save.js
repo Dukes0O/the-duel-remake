@@ -26,40 +26,45 @@ const NEWER = 'This story belongs to a newer version of the game.';
 //   stepOf    (entry) => the step the player is at, a name from `steps`
 //   writers   {name: (entry, ...args) => change}: each returns the names to set (an object), a refusal (a string) or null
 //             for "nothing to change". Run them with `writeStory(profile, key, name, ...args)`.
+//   saveEmpty true only for Kogane, the first story: a saved story always carried its entry, so it still does. Any later story
+//             is added to a saved story only by its own first write, never by loading.
 const STORIES = new Map();
 
-export function registerStory({key, steps, normalize = entry => entry, stepOf, writers = {}} = {}) {
+export function registerStory({key, steps, normalize = entry => entry, stepOf, writers = {}, saveEmpty = false} = {}) {
   if (typeof key !== 'string' || !/^[a-z][a-z0-9-]*$/.test(key)) throw new Error(`A story needs a key of lower case letters, digits and dashes, not ${JSON.stringify(key)}.`);
   if (STORIES.has(key)) throw new Error(`The story "${key}" is already registered.`);
   if (!Array.isArray(steps) || !steps.length || !steps.every(step => typeof step === 'string' && step)) throw new Error(`The story "${key}" needs a list of step names.`);
   if (typeof stepOf !== 'function' || typeof normalize !== 'function') throw new Error(`The story "${key}" needs a stepOf and a normalize function.`);
   if (!object(writers) || !Object.values(writers).every(writer => typeof writer === 'function')) throw new Error(`The story "${key}" has a writer that is not a function.`);
-  STORIES.set(key, Object.freeze({key, steps: Object.freeze([...steps]), normalize, stepOf, writers: Object.freeze({...writers})}));
+  STORIES.set(key, Object.freeze({key, steps: Object.freeze([...steps]), normalize, stepOf, writers: Object.freeze({...writers}), saveEmpty: saveEmpty === true}));
 }
 // Takes a story out again (for tests that register a throwaway story).
 export const unregisterStory = key => STORIES.delete(key);
 export const registeredStories = () => [...STORIES.values()];
 export const storyDefinition = key => STORIES.get(key) ?? null;
 
-const empty = () => {
+// `all`: every registered story as an entry (for reading); otherwise only the saved ones and Kogane (for keeping).
+const empty = (all = false) => {
   const story = {version: 1};
-  for (const def of STORIES.values()) story[def.key] = def.normalize({});
+  for (const def of STORIES.values()) if (all || def.saveEmpty) story[def.key] = def.normalize({});
   return story;
 };
 
-export function normalizeStory(value) {
+export function normalizeStory(value, all = false) {
   // A newer version belongs to that build. Keep it exactly, without trying to use it.
   if (newer(value)) return value;
-  if (!object(value) || value.version !== 1) return empty();
-  // Every registered story reads as a whole entry; unknown stories and unknown names are kept as they are.
+  if (!object(value) || value.version !== 1) return empty(all);
+  // Each saved story reads as a whole entry; unknown stories and unknown names are kept as they are.
   const story = {...value, version: 1};
-  for (const def of STORIES.values()) story[def.key] = def.normalize(object(value[def.key]) ? {...value[def.key]} : {});
+  for (const def of STORIES.values()) if (all || def.saveEmpty || Object.hasOwn(value, def.key))
+    story[def.key] = def.normalize(object(value[def.key]) ? {...value[def.key]} : {});
   return story;
 }
 
-// The player's story as saved, read only. A player with none reads as an empty story; nothing is added to the profile.
+// The player's story as saved, read only: every registered story reads as an entry, empty when absent. Nothing is added
+// to the profile.
 export function storyOf(profile) {
-  return Object.hasOwn(profile ?? {}, 'story') ? normalizeStory(profile.story) : empty();
+  return Object.hasOwn(profile ?? {}, 'story') ? normalizeStory(profile.story, true) : empty(true);
 }
 
 export const storyIsNewer = profile => newer(profile?.story);
@@ -116,6 +121,7 @@ const raise = (flag, need, why) => kogane => {
 
 registerStory({
   key: 'kogane',
+  saveEmpty: true,
   steps: KOGANE_STEPS,
   normalize: normalizeKogane,
   stepOf: koganeStepOf,

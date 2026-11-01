@@ -225,6 +225,10 @@ ok(ui.storyChooserMarkup([ui.storyView(props('job'), KEY)]) === '', 'a chooser i
 
 // A write adds only its own story: the other registered story stays absent until its own first write.
 {
+  const loaded = save.normalizeStory({version: 1, kogane: {read: true}});
+  ok(!Object.hasOwn(loaded, KEY), 'loading a saved story does not add a later story');
+  ok(Object.hasOwn(save.normalizeStory({version: 1, other: 1}), 'kogane'), 'Kogane keeps its old shape: a saved story always has its entry');
+  same(normalizeProfile({...createProfile(), story: {version: 1, kogane: {read: true}}}).story, {version: 1, kogane: {read: true}}, 'the load path keeps the story as saved');
   const kogane = save.readKoganeLetter(createProfile()).profile;
   ok(!Object.hasOwn(kogane.story, KEY), 'a Kogane write does not add the other story');
   const firstTest = Object.entries(save.storyDefinition(KEY).writers)[0][0];
