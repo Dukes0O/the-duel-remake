@@ -55,4 +55,27 @@ section 6), after Lift. Kyle, 31 October: lessons are upgraded in the live game 
 
 ## Review
 
+One independent code review (rule 17). It found ten things; all fixed, with tests:
+- After Show me on the job, the screen said "Press Space to let go" and a press spoiled Brian's run.
+  While he flies, the keys and buttons are held and the prompt says "Watch Brian let go".
+- Show me pressed late in a run did nothing; now she comes round and Brian flies it from the start.
+- After a miss she flew on off the board, taking the pointer and the click with her; now she comes
+  round to the start at once.
+- The let-go mark said "before" when she let go after the buoy; it now says after, as Brian does.
+- The flag and the job were judged on unrounded numbers but described in whole metres; both are
+  now judged in the metres Brian says (a flag at 11 to 15 m is right for the 13 m landing).
+- The job had no splash sound; it splashes like every other drop.
+- Help on a finished word step or an answered check named a key that no longer worked.
+- Letting go while she was still speeding up gave numbers that broke the hints; she now says "not
+  yet" until she passes the 30 mark, and "a little" is used only for small misses.
+- The card said a 3 m ring (the code has 4 m) and a board comment named the old post position.
+- One test condition checked nothing; fixed, and Show me early, late and after a miss is tested.
+
+The board look was checked as a player in two browser runs before the review: nine fixes
+(the waiting helicopter and her Space cap cut off at the board's left edge, two let-go labels on top of each other, a bubble
+too long beside the guess cards, the job's miss label 1 m off Brian's number, an empty bucket
+drawn after a stone drop, crowded helicopters in the three-speed run, recap text at the card's
+edge, a Space cap too narrow for its word, and a "right under her" line added to the Forward
+speed step).
+
 ## Checks

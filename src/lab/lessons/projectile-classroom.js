@@ -2,14 +2,12 @@
 // Teaching state only, no DOM and no saves. Every water path and landing comes from waterTrace(), which steps
 // the bucket's own parcels (heli-bucket.js), the ones the challenge's buoys are hit by; the stone is the same
 // fall with no air.
-import {GRAVITY, HELI_STEP} from '../../heli/heli-flight.js';
-import {BUCKET} from '../../heli/heli-bucket.js';
-import {stoneDrop, stoneFallAfter, waterTrace} from '../benches/projectile.js';
+import {GRAVITY, HELI_STEP, WATER_TOP_SPEED_MS, stoneDrop, stoneFallAfter, waterTrace} from '../benches/projectile.js';
 
 // Heights in metres above the lake; the run-up before the let-go post; the lesson buoy's ring; how close a
 // flag counts as right; where the board ends.
 export const HIGH_M = 30, LOW_M = 10, RUNUP_M = 8, RING_M = 4, CLOSE_M = 2, END_M = 70, FLAG_MAX_M = 45;
-export const TOP_FALL_MS = BUCKET.fallSpeed;
+export const TOP_FALL_MS = WATER_TOP_SPEED_MS;
 // Brian's job: the buoy, how fast she flies, and where letting go hits it.
 export const JOB = Object.freeze({speed: 10, buoyM: 30});
 const WONDER = Object.freeze({speed: 15, buoyM: 15});
