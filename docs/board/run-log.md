@@ -1492,3 +1492,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged STORY-MULTI (story registry for save, lines and cards, chooser; Kogane identical over about 18,700 cases in the save review; story suites and registry 78, lane 57/57, build, Kogane scenario). Goes live with the Water Road.
 - 1 Nov: merged WATER-LINES (eighteen Water Road lines, captions and notes; test 33, lane 25/25, build).
 - 1 Nov: merged WATER-SAVE (story.water, chapters read from the ladder; test 65, fixture roster 25 reviewed, lane 36/36, build; save review, two faults fixed and confirmed).
+- 1 Nov: merged WATER-HOOKS (Water Road jobs through setup, start and settlement; one button per chapter with bars; switch water-road dev; test 93, lane 59/59, build; one review, four faults fixed and confirmed).
