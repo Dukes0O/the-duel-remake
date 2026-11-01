@@ -46,7 +46,7 @@ export const STEPS = Object.freeze([
 
 export const KEY_IDEAS = Object.freeze([
   {id: 'heading', text: 'A heading is the compass number her nose points at: 000 north, 090 east, 180 south, 270 west.'},
-  {id: 'turn', text: 'D turns her right and the number counts up; A turns her left and it counts down. Past 359 comes 000.'},
+  {id: 'turn', text: 'D turns right: the number counts up. A turns left: it counts down. After 359 comes 000.'},
   {id: 'scale', text: 'A map’s scale turns squares into metres: here one square is 100 m.'},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: `Turn until the gauge reads ${three(JOB.headingDeg)}.`,
@@ -290,7 +290,7 @@ export function createModel() {
   function view() {
     const id = step().id;
     const base = {scene: 'map', time: m.time, heli: {x: m.x, y: m.y, heading: m.heading}, flown: m.phase === 'flying' || m.flown > 0 ? m.flown : null, track: m.track, ghosts: m.ghosts,
-      target: m.target, ruler: m.ruler == null ? null : {heading: m.heading, length: m.ruler}, compass: true, gauge: three(m.heading),
+      spot: m.target, ruler: m.ruler == null ? null : {heading: m.heading, length: m.ruler}, compass: true, gauge: three(m.heading),
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], glow: null, waiting: false, ready: seen.has(id), dragCompass: false, dragRuler: false};
     if (id === 'wonder') return {...base, actions: ['replay'],
       say: `The radio says: smoke at heading ${three(JOB.headingDeg)}, ${metres(JOB.distanceM)} from the pad. She flew north, 000, and missed it. Which way is ${three(JOB.headingDeg)}?`,
@@ -314,7 +314,7 @@ export function createModel() {
       const done = m.phase === 'result';
       return {...base, ...(done || m.phase === 'auto-ruler' ? {} : {keys: {...RULER_KEYS, Space: 'fly'}, repeat: ['←', '→'], waiting: true, target: 'ruler:best', glow: 'ruler', dragRuler: true,
         buttons: [{action: 'ruler:shorter', label: 'Shorter', key: '←'}, {action: 'ruler:longer', label: 'Longer', key: '→'}, {action: 'fly', label: 'That’s the hut', key: 'Space'}]}),
-        squares: true, say: done ? m.say : `A map’s scale says how far one square is on the ground. Here one square is ${SQUARE_M} m. Stretch the ruler to the hut.`,
+        squares: true, compass: false, say: done ? m.say : `A map’s scale says how far one square is on the ground. Here one square is ${SQUARE_M} m. Stretch the ruler to the hut.`,
         prompt: done ? 'Press Enter to go on.' : 'Make the ruler longer with → (or drag its end) until it reaches the hut, then press Space.',
         hints: done ? ['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.'] : ['Count the squares from the pad to the hut.', 'Three squares: press → until the ruler reads 300 m, then Space.', 'Watch my pointer: I stretch it to the hut.']};
     }

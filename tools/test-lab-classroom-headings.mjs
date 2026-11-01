@@ -106,6 +106,8 @@ test('the words: D counts up, A counts down, east is 090, and the ruler counts s
 test('the tries: a wrong heading says how far off and how far it passed; the short way round is A', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-turn');
+  // The smoke is on the map while she turns (the pointer's target is a separate field).
+  assert.equal(session.view().spot.kind, 'smoke'); assert.equal(session.view().target, 'turn:best');
   turnTo(session, 100); session.act('fly'); until(session, v => v.ready);
   const passed = Math.round(JOB.distanceM * Math.sin(30 * Math.PI / 180));
   assert.match(session.view().brian.text, new RegExp(`^You flew 100: 30 too far right, and passed ${passed} m from the smoke\\. A turns her back`));
