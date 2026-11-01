@@ -113,3 +113,11 @@ Nothing. No old model, test or tool is replaced.
   re-import, not in three.js.
 - No frame check yet: the group is not in the game. The wiring card does it.
 - Smoke from the lit boiler is left out on purpose (a flat smoke shape would look cartoonish).
+
+## Claude's verdict
+
+Claude, 1 November 2026: round 3 picked (the three-round cap is used). The look is right:
+rusted, welded scrap; each chapter's change reads from the yard. Round 2's close-up sheet
+served its review and is not committed (one sheet per round), and the hygiene test is back
+as it was. Kyle had the round-2 sheets with this pick. The water works are wired into the
+yard by WATER-SCREENS; the frame check goes with the Water Road's release.
