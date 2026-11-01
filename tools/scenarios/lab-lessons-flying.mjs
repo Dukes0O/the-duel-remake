@@ -1,12 +1,11 @@
 // Real Lab navigation and machine inputs, on the harness's memory-only origin.
 import * as projectile from '../../src/lab/lessons/projectile-lesson.js';
 import * as fire from '../../src/lab/lessons/fire-lesson.js';
-import * as pendulum from '../../src/lab/lessons/pendulum-lesson.js';
 import * as altitude from '../../src/lab/lessons/altitude-lesson.js';
 
 export async function run(c) {
   const onlyLessons = (process.env.LAB_FLYING_LESSON ?? '').split(',').filter(Boolean);
-  if (onlyLessons.some(id => !['projectile', 'fire', 'pendulum', 'altitude'].includes(id))) throw Error('Unknown Flying lesson filter.');
+  if (onlyLessons.some(id => !['projectile', 'fire', 'altitude'].includes(id))) throw Error('Unknown Flying lesson filter.');
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html?flags=lab-2,rescue,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
@@ -38,7 +37,8 @@ export async function run(c) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
   }
   let scaleIntroductions = 0;
-  for (const p of [projectile, fire, pendulum, altitude]) {
+  // The pendulum is a classroom lesson now: tools/scenarios/lab-classroom.mjs plays it.
+  for (const p of [projectile, fire, altitude]) {
     if (onlyLessons.length && !onlyLessons.includes(p.definition.id)) continue;
     const id = p.definition.id;
     await c.evaluate(`window.__qaApp.openLab()`);
@@ -46,8 +46,8 @@ export async function run(c) {
     await walk('KeyW', `${pos(2)} < -3.95`);
     if (id === 'fire') {
       await walk('KeyA', `${pos(0)} < -14`); await walk('KeyS', `${pos(2)} > 4.2`); await walk('KeyD', `${pos(0)} > -12.4`);
-    } else await walk('KeyA', `${pos(0)} < ${id === 'projectile' ? -11.5 : id === 'pendulum' ? -6.7 : -2.7}`);
-    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${p.definition.id === 'projectile' ? 'Projectile' : id === 'fire' ? 'Fire' : id === 'pendulum' ? 'Pendulum' : 'Air'}')`, `${id} machine`);
+    } else await walk('KeyA', `${pos(0)} < ${id === 'projectile' ? -11.5 : -2.7}`);
+    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${p.definition.id === 'projectile' ? 'Projectile' : id === 'fire' ? 'Fire' : 'Air'}')`, `${id} machine`);
     await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
     await c.waitFor(`${text}?.includes('Wonder')`, `${id} wonder`);
     await new Promise(r => setTimeout(r, 3000));
@@ -60,7 +60,7 @@ export async function run(c) {
     for (let n = 0; n < p.definition.worked.length; n++) {
       // Show the actual experiment in motion, then still require the full
       // worked example to finish before proceeding.
-      await new Promise(r => setTimeout(r, id === 'fire' ? 600 : id === 'pendulum' ? 2500 : id === 'projectile' ? 3600 : 1200));
+      await new Promise(r => setTimeout(r, id === 'fire' ? 600 : id === 'projectile' ? 3600 : 1200));
       await c.screenshot(`${id}-watch-${n}`); await ready(); await click('next');
     }
     await c.screenshot(`${id}-prediction`);
@@ -90,12 +90,6 @@ export async function run(c) {
         await click(`answer:${['heat', 'air', 'fuel'][i]}`);
         if (i === 0) await touch('water'); else await click(`control:${['water', 'sand', 'rake'][i]}`);
         if (i === 2) await click('control:spray');
-      } else if (id === 'pendulum') {
-        await click(`answer:${i === 2 ? 'slower' : 'same'}`);
-        if (i === 0) await touch('pull'); // release the first pull; put it back with the named handle
-        if (i === 0) await click('control:pull');
-        if (i === 1) await click('control:weightKg');
-        if (i === 2) await click('control:lengthM');
       } else {
         await click(`answer:${i < 2 ? 'up' : 'down'}`);
         if (i === 0) { await touch('siteIndex'); await click('control:siteIndex'); await click('control:siteIndex'); }

@@ -23,7 +23,10 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   const flags = () => app._switches();
   const on = () => flags().enabled('lab-2') === true;
   const learned = () => labNotebookOf(app.profile);
-  const knownWords = () => registeredWords().filter(w => learned().includes(w.id));
+  // Classroom lessons carry their own notebook words; the old lessons' words come from their packets.
+  const classroomWords = Object.values(CLASSROOM_LESSONS).flatMap(l => l.words ?? []);
+  const allWords = () => { const old = registeredWords(); return [...old, ...classroomWords.filter(w => !old.some(o => o.id === w.id))]; };
+  const knownWords = () => allWords().filter(w => learned().includes(w.id));
   const lookup = id => knownWords().find(w => w.id === id);
   const held = new Set();
   function leverKey(event) {
@@ -183,10 +186,13 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
         if (!lever || hover || notebook) held.clear();
         if (!hover && !notebook) session.tick(dt);
         const view = session.view(); entry.hooks.sound?.(view, app.audio);
-        if (hover) { view.animation = hover.animation; view.time = (now - hover.startedAt) / 1000; }
-        room()?.lesson?.(view, hover ? entryForWord(hover.id) : entry); paint();
+        const wordEntry = hover ? entryForWord(hover.id) : null;
+        if (wordEntry) { view.animation = hover.animation; view.time = (now - hover.startedAt) / 1000; }
+        room()?.lesson?.(view, wordEntry ?? entry); paint();
       } else if (hover && visible) {
-        room()?.lesson?.({animation: hover.animation, time: (now - hover.startedAt) / 1000, input: {}}, entryForWord(hover.id));
+        // A classroom word has no 3D picture: the meaning shows on its own.
+        const wordEntry = entryForWord(hover.id);
+        room()?.lesson?.(wordEntry ? {animation: hover.animation, time: (now - hover.startedAt) / 1000, input: {}} : null, wordEntry);
       }
       const idea = !hover && !notebook && !feedback ? session?.view().keyIdea : null;
       if (idea) card.innerHTML = `<b>Key idea</b><p>${escape(idea)}</p>`;

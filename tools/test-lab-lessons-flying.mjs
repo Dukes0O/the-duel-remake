@@ -3,17 +3,14 @@ import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import * as projectile from '../src/lab/lessons/projectile-lesson.js';
 import * as fire from '../src/lab/lessons/fire-lesson.js';
-import * as pendulum from '../src/lab/lessons/pendulum-lesson.js';
 import * as altitude from '../src/lab/lessons/altitude-lesson.js';
 import {projectileBench, waterTrace, stoneDrop, stoneFallAfter} from '../src/lab/benches/projectile.js';
 import {fireBench, practiceFire, TAKES_AWAY} from '../src/lab/benches/fire.js';
-import {pendulumBench, stringPeriod} from '../src/lab/benches/pendulum.js';
 import {altitudeBench, SITES} from '../src/lab/benches/altitude.js';
 import {GRAVITY, createHeliState, heliReadout} from '../src/heli/heli-flight.js';
 import {projectileDrawing, FLAG_TOLERANCE_M} from '../src/lab/lessons/projectile-animation.js';
 import {altitudeReading, altitudeDrawing} from '../src/lab/lessons/altitude-animation.js';
 import {fireDrawing} from '../src/lab/lessons/fire-animation.js';
-import {pendulumDrawing} from '../src/lab/lessons/pendulum-animation.js';
 import {mountMachine} from '../src/lab/lessons/flying-display.js';
 import {Group, PerspectiveCamera, Vector3} from 'three';
 import {mkdirSync, mkdtempSync, writeFileSync} from 'node:fs';
@@ -44,7 +41,8 @@ test('the prescribed flying sheet names allow only three JPG rounds and reject r
   } finally { recycleDirectory(root); }
 });
 
-const packets = [projectile, fire, pendulum, altitude];
+// The pendulum is a classroom lesson (tools/test-lab-classroom.mjs).
+const packets = [projectile, fire, altitude];
 const finish = s => { for (let n = 0; n < 500; n++) s.tick(.1); };
 test('the scale models keep real lengths and anchor at most three labels beside readable moving parts', () => {
   const drop = projectileDrawing({heightM: 30}, 0, 'pair');
@@ -52,19 +50,10 @@ test('the scale models keep real lengths and anchor at most three labels beside 
   const end = projectileDrawing({}, 4);
   assert.ok(end.objects.find(o => o.id === 'parcel').size[0] >= .4);
   assert.ok(end.objects.filter(o => o.id.startsWith('arc-')).every(o => o.size[0] >= .1));
-  const swings = pendulumDrawing({}, 0, 'all');
-  [5, 15, 25].forEach((length, i) => {
-    const cord = swings.objects.find(o => o.id === `string-${i}`);
-    const bob = swings.objects.find(o => o.id === `weight-${i}`);
-    assert.equal(cord.size[1], length / 10);
-    assert.equal(bob.colour, swings.labelColours[i]);
-    assert.ok(bob.size[0] >= .3);
-    assert.ok(Math.hypot(...bob.position.map((x, j) => x - swings.labelPositions[i][j])) <= .6);
-  });
   const air = altitudeDrawing({}, 0), dots = air.objects.filter(o => o.id.startsWith('air-') && o.shape === 'sphere');
   assert.equal(dots.length, Math.round(36 * air.reading.gameShare));
   assert.ok(dots.every(o => o.size[0] >= .12));
-  for (const d of [drop, swings, air, fireDrawing({}, 0)]) {
+  for (const d of [drop, air, fireDrawing({}, 0)]) {
     assert.ok(d.labels.length <= 3);
     assert.equal(d.labels.length, d.labelPositions.length);
   }
@@ -82,7 +71,7 @@ test('the scale models keep real lengths and anchor at most three labels beside 
     }
   }
 });
-test('all four packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
+test('all three packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
   for (const p of packets) {
     validateLesson(p.definition, p.hooks);
     const s = createLessonSession(p); s.next();
@@ -92,7 +81,6 @@ test('all four packets scaffold real lessons through checks and keep rewards out
       assert.equal(s.view().support, ['guided', 'prompted', 'alone'][i]);
       if (p === projectile) { s.control('flagM', Math.round(projectileBench.run({heightM: 30, speedMs: 10}).water.distanceM)); s.predict('hit'); }
       if (p === fire) { s.control(['water', 'sand', 'rake'][i]); if (i === 2) s.control('spray'); s.predict(['heat', 'air', 'fuel'][i]); }
-      if (p === pendulum) { s.control('lengthM', [5, 15, 25][i]); if (i === 1) s.control('weightKg'); s.predict(['faster', 'same', 'slower'][i]); }
       if (p === altitude) { s.control('siteIndex', i); s.predict(['up', 'up', 'down'][i]); }
       assert.ok(s.run()); finish(s); assert.equal(s.view().result.passed, true, p.definition.id); s.next();
     }
@@ -158,20 +146,6 @@ test('every fire tool removes its real triangle side and both strips stop the se
   assert.equal(fire.hooks.animations['answer-air']({time: 2}).mode, 'lid');
 });
 
-test('each pendulum answer uses the period from the existing bench, independent of weight', () => {
-  for (const lengthM of [5, 15, 25]) for (const weightKg of [20, 200]) {
-    const r = pendulumBench.run({kind: 'string', lengthM, weightKg});
-    const actual = r.periodS === stringPeriod(15) ? 'same' : r.periodS < stringPeriod(15) ? 'faster' : 'slower';
-    for (const prediction of ['faster', 'slower', 'same']) {
-      const v = pendulum.hooks.evaluate({input: {lengthM, weightKg, pull: 1}, prediction});
-      assert.equal(v.actual, actual); assert.equal(v.passed, actual === prediction);
-    }
-  }
-  assert.equal(pendulum.definition.checks[0].correct, 'long');
-  assert.equal(pendulum.definition.checks[1].correct, 'heavy-medium');
-  assert.equal(pendulum.hooks.evaluate({input: {pull: 0}, prediction: 'same'}).failure, 'pull');
-});
-
 test('all offered altitude loads compare with flying-height thrust, preserving the old ground stand', () => {
   Object.keys(SITES).forEach((site, siteIndex) => {
     const r = altitudeBench.run({site}), state = createHeliState({altitudeOffset: SITES[site].altitudeM});
@@ -204,7 +178,7 @@ test('two failures give plainer help and three offer a worked replay in every le
     for (const _ of p.definition.words) s.next();
     for (const _ of p.definition.worked) { finish(s); s.next(); }
     for (let i = 0; i < 3; i++) {
-      s.predict(p === pendulum ? 'faster' : p.definition.tries[0].prediction.answers.at(-1).id); s.run(); finish(s);
+      s.predict(p.definition.tries[0].prediction.answers.at(-1).id); s.run(); finish(s);
       assert.equal(s.view().result.passed, false);
       assert.ok(s.view().text.length > 10); if (i < 2) s.retry();
     }

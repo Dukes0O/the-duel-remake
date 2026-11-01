@@ -36,6 +36,12 @@ export const KEY_IDEAS = Object.freeze([
   {id: 'settle', text: 'In the game: hover still and let the swing settle before you set down.'},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Length sets the swing time.', text: 'Hover still and let it settle.'});
+// The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
+export const WORDS = Object.freeze([
+  {id: 'pendulum-pendulum', word: 'Pendulum', meaning: 'A pendulum is a weight on a string that can swing.'},
+  {id: 'pendulum-swing-time', word: 'Swing time', meaning: 'Swing time is how long one swing takes, out and back to where it started.'},
+  {id: 'pendulum-length', word: 'Length', meaning: 'Length is how far it is from the hook to the middle of the weight.'},
+].map(Object.freeze));
 
 // ---- swinging ----
 export const pendulum = (id, x, lengthM, weightKg, extra = {}) => ({id, x, lengthM, weightKg, pullAt: null, amplitude: SWING_RAD, held: 0, ghost: false, ...extra});
@@ -361,4 +367,4 @@ export function createModel() {
 const SETUP_KEYS_NO_RELEASE = Object.freeze(Object.fromEntries(Object.entries(SETUP_KEYS).filter(([key]) => key !== 'Space')));
 const clamp = value => Number.isFinite(value) ? Math.max(-MAX_DRAG_RAD, Math.min(MAX_DRAG_RAD, value)) : 0;
 
-export const lesson = Object.freeze({id: 'pendulum', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD});
+export const lesson = Object.freeze({id: 'pendulum', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD, words: WORDS});
