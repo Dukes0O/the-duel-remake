@@ -1,9 +1,9 @@
-// The story's radio (docs/story/kogane-invitation.md section 6): a caption plays
+// The stories' radio (docs/story/kogane-invitation.md section 6): a caption plays
 // as the radio keys on (the click and hiss of src/lessons/radio-voice.js), the
 // words show, and the radio keys off. No voice file and no new sound. The radio
 // always keys off when the caption ends, when the player leaves the screen,
 // pauses or mutes. Sound and words only: nothing here changes a race or a flight.
-import {captionReadMs, captionText, STORY_ANA_SEQUENCE} from './story-lines.js';
+import {captionReadMs, captionText, storySequence} from './story-lines.js';
 
 // How long the radio stays keyed for a caption: a short transmission, never
 // longer than the caption itself. The words stay on screen for the reading time.
@@ -62,6 +62,8 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
     startNext();
     return true;
   }
+  // A story's named sequence (its registered lines), such as Ana's two lines after the Kogane win.
+  const saySequence = (key, name) => { const ids = storySequence(key, name); return ids ? sayInOrder(ids) : false; };
   // Stop at once: the radio keys off, the words go and nothing waits in line.
   function stop() {
     queue = [];
@@ -78,6 +80,6 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
     stop();
     disposed = true;
   }
-  return {say, sayInOrder, sayAna: () => sayInOrder(STORY_ANA_SEQUENCE), stop, leave, pause, mute, dispose,
+  return {say, sayInOrder, saySequence, sayAna: () => saySequence('kogane', 'ana'), stop, leave, pause, mute, dispose,
     get playing() { return current ? current.id : null; }, get keyed() { return !!current?.chain; }};
 }

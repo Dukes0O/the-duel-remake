@@ -84,10 +84,43 @@ export function captionReadMs(text) {
   return Math.min(CAPTION_READ_MAX_MS, Math.round(CAPTION_READ_BASE_MS + CAPTION_READ_PER_CHARACTER_MS * length));
 }
 
-// The words for a caption id, or null (the letter is not a caption).
-export function captionText(id) {
-  return Object.hasOwn(STORY_CAPTIONS, id) ? STORY_CAPTIONS[id].text : null;
+// ---- Every story's lines -------------------------------------------------------------------------------------------------
+// A story registers its lines once, with its key (the same key as its save):
+//   captions   {id: {who, where, text, captionOnly}} with every id starting `story.<key>.`
+//   letter     optional {id, text...}: the letter on the story's card (never a caption, never spoken)
+//   sequences  optional {name: [ids]}: captions that play one after the other (Kogane's `ana`)
+// Lookup then works across all of them; the radio and the cards never name a story.
+const TABLES = new Map();
+
+export function registerStoryLines(key, {captions, letter = null, sequences = {}} = {}) {
+  if (typeof key !== 'string' || !/^[a-z][a-z0-9-]*$/.test(key)) throw new Error(`Story lines need a story key, not ${JSON.stringify(key)}.`);
+  if (TABLES.has(key)) throw new Error(`The lines of "${key}" are already registered.`);
+  if (captions === null || typeof captions !== 'object') throw new Error(`The lines of "${key}" need a table of captions.`);
+  const prefix = `story.${key}.`;
+  for (const [id, caption] of Object.entries(captions)) {
+    if (!id.startsWith(prefix)) throw new Error(`The caption "${id}" must start with "${prefix}".`);
+    if (typeof caption?.text !== 'string' || !caption.text) throw new Error(`The caption "${id}" has no words.`);
+  }
+  for (const [name, ids] of Object.entries(sequences))
+    if (!Array.isArray(ids) || !ids.every(id => Object.hasOwn(captions, id))) throw new Error(`The sequence "${name}" of "${key}" names a caption that is not there.`);
+  TABLES.set(key, Object.freeze({key, captions, letter, sequences}));
 }
+// Takes a story's lines out again (for tests that register a throwaway story).
+export const unregisterStoryLines = key => TABLES.delete(key);
+export const storyLineKeys = () => [...TABLES.keys()];
+
+// The words for a caption id in any registered story, or null (a letter is not a caption).
+export function captionText(id) {
+  for (const table of TABLES.values()) if (Object.hasOwn(table.captions, id)) return table.captions[id].text;
+  return null;
+}
+
+// A story's letter, or null.
+export const storyLetter = key => TABLES.get(key)?.letter ?? null;
+// The ids of a story's named sequence, or null.
+export const storySequence = (key, name) => TABLES.get(key)?.sequences[name] ?? null;
 
 // Every id the story owns: the ten captions and the letter.
 export const STORY_LINE_IDS = Object.freeze([...Object.keys(STORY_CAPTIONS), STORY_LETTER_ID]);
+
+registerStoryLines('kogane', {captions: STORY_CAPTIONS, letter: STORY_LETTER, sequences: {ana: STORY_ANA_SEQUENCE}});

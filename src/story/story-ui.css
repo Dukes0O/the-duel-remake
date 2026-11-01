@@ -35,3 +35,6 @@
 .story-line b{color:#e4bd82}
 .story-car-card b{letter-spacing:1px}
 @media(max-height:800px){.story-letter{padding:12px 18px}.story-letter p{font-size:14px;line-height:1.5}.story-step{padding:9px 12px}}
+/* The chooser, when the player can see more than one story. */
+.story-choices{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
+.story-choice{width:100%;text-align:left;padding:14px 18px}
