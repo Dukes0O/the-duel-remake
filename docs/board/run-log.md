@@ -1487,3 +1487,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 31 Oct: merged and released LAB-CLASSROOM-LIVE (lab-classroom on, old pendulum removed, notebook keeps classroom words, Tab-focused lesson buttons press on Enter; 22 Lab suites, 14 Lab scenarios, lane 45/45, build).
 - 31 Oct: merged and released LAB-CLASSROOM-LIFT (Lift as a classroom, old Lift removed; Lift 11/11, 23 Lab suites, 14 Lab scenarios, lane 30 + 5 rerun here, build; one review, seven faults fixed).
 - 31 Oct: merged The Water Road design (docs/story/wasteland-water-road.md, ten WATER cards; lane 15/15, build).
+- 1 Nov: merged WATER-YARD-NEXT (the yard's Next up line names the next warlord and how to open or start the fight; yard suites 4/4 after review fixes, lane 28/28, build; one review, two faults fixed).
