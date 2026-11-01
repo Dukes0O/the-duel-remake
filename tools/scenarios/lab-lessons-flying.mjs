@@ -1,11 +1,10 @@
 // Real Lab navigation and machine inputs, on the harness's memory-only origin.
-import * as projectile from '../../src/lab/lessons/projectile-lesson.js';
 import * as fire from '../../src/lab/lessons/fire-lesson.js';
 import * as altitude from '../../src/lab/lessons/altitude-lesson.js';
 
 export async function run(c) {
   const onlyLessons = (process.env.LAB_FLYING_LESSON ?? '').split(',').filter(Boolean);
-  if (onlyLessons.some(id => !['projectile', 'fire', 'altitude'].includes(id))) throw Error('Unknown Flying lesson filter.');
+  if (onlyLessons.some(id => !['fire', 'altitude'].includes(id))) throw Error('Unknown Flying lesson filter.');
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html?flags=lab-2,rescue,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
@@ -37,8 +36,8 @@ export async function run(c) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
   }
   let scaleIntroductions = 0;
-  // The pendulum is a classroom lesson now: tools/scenarios/lab-classroom.mjs plays it.
-  for (const p of [projectile, fire, altitude]) {
+  // The pendulum and Projectile motion are classroom lessons now: tools/scenarios/lab-classroom*.mjs play them.
+  for (const p of [fire, altitude]) {
     if (onlyLessons.length && !onlyLessons.includes(p.definition.id)) continue;
     const id = p.definition.id;
     await c.evaluate(`window.__qaApp.openLab()`);
@@ -46,8 +45,8 @@ export async function run(c) {
     await walk('KeyW', `${pos(2)} < -3.95`);
     if (id === 'fire') {
       await walk('KeyA', `${pos(0)} < -14`); await walk('KeyS', `${pos(2)} > 4.2`); await walk('KeyD', `${pos(0)} > -12.4`);
-    } else await walk('KeyA', `${pos(0)} < ${id === 'projectile' ? -11.5 : -2.7}`);
-    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${p.definition.id === 'projectile' ? 'Projectile' : id === 'fire' ? 'Fire' : 'Air'}')`, `${id} machine`);
+    } else await walk('KeyA', `${pos(0)} < -2.7`);
+    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${id === 'fire' ? 'Fire' : 'Air'}')`, `${id} machine`);
     await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
     await c.waitFor(`${text}?.includes('Wonder')`, `${id} wonder`);
     await new Promise(r => setTimeout(r, 3000));
@@ -60,33 +59,13 @@ export async function run(c) {
     for (let n = 0; n < p.definition.worked.length; n++) {
       // Show the actual experiment in motion, then still require the full
       // worked example to finish before proceeding.
-      await new Promise(r => setTimeout(r, id === 'fire' ? 600 : id === 'projectile' ? 3600 : 1200));
+      await new Promise(r => setTimeout(r, id === 'fire' ? 600 : 1200));
       await c.screenshot(`${id}-watch-${n}`); await ready(); await click('next');
     }
     await c.screenshot(`${id}-prediction`);
     if (!(await c.evaluate(`[...document.querySelectorAll('.lab-lift-overlay .lab-lift-force')].every(el => el.hidden)`))) throw Error('Prediction captions are visible.');
     for (let i = 0; i < 3; i++) {
-      if (id === 'projectile') {
-        // Turn the actual flag on the sand once. The initial 24 m flag is
-        // intentionally past this splash, so the first run exercises help.
-        if (i === 0) {
-          await click('answer:hit');
-          await touch('flagM'); await click('run');
-          await c.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'flag miss'); await c.screenshot('projectile-hint'); await click('retry');
-        }
-        if (i === 1) await click('control:speedMs');
-        if (i === 2) await click('control:heightM');
-        await click('answer:hit'); // Fold the prediction cards before touching the low flag handle.
-        await c.waitFor(`JSON.parse(${canvas}.dataset.labFlyingDrawing).input.${i === 1 ? 'speedMs' : 'heightM'} === ${i === 1 ? 11 : i === 2 ? 35 : 30}`, 'rendered drop setting');
-        await c.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').some(p => p.id === 'flagM')`, 'rendered flag handle');
-        const state = await c.evaluate(`JSON.parse(${canvas}.dataset.labFlyingDrawing)`);
-        const flag = await c.evaluate(`(() => { const el = ${canvas}, b = el.getBoundingClientRect(), p = JSON.parse(el.dataset.labLessonControls).find(p => p.id === 'flagM'); return {x: b.left + p.x, y: b.top + p.y}; })()`);
-        const delta = (Math.round(state.reading.water.distanceM) - state.reading.flagM) / 80 * 180;
-        await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...flag});
-        await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', button: 'left', buttons: 1, x: flag.x, y: flag.y - delta});
-        await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, x: flag.x, y: flag.y - delta});
-        await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
-      } else if (id === 'fire') {
+      if (id === 'fire') {
         await click(`answer:${['heat', 'air', 'fuel'][i]}`);
         if (i === 0) await touch('water'); else await click(`control:${['water', 'sand', 'rake'][i]}`);
         if (i === 2) await click('control:spray');
