@@ -44,6 +44,9 @@ parser.add_argument('--only', default='', help='comma list of chapters to render
 parser.add_argument('--cam', default='', help='camera x,y,z in front-view metres, for close looks')
 parser.add_argument('--target', default='', help='camera target x,y,z in front-view metres')
 parser.add_argument('--res', default='640,480')
+parser.add_argument('--closeups', action='store_true', help='also render the close-up pictures')
+parser.add_argument('--no-chapters', action='store_true')
+parser.add_argument('--close-only', default='', help='comma list of close-up names, for quick tests')
 parser.add_argument('--lens', type=float, default=0.0)
 options = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(options.root).resolve()
@@ -230,10 +233,21 @@ def concrete_texture(S, seed):
             img[int(y), int(x)] *= .35
     return np.clip(img, .01, .9)
 
+def zinc_texture(S, seed):
+    """New galvanised sheet: pale and clean, with a little weather."""
+    rng = np.random.default_rng(seed)
+    n1, n3 = noise(S, 1.4, rng), noise(S, .5, rng)
+    img = np.zeros((S, S, 3), np.float32) + (.60, .62, .60) + .025 * n3[..., None]
+    img *= 1 + .06 * n1[..., None]
+    img *= 1 - .12 * np.clip(streaks(S, rng, .8), 0, 1.4)[..., None]
+    spot = smooth(1.5, 2.3, noise(S, .8, rng))
+    img = img * (1 - spot[..., None] * .6) + np.array((.38, .2, .09)) * spot[..., None] * .6
+    return np.clip(img, .01, .95)
+
 def dirt_texture(S, seed):
     rng = np.random.default_rng(seed)
     n1, n2, n3 = noise(S, 1.8, rng), noise(S, 1.0, rng), noise(S, .45, rng)
-    img = np.zeros((S, S, 3), np.float32) + (.45, .365, .27)
+    img = np.zeros((S, S, 3), np.float32) + (.52, .44, .335)
     img *= 1 + .07 * n1[..., None] + .07 * n2[..., None] + .08 * n3[..., None]
     img *= 1 - .18 * smooth(.9, 2.2, noise(S, 1.4, rng))[..., None]
     return np.clip(img, .02, .9)
@@ -310,7 +324,7 @@ def water_stencil_texture():
     tex = img[::-1].transpose(1, 0, 2)          # [v, u]; text row from top becomes u from the top
     return np.clip(tex, .01, .95)
 
-def save_jpeg(name, arr, quality=76):
+def save_jpeg(name, arr, quality=66):
     h, w, _ = arr.shape
     img = bpy.data.images.new(name, w, h, alpha=False)
     rgba = np.ones((h, w, 4), np.float32)
@@ -335,11 +349,13 @@ TEX = {
     'blue': (lambda: save_jpeg('blue', top_origin(paint_texture(256, 15, (.26, .37, .40), .5, .6))), 1.5),
     'olive': (lambda: save_jpeg('olive', top_origin(paint_texture(256, 19, (.20, .235, .09), .5, .5))), 1.0),
     'concrete': (lambda: save_jpeg('concrete', top_origin(concrete_texture(256, 21))), 2.0),
+    'zinc': (lambda: save_jpeg('zinc', top_origin(zinc_texture(256, 27))), 2.0),
     'gauge': (lambda: save_jpeg('gauge', gauge_texture()), 1.0),
     'stencil': (lambda: save_jpeg('stencil', water_stencil_texture()), 1.0),
 }
 TILE = {k: v[1] for k, v in TEX.items()}
-for k in ('rubber', 'ash', 'rope', 'glass', 'water', 'ember', 'cream', 'smoke'):
+for k in ('rubber', 'ash', 'rope', 'glass', 'water', 'ember', 'cream', 'smoke', 'watertop', 'stream', 'float',
+          'glow', 'wet', 'bare', 'brightred', 'ember2'):
     TILE[k] = 1.0
 
 def make_material(name, texture=None, color=None, rough=.92, alpha=None, emit=None, vertex=True):
@@ -385,9 +401,17 @@ MATS['ash'] = make_material('ash', color=(.016, .014, .012), rough=1.0, vertex=F
 MATS['rope'] = make_material('rope', color=(.40, .30, .17), rough=1.0)
 MATS['glass'] = make_material('glass', color=(.045, .06, .06), rough=.25, vertex=False)
 MATS['cream'] = make_material('cream', color=(.60, .56, .44), rough=.8)
-MATS['water'] = make_material('water', color=(.07, .15, .19), rough=.03, alpha=.9, vertex=False)
-MATS['ember'] = make_material('ember', color=(.9, .25, .04), rough=.6, vertex=False, emit=((1.0, .2, .02), 3.4))
-MATS['smoke'] = make_material('smoke', color=(.3, .3, .3), alpha=.4, vertex=False)
+MATS['water'] = make_material('water', color=(.015, .06, .075), rough=.03, alpha=.93, vertex=False)
+MATS['watertop'] = make_material('watertop', color=(.12, .28, .31), rough=.02, alpha=.96, vertex=False)
+MATS['stream'] = make_material('stream', color=(.80, .91, .97), rough=.02, alpha=.82, vertex=False, emit=((.6, .8, .92), .35))
+MATS['float'] = make_material('float', color=(1.0, .3, .02), rough=.5, vertex=False, emit=((1.0, .28, .0), 1.2))
+MATS['glow'] = make_material('glow', color=(.05, .01, .0), rough=1.0, alpha=.12, vertex=False, emit=((1.0, .22, .0), .7))
+MATS['wet'] = make_material('wet', color=(.055, .04, .028), rough=.3, alpha=.62, vertex=False)
+MATS['bare'] = make_material('bare', color=(.5, .48, .43), rough=.5)
+MATS['brightred'] = make_material('brightred', color=(.55, .018, .01), rough=.42)
+MATS['ember'] = make_material('ember', color=(.03, .005, .0), rough=.6, vertex=False, emit=((1.0, .06, .0), .45))
+MATS['ember2'] = make_material('ember2', color=(.05, .02, .0), rough=.6, vertex=False, emit=((1.0, .25, .0), .6))
+MATS['smoke'] = make_material('smoke', color=(.07, .07, .07), alpha=.45, vertex=False)
 
 # ----------------------------------------------------------------- geometry
 # Everything below is written as it looks from the front (viewer at -Z, well on
@@ -637,6 +661,11 @@ class Node:
         pos, nm = V(pos), V(normal).normalized()
         self.prism(mat, pos, pos + nm * h, r, 0.0, n=n, caps=(False, False), smooth_=False, tint=(.85, .85, .85), rot=.4)
 
+    def shift(self, dx):
+        # move the whole node along the front-view X axis (the stored points are already mirrored)
+        for part in self.parts.values():
+            part['v'] = [V((v.x - dx, v.y, v.z)) for v in part['v']]
+
     def build(self):
         mesh = bpy.data.meshes.new(self.name)
         verts, faces, uvs, mats_idx, smooths, cols = [], [], [], [], [], []
@@ -748,7 +777,15 @@ def build_well():
 
 def build_well_water():
     n = Node('well-water')
-    n.disc('water', (WELL.x, .56, WELL.z), (0, 1, 0), .70, n=14, tint=1.0)
+    W = WELL
+    n.disc('water', (W.x, .86, W.z), (0, 1, 0), .69, n=14, tint=1.0)
+    n.disc('watertop', (W.x, .862, W.z), (0, 1, 0), .69, n=14, tint=1.0)                  # lighter ring at the edge
+    n.disc('water', (W.x, .866, W.z), (0, 1, 0), .5, n=14, tint=1.0)
+    # the bucket is full and dripping back into the well
+    n.disc('watertop', (W.x, 1.39, W.z), (0, 1, 0), .15, n=10, tint=1.0)
+    for dx, dz in ((0, 0), (.07, .03), (-.06, -.05)):
+        n.tube('stream', [(W.x + dx, 1.1, W.z + dz), (W.x + dx, .98, W.z + dz), (W.x + dx, .88, W.z + dz)], .014, n=4, caps=(False, False), tint=1.0)
+    n.disc('stream', (W.x, .872, W.z), (0, 1, 0), .13, n=8, tint=1.0)
     return n
 
 # ---- pump: an engine on a skid, belt to a pump, suction line from the well
@@ -815,11 +852,14 @@ def build_pump():
 
 def build_pump_fuel():
     n = Node('pump-fuel')
-    jerry_can(n, (-8.55, .0, -.15), .3, 'olive')
-    jerry_can(n, (-8.1, .0, -.25), -.2, 'red')
-    jerry_can(n, (-7.7, .0, -.12), .8, 'olive')
-    jerry_can(n, (-8.3, .0, .22), 1.4, 'olive')
-    n.tube('rubber', [(-8.0, .66, -.22), (-7.85, .8, .1), (-7.9, 1.0, .55), (-8.42, 1.35, .95), (-8.45, 1.74, 1.0)], .016, n=5, caps=(True, True))
+    jerry_can(n, (-8.65, .0, -.2), .3, 'olive')
+    jerry_can(n, (-8.2, .0, -.3), -.2, 'red')
+    jerry_can(n, (-7.75, .0, -.16), .8, 'olive')
+    jerry_can(n, (-8.4, .0, .3), 1.4, 'red')
+    jerry_can(n, (-7.3, .0, .05), -.5, 'red')
+    jerry_can(n, (-8.2, .52, -.3), .4, 'olive')                      # one stacked on top
+    n.tube('rubber', [(-8.0, .66, -.22), (-7.85, .8, .1), (-7.9, 1.0, .55), (-8.42, 1.35, .95), (-8.45, 1.74, 1.0)], .024, n=5, caps=(True, True))
+    n.tube('rubber', [(-7.3, .62, .05), (-7.1, .4, .5), (-7.0, .1, 1.0), (-7.2, .1, 1.5)], .022, n=5, caps=(True, True))
     n.prism('iron', (-8.54, 1.82, 1.2), (-8.54, 1.92, 1.2), .0, .09, n=8, caps=(False, False))   # funnel
     return n
 
@@ -886,9 +926,12 @@ def build_pump_house_roof():
         n.beam('wood', (x, roof_y(z0) - .14, z0), (x, roof_y(z1) - .14, z1), .1, .13, up=(0, 1, 0))
     for z in (-.9, .5, 1.9, 3.1):
         n.beam('iron', (-9.85, roof_y(z) - .07, z), (-5.3, roof_y(z) - .07, z), .06, .06)
-    n.sheet('sheet', (-9.95, roof_y(z0), z0), (1, 0, 0), dirv, 1.55, dirv.length, tint=jt(.8, 1.1), vseg=3, wob=.012)
-    n.sheet('sheet', (-8.1, roof_y(z0), z0), (1, 0, 0), dirv, 2.9, dirv.length, tint=jt(.7, 1.0), vseg=3, wob=.014)
+    n.sheet('zinc', (-9.95, roof_y(z0), z0), (1, 0, 0), dirv, 1.55, dirv.length, tint=jt(1.0, 1.25), vseg=3, wob=.008)
+    n.sheet('zinc', (-8.1, roof_y(z0), z0), (1, 0, 0), dirv, 2.9, dirv.length, tint=jt(1.0, 1.25), vseg=3, wob=.01)
     n.sheet('plate', (-7.2, roof_y(-.1) + .04, -.1), (1, 0, 0), dirv, 1.0, 1.1, depth=0, tint=1.15)
+    for x in (-9.7, -8.6, -7.5, -6.4, -5.5):                    # bright new rivets along each rafter
+        for z in (-1.0, .8, 2.6):
+            n.bolt('bare', (x, roof_y(z) + .035, z), (0, 1, 0), r=.034, h=.03, n=4)
     for x, z in ((-9.2, .3), (-6.2, 2.2), (-8.9, 2.7), (-6.4, -.1)):
         n.ring('rubber', (x, roof_y(z) + .12, z), (0, 1, -.1), .17, .38, .2, n=12, smooth_=False)
     return n
@@ -922,15 +965,16 @@ def pipe_run(n, cut):
         flanges = (-6.0, -3.0, -1.5, 8.4, 11.4)
     else:
         n.tube('plate', [(x, MY, MZ) for x in (-6.2, -3.0, 0.0, 3.0, 6.0, 9.0, 12.2)], MR, n=12, caps=(False, False))
-        n.ring('plate', (4.0, MY, MZ), (1, 0, 0), MR * .9, MR + .075, 1.1, n=12, smooth_=True, tint=1.28)
-        for dx in (-.55, .55):
-            n.ring('iron', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .02, MR + .105, .075, n=12, smooth_=True)
-        for k in range(8):
-            t = TAU * k / 8
-            n.bolt('iron', (3.75, MY + (MR + .07) * math.cos(t), MZ + (MR + .07) * math.sin(t)),
-                   (0, math.cos(t), math.sin(t)), r=.03, h=.03, n=5)
-            n.bolt('iron', (4.25, MY + (MR + .07) * math.cos(t), MZ + (MR + .07) * math.sin(t)),
-                   (0, math.cos(t), math.sin(t)), r=.03, h=.03, n=5)
+        n.ring('bare', (4.0, MY, MZ), (1, 0, 0), MR * .9, MR + .12, 1.3, n=12, smooth_=True, tint=1.0)
+        for dx in (-.68, .68):                                     # fresh weld beads
+            n.ring('bare', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .03, MR + .17, .11, n=12, smooth_=True, tint=1.25)
+        for dx in (-.34, 0.0, .34):                                # clamps with lugs and big bolts
+            n.ring('iron', (4.0 + dx, MY, MZ), (1, 0, 0), MR + .1, MR + .2, .12, n=12, smooth_=True, tint=.9)
+            n.box('iron', (4.0 + dx, MY + MR + .21, MZ), (.14, .1, .2))
+            n.bolt('bare', (4.0 + dx, MY + MR + .27, MZ - .06), (0, 1, 0), r=.05, h=.05, n=6)
+            n.bolt('bare', (4.0 + dx, MY + MR + .27, MZ + .06), (0, 1, 0), r=.05, h=.05, n=6)
+        n.beam('wood', (4.0, 0, MZ), (4.0, MY - MR - .02, MZ), .16, .16, tint=1.5)   # a new prop under the patch
+        n.box('bare', (4.0, MY - MR - .05, MZ), (.5, .05, .36))
         flanges = (-6.0, -3.0, -1.5, 8.4, 11.4, 2.4, 6.0)
     for x in flanges:
         flange(n, x)
@@ -973,15 +1017,15 @@ def build_valve():
         n.bolt('iron', (.255 * math.cos(t), 1.575, MZ + .255 * math.sin(t)), (0, 1, 0), r=.034, h=.034, n=6)
     n.prism('plate', (0, 1.9, MZ), (0, 2.18, MZ), .15, .12, n=10)
     n.ring('plate', (0, 1.92, MZ), (0, 1, 0), .15, .27, .05, n=10, smooth_=False)
-    n.prism('iron', (0, 2.18, MZ), (0, 2.62, MZ), .032, n=6)
-    for s in (-1, 1):
-        n.beam('iron', (s * .13, 2.1, MZ), (s * .09, 2.5, MZ), .045, .05)
-    n.beam('iron', (-.1, 2.52, MZ), (.1, 2.52, MZ), .06, .06)
-    n.ring('red', (0, 2.66, MZ), (0, 1, 0), .33, .41, .065, n=14, smooth_=True, tint=1.0)
-    n.prism('red', (0, 2.62, MZ), (0, 2.76, MZ), .075, n=8)
+    n.prism('iron', (0, 2.18, MZ), (0, 2.95, MZ), .04, n=6)
+    for sd in (-1, 1):
+        n.beam('iron', (sd * .13, 2.1, MZ), (sd * .09, 2.55, MZ), .05, .055)
+    n.beam('iron', (-.11, 2.57, MZ), (.11, 2.57, MZ), .07, .07)
+    n.ring('brightred', (0, 2.99, MZ), (0, 1, 0), .46, .58, .08, n=14, smooth_=True, tint=1.0)
+    n.prism('brightred', (0, 2.94, MZ), (0, 3.1, MZ), .09, n=8, tint=1.0)
     for k in range(6):
         t = TAU * k / 6
-        n.beam('red', (.05 * math.cos(t), 2.67, MZ + .05 * math.sin(t)), (.34 * math.cos(t), 2.67, MZ + .34 * math.sin(t)), .05, .045, up=(0, 1, 0))
+        n.beam('brightred', (.06 * math.cos(t), 3.0, MZ + .06 * math.sin(t)), (.5 * math.cos(t), 3.0, MZ + .5 * math.sin(t)), .06, .055, up=(0, 1, 0), tint=1.0)
     return n
 
 # ---- boiler: riveted drum on stone saddles, cold or lit firebox
@@ -1020,11 +1064,16 @@ def boiler_body(n, lit):
     n.box('ash', (BX, .96, 2.405), (1.0, .72, .02))
     n.box('iron', (BX, 1.31, 2.1), (1.04, .05, .05)); n.box('iron', (BX, .62, 2.1), (1.04, .05, .05))
     for k in range(4):
-        n.beam('iron', (BX - .36 + k * .24, .66, 2.12), (BX - .36 + k * .24, .66, 2.4), .035, .04)
+        n.beam('ember2' if lit else 'iron', (BX - .36 + k * .24, .66, 2.12), (BX - .36 + k * .24, .66, 2.4), .045, .05)
     if lit:
-        n.box('ember', (BX, .98, 2.39), (.92, .64, .015), tint=1.0)
-        for k, (dx, dz, ry) in enumerate(((-.3, 2.3, .5), (.05, 2.28, -.2), (.33, 2.3, .8), (-.05, 2.2, 1.2))):
-            n.box('ember', (BX + dx, .72, dz), (.3, .1, .12), ry=ry, tint=1.0)
+        n.box('ember', (BX, .98, 2.39), (.92, .64, .015), tint=1.0)               # deep orange back wall
+        n.box('ember2', (BX, .85, 2.385), (.5, .3, .015), tint=1.0)               # hot yellow core
+        for k, (dx, dz, ry) in enumerate(((-.3, 2.3, .5), (.05, 2.28, -.2), (.33, 2.3, .8), (-.05, 2.2, 1.2), (.17, 2.34, .3))):
+            n.box('ember2' if k % 2 else 'ember', (BX + dx, .74, dz), (.3, .12, .12), ry=ry, tint=1.0)
+        # orange light spilling from the mouth onto the ground and the boiler front
+        for k, (ax, az, y_) in enumerate(((2.0, 1.7, .03), (1.4, 1.15, .034), (.8, .65, .038))):
+            n.poly('glow', [V((BX + ax * math.cos(TAU * i / 14), y_, 1.0 + az * math.sin(TAU * i / 14))) for i in range(14)], tint=1.0)
+        n.poly('glow', [V((BX - .75, .12, 2.02)), V((BX + .75, .12, 2.02)), V((BX + .55, 1.45, 2.02)), V((BX - .55, 1.45, 2.02))], tint=1.0)
     else:
         for k in range(5):
             n.box('rubber', (BX - .3 + k * .15, .72, 2.32 + .04 * (k % 2)), (.16, .08, .14), ry=k, tint=.9)
@@ -1057,7 +1106,11 @@ def build_boiler_lit():
     for s in range(3):
         t = s * 2.1 + .4
         n.beam('iron', (BX + .2 * math.cos(t), top, 6.4 + .2 * math.sin(t)), (BX + .05 * math.cos(t), top + .42, 6.4 + .05 * math.sin(t)), .03, .03)
-    n.prism('plate', (BX, top + .4, 6.4), (BX, top + .62, 6.4), .46, .0, n=12, tint=.9)
+    n.prism('plate', (BX, top + .4, 6.4), (BX, top + .62, 6.4), .46, .0, n=12, tint=.6)    # cap, stained dark by the fire
+    n.ring('ash', (BX, top - .05, 6.4), (0, 1, 0), .245, .31, .22, n=12)                   # soot at the top of the stack
+    for k in range(7):                                                                      # a thin dark smoke wisp
+        x0, y0 = BX + k * .2 + .005 * k * k, top + .7 + k * .55
+        n.prism('smoke', (x0, y0, 6.4 + .03 * k), (x0 + .22, y0 + .6, 6.4 + .04 * k), .05 + k * .022, .07 + k * .025, n=6, caps=(False, False))
     return n
 
 # ---- truck bay and tanker
@@ -1090,7 +1143,7 @@ def build_truck_bay():
         n.ring('iron', (x, .25, z), (0, 1, 0), .3, .325, .04, n=10, smooth_=False)
         n.ring('iron', (x, .66, z), (0, 1, 0), .3, .325, .04, n=10, smooth_=False)
     for k in range(4):
-        n.ring('rubber', (-2.3 + .05 * (k % 2), .11 + k * .2, 6.3), (0, 1, 0), .2, .43, .2, n=12, smooth_=False)
+        n.ring('rubber', (-2.3 + .05 * (k % 2), .11 + k * .2, 6.9), (0, 1, 0), .2, .43, .2, n=12, smooth_=False)
     n.box('wood', (-3.0, .8, 9.5), (1.7, .06, .6)); n.beam('iron', (-3.7, 0, 9.3), (-3.7, .78, 9.3), .08, .08)
     n.beam('iron', (-2.3, 0, 9.3), (-2.3, .78, 9.3), .08, .08)
     n.box('iron', (-3.5, .92, 9.55), (.18, .18, .14)); n.box('plate', (-2.8, .87, 9.45), (.4, .05, .06), ry=.4)
@@ -1098,7 +1151,7 @@ def build_truck_bay():
     return n
 
 def build_water_truck():
-    n = Node('water-truck'); zc = 7.6
+    n = Node('water-truck'); zc = 4.9
     for s in (-1, 1):
         n.box('iron', (-6.5, .96, zc + s * .66), (7.2, .25, .16))
     for x in (-9.9, -8.7, -7.5, -6.2, -4.9, -3.9, -3.2):
@@ -1175,6 +1228,7 @@ def build_water_truck():
     n.ring('rubber', (-6.0, 1.95, zc + 1.2), (0, 0, 1), .26, .54, .28, n=12, smooth_=False)       # spare tyre on the side
     # a crushed section of the front: a bent mudguard stay, and a hanging light
     n.beam('iron', (-2.9, 1.9, zc + .65), (-2.7, 1.5, zc + .75), .03, .03)
+    n.shift(4.2)        # pulled out of the bay, east of the pump house, so the tank and blue cab show
     return n
 
 # ---- water tower on four legs, a ladder, a painted level window
@@ -1222,27 +1276,42 @@ def build_tower():
         t = k / 15
         c = p0 * (1 - t) + p1 * t
         n.beam('iron', c + V((-.2, 0, 0)), c + V((.2, 0, 0)), .035, .035)
-    # tank: a wall with a window slot facing the front, bands, floor, roof
-    for dy0, dy1, rad in ((0, TH, TR2),):
-        n.ring('plate', (TX, TY0 + TH / 2, TZ), (0, 1, 0), TR2 - .06, TR2, TH, n=28, a0=SLOT + .31, a1=SLOT - .31 + TAU,
-               smooth_=True, basis=((1, 0, 0), (0, 0, 1)))
-    n.ring('iron', (TX, TY0 + TH - .06, TZ), (0, 1, 0), TR2 - .09, TR2 + .03, .12, n=28, smooth_=True, basis=((1, 0, 0), (0, 0, 1)))
-    n.ring('iron', (TX, TY0 + .12, TZ), (0, 1, 0), TR2 - .09, TR2 + .03, .24, n=28, a0=SLOT + .31, a1=SLOT - .31 + TAU,
-           smooth_=True, basis=((1, 0, 0), (0, 0, 1)))
+    # tank: a tall narrow slot up the front, an open hatch notch at the top, bands, floor, roof
+    HW, HL = .09, TH * .9
+    lower = dict(a0=SLOT + HW, a1=SLOT - HW + TAU)
+    upper = dict(a0=SLOT + .10, a1=SLOT - .55 + TAU)
+    bs = ((1, 0, 0), (0, 0, 1))
+    n.ring('plate', (TX, TY0 + HL / 2, TZ), (0, 1, 0), TR2 - .06, TR2, HL, n=28, smooth_=True, basis=bs, **lower)
+    n.ring('plate', (TX, TY0 + HL + (TH - HL) / 2, TZ), (0, 1, 0), TR2 - .06, TR2, TH - HL, n=28, smooth_=True, basis=bs, **upper)
+    n.ring('iron', (TX, TY0 + TH - .06, TZ), (0, 1, 0), TR2 - .09, TR2 + .03, .12, n=28, smooth_=True, basis=bs, **upper)
+    n.ring('iron', (TX, TY0 + .12, TZ), (0, 1, 0), TR2 - .09, TR2 + .03, .24, n=28, smooth_=True, basis=bs, **lower)
     for yy in (1.0, 2.0):
-        n.ring('iron', (TX, TY0 + yy, TZ), (0, 1, 0), TR2 - .06, TR2 + .045, .1, n=28, a0=SLOT + .31, a1=SLOT - .31 + TAU,
-               smooth_=True, basis=((1, 0, 0), (0, 0, 1)))
+        n.ring('iron', (TX, TY0 + yy, TZ), (0, 1, 0), TR2 - .06, TR2 + .045, .1, n=28, smooth_=True, basis=bs, **lower)
     n.disc('ash', (TX, TY0 + .02, TZ), (0, 1, 0), TR2 - .05, n=24)
-    # slot frame: painted level strip to the right, red top line across the slot
-    gx0 = SLOT + .31
-    n.ring('gauge', (TX, TY0 + TH / 2, TZ), (0, 1, 0), TR2, TR2 + .02, TH, n=28, a0=gx0 + .02, a1=gx0 + .02 + .31,
-           smooth_=True, span=True, basis=((1, 0, 0), (0, 0, 1)), ends=False, tint=1.0)
+    # painted level strip beside the slot, iron frame and rivets along both slot edges
+    gx0 = SLOT + HW + .045
+    n.ring('gauge', (TX, TY0 + TH / 2, TZ), (0, 1, 0), TR2, TR2 + .02, TH, n=28, a0=gx0, a1=gx0 + .31,
+           smooth_=True, span=True, basis=bs, ends=False, tint=1.0)
+    for sd in (-1, 1):
+        edge = SLOT + sd * (HW + .02)
+        n.ring('iron', (TX, TY0 + HL / 2, TZ), (0, 1, 0), TR2 - .06, TR2 + .04, HL, n=28,
+               a0=min(edge, edge + sd * .03), a1=max(edge, edge + sd * .03), smooth_=False, basis=bs, ends=False)
+        for k in range(7):
+            t = edge + sd * .015
+            n.bolt('bare', (TX + (TR2 + .04) * math.cos(t), TY0 + .25 + k * (HL - .4) / 6, TZ + (TR2 + .04) * math.sin(t)),
+                   (math.cos(t), 0, math.sin(t)), r=.03, h=.026, n=5)
     yl = TY0 + LEVELS[6] * TH
-    n.beam('red', (TX - .52, yl, TZ - TR2 + .1), (TX + .52, yl, TZ - TR2 + .1), .05, .06, tint=1.0)
-    n.beam('iron', (TX - .52, TY0 + .12, TZ - TR2 + .1), (TX - .52, TY0 + TH - .1, TZ - TR2 + .1), .05, .05)
-    n.beam('iron', (TX + .52, TY0 + .12, TZ - TR2 + .1), (TX + .52, TY0 + TH - .1, TZ - TR2 + .1), .05, .05)
-    # roof cone with a hatch, vent and a patched sheet
-    n.prism('sheet', (TX, TY0 + TH, TZ), (TX, TY0 + TH + 1.05, TZ), TR2 + .12, .0, n=16, caps=(True, False), tint=.9, smooth_=False)
+    n.beam('red', (TX - .19, yl, TZ - TR2 + .02), (TX + .19, yl, TZ - TR2 + .02), .06, .07, tint=1.0)   # painted top line across the slot
+    n.ring('red', (TX, yl, TZ), (0, 1, 0), TR2 - .01, TR2 + .03, .09, n=28, a0=SLOT + HW + .02, a1=SLOT + HW + .02 + .5, smooth_=True, basis=bs, ends=False, tint=1.0)
+    # the open hatch: posts at the notch edges
+    for t in (SLOT + .1, SLOT - .55):
+        n.beam('iron', (TX + (TR2 + .02) * math.cos(t), TY0 + HL, TZ + (TR2 + .02) * math.sin(t)),
+               (TX + (TR2 + .02) * math.cos(t), TY0 + TH, TZ + (TR2 + .02) * math.sin(t)), .06, .06)
+    # roof: sixteen facets with two left out over the hatch
+    apex = V((TX, TY0 + TH + 1.05, TZ))
+    ring_pts = [V((TX + (TR2 + .12) * math.cos(TAU * i / 16), TY0 + TH, TZ + (TR2 + .12) * math.sin(TAU * i / 16))) for i in range(16)]
+    facets = [[i, (i + 1) % 16, 16] for i in range(16) if i not in (10, 11)]
+    n.add('sheet', ring_pts + [apex], facets, None, [V((TX, TY0 + TH + .2, TZ))] * len(facets), False, .95)
     n.prism('iron', (TX, TY0 + TH + 1.0, TZ), (TX, TY0 + TH + 1.3, TZ), .09, n=8)
     n.prism('plate', (TX, TY0 + TH + 1.3, TZ), (TX, TY0 + TH + 1.42, TZ), .22, .0, n=8)
     # feed riser and a pipe along the ground to the main line
@@ -1256,7 +1325,22 @@ def build_tower():
 def build_tower_water(level):
     n = Node(f'tower-water-{level}')
     y = TY0 + 0.04 + LEVELS[level - 1] * TH
-    n.prism('water', (TX, TY0 + .05, TZ), (TX, y, TZ), TR2 - .1, n=24, caps=(False, True), smooth_=True, tint=1.0)
+    n.prism('water', (TX, TY0 + .05, TZ), (TX, y, TZ), TR2 - .1, n=16, caps=(False, False), smooth_=True, tint=1.0)
+    n.disc('watertop', (TX, y + .004, TZ), (0, 1, 0), TR2 - .1, n=16, tint=1.3)          # light edge ring ...
+    n.disc('water', (TX, y + .008, TZ), (0, 1, 0), TR2 - .3, n=16, tint=1.0)               # ... around a darker middle
+    # a bright float marker rides in the slot at the water level so it can be read from far away
+    n.box('float', (TX, y, TZ - TR2 - .01), (.3, .2, .1), tint=1.0)
+    if level == 8:       # brim full: a trickle over the lip of the hatch and down the side
+        t = SLOT - .45
+        r0 = TR2 + .04
+        top_y = TY0 + TH * .9
+        n.tube('stream', [(TX + r0 * math.cos(t), top_y + .02, TZ + r0 * math.sin(t)),
+                          (TX + (r0 + .05) * math.cos(t), top_y - .3, TZ + (r0 + .05) * math.sin(t)),
+                          (TX + (r0 + .045) * math.cos(t), TY0 + .3, TZ + (r0 + .045) * math.sin(t)),
+                          (TX + (r0 + .07) * math.cos(t), TY0 + .12, TZ + (r0 + .07) * math.sin(t))], .03, n=5, caps=(False, False), tint=1.0)
+        n.ring('wet', (TX, TY0 + TH * .45, TZ), (0, 1, 0), TR2 + .002, TR2 + .01, TH * .9, n=28, a0=t - .045, a1=t + .045, smooth_=True,
+               basis=((1, 0, 0), (0, 0, 1)), ends=False, tint=1.0)
+        n.disc('watertop', (TX + (TR2 + .3) * math.cos(t), TY0 + .005, TZ + (TR2 + .3) * math.sin(t)), (0, 1, 0), .4, n=10, tint=1.0)
     return n
 
 # ---- the camp tap and its trough
@@ -1285,9 +1369,17 @@ def build_camp_tap():
 def build_tap_running():
     n = Node('tap-running')
     tx, tz = 13.1, MZ - .05
-    n.tube('water', [(tx, .74, tz), (tx, .55, tz), (tx, .47, tz)], .05, n=6, caps=(False, False), tint=1.0)
-    n.box('water', (tx, .46, tz), (1.58, .02, .64), tint=1.0)
-    n.ring('water', (tx, .475, tz), (0, 1, 0), .06, .24, .015, n=10, smooth_=False, tint=1.0)
+    n.tube('stream', [(tx, .74, tz), (tx, .68, tz), (tx, .64, tz)], .055, n=6, caps=(False, False), tint=1.0)   # a clear white-blue stream
+    n.box('water', (tx, .62, tz), (1.6, .02, .66), tint=1.0)                                               # trough filled near the rim
+    n.disc('watertop', (tx, .632, tz), (0, 1, 0), .3, n=10, tint=1.2)
+    n.disc('stream', (tx, .636, tz), (0, 1, 0), .13, n=8, tint=1.0)                                       # splash
+    # it spills over the lip and soaks the ground: a ragged dark wet patch
+    pts = []
+    for i in range(18):
+        a_ = TAU * i / 18
+        r = 1.15 + .35 * math.sin(a_ * 3 + 1.0) + .18 * math.sin(a_ * 5)
+        pts.append(V((tx - .1 + r * 1.35 * math.cos(a_), .014, tz - .5 + r * .8 * math.sin(a_))))
+    n.poly('wet', pts, tint=1.0)
     return n
 
 # --------------------------------------------------------------------- build
@@ -1394,6 +1486,16 @@ def stage_nodes(ch):
         if c == 8: shown.discard('tower-water-7')
     return shown
 
+CLOSEUPS = {
+    'boiler': (5, (12.8, 4.6, -3.2), (10.2, 1.6, 3.2), 38, 800, 600),
+    'tower1': (1, (9.5, 11.0, -3.5), (5.6, 8.0, 9.0), 40, 600, 760),
+    'tower4': (4, (9.5, 11.0, -3.5), (5.6, 8.0, 9.0), 40, 600, 760),
+    'tower8': (8, (9.5, 11.0, -3.5), (5.6, 8.0, 9.0), 40, 600, 760),
+    'truck': (6, (9.0, 5.0, -10.0), (-2.5, 2.0, 5.2), 34, 800, 600),
+    'well': (8, (-17.0, 3.4, -4.5), (-11.8, 1.0, 1.9), 42, 800, 600),
+    'tap': (8, (10.8, 3.4, -4.5), (12.9, .7, 1.2), 40, 800, 600),
+}
+
 if options.render:
     folder = Path(options.render).resolve(); folder.mkdir(parents=True, exist_ok=True)
     def wp(x, y, z):                      # front-view coordinates to the Blender scene
@@ -1425,11 +1527,47 @@ if options.render:
     rng_ = gt.nodes.new('ShaderNodeMapRange'); rng_.inputs['From Min'].default_value = 70; rng_.inputs['From Max'].default_value = 230
     gt.links.new(dist.outputs['Value'], rng_.inputs['Value'])
     fade = gt.nodes.new('ShaderNodeMix'); fade.data_type = 'RGBA'
-    fade.inputs[7].default_value = (.42, .33, .24, 1)
+    fade.inputs[7].default_value = (.48, .39, .29, 1)
     gt.links.new(rng_.outputs['Result'], fade.inputs[0]); gt.links.new(blend.outputs[2], fade.inputs[6])
     gt.links.new(fade.outputs[2], gt.nodes['Principled BSDF'].inputs['Base Color'])
     ground.data.materials.append(gm)
     scene.collection.objects.link(ground)
+    # damp dark patches and tyre ruts on the ground, for the picture only (not in the GLB)
+    wetm = make_material('damp', color=(.07, .05, .035), rough=.35, alpha=.4, vertex=False)
+    rutm = make_material('rut', color=(.15, .105, .07), rough=.8, alpha=.7, vertex=False)
+    def flat(name, pts, mat):
+        me = bpy.data.meshes.new(name)
+        me.from_pydata([wp(x, .012, z) for x, z in pts], [], [list(range(len(pts)))]); me.update()
+        me.materials.append(mat)
+        ob = bpy.data.objects.new(name, me); scene.collection.objects.link(ob); return ob
+    def blob(name, cx, cz, r, seed):
+        rr = random.Random(seed)
+        ph = [rr.uniform(0, 6) for _ in range(3)]
+        pts = []
+        for i in range(24):
+            a_ = TAU * i / 24
+            k = r * (1 + .28 * math.sin(a_ * 2 + ph[0]) + .16 * math.sin(a_ * 3 + ph[1]) + .08 * math.sin(a_ * 5 + ph[2]))
+            pts.append((cx + k * math.cos(a_) * 1.3, cz + k * math.sin(a_)))
+        flat(name, pts, wetm)
+    blob('damp1', -9.5, -4.0, 2.6, 3); blob('damp2', 4.5, -6.0, 3.2, 5); blob('damp3', 1.0, 15.0, 3.0, 8)
+    blob('damp4', 17.5, 3.0, 2.2, 11); blob('damp5', -16.5, 6.0, 2.0, 13)
+    def rut(name, pts, width=.38):
+        left, right = [], []
+        for i, (x, z) in enumerate(pts):
+            x2, z2 = pts[min(i + 1, len(pts) - 1)]; x1, z1 = pts[max(i - 1, 0)]
+            dx, dz = x2 - x1, z2 - z1; ln = math.hypot(dx, dz) or 1
+            nx, nz = -dz / ln, dx / ln
+            w = width * (1 + .25 * math.sin(i * 1.7))
+            left.append((x + nx * w, z + nz * w)); right.append((x - nx * w, z - nz * w))
+        flat(name, left + right[::-1], rutm)
+    def curve(f, n_=30): return [f(i / (n_ - 1)) for i in range(n_)]
+    for off, nm in ((-.9, 'a'), (.9, 'b')):      # a road sweeping past the front of the camp
+        rut('rut' + nm, curve(lambda t, off=off: (-34 + 70 * t, -9.5 - 3.5 * math.sin(t * 3.0) + off)))
+    for off, nm in ((-.9, 'c'), (.9, 'd')):      # a spur up to the pump house door
+        rut('rut' + nm, curve(lambda t, off=off: (-7.6 + off + 5 * (1 - t) ** 2, -3.5 - 6 * (1 - t)), 12))
+    fire = bpy.data.lights.new('fire', 'POINT'); fire.energy = 40; fire.color = (1.0, .35, .08); fire.shadow_soft_size = .3
+    fo = bpy.data.objects.new('fire', fire); scene.collection.objects.link(fo)
+    fo.location = wp(BX, 1.0, 0.5)
     world = bpy.data.worlds.new('late afternoon'); scene.world = world; world.use_nodes = True
     nt = world.node_tree
     bg = nt.nodes['Background']
@@ -1464,12 +1602,27 @@ if options.render:
     scene.view_settings.view_transform = 'AgX'
     scene.view_settings.exposure = .45
     scene.render.image_settings.file_format = 'PNG'
-    wanted = [int(c) for c in options.only.split(',')] if options.only else range(9)
+    wanted = [] if options.no_chapters else [int(c) for c in options.only.split(',')] if options.only else range(9)
     for ch in wanted:
         shown = stage_nodes(ch)
         for name, ob in objects.items():
             ob.hide_render = name not in shown
             ob.hide_viewport = name not in shown
+        fo.hide_render = 'boiler-lit' not in shown
         scene.render.filepath = str(folder / f'chapter-{ch}.png')
         bpy.ops.render.render(write_still=True)
         print(f'water-works: rendered chapter {ch}: {sorted(shown)}')
+    if options.closeups:
+        for name, (ch, cam_p, cam_t, lens, w, h) in CLOSEUPS.items():
+            if options.close_only and name not in options.close_only.split(','): continue
+            shown = stage_nodes(ch)
+            for oname, ob in objects.items():
+                ob.hide_render = oname not in shown; ob.hide_viewport = oname not in shown
+            fo.hide_render = 'boiler-lit' not in shown
+            cam_data.lens = lens
+            cam.location = wp(*cam_p)
+            cam.rotation_euler = (V(wp(*cam_t)) - V(cam.location)).to_track_quat('-Z', 'Y').to_euler()
+            scene.render.resolution_x, scene.render.resolution_y = w, h
+            scene.render.filepath = str(folder / f'close-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'water-works: rendered close-up {name}')

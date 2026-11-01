@@ -1,6 +1,6 @@
 # WATER-YARD-ART
 
-Round 1 of three (card `docs/board/cards/WATER-YARD-ART.md`, packet
+Rounds 1 and 2 of three (card `docs/board/cards/WATER-YARD-ART.md`, packet
 `docs/story/wasteland-water-road.md` sections 2 and 11). Claude (Director), 1 November 2026.
 Not wired into the game: the card that shows the stages in the yard (WATER-SCREENS) comes
 later. Nothing in `src/` changed.
@@ -40,6 +40,33 @@ later. Nothing in `src/` changed.
   from `blender -b --python tools/blender/water-works.py -- --root . --render .qa-dist/water-works`.
 - `tools/test-blender-output.mjs` lists the new recipe like the other yard recipe.
 
+## Round 2 (1 November 2026)
+
+Claude judged round 1: the look is right, keep the layout and node names. Round 2 fixes, in order:
+
+- Fire: `boiler-lit` has a deep orange firebox with a yellow core, glowing coals and grate, a soft
+  orange glow on the ground and boiler front (stacked see-through planes), a soot-dark chimney cap
+  and a thin dark smoke wisp.
+- Water: dark blue-green water with a lighter surface ring. The tower window is now a narrow
+  riveted slot with a red top line and a bright float marker that rises with each level; an open
+  hatch at the top shows the surface at levels 7 and 8; level 8 has an overflow trickle and a
+  puddle on the deck.
+- Ending: `well-water` sits near the rim with a dripping full bucket; `tap-running` is a clear
+  stream into a full trough with a ragged wet patch on the ground.
+- Bigger changes: thick bright patch collar with clamps and a new post; six jerry cans and two
+  hoses; larger bright red valve wheel; pale new galvanised roof with bright rivets; the truck
+  now stands in front of the bay (east of the pump house) so its tank and cab show. This is the
+  one layout change: the truck is no longer under the bay roof.
+- Ground, in the pictures only: paler dirt, damp patches and tyre ruts.
+- Recipe: `--closeups` renders seven close-ups, `--close-only NAME` and `--no-chapters` for quick
+  looks. New `docs/board/looks/water-works/round-2-sheet.py`, `round-2.jpg` (3 by 3, 452 KB),
+  `round-2-close.jpg` (close-ups, 491 KB) and `round-2.md`.
+- GLB 1,979,172 bytes (under 2 MB); 23,974 triangles for all nodes together.
+
+Round 2 checks: `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs` (see
+Checks). Round 2 renders waited out the release full tier (hold in the inbox) and the two-heavy-job
+limit.
+
 ## Checks
 
 - `node tools/test-blender-output.mjs`: 144 checks, 0 failed (the new recipe plans its paths
@@ -50,14 +77,15 @@ later. Nothing in `src/` changed.
   because the cut pipe, missing valve, cold boiler and the lower water heights are hidden then).
   GLB 1,909,796 bytes, eleven small painted textures. Imported back into Blender: one root
   `water-works` with the 25 named children, vertex colours and the boiler glow survive.
-- Nine chapter pictures rendered from the same scene and put on `round-1.jpg` (about 422 KB).
+- Round 1: nine chapter pictures on `round-1.jpg` (about 422 KB). GLB then 1,909,796 bytes, 22,636 triangles.
 - Not run, on purpose: the full lane tier and build (no `src/` change, nothing wired in), and
   any frame check (the group is not in the game).
 
 ## Changed assertions
 
-None. The only test edit is one new line in the list of recipes in
-`tools/test-blender-output.mjs`.
+None loosened. Two small test-file edits: one new line in the list of recipes in
+`tools/test-blender-output.mjs`, and `tools/test-repo-hygiene.mjs` now also accepts a look sheet
+named `round-N-close.jpg` (the second, close-up sheet of a round), same folder and size rules.
 
 ## Removed
 
@@ -65,6 +93,6 @@ Nothing. No old model, test or tool is replaced.
 
 ## Open
 
-- Round 1 of 3. Pictures go to Kyle with a pick; round 2 and 3 fix what he marks.
+- Round 2 of 3 done. Pictures go to Kyle with a pick; round 3 fixes what he marks.
 - No frame check yet: the group is not in the game. The wiring card does it.
 - Smoke from the lit boiler is left out on purpose (a flat smoke shape would look cartoonish).
