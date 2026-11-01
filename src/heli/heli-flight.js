@@ -331,6 +331,15 @@ export function touchdownClass({sink, tilt = 0, slide = 0}) {
   return 'crash';
 }
 
+// The HEADING gauge's compass (HELI-COMPASS): 0 north (+z), 90 east, which is -x, as the view and the D key turn.
+// Every bearing a pilot reads in a course comes from here, so flying the number on the gauge goes there.
+export function compassBearing(dx, dz) {
+  const degrees = Math.atan2(-dx, dz) / DEG;
+  return degrees < 0 ? degrees + 360 : degrees;
+}
+// The way a compass heading points on the ground, as a unit {x, z}.
+export const compassDirection = degrees => ({x: -Math.sin(degrees * DEG), z: Math.cos(degrees * DEG)});
+
 // What the instruments show. Height above sea level and above the ground,
 // knots, feet, rotor percent, fuel and minutes left at the present burn,
 // weight now and the heaviest weight the rotor can hover here.
