@@ -1599,3 +1599,12 @@ pad (new optional save field heli.lastPad, independent save review clean), car
 on the parking spot, crates only on flyable legs, Drop job. 38 helicopter suites
 by hand, heli-jobs scenario, lane tier 104/104, build. Five review faults fixed
 before merge.
+
+## Release, 31 October 2026, evening (Claude, Release Manager)
+
+LAB-CLASSROOM and LAB-CLASSROOM-LIVE: the pendulum lesson as a classroom with
+Brian as tutor, switch lab-classroom on (Kyle: no Preview step); the old
+pendulum lesson removed; classroom words kept in the notebook; Tab-focused
+lesson buttons press on Enter. Lesson suite 14/14, all 22 Lab suites, all 14
+Lab scenarios, lane tier 45/45, build. Rule 19: only Lab code since the full
+tier on 86c48d4f. No save change.
