@@ -243,10 +243,19 @@ root.addEventListener('click',e => {
   if (button.dataset.teamRoom) {e.preventDefault();teamRoom.open(button.dataset.teamRoom, button);return;}
   if(courseActions.handle(button))return;
   if(button.dataset.warlord){if(app.startWarlordFight(button.dataset.warlord)){yardPanel='home';lastScreen=null;}return;}
+  // WATER-HOOKS: a Water Road chapter's button. A Scrapdome job opens the yard's panel with its mode and venue filled.
+  if(button.dataset.waterStep){
+    const out=app.waterStep?.(button.dataset.waterStep);
+    if(out?.setup==='arena'){arenaMode=out.mode;arenaVenue=out.venueId;yardPanel='scrapdome';}
+    else if(out?.courses){yardPanel='home';coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Unlock the course here, then select it.';}
+    else if(out)yardPanel='home';
+    lastScreen=null;renderState(app.duel.state);return;
+  }
   if (button.dataset.arenaVenue) {
     if (!(arenaMode === 'ambush-alley' && button.dataset.arenaVenue === 'pit' &&
       app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
     arenaVenue = button.dataset.arenaVenue; lastScreen = null;
+    app.waterArenaChoice?.({venueId: arenaVenue});
     renderState(app.duel.state);
     root.querySelector(`[data-arena-venue="${arenaVenue}"]`)?.focus({preventScroll:true});
     return;
@@ -256,6 +265,7 @@ root.addEventListener('click',e => {
     if(arenaMode==='convoy-raid')arenaVenue='salt-flats';
     else if(arenaMode==='ambush-alley'&&arenaVenue!=='salt-flats')arenaVenue='pit';
     else if(arenaMode!=='ambush-alley'&&arenaVenue==='pit')arenaVenue='scrapdome';
+    app.waterArenaChoice?.({mode:arenaMode,venueId:arenaVenue});
     lastScreen=null;renderState(app.duel.state);return;
   }
   if(button.dataset.arenaOpponents){arenaOpponents=Math.max(1,Math.min(3,Number(button.dataset.arenaOpponents)||3));lastScreen=null;renderState(app.duel.state);root.querySelector(`[data-arena-opponents="${arenaOpponents}"]`)?.focus({preventScroll:true});return;}

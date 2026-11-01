@@ -37,6 +37,8 @@ import {createStoryRadio} from './story/story-radio.js';
 import {STORY_LEAD_LINE} from './story/story-ui.js';
 import {normalizeRival} from './rival-settings.js';
 import {mountStoryCaption} from './story/story-caption-view.js';
+// WATER-HOOKS: the Water Road (docs/story/wasteland-water-road.md), behind the water-road switch.
+import {createWaterRoad} from './story/water-road.js';
 import {courseClosed, closureCard, burnStage, burnSmoke, scarLooks, CLOSURE, daysSinceBurn} from './course-closures.js';
 import {groundFromCourse} from './heli/heli-ground.js';
 import {createHeliAudio} from './heli/heli-audio.js';
@@ -224,6 +226,8 @@ export class App {
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
+      if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
+      if(event.hiddenRoadArrived)this._waterYardArrived(); // WATER-HOOKS: Hollis's end lines, once
       if (event.stageResult) {
         this._settleResult(event.stageResult,state);
       }
@@ -650,7 +654,8 @@ export class App {
   // The road the Night Duel runs on: the Night version, or the day road while the Night version is not built.
   _storyCourseId(){return COURSE.some(course=>course.id===KOGANE_DUEL_COURSE)?KOGANE_DUEL_COURSE:'kogane-pass';}
   // The plain object the Story card and the other screens draw from (docs/story/kogane-invitation.md 12.1).
-  storyProps(){
+  storyProps(key='kogane'){
+    if(key==='water')return this._waterRoad().props(this.isYardHomeActive()?'yard':'menu');
     const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
     if(!this._storyAvailable())return none;
     const profile=this.profile,step=koganeStep(profile),k=storyOf(profile).kogane,won=typeof k.duel==='string';
@@ -669,7 +674,8 @@ export class App {
       skylineOwned:isCarUnlocked(profile,KOGANE_SKYLINE),lead:k.ana===true?STORY_LEAD_LINE:''};
   }
   // Opening the Story card reads the letter. Only the red dot goes away.
-  openStory(){
+  openStory(key='kogane'){
+    if(key==='water')return this._waterRoad().open();
     if(this.duel.state.status!=='menu'||!this._storyAvailable())return false;
     this._refreshPlayer();
     const read=readKoganeLetter(this.profile);
@@ -720,7 +726,7 @@ export class App {
   _storyUntimer(handle){clearTimeout(handle);}
   // `quiet`: words only, so a caption does not talk over a recorded line.
   _storySay(id,{quiet=false}={}){
-    if(!this._storyOn())return false;
+    if(!this._storyOn()&&!this._waterRoad().on())return false;
     this._storyQuiet=quiet;
     try{return this._storyRadioNow().say(id);}finally{this._storyQuiet=false;}
   }
@@ -755,6 +761,24 @@ export class App {
   _storyLeave(){this._cancelStoryThanks();this._storyRadio?.leave();this.storyCaption=null;}
   // Daichi's thanks waits 3.2 s after the crate is down; leaving the flight (or the game) before then drops it.
   _cancelStoryThanks(){if(this._storyThanks!=null){this._storyUntimer(this._storyThanks);this._storyThanks=null;}}
+
+  // ---- The Water Road (WATER-HOOKS; docs/story/wasteland-water-road.md) ------------------------------------------------
+  // Everything here waits for the water-road switch and its partners (src/story/water-road.js). With it off nothing changes.
+  _waterRoad(){return this._water??=createWaterRoad(this);}
+  // A chapter's button on the Story card or the Story Wall: fills the setup, opens the Scrapdome panel or starts the fight.
+  waterStep(id){return this._waterRoad().step(id);}
+  // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
+  waterArenaChoice(choice){this._water?.arenaChoice(choice);}
+  _waterArenaSettled(state){
+    const arena=state?.arena,result=arena?.result;
+    if(arena?.mode==='warlord'&&arena.warlordId==='blackiron'&&result?.winnerId==='player'&&result.settlementSaved===true&&
+      this._waterRoad().available()&&storyOf(this.profile).water?.end!==true)this._storySay('story.water.vesper.8');
+  }
+  _waterYardArrived(){
+    if(!this._waterRoad().yardArrived())return false;
+    this._storyQuiet=false;
+    return this._storyRadioNow().saySequence('water','end');
+  }
 
   startCampaign(options = {}) {
     if(this.duel.drivingLesson)this._clearDriveLesson();
@@ -828,6 +852,9 @@ export class App {
       ?{seriesId:cupRun.id,ownerId:this.player.id,runId:this.runId,state:this.duel.state}:null;
     this._storyRace=storyRun?{runId:this.runId,level:storyRun.level}:null;
     if(storyRun){levelStart(this.duel);this._storySay('story.kogane.daichi.grid');}
+    // WATER-HOOKS: a Water Road race, asked for by the Story card (or a restart of one), and its radio line.
+    const waterLine=this._waterRoad().raceStarted({stage,mode:this.duel.state.mode,runId:this.runId,rematch:options.waterRematch===true});
+    if(waterLine)this._storySay(waterLine);
     return true;
   }
   nextStage(){
@@ -881,6 +908,7 @@ export class App {
       if((Object.hasOwn(values,'eventId')&&values.eventId!==now.eventId)||(Object.hasOwn(values,'mode')&&values.mode!==now.mode)||
         (Object.hasOwn(values,'rival')&&rivalOf(values.rival)!==rivalOf(now.rival)))this._storyPending=null;
     }
+    this._water?.settingsChanged(values,this._raceSettings); // WATER-HOOKS: another road or mode cancels a story race
     const settings=this._rememberRaceSettings(values);
     const customSeed=Object.hasOwn(values,'routeVariant')?null:this._customMenuSeed;
     this._applyRaceSettings(settings,customSeed);this.duel.emit({raceSettingsChanged:true});return this.getRaceChoices();
@@ -901,7 +929,7 @@ export class App {
     const { mode, car, difficulty,cpuDifficulty,driverId } = this.duel.state;
     // A restart of the story's race keeps the mark (and so Daichi at the level raced); it starts level again.
     const story=this._storyRace?.runId===this.runId&&this.runId?KOGANE_DUEL_MARK:undefined;
-    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,laps:this._lapChoices?.get(this._lapChoiceKey(this._campaignStart||0,mode)),rival:this.duel.state.rivalSettings,...(story?{story}:{}),
+    this.startCampaign({ mode, car, difficulty,cpuDifficulty,driverId,laps:this._lapChoices?.get(this._lapChoiceKey(this._campaignStart||0,mode)),rival:this.duel.state.rivalSettings,...(story?{story}:{}),waterRematch:this._water?.run?.kind==='race'&&this._water.run.runId===this.runId,
       opponentCount:this.duel.state.opponentCount,fieldSize:this.duel.state.opponentCount,seed:this.duel.state.seed,startStage:this._campaignStart||0 });
   }
   getMenuSeed(stageIndex=this.menuStage){return supportsRouteVariants(COURSE[stageIndex])?(this._customMenuSeed??getRouteVariant(this.menuRouteId).seed):1989;}
@@ -1336,7 +1364,10 @@ export class App {
       result.creditReward=0;result.creditBalance=this.profile.credits;return;
     }
     if(awarded.awarded){
-      this.profile=awarded.profile;this._saveProfile();
+      // WATER-HOOKS: a won story race adds its mark in the same save; a loss, a quit or any other race adds nothing.
+      const water=this._water?.settle(awarded.profile,{runId:this.runId,won:payload.won===true&&payload.completed===true&&state.mode==='wasteland'});
+      this.profile=water?.profile??awarded.profile;this._saveProfile();
+      if(water)result.waterJob=water.mark;
       this._settleTunedLap(result,state); // LAB-TUNE
       this._recordCupResult(result,state);
       if(state.mode==='grandprix')result.creditPositionReward=Math.min(Math.max(0,awarded.reward),Math.max(0,awarded.breakdown.base));
@@ -1387,7 +1418,9 @@ export class App {
       result.hold=settled.hold;
       return false;
     }
-    this.profile=settled.profile;
+    const water=this._water?.settle(settled.profile,{runId:this.runId,won:result.winnerId==='player'}); // WATER-HOOKS
+    this.profile=water?.profile??settled.profile;
+    if(water)result.waterJob=water.mark;
     if(!this._saveShopProfile(previous)){
       return false;
     }
@@ -1449,7 +1482,9 @@ export class App {
       }
       return false;
     }
-    const candidate = replacePlayerProfile(registry, pending.ownerId, settled.profile);
+    // WATER-HOOKS: a won story game adds its mark to the same write.
+    const water = this._water?.settle(settled.profile, {runId: pending.runId, won: result.winnerId === 'player'});
+    const candidate = replacePlayerProfile(registry, pending.ownerId, water?.profile ?? settled.profile);
     // Rebase on durable progress each time, and expose nothing until one write succeeds.
     if (!savePlayers(candidate)) {
       this._adoptWarlordRegistry(registry, false);
@@ -1460,6 +1495,7 @@ export class App {
     Object.assign(result, {scrapEarned: settled.scrapEarned,
       scrapBalance: this.profile.wasteland.scrap, holdAdded: settled.holdAdded,
       hold: settled.hold, settlementSaved: true, settlementRetryable: false});
+    if (water) result.waterJob = water.mark;
     this._fuelSettlementRetry = null;
     return true;
   }
@@ -1805,8 +1841,12 @@ export class App {
       weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
       combatRoofLook: getEquippedRoofLook(this.profile, car),
       crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')})};
-    return warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
+    // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
+    const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
+    const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
+    if (started && waterLine) this._storySay(waterLine);
+    return started;
   }
   // ---- the helicopter --------------------------------------------------
   // Special cars travel only by air while the helicopter is on: they drive
@@ -2169,7 +2209,7 @@ export class App {
   }
   selectPlayer(id){
     if(this.duel.state.status!=='menu')return false;
-    this._storyPending=null; // the story's race belongs to the player who asked for it
+    this._storyPending=null;this._water?.clear(); // the story's race belongs to the player who asked for it
     this._refreshPlayers();if(!this.players.players.some(p=>p.id===id))return false;
     this.players=selectPlayer(this.players,id);this.player=activePlayer(this.players);this.profile=this.player.profile;this._restoreRaceSettings();this._rememberRaceSettings();this._recoverInterruptedRace();this._noteFirePlayDay();this.profileSaved=savePlayers(this.players);this.duel.emit({playerChanged:true});return true;
   }
@@ -2370,7 +2410,7 @@ export class App {
     this.duel.setInput({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false });
     this.audio.setPaused(false);
     if (heliLanding) this.setRaceSettings(heliLanding);
-    this._storyRace = null; this._storyPending = null; // the story's race ends with the race (quitting grants nothing)
+    this._storyRace = null; this._storyPending = null; this._water?.clear(); // the story's race ends with the race (quitting grants nothing)
     this.duel.emit({ menu: true });
     this.storyMenuOpened(); // Ana's message, the next time the menu opens after the win
   }
