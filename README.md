@@ -6,6 +6,10 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Pendulums is a classroom now.** Brian sits beside the lesson as
+  your tutor: one idea at a time with a picture, real-time stopwatches, set
+  up then guess then let go, and he says why a guess was wrong. Stuck? He
+  offers help, and the third press of H shows you. Mouse or keyboard.
 - **Your Courses** shows a small map of every course you can buy or race.
   Courses still to be found from the helicopter keep their secret.
 - **Helicopter jobs:** the job you took stays on screen all flight with the
