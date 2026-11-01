@@ -16,8 +16,11 @@ function winPlaces(warlord, career, flags, one) {
   const s = one ? '' : 's';
   const courses = warlord.courses.map(id => courseNames.get(id)).filter(Boolean).join(' or ');
   const places = courses ? [`Mad Max Duel race${s} on ${courses}`] : [];
-  if (warlord.id === 'kettle') places.push(`Last Car Rolling game${s} in the Scrapdome against two or more cars`);
-  if (warlord.id === 'tollkeeper' && flags.enabled('salt-flats') === true && flags.enabled('convoy-raid') === true)
+  // Every Scrapdome game but the Convoy Raid adds Kettle's hold (arena-settlement.js).
+  if (warlord.id === 'kettle') places.push(`Scrapdome game${s} against two or more cars`);
+  // The Convoy Raid shows in the yard only once the Tollkeeper's hold has begun.
+  if (warlord.id === 'tollkeeper' && flags.enabled('salt-flats') === true && flags.enabled('convoy-raid') === true &&
+      career?.territories?.tollkeeper?.hold > 0)
     places.push(`Convoy Raid${s} on the Salt Flats${career?.rank >= 9 ? '' : ' (they open at rank 9)'}`);
   return places.join(', or ');
 }
@@ -36,11 +39,9 @@ export function yardNextStep(profile, {featureFlags} = {}) {
     return `Next up: ${warlord.name} is waiting. Open the TERRITORY MAP and press FIGHT.`;
   const held = career?.territories?.[id]?.hold;
   const hold = Number.isSafeInteger(held) ? Math.max(0, Math.min(100, held)) : 0;
-  if (hold === 100) {
-    const left = WARLORD_LADDER.slice(0, -1).filter(other => !defeated(career, other))
-      .map(other => WARLORDS[other].name);
-    return `Next up: ${warlord.name}. The fight opens once you beat ${left.join(', ')}.`;
-  }
+  // Only the Baron can be held at 100 and still shut: one of the others is beaten
+  // first, and a fight that is switched off cannot be.
+  if (hold === 100) return `Next up: ${warlord.name}'s fight is coming later.`;
   const wins = Math.ceil((100 - hold) / 25);
   const places = winPlaces(warlord, career, flags, wins === 1);
   return `Next up: ${warlord.name}. Win ${wins} more ${places}${places.includes(', or ') ? ',' : ''} to open the fight.`;

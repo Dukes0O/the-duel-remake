@@ -50,10 +50,13 @@ test('after Sal falls the line moves on and never says Sal is waiting', () => {
 test('Kettle and the Tollkeeper name their arena routes; a closed route says the rank', () => {
   const kettle = yardNextStep(career(w => beat(w, 'sal', 'dustmonger', 'mirage', 'gunn')));
   assert.match(kettle, /Kettle Kingpin/);
-  assert.match(kettle, /Last Car Rolling games in the Scrapdome against two or more cars/);
+  assert.match(kettle, /Titan Monster Arena, or Scrapdome games against two or more cars, to open the fight\./);
   const flags = createFeatureFlags({storage: null, qa: true, overrides: {'salt-flats': true, 'convoy-raid': true}});
-  const early = career(w => { w.rank = 5; beat(w, ...WARLORD_LADDER.slice(0, 6)); });
-  assert.match(yardNextStep(early, {featureFlags: flags}), /Neon Docks Circuit, or Convoy Raids on the Salt Flats \(they open at rank 9\), to open the fight\./);
+  const early = career(w => { w.rank = 9; beat(w, ...WARLORD_LADDER.slice(0, 6)); });
+  // No Convoy Raid until the first Neon Docks win starts the hold: the yard does not offer one yet.
+  assert.match(yardNextStep(early, {featureFlags: flags}), /Win 4 more Mad Max Duel races on Neon Docks Circuit to open the fight\./);
+  early.wasteland.rank = 5; early.wasteland.territories.tollkeeper.hold = 25;
+  assert.match(yardNextStep(early, {featureFlags: flags}), /Win 3 more Mad Max Duel races on Neon Docks Circuit, or Convoy Raids on the Salt Flats \(they open at rank 9\), to open the fight\./);
   early.wasteland.rank = 9;
   assert.match(yardNextStep(early, {featureFlags: flags}), /Convoy Raids on the Salt Flats, to open/);
 });
