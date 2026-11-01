@@ -30,7 +30,9 @@ The Water Road (`docs/story/wasteland-water-road.md` section 9).
 
 ## Checks
 
-- `node tools/test-water-save.mjs`: 65 checks pass.
+- `node tools/test-water-save.mjs`: 65 checks pass; `test-save-fixtures` 25 shapes, 1103 checks;
+  `test-career-backup` passes with the new fixture.
+- Lane tier: 36 passed, 0 failed, 0 not run. `npm run build` passes.
 
 ## Save review (rule 17)
 
