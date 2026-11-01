@@ -45,7 +45,7 @@ test('the lesson walks through the seven parts in order, one idea per step', () 
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
   assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['pendulum-pendulum', 'pendulum-swing-time', 'pendulum-length']);
-  assert.equal(FEATURE_STATES['lab-classroom'], 'dev');
+  assert.equal(FEATURE_STATES['lab-classroom'], 'on');
 });
 
 test('a child who does exactly what each prompt says passes every step with one press', () => {
