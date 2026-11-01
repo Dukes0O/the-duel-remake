@@ -94,8 +94,8 @@ test('notebook defaults, normalizes, round trips through profiles, preserves rew
 });
 test('registered data is stable and force arrows share their colour and linear scale', () => {
   const data = copy(); const remove = registerLesson(data, hooks);
-  data.wonder.text = 'Changed'; assert.equal(lessonDefinition('lift').definition.wonder.text, d.wonder.text);
-  remove(); assert.equal(lessonDefinition('lift'), null);
+  data.wonder.text = 'Changed'; assert.equal(lessonDefinition('headings').definition.wonder.text, d.wonder.text);
+  remove(); assert.equal(lessonDefinition('headings'), null);
   for (const [kind, colour] of Object.entries(FORCE_COLOURS)) {
     const a = forceArrow({kind, newtons: 200}, .003), b = forceArrow({kind, newtons: 400}, .003);
     assert.equal(b.length, a.length * 2); assert.equal(a.colour, colour); assert.equal(a.label, '200 N');

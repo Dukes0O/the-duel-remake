@@ -1,13 +1,13 @@
 // Private browser check for the Lab screen (LAB-VIEW, docs/LAB.md): take the Lift lesson, then the Strength lesson
 // and its challenge (the hook arm), buy an upgrade, and leave. Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario lab-view
-import {run as runLiftLesson} from './lab-lift-2.mjs';
+import {run as runLiftLesson} from './lab-classroom-lift.mjs';
 import * as strength from '../../src/lab/lessons/strength-lesson.js';
 
 const entry = '/tools/menu-check.html?flags=helicopter,lab';
 
 export async function run(context) {
-  // Complete every new Lift teaching step and launch its unchanged flight challenge.
+  // Play the Lift classroom lesson through and launch its unchanged flight challenge.
   await runLiftLesson(context);
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   await context.navigate(entry);

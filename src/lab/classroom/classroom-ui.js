@@ -8,7 +8,8 @@ import './classroom.css';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const kbd = key => `<kbd>${escape(key)}</kbd>`;
-const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space'};
+const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space',
+  KeyW: 'W', KeyS: 'S', ArrowUp: '↑', ArrowDown: '↓'};
 const SPARK_COLOURS = ['#ffd27a', '#f0a148', '#fff2c8', '#e8803a'];
 
 export function createClassroomUi({stage, app, lesson, name, onLeave, startChallenge, sayVoice = () => {}, onCue = () => {}}) {
@@ -71,7 +72,9 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (action || ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(event.code)) {
       event.preventDefault(); event.stopImmediatePropagation();
     }
+    // A held key repeats only where the lesson asks for it (the Lift lever), and says it is held.
     if (action && !event.repeat) act(action);
+    else if (action && v.repeat?.includes(name)) act(`${action}:held`);
   }
   win.addEventListener('keydown', onKey, true);
 
@@ -80,7 +83,12 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const [x, y] = boardPoint(event), hit = board.hitTest(session.view(), x, y);
     if (!hit) return;
     event.preventDefault();
-    if (hit.drag) { drag = {id: hit.drag, index: session.view().index}; canvas.setPointerCapture?.(event.pointerId); return; }
+    if (hit.drag) {
+      drag = {id: hit.drag, index: session.view().index}; canvas.setPointerCapture?.(event.pointerId);
+      // A lever moves to where it is pressed; a pendulum weight waits for the drag.
+      if (board.pressMovesDrag) session.act(`hold:${board.dragAngle(session.view(), drag.id, x, y)}`);
+      return;
+    }
     act(hit.action);
   }
   function onMove(event) {
@@ -137,6 +145,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       `<button type="button" data-lc="${action}" class="${primary ? 'primary' : ''}" ${disabled ? 'disabled' : ''} ${pressed === null ? '' : `aria-pressed="${pressed}"`}>${escape(label)} ${kbd(key)}</button>`;
     setHtml($('.lc-actions'), 'actions',
       (v.actions.includes('tap') ? button('tap', 'Tap', 'Space') : '') +
+      (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +
       (v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', 'Try it in the game', 'Enter', {primary: true})
