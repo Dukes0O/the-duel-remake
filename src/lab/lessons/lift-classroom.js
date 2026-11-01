@@ -164,7 +164,7 @@ const CHECKS = {
     answers: [{car: 1}, {crates: 3}, {car: 1, crates: 2}].map(load => ({label: `${[load.car ? 'Dusthawk' : '', load.crates ? `${load.crates} crates` : ''].filter(Boolean).join(' + ')} (${kg(weightOf(load) - OWN_KG)})`, picture: {kind: 'load', ...load}, load})),
     correct: 2,
     right: () => `Yes. ${kg(weightOf({car: 1, crates: 2}))} is more than the ${MOST} she can push.`,
-    wrong: picked => `That one weighs ${kg(weightOf(CHECKS['check-heavy'].answers[picked].load))}, less than the ${MOST} she can push, so she lifts it. The Dusthawk and two crates make ${kg(weightOf({car: 1, crates: 2}))}: too heavy.`,
+    wrong: picked => { const load = CHECKS['check-heavy'].answers[picked].load; return `That load is ${kg(weightOf(load) - OWN_KG)}, so with Kestrel One’s ${kg(OWN_KG)} she weighs ${kg(weightOf(load))}, less than the ${MOST} she can push. The Dusthawk and two crates make ${kg(weightOf({car: 1, crates: 2}))}: too heavy.`; },
     hints: ['Add up each load with Kestrel One’s own 1,630 kg.', `Which one comes to more than ${MOST}?`, 'Pick the Dusthawk and two crates.'],
   },
   'check-more': {
@@ -236,6 +236,7 @@ export function createModel() {
     if (kind === 'lever' && value === 'down') return notch(m.f, -1, extra === 'held');
     if (kind === 'lever' && value === 'weight') return setLever(m.f, Math.min(weightOf(m.f), MOST_KG));
     if (kind === 'lever' && value === 'top') return setLever(m.f, MOST_KG);
+    if (kind === 'lever' && value === 'mark') return setLever(m.f, 2 * NOTCH_KG);
     if (kind === 'hold') { setLever(m.f, Number(value)); return false; }
     return kind === 'release';
   }
@@ -266,7 +267,7 @@ export function createModel() {
       else f.car = f.car ? 0 : 1;
       // Loading happens on the pad: she sets down first.
       f.lift = 0; f.h = 0; f.taut = 0;
-      if (!guided) return {kind: 'sound', sound: 'lab.clunk'};
+      if (!guided) return {kind: 'run', sound: 'lab.clunk', say: `${loadName(f)}: ${kg(weightOf(f))}. Now the lever.`};
       if (guided.goal(f)) { m.phase = 'guess'; return {kind: 'progress', sound: 'lab.clunk', say: guided.guessSay()}; }
       if (id === 'try-heavy' && kind === 'crate' && value === 'add' && f.crates < 2) return {kind: 'progress', sound: 'lab.clunk', say: 'One crate on. One more.'};
       return {kind: 'fail', sound: 'lab.clunk', say: guided.wrongSetup(f, kind)};
@@ -356,7 +357,7 @@ export function createModel() {
     if (id === 'wonder' || id === 'watch-lever') { enter(m.index); return null; }
     if (id === 'watch-loads') { m.sets.forEach(f => Object.assign(f, flight(f))); m.time = 0; return null; }
     if (CHECKS[id] && m.phase === 'answered') { const answered = m.answered; enter(m.index); m.answered = answered; m.phase = 'answered'; showAnswer(id); return null; }
-    if (TRIES[id] && m.phase === 'result') {
+    if ((TRIES[id] || id === 'alone') && m.phase === 'result' && m.replayAt == null) {
       const f = m.f, lift = f.lift;
       Object.assign(f, {lift: 0, h: 0, taut: 0});
       m.replayAt = m.time; m.replayLift = lift;
@@ -388,7 +389,7 @@ export function createModel() {
     }
     if (id === 'word-collective') {
       const done = seen.has(id);
-      return {...base, readouts: 'lift', gauge: 'plain', air: true, keys: LEVER_KEYS, repeat: REPEAT, waiting: !done, target: done ? null : 'lever:up', glow: done ? null : 'lever:up', mark: 2 * NOTCH_KG,
+      return {...base, readouts: 'lift', gauge: 'plain', air: true, keys: LEVER_KEYS, repeat: REPEAT, waiting: !done, target: done ? null : 'lever:mark', glow: done ? null : 'lever:up', mark: 2 * NOTCH_KG,
         say: 'The collective is the lever by the pilot’s left hand. Pull it up, and every blade bites more air: more lift. In the helicopter, W pulls it up and S lets it down.',
         prompt: done ? 'Press Enter to go on, or try the lever more.' : `Pull the lever up to the ${kg(2 * NOTCH_KG)} mark: press W (or ↑), or drag it.`,
         hints: ['The lever is on the left, with kilograms up its side.', 'Press W once, or drag the lever handle up.', 'Watch my pointer: it is on the lever.']};
@@ -430,8 +431,11 @@ export function createModel() {
   function tryView(id, base, help) {
     const guided = TRIES[id], f = m.f;
     const common = {...base, readouts: 'both', gauge: 'weight', air: f.lift > 0, stock: 'all'};
-    if (m.phase === 'setup' && guided) return {...common, keys: LOAD_KEYS, waiting: true, target: guided.target, glow: guided.target,
-      say: guided.setupSay, prompt: guided.setupPrompt, hints: guided.setupHints};
+    if (m.phase === 'setup' && guided) {
+      const target = f.crates > (id === 'try-heavy' ? 2 : 0) ? 'crate:remove' : guided.target;
+      return {...common, keys: LOAD_KEYS, waiting: true, target, glow: target,
+      say: guided.setupSay, prompt: guided.setupPrompt, hints: target === 'crate:remove' ? [...guided.setupHints.slice(0, 2), 'Watch my pointer: it is on the crate to take off.'] : guided.setupHints};
+    }
     if (m.phase === 'setup') {
       const target = !f.car ? 'car' : f.crates < BEST_CRATES ? 'crate:add' : f.crates > BEST_CRATES ? 'crate:remove' : 'lever:weight';
       return {...common, keys: {...LOAD_KEYS, ...LEVER_KEYS}, repeat: REPEAT, waiting: true, target,
@@ -457,6 +461,7 @@ export function createModel() {
   return {enter, act, tick, view, state: () => m};
 }
 
+const loadName = f => f.car ? `The Dusthawk${f.crates ? ` and ${f.crates} crate${f.crates > 1 ? 's' : ''}` : ''}` : f.crates ? `${f.crates} crate${f.crates > 1 ? 's' : ''}` : 'Kestrel One alone';
 const jobDone = w => `That’s it: the Dusthawk and ${BEST_CRATES} crate${BEST_CRATES > 1 ? 's' : ''}, ${kg(w)}, and she hovers. One more crate would be too heavy. Job done.`;
 // What Brian says about where she is, during his lever demonstration.
 function caption(st, f) {

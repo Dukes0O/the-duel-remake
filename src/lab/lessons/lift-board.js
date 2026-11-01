@@ -12,7 +12,7 @@ const leverY = kgValue => G0 - Math.max(0, Math.min(SCALE_KG, kgValue)) * PER_KG
 // The pad scene is drawn 1.2 times its own units, so Kestrel One reads at a glance.
 const PAD_X = 505, SCENE = 1.2, PAD_HALF = 225, METRE = 24, CRATE = Object.freeze({w: 38, h: 32}), LOAD_X = 60, CABLE_PX = 90, HOOK = 22;
 const BOX = Object.freeze({x: 770, y: 14, w: 216, h: 236});
-const STOCK_X = 805, PARKED_CAR_X = 935;
+const STOCK_X = 805, PARKED_CAR_X = 935, DIAL_X = PAD_X - 140, DIAL_Y = GROUND_Y + 42;
 
 // ---- where everything is, in the pad's own units (ground at 0, pad centre at x 0) ----
 function crateSpots(f) {
@@ -68,7 +68,7 @@ export function hoverInfo(view, x, y) {
   if (g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 && Math.abs(ly - c.y) < CRATE.h / 2)) return `A crate: ${kg(CRATE_KG)}.`;
   if (view.stock && x > STOCK_X - 8 && x < STOCK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 10 && y < GROUND_Y) return `Spare crates, ${kg(CRATE_KG)} each.` + (view.keys[1] ? ' Click to load one.' : '');
   if (view.stock === 'all' && !f.car && Math.abs(x - PARKED_CAR_X) < 44 && y > GROUND_Y - 50 && y < GROUND_Y) return `The Dusthawk: ${kg(CAR_KG)}.` + (view.keys[3] ? ' Click to hook it.' : '');
-  if (y > GROUND_Y && Math.abs(x - PAD_X) < 50) return 'The weighing pad’s dial: what the pad feels, her weight less the rotor’s lift.';
+  if (Math.hypot(x - DIAL_X, y - DIAL_Y) < 32) return 'The weighing pad’s dial: what the pad feels, her weight less the rotor’s lift.';
   if (y > GROUND_Y - 10 && y < GROUND_Y + 20 && Math.abs(x - PAD_X) < PAD_HALF * SCENE) return 'The weighing pad: it weighs whatever rests on it.';
   return null;
 }
@@ -79,6 +79,7 @@ export function targetPoint(view, action) {
   const g = setGeometry(f);
   if (action === 'lever:up' || action === 'lever:down') return [GX, leverY(f.lift)];
   if (action === 'lever:weight') return [GX, leverY(Math.min(f.weight, f.most))];
+  if (action === 'lever:mark') return [GX, leverY(view.mark)];
   if (action === 'lever:top') return [GX, leverY(f.most)];
   if (action === 'crate:add') return [STOCK_X + CRATE.w, GROUND_Y - CRATE.h];
   if (action === 'crate:remove') { const c = g.crates.at(-1); return c ? toBoard(c.x, c.y) : null; }
@@ -250,7 +251,7 @@ function drawPad(ctx, view) {
   // Lift on the rotor, as an arrow: the same scale as the readout.
   if (view.readouts === 'lift' || view.readouts === 'both') arrow(ctx, g.hx, g.hy - 44, f.lift * .035, true, theme.good, 8);
   ctx.restore();
-  dial(ctx, f.pad, PAD_X - 140, GROUND_Y + 42);
+  dial(ctx, f.pad, DIAL_X, DIAL_Y);
   if (view.stock) stock(ctx, view);
   if (view.gauge) gauge(ctx, view);
   if (view.readouts) readouts(ctx, view);
