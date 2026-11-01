@@ -166,7 +166,9 @@ function gauge(ctx, view) {
   // The top stop: as far as the lever goes.
   const top = leverY(f.most);
   ctx.fillStyle = theme.beamLight; ctx.fillRect(GX - 18, top - 4, 36, 5);
-  text(ctx, `top ${Math.floor(f.most).toLocaleString('en-GB')}`, GX + 22, top - 14, {size: 13, align: 'left', colour: theme.text, weight: 600});
+  // Above the stop when the red line is below it; under the stop when the weight is above the top.
+  const above = !(view.gauge === 'weight' && f.weight > f.most);
+  text(ctx, `top ${Math.floor(f.most).toLocaleString('en-GB')}`, GX + 22, above ? top - 14 : top + 14, {size: 13, align: 'left', colour: theme.text, weight: 600});
   if (view.mark) {
     const y = leverY(view.mark);
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(GX - 18, y); ctx.lineTo(GX + 60, y); ctx.stroke(); ctx.setLineDash([]);
@@ -186,7 +188,7 @@ function gauge(ctx, view) {
   ctx.strokeStyle = glow ? theme.accent : 'rgba(0,0,0,.5)'; ctx.lineWidth = glow ? 3 + Math.sin(view.time * 6) * 1.5 : 1.5; ctx.stroke();
   if (interactive) { keyCap(ctx, GX - 22, G0 + 34, 'W'); text(ctx, 'up', GX - 8, G0 + 34, {size: 14, align: 'left'}); keyCap(ctx, GX + 26, G0 + 34, 'S'); text(ctx, 'down', GX + 40, G0 + 34, {size: 14, align: 'left'}); }
 }
-const STATUS = {pad: 'On the pad', taut: 'Cable tight: the load is still down', rising: 'Lifting', hovering: 'Hovering: holding still', climbing: 'Climbing', high: 'Still climbing', sinking: 'Sinking'};
+const STATUS = {pad: 'On the pad', taut: 'Load still on the pad', rising: 'Lifting', hovering: 'Hovering: holding still', climbing: 'Climbing', high: 'Still climbing', sinking: 'Sinking'};
 function readouts(ctx, view) {
   const f = view.flight, kind = view.readouts;
   ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
