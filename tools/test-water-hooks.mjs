@@ -109,6 +109,15 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   same(app._water.run, null, 'quitting ends the mark');
   ok(!water(saved(app)).jobs, 'quitting grants nothing');
 
+  // A loss, then NEXT CIRCUIT: the run goes on to another road, which can never win Sal's job.
+  app.waterStep('sal');
+  ok(app.startCampaign(app.getRaceChoices()), 'the story race starts again');
+  app.duel.state.stageIndex = stageOf('high-country');
+  const elsewhere = raceResult();
+  app._settleResult(elsewhere, app.duel.state);
+  ok(!water(app.profile).jobs && elsewhere.waterJob === undefined, 'a win on the next circuit grants nothing');
+  app.returnToMenu();
+
   // The win.
   app.waterStep('sal');
   ok(app.startCampaign(app.getRaceChoices()), 'try again');
@@ -207,6 +216,10 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
 
 // ---- Opening the card: Hollis's note and V.'s notes are read; the end lines once in the yard ---------------------------
 {
+  const unread = freshApp({read: false});
+  const first = unread.storyProps('water');
+  ok(first.available && first.step === 'well', 'a new player starts at the dry well, without a crash');
+  same(first.steps.find(step => step.id === 'sal').note, 'Read Hollis\'s note first.', 'chapter 1 waits for the note');
   const app = freshApp({read: false, beaten: ['sal']});
   ok(app.storyProps('water').message, 'a new note waits (the red dot)');
   ok(app.openStory('water'), 'opening the Water Road card');
@@ -217,6 +230,29 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   intoYard(done);
   ok(water(saved(done)).end === true, 'the yard visit after the Baron plays the end lines');
   ok(done.storyCaption?.id === 'story.water.hollis.end', 'Hollis speaks');
+}
+
+// ---- Vesper speaks after the Baron's first defeat only ----------------------------------------------------------------------
+{
+  const app = freshApp({beaten: WARLORD_LADDER.slice(0, 7)});
+  app.profile.wasteland.territories.blackiron.hold = 100;
+  app._saveProfile();
+  intoYard(app);
+  const said = [];
+  app._storySay = id => { said.push(id); return true; };
+  const winFight = () => {
+    if (!app.isYardHomeActive()) { app.returnToMenu(); intoYard(app); }
+    ok(app.startWarlordFight('blackiron'), 'the Baron\'s fight starts');
+    const s = app.duel.state;
+    s.arena.result = {winnerId: 'player', settlementSaved: true};
+    app._waterArenaSettled(s);
+  };
+  winFight();
+  same(said, ['story.water.vesper.8'], 'Vesper speaks after the first defeat');
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland, warlords: {...app.profile.wasteland.warlords, blackiron: {...app.profile.wasteland.warlords.blackiron, defeated: true}}}};
+  app._saveProfile();
+  winFight();
+  same(said, ['story.water.vesper.8'], 'and not after a rematch');
 }
 
 console.log(`test-water-hooks: ${checks} checks passed`);

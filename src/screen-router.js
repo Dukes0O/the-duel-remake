@@ -249,6 +249,8 @@ root.addEventListener('click',e => {
     if(out?.setup==='arena'){arenaMode=out.mode;arenaVenue=out.venueId;yardPanel='scrapdome';}
     else if(out?.courses){yardPanel='home';coursesOpen=true;garageOpen=playersOpen=leaderboardOpen=false;courseMessage='Unlock the course here, then select it.';}
     else if(out)yardPanel='home';
+    // A race job filled the app's setup: the menu's own choices follow it, so START races that road.
+    if(out?.setup==='race'){refreshRaceSetup();return;}
     lastScreen=null;renderState(app.duel.state);return;
   }
   if (button.dataset.arenaVenue) {

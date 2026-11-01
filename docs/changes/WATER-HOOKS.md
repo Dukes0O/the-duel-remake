@@ -33,17 +33,32 @@ Behind the new `water-road` switch, `dev`.
 - `src/screen-router.js`: a `data-water-step` button runs `app.waterStep`; a
   Scrapdome job opens the yard's panel with its mode and venue filled; the courses
   answer opens Your Courses; picking another Scrapdome mode or venue tells the app.
-- `tools/test-water-hooks.mjs` (new, 81 checks, the real App on memory storage).
+- `start-preview.bat`: the Preview requests `water-road` with the other dev switches.
+- `tools/test-water-hooks.mjs` (new, 93 checks, the real App on memory storage).
 
 ## Checks
 
-- `node tools/test-water-hooks.mjs`: 81 checks pass: switch off changes nothing; the
+- `node tools/test-water-hooks.mjs`: 93 checks pass: switch off changes nothing; the
   button fills the setup; Sal's other road keeps the job, another road or mode
   clears it; the same road picked by hand is not the job; a loss, a restart (kept),
   quitting and a win (saved with the race's own rewards, +25 hold, results tick);
   Last Car Rolling and Fuel Run jobs won and saved in their own write; a lost game
   grants nothing; a fight is never a job; the rank bar, Your Courses with the price,
   the fight button; opening the card reads the notes; the end lines once.
+
+## Review
+
+One independent review (code and saves). Four real faults, all fixed: after a lost
+story race, NEXT CIRCUIT kept the run and a win on the next road counted (a race job
+now counts only on its own roads); the menu's START raced the old setup because the
+router did not follow the filled setup (it now refreshes it, as Kogane does); the
+card crashed for a new player before Hollis's note (chapter 1 now says "Read
+Hollis's note first."); Vesper's line repeated on a Baron rematch (now only after the
+first defeat). Also: Kettle's bar says "against two or more cars", and the caption
+view mounts when either story is on. Checked clean: switch off unchanged, loading
+unchanged, no mark leaks to rematches of another mode, fights, Grand Prix, the
+helicopter, lessons or another player; save retries keep the mark with the game's
+own rewards.
 
 ## Changed assertions
 

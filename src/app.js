@@ -74,7 +74,7 @@ import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
-import {BUILT_WARLORD_IDS, warlordUnlockSatisfied} from './warlords.js';
+import {BUILT_WARLORD_IDS, warlordUnlockSatisfied, vesperEarned} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
@@ -294,7 +294,7 @@ export class App {
     if (this.running) return;
     this.running = true;
     // STORY-KOGANE-HOOKS: the story's caption line (browser only), and Ana's message if the game opens on the menu after the win.
-    if (this._storyOn() && typeof document !== 'undefined') this._storyCaptionView ??= mountStoryCaption(this);
+    if ((this._storyOn() || this._waterRoad().on()) && typeof document !== 'undefined') this._storyCaptionView ??= mountStoryCaption(this);
     if (this.duel.state.status === 'menu') this.storyMenuOpened();
     const loop = (t) => {
       if (!this.running) return;
@@ -771,8 +771,10 @@ export class App {
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
   _waterArenaSettled(state){
     const arena=state?.arena,result=arena?.result;
-    if(arena?.mode==='warlord'&&arena.warlordId==='blackiron'&&result?.winnerId==='player'&&result.settlementSaved===true&&
-      this._waterRoad().available()&&storyOf(this.profile).water?.end!==true)this._storySay('story.water.vesper.8');
+    if(arena?.mode!=='warlord'||arena.warlordId!=='blackiron'||result?.winnerId!=='player'||result.settlementSaved!==true||
+      this._waterBaronFirst!==true||!this._waterRoad().available())return;
+    this._waterBaronFirst=false;
+    this._storySay('story.water.vesper.8');
   }
   _waterYardArrived(){
     if(!this._waterRoad().yardArrived())return false;
@@ -1365,7 +1367,7 @@ export class App {
     }
     if(awarded.awarded){
       // WATER-HOOKS: a won story race adds its mark in the same save; a loss, a quit or any other race adds nothing.
-      const water=this._water?.settle(awarded.profile,{runId:this.runId,won:payload.won===true&&payload.completed===true&&state.mode==='wasteland'});
+      const water=this._water?.settle(awarded.profile,{runId:this.runId,stageId:COURSE[state.stageIndex]?.id,won:payload.won===true&&payload.completed===true&&state.mode==='wasteland'});
       this.profile=water?.profile??awarded.profile;this._saveProfile();
       if(water)result.waterJob=water.mark;
       this._settleTunedLap(result,state); // LAB-TUNE
@@ -1843,6 +1845,8 @@ export class App {
       crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')})};
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
     const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
+    // Vesper speaks after the Baron's first defeat only, never after a rematch.
+    this._waterBaronFirst = warlordId === 'blackiron' && !vesperEarned(this.profile);
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
     if (started && waterLine) this._storySay(waterLine);

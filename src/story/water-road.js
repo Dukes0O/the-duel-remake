@@ -40,7 +40,7 @@ export const waterChapterGets = id => JOB_WORDS[id]?.gets ?? '';
 // The roads and games that add a territory's hold (wasteland-career.js and arena-settlement.js), in plain words.
 function holdWords(warlord) {
   const roads = warlord.id === 'sal' ? 'Sal\'s road' : warlord.courses.map(courseName).join(' or ');
-  return warlord.id === 'kettle' ? `${roads} or in the Scrapdome` : roads;
+  return warlord.id === 'kettle' ? `${roads} or in the Scrapdome against two or more cars` : roads;
 }
 
 // What one chapter shows. `where` is 'menu' (the main menu's Story card) or 'yard' (the Story Wall): arena games and
@@ -52,7 +52,7 @@ export function waterChapterView(profile, n, {where = 'yard', jobAvailable = () 
   if (n === 0) return {...base, note: done ? 'Hollis\'s note is read.' : 'Read Hollis\'s note above.'};
   const warlord = WARLORDS[chapter.warlordId], words = JOB_WORDS[id];
   if (done) return {...base, note: `${warlord.name} is beaten. ${words.gets}`, jobDone: true};
-  if (base.state === 'locked') return {...base, note: `Beat ${WARLORDS[WATER_CHAPTERS[n - 1].warlordId].name} first.`};
+  if (base.state === 'locked') return {...base, note: n === 1 ? 'Read Hollis\'s note first.' : `Beat ${WARLORDS[WATER_CHAPTERS[n - 1].warlordId].name} first.`};
   const career = profile?.wasteland, hold = Math.max(0, Math.min(100, Number.isSafeInteger(career?.territories?.[id]?.hold) ? career.territories[id].hold : 0));
   const wins = Math.ceil((100 - hold) / 25), fightOpen = warlordUnlockSatisfied(profile, id);
   const holdBar = {value: hold, max: 100, label: fightOpen ? `${warlord.name}'s fight is open.` :
@@ -202,8 +202,10 @@ export function createWaterRoad(app) {
   }
   // The settlement: a won story job adds its mark to the profile the game is about to save. Anything else changes nothing.
   // Returns {profile, mark} with the mark written, or null.
-  function settle(profile, {runId, won}) {
+  function settle(profile, {runId, won, stageId}) {
     if (!available() || !run || run.runId !== runId || won !== true) return null;
+    // A race job counts only on its own roads: NEXT CIRCUIT after a loss keeps the run but leaves the job's road.
+    if (run.kind === 'race' && !run.courses.includes(stageId)) return null;
     const out = markWaterJob(profile, run.mark);
     return out.ok && out.changed ? {profile: out.profile, mark: run.mark} : null;
   }
