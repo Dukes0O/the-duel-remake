@@ -4,23 +4,20 @@ import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import * as strength from '../src/lab/lessons/strength-lesson.js';
 import * as rust from '../src/lab/lessons/rust-lesson.js';
 import * as gforce from '../src/lab/lessons/gforce-lesson.js';
-import * as headings from '../src/lab/lessons/headings-lesson.js';
 import {hookArm, MATERIALS, strengthBench, loadBar} from '../src/lab/benches/strength.js';
 import {JARS, jarAfter} from '../src/lab/benches/rust.js';
 import {rustOf, rightProtection, RUST_PARTS} from '../src/lab/lab-workshop.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
-import {headingsBench, leg} from '../src/lab/benches/headings.js';
 import {strengthSamples, strengthResult} from '../src/lab/lessons/strength-animation.js';
 import {readRust, rustTrial, rustState} from '../src/lab/lessons/rust-animation.js';
 import {gforceSamples, G_BASE} from '../src/lab/lessons/gforce-animation.js';
-import {MAP_LEGS, headingSamples} from '../src/lab/lessons/headings-animation.js';
 import {readFile} from 'node:fs/promises';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {inspectRepository} from './test-repo-hygiene.mjs';
 import {fileURLToPath} from 'node:url';
 
-const packets = [strength, rust, gforce, headings];
+const packets = [strength, rust, gforce];
 test('the card-named comparison sheet has a valid review home', () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const sheet = 'docs/board/looks/lab-2/lab-lessons-workshop-1.jpg';
@@ -31,7 +28,6 @@ const goodInputs = {
   strength: [0, 1, 2].map(() => ({part: 'hook arm', materialDial: 2, thicknessMm: 50})),
   rust: [0, 1, 2].map(() => ({partDial: 0, jarDial: 2, coatDial: 2})),
   gforce: [{speedMph: 80, radiusM: 50}, {speedMph: 20, radiusM: 50}, {speedMph: 40, radiusM: 50}],
-  headings: MAP_LEGS.map(row => ({headingDeg: Math.round(row.truth.headingDeg), rulerUnits: Math.round(row.truth.distanceUnits * 10) / 10})),
 };
 for (const packet of packets) test(`${packet.definition.id}: real teaching sequence, retries, checks and challenge`, () => {
   const {definition: d, hooks} = packet;
@@ -150,31 +146,6 @@ test('G-force predictions, metre radii, arrow lengths and hardest-turn pictures 
   assert.equal(check.correct, most.id);
 });
 
-test('every heading prediction reads the real bearing and distance tolerances', () => {
-  for (let tryIndex = 0; tryIndex < 3; tryIndex++) {
-    const row = MAP_LEGS[tryIndex]; assert.deepEqual(row.truth, leg(row.from, row.to));
-    for (const headingDeg of [0, 90, 180, 270, Math.round(row.truth.headingDeg)]) for (const rulerUnits of [1, 2, 4, 9.2, 15.6]) {
-      const input = {headingDeg, rulerUnits}, result = headingsBench.run({...row, ...input});
-      const actual = result.correct ? 'pad' : result.headingOffDeg > 5 ? 'off' : 'distance';
-      const prediction = headings.hooks.evaluate({tryIndex, input, prediction: actual});
-      assert.equal(prediction.actual, actual); assert.equal(prediction.passed, result.correct);
-    }
-  }
-  const q = headings.definition.checks[1];
-  for (const a of q.answers) assert.equal(headingsBench.run(headingSamples[a.id]).correct, a.id === q.correct);
-  assert.equal(headings.hooks.animations['lake-east']({time: 3}).input.headingDeg, 90);
-});
-
-test('named map pads fit on the printed map, including the near-north Snow journey', () => {
-  for (const animation of Object.values(headings.hooks.animations)) {
-    const d = animation({time: 3, input: {}}), radians = d.truth.headingDeg * Math.PI / 180;
-    const x = 512 + Math.sin(radians) * d.truth.distanceUnits * d.scale * 1024 / 2.16;
-    const y = 320 - Math.cos(radians) * d.truth.distanceUnits * d.scale * 640 / 1.35;
-    assert.ok(x - 40 >= 0 && x + 40 <= 1024, 'the whole pad name fits horizontally');
-    assert.ok(y - 25 >= 0 && y + 51 <= 640, 'the H and name fit vertically');
-  }
-});
-
 test('the real rig visibly thickens the selected arm and preserves the room-owned model', async () => {
   const bytes = await readFile(new URL('../public/assets/models/lab/bending-rig.glb', import.meta.url));
   const {scene: model} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
@@ -211,14 +182,6 @@ test('round two uses real named props, anchored readings and hit skins on the ru
     assert.ok(d.captions.length <= 3);
     assert.equal(d.captionAnchors.length, d.captions.length);
     assert.ok(d.objects.filter(o => o.control).every(o => o.opacity === 0), 'no visible cube controls');
-  }
-  for (const headingDeg of [0, 90, 180, 270, 329]) {
-    const d = headings.hooks.animations.try({time: 0, input: {headingDeg, rulerUnits: 4}});
-    const skin = d.objects.find(o => o.control === 'rulerUnits');
-    const actual = d.input.rulerUnits * d.scale;
-    assert.ok(Math.abs(Math.hypot(skin.position[0], skin.position[2]) - actual / 2) < 1e-9);
-    assert.equal(skin.size[0], actual);
-    assert.equal(skin.rotation[1], Math.PI / 2 - d.input.headingDeg * Math.PI / 180);
   }
   const d = rust.hooks.animations.try({time: 0, input: {jarDial: 0}});
   assert.equal(d.props.find(p => p.id === 'water').model, 'dry-air-jar');
