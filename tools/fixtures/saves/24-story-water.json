@@ -1,0 +1,51 @@
+{
+  "shape": "story-water-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "water-qa",
+      "players": [
+        {
+          "id": "water-qa",
+          "name": "Water QA",
+          "profile": {
+            "version": 2,
+            "credits": 1500,
+            "wasteland": {
+              "version": 1,
+              "discoveredGate": true,
+              "rank": 7,
+              "xp": 4200,
+              "scrap": 900,
+              "territories": {"sal": {"hold": 100, "claimed": true}, "dustmonger": {"hold": 100, "claimed": true}, "mirage": {"hold": 25, "claimed": false}},
+              "warlords": {"sal": {"defeated": true}, "dustmonger": {"defeated": true}}
+            },
+            "story": {
+              "version": 1,
+              "kogane": {"read": true},
+              "water": {"read": true, "jobs": ["sal"], "notes": 1, "laterMark": {"keep": true}},
+              "laterStory": {"keep": [1, 2]}
+            }
+          }
+        },
+        {
+          "id": "water-kogane-only",
+          "name": "Kogane Only",
+          "profile": {
+            "version": 2,
+            "credits": 900,
+            "story": {"version": 1, "kogane": {"read": true, "lesson": true}}
+          }
+        },
+        {
+          "id": "water-old",
+          "name": "Water Old",
+          "profile": {
+            "version": 2,
+            "credits": 300
+          }
+        }
+      ]
+    }
+  }
+}
