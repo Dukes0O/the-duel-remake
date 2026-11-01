@@ -156,7 +156,9 @@ export function storyCardMarkup(view) {
     + `<header class="shop-heading"><div><p class="eyebrow"><i></i> ${escape(card.eyebrow)}</p><h2 id="story-title">${escape(card.heading)}</h2></div>`
     + `<button type="button" class="shop-close" data-story-close aria-label="Close the story card">×</button></header>`
     + `<article class="story-letter" aria-label="${escape(card.letterLabel)}"><span class="story-seal" aria-hidden="true"></span><p>${escape(card.letter)}</p></article>`
-    + (view.notes?.length ? `<div class="story-notes" aria-label="Notes">${view.notes.map(text => `<p class="story-note">${escape(text)}</p>`).join('')}</div>` : '')
+    // Notes after the letter: the newest in view, the older ones folded, so the steps stay near the top.
+    + (view.notes?.length ? `<div class="story-notes" aria-label="Notes"><p class="story-note">${escape(view.notes.at(-1))}</p>`
+      + (view.notes.length > 1 ? `<details class="story-older-notes"><summary>Earlier notes (${view.notes.length - 1})</summary>${view.notes.slice(0, -1).map(text => `<p class="story-note">${escape(text)}</p>`).join('')}</details>` : '') + `</div>` : '')
     + (view.closed ? `<p class="story-fire" role="status">${escape(fireMessage(view.closed))}</p>` : '')
     + `<ol class="story-steps" aria-label="${escape(card.stepsLabel)}">${steps}</ol>`
     + (view.lead ? `<p class="story-lead">${escape(view.lead)}</p>` : '')

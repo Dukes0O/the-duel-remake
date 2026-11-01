@@ -44,6 +44,19 @@ The Water Road (`docs/story/wasteland-water-road.md` sections 2 and 3). Behind
   test-warlord-gunn.
 - Lane tier, build, browser look and the yard frame check: see below.
 
+## Browser look
+
+`node tools/browser-harness.mjs scenario water-road` (memory-only, private port): every fact
+passes. It covers the Story button's red dot, the card and its single button, the setup
+filled, automatic gears keeping the job, Hollis's line at GO, the race won by the game's
+autopilot on Easy on the second try with the job saved and the results tick, the yard's
+Next up, the Story Wall at chapters 1, 2, 5 and 8, the fight button starting the
+Dustmonger's fight, and a finished player's end lines. Two things it showed were fixed:
+the job's radio line now waits for GO (it used to play while the road loaded and was gone
+before the race appeared), and with seven notes the chapters fell below the fold (now the
+chapters come first, the newest note shows, and older notes fold away). The results tick
+now sits under the result's headline instead of below the scorecard.
+
 ## Review
 
 One independent review. Three real faults, fixed: the chapter tick and Vesper's line

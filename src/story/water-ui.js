@@ -44,14 +44,24 @@ function chapterRow(step) {
 }
 
 // The Story Wall's Water Road section in the yard. Empty when the story is not shown.
+// The notes: the newest one in view, the older ones (and Hollis's first note) folded away, so the chapters and their
+// button stay at the top of the screen.
+export function waterNotesMarkup(notes = []) {
+  const all = [WATER_LETTER.text, ...notes];
+  const latest = all.at(-1), older = all.slice(0, -1);
+  const card = (text, letter) => letter
+    ? `<article class="story-letter" aria-label="A note from Hollis"><span class="story-seal" aria-hidden="true"></span><p>${escape(text)}</p></article>`
+    : `<p class="story-note">${escape(text)}</p>`;
+  return card(latest, all.length === 1)
+    + (older.length ? `<details class="story-older-notes"><summary>Earlier notes (${older.length})</summary>${older.map((text, index) => card(text, index === 0)).join('')}</details>` : '');
+}
+
 export function waterWallMarkup(props) {
   if (!props?.available) return '';
-  const notes = (props.notes ?? []).map(text => `<p class="story-note">${escape(text)}</p>`).join('');
   return `<section class="water-road-wall" aria-label="The Water Road"><h3>THE WATER ROAD</h3>`
-    + `<article class="story-letter" aria-label="A note from Hollis"><span class="story-seal" aria-hidden="true"></span><p>${escape(WATER_LETTER.text)}</p></article>`
-    + (notes ? `<div class="story-notes" aria-label="Notes from V.">${notes}</div>` : '')
     + `<ol class="story-steps" aria-label="The chapters">${props.steps.map(chapterRow).join('')}</ol>`
     + (props.step === 'done' ? `<p class="story-prize">${escape(ENDED)}</p>` : '')
+    + `<div class="story-notes" aria-label="Notes">${waterNotesMarkup(props.notes)}</div>`
     + `</section>`;
 }
 
