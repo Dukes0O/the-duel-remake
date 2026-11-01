@@ -567,3 +567,103 @@ tasks:
     locks: []
     flag: "lab-classroom"
     details: "docs/board/cards/LAB-CLASSROOM-SUSPENSION.md"
+
+  - id: WATER-YARD-NEXT
+    title: "Yard Next up line always names the real next step"
+    owner: "claude"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WATER-YARD-NEXT.md"
+
+  - id: STORY-MULTI
+    title: "Story system holds more than one story (Kogane unchanged)"
+    owner: "claude"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: [save-shape]
+    details: "docs/board/cards/STORY-MULTI.md"
+
+  - id: WATER-YARD-ART
+    title: "Water works in the yard: well, pipe, pump, boiler, truck bay, water tower"
+    owner: "claude"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WATER-YARD-ART.md"
+
+  - id: WATER-SAVE
+    title: "The Water Road save (story.water)"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [STORY-MULTI]
+    locks: [save-shape]
+    details: "docs/board/cards/WATER-SAVE.md"
+
+  - id: WATER-LINES
+    title: "The Water Road captions"
+    owner: "claude"
+    lane: "AUDIO"
+    size: "S"
+    status: "backlog"
+    needs: [STORY-MULTI]
+    locks: []
+    details: "docs/board/cards/WATER-LINES.md"
+
+  - id: WATER-HOOKS
+    title: "Story jobs through arena, warlord and race settlement"
+    owner: "claude"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [WATER-SAVE]
+    locks: [busy-game-files]
+    details: "docs/board/cards/WATER-HOOKS.md"
+
+  - id: WATER-SCREENS
+    title: "Story Wall chapters, bars, yard stages, results tick"
+    owner: "claude"
+    lane: "UI"
+    size: "M"
+    status: "backlog"
+    needs: [WATER-SAVE, WATER-LINES, WATER-YARD-ART]
+    locks: []
+    details: "docs/board/cards/WATER-SCREENS.md"
+
+  - id: WATER-EASY
+    title: "Every chapter winnable on Easy by a young driver"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "backlog"
+    needs: [WATER-HOOKS]
+    locks: []
+    details: "docs/board/cards/WATER-EASY.md"
+
+  - id: WATER-FINISH
+    title: "Claude plays the Water Road end to end and switches it on"
+    owner: "claude"
+    lane: "OPS"
+    size: "M"
+    status: "backlog"
+    needs: [WATER-HOOKS, WATER-SCREENS, WATER-EASY]
+    locks: [release]
+    details: "docs/board/cards/WATER-FINISH.md"
+
+  - id: WARLORD-NINE
+    title: "Gratian's warlord (chapter 9)"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    needs: [WATER-FINISH]
+    locks: []
+    details: "docs/board/cards/WARLORD-NINE.md"
