@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASED 1 November (Claude, Release Manager).** The Scrapdome Yard's Next up line now names the next warlord and how to open or start that fight; no more "Sal is waiting" after Sal falls. Reload any open game tab.
 - **RELEASED 31 October night (Claude, Release Manager).** The Lab: Lift and weight opens as the new classroom lesson (lever on W and S, stops on her weight); the old Lift lesson is gone. Reload any open game tab.
 - **RELEASED 31 October evening (Claude, Release Manager).** The Lab: Pendulums opens as the new classroom lesson with Brian as tutor; the old pendulum lesson is gone. Reload any open game tab.
 - **RELEASED 31 October (Claude, Release Manager).** Helicopter jobs: job card on screen, hook prompts, start at the last pad, the car is there to hook, every job can end. Reload any open game tab.

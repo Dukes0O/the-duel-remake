@@ -6,6 +6,10 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Scrapdome Yard says what to do next.** Its Next up line names the
+  next warlord to beat and exactly how: how many more wins open the fight and
+  where they count, or that the fight is open and which button starts it. It no
+  longer says Sal is waiting after Sal is beaten.
 - **The Lab: Lift and weight is a classroom now.** Kestrel One on a weighing
   pad with a collective lever you pull up with W (the helicopter's key) or the
   mouse; it stops on the red line, her weight, so hovering is easy to find.

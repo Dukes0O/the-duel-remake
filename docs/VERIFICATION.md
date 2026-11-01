@@ -1618,3 +1618,11 @@ lesson moved to the map table. Lift suite 11/11, all 23 Lab suites, all 14 Lab
 scenarios, lane tier 30 + 5 Recycle Bin suites rerun on the merged result,
 build. One review, seven faults fixed. Rule 19: only Lab code since the full
 tier on 86c48d4f. No save change.
+
+## Release, 1 November 2026 (Claude, Release Manager)
+
+WATER-YARD-NEXT: the yard's Next up line reads the save (next warlord on the
+ladder, wins still needed and where they count, or the open fight and its
+button). New suite test-yard-next 7/7; yard suites 4/4 after the review fixes,
+lane tier 28/28, build. One review, two faults fixed. Rule 19: only yard
+screen code since the full tier on 86c48d4f. No save change.
