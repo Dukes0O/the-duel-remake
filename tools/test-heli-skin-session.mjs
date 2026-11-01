@@ -158,7 +158,9 @@ function scenarioHashes(extra = {}) {
 // RESCUE-FINISH re-records hiker clue, hoist site/clock and supply clock only.
 // HELI-PAY-CONTINUE re-recorded carJob (was 2639427997) and fire (was 1685599464): they hash the job and fire pays and the
 // board's pay words. The hiker, avalanche, hoist and supply hashes did not move.
-const BEFORE = {carJob: 3266723423, hiker: 75325398, avalanche: 382890534, hoist: 3958087009, supply: 1425980116, fire: 3551929874};
+// HELI-COMPASS re-recorded hiker, avalanche, hoist, supply and fire (were 75325398, 382890534, 3958087009, 1425980116 and
+// 3551929874): their views carry the rescue and fire bearings and the wind's name, now the HEADING gauge's. Nothing else moved.
+const BEFORE = {carJob: 3266723423, hiker: 2071532041, avalanche: 2249168172, hoist: 3614661767, supply: 1879391574, fire: 1049849445};
 {
   same(scenarioHashes(), BEFORE, 'with no skin or wildlife switch the session is exactly what it was');
   same(scenarioHashes({skinsEnabled: false, wildlifeEnabled: false}), BEFORE, 'and with both switches off');

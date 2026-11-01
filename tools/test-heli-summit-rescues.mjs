@@ -123,7 +123,8 @@ function summitOnFingerprint() {
 // HELI-JOB-CLARITY (changed pin, SUMMIT_ONLY_PIN was 1829644530): Summit Run flies exactly as it did; only its return
 // crate is gone, since with the pilot's map off no crate leg from there fits the fuel left on arrival (heli-jobs.js
 // jobLegFlyable). With the crate filter undone this pin comes back to 1829644530.
-const OFF_PIN = 2318537187, SUMMIT_ONLY_PIN = 274976626;
+// HELI-COMPASS re-recorded OFF_PIN (was 2318537187): its view carries the rescue bearings and the wind's name, now the HEADING gauge's. Nothing else moved.
+const OFF_PIN = 1599392491, SUMMIT_ONLY_PIN = 274976626;
 for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: 'yes'}])
   assert.equal(offFingerprint(extra), OFF_PIN, `with Summit Run off every rescue and flying area is as it was (${JSON.stringify(extra)})`), checks++;
 assert.equal(summitOnFingerprint(), SUMMIT_ONLY_PIN, 'with Summit Run on and rescues off, Summit Run flies exactly as it did'); checks++;

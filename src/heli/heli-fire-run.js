@@ -12,6 +12,7 @@ import {FIRE, BURNT_LOOKS, fireGrid, courseBurnCheck, startCells, startFire, day
 import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, hearBurnNews, BURN_NEWS, addScar,
   MISSION_KINDS} from './heli-save.js';
 import {HELI_DESTINATIONS} from './heli-jobs.js';
+import {compassBearing} from './heli-flight.js';
 import {placeOfCourse} from './pilot-map-data.js';
 import {courseClosed, burnStage} from '../course-closures.js';
 
@@ -343,8 +344,7 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
         const cell = hottestEdge(burning, grid, wind);
         if (cell !== null) {
           const [i, j] = cellIJ(cell), x = (i + 0.5) * FIRE.cell, z = (j + 0.5) * FIRE.cell;
-          info.target = Object.freeze({x, z, distance: Math.hypot(x - heli.x, z - heli.z),
-            bearing: (Math.atan2(x - heli.x, z - heli.z) * 180 / Math.PI + 360) % 360});
+          info.target = Object.freeze({x, z, distance: Math.hypot(x - heli.x, z - heli.z), bearing: compassBearing(x - heli.x, z - heli.z)});
         }
       }
       return Object.freeze(info);

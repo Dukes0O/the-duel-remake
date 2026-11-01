@@ -8,7 +8,7 @@ import {groundFromCourse} from '../src/heli/heli-ground.js';
 import {createHeliSession, courseSite} from '../src/heli/heli-session.js';
 import {armMissions} from '../src/heli/heli-missions.js';
 import {setMissions, createMissions, heliOf} from '../src/heli/heli-save.js';
-import {KESTREL} from '../src/heli/heli-flight.js';
+import {KESTREL, compassBearing} from '../src/heli/heli-flight.js';
 import {FIRE, cellIJ} from '../src/heli/heli-fire.js';
 import {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeBriefing} from '../src/lab/lab-challenges.js';
 import {labOf, createLab} from '../src/lab/lab-save.js';
@@ -63,7 +63,7 @@ test('where things are: buoys on the lake clear of the scoop area, a clear targe
   const pendulum = spotsOf('pendulum');
   near(Math.hypot(pendulum.target.x - site.zone.x, pendulum.target.z - site.zone.z), 500, 0.2, 'the target is across the woods');
   const headings = spotsOf('headings'), dx = headings.marker.x - site.zone.x, dz = headings.marker.z - site.zone.z;
-  near((Math.atan2(dx, dz) * 180 / Math.PI + 360) % 360, 70, 1e-9, 'the marker\'s heading from the pad');
+  near(compassBearing(dx, dz), 70, 1e-9, 'the marker\'s heading from the pad, as the HEADING gauge reads it');
   near(Math.hypot(dx, dz), 550, 1e-9, 'and its distance');
   assert.equal(headings.headingDeg, 70); assert.equal(headings.distanceM, 550);
   // The practice fire is on dry ground on the lake shore, a short hop from the water, and the same every time.
@@ -282,6 +282,27 @@ test('the board opens the challenges with the Lab and the flying lessons, and a 
   // Air and altitude needs Summit Run; the tank must be full for the Dusthawk.
   assert.equal(session.startChallenge('altitude').ok, false);
   session.leave();
+});
+
+// HELI-COMPASS: the briefing's number is the one on the HEADING gauge. Turn until it reads 070, fly on, and she
+// passes over the smoke; on the old mirror reading (290) she never comes nearer than where she started.
+test('flying the briefing\'s heading on the HEADING gauge reaches the smoke', () => {
+  for (const [gauge, reaches] of [[70, true], [290, false]]) {
+    const session = sessionOf(readyProfile(), {labEnabled: true});
+    session.start();
+    session.startChallenge('headings');
+    const marker = session.view().challenge.props[0], start = session.view().heli, startGap = Math.hypot(start.x - marker.x, start.z - marker.z);
+    const hold = v => Math.max(-1, Math.min(1, (40 - v.readout.heightM) * 0.3 - v.heli.vy * 0.3));
+    const off = v => ((v.readout.headingDeg - gauge + 540) % 360) - 180, turn = v => Math.max(-1, Math.min(1, -off(v) / 20));
+    run(session, 6, v => ({lift: hold(v)}));
+    run(session, 8, v => ({lift: hold(v), yaw: turn(v)}));
+    assert.ok(Math.abs(off(session.view())) < 1, `the gauge reads ${gauge}`);
+    let closest = Infinity;
+    run(session, 40, v => ({lift: hold(v), pitch: 0.6, yaw: turn(v)}), v => { closest = Math.min(closest, Math.hypot(v.heli.x - marker.x, v.heli.z - marker.z)); return false; });
+    if (reaches) assert.ok(closest < CHALLENGE_RULES.headings.radius, `on ${gauge} she passes within ${closest.toFixed(1)} m of the smoke`);
+    else assert.ok(closest > startGap - 5, `on ${gauge} she never comes nearer (${closest.toFixed(0)} m)`);
+    session.leave();
+  }
 });
 
 test('a scripted heading flight to the smoke marker passes, is saved, and a flight the wrong way does not', () => {
