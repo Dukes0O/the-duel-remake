@@ -2,8 +2,6 @@
 import * as strength from '../../src/lab/lessons/strength-lesson.js';
 import * as rust from '../../src/lab/lessons/rust-lesson.js';
 import * as gforce from '../../src/lab/lessons/gforce-lesson.js';
-import * as headings from '../../src/lab/lessons/headings-lesson.js';
-import {MAP_LEGS} from '../../src/lab/lessons/headings-animation.js';
 
 export async function run(c) {
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
@@ -44,7 +42,7 @@ export async function run(c) {
       await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); }
       await new Promise(r => setTimeout(r, 500));
     }
-    const [x, z] = {strength: [3, -4.1], rust: [7, -5.5], gforce: [8, 1.9], headings: [12, -4.5]}[id];
+    const [x, z] = {strength: [3, -4.1], rust: [7, -5.5], gforce: [8, 1.9]}[id];
     await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < ${id === 'rust' ? -4.3 : 3.6}`);
     if (id === 'rust') {
       // Stop in the narrow aisle between the bending rig and the turning arm.
@@ -70,12 +68,12 @@ export async function run(c) {
     if (await c.evaluate(`!document.querySelector('.lab-key-idea').hidden`)) throw Error('A previous challenge card leaked into this lesson.');
   }
   // A bounded continuation may name only the unfinished lessons; the normal
-  // scenario always runs all four. Earlier green lessons keep their evidence.
+  // scenario always runs all three (Headings is a classroom now: lab-classroom-headings). Earlier green lessons keep their evidence.
   const selected = process.env.WORKSHOP_QA_LESSONS?.split(',');
   // Capture-only retakes for picture changes after the normal full flow passed.
   // The normal scenario below always retains every interaction assertion.
   const watchOnly = process.env.WORKSHOP_QA_WATCH_ONLY === '1';
-  if (selected?.some(id => !['strength', 'rust', 'gforce', 'headings'].includes(id))) throw Error('Unknown workshop lesson filter.');
+  if (selected?.some(id => !['strength', 'rust', 'gforce'].includes(id))) throw Error('Unknown workshop lesson filter.');
   async function challengeCapture(id) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 2, y: 2});
     await new Promise(r => setTimeout(r, 600));
@@ -97,7 +95,7 @@ export async function run(c) {
     if (overlap) { await c.screenshot(`${id}-overlap`); throw Error(`Key idea covers ${overlap}`); }
     await c.screenshot(`${id}-challenge`);
   }
-  for (const packet of [strength, rust, gforce, headings].filter(p => !selected || selected.includes(p.definition.id))) {
+  for (const packet of [strength, rust, gforce].filter(p => !selected || selected.includes(p.definition.id))) {
     const d = packet.definition, id = d.id;
     await open(id);
     await new Promise(r => setTimeout(r, 1800)); await c.screenshot(`${id}-wonder`); await click('next');
@@ -120,12 +118,12 @@ export async function run(c) {
     await c.screenshot(`${id}-prediction`);
     if (await c.evaluate(`[...document.querySelectorAll('[data-workshop] > div')].some(el => !el.hidden)`)) throw Error('Floating captions on prediction.');
     // One deliberate mismatch proves the first useful hint in the real UI.
-    const wrong = id === 'rust' ? 'clean' : id === 'gforce' ? 'more' : id === 'strength' ? 'holds' : 'pad';
+    const wrong = id === 'rust' ? 'clean' : id === 'gforce' ? 'more' : 'holds';
     await click(`answer:${wrong}`); await click('run');
     await c.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'failed try and help', 35_000);
     await c.screenshot(`${id}-hint`); await click('retry');
     for (let index = 0; index < 3; index++) {
-      const wanted = id === 'gforce' ? ['more', 'less', 'same'][index] : id === 'rust' ? 'clean' : id === 'strength' ? 'holds' : 'pad';
+      const wanted = id === 'gforce' ? ['more', 'less', 'same'][index] : id === 'rust' ? 'clean' : 'holds';
       await click(`answer:${wanted}`);
       if (id === 'strength') {
         await touch('part'); await touch('materialDial'); await drag('thicknessMm', 30, 50, 5, 120);
@@ -135,16 +133,10 @@ export async function run(c) {
         await touch('coatDial'); await touch('coatDial');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.protection === 'zinc'`, 'real zinc dial');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopPropModels).includes('zinc-can')`, 'selected real zinc spray can');
-      } else if (id === 'gforce') {
+      } else {
         const turns = [2, 3, 0][index];
         for (let j = 0; j < turns; j++) await touch('speedMph');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).actual === '${wanted}'`, 'speed crank');
-      } else {
-        await c.waitFor(`${canvas}.dataset.workshopToy === 'ready'`, 'real toy helicopter');
-        const leg = MAP_LEGS[index];
-        const heading = Math.round(leg.truth.headingDeg), ruler = Math.round(leg.truth.distanceUnits * 10) / 10;
-        await drag('headingDeg', 270, heading, 0, 359); await drag('rulerUnits', 4, ruler, .1, 20);
-        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).actual === 'pad'`, 'compass and ruler');
       }
       await click('run'); await ready();
       await c.screenshot(`${id}-try-${index}`); await click('next');
@@ -172,14 +164,10 @@ export async function run(c) {
       await challengeCapture(id);
       await c.evaluate(`(() => { for (const [part, value] of Object.entries({underbody:'zinc', exhaust:'bare', armour:'zinc'})) { const el = document.querySelector('[data-lab-protect="'+part+'"]'); el.value = value; el.dispatchEvent(new Event('change', {bubbles:true})); } document.querySelector('[data-lab="protect-check"]').click(); })()`);
       await c.waitFor(`window.__qaApp.profile.lab.done.rust === true`, 'real rust challenge awarded');
-    } else if (id === 'gforce') {
+    } else {
       await c.waitFor(`!window.__qaApp.labOpen && !!window.__qaApp.labLap.waiting`, 'real G-force lap handoff');
       await c.evaluate(`(() => { const a = window.__qaApp; if (!a.startCampaign({startStage:0, seed:1989, fieldSeed:12, fieldSize:1, mode:'duel', car:'falcone_f42', difficulty:'casual', cpuDifficulty:'medium'})) throw Error('G-force race did not start'); a.setCamera('chase'); })()`);
       await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && window.__qaApp.duel.state.status !== 'menu'`, 'loaded lap world', 120_000);
-      await challengeCapture(id);
-    } else {
-      await c.waitFor(`window.__qaApp.heliSession?.view().challenge?.id === 'headings' && !document.querySelector('.lab-key-idea').hidden`, 'real navigation challenge', 60_000);
-      await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden`, 'loaded navigation world', 120_000);
       await challengeCapture(id);
     }
     await c.evaluate(`window.__qaApp.returnToMenu()`);
