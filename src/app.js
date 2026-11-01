@@ -74,7 +74,7 @@ import {ARENA_FIELD} from './arena/arena-event.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
-import {BUILT_WARLORD_IDS, warlordUnlockSatisfied, vesperEarned} from './warlords.js';
+import {BUILT_WARLORD_IDS, warlordUnlockSatisfied} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import { Duel } from './game.js';
 import { Course } from './course.js';
@@ -769,12 +769,18 @@ export class App {
   waterStep(id){return this._waterRoad().step(id);}
   // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
+  // The water works' stage in the yard: chapters done, 0 to 8, or null while the story is not shown. Read only.
+  waterYardStage(){
+    return this._waterRoad().stage();
+  }
   _waterArenaSettled(state){
     const arena=state?.arena,result=arena?.result;
-    if(arena?.mode!=='warlord'||arena.warlordId!=='blackiron'||result?.winnerId!=='player'||result.settlementSaved!==true||
-      this._waterBaronFirst!==true||!this._waterRoad().available())return;
-    this._waterBaronFirst=false;
-    this._storySay('story.water.vesper.8');
+    if(arena?.mode!=='warlord'||result?.winnerId!=='player'||result.settlementSaved!==true||
+      this._waterFirstDefeat!==arena.warlordId||!this._waterRoad().available())return;
+    // WATER-SCREENS: the results say which chapter is done; Vesper speaks after the Baron. A rematch says neither.
+    this._waterFirstDefeat=null;
+    result.waterChapter=arena.warlordId;
+    if(arena.warlordId==='blackiron')this._storySay('story.water.vesper.8');
   }
   _waterYardArrived(){
     if(!this._waterRoad().yardArrived())return false;
@@ -1846,7 +1852,8 @@ export class App {
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
     const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
-    this._waterBaronFirst = warlordId === 'blackiron' && !vesperEarned(this.profile);
+    // A warlord's first defeat finishes its chapter: only that win shows the chapter done (and Vesper after the Baron).
+    this._waterFirstDefeat = warlordId && this.profile.wasteland?.warlords?.[warlordId]?.defeated !== true ? warlordId : null;
     const started = warlordId ? startWarlordEvent(this.duel, {...options, warlordId}) :
       this.duel.startArenaEvent(options);
     if (started && waterLine) this._storySay(waterLine);
