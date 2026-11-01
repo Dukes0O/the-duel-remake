@@ -89,4 +89,4 @@ speed step).
   file may not name a helicopter file, so the lesson now reads gravity, the step and the water's
   top speed through `benches/projectile.js`, as Lift reads them through `lift-pad.js`.
 - `npm run build`: passes.
-- Rule 19: only Lab code and its tests changed since the last full tier.
+- Rule 19: the full tier ran on the merged result, c31e8e5a: 556/556 (WATER-SAVE changed the save shape since the last pass).

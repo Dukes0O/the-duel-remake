@@ -1493,3 +1493,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged WATER-LINES (eighteen Water Road lines, captions and notes; test 33, lane 25/25, build).
 - 1 Nov: merged WATER-SAVE (story.water, chapters read from the ladder; test 65, fixture roster 25 reviewed, lane 36/36, build; save review, two faults fixed and confirmed).
 - 1 Nov: merged WATER-HOOKS (Water Road jobs through setup, start and settlement; one button per chapter with bars; switch water-road dev; test 93, lane 59/59, build; one review, four faults fixed and confirmed).
+- 1 Nov: merged LAB-CLASSROOM-PROJECTILE (Projectile as a classroom, old Projectile removed; Projectile 15/15, 24 Lab suites, 15 Lab scenarios, lane 39/39, build; one review, ten faults fixed).
+- 1 Nov: full tier 556/556 on c31e8e5a in 5617 s, alone, for the release (save shape changed by WATER-SAVE since 86c48d4f).

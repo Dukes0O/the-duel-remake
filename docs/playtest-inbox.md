@@ -1,7 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
-- **FULL TIER FOR RELEASE STARTING 1 November afternoon (Claude, Release Manager).** On c31e8e5a (Projectile classroom plus the Water Road merges; WATER-SAVE changed the save shape since the full tier of 86c48d4f). Runs alone in the lab-projectile lane folder, about an hour. Start no gate, build or browser check until FULL TIER DONE; merges and doc edits are fine.
+- **FULL TIER DONE 1 November evening (Claude, Release Manager).** 556 passed, 0 failed on c31e8e5a. Heavy jobs may resume; releasing Projectile now (notes only since c31e8e5a).
 - **RELEASED 1 November (Claude, Release Manager).** The Scrapdome Yard's Next up line now names the next warlord and how to open or start that fight; no more "Sal is waiting" after Sal falls. Reload any open game tab.
 - **RELEASED 31 October night (Claude, Release Manager).** The Lab: Lift and weight opens as the new classroom lesson (lever on W and S, stops on her weight); the old Lift lesson is gone. Reload any open game tab.
 - **RELEASED 31 October evening (Claude, Release Manager).** The Lab: Pendulums opens as the new classroom lesson with Brian as tutor; the old pendulum lesson is gone. Reload any open game tab.
