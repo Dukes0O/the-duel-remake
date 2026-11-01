@@ -46,6 +46,12 @@ Behind the new `water-road` switch, `dev`.
   grants nothing; a fight is never a job; the rank bar, Your Courses with the price,
   the fight button; opening the card reads the notes; the end lines once.
 
+## Gate
+
+Lane tier after the fixes: 59 passed, 0 failed, 0 not run (with `test-course-kit`,
+`test-feature-flags` and `test-preview-launcher`). `npm run build` passes. The review's
+confirmation reran the NEXT CIRCUIT, unread-note and START cases.
+
 ## Review
 
 One independent review (code and saves). Four real faults, all fixed: after a lost
