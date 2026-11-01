@@ -14,7 +14,7 @@
             "wasteland": {
               "version": 1,
               "discoveredGate": true,
-              "rank": 7,
+              "rank": 6,
               "xp": 4200,
               "scrap": 900,
               "territories": {"sal": {"hold": 100, "claimed": true}, "dustmonger": {"hold": 100, "claimed": true}, "mirage": {"hold": 25, "claimed": false}},
@@ -47,5 +47,15 @@
         }
       ]
     }
-  }
+  },
+  "assertions": [
+    {"path": "players.0.profile.story.water.read", "equals": true},
+    {"path": "players.0.profile.story.water.jobs", "equals": ["sal"]},
+    {"path": "players.0.profile.story.water.notes", "equals": 1},
+    {"path": "players.0.profile.story.water.laterMark", "equals": {"keep": true}},
+    {"path": "players.0.profile.story.laterStory", "equals": {"keep": [1, 2]}},
+    {"path": "players.0.profile.wasteland.warlords.dustmonger.defeated", "equals": true},
+    {"path": "players.1.profile.story.kogane.lesson", "equals": true},
+    {"path": "players.2.profile.credits", "equals": 300}
+  ]
 }

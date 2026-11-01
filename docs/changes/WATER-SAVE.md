@@ -46,7 +46,10 @@ every load in the game cleans `story.water` the same way.
 
 ## Changed assertions
 
-None.
+- `tools/test-save-fixtures.mjs`: the fixture roster count goes from 24 to 25 for`n  the new `24-story-water.json` (the count is there so every new save shape is
+  reviewed; this one is, above). Nothing loosened: the new fixture adds its own
+  first-load checks. Claude's review: approved, a pinned count moved by a deliberate
+  new fixture.
 
 ## Removed
 
