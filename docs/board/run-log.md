@@ -1489,3 +1489,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 31 Oct: merged The Water Road design (docs/story/wasteland-water-road.md, ten WATER cards; lane 15/15, build).
 - 1 Nov: merged WATER-YARD-NEXT (the yard's Next up line names the next warlord and how to open or start the fight; yard suites 4/4 after review fixes, lane 28/28, build; one review, two faults fixed).
 - 1 Nov: released WATER-YARD-NEXT (build 26.11.01 19:33 UTC, master 7da01733; rule 19 on the full tier of 86c48d4f).
+- 1 Nov: merged STORY-MULTI (story registry for save, lines and cards, chooser; Kogane identical over about 18,700 cases in the save review; story suites and registry 78, lane 57/57, build, Kogane scenario). Goes live with the Water Road.
