@@ -64,3 +64,12 @@ and the fixed card heading in `story-ui.js`. Nothing is left over for a later ca
 ## Still to do
 
 - The independent save review that rule 17 asks for (the save field's shape is unchanged, but the write path moved).
+
+## Director's fix before review
+
+Claude, 1 November: `writeStory` now adds only the story it writes. Before, a
+write to one story also stored an empty entry for every other registered story,
+which would break the Water Road's "created on first write" rule. The new
+registry test checks both ways; its own first-write check now expects Kogane to
+stay absent (a check of this card, not an existing one). Story suites rerun:
+save, lines, ui, hooks, kogane-duel, heli-story, deep-story and registry (75) pass.

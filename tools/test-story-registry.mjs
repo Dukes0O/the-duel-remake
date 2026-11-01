@@ -91,7 +91,7 @@ ok(save.storyStepOf(fresh, 'missing') === null, 'a story that is not registered 
 
 const wrote = save.writeStory(fresh, KEY, 'read');
 ok(wrote.ok && wrote.changed, 'the first write works');
-same(wrote.profile.story, {version: 1, kogane: {}, [KEY]: {read: true}}, 'the first write makes the field, with this story\'s mark only');
+same(wrote.profile.story, {version: 1, [KEY]: {read: true}}, 'the first write makes the field, with this story\'s mark only (Kogane stays absent)');
 ok(!Object.hasOwn(fresh, 'story'), 'the profile given is not changed');
 const again = save.writeStory(wrote.profile, KEY, 'read');
 ok(again.ok && !again.changed && again.profile === wrote.profile, 'marks only rise: writing it again changes nothing');
@@ -222,6 +222,15 @@ const koganeProps = props('lesson', {steps: [{id: 'lesson', state: 'open'}, {id:
 }
 ok(ui.storyChooserMarkup([]) === '', 'no stories, no chooser');
 ok(ui.storyChooserMarkup([ui.storyView(props('job'), KEY)]) === '', 'a chooser is only drawn for two or more stories');
+
+// A write adds only its own story: the other registered story stays absent until its own first write.
+{
+  const kogane = save.readKoganeLetter(createProfile()).profile;
+  ok(!Object.hasOwn(kogane.story, KEY), 'a Kogane write does not add the other story');
+  const firstTest = Object.entries(save.storyDefinition(KEY).writers)[0][0];
+  const other = save.writeStory(createProfile(), KEY, firstTest);
+  ok(!other.changed || !Object.hasOwn(other.profile.story, 'kogane'), 'the other story\'s write does not add Kogane');
+}
 
 // Kogane did not change while the other story was there.
 same(koganeSnapshot(), before, 'Kogane reads exactly as before while another story is registered');

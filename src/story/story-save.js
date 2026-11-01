@@ -83,8 +83,10 @@ export function writeStory(profile, key, writerName, ...args) {
   const next = def.writers[writerName](story[key], ...args);
   if (typeof next === 'string') return failure(profile, next);
   if (next === null) return {ok: true, changed: false, profile, reason: ''};
+  // Only the story written is added: another registered story stays absent until its own first write.
+  const saved = object(profile.story) && profile.story.version === 1 ? profile.story : {};
   return {ok: true, changed: true, reason: '',
-    profile: {...profile, story: {...story, [key]: {...story[key], ...next}}}};
+    profile: {...profile, story: {...saved, version: 1, [key]: {...story[key], ...next}}}};
 }
 
 // ---- Kogane --------------------------------------------------------------------------------------------------------------
