@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-02T00:08:49.580Z
+Observed at: 2026-11-02T00:12:27.371Z
 
-Observation commit: 95fd06f7e66b61b37fba6355f24eff16b9e2456a
+Observation commit: 43c57d89aec9c0e63b04078f7a212c617abb11bd
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 95fd06f7e66b61b37fba6355f24eff16b9e2456a
+Integration HEAD: 43c57d89aec9c0e63b04078f7a212c617abb11bd
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -46,14 +46,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 369,002,107 B | +0 B | 250,000,000 B |
-| Wasteland models | 117,641,812 B | +1,957,092 B | 60,000,000 B |
+| Wasteland models | 117,641,812 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 38,400,780 B | +1,336,833 B | 20,000,000 B |
-| Added bytes in last merge | 8,038,676 B | +7,667,213 B | 5,000,000 B |
-| All `public/` | 364,094,251 B | +1,957,092 B | unavailable |
-| Git objects | 819,190,784 B | +252,928 B | unavailable |
+| Review `looks/` | 38,400,780 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 193,156 B | -7,845,520 B | 5,000,000 B |
+| All `public/` | 364,094,251 B | +0 B | unavailable |
+| Git objects | 819,430,400 B | +239,616 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -62,7 +62,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 79a92a50d8b6ee0a4d610c812e687525165623bf
 - Local main: missing
-- Local integration/wasteland: 95fd06f7e66b61b37fba6355f24eff16b9e2456a
+- Local integration/wasteland: 43c57d89aec9c0e63b04078f7a212c617abb11bd
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
