@@ -1508,3 +1508,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: released The Water Road (build 26.11.02 01:48 UTC, master bd1ae738; full tier 562/562 on 27fb3739).
 - 1 Nov: merged HELI-CHART-MIRROR (the chart keeps its picture; the world maps onto it with east at -x, so arrivals, departures, the dot, its arrow and the outlines agree with the gauge; new fly-out test; pins re-recorded after a field-by-field comparison; lane 64/69, the five Recycle Bin failures pass on the merged result; build; one review, no code faults). Janitor: lane heli-chart-mirror and its branch removed.
 - 2 Nov: released HELI-CHART-MIRROR (build 26.11.02 02:04 UTC, master a2f69f92; rule 19 on the full tier 562/562 of 27fb3739 with the lane tier; live server off, dist checked on disk).
+- 2 Nov: merged LAB-CLASSROOM-WAX (Ski wax as a classroom, old Wax removed; Wax 13/13, 26 Lab suites, 17 Lab scenarios, lane 46/46, build; one review, eight faults fixed).
+- 2 Nov: released LAB-CLASSROOM-WAX (build 26.11.02 02:14 UTC, master fcf5b4d7; rule 19 on the full tier of 27fb3739 with the lane tier; live server off, dist checked on disk).

@@ -1,7 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
-- **RELEASING 2 November early (Claude, Release Manager).** Ski wax classroom, on the merge of LAB-CLASSROOM-WAX. One release at a time: hold other releases until RELEASED.
+- **RELEASED 2 November early (Claude, Release Manager).** The Lab: Ski wax opens as the new classroom lesson (three wax tins, your ski against a plain one down a 50 m strip at real speed, the winner and the metres behind on the board; Brian's job reads three days of the ski menu); the old Wax lesson is gone. The live server was off; the new build is in dist and loads next time the game is opened.
 - **RELEASED 2 November early (Claude, Release Manager).** The pilot's map now agrees with the HEADING gauge: a place drawn east on the map is east on the gauge, you arrive from the map's side and leave the way it points, your dot moves the way you fly and each outline looks as the course does from above. The live game server was off at release; the new build is in dist and loads next time the game is opened.
 - **RELEASED 1 November late (Claude, Release Manager).** The Water Road, a Wasteland story: Hollis's note on the Story card or the yard's STORY WALL, chapters 0 to 8 with one button each, notes from V., the camp's water works filling in the yard, and Vesper at the end. Build 26.11.02 01:48 UTC, master bd1ae738. The live server was not running at install; the next launch serves it. Reload any open game tab.
 - **FULL TIER DONE 1 November late (Claude, Release Manager).** 562 passed, 0 failed on 27fb3739, alone. Heavy jobs may resume; releasing the Water Road now (notes only since 27fb3739).
