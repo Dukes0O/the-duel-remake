@@ -159,7 +159,8 @@ function ram(ctx, view, r, tx, ty, y, compact) {
 }
 // The 2,000 kg car on its sling: on the floor with the cable slack, lifted as its weight comes onto the arm.
 function hangingCar(ctx, r, tx, ty, y, compact) {
-  const scale = compact ? 1.25 : 2, ground = compact ? y + 120 : FLOOR - 15 * scale;
+  // The car's wheels stand on the floor: they reach 23 units below its middle at scale 1.
+  const scale = compact ? 1.25 : 2, ground = compact ? y + 120 : FLOOR - 23 * scale;
   const broke = r.state !== 'ok', lift = broke ? 0 : r.lower * (compact ? 14 : 26);
   const cy = ground - lift, top = cy - 20 * scale;
   if (r.state !== 'snapped') {
@@ -281,8 +282,8 @@ function drawRig(ctx, view) {
   if (view.rack) rack(ctx, view);
   if (view.handle) handle(ctx, view);
   if (one && view.rigs[0].kind === 'arm' && (view.rack || view.job)) armCard(ctx, view);
-  if (view.glow === 'build' && view.target === 'go') glowBox(ctx, view, TIP_X - 110, 300, 230, FLOOR - 290);
-  if (view.keys.Space === 'go' && view.rigs[0]?.kind === 'arm' && view.rigs[0].lower === 0) text(ctx, 'Space hangs the car', TIP_X, 300, {size: 15, colour: theme.faint});
+  if (view.glow === 'build' && view.target === 'go') glowBox(ctx, view, TIP_X - 110, 312, 180, FLOOR - 302);
+  if (view.keys.Space === 'go' && view.rigs[0]?.kind === 'arm' && view.rigs[0].lower === 0) text(ctx, 'Space hangs the car', TIP_X - 20, 296, {size: 15, colour: theme.faint});
 }
 // The wonder's arms: each holds the car; what it is and what it weighs, big.
 function armRow(ctx, r, y) {
@@ -355,15 +356,15 @@ export function drawPicture(ctx, picture, w, h) {
   if (picture.kind === 'outcome') {
     wall(); ctx.fillStyle = theme.ground; ctx.fillRect(10, h - 10, w - 20, 4);
     const y = 30, x0 = 32, len = 150, t = 12;
-    if (picture.state === 'holds') { fillMaterial(ctx, 'carbon fibre', x0, y - t / 2, len, t); ctx.strokeStyle = theme.line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + len - 4, y + t / 2); ctx.lineTo(x0 + len - 4, y + 34); ctx.stroke(); carAt(x0 + len - 4, y + 56, 1.15); }
+    if (picture.state === 'holds') { fillMaterial(ctx, 'steel', x0, y - t / 2, len, t); ctx.strokeStyle = theme.line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + len - 4, y + t / 2); ctx.lineTo(x0 + len - 4, y + 34); ctx.stroke(); carAt(x0 + len - 4, y + 56, 1.15); }
     if (picture.state === 'bends') {
-      ctx.save(); ctx.translate(x0, y); ctx.rotate(.42); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, len - 30, t); ctx.restore();
+      ctx.save(); ctx.translate(x0, y); ctx.rotate(.42); fillMaterial(ctx, 'steel', 0, -t / 2, len - 30, t); ctx.restore();
       carAt(x0 + (len - 30) * .91 + 2, h - 26, 1.15);
     }
     if (picture.state === 'snaps') {
-      fillMaterial(ctx, 'carbon fibre', x0, y - t / 2, 12, t);
+      fillMaterial(ctx, 'steel', x0, y - t / 2, 12, t);
       ctx.strokeStyle = '#f2f0e6'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 + 12, y - t / 2); ctx.lineTo(x0 + 16, y - 1); ctx.lineTo(x0 + 11, y + t / 2); ctx.stroke();
-      ctx.save(); ctx.translate(x0 + 18, h - 18); ctx.rotate(.05); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, len - 40, t); ctx.restore();
+      ctx.save(); ctx.translate(x0 + 18, h - 18); ctx.rotate(.05); fillMaterial(ctx, 'steel', 0, -t / 2, len - 40, t); ctx.restore();
       carAt(x0 + len + 10, h - 26, 1.15);
     }
   }

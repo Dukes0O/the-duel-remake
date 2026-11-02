@@ -2,7 +2,7 @@
 // snap, then the hook-arm puzzle. The game has no material rules of its own (armour does not wear, Carbon
 // plates only cut kit weight), so the numbers are standard engineering values for the three materials and
 // the maths is the textbook cantilever: tip drop = F L^3 / (3 E I), outer-fibre stress = 6 F L / (w t^2).
-import {GRAVITY} from '../../heli/heli-flight.js';
+import {GRAVITY, KESTREL} from '../../heli/heli-flight.js';
 import {control, choice, makeBench} from './bench-core.js';
 
 // density kg/m3, stiffness E (Pa), strength (Pa) where it bends for good (ductile) or snaps (brittle).
@@ -18,6 +18,8 @@ export const RIG = Object.freeze({lengthM: 0.5, widthM: 0.04, massKg: 1});
 // The hook arm: half a metre long, 60 mm wide, holding 2,000 kg; stress kept 1.5 times (bending metals) or
 // 3 times (carbon, which snaps) under its limit, and the tip allowed to drop 10 mm.
 export const ARM = Object.freeze({lengthM: 0.5, widthM: 0.06, loadKg: 2000, ductileMargin: 1.5, brittleMargin: 3, maxDropM: 0.01});
+// Kestrel One's hook holds this much without the Heavy hook, which the lesson's pass opens.
+export const BASE_HOOK_KG = KESTREL.hookLimitKg;
 
 const tipDrop = (forceN, lengthM, widthM, thicknessM, stiffness) => forceN * lengthM ** 3 / (3 * stiffness * (widthM * thicknessM ** 3 / 12));
 const stress = (forceN, lengthM, widthM, thicknessM) => 6 * forceN * lengthM / (widthM * thicknessM ** 2);

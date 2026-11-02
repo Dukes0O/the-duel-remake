@@ -66,6 +66,29 @@ green, behind `lab-classroom` (on), with no Preview step.
 
 ## Review
 
+The board was looked at as a player in two browser runs before the review. Look fixes: a snapped bar in
+the Watch's rows fell off the board and its ram rod stayed in the air; the car's "2,000 kg" sat under
+the arm card; the two gauge titles were at different heights; "set by Brian" stayed on the handle after
+the job; the weights and the answer pictures were too small to read.
+
+One independent review (a separate agent reading the code and checking every number with node) found
+nothing serious: every prompt can be followed, Show me works on all six steps that wait on a control,
+every number and reason matches `loadBar`, `hookArm` and `lightestArm`, and the bench passes only on a
+full play-through. Its minor findings, fixed with a test where it applies:
+
+- Brian's job always started from the 80 mm steel arm and quoted 18.8 kg, although Thick enough passes
+  any steel arm that holds (to 120 mm). It now starts from the player's own steel arm and quotes its
+  weight (test: "review fixes").
+- The "hang the car" glow ran into the arm card and past the click area; it now matches the area.
+- The "It bends for good" guess picture drew carbon fibre bent, the old lesson's fault; the three
+  outcome pictures now show a plain metal arm.
+- The car's wheels sat in the floor strip.
+
+Left as they are: Show me on Too thin's guess points nowhere and its last hint says any card goes on
+(as the questions do); Show me needs the lightest arm to be a whole 10 mm (the test checks it); with
+the `lab-classroom` switch off Strength does not open, as for Fuel, since the old files are removed and
+the switch is on (LAB-CLASSROOM-LIVE removes the switch).
+
 ## Checks
 
 ## Follow-up

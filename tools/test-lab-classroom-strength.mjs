@@ -270,6 +270,19 @@ test('the board draws every step and card', () => {
   for (const state of ['holds', 'bends', 'snaps']) { calls.clear(); drawPicture(fake(), {kind: 'outcome', state}, 220, 110); assert.ok(calls.has('fillRect'), state); }
 });
 
+test('review fixes: Brian’s job starts from the steel arm the player built, and quotes its weight', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-steel');
+  build(session, 'steel', 100); session.act('go'); until(session, x => x.ready);
+  session.act('next');
+  const v = session.view();
+  assert.deepEqual(v.job.held.map(h => [h.material, h.mm]), [['steel', 100]]);
+  assert.equal(v.handle.mm, 100);
+  assert.match(v.brian.text, /Your steel arm weighs 23\.6 kg\./);
+  build(session, 'carbon fibre', 50); session.act('go'); until(session, x => x.ready);
+  assert.match(session.view().brian.text, /Your steel arm weighed 23\.6 kg\. Job done\./);
+});
+
 test('the old lesson’s faults are gone: thickness and weight always show, every step is named, carbon fibre never bends for good', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-steel');

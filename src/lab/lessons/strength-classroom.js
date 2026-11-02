@@ -1,8 +1,7 @@
 // Strength against weight as a classroom lesson (docs/board/cards/LAB-CLASSROOM-STRENGTH.md, "Claude's script").
 // Teaching state only, no DOM and no saves. Every bar and every hook arm is the strength bench's own run (loadBar and
 // hookArm, the challenge's bench), and the hook arm's limits are the bench's ARM.
-import {MATERIALS, ARM, loadBar, hookArm, lightestArm} from '../benches/strength.js';
-import {KESTREL} from '../../heli/heli-flight.js';
+import {MATERIALS, ARM, BASE_HOOK_KG, loadBar, hookArm, lightestArm} from '../benches/strength.js';
 
 export const NAMES = Object.freeze(Object.keys(MATERIALS));
 const [ALUMINIUM, STEEL, CARBON] = NAMES;
@@ -73,7 +72,7 @@ export const KEY_IDEAS = Object.freeze([
   {id: 'choose', text: `Carbon fibre is light and stiff but brittle: it snaps. Choose by the job: the Heavy hook’s arm is carbon fibre, ${LIGHTEST.thicknessMm} mm, ${kg1(LIGHTEST.massKg)}.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Pick by what the part must do: strong, light or tough.',
-  text: `The Heavy hook is in the Lab shop: Kestrel One’s hook holds ${kg0(CAR_KG)}, up from ${kg0(KESTREL.hookLimitKg)}.`});
+  text: `The Heavy hook is in the Lab shop: Kestrel One’s hook holds ${kg0(CAR_KG)}, up from ${kg0(BASE_HOOK_KG)}.`});
 // The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
 export const WORDS = Object.freeze([
   {id: 'strength-strength', word: 'Strength', meaning: 'Strength is how much load a part can take before it bends for good or breaks.'},
@@ -115,7 +114,7 @@ const CHECKS = {
     hints: ['Brittle means it snaps instead of bending.', 'Which bar broke in two in the Watch?', 'Pick “Carbon fibre”.'],
   },
   'check-game': {
-    question: `The Heavy hook lets Kestrel One lift ${kg0(CAR_KG)}, up from ${kg0(KESTREL.hookLimitKg)}. Which arm would you fit?`,
+    question: `The Heavy hook lets Kestrel One lift ${kg0(CAR_KG)}, up from ${kg0(BASE_HOOK_KG)}. Which arm would you fit?`,
     answers: [{label: `Steel, ${STEEL_HOLDS.mm} mm: ${kg1(CHECK_STEEL.arm.massKg)}`, picture: {kind: 'arm', material: STEEL, mm: STEEL_HOLDS.mm}},
       {label: `Carbon fibre, ${LIGHTEST.thicknessMm} mm: ${kg1(LIGHTEST.massKg)}`, picture: {kind: 'arm', material: CARBON, mm: LIGHTEST.thicknessMm}},
       {label: `Carbon fibre, ${CARBON_THIN.mm} mm: ${kg1(CHECK_THIN.arm.massKg)}`, picture: {kind: 'arm', material: CARBON, mm: CARBON_THIN.mm}}],
@@ -130,6 +129,9 @@ const CHECKS = {
 export function createModel() {
   let m = null;
   const seen = new Set(), runs = [];
+  // The steel arm that held in Thick enough: Brian's job starts from it and compares with it.
+  let steel = STEEL_HOLDS;
+  const steelKg = () => armOutcome(steel.material, steel.mm).arm.massKg;
   const step = () => STEPS[m.index];
 
   function enter(index, keep = {}) {
@@ -141,7 +143,7 @@ export function createModel() {
     if (id === 'watch') { m.phase = 'ram'; m.ram = {t: -.8, kg: 0}; }
     if (id === 'try-snap') { m.mm = SNAP_MM; m.phase = 'set'; }
     if (id === 'try-steel') m.phase = 'set';
-    if (id === 'alone') { m.material = STEEL_HOLDS.material; m.mm = STEEL_HOLDS.mm; m.phase = 'set'; m.held = [{material: STEEL_HOLDS.material, mm: STEEL_HOLDS.mm, kg: CHECK_STEEL.arm.massKg}]; }
+    if (id === 'alone') { m.material = steel.material; m.mm = steel.mm; m.phase = 'set'; m.held = [{material: steel.material, mm: steel.mm, kg: steelKg()}]; }
     if (CHECKS[id]) m.phase = m.answered === null ? 'ask' : 'answered';
   }
   const setting = () => ['try-snap', 'try-steel', 'alone'].includes(step().id) && m.phase === 'set';
@@ -251,7 +253,7 @@ export function createModel() {
     m.phase = 'set';
     if (id === 'try-steel') {
       if (o.holds && o.material === STEEL) {
-        m.phase = 'done'; seen.add(id);
+        m.phase = 'done'; seen.add(id); steel = {material: STEEL, mm: o.mm};
         m.say = `${o.mm} mm of steel holds the car: ${pct(o.used)} of its strength, inside the line, and it dips ${mm1(o.arm.tipDropMm)}. But it weighs ${kg1(o.arm.massKg)}.`;
         return {kind: 'right', say: m.say};
       }
@@ -264,7 +266,7 @@ export function createModel() {
     if (!again) m.held.push({material: o.material, mm: o.mm, kg});
     if (inReach(o.arm)) {
       m.phase = 'done'; seen.add(id);
-      m.say = `${capital(o.material)} at ${o.mm} mm holds the car and weighs ${kg1(kg)}: the lightest arm that can. The steel arm weighed ${kg1(CHECK_STEEL.arm.massKg)}. Job done.`;
+      m.say = `${capital(o.material)} at ${o.mm} mm holds the car and weighs ${kg1(kg)}: the lightest arm that can. Your steel arm weighed ${kg1(steelKg())}. Job done.`;
       return {kind: 'pass', say: m.say};
     }
     const next = o.material === CARBON ? 'Can a thinner one still hold?' : 'Try a lighter material.';
@@ -447,7 +449,7 @@ export function createModel() {
     if (m.phase === 'done') return {...v, job, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to go on.', hints: DONE};
     if (m.phase === 'hanging') return {...v, job, say: m.say, prompt: 'Watch the gauges.', hints: ['Watch both needles.', 'Green holds; past the lines does not.', 'Wait a moment.']};
     return {...v, job,
-      say: m.auto ? autoSay() : m.say || `Brian’s job: the Heavy hook. Build the lightest arm that holds the ${kg0(CAR_KG)} car. Any material, any thickness. Your steel arm weighs ${kg1(CHECK_STEEL.arm.massKg)}.`,
+      say: m.auto ? autoSay() : m.say || `Brian’s job: the Heavy hook. Build the lightest arm that holds the ${kg0(CAR_KG)} car. Any material, any thickness. Your steel arm weighs ${kg1(steelKg())}.`,
       prompt: `${capital(m.material)}, ${m.mm} mm, ${kg1(now.arm.massKg)}. 1, 2, 3 pick the material; ↑ and ↓ the thickness; Space hangs the car.`,
       hints: ['Which material is lightest for its size? Try it, thick enough that both needles stay green.', `Carbon fibre (press 3), then ↓ to ${LIGHTEST.thicknessMm} mm, then Space.`, 'Watch my pointer: I build it and hang the car.']};
   }
@@ -461,7 +463,7 @@ export const benchAttempts = view => (view?.runs ?? []).map(({material, mm}) => 
   input: {part: 'hook arm', material, thicknessMm: mm}}));
 
 // What Brian says when finishing passes the lesson; the classroom stays open on it until the player leaves.
-export const PASS_SAY = `Strength passed! The Heavy hook is in the Lab shop: with it Kestrel One’s hook holds ${kg0(CAR_KG)}, up from ${kg0(KESTREL.hookLimitKg)}.`;
+export const PASS_SAY = `Strength passed! The Heavy hook is in the Lab shop: with it Kestrel One’s hook holds ${kg0(CAR_KG)}, up from ${kg0(BASE_HOOK_KG)}.`;
 
 export const lesson = Object.freeze({id: 'strength', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD, words: WORDS,
   finishLabel: 'Finish the lesson', benchAttempts, passSay: PASS_SAY});
