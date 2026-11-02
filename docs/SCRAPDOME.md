@@ -502,6 +502,28 @@ blackened base, keeping the fit. Claude approved that final sheet on 9 October.
 Kyle heard digital stutter in the native Nitro mix; investigate it before
 the current gate and merge. WAR-04 follows the Baron merge.
 
+### Settled for build: Magnus the Magnet (WARLORD-NINE)
+
+The ninth warlord, chapter 9 of The Water Road (`docs/story/wasteland-water-road.md`
+section 6). Claude, 2 November 2026: Gratian asked to be surprised. Falcone
+Heritage with scrap plates and a roof crane holding a round electromagnet. He
+has no territory and no roads: he is the ladder's ninth place, after the Baron.
+
+| Rule | Value |
+| --- | --- |
+| Unlock | Baron Blackiron is defeated. No hold. Switch `warlord-nine` |
+| Venue | The Salt Flats Scrapyard, a plain fight (no convoy) |
+| Base behaviour | Gunner brain between pulls |
+| Armor | The Heritage's arena armor (50) times 1.5: 75 on Medium and Hard; 60 on Easy |
+| The Big Pull | When ready, with the player 10 to 30 m away: tell (1.5 times the usual), he stops, the magnet glows blue and a blue ring 30 m around him shows its reach; `MAGNET! DRIVE AWAY!`. Then for 2.5 s the player, while inside the ring, is dragged towards him (a push that builds to about 4, 5.5, 7 m/s on Easy, Medium, Hard). At most every 14, 11, 8 s |
+| Counter | Drive straight away: a car at speed outruns the pull. Or stay out of the ring |
+| Window | The magnet is red hot for 3 s: he sits still and every hit on him counts 1.5 times; `HIS MAGNET IS RED HOT. HIT HIM NOW!` |
+| Phase two | After his first wreck: two pulls in a row with 1 s between them; the window follows the second |
+| Reward | The Tesla Coil (`tesla`) earned now if not yet unlocked; first-win pay is the ladder's ninth place (600 + 100 x 8); story card; no territory is claimed. Win title on results: `THE MAGNET IS BROKEN!` |
+| Words | Intro: "Everything metal comes to Magnus. Your car is metal." His line when beaten is a radio caption on the results, then Hollis straight after |
+| Rematch | Any time after the first win, from his card on the Territory Map |
+| Easy | The child-pace test driver (`tools/water-easy-driver.mjs`) wins at least 8 in 10 on Easy. Only his own file's Easy numbers may change for that |
+
 ### Settled for build: the ladder's end (WAR-04)
 
 - **Story cards.** Each first win gives a card: the warlord's name, a picture

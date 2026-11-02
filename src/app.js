@@ -783,6 +783,8 @@ export class App {
       result.waterChapter||!this._waterRoad().available())return;
     result.waterChapter=arena.warlordId;
     if(arena.warlordId==='blackiron')this._storySay('story.water.vesper.8');
+    // WARLORD-NINE: a warlord with its own lines after the first defeat (Magnus, then Hollis).
+    else{this._storyQuiet=false;this._storyRadioNow().saySequence('water',`won-${arena.warlordId}`);}
   }
   _waterYardArrived(){
     if(!this._waterRoad().yardArrived())return false;

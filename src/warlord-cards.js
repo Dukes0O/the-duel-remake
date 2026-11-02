@@ -9,6 +9,7 @@ const stories = Object.freeze({
   vultures: ['Two hunters circled the same prey.', 'You split the pair and claimed the Pit.', 'Their reach belongs to your crew now.'],
   tollkeeper: ['The tanker carried a price on every road.', 'You broke its valves and planted the charge.', 'The Salt Flats are open again.'],
   blackiron: ['The Baron wore the wastes like a crown.', 'You brought his black iron reign down.', 'Vesper left his gang to ride with you.'],
+  magnus: ['Magnus pulled every scrap of metal to his yard.', 'You drove free of his magnet and broke it.', 'The coil that ran it is yours now.'],
 });
 
 export function storyCardFor(id) {

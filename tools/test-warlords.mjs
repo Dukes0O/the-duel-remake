@@ -32,7 +32,11 @@ const loadWarlords = () => warlordModule ??= import('../src/warlords.js');
 
 test('the eight immutable warlords use the existing territory ids and assignments', async () => {
   const {WARLORDS} = await loadWarlords();
-  equal(Object.keys(WARLORDS), ids, 'the ladder order stays Sal through Blackiron');
+  // WARLORD-NINE: Magnus the Magnet follows the eight, with no territory of his own.
+  equal(Object.keys(WARLORDS), [...ids, 'magnus'], 'the ladder order stays Sal through Blackiron, then Magnus');
+  equal([WARLORDS.magnus.territoryId, WARLORDS.magnus.courses, WARLORDS.magnus.venues, WARLORDS.magnus.name],
+    [null, [], [], 'Magnus the Magnet'], 'Magnus has no territory, roads or hold venues');
+  ok(Object.isFrozen(WARLORDS.magnus) && Object.isFrozen(WARLORDS.magnus.courses), 'Magnus metadata is frozen');
   ok(Object.isFrozen(WARLORDS), 'the metadata table is frozen');
   for (const id of ids) {
     const warlord = WARLORDS[id];
@@ -59,7 +63,7 @@ test('the eight immutable warlords use the existing territory ids and assignment
 
 test('the ladder marks only the built fights', async () => {
   const {BUILT_WARLORD_IDS} = await loadWarlords();
-  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron'], 'Eight native fights are built; Gunn, Tollkeeper and Blackiron retain their dev switches');
+  equal(BUILT_WARLORD_IDS, ['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron', 'magnus'], 'Nine native fights are built; Magnus has his own switch');
   ok(Object.isFrozen(BUILT_WARLORD_IDS), 'fight availability cannot be changed at runtime');
 });
 

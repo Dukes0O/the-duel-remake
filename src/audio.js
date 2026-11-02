@@ -854,8 +854,9 @@ export class EngineAudio {
       return;
     }
     const nitroRuns = this.flags.enabled('arsenal-wave3') ? state.combat?.nitroRuns || [] : [];
+    // warlordFields: a warlord move's sound field, such as a magnet's pull.
     const active = new Set([...(state.combat?.flameBursts || []),
-      ...(state.combat?.magnets || []), ...nitroRuns]);
+      ...(state.combat?.magnets || []), ...nitroRuns, ...(state.combat?.warlordFields || [])]);
     for (const [effect, voice] of this.arsenalFieldVoices)
       if (!active.has(effect)) {
         voice.stop();

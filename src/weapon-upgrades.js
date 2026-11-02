@@ -16,7 +16,7 @@ export const ARSENAL_WEAPONS = Object.freeze({
   flamethrower: Object.freeze({rank: 9, wave: 2, cpuRole: 'front'}),
   magnet: Object.freeze({rank: 13, wave: 2, cpuRole: 'control'}),
   mortar: Object.freeze({rank: 14, wave: 3, cpuRole: 'front'}),
-  tesla: Object.freeze({rank: 17, wave: 3, cpuRole: 'control'}),
+  tesla: Object.freeze({rank: 17, wave: 3, cpuRole: 'control', warlordId: 'magnus'}),
   decoy: Object.freeze({rank: 19, wave: 3, cpuRole: 'control', warlordId: 'mirage'}),
   nitro: Object.freeze({rank: 21, wave: 3, cpuRole: 'front'}),
 });
