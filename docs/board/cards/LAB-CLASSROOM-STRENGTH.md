@@ -57,7 +57,7 @@ named, and carbon fibre drawn bending.
 | Step | Brian says | The player does | Wrong move, and why |
 | --- | --- | --- | --- |
 | Wonder | Both arms hold the same 2,000 kg car. One weighs 18.8 kg, the other 2.4 kg. How can the light one hold as much? | Watches the car lowered onto a steel arm (80 mm) and a carbon fibre arm (50 mm), each with its weight; R replays. | |
-| Strength | Strength is how much load a part takes before it bends for good or breaks. | ↑ hangs 10 kg weights on a steel bar; the Strength used needle climbs: 10 kg uses 72% and the bar springs back; 20 kg is 145%: it bends for good. | |
+| Strength | Strength is how much load a part takes before it bends for good or breaks. | ↑ hangs 10 kg weights on a steel bar; the Strength used needle climbs: 10 kg uses 73% and the bar springs back; 20 kg is 145%: it bends for good. | |
 | Stiff | Stiff means it bends very little. | Space hangs 10 kg on a steel bar and a carbon fibre bar: 23.7 mm against 0.3 mm on the Dips gauge; both spring back. | |
 | Brittle | Brittle means it snaps instead of bending. | Space starts the ram on the carbon fibre bar: it holds and springs back all the way to 1,991 kg, then snaps in two. | |
 | Watch | Three bars, each 1 kg: the lighter the material, the thicker its bar (voice `lab.brian.strength.intro`). | Watches the ram load all three together: steel bends for good at 14 kg, aluminium at 128 kg, carbon fibre snaps at 1,991 kg; a table fills in. The words aluminium, steel and carbon fibre go in the notebook here. | |

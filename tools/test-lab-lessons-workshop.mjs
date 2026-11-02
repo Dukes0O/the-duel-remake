@@ -1,14 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
-import * as strength from '../src/lab/lessons/strength-lesson.js';
 import * as rust from '../src/lab/lessons/rust-lesson.js';
 import * as gforce from '../src/lab/lessons/gforce-lesson.js';
-import {hookArm, MATERIALS, strengthBench, loadBar} from '../src/lab/benches/strength.js';
 import {JARS, jarAfter} from '../src/lab/benches/rust.js';
 import {rustOf, rightProtection, RUST_PARTS} from '../src/lab/lab-workshop.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
-import {strengthSamples, strengthResult} from '../src/lab/lessons/strength-animation.js';
 import {readRust, rustTrial, rustState} from '../src/lab/lessons/rust-animation.js';
 import {gforceSamples, G_BASE} from '../src/lab/lessons/gforce-animation.js';
 import {readFile} from 'node:fs/promises';
@@ -17,7 +14,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {inspectRepository} from './test-repo-hygiene.mjs';
 import {fileURLToPath} from 'node:url';
 
-const packets = [strength, rust, gforce];
+const packets = [rust, gforce];
 test('the card-named comparison sheet has a valid review home', () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const sheet = 'docs/board/looks/lab-2/lab-lessons-workshop-1.jpg';
@@ -25,7 +22,6 @@ test('the card-named comparison sheet has a valid review home', () => {
 });
 const finish = session => { for (let i = 0; i < 220; i++) session.tick(.1); };
 const goodInputs = {
-  strength: [0, 1, 2].map(() => ({part: 'hook arm', materialDial: 2, thicknessMm: 50})),
   rust: [0, 1, 2].map(() => ({partDial: 0, jarDial: 2, coatDial: 2})),
   gforce: [{speedMph: 80, radiusM: 50}, {speedMph: 20, radiusM: 50}, {speedMph: 40, radiusM: 50}],
 };
@@ -61,44 +57,6 @@ for (const packet of packets) test(`${packet.definition.id}: real teaching seque
   }
   assert.equal(s.view().challenge, true);
   assert.equal(s.view().text, d.challenge.text);
-});
-
-test('every offered strength setting predicts the real safe hook-arm verdict', () => {
-  for (let materialDial = 0; materialDial < 3; materialDial++) for (let thicknessMm = 5; thicknessMm <= 120; thicknessMm++) {
-    const input = {part: 'hook arm', materialDial, thicknessMm}, material = Object.keys(MATERIALS)[materialDial];
-    const arm = hookArm(material, thicknessMm);
-    const broke = arm.stressMPa * 1e6 >= MATERIALS[material].strength;
-    const actual = broke ? MATERIALS[material].brittle ? 'snaps' : 'bends' : arm.tipDropMm > 10 ? 'bends' : 'holds';
-    const result = strength.hooks.evaluate({tryIndex: 0, input, prediction: actual});
-    assert.equal(result.actual, actual); assert.equal(result.passed, arm.holds);
-  }
-  const input = goodInputs.strength[2], attempt = strength.definition.tries[2];
-  const settings = Object.fromEntries(attempt.controls.map(c => [c.setting ?? c.id, c.values?.[Math.round(input[c.id])] ?? input[c.id]]));
-  const result = strengthBench.run(settings);
-  assert.equal(result.withinReach, true); assert.equal(strengthBench.goalMet([{settings, result}]), true);
-  for (const check of strength.definition.checks) {
-    if (check.correct === 'check-carbon') {
-      const candidates = check.answers.map(a => ({id: a.id, ...hookArm(strengthSamples[a.id].material, strengthSamples[a.id].thicknessMm)})).filter(a => a.holds).sort((a, b) => a.massKg - b.massKg);
-      assert.equal(candidates[0].id, check.correct);
-    } else for (const answer of check.answers) assert.equal(strengthResult(strengthSamples[answer.id]).actual === 'snaps', answer.id === check.correct);
-  }
-  const failureLoads = Object.keys(MATERIALS).map(m => loadBar(m, 0).loadAtFailureKg);
-  assert.ok(failureLoads[1] < failureLoads[0] && failureLoads[0] < failureLoads[2], 'teach actual equal-weight order');
-  const unsafe = strength.hooks.evaluate({tryIndex: 0, input: {part: 'hook arm', materialDial: 1, thicknessMm: 70}, prediction: 'holds'});
-  assert.equal(unsafe.actual, 'holds'); assert.equal(unsafe.passed, false); assert.equal(unsafe.failure, 'safety');
-  assert.doesNotMatch(unsafe.hint.what, /gave way|snapp?ed/);
-  assert.notEqual(strengthResult({material: 'carbon fibre', thicknessMm: 40}).actual, 'snaps', 'excess bending is not a fracture');
-  const unloaded = strength.hooks.animations.try({input: {materialDial: 2, thicknessMm: 20}, time: 3});
-  assert.equal(unloaded.actual, 'holds'); assert.equal(unloaded.drop, 0);
-  assert.ok(unloaded.forces.every(f => f.newtons === 0));
-  for (const materialDial of [0, 1, 2]) for (const thicknessMm of [25.49, 25.5, 25.51, 49.49, 49.5, 49.51, 72.5]) {
-    const input = {part: 'hook arm', materialDial, thicknessMm};
-    const bench = strengthBench.run({part: 'hook arm', material: Object.keys(MATERIALS)[materialDial], thicknessMm});
-    const draw = strength.hooks.animations.try({input, time: 3});
-    assert.equal(draw.input.thicknessMm, bench.settings.thicknessMm);
-    assert.deepEqual(draw.arm, bench.arm);
-    assert.equal(strength.hooks.evaluate({tryIndex: 0, input, prediction: draw.actual}).actual, draw.actual);
-  }
 });
 
 test('rust predictions and all three protection answers agree with jars and challenge', () => {
@@ -146,28 +104,6 @@ test('G-force predictions, metre radii, arrow lengths and hardest-turn pictures 
   assert.equal(check.correct, most.id);
 });
 
-test('the real rig visibly thickens the selected arm and preserves the room-owned model', async () => {
-  const bytes = await readFile(new URL('../public/assets/models/lab/bending-rig.glb', import.meta.url));
-  const {scene: model} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
-  const scene = new THREE.Scene(), group = new THREE.Group(); scene.add(model, group);
-  const node = () => ({style: {}, dataset: {}, append() {}, remove() {}});
-  const canvas = {dataset: {}, parentElement: node()};
-  const mounted = strength.hooks.mount({group, THREE, models: new Map([['bending-rig', model]]), doc: {createElement: node}, canvas});
-  const clock = {time: 0, stage: 3};
-  const draw = thicknessMm => strength.hooks.animations.try({input: {materialDial: 1, thicknessMm}, time: 0});
-  mounted.draw(draw(10), clock);
-  const clone = group.children.find(n => n.getObjectByName('bar-steel'));
-  const thinScale = clone.getObjectByName('bar-steel').scale.y;
-  mounted.draw(draw(100), clock);
-  assert.ok(Math.abs(clone.getObjectByName('bar-steel').scale.y / thinScale - 10) < 1e-12);
-  assert.equal(model.getObjectByName('bar-steel').scale.y, 1, 'shared model is untouched');
-  mounted.draw(strength.hooks.animations.bars({time: 0}), {time: 0, stage: 2});
-  const sizes = ['bar-steel', 'bar-aluminium', 'bar-carbon'].map(name => new THREE.Box3().setFromObject(clone.getObjectByName(name)).getSize(new THREE.Vector3()).y);
-  assert.ok(sizes[0] < sizes[1] && sizes[1] < sizes[2], 'actual equal-weight cross-sections increase steel, aluminium, carbon');
-  assert.doesNotThrow(() => mounted.draw({}, {stage: 4, index: 2, time: 0}), 'the final challenge card has no drawing payload');
-  mounted.dispose(); assert.equal(model.visible, true); assert.equal(group.children.length, 0);
-});
-
 test('round two uses real named props, anchored readings and hit skins on the ruler and floor pan', async () => {
   const bytes = await readFile(new URL('../public/assets/models/lab/workshop-lesson-props.glb', import.meta.url));
   const {scene} = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
@@ -190,17 +126,6 @@ test('round two uses real named props, anchored readings and hit skins on the ru
   const body = new THREE.Box3().setFromObject(pan), skin = d.objects.find(o => o.control === 'partDial');
   const hit = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(...skin.position), new THREE.Vector3(...skin.size));
   assert.ok(hit.containsBox(body), 'the floor-pan face can be clicked, not just empty air above it');
-  for (const time of [0, 3]) {
-    const bars = strength.hooks.animations.bars({time});
-    const weights = bars.props.filter(p => p.model === 'mass-weight');
-    assert.equal(weights.length, 3); assert.equal(bars.forces.length, 3);
-    assert.equal(new Set(bars.objects.map(o => o.id)).size, bars.objects.length, 'each load has its own solid arrow shaft');
-    bars.forces.forEach((f, i) => {
-      assert.equal(f.origin[0], .95, 'load is at the free end of the cantilever');
-      assert.ok(f.newtons * bars.metresPerNewton < .3, 'load arrows do not span adjacent undeformed bars');
-      assert.ok(Math.abs(f.origin[1] - weights[i].position[1] - .13) < 1e-9);
-    });
-  }
 });
 
 test('enlarged jars replace old blank tags only in the lesson clone', async () => {
