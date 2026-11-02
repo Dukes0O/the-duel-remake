@@ -99,7 +99,9 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   // Lose, quit, abandon: nothing.
   app.waterStep('sal');
   ok(app.startCampaign(app.getRaceChoices()) && app._water.run?.mark === 'sal', 'the story race starts');
-  ok(app.storyCaption?.id === 'story.water.job.sal', 'Hollis\'s radio line shows at the start');
+  ok(!app.storyCaption, 'Hollis waits while the road loads');
+  app.duel.state.countdown = 0; app.duel.step(DT);
+  ok(app.storyCaption?.id === 'story.water.job.sal', 'Hollis\'s radio line shows at GO');
   const lost = raceResult(false);
   app._settleResult(lost, app.duel.state);
   ok(!water(app.profile).jobs && lost.waterJob === undefined, 'a loss grants nothing');
@@ -148,7 +150,8 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   app.waterStep('kettle');
   ok(app.startArenaEvent({mode: 'last-car-rolling', venueId: 'scrapdome', opponents: 2}), 'START: Last Car Rolling');
   ok(app._water.run?.mark === 'kettle', 'the story\'s game');
-  ok(app.storyCaption?.id === 'story.water.job.kettle', 'Hollis\'s radio line shows');
+  app.duel.state.countdown = 0; for (let n = 0; n < 3 && app.duel.state.arena.phase !== 'fight'; n++) app.duel.step(DT);
+  ok(app.storyCaption?.id === 'story.water.job.kettle', 'Hollis\'s radio line shows as the fight begins');
   const s = app.duel.state;
   s.countdown = 0;
   s.arena.participants.find(p => p.id === 'player').wrecks = 3;
@@ -240,18 +243,18 @@ same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH'
   intoYard(app);
   const said = [];
   app._storySay = id => { said.push(id); return true; };
-  const winFight = () => {
+  const winFight = firstWin => {
     if (!app.isYardHomeActive()) { app.returnToMenu(); intoYard(app); }
     ok(app.startWarlordFight('blackiron'), 'the Baron\'s fight starts');
     const s = app.duel.state;
-    s.arena.result = {winnerId: 'player', settlementSaved: true};
+    s.arena.result = {winnerId: 'player', settlementSaved: true, firstWin};
     app._waterArenaSettled(s);
   };
-  winFight();
+  winFight(true);
   same(said, ['story.water.vesper.8'], 'Vesper speaks after the first defeat');
   app.profile = {...app.profile, wasteland: {...app.profile.wasteland, warlords: {...app.profile.wasteland.warlords, blackiron: {...app.profile.wasteland.warlords.blackiron, defeated: true}}}};
   app._saveProfile();
-  winFight();
+  winFight(false);
   same(said, ['story.water.vesper.8'], 'and not after a rematch');
 }
 

@@ -5,6 +5,7 @@ import {COURSE} from './config.js';
 import {WARLORDS, WARLORD_LADDER, warlordUnlockSatisfied} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
+import {waterNextUp, waterWallMarkup} from './story/water-ui.js';
 
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
@@ -48,7 +49,7 @@ export function yardNextStep(profile, {featureFlags} = {}) {
 }
 
 export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
-  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags}) {
+  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags, water = null}) {
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
@@ -56,20 +57,23 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const intro = '<p>Win Mad Max Duel events to earn scrap and build territory hold. The yard is your place to prepare for the next fight.</p>';
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
-  const fightCopy = canFight ? yardNextStep(profile, {featureFlags}) : 'Warlord fights are coming later.';
-  const careerContent = `<div class="yard-home-intro"><h3>YOUR WASTELAND CAREER</h3><p>Notoriety rank ${career?.rank || 1} · ${Math.floor(career?.xp || 0).toLocaleString()} XP · ${claimed} territories claimed</p>${intro}<p>Win four events in a territory to fill its hold. ${fightCopy}</p></div>`;
+  // With the Water Road on, the next step is its open chapter and that chapter's one button.
+  const story = canFight ? waterNextUp(water) : null;
+  const fightCopy = story ? story.text : canFight ? yardNextStep(profile, {featureFlags}) : 'Warlord fights are coming later.';
+  const storyButton = story?.button ?? '';
+  const careerContent = `<div class="yard-home-intro"><h3>YOUR WASTELAND CAREER</h3><p>Notoriety rank ${career?.rank || 1} · ${Math.floor(career?.xp || 0).toLocaleString()} XP · ${claimed} territories claimed</p>${intro}<p>Win four events in a territory to fill its hold. ${fightCopy}</p>${storyButton}</div>`;
   let content;
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
   else if (panel === 'territory') content = territoryPanel(profile,
     canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
-  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = cardWallScreen(profile,escapeHTML);
+  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = waterWallMarkup(water) + cardWallScreen(profile,escapeHTML);
   else if (panel === 'crew') content = crewPanel(profile, escapeHTML,{gearEnabled:featureFlags?.enabled('crew-gear')===true,warlordCardsEnabled:featureFlags?.enabled('warlord-cards')===true && featureFlags?.enabled('crew-gear')===true});
   else if (panel === 'armory') content = armoryMarkup;
   else if (panel === 'career') content = careerContent;
   else {
     const homeCopy = canFight ? `The Scrapdome is open. ${fightCopy}` :
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p></div>`;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }
