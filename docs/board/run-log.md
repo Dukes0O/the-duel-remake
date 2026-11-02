@@ -1518,3 +1518,7 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2 Nov: released LAB-CLASSROOM-STRENGTH (build 26.11.02 20:35 UTC, master f437620f; rule 19 on the full tier 562/562 of 27fb3739 with the lane tier; staged build checked on 5188; live server off, dist checked on disk).
 - 2 Nov: full tier 567/567 on b8fc1870, alone (Magnus release).
 - 2 Nov: released WARLORD-NINE (Magnus the Magnet), master fcc43f3c, build 26.11.02 22:28 UTC.
+- 2 Nov: merged CARBON-PLATES-WIRE (Carbon plates: paid kit 40% more protection for the same weight, player only; test-armor-kits 7/7, lane 109/109, build; one review, no real defects, two small points taken). Janitor: lane carbon-plates and its branch removed.
+- 2 Nov: merged LAB-CLASSROOM-BRAKING (Braking classroom; classroom keeps Brian's words, adds Previous step; old Braking lesson and tunnel part gone; suite 12/12, classroom 15/15, every Lab suite, 20 Lab scenarios with one rerun alone (wax, timeout under load), lane tier, build; one review, faults fixed and confirmed). Janitor: lane lab-braking and its branch removed.
+- 2 Nov: full tier 568/568 on bb9a2c8e, alone (Carbon plates and Braking release).
+- 2 Nov: released CARBON-PLATES-WIRE and LAB-CLASSROOM-BRAKING, master 0382689e, build 26.11.02 23:48 UTC; staged build checked on 5188; live server running, serves the new build. Janitor: full-tier copy removed.
