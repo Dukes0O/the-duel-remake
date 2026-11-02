@@ -42,7 +42,12 @@ The Water Road (`docs/story/wasteland-water-road.md` sections 2 and 3). Behind
   suites pass unchanged: test-story-ui, test-story-registry, test-story-hooks,
   test-water-hooks, test-yard-next, test-arena-ui, test-warlord-format,
   test-warlord-gunn.
-- Lane tier, build, browser look and the yard frame check: see below.
+- Lane tier (PowerShell, with WATER-YARD-ART merged in): 84 passed, 0 failed, 0 not run.
+  `npm run build` passes. The yard frame check goes with WATER-FINISH.
+- Browser look with the water works in the yard: every fact passes; the works stand
+  in the home view and fill chapter by chapter. Clarity fixes from it: Next up says how
+  many wins are left, the open chapter's button is scrolled into view on the card and
+  the Story Wall, finished rows are compact on the wall.
 
 ## Browser look
 
