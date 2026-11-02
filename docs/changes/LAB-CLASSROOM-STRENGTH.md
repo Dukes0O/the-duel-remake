@@ -89,7 +89,21 @@ Left as they are: Show me on Too thin's guess points nowhere and its last hint s
 the `lab-classroom` switch off Strength does not open, as for Fuel, since the old files are removed and
 the switch is on (LAB-CLASSROOM-LIVE removes the switch).
 
+Fault found by the lane tier: the lesson read Kestrel One's base hook limit straight from
+`src/heli/heli-flight.js`, which `tools/test-heli-mode.mjs` forbids outside the benches. The strength
+bench now exports it (`BASE_HOOK_KG`) and the lesson reads it there; the rule is unchanged.
+
 ## Checks
+
+- `tools/test-lab-classroom-strength.mjs`: 13 of 13 (numbers from `loadBar`, `hookArm` and
+  `lightestArm`; a child following the prompts passes; every wrong try and question says why;
+  help climbs to Show me on every step; the lesson's runs pass the bench only with the lightest arm;
+  mouse; drawing; the old faults; the review fix).
+- Every `tools/test-lab-*.mjs`: 28 suites, 311 tests, all pass.
+- Lab browser scenarios: 19 of 19, including `lab-classroom-strength` (34 pictures, by keyboard with
+  one click on the rack, to the pass and the Heavy hook for sale), `lab-view` (walking room to the
+  classroom, pass, Heavy hook bought for 2,000 credits) and `lab-walk`.
+- Lane tier (`--changed --jobs 4`) on 982f9b20: 43 of 43. Build passes.
 
 ## Follow-up
 
