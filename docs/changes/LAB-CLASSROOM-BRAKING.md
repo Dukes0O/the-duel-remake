@@ -96,6 +96,8 @@ the lever's knob over its title, and two bubbles that scrolled.
   inside the scenario's long helicopter flight to the slalom (a page call under load, not a failed
   check); rerun alone below.
 - Lane tier (`--changed --jobs 4`) on c711a5db (integration merged in): 73 of 73.
+- `lab-classroom-wax` rerun alone after the WARLORD-NINE full tier: passes (27 pictures).
+- Integration merged in again (433f8ecb, only a board-list conflict, no code conflict): `npm run build` passes.
 
 ## Follow-up
 
