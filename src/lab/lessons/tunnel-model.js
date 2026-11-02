@@ -48,7 +48,7 @@ export function tunnelMount(id) {
     new GLTFLoader().loadAsync('/assets/models/lab/tunnel-parts.glb').then(gltf => {
       if (disposed) { release(gltf.scene); return; }
       loaded = gltf.scene;
-      for (const name of ['tyre', 'brake', 'spring', 'wing', 'can', 'scale', 'wing-stand', 'dial']) {
+      for (const name of ['tyre', 'brake', 'spring', 'wing', 'scale', 'wing-stand', 'dial']) {
         const part = loaded.getObjectByName(name); part.removeFromParent(); own.add(part); parts.set(name, part);
         const old = part.clone(true);
         old.traverse(n => { if (n.material) { n.material = n.material.clone(); n.material.transparent = true; n.material.opacity = .2; n.material.depthWrite = false; } });
@@ -76,7 +76,6 @@ export function tunnelMount(id) {
           const part = parts.get(row.name); if (!part) continue;
           part.visible = true; part.position.set(...row.position); part.rotation.order = row.order ?? 'XYZ'; part.rotation.set(...(row.rotation ?? [0, 0, 0]));
           part.scale.set(...(row.scale ?? [1, 1, 1]));
-          const level = part.getObjectByName('fuel-level'); if (level) level.scale.y = Math.max(.001, row.fill ?? 1);
           const needle = part.getObjectByName('dial-needle'); if (needle) needle.rotation.z = (.75 - 1.5 * (row.dial ?? 0)) * Math.PI;
         }
         cars.forEach((car, i) => {
@@ -89,7 +88,6 @@ export function tunnelMount(id) {
           const old = oldParts.get(pose.name); if (!old) continue;
           old.visible = true; old.position.set(...pose.position); old.position.x -= 1.2;
           old.rotation.order = pose.order ?? 'XYZ'; old.rotation.set(...(pose.rotation ?? [0, 0, 0])); old.scale.set(...(pose.scale ?? [1, 1, 1]));
-          const level = old.getObjectByName('fuel-level'); if (level) level.scale.y = Math.max(.001, pose.fill ?? 1);
           const needle = old.getObjectByName('dial-needle'); if (needle) needle.rotation.z = (.75 - 1.5 * (pose.dial ?? 0)) * Math.PI;
         }
         labels.forEach(l => { l.sprite.visible = false; });

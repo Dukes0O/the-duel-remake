@@ -1,5 +1,4 @@
 // Wind-tunnel packet wiring only. Each lesson owns its words and rule verdicts.
-import {FUEL_RIG} from '../benches/tunnel.js';
 export function tunnelPacket(spec, drawing, mount) {
   const {bench, classify, examples} = spec;
   const results = new Map();
@@ -61,12 +60,6 @@ export function partPicture(kind, describe) {
       ctx.beginPath(); ctx.arc(0, 0, height * .08, 0, Math.PI * 2); ctx.stroke();
     } else if (kind === 'spring') {
       ctx.beginPath(); for (let i = 0; i < 30; i++) { const x = Math.sin(i * Math.PI / 2) * 23, y = -32 + i * 2.2; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();
-    } else if (kind === 'can') {
-      ctx.fillStyle = '#7c8840'; ctx.fillRect(-26, -25, 52, 60); ctx.strokeRect(-15, -38, 30, 14);
-      ctx.beginPath(); ctx.moveTo(-20, -15); ctx.lineTo(20, 25); ctx.moveTo(20, -15); ctx.lineTo(-20, 25); ctx.stroke();
-      ctx.fillStyle = '#151c20'; ctx.fillRect(15, -18, 7, 44);
-      const fill = result.settings.litres / FUEL_RIG.tankLitres * 44;
-      ctx.fillStyle = '#edc557'; ctx.fillRect(15, 26 - fill, 7, fill);
     } else {
       ctx.save();
       ctx.rotate(result.settings.wing === 'big' ? -.3 : result.settings.wing === 'small' ? -.15 : 0);

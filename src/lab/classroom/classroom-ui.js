@@ -28,6 +28,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
   let layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
+  // A lesson passed in the classroom (a bench challenge): what Brian says, and the sparks it throws.
+  let passed = null, burst = false;
 
   brianPortrait(doc).then(url => {
     if (!url || disposed) return;
@@ -41,6 +43,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (action === 'leave') { onLeave(); return; }
     if (action === 'challenge') {
       const started = startChallenge();
+      if (started?.passed) { passed = started.passed; burst = true; return; }
       if (!started?.ok) note = started?.reason ?? 'The challenge is not open yet.';
       return;
     }
@@ -63,7 +66,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const v = session.view(), name = KEY_NAMES[event.code];
     let action = null;
     if (event.code === 'Escape') action = 'leave';
-    else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? 'challenge' : v.ready ? 'next' : null;
+    else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';
     else if (event.code === 'KeyS' && v.actions.includes('slow')) action = 'slow';
@@ -124,7 +127,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       `<li class="${part.done ? 'done' : ''} ${part.current ? 'current' : ''}"><button type="button" ${part.reached && !part.current ? `data-lc="go:${part.first}"` : 'disabled'}>` +
       `<span>${part.done ? '✓' : i + 1}</span>${escape(part.name)}</button></li>`).join(''));
     setHtml($('.lc-step'), 'step', escape(v.step.title));
-    const brian = note ? {text: note, mood: 'explain'} : v.brian;
+    const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
     setHtml($('.lc-bubble'), 'bubble', escape(brian.text));
     const portrait = $('.lc-portrait');
     if (portrait.dataset.mood !== brian.mood) portrait.dataset.mood = brian.mood;
@@ -140,7 +143,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     }
     $('.lc-cards').hidden = v.cards.length === 0;
     root.classList.toggle('lc-asking', v.cards.length > 0);
-    setHtml($('.lc-prompt'), 'prompt', `<b>Your move</b> ${escape(v.prompt)}`);
+    setHtml($('.lc-prompt'), 'prompt', `<b>Your move</b> ${escape(passed && v.last ? 'Enter takes you back to the Lab.' : v.prompt)}`);
     const button = (action, label, key, {primary = false, disabled = false, pressed = null} = {}) =>
       `<button type="button" data-lc="${action}" class="${primary ? 'primary' : ''}" ${disabled ? 'disabled' : ''} ${pressed === null ? '' : `aria-pressed="${pressed}"`}>${escape(label)} ${kbd(key)}</button>`;
     setHtml($('.lc-actions'), 'actions',
@@ -149,7 +152,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +
-      (v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', 'Try it in the game', 'Enter', {primary: true})
+      (v.last && passed ? button('leave', 'Back to the Lab', 'Enter', {primary: true})
+        : v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', lesson.finishLabel ?? 'Try it in the game', 'Enter', {primary: true})
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));
   }
 
@@ -167,10 +171,11 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     }
     if (v.pointer) pointer(v);
     // A right answer throws workshop sparks from where the player was working.
-    if (v.celebrate && celebrated !== v.celebrate.at) {
-      celebrated = v.celebrate.at;
+    if (v.celebrate && celebrated !== v.celebrate.at || burst) {
+      if (v.celebrate) celebrated = v.celebrate.at;
+      const big = burst || v.celebrate.big; burst = false;
       const from = board.targetPoint(v, 'release') ?? [board.BOARD.width / 2, board.BOARD.height / 2];
-      for (let i = 0; i < (v.celebrate.big ? 90 : 45); i++) {
+      for (let i = 0; i < (big ? 90 : 45); i++) {
         const a = -Math.PI / 2 + (Math.random() - .5) * 2.4, speed = 220 + Math.random() * 380;
         sparks.push({x: from[0], y: from[1], vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .7 + Math.random() * .7, colour: SPARK_COLOURS[i % 4]});
       }

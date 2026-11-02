@@ -160,8 +160,15 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
           onLeave: () => { close(); onBack(); },
           startChallenge: () => {
             const started = onChallenge(id, {challenging: false, attempts: []});
-            // A bench-kind challenge ('inline') needs the lesson's own machine runs; the classroom lessons so far fly.
-            if (started === 'inline') return {ok: false, reason: 'This challenge runs on the bench. Leave the lesson and use the machine.'};
+            // A bench-kind challenge ('inline') passes on the lesson's own machine runs (Fuel's races), through the
+            // bench's own goal; a lesson that has none sends the player to the machine.
+            if (started === 'inline') {
+              if (!lesson.benchAttempts) return {ok: false, reason: 'This challenge runs on the bench. Leave the lesson and use the machine.'};
+              const passed = onChallenge(id, {challenging: true, attempts: lesson.benchAttempts(classroom.view())});
+              if (!passed?.ok) return {ok: false, reason: passed?.reason};
+              // The classroom stays open so Brian can say what the pass opened; leaving keeps the board's message.
+              return {ok: true, passed: lesson.passSay ?? `${lesson.name} passed.`};
+            }
             if (!started?.active) return {ok: false, reason: started?.reason};
             challengeActive = started;
             card.innerHTML = `<b>${escape(lesson.challengeCard.title)}</b><p>${escape(lesson.challengeCard.text)}</p>`;
