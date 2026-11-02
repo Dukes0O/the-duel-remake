@@ -57,10 +57,14 @@ for (const [label, flags] of OPTION_SETS) {
       ok(start.y - ground.height(start.x, start.z) >= CLEAR, `${name}: the arrival point is ${CLEAR} m over the ground`);
       ok(start.y - top >= CLEAR, `${name}: the line in clears the ground by ${CLEAR} m (${(start.y - top).toFixed(1)} m)`);
       ok(start.y <= ceilingAt(site.area, start.x, start.z, ground) - HELI_SESSION.arrivalUnder, `${name}: under the flying ceiling`);
-      ok(over >= HELI_SESSION.arrivalHeight, `${name}: never lower than the usual 150 m`);
-      // A line whose 8 m wide reading already clears by a good margin at 150 m keeps the usual height exactly.
-      if (lineTop(ground, start, site.zone, 8) + CLEAR < site.zone.y + HELI_SESSION.arrivalHeight - 5) { ok(over === HELI_SESSION.arrivalHeight, `${name}: the usual 150 m`); kept++; }
-      if (over > HELI_SESSION.arrivalHeight) raised++;
+      ok(over >= HELI_SESSION.arrivalHeight - 1e-9, `${name}: never lower than the usual 150 m`);
+      // No higher than it needs: 150 m, or 40 m over the highest thing within the rotor's 6 m of the line.
+      ok(start.y <= Math.max(site.zone.y + HELI_SESSION.arrivalHeight, lineTop(ground, start, site.zone, 6) + CLEAR) + 1e-9, `${name}: no higher than it needs`);
+      // A line whose 8 m wide reading already clears by a good margin at 150 m keeps the usual height.
+      if (lineTop(ground, start, site.zone, 8) + CLEAR < site.zone.y + HELI_SESSION.arrivalHeight - 5) {
+        ok(Math.abs(over - HELI_SESSION.arrivalHeight) < 1e-9, `${name}: the usual 150 m`); kept++;
+      }
+      if (over > HELI_SESSION.arrivalHeight + 1e-9) raised++;
       if (over > highest.over) highest = {over, name};
     }
   }

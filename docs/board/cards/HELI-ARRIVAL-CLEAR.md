@@ -23,11 +23,11 @@ where the line in from there to the landing circle has higher ground, trees or r
 highest of them, whichever is higher, and never above 20 m under the flying ceiling.
 
 - The margin is 40 m, the same height the rescue autopilot keeps over the highest thing at a search
-  spot. The line is checked every 10 m with `ground.highest` over a 6 m circle (the rotor), the same
+  spot. The line is checked every 2 m with `ground.highest` over a 6 m circle (the rotor), the same
   reading the autopilot climbs by.
-- The highest need measured is 251 m over the pad (Panorama Ridge from Summit Run), 48 m under the
-  ceiling, so the cap never binds today; it is there so a future course can never start a leg above its
-  own ceiling. The check below fails if any line in ever needs more than the cap gives.
+- The highest need is 259 m over the pad (Panorama Ridge from Summit Run), 40 m under the ceiling and
+  20 m under the cap, so the cap never binds today; it is there so a future course can never start a leg
+  above its own ceiling. The check below fails if any line in ever needs more than the cap gives.
 - Summit Run with rescues on keeps its own arrival over the start area (RESCUE-SUMMIT-ARRIVAL).
 - Rejected: ending every leg over the zone as Summit does (it removes the flight in, which is most of the
   arrival, and the player's approach); shortening only the bad legs (a closer start still meets the same
@@ -49,4 +49,4 @@ line move only in its height; each is compared field by field and re-recorded wi
    straight at the pad at the arrival height reaches the landing circle without a crash; on the old code
    that flight hits the ridge.
 3. The suites that pin arrivals (`test-heli-summit-arrival`, `test-heli-autopilot-rescue`,
-   `test-heli-summit-tune`, `test-map-destinations`) pass, with any moved pin re-recorded.
+   `test-heli-summit-tune`, `test-map-destinations`, `test-heli-mode`) pass, with any moved pin re-recorded.
