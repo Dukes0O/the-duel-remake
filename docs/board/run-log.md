@@ -1506,3 +1506,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: full tier 562/562 on 27fb3739, alone (Water Road release).
 - 1 Nov: merged WATER-FINISH (water-road on; lane 43/43, build, water-road scenario 13/13).
 - 1 Nov: released The Water Road (build 26.11.02 01:48 UTC, master bd1ae738; full tier 562/562 on 27fb3739).
+- 1 Nov: merged HELI-CHART-MIRROR (the chart keeps its picture; the world maps onto it with east at -x, so arrivals, departures, the dot, its arrow and the outlines agree with the gauge; new fly-out test; pins re-recorded after a field-by-field comparison; lane 64/69, the five Recycle Bin failures pass on the merged result; build; one review, no code faults). Janitor: lane heli-chart-mirror and its branch removed.
+- 2 Nov: released HELI-CHART-MIRROR (build 26.11.02 02:04 UTC, master a2f69f92; rule 19 on the full tier 562/562 of 27fb3739 with the lane tier; live server off, dist checked on disk).
