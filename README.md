@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Magnus the Magnet, the ninth warlord.** Beat Baron Blackiron and a new
+  card appears on the Territory Map: Magnus, in his scrapyard on the Salt
+  Flats, with a giant magnet on a crane on his roof. When it glows blue and a
+  blue ring shows, drive away: inside the ring he drags your car towards him,
+  and reaching him knocks armor off with a CLANG. Then the magnet glows red
+  hot for three seconds while he sits still and takes extra damage: hit him
+  then. On the Water Road he is chapter 9, after the Baron. Beating him wins
+  the Tesla Coil (if you don't have it yet), his card on the Story Wall and a
+  word from Hollis. On Easy he never shoots and his rams do half damage.
 - **The Lab: Strength against weight is a classroom now.** Hang weights on a
   steel bar until it bends for good, watch carbon fibre spring back right up
   to the moment it snaps, and see three 1 kg bars give way at 14 kg, 128 kg

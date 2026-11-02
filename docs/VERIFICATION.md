@@ -1740,3 +1740,16 @@ helicopter import, now read through the strength bench.
 
 Rule 19: Lab code and its tests and scenarios since the full tier 562/562 on 27fb3739, after the
 releases since (each on its lane tier); no shared core, save shape or physics change. No save change.
+
+## Release, 2 November 2026, night (Claude, Release Manager)
+
+WARLORD-NINE: Magnus the Magnet, the ninth warlord (switch warlord-nine on). A Falcone Heritage with
+a roof-crane magnet in the Salt Flats Scrapyard; the Big Pull (blue ring 30 m, a 2.5 s pull, CLANG on
+contact, a 3 s red-hot window taking 1.5 times damage, two pulls after his first wreck); opens after
+the Baron; claims no territory; Tesla Coil reward; Water Road chapter 9. test-warlord-magnus 38/38,
+Easy 29 of 30 wins, the water-road scenario with its chapter 9 steps, lane tier, build. One review;
+its faults fixed and confirmed. Changed assertions reviewed in docs/changes/WARLORD-NINE.md.
+
+Full tier 567/567 on b8fc1870, alone. Rule 19: only the inbox changed since. Save: one more warlord
+record (normalize and backup checked); no territory row. Frame check of the Magnus fight at the next
+nightly full check.
