@@ -1505,3 +1505,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged WATER-SCREENS (card, Story Wall chapters, bars, yard Next up, results tick, water works in the yard; test 51, water-road scenario all facts, lane 84/84, build; one review, three faults fixed and confirmed).
 - 1 Nov: full tier 562/562 on 27fb3739, alone (Water Road release).
 - 1 Nov: merged WATER-FINISH (water-road on; lane 43/43, build, water-road scenario 13/13).
+- 1 Nov: released The Water Road (build 26.11.02 01:48 UTC, master bd1ae738; full tier 562/562 on 27fb3739).
