@@ -1,6 +1,6 @@
 import {COURSE} from './config.js';
 import {TERRITORIES} from './wasteland-career.js';
-import {BUILT_WARLORD_IDS, WARLORDS, warlordUnlockSatisfied} from './warlords.js';
+import {BUILT_WARLORD_IDS, WARLORDS, WARLORD_LADDER, warlordUnlockSatisfied} from './warlords.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {warlordEnabled} from './warlords/index.js';
 
@@ -48,7 +48,16 @@ export function territoryPanel(profile, {builtWarlordIds = BUILT_WARLORD_IDS, ca
       action+
       `<progress max="100" value="${hold}" aria-label="${territory.name} hold"></progress></article>`;
   }).join('');
+  // A warlord with no territory (Magnus the Magnet) gets a card once the fight is open: no roads, no hold.
+  const others = WARLORD_LADDER.filter(id => !WARLORDS[id].territoryId && builtWarlordIds.includes(id) &&
+    warlordEnabled({featureFlags}, id) && (career.warlords?.[id]?.defeated === true || warlordUnlockSatisfied(profile, id))).map(id => {
+    const warlord = WARLORDS[id], beaten = career.warlords?.[id]?.defeated === true;
+    let status = beaten ? `DEFEATED${warlord.reward ? ` · ${warlord.reward.toUpperCase()} EARNED` : ''}` : `${warlord.name.toUpperCase()} IS WAITING`;
+    let action = `<button type="button" data-warlord="${id}">${beaten ? 'REMATCH' : 'FIGHT'}</button>`;
+    if (!canFight) { action = ''; status += ' · FIGHT FROM THE YARD'; }
+    return `<article class="territory-card is-warlord-only"><h4>${warlord.name}</h4><p>${warlord.hideout ?? ''}</p><b>${status}</b>${action}</article>`;
+  }).join('');
   return `<section class="territory-map" aria-label="Territory map"><h3>TERRITORY MAP</h3>`+
     `<p>Win Wasteland events to build your hold. Four wins fill a territory.</p>`+
-    `<div class="territory-grid">${cards}</div></section>`;
+    `<div class="territory-grid">${cards}${others}</div></section>`;
 }

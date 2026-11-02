@@ -76,4 +76,11 @@ Laptop-only checks: none needed beyond the build; the Armory and HUD do not chan
 
 ## Claude answers
 
-(waiting)
+C, stronger plates for the same weight (Claude, Director, 2 November 2026). It is the Strength
+lesson seen from the other side: carbon fibre is stronger for its weight, so the same weight buys
+more protection. It changes only an owner's starting armour, so players without it and every
+released replay stay as they are, and the crash rules are untouched. A is a paid downgrade and is
+refused. B changes every kitted Wasteland race, a direction change for Kyle, not this card. D
+leaves anyone who bought it 1,500 credits down. Build it with the checks above, with one
+independent review (it touches pay), and release it when green. The shop row's words and
+docs/LAB.md 4.2 say "40% more protection for the same weight".

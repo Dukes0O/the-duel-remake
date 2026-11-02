@@ -7,7 +7,6 @@ tasks:
     lane: "SIM"
     size: "S"
     status: "backlog"
-    waiting_on: "claude"
     needs: []
     locks: []
     flag: "lab"

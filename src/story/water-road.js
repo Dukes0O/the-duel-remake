@@ -7,9 +7,10 @@
 // `story.water.jobs`, in the same profile change as the game's own settlement.
 import {COURSE} from '../config.js';
 import {WARLORDS, warlordUnlockSatisfied} from '../warlords.js';
+import {warlordEnabled} from '../warlords/index.js';
 import {isCourseUnlocked, COURSE_PRICES} from '../course-access.js';
 import {storyIsNewer} from './story-save.js';
-import {WATER_CHAPTERS, waterOf, waterChapter, waterChapterDone, waterChapterOpen, waterJobDone, waterNotesDue,
+import {WATER_CHAPTERS, waterOf, waterChapterDone, waterChapterOpen, waterJobDone, waterNotesDue, waterRoadWon,
   readWaterNote, markWaterJob, markWaterNotes, markWaterEnd} from './water-save.js';
 import {waterJobCaption, WATER_NOTES} from './water-lines.js';
 
@@ -34,6 +35,8 @@ const JOB_WORDS = Object.freeze({
   vultures: {task: 'Win a Mad Max Duel on Alpine Serpent. The Vultures have the water truck.', button: 'Race on Alpine Serpent', gets: 'The water truck is home.'},
   tollkeeper: {task: 'Win a Convoy Raid on the Salt Flats. The tanker holds the water.', button: 'Start the Convoy Raid', gets: 'The tanker fills the tower to the top line.'},
   blackiron: {task: 'Beat Baron Blackiron for the Cistern.', button: null, gets: 'Water runs into the camp, and Vesper joins your crew.'},
+  magnus: {task: 'Magnus the Magnet heard the water is flowing. Beat him in his scrapyard on the Salt Flats.', button: null,
+    gets: 'His card goes on the Story Wall, and the Tesla Coil is yours.'},
 });
 export const waterChapterGets = id => JOB_WORDS[id]?.gets ?? '';
 
@@ -51,13 +54,19 @@ export function waterChapterView(profile, n, {where = 'yard', jobAvailable = () 
   const base = {id, n, state: done ? 'done' : waterChapterOpen(profile, n) ? 'open' : 'locked', note: '', button: '', bar: null, action: null};
   if (n === 0) return {...base, note: done ? 'Hollis\'s note is read.' : 'Read Hollis\'s note above.'};
   const warlord = WARLORDS[chapter.warlordId], words = JOB_WORDS[id];
+  const yardOnly = action => where === 'menu' && action.type !== 'race' ? {type: 'yard', then: action} : action;
   if (done) return {...base, note: `${warlord.name} is beaten. ${words.gets}`, jobDone: true};
   if (base.state === 'locked') return {...base, note: n === 1 ? 'Read Hollis\'s note first.' : `Beat ${WARLORDS[WATER_CHAPTERS[n - 1].warlordId].name} first.`};
+  // A warlord with no territory (Magnus): no hold, the fight opens with the chapter.
+  if (!warlord.territoryId) {
+    if (!warlordUnlockSatisfied(profile, id)) return {...base, state: 'locked', note: `Beat ${WARLORDS[WATER_CHAPTERS[n - 1].warlordId].name} first.`};
+    const step = yardOnly({type: 'fight', warlordId: id});
+    return {...base, note: words.task, button: step.type === 'yard' ? 'Go to the yard' : `Fight ${warlord.name}`, action: step};
+  }
   const career = profile?.wasteland, hold = Math.max(0, Math.min(100, Number.isSafeInteger(career?.territories?.[id]?.hold) ? career.territories[id].hold : 0));
   const wins = Math.ceil((100 - hold) / 25), fightOpen = warlordUnlockSatisfied(profile, id);
   const holdBar = {value: hold, max: 100, label: fightOpen ? `${warlord.name}'s fight is open.` :
     `${wins} more ${wins === 1 ? 'win' : 'wins'} on ${holdWords(warlord)} ${wins === 1 ? 'opens' : 'open'} the fight.`};
-  const yardOnly = action => where === 'menu' && action.type !== 'race' ? {type: 'yard', then: action} : action;
   const jobDone = waterJobDone(profile, n);
   const jobFacts = chapter.job && !jobDone ? jobAvailable(chapter.job, id) : null;
   // 1. The chapter's job, while it is still to do and its game is open.
@@ -117,15 +126,21 @@ export function createWaterRoad(app) {
   const on = () => app._switches().enabled(WATER_SWITCH) === true;
   const available = () => !!app.player && on() && WATER_NEEDS.every(name => app._switches().enabled(name) === true) &&
     app.wastelandUnlocked?.() === true && !storyIsNewer(app.profile);
+  // The chapters shown: a warlord whose fight is switched off has no chapter yet (chapter 9 until Magnus is on).
+  const shown = () => WATER_CHAPTERS.filter(chapter => !chapter.warlordId ||
+    warlordEnabled({featureFlags: app._switches()}, chapter.warlordId));
   const view = (n, where) => waterChapterView(app.profile, n, {where,
     jobAvailable: job => waterJobAvailable(app, job), courseOwned: id => isCourseUnlocked(app.profile, id)});
 
   function props(where = 'menu') {
     if (!available()) return {available: false, step: null, read: false, steps: [], lead: ''};
-    const water = waterOf(app.profile), at = waterChapter(app.profile);
-    const steps = WATER_CHAPTERS.map(chapter => view(chapter.n, where));
-    return {available: true, step: at >= WATER_CHAPTERS.length ? 'done' : steps[at].id, chapter: at, read: water.read === true,
+    const water = waterOf(app.profile), chapters = shown();
+    const next = chapters.find(chapter => !waterChapterDone(app.profile, chapter.n));
+    const steps = chapters.map(chapter => view(chapter.n, where));
+    return {available: true, step: next ? next.id : 'done', chapter: next ? next.n : WATER_CHAPTERS.length, read: water.read === true,
       steps, notesShown: water.notes ?? 0, notesDue: waterNotesDue(app.profile), ended: water.end === true,
+      // Chapter 9 is shown and done: Magnus is beaten too.
+      ninth: chapters.length > 9 && waterChapterDone(app.profile, 9),
       // V.'s notes so far, under Hollis's (one after each chapter done, up to seven).
       notes: WATER_NOTES.slice(0, waterNotesDue(app.profile)).map(note => note.text),
       // A message waits while Hollis's note is unread or a note from V. has not been seen.
@@ -146,7 +161,7 @@ export function createWaterRoad(app) {
   // {setup: 'arena', mode, venueId} (the yard's Scrapdome panel, filled), {started: true} (a fight began), {yard: true}.
   function step(id, where = app.isYardHomeActive?.() ? 'yard' : 'menu') {
     if (!available()) return null;
-    const n = WATER_CHAPTERS.findIndex(chapter => chapter.id === id);
+    const n = shown().find(chapter => chapter.id === id)?.n ?? -1;
     const chapterView = n >= 0 ? view(n, where) : null;
     const action = chapterView?.state === 'open' ? chapterView.action : null;
     if (!action) return null;
@@ -212,18 +227,18 @@ export function createWaterRoad(app) {
     return out.ok && out.changed ? {profile: out.profile, mark: run.mark} : null;
   }
   // The water works' stage: warlord chapters done in order (0 to 8), or null while the story is not shown.
-  // Chapter 0 is Hollis's note, so the first warlord beaten is stage 1.
+  // Chapter 0 is Hollis's note, so the first warlord beaten is stage 1. The tower is full with the Baron (chapter 9 adds nothing).
   function stage() {
     if (!available() || storyIsNewer(app.profile)) return null;
     // Warlords beaten in ladder order, whether or not Hollis's note is read yet (a returning player's yard is not dry).
-    const at = WATER_CHAPTERS.slice(1).findIndex(chapter => !waterChapterDone(app.profile, chapter.n));
+    const at = WATER_CHAPTERS.slice(1, 9).findIndex(chapter => !waterChapterDone(app.profile, chapter.n));
     return at === -1 ? 8 : at;
   }
   // Leaving to the menu, quitting or a new player: no story job waits or runs.
   function clear() { pending = null; run = null; }
   // The yard visit after the Baron: Hollis's two end lines, once.
   function yardArrived() {
-    if (!available() || waterChapter(app.profile) !== WATER_CHAPTERS.length) return false;
+    if (!available() || !waterRoadWon(app.profile)) return false;
     const out = markWaterEnd(app.profile);
     if (!out.ok || !out.changed) return false;
     app.profile = out.profile; app._saveProfile();

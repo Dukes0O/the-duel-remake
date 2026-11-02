@@ -120,7 +120,8 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     wins: Math.min(1_000_000, bounded(previous.wins, 1_000_000) + (facts.won ? 1 : 0)),
     losses: Math.min(1_000_000, bounded(previous.losses, 1_000_000) + (facts.won ? 0 : 1))};
   let territories = career.territories, kits = career.kits;
-  if (facts.won) {
+  // A warlord with no territory claims none.
+  if (facts.won && warlord.territoryId) {
     const territory = record(territories?.[id]) ? territories[id] : {hold: 0};
     territories = {...territories, [id]: {...territory, claimed: true}};
   }
@@ -154,7 +155,8 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   let settledProfile = {...profile, wasteland}, weaponEarned = null;
   if (firstWin && warlord.rewardWeapon) {
     const unlocked = rewardArsenalWeapon(settledProfile, warlord.rewardWeapon, {warlordId: id});
-    if (unlocked.ok) { settledProfile = unlocked.profile; weaponEarned = warlord.rewardWeapon; }
+    // Named on the results only when it is new: a player may already own it.
+    if (unlocked.ok) { settledProfile = unlocked.profile; if (unlocked.changed) weaponEarned = warlord.rewardWeapon; }
   }
   return {profile: settledProfile, key, awarded: true,
     scrapEarned: scrap - oldScrap, firstWin,
@@ -163,5 +165,5 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned, titleEarned,
     crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
     gearEarned: firstWin && warlord.rewardGear ? warlord.rewardGear.id : null,
-    territoryClaimed: facts.won};
+    territoryClaimed: facts.won && !!warlord.territoryId};
 }

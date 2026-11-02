@@ -37,7 +37,7 @@ function profile() {
   const saved = createProfile();
   saved.wasteland.discoveredGate = true;
   saved.wasteland.territories.blackiron.hold = 100;
-  for (const id of WARLORD_LADDER.slice(0, -1))
+  for (const id of WARLORD_LADDER.slice(0, WARLORD_LADDER.indexOf('blackiron')))
     saved.wasteland.warlords[id] = {defeated: true, wins: 1, losses: 0};
   return saved;
 }
@@ -56,7 +56,7 @@ test('Baron unlock requires full own hold and all seven saved defeats, without w
   assert.equal(warlordUnlockSatisfied(saved, 'blackiron'), true);
   assert.match(territoryPanel(saved, {featureFlags: flags(true)}), /data-warlord="blackiron"/);
   assert.deepEqual(saved, before);
-  for (const id of WARLORD_LADDER.slice(0, -1)) {
+  for (const id of WARLORD_LADDER.slice(0, WARLORD_LADDER.indexOf('blackiron'))) {
     const missing = structuredClone(saved); missing.wasteland.warlords[id].defeated = false;
     assert.equal(warlordUnlockSatisfied(missing, 'blackiron'), false, id);
     assert.doesNotMatch(territoryPanel(missing, {featureFlags: flags(true)}), /data-warlord="blackiron"/);

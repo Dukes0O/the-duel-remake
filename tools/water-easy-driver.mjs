@@ -297,8 +297,8 @@ function holdFort(duel, child, hands, view) {
 
 // One arena game. job: {mode, venueId} or fight: {warlordId}. Returns what happened.
 export function playArena({mode = 'last-car-rolling', venueId = 'scrapdome', warlordId = null, seed = 1989,
-  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3}) {
-  const duel = new Duel({seed, featureFlags: {'hidden-road': true}});
+  car = STARTER_CAR, arsenalRank = 12, maxSec = 420, rules = {}, opponents = 3, featureFlags = {}}) {
+  const duel = new Duel({seed, featureFlags: {'hidden-road': true, ...featureFlags}});
   duel.state.wastelandGateDiscovered = true;
   const count = mode === 'ambush-alley' ? 0 : opponents;
   const field = ARENA_FIELD.filter(key => key !== car).slice(0, count).map((key, index) => ({car: key, upgradeLevel: 0,
