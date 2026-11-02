@@ -16,9 +16,15 @@ export const WAXES = Object.freeze(['hard', 'medium', 'soft']);
 // A 10 degree slope, 100 m of glide, from rest, ignoring the air (the same on every sample).
 export const GLIDE = Object.freeze({slopeDeg: 10, distanceM: 100});
 
-export function glideSeconds(friction) {
-  const slope = GLIDE.slopeDeg * Math.PI / 180, acceleration = GRAVITY * (Math.sin(slope) - friction * Math.cos(slope));
-  return Math.sqrt(2 * GLIDE.distanceM / acceleration);
+// The ski rules' friction for the right wax, no wax (plain snow) and the wrong wax.
+export const FRICTION = Object.freeze({right: SKI.wax.right, none: SKI.snowFriction, wrong: SKI.wax.wrong});
+// Down the bench's slope from rest: how fast a ski speeds up, and the seconds to glide a distance (100 m unless told).
+export function glideAcceleration(friction) {
+  const slope = GLIDE.slopeDeg * Math.PI / 180;
+  return GRAVITY * (Math.sin(slope) - friction * Math.cos(slope));
+}
+export function glideSeconds(friction, distanceM = GLIDE.distanceM) {
+  return Math.sqrt(2 * distanceM / glideAcceleration(friction));
 }
 const controls = [choice('snow', 'Snow', Object.keys(SNOWS), 'powder'), choice('wax', 'Wax', WAXES, 'hard')];
 

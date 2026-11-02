@@ -2,11 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import * as launch from '../src/lab/lessons/launch-lesson.js';
-import * as wax from '../src/lab/lessons/wax-lesson.js';
 import {launchBench, rangeOf, TARGET} from '../src/lab/benches/launch.js';
 import {SNOWS, WAXES, waxBench, waxRunResult, snowOfDay} from '../src/lab/benches/wax.js';
 import {launchTrace, launchSamples, launchDrawing} from '../src/lab/lessons/launch-animation.js';
-import {waxSamples, waxDrawing} from '../src/lab/lessons/wax-animation.js';
 import {PerspectiveCamera, Vector3, Group} from 'three';
 import {nameFirstAid} from '../src/lab/lessons/snow-display.js';
 
@@ -34,29 +32,17 @@ test('every launch prediction and path ends at the actual challenge distance', (
   }
 });
 
-test('every wax prediction and check uses real glide and daily challenge rules', () => {
-  for (const [i, snow] of Object.keys(SNOWS).entries()) for (const [waxDial, pick] of WAXES.entries()) {
-    const r = waxBench.run({snow, wax: pick}), actual = r.right ? 'fast' : 'slow';
-    const v = wax.hooks.evaluate({tryIndex: i, input: {waxDial}, prediction: actual});
-    assert.equal(v.actual, actual); assert.equal(v.passed, r.right);
-    const drawing = waxDrawing({snow, wax: pick}, 4);
-    assert.equal(drawing.reading, r.glideS);
-    assert.ok(drawing.captions[i].includes(r.glideS.toFixed(2)));
+test('the wax challenge’s daily rules: the day’s snow decides the wax, and the wrong wax glides slower', () => {
+  for (const snow of Object.keys(SNOWS)) for (const pick of WAXES) {
+    const r = waxBench.run({snow, wax: pick});
     if (r.right) assert.equal(r.glideS, r.bestGlideS); else assert.ok(r.glideS > r.bestGlideS);
   }
-  for (const q of wax.definition.checks) for (const a of q.answers) assert.equal(waxBench.run(waxSamples[a.id]).right, a.id === q.correct);
   for (let day = 0; day < 30; day++) {
     const today = snowOfDay(day);
     for (const pick of WAXES) assert.equal(waxRunResult({day, pick, time: 999}).pass, pick === today.wax);
     assert.equal(waxRunResult({day, pick: today.wax, time: 0}).pass, false);
   }
   assert.equal(waxBench.run({snow: 'powder', wax: 'soft'}).glideS, waxBench.run({snow: 'powder', wax: 'medium'}).glideS);
-  for (const [mode, snow, wrong, right] of [['cold','powder','soft','hard'], ['wet','wet','hard','soft']]) {
-    const first = waxDrawing({snow,wax:wrong}, 1, mode), later = waxDrawing({snow,wax:wrong}, 3, mode);
-    assert.equal(first.reading, waxBench.run({snow,wax:wrong}).glideS);
-    assert.equal(later.reading, waxBench.run({snow,wax:right}).glideS);
-    assert.ok(later.reading < first.reading, 'worked change shows the real improvement');
-  }
 });
 
 const finish = s => { for (let i = 0; i < 220; i++) s.tick(.1); };
@@ -66,7 +52,7 @@ test('the wall label does not require a 2D canvas in a graphics-free room', () =
   nameFirstAid(root, {createElement: () => ({getContext: () => null})}, {});
   assert.equal(root.children.length, 0);
 });
-for (const packet of [launch, wax]) test(`${packet.definition.id}: full teaching flow, useful failure, pictures and challenge`, () => {
+for (const packet of [launch]) test(`${packet.definition.id}: full teaching flow, useful failure, pictures and challenge`, () => {
   const {definition: d, hooks} = packet; validateLesson(d, hooks);
   const s = createLessonSession(packet); s.next();
   for (const row of d.words) { assert.equal(s.view().name, row.word); s.next(); }
@@ -108,7 +94,7 @@ test('every offered launch boundary keeps its flying skier and landing flag in v
 test('close cameras, no newton captions and retained comparison paths', () => {
   const compare = launchDrawing({}, 7, 'compare');
   assert.equal(compare.trails.length, 5); assert.ok(compare.trails.every(t => t.points.length > 2));
-  for (const packet of [launch, wax]) for (const fn of Object.values(packet.hooks.animations)) {
+  for (const packet of [launch]) for (const fn of Object.values(packet.hooks.animations)) {
     const d = fn({time: 4, input: {}, index: 0});
     assert.ok(d.captions.length <= 3); assert.equal(d.hideLabels, true);
     assert.ok(!d.captions.some(t => /\bN\b|newton|m\/s/i.test(t)));

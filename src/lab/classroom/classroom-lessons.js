@@ -8,10 +8,13 @@ import {lesson as projectile} from '../lessons/projectile-classroom.js';
 import * as projectileBoard from '../lessons/projectile-board.js';
 import {lesson as headings} from '../lessons/headings-classroom.js';
 import * as headingsBoard from '../lessons/headings-board.js';
+import {lesson as wax} from '../lessons/wax-classroom.js';
+import * as waxBoard from '../lessons/wax-board.js';
 
 export const CLASSROOM_LESSONS = Object.freeze({
   pendulum: Object.freeze({...pendulum, name: 'Pendulums', board: pendulumBoard}),
   lift: Object.freeze({...lift, name: 'Lift and weight', board: liftBoard}),
   projectile: Object.freeze({...projectile, name: 'Projectile motion', board: projectileBoard}),
   headings: Object.freeze({...headings, name: 'Headings and maps', board: headingsBoard}),
+  wax: Object.freeze({...wax, name: 'Ski wax', board: waxBoard}),
 });
