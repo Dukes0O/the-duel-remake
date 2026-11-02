@@ -1666,4 +1666,6 @@ and WATER-SAVE (two faults fixed). Browser: `scenario water-road` all facts pass
 fresh memory-only career. WATER-EASY: the young-driver claim of section 4 is not met by
 the live game's Easy arena play (0 to 6 in 10 for a player no better than an Easy car);
 the story adds no difficulty; EASY-YOUNG-DRIVER follows. Full tier for this release:
-FULLTIER.
+562 passed, 0 failed, 0 not run on 27fb3739, alone (2,984 s). The yard's frame timing with
+the water works (about 24,000 triangles, loaded only in the yard) is checked at the next
+nightly full check; the scene's other parts are unchanged.

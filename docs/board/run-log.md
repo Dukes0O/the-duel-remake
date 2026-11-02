@@ -1503,3 +1503,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged WATER-YARD-ART (water works by Blender recipe, three rounds, round 3 picked, 1.96 MB; round-2 sheets to Kyle; lane 48/48, build).
 - 1 Nov: merged QA-INSTRUCTOR-SHARDS (any-car instructor suite in four parallel shards in full and merge plans: 17.7 min for all four against about an hour alone; lane 530/531 then test-test-runner fixed and passed alone, build, review no findings). Janitor: lane instructor-shards and its branch removed.
 - 1 Nov: merged WATER-SCREENS (card, Story Wall chapters, bars, yard Next up, results tick, water works in the yard; test 51, water-road scenario all facts, lane 84/84, build; one review, three faults fixed and confirmed).
+- 1 Nov: full tier 562/562 on 27fb3739, alone (Water Road release).
+- 1 Nov: merged WATER-FINISH (water-road on; lane 43/43, build, water-road scenario 13/13).
