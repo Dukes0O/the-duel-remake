@@ -1654,3 +1654,16 @@ all 25 Lab suites, all 16 Lab scenarios, lane tier 41/41, build. One review, sev
 
 Rule 19: helicopter display and Lab code since the full tier 556/556 on c31e8e5a; no save shape or
 physics change, so the two lane tiers cover it. WATER-EASY (tools only) also merged since. No save change.
+
+## Release, 1 November 2026, late (Claude, Release Manager)
+
+The Water Road: STORY-MULTI, WATER-LINES, WATER-SAVE, WATER-HOOKS, WATER-YARD-ART,
+WATER-EASY (measuring tool), WATER-SCREENS and WATER-FINISH (switch `water-road` on).
+Each card: its own tests, lane tier and build; one independent review for code (four,
+three and three real faults in HOOKS, SCREENS and the yard fix, all fixed and
+confirmed); save reviews for STORY-MULTI (Kogane identical over about 18,700 cases)
+and WATER-SAVE (two faults fixed). Browser: `scenario water-road` all facts pass on a
+fresh memory-only career. WATER-EASY: the young-driver claim of section 4 is not met by
+the live game's Easy arena play (0 to 6 in 10 for a player no better than an Easy car);
+the story adds no difficulty; EASY-YOUNG-DRIVER follows. Full tier for this release:
+FULLTIER.
