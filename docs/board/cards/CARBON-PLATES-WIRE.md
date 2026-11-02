@@ -67,8 +67,9 @@ changes nothing for anyone who has not bought it, and stays inside one file's ar
 1. In the combat armour suite: with Carbon plates, the player's Raider car starts with base
    armour plus 28; without it, plus 20; the crash body weight (`_vehicleSpec` mass) is the
    same either way; an opponent's kit is never changed.
-2. In the Lab rules suite: `carbonPlates` reaches the race only when the `lab` switch is on and
-   the profile owns `carbon-plates`; with the switch off a race is exactly as today.
+2. `carbonPlatesOwned` is true only when the `lab` switch is on and the profile owns
+   `carbon-plates`; with the switch off a race is exactly as today; the Armory shows the owner's
+   real figure. (Checks 1 and 2 live in `tools/test-armor-kits.mjs`, beside the kit armour test.)
 3. Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`), replay and world
    signature guards unchanged, `npm run build`, and `combat-balance.mjs --check`.
 
@@ -84,3 +85,11 @@ refused. B changes every kitted Wasteland race, a direction change for Kyle, not
 leaves anyone who bought it 1,500 credits down. Build it with the checks above, with one
 independent review (it touches pay), and release it when green. The shop row's words and
 docs/LAB.md 4.2 say "40% more protection for the same weight".
+
+Kyle picked the same in chat ("Build C: stronger plates"). As built: owning Carbon
+plates, with the `lab` switch on, makes the player's paid kit give 40% more armour at its usual
+weight, rounded to whole points (14, 28, 42). The crash body weight, opponents' kits and the
+earned looks stay as they are. The Armory shows the owner's real figure ("+28 ARMOR") and says
+the plates are carbon, so the player can see what the purchase did. The rule for "owned" lives in
+the Lab (`carbonPlatesOwned` in `src/lab/lab-shop.js`, beside `waxKitOwned`); the 40% lives with
+the kits (`src/armor-kits.js`).

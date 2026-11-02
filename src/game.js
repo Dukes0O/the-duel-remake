@@ -25,7 +25,7 @@ import {initializeCombatArmor} from './combat-armor.js';
 import {initializeRaiders, stepRaiders} from './raiders.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
-import {validArmorKit} from './armor-kits.js';
+import {armorKitBonus, validArmorKit} from './armor-kits.js';
 import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
 import {CREW, crewMember} from './crew.js';
 import {beginQualifying, applyQualifyingGrid, finishQualifying, qualifyingLapEvent} from './qualifying.js';
@@ -196,7 +196,7 @@ export class Duel {
   _npcYield(...args) { return simRival._npcYield.apply(this, args); }
 
   // ---- lifecycle -------------------------------------------------------
-  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], deepSave = null, _hiddenRoadVisit = false, lesson = null, tune = null } = {}) {
+  startCampaign({ laps, mode = 'duel', car, difficulty, cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, startStage = 0, upgrades = {}, seed, yetiSeed, rival, opponentCount = 1, fieldSize, fieldSeed, qualifying = false, tyre, weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook', discoveredGate = false, muddyHollowHubcaps = [], deepKit = false, deepFound = [], deepSave = null, _hiddenRoadVisit = false, lesson = null, tune = null } = {}) {
     const resolvedStage=Number.isFinite(startStage)?clamp(Math.floor(startStage),0,COURSE.length-1):0;
     // A lesson is a private Time Trial with the actual instructor plan. Its
     // state is outside the ordinary race snapshot: flag-off hashes stay exact.
@@ -270,6 +270,8 @@ export class Duel {
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ? validArmorKit(combatArmorKit) : null;
+    if (armorKitBonus(this.state.combatArmorKit) > 0 && combatCarbonPlates === true) this.state.combatCarbonPlates = true;
+    else delete this.state.combatCarbonPlates;
     if (this.state.mode === 'wasteland' && wastelandRulesActive(this.state) && combatRoofLook === 'chrome-crown')
       this.state.combatRoofLook = combatRoofLook;
     else delete this.state.combatRoofLook;
@@ -519,7 +521,7 @@ export class Duel {
   // to a player who has found the gate.
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
-    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatRoofLook = null, crewId = 'rook',
+    seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook',
     warlordId = null } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const ambush = mode === 'ambush-alley';
@@ -569,6 +571,8 @@ export class Duel {
       arsenalEnabled(this) ? [...WEAPON_IDS,
         ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
+    if (armorKitBonus(s.combatArmorKit) > 0 && combatCarbonPlates === true) s.combatCarbonPlates = true;
+    else delete s.combatCarbonPlates;
     if (combatRoofLook === 'chrome-crown') s.combatRoofLook = combatRoofLook;
     else delete s.combatRoofLook;
     s.crewId = Object.hasOwn(CREW, crewId) || crewId === 'vesper' && crewMember(crewId) &&

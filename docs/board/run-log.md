@@ -1516,3 +1516,5 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2 Nov: released LAB-CLASSROOM-FUEL (build 26.11.02 17:41 UTC, master 9341c304; rule 19 on the full tier 562/562 of 27fb3739 with the lane tier; staged build checked on 5188; live server off, dist checked on disk).
 - 2 Nov: merged LAB-CLASSROOM-STRENGTH (Strength against weight classroom; old Strength lesson gone; suite 13/13, 28 Lab suites, 19 Lab scenarios, lane tier 43/43, build; one review, nothing serious, four minor fixes; lane tier caught a direct helicopter import, fixed).
 - 2 Nov: released LAB-CLASSROOM-STRENGTH (build 26.11.02 20:35 UTC, master f437620f; rule 19 on the full tier 562/562 of 27fb3739 with the lane tier; staged build checked on 5188; live server off, dist checked on disk).
+- 2 Nov: full tier 567/567 on b8fc1870, alone (Magnus release).
+- 2 Nov: released WARLORD-NINE (Magnus the Magnet), master fcc43f3c, build 26.11.02 22:28 UTC.

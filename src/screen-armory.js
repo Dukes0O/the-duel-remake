@@ -2,7 +2,8 @@ import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offere
 import {shownCars, wonCars} from './earned-cars-ui.js';
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
-import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitDetails, ownsArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
+import {ARMOR_KITS, EARNED_ARMOR_KITS, armorKitBonus, armorKitDetails, ownsArmorKit, getEquippedArmorKit, getEquippedRoofLook} from './armor-kits.js';
+import {carbonPlatesOwned} from './lab/lab-shop.js';
 import {hasDefeatedWarlord} from './wasteland-progress.js';
 import {isCarUnlocked} from './progression.js';
 import {availableCarWeapons,getCarLoadout,CAR_SLOT_DIRECTIONS,
@@ -56,9 +57,12 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const balance = scrapCareer ? saved.wasteland.scrap : saved.credits;
     const earned = Object.entries(EARNED_ARMOR_KITS)
       .filter(([id]) => ownsArmorKit(saved, car, id));
+    // The Lab's Carbon plates: the same plating gives more armor, so show the owner's real figure.
+    const carbonPlates = carbonPlatesOwned(saved, featureFlags);
+    const armorText = id => `+${armorKitBonus(id, {carbonPlates})} ARMOR${carbonPlates ? ' · CARBON' : ''}`;
     const kitText = !equippedDetails ? 'STOCK ARMOR' :
       `${equippedDetails.name.toUpperCase()} EQUIPPED (${equipped === 'side-saws'
-        ? '1.6× SIDE DAMAGE' : equipped === 'turret-look' ? 'LOOK ONLY' : `+${equippedDetails.armor} ARMOR`})`;
+        ? '1.6× SIDE DAMAGE' : equipped === 'turret-look' ? 'LOOK ONLY' : armorText(equipped)})`;
     const equippedText = kitText + (roofLook ? ' / CHROME CROWN' : '');
     const cars = [...shownCars(featureFlags?.enabled?.('earned-cars') === true), ...wonCars(saved)].map(([id, item]) =>
       `<option value="${id}" ${id === car ? 'selected' : ''}>${escapeHTML(item.name)}${isCarUnlocked(saved, id) ? '' : ' · LOCKED'}</option>`).join('');
@@ -77,7 +81,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
         reward ? 'Your side contacts deal 1.6 times ram damage. No added armor or mass.' :
         id === 'scrapper' ? 'Scrap plates and bull bar' :
           id === 'raider' ? 'Roof cage and saw housings' : 'Full plating and spike crown';
-      return `<article class="kit-card"><h3>${kit.name}</h3><b>${cosmetic ? 'LOOK ONLY' : reward ? '1.6× SIDE DAMAGE' : `+${kit.armor} ARMOR`}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
+      return `<article class="kit-card"><h3>${kit.name}</h3><b>${cosmetic ? 'LOOK ONLY' : reward ? '1.6× SIDE DAMAGE' : armorText(id)}</b><p>${detail}</p><button data-kit-action="${owned ? 'equip' : 'buy'}" data-kit-tier="${id}" ${selected || disabled ? 'disabled' : ''}>${label}</button></article>`;
     }).join('');
     return `<details class="weapon-shop kit-shop" open><summary>ARMOR KITS · PER CAR</summary><p>Choose a car. Equip an owned kit or buy plating. One kit is equipped at a time.</p><label class="kit-car-label" for="kit-car">CAR</label><select id="kit-car" data-kit-car>${cars}</select><p class="kit-equipped">${escapeHTML(CARS[car].name)} · ${equippedText}</p><div class="kit-grid">${choices}</div>${equipped || roofLook ? '<button class="kit-remove" data-kit-action="unequip">REMOVE KIT · RETURN TO STOCK</button>' : ''}</details>`;
   }
