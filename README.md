@@ -6,6 +6,12 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Strength against weight is a classroom now.** Hang weights on a
+  steel bar until it bends for good, watch carbon fibre spring back right up
+  to the moment it snaps, and see three 1 kg bars give way at 14 kg, 128 kg
+  and 1,991 kg. Two gauges show how much of its strength a load uses and how
+  far it dips. Brian's job: build the lightest hook arm that holds a 2,000 kg
+  car. Passing opens the Heavy hook in the Lab shop.
 - **The Lab: Fuel and weight is a classroom now.** Pour petrol into the car's
   tank on a scale, 5 litres a press, and watch the litres and kilograms change
   together; two of the same car race to 60 mph at real speed with a photo
