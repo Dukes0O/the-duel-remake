@@ -1,6 +1,6 @@
 // Real UI, loaded models, isolated memory-only careers via browser-harness.
 // Fuel is a classroom lesson now: lab-classroom-fuel plays it.
-const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,downforce,braking,suspension').split(',');
+const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,downforce,suspension').split(',');
 // The lesson driver is shared: LAB-TUNE-VIEW takes the Downforce lesson through it to open the wing on the Tune page.
 export function tunnelDriver(c) {
   const canvas = `document.querySelector('.lab-canvas')`, panel = `document.querySelector('.lab-teaching')`;

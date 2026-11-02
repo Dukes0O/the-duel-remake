@@ -17,7 +17,8 @@ const HELP_RUNGS = 3;
 export function createClassroomSession(lesson) {
   const model = lesson.createModel();
   let index = 0, furthest = 0, help = 0, idle = 0, offered = false, slow = false, time = 0;
-  let bubble = null, celebrate = null, pointer = null;
+  // nudge: Brian's offer of help when the player seems stuck, shown under his words so it never replaces them.
+  let bubble = null, celebrate = null, pointer = null, nudge = null;
   const done = new Set(), events = [];
   model.enter(0);
 
@@ -29,11 +30,13 @@ export function createClassroomSession(lesson) {
     if (event.kind === 'right' || event.kind === 'pass' || event.kind === 'progress') { help = 0; pointer = null; }
     // A failed try climbs one rung, but Brian never takes over by himself: Show me waits for the player.
     if (event.kind === 'fail') help = Math.min(HELP_RUNGS - 1, help + 1);
-    if (event.kind !== 'sound') { idle = 0; offered = false; bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null; }
+    // Anything the player does, a click of the dial included, means they are not stuck.
+    idle = 0; offered = false; nudge = null;
+    if (event.kind !== 'sound') bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null;
   }
   const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
   function enter(i) {
-    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null;
+    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null; nudge = null;
     model.enter(i);
   }
   const current = () => model.view({help, assist: help >= HELP_RUNGS});
@@ -43,6 +46,8 @@ export function createClassroomSession(lesson) {
     act(action) {
       if (action === 'next') { const v = current(); if (!v.ready || index + 1 >= lesson.steps.length) return false; done.add(index); enter(index + 1); return true; }
       if (action === 'help') return this.help();
+      // Back: the step before this one, to read or do it again.
+      if (action === 'back') { if (index === 0) return false; enter(index - 1); return true; }
       if (action === 'slow') { slow = !slow; return true; }
       if (action.startsWith('go:')) {
         const to = Number(action.slice(3));
@@ -53,7 +58,7 @@ export function createClassroomSession(lesson) {
       return true;
     },
     help() {
-      help = Math.min(HELP_RUNGS, help + 1); idle = 0; offered = true;
+      help = Math.min(HELP_RUNGS, help + 1); idle = 0; offered = true; nudge = null;
       const v = current();
       if (help === HELP_RUNGS && v.target) pointer = {action: v.target, at: time};
       bubble = {text: v.hints[help - 1], mood: 'hint'};
@@ -74,8 +79,8 @@ export function createClassroomSession(lesson) {
       }
       if (!v.waiting) { idle = 0; return; }
       idle += step;
-      if (idle >= STUCK_OFFER_S && !offered) { offered = true; bubble = {text: 'Stuck? Press H and I will help.', mood: 'hint'}; }
-      if (idle >= STUCK_HINT_S && help === 0) { help = 1; bubble = {text: v.hints[0], mood: 'hint'}; }
+      if (idle >= STUCK_OFFER_S && !offered) { offered = true; nudge = {text: 'Stuck? Press H and I will help.'}; }
+      if (idle >= STUCK_HINT_S && help === 0) { help = 1; nudge = {text: v.hints[0]}; }
     },
     takeEvents() { return events.splice(0); },
     view() {
@@ -86,7 +91,7 @@ export function createClassroomSession(lesson) {
           const steps = lesson.steps.map((s, i) => ({...s, i})).filter(s => s.part === part);
           return {name, first: steps[0]?.i ?? null, current: step.part === part, done: steps.length > 0 && steps.every(s => done.has(s.i)), reached: steps.some(s => s.i <= furthest)};
         }),
-        brian: bubble ?? {text: v.say, mood: v.mood ?? 'talk'},
+        brian: bubble ?? {text: v.say, mood: v.mood ?? 'talk'}, nudge,
         pointer: pointer && v.target === pointer.action ? {...pointer, age: time - pointer.at} : null,
         celebrate: celebrate && time - celebrate.at < 1.6 ? {...celebrate, age: time - celebrate.at} : null,
         last: index === lesson.steps.length - 1,

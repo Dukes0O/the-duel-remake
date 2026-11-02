@@ -20,7 +20,8 @@
 .lc-progress .current button { border-color: #edc557; background: #3a3420; color: #fff6d8; }
 .lc-progress .current span { background: #edc557; color: #1d2224; }
 .lc-progress button:disabled:not(.current button) { opacity: .65; }
-.lc-leave { padding: 7px 12px; border: 2px solid #8f9791; border-radius: 6px; background: #252c29; font-size: 15px; }
+.lc-leave, .lc-back { padding: 7px 12px; border: 2px solid #8f9791; border-radius: 6px; background: #252c29; font-size: 15px; }
+.lc-back[hidden] { display: none; }
 
 .lc-main { display: flex; flex: 1; min-height: 0; gap: 14px; }
 .lc-board { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; border: 2px solid #4a524e; border-radius: 8px; background: #121718; overflow: hidden; }
@@ -42,6 +43,7 @@
 .lc-bubble { position: relative; flex: 0 0 auto; width: 100%; min-height: 110px; max-height: 260px; margin: 6px 0 0; padding: 14px 16px; border-radius: 10px; background: #f5f0dc; color: #1d2224;
   font-size: 20px; line-height: 1.4; font-weight: 600; overflow: auto; }
 .lc-bubble::before { content: ''; position: absolute; top: -12px; left: 50%; margin-left: -12px; border: 12px solid transparent; border-top: 0; border-bottom-color: #f5f0dc; }
+.lc-nudge { flex: 0 0 auto; width: 100%; margin: 8px 0 0; padding: 8px 12px; border-left: 4px solid #edc557; border-radius: 6px; background: rgba(237,197,87,.14); color: #f5f0dc; font-weight: 600; }
 .lc-help { margin-top: auto; width: 100%; padding: 10px; border: 2px solid #edc557; border-radius: 8px; background: #3a3420; font-weight: 700; }
 .lc-rungs { display: flex; gap: 8px; }
 .lc-rungs i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #edc557; }
