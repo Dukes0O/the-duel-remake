@@ -1,7 +1,7 @@
 // Ski wax as a classroom lesson (docs/board/cards/LAB-CLASSROOM-WAX.md, "Claude's script").
 // Teaching state only, no DOM and no saves. Every glide uses the ski rules' own friction on the bench's slope, and
 // the snows, their temperature bands and the right wax for each are the ones the game's day draws (snowOfDay).
-import {SNOWS, SNOW_DAYS, WAXES, FRICTION, glideAcceleration, glideSeconds} from '../benches/wax.js';
+import {SNOWS, SNOW_DAYS, WAXES, FRICTION, glideAcceleration, glideSeconds, waxRunFacts} from '../benches/wax.js';
 
 // The test strip, in metres; how long after both skis finish a run counts as over.
 export const STRIP_M = 50;
@@ -70,6 +70,7 @@ const CHECKS = {
     correct: 0, snow: 'powder',
     right: () => 'Yes. Very cold snow has hard, sharp crystals: hard wax.',
     wrong: picked => `${WAX_NAMES[WAXES[picked]]} wax is for ${picked === 1 ? 'cool snow' : 'wet snow near 0 °C'}. Very cold snow has hard, sharp crystals: hard wax. Watch them race.`,
+    race: picked => picked === 0 ? 'soft' : WAXES[picked],
     hints: ['Think of the sharp, cold crystals in the magnifier.', 'The colder the snow, the harder the wax.', 'Pick hard wax.'],
   },
   'check-rule': {
@@ -86,7 +87,8 @@ const CHECKS = {
     answers: [{label: 'Today’s snow on the ski menu', picture: {kind: 'game', what: 'menu'}}, {label: 'The colour of the skis', picture: {kind: 'game', what: 'skis'}}, {label: 'The shop', picture: {kind: 'game', what: 'shop'}}],
     correct: 0, snow: null,
     right: () => 'Yes. The ski menu says today’s snow and its temperature: pick the wax that suits it.',
-    wrong: () => 'The ski menu says today’s snow and its temperature, like “Cool snow, -5 °C”: pick the wax that suits it.',
+    wrong: picked => picked === 1 ? 'The colour of the skis is only paint: it does not tell you the snow. The ski menu says today’s snow and its temperature, like “Cool snow, -5 °C”.'
+      : 'The shop sells the Wax kit, but it does not tell you today’s snow. The ski menu does, like “Cool snow, -5 °C”.',
     hints: ['Before the slalom, the ski menu tells you something about the snow.', 'It says “Today’s snow” and the temperature.', 'Pick “Today’s snow on the ski menu”.'],
   },
 };
@@ -114,11 +116,12 @@ export function createModel() {
       m.phase = m.result ? 'result' : 'pick';
       m.strips = [{snow, lanes: [lane(m.pick, snow, 'Your ski'), lane(null, snow, 'No wax')]}];
     }
-    if (id === 'alone') { const day = DAYS[Math.min(m.day, DAYS.length - 1)]; m.phase = m.day >= DAYS.length ? 'done' : 'pick'; m.strips = [{snow: day.snow, celsius: day.celsius, lanes: [lane(m.pick, day.snow, 'Your ski')]}]; }
+    if (id === 'alone') m.phase = m.day >= DAYS.length ? 'done' : 'pick';
     if (CHECKS[id]) {
       m.phase = m.answered === null ? 'ask' : 'answered';
       const snow = CHECKS[id].snow;
-      m.strips = snow ? [{snow, lanes: [lane('hard', snow, 'Hard wax'), lane('soft', snow, 'Soft wax')]}] : [];
+      const other = CHECKS[id].race && m.answered !== null ? CHECKS[id].race(m.answered) : 'soft';
+      m.strips = snow ? [{snow, lanes: [lane('hard', snow, 'Hard wax'), lane(other, snow, `${WAX_NAMES[other]} wax`)]}] : [];
     }
   }
   const lanes = () => m.strips.flatMap(s => s.lanes);
@@ -132,7 +135,8 @@ export function createModel() {
       if (kind !== 'answer' || m.phase !== 'ask') return null;
       const check = CHECKS[id], picked = Number(value);
       if (!check.answers[picked]) return null;
-      m.answered = picked; m.phase = 'answered'; seen.add(id);
+      m.answered = picked; seen.add(id);
+      enter(m.index, {answered: picked});
       letGo();
       return picked === check.correct ? {kind: 'right', say: check.right()} : {kind: 'wrong', say: check.wrong(picked)};
     }
@@ -179,7 +183,7 @@ export function createModel() {
       return null;
     }
     if (kind === 'go') {
-      if (!m.pick) return {kind: 'progress', say: 'Pick a tin first: press 1, 2 or 3.'};
+      if (!m.pick) return {kind: 'note', say: 'Pick a tin first: press 1, 2 or 3.'};
       if (m.phase === 'result') m.strips = [{snow, lanes: [lane(m.pick, snow, 'Your ski'), lane(null, snow, 'No wax')]}];
       return race();
     }
@@ -191,7 +195,7 @@ export function createModel() {
     const snow = snowNow(), right = SNOWS[snow].wax === m.pick, mine = runSeconds(m.pick, snow), plain = runSeconds(null, snow);
     m.phase = 'result'; seen.add(id); m.result = {right};
     if (right) m.say = `Right! ${WAX_NAMES[m.pick]} wax suits ${SNOWS[snow].name.toLowerCase()} at ${tidy(SNOWS[snow].celsius)}: ${s1(mine)}, faster than no wax, ${s1(plain)}.`;
-    else m.say = `${WAX_NAMES[m.pick]} wax is for ${m.pick === 'hard' ? 'snow at -10 °C and colder' : m.pick === 'medium' ? 'cool snow, -9 °C to -2 °C' : 'wet snow, -1 °C or 0 °C'}. At ${tidy(SNOWS[snow].celsius)} it lost to no wax: ${s1(mine)} against ${s1(plain)}. ${why(snow)} Press ${1 + WAXES.indexOf(SNOWS[snow].wax)} and Space to race again.`;
+    else m.say = `${WAX_NAMES[m.pick]} wax is for ${m.pick === 'hard' ? 'snow at -10 °C and colder' : m.pick === 'medium' ? 'cool snow, -9 °C to -2 °C' : 'wet snow, -1 °C or 0 °C'}: at ${tidy(SNOWS[snow].celsius)} it lost to no wax, ${s1(mine)} against ${s1(plain)}. ${SNOWS[snow].name} wants ${SNOWS[snow].wax} wax: press ${1 + WAXES.indexOf(SNOWS[snow].wax)}, then Space.`;
     return {kind: right ? 'right' : 'wrong', say: m.say};
   }
 
@@ -201,10 +205,10 @@ export function createModel() {
     const day = DAYS[m.day], wax = kind === 'pick' && value === 'best' ? SNOWS[day.snow].wax : kind === 'pick' ? value : null;
     if (kind === 'pick') {
       if (!WAXES.includes(wax)) return null;
-      m.pick = wax; lanes()[0].wax = wax;
+      m.pick = wax;
       if (value !== 'best') return null;
     } else if (kind !== 'go') return null;
-    if (!m.pick) return {kind: 'progress', say: 'Pick a tin first: press 1, 2 or 3.'};
+    if (!m.pick) return {kind: 'note', say: 'Pick a tin first: press 1, 2 or 3.'};
     if (SNOWS[day.snow].wax !== m.pick) {
       m.say = `${todayLine(day)}. ${SNOWS[day.snow].name} is ${band(day.snow)}, so it wants ${SNOWS[day.snow].wax} wax, not ${m.pick}. Pick again and press Space.`;
       return {kind: 'fail', say: m.say};
@@ -212,11 +216,11 @@ export function createModel() {
     m.day += 1; m.pick = null;
     if (m.day >= DAYS.length) {
       m.phase = 'done'; seen.add('alone');
-      m.say = `Three days, three right waxes. On the slalom the right wax is about half a second faster than the wrong one. Job done.`;
+      const slalom = waxRunFacts().seconds;
+      m.say = `Three days, three right waxes. On the slalom the right wax is about ${s1(slalom.wrong - slalom.right)} faster than the wrong one. Job done.`;
       return {kind: 'pass', say: m.say};
     }
     const next = DAYS[m.day];
-    m.strips = [{snow: next.snow, celsius: next.celsius, lanes: [lane(null, next.snow, 'Your ski')]}];
     m.say = `Right: ${SNOWS[day.snow].wax} wax. Next day. ${todayLine(next)}.`;
     return {kind: 'right', say: m.say};
   }
@@ -281,7 +285,7 @@ export function createModel() {
       const ready = m.phase === 'ready';
       return {...base, tins: false, ...(ready ? {keys: {Space: 'go'}, buttons: [{action: 'go', label: 'Let go', key: 'Space'}], waiting: true, target: 'go', glow: 'ski'} : {}),
         actions: m.phase === 'done' ? ['replay'] : [],
-        say: m.phase === 'done' ? m.say : `Glide is how smoothly a ski slides. The test strip is ${STRIP_M} m long, and the stopwatch times the ski down it.`,
+        say: m.phase === 'done' ? m.say : m.phase === 'running' ? 'Watch the ski and the stopwatch: real seconds.' : `Glide is how smoothly a ski slides. The test strip is ${STRIP_M} m long, and the stopwatch times the ski down it.`,
         prompt: ready ? 'Press Space to let the ski go.' : m.phase === 'running' ? 'Watch the stopwatch.' : 'Press Enter to go on, or R to watch again.',
         hints: ready ? ['The ski waits at the top of the strip.', 'Press Space, or click the ski.', 'Watch my pointer: I let it go.'] : m.phase === 'running' ? ['Watch the ski.', 'Watch the stopwatch.', 'Wait a moment.'] : DONE_HINTS};
     }
@@ -289,8 +293,8 @@ export function createModel() {
       const done = m.phase === 'result';
       return {...base, tins: false, magnifier: true, ...(done ? {} : {keys: {'→': 'warm', '←': 'cool'}, repeat: ['→', '←'], waiting: !m.auto, target: m.auto ? null : 'warm:best', glow: 'thermometer',
         buttons: m.auto ? [] : [{action: 'cool', label: 'Colder', key: '←'}, {action: 'warm', label: 'Warmer', key: '→'}]}),
-        say: done ? m.say : 'Snow crystals are tiny bits of ice. Look through the magnifier, then warm the tray up to 0 °C.',
-        prompt: done ? 'Press Enter to go on.' : 'Press → to warm the tray, until the thermometer reads 0 °C.',
+        say: done ? m.say : m.auto ? 'Watch: I warm the tray to 0 °C.' : 'Snow crystals are tiny bits of ice. Look through the magnifier, then warm the tray up to 0 °C.',
+        prompt: done ? 'Press Enter to go on.' : m.auto ? 'Watch the thermometer.' : 'Press → to warm the tray (or click the thermometer), until it reads 0 °C.',
         hints: done ? ['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.'] : ['Watch the crystals in the magnifier.', 'Press → a few times, up to 0 °C.', 'Watch my pointer: I warm it.']};
     }
     if (id === 'watch') {
@@ -321,15 +325,15 @@ export function createModel() {
     }
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
-      return {...base, tins: id === 'check-cold', rule: id === 'check-rule', menu: id === 'check-game' ? {line: todayLine({snow: 'cold', celsius: -5}), example: true} : null,
+      return {...base, tins: id === 'check-cold', rule: id === 'check-rule', ruleTins: answered, asking: !answered, menu: id === 'check-game' ? {line: todayLine({snow: 'cold', celsius: -5}), example: true} : null,
         keys: answered ? {} : ANSWER_KEYS, actions: answered && check.snow ? ['replay'] : [], waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
         say: check.question, prompt: answered ? 'Press Enter to go on.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? ['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.'] : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS,
-      say: 'Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Medium snow wants a medium wax. Warm, wet snow needs a soft wax.',
-      prompt: 'Try it for real on the slalom, or go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
+      say: 'Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Cool snow wants a medium wax. Warm, wet snow needs a soft wax.',
+      prompt: 'Enter takes you to the helicopter: take a ski drop, choose the slalom, and the wax for today’s snow.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
   return {enter, act, tick, view, state: () => m};

@@ -90,13 +90,13 @@ test('the tries: a wrong tin says why with the real times and the snow’s band,
   session.act('go');
   assert.match(session.view().brian.text, /Pick a tin first/);
   session.act('pick:hard'); session.act('go'); until(session, v => v.ready);
-  assert.match(session.view().brian.text, /^Hard wax is for snow at -10 °C and colder\. At -5 °C it lost to no wax: 9\.4 s against 9\.1 s\. Cool snow wants a medium wax\. Press 2/);
+  assert.match(session.view().brian.text, /^Hard wax is for snow at -10 °C and colder: at -5 °C it lost to no wax, 9\.4 s against 9\.1 s\. Cool snow wants medium wax: press 2, then Space\.$/);
   const v = session.view(), [mine, plain] = v.strips[0].lanes;
   assert.ok(mine.seconds > plain.seconds, 'the wrong wax really lost');
   session.act('pick:medium'); session.act('go'); until(session, x => /^Right! Medium wax suits cool snow at -5 °C: 8\.9 s, faster than no wax, 9\.1 s\./.test(x.brian.text));
   session.act('next');
   session.act('pick:medium'); session.act('go'); until(session, v => v.ready);
-  assert.match(session.view().brian.text, /^Medium wax is for cool snow, -9 °C to -2 °C\. At 0 °C it lost to no wax/);
+  assert.match(session.view().brian.text, /^Medium wax is for cool snow, -9 °C to -2 °C: at 0 °C it lost to no wax/);
 });
 
 test('Brian’s job: three days on the ski menu; a wrong pick names the band and tries that day again', () => {
@@ -132,7 +132,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 });
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
-  const answers = {'check-cold': [2, /^Soft wax is for wet snow near 0 °C\. Very cold snow has hard, sharp crystals: hard wax/], 'check-rule': [1, /^The other way round/], 'check-game': [2, /^The ski menu says today’s snow and its temperature/]};
+  const answers = {'check-cold': [2, /^Soft wax is for wet snow near 0 °C\. Very cold snow has hard, sharp crystals: hard wax/], 'check-rule': [1, /^The other way round/], 'check-game': [2, /^The shop sells the Wax kit, but it does not tell you today’s snow/]};
   for (const [id, [pick, why]] of Object.entries(answers)) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
@@ -197,4 +197,43 @@ test('replays: the wonder and the watch start again', () => {
   assert.ok(session.view().strips.every(s => s.lanes[0].seconds < s.lanes[1].seconds), 'on every tray the wax that suits it wins');
   session.act('replay');
   assert.ok(session.view().strips.every(s => s.lanes.every(l => l.seconds == null)));
+});
+
+test('review fixes: the thermometer is a control, Show me says what Brian does, and Space with no tin keeps the help', () => {
+  const warm = createClassroomSession(lesson);
+  playThroughTo(warm, 'word-crystals');
+  let v = warm.view();
+  assert.equal(hitTest(v, ...targetPoint(v, 'warm:best'))?.action, 'warm', 'a click where Brian points warms the tray');
+  warm.act(hitTest(v, ...targetPoint(v, 'warm:best')).action);
+  assert.equal(warm.view().celsius, -10);
+  for (let i = 0; i < 3; i++) warm.act('help');
+  run(warm, SHOW_ME_S + .2);
+  assert.match(warm.view().brian.text, /^Like that\. Watch: I warm the tray to 0 °C\./);
+  assert.equal(warm.view().prompt, 'Watch the thermometer.');
+  until(warm, x => x.ready, 5);
+  // Space with no tin says so and keeps Brian's help where it was.
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  for (let i = 0; i < 2; i++) job.act('help');
+  job.act('go');
+  assert.match(job.view().brian.text, /^Pick a tin first/);
+  assert.equal(job.view().help, 2, 'the help stays');
+  assert.equal(job.view().strips.length, 0, 'the job is the ski menu and the tins, with no tray where nothing moves');
+});
+
+test('review fixes: Question 1 races the wax the child picked, Question 2 hides the tins until answered, and each Question 3 pick has its reason', () => {
+  const q1 = createClassroomSession(lesson);
+  playThroughTo(q1, 'check-cold');
+  assert.equal(hoverInfo(q1.view(), ...targetPoint({...q1.view(), best: 'hard'}, 'pick:best')), 'Hard wax.', 'no answer in the hover while asking');
+  q1.act('answer:1');
+  until(q1, v => v.strips[0].lanes.every(l => l.done), 15);
+  assert.deepEqual(q1.view().strips[0].lanes.map(l => l.wax), ['hard', 'medium']);
+  const q2 = createClassroomSession(lesson);
+  playThroughTo(q2, 'check-rule');
+  assert.equal(q2.view().ruleTins, false);
+  q2.act('answer:0');
+  assert.equal(q2.view().ruleTins, true);
+  const reasons = new Set();
+  for (const pick of [1, 2]) { const q3 = createClassroomSession(lesson); playThroughTo(q3, 'check-game'); q3.act(`answer:${pick}`); reasons.add(q3.view().brian.text); }
+  assert.equal(reasons.size, 2);
 });

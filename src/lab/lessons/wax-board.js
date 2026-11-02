@@ -27,11 +27,12 @@ export function hitTest(view, x, y) {
   if (view.scene !== 'trays') return null;
   if (view.tins && view.keys['1']) for (const t of TINS) if (Math.abs(x - t.x) < 60 && Math.abs(y - t.y) < 50) return {action: view.keys[String(1 + WAXES.indexOf(t.wax))]};
   if (view.keys.Space && view.strips.length) { const [sx, sy] = skiAt(view, 0, 0); if (Math.abs(x - sx) < 50 && Math.abs(y - sy) < 30) return {action: view.keys.Space}; }
+  if (view.magnifier && view.keys['→'] && x > 90 && x < 160 && y > 140 && y < 560) return {action: y < 400 ? view.keys['→'] : view.keys['←']};
   return null;
 }
 export function hoverInfo(view, x, y) {
   if (view.scene !== 'trays') return null;
-  if (view.tins) for (const t of TINS) if (Math.abs(x - t.x) < 60 && Math.abs(y - t.y) < 50) return `${WAX_NAMES[t.wax]} wax${t.wax === 'hard' ? ': for very cold snow' : t.wax === 'soft' ? ': for wet snow near 0 °C' : ': for cool snow'}.`;
+  if (view.tins) for (const t of TINS) if (Math.abs(x - t.x) < 60 && Math.abs(y - t.y) < 50) return view.asking ? `${WAX_NAMES[t.wax]} wax.` : `${WAX_NAMES[t.wax]} wax${t.wax === 'hard' ? ': for very cold snow' : t.wax === 'soft' ? ': for wet snow near 0 °C' : ': for cool snow'}.`;
   if (view.magnifier && Math.hypot(x - 640, y - 330) < 150) return 'Snow crystals through the magnifier.';
   if (view.magnifier && x > 80 && x < 170 && y > 150 && y < 540) return `The thermometer: ${Math.round(view.celsius)} °C.`;
   for (const [i, s] of view.strips.entries()) {
@@ -68,8 +69,8 @@ function strip(ctx, view, i) {
   for (const [m, label] of [[0, 'start'], [STRIP_M, `${STRIP_M} m`]]) {
     const [x, y] = surface(g, 0, 30 * g.scale + along(g, m));
     ctx.strokeStyle = m ? theme.accent : 'rgba(245,240,220,.6)'; ctx.lineWidth = 2; ctx.setLineDash(m ? [] : [5, 4]);
-    ctx.beginPath(); ctx.moveTo(x, y - 26); ctx.lineTo(x, y + (n - 1) * g.lane + 22); ctx.stroke(); ctx.setLineDash([]);
-    text(ctx, label, x, y - 36, {size: 13 * g.scale + 2, colour: m ? theme.accent : theme.faint});
+    ctx.beginPath(); ctx.moveTo(x, y - 42 * g.scale); ctx.lineTo(x, y + (n - 1) * g.lane + 22); ctx.stroke(); ctx.setLineDash([]);
+    text(ctx, label, x, y - 52 * g.scale, {size: 13 * g.scale + 2, colour: m ? theme.accent : theme.faint});
   }
   // The snow: its name and temperature, with a small thermometer.
   const [lx, ly] = surface(g, 0, 0);
@@ -157,18 +158,18 @@ function menu(ctx, m) {
   text(ctx, m.line, x + 18, y + 50, {size: 21, align: 'left', colour: theme.text});
   if (!m.example) text(ctx, 'Hard wax · Medium wax · Soft wax', x + 18, y + 78, {size: 14, align: 'left', colour: theme.faint});
 }
-function ruleScene(ctx) {
-  // Three snows, cold to warm, each over the wax that suits it.
+function ruleScene(ctx, tins) {
+  // Three snows, cold to warm; once answered, each over the wax that suits it.
   [['powder', 'hard'], ['cold', 'medium'], ['wet', 'soft']].forEach(([snow, wax], i) => {
     const x = 260 + i * 240;
     thermometer(ctx, x - 60, 150, 220, SNOWS[snow].celsius, true);
     text(ctx, `${SNOWS[snow].name}`, x + 20, 420, {size: 18});
-    tin(ctx, x + 20, 500, wax, false, null, false, 0);
+    if (tins) tin(ctx, x + 20, 500, wax, false, null, false, 0);
   });
 }
 function drawTrays(ctx, view) {
   background(ctx);
-  if (view.rule) ruleScene(ctx);
+  if (view.rule) ruleScene(ctx, view.ruleTins);
   if (view.magnifier) {
     thermometer(ctx, 125, 160, 340, view.celsius, true);
     text(ctx, `${Math.round(view.celsius)} °C`, 125, 560, {size: 28, colour: theme.accent});
@@ -186,7 +187,7 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
-    if (idea.id === 'rule') ['hard', 'medium', 'soft'].forEach((wax, k) => { thermometer(ctx, x + 50 + k * 90, 120, 150, [-15, -5, 0][k], false); tin(ctx, x + 60 + k * 90, 360, wax, false, null, false, 0); });
+    if (idea.id === 'rule') ['hard', 'medium', 'soft'].forEach((wax, k) => { thermometer(ctx, x + 50 + k * 90, 120, 150, [-15, -5, 0][k], false); ctx.save(); ctx.translate(x + 60 + k * 90, 360); ctx.scale(.78, .78); tin(ctx, 0, 0, wax, false, null, false, 0); ctx.restore(); });
     if (idea.id === 'glide') [['Right wax', '#9ff0b4', 1], ['No wax', theme.text, .82], ['Wrong wax', theme.bad, .62]].forEach(([label, colour, k], r) => {
       ctx.fillStyle = colour; ctx.fillRect(x + 30, 160 + r * 80, (w - 60) * k, 16); text(ctx, label, x + 30, 150 + r * 80, {size: 15, align: 'left', colour});
     });

@@ -58,13 +58,13 @@ for (const packet of [launch]) test(`${packet.definition.id}: full teaching flow
   for (const row of d.words) { assert.equal(s.view().name, row.word); s.next(); }
   for (const row of d.worked) { finish(s); assert.equal(s.view().name, row.name); s.next(); }
   for (let index = 0; index < 3; index++) {
-    const set = () => { if (d.id === 'launch') { s.control('angleDeg', 45); s.control('speedMs', 17); s.control('flagM', 30); } else s.control('waxDial', index); };
+    const set = () => { s.control('angleDeg', 45); s.control('speedMs', 17); s.control('flagM', 30); };
     set();
     if (index === 0) {
-      s.predict(d.id === 'launch' ? 'short' : 'slow'); s.run(); finish(s);
+      s.predict('short'); s.run(); finish(s);
       assert.equal(s.view().result.passed, false); assert.ok(s.view().text.length); s.retry();
     }
-    s.predict(d.id === 'launch' ? 'flag' : 'fast'); s.run(); finish(s);
+    s.predict('flag'); s.run(); finish(s);
     assert.equal(s.view().result.passed, true); s.next();
   }
   for (const q of d.checks) {
