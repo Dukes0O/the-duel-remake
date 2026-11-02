@@ -11,7 +11,7 @@ import {isCourseUnlocked, COURSE_PRICES} from '../course-access.js';
 import {storyIsNewer} from './story-save.js';
 import {WATER_CHAPTERS, waterOf, waterChapter, waterChapterDone, waterChapterOpen, waterJobDone, waterNotesDue,
   readWaterNote, markWaterJob, markWaterNotes, markWaterEnd} from './water-save.js';
-import {waterJobCaption} from './water-lines.js';
+import {waterJobCaption, WATER_NOTES} from './water-lines.js';
 
 export const WATER_SWITCH = 'water-road';
 // The features the story stands on (section 10).
@@ -126,6 +126,8 @@ export function createWaterRoad(app) {
     const steps = WATER_CHAPTERS.map(chapter => view(chapter.n, where));
     return {available: true, step: at >= WATER_CHAPTERS.length ? 'done' : steps[at].id, chapter: at, read: water.read === true,
       steps, notesShown: water.notes ?? 0, notesDue: waterNotesDue(app.profile), ended: water.end === true,
+      // V.'s notes so far, under Hollis's (one after each chapter done, up to seven).
+      notes: WATER_NOTES.slice(0, waterNotesDue(app.profile)).map(note => note.text),
       // A message waits while Hollis's note is unread or a note from V. has not been seen.
       message: water.read !== true || waterNotesDue(app.profile) > (water.notes ?? 0)};
   }
@@ -209,6 +211,14 @@ export function createWaterRoad(app) {
     const out = markWaterJob(profile, run.mark);
     return out.ok && out.changed ? {profile: out.profile, mark: run.mark} : null;
   }
+  // The water works' stage: warlord chapters done in order (0 to 8), or null while the story is not shown.
+  // Chapter 0 is Hollis's note, so the first warlord beaten is stage 1.
+  function stage() {
+    if (!available() || storyIsNewer(app.profile)) return null;
+    // Warlords beaten in ladder order, whether or not Hollis's note is read yet (a returning player's yard is not dry).
+    const at = WATER_CHAPTERS.slice(1).findIndex(chapter => !waterChapterDone(app.profile, chapter.n));
+    return at === -1 ? 8 : at;
+  }
   // Leaving to the menu, quitting or a new player: no story job waits or runs.
   function clear() { pending = null; run = null; }
   // The yard visit after the Baron: Hollis's two end lines, once.
@@ -219,6 +229,6 @@ export function createWaterRoad(app) {
     app.profile = out.profile; app._saveProfile();
     return true;
   }
-  return {available, on, props, open, step, settingsChanged, arenaChoice, raceStarted, arenaStarted, settle, clear, yardArrived,
+  return {available, on, props, open, step, stage, settingsChanged, arenaChoice, raceStarted, arenaStarted, settle, clear, yardArrived,
     get pending() { return pending; }, get run() { return run; }};
 }

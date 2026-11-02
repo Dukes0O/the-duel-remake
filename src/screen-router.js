@@ -321,7 +321,8 @@ root.addEventListener('click',e => {
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
-    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards'))openYardPanel('cards'); return;
+    // WATER-SCREENS: the Story Wall holds the Water Road; opening it reads Hollis's note and V.'s notes so far.
+    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){app.openStory?.('water');openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
@@ -450,7 +451,7 @@ function renderState(s) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
     if(cardPictures.length){

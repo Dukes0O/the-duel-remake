@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Water Road, a Wasteland story.** Behind the Rustwall the camp's well is dry,
+  and eight warlords have cut the old water road into pieces. Hollis's note on the
+  Story card (and the yard's STORY WALL) starts it: each chapter is one job in a mode
+  you know, then that warlord's fight, and each one fixes part of the camp's water
+  works, which you can watch fill up in the yard. Every chapter shows one button for
+  the next thing to do, with a bar for the wins or rank still needed; roads you do not
+  own yet send you to Your Courses with the price. Notes from a mysterious "V." arrive
+  after each chapter. Warlords you already beat count. After the Baron, water runs
+  into the camp, and a ninth warlord is coming.
 - **The Lab: Headings and maps is a classroom now.** A map from above with
   Kestrel One on the Woods pad and the HEADING gauge beside it, as in the
   helicopter: D turns her right and the number counts up, A turns her left and
