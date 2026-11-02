@@ -166,7 +166,8 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
               if (!lesson.benchAttempts) return {ok: false, reason: 'This challenge runs on the bench. Leave the lesson and use the machine.'};
               const passed = onChallenge(id, {challenging: true, attempts: lesson.benchAttempts(classroom.view())});
               if (!passed?.ok) return {ok: false, reason: passed?.reason};
-              close(); onBack(); return {ok: true};
+              // The classroom stays open so Brian can say what the pass opened; leaving keeps the board's message.
+              return {ok: true, passed: lesson.passSay ?? `${lesson.name} passed.`};
             }
             if (!started?.active) return {ok: false, reason: started?.reason};
             challengeActive = started;

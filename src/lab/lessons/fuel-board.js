@@ -16,8 +16,8 @@ const NOZZLE = Object.freeze([180, 150]), TAP = Object.freeze([300, 418]), CAN =
 const STRIP = Object.freeze({metres: 46, top: 160, gap: 100});
 const RIGHT = Object.freeze({x: 450, w: 510}), WIDE = Object.freeze({x: 80, w: 840});
 const stripOf = view => view.tank || view.job ? RIGHT : WIDE;
-const JUGS = Object.freeze({water: [300, 330], petrol: [700, 330]});
-const ON_SCALE = Object.freeze([500, 300]);
+const JUGS = Object.freeze({water: [300, 400], petrol: [700, 400]});
+const ON_SCALE = Object.freeze([500, 400]);
 
 const inBox = (x, y, [cx, cy], r) => Math.hypot(x - cx, y - cy) < r;
 const laneY = i => STRIP.top + i * STRIP.gap;
@@ -29,9 +29,9 @@ export function hitTest(view, x, y) {
   if (!shop(view)) return null;
   if (view.tank && view.keys['↑'] && inBox(x, y, NOZZLE, 48)) return {action: view.keys['↑']};
   if (view.tank && view.keys['↓'] && inBox(x, y, TAP, 40)) return {action: view.keys['↓']};
-  if (view.keys.Space === 'fill' && view.jug && inBox(x, y, [600, 380], 110)) return {action: 'fill'};
-  if (view.keys.Space === 'go' && x > RIGHT.x && x < RIGHT.x + RIGHT.w && y > 110 && y < 460) return {action: 'go'};
-  if (view.jugs && view.keys['1']) for (const [what, key] of [['water', '1'], ['petrol', '2']]) if (inBox(x, y, jugAt(view, what), 80)) return {action: view.keys[key]};
+  if (view.keys.Space === 'fill' && view.jug && x > 530 && x < 670 && y > 270 && y < 470) return {action: 'fill'};
+  if (view.keys.Space === 'go' && goArea(view, x, y)) return {action: 'go'};
+  if (view.jugs && view.keys['1']) for (const [what, key] of [['water', '1'], ['petrol', '2']]) if (onJug(view, what, x, y)) return {action: view.keys[key]};
   return null;
 }
 export function hoverInfo(view, x, y) {
@@ -43,8 +43,8 @@ export function hoverInfo(view, x, y) {
     if (x > TANK.x && x < TANK.x + TANK.w && y > TANK.y && y < TANK.y + TANK.h) return view.covered ? 'The gauge is covered: read the scale.' : `The car’s tank: ${Math.round(view.litres)} of ${TANK_LITRES} litres.`;
     if (view.scale && x > 70 && x < 290 && y > 430 && y < 545) return `The scale: it weighs the tank’s petrol. ${kg1(view.kg)} now.`;
   }
-  if (view.jug && inBox(x, y, [600, 380], 110)) return 'A one litre jug. The line shows one litre.';
-  if (view.jugs) for (const what of ['water', 'petrol']) if (inBox(x, y, jugAt(view, what), 80)) return `One litre of ${what}.`;
+  if (view.jug && x > 530 && x < 670 && y > 270 && y < 470) return 'A one litre jug. The line shows one litre.';
+  if (view.jugs) for (const what of ['water', 'petrol']) if (onJug(view, what, x, y)) return `One litre of ${what}.`;
   const g = stripOf(view);
   if (view.job && x > g.x && x < g.x + g.w && y > 30 && y < 240) return 'The race card: how far this race goes, and how far your petrol lasts.';
   for (const [i, l] of view.lanes.entries()) if (y > laneY(i) - 40 && y < laneY(i) + 30 && x > g.x && x < g.x + g.w)
@@ -55,7 +55,7 @@ export function targetPoint(view, action) {
   if (!shop(view)) return null;
   if (action === 'pour:in' || action === 'pour:best' && view.best > view.litres) return [NOZZLE[0], NOZZLE[1] - 6];
   if (action === 'pour:out' || action === 'pour:best') return TAP;
-  if (action === 'go') return view.job ? [RIGHT.x + 60, 330] : [stripX(RIGHT, 0) - 40, laneY(0)];
+  if (action === 'go') return view.covered ? SCALE : view.job ? [RIGHT.x + 60, 330] : [stripX(RIGHT, 0) - 40, laneY(0)];
   if (action === 'fill') return [600, 360];
   if (action === 'weigh:best' && view.bestJug) return jugAt(view, view.bestJug);
   // Sparks fly from the winning car, the jug or the tank.
@@ -68,6 +68,15 @@ export function targetPoint(view, action) {
 }
 export function dragAngle() { return 0; }
 const jugAt = (view, what) => view.jugs?.on === what ? ON_SCALE : JUGS[what];
+// A jug as it is drawn: 110 wide, standing on y 470, 150 tall.
+const onJug = (view, what, x, y) => Math.abs(x - jugAt(view, what)[0]) < 60 && y > 310 && y < 475;
+// Space by mouse: the scale weighs (By weight), the job's race track or the strip's lanes race.
+const SCALE = Object.freeze([180, 505]);
+function goArea(view, x, y) {
+  if (view.covered) return x > 70 && x < 290 && y > 440 && y < 545;
+  if (view.job) return x > RIGHT.x && x < RIGHT.x + RIGHT.w && y > 290 && y < 370;
+  return x > RIGHT.x && x < RIGHT.x + RIGHT.w && y > laneY(0) - 50 && y < laneY(Math.max(1, view.lanes.length - 1)) + 32;
+}
 
 // ---- pieces ----
 function glowBox(ctx, view, x, y, w, h) {
@@ -142,7 +151,7 @@ function tap(ctx, view) {
   if (view.glow === 'pour' && view.keys['↓']) glowBox(ctx, view, tx - 22, ty - 26, 64, 56);
 }
 function jerryCan(ctx, view) {
-  const {x, y, w, h} = CAN, k = Math.max(0, Math.min(1, (TANK_LITRES - view.level) / TANK_LITRES));
+  const {x, y, w, h} = CAN, k = Math.max(0, Math.min(1, view.can / TANK_LITRES));
   ctx.fillStyle = '#7b2a22'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill();
   ctx.fillStyle = 'rgba(224,166,58,.35)'; ctx.fillRect(x + 6, y + h - 6 - (h - 14) * k, w - 12, (h - 14) * k);
   ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 8, y + 10); ctx.lineTo(x + w - 8, y + h - 10); ctx.moveTo(x + w - 8, y + 10); ctx.lineTo(x + 8, y + h - 10); ctx.stroke();
@@ -278,6 +287,8 @@ function weighCard(ctx, view) {
   text(ctx, `Petrol weighing ${kg1(WEIGH_KG)}`, x + 20, y + 64, {size: 26, align: 'left', colour: theme.accent});
   text(ctx, `On the scale now: ${kg1(view.kg)}`, x + 20, y + 120, {size: 22, align: 'left'});
   text(ctx, `One press pours ${POUR_LITRES} litres: ${kg1(POUR_LITRES * PETROL_KG_PER_LITRE)}`, x + 20, y + 170, {size: 18, align: 'left', colour: theme.text});
+  text(ctx, 'Space (or a click on the scale) weighs it', x + 20, y + 204, {size: 15, align: 'left', colour: theme.faint});
+  if (view.target === 'go') glowBox(ctx, view, 64, 436, 232, 112);
 }
 function drawShop(ctx, view) {
   background(ctx);

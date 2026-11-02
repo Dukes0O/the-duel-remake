@@ -57,8 +57,9 @@ export const WORDS = Object.freeze([
 const POUR_KEYS = Object.freeze({'↑': 'pour:in', '↓': 'pour:out'});
 const ANSWER_KEYS = Object.freeze({1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
 const DONE = Object.freeze(['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.']);
-const pouring = (race, target) => ({keys: {...POUR_KEYS, ...(race ? {Space: 'go'} : {})}, repeat: ['↑', '↓'], waiting: true, target, glow: 'pour',
-  buttons: [{action: 'pour:out', label: 'Pour out', key: '↓'}, {action: 'pour:in', label: 'Pour in', key: '↑'}, ...(race ? [{action: 'go', label: 'Race', key: 'Space'}] : [])]});
+// go: the Space button's words (Race, or Weigh it), or none.
+const pouring = (go, target) => ({keys: {...POUR_KEYS, ...(go ? {Space: 'go'} : {})}, repeat: ['↑', '↓'], waiting: true, target, glow: 'pour',
+  buttons: [{action: 'pour:out', label: 'Pour out', key: '↓'}, {action: 'pour:in', label: 'Pour in', key: '↑'}, ...(go ? [{action: 'go', label: go, key: 'Space'}] : [])]});
 
 // ---- the checks ----
 const FULL_S = secondsTo60(TANK_LITRES), HALF_S = secondsTo60(HALF), EMPTY_S = secondsTo60(0);
@@ -103,7 +104,7 @@ export function createModel() {
 
   function enter(index, keep = {}) {
     m = {index, time: 0, phase: 'ready', litres: TANK_LITRES, level: TANK_LITRES, lanes: [], race: null, jug: 0, weighed: [], auto: null, then: null,
-      result: null, answered: null, say: '', day: 0, onScale: null, saved: 0, lastPour: -1, gp: null, ...keep};
+      result: null, answered: null, say: '', day: 0, onScale: null, saved: 0, lastPour: -1, gp: null, can: 0, ...keep};
     const id = STEPS[index].id;
     if (id === 'wonder') { m.lanes = [lane(TANK_LITRES, 'Full tank'), lane(HALF, 'Half tank')]; m.race = {at: .6, t: null}; m.phase = 'running'; }
     if (id === 'word-fuel-load') { m.litres = 0; m.level = 0; m.phase = 'pour'; }
@@ -124,6 +125,14 @@ export function createModel() {
     return id === 'word-fuel-load' ? TANK_LITRES : id === 'try-half' ? HALF : id === 'try-weigh' ? WEIGH_LITRES : leastLitres(DAYS[Math.min(m.day, DAYS.length - 1)].share);
   }
 
+  // What Brian says while Show me pours, so his "Like that." is about what he did.
+  function autoSay() {
+    const id = step().id, to = goal();
+    if (id === 'word-fuel-load') return `Watch: I fill it to ${TANK_LITRES} litres.`;
+    if (id === 'try-half') return `Watch: I pour it to ${HALF} litres, half of ${TANK_LITRES}, then race.`;
+    if (id === 'try-weigh') return `Watch: I pour until the scale reads ${kg1(WEIGH_KG)}, then weigh it.`;
+    return `Watch: I pour it to ${to} litres, the least that lasts, then race.`;
+  }
   function act(action) {
     const id = step().id, [kind, value, held] = action.split(':');
     if (kind === 'replay') return replay();
@@ -160,15 +169,22 @@ export function createModel() {
     if (!pourable()) return null;
     if (m.phase === 'result' && (way === 'best' || way === 'in' || way === 'out')) m.phase = 'pour';
     if (way === 'best') {
-      m.auto = goal(); m.then = step().id === 'try-half' || step().id === 'alone' ? 'go' : null;
-      return {kind: 'progress', say: m.auto > m.litres ? 'Watch: I pour it in.' : 'Watch: I let it out.'};
+      m.auto = goal(); m.then = step().id === 'word-fuel-load' ? null : 'go';
+      if (step().id === 'try-half') m.lanes = [];
+      return {kind: 'progress', say: autoSay()};
     }
     if (way !== 'in' && way !== 'out') return null;
     if (held && m.time - m.lastPour < HELD_GAP_S) return null;
     const before = m.litres;
     m.litres = way === 'in' ? Math.min(TANK_LITRES, before + POUR_LITRES) : Math.max(0, before - POUR_LITRES);
-    if (m.litres === before) return held ? null : {kind: 'note', say: way === 'in' ? `The tank is full: ${TANK_LITRES} litres.` : 'The tank is empty: 0 litres.'};
+    // Under the cloth Brian does not say the litres.
+    const covered = step().id === 'try-weigh';
+    if (m.litres === before) return held ? null : {kind: 'note', say: way === 'in' ? covered ? 'The tank is full.' : `The tank is full: ${TANK_LITRES} litres.` : covered ? 'The tank is empty.' : 'The tank is empty: 0 litres.'};
     m.lastPour = m.time;
+    if (way === 'out') m.can += POUR_LITRES;
+    if (covered) m.say = '';
+    // After a race the strip clears, ready for the next one with the new load.
+    if (step().id === 'try-half') m.lanes = [];
     return poured(way, held);
   }
   function poured(way, held) {
@@ -178,13 +194,6 @@ export function createModel() {
       m.say = `Full: ${TANK_LITRES} litres. That is the car’s fuel load, the petrol it carries.`;
       return {kind: 'right', say: m.say};
     }
-    if (id === 'try-weigh' && m.litres === WEIGH_LITRES) {
-      m.phase = 'done'; seen.add(id); m.auto = null;
-      m.say = `${kg1(WEIGH_KG)} on the scale: that is ${WEIGH_LITRES} litres. Every litre weighs ${PETROL_KG_PER_LITRE} kg, so ${WEIGH_LITRES} litres weighs ${kg1(WEIGH_KG)}.`;
-      return {kind: 'right', say: m.say};
-    }
-    if (id === 'try-weigh' && way === 'out' && m.litres < WEIGH_LITRES)
-      return {kind: 'wrong', say: `${kg1(fuelKg(m.litres))}: lighter than ${kg1(WEIGH_KG)}. Press ↑ to pour ${WEIGH_LITRES - m.litres} litres back in.`};
     return sound ? {kind: 'sound', sound} : null;
   }
 
@@ -195,6 +204,18 @@ export function createModel() {
       m.lanes = [lane(m.litres, 'Your tank'), lane(TANK_LITRES, 'Full tank')]; m.phase = 'running'; startRace(.2);
       runs.push(m.litres, TANK_LITRES);
       return {kind: 'progress', say: `Your tank, ${m.litres} litres, against a full tank. Watch the stopwatches.`};
+    }
+    // By weight: Space weighs it. Right on 37.0 kg; otherwise the scale says how far off, and which way to pour.
+    if (id === 'try-weigh') {
+      const kg = fuelKg(m.litres), off = Math.abs(kg - WEIGH_KG);
+      if (m.litres === WEIGH_LITRES) {
+        m.phase = 'done'; seen.add(id);
+        m.say = `${kg1(WEIGH_KG)} on the scale: that is ${WEIGH_LITRES} litres. Every litre weighs ${PETROL_KG_PER_LITRE} kg, so ${WEIGH_LITRES} litres weighs ${kg1(WEIGH_KG)}.`;
+        return {kind: 'right', say: m.say};
+      }
+      m.say = kg > WEIGH_KG ? `The scale reads ${kg1(kg)}: ${kg1(off)} too heavy. Each press of ↓ lets out ${kg1(fuelKg(POUR_LITRES))}.`
+        : `The scale reads ${kg1(kg)}: ${kg1(off)} too light. Each press of ↑ pours in ${kg1(fuelKg(POUR_LITRES))}.`;
+      return {kind: 'fail', say: m.say};
     }
     if (id === 'alone') {
       const day = DAYS[m.day];
@@ -238,7 +259,7 @@ export function createModel() {
       m.say = `Three races, each on just enough. You left ${m.saved} litres behind, ${kg1(fuelKg(m.saved))} the car never had to carry. Job done.`;
       return {kind: 'pass', say: m.say};
     }
-    m.litres = TANK_LITRES; m.gp = null;
+    m.litres = TANK_LITRES; m.gp = null; m.can = 0;
     m.say = `Right: ${litres} litres lasts ${pct(lasts)} of a Grand Prix, just enough. Next race: ${DAYS[m.day].name}. The tank is full again.`;
     return {kind: 'right', say: m.say};
   }
@@ -260,7 +281,7 @@ export function createModel() {
       return {kind: 'right', say: m.say};
     }
     if (id === 'watch' && m.phase === 'drain') {
-      m.litres = Math.max(0, m.litres - DRAIN_LPS * dt); m.level = m.litres;
+      m.litres = Math.max(0, m.litres - DRAIN_LPS * dt); m.level = m.litres; m.can = TANK_LITRES - m.litres;
       if (m.litres <= 0) { m.phase = 'running'; startRace(.5); }
       return null;
     }
@@ -288,7 +309,7 @@ export function createModel() {
 
   function replay() {
     const id = step().id;
-    if ((id === 'wonder' || id === 'watch') && m.phase === 'done') { enter(m.index); return null; }
+    if (id === 'wonder' || id === 'watch') { enter(m.index); return null; }
     if (CHECKS[id]?.race && m.phase === 'answered') { m.race = null; startRace(.3); return null; }
     if (id === 'try-half' && m.phase === 'result') return go();
     return null;
@@ -312,10 +333,10 @@ export function createModel() {
 
   function view() {
     const id = step().id;
-    const base = {scene: 'shop', time: m.time, litres: m.litres, level: m.level, kg: fuelKg(m.litres), tank: false, scale: true, gauge: true, covered: false,
+    const base = {scene: 'shop', time: m.time, litres: m.litres, level: m.level, kg: fuelKg(m.litres), can: m.can, tank: false, scale: true, gauge: true, covered: false,
       half: false, jug: null, jugs: null, lanes: m.lanes.length ? laneViews() : [], job: null, tune: null, best: null, runs: [...runs],
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), asking: false};
-    if (id === 'wonder') return {...base, actions: m.phase === 'done' || seen.has(id) ? ['replay'] : [],
+    if (id === 'wonder') return {...base, actions: ['replay'],
       say: seen.has(id) ? `Same car, same engine, same push. The half tank reached 60 mph first: ${s2(HALF_S)} against ${s2(FULL_S)}. Why?`
         : 'Two of the same car, nought to sixty miles an hour. Watch the stopwatches.',
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or R to watch again.' : 'Watch the two cars.',
@@ -324,7 +345,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, tank: true, scale: false, ...(done ? {} : {keys: {'↑': 'pour:in'}, repeat: ['↑'], waiting: m.auto == null, target: m.auto == null ? 'pour:best' : null, glow: 'nozzle', best: TANK_LITRES,
         buttons: [{action: 'pour:in', label: 'Pour in', key: '↑'}]}),
-        say: done ? m.say : 'Fuel load is the petrol the car carries. This tank is empty: fill it.',
+        say: done ? m.say : m.auto != null ? autoSay() : 'Fuel load is the petrol the car carries. This tank is empty: fill it.',
         prompt: done ? 'Press Enter to go on.' : m.litres ? `${m.litres} litres in. Keep pouring: press ↑ (hold it to keep pouring), or click the nozzle.` : 'Press ↑ to pour petrol in (hold it to keep pouring), or click the nozzle.',
         hints: done ? DONE : ['The pump nozzle is over the tank.', `Press ↑ until the gauge reads ${TANK_LITRES} litres.`, 'Watch my pointer: I fill it.']};
     }
@@ -345,7 +366,7 @@ export function createModel() {
     }
     if (id === 'watch') {
       const done = m.phase === 'done';
-      return {...base, tank: true, actions: done ? ['replay', 'slow'] : ['slow'],
+      return {...base, tank: true, actions: ['replay', 'slow'],
         say: done ? `Every litre out took ${PETROL_KG_PER_LITRE} kg off the scale. The lighter the car, the sooner it reached 60 mph: ${s2(EMPTY_S)}, ${s2(HALF_S)}, ${s2(FULL_S)}. Not by much: empty beat full by ${gapWords(gapAtWin(0, TANK_LITRES))}.`
           : m.phase === 'drain' ? `Every litre of petrol weighs ${PETROL_KG_PER_LITRE} kg. Watch the scale as I empty the tank: ${kg1(fuelKg(TANK_LITRES))} when it is full.`
             : 'Now three of the same car: a full tank, half a tank and an empty one.',
@@ -354,15 +375,15 @@ export function createModel() {
     }
     if (id === 'try-half' || id === 'try-weigh') {
       const weigh = id === 'try-weigh', want = weigh ? WEIGH_LITRES : HALF;
-      const target = m.auto != null ? null : !weigh && m.litres === HALF && m.phase === 'pour' ? 'go' : 'pour:best';
+      const target = m.auto != null ? null : m.litres === want && m.phase === 'pour' ? 'go' : 'pour:best';
       const view = {...base, tank: true, covered: weigh, half: !weigh, best: want};
       if (m.phase === 'running') return {...view, say: `Your tank, ${m.lanes[0].litres} litres, against a full tank.`, prompt: 'Watch the stopwatches.', hints: ['Watch the two cars.', 'Which one reaches 60 mph first?', 'Wait a moment.']};
-      if (m.phase === 'done' || m.phase === 'result' && m.result?.right) return {...view, ...(weigh ? {} : pouring(true, null)), waiting: false, actions: weigh ? [] : ['replay'], mood: 'cheer', say: m.say,
+      if (m.phase === 'done' || m.phase === 'result' && m.result?.right) return {...view, ...(weigh ? {} : pouring('Race', null)), waiting: false, actions: weigh ? [] : ['replay'], mood: 'cheer', say: m.say,
         prompt: weigh ? 'Press Enter to go on.' : 'Press Enter to go on, or R to race again.', hints: DONE};
-      return {...view, ...pouring(!weigh, m.auto != null ? null : target), waiting: m.auto == null, actions: m.phase === 'result' ? ['replay'] : [],
-        say: m.phase === 'result' ? m.say : weigh ? `The gauge is covered. Use the scale: pour until the petrol weighs ${kg1(WEIGH_KG)}.` : 'Pour out petrol until the tank is half full, then race it against a full tank.',
-        prompt: weigh ? `The scale reads ${kg1(fuelKg(m.litres))}. Press ↓ to pour out, ↑ to pour in.` : `${m.litres} litres, ${kg1(fuelKg(m.litres))}. Press ↓ to pour out, ↑ to pour in, Space to race.`,
-        hints: weigh ? ['Watch the scale, not the gauge.', `Every ${POUR_LITRES} litres is ${kg1(fuelKg(POUR_LITRES))}. Press ↓ until the scale reads ${kg1(WEIGH_KG)}.`, 'Watch my pointer: I pour.']
+      return {...view, ...pouring(weigh ? 'Weigh it' : 'Race', target), waiting: m.auto == null, actions: m.phase === 'result' ? ['replay'] : [],
+        say: m.auto != null ? autoSay() : m.phase === 'result' || weigh && m.say ? m.say : weigh ? `The gauge is covered. Use the scale: pour until the petrol weighs ${kg1(WEIGH_KG)}, then press Space to weigh it.` : 'Pour out petrol until the tank is half full, then race it against a full tank.',
+        prompt: weigh ? `The scale reads ${kg1(fuelKg(m.litres))}. Press ↓ to pour out, ↑ to pour in, Space to weigh it.` : `${m.litres} litres, ${kg1(fuelKg(m.litres))}. Press ↓ to pour out, ↑ to pour in, Space to race.`,
+        hints: weigh ? ['Watch the scale, not the gauge.', `Every ${POUR_LITRES} litres is ${kg1(fuelKg(POUR_LITRES))}. Press ↓ until the scale reads ${kg1(WEIGH_KG)}, then Space.`, 'Watch my pointer: I pour and weigh it.']
           : ['The gauge has a line at half.', `Half of ${TANK_LITRES} litres is ${HALF}. Press ↓ until the gauge reads ${HALF}, then Space.`, 'Watch my pointer: I pour and race.']};
     }
     if (id === 'alone') {
@@ -373,8 +394,8 @@ export function createModel() {
       if (m.phase === 'done') return {...view, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to go on.', hints: DONE};
       if (m.phase === 'running') return {...view, say: `${day.name}, on ${m.gp.litres} litres.`, prompt: 'Watch the race.', hints: ['Watch the car and its petrol.', 'Does it reach the flag?', 'Wait a moment.']};
       const target = m.auto != null ? null : m.litres === least ? 'go' : 'pour:best';
-      return {...view, ...pouring(true, target), waiting: m.auto == null,
-        say: m.day === 0 && !m.say ? `Your job: three races from the game’s Grand Prix. The tank starts full each time. Carry the fuel you need, no more: pour the least that lasts the race. First: ${day.name}.` : m.say,
+      return {...view, ...pouring('Race', target), waiting: m.auto == null,
+        say: m.auto != null ? autoSay() : m.day === 0 && !m.say ? `Your job: three races from the game’s Grand Prix. The tank starts full each time. Carry the fuel you need, no more: pour the least that lasts the race. First: ${day.name}.` : m.say,
         prompt: `${m.litres} litres lasts ${pct(lastsShare(m.litres))} of a Grand Prix. Pour, then press Space to race.`,
         hints: [`${day.name} is ${pct(day.share)} of the race. The panel under the scale says how far the petrol lasts.`, `Pour to the least that lasts ${pct(day.share)}: ${least} litres. Then press Space.`, 'Watch my pointer: I pour it for you.']};
     }
@@ -399,5 +420,8 @@ export function createModel() {
 // less) must pass on these, so finishing the lesson can never pass without them.
 export const benchAttempts = view => (view?.runs ?? []).map(litres => ({controls: [{id: 'litres'}], input: {litres}}));
 
+// What Brian says when finishing passes the lesson; the classroom stays open on it until the player leaves.
+export const PASS_SAY = `Fuel passed! Fuel load is open on the Tune page in the garage: a half tank is quicker, but in a Grand Prix it runs dry at ${pct(lastsShare(HALF))}.`;
+
 export const lesson = Object.freeze({id: 'fuel', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD, words: WORDS,
-  finishLabel: 'Finish the lesson', benchAttempts});
+  finishLabel: 'Finish the lesson', benchAttempts, passSay: PASS_SAY});

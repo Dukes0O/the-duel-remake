@@ -53,7 +53,10 @@ export async function run(c) {
   await press('ArrowDown', 4); await press('Space'); await at('try-half', 's.ready'); await wait(300); await shot('try-half-right');
   if (!(await bubble()).startsWith('Half a tank: 35 litres, 25.9 kg')) throw Error('Half a tank did not win: ' + await bubble());
   await next('try-half');
-  await at('try-weigh'); await shot('try-weigh'); await press('ArrowDown', 4); await at('try-weigh', 's.ready'); await shot('try-weigh-done');
+  // By weight: one press too many, Space weighs it and Brian says how far off; ↑ and Space again.
+  await at('try-weigh'); await shot('try-weigh'); await press('ArrowDown', 5); await press('Space');
+  await saying('3.7 kg too light', 'a wrong weighing says how far off'); await shot('try-weigh-wrong');
+  await press('ArrowUp'); await press('Space'); await at('try-weigh', 's.ready'); await shot('try-weigh-done');
   await next('try-weigh');
   // Brian's job: a full tank on race one carries too much; then the least that lasts; Show me on race two.
   await at('alone'); await shot('alone'); await press('Space'); await saying('it did not need', 'too much fuel says why'); await shot('alone-too-much');
@@ -71,9 +74,12 @@ export async function run(c) {
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
   if (!(await c.evaluate(`!window.__qaApp.profile.lab?.done?.fuel && ['fuel-word-0', 'fuel-word-1', 'fuel-word-2'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.includes('Finish the lesson'))`))) throw Error('The last step should say Finish the lesson.');
-  // Enter finishes: the lesson's own races pass the bench's goal, and the board says Fuel load is open on the Tune page.
+  // Enter finishes: the lesson's own races pass the bench's goal; Brian says what it opened, and Enter goes back to the Lab.
   await press('Enter');
-  await c.waitFor(`!document.querySelector('.lab-classroom') && window.__qaApp.profile.lab?.done?.fuel === true`, 'Fuel passes and is saved', 10_000);
+  await c.waitFor(`window.__qaApp.profile.lab?.done?.fuel === true`, 'Fuel passes and is saved', 10_000);
+  await saying('Fuel load is open on the Tune page', 'Brian says what the pass opened'); await wait(500); await shot('passed-classroom');
+  await press('Enter');
+  await c.waitFor(`!document.querySelector('.lab-classroom')`, 'back to the Lab', 10_000);
   await c.waitFor(`[...document.querySelectorAll('.lab-message')].some(el => el.textContent.includes('Tune page'))`, 'the pass points at the Tune page', 10_000);
   await shot('passed');
   await c.evaluate(`window.__qaApp.closeLab()`);

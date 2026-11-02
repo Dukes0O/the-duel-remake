@@ -27,7 +27,7 @@ function playThroughTo(session, id) {
     else if (step === 'word-litre') { session.act('fill'); until(session, x => x.ready); }
     else if (step === 'word-kilogram') { session.act('weigh:water'); session.act('weigh:petrol'); }
     else if (step === 'try-half') { pourTo(session, HALF); session.act('go'); until(session, x => x.ready); }
-    else if (step === 'try-weigh') pourTo(session, WEIGH_LITRES);
+    else if (step === 'try-weigh') { pourTo(session, WEIGH_LITRES); session.act('go'); }
     else if (step === 'alone') for (const day of DAYS) { pourTo(session, leastLitres(day.share)); session.act('go'); until(session, x => x.step.id === 'alone' && (x.ready || x.job.day > DAYS.indexOf(day) + 1)); }
     else if (step === 'check-race') session.act('answer:1');
     else if (step.startsWith('check')) session.act('answer:0');
@@ -129,18 +129,23 @@ test('the tries: a wrong pour says why with the real litres, kilograms and times
   assert.equal(session.view().brian.text, 'Half a tank: 35 litres, 25.9 kg. It reached 60 mph in 3.09 s, the full tank in 3.16 s: 86 cm ahead.');
   session.act('next');
   assert.equal(session.view().covered, true, 'the second try covers the gauge');
+  // By weight: the player can pour past the weight; Space weighs it and the scale says how far off, and which way.
   for (let i = 0; i < 5; i++) session.act('pour:out');
-  assert.equal(session.view().ready, true, 'reaching 37.0 kg passes on the press that gets there');
-  const again = createClassroomSession(lesson);
-  playThroughTo(again, 'try-weigh');
-  pourTo(again, 55); again.act('pour:out'); again.act('pour:out');
-  assert.equal(again.view().ready, true);
-  const over = createClassroomSession(lesson);
-  playThroughTo(over, 'try-weigh');
-  for (let i = 0; i < 3; i++) over.act('pour:out');
-  run(over, .2); over.act('pour:out:held');
-  run(over, .2); over.act('pour:out:held');
-  assert.equal(over.view().ready, true); assert.equal(over.view().litres, WEIGH_LITRES, 'a held key stops on the weight');
+  assert.equal(session.view().litres, 45, 'nothing stops the pour on the weight');
+  assert.equal(session.view().ready, false);
+  session.act('go');
+  assert.equal(session.view().brian.text, 'The scale reads 33.3 kg: 3.7 kg too light. Each press of ↑ pours in 3.7 kg.');
+  assert.equal(session.view().help, 1, 'a wrong weighing climbs one rung of help');
+  session.act('pour:in'); session.act('pour:in'); session.act('go');
+  assert.equal(session.view().brian.text, 'The scale reads 40.7 kg: 3.7 kg too heavy. Each press of ↓ lets out 3.7 kg.');
+  assert.ok(!/litres/.test(session.view().brian.text), 'under the cloth Brian does not say the litres');
+  session.act('pour:out'); session.act('go');
+  assert.equal(session.view().ready, true);
+  assert.match(session.view().brian.text, /^37\.0 kg on the scale: that is 50 litres\./);
+  const full = createClassroomSession(lesson);
+  playThroughTo(full, 'try-weigh');
+  full.act('pour:in');
+  assert.equal(full.view().brian.text, 'The tank is full.', 'the full tank is not given away in litres');
 });
 
 test('Brian’s job: too little runs dry, too much carries weight it did not need, and that race goes again', () => {
@@ -270,4 +275,49 @@ test('the races: one clock for every car, the lighter car ahead all the way, and
   run(session, 1); assert.ok(session.view().litres < 70 && session.view().kg < 51.8, 'the scale falls as the tank empties');
   until(session, v => v.ready);
   assert.deepEqual(session.view().lanes.map(l => l.winner), [false, false, true], 'the empty tank wins');
+});
+
+test('review fixes: the can holds only what went out of the tap; clicks land where things are drawn; Show me says what it did', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-fuel-load');
+  session.act('pour:in'); session.act('pour:in');
+  assert.equal(session.view().can, 0, 'filling the tank does not take petrol out of the can');
+  pourTo(session, TANK_LITRES); session.act('next');
+  playThroughTo(session, 'try-half');
+  session.act('pour:out'); session.act('pour:out');
+  assert.equal(session.view().can, 10);
+  session.act('pour:in');
+  assert.equal(session.view().can, 10, 'pouring in comes from the pump');
+  // The jugs: a click on the bottom of a jug weighs it; the empty space above does not.
+  const words = createClassroomSession(lesson);
+  playThroughTo(words, 'word-kilogram');
+  let v = words.view();
+  assert.equal(hitTest(v, 300, 460)?.action, 'weigh:water');
+  assert.equal(hitTest(v, 300, 260), null);
+  // Brian's job: a click on the race card's bar does not race; a click on the track does.
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  v = job.view();
+  assert.equal(hitTest(v, 700, 160), null, 'the race card is not a button');
+  assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
+  // By weight: Space by mouse is a click on the scale.
+  const weigh = createClassroomSession(lesson);
+  playThroughTo(weigh, 'try-weigh');
+  pourTo(weigh, WEIGH_LITRES);
+  v = weigh.view();
+  assert.equal(v.target, 'go');
+  assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
+  // Show me in the job: "Like that." comes with what Brian did, not the last failure.
+  job.act('go'); until(job, x => /did not need/.test(x.brian.text));
+  for (let k = 0; k < 3; k++) job.act('help');
+  run(job, SHOW_ME_S + .2);
+  assert.equal(job.view().brian.text, 'Like that. Watch: I pour it to 35 litres, the least that lasts, then race.');
+  // Watch again restarts the wonder at any time.
+  const wonder = createClassroomSession(lesson);
+  run(wonder, 2);
+  assert.ok(wonder.view().actions.includes('replay'));
+  wonder.act('replay');
+  assert.ok(wonder.view().lanes.every(l => l.seconds == null));
+  // Finishing passes in the classroom: Brian says what it opened, under the game's own numbers.
+  assert.equal(lesson.passSay, 'Fuel passed! Fuel load is open on the Tune page in the garage: a half tank is quicker, but in a Grand Prix it runs dry at 55%.');
 });
