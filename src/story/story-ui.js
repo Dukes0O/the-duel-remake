@@ -104,14 +104,20 @@ export function storyView(props, key = 'kogane') {
   const given = Array.isArray(props.steps) && props.steps.length ? props.steps : defaultSteps(card, props.step);
   const steps = given.filter(item => item && Object.hasOwn(card.steps, item.id)).map(item => {
     const label = typeof item.button === 'string' ? item.button : item.button?.label;
+    // A bar, when the game gives one: how far a hold or a rank is, with its words.
+    const bar = item.bar && Number.isFinite(item.bar.value) && Number.isFinite(item.bar.max) && item.bar.max > 0 && typeof item.bar.label === 'string'
+      ? {value: Math.max(0, Math.min(item.bar.max, item.bar.value)), max: item.bar.max, label: item.bar.label} : null;
     return {id: item.id, state: STATES.includes(item.state) ? item.state : 'locked',
-      note: typeof item.note === 'string' ? item.note.trim() : '', button: typeof label === 'string' ? label.trim() : ''};
+      note: typeof item.note === 'string' ? item.note.trim() : '', button: typeof label === 'string' ? label.trim() : '',
+      ...(bar ? {bar} : {})};
   });
   const lead = typeof props.lead === 'string' && props.lead.trim() ? props.lead.trim() : props.lead === true ? STORY_LEAD_LINE : '';
   return {key, step: props.step, read: props.read === true, steps, closed: closedDays(props.fireClosed),
     skylineOwned: props.skylineOwned === true, lead,
-    // A message waits while the letter is unread or Ana has yet to call.
-    message: props.read !== true || props.step === 'ana'};
+    // Notes after the letter (the Water Road's notes from V.), oldest first.
+    notes: Array.isArray(props.notes) ? props.notes.filter(text => typeof text === 'string' && text) : [],
+    // A message waits while the letter is unread or Ana has yet to call; a story may say so itself.
+    message: typeof props.message === 'boolean' ? props.message : props.read !== true || props.step === 'ana'};
 }
 
 export function fireMessage(closed) {
@@ -135,8 +141,10 @@ function stepMarkup(card, step, closed) {
     ? `<button type="button" class="${words.primary ? 'start-button' : 'secondary-button'} story-step-button" data-story-step="${step.id}"${waiting ? ' disabled aria-disabled="true"' : ''}><span>${escape(label)}</span></button>`
     : '';
   const state = {done: 'DONE', open: 'NEXT', locked: 'LOCKED'}[step.state];
+  const bar = step.bar && step.state === 'open'
+    ? `<div class="story-bar"><progress max="${step.bar.max}" value="${step.bar.value}" aria-label="${escape(step.bar.label)}"></progress><small>${escape(step.bar.label)}</small></div>` : '';
   return `<li class="story-step is-${step.state}" data-step="${step.id}"><i class="story-tick" aria-hidden="true"></i>`
-    + `<div class="story-step-words"><b>${escape(words.name)}</b><small class="story-state">${state}</small><p>${escape(stepText(card, step))}</p></div>${button}</li>`;
+    + `<div class="story-step-words"><b>${escape(words.name)}</b><small class="story-state">${state}</small><p>${escape(stepText(card, step))}</p>${bar}</div>${button}</li>`;
 }
 
 // The Story card. Empty when there is nothing to show.
@@ -148,6 +156,9 @@ export function storyCardMarkup(view) {
     + `<header class="shop-heading"><div><p class="eyebrow"><i></i> ${escape(card.eyebrow)}</p><h2 id="story-title">${escape(card.heading)}</h2></div>`
     + `<button type="button" class="shop-close" data-story-close aria-label="Close the story card">×</button></header>`
     + `<article class="story-letter" aria-label="${escape(card.letterLabel)}"><span class="story-seal" aria-hidden="true"></span><p>${escape(card.letter)}</p></article>`
+    // Notes after the letter: the newest in view, the older ones folded, so the steps stay near the top.
+    + (view.notes?.length ? `<div class="story-notes" aria-label="Notes"><p class="story-note">${escape(view.notes.at(-1))}</p>`
+      + (view.notes.length > 1 ? `<details class="story-older-notes"><summary>Earlier notes (${view.notes.length - 1})</summary>${view.notes.slice(0, -1).map(text => `<p class="story-note">${escape(text)}</p>`).join('')}</details>` : '') + `</div>` : '')
     + (view.closed ? `<p class="story-fire" role="status">${escape(fireMessage(view.closed))}</p>` : '')
     + `<ol class="story-steps" aria-label="${escape(card.stepsLabel)}">${steps}</ol>`
     + (view.lead ? `<p class="story-lead">${escape(view.lead)}</p>` : '')
@@ -266,11 +277,16 @@ export function createStoryUi({host, app, actions = {}, onChange = () => {}, onR
       close();
       const start = storyCardOf(key)?.steps[id]?.start;
       if (start) { if (app[start]?.()) onRaceSetup?.(); }
-      else (actions[`${key}.${id}`] ?? actions[id])?.();
+      else if (actions[`${key}.${id}`] ?? actions[id]) (actions[`${key}.${id}`] ?? actions[id])();
+      // One action for every step of a story (the Water Road's chapters): it is told which step.
+      else actions[key]?.(id);
     });
     layer.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); close(); } });
     host.append(layer);
-    layer.querySelector(focus)?.focus?.({preventScroll: true});
+    const first = layer.querySelector(focus);
+    first?.focus?.({preventScroll: true});
+    // A long story (the Water Road's nine chapters) keeps its open step's button in view.
+    first?.scrollIntoView?.({block: 'nearest'});
     onChange();
     return true;
   }

@@ -761,6 +761,8 @@ export function attachRenderer(host, app) {
       hiddenRoadDrivingCamera(st,course,app.cameraMode||'chase'):null;
     rustwallPresentation?.updateJourney?.(journeyView);
     yardPresentation?.setHomeVisible?.(app.isYardHomeActive?.() === true);
+    // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
+    yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
         winter:winterEnabled(course)?winterLightingSettings:undefined,
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,

@@ -18,6 +18,7 @@ import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {frontDoorMarkup} from './menu-front-door.js';
 import {createStoryUi, storyOn, storyButtonMarkup, syncStoryButton} from './story/story-ui.js';
+import './story/water-ui.js'; // WATER-SCREENS: the Water Road's card joins the Story button
 import {KOGANE_SKYLINE} from './story/story-save.js';
 
 // frontDoor is null with the 'menu-front-door' switch off: the markup is then exactly today's.
@@ -54,7 +55,15 @@ export function createMenuScreen(ctx) {
     // "Race Daichi" changes the app's setup (road, mode, level): the menu shows it, and the first look at that road is not a change of road by the player.
     const showStoryRace=()=>{previousSetupCourse=COURSE[app.getRaceChoices().startStage]?.id;ctx.onRaceSetup?.();};
     storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),onRaceSetup:showStoryRace,
-      actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]')}});
+      actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]'),
+        // The Water Road's chapters: a race fills the setup here; Scrapdome games and fights go to the yard; a road not owned opens Your Courses.
+        water:id=>{
+          const step=app.storyProps?.('water')?.steps?.find(item=>item.id===id);
+          if(step?.action?.type==='yard'){press('[data-action="wasteland-visit"]')();return;}
+          const out=app.waterStep?.(id);
+          if(out?.setup==='race')showStoryRace();
+          else if(out?.courses)press('[data-action="courses"]')();
+        }}});
     root.addEventListener('click',event=>{if(event.target.closest?.('[data-story-open]'))storyUi.open();});
   }
   function syncStory(){syncStoryButton(storyButton,storyOn(app)?storyUi?.view():null);}
