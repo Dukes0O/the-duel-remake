@@ -105,13 +105,14 @@ export function legFuelKg(from, to, {summitRun = false, pilotMap = false, table 
 }
 
 // Bearing on the small map from one course toward another, as a unit
-// vector in world x and z.
+// vector in world x and z. The map counts east as +x and north as +z; in the
+// world, as on the HEADING gauge, north is +z and east is -x (HELI-CHART-MIRROR).
 export function bearing(from, to, options = {}) {
   const table = destinationsFor(options);
   const a = table[from]?.mapKm, b = table[to]?.mapKm;
   if (!a || !b) return null;
   const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
-  return length > 0 ? {x: dx / length, z: dz / length} : null;
+  return length > 0 ? {x: -dx / length, z: dz / length} : null;
 }
 
 // ---- which legs a job may name (HELI-JOB-CLARITY) ---------------------------------

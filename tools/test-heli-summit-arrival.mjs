@@ -105,7 +105,9 @@ function otherArrivals() {
 // HELI-JOB-CLARITY (changed pin, was 624439558): the flights are unchanged; Summit Run, with the pilot's map off, no longer
 // lays a return crate, since no crate leg from there fits the fuel left on arrival (heli-jobs.js jobLegFlyable). With the
 // crate filter undone this pin comes back to 624439558.
-const OTHER_ARRIVALS_PIN = 1375301816;
+// HELI-CHART-MIRROR re-recorded it (was 1375301816): each arrival is now the mirror of before about the landing zone, on the
+// gauge's side (x, heading and sideways speed flip; z and height are the same); fuel and ground height follow the new ground.
+const OTHER_ARRIVALS_PIN = 2640782674;
 {
   const got = otherArrivals();
   if (OTHER_ARRIVALS_PIN === 0) console.log('PIN', got);

@@ -174,7 +174,9 @@ function autopilotFingerprint(extra = {}) {
   return hash(parts.join('\n'));
 }
 // Worked out from the autopilot as it stood before this card.
-const AUTOPILOT_PIN = 1475763491;
+// HELI-CHART-MIRROR re-recorded it (was 1475763491): the autopilot leaves and arrives on the gauge's side now, so the sampled
+// flights follow new lines; this suite's clearance checks on the same flights pass.
+const AUTOPILOT_PIN = 2297298912;
 if (want('pin')) {
   for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: true}])
     same(autopilotFingerprint(extra), AUTOPILOT_PIN, `autopilot flights on today's courses are what they were (${JSON.stringify(extra)})`);

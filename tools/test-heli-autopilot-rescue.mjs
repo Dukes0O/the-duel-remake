@@ -135,7 +135,9 @@ function newSession(profile, {rescue = true, summit = false, mode = 'assisted'} 
 // The pin was taken from the session as it stood before RESCUE-AUTOPILOT.
 // HELI-PAY-CONTINUE re-recorded this (was 2230200939): the hashed board and view carry the job pays and the clean bonus, which moved.
 // HELI-COMPASS re-recorded it (was 2449056266): the view's fire bearing is now the HEADING gauge's (212 became 148); nothing else moved.
-const OFF_PIN = 3493369388;
+// HELI-CHART-MIRROR re-recorded it (was 3493369388): arrivals now come in on the gauge's side, so the area's west and east
+// edges, the arrival heading and the approach flown from there moved (position within 2 m, fuel within 5 kg). Nothing else moved.
+const OFF_PIN = 1704110696;
 for (const extra of [{}, {rescueEnabled: false}, {rescueEnabled: 'yes'}, {summitRunEnabled: false}, {summitRunEnabled: 'yes', rescueEnabled: 1}])
   assert.equal(offFingerprint(extra), OFF_PIN, `the switch-off flights are unchanged (${JSON.stringify(extra)})`), checks++;
 same(offFacts, {lake: true, cruise: true, arrived: true, jobTaken: true}, 'and those flights really flew: the lake, the cruise leg, the approach, a job');
@@ -334,7 +336,8 @@ console.log('PASS a supply run gets no rescue goal');
     same([legFuelKg(from, 'summit-run', {summitRun: true}), legFuelKg('summit-run', from, {summitRun: true}), legFuelKg(from, 'summit-run')], [kg, kg, null],
       `${from}: ${kg} kg to Summit Run and back, and none with the switch off`);
   }
-  ok(bearing('summit-run', 'panorama-ridge') === null && (b => b.x < 0 && b.z > 0)(bearing('panorama-ridge', 'summit-run', {summitRun: true})), 'the small map puts Summit Run north-west of Panorama Ridge');
+  // HELI-CHART-MIRROR: the map's north-west is world +x (the world's east, the gauge's, is -x); was b.x < 0, the mirror.
+  ok(bearing('summit-run', 'panorama-ridge') === null && (b => b.x > 0 && b.z > 0)(bearing('panorama-ridge', 'summit-run', {summitRun: true})), 'the small map puts Summit Run north-west of Panorama Ridge');
 }
 // The flight itself: from the home pad, on the autopilot, across the 160 kg leg, to the pad at Summit Run.
 {

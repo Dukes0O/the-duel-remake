@@ -160,7 +160,9 @@ function scenarioHashes(extra = {}) {
 // board's pay words. The hiker, avalanche, hoist and supply hashes did not move.
 // HELI-COMPASS re-recorded hiker, avalanche, hoist, supply and fire (were 75325398, 382890534, 3958087009, 1425980116 and
 // 3551929874): their views carry the rescue and fire bearings and the wind's name, now the HEADING gauge's. Nothing else moved.
-const BEFORE = {carJob: 3266723423, hiker: 2071532041, avalanche: 2249168172, hoist: 3614661767, supply: 1879391574, fire: 1049849445};
+// HELI-CHART-MIRROR re-recorded all six (were 3266723423, 2071532041, 2249168172, 3614661767, 1879391574 and 1049849445): the arrival points, so the flying area's west and east edges, are the mirror of before about the landing zone;
+// field by field only area.minX and area.maxX moved.
+const BEFORE = {carJob: 2697990669, hiker: 3228745719, avalanche: 2735586122, hoist: 2484860221, supply: 129308216, fire: 194472035};
 {
   same(scenarioHashes(), BEFORE, 'with no skin or wildlife switch the session is exactly what it was');
   same(scenarioHashes({skinsEnabled: false, wildlifeEnabled: false}), BEFORE, 'and with both switches off');
@@ -731,9 +733,16 @@ function patternOver(square, gap, reach) {
   }
   return points;
 }
-function flyPoints(session, points, {agl = 110, speed = 26, each = null} = {}) {
+function flyPoints(session, points, {agl = 110, speed = 26, each = null, climb = false} = {}) {
   const events = [];
   let next = 0;
+  // HELI-CHART-MIRROR: a count climbs in place first. The count's square is placed at random inside the flying area, which moved with
+  // the arrival points; it now starts 93 m north of the pad, so a pilot climbing on the way scared the animals at its edge.
+  for (let n = 0; climb && n < 120 * 30; n++) {
+    const v = session.view(), ground = woods.ground.height(v.heli.x, v.heli.z);
+    if (v.heli.y - ground >= agl - 10) break;
+    events.push(...session.step(pilot(v, {x: v.heli.x, z: v.heli.z, y: ground + agl}, {speed: 1, sink: 6})));
+  }
   for (let n = 0; n < 120 * 900 && next < points.length; n++) {
     const v = session.view(), p = points[next];
     if (Math.hypot(v.heli.x - p.x, v.heli.z - p.z) < 18) { next++; continue; }
@@ -785,14 +794,16 @@ function flyPoints(session, points, {agl = 110, speed = 26, each = null} = {}) {
 console.log('PASS the count is on the board');
 
 {
-  // The whole count: lines 120 m apart cover the square; R reports once; the pay, the tally and the coat.
-  const flyCount = (worn = 'stock', {gap = 120, reach = 60, missions = {}} = {}) => {
+  // The whole count: lines 110 m apart cover the square; R reports once; the pay, the tally and the coat.
+  // HELI-CHART-MIRROR: 110 m (was 120). At 120 m with a 60 m reach the rows midway between two lines are covered only by a
+  // perfectly straight line; over the square's new ground this pilot covered 94%. The 95% the check asks for is unchanged.
+  const flyCount = (worn = 'stock', {gap = 110, reach = 60, missions = {}} = {}) => {
     const session = countSession({}, {worn, owned: worn === 'stock' ? [] : [worn], missions});
     session.takeJob(countJob.id);
     const log = session.takeEvents();
     const square = session.view().survey.square;
     const peaks = {heat: 0};
-    log.push(...flyPoints(session, patternOver(square, gap, reach), {each: v => { peaks.heat = Math.max(peaks.heat, v.survey.heat.length); }}));
+    log.push(...flyPoints(session, patternOver(square, gap, reach), {climb: true, each: v => { peaks.heat = Math.max(peaks.heat, v.survey.heat.length); }}));
     return {session, log, peaks};
   };
   const full = flyCount();
@@ -846,10 +857,14 @@ console.log('PASS a count is flown and reported');
   };
   const probe = passBy('stock');
   const events = [], line = [{x: probe.mine.x - 250, z: probe.mine.z + 70}, {x: probe.mine.x + 250, z: probe.mine.z + 70}];
+  // HELI-CHART-MIRROR: cross to the pass at 110 m first. The square moved with the flying area, and at 30 m all the way from
+  // the pad this pilot flew into the ground cover on the way; the pass itself is the same low line.
+  flyPoints(probe.session, [line[0]], {climb: true});
   events.push(...flyPoints(probe.session, line, {agl: 30, speed: 12}));
   ok(events.some(e => e.type === 'surveyScare' && e.id === probe.mine.id) && lines(events).includes('heli.radio.survey.scared'), 'low and 70 m away, the plain helicopter scares the animal, and Sarah says so');
   ok(lines(events).filter(l => l === 'heli.radio.survey.scared').length <= 3, 'Sarah does not repeat herself every step');
   const quiet = passBy('wildlife');
+  flyPoints(quiet.session, [{x: quiet.mine.x - 250, z: quiet.mine.z + 70}], {climb: true});
   const quietEvents = flyPoints(quiet.session, [{x: quiet.mine.x - 250, z: quiet.mine.z + 70}, {x: quiet.mine.x + 250, z: quiet.mine.z + 70}], {agl: 30, speed: 12});
   ok(!quietEvents.some(e => e.type === 'surveyScare' && e.id === quiet.mine.id), 'with the quiet rotor tips (50 m) the same pass scares it not');
   ok(quietEvents.some(e => e.type === 'surveyCount' && e.id === quiet.mine.id), 'and it is counted (100 m reach)');

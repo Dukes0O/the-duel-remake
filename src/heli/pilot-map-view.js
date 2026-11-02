@@ -71,8 +71,9 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
     for (const id of new Set([from.id, to.id])) jobsBy.set(id, (jobsBy.get(id) ?? 0) + 1);
   }
   const heliPlace = here ?? placeById('tremblant-woods');
+  // The chart's east is the world's -x (the HEADING gauge's east), so the helicopter's world x counts the other way.
   const heliPoint = view?.heli
-    ? {x: roundKm(heliPlace.drawAt.x + view.heli.x / 1000), z: roundKm(heliPlace.drawAt.z + view.heli.z / 1000), heading: view.heli.heading ?? 0}
+    ? {x: roundKm(heliPlace.drawAt.x - view.heli.x / 1000), z: roundKm(heliPlace.drawAt.z + view.heli.z / 1000), heading: view.heli.heading ?? 0}
     : null;
   // A dev place (Kogane Pass) is on the chart only while it is a destination, as Summit Run's switch does.
   const places = [...PLACES, ...DEV_PLACES].filter(place => place.air ? tableSeen : !DEV_PLACES.includes(place) || destinations.has(destinationOf(place))).map(place => {
@@ -282,10 +283,10 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     const [px, py] = project(place.x, place.z), dx = 14 + secret.index * 10;
     ctx.fillStyle = '#b03c28'; ctx.font = 'bold 12px Georgia, serif'; ctx.fillText('★', px + dx, py + 14);
   }
-  // The helicopter: a small triangle pointing the way it faces.
+  // The helicopter: a small triangle pointing the way it faces (the gauge's number, clockwise from north).
   if (model.heli) {
     const [hx, hy] = project(model.heli.x, model.heli.z);
-    ctx.save(); ctx.translate(hx, hy); ctx.rotate(model.heli.heading);
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(-model.heli.heading);
     ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(6, 7); ctx.lineTo(-6, 7); ctx.closePath();
     ctx.fillStyle = '#254a78'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
   }

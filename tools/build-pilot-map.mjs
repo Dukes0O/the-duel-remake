@@ -52,7 +52,8 @@ export function traceCourse(def, {sizeKm = PILOT_MAP.outlineKm, tolerance = TRAC
   const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
   const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
   const scale = sizeKm / Math.max(maxX - minX, maxZ - minZ);
-  let points = course.samples.map(p => [(p.x - cx) * scale, (p.z - cz) * scale]);
+  // The chart's east is the world's -x (the HEADING gauge's east), so an outline looks as the course does from above.
+  let points = course.samples.map(p => [(cx - p.x) * scale, (p.z - cz) * scale]);
   const closed = def.closed !== false;
   if (closed) points = [...points, points[0]];
   // A closed loop is simplified in two halves so the seam is not a corner.

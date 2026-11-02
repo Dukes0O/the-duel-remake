@@ -15,10 +15,12 @@ import {
   destinationsFor, isDestination, legFuelKg, bearing, dayJobs, jobTitle, mapJobPay,
 } from '../src/heli/heli-jobs.js';
 import {createHeliSession, courseSite, SEA_LEVEL, HELI_SESSION} from '../src/heli/heli-session.js';
+import {compassBearing, compassDirection} from '../src/heli/heli-flight.js';
+import {mapModel, bearingKm, placeNote} from '../src/heli/pilot-map-view.js';
 import {SEA_LEVEL as DRAWN_SEA_LEVEL} from '../src/coastal-water.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
 import {
-  PLACES, LEFT_OFF, FUEL_PADS, PLACE_ALTITUDES, legFuelKgMap, mapDistanceKm, placeOfCourse,
+  PLACES, LEFT_OFF, FUEL_PADS, PLACE_ALTITUDES, legFuelKgMap, mapDistanceKm, placeOfCourse, placeById,
 } from '../src/heli/pilot-map-data.js';
 
 let checks = 0;
@@ -74,7 +76,9 @@ ok(FEATURE_STATES['pilot-map'] === 'on', 'the pilot map is released (28 October 
 {
   // HELI-PAY-CONTINUE: only `jobs` moved (471279539 before), because the three routes' pay did; the legs, bearings, titles and tables are the old hashes.
   // With each job's pay mapped back to 300, 450 or 600 by its route the same 100 days hash to the old 471279539.
-  const BEFORE = {jobs: 89313597, legs: 3081688097, bearings: 3418701639, titles: 516794368, tables: 4158423665};
+  // HELI-CHART-MIRROR: only `bearings` moved (3418701639 before): bearing() now gives east as world -x, the gauge's east;
+  // with each x turned back the same table hashes to the old 3418701639.
+  const BEFORE = {jobs: 89313597, legs: 3081688097, bearings: 2932529757, titles: 516794368, tables: 4158423665};
   const ids = ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run', 'ardennes-forest', 'nope'];
   const jobs = []; for (let day = 0; day < 100; day++) jobs.push(dayJobs(day));
   const legs = []; for (const a of ids) for (const b of ids) legs.push([legFuelKg(a, b), legFuelKg(a, b, {summitRun: true})]);
@@ -117,7 +121,8 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
     if (!to || !back || Math.abs(Math.hypot(to.x, to.z) - 1) > 1e-9 || Math.abs(to.x + back.x) > 1e-9 || Math.abs(to.z + back.z) > 1e-9) assert.fail(`bearing ${a} to ${b}`);
   }
   checks++;
-  same(bearing('tremblant-woods', 'eifel-crown', {pilotMap: true}), (() => { const d = Math.hypot(12, 9); return {x: 12 / d, z: 9 / d}; })(), 'Eifel Crown lies north-east of home');
+  // HELI-CHART-MIRROR: the chart's east is the world's -x, the gauge's east (was x: 12 / d, the mirror).
+  same(bearing('tremblant-woods', 'eifel-crown', {pilotMap: true}), (() => { const d = Math.hypot(12, 9); return {x: -12 / d, z: 9 / d}; })(), 'Eifel Crown lies north-east of home');
 }
 
 // ---- A landing zone for each one ------------------------------------------------------------------
@@ -200,6 +205,37 @@ const placeIds = PLACES.filter(place => !place.air).map(place => place.courses[0
   near(Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z), HELI_SESSION.arrivalDistance, 40, 'it arrives 1.5 km out');
   near(Math.atan2(v.heli.x - v.zone.x, v.heli.z - v.zone.z), Math.atan2(toward.x, toward.z), 0.05, 'on the side toward home');
   near(Math.cos(v.heli.heading - Math.atan2(v.zone.x - v.heli.x, v.zone.z - v.heli.z)), 1, 0.01, 'facing the landing zone');
+}
+
+// ---- HELI-CHART-MIRROR: the chart, the HEADING gauge and the world agree ----------------------------------------------
+// Fly out of the home pad on the moving map's bearing to a place, held by the gauge's own compass, and arrive on the
+// chart's side of it. One place the chart draws west of home, one east.
+{
+  const on = {pilotMap: true}, turn = (a, b) => Math.abs((a - b + 540) % 360 - 180);
+  const chartAt = view => mapModel({view, movingMap: true});
+  const zoneOnChart = (chart, view) => ({x: chart.heli.x + (view.heli.x - view.zone.x) / 1000, z: chart.heli.z - (view.heli.z - view.zone.z) / 1000});
+  for (const id of ['pacific-canyon', 'harbor-highlands']) {
+    const session = sessionAt('tremblant-woods');
+    ok(session.setDestination(id), `${id} can be chosen`);
+    const start = session.view(), chart = chartAt(start), place = chart.places.find(row => row.destination === id);
+    const {bearing: heading} = bearingKm(chart.heli, place);
+    ok(placeNote(chart, place).includes(`${String(heading).padStart(3, '0')}°`), `the moving map's hover reads ${heading}° to ${id}`);
+    ok(turn(compassBearing(bearing('tremblant-woods', id, on).x, bearing('tremblant-woods', id, on).z), heading) < 4, `the leg leaves the way the chart points (${heading}°)`);
+    const way = compassDirection(heading), far = 5000;
+    const goal = {x: start.heli.x + way.x * far, z: start.heli.z + way.z * far, y: start.zone.y + 150};
+    run(session, 900, view => pilot(view, goal, {speed: 30}), view => view.cruiseOffered);
+    const out = session.view();
+    ok(out.cruiseOffered, `flying ${heading}° by the gauge reaches the area's edge and the cruise leg to ${id}`);
+    near(turn(compassBearing(out.heli.x - start.heli.x, out.heli.z - start.heli.z), heading), 0, 3, `the flight held ${heading}° on the gauge`);
+    near(turn(bearingKm(chart.heli, chartAt(out).heli).bearing, heading), 0, 3, 'and the chart\'s dot moved the same way');
+    ok(session.acceptCruise(), `the leg to ${id} is taken`);
+    const arrival = run(session, 8, () => ({}), (view, events) => events.some(e => e.type === 'entered'));
+    ok(arrival.some(e => e.type === 'entered' && e.arrived === true && e.courseId === id), `and ${id} is entered`);
+    const there = session.view(), back = bearingKm(placeOfCourse(id).drawAt, placeById('tremblant-woods').drawAt).bearing;
+    near(turn(bearingKm(zoneOnChart(chartAt(there), there), chartAt(there).heli).bearing, back), 0, 2, `on the chart it arrives on home's side of ${id} (${back}°)`);
+    near(turn(compassBearing(there.heli.x - there.zone.x, there.heli.z - there.zone.z), back), 0, 2, 'and the gauge reads the same from the pad');
+    near(turn(there.readout.headingDeg, (back + 180) % 360), 0, 2, 'facing the pad, on the heading it left home on');
+  }
 }
 
 // ---- Fuel pads -----------------------------------------------------------------------------------------------------
