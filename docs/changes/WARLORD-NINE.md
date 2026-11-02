@@ -18,7 +18,7 @@ Magnet"). Switch `warlord-nine`.
   (armor off, thrown clear). Then the magnet glows red for 3 s, he sits still and takes
   1.5 times damage: `HIS MAGNET IS RED HOT. HIT HIM NOW!`. After his first wreck he pulls
   twice in a row.
-- His own Easy: armor 90 (150 on Medium and Hard), never shoots, rams for half.
+- Armor: 75 on Medium and Hard (the Heritage's arena 50 times 1.5, like every warlord); his own Easy: armor 60, never shoots, rams for half.
 - First win: `THE MAGNET IS BROKEN!`, the Tesla Coil if not yet owned, the ladder's ninth
   pay (1,400 times the level's factor), his story card on the Story Wall, then on the radio
   Magnus ("You broke my magnet!...") and Hollis ("...He'll want a rematch."). He claims no
@@ -30,19 +30,39 @@ Magnet"). Switch `warlord-nine`.
 
 UNFINISHED: lane tier, build, art round and browser play still to record here.
 
-- `node tools/test-warlord-magnus.mjs`: 36 checks pass (unlock after the Baron with no
+- `node tools/test-warlord-magnus.mjs`: 38 checks pass (unlock after the Baron with no
   hold, the Baron's gate unchanged, switch off refuses the fight and hides his card, Salt
-  Flats venue, armor by level, the ring, a parked car dragged in, full throttle away gets
+  Flats venue, armor by level, the ring, the pull's sound field kept and removed, a parked car dragged in, full throttle away gets
   free, the clang, the red-hot window and its 1.5 times damage, phase two's two pulls,
   Easy never shoots and rams for half, first-win pay, Tesla Coil, no territory row, his
   record and card, the map's FIGHT and REMATCH).
-- `node tools/test-water-screens.mjs`: 62 checks (new chapter 9 block: off ends with the
-  Baron as before; on, chapter 9 is next, goes to the yard from the menu, fights him from
+- `node tools/test-water-screens.mjs`: 63 checks (new chapter 9 block: off ends with the
+  Baron as before; on, chapter 9 is next, Hollis's end lines still marked once after the Baron, goes to the yard from the menu, fights him from
   the Story Wall, the tower stays full, beating him ends the road).
 - **Easy (packet section 4):** `node tools/test-water-easy.mjs --rates magnus --seeds 30`:
-  **26/30** (the child-pace test driver; losses by three wrecks). Before his Easy numbers:
+  **29/30** (the child-pace test driver; the loss by three wrecks). Before his Easy numbers:
   0/10 (he shot and rammed the child out). Probes on seeds 1 to 10: no shooting on Easy
-  0/10; rams at half 6/10; armor 110 to 90, 10/10. Only his own file's Easy numbers moved.
+  0/10; rams at half 6/10; Easy armor 110 to 90, 10/10 (26/30 over 30). After the review
+  set Medium and Hard to the rule's 75, Easy went to 60 so it stays lower: 29/30. Only his
+  own file's numbers moved.
+
+## Review
+
+One independent review (code, saves, design numbers). Fixed:
+1. Armor was twice the rule: a warlord car's arena armor is halved first, so the rule's
+   "times 1.5" is 75, not 150. Now 75 on Medium and Hard, 60 on Easy.
+2. The pull's hum would stop on the next frame (the audio keeps a field's voice only while
+   the field is in the fight's state). The pull now lists its field in
+   `state.combat.warlordFields`, which `src/audio.js` reads with the other fields.
+3. The two docs now agree: Hollis speaks straight after Magnus, on the results.
+4. The red-hot 1.5 times is in the settled table.
+5. `tools/preview-player.js` no longer gives a Preview player a Magnus hold row.
+6. The results name a warlord's weapon only when it is new (`warlord-settlement.js`):
+   a finished player may already own the Tesla Coil. This also applies to the
+   Dustmonger, Mirage and Gunn rewards, which was wrong in the same way.
+The reviewer found the saves safe: his record survives loading and backups, new careers
+keep eight records, no territory row is written, and a finished player's end lines do not
+replay with the switch on or off.
 
 ## Changed assertions (Claude's rule-18 review)
 

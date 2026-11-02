@@ -18,7 +18,8 @@ export const MAGNUS_RULES = Object.freeze({
   pullSec: 2.5, gapSec: 1, hotSec: 3, hotDefense: 1.5,
   // A pulled car that reaches the magnet is hit and thrown clear.
   clangMetres: 5, clangArmor: Object.freeze({easy: 10, medium: 15, hard: 20}), clangMps: 25 * .44704 * .5,
-  armor: Object.freeze({easy: 90, medium: 150, hard: 150}),
+  // A warlord car's arena armor is halved, then scaled (src/arena/arena-event.js): the Heritage's 50 times 1.5.
+  armor: Object.freeze({easy: 60, medium: 75, hard: 75}),
   // His rams on the player, as a share of an ordinary ram (his own Easy).
   ramShare: Object.freeze({easy: .5, medium: 1, hard: 1}),
 });
@@ -61,13 +62,21 @@ function setStage(duel, participant, actor, stage, seconds = 0) {
   actor.arenaTellSec = 0;
 }
 
-const hum = actor => ({ownerId: actor.arenaId, kind: 'magnus-pull'});
+// The hum lasts while its field is listed in the fight's combat state (the audio keeps
+// a field's voice only while the field is there); the pull's end removes it.
 function startHum(duel, actor) {
-  const at = worldPose(duel, actor);
-  duel.emit({arsenalCue: 'weapon.magnet.hum', warlordMove: true, actor, magnet: hum(actor),
+  const combat = duel.state.combat, at = worldPose(duel, actor);
+  if (!combat) return;
+  const field = {ownerId: actor.arenaId, kind: 'magnus-pull'};
+  combat.warlordFields = [...(combat.warlordFields || []).filter(item => item.ownerId !== actor.arenaId), field];
+  duel.emit({arsenalCue: 'weapon.magnet.hum', warlordMove: true, actor, magnet: field,
     hitPosition: {x: at.x, y: duel.course.groundAt(actor.s, actor.lateral).y ?? 0, z: at.z}});
 }
-function endHum(duel, actor) { duel.emit({arsenalMagnetEnded: true, ownerId: actor.arenaId, reason: 'warlord'}); }
+function endHum(duel, actor) {
+  const combat = duel.state.combat;
+  if (combat?.warlordFields) combat.warlordFields = combat.warlordFields.filter(item => item.ownerId !== actor.arenaId);
+  duel.emit({arsenalMagnetEnded: true, ownerId: actor.arenaId, reason: 'warlord'});
+}
 
 function startTell(duel, participant, actor, difficulty) {
   const seconds = difficulty.tellSec * MAGNUS_RULES.tellScale;

@@ -163,6 +163,7 @@ same(freshApp({read: false, beaten: ['sal', 'dustmonger', 'mirage']}).waterYardS
   same([nine.state, nine.button, nine.action?.type, nine.bar], ['open', 'Go to the yard', 'yard', null], 'from the menu, chapter 9 goes to the yard; no hold bar');
   ok(nine.note.includes('Magnus the Magnet') && nine.note.includes('Salt Flats'), 'its words name him and his hideout');
   intoYard(app);
+  same(app.profile.story.water.end, true, 'Hollis\'s end lines still come once the Baron falls, with chapter 9 to play');
   const wall = waterWallMarkup(app.storyProps('water'));
   ok(/data-water-step="magnus"[^>]*><span>Fight Magnus the Magnet</.test(wall), 'the Story Wall\'s one button fights him');
   ok(wall.includes('9 · The ninth warlord'), 'the chapter is named');

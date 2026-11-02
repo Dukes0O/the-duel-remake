@@ -155,7 +155,8 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
   let settledProfile = {...profile, wasteland}, weaponEarned = null;
   if (firstWin && warlord.rewardWeapon) {
     const unlocked = rewardArsenalWeapon(settledProfile, warlord.rewardWeapon, {warlordId: id});
-    if (unlocked.ok) { settledProfile = unlocked.profile; weaponEarned = warlord.rewardWeapon; }
+    // Named on the results only when it is new: a player may already own it.
+    if (unlocked.ok) { settledProfile = unlocked.profile; if (unlocked.changed) weaponEarned = warlord.rewardWeapon; }
   }
   return {profile: settledProfile, key, awarded: true,
     scrapEarned: scrap - oldScrap, firstWin,

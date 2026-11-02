@@ -76,10 +76,12 @@ test('the Big Pull: a blue ring, then a parked car is dragged in and a car drivi
   equal([ring?.kind, ring?.color, ring?.radius], ['ring', 'magnet', MAGNUS_RULES.reachMetres], 'the ring shows his reach in blue');
   runUntil(duel, () => boss.magnusPull.stage === 'pull', 3);
   equal(boss.magnusPull.stage, 'pull', 'the pull follows the tell');
+  equal(duel.state.combat.warlordFields?.length, 1, 'the pull lists its sound field, so its hum keeps playing');
   duel.state.speedMph = 0;
   const before = gap(duel, boss);
   runUntil(duel, () => boss.magnusPull.stage !== 'pull', 3);
   ok(gap(duel, boss) < before - 4, `a parked car is dragged in (${before.toFixed(1)} m to ${gap(duel, boss).toFixed(1)} m)`);
+  equal(duel.state.combat.warlordFields, [], 'the pull\'s end removes its sound field');
 
   const escape = fight(), d2 = escape.duel, b2 = escape.boss;
   place(d2, b2, 20, 60);
