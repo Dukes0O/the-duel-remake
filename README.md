@@ -6,6 +6,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Ski wax is a classroom now.** Three wax tins, hard, medium and
+  soft, and snow trays side on: your ski races a plain ski down a 50 m test
+  strip, timed at real speed, and the board shows who won and by how many
+  metres. The colder the snow, the harder the wax. Brian's job reads today's
+  snow on the ski menu, three days running, as the slalom challenge does.
 - **The pilot's map now agrees with the HEADING gauge.** A place drawn east on
   the map is east on the gauge: fly the map's bearing and you arrive from that
   side, and the cruise leg leaves that way. Your dot moves the way you fly, its

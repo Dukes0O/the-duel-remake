@@ -1685,3 +1685,16 @@ review, no code faults, two notes fixed.
 
 Rule 19: helicopter, map and Lab bench code since the full tier 562/562 on 27fb3739; no shared core,
 save shape or physics change, so the lane tier covers it. No save change.
+
+## Release, 2 November 2026, early (Claude, Release Manager)
+
+LAB-CLASSROOM-WAX: Ski wax as a classroom lesson (three labelled wax tins, a 50 m test strip at 10
+degrees timed at real speed with the ski rules' own friction, your ski against a plain ski, the
+winner and the metres behind on the board, Brian's job on three days of the ski menu); the old Wax
+lesson removed; the snow suite and scenario keep Launch and the wax challenge's daily rules. Wax
+suite 13/13, all 26 Lab suites, all 17 Lab scenarios (the Wax one to the slalom with the key idea
+card), lane tier 46/46, build. One review, eight faults fixed.
+
+Rule 19: Lab code and the wax bench's glide helpers since the full tier 562/562 on 27fb3739, with
+HELI-CHART-MIRROR (released on its own lane tier) merged before it; no save shape or physics change.
+No save change.
