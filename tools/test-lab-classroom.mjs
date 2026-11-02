@@ -106,10 +106,27 @@ test('Brian notices a stuck player: an offer at 12 s, the first hint at 25 s, ne
   run(session, STUCK_HINT_S + 2);
   assert.equal(session.view().help, 0, 'the wonder needs no input, so nobody is stuck');
   session.act('next');
+  const words = session.view().brian.text;
   run(session, STUCK_OFFER_S + .2);
-  assert.match(session.view().brian.text, /Stuck\? Press H/);
+  assert.match(session.view().nudge.text, /Stuck\? Press H/);
+  assert.equal(session.view().brian.text, words, 'the offer sits under Brian’s words and never replaces them');
   run(session, STUCK_HINT_S - STUCK_OFFER_S);
-  assert.equal(session.view().help, 1); assert.equal(session.view().brian.text, session.view().hints[0]);
+  assert.equal(session.view().help, 1); assert.equal(session.view().nudge.text, session.view().hints[0]);
+  assert.equal(session.view().brian.text, words, 'so does the first hint');
+  session.act('help');
+  assert.equal(session.view().brian.text, session.view().hints[1], 'asking for help answers in Brian’s own words');
+  assert.equal(session.view().nudge, null);
+});
+
+test('Previous step goes back one step to read or do it again; there is nothing before the first', () => {
+  const session = createClassroomSession(lesson);
+  assert.equal(session.act('back'), false);
+  playThroughTo(session, STEPS[3].id);
+  assert.equal(session.act('back'), true);
+  assert.equal(session.view().step.id, STEPS[2].id);
+  assert.equal(session.view().ready, true, 'a step already done stays done');
+  session.act('next');
+  assert.equal(session.view().step.id, STEPS[3].id);
 });
 
 test('failed tries climb the help, but Show me waits for the player', () => {

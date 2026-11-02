@@ -20,7 +20,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
     <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-brian"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b>
-      <p class="lc-bubble" aria-live="polite"></p><div class="lc-cards"></div>
+      <p class="lc-bubble" aria-live="polite"></p><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
@@ -68,11 +68,12 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.code === 'Escape') action = 'leave';
     else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
+    else if (event.code === 'Backspace') action = v.index > 0 && !(passed && v.last) ? 'back' : null;
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';
     else if (event.code === 'KeyS' && v.actions.includes('slow')) action = 'slow';
     else if (name && v.keys[name]) action = v.keys[name];
     // The walk keys and the Lab's own Esc must not act behind the lesson.
-    if (action || ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(event.code)) {
+    if (action || ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Enter', 'Backspace'].includes(event.code)) {
       event.preventDefault(); event.stopImmediatePropagation();
     }
     // A held key repeats only where the lesson asks for it (the Lift lever), and says it is held.
@@ -129,6 +130,10 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     setHtml($('.lc-step'), 'step', escape(v.step.title));
     const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
     setHtml($('.lc-bubble'), 'bubble', escape(brian.text));
+    // Brian's offer of help sits under his words, so a slow reader never loses them.
+    const nudgeText = !note && !(passed && v.last) && v.nudge ? v.nudge.text : '';
+    setHtml($('.lc-nudge'), 'nudge', escape(nudgeText));
+    $('.lc-nudge').hidden = !nudgeText;
     const portrait = $('.lc-portrait');
     if (portrait.dataset.mood !== brian.mood) portrait.dataset.mood = brian.mood;
     root.querySelectorAll('.lc-rungs i').forEach((dot, i) => dot.classList.toggle('on', i < v.help));
@@ -152,6 +157,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +
+      (v.index > 0 && !(v.last && passed) ? button('back', 'Previous step', 'Backspace') : '') +
       (v.last && passed ? button('leave', 'Back to the Lab', 'Enter', {primary: true})
         : v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', lesson.finishLabel ?? 'Try it in the game', 'Enter', {primary: true})
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));
