@@ -103,7 +103,7 @@ export function createModel() {
     if (id === 'wonder') { m.strips = [{snow: 'powder', lanes: [lane('hard', 'powder', 'Hard wax'), lane('soft', 'powder', 'Soft wax')]}]; m.autoStart = .6; m.phase = 'running'; }
     if (id === 'word-wax') { m.phase = 'pick'; m.strips = [{snow: 'powder', lanes: [lane(null, 'powder', 'Your ski')]}]; }
     if (id === 'word-glide') { m.strips = [{snow: 'powder', lanes: [lane('hard', 'powder', 'Hard wax')]}]; }
-    if (id === 'word-crystals') { m.phase = 'warm'; m.strips = [{snow: 'powder', lanes: []}]; }
+    if (id === 'word-crystals') m.phase = 'warm';
     if (id === 'watch') {
       m.strips = [['powder', 'hard', 'soft'], ['cold', 'medium', 'hard'], ['wet', 'soft', 'hard']].map(([snow, right, wrong]) =>
         ({snow, lanes: [lane(right, snow, `${WAX_NAMES[right]} wax`), lane(wrong, snow, `${WAX_NAMES[wrong]} wax`)]}));
@@ -114,7 +114,7 @@ export function createModel() {
       m.phase = m.result ? 'result' : 'pick';
       m.strips = [{snow, lanes: [lane(m.pick, snow, 'Your ski'), lane(null, snow, 'No wax')]}];
     }
-    if (id === 'alone') { m.phase = m.day >= DAYS.length ? 'done' : 'pick'; m.strips = [{snow: DAYS[Math.min(m.day, DAYS.length - 1)].snow, lanes: [lane(m.pick, DAYS[Math.min(m.day, DAYS.length - 1)].snow, 'Your ski')]}]; }
+    if (id === 'alone') { const day = DAYS[Math.min(m.day, DAYS.length - 1)]; m.phase = m.day >= DAYS.length ? 'done' : 'pick'; m.strips = [{snow: day.snow, celsius: day.celsius, lanes: [lane(m.pick, day.snow, 'Your ski')]}]; }
     if (CHECKS[id]) {
       m.phase = m.answered === null ? 'ask' : 'answered';
       const snow = CHECKS[id].snow;
@@ -216,7 +216,7 @@ export function createModel() {
       return {kind: 'pass', say: m.say};
     }
     const next = DAYS[m.day];
-    m.strips = [{snow: next.snow, lanes: [lane(null, next.snow, 'Your ski')]}];
+    m.strips = [{snow: next.snow, celsius: next.celsius, lanes: [lane(null, next.snow, 'Your ski')]}];
     m.say = `Right: ${SNOWS[day.snow].wax} wax. Next day. ${todayLine(next)}.`;
     return {kind: 'right', say: m.say};
   }
@@ -258,8 +258,12 @@ export function createModel() {
     const id = step().id;
     // The tin Brian's pointer goes to: the wax that suits the snow on the board (hard, on the Wax step).
     const best = id === 'word-wax' ? 'hard' : id === 'alone' ? SNOWS[DAYS[Math.min(m.day, DAYS.length - 1)].snow].wax : m.strips[0] ? SNOWS[m.strips[0].snow].wax : null;
-    const base = {scene: 'trays', time: m.time, celsius: m.celsius, pick: m.pick, best, tins: true, menu: null, table: null,
-      strips: m.strips.map(s => ({snow: s.snow, name: SNOWS[s.snow].name, celsius: SNOWS[s.snow].celsius, lanes: s.lanes.map(l => ({...l, metres: metresAt(l.wax, l.snow, l.t), seconds: l.done ? runSeconds(l.wax, l.snow) : l.setAt == null ? null : l.t}))})),
+    const base = {scene: 'trays', time: m.time, celsius: m.celsius, pick: m.pick, best, tins: true, menu: null,
+      strips: m.strips.map(s => {
+        const fastest = Math.min(...s.lanes.map(l => runSeconds(l.wax, l.snow))), won = s.lanes.length > 1 && s.lanes.some(l => l.done && runSeconds(l.wax, l.snow) === fastest);
+        return {snow: s.snow, name: SNOWS[s.snow].name, celsius: s.celsius ?? SNOWS[s.snow].celsius, lanes: s.lanes.map(l => ({...l, metres: metresAt(l.wax, l.snow, l.t), seconds: l.done ? runSeconds(l.wax, l.snow) : l.setAt == null ? null : l.t,
+          winner: won && runSeconds(l.wax, l.snow) === fastest, behindM: won && runSeconds(l.wax, l.snow) > fastest ? STRIP_M - metresAt(l.wax, l.snow, fastest) : null}))};
+      }),
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), magnifier: false};
     if (id === 'wonder') return {...base, tins: false, actions: ['replay'],
       say: seen.has(id) ? `Same skis, same slope, same snow, ${COLD_C} °C dry powder. The hard-waxed ski glided past: ${s1(runSeconds('hard', 'powder'))} against ${s1(runSeconds('soft', 'powder'))}. Why?`
@@ -290,9 +294,8 @@ export function createModel() {
         hints: done ? ['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.'] : ['Watch the crystals in the magnifier.', 'Press → a few times, up to 0 °C.', 'Watch my pointer: I warm it.']};
     }
     if (id === 'watch') {
-      const done = seen.has(id), table = m.strips.map(s => ({label: `${SNOWS[s.snow].name}, ${tidy(SNOWS[s.snow].celsius)}`,
-        right: `${WAX_NAMES[s.lanes[0].wax]} ${s.lanes[0].done ? s1(runSeconds(s.lanes[0].wax, s.snow)) : '…'}`, wrong: `${WAX_NAMES[s.lanes[1].wax]} ${s.lanes[1].done ? s1(runSeconds(s.lanes[1].wax, s.snow)) : '…'}`}));
-      return {...base, tins: false, table, actions: ['replay', 'slow'],
+      const done = seen.has(id);
+      return {...base, tins: false, actions: ['replay', 'slow'],
         say: done ? 'On every tray the wax that suits the snow won: hard on the coldest, medium in the middle, soft on the wet. The colder the snow, the harder the wax.'
           : 'Three trays: dry powder, cool snow and wet snow. On each, the wax that suits it races one that does not.',
         prompt: done ? 'Press Enter to go on, or R to watch again.' : 'Watch the three races.',

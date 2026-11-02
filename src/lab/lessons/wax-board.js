@@ -85,12 +85,17 @@ function ski(ctx, view, i, j, l, g) {
   ctx.strokeStyle = '#e8e2d0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(len / 2 - 2, -5); ctx.quadraticCurveTo(len / 2 + 10, -6, len / 2 + 12, -16); ctx.stroke();
   ctx.fillStyle = '#2b3236'; ctx.fillRect(-8, -16, 16, 7);
   ctx.restore();
-  text(ctx, l.label, x - len / 2 - 6, y - 22, {size: 13 * g.scale + 1, align: 'right', colour: l.wax ? WAX_COLOURS[l.wax] : theme.faint});
+  text(ctx, l.label, x, y - 26 * g.scale, {size: 13 * g.scale + 2, colour: l.wax ? WAX_COLOURS[l.wax] : theme.faint});
+  if (l.behindM != null) {
+    const [bx, by] = surface(g, j, 30 * g.scale + along(g, STRIP_M - l.behindM));
+    ctx.strokeStyle = theme.bad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by - 14); ctx.lineTo(bx, by + 10); ctx.stroke();
+    text(ctx, `${l.behindM.toFixed(1)} m behind`, bx - 8, by + 22 * g.scale, {size: 13 * g.scale + 2, align: 'right', colour: theme.bad});
+  }
   // Its stopwatch, at real seconds, by the finish.
   if (l.seconds != null) {
     const [fx, fy] = surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale);
-    ctx.fillStyle = 'rgba(10,14,15,.8)'; ctx.beginPath(); ctx.roundRect(fx - 4, fy - 24, 82 * g.scale + 10, 26, 5); ctx.fill();
-    text(ctx, s1(l.seconds), fx + 2, fy - 11, {size: 17 * g.scale + 2, align: 'left', colour: l.done ? '#9ff0b4' : theme.text});
+    ctx.fillStyle = 'rgba(10,14,15,.8)'; ctx.beginPath(); ctx.roundRect(fx - 4, fy - 24, (l.winner ? 118 : 82) * g.scale + 10, 26, 5); ctx.fill();
+    text(ctx, `${s1(l.seconds)}${l.winner ? '  first' : ''}`, fx + 2, fy - 11, {size: 17 * g.scale + 2, align: 'left', colour: !l.done ? theme.text : l.winner ? '#9ff0b4' : l.behindM != null ? theme.bad : '#9ff0b4'});
   }
 }
 function thermometer(ctx, x, y, h, celsius, big) {
@@ -152,15 +157,6 @@ function menu(ctx, m) {
   text(ctx, m.line, x + 18, y + 50, {size: 21, align: 'left', colour: theme.text});
   if (!m.example) text(ctx, 'Hard wax · Medium wax · Soft wax', x + 18, y + 78, {size: 14, align: 'left', colour: theme.faint});
 }
-function table(ctx, rows) {
-  const x = 800, y = 110;
-  text(ctx, 'Right wax · wrong wax', x + 90, y - 20, {size: 14, colour: theme.faint});
-  rows.forEach((r, i) => {
-    const ry = y + 34 + i * 190;
-    text(ctx, r.right, x, ry, {size: 17, align: 'left', colour: '#9ff0b4'});
-    text(ctx, r.wrong, x, ry + 26, {size: 17, align: 'left', colour: theme.bad});
-  });
-}
 function ruleScene(ctx) {
   // Three snows, cold to warm, each over the wax that suits it.
   [['powder', 'hard'], ['cold', 'medium'], ['wet', 'soft']].forEach(([snow, wax], i) => {
@@ -180,7 +176,6 @@ function drawTrays(ctx, view) {
     if (view.glow === 'thermometer') { ctx.strokeStyle = theme.accent; ctx.globalAlpha = .55 + .35 * Math.sin(view.time * 6); ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(95, 140, 60, 400, 30); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   view.strips.forEach((_, i) => strip(ctx, view, i));
-  if (view.table) table(ctx, view.table);
   if (view.menu) menu(ctx, view.menu);
   if (view.tins) bench(ctx, view);
 }

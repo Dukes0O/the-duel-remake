@@ -185,6 +185,10 @@ test('the board draws every step and card', () => {
 test('replays: the wonder and the watch start again', () => {
   const session = createClassroomSession(lesson);
   until(session, v => v.ready);
+  // The board shows who won and how far behind the other was when the winner finished.
+  const [hard, soft] = session.view().strips[0].lanes;
+  assert.equal(hard.winner, true); assert.equal(soft.winner, false);
+  assert.ok(Math.abs(soft.behindM - (STRIP_M - metresAt('soft', 'powder', runSeconds('hard', 'powder')))) < 1e-9 && soft.behindM > 5, `${soft.behindM} m behind`);
   session.act('replay');
   assert.ok(session.view().strips[0].lanes.every(l => !l.done), 'the race starts again');
   session.act('next'); playThroughTo(session, 'watch');
