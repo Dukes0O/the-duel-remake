@@ -137,7 +137,7 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
     attachments.detach(`magnus-magnet-${rig.index}`);
     rig.magnet?.removeFromParent();
     for (const material of rig.magnetMaterials || []) material.dispose();
-    rig.magnet = null; rig.magnetMaterials = null; rig.magnetPending = false;
+    rig.magnet = null; rig.magnetMaterials = null; rig.magnetDisc = null; rig.magnetPending = false;
   }
   function removeTurret(rig) {
     attachments.detach(`gunn-turret-${rig.index}`);
@@ -267,7 +267,15 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         };
         node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
       });
-      rig.magnetMaterials = [...materials.values()];
+      // The magnet itself gets its own copies, so its glow never tints the crane.
+      const disc = [];
+      magnet.getObjectByName('magnus-magnet-disc')?.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const own = material => { const copy = material.clone(); disc.push(copy); return copy; };
+        node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
+      });
+      rig.magnetMaterials = [...materials.values(), ...disc];
+      rig.magnetDisc = disc;
       attachments.attach({owner: `magnus-magnet-${rig.index}`, vehicle,
         socket: 'roof', object: magnet, fallback: group});
       magnet.position.fromArray(mount);
@@ -381,10 +389,11 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       if (rig.magnet) {
         rig.magnet.visible = visible && magnus && !actor.combatWrecking;
         const glow = magnusMagnetGlow(actor, state.stageTimeSec || 0);
-        for (const material of rig.magnetMaterials) {
-          if (material.name !== 'magnus-magnet-glow' || !material.emissive) continue;
+        // The face glows full; the rest of the magnet softly, so a chase camera sees it too.
+        for (const material of rig.magnetDisc || []) {
+          if (!material.emissive) continue;
           material.emissive.setHex(glow.color);
-          material.emissiveIntensity = glow.intensity;
+          material.emissiveIntensity = glow.intensity * (material.name === 'magnus-magnet-glow' ? 1 : .35);
         }
       }
       if (rig.turret) {

@@ -28,7 +28,16 @@ Magnet"). Switch `warlord-nine`.
 
 ## Checks
 
-UNFINISHED: build and browser play still to record here.
+- `npm run build`: passes on the lane with current integration merged in.
+- Browser (`node tools/browser-harness.mjs scenario water-road`, memory-only saves, private
+  port): every fact passes, now including chapter 9: the Story Wall's one button "Fight
+  Magnus the Magnet", his intro line, the blue ring and his crane on his car during a real
+  pull, the red-hot window, and the road's end after him. The look camera showed the glow
+  only on the magnet's underside, out of sight from a chase camera; the whole magnet now
+  glows softly (face full), its own material copies so the crane never tints. Pictures sent
+  to Kyle, then deleted.
+- Frame timing: not run here (rule 9 is for art rounds; the crane is one small model on
+  one car in a two-car fight). The nightly full check covers it.
 
 - Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`, PowerShell): 141 of
   142 passed; the one failure was the Preview launcher's "every dev switch" check, cleared by

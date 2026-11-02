@@ -195,10 +195,16 @@ export async function run(context) {
   await app(`(() => { const s = app.duel.state, boss = s.opponents[0]; s.s = boss.s + 20; s.lateral = boss.lateral; s.headingError = 0;
     s.speedMph = 0; for (const p of s.arena.participants) p.protectedSec = 0; boss.magnusPull.nextPullSec = s.stageTimeSec; return true; })()`);
   await context.waitFor(`window.__qaApp.duel.state.opponents[0].magnusPull?.stage === 'pull'`, 'the pull', 20_000);
+  // A look camera on Magnus himself: his crane and the magnet's glow.
+  await app(`(() => { const boss = app.duel.state.opponents[0], c = app.duel.course, p = c.groundAt(boss.s, boss.lateral);
+    app.inspectionCamera = {position: [p.x + 7, p.y + 4, p.z + 7], target: [p.x, p.y + 1.5, p.z]}; return true; })()`);
+  await wait(300);
+  fact(await context.evaluate(`!!window.__render.scene.getObjectByName('magnus-magnet')?.visible`), 'his crane is on his car');
   fact(await app(`app.duel.state.arena.markers.some(m => m.owner === 'magnus' && m.color === 'magnet')`), 'the blue ring shows during the pull');
   await shot('15b-magnus-pull', 'the Big Pull: blue ring, blue magnet');
   await context.waitFor(`window.__qaApp.duel.state.opponents[0].magnusPull?.stage === 'hot'`, 'the red-hot window', 20_000);
   await shot('15c-magnus-hot', 'the red-hot magnet window');
+  await app(`(() => { app.inspectionCamera = null; return true; })()`);
   await beat([...LADDER, 'magnus']);
   await toYard();
   await click('[data-action="yard-cards"]');
