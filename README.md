@@ -6,6 +6,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The pilot's map now agrees with the HEADING gauge.** A place drawn east on
+  the map is east on the gauge: fly the map's bearing and you arrive from that
+  side, and the cruise leg leaves that way. Your dot moves the way you fly, its
+  arrow points the gauge's way, and each course's outline looks as it does from
+  above. Before, the map was a mirror of the world.
 - **The Water Road, a Wasteland story.** Behind the Rustwall the camp's well is dry,
   and eight warlords have cut the old water road into pieces. Hollis's note on the
   Story card (and the yard's STORY WALL) starts it: each chapter is one job in a mode

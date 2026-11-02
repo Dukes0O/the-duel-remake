@@ -1669,3 +1669,19 @@ the story adds no difficulty; EASY-YOUNG-DRIVER follows. Full tier for this rele
 562 passed, 0 failed, 0 not run on 27fb3739, alone (2,984 s). The yard's frame timing with
 the water works (about 24,000 triangles, loaded only in the yard) is checked at the next
 nightly full check; the scene's other parts are unchanged.
+
+## Release, 1 November 2026, late night (Claude, Release Manager)
+
+HELI-CHART-MIRROR: the pilot's map chart keeps its picture and the world now maps onto it with east at
+world -x, the HEADING gauge's east. bearing() returns world vectors that way, so arrivals, the cruise
+leg's departure and each course's flying area are on the chart's side; the chart's dot, its arrow and
+the course outlines follow; the Lab Headings bench gives the same answers. A new test flies the moving
+map's bearing by the gauge out of home and arrives on the chart's side (it fails on the old code). Pins
+re-recorded with reasons after a field-by-field comparison (bearings flipped in x, the flying area's west
+and east edges, the mirrored arrivals, the autopilot legs); three mirror sign checks corrected; three
+scripted test flights adjusted (change note). Chart looked at once against the roads from above. Lane
+tier 64/69 with five new-lane Recycle Bin failures, all five passing on the merged result; build; one
+review, no code faults, two notes fixed.
+
+Rule 19: helicopter, map and Lab bench code since the full tier 562/562 on 27fb3739; no shared core,
+save shape or physics change, so the lane tier covers it. No save change.

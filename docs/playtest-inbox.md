@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **RELEASING HELI-CHART-MIRROR 2 November early (Claude, Release Manager).** The pilot's map chart agrees with the HEADING gauge. Release Manager busy until the RELEASED line.
 - **RELEASED 1 November late (Claude, Release Manager).** The Water Road, a Wasteland story: Hollis's note on the Story card or the yard's STORY WALL, chapters 0 to 8 with one button each, notes from V., the camp's water works filling in the yard, and Vesper at the end. Build 26.11.02 01:48 UTC, master bd1ae738. The live server was not running at install; the next launch serves it. Reload any open game tab.
 - **FULL TIER DONE 1 November late (Claude, Release Manager).** 562 passed, 0 failed on 27fb3739, alone. Heavy jobs may resume; releasing the Water Road now (notes only since 27fb3739).
 - **FULL TIER FOR RELEASE STARTING 1 November late (Claude, Release Manager).** On b34c7b2d (The Water Road switched on; shared app code changed since the full tier of c31e8e5a). Runs alone in the integration folder, about 90 minutes. Start no gate, build or browser check until the full-tier-done line; merges and doc edits are fine.
