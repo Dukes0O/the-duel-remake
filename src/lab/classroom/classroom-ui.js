@@ -149,7 +149,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +
-      (v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', 'Try it in the game', 'Enter', {primary: true})
+      (v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', lesson.finishLabel ?? 'Try it in the game', 'Enter', {primary: true})
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));
   }
 

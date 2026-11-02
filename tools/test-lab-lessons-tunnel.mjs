@@ -9,14 +9,13 @@ import * as grip from '../src/lab/lessons/grip-lesson.js';
 import * as downforce from '../src/lab/lessons/downforce-lesson.js';
 import * as braking from '../src/lab/lessons/braking-lesson.js';
 import * as suspension from '../src/lab/lessons/suspension-lesson.js';
-import * as fuel from '../src/lab/lessons/fuel-lesson.js';
-const packets = [grip, downforce, braking, suspension, fuel];
+// Fuel is a classroom lesson now (tools/test-lab-classroom-fuel.mjs).
+const packets = [grip, downforce, braking, suspension];
 const expected = {
   grip: r => r.grip === 1 ? 'holds' : 'slides',
   downforce: r => r.downforceN > 0 ? 'both' : 'flat',
   braking: r => r.rearBrakeShare > r.rearLoadShare ? 'slide' : r.settings.speedMph <= 50 ? 'short' : 'long',
   suspension: r => r.leanDeg === TUNNEL_BENCHES.suspension.run({spring: 'soft', road: r.settings.road}).leanDeg ? 'gentle' : 'shaky',
-  fuel: r => r.fuelKg <= TUNNEL_BENCHES.fuel.run({litres: 35}).fuelKg ? 'light' : 'heavy',
 };
 function inputsFor(spec, wanted) {
   const input = {};
