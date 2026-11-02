@@ -14,6 +14,8 @@ import {lesson as fuel} from '../lessons/fuel-classroom.js';
 import * as fuelBoard from '../lessons/fuel-board.js';
 import {lesson as strength} from '../lessons/strength-classroom.js';
 import * as strengthBoard from '../lessons/strength-board.js';
+import {lesson as braking} from '../lessons/braking-classroom.js';
+import * as brakingBoard from '../lessons/braking-board.js';
 
 export const CLASSROOM_LESSONS = Object.freeze({
   pendulum: Object.freeze({...pendulum, name: 'Pendulums', board: pendulumBoard}),
@@ -23,4 +25,5 @@ export const CLASSROOM_LESSONS = Object.freeze({
   wax: Object.freeze({...wax, name: 'Ski wax', board: waxBoard}),
   fuel: Object.freeze({...fuel, name: 'Fuel and weight', board: fuelBoard}),
   strength: Object.freeze({...strength, name: 'Strength against weight', board: strengthBoard}),
+  braking: Object.freeze({...braking, name: 'Braking', board: brakingBoard}),
 });

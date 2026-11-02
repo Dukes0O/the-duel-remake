@@ -54,9 +54,9 @@ export function partPicture(kind, describe) {
     ctx.fillStyle = '#202a2d'; ctx.fillRect(0, 0, width, height);
     ctx.save(); ctx.translate(width * .25, height * .45);
     ctx.strokeStyle = '#aebcc0'; ctx.fillStyle = '#718185'; ctx.lineWidth = 6;
-    if (kind === 'tyre' || kind === 'brake') {
+    if (kind === 'tyre') {
       ctx.beginPath(); ctx.arc(0, 0, height * .25, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = kind === 'tyre' ? '#080c10' : '#d85c35'; ctx.lineWidth = kind === 'tyre' ? 14 : 5; ctx.stroke();
+      ctx.strokeStyle = '#080c10'; ctx.lineWidth = 14; ctx.stroke();
       ctx.beginPath(); ctx.arc(0, 0, height * .08, 0, Math.PI * 2); ctx.stroke();
     } else if (kind === 'spring') {
       ctx.beginPath(); for (let i = 0; i < 30; i++) { const x = Math.sin(i * Math.PI / 2) * 23, y = -32 + i * 2.2; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();

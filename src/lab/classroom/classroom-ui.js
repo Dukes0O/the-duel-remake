@@ -17,7 +17,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const session = createClassroomSession(lesson), board = lesson.board;
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
-  root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
+  root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
     <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-brian"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b>
       <p class="lc-bubble" aria-live="polite"></p><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
@@ -128,6 +128,9 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       `<li class="${part.done ? 'done' : ''} ${part.current ? 'current' : ''}"><button type="button" ${part.reached && !part.current ? `data-lc="go:${part.first}"` : 'disabled'}>` +
       `<span>${part.done ? '✓' : i + 1}</span>${escape(part.name)}</button></li>`).join(''));
     setHtml($('.lc-step'), 'step', escape(v.step.title));
+    // Previous step sits by Leave, so it never crowds the step's own buttons.
+    const back = v.index > 0 && !(passed && v.last);
+    if ($('.lc-back').hidden === back) $('.lc-back').hidden = !back;
     const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
     setHtml($('.lc-bubble'), 'bubble', escape(brian.text));
     // Brian's offer of help sits under his words, so a slow reader never loses them.
@@ -157,7 +160,6 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       (v.keys.W ? button('lever:up', 'Lever up', 'W') + button('lever:down', 'Lever down', 'S') : '') +
       (v.actions.includes('replay') ? button('replay', 'Watch again', 'R') : '') +
       (v.actions.includes('slow') ? button('slow', v.slow ? 'Slow motion: on' : 'Slow motion', 'S', {pressed: v.slow}) : '') +
-      (v.index > 0 && !(v.last && passed) ? button('back', 'Previous step', 'Backspace') : '') +
       (v.last && passed ? button('leave', 'Back to the Lab', 'Enter', {primary: true})
         : v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', lesson.finishLabel ?? 'Try it in the game', 'Enter', {primary: true})
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));

@@ -3,18 +3,16 @@ import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import {TUNNEL_BENCHES} from '../src/lab/benches/tunnel.js';
 import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js';
-import {Euler, Vector3, PerspectiveCamera} from 'three';
+import {Euler, Vector3} from 'three';
 import {gripSound, stopGripSound} from '../src/lab/lessons/grip-animation.js';
 import * as grip from '../src/lab/lessons/grip-lesson.js';
 import * as downforce from '../src/lab/lessons/downforce-lesson.js';
-import * as braking from '../src/lab/lessons/braking-lesson.js';
 import * as suspension from '../src/lab/lessons/suspension-lesson.js';
 // Fuel is a classroom lesson now (tools/test-lab-classroom-fuel.mjs).
-const packets = [grip, downforce, braking, suspension];
+const packets = [grip, downforce, suspension];
 const expected = {
   grip: r => r.grip === 1 ? 'holds' : 'slides',
   downforce: r => r.downforceN > 0 ? 'both' : 'flat',
-  braking: r => r.rearBrakeShare > r.rearLoadShare ? 'slide' : r.settings.speedMph <= 50 ? 'short' : 'long',
   suspension: r => r.leanDeg === TUNNEL_BENCHES.suspension.run({spring: 'soft', road: r.settings.road}).leanDeg ? 'gentle' : 'shaky',
 };
 function inputsFor(spec, wanted) {
@@ -52,21 +50,6 @@ test('sparse inputs reset to the same bench defaults for each challenge attempt'
     assert.deepEqual(bench.result.settings, suspension.hooks.animations.try({input, index: 0, time: 0}).result.settings);
   }
   assert.equal(goalMet(bench), true);
-});
-test('braking pictures show the selected speed, stop fully and face the direction of travel', () => {
-  for (const speedMph of [20, 50, 100, 150]) {
-    const d = braking.hooks.animations.try({input: {speedMph, frontShare: 70}, time: 2});
-    assert.equal(d.cars.length, 1);
-    assert.ok(d.labels[0].text.startsWith(`${speedMph} mph`));
-    assert.equal(d.cars[0].rotation[2], 0, 'the two-second trial reaches its stop');
-    assert.ok(new Vector3(0, 0, 1).applyEuler(new Euler(...d.cars[0].rotation)).x > 0);
-    const camera = new PerspectiveCamera(50, 1440 / 900, .1, 80);
-    camera.position.set(...d.camera.position); camera.lookAt(...d.camera.target); camera.updateMatrixWorld();
-    const point = new Vector3(...d.cars[0].position).project(camera);
-    assert.ok(Math.abs(point.x) < .8 && Math.abs(point.y) < .8, 'even the longest stop stays in the close view');
-    assert.ok(d.forces[0].origin[0] > d.cars[0].position[0] && d.forces[1].origin[0] < d.cars[0].position[0]);
-    assert.equal(d.forces[0].newtons, d.result.frontLoadShare);
-  }
 });
 test('air crosses the wing chord and the wing span stays level at every tilt', () => {
   for (const wing of ['flat', 'small', 'big']) {
