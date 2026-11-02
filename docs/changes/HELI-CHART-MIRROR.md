@@ -75,4 +75,9 @@ Each written for the mirror; none loosened.
   ground before the pad, as some did before: Panorama Ridge from Summit Run after 260 m, Ridge Rally from Neon Docks
   after 310 m, Timberline Rush from Midnight Chase at 10 m over the ground (old: Harbor & Highlands from Pacific Canyon
   after 40 m, Alpine Serpent from Cloudbreak at once). Not this card's; a follow-up could lift arrivals over high ground.
-- The 39 suites that import the changed files, before and after; lane tier and build below.
+- The 39 suites that import the changed files, before (all pass on integration) and after.
+- Lane tier from PowerShell (`--changed --jobs 4 --keep-going`, with integration bd1ae738 merged in): 64 passed, 5 failed.
+  All five (test-board, test-course-kit, test-earned-cars-ui, test-lab-lessons-flying, test-medals) fail cleaning their
+  own fixtures ("DeleteDirectory ... not supported", the new-lane Recycle Bin quirk); rerun in integration on the merged
+  result. `npm run build` passes.
+- One independent review: no code faults; its two notes fixed (the wildlife design line, one pin reason).
