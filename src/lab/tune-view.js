@@ -24,7 +24,7 @@ export const TUNE_ROWS = Object.freeze([
   Object.freeze({setting: 'wing', name: 'Wing angle', low: 'Less wing', high: 'More wing', steps: [-2, -1, 0, 1, 2],
     trade: 'More wing grips more in fast corners, most of all at speed, but costs top speed. Less wing is faster on the straights.'}),
   Object.freeze({setting: 'brakes', name: 'Brake balance', low: 'Toward the front', high: 'Toward the rear', steps: [-2, -1, 0, 1, 2],
-    trade: 'Toward the rear stops shorter and keeps the car turning in while braking, but it slides sooner. The front is steadier.'}),
+    trade: 'Toward the rear stops a little shorter, but grips less in a turn while braking: the back slides sooner. Toward the front is steadier.'}),
   Object.freeze({setting: 'springs', name: 'Springs', low: 'Softer', high: 'Stiffer', steps: [-2, -1, 0, 1, 2],
     trade: 'Stiffer springs grip more on smooth roads. Softer ones ride bumps and dirt better.'}),
   Object.freeze({setting: 'fuel', name: 'Fuel load', low: 'Full tank', high: 'Half tank', steps: [0, 1, 2],

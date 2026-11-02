@@ -53,7 +53,7 @@ export const STEPS = Object.freeze([
 const S50 = metresFrom(50), S100 = metresFrom(100);
 export const KEY_IDEAS = Object.freeze([
   {id: 'four', text: `Twice the speed needs four times the road: ${m1(S50)} from 50 mph, ${m1(S100)} from 100.`},
-  {id: 'weight', text: `Braking tips the weight forward: the front tyres carry ${pct(FRONT_LOAD)}, so the front brakes do most of the work.`},
+  {id: 'weight', text: `Braking tips the weight forward: in a gentle stop the front tyres carry ${pct(FRONT_LOAD)}, so the front brakes do most of the work.`},
   {id: 'balance', text: `Give the back brakes more than the ${pct(REAR_LOAD)} the back tyres carry and the back slides. On the Tune page: Brake balance.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Twice the speed, four times the road.',
@@ -131,7 +131,8 @@ export function createModel() {
   }
   const setting = () => ['try-speed', 'try-slide', 'alone'].includes(step().id) && m.phase === 'set';
   const canDial = () => setting() && step().id !== 'try-slide';
-  const canLever = () => (setting() && step().id !== 'try-speed') || (step().id === 'word-balance' && m.phase === 'lever');
+  // A steady back: the lever opens once the player has braked as it is and seen the back slide.
+  const canLever = () => (setting() && step().id !== 'try-speed' && !(step().id === 'try-slide' && !m.slid)) || (step().id === 'word-balance' && m.phase === 'lever');
   // What Show me sets and brakes.
   function goal() {
     const id = step().id;
@@ -228,7 +229,7 @@ export function createModel() {
   function judge() {
     const id = step().id, l = m.lanes[0], r = stopOf(l.speed, l.front);
     if (id === 'word-stopping') { m.phase = 'done'; seen.add(id); m.say = `${m1(r.stopMetres)} from 50 mph. That is its stopping distance: the road it used from brakes on to stopped.`; return {kind: 'right', say: m.say}; }
-    if (id === 'word-weight') { m.phase = 'done'; seen.add(id); m.say = `Standing, each end carries half the weight. Braking, the front tyres carried ${pct(FRONT_LOAD)} and the back ${pct(REAR_LOAD)}. That is weight shift.`; return {kind: 'right', say: m.say}; }
+    if (id === 'word-weight') { m.phase = 'done'; seen.add(id); m.say = `Standing, each end carries half the weight. In a gentle stop the front tyres carry ${pct(FRONT_LOAD)} and the back ${pct(REAR_LOAD)}; a harder stop tips even more forward. That is weight shift.`; return {kind: 'right', say: m.say}; }
     if (id === 'try-speed') {
       m.phase = 'done'; seen.add(id);
       const right = m.guess === 1;

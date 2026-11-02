@@ -30,7 +30,9 @@ export function createClassroomSession(lesson) {
     if (event.kind === 'right' || event.kind === 'pass' || event.kind === 'progress') { help = 0; pointer = null; }
     // A failed try climbs one rung, but Brian never takes over by himself: Show me waits for the player.
     if (event.kind === 'fail') help = Math.min(HELP_RUNGS - 1, help + 1);
-    if (event.kind !== 'sound') { idle = 0; offered = false; nudge = null; bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null; }
+    // Anything the player does, a click of the dial included, means they are not stuck.
+    idle = 0; offered = false; nudge = null;
+    if (event.kind !== 'sound') bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null;
   }
   const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
   function enter(i) {

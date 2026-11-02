@@ -34,7 +34,7 @@ export async function run(c) {
   await at('wonder');
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(1100); await shot('wonder-braking'); await at('wonder', 's.ready'); await shot('wonder');
-  if (await c.evaluate(`[...document.querySelectorAll('.lc-actions button')].some(b => b.textContent.includes('Previous step'))`)) throw Error('The first step has nothing before it.');
+  if (!(await c.evaluate(`document.querySelector('.lc-back').hidden`))) throw Error('The first step has nothing before it.');
   await next('wonder');
   // Stopping distance. Brian's "Stuck?" offer comes after 12 s, under his words, which stay.
   await at('word-stopping'); const words = await bubble(); await shot('word-stopping');
@@ -64,6 +64,7 @@ export async function run(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: lever.x, y: lever.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
   await prompt('60% front', 'the click on the lever moves it toward the front');
+  if (await c.evaluate(`document.querySelector('.lc-back').hidden`)) throw Error('Previous step should show after the first step.');
   await press('ArrowRight'); await press('Space'); await at('try-slide', 's.ready'); await shot('try-slide-steady');
   await next('try-slide');
   // Brian's job: too fast at the first corner, then right; Show me on the second; the third by hand.

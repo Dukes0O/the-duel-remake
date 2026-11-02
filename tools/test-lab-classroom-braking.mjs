@@ -6,7 +6,7 @@ import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, fastestFor, metresFrom, laneAt, stopOf, benchAttempts} from '../src/lab/lessons/braking-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/braking-board.js';
 import {brakingBench, stopDistance, frontLoadShare} from '../src/lab/benches/tunnel.js';
-import {effectLine} from '../src/lab/tune-view.js';
+import {effectLine, TUNE_ROWS} from '../src/lab/tune-view.js';
 import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js';
 
 const lesson = CLASSROOM_LESSONS.braking;
@@ -96,7 +96,7 @@ test('words: Space brakes to a measured stop; the pads shift the weight; the lev
   session.act('go'); until(session, x => x.lanes[0]?.braking);
   assert.equal(session.view().close.front, FRONT_LOAD, 'braking, the weight tips forward');
   until(session, x => x.ready);
-  assert.match(session.view().brian.text, /the front tyres carried 69% and the back 31%/);
+  assert.match(session.view().brian.text, /In a gentle stop the front tyres carry 69% and the back 31%/);
   session.act('next');
   assert.equal(session.view().lever.front, 50);
   session.act('lever:front');
@@ -223,6 +223,24 @@ test('the board draws every step and card', () => {
     }
     for (const c of session.view().cards) { calls.clear(); drawPicture(fake(), c.picture, 220, 110); assert.ok(calls.has('fill') || calls.has('fillRect'), `${c.id} draws a picture`); }
   }
+});
+
+test('review fixes: turning the dial counts as busy; the slide try shows the slide first; the Tune page agrees with question 3', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-speed');
+  for (let i = 0; i < 14; i++) { session.act(i % 2 ? 'speed:down' : 'speed:up'); run(session, 2); }
+  assert.equal(session.view().nudge, null, 'a player turning the dial is not stuck');
+  assert.equal(session.view().help, 0);
+  playThroughTo(session, 'try-slide');
+  session.act('lever:front');
+  assert.equal(session.view().lever.front, 50, 'the lever waits until the back has slid once');
+  assert.equal(session.view().keys['→'], undefined);
+  brake(session);
+  session.act('lever:front');
+  assert.equal(session.view().lever.front, 60);
+  const row = TUNE_ROWS.find(r => r.setting === 'brakes');
+  assert.match(row.trade, /grips less in a turn while braking/);
+  assert.doesNotMatch(row.trade, /keeps the car turning in/);
 });
 
 test('the old lesson’s faults are gone: settings carry, the dial steps in whole 10 mph, and each try starts away from its answer', () => {

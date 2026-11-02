@@ -38,7 +38,7 @@ export function hoverInfo(view, x, y) {
   if (!rig(view)) return null;
   if (view.dial && x > DIAL.x && x < DIAL.x + DIAL.w && y > DIAL.y && y < DIAL.y + DIAL.h) return view.dial.locked ? 'The speed dial: Brian has set it for this try.' : 'The speed dial: 10 mph faster or slower a press.';
   if (view.lever && x > LEVER.x && x < LEVER.x + LEVER.w && y > LEVER.y && y < LEVER.y + LEVER.h) return view.lever.locked ? 'The brake lever: Brian has set it for this try.' : 'The brake lever: how much of the braking the front and back brakes do, 10% a press.';
-  if (view.close && y > CLOSE.ground - 8 && y < CLOSE.ground + 70 && x > 100 && x < 520) return 'Weighing pads: the share of the car’s weight on each end.';
+  if (view.close && y > CLOSE.ground - 8 && y < CLOSE.ground + 92 && x > 100 && x < 520) return 'Weighing pads: the share of the car’s weight on each end.';
   if (view.close && x > 150 && x < 500 && y > 110 && y < CLOSE.ground) return 'The car close up: a Falcone F42.';
   if (x > 90 && x < 950 && y > STRIP.top && y < STRIP.bottom) return 'The test strip, 80 m, drawn to scale: brakes on at the yellow line, a mark every 10 m.';
   return null;
@@ -172,7 +172,7 @@ function strip(ctx, view) {
     text(ctx, l.label, 48, y - 28, {size: 15, align: 'left', colour: theme.text});
     const reading = l.waiting ? 'ready' : l.done ? `stopped: ${m1(l.stopMetres)}${l.slides ? ', back slid' : ''}` : `${Math.round(l.mph)} mph`;
     text(ctx, reading, 952, y - 28, {size: 15, align: 'right', colour: l.done ? (l.slides ? theme.bad : '#9ff0b4') : theme.text});
-    if (l.done) text(ctx, m1(l.stopMetres), (stripX(0) + stripX(l.metres)) / 2, y - 34, {size: 15, colour: theme.accent});
+    if (l.done) text(ctx, l.stopMetres > STRIP.metres ? `${m1(l.stopMetres)}: past the end ▶` : m1(l.stopMetres), Math.min(stripX(l.metres), 900) + 12, y - 22, {size: 15, align: l.stopMetres > STRIP.metres ? 'right' : 'left', colour: theme.accent});
   });
   if (view.keys.Space === 'go' && !view.lanes.length) text(ctx, 'Space brakes', stripX(20), laneY(0, 1) + 4, {size: 15, align: 'left', colour: theme.faint});
 }
