@@ -1,8 +1,8 @@
-// Private browser check for the Lab screen (LAB-VIEW, docs/LAB.md): take the Lift lesson, then the Strength lesson
-// and its challenge (the hook arm), buy an upgrade, and leave. Saves are memory-only. Run:
+// Private browser check for the Lab screen (LAB-VIEW, docs/LAB.md): take the Lift lesson, then the Strength classroom
+// from the walking room (its pass is the hook-arm challenge), buy an upgrade, and leave. Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario lab-view
 import {run as runLiftLesson} from './lab-classroom-lift.mjs';
-import * as strength from '../../src/lab/lessons/strength-lesson.js';
+import {playThrough as playStrength} from './lab-classroom-strength.mjs';
 
 const entry = '/tools/menu-check.html?flags=helicopter,lab';
 
@@ -51,7 +51,7 @@ export async function run(context) {
     throw Error(`The board should list the lessons: ${JSON.stringify(rows)}`);
   await context.screenshot('lab-board');
   await context.evaluate(`document.querySelector('[data-lab="walk-back"]').click()`);
-  // Visit the bending rig through the walking room, then pass its current bench.
+  // Visit the bending rig through the walking room, then take its lesson.
   await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < -3.8`);
   await walk('KeyD', `JSON.parse(${canvas}.dataset.labWalkPosition)[0] > 2.5`);
   const yaw = await context.evaluate(`(() => { const p = JSON.parse(${canvas}.dataset.labWalkPosition); return Math.atan2(p[0] - 3.167375, p[2] + 4.721); })()`);
@@ -60,54 +60,14 @@ export async function run(context) {
   await context.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: 640-yaw/.003, y: 400, button: 'left', clickCount: 1});
   await context.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('Strength against weight')`, 'bending rig prompt');
   await tap('KeyE');
-  // Strength teaches on the five-step lesson frame: its own lesson opens and no old bench panel does.
-  await context.waitFor(`!document.querySelector('.lab-teaching')?.hidden && document.querySelector('.lab-teaching').textContent.includes(${JSON.stringify(strength.definition.wonder.text)})`, 'the strength lesson', 30_000);
+  // Strength opens as a classroom: no old lesson panel and no old bench panel.
+  await context.waitFor(`JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')?.step === 'wonder'`, 'the strength classroom', 30_000);
   if (await context.evaluate(`!!document.querySelector('.lab-bench')`)) throw Error('The old bench panel opened beside the strength lesson.');
-  // The lesson panel (which replaces the old bench caption) must show above the walking room, not behind the canvas.
-  await context.waitFor(`(() => { const box = document.querySelector('.lab-teaching').getBoundingClientRect(); const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2); return !!top && !!top.closest('.lab-teaching'); })()`,
-    'the lesson panel shows above the canvas', 10_000);
-  const text = `document.querySelector('.lab-teaching')?.textContent`;
-  const click = action => context.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
-  const ready = () => context.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready', 45_000);
-  const control = async id => {
-    await context.waitFor(`JSON.parse(${canvas}.dataset.labLessonControls ?? '[]').some(p => p.id === '${id}')`, `control ${id}`);
-    return context.evaluate(`(() => { const el = ${canvas}, b = el.getBoundingClientRect(), p = JSON.parse(el.dataset.labLessonControls).find(p => p.id === '${id}'); return {x: b.left + p.x, y: b.top + p.y}; })()`);
-  };
-  const touch = async id => {
-    const p = await control(id);
-    await context.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
-    await context.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, ...p});
-  };
-  const dragThickness = async () => {
-    const p = await control('thicknessMm'), y = p.y - (50 - 30) / (120 - 5) * 180;
-    await context.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
-    await context.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: p.x, y, button: 'left', buttons: 1});
-    await context.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: p.x, y, button: 'left', clickCount: 1});
-  };
-  // Take the real lesson: wonder, new words, watch it work, three tries, two checks, then the unchanged bench challenge.
-  const d = strength.definition;
-  await new Promise(resolve => setTimeout(resolve, 1800)); await click('next');
-  for (const row of d.words) { await context.waitFor(`document.querySelector('.lab-teaching h4')?.textContent === ${JSON.stringify(row.word)}`, row.word); await click('next'); }
-  for (let i = 0; i < d.worked.length; i++) { await ready(); await click('next'); }
-  await context.waitFor(`!!document.querySelector('[data-teach="answer:holds"]')`, 'prediction');
-  await click('answer:holds'); await click('run');
-  await context.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'failed try and its hint', 35_000); await click('retry');
-  for (let index = 0; index < 3; index++) {
-    await click('answer:holds'); await touch('part'); await touch('materialDial'); await dragThickness();
-    await context.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.material === 'carbon fibre' && Math.abs(JSON.parse(${canvas}.dataset.workshopDrawing).input.thicknessMm - 50) < .01`, 'real material dial and thickness handle');
-    await click('run'); await ready(); await click('next');
-  }
-  for (const q of d.checks) {
-    await click(`answer:${q.answers.find(a => a.id !== q.correct).id}`);
-    await context.waitFor(`${text}.includes('Watch the highlighted picture.')`, 'wrong check replays the right picture'); await click('next');
-  }
-  if (await context.evaluate(`window.__qaApp.profile.lab?.done?.strength === true`)) throw Error('The lesson alone must not pass the challenge.');
-  await context.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 2, y: 2});
-  await click('challenge');
-  await context.waitFor(`${text}.includes('Challenge') && !!document.querySelector('[data-teach="answer:holds"]')`, 'inline challenge');
-  await click('answer:holds'); await touch('part'); await touch('materialDial'); await dragThickness();
-  await click('run'); await context.waitFor(`!!document.querySelector('[data-teach="finish"]')`, 'bench goal met');
-  await click('finish');
+  // The classroom must show above the walking room, not behind the canvas.
+  await context.waitFor(`(() => { const box = document.querySelector('.lab-classroom').getBoundingClientRect(); const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2); return !!top && !!top.closest('.lab-classroom'); })()`,
+    'the classroom shows above the canvas', 10_000);
+  // Play the lesson through; its own hook-arm runs pass the unchanged bench goal only at the end.
+  await playStrength(context);
   await context.waitFor(`window.__qaApp.profile.lab?.done?.strength === true`, 'the strength lesson passes and is saved', 10_000);
   await context.screenshot('lab-strength-passed');
 

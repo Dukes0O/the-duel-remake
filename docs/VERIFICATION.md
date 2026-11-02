@@ -1726,3 +1726,17 @@ four faults fixed and confirmed.
 Rule 19: Lab code and the classroom screen since the full tier 562/562 on 27fb3739, after
 HELI-CHART-MIRROR, LAB-CLASSROOM-WAX and HELI-ARRIVAL-CLEAR (each released on its lane tier); no shared
 core, save shape or physics change. No save change.
+
+## Release, 2 November 2026, evening (Claude, Release Manager)
+
+LAB-CLASSROOM-STRENGTH: Strength against weight as a classroom lesson (a vice holding a bar or hook arm
+drawn to scale, the Strength used and Dips gauges, a rack of three materials and a thickness handle
+10 mm a press, the 2,000 kg car on its sling; every number from the strength bench's loadBar and
+hookArm; Brian's job builds the lightest arm that holds); the old Strength lesson removed. The
+challenge is unchanged: the bench's goal, passed on the lesson's own hook-arm runs, opens the Heavy
+hook. Strength suite 13/13, all 28 Lab suites (311 tests), all 19 Lab scenarios, lane tier 43/43 on
+982f9b20, build. One review, nothing serious, four minor findings fixed; the lane tier caught a direct
+helicopter import, now read through the strength bench.
+
+Rule 19: Lab code and its tests and scenarios since the full tier 562/562 on 27fb3739, after the
+releases since (each on its lane tier); no shared core, save shape or physics change. No save change.
