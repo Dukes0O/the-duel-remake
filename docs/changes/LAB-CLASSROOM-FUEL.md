@@ -23,8 +23,10 @@ behind `lab-classroom` (on), with no Preview step.
 - The challenge is unchanged: the bench's goal (a run on a full tank and one on half a tank or
   less). The lesson's own races are fed to it through `onChallenge`, as the card asked
   (`benchAttempts` on the lesson, used by `src/lab/lesson-ui.js` when the challenge is a bench run);
-  "Finish the lesson" (Enter) passes it and the board says Fuel load is open on the Tune page.
-  `classroom-ui.js` takes the last button's words from the lesson (`finishLabel`).
+  "Finish the lesson" (Enter) passes it. The classroom stays open with sparks and Brian saying what
+  the pass opened (Fuel load on the Tune page, and that a half tank runs dry at 55% of a Grand Prix);
+  Enter then goes back to the Lab, which keeps its pass message. `classroom-ui.js` takes the last
+  button's words from the lesson (`finishLabel`) and shows a bench pass in place (`passed`).
 - New files: `src/lab/benches/fuel.js` (the fuel bench, the drag strip and the Grand Prix tank, read
   through one bench file), `src/lab/lessons/fuel-classroom.js` (steps and model), `fuel-board.js`
   (board), `tools/test-lab-classroom-fuel.mjs`, `tools/scenarios/lab-classroom-fuel.mjs`.
@@ -52,7 +54,33 @@ behind `lab-classroom` (on), with no Preview step.
 - `tools/test-lab-lessons-tunnel.mjs`: only the removed lesson's packet left the list; the other four
   packets are tested as before. Nothing that tests remaining code was loosened.
 
+## Review
+
+The board was looked at as a player in three browser runs before the review. Look fixes: the cars
+parked under the stopwatches and drove off the strip during the settle, a start line through the
+lane names, the photo finish clipping the furthest car, the cloth leaving the gauge's numbers
+showing, an empty half of the board in the weighing try (now a job card with the weight wanted, the
+scale now and what one press weighs), a pump nozzle that read as a green box, and a recap bubble
+that scrolled.
+
+One independent code review (rule 17): nothing serious; four smaller faults, all fixed, with tests:
+- "By weight" could not be failed: the step finished the moment the tank reached 50 litres, so
+  holding ↓ passed it without reading the scale. Now nothing stops the pour; Space (or a click on
+  the scale) weighs it, and a wrong weight says how far off and which way ("33.3 kg: 3.7 kg too
+  light"). Under the cloth Brian no longer says the litres.
+- The jerry can showed petrol nobody poured (it was drawn from the tank's level). It now holds only
+  what went out of the tap.
+- The jugs' click areas sat above the drawn jugs; they now match the drawing.
+- A click on Brian's job card raced the car; only the race track (and the strip's lanes) race now.
+From its minor notes: Watch again restarts the wonder and the watch at any time; the strip clears
+when the player pours after a race; Show me's "Like that." now names what Brian did ("I pour it to
+35 litres, the least that lasts, then race") instead of repeating a failure; the pass is said in
+the classroom as "Fuel passed!" with what it opened.
+
 ## Checks
 
-- `tools/test-lab-classroom-fuel.mjs`: 11 tests.
+- `tools/test-lab-classroom-fuel.mjs`: 13 tests.
 - Every `tools/test-lab-*.mjs` (27 files) passes.
+- Lane tier: 38 passed on the first commit and 38 again with current integration merged in (9155e74a).
+- Every Lab browser scenario (18): 17 passed together; `lab-walk` timed out walking to the weighing pad while the lane tier ran beside it and passed when rerun alone (gates rule). After the last fixes `lab-classroom-fuel`, `lab-classroom` and `lab-classroom-wax` passed again.
+- `npm run build` passes.

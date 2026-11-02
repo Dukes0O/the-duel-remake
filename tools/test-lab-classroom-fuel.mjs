@@ -321,3 +321,19 @@ test('review fixes: the can holds only what went out of the tap; clicks land whe
   // Finishing passes in the classroom: Brian says what it opened, under the game's own numbers.
   assert.equal(lesson.passSay, 'Fuel passed! Fuel load is open on the Tune page in the garage: a half tank is quicker, but in a Grand Prix it runs dry at 55%.');
 });
+
+test('review fixes: the weighing try draws no race strip, so nothing on the board shows the litres under the cloth', () => {
+  const texts = [];
+  const fake = new Proxy({}, {get: (target, name) => {
+    if (name in target) return target[name];
+    if (name === 'measureText') return value => ({width: String(value).length * 9});
+    if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+    if (name === 'fillText') return value => texts.push(String(value));
+    return () => {};
+  }, set: (target, name, value) => { target[name] = value; return true; }});
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-weigh');
+  session.act('pour:out'); session.act('pour:out'); session.act('pour:out');
+  drawBoard(fake, session.view(), 1000, 680);
+  assert.deepEqual(texts.filter(t => /\d+ (L|litres)\b/.test(t) && !/^One press pours/.test(t)), []);
+});

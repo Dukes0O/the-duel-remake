@@ -115,7 +115,7 @@ function tank(ctx, view) {
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.beginPath(); ctx.moveTo(x - 4, hy); ctx.lineTo(x + w + 4, hy); ctx.stroke(); ctx.setLineDash([]);
     text(ctx, `half: ${HALF}`, x + w - 8, hy - 12, {size: 15, align: 'right', colour: theme.accent});
   }
-  text(ctx, `${Math.round(view.litres)} litres`, x + w / 2, y + 26, {size: 24, colour: theme.text, weight: 800});
+  if (!view.covered) text(ctx, `${Math.round(view.litres)} litres`, x + w / 2, y + 26, {size: 24, colour: theme.text, weight: 800});
   // A cloth over the tank when the step asks for the scale alone.
   if (view.covered) {
     ctx.fillStyle = '#6b5236'; ctx.beginPath(); ctx.moveTo(x - 62, y - 34); ctx.lineTo(x + w + 10, y - 34); ctx.lineTo(x + w + 16, y + h + 6); ctx.quadraticCurveTo(x + w / 2, y + h, x - 66, y + h + 6); ctx.closePath(); ctx.fill();
@@ -298,7 +298,7 @@ function drawShop(ctx, view) {
   if (view.covered) weighCard(ctx, view);
   if (view.job) jobCard(ctx, view);
   else if (view.lanes.length) strip(ctx, view);
-  else if (view.tank && view.keys.Space === 'go') {
+  else if (view.tank && view.keys.Space === 'go' && !view.covered) {
     // Before the first race: the strip waits with its start line.
     const g = RIGHT;
     ctx.fillStyle = '#23272a'; ctx.fillRect(g.x, laneY(0) - 50, g.w, STRIP.gap + 82);

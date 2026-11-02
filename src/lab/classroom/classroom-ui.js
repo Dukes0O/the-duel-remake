@@ -143,7 +143,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     }
     $('.lc-cards').hidden = v.cards.length === 0;
     root.classList.toggle('lc-asking', v.cards.length > 0);
-    setHtml($('.lc-prompt'), 'prompt', `<b>Your move</b> ${escape(v.prompt)}`);
+    setHtml($('.lc-prompt'), 'prompt', `<b>Your move</b> ${escape(passed && v.last ? 'Enter takes you back to the Lab.' : v.prompt)}`);
     const button = (action, label, key, {primary = false, disabled = false, pressed = null} = {}) =>
       `<button type="button" data-lc="${action}" class="${primary ? 'primary' : ''}" ${disabled ? 'disabled' : ''} ${pressed === null ? '' : `aria-pressed="${pressed}"`}>${escape(label)} ${kbd(key)}</button>`;
     setHtml($('.lc-actions'), 'actions',
