@@ -121,3 +121,9 @@ rusted, welded scrap; each chapter's change reads from the yard. Round 2's close
 served its review and is not committed (one sheet per round), and the hygiene test is back
 as it was. Kyle had the round-2 sheets with this pick. The water works are wired into the
 yard by WATER-SCREENS; the frame check goes with the Water Road's release.
+
+## Gate
+
+Lane tier 48 passed, 0 failed, 0 not run (test-blender-output, test-repo-hygiene,
+test-review-evidence after the review notes took their `round-N-review.md` names);
+`npm run build` passes. No game code; no review needed beyond the art verdict.
