@@ -6,6 +6,22 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Braking is a classroom now.** The car stands close up on two
+  weighing pads, so you can see how much of its weight each end carries; a
+  speed dial and a brake balance lever set the test, and cars to scale brake on
+  an 80 m strip at real speed, with a tape giving the metres. Twice the speed
+  takes four times the distance (11.8 m from 50 mph, 47.2 m from 100), and
+  braking too much on the back makes it slide. Brian's job: the fastest steady
+  stop for three corners. Passing opens Brake balance on the Tune page.
+- **Lessons wait for you to read them.** In every classroom lesson Brian's
+  words stay put: "Stuck? Press H" and his first hint now appear on their own
+  line under what he said, and a Previous step button (Backspace) beside Leave
+  goes back one step.
+- **Carbon plates now makes your armour kit stronger.** Buy Carbon plates in
+  the Lab shop (it opens when you pass Strength against weight) and every paid
+  Wasteland armour kit gives 40% more protection for the same weight: Scrapper
+  14, Raider 28, Warlord 42 armour. The Armory shows your real figure, such as
+  "+28 ARMOR · CARBON". Your car weighs what it did, so it still hits as hard.
 - **Magnus the Magnet, the ninth warlord.** Beat Baron Blackiron and a new
   card appears on the Territory Map: Magnus, in his scrapyard on the Salt
   Flats, with a giant magnet on a crane on his roof. When it glows blue and a

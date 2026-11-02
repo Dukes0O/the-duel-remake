@@ -1753,3 +1753,26 @@ its faults fixed and confirmed. Changed assertions reviewed in docs/changes/WARL
 Full tier 567/567 on b8fc1870, alone. Rule 19: only the inbox changed since. Save: one more warlord
 record (normalize and backup checked); no territory row. Frame check of the Magnus fight at the next
 nightly full check.
+
+## Release, 2 November 2026, late night (Claude, Release Manager)
+
+CARBON-PLATES-WIRE: the Lab's Carbon plates (1,500 credits, opened by Strength against weight) was
+sold but read nowhere. As LAB.md described it (kits 40% lighter) it would have been a paid
+downgrade: kit weight only adds to the crash body. Picked C: with the `lab` switch on, an owner's
+paid kit gives 40% more armour for the same weight (14, 28, 42), the player only; crash weight,
+opponents, earned looks and non-owners unchanged; no save change. test-armor-kits 7/7 (two new
+tests), lane tier 109/109, build. One review: no real defects, two small points taken. No changed
+assertions.
+
+LAB-CLASSROOM-BRAKING: Braking as a classroom lesson (twelve steps; weighing pads, speed dial,
+brake balance lever, an 80 m strip at real speed; every number from the braking bench; Brian's job
+three corners at 60, 100 and 120 mph). The classroom screen keeps Brian's words when the stuck offer
+or first hint appears (their own line under his) and gains Previous step (Backspace), for every
+rebuilt lesson. The Tune page's Brake balance trade line now agrees with the game rule. The old
+Braking lesson and its tunnel part are removed. test-lab-classroom-braking 12/12, test-lab-classroom
+15/15, every test-lab-* suite, all 20 Lab scenarios (lab-classroom-wax passed on its one rerun
+alone), lane tier, build. One review; its faults fixed and confirmed. Changed assertions reviewed
+in docs/changes/LAB-CLASSROOM-BRAKING.md.
+
+Full tier 568/568 on bb9a2c8e, alone. Rule 19: only the inbox and these notes changed since. No
+save change.
