@@ -73,7 +73,9 @@ export function waterNextUp(props) {
   if (!step) return null;
   const title = `Chapter ${chapterTitle(step.id)}`;
   if (step.id === 'well') return {text: `Next up: ${title}. Hollis left you a note. Open the STORY WALL.`, button: ''};
-  return {text: `Next up: ${title}. ${step.note}`,
+  // The note and, when it adds something, the bar's words (how many wins are left).
+  const bar = step.bar?.label && !step.note.includes(step.bar.label) ? ` ${step.bar.label}` : '';
+  return {text: `Next up: ${title}. ${step.note}${bar}`,
     button: step.button ? `<button type="button" class="start-button yard-next-button" data-water-step="${escape(step.id)}"><span>${escape(step.button)}</span></button>` : ''};
 }
 

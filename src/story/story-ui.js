@@ -283,7 +283,10 @@ export function createStoryUi({host, app, actions = {}, onChange = () => {}, onR
     });
     layer.addEventListener('keydown', event => { if (event.key === 'Escape') { event.stopPropagation(); close(); } });
     host.append(layer);
-    layer.querySelector(focus)?.focus?.({preventScroll: true});
+    const first = layer.querySelector(focus);
+    first?.focus?.({preventScroll: true});
+    // A long story (the Water Road's nine chapters) keeps its open step's button in view.
+    first?.scrollIntoView?.({block: 'nearest'});
     onChange();
     return true;
   }
