@@ -77,3 +77,7 @@ sentences, the recap says how to reach the slalom, and the snow suite's dead Wax
   another session's lane tier had the laptop; rerun alone it passed (gates: a timeout while the
   laptop is busy is rerun once alone).
 - Lane tier (`--changed --jobs 4`): 46/46 on the reviewed code. `npm run build`: passes.
+- All 26 `tools/test-lab-*.mjs` and all 17 Lab browser scenarios pass on the lane with the Water
+  Road release merged in.
+- Rule 19: Lab code and the wax bench's glide helpers since the full tier 562/562 on 27fb3739; no
+  save shape or physics change, so the lane tier covers it.
