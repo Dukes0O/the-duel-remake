@@ -31,7 +31,11 @@ optional: a chapter is done when its warlord is beaten.
 
 ## Checks
 
-Recorded below as they run.
+- Lane tier (PowerShell): 43 passed, 0 failed, 0 not run. `npm run build` passes.
+- `scenario water-road` with the switch on: all 13 facts pass; Sal's road lost on
+  the first try and won on the second (the job saved, the tick shown).
+- Kyle got a six-picture sheet of the play-through with the release note.
+- Full tier for the release and the yard frame check: see VERIFICATION.
 
 ## Changed assertions
 
