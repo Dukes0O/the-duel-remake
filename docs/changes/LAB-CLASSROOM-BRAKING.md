@@ -85,7 +85,7 @@ the lever's knob over its title, and two bubbles that scrolled.
 - `tools/test-lab-classroom-braking.mjs`: 12 of 12 (numbers from the bench; a child following the
   prompts passes; every wrong guess and run says why; help climbs to Show me on every step; the
   lesson's runs pass the bench only with the 100 mph run; mouse; drawing; the old faults; the
-  review fixes). `tools/test-lab-classroom.mjs`: 16 of 16 (the offer and hint sit under Brian's
+  review fixes). `tools/test-lab-classroom.mjs`: 15 of 15 (the offer and hint sit under Brian's
   words; Previous step).
 - Every `tools/test-lab-*.mjs`: 28 suites, 321 tests, all pass (before the review fixes); the four
   classroom suites again after them, 53 of 53.
