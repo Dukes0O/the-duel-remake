@@ -48,7 +48,9 @@ function noClocks(fn) {
 // stood at RESCUE-ENGINE's merge, before the count was added.
 // HELI-PAY-CONTINUE: re-recorded (was 3895189678). The board's cars, routes, titles and days are the same; the pays in it moved
 // (the three routes 300, 450, 600 to 2,100, 2,800, 2,100 and the recovery job 500 to 2,300).
-const BOARD_FINGERPRINT = 2469111954;
+// HELI-CHART-MIRROR re-recorded it (was 2469111954): the hashed bearings now give east as world -x, the gauge's east; with
+// their x turned back the board hashes to 2469111954. Nothing else moved.
+const BOARD_FINGERPRINT = 421700028;
 function boardFingerprint() {
   const out = [];
   for (let d = 0; d < 60; d++) {

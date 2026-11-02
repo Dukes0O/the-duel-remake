@@ -139,8 +139,10 @@ the dispatch board, never the radio.
 - **The estimate.** The game tracks how much of the square lay within 60 m
   of your path (on a 20 m grid). Report to Sarah (the board's Report button,
   or R when no call is waiting) once at least a quarter is covered: the estimate is the count
-  divided by the share covered, rounded. Flying parallel lines 120 m apart
-  covers it all; covering half and doubling is the sampling lesson.
+  divided by the share covered, rounded. Flying parallel lines about 110 m
+  apart covers it all (at 120 m the strip midway between two lines is exactly
+  60 m from each, so only a perfectly straight line covers it); covering half
+  and doubling is the sampling lesson.
 - **Pay.** Within 20% of the true number: 3,500 credits. Within 40%: 2,350.
   Further off: 1,150. Spotting the rare animal of that course during the
   count: 600 more (was 600, 400, 200 and 100). The same in Assisted and Real.

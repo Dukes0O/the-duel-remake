@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {CARS, DRIVE, TYRE_SLIP, tyreSlipAngle, tyreSlipGrip} from '../src/config.js';
-import {GRAVITY, HELI_STEP, KESTREL, createHeliState, heliMass, availableThrust, airFactor} from '../src/heli/heli-flight.js';
+import {GRAVITY, HELI_STEP, KESTREL, createHeliState, heliMass, availableThrust, airFactor, compassBearing} from '../src/heli/heli-flight.js';
 import {BUCKET, DROP_AIM_RINGS, aimPoint} from '../src/heli/heli-bucket.js';
 import {FIRE, cellId, spreadStep} from '../src/heli/heli-fire.js';
 import {bearing, HELI_DESTINATIONS, SUMMIT_RUN} from '../src/heli/heli-jobs.js';
@@ -233,7 +233,8 @@ test('headings: the game\'s own pilot map, north 0, east 90, one map unit a kilo
   const facts = headingsBench.facts();
   assert.equal(facts.north, 0);
   const unit = bearing('tremblant-woods', 'panorama-ridge', {summitRun: true});
-  assert.equal(leg('tremblant-woods', 'panorama-ridge').headingDeg, (Math.atan2(unit.x, unit.z) * 180 / Math.PI + 360) % 360);
+  // HELI-CHART-MIRROR: the game's bearing is a world vector with east at -x, so the gauge's own compass reads it (was atan2(x, z)).
+  assert.equal(leg('tremblant-woods', 'panorama-ridge').headingDeg, compassBearing(unit.x, unit.z));
   near(facts.woodsToPanorama.headingDeg, 319.4, 0.002, 'north-west'); near(facts.woodsToPanorama.distanceUnits, 9.22, 0.005, 'distance');
   near(facts.woodsToSnow.headingDeg, 14.7, 0.01, 'just east of north');
   const back = leg('panorama-ridge', 'tremblant-woods').headingDeg;

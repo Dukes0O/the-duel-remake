@@ -505,7 +505,9 @@ function flyOwnCar({owned}) {
     bearing('tremblant-woods', 'panorama-ridge'));
   // HELI-PAY-CONTINUE: the pin moved only because the three routes' pay did. With the new pays mapped back to 300, 450 and 600 the
   // same list hashes to the old 3257734403: the boards, cars, legs and destinations are unchanged.
-  assert.equal(heliHash(JSON.stringify(before)), 1330338215, 'with the switch off the boards, legs and destinations are unchanged'); checks++;
+  // HELI-CHART-MIRROR re-recorded it (was 1330338215): the two bearings in the list now give east as world -x, the gauge's east;
+  // with their x turned back the list hashes to 1330338215. The boards, cars, legs and destinations are unchanged.
+  assert.equal(heliHash(JSON.stringify(before)), 127511734, 'with the switch off the boards, legs and destinations are unchanged'); checks++;
   same(Object.keys(HELI_DESTINATIONS), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'H1\'s three destinations, in order');
   ok(destinationsFor() === HELI_DESTINATIONS && destinationsFor({summitRun: false}) === HELI_DESTINATIONS && destinationsFor({}) === HELI_DESTINATIONS, 'switch off: the H1 table');
   ok(!isDestination('summit-run') && !isDestination('summit-run', {summitRun: false}), 'switch off: not a destination');
@@ -525,7 +527,8 @@ function flyOwnCar({owned}) {
   same([legFuelKg('tremblant-woods', 'tremblant-snow', on), legFuelKg('panorama-ridge', 'tremblant-woods', on), legFuelKg('tremblant-snow', 'panorama-ridge', on)], [25, 120, 110], 'H1\'s legs are the same');
   ok([160, 150, 90].every(kg => kg < 400), 'every leg can be flown on one tank');
   const toSummit = bearing('panorama-ridge', 'summit-run', on);
-  ok(toSummit.x < 0 && toSummit.z > 0, 'north-west of Panorama Ridge on the small map (north is +z)');
+  // HELI-CHART-MIRROR: north-west on the map is world +x (the world's east is -x, the gauge's east); was toSummit.x < 0, the mirror.
+  ok(toSummit.x > 0 && toSummit.z > 0, 'north-west of Panorama Ridge on the small map (north is +z)');
   near(Math.hypot(toSummit.x, toSummit.z), 1, 1e-9, 'a unit vector');
   const back = bearing('summit-run', 'panorama-ridge', on);
   near(back.x, -toSummit.x, 1e-9, 'the way back faces the other way'); near(back.z, -toSummit.z, 1e-9, 'the way back faces the other way');

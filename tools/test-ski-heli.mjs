@@ -511,7 +511,9 @@ test('the thin-air line plays once, only when the collective is at its top and t
   assert.equal(s.view().heli.y + s.view().heli.altitudeOffset < 3500, true);
   // High up, at the summit pad (3,586 m): the line plays the first time the collective is at its top and the helicopter still sinks.
   // Landing there from the cruise does it (the pilot arrests the descent at full collective), and it plays only once.
-  const flown = flyToPad(s, SKI_PADS.summit);
+  // HELI-CHART-MIRROR: from Tremblant Woods she now arrives on the gauge's side of Summit Run, 650 m farther from the summit
+  // pad; at 18 m/s this pilot, who climbs in place before each ridge, ran the tank dry 3 km short, so it flies the leg at 24.
+  const flown = flyToPad(s, SKI_PADS.summit, {speed: 24});
   assert.equal(has(flown, 'crashed'), false);
   assert.equal(lines(flown), 1, 'once, on the way in');
   run(s, 20, v => pilot(v, {x: SKI_PADS.summit.x, z: SKI_PADS.summit.z, y: SKI_PADS.summit.y + 80}, {speed: 2, sink: 4}), v => v.heli.y > SKI_PADS.summit.y + 70);
@@ -523,7 +525,7 @@ test('the thin-air line plays once, only when the collective is at its top and t
   // A new visit hears it again: nothing about it is saved.
   const again = sessionOf(profileOf());
   again.start(); again.takeSkiDrop(); toSummit(again);
-  const second = flyToPad(again, SKI_PADS.summit);
+  const second = flyToPad(again, SKI_PADS.summit, {speed: 24});
   assert.equal(has(second, 'crashed'), false); assert.equal(lines(second), 1);
   again.leave();
 });
@@ -531,7 +533,7 @@ test('the thin-air line plays once, only when the collective is at its top and t
 test('powder: the stashes pay 700 each, once, and the run has no result', { timeout: 600000 }, () => {
   const s = sessionOf(profileOf());
   s.start(); s.takeSkiDrop(); toSummit(s);
-  assert.equal(has(flyToPad(s, SKI_PADS.summit), 'crashed'), false);
+  assert.equal(has(flyToPad(s, SKI_PADS.summit, {speed: 24}), 'crashed'), false, 'the summit leg at 24 m/s (HELI-CHART-MIRROR, as above)');
   assert.deepEqual(s.skiOffers().runs.map(r => r.id), ['powder']);
   const credits = s.profile.credits;
   assert.equal(s.skiStepOut('powder').ok, true);

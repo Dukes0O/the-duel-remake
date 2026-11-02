@@ -4,6 +4,7 @@
 import {destinationsFor, bearing} from '../../heli/heli-jobs.js';
 import {control, choice, makeBench} from './bench-core.js';
 import {CHALLENGE_RULES} from '../lab-challenges.js';
+import {compassBearing} from '../../heli/heli-flight.js';
 // For the classroom lesson (lessons may not name helicopter files): the HEADING gauge's own compass, and the
 // challenge's smoke (its heading, distance and the ring that counts as over it).
 export {compassBearing, compassDirection} from '../../heli/heli-flight.js';
@@ -24,7 +25,7 @@ export function leg(from, to) {
   const unit = bearing(from, to, {summitRun: true});
   if (!unit) return null;
   const a = PADS[from].mapKm, b = PADS[to].mapKm;
-  return {headingDeg: (Math.atan2(unit.x, unit.z) * 180 / Math.PI + 360) % 360, distanceUnits: Math.hypot(b.x - a.x, b.z - a.z)};
+  return {headingDeg: compassBearing(unit.x, unit.z), distanceUnits: Math.hypot(b.x - a.x, b.z - a.z)};
 }
 const turnOff = (a, b) => Math.abs((a - b + 540) % 360 - 180);
 
