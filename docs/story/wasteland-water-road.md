@@ -113,7 +113,13 @@ later use the gatekeeper's existing voice if credits are spent). No caption over
 | `story.water.hollis.end` | Hollis | Next yard visit | Listen to that. Water in the pipes. Thank you, driver. |
 | `story.water.hollis.9` | Hollis | After the end line | Dust on the horizon. Somebody heard the water is flowing. A new warlord is coming. |
 
-The ninth warlord's own lines are written with Gratian (section 6).
+Chapter 9 (WARLORD-NINE, Claude, 2 November 2026; section 6 "Answers"):
+
+| Id | Who | When | Text |
+| --- | --- | --- | --- |
+| (taunt) | Magnus | His fight's intro card | Everything metal comes to Magnus. Your car is metal. |
+| `story.water.magnus.beaten` | Magnus | After his first defeat | You broke my magnet! Fine, keep your water. I'll build a bigger one. |
+| `story.water.hollis.10` | Hollis | Straight after Magnus | Magnus is back in his scrapyard, sulking. He'll want a rematch. The water keeps flowing. |
 
 ## 6. Gratian's warlord: questions for Gratian
 
@@ -143,7 +149,7 @@ He can change any of it later. The build rules are in `docs/SCRAPDOME.md`,
 "Settled for build: Magnus the Magnet".
 
 1. **Name.** Magnus the Magnet.
-2. **Car.** An old Falcone Heritage that he pulled out of a scrap pile, covered
+2. **Car.** A Falcone Heritage that he pulled out of a scrap pile, covered
    in scrap plates, with a crane on the roof holding a giant round magnet.
 3. **Trick.** The Big Pull. The magnet hums and glows blue, and a blue ring on
    the ground shows how far it reaches. Then every car inside the ring is

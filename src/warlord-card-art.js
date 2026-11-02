@@ -51,7 +51,7 @@ export function createWarlordCardArt({quality='high'}={}) {
       if(!car)throw Error('The real card car is unavailable');root.add(car);
       const kit=view.kit || (view.warlordId==='sal'?'warlord':view.warlordId?'scrapper':null);
       const crown=view.roofLook || (view.warlordId==='blackiron'?'chrome-crown':null);
-      if(kit || crown || view.warlordId==='gunn') {
+      if(kit || crown || view.warlordId==='gunn' || view.warlordId==='magnus') {
         const assets=new Map(),loadKitAsset=id=>{
           if(!assets.has(id))assets.set(id,loader.loadAsync(`/assets/models/wasteland/kits/${id}.glb`));
           return assets.get(id);
@@ -61,7 +61,7 @@ export function createWarlordCardArt({quality='high'}={}) {
         const actor={mode:'wasteland',status:'arena_result',combat:{},wastelandGateDiscovered:true,
           car:view.carId,opponents:[],traffic:[],s:0,lateral:0,stageTimeSec:0,armor:100,maxArmor:100,
           combatArmorKit:kit,combatRoofLook:crown,warlordId:view.warlordId,
-          ...(view.warlordId==='gunn'?{gunnBarrage:{stage:'idle'}}:{})};
+          ...(view.warlordId==='gunn'?{gunnBarrage:{stage:'idle'}}:{}),...(view.warlordId==='magnus'?{magnusPull:{stage:'idle'}}:{})};
         const preview={state:actor,course:{def:{arena:true},at:()=>({heading:0,y:0}),worldAt:()=>({x:0,y:0,z:0}),groundAt:()=>({x:0,y:0,z:0}),surfaceAt:()=>({roadHalfWidth:10})}};
         record.armor.update(preview,{player:car},true);
         await loadKitAsset(view.carId);await Promise.resolve();
@@ -69,6 +69,9 @@ export function createWarlordCardArt({quality='high'}={}) {
         record.armor.update(preview,{player:car},true);
         if(view.warlordId==='gunn' || kit==='turret-look') {
           await loadKitAsset('gunn-turret');await Promise.resolve();if(disposed)return record;record.armor.update(preview,{player:car},true);
+        }
+        if(view.warlordId==='magnus') {
+          await loadKitAsset('magnus-magnet');await Promise.resolve();if(disposed)return record;record.armor.update(preview,{player:car},true);
         }
         if(!car.getObjectByName('authored-kit'))throw Error('The fitted card kit could not load');
       }
