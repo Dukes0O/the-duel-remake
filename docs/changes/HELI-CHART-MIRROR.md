@@ -39,7 +39,7 @@ Each written for the mirror; none loosened.
   moved with the arrivals; it now starts 93 m north of the pad. The count flight climbs in place before its pattern
   (it scared animals on the way up), and its lines are 110 m apart, not 120: with a 60 m reach, 120 m covers the rows
   midway between two lines only on a perfectly straight line, and this pilot covered 94% over the new ground (99% now;
-  the check still asks 95%). The low-pass scare test crosses to its pass at 110 m first (at 30 m from the pad the pilot
+  the check still asks 95%; docs/HELI_WILDLIFE.md now says about 110 m). The low-pass scare test crosses to its pass at 110 m first (at 30 m from the pad the pilot
   flew into the ground cover); the pass itself is the same.
 
 ## Re-recorded pins (one reason each; views compared field by field, old code against new)
@@ -53,7 +53,8 @@ Each written for the mirror; none loosened.
   2249168172, 3614661767, 1879391574, 1049849445): only the flying area's minX and maxX moved (the arrival points it
   covers are now the mirror about the landing zone).
 - `test-heli-summit-arrival.mjs` OTHER_ARRIVALS_PIN, was 1375301816: each arrival is the mirror about the landing zone
-  (x, heading and sideways speed flip; z and height the same); fuel and ground height follow the new ground below.
+  (x, heading and sideways speed flip; z and height the same); fuel moved because the flight out to the area's edge
+  took a new heading to new edges, and the ground height follows the new arrival point.
 - `test-heli-autopilot-rescue.mjs` OFF_PIN, was 3493369388: the area edges, the arrival heading and the approach from
   there (position within 2 m, fuel within 5 kg, the readout).
 - `test-heli-summit-tune.mjs` AUTOPILOT_PIN, was 1475763491: the autopilot's legs now leave and arrive on the gauge's

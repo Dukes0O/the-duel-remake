@@ -33,3 +33,18 @@ step from the world to the chart: the world's east is -x. So:
 Mirroring the drawing instead would have put the "west coast" places on the east and moved every pad-to-pad heading
 the Lab teaches. What moves now: the world side of every arrival and departure, the course outlines, and the dot's
 travel. Check: fly out of a course on the chart's hover bearing by the gauge and arrive on the chart's side.
+
+## Claude's review of the changed tests (rule 18, 1 November 2026)
+
+- The sign assertions (Eifel Crown north-east of home; Summit Run north-west of Panorama Ridge; the Lab bench's formula
+  line) were written for the mirror. Each now states the same place in world terms; the bench's pinned answers (319.4,
+  14.7, 9.22) are unchanged. Nothing loosened.
+- `test-ski-heli.mjs` flies the summit leg at 24 m/s, not 18: the arrival from Tremblant Woods is now 650 m farther from
+  the summit ski pad and the slow pilot ran dry. The checks are the same. (With rescues on, as in the live game, a Summit
+  Run arrival comes over the pad, so players do not meet the longer leg.)
+- `test-heli-skin-session.mjs`: the count flight climbs first and flies lines 110 m apart, not 120; the 95% check is the
+  same. 120 m only ever covered the midway strip on a perfectly straight line (it sits exactly 60 m from each line), so
+  the design note's "120 m covers it all" was too tight: `docs/HELI_WILDLIFE.md` now says about 110 m. The low passes
+  cross at 110 m first and keep the crossing out of the checked events, so the scare and the count must happen on the
+  low pass itself, which is stricter than before.
+- One independent review: no code faults; its two notes (this design line, one pin's wording) are fixed.
