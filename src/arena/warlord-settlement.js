@@ -120,7 +120,8 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     wins: Math.min(1_000_000, bounded(previous.wins, 1_000_000) + (facts.won ? 1 : 0)),
     losses: Math.min(1_000_000, bounded(previous.losses, 1_000_000) + (facts.won ? 0 : 1))};
   let territories = career.territories, kits = career.kits;
-  if (facts.won) {
+  // A warlord with no territory claims none.
+  if (facts.won && warlord.territoryId) {
     const territory = record(territories?.[id]) ? territories[id] : {hold: 0};
     territories = {...territories, [id]: {...territory, claimed: true}};
   }
@@ -163,5 +164,5 @@ export function settleWarlordResult(profile, {runId, ownerPlayerId, activePlayer
     kitEarned: firstWin && warlord.rewardKit ? warlord.rewardKit : null, weaponEarned, titleEarned,
     crewEarned: firstWin && warlord.rewardCrew ? warlord.rewardCrew : null,
     gearEarned: firstWin && warlord.rewardGear ? warlord.rewardGear.id : null,
-    territoryClaimed: facts.won};
+    territoryClaimed: facts.won && !!warlord.territoryId};
 }

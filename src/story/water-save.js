@@ -9,8 +9,9 @@ import {registerStory, storyOf, storyIsNewer, writeStory} from './story-save.js'
 
 export const WATER_KEY = 'water';
 
-// Chapter n (1 to 8) belongs to WARLORD_LADDER[n - 1]. Each job is one game in a
-// mode the player already knows; the Baron's chapter is his fight alone.
+// Chapter n (1 to 9) belongs to WARLORD_LADDER[n - 1]. Each job is one game in a
+// mode the player already knows; the Baron's chapter and Magnus's (chapter 9) are
+// their fights alone.
 const JOBS = [
   {kind: 'race', mode: 'wasteland', courses: ['pacific-canyon', 'red-mesa']},
   {kind: 'arena', mode: 'fuel-run', venueId: 'scrapdome', rank: 6, flag: 'fuel-run'},
@@ -20,15 +21,18 @@ const JOBS = [
   {kind: 'race', mode: 'wasteland', courses: ['alpine-serpent']},
   {kind: 'arena', mode: 'convoy-raid', venueId: 'salt-flats', rank: 9, flag: 'convoy-raid'},
   null,
+  null,
 ];
 export const WATER_CHAPTERS = Object.freeze([
   Object.freeze({n: 0, id: 'well', warlordId: null, job: null}),
   ...JOBS.map((job, index) => Object.freeze({n: index + 1, id: WARLORD_LADDER[index], warlordId: WARLORD_LADDER[index],
-    job: job && Object.freeze({...job, ...(job.courses ? {courses: Object.freeze([...job.courses])} : {})})})),
+    job: job ? Object.freeze({...job, ...(job.courses ? {courses: Object.freeze([...job.courses])} : {})}) : null})),
 ]);
 const JOB_IDS = WATER_CHAPTERS.filter(chapter => chapter.job).map(chapter => chapter.warlordId);
 // V.'s notes come after chapters 1 to 7; the Baron's chapter ends with Vesper herself.
 export const WATER_NOTE_COUNT = 7;
+// The road is won with the Baron's chapter; chapter 9 comes after the end lines.
+export const WATER_ROAD_WON = 8;
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const defeated = (profile, id) => profile?.wasteland?.warlords?.[id]?.defeated === true ||
@@ -84,7 +88,7 @@ export function waterJobDone(profile, n) {
 }
 // A chapter opens when the one before is done.
 export const waterChapterOpen = (profile, n) => n === 0 || n > 0 && n < WATER_CHAPTERS.length && waterChapterDone(profile, n - 1);
-// The first chapter not done, or WATER_CHAPTERS.length when all eight warlords are beaten. null for a newer story.
+// The first chapter not done, or WATER_CHAPTERS.length when every chapter is done. null for a newer story.
 export function waterChapter(profile) {
   if (storyIsNewer(profile)) return null;
   const at = WATER_CHAPTERS.findIndex(chapter => !waterChapterDone(profile, chapter.n));
@@ -104,9 +108,10 @@ export function markWaterJob(profile, warlordId) {
   return writeStory(profile, WATER_KEY, 'job', warlordId);
 }
 export const markWaterNotes = (profile, count) => writeStory(profile, WATER_KEY, 'notes', count);
-// Hollis's end lines, once all eight warlords are beaten.
+// Hollis's end lines, once the Baron's chapter is done (the first eight warlords beaten).
+export const waterRoadWon = profile => waterChapterDone(profile, WATER_ROAD_WON);
 export function markWaterEnd(profile) {
   if (storyIsNewer(profile)) return writeStory(profile, WATER_KEY, 'end');
-  if (waterChapter(profile) !== WATER_CHAPTERS.length) return {ok: false, changed: false, profile, reason: 'Beat Baron Blackiron first.'};
+  if (!waterRoadWon(profile)) return {ok: false, changed: false, profile, reason: 'Beat Baron Blackiron first.'};
   return writeStory(profile, WATER_KEY, 'end');
 }

@@ -28,10 +28,10 @@ const same = (actual, expected, label) => { assert.deepEqual(actual, expected, l
 const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]);
 const count = (text, pattern) => (text.match(pattern) || []).length;
 
-function freshApp({on = true, beaten = [], rank = 1, read = true} = {}) {
+function freshApp({on = true, beaten = [], rank = 1, read = true, ninth = false} = {}) {
   memory.clear();
   const app = new App();
-  app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, overrides: {'water-road': on}});
+  app.duel.featureFlags = createFeatureFlags({storage: null, qa: false, overrides: {'water-road': on, 'warlord-nine': ninth}});
   app.audio.unlock = () => {};
   const profile = createProfile();
   profile.wasteland.discoveredGate = true;
@@ -150,5 +150,26 @@ same(freshApp({read: false}).waterYardStage(), 0, 'a new story: the dry well');
 same(freshApp({beaten: ['sal', 'dustmonger']}).waterYardStage(), 2, 'two warlords: stage 2');
 same(freshApp({beaten: WARLORD_LADDER}).waterYardStage(), 8, 'all eight: stage 8');
 same(freshApp({read: false, beaten: ['sal', 'dustmonger', 'mirage']}).waterYardStage(), 3, 'a returning player whose note is unread still sees their progress');
+
+// ---- Chapter 9: Magnus the Magnet (WARLORD-NINE) ---------------------------------------------------------------------------
+{
+  const eight = WARLORD_LADDER.slice(0, WARLORD_LADDER.indexOf('blackiron') + 1);
+  const off = freshApp({beaten: eight}).storyProps('water');
+  same([off.step, off.steps.length, off.ninth], ['done', 9, false], 'with his switch off the road ends with the Baron, as before');
+  const app = freshApp({beaten: eight, ninth: true});
+  const menu = app.storyProps('water');
+  same([menu.step, menu.steps.length], ['magnus', 10], 'with his switch on, chapter 9 is next after the Baron');
+  const nine = menu.steps.at(-1);
+  same([nine.state, nine.button, nine.action?.type, nine.bar], ['open', 'Go to the yard', 'yard', null], 'from the menu, chapter 9 goes to the yard; no hold bar');
+  ok(nine.note.includes('Magnus the Magnet') && nine.note.includes('Salt Flats'), 'its words name him and his hideout');
+  intoYard(app);
+  const wall = waterWallMarkup(app.storyProps('water'));
+  ok(/data-water-step="magnus"[^>]*><span>Fight Magnus the Magnet</.test(wall), 'the Story Wall\'s one button fights him');
+  ok(wall.includes('9 · The ninth warlord'), 'the chapter is named');
+  same(app.waterYardStage(), 8, 'the tower stays full: chapter 9 adds nothing to the water works');
+  const done = freshApp({beaten: [...eight, 'magnus'], ninth: true}).storyProps('water');
+  same([done.step, done.ninth], ['done', true], 'beating Magnus finishes the road');
+  ok(waterWallMarkup(done).includes('Magnus is back in his scrapyard'), 'and the wall says he is sulking, with a rematch');
+}
 
 console.log(`test-water-screens: ${checks} checks passed`);

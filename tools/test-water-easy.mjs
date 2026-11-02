@@ -26,9 +26,9 @@ import {WATER_CHAPTERS} from '../src/story/water-save.js';
 let checks = 0;
 const ok = (condition, label) => { assert.ok(condition, label); checks++; };
 
-// ---- The 15 cases: each chapter's job, then its warlord's fight ---------------------------------------------------
+// ---- The 16 cases: each chapter's job, then its warlord's fight (chapter 9, Magnus, from WARLORD-NINE) ---------------------------------------------------
 // The rank a player has when the chapter opens: the job's own rank, and at least the rank of the chapter before.
-const RANKS = [1, 6, 9, 12, 12, 12, 12, 12];
+const RANKS = [1, 6, 9, 12, 12, 12, 12, 12, 12];
 export const CASES = [];
 for (const chapter of WATER_CHAPTERS.slice(1)) {
   const rank = RANKS[chapter.n - 1], job = chapter.job;
@@ -44,7 +44,8 @@ for (const chapter of WATER_CHAPTERS.slice(1)) {
 for (const chapter of WATER_CHAPTERS.slice(1)) {
   const rank = RANKS[chapter.n - 1];
   CASES.push({id: chapter.warlordId, label: `ch${chapter.n} fight: ${chapter.warlordId}`,
-    play: (seed, rules) => playArena({warlordId: chapter.warlordId, seed, arsenalRank: rank, rules})});
+    play: (seed, rules) => playArena({warlordId: chapter.warlordId, seed, arsenalRank: rank, rules,
+      featureFlags: {'warlord-nine': true}})});
 }
 
 // ---- The child is never better than an Easy computer car ----------------------------------------------------------
@@ -55,7 +56,7 @@ ok(CHILD.arenaPace[1] <= easy.pace, 'the child drives no faster than an Easy car
 ok(CHILD.roadPace[1] <= .9, 'the child drives at most 90% of the autopilot\'s corner speed');
 ok(CHILD.aimErrorRadians >= CPU_COMBAT.easy.aimError, 'the child aims no better than an Easy car');
 ok(easy.boost === 'never', 'Easy cars never boost, and neither does the child');
-ok(CASES.length === 15 && new Set(CASES.map(item => item.id)).size === 15, 'seven jobs and eight fights');
+ok(CASES.length === 16 && new Set(CASES.map(item => item.id)).size === 16, 'seven jobs and nine fights');
 ok(STARTER_CAR === 'falcone_f42', 'the child drives the starter car');
 {
   const a = childFor(7), b = childFor(7), c = childFor(8);

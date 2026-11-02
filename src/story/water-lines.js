@@ -54,6 +54,10 @@ export const WATER_CAPTIONS = Object.freeze({
     'Listen to that. Water in the pipes. Thank you, driver.'),
   'story.water.hollis.9': line('Hollis', 'Straight after the end line',
     'Dust on the horizon. Somebody heard the water is flowing. A new warlord is coming.'),
+  'story.water.magnus.beaten': line('Magnus', 'After Magnus falls',
+    'You broke my magnet! Fine, keep your water. I\'ll build a bigger one.'),
+  'story.water.hollis.10': line('Hollis', 'Straight after Magnus',
+    'Magnus is back in his scrapyard, sulking. He\'ll want a rematch. The water keeps flowing.'),
 });
 
 // The caption that plays as a chapter's job starts, by warlord id.
@@ -62,8 +66,11 @@ export const waterJobCaption = warlordId => Object.hasOwn(WATER_CAPTIONS, `story
 
 // Hollis's two lines on the yard visit after the Baron, one after the other.
 export const WATER_END_SEQUENCE = Object.freeze(['story.water.hollis.end', 'story.water.hollis.9']);
+// After a warlord's first defeat, by warlord id: Magnus's last words, then Hollis (the Baron's is Vesper's own line).
+export const WATER_WON_SEQUENCES = Object.freeze({magnus: Object.freeze(['story.water.magnus.beaten', 'story.water.hollis.10'])});
 
 // Every id the story owns: the captions, the letter and the notes.
 export const WATER_LINE_IDS = Object.freeze([...Object.keys(WATER_CAPTIONS), WATER_LETTER_ID, ...WATER_NOTES.map(item => item.id)]);
 
-registerStoryLines('water', {captions: WATER_CAPTIONS, letter: WATER_LETTER, sequences: {end: WATER_END_SEQUENCE}});
+registerStoryLines('water', {captions: WATER_CAPTIONS, letter: WATER_LETTER, sequences: {end: WATER_END_SEQUENCE,
+  ...Object.fromEntries(Object.entries(WATER_WON_SEQUENCES).map(([id, ids]) => [`won-${id}`, ids]))}});

@@ -14,10 +14,13 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, character =>
 export const WATER_CHAPTER_NAMES = Object.freeze({
   well: 'The dry well', sal: 'Saws on the pipe', dustmonger: 'Fuel for the pump', mirage: 'The stolen valve',
   gunn: 'Hold the yard', kettle: 'The boiler', vultures: 'The water truck', tollkeeper: 'The tanker', blackiron: 'The Cistern',
+  magnus: 'The ninth warlord',
 });
 const chapterTitle = id => `${WATER_CHAPTERS.find(chapter => chapter.id === id)?.n ?? ''} · ${WATER_CHAPTER_NAMES[id]}`;
-// After the Baron: the road is won, and a dust cloud is coming (chapter 9 is built with Gratian).
+// After the Baron: the road is won, and a dust cloud is coming. After Magnus (chapter 9): the end.
 const ENDED = 'The tower is full and water runs into the camp. Dust on the horizon: a ninth warlord is coming.';
+const ENDED_NINTH = 'The tower is full and the water keeps flowing. Magnus is back in his scrapyard, sulking: rematch him any time from the TERRITORY MAP.';
+const ended = view => view.ninth ? ENDED_NINTH : ENDED;
 
 registerStoryCard({
   key: 'water',
@@ -28,7 +31,7 @@ registerStoryCard({
   letterLabel: 'A note from Hollis',
   stepsLabel: 'The chapters',
   steps: Object.fromEntries(WATER_CHAPTERS.map(chapter => [chapter.id, {name: chapterTitle(chapter.id), primary: true}])),
-  footer: view => view.step === 'done' ? `<p class="story-prize">${escape(ENDED)}</p>` : '',
+  footer: view => view.step === 'done' ? `<p class="story-prize">${escape(ended(view))}</p>` : '',
 });
 
 // One chapter as a row: its tick, its words, its bar and its one button (open chapters only).
@@ -60,7 +63,7 @@ export function waterWallMarkup(props) {
   if (!props?.available) return '';
   return `<section class="water-road-wall" aria-label="The Water Road"><h3>THE WATER ROAD</h3>`
     + `<ol class="story-steps" aria-label="The chapters">${props.steps.map(chapterRow).join('')}</ol>`
-    + (props.step === 'done' ? `<p class="story-prize">${escape(ENDED)}</p>` : '')
+    + (props.step === 'done' ? `<p class="story-prize">${escape(ended(props))}</p>` : '')
     + `<div class="story-notes" aria-label="Notes">${waterNotesMarkup(props.notes)}</div>`
     + `</section>`;
 }
@@ -68,7 +71,7 @@ export function waterWallMarkup(props) {
 // The yard's "Next up": the open chapter's words and its one button, or null when the story is not shown.
 export function waterNextUp(props) {
   if (!props?.available) return null;
-  if (props.step === 'done') return {text: `Next up: the water road is won. ${ENDED}`, button: ''};
+  if (props.step === 'done') return {text: `Next up: the water road is won. ${ended(props)}`, button: ''};
   const step = props.steps.find(item => item.id === props.step);
   if (!step) return null;
   const title = `Chapter ${chapterTitle(step.id)}`;

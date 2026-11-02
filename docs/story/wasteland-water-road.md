@@ -29,7 +29,8 @@ into the camp, and the tower is full.
 
 Then a dust cloud on the horizon: **a ninth warlord** has heard the water is
 flowing. That warlord is **Gratian's**: he names them and picks their car,
-their trick and their hideout (section 6).
+their trick and their hideout (section 6). Gratian asked to be
+surprised, so Claude chose: **Magnus the Magnet** (section 6, Answers).
 
 ## 2. The chapters
 
@@ -133,6 +134,36 @@ change it later.
 6. **Friend or enemy at the end?** Do they join your crew when beaten, like
    Vesper, or stay an enemy for a rematch?
 7. **Prize.** What do you win for beating them?
+
+### Answers (Claude, 2 November 2026)
+
+Kyle, 2 November: "Gratian would like to be surprised." So Claude picked all
+seven, and Gratian meets the warlord for the first time when he plays chapter 9.
+He can change any of it later. The build rules are in `docs/SCRAPDOME.md`,
+"Settled for build: Magnus the Magnet".
+
+1. **Name.** Magnus the Magnet.
+2. **Car.** An old Falcone Heritage that he pulled out of a scrap pile, covered
+   in scrap plates, with a crane on the roof holding a giant round magnet.
+3. **Trick.** The Big Pull. The magnet hums and glows blue, and a blue ring on
+   the ground shows how far it reaches. Then every car inside the ring is
+   dragged towards him. Drive straight away from him and you get free. After a
+   pull the magnet is red hot, and he sits still while it cools: that is when
+   you hit him. When he is wrecked once, he pulls twice in a row.
+4. **Hideout.** His scrapyard on the Salt Flats, the Salt Flats Scrapyard,
+   where everything metal in the Wasteland ends up.
+5. **Words.** Before the fight: "Everything metal comes to Magnus. Your car is
+   metal." When you beat him: "You broke my magnet! Fine, keep your water. I'll
+   build a bigger one."
+6. **Friend or enemy?** Enemy. He goes back to his scrapyard to sulk, and you
+   can fight him again any time from the Territory Map.
+7. **Prize.** The Tesla Coil (the arsenal's lightning pulse, which stops cars'
+   weapons for 3 seconds), the coil that powered his magnet, if you do not have
+   it yet; scrap; and his card on the Story Wall.
+
+He opens for everyone who has beaten Baron Blackiron, story or not. On Easy a
+young driver must beat him at least 8 times in 10 (section 4), using his own
+Easy numbers only.
 
 ## 7. What changes for a player with progress
 
