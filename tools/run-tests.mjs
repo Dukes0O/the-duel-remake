@@ -96,7 +96,7 @@ export const LEGACY_SUITE_ORDER=Object.freeze([
 const HELP=[
   'Usage: node tools/run-tests.mjs [--list] [--filter NAME] [--jobs N] [--keep-going] [--tier lane|merge|full] [--changed] [--json]',
   '',
-  'Each suite runs in its own Node process. Full tier splits the long campaign matrix into eight shards.',
+  'Each suite runs in its own Node process. Full tier splits the long campaign matrix into eight shards and the any-car instructor suite into four.',
   '  --list          Show the selected suites without running them.',
   '  --filter NAME   Match a path substring, ignoring case. Repeat for OR matches.',
   '                  Use "core" to select src/test.js.',
@@ -183,6 +183,8 @@ export function runSuites(suites,{cwd=PROJECT_ROOT,spawn=spawnSync,execPath=proc
 
 export const CAMPAIGN_SUITE='tools/test-campaigns.mjs';
 export const CAMPAIGN_SHARDS=8;
+export const INSTRUCTOR_SUITE='tools/test-lesson-instructor-any-car.mjs';
+export const INSTRUCTOR_SHARDS=4;
 export const SMOKE_SUITES=Object.freeze([
   CORE_SUITE,
   'tools/test-repo-hygiene.mjs',
@@ -473,11 +475,14 @@ export function selectPlan(suites,{tier=null,filters=[],changed=false,affected=[
   if(tier==='merge')selected=selected.filter(suite=>suite!==CAMPAIGN_SUITE);
   if(filters.length)selected=selectSuites(selected,filters);
   const replayScheduled=selected.includes('tools/test-replays.mjs');
-  return selected.flatMap(suite=>suite===CAMPAIGN_SUITE
-    ?Array.from({length:CAMPAIGN_SHARDS},(_,index)=>({
-      suite,label:suite+' ['+(index+1)+'/'+CAMPAIGN_SHARDS+']',args:['--shard='+(index+1)+'/'+CAMPAIGN_SHARDS]
-    }))
-    :[{suite,label:suite,args:suite==='tools/test-lesson-instructor-any-car.mjs'&&(tier==='lane'||changed)
+  const shards=(suite,count)=>Array.from({length:count},(_,index)=>({
+    suite,label:suite+' ['+(index+1)+'/'+count+']',args:['--shard='+(index+1)+'/'+count]
+  }));
+  const sampled=tier==='lane'||changed;
+  return selected.flatMap(suite=>suite===CAMPAIGN_SUITE?shards(suite,CAMPAIGN_SHARDS)
+    // Every instructor car runs as parallel shards; lane plans sample two cars in one run.
+    :suite===INSTRUCTOR_SUITE&&!sampled?shards(suite,INSTRUCTOR_SHARDS)
+    :[{suite,label:suite,args:suite===INSTRUCTOR_SUITE
       ?['--sample']
       :suite==='tools/test-titan-climb.mjs'&&replayScheduled?['--replays-in-plan']:[]}]);
 }
