@@ -6,6 +6,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Helicopter arrivals clear the hills.** When a cruise leg ends where a
+  ridge, hill or treeline stands between you and the landing zone, the
+  helicopter now arrives high enough to fly straight in over it with 40 m to
+  spare, instead of meeting the slope a few seconds later (Panorama Ridge from
+  Summit Run arrives about 260 m up). Clear approaches still arrive 150 m up.
 - **The Lab: Ski wax is a classroom now.** Three wax tins, hard, medium and
   soft, and snow trays side on: your ski races a plain ski down a 50 m test
   strip, timed at real speed, and the board shows who won and by how many

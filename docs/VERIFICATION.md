@@ -1698,3 +1698,16 @@ card), lane tier 46/46, build. One review, eight faults fixed.
 Rule 19: Lab code and the wax bench's glide helpers since the full tier 562/562 on 27fb3739, with
 HELI-CHART-MIRROR (released on its own lane tier) merged before it; no save shape or physics change.
 No save change.
+
+## Release, 2 November 2026, morning (Claude, Release Manager)
+
+HELI-ARRIVAL-CLEAR: a cruise leg ends at the same point 1.5 km out, 150 m over the pad, or 40 m over the
+highest ground, tree or rock on the straight line in (read every 2 m across 6 m), capped 20 m under the
+flying ceiling; 55 of 420 arrivals rise, the highest Panorama Ridge from Summit Run at 259 m. New
+test-heli-arrival-clear 2,572 checks (fails on the old height at -61.2 m and in a straight-in crash); no
+pin moved; lane tier 53/54 (test-board on the in-progress card entry, passes with the card done); build on
+the lane and on the merge. One review, no code faults, four notes fixed.
+
+Rule 19: helicopter session code since the full tier 562/562 on 27fb3739, after HELI-CHART-MIRROR and
+LAB-CLASSROOM-WAX (each released on its lane tier); no shared core, save shape or physics change. No save
+change.
