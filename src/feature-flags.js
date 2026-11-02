@@ -56,8 +56,8 @@ export const FEATURE_STATES = Object.freeze({
   'menu-front-door': 'dev',
   // STORY-KOGANE-SCREENS: the Kogane Invitation story (docs/story/kogane-invitation.md). Off in the game; also needs Kogane Pass and its Night version, the Nissan Skyline, the helicopter, the pilot's map and driving lessons.
   'kogane-invitation': 'on',
-  // WATER-HOOKS: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). Off in the game until WATER-FINISH; also needs the Hidden Road, the Scrapdome and the warlord cards.
-  'water-road': 'dev',
+  // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.
+  'water-road': 'on',
 });
 export const EXPERIMENTAL_KEY = 'duel_experimental_v1';
 

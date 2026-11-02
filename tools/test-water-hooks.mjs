@@ -48,7 +48,7 @@ const intoYard = app => { ok(app.visitWasteland(), 'the player can visit the yar
 const raceResult = (won = true) => ({won, completed: true, timeSec: 140, laps: 2, beatRival: won});
 
 // ---- Off: nothing at all -----------------------------------------------------------------------------------------------
-same(FEATURE_STATES['water-road'], 'dev', 'the switch is dev until WATER-FINISH');
+same(FEATURE_STATES['water-road'], 'on', 'the Water Road is released (WATER-FINISH, 1 November 2026)');
 {
   const app = freshApp({on: false});
   same(app.storyProps('water').available, false, 'switch off: no Water Road card');
