@@ -151,7 +151,8 @@ function fireFingerprint(extra = {}) {
 }
 // Taken from the fire session as it stood before RESCUE-HOOKS (the engine of RESCUE-ENGINE merged).
 // HELI-PAY-CONTINUE re-recorded this (was 1400586788): it hashes the board's pay words.
-const FIRE_SESSION_FINGERPRINT = 2478802993;
+// HELI-COMPASS re-recorded it (was 2478802993): the fire's bearing and the wind's name are now the HEADING gauge's. Nothing else moved.
+const FIRE_SESSION_FINGERPRINT = 3467651565;
 {
   same(fireFingerprint(), FIRE_SESSION_FINGERPRINT, 'with no rescue switch the fire session is as it was');
   same(fireFingerprint({rescueEnabled: false}), FIRE_SESSION_FINGERPRINT, 'and with the switch off');

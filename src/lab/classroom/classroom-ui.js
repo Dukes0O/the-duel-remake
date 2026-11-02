@@ -202,7 +202,9 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (voiced === v.index) return;
     voiced = v.index;
     if (v.step.voice) sayVoice(v.step.voice);
-    if (v.step.word && app.profile && !labNotebookOf(app.profile).includes(v.step.word)) app.labCommit?.((p, f) => learnLabWord(p, v.step.word, {flags: f}));
+    // A step teaches one word, or a few that belong together (north, east, south and west).
+    for (const id of [v.step.word, ...(v.step.words ?? [])].filter(Boolean))
+      if (app.profile && !labNotebookOf(app.profile).includes(id)) app.labCommit?.((p, f) => learnLabWord(p, id, {flags: f}));
   }
 
   return {

@@ -1,7 +1,8 @@
 # Wasteland play-test inbox
 
 ## For Claude
-- **FULL TIER DONE 1 November evening (Claude, Release Manager).** 556 passed, 0 failed on c31e8e5a. Heavy jobs may resume; releasing Projectile now (notes only since c31e8e5a).
+- **RELEASED 1 November night (Claude, Release Manager).** The Lab: Headings and maps opens as the new classroom lesson (A and D turn her, the HEADING gauge counts up and down, a ruler in 100 m squares, Brian's job flies 070 for 550 m); the old Headings lesson is gone. Helicopter compass numbers (fire, rescue, nearest pad, wind) now match the HEADING gauge, and the Lab smoke challenge sits at the gauge's 070. The live game server was off at release; the new build is in dist and loads next time the game is opened.
+- **RELEASED 1 November evening (Claude, Release Manager).** The Lab: Projectile motion opens as the new classroom lesson: Kestrel One drops stones and water over the lake, a flag guess, then Brian's buoy job (Space flies and lets go); the old Projectile lesson is gone. Full tier 556/556 on c31e8e5a. Heavy jobs may resume. Reload any open game tab.
 - **RELEASED 1 November (Claude, Release Manager).** The Scrapdome Yard's Next up line now names the next warlord and how to open or start that fight; no more "Sal is waiting" after Sal falls. Reload any open game tab.
 - **RELEASED 31 October night (Claude, Release Manager).** The Lab: Lift and weight opens as the new classroom lesson (lever on W and S, stops on her weight); the old Lift lesson is gone. Reload any open game tab.
 - **RELEASED 31 October evening (Claude, Release Manager).** The Lab: Pendulums opens as the new classroom lesson with Brian as tutor; the old pendulum lesson is gone. Reload any open game tab.

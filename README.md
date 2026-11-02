@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Headings and maps is a classroom now.** A map from above with
+  Kestrel One on the Woods pad and the HEADING gauge beside it, as in the
+  helicopter: D turns her right and the number counts up, A turns her left and
+  it counts down, and after 359 comes 000. A ruler shows the map's scale (one
+  square is 100 m), and Brian's job is the real one: fly 070 for 550 m and stop
+  over the smoke.
+- **Compass numbers in the helicopter now match the HEADING gauge.** Fly the
+  number on a fire, rescue or nearest-pad line and you get there; the wind's
+  name reads the same way. The Lab's smoke challenge is now at the gauge's 070.
 - **The Lab: Projectile motion is a classroom now.** Kestrel One flies over
   the lake and drops a stone or her water: every drop leaves its path and a
   landing mark in metres. You put a flag where you think the water will land,

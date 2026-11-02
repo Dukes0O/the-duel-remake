@@ -134,7 +134,8 @@ function newSession(profile, {rescue = true, summit = false, mode = 'assisted'} 
 // ---- Switch off: every flight is what it was before this card -----------------
 // The pin was taken from the session as it stood before RESCUE-AUTOPILOT.
 // HELI-PAY-CONTINUE re-recorded this (was 2230200939): the hashed board and view carry the job pays and the clean bonus, which moved.
-const OFF_PIN = 2449056266;
+// HELI-COMPASS re-recorded it (was 2449056266): the view's fire bearing is now the HEADING gauge's (212 became 148); nothing else moved.
+const OFF_PIN = 3493369388;
 for (const extra of [{}, {rescueEnabled: false}, {rescueEnabled: 'yes'}, {summitRunEnabled: false}, {summitRunEnabled: 'yes', rescueEnabled: 1}])
   assert.equal(offFingerprint(extra), OFF_PIN, `the switch-off flights are unchanged (${JSON.stringify(extra)})`), checks++;
 same(offFacts, {lake: true, cruise: true, arrived: true, jobTaken: true}, 'and those flights really flew: the lake, the cruise leg, the approach, a job');

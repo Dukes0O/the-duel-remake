@@ -11,7 +11,7 @@
 //   patches         the water or retardant that landed this step: [{x, z, litres, radius, retardant?}]
 //   events          the session's events this step ({type: 'released' | 'setDown' | 'cargoHit' ...})
 //   ringIndex       the drop ring in use, 0 to 3 (the Projectile challenge passes with it)
-import {KESTREL} from '../heli/heli-flight.js';
+import {KESTREL, compassDirection} from '../heli/heli-flight.js';
 import {FIRE, cellId, spreadStep, applyWater, fireOut} from '../heli/heli-fire.js';
 import {clearCircle} from '../heli/heli-search.js';
 
@@ -35,7 +35,6 @@ export const CHALLENGE_RULES = Object.freeze({
 });
 
 const horizontal = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
-const compass = deg => ({x: Math.sin(deg * Math.PI / 180), z: Math.cos(deg * Math.PI / 180)});
 
 // ---- where things are ---------------------------------------------------------------------------------------
 // Open water, nearest the pad first, with room to scoop (20 m of water each way).
@@ -74,7 +73,7 @@ export function challengeSpots(id, world, site) {
     return spot && target ? Object.freeze({load: Object.freeze({x: spot.x, z: spot.z, y: spot.y}), target: Object.freeze(target), zone}) : null;
   }
   if (id === 'headings') {
-    const rule = CHALLENGE_RULES.headings, dir = compass(rule.headingDeg);
+    const rule = CHALLENGE_RULES.headings, dir = compassDirection(rule.headingDeg);
     const x = zone.x + dir.x * rule.distanceM, z = zone.z + dir.z * rule.distanceM;
     return Object.freeze({marker: Object.freeze({x, z, y: ground.height(x, z)}), headingDeg: rule.headingDeg, distanceM: rule.distanceM, zone});
   }

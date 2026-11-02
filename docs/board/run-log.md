@@ -1495,3 +1495,9 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged WATER-HOOKS (Water Road jobs through setup, start and settlement; one button per chapter with bars; switch water-road dev; test 93, lane 59/59, build; one review, four faults fixed and confirmed).
 - 1 Nov: merged LAB-CLASSROOM-PROJECTILE (Projectile as a classroom, old Projectile removed; Projectile 15/15, 24 Lab suites, 15 Lab scenarios, lane 39/39, build; one review, ten faults fixed).
 - 1 Nov: full tier 556/556 on c31e8e5a in 5617 s, alone, for the release (save shape changed by WATER-SAVE since 86c48d4f).
+- 1 Nov: released LAB-CLASSROOM-PROJECTILE (build 26.11.01 22:09 UTC, master d0900eba; full tier 556/556 on c31e8e5a, notes only since).
+- 1 Nov: merged HELI-COMPASS (in-course bearings, the wind name and the Headings smoke follow the HEADING gauge; challenges 25/25 with a gauge flight, four pins re-recorded with reasons, lane 73/73, build; one review, three faults fixed). Goes live with Headings.
+- 1 Nov: merged WATER-EASY (child-pace measuring tool; claim not met, 0 to 6 in 10 across 15 cases; the Water Road goes ahead unchanged; EASY-YOUNG-DRIVER opened; lane 18/18, build).
+- 1 Nov: merged LAB-CLASSROOM-HEADINGS (Headings as a classroom, old Headings removed, QA example lesson to the fire pit; Headings 13/13, 25 Lab suites, 16 Lab scenarios, lane 41/41, build; one review, seven faults fixed).
+- 1 Nov: released LAB-CLASSROOM-HEADINGS and HELI-COMPASS (build 26.11.01 23:52 UTC, master 79a92a50; rule 19 on the full tier of c31e8e5a with both lane tiers; live server off, dist checked on disk).
+- 1 Nov: merged WATER-YARD-ART (water works by Blender recipe, three rounds, round 3 picked, 1.96 MB; round-2 sheets to Kyle; lane 48/48, build).

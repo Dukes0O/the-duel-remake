@@ -3,6 +3,11 @@
 // 270 west, and one map unit stands for one kilometre.
 import {destinationsFor, bearing} from '../../heli/heli-jobs.js';
 import {control, choice, makeBench} from './bench-core.js';
+import {CHALLENGE_RULES} from '../lab-challenges.js';
+// For the classroom lesson (lessons may not name helicopter files): the HEADING gauge's own compass, and the
+// challenge's smoke (its heading, distance and the ring that counts as over it).
+export {compassBearing, compassDirection} from '../../heli/heli-flight.js';
+export const SMOKE = CHALLENGE_RULES.headings;
 
 const PADS = destinationsFor({summitRun: true});
 const IDS = Object.keys(PADS);
