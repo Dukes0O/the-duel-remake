@@ -1500,3 +1500,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 1 Nov: merged WATER-EASY (child-pace measuring tool; claim not met, 0 to 6 in 10 across 15 cases; the Water Road goes ahead unchanged; EASY-YOUNG-DRIVER opened; lane 18/18, build).
 - 1 Nov: merged LAB-CLASSROOM-HEADINGS (Headings as a classroom, old Headings removed, QA example lesson to the fire pit; Headings 13/13, 25 Lab suites, 16 Lab scenarios, lane 41/41, build; one review, seven faults fixed).
 - 1 Nov: released LAB-CLASSROOM-HEADINGS and HELI-COMPASS (build 26.11.01 23:52 UTC, master 79a92a50; rule 19 on the full tier of c31e8e5a with both lane tiers; live server off, dist checked on disk).
+- 1 Nov: merged WATER-YARD-ART (water works by Blender recipe, three rounds, round 3 picked, 1.96 MB; round-2 sheets to Kyle; lane 48/48, build).
