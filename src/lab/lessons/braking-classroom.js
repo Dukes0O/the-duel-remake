@@ -238,17 +238,17 @@ export function createModel() {
       return {kind: right ? 'right' : 'wrong', say: m.say};
     }
     m.phase = 'set';
-    const why = `the back brakes did ${100 - l.front}% of the braking, but braking left only ${pct(REAR_LOAD)} of the weight on the back tyres: they locked and the back slid`;
+    const why = `its brakes did ${100 - l.front}% of the braking, but braking leaves only ${pct(REAR_LOAD)} of the weight on the back tyres`;
     if (id === 'try-slide') {
-      if (r.rearSlides && !m.slid) { m.slid = true; m.say = `There: ${why}. Move the lever toward the front with → until it stops steady, then brake again.`; return {kind: 'progress', say: m.say}; }
-      if (r.rearSlides) { m.say = `At ${l.front}% front ${why}. Move the lever on with →, then brake again.`; return {kind: 'fail', say: m.say}; }
+      if (r.rearSlides && !m.slid) { m.slid = true; m.say = `The back slid: ${why}. Press → to move the lever toward the front, then brake again.`; return {kind: 'progress', say: m.say}; }
+      if (r.rearSlides) { m.say = `Still sliding at ${l.front}% front: the back brakes did ${100 - l.front}%, more than the ${pct(REAR_LOAD)} on the back tyres. Press → again, then brake.`; return {kind: 'fail', say: m.say}; }
       m.phase = 'done'; seen.add(id);
       m.say = `${l.front}% front: the back brakes did ${100 - l.front}%, less than the ${pct(REAR_LOAD)} the back tyres carry, so the back stayed in line. ${m1(r.stopMetres)}, a steady stop.`;
       return {kind: 'right', say: m.say};
     }
     // Brian's job: the fastest steady stop before the corner.
     const gap = CORNERS[m.corner], best = fastestFor(gap);
-    if (r.rearSlides) { m.say = `The back slid: ${why}. Move the lever toward the front, then try that corner again.`; return {kind: 'fail', say: m.say}; }
+    if (r.rearSlides) { m.say = `The back slid: its brakes did ${100 - l.front}%, more than the ${pct(REAR_LOAD)} on the back tyres. Move the lever toward the front, then try that corner again.`; return {kind: 'fail', say: m.say}; }
     if (r.stopMetres > gap) { m.say = `From ${l.speed} mph it needs ${m1(r.stopMetres)}, and the gap is ${gap} m: it ran ${m1(r.stopMetres - gap)} past the corner. Slower: press ↓.`; return {kind: 'fail', say: m.say}; }
     if (l.speed < best) { m.say = `Stopped ${m1(gap - r.stopMetres)} short of the corner. From ${l.speed + SPEED_STEP} mph it still stops in time (${m1(metresFrom(l.speed + SPEED_STEP))}). Arrive faster: press ↑.`; return {kind: 'fail', say: m.say}; }
     m.corner += 1;
@@ -318,7 +318,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to go on.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, close: null,
-      say: 'From a hundred miles an hour a car needs four times the road it needs from fifty. Braking tips the weight forward onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides.',
+      say: 'Twice the speed, four times the road. Braking tips the weight onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides.',
       prompt: 'Enter finishes the lesson and opens Brake balance on the Tune page in the garage.', hints: KEY_IDEAS.map(i => i.text)};
     if (id === 'wonder') return {...base, line: LINE_M, actions: ['replay'],
       say: seen.has(id) ? `Same car, same brakes. From 50 mph it stopped in ${m1(S50)}. From 100 mph it ran past the line and needed ${m1(S100)}. Twice the speed: why four times the road?`

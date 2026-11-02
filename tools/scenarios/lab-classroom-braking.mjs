@@ -58,7 +58,7 @@ export async function run(c) {
   await press('Digit1'); await at('try-speed', 's.ready'); await saying('Twice the speed needs four times the road', 'a wrong guess says why'); await shot('try-speed-done');
   await next('try-speed');
   // A steady back: brake as it is (the back slides), one click on the lever, then → and brake again.
-  await at('try-slide'); await shot('try-slide'); await press('Space'); await saying('they locked and the back slid', 'the slide says why'); await wait(300); await shot('try-slide-slid');
+  await at('try-slide'); await shot('try-slide'); await press('Space'); await saying('The back slid: its brakes did 50%', 'the slide says why'); await wait(300); await shot('try-slide-slid');
   const lever = await toScreen(910, 280);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: lever.x, y: lever.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: lever.x, y: lever.y, button: 'left', buttons: 0, clickCount: 1});

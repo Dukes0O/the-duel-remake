@@ -120,10 +120,10 @@ test('the tries: Space at the wrong speed, every wrong guess and every slide say
   playThroughTo(slide, 'try-slide');
   assert.equal(slide.view().lever.front, 50); assert.equal(slide.view().dial.locked, true);
   brake(slide);
-  assert.match(slide.view().brian.text, /^There: the back brakes did 50% of the braking, but braking left only 31% of the weight on the back tyres: they locked and the back slid/);
+  assert.match(slide.view().brian.text, /^The back slid: its brakes did 50% of the braking, but braking leaves only 31% of the weight on the back tyres\. Press →/);
   assert.equal(slide.view().ready, false);
   setTo(slide, 50, 60); brake(slide);
-  assert.match(slide.view().brian.text, /^At 60% front the back brakes did 40% of the braking/);
+  assert.match(slide.view().brian.text, /^Still sliding at 60% front: the back brakes did 40%, more than the 31% on the back tyres/);
   setTo(slide, 50, 70); brake(slide);
   assert.match(slide.view().brian.text, /^70% front: the back brakes did 30%, less than the 31% the back tyres carry/);
   assert.equal(slide.view().ready, true);
