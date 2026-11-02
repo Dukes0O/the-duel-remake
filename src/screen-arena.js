@@ -237,6 +237,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     description += ' Side Saws unlocked and equipped on this car. Free on every car you own.';
   } else if (warlord && result.settlementSaved && result.weaponEarned) {
     description += ` ${escapeHTML(warlord.reward)} earned. Equip it in the Armory.`;
+  } else if (warlord && result.settlementSaved && result.kitEarned === 'turret-look') {
+    // Rocket Pods already owned: only the turret look is new.
+    description += ' Turret look earned. Fit it in the Armory.';
   } else if (warlord && result.settlementSaved && result.kitEarned === 'warlord') {
     description += ' Warlord kit fitted to your Titan Monster, and Tusk joins your crew when his gear is ready.';
   } else if (warlord && result.settlementSaved && result.gearEarned === 'grapple-reach') {

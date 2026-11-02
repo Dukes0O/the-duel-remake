@@ -28,7 +28,14 @@ Magnet"). Switch `warlord-nine`.
 
 ## Checks
 
-UNFINISHED: lane tier, build, art round and browser play still to record here.
+UNFINISHED: build and browser play still to record here.
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`, PowerShell): 141 of
+  142 passed; the one failure was the Preview launcher's "every dev switch" check, cleared by
+  switching `warlord-nine` on in this lane. After the review fixes, the switch and the Gunn
+  results line, the 66 suites that read those files or the switches were rerun: all pass
+  (with the yard-next change below).
+- Art: round 1 of 3 is final (`docs/board/looks/magnus-magnet/round-1.jpg`, review note).
 
 - `node tools/test-warlord-magnus.mjs`: 38 checks pass (unlock after the Baron with no
   hold, the Baron's gate unchanged, switch off refuses the fight and hides his card, Salt
@@ -59,7 +66,10 @@ One independent review (code, saves, design numbers). Fixed:
 5. `tools/preview-player.js` no longer gives a Preview player a Magnus hold row.
 6. The results name a warlord's weapon only when it is new (`warlord-settlement.js`):
    a finished player may already own the Tesla Coil. This also applies to the
-   Dustmonger, Mirage and Gunn rewards, which was wrong in the same way.
+   Dustmonger, Mirage and Gunn rewards, which was wrong in the same way. The reviewer's
+   confirmation caught that Gunn's first win would then say nothing when Rockets were
+   already owned; the results now say "Turret look earned" for that case. The card art
+   now fails loudly if Magnus's crane does not load.
 The reviewer found the saves safe: his record survives loading and backups, new careers
 keep eight records, no territory row is written, and a finished player's end lines do not
 replay with the switch on or off.
@@ -81,6 +91,9 @@ None loosens a check; each follows the ninth entry.
   (chapter 9 is a fight alone).
 - `tools/test-feature-flags.mjs`: 46 to 47 switches (`warlord-nine`).
 - `tools/test-water-easy.mjs`: 15 to 16 cases (chapter 9's fight, with his switch on).
+- `tools/test-yard-next.mjs`: after the Baron the line now names Magnus as waiting; "every
+  warlord is beaten" is checked after Magnus too. Same line, one step later.
+- `tools/test-feature-flags.mjs`: `warlord-nine` joins the list of switches that are on.
 
 ## Removed
 

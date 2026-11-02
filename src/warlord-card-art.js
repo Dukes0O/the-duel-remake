@@ -72,6 +72,7 @@ export function createWarlordCardArt({quality='high'}={}) {
         }
         if(view.warlordId==='magnus') {
           await loadKitAsset('magnus-magnet');await Promise.resolve();if(disposed)return record;record.armor.update(preview,{player:car},true);
+          if(!car.getObjectByName('magnus-magnet'))throw Error('The card crane could not load');
         }
         if(!car.getObjectByName('authored-kit'))throw Error('The fitted card kit could not load');
       }
