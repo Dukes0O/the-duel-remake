@@ -6,6 +6,12 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Fuel and weight is a classroom now.** Pour petrol into the car's
+  tank on a scale, 5 litres a press, and watch the litres and kilograms change
+  together; two of the same car race to 60 mph at real speed with a photo
+  finish. Petrol weighs 0.74 kg a litre, and a lighter car is quicker. Brian's
+  job: three races from a Grand Prix, carrying just enough fuel to finish.
+  Passing opens Fuel load on the Tune page.
 - **Helicopter arrivals clear the hills.** When a cruise leg ends where a
   ridge, hill or treeline stands between you and the landing zone, the
   helicopter now arrives high enough to fly straight in over it with 40 m to

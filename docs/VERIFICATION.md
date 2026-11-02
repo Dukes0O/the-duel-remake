@@ -1711,3 +1711,18 @@ the lane and on the merge. One review, no code faults, four notes fixed.
 Rule 19: helicopter session code since the full tier 562/562 on 27fb3739, after HELI-CHART-MIRROR and
 LAB-CLASSROOM-WAX (each released on its lane tier); no shared core, save shape or physics change. No save
 change.
+
+## Release, 2 November 2026, afternoon (Claude, Release Manager)
+
+LAB-CLASSROOM-FUEL: Fuel and weight as a classroom lesson (the car's tank on a scale with pour in and
+pour out, 5 litres a press, litres and kilograms shown together; Falcone F42s timed to 60 mph at real
+speed with a photo finish, all from the fuel bench; weighing by the scale alone; Brian's job on the
+game's Grand Prix tank); the old Fuel lesson removed. The challenge is unchanged: the bench's goal,
+passed on the lesson's own races, opens Fuel load on the Tune page. Fuel suite 13/13, all 27 Lab
+suites, all 18 Lab scenarios (lab-walk timed out beside the lane tier and passed alone), lane tier
+38/38 twice (the second with integration merged in), build on the lane and on the merge. One review,
+four faults fixed and confirmed.
+
+Rule 19: Lab code and the classroom screen since the full tier 562/562 on 27fb3739, after
+HELI-CHART-MIRROR, LAB-CLASSROOM-WAX and HELI-ARRIVAL-CLEAR (each released on its lane tier); no shared
+core, save shape or physics change. No save change.
