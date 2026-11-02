@@ -16,7 +16,7 @@ export const LAB_UPGRADES = Object.freeze([
   upgrade('long-cable', 'Long cable', 1500, 'pendulum'),
   upgrade('altitude-tune', 'Altitude tune', 3500, 'altitude'),
   upgrade('heavy-hook', 'Heavy hook', 2000, 'strength'),
-  upgrade('carbon-plates', 'Carbon plates', 1500, 'strength'),
+  upgrade('carbon-plates', 'Carbon plates', 1500, 'strength'), // Wasteland kits: 40% more protection for the same weight
   upgrade('galvanised', 'Galvanised finish', 600, 'rust'),
   upgrade('gmeter', 'G-meter and racing seat', 800, 'gforce'),
   upgrade('moving-map', 'Moving map', 1200, 'headings'),
@@ -57,6 +57,12 @@ export function aerialsOpen(profile, flags) {
 export function waxKitOwned(profile, flags) {
   const {lab, refusal} = labReady(profile, flags);
   return !refusal && lab.owned['wax-kit'] === true;
+}
+// What Carbon plates does in the Wasteland (docs/LAB.md 4.2): the race reads ownership through this, never Lab internals.
+// With the Lab off nothing is owned, so a race is exactly the Wasteland's own.
+export function carbonPlatesOwned(profile, flags) {
+  const {lab, refusal} = labReady(profile, flags);
+  return !refusal && lab.owned['carbon-plates'] === true;
 }
 // The wax for createSkier({wax}) on a day: the pick judged against the day's snow with the Wax kit, otherwise nothing
 // (the plain snow's friction).

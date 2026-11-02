@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {ARMOR_KITS, equipArmorKit, getEquippedArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
-import {maxArmorForMass} from '../src/combat-armor.js';
+import {ARMOR_KITS, armorKitMass, equipArmorKit, getEquippedArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
+import {createLab} from '../src/lab/lab-save.js';
+import {carbonPlatesOwned} from '../src/lab/lab-shop.js';
+import {initializeCombatArmor, maxArmorForMass} from '../src/combat-armor.js';
 import {CARS} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
@@ -87,6 +89,61 @@ test('equipped tier adds only its armor to a flagged Wasteland player', () => {
     assert.equal(duel.state.combatArmorKit, null);
     assert.equal(duel.state.maxArmor, undefined);
   }
+});
+
+test('Carbon plates gives the player 40% more kit armor at the same weight, never an opponent', () => {
+  const base = maxArmorForMass(CARS.falcone_f42.mass);
+  for (const [tier, bonus] of [[null, 0], ['scrapper', 14], ['raider', 28], ['warlord', 42]]) {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: tier,
+      combatCarbonPlates: true, discoveredGate: true});
+    assert.equal(duel.state.maxArmor, base + bonus);
+    assert.equal(duel.state.armor, base + bonus);
+    assert.equal(duel.state.rival.maxArmor, base);
+    assert.equal(duel._vehicleSpec(duel.state).mass, (CARS.falcone_f42.mass || 1450) + armorKitMass(tier),
+      'the plating weighs what it always did');
+  }
+  const plain = new Duel({seed: 1989}), carbon = new Duel({seed: 1989});
+  for (const [duel, combatCarbonPlates] of [[plain, false], [carbon, true]])
+    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: 'raider',
+      combatCarbonPlates, discoveredGate: true});
+  assert.equal(carbon.state.maxArmor - plain.state.maxArmor, 8);
+  assert.equal(plain.state.combatCarbonPlates, undefined);
+  assert.equal(carbon._vehicleSpec(carbon.state).mass, plain._vehicleSpec(plain.state).mass);
+  const opponent = {car: 'falcone_f42', combatArmorKit: 'raider'};
+  assert.equal(carbon._vehicleSpec(opponent).mass, plain._vehicleSpec(opponent).mass);
+  carbon.state.rival.combatArmorKit = 'raider';
+  initializeCombatArmor(carbon);
+  assert.equal(carbon.state.rival.maxArmor, base + 20, 'a kitted opponent keeps plain plating');
+  assert.equal(carbon.state.maxArmor, base + 28);
+  for (const look of ['side-saws', 'turret-look']) {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: look, combatCarbonPlates: true, discoveredGate: true});
+    assert.equal(duel.state.combatCarbonPlates, undefined, 'an earned look carries no plates');
+  }
+  for (const [mode, discoveredGate] of [['duel', true], ['wasteland', false]]) {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode, car: 'falcone_f42', combatArmorKit: 'warlord', combatCarbonPlates: true, discoveredGate});
+    assert.equal(duel.state.combatCarbonPlates, undefined, 'no plates without Wasteland rules and a kit');
+  }
+});
+
+test('Carbon plates counts only when bought and the Lab is on, and the Armory shows the real figure', () => {
+  const lab = flags => ({enabled: name => flags.includes(name)});
+  const saved = profile({xp: 12650});
+  const bought = {...saved, lab: {...createLab(), done: {strength: true}, owned: {'carbon-plates': true}}};
+  assert.equal(carbonPlatesOwned(bought, lab(['lab'])), true);
+  assert.equal(carbonPlatesOwned(bought, lab([])), false, 'with the Lab off nothing is owned');
+  assert.equal(carbonPlatesOwned(saved, lab(['lab'])), false);
+  const kitted = purchaseArmorKit(bought, 'falcone_f42', 'raider').profile;
+  const common = {credits: String, escapeHTML: String, getGarageMessage: () => '', action: () => '',
+    kitsEnabled: () => true, getArmoryCar: () => 'falcone_f42'};
+  const carbonHtml = createArmoryScreen({...common, profile: () => kitted, featureFlags: lab(['lab'])})();
+  assert.match(carbonHtml, /RAIDER EQUIPPED \(\+28 ARMOR · CARBON\)/);
+  assert.match(carbonHtml, /\+14 ARMOR · CARBON/);
+  const plainHtml = createArmoryScreen({...common, profile: () => kitted, featureFlags: lab([])})();
+  assert.match(plainHtml, /RAIDER EQUIPPED \(\+20 ARMOR\)/);
+  assert.doesNotMatch(plainHtml, /CARBON/);
 });
 
 test('Armory shows per-car kit choices only with the feature enabled', () => {
