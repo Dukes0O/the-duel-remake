@@ -66,10 +66,11 @@ export function initializeCombatArmor(duel) {
   if (!duel._combatRamIncidents) return;
   initializeCombatScoring(duel);
   for (const actor of [duel.state, ...duel.state.opponents]) {
-    // Armor follows the car's own weight; a kit's plating adds its armor.
+    // Armor follows the car's own weight; a kit's plating adds its armor, more with the
+    // player's Carbon plates.
     const car = actor === duel.state ? duel.state.car : actor.car || duel.state.car;
     actor.maxArmor = maxArmorForMass(CARS[car]?.mass || T.referenceMass) +
-      armorKitBonus(actor.combatArmorKit);
+      armorKitBonus(actor.combatArmorKit, {carbonPlates: actor === duel.state && duel.state.combatCarbonPlates === true});
     actor.armor = actor.maxArmor;
     actor.combatWrecking = false;
     actor.combatWreckTimer = 0;

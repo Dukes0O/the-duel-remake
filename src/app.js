@@ -27,6 +27,7 @@ import {createHeliSession, courseSite} from './heli/heli-session.js';
 import {skiKeys, SKI_CAMERA_VIEWS, skiDeepSnow} from './ski/ski-view.js'; // SKI-VIEW: the ski keys and cameras
 import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
 import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
+import {carbonPlatesOwned} from './lab/lab-shop.js'; // CARBON-PLATES-WIRE
 import * as wildlifeRules from './wildlife.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf, heliOf} from './heli/heli-save.js';
@@ -851,6 +852,7 @@ export class App {
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout:this.wastelandUnlocked()?getCarLoadout(this.profile,this._arsenalOptions()):undefined,
       combatArmorKit:this.wastelandUnlocked() ? this._combatArmorKit(car) : null,
+      combatCarbonPlates:this.wastelandUnlocked() && carbonPlatesOwned(this.profile,this._switches()),
       combatRoofLook:this.wastelandUnlocked() ? getEquippedRoofLook(this.profile, car) : null,
       crewId:this.wastelandUnlocked()?selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}):undefined,
       discoveredGate:this.getHiddenRoadDiscovery().discoveredGate,
@@ -1850,6 +1852,7 @@ export class App {
       playerId: this.player.id, opponents: field, weaponLevels: getProfileWeapons(this.profile).levels,
       arsenalRank:this.profile.wasteland?.rank||1,
       weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
+      combatCarbonPlates: carbonPlatesOwned(this.profile, this._switches()),
       combatRoofLook: getEquippedRoofLook(this.profile, car),
       crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')})};
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.

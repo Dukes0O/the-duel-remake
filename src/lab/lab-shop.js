@@ -58,6 +58,12 @@ export function waxKitOwned(profile, flags) {
   const {lab, refusal} = labReady(profile, flags);
   return !refusal && lab.owned['wax-kit'] === true;
 }
+// What Carbon plates does in the Wasteland (docs/LAB.md 4.2): the race reads ownership through this, never Lab internals.
+// With the Lab off nothing is owned, so a race is exactly the Wasteland's own.
+export function carbonPlatesOwned(profile, flags) {
+  const {lab, refusal} = labReady(profile, flags);
+  return !refusal && lab.owned['carbon-plates'] === true;
+}
 // The wax for createSkier({wax}) on a day: the pick judged against the day's snow with the Wax kit, otherwise nothing
 // (the plain snow's friction).
 export const skiWaxFor = (profile, flags, day, pick) => waxKitOwned(profile, flags) ? waxSetting(pick, day) : null;

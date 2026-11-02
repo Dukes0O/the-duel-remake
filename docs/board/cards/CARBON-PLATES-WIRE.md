@@ -67,8 +67,9 @@ changes nothing for anyone who has not bought it, and stays inside one file's ar
 1. In the combat armour suite: with Carbon plates, the player's Raider car starts with base
    armour plus 28; without it, plus 20; the crash body weight (`_vehicleSpec` mass) is the
    same either way; an opponent's kit is never changed.
-2. In the Lab rules suite: `carbonPlates` reaches the race only when the `lab` switch is on and
-   the profile owns `carbon-plates`; with the switch off a race is exactly as today.
+2. `carbonPlatesOwned` is true only when the `lab` switch is on and the profile owns
+   `carbon-plates`; with the switch off a race is exactly as today; the Armory shows the owner's
+   real figure. (Checks 1 and 2 live in `tools/test-armor-kits.mjs`, beside the kit armour test.)
 3. Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`), replay and world
    signature guards unchanged, `npm run build`, and `combat-balance.mjs --check`.
 
@@ -76,4 +77,10 @@ Laptop-only checks: none needed beyond the build; the Armory and HUD do not chan
 
 ## Claude answers
 
-(waiting)
+2 November 2026 (Kyle picked it in chat: "Build C: stronger plates"): **C**. Owning Carbon
+plates, with the `lab` switch on, makes the player's paid kit give 40% more armour at its usual
+weight, rounded to whole points (14, 28, 42). The crash body weight, opponents' kits and the
+earned looks stay as they are. The Armory shows the owner's real figure ("+28 ARMOR") and says
+the plates are carbon, so the player can see what the purchase did. The rule for "owned" lives in
+the Lab (`carbonPlatesOwned` in `src/lab/lab-shop.js`, beside `waxKitOwned`); the 40% lives with
+the kits (`src/armor-kits.js`).

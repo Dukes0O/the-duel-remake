@@ -46,8 +46,13 @@ function earnedOnAnyCar(profile, kit) {
       Array.isArray(saved?.defeated) && saved.defeated.includes(warlord.id)));
 }
 
-export function armorKitBonus(id) {
-  return ARMOR_KITS[validArmorKit(id)]?.armor || 0;
+// The Lab's Carbon plates (docs/LAB.md 4.2): the same plating weight in carbon fibre gives 40%
+// more armor. Its weight, and so the crash body, is unchanged.
+export const CARBON_PLATES_ARMOR = 1.4;
+
+export function armorKitBonus(id, {carbonPlates = false} = {}) {
+  const armor = ARMOR_KITS[validArmorKit(id)]?.armor || 0;
+  return carbonPlates === true ? Math.round(armor * CARBON_PLATES_ARMOR) : armor;
 }
 
 export function armorKitMass(id) {

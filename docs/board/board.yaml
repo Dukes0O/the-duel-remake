@@ -6,8 +6,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "S"
-    status: "backlog"
-    waiting_on: "claude"
+    status: "building"
+    claimed_by: "claude/carbon-plates"
     needs: []
     locks: []
     flag: "lab"
