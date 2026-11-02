@@ -1,5 +1,4 @@
 // Real lesson frame and machine controls in a fresh memory-only career.
-import * as strength from '../../src/lab/lessons/strength-lesson.js';
 import * as rust from '../../src/lab/lessons/rust-lesson.js';
 import * as gforce from '../../src/lab/lessons/gforce-lesson.js';
 
@@ -26,12 +25,6 @@ export async function run(c) {
     await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
     await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', button: 'left', clickCount: 1, ...p});
   }
-  async function drag(id, before, value, min, max) {
-    const p = await target(id), y = p.y - (value - before) / (max - min) * 180;
-    await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', button: 'left', clickCount: 1, ...p});
-    await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: p.x, y, button: 'left', buttons: 1});
-    await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: p.x, y, button: 'left', clickCount: 1});
-  }
   async function open(id) {
     await c.evaluate(`window.__qaApp.closeLab()`);
     await c.waitFor(`!${canvas}`, 'previous room disposed');
@@ -42,7 +35,7 @@ export async function run(c) {
       await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); }
       await new Promise(r => setTimeout(r, 500));
     }
-    const [x, z] = {strength: [3, -4.1], rust: [7, -5.5], gforce: [8, 1.9]}[id];
+    const [x, z] = {rust: [7, -5.5], gforce: [8, 1.9]}[id];
     await walk('KeyW', `JSON.parse(${canvas}.dataset.labWalkPosition)[2] < ${id === 'rust' ? -4.3 : 3.6}`);
     if (id === 'rust') {
       // Stop in the narrow aisle between the bending rig and the turning arm.
@@ -68,12 +61,12 @@ export async function run(c) {
     if (await c.evaluate(`!document.querySelector('.lab-key-idea').hidden`)) throw Error('A previous challenge card leaked into this lesson.');
   }
   // A bounded continuation may name only the unfinished lessons; the normal
-  // scenario always runs all three (Headings is a classroom now: lab-classroom-headings). Earlier green lessons keep their evidence.
+  // scenario always runs both (Headings and Strength are classrooms now: lab-classroom-headings, lab-classroom-strength). Earlier green lessons keep their evidence.
   const selected = process.env.WORKSHOP_QA_LESSONS?.split(',');
   // Capture-only retakes for picture changes after the normal full flow passed.
   // The normal scenario below always retains every interaction assertion.
   const watchOnly = process.env.WORKSHOP_QA_WATCH_ONLY === '1';
-  if (selected?.some(id => !['strength', 'rust', 'gforce'].includes(id))) throw Error('Unknown workshop lesson filter.');
+  if (selected?.some(id => !['rust', 'gforce'].includes(id))) throw Error('Unknown workshop lesson filter.');
   async function challengeCapture(id) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 2, y: 2});
     await new Promise(r => setTimeout(r, 600));
@@ -95,7 +88,7 @@ export async function run(c) {
     if (overlap) { await c.screenshot(`${id}-overlap`); throw Error(`Key idea covers ${overlap}`); }
     await c.screenshot(`${id}-challenge`);
   }
-  for (const packet of [strength, rust, gforce].filter(p => !selected || selected.includes(p.definition.id))) {
+  for (const packet of [rust, gforce].filter(p => !selected || selected.includes(p.definition.id))) {
     const d = packet.definition, id = d.id;
     await open(id);
     await new Promise(r => setTimeout(r, 1800)); await c.screenshot(`${id}-wonder`); await click('next');
@@ -118,18 +111,14 @@ export async function run(c) {
     await c.screenshot(`${id}-prediction`);
     if (await c.evaluate(`[...document.querySelectorAll('[data-workshop] > div')].some(el => !el.hidden)`)) throw Error('Floating captions on prediction.');
     // One deliberate mismatch proves the first useful hint in the real UI.
-    const wrong = id === 'rust' ? 'clean' : id === 'gforce' ? 'more' : 'holds';
+    const wrong = id === 'rust' ? 'clean' : 'more';
     await click(`answer:${wrong}`); await click('run');
     await c.waitFor(`!!document.querySelector('[data-teach="retry"]')`, 'failed try and help', 35_000);
     await c.screenshot(`${id}-hint`); await click('retry');
     for (let index = 0; index < 3; index++) {
-      const wanted = id === 'gforce' ? ['more', 'less', 'same'][index] : id === 'rust' ? 'clean' : 'holds';
+      const wanted = id === 'gforce' ? ['more', 'less', 'same'][index] : 'clean';
       await click(`answer:${wanted}`);
-      if (id === 'strength') {
-        await touch('part'); await touch('materialDial'); await drag('thicknessMm', 30, 50, 5, 120);
-        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.material === 'carbon fibre' && Math.abs(JSON.parse(${canvas}.dataset.workshopDrawing).input.thicknessMm - 50) < .01`, 'real material dial and thickness handle');
-        await c.waitFor(`JSON.parse(${canvas}.dataset.workshopPropModels).includes('carbon-bar')`, 'selected real carbon sample');
-      } else if (id === 'rust') {
+      if (id === 'rust') {
         await touch('coatDial'); await touch('coatDial');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopDrawing).input.protection === 'zinc'`, 'real zinc dial');
         await c.waitFor(`JSON.parse(${canvas}.dataset.workshopPropModels).includes('zinc-can')`, 'selected real zinc spray can');
@@ -152,13 +141,7 @@ export async function run(c) {
     // hovering a learned word deliberately opens its meaning and hides the card.
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 2, y: 2});
     await click('challenge');
-    if (id === 'strength') {
-      await c.waitFor(`${text}.includes('Challenge') && !!document.querySelector('[data-teach="answer:holds"]')`, 'inline challenge');
-      await click('answer:holds'); await touch('part'); await touch('materialDial'); await drag('thicknessMm', 30, 50, 5, 120);
-      await click('run'); await c.waitFor(`!!document.querySelector('[data-teach="finish"]')`, 'bench goal');
-      await challengeCapture(id); await click('finish');
-      await c.waitFor(`window.__qaApp.profile.lab.done.strength === true`, 'existing strength challenge awarded');
-    } else if (id === 'rust') {
+    if (id === 'rust') {
       try { await c.waitFor(`!!document.querySelector('[data-lab-protect="underbody"]') && !document.querySelector('.lab-key-idea').hidden`, 'real protection challenge'); }
       catch (error) { await c.screenshot('rust-handoff-failure'); throw Error(`${error.message} ${await c.evaluate(`JSON.stringify({panel: document.querySelector('.lab-teaching')?.textContent, card: document.querySelector('.lab-key-idea')?.outerHTML, side: document.querySelector('.lab-side')?.textContent})`)}`); }
       await challengeCapture(id);
