@@ -54,6 +54,10 @@ export const HELI_SESSION = Object.freeze({
   arrivalDistance: 1500,
   arrivalHeight: 150,
   arrivalSpeed: 20,
+  // An arrival whose straight line in has higher ground starts this far over the highest ground, tree or rock on it, and
+  // never closer than arrivalUnder to the flying ceiling (HELI-ARRIVAL-CLEAR).
+  arrivalClear: 40,
+  arrivalUnder: 20,
   departAhead: 200,
   fadeSeconds: 1.5,
   crashSeconds: 3,
@@ -168,6 +172,19 @@ export function courseSite(course, ground, courseId, {summitRun = false, summitR
 // 1.5 km out from the zone along the way toward another course.
 function arrivalPoint(zone, toward) {
   return {x: zone.x + toward.x * HELI_SESSION.arrivalDistance, z: zone.z + toward.z * HELI_SESSION.arrivalDistance};
+}
+
+// Where a cruise leg ends: the arrival point, 150 m over the pad, or higher where the straight line in from there to the
+// landing circle has higher ground, trees or rocks: 40 m over the highest of them (read every 2 m across the rotor's 6 m),
+// never closer than 20 m to the flying ceiling (HELI-ARRIVAL-CLEAR, docs/board/cards/HELI-ARRIVAL-CLEAR.md).
+export function arrivalStart(site, ground, toward) {
+  const {zone, area} = site, point = arrivalPoint(zone, toward);
+  let top = -Infinity;
+  for (let d = 0; d <= HELI_SESSION.arrivalDistance - zone.radius; d += 2) {
+    top = Math.max(top, ground.highest(point.x - toward.x * d, point.z - toward.z * d, 6));
+  }
+  const y = Math.max(zone.y + HELI_SESSION.arrivalHeight, top + HELI_SESSION.arrivalClear);
+  return {...point, y: Math.min(y, ceilingAt(area, point.x, point.z, ground) - HELI_SESSION.arrivalUnder)};
 }
 
 // The top of the flying area over a spot: the flat ceiling, or, where the area
@@ -459,12 +476,12 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       // Summit Run with rescues on: the leg ends over the start area's landing circle, hovering, so an
       // autopilot started on arrival clears the cliff the usual arrival point sits behind (RESCUE-SUMMIT-ARRIVAL).
       const overZone = courseId === SUMMIT_COURSE && siteFlag.summitRescue === true;
-      const start = overZone ? {x: site.zone.x, z: site.zone.z} : arrivalPoint(site.zone, toward);
+      const start = overZone ? {x: site.zone.x, z: site.zone.z, y: site.zone.y + HELI_SESSION.arrivalHeight} : arrivalStart(site, world.ground, toward);
       const heading = overZone ? Math.atan2(-toward.x, -toward.z) : Math.atan2(site.zone.x - start.x, site.zone.z - start.z);
       const arriveSpeed = overZone ? 0 : HELI_SESSION.arrivalSpeed;
       heli = createHeliState({x: start.x, z: start.z, heading, fuelKg: fuel, mode, altitudeOffset: info.baseAltitude - site.startY,
         ground: world.ground, upgrades: flightUpgrades()});
-      heli.y = site.zone.y + HELI_SESSION.arrivalHeight;
+      heli.y = start.y;
       heli.onGround = false;
       heli.vx = Math.sin(heading) * arriveSpeed;
       heli.vz = Math.cos(heading) * arriveSpeed;
