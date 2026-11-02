@@ -1,5 +1,4 @@
 // Wind-tunnel packet wiring only. Each lesson owns its words and rule verdicts.
-import {FUEL_RIG} from '../benches/tunnel.js';
 export function tunnelPacket(spec, drawing, mount) {
   const {bench, classify, examples} = spec;
   const results = new Map();
