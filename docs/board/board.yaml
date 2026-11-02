@@ -9,7 +9,7 @@ tasks:
     status: "building"
     claimed_by: "claude/carbon-plates"
     needs: []
-    locks: []
+    locks: [busy-game-files]
     flag: "lab"
     details: "docs/board/cards/CARBON-PLATES-WIRE.md"
 
