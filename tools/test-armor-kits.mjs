@@ -3,7 +3,7 @@ import test from 'node:test';
 import {ARMOR_KITS, armorKitMass, equipArmorKit, getEquippedArmorKit, purchaseArmorKit} from '../src/armor-kits.js';
 import {createLab} from '../src/lab/lab-save.js';
 import {carbonPlatesOwned} from '../src/lab/lab-shop.js';
-import {maxArmorForMass} from '../src/combat-armor.js';
+import {initializeCombatArmor, maxArmorForMass} from '../src/combat-armor.js';
 import {CARS} from '../src/config.js';
 import {Duel} from '../src/game.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
@@ -112,6 +112,15 @@ test('Carbon plates gives the player 40% more kit armor at the same weight, neve
   assert.equal(carbon._vehicleSpec(carbon.state).mass, plain._vehicleSpec(plain.state).mass);
   const opponent = {car: 'falcone_f42', combatArmorKit: 'raider'};
   assert.equal(carbon._vehicleSpec(opponent).mass, plain._vehicleSpec(opponent).mass);
+  carbon.state.rival.combatArmorKit = 'raider';
+  initializeCombatArmor(carbon);
+  assert.equal(carbon.state.rival.maxArmor, base + 20, 'a kitted opponent keeps plain plating');
+  assert.equal(carbon.state.maxArmor, base + 28);
+  for (const look of ['side-saws', 'turret-look']) {
+    const duel = new Duel({seed: 1989});
+    duel.startCampaign({mode: 'wasteland', car: 'falcone_f42', combatArmorKit: look, combatCarbonPlates: true, discoveredGate: true});
+    assert.equal(duel.state.combatCarbonPlates, undefined, 'an earned look carries no plates');
+  }
   for (const [mode, discoveredGate] of [['duel', true], ['wasteland', false]]) {
     const duel = new Duel({seed: 1989});
     duel.startCampaign({mode, car: 'falcone_f42', combatArmorKit: 'warlord', combatCarbonPlates: true, discoveredGate});

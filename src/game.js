@@ -25,7 +25,7 @@ import {initializeCombatArmor} from './combat-armor.js';
 import {initializeRaiders, stepRaiders} from './raiders.js';
 import {initializeFootTransition, stepFootTransition,
   stepParkedRace} from './onfoot-transition.js';
-import {validArmorKit} from './armor-kits.js';
+import {armorKitBonus, validArmorKit} from './armor-kits.js';
 import {initializeFootWeapons, selectFootGear} from './onfoot-weapons.js';
 import {CREW, crewMember} from './crew.js';
 import {beginQualifying, applyQualifyingGrid, finishQualifying, qualifyingLapEvent} from './qualifying.js';
@@ -270,7 +270,7 @@ export class Duel {
     if (COURSE[this.state.stageIndex].stuntTrial || ['chase', 'drift', 'checkpoint'].includes(COURSE[this.state.stageIndex].kind)) this.state.mode = 'duel';
     this.state.combatArmorKit = this.state.mode === 'wasteland' &&
       wastelandRulesActive(this.state) ? validArmorKit(combatArmorKit) : null;
-    if (this.state.combatArmorKit && combatCarbonPlates === true) this.state.combatCarbonPlates = true;
+    if (armorKitBonus(this.state.combatArmorKit) > 0 && combatCarbonPlates === true) this.state.combatCarbonPlates = true;
     else delete this.state.combatCarbonPlates;
     if (this.state.mode === 'wasteland' && wastelandRulesActive(this.state) && combatRoofLook === 'chrome-crown')
       this.state.combatRoofLook = combatRoofLook;
@@ -571,7 +571,7 @@ export class Duel {
       arsenalEnabled(this) ? [...WEAPON_IDS,
         ...implementedArsenalWeapons({arsenalWave3Enabled: arsenalWaveThreeEnabled(this)})] : WEAPON_IDS);
     s.combatArmorKit = validArmorKit(combatArmorKit);
-    if (s.combatArmorKit && combatCarbonPlates === true) s.combatCarbonPlates = true;
+    if (armorKitBonus(s.combatArmorKit) > 0 && combatCarbonPlates === true) s.combatCarbonPlates = true;
     else delete s.combatCarbonPlates;
     if (combatRoofLook === 'chrome-crown') s.combatRoofLook = combatRoofLook;
     else delete s.combatRoofLook;

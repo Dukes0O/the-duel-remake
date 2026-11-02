@@ -67,6 +67,9 @@ test('the Baron waits for the other seven; a finished career says so', () => {
   beat(held.wasteland, 'tollkeeper');
   assert.match(yardNextStep(held), /Baron Blackiron is waiting/);
   beat(held.wasteland, 'blackiron');
+  // WARLORD-NINE: then Magnus the Magnet, who needs no hold.
+  assert.match(yardNextStep(held), /Magnus the Magnet is waiting/);
+  beat(held.wasteland, 'magnus');
   assert.match(yardNextStep(held), /every warlord is beaten/);
 });
 

@@ -36,8 +36,18 @@ const details = Object.freeze({
     taunt: 'You have beaten my road. Now beat me.'},
 });
 
-export const WARLORDS = Object.freeze(Object.fromEntries(
-  Object.entries(TERRITORIES).map(([id, territory]) => [id, Object.freeze({
+// Warlords with no territory: no roads, no hold. Magnus the Magnet is the
+// Water Road's ninth chapter (docs/SCRAPDOME.md, "Settled for build: Magnus the
+// Magnet"); his fight opens once the Baron is beaten.
+const unterritoried = Object.freeze({
+  magnus: {name: 'Magnus the Magnet', venue: 'salt-flats', hideout: 'His scrapyard on the Salt Flats', car: 'falcone_heritage', brain: 'gunner',
+    reward: 'Tesla Coil', rewardBuilt: true, rewardWeapon: 'tesla',
+    victoryTitle: 'THE MAGNET IS BROKEN!',
+    taunt: 'Everything metal comes to Magnus. Your car is metal.'},
+});
+
+export const WARLORDS = Object.freeze(Object.fromEntries([
+  ...Object.entries(TERRITORIES).map(([id, territory]) => [id, Object.freeze({
     id,
     name: territory.name,
     territoryId: id,
@@ -45,23 +55,30 @@ export const WARLORDS = Object.freeze(Object.fromEntries(
     venues: Object.freeze([...(territory.venues ?? [])]),
     ...details[id],
   })]),
-));
+  ...Object.entries(unterritoried).map(([id, warlord]) => [id, Object.freeze({
+    id, territoryId: null, courses: Object.freeze([]), venues: Object.freeze([]), ...warlord,
+  })]),
+]));
 
 // Only formats with a playable entry belong here. Signature moves and reward
 // settlement have their own cards; a saved future defeat never builds a fight.
 // Ladder order sets warlord pay (docs/SCRAPDOME.md section 5).
 export const WARLORD_LADDER = Object.freeze([
-  'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron',
+  'sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron', 'magnus',
 ]);
 
-export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron']);
+export const BUILT_WARLORD_IDS = Object.freeze(['sal', 'dustmonger', 'mirage', 'gunn', 'kettle', 'vultures', 'tollkeeper', 'blackiron', 'magnus']);
 
 const defeated = (profile, id) => profile?.wasteland?.warlords?.[id]?.defeated === true ||
   Array.isArray(profile?.wasteland?.warlords?.defeated) && profile.wasteland.warlords.defeated.includes(id);
 
+// A territory's warlord: a full hold (the Baron also needs the seven before him).
+// A warlord with no territory: the Baron beaten.
 export function warlordUnlockSatisfied(profile, id) {
-  return Object.hasOwn(WARLORDS, id) && profile?.wasteland?.territories?.[id]?.hold === 100 &&
-    (id !== 'blackiron' || WARLORD_LADDER.slice(0, -1).every(other => defeated(profile, other)));
+  if (!Object.hasOwn(WARLORDS, id)) return false;
+  if (!WARLORDS[id].territoryId) return profile?.wasteland?.version === 1 && defeated(profile, 'blackiron');
+  return profile?.wasteland?.territories?.[id]?.hold === 100 &&
+    (id !== 'blackiron' || WARLORD_LADDER.slice(0, WARLORD_LADDER.indexOf('blackiron')).every(other => defeated(profile, other)));
 }
 
 // WAR-04 reads this entitlement when the real roster place and gear are built.

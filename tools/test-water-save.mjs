@@ -18,10 +18,10 @@ const beat = (profile, ...ids) => {
   return {...profile, wasteland};
 };
 
-// The chapters: the dry well, then one for each warlord in ladder order; the Baron's has no job.
+// The chapters: the dry well, then one for each warlord in ladder order; the Baron's and Magnus's have no job.
 same(WATER_CHAPTERS.map(chapter => chapter.warlordId), [null, ...WARLORD_LADDER], 'chapter n is the n-th warlord on the ladder');
 same(WATER_CHAPTERS.map(chapter => chapter.job?.mode ?? null),
-  [null, 'wasteland', 'fuel-run', 'bounty-hunt', 'ambush-alley', 'last-car-rolling', 'wasteland', 'convoy-raid', null], 'each job is a mode the player knows');
+  [null, 'wasteland', 'fuel-run', 'bounty-hunt', 'ambush-alley', 'last-car-rolling', 'wasteland', 'convoy-raid', null, null], 'each job is a mode the player knows');
 same(WATER_CHAPTERS[1].job.courses, ['pacific-canyon', 'red-mesa'], 'chapter 1 is on Sal\'s roads');
 same(WATER_CHAPTERS[6].job.courses, ['alpine-serpent'], 'chapter 6 is on Alpine Serpent');
 

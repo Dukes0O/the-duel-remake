@@ -6,6 +6,7 @@ import {VULTURES_FIGHT} from './vultures.js';
 import {GUNN_FIGHT} from './gunn.js';
 import {TOLLKEEPER_FIGHT} from './tollkeeper.js';
 import {BLACKIRON_FIGHT} from './blackiron.js';
+import {MAGNUS_FIGHT} from './magnus.js';
 
 // Every built warlord's fight, one file each (docs/SCRAPDOME.md section 7).
 // Shared arena files call these hooks and never name a warlord. Adding a
@@ -19,6 +20,7 @@ const FIGHTS = Object.freeze({
   gunn: GUNN_FIGHT,
   get tollkeeper() { return TOLLKEEPER_FIGHT; },
   get blackiron() { return BLACKIRON_FIGHT; },
+  magnus: MAGNUS_FIGHT,
 });
 
 export function warlordEnabled(duel, id) {

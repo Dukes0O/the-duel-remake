@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {gunnTurretMount, gunnTurretHeading, gunnTurretPitch} from './warlords/gunn-turret.js';
+import {MAGNUS_MAGNET_ASSET, magnusMagnetMount, magnusMagnetGlow} from './warlords/magnus-look.js';
 
 const clamp = value => Math.max(0, Math.min(1, value));
 const KIT_TIERS = Object.freeze({scrapper: 1, raider: 2, warlord: 3});
@@ -129,8 +130,15 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
     return {index, roots, plateMaterial, bullBar, centerGuard, sidePlates,
       hoodPlate, stacks, cage, saws, crown, smoke, fire, loose,
       vehicle: null, lastCondition: 1, authored: null, bindVersion: 0,
-      turret: null, turretMaterials: null, turretPending: false};
+      turret: null, turretMaterials: null, turretPending: false,
+      magnet: null, magnetMaterials: null, magnetPending: false};
   });
+  function removeMagnet(rig) {
+    attachments.detach(`magnus-magnet-${rig.index}`);
+    rig.magnet?.removeFromParent();
+    for (const material of rig.magnetMaterials || []) material.dispose();
+    rig.magnet = null; rig.magnetMaterials = null; rig.magnetDisc = null; rig.magnetPending = false;
+  }
   function removeTurret(rig) {
     attachments.detach(`gunn-turret-${rig.index}`);
     rig.turret?.removeFromParent();
@@ -139,6 +147,7 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
   }
   function removeAuthored(rig) {
     removeTurret(rig);
+    removeMagnet(rig);
     attachments.detach(`armor-kit-authored-${rig.index}`);
     rig.authored?.removeFromParent();
     for (const material of rig.authoredMaterials || []) material.dispose();
@@ -235,6 +244,42 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
         socket: 'roof', object: turret, fallback: group});
       turret.position.fromArray(mount).sub(turret.parent.position);
       rig.turret = turret; rig.turretPending = false;
+    }).catch(() => {
+      // Failed requests are cached, like fitted kit loads, until the owner ends.
+    });
+  }
+  // Magnus the Magnet's roof crane, on the roof socket like Gunn's turret.
+  function requestMagnet(rig, vehicle) {
+    if (rig.magnet || rig.magnetPending || !rig.authored) return;
+    const mount = magnusMagnetMount(vehicle.userData.vehicleKey);
+    if (!mount) return;
+    const version = rig.bindVersion;
+    rig.magnetPending = true;
+    assetFor(MAGNUS_MAGNET_ASSET).then(gltf => {
+      if (disposed || rig.vehicle !== vehicle || rig.bindVersion !== version ||
+          !gltf?.scene?.isObject3D) return;
+      const magnet = gltf.scene.clone(true), materials = new Map();
+      magnet.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const own = material => {
+          if (!materials.has(material)) materials.set(material, material.clone());
+          return materials.get(material);
+        };
+        node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
+      });
+      // The magnet itself gets its own copies, so its glow never tints the crane.
+      const disc = [];
+      magnet.getObjectByName('magnus-magnet-disc')?.traverse(node => {
+        if (!node.isMesh || !node.material) return;
+        const own = material => { const copy = material.clone(); disc.push(copy); return copy; };
+        node.material = Array.isArray(node.material) ? node.material.map(own) : own(node.material);
+      });
+      rig.magnetMaterials = [...materials.values(), ...disc];
+      rig.magnetDisc = disc;
+      attachments.attach({owner: `magnus-magnet-${rig.index}`, vehicle,
+        socket: 'roof', object: magnet, fallback: group});
+      magnet.position.fromArray(mount);
+      rig.magnet = magnet; rig.magnetPending = false;
     }).catch(() => {
       // Failed requests are cached, like fitted kit loads, until the owner ends.
     });
@@ -339,6 +384,18 @@ export function createArmorKitMeshes(attachments, {loadKitAsset = defaultLoadKit
       const visible = enabled && !!actor && !actor.crushed && !!vehicle &&
         Number.isFinite(actor.maxArmor) && (tier > 0 || sideSaws || turretLook || crownLook);
       if (visible && hasTurret) requestTurret(rig, vehicle);
+      const magnus = actor?.warlordId === 'magnus' && !!actor.magnusPull;
+      if (visible && magnus) requestMagnet(rig, vehicle);
+      if (rig.magnet) {
+        rig.magnet.visible = visible && magnus && !actor.combatWrecking;
+        const glow = magnusMagnetGlow(actor, state.stageTimeSec || 0);
+        // The face glows full; the rest of the magnet softly, so a chase camera sees it too.
+        for (const material of rig.magnetDisc || []) {
+          if (!material.emissive) continue;
+          material.emissive.setHex(glow.color);
+          material.emissiveIntensity = glow.intensity * (material.name === 'magnus-magnet-glow' ? 1 : .35);
+        }
+      }
       if (rig.turret) {
         rig.turret.visible = visible && hasTurret && !actor.combatWrecking;
         const head = rig.turret.getObjectByName('gunn-turret-head');

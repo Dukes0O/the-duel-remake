@@ -3,12 +3,13 @@
 // Hollis's note, "Race on Sal's road" filling the setup, the real START, the race driven by the game's own autopilot on
 // Easy (retried up to three times), the results tick; then the yard, its Next up and Story Wall at chapters 1, 2, 5 and
 // 8 (the career is moved on by hand between them), a fight button that really starts the fight, the water works at
-// stages 0, 4 and 8, and a finished player's yard visit with Hollis's end lines. Run:
+// stages 0, 4 and 8, a finished player's yard visit with Hollis's end lines, then chapter 9 (WARLORD-NINE): the Story
+// Wall's button starts Magnus the Magnet's fight, and beating him ends the road. Run:
 //   node tools/browser-harness.mjs scenario water-road
 import {join} from 'node:path';
 import {writeFile} from 'node:fs/promises';
 
-const FLAGS = 'water-road';
+const FLAGS = 'water-road,warlord-nine';
 const ready = `document.readyState==='complete' && !!window.__qaApp && document.querySelector('#view3d')?.dataset.vehicleAsset==='ready'
   && !document.querySelector('#start-engine')?.disabled`;
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -178,7 +179,38 @@ export async function run(context) {
   await shot('13-yard-finished', 'the yard after the Baron: water runs, Hollis on the radio');
   await click('[data-action="yard-cards"]');
   await wait(800);
-  await shot('14-story-wall-finished', 'Story Wall finished: every chapter ticked, a ninth warlord coming');
+  await shot('14-story-wall-chapter-9', 'Story Wall after the Baron: chapter 9 open, the ninth warlord');
+
+  // Chapter 9: Magnus the Magnet, no hold needed. The Story Wall's button starts his fight.
+  const ch9 = await app(`app.storyProps('water').steps.find(s => s.id === 'magnus')`);
+  fact(ch9?.state === 'open' && ch9.button === 'Fight Magnus the Magnet', 'chapter 9: Fight Magnus the Magnet');
+  await click('[data-water-step="magnus"]');
+  await context.waitFor(`window.__qaApp.duel.state.status === 'warlord_intro'`, 'Magnus\'s intro', 60_000);
+  fact(await context.evaluate(`/Everything metal comes to Magnus/.test(document.body.innerText)`), 'his intro card says his line');
+  await shot('15-magnus-intro', 'Magnus the Magnet\'s intro card');
+  // The Big Pull in the real fight: the crane, the blue ring and glow, then the red-hot magnet.
+  await app(`app.beginWarlordFight()`);
+  await context.waitFor(`window.__qaApp.duel.state.status === 'racing'`, 'the fight', 30_000);
+  await hidePanels();
+  await app(`(() => { const s = app.duel.state, boss = s.opponents[0]; s.s = boss.s + 20; s.lateral = boss.lateral; s.headingError = 0;
+    s.speedMph = 0; for (const p of s.arena.participants) p.protectedSec = 0; boss.magnusPull.nextPullSec = s.stageTimeSec; return true; })()`);
+  await context.waitFor(`window.__qaApp.duel.state.opponents[0].magnusPull?.stage === 'pull'`, 'the pull', 20_000);
+  // A look camera on Magnus himself: his crane and the magnet's glow.
+  await app(`(() => { const boss = app.duel.state.opponents[0], c = app.duel.course, p = c.groundAt(boss.s, boss.lateral);
+    app.inspectionCamera = {position: [p.x + 7, p.y + 4, p.z + 7], target: [p.x, p.y + 1.5, p.z]}; return true; })()`);
+  await wait(300);
+  fact(await context.evaluate(`!!window.__render.scene.getObjectByName('magnus-magnet')?.visible`), 'his crane is on his car');
+  fact(await app(`app.duel.state.arena.markers.some(m => m.owner === 'magnus' && m.color === 'magnet')`), 'the blue ring shows during the pull');
+  await shot('15b-magnus-pull', 'the Big Pull: blue ring, blue magnet');
+  await context.waitFor(`window.__qaApp.duel.state.opponents[0].magnusPull?.stage === 'hot'`, 'the red-hot window', 20_000);
+  await shot('15c-magnus-hot', 'the red-hot magnet window');
+  await app(`(() => { app.inspectionCamera = null; return true; })()`);
+  await beat([...LADDER, 'magnus']);
+  await toYard();
+  await click('[data-action="yard-cards"]');
+  await wait(800);
+  fact(await context.evaluate(`/Magnus is back in his scrapyard/.test(document.body.innerText)`), 'beating Magnus ends the road, with a rematch');
+  await shot('16-story-wall-finished', 'Story Wall finished: every chapter ticked, Magnus sulking');
 
   await writeFile(join(context.outputDir, 'water-road.json'), JSON.stringify(report, null, 2) + '\n');
   if (fail.length) throw Error('Water Road facts failed: ' + fail.join(' | '));

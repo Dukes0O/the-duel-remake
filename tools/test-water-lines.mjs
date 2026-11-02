@@ -10,10 +10,11 @@ let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
 const same = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
 
-// Every line of section 5: Hollis's note, seven job lines, seven notes from V., Vesper, and Hollis's two end lines.
-same(Object.keys(WATER_CAPTIONS).length, 10, 'ten spoken lines');
+// Every line of section 5: Hollis's note, seven job lines, seven notes from V., Vesper, and Hollis's two end lines;
+// then chapter 9: Magnus's line when beaten and Hollis after him.
+same(Object.keys(WATER_CAPTIONS).length, 12, 'twelve spoken lines');
 same(WATER_NOTES.length, 7, 'seven notes from V.');
-same(WATER_LINE_IDS.length, 18, 'eighteen lines in all, as in section 5');
+same(WATER_LINE_IDS.length, 20, 'twenty lines in all: section 5 and chapter 9');
 same(new Set(WATER_LINE_IDS).size, WATER_LINE_IDS.length, 'every id unique');
 ok(WATER_LINE_IDS.every(id => id.startsWith('story.water.')), 'ids are story.water.*');
 same(WATER_LETTER.id, WATER_LETTER_ID, 'the letter is Hollis\'s note');

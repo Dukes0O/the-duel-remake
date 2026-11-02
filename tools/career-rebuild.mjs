@@ -32,7 +32,7 @@ export const KYLE = {id: 'player-dukes00', name: 'Dukes00', credits: 15000, deep
 // (warlordUnlockSatisfied). Both territories are held so the Tollkeeper fight is open.
 export const GRATIAN = {id: 'player-spikey-ferns', name: 'Spikey Ferns', credits: 23000,
   deep: {kit: true, found: ['kelp-coast'], logged: ['turtle']},
-  beaten: WARLORD_LADDER.filter(id => !['tollkeeper', 'blackiron'].includes(id)), held: Object.keys(TERRITORIES)};
+  beaten: WARLORD_LADDER.filter(id => !['tollkeeper', 'blackiron', 'magnus'].includes(id)), held: Object.keys(TERRITORIES)};
 // The car that won the warlord fights; the warlord kits are installed on it.
 const WINNING_CAR = 'falcone_f42';
 // Warlord pay depends on the CPU level of the fight; the lowest level gives the smallest scrap.

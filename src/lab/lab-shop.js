@@ -16,7 +16,7 @@ export const LAB_UPGRADES = Object.freeze([
   upgrade('long-cable', 'Long cable', 1500, 'pendulum'),
   upgrade('altitude-tune', 'Altitude tune', 3500, 'altitude'),
   upgrade('heavy-hook', 'Heavy hook', 2000, 'strength'),
-  upgrade('carbon-plates', 'Carbon plates', 1500, 'strength'),
+  upgrade('carbon-plates', 'Carbon plates', 1500, 'strength'), // Wasteland kits: 40% more protection for the same weight
   upgrade('galvanised', 'Galvanised finish', 600, 'rust'),
   upgrade('gmeter', 'G-meter and racing seat', 800, 'gforce'),
   upgrade('moving-map', 'Moving map', 1200, 'headings'),
