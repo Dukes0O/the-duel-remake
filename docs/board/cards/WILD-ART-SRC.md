@@ -250,3 +250,16 @@ mountains and Australia, then Europe, desert and coast, cities. Three rounds
 per group, sheets in `docs/board/looks/wildlife/`. A course shows animals only
 once its group passes (section 3.1), so the switch can go on with North woods
 alone.
+
+## Where the card stands (Claude, 3 November night)
+
+Live: North woods, Western mountains and Australia (released 3 November
+evening), Europe (released 3 November night; the wildcat did not pass in
+three rounds and is not in the game, so Ardennes and Azure Riviera have no
+rare animal yet; its recipe stays in tools/blender/wildlife/wildcat.py).
+Still to build, each its own group with three rounds: desert and coast
+(roadrunner, jackrabbit, desert bighorn, collared lizard, pelican, condor;
+the coyote is done) and Asia and cities (black kite, egret, black-faced
+spoonbill, pigeon, raccoon, cat, owl). The recipes, donors and sheet tools
+in tools/blender/wildlife/ cover all of them. Not built yet: drawing the
+wolf-tracks decal (public/assets/wildlife/wolf-tracks.png exists).
