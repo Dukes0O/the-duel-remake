@@ -2,7 +2,9 @@
 // a wall calendar counting the days; the day dial and the protection switch; and below, a close-up, the results table or
 // Brian's job card. Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
-import {PROTECTION_NAME, pct, jarOf} from './rust-classroom.js';
+import {PROTECTION_NAME, pct, jarOf, shareOf, coatOf} from './rust-classroom.js';
+import {RUST as RUST_RULE} from '../benches/rust.js';
+import {RUST_OK, RUST_WEEK} from '../lab-workshop.js';
 export {BOARD};
 export const pressMovesDrag = false;
 
@@ -116,7 +118,7 @@ function jar(ctx, cx, row, view) {
   nail(ctx, cx, top + 20, bottom - top - 34, {rust: row.rust, coat: row.coat === 'zinc' ? row.left : null});
   // Its name and reading under the shelf.
   smallLines(ctx, row.name, cx, SHELF.plank + 20, 15);
-  text(ctx, `rust ${pct(row.rust)}`, cx, top - 34, {size: 16, colour: row.rust > .1 ? RUST : GREEN, weight: 800});
+  text(ctx, `rust ${pct(row.rust)}`, cx, top - 34, {size: 16, colour: row.rust > RUST_OK ? RUST : GREEN, weight: 800});
   if (row.left !== null && row.coat === 'zinc') text(ctx, `coat ${pct(row.left)}`, cx, top - 16, {size: 13, colour: ZINC});
 }
 function calendar(ctx, view) {
@@ -126,7 +128,7 @@ function calendar(ctx, view) {
   ctx.fillStyle = '#fff'; ctx.font = '800 13px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('DAY', x + w / 2, y + 13);
   ctx.fillStyle = '#1d2224'; ctx.font = '800 46px "Segoe UI", sans-serif'; ctx.fillText(String(d), x + w / 2, y + 62);
   ctx.font = '700 13px "Segoe UI", sans-serif'; ctx.fillText(view.dayTo ? `of ${view.dayTo}` : 'not started', x + w / 2, y + 94);
-  if (view.keys.Space === 'go') { keyCap(ctx, x + 14, y + h + 18, 'Sp'); text(ctx, 'runs the days', x + 30, y + h + 18, {size: 13, align: 'left'}); }
+  if (view.keys.Space === 'go') { keyCap(ctx, x + 14, y + h + 18, 'Sp'); text(ctx, view.spaceSays ?? 'runs the days', x + 30, y + h + 18, {size: 13, align: 'left'}); }
 }
 function shelfScene(ctx, view) {
   const {x, y, h, plank} = SHELF, wide = wideOf(view), w = wide ? 930 : SHELF.w, end = x + w - 8;
@@ -167,13 +169,13 @@ function table(ctx, view) {
   text(ctx, 'THE NAILS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   const cols = [[80, 'Jar', 'left'], [420, 'Days', 'right'], [620, 'Rust', 'right'], [880, 'Zinc coat left', 'right']];
   for (const [x, label, align] of cols) text(ctx, label, x, LOW.y + 48, {size: 15, align, colour: theme.faint, weight: 800});
-  if (!view.rows.length) text(ctx, 'No runs yet: Space runs the days.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
+  if (!view.rows.length) text(ctx, view.running ? 'The days are running.' : 'No runs yet.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
   view.rows.slice(-6).forEach((row, i) => {
     const y = LOW.y + 86 + i * 34;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(LOW.x + 10, y - 16, LOW.w - 20, 32);
     text(ctx, row.job ?? jarOf(row.jar).name, 80, y, {size: 17, align: 'left'});
     text(ctx, String(row.days), 420, y, {size: 17, align: 'right'});
-    text(ctx, pct(row.rust), 620, y, {size: 17, align: 'right', colour: row.rust > .1 ? RUST : GREEN, weight: 800});
+    text(ctx, pct(row.rust), 620, y, {size: 17, align: 'right', colour: row.rust > RUST_OK ? RUST : GREEN, weight: 800});
     text(ctx, row.left === null || row.left === undefined ? '–' : pct(row.left), 880, y, {size: 17, align: 'right', colour: ZINC});
   });
 }
@@ -190,7 +192,7 @@ function closeCoat(ctx, view) {
   text(ctx, 'steel', cx, cy, {size: 18, colour: '#1d2224'});
   if (left > 0) text(ctx, 'zinc', cx, cy - 70 - 17 * left, {size: 15, colour: '#1d2224'});
   text(ctx, `Coat left: ${pct(left)}`, 760, 480, {size: 30, colour: ZINC, weight: 800});
-  text(ctx, `Steel rusted: ${pct(rust)}`, 760, 530, {size: 26, colour: rust > .1 ? RUST : GREEN, weight: 800});
+  text(ctx, `Steel rusted: ${pct(rust)}`, 760, 530, {size: 26, colour: rust > RUST_OK ? RUST : GREEN, weight: 800});
   text(ctx, left > 0 ? 'The zinc wears away first.' : 'The coat is gone: now the steel rusts.', 760, 580, {size: 17});
 }
 // The Sirena as she came up: a car on the sea floor's sand, crusted orange.
@@ -218,7 +220,7 @@ function jobCard(ctx, view) {
   text(ctx, j.name, LOW.x + 24, LOW.y + 60, {size: 28, align: 'left'});
   text(ctx, j.lives, LOW.x + 24, LOW.y + 98, {size: 18, align: 'left', colour: theme.accent});
   text(ctx, `Like the ${jarOf(j.jar).name.toLowerCase()} jar.`, LOW.x + 24, LOW.y + 130, {size: 17, align: 'left'});
-  text(ctx, 'Clean: 10% rust or less in a week.', LOW.x + 24, LOW.y + 172, {size: 15, align: 'left', colour: theme.faint});
+  text(ctx, `Clean: ${pct(RUST_OK)} rust or less in a week.`, LOW.x + 24, LOW.y + 172, {size: 15, align: 'left', colour: theme.faint});
   text(ctx, 'Least protection that keeps it clean.', LOW.x + 24, LOW.y + 198, {size: 15, align: 'left', colour: theme.faint});
   text(ctx, 'Your runs', 520, LOW.y + 48, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   const rows = view.rows.filter(r => r.job).slice(-5);
@@ -227,7 +229,7 @@ function jobCard(ctx, view) {
     const y = LOW.y + 84 + i * 34;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(510, y - 16, 440, 32);
     text(ctx, `${row.job}, ${PROTECTION_NAME[row.coat].toLowerCase()}`, 520, y, {size: 16, align: 'left'});
-    text(ctx, pct(row.rust), 930, y, {size: 16, align: 'right', colour: row.rust > .1 ? RUST : GREEN, weight: 800});
+    text(ctx, pct(row.rust), 930, y, {size: 16, align: 'right', colour: row.rust > RUST_OK ? RUST : GREEN, weight: 800});
   });
 }
 
@@ -267,11 +269,11 @@ function drawCheck(ctx, view) {
   ctx.fillStyle = WATER; ctx.fillRect(x - 70, 210, 140, 330);
   ctx.strokeStyle = 'rgba(210,225,232,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - 74, 150, 148, 392, 10); ctx.stroke();
   const r = view.reveal;
-  nail(ctx, x, 190, 320, {rust: r ? r.rust : 0, coat: five ? null : r ? r.left : .5, width: 16});
+  nail(ctx, x, 190, 320, {rust: r ? r.rust : 0, coat: five || !r ? null : r.left, width: 16});
   text(ctx, five ? '5 days' : '22 days', 680, 220, {size: 40, weight: 800});
   if (r) {
     text(ctx, `rust ${pct(r.rust)}`, 680, 300, {size: 34, colour: RUST, weight: 800});
-    if (!five) text(ctx, 'coat gone at day 20', 680, 350, {size: 20, colour: ZINC});
+    if (!five) text(ctx, `coat gone at day ${RUST_RULE.zincLastDays}`, 680, 350, {size: 20, colour: ZINC});
   } else text(ctx, '?', 680, 320, {size: 60, colour: theme.faint});
 }
 function drawRecap(ctx, view) {
@@ -282,14 +284,14 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     if (idea.id === 'water') {
-      nail(ctx, x + 100, 140, 170, {width: 12}); nail(ctx, x + 200, 140, 170, {rust: .14, width: 12});
+      nail(ctx, x + 100, 140, 170, {rust: shareOf('dry', RUST_WEEK), width: 12}); nail(ctx, x + 200, 140, 170, {rust: shareOf('fresh', RUST_WEEK), width: 12});
       text(ctx, 'dry', x + 100, 340, {size: 15}); text(ctx, 'fresh water', x + 200, 340, {size: 15});
     }
     if (idea.id === 'salt') {
-      nail(ctx, x + 100, 140, 170, {rust: .14, width: 12}); nail(ctx, x + 200, 140, 170, {rust: .84, width: 12});
+      nail(ctx, x + 100, 140, 170, {rust: shareOf('fresh', RUST_WEEK), width: 12}); nail(ctx, x + 200, 140, 170, {rust: shareOf('salt', RUST_WEEK), width: 12});
       text(ctx, 'fresh', x + 100, 340, {size: 15}); text(ctx, 'salt', x + 200, 340, {size: 15});
     }
-    if (idea.id === 'zinc') { nail(ctx, x + 150, 140, 170, {coat: .65, width: 14}); text(ctx, 'zinc coat', x + 150, 340, {size: 15, colour: ZINC}); }
+    if (idea.id === 'zinc') { nail(ctx, x + 150, 140, 170, {coat: coatOf('zinc', RUST_WEEK), width: 14}); text(ctx, 'zinc coat', x + 150, 340, {size: 15, colour: ZINC}); }
     wrap(ctx, idea.text, x + w / 2, 410, w - 30);
   });
 }

@@ -49,7 +49,8 @@ behind `lab-classroom` (on), with no Preview step.
 - Rust's part of `tools/test-lab-lessons-workshop.mjs` (its packet, its prediction grid, its floor-pan
   hit skin and the jar-tag test of its 3D mount) and of `tools/scenarios/lab-lessons-workshop.mjs`
   (its walk to the jars, its tries and its hand-over); both now run G-force alone. The workshop props
-  model (`workshop-lesson-props.glb`, with the rust tins and jars inside it) stays: G-force still
+  model (`workshop-lesson-props.glb`, with the old lesson's paint tin, zinc can, salt bag, water jug,
+  dry-air jar, underbody panel, exhaust pipe and armour plate inside it) stays: G-force still
   loads it, and it goes when G-force is rebuilt. The nail-jars machine in the Lab hall stays.
 
 ## Changed assertions (Claude's review, rule 18)
@@ -64,7 +65,19 @@ behind `lab-classroom` (on), with no Preview step.
 
 ## Review
 
-(pending)
+One independent review (read-only agent), on b8a60962: no real fault. It probed Show me from every
+day-dial setting and both switch settings on every job item (each finished), checked that guesses and
+answers only work in their own phase, every number and message against `jarAfter` and `RUST_OK`, the
+hand-over to the parts panel (no pass granted by the lesson), the four old word ids, and that nothing
+removed is still needed and G-force's tests and run are intact. Small points, fixed: going back to the
+job restarted the trailer on whatever the switch last held (it could start on zinc, its answer); the
+job now starts bare on every visit, with a test. Question 2's nail no longer shows a zinc coat before
+the pick. Numbers that were typed in now come from the bench (`RUST`, `RUST_OK`, `jarAfter`). The
+calendar and button say "opens the guess" and "Guess" where Space opens the cards, and the empty table
+no longer says Space runs the days during the Watch. Left: `docs/LAB.md`'s lesson section still
+describes the old Rust lesson (paint, the hot exhaust) as it does the other rebuilt lessons, for the
+cleanup sweep; the card's "last jar kept beside the new one" is met by the paired jars and the table
+rather than a shelf kept across steps.
 
 ## Checks
 

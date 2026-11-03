@@ -139,6 +139,11 @@ test('Brian’s job: too little, too much and the slow gate each say why; each t
   session.act('coat:zinc'); runWeek(session);
   assert.equal(session.view().ready, true);
   assert.match(session.view().brian.text, /Zinc for the trailer and the gate, where water reaches; the toolbox stays bare in the dry\. Job done/);
+  // A second visit starts the trailer bare again, away from its answer.
+  session.act('next'); session.act('back');
+  assert.equal(session.view().step.id, 'alone'); assert.equal(session.view().switch.coat, 'bare');
+  session.act('go'); until(session, x => x.keys.Space === 'go');
+  assert.match(session.view().brian.text, /^Bare in salt water: 84%/);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me sets and runs', () => {

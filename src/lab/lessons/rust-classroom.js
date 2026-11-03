@@ -67,6 +67,7 @@ const COAT_KEYS = Object.freeze({'←': 'coat:bare', '→': 'coat:zinc'});
 const ANSWER_KEYS = Object.freeze({1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
 const DONE = Object.freeze(['Press Enter to go on.', 'Press Enter to go on.', 'Press Enter to go on.']);
 const RUN = Object.freeze({action: 'go', label: 'Run the days', key: 'Space'});
+const TO_GUESS = Object.freeze({action: 'go', label: 'Guess', key: 'Space'});
 
 const DAY_GUESSES = Object.freeze([[FRESH_DAY, 'like fresh water'], [SALT_DAY, `${pct(SALT_DAY)} a day`], [null, 'a whole week']].map(([perDay, why]) => {
   const share = perDay === null ? W('salt') : perDay * TRY_DAYS;
@@ -74,7 +75,7 @@ const DAY_GUESSES = Object.freeze([[FRESH_DAY, 'like fresh water'], [SALT_DAY, `
 }));
 const ZINC_GUESSES = Object.freeze([{days: 10, label: 'About 10 days'}, {days: ZINC_DAYS, label: `About ${ZINC_DAYS} days`}, {days: null, label: 'Never: zinc does not wear away'}]);
 
-const S5 = shareOf('salt', 5), Z22 = shareOf('zinc', 22);
+const S5 = shareOf('salt', 5), Z22 = shareOf('zinc', 22), AFTER = 22 - RUST.zincLastDays;
 const CHECKS = {
   'check-five': {
     question: 'A bare nail in salt water for 5 days. How rusty is it?',
@@ -82,7 +83,7 @@ const CHECKS = {
     correct: 1,
     right: () => `Yes: ${pct(SALT_DAY)} a day for 5 days is ${pct(S5)}.`,
     wrong: picked => picked === 0 ? `More: salt water rusts ${pct(SALT_DAY)} a day, so 5 days is ${pct(S5)}. 10% is less than one day’s rust.`
-      : `Not yet: it takes more than 8 days to rust right through. ${pct(SALT_DAY)} a day for 5 days is ${pct(S5)}.`,
+      : `Not yet: it takes more than ${Math.floor(1 / SALT_DAY)} days to rust right through. ${pct(SALT_DAY)} a day for 5 days is ${pct(S5)}.`,
     hints: [`Salt water: ${pct(SALT_DAY)} a day.`, `5 days of ${pct(SALT_DAY)}: what is that?`, `Pick ${pct(S5)}.`],
   },
   'check-zinc': {
@@ -91,10 +92,10 @@ const CHECKS = {
       {label: `The coat gone and the steel ${pct(Z22)} rusty`, picture: {kind: 'nail', rust: Z22, coat: 0}},
       {label: '100% rusty, like a bare nail', picture: {kind: 'nail', rust: 1, coat: 0}}],
     correct: 1,
-    right: () => `Yes: the coat lasts ${ZINC_DAYS} days, then the steel gets 2 days of ${pct(SALT_DAY)}: ${pct(Z22)}.`,
-    wrong: picked => picked === 0 ? `The coat lasts ${ZINC_DAYS} days: by day 22 it is gone, and the steel has had 2 days of ${pct(SALT_DAY)}: ${pct(Z22)}.`
-      : `The zinc kept it clean for ${ZINC_DAYS} days; only 2 days of rust since: ${pct(Z22)}, not the bare nail’s 100%.`,
-    hints: [`How long did the coat last in the try?`, `${ZINC_DAYS} days of zinc, then 2 days of ${pct(SALT_DAY)}.`, 'Pick the second card.'],
+    right: () => `Yes: the coat lasts ${ZINC_DAYS} days, then the steel gets ${AFTER} days of ${pct(SALT_DAY)}: ${pct(Z22)}.`,
+    wrong: picked => picked === 0 ? `The coat lasts ${ZINC_DAYS} days: by day 22 it is gone, and the steel has had ${AFTER} days of ${pct(SALT_DAY)}: ${pct(Z22)}.`
+      : `The zinc kept it clean for ${ZINC_DAYS} days; only ${AFTER} days of rust since: ${pct(Z22)}, not the bare nail’s 100%.`,
+    hints: [`How long did the coat last in the try?`, `${ZINC_DAYS} days of zinc, then ${AFTER} days of ${pct(SALT_DAY)}.`, 'Pick the second card.'],
   },
   'check-sirena': {
     question: 'Before he restores the Sirena, Brian soaks her in fresh water for weeks. Why?',
@@ -126,7 +127,8 @@ export function createModel() {
     if (id === 'watch') { m.shelf = JARS.map(j => j.id); runDays(RUST_WEEK, .6); }
     if (id === 'try-days') { m.shelf = ['salt']; set.days = RUST_WEEK; m.phase = 'set'; }
     if (id === 'try-zinc') { m.shelf = ['zinc']; m.phase = 'guess'; }
-    if (id === 'alone') startJob();
+    // The job starts bare on every visit, away from the trailer's answer; later things carry the switch.
+    if (id === 'alone') { set.coat = 'bare'; startJob(); }
     if (CHECKS[id]) m.phase = m.answered === null ? 'ask' : 'answered';
   }
   function startJob() { m.shelf = [JOBS[m.job].jar]; m.phase = 'set'; m.run = null; }
@@ -376,7 +378,7 @@ export function createModel() {
     if (id === 'try-days') {
       const setNow = setting() && !m.auto;
       const v = {...base, dial: {days: set.days, locked: !canDays()}, low: 'calendar', best: goal(),
-        keys: setNow ? {...DAY_KEYS, Space: 'go'} : {}, repeat: setNow ? ['↑', '↓'] : [], buttons: setNow ? [RUN] : [],
+        keys: setNow ? {...DAY_KEYS, Space: 'go'} : {}, repeat: setNow ? ['↑', '↓'] : [], buttons: setNow ? [TO_GUESS] : [], spaceSays: 'opens the guess',
         target: !setNow ? null : set.days === TRY_DAYS ? 'go' : 'set:best', glow: setNow ? 'dial' : null, waiting: setNow || m.phase === 'guess'};
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, target: null, glow: null,
         cards: DAY_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'nail', rust: c.share}, state: null})),
