@@ -11,7 +11,7 @@ import {EngineAudio} from '../src/audio.js';
 import {CARS} from '../src/config.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {PLAYERS_KEY, createProfile} from '../src/progression.js';
-import {shownCars, shownCarIds, medalResultLines, medalSheetPanel} from '../src/earned-cars-ui.js';
+import {shownCars, shownCarIds, medalResultLines, medalSheetPanel, medalProgressLine} from '../src/earned-cars-ui.js';
 import {AIR_ONLY_CARS, JOB_CARS} from '../src/heli/heli-jobs.js';
 import {screenMarkup} from '../src/screen-menu.js';
 import {createGarageScreen} from '../src/screen-garage.js';
@@ -100,7 +100,7 @@ test('a medal and a new car in one race play one cue; settling it again plays no
   });
 });
 
-test('a medal line alone gives the results screen the smaller headline; an ordinary win does not', () => {
+test('a medal line or the progress line gives the results screen the smaller headline', () => {
   withApp({'earned-cars': true}, (app) => {
     const render = createResultsScreen({app, profile: () => app.profile, metric: (label, value) => `<dt>${label}</dt><dd>${value}</dd>`,
       time: String, credits: String, action: label => `<button>${label}</button>`, escapeHTML: String, arrow: ''});
@@ -112,8 +112,33 @@ test('a medal line alone gives the results screen the smaller headline; an ordin
     winDuel(app, 'easy');
     const repeat = render(app.duel.state);
     assert.equal(repeat.includes('NEW MEDAL'), false);
-    assert.equal(repeat.includes('earned-car-results'), false, 'a repeat win keeps the ordinary headline');
+    assert.match(first, /MEDALS EARN CARS · 1\/6 TOWARD THE FERRARI ENZO</, 'a new medal says how close the next car is');
+    assert.match(repeat, /MEDALS EARN CARS · 1\/6 TOWARD THE FERRARI ENZO · NEXT MEDAL: DUEL ON MEDIUM</,
+      'a repeat win names the next empty box and how close the next car is');
+    assert.match(repeat, /class="result-panel earned-car-results"/, 'the progress line takes the smaller headline so the buttons stay on screen');
   });
+  withApp({'earned-cars': false}, (app) => {
+    const render = createResultsScreen({app, profile: () => app.profile, metric: (label, value) => `<dt>${label}</dt><dd>${value}</dd>`,
+      time: String, credits: String, action: label => `<button>${label}</button>`, escapeHTML: String, arrow: ''});
+    winDuel(app, 'easy');
+    const off = render(app.duel.state);
+    assert.equal(off.includes('MEDALS EARN CARS') || off.includes('earned-car-results'), false, 'switch off: no progress line, ordinary headline');
+  });
+});
+
+test('the progress line: gold for the last car, the next box, a full sheet, every car won', () => {
+  const sheet = cars => ({unlockedCars: ['falcone_f42', 'stuttgart_959s'], medals: {version: 1, cars}});
+  const full = {duel: [1, 1, 1], grandprix: [1, 1, 1]};
+  assert.equal(medalProgressLine(sheet({falcone_f42: {duel: [2, 0, 0], grandprix: [0, 0, 0]}}), {car: 'falcone_f42', row: 'grandprix'}),
+    'MEDALS EARN CARS · 1/6 TOWARD THE FERRARI ENZO · NEXT MEDAL: GRAND PRIX ON EASY');
+  assert.equal(medalProgressLine(sheet({falcone_f42: full}), {car: 'falcone_f42', row: 'duel'}),
+    "MEDALS EARN CARS · 6/6 TOWARD THE FERRARI ENZO · THIS CAR'S SHEET IS FULL");
+  const owned = {...sheet({falcone_f42: full, stuttgart_959s: {duel: [1, 1, 0], grandprix: [0, 0, 0]}}),
+    unlockedCars: ['falcone_f42', 'stuttgart_959s', 'ferrari_enzo', 'mclaren_f1']};
+  assert.equal(medalProgressLine(owned, {car: 'stuttgart_959s', row: 'duel', newMedal: true}),
+    'MEDALS EARN CARS · 8/24 AND GOLD 2/6 TOWARD THE BUGATTI BOLIDE');
+  assert.equal(medalProgressLine({...owned, unlockedCars: [...owned.unlockedCars, 'bugatti_bolide']}, {car: 'stuttgart_959s', row: 'duel'}),
+    'MEDALS 8 · EVERY EARNED CAR WON · NEXT MEDAL: DUEL ON HARD');
 });
 
 test('the medal event plays the existing bonus cue exactly once', () => {
@@ -131,7 +156,7 @@ test('the medal event plays the existing bonus cue exactly once', () => {
 });
 
 test('switch off: the same race adds no sheet, no medal and no cue', () => {
-  withApp({}, (app, cues, storage) => {
+  withApp({'earned-cars': false}, (app, cues, storage) => {
     const result = winDuel(app, 'easy');
     assert.equal(result.medal, undefined);
     assert.equal(Object.hasOwn(result.creditBreakdown, 'medal'), false);

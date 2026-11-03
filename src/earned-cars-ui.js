@@ -74,6 +74,23 @@ export function medalUnlockCard(profile, carId, { helicopter = false } = {}) {
     `<p>Unlocks the moment you reach it. No credits.</p></div></div>`;
 }
 
+// The results screen's progress line (EARN-FINISH, 3 November 2026): what medals are for and how close the next car
+// is, on every Duel or Grand Prix results screen. When the race gave no new medal, it names this car's next empty box.
+export function medalProgressLine(profile, { car, row, newMedal = false } = {}) {
+  const totals = medalTotals(profile), next = nextMedalCar(profile), rule = next ? medalRequirement(next) : null;
+  const toward = rule
+    ? `MEDALS EARN CARS · ${Math.min(totals.medals, rule.medals)}/${rule.medals}` +
+      `${rule.gold ? ` AND GOLD ${Math.min(totals.gold, rule.gold)}/${rule.gold}` : ''} TOWARD THE ${CARS[next].name.toUpperCase()}`
+    : `MEDALS ${totals.medals} · EVERY EARNED CAR WON`;
+  if (newMedal || !Object.hasOwn(CARS, car) || !MEDAL_ROWS.includes(row)) return toward;
+  const counts = sheetCounts(profile, car);
+  for (const name of [row, ...MEDAL_ROWS.filter(other => other !== row)]) {
+    const index = counts[name].findIndex(count => count === 0);
+    if (index >= 0) return `${toward} · NEXT MEDAL: ${ROW_NAMES[name]} ON ${MEDAL_LEVELS[index].toUpperCase()}`;
+  }
+  return `${toward} · THIS CAR'S SHEET IS FULL`;
+}
+
 export const MEDAL_REWARD_NOTE = 'MEDAL REWARD · Arrives fully tuned. No upgrades needed.';
 
 // The new medal's text line for the results screen (the caller escapes it and

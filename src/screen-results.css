@@ -43,3 +43,5 @@
 .earned-car-card .field-label{color:#e4bd82;font-size:8px;letter-spacing:1.5px}
 .earned-car-card>b{font-size:25px;font-style:italic;font-weight:700;line-height:1.1;color:#f4efe2}
 .earned-car-card>p{margin:0;font-size:12px;color:#c4c9b9}
+.earned-car-card>p.medal-progress{font-size:10px;letter-spacing:.8px;color:#e4bd82}
+.result-bonuses.medal-progress{color:#c9b48c}
