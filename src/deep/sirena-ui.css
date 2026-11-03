@@ -35,14 +35,26 @@
 .deep-objectives li b{font-weight:600}.deep-objectives li small{display:block;font-size:10px;line-height:1.35;color:#aec3b8;margin-top:2px}
 .deep-objectives li.done{color:#b6d8a3;border-color:#87b783}
 .deep-chart-key{font:10px/1.5 'Segoe UI',sans-serif;color:#cebe91;margin:7px 0 0}
-.deep-map .deep-surface{float:right;background:#dbc18b;color:#182d31;font-weight:700}
+.deep-map .deep-surface{background:#dbc18b;color:#182d31;font-weight:700}
 .deep-objective-tick{position:absolute;top:22%;left:50%;transform:translateX(-50%);padding:9px 18px;background:#102c30e8;border:1px solid #d3c28c;color:#f0e1b3;font:16px Georgia,serif}
 
 /* DEEP-EXPLORER: one-second logging ring sits beside, clear of the driving view. */
-.deep-logging{position:absolute;right:4%;top:43%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#102a35e8;border:1px solid #abbead88;border-radius:4px;font:14px Georgia,serif;color:#f0e1b3}
-.deep-logging>i{display:block;width:34px;height:34px;border-radius:50%;position:relative}
-.deep-logging>i:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#102a35}
+.deep-logging,.deep-lift{position:absolute;right:4%;top:43%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#102a35e8;border:1px solid #abbead88;border-radius:4px;font:14px Georgia,serif;color:#f0e1b3}
+.deep-logging>i,.deep-lift>i{display:block;width:34px;height:34px;border-radius:50%;position:relative}
+.deep-logging>i:after,.deep-lift>i:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#102a35}
 
 /* DEEP-SHALLOWS-FIX: plain words when the car meets the edge of the sea floor. */
 .deep-edge-notice{position:absolute;top:12%;left:50%;transform:translateX(-50%);margin:0;padding:9px 18px;background:#102c30e8;border:1px solid #e5be78;color:#fff0c7;font:16px Georgia,serif;text-align:center}
 .deep-map header>span{display:flex;gap:6px}
+
+/* FINISH-DEEP (Claude, 3 November 2026): the panel fits a laptop browser window. On a short
+   window the chart shrinks first, so Ana's list and the next step never get squeezed out. */
+.deep-map{width:420px;max-width:36vw}
+.deep-map canvas{aspect-ratio:400/250;max-height:max(90px,calc(100vh - 490px));object-fit:contain}
+.deep-map-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.deep-map-row .deep-map-home,.deep-map-row .deep-map-bearing{margin-top:0}
+.deep-map-row .deep-surface{margin-left:auto}
+.deep-next{margin:7px 0 6px;font:12px 'Segoe UI',sans-serif;color:#f0e1b3}
+.deep-next b{font-weight:700}
+.deep-next small{display:block;font-size:11px;line-height:1.35;color:#c9d8cc;margin-top:2px}
+.deep-lift{top:auto;bottom:calc(16% + 132px)} /* just above the sonar ring */
