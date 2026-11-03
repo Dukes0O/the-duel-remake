@@ -46,9 +46,9 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
   b.box(m.carbon, [1.36, .045, 1.92], [0, .27, -.10], [0, 0, 0], .012);
   // A dark scuttle under the windscreen out past the cockpit opening's edges, a floor
   // under it and a bulkhead at the back, so no view runs into the hollow nose or tail.
-  panel(b, m.carbon, [[-.74, .775, 1.28], [.74, .775, 1.28], [.74, .705, .84], [-.74, .705, .84]]);
+  panel(b, m.carbon, [[-.74, .81, 1.28], [.74, .81, 1.28], [.74, .705, .84], [-.74, .705, .84]]);
   b.box(m.carbon, [1.36, .045, .44], [0, .27, 1.08], [0, 0, 0], .012); // floor on under the scuttle
-  b.box(m.carbon, [1.40, .62, .03], [0, .72, -1.045], [0, 0, 0], .006); // bulkhead behind the rear seats
+  b.box(m.carbon, [1.40, .48, .03], [0, .64, -1.045], [0, 0, 0], .006); // bulkhead behind the rear seats
   buildCabin(b, m);
 
   // The defining F1 layout: one driver ahead of two rear passenger seats.

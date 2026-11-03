@@ -203,3 +203,7 @@ rerun after the lamp fix, same result) and `mclaren-f1-look` (6 screenshots,
    then `blender --background --factory-startup --python tools/art/skyline-review.py -- --root . --glb .evidence/<day>/<card>/<when>/<key>.glb --out .evidence/<day>/<card>/<when>/<enzo|f1|bolide> --size 900x600 --views side,three-quarter`.
 3. `python tools/art/earned-outline-fit.py .evidence/<day>/<card>/<when>` (writes fit.json).
 4. With `before` and `after` folders: `python tools/art/earned-outline-sheet.py .evidence/<day>/<card> docs/board/looks/earned-cars/outline-round.jpg`.
+
+## Review recheck and last fixes (Claude, 3 November 2026)
+
+The reviewer confirmed the see-through fixes (Enzo and F1 straight down now hit the carbon panel and floor; rearward rays into the Enzo body 0, F1 3, against 0 and 21 on integration) and found two walls behind the seats standing above the cabin. Fixed in `claude/earn-finish`: the F1 bulkhead is now .48 tall centred at .64 (top .88, under the rear glass at .99 and body at .94), the Enzo bulkhead .46 tall centred at .64 (top .87), and the F1 windscreen panel's front edge rises from .775 to .81 to close the thin slot at the base of the glass. Checked by ray casts at the reviewer's points; `test-enzo-vehicle` (426), `test-mclaren-f1-vehicle` (351), `test-bolide-vehicle` (430) and `test-vehicle-assets` pass.

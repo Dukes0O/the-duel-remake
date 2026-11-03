@@ -48,7 +48,7 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   // Close the cockpit where the glass reaches past the floor: a dark scuttle under the
   // windscreen and a bulkhead behind the seats, so no view runs into the hollow nose or tail.
   panel(b, m.carbon, [[-.62, .715, 1.44], [.62, .715, 1.44], [.62, .70, .78], [-.62, .70, .78]]);
-  b.box(m.carbon, [1.22, .56, .03], [0, .64, -.965], [0, 0, 0], .006);
+  b.box(m.carbon, [1.22, .46, .03], [0, .64, -.965], [0, 0, 0], .006);
   // The raised centre ridge of the beak, running from the nose back to the windscreen
   // between the two bonnet channels.
   b.tube(m.paint, [[0, .43, 2.33], [0, .51, 2.12], [0, .58, 1.88], [0, .66, 1.62], [0, .72, 1.40]], .05, 18);
