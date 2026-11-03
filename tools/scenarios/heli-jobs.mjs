@@ -75,7 +75,11 @@ const HELPERS = `(window.__jobQa = {
     if (!s.acceptCruise()) throw Error('cruise refused');
     this.fly(20, () => ({}), v => v.phase === 'flying' && v.courseId === courseId);
     if (!s.autopilotOn) s.pressAutopilot();
-    this.fly(400, () => ({}), v => Math.hypot(v.heli.x - v.zone.x, v.heli.z - v.zone.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < .8);
+    // SKI-FINISH: with a ski flight in hand the leg ends beside the marked pads, and the autopilot goes to the nearest.
+    const goal = v => { const marks = v.ski?.marks ?? []; if (!marks.length) return v.zone;
+      return marks.reduce((a, b) => Math.hypot(b.x - v.heli.x, b.z - v.heli.z) < Math.hypot(a.x - v.heli.x, a.z - v.heli.z) ? b : a); };
+    const first = goal(s.view());
+    this.fly(400, () => ({}), v => Math.hypot(v.heli.x - first.x, v.heli.z - first.z) < 4 && Math.hypot(v.heli.vx, v.heli.vz) < .8);
     if (s.autopilotOn) s.pressAutopilot();
   },
   // Hover with the hook at the load's roof (the cable is 15 m), ready for H.
@@ -199,7 +203,7 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('[data-ski-board="drop"]')`, 'ski box', 30_000);
   await context.evaluate(`document.querySelector('[data-ski-board="drop"]').click()`);
   await context.evaluate(`window.__jobQa.climb(45); window.__jobQa.arrive('summit-run')`);
-  report.facts.skiCardOverCircle = await expect(context, card, /Land on a ski pad to step out\. Nearest: .*km, heading \d{3}\./, 'the ski card at Summit Run');
+  report.facts.skiCardOverCircle = await expect(context, card, /Land on the ski pad under the orange light: .*km, heading \d{3}\./, 'the ski card at Summit Run');
   await context.evaluate(`window.__jobQa.toPad(${JSON.stringify(SKI_PADS.devils)})`);
   await drawn(context, 2500);
   await context.waitFor(`!!document.querySelector('[data-ski-run]')`, 'the ski panel', 30_000);

@@ -322,6 +322,9 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   ok(landedArrival(view, null).waiting.includes('Land on a ski pad'), 'at the landing circle the card says to land on a ski pad');
   ok(!landedArrival(view, null).waiting.includes('ski panel'), 'and does not name a panel that is not there');
   ok(landedArrival(view, null, {skiPanel: true}).waiting.includes('Use the ski panel'), 'on a ski pad with runs it names the panel');
+  // SKI-FINISH: at the home pad before the trip it says to fly to Summit Run; after the run, to fly home.
+  ok(landedArrival({...view, courseId: 'tremblant-woods'}, null).waiting.includes('Fly to Summit Run'), 'at home the drop is still to fly');
+  ok(landedArrival({...view, ski: {flight: {kind: 'drop', skied: true}, group: false}}, null).waiting.includes('Fly home'), 'after the run it is the way home');
 }
 
 console.log(`test-heli-job-clarity: ${checks} checks passed`);
