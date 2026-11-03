@@ -21,7 +21,20 @@ each from its own recipe; design, numbers and doubts in
 
 ### Checks
 
-CHECKS_EU
+From PowerShell, on the lane with current `integration/wasteland` (0ecc1ebf)
+merged in, started on a free heavy-job turn.
+
+- `node tools/test-blender-output.mjs`: 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 51 passed, 1 failed, 0 not
+  run (571 s). The failure is `tools/test-wildlife-view.mjs`, "every model
+  on disk is in the table": the eleven Europe GLBs are on disk for review
+  but, as briefed, not yet in `src/wildlife-models.js`. That guard is doing
+  its job; it goes green when the passed species are wired in. No test was
+  changed to hide it.
+- `npm run build`: built in 0.99 s, existing large-chunk warning only;
+  output deleted.
+- Every species built and reviewed from its recipe in Blender 4.5.13
+  (`-b --factory-startup -t 4`).
 
 ### Changed assertions
 
