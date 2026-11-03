@@ -19,7 +19,17 @@ unchanged until Claude's final call.
 
 ### Checks
 
-CHECKS_EU3
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `test-wildlife-view` 3,813 checks; `test-wildlife` 33,644 checks;
+  `test-heli-survey` 9,990 checks; `test-blender-output` 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (800 s).
+- `npm run build`: passed; output deleted.
+- The three candidates built and reviewed with `--candidate` in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 3`.
 
 ### Changed assertions
 
