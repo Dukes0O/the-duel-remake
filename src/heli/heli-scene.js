@@ -10,6 +10,7 @@ import {createVehicleAssets} from '../vehicle-assets.js';
 import {createFireView} from './heli-fire-view.js';
 import {createRescueView} from './heli-rescue-view.js';
 import {createRankPaint} from './heli-rank-paint.js';
+import {createSkinView} from './heli-skin-view.js';
 
 const CABLE_LENGTH = 15;
 const GUIDE_WAIT = 0xf4f1e8, GUIDE_READY = 0x3ddc5a;
@@ -48,7 +49,7 @@ function buildCrate(THREE) {
   return crate;
 }
 
-export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets(), load = loadModel, fireLoad = undefined, rescueLoad = undefined, quality = 'high'}) {
+export function createHeliView({THREE, scene, vehicleAssets = createVehicleAssets(), load = loadModel, fireLoad = undefined, rescueLoad = undefined, skinTexture = undefined, quality = 'high'}) {
   const group = new THREE.Group();
   group.name = 'Helicopter';
   group.visible = false;
@@ -59,6 +60,8 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   const parts = {model: null, rotor: null, tail: null, hook: null, status: 'idle', error: ''};
   let disposed = false;
   const rankPaint = createRankPaint({THREE});
+  // SKIN-VIEW: the skins' paint, gear and grime (view.skins, only with the heli-skins switch on); it loads nothing until a frame asks.
+  const skinView = createSkinView({THREE, load, ...(skinTexture ? {loadTexture: skinTexture} : {})});
   // The model loads on the first helicopter frame, so a player who never
   // flies (or has the switch off) never downloads it.
   const ensureModel = () => {
@@ -75,6 +78,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
     if (parts.status === 'error') parts.error = 'Kestrel One is missing a named node';
     body.add(model);
     rankPaint.attach(model);
+    skinView.attach(model, {rotor: parts.rotor, hook: parts.hook});
     }).catch(error => {
       parts.status = 'error'; parts.error = String(error?.message || error);
       console.warn(`Kestrel One did not load: ${parts.error}`);
@@ -251,6 +255,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       spin += (h.rotor || 0) * 42 * dt;
       if (parts.rotor) parts.rotor.rotation.y = spin;
       if (parts.tail) parts.tail.rotation.x = spin * 5.5;
+      skinView.update(view.skins ?? null, dt);
       // The cable hangs from the model's hook point.
       let top = {x: h.x, y: h.y - .2, z: h.z};
       if (parts.hook) { body.updateMatrixWorld(true); parts.hook.getWorldPosition(hookWorld); top = hookWorld; }
@@ -314,16 +319,18 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       const hung = view.load?.hooked ? null : view.rescue?.line ?? (view.rescue?.crates ?? []).find(item => item.hooked) ?? null;
       // Framed 8 m lower than it hangs, so the instrument panel along the bottom does not cover the people on it.
       const framed = hung ? {...view, load: {x: hung.x, y: hung.y - 8, z: hung.z, hooked: true}} : view;
-      return {camera: heliCameraPose(framed, cameraIndex), load: loads.find(item => item.own) ?? null};
+      return {camera: heliCameraPose(framed, cameraIndex, view.skins?.gear), load: loads.find(item => item.own) ?? null};
     },
     hide() { group.visible = false; fire.hide(); rescue?.hide(); },
     fire,
     get rescue() { return rescue; },
+    skinView,
     get modelStatus() { return parts.status; },
     get modelError() { return parts.error; },
     dispose() {
       disposed = true;
       rankPaint.dispose();
+      skinView.dispose();
       // Car models share their geometry and materials with the race's own
       // cars, so only the helicopter's own parts are freed.
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);

@@ -409,7 +409,7 @@ for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['buga
   }
   assert.deepEqual(offenders, [], 'no unapproved src/heli imports'); checks++;
   // Every helicopter file except the drawing, page and sound ones is game rules.
-  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js', 'heli-rank-paint.js',
+  const drawing = new Set(['heli-scene.js', 'heli-camera.js', 'heli-ui.js', 'heli-audio.js', 'heli-radio-lines.js', 'heli-fire-view.js', 'heli-rescue-view.js', 'heli-rank-paint.js', 'heli-skin-view.js', // SKIN-VIEW: paint, gear and grime are drawing, not rules
     // MAP-VIEW: the pilot's map screen and its world drawing are drawing files, not rules.
     'pilot-map-view.js', 'pilot-map-world.js']);
   const sim = readdirSync(join(root, 'src/heli')).filter(name => name.endsWith('.js') && !drawing.has(name));
