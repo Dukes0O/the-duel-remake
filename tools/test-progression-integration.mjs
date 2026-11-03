@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {ownTestCourses} from './career-fixture.mjs';
-import {App} from '../src/app.js';
+import {App as GameApp} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+// These exact credit sums predate medal pay (earned cars switched on 3 November 2026), so every App here has medals off.
+class App extends GameApp {constructor(...args){super(...args);this.duel.featureFlags=createFeatureFlags({storage:null,qa:false,overrides:{'earned-cars':false}});}}
 import {COURSE,CPU_DIFFICULTY,CARS} from '../src/config.js';
 import {PLAYERS_KEY,upgradedCar,bestKey,createProfile} from '../src/progression.js';
 import {loadLeaderboard,saveLeaderboard} from '../src/leaderboard.js';

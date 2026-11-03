@@ -553,10 +553,14 @@ A fresh memory-only player in Chrome (browser harness, private port, `earned-car
 
 - `tools/test-busted-quit.mjs`: no assertion changed. Its App now sets `earned-cars` off, because its exact police-fine earnings (1,050 for a clean first Medium win less a 150 fine) predate medals; with the switch on the same win also pays the 250 silver medal. The fine checks are unchanged.
 
+- `tools/test-progression-integration.mjs`: no assertion changed. Every App in it now has `earned-cars` off (a small subclass at the top), because its exact credit sums (760 for a clean first Easy win, and the chain after it) predate medal pay; with the switch on the same win also pays the 150 bronze.
+
 ### Gates
 
 - Lane tier from PowerShell (`--changed --jobs 4 --keep-going`), on 5ae3ff05: 85 passed, 1 failed (`test-busted-quit`, the medal pay above), fixed and passing (280 checks).
 - By hand: `test-earned-cars-ui` (8), `test-medals` (11), `test-feature-flags` (129), `test-mclaren-f1-vehicle` (351 and 42 frame recipe checks), `test-koenigsegg-ui`, `test-sirena-car`, `test-story-ui`, `test-career-rebuild`, `test-grand-prix-career`.
+- Full tier alone on 7859f088 (the merge into integration), `--jobs 4`: 568 passed, 1 failed (`test-progression-integration`, the medal pay above), 2,634 s. Fixed and rerun alone: 146 assertions pass. Rule 19: only that test's setup changed since.
+- Frame checks not run: the laptop panel and both Dells were on (rule 8 does not count that setup). Claude released without them; card EARN-FRAMES times the three fields.
 - Independent review (rule 17, save and code): approve with fixes, no code fault; saves cannot be hidden or wiped by the switch, one release back keeps everything. Its fixes are in: the frame packet must name an earned car, a check for the Enzo selector and a bad name, two doc wording points.
 
 ### Removed

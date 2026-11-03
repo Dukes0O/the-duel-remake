@@ -1,15 +1,17 @@
 {
   "schema": 1,
-  "commit": "bb9a2c8e41ed0fd7dfbb9d4af9c4fa0d9bef3b50",
-  "time": "2026-11-02T23:46:35.302Z",
+  "commit": "7859f088c3d2525608032e99f0bd0a231d935510",
+  "time": "2026-11-03T02:07:34.851Z",
   "tier": "full",
-  "passed": true,
+  "passed": false,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "bb9a2c8e41ed0fd7dfbb9d4af9c4fa0d9bef3b50",
+  "endCommit": "7859f088c3d2525608032e99f0bd0a231d935510",
   "complete": true,
-  "total": 568,
-  "completed": 568,
-  "failures": []
+  "total": 569,
+  "completed": 569,
+  "failures": [
+    "tools/test-progression-integration.mjs"
+  ]
 }
