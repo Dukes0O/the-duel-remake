@@ -1,3 +1,7 @@
+## Claude's verdict (3 November)
+
+Kangaroo PASS: broad cupped ears, longer head, upright stance and creamy front read as an eastern grey at race distance. Kookaburra PASS: one round head with the eye stripe and two-tone bill, no cap line. The Western mountains and Australia group is closed after three rounds.
+
 # Western mountains and Australia, round 3 of 3 (final)
 
 Claude's round 2 verdict and the two fixes asked for are at the top of

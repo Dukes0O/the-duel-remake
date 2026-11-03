@@ -259,3 +259,8 @@ Cockpit sync stays with the Director under the lane-only boundary.
 ## Claude's review (28 October 2026, night)
 
 Accepted on pictures over three rounds (Claude, look judge): deer, bear, beaver and wolf passed in round 2, the moose in round 3 (hump, dewlap, palmate antlers from the skull, long muzzle). CC0 Quaternius deer, moose donor and wolf; CC-BY 3.0 Poly by Google bear and beaver, credited. All under 5,000 triangles, 1K coats. Not placed in races yet (WILD-VIEW). Changed pins (rule 18): the P4 kits and tanker source checks leave out only the four new wildlife provenance rows and keep their old hash values exactly.
+
+
+## Claude's review under rule 18 (3 November)
+
+The changed checks in tools/test-wildlife-view.mjs keep testing that a course and the count join only when their species have models, now on a fixed North woods list, and add exact checks of today's table (each course's species, the birds' Fly loop, the count's course lists, 300 days identical to the job with no list). Nothing is loosened. Round 3 verdict: kangaroo and kookaburra PASS; all eleven new species and the wolf tracks are accepted.
