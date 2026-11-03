@@ -141,12 +141,12 @@ log (section 6.4) carries the one true fact in the last column.
 | --- | --- | --- | --- |
 | Sardines (`silver-school`, several hundred) | Kelp Coast | Swim together, turn as one, part around the car and close behind it | Sardines swim in schools of thousands. Turning together makes it hard for a hunter to pick out one fish. |
 | Reef fish (`reef-fish`, small groups) | Wreck Reef | Hover near the coral, dart into cover | Bright colours help reef fish find their own kind among hundreds of others. |
-| Green turtle (`turtle`, 4 to 6) | Ramp Shallows, Coral Garden | Glide slowly with flipper strokes, surface for air | Green turtles are named for the green fat under their shell, which comes from the seagrass they eat. They do live off Southern California. |
+| Green turtle (`turtle`, 4 to 6) | Ramp Shallows, Coral Garden | Glide slowly with flipper strokes, surface for air | Green turtles are named for the green fat under their shell, not for their skin. Some live all year off Southern California. |
 | Bat ray (`ray`) | Ramp Shallows | Rests on the sand and lifts off | Bat rays dig clams out of the sand by flapping their wings over it. |
 | Manta (`manta`) | Manta Point | Glides in wide loops | The biggest mantas are 7 m across, wider than a car is long, yet they feed mostly on plankton. |
 | California sea lion (`sea-lion`) | The Kelp Forest | Fast twisting passes | Sea lions can turn their back flippers forward and walk on land. Seals cannot. |
 | Sea otter (`otter`) | The Kelp Forest, at the surface | Floats on its back, wrapped in kelp | Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears. |
-| Kelp crab (`crab`) | Sand, rocks, the harbour wall | Scuttles sideways out of the way | A crab's legs bend outward, so sideways is its fastest way to move. |
+| Kelp crab (`crab`) | Sand, rocks, the harbour wall | Scuttles sideways out of the way | A kelp crab grips the kelp with hooked tips on its legs, and its shell takes on the colour of the seaweed it eats. |
 | Moray (`moray`) | Coral Garden | Watches from a crack | A moray has a second set of jaws in its throat that pulls food down. |
 | Grouper (`grouper`) | The Wreck | Hangs in the hold | A big grouper opens its mouth so fast that water rushes in and carries a fish with it. |
 | Reef shark (`reef-shark`, 2) | Coral Garden | Cruises slowly, never chases | Sharks have no bones: their skeleton is cartilage, like the end of your nose. |

@@ -277,8 +277,11 @@ export function landedArrival(view, profile = null, {skiPanel = false} = {}) {
       view.lesson || view.challenge || view.job || view.fire?.cells > 0 || view.ski?.run || view.survey?.taken) return null;
   const rescue = view.rescue?.active ?? view.rescue?.call;
   const waiting = rescue ? `${RESCUE_WORDS[rescue.kind] ?? 'Rescue call'} waiting. Finish the rescue or shut down to leave the flight.` :
-    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. ${skiPanel
-      ? 'Use the ski panel to continue or shut down to leave the flight.'
+    // SKI-FINISH: the words follow the trip (at home it is still to fly; after the run it is the way home).
+    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. ${view.ski.flight?.skied
+      ? `Follow the job card on the left home${skiPanel ? ', or ski again on the ski panel' : ''}. Or shut down to leave the flight.`
+      : skiPanel ? 'Use the ski panel to continue or shut down to leave the flight.'
+      : view.courseId !== 'summit-run' ? 'Fly to Summit Run: the job card on the left shows what to do. Or shut down to leave the flight.'
       : 'Land on a ski pad to ski: the job card on the left shows the nearest. Or shut down to leave the flight.'}` : null;
   const car = view.loads?.find(load => load.own && load.onGround && !load.hooked);
   const unavailable = new Set(view.loads?.filter(load => load.hooked || !load.onGround).map(load => load.id));
@@ -322,8 +325,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   // The label changes as fuel burns; it sits in its own span so the panel
   // can update it without rebuilding the buttons under the mouse.
   const atTruck = view.heli.onGround && view.rescue?.active?.sites?.atTruck === true;
-  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck ? Math.max(1, refuels) : refuels});
-  const pump = onPad || atTruck ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  // SKI-FINISH: the pickup pad's pump during a ski flight sells fuel like the home pump (always for pay).
+  const atSkiPump = view.heli.onGround && view.ski?.pump?.atPump === true;
+  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump ? Math.max(1, refuels) : refuels});
+  const pump = onPad || atTruck || atSkiPump ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const truckTarget = atTruck ? `<label class="heli-fuel-target">Tank target
     <select data-heli-fuel-target aria-label="Fuel tank target">
       ${[190, 230, 330, 360, 400].map(kg => `<option value="${kg}"${kg === 330 ? ' selected' : ''}>${kg} kg</option>`).join('')}

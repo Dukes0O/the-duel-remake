@@ -1,10 +1,9 @@
 // Real Lab navigation and machine inputs, on the harness's memory-only origin.
 import * as fire from '../../src/lab/lessons/fire-lesson.js';
-import * as altitude from '../../src/lab/lessons/altitude-lesson.js';
 
 export async function run(c) {
   const onlyLessons = (process.env.LAB_FLYING_LESSON ?? '').split(',').filter(Boolean);
-  if (onlyLessons.some(id => !['fire', 'altitude'].includes(id))) throw Error('Unknown Flying lesson filter.');
+  if (onlyLessons.some(id => !['fire'].includes(id))) throw Error('Unknown Flying lesson filter.');
   await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html?flags=lab-2,rescue,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
@@ -36,17 +35,15 @@ export async function run(c) {
     await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 1100, y: 125});
   }
   let scaleIntroductions = 0;
-  // The pendulum and Projectile motion are classroom lessons now: tools/scenarios/lab-classroom*.mjs play them.
-  for (const p of [fire, altitude]) {
+  // The pendulum, Projectile motion and Air and altitude are classroom lessons now: tools/scenarios/lab-classroom*.mjs play them.
+  for (const p of [fire]) {
     if (onlyLessons.length && !onlyLessons.includes(p.definition.id)) continue;
     const id = p.definition.id;
     await c.evaluate(`window.__qaApp.openLab()`);
     await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
     await walk('KeyW', `${pos(2)} < -3.95`);
-    if (id === 'fire') {
-      await walk('KeyA', `${pos(0)} < -14`); await walk('KeyS', `${pos(2)} > 4.2`); await walk('KeyD', `${pos(0)} > -12.4`);
-    } else await walk('KeyA', `${pos(0)} < -2.7`);
-    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the ${id === 'fire' ? 'Fire' : 'Air'}')`, `${id} machine`);
+    await walk('KeyA', `${pos(0)} < -14`); await walk('KeyS', `${pos(2)} > 4.2`); await walk('KeyD', `${pos(0)} > -12.4`);
+    await c.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent.includes('E: use the Fire')`, `${id} machine`);
     await key('KeyE', 'keyDown'); await key('KeyE', 'keyUp');
     await c.waitFor(`${text}?.includes('Wonder')`, `${id} wonder`);
     await new Promise(r => setTimeout(r, 3000));
@@ -65,15 +62,9 @@ export async function run(c) {
     await c.screenshot(`${id}-prediction`);
     if (!(await c.evaluate(`[...document.querySelectorAll('.lab-lift-overlay .lab-lift-force')].every(el => el.hidden)`))) throw Error('Prediction captions are visible.');
     for (let i = 0; i < 3; i++) {
-      if (id === 'fire') {
-        await click(`answer:${['heat', 'air', 'fuel'][i]}`);
-        if (i === 0) await touch('water'); else await click(`control:${['water', 'sand', 'rake'][i]}`);
-        if (i === 2) await click('control:spray');
-      } else {
-        await click(`answer:${i < 2 ? 'up' : 'down'}`);
-        if (i === 0) { await touch('siteIndex'); await click('control:siteIndex'); await click('control:siteIndex'); }
-        if (i === 1) await click('control:loadKg');
-      }
+      await click(`answer:${['heat', 'air', 'fuel'][i]}`);
+      if (i === 0) await touch('water'); else await click(`control:${['water', 'sand', 'rake'][i]}`);
+      if (i === 2) await click('control:spray');
       await click('run'); await c.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, `${id} try ${i}`, 40_000);
       await c.screenshot(`${id}-try-${i}`); await click('next');
     }

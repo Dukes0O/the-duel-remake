@@ -6,6 +6,32 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Ski drops are easy to find, and the fuel is planned.** Take the heli-ski
+  drop (or the group) at the home pad and the flight to Summit Run now ends
+  beside the ski pads, hovering 400 m from Devils Playground. Every pad you can
+  ski from has a tall orange light and an orange ring on the snow, and the
+  pilot's map shows it as an orange SKI flag. Press P and the autopilot flies
+  you to the pad. The job card says how much fuel the trip needs and, when the
+  tank is short, to fill it first. A pump now stands at the pickup pad, where
+  every run ends: the card says to fill up there for the way home and has a
+  Fill up here button.
+- **The Lab: Air and altitude is a classroom now.** Kestrel One's test pad
+  climbs a mountain drawn to its heights: Sea level, Panorama Ridge (860 m) and
+  Summit Run (2,860 m). A jar of air scooped at the top holds 75 bits where the
+  sea's holds 100, and with the lever all the way up she pushes 2,777 kg there
+  against 3,887 kg at the sea, so the Dusthawk that lifts at the sea stays down
+  at the summit. Hovering takes more lever up high (59% instead of 42%), which
+  burns more fuel. Brian's job: load as many crates as she can lift at each
+  place (four, three, two).
+- **The Deep is easier to follow.** While you dive, a "Next" line under the
+  map panel's heading always says what to do next, even with the map folded
+  away. Ana's list now says where the Sirena's parts still lie (the steering
+  wheel and front wheel in the Kelp Forest, the bonnet at the forest's edge,
+  the door on the Drop-off lip). Stop beside a part and a ring says "press F
+  for a lift bag", then fills while the bag does, bag by bag for the Sirena.
+  The map panel is smaller and fits a shorter browser window without
+  squeezing Ana's list. The green turtle and kelp crab cards now carry
+  facts that are true.
 - **The Lab: Braking is a classroom now.** The car stands close up on two
   weighing pads, so you can see how much of its weight each end carries; a
   speed dial and a brake balance lever set the test, and cars to scale brake on
