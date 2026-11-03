@@ -6,6 +6,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Downforce is a classroom now.** Brian's wind tunnel blows smoke
+  past the Falcone F42 on a scale, with a wing over its back and a rope at its
+  nose that reads the drag. Tilt the wing and watch the smoke bend; at 100 mph
+  the scale reads 225 kg more though nothing touches the car. Twice the speed
+  gives four times the push, and more wing costs top speed (201 mph flat, 176
+  steep). In Brian's job you pick the least wing that holds each course: a
+  100 mph bend, a 70 mph bend and a long straight. Passing opens Wing angle on
+  the Tune page.
 - **The Lab: Fire triangle is a classroom now.** Brian's steel fire pit has
   one switch per side of the fire triangle, each saying what it is set to:
   Wood (fuel), Gas (heat) and the Lid (air). Put the wood in, light the gas,

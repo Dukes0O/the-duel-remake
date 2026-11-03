@@ -1870,3 +1870,21 @@ Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 1
 lesson code, a Lab test fixture, the hygiene check's sheet list, tests and notes; no shared core, save
 shape or physics. No save change.
 
+
+## Release, 3 November 2026, night, after Fire (Claude, Release Manager)
+
+LAB-CLASSROOM-DOWNFORCE: Downforce as a classroom lesson (twelve steps; the wind tunnel with the fan, the
+Falcone F42 on a scale, a wing over its back and a rope with a drag gauge; every push and drag the
+downforce bench's own: 56, 225 and 505 kg from the steep wing at 50, 100 and 150 mph, top speed 201,
+187 and 176 mph flat, tilted and steep; Brian's job picks the least wing for a 100 mph bend, a 70 mph
+bend and a straight). The challenge (the bench's goal, passed on the lesson's own fan runs; it opens
+Wing angle on the Tune page) and the save are unchanged. The old lesson goes, with Downforce's part of
+the tunnel suite and scenario; lab-tune-view now passes Downforce through the classroom.
+test-lab-classroom-downforce 12/12, every test-lab-* suite 343/343, 22 Lab scenarios 22/22, lane tier
+46/46 twice, build. One review: one real fault (Brian's job could open on course 1's answer) fixed,
+tested and confirmed by the reviewer. Changed assertions reviewed in docs/changes/LAB-CLASSROOM-DOWNFORCE.md
+(tests of the removed lesson removed with it).
+
+Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 19: since then Lab
+lesson code, the tunnel bench's two new names (no rule changed), Lab tests and scenarios, a fixture, the
+hygiene check's sheet list and notes; no shared core, save shape or physics. No save change.
