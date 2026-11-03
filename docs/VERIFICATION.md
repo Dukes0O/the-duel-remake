@@ -1829,3 +1829,24 @@ words, the way after an unfinished group run, the pickup fuel floor now the pump
 Full tier 568/568 on bb9a2c8e. Rule 19: since then helicopter and ski screen and session code, the
 Deep's screen code and Lab lesson code (each released on its lane tier), tests and notes; no shared
 core, save shape or physics. No save change.
+
+## Release, 3 November 2026, night (Claude, Release Manager)
+
+EARN-FINISH and EARN-OUTLINE: the `earned-cars` switch goes on (Ferrari Enzo at 6 medals, McLaren F1 at
+12, Bugatti Bolide at 24 with 6 gold; each new medal pays 150, 250 or 375 once). The path was played end
+to end in Chrome on a memory-only save (24 wins with the starters, the Enzo and the F1; every medal paid
+once with one cue, a repeat win paid none, each car fully tuned and air-only). The play found two screen
+gaps, fixed: a Grand Prix win hid the new car below the standings, and no results screen said how close
+the next car was. The three cars were reshaped from traced photo outlines (Enzo, F1 and Bolide 3 of 5
+each, sheet docs/board/looks/earned-cars/outline-round.jpg). Two independent reviews: the save and
+switch (no fault; nothing in a save can be hidden or wiped, one release back keeps everything) and the
+car code (see-through cockpits under the new glass and two walls above the cabin, all fixed and
+rechecked). Changed assertions reviewed in docs/changes/EARN-FINISH.md (switch list, the repeat-win
+headline check now asks for the progress line) and docs/changes/EARN-OUTLINE.md (sheet name).
+
+Full tier on 7859f088, alone, --jobs 4: 568 passed, 1 failed (test-progression-integration, whose
+credit sums predate medal pay); its App now has medals off, assertions unchanged, 146 pass. Rule 19:
+only that test's setup and notes since. Lane tier 85/86 then the same kind of fix (test-busted-quit),
+build, earned-cars scenario, enzo-look and mclaren-f1-look. Frame checks not run: the laptop panel and
+both Dells were on, which rule 8 does not count; each car stays under the Jesko's 73,600 triangles and 66
+draws, and card EARN-FRAMES times the three Grand Prix fields. Save shape unchanged since EARN-MEDALS.

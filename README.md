@@ -6,6 +6,16 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Earned cars and medal sheets are on.** Every car keeps a medal sheet for
+  each player: Duel and Grand Prix, on Easy (bronze), Medium (silver) and Hard
+  (gold). A box fills the first time you win that race in that car, and each
+  new medal pays once: 150, 250 or 375 credits. Medals from all your cars earn
+  three cars that are never sold: the Ferrari Enzo at 6 medals, the McLaren F1
+  at 12 and the Bugatti Bolide at 24 with 6 of them gold. Each arrives fully
+  tuned, waits at Tremblant Woods and travels by helicopter. Every results
+  screen says how close the next car is and which box to win next, and a new
+  car shows on a Grand Prix results screen without scrolling. The three cars
+  were reshaped from outlines traced off real photos.
 - **Ski drops are easy to find, and the fuel is planned.** Take the heli-ski
   drop (or the group) at the home pad and the flight to Summit Run now ends
   beside the ski pads, hovering 400 m from Devils Playground. Every pad you can
