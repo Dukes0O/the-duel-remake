@@ -2,11 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateLesson, createLessonSession} from '../src/lab/lesson-frame.js';
 import * as fire from '../src/lab/lessons/fire-lesson.js';
-import * as altitude from '../src/lab/lessons/altitude-lesson.js';
 import {fireBench, practiceFire, TAKES_AWAY} from '../src/lab/benches/fire.js';
-import {altitudeBench, SITES} from '../src/lab/benches/altitude.js';
-import {GRAVITY, createHeliState, heliReadout} from '../src/heli/heli-flight.js';
-import {altitudeReading, altitudeDrawing} from '../src/lab/lessons/altitude-animation.js';
 import {fireDrawing} from '../src/lab/lessons/fire-animation.js';
 import {mountMachine} from '../src/lab/lessons/flying-display.js';
 import {Group} from 'three';
@@ -38,23 +34,19 @@ test('the prescribed flying sheet names allow only three JPG rounds and reject r
   } finally { recycleDirectory(root); }
 });
 
-// The pendulum and Projectile motion are classroom lessons (tools/test-lab-classroom*.mjs).
-const packets = [fire, altitude];
+// The pendulum, Projectile motion and Air and altitude are classroom lessons (tools/test-lab-classroom*.mjs).
+const packets = [fire];
 const finish = s => { for (let n = 0; n < 500; n++) s.tick(.1); };
 test('the scale models keep real lengths and anchor at most three labels beside readable moving parts', () => {
-  const air = altitudeDrawing({}, 0), dots = air.objects.filter(o => o.id.startsWith('air-') && o.shape === 'sphere');
-  assert.equal(dots.length, Math.round(36 * air.reading.gameShare));
-  assert.ok(dots.every(o => o.size[0] >= .12));
-  for (const d of [air, fireDrawing({}, 0)]) {
-    assert.ok(d.labels.length <= 3);
-    assert.equal(d.labels.length, d.labelPositions.length);
-  }
+  const d = fireDrawing({}, 0);
+  assert.ok(d.labels.length <= 3);
+  assert.equal(d.labels.length, d.labelPositions.length);
   for (const packet of packets) {
     const d = packet.hooks.animations.undefined();
     assert.ok(d.camera && d.objects.length > 0, `${packet.definition.id} keeps its experiment on the final key card`);
   }
 });
-test('both packets scaffold real lessons through checks and keep rewards outside the teaching session', () => {
+test('the fire packet scaffolds real lessons through checks and keep rewards outside the teaching session', () => {
   for (const p of packets) {
     validateLesson(p.definition, p.hooks);
     const s = createLessonSession(p); s.next();
@@ -63,7 +55,6 @@ test('both packets scaffold real lessons through checks and keep rewards outside
     for (let i = 0; i < 3; i++) {
       assert.equal(s.view().support, ['guided', 'prompted', 'alone'][i]);
       if (p === fire) { s.control(['water', 'sand', 'rake'][i]); if (i === 2) s.control('spray'); s.predict(['heat', 'air', 'fuel'][i]); }
-      if (p === altitude) { s.control('siteIndex', i); s.predict(['up', 'up', 'down'][i]); }
       assert.ok(s.run()); finish(s); assert.equal(s.view().result.passed, true, p.definition.id); s.next();
     }
     for (const q of p.definition.checks) {
@@ -97,32 +88,6 @@ test('every fire tool removes its real triangle side and both strips stop the se
   assert.equal(fire.hooks.animations['answer-heat']({time: 2}).removed, 'heat');
   assert.ok(fireDrawing({putOut: 'sand'}, 2).objects.some(o => o.id === 'sand-cover'));
   assert.equal(fire.hooks.animations['answer-air']({time: 2}).mode, 'lid');
-});
-
-test('all offered altitude loads compare with flying-height thrust, preserving the old ground stand', () => {
-  Object.keys(SITES).forEach((site, siteIndex) => {
-    const r = altitudeBench.run({site}), state = createHeliState({altitudeOffset: SITES[site].altitudeM});
-    assert.equal(r.aloftLiftKg, heliReadout(state).maxLiftKg);
-    assert.ok(r.liftKg > r.aloftLiftKg);
-    for (let loadKg = 1000; loadKg <= 4000; loadKg += 100) {
-      const expected = Math.abs(loadKg - r.aloftLiftKg) <= 25 ? 'hover' : r.aloftLiftKg > loadKg ? 'up' : 'down';
-      for (const prediction of ['up', 'hover', 'down']) {
-        const v = altitude.hooks.evaluate({input: {siteIndex, loadKg}, prediction});
-        assert.equal(v.actual, expected); assert.equal(v.passed, prediction === expected);
-      }
-      const d = altitudeDrawing({siteIndex, loadKg}, 2);
-      assert.ok(d.forces.every(f => f.displayUnit === 'kg'));
-      assert.ok(Math.abs(d.forces[0].newtons / d.forces[1].newtons - r.aloftLiftKg / loadKg) < 1e-12);
-      assert.equal(d.forces[0].newtons / GRAVITY, r.aloftLiftKg);
-    }
-  });
-  assert.deepEqual([0, 1, 2].map(siteIndex => altitudeReading({siteIndex, loadKg: 3200}).outcome), ['up', 'down', 'down']);
-  for (let i = 0; i < 3; i++) {
-    const q = altitude.definition.tries[i].prediction;
-    const d = altitude.hooks.animations.try({time: 0, input: {}, index: i});
-    assert.equal(d.input.siteIndex, altitude.definition.tries[i].controls[0].initial);
-    assert.equal(altitude.hooks.evaluate({tryIndex: i, input: {}, prediction: q.correct}).passed, true);
-  }
 });
 
 test('two failures give plainer help and three offer a worked replay in every lesson', () => {
