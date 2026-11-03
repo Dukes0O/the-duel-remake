@@ -6,7 +6,7 @@ import { prepareVehicleDamage } from './vehicles.js';
 // geometry inspired by public photographs of the Bugatti Bolide. No imported
 // model, texture, badge or trademark graphic is embedded. Metres; +Z forward.
 // Its character: a track car barely a metre tall and very wide, a blue upper
-// body over bare carbon, a small cockpit bubble with an air scoop on its roof,
+// body over bare carbon, a small cockpit with an angled windscreen and an air scoop on its roof,
 // a fin running back from the scoop to a tall rear wing on swan-neck pylons,
 // a central horseshoe-shaped intake in a low nose, X-shaped lamps front and
 // rear, and a deep open diffuser. Shared helpers only construct small parts.
@@ -33,18 +33,19 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
     damageSpace: { scale: [.92, .78, 1.0], offset: [0, 0, 0], frontGlassZ: .70, rearGlassZ: -.64 },
   });
 
-  // Stations: [z, half width, floor, shoulder, crown, crown half width]. Low
-  // everywhere; over the front wheels the shoulders rise either side of a
-  // lower central channel, and behind the cockpit the deck climbs high and
-  // stays high to a tall, square tail.
+  // Stations: [z, half width, floor, shoulder, crown, crown half width], fitted to
+  // the side outline traced off the photo (tools/art/earned-outlines.json). Low
+  // everywhere: a low hard nose climbs to the front fenders, which stand either
+  // side of a lower central channel; behind the cockpit the deck stays high to a
+  // tall, square tail.
   sculpt(b, m.paint, [
-    [-2.38, .90, .30, .70, .73, .70], [-2.22, 1.00, .25, .80, .82, .74],
-    [-1.85, 1.03, .21, .90, .86, .64], [-1.33, 1.03, .19, .92, .84, .56],
-    [-.85, .99, .18, .76, .80, .50], [-.30, .93, .17, .62, .66, .52],
-    [.40, .92, .17, .60, .60, .54], [.95, .98, .17, .76, .50, .46],
-    [1.42, 1.03, .17, .88, .46, .40], [1.85, 1.00, .16, .80, .38, .34],
-    [2.20, .90, .16, .56, .36, .28], [2.38, .62, .17, .42, .38, .24],
-  ], AXLES, .36, .36, { width: .52, y: .52, back: -.76, front: .82 });
+    [-2.38, .90, .30, .72, .76, .70], [-2.22, 1.00, .25, .82, .84, .74],
+    [-1.85, 1.03, .21, .90, .88, .64], [-1.33, 1.03, .19, .92, .88, .56],
+    [-.85, .99, .18, .82, .86, .50], [-.30, .93, .17, .64, .68, .52],
+    [.40, .92, .17, .60, .60, .54], [.95, .98, .17, .74, .52, .46],
+    [1.42, 1.03, .17, .80, .46, .40], [1.85, 1.00, .16, .72, .40, .34],
+    [2.05, .96, .16, .60, .37, .30], [2.22, .86, .16, .47, .35, .26], [2.38, .62, .17, .37, .34, .22],
+  ], AXLES, .36, .36, { width: .52, y: .52, back: -.86, front: 1.02 });
   b.box(m.carbon, [1.10, .05, 1.54], [0, .32, .03], [0, 0, 0], .012);
   buildCanopy(b, m);
 
@@ -72,7 +73,8 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
   b.box(m.carbon, [1.80, .02, .10], [0, 1.15, -2.29], [-.55, 0, 0], .006);
 
   // The nose: a wide carbon splitter and the central horseshoe intake.
-  b.box(m.carbon, [1.62, .04, .20], [0, .175, 2.18], [0, 0, 0], .02);
+  b.box(m.carbon, [1.84, .035, .34], [0, .165, 2.20], [0, 0, 0], .012);
+  for (const side of [-1, 1]) b.box(m.carbon, [.03, .10, .30], [side * .90, .21, 2.18], [0, 0, 0], .006); // splitter end fences
   panel(b, m.darkAlloy, [[-.10, .19, 2.382], [.10, .19, 2.382], [.10, .30, 2.378], [-.10, .30, 2.378]]);
   {
     const shoe = new THREE.TorusGeometry(.10, .016, 8, 26, Math.PI);
@@ -99,18 +101,21 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
   return vehicle;
 }
 
-// A small cockpit bubble set mid-car: glass all round a short painted roof,
-// [z, half width, base, top].
+// The cockpit from the outline: an angled windscreen rising from the bonnet channel
+// just behind the front wheels, a short flat roof under the scoop, and side glass
+// that leans in. Squared-off ellipse sections, not a bubble. [z, half width, base, top].
 const canopySections = [
-  [-.84, .34, .72, .80], [-.58, .48, .66, .95], [-.22, .54, .62, 1.03],
-  [.14, .55, .61, 1.05], [.44, .52, .61, .99], [.68, .44, .61, .83], [.86, .32, .60, .65],
+  [-.86, .40, .74, .88], [-.62, .50, .68, .97], [-.40, .56, .64, 1.02], [-.10, .60, .62, 1.05],
+  [.25, .60, .62, 1.04], [.55, .58, .60, .98], [.80, .54, .57, .86], [1.02, .48, .55, .66],
 ];
+const SQUARE = 3, TUMBLE = .22; // 2 is an ellipse, higher flattens the roof; the sides lean in as they rise
 function canopyPoint(z, angle, lift = 0) {
   const last = canopySections.length - 1;
   let i = canopySections.findIndex(p => p[0] >= z); if (i <= 0) i = 1; if (z >= canopySections[last][0]) i = last;
   const a = canopySections[i - 1], b = canopySections[i], t = THREE.MathUtils.clamp((z - a[0]) / (b[0] - a[0]), 0, 1);
   const smooth = t * t * (3 - 2 * t), width = THREE.MathUtils.lerp(a[1], b[1], smooth), base = THREE.MathUtils.lerp(a[2], b[2], t), top = THREE.MathUtils.lerp(a[3], b[3], smooth);
-  return [Math.cos(angle) * (width + lift), base + Math.sin(angle) * (top - base + lift), z];
+  const c = Math.cos(angle), s = Math.sin(angle), x = Math.sign(c) * Math.abs(c) ** (2 / SQUARE), y = Math.abs(s) ** (2 / SQUARE);
+  return [x * (width * (1 - TUMBLE * y) + lift), base + y * (top - base + lift), z];
 }
 function canopySheet(b, material, start, end, minAngle, maxAngle, lift = 0) {
   const positions = [], indices = [], rows = 30, columns = 22;
@@ -120,14 +125,14 @@ function canopySheet(b, material, start, end, minAngle, maxAngle, lift = 0) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(indices); g.computeVertexNormals(); b.add(g, material); g.dispose();
 }
 function buildCanopy(b, m) {
-  canopySheet(b, m.glass, -.84, .86, 0, Math.PI);
+  canopySheet(b, m.glass, -.86, 1.02, 0, Math.PI);
   // The painted roof between the side windows.
-  canopySheet(b, m.paint, -.58, .20, Math.PI * .24, Math.PI * .76, .007);
+  canopySheet(b, m.paint, -.62, .30, Math.PI * .22, Math.PI * .78, .007);
   for (const angle of [0, Math.PI]) {
-    const sill = []; for (let i = 0; i <= 24; i++) sill.push(canopyPoint(-.84 + 1.70 * i / 24, angle, .01));
+    const sill = []; for (let i = 0; i <= 24; i++) sill.push(canopyPoint(-.86 + 1.88 * i / 24, angle, .01));
     b.tube(m.carbon, sill, .018, 24);
   }
-  for (const z of [-.58, .20]) {
+  for (const z of [-.62, .30]) {
     const hoop = []; for (let i = 0; i <= 22; i++) hoop.push(canopyPoint(z, Math.PI * i / 22, .008));
     b.tube(m.carbon, hoop, .015, 22);
   }

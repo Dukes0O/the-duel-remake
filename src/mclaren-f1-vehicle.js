@@ -14,7 +14,7 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
   if (!Object.hasOwn(MCLAREN_F1_VEHICLE_DIMENSIONS, key)) return null;
   const vehicle = new THREE.Group(); vehicle.name = key;
   const m = materials(color, accent), data = vehicle.userData, b = batch(vehicle);
-  m.paint.name = 'F1 silver body'; m.paint.metalness = .58; m.paint.roughness = .29;
+  m.paint.name = 'F1 silver body'; m.paint.metalness = .72; m.paint.roughness = .33;
   m.accent.name = 'F1 charcoal trim'; m.glass.color.setHex(0x17242a); m.glass.opacity = .82;
   m.glass.roughness = .085; m.glass.metalness = .3;
   m.headlight.color.setHex(0xb6c0bd); m.headlight.emissive.setHex(0x7c928e); m.headlight.emissiveIntensity = .28;
@@ -28,19 +28,21 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     damageSpace: { scale: [.9, .68, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -.97 },
   });
 
-  // A smooth teardrop: a wide rounded nose over high front wings, a roof that
-  // runs back into a tall, full engine deck (the haunches stand higher than the
-  // doors), then a short rounded tail. Unlike a racing wedge, the bonnet stays
-  // full across its centre. The cabin opening removes the deck beneath all
-  // three seats before the shell is batched.
+  // A smooth teardrop, fitted to the side outline traced off the photo
+  // (tools/art/earned-outlines.json): a low rounded nose that climbs in one
+  // line over high front wings to a long windscreen, a broad roof that runs
+  // straight back into a tall, full engine deck, then a short rounded tail.
+  // The bonnet stays full across its centre. The cabin opening removes the
+  // deck beneath all three seats before the shell is batched.
   sculpt(b, m.paint, [
-    [-2.12, .78, .30, .62, .66, .60], [-1.99, .90, .22, .74, .73, .64],
-    [-1.65, .98, .19, .82, .80, .66], [-1.30, .995, .18, .86, .86, .66],
-    [-.90, .98, .17, .78, .80, .66], [-.35, .94, .16, .70, .66, .68],
-    [.35, .93, .16, .68, .64, .67], [.90, .98, .17, .76, .68, .66],
-    [1.23, 1.0, .18, .82, .74, .62], [1.64, .96, .19, .74, .70, .60],
-    [1.94, .88, .21, .62, .60, .54], [2.12, .70, .25, .46, .45, .42],
-  ], AXLES, .335, .335, { width: .70, y: .48, back: -.94, front: .88 });
+    [-2.11, .74, .32, .56, .56, .58], [-2.02, .88, .24, .68, .70, .60],
+    [-1.85, .96, .20, .74, .76, .56], [-1.62, .99, .19, .82, .91, .56],
+    [-1.30, .995, .18, .84, .98, .55], [-.95, .98, .17, .80, .93, .60],
+    [-.35, .94, .16, .76, .72, .68], [.35, .93, .16, .70, .66, .67],
+    [.90, .98, .17, .70, .73, .66], [1.23, 1.0, .18, .74, .80, .58],
+    [1.45, .99, .18, .70, .75, .56], [1.70, .96, .19, .62, .63, .56],
+    [1.96, .88, .21, .52, .48, .54], [2.12, .70, .25, .40, .38, .42],
+  ], AXLES, .335, .335, { width: .70, y: .48, back: -1.06, front: 1.26 });
   b.box(m.carbon, [1.36, .045, 1.76], [0, .27, -.02], [0, 0, 0], .012);
   buildCabin(b, m);
 
@@ -66,10 +68,10 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     }
   }
   // Restrained front mouth and thin splitter follow the road car's rounded lip.
-  b.box(m.carbon, [1.12, .07, .026], [0, .335, 2.12], [-.08, 0, 0], .03);
+  b.box(m.carbon, [1.06, .10, .026], [0, .305, 2.125], [-.08, 0, 0], .03);
   b.box(m.carbon, [1.34, .022, .12], [0, .225, 2.06], [0, 0, 0], .012);
-  b.box(m.carbon, [1.32, .17, .018], [0, .435, -2.122], [0, 0, 0], .02);
-  b.box(m.plate, [.40, .10, .009], [0, .46, -2.137], [0, 0, 0], .004);
+  b.box(m.carbon, [1.30, .24, .02], [0, .48, -2.125], [0, 0, 0], .02);
+  b.box(m.plate, [.40, .10, .009], [0, .42, -2.138], [0, 0, 0], .004);
   b.box(m.carbon, [1.48, .035, .24], [0, .20, -1.99], [.06, 0, 0], .01);
   for (const x of [-.55, -.28, .28, .55]) b.box(m.carbon, [.014, .085, .24], [x, .23, -1.98], [.06, 0, 0], 0);
   wheels(vehicle, m, { radius: .335, width: .26, track: .867, axles: AXLES, spokes: 5, roadSmooth: true, broadSpokes: true });
@@ -83,11 +85,14 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
 
 // The three-seat cabin is a solid painted roof with four bounded glass panes.
 // The old continuous bubble shell is removed: no glazing remains under the roof.
+// The glasshouse follows the traced roofline: a long shallow windscreen from just
+// behind the front wheels, a broad roof, and a rear screen that runs on into the deck.
 const CABIN = [
-  [-1.02, .34, .78, .84], [-.80, .55, .72, .98], [-.46, .66, .66, 1.06],
-  [-.12, .70, .65, 1.08], [.23, .69, .65, 1.07], [.57, .62, .65, .97], [.90, .45, .65, .68],
+  [-1.10, .50, .90, .98], [-.80, .60, .84, 1.05], [-.46, .68, .78, 1.09],
+  [-.12, .72, .68, 1.082], [.23, .69, .65, 1.065], [.57, .62, .65, 1.035], [.90, .56, .68, .985],
+  [1.10, .53, .74, .925], [1.26, .48, .80, .865],
 ];
-const ROOF_EDGE = Math.PI * .18, ROOF_BACK = -.64, ROOF_FRONT = .30;
+const ROOF_EDGE = Math.PI * .18, ROOF_BACK = -.66, ROOF_FRONT = .32;
 function cabinPoint(z, angle, lift = 0) {
   let i = CABIN.findIndex(section => section[0] >= z);
   i = THREE.MathUtils.clamp(i < 0 ? CABIN.length - 1 : i, 1, CABIN.length - 1);
@@ -113,15 +118,15 @@ function cabinSheet(b, material, back, front, left, right, lift = 0) {
 function buildCabin(b, m) {
   const edgeShare = angle => Math.min(1, Math.min(angle, Math.PI - angle) / ROOF_EDGE);
   const frontFrame = angle => THREE.MathUtils.lerp(.82, ROOF_FRONT, edgeShare(angle));
-  const rearFrame = angle => THREE.MathUtils.lerp(-.90, ROOF_BACK, edgeShare(angle));
+  const rearFrame = angle => THREE.MathUtils.lerp(-.98, ROOF_BACK, edgeShare(angle));
   // Each pane ends at its real painted boundary; there is no hidden roof glass.
-  cabinSheet(b, m.glass, frontFrame, .90, 0, Math.PI);
-  cabinSheet(b, m.glass, -1.02, rearFrame, 0, Math.PI);
+  cabinSheet(b, m.glass, frontFrame, 1.26, 0, Math.PI);
+  cabinSheet(b, m.glass, -1.10, rearFrame, 0, Math.PI);
   cabinSheet(b, m.glass, rearFrame, frontFrame, 0, ROOF_EDGE);
   cabinSheet(b, m.glass, rearFrame, frontFrame, Math.PI - ROOF_EDGE, Math.PI);
   cabinSheet(b, m.paint, ROOF_BACK, ROOF_FRONT, ROOF_EDGE, Math.PI - ROOF_EDGE, .006);
   for (const angle of [0, Math.PI]) {
-    const sill = []; for (let i = 0; i <= 24; i++) sill.push(cabinPoint(-1.02 + i * 1.92 / 24, angle, .007));
+    const sill = []; for (let i = 0; i <= 24; i++) sill.push(cabinPoint(-1.10 + i * 2.36 / 24, angle, .007));
     b.tube(m.carbon, sill, .014, 24);
   }
   for (const boundary of [frontFrame, rearFrame]) {
