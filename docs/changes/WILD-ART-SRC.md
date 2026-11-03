@@ -27,7 +27,20 @@ sheet `europe-round-2.jpg`. The round 1 sheets are recycled.
 
 ### Checks
 
-CHECKS_EU2
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `node tools/test-wildlife-view.mjs`: 3,813 checks passed.
+- `node tools/test-wildlife.mjs`: 33,644 checks, 2,352 animals on 12 courses.
+- `node tools/test-heli-survey.mjs`: 9,990 checks passed.
+- `node tools/test-blender-output.mjs`: 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (799 s). The round 1 `test-wildlife-view` failure is gone: the table
+  and the runtime folder now agree.
+- `npm run build`: built in 0.99 s; output deleted.
+- The three candidates built and reviewed with `--candidate` in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 2`.
 
 ### Changed assertions (for Claude's review, rule 18)
 
