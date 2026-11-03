@@ -80,14 +80,19 @@ def paint(p, bone, material, ctx):
         return d.mix(COAT, (.11, .085, .06), .4)
     if bone.startswith('Neck'):
         return d.mix(COAT, BACK, .3)
-    if 'LowerLeg' in bone or bone.startswith(('FF', 'IK')):
-        # White backs of the legs, dark fronts.
-        return WHITE if p.y > ctx.head(bone).y + .075 else LEG
+    if bone.startswith(('FF', 'IK')):
+        return LEG
+    rump = d.smooth((p.y - 1.10) / .16) * d.smooth((p.z - 1.75) / .12)
+    if 'Leg' in bone or 'Shoulder' in bone:
+        # Brown legs like the body, darker low down; pale only on the back
+        # edge of the lower legs and where the rump patch runs down.
+        colour = d.mix(COAT, LEG, d.smooth((1.30 - p.z) / .5))
+        if 'LowerLeg' in bone and p.y > ctx.head(bone).y + .085:
+            colour = d.mix(colour, WHITE, .75)
+        return d.mix(colour, WHITE, rump)
     colour = d.mix(COAT, BACK, d.smooth((p.z - 2.35) / .2))
     colour = d.mix(colour, WHITE, d.smooth((1.86 - p.z) / .10))
-    rump = d.smooth((p.y - 1.10) / .16) * d.smooth((p.z - 1.75) / .12)
     return d.mix(colour, WHITE, rump)
-
 
 def parts(a, ctx):
     """Two curled horns. Authored around a curl centre beside the skull."""

@@ -6,7 +6,41 @@ Western mountains and Australia lists, plus the Tremblant Snow wolf tracks.
 Gritty and real, never toy-like; Claude's own recipes from the best-fitting
 licensed skeleton, or original where none fits.
 
-## Sheets
+## Claude's round 1 verdict
+
+PASS, do not change: echidna, wolf tracks, coyote, mule deer.
+PASS with one small fix: bighorn lower legs, brown in front like the body,
+pale only on the back of the legs and the rump patch (they read as white
+socks).
+
+Round 2 fixes, judged against field photos of the real animal, gritty and
+real, never smooth or toy-like:
+
+1. Kangaroo (count species, most important): right shape, too smooth. A real
+   fur coat with grain and soft mottling, grey-brown back, pale cream belly
+   and inner legs, darker paws, feet, tail tip and ear backs. Thicker,
+   muscular hind thighs and a heavier tail base. Keep the bound.
+2. Cougar (count species): warm tawny, not greyish; white muzzle, chin and
+   chest; black marks at the sides of the muzzle and behind the ears; dark
+   tail tip. Head slightly larger and rounder, ears smaller and rounded.
+   Fix the Walk dipping 17 mm below the ground.
+3. Elk: rack about a third lower and swept back over the shoulders, unequal
+   tines (longer brow and fourth); thicker neck with a dark mane down the
+   throat; tan body with the pale rump.
+4. Marmot: rebuild as a chunky rodent with a distinct head and neck, short
+   visible front legs with claws, a short bushy tail of fur, grizzled brown
+   back with buff tips, yellow-orange belly, pale band across the nose.
+5. Kookaburra: big round head merged into the body (no cap line), heavy
+   dark-and-pale bill, dark eye stripe, mottled brown back, blue wing patch,
+   barred rufous tail.
+6. Raven and cockatoo Fly: feathered wings, curved leading edge, separate
+   primaries fanned at the tips (raven about 5 fingers, cockatoo rounder),
+   thickness at the wrist, a gentle bend in the downstroke. Perched poses stay.
+
+Small animals and birds may use 512 coat maps; large animals stay 1K.
+Round 2 sheet: `west-australia-round-2.jpg`, changed animals only.
+
+## Sheets (recycled after the verdict)
 
 - `west-australia-round-1a.jpg`: mule deer, elk, bighorn sheep, cougar,
   coyote, yellow-bellied marmot, raven.

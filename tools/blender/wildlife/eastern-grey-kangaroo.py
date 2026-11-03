@@ -18,6 +18,7 @@ ID = 'eastern-grey-kangaroo'
 COAT = (.122, .096, .074)
 BACK = (.092, .073, .058)
 BELLY = (.37, .34, .29)
+CREAM = (.42, .38, .31)
 MUZZLE = (.060, .052, .047)
 DARK = (.020, .017, .015)
 HIP = (-.12, .58)
@@ -49,16 +50,25 @@ def build(output, c, cache):
 
     spine_x = lambda z: -.20 + .72 * (z - .50)
 
+    def fur(p):
+        # Grey-brown with soft mottling and grizzled guard-hair tips.
+        colour = o.mix(COAT, BACK, .6 * o.mottle(p))
+        return o.mix(colour, (.20, .175, .15), .45 * o.speckle(p) ** 3)
+
     def coat(p):
         front = p.x - spine_x(p.z)
-        colour = o.mix(COAT, BACK, o.smooth((-front - .06) / .10))
-        return o.mix(colour, BELLY, o.smooth((front - .03) / .09))
+        colour = o.mix(fur(p), o.mix(BACK, DARK, .25), o.smooth((-front - .06) / .10))
+        return o.mix(colour, o.mix(BELLY, CREAM, o.mottle(p, 1.7)), o.smooth((front - .03) / .09))
+
+    def thigh(p, y):
+        # Cream on the inside of the leg, coat outside.
+        return o.mix(coat(p), BELLY, .85 * o.smooth((abs(y) - abs(p.y) - .07) / .04))
 
     body = o.near(a, ['pelvis', 'chest', 'neck', 'tail1'])
-    a.loft([((-.30, 0, .44), .09, .09), ((-.20, 0, .50), .17, .19), ((-.08, 0, .60), .20, .25),
+    a.fur([((-.30, 0, .44), .10, .10), ((-.20, 0, .50), .17, .19), ((-.08, 0, .60), .20, .25),
             ((.04, 0, .73), .18, .22), ((.12, 0, .86), .15, .17), ((.18, 0, .98), .12, .13),
             ((.22, 0, 1.08), .095, .10), ((.25, 0, 1.17), .072, .078), ((.27, 0, 1.25), .066, .07)],
-           coat, body, 16)
+           coat, body, 18, .05)
 
     def head_coat(p):
         if p.x > .47:
@@ -71,7 +81,8 @@ def build(output, c, cache):
            head_coat, 'head', 12)
     for s, side in ((1, 'L'), (-1, 'R')):
         a.oval((.385, s * .052, 1.335), (.012, .006, .010), DARK, 'head', 4, 8)
-        ear = lambda p: DARK if p.z > 1.56 else o.mix(COAT, BELLY, .25)
+        # Dark ear backs and rims, paler inside.
+        ear = lambda p: DARK if p.z > 1.56 or p.x < .30 - .13 * (p.z - 1.365) - .004 else o.mix(COAT, BELLY, .45)
         a.blade([((.302, s * .030, 1.365), (.296, s * .094, 1.37), .016, (1, 0, 0)),
                  ((.290, s * .046, 1.49), (.280, s * .118, 1.48), .012, (1, 0, 0)),
                  ((.268, s * .092, 1.60), (.266, s * .100, 1.597), .006, (1, 0, 0))],
@@ -79,10 +90,11 @@ def build(output, c, cache):
         y = s * .13
         leg = o.near(a, ['thigh.' + side, 'shin.' + side, 'pelvis'])
         # Massive hind thighs, the kangaroo's engine.
-        a.loft([((HIP[0] - .04, y * .9, .64), .13, .18), ((-.06, y, .52), .135, .16),
-                ((.04, y, .42), .10, .11), ((.12, y, .35), .055, .058)], coat, leg, 14)
+        # Massive, muscular hind thighs.
+        a.fur([((HIP[0] - .05, y * .9, .66), .14, .19), ((-.07, y, .54), .16, .19), ((.0, y * 1.02, .46), .14, .15),
+               ((.07, y, .39), .095, .10), ((.12, y, .35), .058, .06)], lambda p, y=y: thigh(p, y), leg, 16, .04)
         shin = o.near(a, ['shin.' + side, 'thigh.' + side, 'foot.' + side])
-        a.tube3([(.13, y, .36), (-.02, y, .21), (-.16, y * .95, .08)], [.052, .040, .032], COAT, shin, 10)
+        a.tube3([(.13, y, .36), (-.02, y, .21), (-.16, y * .95, .08)], [.056, .042, .033], lambda p, y=y: thigh(p, y), shin, 10)
         foot = o.near(a, ['foot.' + side, 'shin.' + side])
         feet = lambda p: o.mix(o.mix(COAT, DARK, .5), DARK, o.smooth((p.x - .05) / .1))
         a.loft([((-.20, y * .95, .062), .034, .036), ((-.06, y * .95, .043), .040, .030),
@@ -93,9 +105,9 @@ def build(output, c, cache):
         a.oval((.365, s * .11, .755), (.022, .016, .015), DARK, 'hand.' + side, 4, 8)
 
     tail = o.near(a, ['tail1', 'tail2', 'tail3', 'pelvis'])
-    a.loft([((-.24, 0, .48), .088, .088), ((-.42, 0, .32), .076, .076), ((-.62, 0, .185), .062, .060),
-            ((-.85, 0, .095), .048, .046), ((-1.05, 0, .062), .034, .032), ((-1.25, 0, .050), .012, .012)],
-           lambda p: o.mix(COAT, DARK, o.smooth((-p.x - .95) / .15)), tail, 12)
+    a.fur([((-.22, 0, .50), .115, .115), ((-.40, 0, .33), .092, .090), ((-.62, 0, .185), .066, .064),
+           ((-.85, 0, .095), .048, .046), ((-1.05, 0, .062), .034, .032), ((-1.25, 0, .050), .012, .012)],
+          lambda p: o.mix(fur(p), DARK, o.smooth((-p.x - .95) / .15)), tail, 14, .04)
 
     o.finish(a, c, output, [('Idle', 120, idle), ('Walk', 22, hop)], refine=4600)
 

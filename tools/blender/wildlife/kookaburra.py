@@ -20,9 +20,9 @@ STRIPE = (.040, .028, .019)
 BLUE = (.10, .15, .22)
 RUFOUS = (.20, .085, .032)
 
-P = {'body': .17, 'width': .066, 'height': .072, 'neck': (.022, .052), 'head': .062,
+P = {'body': .17, 'width': .066, 'height': .072, 'neck': (.010, .040), 'head': .070, 'neck_r': 1.0,
      'bill': (.088, .034, .026, .10), 'tail': (.12, .050, 'round'), 'span': .33,
-     'chord': (.15, .10), 'fingers': 0, 'leg': .045, 'stance': .025, 'toe': .0062,
+     'primaries': (6, .095, .032, 34, False), 'chord': (.15, .10), 'leg': .045, 'stance': .025, 'toe': .0062,
      'toes': [(0, .036), (25, .030), (-25, .030), (180, .026)], 'tilt': 55, 'beat': 12,
      'flap': .60}
 
@@ -35,7 +35,8 @@ def head_centre(f):
 def body(f, p):
     import original as o
     q = f.b(p)
-    colour = o.mix(CREAM, BROWN, o.smooth((q.z + .005) / .02))
+    back = o.mix(BROWN, (.13, .095, .060), .55 * o.speckle(p, .6))      # mottled back
+    colour = o.mix(CREAM, back, o.smooth((q.z + .005) / .02))
     # Faint brown barring on the pale front.
     return o.mix(colour, BROWN, .25 * (math.sin(q.x * 260) > .6) * (q.z < 0))
 
@@ -43,21 +44,23 @@ def body(f, p):
 def head(f, p):
     import original as o
     d = (p - head_centre(f)) / P['head']
-    if abs(d.z - .16) < .26 and d.x < .62 and abs(d.y) > .30:
-        return STRIPE                      # dark stripe through the eye
-    if d.z > .55:
-        return o.mix(CREAM, BROWN, .35 + .5 * o.speckle(p))   # streaked crown
-    if d.x < -.6 and d.z > -.2:
-        return o.mix(CREAM, BROWN, .55)    # nape
-    return CREAM
+    crown = o.mix(CREAM, o.mix(BROWN, (.16, .12, .08), o.speckle(p)), .65)
+    colour = o.mix(CREAM, crown, o.smooth((d.z - .22) / .25))     # streaked brown crown, soft edge
+    colour = o.mix(colour, crown, o.smooth((-d.x - .45) / .35) * o.smooth((d.z + .2) / .3))
+    # Dark brown stripe through the eye, running back to the nape.
+    stripe = o.smooth((.26 - abs(d.z - .14)) / .08) * o.smooth((.55 - d.x) / .15) * o.smooth((abs(d.y) - .25) / .1)
+    return o.mix(colour, STRIPE, stripe)
 
 
 def wing(f, p):
     import original as o
     q = f.b(p)
-    inner = o.smooth((.24 - abs(q.y)) / .06)
-    spots = (o.speckle(p, .5) > .55) * inner * (q.x > -.02)
-    return o.mix(BROWN, BLUE, .85 * spots)
+    colour = o.mix(BROWN, (.10, .075, .050), .5 * o.speckle(p, .6))
+    # Blue shoulder patch: the coverts at the front of the folded wing and
+    # along the inner leading edge of the spread wing.
+    folded = o.smooth((q.x + .005) / .025) * o.smooth((q.z - .06 * P['height']) / .02) * (abs(q.y) < .09)
+    spread = (abs(q.y) > .06) * (abs(q.y) < .20) * o.smooth((q.x - .005) / .02)
+    return o.mix(colour, o.mix(BLUE, (.16, .22, .30), o.speckle(p, .9)), .9 * max(folded, spread))
 
 
 def tail(f, p):

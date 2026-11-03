@@ -69,15 +69,16 @@ def build(ID, P, paint, output, c):
     prof = [(-.50, .35, .35), (-.38, .74, .72), (-.20, .98, .96), (.02, 1, 1), (.22, .92, .95),
             (.38, .76, .80), (.50, .52, .62)]
     sections = [(tuple(f.w((x * bl, 0, -.04 * bh * (x > .1)))), w * bw, h * bh) for x, w, h in prof]
-    a.fur(sections, lambda p: paint['body'](f, p), body, 18, P.get('shag', .015))
+    a.fur(sections, lambda p: paint['body'](f, p), body, 14, P.get('shag', .015))
     # Neck joins chest and head; the head is level in the world.
     a.fur([(tuple(f.w((.30 * bl, 0, .12 * bh))), bw * .80, bh * .82),
-           (tuple(chest.lerp(head_c, .5)), hr * .80, hr * .82),
+           (tuple(chest.lerp(head_c, .5)), hr * P.get('neck_r', .80), hr * P.get('neck_r', .80) * 1.02),
            (tuple(head_c + Vector((-hr * .55, 0, 0))), hr * .85, hr * .88),
            (tuple(head_c), hr, hr * .96),
-           (tuple(head_c + Vector((hr * .55, 0, -hr * .04))), hr * .80, hr * .78),
-           (tuple(head_c + Vector((hr * .88, 0, -hr * .12))), hr * .30, hr * .32)],
-          lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), 16, .01)
+           (tuple(head_c + Vector((hr * .50, 0, -hr * .04))), hr * .84, hr * .82),
+           (tuple(head_c + Vector((hr * .78, 0, -hr * .09))), hr * .60, hr * .60),
+           (tuple(head_c + Vector((hr * .94, 0, -hr * .12))), hr * .26, hr * .28)],
+          lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), 14, .01)
     # Bill: deep at the base, tapering and curving down to the tip.
     depth, width, hook = P['bill'][1], P['bill'][2], P['bill'][3]
     bill = []
@@ -89,8 +90,8 @@ def build(ID, P, paint, output, c):
     for s in (1, -1):
         eye = head_c + Vector((hr * .42, s * hr * .80, hr * .22))
         if 'eyering' in paint:
-            a.oval(tuple(eye + Vector((0, s * -.002, 0))), (hr * .20, hr * .07, hr * .20), paint['eyering'](f, eye), 'head', 4, 8)
-        a.oval(tuple(eye), (hr * .13, hr * .09, hr * .13), (.006, .005, .004), 'head', 4, 8)
+            a.oval(tuple(eye + Vector((0, s * -.002, 0))), (hr * .20, hr * .07, hr * .20), paint['eyering'](f, eye), 'head', 3, 6)
+        a.oval(tuple(eye), (hr * .13, hr * .09, hr * .13), (.006, .005, .004), 'head', 3, 6)
     # Tail fan from the rump.
     tl, tw, tshape = P['tail']
     stations = []
@@ -106,26 +107,48 @@ def build(ID, P, paint, output, c):
         trail = f.w((x, -half, .02 * bh))
         stations.append((tuple(lead), tuple(trail), .006, tuple(f.tilt @ Vector((0, 0, 1)))))
     a.blade(stations, lambda p: paint['tail'](f, p), o.near(a, ['tail', 'body']))
-    # Wings, spread in the rest pose. Primaries separate into fingers at the tip.
+    # Wings, spread in the rest pose: an arm-and-hand blade with a curved
+    # leading edge and its thickest point at the wrist, then separate
+    # primary feathers fanned from the hand (P['primaries']).
+    up = tuple(f.tilt @ Vector((0, 0, 1)))
+    reach = span - shoulder_y
+    c0 = P['chord'][0]
+
+    def lead_x(u):
+        # Forward bulge to the wrist, then swept back along the hand.
+        return shoulder[0] + c0 * (.16 * math.sin(math.pi * min(u / .42, 1) / 2)
+                                   - .45 * max(0, (u - .42) / .58) ** 1.4)
+
+    def chord(u):
+        return c0 * (1 - .08 * min(u / .42, 1) - .55 * max(0, (u - .42) / .28) ** 1.2)
+
     for side, s in (('L', 1), ('R', -1)):
         wing = o.near(a, ['wing1.' + side, 'wing2.' + side])
         stations = []
-        n = 16
-        for k in range(n + 1):
-            u = k / n
-            y = shoulder_y + (span - shoulder_y) * u
-            chord = P['chord'][0] + (P['chord'][1] - P['chord'][0]) * u ** 1.3
-            if u > .92:
-                chord *= (1 - u) / .08 * .7 + .3
-            lead_x = shoulder[0] + .03 * math.sin(u * math.pi) - .05 * u
-            # Separate primaries at the tip; small feather steps elsewhere.
-            notch = chord * (P.get('fingers', 0) * .28 * (u > .66) + .025 * (u > .3)) * (k % 2)
-            trail_x = lead_x - chord + notch
-            lead = f.w((lead_x, s * y, shoulder[2]))
-            trail = f.w((trail_x, s * y, shoulder[2] - .01))
-            stations.append((tuple(lead), tuple(trail), .006 * (1 - .6 * u) + .0015,
-                             tuple(f.tilt @ Vector((0, 0, 1)))))
+        for k in range(8):
+            u = .70 * k / 7
+            y = shoulder_y + reach * u
+            thick = .003 + .009 * math.exp(-((u - .42) / .16) ** 2) + .004 * (1 - u)
+            # Soft scallops of the secondaries along the trailing edge.
+            trail_x = lead_x(u) - chord(u) * (1 - .05 * (k % 2) * (u > .1))
+            stations.append((tuple(f.w((lead_x(u), s * y, shoulder[2]))),
+                             tuple(f.w((trail_x, s * y, shoulder[2] - .006))), thick, up))
         a.blade(stations, lambda p: paint['wing'](f, p), wing)
+        count, length, width, spread, slots = P['primaries']
+        for i in range(count):
+            # Outermost feather first, a little forward; the fan opens backwards.
+            u = .70 - .20 * i / max(1, count - 1)
+            ang = math.radians(8 - spread * i / max(1, count - 1))
+            d = Vector((math.sin(ang), s * math.cos(ang), 0))
+            side_v = d.cross(Vector((0, 0, 1))).normalized()
+            root = Vector((lead_x(u) - chord(u) * .40, s * (shoulder_y + reach * u), shoulder[2] - .002 * i))
+            feather = length * (.78 + .22 * math.sin(math.pi * (i + 1) / (count + 1)) + .06 * (i == 0))
+            widths = (width * .75, width, width * (.55 if slots else .85), width * (.12 if slots else .35))
+            fs = []
+            for t, w in zip((0, .45, .82, 1), widths):
+                centre = root + d * feather * t
+                fs.append((tuple(f.w(centre + side_v * w / 2)), tuple(f.w(centre - side_v * w / 2)), .0025, up))
+            a.blade(fs, lambda p: paint['wing'](f, p), 'wing2.' + side)
         # The folded wing, sculpted against the flank with the primaries
         # crossing over the rump. Idle shows it; Fly hides it in the body.
         fold = P.get('fold', .55 * P['tail'][0])
@@ -136,18 +159,18 @@ def build(ID, P, paint, output, c):
                   ((-.5 * bl - fold * .55, bw * .36, .18 * bh), .008, .24 * bh),
                   ((-.5 * bl - fold, bw * .15, .18 * bh), .002, .03 * bh)]
         a.loft([(tuple(f.w((x, s * y, z))), wdt, hgt) for (x, y, z), wdt, hgt in folded],
-               lambda p: paint['wing'](f, p), 'fold.' + side, 10)
+               lambda p: paint['wing'](f, p), 'fold.' + side, 8)
         # Leg and toes: tarsus from the belly feathers to a gripping foot.
         hip = f.hip_w + Vector((0, s * P['stance'], .01))
         foot = Vector((.008, s * P['stance'], .008))
         legw = o.near(a, ['leg.' + side, 'foot.' + side])
         a.tube3([hip, hip.lerp(foot, .5), foot], [P['toe'] * 1.4, P['toe'], P['toe'] * .9],
-                lambda p: paint['leg'](f, p), legw, 6)
+                lambda p: paint['leg'](f, p), legw, 5)
         for angle, length in P['toes']:
             d = Vector((math.cos(math.radians(angle)), s * math.sin(math.radians(angle)) * .35, 0))
             end = foot + d * length + Vector((0, 0, -.004))
             a.tube3([foot, foot.lerp(end, .6) + Vector((0, 0, .003)), end], [P['toe'], P['toe'] * .8, P['toe'] * .3],
-                    lambda p: paint['leg'](f, p), 'foot.' + side, 5)
+                    lambda p: paint['leg'](f, p), 'foot.' + side, 4)
     if 'extra' in P:
         P['extra'](a, f, head_c, hr)
 
@@ -171,7 +194,10 @@ def build(ID, P, paint, output, c):
         amp = P.get('flap', .62)
         for side, s in (('L', 1), ('R', -1)):
             o.turn(obj, 'wing1.' + side, s * (amp * math.sin(w) + .10), axis)
-            o.turn(obj, 'wing2.' + side, s * (amp * .55 * math.sin(w - .8)), axis)
+            # The hand lags the arm, bending gently through the downstroke,
+            # and sweeps back a little on the upstroke.
+            o.turn(obj, 'wing2.' + side, s * (amp * .45 * math.sin(w - .8) - .10), axis)
+            o.turn(obj, 'wing2.' + side, s * .28 * max(0, math.cos(w)), up)
             o.turn(obj, 'leg.' + side, 1.35)
             o.stretch(obj, 'fold.' + side, (.001, .001, .001))
         o.turn(obj, 'tail', .06 * math.sin(w - 1.2))

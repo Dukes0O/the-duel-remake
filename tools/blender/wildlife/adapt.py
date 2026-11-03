@@ -6,7 +6,10 @@ from pathlib import Path
 
 
 # Coats baked with the coarse, shaggy fur grain rather than the fine one.
-ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep'}
+ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep', 'eastern-grey-kangaroo'}
+
+# Small animals and birds: a 512 coat map is plenty and saves runtime size.
+SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra'}
 
 
 def build(species, output, c, cache):
@@ -282,7 +285,7 @@ def static_donor(species, mesh, output, c):
 
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
-    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR)
+    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR, size=512 if output.stem in SMALL_MAP else 1024)
     if output.stem == 'black-bear':
         shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
         shader.inputs['Roughness'].default_value = 1

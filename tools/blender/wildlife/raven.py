@@ -16,7 +16,7 @@ BLACK = (.011, .011, .014)
 
 P = {'body': .25, 'width': .062, 'height': .068, 'neck': (.040, .060), 'head': .040,
      'bill': (.074, .028, .019, .20), 'tail': (.23, .072, 'wedge'), 'span': .60,
-     'chord': (.21, .13), 'fingers': 1, 'leg': .075, 'stance': .028, 'toe': .0055,
+     'primaries': (5, .20, .036, 44, True), 'chord': (.21, .13), 'leg': .075, 'stance': .028, 'toe': .0055,
      'toes': [(0, .052), (28, .045), (-28, .045), (180, .036)], 'tilt': 28, 'beat': 24,
      'shag': .035, 'flap': .70, 'roughness': .42, 'specular': .55}
 

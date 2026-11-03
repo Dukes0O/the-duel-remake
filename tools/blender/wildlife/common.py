@@ -59,8 +59,8 @@ def material():
     return mat
 
 
-def finish_coat(mesh, rough_fur=False):
-    """Bake unlit coat colour and fine directional fur into one embedded 1K map."""
+def finish_coat(mesh, rough_fur=False, size=1024):
+    """Bake unlit coat colour and fine directional fur into one embedded map (1K unless smaller)."""
     bpy.ops.object.select_all(action='DESELECT')
     mesh.select_set(True)
     bpy.context.view_layer.objects.active = mesh
@@ -96,7 +96,7 @@ def finish_coat(mesh, rough_fur=False):
     links.new(ramp.outputs['Color'], mix.inputs[2])
     shader = nodes.get('Principled BSDF')
     links.new(mix.outputs[0], shader.inputs['Base Color'])
-    image = bpy.data.images.new(mesh.name + ' natural coat', width=1024, height=1024)
+    image = bpy.data.images.new(mesh.name + ' natural coat', width=size, height=size)
     target = nodes.new('ShaderNodeTexImage')
     target.image = image
     nodes.active = target

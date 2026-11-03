@@ -33,10 +33,12 @@ def shape(p, bone, ctx):
         p.z = 2.50 - (2.50 - p.z) * 1.10
     elif bone.startswith('Neck'):
         # Shaggy mane: a deeper, thicker neck, fullest at the throat.
-        p.x *= 1.42
-        p.y -= .10 * d.smooth((2.9 - p.z) / .5) * (1 if p.y > -1.6 else 0)
-        throat = d.smooth((-1.45 - p.y) / .3) * d.smooth((3.3 - p.z) / .4)
-        p.z -= .16 * throat
+        p.x *= 1.66
+        p.y -= .14 * d.smooth((2.9 - p.z) / .5) * (1 if p.y > -1.6 else 0)
+        # Long dark mane hanging down the throat.
+        throat = d.smooth((-1.40 - p.y) / .3) * d.smooth((3.4 - p.z) / .5)
+        p.z -= .30 * throat
+        p.y -= .06 * throat
     elif bone == 'Head':
         nose = d.smooth((-p.y - 2.10) / .55)
         p.x *= 1.06 + .12 * nose
@@ -79,8 +81,9 @@ def parts(a, ctx):
     import donor_shape as d
 
     def tube(points, *rest):
-        # Rack height pulled in by 15 % about the skull: tips near 3 m, not 3.5 m.
-        d.ring_tube(a, [(x, y, 3.98 + (z - 3.98) * .85) for x, y, z in points], *rest)
+        # The rack is a third lower than authored and swept back over the
+        # shoulders: the higher a point, the further back it goes.
+        d.ring_tube(a, [(x, y + (z - 3.98) * .42, 3.98 + (z - 3.98) * .62) for x, y, z in points], *rest)
     base, tip = (.17, .12, .07), (.55, .48, .36)
     colour = lambda t: d.mix(base, tip, d.smooth((t - .55) / .45))
     for s in (-1, 1):
@@ -91,10 +94,10 @@ def parts(a, ctx):
         # Tines rise forward and up at varied lengths and angles, never a
         # comb of equal spikes: long brow and royal, shorter bez and trez.
         for start, mid, end, r in [
-                ((s * .24, -1.76, 4.18), (s * .36, -2.20, 4.20), (s * .46, -2.52, 4.52), .050),   # brow
-                ((s * .36, -1.64, 4.40), (s * .50, -1.96, 4.52), (s * .60, -2.12, 4.78), .040),   # bez
-                ((s * .60, -1.32, 4.86), (s * .74, -1.56, 5.06), (s * .86, -1.62, 5.32), .040),   # trez
-                ((s * .74, -.94, 5.24), (s * .86, -1.12, 5.62), (s * .90, -1.10, 6.02), .046),    # royal
+                ((s * .24, -1.76, 4.18), (s * .38, -2.30, 4.18), (s * .48, -2.70, 4.50), .054),   # brow, longest low tine
+                ((s * .36, -1.64, 4.40), (s * .48, -1.92, 4.50), (s * .56, -2.04, 4.70), .038),   # bez, short
+                ((s * .60, -1.32, 4.86), (s * .70, -1.52, 5.00), (s * .78, -1.62, 5.20), .036),   # trez, short
+                ((s * .74, -.94, 5.24), (s * .88, -1.22, 5.74), (s * .92, -1.24, 6.26), .052),    # royal (fourth), longest
                 ((s * .74, -.48, 5.52), (s * .80, -.58, 5.78), (s * .78, -.66, 5.98), .036)]:     # sur-royal
             tube([start, mid, end], [r, r * .72, .005], colour, 'Head', 6)
 

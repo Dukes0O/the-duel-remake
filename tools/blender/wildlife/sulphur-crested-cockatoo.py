@@ -21,10 +21,10 @@ YELLOW = (.62, .42, .05)
 def crest(a, f, head_c, hr):
     from mathutils import Vector
     base = head_c + Vector((-hr * .05, 0, hr * .86))
-    for k in range(6):
-        theta = math.radians(22 + 12 * k)
-        length = hr * (2.3 - .18 * abs(k - 2.5))
-        y = (k - 2.5) * hr * .07
+    for k in range(5):
+        theta = math.radians(22 + 14 * k)
+        length = hr * (2.3 - .18 * abs(k - 2))
+        y = (k - 2) * hr * .08
         path = [base + Vector((-hr * .2, y, 0)),
                 base + Vector((-math.cos(theta) * length * .55, y * 1.6, math.sin(theta) * length * .55)),
                 base + Vector((-math.cos(theta) * length + length * .22, y * 2, math.sin(theta) * length + length * .10))]
@@ -41,7 +41,7 @@ def under(f, p, shoulder_z):
 
 P = {'body': .20, 'width': .058, 'height': .062, 'neck': (.028, .062), 'head': .046,
      'bill': (.034, .034, .026, .95), 'tail': (.17, .065, 'round'), 'span': .48,
-     'chord': (.17, .10), 'fingers': 0, 'leg': .055, 'stance': .024, 'toe': .0062,
+     'primaries': (6, .15, .044, 36, False), 'chord': (.17, .10), 'leg': .055, 'stance': .024, 'toe': .0062,
      'toes': [(18, .036), (-18, .036), (160, .030), (-160, .030)], 'tilt': 45, 'beat': 12,
      'extra': crest, 'flap': .55}
 

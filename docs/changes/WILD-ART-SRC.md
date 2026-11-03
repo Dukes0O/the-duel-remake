@@ -1,5 +1,37 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Western mountains and Australia, round 2
+
+Claude's round 1 verdict is in the round 1 note; the changes and numbers in
+[the round 2 note](../board/looks/wildlife/west-australia-round-2.md), sheet
+`west-australia-round-2.jpg`. Changed: bighorn legs, kangaroo, cougar, elk,
+marmot (rebuilt), kookaburra, raven and cockatoo Fly wings. Echidna, wolf
+tracks, coyote and mule deer passed and are byte exact.
+
+- `bird.py`: new spread wing (curved leading edge, thick wrist, scalloped
+  secondaries) plus separate fanned primaries from `P['primaries']`; the hand
+  bends through the downstroke. `'fingers'` is gone. Head taper rounder;
+  optional `neck_r`.
+- `original.py`: `mottle()` for soft coat variation.
+- `common.finish_coat` takes a map size (default 1024, so older recipes are
+  unchanged); `adapt.SMALL_MAP` gives the marmot and the three birds 512 maps.
+- The kangaroo joins `adapt.ROUGH_FUR`.
+
+### Checks
+
+CHECKS2
+
+### Changed assertions
+
+None. The hygiene pattern added in round 1 already covers the round 2 sheet.
+
+### Removed
+
+The round 1 sheets `west-australia-round-1a.jpg` and `-1b.jpg` (verdict
+given; their note keeps the verdict). The raven's old notched single-blade
+wing and its `fingers` parameter. The marmot's first build (its body,
+paddle tail and head) is replaced in the same recipe file.
+
 ## 3 November 2026: Western mountains and Australia, round 1
 
 Claude took over the card. Lane `claude/wild-art-west`, from

@@ -19,6 +19,9 @@ GROUPS = {
                                                 'yellow-bellied-marmot', 'raven')),
     'west-australia-1b': ('AUSTRALIA, AND WOLF TRACKS', ('eastern-grey-kangaroo', 'sulphur-crested-cockatoo',
                                                         'kookaburra', 'echidna')),
+    'west-australia-2': ('WESTERN MOUNTAINS AND AUSTRALIA, CHANGED', ('eastern-grey-kangaroo', 'cougar', 'bighorn-sheep', 'elk',
+                                                                    'yellow-bellied-marmot', 'kookaburra', 'raven',
+                                                                    'sulphur-crested-cockatoo')),
 }
 
 
@@ -125,7 +128,7 @@ def group_sheet(root, round_number, group):
         strip = strip.crop((0, 256 - band // 2, strip.width, 256 - band // 2 + band)).resize((cell_w * 3 + 24, cell_h))
         sheet.paste(strip, (12 + cell_w + 12, y + 36))
     draw.text((28, sheet.height - 34), 'CC0 Quaternius deer (mule deer, elk, bighorn) and wolf (cougar, coyote) reshaped | '
-              'kangaroo, marmot, echidna and birds: original recipes | coats 1024 x 1024', font=small, fill='#bbc4b7')
+              'kangaroo, marmot, echidna and birds: original recipes | coats 1K; marmot and birds 512', font=small, fill='#bbc4b7')
     output = root / f'docs/board/looks/wildlife/west-australia-round-{round_number}{part}.jpg'
     output.parent.mkdir(parents=True, exist_ok=True)
     for quality in (86, 82, 78, 74, 70, 66, 62):

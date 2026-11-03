@@ -118,6 +118,14 @@ def speckle(p, scale=1.0):
     return v - math.floor(v)
 
 
+def mottle(p, scale=1.0):
+    """Smooth, fixed 0..1 variation a few centimetres across: soft coat mottling."""
+    x, y, z = p.x * scale, p.y * scale, p.z * scale
+    v = (math.sin(x * 31 + z * 17) * .35 + math.sin(y * 43 - x * 23 + 1.3) * .25 +
+         math.sin(z * 53 + y * 29 + 2.1) * .25 + math.sin(x * 71 - z * 61 + .7) * .15)
+    return .5 + .5 * v
+
+
 def mix(a, b, t):
     t = max(0, min(1, t))
     return tuple(x + (y - x) * t for x, y in zip(a, b))

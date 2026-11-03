@@ -1,12 +1,15 @@
 """Summit Run yellow-bellied marmot: an original recipe with its own rig.
 
-About 0.5 m nose to rump plus a 0.17 m bushy tail, heavy low body on short
-legs, broad flat head with small round ears. Grizzled grey-brown back,
-yellow-orange belly, flanks and neck sides, dark brown head with a pale
-band across the nose and a pale muzzle, rufous-brown tail, dark feet.
+A chunky ground squirrel about 0.5 m nose to rump: a broad rump tapering to
+the shoulders, a distinct short neck, a broad flat head with small round
+ears, short visible forelegs with pale claws, and a short bushy tail of fur
+(not a paddle). Grizzled dark brown back with buff hair tips, yellow-orange
+belly and flanks, a pale band across the nose, pale muzzle, buff cheeks.
+The outline is left unsmoothed and uneven so it reads as fur.
 Idle and Walk use the shared quadruped animation in common.py.
 Helpers: original.py.
 """
+import math
 import sys
 from pathlib import Path
 sys.dont_write_bytecode = True
@@ -14,69 +17,81 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import cli
 
 ID = 'yellow-bellied-marmot'
-BACK = (.080, .064, .047)
-YELLOW = (.30, .19, .070)
-HEAD = (.035, .026, .019)
-PALE = (.30, .29, .26)
-TAIL = (.105, .060, .033)
-FOOT = (.030, .023, .017)
+BACK = (.070, .054, .039)
+BUFF = (.30, .25, .16)
+YELLOW = (.36, .20, .060)
+HEAD = (.040, .029, .020)
+PALE = (.34, .32, .28)
+TAIL = (.090, .052, .030)
+FOOT = (.034, .026, .019)
+CLAW = (.22, .19, .15)
+
+BODY = [((-.255, 0, .140), .030, .030), ((-.240, 0, .142), .090, .066), ((-.205, 0, .146), .130, .090),
+        ((-.160, 0, .148), .148, .098), ((-.110, 0, .146), .150, .097), ((-.060, 0, .142), .140, .090),
+        ((-.010, 0, .138), .126, .084), ((.040, 0, .136), .110, .076), ((.085, 0, .138), .094, .066),
+        ((.125, 0, .144), .078, .064), ((.155, 0, .150), .066, .056)]
 
 
 def build(output, c, cache):
     import original as o
+    from mathutils import Vector
     a = o.Body(ID)
     a.bone('root', (0, 0, 0), (0, 0, .05))
-    a.bone('spine', (-.17, 0, .14), (.12, 0, .14), 'root')
-    a.bone('neck', (.12, 0, .14), (.19, 0, .162), 'spine')
-    a.bone('head', (.19, 0, .162), (.31, 0, .14), 'neck')
-    a.bone('tail', (-.22, 0, .15), (-.40, 0, .10), 'spine')
+    a.bone('spine', (-.18, 0, .145), (.10, 0, .14), 'root')
+    a.bone('neck', (.10, 0, .14), (.17, 0, .155), 'spine')
+    a.bone('head', (.17, 0, .155), (.30, 0, .135), 'neck')
+    a.bone('tail', (-.23, 0, .152), (-.40, 0, .172), 'spine')
+
+    def grizzle(p):
+        colour = o.mix(BACK, (.095, .072, .050), .5 * o.mottle(p, 2.0))
+        return o.mix(colour, BUFF, .7 * o.speckle(p) ** 2)
 
     def coat(p):
-        # Yellow underneath and up the flanks; grizzled grey-brown on top.
-        top = o.smooth((p.z - .13) / .05)
-        colour = o.mix(YELLOW, BACK, top)
-        # Grizzled: pale buff guard-hair tips scattered over the dark back.
-        return o.mix(colour, (.30, .26, .19), top * .55 * o.speckle(p) ** 2)
+        # Yellow-orange underneath and up the flanks, with a ragged edge.
+        edge = .118 + .012 * (o.mottle(p, 3.0) - .5)
+        return o.mix(o.mix(YELLOW, (.30, .17, .05), o.mottle(p, 2.5)), grizzle(p), o.smooth((p.z - edge) / .03))
 
     body = o.near(a, ['spine', 'neck', 'tail'])
-    # Low and heavy: the belly fur nearly brushes the ground and hides the
-    # upper legs; the back arches over the hips.
-    a.fur([((-.25, 0, .13), .030, .030), ((-.23, 0, .134), .096, .086), ((-.17, 0, .140), .138, .112),
-           ((-.10, 0, .140), .142, .112), ((-.02, 0, .134), .128, .104), ((.05, 0, .128), .110, .096),
-           ((.11, 0, .132), .092, .084), ((.16, 0, .142), .078, .070), ((.20, 0, .150), .062, .056)],
-          coat, body, 20, .12)
+    a.fur(BODY, coat, body, 28, .10)
 
     def head_coat(p):
-        if p.x > .300:
-            return (.012, .010, .009)
-        if p.x > .272:
-            return PALE                      # muzzle
-        if .250 < p.x < .262 and p.z > .158:
-            return o.mix(PALE, HEAD, .35)    # pale band between the eyes
-        if p.z < .128:
-            return o.mix(YELLOW, PALE, .4)   # cheeks and throat
-        # Dark crown fading into the grizzled nape.
-        return o.mix(o.mix(BACK, (.30, .26, .19), .3 * o.speckle(p) ** 2), HEAD, o.smooth((p.x - .17) / .06))
-    a.fur([((.15, 0, .160), .060, .052), ((.19, 0, .165), .074, .048), ((.235, 0, .160), .066, .040),
-           ((.27, 0, .150), .050, .033), ((.295, 0, .142), .036, .026), ((.308, 0, .138), .012, .010)],
-          head_coat, 'head', 14, .04)
+        if p.x > .292:
+            return (.012, .010, .009)                   # nose
+        if p.x > .268:
+            return PALE                                 # muzzle
+        if .244 < p.x < .258 and p.z > .150:
+            return o.mix(PALE, (.5, .48, .44), .4)      # pale band across the nose
+        if p.z < .128 or abs(p.y) > .060:
+            return o.mix(YELLOW, BUFF, .5)              # cheeks and chin
+        return o.mix(HEAD, BUFF, .35 * o.speckle(p) ** 2)
+    # Short distinct neck, then a broad flat head.
+    a.fur([((.140, 0, .148), .070, .058), ((.165, 0, .152), .064, .054), ((.190, 0, .156), .076, .056),
+           ((.215, 0, .157), .080, .054), ((.245, 0, .152), .066, .044), ((.270, 0, .144), .046, .034),
+           ((.290, 0, .138), .030, .024), ((.300, 0, .135), .010, .009)], head_coat, 'head', 24, .05)
     for s in (1, -1):
-        a.oval((.243, s * .050, .170), (.006, .004, .005), (.008, .007, .006), 'head', 4, 8)
-        a.oval((.188, s * .058, .192), (.010, .012, .013), HEAD, 'head', 4, 8)
+        a.oval((.236, s * .050, .166), (.006, .004, .005), (.008, .007, .006), 'head', 3, 6)
+        a.oval((.188, s * .060, .190), (.010, .009, .012), HEAD, 'head', 3, 8)
     for side, s in (('L', 1), ('R', -1)):
-        y = s * .085
-        o.small_leg(a, 'front.' + side, (.09, y, .13), (.11, y * 1.05, .07), (.10, y * 1.05, .022),
-                    (.135, y * 1.05, .010), (.040, .030, .021), lambda p: o.mix(YELLOW, FOOT, .6), FOOT, False)
-        o.small_leg(a, 'rear.' + side, (-.13, y, .12), (-.09, y * 1.1, .065), (-.14, y * 1.1, .022),
-                    (-.095, y * 1.1, .010), (.050, .034, .022), lambda p: o.mix(BACK, FOOT, .5), FOOT, True)
+        y = s * .072
+        o.small_leg(a, 'front.' + side, (.075, y, .105), (.100, y * 1.12, .060), (.108, y * 1.12, .020),
+                    (.138, y * 1.12, .017), (.032, .025, .018), lambda p: o.mix(YELLOW, FOOT, .45), FOOT, False)
+        o.small_leg(a, 'rear.' + side, (-.150, y * 1.15, .110), (-.105, y * 1.25, .060), (-.150, y * 1.25, .020),
+                    (-.105, y * 1.25, .009), (.050, .034, .021), lambda p: o.mix(BACK, FOOT, .5), FOOT, True)
+        # Pale claws, longer than the shared legs give.
+        for k in (-1, 0, 1):
+            start = Vector((.142, y * 1.12 + k * .009, .016))
+            a.tube3([start, start + Vector((.020, k * .003, -.007))], [.0035, .0006], CLAW, 'front.' + side + '.foot', 3)
+    # Short bushy tail of ragged fur, carried out and a little up.
     tail = o.near(a, ['tail', 'spine'])
-    a.fur([((-.215, 0, .150), .022, .022), ((-.26, 0, .148), .034, .032), ((-.31, 0, .136), .040, .036),
-           ((-.36, 0, .118), .036, .032), ((-.40, 0, .100), .010, .010)],
-           lambda p: o.mix(TAIL, (.03, .02, .015), o.smooth((-p.x - .33) / .04)), tail, 10, .18)
+    a.fur([((-.225, 0, .150), .016, .016), ((-.255, 0, .162), .022, .022), ((-.285, 0, .171), .026, .026),
+           ((-.315, 0, .177), .028, .028), ((-.345, 0, .179), .028, .027), ((-.370, 0, .177), .025, .024),
+           ((-.392, 0, .172), .018, .017), ((-.405, 0, .169), .006, .006)],
+          lambda p: o.mix(o.mix(TAIL, BUFF, .55 * o.speckle(p) ** 2), (.03, .022, .016), o.smooth((-p.x - .37) / .03)),
+          tail, 14, .28)
 
     def animate(rig):
-        c.animate(a, rig, stride=.09, lift=.03)
-    o.finish(a, c, output, animate, refine=4200)
+        c.animate(a, rig, stride=.075, lift=.025)
+    o.finish(a, c, output, animate)
 
 
 if __name__ == '__main__':

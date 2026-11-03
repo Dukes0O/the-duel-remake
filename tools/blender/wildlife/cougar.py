@@ -19,9 +19,10 @@ BUDGET = 4300
 SCALE = (.42, .42, .35)
 EYE = .55
 
-TAWNY = (.170, .100, .050)
-BACK = (.112, .070, .040)
+TAWNY = (.215, .118, .048)
+BACK = (.160, .086, .036)
 CREAM = (.44, .39, .31)
+WHITE = (.58, .54, .47)
 DARK = (.022, .016, .012)
 BLACK = (.008, .007, .006)
 
@@ -58,15 +59,18 @@ def shape(p, bone, ctx):
         if bone.startswith('Ear'):
             # Small, rounded, set wider on the skull.
             base = ctx.head('Ear1.L' if bone.endswith('.L') else 'Ear1.R')
-            p = d.scale_about(p, base, (.62, .62, .48))
-            p.x += .06 if p.x > 0 else -.06
-            p.y += .10
-            p.z -= .06
+            # Small and rounded: shorter, and the tip pulled down into a curve.
+            p = d.scale_about(p, base, (.52, .52, .38))
+            rise = max(0, p.z - base.z - .05)
+            p.z -= rise * .45
+            p.x += (.07 if p.x > 0 else -.07) + (.04 if p.x > 0 else -.04) * min(1, rise / .06)
+            p.y += .12
+            p.z -= .07
             return p
         if bone == 'Head':
             if p.y < centre.y - .05:
                 p.y = centre.y - .05 + (p.y - centre.y + .05) * .48
-            p = d.scale_about(p, centre, (1.40, 1.18, 1.28))
+            p = d.scale_about(p, centre, (1.52, 1.26, 1.38))
             p.y += .08
         return p
     if bone.startswith('Neck'):
@@ -80,10 +84,10 @@ def shape(p, bone, ctx):
         p.x = centre.x + (p.x - centre.x) * f
         p.y = centre.y + (p.y - centre.y) * f
     elif bone.startswith(('FF', 'IK')):
-        # Broad cat paws.
+        # Broad cat paws, wider but no longer: a longer toe dug into the
+        # ground at each step of the donor's walk.
         centre = ctx.head(bone)
-        p.x = centre.x + (p.x - centre.x) * 1.25
-        p.y = centre.y + (p.y - centre.y) * 1.25
+        p.x = centre.x + (p.x - centre.x) * 1.22
     return p
 
 
@@ -101,18 +105,22 @@ def paint(p, bone, material, ctx):
     if bone == 'Head':
         centre = ctx.head('Head')
         if p.y < centre.y - .32 and p.z < centre.z + .02:
-            # White muzzle with dark whisker patches at its sides.
-            return DARK if abs(p.x) > .10 and p.z > centre.z - .14 else CREAM
+            # White muzzle with black whisker patches at its sides.
+            return DARK if abs(p.x) > .10 and p.z > centre.z - .14 else WHITE
         if p.z < centre.z - .12:
-            return CREAM
+            return WHITE                                    # chin
+        if p.y > centre.y - .04 and p.z > centre.z + .10:
+            return d.mix(TAWNY, DARK, .75)                  # black behind the ears
         return d.mix(TAWNY, BACK, .25)
     if bone.startswith('Neck'):
-        return CREAM if p.z < 1.72 else TAWNY
+        return WHITE if p.z < 1.72 else TAWNY               # white throat and chest
     if 'Leg' in bone or bone.startswith(('FF', 'IK')):
         # Tawny outer legs, paler on the inside.
         return d.mix(TAWNY, CREAM, .45 if abs(p.x) < abs(ctx.head(bone).x) - .02 else .12)
     colour = d.mix(TAWNY, BACK, d.smooth((p.z - 1.80) / .18))
-    return d.mix(colour, CREAM, d.smooth((1.30 - p.z) / .14))
+    colour = d.mix(colour, CREAM, d.smooth((1.30 - p.z) / .14))
+    # White chest between the forelegs.
+    return d.mix(colour, WHITE, d.smooth((1.55 - p.z) / .15) * d.smooth((-.80 - p.y) / .2))
 
 
 def build(output, c, cache):
