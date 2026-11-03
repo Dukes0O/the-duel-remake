@@ -222,3 +222,29 @@ errors or warnings. Not run: Pro, frame timing, any art or sound judgement.
 ## Claude's review (28 October 2026, night)
 
 Codex's place titles and story evidence from 26 October, brought up to date, plus the Coast Cup card moved clear of the results text (drawing only). No assertion changed; lane 48/48, build pass. Verdict: merge. Follow-ups: the recipe's turn-to-face workaround goes when the DEEP-TRAIL-JOINTS start-heading fix lands; LAB-RESTORE-PASSED (a player who passed Rust reaches Restore without replaying the lesson) is a new card.
+
+## 3 November 2026: Claude's play-through and fixes
+
+Played as a new player on a memory-only save, private port, 1280 x 720 and
+1280 x 600 windows: garage tip and dive kit (bought in the garage), BOAT RAMP
+sign, the ramp, Dive, badge, sonar, steering wheel, door, front wheel, bonnet,
+the Sirena on four bags, Surface (U), driving back up the ramp (by mistake,
+from the ramp foot: it surfaces, as designed), a third dive for crab, turtle,
+pearl and a big rock (pushed 4 m, the car went round it, never through), then
+the Lab's restore rule and a Pacific Canyon race in the Sirena: the Coast Cup
+card showed and paid. No stall and no console error. Kyle's "map collapsing"
+reproduced as the panel squeezing Ana's list on a short window. Fixes and the
+reasons are on the card (section "Claude's finishing pass").
+
+Code: `deep-objectives.js` (`SIRENA_PARTS`, grouped where-hint, `deepNextStep`,
+cup hint after the raise), `deep-sirena.js` (`liftPrompt`, read only),
+`sirena-view.js` (`.deep-next` line, `.deep-lift` ring, `.deep-map-row`),
+`sirena-ui.css` (panel 420 px / 36vw, chart capped by window height, row
+layout), `deep-log.js` and THE_DEEP section 5 (turtle and kelp crab facts).
+New tests: `test-deep-sirena` (the lift prompt), `test-deep-explorer` (next
+step order and where-hint). Changed assertions: none.
+
+### Removed
+
+The parts row's old fixed hint ("R pings the sonar...") and the Surface
+button's float. Nothing else replaced.

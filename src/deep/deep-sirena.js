@@ -128,6 +128,24 @@ export function stepLift(state, car, input, dt) {
   return events;
 }
 
+// FINISH-DEEP (Claude, 3 November 2026): what the screen says about F, read only. A lift
+// under way gives its progress and which bag is filling; otherwise the part F would lift
+// from here (the nearest, as stepLift picks) gives {find, ready, still}. The badge needs no F.
+export function liftPrompt(state, car) {
+  if (!state?.active || state.hold) return null;
+  if (state.lift) {
+    const {find, elapsed, seconds} = state.lift, bags = Math.max(1, Math.round(seconds / SIRENA.liftSeconds));
+    return {find, fraction: Math.min(1, elapsed / seconds), bag: Math.min(bags, Math.floor(elapsed / SIRENA.liftSeconds) + 1), bags};
+  }
+  if (!validCar(car)) return null;
+  let target = null;
+  for (const find of state.finds) {
+    if (find.id === BADGE || !available(state, find) || distance(find, car) > SIRENA.liftRange + 1e-9) continue;
+    if (!target || distance(find, car) < distance(target, car)) target = find;
+  }
+  return target ? {find: target.id, ready: true, still: still(car)} : null;
+}
+
 // ---- the save: what is recorded, and what it pays, exactly once ---------------------
 
 // Credits stop at the save's cap; a wallet already past it is left alone.
