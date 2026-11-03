@@ -176,38 +176,16 @@ tasks:
     flag: "rescue"
     details: "docs/board/cards/RESCUE-FINISH.md"
 
-  - id: WILD-VIEW
-    title: "Draw the animals in races and from the air"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "done"
-    needs: [WILD-PLACE, WILD-ART-SRC]
-    locks: [busy-game-files]
-    flag: "wildlife"
-    details: "docs/board/cards/WILD-VIEW.md"
-
   - id: WILD-FINISH
     title: "Claude's finishing pass on animals in races"
     owner: "claude"
     lane: "FINISH"
     size: "S"
     status: "backlog"
-    needs: [WILD-VIEW]
+    needs: []
     locks: []
     flag: "wildlife"
     details: "docs/board/cards/WILD-FINISH.md"
-
-  - id: SKIN-VIEW
-    title: "Draw skins, gear and grime"
-    owner: "claude"
-    lane: "UI"
-    size: "M"
-    status: "done"
-    needs: [SKIN-HOOKS, RESCUE-VIEW, WILD-VIEW, SKIN-ART-PAINT, SKIN-ART-GEAR]
-    locks: []
-    flag: "heli-skins"
-    details: "docs/board/cards/SKIN-VIEW.md"
 
   - id: SKIN-FINISH
     title: "Claude's finishing pass on skins and the count"
@@ -215,7 +193,7 @@ tasks:
     lane: "FINISH"
     size: "S"
     status: "backlog"
-    needs: [SKIN-VIEW, RESCUE-FINISH]
+    needs: [RESCUE-FINISH]
     locks: []
     flag: "heli-skins"
     details: "docs/board/cards/SKIN-FINISH.md"
