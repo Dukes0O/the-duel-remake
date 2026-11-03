@@ -25,6 +25,8 @@ const westWildlife = [
   ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
 ].map(([id, motion, donor]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
+// Species whose art is still in review (WILD-ART-SRC Europe round 2).
+const artCandidates = new Set(['wild-boar', 'wildcat', 'golden-eagle']);
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -410,6 +412,15 @@ try {
         assert.deepEqual(readdirSync(fixtureRoot), []);
       }
     });
+    if (artCandidates.has(generator.id)) {
+      // Still in its art rounds: built under the ignored .qa-dist, never in
+      // public/, so the game's model table and the disk agree. Its export
+      // checks return here when it passes and moves into public/.
+      check(generator.script + ' keeps its candidate out of the runtime folder until it passes', () => {
+        assert.ok(!existsSync(join(root, generator.glb[0])), `${generator.glb[0]} is published before passing`);
+      });
+      continue;
+    }
     check(generator.script + ` exports a bounded coloured skinned animal with Idle and ${generator.motion}`, () => {
       const bytes = readFileSync(join(root, generator.glb[0]));
       assert.equal(bytes.toString('ascii', 0, 4), 'glTF');

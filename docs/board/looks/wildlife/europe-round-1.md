@@ -1,12 +1,38 @@
 # Europe, round 1 of 3
 
+## Claude's round 1 verdict
+
+PASS, do not change: roe deer, red deer, red fox (excellent), chamois, ibex,
+alpine marmot, black stork, gull.
+
+Round 2 (same lane):
+
+1. Wild boar: body and head right; the legs read as toy stumps with ball
+   feet. Slim short legs tapering to small cloven hooves with dewclaws, dark
+   lower legs, a slightly longer wedge snout, and a coarser, less even coat:
+   grizzled dark brown-grey with lighter tips, a darker spine ridge and
+   face, paler snout tip.
+2. Wildcat: rebuild the body as a cat, not a reshaped wolf: compact and
+   muscular, level back, shorter legs, broad round head with a short muzzle,
+   small rounded ears, a short thick tail with 3 to 4 clear black rings and
+   a blunt black tip; clear grey-brown tabby with distinct dark stripes on
+   flanks and legs, a dark spine line, paler belly.
+3. Golden eagle: the head reads as a block. A round head flowing into the
+   neck (as the kookaburra fix), golden-buff nape blending into the dark
+   body, a strong hooked bill dark at the tip and yellow at the base, a
+   fierce brow over the eye. Keep wings and feet.
+
+Wire the eight passed species into `src/wildlife-models.js` now; keep the
+three round 2 candidates out of `public/assets/wildlife/` until they pass.
+The round 1 sheets were recycled with the round 2 commit.
+
 Claude's brief (3 November 2026): the Europe group for Ardennes, Eifel
 Crown, Alpine Serpent and Azure Riviera, priority roe deer, red deer, wild
 boar and red fox, then chamois, ibex and alpine marmot, then the wildcat
 and the birds. Real fur from round 1: grain, mottling, darker and lighter
 zones, never a smooth single-tone body.
 
-## Sheets
+## Sheets (recycled after the verdict)
 
 - `europe-round-1a.jpg`: roe deer, red deer, wild boar, red fox, chamois, ibex.
 - `europe-round-1b.jpg`: alpine marmot, wildcat, black stork, golden eagle, gull.

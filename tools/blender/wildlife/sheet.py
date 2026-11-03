@@ -25,7 +25,10 @@ GROUPS = {
     'west-australia-3': ('KANGAROO AND KOOKABURRA, FINAL', ('eastern-grey-kangaroo', 'kookaburra')),
     'europe-1a': ('EUROPE: DEER, BOAR, FOX, CHAMOIS', ('roe-deer', 'red-deer', 'wild-boar', 'red-fox', 'chamois', 'ibex')),
     'europe-1b': ('EUROPE: MARMOT, WILDCAT, BIRDS', ('alpine-marmot', 'wildcat', 'black-stork', 'golden-eagle', 'gull')),
+    'europe-2': ('EUROPE: BOAR, WILDCAT, EAGLE', ('wild-boar', 'wildcat', 'golden-eagle')),
 }
+# Groups whose animals are still candidates, built under .qa-dist (common.py --candidate).
+CANDIDATE_GROUPS = {'europe-2'}
 
 
 def main():
@@ -105,7 +108,8 @@ def group_sheet(root, round_number, group):
     facts = []
     y = 150
     for species in ids:
-        info = glb_facts(root / 'public/assets/wildlife' / (species + '.glb'))
+        home = '.qa-dist/wildlife-candidates' if group in CANDIDATE_GROUPS else 'public/assets/wildlife'
+        info = glb_facts(root / home / (species + '.glb'))
         motion = 'fly' if species in BIRDS else 'walk'
         clip_text = 'Idle, ' + motion.title() + (f' (+{len(info["clips"]) - 2} donor clips)' if len(info['clips']) > 2 else '')
         facts.append({'species': species, **{k: info[k] for k in ('triangles', 'bytes')}, 'clips': len(info['clips'])})
@@ -133,8 +137,8 @@ def group_sheet(root, round_number, group):
         sheet.paste(strip, (12 + cell_w + 12, y + 36))
     footer = {'west-australia': 'CC0 Quaternius deer (mule deer, elk, bighorn) and wolf (cougar, coyote) reshaped | '
                                 'kangaroo, marmot, echidna and birds: original recipes | coats 1K; marmot and birds 512',
-              'europe': 'CC0 Quaternius deer (roe deer, red deer, chamois, ibex) and wolf (red fox, wildcat) reshaped | '
-                        'boar, marmot and birds: original recipes | coats 1K; marmot and birds 512'}[family]
+              'europe': 'CC0 Quaternius deer (roe deer, red deer, chamois, ibex) and wolf (red fox) reshaped | '
+                        'boar, wildcat, marmot and birds: original recipes | coats 1K; marmot and birds 512'}[family]
     draw.text((28, sheet.height - 34), footer, font=small, fill='#bbc4b7')
     output = root / f'docs/board/looks/wildlife/{family}-round-{round_number}{part}.jpg'
     output.parent.mkdir(parents=True, exist_ok=True)

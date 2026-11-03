@@ -278,11 +278,13 @@ def finish(a, c, output, recipe, budget=5000, roughness=None, specular=None, ref
         # One smoothing level, then back under budget, as the donor recipes do.
         adapt.refine(mesh, c, refine)
         data = mesh.data
-        # Smoothing pulls the soles up a few millimetres; set them back on the ground.
-        floor = min(v.co.z for v in data.vertices)
-        if floor > 0:
-            for v in data.vertices:
-                v.co.z -= floor
+    # Soles that stand above the ground (smoothing, or a recipe's rounded
+    # hooves and paws) are set back on it. Nothing moves if any part already
+    # touches or dips below the ground, so earlier recipes keep their output.
+    floor = min(v.co.z for v in data.vertices)
+    if floor > 0:
+        for v in data.vertices:
+            v.co.z -= floor
     data.calc_loop_triangles()
     assert len(data.loop_triangles) <= budget, (a.species, len(data.loop_triangles))
     adapt.export(mesh, rig, output, c)

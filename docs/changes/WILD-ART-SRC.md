@@ -1,5 +1,51 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Europe round 2, and the eight passed species in the game
+
+Claude's round 1 verdict is at the top of the Europe round 1 note; changes
+and numbers in [the Europe round 2 note](../board/looks/wildlife/europe-round-2.md),
+sheet `europe-round-2.jpg`. The round 1 sheets are recycled.
+
+- Wild boar: slim legs on cloven hooves with dewclaws, longer snout, patchier
+  coat. Wildcat: rebuilt as an original cat (the wolf-based round 1 recipe is
+  replaced). Golden eagle: merged round head, golden nape, brow, heavier bill.
+- `common.py`: `--candidate` builds and reviews under the ignored
+  `.qa-dist/wildlife-candidates/`. The three candidates are out of
+  `public/assets/wildlife/` until they pass.
+- `original.finish`: lifts nothing and lowers a recipe whose lowest rest
+  point stands above the ground; the passed original species already touch
+  or dip below it, so their output is unchanged.
+- `bird.py`: optional `head_reach`, `body_sides`, `fold_sides`; defaults keep
+  the passed birds' output.
+- `sheet.py`: candidate groups read their GLBs from `.qa-dist`.
+- **In the game:** `src/wildlife-models.js` has rows for roe deer, red deer,
+  red fox, chamois, ibex, alpine marmot, black stork and gull (birds fly in
+  `Fly`). Ardennes and Eifel Crown get roe deer, red deer and red foxes (Eifel
+  also the black stork as its rare bird), Alpine Serpent chamois, ibex,
+  alpine marmots and red deer, Azure Riviera gulls, red foxes and roe deer.
+  Wild boar, wildcat and golden eagle join when they pass.
+
+### Checks
+
+CHECKS_EU2
+
+### Changed assertions (for Claude's review, rule 18)
+
+- `tools/test-blender-output.mjs`: the round 1 export checks for wild boar,
+  wildcat and golden eagle are replaced, while those three are in review, by
+  a check that their GLB is not in `public/` (a set `artCandidates`). Their
+  path-plan checks stay. When a species passes, it leaves the set and its
+  export checks apply again. No other assertion changed.
+- `tools/test-wildlife-view.mjs`: additive only: exact checks of today's
+  Europe table (each course's drawn species, the stork as Eifel's rare bird,
+  the two birds flying in `Fly`, no row for the three candidates).
+
+### Removed
+
+The round 1 sheets; the wolf-based wildcat recipe (replaced in the same
+file); the boar's ball-hoof legs; the three candidate GLBs from `public/`
+(rebuilt under `.qa-dist` until they pass).
+
 ## 3 November 2026: Europe, round 1
 
 Lane `claude/wild-art-europe` from integration 91ca9040. Eleven species,

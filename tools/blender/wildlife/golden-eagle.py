@@ -20,10 +20,20 @@ DARK = (.024, .016, .010)
 GOLD = (.34, .21, .075)
 YELLOW = (.48, .34, .05)
 
-P = {'body': .38, 'width': .11, 'height': .12, 'neck': (.05, .10), 'head': .065,
-     'bill': (.075, .050, .035, .90), 'tail': (.30, .14, 'round'), 'span': 1.05,
-     'primaries': (7, .34, .080, 55, True), 'chord': (.42, .26), 'leg': .12, 'stance': .06, 'toe': .011,
+P = {'body': .38, 'width': .11, 'height': .12, 'neck': (.035, .060), 'head': .074, 'merged': True, 'head_reach': 3.0,
+     'bill': (.082, .056, .038, .95), 'tail': (.30, .14, 'round'), 'span': 1.05,
+     'primaries': (6, .34, .085, 52, True), 'body_sides': 12, 'fold_sides': 6, 'chord': (.42, .26), 'leg': .12, 'stance': .06, 'toe': .011,
      'toes': [(0, .07), (30, .065), (-30, .065), (180, .06)], 'tilt': 40, 'beat': 30, 'flap': .45}
+
+
+def brow(a, f, head_c, hr):
+    """A fierce bony brow ridge jutting over each eye."""
+    from mathutils import Vector
+    for s in (1, -1):
+        a.oval(tuple(head_c + Vector((hr * .46, s * hr * .74, hr * .40))), (hr * .34, hr * .16, hr * .10), DARK, 'head', 2, 6)
+
+
+P['extra'] = brow
 
 
 def plumage(f, p):
@@ -36,8 +46,10 @@ def head(f, p):
     from mathutils import Vector
     head_c = f.w((.42 * P['body'], 0, .10 * P['height'])) + Vector((P['neck'][0], 0, P['neck'][1]))
     d = (p - head_c) / P['head']
-    # Golden crown and nape over the dark face.
-    return o.mix(plumage(f, p), o.mix(GOLD, BROWN, .3 * o.speckle(p)), o.smooth((d.z + .1 - .4 * d.x) / .35))
+    # Golden-buff crown and nape feathers flowing down the back of the neck
+    # into the dark body, broken by darker feather tips; the face stays dark.
+    gold = o.smooth((d.z + .9) / .6) * o.smooth((.35 - d.x) / .45)
+    return o.mix(plumage(f, p), o.mix(GOLD, BROWN, .45 * o.speckle(p)), gold)
 
 
 def wing(f, p):
