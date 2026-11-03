@@ -181,9 +181,7 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "building"
-    claimed_by: "claude-h3-finish-2026-11-03"
-    branch: "claude/wild-view"
+    status: "done"
     needs: [WILD-PLACE, WILD-ART-SRC]
     locks: [busy-game-files]
     flag: "wildlife"
