@@ -54,9 +54,49 @@ green, behind `lab-classroom` (on), with no Preview step.
 
 ## Changed assertions (Claude's review, rule 18)
 
+- `tools/test-lab-lesson-frame.mjs`: the QA example lesson borrowed the fire pit as id `fire`; with Fire a
+  classroom now, it borrows the nail jars as id `rust` (a machine still on the five-step frame), and the
+  registry check names `d.id` instead of `'fire'`. The same check, on another machine.
+  `tools/scenarios/lab-lesson-frame.mjs` follows it to the nail jars; its key-idea-over-a-flight check goes,
+  since no five-step lesson has a helicopter challenge any more (every classroom scenario checks that card).
 - `tools/test-lab-lessons-flying.mjs` is removed with the lesson it tested. Its fire checks have
   their counterparts in the new suite, on the same rules: each tool takes its own side away
   (`TAKES_AWAY`, the bench), the open forest reaches the far side and a cleared or treated strip
   stops it (now on the challenge's own forest). Its sheet-name placement test goes with the sheets;
   `tools/test-repo-hygiene.mjs` allows one fewer sheet name, which is stricter, not looser. Its
   empty-drawing test covered `flying-display.js`, which is gone. Nothing is loosened.
+
+## Review
+
+One independent review (a separate agent: 300 random games of 400 actions through the session, every
+number checked with node, a click where the pointer is on every step and every trip of the job) found no
+dead end, no early pass and every number true. Its findings, all fixed:
+- Real: the `lab-lesson-frame` browser scenario still opened its example at the fire pit, which now opens
+  the classroom (it timed out in the full Lab run, as predicted). Moved to the nail jars.
+- Brian praised "the flames nearest the road first, each time" whenever the fire went out; now only when
+  every drop was where his pointer would have gone, and otherwise he says to start at the front next time.
+- Question 3 said a full bucket puts out "up to 3" while the job's first drop put out six: it now says
+  three cells at full strength, more smaller ones, and the splash line says leftover water runs on to the
+  flames next to it.
+- A test branch that never ran (water on green trees) now runs on a fresh job; the strip try's small
+  triangle said OUT with the forest still burning (now a flame and "No fuel in the strip"); the Space
+  keys drawn on the board take clicks; the card's keys match the build (1, 2, 3); plainer words ("out"
+  for a cell put out, "full strength", "patch of forest", "after the flames spread 4 more times").
+
+## Checks
+
+- `tools/test-lab-classroom-fire.mjs`: 10 of 10 (numbers from the game's rules, including the forest
+  spreading cell for cell as the challenge's does; a child following the prompts passes; the words; the
+  tries set up, ask, then test, and each wrong guess says why; Brian's job: the pointer's way puts it out
+  in three trips, the back first loses the road in two and starts again, wasted drops say why; every
+  wrong answer says why; help climbs to Show me; the board draws every step and a click where the
+  pointer is does what it shows; Previous step and Watch again).
+- Every `tools/test-lab-*.mjs`: 30 suites, 335 tests, all pass (after the review fixes).
+- Lane tier: 46 of 46 before the review fixes, 47 of 47 after; build passes both times.
+- Lab browser scenarios, 21: 20 passed, `lab-lesson-frame` failed as the review predicted; after the fix,
+  `lab-lesson-frame` and `lab-classroom-fire` pass (the Fire walkthrough: keyboard, two mouse clicks,
+  Show me tipping the sand bucket, a wrong guess and why, the job by click and arrow keys, the helicopter
+  challenge with its card).
+- Looks, from the walkthrough pictures (deleted after review): first round had triangle labels under the
+  crosses, bucket names inside their handles, the tipped bucket vanishing, an overflowing recap card and a
+  caption running off the board; all fixed and checked again.
