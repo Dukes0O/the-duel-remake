@@ -48,7 +48,7 @@ export function tunnelMount(id) {
     new GLTFLoader().loadAsync('/assets/models/lab/tunnel-parts.glb').then(gltf => {
       if (disposed) { release(gltf.scene); return; }
       loaded = gltf.scene;
-      for (const name of ['tyre', 'spring', 'wing', 'scale', 'wing-stand', 'dial']) {
+      for (const name of ['tyre', 'spring', 'dial']) {
         const part = loaded.getObjectByName(name); part.removeFromParent(); own.add(part); parts.set(name, part);
         const old = part.clone(true);
         old.traverse(n => { if (n.material) { n.material = n.material.clone(); n.material.transparent = true; n.material.opacity = .2; n.material.depthWrite = false; } });
