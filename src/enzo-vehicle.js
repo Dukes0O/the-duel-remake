@@ -6,9 +6,9 @@ import { prepareVehicleDamage } from './vehicles.js';
 // geometry inspired by public photographs of the Ferrari Enzo. No imported
 // model, texture, badge or trademark graphic is embedded. Metres; +Z forward.
 // Its character: a Formula One beak that drops between two raised front
-// fenders, a teardrop canopy set well forward, deep side scoops behind the
+// fenders, a long raked glasshouse set well forward, deep side scoops behind the
 // doors, a glass engine cover on a high rear deck, four round tail lamps and a
-// short tail with an integrated lip. Shared helpers only construct small parts.
+// tall body-coloured tail with an integrated lip. Shared helpers only construct small parts.
 export const ENZO_VEHICLE_DIMENSIONS = Object.freeze({
   ferrari_enzo: Object.freeze({ width: 2.04, length: 4.70, height: 1.15, wheelRadius: .35 }),
 });
@@ -27,23 +27,33 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...ENZO_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, designFeatures: Object.freeze(['beak-nose', 'raised-front-fenders', 'teardrop-canopy', 'side-scoops', 'glass-engine-cover', 'quad-round-tail-lamps']),
-    damageSpace: { scale: [.92, .80, 1.0], offset: [0, 0, 0], frontGlassZ: .92, rearGlassZ: -.98 },
+    damageSpace: { scale: [.92, .80, 1.0], offset: [0, 0, 0], frontGlassZ: 1.12, rearGlassZ: -.66 },
   });
 
-  // Stations: [z, half width, floor, shoulder, crown, crown half width]. The
-  // wedge is wide and low: high front fenders crest over the wheels either side
-  // of a lower centre line, the beak drops steeply to a broad blunt face, the
-  // belt stays near .80 along the doors, and behind the cabin two tall rear
-  // haunches stand either side of the engine cover and fall to a short tail.
+  // Stations: [z, half width, floor, shoulder, crown, crown half width], fitted to the side
+  // outline traced off the photo (tools/art/earned-outlines.json). The front fenders crest
+  // over the wheels either side of a lower beak; the belt dips along the doors; behind the
+  // cabin two tall haunches rise either side of the glass engine cover and carry the deck
+  // high to a tall body-coloured tail with an integrated lip.
   sculpt(b, m.paint, [
-    [-2.35, .90, .26, .62, .64, .70], [-2.20, .97, .22, .70, .70, .70],
-    [-1.85, 1.01, .19, .82, .76, .56], [-1.35, 1.015, .19, .86, .78, .52],
-    [-.90, 1.00, .18, .82, .80, .62], [-.30, .98, .17, .74, .78, .66],
-    [.40, .97, .17, .72, .78, .68], [.95, .99, .17, .80, .80, .62],
-    [1.35, 1.01, .17, .85, .80, .54], [1.80, .99, .17, .78, .70, .46],
-    [2.15, .90, .19, .62, .54, .36], [2.35, .74, .22, .52, .48, .28],
-  ], AXLES, .35, .35, { width: .60, y: .56, back: -.88, front: .94 });
-  b.box(m.carbon, [1.18, .05, 1.62], [0, .33, .02], [0, 0, 0], .012);
+    [-2.35, .86, .24, .70, .69, .64], [-2.24, .95, .20, .77, .75, .66],
+    [-1.95, 1.01, .18, .82, .79, .56], [-1.60, 1.015, .18, .86, .82, .50],
+    [-1.30, 1.015, .18, .90, .84, .50], [-.95, 1.00, .17, .94, .84, .58],
+    [-.55, .98, .17, .94, .86, .64], [-.10, .97, .17, .82, .78, .66],
+    [.40, .97, .17, .72, .74, .66], [.95, .99, .17, .72, .72, .62],
+    [1.35, 1.01, .17, .72, .72, .52], [1.65, 1.005, .17, .70, .68, .48],
+    [1.95, .97, .17, .62, .57, .42], [2.20, .88, .19, .56, .49, .34], [2.35, .74, .22, .47, .44, .28],
+  ], AXLES, .35, .35, { width: .60, y: .56, back: -.98, front: 1.42 });
+  b.box(m.carbon, [1.18, .05, 2.40], [0, .33, .235], [0, 0, 0], .012); // floor from the bulkhead to the scuttle
+  // Close the cockpit where the glass reaches past the floor: a dark scuttle under the
+  // windscreen and a bulkhead behind the seats, so no view runs into the hollow nose or tail.
+  panel(b, m.carbon, [[-.62, .715, 1.44], [.62, .715, 1.44], [.62, .70, .78], [-.62, .70, .78]]);
+  b.box(m.carbon, [1.22, .56, .03], [0, .64, -.965], [0, 0, 0], .006);
+  // The raised centre ridge of the beak, running from the nose back to the windscreen
+  // between the two bonnet channels.
+  b.tube(m.paint, [[0, .43, 2.33], [0, .51, 2.12], [0, .58, 1.88], [0, .66, 1.62], [0, .72, 1.40]], .05, 18);
+  // Rounded front fender humps that carry the headlamps, cresting over the front wheels.
+  for (const side of [-1, 1]) b.tube(m.paint, [[.68, .43, 2.27], [.71, .53, 2.10], [.74, .65, 1.90], [.765, .73, 1.68], [.785, .77, 1.45], [.80, .775, 1.22], [.81, .74, 1.00], [.82, .68, .86]].map(([x, y, z]) => [side * x, y, z]), .11, 24);
   buildCanopy(b, m);
 
   for (const side of [-1, 1]) {
@@ -69,13 +79,13 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   b.box(m.carbon, [1.62, .04, .20], [0, .185, 2.25], [0, 0, 0], .02);
   // Short tail: integrated lip spoiler, a black rear panel and a deep diffuser.
   b.box(m.paint, [1.50, .06, .16], [0, .815, -2.285], [-.18, 0, 0], .02);
-  b.box(m.carbon, [1.40, .20, .04], [0, .46, -2.325], [0, 0, 0], .02);
+  b.box(m.carbon, [.86, .15, .02], [0, .58, -2.352], [0, 0, 0], .008);
   for (let i = -3; i <= 3; i++) b.box(m.carbon, [.022, .15, .30], [i * .19, .27, -2.12], [.12, 0, 0], .002);
   b.box(m.carbon, [1.42, .024, .26], [0, .19, -2.14], [.12, 0, 0], .01);
-  b.box(m.plate, [.50, .11, .01], [0, .44, -2.348], [0, 0, 0], .004);
+  b.box(m.plate, [.50, .11, .01], [0, .445, -2.358], [0, 0, 0], .004);
   cockpit(vehicle, b, m, [.29, -.045, -.04], .80);
   wheels(vehicle, m, { radius: .35, width: .27, track: .86, axles: AXLES, spokes: 5, roadSmooth: true }); // twin five-spoke, as on the real car
-  exhaust(vehicle, b, m, [[-.09, .36, -2.26], [.09, .36, -2.26]], .055);
+  exhaust(vehicle, b, m, [[-.09, .31, -2.26], [.09, .31, -2.26]], .055);
   b.finish(data);
   fittedDetails(vehicle, m);
   prepareVehicleDamage(vehicle);
@@ -83,18 +93,23 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
   return vehicle;
 }
 
-// A teardrop canopy set forward: glass all round a small painted roof, the
-// roof line flowing back into the engine cover. [z, half width, base, top].
+// A long raked glasshouse set well forward, from the outline: the windscreen starts just
+// behind the front wheels and climbs to the roof's crest over the driver's knees; behind the
+// short painted roof the rear glass drops onto the engine cover. Sections are squared-off
+// ellipses (tumbled-in sides, flatter roof). [z, half width, base, top].
 const canopySections = [
-  [-.98, .42, .80, .86], [-.70, .58, .76, .99], [-.35, .67, .72, 1.10],
-  [0, .70, .70, 1.14], [.35, .69, .70, 1.10], [.65, .62, .72, .98], [.94, .48, .74, .84],
+  [-.98, .52, .88, .955], [-.62, .56, .88, 1.00], [-.30, .60, .84, 1.045], [-.05, .63, .80, 1.10],
+  [.20, .66, .78, 1.135], [.50, .68, .75, 1.145], [.80, .69, .73, 1.12], [1.05, .69, .72, 1.05],
+  [1.25, .67, .72, .96], [1.42, .62, .73, .86],
 ];
+const SQUARE = 3, TUMBLE = .26; // 2 is an ellipse, higher flattens the roof; the sides lean in as they rise
 function canopyPoint(z, angle, lift = 0) {
   const last = canopySections.length - 1;
   let i = canopySections.findIndex(p => p[0] >= z); if (i <= 0) i = 1; if (z >= canopySections[last][0]) i = last;
   const a = canopySections[i - 1], b = canopySections[i], t = THREE.MathUtils.clamp((z - a[0]) / (b[0] - a[0]), 0, 1);
   const smooth = t * t * (3 - 2 * t), width = THREE.MathUtils.lerp(a[1], b[1], smooth), base = THREE.MathUtils.lerp(a[2], b[2], t), top = THREE.MathUtils.lerp(a[3], b[3], smooth);
-  return [Math.cos(angle) * (width + lift), base + Math.sin(angle) * (top - base + lift), z];
+  const c = Math.cos(angle), s = Math.sin(angle), x = Math.sign(c) * Math.abs(c) ** (2 / SQUARE), y = Math.abs(s) ** (2 / SQUARE);
+  return [x * (width * (1 - TUMBLE * y) + lift), base + y * (top - base + lift), z];
 }
 function canopySheet(b, material, start, end, minAngle, maxAngle, lift = 0) {
   const positions = [], indices = [], rows = 32, columns = 22;
@@ -104,18 +119,26 @@ function canopySheet(b, material, start, end, minAngle, maxAngle, lift = 0) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); g.setIndex(indices); g.computeVertexNormals(); b.add(g, material); g.dispose();
 }
 function buildCanopy(b, m) {
-  canopySheet(b, m.glass, -.98, .94, 0, Math.PI);
-  // Painted roof panel between the side glass, as on the real car.
-  canopySheet(b, m.paint, -.62, .30, Math.PI * .22, Math.PI * .78, .007);
+  canopySheet(b, m.glass, -.98, 1.42, 0, Math.PI);
+  // Painted roof between the side glass, from the windscreen's top edge back to the rear glass.
+  canopySheet(b, m.paint, -.22, .86, Math.PI * .2, Math.PI * .8, .007);
+  // Body-coloured buttresses either side of the rear glass, flowing into the haunches.
+  canopySheet(b, m.paint, -.98, -.20, 0, Math.PI * .2, .006);
+  canopySheet(b, m.paint, -.98, -.20, Math.PI * .8, Math.PI, .006);
   for (const angle of [0, Math.PI]) {
-    const sill = []; for (let i = 0; i <= 26; i++) sill.push(canopyPoint(-.98 + 1.92 * i / 26, angle, .01));
+    const sill = []; for (let i = 0; i <= 26; i++) sill.push(canopyPoint(-.98 + 2.40 * i / 26, angle, .01));
     b.tube(m.carbon, sill, .018, 26);
   }
-  for (const z of [-.62, .30]) {
+  // Black A pillars and the frame round the side window.
+  for (const angle of [Math.PI * .2, Math.PI * .8]) {
+    const pillar = []; for (let i = 0; i <= 14; i++) pillar.push(canopyPoint(.86 + .54 * i / 14, angle + (angle < 1.5 ? -1 : 1) * .62 * i / 14, .009));
+    b.tube(m.carbon, pillar, .016, 14);
+  }
+  for (const z of [-.22, .86]) {
     const hoop = []; for (let i = 0; i <= 22; i++) hoop.push(canopyPoint(z, Math.PI * i / 22, .008));
     b.tube(m.carbon, hoop, .015, 22);
   }
-  b.tube(m.carbon, [canopyPoint(.80, 1.25, .009), canopyPoint(.52, 1.48, .009), canopyPoint(.48, 1.82, .009)], .008, 8);
+  b.tube(m.carbon, [canopyPoint(1.20, 1.25, .009), canopyPoint(.98, 1.48, .009), canopyPoint(.94, 1.82, .009)], .008, 8);
 }
 
 function fittedDetails(vehicle, m) {
@@ -145,8 +168,8 @@ function fittedDetails(vehicle, m) {
     patch([[side * .16, 1.62], [side * .34, 1.60], [side * .32, 1.20], [side * .17, 1.24]], 'top');
   }
   // The glass engine cover over the high rear deck, with a dark frame.
-  patch([[-.46, -1.06], [.46, -1.06], [.40, -1.96], [-.40, -1.96]], 'top');
-  patch([[-.38, -1.14], [.38, -1.14], [.33, -1.88], [-.33, -1.88]], 'top', 1, m.glass, .011);
+  patch([[-.44, -1.00], [.44, -1.00], [.40, -1.78], [-.40, -1.78]], 'top');
+  patch([[-.37, -1.06], [.37, -1.06], [.34, -1.72], [-.34, -1.72]], 'top', 1, m.glass, .011);
   // Engine cover louvres either side, fitted to the curved deck.
   for (const side of [-1, 1]) for (let i = 0; i < 6; i++) {
     const z = -1.16 - i * .12, x = side * .66;
@@ -163,18 +186,18 @@ function fittedDetails(vehicle, m) {
     // with a slim running-light strip along the recess's outer edge.
     for (const [x, z] of [[.71, 1.96], [.79, 1.74]]) {
       const y = surfaceY(side * x, z); if (y === null) continue;
-      // Facing straight forward and sunk into the recess: a dark tinted lens with a thin lit ring.
-      cylinder(b, m.carbon, .062, .06, [side * x, y - .012, z], [Math.PI / 2, 0, 0], 20);
-      cylinder(b, m.glass, .05, .012, [side * x, y - .012, z + .031], [Math.PI / 2, 0, 0], 20);
-      const ring = new THREE.TorusGeometry(.046, .006, 6, 24);
-      b.add(ring, m.headlight, [side * x, y - .012, z + .036]); ring.dispose();
+      // Facing straight forward and sunk into the fender hump: a dark tinted lens with a thin bezel.
+      cylinder(b, m.carbon, .05, .06, [side * x, y - .04, z], [Math.PI / 2, 0, 0], 20);
+      cylinder(b, m.glass, .04, .012, [side * x, y - .04, z + .031], [Math.PI / 2, 0, 0], 20);
+      const ring = new THREE.TorusGeometry(.037, .005, 6, 24);
+      b.add(ring, m.alloy, [side * x, y - .04, z + .036]); ring.dispose();
     }
     const strip = [];
     for (let i = 0; i <= 8; i++) {
       const z = 2.0 - i * .065, x = side * (.74 + .12 * i / 8), y = surfaceY(x, z);
       if (y !== null) strip.push([x, y + .016, z]);
     }
-    if (strip.length > 1) b.tube(m.headlight, strip, .0085, strip.length);
+    if (strip.length > 1) b.tube(m.headlight, strip, .005, strip.length);
     // A waist line: a crease along the doors from the front arch to the scoop, fitted to the side.
     const crease = [];
     for (let i = 0; i <= 16; i++) {
