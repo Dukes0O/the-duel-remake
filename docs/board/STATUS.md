@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-03T21:05:03.203Z
+Observed at: 2026-11-03T21:13:09.370Z
 
-Observation commit: 0e804a08b7aa95bf9c934690aae4c46cff9407af
+Observation commit: f919d7008012eb415f898cdcba0d01f005ca6331
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 0e804a08b7aa95bf9c934690aae4c46cff9407af
+Integration HEAD: f919d7008012eb415f898cdcba0d01f005ca6331
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -45,31 +45,31 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 383,470,594 B | +12,019,980 B | 250,000,000 B |
+| Build `dist/` | 383,470,594 B | +0 B | 250,000,000 B |
 | Wasteland models | 117,929,200 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 37,574,340 B | +387,375 B | 20,000,000 B |
-| Added bytes in last merge | 207,965 B | -40,361 B | 5,000,000 B |
-| All `public/` | 376,269,571 B | +13,223,736 B | unavailable |
-| Git objects | 862,672,896 B | +26,559,488 B | unavailable |
+| Review `looks/` | 37,574,340 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 207,965 B | +0 B | 5,000,000 B |
+| All `public/` | 376,269,571 B | +0 B | unavailable |
+| Git objects | 863,115,264 B | +442,368 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 6eb15259f0a393d469f12e416c8771255a6fa89b
+- Local master: f919d7008012eb415f898cdcba0d01f005ca6331
 - Local main: missing
-- Local integration/wasteland: 0e804a08b7aa95bf9c934690aae4c46cff9407af
+- Local integration/wasteland: f919d7008012eb415f898cdcba0d01f005ca6331
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: behind local; cached commit 198a1695146ba283ca4b55da27a7c55e3a4a8f34.
+- Remote origin/master: matches local; cached commit f919d7008012eb415f898cdcba0d01f005ca6331.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: behind local; cached commit 8d356ab086c043d2ca693b2d36a0dfa8359c2cef.
+- Remote origin/integration/wasteland: matches local; cached commit f919d7008012eb415f898cdcba0d01f005ca6331.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
