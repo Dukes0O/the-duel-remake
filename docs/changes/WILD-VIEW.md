@@ -44,6 +44,31 @@ Card: WILD-VIEW (Claude, UI lane; lock `busy-game-files`, held only for the one 
   loads nothing; a race at Tremblant Woods draws the animal, an approaching car makes it run
   10 to 20 m; the helicopter over the count square draws the count's deer and moose.
 
+## Round 2: the animals must be seen
+
+- **Race herds stand in the open, near the road.** `createPlacementChecker` in `src/wildlife.js` gets an `open` test
+  built from the course's own trees (`course.features.trees`, the trees the world draws, so no renderer is needed): no
+  trunk within 6 m, and no tree crown (3 m) on the last 40 m of the line to the road edge. A herd's middle is tried 15 to 35 m
+  from the road edge in open ground first, then anywhere in 15 to 70 m in open ground, then, so a thick forest still has
+  animals, as before. The 15 to 70 m band the placement test checks is unchanged. At Tremblant Woods and Snow over 40
+  races each, 90 per cent or more of herds stand within 35 m of the edge and in open ground (the test says so).
+  Not done: preferring the side the driver faces or the outside of a bend.
+- **The count's animals stand in open ground.** `_surveyStand` in `src/app.js` asks the checker for `open: true`;
+  `planSurvey` and its tests are unchanged. Over 120 days at both courses 95 per cent or more of the count's animals stand in
+  open ground.
+- **A ring for every counted animal.** At the shutter click (the animal's `counted` flag in the count's view) a thin pale
+  ring (3.3 to 4 m) is drawn on the ground where the animal stood. It swells and fades once over 0.9 s, then stays at
+  30 per cent opacity until the count ends. It is drawn through grass and trees on purpose, is not part of the 12-animal
+  cap, fades with distance like the animals, and stays where it was when the animal runs. View only.
+- **Pictures** (integration `.evidence/2026-11-03/WILD-VIEW/`): `race-chase-36m.png` (a deer in the open beside the road in
+  the normal chase view at about 85 mph), `race-chase-startled.png`, `heli-count-rings.png` and
+  `heli-count-rings-pulse.png` (110 m up, normal view, four rings and the herd's animals), `heli-count-ring-close.png`.
+  Honest limit: an animal is small at those ranges (a deer is about 40 pixels tall at 36 m from the car, a few pixels
+  from the helicopter at 110 m up and 190 m out). From 110 m the count reaches only animals within 60 m sideways, which lie
+  under the behind camera's lower edge, so the pilot sees counted animals mainly as rings once past them.
+- **Scenario.** `tools/scenarios/wildlife-view.mjs` now drives by at racing pace and flies the count toward a herd, past
+  it and back to look at it.
+
 ## Assumptions to review
 
 - **Play day** in a race is the calendar day (a whole number of days), because the save's
@@ -57,7 +82,7 @@ Card: WILD-VIEW (Claude, UI lane; lock `busy-game-files`, held only for the one 
 
 ## Checks and results
 
-- `node tools/test-wildlife-view.mjs` (new, 2,880 checks): the table matches the files and clips on
+- `node tools/test-wildlife-view.mjs` (new, 3,060 checks after round 2): the table matches the files and clips on
   disk; the count offers only approved animals and gives today's answers when all are approved;
   the idle or flee decision, the fade, the 12-animal pick, facing and a bird's flight as pure
   functions; drawing never uses the race generator or assigns race state; one call in render3d.
@@ -68,10 +93,9 @@ Card: WILD-VIEW (Claude, UI lane; lock `busy-game-files`, held only for the one 
   when the car came within 20 m; from the helicopter 110 m over the count square 9 animals drew
   (deer and moose) and stood on the ground. Pictures are in the integration folder's
   `.evidence/2026-11-03/WILD-VIEW/` (to be deleted after review).
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): 84 suites passed, 1 failed on the
-  first run: `test-heli-mode`'s import guard read a comment of mine that named a helicopter file. The comment was reworded
-  and that suite passes (267 checks); nothing else changed since the run. The replay and world-signature guards in the tier
-  passed (the world builder is not touched).
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`), after round 2: 86 suites passed, 0
+  failed. (Round 1: one failure, `test-heli-mode`'s import guard read a comment that named a helicopter file; reworded.)
+  `test-wildlife.mjs` passes unchanged. The replay and world-signature guards passed (the world builder is not touched).
 - `npm run build`: passes (the usual large-chunk notes only).
 - Two of the laptop's heavy slots were busy when the browser look started (it began with two jobs counted, not one); no
   frame timing was done.

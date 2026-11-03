@@ -12,8 +12,11 @@ import {
 } from '../src/wildlife-models.js';
 import {
   WILDLIFE_VIEW, IDLE, FLEE, FLY, GONE, startleReach, nextMood, fleeLength, fadeAlpha, pickNearest, turnToward, yawToward, birdFlight,
-  calendarPlayDay,
+  calendarPlayDay, ringLook,
 } from '../src/wildlife-view.js';
+import {Course} from '../src/course.js';
+import {COURSE} from '../src/config.js';
+import {referenceLap} from '../src/reference-laps.js';
 import {SURVEY_TARGETS, surveyCourses, surveyJob, planSurvey} from '../src/heli/heli-survey.js';
 import {surveyJobOf} from '../src/heli/heli-jobs.js';
 import {createProfile} from '../src/progression.js';
@@ -171,6 +174,55 @@ const near = (actual, expected, tolerance, label) => {
   ok(birdFlight(start, 1, 0, 3).y - birdFlight(start, 1, 0, 2).y > birdFlight(start, 1, 0, 2).y - birdFlight(start, 1, 0, 1).y, 'and climbs faster as it goes');
   const day = calendarPlayDay(new Date(2026, 10, 3, 3, 15)), same_day = calendarPlayDay(new Date(2026, 10, 3, 23, 59));
   equal(day, same_day, 'the play day is the same all calendar day'); equal(calendarPlayDay(new Date(2026, 10, 4, 0, 1)), day + 1, 'and the next day is one more');
+}
+
+// ---- Herds and the count's animals stand where they can be seen ----------------
+{
+  for (const id of ['tremblant-woods', 'tremblant-snow']) {
+    const definition = COURSE.find(row => row.id === id), course = new Course(definition, definition.layoutSeed ?? 1989);
+    const checker = wildlife.createPlacementChecker(course), trees = course.features.trees;
+    ok(trees.length > 1000, `${id} has trees to keep clear of`);
+    let herds = 0, near = 0, open = 0, clear = 0;
+    for (let race = 1; race <= 40; race++) {
+      const placed = wildlife.placeWildlife({courseId: id, playDay: 20400, raceNumber: race, course, approvedModels: APPROVED_MODEL_IDS,
+        referenceLap: referenceLap(id, 'fixed') ?? referenceLap(id, 'route_a')});
+      for (const spot of placed.spots) {
+        const anchor = spot.animals[0]; herds++;
+        if (anchor.edgeDistance <= wildlife.NEAR_EDGE) near++;
+        if (checker.inspect(anchor.x, anchor.z, {open: true, minEdge: 15, maxEdge: 70, lake: 'shore'}) || checker.inspect(anchor.x, anchor.z, {open: true})) open++;
+        // A second look made here: the nearest trunk is more than 6 m away.
+        if (!trees.some(tree => Math.hypot(tree.x - anchor.x, tree.z - anchor.z) < wildlife.TRUNK_CLEAR)) clear++;
+        ok(anchor.edgeDistance >= 15 && anchor.edgeDistance <= 70, `${id}: a herd stays in the 15 to 70 m band`);
+      }
+    }
+    ok(near / herds >= .9, `${id}: most herds (${near} of ${herds}) stand 15 to 35 m from the road edge`);
+    ok(open / herds >= .9 && clear / herds >= .9, `${id}: most herds (${open} and ${clear} of ${herds}) stand in open ground`);
+    // The tree test itself: a spot beside a tree is not open, the same spot with trees gone is.
+    const tree = trees.find(row => checker.inspect(row.x + 3, row.z, {minEdge: 15, maxEdge: Infinity}));
+    if (tree) {
+      ok(!checker.inspect(tree.x + 3, tree.z, {minEdge: 15, maxEdge: Infinity, open: true}), `${id}: 3 m from a trunk is not open ground`);
+    }
+    // The count: a square planned with the open-ground test puts its animals in open ground.
+    const xs = course.samples.map(p => p.x), zs = course.samples.map(p => p.z), site = {minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs)};
+    const canStand = (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity, open: true});
+    let animals = 0, standing = 0;
+    for (let day = 1; day <= 120; day++) {
+      const job = surveyJob(day, {approved: APPROVED_MODEL_IDS});
+      if (job.courseId !== id) continue;
+      for (const animal of planSurvey(job, {site, canStand, wildlife, approved: APPROVED_MODEL_IDS}).animals) { animals++; if (canStand(animal.x, animal.z)) standing++; }
+    }
+    ok(animals > 50 && standing / animals >= .95, `${id}: the count's animals stand in open ground (${standing} of ${animals})`);
+  }
+  // The ring round a counted animal: one pulse, then faint until the count ends.
+  const start = ringLook(0), peak = ringLook(WILDLIFE_VIEW.ringPulse / 2), settled = ringLook(WILDLIFE_VIEW.ringPulse), later = ringLook(600);
+  equal(start.opacity, .95, 'the ring starts bright'); equal(start.scale, 1, 'and its own size');
+  ok(peak.scale > 1.4 && peak.opacity < start.opacity && peak.opacity > settled.opacity, 'it swells and fades through the middle of the pulse');
+  near(settled.opacity, WILDLIFE_VIEW.ringStay, 1e-9, 'it settles at its faint opacity'); near(settled.scale, 1, 1e-9, 'and its own size again');
+  same(later, settled, 'and stays there until the count ends'); ok(settled.opacity > .1 && settled.opacity < start.opacity, 'faint, not gone');
+  equal(ringLook(-3).opacity, .95, 'a bad age reads as the start');
+  const view = readFileSync(new URL('../src/wildlife-view.js', import.meta.url), 'utf8');
+  ok(/counted/.test(view) && /addRing/.test(view), 'the view draws rings for counted animals');
+  ok(/open: true/.test(readFileSync(new URL('../src/app.js', import.meta.url), 'utf8')), 'the app asks for open ground when it places the count');
 }
 
 // ---- Drawing never reaches into the race ---------------------------------------

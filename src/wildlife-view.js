@@ -40,7 +40,16 @@ export const WILDLIFE_VIEW = Object.freeze({
   birdClimb: 5,            // and its climb, metres a second
   birdLift: .35,           // the climb quickens by this much each second
   birdGone: 12,            // seconds after take-off a bird is out of sight for the rest of the race
+  ringInner: 3.3, ringOuter: 4, // the pale ring on the ground around an animal that was counted (metres)
+  ringPulse: .9,           // it swells and settles once over this many seconds...
+  ringStay: .3,            // ...and then stays at this opacity until the count ends
 });
+
+// The ring of a counted animal: opacity and size `age` seconds after the count. One pulse, then faint for good.
+export function ringLook(age) {
+  const t = Math.min(1, Math.max(0, age / WILDLIFE_VIEW.ringPulse));
+  return {opacity: .95 + (WILDLIFE_VIEW.ringStay - .95) * t, scale: 1 + .5 * Math.sin(Math.PI * t)};
+}
 
 // ---------------------------------------------------------------------------
 // The pure decisions (tested without graphics)
@@ -147,6 +156,8 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   const heliNow = {x: 0, y: 0, z: 0, agl: 0};
   let threatCount = 0;
 
+  const countIndex = new Map();       // the count's animal id -> its entity
+  let ringGeometry = null;
   let planKey = null, countKey = null, planCourse = null;
   let lastRun = null, raceCount = 0, countDay = null;
   let revision = 0, retired = false, shown = false, lastStatus = '';
@@ -181,8 +192,29 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       yaw: unit * Math.PI * 2, yawTarget: null, mood: IDLE, drawn: false, picked: false, blend: 0, alpha: -1, shadow: null, flees: 0,
       fromX: 0, fromY: 0, fromZ: 0, toX: 0, toY: 0, toZ: 0, travel: 0, length: 0, speed: 0, age: 0, dirX: 0, dirZ: 0, startY: 0,
       root: null, mixer: null, idleAction: null, moveAction: null, materials: null, meshes: null,
-      scale: 1, unit,
+      scale: 1, unit, ring: null, ringAge: 0,
     };
+  }
+
+  // ---- the ring round a counted animal -----------------------------------------
+  function addRing(entity) {
+    ringGeometry ??= new THREE.RingGeometry(WILDLIFE_VIEW.ringInner, WILDLIFE_VIEW.ringOuter, 48).rotateX(-Math.PI / 2);
+    // Seen through grass and trees on purpose: it is the pilot's mark, not part of the scenery.
+    const material = new THREE.MeshBasicMaterial({color: 0xf3eedc, transparent: true, depthTest: false, depthWrite: false, fog: false, side: THREE.DoubleSide});
+    const ring = new THREE.Mesh(ringGeometry, material);
+    ring.name = 'Counted ring'; ring.renderOrder = 5;
+    ring.position.set(entity.x, entity.y + .15, entity.z);
+    entity.herd.add(ring);
+    entity.ring = ring; entity.ringAge = 0;
+    revision++;
+  }
+
+  function stepRing(entity, dt, distance, limit) {
+    entity.ringAge += dt;
+    const look = ringLook(entity.ringAge), ring = entity.ring;
+    ring.material.opacity = look.opacity * fadeAlpha(distance, limit);
+    ring.scale.setScalar(look.scale);
+    ring.visible = ring.material.opacity > .01;
   }
 
   function clearEntities(source) {
@@ -235,6 +267,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
 
   function planCount(course, survey) {
     clearEntities('count');
+    countIndex.clear();
     const rng = wildlifeRng(course.def.id, 0, 0, 'count-view|' + survey.jobId);
     for (const animal of survey.animals) {
       if (!WILDLIFE_MODELS[animal.species]) continue;   // no model, nothing to draw (and the count's numbers never depend on it)
@@ -242,6 +275,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       const entity = makeEntity('count', 'c' + animal.id, herdGroup('count', herdId), {species: animal.species, kind: 'ground', x: animal.x, y: 0, z: animal.z}, rng.float());
       entity.y = groundHeight(course, entity);
       entities.push(entity);
+      countIndex.set(animal.id, entity);
       ensureModel(animal.species);
     }
     distances = new Float64Array(entities.length);
@@ -275,6 +309,7 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
   }
 
   function release(entity) {
+    if (entity.ring) { entity.herd?.remove(entity.ring); entity.ring.material.dispose(); entity.ring = null; }
     if (!entity.root) return;
     entity.herd?.remove(entity.root);
     entity.root.traverse(node => { if (node.isSkinnedMesh) node.skeleton.dispose(); });
@@ -448,7 +483,14 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     const wantCount = survey ? `${survey.jobId}|${survey.animals.length}` : null;
     if (wantCount !== countKey) {
       countKey = wantCount;
-      if (survey) planCount(course, survey); else clearEntities('count');
+      if (survey) planCount(course, survey); else { clearEntities('count'); countIndex.clear(); }
+    }
+    // The shutter click: an animal just counted gets its ring, where it stood.
+    if (survey) for (let i = 0; i < survey.animals.length; i++) {
+      const row = survey.animals[i];
+      if (!row.counted) continue;
+      const entity = countIndex.get(row.id);
+      if (entity && !entity.ring) addRing(entity);
     }
 
     group.visible = frame.worldVisible !== false;
@@ -476,6 +518,12 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       const e = entities[picked[i]];
       step(e, dt, course, heli, limit, distances[picked[i]]);
     }
+    for (let i = 0; i < entities.length; i++) {
+      const e = entities[i];
+      if (!e.ring) continue;
+      const dx = e.x - vx, dy = e.y - vy, dz = e.z - vz;
+      stepRing(e, dt, Math.sqrt(dx * dx + dy * dy + dz * dz), limit);
+    }
     drawnCount = count;
     report(shownState());
   }
@@ -486,7 +534,8 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
     for (const entity of entities) release(entity);
     entities = [];
     for (const model of models.values()) if (model.gltf) disposeModel(model.gltf.scene);
-    models.clear(); herds.clear();
+    models.clear(); herds.clear(); countIndex.clear();
+    ringGeometry?.dispose();
     scene.remove(group);
     group.clear();
   }

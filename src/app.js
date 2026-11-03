@@ -1899,7 +1899,7 @@ export class App {
     this._standCheckers ??= new Map();
     if (!this._standCheckers.has(courseId)) this._standCheckers.set(courseId, wildlifeRules.createPlacementChecker(world.course));
     const checker = this._standCheckers.get(courseId);
-    return (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity});
+    return (x, z) => !!checker.inspect(x, z, {maxEdge: Infinity, open: true}); // open ground, so the count's animals can be seen from the air
   }
   // A course model at the helicopter's seed, built once, for fire grids; it
   // never touches the course being raced or flown.
