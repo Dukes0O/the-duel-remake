@@ -19,7 +19,15 @@ and golden eagle PASS, wildcat NOT passed (cap reached).
 
 ### Checks
 
-CHECKS_FINAL
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `test-wildlife-view` 3,829 checks; `test-wildlife` 33,644 checks;
+  `test-heli-survey` 9,990 checks; `test-blender-output` 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (778 s).
+- `npm run build`: passed; output deleted.
 
 ### Changed assertions (for Claude's review, rule 18)
 
