@@ -19,6 +19,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
   supply), or buy one sooner at the pad; the TV coat with the Barely News
   logo is bought. Dust, mud, soot and salt build up as you fly; a wash at
   the pad costs 100 credits.
+- **The Lab: Rust is a classroom now.** Brian's shelf holds glass jars with
+  a steel nail in each and a wall calendar that counts the days. A nail in a
+  dry jar stays clean for a week; in fresh water it rusts 14%; in salt water
+  84%, six times as fast. A zinc coat wears away first and keeps the steel
+  clean until it is gone, about 20 days in salt water. In Brian's job you give
+  a boat trailer, a toolbox and a garden gate the least protection that keeps
+  each clean. Then the parts panel opens as before: pass it for the Galvanised
+  finish and, once she is raised, to restore the Sirena.
 - **The Lab: Launch angles is a classroom now.** Brian's launcher throws a
   skier along a tape: tilt the ramp and turn the speed dial both ways, and
   launch. About 45 degrees goes furthest (35.6 m at 45 mph), steeper or flatter

@@ -1932,3 +1932,22 @@ six-blast-overlap timing; no audio or combat code changed; passed 23/23 alone on
 rule 3, card QA-AUDIO-CRASH-PEAK-3). Since 8361997b: notes and board only. Frame check not run: the
 monitor setup locks frames at 33.3 ms (rule 8); card WILD-FRAMES. Save: H3 fields were added by
 SKIN-SAVE (optional, version unchanged, fixture 13); no change in this release.
+
+
+## Release, 3 November 2026, evening, after H3 (Claude, Release Manager)
+
+LAB-CLASSROOM-RUST: Rust as a classroom lesson (twelve steps; Brian's shelf of nail jars with a wall
+calendar, a day dial and a Bare / Zinc coat switch; every share the rust bench's own: after a week dry
+0%, fresh water 14%, salt water 84%, zinc in salt water 0% with 65% of the coat left; the coat is gone
+at day 20; Brian's job gives a boat trailer, a toolbox and a garden gate the least protection that
+keeps each at 10% or less). The challenge (the Lab's parts panel; it gives the Galvanised finish and
+Restore the Sirena) and the save are unchanged. The old five-step lesson goes, with Rust's part of the
+workshop suite and scenario; lab-restore and lab-lesson-frame moved off the old lesson.
+test-lab-classroom-rust 10/10, every test-lab-* suite 358/358, 23 Lab scenarios 23/23, lane tier 44/44,
+build. One review: no real fault; small points fixed. Changed assertions reviewed in
+docs/changes/LAB-CLASSROOM-RUST.md (tests of the removed lesson removed with it).
+
+Full tier on 8361997b (572 passed; the one failure the known unreliable test-audio-crash-peak, rule 3).
+Rule 19: since then Lab lesson code, Lab tests and scenarios, a test-only fixture, board and notes; no
+shared core, save shape or physics. On the merged commit: every test-lab-* suite (33 suites) and the
+lab-classroom-rust, lab-restore and lab-lesson-frame scenarios pass. No save change.
