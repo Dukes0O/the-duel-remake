@@ -51,18 +51,36 @@ behind `lab-classroom` (on), with no Preview step.
 
 ## Review
 
-(to come)
-
+One independent review (a separate agent reading the code, checking every number with node, and
+walking every step with Back, jumps, Watch again, slow motion and Show me) found no dead end and
+every number right; the pass cannot come early; the changed assertions are a move, not a loosening.
+Its findings, all fixed: two real faults, where Brian's pointer for "lift off" landed on a crate once
+two or more were on (a click took a crate off), and a click on a place's name did nothing (only its
+line took clicks). Small ones: Previous step to a finished word showed an empty bubble; the keys
+drawn on the board (Space, 1, 2) did not take clicks; one drag past the red line climbed the help two
+rungs; question 3 and a key idea gave the pad's lever and fuel figures as the game's flight (now
+"by the pad", "more still in flight"); the Watch said its finding before the table filled on a
+replay; a stale line after Show me in Brian's job. Its test points: two checks that could never
+fail are gone, and the board test now clicks where the pointer is on every step and with two to
+five crates on. Writing that test found one more fault, fixed: after Watch again the Watch never
+reached its end.
 ## Checks
 
-- `tools/test-lab-classroom-altitude.mjs`: 9 of 9 (numbers from the bench and the Lift pad; a child
-  following the prompts passes; the words; the tries set up, ask, then test, and a wrong guess says
-  why; Brian's job; every wrong answer says why; help climbs to Show me; the board draws, hit-tests
-  and points at every target).
-- Every `tools/test-lab-*.mjs`: 30 suites, 330 tests, all pass.
-- `lab-classroom-altitude` browser scenario, first run: played to the helicopter challenge with 23
-  pictures; one browser error loading a voice file (`ERR_NO_BUFFER_SPACE`, the laptop's network
-  buffer, not the game). The pictures found the look faults fixed before the second run: the
-  mountain read as a beam of light, its title over Summit Run, the watch table's columns ran together
-  and covered the lever's title, Brian's bubble after the lever try overflowed, the Space key's name
-  was clipped, and the resting helicopter in Brian's job sat across the lever.
+- `tools/test-lab-classroom-altitude.mjs`: 10 of 10 (numbers from the bench and the Lift pad; a
+  child following the prompts passes; the words; the tries set up, ask, then test, and a wrong guess
+  says why; Brian's job; every wrong answer says why; help climbs to Show me; the board draws and a
+  click where the pointer is does what the pointer shows, with two to five crates on; the review
+  fixes). With `test-lab-classroom` and `test-lab-lessons-flying`: 31 of 31 after the review fixes.
+- Every `tools/test-lab-*.mjs`: 30 suites, 330 tests, all pass (before the review fixes).
+- Lab browser scenarios, 21, with the lane tier alongside: 20 passed, including
+  `lab-classroom-altitude` (23 pictures: keyboard and one drag of the lever, Show me taking the stand
+  up, the reasons with the kilograms, the helicopter challenge with its card). `lab-classroom-wax`
+  timed out inside its long helicopter flight, as on 2 November under load (a page call, not a failed
+  check). After the review fixes, `lab-classroom-altitude` and `lab-classroom-wax` alone: both pass.
+- The first browser run had one browser error loading a voice file (`ERR_NO_BUFFER_SPACE`, the
+  laptop's network buffer, not the game); its pictures found the look faults fixed before the second
+  run: the mountain read as a beam of light, its title over Summit Run, the watch table's columns ran
+  together and later covered the jar, Brian's bubble after the lever try overflowed, the Space key's
+  name was clipped, the resting helicopter in Brian's job sat across the lever, and the fuel row's
+  name ran into its number.
+- Lane tier (`--changed --jobs 4`) on 1fc8d398: 40 of 40. `npm run build` passes.
