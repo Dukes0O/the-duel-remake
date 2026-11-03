@@ -73,6 +73,6 @@ Nothing replaced. The old `HELI_CAMERA_VIEWS[... % 4]` status-line lookup in
 
 Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`, on the branch with
 `integration/wasteland` at 926f6d26 merged in): 46 passed, 0 failed, 0 not run, 506 s.
-It includes `test-heli-skin-view`, `test-heli-mode`, `test-heli-view`, `test-heli-rank-paint`
-neighbours and `test-repo-hygiene`. `npm run build`: built in 1.1 s. The heavy-job turn
+It includes `test-heli-skin-view`, `test-heli-mode`, `test-heli-view`
+and `test-repo-hygiene` (the rank paint and skin gear suites were not selected as unaffected). `npm run build`: built in 1.1 s. The heavy-job turn
 rule made this builder wait and, twice, stop its own start when a later count passed two.
