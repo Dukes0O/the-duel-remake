@@ -19,7 +19,20 @@ tracks, coyote and mule deer passed and are byte exact.
 
 ### Checks
 
-CHECKS2
+From PowerShell, on the lane with `integration/wasteland` (4d3f657b) merged
+in, started on a free heavy-job turn.
+
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 50 passed, 1 failed, 0 not
+  run (525 s). The failure is `tools/test-board.mjs`, "finished cards leave
+  the open board": `docs/board/board.yaml` from integration keeps a finished
+  card in the open list. It fails the same way on the integration folder's
+  own head (f0f2bb30); this lane changes no board file. Left for the board
+  owner; not a wildlife fault.
+- `npm run build -- --outDir .qa-dist/wildlife-build`: built in 1.25 s,
+  existing large-chunk warning only; output deleted.
+- Every changed animal rebuilt and reviewed from its recipe in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 2`.
 
 ### Changed assertions
 
