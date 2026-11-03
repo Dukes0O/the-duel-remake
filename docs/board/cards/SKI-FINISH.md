@@ -176,3 +176,18 @@ fills up at the pickup and flies home without the fuel truck), the job card
 words in `tools/test-heli-job-clarity.mjs`, the pilot map's ski pads in
 `tools/test-pilot-map.mjs`; a browser play from the home pad with a
 memory-only save.
+
+## Claude's finishing verdict (3 November 2026): done
+
+Played from the home pad on the private QA page with a memory-only save
+(`tools/scenarios/ski-drop-trip.mjs`): the drop taken on the ski box, P and
+ENTER, the leg ending 400 m from Devils Playground under its orange light, the
+autopilot to the pad, the slalom (gold, every gate clean), Fill up here at the
+pickup pump, P and ENTER home, landed with 94 kg. The card said the next step
+at every stage. The keyboard play of every run (`ski-finish` scenario) gives
+the 26 October numbers again: slalom steady 34.43 s bronze, practised 19.74 s
+silver; giant slalom 64.51 s bronze, 48.90 s gold; moguls 78 and 37.6 points;
+aerials 0 untucked and 58.2 tucked (the start line says to hold Shift); powder
+finds all three stashes; no tumbles; the group hears the thin-air line at the
+summit pad. No medal, gate or guide change. Pictures for Kyle:
+`docs/board/looks/ski-finish/look-2.jpg`. Released live under rule 18.

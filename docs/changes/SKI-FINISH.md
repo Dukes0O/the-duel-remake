@@ -597,5 +597,32 @@ result, a real run counts) is unchanged.
 `tools/scenarios/heli-jobs.mjs`: its ski card pattern takes the new words and
 its `arrive` helper waits over the marked pad, not the start line.
 
-**Removed.** The ski pads' "Nearest:" card wording. `fuel-pump.glb` is now
-loaded (it was unused).
+**After the first review.** Independent review found two faults, both
+fixed and confirmed by the reviewer: an empty tank at a paid pump with the
+free first tank unused got no fuel truck, and a group run left unfinished
+pointed the autopilot home. Also from the review: the arrival and the
+autopilot rank the pickup 300 m behind Devils Playground, the pump ring hides
+where the pickup has its own orange ring, and the map flags have a check. The
+picture sheet showed the light column inside the slalom's backdrop (the ski
+scene paints it from the flying world); the marks now go out during a run.
+
+**Other scenarios.** `ski-finish.mjs` now fills up at the pickup pump between
+runs and before the group's summit climb: its scripted pilot used to run dry
+before Devils Playground and get a full tank from the truck, and without that
+the group ran dry on the summit climb and the fuel lines pushed the thin-air
+line off the screen. Passes: `ski-drop-trip`, `heli-jobs`, `ski-view`,
+`ski-finish` (all runs, the group's thin-air line).
+
+**Gates.** Lane tier from PowerShell, jobs 4: first run 55 passed, 4 failed,
+all four the new-lane Recycle Bin fault ("DeleteDirectory is not supported");
+second run after the review fixes 63 passed, 1 failed (`test-ski-heli`, the
+two design-change assertions above), then `test-ski-heli` 21 of 21,
+`test-heli-job-clarity` 1,530 checks, `test-pilot-map` 321 checks,
+`test-board` and `test-repo-hygiene` pass; `npm run build` passes. The save
+does not change, so no full tier (rule 19: since the last full-tier pass only
+helicopter and ski files changed). No frame timing: the scene adds a few
+transparent meshes at Summit Run during a ski flight only.
+
+**Removed.** The ski pads' "Nearest:" card wording; `look-1.jpg` and its
+recipe, replaced by `look-2.jpg` and `tools/art/ski-finish-sheet.py`'s new
+version. `fuel-pump.glb` is now loaded (it was unused).
