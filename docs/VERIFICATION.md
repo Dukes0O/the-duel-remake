@@ -1850,3 +1850,23 @@ only that test's setup and notes since. Lane tier 85/86 then the same kind of fi
 build, earned-cars scenario, enzo-look and mclaren-f1-look. Frame checks not run: the laptop panel and
 both Dells were on, which rule 8 does not count; each car stays under the Jesko's 73,600 triangles and 66
 draws, and card EARN-FRAMES times the three Grand Prix fields. Save shape unchanged since EARN-MEDALS.
+
+
+## Release, 3 November 2026, late night (Claude, Release Manager)
+
+LAB-CLASSROOM-FIRE: Fire triangle as a classroom lesson (fifteen steps; the fire pit with one switch
+plate per side of the triangle, the triangle beside it, the water and sand buckets; the practice fire's
+forest from above, spread, watered and coated by the game's own rules: a cell at full strength takes 180
+litres, the bucket holds 600, the retardant tank coats four cells; Brian's job puts the challenge's fire
+out in three trips at the front). The challenge (keep the practice fire off the road for 7 minutes, or
+put it out), its Retardant tank reward and the save are unchanged. The old lesson and the old flying
+lesson display go. test-lab-classroom-fire 10/10, every test-lab-* suite 335/335, 21 Lab scenarios
+(lab-lesson-frame fixed and rerun with lab-classroom-fire), lane tier 47/47, build. One review: one
+real fault (the lesson-frame scenario's example still at the fire pit) and small ones, all fixed and
+tested. Changed assertions reviewed in docs/changes/LAB-CLASSROOM-FIRE.md (the example lesson moved
+to the nail jars; the old flying suite removed with its lesson).
+
+Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 19: since then Lab
+lesson code, a Lab test fixture, the hygiene check's sheet list, tests and notes; no shared core, save
+shape or physics. No save change.
+

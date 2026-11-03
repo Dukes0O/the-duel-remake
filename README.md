@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Fire triangle is a classroom now.** Brian's steel fire pit has
+  one switch per side of the fire triangle, each saying what it is set to:
+  Wood (fuel), Gas (heat) and the Lid (air). Put the wood in, light the gas,
+  shut the lid and watch it die with the gas still on, then guess which side
+  the water, the sand and a raked strip of bare ground each take away. The
+  forest is the helicopter challenge's own practice fire seen from above:
+  retardant coated in front of the flames stops them, and in Brian's job you
+  drop one 600-litre bucket a trip on the flames nearest the road before the
+  fire reaches it.
 - **Earned cars and medal sheets are on.** Every car keeps a medal sheet for
   each player: Duel and Grand Prix, on Easy (bronze), Medium (silver) and Hard
   (gold). A box fills the first time you win that race in that car, and each
