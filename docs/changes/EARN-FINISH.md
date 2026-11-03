@@ -551,6 +551,14 @@ A fresh memory-only player in Chrome (browser harness, private port, `earned-car
 - `tools/test-earned-cars-ui.mjs`, "switch off: the same race adds no sheet...": the test now sets the switch off itself (`{'earned-cars': false}`); it relied on dev meaning off. Same assertions.
 - `tools/test-earned-cars-ui.mjs`, the headline test: a repeat win used to keep the big headline. It now shows the progress line and takes the smaller headline, so the check asks for the line ("... NEXT MEDAL: DUEL ON MEDIUM") and the smaller headline instead, and a new switch-off case checks there is no line and the ordinary headline. New test: the progress line's wording for the next box, a full sheet, gold for the Bolide and every car won.
 
+- `tools/test-busted-quit.mjs`: no assertion changed. Its App now sets `earned-cars` off, because its exact police-fine earnings (1,050 for a clean first Medium win less a 150 fine) predate medals; with the switch on the same win also pays the 250 silver medal. The fine checks are unchanged.
+
+### Gates
+
+- Lane tier from PowerShell (`--changed --jobs 4 --keep-going`), on 5ae3ff05: 85 passed, 1 failed (`test-busted-quit`, the medal pay above), fixed and passing (280 checks).
+- By hand: `test-earned-cars-ui` (8), `test-medals` (11), `test-feature-flags` (129), `test-mclaren-f1-vehicle` (351 and 42 frame recipe checks), `test-koenigsegg-ui`, `test-sirena-car`, `test-story-ui`, `test-career-rebuild`, `test-grand-prix-career`.
+- Independent review (rule 17, save and code): approve with fixes, no code fault; saves cannot be hidden or wiped by the switch, one release back keeps everything. Its fixes are in: the frame packet must name an earned car, a check for the Enzo selector and a bad name, two doc wording points.
+
 ### Removed
 
 The scratch play-through scenario, the scratch copy of the test driver and the temporary hook in `tools/menu-check.js` were removed before the commit; the pictures were used for this verdict and deleted.
