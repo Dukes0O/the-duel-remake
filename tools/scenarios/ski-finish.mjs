@@ -63,7 +63,9 @@ export async function run(context) {
     for (const attempt of difficulty === 'pro' ? ['practice'] : photo?['tuck']:id==='powder'?['explore']:detail?(id==='moguls'?['straight']:['tuck','spin','tumble']):['steady','practice']) {
       const practice = ['practice','tuck','spin','tumble'].includes(attempt);
       const rotation = attempt==='spin'?360:attempt==='tumble'?180:0;
+      // SKI-FINISH: every run ends at the pickup pad's pump; fill up there before the next flight, as a pilot does.
       await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession;if(s.phase==='skiing')s.leaveSkiRun();
+        if(s.view().ski?.pump?.atPump)s.buyFuel();
         window.__skiQa.toPad(${JSON.stringify(zone.pad)});const r=s.skiStepOut(${JSON.stringify(id)});if(!r.ok)throw Error(JSON.stringify(r));if(s.view().ski.run.difficulty!==${JSON.stringify(difficulty)})throw Error('Ski difficulty did not reach the live session');
         window.__finishDrive=(${keyboardDriver.toString()})(${JSON.stringify(zone)},{practice:${practice},explore:${id==='powder'},rotation:${rotation},closeYeti:${detail},straight:${attempt==='straight'}});
         window.__finishEvents=[];window.__finishAir=false;window.__finishLastKeys={};window.__finishRecovery=[];
@@ -107,7 +109,9 @@ export async function run(context) {
     if(!offered)continue;
     report.group=await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession,events=a._heliEvents.bind(a);window.__finishRadio=[];
       a._heliEvents=es=>{for(const e of es)if(e.type==='radio')window.__finishRadio.push({event:e,heli:s.view().heli});events(es);};
-      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));window.__skiQa.toSummit();window.__skiQa.toPad('summit');
+      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));window.__skiQa.toSummit();
+      // SKI-FINISH: the leg ends beside Devils Playground; fill up at the pickup pump before the summit climb, as a pilot does.
+      window.__skiQa.toPad('pickup');if(!s.buyFuel().ok)throw Error('no fuel at the pickup pump');window.__skiQa.toPad('summit');
       return {taken,view:s.view(),radio:window.__finishRadio};})()`);
     await context.waitFor(`window.__qaApp.visualReady`,'group summit drawn',300000);
     await sleep(500);report.group.screen=await context.evaluate(`document.body.innerText`);

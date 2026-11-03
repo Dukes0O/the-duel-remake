@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Ski drops are easy to find, and the fuel is planned.** Take the heli-ski
+  drop (or the group) at the home pad and the flight to Summit Run now ends
+  beside the ski pads, hovering 400 m from Devils Playground. Every pad you can
+  ski from has a tall orange light and an orange ring on the snow, and the
+  pilot's map shows it as an orange SKI flag. Press P and the autopilot flies
+  you to the pad. The job card says how much fuel the trip needs and, when the
+  tank is short, to fill it first. A pump now stands at the pickup pad, where
+  every run ends: the card says to fill up there for the way home and has a
+  Fill up here button.
 - **The Lab: Air and altitude is a classroom now.** Kestrel One's test pad
   climbs a mountain drawn to its heights: Sea level, Panorama Ridge (860 m) and
   Summit Run (2,860 m). A jar of air scooped at the top holds 75 bits where the

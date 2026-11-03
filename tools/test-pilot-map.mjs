@@ -247,4 +247,17 @@ const generated = JSON.parse(readFileSync(OUTLINE_FILE, 'utf8'));
   same(nearestFuelPad('azure-riviera', {tankKg: 20}), null, 'a place with no pad in reach says so');
 }
 
+// SKI-FINISH: a ski flight's pads are flagged on the chart at Summit Run, in the frame the helicopter's dot uses.
+{
+  const {mapModel} = await import('../src/heli/pilot-map-view.js');
+  const summit = placeOfCourse('summit-run'), devils = {name: 'devils', x: 2325.3, y: 391.5, z: 3256.8};
+  const view = {courseId: 'summit-run', destinations: ['tremblant-woods', 'summit-run'], heli: {x: devils.x, z: devils.z, heading: 0, fuelKg: 200}, ski: {marks: [devils]}};
+  const model = mapModel({view});
+  same(model.skiPads.length, 1, 'one flagged pad');
+  same([model.skiPads[0].x, model.skiPads[0].z], [model.heli.x, model.heli.z], 'the flag sits under the helicopter standing on the pad');
+  same(model.skiPads[0].label, 'Devils Playground', 'named');
+  ok(Math.abs(model.skiPads[0].x - summit.drawAt.x) < 5, 'at Summit Run');
+  same(mapModel({view: {...view, ski: {marks: []}}}).skiPads, [], 'no ski flight, no flags');
+}
+
 console.log(`PASS MAP-DATA: the pilot's map data (${checks} checks)`);
