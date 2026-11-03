@@ -118,3 +118,11 @@
 .heli-job-card button:hover{background:#ffffff26}
 .heli-hook-prompt{position:absolute;left:50%;bottom:196px;transform:translateX(-50%);padding:8px 16px;font-size:16px;font-weight:750;background:#0f1614e6;border:1px solid #4fd16a99;border-radius:4px}
 .heli-hook-prompt[hidden]{display:none}
+/* SKIN-VIEW: the heat camera's inset, bottom left, and the frame round the TV skin's nose camera view. */
+.heli-heat{position:absolute;left:24px;bottom:22px;width:168px;height:168px;border:1px solid #9fd8b855;border-radius:4px;overflow:hidden;
+  background:#070a09;box-shadow:0 2px 14px #0009}
+.heli-heat[hidden]{display:none}
+.heli-heat canvas{display:block;width:168px;height:168px}
+.heli-panel[data-camera="nose"]::after{content:'●  NOSE CAMERA';position:absolute;inset:14px;pointer-events:none;
+  border:2px solid #f3eddf40;border-radius:2px;box-shadow:inset 0 0 90px #0006;
+  padding:10px 14px;text-align:center;font:700 11px/1 system-ui,sans-serif;letter-spacing:3px;color:#f3eddfcc;text-shadow:0 1px 6px #000a}
