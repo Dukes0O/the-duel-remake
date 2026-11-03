@@ -181,7 +181,9 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: "claude-h3-finish-2026-11-03"
+    branch: "claude/wild-view"
     needs: [WILD-PLACE, WILD-ART-SRC]
     locks: [busy-game-files]
     flag: "wildlife"
@@ -203,7 +205,9 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "M"
-    status: "backlog"
+    status: "building"
+    claimed_by: "claude-h3-finish-2026-11-03"
+    branch: "claude/skin-view"
     needs: [SKIN-HOOKS, RESCUE-VIEW, WILD-VIEW, SKIN-ART-PAINT, SKIN-ART-GEAR]
     locks: []
     flag: "heli-skins"
@@ -222,12 +226,12 @@ tasks:
 
   - id: WILD-ART-SRC
     title: "Source local animals for every course (North woods first)"
-    owner: "codex"
+    owner: "claude"
     lane: "ART"
     size: "M"
     status: "building"
-    claimed_by: "codex-wild-art-2026-10-14"
-    branch: "codex/wild-art-src"
+    claimed_by: "claude-h3-finish-2026-11-03"
+    branch: "claude/wild-art-west"
     needs: []
     locks: []
     flag: "wildlife"

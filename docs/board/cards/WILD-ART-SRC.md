@@ -235,3 +235,18 @@ Exact clean625b8398: existing test-blender-output passed1/1,98checks,zero failur
 Separate actual-container inspection confirms the complete149844-byte candidate BIN is exact, including geometry, atlas and padding; JSON differs only by Geo_Beaver root uniform scale.009854149844873853 and translation[0,.1807245082090349,0]. Actual length1.10m, minimum rear-paw datum0, original front offset1.774mm, unchanged tail14.902mm below datum (within approved20mm). No all-four-coplanar or in-game-grounding claim. Original and unfitted candidate hashes remain exact. Receipts and independent verification are under integration .evidence/2026-10-15/WILD-ART-SRC/fit-625b8398.
 
 This completes only the authorized private beaver fit. No runtime/CREDITS, art sheet/verdict, gate/build or merge. North woods round1 still waits for four donors: deer/wolf retry only15October22:00PT; moose/bear await Kyle's official originals. No further generation or views are needed now. Fold these actual results into the lane's own note with its next genuine source change, not a results-only lane commit.
+
+## Claude takes the card (3 November 2026)
+
+North woods passed and merged on 28 October (round 3; the moose reads as a
+moose at race distance, accepted). Codex is paused for quota, so Claude takes
+the rest of the card in lane `claude/wild-art-west`: original Blender
+recipes in `tools/blender/wildlife/` built on the same licensed CC0 donors
+(Quaternius deer and wolf) and the Poly bear and beaver, the way the moose
+and the rescue people were built. Black bear cubs reuse the bear at about
+half size; the wolf tracks are a decal. Order: the count's species first
+(eastern grey kangaroo, bighorn sheep, cougar), then the rest of the Western
+mountains and Australia, then Europe, desert and coast, cities. Three rounds
+per group, sheets in `docs/board/looks/wildlife/`. A course shows animals only
+once its group passes (section 3.1), so the switch can go on with North woods
+alone.
