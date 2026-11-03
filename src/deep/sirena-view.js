@@ -316,7 +316,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
   root.innerHTML = '<div class="deep-logging" hidden><i></i><span></span></div>' + // DEEP-EXPLORER
-    '<div class="deep-logging deep-lift" hidden><i></i><span></span></div>' + // FINISH-DEEP: F and the lift bags
+    '<div class="deep-lift" hidden><i></i><span></span></div>' + // FINISH-DEEP: F and the lift bags
     '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip" hidden></b><span>R · sonar</span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
@@ -413,7 +413,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
         const name = SIRENA_PARTS[lift.find]?.name ?? 'Part';
         lifting.querySelector('span').textContent = !lift.ready
           ? (lift.bags > 1 ? `${name}: lift bag ${lift.bag} of ${lift.bags}` : `${name}: filling the lift bag`)
-          : lift.still ? `${name}: press F for a lift bag` : `${name}: stop here, then press F`;
+          : lift.still ? `${name}: press F for ${lift.find === 'sirena-car' ? 'the lift bags' : 'a lift bag'}` : `${name}: stop here, then press F`;
         lifting.querySelector('i').style.background = `conic-gradient(#ffd36a ${(lift.fraction ?? 0) * 360}deg,#365764 0deg)`;
       }
       if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
