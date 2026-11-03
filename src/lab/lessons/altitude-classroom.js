@@ -58,7 +58,7 @@ export const STEPS = Object.freeze([
 export const KEY_IDEAS = Object.freeze([
   {id: 'thin', text: `Higher up the air is thinner: at ${NAME[SUMMIT]}, ${metres(HEIGHT[SUMMIT])} up, a jar holds ${bits(AIR[SUMMIT])} bits of air where the sea’s holds 100.`},
   {id: 'load', text: `Thin air, less lift: ${kg(MOST[SEA])} at the sea, ${kg(MOST[SUMMIT])} at the top. Plan the load: ${bestCrates(SEA)} crates, then ${bestCrates(SUMMIT)}.`},
-  {id: 'fuel', text: `Up high she needs more lever just to hover, ${pct(HOVER_TOP)} instead of ${pct(HOVER_SEA)}, so she burns fuel faster. Fly straight there.`},
+  {id: 'fuel', text: `Up high she needs more lever just to hover, ${pct(HOVER_TOP)} by the pad instead of ${pct(HOVER_SEA)}, so she burns fuel faster. Fly straight there.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Thin air, less lift.',
   text: `Carry a ${GAME_CRATE_KG} kg crate up to ${NAME[SUMMIT]} and land with 30% of the tank left. Fly straight there: up high every minute burns more fuel.`});
@@ -165,7 +165,7 @@ const CHECKS = {
     answers: [{label: 'Fly straight there and land', picture: {kind: 'route', what: 'straight'}},
       {label: 'Keep the lever all the way up', picture: {kind: 'route', what: 'lever'}}, {label: 'Fill up at a pump on the way', picture: {kind: 'route', what: 'pump'}}],
     correct: 0,
-    right: () => `Yes. With the crate she needs ${pct(GAME_TOP)} of the lever to hover at ${NAME[SUMMIT]}, against ${pct(GAME_SEA)} at the sea: ${perMinute(fuelPerMinute(GAME_TOP))} instead of ${perMinute(fuelPerMinute(GAME_SEA))}. Don’t hang about up there.`,
+    right: () => `Yes. With the crate, hovering by the pad at ${NAME[SUMMIT]} takes ${pct(GAME_TOP)} of the lever against ${pct(GAME_SEA)} at the sea, and more still in flight: more lever, more fuel every minute. Don’t hang about up there.`,
     wrong: picked => picked === 1 ? `The lever all the way up burns the most: ${perMinute(fuelPerMinute(1))}. Use only the lever she needs, and fly straight there.`
       : 'Refuelling once the crate is on the hook does not count in this challenge: it is one tank. Fly straight there.',
     hints: ['Up high, every minute burns more fuel.', 'More lever, more fuel. And this challenge is one tank.', 'Pick “Fly straight there and land”.'],
@@ -174,7 +174,7 @@ const CHECKS = {
 
 export function createModel() {
   let m = null;
-  const seen = new Set();
+  const seen = new Set(), said = {};
   const step = () => STEPS[m.index];
 
   function enter(index) {
@@ -188,6 +188,12 @@ export function createModel() {
     if (id === 'try-lever') { m.f = flight(SEA); m.phase = 'setup'; }
     if (id === 'alone') m.f = flight(SEA);
     if (CHECKS[id]) m.phase = 'ask';
+    // A word step done before, visited again with Previous step: it shows what it found.
+    if (said[id]) {
+      m.say = said[id]; m.phase = 'done';
+      if (id === 'word-altitude') m.f.place = SUMMIT;
+      if (id === 'word-thin') m.f.lever = 1;
+    }
   }
 
   // ↑ and ↓ move the stand a place up or down the mountain; a click goes straight to a place.
@@ -216,7 +222,7 @@ export function createModel() {
       if (kind !== 'place' || seen.has(id)) return null;
       const moved = move(kind, value);
       if (moved?.kind !== 'sound') return moved;
-      if (m.f.place === SUMMIT) { seen.add(id); m.say = `${placeLine(SUMMIT)} That is its altitude: how high a place is above the sea.`; return {kind: 'right', sound: 'lab.tick', say: m.say}; }
+      if (m.f.place === SUMMIT) { seen.add(id); said[id] = m.say = `${placeLine(SUMMIT)} That is its altitude: how high a place is above the sea.`; return {kind: 'right', sound: 'lab.tick', say: m.say}; }
       return {kind: 'progress', sound: 'lab.tick', say: m.f.place === RIDGE ? `${placeLine(RIDGE)} Once more, up to ${NAME[SUMMIT]}.` : `${placeLine(SEA)} Up to ${NAME[SUMMIT]}.`};
     }
     if (id === 'word-density') {
@@ -268,7 +274,9 @@ export function createModel() {
       return null;
     }
     const mode = want(f);
-    if (mode === 'climb') return {kind: 'fail', say: `Past the red line: ${kg(liftOf(f))} of push against her ${kg(OWN_KG)}, so she climbs. Bring the lever back to the line with S.`};
+    if (mode !== 'climb') m.past = false;
+    else if (m.past) return null;
+    if (mode === 'climb') { m.past = true; return {kind: 'fail', say: `Past the red line: ${kg(liftOf(f))} of push against her ${kg(OWN_KG)}, so she climbs. Bring the lever back to the line with S.`}; }
     if (mode === 'hover') { m.phase = 'running'; m.settleAt = m.time + SETTLE_S; return {kind: 'progress', say: 'On the red line. Watch her.'}; }
     return null;
   }
@@ -280,6 +288,7 @@ export function createModel() {
     if (way === 'add' && f.crates >= RACK) return {kind: 'note', say: `All ${RACK} crates are on.`};
     if (way === 'remove' && f.crates <= 0) return {kind: 'note', say: 'There are no crates on her to take off.'};
     f.crates += way === 'add' ? 1 : -1; f.lever = 0; f.h = 0;
+    m.say = `${NAME[f.place]}: ${crateWords(f.crates)} on, ${kg(weightOf(f))}. Space lifts off.`;
     return {kind: 'sound', sound: 'lab.clunk'};
   }
   function liftOff() {
@@ -314,14 +323,14 @@ export function createModel() {
     if (m.f) fly(m.f, dt);
     if (id === 'word-density' && m.phase === 'running' && m.time - m.scoop.at >= 1.4) {
       m.phase = 'done'; seen.add(id);
-      m.say = `The same jar holds only ${bits(AIR[SUMMIT])} bits of air up here, where the sea’s held 100. Less air packed into the same space: lower air density.`;
+      said[id] = m.say = `The same jar holds only ${bits(AIR[SUMMIT])} bits of air up here, where the sea’s held 100. Less air packed into the same space: lower air density.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-thin' && m.phase === 'running') {
       if (m.f.lever < 1) { m.f.lever = Math.min(1, m.f.lever + LEVER_RATE * dt); if (m.f.lever >= 1) m.settleAt = m.time + 1; return null; }
       if (m.time < m.settleAt) return null;
       m.phase = 'done'; seen.add(id);
-      m.say = `Lever all the way up: ${kg(MOST[SUMMIT])} of push here, against ${kg(MOST[SEA])} at Sea level, ${pct(LIFT_SHARE[SUMMIT])} as much. Fewer bits of air for the blades to throw down, and the engine breathes the same thin air.`;
+      said[id] = m.say = `Lever all the way up: ${kg(MOST[SUMMIT])} of push here, against ${kg(MOST[SEA])} at Sea level, ${pct(LIFT_SHARE[SUMMIT])} as much. Fewer bits of air for the blades to throw down, and the engine breathes the same thin air.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'alone' && m.phase === 'running') {
@@ -365,7 +374,7 @@ export function createModel() {
     if (at >= 0 && t >= WATCH_AT[at] + .5) f.lever = Math.min(1, f.lever + LEVER_RATE * dt);
     fly(f, dt);
     for (let i = 0; i < PLACES.length; i++) if (t >= WATCH_AT[i] + 2.3 && !m.rows[i]) m.rows[i] = {name: NAME[i], height: HEIGHT[i], air: AIR[i], most: MOST[i]};
-    if (t >= WATCH_END && !seen.has('watch')) { seen.add('watch'); m.phase = 'done'; }
+    if (t >= WATCH_END && m.phase !== 'done') { seen.add('watch'); m.phase = 'done'; }
     return null;
   }
 
@@ -411,9 +420,9 @@ export function createModel() {
       const done = seen.has(id);
       return {...base, jar: {share: AIR[here]}, readouts: {most: true}, lever: {red: false}, air: m.f.lever > 0, actions: ['replay', 'slow'],
         table: PLACES.map((_, i) => m.rows[i] ?? null),
-        say: done ? `The higher the place, the less air in a jar, and the less she can push: ${kg(MOST[SEA])}, ${kg(MOST[RIDGE])}, ${kg(MOST[SUMMIT])}.`
+        say: m.phase === 'done' ? `The higher the place, the less air in a jar, and the less she can push: ${kg(MOST[SEA])}, ${kg(MOST[RIDGE])}, ${kg(MOST[SUMMIT])}.`
           : 'The stand visits each place in turn. At each, the lever goes all the way up and we write down her push.',
-        prompt: done ? 'Press Enter to go on, or R to watch again.' : 'Watch the jar and the green arrow.',
+        prompt: m.phase === 'done' ? 'Press Enter to go on, or R to watch again.' : 'Watch the jar and the green arrow.',
         hints: ['Watch the jar at each place.', 'And watch the most she can push.', done ? 'Press R to watch again.' : 'Wait a moment.']};
     }
     if (id === 'try-car' || id === 'try-lever') return tryView(id, base);

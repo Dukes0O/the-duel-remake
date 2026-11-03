@@ -10,7 +10,7 @@ import {altitudeBench, SITES} from '../src/lab/benches/altitude.js';
 import {KESTREL, padForces} from '../src/lab/benches/lift-pad.js';
 import {MOST_KG as LIFT_LESSON_MOST} from '../src/lab/lessons/lift-classroom.js';
 import {CHALLENGE_RULES} from '../src/lab/lab-challenges.js';
-import {GRAVITY, createHeliState, heliReadout} from '../src/heli/heli-flight.js';
+import {createHeliState, heliReadout} from '../src/heli/heli-flight.js';
 
 const lesson = CLASSROOM_LESSONS.altitude;
 const run = (session, seconds) => { for (let t = 0; t < seconds; t += .05) session.tick(.05); };
@@ -79,7 +79,6 @@ test('every number is the altitude bench’s own run and the Lift lesson’s pad
   assert.deepEqual([0, 1, 2].map(p => weightOf({car: 1}) <= MOST[p]), [true, true, false], 'the Dusthawk lifts at the sea and the Ridge only');
   assert.equal(fuelPerMinute(1), (KESTREL.burnIdle + KESTREL.burnPerCollective) * 60);
   assert.ok(fuelPerMinute(hoverShare(2)) > fuelPerMinute(hoverShare(0)));
-  assert.ok(MOST.every(kg => kg * GRAVITY < 1e6));
 });
 
 test('a child who does exactly what each prompt says passes every step', () => {
@@ -172,7 +171,7 @@ test('the questions: each wrong answer says why with the numbers', () => {
   const answers = {
     'check-why': [[1, /Her weight is the same everywhere: 1,630 kg/], [2, /Her rotor spins just as fast/], [0, /Yes\. A jar of air at Summit Run holds 75 bits/]],
     'check-car': [[0, /At Panorama Ridge she can still push 3,513 kg, more than 2,910 kg/], [2, /At Summit Run she can push only 2,777 kg: 133 kg short/], [1, /Yes\./]],
-    'check-game': [[1, /burns the most: 48\.0 kg a minute/], [2, /Refuelling once the crate is on the hook does not count/], [0, /70% of the lever to hover at Summit Run, against 50% at the sea: 37\.9 kg a minute instead of 31\.4/]],
+    'check-game': [[1, /burns the most: 48\.0 kg a minute/], [2, /Refuelling once the crate is on the hook does not count/], [0, /hovering by the pad at Summit Run takes 70% of the lever against 50% at the sea, and more still in flight/]],
   };
   for (const [step, tries] of Object.entries(answers)) for (const [answer, why] of tries) {
     const session = createClassroomSession(lesson);
@@ -221,7 +220,7 @@ test('the board draws every step and card, hit-tests its controls and points at 
       calls.clear(); drawBoard(fake(), session.view(), 1000, 680);
       assert.ok(calls.has('fillText') && (calls.has('fillRect') || calls.has('fill')), `${STEPS[i].id} draws its board`);
       const v = session.view();
-      if (v.target) assert.ok(targetPoint(v, v.target), `${STEPS[i].id} can point at ${v.target}`);
+      if (v.target) assert.equal(hitTest(v, ...targetPoint(v, v.target))?.action === v.target || hitTest(v, ...targetPoint(v, v.target))?.drag === 'lever', true, `${STEPS[i].id}: a click where the pointer is does ${v.target}`);
     }
     for (const c of session.view().cards) { calls.clear(); drawPicture(fake(), c.picture, 220, 110); assert.ok(calls.has('fill') || calls.has('fillRect'), `${c.id} draws a picture`); }
   }
@@ -229,6 +228,9 @@ test('the board draws every step and card, hit-tests its controls and points at 
   const s = createClassroomSession(lesson);
   playThroughTo(s, 'word-altitude');
   assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'place:2')).action, 'place:2');
+  // A click on a place's name goes there too.
+  for (const [i, name] of NAME.entries()) assert.match(hoverInfo(s.view(), 60, targetPoint(s.view(), `place:${i}`)[1] - 14), new RegExp(name));
+  assert.equal(hitTest(s.view(), 60, targetPoint(s.view(), 'place:1')[1] - 14).action, 'place:1');
   playThroughTo(s, 'word-density');
   assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'scoop')).action, 'scoop');
   playThroughTo(s, 'word-thin');
@@ -244,6 +246,32 @@ test('the board draws every step and card, hit-tests its controls and points at 
   s.act('crate:add');
   assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'crate:remove')).action, 'crate:remove');
   assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'go')).action, 'go');
+  for (let n = 2; n <= RACK; n++) {
+    s.act('crate:add');
+    assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'go')).action, 'go', `lift off with ${n} crates on is not a crate`);
+    assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'crate:remove')).action, 'crate:remove');
+  }
   assert.match(hoverInfo(s.view(), ...targetPoint(s.view(), 'crate:remove')), new RegExp(`A crate: ${CRATE_KG} kg`));
-  assert.ok(CAR_KG > 0);
+});
+
+test('review fixes: Previous step shows a finished word as it was; one drag past the red line climbs the help once; the Watch speaks when its table is full', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-density');
+  session.act('back');
+  assert.equal(session.view().step.id, 'word-altitude');
+  assert.equal(session.view().flight.place, 2, 'the stand is back at the summit');
+  assert.match(say(session), /Summit Run: 2,860 m above the sea\. That is its altitude/);
+  assert.equal(session.view().ready, true);
+  playThroughTo(session, 'watch');
+  assert.doesNotMatch(say(session), /3,513 kg/);
+  until(session, x => x.ready);
+  session.act('replay');
+  assert.doesNotMatch(say(session), /3,513 kg/, 'watching again starts with an empty table and says so');
+  run(session, 11);
+  assert.match(say(session), /3,887 kg, 3,513 kg, 2,777 kg/);
+  playThroughTo(session, 'try-lever'); toSummit(session); session.act('answer:2');
+  for (const share of [.7, .75, .8, .85]) session.act(`hold:${share}`);
+  assert.equal(session.view().help, 1, 'one drag past the line is one fail');
+  session.act('hold:.5'); session.act('hold:.8');
+  assert.equal(session.view().help, 2, 'crossing the line again is a second');
 });

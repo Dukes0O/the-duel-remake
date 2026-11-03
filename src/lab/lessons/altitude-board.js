@@ -11,6 +11,8 @@ export const pressMovesDrag = true;
 const MX0 = 16, MX1 = 236, FOOT_Y = 556, PEAK_Y = 118, PER_M = (FOOT_Y - PEAK_Y) / HEIGHT[2];
 const placeY = i => FOOT_Y - HEIGHT[i] * PER_M;
 const MARK_X = 206;
+// Which place a point is on: its name plate above the line, or the line itself.
+const placeAt = y => [0, 1, 2].find(i => y > placeY(i) - 40 && y < placeY(i) + 10);
 // The lever: a share from 0 at the bottom to all the way up at the top.
 const GX = 300, G0 = 560, G1 = 200;
 const leverY = share => G0 - Math.max(0, Math.min(1, share)) * (G0 - G1);
@@ -20,6 +22,8 @@ const PAD_X = 575, PAD_HALF = 150, METRE = 24, CRATE = Object.freeze({w: 38, h: 
 const JAR = Object.freeze({x: 772, y: 64, w: 112, h: 150}), SEA_JAR = Object.freeze({x: 906, y: 104, w: 72, h: 96});
 const BOX = Object.freeze({x: 762, y: 262, w: 226});
 const RACK_X = 760, LIFT_PX = .045, REST_X = -62;
+// The keys drawn on the board: 1 and 2 under the rack, Space and lift off under the pad.
+const KEY_ONE = [RACK_X + CRATE.w - 14, GROUND_Y + 26], KEY_TWO = [RACK_X + CRATE.w + 14, GROUND_Y + 26], LIFT_OFF = [PAD_X - 40, GROUND_Y + 34];
 
 // ---- where everything is, in the pad's own units ----
 function crateSpots(f) {
@@ -43,21 +47,23 @@ const toBoard = (lx, ly) => [PAD_X + lx, GROUND_Y + ly];
 // ---- hit testing and Brian's pointer, in board units ----
 export function hitTest(view, x, y) {
   if (view.keys.W && x > GX - 50 && x < GX + 80 && y > G1 - 24 && y < G0 + 20) return {drag: 'lever', action: 'release'};
-  if (view.keys['↑'] === 'place:up' && x > MX0 && x < MX1) for (let i = 0; i < 3; i++) if (Math.abs(y - placeY(i)) < 22) return {action: `place:${i}`};
+  if (view.keys['↑'] === 'place:up' && x > MX0 && x < MX1 && placeAt(y) !== undefined) return {action: `place:${placeAt(y)}`};
   if (view.keys.Space === 'scoop' && x > JAR.x - 10 && x < JAR.x + JAR.w + 10 && y > JAR.y - 20 && y < JAR.y + JAR.h + 10) return {action: 'scoop'};
   const f = view.flight;
   if (!f || view.scene !== 'stand') return null;
   const g = geometry(f), lx = x - PAD_X, ly = y - GROUND_Y;
-  if (view.keys.Space === 'rotor' && Math.abs(lx - g.hx) < 130 && ly > g.hy - 60 && ly < g.hy + 34) return {action: 'rotor'};
-  if (view.keys[1] === 'crate:add' && x > RACK_X - 8 && x < RACK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 14 && y < GROUND_Y + 4) return {action: 'crate:add'};
+  if (view.keys.Space === 'rotor' && Math.abs(lx - g.hx) < 130 && ly > g.hy - 90 && ly < g.hy + 34) return {action: 'rotor'};
+  if (view.keys[2] === 'crate:remove' && f.crates && Math.hypot(x - KEY_TWO[0], y - KEY_TWO[1]) < 14) return {action: 'crate:remove'};
+  if (view.keys[1] === 'crate:add' && x > RACK_X - 8 && x < RACK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 14 && y < GROUND_Y + 40) return {action: 'crate:add'};
   if (view.keys[2] === 'crate:remove' && g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 + 4 && Math.abs(ly - c.y) < CRATE.h / 2 + 4)) return {action: 'crate:remove'};
-  if (view.keys.Space === 'go' && Math.abs(lx) < PAD_HALF + 40 && ly > g.hy - 60 && ly < 12) return {action: 'go'};
+  if (view.keys.Space === 'go' && lx > -PAD_HALF - 60 && lx < PAD_HALF + 20 && ly > -6 && ly < 52) return {action: 'go'};
   return null;
 }
 export function hoverInfo(view, x, y) {
   if (view.scene === 'wonder' || view.scene === 'recap') return null;
   if (view.mountain !== false && x > MX0 && x < MX1 && y > PEAK_Y - 40 && y < FOOT_Y + 20) {
-    for (let i = 0; i < 3; i++) if (Math.abs(y - placeY(i)) < 22) return `${NAME[i]}: ${metres(HEIGHT[i])} above the sea. A jar of air here holds ${bits(AIR[i])} bits of every 100 at the sea.`;
+    const i = placeAt(y);
+    if (i !== undefined) return `${NAME[i]}: ${metres(HEIGHT[i])} above the sea. A jar of air here holds ${bits(AIR[i])} bits of every 100 at the sea.`;
     return 'The mountain, drawn to its heights: Sea level at the foot, Summit Run at the top.';
   }
   if (view.jar && x > JAR.x && x < JAR.x + JAR.w && y > JAR.y && y < JAR.y + JAR.h) return 'A jar of air from where the stand is. Each dot is one bit of air: the more packed in, the denser the air.';
@@ -92,7 +98,7 @@ export function targetPoint(view, action) {
   if (action === 'rotor') return toBoard(g.hx, g.hy - 35);
   if (action === 'crate:add') return [RACK_X + CRATE.w, GROUND_Y - CRATE.h];
   if (action === 'crate:remove') { const c = g.crates.at(-1); return c ? toBoard(c.x, c.y) : null; }
-  if (action === 'go') return toBoard(0, -14);
+  if (action === 'go') return LIFT_OFF;
   return null;
 }
 // The lever share a drag to (x, y) asks for.
@@ -265,8 +271,8 @@ function rack(ctx, view) {
   const f = view.flight, spare = RACK - f.crates;
   for (let i = 0; i < spare; i++) crate(ctx, RACK_X + CRATE.w / 2 + (i % 2) * (CRATE.w + 2), GROUND_Y - CRATE.h / 2 - Math.floor(i / 2) * (CRATE.h + 2));
   if (view.glow === 'crate:add' && spare) halo(ctx, RACK_X + CRATE.w, GROUND_Y - CRATE.h, 50, view.time);
-  if (view.keys[1]) keyCap(ctx, RACK_X + CRATE.w - 14, GROUND_Y + 26, '1');
-  if (view.keys[2] && f.crates) keyCap(ctx, RACK_X + CRATE.w + 14, GROUND_Y + 26, '2');
+  if (view.keys[1]) keyCap(ctx, ...KEY_ONE, '1');
+  if (view.keys[2] && f.crates) keyCap(ctx, ...KEY_TWO, '2');
 }
 function table(ctx, rows) {
   const x = 352, y = 8, w = 404, cols = [x + 12, x + 150, x + 226, x + w - 12];
@@ -304,7 +310,7 @@ function drawStand(ctx, view) {
   ctx.restore();
   if ((f.lever > 0 || f.h > 0) && view.keys.Space !== 'go') text(ctx, STATUS[f.status], PAD_X, GROUND_Y + 34, {size: 18, colour: f.status === 'hovering' ? theme.good : theme.accent});
   if (view.keys.Space === 'rotor') spaceKey(ctx, ...toBoard(g.hx, g.hy - 74));
-  if (view.keys.Space === 'go') { spaceKey(ctx, PAD_X - 40, GROUND_Y + 34); text(ctx, 'lift off', PAD_X - 6, GROUND_Y + 34, {size: 15, align: 'left'}); }
+  if (view.keys.Space === 'go') { spaceKey(ctx, ...LIFT_OFF); text(ctx, 'lift off', LIFT_OFF[0] + 34, LIFT_OFF[1], {size: 15, align: 'left'}); if (view.glow === 'go') halo(ctx, LIFT_OFF[0] + 30, LIFT_OFF[1], 50, view.time); }
   if (view.lever) lever(ctx, view);
   if (view.jar) jars(ctx, view, f.place);
   if (view.readouts) readouts(ctx, view);
