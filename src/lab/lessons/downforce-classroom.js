@@ -3,7 +3,6 @@
 // challenge's bench), the car on the scale is the bench's car, and question 3 is the Tune page's own Wing angle line.
 import {downforceBench, downforce, tunnelCar, kgForce} from '../benches/tunnel.js';
 import {LAB_TUNE} from '../lab-tune.js';
-import {effectLine} from '../tune-view.js';
 
 // The fan dial moves in the bench's own step, 10 mph a press, from 50 to 150.
 export const SPEED_STEP = 10, MIN_MPH = 50, MAX_MPH = 150;
@@ -84,8 +83,9 @@ const GUESSES = Object.freeze([[2, 'twice'], [4, 'four times'], [8, 'eight times
   ({label: `About ${kg(n * T60_EXACT)}: ${word} as much`, kg: n * T60_EXACT})));
 const COST_GUESSES = WINGS.map(wing => ({label: WING_NAME[wing], wing}));
 
-// The Tune page's own line for two steps of More wing (tune-view.js effectLine).
-export const WING_TWO_LINE = effectLine('wing', 2);
+// The Tune page's own line for two steps of More wing (tune-view.js effectLine), from the same table.
+const signedPct = share => `${share > 0 ? '+' : '-'}${Math.round(Math.abs(share) * 1000) / 10}%`;
+export const WING_TWO_LINE = `Grip at 100 mph ${signedPct(2 * LAB_TUNE.wing.gripAtReference)}, more at higher speed; top speed ${signedPct(2 * LAB_TUNE.wing.topSpeedPerStep)}.`;
 const gripTwo = Math.round(2 * LAB_TUNE.wing.gripAtReference * 100), topTwo = Math.round(-2 * LAB_TUNE.wing.topSpeedPerStep * 100);
 const CHECKS = {
   'check-nine': {
@@ -137,7 +137,8 @@ export function createModel() {
     if (id === 'watch') { set.wing = 'big'; m.watch = 0; spinTo(WATCH_MPH[0], {from: 0, hold: WATCH_HOLD_S, delay: .6}); }
     if (id === 'try-speed') { set.speed = TRY_FROM; set.wing = 'small'; m.fan = {mph: TRY_FROM}; m.rows = [row(TRY_FROM, 'small')]; m.phase = 'set'; }
     if (id === 'try-cost') { set.speed = 100; m.phase = 'guess'; }
-    if (id === 'alone') { set.speed = COURSES[m.course].mph; m.phase = 'set'; }
+    // The job starts on the steep wing, away from course 1's answer, whatever wing the tries left.
+    if (id === 'alone') { set.speed = COURSES[m.course].mph; if (m.course === 0) set.wing = 'big'; m.phase = 'set'; }
     if (CHECKS[id]) m.phase = m.answered === null ? 'ask' : 'answered';
   }
   // The fan spins from where it is (or `from`) up to `mph`, holds, then the step goes on.
@@ -276,9 +277,9 @@ export function createModel() {
     if (id === 'try-speed') {
       m.phase = 'done'; seen.add(id); m.rows = [...m.rows, row(mph, wing)];
       const right = m.guess === 1, got = pushKg(mph, wing);
-      m.say = right ? `Right: ${kg(got)}, four times the ${kg(T60)} at ${TRY_FROM} mph. Twice the speed, four times the push.`
-        : m.guess === 0 ? `It pushed ${kg(got)}, not twice ${kg(T60)}: four times as much. Twice the speed gives four times the push.`
-          : `It pushed ${kg(got)}: four times ${kg(T60)}, not eight. Twice the speed, four times the push.`;
+      m.say = right ? `Right: ${kg(got)}, four times as much as at ${TRY_FROM} mph. Twice the speed, four times the push.`
+        : m.guess === 0 ? `It pushed ${kg(got)}: four times as much as at ${TRY_FROM} mph, not twice. Twice the speed gives four times the push.`
+          : `It pushed ${kg(got)}: four times as much as at ${TRY_FROM} mph, not eight. Twice the speed, four times the push.`;
       return {kind: right ? 'right' : 'wrong', say: m.say};
     }
     if (id === 'try-cost') {

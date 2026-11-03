@@ -132,7 +132,7 @@ test('the tries: Space at the wrong speed, every wrong guess and the same wing t
   assert.equal(speed.view().cards.length, 3, 'set up, then guess from pictures of results');
   assert.deepEqual(speed.view().cards.map(c => c.label), ['About 81 kg: twice as much', 'About 162 kg: four times as much', 'About 323 kg: eight times as much']);
   speed.act('answer:0'); until(speed, x => x.ready);
-  assert.match(speed.view().brian.text, /^It pushed 162 kg, not twice 40 kg: four times as much/);
+  assert.match(speed.view().brian.text, /^It pushed 162 kg: four times as much as at 60 mph, not twice/);
 
   const cost = createClassroomSession(lesson);
   playThroughTo(cost, 'try-cost');
@@ -147,6 +147,18 @@ test('the tries: Space at the wrong speed, every wrong guess and the same wing t
   assert.equal(cost.view().ready, true);
   assert.match(cost.view().brian.text, /^The steep wing pushes more, 225 kg, but drags more too: only 176 mph\. Flat drags least, 81 kg, the car’s body alone, and keeps all 201 mph\./);
   assert.deepEqual(cost.view().rows.map(r => r.wing), ['small', 'flat', 'big']);
+});
+
+test('Brian’s job starts away from course 1’s answer, whatever order the tries were run in', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-cost');
+  session.act('answer:0');
+  for (const wing of ['flat', 'big', 'small']) { setTo(session, null, wing); fan(session); }
+  assert.equal(session.view().wingPanel.wing, 'small', 'the tries end on the tilted wing');
+  session.act('next');
+  assert.equal(session.view().step.id, 'alone');
+  assert.equal(session.view().wingPanel.wing, 'big');
+  assert.notEqual(session.view().target, 'go', 'Brian does not point at the fan before a choice is made');
 });
 
 test('Brian’s job: the least wing that holds each course; too little, too much and a wing on the straight each say why', () => {

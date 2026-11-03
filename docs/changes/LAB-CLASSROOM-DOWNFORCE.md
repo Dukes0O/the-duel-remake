@@ -47,7 +47,8 @@ green, behind `lab-classroom` (on), with no Preview step.
 - The old Downforce lesson: `src/lab/lessons/downforce-lesson.js` and `downforce-animation.js`; the
   tunnel picture's wing drawing in `tunnel-packet.js` (only Downforce drew it); the wing, scale and
   wing stand from the parts the 3D tunnel takes out of its model (`tunnel-model.js`). The tunnel model
-  file stays: Grip and Suspension still use it, and it goes when they are rebuilt.
+  file (`public/assets/models/lab/tunnel-parts.glb`, wing, scale and stand still inside it) stays:
+  Grip and Suspension still use it, and it goes when they are rebuilt.
 - Downforce's part of `tools/test-lab-lessons-tunnel.mjs` (its packet, its verdict, the wing chord
   test) and of `tools/scenarios/lab-lessons-tunnel.mjs` (now Grip and Suspension); that scenario's
   shared driver is no longer exported, since `lab-tune-view` now passes Downforce through the
@@ -63,5 +64,16 @@ green, behind `lab-classroom` (on), with no Preview step.
   that is unchanged.
 
 ## Review
+
+One independent review (read-only agent), on a77a9727. One real fault, fixed: Brian's job kept the
+wing the tries left, so running the tries in the order Flat, Steep, Tilted opened the job on course
+1's answer and one Space passed it. The job now starts on the steep wing (its first Space teaches
+"too much wing"), with a test that plays the tries in that order. Smaller points, fixed: "four times
+the 40 kg" beside 162 kg (40.4 kg rounded) now says "four times as much as at 60 mph"; question 3's
+line is built from the Tune page's own table (`LAB_TUNE`) as Braking's is, instead of importing the
+garage page, and the test still checks it equals `effectLine('wing', 2)`; the push arrow is capped so
+it stays clear of the car at 150 mph; the Removed note names the tunnel model's leftover parts. Left
+as is: the Watch voice says "turn the fan from fifty to a hundred and fifty" while the Watch runs by
+itself (the words on screen say what happens).
 
 ## Checks

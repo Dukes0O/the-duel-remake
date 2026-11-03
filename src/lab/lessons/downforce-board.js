@@ -163,7 +163,7 @@ function tunnelScene(ctx, view) {
   wingShape(ctx, WING_AT.x, WING_AT.y, WING_AT.chord, tilt);
   // The push down from the wing, the drag back from the tail.
   if (r.push > .5) {
-    const len = 14 + r.push * .2;
+    const len = 14 + Math.min(r.push, 380) * .2;
     arrowLine(ctx, WING_AT.x + 54, WING_AT.y - 30, WING_AT.x + 54, WING_AT.y - 30 + len, theme.good);
     text(ctx, `push ${kg(r.push)}`, WING_AT.x + 66, WING_AT.y - 40, {size: 15, align: 'left', colour: GREEN});
   }
