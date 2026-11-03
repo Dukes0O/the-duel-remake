@@ -1809,3 +1809,23 @@ checks removed; two bench facts moved unchanged).
 Full tier 568/568 on bb9a2c8e. Rule 19: since then the Deep's screen code (FINISH-DEEP, released on
 its lane tier) and Lab lesson code, tests and notes; no shared core, save shape or physics. No save
 change.
+
+
+## Release, 3 November 2026, night (Claude, Release Manager)
+
+SKI-FINISH (Kyle, 2 November: could not find the ski pad and ran out of fuel). A ski flight's leg to
+Summit Run ends hovering 400 m from Devils Playground; orange light columns and rings on the pads still
+to fly to, orange SKI flags on the pilot's map; the autopilot flies to the pad; a pump at the pickup pad
+during a ski flight; the job card names the fuel the next leg needs, says to fill up when short and has
+a Fill up here button; the landed panel follows the trip. The fuel truck now also comes to an empty tank
+at a paid pump when the credits cannot buy the reserve. Played from the home pad with a memory-only save
+(ski-drop-trip: arrival 187 kg, home 94 kg, the card right at every stage); every run on keyboard and
+the group's thin air (ski-finish, the 26 October numbers again); ski-view and heli-jobs pass.
+test-ski-heli 21/21, test-heli-job-clarity 1,530, test-pilot-map 321, lane tier (the new-lane Recycle
+Bin fault on four suites in the first run; they passed in the second), build. One review: two real
+faults, fixed and confirmed. Changed assertions reviewed in docs/changes/SKI-FINISH.md (the ski card
+words, the way after an unfinished group run, the pickup fuel floor now the pump).
+
+Full tier 568/568 on bb9a2c8e. Rule 19: since then helicopter and ski screen and session code, the
+Deep's screen code and Lab lesson code (each released on its lane tier), tests and notes; no shared
+core, save shape or physics. No save change.
