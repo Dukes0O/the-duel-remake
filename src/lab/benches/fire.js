@@ -3,6 +3,9 @@
 // a cleared strip is a column of cells with no forest in it, which a fire cannot cross without wind.
 import {FIRE, RETARDANT, cellId, spreadStep} from '../../heli/heli-fire.js';
 import {choice, makeBench} from './bench-core.js';
+// The game's own fire and bucket rules, for the classroom lesson's forest (fire-classroom.js).
+export {FIRE, RETARDANT, cellId, cellIJ, spreadStep, applyWater, applyRetardant} from '../../heli/heli-fire.js';
+export {BUCKET, RETARDANT_LITRES} from '../../heli/heli-bucket.js';
 
 const ON_OFF = ['on', 'off'];
 const controls = [

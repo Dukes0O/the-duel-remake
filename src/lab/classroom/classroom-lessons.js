@@ -18,6 +18,8 @@ import {lesson as braking} from '../lessons/braking-classroom.js';
 import * as brakingBoard from '../lessons/braking-board.js';
 import {lesson as altitude} from '../lessons/altitude-classroom.js';
 import * as altitudeBoard from '../lessons/altitude-board.js';
+import {lesson as fire} from '../lessons/fire-classroom.js';
+import * as fireBoard from '../lessons/fire-board.js';
 
 export const CLASSROOM_LESSONS = Object.freeze({
   pendulum: Object.freeze({...pendulum, name: 'Pendulums', board: pendulumBoard}),
@@ -29,4 +31,5 @@ export const CLASSROOM_LESSONS = Object.freeze({
   strength: Object.freeze({...strength, name: 'Strength against weight', board: strengthBoard}),
   braking: Object.freeze({...braking, name: 'Braking', board: brakingBoard}),
   altitude: Object.freeze({...altitude, name: 'Air and altitude', board: altitudeBoard}),
+  fire: Object.freeze({...fire, name: 'Fire triangle', board: fireBoard}),
 });
