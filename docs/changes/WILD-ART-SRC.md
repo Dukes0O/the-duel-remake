@@ -1,5 +1,50 @@
 # WILD-ART-SRC
 
+## 3 November 2026: round 3 (final), and every passed animal in the game
+
+Claude's round 2 verdict is at the top of the round 2 note. Round 3 changed
+only the kangaroo and the kookaburra; see
+[the round 3 note](../board/looks/wildlife/west-australia-round-3.md) and
+`west-australia-round-3.jpg`. The round 2 sheet is recycled. `bird.py` gains
+a `merged` head (head, nape and face balls instead of a bent loft) used by
+the kookaburra only; the passed raven and cockatoo files are byte exact.
+
+**Panorama Ridge and Summit Run now join the count.** `src/wildlife-models.js`
+has rows for mule deer, elk, bighorn sheep, cougar, coyote, yellow-bellied
+marmot, eastern grey kangaroo, echidna, raven, sulphur-crested cockatoo and
+kookaburra (I judged the round 3 kookaburra's cap head fixed; Claude makes
+the final call). Birds move and fly in their `Fly` clip. Run speeds and clip
+rates follow each Walk clip's stride at its size; the marmot and echidna
+slide a little when running, as the beaver does. Wolf tracks stay out of the
+table (no decal drawing yet). With every count target approved, the count
+is exactly the job with no list: Panorama Ridge (kangaroos) always, Summit
+Run (bighorn sheep, cougar) once it is open. Every course of the Western
+mountains and Australia lists now draws its animals.
+
+### Checks
+
+CHECKS3
+
+### Changed assertions (for Claude's review, rule 18)
+
+`tools/test-wildlife-view.mjs`, only where it pinned the table:
+
+- "Panorama Ridge has no approved species" and "Summit Run has none either"
+  now use a fixed North woods list (the five that were the table), so they
+  still prove a course without models has no animals. New exact checks pin
+  today's table: Panorama Ridge's three species and echidna rare, Summit
+  Run's four species and cougar rare, the three birds flying in `Fly`.
+- The count block's "today: Tremblant Woods and Tremblant Snow" and the
+  joining checks that followed now run on the same fixed North woods list,
+  unchanged in meaning. New exact checks: today's course lists (three, four
+  with Summit Run) and, over 300 days, today's table gives exactly the job
+  with no list. Nothing is loosened; every old expectation is still asserted.
+
+### Removed
+
+The round 2 sheet. The kookaburra's bent head-and-neck loft (replaced by the
+merged head in the same recipe).
+
 ## 3 November 2026: Western mountains and Australia, round 2
 
 Claude's round 1 verdict is in the round 1 note; the changes and numbers in

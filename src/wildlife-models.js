@@ -19,6 +19,21 @@ export const WILDLIFE_MODELS = Object.freeze({
   'black-bear': model('black-bear.glb', {speed: 4.5, rate: 2.6}, {cubScale: .5}),
   'beaver': model('beaver.glb', {speed: 2.2, rate: 2}),
   'eastern-wolf': model('eastern-wolf.glb', {speed: 6.5, rate: 3.4}),
+  // Western mountains and Australia (WILD-ART-SRC rounds 1 to 3). Rates match
+  // each Walk clip's stride at its size; the small animals' short strides
+  // need high rates, and like the beaver they slide a little when running.
+  'mule-deer': model('mule-deer.glb', {speed: 6, rate: 3.6}),
+  'elk': model('elk.glb', {speed: 6.5, rate: 3}),
+  'bighorn-sheep': model('bighorn-sheep.glb', {speed: 5.5, rate: 3.3}),
+  'cougar': model('cougar.glb', {speed: 6.5, rate: 3.1}),
+  'coyote': model('coyote.glb', {speed: 6, rate: 3.9}),
+  'yellow-bellied-marmot': model('yellow-bellied-marmot.glb', {speed: 2.5, rate: 6}),
+  'eastern-grey-kangaroo': model('eastern-grey-kangaroo.glb', {speed: 6, rate: 2.2}),   // Walk is a bound
+  'echidna': model('echidna.glb', {speed: .8, rate: 4}),
+  // Birds perch in Idle and fly in their Fly loop; the view sets their flight speed.
+  'raven': model('raven.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'sulphur-crested-cockatoo': model('sulphur-crested-cockatoo.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  'kookaburra': model('kookaburra.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
 });
 
 // The ids in the table, for availableSpecies() and the count's course list.
