@@ -5,13 +5,16 @@
                                                  draws each trace back over its photo
 
 The photos live in C:/Users/kyleb/dev/art-library/<car>/reference/ (viewing only, never
-shipped). Each trace is a list of photo pixels read off a 10 to 25 px grid. The side
-photos are taken from the front quarter with a slight downward look, so a plain scale
-would be wrong: the side view is mapped through a one-dimensional pinhole camera fitted
-to the two wheel hubs and the two rim sizes (the 19 or 20 inch rims are a known length),
-giving metres along the car and above the road. Front and rear outlines are scaled by
-the track of the two contact patches. Output is in game metres: +Z forward, front axle
-at the car file's front axle, ground at 0.
+shipped). Only the side views are traced: each trace is a list of photo pixels read off a
+10 to 25 px grid (the top line, the tail, the underside and, for two cars, the side
+window), with both hub centres and a rim or tyre size for scale. The Enzo's side photo is
+taken from the front quarter with a slight downward look, so it is mapped through a
+one-dimensional pinhole camera fitted to the nose, both hubs and the tail, with one height
+factor that brings the roof to the real height. The F1's photo is square on: the same fit
+with no height factor. The Bolide's is square on too but its axles sit off the game's, so
+it uses a plain scale taken from nose to tail ('square'). Front and rear
+widths were judged by eye, not traced. Output is in game metres: +Z forward, the front
+axle at the car file's front axle, ground at 0.
 """
 import json
 import sys

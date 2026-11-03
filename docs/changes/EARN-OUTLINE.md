@@ -5,7 +5,7 @@
   `C:/Users/kyleb/dev/art-library/<car>/reference/` (viewing only, never
   shipped or committed). Part of EARN-FINISH. Lane `claude/earn-outline`. Kind:
   car look. The `earned-cars` switch is not touched here.
-- Sheet: `docs/board/looks/earned-cars/outline-round.jpg` (366 KB): for each car
+- Sheet: `docs/board/looks/earned-cars/outline-round.jpg` (386 KB): for each car
   a side row and a three-quarter row, photo / model before / model after, the
   renders turned to face the photo's way.
 
@@ -19,10 +19,10 @@
 2. Map to game metres. The Enzo photo is taken from the front quarter (front rim
    66 px, rear 52 px), so it is mapped through a one-dimensional pinhole camera
    fitted to the nose, both hubs and the tail at the declared length, with one
-   height factor for the downward look (roof to the real 1.147 m). The F1 and
-   Bolide photos are square on, so they use a plain scale (the Bolide's
-   lengthwise scale comes from nose and tail, because the game's axles sit about
-   20 cm rearward of the photo's). Output: `tools/art/earned-outlines.json`.
+   height factor for the downward look (roof to the real 1.147 m). The F1 photo
+   is square on: the same fit with no height factor. The Bolide photo is square
+   on too, but the game's axles sit about 20 cm rearward of the photo's, so it
+   uses a plain scale from nose to tail. Output: `tools/art/earned-outlines.json`.
 3. Rebuild the body stations, the glasshouse sections and the worst details
    from those numbers (below).
 4. Score. `tools/art/earned-export.mjs` builds the runtime model through the
@@ -50,6 +50,9 @@ after only.
 Verdict (self): **better proportions on all three, gritty not toy-like, not
 release-quality likenesses.** Enzo and F1 gain half a point each; the Bolide's
 shape changed but its score did not.
+
+Claude's verdict: accepted by Claude 3 November: Enzo 3, F1 3, Bolide 3 of 5;
+gritty, not toy-like.
 
 ## What changed per car
 
@@ -83,9 +86,9 @@ shape changed but its score did not.
 
 Kept: declared sizes, wheel positions and radii, collision footprints, driver
 and steering hooks, damage and crush, design feature labels and every vehicle
-contract check. Budgets: Enzo 69,111 / 55 (was 64,710 / 54), F1 54,800 / 54
-(was 54,793 / 54), Bolide 66,408 / 55 (was 65,871 / 55), all under the Jesko's
-73,600 triangles and 66 draws.
+contract check. Budgets before the review fixes: Enzo 69,111 / 55 (was 64,710 /
+54), F1 54,800 / 54 (was 54,793 / 54), Bolide 66,408 / 55 (was 65,871 / 55),
+all under the Jesko's 73,600 triangles and 66 draws.
 
 ## Tests and checks
 
@@ -100,14 +103,78 @@ contract check. Budgets: Enzo 69,111 / 55 (was 64,710 / 54), F1 54,800 / 54
   the Enzo and Bolide files were reworded after it started (comments only).
 - `npm run build`: passes.
 - Not run: frame timing (rule 9: art rounds are not frame-timed), browser
-  look scenarios (`enzo-look`, `mclaren-f1-look`: laptop-only; the parent
-  session's play-through covers the cars in the game), the full tier.
+  look scenarios in the first pass (run after the review fixes, below), the
+  full tier.
 - Test-driven corrections during the round, no test touched: the Enzo fender
   test (fenders above the beak) failed with a tall ridge, so the ridge was
   made smaller and fender humps added; the F1's windscreen frame, helmet and
   snorkel checks failed with a wide, high front cabin, so its front sections
   were narrowed and the roof kept under 1.09 m; the F1 paint colour is pinned,
   so only its metalness and roughness changed.
+
+## Review fixes (3 November)
+
+The review found three real faults; all fixed in this lane.
+
+1. **See-through under the new glass.** The cockpit openings had moved forward
+   (Enzo to 1.42 m, F1 to 1.26 m) past the cockpit floors (about .83 and
+   .86 m), and the F1 opening (.70 m half width) was wider than its windscreen
+   base, so views ran into the hollow nose and, on the Enzo, through the
+   bigger rear glass into the tail. Fixed:
+   - Enzo: a dark carbon scuttle under the windscreen (z .78 to 1.44), the
+     floor run from the new bulkhead to the scuttle (z -.97 to 1.44), a carbon
+     bulkhead behind the seats at the opening's back edge, and the
+     windscreen's lower edge brought down onto the body (.72 to .75 m instead
+     of .77 to .83 m).
+   - F1: a carbon scuttle out past the opening edges (x ±.74, tucked 1.5 cm
+     under the body edge, z .84 to 1.28), a floor under it, the main floor run
+     back to the opening's back edge and a rear bulkhead.
+   - Bolide: the floor now covers the whole cockpit opening (z -.87 to 1.03).
+   Check: a grid of parallel rays (0.033 m apart) over each car in four
+   directions; a ray counts when it passes the glass or the cockpit opening
+   and its first solid hit is the inside of the body shell outside the old
+   cockpit floor, or nothing at all. Built model (`integration/wasteland`
+   base) against the fixed branch:
+
+   | Car | Straight down | Chase camera, 19 degrees down from behind | Rearward, 30 degrees down | Forward, 30 degrees down |
+   | --- | --- | --- | --- | --- |
+   | Enzo base, fixed | 118, 0 | 65, 40 | 51, 0 | 97, 3 |
+   | F1 base, fixed | 11, 0 | 114, 98 | 30, 8 | 20, 2 |
+   | Bolide base, fixed | 0, 0 | 56, 39 | 50, 44 | 20, 18 |
+
+   Every count is now at or below the base. The remaining chase counts sit at
+   the nose (z 1.5 to 2.1 m: wheel houses and lamp recesses seen from behind,
+   present in the base too), not in the cockpit. The review's own numbers on
+   the unfixed branch were about 250 chase rays into the F1 nose (base about
+   6) and about 80 rearward rays into the Enzo tail (base none).
+2. **Enzo windscreen cracks under the roof.** `frontGlassZ` .92 put 18 of 52
+   crack ends under the painted roof. Now 1.12 (on the windscreen) and
+   `rearGlassZ` -.66 (on the rear glass, ahead of where it ends): 0 of 52
+   front and 0 of 52 rear crack ends under paint (checked by casting down from
+   each crack end). The same check found two smaller cases, also fixed: F1 rear
+   2 of 48 under paint at -.97, now 0 of 44 at -1.03 (base 0 of 42); Bolide
+   rear 16 of 48 at -.64, now 3 of 44 at -.74 (base 12 of 44).
+3. **Photo credits.** The sheet now ends with the author and licence of each
+   photo, read from each car's `sources.json` by
+   `tools/art/earned-outline-sheet.py`: Ferrari Enzo side and three-quarter by
+   Valder137 (CC BY 2.0); McLaren F1 side and three-quarter by Mr.choppers (CC
+   BY-SA 3.0); Bugatti Bolide side by Santaclaus93 (CC BY-SA 4.0),
+   three-quarter by Mr.choppers (CC BY-SA 4.0). Sheet 386 KB.
+4. The `earned-outlines.py` docstring now says only the side views are traced
+   and how each car is mapped.
+
+Also found in the browser look: the Enzo's headlamp lenses stood above the
+new fender humps like goggles; they are smaller (.05 m) and sunk 4 cm into the
+humps.
+
+Checks after the fixes, with `integration/wasteland` (0510b9c9) merged in
+cleanly: `test-enzo-vehicle` (426), `test-mclaren-f1-vehicle` (351),
+`test-bolide-vehicle` (430), `test-vehicle-assets` (147), `test-repo-hygiene`
+(placement passed), `test-repo-hygiene-rules` (150) all pass. Browser
+scenarios, one at a time: `enzo-look` (9 screenshots, 0 warnings, 0 errors;
+rerun after the lamp fix, same result) and `mclaren-f1-look` (6 screenshots,
+0 warnings, 0 errors); screenshots looked at, then deleted. Budgets now: Enzo
+69,413 / 55, F1 55,402 / 54, Bolide 66,408 / 55.
 
 ## Changed assertions
 

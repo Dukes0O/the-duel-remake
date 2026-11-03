@@ -186,11 +186,11 @@ function fittedDetails(vehicle, m) {
     // with a slim running-light strip along the recess's outer edge.
     for (const [x, z] of [[.71, 1.96], [.79, 1.74]]) {
       const y = surfaceY(side * x, z); if (y === null) continue;
-      // Facing straight forward and sunk into the recess: a dark tinted lens with a thin lit ring.
-      cylinder(b, m.carbon, .062, .06, [side * x, y - .012, z], [Math.PI / 2, 0, 0], 20);
-      cylinder(b, m.glass, .05, .012, [side * x, y - .012, z + .031], [Math.PI / 2, 0, 0], 20);
-      const ring = new THREE.TorusGeometry(.046, .006, 6, 24);
-      b.add(ring, m.alloy, [side * x, y - .012, z + .036]); ring.dispose();
+      // Facing straight forward and sunk into the fender hump: a dark tinted lens with a thin bezel.
+      cylinder(b, m.carbon, .05, .06, [side * x, y - .04, z], [Math.PI / 2, 0, 0], 20);
+      cylinder(b, m.glass, .04, .012, [side * x, y - .04, z + .031], [Math.PI / 2, 0, 0], 20);
+      const ring = new THREE.TorusGeometry(.037, .005, 6, 24);
+      b.add(ring, m.alloy, [side * x, y - .04, z + .036]); ring.dispose();
     }
     const strip = [];
     for (let i = 0; i <= 8; i++) {

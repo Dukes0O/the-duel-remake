@@ -47,12 +47,25 @@ def fit(image):
     return tile
 
 
+def credits():
+    """Author and licence of each photo on the sheet, read from each car's sources.json."""
+    lines = []
+    for _, _, library, name, views in CARS:
+        sources = {e['file']: e for e in json.loads((LIBRARY / library / 'reference' / 'sources.json').read_text())}
+        used = {}
+        for _, photo, _, _ in views:
+            e = sources[photo]
+            used.setdefault(f"{e['author']}, {e['licence']}", []).append(photo.removesuffix('.jpg'))
+        lines.append(f'{name} ' + ', '.join(f"{' and '.join(views)} by {who}" for who, views in used.items()))
+    return lines
+
+
 def main(folder, out, limit='500000'):
     folder, out, limit = Path(folder), Path(out), int(limit)
     scores = {when: json.loads((folder / when / 'fit.json').read_text()) for when in ('before', 'after')}
     rows = sum(len(car[4]) for car in CARS)
-    head, label = 40, 22
-    sheet = Image.new('RGB', (TILE[0] * 3, head + rows * (TILE[1] + label)), (18, 20, 22))
+    head, label, foot = 40, 22, 74
+    sheet = Image.new('RGB', (TILE[0] * 3, head + rows * (TILE[1] + label) + foot), (18, 20, 22))
     draw = ImageDraw.Draw(sheet)
     try:
         font, title = ImageFont.truetype('arialbd.ttf', 14), ImageFont.truetype('arialbd.ttf', 17)
@@ -77,6 +90,8 @@ def main(folder, out, limit='500000'):
             for i, text in enumerate(texts):
                 draw.text((i * TILE[0] + 8, y + 3), text, fill=(235, 228, 210), font=font)
             y += TILE[1] + label
+    for i, line in enumerate(['Photos from Wikimedia Commons, used for comparison only:', *credits()]):
+        draw.text((10, y + 4 + i * 17), line, fill=(200, 196, 186), font=font)
     for quality in range(88, 30, -4):
         sheet.save(out, quality=quality, optimize=True)
         if out.stat().st_size <= limit:
