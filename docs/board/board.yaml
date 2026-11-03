@@ -192,7 +192,7 @@ tasks:
     size: "M"
     status: "building"
     claimed_by: "claude-h3-finish-2026-11-03"
-    branch: "claude/wild-art-west"
+    branch: "claude/wild-art-europe"
     needs: []
     locks: []
     flag: "wildlife"
