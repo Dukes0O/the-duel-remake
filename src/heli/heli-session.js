@@ -216,7 +216,9 @@ export function insideArea(area, x, y, z, ground = null) {
 // only with the pilot's map on, a sign for each is on its course to be found from the air, and the Table appears on the map after
 // the leg that passes it. wildlife is src/wildlife.js (pass `import *
 // as wildlife`; the helicopter rules may not import it) and surveyStand(courseId,
-// world) gives the count's `canStand(x, z)` for a course, or null. With both
+// world) gives the count's `canStand(x, z)` for a course, or null. wildlifeApproved
+// is the species that have a drawn model (src/wildlife-models.js): the count asks
+// only for those; left out, every species is on offer. With both
 // switches off, or left out, every result is what it was.
 // drivingLessonAt(courseId, carId) (DRIVE-LESSON-HELIPAD, docs/DRIVING_LESSONS.md
 // 12.6): the app's answer to "which driving lesson is next on this course for
@@ -226,7 +228,7 @@ export function insideArea(area, x, y, z, ground = null) {
 // board only with it on, with the pilot's map and Kogane Pass on as well, and once the story reaches that step; left out, nothing changes.
 export function createHeliSession({profile, enabled = false, loadCourse, persist = () => {}, carId = null,
   mode = 'assisted', difficulty = 'pro', today = null, fireEnabled = false, playerName = 'Player', loadFireCourse = null, rescueEnabled = false,
-  summitRunEnabled = false, koganePassEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, surveyStand = null, labEnabled = false,
+  summitRunEnabled = false, koganePassEnabled = false, skinsEnabled = false, wildlifeEnabled = false, wildlife = null, wildlifeApproved = null, surveyStand = null, labEnabled = false,
   drivingLessonAt = null, pilotMapEnabled = false, secretCourses = [], heliSkiingEnabled = false, logbookEnabled = false, koganeStoryEnabled = false} = {}) {
   if (enabled !== true) throw new Error('The helicopter switch is off.');
   if (typeof loadCourse !== 'function') throw new Error('createHeliSession needs loadCourse(courseId)');
@@ -247,7 +249,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   let logbookAirborne = false, rankCheckedSave = null;
   const rankNotices = [];
   const skinOn = skinsEnabled === true, sflag = {enabled: skinOn};
-  const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn};
+  const wildOn = wildlifeEnabled === true, wildFlag = {enabled: wildOn, summitRun: summitOn, approved: wildlifeApproved};
   const placesNow = () => destinationsFor(dflag);
   let save = profile;
   // The pilot's map record, read again only when the save changes.
@@ -1646,7 +1648,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   function startSurveyRun() {
     const a = site.area, m = HELI_SESSION.areaMargin;
     const plan = planSurvey(surveyTaken, {site: {minX: a.minX + m, maxX: a.maxX - m, minZ: a.minZ + m, maxZ: a.maxZ - m},
-      canStand: typeof surveyStand === 'function' ? surveyStand(site.courseId, world) : null, wildlife});
+      canStand: typeof surveyStand === 'function' ? surveyStand(site.courseId, world) : null, wildlife, approved: wildlifeApproved});
     surveyRun = createSurveyRun(plan);
     scareSaidAt = -Infinity;
   }
@@ -2739,7 +2741,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const run = surveyRun, square = run.plan.square, agl = heli.y - world.ground.height(heli.x, heli.z);
     return Object.freeze({...base, count: run.count, percent: surveyPercent(run), canReport: canReport(run), rare: run.rareSeen,
       square: Object.freeze({...square}), target: Object.freeze(bearingTo(square.cx, square.cz)),
-      animals: Object.freeze(run.animals.map(a => Object.freeze({id: a.id, role: a.role, x: a.x, z: a.z, counted: a.counted}))),
+      // species is for the drawing (WILD-VIEW): which model stands where.
+      animals: Object.freeze(run.animals.map((a, i) => Object.freeze({id: a.id, role: a.role, species: run.plan.animals[i].species, x: a.x, z: a.z, counted: a.counted}))),
       heat: Object.freeze(heatAnimals(run, {x: heli.x, z: heli.z, agl}, gearNow()).map(animal => Object.freeze(animal)))});
   }
 

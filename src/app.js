@@ -29,6 +29,7 @@ import {createLabLap} from './lab/lab-lap.js'; // LAB-VIEW
 import {passLesson as labPassLesson} from './lab/lab-save.js'; // LAB-VIEW
 import {carbonPlatesOwned} from './lab/lab-shop.js'; // CARBON-PLATES-WIRE
 import * as wildlifeRules from './wildlife.js';
+import {APPROVED_MODEL_IDS as wildlifeApproved} from './wildlife-models.js';
 import {fireOnNewDay, fireWorld} from './heli/heli-fire-run.js';
 import {notePlayDay, buyBack as buyBackSave, fireOf, heliOf} from './heli/heli-save.js';
 // STORY-KOGANE-HOOKS: the Kogane Invitation (docs/story/kogane-invitation.md), behind the kogane-invitation switch.
@@ -1993,7 +1994,7 @@ export class App {
       skinsEnabled: this._switches().enabled('heli-skins') === true, wildlifeEnabled: this._switches().enabled('wildlife') === true,
       // SKI-VIEW: heli-skiing needs Summit Run (the session checks that too).
       heliSkiingEnabled: this._switches().enabled('heli-skiing') === true,
-      wildlife: wildlifeRules, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
+      wildlife: wildlifeRules, wildlifeApproved, surveyStand: (courseId, world) => this._surveyStand(courseId, world), playerName: this.player.name, loadFireCourse: courseId => this._fireCourse(courseId),
       today: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       persist: profile => {
         // Credits the session charged since its last save move the app's

@@ -6,6 +6,7 @@ import {createUnderwaterScene} from './deep/underwater-scene.js';
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
+import {createWildlifeView} from './wildlife-view.js'; // WILD-VIEW: animals beside the road and from the air
 // MAP-VIEW: signs, corner names and the Table (drawing only).
 import {createMapWorldView} from './heli/pilot-map-world.js';
 import {createSkiView} from './ski/ski-view.js'; // SKI-VIEW: the ski zone, drawn in a scene of its own
@@ -332,6 +333,8 @@ export function attachRenderer(host, app) {
   // The helicopter's group joins the scene before the lighting roots are
   // taken, so a world rebuild never removes it.
   const heliView=createHeliView({THREE,scene});
+  // WILD-VIEW: the animals, a group of their own beside the cars; with the switch off nothing is drawn and nothing loads.
+  const wildlifeView=createWildlifeView({scene,host});let wildlifeRevision=0;
   // MAP-VIEW: the pilot's map in the world; its ground heights come from the course last loaded.
   const mapWorld=createMapWorldView({THREE,scene,groundHeight:(x,z)=>app.heliGroundHeight(x,z),
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
@@ -1066,6 +1069,9 @@ export function attachRenderer(host, app) {
     const high=app.ambientOcclusionEnabled!==false;
     snowmenView?.update(menu?null:st,high);
     avalancheView?.update(menu?null:st,high);
+    wildlifeView.update({enabled:(app._switches?.()??app.duel.featureFlags).enabled('wildlife')===true,hidden:menu||!!deepPose,course,runId:app.runId,dt:st.paused?0:dt,
+      worldVisible:world.visible,heli:heliNow,player,rival,extras:extraOpponents,traffic});
+    if(wildlifeView.revision!==wildlifeRevision){wildlifeRevision=wildlifeView.revision;sceneRevision++;ambientShading.refresh();}
     yetiView.update(menu?null:st,course,high);
     const snowOwner=snowWorldOf(world);
     if(snowOwner){
@@ -1210,7 +1216,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
-    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();wildlifeView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;
     if(renderer.domElement.parentNode===host)host.removeChild(renderer.domElement);

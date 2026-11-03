@@ -105,16 +105,34 @@ export const surveyName = species => SURVEY_NAMES[species] ?? species;
 // One a play day, the same every time for the same play day number: a course,
 // then a species there. {id: 's<day>', kind: 'survey', courseId, to, species,
 // pay}; the pay shown is the top band, before the rare bonus.
-export function surveyCourses({summitRun = false} = {}) {
-  return Object.keys(SURVEY_TARGETS).filter(id => id !== SUMMIT_ID || summitRun === true);
+//
+// `approved` is the species that have a drawn model (src/wildlife-models.js; a
+// Set or an array). Sarah never asks for an animal nobody can see: a course is
+// offered only while one of its targets is approved, and the species is picked
+// among the approved ones. Left out (null), every target is on offer, which is
+// every answer this file gave before models were counted.
+const allowing = approved => {
+  if (approved === null || approved === undefined) return () => true;
+  const set = new Set(approved);
+  return species => set.has(species);
+};
+const targetsOf = (courseId, approved) => {
+  const may = allowing(approved);
+  return SURVEY_TARGETS[courseId].filter(row => may(row.species));
+};
+
+export function surveyCourses({summitRun = false, approved = null} = {}) {
+  return Object.keys(SURVEY_TARGETS).filter(id => (id !== SUMMIT_ID || summitRun === true) && targetsOf(id, approved).length > 0);
 }
 
-export function surveyJob(day, {summitRun = false} = {}) {
+// Null when no course has an approved target: nothing can be counted yet.
+export function surveyJob(day, {summitRun = false, approved = null} = {}) {
   const number = dayNumber(day), id = `s${number}`;
   const rng = makeRng(heliHash('survey', 'job', number));
-  const courses = surveyCourses({summitRun});
+  const courses = surveyCourses({summitRun, approved});
+  if (!courses.length) return null;
   const courseId = courses[rng.int(0, courses.length - 1)];
-  const rows = SURVEY_TARGETS[courseId];
+  const rows = targetsOf(courseId, approved);
   let left = rng.float() * rows.reduce((sum, row) => sum + row.weight, 0);
   let species = rows.at(-1).species;
   for (const row of rows) { left -= row.weight; if (left < 0) { species = row.species; break; } }
@@ -153,14 +171,14 @@ function splitHerds(total, herds, rng) {
 
 // Other species beside the course's road that may stand in the square but
 // never count: the common ones with ground feet, not shore-bound, not tracks,
-// not the species being counted.
-function othersFor(wildlife, courseId, target) {
-  const table = wildlife?.speciesFor?.(courseId);
-  return table ? table.common.filter(row => row.species !== target && !row.night
+// not the species being counted, and only those with a drawn model (`approved`).
+function othersFor(wildlife, courseId, target, approved) {
+  const table = wildlife?.speciesFor?.(courseId), may = allowing(approved);
+  return table ? table.common.filter(row => row.species !== target && may(row.species) && !row.night
     && wildlife.SPECIES[row.species]?.kind !== 'decal' && !wildlife.SPECIES[row.species]?.lake) : [];
 }
 
-export function planSurvey(job, {site = null, canStand = null, wildlife = null} = {}) {
+export function planSurvey(job, {site = null, canStand = null, wildlife = null, approved = null} = {}) {
   const square = squareFor(job, site);
   const stands = typeof canStand === 'function' ? canStand : () => true;
   const inside = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -188,7 +206,7 @@ export function planSurvey(job, {site = null, canStand = null, wildlife = null} 
   const total = count.int(...SURVEY.animals), herds = count.int(...SURVEY.herds);
   splitHerds(total, herds, count).forEach((size, i) => addHerd('target', job.species, size, i, 'target'));
   // Other species, which do not count.
-  const others = othersFor(wildlife, job.courseId, job.species), mix = rngFor('others', job.id, job.courseId);
+  const others = othersFor(wildlife, job.courseId, job.species, approved), mix = rngFor('others', job.id, job.courseId);
   if (others.length) {
     const herdsOfOthers = mix.int(...SURVEY.otherHerds);
     for (let i = 0; i < herdsOfOthers; i++) {
@@ -199,7 +217,8 @@ export function planSurvey(job, {site = null, canStand = null, wildlife = null} 
   }
   // The course's rare animal: one day in five, and not when it is what is being
   // counted (a cougar count has no separate rare animal).
-  const rare = wildlife?.speciesFor?.(job.courseId)?.rare ?? null;
+  const tableRare = wildlife?.speciesFor?.(job.courseId)?.rare ?? null;
+  const rare = tableRare && allowing(approved)(tableRare.species) ? tableRare : null;
   const rareRng = rngFor('rare', job.id, job.courseId);
   if (rare && rare.species !== job.species && wildlife.SPECIES[rare.species]?.kind !== 'decal' && rareRng.chance(wildlife.RARE_CHANCE))
     addHerd('rare', rare.species, rareRng.int(...rare.herd), 0, 'rareherd');
