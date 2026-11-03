@@ -6,6 +6,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Air and altitude is a classroom now.** Kestrel One's test pad
+  climbs a mountain drawn to its heights: Sea level, Panorama Ridge (860 m) and
+  Summit Run (2,860 m). A jar of air scooped at the top holds 75 bits where the
+  sea's holds 100, and with the lever all the way up she pushes 2,777 kg there
+  against 3,887 kg at the sea, so the Dusthawk that lifts at the sea stays down
+  at the summit. Hovering takes more lever up high (59% instead of 42%), which
+  burns more fuel. Brian's job: load as many crates as she can lift at each
+  place (four, three, two).
 - **The Deep is easier to follow.** While you dive, a "Next" line under the
   map panel's heading always says what to do next, even with the map folded
   away. Ana's list now says where the Sirena's parts still lie (the steering

@@ -1792,3 +1792,20 @@ Full tier 568/568 on bb9a2c8e. Rule 19: since then only notes and the Deep's scr
 no shared core, save shape or physics), covered by the lane tier above. Frame check: the scene is
 unchanged (screen layer only).
 
+
+## Release, 3 November 2026, later (Claude, Release Manager)
+
+LAB-CLASSROOM-ALTITUDE: Air and altitude as a classroom lesson (twelve steps; the mountain drawn to
+its heights, an air jar of 100, 92 and 75 bits, the collective lever as a share with the red line that
+hovers her; every push from the altitude bench, the Lift lesson's 3,887 kg at sea, 3,513 and 2,777 kg
+up the mountain; Brian's job loads four, three and two crates). The challenge (a 300 kg crate to
+Summit Run with 30% of the tank left), its reward and the save are unchanged. The old lesson goes.
+test-lab-classroom-altitude 10/10, every test-lab-* suite (30), 21 Lab scenarios (Wax's helicopter
+flight timed out under load and passed alone), lane tier 40/40, build. One review: two real faults
+(the lift-off pointer on a crate, place names not clickable) and small ones, all fixed and tested.
+Changed assertions reviewed in docs/changes/LAB-CLASSROOM-ALTITUDE.md (the old lesson's flying-test
+checks removed; two bench facts moved unchanged).
+
+Full tier 568/568 on bb9a2c8e. Rule 19: since then the Deep's screen code (FINISH-DEEP, released on
+its lane tier) and Lab lesson code, tests and notes; no shared core, save shape or physics. No save
+change.
