@@ -35,6 +35,13 @@ const RUNOFF_MARGIN = 3;
 const ESCAPE_MARGIN = 6;
 const PIT_BELT = 30;                   // metres along the road beyond a pit lane or paddock
 const PADDOCK_SIDE_ROOM = 25;          // metres beyond the outermost paddock piece
+// Open ground (WILD-VIEW round 2): a herd a driver or pilot can see stands where no tree
+// trunk is within TRUNK_CLEAR metres and no tree crown lies on the line to the road.
+export const TRUNK_CLEAR = 6;
+export const CROWN_REACH = 3;          // a tree hides what stands this close to the line of sight
+export const NEAR_EDGE = 35;           // herds first try 15 to 35 m from the road edge
+const SIGHT_STEP = 3;
+const SIGHT_LENGTH = 40;               // only the last 40 m of the line to the road can hide an animal that matters
 
 // ---------------------------------------------------------------------------
 // Species. `kind` is ground, bird or decal. A bird is marked perching: the
@@ -371,8 +378,28 @@ function pointToPolyline(points, x, z) {
   return best;
 }
 
+// The course's trees by where they stand (they are course data: the world draws these same trees).
+function treeGrid(course) {
+  const cells = new Map();
+  for (const tree of course.features?.trees ?? []) {
+    const key = Math.floor(tree.x / GRID_CELL) + ':' + Math.floor(tree.z / GRID_CELL);
+    if (!cells.has(key)) cells.set(key, []);
+    cells.get(key).push(tree);
+  }
+  // Is any tree within `reach` metres of the point?
+  return reach => (x, z) => {
+    const span = Math.ceil(reach / GRID_CELL);
+    const cx = Math.floor(x / GRID_CELL), cz = Math.floor(z / GRID_CELL);
+    for (let i = cx - span; i <= cx + span; i++) for (let j = cz - span; j <= cz + span; j++)
+      for (const tree of cells.get(i + ':' + j) ?? []) if (Math.hypot(tree.x - x, tree.z - z) < reach + (tree.halfX ?? 0)) return true;
+    return false;
+  };
+}
+
 export function createPlacementChecker(course) {
   const branches = branchRoads(course);
+  const treeWithin = treeGrid(course);
+  const trunkNear = treeWithin(TRUNK_CLEAR), crownNear = treeWithin(CROWN_REACH);
   const { circles, belt } = kitFootprints(course);
   const basins = course.def.basins ?? [];
   const hazards = hazardGrid(course);
@@ -393,7 +420,21 @@ export function createPlacementChecker(course) {
   }
 
   // Everything that makes a spot a bad place to stand, or null; otherwise where it is.
-  function inspect(x, z, { minEdge = MIN_EDGE, maxEdge = MAX_EDGE, lake = 'avoid' } = {}) {
+  // True when no tree hides the point from the road: none within 6 m of it, none close to the straight
+  // line from it to the nearest road edge.
+  function openGround(x, z, n) {
+    if (trunkNear(x, z)) return false;
+    const phase = course.phase(n.s), side = Math.sign(n.lateral) || 1, edge = course.worldAt(phase, side * course.roadHalfWidthAt(phase));
+    const length = Math.min(SIGHT_LENGTH, Math.hypot(edge.x - x, edge.z - z)), steps = Math.floor(length / SIGHT_STEP);
+    const dx = edge.x - x, dz = edge.z - z, whole = Math.hypot(dx, dz) || 1;
+    for (let i = 1; i <= steps; i++) {
+      const t = (i * SIGHT_STEP) / whole;
+      if (crownNear(x + (edge.x - x) * t, z + (edge.z - z) * t)) return false;
+    }
+    return true;
+  }
+
+  function inspect(x, z, { minEdge = MIN_EDGE, maxEdge = MAX_EDGE, lake = 'avoid', open = false } = {}) {
     if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
     const n = course.nearest(x, z);
     if (!Number.isFinite(n.s) || !Number.isFinite(n.lateral)) return null;
@@ -419,6 +460,7 @@ export function createPlacementChecker(course) {
     for (const circle of circles) if (Math.hypot(circle.x - x, circle.z - z) < circle.radius) return null;
     for (const o of hazards.near(x, z)) if (insideObstacle(o, x, z, OBSTACLE_MARGIN)) return null;
     if (unreachable(course, x, z)) return null;
+    if (open && !openGround(x, z, n)) return null;
     const water = lakeOut(n);
     if (lake === 'avoid' && water.out > -LAKE_GAP) return null;
     if (lake === 'shallows' && water.out > SHALLOWS_METRES) return null;
@@ -484,8 +526,6 @@ function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
   const shallows = checker.basins.length > 0 && rng.chance(info.shallows ?? 0);
   const rule = lakeRule(info, shallows);
   if (rule !== 'avoid' && !checker.basins.length) return null;
-  const options = { minEdge: band[0], maxEdge: band[1], lake: rule };
-
   // Where an anchor for the herd could be, as world x and z.
   const roadCandidate = (time, side, edge) => {
     const s = clock.distanceAt(time), at = course.worldAt(s, side * (course.roadHalfWidthAt(s) + edge));
@@ -499,22 +539,31 @@ function placeHerd({ course, checker, clock, slot, rng, choice, rare }) {
     const at = course.worldAt(basin.s + du, basin.lateral + dv);
     return { x: at.x, z: at.z };
   };
-  const accept = point => {
-    const found = checker.inspect(point.x, point.z, options);
-    return found && inSlot(clock.timeAt(found.s), slot, clock.lapSeconds, clock.closed) ? found : null;
-  };
-
-  let anchor = null;
-  const attempts = rule === 'avoid' ? 40 : 160;
-  for (let i = 0; i < attempts && !anchor; i++) {
-    const point = rule === 'avoid'
-      ? roadCandidate(slot.from + rng.float() * (slot.to - slot.from), rng.chance(.5) ? 1 : -1, rng.range(band[0], band[1]))
-      : shoreCandidate();
-    anchor = accept(point);
+  // Herds by the road stand where they can be seen (WILD-VIEW round 2): first 15 to 35 m from the road edge in
+  // open ground (no trunk within 6 m, no tree on the line to the road), then anywhere in the band in open
+  // ground, then, so a thick forest still has animals, as before. A herd at a lake keeps its own rule.
+  const near = Math.max(band[0] + 1, Math.min(band[1], NEAR_EDGE));
+  const tiers = rule === 'avoid'
+    ? [{ minEdge: band[0], maxEdge: near, lake: rule, open: true }, { minEdge: band[0], maxEdge: band[1], lake: rule, open: true }, { minEdge: band[0], maxEdge: band[1], lake: rule }]
+    : [{ minEdge: band[0], maxEdge: band[1], lake: rule }];
+  let anchor = null, options = null;
+  for (const tier of tiers) {
+    const accept = point => {
+      const found = checker.inspect(point.x, point.z, tier);
+      return found && inSlot(clock.timeAt(found.s), slot, clock.lapSeconds, clock.closed) ? found : null;
+    };
+    const attempts = rule === 'avoid' ? 40 : 160;
+    for (let i = 0; i < attempts && !anchor; i++) {
+      const point = rule === 'avoid'
+        ? roadCandidate(slot.from + rng.float() * (slot.to - slot.from), rng.chance(.5) ? 1 : -1, rng.range(tier.minEdge, tier.maxEdge))
+        : shoreCandidate();
+      anchor = accept(point);
+    }
+    // A thorough sweep of the slot, in case the random draws all landed badly.
+    for (let time = slot.from; rule === 'avoid' && !anchor && time <= slot.to; time += .5)
+      for (const side of [1, -1]) for (const edge of [tier.minEdge + 2, (tier.minEdge + tier.maxEdge) / 2, tier.maxEdge - 3]) anchor ||= accept(roadCandidate(time, side, edge));
+    if (anchor) { options = { ...tier, maxEdge: Math.min(band[1], tier.maxEdge + 10) }; break; }
   }
-  // A thorough sweep of the slot, in case the random draws all landed badly.
-  for (let time = slot.from; rule === 'avoid' && !anchor && time <= slot.to; time += .5)
-    for (const side of [1, -1]) for (const edge of [band[0] + 2, (band[0] + band[1]) / 2, band[1] - 3]) anchor ||= accept(roadCandidate(time, side, edge));
   if (!anchor) return null;
 
   const animals = [];

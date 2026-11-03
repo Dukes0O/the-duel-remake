@@ -371,20 +371,21 @@ export function surveyTitle(job) {
 }
 
 // Today's count job from a profile, or null: switch off, or already finished today.
-export function surveyJobOf(profile, {enabled, summitRun = false} = {}) {
+// `approved` is the species with a drawn model (heli-survey.js); left out, every target is on offer.
+export function surveyJobOf(profile, {enabled, summitRun = false, approved = null} = {}) {
   if (enabled !== true) return null;
   const heli = heliOf(profile), day = heli.playDay.count;
   if (heli.survey?.day === day && heli.survey.done === true) return null;
-  return surveyJob(day, {summitRun});
+  return surveyJob(day, {summitRun, approved});
 }
 
 // The pilot reports to Sarah: pay by how near the estimate is, add one to the
 // wildlife counts, and mark today's count done. The run must be for the job on
 // the board today, so a count can never pay twice, on a replay or a second
 // press. Pay is the same in Assisted and Real, capped like every credit change.
-export function finishSurvey(profile, run, {enabled, summitRun = false} = {}) {
+export function finishSurvey(profile, run, {enabled, summitRun = false, approved = null} = {}) {
   if (enabled !== true) return {ok: false, reason: 'The wildlife count is not available yet.', profile};
-  const job = surveyJobOf(profile, {enabled, summitRun});
+  const job = surveyJobOf(profile, {enabled, summitRun, approved});
   if (!job) return {ok: false, reason: 'There is no count to report.', profile};
   if (!isSurveyRun(run)) return {ok: false, reason: SURVEY_NOT_A_RUN, profile};
   const plan = run.plan;
