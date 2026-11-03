@@ -304,7 +304,8 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.visible = view.courseId === 'tremblant-woods';
       }
       labDraw(view.challenge?.props); // LAB-VIEW
-      skiDraw(view.courseId === 'summit-run' ? view.ski : null, h); // SKI-FINISH
+      // SKI-FINISH: not while a run is skied, so the ski scene's backdrop (painted from this world) never shows the marks.
+      skiDraw(view.courseId === 'summit-run' && !view.ski?.run ? view.ski : null, h);
       fire.update(view, {dt});
       if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});
