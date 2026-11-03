@@ -20,6 +20,8 @@ def cli(species, build=None, motion='Walk'):
     parser.add_argument('--cache', type=Path, default=Path('C:/Users/kyleb/dev/art-library/wild-north-woods'))
     parser.add_argument('--review', action='store_true', help='Render exported GLB, without rebuilding it')
     parser.add_argument('--round', type=int, choices=(1, 2, 3), default=1)
+    parser.add_argument('--candidate', action='store_true',
+                        help='Build or review a candidate under the ignored .qa-dist/wildlife-candidates/ until it passes')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     root = args.root.resolve()
     evidence = root / ('.qa-dist/wildlife-round-' + str(args.round))
@@ -28,7 +30,8 @@ def cli(species, build=None, motion='Walk'):
         # Later species add close Idle and motion frames; small animals and
         # birds are only a few pixels tall from the fixed 14 m cameras.
         views += ['close-idle', 'close-' + motion.lower()]
-    plan = {'blend': [], 'glb': [] if args.review else [str(root / 'public/assets/wildlife' / (species + '.glb'))],
+    home = root / ('.qa-dist/wildlife-candidates' if args.candidate else 'public/assets/wildlife')
+    plan = {'blend': [], 'glb': [] if args.review else [str(home / (species + '.glb'))],
             'evidence': [str(evidence / (species + '-' + view + '.png')) for view in views] if args.review else [],
             'json': [str(evidence / (species + '-inspection.json'))] if args.review else []}
     if args.paths_only:
@@ -39,7 +42,7 @@ def cli(species, build=None, motion='Walk'):
     from mathutils import Vector, Quaternion
     globals().update(Vector=Vector, Quaternion=Quaternion)
     if args.review:
-        review(species, root, args.round)
+        review(species, root, args.round, home)
     elif build:
         build(Path(plan['glb'][0]), sys.modules[__name__], args.cache)
     else:
@@ -347,11 +350,11 @@ def aim(obj, target):
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
 
-def review(species, root, round_number=1):
+def review(species, root, round_number=1, home=None):
     evidence = root / ('.qa-dist/wildlife-round-' + str(round_number))
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
-    bpy.ops.import_scene.gltf(filepath=str(root / 'public/assets/wildlife' / (species + '.glb')))
+    bpy.ops.import_scene.gltf(filepath=str((home or root / 'public/assets/wildlife') / (species + '.glb')))
     scene = bpy.context.scene
     for obj in scene.objects:
         if obj.animation_data:

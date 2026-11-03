@@ -18,8 +18,16 @@ const westWildlife = [
   ['bighorn-sheep', 'Walk', 'white-tailed-deer'], ['cougar', 'Walk', 'eastern-wolf'],
   ['coyote', 'Walk', 'eastern-wolf'], ['yellow-bellied-marmot', 'Walk'], ['eastern-grey-kangaroo', 'Walk'],
   ['echidna', 'Walk'], ['raven', 'Fly'], ['sulphur-crested-cockatoo', 'Fly'], ['kookaburra', 'Fly'],
+  // Europe round 1.
+  ['roe-deer', 'Walk', 'white-tailed-deer'], ['red-deer', 'Walk', 'white-tailed-deer'],
+  ['chamois', 'Walk', 'white-tailed-deer'], ['ibex', 'Walk', 'white-tailed-deer'], ['red-fox', 'Walk', 'eastern-wolf'],
+  ['wildcat', 'Walk', 'eastern-wolf'], ['wild-boar', 'Walk'], ['alpine-marmot', 'Walk'],
+  ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
 ].map(([id, motion, donor]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
+// Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
+// Its recipe stays for a later card; its GLB stays out of public/.
+const artCandidates = new Set(['wildcat']);
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -405,6 +413,15 @@ try {
         assert.deepEqual(readdirSync(fixtureRoot), []);
       }
     });
+    if (artCandidates.has(generator.id)) {
+      // Not passed: built only under the ignored .qa-dist (--candidate),
+      // never in public/, so the game's model table and the disk agree. Its
+      // export checks return when it passes and moves into public/.
+      check(generator.script + ' keeps its candidate out of the runtime folder until it passes', () => {
+        assert.ok(!existsSync(join(root, generator.glb[0])), `${generator.glb[0]} is published before passing`);
+      });
+      continue;
+    }
     check(generator.script + ` exports a bounded coloured skinned animal with Idle and ${generator.motion}`, () => {
       const bytes = readFileSync(join(root, generator.glb[0]));
       assert.equal(bytes.toString('ascii', 0, 4), 'glTF');

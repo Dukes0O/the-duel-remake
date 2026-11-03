@@ -1,5 +1,201 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Europe final verdict, boar and eagle in the game
+
+Claude's final verdict is at the top of the Europe round 3 note: wild boar
+and golden eagle PASS, wildcat NOT passed (cap reached).
+
+- The reviewed boar and eagle GLBs (the round 3 candidate files, byte for
+  byte) are in `public/assets/wildlife/`, with rows in `src/wildlife-models.js`
+  (the eagle flies in `Fly`). The Ardennes, Eifel Crown and Azure Riviera now
+  draw wild boar too; the golden eagle is Alpine Serpent's rare bird.
+- **The wildcat is not in the game.** Its recipe stays in
+  `tools/blender/wildlife/wildcat.py` for a later card; its GLB stays out of
+  `public/`. Until it passes, **Ardennes and Azure Riviera have no rare
+  animal** (the wildcat is their rare one).
+- `artCandidates` in the Blender-output suite now holds only the wildcat, and
+  `common.py --candidate` stays because the wildcat's recipe still builds that
+  way. The boar's and eagle's export checks apply again.
+
+### Checks
+
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `test-wildlife-view` 3,829 checks; `test-wildlife` 33,644 checks;
+  `test-heli-survey` 9,990 checks; `test-blender-output` 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (778 s).
+- `npm run build`: passed; output deleted.
+
+### Changed assertions (for Claude's review, rule 18)
+
+- `tools/test-blender-output.mjs`: wild boar and golden eagle leave
+  `artCandidates`, so their full export checks are restored; the wildcat
+  keeps the "not in public/" check. Nothing loosened.
+- `tools/test-wildlife-view.mjs`: today's exact Europe lists now include the
+  wild boar on the Ardennes, Eifel Crown and Azure Riviera, the golden eagle
+  as Alpine Serpent's rare bird and flying in `Fly`, no rare animal on the
+  Ardennes and Riviera, and no row for the wildcat.
+
+### Removed
+
+- The recycled round sheets: `europe-round-1a.jpg`, `europe-round-1b.jpg`,
+  `europe-round-2.jpg` (each removed with the next round's commit; verdicts
+  kept in their notes) and earlier `west-australia-round-1a.jpg`,
+  `west-australia-round-1b.jpg` and `west-australia-round-2.jpg`.
+- The boar and eagle candidate copies under `.qa-dist` are superseded by
+  their published files.
+
+## 3 November 2026: Europe round 3 (final)
+
+Claude's round 2 verdict is at the top of the Europe round 2 note; changes,
+numbers and my pass or drop judgement in
+[the Europe round 3 note](../board/looks/wildlife/europe-round-3.md), sheet
+`europe-round-3.jpg`. The round 2 sheet is recycled. The three are still
+candidates under `.qa-dist`; the model table and `artCandidates` are
+unchanged until Claude's final call.
+
+- Wild boar and wildcat: upper legs as lofts that rise from a closed dome
+  inside the body and close below the joint, so no tube seam or flat end
+  shows; wildcat body smoother and deeper, tail root wider, head rounder.
+- Golden eagle: smaller, finer head, lower and wider nape, dark face and
+  throat, gold only on the back of the crown and nape, dark hooked bill.
+- `bird.py`: optional `head_detail` and `nape`; defaults keep the passed
+  kookaburra's output.
+
+### Checks
+
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `test-wildlife-view` 3,813 checks; `test-wildlife` 33,644 checks;
+  `test-heli-survey` 9,990 checks; `test-blender-output` 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (800 s).
+- `npm run build`: passed; output deleted.
+- The three candidates built and reviewed with `--candidate` in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 3`.
+
+### Changed assertions
+
+None.
+
+### Removed
+
+The round 2 sheet; the boar's and wildcat's previous leg builds (replaced in
+the same recipe files).
+
+## 3 November 2026: Europe round 2, and the eight passed species in the game
+
+Claude's round 1 verdict is at the top of the Europe round 1 note; changes
+and numbers in [the Europe round 2 note](../board/looks/wildlife/europe-round-2.md),
+sheet `europe-round-2.jpg`. The round 1 sheets are recycled.
+
+- Wild boar: slim legs on cloven hooves with dewclaws, longer snout, patchier
+  coat. Wildcat: rebuilt as an original cat (the wolf-based round 1 recipe is
+  replaced). Golden eagle: merged round head, golden nape, brow, heavier bill.
+- `common.py`: `--candidate` builds and reviews under the ignored
+  `.qa-dist/wildlife-candidates/`. The three candidates are out of
+  `public/assets/wildlife/` until they pass.
+- `original.finish`: lifts nothing and lowers a recipe whose lowest rest
+  point stands above the ground; the passed original species already touch
+  or dip below it, so their output is unchanged.
+- `bird.py`: optional `head_reach`, `body_sides`, `fold_sides`; defaults keep
+  the passed birds' output.
+- `sheet.py`: candidate groups read their GLBs from `.qa-dist`.
+- **In the game:** `src/wildlife-models.js` has rows for roe deer, red deer,
+  red fox, chamois, ibex, alpine marmot, black stork and gull (birds fly in
+  `Fly`). Ardennes and Eifel Crown get roe deer, red deer and red foxes (Eifel
+  also the black stork as its rare bird), Alpine Serpent chamois, ibex,
+  alpine marmots and red deer, Azure Riviera gulls, red foxes and roe deer.
+  Wild boar, wildcat and golden eagle join when they pass.
+
+### Checks
+
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(already up to date), started on a free heavy-job turn; logs in the lane's
+`.qa-dist/logs/`.
+
+- `node tools/test-wildlife-view.mjs`: 3,813 checks passed.
+- `node tools/test-wildlife.mjs`: 33,644 checks, 2,352 animals on 12 courses.
+- `node tools/test-heli-survey.mjs`: 9,990 checks passed.
+- `node tools/test-blender-output.mjs`: 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (799 s). The round 1 `test-wildlife-view` failure is gone: the table
+  and the runtime folder now agree.
+- `npm run build`: built in 0.99 s; output deleted.
+- The three candidates built and reviewed with `--candidate` in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 2`.
+
+### Changed assertions (for Claude's review, rule 18)
+
+- `tools/test-blender-output.mjs`: the round 1 export checks for wild boar,
+  wildcat and golden eagle are replaced, while those three are in review, by
+  a check that their GLB is not in `public/` (a set `artCandidates`). Their
+  path-plan checks stay. When a species passes, it leaves the set and its
+  export checks apply again. No other assertion changed.
+- `tools/test-wildlife-view.mjs`: additive only: exact checks of today's
+  Europe table (each course's drawn species, the stork as Eifel's rare bird,
+  the two birds flying in `Fly`, no row for the three candidates).
+
+### Removed
+
+The round 1 sheets; the wolf-based wildcat recipe (replaced in the same
+file); the boar's ball-hoof legs; the three candidate GLBs from `public/`
+(rebuilt under `.qa-dist` until they pass).
+
+## 3 November 2026: Europe, round 1
+
+Lane `claude/wild-art-europe` from integration 91ca9040. Eleven species,
+each from its own recipe; design, numbers and doubts in
+[the Europe round 1 note](../board/looks/wildlife/europe-round-1.md), sheets
+`europe-round-1a.jpg` and `-1b.jpg`. Nothing is wired into the game yet.
+
+- Deer donor: roe deer, red deer, chamois, ibex. Wolf donor: red fox,
+  wildcat (with the cougar's cat head and paws). Original: wild boar, black
+  stork, golden eagle, gull. Alpine marmot: the passed marmot recipe loaded
+  unchanged and recoloured.
+- `donor_shape.py`: optional `MOTTLE` and `GRIZZLE` coat zones, off unless a
+  recipe sets them, so the passed species' output is unchanged.
+- `adapt.py`: the new species join `ROUGH_FUR` or `SMALL_MAP` as fits.
+- `sheet.py`: groups name their sheet family (`europe-round-1a.jpg`); the
+  wolf-tracks row stays on the Western mountains sheet.
+- Sources: `sources.json` rows for all eleven; the catalog's deer and wolf
+  credit rows name the new adaptations.
+
+### Checks
+
+From PowerShell, on the lane with current `integration/wasteland` (0ecc1ebf)
+merged in, started on a free heavy-job turn.
+
+- `node tools/test-blender-output.mjs`: 189 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 51 passed, 1 failed, 0 not
+  run (571 s). The failure is `tools/test-wildlife-view.mjs`, "every model
+  on disk is in the table": the eleven Europe GLBs are on disk for review
+  but, as briefed, not yet in `src/wildlife-models.js`. That guard is doing
+  its job; it goes green when the passed species are wired in. No test was
+  changed to hide it.
+- `npm run build`: built in 0.99 s, existing large-chunk warning only;
+  output deleted.
+- Every species built and reviewed from its recipe in Blender 4.5.13
+  (`-b --factory-startup -t 4`).
+
+### Changed assertions
+
+- Blender-output: new cases only, for the eleven species (same checks as
+  the Western mountains ones). No old assertion changed.
+- Hygiene: allow `docs/board/looks/wildlife/europe-round-[1-3][ab]?.jpg`
+  next to the existing wildlife sheet names. Needs Claude's review under
+  rule 18; nothing else is loosened.
+
+### Removed
+
+Nothing replaced: all eleven are new. Scratch renders stay in the ignored
+`.qa-dist/wildlife-round-1/` until Claude's verdict.
+
 ## 3 November 2026: round 3 (final), and every passed animal in the game
 
 Claude's round 2 verdict is at the top of the round 2 note. Round 3 changed
@@ -264,3 +460,7 @@ Accepted on pictures over three rounds (Claude, look judge): deer, bear, beaver 
 ## Claude's review under rule 18 (3 November)
 
 The changed checks in tools/test-wildlife-view.mjs keep testing that a course and the count join only when their species have models, now on a fixed North woods list, and add exact checks of today's table (each course's species, the birds' Fly loop, the count's course lists, 300 days identical to the job with no list). Nothing is loosened. Round 3 verdict: kangaroo and kookaburra PASS; all eleven new species and the wolf tracks are accepted.
+
+## Claude's review under rule 18, Europe (3 November)
+
+The boar and eagle left artCandidates, so their full export checks apply again; only the wildcat stays on the list, checked to stay out of public/. test-wildlife-view's exact course lists grew with today's table. Nothing loosened. Europe verdict: ten species in the game; the wildcat did not pass in three rounds.

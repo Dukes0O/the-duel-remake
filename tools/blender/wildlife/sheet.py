@@ -13,7 +13,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 IDS = ('white-tailed-deer', 'moose', 'black-bear', 'beaver', 'eastern-wolf')
-BIRDS = ('raven', 'sulphur-crested-cockatoo', 'kookaburra')
+BIRDS = ('raven', 'sulphur-crested-cockatoo', 'kookaburra', 'black-stork', 'golden-eagle', 'gull')
 GROUPS = {
     'west-australia-1a': ('WESTERN MOUNTAINS', ('mule-deer', 'elk', 'bighorn-sheep', 'cougar', 'coyote',
                                                 'yellow-bellied-marmot', 'raven')),
@@ -23,7 +23,13 @@ GROUPS = {
                                                                     'yellow-bellied-marmot', 'kookaburra', 'raven',
                                                                     'sulphur-crested-cockatoo')),
     'west-australia-3': ('KANGAROO AND KOOKABURRA, FINAL', ('eastern-grey-kangaroo', 'kookaburra')),
+    'europe-1a': ('EUROPE: DEER, BOAR, FOX, CHAMOIS', ('roe-deer', 'red-deer', 'wild-boar', 'red-fox', 'chamois', 'ibex')),
+    'europe-1b': ('EUROPE: MARMOT, WILDCAT, BIRDS', ('alpine-marmot', 'wildcat', 'black-stork', 'golden-eagle', 'gull')),
+    'europe-2': ('EUROPE: BOAR, WILDCAT, EAGLE', ('wild-boar', 'wildcat', 'golden-eagle')),
+    'europe-3': ('EUROPE: BOAR, WILDCAT, EAGLE, FINAL', ('wild-boar', 'wildcat', 'golden-eagle')),
 }
+# Groups whose animals are still candidates, built under .qa-dist (common.py --candidate).
+CANDIDATE_GROUPS = {'europe-2', 'europe-3'}
 
 
 def main():
@@ -84,9 +90,10 @@ def glb_facts(path):
 
 def group_sheet(root, round_number, group):
     title_text, ids = GROUPS[group]
-    part = group.rsplit('-', 1)[1][1:]
+    family, part = group.rsplit('-', 1)[0], group.rsplit('-', 1)[1][1:]
     evidence = root / ('.qa-dist/wildlife-round-' + str(round_number))
-    rows = len(ids) + (1 if part == 'b' else 0)
+    tracks = family == 'west-australia' and part == 'b'
+    rows = len(ids) + (1 if tracks else 0)
     width, cell_w, cell_h = 2040, 498, 225
     sheet = Image.new('RGB', (width, 150 + rows * (cell_h + 46) + 40), '#17201f')
     draw = ImageDraw.Draw(sheet)
@@ -102,7 +109,8 @@ def group_sheet(root, round_number, group):
     facts = []
     y = 150
     for species in ids:
-        info = glb_facts(root / 'public/assets/wildlife' / (species + '.glb'))
+        home = '.qa-dist/wildlife-candidates' if group in CANDIDATE_GROUPS else 'public/assets/wildlife'
+        info = glb_facts(root / home / (species + '.glb'))
         motion = 'fly' if species in BIRDS else 'walk'
         clip_text = 'Idle, ' + motion.title() + (f' (+{len(info["clips"]) - 2} donor clips)' if len(info['clips']) > 2 else '')
         facts.append({'species': species, **{k: info[k] for k in ('triangles', 'bytes')}, 'clips': len(info['clips'])})
@@ -113,7 +121,7 @@ def group_sheet(root, round_number, group):
             thumb = ImageOps.contain(source, (cell_w, cell_h), Image.Resampling.LANCZOS)
             sheet.paste(thumb, (12 + col * (cell_w + 12) + (cell_w - thumb.width) // 2, y + 36))
         y += cell_h + 46
-    if part == 'b':
+    if tracks:
         tracks = Image.open(root / 'public/assets/wildlife/wolf-tracks.png').convert('RGBA')
         draw.text((28, y), 'Wolf tracks | 512 x 512 RGBA tiling decal, 1.5 m square, '
                   f'{(root / "public/assets/wildlife/wolf-tracks.png").stat().st_size / 1e3:.0f} KB | on plain snow: one tile, then tiled 3 high',
@@ -128,9 +136,12 @@ def group_sheet(root, round_number, group):
         band = round(strip.width * cell_h / (cell_w * 3 + 24))
         strip = strip.crop((0, 256 - band // 2, strip.width, 256 - band // 2 + band)).resize((cell_w * 3 + 24, cell_h))
         sheet.paste(strip, (12 + cell_w + 12, y + 36))
-    draw.text((28, sheet.height - 34), 'CC0 Quaternius deer (mule deer, elk, bighorn) and wolf (cougar, coyote) reshaped | '
-              'kangaroo, marmot, echidna and birds: original recipes | coats 1K; marmot and birds 512', font=small, fill='#bbc4b7')
-    output = root / f'docs/board/looks/wildlife/west-australia-round-{round_number}{part}.jpg'
+    footer = {'west-australia': 'CC0 Quaternius deer (mule deer, elk, bighorn) and wolf (cougar, coyote) reshaped | '
+                                'kangaroo, marmot, echidna and birds: original recipes | coats 1K; marmot and birds 512',
+              'europe': 'CC0 Quaternius deer (roe deer, red deer, chamois, ibex) and wolf (red fox) reshaped | '
+                        'boar, wildcat, marmot and birds: original recipes | coats 1K; marmot and birds 512'}[family]
+    draw.text((28, sheet.height - 34), footer, font=small, fill='#bbc4b7')
+    output = root / f'docs/board/looks/wildlife/{family}-round-{round_number}{part}.jpg'
     output.parent.mkdir(parents=True, exist_ok=True)
     for quality in (86, 82, 78, 74, 70, 66, 62):
         sheet.save(output, quality=quality, optimize=True, subsampling=2)

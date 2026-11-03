@@ -34,6 +34,20 @@ export const WILDLIFE_MODELS = Object.freeze({
   'raven': model('raven.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
   'sulphur-crested-cockatoo': model('sulphur-crested-cockatoo.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
   'kookaburra': model('kookaburra.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  // Europe (WILD-ART-SRC Europe round 1). Same rule: rates match each Walk
+  // clip's stride at its size, so the small animals' rates are high.
+  'roe-deer': model('roe-deer.glb', {speed: 6.5, rate: 4.5}),
+  'red-deer': model('red-deer.glb', {speed: 6.5, rate: 3.5}),
+  'red-fox': model('red-fox.glb', {speed: 6, rate: 5}),
+  'chamois': model('chamois.glb', {speed: 5.5, rate: 4.5}),
+  'ibex': model('ibex.glb', {speed: 4.5, rate: 2.8}),
+  'alpine-marmot': model('alpine-marmot.glb', {speed: 2.5, rate: 6}),
+  'black-stork': model('black-stork.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
+  'gull': model('gull.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  // Europe round 3. The boar's short stride needs a high rate; it slides a
+  // little when running, as the beaver does. The wildcat has not passed.
+  'wild-boar': model('wild-boar.glb', {speed: 5, rate: 4}),
+  'golden-eagle': model('golden-eagle.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
 });
 
 // The ids in the table, for availableSpecies() and the count's course list.

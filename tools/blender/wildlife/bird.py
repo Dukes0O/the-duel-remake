@@ -69,15 +69,18 @@ def build(ID, P, paint, output, c):
     prof = [(-.50, .35, .35), (-.38, .74, .72), (-.20, .98, .96), (.02, 1, 1), (.22, .92, .95),
             (.38, .76, .80), (.50, .52, .62)]
     sections = [(tuple(f.w((x * bl, 0, -.04 * bh * (x > .1)))), w * bw, h * bh) for x, w, h in prof]
-    a.fur(sections, lambda p: paint['body'](f, p), body, 14, P.get('shag', .015))
+    a.fur(sections, lambda p: paint['body'](f, p), body, P.get('body_sides', 14), P.get('shag', .015))
     if P.get('merged'):
         # One big round head sunk into the shoulders: a head ball, a broad
         # nape-and-throat ball bridging it to the body, and the face tapering
         # into the bill. Smooth balls meet in soft hollows, never a fold.
-        colour = lambda p: paint['head'](f, p) if (Vector(p) - head_c).length < 1.2 * hr else paint['body'](f, p)
+        reach = P.get('head_reach', 1.2) * hr
+        colour = lambda p: paint['head'](f, p) if (Vector(p) - head_c).length < reach else paint['body'](f, p)
         weight = o.near(a, ['head', 'neck', 'body'])
-        a.oval(tuple(head_c), (hr * 1.04, hr * .96, hr * .96), colour, weight, 7, 14)
-        a.oval(tuple(chest.lerp(head_c, .45) + Vector((-hr * .10, 0, 0))), (hr * .95, bw * .96, hr * .92),
+        rings, sides = P.get('head_detail', (7, 14))
+        a.oval(tuple(head_c), (hr * 1.04, hr * .96, hr * .96), colour, weight, rings, sides)
+        at, nr = P.get('nape', (.45, 1.0))
+        a.oval(tuple(chest.lerp(head_c, at) + Vector((-hr * .10, 0, 0))), (hr * .95 * nr, bw * .96, hr * .92 * nr),
                colour, weight, 5, 12)
         a.oval(tuple(head_c + Vector((hr * .62, 0, -hr * .10))), (hr * .45, hr * .62, hr * .58), colour, 'head', 4, 10)
     else:
@@ -170,7 +173,7 @@ def build(ID, P, paint, output, c):
                   ((-.5 * bl - fold * .55, bw * .36, .18 * bh), .008, .24 * bh),
                   ((-.5 * bl - fold, bw * .15, .18 * bh), .002, .03 * bh)]
         a.loft([(tuple(f.w((x, s * y, z))), wdt, hgt) for (x, y, z), wdt, hgt in folded],
-               lambda p: paint['wing'](f, p), 'fold.' + side, 8)
+               lambda p: paint['wing'](f, p), 'fold.' + side, P.get('fold_sides', 8))
         # Leg and toes: tarsus from the belly feathers to a gripping foot.
         hip = f.hip_w + Vector((0, s * P['stance'], .01))
         foot = Vector((.008, s * P['stance'], .008))

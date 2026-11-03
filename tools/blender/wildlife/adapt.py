@@ -6,10 +6,12 @@ from pathlib import Path
 
 
 # Coats baked with the coarse, shaggy fur grain rather than the fine one.
-ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep', 'eastern-grey-kangaroo'}
+ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep', 'eastern-grey-kangaroo',
+             'red-deer', 'wild-boar', 'chamois', 'ibex', 'alpine-marmot', 'wildcat'}
 
 # Small animals and birds: a 512 coat map is plenty and saves runtime size.
-SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra'}
+SMALL_MAP = {'yellow-bellied-marmot', 'raven', 'sulphur-crested-cockatoo', 'kookaburra',
+             'alpine-marmot', 'black-stork', 'golden-eagle', 'gull'}
 
 
 def build(species, output, c, cache):

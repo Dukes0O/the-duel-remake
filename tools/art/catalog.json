@@ -3628,7 +3628,7 @@
           "sha256": "fabf360b22eaccccd056ee99d698a9562d15aa245821f96e4fbad6db3751604e"
         }
       ],
-      "changes": "Metric fit, smaller ears and eyes, slimmer lower legs, whitetail antlers, white flag and throat, 1K natural coat, smoother silhouette. Original rig and all clips retained. Also adapted into the round 3 moose with larger proportions, shoulder hump, heavy muzzle, bell and palmate antlers. Also adapted for the Western mountains round 1 mule deer, elk and bighorn sheep (tools/blender/wildlife/donor_shape.py).",
+      "changes": "Metric fit, smaller ears and eyes, slimmer lower legs, whitetail antlers, white flag and throat, 1K natural coat, smoother silhouette. Original rig and all clips retained. Also adapted into the round 3 moose with larger proportions, shoulder hump, heavy muzzle, bell and palmate antlers. Also adapted for the Western mountains round 1 mule deer, elk and bighorn sheep (tools/blender/wildlife/donor_shape.py). Also adapted for the Europe round 1 roe deer, red deer, chamois and ibex.",
       "download": "https://static.poly.pizza/4b6c2a41-43c7-404c-ae37-e8c4645ff93b.glb"
     },
     {
@@ -3650,7 +3650,7 @@
           "sha256": "16ac96339d06f7def9af20d5d9b27622d61e53580dab43970c9edb1bffbe8f84"
         }
       ],
-      "changes": "Metric fit, longer-legged proportions, smaller ears and eyes, grey-brown saddle and natural 1K coat, smoother silhouette. Original rig and all clips retained. Also adapted for the Western mountains round 1 cougar and coyote (tools/blender/wildlife/donor_shape.py).",
+      "changes": "Metric fit, longer-legged proportions, smaller ears and eyes, grey-brown saddle and natural 1K coat, smoother silhouette. Original rig and all clips retained. Also adapted for the Western mountains round 1 cougar and coyote (tools/blender/wildlife/donor_shape.py). Also adapted for the Europe red fox.",
       "download": "https://static.poly.pizza/f1d12388-e39b-4157-b32a-646a1d089fc4.glb"
     },
     {

@@ -52,6 +52,20 @@ def grain(p, strength=1):
                        + .03 * math.sin(p.x * 211 + p.y * 173))
 
 
+def mottle(p, scale=1.0):
+    """Smooth 0..1 variation over a few donor units: darker and lighter coat zones."""
+    x, y, z = p.x * scale, p.y * scale, p.z * scale
+    v = (math.sin(x * 9 + z * 5) * .35 + math.sin(y * 13 - x * 7 + 1.3) * .25 +
+         math.sin(z * 16 + y * 9 + 2.1) * .25 + math.sin(x * 21 - z * 18 + .7) * .15)
+    return .5 + .5 * v
+
+
+def speckle(p):
+    """Fixed pseudo-random 0..1 per point: grizzled hair tips."""
+    v = math.sin(p.x * 1271.3 + p.y * 3117.7 + p.z * 1723.1) * 43758.5453
+    return v - math.floor(v)
+
+
 def mix(a, b, t):
     t = max(0, min(1, t))
     return tuple(x + (y - x) * t for x, y in zip(a, b))
@@ -104,6 +118,9 @@ def build(species, output, c, cache, spec):
             p = original
             base = Vector(spec.paint(original.copy(), '', materials[v.index], ctx))
         g = grain(original, getattr(spec, 'GRAIN', 1))
+        # Optional coat zones (MOTTLE) and grizzled tips (GRIZZLE); both 0 for
+        # the species made before they existed, so their output is unchanged.
+        g += getattr(spec, 'MOTTLE', 0) * (mottle(original) - .5) + getattr(spec, 'GRIZZLE', 0) * (speckle(original) ** 3 - .25)
         coat.data[v.index].color = tuple(max(.002, q * (1 + g)) for q in base) + (1,)
         v.co = inverse @ p
     for face in mesh.data.polygons:
