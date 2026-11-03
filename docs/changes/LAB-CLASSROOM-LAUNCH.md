@@ -77,4 +77,19 @@ describe the old 3D Snow lessons (nothing reads them at run time).
 
 ## Checks
 
-(pending)
+- `tools/test-lab-classroom-launch.mjs`: 11/11 (one assertion added after the review: no speed advice
+  at the top of the dial).
+- Every `tools/test-lab-*.mjs`: 351/351 on c97adfd4 and again on beed6250 (integration merged in).
+- Lane tier (`--changed --jobs 4`): 71/71 on c97adfd4 and 71/71 on beed6250; `npm run build` passed
+  both times.
+- All 22 Lab browser scenarios on beed6250: 21/22 in the batch, with `lab-walk` timing out on its walk
+  to the weighing pad (no Launch code on that path; another session was building at the time); rerun
+  alone it passed (rule 3), so 22/22. `lab-classroom-launch` plays the lesson by keyboard, with one
+  click on the ramp panel, through every wrong move and Show me, to the pass, the Aerials reward and
+  the notebook words.
+- Look: the walkthrough's pictures checked by Claude over three runs. Run 1 found the ramp icon over
+  the Flatter button, trail labels piled on each other, the flights drawn too small (the dial now stops
+  at 54 mph so the scale can grow), question labels overlapping at the landings, the Aerials kicker
+  drawn as a plain slope with a bump, and the recap's speed labels colliding; run 2 found the kicker's
+  labels over the snow and the tape close-up cutting its end numbers. All fixed and checked in run 3.
+- No frame check: the Lab classroom is a 2D board and changes no race scene.
