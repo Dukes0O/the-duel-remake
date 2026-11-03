@@ -1000,7 +1000,8 @@ console.log('PASS the hook acts on key-up with the medevac coat only');
       ok(app.visitHeli(), 'the helicopter visit starts');
       return app;
     };
-    const both = visit({'heli-skins': true, wildlife: true}), plain = visit({}), skinsOnly = visit({'heli-skins': true}), wildOnly = visit({wildlife: true});
+    const both = visit({'heli-skins': true, wildlife: true}), plain = visit({'heli-skins': false, wildlife: false}),
+      skinsOnly = visit({'heli-skins': true, wildlife: false}), wildOnly = visit({wildlife: true, 'heli-skins': false});
     ok('skins' in both.heliSession.view() && 'survey' in both.heliSession.view(), 'both switches on: the session has skins and the count');
     ok(!('skins' in plain.heliSession.view()) && !('survey' in plain.heliSession.view()), 'both off: neither');
     ok('skins' in skinsOnly.heliSession.view() && !('survey' in skinsOnly.heliSession.view()), 'skins alone: no count');
