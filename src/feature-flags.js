@@ -34,11 +34,11 @@ export const FEATURE_STATES = Object.freeze({
   'nissan-skyline': 'on',
   // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Released 26 October 2026; works only with the helicopter on.
   rescue: 'on',
-  // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Off in the game.
-  wildlife: 'dev',
-  // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Off in the game; works only with the helicopter on.
+  // H3 Wildlife (docs/HELI_WILDLIFE.md): animals beside the road, and the wildlife count when the helicopter is on. Released 3 November 2026.
+  wildlife: 'on',
+  // H3 Skins (docs/HELI_WILDLIFE.md): mission skins, gear, dirt and the wash. Released 3 November 2026; works only with the helicopter on.
   // Named heli-skins, not heliSkins as the packet says: switch names are lower case with hyphens.
-  'heli-skins': 'dev',
+  'heli-skins': 'on',
   // Pilot ranks, flight log and rank paints. Released 26 October 2026.
   'heli-logbook': 'on',
   // H5 Heli-skiing (docs/HELI_SKIING.md): the ski rules, runs and drops. Released 26 October 2026; works only with the helicopter on and Summit Run owned.
