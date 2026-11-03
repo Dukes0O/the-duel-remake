@@ -77,8 +77,10 @@ def build(ID, P, paint, output, c):
         reach = P.get('head_reach', 1.2) * hr
         colour = lambda p: paint['head'](f, p) if (Vector(p) - head_c).length < reach else paint['body'](f, p)
         weight = o.near(a, ['head', 'neck', 'body'])
-        a.oval(tuple(head_c), (hr * 1.04, hr * .96, hr * .96), colour, weight, 7, 14)
-        a.oval(tuple(chest.lerp(head_c, .45) + Vector((-hr * .10, 0, 0))), (hr * .95, bw * .96, hr * .92),
+        rings, sides = P.get('head_detail', (7, 14))
+        a.oval(tuple(head_c), (hr * 1.04, hr * .96, hr * .96), colour, weight, rings, sides)
+        at, nr = P.get('nape', (.45, 1.0))
+        a.oval(tuple(chest.lerp(head_c, at) + Vector((-hr * .10, 0, 0))), (hr * .95 * nr, bw * .96, hr * .92 * nr),
                colour, weight, 5, 12)
         a.oval(tuple(head_c + Vector((hr * .62, 0, -hr * .10))), (hr * .45, hr * .62, hr * .58), colour, 'head', 4, 10)
     else:

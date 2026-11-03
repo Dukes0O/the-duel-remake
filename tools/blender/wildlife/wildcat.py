@@ -66,10 +66,11 @@ def build(output, c, cache):
         return o.mix(colour, PALE, o.smooth((.215 - p.z) / .02))
 
     body = o.near(a, ['spine', 'neck', 'tail'])
+    # Smooth, with a deeper chest; many sides so no flat planes show.
     a.fur(dense([((-.27, 0, .285), .030, .030), ((-.25, 0, .285), .072, .074), ((-.19, 0, .281), .092, .092),
-                 ((-.10, 0, .277), .094, .090), ((-.01, 0, .277), .090, .088), ((.07, 0, .283), .090, .090),
-                 ((.14, 0, .290), .084, .086), ((.19, 0, .302), .066, .070), ((.22, 0, .315), .056, .060)], 34),
-          coat, body, 28, .05)
+                 ((-.10, 0, .277), .094, .092), ((-.01, 0, .275), .092, .096), ((.07, 0, .276), .094, .104),
+                 ((.14, 0, .286), .086, .096), ((.19, 0, .302), .068, .074), ((.22, 0, .315), .058, .062)], 34),
+          coat, body, 26, .018)
 
     def head_coat(p):
         d = Vector((p.x - .29, p.y, p.z - .335))
@@ -82,27 +83,27 @@ def build(output, c, cache):
         cheek = abs(d.z + .005 - .25 * abs(d.y)) < .006 and abs(d.y) > .035
         return o.mix(tabby(p), DARK, .8 if crown or cheek else 0)
     # Broad round head with a short muzzle.
-    a.fur(dense([((.215, 0, .335), .050, .046), ((.245, 0, .338), .070, .062), ((.282, 0, .338), .076, .066),
-                 ((.315, 0, .331), .064, .054), ((.338, 0, .322), .044, .038), ((.352, 0, .316), .026, .023),
-                 ((.358, 0, .314), .008, .008)], 14), head_coat, 'head', 24, .03)
+    a.fur(dense([((.215, 0, .335), .052, .050), ((.245, 0, .338), .074, .068), ((.282, 0, .338), .080, .072),
+                 ((.315, 0, .331), .066, .058), ((.338, 0, .322), .045, .040), ((.352, 0, .316), .026, .023),
+                 ((.358, 0, .314), .008, .008)], 14), head_coat, 'head', 20, .015)
     for s in (1, -1):
         a.oval((.320, s * .030, .346), (.008, .005, .007), (.10, .09, .02), 'head', 3, 8)      # amber eye
         a.oval((.322, s * .031, .346), (.004, .006, .006), (.006, .005, .004), 'head', 2, 6)   # pupil
         # Small rounded ears, set wide.
         ear = lambda p: o.mix(TABBY, DARK, .4)
-        a.blade([((.272, s * .030, .380), (.252, s * .058, .378), .010, (1, 0, 0)),
-                 ((.268, s * .040, .400), (.255, s * .060, .398), .007, (1, 0, 0)),
-                 ((.263, s * .050, .412), (.258, s * .056, .411), .003, (1, 0, 0))], ear, 'head')
+        a.blade([((.272, s * .040, .382), (.252, s * .070, .376), .010, (1, 0, 0)),
+                 ((.268, s * .050, .402), (.255, s * .072, .396), .007, (1, 0, 0)),
+                 ((.263, s * .061, .413), (.258, s * .067, .411), .003, (1, 0, 0))], ear, 'head')
     for side, s in (('L', 1), ('R', -1)):
         y = s * .050
 
         def legs(p):
             bars = math.sin(p.z * 75) > .45 and p.z > .07
             return o.mix(tabby(p), DARK, .75 if bars else 0)
-        o.small_leg(a, 'front.' + side, (.13, y, .25), (.15, y * 1.1, .135), (.13, y * 1.1, .035),
-                    (.165, y * 1.1, .016), (.042, .028, .020), legs, o.mix(TABBY, PALE, .3), False, claws=0)
-        o.small_leg(a, 'rear.' + side, (-.18, y, .26), (-.12, y * 1.15, .145), (-.20, y * 1.15, .045),
-                    (-.165, y * 1.15, .016), (.058, .032, .020), legs, o.mix(TABBY, PALE, .3), True, claws=0)
+        cat_leg(a, o, 'front.' + side, Vector((.13, y * .85, .25)), Vector((.115, y * 1.05, .15)),
+                Vector((.135, y * 1.05, .040)), Vector((.160, y * 1.05, .012)), (.046, .026, .018), legs, False)
+        cat_leg(a, o, 'rear.' + side, Vector((-.17, y * .85, .26)), Vector((-.11, y * 1.1, .165)),
+                Vector((-.21, y * 1.1, .065)), Vector((-.175, y * 1.1, .012)), (.060, .028, .019), legs, True)
     # Short thick tail of even width, ringed, ending in a blunt black tip.
     tail = o.near(a, ['tail', 'spine'])
 
@@ -112,13 +113,41 @@ def build(output, c, cache):
             return DARK
         ring = u > .25 and math.sin((u - .25) * 2 * math.pi / .16) > .1
         return o.mix(tabby(p), DARK, .9 if ring else 0)
-    a.fur(dense([((-.25, 0, .285), .028, .028), ((-.30, 0, .281), .036, .036), ((-.36, 0, .267), .038, .038),
+    # The root sits wide inside the rump so the tail grows out of it smoothly.
+    a.fur(dense([((-.21, 0, .285), .050, .052), ((-.26, 0, .284), .040, .040), ((-.31, 0, .278), .037, .037), ((-.36, 0, .267), .038, .038),
                  ((-.42, 0, .247), .038, .038), ((-.48, 0, .223), .036, .036), ((-.515, 0, .207), .030, .030),
-                 ((-.525, 0, .203), .012, .012)], 26), tail_coat, tail, 14, .08)
+                 ((-.525, 0, .203), .012, .012)], 18), tail_coat, tail, 14, .08)
 
     def animate(rig):
         c.animate(a, rig, stride=.10, lift=.04)
     o.finish(a, c, output, animate)
+
+
+def cat_leg(a, o, name, hip, joint, ankle, toe, radii, colour, hind):
+    """A cat's leg: a thick upper leg rising out of the body with no seam, a
+    defined elbow or hock, a slimmer lower leg and a round paw.
+
+    Registers the bones and leg entry the shared walk in common.animate uses.
+    """
+    from mathutils import Vector
+    a.bone(name + '.upper', tuple(hip), tuple(joint), 'spine')
+    a.bone(name + '.lower', tuple(joint), tuple(ankle), name + '.upper')
+    a.bone(name + '.foot', tuple(ankle), tuple(toe), name + '.lower')
+    a.legs.append((name, tuple(hip), tuple(joint), tuple(ankle), tuple(toe), hind))
+    upper = o.near(a, [name + '.upper', name + '.lower', 'spine'])
+    # The top closes in a dome inside the body, so no flat end shows.
+    top = hip + Vector((0, 0, .055))
+    a.fur([(tuple(top + Vector((0, 0, .05))), .006, .006), (tuple(top + Vector((0, 0, .028))), radii[0] * .70, radii[0] * .85),
+           (tuple(top), radii[0] * .95, radii[0] * 1.2), (tuple(hip), radii[0], radii[0] * 1.15),
+           (tuple(hip.lerp(joint, .5)), radii[0] * .78, radii[0] * .88),
+           (tuple(joint), radii[1] * 1.25, radii[1] * 1.35), (tuple(joint + Vector((0, 0, -.012))), radii[1] * .85, radii[1] * .9),
+           (tuple(joint + Vector((0, 0, -.020))), .003, .003)], colour, upper, 14, .02)
+    lower = o.near(a, [name + '.lower', name + '.foot', name + '.upper'])
+    a.tube3([joint, joint.lerp(ankle, .5), ankle], [radii[1] * 1.15, radii[1] * .85, radii[2]], colour, lower, 10)
+    paw = o.near(a, [name + '.foot', name + '.lower'])
+    centre = Vector((toe.x - .006, toe.y, .016))
+    a.tube3([ankle, centre + Vector((-.008, 0, .010))], [radii[2], radii[2] * 1.05], colour, paw, 10)
+    a.oval(tuple(centre), (.024, .020, .016), o.mix(TABBY, PALE, .3), paw, 5, 12)
 
 
 if __name__ == '__main__':

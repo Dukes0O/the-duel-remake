@@ -79,10 +79,11 @@ def build(output, c, cache):
             a.tube3([base, tip], [.012, .002], lambda p: o.mix(DARKER, TIPS, .4 * o.speckle(p)), body, 3)
     for side, s in (('L', 1), ('R', -1)):
         y = s * .14
-        boar_leg(a, o, 'front.' + side, Vector((.24, y, .52)), Vector((.27, y, .30)), Vector((.25, y * .95, .08)),
-                 (.085, .036, .020), coat, False)
-        boar_leg(a, o, 'rear.' + side, Vector((-.44, y * .95, .50)), Vector((-.36, y, .30)), Vector((-.46, y * .95, .08)),
-                 (.10, .040, .021), coat, True)
+        # Front legs set under the heavy shoulders; hams under the rump.
+        boar_leg(a, o, 'front.' + side, Vector((.20, y * .75, .50)), Vector((.23, y * .95, .19)), Vector((.22, y * .95, .08)),
+                 (.12, .048, .022), coat, False)
+        boar_leg(a, o, 'rear.' + side, Vector((-.42, y * .72, .48)), Vector((-.34, y * .95, .21)), Vector((-.44, y * .95, .08)),
+                 (.14, .052, .023), coat, True)
     a.tube3([(-.66, 0, .62), (-.71, 0, .52), (-.73, 0, .42)], [.016, .010, .008], DARKER, 'tail', 5)
     a.tube3([(-.73, 0, .43), (-.74, 0, .37)], [.022, .004], DARKER, 'tail', 6)              # tuft
 
@@ -104,7 +105,16 @@ def boar_leg(a, o, name, hip, knee, ankle, radii, coat, hind):
     a.legs.append((name, tuple(hip), tuple(knee), tuple(ankle), tuple(toe), hind))
     limb = o.near(a, [name + '.upper', name + '.lower', 'spine'])
     leg = lambda p: o.mix(coat(p), DARKER, o.smooth((.36 - p.z) / .12))      # dark lower leg
-    a.tube3([hip, hip.lerp(knee, .5), knee], [radii[0], radii[0] * .7, radii[1] * 1.15], leg, limb, 10)
+    # Thick muscular forearm or ham, rising out of the body: it starts wide
+    # and deep inside the flank, so it blends in with no seam, and tapers
+    # to the joint.
+    # The top closes in a dome deep inside the body, so no flat end shows.
+    top = hip + Vector((0, 0, .10))
+    a.fur([(tuple(top + Vector((0, 0, .09))), .010, .010), (tuple(top + Vector((0, 0, .05))), radii[0] * .70, radii[0] * .90),
+           (tuple(top), radii[0] * .95, radii[0] * 1.25), (tuple(hip), radii[0], radii[0] * 1.15),
+           (tuple(hip.lerp(knee, .45)), radii[0] * .72, radii[0] * .85), (tuple(hip.lerp(knee, .8)), radii[1] * 1.6, radii[1] * 1.7),
+           (tuple(knee), radii[1] * 1.15, radii[1] * 1.2), (tuple(knee + Vector((0, 0, -.02))), radii[1] * .75, radii[1] * .8),
+           (tuple(knee + Vector((0, 0, -.032))), .004, .004)], leg, limb, 12, .05)
     shank = o.near(a, [name + '.lower', name + '.foot'])
     a.tube3([knee, knee.lerp(ankle, .6), ankle, toe + Vector((-.010, 0, .028))],
             [radii[1], radii[1] * .80, radii[2], radii[2] * .95], leg, shank, 8)

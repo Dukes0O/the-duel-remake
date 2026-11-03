@@ -1,5 +1,25 @@
 # Europe, round 2 of 3
 
+## Claude's round 2 verdict
+
+All three read right at race distance, but the close views still show
+faults. Round 3 is the last (SPEC 0.11); after it each passes or is dropped.
+
+1. Wild boar: the legs went from stumps to sticks. Short but solid legs: a
+   thick muscular forearm and ham blended into the body with no tube seam,
+   tapering to a slim lower leg and the small cloven hooves. Front legs set
+   under the heavy shoulders. Keep body, head and coat.
+2. Wildcat: keep the coat and tail. Thick upper legs blended into the body,
+   a defined elbow and hock, round paws; a smoother body, a little deeper in
+   the chest, no faceted planes; the tail joining the rump smoothly; the
+   head a touch rounder with the ears set wider.
+3. Golden eagle: a smaller, smoother head; forehead, face and throat dark
+   brown; golden-buff only on the back of the crown and the nape, streaked
+   into the brown; the bill's dark hook clear; no flat planes on the head.
+   Keep wings and feet.
+
+The round 2 sheet was recycled with the round 3 commit.
+
 Claude's round 1 verdict is at the top of `europe-round-1.md`. Passed and
 unchanged: roe deer, red deer, red fox, chamois, ibex, alpine marmot, black
 stork, gull; those eight are now in the game's model table.

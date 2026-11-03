@@ -26,9 +26,10 @@ GROUPS = {
     'europe-1a': ('EUROPE: DEER, BOAR, FOX, CHAMOIS', ('roe-deer', 'red-deer', 'wild-boar', 'red-fox', 'chamois', 'ibex')),
     'europe-1b': ('EUROPE: MARMOT, WILDCAT, BIRDS', ('alpine-marmot', 'wildcat', 'black-stork', 'golden-eagle', 'gull')),
     'europe-2': ('EUROPE: BOAR, WILDCAT, EAGLE', ('wild-boar', 'wildcat', 'golden-eagle')),
+    'europe-3': ('EUROPE: BOAR, WILDCAT, EAGLE, FINAL', ('wild-boar', 'wildcat', 'golden-eagle')),
 }
 # Groups whose animals are still candidates, built under .qa-dist (common.py --candidate).
-CANDIDATE_GROUPS = {'europe-2'}
+CANDIDATE_GROUPS = {'europe-2', 'europe-3'}
 
 
 def main():

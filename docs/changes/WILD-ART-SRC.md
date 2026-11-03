@@ -1,5 +1,35 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Europe round 3 (final)
+
+Claude's round 2 verdict is at the top of the Europe round 2 note; changes,
+numbers and my pass or drop judgement in
+[the Europe round 3 note](../board/looks/wildlife/europe-round-3.md), sheet
+`europe-round-3.jpg`. The round 2 sheet is recycled. The three are still
+candidates under `.qa-dist`; the model table and `artCandidates` are
+unchanged until Claude's final call.
+
+- Wild boar and wildcat: upper legs as lofts that rise from a closed dome
+  inside the body and close below the joint, so no tube seam or flat end
+  shows; wildcat body smoother and deeper, tail root wider, head rounder.
+- Golden eagle: smaller, finer head, lower and wider nape, dark face and
+  throat, gold only on the back of the crown and nape, dark hooked bill.
+- `bird.py`: optional `head_detail` and `nape`; defaults keep the passed
+  kookaburra's output.
+
+### Checks
+
+CHECKS_EU3
+
+### Changed assertions
+
+None.
+
+### Removed
+
+The round 2 sheet; the boar's and wildcat's previous leg builds (replaced in
+the same recipe files).
+
 ## 3 November 2026: Europe round 2, and the eight passed species in the game
 
 Claude's round 1 verdict is at the top of the Europe round 1 note; changes
