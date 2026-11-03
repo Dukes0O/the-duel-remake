@@ -1,3 +1,165 @@
+# WILD-ART-SRC
+
+## 3 November 2026: round 3 (final), and every passed animal in the game
+
+Claude's round 2 verdict is at the top of the round 2 note. Round 3 changed
+only the kangaroo and the kookaburra; see
+[the round 3 note](../board/looks/wildlife/west-australia-round-3.md) and
+`west-australia-round-3.jpg`. The round 2 sheet is recycled. `bird.py` gains
+a `merged` head (head, nape and face balls instead of a bent loft) used by
+the kookaburra only; the passed raven and cockatoo files are byte exact.
+
+**Panorama Ridge and Summit Run now join the count.** `src/wildlife-models.js`
+has rows for mule deer, elk, bighorn sheep, cougar, coyote, yellow-bellied
+marmot, eastern grey kangaroo, echidna, raven, sulphur-crested cockatoo and
+kookaburra (I judged the round 3 kookaburra's cap head fixed; Claude makes
+the final call). Birds move and fly in their `Fly` clip. Run speeds and clip
+rates follow each Walk clip's stride at its size; the marmot and echidna
+slide a little when running, as the beaver does. Wolf tracks stay out of the
+table (no decal drawing yet). With every count target approved, the count
+is exactly the job with no list: Panorama Ridge (kangaroos) always, Summit
+Run (bighorn sheep, cougar) once it is open. Every course of the Western
+mountains and Australia lists now draws its animals.
+
+### Checks
+
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(WILD-VIEW included), heavy jobs started on a free turn:
+
+- `node tools/test-wildlife-view.mjs`: 3,747 checks passed.
+- `node tools/test-wildlife.mjs`: 33,644 checks, 2,352 animals on 12
+  courses, 31 species seen.
+- `node tools/test-heli-survey.mjs`: 9,990 checks passed.
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (762 s). The round 2 `test-board` failure is gone with integration's
+  board fix.
+- `npm run build`: built in 1.38 s, existing large-chunk warning only;
+  output deleted.
+- Kangaroo and kookaburra rebuilt and reviewed from their recipes in
+  Blender 4.5.13, reviews at `--round 3`. No browser or frame check: the
+  view already draws the North woods animals the same way (WILD-VIEW).
+
+### Changed assertions (for Claude's review, rule 18)
+
+`tools/test-wildlife-view.mjs`, only where it pinned the table:
+
+- "Panorama Ridge has no approved species" and "Summit Run has none either"
+  now use a fixed North woods list (the five that were the table), so they
+  still prove a course without models has no animals. New exact checks pin
+  today's table: Panorama Ridge's three species and echidna rare, Summit
+  Run's four species and cougar rare, the three birds flying in `Fly`.
+- The count block's "today: Tremblant Woods and Tremblant Snow" and the
+  joining checks that followed now run on the same fixed North woods list,
+  unchanged in meaning. New exact checks: today's course lists (three, four
+  with Summit Run) and, over 300 days, today's table gives exactly the job
+  with no list. Nothing is loosened; every old expectation is still asserted.
+
+### Removed
+
+The round 2 sheet. The kookaburra's bent head-and-neck loft (replaced by the
+merged head in the same recipe).
+
+## 3 November 2026: Western mountains and Australia, round 2
+
+Claude's round 1 verdict is in the round 1 note; the changes and numbers in
+[the round 2 note](../board/looks/wildlife/west-australia-round-2.md), sheet
+`west-australia-round-2.jpg`. Changed: bighorn legs, kangaroo, cougar, elk,
+marmot (rebuilt), kookaburra, raven and cockatoo Fly wings. Echidna, wolf
+tracks, coyote and mule deer passed and are byte exact.
+
+- `bird.py`: new spread wing (curved leading edge, thick wrist, scalloped
+  secondaries) plus separate fanned primaries from `P['primaries']`; the hand
+  bends through the downstroke. `'fingers'` is gone. Head taper rounder;
+  optional `neck_r`.
+- `original.py`: `mottle()` for soft coat variation.
+- `common.finish_coat` takes a map size (default 1024, so older recipes are
+  unchanged); `adapt.SMALL_MAP` gives the marmot and the three birds 512 maps.
+- The kangaroo joins `adapt.ROUGH_FUR`.
+
+### Checks
+
+From PowerShell, on the lane with `integration/wasteland` (4d3f657b) merged
+in, started on a free heavy-job turn.
+
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 50 passed, 1 failed, 0 not
+  run (525 s). The failure is `tools/test-board.mjs`, "finished cards leave
+  the open board": `docs/board/board.yaml` from integration keeps a finished
+  card in the open list. It fails the same way on the integration folder's
+  own head (f0f2bb30); this lane changes no board file. Left for the board
+  owner; not a wildlife fault.
+- `npm run build -- --outDir .qa-dist/wildlife-build`: built in 1.25 s,
+  existing large-chunk warning only; output deleted.
+- Every changed animal rebuilt and reviewed from its recipe in Blender
+  4.5.13 (`-b --factory-startup -t 4`), reviews at `--round 2`.
+
+### Changed assertions
+
+None. The hygiene pattern added in round 1 already covers the round 2 sheet.
+
+### Removed
+
+The round 1 sheets `west-australia-round-1a.jpg` and `-1b.jpg` (verdict
+given; their note keeps the verdict). The raven's old notched single-blade
+wing and its `fingers` parameter. The marmot's first build (its body,
+paddle tail and head) is replaced in the same recipe file.
+
+## 3 November 2026: Western mountains and Australia, round 1
+
+Claude took over the card. Lane `claude/wild-art-west`, from
+`integration/wasteland`. Eleven animals and the wolf tracks, each built by
+its own recipe. Design, numbers and doubts are in
+[the round 1 note](../board/looks/wildlife/west-australia-round-1.md); sheets
+`west-australia-round-1a.jpg` and `-1b.jpg` in the same folder.
+
+- Donor species (`donor_shape.py`, the moose method generalised): mule deer,
+  elk and bighorn sheep from the CC0 Quaternius deer; cougar and coyote from
+  the CC0 Quaternius wolf. Donor bones, inverse binds and every clip kept.
+- Original recipes (`original.py`, `bird.py`): kangaroo with its own rig and
+  an in-place bounding Walk; marmot and echidna on the shared quadruped rig
+  and gait; raven, cockatoo and kookaburra with a bird rig, a perched Idle
+  and a looping Fly.
+- `tools/art/wolf-tracks.py`: seeded 512 x 512 RGBA tiling decal.
+- Shared code: `common.cli` takes a recipe function and a motion clip name;
+  `common.animate` takes an optional stride and lift; review renders new
+  species in their Idle pose and adds close Idle and motion frames;
+  `adapt.export` reads its coarse-fur list from `ROUGH_FUR`. The North woods
+  five take exactly their old paths, and their GLBs are byte exact.
+- Sources: `sources.json` rows for all twelve; the catalog's deer and wolf
+  credit rows name their new adaptations. Originals need no third-party credit.
+
+### Checks
+
+All from PowerShell, on the lane with current `integration/wasteland`
+(8d356ab0) merged in, each started on a free heavy-job turn (FACTORY 8).
+
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`:
+  51 passed, 0 failed, 0 not run, 515 s (includes repo hygiene, world
+  composition, track kits and the replay guards).
+- `npm run build -- --outDir .qa-dist/wildlife-build`: built in 1.15 s;
+  only the existing large-chunk warning. Output deleted afterwards.
+- Blender 4.5.13, `-b --factory-startup -t 4`, CPU: every species built and
+  reviewed from its recipe in one batch; the elk and kangaroo rebuilt once
+  more after their last fix. No browser, frame or save check: nothing is
+  placed in the game yet (WILD-VIEW).
+
+### Changed assertions
+
+- Blender-output: new cases only, for the eleven animals (paths, review
+  views, budget 5,000 or 2,000 for birds, 1K map, skin, Idle and Walk or Fly
+  on skin joints, donor clips kept) and the wolf-tracks plan and PNG. No old
+  assertion changed.
+- Hygiene: allow `docs/board/looks/wildlife/west-australia-round-[1-3][ab]?.jpg`
+  next to the existing North woods sheet names. Needs Claude's review under
+  rule 18; nothing else is loosened.
+
+### Removed
+
+Nothing replaced: all twelve are new. Scratch renders stay in the ignored
+`.qa-dist/wildlife-round-1/` and go after Claude's verdict.
+
 # WILD-ART-SRC: North woods round 3 of 3
 
 28 October 2026. Final North woods round. Work stays in this lane. No merge,
@@ -97,3 +259,8 @@ Cockpit sync stays with the Director under the lane-only boundary.
 ## Claude's review (28 October 2026, night)
 
 Accepted on pictures over three rounds (Claude, look judge): deer, bear, beaver and wolf passed in round 2, the moose in round 3 (hump, dewlap, palmate antlers from the skull, long muzzle). CC0 Quaternius deer, moose donor and wolf; CC-BY 3.0 Poly by Google bear and beaver, credited. All under 5,000 triangles, 1K coats. Not placed in races yet (WILD-VIEW). Changed pins (rule 18): the P4 kits and tanker source checks leave out only the four new wildlife provenance rows and keep their old hash values exactly.
+
+
+## Claude's review under rule 18 (3 November)
+
+The changed checks in tools/test-wildlife-view.mjs keep testing that a course and the count join only when their species have models, now on a fixed North woods list, and add exact checks of today's table (each course's species, the birds' Fly loop, the count's course lists, 300 days identical to the job with no list). Nothing is loosened. Round 3 verdict: kangaroo and kookaburra PASS; all eleven new species and the wolf tracks are accepted.

@@ -30,6 +30,11 @@ const near = (actual, expected, tolerance, label) => {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: ${actual} not within ${tolerance} of ${expected}`); checks++;
 };
 
+// The North woods five, the table before the Western mountains and Australia
+// joined. The checks of how a course or count joins use this fixed list, so
+// they keep testing that mechanism whatever the table holds today.
+const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'eastern-wolf'];
+
 // ---- The approved table matches the files on disk ---------------------------
 {
   const files = readdirSync(new URL('../public/assets/wildlife/', import.meta.url)).filter(name => name.endsWith('.glb')).sort();
@@ -53,14 +58,29 @@ const near = (actual, expected, tolerance, label) => {
   ok(!APPROVED_MODEL_IDS.includes('wolf-tracks'), 'the wolf tracks decal has no model yet, so it is absent');
   // A species with no model: availableSpecies drops it, and a course with none has no animals.
   same(wildlife.availableSpecies('tremblant-snow', APPROVED_MODEL_IDS).common.map(row => row.species), ['white-tailed-deer', 'moose'], 'Tremblant Snow has deer and moose, no tracks');
-  equal(wildlife.availableSpecies('panorama-ridge', APPROVED_MODEL_IDS).any, false, 'Panorama Ridge has no approved species, so no animals');
-  equal(wildlife.availableSpecies('summit-run', APPROVED_MODEL_IDS).any, false, 'Summit Run has none either until its species have models');
+  equal(wildlife.availableSpecies('panorama-ridge', NORTH_WOODS).any, false, 'Panorama Ridge has no approved species, so no animals');
+  equal(wildlife.availableSpecies('summit-run', NORTH_WOODS).any, false, 'Summit Run has none either until its species have models');
+  // Today's table: Panorama Ridge and Summit Run have all their animals.
+  const ridge = wildlife.availableSpecies('panorama-ridge', APPROVED_MODEL_IDS), summit = wildlife.availableSpecies('summit-run', APPROVED_MODEL_IDS);
+  same(ridge.common.map(row => row.species), ['eastern-grey-kangaroo', 'sulphur-crested-cockatoo', 'kookaburra'], 'Panorama Ridge: kangaroos, cockatoos and kookaburras');
+  equal(ridge.rare?.species, 'echidna', 'and the echidna as its rare animal');
+  same(summit.common.map(row => row.species), ['yellow-bellied-marmot', 'bighorn-sheep', 'mule-deer', 'raven'], 'Summit Run: marmots, bighorns, mule deer and ravens');
+  equal(summit.rare?.species, 'cougar', 'and the cougar as its rare animal');
+  for (const id of ['raven', 'sulphur-crested-cockatoo', 'kookaburra']) equal(WILDLIFE_MODELS[id].fly, 'Fly', `${id}: flies in its Fly loop`);
 }
 
 // ---- The count never asks for an animal with no model ------------------------
 {
-  const approved = APPROVED_MODEL_IDS;
-  same(surveyCourses({approved}), ['tremblant-woods', 'tremblant-snow'], 'today: Tremblant Woods and Tremblant Snow');
+  // Today's table approves every count target: the count is exactly the job
+  // with no list, and Panorama Ridge and Summit Run are in it.
+  same(surveyCourses({approved: APPROVED_MODEL_IDS}), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge'], 'today: the Woods, the Snow and Panorama Ridge');
+  same(surveyCourses({summitRun: true, approved: APPROVED_MODEL_IDS}), ['tremblant-woods', 'tremblant-snow', 'panorama-ridge', 'summit-run'], 'and Summit Run once it is open');
+  for (let day = 0; day < 300; day++) {
+    for (const summitRun of [false, true]) same(surveyJob(day, {summitRun, approved: APPROVED_MODEL_IDS}), surveyJob(day, {summitRun}), `day ${day}: today's table is the full count`);
+  }
+  // The mechanism, on the fixed North woods list.
+  const approved = NORTH_WOODS;
+  same(surveyCourses({approved}), ['tremblant-woods', 'tremblant-snow'], 'North woods only: Tremblant Woods and Tremblant Snow');
   same(surveyCourses({summitRun: true, approved}), ['tremblant-woods', 'tremblant-snow'], 'Summit Run joins only once a target species has a model');
   for (let day = 0; day < 300; day++) {
     const job = surveyJob(day, {summitRun: true, approved});

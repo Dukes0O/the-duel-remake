@@ -1,7 +1,8 @@
-"""North woods donor adaptation, shared rig and exported-model review helpers.
+"""Wildlife donor adaptation, shared rig and exported-model review helpers.
 
 Coordinates are metres, +X forward, Z up; glTF uses Y up.
-All five species use licensed donors through adapt.py.
+The North woods five use licensed donors through adapt.py. Later species
+pass their own recipe function to cli(); see donor_shape.py and original.py.
 """
 import argparse
 import json
@@ -12,7 +13,7 @@ from pathlib import Path
 IDS = ('white-tailed-deer', 'moose', 'black-bear', 'beaver', 'eastern-wolf')
 
 
-def cli(species):
+def cli(species, build=None, motion='Walk'):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--paths-only', action='store_true')
@@ -22,9 +23,13 @@ def cli(species):
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     root = args.root.resolve()
     evidence = root / ('.qa-dist/wildlife-round-' + str(args.round))
+    views = ['side', 'three-quarter', 'idle-25', 'idle-75', motion.lower() + '-25', motion.lower() + '-75']
+    if species not in IDS:
+        # Later species add close Idle and motion frames; small animals and
+        # birds are only a few pixels tall from the fixed 14 m cameras.
+        views += ['close-idle', 'close-' + motion.lower()]
     plan = {'blend': [], 'glb': [] if args.review else [str(root / 'public/assets/wildlife' / (species + '.glb'))],
-            'evidence': [str(evidence / (species + '-' + view + '.png'))
-                         for view in ('side', 'three-quarter', 'idle-25', 'idle-75', 'walk-25', 'walk-75')] if args.review else [],
+            'evidence': [str(evidence / (species + '-' + view + '.png')) for view in views] if args.review else [],
             'json': [str(evidence / (species + '-inspection.json'))] if args.review else []}
     if args.paths_only:
         print(json.dumps(plan))
@@ -35,6 +40,8 @@ def cli(species):
     globals().update(Vector=Vector, Quaternion=Quaternion)
     if args.review:
         review(species, root, args.round)
+    elif build:
+        build(Path(plan['glb'][0]), sys.modules[__name__], args.cache)
     else:
         import adapt
         adapt.build(species, Path(plan['glb'][0]), sys.modules[__name__], args.cache)
@@ -52,8 +59,8 @@ def material():
     return mat
 
 
-def finish_coat(mesh, rough_fur=False):
-    """Bake unlit coat colour and fine directional fur into one embedded 1K map."""
+def finish_coat(mesh, rough_fur=False, size=1024):
+    """Bake unlit coat colour and fine directional fur into one embedded map (1K unless smaller)."""
     bpy.ops.object.select_all(action='DESELECT')
     mesh.select_set(True)
     bpy.context.view_layer.objects.active = mesh
@@ -89,7 +96,7 @@ def finish_coat(mesh, rough_fur=False):
     links.new(ramp.outputs['Color'], mix.inputs[2])
     shader = nodes.get('Principled BSDF')
     links.new(mix.outputs[0], shader.inputs['Base Color'])
-    image = bpy.data.images.new(mesh.name + ' natural coat', width=1024, height=1024)
+    image = bpy.data.images.new(mesh.name + ' natural coat', width=size, height=size)
     target = nodes.new('ShaderNodeTexImage')
     target.image = image
     nodes.active = target
@@ -266,7 +273,7 @@ def rotate_world(obj, name, angle, axis=(0, 1, 0)):
     pose.keyframe_insert('rotation_quaternion')
 
 
-def animate(a, obj):
+def animate(a, obj, stride=None, lift=None):
     scene = bpy.context.scene
     scene.render.fps = 30
     obj.animation_data_create()
@@ -289,8 +296,10 @@ def animate(a, obj):
             else:
                 # Diagonal pairs with a quarter-cycle offset give a four-beat walk.
                 offsets = {'rear.L': 0, 'front.L': .25, 'rear.R': .50, 'front.R': .75}
-                stride = .12 if a.species == 'beaver' else .38 if a.species == 'moose' else .25
-                lift = .035 if a.species == 'beaver' else .10
+                if stride is None:
+                    stride = .12 if a.species == 'beaver' else .38 if a.species == 'moose' else .25
+                if lift is None:
+                    lift = .035 if a.species == 'beaver' else .10
                 for name, hip, knee, ankle, toe, hind in a.legs:
                     phase = ((f - 1) / frames + offsets[name]) % 1
                     # Foot travels back on ground for 60% of the loop, then lifts.
@@ -350,6 +359,16 @@ def review(species, root, round_number=1):
             for track in obj.animation_data.nla_tracks:
                 track.mute = True
     scene.frame_set(1)
+    if species not in IDS:
+        # Later species are shown standing or perched in their Idle clip,
+        # not in the bind pose (birds bind with their wings spread).
+        for obj in scene.objects:
+            idle = bpy.data.actions.get('Idle')
+            if obj.type == 'ARMATURE' and idle:
+                obj.animation_data.action = idle
+                if idle.slots:
+                    obj.animation_data.action_slot = idle.slots[0]
+        scene.frame_set(1)
     scene.render.engine = 'CYCLES'
     scene.cycles.device = 'CPU'
     scene.cycles.samples = 24
@@ -371,7 +390,12 @@ def review(species, root, round_number=1):
         light = bpy.context.object
         light.data.energy, light.data.shape, light.data.size, light.data.color = power, 'DISK', size, colour
         aim(light, (0, 0, .8))
-    centre_z = {'white-tailed-deer': 1.08, 'moose': 1.35, 'black-bear': .64, 'beaver': .32, 'eastern-wolf': .73}[species]
+    centre_z = {'white-tailed-deer': 1.08, 'moose': 1.35, 'black-bear': .64, 'beaver': .32, 'eastern-wolf': .73}.get(species)
+    if centre_z is None:
+        bpy.context.view_layer.update()
+        heights = [(o.matrix_world @ Vector(corner)).z for o in scene.objects
+                   if o.type == 'MESH' and o != ground for corner in o.bound_box]
+        centre_z = max(heights) / 2
     # A roadside camera at 14 m. Fixed lens shows genuine relative species sizes.
     for view, location in [('side', (0, -14, centre_z + 2.2)),
                             ('three-quarter', (7, -12.12, centre_z + 2.2))]:
@@ -395,7 +419,7 @@ def review(species, root, round_number=1):
     mesh = next(obj for obj in scene.objects if obj.type == 'MESH' and obj != ground)
     metrics = []
     for action in bpy.data.actions:
-        if action.name not in ('Idle', 'Walk'):
+        if action.name not in ('Idle', 'Walk', 'Fly'):
             continue
         rig_obj.animation_data.action = action
         # Blender 4.5 action slots are selected explicitly after import.
@@ -421,5 +445,37 @@ def review(species, root, round_number=1):
             scene.render.filepath = str(evidence /
                 (species + '-' + action.name.lower() + '-' + str(int(factor * 100)) + '.png'))
             bpy.ops.render.render(write_still=True)
+    if species not in IDS:
+        close_view(species, scene, rig_obj, mesh, evidence)
     manifest = evidence / (species + '-inspection.json')
     manifest.write_text(json.dumps(metrics, indent=2) + '\n', encoding='utf-8')
+
+
+def close_view(species, scene, rig_obj, mesh, evidence):
+    """Rear three-quarter frames filled by the animal: Idle, then its gait."""
+    for clip in ('Idle', 'Walk', 'Fly'):
+        action = bpy.data.actions.get(clip)
+        if not action:
+            continue
+        rig_obj.animation_data.action = action
+        if action.slots:
+            rig_obj.animation_data.action_slot = action.slots[0]
+        lo, hi = action.frame_range
+        scene.frame_set(int(lo + (hi - lo) * .3))
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated = mesh.evaluated_get(depsgraph)
+        verts = [evaluated.matrix_world @ v.co for v in evaluated.data.vertices]
+        lo_v = Vector([min(p[i] for p in verts) for i in range(3)])
+        hi_v = Vector([max(p[i] for p in verts) for i in range(3)])
+        centre = (lo_v + hi_v) / 2
+        size = max((hi_v - lo_v).length, .2)
+        bpy.ops.object.camera_add(location=centre + Vector((-.30, -1.0, .30)).normalized() * size * 2.4)
+        camera = bpy.context.object
+        camera.data.lens = 55
+        aim(camera, centre)
+        scene.camera = camera
+        scene.render.resolution_percentage = 100
+        scene.render.resolution_x, scene.render.resolution_y = 840, 380
+        scene.cycles.samples = 24
+        scene.render.filepath = str(evidence / (species + '-close-' + clip.lower() + '.png'))
+        bpy.ops.render.render(write_still=True)
