@@ -219,7 +219,17 @@ keyboard work as today: pick your player, then race.
   so the Unlock button stays on screen at 1280 x 720.
 - **Sound:** the existing `interface.bonus` cue, once per results screen,
   when the medal line or the car card shows. No new sound.
-- A win that only adds to a count shows nothing new here; the sheet shows it.
+- **Progress line** (Claude, 3 November 2026, from the end-to-end play):
+  every Duel or Grand Prix results screen of a finished race, won or not, says what medals are
+  for and how close the next car is: "MEDALS EARN CARS · 5/6 TOWARD THE
+  FERRARI ENZO" ("12/24 AND GOLD 4/6 TOWARD THE BUGATTI BOLIDE"; "MEDALS 24 ·
+  EVERY EARNED CAR WON" at the end). When the race filled no new box it adds
+  this car's next empty box ("· NEXT MEDAL: DUEL ON MEDIUM") or "THIS CAR'S
+  SHEET IS FULL". With a car card it sits inside the card. A screen with the
+  line takes the smaller headline, so the buttons stay on screen.
+- **Grand Prix:** the medal line and car card sit right under the headline,
+  above the timing and the standings, so a new car is on screen at 1280 x
+  720 without scrolling.
 
 ### 5.3 The menu
 
@@ -305,7 +315,8 @@ count goes from 11 to 12; the change note explains each changed assertion.
 
 ## 7. The switch
 
-- `earned-cars`, dev, in `src/feature-flags.js`.
+- `earned-cars` in `src/feature-flags.js`: on since 3 November 2026 (it was
+  dev; the cars shipped in releases with it off first, as 6.4 asks).
 - **Off:** no win is counted, no save gains a field, and the earned cars
   appear nowhere: not in the garage, the menu's car picker or its count, the
   armory, the rival car choice, the leaderboard or the dispatch board. Every
@@ -313,8 +324,8 @@ count goes from 11 to 12; the change note explains each changed assertion.
 - **On:** the sheets count, the panel and lines show, and the earned cars
   show locked until earned.
 - **Release:** the cars first reach players in a release with the switch
-  off (section 6.4). The switch goes to beta in a later release, only after
-  all three cars pass their look tests and EARN-FINISH passes. The Grand Prix row needs `grand-prix-career` on to fill;
+  off (section 6.4). The switch went straight to on in a later release
+  (3 November 2026), after the cars' look rounds and EARN-FINISH. The Grand Prix row needs `grand-prix-career` on to fill;
   if that switch is still dev at release, the row says so (section 5.1) and
   the Duel row alone can earn every car.
 

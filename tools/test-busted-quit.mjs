@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {ownTestCourses} from './career-fixture.mjs';
 import {createResultsScreen} from '../src/screen-results.js';
 import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
 import {COURSE,POLICE} from '../src/config.js';
 import {PLAYERS_KEY,loadPlayers,activePlayer} from '../src/progression.js';
 
@@ -11,6 +12,8 @@ globalThis.localStorage=storage;
 const chase=COURSE.findIndex(stage=>stage.kind==='chase');
 function start({credits=2000,cpu='medium',manual=false,stage=0}={}){
   memory.clear();const app=ownTestCourses(new App());app.profile.credits=credits;
+  // Fines are checked without medal pay: these exact earnings predate earned cars (switched on 3 November 2026).
+  app.duel.featureFlags=createFeatureFlags({storage:null,qa:false,overrides:{'earned-cars':false}});
   if(stage===chase)app.profile.unlockedCars.push('banshee_muscle');
   app._saveProfile();app.startCampaign({startStage:stage,cpuDifficulty:cpu,difficulty:manual?'pro':'casual'});app.advance(4);
   app.duel.state.traffic=[];app.duel.state.rival=null;return app;

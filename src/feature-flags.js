@@ -29,8 +29,8 @@ export const FEATURE_STATES = Object.freeze({
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.
   // Released 15 October 2026.
   'forest-fire': 'on',
-  // Earned cars and medal sheets (docs/EARNED_CARS.md). Off in the game.
-  'earned-cars': 'dev',
+  // Earned cars and medal sheets (docs/EARNED_CARS.md). Released 3 November 2026.
+  'earned-cars': 'on',
   'nissan-skyline': 'on',
   // H4 Rescue (docs/HELI_RESCUE.md): rescues in the mission engine. Released 26 October 2026; works only with the helicopter on.
   rescue: 'on',

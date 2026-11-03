@@ -216,6 +216,10 @@ equal(earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '0'}), null, 'A disabled s
 equal(earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '1'}), {
   courseId: 'panorama-ridge', car: 'mclaren_f1', flags: 'panorama-ridge,earned-cars,grand-prix',
 }, 'The F1 selector enables the real course, car and Grand Prix');
+equal(earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '1', EARN_CAR_FRAMES_CAR: 'ferrari_enzo'}), {
+  courseId: 'panorama-ridge', car: 'ferrari_enzo', flags: 'panorama-ridge,earned-cars,grand-prix',
+}, 'EARN_CAR_FRAMES_CAR picks another earned car for the same field check');
+assert.throws(() => earnCar2FrameSelection({EARN_CAR_2_FRAMES_ONLY: '1', EARN_CAR_FRAMES_CAR: 'falcone_f42'}), /earned car/); checks++;
 const frameContext = {headed: true, launchMode: 'headed'};
 const frameEnv = {EARN_CAR_2_FRAMES_ONLY: '1', DUEL_FRAME_IDLE_AWAKE: '1'};
 assertEarnCar2FrameContext(frameContext, frameEnv, []); checks++;

@@ -41,9 +41,13 @@ export function validateArdennesFramePacket(packet) {
   }
   return packet;
 }
+// EARN-FINISH: EARN_CAR_FRAMES_CAR picks the earned car for the same Panorama field check (default the F1).
+const EARNED_FRAME_CARS = Object.freeze(['mclaren_f1', 'ferrari_enzo', 'bugatti_bolide']);
 export function earnCar2FrameSelection(env = process.env) {
-  return env.EARN_CAR_2_FRAMES_ONLY === '1'
-    ? {courseId: 'panorama-ridge', car: 'mclaren_f1', flags: 'panorama-ridge,earned-cars,grand-prix'} : null;
+  if (env.EARN_CAR_2_FRAMES_ONLY !== '1') return null;
+  const car = env.EARN_CAR_FRAMES_CAR ?? 'mclaren_f1';
+  if (!EARNED_FRAME_CARS.includes(car)) throw Error('EARN_CAR_FRAMES_CAR must name an earned car.');
+  return {courseId: 'panorama-ridge', car, flags: 'panorama-ridge,earned-cars,grand-prix'};
 }
 export function assertEarnCar2FrameContext(context, env = process.env, busy = []) {
   if (context?.headed !== true || context.launchMode !== 'headed' ||
@@ -54,12 +58,14 @@ export function assertEarnCar2FrameContext(context, env = process.env, busy = []
 export function validateEarnCar2FramePacket(packet, {warn = () => {}} = {}) {
   if (packet?.schema !== 1 || packet.mode !== 'earn-car-2-simple' || packet.reports?.length !== 2)
     throw Error('Missing complete F1 frame packet.');
+  const car = packet.car ?? 'mclaren_f1';
+  if (!EARNED_FRAME_CARS.includes(car)) throw Error('The frame packet names a car that is not earned.');
   for (const [index, quality] of ['High', 'Performance'].entries()) {
     const row = packet.reports[index];
     if (row?.quality === quality && Number.isFinite(row.constructionMs) && row.constructionMs > 5000)
       warn(`${quality}: full first-race load ${row.constructionMs} ms exceeds 5000 ms (warning only).`);
-    if (row?.quality !== quality || row.course !== 'panorama-ridge' || row.sourceCar !== 'mclaren_f1' ||
-        !Array.isArray(row.roster) || row.roster.length !== 8 || !row.roster.every(car => car === 'mclaren_f1') ||
+    if (row?.quality !== quality || row.course !== 'panorama-ridge' || row.sourceCar !== car ||
+        !Array.isArray(row.roster) || row.roster.length !== 8 || !row.roster.every(item => item === car) ||
         row.cars !== 8 || row.frames !== 120 || row.headed !== true || row.visible !== true ||
         row.memoryOnlySaves !== true || row.appRunning !== true || row.rearView !== 'ready' ||
         !Number.isFinite(row.countdownBefore) || !Number.isFinite(row.countdownAfter) ||
@@ -70,14 +76,14 @@ export function validateEarnCar2FramePacket(packet, {warn = () => {}} = {}) {
   }
   return packet;
 }
-export function prepareEarnCar2FramePlayer(app, quality, upgradeTypes) {
+export function prepareEarnCar2FramePlayer(app, quality, upgradeTypes, car = 'mclaren_f1') {
   app.returnToMenu();
   if (!app.addPlayer('F1 Frame QA ' + quality).ok)
     throw Error('Memory-only native F1 temporary player creation failed.');
   app.profile = {...app.profile, credits: 50000,
-    unlockedCars: [...app.profile.unlockedCars, 'mclaren_f1'],
-    upgrades: {...app.profile.upgrades, mclaren_f1: Object.fromEntries(Object.keys(upgradeTypes).map(type => [type, 3]))},
-    heli: {...app.profile.heli, version: 1, carsAt: {...app.profile.heli?.carsAt, mclaren_f1: 'panorama-ridge'}}};
+    unlockedCars: [...app.profile.unlockedCars, car],
+    upgrades: {...app.profile.upgrades, [car]: Object.fromEntries(Object.keys(upgradeTypes).map(type => [type, 3]))},
+    heli: {...app.profile.heli, version: 1, carsAt: {...app.profile.heli?.carsAt, [car]: 'panorama-ridge'}}};
   if (!app._saveProfile() || !app.purchaseCourse('panorama-ridge').ok)
     throw Error('Memory-only native F1 course purchase failed.');
 }
@@ -99,9 +105,10 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
   const labFan = carId === 'mcmurtry_speirling';
   if (labFan && process.env.LAB_FAN_FRAMES_ONLY !== '1')
     throw Error('Speirling frames require the explicit LAB_FAN_FRAMES_ONLY opt-in.');
-  const sameCarGrid = labFan || (courseId === 'panorama-ridge' && carId === 'mclaren_f1');
+  const earnedCar = earnCar2FrameSelection()?.car ?? 'mclaren_f1';
+  const sameCarGrid = labFan || (courseId === 'panorama-ridge' && carId === earnedCar);
   const ardennes = courseId === 'ardennes-forest';
-  const earnedF1 = courseId === 'panorama-ridge' && carId === 'mclaren_f1';
+  const earnedF1 = courseId === 'panorama-ridge' && carId === earnedCar;
   const assertContext = earnedF1 ? assertEarnCar2FrameContext : ardennes ? assertArdennesFrameContext : assertNightFrameContext;
   assertContext(context, process.env, inspectNightProcesses());
   await context.navigate(earnedF1 ? `${entry}?flags=${earnCar2FrameSelection().flags}&frame-pacing=earn-car-2-${quality}` :
@@ -129,7 +136,7 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
     if (!Number.isInteger(stage)) throw Error('Requested frame course is absent from the real menu.');
     if (${earnedF1}) {
       if (!app._switches().enabled('earned-cars')) throw Error('F1 frames require the earned-cars switch.');
-      (${prepareEarnCar2FramePlayer.toString()})(app, ${JSON.stringify(quality)}, ${JSON.stringify(Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, true])))});
+      (${prepareEarnCar2FramePlayer.toString()})(app, ${JSON.stringify(quality)}, ${JSON.stringify(Object.fromEntries(Object.keys(UPGRADE_TYPES).map(type => [type, true])))}, requestedCar);
     } else {
       (${prepareNightPlayer.toString()})(app, ${JSON.stringify(quality)}, requestedCourse);
       if (${labFan}) {
@@ -609,7 +616,7 @@ export async function run(context) {
     try {
       for (const quality of ['high', 'performance'])
         reports.push(await measureNight(context, quality, earnedF1.courseId, earnedF1.car));
-      const packet = {schema: 1, mode: 'earn-car-2-simple', reports, warnings};
+      const packet = {schema: 1, mode: 'earn-car-2-simple', car: earnedF1.car, reports, warnings};
       try {validateEarnCar2FramePacket(packet, {warn: message => warnings.push(message)});}
       finally {await writeFile(join(context.outputDir, 'frame-pacing.json'), JSON.stringify(packet, null, 2) + '\n');}
       for (const message of warnings) console.log('WARNING ' + message);
