@@ -22,6 +22,7 @@ GROUPS = {
     'west-australia-2': ('WESTERN MOUNTAINS AND AUSTRALIA, CHANGED', ('eastern-grey-kangaroo', 'cougar', 'bighorn-sheep', 'elk',
                                                                     'yellow-bellied-marmot', 'kookaburra', 'raven',
                                                                     'sulphur-crested-cockatoo')),
+    'west-australia-3': ('KANGAROO AND KOOKABURRA, FINAL', ('eastern-grey-kangaroo', 'kookaburra')),
 }
 
 

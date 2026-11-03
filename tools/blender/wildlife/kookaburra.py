@@ -14,15 +14,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import cli
 
 ID = 'kookaburra'
-CREAM = (.50, .46, .38)
+CREAM = (.56, .53, .45)
 BROWN = (.070, .050, .034)
-STRIPE = (.040, .028, .019)
+STRIPE = (.030, .020, .013)
 BLUE = (.10, .15, .22)
 RUFOUS = (.20, .085, .032)
 
-P = {'body': .17, 'width': .066, 'height': .072, 'neck': (.010, .040), 'head': .070, 'neck_r': 1.0,
-     'bill': (.088, .034, .026, .10), 'tail': (.12, .050, 'round'), 'span': .33,
-     'primaries': (6, .095, .032, 34, False), 'chord': (.15, .10), 'leg': .045, 'stance': .025, 'toe': .0062,
+P = {'body': .17, 'width': .066, 'height': .072, 'neck': (.012, .046), 'head': .068, 'merged': True,
+     'bill': (.090, .040, .030, .10), 'tail': (.12, .050, 'round'), 'span': .33,
+     'primaries': (5, .10, .036, 32, False), 'chord': (.15, .10), 'leg': .045, 'stance': .025, 'toe': .0062,
      'toes': [(0, .036), (25, .030), (-25, .030), (180, .026)], 'tilt': 55, 'beat': 12,
      'flap': .60}
 
@@ -45,10 +45,11 @@ def head(f, p):
     import original as o
     d = (p - head_centre(f)) / P['head']
     crown = o.mix(CREAM, o.mix(BROWN, (.16, .12, .08), o.speckle(p)), .65)
-    colour = o.mix(CREAM, crown, o.smooth((d.z - .22) / .25))     # streaked brown crown, soft edge
-    colour = o.mix(colour, crown, o.smooth((-d.x - .45) / .35) * o.smooth((d.z + .2) / .3))
+    # Cream-white head with only light brown streaks on the crown.
+    colour = o.mix(CREAM, crown, .45 * o.smooth((d.z - .45) / .30))
+    colour = o.mix(colour, crown, .5 * o.smooth((-d.x - .70) / .30) * o.smooth((d.z + .1) / .3))
     # Dark brown stripe through the eye, running back to the nape.
-    stripe = o.smooth((.26 - abs(d.z - .14)) / .08) * o.smooth((.55 - d.x) / .15) * o.smooth((abs(d.y) - .25) / .1)
+    stripe = o.smooth((.30 - abs(d.z - .16)) / .06) * o.smooth((.50 - d.x) / .10) * o.smooth((abs(d.y) - .22) / .08)
     return o.mix(colour, STRIPE, stripe)
 
 
@@ -74,7 +75,7 @@ def bill(f, p):
     hc = head_centre(f)
     base_z = hc.z - P['head'] * .12
     centre = base_z - (p.x - (hc.x + P['head'] * .78)) * P['bill'][3]
-    return (.030, .026, .022) if p.z > centre - .002 else (.40, .37, .32)
+    return (.018, .015, .012) if p.z > centre - .001 else (.56, .51, .42)
 
 
 PAINT = {'body': body, 'head': head, 'wing': wing, 'tail': tail, 'bill': bill,

@@ -70,15 +70,26 @@ def build(ID, P, paint, output, c):
             (.38, .76, .80), (.50, .52, .62)]
     sections = [(tuple(f.w((x * bl, 0, -.04 * bh * (x > .1)))), w * bw, h * bh) for x, w, h in prof]
     a.fur(sections, lambda p: paint['body'](f, p), body, 14, P.get('shag', .015))
-    # Neck joins chest and head; the head is level in the world.
-    a.fur([(tuple(f.w((.30 * bl, 0, .12 * bh))), bw * .80, bh * .82),
-           (tuple(chest.lerp(head_c, .5)), hr * P.get('neck_r', .80), hr * P.get('neck_r', .80) * 1.02),
-           (tuple(head_c + Vector((-hr * .55, 0, 0))), hr * .85, hr * .88),
-           (tuple(head_c), hr, hr * .96),
-           (tuple(head_c + Vector((hr * .50, 0, -hr * .04))), hr * .84, hr * .82),
-           (tuple(head_c + Vector((hr * .78, 0, -hr * .09))), hr * .60, hr * .60),
-           (tuple(head_c + Vector((hr * .94, 0, -hr * .12))), hr * .26, hr * .28)],
-          lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), 14, .01)
+    if P.get('merged'):
+        # One big round head sunk into the shoulders: a head ball, a broad
+        # nape-and-throat ball bridging it to the body, and the face tapering
+        # into the bill. Smooth balls meet in soft hollows, never a fold.
+        colour = lambda p: paint['head'](f, p) if (Vector(p) - head_c).length < 1.2 * hr else paint['body'](f, p)
+        weight = o.near(a, ['head', 'neck', 'body'])
+        a.oval(tuple(head_c), (hr * 1.04, hr * .96, hr * .96), colour, weight, 7, 14)
+        a.oval(tuple(chest.lerp(head_c, .45) + Vector((-hr * .10, 0, 0))), (hr * .95, bw * .96, hr * .92),
+               colour, weight, 5, 12)
+        a.oval(tuple(head_c + Vector((hr * .62, 0, -hr * .10))), (hr * .45, hr * .62, hr * .58), colour, 'head', 4, 10)
+    else:
+        # Neck joins chest and head; the head is level in the world.
+        a.fur([(tuple(f.w((.30 * bl, 0, .12 * bh))), bw * .80, bh * .82),
+               (tuple(chest.lerp(head_c, .5)), hr * P.get('neck_r', .80), hr * P.get('neck_r', .80) * 1.02),
+               (tuple(head_c + Vector((-hr * .55, 0, 0))), hr * .85, hr * .88),
+               (tuple(head_c), hr, hr * .96),
+               (tuple(head_c + Vector((hr * .50, 0, -hr * .04))), hr * .84, hr * .82),
+               (tuple(head_c + Vector((hr * .78, 0, -hr * .09))), hr * .60, hr * .60),
+               (tuple(head_c + Vector((hr * .94, 0, -hr * .12))), hr * .26, hr * .28)],
+              lambda p: paint['head'](f, p), o.near(a, ['head', 'neck', 'body']), 14, .01)
     # Bill: deep at the base, tapering and curving down to the tip.
     depth, width, hook = P['bill'][1], P['bill'][2], P['bill'][3]
     bill = []

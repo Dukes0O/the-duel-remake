@@ -1,5 +1,25 @@
 # Western mountains and Australia, round 2 of 3
 
+## Claude's round 2 verdict
+
+PASS: bighorn, cougar, elk, marmot, raven and cockatoo (with round 1's
+echidna, coyote, mule deer and wolf tracks). Do not change those files again.
+
+Round 3 (final, SPEC 0.11 cap), two animals only:
+
+1. Kangaroo (the count asks for it): broad, cupped, upright ears with pale
+   inner fur and dark rims, about as long as the head; a longer, deeper head
+   with a soft muzzle, dark nose and visible eye; a more upright resting
+   stance in Idle (body more vertical, short forearms held in front with
+   dark paws); stronger coat contrast (grey-brown back, clearly creamy front
+   from chin to belly). Keep the bound, the feet on the ground and the budget.
+2. Kookaburra: one round head that grows out of the body without any crease
+   or cap line, larger than now, almost as wide as the body; cream-white
+   head and chest with a dark brown stripe through the eye; heavy two-tone
+   bill. Keep the wings and tail.
+
+The round 2 sheet was recycled with the round 3 commit.
+
 Claude's round 1 verdict and the fixes asked for are in
 `west-australia-round-1.md`. Passed and unchanged (byte exact): echidna,
 wolf tracks, coyote, mule deer. The North woods five are untouched.
