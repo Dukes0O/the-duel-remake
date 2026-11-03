@@ -18,6 +18,8 @@ import {SECRET_SIGNS, TABLE_ID} from './map-secrets.js';
 import {STORY_COURSE, STORY_NIGHT, STORY_NIGHT_NAME} from './heli-story.js';
 
 export const MAP_KEY = 'N';
+const SKI_COURSE = 'summit-run';
+const SKI_PAD_LABELS = Object.freeze({devils: 'Devils Playground', summit: 'Summit pad', pickup: 'Pickup pad'});
 const chartOutlines = {...traced, outlines: {...traced.outlines,
   ...Object.fromEntries(Object.entries(traced.previews ?? {}).filter(([, row]) => featureFlags.enabled(row.flag))
     .map(([id, row]) => [id, row.outline])),
@@ -98,8 +100,12 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
   // The Night version of Kogane Pass has no sign to spot: the delivery finds it (STORY-KOGANE-DELIVERY), so it is marked the same way.
   const found = (secrets?.found ?? []).map(id => SECRET_SIGNS.find(sign => sign.id === id) ?? (id === STORY_NIGHT ? {id, name: STORY_NIGHT_NAME, course: STORY_COURSE} : null)).filter(Boolean)
     .map((sign, index) => ({id: sign.id, name: sign.name, place: placeOfCourse(sign.course)?.id ?? null, index}));
+  // SKI-FINISH: a ski flight's pads still to fly to, drawn at Summit Run in the chart's frame (as the helicopter's dot is).
+  const summit = placeOfCourse(SKI_COURSE);
+  const skiPads = summit && places.some(place => place.id === summit.id) ? (view?.ski?.marks ?? []).map(pad => ({name: pad.name, label: SKI_PAD_LABELS[pad.name] ?? pad.name,
+    x: roundKm(summit.drawAt.x - pad.x / 1000), z: roundKm(summit.drawAt.z + pad.z / 1000)})) : [];
   return {
-    places, jobLines, heli: heliPoint, here: here?.id ?? null, fuelKg,
+    places, jobLines, heli: heliPoint, here: here?.id ?? null, fuelKg, skiPads,
     reachKm: heliPoint ? Math.max(0, roundKm(reachKm(fuelKg))) : 0,
     found, table: tableSeen ? (secrets?.table === true ? 'found' : 'seen') : null,
     movingMap: movingMap === true, destination: view?.destination ?? null,
@@ -283,6 +289,16 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     const [px, py] = project(place.x, place.z), dx = 14 + secret.index * 10;
     ctx.fillStyle = '#b03c28'; ctx.font = 'bold 12px Georgia, serif'; ctx.fillText('★', px + dx, py + 14);
   }
+  // SKI-FINISH: the ski pads to fly to, an orange flag on each with its name (pads close together stack their names).
+  (model.skiPads ?? []).forEach((pad, i, pads) => {
+    const [px, py] = project(pad.x, pad.z), stack = pads.slice(0, i).filter(other => Math.hypot(other.x - pad.x, other.z - pad.z) < 1).length;
+    ctx.fillStyle = '#e0560f'; ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillRect(px - 1, py - 16, 2, 14);
+    ctx.beginPath(); ctx.moveTo(px + 1, py - 16); ctx.lineTo(px + 11, py - 12.5); ctx.lineTo(px + 1, py - 9); ctx.closePath(); ctx.fill();
+    ctx.font = 'bold 11px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#b8440b';
+    ctx.fillText(`SKI · ${pad.label}`, px + 14, py - 8 + stack * 13); ctx.textAlign = 'center';
+  });
   // The helicopter: a small triangle pointing the way it faces (the gauge's number, clockwise from north).
   if (model.heli) {
     const [hx, hy] = project(model.heli.x, model.heli.z);

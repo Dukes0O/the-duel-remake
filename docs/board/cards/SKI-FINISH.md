@@ -129,3 +129,50 @@ is midway. Targets bronze/silver/gold: Casual 37.88/28.71/19.54 s; Pro
 33.65/31.97/30.29 s. The Pro bronze convention and every assertion change
 are explicit in the change note for Claude's review. Feature stays dev;
 no merge out or release is requested by this lane.
+
+## Claude decides (3 November 2026): finding the pads and the fuel
+
+Kyle, 2 November: "I tried to get to drop off skiers at Summit but I couldn't
+find the ski pad, it wasn't clearly marked and I ran out of fuel."
+
+What the numbers show: the cruise leg to Summit Run ends 1.5 km outside the
+start line, but Devils Playground is 5.4 km further up the mountain, and the
+summit pad 8.9 km. A scripted pilot leaving the home pad on a full tank lands
+at Summit with 214 kg and runs dry on the climb to Devils Playground. The two
+lower pads were not drawn in the flying world at all. One tank cannot do the
+trip as built, so a warning alone would not fix it.
+
+The fix, in order of how much it helps a player:
+
+1. **The ski flight ends at the pads.** With a ski drop or the group job in
+   hand, the leg to Summit Run ends 400 m short of Devils Playground on the
+   line from home, hovering, facing the pad, clear of the ground on the way
+   in (the rescue calls already end their Summit leg hovering). The flight to
+   the pads is part of the leg's 160 kg.
+2. **Each drop pad is marked.** An orange light column (300 m, visible from
+   kilometres away against snow and sky) and an orange ring painted on the
+   snow, for each pad that starts a run for the flight in hand, while it waits
+   for a skier. The pickup pad has the fuel pump (the existing
+   `fuel-pump.glb`) and its own ring.
+3. **The autopilot and the map point there.** At Summit with a ski flight in
+   hand, the autopilot's goal is the nearest marked pad, not the start line.
+   The pilot's map draws the marked pads at Summit Run with their names.
+4. **Fuel is planned, not found out.** The job card shows the fuel the trip
+   needs and what is in the tank. At the home pad with less than the leg plus
+   the 80 kg the jobs keep for flying at each end (240 kg from the Woods), its
+   next step is "Fill the tank first". The pickup pad's pump sells fuel at the
+   home price during a ski flight; after the run, with less than the way home
+   needs, the card's next step is to fill up there. The card names the pump on
+   the way in so it is never a surprise.
+
+Why a pump and not a refusal: the run ends at the pickup, so the helicopter is
+always standing beside the pump when it needs fuel, and buying fuel there is
+the same act as at home. Refusing the drop at the home pad would only move the
+problem: the way home still needs more than one tank.
+
+Checks: `tools/test-ski-heli.mjs` (a new test: from the home pad on a full
+tank, the scripted pilot reaches Devils Playground with fuel to spare, skis,
+fills up at the pickup and flies home without the fuel truck), the job card
+words in `tools/test-heli-job-clarity.mjs`, the pilot map's ski pads in
+`tools/test-pilot-map.mjs`; a browser play from the home pad with a
+memory-only save.

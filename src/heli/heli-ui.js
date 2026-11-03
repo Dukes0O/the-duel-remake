@@ -322,8 +322,10 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   // The label changes as fuel burns; it sits in its own span so the panel
   // can update it without rebuilding the buttons under the mouse.
   const atTruck = view.heli.onGround && view.rescue?.active?.sites?.atTruck === true;
-  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck ? Math.max(1, refuels) : refuels});
-  const pump = onPad || atTruck ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
+  // SKI-FINISH: the pickup pad's pump during a ski flight sells fuel like the home pump (always for pay).
+  const atSkiPump = view.heli.onGround && view.ski?.pump?.atPump === true;
+  const label = pumpLabel(view.heli.fuelKg, {credits, refuels: atTruck || atSkiPump ? Math.max(1, refuels) : refuels});
+  const pump = onPad || atTruck || atSkiPump ? `<button type="button" class="heli-pump" data-heli-fuel="fill" ${label.disabled ? 'disabled' : ''}><span class="heli-pump-label">${label.text}</span></button>` : '';
   const truckTarget = atTruck ? `<label class="heli-fuel-target">Tank target
     <select data-heli-fuel-target aria-label="Fuel tank target">
       ${[190, 230, 330, 360, 400].map(kg => `<option value="${kg}"${kg === 330 ? ' selected' : ''}>${kg} kg</option>`).join('')}

@@ -6,8 +6,9 @@ import {CARS} from '../config.js';
 import {HELI_DESTINATIONS_WITH_SUMMIT, placeName} from './heli-jobs.js';
 import {payWords} from './heli-pay.js';
 
-// The keys the game uses (src/input-contexts.js, the helicopter's keyboard): H hooks and lets go, N opens the map.
-export const JOB_KEYS = Object.freeze({hook: 'H', map: 'N'});
+// The keys the game uses (src/input-contexts.js, the helicopter's keyboard): H hooks and lets go, N opens the map,
+// P turns the autopilot on and off.
+export const JOB_KEYS = Object.freeze({hook: 'H', map: 'N', autopilot: 'P'});
 // How long the card says "Delivered" after the pay, in seconds.
 export const DELIVERED_SECONDS = 5;
 
@@ -48,16 +49,25 @@ export function jobCardText(status, {keys = JOB_KEYS, flyToList, delivered = nul
       return Object.freeze({heading: status.kind === 'story' ? 'STORY JOB' : 'CRATE JOB', what: status.kind === 'story' && status.title ? status.title : `Crate, ${num(status.massKg)} kg`,
         route, pay, next: stages('the crate')[status.stage], note: `${hook} hooks and ${hook} lets go.`, drop: true});
     case 'skiDrop': case 'skiGroup': {
+      // SKI-FINISH (Kyle, 2 November 2026: couldn't find the pad, ran out of fuel): while the tank is short of what the
+      // next leg needs, filling it is the next step; the pads are named by their orange light, and the pickup pad's pump
+      // is named before it is needed.
       const group = status.kind === 'skiGroup', nearest = status.pads?.[0];
+      const short = Number.isFinite(status.needKg) && status.fuelKg < status.needKg, atHome = status.here === status.from;
+      const tank = `needs about ${num(status.needKg)} kg of fuel and you have ${num(status.fuelKg)} kg.`;
       const next = {
-        fly: flyToWords(status.flyTo, options),
-        pad: nearest ? `Land on a ski pad to step out. Nearest: ${PAD_NAMES[nearest.name] ?? nearest.name}, ${(nearest.distance / 1000).toFixed(1)} km, heading ${compass(nearest.bearing)}.`
-          : 'Land on a ski pad to step out.',
+        fly: short && atHome ? `Fill the tank first at the home pump: the flight to the ski pads ${tank}`
+          : `${flyToWords(status.flyTo, options)} The flight ends beside the ski pads.`,
+        pad: nearest ? `Land on the ski pad under the orange light: ${PAD_NAMES[nearest.name] ?? nearest.name}, ${(nearest.distance / 1000).toFixed(1)} km, heading ${compass(nearest.bearing)}.`
+          : 'Land on a ski pad under an orange light to step out.',
         ski: 'Pick a run on the ski panel.',
-        flyHome: group ? 'Fly the group home and land on the home pad.' : 'Fly home and land on the home pad.',
+        flyHome: short && status.here === status.to ? `${status.atPump ? 'Fill up at the pump here' : 'Fill up at the pump on the pickup pad'} first: the way home ${tank}`
+          : group ? 'Fly the group home and land on the home pad.' : 'Fly home and land on the home pad.',
       }[status.stage];
+      const note = status.stage === 'pad' ? `Press ${keys.autopilot ?? JOB_KEYS.autopilot} and the autopilot flies to the nearest pad. Fuel: the pump is on the pickup pad, beside Devils Playground.`
+        : status.stage === 'ski' ? 'Fuel: the pump is on the pickup pad, where every run ends.' : '';
       return Object.freeze({heading: group ? 'HELI-SKI GROUP' : 'HELI-SKI DROP', what: group ? 'A guide and four guests' : 'Your own run', route: `${placeName(status.from)} to ${placeName(status.to)}`,
-        pay, next, note: '', drop: !group || status.here === status.from});
+        pay, next, note, drop: !group || atHome});
     }
     default: return null;
   }

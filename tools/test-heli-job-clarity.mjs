@@ -271,10 +271,22 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   same(jobCardText({kind: 'recovery', carId: 'falcone_f42', from: 'panorama-ridge', to: 'panorama-ridge', pay: 2300, bonus: 575, stage: 'hook', again: false}).next,
     'Hook the Falcone F42 on the slope: hover low over it and press H.', 'recovery: the car is on the slope');
   const ski = {kind: 'skiDrop', from: HOME_COURSE, to: 'summit-run', pay: 0, bonus: 0, here: 'summit-run'};
-  same(jobCardText({...ski, stage: 'fly', flyTo: 'summit-run'}, {flyToList: flyTo}).next, 'Fly to Summit Run.', 'ski: fly there');
+  // SKI-FINISH (Kyle, 2 November 2026: couldn't find the pad, ran out of fuel): the leg ends at the pads, the pad is
+  // named by its orange light, and a tank short of the next leg puts filling it first.
+  same(jobCardText({...ski, stage: 'fly', flyTo: 'summit-run'}, {flyToList: flyTo}).next, 'Fly to Summit Run. The flight ends beside the ski pads.', 'ski: fly there');
+  same(jobCardText({...ski, here: HOME_COURSE, stage: 'fly', flyTo: 'summit-run', fuelKg: 180, needKg: 240}, {flyToList: flyTo}).next,
+    'Fill the tank first at the home pump: the flight to the ski pads needs about 240 kg of fuel and you have 180 kg.', 'ski: a short tank at home fills first');
+  same(jobCardText({...ski, here: HOME_COURSE, stage: 'fly', flyTo: 'summit-run', fuelKg: 400, needKg: 240}, {flyToList: flyTo}).next,
+    'Fly to Summit Run. The flight ends beside the ski pads.', 'ski: a full tank flies');
   same(jobCardText({...ski, stage: 'pad', pads: [{name: 'devils', distance: 3240, bearing: 44.6}]}).next,
-    'Land on a ski pad to step out. Nearest: Devils Playground, 3.2 km, heading 045.', 'ski: the nearest pad');
+    'Land on the ski pad under the orange light: Devils Playground, 3.2 km, heading 045.', 'ski: the nearest pad');
+  ok(jobCardText({...ski, stage: 'pad', pads: [{name: 'devils', distance: 400, bearing: 44.6}]}).note.includes('pump is on the pickup pad'), 'ski: the pump is named on the way in');
   same(jobCardText({...ski, stage: 'ski'}).next, 'Pick a run on the ski panel.', 'ski: on a pad');
+  same(jobCardText({...ski, stage: 'flyHome', fuelKg: 173, needKg: 240, atPump: true}).next,
+    'Fill up at the pump here first: the way home needs about 240 kg of fuel and you have 173 kg.', 'ski: after the run, fill up at the pickup');
+  same(jobCardText({...ski, stage: 'flyHome', fuelKg: 173, needKg: 240, atPump: false}).next,
+    'Fill up at the pump on the pickup pad first: the way home needs about 240 kg of fuel and you have 173 kg.', 'ski: away from the pump, it is named');
+  same(jobCardText({...ski, stage: 'flyHome', fuelKg: 400, needKg: 240, atPump: true}).next, 'Fly home and land on the home pad.', 'ski: filled, fly home');
   same(jobCardText({...ski, kind: 'skiGroup', pay: 3000, stage: 'flyHome'}).drop, false, 'the group is aboard: no Drop job away from home');
   same(flyToWords('eifel-crown', {keys: JOB_KEYS}), "Fly to Eifel Crown (on the Pilot's map, press N).", 'a map place names the map key');
   ok(jobCardMarkup(card('fly')).includes('data-heli-job="drop"') && jobCardMarkup(card('fly')).includes('Pacific Canyon Circuit'), 'the markup has the words and the button');
