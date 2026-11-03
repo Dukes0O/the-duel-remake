@@ -6,6 +6,19 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Animals beside the road, and the helicopter's new coats.** Real local
+  animals stand in open ground beside the road and run for cover as you
+  pass: white-tailed deer, moose, black bears with cubs, beavers and, one
+  race in five, wolves at Tremblant; kangaroos, cockatoos, kookaburras and
+  sometimes an echidna at Panorama Ridge; marmots, bighorn sheep, mule deer,
+  ravens and sometimes a cougar at Summit Run. From Kestrel One the daily
+  wildlife count asks Sarah's question (how many in this square?): fly
+  straight lines high enough not to scare them, and each animal counted gets
+  a pale ring. Five missions of one kind earn a coat of paint with its own
+  gear (fire service, medevac, search and rescue, wildlife camouflage,
+  supply), or buy one sooner at the pad; the TV coat with the Barely News
+  logo is bought. Dust, mud, soot and salt build up as you fly; a wash at
+  the pad costs 100 credits.
 - **The Lab: Launch angles is a classroom now.** Brian's launcher throws a
   skier along a tape: tilt the ramp and turn the speed dial both ways, and
   launch. About 45 degrees goes furthest (35.6 m at 45 mph), steeper or flatter
