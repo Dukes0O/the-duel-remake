@@ -460,3 +460,7 @@ Accepted on pictures over three rounds (Claude, look judge): deer, bear, beaver 
 ## Claude's review under rule 18 (3 November)
 
 The changed checks in tools/test-wildlife-view.mjs keep testing that a course and the count join only when their species have models, now on a fixed North woods list, and add exact checks of today's table (each course's species, the birds' Fly loop, the count's course lists, 300 days identical to the job with no list). Nothing is loosened. Round 3 verdict: kangaroo and kookaburra PASS; all eleven new species and the wolf tracks are accepted.
+
+## Claude's review under rule 18, Europe (3 November)
+
+The boar and eagle left artCandidates, so their full export checks apply again; only the wildcat stays on the list, checked to stay out of public/. test-wildlife-view's exact course lists grew with today's table. Nothing loosened. Europe verdict: ten species in the game; the wildcat did not pass in three rounds.
