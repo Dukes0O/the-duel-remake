@@ -60,15 +60,6 @@ export function partPicture(kind, describe) {
       ctx.beginPath(); ctx.arc(0, 0, height * .08, 0, Math.PI * 2); ctx.stroke();
     } else if (kind === 'spring') {
       ctx.beginPath(); for (let i = 0; i < 30; i++) { const x = Math.sin(i * Math.PI / 2) * 23, y = -32 + i * 2.2; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke();
-    } else {
-      ctx.save();
-      ctx.rotate(result.settings.wing === 'big' ? -.3 : result.settings.wing === 'small' ? -.15 : 0);
-      ctx.beginPath(); ctx.moveTo(-45, 5); ctx.quadraticCurveTo(-30, -30, 45, 0); ctx.lineTo(-45, 5); ctx.fill(); ctx.stroke();
-      ctx.restore();
-      const push = Math.min(45, result.downforceKg * .18);
-      if (push > 0) { ctx.strokeStyle = '#56d683'; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, 10 + push); ctx.lineTo(-7, 3 + push); ctx.moveTo(0, 10 + push); ctx.lineTo(7, 3 + push); ctx.stroke(); }
-      const drag = Math.min(42, result.dragN * .025);
-      ctx.strokeStyle = '#f0a148'; ctx.beginPath(); ctx.moveTo(-20, -30); ctx.lineTo(-20 + drag, -30); ctx.lineTo(-27 + drag, -37); ctx.moveTo(-20 + drag, -30); ctx.lineTo(-27 + drag, -23); ctx.stroke();
     }
     ctx.restore(); ctx.fillStyle = '#f5f0dc'; ctx.font = 'bold 18px sans-serif';
     describe(result).forEach((text, i) => ctx.fillText(text, width * .48, height * .3 + i * 25));

@@ -41,6 +41,9 @@ export function downforce(speedMph, wing) {
   const downforceN = 0.5 * WING.airDensity * liftArea * v * v, dragN = 0.5 * WING.airDensity * (WING.bodyDragArea + WING.dragPerLift * liftArea) * v * v;
   return {downforceN, downforceKg: downforceN / GRAVITY, dragN};
 }
+// The car on the tunnel's scale (the bench's car, as Braking's is) and a force in newtons read as kilograms on a scale.
+export const tunnelCar = Object.freeze({id: carIds[0], kg: carMassKg(carIds[0]), topMph: CARS[carIds[0]].topSpeed});
+export const kgForce = newtons => newtons / GRAVITY;
 export const downforceBench = makeBench({
   id: 'downforce', cues: ['lab.fan'],
   controls: [control('speedMph', 'Fan speed', 'mph', 50, 150, 10, 50), choice('wing', 'Wing', Object.keys(WING.wings), 'flat')],

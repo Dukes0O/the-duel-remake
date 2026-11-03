@@ -6,13 +6,11 @@ import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js'
 import {Euler, Vector3} from 'three';
 import {gripSound, stopGripSound} from '../src/lab/lessons/grip-animation.js';
 import * as grip from '../src/lab/lessons/grip-lesson.js';
-import * as downforce from '../src/lab/lessons/downforce-lesson.js';
 import * as suspension from '../src/lab/lessons/suspension-lesson.js';
-// Fuel is a classroom lesson now (tools/test-lab-classroom-fuel.mjs).
-const packets = [grip, downforce, suspension];
+// Fuel and Downforce are classroom lessons now (tools/test-lab-classroom-fuel.mjs, test-lab-classroom-downforce.mjs).
+const packets = [grip, suspension];
 const expected = {
   grip: r => r.grip === 1 ? 'holds' : 'slides',
-  downforce: r => r.downforceN > 0 ? 'both' : 'flat',
   suspension: r => r.leanDeg === TUNNEL_BENCHES.suspension.run({spring: 'soft', road: r.settings.road}).leanDeg ? 'gentle' : 'shaky',
 };
 function inputsFor(spec, wanted) {
@@ -25,7 +23,7 @@ function inputsFor(spec, wanted) {
 }
 const finish = s => { for (let i = 0; i < 100; i++) s.tick(.1); };
 test('reversing a choice replaces its old input in both teaching and bench proof', () => {
-  for (const packet of [downforce, suspension]) {
+  for (const packet of [suspension]) {
     const {spec, definition, hooks} = packet, s = createLessonSession(packet);
     s.next(); definition.words.forEach(() => s.next()); definition.worked.forEach(() => { finish(s); s.next(); });
     const choices = spec.controls.filter(c => c.setting);
@@ -50,16 +48,6 @@ test('sparse inputs reset to the same bench defaults for each challenge attempt'
     assert.deepEqual(bench.result.settings, suspension.hooks.animations.try({input, index: 0, time: 0}).result.settings);
   }
   assert.equal(goalMet(bench), true);
-});
-test('air crosses the wing chord and the wing span stays level at every tilt', () => {
-  for (const wing of ['flat', 'small', 'big']) {
-    const c = downforce.spec.controls.find(c => c.value === wing);
-    const d = downforce.hooks.animations.try({input: {[c.id]: wing}, time: 1});
-    const pose = d.parts[0], rotation = new Euler(...pose.rotation, pose.order);
-    const span = new Vector3(1, 0, 0).applyEuler(rotation), chord = new Vector3(0, 0, 1).applyEuler(rotation);
-    assert.ok(Math.abs(span.x) < 1e-12 && Math.abs(span.y) < 1e-12);
-    assert.ok(Math.abs(chord.x) > .9, 'smoke crosses the chord, not the span');
-  }
 });
 test('the drawing graph uses actual slide degrees and the challenge grip curve', () => {
   const graph = grip.hooks.animations['watch-2']({time: 3}).graph;

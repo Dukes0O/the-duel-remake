@@ -2,7 +2,7 @@
 // Downforce lesson, open the car's Tune page in the garage, set the wing, drive a stock Time Trial lap and a tuned one,
 // and read the result line. Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario lab-tune-view
-import {tunnelDriver} from './lab-lessons-tunnel.mjs';
+import {passDownforce} from './lab-classroom-downforce.mjs';
 
 const entry = '/tools/menu-check.html?flags=helicopter,lab,lab-tuning';
 const COURSE_ID = 'tremblant-woods';
@@ -51,14 +51,11 @@ export async function run(context) {
   await context.evaluate(`document.querySelector('.tune-panel').scrollIntoView({block: 'center'})`);
   await context.screenshot('tune-shut');
 
-  // The Downforce lesson: the real five-step lesson at the wind tunnel machine in the walking Lab, then its challenge.
-  // The lesson alone awards nothing (the driver checks it); the pass is saved only when the bench goal is met.
+  // The Downforce lesson: the classroom at the wind tunnel in the walking Lab (lab-classroom-downforce plays it in full).
+  // Finishing it passes the bench goal on the lesson's own fan runs.
   await context.evaluate(`document.querySelector('.lab-tab').click()`);
   await context.waitFor(`window.__qaApp.labOpen === true && !document.querySelector('.lab-panel').hidden`, 'the Lab opens', 30_000);
-  const tunnel = tunnelDriver(context);
-  await tunnel.walkToTunnel();
-  await tunnel.play('downforce');
-  await context.waitFor(`window.__qaApp.profile.lab?.done?.downforce === true`, 'Downforce passes and is saved', 10_000);
+  await passDownforce(context);
   // Finishing the lesson goes back to the board, which keeps the pass message pointing at the Tune page.
   await context.waitFor(`[...document.querySelectorAll('.lab-message')].some(el => el.textContent.includes('Tune page'))`,
     'the pass points at the Tune page', 10_000);

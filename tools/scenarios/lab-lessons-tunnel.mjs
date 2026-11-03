@@ -1,8 +1,7 @@
 // Real UI, loaded models, isolated memory-only careers via browser-harness.
-// Fuel is a classroom lesson now: lab-classroom-fuel plays it.
-const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,downforce,suspension').split(',');
-// The lesson driver is shared: LAB-TUNE-VIEW takes the Downforce lesson through it to open the wing on the Tune page.
-export function tunnelDriver(c) {
+// Fuel and Downforce are classroom lessons now: lab-classroom-fuel and lab-classroom-downforce play them.
+const ids = (process.env.LAB_TUNNEL_QA_LESSONS ?? 'grip,suspension').split(',');
+function tunnelDriver(c) {
   const canvas = `document.querySelector('.lab-canvas')`, panel = `document.querySelector('.lab-teaching')`;
   const click = action => c.evaluate(`document.querySelector('[data-teach="${action}"]').click()`);
   const next = () => c.waitFor(`!!document.querySelector('[data-teach="next"]') && !document.querySelector('[data-teach="next"]').disabled`, 'step ready', 40_000);
