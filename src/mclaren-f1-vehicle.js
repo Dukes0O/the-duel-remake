@@ -7,7 +7,7 @@ import { prepareVehicleDamage } from './vehicles.js';
 export const MCLAREN_F1_VEHICLE_DIMENSIONS = Object.freeze({
   mclaren_f1: Object.freeze({ width: 2.00, length: 4.28, height: 1.14, wheelRadius: .335 }),
 });
-const { materials, batch, sculpt, cylinder, cockpit, wheels, exhaust, fitSurfacePatch } = originalVehicleParts;
+const { materials, batch, sculpt, panel, cylinder, cockpit, wheels, exhaust, fitSurfacePatch } = originalVehicleParts;
 const AXLES = Object.freeze([1.23, -1.30]);
 
 export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, accent = 0x202329 } = {}) {
@@ -25,7 +25,7 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     ultimateKey: key,
     // The shared projector's side-window centre is canonical y=1.275. Map it
     // to the actual bounded pane at .867 m, below the opaque roof's side rail.
-    damageSpace: { scale: [.9, .68, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -.97 },
+    damageSpace: { scale: [.9, .68, .93], offset: [0, 0, 0], frontGlassZ: .85, rearGlassZ: -1.03 },
   });
 
   // A smooth teardrop, fitted to the side outline traced off the photo
@@ -43,7 +43,12 @@ export function createMclarenF1Vehicle({ key = 'mclaren_f1', color = 0xb8bdc2, a
     [1.45, .99, .18, .70, .75, .56], [1.70, .96, .19, .62, .63, .56],
     [1.96, .88, .21, .52, .48, .54], [2.12, .70, .25, .40, .38, .42],
   ], AXLES, .335, .335, { width: .70, y: .48, back: -1.06, front: 1.26 });
-  b.box(m.carbon, [1.36, .045, 1.76], [0, .27, -.02], [0, 0, 0], .012);
+  b.box(m.carbon, [1.36, .045, 1.92], [0, .27, -.10], [0, 0, 0], .012);
+  // A dark scuttle under the windscreen out past the cockpit opening's edges, a floor
+  // under it and a bulkhead at the back, so no view runs into the hollow nose or tail.
+  panel(b, m.carbon, [[-.74, .775, 1.28], [.74, .775, 1.28], [.74, .705, .84], [-.74, .705, .84]]);
+  b.box(m.carbon, [1.36, .045, .44], [0, .27, 1.08], [0, 0, 0], .012); // floor on under the scuttle
+  b.box(m.carbon, [1.40, .62, .03], [0, .72, -1.045], [0, 0, 0], .006); // bulkhead behind the rear seats
   buildCabin(b, m);
 
   // The defining F1 layout: one driver ahead of two rear passenger seats.

@@ -27,7 +27,7 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     paint: m.paint, originalColor: m.paint.color.clone(), wheels: [], wheelPivots: [],
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...ENZO_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, designFeatures: Object.freeze(['beak-nose', 'raised-front-fenders', 'teardrop-canopy', 'side-scoops', 'glass-engine-cover', 'quad-round-tail-lamps']),
-    damageSpace: { scale: [.92, .80, 1.0], offset: [0, 0, 0], frontGlassZ: .92, rearGlassZ: -.98 },
+    damageSpace: { scale: [.92, .80, 1.0], offset: [0, 0, 0], frontGlassZ: 1.12, rearGlassZ: -.66 },
   });
 
   // Stations: [z, half width, floor, shoulder, crown, crown half width], fitted to the side
@@ -44,7 +44,11 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
     [1.35, 1.01, .17, .72, .72, .52], [1.65, 1.005, .17, .70, .68, .48],
     [1.95, .97, .17, .62, .57, .42], [2.20, .88, .19, .56, .49, .34], [2.35, .74, .22, .47, .44, .28],
   ], AXLES, .35, .35, { width: .60, y: .56, back: -.98, front: 1.42 });
-  b.box(m.carbon, [1.18, .05, 1.62], [0, .33, .02], [0, 0, 0], .012);
+  b.box(m.carbon, [1.18, .05, 2.40], [0, .33, .235], [0, 0, 0], .012); // floor from the bulkhead to the scuttle
+  // Close the cockpit where the glass reaches past the floor: a dark scuttle under the
+  // windscreen and a bulkhead behind the seats, so no view runs into the hollow nose or tail.
+  panel(b, m.carbon, [[-.62, .715, 1.44], [.62, .715, 1.44], [.62, .70, .78], [-.62, .70, .78]]);
+  b.box(m.carbon, [1.22, .56, .03], [0, .64, -.965], [0, 0, 0], .006);
   // The raised centre ridge of the beak, running from the nose back to the windscreen
   // between the two bonnet channels.
   b.tube(m.paint, [[0, .43, 2.33], [0, .51, 2.12], [0, .58, 1.88], [0, .66, 1.62], [0, .72, 1.40]], .05, 18);
@@ -95,8 +99,8 @@ export function createEnzoVehicle({ key = 'ferrari_enzo', color = 0xa3121b, acce
 // ellipses (tumbled-in sides, flatter roof). [z, half width, base, top].
 const canopySections = [
   [-.98, .52, .88, .955], [-.62, .56, .88, 1.00], [-.30, .60, .84, 1.045], [-.05, .63, .80, 1.10],
-  [.20, .66, .78, 1.135], [.50, .68, .77, 1.145], [.80, .69, .77, 1.12], [1.05, .69, .78, 1.05],
-  [1.25, .67, .80, .96], [1.42, .62, .83, .86],
+  [.20, .66, .78, 1.135], [.50, .68, .75, 1.145], [.80, .69, .73, 1.12], [1.05, .69, .72, 1.05],
+  [1.25, .67, .72, .96], [1.42, .62, .73, .86],
 ];
 const SQUARE = 3, TUMBLE = .26; // 2 is an ellipse, higher flattens the roof; the sides lean in as they rise
 function canopyPoint(z, angle, lift = 0) {

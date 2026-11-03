@@ -30,7 +30,7 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
     brakeLights: [], boostFlames: [], damageMeshes: [], size: { ...BOLIDE_VEHICLE_DIMENSIONS[key] },
     ultimateKey: key, designFeatures: Object.freeze(['horseshoe-intake', 'cockpit-bubble', 'roof-scoop', 'spine-fin',
       'swan-neck-wing', 'x-lamps', 'carbon-lower-body', 'open-diffuser']),
-    damageSpace: { scale: [.92, .78, 1.0], offset: [0, 0, 0], frontGlassZ: .70, rearGlassZ: -.64 },
+    damageSpace: { scale: [.92, .78, 1.0], offset: [0, 0, 0], frontGlassZ: .70, rearGlassZ: -.74 },
   });
 
   // Stations: [z, half width, floor, shoulder, crown, crown half width], fitted to
@@ -46,7 +46,7 @@ export function createBolideVehicle({ key = 'bugatti_bolide', color = 0x1f4fa8, 
     [1.42, 1.03, .17, .80, .46, .40], [1.85, 1.00, .16, .72, .40, .34],
     [2.05, .96, .16, .60, .37, .30], [2.22, .86, .16, .47, .35, .26], [2.38, .62, .17, .37, .34, .22],
   ], AXLES, .36, .36, { width: .52, y: .52, back: -.86, front: 1.02 });
-  b.box(m.carbon, [1.10, .05, 1.54], [0, .32, .03], [0, 0, 0], .012);
+  b.box(m.carbon, [1.10, .05, 1.90], [0, .32, .08], [0, 0, 0], .012); // floor under the whole cockpit opening
   buildCanopy(b, m);
 
   for (const side of [-1, 1]) {
