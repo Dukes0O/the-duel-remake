@@ -156,6 +156,15 @@ tasks:
     priority: "low"
     details: "docs/board/cards/P4-AZURE-GP-COMPARISON.md"
 
+  - id: WILD-FRAMES
+    title: "Frame check: animals at Tremblant Woods and over a count square"
+    owner: "claude"
+    lane: "QA"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/WILD-FRAMES.md"
+
   - id: EARN-FRAMES
     title: "Frame check: Grand Prix fields of each earned car"
     owner: "claude"
