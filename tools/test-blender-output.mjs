@@ -18,6 +18,11 @@ const westWildlife = [
   ['bighorn-sheep', 'Walk', 'white-tailed-deer'], ['cougar', 'Walk', 'eastern-wolf'],
   ['coyote', 'Walk', 'eastern-wolf'], ['yellow-bellied-marmot', 'Walk'], ['eastern-grey-kangaroo', 'Walk'],
   ['echidna', 'Walk'], ['raven', 'Fly'], ['sulphur-crested-cockatoo', 'Fly'], ['kookaburra', 'Fly'],
+  // Europe round 1.
+  ['roe-deer', 'Walk', 'white-tailed-deer'], ['red-deer', 'Walk', 'white-tailed-deer'],
+  ['chamois', 'Walk', 'white-tailed-deer'], ['ibex', 'Walk', 'white-tailed-deer'], ['red-fox', 'Walk', 'eastern-wolf'],
+  ['wildcat', 'Walk', 'eastern-wolf'], ['wild-boar', 'Walk'], ['alpine-marmot', 'Walk'],
+  ['black-stork', 'Fly'], ['golden-eagle', 'Fly'], ['gull', 'Fly'],
 ].map(([id, motion, donor]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 const generators = [

@@ -1,5 +1,41 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Europe, round 1
+
+Lane `claude/wild-art-europe` from integration 91ca9040. Eleven species,
+each from its own recipe; design, numbers and doubts in
+[the Europe round 1 note](../board/looks/wildlife/europe-round-1.md), sheets
+`europe-round-1a.jpg` and `-1b.jpg`. Nothing is wired into the game yet.
+
+- Deer donor: roe deer, red deer, chamois, ibex. Wolf donor: red fox,
+  wildcat (with the cougar's cat head and paws). Original: wild boar, black
+  stork, golden eagle, gull. Alpine marmot: the passed marmot recipe loaded
+  unchanged and recoloured.
+- `donor_shape.py`: optional `MOTTLE` and `GRIZZLE` coat zones, off unless a
+  recipe sets them, so the passed species' output is unchanged.
+- `adapt.py`: the new species join `ROUGH_FUR` or `SMALL_MAP` as fits.
+- `sheet.py`: groups name their sheet family (`europe-round-1a.jpg`); the
+  wolf-tracks row stays on the Western mountains sheet.
+- Sources: `sources.json` rows for all eleven; the catalog's deer and wolf
+  credit rows name the new adaptations.
+
+### Checks
+
+CHECKS_EU
+
+### Changed assertions
+
+- Blender-output: new cases only, for the eleven species (same checks as
+  the Western mountains ones). No old assertion changed.
+- Hygiene: allow `docs/board/looks/wildlife/europe-round-[1-3][ab]?.jpg`
+  next to the existing wildlife sheet names. Needs Claude's review under
+  rule 18; nothing else is loosened.
+
+### Removed
+
+Nothing replaced: all eleven are new. Scratch renders stay in the ignored
+`.qa-dist/wildlife-round-1/` until Claude's verdict.
+
 ## 3 November 2026: round 3 (final), and every passed animal in the game
 
 Claude's round 2 verdict is at the top of the round 2 note. Round 3 changed
