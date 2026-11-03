@@ -62,6 +62,15 @@ behind `lab-classroom` (on), with no Preview step.
   loosened.
 - `tools/scenarios/lab-lessons-workshop.mjs`: Rust's run goes; the parts panel is now reached and
   passed from the classroom in `lab-classroom-rust.mjs`.
+- `tools/scenarios/lab-restore.mjs`: after the Sirena's restore, the passed Rust bench still offers the
+  lesson again; it now waits for that lesson to open as the classroom instead of the five-step panel.
+  Every restore, charge and replay check is unchanged.
+- `tools/scenarios/lab-lesson-frame.mjs` and its test-only lesson `tools/fixtures/lab-lesson-example.js`:
+  the example borrowed the nail jars because Rust was on the five-step frame; with Rust a classroom it
+  borrows the turning arm (G-force, still five-step), the scenario walks there and checks the real
+  G-force lesson opens without the example, and its test player has the cornering lesson that G-force
+  needs, as the workshop scenario's player does. Every frame check (Tab focus, words, notebook,
+  isolation from rewards) is unchanged.
 
 ## Review
 
@@ -81,4 +90,17 @@ rather than a shelf kept across steps.
 
 ## Checks
 
-(pending)
+- `tools/test-lab-classroom-rust.mjs`: 10/10 (one assertion added after the review: a second visit
+  to the job starts the trailer bare).
+- Every `tools/test-lab-*.mjs`: 358/358 on 1195a6a0 (integration merged in).
+- Lane tier (`--changed --jobs 4`): 44/44 on 1195a6a0 (an earlier run on b8a60962 stopped at
+  `test-board` only because the lane was cut from an integration commit whose board had a finished
+  card still open; integration had fixed it, and the merged lane passes); `npm run build` passed.
+- All 23 Lab browser scenarios: 21/23 in the batch on 1195a6a0; `lab-restore` and `lab-lesson-frame`
+  still expected Rust's five-step lesson. Both were updated (changed assertions above) and pass, so
+  23/23. `lab-classroom-rust` plays the lesson by keyboard, with one click on the switch, through
+  every wrong move and Show me, to the parts panel and the pass.
+- Look: the walkthrough's pictures checked by Claude over two runs. Run 1 found the rust drawn as a
+  string of beads rather than a crust, and the shelf cramped into the left half when no panel sits on
+  the right; both fixed and checked in run 2.
+- No frame check: the Lab classroom is a 2D board and changes no race scene.

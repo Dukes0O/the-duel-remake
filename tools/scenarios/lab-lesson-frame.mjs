@@ -4,16 +4,16 @@ export async function run(c) {
   await c.navigate('/tools/menu-check.html?flags=lab-2&lab-lesson-example=1');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Teaching QA');
-    a.profile = {...a.profile, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
+    a.profile = {...a.profile, drivingLessons: {version: 1, done: {corner: true}}, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
     document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
   const canvas = `document.querySelector('.lab-canvas')`;
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: code === 'KeyE' ? 'e' : code.slice(3).toLowerCase(), windowsVirtualKeyCode: code === 'KeyE' ? 69 : undefined});
   async function walk(code, expression) { await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); } await new Promise(r => setTimeout(r, 550)); }
-  // The example borrows the nail jars (a five-step machine); the Lab map's click-to-go opens it as a player's click does.
+  // The example borrows the turning arm (a five-step machine); the Lab map's click-to-go opens it as a player's click does.
   async function useMachine() {
-    await c.evaluate(`document.querySelector('[data-go="nail-jars"]').click()`);
-    await c.waitFor(`${canvas}.dataset.labWalkArrived === 'nail-jars'`, 'machine', 30_000);
+    await c.evaluate(`document.querySelector('[data-go="turning-arm"]').click()`);
+    await c.waitFor(`${canvas}.dataset.labWalkArrived === 'turning-arm'`, 'machine', 30_000);
   }
   await useMachine();
   const text = `document.querySelector('.lab-teaching')?.textContent`;
@@ -47,7 +47,7 @@ export async function run(c) {
   }
   await click('answer:near'); await c.waitFor(`${text}?.includes('Watch the highlighted picture')`, 'wrong check replays correct picture');
   await c.screenshot('check'); await click('next'); await click('answer:far'); await click('next');
-  if (!(await c.evaluate(`window.__qaApp.profile.lab.notebook.includes('push') && !window.__qaApp.profile.lab.done.rust`))) throw Error('Notebook or reward isolation failed.');
+  if (!(await c.evaluate(`window.__qaApp.profile.lab.notebook.includes('push') && !window.__qaApp.profile.lab.done.gforce`))) throw Error('Notebook or reward isolation failed.');
   // The key-idea card over a helicopter challenge is checked by the classroom scenarios (lab-classroom-fire and others).
   await c.screenshot('key-idea');
   await c.evaluate(`window.__qaApp.closeLab(); window.__qaApp.openLab()`);
@@ -61,11 +61,11 @@ export async function run(c) {
   await c.navigate('/tools/menu-check.html');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'plain menu', 90_000);
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Teaching QA');
-    a.profile = {...a.profile, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
+    a.profile = {...a.profile, drivingLessons: {version: 1, done: {corner: true}}, heli: {...a.profile.heli, version: 1, fuelKg: 400, lessons: {liftoff: true, hover: true, landing: true, carry: true}}}; a._saveProfile();
     document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'plain room', 60_000);
   await useMachine();
-  await c.waitFor(`!document.querySelector('.lab-teaching').hidden && ${text}?.includes('1 / 5')`, 'real Rust lesson opens');
+  await c.waitFor(`!document.querySelector('.lab-teaching').hidden && ${text}?.includes('1 / 5')`, 'real G-force lesson opens');
   if (await c.evaluate(`${text}.includes('Can a fan move') || !!document.querySelector('.lab-bench')`)) throw Error('The test lesson reached the released Lab.');
   await c.evaluate(`window.__qaApp.closeLab()`);
 }
