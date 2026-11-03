@@ -1523,3 +1523,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 2 Nov: full tier 568/568 on bb9a2c8e, alone (Carbon plates and Braking release).
 - 2 Nov: released CARBON-PLATES-WIRE and LAB-CLASSROOM-BRAKING, master 0382689e, build 26.11.02 23:48 UTC; staged build checked on 5188; live server running, serves the new build. Janitor: full-tier copy removed.
 - 3 Nov: merged FINISH-DEEP (Claude played the Kelp Coast end to end; map panel fits short windows, Next line, where the parts lie, F prompt and lift progress, turtle and crab facts; Deep suites 17/17, lane 42 + 4 lane-only suites passed in integration, build; one review, four small points taken).
+- 3 Nov: released FINISH-DEEP, master 9b5aa96c, build 26.11.03 00:42 UTC; rule 19 on the 568/568 full tier of bb9a2c8e (Deep screen code only since, lane tier covered); staged build checked on 5188; live server running, serves the new build.
