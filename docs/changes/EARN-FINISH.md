@@ -516,3 +516,41 @@ Tests: `tools/test-earned-cars-ui.mjs` gains order checks (the Jesko and a locke
 ## Claude's review (28 October 2026, night)
 
 Approved (independent review, rule 17; no assertion changed, tests added). Ladder by tools/earned-ladder.mjs through the real settlement: Enzo 6 to 10 wins, F1 needs a new car or harder rivals, Bolide needs Hard wins; no tuning. Results: a medal-only win uses the smaller headline so buttons stay on screen. Garage: a locked earned car's unlock card sits under the ratings; the trophy case is styled like the garage with won and not-won tiles. Look checked on pictures. Remaining: the three Grand Prix frame checks before the switch goes on.
+
+## Switch-on pass, 3 November 2026 (Claude, on integration ea84b3fc)
+
+Kind: switch on, one screen change, frame recipe widened. Medal numbers, rules and the save shape are unchanged.
+
+### 1. The path, end to end in the browser
+
+A fresh memory-only player in Chrome (browser harness, private port, `earned-cars`, `grand-prix-career` and `helicopter` on): two starter cars, no credits, only Pacific Canyon. Each race was a real start through the game's own `startCampaign`, finished at the line with the game's own `_finishStage`, then the real settlement, results screen, sound event and save (the same method as the `earned-cars` scenario; real driven careers were counted on 28 October). The scripted test driver lost a Medium Duel fourteen times running in the browser, so driven races were not used for the ladder here.
+
+- Falcone F42 and Stuttgart 959-S, Duel and Grand Prix, Easy, Medium and Hard: twelve wins. Each new medal paid exactly once, as its own line: 150 bronze, 250 silver, 375 gold, and one `interface.bonus` cue each.
+- The Ferrari Enzo arrived on medal 6 (a Grand Prix Hard win), the McLaren F1 on medal 12. Both fully tuned (every upgrade at 3), both refused at Pacific Canyon (they wait at Tremblant Woods for Kestrel One).
+- A repeat Easy Duel win in a filled box: ordinary pay (780), no medal, no cue.
+- Bought Tremblant Woods (1,600 of the 21,280 credits earned), then twelve wins in the Enzo and the F1 there. The Bugatti Bolide arrived on medal 24 with 8 gold, fully tuned, refused at Pacific Canyon. Balance at the end 48,760.
+
+### 2. What the play found, and the fix
+
+- **A Grand Prix win hid the new car.** The car card sat under the eight-car standings, below the bottom of a 1280 x 720 screen. Now in a Grand Prix the medal line and car card sit right under the headline, above the timing and standings (`src/screen-results.js`).
+- **No screen after a race said how close the next car was**, and a win in a filled box said nothing about medals. Every Duel or Grand Prix results screen now has one line, `medalProgressLine` in `src/earned-cars-ui.js`: "MEDALS EARN CARS · 5/6 TOWARD THE FERRARI ENZO" (with gold for the Bolide, "EVERY EARNED CAR WON" at the end), plus this car's next empty box when the race filled none ("NEXT MEDAL: DUEL ON MEDIUM", or "THIS CAR'S SHEET IS FULL"). With a car card the line sits inside the card. A screen with the line takes the smaller headline, so the buttons stay on screen (checked on the repeat win: buttons end at about 657 pixels).
+- The garage already says it: the chip "MEDALS 12/24 · NEXT CAR AT 24 WITH 6 GOLD", the sheet's "ALL CARS: 12 MEDALS · NEXT CAR AT 24 WITH 6 GOLD", "EARNED, NOT BOUGHT" on locked cars and "MAXED" on earned ones.
+
+### 3. Switching on, and saves
+
+`earned-cars` goes from dev to on. Nothing in a player's save is hidden or wiped:
+
+- The save loader reads no switch. A save without `medals` loads exactly as before and gains no field until a counted win.
+- The earned cars have been in `CARS` on master through every release since 24 October with the switch off (section 6.4), so a build one release back keeps everything for them.
+- The Jesko's progress counts only bought cars, so nobody's Jesko progress moves. Earned cars arrive fully tuned, so no credits are ever spent on them.
+- With the switch on the lists gain the three cars, locked, and the menu count reads three more earnable cars. Every owned car, credit, record, ghost and paint stays.
+
+### Changed assertions
+
+- `tools/test-feature-flags.mjs`: `earned-cars` moves from the dev list to the released list, and the message says it was released on 3 November. The usual switch-on change; every other switch is checked as before.
+- `tools/test-earned-cars-ui.mjs`, "switch off: the same race adds no sheet...": the test now sets the switch off itself (`{'earned-cars': false}`); it relied on dev meaning off. Same assertions.
+- `tools/test-earned-cars-ui.mjs`, the headline test: a repeat win used to keep the big headline. It now shows the progress line and takes the smaller headline, so the check asks for the line ("... NEXT MEDAL: DUEL ON MEDIUM") and the smaller headline instead, and a new switch-off case checks there is no line and the ordinary headline. New test: the progress line's wording for the next box, a full sheet, gold for the Bolide and every car won.
+
+### Removed
+
+The scratch play-through scenario, the scratch copy of the test driver and the temporary hook in `tools/menu-check.js` were removed before the commit; the pictures were used for this verdict and deleted.

@@ -220,7 +220,7 @@ keyboard work as today: pick your player, then race.
 - **Sound:** the existing `interface.bonus` cue, once per results screen,
   when the medal line or the car card shows. No new sound.
 - **Progress line** (Claude, 3 November 2026, from the end-to-end play):
-  every Duel or Grand Prix results screen, win or loss, says what medals are
+  every Duel or Grand Prix results screen of a finished race, won or not, says what medals are
   for and how close the next car is: "MEDALS EARN CARS · 5/6 TOWARD THE
   FERRARI ENZO" ("12/24 AND GOLD 4/6 TOWARD THE BUGATTI BOLIDE"; "MEDALS 24 ·
   EVERY EARNED CAR WON" at the end). When the race filled no new box it adds
@@ -324,8 +324,8 @@ count goes from 11 to 12; the change note explains each changed assertion.
 - **On:** the sheets count, the panel and lines show, and the earned cars
   show locked until earned.
 - **Release:** the cars first reach players in a release with the switch
-  off (section 6.4). The switch goes to beta in a later release, only after
-  all three cars pass their look tests and EARN-FINISH passes. The Grand Prix row needs `grand-prix-career` on to fill;
+  off (section 6.4). The switch went straight to on in a later release
+  (3 November 2026), after the cars' look rounds and EARN-FINISH. The Grand Prix row needs `grand-prix-career` on to fill;
   if that switch is still dev at release, the row says so (section 5.1) and
   the Duel row alone can earn every car.
 

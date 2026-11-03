@@ -59,6 +59,7 @@ export function validateEarnCar2FramePacket(packet, {warn = () => {}} = {}) {
   if (packet?.schema !== 1 || packet.mode !== 'earn-car-2-simple' || packet.reports?.length !== 2)
     throw Error('Missing complete F1 frame packet.');
   const car = packet.car ?? 'mclaren_f1';
+  if (!EARNED_FRAME_CARS.includes(car)) throw Error('The frame packet names a car that is not earned.');
   for (const [index, quality] of ['High', 'Performance'].entries()) {
     const row = packet.reports[index];
     if (row?.quality === quality && Number.isFinite(row.constructionMs) && row.constructionMs > 5000)
