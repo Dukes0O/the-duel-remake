@@ -67,6 +67,7 @@ export function inspectRepository(root = PROJECT_ROOT, files = projectFiles(root
     const roundSheet = extension === '.jpg' && (
       name === 'docs/board/looks/wildlife/north-woods-round-1.jpg' ||
       name === 'docs/board/looks/wildlife/north-woods-round-3.jpg' ||
+      /^docs\/board\/looks\/wildlife\/west-australia-round-[1-3][ab]?\.jpg$/.test(name) ||
       /^docs\/board\/looks\/[^/]+\/(?:v\d+-)?(?:round|look)-\d+\.jpg$/.test(name) ||
       name === 'docs/board/looks/kogane-pass/c5-round-2.jpg' ||
       name === 'docs/board/looks/kogane-pass/wall-round-1.jpg' ||

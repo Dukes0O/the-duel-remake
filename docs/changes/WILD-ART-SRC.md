@@ -1,3 +1,48 @@
+# WILD-ART-SRC
+
+## 3 November 2026: Western mountains and Australia, round 1
+
+Claude took over the card. Lane `claude/wild-art-west`, from
+`integration/wasteland`. Eleven animals and the wolf tracks, each built by
+its own recipe. Design, numbers and doubts are in
+[the round 1 note](../board/looks/wildlife/west-australia-round-1.md); sheets
+`west-australia-round-1a.jpg` and `-1b.jpg` in the same folder.
+
+- Donor species (`donor_shape.py`, the moose method generalised): mule deer,
+  elk and bighorn sheep from the CC0 Quaternius deer; cougar and coyote from
+  the CC0 Quaternius wolf. Donor bones, inverse binds and every clip kept.
+- Original recipes (`original.py`, `bird.py`): kangaroo with its own rig and
+  an in-place bounding Walk; marmot and echidna on the shared quadruped rig
+  and gait; raven, cockatoo and kookaburra with a bird rig, a perched Idle
+  and a looping Fly.
+- `tools/art/wolf-tracks.py`: seeded 512 x 512 RGBA tiling decal.
+- Shared code: `common.cli` takes a recipe function and a motion clip name;
+  `common.animate` takes an optional stride and lift; review renders new
+  species in their Idle pose and adds close Idle and motion frames;
+  `adapt.export` reads its coarse-fur list from `ROUGH_FUR`. The North woods
+  five take exactly their old paths, and their GLBs are byte exact.
+- Sources: `sources.json` rows for all twelve; the catalog's deer and wolf
+  credit rows name their new adaptations. Originals need no third-party credit.
+
+### Checks
+
+CHECKS
+
+### Changed assertions
+
+- Blender-output: new cases only, for the eleven animals (paths, review
+  views, budget 5,000 or 2,000 for birds, 1K map, skin, Idle and Walk or Fly
+  on skin joints, donor clips kept) and the wolf-tracks plan and PNG. No old
+  assertion changed.
+- Hygiene: allow `docs/board/looks/wildlife/west-australia-round-[1-3][ab]?.jpg`
+  next to the existing North woods sheet names. Needs Claude's review under
+  rule 18; nothing else is loosened.
+
+### Removed
+
+Nothing replaced: all twelve are new. Scratch renders stay in the ignored
+`.qa-dist/wildlife-round-1/` and go after Claude's verdict.
+
 # WILD-ART-SRC: North woods round 3 of 3
 
 28 October 2026. Final North woods round. Work stays in this lane. No merge,

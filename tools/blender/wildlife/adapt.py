@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 
 
+# Coats baked with the coarse, shaggy fur grain rather than the fine one.
+ROUGH_FUR = {'black-bear', 'yellow-bellied-marmot', 'echidna', 'elk', 'bighorn-sheep'}
+
+
 def build(species, output, c, cache):
     bpy, Vector = c.bpy, c.Vector
     source = json.loads((Path(__file__).parent / 'sources.json').read_text())[species]
@@ -278,7 +282,7 @@ def static_donor(species, mesh, output, c):
 
 def export(mesh, rig, output, c, root=None):
     bpy = c.bpy
-    c.finish_coat(mesh, rough_fur=output.stem == 'black-bear')
+    c.finish_coat(mesh, rough_fur=output.stem in ROUGH_FUR)
     if output.stem == 'black-bear':
         shader = mesh.data.materials[0].node_tree.nodes.get('Principled BSDF')
         shader.inputs['Roughness'].default_value = 1

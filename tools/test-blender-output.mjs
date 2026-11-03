@@ -11,6 +11,15 @@ const wildlifeGenerators = wildlifeIds.map(id => ({
   script: `tools/blender/wildlife/${id}.py`, args: [],
   glb: [`public/assets/wildlife/${id}.glb`],
 }));
+// WILD-ART-SRC round 1, Western mountains and Australia. The donor species keep
+// every donor clip; the original recipes have their own rigs. Birds fly.
+const westWildlife = [
+  ['mule-deer', 'Walk', 'white-tailed-deer'], ['elk', 'Walk', 'white-tailed-deer'],
+  ['bighorn-sheep', 'Walk', 'white-tailed-deer'], ['cougar', 'Walk', 'eastern-wolf'],
+  ['coyote', 'Walk', 'eastern-wolf'], ['yellow-bellied-marmot', 'Walk'], ['eastern-grey-kangaroo', 'Walk'],
+  ['echidna', 'Walk'], ['raven', 'Fly'], ['sulphur-crested-cockatoo', 'Fly'], ['kookaburra', 'Fly'],
+].map(([id, motion, donor]) => ({ id, motion, donor, script: `tools/blender/wildlife/${id}.py`, args: [],
+  glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -381,6 +390,67 @@ try {
       }
     });
   }
+  for (const generator of westWildlife) {
+    check(generator.script + ' plans its runtime animal and review views without Blender or writes', () => {
+      for (const fixtureRoot of fixtureRoots) {
+        const plan = pathPlan(generator, fixtureRoot);
+        assert.deepEqual(plan.blend, []);
+        assert.deepEqual(relativePaths(fixtureRoot, plan.glb, '.glb'), generator.glb);
+        assert.deepEqual(plan.evidence, []);
+        const review = pathPlan({...generator, args: ['--review']}, fixtureRoot);
+        assert.deepEqual(review.glb, []);
+        const motion = generator.motion.toLowerCase();
+        assert.deepEqual(review.evidence, ['side', 'three-quarter', 'idle-25', 'idle-75', `${motion}-25`, `${motion}-75`,
+          'close-idle', `close-${motion}`].map(view => join(fixtureRoot, '.qa-dist/wildlife-round-1', `${generator.id}-${view}.png`)));
+        assert.deepEqual(review.json, [join(fixtureRoot, '.qa-dist/wildlife-round-1', `${generator.id}-inspection.json`)]);
+        assert.deepEqual(readdirSync(fixtureRoot), []);
+      }
+    });
+    check(generator.script + ` exports a bounded coloured skinned animal with Idle and ${generator.motion}`, () => {
+      const bytes = readFileSync(join(root, generator.glb[0]));
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+      const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
+      const triangles = primitives.reduce((sum, p) => sum + gltf.accessors[p.indices].count / 3, 0);
+      assert.ok(triangles > 300 && triangles <= generator.budget, `${triangles} triangles`);
+      assert.ok(gltf.skins?.length > 0);
+      assert.equal(gltf.images?.length, 1, 'one embedded natural coat map');
+      const imageView = gltf.bufferViews[gltf.images[0].bufferView];
+      const imageStart = 28 + bytes.readUInt32LE(12) + (imageView.byteOffset || 0);
+      assert.equal(gltf.images[0].mimeType, 'image/png');
+      assert.ok(bytes.readUInt32BE(imageStart + 16) <= 1024 && bytes.readUInt32BE(imageStart + 20) <= 1024);
+      for (const p of primitives) {
+        for (const attribute of ['COLOR_0', 'JOINTS_0', 'WEIGHTS_0']) assert.ok(Number.isInteger(p.attributes[attribute]), `missing ${attribute}`);
+      }
+      for (const name of ['Idle', generator.motion]) {
+        const clip = gltf.animations.find(a => a.name === name);
+        assert.ok(clip, `missing ${name}`);
+        assert.ok(clip.channels.some(channel => gltf.skins.some(skin => skin.joints.includes(channel.target.node))),
+          `${name} must animate actual skin joints`);
+        assert.ok(clip.samplers.some(s => gltf.accessors[s.input].count > 2));
+      }
+      const sources = JSON.parse(readFileSync(join(root, 'tools/blender/wildlife/sources.json'), 'utf8'));
+      assert.ok(sources[generator.id], 'source and credit row');
+      if (generator.donor) {
+        assert.equal(sources[generator.id].sha256, sources[generator.donor].sha256, 'same licensed donor');
+        for (const name of sources[generator.donor].clips) assert.ok(gltf.animations.some(a => a.name === name), `lost donor clip ${name}`);
+      }
+    });
+  }
+  check('tools/art/wolf-tracks.py plans and keeps its tiling snow decal', () => {
+    for (const fixtureRoot of fixtureRoots) {
+      const call = spawnSync('python', [join(root, 'tools/art/wolf-tracks.py'), '--root', fixtureRoot, '--paths-only'],
+        { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      assert.equal(call.status, 0, call.stderr);
+      assert.deepEqual(JSON.parse(call.stdout).textures, [join(fixtureRoot, 'public/assets/wildlife/wolf-tracks.png')]);
+      assert.deepEqual(readdirSync(fixtureRoot), []);
+    }
+    const png = readFileSync(join(root, 'public/assets/wildlife/wolf-tracks.png'));
+    assert.equal(png.toString('ascii', 1, 4), 'PNG');
+    assert.ok(png.readUInt32BE(16) <= 512 && png.readUInt32BE(20) <= 512, 'at most 512');
+    assert.equal(png[25], 6, 'RGBA, transparent where the snow is untouched');
+  });
   for (const generator of generators) {
     let plans;
     check(`${generator.script} supports a Blender-free output plan`, () => {
