@@ -358,7 +358,7 @@ function drawCheck(ctx, view) {
   text(ctx, 'about 50°', 462, 305, {size: 18, colour: theme.accent, align: 'left'});
   text(ctx, 'inrun', 260, 150, {size: 16, colour: theme.text});
   text(ctx, 'landing hill', 660, 440, {size: 16, colour: theme.text});
-  view.kicker.arcs.forEach((arc, i) => text(ctx, `At 50°, ${mph(arc.ms)} mph lands ${m1(arc.distance)}`, 920, 110 + i * 34, {size: 18, align: 'right', colour: i ? GREEN : theme.text}));
+  view.kicker.arcs.forEach((arc, i) => text(ctx, `On the launcher at 50°, ${mph(arc.ms)} mph lands ${m1(arc.distance)}`, 920, 110 + i * 34, {size: 18, align: 'right', colour: i ? GREEN : theme.text}));
 }
 function drawRecap(ctx, view) {
   background(ctx);

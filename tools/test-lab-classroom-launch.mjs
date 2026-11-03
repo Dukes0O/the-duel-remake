@@ -180,6 +180,8 @@ test('Brian’s job: each mark starts on a miss, fixes one thing, and every miss
   assert.equal(v.job.mark, 3); assert.equal(v.ramp.angle, 75); assert.equal(v.dial.mph, 36); assert.equal(v.flag, 30);
   fly(session);
   assert.match(session.view().brian.text, /^It landed 11\.9 m, 18\.1 m short of the 30 m flag\. Tilt it flatter, toward 45: press ↓, or more speed: press →/);
+  setTo(session, 75, MAX_MS); fly(session);
+  assert.match(session.view().brian.text, /^It landed 24\.2 m, 5\.8 m short of the 30 m flag\. Tilt it flatter, toward 45: press ↓, then Space\./, 'no more speed at the top of the dial');
   setTo(session, 45, 18); fly(session);
   assert.equal(session.view().ready, true);
   assert.match(session.view().brian.text, /^45° at 40 mph lands 29\.5 m: on my 30 m mark\. Job done/);
@@ -210,7 +212,7 @@ test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
     'check-pair': [[1, /^55 degrees lands 33\.2 m, 1\.7 m shorter\. 40 is as far below 45 as 50 is above: 35\.2 m/], [2, /^70 degrees is far too steep: 22\.7 m/]],
     'check-lower': [[1, /^45 degrees goes 42\.7 m; 40 degrees goes 43\.6 m\. The skier has longer to fall/], [2, /^55 degrees goes only 38\.4 m/]],
-    'check-game': [[1, /^The kicker is snow: its angle is fixed/], [2, /^Slower lands lower and shorter: at 50 degrees, 40 mph lands 28\.9 m and 49 mph 41\.1 m/]],
+    'check-game': [[1, /^The kicker is snow: its angle is fixed/], [2, /^Slower lands lower and shorter: on the launcher at 50 degrees, 40 mph lands 28\.9 m and 49 mph 41\.1 m/]],
   };
   for (const [id, picks] of Object.entries(answers)) for (const [pick, why] of picks) {
     const session = createClassroomSession(lesson);

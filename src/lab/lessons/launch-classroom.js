@@ -107,9 +107,9 @@ const CHECKS = {
       {label: 'Lean back to make the kicker steeper', picture: {kind: 'kicker', what: 'lean'}},
       {label: 'Ski slower so the kicker throws you higher', picture: {kind: 'kicker', what: 'slow'}}],
     correct: 0,
-    right: () => `Yes. The kicker sets the angle; your speed is yours. At 50 degrees, 40 mph lands ${D(50, SLOW_MS)} and 49 mph ${D(50, 22)}.`,
+    right: () => `Yes. The kicker sets the angle; your speed is yours. On the launcher at 50 degrees, 40 mph lands ${D(50, SLOW_MS)} and 49 mph ${D(50, 22)}.`,
     wrong: picked => picked === 1 ? 'The kicker is snow: its angle is fixed. Your speed is yours: tuck on the inrun (hold Shift) to come off faster.'
-      : `Slower lands lower and shorter: at 50 degrees, 40 mph lands ${D(50, SLOW_MS)} and 49 mph ${D(50, 22)}. Tuck on the inrun for speed.`,
+      : `Slower lands lower and shorter: on the launcher at 50 degrees, 40 mph lands ${D(50, SLOW_MS)} and 49 mph ${D(50, 22)}. Tuck on the inrun for speed.`,
     hints: ['You cannot change the kicker’s angle.', 'What did more speed do on the launcher?', 'Pick the first card.'],
   },
 };
@@ -121,11 +121,13 @@ function angleFix(angle, short) {
   if (short) return angle < 45 ? 'tilt it steeper, toward 45: press ↑' : angle > 45 ? 'tilt it flatter, toward 45: press ↓' : null;
   return angle < 45 ? 'tilt it flatter, further from 45: press ↓' : angle > 45 ? 'tilt it steeper, further from 45: press ↑' : 'tilt it steeper or flatter, since 45 goes furthest: press ↑ or ↓';
 }
-const speedFix = short => short ? 'more speed: press →' : 'less speed: press ←';
+// Speed advice only while the dial can still turn that way.
+const speedFix = (short, ms) => short ? (ms < MAX_MS ? 'more speed: press →' : null) : (ms > MIN_MS ? 'less speed: press ←' : null);
 const sentence = s => s[0].toUpperCase() + s.slice(1);
 export function missSay(flag, angle, ms, fixed) {
   const d = distanceOf(angle, ms), short = d < flag, by = m1(Math.abs(d - flag));
-  const turn = angleFix(angle, short), fix = fixed === 'angle' || !turn ? speedFix(short) : fixed === 'speed' ? turn : `${turn}, or ${speedFix(short)}`;
+  const turn = angleFix(angle, short), speed = speedFix(short, ms);
+  const fix = fixed === 'angle' || !turn ? speed ?? turn : fixed === 'speed' || !speed ? turn : `${turn}, or ${speed}`;
   return `It landed ${m1(d)}, ${by} ${short ? 'short of' : 'past'} the ${flag} m flag. ${sentence(fix)}, then Space.`;
 }
 
@@ -190,7 +192,7 @@ export function createModel() {
     const id = step().id, g = goal();
     if (id === 'word-angle') return 'Watch: I tilt it to 45 degrees.';
     if (id === 'word-speed') return 'Watch: I turn the dial to 45 mph.';
-    if (id === 'try-speed') return 'Watch: I turn the dial to 40 mph, then launch.';
+    if (id === 'try-speed') return 'Watch: I turn the dial to 40 mph. Then you guess where it lands.';
     const parts = [g.angle !== set.angle ? `tilt the ramp to ${g.angle} degrees` : null, g.ms !== set.ms ? `turn the dial to ${mph(g.ms)} mph` : null].filter(Boolean);
     return parts.length ? `Watch: I ${parts.join(' and ')}, then launch.` : 'Watch: I launch.';
   }
@@ -484,7 +486,7 @@ export function createModel() {
 }
 
 // The lesson's own launches, as the bench's challenge reads them: the bench's goal (a landing within 2 m of the 30 m mark)
-// must pass on these, so finishing the lesson can never pass without one.
+// passes on these. Several steps land on 30 m (the wonder's 60 degrees, the flag try, mark 3), so a finished lesson has one.
 export const benchAttempts = view => (view?.runs ?? []).map(({angle, ms}) => ({controls: [{id: 'angleDeg'}, {id: 'speedMs'}, {id: 'air'}, {id: 'landing'}],
   input: {angleDeg: angle, speedMs: ms, air: 'air', landing: 'level'}}));
 
