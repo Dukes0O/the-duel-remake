@@ -77,3 +77,18 @@ as is: the Watch voice says "turn the fan from fifty to a hundred and fifty" whi
 itself (the words on screen say what happens).
 
 ## Checks
+
+- `tools/test-lab-classroom-downforce.mjs`: 12/12 (11 before the review fix, plus the job's starting
+  wing).
+- Every `tools/test-lab-*.mjs`: 343/343 on a77a9727; after the review fixes (Downforce's own files
+  only) the Downforce suite, `test-lab-classroom` (15) and the lane tier cover them.
+- Lane tier (`--changed --jobs 4`): 46/46 on a77a9727 and 46/46 on 5519c84b; `npm run build` passed
+  both times.
+- All 22 Lab browser scenarios on 5519c84b: 22/22, including `lab-classroom-downforce` (by keyboard
+  with one click on the wing panel, to the pass and the Wing angle row on the Tune page) and
+  `lab-tune-view` (now passing Downforce through the classroom).
+- Look: the walkthrough's pictures checked by Claude; run 1 found the scale's total over its
+  breakdown, smoke lines leaking out of their panels, "set by Brian" over the wing buttons, the car
+  leaving the picture when it slid wide, and the try's last line too long for Brian's bubble; all
+  fixed and checked again in run 2.
+- No frame check: the Lab classroom is a 2D board and changes no race scene.
