@@ -134,11 +134,11 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('[data-lab="restore-close"]')`, 'Skip jumps to the end', 10_000);
   const credits = await context.evaluate(`window.__qaApp.profile.credits`);
   if (credits !== 3500) throw Error(`Nothing more should be charged, credits are ${credits}`);
-  // The lesson itself stays open: from the finished replay the bench offers it, and it opens as the five-step lesson.
+  // The lesson itself stays open: from the finished replay the bench offers it, and it opens as the classroom.
   await context.evaluate(`document.querySelector('[data-lab="restore-close"]').click()`);
   await context.waitFor(`!!document.querySelector('[data-lab="replay"]')`, 'the passed bench offers the lesson again', 10_000);
   await context.evaluate(`document.querySelector('[data-lab="replay"]').click()`);
-  await context.waitFor(`!!document.querySelector('.lab-teaching') && !document.querySelector('.lab-teaching').hidden && !document.querySelector('[data-lab="restore"]')`, 'the Rust lesson replays', 20_000);
+  await context.waitFor(`!!document.querySelector('.lab-classroom') && !document.querySelector('[data-lab="restore"]')`, 'the Rust lesson replays as the classroom', 20_000);
   await context.screenshot('restore-lesson-replay');
   console.log(`Lab restore: mechanical 1,000 + body 1,500, both finishes kept, the sequence took ${took.toFixed(0)} s, salt ${salt.join('% > ')}%`);
 }
