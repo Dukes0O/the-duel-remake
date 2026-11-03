@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-03T03:51:03.316Z
+Observed at: 2026-11-03T15:07:51.158Z
 
-Observation commit: e3b329e188d77ee1b393b2bfdbca91679127c5c3
+Observation commit: 49da08f7459fc58da972f4e1729bdf6fffc638f9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e3b329e188d77ee1b393b2bfdbca91679127c5c3
+Integration HEAD: 49da08f7459fc58da972f4e1729bdf6fffc638f9
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,7 +29,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/perf-high-night | 18 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/perf-high-night | 19 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 
 ## Unmerged branches for idle review
 
@@ -37,7 +37,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 18 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 19 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 
 ## Size targets
 
@@ -50,26 +50,26 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
-| Review `looks/` | 37,186,965 B | -960,557 B | 20,000,000 B |
-| Added bytes in last merge | 249,251 B | +184,761 B | 5,000,000 B |
+| Review `looks/` | 37,186,965 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 262,789 B | +13,538 B | 5,000,000 B |
 | All `public/` | 364,381,639 B | +0 B | unavailable |
-| Git objects | 834,280,448 B | +747,520 B | unavailable |
+| Git objects | 835,025,920 B | +745,472 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: e3b329e188d77ee1b393b2bfdbca91679127c5c3
+- Local master: 49da08f7459fc58da972f4e1729bdf6fffc638f9
 - Local main: missing
-- Local integration/wasteland: e3b329e188d77ee1b393b2bfdbca91679127c5c3
+- Local integration/wasteland: 49da08f7459fc58da972f4e1729bdf6fffc638f9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit e3b329e188d77ee1b393b2bfdbca91679127c5c3.
+- Remote origin/master: matches local; cached commit 49da08f7459fc58da972f4e1729bdf6fffc638f9.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit e3b329e188d77ee1b393b2bfdbca91679127c5c3.
+- Remote origin/integration/wasteland: matches local; cached commit 49da08f7459fc58da972f4e1729bdf6fffc638f9.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
