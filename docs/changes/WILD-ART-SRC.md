@@ -23,7 +23,22 @@ mountains and Australia lists now draws its animals.
 
 ### Checks
 
-CHECKS3
+From PowerShell, on the lane with current `integration/wasteland` merged in
+(WILD-VIEW included), heavy jobs started on a free turn:
+
+- `node tools/test-wildlife-view.mjs`: 3,747 checks passed.
+- `node tools/test-wildlife.mjs`: 33,644 checks, 2,352 animals on 12
+  courses, 31 species seen.
+- `node tools/test-heli-survey.mjs`: 9,990 checks passed.
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- Lane tier, `--changed --jobs 4 --keep-going`: 57 passed, 0 failed, 0 not
+  run (762 s). The round 2 `test-board` failure is gone with integration's
+  board fix.
+- `npm run build`: built in 1.38 s, existing large-chunk warning only;
+  output deleted.
+- Kangaroo and kookaburra rebuilt and reviewed from their recipes in
+  Blender 4.5.13, reviews at `--round 3`. No browser or frame check: the
+  view already draws the North woods animals the same way (WILD-VIEW).
 
 ### Changed assertions (for Claude's review, rule 18)
 
