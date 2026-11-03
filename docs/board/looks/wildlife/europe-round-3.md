@@ -1,5 +1,12 @@
 # Europe, round 3 of 3 (final)
 
+## Claude's round 3 verdict (final)
+
+Wild boar PASS. Golden eagle PASS. Wildcat NOT passed: the legs read as
+sleeves and the body is blocky close up; the three-round cap is reached.
+The boar and eagle move into `public/assets/wildlife/` and the model table;
+the wildcat's recipe stays for a later card, its GLB stays out of `public/`.
+
 Claude's round 2 verdict is at the top of `europe-round-2.md`. Sheet:
 `europe-round-3.jpg` (170,540 bytes), the three candidates only, same
 columns. They are still built under the ignored `.qa-dist/wildlife-candidates/`;

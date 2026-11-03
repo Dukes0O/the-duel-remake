@@ -44,6 +44,10 @@ export const WILDLIFE_MODELS = Object.freeze({
   'alpine-marmot': model('alpine-marmot.glb', {speed: 2.5, rate: 6}),
   'black-stork': model('black-stork.glb', {speed: 9, rate: 1.1}, {move: 'Fly', fly: 'Fly'}),
   'gull': model('gull.glb', {speed: 9, rate: 1.2}, {move: 'Fly', fly: 'Fly'}),
+  // Europe round 3. The boar's short stride needs a high rate; it slides a
+  // little when running, as the beaver does. The wildcat has not passed.
+  'wild-boar': model('wild-boar.glb', {speed: 5, rate: 4}),
+  'golden-eagle': model('golden-eagle.glb', {speed: 9, rate: 1.05}, {move: 'Fly', fly: 'Fly'}),
 });
 
 // The ids in the table, for availableSpecies() and the count's course list.

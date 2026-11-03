@@ -67,16 +67,19 @@ const NORTH_WOODS = ['white-tailed-deer', 'moose', 'black-bear', 'beaver', 'east
   same(summit.common.map(row => row.species), ['yellow-bellied-marmot', 'bighorn-sheep', 'mule-deer', 'raven'], 'Summit Run: marmots, bighorns, mule deer and ravens');
   equal(summit.rare?.species, 'cougar', 'and the cougar as its rare animal');
   for (const id of ['raven', 'sulphur-crested-cockatoo', 'kookaburra']) equal(WILDLIFE_MODELS[id].fly, 'Fly', `${id}: flies in its Fly loop`);
-  // Europe: the passed species are drawn; a species still in its art rounds
-  // (wild boar, wildcat, golden eagle) is simply left out until it passes.
+  // Europe: the passed species are drawn; the wildcat did not pass its art
+  // rounds, so it is left out and Ardennes and Azure Riviera have no rare animal.
   const europe = id => wildlife.availableSpecies(id, APPROVED_MODEL_IDS);
-  same(europe('ardennes-forest').common.map(row => row.species), ['roe-deer', 'red-deer', 'red-fox'], 'Ardennes: roe deer, red deer and red fox');
-  same(europe('eifel-crown').common.map(row => row.species), ['roe-deer', 'red-deer', 'red-fox'], 'Eifel Crown: roe deer, red deer and red fox');
+  same(europe('ardennes-forest').common.map(row => row.species), ['roe-deer', 'red-deer', 'wild-boar', 'red-fox'], 'Ardennes: roe deer, red deer, wild boar and red fox');
+  equal(europe('ardennes-forest').rare, null, 'and no rare animal without the wildcat');
+  same(europe('eifel-crown').common.map(row => row.species), ['roe-deer', 'red-deer', 'wild-boar', 'red-fox'], 'Eifel Crown: roe deer, red deer, wild boar and red fox');
   equal(europe('eifel-crown').rare?.species, 'black-stork', 'and the black stork as its rare bird');
   same(europe('alpine-serpent').common.map(row => row.species), ['chamois', 'ibex', 'alpine-marmot', 'red-deer'], 'Alpine Serpent: chamois, ibex, alpine marmots and red deer');
-  same(europe('azure-riviera').common.map(row => row.species), ['gull', 'red-fox', 'roe-deer'], 'Azure Riviera: gulls, red foxes and roe deer');
-  for (const id of ['black-stork', 'gull']) equal(WILDLIFE_MODELS[id].fly, 'Fly', `${id}: flies in its Fly loop`);
-  for (const id of ['wild-boar', 'wildcat', 'golden-eagle']) ok(!APPROVED_MODEL_IDS.includes(id), `${id}: no row while it is still in its art rounds`);
+  equal(europe('alpine-serpent').rare?.species, 'golden-eagle', 'and the golden eagle as its rare bird');
+  same(europe('azure-riviera').common.map(row => row.species), ['gull', 'red-fox', 'roe-deer', 'wild-boar'], 'Azure Riviera: gulls, red foxes, roe deer and wild boar');
+  equal(europe('azure-riviera').rare, null, 'and no rare animal without the wildcat');
+  for (const id of ['black-stork', 'gull', 'golden-eagle']) equal(WILDLIFE_MODELS[id].fly, 'Fly', `${id}: flies in its Fly loop`);
+  ok(!APPROVED_MODEL_IDS.includes('wildcat'), 'wildcat: no row, it did not pass its art rounds');
 }
 
 // ---- The count never asks for an animal with no model ------------------------

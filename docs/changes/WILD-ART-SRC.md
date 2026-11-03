@@ -1,5 +1,45 @@
 # WILD-ART-SRC
 
+## 3 November 2026: Europe final verdict, boar and eagle in the game
+
+Claude's final verdict is at the top of the Europe round 3 note: wild boar
+and golden eagle PASS, wildcat NOT passed (cap reached).
+
+- The reviewed boar and eagle GLBs (the round 3 candidate files, byte for
+  byte) are in `public/assets/wildlife/`, with rows in `src/wildlife-models.js`
+  (the eagle flies in `Fly`). The Ardennes, Eifel Crown and Azure Riviera now
+  draw wild boar too; the golden eagle is Alpine Serpent's rare bird.
+- **The wildcat is not in the game.** Its recipe stays in
+  `tools/blender/wildlife/wildcat.py` for a later card; its GLB stays out of
+  `public/`. Until it passes, **Ardennes and Azure Riviera have no rare
+  animal** (the wildcat is their rare one).
+- `artCandidates` in the Blender-output suite now holds only the wildcat, and
+  `common.py --candidate` stays because the wildcat's recipe still builds that
+  way. The boar's and eagle's export checks apply again.
+
+### Checks
+
+CHECKS_FINAL
+
+### Changed assertions (for Claude's review, rule 18)
+
+- `tools/test-blender-output.mjs`: wild boar and golden eagle leave
+  `artCandidates`, so their full export checks are restored; the wildcat
+  keeps the "not in public/" check. Nothing loosened.
+- `tools/test-wildlife-view.mjs`: today's exact Europe lists now include the
+  wild boar on the Ardennes, Eifel Crown and Azure Riviera, the golden eagle
+  as Alpine Serpent's rare bird and flying in `Fly`, no rare animal on the
+  Ardennes and Riviera, and no row for the wildcat.
+
+### Removed
+
+- The recycled round sheets: `europe-round-1a.jpg`, `europe-round-1b.jpg`,
+  `europe-round-2.jpg` (each removed with the next round's commit; verdicts
+  kept in their notes) and earlier `west-australia-round-1a.jpg`,
+  `west-australia-round-1b.jpg` and `west-australia-round-2.jpg`.
+- The boar and eagle candidate copies under `.qa-dist` are superseded by
+  their published files.
+
 ## 3 November 2026: Europe round 3 (final)
 
 Claude's round 2 verdict is at the top of the Europe round 2 note; changes,
