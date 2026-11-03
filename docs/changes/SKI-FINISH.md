@@ -518,3 +518,84 @@ checks are kept. Casual steady keyboard run: 2 misses, bronze; practised:
 0 misses, silver. Pro bronze from practice +10% is accepted (no steady Pro
 target exists by design). Left before switch-on: Claude's look and the frame
 check with the screens on.
+
+## Finding the pads and the fuel (Claude, 3 November 2026)
+
+Kyle, 2 November: "I tried to get to drop off skiers at Summit but I couldn't
+find the ski pad, it wasn't clearly marked and I ran out of fuel." Design on
+the card ("Claude decides", 3 November).
+
+**Cause.** The leg to Summit Run ended 1.5 km outside the start line; Devils
+Playground is 5.4 km further up the mountain. A scripted pilot from the home
+pad on a full tank arrived with 214 kg and ran dry on the climb (engine out,
+hard landing). Devils Playground and the pickup had nothing drawn in the
+flying world.
+
+**Changed.**
+- `heli-session.js`: a ski flight's leg ends hovering 400 m short of the
+  nearest pad (Devils Playground: the pickup, with only the aerials, ranks
+  300 m behind it), at least 150 m over the pad and 40 m over anything on
+  the way in. The autopilot's goal at Summit Run with a ski flight is that
+  pad. The pickup pad has a pump during a ski flight (home price, always
+  paid). The job status carries the tank, the fuel the next leg and its two
+  ends need (leg plus `JOB_RESERVE_KG`, 240 kg either way from the Woods) and
+  whether the helicopter stands at a pump. A group run left unfinished keeps
+  Summit Run as the way (it used to set home). The fuel truck now also comes
+  to an empty tank at any paid pump when the credits cannot buy the 60 kg
+  reserve: the free first tank only helps at home (found in review; the
+  rescue trucks had the same gap).
+- `heli-scene.js`: each pad still to fly to has an orange light column
+  (300 m, fades upward, drawn through the haze) and an orange ring on the
+  snow; the column goes out within 40 m. The pickup has the existing
+  `fuel-pump.glb` (unused until now) and a yellow ring.
+- `heli-job-card.js`: "Fly to Summit Run. The flight ends beside the ski
+  pads."; "Fill the tank first at the home pump: ..." when short; "Land on
+  the ski pad under the orange light: Devils Playground, 0.4 km, heading
+  320."; the pump named before it is needed; after the run "Fill up at the
+  pump here first: the way home needs about 240 kg of fuel and you have
+  153 kg." with a Fill up here button on the card.
+- `heli-ui.js`: the landed panel follows the trip (fly to Summit Run at home,
+  follow the card home after the run); the pump button at the ski pump.
+- `pilot-map-view.js`: orange SKI flags with names at the pads to fly to.
+
+**Played.** `tools/scenarios/ski-drop-trip.mjs` (new): memory-only QA page,
+a pilot with the landing lesson and Summit Run, the ski box, P and ENTER,
+the autopilot to the pad, the slalom on the run menu (19.05 s, gold, every
+gate clean), the card's Fill up here, P and ENTER home, landing. Fuel: 349 kg
+at the cruise, 187 on arrival, 165 over the pad, 153 back aboard at the
+pickup, 400 filled, 337 leaving Summit, 146 over home, 94 landed. The card
+said the next step at every stage. Pictures looked at once and deleted:
+the column is plain from the arrival point; the pickup pump and both rings
+read clearly.
+
+**Tests.** `test-ski-heli.mjs`: new tests for the whole drop from the home
+pad (arrival within 400 m of a marked pad, hovering and clear of the ground;
+the autopilot to the pad; no engine out and no fuel truck on one fill), a
+short tank at home, the truck at the pickup pump with no credits, and a
+group run left unfinished. `test-heli-job-clarity.mjs`: the new card words,
+the fill button and the landed panel. `test-pilot-map.mjs`: the map flags.
+
+**Changed assertions (Claude's review).** `test-heli-job-clarity.mjs`: the
+ski card's fly and pad lines now expect the new words; nothing else in the
+check changed. `test-ski-heli.mjs` `flyHome` and the group job test: the
+pilot used to idle the tank dry at the pickup so the paid fuel truck filled
+it; with a pump at the pickup the truck no longer comes to a pilot who can
+pay, so the helper fills up at the pump and the group test now checks the
+pump's charge exactly (`wallet + pay - charged - fill cost`). Nothing is
+loosened: the fill is checked to reach a full tank, the pay and charges are
+still exact, and the truck at a paid pump has its own new test.
+Two more in `test-ski-heli.mjs`, both from design changes: the group job test
+asked for more than 160 kg left at the pickup so the cruise home needed no
+fuel; the pickup pump now fills the way home, so it checks instead that the
+tank is short of the 240 kg home, the helicopter is at the pump and the card
+asks to fill up (the fill and its charge are then checked exactly). The
+unfinished group run test expected the way home to be set after leaving a
+run; an unfinished run is not paid, so pointing home led the player to an
+unpaid flight. It now expects Summit Run, and the new test checks the
+autopilot then goes to a pad. The rest of that test (no pay without a
+result, a real run counts) is unchanged.
+`tools/scenarios/heli-jobs.mjs`: its ski card pattern takes the new words and
+its `arrive` helper waits over the marked pad, not the start line.
+
+**Removed.** The ski pads' "Nearest:" card wording. `fuel-pump.glb` is now
+loaded (it was unused).

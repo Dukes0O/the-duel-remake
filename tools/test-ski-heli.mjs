@@ -374,9 +374,10 @@ test('the group job: aboard at the home pad with 475 kg, skied from the pickup p
   assert.equal(empty(), KESTREL.emptyKg + 475);
   // Not paid until they are home.
   assert.equal(heliOf(s.profile).jobs.taken, `ski${day}`);
-  // The snowy pickup is reached sooner: enough fuel remains for the cruise.
-  // SKI-FINISH: the pickup pad's pump fills the tank for pay before the way home.
-  assert.ok(v.heli.fuelKg > 160 && v.heli.fuelKg < KESTREL.tankKg, `fuel left ${v.heli.fuelKg.toFixed(0)} kg`);
+  // SKI-FINISH: the way home is filled at the pickup pad's pump, so the card asks for it while the tank is short of the
+  // leg home and its two ends (it used to need 160 kg left here to cruise home without fuel).
+  const back = s.jobStatus();
+  assert.ok(v.heli.fuelKg > 0 && back.fuelKg < back.needKg && back.atPump, `fuel left ${v.heli.fuelKg.toFixed(0)} kg of the ${back.needKg} kg home, at the pump`);
   const wallet = s.profile.credits, homeFlight = flyHome(s), home = homeFlight.home;
   assert.ok(homeFlight.filled.cost > 0 && wallet > 0, 'the pump filled the tank, for pay');
   assert.ok(has(home, 'skiGroupDone'), 'paid at the home pad');
@@ -462,7 +463,8 @@ test('the group is paid only for a run with a result: leaving it, or reaching th
   assert.equal(s.skiStepOut('aerials').ok, true); run(s, 1, () => ({skate: true}));
   assert.equal(s.leaveSkiRun().ok, true);
   assert.equal(s.view().ski.flight.skied, false); assert.equal(s.view().ski.group, true);
-  assert.equal(s.view().destination, 'tremblant-woods', 'the way home is set');
+  // SKI-FINISH review: no run yet, so the way stays Summit Run (home would be a flight with no pay).
+  assert.equal(s.view().destination, 'summit-run', 'the way stays Summit Run');
   // The pure run: skirting the start and finish gates to the pickup ends the run with no result.
   const zone = skiZone('aerials'), around = createSkiRun({runId: 'aerials'}), drive = skierDriver('aerials', [{x: 24, z: zone.pickup.z - 40}, zone.pickup]);
   let steps = 0;
