@@ -26,7 +26,19 @@ its own recipe. Design, numbers and doubts are in
 
 ### Checks
 
-CHECKS
+All from PowerShell, on the lane with current `integration/wasteland`
+(8d356ab0) merged in, each started on a free heavy-job turn (FACTORY 8).
+
+- `node tools/test-blender-output.mjs`: 167 checks, 0 failed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`:
+  51 passed, 0 failed, 0 not run, 515 s (includes repo hygiene, world
+  composition, track kits and the replay guards).
+- `npm run build -- --outDir .qa-dist/wildlife-build`: built in 1.15 s;
+  only the existing large-chunk warning. Output deleted afterwards.
+- Blender 4.5.13, `-b --factory-startup -t 4`, CPU: every species built and
+  reviewed from its recipe in one batch; the elk and kangaroo rebuilt once
+  more after their last fix. No browser, frame or save check: nothing is
+  placed in the game yet (WILD-VIEW).
 
 ### Changed assertions
 
