@@ -20,6 +20,10 @@ const GUIDE_WAIT = 0xf4f1e8, GUIDE_READY = 0x3ddc5a;
 // its X; cable_hook is where the cable hangs from.
 export const KESTREL_MODEL_URL = '/assets/heli/kestrel-one.glb';
 const loadModel = url => new GLTFLoader().loadAsync(url).then(gltf => gltf.scene);
+// SKI-FINISH: the pickup pad's pump (tools/blender/heli-accessories.py) and the pads' light columns.
+export const SKI_PUMP_URL = '/assets/heli/fuel-pump.glb';
+const SKI_ORANGE = 0xff6a13;
+export const SKI_COLUMN = Object.freeze({height: 300, radius: 3.5, ringInner: 10.4, outWithin: 40});
 
 function ring(THREE, radius, color) {
   const mesh = new THREE.Mesh(new THREE.RingGeometry(radius - .35, radius, 64),
@@ -161,6 +165,73 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   // The game sets the fire's quality each frame; the rescue drawing follows it (render3d is not touched).
   const setFireQuality = fire.setQuality;
   fire.setQuality = next => { setFireQuality(next); quality = next; rescue?.setQuality(next); };
+  // SKI-FINISH (Kyle, 2 November 2026: "I couldn't find the ski pad, it wasn't clearly marked"): at Summit Run, each
+  // pad still to fly to stands under an orange light column, fading as it rises and seen through the haze from
+  // kilometres away, with an orange ring painted on the snow; the column goes out as the helicopter comes in to land.
+  // The pickup pad's pump stands at its spot with a yellow ring like the home pad's. Drawing only (view.ski).
+  const skiMarks = new THREE.Group();
+  skiMarks.name = 'Ski pad marks';
+  group.add(skiMarks);
+  const fadeData = new Uint8Array(64 * 4);
+  // Solid for its lowest fifth, then fading to nothing at the top.
+  for (let i = 0; i < 64; i++) fadeData.fill(Math.round(255 * Math.min(1, (1 - i / 63) / .8) ** .9), i * 4, i * 4 + 4);
+  const fade = new THREE.DataTexture(fadeData, 1, 64, THREE.RGBAFormat);
+  fade.needsUpdate = true;
+  const columnGeometry = new THREE.CylinderGeometry(SKI_COLUMN.radius, SKI_COLUMN.radius, SKI_COLUMN.height, 16, 1, true);
+  columnGeometry.translate(0, SKI_COLUMN.height / 2, 0);
+  const columnMaterial = new THREE.MeshBasicMaterial({color: SKI_ORANGE, transparent: true, opacity: .9, alphaMap: fade, side: THREE.DoubleSide,
+    depthWrite: false, fog: false});
+  const padRing = color => {
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(SKI_COLUMN.ringInner, 12, 64),
+      new THREE.MeshBasicMaterial({color, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2}));
+    mesh.rotation.x = -Math.PI / 2;
+    return mesh;
+  };
+  const skiPads = [];
+  const pumpRing = padRing(0xf2c14e);
+  pumpRing.name = 'Ski pump pad';
+  skiMarks.add(pumpRing);
+  const pump = {model: null, status: 'idle'};
+  function skiDraw(ski, h) {
+    skiMarks.visible = !!ski;
+    if (!ski) return;
+    const marks = ski.marks ?? [];
+    while (skiPads.length < marks.length) {
+      const column = new THREE.Mesh(columnGeometry, columnMaterial), rim = padRing(SKI_ORANGE), mark = new THREE.Group();
+      column.name = 'Ski pad light';
+      mark.add(column, rim);
+      skiMarks.add(mark);
+      skiPads.push({mark, column, rim});
+    }
+    skiPads.forEach((pad, i) => {
+      const at = marks[i];
+      pad.mark.visible = !!at;
+      if (!at) return;
+      pad.mark.position.set(at.x, at.y, at.z);
+      pad.rim.position.y = .15;
+      pad.column.visible = Math.hypot(h.x - at.x, h.z - at.z) > SKI_COLUMN.outWithin;
+    });
+    // Where the pickup is itself a pad to fly to (the aerials open), its orange ring stands for it.
+    pumpRing.visible = !!ski.pump && !marks.some(at => at.name === 'pickup');
+    if (!ski.pump) { if (pump.model) pump.model.visible = false; return; }
+    pumpRing.position.set(ski.pump.pad.x, ski.pump.pad.y + .15, ski.pump.pad.z);
+    if (pump.status === 'idle') {
+      pump.status = 'loading';
+      load(SKI_PUMP_URL).then(model => {
+        if (disposed) return;
+        model.name = 'Ski pickup pump';
+        model.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
+        pump.model = model; pump.status = 'ready';
+        skiMarks.add(model);
+      }).catch(error => { pump.status = 'error'; console.warn(`The ski pump did not load: ${String(error?.message || error)}`); });
+    }
+    if (pump.model) {
+      pump.model.visible = true;
+      // Facing the pad, so its JET A side is seen from the helicopter standing there.
+      pump.model.position.set(ski.pump.x, ski.pump.y, ski.pump.z);
+      pump.model.rotation.y = Math.atan2(ski.pump.pad.x - ski.pump.x, ski.pump.pad.z - ski.pump.z);
+    }
+  }
   let spin = 0;
   const points = cableGeometry.attributes.position;
 
@@ -233,6 +304,8 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.visible = view.courseId === 'tremblant-woods';
       }
       labDraw(view.challenge?.props); // LAB-VIEW
+      // SKI-FINISH: not while a run is skied, so the ski scene's backdrop (painted from this world) never shows the marks.
+      skiDraw(view.courseId === 'summit-run' && !view.ski?.run ? view.ski : null, h);
       fire.update(view, {dt});
       if (view.rescue) rescue ??= createRescueView({THREE, scene, quality, vehicleAssets, ...(rescueLoad ? {load: rescueLoad} : {})});
       rescue?.update(view, {dt});
@@ -256,6 +329,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       for (const mesh of others.values()) if (mesh.userData?.vehicleKey) group.remove(mesh);
       scene.remove(group);
       group.traverse(object => { object.geometry?.dispose?.(); object.material?.dispose?.(); });
+      fade.dispose();
       fire.dispose();
       rescue?.dispose();
     },

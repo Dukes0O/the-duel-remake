@@ -14,7 +14,7 @@ const FLAGS = 'helicopter,forest-fire,rescue,summit-run,heli-skiing';
 
 // Page helpers: a pilot and a skier, both as the session's own tests drive them. The ground under the helicopter is read
 // from the course the way the helicopter's ground falls back to it.
-const HELPERS = (line, pickup, pads, guide) => `(window.__skiQa={
+export const HELPERS = (line, pickup, pads, guide) => `(window.__skiQa={
   clamp:(v,lo,hi)=>Math.max(lo,Math.min(hi,v)),wrap:a=>Math.atan2(Math.sin(a),Math.cos(a)),
   ground(x,z){const c=window.__qaApp.duel.course,n=c.nearest(x,z);return c.groundAt(n.s,n.lateral).y;},
   highest(x,z){let top=-Infinity;for(const [dx,dz] of [[0,0],[10,0],[-10,0],[0,10],[0,-10]])top=Math.max(top,this.ground(x+dx,z+dz));return top;},
