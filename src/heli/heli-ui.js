@@ -4,7 +4,8 @@ import {shelfMarkup} from './heli-logbook-ui.js';
 // Drawing only: it reads the app's helicopter view and log and never
 // changes flight state; its buttons call the app's helicopter actions.
 import {HELI_DESTINATIONS, HELI_DESTINATIONS_WITH_SUMMIT, HOME_COURSE, legFuelKg} from './heli-jobs.js';
-import {HELI_CAMERA_VIEWS} from './heli-camera.js';
+import {cameraViewsFor} from './heli-camera.js';
+import {createHeatInset} from './heli-skin-view.js'; // SKIN-VIEW: the heat camera's inset
 import {HELI_RADIO_LINES, SKI_RADIO_TEXT} from './heli-radio-lines.js';
 import {HELI_MONEY} from './heli-save.js';
 import {payWords, resultWords} from './heli-pay.js';
@@ -250,6 +251,12 @@ export function rescueLineMarkup(view) {
 // How dark the light is (0 to 1): the hiker's last 3 minutes, drawing only.
 export const duskShare = view => Math.max(0, Math.min(1, view?.rescue?.active?.dusk ?? 0));
 
+// The camera view C has chosen: four views, or five with the TV skin's nose camera (SKIN-VIEW).
+export function cameraName(view, index = 0) {
+  const views = cameraViewsFor(view?.skins?.gear);
+  return views[((index % views.length) + views.length) % views.length];
+}
+
 // credits: the player's credits, shown in the status row (HELI-PAY-CONTINUE); left out, the row is as it was.
 export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) {
   const r = instrumentReadings(view?.readout);
@@ -263,7 +270,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) 
   </div>
   <div class="heli-status">
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
-    <span>VIEW ${HELI_CAMERA_VIEWS[((cameraIndex % 4) + 4) % 4].toUpperCase()} <kbd>C</kbd></span>
+    <span>VIEW ${cameraName(view, cameraIndex).toUpperCase()} <kbd>C</kbd></span>
     <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}${Number.isFinite(credits) ? `<span class="heli-credits">CREDITS <b>${Math.floor(credits).toLocaleString('en-US')}</b></span>` : ''}
   </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
@@ -401,6 +408,7 @@ export function createHeliUi({host, app, onMenu = null}) {
   const lessonsHost = section.querySelector('.heli-lessons-host');
   const arrivalHost = section.querySelector('.heli-arrival-host');
   let lastArrival = '', lastShelf = '';
+  let heat = null; // SKIN-VIEW: the heat camera's inset, made the first time the camera is worn
   // HELI-JOB-CLARITY: the job card (top left) and the hook prompt (above the radio line).
   const jobHost = section.querySelector('.heli-job-host'), hookPrompt = section.querySelector('.heli-hook-prompt');
   let lastJob = '', delivered = null;
@@ -488,7 +496,7 @@ export function createHeliUi({host, app, onMenu = null}) {
       const view = app.duel?.state?.status === 'heli' ? app.heliView?.() : null;
       if (view?.secrets !== undefined) (pilotMap ??= createPilotMapUi({host, app})).update(view); else pilotMap?.update(view); // MAP-VIEW
       section.hidden = !view;
-      if (!view) { shown = []; radioLine = null; seenLog = null; skiHud?.update(null, now); return null; }
+      if (!view) { shown = []; radioLine = null; seenLog = null; skiHud?.update(null, now); heat?.update(null); return null; }
       // New events since the last frame become notices and radio subtitles.
       const log = app.heliLog || [];
       if (log !== seenLog) {
@@ -511,6 +519,10 @@ export function createHeliUi({host, app, onMenu = null}) {
       }
       shown = shown.filter(item => item.until > now).slice(-3);
       lastShelf = set(shelf, shelfMarkup(view), lastShelf);
+      // SKIN-VIEW: the heat camera's inset while that gear is worn, and a frame round the nose camera's view.
+      if (view.skins?.gear?.heatRange > 0) (heat ??= createHeatInset({doc, host: section})).update(view); else heat?.update(null);
+      const nose = cameraName(view, app.heliCamera || 0) === 'nose';
+      if (nose !== (section.dataset.camera === 'nose')) { if (nose) section.dataset.camera = 'nose'; else delete section.dataset.camera; }
       const tank = app.profile?.heli;
       // Dusk over the hiker's last 3 minutes: the panel's dimming layer (CSS), set only when it falls.
       const dusk = duskShare(view);
@@ -569,6 +581,7 @@ export function createHeliUi({host, app, onMenu = null}) {
       board.dispose();
       pilotMap?.dispose(); // MAP-VIEW
       skiHud?.dispose();
+      heat?.dispose();
       section.remove();
     },
   };
