@@ -9,7 +9,7 @@ import {defineZone} from '../src/deep/deep-zone.js';
 import {kelpCoastProvider} from '../src/deep/zones/kelp-coast.js';
 import {normalizeDeep} from '../src/deep/deep-discovery.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
-import {SIRENA, SIRENA_FINDS, SIRENA_PAY, createSirena, pingSonar, stepLift, raiseFind, recordCoastCup} from '../src/deep/deep-sirena.js';
+import {SIRENA, SIRENA_FINDS, SIRENA_PAY, createSirena, pingSonar, stepLift, raiseFind, recordCoastCup, liftPrompt} from '../src/deep/deep-sirena.js';
 
 const MPH = 1 / 1.609344;          // one km/h in mph (the car's picture is in mph)
 const ON = {enabled: true};
@@ -298,4 +298,25 @@ test('odd saves keep the badge payment in step and never lose the id just raised
   assert.equal(badge.profile.deep.raised.length, 128); assert.equal(badge.profile.deep.raised.at(-1), 'sirena-badge');
   assert.ok(normalizeProfile(badge.profile).deep.raised.includes('sirena-badge'), 'and it survives a reload');
   assert.equal(raiseFind(normalizeProfile(badge.profile), 'sirena-badge', ON).paid, 0, 'so it is not paid twice');
+});
+
+// FINISH-DEEP: the screen's F prompt and lift progress read the rules and change nothing.
+test('the lift prompt names what F lifts here, then shows the bags filling, and never changes the lift', () => {
+  const state = createSirena(straight(), {}, ON);
+  assert.equal(liftPrompt(state, stand(state, 'sirena-badge')), null, 'the badge needs no F');
+  raise(state, 'sirena-badge');
+  const wheel = stand(state, 'sirena-steering-wheel');
+  assert.deepEqual(liftPrompt(state, wheel), {find: 'sirena-steering-wheel', ready: true, still: true});
+  assert.equal(liftPrompt(state, car(wheel.x, wheel.z, 5 * MPH)).still, false, '5 km/h: stop first');
+  assert.equal(liftPrompt(state, car(wheel.x + 4.5, wheel.z)), null, 'past 4 m: nothing to lift');
+  assert.equal(liftPrompt(state, stand(state, 'sirena-car')), null, 'the car waits for the five parts');
+  const before = JSON.stringify(state);
+  liftPrompt(state, wheel); assert.equal(JSON.stringify(state), before, 'reading never changes the rules');
+  stepLift(state, wheel, {lift: true}, 0); stepLift(state, wheel, {lift: true}, 1.5); // F starts it, then 1.5 s
+  assert.deepEqual(liftPrompt(state, wheel), {find: 'sirena-steering-wheel', fraction: .5, bag: 1, bags: 1});
+  for (const id of ['sirena-steering-wheel', 'sirena-wheel', 'sirena-bonnet', 'sirena-door']) raise(state, id);
+  const sirena = stand(state, 'sirena-car');
+  stepLift(state, sirena, {lift: true}, 0); stepLift(state, sirena, {lift: true}, 7);
+  assert.deepEqual(liftPrompt(state, sirena), {find: 'sirena-car', fraction: 7 / 12, bag: 3, bags: 4}, '7 s in: the third of four bags');
+  assert.equal(liftPrompt(createSirena(straight(), {}, {enabled: false}), wheel), null, 'switch off: no prompt');
 });

@@ -1776,3 +1776,19 @@ in docs/changes/LAB-CLASSROOM-BRAKING.md.
 
 Full tier 568/568 on bb9a2c8e, alone. Rule 19: only the inbox and these notes changed since. No
 save change.
+
+## Release, 3 November 2026 (Claude, Release Manager)
+
+FINISH-DEEP: Claude played the Kelp Coast end to end as a new player on a memory-only save (garage
+tip, dive kit, ramp, badge, sonar, five parts, the Sirena, sea life, a pearl, rocks, Surface and the
+ramp back up, the Lab restore rule, the Coast Cup in the Sirena); no stall. Fixes: the map panel fits
+a short window (Kyle's "map collapsing" reproduced as the panel squeezing Ana's list at 600 px), a
+Next line, where the parts lie, the F prompt and lift progress (read only), bearing and Surface on
+one row, turtle and kelp crab facts. Every test-deep-* suite (17), lane tier 42 passed plus the four
+lane-only suites passed in integration, build. One review: nothing blocking, four small points taken.
+No changed assertions; no save change.
+
+Full tier 568/568 on bb9a2c8e. Rule 19: since then only notes and the Deep's screen code (src/deep,
+no shared core, save shape or physics), covered by the lane tier above. Frame check: the scene is
+unchanged (screen layer only).
+

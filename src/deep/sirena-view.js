@@ -14,7 +14,8 @@ import {logCardMarkup} from './deep-log.js';
 import {SOUND_BANK} from '../sound-bank.js';
 import {deepWorldPose} from './deep-journey.js';
 import {deepMapGeometry, deepMapData, drawDeepMap} from './deep-map.js';
-import {deepObjectives} from './deep-objectives.js'; // DEEP-EXPLORER
+import {deepObjectives, deepNextStep, SIRENA_PARTS} from './deep-objectives.js'; // DEEP-EXPLORER, FINISH-DEEP
+import {liftPrompt} from './deep-sirena.js'; // FINISH-DEEP
 
 export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-steering-wheel': 'steering-wheel',
   'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck'});
@@ -315,14 +316,17 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   const doc = host.ownerDocument, root = doc.createElement('section');
   root.className = 'sirena-hud';
   root.innerHTML = '<div class="deep-logging" hidden><i></i><span></span></div>' + // DEEP-EXPLORER
+    '<div class="deep-lift" hidden><i></i><span></span></div>' + // FINISH-DEEP: F and the lift bags
     '<div class="sirena-sonar" hidden><i></i><b class="sirena-blip" hidden></b><span>R · sonar</span></div>' +
     '<div class="sirena-log" hidden></div><p class="sirena-caption" aria-live="polite" hidden><small>ANA · FIELD STATION</small><span></span></p>' +
     '<div class="sirena-title" hidden><p>COAST CUP</p><h2>1966 to 2026: finished</h2></div>' +
     '<aside class="deep-map" hidden><header><b>KELP COAST</b><span><button type="button" class="deep-map-orient">Turn with the car</button> <button type="button" class="deep-map-toggle">Hide map</button></span></header>' +
+    // FINISH-DEEP: the next step stays in sight even with the map folded away.
+    '<p class="deep-next"><b></b><small></small></p>' +
     '<canvas width="400" height="250" role="img" aria-label="Sea chart: explored seabed, saved finds, discovered places, ramp and your heading"></canvas>' +
-    '<button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
+    '<div class="deep-map-row"><button type="button" class="deep-map-home">Return bearing</button><span class="deep-map-bearing" hidden><i>↑</i><b></b></span>' +
     // DEEP-EXPLORER: Surface stays visible even when the map is closed.
-    '<button type="button" class="deep-surface">Surface · U</button>' +
+    '<button type="button" class="deep-surface">Surface · U</button></div>' +
     '<section class="deep-objectives"><h3>Ana’s list <span class="deep-chart-percent"></span></h3><ol></ol>' +
     '<p class="deep-chart-key">◆ Sea life · ● Pearl · ★ Badge · ⚑ Salvage<br>Sand · Kelp · Rock · Blue depths</p></section></aside>' +
     '<p class="deep-objective-tick" aria-live="polite" hidden></p>' +
@@ -338,6 +342,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   // DEEP-EXPLORER: checklist and completion notices are presentation only.
   const objectives = map.querySelector('.deep-objectives'), list = objectives.querySelector('ol');
   const logging = root.querySelector('.deep-logging'); // DEEP-EXPLORER
+  const lifting = root.querySelector('.deep-lift'), next = map.querySelector('.deep-next'); // FINISH-DEEP
   const survey = objectives.querySelector('.deep-chart-percent'), tick = root.querySelector('.deep-objective-tick');
   const edgeNotice = root.querySelector('.deep-edge-notice');
   const surface = map.querySelector('.deep-surface'), surfaceNow = () => app.duel.deepSurface();
@@ -401,6 +406,16 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
         logging.querySelector('span').textContent = `Logging: ${progress.name}`;
         logging.querySelector('i').style.background = `conic-gradient(#e9d7a0 ${progress.fraction*360}deg,#365764 0deg)`;
       }
+      // FINISH-DEEP: say what F does here, and show a lift filling bag by bag.
+      const lift = active ? liftPrompt(d.deepStory?.sirena, deepWorldPose(d)) : null;
+      lifting.hidden = !lift;
+      if (lift) {
+        const name = SIRENA_PARTS[lift.find]?.name ?? 'Part';
+        lifting.querySelector('span').textContent = !lift.ready
+          ? (lift.bags > 1 ? `${name}: lift bag ${lift.bag} of ${lift.bags}` : `${name}: filling the lift bag`)
+          : lift.still ? `${name}: press F for ${lift.find === 'sirena-car' ? 'the lift bags' : 'a lift bag'}` : `${name}: stop here, then press F`;
+        lifting.querySelector('i').style.background = `conic-gradient(#ffd36a ${(lift.fraction ?? 0) * 360}deg,#365764 0deg)`;
+      }
       if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
       else {
         if (mapVisit !== journey) {
@@ -419,8 +434,12 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
           if (previousObjectives) for (const row of rows)
             if (row.done && !previousObjectives.find(old => old.id === row.id)?.done) ticks.push(row.tick);
           previousObjectives = rows;
-          const markup = rows.map(row => `<li class="${row.done ? 'done' : ''}"><b>${row.done ? '✓ ' : ''}${row.text}</b>${row.done ? '' : `<small>${row.hint}</small>`}</li>`).join('');
+          // FINISH-DEEP: the next step's hint sits above the chart, so its row here keeps only its title.
+          const step = deepNextStep(rows);
+          const markup = rows.map(row => `<li class="${row.done ? 'done' : ''}"><b>${row.done ? '✓ ' : ''}${row.text}</b>${row.done || row.text === step.text ? '' : `<small>${row.hint}</small>`}</li>`).join('');
           if (markup !== listMarkup) { list.innerHTML = markup; listMarkup = markup; }
+          next.querySelector('b').textContent = `Next: ${step.text}`;
+          next.querySelector('small').textContent = step.hint;
           survey.textContent = `${data.percent}% charted`;
           bearing.hidden = !data.home.visible; home.hidden = data.home.visible;
           bearing.querySelector('i').style.transform = `rotate(${-data.home.relative}rad)`;

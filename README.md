@@ -6,6 +6,15 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Deep is easier to follow.** While you dive, a "Next" line under the
+  map panel's heading always says what to do next, even with the map folded
+  away. Ana's list now says where the Sirena's parts still lie (the steering
+  wheel and front wheel in the Kelp Forest, the bonnet at the forest's edge,
+  the door on the Drop-off lip). Stop beside a part and a ring says "press F
+  for a lift bag", then fills while the bag does, bag by bag for the Sirena.
+  The map panel is smaller and fits a shorter browser window without
+  squeezing Ana's list. The green turtle and kelp crab cards now carry
+  facts that are true.
 - **The Lab: Braking is a classroom now.** The car stands close up on two
   weighing pads, so you can see how much of its weight each end carries; a
   speed dial and a brake balance lever set the test, and cars to scale brake on

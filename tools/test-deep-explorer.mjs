@@ -10,7 +10,7 @@ import {rampAt} from '../src/deep/deep-journey.js';
 import {ZONE_SPAN} from '../src/deep/zone-floor.js';
 import {chartCells, revealChart, chartHas, chartPercent, CHART_HEX, chartFrame} from '../src/deep/deep-chart.js';
 import {normalizeDeep, rememberChart} from '../src/deep/deep-discovery.js';
-import {deepObjectives} from '../src/deep/deep-objectives.js';
+import {deepObjectives, deepNextStep} from '../src/deep/deep-objectives.js';
 import {deepMapGeometry, deepMapData} from '../src/deep/deep-map.js';
 import {rockContact, driveIntoDeepRocks, deepRocks, deepGoalPoints, pushKeeps, SMALL_ROCK, BOUNCE_KEEPS, CRAWL_MPH} from '../src/deep/deep-rocks.js';
 import {SIRENA_FINDS} from '../src/deep/deep-sirena.js';
@@ -472,4 +472,18 @@ test('the edge of the sea floor holds the car where it is, slides it along, and 
     const back=driveAround(d,(t)=>({throttle:1,brake:0,steer:t<2.5?1:0}),12);
     assert.deepEqual(back.events,[]); assert.ok(back.worst<.75);
   }
+});
+
+// FINISH-DEEP: the next step is always the story's next goal, and the parts hint says where.
+test('the next step follows the story, then the log, and the parts hint names where the rest lie', () => {
+  assert.equal(deepNextStep(deepObjectives({})).text,'Find the Falcone badge');
+  const parts=deepObjectives({raised:['sirena-badge','sirena-door']});
+  assert.equal(deepNextStep(parts).text,'Raise the Sirena’s parts: 2 of 5');
+  assert.match(parts[1].hint,/steering wheel and front wheel in the Kelp Forest; bonnet at the forest’s edge\./);
+  assert.doesNotMatch(parts[1].hint,/door/,'a raised part is not listed');
+  const raised=deepObjectives({raised:SIRENA_FINDS});
+  assert.equal(deepNextStep(raised).text,'Race the Coast Cup'); assert.match(deepNextStep(raised).hint,/Surface with U/);
+  assert.equal(deepNextStep(deepObjectives({raised:SIRENA_FINDS,coastCup:true})).text,'Log the sea life: 0 of 7');
+  const done=deepObjectives({raised:SIRENA_FINDS,logged:DEEP_LOG_PAGES[0].creatures,pearls:DEEP_LOG_PAGES[0].pearls,coastCup:true},100);
+  assert.equal(deepNextStep(done).text,'Ana’s list is done');
 });
