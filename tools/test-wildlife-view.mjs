@@ -222,6 +222,8 @@ const near = (actual, expected, tolerance, label) => {
   equal(ringLook(-3).opacity, .95, 'a bad age reads as the start');
   const view = readFileSync(new URL('../src/wildlife-view.js', import.meta.url), 'utf8');
   ok(/counted/.test(view) && /addRing/.test(view), 'the view draws rings for counted animals');
+  ok(/planRace\(course, raceNumber, today\);[\s\S]{0,240}clearEntities\('count'\); countIndex\.clear\(\); countKey = null;/.test(view),
+    'a new plan (leaving the helicopter, another course) clears the count animals, so none stand in a race');
   ok(/open: true/.test(readFileSync(new URL('../src/app.js', import.meta.url), 'utf8')), 'the app asks for open ground when it places the count');
 }
 

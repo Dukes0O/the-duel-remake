@@ -477,7 +477,9 @@ export function createWildlifeView({scene, host = null, loadModel = defaultLoad,
       planKey = key; planCourse = course;
       const today = playDay(), raceNumber = heli ? (today === countDay ? raceCount : 0) + 1 : Math.max(1, raceCount);
       planRace(course, raceNumber, today);
-      countKey = null;
+      // Leaving the helicopter or the course ends the count's animals too, so they
+      // never stand in a race; planCount rebuilds them below if a count is still on.
+      clearEntities('count'); countIndex.clear(); countKey = null;
     }
     const survey = heli && frame.heli.survey?.active && frame.heli.survey.courseId === course.def.id ? frame.heli.survey : null;
     const wantCount = survey ? `${survey.jobId}|${survey.animals.length}` : null;

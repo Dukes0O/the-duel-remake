@@ -111,3 +111,7 @@ Nothing replaced. The count's course list no longer assumes every species has a 
 ## Not done
 
 Frame timing (Claude's step). Bird perch spots and bird models. Animal calls (WILD-RACE-SOUND).
+
+## Review (3 November, Claude)
+
+One independent review. One real fault, fixed: a new plan (leaving the helicopter, or another course) left the count's animals and rings in place, so they could stand in the next race. The plan change now clears them; a source check in test-wildlife-view guards it (3,061 checks pass). Minor points not taken: a few small per-frame objects (ring look, bird flight, key strings) and switch-off hiding rather than freeing one race's animals; both bounded.
