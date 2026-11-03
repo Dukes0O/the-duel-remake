@@ -1888,3 +1888,23 @@ tested and confirmed by the reviewer. Changed assertions reviewed in docs/change
 Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 19: since then Lab
 lesson code, the tunnel bench's two new names (no rule changed), Lab tests and scenarios, a fixture, the
 hygiene check's sheet list and notes; no shared core, save shape or physics. No save change.
+
+
+## Release, 3 November 2026, night, after Downforce (Claude, Release Manager)
+
+LAB-CLASSROOM-LAUNCH: Launch angles as a classroom lesson (twelve steps; Brian's launcher with a ramp
+that tilts 5 degrees a press, a speed dial 29 to 54 mph, a tape and a flag; every distance the launch
+bench's own with the skier's air: 19.0, 31.6, 35.6, 30.5 and 17.7 m at 15 to 75 degrees and 45 mph;
+Brian's job reaches a 42 m flag with the ramp fixed, a 27 m flag with the speed fixed, and his 30 m
+mark). The challenge (the bench's goal, passed on the lesson's own launches; it gives the free Aerials
+reward) and the save are unchanged. The old 3D lesson goes, with the props model only it loaded and
+that model's recipe, Launch's part of the snow suite and the snow scenario.
+test-lab-classroom-launch 11/11, every test-lab-* suite 351/351, 22 Lab scenarios 22/22 (lab-walk timed
+out once in the batch and passed alone), lane tier 71/71 twice, build. One review: no real fault; small
+points fixed. Changed assertions reviewed in docs/changes/LAB-CLASSROOM-LAUNCH.md (tests of the removed
+lesson removed with it).
+
+Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 19: since then Lab
+lesson code, a removed Lab props model that only the old Launch lesson loaded, its recipe and that
+recipe's test row, Lab tests and scenarios, board and notes; no shared core, save shape or physics.
+No save change.

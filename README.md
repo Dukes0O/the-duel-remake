@@ -6,6 +6,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab: Launch angles is a classroom now.** Brian's launcher throws a
+  skier along a tape: tilt the ramp and turn the speed dial both ways, and
+  launch. About 45 degrees goes furthest (35.6 m at 45 mph), steeper or flatter
+  both land shorter, and 30 and 60 degrees land nearly together. More speed
+  goes further, and a lower landing wants a flatter ramp. In Brian's job you
+  reach three flags, one with the ramp fixed, one with the speed fixed and his
+  own 30 m mark. Passing opens the Aerials run: the kicker sets the angle, so
+  tuck on the inrun for speed.
 - **The Lab: Downforce is a classroom now.** Brian's wind tunnel blows smoke
   past the Falcone F42 on a scale, with a wing over its back and a rope at its
   nose that reads the drag. Tilt the wing and watch the smoke bend; at 100 mph

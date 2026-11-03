@@ -22,6 +22,8 @@ import {lesson as fire} from '../lessons/fire-classroom.js';
 import * as fireBoard from '../lessons/fire-board.js';
 import {lesson as downforce} from '../lessons/downforce-classroom.js';
 import * as downforceBoard from '../lessons/downforce-board.js';
+import {lesson as launch} from '../lessons/launch-classroom.js';
+import * as launchBoard from '../lessons/launch-board.js';
 
 export const CLASSROOM_LESSONS = Object.freeze({
   pendulum: Object.freeze({...pendulum, name: 'Pendulums', board: pendulumBoard}),
@@ -35,4 +37,5 @@ export const CLASSROOM_LESSONS = Object.freeze({
   altitude: Object.freeze({...altitude, name: 'Air and altitude', board: altitudeBoard}),
   fire: Object.freeze({...fire, name: 'Fire triangle', board: fireBoard}),
   downforce: Object.freeze({...downforce, name: 'Downforce', board: downforceBoard}),
+  launch: Object.freeze({...launch, name: 'Launch angles', board: launchBoard}),
 });
