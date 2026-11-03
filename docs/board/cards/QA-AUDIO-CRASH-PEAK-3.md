@@ -6,3 +6,5 @@ AUD-CRASH-PEAK, QA-AUDIO-CRASH-RELIABILITY and QA-AUDIO-CRASH-PEAK-AGAIN treated
 
 Acceptance: find which check fails under a busy laptop (run it alongside the full tier a few times), and make
 the check repeatable without loosening any assertion or tolerance. Rule 4's 30 minutes apply; never holds merges.
+
+Again 3 November 2026: the full tier on 8361997b (H3 release, no audio or combat code changed) failed only six-blast-overlap ("six actual blast voices were dispatched in the overlap window") twice in a row in the full tier; it passed 23/23 alone on the same commit.

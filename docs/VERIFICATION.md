@@ -1908,3 +1908,27 @@ Full tier on 7859f088 (568 passed; its one failure fixed in EARN-FINISH). Rule 1
 lesson code, a removed Lab props model that only the old Launch lesson loaded, its recipe and that
 recipe's test row, Lab tests and scenarios, board and notes; no shared core, save shape or physics.
 No save change.
+
+
+## Release, 3 November 2026, evening, H3 Wildlife and skins (Claude, Release Manager)
+
+WILD-VIEW, SKIN-VIEW, WILD-ART-SRC (Western mountains and Australia), H3-SWITCH-ON: switches
+`wildlife` and `heli-skins` on. Animals drawn beside the road and from the helicopter, only species
+with models (16 species and bear cubs on Tremblant Woods, Tremblant Snow, Panorama Ridge and Summit
+Run), herds 15 to 35 m off the road in open ground, rings on counted animals; the count offers only
+courses whose species have models. Seven paints, gear on Kestrel One's mounts (side winch turned half a
+turn), grime from four dirt kinds, the wash, heat camera inset and nose camera view. Eleven new animals
+as original Blender recipes on the CC0 Quaternius donors and original rigs, three look rounds
+(docs/board/looks/wildlife/west-australia-round-*.md); skins look round 1
+(docs/board/looks/heli-skins/look-1.jpg).
+Checks: test-wildlife-view 3,747, test-wildlife 33,644, test-heli-survey 9,990, test-heli-skin-view
+273, Blender-output 167; lane tiers green on each lane; browser scenarios wildlife-view and
+heli-skin-view; build; combat balance --check passes. Reviews: SKIN-VIEW CLEAR; WILD-VIEW one real
+fault (count animals left in a race) fixed. Changed assertions reviewed in docs/changes/H3-SWITCH-ON.md
+and docs/changes/WILD-ART-SRC.md; nothing loosened.
+
+Full tier on 8361997b, alone, --keep-going: 572 passed, 1 failed (test-audio-crash-peak,
+six-blast-overlap timing; no audio or combat code changed; passed 23/23 alone on the same commit;
+rule 3, card QA-AUDIO-CRASH-PEAK-3). Since 8361997b: notes and board only. Frame check not run: the
+monitor setup locks frames at 33.3 ms (rule 8); card WILD-FRAMES. Save: H3 fields were added by
+SKIN-SAVE (optional, version unchanged, fixture 13); no change in this release.
