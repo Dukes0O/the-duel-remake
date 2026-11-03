@@ -58,7 +58,7 @@ function run(session, seconds, controls, until = null) {
 const has = (events, type) => events.some(event => event.type === type);
 const summit = loadCourse('summit-run');
 
-// Home pad to Summit Run by the cruise leg (arriving 1.5 km out and 150 m up).
+// Home pad to Summit Run by the cruise leg (a ski flight arrives 400 m from Devils Playground, hovering: SKI-FINISH).
 function toSummit(session) {
   const events = run(session, 120, v => pilot(v, {x: v.heli.x - 300, z: v.heli.z + 300, y: 100}, {speed: 30, sink: 8}), v => v.cruiseOffered);
   assert.equal(session.acceptCruise(), true);
@@ -690,6 +690,46 @@ test('a ski flight with a short tank at the home pad says to fill it first', () 
   low.start(); low.takeSkiDrop();
   const status = low.jobStatus();
   assert.equal(status.stage, 'fly'); assert.equal(status.fuelKg, 200); assert.equal(status.needKg, 240);
-  assert.equal(status.atPump, false);
+  assert.equal(status.atPump, true, 'on the home pad, beside the home pump');
   s.leave(); low.leave();
+});
+
+// SKI-FINISH review: the pickup pad's pump always charges, so a pilot with no credits whose tank runs dry there is still
+// fetched by the fuel truck (the free first tank is the home pad's and is no help away from it).
+test('an empty tank at the pickup pad pump with no credits still calls the fuel truck', { timeout: 600000 }, () => {
+  const broke = profileOf({extra: {}});
+  const s = sessionOf(normalizeProfile({...broke, credits: 0, heli: {...heliOf(broke), fuelKg: 290, refuels: 0}}));
+  s.start(); assert.equal(s.takeSkiDrop().ok, true); toSummit(s);
+  assert.equal(has(flyToPad(s, SKI_PADS.pickup), 'crashed'), false);
+  assert.equal(s.view().ski.pump.atPump, true);
+  assert.equal(s.buyFuel().ok, false, 'no credits, no fuel from the pump');
+  const idle = run(s, Math.ceil(s.view().heli.fuelKg / KESTREL.burnIdle) + 5, () => ({}), (v, got) => has(got, 'charged') || got.some(e => e.line === 'heli.radio.fuel.truck'));
+  assert.ok(idle.some(e => e.line === 'heli.radio.fuel.truck'), 'the fuel truck came');
+  assert.ok(s.view().heli.fuelKg > 0);
+  s.leave();
+});
+
+// SKI-FINISH review: a group run left before the finish is no run; the pads stay marked and the way stays Summit Run, so P
+// flies to a pad as the card says, not home.
+test('a group run left unfinished keeps Summit Run as the way, and the autopilot goes to a pad', { timeout: 600000 }, () => {
+  const day = groupDay(), s = sessionOf(profileOf({count: day}));
+  s.start(); assert.equal(s.takeSkiGroup().ok, true); toSummit(s);
+  assert.equal(has(flyToPad(s, SKI_PADS.devils), 'crashed'), false);
+  assert.equal(s.skiStepOut('slalom').ok, true);
+  run(s, 3, () => ({skate: true}));
+  s.leaveSkiRun();
+  const v = s.view();
+  assert.equal(v.ski.flight.skied, false); assert.ok(v.ski.marks.length > 0, 'the pads are still marked');
+  assert.equal(v.destination, 'summit-run');
+  // Back aboard at the pickup (a pad with the aerials open): lift off and the card points to a pad again.
+  run(s, 20, f => pilot(f, {x: f.heli.x, z: f.heli.z, y: SKI_PADS.pickup.y + 30}, {speed: 1, sink: 4}), f => f.heli.y > SKI_PADS.pickup.y + 25);
+  assert.equal(s.jobStatus().stage, 'pad');
+  assert.equal(s.jobStatus().pads[0].name, 'devils', 'Devils Playground first: the pickup ranks behind it');
+  assert.equal(s.pressAutopilot(), true);
+  const to = s.jobStatus().pads[0], pad = SKI_PADS[to.name];
+  const before = Math.hypot(s.view().heli.x - pad.x, s.view().heli.z - pad.z);
+  run(s, 60, () => ({}));
+  const after = s.view();
+  assert.ok(Math.hypot(after.heli.x - pad.x, after.heli.z - pad.z) < Math.max(before, 30), `toward ${to.name}, not home`);
+  s.leave();
 });

@@ -73,10 +73,11 @@ export const HELI_SESSION = Object.freeze({
 // above this height the thin-air line plays when the collective is at its top and the helicopter still sinks.
 const EARN_EVENTS = Object.freeze(['jobDone', 'fireOut', 'rescueDone', 'crateDown', 'skiGroupDone', 'skiRecorded', 'skiStashPaid', 'tableFound', 'surveyDone']);
 const DAMAGE_KINDS = Object.freeze(['hardLanding', 'crash', 'drop', 'cargoLight', 'cargoHeavy', 'cargoWreck']);
-// arriveShort, arriveHeight, arriveClear: a ski flight's leg to Summit Run ends this many metres short of the nearest
-// pad on the line from home, at least arriveHeight over the pad and arriveClear over anything on the way in (SKI-FINISH).
+// arriveShort, arriveHeight, arriveClear: a ski flight's leg to Summit Run ends this many metres short of Devils
+// Playground on the line from home, at least arriveHeight over the pad and arriveClear over anything on the way in;
+// pickupBehind: metres the pickup pad counts as farther than it is, beside Devils Playground (SKI-FINISH).
 export const HELI_SKIING = Object.freeze({groupKg: 475, guests: 4, groupPay: HELI_PAYS.skiGroup, groupOneDayIn: 3, padRadius: 12, thinAirMetres: 3500,
-  seed: 0x534b4947, dropId: 'ski-drop', arriveShort: 400, arriveHeight: 150, arriveClear: 40});
+  seed: 0x534b4947, dropId: 'ski-drop', arriveShort: 400, arriveHeight: 150, arriveClear: 40, pickupBehind: 300});
 // How far above the highest obstacle the autopilot stops over a rescue's
 // search area, debris area or cliff spot (docs/HELI_RESCUE.md section 7).
 const RESCUE_HOVER = 40;
@@ -719,12 +720,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // Nobody is stranded: an empty tank on the ground calls the fuel truck,
   // except at the home pad while the pump can still sell a reserve of 60 kg
   // (15% of the tank), so a few credits never buy a sliver that runs dry
-  // at once. The first tank there is free.
+  // at once. The first tank there is free; any other pump (a far pad, a Summit truck, the ski pickup's) always charges,
+  // so there the free tank is no help (SKI-FINISH review).
   function strandedOnGround() {
     if (!heli.onGround || heli.engine || heli.fuelKg > 0) return false;
     if (!pumpHere()) return true;
     const tank = heliOf(save);
-    return tank.refuels > 0 && save.credits < Math.ceil(KESTREL.tankKg * KESTREL.lowFuelShare * (padPrice() ?? HELI_MONEY.creditsPerKg));
+    return (tank.refuels > 0 || !onHome()) && save.credits < Math.ceil(KESTREL.tankKg * KESTREL.lowFuelShare * (padPrice() ?? HELI_MONEY.creditsPerKg));
   }
 
   function onHome() {
@@ -1092,13 +1094,17 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // SKI-FINISH (Kyle, 2 November 2026: "I couldn't find the ski pad, it wasn't clearly marked and I ran out of fuel").
   // The pads still to fly to: those that start a run for the flight in hand, until a run is skied.
   const skiPadsToFly = () => skiOn && skiFlight && !skiFlight.skied ? skiDropPads() : [];
-  const nearestPad = (pads, x, z) => pads.reduce((a, b) => Math.hypot(b.x - x, b.z - z) < Math.hypot(a.x - x, a.z - z) ? b : a);
-  // Where a ski flight's leg to Summit Run ends: arriveShort metres from the pad nearest the usual arrival point, on the
-  // line from home, hovering and facing it, over the pad and clear of the ground on the way in. Null for any other leg.
+  // How far a pad counts as being: its distance, with the pickup (only the aerials) ranked behind Devils Playground, 117 m
+  // away with three runs, so both the card and the autopilot send a player to Devils Playground first.
+  const padRank = (pads, pad, x, z) => Math.hypot(pad.x - x, pad.z - z) + (pad.name === 'pickup' && pads.some(item => item.name === 'devils') ? HELI_SKIING.pickupBehind : 0);
+  const nearestPad = (pads, x, z) => pads.reduce((a, b) => padRank(pads, b, x, z) < padRank(pads, a, x, z) ? b : a);
+  // Where a ski flight's leg to Summit Run ends: arriveShort metres from the pad nearest the usual arrival point (Devils
+  // Playground), on the line from home, hovering and facing it, over the pad and clear of the ground on the way in.
+  // Null for any other leg.
   function skiArrival(toward) {
     const pads = skiPadsToFly();
     if (!pads.length || !toward) return null;
-    const usual = arrivalPoint(site.zone, toward), pad = nearestPad(pads, usual.x, usual.z), short = HELI_SKIING.arriveShort;
+    const usual = arrivalPoint(site.zone, toward), short = HELI_SKIING.arriveShort, pad = nearestPad(pads, usual.x, usual.z);
     const x = pad.x + toward.x * short, z = pad.z + toward.z * short;
     let top = -Infinity;
     for (let d = 0; d <= short - HELI_SKIING.padRadius; d += 2) top = Math.max(top, world.ground.highest(x - toward.x * d, z - toward.z * d, 6));
@@ -1195,8 +1201,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // A run ended by the pilot reaching the pickup has already told the ski module's `skiPickup`; a left run says it here.
     if (fetched) emit({type: 'skiPickup', fetched: true});
     skiSay(fetched ? 'fetch' : 'pickup');
-    // The way home is set for the pilot.
-    if (skiFlight) aim(HOME_COURSE);
+    // The way home is set for the pilot once a run is skied; a group run left unfinished keeps Summit Run, so the
+    // autopilot still flies to the nearest pad (SKI-FINISH review).
+    if (skiFlight) aim(skiFlight.skied ? HOME_COURSE : SUMMIT_COURSE);
   }
   // Something else in hand: a lesson, a Lab challenge, a rescue, or a load on the hook.
   const skiBusy = () => lesson ? 'Finish the lesson first.' : challenge ? 'Finish the challenge first.' : live ? 'Finish the rescue first.'
@@ -1947,7 +1954,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       return true;
     },
     // Accept the cruise leg: fade out, take the leg's fuel, arrive 1.5 km
-    // out from the destination's zone at 150 m.
+    // out from the destination's zone at 150 m (a ski flight to Summit Run: beside the ski pads, enter()).
     acceptCruise() {
       if (phase !== 'flying' || !cruiseOffered || !destination) return false;
       const fuel = legFuelKg(site.courseId, destination, dflag);
@@ -2584,15 +2591,15 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     }
     if (skiOn && skiFlight) {
       // fuelKg, needKg: the tank and what the next leg with its two ends needs (null with no leg to fly); atPump: on the
-      // ground at the pickup pad's pump (SKI-FINISH).
+      // ground where fuel is sold, the home pump or the pickup pad's (SKI-FINISH).
       const group = skiFlight.kind === 'group', base = {kind: group ? 'skiGroup' : 'skiDrop', from: HOME_COURSE, to: SUMMIT_COURSE, here,
         ...(group ? pays({pay: HELI_SKIING.groupPay}) : {pay: 0, bonus: 0}),
-        fuelKg: Math.floor(heli.fuelKg), needKg: skiFuelNeed(), atPump: here === SUMMIT_COURSE && atTruck()};
+        fuelKg: Math.floor(heli.fuelKg), needKg: skiFuelNeed(), atPump: pumpHere()};
       if (skiFlight.skied) return Object.freeze({...base, stage: 'flyHome', flyTo: HOME_COURSE});
       if (here !== SUMMIT_COURSE) return Object.freeze({...base, stage: 'fly', flyTo: SUMMIT_COURSE});
       const pads = skiDropPads(), padHere = skiPadHere();
       if (padHere && pads.some(pad => pad.name === padHere)) return Object.freeze({...base, stage: 'ski', pad: padHere, flyTo: SUMMIT_COURSE});
-      const near = pads.map(pad => ({name: pad.name, ...bearingTo(pad.x, pad.z)})).sort((a, b) => a.distance - b.distance);
+      const near = pads.map(pad => ({name: pad.name, rank: padRank(pads, pad, heli.x, heli.z), ...bearingTo(pad.x, pad.z)})).sort((a, b) => a.rank - b.rank);
       return Object.freeze({...base, stage: 'pad', flyTo: SUMMIT_COURSE, pads: Object.freeze(near.map(pad => Object.freeze({name: pad.name,
         distance: pad.distance, bearing: pad.bearing})))});
     }

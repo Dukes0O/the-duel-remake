@@ -278,9 +278,9 @@ export function landedArrival(view, profile = null, {skiPanel = false} = {}) {
   const rescue = view.rescue?.active ?? view.rescue?.call;
   const waiting = rescue ? `${RESCUE_WORDS[rescue.kind] ?? 'Rescue call'} waiting. Finish the rescue or shut down to leave the flight.` :
     // SKI-FINISH: the words follow the trip (at home it is still to fly; after the run it is the way home).
-    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. ${skiPanel
-      ? 'Use the ski panel to continue or shut down to leave the flight.'
-      : view.ski.flight?.skied ? 'Fly home and land on the home pad: the job card on the left shows what to do. Or shut down to leave the flight.'
+    view.ski?.flight || view.ski?.group ? `${view.ski.group || view.ski.flight?.kind === 'group' ? 'Ski group' : 'Ski drop'} waiting. ${view.ski.flight?.skied
+      ? `Follow the job card on the left home${skiPanel ? ', or ski again on the ski panel' : ''}. Or shut down to leave the flight.`
+      : skiPanel ? 'Use the ski panel to continue or shut down to leave the flight.'
       : view.courseId !== 'summit-run' ? 'Fly to Summit Run: the job card on the left shows what to do. Or shut down to leave the flight.'
       : 'Land on a ski pad to ski: the job card on the left shows the nearest. Or shut down to leave the flight.'}` : null;
   const car = view.loads?.find(load => load.own && load.onGround && !load.hooked);

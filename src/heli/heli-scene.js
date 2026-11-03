@@ -23,7 +23,7 @@ const loadModel = url => new GLTFLoader().loadAsync(url).then(gltf => gltf.scene
 // SKI-FINISH: the pickup pad's pump (tools/blender/heli-accessories.py) and the pads' light columns.
 export const SKI_PUMP_URL = '/assets/heli/fuel-pump.glb';
 const SKI_ORANGE = 0xff6a13;
-export const SKI_COLUMN = Object.freeze({height: 300, radius: 1.8, ringInner: 10.6, outWithin: 40});
+export const SKI_COLUMN = Object.freeze({height: 300, radius: 3.5, ringInner: 10.4, outWithin: 40});
 
 function ring(THREE, radius, color) {
   const mesh = new THREE.Mesh(new THREE.RingGeometry(radius - .35, radius, 64),
@@ -173,12 +173,13 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   skiMarks.name = 'Ski pad marks';
   group.add(skiMarks);
   const fadeData = new Uint8Array(64 * 4);
-  for (let i = 0; i < 64; i++) fadeData.fill(Math.round(255 * (1 - i / 63) ** 1.6), i * 4, i * 4 + 4);
+  // Solid for its lowest fifth, then fading to nothing at the top.
+  for (let i = 0; i < 64; i++) fadeData.fill(Math.round(255 * Math.min(1, (1 - i / 63) / .8) ** .9), i * 4, i * 4 + 4);
   const fade = new THREE.DataTexture(fadeData, 1, 64, THREE.RGBAFormat);
   fade.needsUpdate = true;
   const columnGeometry = new THREE.CylinderGeometry(SKI_COLUMN.radius, SKI_COLUMN.radius, SKI_COLUMN.height, 16, 1, true);
   columnGeometry.translate(0, SKI_COLUMN.height / 2, 0);
-  const columnMaterial = new THREE.MeshBasicMaterial({color: SKI_ORANGE, transparent: true, opacity: .75, alphaMap: fade, side: THREE.DoubleSide,
+  const columnMaterial = new THREE.MeshBasicMaterial({color: SKI_ORANGE, transparent: true, opacity: .9, alphaMap: fade, side: THREE.DoubleSide,
     depthWrite: false, fog: false});
   const padRing = color => {
     const mesh = new THREE.Mesh(new THREE.RingGeometry(SKI_COLUMN.ringInner, 12, 64),
@@ -210,7 +211,8 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
       pad.rim.position.y = .15;
       pad.column.visible = Math.hypot(h.x - at.x, h.z - at.z) > SKI_COLUMN.outWithin;
     });
-    pumpRing.visible = !!ski.pump;
+    // Where the pickup is itself a pad to fly to (the aerials open), its orange ring stands for it.
+    pumpRing.visible = !!ski.pump && !marks.some(at => at.name === 'pickup');
     if (!ski.pump) { if (pump.model) pump.model.visible = false; return; }
     pumpRing.position.set(ski.pump.pad.x, ski.pump.pad.y + .15, ski.pump.pad.z);
     if (pump.status === 'idle') {

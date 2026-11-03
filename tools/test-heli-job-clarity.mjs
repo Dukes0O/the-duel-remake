@@ -287,6 +287,9 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   same(jobCardText({...ski, stage: 'flyHome', fuelKg: 173, needKg: 240, atPump: false}).next,
     'Fill up at the pump on the pickup pad first: the way home needs about 240 kg of fuel and you have 173 kg.', 'ski: away from the pump, it is named');
   same(jobCardText({...ski, stage: 'flyHome', fuelKg: 400, needKg: 240, atPump: true}).next, 'Fly home and land on the home pad.', 'ski: filled, fly home');
+  ok(jobCardMarkup(jobCardText({...ski, stage: 'flyHome', fuelKg: 173, needKg: 240, atPump: true})).includes('data-heli-fuel="fill"'), 'ski: short at the pump, the card has Fill up here');
+  ok(!jobCardMarkup(jobCardText({...ski, stage: 'flyHome', fuelKg: 173, needKg: 240, atPump: false})).includes('data-heli-fuel'), 'ski: away from a pump, no fill button');
+  ok(!jobCardMarkup(jobCardText({...ski, stage: 'flyHome', fuelKg: 400, needKg: 240, atPump: true})).includes('data-heli-fuel'), 'ski: full, no fill button');
   same(jobCardText({...ski, kind: 'skiGroup', pay: 3000, stage: 'flyHome'}).drop, false, 'the group is aboard: no Drop job away from home');
   same(flyToWords('eifel-crown', {keys: JOB_KEYS}), "Fly to Eifel Crown (on the Pilot's map, press N).", 'a map place names the map key');
   ok(jobCardMarkup(card('fly')).includes('data-heli-job="drop"') && jobCardMarkup(card('fly')).includes('Pacific Canyon Circuit'), 'the markup has the words and the button');
@@ -324,7 +327,8 @@ const session = (profile, extra = {}) => createHeliSession({profile, enabled: tr
   ok(landedArrival(view, null, {skiPanel: true}).waiting.includes('Use the ski panel'), 'on a ski pad with runs it names the panel');
   // SKI-FINISH: at the home pad before the trip it says to fly to Summit Run; after the run, to fly home.
   ok(landedArrival({...view, courseId: 'tremblant-woods'}, null).waiting.includes('Fly to Summit Run'), 'at home the drop is still to fly');
-  ok(landedArrival({...view, ski: {flight: {kind: 'drop', skied: true}, group: false}}, null).waiting.includes('Fly home'), 'after the run it is the way home');
+  ok(landedArrival({...view, ski: {flight: {kind: 'drop', skied: true}, group: false}}, null).waiting.includes('Follow the job card on the left home'), 'after the run it is the way home');
+  ok(landedArrival({...view, ski: {flight: {kind: 'drop', skied: true}, group: false}}, null, {skiPanel: true}).waiting.includes('or ski again on the ski panel'), 'or another run');
 }
 
 console.log(`test-heli-job-clarity: ${checks} checks passed`);

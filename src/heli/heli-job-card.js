@@ -64,10 +64,12 @@ export function jobCardText(status, {keys = JOB_KEYS, flyToList, delivered = nul
         flyHome: short && status.here === status.to ? `${status.atPump ? 'Fill up at the pump here' : 'Fill up at the pump on the pickup pad'} first: the way home ${tank}`
           : group ? 'Fly the group home and land on the home pad.' : 'Fly home and land on the home pad.',
       }[status.stage];
-      const note = status.stage === 'pad' ? `Press ${keys.autopilot ?? JOB_KEYS.autopilot} and the autopilot flies to the nearest pad. Fuel: the pump is on the pickup pad, beside Devils Playground.`
+      const note = status.stage === 'pad' ? `Press ${keys.autopilot ?? JOB_KEYS.autopilot} and the autopilot flies you there. Fuel: the pump is on the pickup pad, beside Devils Playground.`
         : status.stage === 'ski' ? 'Fuel: the pump is on the pickup pad, where every run ends.' : '';
+      // fill: the card carries the pump's button while the tank is short and the helicopter stands at a pump.
+      const fill = short && status.atPump === true && (status.stage === 'flyHome' || (status.stage === 'fly' && atHome));
       return Object.freeze({heading: group ? 'HELI-SKI GROUP' : 'HELI-SKI DROP', what: group ? 'A guide and four guests' : 'Your own run', route: `${placeName(status.from)} to ${placeName(status.to)}`,
-        pay, next, note, drop: !group || atHome});
+        pay, next, note, drop: !group || atHome, ...(fill ? {fill: true} : {})});
     }
     default: return null;
   }
@@ -88,12 +90,13 @@ export function hookPromptText(prompt, {keys = JOB_KEYS} = {}) {
   return fix ? `${fix}, then press ${hook} to hook` : `Press ${hook} to hook`;
 }
 
-// The card's markup: the job, the route, the pay, the next step in bold, the key note and Drop job.
+// The card's markup: the job, the route, the pay, the next step in bold, the key note, Fill up here (SKI-FINISH) and Drop job.
 export function jobCardMarkup(card) {
   if (!card) return '';
   const esc = text => String(text ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
   const line = (cls, text) => text ? `<p class="${cls}">${esc(text)}</p>` : '';
   return `<div class="heli-job-card" role="status" aria-label="Job in hand"><span>${esc(card.heading)}</span>${line('heli-job-what', card.what)}` +
     `${line('heli-job-route', card.route)}${line('heli-job-pay', card.pay)}${line('heli-job-next', card.next)}${line('heli-job-note', card.note)}` +
+    `${card.fill ? '<button type="button" data-heli-fuel="fill">Fill up here</button>' : ''}` +
     `${card.drop ? '<button type="button" data-heli-job="drop">Drop job</button>' : ''}</div>`;
 }

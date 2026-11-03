@@ -32,7 +32,9 @@ const hands = (seconds, until) => `(() => { const s = window.__qaApp.heliSession
 
 export async function run(context) {
   const report = {scope: 'Private QA page, released switches, memory-only save; no frame timing.', facts: {}, pictures: {}};
-  const shot = async (name, label) => { report.pictures[name] = label; await context.screenshot(name); };
+  // The QA page's own panel (not part of the game) is hidden before each picture, so the job card shows.
+  const shot = async (name, label) => { report.pictures[name] = label;
+    await context.evaluate(`document.querySelectorAll('details').forEach(node => { node.hidden = true; })`); await context.screenshot(name); };
   const zone = skiZone('slalom');
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1366, height: 768, deviceScaleFactor: 1, mobile: false});
   await context.navigate('/tools/menu-check.html');
@@ -88,10 +90,10 @@ export async function run(context) {
   await context.waitFor(`window.__qaApp.visualReady`, 'drawn at the pickup', 120_000);
   await pause(3000);
   report.facts.pickupCard = await expect(context, card, /Fill up at the pump here first: the way home needs about 240 kg of fuel and you have \d+ kg\./, 'the card at the pickup');
-  await context.waitFor(`!!document.querySelector('[data-heli-fuel="fill"]')`, 'the pump button', 30_000);
-  report.facts.pumpButton = await context.evaluate(`document.querySelector('[data-heli-fuel="fill"]').textContent.trim()`);
+  await context.waitFor(`!!document.querySelector('.heli-job-card [data-heli-fuel="fill"]') && !!document.querySelector('.heli-pump')`, 'the pump buttons', 30_000);
+  report.facts.pumpButton = await context.evaluate(`document.querySelector('.heli-pump').textContent.trim()`);
   await shot('pickup', 'Back aboard at the pickup pad: the pump and the card');
-  await context.evaluate(`document.querySelector('[data-heli-fuel="fill"]').click()`);
+  await context.evaluate(`document.querySelector('.heli-job-card [data-heli-fuel="fill"]').click()`);
   report.facts.homeboundCard = await expect(context, card, /Fly home and land on the home pad\./, 'the card after filling up');
 
   // ---- P, ENTER, home, down by hand ----

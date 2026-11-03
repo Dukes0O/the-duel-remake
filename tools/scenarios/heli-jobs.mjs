@@ -203,7 +203,7 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('[data-ski-board="drop"]')`, 'ski box', 30_000);
   await context.evaluate(`document.querySelector('[data-ski-board="drop"]').click()`);
   await context.evaluate(`window.__jobQa.climb(45); window.__jobQa.arrive('summit-run')`);
-  report.facts.skiCardOverCircle = await expect(context, card, /Land on the ski pad under the orange light: .*km, heading \d{3}\./, 'the ski card at Summit Run');
+  report.facts.skiCardOnArrival = await expect(context, card, /Land on the ski pad under the orange light: .*km, heading \d{3}\./, 'the ski card at Summit Run');
   await context.evaluate(`window.__jobQa.toPad(${JSON.stringify(SKI_PADS.devils)})`);
   await drawn(context, 2500);
   await context.waitFor(`!!document.querySelector('[data-ski-run]')`, 'the ski panel', 30_000);
