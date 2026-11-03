@@ -6,6 +6,9 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
+  Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
+  ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.
 - **Animals beside the road, and the helicopter's new coats.** Real local
   animals stand in open ground beside the road and run for cover as you
   pass: white-tailed deer, moose, black bears with cubs, beavers and, one

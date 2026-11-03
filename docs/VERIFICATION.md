@@ -1951,3 +1951,18 @@ Full tier on 8361997b (572 passed; the one failure the known unreliable test-aud
 Rule 19: since then Lab lesson code, Lab tests and scenarios, a test-only fixture, board and notes; no
 shared core, save shape or physics. On the merged commit: every test-lab-* suite (33 suites) and the
 lab-classroom-rust, lab-restore and lab-lesson-frame scenarios pass. No save change.
+
+
+## Release, 3 November 2026, night, European animals (Claude, Release Manager)
+
+WILD-ART-SRC Europe: ten species as original Blender recipes (roe deer, red deer, chamois and ibex on the
+CC0 Quaternius deer; red fox on the CC0 Quaternius wolf; wild boar, alpine marmot, black stork, golden
+eagle and gull original), three look rounds (docs/board/looks/wildlife/europe-round-*.md), rows in
+src/wildlife-models.js. The wildcat did not pass in three rounds; its recipe stays, it is not in the game,
+and Ardennes and Azure Riviera have no rare animal until it does. Checks: test-wildlife-view 3,829,
+test-wildlife 33,644, test-heli-survey 9,990, Blender-output 189, lane tier 57/57, build on the merged
+result. Changed assertions reviewed in docs/changes/WILD-ART-SRC.md; nothing loosened.
+
+Rule 19 on the full tier of 8361997b: since then a data table of models, runtime animal models, Blender
+recipes, their tests, a Lab lesson released by another session, board and notes; no shared core, save
+shape or physics. No save change.
