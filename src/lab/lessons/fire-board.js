@@ -23,7 +23,7 @@ const TABLE = Object.freeze({x: 728, y: 330, w: 262});
 const FX = 60, FY = 196, CELL = 100;
 const ROAD_X = FX + COLS * CELL + 8, ROAD_W = 56;
 const TOOL_AT = [FX + (STRIP + .5) * CELL, FY - 52];
-const BURN_KEY = [FX + 3 * CELL, FY + ROWS * CELL + 46];
+const BURN_KEY = [FX + 3 * CELL, FY + ROWS * CELL + 46], DROP_KEY = [FX + 220, FY + ROWS * CELL + 50];
 const cellAt = (x, y) => {
   const i = Math.floor((x - FX) / CELL), j = Math.floor((y - FY) / CELL);
   return i >= 0 && i < COLS && j >= 0 && j < ROWS ? [i, j] : null;
@@ -42,15 +42,19 @@ export function hitTest(view, x, y) {
   }
   if (view.keys.Space === 'tip') {
     const tool = view.tools?.inHand;
-    if (tool && (inBox(x, y, ...bucketBox(tool)) || Math.abs(x - PIT_X) < RIM_RX && y > 250 && y < GROUND_Y)) return {action: 'tip'};
+    if (tool && (inBox(x, y, ...bucketBox(tool)) || Math.hypot(x - BUCKET_AT[tool][0], y - (BUCKET_AT[tool][1] - BUCKET_H - 70)) < 30 || Math.abs(x - PIT_X) < RIM_RX && y > 250 && y < GROUND_Y)) return {action: 'tip'};
   }
   if (view.scene !== 'forest') return null;
   if (view.keys.Space === 'rake' || view.keys.Space === 'coat') {
     const c = cellAt(x, y);
-    if (Math.hypot(x - TOOL_AT[0], y - TOOL_AT[1]) < 46 || c?.[0] === STRIP) return {action: view.keys.Space};
+    if (Math.hypot(x - TOOL_AT[0], y - TOOL_AT[1]) < 46 || Math.hypot(x - TOOL_AT[0] - 72, y - TOOL_AT[1] - 12) < 30 || c?.[0] === STRIP) return {action: view.keys.Space};
   }
   if (view.keys.Space === 'burn' && (cellAt(x, y) || Math.hypot(x - BURN_KEY[0], y - BURN_KEY[1]) < 40)) return {action: 'burn'};
-  if (view.keys.Space === 'drop') { const c = cellAt(x, y); if (c) return {action: `drop:${c[0]}:${c[1]}`}; }
+  if (view.keys.Space === 'drop') {
+    const c = cellAt(x, y);
+    if (c) return {action: `drop:${c[0]}:${c[1]}`};
+    if (Math.hypot(x - DROP_KEY[0], y - DROP_KEY[1]) < 30) return {action: 'drop'};
+  }
   return null;
 }
 export function hoverInfo(view, x, y) {
@@ -69,8 +73,8 @@ export function hoverInfo(view, x, y) {
   if (!c || !view.forest) return x >= ROAD_X && x <= ROAD_X + ROAD_W && y > FY - 20 ? 'The road. The fire must not reach it.' : x < FX && y > FY ? 'The lake, where the bucket is filled.' : null;
   const cell = view.forest.cells.find(k => k.i === c[0] && k.j === c[1]);
   const road = c[0] === ROAD ? ' These trees are by the road.' : '';
-  if (cell.state === 'burning') return `Burning at ${Math.round(cell.percent)}%: it takes ${litres(litresFor(cell.percent))} of water to put out.${road}`;
-  if (cell.state === 'burnt') return `Burnt out: no fuel and no heat left here.${road}`;
+  if (cell.state === 'burning') return `Burning at ${Math.round(cell.percent)}% strength: it takes ${litres(litresFor(cell.percent))} of water to put out.${road}`;
+  if (cell.state === 'burnt') return `Out: nothing is burning here now.${road}`;
   if (cell.state === 'raked') return 'The raked strip: bare ground, nothing to burn.';
   if (cell.state === 'coated') return `Coated with retardant, ${litres(COAT_L)}: these trees cannot catch.`;
   if (cell.state === 'damp') return `Damp trees: slower to catch for a while.${road}`;
@@ -129,9 +133,9 @@ function triangle(ctx, {x, top, base, half}, gone, {burning = false, labels = tr
   ctx.lineCap = 'butt';
   if (labels) {
     const h = base - top;
-    text(ctx, SIDE_NAME.fuel, x - half * .5 - width * 2.6, top + h * .5, {size, align: 'right', colour: gone.includes('fuel') ? theme.faint : SIDE_COLOUR.fuel});
+    text(ctx, SIDE_NAME.fuel, x - half * .5 - width * 3.6, top + h * .5, {size, align: 'right', colour: gone.includes('fuel') ? theme.faint : SIDE_COLOUR.fuel});
     text(ctx, SIDE_NAME.heat, x, base + size + width * 1.6, {size, colour: gone.includes('heat') ? theme.faint : SIDE_COLOUR.heat});
-    text(ctx, SIDE_NAME.air, x + half * .5 + width * 2.6, top + h * .5, {size, align: 'left', colour: gone.includes('air') ? theme.faint : SIDE_COLOUR.air});
+    text(ctx, SIDE_NAME.air, x + half * .5 + width * 3.6, top + h * .5, {size, align: 'left', colour: gone.includes('air') ? theme.faint : SIDE_COLOUR.air});
   }
   const cy = top + (base - top) * .64;
   if (burning) flame(ctx, x, cy + size * 1.1, size * 1.3, size * 2.4, time, 1);
@@ -260,7 +264,7 @@ function drawPitScene(ctx, view) {
   if (view.triangle) {
     text(ctx, 'Fire triangle', TRI.x, 34, {size: 18, colour: theme.accent});
     triangle(ctx, TRI, p.missing, {burning: p.flame > .5, time: view.time});
-    if (view.taken) text(ctx, `The ${view.tools?.inHand ?? ''} took the ${SIDE_NAME[view.taken].toLowerCase()}`, TRI.x, TRI.base + 52, {size: 16, colour: SIDE_COLOUR[view.taken]});
+    if (view.taken) text(ctx, `The ${view.tools?.inHand ?? ''} took the ${SIDE_NAME[view.taken].toLowerCase()}`, TRI.x, TRI.base + 70, {size: 16, colour: SIDE_COLOUR[view.taken]});
   }
   if (view.table) watchTable(ctx, view.table, view.time);
 }
@@ -336,7 +340,7 @@ function tool(ctx, view) {
 }
 function legend(ctx, view, x0, y0) {
   const states = new Set(view.forest.cells.map(c => c.state));
-  const rows = [['trees', 'Trees', '#3f7a45'], ['burning', 'Burning', '#f2551f'], ['burnt', 'Burnt out', '#1d1b19'], ['damp', 'Damp', '#3f7d78'],
+  const rows = [['trees', 'Trees', '#3f7a45'], ['burning', 'Burning', '#f2551f'], ['burnt', 'Out', '#1d1b19'], ['damp', 'Damp', '#3f7d78'],
     ['raked', 'Raked bare', '#6b5236'], ['coated', 'Retardant', '#d8768a']].filter(([s]) => states.has(s));
   rows.forEach(([, label, colour], k) => {
     const y = y0 + k * 28;
@@ -352,15 +356,16 @@ function drawForestScene(ctx, view) {
   if (view.tool) tool(ctx, view);
   if (view.triangle) {
     const small = {x: 878, top: 52, base: 186, half: 72};
-    triangle(ctx, small, view.taken ? [view.taken] : [], {burning: f.burning > 0 && !view.taken, size: 15, width: 7, time: view.time});
+    triangle(ctx, small, view.taken ? [view.taken] : [], {burning: f.burning > 0, size: 15, width: 7, time: view.time});
+    if (view.taken) { text(ctx, 'No fuel in the strip:', 878, 234, {size: 15, colour: SIDE_COLOUR.fuel}); text(ctx, 'the flames cannot cross it', 878, 254, {size: 15, colour: SIDE_COLOUR.fuel}); }
   }
-  let y = view.triangle ? 262 : 60;
+  let y = view.triangle ? 300 : 60;
   if (view.job) {
     const j = view.job;
     ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(px, 40, 212, 150, 8); ctx.fill(); ctx.stroke();
     text(ctx, 'Bucket', px + 12, 66, {size: 15, align: 'left', weight: 600}); text(ctx, litres(j.bucket), px + 200, 66, {size: 16, align: 'right', colour: '#8cc8f0'});
-    text(ctx, 'Flat out, a cell', px + 12, 100, {size: 15, align: 'left', weight: 600}); text(ctx, litres(j.flatOut), px + 200, 100, {size: 16, align: 'right', colour: theme.bad});
+    text(ctx, 'A cell at 100%', px + 12, 100, {size: 15, align: 'left', weight: 600}); text(ctx, litres(j.flatOut), px + 200, 100, {size: 16, align: 'right', colour: theme.bad});
     text(ctx, 'Trips', px + 12, 134, {size: 15, align: 'left', weight: 600}); text(ctx, String(j.trips), px + 200, 134, {size: 18, align: 'right', colour: theme.accent});
     text(ctx, 'Burning', px + 12, 166, {size: 15, align: 'left', weight: 600}); text(ctx, String(f.burning), px + 200, 166, {size: 18, align: 'right', colour: theme.bad});
     y = 230;
@@ -380,7 +385,7 @@ function drawForestScene(ctx, view) {
   if (view.keys.Space === 'drop') {
     ['←', '→', '↑', '↓'].forEach((k, n) => keyCap(ctx, FX + 30 + n * 26, under, k));
     text(ctx, 'aim', FX + 140, under, {size: 15, align: 'left'});
-    spaceKey(ctx, FX + 220, under); text(ctx, 'drop the bucket', FX + 254, under, {size: 15, align: 'left'});
+    spaceKey(ctx, ...DROP_KEY); text(ctx, 'drop the bucket', FX + 254, under, {size: 15, align: 'left'});
   }
   if (view.keys.Space === 'burn') { spaceKey(ctx, ...BURN_KEY); text(ctx, 'let it burn', BURN_KEY[0] + 34, BURN_KEY[1], {size: 15, align: 'left'}); if (view.glow === 'burn') halo(ctx, ...BURN_KEY, 40, view.time); }
   if (f.road) text(ctx, 'The fire reached the road!', FX + COLS * CELL / 2, 70, {size: 26, colour: theme.bad});
@@ -401,7 +406,7 @@ function drawCheck(ctx, view) {
   triangle(ctx, {x: 250, top: 120, base: 400, half: 140}, [], {burning: true, size: 22, width: 11, time: view.time});
   miniForest(ctx, 560, 160, 64, view.check === 'check-coat' ? 'coat' : 'water', null, view.time);
   text(ctx, 'Lake', 530, 140, {size: 14, colour: theme.faint}); text(ctx, 'Road', 560 + 6 * 64 + 28, 140, {size: 14, colour: theme.bad});
-  text(ctx, `Water bucket ${litres(BUCKET_L)} · a cell burning flat out takes ${litres(FLAT_OUT_L)}`, 500, 520, {size: 17, colour: theme.faint});
+  text(ctx, `Water bucket ${litres(BUCKET_L)} · a cell burning at full strength takes ${litres(FLAT_OUT_L)}`, 500, 520, {size: 17, colour: theme.faint});
 }
 // A small forest for the questions: burning at the lake end, the road at the far end, and a mark where something goes.
 function miniForest(ctx, x0, y0, size, what, where, time) {

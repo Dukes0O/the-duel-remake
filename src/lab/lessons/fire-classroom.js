@@ -172,7 +172,7 @@ const CHECKS = {
     answers: [{label: 'On the flames nearest the road', picture: {kind: 'spot', what: 'water', where: 'flames'}},
       {label: 'On the green trees ahead', picture: {kind: 'spot', what: 'water', where: 'front'}}, {label: 'On the flames at the back, where it started', picture: {kind: 'spot', what: 'water', where: 'back'}}],
     correct: 0,
-    right: () => `Yes. A cell burning flat out takes ${litres(FLAT_OUT_L)} to put out, so one full bucket puts out up to ${Math.floor(BUCKET_L / FLAT_OUT_L)}: start with the ones nearest the road.`,
+    right: () => `Yes. A cell burning at full strength takes ${litres(FLAT_OUT_L)} to put out, so one full bucket puts out ${Math.floor(BUCKET_L / FLAT_OUT_L)} of those; smaller flames take less, so one load can put out more. Start with the ones nearest the road.`,
     wrong: picked => picked === 1 ? `Water on trees that are not burning only makes them damp, slower to catch for ${FIRE.dampSteps} spreads, and the flames keep burning and keep coming. Drop on the flames nearest the road.`
       : 'The flames at the back are furthest from the road. While you put them out, the front reaches the road, as in my job. Drop on the flames nearest the road.',
     hints: ['Think of my job in the forest.', 'Which flames will reach the road first?', 'Pick “On the flames nearest the road”.'],
@@ -211,7 +211,7 @@ export function createModel() {
 
   function startJob() {
     const grid = forestGrid();
-    m.fz = {grid, fire: grown(litFire(), grid, JOB_HEAD_START), raked: false, aim: [0, MIDDLE], trips: 0, splash: null, spreadAt: null};
+    m.fz = {grid, fire: grown(litFire(), grid, JOB_HEAD_START), raked: false, aim: [0, MIDDLE], trips: 0, splash: null, spreadAt: null, allFront: true};
     m.phase = 'set';
   }
 
@@ -291,19 +291,21 @@ export function createModel() {
       if (!Number.isInteger(i) || !Number.isInteger(j) || i < 0 || i >= COLS || j < 0 || j >= ROWS) return null;
       fz.aim = [i, j];
     }
-    const [i, j] = fz.aim, before = cellState(fz, i, j);
+    const [i, j] = fz.aim, before = cellState(fz, i, j), best = frontCell(fz.fire);
+    if (best[0] !== i || best[1] !== j) fz.allFront = false;
     const r = dropOn(fz.fire, fz.grid, i, j);
     fz.fire = r.fire; fz.trips += 1; fz.splash = {i, j, at: m.time};
     const left = fz.fire.burning.length;
     if (!left) {
       m.phase = 'done'; seen.add('alone');
-      m.say = `Out! ${fz.trips} trips, and the fire never reached the road. You put out the flames nearest the road first, each time.`;
+      m.say = fz.allFront ? `Out! ${fz.trips} trips, and the fire never reached the road. You put out the flames nearest the road first, each time.`
+        : `Out in ${fz.trips} trips, and the fire never reached the road. Next time start with the flames nearest the road: it is safer.`;
       return {kind: 'pass', sound: 'lab.splash', say: m.say};
     }
     m.phase = 'running'; fz.spreadAt = m.time + 1;
-    if (before.state === 'burning') m.say = r.cellsOut ? `Splash: ${cellWords(r.cellsOut)} out. Small flames take less water; a cell burning flat out takes ${litres(FLAT_OUT_L)}. ${cap(cellWords(left))} still burning.`
+    if (before.state === 'burning') m.say = r.cellsOut ? `Splash: ${cellWords(r.cellsOut)} out. Small flames take less water than the ${litres(FLAT_OUT_L)} a cell burning at full strength takes, and the water left over ran on to the flames next to it. ${cap(cellWords(left))} still burning.`
       : `Splash: the flames there are lower, but still burning.`;
-    else if (before.state === 'burnt') m.say = 'That cell has burnt out already: no heat left to take, so the water did nothing.';
+    else if (before.state === 'burnt') m.say = 'That cell is out already: nothing is burning there, so the water did nothing.';
     else m.say = `Those trees are damp now, slower to catch for ${FIRE.dampSteps} spreads. But the flames are still burning.`;
     return {kind: before.state === 'burning' ? 'progress' : 'note', sound: 'lab.splash', say: m.say};
   }
@@ -357,7 +359,7 @@ export function createModel() {
     const t = TRIES[id], right = m.guess === t.takes;
     m.phase = 'result'; seen.add(id);
     m.result = {actual: t.takes, right};
-    const extra = id === 'try-strip' ? ` With no strip, this fire reaches the road in ${OPEN_SPREADS} spreads.` : '';
+    const extra = id === 'try-strip' ? ` With no strip, this fire reaches the road after the flames spread ${OPEN_SPREADS} more times.` : '';
     m.say = right ? `Right: ${SIDE_NAME[t.takes].toLowerCase()}. ${t.why}${extra}` : `It took the ${SIDE_NAME[t.takes].toLowerCase()}. ${t.wrong[m.guess]} ${t.why}${extra}`;
     return {kind: right ? 'right' : 'wrong', say: m.say};
   }
@@ -459,7 +461,7 @@ export function createModel() {
     const t = TRIES[id], strip = id === 'try-strip';
     const common = {...base, plates: !strip, triangle: true, tools: strip ? null : {inHand: t.tool}, tool: strip ? 'rake' : null, guess: m.guess};
     if (m.phase === 'setup') return {...common, keys: {Space: 'rake'}, waiting: true, target: 'rake', glow: 'rake',
-      say: m.say || 'A forest fire is far too big for a lid. This strip of forest is burning at the lake end, and the road is at the other. Rake a strip of bare ground across it, in front of the flames.',
+      say: m.say || 'A forest fire is far too big for a lid. This patch of forest is burning at the lake end, and the road is at the other. Rake a strip of bare ground across it, in front of the flames.',
       prompt: 'Press Space, or click the rake.', hints: ['The rake is over the column of trees in front of the flames.', 'Press Space.', 'Watch my pointer: it is on the rake.']};
     if (m.phase === 'guess') return {...common, keys: PICK_KEYS(3), waiting: true,
       cards: SIDE_CARDS.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: c.picture, state: null})),
@@ -490,7 +492,7 @@ export function createModel() {
     return {...common, keys: AIM_KEYS, waiting: true, target, glow: target,
       say: fz.trips === 0 && !m.say ? `Brian’s job: the practice fire is coming for the road. Each trip you drop one ${BUCKET_L}-litre bucket, and the fire spreads once while you fly back for more. Put it out before it reaches the road.` : m.say,
       prompt: 'Aim with ← → ↑ ↓ and drop with Space, or click a cell.',
-      hints: [`A cell burning flat out takes ${litres(FLAT_OUT_L)} to put out. The bucket holds ${litres(BUCKET_L)}.`, 'Aim at the flames nearest the road, the biggest of those, and drop there.',
+      hints: [`A cell burning at full strength (100%) takes ${litres(FLAT_OUT_L)} to put out. The bucket holds ${litres(BUCKET_L)}.`, 'Aim at the flames nearest the road, the biggest of those, and drop there.',
         'Watch my pointer: it is on the cell to drop on.']};
   }
 

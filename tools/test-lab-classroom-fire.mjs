@@ -148,7 +148,7 @@ test('the guided tries set up first, then ask, then test; a wrong guess says why
   session.act(`answer:${side('air')}`); session.act('burn'); until(session, x => x.ready);
   assert.equal(session.view().forest.front, STRIP - 1);
   assert.equal(session.view().forest.cells.filter(c => c.i === STRIP).every(c => c.state === 'raked'), true, 'the raked strip stays in the picture');
-  assert.match(say(session), new RegExp(`It took the fuel\\. Air blows across the strip all the time: the oxygen was not taken\\. There was nothing in the strip to burn.*reaches the road in ${OPEN_SPREADS} spreads`));
+  assert.match(say(session), new RegExp(`It took the fuel\\. Air blows across the strip all the time: the oxygen was not taken\\. There was nothing in the strip to burn.*reaches the road after the flames spread ${OPEN_SPREADS} more times`));
   session.act('next');
   session.act('coat'); until(session, x => x.ready);
   assert.equal(session.view().forest.front, STRIP - 1);
@@ -168,7 +168,7 @@ test('Brian’s job: following the pointer puts it out; water at the back loses 
   const s = createClassroomSession(lesson);
   playThroughTo(s, 'alone');
   const back = () => { const v = s.view(), c = v.forest.cells.filter(k => k.state === 'burning').sort((a, b) => a.i - b.i || b.percent - a.percent)[0]; s.act(`drop:${c.i}:${c.j}`); };
-  back(); assert.match(say(s), /Splash: .* out\. Small flames take less water; a cell burning flat out takes 180 litres/);
+  back(); assert.match(say(s), /Splash: .* out\. Small flames take less water than the 180 litres a cell burning at full strength takes, and the water left over ran on to the flames next to it/);
   until(s, x => x.keys.Space === 'drop' || x.job.lost, 5);
   back(); until(s, x => x.job.lost, 5);
   assert.match(say(s), /The fire reached the road\. The flames at the front kept spreading while the water fell behind them\. Drop on the flames nearest the road first/);
@@ -179,9 +179,18 @@ test('Brian’s job: following the pointer puts it out; water at the back loses 
   s.act(`drop:0:${MIDDLE}`); until(s, x => x.keys.Space === 'drop', 5);
   const burnt = s.view().forest.cells.find(c => c.state === 'burnt');
   s.act(`drop:${burnt.i}:${burnt.j}`);
-  assert.match(say(s), /That cell has burnt out already: no heat left to take, so the water did nothing/);
-  until(s, x => x.keys.Space === 'drop' || x.job.lost, 5);
-  if (!s.view().job.lost) { s.act(`drop:${ROAD}:0`); assert.match(say(s), /Those trees are damp now, slower to catch for 2 spreads\. But the flames are still burning/); }
+  assert.match(say(s), /That cell is out already: nothing is burning there, so the water did nothing/);
+  // Water on green trees, on a fresh job: the trees by the road are not burning yet.
+  const g = createClassroomSession(lesson);
+  playThroughTo(g, 'alone');
+  assert.equal(g.view().forest.cells.find(c => c.i === ROAD && c.j === 0).state, 'trees');
+  g.act(`drop:${ROAD}:0`);
+  assert.match(say(g), /Those trees are damp now, slower to catch for 2 spreads\. But the flames are still burning/);
+  run(g, 1.2); assert.equal(g.view().forest.cells.find(c => c.i === ROAD && c.j === 0).state, 'damp');
+  // Put out another way, Brian does not praise the order: only the pointer's order earns "each time".
+  for (let n = 0; n < 40 && !g.view().ready; n++) { const v = g.view(); if (v.keys.Space === 'drop') g.act(v.target); else run(g, .25); }
+  if (g.view().ready) assert.match(say(g), /Next time start with the flames nearest the road/);
+  else assert.equal(g.view().job.lost, true);
   // Arrow keys aim and stop at the edge; a drop at the aim.
   const k = createClassroomSession(lesson);
   playThroughTo(k, 'alone');
@@ -210,7 +219,7 @@ test('the questions: each wrong answer says why', () => {
   session.act('back'); session.act(`go:${STEPS.findIndex(s => s.id === 'check-coat')}`); session.act('answer:0');
   assert.match(say(session), /The tank’s 600 litres coat 4 cells of forest, 150 litres each/);
   session.act('back'); session.act(`go:${STEPS.findIndex(s => s.id === 'check-game')}`); session.act('answer:0');
-  assert.match(say(session), /A cell burning flat out takes 180 litres to put out, so one full bucket puts out up to 3/);
+  assert.match(say(session), /A cell burning at full strength takes 180 litres to put out, so one full bucket puts out 3 of those; smaller flames take less/);
 });
 
 test('help climbs from a nudge to a plain step to Brian pointing at the exact control, and Show me presses it', () => {
@@ -280,9 +289,16 @@ test('the board draws every step and card, hit-tests its controls and points at 
     const v = s.view();
     if (v.keys.Space !== 'drop') { run(s, .25); n--; continue; }
     assert.equal(hitTest(v, ...targetPoint(v, v.target)).action, v.target, 'a click on the pointed cell drops there');
-    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /Burning at \d+%: it takes \d+ litres of water to put out/);
+    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /Burning at \d+% strength: it takes \d+ litres of water to put out/);
     s.act(v.target);
   }
+  // The keys drawn on the board take clicks too: Space under the job drops at the aim.
+  const k = createClassroomSession(lesson);
+  playThroughTo(k, 'alone');
+  assert.equal(hitTest(k.view(), 280, 546).action, 'drop');
+  const r = createClassroomSession(lesson);
+  playThroughTo(r, 'word-retardant');
+  assert.equal(hitTest(r.view(), 482, 156).action, 'coat');
 });
 
 test('Previous step shows a finished word as it was, and Watch again plays the Watch from the start', () => {

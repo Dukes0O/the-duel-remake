@@ -1,7 +1,7 @@
-// Test-only teaching packet: a ball and a fan, not the Fire lesson. It borrows the fire pit, a machine still on the
-// five-step frame whose challenge is a helicopter flight (the pendulum, Lift, Projectile and Headings open as classrooms).
+// Test-only teaching packet: a ball and a fan, not the Rust lesson. It borrows the nail jars, a machine still on the
+// five-step frame (every lesson with a helicopter challenge opens as a classroom now).
 export const exampleLesson = {
-  id: 'fire', vocabulary: ['push'],
+  id: 'rust', vocabulary: ['push'],
   wonder: {text: 'Can a fan move this ball?', animation: 'ball', seconds: 2},
   words: [{id: 'push', word: 'Push', meaning: 'A push is a force that moves something away.', animation: 'push'}],
   worked: [
