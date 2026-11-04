@@ -2,7 +2,7 @@
 // smoke past the Falcone F42 on its scale, a wing over its back and a rope at its nose with a drag gauge; the fan dial
 // and the wing panel; and below, a close-up, the runs table or Brian's course. Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
-import {WINGS, WING_NAME, CAR_KG, kg, pushKg, topOf} from './downforce-classroom.js';
+import {WINGS, WING_NAME, CAR_KG, kg, kmh, pushKg, topOf} from './downforce-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
 
@@ -41,14 +41,14 @@ export function hitTest(view, x, y) {
 }
 export function hoverInfo(view, x, y) {
   if (!tunnel(view)) return null;
-  if (view.dial && x > DIAL.x && x < DIAL.x + DIAL.w && y > DIAL.y && y < DIAL.y + DIAL.h) return view.dial.locked ? 'The fan dial: Brian has set it for this run.' : 'The fan dial: the wind 10 mph faster or slower a press.';
-  if (view.wingPanel && x > WINGP.x && x < WINGP.x + WINGP.w && y > WINGP.y && y < WINGP.y + WINGP.h) return view.wingPanel.locked ? 'The wing: Brian has set it for this run.' : 'The wing: flat, tilted or steep, one notch a press.';
-  if (Math.hypot(x - FAN.x, y - FAN.y) < FAN.r + 10) return 'The fan: it blows the wind past the car, as fast as the dial says.';
-  if (x > ROPE_BOX.x && x < ROPE_BOX.x + ROPE_BOX.w && y > ROPE_BOX.y && y < ROPE_BOX.y + ROPE_BOX.h) return 'The rope’s gauge: how hard the air pushes the car back. That is drag.';
-  if (x > SCALE_BOX.x && x < SCALE_BOX.x + SCALE_BOX.w && y > SCALE_BOX.y && y < SCALE_BOX.y + SCALE_BOX.h) return 'The scale: the car’s weight and the air pushing it down.';
-  if (x > WING_AT.x - 60 && x < WING_AT.x + 60 && y > WING_AT.y - 40 && y < WING_AT.y + 40) return 'The wing on its stand over the back of the car.';
-  if (x > CAR_AT.nose && x < CAR_AT.nose + 92 * CAR_AT.scale && y > carGround() - 60 && y < TUNNEL.floor) return `A Falcone F42 on the scale: ${kg(CAR_KG)}.`;
-  if (view.rows?.length && y > 376 && x < 960) return 'The runs: each one the fan made, with what the scale and the rope read.';
+  if (view.dial && x > DIAL.x && x < DIAL.x + DIAL.w && y > DIAL.y && y < DIAL.y + DIAL.h) return view.dial.locked ? 'Brian has set the fan dial for this run.' : 'The fan dial sets how fast the fan blows the air past the car.';
+  if (view.wingPanel && x > WINGP.x && x < WINGP.x + WINGP.w && y > WINGP.y && y < WINGP.y + WINGP.h) return view.wingPanel.locked ? 'Brian has set the wing for this run.' : 'Each press tilts the wing one notch: flat, tilted or steep.';
+  if (Math.hypot(x - FAN.x, y - FAN.y) < FAN.r + 10) return 'The fan blows the air past the car at the speed on the dial.';
+  if (x > ROPE_BOX.x && x < ROPE_BOX.x + ROPE_BOX.w && y > ROPE_BOX.y && y < ROPE_BOX.y + ROPE_BOX.h) return 'The gauge on the rope reads how hard the air pushes the car back, which is the drag.';
+  if (x > SCALE_BOX.x && x < SCALE_BOX.x + SCALE_BOX.w && y > SCALE_BOX.y && y < SCALE_BOX.y + SCALE_BOX.h) return 'The scale reads the car’s own kilograms and the push of the air together.';
+  if (x > WING_AT.x - 60 && x < WING_AT.x + 60 && y > WING_AT.y - 40 && y < WING_AT.y + 40) return 'The wing stands on two struts over the back of the car.';
+  if (x > CAR_AT.nose && x < CAR_AT.nose + 92 * CAR_AT.scale && y > carGround() - 60 && y < TUNNEL.floor) return `This Falcone F42 stands on the scale, and the car alone reads ${kg(CAR_KG)}.`;
+  if (view.rows?.length && y > 376 && x < 960) return 'This table lists each run of the fan, with what the scale and the rope read.';
   return null;
 }
 export function targetPoint(view, action) {
@@ -66,6 +66,7 @@ export function targetPoint(view, action) {
   // Sparks fly from what the step is about.
   if (view.focus === 'rope') return [ROPE_BOX.x + ROPE_BOX.w / 2, ROPE_BOX.y + 20];
   if (view.focus === 'wing') return [WING_AT.x, WING_AT.y];
+  if (view.focus === 'dial') return [DIAL.x + DIAL.w / 2, DIAL.y + 52];
   return [SCALE_BOX.x + SCALE_BOX.w / 2, SCALE_BOX.y + 20];
 }
 export function dragAngle() { return 0; }
@@ -99,6 +100,13 @@ function wingShape(ctx, x, y, chord, tilt, {fill = '#3a4349', edge = theme.iron[
   ctx.lineTo(chord / 2, h * .05); ctx.quadraticCurveTo(-chord / 6, h * 1.6, -chord / 2, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
+// A label with a dark strip behind it, so that a smoke line running behind it does not cross the words.
+function label(ctx, value, x, y, {size = 15, align = 'left', weight = 700, colour = theme.text} = {}) {
+  ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
+  const width = ctx.measureText(value).width, left = align === 'right' ? x - width : align === 'center' ? x - width / 2 : x;
+  ctx.fillStyle = 'rgba(14,20,24,.88)'; ctx.fillRect(left - 5, y - size * .75, width + 10, size * 1.5);
+  text(ctx, value, x, y, {size, align, weight, colour});
+}
 function arrowLine(ctx, x0, y0, x1, y1, colour, width = 6) {
   const len = Math.hypot(x1 - x0, y1 - y0);
   if (len < 4) return;
@@ -107,34 +115,38 @@ function arrowLine(ctx, x0, y0, x1, y1, colour, width = 6) {
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * head * .8, y1 - uy * head * .8); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - ux * head - uy * head * .6, y1 - uy * head + ux * head * .6); ctx.lineTo(x1 - ux * head + uy * head * .6, y1 - uy * head - ux * head * .6); ctx.closePath(); ctx.fill();
 }
-// Smoke lines from the fan, moving with the wind; behind a tilted wing the lines near it bend up.
-function smoke(ctx, view, {x0, x1, rows, wingX, wingY, chord, tilt, clip}) {
-  const r = view.rig, mph = r.mph;
+// Smoke lines from the fan, moving with the air. `rows` are heights above (negative) and below the wing. Each line arrives
+// level and parts round the wing; a tilted wing turns the lines near it upward and they leave rising, so the picture shows
+// the air being turned. A flat wing leaves every line level.
+function smoke(ctx, view, {x0, x1, rows, wingX, wingY, chord, tilt, clip, most = chord * .55}) {
+  const r = view.rig, slope = Math.tan(tilt), half = chord / 2, frontX = wingX - half * Math.cos(tilt), frontY = wingY + half * Math.sin(tilt), reach = chord * 1.1;
   ctx.save(); ctx.beginPath(); ctx.rect(...clip); ctx.clip();
   ctx.lineWidth = 2.5; ctx.setLineDash([22, 14]);
-  ctx.lineDashOffset = -(view.time * mph * 3.2) % 36;
-  for (const y0 of rows) {
-    const near = Math.max(0, 1 - Math.abs(y0 - wingY) / 70);
-    ctx.strokeStyle = mph > 0 ? 'rgba(225,232,236,.55)' : 'rgba(225,232,236,.12)';
-    ctx.beginPath(); ctx.moveTo(x0, y0);
-    for (let x = x0; x <= x1; x += 8) {
-      const past = x - (wingX - chord / 2);
-      const lift = past > 0 ? near * Math.tan(tilt) * Math.min(past, chord * 1.5) * .7 : 0;
-      ctx.lineTo(x, y0 - lift);
+  ctx.lineDashOffset = -(view.time * r.ms * 7.2) % 36;
+  ctx.strokeStyle = r.on && r.ms > 0 ? 'rgba(225,232,236,.6)' : 'rgba(225,232,236,.12)';
+  for (const row of rows) {
+    const above = row < 0, near = Math.max(0, 1 - Math.abs(row) / reach), from = above ? frontX - chord * .3 : wingX - chord * .1, ease = chord * .7;
+    // A line under the wing dips round its low front edge first.
+    const dip = above ? 0 : Math.max(0, frontY + chord * .06 - (wingY + row));
+    ctx.beginPath();
+    for (let x = x0; x <= x1; x += 6) {
+      const past = x - from, rise = past <= 0 ? 0 : past < ease ? past * past / (2 * ease) : past - ease / 2;
+      const y = wingY + row - Math.min(most, near * slope * rise) + dip * Math.exp(-(((x - frontX) / (chord * .45)) ** 2));
+      x === x0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
   ctx.restore();
 }
 function fan(ctx, view) {
-  const {x, y, r} = FAN, on = view.rig.on && view.rig.mph > 0;
+  const {x, y, r} = FAN, on = view.rig.on && view.rig.ms > 0;
   ctx.fillStyle = '#1b2023'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.save(); ctx.translate(x, y); ctx.rotate(on ? view.time * view.rig.mph * .12 : 0);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(on ? view.time * view.rig.ms * .27 : 0);
   ctx.fillStyle = theme.iron[1];
   for (let k = 0; k < 5; k++) { ctx.rotate(Math.PI * 2 / 5); ctx.beginPath(); ctx.ellipse(0, -r * .48, r * .15, r * .42, .35, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
   ctx.fillStyle = theme.brass[1]; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
-  text(ctx, on ? `FAN ${Math.round(view.rig.mph)} mph` : 'FAN OFF', x, y + r + 14, {size: 13, colour: on ? theme.accent : theme.faint, weight: 800});
+  text(ctx, on ? `FAN ${view.rig.kmh} km/h` : 'FAN OFF', x, y + r + 20, {size: 13, colour: on ? theme.accent : theme.faint, weight: 800});
   if (view.keys.Space === 'go') {
     ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 64, y - r - 26, 54, 22, 3); ctx.fill();
     ctx.fillStyle = '#1d2224'; ctx.font = '800 13px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Space', x - 37, y - r - 14);
@@ -148,7 +160,7 @@ function tunnelScene(ctx, view) {
   ctx.fillStyle = theme.iron[2]; ctx.fillRect(x + 4, floor, w - 8, 8);
   const tail = CAR_AT.nose + 92 * CAR_AT.scale;
   ctx.fillStyle = theme.iron[1]; ctx.fillRect(CAR_AT.nose - 6, floor - 6, tail - CAR_AT.nose + 12, 8);
-  smoke(ctx, view, {x0: FAN.x + FAN.r + 6, x1: x + w - 10, rows: [70, 104, 138, 172, 206], wingX: WING_AT.x, wingY: WING_AT.y, chord: WING_AT.chord, tilt, clip: [x + 2, y + 2, w - 4, floor - y - 4]});
+  smoke(ctx, view, {x0: FAN.x + FAN.r + 6, x1: x + w - 10, rows: [-98, -64, -30, 24], wingX: WING_AT.x, wingY: WING_AT.y, chord: WING_AT.chord, tilt, clip: [x + 2, y + 2, w - 4, floor - y - 4]});
   fan(ctx, view);
   // The rope: from the post to the car's nose, with its gauge.
   const noseY = carGround() - 2;
@@ -161,16 +173,20 @@ function tunnelScene(ctx, view) {
   for (const sx of [WING_AT.x - 18, WING_AT.x + 18]) { ctx.beginPath(); ctx.moveTo(sx, deck); ctx.lineTo(sx, WING_AT.y + 4); ctx.stroke(); }
   car(ctx, CAR_AT.nose, carGround(), CAR_AT.scale, {facing: -1});
   wingShape(ctx, WING_AT.x, WING_AT.y, WING_AT.chord, tilt);
-  // The push down from the wing, the drag back from the tail.
+  // The air leaving the wing, the push down from the wing and the drag back from the tail. The push and the drag arrows are
+  // drawn to scale, so four times the push is an arrow four times as long.
+  if (r.on && r.ms > 0 && tilt > 0) {
+    const tx = WING_AT.x + WING_AT.chord / 2 * Math.cos(tilt), ty = WING_AT.y - WING_AT.chord / 2 * Math.sin(tilt) - 4;
+    arrowLine(ctx, tx + 2, ty, tx + 42, ty - 42 * Math.tan(tilt) * 1.3, 'rgba(240,244,246,.95)', 3);
+  }
   if (r.push > .5) {
-    const len = 14 + Math.min(r.push, 380) * .2;
-    arrowLine(ctx, WING_AT.x + 54, WING_AT.y - 30, WING_AT.x + 54, WING_AT.y - 30 + len, theme.good);
-    text(ctx, `push ${kg(r.push)}`, WING_AT.x + 66, WING_AT.y - 40, {size: 15, align: 'left', colour: GREEN});
+    arrowLine(ctx, WING_AT.x, WING_AT.y + 14, WING_AT.x, WING_AT.y + 14 + r.push * .2, theme.good);
+    label(ctx, `push ${kg(r.push)}`, WING_AT.x + 34, WING_AT.y + 22, {colour: GREEN});
   }
   if (r.drag > .5) {
-    const len = 14 + r.drag * .3, ay = carGround() - 22;
-    arrowLine(ctx, tail + 6, ay, Math.min(x + w - 6, tail + 6 + len), ay, ORANGE);
-    text(ctx, 'drag', tail + 10, ay - 18, {size: 15, align: 'left', colour: ORANGE});
+    const ay = carGround() - 8;
+    arrowLine(ctx, tail + 6, ay, Math.min(x + w - 6, tail + 6 + r.drag * .3), ay, ORANGE);
+    text(ctx, 'drag', tail + 10, ay + 18, {size: 15, align: 'left', colour: ORANGE});
   }
   // The readouts.
   panel(ctx, ROPE_BOX.x, ROPE_BOX.y, ROPE_BOX.w, ROPE_BOX.h);
@@ -188,7 +204,8 @@ function dial(ctx, view) {
   const d = view.dial, can = view.keys['↑'] === 'speed:up';
   panel(ctx, DIAL.x, DIAL.y, DIAL.w, DIAL.h);
   text(ctx, 'FAN DIAL', DIAL.x + DIAL.w / 2, DIAL.y + 18, {size: 12, colour: theme.faint, weight: 800});
-  text(ctx, `${d.speed} mph`, DIAL.x + DIAL.w / 2, DIAL.y + 52, {size: 30, weight: 800});
+  text(ctx, `${d.kmh} km/h`, DIAL.x + DIAL.w / 2 - 54, DIAL.y + 52, {size: 30, weight: 800});
+  text(ctx, `${d.ms.toFixed(2)} m/s`, DIAL.x + DIAL.w / 2 + 96, DIAL.y + 54, {size: 18, colour: theme.faint});
   for (const [way, label, key] of [['down', 'Slower', '↓'], ['up', 'Faster', '↑']]) {
     const [x, y] = DIAL[way];
     ctx.globalAlpha = can ? 1 : .35;
@@ -221,33 +238,53 @@ function wingPanel(ctx, view) {
 // ---- the lower half: a close-up for the words, the runs table, or Brian's course ----
 const LOW = Object.freeze({x: 40, y: 376, w: 920, h: 284});
 function closeWing(ctx, view) {
-  const tilt = TILT[view.rig.wing], cx = 500, cy = 520;
+  const r = view.rig, tilt = TILT[r.wing], cx = 500, cy = 516, chord = 240, tx = cx + chord / 2 * Math.cos(tilt), ty = cy - chord / 2 * Math.sin(tilt);
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   text(ctx, 'THE WING CLOSE UP', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-  smoke(ctx, view, {x0: LOW.x + 30, x1: LOW.x + LOW.w - 20, rows: [440, 480, 520, 560, 600], wingX: cx, wingY: cy, chord: 240, tilt, clip: [LOW.x + 2, LOW.y + 30, LOW.w - 4, LOW.h - 32]});
-  wingShape(ctx, cx, cy, 240, tilt);
-  text(ctx, 'wind →', LOW.x + 60, LOW.y + 44, {size: 15, colour: theme.text});
+  smoke(ctx, view, {x0: LOW.x + 6, x1: LOW.x + LOW.w - 6, rows: [-104, -68, -34, 34, 68, 104], wingX: cx, wingY: cy, chord, tilt, clip: [LOW.x + 2, LOW.y + 30, LOW.w - 4, LOW.h - 32]});
+  wingShape(ctx, cx, cy, chord, tilt);
+  // The air arrives level and leaves turned upward; the air pushes back on the wing, down.
+  arrowLine(ctx, LOW.x + 30, cy, LOW.x + 150, cy, 'rgba(240,244,246,.95)', 5);
+  label(ctx, 'The air arrives level.', LOW.x + 30, cy - 22);
   if (tilt > 0) {
-    arrowLine(ctx, cx + 170, cy - 30, cx + 240, cy - 30 - 120 * Math.tan(tilt), 'rgba(225,232,236,.85)', 4);
-    text(ctx, 'air thrown up', cx + 250, cy - 50 - 120 * Math.tan(tilt), {size: 15, align: 'left'});
-    arrowLine(ctx, cx, cy + 30, cx, cy + 30 + 60 * tilt / TILT.big + 14, theme.good);
-    text(ctx, 'wing pushed down', cx + 14, cy + 72, {size: 15, align: 'left', colour: GREEN});
-  } else text(ctx, 'Flat: the air goes straight past.', cx, cy + 80, {size: 17, colour: theme.faint});
+    arrowLine(ctx, tx + 10, ty - 6, tx + 100, ty - 6 - 90 * Math.tan(tilt), 'rgba(240,244,246,.95)', 5);
+    label(ctx, 'The wing turns the air upward.', LOW.x + LOW.w - 16, LOW.y + 18, {align: 'right'});
+    arrowLine(ctx, cx, cy + 34, cx, cy + 34 + r.push * 1.6, theme.good, 8);
+    label(ctx, 'The air pushes the wing down.', cx + 20, cy + 62, {colour: GREEN});
+    label(ctx, `push ${kg(r.push)}`, cx + 20, cy + 88, {size: 20, colour: GREEN, weight: 800});
+  } else label(ctx, 'The flat wing does not turn the air, so the air does not push the wing down.', cx, LOW.y + LOW.h - 22, {size: 16, align: 'center'});
+}
+// The fan speed in km/h and in m/s, and a tape that shows how far the air moves during each second.
+function closeSpeed(ctx, view) {
+  const d = view.dial, x0 = 90, x1 = 910, most = 70, at = m => x0 + m / most * (x1 - x0), y = 590, flown = (view.time % 1) * d.ms;
+  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
+  text(ctx, 'WHAT THE SPEED MEANS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, `${d.kmh} km/h`, 300, LOW.y + 56, {size: 34, colour: theme.accent, weight: 800});
+  text(ctx, 'is about the same as', 500, LOW.y + 58, {size: 16});
+  text(ctx, `${d.ms.toFixed(2)} m/s`, 700, LOW.y + 56, {size: 34, colour: theme.accent, weight: 800});
+  text(ctx, `During each second, the air moves ${d.ms.toFixed(2)} metres.`, 500, LOW.y + 104, {size: 18});
+  ctx.fillStyle = '#d9b24a'; ctx.fillRect(x0, y - 4, x1 - x0, 8);
+  ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 1.5;
+  for (let k = 0; k <= most; k += 10) { ctx.beginPath(); ctx.moveTo(at(k), y - 4); ctx.lineTo(at(k), y + 6); ctx.stroke(); text(ctx, `${k} m`, at(k), y + 22, {size: 14}); }
+  arrowLine(ctx, at(0), y - 30, at(d.ms), y - 30, GREEN, 5);
+  text(ctx, 'one second of air', at(d.ms / 2), y - 50, {size: 15, colour: GREEN});
+  ctx.fillStyle = 'rgba(240,244,246,.9)'; ctx.beginPath(); ctx.arc(at(flown), y - 12, 7, 0, Math.PI * 2); ctx.fill();
 }
 function closeReadout(ctx, view, kind) {
   const r = view.rig;
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   if (kind === 'rope') {
     text(ctx, 'THE ROPE’S GAUGE', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-    const cx = 330, cy = 530, rad = 100, share = Math.min(1, r.drag / 60);
+    const cx = 330, cy = 530, rad = 100, share = Math.min(1, r.drag / 300);
     ctx.fillStyle = theme.dial; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#2b3236'; ctx.lineWidth = 2;
-    for (let k = 0; k <= 6; k++) { const a = Math.PI * (.75 + 1.5 * k / 6); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * rad * .8, cy + Math.sin(a) * rad * .8); ctx.lineTo(cx + Math.cos(a) * rad * .95, cy + Math.sin(a) * rad * .95); ctx.stroke(); text(ctx, String(k * 10), cx + Math.cos(a) * rad * .64, cy + Math.sin(a) * rad * .64, {size: 13, colour: '#2b3236'}); }
+    for (let k = 0; k <= 6; k++) { const a = Math.PI * (.75 + 1.5 * k / 6); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * rad * .8, cy + Math.sin(a) * rad * .8); ctx.lineTo(cx + Math.cos(a) * rad * .95, cy + Math.sin(a) * rad * .95); ctx.stroke(); text(ctx, String(k * 50), cx + Math.cos(a) * rad * .64, cy + Math.sin(a) * rad * .64, {size: 13, colour: '#2b3236'}); }
     const a = Math.PI * (.75 + 1.5 * share);
     ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * rad * .85, cy + Math.sin(a) * rad * .85); ctx.stroke();
     text(ctx, 'kg', cx, cy + 40, {size: 14, colour: '#2b3236'});
     text(ctx, `Drag: ${kg(r.drag)}`, 640, 500, {size: 32, colour: ORANGE, weight: 800});
     text(ctx, 'the air pushing the car back', 640, 544, {size: 18, colour: theme.text});
+    text(ctx, `Top speed with this wing: ${r.top} km/h`, 640, 590, {size: 20});
     return;
   }
   text(ctx, 'THE SCALE', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
@@ -260,22 +297,24 @@ function closeReadout(ctx, view, kind) {
     ctx.fillStyle = theme.good; ctx.fillRect(x0 + carW, 540, pw, 34);
     text(ctx, `+ push ${kg(r.push)}`, x0 + carW + pw + 10, 557, {size: 16, align: 'left', colour: GREEN});
   }
-  text(ctx, r.push > .5 ? 'Only the air touches the car.' : 'The fan is off: the scale reads the car alone.', 500, 616, {size: 17, colour: theme.faint});
+  text(ctx, r.push > .5 ? 'Only the air is pressing down on the car.' : r.on && r.ms > 0 ? 'A flat wing turns no air, so the scale reads the car alone.' : 'The fan is off, so the scale reads the car alone.', 500, 616, {size: 17});
 }
 function table(ctx, view) {
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   const cols = [[90, 'Fan', 'left'], [250, 'Wing', 'left'], [520, 'Push down', 'right'], [700, 'Drag', 'right'], [900, 'Top speed', 'right']];
   text(ctx, 'THE RUNS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   for (const [x, label, align] of cols) text(ctx, label, x, LOW.y + 48, {size: 15, align, colour: theme.faint, weight: 800});
-  if (!view.rows.length) text(ctx, 'No runs yet: Space runs the fan.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
+  if (!view.rows.length) text(ctx, 'There are no runs yet.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
+  const first = view.rows[0]?.push;
   view.rows.slice(-6).forEach((row, i) => {
     const y = LOW.y + 86 + i * 34;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(LOW.x + 10, y - 16, LOW.w - 20, 32);
-    text(ctx, `${row.speed} mph`, 90, y, {size: 18, align: 'left'});
+    text(ctx, `${row.kmh} km/h`, 90, y, {size: 18, align: 'left'});
     text(ctx, WING_NAME[row.wing], 250, y, {size: 18, align: 'left'});
     text(ctx, kg(row.push), 520, y, {size: 18, align: 'right', colour: GREEN});
+    if (view.times && first > 0 && row.push !== first) text(ctx, `× ${Math.round(row.push / first)}`, 534, y, {size: 18, align: 'left', colour: theme.accent, weight: 800});
     text(ctx, kg(row.drag), 700, y, {size: 18, align: 'right', colour: ORANGE});
-    text(ctx, `${row.top} mph`, 900, y, {size: 18, align: 'right'});
+    text(ctx, `${row.top} km/h`, 900, y, {size: 18, align: 'right'});
   });
 }
 // Brian's course: its card on the left, and the car driving the bend (holding, or sliding wide) or the straight.
@@ -283,11 +322,11 @@ function course(ctx, view) {
   const j = view.job, wing = view.wingPanel.wing;
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   text(ctx, `BRIAN’S JOB · COURSE ${j.course} OF ${j.of}${j.done ? ' · DONE' : ''}`, LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.accent, weight: 800});
-  text(ctx, j.bend ? `A ${j.mph} mph bend` : 'One long straight', LOW.x + 24, LOW.y + 60, {size: 26, align: 'left'});
-  text(ctx, j.bend ? `It needs ${kg(j.needKg)} of push.` : 'No bend: top speed is all.', LOW.x + 24, LOW.y + 96, {size: 18, align: 'left', colour: theme.accent});
-  text(ctx, `Your wing: ${WING_NAME[wing]}`, LOW.x + 24, LOW.y + 150, {size: 18, align: 'left'});
-  text(ctx, `push at ${j.mph} mph: ${kg(pushKg(j.mph, wing))}`, LOW.x + 24, LOW.y + 182, {size: 17, align: 'left', colour: GREEN});
-  text(ctx, `top speed: ${topOf(wing)} mph`, LOW.x + 24, LOW.y + 212, {size: 17, align: 'left'});
+  text(ctx, j.bend ? `A bend at ${j.kmh} km/h` : 'One long straight', LOW.x + 24, LOW.y + 60, {size: 26, align: 'left'});
+  text(ctx, j.bend ? `It needs ${kg(j.needKg)} of push.` : 'There is no bend, so only top speed matters.', LOW.x + 24, LOW.y + 96, {size: 18, align: 'left', colour: theme.accent});
+  text(ctx, `Your wing: ${WING_NAME[wing].toLowerCase()}`, LOW.x + 24, LOW.y + 150, {size: 18, align: 'left'});
+  text(ctx, `push at ${j.kmh} km/h: ${kg(pushKg(j.speed, wing))}`, LOW.x + 24, LOW.y + 182, {size: 17, align: 'left', colour: GREEN});
+  text(ctx, `top speed: ${topOf(wing)} km/h`, LOW.x + 24, LOW.y + 212, {size: 17, align: 'left'});
   // The course picture: x 470 to 950.
   ctx.save(); ctx.beginPath(); ctx.rect(462, LOW.y + 6, 492, LOW.h - 12); ctx.clip();
   ctx.fillStyle = '#3b3527'; ctx.fillRect(462, LOW.y + 6, 492, LOW.h - 12);
@@ -296,19 +335,19 @@ function course(ctx, view) {
     const cx = 708, cy = LOW.y + LOW.h + 40, rad = 200;
     ctx.strokeStyle = '#23272a'; ctx.lineWidth = 56; ctx.beginPath(); ctx.arc(cx, cy, rad, Math.PI, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = 'rgba(245,240,220,.4)'; ctx.lineWidth = 2; ctx.setLineDash([14, 12]); ctx.beginPath(); ctx.arc(cx, cy, rad, Math.PI, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    text(ctx, `${j.mph} mph`, cx, cy - rad + 70, {size: 20, colour: theme.accent});
+    text(ctx, `${j.kmh} km/h`, cx, cy - rad + 70, {size: 20, colour: theme.accent});
     // Holding, the car follows the middle of the road; short of push it runs wide off the outside of the bend.
     const slide = d && !d.holds ? Math.max(0, u - .3) ** 1.4 * 140 : 0;
     const a = Math.PI + u * Math.PI * .75, r = rad + slide;
     const px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r;
     ctx.save(); ctx.translate(px, py); ctx.rotate(a + Math.PI / 2 - (slide > 0 ? .5 * Math.min(1, slide / 80) : 0)); car(ctx, 26, 0, .56); ctx.restore();
-    if (d && u >= 1) text(ctx, d.holds ? 'held its line' : 'slid wide', cx, cy - rad - 40 < LOW.y + 30 ? LOW.y + 40 : cy - rad - 40, {size: 22, colour: d.holds ? GREEN : theme.bad, weight: 800});
+    if (d && u >= 1) text(ctx, d.holds ? 'The car held the bend.' : 'The car slid wide.', cx, cy - rad - 40 < LOW.y + 30 ? LOW.y + 40 : cy - rad - 40, {size: 22, colour: d.holds ? GREEN : theme.bad, weight: 800});
   } else {
     const y = LOW.y + 150;
     ctx.fillStyle = '#23272a'; ctx.fillRect(462, y - 30, 492, 60);
     ctx.strokeStyle = 'rgba(245,240,220,.4)'; ctx.lineWidth = 2; ctx.setLineDash([14, 12]); ctx.beginPath(); ctx.moveTo(462, y); ctx.lineTo(954, y); ctx.stroke(); ctx.setLineDash([]);
     car(ctx, 540 + u * 380, y + 4, .7);
-    if (d) text(ctx, `${Math.round(topOf(d.wing) * Math.min(1, u * 1.3))} mph`, 708, y + 70, {size: 26, colour: theme.accent, weight: 800});
+    if (d) text(ctx, `${Math.round(topOf(d.wing) * Math.min(1, u * 1.3))} km/h`, 708, y + 70, {size: 26, colour: theme.accent, weight: 800});
   }
   ctx.restore();
 }
@@ -320,13 +359,14 @@ function drawTunnel(ctx, view) {
   if (view.wingPanel) wingPanel(ctx, view);
   if (view.low === 'course' && view.job) course(ctx, view);
   else if (view.low === 'wing') closeWing(ctx, view);
+  else if (view.low === 'speed') closeSpeed(ctx, view);
   else if (view.low === 'scale' || view.low === 'rope') closeReadout(ctx, view, view.low);
   else table(ctx, view);
   // The glow on what to use next.
   if (view.glow === 'fan' || view.glow === 'set' && view.target === 'go') glowBox(ctx, view, FAN.x - FAN.r - 8, FAN.y - FAN.r - 8, 2 * FAN.r + 16, 2 * FAN.r + 16);
   const wingNext = view.wingPanel && !view.wingPanel.locked && view.best && view.wingPanel.wing !== view.best.wing;
   if (view.glow === 'wing' || view.glow === 'set' && view.target === 'set:best' && wingNext) glowBox(ctx, view, WINGP.x - 4, WINGP.y - 4, WINGP.w + 8, WINGP.h + 8);
-  else if (view.glow === 'set' && view.target === 'set:best' && view.dial && !view.dial.locked) glowBox(ctx, view, DIAL.x - 4, DIAL.y - 4, DIAL.w + 8, DIAL.h + 8);
+  else if (view.glow === 'dial' || view.glow === 'set' && view.target === 'set:best' && view.dial && !view.dial.locked) glowBox(ctx, view, DIAL.x - 4, DIAL.y - 4, DIAL.w + 8, DIAL.h + 8);
 }
 
 // The questions: two pushes (shown once answered), three bends, and the Tune page's row.
@@ -335,7 +375,7 @@ function drawCheck(ctx, view) {
   if (view.pushes) {
     view.pushes.forEach((p, i) => {
       const y = 240 + i * 150;
-      text(ctx, `Steep wing at ${p.speed} mph`, 60, y - 50, {size: 20, align: 'left'});
+      text(ctx, `The steep wing at ${p.kmh} km/h`, 60, y - 50, {size: 20, align: 'left'});
       ctx.fillStyle = '#23272a'; ctx.fillRect(60, y - 24, 880, 48);
       if (view.answered) { ctx.fillStyle = theme.good; ctx.fillRect(60, y - 24, 880 * p.kg / 520, 48); text(ctx, kg(p.kg), 70 + 880 * p.kg / 520, y, {size: 20, align: 'left', colour: GREEN}); }
       else text(ctx, '?', 500, y, {size: 26, colour: theme.faint});
@@ -346,8 +386,8 @@ function drawCheck(ctx, view) {
     view.bends.forEach((b, i) => {
       const x = 180 + i * 320, y = 300;
       panel(ctx, x - 140, y - 140, 280, 260);
-      text(ctx, `${b.mph} mph`, x, y - 110, {size: 22});
-      bendPicture(ctx, x, y + 40, 90 - i * 0);
+      text(ctx, `${b.name} at ${b.kmh} km/h`, x, y - 110, {size: 20});
+      bendPicture(ctx, x, y + 40, [46, 72, 100][i]);
       if (view.answered) { arrowLine(ctx, x, y - 70, x, y - 60 + b.kg * .2, theme.good); text(ctx, `push ${kg(b.kg)}`, x, y + 100, {size: 20, colour: GREEN}); }
     });
     return;
@@ -379,18 +419,18 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     if (idea.id === 'push') {
-      // The steep wing's push at 50, 100 and 150 mph, to the same scale.
-      [50, 100, 150].forEach((mph, k) => {
-        const y = 130 + k * 70, kgNow = pushKg(mph, 'big');
+      // The steep wing's push at the watch's three speeds, to the same scale.
+      [50, 100, 150].forEach((speed, k) => {
+        const y = 130 + k * 70, kgNow = pushKg(speed, 'big');
         ctx.fillStyle = theme.good; ctx.fillRect(x + 30, y, kgNow * .46, 16);
-        text(ctx, `${mph} mph: ${kg(kgNow)}`, x + 30, y - 14, {size: 15, align: 'left'});
+        text(ctx, `${kmh(speed)} km/h: ${kg(kgNow)}`, x + 30, y - 14, {size: 15, align: 'left'});
       });
     }
     if (idea.id === 'drag') {
       WINGS.forEach((wing, k) => {
         const y = 140 + k * 66;
         wingShape(ctx, x + 70, y, 70, TILT[wing]);
-        text(ctx, `${topOf(wing)} mph`, x + 150, y, {size: 20, align: 'left'});
+        text(ctx, `${topOf(wing)} km/h`, x + 150, y, {size: 20, align: 'left'});
       });
     }
     if (idea.id === 'choose') {
@@ -401,7 +441,7 @@ function drawRecap(ctx, view) {
       text(ctx, 'fast bends', x + 85, 170, {size: 14, colour: theme.faint}); text(ctx, 'long straights', x + 220, 170, {size: 14, colour: theme.faint});
       text(ctx, 'less wing', x + 220, 290, {size: 15, colour: theme.accent});
     }
-    wrap(ctx, idea.text, x + w / 2, 400, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 380, w - 30, {size: 19, weight: 600});
   });
 }
 
@@ -431,7 +471,7 @@ export function drawPicture(ctx, picture, w, h) {
   }
   if (picture.kind === 'bend') {
     bendPicture(ctx, w / 2, h * .62, Math.min(60, h * .55));
-    text(ctx, `${picture.mph} mph`, w / 2, h * .62, {size: 15, colour: theme.accent});
+    text(ctx, `${picture.kmh} km/h`, w / 2, h * .62, {size: 15, colour: theme.accent});
   }
   if (picture.kind === 'game') {
     car(ctx, w / 2 + 50, h / 2 + 8, 1.1);
