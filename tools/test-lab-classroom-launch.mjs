@@ -186,7 +186,7 @@ test('Brian’s job: each mark starts on a miss, fixes one thing, and every miss
   assert.match(session.view().brian.text, /^The skier landed 24\.2 m along the tape, which is 5\.8 m short of the 30 m flag\. Tilt the ramp flatter, towards 45 degrees, by pressing ↓, then press Space\./, 'no more speed at the top of the dial');
   setTo(session, 45, 18); fly(session);
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /^With the ramp at 45 degrees and the dial at 65 km\/h, the skier landed 29\.5 m, on my 30 m mark\. Job done/);
+  assert.match(session.view().brian.text, /^With the ramp at 45 degrees and the dial at 65 km\/h, the skier landed 29\.5 m, on my 30 m mark, which finishes the job/);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me sets and launches', () => {
