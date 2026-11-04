@@ -18,8 +18,9 @@ note covers the first batch; each later batch adds a section.
   no formulas shows no panel. The board loses no size on Kyle's screen, because the panel takes the empty margin
   he marked.
 - **The bucket.** A water challenge started from the Lab (Projectile, Fire) now fits the bucket itself
-  (`heli-session.js` `startChallenge`), which is the option Kyle preferred. A rescue line or a hooked car still
-  refuses with its own reason.
+  (`heli-session.js` `startChallenge`), which is the option Kyle preferred. A hooked load or a rescue line refuses as
+  before ("Set the load down first"), and a ruined bucket refuses with "The bucket is ruined; repair it first", because it
+  holds nothing.
 
 ## What changed: Projectile motion
 

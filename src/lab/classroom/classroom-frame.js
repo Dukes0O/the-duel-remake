@@ -20,7 +20,7 @@ export function createClassroomSession(lesson) {
   const model = lesson.createModel();
   let index = 0, furthest = 0, help = 0, idle = 0, offered = false, slow = false, time = 0;
   // nudge: Brian's offer of help when the player seems stuck, shown under his words so it never replaces them.
-  let bubble = null, celebrate = null, pointer = null, nudge = null;
+  let bubble = null, celebrate = null, pointer = null, nudge = null, lastSay = null;
   const done = new Set(), events = [];
   // The page: what each step has taught so far (its first words and its latest result). Nothing is replaced by the next step.
   const page = new Map();
@@ -42,7 +42,7 @@ export function createClassroomSession(lesson) {
   }
   const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
   function enter(i) {
-    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null; nudge = null;
+    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null; nudge = null; lastSay = null;
     model.enter(i);
   }
   const current = () => model.view({help, assist: help >= HELP_RUNGS});
@@ -75,12 +75,14 @@ export function createClassroomSession(lesson) {
       time += step;
       handle(model.tick(step * (slow ? SLOW_MOTION : 1)));
       const v = current();
+      // A result that arrives with no event (a Watch ending) replaces a hint the player asked for during it.
+      if (v.say !== lastSay) { if (lastSay !== null && bubble?.mood === 'hint') bubble = null; lastSay = v.say; }
       // Show me: the pointer reaches the control, Brian presses it, and hands the next part back.
       if (pointer && !pointer.done && time - pointer.at >= SHOW_ME_S && v.target === pointer.action && !v.pointOnly) {
         pointer.done = true;
         handle(model.act(pointer.action));
         celebrate = null; help = 0;
-        bubble = {text: `Like that. ${current().say}`, mood: 'talk'};
+        bubble = {text: `Watch how I do it. ${current().say}`, mood: 'talk'};
         return;
       }
       if (!v.waiting) { idle = 0; return; }
@@ -92,6 +94,8 @@ export function createClassroomSession(lesson) {
     view() {
       const v = current(), step = lesson.steps[index], row = pageRow(index);
       row.setup ??= v.say;
+      // A step that has finished may end on new words of its own, with no event: they are its result.
+      if (v.ready && v.say && v.say !== row.setup) row.result = v.say;
       return {
         ...v, index, step, slow, help, time,
         page: lesson.steps.slice(0, index + 1).map((_, i) => page.get(i)).filter(Boolean),

@@ -11,7 +11,7 @@ const kbd = key => `<kbd>${escape(key)}</kbd>`;
 const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space',
   KeyW: 'W', KeyS: 'S', KeyA: 'A', KeyD: 'D', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'};
 const SPARK_COLOURS = ['#ffd27a', '#f0a148', '#fff2c8', '#e8803a'];
-// Formulas: x^2 is drawn raised. The player's choice to hide the panel lasts for the visit to the Lab.
+// Formulas: x^2 is drawn raised. The player's choice to hide the panel lasts until the game is reloaded.
 const math = value => escape(value).replace(/\^(\d)/g, '<sup>$1</sup>');
 let physicsChoice = null;
 
@@ -176,7 +176,9 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   // The running page: every step so far, oldest first, with the newest words last.
   function paintPage(v, brian) {
     const rows = v.page.map((row, i) => {
-      const lines = [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && !(i === v.page.length - 1 && text === brian.text));
+      // The newest step shows only what comes before Brian's words now, so a step done again starts from its opening words.
+      const newest = i === v.page.length - 1, again = newest && brian.text === row.setup;
+      const lines = again ? [] : [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && !(newest && text === brian.text));
       return `<section class="${i === v.page.length - 1 ? 'now' : ''}"><h4>${escape(row.title)}</h4>${lines.map(text => `<p>${escape(text)}</p>`).join('')}</section>`;
     }).join('');
     const moved = setHtml($('.lc-past'), 'past', rows);

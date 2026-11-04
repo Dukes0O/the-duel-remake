@@ -23,10 +23,10 @@ function playThroughTo(session, id) {
   while (session.view().step.id !== id) {
     const step = session.view().step.id;
     if (step === 'wonder' || step === 'watch') until(session, x => x.ready);
-    else if (step === 'word-angle') setTo(session, 45);
     else if (step === 'word-speed') setTo(session, null, 20);
+    else if (step === 'word-angle') setTo(session, 45);
     else if (step === 'word-distance') { session.act('go'); until(session, x => x.ready); }
-    else if (step === 'try-free') for (let i = 0; i < FREE_TRIES; i++) fly(session);
+    else if (step === 'try-free') { fly(session); for (let i = 1; i < FREE_TRIES; i++) { session.act('angle:up'); fly(session); } }
     else if (step === 'try-flag') { session.act('answer:2'); setTo(session, 60); fly(session); }
     else if (step === 'try-speed') { setTo(session, null, 18); session.act('go'); session.act('answer:1'); until(session, x => x.ready); }
     else if (step === 'alone') { setTo(session, null, 22); fly(session); setTo(session, 70); fly(session); setTo(session, 45, 18); fly(session); }
@@ -51,7 +51,7 @@ function benchPasses(attempts) {
 test('the lesson walks the seven parts in order, keeps the old notebook words, and finishes on the bench', () => {
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
-  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['launch-launch-angle', 'launch-speed', 'launch-distance'], 'the old lesson’s notebook ids');
+  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['launch-speed', 'launch-launch-angle', 'launch-distance'], 'the old lesson’s notebook ids');
   assert.deepEqual(lesson.words.map(w => w.word), ['Launch angle', 'Speed', 'Distance']);
   assert.equal(lesson.name, 'Launch angles');
   assert.equal(lesson.finishLabel, 'Finish the lesson');
@@ -103,17 +103,17 @@ test('words: the ramp tilts, the dial turns, and the tape reads the landing', ()
   assert.match(session.view().brian.text, /^At 60 degrees the skier went high but moved forward slowly, and landed 30\.5 m along the tape\. At 30 degrees the skier stayed low but moved forward quickly, and landed 31\.6 m\. Those are two very different jumps that land in nearly the same spot/);
   assert.deepEqual(session.view().rows.map(r => r.angle), [60, 30]);
   session.act('next');
+  assert.equal(session.view().dial.kmh, 65, 'the dial starts away from its answer');
+  assert.equal(session.view().ramp.locked, true);
+  session.act('speed:up'); session.act('speed:up');
+  assert.match(session.view().brian.text, /^A dial reading of 72 km\/h is about the same as 20 m\/s, and that is how fast the skier leaves the end of the ramp\./);
+  session.act('next');
   assert.equal(session.view().ramp.angle, 60, 'the ramp starts away from its answer');
   assert.equal(session.view().ready, false);
   session.act('angle:down'); session.act('angle:down');
   assert.equal(session.view().ready, false);
   session.act('angle:down');
-  assert.match(session.view().brian.text, /^The ramp is now at 45 degrees, halfway between level ground and straight up\. That angle is the launch angle\. The ramp divides the skier’s speed into two parts/);
-  session.act('next');
-  assert.equal(session.view().dial.kmh, 65, 'the dial starts away from its answer');
-  assert.equal(session.view().ramp.locked, true);
-  session.act('speed:up'); session.act('speed:up');
-  assert.match(session.view().brian.text, /^The dial now reads 72 km\/h, which is 20 m\/s\. That is how fast the skier leaves the end of the ramp\./);
+  assert.match(session.view().brian.text, /^A ramp at 45 degrees points halfway between level ground and straight up, and that angle is its launch angle\. The ramp divides the skier’s speed into two parts/);
   session.act('next');
   session.act('go'); until(session, x => x.ready);
   assert.match(session.view().brian.text, /^The tape reads 35\.6 m, which is further than both the 60 degree and the 30 degree jumps\. Leaving out the air, the formulas predict 40\.9 m\./);
@@ -203,7 +203,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     if (v.pointer.action === 'go') assert.equal(hitTest(v, ...at)?.action, 'go', `${id}: a click where Brian points launches`);
     else assert.ok(hitTest(v, ...at), `${id}: Brian points at the ramp or the dial`);
     run(session, SHOW_ME_S + .1);
-    assert.match(session.view().brian.text, /^Like that\. /);
+    assert.match(session.view().brian.text, /^Watch how I do it\. /);
     if (id === 'try-speed') { until(session, x => x.cards.length === 3, 5); session.act('answer:1'); }
     if (id === 'alone') for (let k = 1; k < MARKS.length; k++) { until(session, x => x.keys.Space === 'go' && x.job.mark === k + 1, 20); for (let h = 0; h < 3; h++) session.act('help'); run(session, SHOW_ME_S + .1); }
     until(session, x => x.ready, 40);
@@ -252,6 +252,7 @@ test('the free test and the formulas: every press of the ramp or the dial change
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-angle');
   assert.equal(session.view().ramp.angle, 60);
+  assert.equal(session.view().formulas.length, 3, 'only the sums that have been explained so far');
   let worked = session.view().formulas.map(f => f.worked);
   assert.equal(worked[1], '20 × cos 60° = 10.00 m/s');
   assert.equal(worked[2], '20 × sin 60° = 17.32 m/s');
@@ -268,14 +269,16 @@ test('the free test and the formulas: every press of the ramp or the dial change
   playThroughTo(free, 'try-free');
   assert.ok(!free.view().ready);
   free.act('speed:up');
-  assert.match(free.view().formulas[0].worked, /^76 km\/h ÷ 3\.6 = 21 m\/s$/, 'the dial changes the sum');
+  assert.equal(free.view().formulas[0].worked, '21 m/s × 3.6 = 75.6 km/h', 'the dial changes the sum');
   fly(free);
   assert.match(free.view().brian.text, /skier landed 38\.7 m along the tape\. Leaving out the air, the formulas predict 45\.0 m, so the friction of the air shortened the jump by 6\.3 m/);
   assert.match(free.view().formulas.at(-1).note, /The tape read 38\.7 m/);
   assert.ok(!free.view().ready);
+  fly(free);
+  assert.ok(!free.view().ready, 'the same setting again does not count as a different one');
   free.act('angle:up'); fly(free); free.act('angle:up'); fly(free);
   assert.ok(free.view().ready, 'three tests open Continue');
-  assert.equal(free.view().rows.length, 3, 'the table keeps the results');
+  assert.equal(free.view().rows.length, 4, 'the table keeps the results');
   assert.equal(noAirDistance(45, 20), 40.9, 'what Brian says is what the panel’s numbers give');
 });
 

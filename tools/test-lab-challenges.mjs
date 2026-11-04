@@ -451,6 +451,11 @@ test('a water challenge started from the Lab has the bucket on the hook, and any
     assert.equal(session.startChallenge(id).ok, true, id);
     assert.equal(!!session.view().bucket, bucket, id);
   }
+  // A ruined bucket holds nothing, so the challenge refuses and says why instead of fitting it.
+  const profile = readyProfile();
+  const ruined = sessionOf({...profile, heli: {...profile.heli, bucket: {...profile.heli?.bucket, damage: 3}}}, {labEnabled: true});
+  ruined.start();
+  assert.match(ruined.startChallenge('projectile').reason ?? '', /ruined/);
 });
 
 // ---- Projectile motion, flown: scoop from the lake, aim with the ring, drop on the buoys ------------------------

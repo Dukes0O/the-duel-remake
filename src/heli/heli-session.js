@@ -15,7 +15,7 @@ import {HOME_COURSE, destinationsFor, legFuelKg, bearing, isDestination, dayJobs
 import {isCourseUnlocked} from '../course-access.js';
 import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLesson, carryGuidance} from './heli-lessons.js';
 import {CRATE} from './heli-cable.js';
-import {BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
+import {DAMAGE_NAMES, BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
 import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine, CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge,
   challengeProps, challengeBriefing, passLabChallenge, labChallengeOpen, labChallengesDone,
   aerialsOpen, waxKitOwned, skiWaxFor, snowOfDay, WAXES, waxSetting, waxRunResult} from '../lab/lab-heli.js';
@@ -998,6 +998,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   // ---- the Lab's helicopter challenges (docs/LAB.md 4.1, src/lab/lab-challenges.js) ----
   // A try starts on the home pad with the helicopter on the ground. The loads it uses are `labLoad`s, removed with it.
   const WATER_CHALLENGES = ['projectile', 'fire'];
+  const bucketHoldsAfterDamage = () => DAMAGE_NAMES[bucketDamageOf(save)] !== 'ruined';
   function layLabLoad(id, spot) {
     const car = id === 'altitude'
       ? Object.assign(createLoad({id: 'lab-crate', massKg: CHALLENGE_RULES.altitude.crateKg, x: spot.x, z: spot.z, heading: 0, ground: world.ground}), {crate: true})
@@ -2113,6 +2114,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (WATER_CHALLENGES.includes(id) && !fire) return {ok: false, reason: 'Forest fires are not available yet.'};
       if (id === 'lift' && heli.fuelKg < CHALLENGE_RULES.lift.fullTankKg) return {ok: false, reason: 'Fill the tank first.'};
       if (id === 'altitude' && !placesNow()[CHALLENGE_RULES.altitude.courseId]) return {ok: false, reason: 'Summit Run is not open yet.'};
+      if (WATER_CHALLENGES.includes(id) && !bucketLoad() && !bucketHoldsAfterDamage()) return {ok: false, reason: 'The bucket is ruined; repair it first.'};
       endChallenge(null);
       // A water challenge starts ready: the lesson goes on in the air, not on the fitting menu (Kyle, 4 November 2026).
       if (WATER_CHALLENGES.includes(id) && !bucketLoad()) {

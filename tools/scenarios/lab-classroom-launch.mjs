@@ -34,6 +34,9 @@ export async function run(c) {
   await wait(2000); await shot('wonder-flying'); await at('wonder', 's.ready'); await shot('wonder');
   if (!(await bubble()).includes('nearly the same spot')) throw Error('The wonder should end on the two landings: ' + await bubble());
   await next('wonder');
+  // Speed first: the dial, and m/s, are defined before the arrows use them.
+  await at('word-speed'); await shot('word-speed'); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
+  await next('word-speed');
   // Launch angle: one click on the ramp panel's Flatter, then ↓ twice more.
   await at('word-angle'); await shot('word-angle');
   const flatter = await toScreen(690, 160);
@@ -42,11 +45,9 @@ export async function run(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
   await prompt('at 55 degrees', 'the click on Flatter tilts the ramp 5 degrees');
   await press('ArrowDown', 2); await at('word-angle', 's.ready'); await shot('word-angle-done');
-  await next('word-angle');
-  await at('word-speed'); await shot('word-speed'); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
   // Backspace goes back one step, which stays done; Enter comes forward again.
-  await press('Backspace'); await at('word-angle', 's.ready'); await press('Enter');
-  await next('word-speed');
+  await press('Backspace'); await at('word-speed', 's.ready'); await press('Enter');
+  await next('word-angle');
   await at('word-distance'); await press('Space'); await wait(900); await shot('word-distance-flying'); await at('word-distance', 's.ready');
   await saying('35.6 m', 'the tape reads the landing'); await shot('word-distance-done');
   await next('word-distance');
@@ -57,8 +58,8 @@ export async function run(c) {
   await at('try-free'); await shot('try-free');
   await press('ArrowDown', 2); await press('ArrowRight', 2); await wait(200); await shot('try-free-set');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('22 × cos 35°'))`))) throw Error('The formulas did not follow the ramp and the dial.');
-  await press('Space'); await wait(1200); await shot('try-free-flying'); await saying('Change a setting', 'the first launch says its result');
-  await press('ArrowUp', 5); await press('Space'); await saying('Change a setting', 'the second launch says its result'); await wait(300);
+  await press('Space'); await wait(1200); await shot('try-free-flying'); await saying('test a different one', 'the first launch says its result');
+  await press('ArrowUp', 5); await press('Space'); await saying('test a different one', 'the second launch says its result'); await c.waitFor(`document.querySelector('.lc-prompt')?.textContent.includes('tested so far: 2')`, 'two settings counted', 10_000); await wait(300);
   await press('ArrowDown', 3); await press('Space'); await at('try-free', 's.ready'); await shot('try-free-three');
   await next('try-free');
   await at('try-flag', 's.cards === 3'); await shot('try-flag-guess'); await press('Digit1');
@@ -79,7 +80,7 @@ export async function run(c) {
   await saying('For the third mark', 'Show me sets and launches mark 2');
   await press('Space'); await saying('short of the 30 m flag', 'mark 3 starts on a miss'); await shot('alone-mark3-short');
   await press('ArrowDown', 6); await press('ArrowRight', 2); await prompt('65 km/h', 'set for the mark'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
-  if (!(await bubble()).includes('Job done')) throw Error('The job should end done: ' + await bubble());
+  if (!(await bubble()).includes('finishes the job')) throw Error('The job should end done: ' + await bubble());
   await next('alone');
   for (const [step, answer] of [['check-pair', 'Digit1'], ['check-lower', 'Digit2'], ['check-game', 'Digit1']]) {
     await at(step); await shot(step); await press(answer); await at(step, 's.ready'); await wait(500); await shot(`${step}-answered`);

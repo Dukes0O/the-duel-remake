@@ -156,7 +156,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(v.pointer, `${id}: Brian points`);
     assert.ok(targetPoint(v, v.pointer.action), `${id}: at a place on the board`);
     run(session, SHOW_ME_S + .2);
-    assert.match(session.view().brian.text, /^Like that\. /);
+    assert.match(session.view().brian.text, /^Watch how I do it\. /);
     until(session, x => x.ready, 30);
   }
   const job = createClassroomSession(lesson);

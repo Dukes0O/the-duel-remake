@@ -39,6 +39,31 @@ test('a hint or a "watch this" line is not kept on the page, and going back show
   assert.deepEqual(session.view().page.map(r => r.title), ['Why did the water miss?', 'Metres per second']);
 });
 
+test('a result that arrives with no event stays on the page, and replaces a hint the player asked for', () => {
+  const session = createClassroomSession(projectile);
+  until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  assert.equal(session.view().step.id, 'watch-water');
+  session.tick(.05); session.act('help');
+  assert.equal(session.view().brian.text, session.view().hints[0]);
+  until(session, v => v.ready);
+  assert.match(session.view().brian.text, /The friction of the air against the droplets/, 'the explanation, not the hint');
+  session.act('next');
+  assert.match(session.view().page.at(-2).result, /The friction of the air against the droplets/, 'and it stays on the page');
+});
+
+test('a step done again shows its opening words before anything it found out the first time', () => {
+  const session = createClassroomSession(projectile);
+  until(session, v => v.ready); session.act('next');
+  session.act('drop'); until(session, v => v.ready); session.act('next');
+  session.act('back');
+  const v = session.view();
+  assert.equal(v.brian.text, v.page.at(-1).setup, 'the opening words are Brian’s words now');
+});
+
 // Every lesson moves onto this list as it is rewritten (card, "Order"); when all are on it, it becomes the whole of CLASSROOM_LESSONS.
 const REWRITTEN = ['projectile', 'launch'];
 test('a rewritten lesson calls no object she or her, uses one measurement system, and has physics that determines rather than decides', () => {
@@ -49,7 +74,7 @@ test('a rewritten lesson calls no object she or her, uses one measurement system
   }
 });
 
-test('a rewritten lesson shows formulas on every step after the first, and the same answer is never asked with a word the answers do not fit', () => {
+test('a rewritten lesson shows formulas on every step after the first', () => {
   for (const id of REWRITTEN) {
     const lesson = CLASSROOM_LESSONS[id], model = lesson.createModel();
     lesson.steps.forEach((step, i) => {

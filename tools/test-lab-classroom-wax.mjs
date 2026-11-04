@@ -125,7 +125,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(at, `${id}: at a place on the board`);
     if (v.pointer.action === 'pick:best') assert.equal(hitTest(v, ...at)?.action, `pick:${v.best}`, `${id}: a click where Brian points picks the right tin`);
     run(session, SHOW_ME_S + .2);
-    assert.match(session.view().brian.text, /^Like that\. /);
+    assert.match(session.view().brian.text, /^Watch how I do it\. /);
     if (id === 'alone') for (let i = 1; i < DAYS.length; i++) { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     until(session, x => x.ready, 30);
   }

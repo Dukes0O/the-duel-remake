@@ -284,7 +284,7 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.fuel.intro` | A jerry can on the scale, then the car timed from nought to sixty, full and half full. |
 | `lab.brian.fuel.explain` | Petrol weighs about three quarters of a kilo a litre, so a seventy litre tank holds about fifty two kilos. A lighter car speeds up quicker. Electric cars carry batteries instead, which weigh the same full or empty. |
 | `lab.brian.fuel.pass` | Less fuel, less weight, a quicker car. But you still have to finish the race. |
-| `lab.brian.launch.intro` | This is a small launcher. You set the angle and the speed of the ramp, and the tape measures how far the skier travels. |
+| `lab.brian.launch.intro` | This is my small launcher. Watch the tape as it throws the skier from five ramps, one after another, all at the same speed. |
 | `lab.brian.launch.explain` | On level ground, a ramp of about forty five degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. More speed carries the skier further. When the landing is lower than the ramp, a flatter ramp goes furthest. |
 | `lab.brian.launch.pass` | That landed right on target, and that is how you plan a jump. |
 | `lab.brian.wax.intro` | Skis on three kinds of snow, with three waxes. We'll time every glide. |

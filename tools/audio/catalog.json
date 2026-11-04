@@ -7063,7 +7063,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.launch.intro",
       "cue": "lab.brian.launch.intro",
-      "text": "This is a small launcher. You set the angle and the speed of the ramp, and the tape measures how far the skier travels.",
+      "text": "This is my small launcher. Watch the tape as it throws the skier from five ramps, one after another, all at the same speed.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7072,12 +7072,12 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 119,
+      "creditsUsed": 123,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-intro.mp3",
-      "sha256": "219fd71412f83f215f15970b914268c3b18e1979333cca79e572013ae0f5ea61",
-      "bytes": 109548,
+      "sha256": "97d06d77a8ee4ced29c313a9153dee082822ebe1c32c9f866ae06e82aed5298c",
+      "bytes": 117071,
       "generated": "2026-11-04"
     },
     {

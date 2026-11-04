@@ -191,7 +191,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     else assert.ok(hitTest(v, ...at), `${id}: Brian points at the rack or the handle`);
     // Brian presses it, says "Like that.", and goes on building where there is more to do.
     run(session, SHOW_ME_S + .1);
-    assert.match(session.view().brian.text, /^Like that\. /);
+    assert.match(session.view().brian.text, /^Watch how I do it\. /);
     if (id === 'word-strength') { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     if (id === 'try-snap') { until(session, x => x.cards.length === 3, 5); session.act('answer:2'); }
     until(session, x => x.ready, 30);

@@ -44,8 +44,8 @@ export const MARKS = Object.freeze([
 
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'Two jumps, one spot'},
-  {id: 'word-angle', part: 1, title: 'Launch angle', word: 'launch-launch-angle'},
   {id: 'word-speed', part: 1, title: 'Speed', word: 'launch-speed'},
+  {id: 'word-angle', part: 1, title: 'Launch angle', word: 'launch-launch-angle'},
   {id: 'word-distance', part: 1, title: 'Distance', word: 'launch-distance'},
   {id: 'watch', part: 2, title: 'Five ramps, one speed', voice: 'lab.brian.launch.intro'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
@@ -106,8 +106,8 @@ const CHECKS = {
     hints: ['A lower landing gives the skier longer in the air.', 'With longer to fall, it pays to send more of the speed forward, which means a flatter ramp.', 'Pick 40 degrees.'],
   },
   'check-game': {
-    question: 'On the Aerials run the kicker always throws you at about 50 degrees. What can you do to fly higher and further?',
-    answers: [{label: 'Hold Shift to tuck on the inrun and leave the kicker faster', picture: {kind: 'kicker', what: 'tuck'}},
+    question: 'On the Aerials run you ski down a slope called the inrun and leave the ground from a snow ramp called the kicker, which always throws you at about 50 degrees. What can you do to fly higher and further?',
+    answers: [{label: 'Hold Shift to tuck, which means crouching low, on the inrun and leave the kicker faster', picture: {kind: 'kicker', what: 'tuck'}},
       {label: 'Lean back to make the kicker steeper', picture: {kind: 'kicker', what: 'lean'}},
       {label: 'Ski more slowly so that the kicker throws you higher', picture: {kind: 'kicker', what: 'slow'}}],
     correct: 0,
@@ -129,10 +129,10 @@ export const noAirDistance = (angle, ms) => Number(splitOf(angle, ms).distance.t
 function formulasFor(angle, ms, tape = null) {
   const {cos, sin, forward, upward, air, distance} = splitOf(angle, ms), f = forward.toFixed(2), u = upward.toFixed(2), t = air.toFixed(2);
   return [
-    {title: 'Speed in metres per second', formula: 'm/s = km/h ÷ 3.6', worked: `${kmh(ms)} km/h ÷ 3.6 = ${ms} m/s`},
+    {title: 'Speed in kilometres per hour', formula: 'km/h = m/s × 3.6', worked: `${ms} m/s × 3.6 = ${(ms * KMH_PER_MS).toFixed(1)} km/h`, note: 'The dial shows this to the nearest whole number.'},
     {title: 'The ramp divides the speed', formula: 'forward = speed × cos(angle)', worked: `${ms} × cos ${angle}° = ${f} m/s`, note: `cos ${angle}° is ${cos.toFixed(2)}, the share of the speed going forward. sin ${angle}° is ${sin.toFixed(2)}, the share going upward.`},
     {title: '', formula: 'upward = speed × sin(angle)', worked: `${ms} × sin ${angle}° = ${u} m/s`},
-    {title: 'Time in the air', formula: 'time = 2 × upward ÷ g', worked: `2 × ${u} ÷ ${G_SHOWN} = ${t} s`, note: 'g is the acceleration caused by gravity, 9.8 m/s².'},
+    {title: 'Time in the air', formula: 'time = 2 × upward ÷ g', worked: `2 × ${u} ÷ ${G_SHOWN} = ${t} s`, note: 'g is the acceleration caused by gravity, 9.8 m/s², which is read as “metres per second, per second”. Gravity changes the skier’s speed by 9.8 m/s during every second.'},
     {title: 'Distance, leaving out the air', formula: 'distance = forward × time', worked: `${f} m/s × ${t} s = ${distance.toFixed(1)} m`},
     {title: 'What the air does', formula: 'slowing = k × speed^2', worked: `${DRAG_K.toFixed(4)} × (${ms} m/s)^2 = ${launchDragAcceleration(ms).toFixed(1)} m/s^2`, note: tape == null ? 'k depends on the size and mass of the skier. The friction of the air slows the skier throughout the flight, so the tape reads shorter than the sum above.' : `The tape read ${m1(tape)}, which is shorter than the sum above, because the friction of the air slows the skier throughout the flight.`},
   ];
@@ -165,7 +165,7 @@ export function createModel() {
 
   function enter(index, keep = {}) {
     m = {index, time: 0, phase: 'ready', flight: null, queue: [], trails: [], rows: [], guess: null, answered: null, say: '', auto: null, lastPress: -1,
-      mark: 0, tries: 0, ...keep};
+      mark: 0, tries: 0, tested: new Set(), ...keep};
     const id = STEPS[index].id;
     if (id === 'wonder') { set.ms = SHOW_MS; queueLaunches(WONDER_ANGLES); }
     if (id === 'word-angle') { set.angle = 60; set.ms = SHOW_MS; m.phase = 'tilt'; }
@@ -216,11 +216,11 @@ export function createModel() {
   }
   function autoSay() {
     const id = step().id, g = goal();
-    if (id === 'word-angle') return 'Watch how it is done. I will tilt the ramp to 45 degrees.';
-    if (id === 'word-speed') return `Watch how it is done. I will turn the dial to ${kmh(SHOW_MS)} km/h.`;
-    if (id === 'try-speed') return `Watch how it is done. I will turn the dial to ${kmh(SLOW_MS)} km/h, and then you can guess where the skier will land.`;
+    if (id === 'word-angle') return 'I will tilt the ramp to 45 degrees.';
+    if (id === 'word-speed') return `I will turn the dial to ${kmh(SHOW_MS)} km/h.`;
+    if (id === 'try-speed') return `I will turn the dial to ${kmh(SLOW_MS)} km/h, and then you can guess where the skier will land.`;
     const parts = [g.angle !== set.angle ? `tilt the ramp to ${g.angle} degrees` : null, g.ms !== set.ms ? `turn the dial to ${kmh(g.ms)} km/h` : null].filter(Boolean);
-    return parts.length ? `Watch how it is done. I will ${parts.join(' and ')}, and then launch.` : 'Watch how it is done. I will launch now.';
+    return parts.length ? `I will ${parts.join(' and ')}, and then launch.` : 'I will launch now.';
   }
 
   function act(action) {
@@ -272,7 +272,7 @@ export function createModel() {
   }
   function tilted() {
     m.phase = 'done'; m.auto = null; seen.add('word-angle');
-    m.say = 'The ramp is now at 45 degrees, halfway between level ground and straight up. That angle is the launch angle. The ramp divides the skier’s speed into two parts, a forward speed and an upward speed, and the two arrows at the end of the ramp show them. At 45 degrees the two parts are equal. A steeper ramp sends more of the speed upward, and a flatter ramp sends more of it forward. You can keep tilting the ramp to watch the arrows and the formulas change.';
+    m.say = 'A ramp at 45 degrees points halfway between level ground and straight up, and that angle is its launch angle. The ramp divides the skier’s speed into two parts, a forward speed and an upward speed, and the two arrows at the end of the ramp show them. At 45 degrees the two parts are equal. A steeper ramp sends more of the speed upward, and a flatter ramp sends more of it forward. You can keep tilting the ramp to watch the arrows and the formulas change.';
     return {kind: 'right', sound: 'lab.clunk', say: m.say};
   }
   // → turns the speed dial 1 m/s faster, ← 1 m/s slower, shown in km/h.
@@ -288,7 +288,7 @@ export function createModel() {
   }
   function turned() {
     m.phase = 'done'; m.auto = null; seen.add('word-speed');
-    m.say = `The dial now reads ${kmh(SHOW_MS)} km/h, which is ${SHOW_MS} m/s. That is how fast the skier leaves the end of the ramp. More speed makes both arrows longer, so the skier moves forward faster and also stays in the air for longer. You can keep turning the dial to watch the arrows and the formulas change.`;
+    m.say = `A dial reading of ${kmh(SHOW_MS)} km/h is about the same as ${SHOW_MS} m/s, and that is how fast the skier leaves the end of the ramp. More speed means that the skier moves forward faster and also stays in the air for longer. You can keep turning the dial to watch the formula change.`;
     return {kind: 'right', sound: 'lab.tick', say: m.say};
   }
 
@@ -329,9 +329,9 @@ export function createModel() {
     }
     m.rows = [...m.rows, row(angle, ms)];
     if (id === 'try-free') {
-      m.phase = 'set'; m.tries += 1;
+      m.phase = 'set'; m.tested.add(`${angle}/${ms}`); m.tries = m.tested.size;
       if (m.tries >= FREE_TRIES) seen.add(id);
-      m.say = `With the ramp at ${angle} degrees and the dial at ${kmh(ms)} km/h, the skier landed ${m1(distance)} along the tape. Leaving out the air, the formulas predict ${m1(noAirDistance(angle, ms))}, so the friction of the air shortened the jump by ${m1(noAirDistance(angle, ms) - distance)}. ${m.tries >= FREE_TRIES ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test again.'}`;
+      m.say = `With the ramp at ${angle} degrees and the dial at ${kmh(ms)} km/h, the skier landed ${m1(distance)} along the tape. Leaving out the air, the formulas predict ${m1(noAirDistance(angle, ms))}, so the friction of the air shortened the jump by ${m1(noAirDistance(angle, ms) - distance)}. ${m.tries >= FREE_TRIES ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test a different one.'}`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'try-flag') {
@@ -357,7 +357,7 @@ export function createModel() {
     m.mark += 1;
     if (m.mark >= MARKS.length) {
       m.phase = 'done'; seen.add('alone');
-      m.say = `With the ramp at ${angle} degrees and the dial at ${kmh(ms)} km/h, the skier landed ${m1(distance)}, on my 30 m mark. Job done. You used speed to reach the far flag, the angle to reach the near flag, and both to reach my mark.`;
+      m.say = `With the ramp at ${angle} degrees and the dial at ${kmh(ms)} km/h, the skier landed ${m1(distance)}, on my 30 m mark, which finishes the job. You used speed to reach the far flag, the angle to reach the near flag, and both to reach my mark.`;
       return {kind: 'pass', say: m.say};
     }
     startMark();
@@ -416,7 +416,7 @@ export function createModel() {
     const id = step().id;
     const flown = m.flight, lastRow = m.rows.at(-1);
     const shown = flown ? [flown.angle, flown.ms, flown.t >= flown.seconds ? flown.distance : null] : [set.angle, set.ms, lastRow && lastRow.angle === set.angle && lastRow.ms === set.ms ? lastRow.distance : null];
-    const base = {scene: 'launcher', low: 'table', time: m.time, rig: rig(), formulas: CHECKS[id] || id === 'recap' ? formulasFor(45, SHOW_MS) : formulasFor(...shown), ramp: null, dial: null, flag: null, rows: m.rows.map(r => ({...r})), job: null, runs: runs.map(r => ({...r})),
+    const base = {scene: 'launcher', low: 'table', time: m.time, rig: rig(), formulas: id === 'wonder' ? [] : CHECKS[id] || id === 'recap' ? formulasFor(45, SHOW_MS) : formulasFor(...shown).slice(0, id === 'word-speed' ? 1 : id === 'word-angle' ? 3 : 6), ramp: null, dial: null, flag: null, rows: m.rows.map(r => ({...r})), job: null, runs: runs.map(r => ({...r})),
       focus: null, keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), asking: false};
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
@@ -436,7 +436,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, actions: ['replay'], focus: 'tape',
         say: done ? `At 60 degrees the skier went high but moved forward slowly, and landed ${D(60)} along the tape. At 30 degrees the skier stayed low but moved forward quickly, and landed ${D(30)}. Those are two very different jumps that land in nearly the same spot. Is there an angle that goes further than both?`
-          : `My launcher throws a skier along a tape at ${kmh(SHOW_MS)} km/h. First the ramp will be at 60 degrees, and then at 30 degrees. Watch where the skier lands each time.`,
+          : 'My launcher throws a skier along a tape that is marked in metres. First the ramp will be at 60 degrees, and then at 30 degrees, with the same speed both times. Watch where the skier lands each time.',
         prompt: done ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the tape.',
         hints: ['Watch where the skier lands on the tape each time.', 'One jump goes high and the other stays low.', done ? 'Press Enter when you are ready to find out.' : 'Watch, then press Enter.']};
     }
@@ -445,15 +445,15 @@ export function createModel() {
       return {...base, ramp: {angle: set.angle, locked: false}, focus: 'ramp', low: 'angle', best: goal(), split: true,
         ...(done ? {keys: ANGLE_KEYS, repeat: ['↑', '↓']} : {keys: ANGLE_KEYS, repeat: ['↑', '↓'], waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'ramp'}),
         say: done ? m.say : m.auto ? autoSay() : 'Launch angle is how far the ramp points up from level ground, measured in degrees. Level ground is 0 degrees and straight up is 90 degrees. The ramp starts at 60 degrees. Tilt it to 45 degrees, and watch the two arrows at the end of the ramp.',
-        prompt: done ? 'Press Enter to continue, or keep tilting the ramp with ↑ and ↓.' : `The ramp is at ${set.angle} degrees. Press ↓ to tilt it flatter or ↑ to tilt it steeper, or click the ramp panel.`,
+        prompt: done ? 'Press Enter to continue, or keep tilting the ramp with ↑ and ↓.' : `The ramp is at ${set.angle} degrees. Press ↓ to tilt it flatter or ↑ to tilt it steeper, or click Flatter or Steeper.`,
         hints: done ? DONE : ['Watch the angle on the ramp panel.', 'Press ↓ until the panel reads 45°.', 'Watch my pointer. I will tilt the ramp.']};
     }
     if (id === 'word-speed') {
       const done = m.phase === 'done';
-      return {...base, ramp: {angle: set.angle, locked: true}, dial: {ms: set.ms, kmh: kmh(set.ms), locked: false}, focus: 'dial', low: 'speed', best: goal(), split: true,
+      return {...base, ramp: {angle: set.angle, locked: true}, dial: {ms: set.ms, kmh: kmh(set.ms), locked: false}, focus: 'dial', low: 'speed', best: goal(), split: false,
         ...(done ? {keys: SPEED_KEYS, repeat: ['←', '→']} : {keys: SPEED_KEYS, repeat: ['←', '→'], waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'dial'}),
-        say: done ? m.say : m.auto ? autoSay() : `Speed is how fast the skier is moving at the moment of leaving the ramp. We usually give speed in kilometres per hour, written km/h. The formulas use metres per second, written m/s, which is the number of metres travelled during each second. To change km/h into m/s you divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The dial starts at ${kmh(SLOW_MS)} km/h. Turn it up to ${kmh(SHOW_MS)} km/h, and watch both arrows grow.`,
-        prompt: done ? 'Press Enter to continue, or keep turning the dial with ← and →.' : `The dial reads ${kmh(set.ms)} km/h. Press → for faster or ← for slower, or click the dial.`,
+        say: done ? m.say : m.auto ? autoSay() : `Speed is how fast the skier is moving at the moment of leaving the ramp. We usually give speed in kilometres per hour, written km/h. The formulas use metres per second, written m/s, which is the number of metres travelled during each second. To change km/h into m/s you divide by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The dial starts at ${kmh(SLOW_MS)} km/h. Turn it up to ${kmh(SHOW_MS)} km/h, and watch the formula beside the picture change.`,
+        prompt: done ? 'Press Enter to continue, or keep turning the dial with ← and →.' : `The dial reads ${kmh(set.ms)} km/h. Press → for faster or ← for slower, or click Faster or Slower.`,
         hints: done ? DONE : ['The speed dial is on the right.', `Press → until the dial reads ${kmh(SHOW_MS)} km/h.`, 'Watch my pointer. I will turn the dial.']};
     }
     if (id === 'word-distance') {
@@ -482,7 +482,7 @@ export function createModel() {
     if (id === 'try-free') {
       if (flying) return {...v, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands.', 'Compare it with the table.', 'Wait a moment.']};
       return {...v, target: 'go', say: m.say || `Now you can experiment. Press ↑ and ↓ to tilt the ramp, and ← and → to change the speed. Watch the arrows and the formulas change as you do, and predict where the skier will land before you press Space. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
-        waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to launch. Tests so far: ${m.tries} of ${FREE_TRIES}.`,
+        waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to launch. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Press Space to test the settings as they are.', 'Try a very steep ramp, a very flat ramp, and a fast and a slow dial.', 'Watch my pointer. I will launch with the settings as they are.']};
     }
     if (id === 'try-flag') {

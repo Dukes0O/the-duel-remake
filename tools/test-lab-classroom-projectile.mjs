@@ -33,7 +33,7 @@ function playThroughTo(session, id, {flag = Math.round(water(15)), guess = 1} = 
   while (session.view().step.id !== id) {
     const v = session.view(), step = v.step.id;
     if (step.startsWith('watch') || step === 'wonder') until(session, x => x.ready, 20);
-    else if (step === 'try-free') for (let i = 0; i < FREE_TRIES; i++) { followPrompt(session); until(session, x => x.phase === undefined && x.keys.Space === 'drop', 15); }
+    else if (step === 'try-free') for (let i = 0; i < FREE_TRIES; i++) { if (i) session.act('speed:up'); followPrompt(session); until(session, x => x.keys.Space === 'drop', 15); }
     else if (step.startsWith('word')) { followPrompt(session); until(session, x => x.ready, 10); }
     else if (step === 'try-flag') {
       for (let i = 0; i < flag; i++) session.act('flag:right');
@@ -125,10 +125,12 @@ test('the free test: every control moves the sums at once, arcs stay to compare,
   assert.match(v.brian.text, /From 40 m at 15 m\/s, the stone fell for 2\.9 s and landed 43 m ahead of the post/);
   assert.equal(v.ghosts.length, 1); assert.ok(!v.ready);
   session.act('drop'); until(session, x => x.keys.Space === 'drop', 15);
+  assert.ok(!session.view().ready, 'the same setting again does not count');
+  session.act('height:down'); session.act('drop'); until(session, x => x.keys.Space === 'drop', 15);
   assert.ok(!session.view().ready);
   session.act('speed:down'); session.act('drop'); until(session, x => x.ready, 15);
   v = session.view();
-  assert.equal(v.ghosts.length, 3, 'every arc is kept to compare');
+  assert.equal(v.ghosts.length, 4, 'every arc is kept to compare');
   assert.match(v.prompt, /Press Enter to continue, or test another setting/);
   for (let i = 0; i < 9; i++) { session.act('height:up'); session.act('speed:up'); }
   assert.equal(session.view().formulas[1].worked, '20 m/s × 2.86 s = 57.2 m', 'the dials stop where the arc still fits the board');
@@ -210,7 +212,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only a
   assert.match(session.view().brian.text, /The helicopter flew past the buoy without releasing any water/);
   flyAndLetGo(session, BEST_LET_GO_M + RING_M - .5);
   assert.ok(session.view().ready);
-  assert.match(session.view().brian.text, /^The water hit the buoy\. You released it [67] m before the buoy, and it travelled 10 m forward as it fell\. Job done\./);
+  assert.match(session.view().brian.text, /^The water hit the buoy\. You released it [67] m before the buoy, and it travelled 10 m forward as it fell\. That finishes the job\./);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me hits the buoy', () => {
@@ -222,7 +224,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
   assert.equal(v.pointer.action, 'drop:best');
   assert.equal(hitTest(v, ...targetPoint(v, 'drop:best'))?.action, 'drop', 'Brian points at something a click there really presses');
   run(session, SHOW_ME_S + .2);
-  assert.match(session.view().brian.text, /^Like that\. /);
+  assert.match(session.view().brian.text, /^Watch how I do it\. /);
   until(session, x => x.ready, 10);
   assert.match(session.view().brian.text, /^The water hit the buoy\. You released it 10 m before the buoy/);
   const flag = createClassroomSession(lesson);

@@ -35,13 +35,13 @@ export function hitTest(view, x, y) {
 }
 export function hoverInfo(view, x, y) {
   if (!scene(view)) return null;
-  if (view.ramp && inRect(x, y, RAMP)) return view.ramp.locked ? 'The ramp: Brian has set its angle for this launch.' : 'The ramp: 5 degrees steeper or flatter a press.';
-  if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'The speed dial: Brian has set it for this launch.' : 'The speed dial: how fast the skier leaves the ramp.';
-  if (inRect(x, y, TAPE_BOX)) return 'The tape’s reading: how far the last skier landed from the end of the ramp.';
-  if (view.flag && Math.abs(x - (LIP.x + view.flag * PX)) < 16 && y > DECK_Y - 50 && y < DECK_Y + 4) return `The flag: ${view.flag} m from the end of the ramp.`;
-  if (x > SCENE.x && x < LIP.x + 10 && y > DECK_Y - 60 && y < SCENE.y + SCENE.h) return `The launcher: its ramp at ${deg(view.rig.angle)}, its spring set to ${view.rig.kmh} km/h.`;
-  if (x > LIP.x && x < SCENE.x + SCENE.w && y > DECK_Y - 8 && y < DECK_Y + 22) return 'The landing deck, level with the end of the ramp, with a tape in metres.';
-  if (y > LOW.y && x < LOW.x + LOW.w) return view.job ? 'Brian’s mark: the flag to reach, and what he has fixed.' : 'The launches: each one with its angle, speed and distance.';
+  if (view.ramp && inRect(x, y, RAMP)) return view.ramp.locked ? 'Brian has set the angle of the ramp for this launch.' : 'Each press tilts the ramp 5 degrees steeper or flatter.';
+  if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'Brian has set the speed dial for this launch.' : 'The speed dial sets how fast the skier leaves the ramp.';
+  if (inRect(x, y, TAPE_BOX)) return 'The tape shows how far from the end of the ramp the last skier landed.';
+  if (view.flag && Math.abs(x - (LIP.x + view.flag * PX)) < 16 && y > DECK_Y - 50 && y < DECK_Y + 4) return `The flag stands ${view.flag} m from the end of the ramp.`;
+  if (x > SCENE.x && x < LIP.x + 10 && y > DECK_Y - 60 && y < SCENE.y + SCENE.h) return `The ramp of the launcher is at ${deg(view.rig.angle)}, and its spring is set to ${view.rig.kmh} km/h.`;
+  if (x > LIP.x && x < SCENE.x + SCENE.w && y > DECK_Y - 8 && y < DECK_Y + 22) return 'The landing deck is level with the end of the ramp and carries a tape marked in metres.';
+  if (y > LOW.y && x < LOW.x + LOW.w) return view.job ? 'This card shows the flag to reach and what Brian has fixed.' : 'This table lists each launch with its angle, speed and distance.';
   return null;
 }
 export function targetPoint(view, action) {
@@ -165,7 +165,7 @@ function launchScene(ctx, view) {
   text(ctx, `${deg(f ? f.angle : r.angle)} · ${f ? kmh(f.ms) : r.kmh} km/h`, LIP.x - 40, SCENE.y + 22, {size: 14, colour: theme.faint, weight: 800});
   if (view.keys.Space === 'go') {
     keyCap(ctx, SCENE.x + 30, SCENE.y + 48, 'Sp');
-    text(ctx, 'Space launches', SCENE.x + 46, SCENE.y + 48, {size: 13, align: 'left'});
+    text(ctx, 'Press Space to launch', SCENE.x + 46, SCENE.y + 48, {size: 13, align: 'left'});
   }
   // The tape's reading: the skier now landed, or the last one.
   panel(ctx, TAPE_BOX.x, TAPE_BOX.y, TAPE_BOX.w, TAPE_BOX.h);
@@ -231,7 +231,7 @@ function closeSpeed(ctx, view) {
   for (let k = 0; k <= 6; k++) {
     const t = Math.PI * (.75 + 1.5 * k / 6);
     ctx.beginPath(); ctx.moveTo(cx + Math.cos(t) * rad * .8, cy + Math.sin(t) * rad * .8); ctx.lineTo(cx + Math.cos(t) * rad * .95, cy + Math.sin(t) * rad * .95); ctx.stroke();
-    text(ctx, String(k * 10), cx + Math.cos(t) * rad * .64, cy + Math.sin(t) * rad * .64, {size: 13, colour: '#2b3236'});
+    text(ctx, String(k * 15), cx + Math.cos(t) * rad * .64, cy + Math.sin(t) * rad * .64, {size: 13, colour: '#2b3236'});
   }
   const t = Math.PI * (.75 + 1.5 * share);
   ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(t) * rad * .85, cy + Math.sin(t) * rad * .85); ctx.stroke();
@@ -262,7 +262,7 @@ function table(ctx, view) {
   const cols = [[110, 'Angle', 'left'], [300, 'Speed', 'left'], [560, 'Distance', 'right'], [880, view.flag ? 'Against the flag' : '', 'right']];
   text(ctx, 'THE LAUNCHES', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   for (const [x, label, align] of cols) text(ctx, label, x, LOW.y + 48, {size: 15, align, colour: theme.faint, weight: 800});
-  if (!view.rows.length) text(ctx, 'No launches yet: Space launches.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
+  if (!view.rows.length) text(ctx, 'There are no launches yet. Press Space to launch.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
   const best = view.rows.length > 2 ? Math.max(...view.rows.map(r => r.distance)) : null;
   view.rows.slice(-6).forEach((row, i) => {
     const y = LOW.y + 86 + i * 34;
@@ -288,7 +288,7 @@ function jobCard(ctx, view) {
   text(ctx, 'Within 2 m of the flag counts.', LOW.x + 24, LOW.y + 172, {size: 15, align: 'left', colour: theme.faint});
   text(ctx, 'Your launches', 500, LOW.y + 48, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   const rows = view.rows.slice(-5);
-  if (!rows.length) text(ctx, 'None yet: Space launches.', 500, LOW.y + 90, {size: 17, align: 'left', colour: theme.faint});
+  if (!rows.length) text(ctx, 'There are no launches yet. Press Space to launch.', 500, LOW.y + 90, {size: 17, align: 'left', colour: theme.faint});
   rows.forEach((row, i) => {
     const y = LOW.y + 84 + i * 34;
     ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(490, y - 16, 460, 32);

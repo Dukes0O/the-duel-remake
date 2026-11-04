@@ -131,7 +131,7 @@ test('help climbs from a nudge to a plain step to Brian pressing the exact contr
   assert.equal(v.pointer.action, 'crate:add');
   assert.equal(hitTest(v, ...targetPoint(v, 'crate:add'))?.action, 'crate:add', 'Brian points at something a click there really presses');
   run(session, SHOW_ME_S + .2);
-  assert.equal(session.view().flight.crates, 1); assert.match(session.view().brian.text, /^Like that\. /);
+  assert.equal(session.view().flight.crates, 1); assert.match(session.view().brian.text, /^Watch how I do it\. /);
   session.act('crate:add'); session.act('guess:1');
   for (let i = 0; i < 3; i++) session.act('help');
   v = session.view();
