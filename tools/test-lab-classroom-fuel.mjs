@@ -183,7 +183,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(at, `${id}: at a place on the board`);
     if (v.pointer.action === 'pour:best') assert.equal(hitTest(v, ...at)?.action, v.best > v.litres ? 'pour:in' : 'pour:out', `${id}: a click where Brian points pours the right way`);
     run(session, SHOW_ME_S + .2);
-    assert.match(session.view().brian.text, /^Watch how I do it\. /);
+    assert.match(session.view().brian.text, /^That is how it is done. /);
     if (id === 'word-kilogram') { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     if (id === 'alone') for (let i = 1; i < DAYS.length; i++) { until(session, x => x.job.day === i + 1 && !x.job.race, 10); for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     until(session, x => x.ready, 30);
@@ -307,11 +307,11 @@ test('review fixes: the can holds only what went out of the tap; clicks land whe
   v = weigh.view();
   assert.equal(v.target, 'go');
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  // Show me in the job: "Like that." comes with what Brian did, not the last failure.
+  // Show me in the job: "That is how it is done." comes with what Brian did, not the last failure.
   job.act('go'); until(job, x => /did not need/.test(x.brian.text));
   for (let k = 0; k < 3; k++) job.act('help');
   run(job, SHOW_ME_S + .2);
-  assert.equal(job.view().brian.text, 'Like that. Watch: I pour it to 35 litres, the least that lasts, then race.');
+  assert.equal(job.view().brian.text, 'That is how it is done. Watch: I pour it to 35 litres, the least that lasts, then race.');
   // Watch again restarts the wonder at any time.
   const wonder = createClassroomSession(lesson);
   run(wonder, 2);

@@ -125,7 +125,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(at, `${id}: at a place on the board`);
     if (v.pointer.action === 'pick:best') assert.equal(hitTest(v, ...at)?.action, `pick:${v.best}`, `${id}: a click where Brian points picks the right tin`);
     run(session, SHOW_ME_S + .2);
-    assert.match(session.view().brian.text, /^Watch how I do it\. /);
+    assert.match(session.view().brian.text, /^That is how it is done. /);
     if (id === 'alone') for (let i = 1; i < DAYS.length; i++) { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     until(session, x => x.ready, 30);
   }
@@ -208,7 +208,7 @@ test('review fixes: the thermometer is a control, Show me says what Brian does, 
   assert.equal(warm.view().celsius, -10);
   for (let i = 0; i < 3; i++) warm.act('help');
   run(warm, SHOW_ME_S + .2);
-  assert.match(warm.view().brian.text, /^Like that\. Watch: I warm the tray to 0 °C\./);
+  assert.match(warm.view().brian.text, /^That is how it is done. Watch: I warm the tray to 0 °C\./);
   assert.equal(warm.view().prompt, 'Watch the thermometer.');
   until(warm, x => x.ready, 5);
   // Space with no tin says so and keeps Brian's help where it was.

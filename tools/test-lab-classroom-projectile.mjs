@@ -224,7 +224,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
   assert.equal(v.pointer.action, 'drop:best');
   assert.equal(hitTest(v, ...targetPoint(v, 'drop:best'))?.action, 'drop', 'Brian points at something a click there really presses');
   run(session, SHOW_ME_S + .2);
-  assert.match(session.view().brian.text, /^Watch how I do it\. /);
+  assert.match(session.view().brian.text, /^That is how it is done. /);
   until(session, x => x.ready, 10);
   assert.match(session.view().brian.text, /^The water hit the buoy\. You released it 10 m before the buoy/);
   const flag = createClassroomSession(lesson);

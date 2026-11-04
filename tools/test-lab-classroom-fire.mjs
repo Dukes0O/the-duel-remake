@@ -229,7 +229,7 @@ test('help climbs from a nudge to a plain step to Brian pointing at the exact co
   assert.equal(session.view().pointer.action, 'wood:in');
   run(session, SHOW_ME_S + .1);
   assert.equal(session.view().pit.fuel, true);
-  assert.match(say(session), /^Like that\./);
+  assert.match(say(session), /^That is how it is done./);
   playThroughTo(session, 'try-water');
   session.act('answer:0');
   session.help(); session.help(); session.help();

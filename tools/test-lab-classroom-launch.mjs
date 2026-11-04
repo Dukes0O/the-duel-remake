@@ -203,7 +203,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     if (v.pointer.action === 'go') assert.equal(hitTest(v, ...at)?.action, 'go', `${id}: a click where Brian points launches`);
     else assert.ok(hitTest(v, ...at), `${id}: Brian points at the ramp or the dial`);
     run(session, SHOW_ME_S + .1);
-    assert.match(session.view().brian.text, /^Watch how I do it\. /);
+    assert.match(session.view().brian.text, /^That is how it is done. /);
     if (id === 'try-speed') { until(session, x => x.cards.length === 3, 5); session.act('answer:1'); }
     if (id === 'alone') for (let k = 1; k < MARKS.length; k++) { until(session, x => x.keys.Space === 'go' && x.job.mark === k + 1, 20); for (let h = 0; h < 3; h++) session.act('help'); run(session, SHOW_ME_S + .1); }
     until(session, x => x.ready, 40);

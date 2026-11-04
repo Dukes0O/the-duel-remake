@@ -82,7 +82,7 @@ export function createClassroomSession(lesson) {
         pointer.done = true;
         handle(model.act(pointer.action));
         celebrate = null; help = 0;
-        bubble = {text: `Watch how I do it. ${current().say}`, mood: 'talk'};
+        bubble = {text: `That is how it is done. ${current().say}`, mood: 'talk'};
         return;
       }
       if (!v.waiting) { idle = 0; return; }

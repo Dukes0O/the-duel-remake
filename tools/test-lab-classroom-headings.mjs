@@ -156,7 +156,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(v.pointer, `${id}: Brian points`);
     assert.ok(targetPoint(v, v.pointer.action), `${id}: at a place on the board`);
     run(session, SHOW_ME_S + .2);
-    assert.match(session.view().brian.text, /^Watch how I do it\. /);
+    assert.match(session.view().brian.text, /^That is how it is done. /);
     until(session, x => x.ready, 30);
   }
   const job = createClassroomSession(lesson);
@@ -256,7 +256,7 @@ test('review fixes: the ruler keeps its 50 m steps, and Show me always works and
   press(heading, 'turn:left', 32);
   for (let i = 0; i < 3; i++) heading.act('help');
   run(heading, SHOW_ME_S + .2);
-  assert.match(heading.view().brian.text, /^Like that\. Watch: I turn her right/);
+  assert.match(heading.view().brian.text, /^That is how it is done. Watch: I turn her right/);
   until(heading, v => v.ready, 5);
   // The short way round: Show me after turning the long way starts again from 020 and turns left.
   const wrap = createClassroomSession(lesson);
@@ -264,7 +264,7 @@ test('review fixes: the ruler keeps its 50 m steps, and Show me always works and
   press(wrap, 'turn:right', 36);
   for (let i = 0; i < 3; i++) wrap.act('help');
   run(wrap, SHOW_ME_S + .2);
-  assert.match(wrap.view().brian.text, /^Like that\. Watch: I turn her to 340\./, 'Brian says the heading he turns to');
+  assert.match(wrap.view().brian.text, /^That is how it is done. Watch: I turn her to 340\./, 'Brian says the heading he turns to');
   until(wrap, v => v.ready, 20);
   assert.match(wrap.view().brian.text, /^Right: A turned her left past 000/);
 });
