@@ -444,6 +444,15 @@ test('pendulum, flown: carried across the woods and set down still passes; dropp
   drop.session.leave();
 });
 
+test('a water challenge started from the Lab has the bucket on the hook, and any other challenge does not', () => {
+  for (const [id, bucket] of [['projectile', true], ['fire', true], ['pendulum', false]]) {
+    const session = sessionOf(readyProfile(), {labEnabled: true});
+    session.start();
+    assert.equal(session.startChallenge(id).ok, true, id);
+    assert.equal(!!session.view().bucket, bucket, id);
+  }
+});
+
 // ---- Projectile motion, flown: scoop from the lake, aim with the ring, drop on the buoys ------------------------
 function projectileFlight({aimed = true} = {}) {
   const session = sessionOf(readyProfile(), {labEnabled: true});

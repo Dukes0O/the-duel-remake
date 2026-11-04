@@ -2114,6 +2114,11 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (id === 'lift' && heli.fuelKg < CHALLENGE_RULES.lift.fullTankKg) return {ok: false, reason: 'Fill the tank first.'};
       if (id === 'altitude' && !placesNow()[CHALLENGE_RULES.altitude.courseId]) return {ok: false, reason: 'Summit Run is not open yet.'};
       endChallenge(null);
+      // A water challenge starts ready: the lesson goes on in the air, not on the fitting menu (Kyle, 4 November 2026).
+      if (WATER_CHALLENGES.includes(id) && !bucketLoad()) {
+        const fit = api.fitBucket();
+        if (!fit.ok) return fit;
+      }
       return beginChallenge(id);
     },
     stopChallenge() { return endChallenge('stopped'); },

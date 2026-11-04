@@ -11,6 +11,9 @@ const kbd = key => `<kbd>${escape(key)}</kbd>`;
 const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space',
   KeyW: 'W', KeyS: 'S', KeyA: 'A', KeyD: 'D', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'};
 const SPARK_COLOURS = ['#ffd27a', '#f0a148', '#fff2c8', '#e8803a'];
+// Formulas: x^2 is drawn raised. The player's choice to hide the panel lasts for the visit to the Lab.
+const math = value => escape(value).replace(/\^(\d)/g, '<sup>$1</sup>');
+let physicsChoice = null;
 
 export function createClassroomUi({stage, app, lesson, name, onLeave, startChallenge, sayVoice = () => {}, onCue = () => {}}) {
   const doc = stage.ownerDocument, win = doc.defaultView;
@@ -18,9 +21,10 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
-    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
-    <aside class="lc-brian"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b>
-      <p class="lc-bubble" aria-live="polite"></p><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
+    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
+    <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
+    <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b></div>
+      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
@@ -37,10 +41,12 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     portrait.innerHTML = `<img alt="Brian" src="${url}">`;
   });
 
+  const physicsOpen = () => physicsChoice ?? win.innerWidth >= 1500;
   function setHtml(element, key, html) { if (last[key] !== html) { element.innerHTML = html; last[key] = html; return true; } return false; }
   function act(action) {
     note = '';
     if (action === 'leave') { onLeave(); return; }
+    if (action === 'physics') { physicsChoice = !physicsOpen(); return; }
     if (action === 'challenge') {
       const started = startChallenge();
       if (started?.passed) { passed = started.passed; burst = true; return; }
@@ -68,6 +74,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.code === 'Escape') action = 'leave';
     else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
+    else if (event.code === 'KeyF' && v.formulas?.length) action = 'physics';
     else if (event.code === 'Backspace') action = v.index > 0 && !(passed && v.last) ? 'back' : null;
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';
     else if (event.code === 'KeyS' && v.actions.includes('slow')) action = 'slow';
@@ -132,7 +139,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const back = v.index > 0 && !(passed && v.last);
     if ($('.lc-back').hidden === back) $('.lc-back').hidden = !back;
     const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
-    setHtml($('.lc-bubble'), 'bubble', escape(brian.text));
+    paintPage(v, brian);
+    paintPhysics(v);
     // Brian's offer of help sits under his words, so a slow reader never loses them.
     const nudgeText = !note && !(passed && v.last) && v.nudge ? v.nudge.text : '';
     setHtml($('.lc-nudge'), 'nudge', escape(nudgeText));
@@ -163,6 +171,26 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       (v.last && passed ? button('leave', 'Back to the Lab', 'Enter', {primary: true})
         : v.last ? button('leave', 'Back to the Lab', 'Esc') + button('challenge', lesson.finishLabel ?? 'Try it in the game', 'Enter', {primary: true})
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));
+  }
+
+  // The running page: every step so far, oldest first, with the newest words last.
+  function paintPage(v, brian) {
+    const rows = v.page.map((row, i) => {
+      const lines = [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && !(i === v.page.length - 1 && text === brian.text));
+      return `<section class="${i === v.page.length - 1 ? 'now' : ''}"><h4>${escape(row.title)}</h4>${lines.map(text => `<p>${escape(text)}</p>`).join('')}</section>`;
+    }).join('');
+    const moved = setHtml($('.lc-past'), 'past', rows);
+    if (setHtml($('.lc-bubble'), 'bubble', escape(brian.text)) || moved) { const page = $('.lc-page'); page.scrollTop = page.scrollHeight; }
+  }
+  function paintPhysics(v) {
+    const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();
+    if ($('.lc-physics').hidden === open) $('.lc-physics').hidden = !open;
+    const offer = formulas.length > 0 && !open;
+    if ($('.lc-show-physics').hidden === offer) $('.lc-show-physics').hidden = !offer;
+    if (!open) return;
+    setHtml($('.lc-formulas'), 'formulas', formulas.map(f => `<section><h4>${escape(f.title)}</h4>` +
+      (f.formula ? `<p class="lc-formula">${math(f.formula)}</p>` : '') + (f.worked ? `<p class="lc-worked">${math(f.worked)}</p>` : '') +
+      (f.note ? `<p class="lc-formula-note">${math(f.note)}</p>` : '') + '</section>').join(''));
   }
 
   function paintBoard(v, dt) {

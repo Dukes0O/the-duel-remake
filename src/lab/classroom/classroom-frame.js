@@ -10,6 +10,8 @@ export const SLOW_MOTION = .5;
 // Brian's pointer takes this long to reach the control before he presses it for the player.
 export const SHOW_ME_S = 1.4;
 const HELP_RUNGS = 3;
+// A result stays on the page; a "watch this" line or a hint does not.
+const KEPT_EVENTS = Object.freeze(['right', 'wrong', 'pass', 'fail']);
 
 // lesson: {id, steps: [{id, part, title}], createModel()}. The model owns the step's experiment:
 // enter(index), act(action) -> event, tick(dt) -> event, view({help, assist}) and targetOf(action).
@@ -20,6 +22,9 @@ export function createClassroomSession(lesson) {
   // nudge: Brian's offer of help when the player seems stuck, shown under his words so it never replaces them.
   let bubble = null, celebrate = null, pointer = null, nudge = null;
   const done = new Set(), events = [];
+  // The page: what each step has taught so far (its first words and its latest result). Nothing is replaced by the next step.
+  const page = new Map();
+  const pageRow = i => { if (!page.has(i)) page.set(i, {title: lesson.steps[i].title, setup: null, result: null}); return page.get(i); };
   model.enter(0);
 
   function handle(event) {
@@ -33,6 +38,7 @@ export function createClassroomSession(lesson) {
     // Anything the player does, a click of the dial included, means they are not stuck.
     idle = 0; offered = false; nudge = null;
     if (event.kind !== 'sound') bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null;
+    if (event.say && KEPT_EVENTS.includes(event.kind)) pageRow(index).result = event.say;
   }
   const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
   function enter(i) {
@@ -84,9 +90,11 @@ export function createClassroomSession(lesson) {
     },
     takeEvents() { return events.splice(0); },
     view() {
-      const v = current(), step = lesson.steps[index];
+      const v = current(), step = lesson.steps[index], row = pageRow(index);
+      row.setup ??= v.say;
       return {
         ...v, index, step, slow, help, time,
+        page: lesson.steps.slice(0, index + 1).map((_, i) => page.get(i)).filter(Boolean),
         parts: PARTS.map((name, part) => {
           const steps = lesson.steps.map((s, i) => ({...s, i})).filter(s => s.part === part);
           return {name, first: steps[0]?.i ?? null, current: step.part === part, done: steps.length > 0 && steps.every(s => done.has(s.i)), reached: steps.some(s => s.i <= furthest)};

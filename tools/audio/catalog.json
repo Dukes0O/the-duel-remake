@@ -6265,43 +6265,43 @@
       "source": "elevenlabs",
       "key": "lab.brian.projectile.explain",
       "cue": "lab.brian.projectile.explain",
-      "text": "A dropped thing keeps the forward speed it had, so it lands ahead of where you let go. And it falls faster every second. Air slows a spray of water more than a stone, so water falls shorter.",
+      "text": "An object dropped from a moving helicopter keeps moving forward at the speed it had when it was released, so it lands ahead of the place where it was released. Gravity pulls it downward, faster during every second of the fall. The air slows a spray of water far more than it slows a stone, so the water lands closer to the point of release.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 190,
+      "creditsUsed": 340,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-projectile-explain.mp3",
-      "sha256": "f7f61f72d6867cf6a433daee4910b2f8e401b08d4534ad2e951493cd8faab5b7",
-      "bytes": 176421,
-      "generated": "2026-10-24"
+      "sha256": "d560d5e6928af8bc5395b9561618094e9434dded3acc47b5b5dde8b4ab90e681",
+      "bytes": 298883,
+      "generated": "2026-11-04"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.projectile.pass",
       "cue": "lab.brian.projectile.pass",
-      "text": "That's your aim. Let go early, not right over the target.",
+      "text": "That is your aim. Release the water before you reach the target, not directly above it.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 57,
+      "creditsUsed": 87,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-projectile-pass.mp3",
-      "sha256": "4c4c4adb2bb23a079c308c12379273f220f6040bd4505d3fdcb613237119dbb7",
-      "bytes": 55213,
-      "generated": "2026-10-24"
+      "sha256": "06c001889acec7f18256ce578ce32701b1bbe3cd2ac28b752c1344609a67c364",
+      "bytes": 80709,
+      "generated": "2026-11-04"
     },
     {
       "source": "elevenlabs",
@@ -7063,64 +7063,64 @@
       "source": "elevenlabs",
       "key": "lab.brian.launch.intro",
       "cue": "lab.brian.launch.intro",
-      "text": "A small launcher. Set the angle and the speed, and measure how far it goes.",
+      "text": "This is a small launcher. You set the angle and the speed of the ramp, and the tape measures how far the skier travels.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 75,
+      "creditsUsed": 119,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-intro.mp3",
-      "sha256": "f353f4e0f536b2eb85259f69d542fd7009495524923fe768c6db37d343b5fa47",
-      "bytes": 79873,
-      "generated": "2026-10-25"
+      "sha256": "3ca400b683d3aa7a925bffe51cd78ddbc34a77e7ca798e959f01e434a9841563",
+      "bytes": 115399,
+      "generated": "2026-11-04"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.launch.explain",
       "cue": "lab.brian.launch.explain",
-      "text": "On flat ground with no air, forty five degrees goes furthest. Air drag, and landing lower than you took off, both make the best angle lower than forty five.",
+      "text": "On level ground, a ramp of about forty five degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. More speed carries the skier further. When the landing is lower than the ramp, a flatter ramp goes furthest.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 156,
+      "creditsUsed": 269,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-explain.mp3",
-      "sha256": "bf1edacdaca9368eabcc148b350531850abe508c76bb314579d0be8d564a3e69",
-      "bytes": 145910,
-      "generated": "2026-10-25"
+      "sha256": "510eaf783bed1562e741bb535bf7a89ea8a68f23c85a8539e636e2d5fe60d535",
+      "bytes": 234518,
+      "generated": "2026-11-04"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.launch.pass",
       "cue": "lab.brian.launch.pass",
-      "text": "Right on target. That's how you plan a jump.",
+      "text": "That landed right on target, and that is how you plan a jump.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 44,
+      "creditsUsed": 61,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-pass.mp3",
-      "sha256": "ce7de2fdd4b77157e9d5f71c64efbe08a010244ef4cee351c82e1589e5f5dbb7",
-      "bytes": 35987,
-      "generated": "2026-10-25"
+      "sha256": "f28416e04966ce63c8d78109d144f25ff4cd5deba0ed3ab47b10e6b00ba0e035",
+      "bytes": 55213,
+      "generated": "2026-11-04"
     },
     {
       "source": "elevenlabs",

@@ -7,7 +7,7 @@ const state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.clas
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html?flags=lab-classroom,lab-2,helicopter,forest-fire,rescue,heli-skiing,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a = window.__qaApp; a.audio.setMuted?.(true); a.addPlayer('Launch QA');
@@ -40,7 +40,7 @@ export async function run(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: flatter.x, y: flatter.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: flatter.x, y: flatter.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
-  await prompt('55°', 'the click on Flatter tilts the ramp 5 degrees');
+  await prompt('at 55 degrees', 'the click on Flatter tilts the ramp 5 degrees');
   await press('ArrowDown', 2); await at('word-angle', 's.ready'); await shot('word-angle-done');
   await next('word-angle');
   await at('word-speed'); await shot('word-speed'); await press('ArrowRight', 2); await at('word-speed', 's.ready'); await shot('word-speed-done');
@@ -53,24 +53,32 @@ export async function run(c) {
   await at('watch'); await wait(5000); await shot('watch-running'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
   // Past the flag: guess steeper; a launch at 45 says to tilt first; 50 degrees still lands past; 60 is on the flag.
+  // The free test: the ramp and the dial move the sums at once, and three launches open Continue.
+  await at('try-free'); await shot('try-free');
+  await press('ArrowDown', 2); await press('ArrowRight', 2); await wait(200); await shot('try-free-set');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('22 × cos 35°'))`))) throw Error('The formulas did not follow the ramp and the dial.');
+  await press('Space'); await wait(1200); await shot('try-free-flying'); await saying('Change a setting', 'the first launch says its result');
+  await press('ArrowUp', 5); await press('Space'); await saying('Change a setting', 'the second launch says its result'); await wait(300);
+  await press('ArrowDown', 3); await press('Space'); await at('try-free', 's.ready'); await shot('try-free-three');
+  await next('try-free');
   await at('try-flag', 's.cards === 3'); await shot('try-flag-guess'); await press('Digit1');
-  await press('Space'); await saying('tilt the ramp first', 'a launch at 45 says why');
-  await press('ArrowUp'); await press('Space'); await saying('past the 30 m flag', 'a miss says why'); await wait(300); await shot('try-flag-miss');
-  await press('ArrowUp', 2); await press('Space'); await at('try-flag', 's.ready'); await saying('so does the other way', 'either way works'); await shot('try-flag-done');
+  await press('Space'); await saying('Tilt the ramp first', 'a launch at 45 says why');
+  await press('ArrowUp'); await press('Space'); await saying('beyond the 30 m flag', 'a miss says why'); await wait(300); await shot('try-flag-miss');
+  await press('ArrowUp', 2); await press('Space'); await at('try-flag', 's.ready'); await saying('so does tilting the other way', 'either way works'); await shot('try-flag-done');
   await next('try-flag');
-  // A little slower: Space at 45 mph says to turn the dial; 40 mph, a wrong guess says why.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ← until the dial reads 40', 'the wrong speed says why');
-  await press('ArrowLeft', 2); await prompt('40 mph', 'the dial reads 40'); await press('Space'); await at('try-speed', 's.cards === 3'); await shot('try-speed-guess');
-  await press('Digit3'); await at('try-speed', 's.ready'); await saying('Not that much', 'a wrong guess says why'); await shot('try-speed-done');
+  // A little slower: Space at 72 km/h says to turn the dial; 65 km/h, a wrong guess says why.
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ← until the dial reads 65', 'the wrong speed says why');
+  await press('ArrowLeft', 2); await prompt('65 km/h', 'the dial reads 65'); await press('Space'); await at('try-speed', 's.cards === 3'); await shot('try-speed-guess');
+  await press('Digit3'); await at('try-speed', 's.ready'); await saying('did not shorten by that much', 'a wrong guess says why'); await shot('try-speed-done');
   await next('try-speed');
-  // Brian's job: mark 1 short then right; mark 2 by Show me; mark 3 too steep, then 45 degrees at 40 mph.
-  await at('alone'); await shot('alone'); await press('Space'); await saying('More speed: press →', 'a short launch says why'); await shot('alone-short');
-  await press('ArrowRight', 2); await press('Space'); await saying('Mark 2', 'mark 1 is on the flag');
+  // Brian's job: mark 1 short then right; mark 2 by Show me; mark 3 too steep, then 45 degrees at 65 km/h.
+  await at('alone'); await shot('alone'); await press('Space'); await saying('Add speed by pressing →', 'a short launch says why'); await shot('alone-short');
+  await press('ArrowRight', 2); await press('Space'); await saying('For the second mark', 'mark 1 is on the flag');
   for (let i = 0; i < 3 && !(await c.evaluate(`${state}?.help === 3`)); i++) await press('KeyH');
   await wait(1500); await shot('alone-show-me');
-  await saying('Mark 3', 'Show me sets and launches mark 2');
+  await saying('For the third mark', 'Show me sets and launches mark 2');
   await press('Space'); await saying('short of the 30 m flag', 'mark 3 starts on a miss'); await shot('alone-mark3-short');
-  await press('ArrowDown', 6); await press('ArrowRight', 2); await prompt('40 mph', 'set for the mark'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
+  await press('ArrowDown', 6); await press('ArrowRight', 2); await prompt('65 km/h', 'set for the mark'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
   if (!(await bubble()).includes('Job done')) throw Error('The job should end done: ' + await bubble());
   await next('alone');
   for (const [step, answer] of [['check-pair', 'Digit1'], ['check-lower', 'Digit2'], ['check-game', 'Digit1']]) {
@@ -84,7 +92,7 @@ export async function run(c) {
   // Enter finishes: the lesson's own launches pass the bench's goal; the free Aerials reward is owned.
   await press('Enter');
   await c.waitFor(`window.__qaApp.profile.lab?.done?.launch === true && window.__qaApp.profile.lab?.owned?.aerials === true`, 'Launch passes and the Aerials reward is owned', 10_000);
-  await saying('The Aerials run is open', 'Brian says what the pass opened'); await wait(500); await shot('passed-classroom');
+  await saying('the Aerials run is now open', 'Brian says what the pass opened'); await wait(500); await shot('passed-classroom');
   await press('Enter');
   await c.waitFor(`!document.querySelector('.lab-classroom')`, 'back to the Lab', 10_000);
   await c.evaluate(`window.__qaApp.closeLab()`);
