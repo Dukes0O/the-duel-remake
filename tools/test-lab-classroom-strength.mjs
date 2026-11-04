@@ -189,9 +189,9 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     assert.ok(at, `${id}: at a place on the board`);
     if (v.pointer.action !== 'build:best') assert.equal(hitTest(v, ...at)?.action, v.pointer.action, `${id}: a click where Brian points does it`);
     else assert.ok(hitTest(v, ...at), `${id}: Brian points at the rack or the handle`);
-    // Brian presses it, says "Like that.", and goes on building where there is more to do.
+    // Brian presses it, says "That is how it is done.", and goes on building where there is more to do.
     run(session, SHOW_ME_S + .1);
-    assert.match(session.view().brian.text, /^Like that\. /);
+    assert.match(session.view().brian.text, /^That is how it is done. /);
     if (id === 'word-strength') { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     if (id === 'try-snap') { until(session, x => x.cards.length === 3, 5); session.act('answer:2'); }
     until(session, x => x.ready, 30);

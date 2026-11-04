@@ -1,20 +1,20 @@
 // The Projectile lesson's board (docs/board/cards/LAB-CLASSROOM-PROJECTILE.md): Kestrel One side on over
-// the lake, the bucket or a stone on her hook, the falls with their paths, the flag, the buoy and a ruler
-// on the water. Draws and hit-tests only.
+// the lake, the bucket or a stone on its hook, the falls with their paths and speed arrows, the marks for each
+// second, the flag, the buoy and a ruler on the water. Draws and hit-tests only.
 import {BOARD, GROUND_Y, theme, background, text, keyCap, helicopter, wrap, fitBoard} from '../classroom/board-art.js';
-import {BEST_LET_GO_M, HIGH_M, JOB, RING_M, dropPoint, landing, metres} from './projectile-classroom.js';
-import {stoneFallAfter} from '../benches/projectile.js';
+import {BEST_LET_GO_M, HIGH_M, JOB, RING_M, dropPoint, dropSpeed, landing, metres} from './projectile-classroom.js';
+import {GRAVITY, stoneFallAfter} from '../benches/projectile.js';
 export {BOARD};
 // Pressing on the water moves the flag there at once.
 export const pressMovesDrag = true;
 
-// Metres to board units: the let-go post at x 200, the lake's surface at the ground line.
+// Metres to board units: the release post at x 200, the lake's surface at the ground line.
 const POST_X = 200, METRE = 12, WATER_Y = GROUND_Y, HELI = .5, HANG_M = 3.8;
 const bx = m => POST_X + m * METRE, by = h => WATER_Y - h * METRE;
 const COLOURS = ['#f5f0dc', theme.accent, theme.good];
-const WATER_BLUE = '#71c9ff', STONE = '#b9b4a8';
+const WATER_BLUE = '#71c9ff', STONE = '#b9b4a8', FORWARD_COLOUR = theme.accent, DOWN_COLOUR = '#ff9a78', SCALE_Y = 104;
 
-// Where her bucket (or stone) hangs, and where she is, in board units.
+// Where the bucket (or stone) hangs, and where the helicopter is, in board units.
 const bucketAt = c => [bx(c.x), by(c.h)];
 const bodyAt = c => [bx(c.x), by(c.h + HANG_M) - 14];
 
@@ -30,16 +30,16 @@ export function hoverInfo(view, x, y) {
   if (view.scene !== 'lake') return null;
   for (const c of view.helis) {
     const [hx, hy] = bodyAt(c), [kx, ky] = bucketAt(c);
-    if (Math.abs(x - kx) < 14 && Math.abs(y - ky) < 14 && c.loads.length) return c.loads.includes('water') ? `The water bucket, ${c.h} m above the lake.` : 'A stone: heavy and small, so the air hardly slows it.';
-    if (Math.abs(x - hx) < 66 && Math.abs(y - hy) < 26) return c.speed ? `Kestrel One at ${c.speed} m/s: ${c.speed} metres every second.` : `Kestrel One, hovering ${c.h} m up: no forward speed.`;
+    if (Math.abs(x - kx) < 14 && Math.abs(y - ky) < 14 && c.loads.length) return c.loads.includes('water') ? `The water bucket, ${c.h} m above the lake.` : 'A stone. It is heavy for its size, so the air hardly slows it.';
+    if (Math.abs(x - hx) < 66 && Math.abs(y - hy) < 26) return c.speed ? `The helicopter at ${c.speed} m/s, which is ${c.speed} metres during every second.` : `The helicopter, hovering ${c.h} m above the lake with no forward speed.`;
   }
-  if (view.flag != null && Math.abs(x - bx(view.flag)) < 16 && y > WATER_Y - 60 && y < WATER_Y + 10) return `Your flag, ${metres(view.flag)} from the post: your guess at where it lands.`;
+  if (view.flag != null && Math.abs(x - bx(view.flag)) < 16 && y > WATER_Y - 60 && y < WATER_Y + 10) return `Your flag, ${metres(view.flag)} from the post, marks your guess at where the water will land.`;
   if (view.buoy != null && Math.abs(x - bx(view.buoy)) < RING_M * METRE + 6 && y > WATER_Y - 30 && y < WATER_Y + 12) return `The buoy. A splash inside its ring hits it.`;
-  if (view.post && Math.abs(x - POST_X) < 10 && y > WATER_Y - 60 && y < WATER_Y) return 'The let-go post: she lets go right above it.';
-  if (view.ruler && y > WATER_Y + 4 && y < WATER_Y + 40) return view.ruler === 'buoy' ? 'Metres before the buoy.' : 'Metres ahead of the let-go post.';
+  if (view.post && Math.abs(x - POST_X) < 10 && y > WATER_Y - 60 && y < WATER_Y) return 'The release post. The helicopter releases its load directly above this post.';
+  if (view.ruler && y > WATER_Y + 4 && y < WATER_Y + 40) return view.ruler === 'buoy' ? 'Metres before the buoy.' : 'Metres ahead of the release post.';
   for (const d of view.drops) {
     const p = dropPoint(d.kind, d.h, d.v, d.t), dx = bx(d.x0 + p.x), dy = by(p.y);
-    if (Math.hypot(x - dx, y - dy) < 14) return d.kind === 'stone' ? 'The stone: the air hardly slows it.' : 'The water: a spray the air slows down.';
+    if (Math.hypot(x - dx, y - dy) < 14) return d.kind === 'stone' ? 'The stone. The air hardly slows it.' : 'The water. The air slows these small droplets quickly.';
   }
   return null;
 }
@@ -83,7 +83,7 @@ function ruler(ctx, view) {
 function post(ctx) {
   ctx.fillStyle = theme.beamDark; ctx.fillRect(POST_X - 3, WATER_Y - 46, 6, 50);
   ctx.fillStyle = theme.brass[1]; ctx.fillRect(POST_X - 6, WATER_Y - 50, 12, 6);
-  text(ctx, 'let-go post', POST_X, WATER_Y - 62, {size: 13, weight: 600, colour: theme.faint});
+  text(ctx, 'release post', POST_X, WATER_Y - 62, {size: 13, weight: 600, colour: theme.faint});
 }
 function buoy(ctx, x, time) {
   const cx = bx(x), r = RING_M * METRE;
@@ -117,7 +117,7 @@ function spray(ctx, x, y, r = 1) {
   ctx.fillStyle = WATER_BLUE;
   for (const [dx, dy, s] of [[0, 0, 5], [-5, -3, 3], [4, -4, 3], [-2, 5, 2.5], [5, 3, 2.5]]) { ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, s, 0, Math.PI * 2); ctx.fill(); }
 }
-// One helicopter with her bucket or stone on the cable, and her speed above her.
+// One helicopter with its bucket or stone on the cable, and its speed above it.
 function kestrel(ctx, c, view, label = true) {
   ctx.save(); if (c.dim) ctx.globalAlpha = .45;
   const [hx, hy] = bodyAt(c), [kx, ky] = bucketAt(c), stoneOn = c.loads.includes('stone'), waterOn = c.loads.includes('water');
@@ -135,18 +135,70 @@ function path(ctx, kind, h, v, x0, upTo, colour, faint = false) {
   ctx.globalAlpha = 1;
 }
 function drops(ctx, view) {
-  for (const g of view.ghosts) {
+  view.ghosts.forEach((g, i) => {
     const end = landing(g.kind, g.h, g.v);
     path(ctx, g.kind, g.h, g.v, g.x0, end.seconds, theme.text, true);
-    text(ctx, `${g.label}: ${metres(end.distanceM)}`, bx(g.x0 + end.distanceM), WATER_Y - 84, {size: 13, weight: 600, colour: theme.faint});
-  }
+    text(ctx, `${g.label}: ${metres(end.distanceM)}`, bx(g.x0 + end.distanceM), WATER_Y - 84 - i * 20, {size: 14, weight: 600, colour: 'rgba(245,240,220,.7)'});
+  });
   for (const d of view.drops) {
     const colour = d.kind === 'stone' ? STONE : view.drops.length > 1 && view.helis.length > 1 ? COLOURS[d.colour] : WATER_BLUE;
     path(ctx, d.kind, d.h, d.v, d.x0, d.t, colour);
     if (d.landed) continue;
     const p = dropPoint(d.kind, d.h, d.v, d.t), x = bx(d.x0 + p.x), y = by(p.y);
     if (d.kind === 'stone') stone(ctx, x, y); else spray(ctx, x, y);
+    if (view.arrows) speedArrows(ctx, d, x, y, view.drops.length > 1);
   }
+}
+// The two speeds of a falling thing: the forward arrow and the downward arrow, drawn to the same scale.
+const ARROW_SCALE = 4;
+function arrow(ctx, x, y, dx, dy, colour) {
+  const length = Math.hypot(dx, dy);
+  if (length < 3) return;
+  const ux = dx / length, uy = dy / length, head = Math.min(9, length * .6);
+  ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * head, y + dy - uy * head); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy); ctx.lineTo(x + dx - ux * head - uy * head * .6, y + dy - uy * head + ux * head * .6); ctx.lineTo(x + dx - ux * head + uy * head * .6, y + dy - uy * head - ux * head * .6); ctx.closePath(); ctx.fill();
+}
+function speedArrows(ctx, d, x, y, two) {
+  const {forward, down} = dropSpeed(d.kind, d.h, d.v, d.t), name = d.kind === 'stone' ? '' : 'water ', low = two && d.kind === 'water';
+  arrow(ctx, x, y, forward * ARROW_SCALE, 0, FORWARD_COLOUR);
+  arrow(ctx, x, y, 0, down * ARROW_SCALE, DOWN_COLOUR);
+  // With a stone and water together, the water's numbers go to its left, behind the stone.
+  if (low) {
+    if (forward > .05) text(ctx, `water ${forward.toFixed(1)} m/s forward`, x - 12, y - 12, {size: 15, align: 'right', colour: FORWARD_COLOUR});
+    if (down > .05) text(ctx, `water ${down.toFixed(1)} m/s down`, x - 12, y + 12, {size: 15, align: 'right', colour: DOWN_COLOUR});
+    return;
+  }
+  if (forward > .05) text(ctx, `${name}${forward.toFixed(1)} m/s forward`, x + Math.max(14, forward * ARROW_SCALE + 8), y - 12, {size: 15, align: 'left', colour: FORWARD_COLOUR});
+  if (down > .05) text(ctx, `${name}${down.toFixed(1)} m/s down`, x + 10, y + Math.max(16, down * ARROW_SCALE - 6), {size: 15, align: 'left', colour: DOWN_COLOUR});
+}
+// Along the top of the picture, a mark for each second of the fall: how far forward the object has come by then,
+// and, on a fall, a line down to where it was at that moment and how far it had fallen.
+function secondsScale(ctx, view) {
+  const s = view.scale;
+  if (!s) return;
+  const whole = Math.min(Math.floor(s.t + 1e-6), s.end != null ? Math.floor(s.end) : s.upTo), last = s.end != null ? Math.min(s.t, s.end) : Math.min(s.t, s.upTo);
+  const from = bx(s.x0), to = bx(s.x0 + s.v * last);
+  ctx.strokeStyle = FORWARD_COLOUR; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(from, SCALE_Y); ctx.lineTo(Math.max(from, to), SCALE_Y); ctx.stroke();
+  const tick = (x, label) => { ctx.strokeStyle = FORWARD_COLOUR; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, SCALE_Y - 9); ctx.lineTo(x, SCALE_Y + 9); ctx.stroke(); text(ctx, label, x, SCALE_Y - 22, {size: 16, colour: FORWARD_COLOUR}); };
+  tick(from, '0 s');
+  for (let k = 1; k <= whole; k++) {
+    const x = bx(s.x0 + s.v * k);
+    tick(x, `${k} s`);
+    text(ctx, `${s.v} m`, (x + bx(s.x0 + s.v * (k - 1))) / 2, SCALE_Y + 16, {size: 14, weight: 600, colour: FORWARD_COLOUR});
+    if (s.dots) secondDot(ctx, x, s.h, k);
+  }
+  if (s.end != null && s.t >= s.end) {
+    const x = bx(s.x0 + s.v * s.end);
+    tick(x, `${s.end.toFixed(1)} s`);
+    ctx.strokeStyle = 'rgba(237,197,87,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(x, SCALE_Y + 10); ctx.lineTo(x, WATER_Y - 8); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function secondDot(ctx, x, h, k) {
+  const fell = stoneFallAfter(k), y = by(h - fell);
+  ctx.strokeStyle = 'rgba(237,197,87,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(x, SCALE_Y + 10); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = theme.text; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+  text(ctx, `${fell.toFixed(1)} m fallen`, x - 10, y + 4, {size: 15, align: 'right', colour: DOWN_COLOUR});
 }
 function marks(ctx, view) {
   view.marks.forEach((k, i) => {
@@ -159,7 +211,7 @@ function marks(ctx, view) {
     text(ctx, k.label, x, WATER_Y - 30 - (i % 2) * 22, {size: 16, colour});
   });
 }
-const beforeBuoy = b => b > 0 ? `let go ${b} m before` : b < 0 ? `let go ${-b} m after` : 'let go over the buoy';
+const beforeBuoy = b => b > 0 ? `released ${b} m before` : b < 0 ? `released ${-b} m after` : 'released above the buoy';
 function letGoMark(ctx, x, label, colour = theme.accent, dy = 52) {
   const cx = bx(x);
   ctx.strokeStyle = colour; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(cx, by(HIGH_M) + 6); ctx.lineTo(cx, WATER_Y - 4); ctx.stroke(); ctx.setLineDash([]);
@@ -170,7 +222,7 @@ function height(ctx, h, x) {
   ctx.beginPath(); ctx.moveTo(x, WATER_Y); ctx.lineTo(x, by(h)); ctx.moveTo(x - 5, by(h)); ctx.lineTo(x + 5, by(h)); ctx.stroke();
   text(ctx, `${h} m up`, x + 8, (WATER_Y + by(h)) / 2, {size: 14, weight: 600, colour: theme.faint, align: 'left'});
 }
-// The gravity marks: how far the stone has fallen after one and two seconds.
+// The gravity marks: how far the stone has fallen, and how fast it is falling, after each second.
 function fallMarks(ctx, view) {
   const d = view.drops[0];
   if (!d) return;
@@ -178,24 +230,23 @@ function fallMarks(ctx, view) {
     if (d.t < s) continue;
     const y = by(d.h - stoneFallAfter(s));
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(POST_X - 20, y); ctx.lineTo(POST_X + 90, y); ctx.stroke(); ctx.setLineDash([]);
-    text(ctx, `after ${s} s: ${metres(stoneFallAfter(s))} fallen`, POST_X + 96, y, {size: 15, align: 'left', colour: theme.accent});
+    text(ctx, `after ${s} s: ${stoneFallAfter(s).toFixed(1)} m fallen, moving at ${(GRAVITY * s).toFixed(1)} m/s`, POST_X + 96, y, {size: 16, align: 'left', colour: theme.accent});
   }
 }
-function underHer(ctx, view) {
+function underHelicopter(ctx, view) {
   const c = view.helis[0], d = view.drops[0];
   if (!c || !d || d.landed) return;
   const p = dropPoint(d.kind, d.h, d.v, d.t), x = bx(d.x0 + p.x);
   ctx.strokeStyle = theme.accent; ctx.lineWidth = 1.5; ctx.setLineDash([3, 5]);
   ctx.beginPath(); ctx.moveTo(bx(c.x), by(c.h) + 4); ctx.lineTo(x, by(p.y) - 8); ctx.stroke(); ctx.setLineDash([]);
-  text(ctx, 'right under her', x + 10, (by(c.h) + by(p.y)) / 2, {size: 15, align: 'left', colour: theme.accent});
 }
 function clock(ctx, view) {
   const d = view.drops.find(x => !x.landed) ?? view.drops.at(-1);
   if (!d) return;
-  text(ctx, `${Math.min(d.t, landing(d.kind, d.h, d.v).seconds).toFixed(1)} s since letting go`, BOARD.width / 2, 30, {size: 18, colour: theme.text});
+  text(ctx, `${Math.min(d.t, landing(d.kind, d.h, d.v).seconds).toFixed(1)} s since the release`, BOARD.width / 2, 30, {size: 18, colour: theme.text});
 }
 function table(ctx, rows) {
-  const w = 330, h = 18 + rows.length * 30, x = BOARD.width - w - 16, y = 12;
+  const w = 360, h = 18 + rows.length * 30, x = BOARD.width - w - 16, y = 12;
   ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
   rows.forEach((row, i) => {
@@ -218,13 +269,14 @@ function drawLake(ctx, view) {
   if (view.post) post(ctx);
   if (view.buoy != null) buoy(ctx, view.buoy, view.time);
   if (view.ghostLetGo != null) letGoMark(ctx, view.ghostLetGo, 'at 10 m/s', theme.faint, 96);
-  if (view.letGo != null) letGoMark(ctx, view.letGo, view.ruler === 'buoy' ? beforeBuoy(Math.round(view.buoy - view.letGo)) : view.ghostLetGo != null ? 'at 20 m/s' : 'let go here');
+  if (view.letGo != null) letGoMark(ctx, view.letGo, view.ruler === 'buoy' ? beforeBuoy(Math.round(view.buoy - view.letGo)) : view.ghostLetGo != null ? 'at 20 m/s' : 'released here');
   if (view.flag != null) flag(ctx, view.flag, view.glow === 'flag', view.time);
   if (view.helis.length && view.helis.every(c => !c.set)) [...new Set(view.helis.map(c => c.h))].forEach((h, i) => height(ctx, h, POST_X + 40 + i * 76));
   drops(ctx, view);
   marks(ctx, view);
+  secondsScale(ctx, view);
   if (view.fallMarks) fallMarks(ctx, view);
-  if (view.underHer) underHer(ctx, view);
+  if (view.underHelicopter) underHelicopter(ctx, view);
   for (const c of view.helis) if (c.x > -14 && c.x < 76) kestrel(ctx, c, view);
   if (view.glow === 'drop' || view.glow === 'drop:best') { const at = targetPoint(view, view.glow); if (at) halo(ctx, ...at, 26, view.time); }
   if (view.keys.Space && view.helis[0]) { const [kx, ky] = bucketAt(view.helis[0]); spaceCap(ctx, kx + 46, ky - 6); }
@@ -240,10 +292,10 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 410); ctx.clip();
-    miniScene(ctx, idea.id, x + 10, 110, w - 20, 380, view.time);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 340); ctx.clip();
+    miniScene(ctx, idea.id, x + 10, 100, w - 20, 320, view.time);
     ctx.restore();
-    wrap(ctx, idea.text, x + w / 2, 528, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 460, w - 30, {size: 19, weight: 600});
   });
 }
 // A small side view for the recap and the cards: a helicopter, falls drawn as dotted arcs, a buoy.
@@ -262,7 +314,7 @@ function miniScene(ctx, kind, x, y, w, h, time) {
     ctx.strokeStyle = theme.faint; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(hx, hy + 14); ctx.lineTo(hx, water); ctx.stroke(); ctx.setLineDash([]);
     arc(x + w * .15, hy + 14, hx, STONE);
     stone(ctx, hx, y + h * .62, 6);
-    text(ctx, 'let go', x + w * .15, hy - 4, {size: 14, colour: theme.faint});
+    text(ctx, 'released here', x + w * .15, hy - 4, {size: 14, colour: theme.faint});
   }
   if (kind === 'faster') {
     const sx = x + w * .24, sy = y + h * .2;
@@ -273,7 +325,7 @@ function miniScene(ctx, kind, x, y, w, h, time) {
   if (kind === 'early') {
     const bxp = x + w * .78, sx = x + w * .38, sy = y + h * .25;
     buoyAt(bxp); mini(sx, sy - 14); arc(sx, sy, bxp, WATER_BLUE);
-    text(ctx, 'pour here', sx, sy - 44, {size: 14, colour: theme.accent});
+    text(ctx, 'start pouring here', sx, sy - 44, {size: 14, colour: theme.accent});
   }
 }
 
@@ -318,6 +370,6 @@ export function drawPicture(ctx, picture, w, h) {
     buoyAt(b);
     if (picture.what === 'over') { mini(b, 26); arc(b, 36, b + 60); }
     if (picture.what === 'before') { mini(w * .28, 26); arc(w * .28, 36, b); }
-    if (picture.what === 'high') { mini(b - 10, 10); arc(b - 10, 20, b + 50); text(ctx, 'very high', b + 40, 10, {size: 12, colour: theme.faint}); }
+    if (picture.what === 'after') { mini(b + 34, 26); arc(b + 34, 36, b + 80); }
   }
 }

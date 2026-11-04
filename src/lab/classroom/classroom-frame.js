@@ -10,6 +10,8 @@ export const SLOW_MOTION = .5;
 // Brian's pointer takes this long to reach the control before he presses it for the player.
 export const SHOW_ME_S = 1.4;
 const HELP_RUNGS = 3;
+// A result stays on the page; a "watch this" line or a hint does not.
+const KEPT_EVENTS = Object.freeze(['right', 'wrong', 'pass', 'fail']);
 
 // lesson: {id, steps: [{id, part, title}], createModel()}. The model owns the step's experiment:
 // enter(index), act(action) -> event, tick(dt) -> event, view({help, assist}) and targetOf(action).
@@ -18,8 +20,11 @@ export function createClassroomSession(lesson) {
   const model = lesson.createModel();
   let index = 0, furthest = 0, help = 0, idle = 0, offered = false, slow = false, time = 0;
   // nudge: Brian's offer of help when the player seems stuck, shown under his words so it never replaces them.
-  let bubble = null, celebrate = null, pointer = null, nudge = null;
+  let bubble = null, celebrate = null, pointer = null, nudge = null, lastSay = null;
   const done = new Set(), events = [];
+  // The page: what each step has taught so far (its first words and its latest result). Nothing is replaced by the next step.
+  const page = new Map();
+  const pageRow = i => { if (!page.has(i)) page.set(i, {title: lesson.steps[i].title, setup: null, result: null}); return page.get(i); };
   model.enter(0);
 
   function handle(event) {
@@ -33,10 +38,11 @@ export function createClassroomSession(lesson) {
     // Anything the player does, a click of the dial included, means they are not stuck.
     idle = 0; offered = false; nudge = null;
     if (event.kind !== 'sound') bubble = event.say ? {text: event.say, mood: moodOf(event.kind)} : null;
+    if (event.say && KEPT_EVENTS.includes(event.kind)) pageRow(index).result = event.say;
   }
   const moodOf = kind => kind === 'right' || kind === 'pass' ? 'cheer' : kind === 'wrong' || kind === 'fail' ? 'explain' : 'talk';
   function enter(i) {
-    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null; nudge = null;
+    index = i; furthest = Math.max(furthest, i); slow = false; help = 0; idle = 0; offered = false; bubble = null; pointer = null; celebrate = null; nudge = null; lastSay = null;
     model.enter(i);
   }
   const current = () => model.view({help, assist: help >= HELP_RUNGS});
@@ -69,12 +75,14 @@ export function createClassroomSession(lesson) {
       time += step;
       handle(model.tick(step * (slow ? SLOW_MOTION : 1)));
       const v = current();
+      // A result that arrives with no event (a Watch ending) replaces a hint the player asked for during it.
+      if (v.say !== lastSay) { if (lastSay !== null && bubble?.mood === 'hint') bubble = null; lastSay = v.say; }
       // Show me: the pointer reaches the control, Brian presses it, and hands the next part back.
       if (pointer && !pointer.done && time - pointer.at >= SHOW_ME_S && v.target === pointer.action && !v.pointOnly) {
         pointer.done = true;
         handle(model.act(pointer.action));
         celebrate = null; help = 0;
-        bubble = {text: `Like that. ${current().say}`, mood: 'talk'};
+        bubble = {text: `That is how it is done. ${current().say}`, mood: 'talk'};
         return;
       }
       if (!v.waiting) { idle = 0; return; }
@@ -84,9 +92,13 @@ export function createClassroomSession(lesson) {
     },
     takeEvents() { return events.splice(0); },
     view() {
-      const v = current(), step = lesson.steps[index];
+      const v = current(), step = lesson.steps[index], row = pageRow(index);
+      row.setup ??= v.say;
+      // A step that has finished may end on new words of its own, with no event: they are its result.
+      if (v.ready && v.say && v.say !== row.setup) row.result = v.say;
       return {
         ...v, index, step, slow, help, time,
+        page: lesson.steps.slice(0, index + 1).map((_, i) => page.get(i)).filter(Boolean),
         parts: PARTS.map((name, part) => {
           const steps = lesson.steps.map((s, i) => ({...s, i})).filter(s => s.part === part);
           return {name, first: steps[0]?.i ?? null, current: step.part === part, done: steps.length > 0 && steps.every(s => done.has(s.i)), reached: steps.some(s => s.i <= furthest)};

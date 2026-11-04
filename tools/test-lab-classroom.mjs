@@ -202,7 +202,7 @@ test('review fixes: slow motion ends with its step; Show me presses the control;
   run(session, SHOW_ME_S + .2);
   let v = session.view();
   assert.equal(v.chosen.lengthM, 5); assert.equal(v.cards.length, 3, 'the player is handed the guess');
-  assert.match(v.brian.text, /^Like that\. /); assert.equal(v.celebrate, null, 'Brian does not cheer his own press');
+  assert.match(v.brian.text, /^That is how it is done. /); assert.equal(v.celebrate, null, 'Brian does not cheer his own press');
   // A press that changes nothing is not a mistake; a weight press says to change one thing.
   session.act('guess:1'); session.act('release'); until(session, x => x.ready, 15);
   v = session.view();

@@ -1,11 +1,11 @@
 // LAB-CLASSROOM-PROJECTILE: the Projectile motion classroom played by keyboard (and one mouse drag of the flag),
 // from walking up to the drop tower to the helicopter challenge, on the harness's memory-only origin.
 export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
 }
 
-const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], KeyR: ['r', 82], ArrowRight: ['ArrowRight', 39],
+const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], KeyE: ['e', 69], KeyR: ['r', 82], KeyF: ['f', 70], ArrowRight: ['ArrowRight', 39], ArrowLeft: ['ArrowLeft', 37], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40],
   Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
 
 async function play(c) {
@@ -42,9 +42,19 @@ async function play(c) {
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(3200); await shot('wonder-falling'); await at('wonder', 's.ready'); await shot('wonder-missed');
   await next('wonder');
+  // Metres per second: the dial changes the sum at once, and the sum says so on the screen.
+  await at('word-metres'); await shot('word-metres');
+  await press('ArrowRight');
+  if (!(await c.evaluate(`document.querySelector('.lc-worked')?.textContent.includes('15 m ÷ 1 s = 15 m/s')`))) throw Error('The formula did not change with the dial.');
+  await press('Space'); await wait(3500); await shot('word-metres-marks'); await at('word-metres', 's.ready'); await shot('word-metres-done');
+  await next('word-metres');
   await at('word-gravity'); await shot('word-gravity'); await press('Space'); await wait(2000); await shot('word-gravity-marks');
+  await at('word-gravity', 's.ready'); await shot('word-gravity-done');
   await next('word-gravity');
-  await at('word-forward-speed'); await press('Space'); await wait(2600); await shot('word-forward-speed-under-her');
+  // The words stack: the earlier word is still on the page.
+  if (!(await c.evaluate(`document.querySelector('.lc-page').textContent.includes('Gravity is the pull of the Earth') && document.querySelector('.lc-page').textContent.includes('Speed is the distance an object travels')`))) throw Error('An earlier word left the page.');
+  await at('word-forward-speed'); await press('Space'); await wait(2900); await shot('word-forward-speed-falling');
+  await at('word-forward-speed', 's.ready'); await shot('word-forward-speed-done');
   await next('word-forward-speed');
   await at('word-arc'); await press('Space'); await at('word-arc', 's.ready'); await shot('word-arc');
   await next('word-arc');
@@ -52,6 +62,22 @@ async function play(c) {
   await next('watch-water');
   await at('watch-speeds'); await wait(2400); await shot('watch-speeds-falling'); await at('watch-speeds', 's.ready'); await shot('watch-speeds');
   await next('watch-speeds');
+  // The free test: the controls move the sums, the arcs stay, and F hides and shows the physics.
+  await at('try-free'); await shot('try-free');
+  await press('ArrowUp'); await press('ArrowRight'); await wait(200); await shot('try-free-set');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('15 m/s × 2.86 s = 42.9 m'))`))) throw Error('The formulas did not follow the settings.');
+  await press('Space'); await wait(3500); await shot('try-free-falling');
+  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('From 40 m at 15 m/s')`, 'the first test says its result', 15_000);
+  await press('ArrowDown'); await press('ArrowDown'); await press('Space');
+  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('From 20 m at 15 m/s')`, 'the second test says its result', 15_000);
+  await press('ArrowUp'); await press('ArrowUp'); await press('ArrowUp'); await press('ArrowRight'); await press('Space');
+  await at('try-free', 's.ready'); await shot('try-free-three');
+  await press('KeyF'); await wait(200);
+  if (!(await c.evaluate(`document.querySelector('.lc-physics').hidden && !document.querySelector('.lc-show-physics').hidden`))) throw Error('F did not hide the physics.');
+  await shot('try-free-hidden');
+  await press('KeyF'); await wait(200);
+  if (await c.evaluate(`document.querySelector('.lc-physics').hidden`)) throw Error('F did not show the physics again.');
+  await next('try-free');
   // The flag: a held arrow moves it a metre a press, then one mouse drag puts it on 13 m.
   await at('try-flag'); await shot('try-flag');
   await key('ArrowRight', 'keyDown'); for (let i = 0; i < 4; i++) { await wait(40); await key('ArrowRight', 'keyDown', {autoRepeat: true}); } await key('ArrowRight', 'keyUp'); await wait(250);
@@ -62,14 +88,14 @@ async function play(c) {
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
   await wait(300); await shot('try-flag-placed');
   await press('Space'); await at('try-flag', 's.ready'); await shot('try-flag-result');
-  if (!(await c.evaluate(`document.querySelector('.lc-bubble').textContent.startsWith('Right! The water landed 13 m ahead')`))) throw Error('The flag at 13 m was not right: ' + await c.evaluate(`document.querySelector('.lc-bubble').textContent`));
+  if (!(await c.evaluate(`document.querySelector('.lc-bubble').textContent.startsWith('Well judged. The water landed 13 m ahead')`))) throw Error('The flag at 13 m was not right: ' + await c.evaluate(`document.querySelector('.lc-bubble').textContent`));
   await next('try-flag');
   await at('try-height', 's.cards === 3'); await shot('try-height-guess'); await press('Digit1');
   await press('Space'); await at('try-height', 's.ready'); await shot('try-height-wrong-guess');
   await next('try-height');
   // Brian's job: an early press falls short and Brian says why; then help climbs to his pointer and Show me hits.
   await at('alone'); await shot('alone');
-  await press('Space'); await wait(2000); await press('Space');
+  await press('Space'); await wait(1800); await press('Space');
   await at('alone', 's.help === 1'); await wait(400); await shot('alone-short');
   for (const rung of [2, 3]) { await press('KeyH'); await at('alone', `s.help === ${rung}`); }
   await wait(900); await shot('alone-show-me');
@@ -82,11 +108,13 @@ async function play(c) {
   await at('recap'); await wait(1500); await shot('recap');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-progress li')].slice(0, 6).every(li => li.classList.contains('done'))`))) throw Error('The progress strip does not tick the finished parts.');
   // Teaching writes the notebook words and never passes the lesson by itself.
-  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.projectile && ['projectile-gravity', 'projectile-forward-speed', 'projectile-arc'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
+  if (!(await c.evaluate(`!window.__qaApp.profile.lab.done.projectile && ['projectile-metres-per-second', 'projectile-gravity', 'projectile-acceleration', 'projectile-forward-speed', 'projectile-arc'].every(id => window.__qaApp.profile.lab.notebook.includes(id))`))) throw Error('Teaching awarded progress or lost words.');
   // The game challenge goes through the Lab's own path: the helicopter starts with the key idea card.
   await press('Enter');
   await c.waitFor(`!document.querySelector('.lab-classroom') && window.__qaApp.heliSession?.view?.()?.challenge?.id === 'projectile'`, 'projectile challenge in the helicopter', 60_000);
-  await c.waitFor(`!document.querySelector('.lab-key-idea')?.hidden && document.querySelector('.lab-key-idea')?.textContent.includes('Let go before the buoy.')`, 'key idea card');
+  await c.waitFor(`!document.querySelector('.lab-key-idea')?.hidden && document.querySelector('.lab-key-idea')?.textContent.includes('Release the water before the buoy.')`, 'key idea card');
+  // The bucket is on the hook without a trip to the fitting menu.
+  await c.waitFor(`!!window.__qaApp.heliSession.view().bucket`, 'the bucket is fitted');
   await c.waitFor(`window.__qaApp.visualReady && document.querySelector('#renderer-loading')?.hidden && document.querySelector('#view3d canvas')?.style.visibility !== 'hidden'`, 'presented challenge world', 120_000);
   await wait(1500);
   if (!(await c.evaluate(`(() => {

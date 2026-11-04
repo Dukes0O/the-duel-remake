@@ -125,7 +125,7 @@ export function createModel() {
     return id === 'word-fuel-load' ? TANK_LITRES : id === 'try-half' ? HALF : id === 'try-weigh' ? WEIGH_LITRES : leastLitres(DAYS[Math.min(m.day, DAYS.length - 1)].share);
   }
 
-  // What Brian says while Show me pours, so his "Like that." is about what he did.
+  // What Brian says while Show me pours, so his "That is how it is done." is about what he did.
   function autoSay() {
     const id = step().id, to = goal();
     if (id === 'word-fuel-load') return `Watch: I fill it to ${TANK_LITRES} litres.`;
