@@ -354,6 +354,7 @@ tasks:
     lane: "UI"
     size: "L"
     status: "active"
+    claimed_by: "Claude, lesson language session, 4 November 2026"
     needs: [LAB-CLASSROOM]
     locks: []
     flag: "lab-classroom"
