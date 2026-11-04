@@ -42,7 +42,7 @@
 .lc-portrait[data-mood="explain"] { border-color: #f0a148; }
 .lc-name { font-size: 18px; color: #c9cfca; }
 /* The page: each step adds to it, like a textbook, and the newest words sit last on the light paper. */
-.lc-page { flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-color: #4a524e transparent; }
+.lc-page { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px; scrollbar-color: #4a524e transparent; }
 .lc-past section { margin-bottom: 10px; }
 .lc-past h4 { margin: 0 0 3px; font-size: 15px; font-weight: 700; color: #edc557; }
 .lc-past p { margin: 0 0 6px; font-size: 17px; line-height: 1.42; color: #c9cfca; }

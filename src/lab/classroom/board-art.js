@@ -81,13 +81,13 @@ export function outdoors(ctx) {
   ctx.fillStyle = theme.ground; ctx.fillRect(0, GROUND_Y, BOARD.width, 80);
   ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(BOARD.width, GROUND_Y); ctx.stroke();
 }
-export function wrap(ctx, value, x, y, width) {
-  ctx.font = '700 22px "Segoe UI", sans-serif';
+export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {
+  ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
   const words = value.split(' '), lines = [];
   let line = '';
   for (const w of words) { const next = line ? `${line} ${w}` : w; if (ctx.measureText(next).width > width && line) { lines.push(line); line = w; } else line = next; }
   lines.push(line);
-  lines.forEach((l, i) => text(ctx, l, x, y + i * 28, {size: 22}));
+  lines.forEach((l, i) => text(ctx, l, x, y + i * gap, {size, weight}));
 }
 
 

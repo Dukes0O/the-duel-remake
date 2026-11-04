@@ -31,7 +31,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   stage.append(root);
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
-  let layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
+  let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
   // A lesson passed in the classroom (a bench challenge): what Brian says, and the sparks it throws.
   let passed = null, burst = false;
 
@@ -159,6 +159,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     }
     $('.lc-cards').hidden = v.cards.length === 0;
     root.classList.toggle('lc-asking', v.cards.length > 0);
+    if (pageMoved) { pageMoved = false; showNewest(); }
     setHtml($('.lc-prompt'), 'prompt', `<b>Your move</b> ${escape(passed && v.last ? 'Enter takes you back to the Lab.' : v.prompt)}`);
     const button = (action, label, key, {primary = false, disabled = false, pressed = null} = {}) =>
       `<button type="button" data-lc="${action}" class="${primary ? 'primary' : ''}" ${disabled ? 'disabled' : ''} ${pressed === null ? '' : `aria-pressed="${pressed}"`}>${escape(label)} ${kbd(key)}</button>`;
@@ -173,6 +174,11 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
         : button('next', 'Continue', 'Enter', {primary: true, disabled: !v.ready})));
   }
 
+  // Brian's newest words in full, once the answer cards under the page have taken their room. A long question shows from its first word.
+  function showNewest() {
+    const page = $('.lc-page'), words = $('.lc-bubble');
+    page.scrollTop = words.offsetHeight > page.clientHeight ? words.offsetTop : page.scrollHeight;
+  }
   // The running page: every step so far, oldest first, with the newest words last.
   function paintPage(v, brian) {
     const rows = v.page.map((row, i) => {
@@ -182,7 +188,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
       return `<section class="${i === v.page.length - 1 ? 'now' : ''}"><h4>${escape(row.title)}</h4>${lines.map(text => `<p>${escape(text)}</p>`).join('')}</section>`;
     }).join('');
     const moved = setHtml($('.lc-past'), 'past', rows);
-    if (setHtml($('.lc-bubble'), 'bubble', escape(brian.text)) || moved) { const page = $('.lc-page'); page.scrollTop = page.scrollHeight; }
+    if (setHtml($('.lc-bubble'), 'bubble', escape(brian.text)) || moved) pageMoved = true;
   }
   function paintPhysics(v) {
     const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();

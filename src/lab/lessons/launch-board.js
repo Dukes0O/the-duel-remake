@@ -392,7 +392,7 @@ function drawRecap(ctx, view) {
     });
     if (idea.id === 'lower') kicker(ctx, x + 150, 230, .5, {pose: 'tuck', flight: true});
     if (idea.id !== 'lower') { ctx.fillStyle = '#d9b24a'; ctx.fillRect(ox, oy - 1, w - 50, 3); }
-    wrap(ctx, idea.text, x + w / 2, 430, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 440, w - 30, {size: 19, weight: 600});
   });
 }
 

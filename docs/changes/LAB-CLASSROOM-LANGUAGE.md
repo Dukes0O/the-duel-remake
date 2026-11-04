@@ -82,7 +82,28 @@ Five lines are rewritten and re-recorded with the same voice and settings, and t
 - `tools/test-lab-challenges.mjs`: added a test that the water challenges start with the bucket on the hook and others do
   not. The flown tests keep their `fitBucket()` calls, which now answer "already fitted".
 
+## Review
+
+One independent review (read-only agent). Real faults, all fixed with a test where one fits: the main explanations left the
+page because a Watch ends with no event, so the frame now keeps a finished step's closing words as its result; a hint asked
+for during a Watch hid the result; the Launch dial's needle and its numbers disagreed (the dial now reads 0 to 90 km/h);
+sums that did not come out on a calculator (0.12, 9.8 and m/s to km/h now show exactly what they use); the challenge card
+said water keeps the helicopter's speed; a revisited step printed its old result above its question; Launch used m/s before
+defining it, so Speed now comes before Launch angle, and each step shows only the sums explained so far; kicker, inrun and
+tuck are now defined; "you set the speed of the ramp" in a recorded line; three identical tests counted as three, so only
+different settings count now; a ruined bucket was fitted with no warning, so the challenge now refuses with the repair
+reason. Claude's look check then found two more: the answer cards cut off the end of Brian's question, and the recap text
+ran off its cards in both lessons. Both are fixed, and `wrap` gained an optional size. "Like that." became "That is how it
+is done." in every lesson, because the frame says it.
+
+Left for the sweep: `docs/LAB.md`'s lesson sections still describe the old lessons; the helicopter's own instruments show feet
+and knots, which is the game's cockpit rather than a lesson (raised with Kyle).
+
 ## Checks
 
-Filled in below by the batch that runs them: `tools/test-lab-classroom-page.mjs`; each lesson's suite; every
-`tools/test-lab-*.mjs`; lane tier and build; all Lab browser scenarios; one independent review.
+- `tools/test-lab-classroom-page.mjs` 6/6 (new); `test-lab-classroom-projectile` 17/17; `test-lab-classroom-launch` 12/12;
+  every `tools/test-lab-*.mjs` passes on the final code; `test-lab-radio` 791 checks with the new takes.
+- Lane tier (`--changed --jobs 4`) 142/142 and build. One earlier run stopped on `test-lab-classroom-fire`, which pinned "Like
+  that."; the wording moved with the frame.
+- All 23 Lab browser scenarios pass; Launch and Projectile ran again after the last two look fixes.
+- Look: Claude read the walkthrough's pictures over five runs. No frame check: the classroom is a 2D board.

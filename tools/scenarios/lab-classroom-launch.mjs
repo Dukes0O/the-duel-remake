@@ -83,7 +83,9 @@ export async function run(c) {
   if (!(await bubble()).includes('finishes the job')) throw Error('The job should end done: ' + await bubble());
   await next('alone');
   for (const [step, answer] of [['check-pair', 'Digit1'], ['check-lower', 'Digit2'], ['check-game', 'Digit1']]) {
-    await at(step); await shot(step); await press(answer); await at(step, 's.ready'); await wait(500); await shot(`${step}-answered`);
+    await at(step); await wait(300); await shot(step);
+    if (!(await c.evaluate(`(() => { const p = document.querySelector('.lc-page').getBoundingClientRect(), b = document.querySelector('.lc-bubble').getBoundingClientRect(); return b.top >= p.top - 1 && (b.bottom <= p.bottom + 1 || b.height > p.height); })()`))) throw Error(`${step}: Brian's question is cut off.`);
+    await press(answer); await at(step, 's.ready'); await wait(500); await shot(`${step}-answered`);
     await press('Enter');
   }
   await at('recap'); await wait(800); await shot('recap');

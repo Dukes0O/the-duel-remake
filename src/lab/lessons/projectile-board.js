@@ -292,10 +292,10 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 410); ctx.clip();
-    miniScene(ctx, idea.id, x + 10, 110, w - 20, 380, view.time);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 340); ctx.clip();
+    miniScene(ctx, idea.id, x + 10, 100, w - 20, 320, view.time);
     ctx.restore();
-    wrap(ctx, idea.text, x + w / 2, 528, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 460, w - 30, {size: 19, weight: 600});
   });
 }
 // A small side view for the recap and the cards: a helicopter, falls drawn as dotted arcs, a buoy.
