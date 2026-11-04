@@ -57,6 +57,38 @@ Lift and Pendulums, one at a time, with formulas where the lesson has physics to
 and Suspension are built to this standard from the start. Brian's recorded lines change with the
 words (`src/lab/lab-lines.js`, `tools/audio/build-lab-voice.mjs`).
 
+## How each remaining lesson is rewritten
+
+Worked examples: `src/lab/lessons/projectile-classroom.js`, `launch-classroom.js` and their boards, tests and scenarios.
+Faults already found once, so not to be repeated, are in the Review section of `docs/changes/LAB-CLASSROOM-LANGUAGE.md`.
+
+- **Read every string aloud:** `say`, `prompt`, `hints`, `right`, `wrong`, question and answer labels, `KEY_IDEAS`, `CHALLENGE_CARD`,
+  `WORDS` meanings, `PASS_SAY`, button labels, and in the board `hoverInfo` and every drawn caption. Short captions on a picture
+  may be labels ("flag 27 m"); anything that makes a statement is a sentence.
+- **The numbers stay the game's own.** The rules, challenges, rewards, save and notebook ids do not change; every number comes from
+  the same bench function as before. Change wording, teaching order and pictures, not the rules.
+- **Formulas.** Give `formulas` on each step where there is real physics to show, as `{title, formula, worked, note}`, only for what
+  has been explained so far. `worked` must come out on a calculator from exactly the numbers it shows, so round the inputs first and
+  compute from the rounded values. Use the game's own rule. Where the game's rule is a simplification, say "in this game". A lesson
+  with no honest formula on a step shows none on that step.
+- **Controls move the sums.** Wherever the player changes a control, the worked line changes on that press.
+- **A free test step** (`try-free`, part 3) wherever the bench has controls: the player changes them freely and compares results kept
+  on the board or in a table. Only different settings count, and three open Continue. The sums show first, so the player can predict.
+- **Word steps** that use a dial stay open after the answer, so the player can keep experimenting, and their closing words must stay true
+  while the player does.
+- **Units.** Metric only, defined the first time they appear in that lesson, because a player may take the lessons in any order. Speeds show
+  in km/h (`mph x 1.609344`, or `m/s x 3.6`, rounded for the dial) and the sums use m/s. Nothing in a lesson file says mph.
+- **Pictures.** The picture must show the idea, not only decorate it. Add arrows, marks or labels that make the mechanism visible,
+  in the manner of Projectile's second marks and speed arrows.
+- **Fit.** Longer text must still fit: recap cards use `wrap(ctx, text, x, y, width, {size: 19, weight: 600})` and must stay inside
+  their cards. Read the screenshots at 1920 by 1000 to check.
+- **Tests.** Assertions on wording move to the new sentence and keep their numbers. Never loosen or delete a check of behaviour. A speed in
+  mph becomes the same speed in km/h. Add the card's new behaviour: formula changes with a control, and the free test.
+  Scenarios run at 1920 by 1000.
+- **Shared files are not edited in a lesson's lane:** `src/lab/classroom/*`, `src/lab/lab-lines.js`, `tools/audio/*`, `docs/LAB.md`,
+  `tools/test-lab-classroom-page.mjs`, the board and the inbox. A rewritten recorded line is proposed in the lesson's change note,
+  and Claude records them together at the merge. A lesson's Watch and recap words should match what its proposed voice lines say.
+
 ## Checks
 
 - `tools/test-lab-classroom-page.mjs` (new, the card asks for it): the page keeps earlier steps and
