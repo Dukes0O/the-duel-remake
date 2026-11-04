@@ -6269,7 +6269,7 @@
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.45,
+        "stability": 0.4,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
@@ -6278,8 +6278,8 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-projectile-explain.mp3",
-      "sha256": "d560d5e6928af8bc5395b9561618094e9434dded3acc47b5b5dde8b4ab90e681",
-      "bytes": 298883,
+      "sha256": "07787862a716648a1590dc10b4ec4d9bcfc3696cbcf915c6be7b5b5ddbfa1d66",
+      "bytes": 307243,
       "generated": "2026-11-04"
     },
     {
@@ -6290,7 +6290,7 @@
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.45,
+        "stability": 0.4,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
@@ -6299,8 +6299,8 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-projectile-pass.mp3",
-      "sha256": "06c001889acec7f18256ce578ce32701b1bbe3cd2ac28b752c1344609a67c364",
-      "bytes": 80709,
+      "sha256": "8c9ab210bc79177c1b619e9003970244b295b7d41a134525424a11b25c0704af",
+      "bytes": 81127,
       "generated": "2026-11-04"
     },
     {
@@ -7067,7 +7067,7 @@
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.45,
+        "stability": 0.4,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
@@ -7076,8 +7076,8 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-intro.mp3",
-      "sha256": "3ca400b683d3aa7a925bffe51cd78ddbc34a77e7ca798e959f01e434a9841563",
-      "bytes": 115399,
+      "sha256": "219fd71412f83f215f15970b914268c3b18e1979333cca79e572013ae0f5ea61",
+      "bytes": 109548,
       "generated": "2026-11-04"
     },
     {
@@ -7088,7 +7088,7 @@
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.45,
+        "stability": 0.4,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
@@ -7097,8 +7097,8 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-explain.mp3",
-      "sha256": "510eaf783bed1562e741bb535bf7a89ea8a68f23c85a8539e636e2d5fe60d535",
-      "bytes": 234518,
+      "sha256": "64cf36c177db47dbfd60f6ae8f0c0b618960dfcd1c22c0b01c7a0af1cc194fa5",
+      "bytes": 245385,
       "generated": "2026-11-04"
     },
     {
@@ -7109,7 +7109,7 @@
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.45,
+        "stability": 0.4,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
@@ -7118,8 +7118,8 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-launch-pass.mp3",
-      "sha256": "f28416e04966ce63c8d78109d144f25ff4cd5deba0ed3ab47b10e6b00ba0e035",
-      "bytes": 55213,
+      "sha256": "f0cb99241ef6cf89e623d48928e3fff9b2cc2b67384c4dcb6f8cfe6ed7739bd3",
+      "bytes": 58975,
       "generated": "2026-11-04"
     },
     {

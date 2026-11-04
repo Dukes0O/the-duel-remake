@@ -348,6 +348,17 @@ tasks:
     details: "docs/board/cards/QA-AUDIO-CRASH-PEAK-3.md"
 
 
+  - id: LAB-CLASSROOM-LANGUAGE
+    title: "Every lesson rewritten in plain English, with a running page and physics formulas"
+    owner: "claude"
+    lane: "UI"
+    size: "L"
+    status: "active"
+    needs: [LAB-CLASSROOM]
+    locks: []
+    flag: "lab-classroom"
+    details: "docs/board/cards/LAB-CLASSROOM-LANGUAGE.md"
+
   - id: LAB-CLASSROOM-GFORCE
     title: "G-force rebuilt as a classroom lesson"
     owner: "codex"
