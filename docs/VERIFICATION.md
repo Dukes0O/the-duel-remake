@@ -1966,3 +1966,18 @@ result. Changed assertions reviewed in docs/changes/WILD-ART-SRC.md; nothing loo
 Rule 19 on the full tier of 8361997b: since then a data table of models, runtime animal models, Blender
 recipes, their tests, a Lab lesson released by another session, board and notes; no shared core, save
 shape or physics. No save change.
+
+
+## Release, 4 November 2026, LAB-CLASSROOM-LANGUAGE batch 1 (Claude, Release Manager)
+
+From Kyle's critique of the Launch and Projectile lessons. The classroom gains a running page and a physics panel; Projectile
+and Launch are rewritten in whole sentences, metric only, with m/s, m/s² and km/h explained, live formulas and a free test
+step; a water challenge from the Lab fits the bucket (a ruined bucket refuses with the repair reason). Five of Brian's lines
+are re-recorded. The challenges' goals and rewards and the save shape are unchanged; two new notebook word ids
+(`projectile-metres-per-second`, `projectile-acceleration`) use the existing notebook list.
+test-lab-classroom-page 6/6, Projectile 17/17, Launch 12/12, every test-lab-* suite, 23 Lab scenarios 23/23, lane tier 142/142,
+build. One review: real faults found and fixed, listed in docs/changes/LAB-CLASSROOM-LANGUAGE.md with the changed assertions.
+
+Rule 19: the last whole-tier pass is 8361997b. Since then Lab code, tests and notes, the European animals release, and a
+four-line guard in `heli-session.js` `startChallenge` (no physics or save shape), whose suites ran in the lane tier
+(`test-lab-challenges` included). No frame check: the classroom is a 2D board and no race scene changed.

@@ -9,6 +9,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 - **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
   Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
   ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.
+- **The Lab reads like a good teacher now, starting with Projectile and Launch.**
+  Brian's side of the screen is one running page, like a textbook, so a new word
+  goes below the last one and you can scroll back to anything. A physics panel beside the
+  picture (F hides it) shows the formulas with the numbers now on the board, and in Launch and
+  in Projectile's free test the sums change with each press of a control. Both lessons
+  are rewritten in whole sentences that explain why, in metric units, with m/s and km/h
+  explained, and each has a step for testing your own settings. A water challenge
+  now starts with the bucket already on the hook. The other lessons follow.
 - **Animals beside the road, and the helicopter's new coats.** Real local
   animals stand in open ground beside the road and run for cover as you
   pass: white-tailed deer, moose, black bears with cubs, beavers and, one
