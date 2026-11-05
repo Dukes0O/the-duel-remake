@@ -25,6 +25,7 @@ and notebook ids are unchanged, and every number still comes from the rust bench
   coming down through water to steel; two tanks with few and many charged particles; arrows for electrons going from the zinc into
   the steel; each jar's daily rate. Each jar's reading uses the calendar's whole day, so it agrees with the sum.
 - The questions and their answers read as sentences together, and no answer is shown in the panel or on the board before the pick.
+  On the 3-day question the player works out the sum, which reads "= ?" until the run.
 - The challenge card is reworded. The challenge itself is still the Lab's parts panel, which this change does not touch.
 - The scenario runs at 1920 by 1000.
 
@@ -55,13 +56,30 @@ Nothing is recorded in this lane. For Claude to record at the merge, in `src/lab
 - `lab.brian.rust.explain`: "Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it."
 - `lab.brian.rust.pass`: "You have chosen the right protection for each part. That is how you keep metal from rusting away."
 
+## Review
+
+One independent review. Real faults, all fixed with a test where one fits:
+
+- The panel gave away how long the coat lasts on Zinc coat, Watch and the coat's question, and showed the dial's old days beside a question
+  about a week. Those steps now show only that the rust stays at 0% while the coat lasts, and the question's own 7 days.
+- The worked sum and the graph gave the answer to the 3-day question, so the sum reads "= ?" and the graph stays empty until the run. The
+  job's verdict on clean now waits for its run, because the verdict is the choice the job asks for.
+- A hint said to press ↓ from a dial reading 1 or 2. It is now right from every setting.
+- Show me on the free test reran the same setting for ever. It now tries a setting not yet tested and says which, and a test finishes the
+  step with Show me alone.
+- The 3-day intro carried the dial's number, so a revisit changed it on each press. The number is now only in the prompt and the panel.
+- Colons that skipped a verb in the panel and on the board are now sentences or plain labels.
+
+Also checked against the first batch's list: a line said during a run or while a question is open no longer stands as the step's result on
+the page, Continue waits for the run to end on a step done again, rust and steel are defined in the first step that names them, charged
+particles are explained before the picture names them, and "clean" is not used in its special sense before Brian's job.
+
 ## Checks
 
-- `node tools/test-lab-classroom-rust.mjs`: 12 of 12.
+- `node tools/test-lab-classroom-rust.mjs`: 17 of 17.
 - Source check with the patterns of `tools/test-lab-classroom-page.mjs`: no she, her, mph, decides or "air takes" in either lesson file, and
   every step after the first shows formulas. Claude adds `rust` to that suite's list at the merge.
-- Browser walkthrough `lab-classroom-rust` at 1920 by 1000: passes, 36 pictures, no warnings or errors. The pictures were read over two
+- Browser walkthrough `lab-classroom-rust` at 1920 by 1000: passes, 36 pictures, no warnings or errors. The pictures were read over three
   runs. The first found graph labels on top of each other, words too dark to read, the jar buttons touching the Space label, bits of
-  zinc drifting outside the water and a prompt with a colon before a sentence; all are fixed. The last word label on the oxygen close-up
-  changed after the second run and was checked by the suite only.
+  zinc drifting outside the water and a prompt with a colon before a sentence; all are fixed. The third read the screens the review changed.
 - The lane tier and build are left for the merge, as the brief says. No frame check: the classroom is a 2D board.
