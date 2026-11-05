@@ -46,9 +46,15 @@ const generators = [
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
+  { script: 'tools/blender/bowl-crush.py', args: [], glb: ['public/assets/models/wasteland/bowl/crush.glb'], budget: 20000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
+  { id: 'bowl-trucks', script: 'tools/blender/bowl-trucks.py', args: [], glb: ['public/assets/models/wasteland/bowl/trucks.glb'], budget: 8000 },
+  // Candidate art is generated and read back in its lane, then waits for Claude's look verdict.
+  // The public candidate is installed only when a later scene card wires it into gameplay.
+  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '2'], candidate: true,
+    budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -57,6 +63,9 @@ const generators = [
     ...['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/first-person/hands/${name}.glb`),
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
+  { script: 'tools/blender/scablands-vehicles.py', args: [], glb: ['public/assets/models/wasteland/scablands/vehicles.glb'] },
+  // WW-SCENE owns installation; this card keeps its generated GLB out of public/.
+    { script: 'tools/blender/scablands-mall.py', args: [], glb: ['public/assets/models/wasteland/scablands/mall.glb'] },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
   { script: 'tools/blender/muddy-hollow-props.py', args: [], glb: [], json: ['src/generated/muddy-hollow-props.json'] },
   { script: 'tools/blender/speirling-tries.py', args: [], recipeOnly: true, glb: ['public/assets/models/unlocks/mcmurtry_speirling.glb'] },
@@ -506,8 +515,27 @@ try {
       assert.equal(relativePlans[0].blend.length, generator.recipeOnly ? 0 : generator.glb.length || 1,
         generator.recipeOnly ? 'recipe-only exports plan no editable Blend files' : 'one editable Blend per exported model is expected');
       for (const runtimePath of [...relativePlans[0].glb, ...relativePlans[0].json]) {
-        assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
+        if (artCandidates.has(generator.id)) {
+          assert.ok(!existsSync(join(root, runtimePath)), `${runtimePath} is published before art approval`);
+        } else {
+          assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
+        }
+        if (!generator.candidate) assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
       }
+    });
+    if (generator.candidate) check(`${generator.script} candidate GLB stays within its art budget when present`, () => {
+      const path = join(root, generator.glb[0]);
+      if (!existsSync(path)) return; // Claude's approved look is installed by the scene card.
+      const bytes = readFileSync(path);
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(4), 2);
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      const jsonLength = bytes.readUInt32LE(12);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+      const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+        .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+      assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
     });
   }
   check('scablands-tintown exports its bounded named walkable town model', () => {
@@ -587,6 +615,17 @@ try {
       'bowl-podium-welded-cap', 'bowl-ramp-0-flame-jet-housings', 'bowl-floodlight-1-24-legs']) {
       assert.ok(names.has(part), `missing named stadium part ${part}`);
     }
+  });
+
+  check('Bowl crush GLB stays within its 20,000-triangle and 1 MB card budget', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/bowl/crush.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF', 'valid GLB header');
+    assert.ok(bytes.length <= 1_000_000, `${bytes.length} bytes`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength).trim());
+    const triangles = (gltf.meshes || []).flatMap(mesh => mesh.primitives || [])
+      .reduce((sum, primitive) => sum + (gltf.accessors[primitive.indices]?.count || 0) / 3, 0);
+    assert.ok(triangles > 100 && triangles <= 20_000, `${triangles} triangles`);
   });
 
   for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
@@ -831,6 +870,24 @@ try {
 } finally {
   for (const fixtureRoot of fixtureRoots) rmSync(fixtureRoot, { recursive: true, force: true });
 }
+
+check('BOWL-ART-TRUCKS GLB meets its five-rival file and triangle budgets', () => {
+  const path = join(root, 'public/assets/models/wasteland/bowl/trucks.glb');
+  const bytes = readFileSync(path);
+  assert.ok(bytes.length <= 1024 * 1024, `GLB is ${bytes.length} bytes; budget is 1 MB`);
+  assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+  assert.equal(bytes.readUInt32LE(8), bytes.length);
+  const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+  const parts = new Map();
+  for (const node of gltf.nodes) {
+    const rival = node.name?.split('-').slice(0, 2).join('-');
+    if (!['rust-rhino','big-kettle','tin-lizard','old-bess','dragon-wagon'].includes(rival) || node.mesh === undefined) continue;
+    const tris = gltf.meshes[node.mesh].primitives.reduce((sum, p) => sum + gltf.accessors[p.indices].count / 3, 0);
+    parts.set(rival, (parts.get(rival) || 0) + tris);
+  }
+  assert.deepEqual([...parts.keys()].sort(), ['big-kettle','dragon-wagon','old-bess','rust-rhino','tin-lizard']);
+  for (const [name, triangles] of parts) assert.ok(triangles > 0 && triangles <= 8000, `${name}: ${triangles} triangles`);
+});
 
 check('art-build is ignored as a directory', () => {
   const ignored = spawnSync('git', ['check-ignore', 'art-build/placement-probe.txt'], { cwd: root, encoding: 'utf8', windowsHide: true });

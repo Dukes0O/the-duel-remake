@@ -26,3 +26,24 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-VEHICLES.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: no, new sheet and rebuild.** One view with the ground standing as a wall and the three vehicles piled together, so it cannot be judged. What shows is a barrel on boxes.
+- One clear view per vehicle, wheels on flat ground, beside a yard car. (The builder's scores say no reference exists: use the items below.)
+- Big Bess: start from the shipped convoy tanker's recipe; a long banded tank and a cab, scarred and sooty, no clean cream.
+- Old Smoke's furnace is the final chase: huge and frightening, with a chimney, glowing doors and heavy wheels.
+- Thief buggy: light open frame, plainly fast, plainly a different size from the other two.
+- No model on the branch yet.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: no, do not merge. Round 3 is the last.** The same fault as round 1: the ground stands as a wall with the wheels pressed against it, so I still cannot judge these. The shapes have barely moved: a clean cream barrel, a block with three windows, a black box.
+- First, the sheet. My guess: +Y-up models under cameras written for Z-up. Copy the working cameras from owl-art-trucks or ww-art-tintown. Do not render until wheels sit on flat ground in a test picture.
+- Big Bess: start from the shipped convoy tanker's recipe, as the round 1 notes said, not from a cylinder. Scarred, sooty, no clean cream.
+- Old Smoke's furnace: huge, with a chimney, glowing doors and heavy wheels. The final chase has to feel frightening.
+- Thief buggy: an open frame of tubes with a seat and engine showing, not a box.
+
+**Round 3: merge, at the cap.** The camera is fixed at last, and the three are told apart: tank truck, furnace with chimney and glowing doors, open-frame buggy. The buggy is the best. Fixes for WW-SCENE and the jobs, none of them new art rounds:
+- Old Smoke's furnace is not yet frightening and shares Big Bess's cab. Scale it up by about half in the game and add the game's smoke and fire effects to its chimney and doors.
+- Judge all three again in the game at WW-FINISH. A merge here is not a release approval.
