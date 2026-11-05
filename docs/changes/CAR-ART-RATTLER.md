@@ -2,19 +2,21 @@
 
 ## Changed
 
-- Revised `tools/blender/rattler.py` for a rounded, chopped cab and roof, open wheel arches, brighter lighting, closer framing, and five review views.
-- Exported `public/assets/models/wasteland/cars/rattler.glb`: 2,136 triangles and 352,436 bytes, within the card budgets.
-- Replaced the round 1 sheet with a 191,886-byte comparison JPG containing the earlier sheet and all five round 2 views. Added honest scores in the review note.
+- Added a generated photographic rat-rod reference and a generated picture-based steel/rust material. Both full prompts are in `docs/WASTELAND_ART.md`; the texture is packed in the GLB and its credit is in the adjacent `CREDITS.md`.
+- Rebuilt `tools/blender/rattler.py` with a curved cab shell and separate roof, slit windshield, short pickup bed, detailed V8 parts, game-style torus tyres with tread, overcast render lights and five requested views.
+- Exported the Rattler model at 20,408 triangles and 7,803,604 bytes, within the card's 25,000 triangle and 8 MB limits.
+- Added the photographic crop and five views to `docs/board/looks/car-art-rattler/round-3.jpg` (within the 500 KB sheet limit).
+- The art does **not pass**. My side-by-side review still reads as toy-like: the cab looks like an oval cap rather than a shaped cab with open window apertures, the engine and nose overlap, and the generated texture stretches into broad streaks. I stopped after targeted silhouette, lighting and nose corrections failed to make the model resemble the reference. Claude should judge the round-3 sheet and use its review gaps to direct another round.
 
 ## Checks
 
-- Blender render and GLB export passed; all five requested views rendered.
-- Lane tier `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` passed: 47/47 suites. Blender output placement passed 232 checks; smoke test passed 799 checks; replay guards passed 297 checks.
-- `npm.cmd run build` passed. Vite reported its dynamic-import and large-chunk warnings.
-- No browser scenario or frame check was run. Claude should inspect the comparison sheet, requested views and scale figure, and compare the model with the generated photographic reference. The reference crop is not included on the sheet.
-- No assertions changed. No simulation code changed; replay guards passed with unchanged fingerprints.
+- Blender recipe rendered all five views and exported the GLB successfully. The final export measured 20,408 triangles and 7,803,604 bytes.
+- Blender output placement passed 232 checks in the lane tier. The lane command selected 48 suites; 46 passed. `tools/test-circuit-eifel.mjs` failed because FFmpeg loudness measurement failed, and its same-commit rerun failed the same way. `tools/test-review-evidence.mjs` failed because spawning FFmpeg returned `EPERM`, and its same-commit rerun failed the same way. No Eifel, audio or game code changed in this card. All selected suites reported; the runner did not exit after the suite results, so I interrupted it.
+- `npm.cmd run build` passed. Vite reported the existing dynamic-import and large-chunk warnings.
+- No browser checks or frame tests were run. Claude should inspect the five renders beside the reference crop in the round-3 sheet.
+- No assertions changed. No race or game code changed; race fingerprints are not applicable to this model-only card.
 
 ## Removed
 
-- Removed the superseded round 1 sheet and review note from the current looks folder.
-- Round 1 private render outputs are superseded by `.evidence/2026-11-05/CAR-ART-RATTLER/round-2/`.
+- Kept the round-2 sheet and review note as the earlier card round. Deleted round-3 temporary photo and render evidence after placing a crop on the review sheet and packing the material texture into the GLB.
+- No source model, save, runtime file or unrelated asset was removed.

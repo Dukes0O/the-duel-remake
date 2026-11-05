@@ -359,3 +359,23 @@ Prompt (full procedural art brief):
 ## HELI-LOGBOOK rank paint credits
 
 `rank-student.png`, `rank-private.png`, `rank-commercial.png`, `rank-mountain.png`, and `rank-chief.png`: original procedural paint textures for The Duel, 26 October 2026. Blender 4.5.13 LTS and NumPy, recipe `tools/blender/heli-logbook-paints.py`. No external source art or licensed marks. Original kestrel silhouettes are polygon coordinates in the recipe; the airframe is Claude's original Kestrel One. Round 2 candidates; Claude's paint review is pending. The Commercial and Chief kestrels moved to the tail boom at Claude's direction; the skid scuffs are original object-space shader marks, generated without external source art. Credits are recorded here because the game does not load a separate credits document from the texture folder.
+
+## Rattler round 3 embedded steel and rust map
+
+Date: 2026-11-05
+Tool: Codex built-in image generation
+Use: Embedded base-color image in `public/assets/models/wasteland/cars/rattler.glb`, as a picture-based surface for the Rattler's sandblasted steel and restrained iron oxide.
+Prompt:
+> Use case: photorealistic-natural. Asset type: square seamless close-up albedo photograph for a real-time game material on a hand-built rat rod. Straight-on flat macro view of sandblasted bare automotive steel panel with convincing fine abrasive grain, several localized reddish iron-oxide blooms and tiny chipped remnants of muted faded oxide primer, shallow scratches, hammered irregularities and a few small weld seams. Neutral medium grey steel dominates, rust is brown-orange and restrained, realistic crisp sharp surface detail at fine and medium scales. Uniform diffuse overcast illumination, no shadows, no glare, no perspective, true color only. Continuous tile on all four edges, evenly distributed texture with no central feature. No vehicle, parts, tools, text, logos, border, grid, watermark, illustration or noise effect. Opaque photographic material texture.
+
+Original image remains outside the repository in Codex generated images. It is packed into the GLB; the compressed comparison sheet contains the reference crop and model views.
+
+## Rattler round 3 photographic reference
+
+Date: 2026-11-05
+Tool: Codex built-in image generation
+Use: Photographic shape and wear reference for the original Rattler pickup. The generated photograph itself stays outside the repository; a small crop appears on `docs/board/looks/car-art-rattler/round-3.jpg` beside the Blender views.
+Prompt:
+> Use case: photorealistic-natural. Asset type: documentary automotive photograph reference for an original real-world rat rod pickup, outdoors in plain bright overcast daylight. One believable home-built late-1930s pickup hot rod with a chopped rounded cab and crowned roof, very narrow slit windshield, low long stance, exposed detailed V8 engine with belts and headers ahead of a narrow grille shell, open cycle fenders, short steel pickup bed, oversized rear tires and narrow front tires, simple welded roll hoop, sandblasted bare steel with patchy reddish rust and faded primer. Dusty, used, mechanically plausible, imperfect hand-built craftsmanship. Camera at low front three-quarter angle, full vehicle fills frame, neutral pale gravel yard, soft shadow, natural exposure preserving steel highlights without clipping, high-detail photographic surface. No logos, badges, text, people, franchise cues, dramatic sunset, studio gloss, CGI look, illustration, watermark.
+
+The model comparison did not pass this round; see the round review for the observed shape and material gaps.
