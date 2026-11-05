@@ -350,6 +350,15 @@ tasks:
     flag: "lab-classroom"
     details: "docs/board/cards/LAB-CLASSROOM-LANGUAGE.md"
 
+  - id: QA-BUNDLE-NO-COPY
+    title: "Browser test builds stop copying the 373 MB public folder"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "building"
+    needs: []
+    details: "docs/board/cards/QA-BUNDLE-NO-COPY.md"
+
   - id: LAB-CLASSROOM-GRIP
     title: "Grip and slip rebuilt as a classroom lesson"
     owner: "codex"
