@@ -21,6 +21,12 @@ for (const [step, line, expectedTarget] of cases) {
   assert.deepEqual(view.target, {id: expectedTarget.id ?? null,
     name: expectedTarget.name ?? expectedTarget.id?.replaceAll('-', ' ') ?? 'the marked place',
     x: expectedTarget.position?.x ?? expectedTarget.x, z: expectedTarget.position?.z ?? expectedTarget.z}, `${step.kind} marker`);
+  const point = expectedTarget.position ?? expectedTarget;
+  const bearing = (Math.atan2(point.x, point.z) * 180 / Math.PI + 360) % 360;
+  const model = worldHudModel({worldJob: {definition: {}, actors, inventory: [],
+    job: {steps: [step], stepIndex: 0}}, player: {x: 0, z: 0}, heading: 0, places: [target]});
+  assert.equal(model.bearing, bearing, `${step.kind} compass bearing`);
+  assert.equal(model.arrow, bearing, `${step.kind} compass arrow`);
 }
 
 assert.equal(worldHudStep(cases[5][0], {inventory: ['valve-key']}, [target]).line, 'Carry valve key to your car', 'heist changes from taking the key to escaping');

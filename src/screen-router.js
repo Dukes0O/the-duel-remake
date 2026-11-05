@@ -33,6 +33,8 @@ import './screen-team-room.css';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
+import {createWorldHud} from './world/world-hud.js';
+import './world/world-hud.css';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
@@ -93,6 +95,7 @@ const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
+const worldHud=createWorldHud({host:root.querySelector('#stage')});
 const heliUi=createHeliUi({host:root.querySelector('#stage'),app,onMenu:()=>refreshRaceSetup()});
 const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.
@@ -141,7 +144,7 @@ const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadD
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
 const courseCardMaps=createCourseCardMaps({getSeed:index=>app.getMenuSeed(index)});
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();courseCardMaps.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();worldHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();courseCardMaps.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -490,6 +493,7 @@ function renderState(s) {
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
   combatHud.update(s);
+  worldHud.update(s,app.duel,profile());
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
   const deepView=deepUi.update(app.duel);sirenaHud.update(); // DEEP-SIRENA-VIEW

@@ -92,3 +92,94 @@ export function worldHudModel({worldJob, player = null, heading = 0, found = [],
     player: position,
   };
 }
+
+const STYLE_ID = 'world-hud-style';
+const MAP_WIDTH = 640, MAP_HEIGHT = 440;
+
+function drawWorldMap(ctx, model) {
+  ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+  ctx.fillStyle = '#b8a27e'; ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+  const project = (x, z) => [28 + (x + 700) / 1400 * (MAP_WIDTH - 56), 26 + (500 - z) / 1000 * (MAP_HEIGHT - 52)];
+  ctx.fillStyle = '#82765e'; ctx.beginPath(); ctx.ellipse(MAP_WIDTH / 2, MAP_HEIGHT / 2, 264, 174, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#d5bd90'; ctx.lineWidth = 8; ctx.setLineDash([10, 8]); ctx.beginPath();
+  model.places.forEach((place, index) => { const [x, y] = project(place.x, place.z); if (index) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  for (const place of model.places) {
+    const [x, y] = project(place.x, place.z);
+    ctx.fillStyle = '#e4d4b2'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#201d18'; ctx.font = '12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(place.name, x, y - 9);
+  }
+  for (const find of model.finds) {
+    const [x, y] = project(find.x, find.z); ctx.fillStyle = find.found ? '#91d29a' : '#f0c04f';
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#201d18'; ctx.textAlign = 'left'; ctx.fillText(find.found ? '✓' : '?', x + 8, y + 4);
+  }
+  if (model.target) {
+    const [x, y] = project(model.target.x, model.target.z); ctx.strokeStyle = '#ff6e36'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (model.player) {
+    const [x, y] = project(model.player.x, model.player.z); ctx.fillStyle = '#71c8ff';
+    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#102536'; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+export function createWorldHud({host}) {
+  const doc = host.ownerDocument;
+  if (doc?.head && !doc.getElementById(STYLE_ID)) {
+    const link = doc.createElement('link'); link.id = STYLE_ID; link.rel = 'stylesheet';
+    link.href = new URL('./world-hud.css', import.meta.url).href; doc.head.append(link);
+  }
+  const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
+  root.setAttribute('aria-label', 'Scablands job guidance');
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+    <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
+    <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>SCABLANDS</b><button type="button" data-world-map-close>CLOSE</button></header>
+      <canvas width="${MAP_WIDTH}" height="${MAP_HEIGHT}" aria-label="Map with your position and job marker"></canvas>
+      <p class="world-hud-find-label">FINDS</p><ul class="world-hud-finds"></ul></section>`;
+  host.append(root);
+  const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
+  const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
+  const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
+  const findList = root.querySelector('.world-hud-finds');
+  let active = false, mapOpen = false, lastMap = '', disposed = false;
+  const setMapOpen = value => { mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); };
+  const click = event => {
+    if (event.target.closest?.('[data-world-map-close]')) setMapOpen(false);
+    else if (event.target.closest?.('.world-hud-map-button')) setMapOpen(!mapOpen);
+  };
+  const keydown = event => {
+    if (!active || event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
+      /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName) || event.target?.isContentEditable) return;
+    if (event.code === 'KeyM') { event.preventDefault(); setMapOpen(!mapOpen); }
+    else if (event.code === 'Escape' && mapOpen) { event.preventDefault(); setMapOpen(false); }
+  };
+  root.addEventListener('click', click); doc.addEventListener('keydown', keydown);
+  return {
+    update(state, duel, profile) {
+      if (disposed) return;
+      active = state?.arena?.mode === 'world-job' && ['countdown', 'racing'].includes(state.status);
+      root.hidden = !active;
+      if (!active) { setMapOpen(false); return; }
+      const actor = state.onFoot && state.fighter ? state.fighter : state;
+      const frame = duel.course?.at?.(actor.s) ?? {};
+      const point = duel.course?.worldAt?.(actor.s, actor.lateral);
+      const heading = (frame.heading ?? 0) + (actor.headingError ?? 0) + (actor.slipAngle ?? 0);
+      const model = worldHudModel({worldJob: state.arena.worldJob, player: point, heading,
+        found: profile?.world?.found ?? []});
+      line.textContent = model.line;
+      compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
+      const mapKey = JSON.stringify([model.places, model.finds, model.target, model.player]);
+      if (mapKey !== lastMap) {
+        lastMap = mapKey;
+        if (context) drawWorldMap(context, model);
+        findList.innerHTML = model.finds.length ? model.finds.map(item =>
+          `<li class="${item.found ? 'is-found' : ''}"><span>${item.found ? '✓' : '○'}</span> ${item.name}</li>`).join('') : '<li>Nothing found yet</li>';
+      }
+    },
+    dispose() {
+      if (disposed) return;
+      disposed = true; root.removeEventListener('click', click); doc.removeEventListener('keydown', keydown); root.remove();
+    },
+  };
+}
