@@ -409,3 +409,12 @@ Voice is a later card, and no release waits for it.
 ## 11. After the sea, and everything else
 
 The story has no last page. Each of these can become a whole strand, added as new files whenever Kyle and Gratian want it, and none needs anything already built to change: **a harbour** and what comes with it, boats and trade across the water; **land beyond the Ridge** and whoever lives there; **a second town** of yours and the road between them; **Magnus's biggest magnet**; **Bo's own story**, and his children's; **Hollis's last gate**; **a Wasteland race** along the new shore; **elections**, and who runs the town after you; **Mrs Vane's next idea**, because she will have one. Gratian's own ideas go here first.
+
+## 12. This is one strand
+
+Kyle, 5 November, after reading this page: "I do like the storyline and how it's held together. But this is just one storyline... we can continue to write new stories." So nothing in the game may depend on The Long Dry being the only story. How the town is built is in `docs/MACHINES.md`, and these fit the story where they meet it:
+
+- **Bo** is your apprentice when he is old enough, on whichever machine you choose. He has been asking for years.
+- **The boring machine's** biggest parts come through neighbours: a ship's propeller shaft from Captain Imre, the gears from Tin Town's forge. Whoever builds it names it.
+- **The Teeth,** a mountain range beyond the Ridge, is reached only by tunnel and has room for stories of its own.
+- **Vane Reclamation** dug and drained with machines like yours, thirty years ago, so an old abandoned one out on the dead sea is a fine place to find parts.
