@@ -750,8 +750,8 @@ per event (Save Guardian).
 100 events for a family that plays a few evenings a week. Settled instead:
 Fuel Run at rank 6, Bounty Hunt at rank 9, Ambush Alley at rank 12, and the
 Salt Flats at rank 9. The Convoy Raid opens with the Tollkeeper's territory
-(section 5), not by rank. A locked mode is not shown on the SCRAPDOME panel
-(nothing is advertised that does not work yet).
+(section 5), not by rank. A locked mode is shown on the SCRAPDOME panel as
+disabled, with its rank requirement and progress bar. It cannot be started.
 
 ### Fuel Run (ARENA-03)
 

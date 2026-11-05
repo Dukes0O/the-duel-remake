@@ -3,6 +3,7 @@ import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
+  'gear-find': 'dev',
   'seeker-rockets': 'on',
   'convoy-raid': 'on',
   tollkeeper: 'on',
