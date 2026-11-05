@@ -68,8 +68,9 @@ for (const [id, line] of Object.entries(LAB_LINES)) {
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
 }
-ok(creditsUsed > 0 && creditsUsed <= 9000, `voice credits within budget (${creditsUsed})`);
-ok(runtimeBytes < 7e6, `the fifty-four lines stay small (${runtimeBytes} bytes)`);
+// Raised for the whole-sentence rewrite (LAB-CLASSROOM-LANGUAGE): the lines are longer, and they load only when the Lab opens.
+ok(creditsUsed > 0 && creditsUsed <= 14000, `voice credits within budget (${creditsUsed})`);
+ok(runtimeBytes < 12e6, `the fifty-four lines stay small (${runtimeBytes} bytes)`);
 same(copyLabVoices().lines, 54, 'the build step finds all fifty-four kept takes');
 
 // The bank: every line and sound behind the lab switch, lines on the voice bus, ducking like the other speech.

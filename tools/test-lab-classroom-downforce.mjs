@@ -83,8 +83,7 @@ test('every number is the downforce bench’s own run, and question 3 is the Tun
     const best = bestWing(course), less = WINGS[WINGS.indexOf(best) - 1];
     assert.ok(downforce(course.speed, best).downforceKg >= course.needKg && downforce(course.speed, less).downforceKg < course.needKg);
   }
-  // tune-view.js says 161 km/h after the merge (Claude), and this replacement then goes.
-  assert.equal(WING_TWO_LINE, effectLine('wing', 2).replace('100 mph', '161 km/h'));
+  assert.equal(WING_TWO_LINE, effectLine('wing', 2));
   assert.equal(WING_TWO_LINE, 'Grip at 161 km/h +6%, more at higher speed; top speed -2%.');
 });
 

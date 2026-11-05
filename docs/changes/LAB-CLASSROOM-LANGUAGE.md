@@ -82,6 +82,16 @@ Five lines are rewritten and re-recorded with the same voice and settings, and t
 - `tools/test-lab-challenges.mjs`: added a test that the water challenges start with the bucket on the hook and others do
   not. The flown tests keep their `fitBucket()` calls, which now answer "already fitted".
 
+## Batch 2: Rust, Downforce and Fire
+
+Each lesson's own note is `docs/changes/LAB-CLASSROOM-LANGUAGE-<ID>.md`. Shared changes at this merge: Show me on the free tests of
+Projectile and Launch now reaches three different settings, and Projectile's panel settles no open question; the Tune page's wing line
+says 161 km/h; the parts panel's notes are sentences; eleven more of Brian's lines are recorded, including the two Sirena restore lines,
+which no longer call the car "she". `tools/test-lab-radio.mjs`: the voice budgets rise from 9,000 to 14,000 credits and from 7 MB to 12 MB,
+reviewed by Claude: longer lines are what Kyle asked for, the files load only when the Lab opens, and each line's text, take, level and
+peak are still checked. `tools/test-lab-tune-view.mjs` moves with the Tune page's wording. One independent review of the three lessons;
+its faults are fixed, listed in each lesson's note, and added to the rewrite brief for the lessons still to come.
+
 ## Review
 
 One independent review (read-only agent). Real faults, all fixed with a test where one fits: the main explanations left the
