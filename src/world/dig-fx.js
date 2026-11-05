@@ -1,7 +1,4 @@
 import * as THREE from 'three';
-import {flipbookFrameUVInto} from '../combat-vfx-atlas.js';
-
-const FRAME = {columns: 4, rows: 4};
 
 /** Small seeded plume and clods, aimed along the tool's throw direction. */
 export function createDigFx({group, atlasTexture = null, seed = 1} = {}) {
@@ -21,8 +18,7 @@ export function createDigFx({group, atlasTexture = null, seed = 1} = {}) {
       const clod = atlasTexture ? new THREE.Sprite(particleMaterial) : new THREE.Mesh(new THREE.IcosahedronGeometry(.16 + random() * .22, 0), particleMaterial);
       if (atlasTexture) {
         particleMaterial.map = atlasTexture.clone();
-        const uv = flipbookFrameUVInto(Math.floor(random() * 16), FRAME, {});
-        particleMaterial.map.offset.set(uv.offsetX, uv.offsetY); particleMaterial.map.repeat.set(uv.repeatX, uv.repeatY);
+        particleMaterial.map.needsUpdate = true;
       } else particleMaterial.color.setHex(colour);
       clod.position.set(x, y, z); clod.scale.setScalar(.45 + random() * .8); group.add(clod);
       const speed = strength * (.8 + random() * 2.4), angle = (random() - .5) * .95;

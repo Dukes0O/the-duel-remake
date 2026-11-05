@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
 import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
@@ -40,6 +40,14 @@ assert.ok(near[0].geometry.attributes.position.count>far.geometry.attributes.pos
 const nearVertex=near[0].geometry.attributes.position;
 const x=near[0].position.x+nearVertex.getX(0),z=near[0].position.z+nearVertex.getZ(0);
 assert.ok(Math.abs(near[0].position.y+nearVertex.getY(0)-scablandsSurfaceHeightAt(x,z)-.025)<.001,'rendered terrain samples the shared physics height');
+const untouchedX=far.geometry.attributes.position.getX(0),untouchedZ=far.geometry.attributes.position.getZ(0);
+const untouchedY=far.geometry.attributes.position.getY(0);
+const editX=far.geometry.attributes.position.getX(1),editZ=far.geometry.attributes.position.getZ(1);
+scablandsGroundEdit.cut({x:editX,z:editZ,radius:1},scablandsGroundEdit.heightAt(editX,editZ)-3);
+assert.ok(scene.group.userData.updateGroundView()>0,'committed edits refresh near ground and horizon');
+assert.ok(Math.abs(far.geometry.attributes.position.getY(1)-untouchedY)>0.1,'far ground rebuild includes edited terrain');
+assert.equal(far.geometry.attributes.position.getY(0),untouchedY,'far ground keeps undug terrain exactly unchanged');
+resetScablandsGroundEdit();
 assert.ok(scene.group.getObjectByName('Radio mast visible across the Scablands'),'mast is placed in the world');
 assert.ok(scene.group.getObjectByName('Everburn smoke pillar visible across the Scablands'),'smoke pillar is placed in the world');
 assert.ok(scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke"),'furnace art gets its smoke and fire treatment');

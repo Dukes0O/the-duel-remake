@@ -42,11 +42,11 @@ const placeAssets={
 const vehiclePart={'boneyard':'Big Bess gas truck','everburn':"Old Smoke's rolling furnace"};
 const detailCounts=Object.freeze({near:30,far:10});
 
-function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0){
+function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
   const positions=[],uv=[],indices=[];
   for(let iz=0;iz<=segments;iz++)for(let ix=0;ix<=segments;ix++){
     const x=-width/2+width*ix/segments,z=-depth/2+depth*iz/segments;
-    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ)+.025,z);uv.push(ix/segments*12,iz/segments*12);
+    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025,z);uv.push(ix/segments*12,iz/segments*12);
     if(ix<segments&&iz<segments){const a=iz*(segments+1)+ix,b=a+1,c=a+segments+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
@@ -130,7 +130,9 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   }
   const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
   const editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
-  const digFx=createDigFx({group,seed:course.seed});
+  const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
+  if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
+  const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
   // A broad gravel ribbon follows the stable oval frame used by driving and
   // never changes the shared terrain height function.
   const roadPoints=[];
@@ -173,7 +175,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));}return false;});
   function dispose(){
     if(retired)return;retired=true;
-    editedGround.dispose();digFx.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
@@ -186,7 +188,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
   group.userData.updateGroundView=()=>{
     const changed=editedGround.update();
-    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
+    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
     return changed;
   };
   group.userData.digFx=digFx;

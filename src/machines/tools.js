@@ -47,7 +47,8 @@ export function operateMachineTool(definition, state, {ground, toolId, action, d
     if (!ground || typeof ground.cut !== 'function') throw new TypeError('Digging needs an editable ground layer.');
     const before = total(load);
     const depth = tool.cutRateM3s * dtSeconds / (Math.PI * Math.max(0.1, position.radius) ** 2);
-    const cut = ground.cut(position, finite(targetHeight) ? targetHeight : ground.heightAt(position.x, position.z) - depth);
+    const cut = ground.cut(position, finite(targetHeight) ? targetHeight : ground.heightAt(position.x, position.z) - depth,
+      capacity / 1.25);
     const looseCutVolume = cut.looseVolume;
     const accepted = Math.min(capacity, looseCutVolume);
     if (looseCutVolume > 0) for (const [kind, amount] of Object.entries(cut.volumes)) if (amount > 0) load[kind] = (load[kind] ?? 0) + amount * 1.25 * accepted / looseCutVolume;

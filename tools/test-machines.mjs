@@ -18,6 +18,13 @@ const dug = operateMachineTool(excavator, excavatorState, {ground, toolId:'bucke
   shape:{x:0,z:0,radius:1.1}, targetHeight:-0.1});
 assert.equal(dug.groundResult.volume, 0.5, 'bucket removes the requested compacted volume');
 assert.equal(dug.movedVolumeM3, dug.groundResult.looseVolume, 'loose material includes ground bulking');
+const nearlyFull = {...excavatorState, load:{topsoil:0.75}};
+const cappedGround = flatGround();
+const cappedDig = operateMachineTool(excavator, nearlyFull, {ground:cappedGround, toolId:'bucket', action:'dig', dtSeconds:0.5,
+  shape:{x:0,z:0,radius:1.1}, targetHeight:-0.1});
+assert.ok(cappedDig.movedVolumeM3 <= 0.05 + 1e-9, 'digging never exceeds the bucket capacity');
+assert.equal(cappedDig.groundResult.volume, cappedDig.movedVolumeM3 / 1.25, 'the ground cut only removes material that fits after bulking');
+assert.equal(cappedDig.spilledVolumeM3, 0, 'a capacity-limited cut leaves excess material in the ground');
 const loaded = transferMachineLoad(dug.state, truckState, dug.movedVolumeM3, truck.tools.bed.capacityM3);
 assert.equal(loaded.movedVolumeM3, dug.groundResult.looseVolume, 'excavated load transfers to the truck bed');
 assert.equal(machineLoadVolume(loaded.sourceState), 0, 'bucket is empty after transfer');

@@ -64,3 +64,7 @@ provider's file manifest and re-encoded (JPEG quality 84) by
 `tools/art/muddy-hollow-mud.py`; checksums of the source maps are in
 `tools/art/catalog.json`. The game tints it and blends it into the Muddy
 Hollow pits.
+
+## Dig particles
+
+dig-dirt.png is dirt_01.png from **Kenney Particle Pack** by Kenney Vleugels, [Particle Pack](https://kenney.nl/assets/particle-pack), CC0 1.0. The transparent source sprite is used for Wasteland digging effects. The original pack and license are in the local art library.

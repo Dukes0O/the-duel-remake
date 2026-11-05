@@ -69,9 +69,10 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
 
-  function cut(shape, target) {
+  function cut(shape, target, maxVolume = Infinity) {
     validShape(shape);
     if (!finite(target)) throw new TypeError('Cut target must be a finite height.');
+    if (!(maxVolume >= 0)) throw new TypeError('Cut volume limit must be non-negative.');
     const reason = refusal(shape);
     if (reason) return emptyResult(reason);
     const result = emptyResult();
@@ -84,7 +85,8 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       const before = naturalHeight(x, z) + chunk.delta[index];
       const after = Math.max(target, Math.min(before, target));
       if (after >= before) continue;
-      const removed = before - after;
+      const removed = Math.min(before - after, Math.max(0, maxVolume - result.volume));
+      if (removed <= 0) continue;
       chunk.delta[index] -= removed;
       const roll = hash(numericSeed, x, z);
       const depthStart = Math.max(0, naturalHeight(x, z) - before);
