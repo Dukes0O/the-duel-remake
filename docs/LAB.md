@@ -254,12 +254,12 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.pendulum.intro` | Three weights on three strings, then a heavier weight on the same string. The stopwatch times every swing. |
 | `lab.brian.pendulum.explain` | A swing takes longer on a longer string, and the weight makes no difference. Slow swings are gentler and easier to calm, but a longer cable needs more height. |
 | `lab.brian.pendulum.pass` | A long cable swings slow, and a slow swing is easy to settle. |
-| `lab.brian.altitude.intro` | A rotor on a test stand at sea level, at Panorama Ridge and at Summit Run. Measure its lift at each. |
-| `lab.brian.altitude.explain` | Higher up the air is thinner. At Summit Run each lungful holds about three quarters of the air it would at sea level, so the rotor has less to push on and the engine makes less power. The game rounds this down a little, to seventy one percent. |
-| `lab.brian.altitude.pass` | Thin air, less lift. Plan your load for the high country. |
-| `lab.brian.strength.intro` | Three bars of the same weight: aluminium, steel and carbon fibre. Load them until they bend or snap. |
-| `lab.brian.strength.explain` | Aluminium is about a third the weight of steel, size for size. Carbon fibre is lighter still and very stiff, but it snaps instead of bending. Engineers choose by what the part has to do. |
-| `lab.brian.strength.pass` | That arm holds the load for the least weight. Well chosen. |
+| `lab.brian.altitude.intro` | "Now the stand will visit each place in turn. At each place the lever goes all the way up, and we |
+| `lab.brian.altitude.explain` | "Higher up there is less air above to press down, so the air is thinner. The rotor then has less |
+| `lab.brian.altitude.pass` | "Thinner air gives the rotor less to push against, so always plan your load for the height where |
+| `lab.brian.strength.intro` | "Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps." |
+| `lab.brian.strength.explain` | "Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do." |
+| `lab.brian.strength.pass` | "That arm holds the load for the least weight, which is the right choice for a helicopter." |
 | `lab.brian.rust.intro` | "Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water." |
 | `lab.brian.rust.explain` | "Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it." |
 | `lab.brian.rust.pass` | "You have chosen the right protection for each part. That is how you keep metal from rusting away." |
@@ -275,9 +275,9 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.downforce.intro` | The wing is now steep, and the fan will run at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table. |
 | `lab.brian.downforce.explain` | A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights. |
 | `lab.brian.downforce.pass` | More wing gives more grip and a lower top speed, so you choose the wing that suits the track. |
-| `lab.brian.braking.intro` | The car brakes from fifty and from a hundred miles an hour. You can slide the braking between front and back. |
-| `lab.brian.braking.explain` | From a hundred miles an hour a car needs four times the road it needs from fifty. Braking tips the weight forward onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides. The bench shows the weight shift at a gentle stop; the distances use the car's full braking. |
-| `lab.brian.braking.pass` | Double the speed, four times the road. Brake early and brake straight. |
+| `lab.brian.braking.intro` | "Three identical cars will now brake at the same line. Two have the lever at seventy percent front, one from eighty kilometres per hour and one from a hundred and thirteen. The third brakes from eighty kilometres per hour with the lever at fifty percent front. Watch where each car stops, and watch the back of the third car." |
+| `lab.brian.braking.explain` | "A car's stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides." |
+| `lab.brian.braking.pass` | "Twice the speed needs four times the road, because it carries four times the energy for the same brakes to remove. So brake early, and brake in a straight line." |
 | `lab.brian.suspension.intro` | A shaker rig under each wheel, a bumpy road and a smooth one. Try soft springs and stiff springs. |
 | `lab.brian.suspension.explain` | Soft springs let the body ride over a bump, so it is shaken less, but it leans more in a corner. Stiff springs pass every bump up into the body and shake it harder, but keep it flatter. |
 | `lab.brian.suspension.pass` | Soft for bumps, stiff for smooth. Now you can set up for the road. |

@@ -6433,7 +6433,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.altitude.intro",
       "cue": "lab.brian.altitude.intro",
-      "text": "A rotor on a test stand at sea level, at Panorama Ridge and at Summit Run. Measure its lift at each.",
+      "text": "\"Now the stand will visit each place in turn. At each place the lever goes all the way up, and we",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6442,19 +6442,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 285,
-      "creditsEstimated": false,
+      "creditsUsed": 97,
+      "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-intro.mp3",
-      "sha256": "f8b0093c84a1769aac28a24848d72a9fc5370837d03af273c2494786a588e2f5",
-      "bytes": 111220,
-      "generated": "2026-10-24"
+      "sha256": "cf0a4f7077bc150559af15086d4a682006ff4e8af0ec3012920dd8a182df7c18",
+      "bytes": 91576,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.altitude.explain",
       "cue": "lab.brian.altitude.explain",
-      "text": "Higher up the air is thinner. At Summit Run each lungful holds about three quarters of the air it would at sea level, so the rotor has less to push on and the engine makes less power. The game rounds this down a little, to seventy one percent.",
+      "text": "\"Higher up there is less air above to press down, so the air is thinner. The rotor then has less",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6463,19 +6463,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 243,
+      "creditsUsed": 96,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-explain.mp3",
-      "sha256": "0caab65860186ecea6cf7b5949b526db38526aff0af488eb9d776054ea61903b",
-      "bytes": 241623,
-      "generated": "2026-10-24"
+      "sha256": "2b0f884f081e311224a3222fca44af01e1b9a58eb9491d0d8e51a7aa1281e084",
+      "bytes": 100771,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.altitude.pass",
       "cue": "lab.brian.altitude.pass",
-      "text": "Thin air, less lift. Plan your load for the high country.",
+      "text": "\"Thinner air gives the rotor less to push against, so always plan your load for the height where",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6484,19 +6484,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 57,
+      "creditsUsed": 96,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-pass.mp3",
-      "sha256": "00b30fa2680e72341e8565543b3ecdeef27b422551809d162160b946e0aba062",
-      "bytes": 58975,
-      "generated": "2026-10-24"
+      "sha256": "9528fefd57331a88033051f602ebb1f0c150a6ec5a7d6fa68be6dd3282e5ae08",
+      "bytes": 94083,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.intro",
       "cue": "lab.brian.strength.intro",
-      "text": "Three bars of the same weight: aluminium, steel and carbon fibre. Load them until they bend or snap.",
+      "text": "\"Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6505,19 +6505,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 100,
+      "creditsUsed": 161,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-intro.mp3",
-      "sha256": "647d8f610f976d4ff7406517ec94597a8c3ba78a1a3d3ab33d6026293ca41f28",
-      "bytes": 104950,
-      "generated": "2026-10-24"
+      "sha256": "134275a54f3c898b4d37a589dde128fac8e248767f1fe912d463e59e141b338a",
+      "bytes": 149672,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.explain",
       "cue": "lab.brian.strength.explain",
-      "text": "Aluminium is about a third the weight of steel, size for size. Carbon fibre is lighter still and very stiff, but it snaps instead of bending. Engineers choose by what the part has to do.",
+      "text": "\"Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6526,19 +6526,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 186,
+      "creditsUsed": 342,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-explain.mp3",
-      "sha256": "d5bce8c642c254e765f5788bde1de6cf9901131b54dc11219731205986af7f0e",
-      "bytes": 194812,
-      "generated": "2026-10-24"
+      "sha256": "f36c621098cd7da07f014f50e0dc17c89cd0041253cb874007e166a16eddbbe8",
+      "bytes": 328141,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.pass",
       "cue": "lab.brian.strength.pass",
-      "text": "That arm holds the load for the least weight. Well chosen.",
+      "text": "\"That arm holds the load for the least weight, which is the right choice for a helicopter.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6547,13 +6547,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 58,
+      "creditsUsed": 91,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-pass.mp3",
-      "sha256": "84716a2d6b902ba361576e42e5be05ac73c1607fef69a13793621258c57da26a",
-      "bytes": 56049,
-      "generated": "2026-10-24"
+      "sha256": "db6763206314bce7c1668568434553471b80f14303d39cae858d7b09db264c9b",
+      "bytes": 75275,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6874,7 +6874,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.braking.intro",
       "cue": "lab.brian.braking.intro",
-      "text": "The car brakes from fifty and from a hundred miles an hour. You can slide the braking between front and back.",
+      "text": "\"Three identical cars will now brake at the same line. Two have the lever at seventy percent front, one from eighty kilometres per hour and one from a hundred and thirteen. The third brakes from eighty kilometres per hour with the lever at fifty percent front. Watch where each car stops, and watch the back of the third car.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6883,19 +6883,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 109,
+      "creditsUsed": 326,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-intro.mp3",
-      "sha256": "c51671e73af05d157fe52206ef8f25598f1e65a8b13e5c1ff3fbde6ebb500f8f",
-      "bytes": 107876,
-      "generated": "2026-10-25"
+      "sha256": "044f22c44b6d58e947912871ffa00983becc94eea1fb08ade004038fc05fe67b",
+      "bytes": 313094,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.braking.explain",
       "cue": "lab.brian.braking.explain",
-      "text": "From a hundred miles an hour a car needs four times the road it needs from fifty. Braking tips the weight forward onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides. The bench shows the weight shift at a gentle stop; the distances use the car's full braking.",
+      "text": "\"A car's stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6904,19 +6904,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 310,
+      "creditsUsed": 430,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-explain.mp3",
-      "sha256": "96ffb57b827cf3b2ff38269674ac1800f7f990aac36440d3be4c5e210767154c",
-      "bytes": 290942,
-      "generated": "2026-10-25"
+      "sha256": "13983599533c98ce2fd40bc7c88566ca2898c2be956e684bd909bbd051265a6b",
+      "bytes": 417166,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.braking.pass",
       "cue": "lab.brian.braking.pass",
-      "text": "Double the speed, four times the road. Brake early and brake straight.",
+      "text": "\"Twice the speed needs four times the road, because it carries four times the energy for the same brakes to remove. So brake early, and brake in a straight line.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6925,13 +6925,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 70,
+      "creditsUsed": 162,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-pass.mp3",
-      "sha256": "160e4414185254ff2dad71286e9487b0f38a0d174f6c79a8cd94552fccdc32ad",
-      "bytes": 64408,
-      "generated": "2026-10-25"
+      "sha256": "de9a30d7c306c827918a73b878d27a1f697203da7244c1456d584c2809342b9a",
+      "bytes": 149672,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
