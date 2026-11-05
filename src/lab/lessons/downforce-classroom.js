@@ -17,7 +17,7 @@ export const kmh = speed => Math.round(speed * MS_PER_SPEED * KMH_PER_MS);
 // The bench's three wings, named for how far they tilt.
 export const WINGS = Object.freeze(['flat', 'small', 'big']);
 export const WING_NAME = Object.freeze({flat: 'Flat', small: 'Tilted', big: 'Steep'});
-export const CAR_KG = Math.round(tunnelCar.kg), TOP_MS = Number((tunnelCar.topMph * MS_PER_SPEED).toFixed(2));
+export const CAR_KG = Math.round(tunnelCar.kg), TOP_MS = Number((tunnelCar.topMph * MS_PER_SPEED).toFixed(3));
 // The fan spins up, holds while the scale is read, then the run is judged; in the job the car then drives the course.
 export const RAMP_S = 1.2, HOLD_S = .9, DRIVE_S = 2.4;
 const WONDER_RAMP_S = 2.2, WATCH_HOLD_S = 1.6, HELD_GAP_S = .14;
@@ -48,6 +48,8 @@ export const WATCH_SPEEDS = Object.freeze([50, 100, 150]);
 export const TRY_FROM = 60, TRY_TO = 120;
 // The free test asks for this many different settings before Continue opens.
 export const FREE_TRIES = 3;
+// The settings Show me tries on the free test, in order, skipping any the player has already tested.
+const FREE_PLAN = Object.freeze([[50, 'big'], [100, 'big'], [100, 'small'], [50, 'small'], [150, 'big'], [150, 'small'], [50, 'flat'], [100, 'flat'], [150, 'flat']]);
 
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'What pushed the car down?'},
@@ -71,7 +73,7 @@ const K50 = kmh(50), K100 = kmh(100), K150 = kmh(150);
 // Try 1's first push, unrounded, so its guesses are the real twice, four and eight times.
 const T60 = pushKg(TRY_FROM, 'small'), T60_EXACT = runOf(TRY_FROM, 'small').downforceKg;
 export const KEY_IDEAS = Object.freeze([
-  {id: 'push', text: `Twice the speed gives four times the push, because the push grows with the square of the speed. The steep wing pushes ${kg(P50)} at ${K50} km/h, ${kg(P100)} at ${K100} km/h and ${kg(P150)} at ${K150} km/h.`},
+  {id: 'push', text: `Twice the speed gives four times the push, because the push grows with the square of the speed. To the nearest whole number, the steep wing pushes ${kg(P50)} at ${K50} km/h, ${kg(P100)} at ${K100} km/h and ${kg(P150)} at ${K150} km/h.`},
   {id: 'drag', text: `A wing adds drag as well as downforce, so the top speed falls. The Falcone F42 reaches ${topOf('flat')} km/h with the wing flat, ${topOf('small')} km/h with the wing tilted and ${topOf('big')} km/h with the wing steep.`},
   {id: 'choose', text: 'More wing presses the tyres harder, which helps in fast bends. Less wing gives a higher top speed on long straights. You can set this on the Tune page under Wing angle.'},
 ].map(Object.freeze));
@@ -90,6 +92,7 @@ const WING_KEYS = Object.freeze({'→': 'wing:steeper', '←': 'wing:flatter'});
 const ANSWER_KEYS = Object.freeze({1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
 const DONE = Object.freeze(['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.']);
 const FAN = Object.freeze({action: 'go', label: 'Run the fan', key: 'Space'});
+const TO_GUESS = Object.freeze({action: 'go', label: 'Go to the guess', key: 'Space'});
 
 // Try 1's guesses: three pictures of the push at twice the speed.
 const GUESSES = Object.freeze([[2, 'twice'], [4, 'four times'], [8, 'eight times']].map(([n, word]) =>
@@ -104,14 +107,14 @@ const gripTwo = Math.round(2 * TUNE.gripAtReference * 100), topTwo = Math.round(
 const TWO_STEPS = `Two steps toward More wing give ${gripTwo}% more grip at ${TUNE_KMH} km/h and more still at higher speeds, and they lower the top speed by ${topTwo}%.`;
 const CHECKS = {
   'check-nine': {
-    question: `The steep wing is in the tunnel, and the fan speed rises from ${K50} km/h to ${K150} km/h, which is three times as fast. How many times greater is the push?`,
-    answers: [{label: 'Three times as great', picture: {kind: 'push', kg: [P50, 3 * P50]}}, {label: 'Six times as great', picture: {kind: 'push', kg: [P50, 6 * P50]}},
-      {label: 'Nine times as great', picture: {kind: 'push', kg: [P50, P150]}}],
+    question: `The steep wing is in the tunnel, and the fan speed rises from ${K50} km/h to ${K150} km/h, which is about three times as fast. About how many times greater is the push?`,
+    answers: [{label: 'About three times as great', picture: {kind: 'push', kg: [P50, 3 * P50]}}, {label: 'About six times as great', picture: {kind: 'push', kg: [P50, 6 * P50]}},
+      {label: 'About nine times as great', picture: {kind: 'push', kg: [P50, P150]}}],
     correct: 2,
-    right: () => `Correct. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h, which is nine times as much. The push grows with the square of the speed, and 3 × 3 = 9.`,
-    wrong: picked => picked === 0 ? `The push grows by more than that. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h, which is nine times as much, because the push grows with the square of the speed and 3 × 3 = 9.`
-      : `The push is nine times as great, not six times. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h. Three times the speed gives 3 × 3 = 9 times the push, not 3 + 3.`,
-    hints: [`Think of what you watched at ${K50}, ${K100} and ${K150} km/h.`, 'The push grows with the square of the speed. What is 3 × 3?', 'Pick “Nine times as great”.'],
+    right: () => `Correct. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h, which is about nine times as much. The push grows with the square of the speed, and 3 × 3 = 9.`,
+    wrong: picked => picked === 0 ? `The push grows by more than that. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h, which is about nine times as much, because the push grows with the square of the speed and 3 × 3 = 9.`
+      : `The push is about nine times as great, not six times. The steep wing pushes ${kg(P50)} at ${K50} km/h and ${kg(P150)} at ${K150} km/h. About three times the speed gives about 3 × 3 = 9 times the push, not 3 + 3.`,
+    hints: [`Think of what you watched at ${K50}, ${K100} and ${K150} km/h.`, 'The push grows with the square of the speed. What is 3 × 3?', 'Pick “About nine times as great”.'],
   },
   'check-bend': {
     question: `A car with the steep wing takes three bends. A hairpin, which is a very tight bend, is taken at ${K50} km/h, an ordinary bend at ${K100} km/h and a sweeper, which is a long fast bend, at ${K150} km/h. In which bend does the wing press the car down hardest?`,
@@ -141,22 +144,23 @@ export const pushK = wing => Number((0.5 * WING.airDensity * WING.wings[wing] / 
 export const dragK = wing => Number((0.5 * WING.airDensity * (WING.bodyDragArea + WING.dragPerLift * WING.wings[wing]) / G).toFixed(5));
 export const pushSum = (speed, wing) => pushK(wing) * msOf(speed) ** 2;
 export const dragSum = (speed, wing) => dragK(wing) * msOf(speed) ** 2;
-export const topMsSum = wing => Number((TOP_MS * Math.cbrt(dragK('flat') / dragK(wing))).toFixed(2));
+export const topMsSum = wing => Number((TOP_MS * Math.cbrt(dragK('flat') / dragK(wing))).toFixed(3));
 export const timesSum = (speed, base = 50) => { const ratio = Number((msOf(speed) / msOf(base)).toFixed(2)); return {ratio, times: Number((ratio * ratio).toFixed(2))}; };
 
 const speedRow = speed => ({title: 'Speed in km/h and m/s', formula: 'km/h = m/s × 3.6', worked: `${msOf(speed).toFixed(2)} m/s × 3.6 = ${(msOf(speed) * KMH_PER_MS).toFixed(2)} km/h`, note: 'The dial shows this to the nearest whole number. An hour has 3,600 seconds and a kilometre has 1,000 metres, and 3,600 ÷ 1,000 = 3.6.'});
 const numberRow = wing => ({title: 'The wing’s number, k', formula: 'k = ½ × density × area ÷ g', worked: `0.5 × ${WING.airDensity} × ${WING.wings[wing]} ÷ ${G} = ${shown(pushK(wing))}`, note: `The density of air is ${WING.airDensity} kg in each cubic metre. In this game the wing area, in square metres (m²), is 0 when flat, ${WING.wings.small} when tilted and ${WING.wings.big} when steep, so a steeper wing turns more air. g is the pull of gravity, ${G} metres per second per second (m/s²), and dividing by g gives the kilograms that a scale shows.`});
-const pushRow = (speed, wing) => ({title: 'Downforce', formula: 'push = k × speed^2', worked: `${shown(pushK(wing))} × ${msOf(speed).toFixed(2)}^2 = ${kg(pushSum(speed, wing))}`, note: `speed^2 is the square of the speed in m/s, which means the speed multiplied by itself: ${msOf(speed).toFixed(2)} × ${msOf(speed).toFixed(2)} = ${(msOf(speed) ** 2).toFixed(1)}.`});
+const pushRow = (speed, wing) => ({title: 'Downforce', formula: 'push = k × speed^2', worked: `${shown(pushK(wing))} × ${msOf(speed).toFixed(2)}^2 = ${pushSum(speed, wing).toFixed(1)} kg`, note: `speed^2 is the square of the speed in m/s, which means the speed multiplied by itself: ${msOf(speed).toFixed(2)} × ${msOf(speed).toFixed(2)} = ${(msOf(speed) ** 2).toFixed(1)}.`});
 function timesRow(speed, wing, base = 50) {
   const {ratio, times} = timesSum(speed, base), from = msOf(base).toFixed(2);
   return {title: `Compared with ${kmh(base)} km/h`, formula: `times the push = (speed ÷ ${from})^2`, worked: `(${msOf(speed).toFixed(2)} ÷ ${from})^2 = ${ratio.toFixed(2)}^2 = ${times.toFixed(2)} times`,
-    note: wing === 'flat' ? 'In this game the flat wing pushes 0 kg at any speed, and any number of times 0 kg is still 0 kg.' : `This wing pushes ${kg(pushKg(base, wing))} at ${kmh(base)} km/h and ${kg(pushKg(speed, wing))} at ${kmh(speed)} km/h.`};
+    note: wing === 'flat' ? 'In this game the flat wing pushes 0 kg at any speed, and any number of times 0 kg is still 0 kg.' : `To the nearest kilogram, this wing pushes ${kg(pushKg(base, wing))} at ${kmh(base)} km/h and ${kg(pushKg(speed, wing))} at ${kmh(speed)} km/h.`};
 }
-const dragRow = (speed, wing) => ({title: 'Drag, read on the rope', formula: 'drag = d × speed^2', worked: `${dragK(wing).toFixed(5)} × ${msOf(speed).toFixed(2)}^2 = ${kg(dragSum(speed, wing))}`, note: 'Drag grows with the square of the speed in the same way as the push. d is the number for the car and the wing together.'});
+const dragRow = (speed, wing) => ({title: 'Drag, read on the rope', formula: 'drag = d × speed^2', worked: `${dragK(wing).toFixed(5)} × ${msOf(speed).toFixed(2)}^2 = ${dragSum(speed, wing).toFixed(1)} kg`, note: 'Drag grows with the square of the speed in the same way as the push. d is the number for the car and the wing together.'});
 const dragNumberRow = wing => ({title: '', formula: 'd = ½ × density × drag area ÷ g', worked: `0.5 × ${WING.airDensity} × (${WING.bodyDragArea} + ${WING.dragPerLift} × ${WING.wings[wing]}) ÷ ${G} = ${dragK(wing).toFixed(5)}`, note: `In this game the car’s body has a drag area of ${WING.bodyDragArea} m², and each square metre of wing area adds ${WING.dragPerLift} m².`});
-const topRow = wing => ({title: 'Top speed', formula: 'top speed = flat top speed × ∛(flat d ÷ this d)', worked: `${TOP_MS.toFixed(2)} × ∛(${dragK('flat').toFixed(5)} ÷ ${dragK(wing).toFixed(5)}) = ${topMsSum(wing).toFixed(2)} m/s`, note: 'The power that drag uses up is drag × speed, so that power grows with speed × speed × speed. In this game the engine’s power stays fixed, so the top speed follows the cube root, written ∛, of the drag. A cube root is the number that gives the number inside when it is multiplied by itself three times.'});
-const topKmhRow = wing => ({title: '', formula: '', worked: `${topMsSum(wing).toFixed(2)} m/s × 3.6 = ${Math.round(topMsSum(wing) * KMH_PER_MS)} km/h`});
+const topRow = wing => ({title: 'Top speed', formula: 'top speed = flat top speed × ∛(flat d ÷ this d)', worked: `${TOP_MS.toFixed(3)} × ∛(${dragK('flat').toFixed(5)} ÷ ${dragK(wing).toFixed(5)}) = ${topMsSum(wing).toFixed(3)} m/s`, note: 'The power that drag uses up is drag × speed, so that power grows with speed × speed × speed. In this game the engine’s power stays fixed, so the top speed follows the cube root, written ∛, of the drag. A cube root is the number that gives the number inside when it is multiplied by itself three times.'});
+const topKmhRow = wing => ({title: '', formula: '', worked: `${topMsSum(wing).toFixed(3)} m/s × 3.6 = ${(topMsSum(wing) * KMH_PER_MS).toFixed(2)} km/h`, note: 'The table shows this to the nearest whole number.'});
 const brief = row => ({...row, note: ''});
+const RULES = Object.freeze({push: {title: 'Downforce', formula: 'push = k × speed^2'}, drag: {title: 'Drag, read on the rope', formula: 'drag = d × speed^2'}});
 
 const clampSpeed = s => Math.max(MIN_SPEED, Math.min(MAX_SPEED, s));
 
@@ -203,13 +207,18 @@ export function createModel() {
     if (id === 'try-speed') return {speed: TRY_TO, wing: set.wing};
     if (id === 'word-speed') return {speed: 100, wing: set.wing};
     if (id === 'word-wing') return {speed: set.speed, wing: 'big'};
-    if (id === 'try-free') return {speed: set.speed, wing: set.wing};
+    if (id === 'try-free') {
+      if (!m.tested.has(`${set.speed}/${set.wing}`)) return {speed: set.speed, wing: set.wing};
+      const [speed, wing] = FREE_PLAN.find(([s, w]) => !m.tested.has(`${s}/${w}`)) ?? [set.speed, set.wing];
+      return {speed, wing};
+    }
     if (id === 'try-cost') return {speed: set.speed, wing: m.tried.includes(set.wing) ? WINGS.find(w => !m.tried.includes(w)) ?? set.wing : set.wing};
     return {speed: set.speed, wing: bestWing(COURSES[Math.min(m.course, COURSES.length - 1)])};
   }
   function autoSay() {
     const id = step().id, g = goal();
-    if (id === 'try-speed') return `I will turn the dial to ${kmh(TRY_TO)} km/h and then run the fan.`;
+    if (id === 'try-speed') return `I will turn the dial to ${kmh(TRY_TO)} km/h, and then you can guess how hard the tilted wing will push.`;
+    if (id === 'try-free') return `I will set the ${wingWord(g.wing)} wing and turn the dial to ${kmh(g.speed)} km/h, and then I will run the fan.`;
     if (id === 'word-speed') return `I will turn the dial to ${K100} km/h.`;
     if (id === 'word-wing') return 'I will tilt the wing until it is steep.';
     return g.wing === set.wing ? `I will run the fan with the ${wingWord(g.wing)} wing.` : `I will set the ${wingWord(g.wing)} wing and then run the fan.`;
@@ -296,9 +305,9 @@ export function createModel() {
     }
     if (!setting() || m.auto) return null;
     if (id === 'try-speed') {
-      if (set.speed !== TRY_TO) return {kind: 'note', say: `This test is at ${kmh(TRY_TO)} km/h, so press ↑ until the dial reads ${kmh(TRY_TO)} km/h.`};
+      if (set.speed !== TRY_TO) return {kind: 'note', say: `This test is at ${kmh(TRY_TO)} km/h, so press ${set.speed < TRY_TO ? '↑' : '↓'} until the dial reads ${kmh(TRY_TO)} km/h.`};
       m.phase = 'guess'; m.fan = null;
-      m.say = `At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}. At ${kmh(TRY_TO)} km/h, which is twice as fast, how hard do you think the tilted wing will push? Pick a card.`;
+      m.say = `At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}. At ${kmh(TRY_TO)} km/h, which is about twice as fast, how hard do you think the tilted wing will push? Pick a card.`;
       return {kind: 'progress', say: m.say};
     }
     if (id === 'try-cost' && m.tried.includes(set.wing)) return {kind: 'note', say: `You have already run the ${wingWord(set.wing)} wing. Press ← or → to choose another wing.`};
@@ -324,12 +333,12 @@ export function createModel() {
     }
     if (id === 'word-downforce') {
       m.phase = 'done'; seen.add(id);
-      m.say = `With the fan at ${K50} km/h and the steep wing, the scale read ${kg(CAR_KG + P50)}, which is the car’s ${kg(CAR_KG)} and ${kg(P50)} of downforce. A car goes round a bend only because its tyres grip the road, and a tyre grips harder when it is pressed onto the road harder. Downforce therefore lets a car hold a faster bend. The panel shows the rule: the push is the wing’s number, k, multiplied by the square of the speed. You can turn the dial and tilt the wing to watch the sum and the scale change.`;
+      m.say = `With the fan at ${K50} km/h and the steep wing, the scale read ${kg(CAR_KG + P50)}, which is the car’s ${kg(CAR_KG)} and ${kg(P50)} of downforce. A car goes round a bend only because its tyres grip the road, and a tyre grips harder when it is pressed onto the road harder. Downforce therefore lets a car hold a faster bend. The panel shows the rule: the push is the wing’s number, k, multiplied by the square of the speed, and the square of a number is that number multiplied by itself. You can turn the dial and tilt the wing to watch the sum and the scale change.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-drag') {
       m.phase = 'done'; seen.add(id);
-      m.say = `With the fan at ${K50} km/h and the steep wing, the rope’s gauge read ${kg(dragKg(50, 'big'))}, which means that the air pushed the car back as hard as a weight of ${kg(dragKg(50, 'big'))} would pull on the rope. On the road, that push slows the car. The car’s body causes some of the drag, and turning the air with a wing adds more. The car stops gaining speed when drag uses up all of the engine’s power, so more wing means a lower top speed. The steep wing lowers the Falcone F42’s top speed from ${topOf('flat')} km/h to ${topOf('big')} km/h. You can turn the dial and tilt the wing to watch the sums change.`;
+      m.say = `With the fan at ${K50} km/h and the steep wing, the rope’s gauge read ${kg(dragKg(50, 'big'))}, which means that the air pushed the car back as hard as a weight of ${kg(dragKg(50, 'big'))} would pull on the rope. On the road, that push slows the car. The car’s body causes some of the drag, and turning the air with a wing adds more. The car stops gaining speed when drag uses up all of the engine’s power, so more wing means a lower top speed. The steep wing lowers the top speed of this car, a Falcone F42, from ${topOf('flat')} km/h to ${topOf('big')} km/h. You can turn the dial and tilt the wing to watch the sums change.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'try-free') {
@@ -342,10 +351,10 @@ export function createModel() {
     if (id === 'try-speed') {
       m.phase = 'done'; seen.add(id); m.rows = [...m.rows, row(speed, wing)];
       const right = m.guess === 1, got = pushKg(speed, wing), from = kmh(TRY_FROM);
-      const why = `The speed went from ${msOf(TRY_FROM).toFixed(2)} m/s to ${msOf(TRY_TO).toFixed(2)} m/s, which is twice as fast, and 2 × 2 = 4.`;
-      m.say = right ? `Correct. The tilted wing pushed ${kg(got)}, which is four times as much as at ${from} km/h. ${why}`
-        : m.guess === 0 ? `The tilted wing pushed ${kg(got)}, which is four times as much as at ${from} km/h, not twice as much. ${why}`
-          : `The tilted wing pushed ${kg(got)}, which is four times as much as at ${from} km/h, not eight times as much. ${why}`;
+      const why = `The speed went from ${msOf(TRY_FROM).toFixed(2)} m/s to ${msOf(TRY_TO).toFixed(2)} m/s, which is exactly twice as fast, and 2 × 2 = 4.`;
+      m.say = right ? `Correct. The tilted wing pushed ${kg(got)}, which is about four times as much as at ${from} km/h. ${why}`
+        : m.guess === 0 ? `The tilted wing pushed ${kg(got)}, which is about four times as much as at ${from} km/h, not twice as much. ${why}`
+          : `The tilted wing pushed ${kg(got)}, which is about four times as much as at ${from} km/h, not eight times as much. ${why}`;
       return {kind: right ? 'right' : 'wrong', say: m.say};
     }
     if (id === 'try-cost') {
@@ -448,15 +457,17 @@ export function createModel() {
     if (id === 'word-drag') return [dragRow(s, w), dragNumberRow(w), topRow(w), topKmhRow(w)];
     if (id === 'watch') return [brief(speedRow(s)), pushRow(s, w), timesRow(s, w)];
     if (id === 'try-free') return [brief(speedRow(s)), brief(pushRow(s, w)), timesRow(s, w), brief(dragRow(s, w)), brief(topRow(w)), topKmhRow(w)];
+    // A guess is coming or open: the panel shows the rules, and no sum that settles it, until the guess is made.
+    if (id === 'try-speed' && !['running', 'done'].includes(m.phase)) return [brief(speedRow(s)), RULES.push];
     if (id === 'try-speed') return [brief(speedRow(s)), brief(pushRow(s, w)), timesRow(s, w, TRY_FROM)];
+    if (id === 'try-cost' && m.phase === 'guess') return [RULES.push, RULES.drag];
     if (id === 'try-cost') return [brief(numberRow(w)), brief(pushRow(s, w)), brief(dragRow(s, w)), brief(dragNumberRow(w)), brief(topRow(w)), topKmhRow(w)];
     if (id === 'alone') return [brief(speedRow(s)), brief(pushRow(s, w)), brief(topRow(w)), topKmhRow(w)];
     return [brief(pushRow(100, 'big')), brief(timesRow(100, 'big')), brief(dragRow(100, 'big')), brief(topRow('big')), topKmhRow('big')];
   }
   // A question's sums wait for the answer, so the panel does not give the answer away.
   function checkSums(id, answered) {
-    const rule = {title: 'Downforce', formula: 'push = k × speed^2', note: 'The push grows with the square of the speed in m/s.'};
-    if (!answered) return [rule];
+    if (!answered) return [RULES.push];
     const pushAtSpeed = s => ({...brief(pushRow(s, 'big')), title: `Downforce at ${kmh(s)} km/h`});
     if (id === 'check-nine') return [pushAtSpeed(50), pushAtSpeed(150), timesRow(150, 'big')];
     if (id === 'check-bend') return WATCH_SPEEDS.map(pushAtSpeed);
@@ -468,7 +479,7 @@ export function createModel() {
 
   function view() {
     const id = step().id;
-    const base = {scene: 'tunnel', low: 'table', time: m.time, rig: rig(), formulas: id === 'wonder' ? [] : CHECKS[id] ? [] : sums(id), dial: null, wingPanel: null, rows: m.rows.map(r => ({...r})), job: null, runs: runs.map(r => ({...r})),
+    const base = {scene: 'tunnel', low: 'table', time: m.time, rig: rig(), formulas: id === 'wonder' ? [] : CHECKS[id] ? [] : sums(id), dragKnown: m.index >= STEPS.findIndex(s => s.id === 'word-drag'), dial: null, wingPanel: null, rows: m.rows.map(r => ({...r})), job: null, runs: runs.map(r => ({...r})),
       focus: null, keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), asking: false};
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
@@ -521,8 +532,8 @@ export function createModel() {
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], dial: dialOf(true), wingPanel: {wing: set.wing, locked: true}, focus: 'scale', times: true,
-        say: done ? `The steep wing pushed ${kg(P50)} at ${K50} km/h and ${kg(P100)} at ${K100} km/h, which is twice the speed and four times the push. At ${K150} km/h the steep wing pushed ${kg(P150)}, which is three times the speed and nine times the push. There are two reasons. When the air moves twice as fast, the wing meets twice as much air during each second, and the wing has to turn each kilogram of that air twice as hard. Two times two makes four. The drag on the rope grew in the same way, with the square of the speed.`
-          : `The steep wing stays in place while the fan runs at ${K50} km/h, then at ${K100} km/h and then at ${K150} km/h. Watch the scale and the table.`,
+        say: done ? `The steep wing pushed ${kg(P50)} at ${K50} km/h and ${kg(P100)} at ${K100} km/h, which is about twice the speed and about four times the push. At ${K150} km/h the steep wing pushed ${kg(P150)}, which is about three times the speed and about nine times the push. There are two reasons for the four times. When the air moves twice as fast, the wing meets twice as much air during each second, and the wing has to turn each kilogram of that air twice as hard. Two times two makes four. The drag on the rope grew in the same way, with the square of the speed.`
+          : `The wing is now steep, and the fan will run at ${K50} km/h, then at ${K100} km/h and then at ${K150} km/h. Watch the scale and the table.`,
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the scale.',
         hints: ['Watch the push in the table.', 'How many times greater is each push than the first one?', done ? 'Press R to watch again.' : 'Wait a moment.']};
     }
@@ -534,32 +545,32 @@ export function createModel() {
       glow: setNow ? 'set' : null, waiting: setNow || m.phase === 'guess', best: g};
     if (id === 'try-free') {
       if (m.phase === 'running') return {...v, focus: 'scale', say: m.say, prompt: 'Watch the scale and the rope.', hints: ['Read the scale and the rope.', 'The table keeps each run.', 'Wait a moment.']};
-      return {...v, target: 'go', say: m.say || `Now you can experiment. Press ↑ and ↓ to change the fan speed, and ← and → to tilt the wing. Watch the sums change as you do, and predict what the scale and the rope will read before you press Space. Try doubling the speed with the same wing. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
-        waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to run the fan. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
-        hints: ['Press Space to test the settings as they are.', `Try ${K50} km/h and then ${K100} km/h with the same wing, and try a different wing as well.`, 'Watch my pointer. I will run the fan with the settings as they are.']};
+      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press ↑ and ↓ to change the fan speed, and ← and → to tilt the wing. Watch the sums change as you do, and predict what the scale and the rope will read before you press Space. Try doubling the speed with the same wing. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
+        waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to run the fan. You have tested ${m.tries} of ${FREE_TRIES} different settings so far.`,
+        hints: ['Press Space to test the settings as they are.', `Try ${K50} km/h and then ${K100} km/h with the same wing, and try a different wing as well.`, atGoal ? 'Watch my pointer. I will run the fan with the settings as they are.' : 'Watch my pointer. I will change to a setting you have not tested and run the fan.']};
     }
     if (id === 'try-speed') {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'push', kg: [T60, c.kg]}, state: null})),
-        say: m.say || `At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}. At ${kmh(TRY_TO)} km/h, which is twice as fast, how hard do you think the tilted wing will push? Pick a card.`,
+        say: m.say || `At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}. At ${kmh(TRY_TO)} km/h, which is about twice as fast, how hard do you think the tilted wing will push? Pick a card.`,
         prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}.`, 'Twice the speed gives more than twice the push.', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'scale', say: m.say, prompt: 'Watch the scale.', hints: ['Watch the push on the scale.', 'Compare the push with the first row of the table.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, focus: 'scale', times: true, mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
-      return {...v, say: m.auto ? autoSay() : m.say || `The tilted wing pushes ${kg(T60)} at ${kmh(TRY_FROM)} km/h. Turn the fan up to ${kmh(TRY_TO)} km/h, which is twice as fast, and then run the fan.`,
-        prompt: `The dial reads ${kmh(set.speed)} km/h. Press ↑ for faster or ↓ for slower, then Space to run the fan.`,
-        hints: ['The fan dial is on the right.', `Press ↑ until the dial reads ${kmh(TRY_TO)} km/h, then press Space.`, 'Watch my pointer. I will turn the dial and run the fan.']};
+      return {...v, buttons: setNow ? [TO_GUESS] : [], spaceWords: 'goes to the guess', say: m.auto ? autoSay() : m.say || `The tilted wing pushes ${kg(T60)} at ${kmh(TRY_FROM)} km/h. Turn the fan up to ${kmh(TRY_TO)} km/h, which is about twice as fast, and then press Space, and you can guess how hard the tilted wing will push.`,
+        prompt: `The dial reads ${kmh(set.speed)} km/h. Press ↑ for faster or ↓ for slower, then press Space to go to the guess.`,
+        hints: ['The fan dial is on the right.', set.speed === TRY_TO ? 'The dial is set, so press Space.' : `Press ${set.speed < TRY_TO ? '↑' : '↓'} until the dial reads ${kmh(TRY_TO)} km/h, then press Space.`, atGoal ? 'Watch my pointer. I will take you to the guess.' : 'Watch my pointer. I will turn the dial, and then you can guess.']};
     }
     if (id === 'try-cost') {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: COST_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'wing', wing: c.wing}, state: null})),
-        say: `The fan stays at ${kmh(set.speed)} km/h. Which wing will leave the car with the highest top speed: the flat wing, the tilted wing or the steep wing? Pick a card, and then you will test all three.`,
+        say: `The fan is now set to ${kmh(set.speed)} km/h. Which wing will leave the car with the highest top speed: the flat wing, the tilted wing or the steep wing? Pick a card, and then you will test all three.`,
         prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: ['The car stops gaining speed when drag uses up all of the engine’s power.', 'Which wing turns the least air?', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'rope', say: m.say, prompt: 'Watch the scale and the rope.', hints: ['Read the push and the drag.', 'The table keeps each wing.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: COST_GUESSES[m.guess]?.wing === 'flat' ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
-      const left = WINGS.filter(w => !m.tried.includes(w)).map(wingWord);
+      const left = WINGS.filter(w => !m.tried.includes(w)).map(wingWord).join(' wing and the ');
       return {...v, say: m.auto ? autoSay() : m.say,
-        prompt: `The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan. Still to test: ${left.join(', ')}.`,
-        hints: ['Run each wing once, and the table will keep them all.', m.tried.includes(set.wing) ? 'Press ← or → to choose a wing you have not run, then press Space.' : 'Press Space to run this wing.', 'Watch my pointer. I will set the wing and run the fan.']};
+        prompt: `The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan. You still have to test the ${left} wing.`,
+        hints: ['Run each wing once, and the table will keep them all.', m.tried.includes(set.wing) ? 'Press ← or → to choose a wing you have not run, then press Space.' : 'Press Space to run this wing.', atGoal ? 'Watch my pointer. I will run the fan.' : 'Watch my pointer. I will set the wing and run the fan.']};
     }
     // Brian's job.
     const at = Math.min(m.course, COURSES.length - 1), course = COURSES[at], best = bestWing(course), courseKmh = kmh(course.speed);
@@ -572,11 +583,11 @@ export function createModel() {
     const intro = `Here is a job for you, with three courses. I will set the fan to the speed of each course, and you choose the least wing that lets the car hold the course, because more wing means a lower top speed. Course 1 is a bend taken at ${kmh(COURSES[0].speed)} km/h, and the car needs ${kg(COURSES[0].needKg)} of push to hold it.`;
     return {...jv,
       say: m.auto ? autoSay() : m.course === 0 && !m.say ? intro : m.say,
-      prompt: course.bend ? `Course ${at + 1}: the bend at ${courseKmh} km/h needs ${kg(course.needKg)} of push. The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan.`
-        : `Course ${at + 1}: one long straight. The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan.`,
+      prompt: course.bend ? `Course ${at + 1} is the bend at ${courseKmh} km/h, which needs ${kg(course.needKg)} of push. The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan.`
+        : `Course ${at + 1} is one long straight. The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan.`,
       hints: course.bend ? [`The bend needs ${kg(course.needKg)} at ${courseKmh} km/h, and the least wing that gives that much leaves the highest top speed.`,
-        `At ${courseKmh} km/h the tilted wing gives ${kg(pushKg(course.speed, 'small'))} and the steep wing gives ${kg(pushKg(course.speed, 'big'))}. Choose the ${wingWord(best)} wing, then press Space.`, 'Watch my pointer. I will set the wing and run the fan.']
-        : ['A straight has no bend, so the car needs no push.', 'The flat wing leaves the highest top speed. Press ← until the wing panel shows Flat, then press Space.', 'Watch my pointer. I will set the wing and run the fan.']};
+        `At ${courseKmh} km/h the tilted wing gives ${kg(pushKg(course.speed, 'small'))} and the steep wing gives ${kg(pushKg(course.speed, 'big'))}. Choose the ${wingWord(best)} wing, then press Space.`, atGoal ? 'Watch my pointer. I will run the fan.' : 'Watch my pointer. I will set the wing and run the fan.']
+        : ['A straight has no bend, so the car needs no push.', set.wing === 'flat' ? 'The flat wing leaves the highest top speed, and the wing is flat, so press Space.' : 'The flat wing leaves the highest top speed. Press ← until the wing panel shows Flat, then press Space.', atGoal ? 'Watch my pointer. I will run the fan.' : 'Watch my pointer. I will set the wing and run the fan.']};
   }
 
   return {enter, act, tick, view, state: () => m};

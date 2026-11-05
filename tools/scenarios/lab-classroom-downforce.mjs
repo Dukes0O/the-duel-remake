@@ -39,7 +39,7 @@ export async function passDownforce(c) {
   await d.next('watch');
   // The free test: three different settings open Continue.
   await d.at('try-free'); await d.press('Space'); await d.saying('test a different one', 'the first setting ran');
-  await d.press('ArrowUp', 5); await d.press('Space'); await d.prompt('tested so far: 2', 'the second setting ran');
+  await d.press('ArrowUp', 5); await d.press('Space'); await d.prompt('You have tested 2 of', 'the second setting ran');
   await d.press('ArrowLeft'); await d.press('Space'); await d.next('try-free');
   await d.at('try-speed'); await d.press('ArrowUp', 6); await d.prompt('193 km/h', 'the dial reads 193 km/h'); await d.press('Space');
   await d.at('try-speed', 's.cards === 3'); await d.press('Digit2'); await d.next('try-speed');
@@ -115,7 +115,7 @@ export async function run(c) {
   if (!(await sums('2.00'))) throw Error('The comparison did not follow the dial.');
   await shot('try-free-set');
   await press('Space'); await wait(1000); await shot('try-free-running'); await saying('test a different one', 'the first run says its result');
-  await press('ArrowDown', 5); await press('Space'); await prompt('tested so far: 2', 'two settings counted'); await wait(300);
+  await press('ArrowDown', 5); await press('Space'); await prompt('You have tested 2 of', 'two settings counted'); await wait(300);
   await press('ArrowLeft'); await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
   await next('try-free');
   // Twice the speed: Space at 97 km/h says to turn the dial; 193 km/h, a wrong guess says why.

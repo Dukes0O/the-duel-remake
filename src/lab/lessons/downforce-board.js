@@ -44,7 +44,7 @@ export function hoverInfo(view, x, y) {
   if (view.dial && x > DIAL.x && x < DIAL.x + DIAL.w && y > DIAL.y && y < DIAL.y + DIAL.h) return view.dial.locked ? 'Brian has set the fan dial for this run.' : 'The fan dial sets how fast the fan blows the air past the car.';
   if (view.wingPanel && x > WINGP.x && x < WINGP.x + WINGP.w && y > WINGP.y && y < WINGP.y + WINGP.h) return view.wingPanel.locked ? 'Brian has set the wing for this run.' : 'Each press tilts the wing one notch: flat, tilted or steep.';
   if (Math.hypot(x - FAN.x, y - FAN.y) < FAN.r + 10) return 'The fan blows the air past the car at the speed on the dial.';
-  if (x > ROPE_BOX.x && x < ROPE_BOX.x + ROPE_BOX.w && y > ROPE_BOX.y && y < ROPE_BOX.y + ROPE_BOX.h) return 'The gauge on the rope reads how hard the air pushes the car back, which is the drag.';
+  if (x > ROPE_BOX.x && x < ROPE_BOX.x + ROPE_BOX.w && y > ROPE_BOX.y && y < ROPE_BOX.y + ROPE_BOX.h) return view.dragKnown ? 'The gauge on the rope reads how hard the air pushes the car back, which is the drag.' : 'The gauge on the rope reads how hard the air pushes the car back.';
   if (x > SCALE_BOX.x && x < SCALE_BOX.x + SCALE_BOX.w && y > SCALE_BOX.y && y < SCALE_BOX.y + SCALE_BOX.h) return 'The scale reads the car’s own kilograms and the push of the air together.';
   if (x > WING_AT.x - 60 && x < WING_AT.x + 60 && y > WING_AT.y - 40 && y < WING_AT.y + 40) return 'The wing stands on two struts over the back of the car.';
   if (x > CAR_AT.nose && x < CAR_AT.nose + 92 * CAR_AT.scale && y > carGround() - 60 && y < TUNNEL.floor) return `This Falcone F42 stands on the scale, and the car alone reads ${kg(CAR_KG)}.`;
@@ -150,7 +150,7 @@ function fan(ctx, view) {
   if (view.keys.Space === 'go') {
     ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 64, y - r - 26, 54, 22, 3); ctx.fill();
     ctx.fillStyle = '#1d2224'; ctx.font = '800 13px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Space', x - 37, y - r - 14);
-    text(ctx, 'runs the fan', x - 2, y - r - 15, {size: 13, align: 'left'});
+    text(ctx, view.spaceWords ?? 'runs the fan', x - 2, y - r - 15, {size: 13, align: 'left'});
   }
 }
 function tunnelScene(ctx, view) {
@@ -183,14 +183,14 @@ function tunnelScene(ctx, view) {
     arrowLine(ctx, WING_AT.x, WING_AT.y + 14, WING_AT.x, WING_AT.y + 14 + r.push * .2, theme.good);
     label(ctx, `push ${kg(r.push)}`, WING_AT.x + 34, WING_AT.y + 22, {colour: GREEN});
   }
-  if (r.drag > .5) {
+  if (r.drag > .5 && view.dragKnown) {
     const ay = carGround() - 8;
     arrowLine(ctx, tail + 6, ay, Math.min(x + w - 6, tail + 6 + r.drag * .3), ay, ORANGE);
     text(ctx, 'drag', tail + 10, ay + 18, {size: 15, align: 'left', colour: ORANGE});
   }
   // The readouts.
   panel(ctx, ROPE_BOX.x, ROPE_BOX.y, ROPE_BOX.w, ROPE_BOX.h);
-  text(ctx, 'ROPE · DRAG', ROPE_BOX.x + 12, ROPE_BOX.y + 14, {size: 11, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, view.dragKnown ? 'ROPE · DRAG' : 'ROPE', ROPE_BOX.x + 12, ROPE_BOX.y + 14, {size: 11, align: 'left', colour: theme.faint, weight: 800});
   text(ctx, kg(r.drag), ROPE_BOX.x + ROPE_BOX.w / 2, ROPE_BOX.y + 34, {size: 22, colour: ORANGE, weight: 800});
   panel(ctx, SCALE_BOX.x, SCALE_BOX.y, SCALE_BOX.w, SCALE_BOX.h);
   text(ctx, 'SCALE', SCALE_BOX.x + 12, SCALE_BOX.y + 14, {size: 11, align: 'left', colour: theme.faint, weight: 800});
@@ -312,7 +312,7 @@ function table(ctx, view) {
     text(ctx, `${row.kmh} km/h`, 90, y, {size: 18, align: 'left'});
     text(ctx, WING_NAME[row.wing], 250, y, {size: 18, align: 'left'});
     text(ctx, kg(row.push), 520, y, {size: 18, align: 'right', colour: GREEN});
-    if (view.times && first > 0 && row.push !== first) text(ctx, `× ${Math.round(row.push / first)}`, 534, y, {size: 18, align: 'left', colour: theme.accent, weight: 800});
+    if (view.times && first > 0 && row.push !== first) text(ctx, `about × ${Math.round(row.push / first)}`, 534, y, {size: 18, align: 'left', colour: theme.accent, weight: 800});
     text(ctx, kg(row.drag), 700, y, {size: 18, align: 'right', colour: ORANGE});
     text(ctx, `${row.top} km/h`, 900, y, {size: 18, align: 'right'});
   });

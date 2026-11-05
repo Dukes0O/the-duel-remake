@@ -54,13 +54,25 @@ challenge, the reward, the save and the three notebook ids are unchanged, and ev
 
 Not recorded. For `src/lab/lab-lines.js` and the table in `docs/LAB.md`:
 
-- `lab.brian.downforce.intro`: The steep wing stays in place while the fan runs at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table.
+- `lab.brian.downforce.intro`: The wing is now steep, and the fan will run at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table.
 - `lab.brian.downforce.explain`: A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.
 - `lab.brian.downforce.pass`: More wing gives more grip and a lower top speed, so you choose the wing that suits the track.
 
+## Review
+
+One independent review. All of its faults are fixed, with a test for each that fits. During the speed test and the top speed
+guess, the panel showed sums that gave away the answer, so those sums now wait for the guess. "Press ↑" was wrong with the dial above
+193 km/h. Show me on the free test reran the same setting, so it now tries a new one each time and reaches three. Show me said it would run the
+fan when it stops at the guess, and Space in that step now says that it goes to the guess. "The fan stays" followed a run at another speed.
+Two prompts were fragments. Whole figures sat beside exact claims, so they now say "about", and the panel shows decimals that come out on a calculator.
+Checked against the first batch's list as well: "drag" no longer appears on the picture before the step that defines it, the square of a
+number is now defined in Brian's words where it first appears, and "the steep wing stays in place" became "the wing is now steep", because the player may have left it flatter.
+
+`tools/test-lab-classroom-downforce.mjs` replaces `100 mph` in the Tune page's line until Claude changes `tune-view.js` to 161 km/h at the merge.
+
 ## Checks
 
-- `node tools/test-lab-classroom-downforce.mjs`: 16 of 16.
+- `node tools/test-lab-classroom-downforce.mjs`: 23 of 23.
 - The source check on both lesson files finds no `she`, `her`, `mph`, `decides` or "air takes". Every step after the first shows formulas, which is
   what `tools/test-lab-classroom-page.mjs` will ask once Downforce joins its list.
 - Browser scenario `lab-classroom-downforce` passes at 1920 by 1000: 38 screenshots, 0 warnings, 0 errors. Pictures read: the word steps, the free test,
