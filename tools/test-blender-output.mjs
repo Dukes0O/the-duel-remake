@@ -27,7 +27,7 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat']);
+const artCandidates = new Set(['wildcat', 'bowl-trucks']);
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -43,6 +43,7 @@ const generators = [
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
+  { id: 'bowl-trucks', script: 'tools/blender/bowl-trucks.py', args: [], glb: ['public/assets/models/wasteland/bowl/trucks.glb'], budget: 8000 },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -500,7 +501,11 @@ try {
       assert.equal(relativePlans[0].blend.length, generator.recipeOnly ? 0 : generator.glb.length || 1,
         generator.recipeOnly ? 'recipe-only exports plan no editable Blend files' : 'one editable Blend per exported model is expected');
       for (const runtimePath of [...relativePlans[0].glb, ...relativePlans[0].json]) {
-        assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
+        if (artCandidates.has(generator.id)) {
+          assert.ok(!existsSync(join(root, runtimePath)), `${runtimePath} is published before art approval`);
+        } else {
+          assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
+        }
       }
     });
   }
@@ -747,6 +752,25 @@ try {
 } finally {
   for (const fixtureRoot of fixtureRoots) rmSync(fixtureRoot, { recursive: true, force: true });
 }
+
+check('BOWL-ART-TRUCKS GLB meets its five-rival file and triangle budgets', () => {
+  const path = join(root, '.qa-dist/bowl-trucks.glb');
+  if (!existsSync(path)) return; // Art stays a candidate until Claude picks a round.
+  const bytes = readFileSync(path);
+  assert.ok(bytes.length <= 1024 * 1024, `GLB is ${bytes.length} bytes; budget is 1 MB`);
+  assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+  assert.equal(bytes.readUInt32LE(8), bytes.length);
+  const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+  const parts = new Map();
+  for (const node of gltf.nodes) {
+    const rival = node.name?.split('-').slice(0, 2).join('-');
+    if (!['rust-rhino','big-kettle','tin-lizard','old-bess','dragon-wagon'].includes(rival) || node.mesh === undefined) continue;
+    const tris = gltf.meshes[node.mesh].primitives.reduce((sum, p) => sum + gltf.accessors[p.indices].count / 3, 0);
+    parts.set(rival, (parts.get(rival) || 0) + tris);
+  }
+  assert.deepEqual([...parts.keys()].sort(), ['big-kettle','dragon-wagon','old-bess','rust-rhino','tin-lizard']);
+  for (const [name, triangles] of parts) assert.ok(triangles > 0 && triangles <= 8000, `${name}: ${triangles} triangles`);
+});
 
 check('art-build is ignored as a directory', () => {
   const ignored = spawnSync('git', ['check-ignore', 'art-build/placement-probe.txt'], { cwd: root, encoding: 'utf8', windowsHide: true });
