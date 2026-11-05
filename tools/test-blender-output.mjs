@@ -64,6 +64,7 @@ const generators = [
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
   { script: 'tools/blender/scablands-vehicles.py', args: [], glb: ['public/assets/models/wasteland/scablands/vehicles.glb'] },
+  { script: 'tools/blender/rattler.py', args: [], glb: ['public/assets/models/wasteland/cars/rattler.glb'], budget: 25000, maxBytes: 8000000 },
   // WW-SCENE owns installation; this card keeps its generated GLB out of public/.
     { script: 'tools/blender/scablands-mall.py', args: [], glb: ['public/assets/models/wasteland/scablands/mall.glb'] },
   { script: 'tools/build-course-landmarks.py', args: [], glb: [], json: ['src/generated/course-landmarks.json'] },
