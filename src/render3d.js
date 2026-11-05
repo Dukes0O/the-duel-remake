@@ -340,11 +340,22 @@ export function attachRenderer(host, app) {
     roadHeading:(x,z)=>course?.nearest?.(x,z)?.heading??0});
   // H2 Fire: a burnt course's look (docs/HELI_FIRE.md 8.4), drawing only.
   const burntLook=createBurntLook({THREE,scene});
-  const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   const quality=createRenderQuality({renderer,composer,ambientShading,sun:lighting.sun,host});
   const rearView=createRearView({renderer,scene,host});
   let course, world, loadedCar, loadedRivalCar, loadedRivalPaint, player, rival, chickens, ghost, ghostStyle, worldKey;
   const extraOpponents = [];
+  const worldJobVehicles = [];
+  const worldJobCrate = new THREE.Group();
+  const crateWood = new THREE.MeshStandardMaterial({color:0x8b6238, roughness:.86});
+  const crateIron = new THREE.MeshStandardMaterial({color:0x4a463c, roughness:.68, metalness:.42});
+  const crateBody = new THREE.Mesh(new THREE.BoxGeometry(1.25,.8,1), crateWood);
+  crateBody.position.y=.45;worldJobCrate.add(crateBody);
+  for(const x of [-.48,.48]){
+    const band=new THREE.Mesh(new THREE.BoxGeometry(.12,.88,1.04),crateIron);
+    band.position.set(x,.45,0);worldJobCrate.add(band);
+  }
+  worldJobCrate.visible=false;scene.add(worldJobCrate);
+  const lightingRoots = new Set(scene.children.filter(object => object !== arenaMarkers));
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
@@ -661,11 +672,13 @@ export function attachRenderer(host, app) {
       frameMetrics.suspend();adaptiveResolution.reset();return;
     }
     const opponents = st.opponents || (st.rival ? [st.rival] : []);
+    const jobActors = st.arena?.mode === 'world-job' ? st.arena.worldJob?.actors || [] : [];
     const convoy=!menu&&(st.arena?.mode==='convoy-raid'||st.arena?.format==='convoy-raid');
     const rivalCarKey=convoy?'convoy-tanker':!menu&&st.rival?.car||carKey;
     if(convoy&&!prepareTanker()){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!convoy&&rivalCarKey!==carKey&&!prepareVehicle(rivalCarKey)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!menu)for(const opponent of opponents.slice(1))if(opponent.car!==carKey&&!prepareVehicle(opponent.car)){frameMetrics.suspend();adaptiveResolution.reset();return;}
+    if(!menu)for(const actor of jobActors)if(actor.renderCar&&!prepareVehicle(actor.renderCar)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if(!terrainReady(next)){frameMetrics.suspend();adaptiveResolution.reset();return;}
     if (course !== next || worldKey!==kitWorldKey(next)) {
       if(world&&worldKey===kitWorldKey(next)&&!winterEnabled(next)){course=next;lighting.apply({course,mood:app.lightingMood,winter:winterEnabled(course)?winterLightingSettings:undefined});}
@@ -707,6 +720,21 @@ export function attachRenderer(host, app) {
       droneStyle?.opacity(.3);
       if(drone)mesh.name='Arsenal Decoy Drone';
       scene.add(mesh);extraOpponents[index-1]={mesh,carKey,drone,droneStyle,paintKey:paint?.color??0};sceneRevision++;ambientShading.refresh();
+    }
+    const liveJobActorIds=new Set(jobActors.filter(actor=>actor.renderCar).map(actor=>actor.id));
+    for(let index=worldJobVehicles.length-1;index>=0;index--){
+      if(liveJobActorIds.has(worldJobVehicles[index].id))continue;
+      retireObject(worldJobVehicles[index].mesh);worldJobVehicles.splice(index,1);
+    }
+    for(const actor of jobActors){
+      if(!actor.renderCar)continue;
+      let entry=worldJobVehicles.find(item=>item.id===actor.id);
+      if(!entry){
+        const mesh=vehicleAssets.create(actor.renderCar,{color:0x806a4d,accent:0x32291e});
+        mesh.name=`World job actor: ${actor.id}`;scene.add(mesh);
+        entry={id:actor.id,mesh};worldJobVehicles.push(entry);sceneRevision++;ambientShading.refresh();
+      }
+      entry.mesh.visible=!menu;
     }
     // Decoy cars (a warlord's copies) come and go mid-fight and never wreck, so
     // the wreck-effect pool counts real cars only and is not rebuilt for them.
@@ -946,6 +974,24 @@ export function attachRenderer(host, app) {
     rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
     if (rival.visible&&st.field)setCarShadows(rival,Math.abs(visualGap(st.rival.s))<FIELD_SHADOW_RANGE);
+    for(const entry of worldJobVehicles){
+      const actor=jobActors.find(item=>item.id===entry.id);entry.mesh.visible=!menu&&!!actor;
+      if(!entry.mesh.visible)continue;
+      const near=course.nearest(actor.position.x,actor.position.z,st.s);
+      const ground=course.groundAt(near.s,near.lateral);
+      entry.mesh.position.set(actor.position.x,ground.y+(actor.position.y||0),actor.position.z);
+      if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
+        actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
+      entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
+    }
+    const refillCrate=st.arena?.mode==='world-job'?st.arena.worldJob?.refillCrate:null;
+    worldJobCrate.visible=!menu&&!!refillCrate;
+    if(refillCrate){
+      const near=course.nearest(refillCrate.position.x,refillCrate.position.z,st.s);
+      const ground=course.groundAt(near.s,near.lateral);
+      worldJobCrate.position.set(refillCrate.position.x,ground.y,refillCrate.position.z);
+      worldJobCrate.rotation.y=.36;
+    }
     if (rival.visible) {place(rival, vehicleGroundPoint(course,st.rival.s, st.rival.lateral), st.rival.headingError||0, wheelTravel(st.rival.speedMph));rival.position.y+=st.rival.airHeight||0;const slope=groundSlope(course,st.rival.s,st.rival.lateral,st.rival.headingError||0);rival.rotation.x=slope.pitch;rival.rotation.z=slope.roll;applyVehicleTerrainPose(rival,course,st.rival);updateDriver(rival.userData.driver,Math.max(-1,Math.min(1,(st.rival.pushVelocity||0)*.08)),0,false);for(const lamp of rival.userData.brakeLights||[])lamp.material.emissiveIntensity=st.rival.braking?4:1.4;}
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];

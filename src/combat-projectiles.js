@@ -16,6 +16,7 @@ import {cpuCrewAimPoint} from './crew-gear/cpu-crews.js';
 import {isConvoyRig} from './arena/modes/convoy-raid.js';
 import {convoyBlastDistance} from './arena/convoy.js';
 import {ambushFortTargets, damageAmbushFort} from './arena/modes/ambush-alley.js';
+import {reportWorldJobThingHit, worldJobHitTargets} from './arena/modes/world-job.js';
 
 const T = COMBAT_TUNING;
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
@@ -284,6 +285,22 @@ export function stepProjectiles(duel, dt) {
     // for the next step. Two half-turn budgets preserve the full-step cap.
     if (biasedEnemyBolt) steerBolt(duel, projectile, dt / 2, 0);
     if (projectile.kind === 'bomb') projectile.vy -= T.bomb.gravity * dt;
+
+    // World-job targets observe real projectile sweeps. This is a side
+    // channel: the existing projectile collision and damage path still runs.
+    if (state.arena?.mode === 'world-job') {
+      projectile.worldJobHits ??= [];
+      for (const thing of worldJobHitTargets(duel)) {
+        if (projectile.worldJobHits.includes(thing.id)) continue;
+        const at = thing.position;
+        const approach = sweptApproach(projectile, old, at, thing.radius);
+        if (approach && approach.distance < thing.radius &&
+            Math.abs(projectile.y - (at.y ?? 0)) < T.projectileHitHeight + 1) {
+          projectile.worldJobHits.push(thing.id);
+          reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined});
+        }
+      }
+    }
 
     const nearest = duel.course.nearest(projectile.x, projectile.z);
     let floor = duel.course.groundAt(nearest.s, nearest.lateral).y;

@@ -3,6 +3,8 @@ import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.
 import {combatOwnerId, hostile, outOfPlay} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
 import {setCarEffect} from './car-effects.js';
+import {reportWorldJobThingHit, worldJobHitTargets} from '../arena/modes/world-job.js';
+import {damageRaider} from '../raiders.js';
 
 export const FLAME_RULES = Object.freeze({
   duration: 3, range: 9, halfConeRadians: 15 * Math.PI / 180,
@@ -76,6 +78,36 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
       combat.flameBurns[id] = {remainingSec: FLAME_RULES.burnDuration,
         ownerId: burst.ownerId};
       setCarEffect(actor, 'burning', {duration: FLAME_RULES.burnDuration});
+    }
+    if (live > 0 && duel.state.arena?.mode === 'world-job' && owner) {
+      const at = point(duel, owner), heading = at.heading + (owner.headingError || 0);
+      // The finale's car-mounted flamer also catches fighters and raiders in
+      // its cone. Use the settled 30 health/s hand-flamer rate from CREW.md;
+      // the car weapon's shared vehicle damage and cooldown stay unchanged.
+      for (const raider of duel.state.raids?.zones.flatMap(zone => zone.raiders) || []) {
+        if (raider.knockedDown) continue;
+        const dx = raider.x - at.x, dz = raider.z - at.z;
+        const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
+          Math.cos(Math.atan2(dx, dz) - heading));
+        if (Math.hypot(dx, dz) <= FLAME_RULES.range &&
+            Math.abs(angle) <= FLAME_RULES.halfConeRadians &&
+            Math.abs((raider.y || 0) + .9 - at.y) < 3.5)
+          damageRaider(duel, raider, 30 * live, {source: 'car', owner: 'player'});
+      }
+      burst.worldJobHits ??= [];
+      for (const thing of worldJobHitTargets(duel)) {
+        if (burst.worldJobHits.includes(thing.id)) continue;
+        const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
+        const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
+          Math.cos(Math.atan2(dx, dz) - heading));
+        if (Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
+            Math.abs(angle) <= FLAME_RULES.halfConeRadians &&
+            Math.abs((thing.position.y || 0) - at.y) < 3) {
+          burst.worldJobHits.push(thing.id);
+          reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,
+            burnable: thing.kind === 'barricade' && thing.burnable});
+        }
+      }
     }
     burst.age += dt;
     if (burst.age + EPS >= FLAME_RULES.duration || !live) {

@@ -39,6 +39,8 @@ assert.equal(next.failedStep ?? false, false);
 
 // Escort gets one rest at zero health; the next breakdown restarts its leg.
 job = createJob({ steps: [{ kind: 'escort', actorId: 'bess', path: [pos(0)], destination: pos(10) }] });
+next = tick(job, {actors: []});
+assert.equal(next.done, false, 'an escort cannot finish before its truck spawns');
 next = tick(job, { actors: [{ id: 'bess', health: 0 }] });
 assert(next.events.some(event => event.type === 'rest'));
 job = tick(next, { actors: [{ id: 'bess', health: 0 }] });

@@ -24,5 +24,8 @@ export function stepHeist(step, state, view) {
     if (carried && !view.onFoot && state.phase === 'return' && distance(view.player?.position, step.carPlace?.position ?? step.carPlace) <= (step.carRadius ?? 6)) return { state: { phase: 'escape', alarm }, events, requests: [{ type: 'marker', place: step.escapePlace }] };
   }
   if (!view.onFoot && state.phase === 'escape' && distance(view.player?.position, step.escapePlace?.position ?? step.escapePlace) <= (step.escapeRadius ?? 6)) return { state: { alarm }, complete: true, events, requests };
-  return { state: { phase: state.phase ?? 'infiltrate', alarm }, events, requests: [{ type: 'marker', place: state.phase === 'return' ? step.carPlace : step.zone }] };
+  const place = state.phase === 'return' ? step.carPlace :
+    state.phase === 'escape' ? step.escapePlace : step.zone;
+  return { state: { phase: state.phase ?? 'infiltrate', alarm }, events,
+    requests: [{ type: 'marker', place }] };
 }
