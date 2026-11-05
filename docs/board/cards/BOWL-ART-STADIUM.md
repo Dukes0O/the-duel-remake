@@ -26,3 +26,13 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/BOWL-ART-STADIUM.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: not yet, new sheet first.** The labels are mirrored and the views look at the model from behind or below, so I cannot judge the bowl.
+- Three views at night: from the floor at truck height looking up, from the top row of the stands, and overhead.
+- Must show flame jets, floodlights, the scoreboard, ramps and a full crowd (a huge mass of colour cards is fine).
+- The stands' rows shimmer in a fine stripe: use fewer, heavier rows. Check the dark blocks floating in the third view are attached.
+- No model on the branch yet.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
