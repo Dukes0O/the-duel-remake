@@ -56,7 +56,40 @@ export const INPUT_CONTEXTS = Object.freeze({
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),
     gamepad: Object.freeze([[1, 'photo-exit'], [0, 'photo-capture']]), held: Object.freeze({}) }),
+  machine: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', Tab: 'machine-mode-toggle' }),
+    gamepad: Object.freeze([[9, 'pause'], [0, 'machine-mode-toggle']]),
+    held: Object.freeze({ driveForward: Object.freeze(['KeyW']), driveBack: Object.freeze(['KeyS']),
+      driveLeft: Object.freeze(['KeyA']), driveRight: Object.freeze(['KeyD']),
+      swingLeft: Object.freeze(['KeyA']), swingRight: Object.freeze(['KeyD']),
+      boomUp: Object.freeze(['KeyW']), boomDown: Object.freeze(['KeyS']),
+      armIn: Object.freeze(['KeyI']), armOut: Object.freeze(['KeyK']),
+      bucketCurl: Object.freeze(['KeyJ']), bucketDump: Object.freeze(['KeyL']) }) }),
 });
+
+const MACHINE_AXES = Object.freeze(['swing', 'boom', 'arm', 'bucket']);
+const deadzone = value => Math.abs(value || 0) < .12 ? 0 : Math.max(-1, Math.min(1, value));
+
+export function machineControlInput(keys = {}, pad = null, mode = 'drive', mapping = null) {
+  const held = (name) => heldInput('machine', name, keys);
+  const controls = mode === 'work'
+    ? { swing: Number(held('swingRight')) - Number(held('swingLeft')),
+      boom: Number(held('boomUp')) - Number(held('boomDown')),
+      arm: Number(held('armOut')) - Number(held('armIn')),
+      bucket: Number(held('bucketDump')) - Number(held('bucketCurl')) }
+    : { forward: Number(held('driveForward')) - Number(held('driveBack')),
+      steer: Number(held('driveRight')) - Number(held('driveLeft')) };
+  if (pad?.axes && mapping?.axes && mode === 'work') {
+    for (const name of MACHINE_AXES) {
+      const axis = mapping.axes[name];
+      if (Number.isInteger(axis) && axis >= 0 && axis < pad.axes.length) controls[name] = deadzone(pad.axes[axis]);
+    }
+  } else if (pad?.axes && mapping?.drive && mode === 'drive') {
+    const { steer, forward } = mapping.drive;
+    if (Number.isInteger(steer) && steer < pad.axes.length) controls.steer = deadzone(pad.axes[steer]);
+    if (Number.isInteger(forward) && forward < pad.axes.length) controls.forward = -deadzone(pad.axes[forward]);
+  }
+  return controls;
+}
 
 export function keyboardAction(context, code) {
   return INPUT_CONTEXTS[context]?.keyboard[code] ?? null;
