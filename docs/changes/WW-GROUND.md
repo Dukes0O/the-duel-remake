@@ -1,38 +1,29 @@
 # WW-GROUND
 
-Status: implementation committed; required checks are waiting on the open
-FULL TIER FOR RELEASE hold in `docs/playtest-inbox.md`.
-
 ## Changed
 
-- Added the Scablands venue and eight named place anchors. It is registered as
-  an arena venue and stays out of `COURSE`.
-- Added one world-space height query for place flats, the outer ridge and the
-  far wall, plus one surface query for the dirt road.
-- Connected `Course` ground and surface reads to those shared queries. The
-  oval frame stays separate from the winding map road.
-- Added a headless test for venue routing, place-to-place driving, Tin Town
-  walking, Titan ridge climbing and height continuity at 128 m chunk edges.
-
-Design choice: the venue uses the stable oval frame, with the dirt road held in
-world-space ground data. See the decision on the card.
+- Centered the Scablands oval frame at world origin and used the Salt Flats
+  normal projection for nearest-point queries. Other courses keep their old
+  frame and projection.
+- Fighters now use the full 1.4 km by 1.0 km Scablands bounds; other arenas
+  keep their current limits. The venue frame bounds sit past the map so the
+  ridge remains the driving limit.
+- Widened the road surface band to 36 m so an ordinary car can stay on the
+  route at speed between all eight places.
+- Settled the vehicle and fighter map bounds on the card before these code
+  changes.
 
 ## Checks
 
-- `git diff --check`: passed.
-- `node tools/test-scablands-ground.mjs`: not run; the inbox still has an open
-  FULL TIER FOR RELEASE hold. Recheck the inbox before starting it.
-- `node tools/test-world-composition.mjs`: not run for the same hold.
-- Replay guards: not run for the same hold. Expected fingerprints were not
-  changed.
-- `npm run build`: not run for the same hold.
-- Browser and look checks: Claude runs them. Please check that the road reads
-  as a continuous route through all eight places, Tin Town stays flat across a
-  ground chunk edge, the outer ridge rises before the far wall, and the Scablands
-  remains absent from the main circuit picker.
-
-Changed assertions: none. Race fingerprints: unchanged and not re-recorded.
+- `node tools/test-scablands-ground.mjs`: passed, 5 tests.
+- `node tools/test-world-composition.mjs`: passed.
+- `node tools/test-replays.mjs`: passed; replay fingerprints unchanged.
+- `npm.cmd run build`: passed. PowerShell blocked `npm run build` through its
+  script shim; `npm.cmd` ran the same package build. Vite reported existing
+  chunk-size and dynamic-import warnings.
+- Lane tier and browser checks: Claude runs them.
+- Changed assertions: none.
 
 ## Removed
 
-No prior path or asset was replaced.
+No prior venue path or asset was replaced.
