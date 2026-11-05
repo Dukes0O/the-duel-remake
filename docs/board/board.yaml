@@ -479,6 +479,42 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-REVIEW-EVIDENCE-MIDNIGHT.md"
 
+  - id: QA-ARENA-SHOVE-BASELINE
+    title: "arena-shove stops: current baseline and candidate have identical src"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-ARENA-SHOVE-BASELINE.md"
+
+  - id: QA-PREVIEW-STORAGE-SEED
+    title: "preview-storage: seeded preview player or badge missing"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-PREVIEW-STORAGE-SEED.md"
+
+  - id: QA-DRIVE-LESSON-RUN-BOARD
+    title: "drive-lesson-run expects an older lesson board"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-DRIVE-LESSON-RUN-BOARD.md"
+
+  - id: QA-SKI-FINISH-TIMEOUT
+    title: "ski-finish browser scenario times out after the slalom"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-SKI-FINISH-TIMEOUT.md"
+
   - id: WW-SCENE
     title: "Places and props in the world"
     owner: "codex"
