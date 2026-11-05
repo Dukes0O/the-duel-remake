@@ -36,3 +36,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Reuse the junk cars, as the plan says.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: no, do not merge. Round 3 is the last.** The bus and stack no longer stand on end, but the cars sit on a wall again, the Titan is stuck to it, and everything is one salmon colour. Flat trays with wheels are not crushed vehicles.
+- First, the sheet: copy the working cameras from owl-art-trucks, flat dirt floor, the Titan on its wheels beside them.
+- Reuse the game's own junk cars for the stack, as the plan says. Only the van, bus and RV are new.
+- Each vehicle keeps its outline, with the roof pressed to the door handles, sides bulged and glass gone. Paint in several faded colours, with rust and soot.
+- Until this passes, BOWL-COURSE uses the existing junk cars.
