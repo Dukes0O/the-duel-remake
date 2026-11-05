@@ -28,6 +28,10 @@ export async function run(c) {
   };
   const at = (step, extra = 'true') => c.waitFor(`${state}?.step==='${step}' && (value=>${extra})(${state})`, step, 30_000);
   const next = async step => { await at(step, 'value.ready'); await press('Enter'); };
+  const waitForWords = (words, label) => c.waitFor(
+    `['.lc-past', '.lc-bubble'].some(selector => document.querySelector(selector)?.textContent.includes(${JSON.stringify(words)}))`,
+    label,
+  );
   const shot = name => c.screenshot(name);
 
   const canvas = `document.querySelector('.lab-canvas')`;
@@ -43,33 +47,43 @@ export async function run(c) {
   await next('word-grip'); await next('word-limit');
   await at('formula');
   await press('ArrowUp', 10);
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('× 100 ='))`))) throw new Error('The percent formula did not show a worked example.');
+  const showedFormula = await c.evaluate(
+    `[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('× 100 ='))`,
+  );
+  if (!showedFormula) throw new Error('The percent formula did not show a worked example.');
   await shot('grip-formula'); await next('formula');
 
+  await at('watch'); await wait(3_400); await at('watch', 'value.ready'); await shot('grip-watch'); await next('watch');
+
   await at('try-edge', 'value.cards > 0');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].every(line => line.textContent.trim() === '')`))) throw new Error('An open guess shows a worked answer.');
+  const hidWorkedAnswer = await c.evaluate(
+    `[...document.querySelectorAll('.lc-worked')].every(line => line.textContent.trim() === '')`,
+  );
+  if (!hidWorkedAnswer) throw new Error('An open guess shows a worked answer.');
   await shot('grip-guess'); await press('Digit1'); await press('Space'); await at('try-edge', 'value.ready'); await shot('grip-result');
-  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('99.7%')`, 'the result explains the small grip loss');
+  await waitForWords('At 4.5 degrees the tyre keeps about 99.7% grip', 'the result explains the small grip loss');
   await next('try-edge');
 
   await at('try-far', 'value.cards > 0');
   await shot('grip-far-guess'); await press('Digit2'); await press('Space');
-  await at('try-far', 'value.ready'); await shot('grip-far-result'); await next('try-far');
-
-  await at('watch'); await wait(3_400); await at('watch', 'value.ready'); await shot('grip-watch'); await next('watch');
+  await at('try-far', 'value.ready');
+  await waitForWords('At 9 degrees the tyre keeps about 93.9% grip', 'the second prediction result');
+  await shot('grip-far-result'); await next('try-far');
 
   await at('try-free');
   for (const [target, presses] of [[3, 2], [4.5, 3], [9, 9]]) {
     await press('ArrowUp', presses); await press('Space');
-    await c.waitFor(`document.querySelector('.lc-past')?.textContent.includes('At ${target} degrees')`, `${target} degree comparison`);
+    await waitForWords(`At ${target} degrees, the tyre keeps about`, `${target} degree comparison`);
   }
   await at('try-free', 'value.ready'); await shot('grip-free-test'); await next('try-free');
 
   await at('challenge');
   await press('ArrowUp', 4); await press('Space');
-  await c.waitFor(`document.querySelector('.lc-past')?.textContent.includes('At 4 degrees the tyre kept 100% grip')`, 'full-grip run');
+  await waitForWords('At 4 degrees the tyre kept 100% grip.', 'full-grip run');
   await press('ArrowUp'); await press('Space');
-  await at('challenge', 'value.ready'); await shot('grip-two-run-test'); await next('challenge');
+  await at('challenge', 'value.ready');
+  await waitForWords('Together with your earlier run, this meets both targets', 'the two-run challenge result');
+  await shot('grip-two-run-test'); await next('challenge');
   for (const [step, answer] of [['check-best', 'Digit2'], ['check-loss', 'Digit2'], ['check-driving', 'Digit1']]) {
     await at(step, 'value.cards > 0'); await press(answer); await at(step, 'value.ready'); await press('Enter');
   }

@@ -1,5 +1,6 @@
 // A rolling-road demonstration of the game's tyre grip curve.
-import {gripBench, bestSlideDegrees} from '../benches/tunnel.js';
+import {gripBench, slipAtAngle, bestSlideDegrees} from '../benches/tunnel.js';
+import {tyreSlipGrip} from '../../config.js';
 import {BOARD, theme, background, text, keyCap, fitBoard, wrap} from '../classroom/board-art.js';
 
 export {BOARD};
@@ -10,6 +11,18 @@ const hit = (x, y, cx, cy, rx = 60, ry = 26) => Math.abs(x - cx) <= rx && Math.a
 const graph = Object.freeze({left: 92, right: 630, top: 180, bottom: 452});
 const px = degree => graph.left + degree / 12 * (graph.right - graph.left);
 const py = percent => graph.bottom - (percent - 88) / 12 * (graph.bottom - graph.top);
+
+function makeGripCurvePoints() {
+  const points = [];
+  for (let slideDeg = 0; slideDeg <= 12.001; slideDeg += .01) {
+    const slip = slipAtAngle(slideDeg * Math.PI / 180);
+    const grip = tyreSlipGrip(slip, 'casual');
+    points.push({slideDeg, x: px(slideDeg), y: py(grip * 100)});
+  }
+  return points;
+}
+const GRIP_CURVE_POINTS = makeGripCurvePoints();
+export const gripCurvePoints = () => GRIP_CURVE_POINTS;
 
 export function hitTest(view, x, y) {
   if (view.keys['↓'] && hit(x, y, ...DOWN)) return {action: 'slide:down'};
@@ -71,10 +84,8 @@ function drawGraph(ctx, view) {
     text(ctx, 'BEST ANGLE ABOUT 4.3°', px(limit), graph.top - 13, {size: 11, align: 'center', weight: 900, colour: '#e4c56d'});
 
     ctx.strokeStyle = '#68b7e5'; ctx.lineWidth = 4; ctx.beginPath();
-    for (let value = 0; value <= 12.001; value += .05) {
-      const reading = gripBench.run({slideDeg: value, driver: 'casual'});
-      const point = [px(value), py(reading.grip * 100)];
-      if (value === 0) ctx.moveTo(...point); else ctx.lineTo(...point);
+    for (const point of gripCurvePoints()) {
+      if (point.slideDeg === 0) ctx.moveTo(point.x, point.y); else ctx.lineTo(point.x, point.y);
     }
     ctx.stroke();
 
@@ -149,7 +160,11 @@ function drawRows(ctx, view) {
   if (!rows.length) return;
   panel(ctx, 690, 435, 280, 212);
   text(ctx, 'RECORDED SETTINGS', 712, 463, {size: 13, align: 'left', weight: 900, colour: '#d5b65f'});
-  rows.forEach((item, index) => text(ctx, `Run ${index + 1}: ${item.slideDeg}°  ·  ${item.percent}% grip`, 714, 500 + index * 35, {size: 14, align: 'left', weight: 700}));
+  rows.forEach((item, index) => {
+    text(ctx, `Run ${index + 1}: ${item.slideDeg}°  ·  ${item.percent}% grip`, 714, 500 + index * 35, {
+      size: 14, align: 'left', weight: 700,
+    });
+  });
 }
 
 function glow(ctx, view) {
@@ -206,7 +221,13 @@ export function drawPicture(ctx, picture, width, height) {
   const x = width * .45, y = height * .52, radius = Math.min(width, height) * .25;
   ctx.strokeStyle = '#d4bc73'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = '#202526'; ctx.beginPath(); ctx.roundRect(x - radius * .42, y - radius * .82, radius * .84, radius * 1.64, 7); ctx.fill();
-  for (let i = -1; i <= 1; i++) { ctx.strokeStyle = '#9ba4a3'; ctx.beginPath(); ctx.moveTo(x - radius * .3, y + i * 9); ctx.lineTo(x + radius * .3, y + i * 9); ctx.stroke(); }
+  for (let i = -1; i <= 1; i++) {
+    ctx.strokeStyle = '#9ba4a3';
+    ctx.beginPath();
+    ctx.moveTo(x - radius * .3, y + i * 9);
+    ctx.lineTo(x + radius * .3, y + i * 9);
+    ctx.stroke();
+  }
   text(ctx, percent == null ? 'Grip?' : `${percent}%`, width * .78, height * .5, {size: 16, weight: 900});
   text(ctx, 'tyre on road', width * .78, height * .72, {size: 10, colour: '#d2cbbd'});
   ctx.restore();

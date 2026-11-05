@@ -38,7 +38,7 @@ The graph plots unrounded casual grip readings at small angle steps. The board s
 | Best angle | Grip grows as the slide angle grows, up to the best angle. In this game, that is about 4.3 degrees. |
 | Past the best angle | Past the best angle, the tyre slides more and pushes less. The driver feels the car start to skid. A corner at the best angle is fastest. |
 | Percent | Grip kept as a fraction times 100 gives grip kept as a percent. For example, 0.94 × 100 = 94%. This is the simple part; the exact road rule is in this game. |
-| Watch | Test 3, 4, 4.5 and 9 degrees. At 3 and 4 the tyre keeps 100%; at 4.5 it keeps about 99.7%, a small loss for casual tyres; at 9 it keeps about 93.9%. |
+| Watch | Before either prediction, test 2, 3, 4 and 12 degrees. At 2, 3 and 4 the tyre keeps 100%; at 12 the grip is lower. Do not reveal the 4.5- or 9-degree prediction results here. |
 | Predict at 4.5 | Ask if the grip loss is less than 1% or more than 10%. Hide the graph, marker, reading and worked sum while the guess is open. After the guess and run, show about 99.7% grip and the rounded sum 100% less 99.7% = about 0.3% lost. |
 | Predict at 9 | Ask if grip has fallen more or less than at 4.5. After the guess, compare about 93.9% with about 99.7%; the farther slide loses more grip. |
 | Free test | Record three different dial settings. Show one decimal place in percentages and a worked percent sum only when rounding the fraction first gives the displayed result. |
@@ -49,3 +49,7 @@ The graph plots unrounded casual grip readings at small angle steps. The board s
 **Recorded lines.** The lesson uses the existing intro and explain audio cues. Brian's on-screen words give the plain language and rounded readings for every step. Preserve the existing pass line and challenge wording contract.
 
 **Assertion changes.** Replace assertions that pinned hidden tyre variables, six-decimal sums, or the old one-question flow with checks for the rounded percent sum, hidden answers while a prediction is open, the two distinct prediction explanations, three check cards, and the unchanged two-run challenge. The challenge goal, run count, distinct free settings, saved reward and profile behavior remain behavior checks; none are loosened.
+
+The parts must only move forward. Put Watch in part 2 before both part 3
+predictions. Its live settings and recorded rows are 2, 3, 4 and 12 degrees.
+Check that its closing words avoid the 4.5- and 9-degree answers.
