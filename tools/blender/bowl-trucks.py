@@ -52,7 +52,7 @@ paint = [
     mat('Big Kettle faded furnace ochre', (.53,.29,.075), .35),
     mat('Tin Lizard oxidised blue-green', (.075,.29,.27), .35),
     mat('Old Bess faded cream enamel', (.58,.48,.31), .3),
-    mat('Dragon Wagon faded soot-orange', (.56,.16,.035), .35),
+    mat('Dragon Wagon scarred black and furnace red', (.52,.035,.025), .42),
 ]
 names = []
 
@@ -98,8 +98,8 @@ def tag(index, part): return f'{NAMES[index]}-{part}'
 def horn(i, side):
     sx=side*.34
     beam(tag(i,'horn-root'),(sx,.99,1.35),(sx*1.12,1.13,1.67),.16,steel,.22)
-    beam(tag(i,'horn-up'),(sx*1.12,1.13,1.67),(sx*1.22,1.50,1.92),.12,rust,.16)
-    pipe(tag(i,'horn-tip'),(sx*1.22,1.50,1.92),(sx*1.25,1.58,1.99),.065,steel,8)
+    beam(tag(i,'horn-up'),(sx*1.12,1.13,1.67),(sx*1.28,1.66,2.08),.19,rust,.23)
+    pipe(tag(i,'horn-tip'),(sx*1.28,1.66,2.08),(sx*1.31,1.79,2.19),.09,steel,8)
 
 for i,n in enumerate(NAMES):
     start=len(names)
@@ -169,6 +169,10 @@ for i,n in enumerate(NAMES):
             o.location.x *= 1.55
             o.location.y += .75
             o.location.z += .2
+        pivot_game=[(0,1.1,1.45),(0,1.35,.42),(0,1.2,-.8),(0,1.4,-.05),(0,1.2,-.1)][i]
+        pivot=Vector((pivot_game[0],-pivot_game[2],pivot_game[1]+1.5))
+        o.location=pivot+(o.location-pivot)*1.5
+        o.dimensions*=1.5
         o['rival'] = n
         o['socket-set'] = 'titan_monster-roof-and-rear'
 
@@ -223,7 +227,7 @@ if a.render:
         group=[o for o in names if o.get('rival')==rival]
         for o in names: o.hide_render=o not in group
         idx=NAMES.index(rival)
-        body_col=[(.40,.105,.052),(.52,.29,.085),(.08,.30,.28),(.57,.48,.32),(.57,.16,.045)][idx]
+        body_col=[(.40,.105,.052),(.52,.29,.085),(.08,.30,.28),(.57,.48,.32),(.018,.022,.022)][idx]
         for obj in titan:
             for slot in obj.material_slots:
                 if slot.material and slot.material.name in ('Race livery','Lacquered body'):
@@ -233,9 +237,24 @@ if a.render:
                         bs.inputs['Base Color'].default_value=(*body_col,1)
                         bs.inputs['Roughness'].default_value=.82
                         bs.inputs['Metallic'].default_value=.16
+                        nt=slot.material.node_tree
+                        tex=nt.nodes.new('ShaderNodeTexNoise'); tex.inputs['Scale'].default_value=8.0
+                        tex.inputs['Detail'].default_value=4.0; tex.inputs['Roughness'].default_value=.78
+                        ramp=nt.nodes.new('ShaderNodeValToRGB')
+                        ramp.color_ramp.elements[0].position=.30
+                        ramp.color_ramp.elements[0].color=(.055,.035,.022,1)
+                        ramp.color_ramp.elements[1].position=.48
+                        ramp.color_ramp.elements[1].color=(*body_col,1)
+                        e=ramp.color_ramp.elements.new(.37); e.color=(.25,.075,.025,1)
+                        nt.links.new(tex.outputs['Fac'],ramp.inputs[0])
+                        nt.links.new(ramp.outputs['Color'],bs.inputs['Base Color'])
+                        bump=nt.nodes.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.22
+                        bump.inputs['Distance'].default_value=.045
+                        nt.links.new(tex.outputs['Fac'],bump.inputs['Height'])
+                        nt.links.new(bump.outputs['Normal'],bs.inputs['Normal'])
         views=[
-            ('front',(3,-10,3.5),(0,1.35,.1),8.2),
-            ('side',(10,-1,2.9),(0,1.32,.0),10.2),
+            ('front',(3,-10,3.5),(0,1.45,.25),7.0),
+            ('side',(10,-1,2.9),(0,1.42,.0),8.5),
             ('forty-metre-car-height',(3,-40,1.45),(0,1.1,1.5),13.0),
             ('close-three-quarter',(5,-6,3.0),(0,1.45,.1),5.0),
         ]
