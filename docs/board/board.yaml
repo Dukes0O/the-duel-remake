@@ -73,7 +73,7 @@ tasks:
     title: "Armor kits with distinct fitted steel plates"
     lane: "VIS"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [GFX-03]
     priority: 16
     details: "docs/board/cards/GFX-03-P1.md"
@@ -82,7 +82,7 @@ tasks:
     title: "Scrapdome yard reference likeness polish"
     lane: "VIS"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [GFX-04]
     flag: "hidden-road"
     priority: 16
@@ -350,6 +350,15 @@ tasks:
     flag: "lab-classroom"
     details: "docs/board/cards/LAB-CLASSROOM-LANGUAGE.md"
 
+  - id: QA-BUNDLE-NO-COPY
+    title: "Browser test builds stop copying the 373 MB public folder"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "building"
+    needs: []
+    details: "docs/board/cards/QA-BUNDLE-NO-COPY.md"
+
   - id: LAB-CLASSROOM-GRIP
     title: "Grip and slip rebuilt as a classroom lesson"
     owner: "codex"
@@ -382,3 +391,375 @@ tasks:
     locks: []
     details: "docs/board/cards/EASY-YOUNG-DRIVER.md"
 
+  - id: GEAR-FIND
+    title: "Flamethrower and getting out of the car are easy to find"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "gear-find"
+    details: "docs/board/cards/GEAR-FIND.md"
+
+  - id: WW-JOBS-CORE
+    title: "Job engine and its eight step kinds, headless"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-JOBS-CORE.md"
+
+  - id: WW-GROUND
+    title: "The Scablands venue: ground, road and places"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-GROUND.md"
+
+  - id: WW-SAVE
+    title: "Everburn save, found places and the earned flamethrower"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "building"
+    needs: []
+    locks: [save-shape]
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-SAVE.md"
+
+  - id: WW-LINES
+    title: "The Everburn's lines and Hollis's note"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-LINES.md"
+
+  - id: BOWL-SHOW
+    title: "Show Night rules and scoring, headless"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SHOW.md"
+
+  - id: BOWL-AIR
+    title: "Air control and flips, for the Bowl only"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-AIR.md"
+
+  - id: BOWL-SAVE
+    title: "Show records, trophies and purse"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "building"
+    needs: []
+    locks: [save-shape]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-SAVE.md"
+
+  - id: WW-ART-TINTOWN
+    title: "Art: Tin Town"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-TINTOWN.md"
+
+  - id: WW-ART-BONEYARD
+    title: "Art: the Boneyard"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-BONEYARD.md"
+
+  - id: WW-ART-MALL
+    title: "Art: the Dead Mall"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-MALL.md"
+
+  - id: WW-ART-EVERBURN
+    title: "Art: the Everburn well"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-EVERBURN.md"
+
+  - id: WW-ART-KIT
+    title: "Art: Scablands kit"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-KIT.md"
+
+  - id: WW-ART-FOLK
+    title: "Art: townsfolk and Ash Men"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-FOLK.md"
+
+  - id: WW-ART-VEHICLES
+    title: "Art: Big Bess, Old Smoke's furnace, the thief's buggy"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-VEHICLES.md"
+
+  - id: WW-ART-MULE
+    title: "Art: the Iron Mule"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-ART-MULE.md"
+
+  - id: BOWL-ART-STADIUM
+    title: "Art: the Bowl stadium"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-ART-STADIUM.md"
+
+  - id: BOWL-ART-CRUSH
+    title: "Art: crush stacks"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-ART-CRUSH.md"
+
+  - id: BOWL-ART-TRUCKS
+    title: "Art: rival truck bolt-ons"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-ART-TRUCKS.md"
+
+  - id: BOWL-ART-REX
+    title: "Art: the Scrapasaurus"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "building"
+    needs: []
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-ART-REX.md"
+
+  - id: WW-EVERBURN-JOBS
+    title: "The Everburn's six jobs as data; Easy proof"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [WW-JOBS-CORE, WW-GROUND, WW-SAVE]
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-EVERBURN-JOBS.md"
+
+  - id: WW-HOOKS
+    title: "The world-job mode in the game, with lending and getting out"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [WW-JOBS-CORE, WW-GROUND]
+    locks: [busy-game-files]
+    flag: "scablands"
+    details: "docs/board/cards/WW-HOOKS.md"
+
+  - id: WW-SCENE
+    title: "Places and props in the world"
+    owner: "codex"
+    lane: "RENDER"
+    size: "L"
+    status: "ready"
+    needs: [WW-GROUND, WW-ART-TINTOWN, WW-ART-BONEYARD, WW-ART-MALL, WW-ART-EVERBURN, WW-ART-KIT]
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-SCENE.md"
+
+  - id: WW-HUD
+    title: "Job line, world compass, map and finds"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [WW-HOOKS]
+    locks: []
+    flag: "scablands"
+    details: "docs/board/cards/WW-HUD.md"
+
+  - id: WW-SCREENS
+    title: "Story Wall, BACK GATE, Next up and the notice board"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: [WW-HOOKS, WW-LINES, WW-SAVE]
+    locks: [busy-game-files]
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-SCREENS.md"
+
+  - id: WW-BOSS
+    title: "Old Smoke's furnace chase"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [WW-HOOKS, WW-ART-VEHICLES]
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-BOSS.md"
+
+  - id: BOWL-COURSE
+    title: "The Bowl course and props"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-ART-STADIUM, BOWL-ART-CRUSH, BOWL-SHOW]
+    locks: [circuit-registry]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-COURSE.md"
+
+  - id: BOWL-HOOKS
+    title: "Show Night in the game"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-COURSE, BOWL-AIR, BOWL-SAVE]
+    locks: [busy-game-files]
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-HOOKS.md"
+
+  - id: BOWL-RIVALS
+    title: "Computer trucks: Side by Side and Last Truck Rolling"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-HOOKS, BOWL-ART-TRUCKS]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-RIVALS.md"
+
+  - id: BOWL-TURNS
+    title: "Turn Show: pass the keyboard"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: [BOWL-HOOKS]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-TURNS.md"
+
+  - id: BOWL-REX-FIGHT
+    title: "Night five: the Scrapasaurus"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: [BOWL-HOOKS, BOWL-ART-REX]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-REX-FIGHT.md"
+
+  - id: WW-FINISH
+    title: "Claude plays the Everburn end to end, frames, release"
+    owner: "claude"
+    lane: "FINISH"
+    size: "M"
+    status: "backlog"
+    needs: [WW-EVERBURN-JOBS, WW-SCENE, WW-HUD, WW-SCREENS, WW-BOSS]
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-FINISH.md"
+
+  - id: BOWL-FINISH
+    title: "Claude plays Show Night, frames, release"
+    owner: "claude"
+    lane: "FINISH"
+    size: "M"
+    status: "backlog"
+    needs: [BOWL-RIVALS, BOWL-TURNS, BOWL-REX-FIGHT]
+    locks: []
+    flag: "titan-bowl"
+    details: "docs/board/cards/BOWL-FINISH.md"
+
+  - id: STORY-IRON-MULE
+    title: "Every line and job list for the second story"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "backlog"
+    needs: [WW-FINISH]
+    locks: []
+    details: "docs/board/cards/STORY-IRON-MULE.md"

@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { after } from 'node:test';
@@ -216,7 +217,7 @@ test('actual QA build recipe uses one unique output and marks it only after a co
     wait: async handle => {assert.equal(handle, 'handle'); calls.push(['exit']);},
     read: async path => {assert.equal(path, resolve(bundle, 'tools/menu-check.html')); return '<meta charset="utf-8">';},
     write: async (path, value) => {writes.push([path, value]);},
-    recycle: async path => {calls.push(['recycle', path]);},
+    cleanup: async path => {calls.push(['cleanup', path]);},
   };
   assert.equal(await browserHarness.buildQaBundle(operations), bundle);
   assert.equal(calls.filter(row => row[0] === 'launch').length, 1);
@@ -226,31 +227,28 @@ test('actual QA build recipe uses one unique output and marks it only after a co
   assert.equal(args[args.indexOf('--config') + 1], 'tools/vite-qa.config.js');
   assert.ok(writes[0][1].includes('rel="icon"'));
   assert.deepEqual(JSON.parse(writes[1][1]), {schema: 1, projectRoot: root, qa: true});
-  assert.ok(!calls.some(row => row[0] === 'recycle'), 'successful bundle stays alive until suite children drain');
+  assert.ok(!calls.some(row => row[0] === 'cleanup'), 'successful bundle stays alive until suite children drain');
   calls.length = 0; writes.length = 0;
   await assert.rejects(browserHarness.buildQaBundle({...operations, wait: async () => {throw Error('Vite failed');}}), /Vite failed/);
-  assert.deepEqual(calls.at(-1), ['recycle', bundle]);
+  assert.deepEqual(calls.at(-1), ['cleanup', bundle]);
   assert.deepEqual(writes, [], 'failed build cannot advertise a completed bundle');
 });
 
 
-test('bundle cleanup recycles only the exact owned leaf and refuses redirected targets', async () => {
+test('bundle cleanup deletes only the exact owned leaf, never through the Recycle Bin, and refuses redirected targets', async () => {
   const bundle = resolve(browserHarness.PROJECT_ROOT, '.qa-dist/browser-suite-owned');
   const calls = [];
-  const operations = {platform: 'win32', realPath: async path => path,
-    start: (exe, args) => {calls.push([exe, args]); return 'cleanup';},
-    wait: async handle => {assert.equal(handle, 'cleanup');}};
-  await browserHarness.recycleQaBundle(bundle, operations);
+  const operations = {realPath: async path => path, remove: async (path, options) => {calls.push([path, options]);}};
+  await browserHarness.removeQaBundle(bundle, operations);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'powershell.exe');
-  const script = Buffer.from(calls[0][1].at(-1), 'base64').toString('utf16le');
-  assert.ok(script.includes('SendToRecycleBin'));
-  assert.ok(script.includes(bundle));
+  assert.equal(calls[0][0], bundle);
+  assert.equal(calls[0][1].recursive, true);
+  assert.ok(!readFileSync(new URL('./browser-harness.mjs', import.meta.url), 'utf8').includes('SendTo' + 'RecycleBin'), 'a bundle never goes to the Recycle Bin');
   calls.length = 0;
-  await assert.rejects(browserHarness.recycleQaBundle(bundle, {...operations,
+  await assert.rejects(browserHarness.removeQaBundle(bundle, {...operations,
     realPath: async () => resolve(browserHarness.PROJECT_ROOT, '.qa-dist/browser-suite-other')}), /QA bundle/);
   assert.equal(calls.length, 0, 'a redirected target must not reach cleanup');
-  await assert.rejects(browserHarness.recycleQaBundle(resolve(browserHarness.PROJECT_ROOT, '.qa-dist'), operations), /QA bundle/);
+  await assert.rejects(browserHarness.removeQaBundle(resolve(browserHarness.PROJECT_ROOT, '.qa-dist'), operations), /QA bundle/);
   assert.equal(calls.length, 0);
 });
 
