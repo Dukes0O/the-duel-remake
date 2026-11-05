@@ -17,85 +17,67 @@ function the lesson's challenge uses. The challenge, its reward and the save are
 Claude writes the step script (what Brian says, the set-up, the guesses and the reasons
 for each wrong answer) under "Claude's script" here before code.
 
-## Codex draft script (Claude to review)
+## Codex final script (Director review pending)
 
-The numbers below come from `suspensionBench.run({spring, road})` in
-`src/lab/benches/tunnel.js`, the same function that the suspension challenge
-uses. The four results are: soft on bumps, 4.09 m/s² body shake and 6.5° body
-roll; stiff on bumps, 4.77 m/s² and 2.2°; soft on smooth road, 0.22 m/s² and
-6.5°; stiff on smooth road, 0.27 m/s² and 2.2°. The displays round shake to
-two decimals and roll to one decimal. On bumps the tyre-contact shares are
-87.87% and 93.12%; on the smooth road both are 100%.
+The numbers come from `suspensionBench.run({spring, road})` in
+`src/lab/benches/tunnel.js`, which is also used by the unchanged challenge.
+The four runs read: soft/bumpy, 4.09 m/s? body shake and 6.5? body roll;
+stiff/bumpy, 4.77 m/s? and 2.2?; soft/smooth, 0.22 m/s? and 6.5?;
+stiff/smooth, 0.27 m/s? and 2.2?. Tyre contact is 87.87% and 93.12% on
+the bumpy road and 100% on either spring on the smooth road.
 
-1. **Wonder — The shaker rig.** Brian says, “This rig moves one wheel over a
-   rough road while the car body rides above it. Watch the body and the tyre
-   contact light; we will name the measurements next.” Show the soft and stiff
-   examples briefly, without asking for a prediction yet.
-2. **Spring — The coil between wheel and body.** Brian says, “A spring is a
-   coil between the wheel and the car body. A soft spring compresses more under
-   the same force, while a stiff spring resists that movement.” Point to the
-   coil and let the learner select soft or stiff once.
-3. **Body shake — A measured motion.** Set soft spring and bumpy road before
-   asking. Define a bump as a raised part of the road, measured in metres (m),
-   and a second (s) as a unit of time. Brian says, “Body shake is the root mean
-   square of the body's up-and-down acceleration during this 20-second run.
-   Acceleration is a change in speed or direction over time; metres per second
-   squared, written m/s², measures that change.” Show 4.09 m/s² after the
-   example run.
-4. **First prediction — Which spring shakes less on bumps?** Put the bumpy
-   road under the wheel and show the spring control before asking: “On these
-   same bumps, which spring gives the smaller body-shake reading?” The answer
-   cards name predicted readings, not spring set-ups. Correct choice: soft.
-   If the learner picks stiff, Brian says, “The soft spring gives 4.09 m/s² of
-   body shake here. The stiff spring gives 4.77 m/s², so that choice shakes
-   more in this test.” If the learner picks neither, Brian explains that
-   4.09 m/s² is lower than 4.77 m/s².
-5. **Body roll — The car tilts in a bend.** Define a bend as a turn in the
-   road, and a degree (°) as a unit for an angle. Brian says, “Body roll is
-   how far the car body tilts sideways in a bend. This rig calculates that
-   angle from the car's mass, its centre height, the bend's sideways force,
-   the distance between the wheels, and the spring's stiffness.” Show the
-   angle after the word is defined.
-6. **Second prediction — Which spring rolls less?** Set the smooth road first,
-   then ask: “In this model bend, which spring gives the smaller body-roll
-   angle?” Correct choice: stiff. If the learner picks soft, Brian says,
-   “The soft spring gives 6.5° of body roll in this model bend. The stiff
-   spring gives 2.2°, so the stiff spring rolls less here.” If the learner
-   chooses neither, Brian explains that 2.2° is lower than 6.5°.
-7. **The trade-off.** Brian says, “The soft spring isolates the body from
-   these bumps better, but it allows more body roll in the model bend. The
-   stiff spring sends more bump motion into the body, but its higher roll
-   stiffness keeps the body flatter.” Show both measured comparisons and say
-   tyre contact is similar: 87.87% for soft and 93.12% for stiff on bumps,
-   and 100% for both on smooth road. Do not claim that the soft spring
-   improves tyre contact.
-8. **Free test — Choose the spring and road.** Brian says, “Choose either
-   spring and either road, then run the rig. The panel shows the model's
-   measurements, and the table keeps three different setting pairs so you
-   can compare them.” Let the learner make any three distinct comparisons.
-   Repeating a pair does not count. Record a result before describing it.
-9. **Review and challenge.** Recap the spring, body shake and body roll with
-   labelled pictures. Brian says, “The suspension challenge asks you to
-   compare both springs on the rough and smooth roads. The challenge records
-   all four comparisons.” This replaces the ambiguous “other spring” wording:
-   either spring is a valid first choice, and the challenge still requires
-   every spring-road pair.
+1. **Wonder.** Brian shows the wheel crossing the shaker rig while the body
+   moves above it. He says the car leans outward in a bend and asks the learner
+   to watch the wheel and body. No measurement or prediction is given yet.
+2. **Spring.** Brian defines a spring as a coil between the wheel and car body.
+   It compresses when they move closer and stretches when they move apart.
+3. **Spring stiffness.** Brian defines stiffness as how strongly a spring
+   resists compression or stretch. A stiffer spring moves less under the same
+   force. It can reduce sideways lean in a turn, but it sends more bump motion
+   into the body and can make this car less comfortable.
+4. **Weight transfer.** Brian defines a corner as a bend in the road, then
+   explains that turning changes how the tyres share the car's load: the
+   outside tyres carry more and the inside tyres carry less. The car body
+   leans outward as the suspension moves by different amounts on each side.
+5. **Body roll.** Brian names that sideways angle body roll and defines degrees
+   (?) as its unit. In a turn the outside spring compresses while the inside
+   spring extends, until the forces balance.
+6. **Body shake.** Brian defines body shake as the root mean square of the
+   body's up-and-down acceleration over a 20-second run. Acceleration describes
+   how quickly speed or direction changes. The unit m/s? means metres per
+   second squared.
+7. **Formula.** Show the root-mean-square rule and the model roll rule. The
+   worked roll example uses the displayed values 1,300 kg, 0.8 g, 9.81 m/s?,
+   0.5 m, 40,000 N/m and 1.5 m track: `atan(5101.20 ? 90000.00) = 3.25?`.
+   This intermediate spring stiffness does not reveal either answer to the
+   next predictions. The model uses 0.8 g; the shaker rig supplies body-shake
+   readings.
+8. **Prediction: bumps.** Ask which spring gives less body shake on the same
+   bumps. The cards show the real readings (soft 4.09 m/s?, stiff 4.77 m/s?,
+   or equal). Keep the panel's worked sums and measured values hidden until the
+   learner answers. Explain the choice with these two readings.
+9. **Prediction: body roll.** Ask which spring gives the smaller roll angle in
+   this model bend. The choices are soft 6.5?, stiff 2.2?, or equal. Keep the
+   panel's worked sum hidden until the learner answers, then explain the result
+   with both measured angles.
+10. **Watch.** Brian changes through the four spring and road settings. The car
+    visibly tilts by the model's roll angle, the springs compress and extend,
+    and the panel changes with the live setting. He explains the real bump
+    readings and roll trade-off after the demonstration.
+11. **Free test.** Let the learner choose spring and road and record three
+    different pairs. Keep each measured shake, roll and tyre-contact reading
+    in the results table. A repeated pair does not count.
+12. **On your own.** Ask the learner to find a setup below 3? body roll. The
+    live formula and result follow the selected spring. Show me sets a stiff
+    spring on the smooth road and runs it, reaching 2.2?.
+13. **Three checks.** Ask what spring stiffness changes, where weight transfers
+    in a corner, and what happens to roll when spring stiffness increases.
+    Each wrong answer explains the rule in a whole sentence.
+14. **Recap.** Show recap cards for the spring trade-off (4.09 and 4.77 m/s? on
+    bumps), weight transfer, and stiffness (6.5? soft, 2.2? stiff). Brian says
+    the unchanged challenge records all four spring-road pairs.
 
-**Formulas, in teaching order.** Once body shake is defined, show
-`body shake = √(Σ(body acceleration²) ÷ number of time samples)` over the
-20-second run. Label this as the rig's measured root mean square, not a simple
-spring shortcut. Once body roll is defined, show the model rule
-`roll angle = atan(mass × 0.8 g × centre height ÷ (spring stiffness × track²))`.
-Use the displayed inputs: 1,300 kg, 9.81 m/s², 0.5 m, 0.8, 1.5 m track,
-and 20,000 N/m or 60,000 N/m. These give about 6.5° for soft and 2.2° for
-stiff. Explain that the game models a 0.8 g corner; the shaker simulation
-supplies the body-shake readings. Do not show a result or worked sum that
-settles an open prediction before the learner answers.
+The challenge card asks the learner to compare both springs on both roads.
+The pass condition, reward and save remain unchanged. Its classroom route feeds
+all four original spring-road attempts to `onChallenge`.
 
-Checks: in `tools/test-lab-classroom.mjs`, a child who does exactly what each prompt says
-passes with one press; each wrong guess says why with the real numbers; help climbs to
-Brian's pointer. The `lab-classroom` browser scenario plays this lesson by keyboard alone.
-Lane tier and build. The old lesson files go in LAB-CLASSROOM-LIVE.
-If the challenge is a bench run ('inline' from `onChallenge` in `lab-view.js`), feed the
-classroom's machine runs to it: the pendulum only needed the flying path, and `lesson-ui.js`
-refuses 'inline' with a message until a lesson wires it.

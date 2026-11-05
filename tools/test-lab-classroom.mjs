@@ -261,10 +261,11 @@ test('review fixes: Show me only points where pressing for the player would be w
 test('Suspension keeps its notebook terms, bench challenge and ordered classroom parts', () => {
   const suspension = CLASSROOM_LESSONS.suspension;
   assert.ok(suspension);
-  assert.deepEqual([...new Set(SUSPENSION_STEPS.map(step => step.part))], [0,1,2,3,4]);
+  assert.deepEqual([...new Set(SUSPENSION_STEPS.map(step => step.part))].sort(), [0,1,2,3,4,5,6]);
   assert.deepEqual(SUSPENSION_WORDS.slice(0,4).map(word => word.id), ['suspension-word-0','suspension-word-1','suspension-word-2','suspension-word-3']);
-  assert.deepEqual(SUSPENSION_WORDS.map(word => word.word), ['Spring','Soft','Stiff','Body roll','Body shake']);
+  assert.deepEqual(SUSPENSION_WORDS.map(word => word.word), ['Spring','Spring stiffness','Weight transfer','Body roll','Body shake']);
   assert.equal(suspension.challengeCard.title, 'Compare both springs on both roads.');
+  assert.equal(suspension.challengeCard.text, 'Run the suspension rig with soft and stiff springs on the bumpy and smooth roads. Complete all four setting pairs.');
 });
 
 test('Suspension opens only after driving lesson 1, matching the Lab lesson gate', () => {
@@ -283,12 +284,12 @@ test('the Suspension classroom challenge submits the same four settings to the u
 });
 
 test('the Suspension Watch changes the rig settings and live readings as Brian describes', () => {
-  const model=createSuspensionModel(); model.enter(4);
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='watch'));
   model.tick(.5); assert.deepEqual(model.view().setup,{spring:'soft',road:'bumpy'});
   const softShake=model.view().result.bodyShake;
-  model.tick(.7); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
+  model.tick(.8); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
   const stiffShake=model.view().result.bodyShake; assert.notEqual(stiffShake,softShake);
-  model.tick(1); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
+  model.tick(1.2); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
   assert.notEqual(model.view().result.bodyShake,stiffShake);
   model.tick(1); assert.equal(model.view().ready,true); assert.match(model.view().say,/6\.5° and 2\.2°/);
 });
@@ -309,21 +310,20 @@ test('Suspension exposes the complete screen contract and drawable targets on ev
 
 test('Suspension questions explain every wrong answer with the challenge bench results', () => {
   const model=createSuspensionModel();
-  const advance=()=>{ if(model.view().ready) model.act('next'); };
-  model.enter(5);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='guess-bumps'));
   assert.equal(model.view().scene,'guess-bumps');
   assert.equal(model.view().cards.length,3);
   assert.ok(model.view().formulas.every(row=>!row.worked), 'the open guess has no worked answer');
-  model.act('answer:1'); model.act('spring:soft'); model.act('road:bumpy'); model.act('run');
-  assert.match(model.view().say,/4\.09 m\/s².*4\.77 m\/s²/);
-  model.enter(6); assert.equal(model.view().scene,'guess-roll');
-  model.act('answer:0'); model.act('spring:stiff'); model.act('road:smooth'); model.act('run');
-  assert.match(model.view().say,/6\.5°.*2\.2°/);
+  model.act('answer:1');
+  assert.match(model.view().say,/4\.77.*4\.09/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='guess-roll')); assert.equal(model.view().scene,'guess-roll');
+  model.act('answer:0');
+  assert.match(model.view().say,/6\.5.*2\.2/);
 });
 
 test('Suspension guided prompts work, the formulas follow settings, and three distinct free runs open Continue', () => {
   const model=createSuspensionModel();
-  model.enter(7);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
   const initial=model.view().formulas.at(-1).worked;
   model.act('spring:stiff'); model.act('road:smooth');
   assert.notEqual(model.view().formulas.at(-1).worked,initial,'the roll sum tracks control settings');
@@ -335,11 +335,87 @@ test('Suspension guided prompts work, the formulas follow settings, and three di
 });
 
 test('Show me selects and runs a different setting pair each time in the free test', () => {
-  const model=createSuspensionModel(); model.enter(7);
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
   for(let i=0;i<3;i++) { const v=model.view(); assert.equal(v.target,'show'); model.act(v.target); }
   assert.equal(model.view().rows.length,3);
   assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
   assert.equal(model.view().ready,true);
+});
+
+test('Suspension roll formula uses visible numbers and gives a calculator result', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='formula'));
+  const row=model.view().formulas.find(item=>item.title==='How the model calculates body roll');
+  assert.ok(row.worked.includes('1300 kg') && row.worked.includes('9.81 m/s'));
+  assert.ok(row.worked.includes('40000 N/m') && row.worked.includes('1.5'));
+  assert.ok(row.worked.includes('5101.20') && row.worked.includes('90000.00'));
+  const degrees=Math.atan((1300*.8*9.81*.5)/(40000*1.5**2))*180/Math.PI;
+  assert.ok(row.worked.endsWith(`${degrees.toFixed(2)}${String.fromCharCode(176)}`));
+});
+
+test('Suspension held controls use classroom arrows and wait for their repeat interval', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-stiffness'));
+  const arrows=[8592,8594,8595,8593].map(code=>String.fromCharCode(code));
+  assert.deepEqual(Object.keys(model.view().keys),arrows);
+  assert.deepEqual(arrows.map(key=>model.view().keys[key]),['spring:soft','spring:stiff','road:bumpy','road:smooth']);
+  assert.deepEqual(model.view().repeat,arrows);
+  for(const key of arrows) assert.ok(Object.values(KEY_NAMES).includes(key));
+  model.act('spring:soft'); model.act('spring:stiff:held');
+  assert.equal(model.state().setup.spring,'soft');
+  model.tick(.15); model.act('spring:stiff:held');
+  assert.equal(model.state().setup.spring,'stiff');
+});
+
+test('Suspension board targets hit every control and every drawn rectangle stays inside the board', () => {
+  const rectangles=[]; let matrix=[1,0,0,1,0,0]; const stack=[];
+  const transformed=(x,y,w,h)=>{
+    const points=[[x,y],[x+w,y],[x,y+h],[x+w,y+h]].map(([px,py])=>[matrix[0]*px+matrix[2]*py+matrix[4],matrix[1]*px+matrix[3]*py+matrix[5]]);
+    const xs=points.map(point=>point[0]),ys=points.map(point=>point[1]);
+    rectangles.push([Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)]);
+  };
+  const ctx=new Proxy({}, {get:(_,name)=>{
+    if(name==='measureText') return value=>({width:String(value).length*7});
+    if(['createLinearGradient','createRadialGradient'].includes(name)) return ()=>({addColorStop(){}});
+    return (...args)=>{
+      if(name==='save') stack.push([...matrix]);
+      else if(name==='restore') matrix=stack.pop()??[1,0,0,1,0,0];
+      else if(name==='translate') {matrix[4]+=matrix[0]*args[0]+matrix[2]*args[1];matrix[5]+=matrix[1]*args[0]+matrix[3]*args[1];}
+      else if(name==='scale') {matrix[0]*=args[0];matrix[1]*=args[0];matrix[2]*=args[1];matrix[3]*=args[1];}
+      else if(name==='rotate') {const [a,b,c,d]=matrix,co=Math.cos(args[0]),si=Math.sin(args[0]);matrix[0]=a*co+c*si;matrix[1]=b*co+d*si;matrix[2]=-a*si+c*co;matrix[3]=-b*si+d*co;}
+      else if(name==='roundRect'||name==='fillRect') transformed(...args.slice(0,4));
+    };
+  },set:()=>true});
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  const view=model.view();
+  for(const action of ['spring:soft','spring:stiff','road:bumpy','road:smooth','run']) {
+    const point=suspensionBoard.targetPoint(view,action);
+    assert.deepEqual(suspensionBoard.hitTest(view,...point),{action});
+  }
+  suspensionBoard.drawBoard(ctx,view); assert.ok(rectangles.length>10);
+  for(const [x,y,width,height] of rectangles) assert.ok(x>=0&&y>=0&&x+width<=1000&&y+height<=680,`rectangle stays inside board: ${[x,y,width,height]}`);
+  assert.ok(rectangles.some(([x,y,width,height])=>x===672&&y===370&&width===156&&height===44),'run button extents are checked');
+});
+
+test('Suspension on-your-own target and Show me use the same roll reading and target', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='alone'));
+  assert.match(model.view().prompt,/less than 3/);
+  model.act('show');
+  assert.equal(model.view().ready,true);
+  assert.match(model.view().say,/2\.2/);
+});
+
+test('Suspension review asks three questions and explains wrong choices without showing answers early', () => {
+  const model=createSuspensionModel();
+  for(const id of ['check-spring','check-transfer','check-formula']) {
+    model.enter(SUSPENSION_STEPS.findIndex(step=>step.id===id));
+    assert.equal(model.view().asking,true);
+    assert.ok(model.view().formulas.every(row=>row.worked===''));
+    model.act('answer:1');
+    assert.equal(model.view().ready,true);
+    assert.ok(model.view().say.length>30);
+  }
 });
 
 test('hovering explains the parts of the picture: hooks, weights, stopwatches', () => {
