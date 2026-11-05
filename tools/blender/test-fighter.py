@@ -7,7 +7,7 @@ import json
 import math
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import date
 from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
@@ -17,7 +17,7 @@ root = Path(args.root).resolve()
 asset_dir = root / 'public/assets/models/wasteland'
 blend_path = root / 'art-build/test-fighter.blend'
 glb_path = asset_dir / 'test-fighter.glb'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / datetime.now(timezone.utc).date().isoformat() / 'test-fighter' / 'round-1')
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'test-fighter' / 'round-1')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

@@ -12,7 +12,7 @@ import math
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import date
 from pathlib import Path
 
 p = argparse.ArgumentParser()
@@ -138,7 +138,7 @@ def tool_texture(name, label):
 def hands_texture(name, label):
     return blend_dir / 'hands' / f'{name}-{label}.png'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
-    (candidate_dir / 'evidence' if proof_mode else root / '.evidence' / datetime.now(timezone.utc).date().isoformat() / 'first-person' / f'round-{args.round}'))
+    (candidate_dir / 'evidence' if proof_mode else root / '.evidence' / date.today().isoformat() / 'first-person' / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

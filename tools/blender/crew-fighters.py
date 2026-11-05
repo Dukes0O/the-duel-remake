@@ -11,7 +11,7 @@ import math
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import date
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ def blend_path(name):
     return blend_dir / f'{name}.blend'
 def texture_path(name, label):
     return blend_dir / f'{name}-{label}.png'
-shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / datetime.now(timezone.utc).date().isoformat() / 'crew' / f'round-{args.round}')
+shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or root / '.evidence' / date.today().isoformat() / 'crew' / f'round-{args.round}')
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:

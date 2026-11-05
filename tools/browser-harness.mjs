@@ -138,7 +138,7 @@ export function reviewRoundOutputDir(name, date = new Date(), root = PROJECT_ROO
   if (!Number.isInteger(round) || round < 1 || round > 10)
     throw Error(`${roundKey} must be a round from 1 to 10.`);
   if (env.DUEL_EVIDENCE_DIR) return resolveEvidenceDir(env.DUEL_EVIDENCE_DIR, root);
-  const day = date.toISOString().slice(0, 10);
+  const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   return join(root, '.evidence', day, family, `round-${round}`);
 }
 

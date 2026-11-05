@@ -14,7 +14,7 @@ import stat
 import sys
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import date
 from pathlib import Path
 
 p = argparse.ArgumentParser()
@@ -63,7 +63,7 @@ def texture_path(name, label):
 family = 'rustwall-p2' if args.p2 else 'rustwall'
 shots = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
              (out / 'evidence' if args.output_dir else
-              root / '.evidence' / datetime.now(timezone.utc).date().isoformat() / family / f'round-{args.round}'))
+              root / '.evidence' / date.today().isoformat() / family / f'round-{args.round}'))
 if not shots.is_absolute():
     shots = root / shots
 if args.paths_only:
