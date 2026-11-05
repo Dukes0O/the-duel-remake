@@ -595,7 +595,7 @@ export function createModel() {
       ready: done,
       target: done ? null : targetAction(),
       glow: 'settings',
-      say: done ? m.say : 'Brian’s test starts at 64.4 km/h and 50 m; change at least one setting, then find a turn that reaches 2 g or more. Predict from the formula and press Space to run the turn.',
+      say: done ? m.say : 'This test starts at 64.4 km/h and 50 m; change at least one setting, then find a turn that reaches 2 g or more. Predict from the formula and press Space to run the turn.',
       prompt: done ? 'Press Enter to continue.' : `The meter reads ${reading(speed, radius)} g. Change speed or radius, then press Space to run the turn.`,
       hints: ['A higher speed or a shorter radius raises the reading.', 'Use ← or → to raise speed, or ↑ or ↓ to change the radius; then run the turn.', 'Watch my pointer. I will set 128.7 km/h and run the turn.'],
     };
@@ -620,6 +620,10 @@ export function createModel() {
       ready: true,
       waiting: false,
       ideas: KEY_IDEAS,
+      ideaRows: {
+        speed: [`${kmh(40).toFixed(1)} km/h: ${reading(40, 50)} g`, `${kmh(80).toFixed(1)} km/h: ${reading(80, 50)} g`, 'Both at a 50 m radius'],
+        radius: [`50 m: ${reading(40, 50)} g`, `100 m: ${reading(40, 100)} g`, `Both at ${kmh(40).toFixed(1)} km/h`],
+      },
       say: 'A turning car keeps changing direction, so it needs a sideways push that the driver feels. In this game the reading rises with the square of speed and falls as radius grows, and the G-force lap still asks you to reach at least 2 g in three different corners without leaving the road.',
       prompt: 'Press Enter to finish the lesson and open the G-force lap challenge.',
       hints: KEY_IDEAS.map(item => item.text),

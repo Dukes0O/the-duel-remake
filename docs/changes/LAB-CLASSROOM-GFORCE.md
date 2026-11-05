@@ -47,3 +47,7 @@
 
 - Removed the obsolete precise-setting note, duplicate prediction branch and duplicate say property. No files were removed; the legacy G-force path remains for its fallback.
 - Removed G-force's duplicate answer-card drawing and board hit tests; `classroom-ui.js` already owns drawing and activating those cards.
+
+## Claude's review (5 November 2026)
+
+Codex built this over four passes without Chrome, which will not run under `codex exec`, so Claude played it and made the last fixes: the view's `actions`, the board's returned layout, the labels moved to a fixed key in the corner the circle never reaches, recap cards with the readings, and the scenario's set-up and ending. Claude read every line of the lesson against LAB-CLASSROOM-LANGUAGE and the two fault lists. No existing assertion changed; all the G-force tests are new. Removed: nothing yet, because the old lesson files go in LAB-CLASSROOM-LIVE.

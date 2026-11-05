@@ -95,6 +95,10 @@ export async function run(c) {
   await shot('gforce-word-g');
   await next('word-g');
 
+  await at('formula');
+  await shot('gforce-formula');
+  await next('formula');
+
   await at('watch');
   await wait(6500);
   await at('watch', 'value.ready');
@@ -156,14 +160,16 @@ export async function run(c) {
   if (!panelVisible) throw new Error('The physics panel did not show the G-force rule at 1920 by 1000.');
 
   const pageKeptSteps = await c.evaluate(`
-    JSON.parse(document.querySelector('.lab-classroom').dataset.classroom).page.length >= 12
+    document.querySelectorAll('.lc-past > *').length >= 12
   `);
   if (!pageKeptSteps) throw new Error('The classroom page did not keep the earlier lesson steps.');
 
   await press('Enter');
+  await wait(1500);
+  await shot('gforce-after-finish');
   await c.waitFor(
-    '!document.querySelector(".lab-classroom") && window.__qaApp.labOpen===true',
-    'the existing G-force challenge opens from the recap',
+    '!document.querySelector(".lab-classroom") && !!document.querySelector(".lab-gforce")',
+    'the G-force lap is armed from the recap',
     20000,
   );
 }
