@@ -1,19 +1,17 @@
 # WW-ART-EVERBURN
 
-- **Status:** Round 1 built; awaiting Claude's look judgment.
-- **Kind:** Art.
-- **Switch:** None. This asset is not wired into the game in this card.
-- **Settled design:** One standalone, metre-scaled well prop with named shared, cap, valve-wheel and flame parts; Blender scene up is rotated into the GLB's +Y up convention. No open card question needed a decision.
-- **Changed:** Added `tools/blender/scablands-everburn.py`, exported `public/assets/models/wasteland/scablands/everburn.glb` (10,338 triangles; 783,444 bytes), registered and budget-checked it in `tools/test-blender-output.mjs`, and rendered three views for the round sheet.
-- **Round sheet:** `docs/board/looks/ww-art-everburn/round-1.jpg` (38,897 bytes, under 500 KB). Scores and five main gaps are in the adjacent round note. Claude should judge the grit, readability of cap/burning states, and next changes.
-- **Reuse and credits:** No compatible Scablands well donor exists. No art-library files were used. The arsenal has procedural fire effects but no reusable flame image texture under `src/arsenal`; the model uses its orange/gold color direction. This is recorded as a round gap.
-- **Card check:** `node tools/test-blender-output.mjs` — 193 checks passed, 0 failed.
-- **Lane tier:** `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` — 46 passed, 2 failed, 0 not run. The one allowed rerun of each failed suite reproduced both failures: `tools/test-circuit-eifel.mjs` fails its FFmpeg loudness measurement; `tools/test-review-evidence.mjs` gets `spawnSync ffmpeg EPERM` in its audio analysis test. These suites are unrelated to the changed files; no game code changed. The asset's JPG publication check passed within `test-review-evidence`.
-- **Build:** `npm.cmd run build` — passed (3.10 s). PowerShell blocked the `npm.ps1` shim under its execution policy, so I ran the equivalent `npm.cmd run build` from PowerShell. Vite reported existing dynamic-import and large-chunk warnings.
-- **Browser / look:** No browser check; the asset is not wired into the game. Claude runs the look check on the round sheet.
-- **Changed assertions:** None. Added positive budget and named-part assertions for this new asset.
-- **Race fingerprints:** Not applicable; no simulation or course files changed.
+Round 2 updates the gas well and publishes `docs/board/looks/ww-art-everburn/round-2.jpg` (26,081 bytes), a single comparison sheet under 500 KB. The recipe adds the taller guyed stack, ladder, weld and rust detail, clamp-held cap, layered flame, ragged ground scar and uneven salvage. The scale worker appears only in renders. The GLB is 954,064 bytes and 13,044 triangles.
+
+## Checks
+
+- `node tools/test-blender-output.mjs`: passed, 193 checks; the final GLB has the required named parts and meets both budgets.
+- Lane tier: 72 passed, 2 failed. `tools/test-circuit-eifel.mjs` failed its FFmpeg loudness measurement. `tools/test-review-evidence.mjs` failed to spawn FFmpeg (`EPERM`). Each suite failed again on its one rerun; both failures are in audio tooling and outside this art change. No test assertions changed.
+- Replay guard: passed, 297 checks across 33 cases, 31 events, 9 categories and three frame rates. No race code or fingerprints were changed.
+- `npm.cmd run build`: passed. `npm` itself is blocked by this shell's PowerShell execution policy, so the Windows command shim ran the same build script.
+- `tools/test-repo-hygiene.mjs`: passed in the lane tier.
+- Blender round-2 views rendered: 40 m car-height, three-quarter, close detail and capped three-quarter. No frame checks were run.
+- Browser and in-game look checks: Claude runs. The asset is not wired into a reachable scene here.
 
 ## Removed
 
-No prior model, recipe, test or document was replaced.
+Removed the square slab, evenly spaced slag ring and single flame plume. Replaced the round-1 sheet and note with the round-1/round-2 comparison sheet and this score note. No donor files or credits were needed.
