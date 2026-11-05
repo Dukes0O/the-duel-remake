@@ -1115,11 +1115,12 @@ tasks:
     details: "docs/board/cards/HELI-RUSTWALL.md"
 
   - id: DEEP-LAST-JOKE
-    title: "The Deep: one last funny car mission"
-    owner: "claude"
-    lane: "DESIGN"
-    size: "S"
+    title: "The Deep: The Squeak, one last funny mission that wins a bath with wheels"
+    owner: "codex"
+    lane: "DEEP"
+    size: "M"
     status: "ready"
     needs: []
-    locks: []
+    locks: ["busy-game-files", "save-shape"]
+    flag: "deep-vasca"
     details: "docs/board/cards/DEEP-LAST-JOKE.md"

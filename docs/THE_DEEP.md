@@ -13,6 +13,14 @@ with Kyle's answers in section 11. The story and goals (section 6) were
 written by Claude on 24 October 2026, when Kyle handed the Deep's story to
 Claude. Section 10 is the build graph for what is left.
 
+**Closed to new places (Kyle, 5 November 2026):** "I don't think that we'll go
+too much more into the deep... We can basically finish the current storyline
+and anything associated with it, but we won't expand it." The Kelp Coast story
+is the Deep. One last short joke, card DEEP-LAST-JOKE, finishes it and wins a
+car. Wreck Reef, the Night Harbour, the later chapters in section 6.9, boats
+(section 7) and any Atlantis idea are paused: kept here as ideas, not to be
+built.
+
 ## 1. The feeling
 
 Wonder, not danger. You drive off a sunny coast road, down an old boat ramp,
@@ -210,8 +218,9 @@ your first part is raised.
    kelp into the sunlight. If the whale has not passed this visit, it passes
    now.
 5. **The Lab.** The Sirena waits in your garage under a sheet until the Lab
-   restores it (`docs/LAB.md`, the rust lesson). Restoring it costs 2,500
-   credits and makes it your car.
+   restores it (`docs/LAB.md`, the rust lesson). Getting her running costs
+   1,000 credits and makes her your car; the optional body restoration is
+   another 1,500 (section "Racing the wreck").
 6. **The Coast Cup.** Finish any race on Pacific Canyon in the Sirena. A title
    card reads "Coast Cup, 1966 to 2026: finished", Ana passes on her
    grandmother's thanks, and a plaque goes on the Sirena's garage page.
@@ -308,7 +317,7 @@ long float; kelp that bends around the car and closes behind it; a school
 of sardines that splits and re-forms; the whale. The trail data marks the
 gullies (DEEP-TRAIL).
 
-### 6.9 Later chapters (after Kyle plays the Kelp Coast)
+### 6.9 Later chapters (paused, Kyle, 5 November 2026: not to be built)
 
 - **Wreck Reef: the *Marguerite*.** The freighter sank off the High Country
   coast later the same night. In its hold is the Falcone team's crate: the
@@ -462,9 +471,8 @@ The Lab's restore button (`docs/LAB.md`, LAB-RESTORE) needs SIRENA-CAR.
 Without the Lab the raised Sirena waits under its sheet, which is a finished
 state, not a placeholder: the story says the car needs the Lab.
 
-Wreck Reef (DEEP-REEF) and Night Harbour (DEEP-NIGHT) reuse every part with
-new zone data and the later chapters of 6.9, after Kyle has played the Kelp
-Coast. Boats (B0) stay a separate plan.
+Wreck Reef (DEEP-REEF), Night Harbour (DEEP-NIGHT) and Boats (B0) are paused
+(Kyle, 5 November 2026). The last card is DEEP-LAST-JOKE.
 
 ### 10.1 Contracts between lanes
 
