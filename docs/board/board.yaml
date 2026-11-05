@@ -73,7 +73,7 @@ tasks:
     title: "Armor kits with distinct fitted steel plates"
     lane: "VIS"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [GFX-03]
     priority: 16
     details: "docs/board/cards/GFX-03-P1.md"
@@ -82,7 +82,7 @@ tasks:
     title: "Scrapdome yard reference likeness polish"
     lane: "VIS"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [GFX-04]
     flag: "hidden-road"
     priority: 16
