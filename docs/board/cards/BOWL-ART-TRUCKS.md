@@ -42,3 +42,5 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - The extras are still small from the front. Make them about half as big again: Rhino's horn, Kettle's boiler, Lizard's tail, Dragon's jaws and stacks.
 - Too clean for this world: mud, dents, chipped paint on every body.
 - Commit public/assets/models/wasteland/bowl/trucks.glb: no model is on the branch yet.
+
+**Round 3: pass, merge.** The best of this batch: five different paint jobs with real rust and chips, Dragon Wagon black and red at last, and the fit on the Titan stays good. Extras are still modest from the front, but the paint and outlines tell the trucks apart at 40 m.
