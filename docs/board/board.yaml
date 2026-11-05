@@ -342,7 +342,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "building"
+    status: "backlog"
     needs: []
     locks: []
     details: "docs/board/cards/QA-AUDIO-CRASH-PEAK-3.md"
