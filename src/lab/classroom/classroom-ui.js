@@ -2,14 +2,13 @@
 // board, Brian's tutor panel and one action bar. Reads the session; never writes race state.
 // Notebook words go through app.labCommit; challenges go through the Lab's own challenge path.
 import {createClassroomSession} from './classroom-frame.js';
+import {KEY_NAMES} from './classroom-keys.js';
 import {brianPortrait} from './brian-portrait.js';
 import {learnLabWord, labNotebookOf} from '../lab-save.js';
 import './classroom.css';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const kbd = key => `<kbd>${escape(key)}</kbd>`;
-const KEY_NAMES = {Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Space: 'Space',
-  KeyW: 'W', KeyS: 'S', KeyA: 'A', KeyD: 'D', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'};
 const SPARK_COLOURS = ['#ffd27a', '#f0a148', '#fff2c8', '#e8803a'];
 // Formulas: x^2 is drawn raised. The player's choice to hide the panel lasts until the game is reloaded.
 const math = value => escape(value).replace(/\^(\d)/g, '<sup>$1</sup>');

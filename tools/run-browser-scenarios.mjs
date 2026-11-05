@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildQaBundle, recycleQaBundle, evidenceOutputDir, resolveEvidenceDir } from './browser-harness.mjs';
+import { buildQaBundle, removeQaBundle, evidenceOutputDir, resolveEvidenceDir } from './browser-harness.mjs';
 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const harness = join(PROJECT_ROOT, 'tools', 'browser-harness.mjs');
@@ -94,7 +94,7 @@ async function runScenario(name, outputDir, qaBundle, options) {
 export async function main(args = process.argv.slice(2), {
   discover = namedScenarios, build = buildQaBundle, scenario = runScenario,
   mkdir: makeDirectory = mkdir, read = readFile, write = writeFile,
-  cleanup = recycleQaBundle, log = console.log, error: logError = console.error,
+  cleanup = removeQaBundle, log = console.log, error: logError = console.error,
 } = {}) {
   const options = parseSuiteArguments(args);
   const discovered = await discover({includeManual: !!options.names});

@@ -9,6 +9,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 - **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
   Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
   ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.
+- **The Lab's flight challenges show where to go.** A tall light and a ring on the
+  ground mark the target, orange for a place and blue for the lake that fills the bucket.
+  A line under the compass gives the bearing and the distance, and the pilot's map has a flag.
+  The Pendulums car now has a marked place to be set down, and Air and altitude starts with
+  the arrow on Summit Run. The heading flight stays unmarked on purpose.
+- **Rust, Downforce and Fire triangle are rewritten as well,** in whole sentences, metric
+  only, with live formulas and a step for testing your own settings. The Tune page now
+  gives its wing figure in km/h.
 - **The Lab reads like a good teacher now, starting with Projectile and Launch.**
   Brian's side of the screen is one running page, like a textbook, so a new word
   goes below the last one and you can scroll back to anything. A physics panel beside the

@@ -156,13 +156,20 @@ export function challengeGoal(challenge) {
   if (!rule) return '';
   switch (id) {
     case 'lift': return `Hover with the ${CARS[rule.carId]?.name ?? 'car'} on the hook for ${rule.holdSeconds} s, ${rule.low} to ${rule.high} m up, over the pad.`;
-    case 'projectile': return `Hit the ${rule.buoys} buoys on the lake with water drops (within ${rule.hitRadius} m): ${(challenge.props ?? []).filter(p => p.hit).length}/${rule.buoys}.`;
-    case 'fire': return `Keep the practice fire off the road for ${rule.seconds} s: ${Math.max(0, Math.ceil(rule.seconds - challenge.elapsed))} s to go.`;
-    case 'pendulum': return `Carry the ${CARS[rule.carId]?.name ?? 'car'} ${rule.distance} m to the target. Set it down within ${rule.targetRadius} m, swinging under ${rule.swingMetres} m.`;
-    case 'altitude': return `Fly the ${rule.crateKg} kg crate to Summit Run and land with ${Math.round(rule.fuelShare * 100)}% of the fuel left.`;
+    case 'projectile': return `Fill the bucket at the blue light, then hit the ${rule.buoys} buoys under the orange lights with water, inside each ring. Buoys hit so far: ${(challenge.props ?? []).filter(p => p.hit).length} of ${rule.buoys}.`;
+    case 'fire': return `Fill the bucket at the blue light, then keep the practice fire under the orange light off the road for ${rule.seconds} s. Seconds left: ${Math.max(0, Math.ceil(rule.seconds - challenge.elapsed))}.`;
+    case 'pendulum': return `Carry the ${CARS[rule.carId]?.name ?? 'car'} to the orange light. Set it down inside the ring, swinging by less than ${rule.swingMetres} m.`;
+    case 'altitude': return `Follow the arrow to Summit Run with the ${rule.crateKg} kg crate, set it down inside the ring under the orange light, and land with ${Math.round(rule.fuelShare * 100)}% of the fuel left.`;
     case 'headings': return `Fly heading ${String(Math.round(challenge.briefing?.headingDeg ?? rule.headingDeg)).padStart(3, '0')} for ${Math.round(challenge.briefing?.distanceM ?? rule.distanceM)} m to the smoke. No arrow, no autopilot.`;
     default: return '';
   }
+}
+// LAB-TARGETS: the line under the compass, as the fire's and the rescue's: which way and how far.
+export function challengeTargetMarkup(view) {
+  const target = view?.challenge?.target;
+  if (!target) return '';
+  const away = target.distance < 1000 ? `${Math.round(target.distance)} m` : `${(target.distance / 1000).toFixed(1)} km`;
+  return `<div class="heli-fire"><span class="heli-fire-line">${escape(target.label.toUpperCase())} ${String(Math.round(target.bearing) % 360).padStart(3, '0')}° ${away}</span></div>`;
 }
 export function challengeMarkup(view) {
   if (!view?.challenge) return '';
@@ -272,7 +279,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) 
     <span>${view.autopilot ? 'AUTOPILOT ON' : 'AUTOPILOT OFF'} <kbd>P</kbd></span>
     <span>VIEW ${cameraName(view, cameraIndex).toUpperCase()} <kbd>C</kbd></span>
     <span>${view.bucket ? 'POUR (hold)' : 'HOOK'} <kbd>H</kbd></span>${view.secrets !== undefined ? `<span>MAP <kbd>${MAP_KEY}</kbd></span>` : ''}${Number.isFinite(credits) ? `<span class="heli-credits">CREDITS <b>${Math.floor(credits).toLocaleString('en-US')}</b></span>` : ''}
-  </div>${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
+  </div>${challengeTargetMarkup(view)}${fireLineMarkup(view)}${rescueLineMarkup(view)}`;
 }
 
 // HELI-LANDED: read-only arrival eligibility, shared by the panel and its actions.
