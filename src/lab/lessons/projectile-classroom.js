@@ -239,6 +239,11 @@ export function createModel() {
         return {kind: 'progress', sound: 'lab.tick', say: `The helicopter is now set to ${m.height} m above the lake at ${m.speed} m/s. Use the formulas to work out where the stone should land, then press Space to test your answer.`};
       }
       if (kind !== 'drop') return null;
+      // Show me moves on to a speed that has not been tested at this height yet.
+      if (value === 'best' && m.tested.has(`${m.height}/${m.speed}`)) {
+        const fresh = FREE_SPEEDS.find(speed => !m.tested.has(`${m.height}/${speed}`)) ?? m.speed;
+        m.speed = fresh; m.helis = [heli(m.speed, m.height, {loads: ['stone']})];
+      }
       m.phase = 'running'; setOff();
       return {kind: 'progress', say: 'Watch the stone. The helicopter will release it directly above the post.'};
     }
@@ -416,7 +421,11 @@ export function createModel() {
     }
     if (id === 'watch-speeds') return [dragFormula(5), dragFormula(20), ruleFormula()];
     if (id === 'try-free') return [timeFormula(m.height), forwardFormula(m.speed, landing('stone', m.height, m.speed).seconds), kmhFormula(m.speed)];
+    if (id === 'try-flag' && m.phase === 'running') return [ruleFormula()];
     if (id === 'try-flag') return [{title: 'For a stone, with no air friction', formula: 'distance = forward speed × t', worked: `15 m/s × ${hundredth(landing('stone', HIGH_M, 15).seconds)} s = ${tenth(landing('stone', HIGH_M, 15).distanceM)} m`}, ruleFormula(), {title: 'What the water has done so far', worked: `10 m/s: ${metres(water(10))}, 20 m/s: ${metres(water(20))}`}];
+    // Nothing here settles the guess or the question that is open: the landings come only once it is answered.
+    if (id === 'try-height' && m.phase !== 'result') return [dragFormula(10), ruleFormula()];
+    if (CHECKS[id] && m.answered === null) return [ruleFormula()];
     if (id === 'try-height' || id === 'alone' || CHECKS[id]) return [{title: 'Water released at 10 m/s, from 30 m', worked: `travels ${metres(water(10))} forward`}, {title: 'Water released at 20 m/s, from 30 m', worked: `travels ${metres(water(20))} forward`}, ruleFormula()];
     if (id === 'recap') return [gainFormula(1), timeFormula(HIGH_M), forwardFormula(10, stoneDrop(HIGH_M, 0).seconds), dragFormula(10), topFormula()];
     return [];
@@ -477,10 +486,10 @@ export function createModel() {
     }
     if (id === 'try-free') {
       if (m.phase === 'running') return {...base, arrows: true, actions: ['slow'], say: 'Watch the stone. The helicopter will release it directly above the post.', prompt: 'Watch the stone.', hints: ['Watch the stone.', 'Compare this arc with the earlier ones.', 'Wait a moment.']};
-      return {...base, keys: {...SPEED_KEYS, '↑': 'height:up', '↓': 'height:down', Space: 'drop'}, buttons: [...SPEED_BUTTONS, ...HEIGHT_BUTTONS, {action: 'drop', label: 'Fly and release', key: 'Space'}], waiting: !seen.has(id), target: 'drop', glow: 'drop',
+      return {...base, keys: {...SPEED_KEYS, '↑': 'height:up', '↓': 'height:down', Space: 'drop'}, buttons: [...SPEED_BUTTONS, ...HEIGHT_BUTTONS, {action: 'drop', label: 'Fly and release', key: 'Space'}], waiting: !seen.has(id), target: 'drop:best', glow: 'drop',
         say: m.say || `Now you can experiment with a stone. Press ← and → to change the forward speed, and ↑ and ↓ to change the height. The formulas beside the picture change as you change the settings, so you can work out where the stone should land before you release it. Test at least ${FREE_TRIES} different settings and compare their arcs.`,
         prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to test them. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
-        hints: ['Press Space to test the settings as they are.', 'A greater height means a longer fall, and so a longer distance. Which change makes the stone land furthest?', 'Watch my pointer. I will test the settings as they are.']};
+        hints: ['Press Space to test the settings as they are.', 'A greater height means a longer fall, and so a longer distance. Which change makes the stone land furthest?', 'Watch my pointer. I will choose a speed you have not tested yet, and release the stone.']};
     }
     if (id === 'try-flag') {
       if (m.phase === 'flag') return {...base, keys: {...FLAG_KEYS, Space: 'drop'}, repeat: FLAG_REPEAT, buttons: [{action: 'drop', label: 'Release', key: 'Space'}], waiting: true, target: 'drop', glow: 'flag', dragFlag: true,

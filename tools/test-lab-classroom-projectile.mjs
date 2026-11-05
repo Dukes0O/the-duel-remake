@@ -136,6 +136,20 @@ test('the free test: every control moves the sums at once, arcs stay to compare,
   assert.equal(session.view().formulas[1].worked, '20 m/s × 2.86 s = 57.2 m', 'the dials stop where the arc still fits the board');
 });
 
+test('Show me on the free test reaches three different settings by itself, and the panel never settles an open question', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  for (let i = 0; i < FREE_TRIES; i++) {
+    assert.equal(session.view().target, 'drop:best');
+    session.act(session.view().target);
+    until(session, v => v.keys.Space === 'drop', 15);
+  }
+  assert.ok(session.view().ready);
+  session.act('next');
+  playThroughTo(session, 'check-faster');
+  assert.ok(!session.view().formulas.some(f => /15 m/.test(f.worked ?? '')), 'question 2 is not answered by the panel');
+});
+
 test('the words: gravity marks 4.9 m then 14.7 m more, a stone stays under the helicopter, and a faster arc is longer', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-gravity');
