@@ -995,7 +995,7 @@ export class App {
   }
   getPaintPreset(car,{menu=false}={}){
     if(menu||this.duel.state.status==='menu')return getPaintAppearance(this.profile,car,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep'),wastelandTownEnabled:this._switches().enabled('wasteland-town')});
     return car===this._racePaintCar?this._racePaint:null;
   }
   getRoofLook(car,{menu=false}={}){
@@ -1014,7 +1014,7 @@ export class App {
   _paintOperation(car,id,buy){
     if(this.duel.state.status!=='menu')return {ok:false,reason:'Return to the garage before changing paint.',cost:0};
     this._refreshPlayer();const result=(buy?buyPaint:equipPaint)(this.profile,car,id,
-      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep')});
+      {muddyHollowEnabled:true,yetiEnabled:this._switches().enabled('yeti'),labEnabled:this._switches().enabled('lab'),deepEnabled:this._switches().enabled('the-deep'),wastelandTownEnabled:this._switches().enabled('wasteland-town')});
     if(result.ok&&result.changed){this.profile=result.profile;this._saveProfile();this.duel.emit({garage:true,paintChanged:true});
       if(result.purchased&&car==='falcone_sirena'&&id==='restored-1966'){this._labRestoreBody=true;this.openLab();}
     }return result;

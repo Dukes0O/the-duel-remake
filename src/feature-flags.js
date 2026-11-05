@@ -62,6 +62,8 @@ export const FEATURE_STATES = Object.freeze({
   'water-road': 'on',
   // Everburn story screens and Scablands jobs, still in development.
   'story-everburn': 'dev',
+  // The Wasteland town and its shop finishes are still in development.
+  'wasteland-town': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
   'titan-bowl': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).
