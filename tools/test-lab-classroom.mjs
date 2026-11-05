@@ -11,6 +11,10 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {STEPS as GFORCE_STEPS, KEY_IDEAS as GFORCE_IDEAS, createModel as createGforceModel} from '../src/lab/lessons/gforce-classroom.js';
 import * as gforceBoard from '../src/lab/lessons/gforce-board.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
+import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
+import * as suspensionBoard from '../src/lab/lessons/suspension-board.js';
+import {suspensionBench} from '../src/lab/benches/tunnel.js';
+import {lessonOpenState} from '../src/lab/lab-lessons.js';
 
 const lesson = CLASSROOM_LESSONS.pendulum;
 const fakeCanvas = (labels = null) => new Proxy({}, {
@@ -252,6 +256,79 @@ test('review fixes: Show me only points where pressing for the player would be w
   assert.equal(v.keys[3], undefined);
   playThroughTo(session, 'word-length');
   assert.equal(session.view().keys[3], 'measure:25', 'the prompt’s "3" picks the longest string');
+});
+
+test('Suspension keeps its notebook terms, bench challenge and ordered classroom parts', () => {
+  const suspension = CLASSROOM_LESSONS.suspension;
+  assert.ok(suspension);
+  assert.deepEqual([...new Set(SUSPENSION_STEPS.map(step => step.part))], [0,1,2,3,4]);
+  assert.deepEqual(SUSPENSION_WORDS.slice(0,4).map(word => word.id), ['suspension-word-0','suspension-word-1','suspension-word-2','suspension-word-3']);
+  assert.deepEqual(SUSPENSION_WORDS.map(word => word.word), ['Spring','Soft','Stiff','Body roll','Body shake']);
+  assert.equal(suspension.challengeCard.title, 'Compare both springs on both roads.');
+});
+
+test('Suspension opens only after driving lesson 1, matching the Lab lesson gate', () => {
+  const flags={enabled:name=>name==='lab'};
+  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:false,note:'Opens after driving lesson 1'});
+  assert.deepEqual(lessonOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
+});
+
+test('the Suspension classroom challenge submits the same four settings to the unchanged bench goal', () => {
+  const attempts=CLASSROOM_LESSONS.suspension.benchAttempts();
+  assert.deepEqual(attempts.map(attempt=>attempt.input),[
+    {spring:'soft',road:'bumpy'},{spring:'stiff',road:'bumpy'},
+    {spring:'soft',road:'smooth'},{spring:'stiff',road:'smooth'},
+  ]);
+  assert.equal(suspensionBench.goalMet(attempts.map(attempt=>({result:{settings:attempt.input}}))),true);
+});
+
+test('Suspension exposes the complete screen contract and drawable targets on every step', () => {
+  const sent = new Set(Object.values(KEY_NAMES)), model = createSuspensionModel();
+  for (let index=0;index<SUSPENSION_STEPS.length;index++) {
+    model.enter(index); const v=model.view();
+    for (const field of ['actions','buttons','cards','keys','repeat','hints','formulas','target','glow','waiting','ready','asking','say','prompt']) assert.ok(field in v, `${v.scene} has ${field}`);
+    for (const key of Object.keys(v.keys)) assert.ok(sent.has(key), `${v.scene} offers unsendable key ${key}`);
+    for (const key of v.repeat) assert.ok(sent.has(key), `${v.scene} repeats unsendable key ${key}`);
+    if(v.target) { const point=suspensionBoard.targetPoint(v,v.target); if(v.pointOnly) assert.equal(point,null); else assert.ok(point?.every(Number.isFinite),`${v.scene} target ${v.target} has a board point`); }
+    if(v.asking) assert.equal(v.result,null,'an open question does not show the rig result');
+    for(const card of v.cards) { const labels=[]; suspensionBoard.drawPicture(fakeCanvas(labels),card.picture,220,110); assert.ok(labels.some(label=>label.includes('Reading?')),`${card.id} shows an unknown answer reading`); }
+  }
+  assert.deepEqual(suspensionBoard.drawBoard(fakeCanvas(),model.view(),800,600),{scale:.8,left:0,top:28});
+});
+
+test('Suspension questions explain every wrong answer with the challenge bench results', () => {
+  const model=createSuspensionModel();
+  const advance=()=>{ if(model.view().ready) model.act('next'); };
+  model.enter(5);
+  assert.equal(model.view().scene,'guess-bumps');
+  assert.equal(model.view().cards.length,3);
+  assert.ok(model.view().formulas.every(row=>!row.worked), 'the open guess has no worked answer');
+  model.act('answer:1'); model.act('spring:soft'); model.act('road:bumpy'); model.act('run');
+  assert.match(model.view().say,/4\.09 m\/s².*4\.77 m\/s²/);
+  model.enter(6); assert.equal(model.view().scene,'guess-roll');
+  model.act('answer:0'); model.act('spring:stiff'); model.act('road:smooth'); model.act('run');
+  assert.match(model.view().say,/6\.5°.*2\.2°/);
+});
+
+test('Suspension guided prompts work, the formulas follow settings, and three distinct free runs open Continue', () => {
+  const model=createSuspensionModel();
+  model.enter(7);
+  const initial=model.view().formulas.at(-1).worked;
+  model.act('spring:stiff'); model.act('road:smooth');
+  assert.notEqual(model.view().formulas.at(-1).worked,initial,'the roll sum tracks control settings');
+  model.act('run'); model.act('road:bumpy'); model.act('run'); model.act('spring:soft'); model.act('run');
+  assert.equal(model.view().rows.length,3); assert.equal(model.view().ready,true);
+  assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
+  const actual=suspensionBench.run({spring:'soft',road:'bumpy'});
+  assert.equal(model.view().rows[2].shake,actual.bodyShake.toFixed(2));
+});
+
+test('Show me selects and runs a different setting pair each time in the free test', () => {
+  const model=createSuspensionModel(); model.enter(7);
+  for(let i=0;i<3;i++) { const v=model.view(); assert.equal(v.target,'show'); model.act(v.target); }
+  assert.equal(model.view().rows.length,3);
+  assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
+  assert.equal(model.view().ready,true);
 });
 
 test('hovering explains the parts of the picture: hooks, weights, stopwatches', () => {
