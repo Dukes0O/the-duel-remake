@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, OWN_KG, MOST_KG, CAR_KG, CRATE_KG, BEST_CRATES, kg, weightOf} from '../src/lab/lessons/lift-classroom.js';
+import {readFileSync} from 'node:fs';
+import {STEPS, OWN_KG, MOST_KG, CAR_KG, CRATE_KG, BEST_CRATES, BAND_M, HOLD_S, FREE_TRIES, kg, weightOf, leverShare} from '../src/lab/lessons/lift-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle} from '../src/lab/lessons/lift-board.js';
 import {padForces, KESTREL, GRAVITY} from '../src/lab/benches/lift-pad.js';
 import {heliMass, availableThrust, createHeliState} from '../src/heli/heli-flight.js';
@@ -23,11 +24,14 @@ function followPrompt(session) {
   if (/hold/i.test(how)) for (let i = 0; i < 20 && session.view().keys[key]; i++) session.act(`${action}:held`);
   return action;
 }
+// Three different settings: the lever is moved up a notch between tests.
+function freeTests(session) { for (let i = 0; i < FREE_TRIES; i++) { session.act('lever:up'); session.act('go'); } }
 function playThroughTo(session, id, {guesses = {'try-car': 'guess:0', 'try-heavy': 'guess:1'}} = {}) {
   while (session.view().step.id !== id) {
     const v = session.view(), step = v.step.id;
     if (step.startsWith('watch') || step === 'wonder') until(session, x => x.ready, 20);
     else if (step.startsWith('word')) followPrompt(session);
+    else if (step === 'try-free') { freeTests(session); }
     else if (step.startsWith('try')) {
       followPrompt(session); if (step === 'try-heavy') followPrompt(session);
       assert.equal(session.view().cards.length, 2, `${step}: set-up done, cards to guess`);
@@ -55,6 +59,7 @@ test('every weight and lift comes from the helicopter’s own flight rules', () 
   assert.deepEqual([OWN_KG, CAR_KG, CRATE_KG, Math.floor(MOST_KG)], [1630, 1280, 500, 3887]);
   assert.ok(weightOf({car: 1, crates: 1}) < MOST_KG && weightOf({car: 1, crates: 2}) > MOST_KG, 'Brian’s job has one right answer');
   assert.equal(BEST_CRATES, 1);
+  assert.deepEqual([CHALLENGE_RULES.lift.low, CHALLENGE_RULES.lift.high, CHALLENGE_RULES.lift.holdSeconds], [...BAND_M, HOLD_S], 'the lesson states the challenge’s own band and time');
 });
 
 test('a child who does exactly what each prompt says passes every step with one press or one held key', () => {
@@ -68,7 +73,7 @@ test('a child who does exactly what each prompt says passes every step with one 
   assert.ok(!events.some(e => e.kind === 'fail' || e.kind === 'wrong'), events.filter(e => e.kind === 'fail' || e.kind === 'wrong').map(e => e.say).join(' / '));
 });
 
-test('a held key stops the lever on the red line; a fresh press goes past it, and Brian says why she climbs', () => {
+test('a held key stops the lever on the red line; a fresh press goes past it, and Brian says why the helicopter climbs', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-hover');
   let v = session.view();
@@ -83,7 +88,7 @@ test('a held key stops the lever on the red line; a fresh press goes past it, an
   assert.ok(!fresh.view().ready);
   // Dragged past the line (more than the lever's click distance away).
   fresh.act(`hold:${OWN_KG + 400}`); fresh.act('release');
-  assert.match(fresh.view().brian.text, new RegExp(`${kg(OWN_KG + 400)} of lift is more than her ${kg(OWN_KG)}, so she climbs`));
+  assert.match(fresh.view().brian.text, new RegExp(`A lift of ${kg(OWN_KG + 400)} is more than the helicopter’s weight of ${kg(OWN_KG)}, so the helicopter climbs`));
   fresh.act(`hold:${OWN_KG + 90}`); fresh.act('release');
   assert.equal(fresh.view().flight.lift, OWN_KG, 'a drag near the red line clicks onto it');
   assert.ok(fresh.view().ready);
@@ -103,7 +108,7 @@ test('a wrong guess says why with the real numbers, and the board shows what hap
   session.act('crate:add'); session.act('crate:add'); session.act('guess:0'); session.act('lever:top');
   until(session, x => x.ready, 10);
   v = session.view();
-  assert.match(v.brian.text, new RegExp(`${kg(weightOf({car: 1, crates: 2}))}: ${kg(Math.ceil(weightOf({car: 1, crates: 2}) - MOST_KG))} too heavy`));
+  assert.match(v.brian.text, new RegExp(`${kg(weightOf({car: 1, crates: 2}))}, so the load is ${kg(Math.ceil(weightOf({car: 1, crates: 2}) - MOST_KG))} too heavy`));
   assert.equal(v.flight.status, 'taut', 'the cable is tight but the load stays down');
   assert.equal(v.flight.pad, Math.max(0, weightOf({car: 1, crates: 2}) - MOST_KG), 'the pad feels the weight the rotor cannot hold');
 });
@@ -112,14 +117,14 @@ test('Brian’s job: each wrong load says what to change with the real numbers; 
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   session.act('lever:weight'); until(session, v => v.help > 0, 5);
-  assert.match(session.view().brian.text, new RegExp(`room for ${kg(MOST_KG - weightOf({car: 1}))} more\\. A crate is 500 kg`));
+  assert.match(session.view().brian.text, new RegExp(`room for ${kg(MOST_KG - weightOf({car: 1}))} more\\. A crate weighs 500 kg`));
   session.act('crate:add'); session.act('crate:add');
-  assert.equal(session.view().flight.lift, 0, 'loading sets her down');
+  assert.equal(session.view().flight.lift, 0, 'loading sets the helicopter down');
   session.act('lever:top'); until(session, v => v.help > 1, 5);
-  assert.match(session.view().brian.text, /23 kg more than the 3,887 kg she can push.*Take a crate off with 2/);
+  assert.match(session.view().brian.text, /23 kg more than the 3,887 kg that the rotor can push.*Take a crate off by pressing 2/);
   assert.ok(!session.view().ready);
   session.act('crate:remove'); session.act('lever:weight'); until(session, v => v.ready, 5);
-  assert.match(session.view().brian.text, /Dusthawk and 1 crate, 3,410 kg, and she hovers/);
+  assert.match(session.view().brian.text, /Dusthawk and 1 crate on the cable, the total weight is 3,410 kg and the helicopter hovers/);
 });
 
 test('help climbs from a nudge to a plain step to Brian pressing the exact control', () => {
@@ -148,7 +153,7 @@ test('mouse: the crates, the car, the rotor and the lever can be clicked, and ho
   playThroughTo(session, 'word-weight');
   let v = session.view();
   assert.equal(hitTest(v, ...targetPoint(v, 'crate:add'))?.action, 'crate:add');
-  assert.match(hoverInfo(v, ...targetPoint(v, 'crate:add')), /Spare crates, 500 kg each/);
+  assert.match(hoverInfo(v, ...targetPoint(v, 'crate:add')), /spare crates, 500 kg each/);
   playThroughTo(session, 'word-lift');
   v = session.view();
   assert.equal(hitTest(v, ...targetPoint(v, 'rotor'))?.action, 'rotor');
@@ -156,7 +161,7 @@ test('mouse: the crates, the car, the rotor and the lever can be clicked, and ho
   playThroughTo(session, 'try-car');
   v = session.view();
   assert.equal(hitTest(v, ...targetPoint(v, 'car'))?.action, 'car');
-  assert.match(hoverInfo(v, ...targetPoint(v, 'lever:weight')), /red line is her weight, 1,630 kg/);
+  assert.match(hoverInfo(v, ...targetPoint(v, 'lever:weight')), /red line marks the total weight, 1,630 kg/);
 });
 
 test('the board draws every step and card', () => {
@@ -180,11 +185,11 @@ test('the board draws every step and card', () => {
 test('replays: the wonder and the lever show run again, and a try sets down and lifts again', () => {
   const session = createClassroomSession(lesson);
   run(session, 9); assert.ok(session.view().ready);
-  session.act('replay'); assert.equal(session.view().flight.crates, 2, 'the wonder starts again with both crates');
+  session.act('replay'); assert.equal(session.view().flight.crates, 3, 'the wonder starts again with all three crates');
   playThroughTo(session, 'try-car');
   session.act('car'); session.act('guess:0'); session.act('lever:weight'); until(session, v => v.ready, 10);
   session.act('replay'); session.act('replay'); run(session, .1);
-  assert.equal(session.view().flight.h, 0, 'she sets down');
+  assert.equal(session.view().flight.h, 0, 'the helicopter sets down');
   run(session, 3);
   assert.equal(session.view().flight.status, 'hovering', 'and lifts again with the same lever');
 });
@@ -203,9 +208,9 @@ test('review fixes: Show me clears a stray crate; the job says what is loaded; W
   session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   session.act('crate:add'); session.act('crate:add');
-  assert.match(session.view().brian.text, /^The Dusthawk and 2 crates: 3,910 kg\./);
+  assert.match(session.view().brian.text, /^With the Dusthawk and 2 crates on the cable, the total weight is 3,910 kg\./);
   session.act('crate:remove');
-  assert.match(session.view().brian.text, /^The Dusthawk and 1 crate: 3,410 kg\. Now the lever\./, 'the old “take one off” line is gone');
+  assert.match(session.view().brian.text, /^With the Dusthawk and 1 crate on the cable, the total weight is 3,410 kg\. Now move the lever\./, 'the old “take one off” line is gone');
   session.act('lever:weight'); until(session, v => v.ready, 5);
   session.act('replay'); run(session, .1); assert.equal(session.view().flight.h, 0, 'Watch again works on the job');
   run(session, 3); assert.equal(session.view().flight.status, 'hovering');
@@ -220,5 +225,124 @@ test('review fixes: Show me clears a stray crate; the job says what is loaded; W
   session = createClassroomSession(lesson);
   playThroughTo(session, 'check-heavy');
   session.act('answer:0');
-  assert.match(session.view().brian.text, /That load is 1,280 kg, so with Kestrel One’s 1,630 kg she weighs 2,910 kg/);
+  assert.match(session.view().brian.text, /That load weighs 1,280 kg, and with Kestrel One’s 1,630 kg the total is 2,910 kg/);
+});
+
+const worked = (view, title) => view.formulas.find(f => f.title === title)?.worked;
+test('the sums: weight in newtons, the lever’s share and the force left over all follow the load and the lever on each press', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-weight');
+  assert.equal(worked(session.view(), 'The weight in newtons'), '1,630 kg × 9.81 = 15,990.3 N');
+  session.act('crate:add');
+  assert.equal(worked(session.view(), 'The total mass'), '1,150 + 80 + 400 + 500 = 2,130 kg');
+  assert.equal(worked(session.view(), 'The weight in newtons'), '2,130 kg × 9.81 = 20,895.3 N');
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  const title = 'The lift at this lever setting';
+  assert.equal(worked(free.view(), title), '0.0000 × 3,887 kg = 0 kg');
+  free.act('lever:up');
+  assert.equal(worked(free.view(), title), '0.1286 × 3,887 kg = 500 kg', 'the lever changes the sum');
+  assert.match(worked(free.view(), 'The force left over'), /^500 − 1,630 = −1,130 kg, so the helicopter stays on the pad/);
+  assert.match(worked(free.view(), 'The lever needed to hover'), /^1,630 kg ÷ 3,887 kg = 0\.4193, which is 42%/);
+  free.act('car');
+  assert.equal(worked(free.view(), 'The total mass'), '1,150 + 80 + 400 + 1,280 = 2,910 kg', 'the load changes the sum');
+  assert.match(worked(free.view(), 'The lever needed to hover'), /^2,910 kg ÷ 3,887 kg = 0\.7486, which is 75%/);
+  free.act('crate:add'); free.act('crate:add');
+  assert.match(worked(free.view(), 'The lever needed to hover'), /^3,910 kg ÷ 3,887 kg = 1\.0059, which is 101%, so the lever cannot reach it/);
+});
+
+test('every shown lever sum comes out on a calculator, and the rotor’s most push is the game’s own', () => {
+  for (let lift = 0; lift <= 3880; lift += 10) assert.equal(Math.round(Number(leverShare(lift).toFixed(4)) * 3887), lift, `lever sum at ${lift} kg`);
+  assert.equal(Number(leverShare(MOST_KG).toFixed(4)), 1);
+  for (const load of [{}, {car: 1}, {crates: 1}, {car: 1, crates: 1}, {crates: 4}]) assert.equal(Math.round(Number(leverShare(weightOf(load)).toFixed(4)) * 3887), weightOf(load));
+  assert.equal(Math.round(3380.4 * 1.15), Math.floor(MOST_KG));
+  assert.ok(Math.abs(KESTREL.maxThrust / GRAVITY - 3380.4) < 1e-6);
+  assert.equal(Math.round(1630 * 9.81 * 10) / 10, 15990.3);
+});
+
+test('the free test: only different settings count, the table keeps them, and three open Continue', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  assert.ok(!session.view().ready);
+  session.act('go');
+  assert.equal(session.view().freeTable.length, 1);
+  assert.match(session.view().brian.text, /total weight is 1,630 kg\. The lever is at 0%, which gives a lift of 0 kg\. That is 1,630 kg less than the weight/);
+  session.act('go');
+  assert.match(session.view().brian.text, /already tested/);
+  assert.equal(session.view().freeTable.length, 1, 'the same setting does not count twice');
+  for (let i = 0; i < 3; i++) session.act('lever:up');
+  session.act('lever:up:held'); session.act('go');
+  assert.match(session.view().brian.text, /equal, so the two forces cancel and the helicopter hovers/);
+  session.act('crate:add');
+  assert.equal(session.view().flight.lift, 0, 'loading sets the helicopter down');
+  assert.ok(!session.view().ready);
+  session.act('lever:top'); session.act('go');
+  assert.ok(session.view().ready, 'three different settings open Continue');
+  assert.equal(session.view().freeTable.length, 3);
+  assert.deepEqual(session.view().freeTable.map(r => r.value), ['stays down', 'hovers', 'climbs']);
+});
+
+test('Show me on the free test reaches three different settings by itself, and says what it will do', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  for (let i = 0; i < FREE_TRIES; i++) {
+    assert.ok(!session.view().ready);
+    for (let h = 0; h < 3; h++) session.act('help');
+    assert.match(session.view().brian.text, /I will set a load and a lever that you have not tested yet/);
+    assert.equal(session.view().pointer.action, 'set:best');
+    assert.ok(hitTest(session.view(), ...targetPoint(session.view(), 'set:best')), 'Brian points at the lever');
+    run(session, SHOW_ME_S + .2);
+    assert.equal(session.view().freeTable.length, i + 1);
+  }
+  assert.ok(session.view().ready);
+});
+
+test('nothing gives a guess or a question away while it is open', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-heavy');
+  session.act('crate:add'); session.act('crate:add');
+  let v = session.view();
+  assert.equal(v.cards.length, 2);
+  assert.equal(v.gauge, 'plain', 'no red line above the top');
+  assert.ok(!v.formulas.some(f => /cannot reach|101%|too heavy/.test(`${f.worked} ${f.note}`)), 'the panel does not settle the guess');
+  // The wonder and the watch never show the Dusthawk with two crates, so this guess really is open.
+  assert.deepEqual(weightOf({car: 1, crates: 2}), 3910);
+  const first = createClassroomSession(lesson);
+  assert.equal(first.view().flight.crates, 3);
+  run(first, 6); assert.equal(first.view().flight.crates, 1, 'two crates come off at once, so two is never shown');
+  playThroughTo(first, 'watch-loads');
+  assert.deepEqual(first.view().sets.map(f => [f.car, f.crates]), [[0, 1], [0, 3], [0, 4]]);
+  for (const [id, pick] of [['check-heavy', 2], ['check-more', 0], ['check-game', 1]]) {
+    const s = createClassroomSession(lesson);
+    playThroughTo(s, id);
+    assert.ok(s.view().formulas.every(f => !f.worked && !f.note), `${id}: only general formulas while the question is open`);
+    assert.ok(!s.view().formulas.some(f => /Dusthawk/.test(f.title)), `${id}: no title names the answer`);
+    s.act(`answer:${pick}`);
+    assert.ok(s.view().formulas.some(f => f.worked), `${id}: the sums appear with the answer`);
+  }
+});
+
+test('a hint about the lever is right from either side of the red line', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-hover');
+  assert.match(session.view().hints[1], /Press W until/);
+  session.act(`hold:${OWN_KG + 400}`); session.act('release');
+  assert.match(session.view().hints[1], /Press S until/);
+});
+
+test('a word does not appear before the step that defines it, and every view is free of the old faults', () => {
+  const session = createClassroomSession(lesson);
+  const seenBefore = {lever: 'word-collective', rotor: 'word-lift', hover: 'word-hover'};
+  playThroughTo(session, 'recap');
+  for (const step of STEPS) {
+    session.act(`go:${STEPS.indexOf(step)}`);
+    const v = session.view(), words = [v.say, v.prompt, ...v.hints, ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note])].filter(Boolean).join(' ').toLowerCase();
+    for (const [word, from] of Object.entries(seenBefore)) if (STEPS.indexOf(step) < STEPS.findIndex(s => s.id === from)) assert.ok(!words.includes(word), `${step.id} uses “${word}” before it is defined`);
+    assert.ok(v.formulas.every(f => f.title), `${step.id}: every panel entry has a title`);
+    assert.ok(!/\bbench\b/i.test(words), `${step.id} says bench`);
+  }
+  for (const file of ['lift-classroom.js', 'lift-board.js']) {
+    const source = readFileSync(new URL(`../src/lab/lessons/${file}`, import.meta.url), 'utf8');
+    for (const pattern of [/\b(she|her|hers|herself)\b/i, /\bmph\b/i, /\bdecides?\b/i, /\b(air|wind)\s+(soon\s+)?takes\b/i, /\bfeels?\b/i]) assert.ok(!pattern.test(source), `${file}: ${source.match(pattern)?.[0]}`);
+  }
 });
