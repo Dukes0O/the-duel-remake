@@ -81,7 +81,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
 
-export function worldHudModel({worldJob, player = null, found = [], places = SCABLANDS_PLACES} = {}) {
+export function worldHudModel({worldJob, player = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
     found, stepState: job?.stepState}, places);
@@ -93,6 +93,9 @@ export function worldHudModel({worldJob, player = null, found = [], places = SCA
   const finds = [...(worldJob?.definition?.finds ?? []), ...(job?.steps ?? []).flatMap(item => item.finds ?? [])];
   return {
     line: next.line, kind: next.kind, target, bearing,
+    prompt: step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : '',
+    wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
+    well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -142,13 +145,14 @@ export function createWorldHud({host}) {
   }
   const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
   root.setAttribute('aria-label', 'Scablands job guidance');
-  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>SCABLANDS</b><button type="button" data-world-map-close>CLOSE</button></header>
       <canvas width="${MAP_WIDTH}" height="${MAP_HEIGHT}" aria-label="Map with your position and job marker"></canvas>
       <p class="world-hud-find-label">FINDS</p><ul class="world-hud-finds"></ul></section>`;
   host.append(root);
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
+  const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
   const findList = root.querySelector('.world-hud-finds');
@@ -173,9 +177,14 @@ export function createWorldHud({host}) {
       if (!active) { setMapOpen(false); return; }
       const actor = state.onFoot && state.fighter ? state.fighter : state;
       const point = duel.course?.worldAt?.(actor.s, actor.lateral);
-      const model = worldHudModel({worldJob: state.arena.worldJob, player: point,
+      const model = worldHudModel({worldJob: state.arena.worldJob, player: point, onFoot:state.onFoot,
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
+      prompt.textContent = model.prompt;
+      const bars=model.wave?[{label:`WAVE ${Math.min(model.wave.value+1,model.wave.max)} / ${model.wave.max}`,value:Math.min(model.wave.value+1,model.wave.max),max:model.wave.max}]:[];
+      if(model.well)bars.push({label:`WELL ${Math.ceil(model.well.value)} / ${model.well.max}`,value:model.well.value,max:model.well.max});
+      progress.hidden=!bars.length;
+      progress.replaceChildren(...bars.flatMap(bar=>{const label=doc.createElement('span'),meter=doc.createElement('progress');label.textContent=bar.label;meter.max=bar.max;meter.value=bar.value;meter.setAttribute('aria-label',bar.label);return[label,meter];}));
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
       const mapKey = JSON.stringify([model.places, model.finds, model.target, model.player]);
       if (mapKey !== lastMap) {

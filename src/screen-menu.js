@@ -19,6 +19,7 @@ import {speedKph, formatSpeed} from './speed-format.js';
 import {frontDoorMarkup} from './menu-front-door.js';
 import {createStoryUi, storyOn, storyButtonMarkup, syncStoryButton} from './story/story-ui.js';
 import './story/water-ui.js'; // WATER-SCREENS: the Water Road's card joins the Story button
+import './story/ember-ui.js'; // WW-SCREENS: registers the Everburn card without affecting it while switched off
 import {KOGANE_SKYLINE} from './story/story-save.js';
 
 // frontDoor is null with the 'menu-front-door' switch off: the markup is then exactly today's.
@@ -57,6 +58,7 @@ export function createMenuScreen(ctx) {
     storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),onRaceSetup:showStoryRace,
       actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]'),
         // The Water Road's chapters: a race fills the setup here; Scrapdome games and fights go to the yard; a road not owned opens Your Courses.
+        ember:()=>press('[data-action="wasteland-visit"]')(),
         water:id=>{
           const step=app.storyProps?.('water')?.steps?.find(item=>item.id===id);
           if(step?.action?.type==='yard'){press('[data-action="wasteland-visit"]')();return;}

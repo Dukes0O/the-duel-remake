@@ -23,7 +23,7 @@ registerStoryCard({
 function row(step, index) {
   const state = {done: 'DONE', open: 'NEXT', locked: 'LOCKED'}[step.state] ?? 'LOCKED';
   const button = step.state === 'open' && step.button
-    ? `<button type="button" class="start-button story-step-button" data-ember-step="${escape(step.id)}"><span>${escape(step.button)}</span></button>` : '';
+    ? `<button type="button" class="start-button story-step-button" data-ember-step="${escape(step.action ?? step.id)}"><span>${escape(step.button)}</span></button>` : '';
   return `<li class="story-step is-${step.state}" data-ember-job="${escape(step.id)}"><i class="story-tick" aria-hidden="true"></i>`
     + `<div class="story-step-words"><b>${index + 1} · ${escape(EMBER_JOB_NAMES[index])}</b><small class="story-state">${state}</small><p>${escape(step.note)}</p></div>${button}</li>`;
 }
@@ -32,7 +32,7 @@ export function emberWallMarkup(props) {
   if (!props?.available) return '';
   return `<section class="ember-wall" aria-label="The Everburn"><h3>THE EVERBURN</h3>`
     + `<article class="story-letter" aria-label="A note from Hollis"><span class="story-seal" aria-hidden="true"></span><p>${escape(EMBER_NOTE.text)}</p></article>`
-    + `<ol class="story-steps" aria-label="The jobs">${props.steps.map(row).join('')}</ol>`
+    + `<ol class="story-steps" aria-label="The jobs">${props.steps.map((step,index)=>row({...step,action:props.step==='read'&&index===0?'read':step.id},index)).join('')}</ol>`
     + (props.sideJobs.length ? `<section class="ember-notice-board" aria-label="Tin Town notice board"><h4>TIN TOWN NOTICE BOARD</h4><ul>${props.sideJobs.map(job =>
       `<li><b>${escape(job.name)}</b> · ${escape(job.kind)}<p>${escape(job.note)}</p><button type="button" class="secondary-button" data-ember-side-job="${escape(job.id)}"><span>Take job</span></button></li>`).join('')}</ul></section>` : '')
     + '</section>';

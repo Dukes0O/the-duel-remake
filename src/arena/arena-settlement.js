@@ -67,6 +67,14 @@ function validConvoyFinish(arena) {
 }
 
 function arenaFacts(arena) {
+  if(arena?.mode==='world-job'){
+    const result=arena.result, job=arena.worldJob?.job;
+    if(arena.version!==1||arena.venueId!=='scablands'||arena.phase!=='over'||!result||
+      !Array.isArray(arena.participants)||arena.participants.length!==1||arena.participants[0]?.id!=='player'||
+      !Array.isArray(result.placings)||result.placings.length!==1||result.placings[0]!=='player'||
+      result.winnerId!=='player'||!['complete','job-complete'].includes(result.reason)||job?.stepIndex!==job?.steps?.length)return null;
+    return {player:arena.participants[0],computers:0,behind:0,won:true};
+  }
   if (arena?.mode === 'ambush-alley') {
     const alley = arena.ambushAlley, result = arena.result;
     if (arena.version !== 1 || !['pit', 'salt-flats'].includes(arena.venueId) ||
@@ -113,6 +121,7 @@ function arenaFacts(arena) {
 export function arenaReward(arena, cpuDifficulty) {
   const facts = arenaFacts(arena), factor = DIFFICULTY_FACTORS[cpuDifficulty];
   if (!facts || !factor) return {base: 0, placing: 0, wrecks: 0, factor: 0, total: 0};
+  if(arena.mode==='world-job')return {base:80,placing:0,wrecks:0,factor,total:Math.round(80*factor)};
   if (arena.mode === 'convoy-raid') {
     const base = facts.won ? CONVOY_RULES.winScrap :
       CONVOY_RULES.valveScrap * arena.convoy.playerValvesBroken;

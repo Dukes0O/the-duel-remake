@@ -4,9 +4,10 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {canLeaveCar} from '../src/onfoot-transition.js';
 import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
+import {worldHudModel} from '../src/world/world-hud.js';
 
 const dt = 1 / 120;
-const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true};
+const flags = {'hidden-road': true, 'story-everburn': true, arsenal: true, 'arsenal-wave3': true};
 const values = new Map();
 globalThis.localStorage = {
   getItem: key => values.get(String(key)) ?? null,
@@ -14,6 +15,35 @@ globalThis.localStorage = {
   removeItem: key => values.delete(String(key)),
 };
 globalThis.cancelAnimationFrame ??= () => {};
+
+// The Everburn action must respect saved story order, then launch through the
+// same App arena path used by the yard and Story card.
+{
+  values.clear();
+  const app=new App();app.audio.unlock=()=>{};
+  app.duel.featureFlags=createFeatureFlags({storage:null,overrides:flags});
+  app.profile={...app.profile,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};
+  assert.equal(app._saveProfile(),true);
+  const state=app.duel.state;state.status='exploring';state.playerId=app.player.id;
+  state.hiddenRoadJourney={id:'test-yard',phase:'arrived',departed:true};state.wastelandGateDiscovered=true;
+  assert.equal(app.isYardHomeActive(),true,'fixture is the real arrived yard state');
+  assert.equal(app.everburnStep('read'),true,'Hollis\'s note starts the story');
+  assert.equal(app.everburnStep('get-out-and-walk'),false,'locked job refuses direct App action');
+  assert.equal(app.everburnStep('hot-delivery'),true,'open job starts through the App arena action');
+  assert.equal(app.duel.state.arena.mode,'world-job');
+  assert.equal(app.duel.state.arena.venueId,'scablands');
+  assert.equal(app.duel.state.arena.worldJob.definition.id,'everburn-hot-delivery');
+  const arena=app.duel.state.arena,worldJob=arena.worldJob;
+  worldJob.job.stepIndex=worldJob.job.steps.length;worldJob.job.done=true;
+  finishArenaEvent(app.duel,'job-complete','player');
+  const result=arena.result,paid=app.profile.wasteland.scrap;
+  assert.equal(result.settlementSaved,true,'finished job settles through the shared Wasteland save helper');
+  assert.equal(result.emberJob,'hot-delivery','finished job records the WW-SAVE story mark');
+  assert.equal(app.profile.story.ember.jobs.includes('hot-delivery'),true);
+  assert.equal(app._settleArenaResult({result},app.duel.state),false,'duplicate result cannot award twice');
+  assert.equal(app.profile.wasteland.scrap,paid,'duplicate result leaves the reward unchanged');
+  app.returnToMenu();app.dispose?.();
+}
 
 function start({complete = false, seed = 1989, job: suppliedJob = null} = {}) {
   values.clear();
@@ -50,6 +80,11 @@ function start({complete = false, seed = 1989, job: suppliedJob = null} = {}) {
       carWeapon: 'flamethrower', footAmmo: 'rpg'}}]};
   const {app} = start({job});
   const worldJob = app.duel.state.arena.worldJob;
+  const hud = () => worldHudModel({worldJob:app.duel.state.arena.worldJob,
+    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)});
+  assert.match(hud().line,/^Defend /,'live defend job tells the player what to do');
+  assert.equal(hud().well.max,.1,'live HUD receives the actual defend place health');
+  assert.equal(hud().wave.max,2,'live HUD receives the actual wave count');
   app.duel.state.combat.cooldowns.flamethrower = 7;
   app.duel.state.footWeapons = {ammo: 1};
   app.duel.state.footGear = {name: 'LONGHORN RPG', ammo: 1};
@@ -106,6 +141,9 @@ function assertSavedLoadout(app, expectedBytes, exit) {
 // lent weapon. F steps out and back in through the normal fixed-step transition.
 {
   const {app} = start();
+  assert.match(worldHudModel({worldJob:app.duel.state.arena.worldJob,
+    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).line,/^Drive to /,
+  'live reach job tells the player where to go');
   assert.equal(canLeaveCar(app.duel), true);
   assert.equal(app.duel.fireWeapon('flamethrower'), true);
   app.duel.setInput({interact: true});

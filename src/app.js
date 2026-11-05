@@ -74,6 +74,9 @@ import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUn
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
+import {EMBER_JOBS, markEmberJob, markEmberRead} from './story/ember-save.js';
+import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
 import {startWarlordEvent, beginWarlordEvent} from './arena/warlord-event.js';
@@ -661,6 +664,7 @@ export class App {
   // The plain object the Story card and the other screens draw from (docs/story/kogane-invitation.md 12.1).
   storyProps(key='kogane'){
     if(key==='water')return this._waterRoad().props(this.isYardHomeActive()?'yard':'menu');
+    if(key==='ember')return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()});
     const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
     if(!this._storyAvailable())return none;
     const profile=this.profile,step=koganeStep(profile),k=storyOf(profile).kogane,won=typeof k.duel==='string';
@@ -681,6 +685,7 @@ export class App {
   // Opening the Story card reads the letter. Only the red dot goes away.
   openStory(key='kogane'){
     if(key==='water')return this._waterRoad().open();
+    if(key==='ember'){if(this._switches().enabled('story-everburn')!==true)return false;const marked=markEmberRead(this.profile);if(marked.ok&&marked.changed){this.profile=marked.profile;this._saveProfile();}return marked.ok;}
     if(this.duel.state.status!=='menu'||!this._storyAvailable())return false;
     this._refreshPlayer();
     const read=readKoganeLetter(this.profile);
@@ -772,6 +777,14 @@ export class App {
   _waterRoad(){return this._water??=createWaterRoad(this);}
   // A chapter's button on the Story card or the Story Wall: fills the setup, opens the Scrapdome panel or starts the fight.
   waterStep(id){return this._waterRoad().step(id);}
+  everburnStep(id){
+    if(this._switches().enabled('story-everburn')!==true||!this.wastelandUnlocked())return false;
+    const props=emberStoryProps(this.profile,{available:true});
+    if(id==='read'){const marked=markEmberRead(this.profile);if(!marked.ok)return false;this.profile=marked.profile;this._saveProfile();return true;}
+    const index=EMBER_JOBS.indexOf(id),open=props.steps.find(step=>step.id===id);
+    if(index<0||open?.state!=='open'||props.read!==true)return false;
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',job:EVERBURN_JOBS[index]});
+  }
   // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
   // The water works' stage in the yard: chapters done, 0 to 8, or null while the story is not shown. Read only.
@@ -1435,8 +1448,13 @@ export class App {
       return false;
     }
     const water=this._water?.settle(settled.profile,{runId:this.runId,won:result.winnerId==='player'}); // WATER-HOOKS
-    this.profile=water?.profile??settled.profile;
+    let awardedProfile=water?.profile??settled.profile;
     if(water)result.waterJob=water.mark;
+    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
+      const id=EMBER_JOBS[state.arena.worldJob.definition.number-1],marked=markEmberJob(awardedProfile,id);
+      if(marked.ok){awardedProfile=marked.profile;result.emberJob=id;result.won=true;}
+    }
+    this.profile=awardedProfile;
     if(!this._saveShopProfile(previous)){
       return false;
     }
@@ -1814,25 +1832,26 @@ export class App {
     return this.arenaAvailable() && this._switches().enabled('ambush-alley') === true &&
       this.profile.wasteland?.rank >= 12;
   }
-  startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3} = {}) {
-    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid', 'ambush-alley'].includes(mode)) return false;
-    return this._startArenaFight({venueId, mode, opponents});
+  startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3, job = null} = {}) {
+    if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid', 'ambush-alley', 'world-job'].includes(mode)) return false;
+    if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||!EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open'))return false;
+    return this._startArenaFight({venueId, mode, opponents, job});
   }
-  _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling'}) {
+  _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
-    const available = warlordId ? this.warlordsAvailable() :
+    const available = mode==='world-job' ? this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&!!job : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
     const ambush = mode === 'ambush-alley';
-    const venueAvailable = ambush ? venueId === 'pit' ||
+    const venueAvailable = mode==='world-job' ? venueId==='scablands' : ambush ? venueId === 'pit' ||
       venueId === 'salt-flats' && this.arenaVenueAvailable(venueId) : this.arenaVenueAvailable(venueId);
     if (!available || !venueAvailable || mode === 'convoy-raid' && venueId !== 'salt-flats' ||
         !(this.isYardHomeActive() || state.arena)) return false;
-    const count = ambush ? 0 : mode === 'convoy-raid' ? 3 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
+    const count = ambush||mode==='world-job' ? 0 : mode === 'convoy-raid' ? 3 : Math.max(1, Math.min(3, Math.floor(Number(opponents)) || 3));
     const car = isCarUnlocked(this.profile, this.menuCar) ? this.menuCar : 'falcone_f42';
     if (this._airOnlyRefused(car, venueId)) return false;
     const level = {easy: 0, medium: 1, hard: 2}[this.cpuDifficulty] ?? 1;
@@ -1858,7 +1877,7 @@ export class App {
       weaponLoadout: getCarLoadout(this.profile,this._arsenalOptions()), combatArmorKit: this._combatArmorKit(car),
       combatCarbonPlates: carbonPlatesOwned(this.profile, this._switches()),
       combatRoofLook: getEquippedRoofLook(this.profile, car),
-      crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')})};
+      crewId: selectedCrewId(this.profile,{warlordCardsEnabled:this._switches().enabled('warlord-cards') && this._switches().enabled('crew-gear')}), ...(mode==='world-job'?{job}:{})};
     // WATER-HOOKS: a Water Road game, asked for by the Story card (or a rematch of one), and its radio line.
     const waterLine = this._waterRoad().arenaStarted({mode, venueId, warlordId, runId: this.runId, rematch: !!state.arena});
     // Vesper speaks after the Baron's first defeat only, never after a rematch.
