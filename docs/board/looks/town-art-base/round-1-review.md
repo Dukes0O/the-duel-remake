@@ -1,7 +1,7 @@
 ﻿# Town art base, round 1
 
-Builder scores (1 to 5): likeness **2**, readability **2**, grounding **3**, material and finish **2**. The shared rust, tin and timber atlas reads as weathered material, and the sample includes two distinct structures and scale props. The sheet still looks too crude beside Tin Town round 2: broad wall planes, simple roofs and limited local wear. Treat this as an honest first foundation, not a passing visual verdict. Claude should judge the sheet against `docs/board/looks/ww-art-tintown/round-2.jpg` and decide whether the shared construction style is useful for later town families.
+Builder scores (1 to 5): likeness **2**, readability **2**, grounding **3**, material and finish **2**. The two buildings are legible, but the materials read as blurry, bumpy painted surfaces and the silhouettes remain boxy. The sheet is below Tin Town round 2.
 
-The single sheet contains the 1x1 shack and 3x2 workshop, each with a 45-degree view and a driver's-eye view. The JPG is 157,964 bytes. Four raw renders and the generated sample model are review evidence only and stay under `.evidence/2026-11-05/TOWN-ART-BASE/round-1/` in this lane.
+Claude's verdict: **not accepted**. The review asks for sharper corrugation, layered rust streaks and scratches, less box-shaped construction, a real game car for scale, and a six-building street view. Claude's full findings are in `docs/board/cards/TOWN-ART-BASE.md`.
 
-Claude: please inspect whether the sheet is clear enough to judge scale, roof construction, wall orientation, atlas finish, and whether the result is sufficiently gritty and hand-built for Tin Town. No browser or in-game check was run.
+The first-round JPG is 157,853 bytes. The browser and in-game look check were not run. This task's brief capped the work at one round, so no second round was made by this job.
