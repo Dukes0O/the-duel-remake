@@ -8,146 +8,220 @@ hop in your car, hop in your truck, your monster truck, gather your supporting
 vehicles, go out on your mission, dispatch others to fix things." "The stories and
 the little missions don't have to be limited to attacking."
 
-Kyle's three answers: the town **stops when the game is closed**; damage is **real
+And the rule over everything else here, from Kyle the same day: "This is not a game
+for instant gratification." "This is something Gratian and I are going to work on
+for years and build for years." Once you are in it, it "shouldn't be over in" the
+time a "mid-length YouTube video takes to complete." "We're going to bring
+verisimilitude into it as well where we can." "Make sure that we are not limiting
+the expansion of the story in our ability to build things."
+
+Kyle's other answers: the town **stops when the game is closed**; damage is **real
 but always recoverable**; Codex builds at once and Kyle reads afterwards, with the
 game switched off for players until it is finished.
 
-The story is `docs/story/the-long-dry.md`. Sections 1 to 8 here are for Kyle and
-Gratian: what you see and do. Sections 9 to 15 are for the builders. Claude decided
+The story is `docs/story/the-long-dry.md`. Sections 1 to 9 here are for Kyle and
+Gratian: what you see and do. Sections 10 to 16 are for the builders. Claude decided
 all of it, and Kyle can overrule anything.
 
-The top rule: smooth play, and one line on the screen that always says what to do
-next. A child must be able to pick this up and enjoy it without help.
+The top rule stays: smooth play, and one line on the screen that always says what to
+do next. A child must be able to start it without help. Long does not mean confusing.
+**Depth opens over time**: the first year asks little of you and the twentieth asks a
+lot, and the real numbers are always there when you look closer.
 
 ## 1. What it is, in one breath
 
-Press **THE TOWN** in the Scrapdome Yard. The camera rises over the Dome, and all
-round it is flat ground with a few tents on it and people looking at you. You draw
-roads, put in taps, paint ground for homes and watch people move in. They want
-water, then food, then for it not to smell, then to feel safe, then for there to be
-something to do. Every one of them can be clicked on, and they will tell you what
-they are thinking.
+Press **THE TOWN** in the Scrapdome Yard. The camera rises over the Dome, and on the
+dirt around it are twelve people with nothing. Over years, one road, one well, one
+hard winter and one terrible first fire at a time, you and they build a place. Children
+go to Miss Quill's school and grow up to run your treatment plant. The first people
+who came get old, and their names are in the town's book. You lay every pipe. You
+haul the steel yourself when the job is behind. And when the report comes in, you get
+in the fire truck you paid for and drive down the road your people built, to save the
+building they spent a season on. **The town you build is the world you drive in**, and
+it should take you years to build it.
 
-Then a report comes in: **fire at the soup kitchen**. You press GO, and you are
-sitting in a fire engine with the bell going, driving down the road you drew, past
-the people you housed, to the building you put up. That is the whole idea. **The
-town you build is the world you drive in.**
+## 2. How long it takes
 
-## 2. Three zooms
+There is no finishing it. These are how far along you should be, roughly, tested by
+the game's test players:
+
+| Where you are | Game time | Hours of play | People |
+| --- | --- | --- | --- |
+| Through the first winter, with a road, a well and shacks | Year 1 | 3 to 5 | 30 |
+| A real settlement, Town Hall built, the first fire behind you | Year 3 | 10 to 15 | 100 |
+| Neighbours met, and clean water from a plant you built | Year 6 or 7 | about 40 | 500 |
+| The school's first children running things, deeds and territory | Year 10 | about 80 | 1,500 |
+| Mrs Vane's contest at its height | Year 15 | about 130 | 3,000 |
+| The sea comes back | Year 25 or so | 200 to 300 | 6,000 or more |
+| After that | For as long as you like | | No limit |
+
+**A year** is about 4 and a half hours at normal speed, and just over an hour at the
+fastest. Twelve months of thirty days, with real seasons.
+
+**What makes it take that long is the work, not waiting.** There are no timers to sit
+out. Things take as long as they would if people had to do them:
+
+- Nothing appears when you click. A plan goes down, then workers walk out, then
+  materials have to get there, then it goes up, stage by stage, in front of you.
+- A shack takes a couple of people a few days. A treatment plant takes forty people
+  most of a season, and twelve tonnes of steel somebody had to find. The Sea Works takes
+  a generation.
+- If a site is short of steel, it stops and says so, and you can go and fetch it.
+- You can run the clock fast through the slow parts, and you will often want to stop
+  it and think.
+
+And you are never without something to do, because there is always a report, a job or
+a neighbour, and every mission still plays out in real time at the wheel.
+
+## 3. Real where it can be
+
+Real numbers from the real world, showing when you look closer and never in your way.
+Anything a child learns here is true, and Brian can teach it in the Lab.
+
+- **Water is measured in litres.** A person needs 15 litres a day to get by and 50 to
+  live well (the real standard aid workers use). A tap runs about 7 litres a minute, so
+  a queue is real.
+- **Finding water is real.** Ground water lies at different depths in different places.
+  You dig test pits. A hand-dug well gives so much a day, can run dry in a drought, and
+  is brown.
+- **Pipes are real, and you lay them.** Water runs downhill and needs pushing uphill. A
+  water tower is there because height is pressure: a 12 metre tower gives about 1.2 bar,
+  so a tap higher than the tank gets nothing. A thin pipe loses pressure over distance.
+  Sewers need a downhill slope.
+- **Clean water is made in real stages:** settling tanks, a sand filter, then boiling or
+  chlorine. You can test it and watch the number change.
+- **Sanitation is real.** A latrine belongs at least 30 metres from a well and downhill
+  of it. One for every 20 people. The pit fills in about two years and then needs dealing
+  with. Reed beds really do clean sewage. Get it wrong and people get ill, and the map
+  shows you why.
+- **Food is calories.** 2,100 a day each. Hens lay about an egg a day, goats give about
+  three litres of milk, and greenhouses have growing seasons and drink water.
+- **Things are made from things.** Salvage comes from the Boneyard, gets sorted, gets
+  melted at the forge, becomes steel and pipe. Timber is scarce. Brick needs clay and a
+  kiln. A truck carries what a truck can carry and burns fuel doing it.
+- **People are people.** They have ages, families, skills and a history. Children go to
+  school and grow up. Skills take years. People get old, and in time they pass on, and
+  that goes in the book.
+- **Fire is real.** It needs fuel and air and goes with the wind. A fire truck holds about
+  3,000 litres and empties in three minutes. A hydrant only gives what your pipes can
+  bring it, so the fire at the far end of town is the dangerous one.
+- **Money is real.** A proper Ledger: money in and out each month, what you own and what
+  you owe, loans with interest. The Vultures will explain it, and they will enjoy it.
+- **Seasons are real.** Dust in spring, heat in summer when everyone drinks more, harvest,
+  and cold nights when a tent will not do.
+
+## 4. Three zooms
 
 Roll the mouse wheel and the camera pulls straight back.
 
 | Zoom | You see | What you do here |
 | --- | --- | --- |
-| **The Town** | Your streets, up close: people walking, lamps at night, smoke, roofs | Build. Click anything to see how it is doing |
-| **The Scablands** | The same world from high up: your town around the Dome, the ring road, Tin Town, the Boneyard, Dot's Diner, the Ridge. Trucks crawling along the road | See who needs what. Send people. Protect your neighbours |
-| **The Wasteland** | A hand-drawn map: the Scablands in the middle, the eight warlords' old territories around it, each with its deeds, and the flags of who holds them | Buy land, hold sets, watch Mrs Vane's white flags spread |
+| **The Town** | Your streets, up close: people walking, lamps at night, smoke, roofs, sites going up. A press of a key shows pipes and wires under the ground | Build. Click anything to see how it is doing |
+| **The Scablands** | The same world from high up: your town around the Dome, the ring road, Tin Town, the Boneyard, Dot's Diner, the Ridge. Real trucks crawling along real roads | See who needs what. Send people. Protect your neighbours |
+| **The Wasteland** | A hand-drawn map: the Scablands in the middle, the eight warlords' old territories around it, each with its deeds, and the flags of who holds them. Dark where nobody has been | Buy land, hold sets, watch Mrs Vane's white flags spread |
 
-The Ledger and the Reports panel stay on the screen at every zoom.
+The Ledger and the Reports panel stay on the screen at every zoom. The map has room for
+more: land beyond the Ridge and new regions can be added at any time without changing
+anything already built.
 
-## 3. The town, and how it grows
+## 5. The town, and how it grows
 
-**Money.** The town has its own money, **the till**, and your scrap stays yours. Bills
-only ever come out of the till, so the town can never eat what you saved for a
-flamethrower. If you try to build with an empty till, one press puts your own scrap
-in. Taking money back out costs a levy: half stays with the town ("It's spoken for,"
-says Hollis). A new town starts with a grant of 1,500.
+**The start.** Twelve people, some canvas, a grant of 1,500 scrap from Hollis and a share of
+the camp's water, carried in buckets until you do better. Each of the twelve has a name,
+and the town remembers them as its founders.
 
-**Needs, in the order people feel them.** Each home shows these as dots, and any red
-dot has a **Why?** button that says what is wrong in one plain sentence and shows you
-on the map.
+**Building.** You draw a plan. Workers build it from what is in your stockpile, and each
+building's card says what it needs, what has come and what it is short of. You choose
+what goes first. You paint ground for homes and shops and people build there themselves,
+improving them over years: tent, shack, tall tin stack, stacked shipping containers, then
+proper brick.
 
-1. **Water.** A tap within reach. Well water is brown; brown water makes people
-   sick now and then.
-2. **Food.** A soup kitchen, then chickens, goats, a greenhouse and Dot's pies.
-3. **Sanitation.** A latrine in reach, then a bathhouse, reed beds (real sewage
-   treatment by plants) and a rubbish sorter. A latrine too close to a well makes
-   everyone ill, and Odessa tells you why, with a true story.
-4. **Safety.** Fences, towers, guard posts, a fire station.
-5. **Work.** Buildings need people to run them, and working people pay more rent.
-6. **Fun.** A tavern, a drive-in, a bumper ring made of wrecks, a big wheel made from
-   truck axles and a roller coaster nobody should trust.
+**Money and goods.** The town has its own money, **the till**, and your scrap stays yours,
+so bills can never eat what you saved for a flamethrower. If the till is short, one press
+puts your own scrap in. Taking money back out costs a levy: half stays with the town ("It's
+spoken for," says Hollis). Goods are separate: salvage, tin, steel, timber, brick, pipe,
+canvas, glass, fuel and food sit in stockpiles and warehouses, can be made, bought, traded
+or stolen, and their prices move with how much there is.
 
-Meet the needs and more people come, and their homes improve by themselves: tent,
-shack, tall tin stack, stacked shipping containers, then proper brick. You never
-place a house. You **paint ground** for homes or for shops and they appear. You do
-place everything else.
+**Needs.** Each home shows its needs as dots, and any red dot has a **Why?** button that says
+what is wrong in one plain sentence and shows you on the map. In the order people feel
+them: water, food, shelter from the weather, sanitation, safety, work, health, learning,
+and fun. A town can be doing well and still have one street where it is all going wrong.
 
-**Rent, tickets and bills.** Every home pays rent, every attraction sells tickets and
-every building has running costs. Every five days, the bills come in and the Ledger
-shows money in, money out, and what is left. Attractions have a price you set in
-plain words (Cheap, Fair or Dear), and you can see the queue change as you do.
+**Fun.** Over the years, a tavern, a drive-in, a bumper ring made of wrecks, a big wheel made
+from truck axles, a mud pit and a roller coaster nobody should trust. Each sells tickets,
+at a price you choose in plain words (Cheap, Fair or Dear), and you can watch the queue change.
 
-**The Water Road feeds the town.** The camp only gets as much water as the road brings
-in, so every warlord you beat means more people you can have and a new thing to build:
+**The Water Road feeds the town.** The camp only gets as much water as the road brings in,
+so every warlord you beat means more water and a new thing you can build:
 
 | Beat | The town gets |
 | --- | --- |
-| Sawtooth Sal | The pipe is patched: more water. Wood fences and walls |
-| The Dustmonger | Fuel, so the Pump House and Generator can run |
+| Sawtooth Sal | The pipe is patched: more water. Timber, and wood fences and walls |
+| The Dustmonger | Fuel, so pumps and generators can run |
 | Mother Mirage | The valve: more water. The Trading Post |
 | Gearhead Gunn | Guard Posts and Searchlights |
 | Kettle Kingpin | The boiler. With steel from the forge, the Treatment Plant |
 | The Twin Vultures | The water truck: more water. The Motor Pool |
 | The Tollkeeper | The tanker: more water. Deeds and the Bank |
-| Baron Blackiron | The Cistern: a lot more water |
+| Baron Blackiron | The Cistern: a great deal more water |
 | Magnus | The Scrapyard's big crane |
 
-These read your save as it stands, so anything you have already beaten counts the
-moment you open the town. Lighting Tin Town's forge (the Everburn) opens steel. The
-Bowl's trucks, your rank and your crew all count too. Nothing here ever makes a race
-or a fight harder or easier.
+These read your save as it stands, so anything you have already beaten counts the moment you
+open the town. Lighting Tin Town's forge (the Everburn) opens steel. Nothing here ever makes a
+race or a fight harder or easier.
 
-**The look.** Everything is built from scrap, rust and salvage, and it gets better
-as the town does. At night the lamps come on. It should be the kind of place you just
-want to stop and watch.
+**The Town's Book.** The town writes its own history as you play: who came, what burned, who
+was born, the year of the drought, the day the first tap ran clean. You can read it from the
+first page at any time, and years from now that is the part that will matter. Each year ends
+with one page. The founders' names are on the first.
 
-**Time.** Pause, normal, fast and very fast. It only runs while you are playing. Out
-on a mission it keeps going, more slowly, and your radio tells you about anything
-serious. It stops when you close the game, and there is never a timer to wait out.
+**Time.** Pause, normal, fast and very fast. It only runs while you are playing. Out on a
+mission it keeps going, more slowly, and your radio tells you about anything serious. It stops
+when you close the game.
 
-## 4. Reports: the town tells you what it needs
+## 6. Reports: the town tells you what it needs
 
-A panel down the side of the screen, newest and worst first. Each one has who, what,
-and where (click to fly there), and up to three buttons.
+A panel down the side of the screen, newest and worst first. Each one has who, what, and where
+(click to fly there), and up to three buttons.
 
 > **FIRE at Moss's garage.** Odessa says it will reach the fuel depot.
 > **[GO YOURSELF]** Fire truck, from the Motor Pool
 > **[SEND SOMEONE]** Cinder and the second engine. Likely. Back in a day.
 > **[LEAVE IT]** It will probably burn down, and the fuel depot with it.
 
-- **Go yourself:** pick your vehicle (the right one is already picked) and up to two
-  support vehicles from the Motor Pool, and you are driving in a few seconds. Any
-  car, truck or monster truck you own that suits the job can be taken.
-- **Send someone:** pick a crew member. The card tells you the chance in words and
-  numbers, how long it takes, and why (Cinder is good at fire). They go, the map
-  shows them going, and they report back with what happened. They can come back
-  bruised and with the job still open, but nobody is ever lost.
+- **Go yourself:** pick your vehicle (the right one is already picked) and up to two support
+  vehicles from the Motor Pool, and you are driving in a few seconds. Any car, truck or monster
+  truck you own that suits the job can be taken.
+- **Send someone:** pick a crew member. The card tells you the chance in words and numbers, how
+  long it takes, and why (Cinder is good at fire). They go, the map shows them going, and they
+  report back with what happened. They can come back bruised and with the job still open.
 - **Leave it:** always a choice, and it says exactly what will happen.
 
-Not everything is bad news. Traders offer deals, children send drawings, and the
-Vultures point out that you have been paying for the same fence twice. A dust storm
-blows through and Dune gets stuck in a plane for a day and writes about it.
+Not everything is bad news. Traders offer deals, children send drawings, and the Vultures point
+out that you have been paying for the same fence twice. A dust storm blows through and Dune
+gets stuck in a plane for a day and writes about it.
 
-**What goes wrong is real, and always fixable.** A fire can burn a building to a
-black frame: rebuild it for half price. Raiders can steal a truck: chase it down, or
-buy another. A rival can take a deed: bid for it, or go and take it back. People can
-leave: they come back when things are better. There is no game over.
+**What goes wrong is real, and always fixable.** A fire can burn a building to a black frame: you
+rebuild it, and it costs what it costs. Raiders can steal a truck: chase it down, or find another.
+A rival can take a deed: bid for it, or go and take it back. People can leave: they come back when
+things are better. There is no game over.
 
-## 5. Missions
+## 7. Missions
 
-Every job is one screen line, one marker on the map and one arrow on the compass. No
-racing clock. Fail, and it restarts from its last step with one press. All of them
-can be done on Easy by a child: at least 8 times in 10 at a child's pace, proved by
-the game's test drivers before any of it goes live. They use the job engine the
-Everburn uses, driving through the real town and the real Scablands.
+Every job is one screen line, one marker on the map and one arrow on the compass. No racing clock.
+Fail, and it restarts from its last step with one press. All of them can be done on Easy by a child:
+at least 8 times in 10 at a child's pace, proved by the game's test drivers before any of it goes
+live. They use the job engine the Everburn uses, driving through the real town and the real Scablands.
 
 | Job | The goal | Vehicle |
 | --- | --- | --- |
-| **Fire call** | Drive up, hold H to spray, refill at any tap, hit the worst of it first. It spreads if you dawdle | Fire truck |
+| **Salvage haul** | Drive out to the Boneyard, load what the gang has cut, bring it home without shedding it. Your very first job | Flatbed |
+| **Fire call** | Drive up, hold H to spray, refill at any tap or hydrant, hit the worst of it first. It spreads with the wind | Fire truck |
 | **Fire on the Ridge** | Scoop, fly, pour | Kestrel One |
 | **Food run** | Carry sacks, don't spill them, and bring back what they trade you | Supply truck |
 | **Water run** | Drive a heavy, sloshing tanker out, then hold still while it fills their tank | Water tanker |
+| **Steel run** | A site is stopped for want of steel. Go and get it from Tin Town | Flatbed |
 | **Pipe patch** | Park, get out, wrench three joints while Rats come at you | Any, on foot |
 | **Fence run** | Drop fence at four stops around an outpost, so it is safer from then on | Supply truck or dozer |
 | **Tow job** | Hook a dead van and bring it home, slowly, while everyone overtakes you | Tow rig |
@@ -161,277 +235,256 @@ Everburn uses, driving through the real town and the real Scablands.
 | **Scout** | Go somewhere nobody has been and uncover it | Anything, or Kestrel One |
 | **School bus** | Take forty fans to the Bowl in the Bully without losing any. They are very noisy | The Bully |
 
-Your old modes count too: a report can send you to win a **Fuel Run** for the fuel
-depot, a **Convoy Raid** against Mrs Vane's tanker, a **warlord rematch** to win back
-a territory or **Last Car Rolling** at the Dome to sell tickets. The whole game feeds
-the town.
+More kinds can be added at any time: a job is data on the engine.
 
-**Choices stick.** Every community remembers what you did. Friends trade better and
-send help. People who fear you pay up and hate you. Neither is wrong, and the game
-never tells you which to be.
+Your old modes count too: a report can send you to win a **Fuel Run** for the fuel depot, a **Convoy
+Raid** against Mrs Vane's tanker, a **warlord rematch** to win back a territory or **Last Car Rolling**
+at the Dome to sell tickets. The whole game feeds the town.
 
-**New gear for jobs that aren't fights.** A water cannon (on the fire truck, later
-in the Armory: pushes cars around and puts out fires), a dozer blade and a tow hook.
-They follow the arsenal's rules: you can see them coming, you can get away from them,
-and they never take your car away from you for long.
+**Choices stick.** Every community remembers what you did, for years. Friends trade better and send
+help. People who fear you pay up and hate you. Neither is wrong, and the game never tells you which to
+be.
 
-## 6. Territory and deeds
+**New gear for jobs that aren't fights.** A water cannon (on the fire truck, later in the Armory: pushes
+cars around and puts out fires), a dozer blade and a tow hook. They follow the arsenal's rules: you can
+see them coming, you can get away from them, and they never take your car away from you for long.
 
-On the Wasteland map, every one of the eight old territories has **three deeds**: a
-stretch of road (tolls), a works (Sal's sawmill, the Dustmonger's pumps and so on) and
-an outpost (people who pay you to look after them and send you trade). When a
-territory's warlord is beaten, its deeds can be bought from the Tollkeeper.
+## 8. Territory and deeds
 
-- **A set.** Hold all three deeds in a territory and it flies your flag: double the
-  income, and its special perk.
-- **Rent both ways.** Your trucks pay tolls on other people's roads. Theirs pay on
-  yours.
-- **Bidding.** Mrs Vane buys deeds too. A report tells you she has bid, with a button
-  to beat her price before the deal closes.
-- **Holding on.** A deed with nobody looking after it gets raided and reports come in.
-  Build it a fence or a post from the map, or go and sort it out. Ignore it for long
-  enough and someone else's flag goes up. Then buy it back, or win it back: a Mad Max
-  Duel on that road or a rematch against that warlord does exactly that.
+On the Wasteland map, every one of the eight old territories has **three deeds**: a stretch of road
+(tolls), a works (Sal's sawmill, the Dustmonger's pumps and so on) and an outpost (people who pay you to
+look after them and send you trade). When a territory's warlord is beaten, its deeds can be bought from
+the Tollkeeper.
 
-Beyond the deeds, **sending crew out** is how the map opens up. Unexplored land is
-dark. Send Dune, Wren or anyone out for a few days and they come back with what they
-found and a short funny log of how it went. ("Day 2. Found an airliner. Ate a lizard.
-Regret the lizard.")
+- **A set.** Hold all three deeds in a territory and it flies your flag: double the income, and its
+  special perk.
+- **Rent both ways.** Your trucks pay tolls on other people's roads. Theirs pay on yours.
+- **Bidding.** Mrs Vane buys deeds too. A report tells you she has bid, with a button to beat her price
+  before the deal closes.
+- **Holding on.** A deed with nobody looking after it gets raided, and reports come in. Build it a fence
+  or a post, or go and sort it out. Ignore it for long enough and someone else's flag goes up. Then buy it
+  back, or win it back: a Mad Max Duel on that road or a rematch against that warlord does exactly that.
 
-## 7. The town and everything else
+Beyond the deeds, **sending crew out** is how the map opens up. Unexplored land is dark. Send Dune, Wren
+or anyone out for a few days and they come back with what they found and a short funny log of how it went.
+("Day 2. Found an airliner. Ate a lizard. Regret the lizard.")
 
-- **Drive through it.** Press DRIVE and you are at your own gate in your own car. Your
-  town is solid. The people get out of the way. Every story job in the Scablands now
-  runs past the buildings you made.
-- **The Dome is in the middle of it.** Winning at the Scrapdome sells tickets, and the
-  till takes the money. Its gate is a real place: drive up to it and go in.
-- **Cars.** Your Workshop can build the Wasteland's own cars from scrap: the Rattler,
-  the Scarab, the Longhaul and the Bully. The Paint Shop sells new paint jobs for
-  anything you own.
-- **The helicopter.** Section 6 of the story: once you build a Helipad, Kestrel One
-  comes over the wall.
-- **The Lab.** The town can open Brian's new lesson later on how water is made clean,
-  with his shelf of glass jars.
-- **The animals.** Goats, chickens and a scruffy camp dog in your town; lizards and
-  vultures in the Scablands.
+## 9. The town and everything else
 
-## 8. What this does not do
+- **Drive through it.** Press DRIVE and you are at your own gate in your own car. Your town is solid. The
+  people get out of the way. Every story job in the Scablands runs past the buildings you made.
+- **The Dome is in the middle of it.** Winning at the Scrapdome sells tickets, and the till takes the money.
+  Its gate is a real place: drive up to it and go in.
+- **Cars.** Your Workshop can build the Wasteland's own cars, slowly, from parts: the Rattler, the Scarab,
+  the Longhaul and the Bully. The Paint Shop sells new paint jobs for anything you own.
+- **The helicopter.** Section 6 of the story: once you build a Helipad, Kestrel One comes over the wall.
+- **The Lab.** Brian can teach what the town is doing, for real: why a tower gives pressure, how sand cleans
+  water, why the latrine goes downhill. Kept for later cards.
+- **The animals.** Goats, chickens and a scruffy camp dog in your town; lizards and vultures in the Scablands.
 
-No second player at the same time: Kyle and Gratian each have their own town in their
-own save. No waiting on timers or coming back tomorrow. No game over. Nothing in the
-town changes race rules, ranks, weapon balance or any released course. The yard keeps
-its old pages and gets one new button, and the front door stays as it is. No phone or
-small-screen layouts. No more of The Deep than finishing what is there.
+**What this does not do.** No second player at the same time. No waiting on timers and no coming back tomorrow.
+No game over. Nothing in the town changes race rules, ranks, weapon balance or any released course. The yard
+keeps its old pages and gets one new button, and the front door stays as it is. No phone or small-screen layouts.
+No more of The Deep than finishing what is there.
 
 ---
 
-## 9. Builders: how it works
+## 10. Builders: no ceilings
+
+This game will be added to for years. Every rule here protects that. A card that needs to break one stops and
+asks.
+
+- **No fixed limits in code.** No maximum people, buildings, roads or years. Performance targets, not caps: a sim
+  day under 30 ms with 10,000 people and 5,000 buildings, tested. The view uses distance and sampling so it holds
+  at any size.
+- **The world is regions of sparse chunks.** A region is data: id, ground function, reserved shapes. 16 by 16
+  chunks of 8 m cells, made when first used. The Scablands is the first region. You can build anywhere not
+  reserved, including beyond the ring road. Land beyond the Ridge is one more region later. Nothing assumes one map.
+- **Everything is content, in data.** Buildings, goods, recipes, jobs, step kinds, events, neighbours, chapters,
+  report text, deeds, weapons and vehicles live in tables under `src/town/content/`, one file a family, read through
+  registries. Adding a building is a table row, an art node and a test row. Code never names one building unless it
+  is a rule of the world.
+- **The story is a graph with no last node.** A chapter has conditions read from the town and what it opens. New
+  stories are new files. The Sea Works ends an era, not the game; the code has no "game finished" state.
+- **A save from Year 1 of the first build always loads in the last build.** The town's version number and a migration
+  list kept forever, with a fixture from each version tested on every merge that touches saves. New features default
+  sensibly on old towns; nothing is ever dropped because it is unknown. See section 13.
+- **The chronicle keeps everything** in compact form, with no limit: the Town's Book is a real record, and so are
+  people's histories.
+
+## 11. Builders: how it works
 
 These are settled. A card's own open question goes on the card in writing first.
 
-- **Pure sim, no graphics.** Everything in `src/town/` except `view/` and `ui/` steps
-  from seed and commands with no DOM and no Three.js. All randomness from `src/rng.js`,
-  its state kept in the town. `stepTown(town, commands)` runs one tick. One tick is one
-  game hour; 24 ticks make a day; 5 days make a week. At normal speed one day takes 40
-  seconds; speeds are 0, 1, 2 and 4. The view turns real time into whole ticks. It is
-  frame-rate independent by construction, and a test fingerprints a scripted town after
-  a set number of ticks.
-- **Commands are the only way in.** The UI and mission results send plain data commands
-  (`place`, `paint`, `road`, `demolish`, `setPrice`, `tillIn`, `tillOut`, `dispatch`,
-  `answerReport`, `missionResult`, `bid`, `buyDeed`). The view and HUD only read. A
+- **Pure sim, no graphics.** Everything in `src/town/` except `view/` and `ui/` steps from seed and commands with no
+  DOM and no Three.js. All randomness from `src/rng.js`, its state kept in the town. `stepTown(town, commands)` runs one
+  tick. One tick is one game hour. A day is 24 ticks, a month 30 days, a year 12 months. At normal speed a day takes 45
+  seconds; speeds are 0, 1, 2 and 4. The view turns real time into whole ticks. Slow systems run by the day or month from
+  the same loop. A test fingerprints a scripted town after a set number of ticks.
+- **Commands are the only way in.** The UI and mission results send plain data commands. The view and HUD only read. A
   refused command returns a sentence for a child, and that is what the screen shows.
-- **Systems register.** `src/town/town-sim.js` runs a list of systems in a fixed order,
-  each in its own file (`registerTownSystem(name, order, fn)`), so cards do not fight
-  over one file. `src/town/index.js` has one import line per system.
-- **Grid.** 64 by 48 cells of 8 m, centred on the Scablands' origin. The Dome takes the
-  middle 28 by 20. Ground inside the grid is flat at height 0, added to
-  `scablandsSurfaceHeightAt` with a soft edge. Nothing else on the map moves: the ring
-  road's inner edge is at 394 m and the grid's edge at 192 m. Four dirt spokes run from
-  the grid to the ring road, always open. Building cells off a road do not count: a
-  building needs a road next to it.
-- **Pipes and wires are free and invisible.** Any road carries water and power, and a
-  building next to a connected road is on the network. An overlay shows it. Plumbing is
-  not the fun part.
-- **Reach.** Services reach homes by road distance in cells, not straight lines, so
-  roads matter and the Why? button can draw the route.
-- **People.** Town state keeps counts and per-home data, and at most 300 named people as
-  small records (name seed, home, job, mood). Walkers are view-only, up to 200 on screen,
-  picked from those people, walking the road graph with their own seeded stream, which is
-  never read back.
-- **The till** is `town.till`. It only meets `profile.wasteland.scrap` through `tillIn` and
-  `tillOut`, and those are the only town commands that write outside `profile.town`. `tillOut`
-  gives half (rounded down) to the wallet. Mission pay still goes to the wallet through the
-  existing settlement, and a mission's effect on the town is a separate `missionResult`.
-- **Links are read-only.** `src/town/town-links.js` reads warlords beaten, Everburn progress,
-  rank, crew and owned cars from the profile, as `water-save.js` does, and never writes.
-  Section 11's unlocks are computed from those on every read and are never copied.
-- **Jobs.** Town missions are job data (`src/world/jobs/town-jobs.js`) on the existing engine
-  and `world-job` mode. New step kinds, each its own file in `src/world/jobs/steps/`: `douse`
-  (fire cells, tank, refill points, hold H), `tow`, `repair` (on foot, hold at markers with
-  the wrench), `fence` (reach and drop), `clear` (hit or crush listed wrecks), `hold` (stay in
-  a ring). A job may set `side: 'defend' | 'attack'`, so that one road fight can run both ways.
-- **Your town in the world.** `src/town/town-world.js` turns town data into solids for the
-  arena venue and instance lists for rendering. The layout is read once at the start of a job,
-  so a job's replay stays repeatable from seed, inputs and that layout. Walkers step aside
-  and are never hit.
-- **During a mission** the app ticks the town at one tick every 5 real seconds outside race
-  state, and passes its serious reports to the radio queue at most once a minute. Nothing in
-  race state reads the town. Results go back as one `missionResult`, settled once per run id.
-- **Support vehicles** are computer drivers on the player's team through `combat-teams.js` and
-  the arena pilot. Work vehicles are drivable, but they are not garage cars: `src/town/work-vehicles.js`
-  gives them to the arena's player setup without adding them to `CARS`, so no menu, medal, computer
-  field or existing test changes.
-- **Dispatch.** `src/town/town-dispatch.js`. Chance = 0.5 + crew skill for that kind of job (0 to
-  0.3) + vehicle (0 to 0.15) + standing with the place (-0.1 to 0.1) - job difficulty (0 to 0.5),
-  clamped to .1 to .95, shown in words (Risky, Even, Likely, Sure thing) and as a number. Rolled
-  from the town's generator when the job starts. Failure means bruised (crew unavailable for 2 days)
-  and the job is still open. Crew are those available from `availableCrew`.
-- **Save.** `profile.town`, version 1, optional: made on first open, never by loading. Unknown
-  fields are kept, a newer version is kept untouched, grid stored run-length by row. At most 40 KB,
-  tested with a full town (career storage has a 4 MB budget). Written on leaving the town, every game
-  week and before each mission, never every tick. It goes through the usual profile save, so
-  it gets career backup with no extra code. One independent save review.
-- **Switch.** `wasteland-town`, dev until finished. Off means no button and nothing loads: `src/town/`
-  is loaded by dynamic import.
-- **Art.** `public/assets/models/wasteland/town/<family>.glb`; contract on the TOWN-ART cards. Draw with
-  instancing per node; at most 150 draw calls for a full town. Frame check per rule 8 with a full town
-  at the busiest view, once it can be reached.
-- **Sound.** Every new event names a cue, reusing banks first: `town.place` (metal thunk), `town.ready`
-  (hammer stops, bell), `town.report` (radio click), `town.ledger` (till ring), `town.fire` (the fire
-  banks in `heli-audio.js`), `town.bell` (truck bell), `town.crowd` (crowd bank, by population). No voice
-  files in the first slices.
+- **Systems register.** `registerTownSystem(name, order, everyTicks, fn)`, each in its own file, with `src/town/index.js`
+  one import line each, so cards do not fight over one file.
+- **Ground and earthworks.** `heightAt(x, z)` = the region's natural height + a sparse grading layer the town keeps, read
+  by rendering, physics, pipes and sewers alike. Building on a slope needs grading, which takes workers. The Dome's oval
+  and the gate are reserved. Everything on the map stays where it is.
+- **Ground water.** A seeded depth and yield field per region, shallower along old creek lines, known only where someone
+  has dug a test pit. Wells draw it down and droughts lower it.
+- **Water network.** Three pipe sizes, laid by workers along any path, on their own underground layer. A connected network has
+  sources (wells, pumps, towers, the Water Road tap), and each cell's pressure in metres of head = the source's height
+  (ground + tower) - the ground at that cell - friction by distance, flow and pipe size. Solved by walking outward from the
+  sources when the network or demand changes, not by a full flow solver: real behaviour, cheap and explainable in one
+  sentence. Taps and hydrants deliver what pressure and pipe allow. Sewers are the same in reverse and need a fall. Water
+  quality travels with the water. Wires carry kW, with generation against demand. Overlays show all of it.
+- **Construction.** A plan makes a site with a list of materials and worker hours. Haulers bring materials, builders add
+  hours, and the site shows `scaffold-N` until finished. Short of something: it stops and raises a report with a job.
+- **Goods and hauling.** Stockpiles and warehouses by cell. Recipes run in buildings with workers. Handcarts and trucks are
+  agents on the road graph, with capacity in kg, speed by road class and vehicle, fuel used. They are real in the sim, and the
+  view draws them. Prices move with stock.
+- **People.** Everyone is an individual record: id, name, born, family, home, job, skills, health, mood, a short history. Updated
+  once a day, not per tick. Walkers on screen are a sample, view-only, with their own seeded stream.
+- **The till** is `town.till`. It only meets `profile.wasteland.scrap` through `tillIn` and `tillOut`, the only town commands that
+  write outside the town. `tillOut` gives half to the wallet. Mission pay still goes to the wallet through existing settlement, and a
+  mission's effect on the town is a separate `missionResult`.
+- **The Ledger is double entry.** Every money move has two sides in named accounts, monthly and yearly, so it always balances, with
+  loans, interest and what buildings are worth. A test proves it balances after 30 years.
+- **Links are read-only.** `src/town/town-links.js` reads warlords beaten, Everburn progress, rank, crew and owned cars from the profile
+  as `water-save.js` does, and never writes.
+- **Jobs.** Town missions are job data on the existing engine and `world-job` mode. New step kinds, each its own file in
+  `src/world/jobs/steps/`: `douse`, `haul` (load, carry with shed risk, unload), `tow`, `repair`, `fence`, `clear`, `hold`. A job may set
+  `side: 'defend' | 'attack'`, so one road fight can run both ways.
+- **Your town in the world.** `src/town/town-world.js` turns town data into solids and instance lists, read once at the start of a job,
+  so a replay is repeatable from seed, inputs and that layout. Walkers step aside and are never hit.
+- **During a mission** the app ticks the town at one tick every 10 real seconds outside race state, and passes serious reports to the
+  radio at most once a minute. Nothing in race state reads the town. Results go back as one `missionResult`, settled once per run id.
+- **Support vehicles** are computer drivers on the player's team through `combat-teams.js` and the arena pilot. Work vehicles are drivable
+  but are not garage cars: `src/town/work-vehicles.js` gives them to the arena's player setup without adding them to `CARS`, so no menu,
+  medal, computer field or existing test changes.
+- **Dispatch.** Chance = 0.5 + crew skill for that kind of job (0 to 0.3) + vehicle (0 to 0.15) + standing with the place (-0.1 to 0.1) -
+  job difficulty (0 to 0.5), clamped to .1 to .95, shown in words (Risky, Even, Likely, Sure thing) and as a number. Failure means bruised
+  (unavailable for a few days), and the job is still open.
+- **Switch.** `wasteland-town`, dev until finished. Off means no button and nothing loads: `src/town/` by dynamic import.
+- **Art.** `public/assets/models/wasteland/town/<family>.glb`; contract on the TOWN-ART cards. Instancing per node, level of detail and
+  chunk culling, so a big town holds rule 8's frame limit. Frame check once a big town can be reached, at Year 3 and at the test town of
+  10,000.
+- **Sound.** Every new event names a cue, reusing banks first: `town.place`, `town.ready`, `town.report`, `town.ledger`, `town.fire`, `town.bell`,
+  `town.crowd`. No voice files in the first slices.
 
-## 10. The screen
+## 12. The screen
 
-Same style as the yard: dark panel, stencil heads, yard colours. Laptop only, mouse and keyboard
-(the Lab's rule). Never covers the middle of the map.
+Same style as the yard: dark panel, stencil heads, yard colours. Laptop only, mouse and keyboard (the Lab's rule). Never covers the middle of
+the map.
 
-- **Top bar:** town name, date, TILL, PEOPLE, mood face with number, water in and out, power in and out;
-  pause, 1, 2, 3 (Space and number keys); THE YARD (leaves).
-- **Under the top bar, the whole width: NEXT.** One line, always right, with an arrow to where on the map.
-- **Left: build menu.** Picture tabs: Roads, Homes and Shops (paint), Water, Clean, Food, Power, Safety,
-  Services, Fun. Each entry has a picture, cost, what it does in six words. Locked ones are shown greyed,
-  with what opens them ("Beat Gunn").
-- **Right: Reports.**
-- **Bottom left:** overlays (Water, Clean, Food, Safety, Fire, Mood, Reach). **Bottom right:** DRIVE, MAP
-  (zoom), LEDGER, CREW.
-- **Placing:** ghost in place, green or red by cell, a refusal says why, drag for roads, zones and walls,
-  R rotates, right click or Esc cancels. Refunds half if demolished.
-- **Clicking a person or building:** a card beside it, with name, what they think in one sentence, the need
-  dots, Why? buttons, and on a building: running or why not, jobs, upgrade, demolish, price.
-- **Camera:** WASD or arrows or edge-of-screen to move; wheel to zoom, continuously from the street to the
-  Scablands; Q and E to turn. The Wasteland map opens past the far end of the zoom.
-- **Teaching:** no bare sliders (the Lab's standard). The first time a system matters, Odessa or Hollis says
-  what it is and why, with the thing lit on the map. Every word is explained the first time.
+- **Top bar:** town name, date and season, TILL, PEOPLE, mood face with number, water in and out, power in and out; pause, 1, 2, 3 (Space and
+  number keys); THE YARD (leaves).
+- **Under the top bar, the whole width: NEXT.** One line, always right, with an arrow to where on the map. When nothing is urgent it says what is
+  under way ("Shacks going up, 3 of 8. Short of tin.") and what you might plan.
+- **Left: build menu.** Picture tabs: Roads, Pipes and Wires, Homes and Shops, Water, Clean, Food, Goods, Power, Safety, Services, Fun. Each entry has
+  a picture, what it needs, what it does in six words. Locked ones are shown greyed, with what opens them ("Beat Gunn").
+- **Right: Reports.** **Bottom left:** overlays (Water, Pressure, Clean, Food, Goods, Safety, Fire, Mood, Reach, Underground). **Bottom right:** DRIVE, MAP,
+  LEDGER, CREW, THE BOOK.
+- **Placing:** ghost in place, green or red by cell, a refusal says why, drag for roads, pipes, zones and walls, R rotates, right click or Esc cancels.
+- **Clicking a person or building:** a card beside it, with name, what they think in one sentence, the need dots, Why? buttons. On a building: running or why
+  not, jobs, stock, real numbers under MORE, upgrade, demolish, price. On a person: age, family, job, skills and their history.
+- **Camera:** WASD or arrows or edge-of-screen to move; wheel to zoom, continuously from the street to the Scablands; Q and E to turn. The Wasteland map opens
+  past the far end of the zoom.
+- **Teaching:** no bare sliders (the Lab's standard). The first time a system matters, Odessa or Hollis says what it is and why, with the thing lit on the map.
+  Every word is explained the first time. Real numbers are explained where they appear.
 
-## 11. Numbers to start from (one review; TOWN-BALANCE tunes them)
+## 13. Builders: a save that lasts for years
 
-Cost in scrap, upkeep per week. **Water:** 4 litres a person a day. Water Road limit on all water drawn
-per day: 80 + 60 per warlord beaten, + 1000 with the Cistern deed.
+Kyle's town may be years old. On 28 October a full disk let Chrome clear careers, so this one is taken seriously.
 
-| Building | Size | Cost | Upkeep | Jobs | Gives | Opens with |
-| --- | --- | --- | --- | --- | --- | --- |
-| road (a cell) | | 5 | | | Carries pipes and wires | start |
-| `hand-well` | 1x1 | 80 | 0 | 0 | 40 L a day, brown | start |
-| `standpipe` | 1x1 | 40 | 2 | 0 | Water within 8 cells | start |
-| `water-tower` | 2x2 | 300 | 5 | 0 | Stores 400 L; reach 16 | Sal |
-| `pump-house` | 2x2 | 600 | 20 | 2 | 200 L a day, brown; needs 5 power | Dustmonger |
-| `treatment-plant` | 4x3 | 3000 | 60 | 6 | Makes 400 L clean; needs 15 power | Kettle and forge lit |
-| `reservoir` | 4x4 | 1200 | 5 | 0 | Stores 2000 L; helicopter scoop | Treatment Plant |
-| `latrine` | 1x1 | 50 | 3 | 0 | 8 people within 6 cells | chapter 3 |
-| `bathhouse` | 2x2 | 400 | 15 | 1 | 30 people within 10; mood | 25 people |
-| `reed-bed` | 3x3 | 900 | 10 | 1 | Cleans waste of 80 | Sal |
-| `trash-sorter` | 3x2 | 700 | 15 | 3 | Scrap from rubbish | 50 people |
-| `compost-heap` | 1x1 | 60 | 1 | 0 | Greenhouse within 4: 20% more | Greenhouse |
-| `soup-kitchen` | 2x1 | 150 | 10 | 1 | Feeds 12 within 10; uses 12 L | chapter 2 |
-| `chicken-run` | 1x1 | 100 | 2 | 0 | Feeds 4 | chapter 2 |
-| `goat-pen` | 2x2 | 350 | 6 | 1 | Feeds 12 | Old Tam |
-| `greenhouse` | 3x2 | 800 | 12 | 2 | Feeds 30; uses 30 L | chapter 6 |
-| `market-hall` | 3x3 | 1500 | 25 | 4 | Shops within 12 double | 60 people |
-| `windmill` | 1x1 | 150 | 1 | 0 | 10 power | chapter 5 |
-| `generator` | 2x1 | 500 | 10 | 1 | 40 power; 5 fuel a day | Dustmonger |
-| `solar-rack` | 2x2 | 900 | 2 | 0 | 25 power | chapter 6 |
-| `fuel-depot` | 3x2 | 1200 | 10 | 2 | Stores 500 fuel | Dustmonger |
-| `fence-wood`, `-chain` | a cell | 6, 15 | | | Strength 1, 2 | start, Sal |
-| `wall-scrap`, `-steel` | a cell | 40, 120 | | | Strength 4, 8 | Gunn, forge lit |
-| `gate-scrap` | 2x1 | 100 | 1 | 0 | Road passes a wall | Sal |
-| `watchtower` | 1x1 | 200 | 5 | 1 | Safety within 12; earlier warning | chapter 6 |
-| `guard-post` | 2x1 | 350 | 15 | 2 | Safety within 8; fights off small raids | Gunn |
-| `searchlight` | 1x1 | 120 | 3 | 0 | Night raids spotted | Gunn |
-| `fire-station` | 3x2 | 1000 | 25 | 3 | Sends itself to fires within 20 | First Fire |
-| `clinic` | 2x2 | 800 | 25 | 2 | Cures 20 within 16 | 30 people |
-| `town-hall` | 3x3 | 1500 | 20 | 2 | Mood +5; opens the second build tier | chapter 6 |
-| `scrapyard` | 3x3 | 900 | 15 | 3 | 60 scrap a week | 30 people |
-| `forge` | 2x2 | 1200 | 15 | 2 | Steel buildings | Everburn job 4 |
-| `workshop` | 3x2 | 1500 | 20 | 3 | Builds Wasteland cars | Town Hall |
-| `motor-pool` | 4x2 | 1000 | 15 | 2 | Holds four work vehicles | Vultures, or chapter 7 |
-| `paint-shop` | 2x2 | 600 | 8 | 1 | New paints | Workshop |
-| `trading-post` | 3x2 | 900 | 12 | 2 | Trade roads run | Mirage, or chapter 7 |
-| `toll-bank` | 2x2 | 1000 | 15 | 2 | Deeds, loans | Tollkeeper |
-| `school` | 3x2 | 700 | 15 | 2 | Mood; children; jobs pay more | Miss Quill |
-| `radio-mast` | 1x1 | 500 | 5 | 0 | Scout further; more warning | chapter 7 |
-| `helipad` | 4x4 | 2000 | 10 | 1 | Kestrel One | Ridge fire |
-| `tavern` | 2x2 | 500 | 8 | 1 | Fun within 14 | 20 people |
-| `fun-stall-a`, `-b` | 1x1 | 120 | 2 | 1 | Fun within 6 | 20 people |
-| `fountain` | 1x1 | 300 | 2 | 0 | Mood within 8; uses 10 L | Treatment Plant |
-| `statue` | 1x1 | 200 | 0 | 0 | Mood within 8 | Town Hall |
-| `wreck-ring` | 3x3 | 900 | 12 | 2 | Fun within 16 | 40 people |
-| `drive-in` | 4x3 | 1400 | 15 | 2 | Fun within 18 | Town Hall |
-| `mud-pit` | 4x4 | 1800 | 15 | 2 | Fun within 18; can be driven in | Titan owned or Bowl played |
-| `big-wheel` | 3x3 | 2000 | 25 | 3 | Fun within 20 | 80 people |
-| `scrap-coaster` | 6x4 | 5000 | 50 | 4 | Fun within 26 | 120 people |
+- **Its own store.** Each town is an IndexedDB record, as `career-archives.js` does for ghosts, with a pointer key in `CAREER_KEYS`, so that `createCompleteCareerExport`
+  and import include it. Target under 5 MB at Year 30, tested by the soak run. The career stays small and unaffected.
+- **Town ids and mayors.** A town has an id and a list of players who can open it (`mayors`), so it can belong to one player or be shared. Links (warlords beaten) read
+  whoever is playing, and a shared town counts the best of its mayors.
+- **Rolling copies.** Saved on leaving, each game month and before each mission. It keeps the last 3 saves and one copy from the start of each real week for 8 weeks,
+  all in the same store.
+- **A file on the disk.** A BACK UP button, and a monthly reminder from the Vultures, write the town to a file the player chooses (File System Access API where the browser
+  has it, keeping the permission so later backups are one press; a normal download otherwise). Restore from the same screen. Reminds, never nags, and never blocks play.
+- **QA** is memory-only as always. A corrupt town never harms the career: it reads as damaged, offers the newest good copy and says so plainly.
+- **One independent save review, and the save checker** (rule 6).
 
-**Homes:** tent 2 people, shack 3, stack 5, block 12, terrace 6. A home improves when mood at it holds at
-50, 65, 80 for a week, and steps back if it drops below by 15. **Rent** a person a week: tent 3, shack 5,
-stack 7, block 8, terrace 12, +2 with a job. **Shops** pay 10, 20, 30 a week by size if 20 people live within
-10 cells. **Tickets:** a person spends 3 a week at Fair, in the nearest attraction with room; Cheap gives
-2 and +10% queue and +3 mood, Dear gives 5 and -30% queue and -3 mood. **Arrivals:** per day, up to
-1 + mood/25, while water, homes and mood over 40 allow. **People leave** at mood under 20 for a week.
+## 14. Numbers to start from (one review; TOWN-PACE tunes them)
 
-**Targets TOWN-EASY must prove:** the child-pace player following only NEXT reaches chapter 6 by 25 minutes of
-real play at normal speed, never has the till stuck at 0 for more than one week, and has spent about
-as much as earned. A town of 150 earns about 700 a week. Late costs are meant to be chased with a mix of
-racing, rents and deeds. **Deeds** cost 400 to 2000 by ladder order. **The Sea Works** costs 60,000.
+Real where a real number exists. Money in scrap, per month. **Water Road limit** on water drawn: 10,000 litres a day + 12,000 per warlord beaten + 200,000 with the Baron.
 
-**Fire:** a building burns from 0 to 100 at 4 an hour, 8 if nothing is in reach of a tap. Catches a neighbour
-within 2 cells at 3% an hour per point above 50. At 100 it is `burnt-N`: stops working; rebuild for half.
-Hose lowers it 3 a second. Causes: arson by raiders and accidents, about one in 8 days at first; less with
-safety; none in the first 10 minutes except chapter 4's.
+| Building | Size | Materials (kg) | Worker hours | Upkeep | Staff | Gives | Opens with |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| road, dirt / plank / paved (a cell) | | - / timber 100 / brick 600 | 10 / 20 / 60 | | | Speed | start, Sal, kiln |
+| pipe, 50 / 100 / 200 mm (a cell) | | 15 / 40 / 120 | 6 / 10 / 18 | | | Water | start, forge, forge |
+| `hand-well` | 1x1 | timber 40 | 40 per metre deep | 0 | 0 | About 1,000 L a day, brown | start |
+| `standpipe` | 1x1 | pipe 30 | 16 | 2 | 0 | 7.5 L a minute; 250 people | start |
+| `water-tower` | 2x2 | steel 800, timber 400 | 600 | 5 | 0 | 20,000 L, 12 m of head | Sal |
+| `pump-house` | 2x2 | steel 600, brick 2,000 | 800 | 20 | 2 | 40,000 L a day; 3 kW | Dustmonger |
+| `treatment-plant` | 4x3 | steel 12,000, brick 20,000, pipe 3,000 | 20,000 | 200 | 12 | 200,000 L a day clean; 15 kW | Kettle and forge lit |
+| `reservoir` | 4x4 | clay 5,000, sand 2,000 | 4,000 | 5 | 0 | 2,000,000 L; helicopter scoop | Treatment Plant |
+| `latrine` | 1x1 | timber 60, tin 30 | 30 | 2 | 0 | 20 people; fills in 2 years | start |
+| `bathhouse` | 2x2 | tin 400, timber 300 | 300 | 15 | 1 | 100 people; mood | 25 people |
+| `reed-bed` | 3x3 | gravel 20,000, pipe 300 | 1,500 | 10 | 1 | Cleans waste of 200 | Sal |
+| `trash-sorter` | 3x2 | steel 800, tin 400 | 800 | 15 | 3 | Salvage from rubbish | 50 people |
+| `soup-kitchen` | 2x1 | tin 200, timber 120 | 120 | 10 | 2 | Cooks for 40; uses 400 L | Year 1 |
+| `chicken-run` | 1x1 | timber 50, wire 10 | 24 | 2 | 0 | 12 hens: about 12 eggs a day | Year 1 |
+| `goat-pen` | 2x2 | timber 200 | 100 | 6 | 1 | 8 goats: about 24 L milk a day | Old Tam |
+| `greenhouse` | 3x2 | glass 400, timber 300 | 500 | 12 | 3 | Vegetables by season; 500 L a day | Town Hall |
+| `salvage-yard` | 3x3 | timber 200, tin 200 | 200 | 10 | 4 | Stores and sorts salvage | start |
+| `forge` | 2x2 | brick 3,000, steel 400 | 1,200 | 30 | 3 | Salvage to steel, tin, pipe; burns gas | Everburn job 4 |
+| `sawmill` | 3x2 | steel 400, timber 300 | 600 | 15 | 3 | Timber | Sal at peace |
+| `kiln` | 2x2 | brick 1,000 | 500 | 15 | 3 | Clay to brick | Town Hall |
+| `warehouse` | 3x3 | steel 1,000, tin 600 | 800 | 10 | 2 | Holds 200 tonnes | 100 people |
+| `windmill` | 1x1 | steel 200, parts 40 | 120 | 1 | 0 | About 5 kW with wind | Year 2 |
+| `generator` | 2x1 | steel 300, parts 100 | 200 | 10 | 1 | 40 kW; about 13 L fuel an hour | Dustmonger |
+| `solar-rack` | 2x2 | glass 200, steel 200 | 200 | 2 | 0 | About 8 kW by day | Town Hall |
+| `fuel-depot` | 3x2 | steel 2,000, brick 2,000 | 1,000 | 10 | 2 | 50,000 L of fuel | Dustmonger |
+| `fence-wood`, `-chain` | a cell | timber 30, wire 30 | 6, 8 | | | Strength 1, 2 | start, Sal |
+| `wall-scrap`, `-steel` | a cell | salvage 800, steel 1,200 | 30, 60 | | | Strength 4, 8 | Gunn, forge |
+| `watchtower` | 1x1 | timber 400 | 200 | 5 | 2 | Safety within 12; warning | Year 2 |
+| `guard-post` | 2x1 | sandbags 2,000, tin 100 | 150 | 15 | 4 | Safety within 8 | Gunn |
+| `fire-station` | 3x2 | steel 1,500, brick 3,000 | 3,000 | 40 | 6 | Sends itself within 20 | after the first fire |
+| `clinic` | 2x2 | tin 500, timber 500 | 800 | 30 | 3 | Treats 40; needs clean water | 100 people |
+| `school` | 3x2 | tin 500, timber 600 | 1,000 | 25 | 3 | 60 children; skills | Miss Quill |
+| `town-hall` | 3x3 | brick 8,000, steel 1,000 | 5,000 | 30 | 4 | Mood; second tier of building | 100 people |
+| `old-ground` | 3x3 | stone 500 | 100 | 1 | 0 | Where the town's people rest; their names | 50 people |
+| `workshop` | 3x2 | steel 1,500 | 1,500 | 25 | 4 | Builds Wasteland cars | Town Hall |
+| `motor-pool` | 4x2 | steel 1,500, tin 500 | 1,000 | 15 | 3 | Four work vehicles | Vultures, or Food run |
+| `trading-post` | 3x2 | timber 500, tin 300 | 500 | 12 | 3 | Trade roads run | Mirage, or Food run |
+| `toll-bank` | 2x2 | steel 2,000, brick 1,000 | 1,500 | 20 | 3 | Deeds, loans | Tollkeeper |
+| `radio-mast` | 1x1 | steel 600 | 400 | 5 | 1 | Scout further; warning | Food run |
+| `helipad` | 4x4 | steel 3,000, brick 4,000 | 2,500 | 15 | 2 | Kestrel One | Ridge fire |
+| `tavern` | 2x2 | timber 800, tin 200 | 500 | 12 | 2 | Fun within 14 | 40 people |
+| `wreck-ring` | 3x3 | salvage 4,000 | 1,000 | 15 | 3 | Fun within 16 | 200 people |
+| `drive-in` | 4x3 | steel 800, glass 100 | 1,500 | 20 | 3 | Fun within 18 | 300 people |
+| `mud-pit` | 4x4 | timber 1,000 | 1,500 | 15 | 3 | Fun; can be driven in | Bowl played |
+| `big-wheel` | 3x3 | steel 8,000, parts 400 | 6,000 | 40 | 4 | Fun within 20 | 800 people |
+| `scrap-coaster` | 6x4 | steel 30,000 | 30,000 | 100 | 8 | Fun within 26 | 2,000 people |
 
-**Standing** with each community: -100 to 100. Delivery +10, protection +20, raiding them -25, raiding their
-enemy +5. Above 30, trade pays 20% more. Below -30 they raid you or stop trading.
+Other art-card buildings (`compost-heap`, `market-hall`, `paint-shop`, `searchlight`, `gate-scrap`, `fountain`, `statue`, `fun-stall-*`, `scrapyard`) follow this rule until reviewed: about 15 worker hours a square metre of floor, 3 times that with machinery.
 
-**Mrs Vane** (from chapter 13, Medium numbers; half on Easy): every 8 days, makes one bid on an unowned deed,
-at list price plus 10%. A kiosk per 10 people drinking brown water; each takes 1 scrap a week per person from
-your water rent. Her buying stops at 12 deeds until you hold 12. She is built never to win outright, only to
-keep pressure on.
+**The Sea Works** needs about 2,000,000 worker hours and 400 tonnes of steel across its parts: the work of a generation.
 
-## 12. Slices, today's order
+**People.** 2,100 kcal a day, 15 to 50 L of water. Working hours 8 a day. Adults 16 to 65. A school year is real: a child in school for ten years has real skills. **Rent** about 6 to 20 a person a month by home tier; about 8 people's rent keeps one worker's wage. **Arrivals** depend on how the town is spoken of: about 1 + mood/25 a month in Year 1, more later, only while there is water and shelter. **Home tiers** improve when mood holds for months, and step back slowly if it does not.
 
-| Slice | What you can do | When |
-| --- | --- | --- |
-| **T1 Founding** | Everything in chapters 1 to 6: build, grow, Ledger, reports, the fire call | First playable |
-| **T2 Neighbours** | Zoom to the Scablands, your town solid in the world, Dot, Quill, Tam, Imre, Pim, the job list | Next |
-| **T3 Territory** | The Wasteland map, deeds, sets, dispatch, scouting, warlords' peace jobs | Next |
-| **T4 Mrs Vane** | Kiosks, bids, Free Water Day, both-sided road fights, water cannon, cars, paints | Next |
-| **T5 The Sea** | Helipad, Iron Mule and Ships stories, the Sea Works, the last run | Designed further when T3 stands |
+**Fire.** Real truck: 3,000 L, 1,000 L a minute. A building's fuel by material; wind by season; spreads downwind. About one serious fire a year at first, less with safety.
 
-## 13. Checks in common
+**Standing** with each community: -100 to 100. Delivery +10, protection +20, raiding them -25, raiding their enemy +5. Above 30, trade pays 20% more. Below -30 they raid you or stop trading. Drifts back slowly.
 
-The builder runs the card's own checks and `npm run build`; Claude runs the lane tier and browser scenarios
-before merging. Memory-only saves. Town sim tests never need a browser. New suites are named `tools/test-town-*.mjs`.
-Race fingerprints and world signatures of existing courses do not move; if a card needs that, it stops and asks.
-The Scablands is not yet released, so its ground may change here. No frame timing until a full town can be
-reached. No new dependency, network request, account or key.
+**Mrs Vane** (from about Year 7, half pace on Easy): buys one deed each few months, sets up kiosks where water is brown. Her buying pauses at 12 deeds until you hold 12. She is built never to win outright, and never to go away.
 
-## 14. Files
+## 15. Slices
 
-Everything new lives in `src/town/` (`view/`, `ui/`), `src/world/jobs/`, `tools/test-town-*.mjs`, `tools/scenarios/town-*.mjs`,
-`tools/blender/town*.py`. Shared files are touched only through the named hook on each card: `src/screen-yard-home.js` and
-`src/screen-router.js` (one button), `src/feature-flags.js` (one line), `src/world/scablands-ground.js` (flat ground),
-`src/arena/modes/world-job.js` (work vehicles, town solids, new step views), `src/story/story-radio.js` (town lines).
+| Slice | What you can do |
+| --- | --- |
+| **T1 Founding** | Years 1 to 3: the twelve, roads, wells, pipes, sites going up, goods and hauling, the first salvage haul, the first winter, the first fire, the Ledger, the Book |
+| **T2 Neighbours** | Your town solid in the world, zoom to the Scablands, Dot, Quill, Tam, Imre, Pim, jobs that aren't fights |
+| **T3 Territory** | The Wasteland map, deeds, sending crew, scouting and logs, what became of the warlords |
+| **T4 Mrs Vane** | Kiosks, bids, Free Water Day, both-sided road fights, water cannon, cars, paints |
+| **T5 The Sea** | Helipad, Iron Mule and Ships stories, the Sea Works, the last run. Then whatever comes next |
 
-## 15. Removed
+**Checks in common.** The builder runs the card's own checks and `npm run build`; Claude runs the lane tier and browser scenarios before merging. Memory-only saves. Town sim tests never need a browser. New suites are named `tools/test-town-*.mjs`. Race fingerprints and world signatures of existing courses do not move; if a card needs that, it stops and asks. The Scablands is not yet released, so its ground may change here. No frame timing until a big town can be reached. No new dependency, network request, account or key.
 
-Nothing is replaced. WASTELAND_WORLD section 6's stories are changed by `docs/story/the-long-dry.md` section 7.
-TOWN-ART-BASE's sample model goes when the first real family lands.
+## 16. Files and removed
+
+Everything new lives in `src/town/` (`content/`, `view/`, `ui/`), `src/world/jobs/`, `tools/test-town-*.mjs`, `tools/scenarios/town-*.mjs`, `tools/blender/town*.py`. Shared files are touched only through the named hook on each card: `src/screen-yard-home.js` and `src/screen-router.js` (one button), `src/feature-flags.js` (one line), `src/career-backup.js` (one key), `src/world/scablands-ground.js` (the grading layer), `src/arena/modes/world-job.js` (work vehicles, town solids, new step views), `src/story/story-radio.js` (town lines).
+
+**Removed:** nothing is replaced in the game. WASTELAND_WORLD section 6's stories are changed by `docs/story/the-long-dry.md` section 7. TOWN-ART-BASE's sample model goes when the first real family lands.
