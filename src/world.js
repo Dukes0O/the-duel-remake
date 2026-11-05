@@ -34,6 +34,7 @@ import { createRustwallScene } from './rustwall-scene.js';
 import { createScrapdomeYard } from './scrapdome-yard.js';
 import { createMuddyHollowScene, filterMuddyHollowMountains } from './muddy-hollow-scene.js';
 import { createSaltFlatsScene } from './arena/venues/salt-flats.js';
+import {createScablandsScene} from './world/scablands-scene.js';
 import {Course} from './course.js';
 import {SCRAPDOME_VENUE} from './arena/venues.js';
 import {pitStadiumFrame} from './arena/venues/pit.js';
@@ -62,6 +63,11 @@ export function buildEnvironment(course, {saltFlats,trackKits,snow=false,preload
     group.add(salt.group,salt.outside);
     registerSceneSystem(group,{animate:salt.animate});
     return group;
+  }
+  if(course.def.id==='scablands'){
+    const scene=createScablandsScene(course);
+    registerSceneSystem(scene.group,{dispose:scene.dispose});
+    return scene.group;
   }
   const group = new THREE.Group(), alpine = course.def.theme === 'alpine', night=course.def.theme==='city';
   const winter=snow&&!!course.def.snowWorld;
