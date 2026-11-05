@@ -37,7 +37,7 @@ export function effectLine(setting, step) {
   if (!step) return 'Standard: the car as it is.';
   switch (setting) {
     case 'pressure': return `Grip ${signedPercent(T.pressure.gripPerStep * step)}, top speed ${signedPercent(T.pressure.topSpeedPerStep * step)}.`;
-    case 'wing': return `Grip at 100 mph ${signedPercent(T.wing.gripAtReference * step)}, more at higher speed; top speed ${signedPercent(T.wing.topSpeedPerStep * step)}.`;
+    case 'wing': return `Grip at 161 km/h ${signedPercent(T.wing.gripAtReference * step)}, more at higher speed; top speed ${signedPercent(T.wing.topSpeedPerStep * step)}.`;
     case 'brakes': return `Braking ${signedPercent(T.brakes.brakingPerStep * step)}; cornering grip while braking ${signedPercent(T.brakes.cornerLeftPerStep * step)}.`;
     case 'springs': return `Grip ${signedPercent(T.springs.gripPerStep * step)}; off-road grip ${signedPercent(T.springs.offRoadGripPerStep * step)}, bumps ${signedPercent(T.springs.bumpsPerStep * step)}.`;
     case 'fuel': return `${step === 1 ? 'Three-quarter' : 'Half'} tank. Acceleration and braking ${signedPercent(T.fuel.accelPerStep * step)}; the tank lasts ${percent(T.fuel.fullTankRaceShare * (1 - T.fuel.loadPerStep * step))} of a Grand Prix.`;

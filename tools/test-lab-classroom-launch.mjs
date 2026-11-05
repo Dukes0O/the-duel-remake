@@ -248,6 +248,16 @@ test('mouse: the ramp and the dial turn, a click on the launcher launches, and h
   assert.ok(hoverInfo(v, 118 + 27 * 9, 240), 'the flag is named');
 });
 
+test('Show me on the free test reaches three different settings by itself', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  for (let i = 0; i < FREE_TRIES; i++) {
+    session.act('set:best');
+    until(session, v => v.phase === undefined && v.keys.Space === 'go' && v.rows.length === i + 1, 30);
+  }
+  assert.ok(session.view().ready);
+});
+
 test('the free test and the formulas: every press of the ramp or the dial changes the sums at once', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-angle');

@@ -107,7 +107,7 @@ export async function run(context) {
   await pause(4500); await context.screenshot('restore-5-rebuild');
   await pause(6500); await context.screenshot('restore-6-paint');
   await context.waitFor(`!!document.querySelector('[data-lab="restore-close"]')`, 'body show finishes', 15000);
-  await context.waitFor(`document.querySelector('.lab-caption-text')?.textContent.includes('Strip, rebuild, paint')`, 'Brian body completion caption', 10000);
+  await context.waitFor(`document.querySelector('.lab-caption-text')?.textContent.includes('stripped, rebuilt and painted')`, 'Brian body completion caption', 10000);
   await context.screenshot('restore-body-done');
   await context.evaluate(`document.querySelector('[data-lab="restore-close"]').click(); document.querySelector('[data-lab="close"]').click(); document.querySelector('#garage-open').click()`);
   await context.waitFor(`!!document.querySelector('[data-garage-car="falcone_sirena"]')`, 'garage after body show', 20000);

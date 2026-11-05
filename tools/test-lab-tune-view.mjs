@@ -108,7 +108,7 @@ test('the app hands a race the usable tune only, and only with both switches on'
 
 test('step effects quote the table, and a step of 0 is the standard car', () => {
   assert.equal(effectLine('wing', 0), 'Standard: the car as it is.');
-  assert.match(effectLine('wing', 2), /Grip at 100 mph \+6%.*top speed -2%/);
+  assert.match(effectLine('wing', 2), /Grip at 161 km\/h \+6%.*top speed -2%/);
   assert.match(effectLine('pressure', -2), /Grip \+2%.*top speed -1%/);
   assert.match(effectLine('brakes', 1), /Braking \+1%.*-2%/);
   assert.match(effectLine('springs', -1), /off-road grip \+2%, bumps -8%/, 'softer: more off-road grip and smaller bumps');

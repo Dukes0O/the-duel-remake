@@ -248,9 +248,9 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.projectile.intro` | Pick a height and a forward speed, drop the parcel, and watch where it lands. |
 | `lab.brian.projectile.explain` | An object dropped from a moving helicopter keeps moving forward at the speed it had when it was released, so it lands ahead of the place where it was released. Gravity pulls it downward, faster during every second of the fall. The air slows a spray of water far more than it slows a stone, so the water lands closer to the point of release. |
 | `lab.brian.projectile.pass` | That is your aim. Release the water before you reach the target, not directly above it. |
-| `lab.brian.fire.intro` | Three switches: gas for heat, wood for fuel, and a lid for air. Let's put the fire out three different ways. |
-| `lab.brian.fire.explain` | Fire needs heat, fuel and air. Take away any one and it dies. Water takes the heat, a lid takes the air, a cleared strip takes the fuel. Retardant coats plants so they char instead of burn, so planes drop it in front of a fire, not on it. |
-| `lab.brian.fire.pass` | Heat, fuel, air. Break any one and the fire is done. |
+| `lab.brian.fire.intro` | This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. I will remove one side of the triangle at a time. Watch the switches and the triangle. |
+| `lab.brian.fire.explain` | A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road. |
+| `lab.brian.fire.pass` | Heat, fuel and oxygen are the three sides of the fire triangle. When any one of them is removed, the fire goes out. |
 | `lab.brian.pendulum.intro` | Three weights on three strings, then a heavier weight on the same string. The stopwatch times every swing. |
 | `lab.brian.pendulum.explain` | A swing takes longer on a longer string, and the weight makes no difference. Slow swings are gentler and easier to calm, but a longer cable needs more height. |
 | `lab.brian.pendulum.pass` | A long cable swings slow, and a slow swing is easy to settle. |
@@ -260,9 +260,9 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.strength.intro` | Three bars of the same weight: aluminium, steel and carbon fibre. Load them until they bend or snap. |
 | `lab.brian.strength.explain` | Aluminium is about a third the weight of steel, size for size. Carbon fibre is lighter still and very stiff, but it snaps instead of bending. Engineers choose by what the part has to do. |
 | `lab.brian.strength.pass` | That arm holds the load for the least weight. Well chosen. |
-| `lab.brian.rust.intro` | Four steel nails in jars for a week. Dry air, fresh water, salt water, and one with a zinc coat in salt water. |
-| `lab.brian.rust.explain` | Iron rusts when water and oxygen reach it, and salt water makes it rust much faster. A zinc coat rusts first and saves the steel under it. |
-| `lab.brian.rust.pass` | Right protection for the right part. That's how you keep metal alive. |
+| `lab.brian.rust.intro` | "Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water." |
+| `lab.brian.rust.explain` | "Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it." |
+| `lab.brian.rust.pass` | "You have chosen the right protection for each part. That is how you keep metal from rusting away." |
 | `lab.brian.gforce.intro` | A car on a turning arm. Set the speed and the radius, and watch the weight on the string lean. |
 | `lab.brian.gforce.explain` | In a corner the car pushes you sideways. One g is a push as strong as your own weight. Twice the speed makes four times the push, and half the radius makes twice the push. The cars in this game are allowed between two and a half and three and a half g. |
 | `lab.brian.gforce.pass` | That's a proper corner. You can feel that in the seat. |
@@ -272,9 +272,9 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.grip.intro` | A tyre on the rolling road. Each run, we slide it a little more and graph the grip. |
 | `lab.brian.grip.explain` | In the game a tyre keeps all its grip up to four point three degrees of slide. Past that the rubber skates and grip falls. A short squeal says you are at the limit. A long screech says you are past it. |
 | `lab.brian.grip.pass` | Right at the limit and no further. That's grip. |
-| `lab.brian.downforce.intro` | A wing in the smoke. Turn the fan from fifty to a hundred and fifty miles an hour, and watch the scale. |
-| `lab.brian.downforce.explain` | A racing wing is an aeroplane wing upside down, so it pushes the car onto the road. Twice the speed gives four times the push. More push means more grip in fast corners, but the wing also drags, so top speed falls. |
-| `lab.brian.downforce.pass` | More wing, more grip, less top speed. Choose for the track. |
+| `lab.brian.downforce.intro` | The wing is now steep, and the fan will run at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table. |
+| `lab.brian.downforce.explain` | A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights. |
+| `lab.brian.downforce.pass` | More wing gives more grip and a lower top speed, so you choose the wing that suits the track. |
 | `lab.brian.braking.intro` | The car brakes from fifty and from a hundred miles an hour. You can slide the braking between front and back. |
 | `lab.brian.braking.explain` | From a hundred miles an hour a car needs four times the road it needs from fifty. Braking tips the weight forward onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides. The bench shows the weight shift at a gentle stop; the distances use the car's full braking. |
 | `lab.brian.braking.pass` | Double the speed, four times the road. Brake early and brake straight. |
@@ -294,8 +294,8 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.secret.1970` | In 1970 the Chaparral 2J raced with two fans sucking it to the ground. |
 | `lab.brian.secret.1978` | In 1978 the Brabham BT46B fan car won its first race, the Swedish Grand Prix, and was withdrawn straight after. |
 | `lab.brian.secret.2022` | In 2022 the electric McMurtry Spéirling set the Goodwood hill climb record, 39.08 seconds. Its fans pull about two thousand kilos of downforce, even standing still. |
-| `lab.brian.restore.start` | Salt has been working on her metal for sixty years. First a long soak in fresh water to draw it out, then a small electric current to loosen the rust. |
-| `lab.brian.restore.done` | Strip, rebuild, paint. There she is. Sixty years under the sea, and she's ready to race. |
+| `lab.brian.restore.start` | Salt has been working on the metal of the Sirena for sixty years. The first step is a long soak in fresh water to draw the salt out, and then a small electric current loosens the rust. |
+| `lab.brian.restore.done` | The Sirena has been stripped, rebuilt and painted. After sixty years under the sea, the car is ready to race. |
 
 ## 9. The save (`save-shape`)
 

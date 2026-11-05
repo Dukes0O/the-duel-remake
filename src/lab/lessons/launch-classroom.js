@@ -206,6 +206,11 @@ export function createModel() {
     if (id === 'word-speed') return {angle: set.angle, ms: SHOW_MS};
     if (id === 'try-flag') return {angle: set.angle > 45 ? 60 : 30, ms: set.ms};
     if (id === 'try-speed') return {angle: set.angle, ms: SLOW_MS};
+    // The free test: Show me moves on to a ramp that has not been tested at this speed yet.
+    if (id === 'try-free') {
+      const fresh = [45, 30, 60, 15, 75].find(angle => !m.tested.has(`${angle}/${set.ms}`));
+      return {angle: fresh ?? set.angle, ms: set.ms};
+    }
     if (id === 'alone') {
       const k = mark();
       if (k.fixed === 'angle') return {angle: set.angle, ms: 22};
@@ -481,9 +486,9 @@ export function createModel() {
       glow: setNow ? 'set' : null, waiting: setNow || m.phase === 'guess', best: g};
     if (id === 'try-free') {
       if (flying) return {...v, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands.', 'Compare it with the table.', 'Wait a moment.']};
-      return {...v, target: 'go', say: m.say || `Now you can experiment. Press ↑ and ↓ to tilt the ramp, and ← and → to change the speed. Watch the arrows and the formulas change as you do, and predict where the skier will land before you press Space. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
+      return {...v, target: 'set:best', say: m.say || `Now you can experiment. Press ↑ and ↓ to tilt the ramp, and ← and → to change the speed. Watch the arrows and the formulas change as you do, and predict where the skier will land before you press Space. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
         waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to launch. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
-        hints: ['Press Space to test the settings as they are.', 'Try a very steep ramp, a very flat ramp, and a fast and a slow dial.', 'Watch my pointer. I will launch with the settings as they are.']};
+        hints: ['Press Space to test the settings as they are.', 'Try a very steep ramp, a very flat ramp, and a fast and a slow dial.', 'Watch my pointer. I will set a ramp you have not tested yet, and launch.']};
     }
     if (id === 'try-flag') {
       const flagged = {...v, flag: FLAG_M};
