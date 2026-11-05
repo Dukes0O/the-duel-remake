@@ -56,7 +56,7 @@ export const INPUT_CONTEXTS = Object.freeze({
   photo: Object.freeze({ keyboard: Object.freeze({ Escape: 'photo-exit', Space: 'photo-capture',
     ArrowUp: 'photo-forward', ArrowDown: 'photo-back', ArrowLeft: 'photo-left', ArrowRight: 'photo-right' }),
     gamepad: Object.freeze([[1, 'photo-exit'], [0, 'photo-capture']]), held: Object.freeze({}) }),
-  machine: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', Tab: 'machine-mode-toggle' }),
+  machine: Object.freeze({ keyboard: Object.freeze({ Escape: 'pause', Tab: 'machine-mode-toggle', KeyQ: 'machine-switch' }),
     gamepad: Object.freeze([[9, 'pause'], [0, 'machine-mode-toggle']]),
     held: Object.freeze({ driveForward: Object.freeze(['KeyW']), driveBack: Object.freeze(['KeyS']),
       driveLeft: Object.freeze(['KeyA']), driveRight: Object.freeze(['KeyD']),

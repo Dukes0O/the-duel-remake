@@ -60,6 +60,8 @@ export const FEATURE_STATES = Object.freeze({
   'kogane-invitation': 'on',
   // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.
   'water-road': 'on',
+  // Wasteland Town construction systems are built behind this development switch.
+  'wasteland-town': 'dev',
   // Everburn story screens and Scablands jobs, still in development.
   'story-everburn': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
