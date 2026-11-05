@@ -66,8 +66,10 @@ def material(name, color, metallic=.25, roughness=.82, wear=False):
         ramp.color_ramp.elements[0].color = (.055, .047, .041, 1)
         ramp.color_ramp.elements[1].position = .77
         ramp.color_ramp.elements[1].color = (*color, 1)
-        e = ramp.color_ramp.elements.new(.51)
-        e.color = (.34, .13, .045, 1)
+        e = ramp.color_ramp.elements.new(.43)
+        e.color = (.20, .075, .028, 1)
+        e = ramp.color_ramp.elements.new(.62)
+        e.color = (*color, 1)
         links.new(coordinates.outputs['Generated'], tex.inputs['Vector'])
         links.new(ramp.outputs['Color'], bs.inputs['Base Color'])
         bump = nodes.new('ShaderNodeBump')
@@ -85,6 +87,14 @@ GLASS = material('empty black window cavities', (.012, .019, .02), .08, .48)
 RUBBER = material('cracked salvaged rubber', (.036, .034, .031), .03, .98, True)
 EMBER = material('hot ember core', (1.0, .19, .018), .04, .35)
 FLAME = material('smoky orange flame', (.9, .105, .009), .02, .6)
+FLAME.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value = (1.0,.10,.008,1)
+FLAME.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = 1.8
+VAN_PAINT = material('faded blue grey van enamel', (.20, .29, .32), .31, .86, True)
+BUS_PAINT = material('old ivory bus enamel', (.48, .39, .25), .28, .88, True)
+RV_PAINT = material('faded sage RV enamel', (.25, .34, .27), .32, .87, True)
+JUNK_GREEN = material('yard junk car faded green', (.17, .24, .20), .30, .91, True)
+JUNK_RED = material('yard junk car faded oxide', (.36, .15, .10), .29, .92, True)
+JUNK_BLUE = material('yard junk car faded blue', (.20, .28, .34), .30, .9, True)
 DIRT = material('packed Bowl dirt', (.19, .14, .085), 0, 1)
 dirt_nodes=DIRT.node_tree.nodes
 dirt_noise=dirt_nodes.new('ShaderNodeTexNoise')
@@ -178,10 +188,31 @@ def vehicle(kind, ident, x, z, crushed=False, scorched=False, pitch=0):
         # crushed shoulders bow outward and the roof falls in alternating dips
         pz0 = pz + .08*math.sin(pz*2.3 + len(ident)) if crushed else pz
         return (x+px, py0, z+pz0)
-    base = SOOT if scorched else OXIDE
+    base = SOOT if scorched else {'van': VAN_PAINT, 'bus': BUS_PAINT, 'rv': RV_PAINT}[kind]
     hull_top = .87 if crushed else full_h*.78
-    solid(ident+'-continuous-lower-body', (x,(.36+hull_top)*.5,z),
-          (width*.90,hull_top-.36,length*.92), SOOT if scorched else OXIDE, .09 if not crushed else .06)
+    if crushed:
+        # A crushed body is a folded cage, not a flat slab: each roof station
+        # buckles to a different height and the shoulders push out unevenly.
+        stations=(-.48,-.24,.03,.29,.48)
+        heights=(.67,.91,.61,.84,.58)
+        verts=[]
+        for i,along in enumerate(stations):
+            bow=(.08,.19,.12,.22,.04)[i]
+            verts.extend([(x-width*.43,.36,z+along*length),
+                          (x+width*.43,.36,z+along*length),
+                          (x-width*(.44+bow),heights[i],z+along*length),
+                          (x+width*(.44+bow),heights[i]-.08*(i%2),z+along*length)])
+        faces=[]
+        for i in range(len(stations)-1):
+            a0=i*4; b0=(i+1)*4
+            faces.extend([(a0,a0+2,b0+2,b0),(a0+1,b0+1,b0+3,a0+3),
+                          (a0+2,a0+3,b0+3,b0+2)])
+        faces.extend([(0,1,3,2),(16,18,19,17)])
+        mesh_obj(ident+'-crumpled-body-cage',verts,faces,[base,RUST,STEEL],
+                 [0,1,0]*((len(stations)-1)*3)+[2,2])
+    else:
+        solid(ident+'-continuous-lower-body', (x,(.36+hull_top)*.5,z),
+              (width*.90,hull_top-.36,length*.92), base, .09)
     if not crushed:
         # The upper body closes the roofline; bus height and RV bluntness stay distinct.
         solid(ident+'-upper-coach-body',(x,(hull_top+full_h*.90)*.5,z),
@@ -213,7 +244,7 @@ def vehicle(kind, ident, x, z, crushed=False, scorched=False, pitch=0):
         pts = [P(side*width*.43,.42,-length*.48), P(side*width*.51,top*.78,-length*.32),
                P(side*(width*.50+bulge),top*.70,-length*.08), P(side*(width*.55+bulge),top*.64,length*.12),
                P(side*width*.47,top*.82,length*.32), P(side*width*.42,.42,length*.49)]
-        plate(ident+'-folded-side-shell', pts, SOOT if scorched else OXIDE, .065)
+        plate(ident+'-folded-side-shell', pts, base, .065)
         # Separate, uneven upper scraps leave the windows truly open and the side ribs exposed.
         if kind == 'bus':
             bays = 7
@@ -327,38 +358,57 @@ def vehicle(kind, ident, x, z, crushed=False, scorched=False, pitch=0):
     return h
 
 # Bowl dirt, low scattered stones, and subtle tire-scuffed patches anchor the wrecks.
-bpy.ops.mesh.primitive_plane_add(size=90, location=(0,-.09,0))
+bpy.ops.mesh.primitive_plane_add(size=250, location=(0,-.09,0))
 ground = bpy.context.object
 ground.name = 'Bowl-flat-packed-dirt'
+ground.rotation_euler[0] = math.pi / 2  # authored XZ dirt plane; root rotation returns it to horizontal
 ground.data.materials.append(DIRT)
 for node in ground.data.materials[0].node_tree.nodes:
     if node.type == 'TEX_NOISE':
         node.inputs['Scale'].default_value = 13
 
 # Three original vehicle silhouettes in whole and collapsed forms, spaced like a crush lane.
-vehicle('van','van-crushed',-7,0,True)
+vehicle('van','van-crushed',-5,0,True)
 vehicle('bus','bus-crushed',0,0,True)
-vehicle('rv','rv-crushed',7,0,True)
-vehicle('van','van-whole',-7,5.3,False)
+vehicle('rv','rv-crushed',5,0,True)
+vehicle('van','van-whole',-5,5.3,False)
 vehicle('bus','bus-whole',0,5.3,False)
-vehicle('rv','rv-whole',7,5.3,False)
+vehicle('rv','rv-whole',5,5.3,False)
 
-# The burning buses slump diagonally into a low heap. Their body panels are scorched;
-# the flames curl from the cavities and ember bed instead of standing as orange bars.
-vehicle('bus','fire-heap-lower',-1.5,11.3,True,True)
-vehicle('bus','fire-heap-upper',1.4,11.8,True,True,.55)
+# The game represents its crushable junk as 2.12 x 1.30 x 4.50 m boxes with
+# these three paint colors (course.js). Reuse that small wreck shape for the
+# pile; the van, bus and RV above are the only new vehicle silhouettes.
+def yard_junk(ident, x, y, z, paint, tilt=0):
+    length, width, height = 4.5, 2.12, 1.30
+    body = solid(ident+'-wreck-body', (x,y+height*.50,z), (width,height,length), paint, .12, tilt)
+    body.rotation_euler[0] = tilt
+    body.rotation_euler[2] = tilt*.35
+    solid(ident+'-missing-roof-panel', (x,y+height*.90,z-.18), (width*.72,.06,length*.42), RUST, .035, tilt)
+    for side in (-1,1):
+        for fore in (-1,1):
+            wheel(ident+'-salvage-wheel', (x+side*width*.51,y+.35,z+fore*length*.34), .34, side*.24)
+        beam(ident+'-welded-frame-rail', (x+side*width*.40,y+.20,z-length*.47),
+             (x+side*width*.40,y+.20,z+length*.47), .075, STEEL, .10)
+    for k in range(4):
+        zz=z-length*.36+k*length*.23
+        plate(ident+'-oxide-scar',[(x-width*.51,y+.82,zz),(x-width*.51,y+.91,zz+.33),
+              (x-width*.51,y+.56,zz+.42),(x-width*.51,y+.54,zz+.10)],RUST,.025)
+
+yard_junk('fire-stack-lower-car',-.72,.05,11.2,JUNK_RED,-.14)
+yard_junk('fire-stack-middle-car',.42,.96,11.55,JUNK_GREEN,.18)
+yard_junk('fire-stack-top-car',-.24,1.82,11.75,JUNK_BLUE,-.22)
 for i in range(10):
     x = -2.6 + (i*17 % 49)/10
     z = 9.7 + (i*13 % 31)/10
-    y = .08 + (i%3)*.025
+    y = .35 + (i%3)*.12
     bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=5,
        location=(x,y,z), scale=(.17+(i%3)*.035,.12,.20+(i%4)*.03))
     coal=bpy.context.object; coal.name='fire-heap-glowing-coal'; coal.data.materials.append(EMBER if i%4==0 else SOOT); objects.append(coal)
 for i in range(8):
     x=-2.3+(i*17%42)/10
     z=10+(i*11%26)/10
-    height=.85+(i%4)*.22
-    radius=.18+(i%3)*.035
+    height=1.3+(i%4)*.26
+    radius=.38+(i%3)*.06
     verts=[]
     profile=((0,1.0),(.20,.86),(.47,.57),(.72,.39),(1.0,.20),(1.18,.02))
     lean=.12*math.sin(i*2.7)
@@ -367,7 +417,7 @@ for i in range(8):
             angle=side*math.tau/7
             wav=1+.12*math.sin(side*4+i*1.7+ring)
             verts.append((x+lean*rise+math.cos(angle)*radius*wide*wav,
-                          .12+rise*height,
+                          1.05+rise*height,
                           z+math.sin(angle)*radius*.72*wide*wav))
     faces=[]
     for ring in range(len(profile)-1):
@@ -398,53 +448,48 @@ if a.render:
     # Use the real Titan monster as a temporary review prop. It is excluded
     # from the obstacle export; it only gives Claude a trustworthy size cue.
     bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/unlocks/titan_monster.glb'))
-    imported=[o for o in bpy.context.selected_objects if o.type=='MESH']
-    if not imported:
+    imported=set(bpy.context.selected_objects)
+    titan_meshes=[o for o in imported if o.type=='MESH']
+    if not titan_meshes:
         raise RuntimeError('Titan scale reference contains no mesh')
     bpy.ops.object.select_all(action='DESELECT')
     for obj in imported:
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active=imported[0]
-    bpy.ops.object.join()
-    titan=bpy.context.object
-    titan.name='review-only-Titan-scale-reference'
-    bounds=[titan.matrix_world @ Vector(corner) for corner in titan.bound_box]
-    height=max(v.z for v in bounds)-min(v.z for v in bounds)
-    if height <= 0:
-        raise RuntimeError('Titan scale reference has no height')
-    titan.scale *= 3.8/height
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    bounds=[titan.matrix_world @ Vector(corner) for corner in titan.bound_box]
-    cx=(min(v.x for v in bounds)+max(v.x for v in bounds))*.5
-    cz=(min(v.z for v in bounds)+max(v.z for v in bounds))*.5
-    floor=min(v.z for v in bounds)
-    titan.location.x += 11.2-cx
-    titan.location.y += -0.2-cz
-    titan.location.z -= floor
-    def blender_point(point):
-        x,y,z=point
-        return (x,-z,y)
+        if obj.parent is None:
+            obj.location.x += 10.0
+    bpy.context.view_layer.update()
+    # Keep the imported hierarchy at the Titan's authored scale.
+    # No source scaling or mesh joining: the Titan remains a trustworthy cue.
     def aim(obj, target):
-        obj.rotation_euler=(Vector(blender_point(target))-obj.location).to_track_quat('-Z','Y').to_euler()
+        obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
     def area(name, loc, energy, size, target):
-        bpy.ops.object.light_add(type='AREA',location=blender_point(loc))
+        bpy.ops.object.light_add(type='AREA',location=loc)
         light=bpy.context.object; light.name=name; light.data.energy=energy; light.data.shape='DISK'; light.data.size=size; aim(light,target)
-    area('warm stadium flood',(1,15,-2),7600,16,(0,1,5))
-    area('cool steel rim',(-15,9,14),5200,12,(0,1,6))
-    area('fire bounce',(1,5,14),1800,6,(0,.8,10))
+    area('warm yard key',(2,-11,16),3600,13,(0,-2,1))
+    area('cool steel rim',(-15,-2,10),2200,10,(0,-3,1))
+    area('fire bounce',(1,-8,7),600,5,(0,-11,1.5))
     def render(name, location, target, lens, resolution=(1200,760)):
-        bpy.ops.object.camera_add(location=blender_point(location))
+        bpy.ops.object.camera_add(location=location)
         camera=bpy.context.object; camera.data.lens=lens; aim(camera,target); scene.camera=camera
         scene.render.resolution_x,scene.render.resolution_y=resolution
         scene.render.image_settings.file_format='PNG'
         scene.render.filepath=str(dest/(name+'.png'))
         bpy.ops.render.render(write_still=True)
         bpy.data.objects.remove(camera,do_unlink=True)
-    # Low eye-line at 40 m, followed by a three-quarter crush view and a material/detail view.
-    render('wide-40m',(-26,3.0,-25),(1.0,1.0,4.0),50)
-    render('three-quarter',(15,7,-15),(0,.9,5.7),48)
-    render('close-welds',(-14,3.3,-6.3),(-7,.55,0),57,(1200,760))
-    render('fire-heap-close',(9,4,25),(0,.9,11),57,(1200,760))
+    def show_groups(prefixes):
+        for obj in objects:
+            obj.hide_render = not any(obj.name.startswith(prefix) for prefix in prefixes)
+        for group in assemblies:
+            group.hide_render = not any(group.name.startswith(prefix) for prefix in prefixes)
+    # The 40 m view keeps the Titan on its wheels beside the crushed row.
+    show_groups(('van-crushed-', 'bus-crushed-', 'rv-crushed-', 'fire-stack-'))
+    render('wide-40m',(3,-40,1.45),(1,-2,1.25),55)
+    for obj in titan_meshes: obj.hide_render=True
+    show_groups(('van-crushed-', 'bus-crushed-', 'rv-crushed-'))
+    render('three-quarter',(8,-15,2.3),(0,-1,.78),45)
+    show_groups(('van-crushed-',))
+    render('close-welds',(-12,-10,2.2),(-7,0,.72),52,(1200,760))
+    show_groups(('fire-stack-', 'curling-flame'))
+    render('fire-heap-close',(10,-20,3.1),(0,-11,1.7),45,(1200,760))
 
 out.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.object.select_all(action='DESELECT')
