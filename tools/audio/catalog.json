@@ -6160,22 +6160,22 @@
       "source": "elevenlabs",
       "key": "deep.ana.otter",
       "cue": "deep.ana.otter",
-      "text": "See the otters? They eat the sea urchins. No otters, no kelp forest.",
+      "text": "See the otters? They eat the sea urchins that eat the kelp.",
       "voiceId": "hpp4J3VqNfWAUOO0d1Us",
       "model": "eleven_multilingual_v2",
       "settings": {
-        "stability": 0.4,
+        "stability": 0.45,
         "similarity_boost": 0.8,
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 68,
+      "creditsUsed": 59,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/deep-ana-otter.mp3",
-      "sha256": "94ee61f610ec5f9989fe20926e8d4d88c743d79f814d84ce53541a88813d7c39",
-      "bytes": 75275,
-      "generated": "2026-10-24"
+      "sha256": "3367c41f22bdfe6eebeeb816b244ef2b8f83416309e810963bbf6ad0a5abecb4",
+      "bytes": 53959,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -8640,6 +8640,237 @@
           }
         }
       }
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.squeak",
+      "cue": "deep.ana.squeak",
+      "text": "Oh good, it's you. Something's wrong with my sonar. It's stopped pinging. Now it squeaks. Press R and tell me I'm not going mad.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 128,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-squeak.mp3",
+      "sha256": "1ce72c8d98202e5b0919d614b7a3bdcc1783298d3887e11e1c88fc161aae4138",
+      "bytes": 130446,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.whale",
+      "cue": "deep.ana.whale",
+      "text": "There! You heard that. That's no whale. Whales don't squeak. I asked one.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 73,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-whale.mp3",
+      "sha256": "41f213b1a4ffb3517a918121c3a936b4f55dc48b9bac97a575972f0eb93860cf",
+      "bytes": 67752,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.duck",
+      "cue": "deep.ana.duck",
+      "text": "Hold on. Is that a duck? That's a rubber duck. On a chain. Why is it on a chain? Stop right beside it and press F. I have to know what's on the other end.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 154,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-duck.mp3",
+      "sha256": "92413ca00faccc177cb2006cae1a5611508e80d580cc91f2c7ba1991524f3030",
+      "bytes": 152598,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.heavy",
+      "cue": "deep.ana.heavy",
+      "text": "Four bags? For a duck? That is one very heavy duck.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 51,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-heavy.mp3",
+      "sha256": "d0db49e8c59516ca7cdfb5ba79ab0bd79aab95f4d2d2bbdf220f810b12a1ca79",
+      "bytes": 63572,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.maybe",
+      "cue": "deep.ana.maybe",
+      "text": "The sand's moving. There's something big under there. Something Falcone lost that night. Could it be another race car?",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 118,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-maybe.mp3",
+      "sha256": "df71189fb8cbdf1128d33ebca7563178b8ef59889364ae2367d0ad27870156cb",
+      "bytes": 112474,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.reveal",
+      "cue": "deep.ana.reveal",
+      "text": "Here it comes. Sixty years in the dark. The lost treasure of the Falcone team is...",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 83,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-reveal.mp3",
+      "sha256": "dba3ca5f7592ec996040831f945eed11b6a905aa010205b66ea375cb6c22de9c",
+      "bytes": 81963,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.bath",
+      "cue": "deep.ana.bath",
+      "text": "It's a bath.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 12,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-bath.mp3",
+      "sha256": "f3e3ad69c3dbda2e95159de4c28eb81288530ae02ca7afdca74e2b7f147b5956",
+      "bytes": 13835,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.wheels",
+      "cue": "deep.ana.wheels",
+      "text": "It's a bath with wheels.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 24,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-wheels.mp3",
+      "sha256": "867fe427640dcd1ca951a8a504bf8656c056f98b911c69d5f52466ce0ced220a",
+      "bytes": 24702,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.nino",
+      "cue": "deep.ana.nino",
+      "text": "Hold on, that's Grandma on the other line. Oh no. She says that's Nino's. Nino was the team's mechanic. He hated getting out of the bath, so one day he just didn't.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 164,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-nino.mp3",
+      "sha256": "b262b072b91ba537145b16a03be40611370bed01a64ce826da3f3b8e9fd1d38d",
+      "bytes": 158031,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.towel",
+      "cue": "deep.ana.towel",
+      "text": "He raced it once, down the coast road, in a towel. He came fourth. Grandma says the towel came third.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 101,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-towel.mp3",
+      "sha256": "332db7be1ea50fec4a02414fdb45dd3d6888e629b3f38a74285e3f55e7897044",
+      "bytes": 98263,
+      "generated": "2026-11-05"
+    },
+    {
+      "source": "elevenlabs",
+      "key": "deep.ana.yours",
+      "cue": "deep.ana.yours",
+      "text": "She says it's yours now. The duck comes with it. She was very firm about the duck.",
+      "voiceId": "hpp4J3VqNfWAUOO0d1Us",
+      "model": "eleven_multilingual_v2",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "creditsUsed": 82,
+      "creditsEstimated": true,
+      "license": "ElevenLabs free plan, non-commercial, attribution",
+      "file": "audio-src/voices/deep-ana-yours.mp3",
+      "sha256": "3410610451ef0fde08e2242bb02d0b3dc010525e865da1ed00dd13574203e826",
+      "bytes": 75275,
+      "generated": "2026-11-05"
     }
   ]
 }

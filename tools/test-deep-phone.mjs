@@ -1,4 +1,4 @@
-// DEEP-RADIO: Ana's sixteen lines on the through-water phone and the phone chain
+// DEEP-RADIO: Ana's twenty-seven lines on the through-water phone and the phone chain
 // (docs/THE_DEEP.md section 6.7).
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -25,7 +25,7 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 const design = String(read('docs/THE_DEEP.md'));
 const section = design.slice(design.indexOf('### 6.7'), design.indexOf('### 6.8'));
 const table = Object.fromEntries([...section.matchAll(/^\| `(deep\.ana\.[a-z]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
-same(Object.keys(table).length, 16, 'the design lists sixteen lines');
+same(Object.keys(table).length, 27, 'the design lists twenty-seven lines');
 same(Object.fromEntries(Object.entries(DEEP_PHONE_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the design word for word');
 ok(Object.values(DEEP_PHONE_LINES).every(line => !/credit|price|dollar|\$/i.test(line.text)), 'no line names a price');
 
@@ -51,11 +51,11 @@ for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
 }
 ok(creditsUsed > 0 && creditsUsed <= 2000, `voice credits within budget (${creditsUsed})`);
-ok(runtimeBytes < 1.5e6, `the sixteen lines stay small (${runtimeBytes} bytes)`);
-same(copyDeepPhoneVoices().lines, 16, 'the build step finds all sixteen kept takes');
+ok(runtimeBytes < 3e6, `the twenty-seven lines stay within the 3 MB voice budget (${runtimeBytes} bytes)`);
+same(copyDeepPhoneVoices().lines, 27, 'the build step finds all twenty-seven kept takes');
 
-// The bank: sixteen cues behind the-deep, on the voice bus, playing like the helicopter's radio.
-same(Object.keys(DEEP_PHONE_CUES).length, 16, 'sixteen phone cues');
+// The bank: twenty-seven cues behind the-deep, on the voice bus, playing like the helicopter's radio.
+same(Object.keys(DEEP_PHONE_CUES).length, 27, 'twenty-seven phone cues');
 const heli = SOUND_BANK['heli.radio.liftoff.hold'];
 for (const [id, cue] of Object.entries(DEEP_PHONE_CUES)) {
   ok(SOUND_BANK[id] === cue, `${id}: in the sound bank`);

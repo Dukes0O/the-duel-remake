@@ -20,7 +20,7 @@ import {seedStockLaps, settleTunedLap, ruleSetOf} from './lab/lab-tune.js'; // L
 import {usableTune} from './lab/tune-view.js'; // LAB-TUNE-VIEW
 import {deepDiscoverySnapshot,rememberDeep,rememberChart,normalizeDeep} from './deep/deep-discovery.js'; // DEEP-EXPLORER: chart save hook
 // DEEP-SIRENA-VIEW: the story's finds, logs and pearls are paid and saved here.
-import {raiseFind} from './deep/deep-sirena.js';
+import {raiseFind, raiseJoke, JOKE_FIND} from './deep/deep-sirena.js';
 import {recordLogged,recordPearl,phoneLineFor,DEEP_CREATURES} from './deep/deep-log.js';
 import {createDeepAudio} from './deep/deep-audio.js';
 import {createHeliSession, courseSite} from './heli/heli-session.js';
@@ -1669,7 +1669,9 @@ export class App {
       if(profile!==this.profile){this.profile=profile;this._saveProfile();}
       return true;
     }
-    const on={enabled:true},result=event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
+    const on={enabled:true},result=event.deepRaised?.find===JOKE_FIND
+      ?raiseJoke(this.profile,{enabled:this._switches().enabled('deep-vasca')===true})
+      :event.deepRaised?raiseFind(this.profile,event.deepRaised.find,on):
       event.deepLogged?recordLogged(this.profile,event.deepLogged.creature,on):recordPearl(this.profile,event.deepPearl.pearl,on);
     if(result.profile!==this.profile){this.profile=result.profile;this._saveProfile();}
     if(!event.deepRaised)for(const line of phoneLineFor(event,result))this.duel.emit({deepPhone:{line}});

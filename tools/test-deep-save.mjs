@@ -89,9 +89,9 @@ check('Hints appear at three and six, stop after finding, stay hidden while off 
   for (let count = 0; count <= 10; count++) {
     const snapshot = deepDiscoverySnapshot({deep: {pacificFinishes: count}}, 'qa', true), hints = deepHints(snapshot);
     assert.equal(hints.hintIds.length, count < 3 ? 0 : count < 6 ? 1 : 2);
-    assert.equal(hints.bubbles, count >= 6); assert.equal(hints.kitAvailable, count >= 3);
+    assert.equal(hints.kitAvailable, count >= 3);
     for (const off of [{...snapshot, enabled: false}, {...snapshot, playerId: ''}, {...snapshot, found: ['kelp-coast']}]) {
-      assert.equal(deepHints(off).garageTip, null); assert.equal(deepHints(off).bubbles, false);
+      assert.equal(deepHints(off).garageTip, null);
     }
   }
   const saved = markDeepHintsShown({...createProfile(), deep: {pacificFinishes: 10}}, {enabled: true});

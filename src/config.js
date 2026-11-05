@@ -119,6 +119,13 @@ export const CARS = {
     color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:810,
     collision:{halfWidth:1.1,halfLength:2.45},height:1.06,kind:'prototype',
   },
+  ...(featureFlags.enabled('deep-vasca') ? {falcone_vasca: {
+    name: 'Falcone Vasca', homage: 'A bath with wheels', gearbox: 'manual',
+    unlockRequirement: 'deep-vasca', excludeFromCompletion: true,
+    topSpeed: 168, accel: 8.4, grip: 0.84, braking: 0.92, gears: [48, 84, 120, 148, 168],
+    color: 0xf1ede2, accent: 0x9c1217, offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62, mass: 900,
+    collision: {halfWidth: .9, halfLength: 1.9}, height: .95, kind: 'prototype',
+  }} : {}),
   // LAB-FAN: built on the fan bench, never bought from the garage.
   mcmurtry_speirling: {
     name: 'McMurtry Spéirling', homage: 'Electric fan car', gearbox: 'single', electric: true,
