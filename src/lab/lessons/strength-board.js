@@ -5,8 +5,7 @@
 // Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard, helicopter, car as slungCar} from '../classroom/board-art.js';
 import {NAMES, LIGHTEST, CAR_KG, DIP_MM, WEIGHT_KG, pct, mm1, kg1, failKg, barMm} from './strength-classroom.js';
-import {MATERIALS} from '../benches/strength.js';
-import {GRAVITY} from '../../heli/heli-flight.js';
+import {GRAVITY, MATERIALS} from '../benches/strength.js';
 export {BOARD};
 export const pressMovesDrag = false;
 

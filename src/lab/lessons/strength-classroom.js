@@ -2,8 +2,7 @@
 // wording and formulas follow LAB-CLASSROOM-LANGUAGE.md).
 // Teaching state only, no DOM and no saves. Every bar and every hook arm is the strength bench's own run (loadBar and
 // hookArm, the challenge's bench), and the hook arm's limits are the bench's ARM.
-import {MATERIALS, RIG, ARM, BASE_HOOK_KG, loadBar, hookArm, lightestArm} from '../benches/strength.js';
-import {GRAVITY} from '../../heli/heli-flight.js';
+import {GRAVITY, MATERIALS, RIG, ARM, BASE_HOOK_KG, loadBar, hookArm, lightestArm} from '../benches/strength.js';
 
 export const NAMES = Object.freeze(Object.keys(MATERIALS));
 const [ALUMINIUM, STEEL, CARBON] = NAMES;

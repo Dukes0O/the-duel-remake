@@ -65,11 +65,7 @@ test('a step done again shows its opening words before anything it found out the
 });
 
 // Every lesson moves onto this list as it is rewritten (card, "Order"); when all are on it, it becomes the whole of CLASSROOM_LESSONS.
-<<<<<<< HEAD
-const REWRITTEN = ['projectile', 'launch', 'rust', 'downforce', 'fire', 'altitude', 'braking', 'strength', 'fuel', 'wax', 'headings'];
-=======
-const REWRITTEN = ['projectile', 'launch', 'rust', 'downforce', 'fire', 'altitude', 'braking', 'strength', 'fuel', 'wax', 'headings'];
->>>>>>> integration/wasteland
+const REWRITTEN = ['projectile', 'launch', 'rust', 'downforce', 'fire', 'gforce', 'altitude', 'braking', 'strength'];
 test('a rewritten lesson calls no object she or her, uses one measurement system, and has physics that determines rather than decides', () => {
   for (const id of REWRITTEN) for (const file of [`${id}-classroom.js`, `${id}-board.js`]) {
     const source = readFileSync(new URL(`../src/lab/lessons/${file}`, import.meta.url), 'utf8');

@@ -3,8 +3,7 @@
 // (brakingBench, the challenge's bench, which brakes each car as the game does), and question 3 is the Tune page's own
 // Brake balance rule. The dial moves on the bench's own steps, shown in km/h; the sums use m/s.
 import {CARS, DRIVE} from '../../config.js';
-import {carMassKg} from '../../heli/heli-cable.js';
-import {brakingBench, frontLoadShare, BRAKE_RIG} from '../benches/tunnel.js';
+import {brakingBench, carMassKg, frontLoadShare, BRAKE_RIG} from '../benches/tunnel.js';
 import {LAB_TUNE} from '../lab-tune.js';
 
 // `speed` everywhere below is the bench's own setting. The speed dial and the brake lever move in the bench's steps'
