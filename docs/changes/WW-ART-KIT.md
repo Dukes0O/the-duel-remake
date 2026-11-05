@@ -1,34 +1,28 @@
-# WW-ART-KIT
+# WW-ART-KIT change note
 
 ## Changed
 
-- Added `tools/blender/scablands-kit.py` for basalt rocks, a roadside sign,
-  radio mast, whole and burnt barricades, ember pot and job flag.
-- Registered the recipe in `tools/test-blender-output.mjs`. The test reads the
-  `.qa-dist` GLB, checks named parts and enforces the 30,000 triangle / 1.5 MB
-  budgets. The model is not wired into the game, so it is not committed.
-- Rendered one art round. The review sheet and builder scores are in
-  `docs/board/looks/ww-art-kit/round-1.md`; its JPG is 57,619 bytes.
-- Candidate GLB: 2,600 triangles, 264,832 bytes. No replay fingerprints
-  changed. Added candidate budget and named-part assertions; no prior
-  assertions were changed or weakened.
+- Updated `tools/blender/scablands-kit.py` for round 2: added cliffs and lamps; darkened and partly buried the rocks; rebuilt the barricades with welded steel plate, visible welds, pipe, tyres and spikes; added painted sign words; doubled the job pennant; kept the mast and ember pot. The recipe exports the GLB to the card's runtime path.
+- Added the existing Cinder crew model as a render-only size cue. The export excludes it.
+- Updated the card's one `tools/test-blender-output.mjs` entry and named-part checks.
+- Replaced the old round 1 sheet and note with one round 1/2 comparison sheet and review note. The sheet is 131,278 bytes. Claude should review it and the three round 2 views under `.evidence/2026-11-05/WW-ART-KIT/round-2/`.
 
 ## Checks
 
-- Blender 4.5.13 recipe build and three review renders: passed.
-- `node tools/test-blender-output.mjs`: 193 checks passed on rerun after fixing
-  the recipe's `.blend` path plan.
-- Lane tier: all 48 suite results were emitted (46 passed, 2 failed). The
-  outer runner did not exit after the last result and was stopped. The two
-  failures were unrelated FFmpeg `EPERM` errors in Eifel loudness measurement
-  and review-evidence audio analysis; each suite was rerun once and failed the
-  same way. `tools/test-repo-hygiene.mjs` passed in the lane tier.
-- `npm.cmd run build`: passed. Vite reported the existing dynamic import and
-  large-chunk warnings.
-- Browser and in-game look checks: Claude runs. Please inspect the round-one
-  sheet and source renders listed in the look note. This card does not wire the
-  model into the game.
+- Blender export and overview, detail and mast renders: passed. Readback: 6,568 triangles and 526,152 bytes, within the limits.
+- `tools/test-blender-output.mjs`: passed in the lane run; 193 checks and zero placement failures.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: not green. Per-suite records reached the end of 48 scheduled suites; 46 passed and two failed. `test-circuit-eifel.mjs` failed, then failed its one rerun, because FFmpeg loudness measurement could not run. `test-review-evidence.mjs` failed while the previous tracked sheet path was still in Git's index; its direct rerun also reported that old path missing and `spawnSync ffmpeg EPERM`. The lane runner held the shell open after per-suite results, so I stopped it before it printed the aggregate summary.
+- `npm.cmd run build`: passed; Vite built in 1.84 seconds. It reported the existing dynamic-import and large-chunk warnings.
+- Browser scenarios and in-game look: Claude runs. No frame check was requested or run.
+
+## Changed assertions
+
+The output test now expects the runtime GLB path and checks new cliffs, lamps, painted signs and welded barricade parts. No assertion or tolerance was weakened.
+
+## Race fingerprints
+
+No simulation, course or replay inputs changed; race fingerprints were not rerun.
 
 ## Removed
 
-- Nothing replaced or removed.
+Removed the superseded round 1 sheet and note after carrying their facts into the comparison sheet and review note. No old model or runtime path was removed.

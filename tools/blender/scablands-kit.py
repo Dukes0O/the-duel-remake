@@ -11,11 +11,11 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--render', help='Render round-one inspection views into this evidence folder')
+parser.add_argument('--render', help='Render inspection views into this evidence folder')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 ROOT = Path(args.root).resolve()
-OUT = ROOT / '.qa-dist/WW-ART-KIT/kit.glb'
+OUT = ROOT / 'public/assets/models/wasteland/scablands/kit.glb'
 TRIANGLE_BUDGET = 30000
 FILE_BUDGET = 1_500_000
 if args.paths_only:
@@ -43,15 +43,19 @@ def mat(name, color, metallic=.55, rough=.78, emission=None):
     m.node_tree.links.new(ramp.outputs['Color'], b.inputs['Base Color'])
     return m
 
-RUST = mat('Scale rust over old mill steel', (.31,.105,.045), .72)
-IRON = mat('Blackened forged iron', (.075,.083,.078), .82)
-OXIDE = mat('Flaked oxide red', (.39,.12,.047), .48)
-STONE = mat('Basalt dust and lichen', (.24,.235,.205), .05, .94)
+RUST = mat('Scale rust over old mill steel', (.15,.075,.045), .78)
+IRON = mat('Blackened forged iron', (.045,.052,.050), .88)
+OXIDE = mat('Flaked oxide red', (.29,.095,.042), .58)
+STONE = mat('Scablands ochre dust', (.30,.22,.12), .05, .94)
+BASALT = mat('Dark basalt with buried grit', (.045,.050,.049), .04, .97)
+TAN_BASALT = mat('Ochre dust-stained basalt', (.16,.105,.055), .06, .96)
+PLATE_STEEL = mat('Dark welded plate steel', (.072,.083,.080), .86, .82)
 PAINT = mat('Faded road paint', (.67,.49,.23), .25)
 CREAM = mat('Old enamel lettering', (.79,.72,.54), .2)
-CHAR = mat('Char and burned timber', (.045,.038,.033), .05, .96)
+CHAR = mat('Sooted welded steel', (.042,.039,.033), .26, .96)
 EMBER = mat('Low ember glow', (.95,.18,.018), .25,.5, .8)
 CANVAS = mat('Smoke-stained signal cloth', (.56,.25,.09), .05,.96)
+LAMP = mat('Amber industrial lamp glass', (.95,.37,.055), .12,.34,1.7)
 
 root = bpy.data.objects.new('scablands-kit', None); scene.collection.objects.link(root)
 objects=[]
@@ -79,26 +83,37 @@ def ico(name,loc,scale,material,subdiv=1):
     o=bpy.context.object; o.scale=scale; bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
     return keep(o,name,material)
 
-# Roadside basalt: fractured ledges and a scatter of sharp, squat blocks.
+# Scablands cliffs: half-buried basalt ledges, with ochre sand banked over the feet.
+for i,(x,y,sx,sy,sz,rot) in enumerate([
+        (-5.5,2.55,1.18,.90,2.35,.12),(-4.25,2.72,.84,.78,1.72,-.22),
+        (-6.55,2.85,.88,.88,1.92,.31),(-5.05,3.18,1.05,.76,1.52,-.1),
+        (-3.85,3.18,.70,.70,1.30,.18)]):
+    o=ico(f'basalt-cliff-face-{i+1}',(x,y,sz*.42),(sx,sy,sz),BASALT,2 if i in (0,3) else 1); o.rotation_euler.z=rot
+    if i in (0,2,3):
+        beam(f'cliff-fracture-seam-{i+1}',(x-.35,y-.18,.36),(x+.28,y-.16,.72),.045,IRON)
+
+# Roadside rocks: dark fractured basalt with an ochre bank hiding their lower edges.
 for i,(x,y,sx,sy,sz,rot) in enumerate([(-5,0,1.25,.8,.55,.2),(-4.1,.25,.75,.7,.42,-.3),
         (-5.5,.5,.62,.56,.75,.5),(-4.6,-.42,.55,.48,.32,.1)]):
-    o=ico(f'basalt-rock-{i+1}',(x,y,sz*.46),(sx,sy,sz),STONE,2 if i==0 else 1); o.rotation_euler.z=rot
+    o=ico(f'basalt-rock-{i+1}',(x,y,sz*.26),(sx,sy,sz),BASALT if i%2==0 else TAN_BASALT,2 if i==0 else 1); o.rotation_euler.z=rot
 for i in range(4):
     x=-5.6+i*.55; beam(f'fractured-cliff-seam-{i+1}',(x,-.12,.12),(x+.22,.36,.18),.035,IRON)
 
-# Bent, still-readable direction sign: galvanized post, old arrow plates and rivets.
+# Bent direction sign with real painted words, chipped enamel, arrow plates and rivets.
 sign_start=len(objects)
 beam('sign-post',(0,0,0),(0,0,2.2),.09,IRON,.09)
 beam('post-brace',(-.05,0,.28),(.03,0,1.72),.035,OXIDE)
-cube('sign-upper-arrow',(.23,-.015,1.68),(.92,.075,.34),OXIDE,.018)
-cube('sign-lower-arrow',(-.18,-.02,1.25),(.82,.075,.32),RUST,.018)
-for z, direction, label in [(1.68,1,'ASH ROAD'),(1.25,-1,'WELL  6')]:
-    tip=.23+direction*.50 if z>1.5 else -.18+direction*.45
-    beam('arrow-head-'+str(z),(tip-direction*.16,-.06,z),(tip,-.06,z),.075,CREAM,.022)
-    for xx in ((-.16,.52) if z>1.5 else (-.52,.16)):
-        cyl('sign-face-rivet',(xx,-.064,z),.018,.018,IRON,8)
-    # The letters stay as inspectable raised bars when no font file is available.
-    for j in range(3): cube('worn-enamel-letter',( (-.12+j*.11 if z>1.5 else -.40+j*.11),-.067,z),(.055,.012,.13),CREAM,.004)
+cube('sign-upper-arrow',(.25,-.015,1.68),(1.48,.075,.38),OXIDE,.018)
+cube('sign-lower-arrow',(-.15,-.02,1.20),(1.36,.075,.36),RUST,.018)
+for z, direction, label, center in [(1.68,1,'ASH ROAD',.17),(1.20,-1,'WELL 6',-.20)]:
+    tip=center+direction*.79
+    beam('arrow-head-'+str(z),(tip-direction*.20,-.06,z),(tip,-.06,z),.075,CREAM,.022)
+    for xx in (center-.58,center+.58): cyl('sign-face-rivet',(xx,-.064,z),.025,.018,IRON,8)
+    curve=bpy.data.curves.new('painted sign lettering','FONT'); curve.body=label; curve.size=.185 if len(label)>6 else .22
+    curve.extrude=.002; text=bpy.data.objects.new('sign-painted-'+label.lower().replace(' ','-'),curve)
+    scene.collection.objects.link(text); text.location=(center-.49,-.069,z-.055); text.rotation_euler=(math.pi/2,0,0)
+    bpy.ops.object.select_all(action='DESELECT'); text.select_set(True); bpy.context.view_layer.objects.active=text
+    bpy.ops.object.convert(target='MESH'); text=bpy.context.object; keep(text,text.name,CREAM)
 for o in objects[sign_start:]: o.location.x-=1.45
 
 # Tall radio mast: four bolted legs, crossed braces, aerial and a scavenged dish.
@@ -118,26 +133,36 @@ for z in (3.5,4.1,4.7):
 cube('mast-warning-panel',(0,-.44,2.1),(.38,.035,.27),PAINT,.01)
 for o in objects[mast_start:]: o.location.x-=2.35
 
-# Burnable barricade, intact and charred alternatives kept as named mesh assemblies.
-def barricade(prefix, material, xoff):
+# Burnable barricades: bowed welded sheet, pipe rails, tire ballast and cut spikes.
+def barricade(prefix, plate_material, xoff, burnt=False):
     par=bpy.data.objects.new(prefix,None); scene.collection.objects.link(par); par.parent=root; objects.append(par)
-    def part(o,n): o.name=n; o.parent=par; o.data.materials.append(material); objects.append(o)
-    for i in range(5):
-        y=-.66+i*.30
-        bpy.ops.mesh.primitive_cube_add(size=1,location=(xoff,y,.52+(i%2)*.08)); o=bpy.context.object
-        o.dimensions=(1.9,.24,.2); o.rotation_euler.y=(.035 if i%2 else -.025)
-        bpy.ops.object.transform_apply(location=False,rotation=False,scale=True); part(o,prefix+'-salvage-slat')
-    for x in (xoff-.72,xoff+.72):
-        bpy.ops.mesh.primitive_cube_add(size=1,location=(x,0,.62)); o=bpy.context.object
-        o.dimensions=(.16,1.65,1.05); bpy.ops.object.transform_apply(location=False,rotation=False,scale=True); part(o,prefix+'-upright')
+    def part(o,n,material): o.name=n; o.parent=par; o.data.materials.append(material); objects.append(o)
+    steel=CHAR if burnt else PLATE_STEEL
     for i in range(4):
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=5,radius=.035,location=(xoff-.55+i*.36,-.79,.57))
-        part(bpy.context.object,prefix+'-weld-bead')
+        y=-.64+i*.39; z=.42+(i%2)*.27
+        # Individual overlapping armor sheets are battered, dark and uneven.
+        plate=cube(prefix+'-salvage-slat',(xoff,y,z),(1.52,.12,.38),steel,.035)
+        plate.rotation_euler=(.02*(i%2),(-.16 if i%2 else .12),(.08 if i%2 else -.06))
+        # Ragged cutouts and bent-up plate corners break the clean bench silhouette.
+        for side in (-1,1):
+            beam(prefix+'-torn-tab',(xoff+side*.61,y,z+.16),(xoff+side*.83,y+.04,z+.35),.075,OXIDE,.09)
+        for j in range(3):
+            cyl(prefix+'-plate-rivet',(xoff-.62+j*.62,y-.123,z),.027,.025,IRON,8)
+        for j in range(2):
+            beam(prefix+'-weld-seam',(xoff-.35+j*.72,y-.125,z-.13),(xoff-.14+j*.72,y-.125,z+.15),.035,CREAM if not burnt else IRON,.018)
+    # Heavy pipe frame and a pair of chained scrap tyres hold the fence upright.
+    for x in (xoff-.82,xoff+.82):
+        beam(prefix+'-pipe-upright',(x,0,.07),(x,0,1.22),.105,IRON,.105)
+    beam(prefix+'-top-pipe',(xoff-.92,0,1.10),(xoff+.92,0,1.10),.105,OXIDE,.105)
+    for x in (xoff-.72,xoff+.72):
+        bpy.ops.mesh.primitive_torus_add(major_radius=.34,minor_radius=.12,major_segments=12,minor_segments=6,location=(x,-.39,.36),rotation=(math.pi/2,0,0))
+        part(bpy.context.object,prefix+'-ballast-tyre',IRON)
+    for i in range(5):
+        x=xoff-.74+i*.37
+        beam(prefix+'-cut-spike',(x,0,1.12),(x+(.12 if i%2 else -.10),0,1.48),.065,OXIDE,.065)
     return par
 barricade('barricade-whole',RUST,0)
-barricade('barricade-burnt',CHAR,2.45)
-for i in range(4):
-    beam('burnt-splinter',(1.8+i*.28,-.1,.3),(2.0+i*.3,-.12,.9+(i%2)*.25),.075,CHAR,.11)
+barricade('barricade-burnt',CHAR,2.8,True)
 
 # Roof-top ember pot, patched from a cut drum with hoop straps and punched vents.
 cyl('ember-pot-drum',(5,0,.48),.43,.82,RUST,16)
@@ -151,13 +176,42 @@ for i in range(8):
 for i in range(3): ico('visible-coal',(5+(i-1)*.14,0,.94),(.12,.10,.07),EMBER,1)
 for x in (4.72,5.28): beam('pot-leg',(x,0,.07),(x,0,.22),.07,IRON)
 
-# Side-job pennant: square timber, welded bracket, flapping triangular signal.
+# Side-job pennant: doubled cloth area, frayed and patched at the mast.
 beam('job-flag-pole',(7,0,0),(7,0,2.65),.075,IRON)
-beam('job-flag-bracket',(7,0,2.4),(7.7,0,2.4),.045,OXIDE)
-verts=[(7.68,-.012,2.37),(8.45,-.012,2.24),(8.08,-.012,1.78),(7.68,.012,2.37),(8.45,.012,2.24),(8.08,.012,1.78)]
+beam('job-flag-bracket',(7,0,2.4),(8.1,0,2.4),.045,OXIDE)
+verts=[(8.08,-.012,2.39),(9.62,-.012,2.12),(8.86,-.012,1.20),(8.08,.012,2.39),(9.62,.012,2.12),(8.86,.012,1.20)]
 mesh=bpy.data.meshes.new('side-job-flag-mesh'); mesh.from_pydata(verts,[],[(0,1,2),(5,4,3),(0,3,4,1),(1,4,5,2),(2,5,3,0)])
 flag=bpy.data.objects.new('side-job-flag-weathered-cloth',mesh); scene.collection.objects.link(flag); keep(flag,'side-job-flag-weathered-cloth',CANVAS)
-cube('flag-stitch-strip',(7.72,-.03,2.25),(.07,.025,.32),CREAM,.005)
+cube('flag-stitch-strip',(8.18,-.03,2.23),(.09,.025,.38),CREAM,.005)
+
+# Caged amber lamps on welded brackets make the planned route props visible.
+for i,x in enumerate((-3.8,3.8,6.2)):
+    beam(f'yard-lamp-post-{i+1}',(x,0,0),(x,0,3.15),.09,IRON,.09)
+    beam(f'yard-lamp-arm-{i+1}',(x,0,2.95),(x+.48,0,2.95),.07,OXIDE,.07)
+    cyl(f'yard-lamp-glass-{i+1}',(x+.48,-.025,2.78),.16,.28,LAMP,12)
+    for angle in range(4):
+        a=angle*math.pi/2
+        beam(f'yard-lamp-guard-{i+1}',(x+.48+.20*math.cos(a),-.025+.20*math.sin(a),2.58),
+             (x+.48+.20*math.cos(a),-.025+.20*math.sin(a),2.98),.025,IRON)
+    beam(f'yard-lamp-top-hood-{i+1}',(x+.28,-.025,3.02),(x+.68,-.025,3.02),.045,IRON,.34)
+
+# Review-only scale cue: the real Cinder crew model stands behind the props.
+# It is visible in the Blender views but excluded from the kit export.
+crew_model=ROOT/'public/assets/models/wasteland/crew/cinder.glb'
+assert crew_model.exists(), f'missing scale-reference crew model: {crew_model}'
+before_import=set(scene.objects)
+bpy.ops.import_scene.gltf(filepath=str(crew_model))
+scale_objects=[o for o in scene.objects if o not in before_import]
+scale_meshes=[o for o in scale_objects if o.type=='MESH']
+corners=[o.matrix_world @ Vector(corner) for o in scale_meshes for corner in o.bound_box]
+height=max(p.z for p in corners)-min(p.z for p in corners)
+scale=1.72/max(.001,height)
+for o in scale_objects:
+    if o.parent is None:
+        o.scale*=scale
+        o.location.x+=1.1
+        o.location.y+=1.9
+        o.location.z-=min(p.z for p in corners)*scale
 
 # Merge disconnected authored islands under named part objects for a tidy, inspectable GLB.
 OUT.parent.mkdir(parents=True,exist_ok=True)
@@ -178,7 +232,7 @@ def render_views(folder):
     # Tight camera views of the prop families, against a neutral dusty floor.
     bpy.ops.mesh.primitive_plane_add(size=50,location=(0,0,-.03)); floor=bpy.context.object; floor.name='review-only ground'
     floor.data.materials.append(STONE); floor.hide_set(False)
-    views=[('kit-overview',(1.3,-15,9),(1.3,0,2.25),17),('kit-detail',(-1.4,-10,7.2),(-1.4,0,2.2),10),('kit-mast',(-2.35,-9,7.1),(-2.35,0,2.7),8)]
+    views=[('kit-overview',(1.8,-20,10),(1.8,.4,2.0),21),('kit-detail',(1.0,-13,7.2),(1.0,-.1,1.6),13),('kit-mast',(-2.35,-10,7.1),(-2.35,.8,2.6),10)]
     for name,loc,target,scale in views:
         bpy.ops.object.camera_add(location=loc); cam=bpy.context.object
         cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.type='ORTHO'; cam.data.ortho_scale=scale; scene.camera=cam
@@ -190,7 +244,10 @@ triangles=sum(len(p.vertices)-2 for o in objects if o.type=='MESH' for p in o.da
 print('SCABLANDS_KIT_TRIANGLES',triangles)
 assert triangles <= TRIANGLE_BUDGET, f'triangle budget exceeded: {triangles}'
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'art-build/scablands-kit.blend'))
-bpy.ops.object.select_all(action='SELECT'); bpy.context.view_layer.objects.active=root
+bpy.ops.object.select_all(action='DESELECT')
+root.select_set(True)
+for o in objects: o.select_set(True)
+bpy.context.view_layer.objects.active=root
 bpy.ops.export_scene.gltf(filepath=str(OUT),export_format='GLB',use_selection=True,export_yup=True,
                           export_apply=False,export_cameras=False,export_lights=False)
 assert OUT.stat().st_size <= FILE_BUDGET, f'file budget exceeded: {OUT.stat().st_size}'
