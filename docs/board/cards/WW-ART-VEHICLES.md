@@ -37,3 +37,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - No model on the branch yet.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: no, do not merge. Round 3 is the last.** The same fault as round 1: the ground stands as a wall with the wheels pressed against it, so I still cannot judge these. The shapes have barely moved: a clean cream barrel, a block with three windows, a black box.
+- First, the sheet. My guess: +Y-up models under cameras written for Z-up. Copy the working cameras from owl-art-trucks or ww-art-tintown. Do not render until wheels sit on flat ground in a test picture.
+- Big Bess: start from the shipped convoy tanker's recipe, as the round 1 notes said, not from a cylinder. Scarred, sooty, no clean cream.
+- Old Smoke's furnace: huge, with a chimney, glowing doors and heavy wheels. The final chase has to feel frightening.
+- Thief buggy: an open frame of tubes with a seat and engine showing, not a box.
