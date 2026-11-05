@@ -523,3 +523,233 @@ tasks:
     needs: [WW-FINISH]
     locks: []
     details: "docs/board/cards/STORY-IRON-MULE.md"
+
+  - id: TOWN-ART-BASE
+    title: "Art: the town kit's shared base"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/TOWN-ART-BASE.md"
+
+  - id: TOWN-ART-WATER
+    title: "Art: town water works"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-WATER.md"
+
+  - id: TOWN-ART-SANITATION
+    title: "Art: town sanitation"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SANITATION.md"
+
+  - id: TOWN-ART-HOMES
+    title: "Art: town homes"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-HOMES.md"
+
+  - id: TOWN-ART-FOOD
+    title: "Art: town food and shops"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-FOOD.md"
+
+  - id: TOWN-ART-POWER
+    title: "Art: town power and fuel"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-POWER.md"
+
+  - id: TOWN-ART-SAFETY
+    title: "Art: town walls and safety"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SAFETY.md"
+
+  - id: TOWN-ART-SERVICES
+    title: "Art: town services"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SERVICES.md"
+
+  - id: TOWN-ART-FUN
+    title: "Art: town attractions"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-FUN.md"
+
+  - id: TOWN-ART-STAGES
+    title: "Art: building stages, ruins and street things"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-STAGES.md"
+
+  - id: TOWN-ART-DOME
+    title: "Art: the Scrapdome from outside"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-DOME.md"
+
+  - id: TOWN-ART-OUTPOSTS
+    title: "Art: the neighbours"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-OUTPOSTS.md"
+
+  - id: TOWN-ART-VANE
+    title: "Art: Vane Reclamation"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-VANE.md"
+
+  - id: TOWN-ART-TRUCKS-1
+    title: "Art: fire truck, tanker, supply truck, tow rig"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-TRUCKS-1.md"
+
+  - id: TOWN-ART-TRUCKS-2
+    title: "Art: dozer, ambulance, Vane trucks"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-TRUCKS-2.md"
+
+  - id: TOWN-ART-WALKERS
+    title: "Art: townsfolk for the crowd"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-WALKERS.md"
+
+  - id: WILD-ART-DESERT
+    title: "Animals: desert and coast"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-DESERT.md"
+
+  - id: WILD-ART-CITY
+    title: "Animals: Asia and cities"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-CITY.md"
+
+  - id: WILD-ART-WASTE
+    title: "Animals: the Wasteland and the farm"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-WASTE.md"
+
+  - id: CAR-ART-RATTLER
+    title: "Art car: the Rattler"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-RATTLER.md"
+
+  - id: CAR-ART-LONGHAUL
+    title: "Art car: the Longhaul"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-LONGHAUL.md"
+
+  - id: CAR-ART-SCARAB
+    title: "Art car: the Scarab"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-SCARAB.md"
+
+  - id: CAR-ART-BULLY
+    title: "Art car: the Bully"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-BULLY.md"
