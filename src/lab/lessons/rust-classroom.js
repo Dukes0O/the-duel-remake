@@ -456,7 +456,7 @@ export function createModel() {
         keys: answered ? {} : ANSWER_KEYS, waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, shelf: [],
       say: `Iron rusts when water and oxygen both reach it, and salt water makes the rust form ${TIMES} times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it. Now you can protect three parts of a car.`,
@@ -497,7 +497,7 @@ export function createModel() {
         target: !setNow ? null : set.days === TRY_DAYS ? 'go' : 'set:best', glow: setNow ? 'dial' : null, waiting: setNow || m.phase === 'guess'};
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, target: null, glow: null,
         cards: DAY_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'nail', rust: c.share}, state: null})),
-        say: m.say, prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`Salt water rusted the nail by ${pct(W('salt'))} in ${RUST_WEEK} days.`, `That is ${pct(SALT_DAY)} a day.`, 'Pick a card. Any guess lets you go on.']};
+        say: m.say, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`Salt water rusted the nail by ${pct(W('salt'))} in ${RUST_WEEK} days.`, `That is ${pct(SALT_DAY)} a day.`, 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'shelf', say: m.say, prompt: 'Watch the nail.', hints: ['Watch the nail.', 'Count the days on the calendar.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, focus: 'shelf', mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...v, say: m.auto ? autoSay() : m.say || `Now you can use the sum yourself. A bare nail sits in salt water. Turn the day dial to ${TRY_DAYS} days and work out the sum beside the picture, then press Space to answer a question.`,
@@ -509,7 +509,7 @@ export function createModel() {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, waiting: true,
         cards: ZINC_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'nail', rust: 0, coat: c.days === null ? 1 : .5}, state: null})),
         say: `A week in salt water wore away ${pct(1 - coatOf('zinc', RUST_WEEK))} of the zinc coat. At that rate, when will the whole coat be gone?`,
-        prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`The nail lost ${pct(1 - coatOf('zinc', RUST_WEEK))} of its coat in ${RUST_WEEK} days.`, 'How many weeks would it need to lose all of the coat?', 'Pick a card. Any guess lets you go on.']};
+        prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`The nail lost ${pct(1 - coatOf('zinc', RUST_WEEK))} of its coat in ${RUST_WEEK} days.`, 'How many weeks would it need to lose all of the coat?', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'ready') return {...v, keys: {Space: 'go'}, waiting: true, target: 'go', glow: 'calendar', buttons: [RUN], say: m.say,
         prompt: `Press Space to run the calendar on to day ${ZINC_TO}, or click the calendar.`, hints: ['Watch the grey coat on the nail.', 'Press Space to run the days.', 'Watch my pointer. I will run the days.']};
       if (m.phase === 'running') return {...v, say: m.say, prompt: 'Watch the coat.', hints: ['Watch the coat become thinner.', 'What happens when the coat has gone?', 'Wait a moment.']};

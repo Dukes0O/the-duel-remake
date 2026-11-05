@@ -6181,7 +6181,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.lift.intro",
       "cue": "lab.brian.lift.intro",
-      "text": "Kestrel One is on the weighing pad. Add fuel and cargo, raise the collective, and see if she leaves the ground.",
+      "text": "Here are three loads, and each time the lever goes up until the lift equals the weight of that load. Watch how far the lever has to go.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6190,19 +6190,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 111,
+      "creditsUsed": 135,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-intro.mp3",
-      "sha256": "2f41fde1c12839421e090818fb425950ce85ac5db4f20c13e568c92654f2c3cd",
-      "bytes": 104950,
-      "generated": "2026-10-24"
+      "sha256": "6a12240d907465a3e74793dbdd76a93803479d39a0a67f6be3ee6200caa827e8",
+      "bytes": 117907,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.lift.explain",
       "cue": "lab.brian.lift.explain",
-      "text": "To hover, the rotor has to push the air down as hard as gravity pulls the helicopter down. More weight needs more push, and every rotor has a most it can give.",
+      "text": "To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a limit to how hard it can push.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6211,19 +6211,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 159,
+      "creditsUsed": 241,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-explain.mp3",
-      "sha256": "23357597b80c9829e939636900f25930c83ecdfda1f5844842401ad7a40bff30",
-      "bytes": 151762,
-      "generated": "2026-10-24"
+      "sha256": "028115da5c910d6150049550290d7f73b39c7270f5c4cfa7ed435e77ab8e968b",
+      "bytes": 208186,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.lift.pass",
       "cue": "lab.brian.lift.pass",
-      "text": "Good. Now you know why a heavy load is a hard lift.",
+      "text": "That is well done. Now you know why a heavy load is a hard lift.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6232,13 +6232,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 51,
-      "creditsEstimated": true,
+      "creditsUsed": 150,
+      "creditsEstimated": false,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-pass.mp3",
-      "sha256": "a2ab0fe125ab2e8eee9854232d9c5b486c3fc883aaa6872e457d3fa77428cc80",
-      "bytes": 46436,
-      "generated": "2026-10-24"
+      "sha256": "ea27ceca8cd0087f577e668d3aa38820a7d544a1409ee5a3059d60df2ded52e2",
+      "bytes": 64408,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6370,7 +6370,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.intro",
       "cue": "lab.brian.pendulum.intro",
-      "text": "Three weights on three strings, then a heavier weight on the same string. The stopwatch times every swing.",
+      "text": "Here are two strings of different lengths, 15 metres and 25 metres, with the same 20 kilogram weight on each. Both weights start together, and a stopwatch above each string times one full swing.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6379,19 +6379,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 106,
+      "creditsUsed": 194,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-intro.mp3",
-      "sha256": "cff698ab1eb0018480315155f057950494c5e5cdefa75584b67a991f0acdd2e5",
-      "bytes": 97845,
-      "generated": "2026-10-24"
+      "sha256": "2c55aa4e1d71a6f18d7eda09fd2ba13106a126af218b17b267948f361cba807a",
+      "bytes": 203171,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.explain",
       "cue": "lab.brian.pendulum.explain",
-      "text": "A swing takes longer on a longer string, and the weight makes no difference. Slow swings are gentler and easier to calm, but a longer cable needs more height.",
+      "text": "A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster. In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6400,19 +6400,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 158,
+      "creditsUsed": 491,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-explain.mp3",
-      "sha256": "2ffbd9326ad1e6119801d8516e61a0f8f7687f1f5613c1acd28d2ca280f50d35",
-      "bytes": 150508,
-      "generated": "2026-10-24"
+      "sha256": "d7a4121ed60a04e635bf765f3e9eb8b24ea1c0c9c204580e64f13786980e1bfa",
+      "bytes": 461887,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.pass",
       "cue": "lab.brian.pendulum.pass",
-      "text": "A long cable swings slow, and a slow swing is easy to settle.",
+      "text": "A longer cable makes a slower swing, and hovering still lets any swing settle.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6421,13 +6421,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 61,
+      "creditsUsed": 78,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-pass.mp3",
-      "sha256": "70e46d728ee5edda06b8199f442dfa3927570f6603491b45a50cb1780a2463ac",
-      "bytes": 60647,
-      "generated": "2026-10-24"
+      "sha256": "14864b507c3fa03e00348d83f212ed2c0bec96a0b04c39738b65f3f4a9027733",
+      "bytes": 77783,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",

@@ -242,18 +242,18 @@ than the world it says so. Lines never name credits or prices.
 
 | Id | Line |
 | --- | --- |
-| `lab.brian.lift.intro` | Kestrel One is on the weighing pad. Add fuel and cargo, raise the collective, and see if she leaves the ground. |
-| `lab.brian.lift.explain` | To hover, the rotor has to push the air down as hard as gravity pulls the helicopter down. More weight needs more push, and every rotor has a most it can give. |
-| `lab.brian.lift.pass` | Good. Now you know why a heavy load is a hard lift. |
+| `lab.brian.lift.intro` | Here are three loads, and each time the lever goes up until the lift equals the weight of that load. Watch how far the lever has to go. |
+| `lab.brian.lift.explain` | To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a limit to how hard it can push. |
+| `lab.brian.lift.pass` | That is well done. Now you know why a heavy load is a hard lift. |
 | `lab.brian.projectile.intro` | Pick a height and a forward speed, drop the parcel, and watch where it lands. |
 | `lab.brian.projectile.explain` | An object dropped from a moving helicopter keeps moving forward at the speed it had when it was released, so it lands ahead of the place where it was released. Gravity pulls it downward, faster during every second of the fall. The air slows a spray of water far more than it slows a stone, so the water lands closer to the point of release. |
 | `lab.brian.projectile.pass` | That is your aim. Release the water before you reach the target, not directly above it. |
 | `lab.brian.fire.intro` | This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. I will remove one side of the triangle at a time. Watch the switches and the triangle. |
 | `lab.brian.fire.explain` | A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road. |
 | `lab.brian.fire.pass` | Heat, fuel and oxygen are the three sides of the fire triangle. When any one of them is removed, the fire goes out. |
-| `lab.brian.pendulum.intro` | Three weights on three strings, then a heavier weight on the same string. The stopwatch times every swing. |
-| `lab.brian.pendulum.explain` | A swing takes longer on a longer string, and the weight makes no difference. Slow swings are gentler and easier to calm, but a longer cable needs more height. |
-| `lab.brian.pendulum.pass` | A long cable swings slow, and a slow swing is easy to settle. |
+| `lab.brian.pendulum.intro` | Here are two strings of different lengths, 15 metres and 25 metres, with the same 20 kilogram weight on each. Both weights start together, and a stopwatch above each string times one full swing. |
+| `lab.brian.pendulum.explain` | A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster. In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down. |
+| `lab.brian.pendulum.pass` | A longer cable makes a slower swing, and hovering still lets any swing settle. |
 | `lab.brian.altitude.intro` | "Now the stand will visit each place in turn. At each place the lever goes all the way up, and we |
 | `lab.brian.altitude.explain` | "Higher up there is less air above to press down, so the air is thinner. The rotor then has less |
 | `lab.brian.altitude.pass` | "Thinner air gives the rotor less to push against, so always plan your load for the height where |
