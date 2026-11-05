@@ -36,3 +36,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - No model on the branch yet.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass for layout, merge so BOWL-COURSE can start. Round 3 is owed before BOWL-FINISH.** Now a real arena from the right side up. It does not yet feel like a big show night:
+- Stands are only at two ends and the sides are fences. Wrap the stands all the way round.
+- The crowd is rows of small grey pegs. Make it a huge mass of colour, standing, filling every row.
+- Flame jets cannot be seen and the floodlights are tiny. Add tall towers with big lit banks and flame jets along the floor, plus strong coloured show lights.
+- Show it from truck height again, with the Titan in the picture.
