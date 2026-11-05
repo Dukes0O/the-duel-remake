@@ -238,7 +238,7 @@ fine. Nothing here touches the existing ladder.
 | **The Twin Vultures** | Offering to do your books | Bring them the town's receipts, which blew away. Find them all over the map | The Ledger shows what is coming next week, and they find you money | "Two columns. One of you. Do the math." |
 | **The Tollkeeper** | Runs the deeds office. He always did love paperwork | No job: chapter 19 | Loans and deeds | "This road has a price. Sign here." |
 | **Baron Blackiron** | In chains in the yard, sorry for himself, writing his memoirs | Bring Vesper to see him. No fighting | His logbook, the clue to Act 4 | "I was robbed. By my landlord." |
-| **Magnus the Magnet** | Builds a bigger magnet. Comes back about every few weeks | A town disaster: his crane drags your tin roofs off into the sky. Chase him down, and get them back | Nothing, until Act 5 | "EVERYTHING metal comes to Magnus. I have upgraded." |
+| **Magnus the Magnet** | Builds a bigger magnet. Comes back about every two years | A town disaster: his crane drags your tin roofs off into the sky. Chase him down, and get them back | Nothing, until Act 5 | "EVERYTHING metal comes to Magnus. I have upgraded." |
 
 ## 6. The helicopter comes over the wall
 
@@ -272,7 +272,8 @@ gatehouse and Hollis's reveal. **It no longer leads to The Deep** (Kyle, 5 Novem
 the Deep is paused). Ana's single radio line in Act 5 is the only link.
 
 Both are now written line by line: `docs/story/iron-mule.md` and
-`docs/story/ships-in-the-sand.md`.
+`docs/story/ships-in-the-sand.md`. Act 3's chapters 17 to 21 and section 5's warlord jobs are
+written the same way in `docs/story/the-polite-letter.md`.
 
 **Later:** section 11.
 
@@ -385,7 +386,7 @@ Voice is a later card, and no release waits for it.
 | `town.heli.roger` | Roger | First flight over | Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side. |
 | `town.heli.dune` | Dune | No pilot yet | I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask. |
 
-### Act 3, opening lines (the rest are written with their cards)
+### Act 3, opening lines (all the rest: `docs/story/the-polite-letter.md`)
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |

@@ -1118,6 +1118,27 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-OUTPOST-SCENE.md"
 
+  - id: TOWN-VANE-JOBS
+    title: "Act 3: A Bottle of Her Water, Sand from the Shore, Walk the Bounds"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-VANE","TOWN-HAUL-JOB"]
+    locks: []
+    details: "docs/board/cards/TOWN-VANE-JOBS.md"
+
+  - id: WW-ART-PEACE
+    title: "Art: Mirage's billboard, Gunn's turret, Kettle's chair and the other warlord props"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/WW-ART-PEACE.md"
+
   - id: TOWN-BOWL-LINK
     title: "Town: the Bowl's gate, tickets, crowd and the Rex in the square"
     owner: "codex"
@@ -1164,7 +1185,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-DEEDS","TOWN-JOBS-2"]
+    needs: ["TOWN-DEEDS","TOWN-JOBS-2","TOWN-VANE-JOBS","WW-ART-PEACE"]
     locks: []
     details: "docs/board/cards/TOWN-PEACE.md"
 
