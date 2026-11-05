@@ -10,7 +10,7 @@ import {armMissions} from '../src/heli/heli-missions.js';
 import {setMissions, createMissions, heliOf} from '../src/heli/heli-save.js';
 import {KESTREL, compassBearing} from '../src/heli/heli-flight.js';
 import {FIRE, cellIJ} from '../src/heli/heli-fire.js';
-import {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeBriefing} from '../src/lab/lab-challenges.js';
+import {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeTargets, challengeBriefing} from '../src/lab/lab-challenges.js';
 import {labOf, createLab} from '../src/lab/lab-save.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 
@@ -175,7 +175,7 @@ test('pendulum: set down at the far place with a small swing passes; a swinging 
   assert.equal(run(0.4, letGo('released', {dropMetres: 0})).result, 'passed');
   assert.equal(run(1.4, letGo('released', {dropMetres: 0})).reason, 'The car was still swinging when you let go.');
   assert.equal(run(0.4, letGo('releasedHigh', {heightM: 6})).reason, 'Set the car down, do not drop it.');
-  assert.equal(run(0.4, letGo('released', {dropMetres: 0}), {x: site.zone.x, z: site.zone.z}).reason, 'That is not the place: carry it across the woods.');
+  assert.equal(run(0.4, letGo('released', {dropMetres: 0}), {x: site.zone.x, z: site.zone.z}).reason, 'That is not the place. Carry the car to the orange light and set it down inside the ring.');
   assert.equal(run(0.4, quiet()).result, 'running', 'nothing is decided until the car is let go');
   // The swing counts at the moment of letting go, not an earlier wild one.
   const calmed = lastOf(createChallenge('pendulum', spotsOf('pendulum')), [[2, carried(3)], [3, carried(0.3)], [0.1, letGo('released', {dropMetres: 0})]]);
@@ -456,6 +456,41 @@ test('a water challenge started from the Lab has the bucket on the hook, and any
   const ruined = sessionOf({...profile, heli: {...profile.heli, bucket: {...profile.heli?.bucket, damage: 3}}}, {labEnabled: true});
   ruined.start();
   assert.match(ruined.startChallenge('projectile').reason ?? '', /ruined/);
+});
+
+test('every flown challenge but the heading flight shows where to go, and the water challenges start at the lake', () => {
+  const started = id => { const session = sessionOf(readyProfile(), {labEnabled: true, summitRunEnabled: true}); session.start(); assert.equal(session.startChallenge(id).ok, true, id); return session; };
+  // Pendulums: the light stands on the spot the challenge scores against, at the radius that counts.
+  let session = started('pendulum'), view = session.view().challenge;
+  assert.deepEqual(view.targets.map(t => t.kind), ['place']);
+  const spot = spotsOf('pendulum').target;
+  assert.deepEqual([view.targets[0].x, view.targets[0].z, view.targets[0].radius], [spot.x, spot.z, CHALLENGE_RULES.pendulum.targetRadius]);
+  assert.ok(Math.abs(view.target.distance - 500) < 120, `the line gives the distance (${view.target.distance})`);
+  assert.ok(view.target.bearing >= 0 && view.target.bearing <= 360);
+  // The water challenges: the lake while the bucket is empty.
+  for (const id of ['projectile', 'fire']) {
+    session = started(id); view = session.view().challenge;
+    assert.deepEqual(view.targets.map(t => [t.kind, t.label]), [['water', 'Fill the bucket here']], id);
+    assert.deepEqual([view.targets[0].x, view.targets[0].z], [spotsOf(id).scoop.x, spotsOf(id).scoop.z], id);
+  }
+  // With water on board: the unhit buoys, and a hit buoy loses its light.
+  const ch = createChallenge('projectile', spotsOf('projectile'));
+  assert.equal(challengeTargets(ch, {bucketWater: 100}).length, CHALLENGE_RULES.projectile.buoys);
+  ch.hit[0] = true;
+  assert.equal(challengeTargets(ch, {bucketWater: 100}).length, CHALLENGE_RULES.projectile.buoys - 1);
+  // The fire's light stands over its block.
+  const fire = createChallenge('fire', spotsOf('fire')), light = challengeTargets(fire, {bucketWater: 100})[0], cells = challengeProps(fire);
+  assert.ok(light.x >= Math.min(...cells.map(c => c.x)) && light.x <= Math.max(...cells.map(c => c.x)));
+  assert.ok(light.z >= Math.min(...cells.map(c => c.z)) && light.z <= Math.max(...cells.map(c => c.z)));
+  // The crate: the arrow to Summit Run at home, and the ring only once there.
+  session = started('altitude');
+  assert.equal(session.view().destination, 'summit-run');
+  assert.deepEqual(session.view().challenge.targets, []);
+  assert.equal(challengeTargets(createChallenge('altitude', spotsOf('altitude')), {landingZone: {x: 1, y: 2, z: 3}})[0].label, 'Land here');
+  // The heading flight keeps its smoke and nothing else, because finding it by heading is the lesson.
+  session = started('headings');
+  assert.deepEqual(session.view().challenge.targets, []);
+  assert.equal(session.view().challenge.target, null);
 });
 
 // ---- Projectile motion, flown: scoop from the lake, aim with the ring, drop on the buoys ------------------------

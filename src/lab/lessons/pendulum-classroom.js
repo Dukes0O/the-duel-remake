@@ -35,7 +35,7 @@ export const KEY_IDEAS = Object.freeze([
   {id: 'weights', text: 'Weight does not change the swing time.'},
   {id: 'settle', text: 'In the game: hover still and let the swing settle before you set down.'},
 ].map(Object.freeze));
-export const CHALLENGE_CARD = Object.freeze({title: 'Length sets the swing time.', text: 'Hover still and let it settle.'});
+export const CHALLENGE_CARD = Object.freeze({title: 'Length sets the swing time.', text: 'Carry the car to the orange light. Hover still inside the ring until the car stops swinging, then set it down.'});
 // The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
 export const WORDS = Object.freeze([
   {id: 'pendulum-pendulum', word: 'Pendulum', meaning: 'A pendulum is a weight on a string that can swing.'},

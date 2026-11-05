@@ -94,5 +94,7 @@ async function play(c) {
       return !r.width || !r.height || r.right <= card.left || r.left >= card.right || r.bottom <= card.top || r.top >= card.bottom;
     });
   })()`))) throw Error('The key-idea card overlaps an interactive control.');
+  // LAB-TARGETS: the target can be seen, and the instruments say which way and how far.
+  if (!(await c.evaluate(`(() => { const v = window.__qaApp.heliSession.view().challenge; return v.targets.length === 1 && v.target.label === 'Set the car down here' && [...document.querySelectorAll('.heli-fire-line')].some(e => e.textContent.startsWith('SET THE CAR DOWN HERE')); })()`))) throw Error('The pendulum challenge shows no target.');
   await shot('challenge');
 }
