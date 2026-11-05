@@ -37,3 +37,5 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - No model on the branch yet.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass, merge.** Lamps, tyre barricades, real sign words and darker rocks all work. Keep round 3 for one item: the cliffs read as smooth blue-grey gems, not as a wall of the Ridge. They need layered tan rock, broken ledges and rubble at the foot, and they must join edge to edge. Also, the tyres make the barricades look a little like carts: lay some flat.
