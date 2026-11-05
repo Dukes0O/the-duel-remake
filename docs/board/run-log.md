@@ -1549,3 +1549,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 4 Nov night: merged QA-MAP-FINISH-TABLE (note only: the check was already corrected to 1,750 credits; map-finish browser scenario passes; lane 9 suites, build).
 - 4 Nov: merged LAB-TARGETS (lights, rings, compass line and map flags on the Lab's flight challenges; lane tier 79/79, build, 5 scenarios) and LAB-CLASSROOM-LANGUAGE batch 2 (Rust, Downforce, Fire; lane tier 143/143, build, 23 Lab scenarios, one review). Janitor: lanes lang-rust, lang-downforce, lang-fire, lab-targets removed.
 - 4 Nov: released LAB-TARGETS and language batch 2, master 601a96f8, build 26.11.05 03:23 UTC; rule 19 on the full tier of 8361997b with the lane tiers; staged build checked on 5188; live server running, serves the new build.
+- 5 Nov early: merged LAB-CLASSROOM-GFORCE (Codex build, Claude play and review; lane 46/46, build, lab-classroom-gforce browser pass). Not live until the next Lab release.
