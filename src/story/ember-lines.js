@@ -50,3 +50,109 @@ export const EMBER_CAPTIONS = Object.freeze({
 export const EMBER_LINE_IDS = Object.freeze([...Object.keys(EMBER_CAPTIONS), EMBER_NOTE_ID]);
 
 registerStoryLines('ember', {captions: EMBER_CAPTIONS, letter: EMBER_NOTE});
+
+// Ships in the Sand (docs/story/ships-in-the-sand.md section 4), word for word.
+// Captions use the radio click; letters stay unspoken. No voice file or new cue.
+const shipsLine = (who, where, text) => Object.freeze({who, where, text, captionOnly: true});
+const shipsLetter = (id, who, where, text) => Object.freeze({id, who, where, spoken: false, text});
+
+export const SHIPS_CAPTIONS = Object.freeze({
+  "story.ships.next": shipsLine("Screen (NEXT line)", "Chapter 23 opens", "Take Vesper to see the Baron."),
+  "story.ships.1.start": shipsLine("Vesper", "Job starts", "I want to see my father. It's been years. Drive me round the back of the Dome. If I say turn round, don't listen."),
+  "story.ships.1.exit": shipsLine("Vesper", "Arrived", "Hold F to step out. Walk me to the door. I'll be fine after that. I'll be fine anyway."),
+  "story.ships.1.baron": shipsLine("The Baron", "At the cell door", "Daughter. You've come to gloat at last. Do sit down. I would offer you the chair, but I'm chained to it."),
+  "story.ships.1.vesper": shipsLine("Vesper", "Straight after", "What's the book, Father? You've had it under your arm since we locked you up."),
+  "story.ships.1.rent": shipsLine("The Baron", "Straight after", "My logbook. Years and years of rent, paid on time. I was an excellent tenant. Ask anyone. I was robbed. By my landlord."),
+  "story.ships.1.oil": shipsLine("Vesper", "She opens it", "Lamp oil. One barrel a month, every month since I was six, sent to the lighthouse. Father, nobody lives in the lighthouse. Mother died there."),
+  "story.ships.1.word": shipsLine("The Baron", "Straight after", "I was told never to stop paying. I gave my word. It is the only thing I ever kept. Now go away, I'm writing my memoirs."),
+  "story.ships.1.won": shipsLine("Vesper", "Back at the car", "The oil goes through Deck Town. Let's go and ask a man who has never reported anything in his life."),
+  "story.ships.2.start": shipsLine("Captain Imre", "Job starts", "Deck Town, forenoon watch. Lamp oil goes out on the first of every month. Standing orders: leave the barrel, take the empty, don't knock. Nothing to report."),
+  "story.ships.2.vesper": shipsLine("Vesper", "Straight after", "And the barrels come back empty? All these years? You didn't think that was worth writing down?"),
+  "story.ships.2.imre": shipsLine("Captain Imre", "Straight after", "Not under the heading of weather. It's all in the ships' logs, if you care to climb for them. One press of F takes you up a ladder. Three ships. Mind the gaps."),
+  "story.ships.2.exit": shipsLine("Captain Imre", "Still in the car", "Nobody boards my ships in a car. Hold F to step out."),
+  "story.ships.2.log1.go": shipsLine("Captain Imre", "Heading for log 1", "First log's in the chart room on the Good Hope. Up the ladder on her near side."),
+  "story.ships.2.log1": shipsLine("Vesper", "Reading log 1", "The first book. \"Morning watch, tide out as normal. Afternoon watch, tide has not come back.\" Next day, \"Tide late.\" Next day, \"Tide late.\""),
+  "story.ships.2.log2.go": shipsLine("Captain Imre", "Heading for log 2", "Second is on the Marigold. Don't lean on her rail. She sold the other half of it."),
+  "story.ships.2.log2": shipsLine("Vesper", "Reading log 2", "A year on. \"Water down to the anchor chains. Felt her touch bottom at four bells.\" So the sea didn't go in a fortnight. The tide did. The rest went slowly, and everyone had stopped looking."),
+  "story.ships.2.log3.go": shipsLine("Captain Imre", "Heading for log 3", "The last is mine, on the Patience. Wipe your feet."),
+  "story.ships.2.log3": shipsLine("Vesper", "Reading log 3", "{aground} years of this. \"Sea's late. Sea's late. Sea's late.\" Captain, this is the saddest book I have ever read."),
+  "story.ships.2.accurate": shipsLine("Captain Imre", "Straight after", "It's very accurate."),
+  "story.ships.2.mast.go": shipsLine("Captain Imre", "Heading for the mast", "I go up the mast every evening, about now. You may as well see it. It's only a ladder. It's a long ladder."),
+  "story.ships.2.mast": shipsLine("Vesper", "At the top of the mast", "The light. It's lit. That lighthouse is lit, and it's been lit all this time, and nobody thought to mention it."),
+  "story.ships.2.light": shipsLine("Captain Imre", "Straight after", "Evening watch. Light on. Nothing to report."),
+  "story.ships.2.won": shipsLine("Vesper", "Job won", "Somebody up there is trimming that lamp. Mr Crisp watches that road, and in clear air his lamps see everything. The spring dust will hide us. We wait for the dust."),
+  "story.ships.3.start": shipsLine("Captain Imre", "Job starts", "First dust of spring, and two of our lookouts went out with the oil cart, and the storm has them. Steer by the lighthouse. Nothing to report, but I would hurry."),
+  "story.ships.3.vesper": shipsLine("Vesper", "Straight after", "You can't see a thing in this. Watch for the beam coming round, and follow the arrow."),
+  "story.ships.3.dustmonger": shipsLine("The Dustmonger", "In the storm, if at peace", "Still not my dust. I checked. Whoever's dust it is, I'd like it noted that it isn't mine."),
+  "story.ships.3.crisp": shipsLine("Mr Crisp", "In the storm", "So sorry, this road is closed for maintenance. Also, I'm told it isn't a road. Terribly sorry."),
+  "story.ships.3.stop": shipsLine("Vesper", "Near a lookout", "There! A lamp, waving. Stop right beside it and wait."),
+  "story.ships.3.one": shipsLine("First lookout", "Picked up", "Bless you. We've been walking in a circle since supper. We passed this rock four times. It's a good rock."),
+  "story.ships.3.two": shipsLine("Second lookout", "Picked up", "Forenoon lookout, reporting for rescue. Is it still forenoon? It has felt like forenoon for some time."),
+  "story.ships.3.won": shipsLine("Vesper", "At the lighthouse door", "The door's not locked. There's fresh oil on the step and one clean cup. Stay close, driver."),
+  "story.ships.4.start": shipsLine("Vesper", "Job starts", "Hold F to step out, and F again at the foot of the stairs. Stay behind me. If it's Vane's people, I'm going to be rude to them."),
+  "story.ships.4.drawings": shipsLine("Vesper", "First landing", "Drawings, all the way up the wall. Those are gates. That's the Dry Dam, every bolt of it."),
+  "story.ships.4.letters": shipsLine("Vesper", "Second landing", "A box of letters. They've all got my name on. Nobody ever posted them."),
+  "story.ships.4.isolde": shipsLine("Isolde", "Top of the stairs", "I heard you on the gravel. You drive like your father. Shut that door, there's a storm on, and I have only just swept."),
+  "story.ships.4.dead": shipsLine("Vesper", "Straight after", "You're dead. You've been dead since I was six."),
+  "story.ships.4.told": shipsLine("Isolde", "Straight after", "I told him to say so. It's the one instruction he ever followed."),
+  "story.ships.4.years": shipsLine("Vesper", "Straight after", "All those years."),
+  "story.ships.4.cup": shipsLine("Isolde", "Straight after", "A letter a year. I never found a way to send them that wouldn't send Prudence Vane to you. Sit down. There's only the one cup. You have it."),
+  "story.ships.4.sea": shipsLine("Isolde", "Straight after", "You've been told the sea dried up. It never did. The ocean is on the other side of that dam, as high as it ever was. We shut the sea gate, and the sun did the rest."),
+  "story.ships.4.why": shipsLine("Isolde", "Straight after", "Under the water was salt and metal, worth far more than the water. Prudence knew that. I was her chief engineer, and I drew that gate. When I understood what it was for, I said no, in writing."),
+  "story.ships.4.leak": shipsLine("Isolde", "Straight after", "The dam leaks, of course. One litre a second through one crack is eighty-six thousand litres a day. She boils the salt out and sells it to you by the bottle. Prudence built a business on a leak."),
+  "story.ships.4.salt": shipsLine("Jax", "Straight after, on the radio", "So THAT'S why the wall tastes of salt. I'd like it known I said so."),
+  "story.ships.4.letgo": shipsLine("Vesper", "Straight after", "And she just let you go?"),
+  "story.ships.4.dead2": shipsLine("Isolde", "Straight after", "She sent a very nice letter. Then some men came, very politely. So I died. She doesn't look for dead people. She is far too tidy."),
+  "story.ships.4.lamp": shipsLine("Isolde", "Vesper looks at the lamp", "That's for the ships. You don't leave a ship without a light just because the sea is late."),
+  "story.ships.4.clue": shipsLine("Isolde", "Job won", "I have the drawings and half the codes. The other half went in the gate log, up in the gatehouse on the Ridge. The man who kept it would know. A boy, nineteen or so, very polite. He asked me if a fortnight was a long time."),
+  "story.ships.5.start": shipsLine("Isolde", "Job starts", "I am packed. My drawings are in the pilot boat, on the trailer out the back. Forty feet of her, about fifteen tonnes. Yes, a boat. Yes, it's a desert. She was here first."),
+  "story.ships.5.vane": shipsLine("Mr Crisp", "Straight after", "So sorry, Mrs Blackiron. Mrs Vane sends her kind regards, and some men. Nothing personal."),
+  "story.ships.5.hand": shipsLine("Isolde", "Straight after", "Tell Prudence her handwriting has got worse."),
+  "story.ships.5.hook": shipsLine("Odessa", "Vehicle ready", "That's the tow rig. Back up to the trailer and stop. Then go slowly, because that line snaps if you pull too hard."),
+  "story.ships.5.vesper": shipsLine("Vesper", "Moving", "I'll keep them off the rope. You keep driving. Don't look at the boat. Nobody can drive and look at that boat."),
+  "story.ships.5.bump": shipsLine("Mr Crisp", "Pickups arrive", "So sorry, would you mind awfully stopping? I've been told to bump you until you do."),
+  "story.ships.5.snap": shipsLine("Isolde", "The line snaps", "You've snapped my line. How fast did you think a boat goes? Back up and hook on again."),
+  "story.ships.5.imre": shipsLine("Captain Imre", "Passing Deck Town", "Deck Town, afternoon watch. Boat going by on a trailer, on dry land, in our sea. Nothing to report."),
+  "story.ships.5.bo": shipsLine("Bo", "At the north gate, grown up by now", "That's a real boat. I've got a very good truck of my own now, you know. I could tow that better than you. Can I drive it?"),
+  "story.ships.5.know": shipsLine("Isolde", "Straight after, seeing Hollis", "You. I know you. You've got old."),
+  "story.ships.5.maam": shipsLine("Hollis", "Straight after", "Yes, ma'am."),
+  "story.ships.5.what": shipsLine("Vesper", "Straight after", "Hollis? What was that?"),
+  "story.ships.5.won": shipsLine("Hollis", "Job won", "Leave the boat there. Nobody's to sit in it."),
+  "story.ships.6.start": shipsLine("Hollis", "Job starts", "There's a gatehouse up on the Ridge. I've not been up there since I was nineteen. I'd like you to drive me, in something that climbs."),
+  "story.ships.6.mo": shipsLine("Big Mo", "Owns neither the Titan nor the rally car", "LADIES AND GENTLEMEN AND ALSO DOGS, THE SHOW TRUCK IS OUT ON LOAN! PLEASE DO NOT SCRATCH IT! HE SAID PLEASE!"),
+  "story.ships.6.left": shipsLine("Hollis", "Leaving the road", "Left here."),
+  "story.ships.6.knees": shipsLine("Hollis", "First big bump", "Mind the bumps. I've had these knees a long time."),
+  "story.ships.6.green": shipsLine("Hollis", "Halfway up", "It was greener."),
+  "story.ships.6.tam": shipsLine("Old Tam", "Higher", "Who's that on my ridge? Is that young Hollis? Tell that boy he still owes me a goat."),
+  "story.ships.6.goat": shipsLine("Hollis", "Straight after", "I do."),
+  "story.ships.6.view": shipsLine("Hollis", "Arrived", "You can see all of it from here. I'd forgotten that. Wait by the car, driver. I'll go in alone."),
+  "story.ships.6.wait.vesper": shipsLine("Vesper", "Waiting, on the radio", "What's he doing up there? He's never left that gate. He won't take a day off for his own birthday."),
+  "story.ships.6.wait.isolde": shipsLine("Isolde", "Waiting, on the radio", "Let him be."),
+  "story.ships.6.out": shipsLine("Vesper", "He comes out, she reads it over the radio as he says it", "The gate log. Last page. \"Sea gate shut, on orders. Back on duty in a fortnight.\" Hollis, is that your handwriting?"),
+  "story.ships.6.reveal": shipsLine("Hollis", "Job won (words from Long Dry Act 4)", "I've kept a gate all my life, driver. That was the first one. I was nineteen and they told me it was for a fortnight. I can open it. I'll need a lot of help."),
+  "story.ships.6.isolde": shipsLine("Isolde", "Straight after", "You will. I've got half the codes and he's got the rest. You'd better build something, driver. You'd better build something very big."),
+  "story.ships.oil.start": shipsLine("Captain Imre", "Job starts", "First of the month. Barrel's on your roof. Standing orders: leave it, take the empty. You may knock now, if you like. Nothing to report."),
+  "story.ships.oil.spill": shipsLine("Captain Imre", "Barrel spilled", "Oil on the sea bed. I shall not be writing that down. Come back for another."),
+  "story.ships.oil.won": shipsLine("Captain Imre", "Delivered", "Evening watch. Light on. Nothing to report."),
+  "story.ships.b0.odessa": shipsLine("Odessa", "Report: chapter 23 opens", "That bottle of water from the dam has been on my shelf long enough. I'm sending it to Brian. If it's only a salty well, I want to know, and then I can stop thinking about it."),
+  "story.ships.b0.brian": shipsLine("Brian", "Test finished", "I boiled a litre dry and weighed what was left. Thirty-five grams of salt. That number is the sea, driver, nearly everywhere on Earth. Not a salty well. The sea. So why is it in your dam?"),
+  "story.ships.b0.hollis": shipsLine("Hollis", "Straight after", "Hm."),
+  "story.ships.b1.pell": shipsLine("Mr Pell", "Report: after job 1, a month later", "I've read the Baron's logbook. His rent adds up, sadly. A barrel is two hundred litres, so that oil is about six and a half litres a night, and that is exactly what a lighthouse lamp burns. Somebody is burning it."),
+  "story.ships.b1.friend": shipsLine("Captain Imre", "Report: standing too low", "Deck Town, forenoon watch. We do not show our logs to strangers. Bring water and buy salt for a while. Nothing to report."),
+  "story.ships.b4.pack": shipsLine("Isolde", "Report: after job 4", "I will come when I am packed, and not before. All those years of drawings, in order. The trailer wants new tyres and an axle. And somebody learns that lamp before I leave it. Go home. I'll send word."),
+  "story.ships.b4.keeper": shipsLine("Captain Imre", "Report: the keeper learns", "Deck Town, forenoon watch. Two of ours are learning the lamp. She has made one of them cry. Nothing to report."),
+  "story.ships.b5.office": shipsLine("Isolde", "Report: after job 5", "I need a dry room, a long table and good light. Then I need two people who can draw a straight line. Your school has turned out a few by now. I will teach them the rest."),
+  "story.ships.b5.copying": shipsLine("Vesper", "Report: copying under way", "She's had them copying every bolt of that dam. Nobody knows what it's for yet. I asked Hollis. He went and looked at the gate for a while."),
+  "story.ships.b5.ready": shipsLine("Isolde", "Report: every drawing read", "I have read every sheet twice. I still need the other half of the codes. It has been a year, Hollis."),
+  "story.ships.b5.know": shipsLine("Hollis", "Straight after", "I know."),
+});
+
+export const SHIPS_NOTE_ID = "story.ships.hollis.note";
+export const SHIPS_NOTE = shipsLetter(SHIPS_NOTE_ID, "Hollis (note)", "The Story Wall, after the Iron Mule", "Driver, Vesper wants to see her father. I'd go with her. People should have someone to drive them to that sort of thing. Hollis");
+
+export const VANE_LETTER_ID = "story.ships.6.letter";
+export const VANE_LETTER = shipsLetter(VANE_LETTER_ID, "Mrs Vane (letter)", "Next town visit", "Dear Neighbour, I understand you have been up at the old gatehouse. Mr Hollis and I go back some way. Do give him my regards. Kind regards.");
+
+export const SHIPS_LINE_IDS = Object.freeze([...Object.keys(SHIPS_CAPTIONS), SHIPS_NOTE_ID, VANE_LETTER_ID]);
+
+registerStoryLines('ships', {captions: SHIPS_CAPTIONS, letter: SHIPS_NOTE});
