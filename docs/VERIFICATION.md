@@ -2010,3 +2010,11 @@ Lane tier 120/120, build, every test-lab-* suite, Lab scenarios: 21 of 23 in the
 and lab-walk on an expected phrase that this batch fixed; both pass alone at --jobs 1. Three reviews with their faults fixed, listed in each lesson's note. Rule 19: whole-tier pass
 8361997b. Since then Lab code, tests, notes and voice, the European animals, tool cleanup, and the earlier Lab releases' small helicopter view changes; no physics or save shape. No
 frame check: the classroom is a 2D board and no race scene changed.
+
+
+## Release, 5 November 2026, Grip and Suspension classrooms and gear-find (Claude, Release Manager)
+
+Grip and Suspension classrooms with the old lessons removed; `gear-find` on. `story-everburn` and `titan-bowl` stay off. The range also holds their shared code, the night fixes and art not yet in the game.
+Full tier alone on 8aa0b620: 584 passed, 1 failed. The failure was test-review-evidence: two art notes had the wrong file names (Everburn's note, Tin Town's sheet). Renamed in 7f957dee, suite 9/9, test-board and test-repo-hygiene pass; only those files changed, so rule 19 carries the pass.
+Browser scenarios on 7f957dee, 13 of 15: lab-classroom-grip, lab-classroom-suspension, lab-walk, lab-restore, lab-view, career-writer-lock, lap-telemetry, warlord-pay, warlord-cards, wildlife-view, arena-shove, heli-jobs, ski-finish. Failing, both carded and no fix attempted here: preview-storage (QA-PREVIEW-STORAGE-SEED) and drive-lesson-run (QA-DRIVE-LESSON-RUN-BOARD).
+No frame check: no race scene changed; game.js's new code runs only in the world-job mode, which is off. The night check of d292a621 recorded a frame failure whose log is gone, so it was not read; WILD-FRAMES and QA-HARBOUR-PERFORMANCE-PACING remain open. Combat balance not run for this release.
