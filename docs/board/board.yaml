@@ -973,19 +973,10 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-CORE"]
+    needs: ["TOWN-CORE","GROUND-EDIT"]
     locks: []
     details: "docs/board/cards/TOWN-GROUND.md"
 
-  - id: TOWN-BUILD
-    title: "Town: sites, workers and things going up"
-    owner: "codex"
-    lane: "SIM"
-    size: "L"
-    status: "ready"
-    needs: ["TOWN-CORE"]
-    locks: []
-    details: "docs/board/cards/TOWN-BUILD.md"
 
   - id: TOWN-GOODS
     title: "Town: goods, recipes, hauling and prices"
@@ -1003,7 +994,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["TOWN-GROUND","TOWN-BUILD"]
+    needs: ["TOWN-GROUND","TOWN-WORK","TOWN-ROUTES"]
     locks: []
     details: "docs/board/cards/TOWN-PIPES.md"
 
@@ -1093,7 +1084,7 @@ tasks:
     lane: "SIM"
     size: "L"
     status: "ready"
-    needs: ["TOWN-PIPES","TOWN-HEALTH","TOWN-FARM","TOWN-MONEY","TOWN-FIRE","TOWN-REPORTS","TOWN-CHAPTERS","TOWN-BOOK","TOWN-LINKS"]
+    needs: ["TOWN-PIPES","TOWN-HEALTH","TOWN-FARM","TOWN-MONEY","TOWN-FIRE","TOWN-REPORTS","TOWN-CHAPTERS","TOWN-BOOK","TOWN-LINKS","TOWN-APPRENTICES","TOWN-SCRAPYARD"]
     locks: []
     details: "docs/board/cards/TOWN-PACE.md"
 
@@ -1173,7 +1164,7 @@ tasks:
     lane: "SIM"
     size: "M"
     status: "ready"
-    needs: ["TOWN-CORE","TOWN-GROUND","WW-SCENE"]
+    needs: ["TOWN-CORE","GROUND-EDIT"]
     locks: []
     details: "docs/board/cards/TOWN-WORLD.md"
 
@@ -1203,7 +1194,7 @@ tasks:
     lane: "DESIGN"
     size: "M"
     status: "ready"
-    needs: ["TOWN-PACE","TOWN-VIEW-LIFE","TOWN-FIRE-JOB","TOWN-VIEW-ART"]
+    needs: ["TOWN-PACE","TOWN-VIEW-LIFE","TOWN-FIRE-JOB","TOWN-VIEW-ART","TOWN-ROUTES-UI","MACHINE-PLANT","MACHINE-ROADS"]
     locks: []
     details: "docs/board/cards/TOWN-T1-FINISH.md"
 
@@ -1366,3 +1357,233 @@ tasks:
     needs: ["TOWN-ART-BASE"]
     locks: []
     details: "docs/board/cards/TOWN-ART-WORKS.md"
+
+  - id: GROUND-EDIT
+    title: "Ground you can dig: the rules"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/GROUND-EDIT.md"
+
+  - id: GROUND-VIEW
+    title: "Ground you can dig: drawing it"
+    owner: "codex"
+    lane: "UI"
+    size: "L"
+    status: "ready"
+    needs: ["GROUND-EDIT"]
+    locks: []
+    details: "docs/board/cards/GROUND-VIEW.md"
+
+  - id: MACHINE-CORE
+    title: "Machines: the rules"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["GROUND-EDIT"]
+    locks: []
+    details: "docs/board/cards/MACHINE-CORE.md"
+
+  - id: MACHINE-INPUT
+    title: "Machines: controls, wheel and joystick"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/MACHINE-INPUT.md"
+
+  - id: MACHINE-VIEW
+    title: "Machines: on screen"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["MACHINE-CORE","GROUND-VIEW","TOWN-ART-MACHINES-1"]
+    locks: []
+    details: "docs/board/cards/MACHINE-VIEW.md"
+
+  - id: MACHINE-TRENCHER
+    title: "Machines: the trencher, first to play"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["MACHINE-CORE","MACHINE-INPUT"]
+    locks: []
+    details: "docs/board/cards/MACHINE-TRENCHER.md"
+
+  - id: MACHINE-HAUL
+    title: "Machines: excavator and dump truck"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["MACHINE-CORE","MACHINE-INPUT"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/MACHINE-HAUL.md"
+
+  - id: THE-DIG
+    title: "The Dig: a sandbox for the machines"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["MACHINE-VIEW","MACHINE-TRENCHER","MACHINE-HAUL"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/THE-DIG.md"
+
+  - id: TUNNEL-TRIAL
+    title: "Tunnels: the trial, go or no-go"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["GROUND-EDIT","GROUND-VIEW"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/TUNNEL-TRIAL.md"
+
+  - id: MACHINE-PLANT
+    title: "Machines: crusher, batch plant, mixer and pouring"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["MACHINE-HAUL","TOWN-WORK","TOWN-ART-PLANTS","TOWN-ART-MACHINES-2"]
+    locks: []
+    details: "docs/board/cards/MACHINE-PLANT.md"
+
+  - id: MACHINE-ROADS
+    title: "Machines: dozer, roller and paver"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["MACHINE-HAUL","TOWN-ROUTES","TOWN-ART-MACHINES-2"]
+    locks: []
+    details: "docs/board/cards/MACHINE-ROADS.md"
+
+  - id: MACHINE-DRILL
+    title: "Machines: drilling a well"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["MACHINE-CORE","TOWN-GROUND","TOWN-ART-MACHINES-2"]
+    locks: []
+    details: "docs/board/cards/MACHINE-DRILL.md"
+
+  - id: MACHINE-BORER
+    title: "The boring machine"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TUNNEL-TRIAL","MACHINE-CORE","TOWN-ART-BORER"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/MACHINE-BORER.md"
+
+  - id: TOWN-WORK
+    title: "Town: work orders, stages and ingredients"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-WORK.md"
+
+  - id: TOWN-APPRENTICES
+    title: "Town: do it, teach it, hand it over"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-WORK","TOWN-PEOPLE","MACHINE-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-APPRENTICES.md"
+
+  - id: TOWN-ROUTES
+    title: "Town: route options on the map"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-CORE","GROUND-EDIT"]
+    locks: []
+    details: "docs/board/cards/TOWN-ROUTES.md"
+
+  - id: TOWN-ROUTES-UI
+    title: "Town: the route tool on screen"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ROUTES","TOWN-UI","TOWN-VIEW"]
+    locks: []
+    details: "docs/board/cards/TOWN-ROUTES-UI.md"
+
+  - id: TOWN-SCRAPYARD
+    title: "Town: building machines from parts"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-WORK","TOWN-GOODS"]
+    locks: []
+    details: "docs/board/cards/TOWN-SCRAPYARD.md"
+
+  - id: TOWN-DEFEND
+    title: "Town: radar, scouts and defending the works"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-REPORTS","TOWN-PIPES","TOWN-WORLD","TOWN-JOBS-2"]
+    locks: []
+    details: "docs/board/cards/TOWN-DEFEND.md"
+
+  - id: TOWN-ART-MACHINES-1
+    title: "Art: trencher, excavator, dump truck, dozer"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-MACHINES-1.md"
+
+  - id: TOWN-ART-MACHINES-2
+    title: "Art: loader, mixer, roller, drill rig"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-MACHINES-2.md"
+
+  - id: TOWN-ART-PLANTS
+    title: "Art: quarry, crusher, batch plant, wellhead, radar"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-PLANTS.md"
+
+  - id: TOWN-ART-BORER
+    title: "Art: the boring machine"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-BORER.md"

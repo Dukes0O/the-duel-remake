@@ -41,7 +41,7 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   Release Manager after the release gate. That folder serves the live game.
 - Do not use port 5174 for development or QA. Do not refresh a live race.
 - Do not read, write or reset real player saves. QA uses memory-only storage.
-- Do not add runtime dependencies, network requests, accounts or API keys.
+- Do not add network requests, accounts or API keys. Do not add runtime dependencies, except a permissively licensed library named on a card by Claude (Kyle, 5 November 2026: "We don't have to recreate absolutely everything"; `docs/MACHINES.md` section 12).
 - Do not weaken a test to make a change pass. Explain and review any changed
   assertion in the task's change note.
 - Do not regenerate world signatures without a reviewed visual difference.

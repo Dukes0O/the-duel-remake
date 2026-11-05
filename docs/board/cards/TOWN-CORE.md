@@ -2,7 +2,7 @@
 
 The short board entry controls current state, ownership, dependencies and locks.
 
-The base every other town card builds on, and the card most able to limit the next ten years, so build it for that. Sections 10 and 11.
+The base every other town card builds on, and the card most able to limit the next ten years, so build it for that. Sections 10 and 11, and `docs/MACHINES.md` sections 1 and 8, which win where they differ.
 
 `src/town/content/registry.js` plus content files for each kind, with a schema check at load: buildings (section 14's table, every row), goods. `src/town/town-world-data.js`: regions as data, sparse 16 by 16 chunks of 8 m cells made when first used; the Scablands region with the Dome's oval and gate reserved, using `scablandsSurfaceHeightAt`. `town-calendar.js`: hour, day, month, season, year as section 11. `town-state.js`: createTown(seed, name, founders), serialize and deserialize; `town-migrate.js`: version number and a migration list kept forever, starting at version 1, with fixtures in `tools/fixtures/town/`. `town-commands.js`: command dispatch, each returning ok or one plain sentence a child can read. `town-sim.js`: `stepTown`, `registerTownSystem(name, order, everyTicks, fn)`, generator from `src/rng.js` with its state inside the town. `index.js`: one import line a system.
 
