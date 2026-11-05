@@ -36,3 +36,8 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - 12,208 of 50,000 triangles: there is plenty of room for real walls and rubble. No model on the branch yet.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: no, do not merge. Round 3 is the last.** Still dark tilted views of grey ground, and still not a mall. The entrance view with its three pillars and sand drift is the one good start. The shop signs are not readable in any view.
+- First, the sheet: flat ground and level camera, plain daylight. Copy the working cameras from ww-art-tintown (	ools/blender/scablands-tintown.py).
+- Large invented shop signs readable from 40 m, shopfronts with broken glass, a floor of cracked tile and sand. Someone must be able to say "that's a mall" from one picture.
+- Show the stuck escalator from the floor, with a person beside it.
