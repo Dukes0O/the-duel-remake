@@ -44,6 +44,7 @@ const generators = [
   { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
+  { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
@@ -545,6 +546,28 @@ try {
       'barricade-whole-salvage-slat', 'barricade-whole-ballast-tyre',
       'barricade-burnt-salvage-slat', 'ember-pot-drum', 'side-job-flag-weathered-cloth']) {
       assert.ok(names.includes(part), `missing named prop part ${part}`);
+    }
+  });
+
+  check('WW-ART-EVERBURN exports a bounded well with selectable capped and burning parts', () => {
+    const path = join(root, 'public/assets/models/wasteland/scablands/everburn.glb');
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(4), 2);
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 1024 * 1024, `${bytes.length} bytes exceeds 1 MB`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 500 && triangles <= 20000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name);
+    for (const part of ['everburn-root', 'everburn-hand-wheel', 'everburn-cap-plate',
+      'everburn-flame-outer', 'everburn-flame-core', 'everburn-flare-stack']) {
+      assert.ok(names.includes(part), `missing named part ${part}`);
+    }
+    const materials = gltf.materials.map(item => item.name);
+    for (const name of ['everburn-flame-orange', 'everburn-flame-core', 'everburn-ash-men-cap']) {
+      assert.ok(materials.includes(name), `missing state material ${name}`);
     }
   });
 
