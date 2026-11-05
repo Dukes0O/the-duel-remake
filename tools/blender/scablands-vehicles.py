@@ -6,7 +6,9 @@ Metric units, +Y up, +Z forward. The GLB has one named empty root per vehicle.
 import argparse
 import json
 import math
+import os
 import sys
+from datetime import date
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -17,11 +19,13 @@ root = Path(args.root).resolve()
 glb = root / 'public/assets/models/wasteland/scablands/vehicles.glb'
 blend = root / 'art-build/scablands/vehicles.blend'
 sheet = root / 'docs/board/looks/ww-art-vehicles/round-1.jpg'
+round_two_sheet = root / 'docs/board/looks/ww-art-vehicles/round-2.jpg'
+evidence = root / '.evidence' / date.today().isoformat() / 'WW-ART-VEHICLES' / 'round-2'
 if args.paths_only:
-    print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)], 'evidence': [], 'summary': [str(sheet)]}))
+    print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)], 'evidence': [str(evidence)], 'summary': [str(round_two_sheet)]}))
     raise SystemExit(0)
-if sheet.exists():
-    raise SystemExit('round-1.jpg already exists; review rounds are immutable')
+if round_two_sheet.exists():
+    raise SystemExit('round-2.jpg already exists; review rounds are immutable')
 
 import bpy
 from mathutils import Vector
@@ -31,7 +35,7 @@ for obj in list(bpy.data.objects):
 scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
 scene.render.engine = 'BLENDER_EEVEE_NEXT'
-scene.render.resolution_x, scene.render.resolution_y = 1800, 850
+scene.render.resolution_x, scene.render.resolution_y = 1100, 700
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'JPEG'
 scene.render.image_settings.quality = 88
@@ -49,7 +53,7 @@ def mat(name, color, metallic=.45, rough=.72, emission=0):
 
 steel = mat('Welded soot-dark steel', (.105,.112,.105), .68, .82)
 rust = mat('Layered iron oxide', (.31,.115,.048), .55, .92)
-paint = mat('Faded ochre enamel over rust', (.37,.28,.12), .45, .84)
+paint = mat('Faded ochre enamel, chipped to rust', (.37,.28,.12), .45, .84)
 black = mat('Oiled iron and rubber', (.035,.039,.036), .26, .91)
 glass = mat('Dusty cab glass', (.09,.14,.14), .35, .42)
 glow = mat('Vent glow look', (.95,.19,.025), .05, .44, 2.0)
@@ -94,6 +98,11 @@ def cab(parent, x, z, width=1.65, height=1.15):
     # rivets and mismatched patches
     for side in (-1,1):
         for zz in (z-.50,z+.48): cyl('Door rivet',(x+side*(width*.51),1.55,zz),.035,.035,black,parent=parent)
+    # Uneven repair plates, bent corners and exposed weld beads break the factory symmetry.
+    cube('Bent cab patch',(-width*.48,1.22,z-.58),(.46,.54,.12),rust,.018,parent)
+    cube('Scabbed cab patch',(width*.51,1.54,z+.47),(.13,.34,.38),paint,.018,parent)
+    for dz in (-.34,-.12,.11,.32):
+        cube('Raised weld bead',(width*.515,1.40,z+dz),(.04,.035,.12),steel,.006,parent)
 
 def bess(x):
     r=root_empty('Big Bess gas truck',x)
@@ -104,6 +113,11 @@ def bess(x):
     for z in (-2.53,-.98):
         cube('Tank retaining saddle',(0,1.70,z),(2.02,.12,.17),rust,.025,r)
     cyl('Fill cap',(0,2.72,-.35),.16,.16,steel,rot=(0,0,0),parent=r)
+    # Pipework, hand wheel and a dented end shroud make the tank read as a working gas hauler.
+    cyl('Tank draw pipe',(.48,2.56,-1.68),.09,1.3,rust,rot=(math.pi/2,0,0),vertices=10,parent=r)
+    cyl('Valve wheel',(.48,2.59,-2.37),.25,.09,steel,rot=(math.pi/2,0,0),vertices=12,parent=r)
+    cube('Dented tank end guard',(-.72,1.55,-2.95),(.34,.58,.70),steel,.035,r)
+    cube('Lopsided tank scar',( .42,2.02,-1.94),(.62,.08,.38),paint,.025,r)
     for side in (-1,1):
         cube('Tank welded patch',(side*.72,1.94,-1.28),(.045,.48,.72),rust,.025,r)
         cube('Side running board',(side*1.12,.92,.26),(.22,.16,1.6),steel,.02,r)
@@ -131,6 +145,12 @@ def smoke(x):
     cube('Chimney cap',(.62,4.52,-1.18),(.62,.12,.58),rust,.02,r)
     for side in (-1,1):
         cube('Furnace side armor',(side*1.40,1.55,-1.0),(.08,1.22,2.3),paint,.025,r)
+        # Three-part vent housings project from each flank; each keeps a separate glow look.
+        for i,zv in enumerate((-1.88,-1.05,-.22),1):
+            cube(f'Flank vent {side} {i} rim',(side*1.47,1.78,zv),(.12,.50,.46),rust,.035,r)
+            cube(f'Flank vent {side} {i} dark throat',(side*1.54,1.78,zv),(.035,.27,.25),black,.01,r)
+            cube(f'Flank vent {side} {i} ember',(side*1.565,1.78,zv),(.02,.13,.15),glow,.008,r)
+        cube('Furnace torn corner plate',(side*1.50,1.11,-2.12),(.09,.43,.55),steel,.02,r)
         for y in (1.12,1.52,1.92): cube('Armor weld bead',(side*1.45,y,-1.0),(.025,.035,2.05),steel,.006,r)
     wheelset(r,0,5.2,.70,3)
     return r
@@ -148,26 +168,45 @@ def buggy(x):
     cube('Patch welded to hood',(.26,1.14,1.04),(.38,.035,.41),rust,.01,r)
     cyl('Exposed engine block',(0,1.08,-.82),.40,.82,steel,rot=(math.pi/2,0,0),vertices=12,parent=r)
     cube('Rear scrap rack',(0,1.35,-1.55),(1.12,.54,.38),rust,.03,r)
+    # A visibly light, incomplete cage with one missing panel and a salvaged front fork.
+    cyl('Exposed exhaust stack',(.39,1.22,-1.0),.085,1.2,rust,rot=(0,0,0),vertices=8,parent=r)
+    cube('Single bent windscreen rail',(0,1.96,.90),(1.05,.07,.07),rust,.015,r)
+    cube('Skewed left fender',(-.84,.92,1.48),(.35,.10,.84),paint,.025,r)
+    cube('Engine side guard',( .48,1.12,-.73),(.15,.58,.54),steel,.02,r)
     return r
 
 roots=[bess(-4.3),smoke(0),buggy(4.3)]
-# Review stage, neutral dark ground and three large forms with labels.
+# Neutral display ground is used only in review renders, never exported.
 ground=mat('Review ground',(.075,.078,.073),.05,.96)
 cube('Review floor',(0,-.04,0),(13,.08,9),ground,0)
-for idx,label in enumerate(('BIG BESS','OLD SMOKE','THIEF BUGGY')):
-    bpy.ops.object.text_add(location=(-5.3+idx*4.3,.02,-3.4),rotation=(math.pi/2,0,0))
-    t=bpy.context.object; t.name='Review label: '+label; t.data.body=label; t.data.size=.43
-    t.data.materials.append(paint)
-
 def aim(obj, point): obj.rotation_euler=(Vector(point)-obj.location).to_track_quat('-Z','Y').to_euler()
-bpy.ops.object.camera_add(location=(10,7.2,11)); camera=bpy.context.object; aim(camera,(0,1.6,0)); camera.data.type='ORTHO'; camera.data.ortho_scale=14.5; scene.camera=camera
 for loc,power,size in [((-3,9,5),1800,7),((4,6,-5),1100,6)]:
     bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,(0,1,0))
 scene.view_settings.view_transform='AgX'
 blend.parent.mkdir(parents=True,exist_ok=True); glb.parent.mkdir(parents=True,exist_ok=True); sheet.parent.mkdir(parents=True,exist_ok=True)
+evidence.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
-scene.render.filepath=str(sheet)
-bpy.ops.render.render(write_still=True)
+# Render car-height side, three-quarter and close detail views for every vehicle.
+labels=('BIG BESS','OLD SMOKE','THIEF BUGGY')
+view_files=[]
+root_positions=[obj.location.x for obj in roots]
+for idx,(label,root_obj) in enumerate(zip(labels,roots)):
+    root_obj.location.x=0
+    bpy.context.view_layer.update()
+    bpy.ops.object.text_add(location=(-2.0,.03,-4.2),rotation=(math.pi/2,0,0))
+    title=bpy.context.object; title.name='Review label: '+label; title.data.body=label; title.data.size=.42; title.data.materials.append(paint)
+    bpy.ops.object.camera_add(); camera=bpy.context.object; camera.data.type='ORTHO'; scene.camera=camera
+    for view,loc,point,scale in (
+        ('side',(10,2.2,0),(0,1.25,0),8.4),
+        ('three-quarter',(8,5,8),(0,1.4,0),8.0),
+        ('detail',(4.5,3.2,3.6),(0,1.8,-.7),4.0)):
+        camera.location=loc; aim(camera,point); camera.data.ortho_scale=scale
+        scene.render.filepath=str(evidence/f'{idx+1}-{view}.jpg')
+        bpy.ops.render.render(write_still=True)
+        view_files.append(str(evidence/f'{idx+1}-{view}.jpg'))
+    bpy.data.objects.remove(camera,do_unlink=True)
+    bpy.data.objects.remove(title,do_unlink=True)
+for root_obj,x in zip(roots,root_positions): root_obj.location.x=x
 for obj in bpy.context.selected_objects: obj.select_set(False)
 for obj in list(bpy.data.objects):
     parent=obj.parent
@@ -175,4 +214,6 @@ for obj in list(bpy.data.objects):
     if obj in roots or parent in roots: obj.select_set(True)
 bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True,export_materials='EXPORT',export_extras=True,use_selection=True)
 if glb.stat().st_size > 1_500_000: raise RuntimeError(f'GLB budget exceeded: {glb.stat().st_size}')
-if sheet.stat().st_size > 500_000: raise RuntimeError(f'Review sheet budget exceeded: {sheet.stat().st_size}')
+# A separate comparison collage is assembled after Blender from the previous
+# round plus the nine individual evidence renders.
+print(json.dumps({'renders':view_files,'round1':str(sheet),'round2':str(round_two_sheet)}))
