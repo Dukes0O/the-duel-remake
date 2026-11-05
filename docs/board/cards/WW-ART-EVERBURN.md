@@ -26,3 +26,13 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-EVERBURN.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: close, one small round more.** Right shape, and burning and capped are clearly different. Keep the well head, collar, hand wheel and stack.
+- The flame is a solid pink faceted spike. Make it layers: white-yellow core, orange shell, ragged tongues, wider at the base, with no pink.
+- The slag ring is a neat circle of same-size bricks, which looks like a toy. Scatter it unevenly, with larger pipe and plate pieces.
+- Hide the square slab: sink the base into scorched ground with an uneven edge.
+- This is a story landmark seen from across the map. Make the stack much taller, as tall as a building, with guy wires and a ladder.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
