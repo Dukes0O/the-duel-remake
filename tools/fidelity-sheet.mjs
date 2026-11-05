@@ -22,7 +22,7 @@ function value(name, fallback) {
 }
 function evidenceDir(family, round) {
   const now = new Date();
-  const day = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const day = now.toISOString().slice(0, 10);
   return resolve(root, process.env.DUEL_EVIDENCE_DIR || join('.evidence', day, family, `round-${round}`));
 }
 function summaryPath(family, round) {
