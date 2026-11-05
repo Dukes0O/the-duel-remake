@@ -161,7 +161,7 @@ if not a.no_build:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=.22, location=(x,4.55,z))
         lamp=bpy.context.object; lamp.name=f'ash-men-lamp-{i+1}-amber-lens'; lamp.data.materials.append(lampmat)
     # A standing scale figure beside the escalator anchors the floor-level view.
-    px,pz=-2.4,-2.2
+    px,pz=2.0,-5.0
     cyl('entry-scale-person-body',(px,1.0,pz),.22,1.05,steel,8)
     bpy.ops.mesh.primitive_uv_sphere_add(segments=10,ring_count=6,radius=.18,location=(px,1.62,pz))
     bpy.context.object.name='entry-scale-person-head'; bpy.context.object.data.materials.append(rust)
