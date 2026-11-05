@@ -21,7 +21,7 @@ The output test now expects the runtime GLB path and checks new cliffs, lamps, p
 
 ## Race fingerprints
 
-No simulation, course or replay inputs changed; race fingerprints were not rerun.
+No simulation, course or replay inputs changed. The lane tier replay guard passed 297 checks across 33 cases, 31 events and 9 categories. It covered three frame rates and three runs.
 
 ## Removed
 
