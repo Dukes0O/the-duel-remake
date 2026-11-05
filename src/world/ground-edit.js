@@ -30,7 +30,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     throw new TypeError('Ground region must say whether it is editable.');
   if (typeof naturalHeight !== 'function') throw new TypeError('Ground edits need a natural height function.');
   for (const shape of reservedShapes) validShape(shape);
-  const chunks = new Map();
+  let chunks = new Map();
   const numericSeed = Number.isFinite(seed) ? seed | 0 : 1;
 
   const chunkKey = (cx, cz) => `${cx},${cz}`;
@@ -59,10 +59,14 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
 
   function heightAt(x, z) {
     if (!finite(x) || !finite(z)) throw new TypeError('Ground coordinates must be finite.');
-    const base = naturalHeight(x, z);
-    const sx = Math.round(x), sz = Math.round(z), sample = sampleAt(sx, sz);
-    if (!sample) return base;
-    return base + sample.chunk.delta[sample.index];
+    const x0 = Math.floor(x), z0 = Math.floor(z), tx = x - x0, tz = z - z0;
+    const deltaAt = (sx, sz) => {
+      const sample = sampleAt(sx, sz);
+      return sample ? sample.chunk.delta[sample.index] : 0;
+    };
+    const north = deltaAt(x0, z0) * (1 - tx) + deltaAt(x0 + 1, z0) * tx;
+    const south = deltaAt(x0, z0 + 1) * (1 - tx) + deltaAt(x0 + 1, z0 + 1) * tx;
+    return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
 
   function cut(shape, target) {
@@ -103,7 +107,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
 
   function fill(shape, material, volume) {
     validShape(shape);
-    if (!(material in MATERIAL_ID)) throw new TypeError('Fill material must be topsoil, clay, gravel or rock.');
+    if (!Object.hasOwn(MATERIAL_ID, material)) throw new TypeError('Fill material must be topsoil, clay, gravel or rock.');
     if (!finite(volume) || volume < 0) throw new TypeError('Fill volume must be a non-negative finite number.');
     const reason = refusal(shape);
     if (reason) return emptyResult(reason);
@@ -138,13 +142,18 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   function loadSave(save) {
     if (!save || save.version !== 1 || save.chunkMetres !== CHUNK_METRES || !Array.isArray(save.chunks))
       throw new TypeError('Unsupported ground edit save.');
-    chunks.clear();
+    const nextChunks = new Map();
     for (const row of save.chunks) {
       if (!Number.isInteger(row.x) || !Number.isInteger(row.z) || !(row.delta instanceof Float32Array) ||
           row.delta.length !== SAMPLE_COUNT || !(row.material instanceof Uint8Array) || row.material.length !== SAMPLE_COUNT)
         throw new TypeError('Invalid ground edit chunk.');
-      chunks.set(chunkKey(row.x, row.z), {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
+      for (let index = 0; index < SAMPLE_COUNT; index++) {
+        if (!finite(row.delta[index]) || row.material[index] >= GROUND_MATERIALS.length)
+          throw new TypeError('Invalid ground edit sample.');
+      }
+      nextChunks.set(chunkKey(row.x, row.z), {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
     }
+    chunks = nextChunks;
   }
 
   return Object.freeze({heightAt, cut, fill, toSave, loadSave, get chunkCount() { return chunks.size; },

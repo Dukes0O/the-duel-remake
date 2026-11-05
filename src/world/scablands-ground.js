@@ -37,8 +37,20 @@ export function scablandsNaturalHeightAt(x,z){
 
 // Physics and scenery share this sparse layer. It allocates nothing until a
 // cut or fill touches a sample, so the untouched Scablands stays unchanged.
-export const scablandsGroundEdit=createGroundEdit({region:{id:'scablands',editable:true},
+const createScablandsGroundEdit=()=>createGroundEdit({region:{id:'scablands',editable:true},
   naturalHeight:scablandsNaturalHeightAt});
+
+export let scablandsGroundEdit=createScablandsGroundEdit();
+
+export function setScablandsGroundEdit(groundEdit){
+  if(!groundEdit||typeof groundEdit.heightAt!=='function')throw new TypeError('Scablands ground edits need a heightAt function.');
+  scablandsGroundEdit=groundEdit;
+  return scablandsGroundEdit;
+}
+
+export function resetScablandsGroundEdit(){
+  return setScablandsGroundEdit(createScablandsGroundEdit());
+}
 
 export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit){
   if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('Scablands ground coordinates must be finite.');
