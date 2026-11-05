@@ -292,6 +292,8 @@ test('the tap: a good tap ends the step and later presses cannot overwrite the r
   playThroughTo(session, 'word-swing-time');
   run(session, .3); session.act('tap');
   assert.match(session.view().brian.text, /has only just set off/);
+  run(session, stringPeriod(15) * .4 - .3); session.act('tap');
+  assert.match(session.view().brian.text, /near the far side/, 'a tap at 40% of the first swing is told the truth');
   until(session, v => v.lap.elapsed > stringPeriod(15) * .93, 20); session.act('tap');
   const said = session.view().brian.text;
   assert.match(said, /^Correct\. The weight swung out to the far side and came back to the green flag/);
@@ -472,6 +474,23 @@ test('the pictures show the idea: the trip, the pull arrow’s sum, the pull-bac
   assert.match(drawn(session), /20°/);
   session.act('pull:up');
   assert.match(drawn(session), /25°/);
+});
+
+test('the guess cards’ symbols read as their dials do: grey on the left, yours on the right', () => {
+  const symbolOf = mine => {
+    const labels = [];
+    const fake = new Proxy({}, {get: (target, name) => {
+      if (name in target) return target[name];
+      if (name === 'fillText') return value => labels.push(String(value));
+      if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+      return () => {};
+    }, set: (target, name, value) => { target[name] = value; return true; }});
+    drawPicture(fake, {kind: 'compare', mine}, 220, 110);
+    return labels.find(label => ['<', '>', '='].includes(label));
+  };
+  assert.equal(symbolOf('quicker'), '>', 'grey needs 7.8 s, more than your 4.5 s');
+  assert.equal(symbolOf('slower'), '<', 'grey needs 7.8 s, less than your 10.0 s');
+  assert.equal(symbolOf('same'), '=');
 });
 
 test('the words: every string a player reads avoids the reviewed faults', () => {

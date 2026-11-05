@@ -389,7 +389,7 @@ export function drawPicture(ctx, picture, w, h) {
     stopwatch(ctx, w * .72, h * .48, {elapsed: mine, done: false}, 0, {r: 30, digits: false});
     text(ctx, 'grey', w * .28, h - 14, {size: 14, colour: theme.ghost});
     text(ctx, 'yours', w * .72, h - 14, {size: 14, colour: theme.accent});
-    text(ctx, picture.mine === 'quicker' ? '<' : picture.mine === 'slower' ? '>' : '=', w / 2, h * .48, {size: 30, colour: theme.text});
+    text(ctx, picture.mine === 'quicker' ? '>' : picture.mine === 'slower' ? '<' : '=', w / 2, h * .48, {size: 30, colour: theme.text});
   }
   if (picture.kind === 'watch') {
     stopwatch(ctx, w * .5, h * .5, {elapsed: picture.seconds, done: false}, 0, {r: 38, digits: false});

@@ -1,8 +1,7 @@
 // Pendulums as a classroom lesson (docs/board/cards/LAB-CLASSROOM.md section 4; its wording and formulas follow
 // LAB-CLASSROOM-LANGUAGE.md). Teaching state only, no DOM and no saves. Every swing time on screen comes from
 // stringPeriod(), the function the pendulum bench and its tests use.
-import {stringPeriod} from '../benches/pendulum.js';
-import {GRAVITY} from '../../heli/heli-flight.js';
+import {GRAVITY, stringPeriod} from '../benches/pendulum.js';
 
 export const LENGTHS = Object.freeze([5, 15, 25]);
 export const WEIGHTS = Object.freeze({light: 20, heavy: 200});
@@ -122,7 +121,7 @@ const TRIES = {
     weightFirst: true,
     still: p => p.weightKg !== WEIGHTS.light ? `The weight is now ${p.weightKg} kg, but this test changes only the string, so the weight must stay at 20 kg. Press 4 to put the 20 kg weight back.`
       : `The string is now ${p.lengthM} m, but this test needs the short 5 m string. Press 1 for the 5 m hook.`,
-    question: 'Your weight hangs on the 5 m string and the grey weight hangs on the 15 m string. Both weights have 20 kg and both start together. Will your weight finish one full swing sooner than the grey weight, later than the grey weight, or at the same moment?',
+    question: 'Your weight hangs on the 5 m string and the grey weight hangs on the 15 m string. Both weights are 20 kg and both start together. Will your weight finish one full swing sooner than the grey weight, later than the grey weight, or at the same moment?',
     guessHints: ['Think about how far each weight has to travel in one swing.', 'A shorter string makes the weight follow a smaller circle, so the trip is shorter.', 'Any guess lets you go on. Pick a card, and then we will test it.'],
     why: 'A shorter string makes the weight follow a smaller circle, so the weight has a shorter trip, and the labels under the weights show the two trips. Gravity pulls along the path just as hard at the same angle, so the shorter trip needs less time.',
     right: () => `Correct. Your weight finished in ${s1(T(5))} and the grey weight finished in ${s1(T(15))}. `,
@@ -274,8 +273,8 @@ export function createModel() {
       m.goodTaps++; seen.add('word-swing-time');
       return {kind: 'right', say: `Correct. The weight swung out to the far side and came back to the green flag, and that is one full swing. On this 15 m string one swing needs ${s1(period)}, so the swing time is ${s1(period)}.`};
     }
-    if (elapsed < period * .5) return {kind: 'fail', say: 'The weight has only just set off. Wait for the weight to swing out to the far side and come all the way back.'};
     if (phase >= .3 && phase <= .7) return {kind: 'fail', say: 'The weight is near the far side, so it is only halfway through the swing. One swing ends when the weight is back at the green flag.'};
+    if (elapsed < period * .5) return {kind: 'fail', say: 'The weight has only just set off. Wait for the weight to swing out to the far side and come all the way back.'};
     if (phase > .7) return {kind: 'fail', say: 'That was nearly right, but the weight had not reached the green flag yet. Wait until the weight gets there.'};
     return {kind: 'fail', say: 'That was a little late, because the weight had already left the green flag. Press Space just as the weight gets back to the flag.'};
   }
