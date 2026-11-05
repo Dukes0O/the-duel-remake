@@ -45,7 +45,7 @@ const generators = [
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   // Candidate art is generated and read back in its lane, then waits for Claude's look verdict.
   // The public candidate is installed only when a later scene card wires it into gameplay.
-  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '1'], candidate: true,
+  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '2'], candidate: true,
     budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },

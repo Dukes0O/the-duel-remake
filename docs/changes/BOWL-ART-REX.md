@@ -1,23 +1,28 @@
-# BOWL-ART-REX: Scrapasaurus round 1
+# BOWL-ART-REX — round 2
 
-## What changed
+**Status:** Round 2 ready for Claude's look verdict. **Kind:** art asset. **Flag:** none; the model is not wired into gameplay.
 
-- Added `tools/blender/bowl-scrapasaurus.py`, a repeatable Blender recipe for a two-storey welded scrap dinosaur on a rail bogie. It has separate jaw and tail nodes, three battery boxes with whole and smashed states, and review views.
-- Added the candidate recipe and GLB budget check to `tools/test-blender-output.mjs`. The candidate GLB stays optional in the shared suite until a scene card wires it into gameplay.
-- Rendered one review sheet at `docs/board/looks/bowl-art-rex/round-1.jpg` (78,465 bytes; limit 500,000). Scores and Claude's review requests are in the round note.
-- The generated GLB measured 16,596 triangles and 1,410,100 bytes (limits 60,000 and 2,500,000). It was read back by the Blender-output suite. The card says gameplay wiring belongs to WW-SCENE or BOWL-COURSE, so the generated GLB and editable `.blend` are not part of this commit.
+The recipe now builds a longer skull with an open toothed jaw, a thick neck, four heavy legs, and a longer swaying tail. The rail frame and wheels sit behind a continuous salvaged side skin. Three named battery boxes keep whole and smashed states, with hazard paint and bright cables. The rendered views use the actual Titan model for scale only; it is excluded from the exported asset.
+
+## Evidence
+
+- Blender 4.5.13 rendered five views: front, three-quarter, side at rest, side biting, and top. The side views show the jaw and tail poses. Raw PNGs are in `.evidence/2026-11-05/BOWL-ART-REX/round-2/`.
+- The comparison sheet is `docs/board/looks/bowl-art-rex/round-1.jpg`: round 1 on the left and round 2 on the right. It is 169,594 bytes, below 500 KB. The paired note records builder scores and asks Claude to judge the remaining squared torso and material finish.
+- GLB readback: 18,328 triangles and 1,554,020 bytes (limits: 60,000 triangles and 2.5 MB).
 
 ## Checks
 
-- Blender 4.5.13 LTS: one successful round, four views rendered, GLB exported. An initial startup attempt stopped before rendering because the empty scene had no world; the recipe now creates one. No additional art round was made.
-- `node tools/test-blender-output.mjs`: **193 checks passed, 0 failed**, including the generated GLB triangle and size readback.
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): **45 suites passed, 2 failed, 0 not run**. Re-ran both failures once on the same code. `test-circuit-eifel.mjs` failed again because FFmpeg loudness measurement could not start. `test-review-evidence.mjs` failed again on an existing crew evidence date-folder mismatch and `spawnSync ffmpeg EPERM`. Neither failure touches this card's files.
-- `npm.cmd run build`: passed. Vite reported its existing dynamic-import and large-chunk warnings.
-- Browser scenario and in-game look check: Claude runs from the compact sheet. No browser QA or frame check was run in this art lane.
-- Changed assertions: no existing assertions changed. Added an optional candidate-GLB budget check for this recipe.
-- Race fingerprints: none; this art-only change does not change race code.
+- `node tools/test-blender-output.mjs`: passed, 193 checks.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- Changed-file lane tier: 45 passed, 2 failed, 0 not run. `tools/test-circuit-eifel.mjs` failed its FFmpeg loudness measurement; its one rerun still failed there (17 passed, 1 failed). `tools/test-review-evidence.mjs` initially failed because the old sheet path was absent and FFmpeg could not start; after restoring the final comparison at the recognized `round-1.jpg` path, its one rerun passed the sheet checks but still failed the FFmpeg audio-analysis case (`spawnSync ffmpeg EPERM`, 8 passed, 1 failed). No assertions were changed or weakened.
+- `npm.cmd run build`: passed. Vite reported its existing chunk-size and dynamic-import warnings.
+- Browser scenario: none; this candidate is not wired into the game. Claude should review the comparison sheet, especially the side silhouette, jaw/tail poses, battery targets from the Titan, and the remaining boxy body.
+- Replay fingerprints: the lane replay suite passed 297 checks across 33 cases and three frame rates. This art change does not alter race rules.
+
+## Changed assertions
+
+None. The Blender output registry now asks this recipe for round 2; all model budgets and existing test assertions stay unchanged.
 
 ## Removed
 
-- Removed the generated public GLB and editable Blender file after their local output checks. The model is not wired into gameplay in this card. The four raw renders remain in the ignored `.evidence/2026-11-05/BOWL-ART-REX/round-1/` folder for review.
-- No existing recipe, model or behavior was replaced.
+Replaced the round 1-only JPG and its review note with a single two-round comparison JPG and updated review note at the existing recognized paths. Recycled the temporary alternative sheet and generated scratch artifacts. No runtime asset was replaced outside this card.

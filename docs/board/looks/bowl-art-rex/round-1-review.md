@@ -1,12 +1,13 @@
-# BOWL-ART-REX — Round 1
+# BOWL-ART-REX — rounds 1 and 2
 
-The 2×2 sheet reads clockwise from the upper left: front, three-quarter, side, top. The raw Blender views are in the lane evidence folder.
+The comparison sheet shows round 1 on the left and round 2 on the right. Round 2 reads front, three-quarter, side at rest, side biting, and top. The actual Titan model gives scale. Raw Blender views are in the ignored lane evidence folder.
 
-**Builder scores (1–5):**
+**Builder scores for round 2 (1–5):**
 
-- Welded steel, rust and wear: **3/5** — the palette and dense bracing read as salvage, but the large plates look smooth in these views.
-- Two-storey scale: **4/5** — the stacked wreck decks and rail bogie are easy to see.
-- Dinosaur silhouette: **2/5** — the head and bite do not stand out; several views read more like a rail gantry than a dinosaur.
-- Overall: **3/5** — usable as a structural direction, not yet a clear show-night monster.
+- Salvaged steel, rust and wear: **3/5** — the welded panels, scraped hazard paint and cables read as salvage, though the low-poly surfaces still look quite clean.
+- Dinosaur side silhouette: **3/5** — the long skull, open toothed jaw, four legs and longer tail read more like a dinosaur than round 1. The boxy torso and hidden bogie still suggest a rail machine.
+- Jaw and tail poses: **4/5** — the two side views show a wider bite and a clear tail sway.
+- Battery targets and scale: **4/5** — all three boxes are visible with hazard marks and bright cables; the Titan is beside the whole animal.
+- Overall: **3/5** — the core fixes are visible, but the animal still needs an honest look verdict on the torso and gritty material finish.
 
-**Claude: please judge** whether the skull, bite, jaw and tail read as a scary, funny dinosaur; whether the three battery boxes are visible and distinct; and whether the hand-built steel look is gritty enough. The builder recommends a silhouette revision if the art continues, especially a longer muzzle, clearer open jaw and more obvious tail curve. No second round was made in this lane run.
+**Claude: please judge** whether the side outline now reads as a dinosaur to a child, whether the two bite/tail poses are clear, and whether the body finish is gritty enough. Pay special attention to the remaining squared torso and whether the batteries read as jump targets from the Titan.
