@@ -23,7 +23,7 @@ export async function run(c) {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await c.navigate('/tools/menu-check.html?flags=lab-classroom,rescue,summit-run');
+  await c.navigate('/tools/menu-check.html?flags=lab-classroom,lab-2,helicopter,forest-fire,rescue,heli-skiing,summit-run');
   await c.waitFor(
     `!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`,
     'menu',
@@ -34,14 +34,10 @@ export async function run(c) {
     app.audio.setMuted?.(true);
     app.addPlayer('G-force QA');
     app.profile={...app.profile,
-      drivingLessons:{version:1,done:{corner:true}},
-      drivingLesson:{version:1,done:{corner:true}},
-      courses:{version:1,unlocked:['summit-run']},
-      heli:{...app.profile.heli,fuelKg:400,
-        lessons:{liftoff:true,hover:true,landing:true,carry:true}}
-    };
+      courses:{version:1,unlocked:['tremblant-woods','summit-run']},
+      heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3}};
     app._saveProfile();
-    document.querySelectorAll('body > details').forEach(item=>item.open=false);
+    document.querySelectorAll('body > details').forEach(item=>item.hidden=true);
     app.openLab();
   })()`);
 
@@ -70,7 +66,8 @@ export async function run(c) {
   const shot = name => c.screenshot(name);
 
   await c.waitFor('window.__qaApp.labOpen===true', 'Lab map', 60000);
-  await c.evaluate(`document.querySelector('[data-go="turning-arm"]')?.click()`);
+  await c.waitFor(`document.querySelector('.lab-canvas')?.dataset.labWalkReady === 'true'`, 'Lab map walk room', 60000);
+  await c.evaluate(`document.querySelector('[data-go="turning-arm"]').click()`);
 
   await at('wonder');
   await shot('gforce-wonder');
@@ -88,6 +85,14 @@ export async function run(c) {
   await press('ArrowDown', 2);
   await at('word-radius', 'value.ready');
   await next('word-radius');
+
+  await at('word-acceleration');
+  await shot('gforce-word-acceleration');
+  await next('word-acceleration');
+
+  await at('word-g');
+  await shot('gforce-word-g');
+  await next('word-g');
 
   await at('watch');
   await wait(6500);

@@ -307,6 +307,14 @@ test('G-force is registered with its old notebook words, challenge and seven les
   assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
+test('the short G-force wonder ends with its prediction question', () => {
+  const model = createGforceModel();
+  model.enter(0);
+  assert.match(model.view().say, /car on an arm.*cord.*meter.*words come next/i);
+  model.tick(2.5);
+  assert.match(model.view().say, /Which change could make the meter show a larger reading\?/);
+});
+
 test('G-force formula sums calculate from the exact metric values they show and match the challenge rule', () => {
   const model = createGforceModel();
   const formulaIndex = GFORCE_STEPS.findIndex(step => step.id === 'formula');
@@ -320,12 +328,13 @@ test('G-force formula sums calculate from the exact metric values they show and 
       while (state.radius < radius) { model.act('radius:up'); state = model.state(); }
       while (state.radius > radius) { model.act('radius:down'); state = model.state(); }
       const worked = model.view().formulas.at(-1).worked;
-      const match = worked.match(/\((\d+\.\d{5}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = (\d+\.\d{2}) g/);
+      const match = worked.match(/\((\d+\.\d{2}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = about (\d+\.\d{2}) g/);
       assert.ok(match, worked);
       const [, metresPerSecond, shownRadius, shownG] = match;
       const calculated = (Number(metresPerSecond) ** 2 / Number(shownRadius) / 9.81).toFixed(2);
-      assert.equal(shownG, calculated, `${speed} mph setting and ${radius} m radius`);
-      assert.equal(shownG, lateralG(speed, radius).toFixed(2), 'the displayed result matches the challenge function');
+      assert.equal(shownG, calculated, `${speed} dial setting and ${radius} m radius`);
+      assert.equal(model.view().g.toFixed(2), lateralG(speed, radius).toFixed(2), 'the board meter matches the challenge function');
+      assert.equal(model.view().speedKmh.toFixed(1), (speed * 1.609344).toFixed(1));
     }
   }
 });
@@ -351,6 +360,25 @@ test('a child can follow the G-force prompts through the speed and radius lesson
   assert.equal(new Set(session.view().rows.map(row => `${row.speed}/${row.radius}`)).size, 3);
 });
 
+test('the watch changes both settings over time and keeps the board, meter and formula in step', () => {
+  const model = createGforceModel();
+  const watch = GFORCE_STEPS.findIndex(step => step.id === 'watch');
+  model.enter(watch);
+  model.tick(1);
+  assert.equal(model.view().speedKmh, 64.4);
+  model.tick(1);
+  assert.equal(model.view().speedKmh, 128.7);
+  assert.equal(model.view().radiusM, 50);
+  assert.equal(model.view().g.toFixed(2), lateralG(80, 50).toFixed(2));
+  assert.match(model.view().formulas[0].worked, /128\.7 km\/h/);
+  model.tick(2);
+  assert.equal(model.view().speedKmh, 64.4);
+  model.tick(1);
+  assert.equal(model.view().radiusM, 100);
+  assert.equal(model.view().g.toFixed(2), lateralG(40, 100).toFixed(2));
+  assert.match(model.view().formulas.at(-1).worked, /100 m/);
+});
+
 test('wrong G-force predictions explain the actual readings after the turn has run', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
   reachGforceFreeTest(session);
@@ -364,6 +392,7 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   assert.match(session.view().brian.text, /96\.6 km\/h/);
   assert.match(session.view().brian.text, /1\.47 g/);
   assert.match(session.view().brian.text, /0\.65 g/);
+  assert.match(session.view().brian.text, /1\.5 × 1\.5 = 2\.25/);
   session.act('next');
   session.act('answer:1');
   session.act('radius:up');
@@ -372,6 +401,7 @@ test('wrong G-force predictions explain the actual readings after the turn has r
   assert.match(session.view().brian.text, /75 m/);
   assert.match(session.view().brian.text, /0\.43 g/);
   assert.match(session.view().brian.text, /0\.65 g/);
+  assert.match(session.view().brian.text, /one and a half times 50 m.*two thirds as large/);
 });
 
 test('Show me points to a live control and records a new free-test setting on each use', () => {

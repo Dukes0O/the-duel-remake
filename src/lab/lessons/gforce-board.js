@@ -58,8 +58,8 @@ export function hoverInfo(view, x, y) {
 
 export function targetPoint(view, action) {
   if (action === 'set:best' && view.best) {
-    if (view.speedMph !== view.best.speed) {
-      return view.speedMph < view.best.speed ? SPEED.up : SPEED.down;
+    if (view.setting !== view.best.speed) {
+      return view.setting < view.best.speed ? SPEED.up : SPEED.down;
     }
     if (view.radiusM !== view.best.radius) {
       return view.radiusM < view.best.radius ? RADIUS.up : RADIUS.down;
