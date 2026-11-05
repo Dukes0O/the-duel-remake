@@ -585,6 +585,19 @@ test('review fixes: the can holds only what went out of the tap; clicks land whe
   assert.ok(wonder.view().actions.includes('replay'));
   wonder.act('replay');
   assert.ok(wonder.view().lanes.every(l => l.seconds == null));
+  // Pressing R after the race: the words about the finished race go while the cars restart, and come back at the end.
+  until(wonder, x => x.ready);
+  assert.match(wonder.view().brian.text, /The picture shows the moment/);
+  wonder.act('replay');
+  assert.ok(!/The picture shows the moment/.test(wonder.view().brian.text), 'no talk of the finish while the cars restart');
+  assert.equal(wonder.view().ready, true, 'the step stays done');
+  until(wonder, x => /The picture shows the moment/.test(x.brian.text));
+  // The car can still run on an empty tank, so nothing says it must stop.
+  assert.ok(!/must stop/.test(readFileSync(new URL('../src/lab/lessons/fuel-classroom.js', import.meta.url), 'utf8')));
+  const pit = createClassroomSession(lesson);
+  playThroughTo(pit, 'check-game');
+  pit.act('answer:0');
+  assert.match(pit.view().brian.text, /After that the car has 40% of its acceleration until it stops in the pit lane to refill/);
 });
 
 test('review fixes: the weighing try draws no race strip, so nothing on the board shows the litres under the cloth', () => {

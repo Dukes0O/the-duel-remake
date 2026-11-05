@@ -77,7 +77,7 @@ export const KEY_IDEAS = Object.freeze([
   {id: 'game', text: `Fuel load is on the Tune page in the garage. In a Grand Prix a half tank lasts only ${pct(lastsShare(HALF))} of the race, so carry the petrol you need and no more.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Carry the petrol you need, and no more.',
-  text: 'Fuel load is on the Tune page in the garage. A half tank accelerates faster, but in a Grand Prix its petrol runs out just past half way, so the car must stop in the pit lane to refill.'});
+  text: 'Fuel load is on the Tune page in the garage. A half tank accelerates faster, but in a Grand Prix its petrol runs out just past half way, and the car is slow until it stops in the pit lane to refill.'});
 // The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
 export const WORDS = Object.freeze([
   {id: 'fuel-word-0', word: 'Fuel load', meaning: 'The amount of petrol that a car carries, measured in litres.'},
@@ -140,13 +140,13 @@ const CHECKS = {
   },
   'check-game': {
     question: 'In the game, you set Fuel load to Half tank on the Tune page for a Grand Prix. What happens during the race?',
-    answers: [{label: 'The car accelerates faster, but its petrol runs out past half way, so it must stop in the pit lane to refill', picture: {kind: 'game', what: 'pit'}}, {label: 'The petrol lasts the whole race', picture: {kind: 'game', what: 'flag'}},
+    answers: [{label: 'The car accelerates faster, but its petrol runs out past half way, and it is slow until it stops in the pit lane to refill', picture: {kind: 'game', what: 'pit'}}, {label: 'The petrol lasts the whole race', picture: {kind: 'game', what: 'flag'}},
       {label: 'The car is slower for the whole race', picture: {kind: 'game', what: 'slow'}}],
     correct: 0,
     formulas: answered => [shareSum(answered ? HALF : null)],
-    right: () => `Correct. A half tank lasts ${pct(lastsShare(HALF))} of a Grand Prix, so the car must stop in the pit lane to refill, and that stop is ${GRAND_PRIX.stopSec} s longer than usual.`,
+    right: () => `Correct. A half tank lasts ${pct(lastsShare(HALF))} of a Grand Prix. After that the car has ${pct(GRAND_PRIX.dryPower)} of its acceleration until it stops in the pit lane to refill, and that stop is ${GRAND_PRIX.stopSec} s longer than usual.`,
     wrong: picked => picked === 1 ? `A full tank lasts ${pct(GRAND_PRIX.fullTankShare)} of a Grand Prix, so half a tank lasts ${pct(lastsShare(HALF))} and its petrol runs out just past half way. With an empty tank the car has ${pct(GRAND_PRIX.dryPower)} of its acceleration until it stops in the pit lane.`
-      : `The same car with less mass accelerates faster, so in the game a half tank accelerates and brakes ${pct(2 * GRAND_PRIX.accelPerStep)} better. However, its petrol runs out just past half way, so the car must stop in the pit lane.`,
+      : `The same car with less mass accelerates faster, so in the game a half tank accelerates and brakes ${pct(2 * GRAND_PRIX.accelPerStep)} better. However, its petrol runs out just past half way, and the car is slow until it stops in the pit lane to refill.`,
     hints: ['Think of Brian’s job. How far does half a tank last?', `Half a tank lasts ${pct(lastsShare(HALF))} of a Grand Prix.`, 'Pick the first card.'],
   },
 };
@@ -450,9 +450,9 @@ export function createModel() {
       half: false, jug: null, jugs: null, lanes: m.lanes.length ? laneViews() : [], plain: false, laneSums: false, graph: null, free: null, job: null, tune: null, best: null, runs: [...runs], formulas: [],
       keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null, waiting: false, ready: seen.has(id), asking: false};
     if (id === 'wonder') return {...base, actions: ['replay'], plain: true,
-      say: seen.has(id) ? `The car with half a tank reached ${ABOUT_KMH} first, in ${s2(HALF_S)}, and the car with a full tank reached it in ${s2(FULL_S)}. The picture shows the moment when the first car got there, with the other car ${Math.round(gapAtWin(HALF, TANK_LITRES) * 100)} centimetres, written cm, behind. The only difference between the cars was the petrol in their tanks, so why did the car with less petrol win?`
+      say: m.phase === 'done' ? `The car with half a tank reached ${ABOUT_KMH} first, in ${s2(HALF_S)}, and the car with a full tank reached it in ${s2(FULL_S)}. The picture shows the moment when the first car got there, with the other car ${Math.round(gapAtWin(HALF, TANK_LITRES) * 100)} centimetres, written cm, behind. The only difference between the cars was the petrol in their tanks, so why did the car with less petrol win?`
         : `Here are two identical cars with the same engine. One car has a full tank of petrol and the other has half a tank. Both start from a standstill and race until they reach ${ABOUT} kilometres per hour, which is written km/h. The road is marked in metres, written m, and the stopwatches count in seconds, written s. Watch which car gets there first.`,
-      prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the two cars.',
+      prompt: m.phase === 'done' ? 'Press Enter when you are ready to find out, or press R to watch again.' : seen.has(id) ? 'Watch the two cars, or press Enter when you are ready to find out.' : 'Watch the two cars.',
       hints: [`Watch which car reaches ${ABOUT_KMH} first.`, 'The only difference is the petrol in the tanks.', seen.has(id) ? 'Press Enter when you are ready to find out.' : 'Watch until both stopwatches have stopped, then press Enter.']};
     if (id === 'word-litre') {
       const ready = m.phase === 'jug', done = m.phase === 'done';
