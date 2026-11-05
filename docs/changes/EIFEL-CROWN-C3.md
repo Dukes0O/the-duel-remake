@@ -170,3 +170,8 @@ Easy measurement at pace `.94` (30 seeds): all computers finished in 30/30;
 14 computer crashes; 0 first-lap pile-ups; 27 player wins (90%); 1.30
 computer passes per race; player time mean 337.973 s (range 328.711–358.436 s).
 The finish and pile-up targets pass. The Easy win band and crash limit fail.
+
+Hard measurement at pace `.86` (30 seeds): all computers finished in 30/30;
+4 computer crashes; 0 first-lap pile-ups; 6 player wins (20%); 2.03
+computer passes per race; player time mean 347.307 s (range 338.744–355.306 s).
+Finish, pile-up and win targets pass. The crash limit is exceeded by one.
