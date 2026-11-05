@@ -1554,3 +1554,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: released Lab language batch 3 and G-force, master 0a11aa3b, build 26.11.05 06:34 UTC; rule 19 on the full tier of 8361997b with the lane tier 120/120; staged build checked on 5188; live server running, serves the new build.
 - 5 Nov night: merged the first Wasteland batch of eight cards (Codex build, Codex review with two faults fixed, changed suites, circuits, replays; switches off) and QA-BUNDLE-NO-COPY (browser test copy 373 MB to 7 MB).
 - 5 Nov night: merged Grip and Suspension classrooms, old lessons removed (all 23 lab browser scenarios pass, lane 44/45: test-review-evidence fails on a midnight date mismatch, carded, build). Live with the next release.
+- 5 Nov night: merged EIFEL-CROWN-C3 (lane 57/57, circuits, build; Claude reviewed the Medium limit, back on the written 30 to 50%).
