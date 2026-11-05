@@ -289,8 +289,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       if(s.status==='countdown')text('countdown-word','EXPLORE THE PLAYGROUND');
     }
     const arena=arenaHud(s);
-    ui['arena-board'].hidden=!arena;
-    ui.stage.classList.toggle('is-scrapdome',!!arena);
+    ui['arena-board'].hidden=!arena||!!arena.worldJob;
+    ui.stage.classList.toggle('is-scrapdome',!!arena&&!arena.worldJob);
     if(arena){
     // Scrapdome events replace laps, route progress and race position.
       text('race-time-label',arena.timeLabel);
@@ -298,8 +298,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('penalty-time','');
       text('lap-number',arena.modeLabel);
       text('lap-time',arena.scoreText);
-      text('stage-label',`${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
-      text('stage-objective',arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
+      text('stage-label',arena.worldJob ? `${arena.modeLabel.toUpperCase()} · STEP ${s.arena.worldJob.job.stepIndex+1}` : `${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
+      text('stage-objective',arena.worldJob ? arena.scoreText : arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
         'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
           arena.fuel ? `BRING FUEL TO YOUR ${arena.fuelColorName ?? 'MATCHING'} DEPOT` : 'WRECK THEM MORE THAN THEY WRECK YOU');
       // The objective line takes the colour of the player's own depot.
@@ -307,7 +307,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('route-percent','');
       text('route-remaining',arena.scoreText);
       text('route-lap','ARENA');
-      text('route-section','THE SCRAPDOME');
+      text('route-section',arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);
@@ -325,7 +325,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
         text('callout-text','WRECKED');
         text('callout-kicker',`BACK IN THE FIGHT IN ${arena.respawnSec}`);
       }
-      if(s.status==='countdown')text('countdown-word',s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
+      if(s.status==='countdown')text('countdown-word',arena.worldJob ? 'THE SCABLANDS' : s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
   }
   return updateHud;

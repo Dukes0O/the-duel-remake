@@ -142,7 +142,7 @@ export class Course {
       this.saltFlatsGeometry=saltFlatsPhysicalGeometry(this);
       f.ramps.push(...this.saltFlatsGeometry.ramps);
     }
-    else if(this.def.scrapdome){
+    else if(this.def.scrapdome&&!this.def.scablands){
       // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
       const layout=this.def.scrapdome;
       for(const frac of layout.rampFractions)f.ramps.push({start:this.length*frac,end:this.length*frac+layout.rampLength,height:layout.rampHeight});
@@ -390,7 +390,7 @@ export class Course {
       for(let i=0;i<28;i++){let s=130+i*(this.length-220)/28,off=(i%2?1:-1)*(i%3===0?5.5:12+rng.range(0,6));
         if(this.tunnelAt(s))continue;if(!vacant(s,off,4))off=(i%2?1:-1)*5;
         if(vacant(s,off,3.5))f.flocks.push({id:`flock-${i}`,s,off,radius:3.5,count:8,seed:rng.int(1,100000)});}
-    }else if(!this.def.practice){
+    }else if(!this.def.practice&&!this.def.scablands){
       for(let s=0;s<this.length;s+=8)for(const side of[-1,1]){
         // Pieces sit every 8 m along the centre line. Where the ring bends, the outer
         // side is longer, so each piece grows to meet its neighbours (no open gaps).
@@ -398,7 +398,7 @@ export class Course {
         f.barriers.push(add(`arena-wall-${s}-${side}`,'prop',s,off,.5,4.2*Math.max(1,1-this.at(s).curvature*off),0,{barrier:true,arenaWall:true}));
       }
     }
-    if(!this.def.practice)Object.assign(f,buildRoadFurniture(this));
+    if(!this.def.practice&&!this.def.scablands)Object.assign(f,buildRoadFurniture(this));
     for(const sign of f.signs)for(const post of sign.posts)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     for(const post of f.chevrons)f.obstacles.push({...post,kind:'prop',shape:'box',theme:this.themeAt(post.s),signSupport:true});
     if(this.def.checkpointRush){

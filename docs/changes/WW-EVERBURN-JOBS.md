@@ -1,5 +1,54 @@
 # WW-EVERBURN-JOBS
 
+## First job play fixes (5 November 2026)
+
+- Kept the Scablands venue through the App and Game start calls. The visible
+  Scrapdome leak came from generic arena HUD and course scenery being applied
+  to the Scablands definition. Scablands now skips those Scrapdome barriers
+  and road furniture, and its job HUD shows the world venue.
+- World jobs start at the first step's authored place. The in-race panel shows
+  the job name, step number and hand-written step line, uses elapsed time, and
+  hides arena score rows.
+- Every Everburn job step, including side jobs, has a full-sentence `what`.
+  The HUD uses it instead of turning internal load IDs into player text.
+- Loaned car Flamethrowers use key 4's existing slot for the job and return to
+  the saved loadout afterward. Cinder's Hand Flamer loan selects her foot gear
+  and restores the player's crew and gear selection when the job ends.
+- `tools/scenarios/everburn-play.mjs` now checks the venue, finite HUD text,
+  job identity and step, scoreboard removal, the Flamethrower slot, start
+  position, Scablands map and marker, and keyboard progress to the next step.
+  The browser scenario is for Claude to play; Chrome is unavailable here.
+
+### Checks for these fixes
+
+- `node tools/test-everburn-easy.mjs` — passed; all nine jobs finished 10/10.
+- `node tools/test-world-job-mode.mjs` — passed; car and foot loans, F exit,
+  step HUD, and saved loadout/crew restoration.
+- `node tools/test-world-jobs.mjs` — passed; job engine scenarios and
+  repeatability checks.
+- `node tools/test-world-job-mode.mjs` — passed; every Everburn step has a
+  sentence, and the map marker points to Tin Town.
+- `node tools/test-replays.mjs` — passed; 297 checks, fingerprints unchanged.
+- `node tools/test-combat-replays.mjs` — passed; 12 checks.
+- `node tools/test-world-composition.mjs` — passed; 63 checks across 20 events.
+- `npm.cmd run build` — passed. Vite emitted its existing chunk-size and
+  dynamic-import warnings.
+- Browser scenario and lane tier — not run here, as instructed.
+
+### Changed assertions
+
+- Added assertions for the explicit Everburn step lines, the job HUD and
+  fourth-slot loan, and Hand Flamer gear restoration. No existing assertion
+  or tolerance was weakened.
+
+### Race fingerprints
+
+- Replay and combat replay fingerprints stayed exact.
+
+### Removed
+
+- Removed Scrapdome barrier and road-furniture generation from Scablands.
+
 ## Changed
 
 - Applied Claude's Easy finale plan. The car lends the Flamethrower through

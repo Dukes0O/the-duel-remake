@@ -20,6 +20,15 @@ export function arenaStyleLabel(participant) {
 export function arenaHud(state) {
   const arena = state?.arena;
   if (!arena) return null;
+  if (arena.mode === 'world-job') {
+    const worldJob = arena.worldJob;
+    const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+    return {worldJob: true, phase: arena.phase,
+      modeLabel: worldJob?.definition?.name ?? 'WORLD JOB',
+      timeLabel: 'TIME SPENT', remainingSec: Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0,
+      place: 1, field: 1, placeText: '01', leaderText: 'JOB IN PROGRESS',
+      scoreText: step?.what ?? 'Keep going.', huntedBy: [], respawnSec: 0, rows: []};
+  }
   if (arena.mode === 'ambush-alley') {
     const alley = arena.ambushAlley;
     const living = (state.raids?.zones || []).flatMap(zone => zone.raiders)

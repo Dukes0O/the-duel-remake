@@ -25,35 +25,35 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   switch (step.kind) {
     case 'reach':
       target = step.place ?? step.destination;
-      line = `Drive to ${labelOf(target, places)}`;
+      line = step.what ?? `Drive to ${labelOf(target, places)}`;
       break;
     case 'carry':
       target = step.destination ?? step.origin;
-      line = `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
+      line = step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
       break;
     case 'chase': {
       const targetActor = actor(step.targetId);
       target = targetActor ?? step.path?.at(-1);
-      line = `Catch ${labelOf(step.actor ?? targetActor ?? {id: step.targetId}, places)}`;
+      line = step.what ?? `Catch ${labelOf(step.actor ?? targetActor ?? {id: step.targetId}, places)}`;
       break;
     }
     case 'escort': {
       const convoy = actor(step.actorId);
       target = step.destination ?? step.path?.at(-1) ?? convoy?.position;
-      line = `Keep ${labelOf(step.actor ?? {id: step.actorId}, places)} safe to ${labelOf(target, places)}`;
+      line = step.what ?? `Keep ${labelOf(step.actor ?? {id: step.actorId}, places)} safe to ${labelOf(target, places)}`;
       break;
     }
     case 'onfoot': {
       target = step.places?.[stepState.index ?? 0] ?? step.returnToCar;
       line = (stepState.index ?? 0) >= (step.places?.length ?? 0)
-        ? 'Return to your car' : `Walk to ${labelOf(target, places)}`;
+        ? 'Return to your car' : step.what ?? `Walk to ${labelOf(target, places)}`;
       break;
     }
     case 'heist': {
       const phase = stepState.phase ?? 'infiltrate';
       target = phase === 'return' ? step.carPlace : phase === 'escape' ? step.escapePlace : step.zone;
-      line = phase === 'return' ? `Carry ${labelOf({id: step.takeId}, places)} to your car`
-        : phase === 'escape' ? `Drive to ${labelOf(step.escapePlace, places)}` : `Take ${labelOf({id: step.takeId}, places)}`;
+      line = step.what ?? (phase === 'return' ? `Carry ${labelOf({id: step.takeId}, places)} to your car`
+        : phase === 'escape' ? `Drive to ${labelOf(step.escapePlace, places)}` : `Take ${labelOf({id: step.takeId}, places)}`);
       break;
     }
     case 'rescue': {
@@ -61,17 +61,17 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
       const needed = Math.min(step.people?.length ?? 0, step.seats ?? 2);
       const person = count < needed ? step.people?.[count] : null;
       target = person ?? step.home;
-      line = person ? `Rescue ${labelOf(person, places)}` : `Bring everyone to ${labelOf(step.home, places)}`;
+      line = step.what ?? (person ? `Rescue ${labelOf(person, places)}` : `Bring everyone to ${labelOf(step.home, places)}`);
       break;
     }
     case 'defend':
       target = step.place;
-      line = `Defend ${labelOf(target, places)}`;
+      line = step.what ?? `Defend ${labelOf(target, places)}`;
       break;
     case 'explore': {
       const find = step.finds?.[stepState.index ?? 0] ?? nextFind(step, found);
       target = find;
-      line = find ? `Find ${labelOf(find, places)}` : 'Explore the Scablands';
+      line = step.what ?? (find ? `Find ${labelOf(find, places)}` : 'Explore the Scablands');
       break;
     }
     default:

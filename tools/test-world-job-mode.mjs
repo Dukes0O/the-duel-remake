@@ -5,8 +5,12 @@ import {canLeaveCar} from '../src/onfoot-transition.js';
 import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {worldHudModel} from '../src/world/world-hud.js';
+import {arenaHud} from '../src/screen-arena.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 
 const dt = 1 / 120;
+for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps)
+  assert.match(step.what, /^[A-Z].*[.!?]$/, `${job.id} has a whole-sentence step line`);
 const flags = {'hidden-road': true, 'story-everburn': true, arsenal: true, 'arsenal-wave3': true};
 const values = new Map();
 globalThis.localStorage = {
@@ -33,6 +37,14 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.equal(app.duel.state.arena.mode,'world-job');
   assert.equal(app.duel.state.arena.venueId,'scablands');
   assert.equal(app.duel.state.arena.worldJob.definition.id,'everburn-hot-delivery');
+  const jobHud=arenaHud(app.duel.state);
+  assert.equal(jobHud.modeLabel,'Hot Delivery');
+  assert.match(jobHud.scoreText,/Cinder's ember pot/);
+  assert(Number.isFinite(jobHud.remainingSec),'job HUD shows finite elapsed time');
+  assert.deepEqual(jobHud.rows,[],'world jobs do not show an arena table');
+  assert.equal(worldHudModel({worldJob:app.duel.state.arena.worldJob,
+    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).target.id,'tin-town',
+    'the Scablands map guidance carries the job destination marker');
   const arena=app.duel.state.arena,worldJob=arena.worldJob;
   worldJob.job.stepIndex=worldJob.job.steps.length;worldJob.job.done=true;
   finishArenaEvent(app.duel,'job-complete','player');
@@ -63,7 +75,8 @@ function start({complete = false, seed = 1989, job: suppliedJob = null} = {}) {
     playerId: app.player.id, seed, opponents: [], weaponLoadout: app.profile.wasteland.loadout, job}), true);
   assert.equal(app.duel.state.arena.mode, 'world-job');
   assert.equal(app.duel.state.objective, null, 'the world job leaves the race objective inactive');
-  assert(app.duel.state.weaponLoadout.includes('flamethrower'), 'the run receives the loan');
+  if (job.lend?.[0] === 'flamethrower' || job.steps[0].lentWeapon === 'flamethrower')
+    assert.equal(app.duel.state.weaponLoadout[3], 'flamethrower', 'the run lends the Flamethrower in the fourth key slot');
   app.duel.state.countdown = 0;
   app.duel.step(dt);
   assert.equal(app.duel.state.status, 'racing');
@@ -155,6 +168,23 @@ function assertSavedLoadout(app, expectedBytes, exit) {
   assert.equal(app.duel.state.onFoot, false, 'holding F beside the car gets back in');
   app.returnToMenu();
   app.dispose?.();
+}
+
+// A Hand Flamer loan selects Cinder's on-foot signature gear and leaves the
+// car weapon bar alone; the regular F transition exposes it in the field.
+{
+  const {app} = start({job:{id:'cinders-loan-test', steps:[{kind:'onfoot', lentWeapon:'cinders-hand-flamer',
+    places:[{id:'lamp',position:{x:999,z:999}}], returnToCar:{position:{x:0,z:0}}, requiresExit:true}]}});
+  assert.equal(app.duel.state.crewId,'cinder');
+  assert.equal(app.duel.state.crewGear.id,'hand-flamer');
+  assert.equal(app.duel.state.footWeapons.selected,'hand-flamer');
+  app.duel.setInput({interact:true});
+  for(let n=0;n<75;n++)app.duel.step(dt);
+  assert.equal(app.duel.state.onFoot,true,'Cinder loan works after holding F to get out');
+  assert.equal(app.duel.state.footGear.name,'HAND FLAMER');
+  app.returnToMenu();app.dispose?.();
+  assert.equal(app.duel.state.crewId,'rook','the loaned crew identity is restored after the job');
+  assert.equal(app.duel.state.footWeapons.selected,'rpg','the loaned Hand Flamer selection is restored after the job');
 }
 
 for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {

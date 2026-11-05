@@ -1,6 +1,7 @@
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
+import {initializeCrewGear} from '../../crew-gear/signature.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -23,8 +24,10 @@ export function initializeWorldJob(duel, definition) {
   if (!worldJob) return false;
   // Loaned car weapons belong to this run. They never touch the player profile.
   worldJob.originalWeaponLoadout = [...(state.weaponLoadout || [])];
+  worldJob.originalCrewId = state.crewId;
+  worldJob.originalFootWeaponSelected = state.footWeapons?.selected ?? null;
   worldJob.activeLoan = null;
-  applyStepLoan(state, worldJob);
+  applyStepLoan(duel, worldJob);
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   state.worldJobThingsHit = [];
@@ -35,17 +38,34 @@ export function cleanupWorldJobLoan(duel) {
   const worldJob = duel.state.arena?.mode === 'world-job' ? duel.state.arena.worldJob : null;
   if (!worldJob || !Array.isArray(worldJob.originalWeaponLoadout)) return false;
   duel.state.weaponLoadout = [...worldJob.originalWeaponLoadout];
+  if (worldJob.originalCrewId) duel.state.crewId = worldJob.originalCrewId;
+  if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)
+    duel.state.footWeapons.selected = worldJob.originalFootWeaponSelected;
+  initializeCrewGear(duel);
   worldJob.activeLoan = null;
   worldJob.settled = true;
   return true;
 }
 
-function applyStepLoan(state, worldJob) {
+function applyStepLoan(duel, worldJob) {
+  const state = duel.state;
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   const loan = step?.lentWeapon ?? (worldJob.job.stepIndex === 0 ? worldJob.definition.lend?.[0] : null);
   worldJob.activeLoan = typeof loan === 'string' ? loan : null;
-  state.weaponLoadout = [...new Set([...(worldJob.originalWeaponLoadout || []),
-    ...(worldJob.activeLoan ? [worldJob.activeLoan] : [])])];
+  state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
+  if (worldJob.activeLoan === 'flamethrower') {
+    const slot = Math.min(state.weaponLoadout.length, 3);
+    state.weaponLoadout[slot] = worldJob.activeLoan;
+  } else if (worldJob.activeLoan === 'cinders-hand-flamer') {
+    state.crewId = 'cinder';
+    initializeCrewGear(duel);
+    if (state.footWeapons) state.footWeapons.selected = 'hand-flamer';
+  } else if (worldJob.originalCrewId) {
+    state.crewId = worldJob.originalCrewId;
+    if (worldJob.originalFootWeaponSelected && state.footWeapons)
+      state.footWeapons.selected = worldJob.originalFootWeaponSelected;
+    initializeCrewGear(duel);
+  }
 }
 
 function updateJobActors(worldJob, dt) {
@@ -220,7 +240,7 @@ export function stepWorldJob(duel, dt) {
   moveJobRaiders(worldJob, dt);
   updateJobActors(worldJob, dt);
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
-  if (next.stepIndex !== previousStep) applyStepLoan(state, worldJob);
+  if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
   for (const event of next.events) {
     if (event.type === 'waveRestarted') {
       const step = next.steps[next.stepIndex];
@@ -248,6 +268,10 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'done') {
       worldJob.settled = true;
       state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
+      if (worldJob.originalCrewId) state.crewId = worldJob.originalCrewId;
+      if (worldJob.originalFootWeaponSelected && state.footWeapons)
+        state.footWeapons.selected = worldJob.originalFootWeaponSelected;
+      initializeCrewGear(duel);
       return {reason: 'job-complete', winnerId: 'player'};
     }
   }

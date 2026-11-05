@@ -625,6 +625,16 @@ export class Duel {
       placeActor(this, actor, slot);
       s.arena.participants[index].spawnSlot = slot.index;
     });
+    if (mode === 'world-job' && job?.storyId === 'everburn') {
+      const start = job?.steps?.[0]?.origin ?? job?.steps?.[0]?.carPlace ??
+        job?.steps?.[0]?.place ?? job?.steps?.[0]?.returnToCar ?? job?.steps?.[0]?.zone;
+      const point = start?.position ?? start;
+      if (Number.isFinite(point?.x) && Number.isFinite(point?.z)) {
+        const at = this.course.nearest(point.x, point.z);
+        s.s = at.s; s.lateral = at.lateral;
+        s.speedMph = 0; s.headingError = 0; s.yawVelocity = 0;
+      }
+    }
     initializeArenaJunk(this);
     initializeFuelRun(this);
     initializeBountyHunt(this);

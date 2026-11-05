@@ -238,6 +238,12 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   const convoyBanner = host.querySelector('.convoy-prompt');
   const markers = [];
   const buttons = [...host.querySelectorAll('[data-combat-weapon]')];
+  const slotBar = host.querySelector('.combat-slot-bar');
+  const loanSlot = document.createElement('button');
+  loanSlot.type = 'button'; loanSlot.dataset.combatWeapon = 'flamethrower'; loanSlot.dataset.combatSlot = '3';
+  loanSlot.title = `${WEAPONS.flamethrower.name} · Key 4`;
+  loanSlot.innerHTML = `<span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">4 ↓</span><span class="combat-slot-name">${WEAPONS.flamethrower.name}</span><span class="combat-slot-state"></span>`;
+  loanSlot.hidden = true; slotBar.append(loanSlot); buttons.push(loanSlot);
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
@@ -338,6 +344,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
+      button.hidden = slot === 3 && ((button === loanSlot) !== (id === 'flamethrower'));
+      if (button.hidden) continue;
       const weapon=WEAPONS[id];
       if(button.dataset.combatWeapon!==id)button.dataset.combatWeapon=id;
       setText(button.querySelector('.combat-slot-name'),weapon.name);
