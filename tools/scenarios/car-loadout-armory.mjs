@@ -43,7 +43,7 @@ export async function run(context){
       s:500,prevS:500,lateral:0,prevLateral:0,speedMph:0,traffic:[]});
     state.combat.aiTimer=Infinity;state.combat.pickupTimer=Infinity;
     app.onFrame?.(state);
-    const hud=[...document.querySelectorAll('[data-combat-slot]')]
+    const hud=[...document.querySelectorAll('[data-combat-slot]:not([hidden])')]
       .map(button=>button.dataset.combatWeapon);
     if(state.weaponLoadout.join(',')!==hud.join(','))
       throw Error('Race HUD does not follow the saved slot order');

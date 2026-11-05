@@ -3,7 +3,8 @@ import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
-  'gear-find': 'dev',
+  // GEAR-FIND: the yard's Things to try, every weapon listed in the Armory, locked modes shown with their rank (Kyle, 5 November 2026, for Gratian).
+  'gear-find': 'on',
   'seeker-rockets': 'on',
   'convoy-raid': 'on',
   tollkeeper: 'on',
