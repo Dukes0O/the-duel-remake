@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, fastestFor, metresFrom, laneAt, stopOf, benchAttempts} from '../src/lab/lessons/braking-classroom.js';
+import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, TEST_CARS, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, fastestFor, metresFrom, laneAt, stopOf, kmh, msOf, aOf, brakesOf, sumOf, benchAttempts} from '../src/lab/lessons/braking-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/braking-board.js';
 import {brakingBench, stopDistance, frontLoadShare} from '../src/lab/benches/tunnel.js';
 import {effectLine, TUNE_ROWS} from '../src/lab/tune-view.js';
@@ -22,8 +22,10 @@ function playThroughTo(session, id) {
   while (session.view().step.id !== id) {
     const step = session.view().step.id;
     if (step === 'wonder' || step === 'watch') until(session, x => x.ready);
-    else if (step === 'word-stopping' || step === 'word-weight') { session.act('go'); until(session, x => x.ready); }
+    else if (step === 'word-speed') setTo(session, 100);
+    else if (['word-stopping', 'word-deceleration', 'word-energy', 'word-weight'].includes(step)) { session.act('go'); until(session, x => x.ready); }
     else if (step === 'word-balance') { session.act('lever:front'); session.act('lever:front'); }
+    else if (step === 'try-free') { brake(session); session.act('speed:up'); brake(session); session.act('car:next'); brake(session); }
     else if (step === 'try-speed') { setTo(session, 100); session.act('go'); session.act('answer:1'); until(session, x => x.ready); }
     else if (step === 'try-slide') { brake(session); setTo(session, 50, STEADY_FRONT); brake(session); }
     else if (step === 'alone') for (const gap of CORNERS) { setTo(session, fastestFor(gap), STEADY_FRONT); brake(session); }
@@ -44,12 +46,13 @@ function benchPasses(attempts) {
   }
   return goalMet(bench);
 }
+const panelText = v => v.formulas.map(f => [f.title, f.formula, f.worked, f.note].filter(Boolean).join(' ')).join(' ');
 
 test('the lesson walks the seven parts in order, keeps the old notebook words, and finishes on the bench', () => {
   assert.deepEqual([...new Set(STEPS.map(s => s.part))], PARTS.map((_, i) => i));
   assert.ok(STEPS.every((s, i) => i === 0 || s.part >= STEPS[i - 1].part));
-  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['braking-word-0', 'braking-word-1', 'braking-word-2'], 'the old lesson’s notebook ids');
-  assert.deepEqual(lesson.words.map(w => w.word), ['Stopping distance', 'Weight shift', 'Brake balance']);
+  assert.deepEqual(STEPS.filter(s => s.word).map(s => s.word), ['braking-metres-per-second', 'braking-word-0', 'braking-deceleration', 'braking-energy', 'braking-word-1', 'braking-word-2'], 'the old lesson’s notebook ids, and the new words');
+  assert.deepEqual(lesson.words.map(w => w.word), ['Metres per second (m/s)', 'Stopping distance', 'Deceleration (m/s²)', 'Energy of motion', 'Weight shift', 'Brake balance']);
   assert.equal(lesson.name, 'Braking');
   assert.equal(lesson.finishLabel, 'Finish the lesson');
   assert.equal(STEPS.find(s => s.id === 'watch').voice, 'lab.brian.braking.intro');
@@ -71,8 +74,19 @@ test('every number is the braking bench’s own run, and question 3 is the Tune 
   // The car on the strip brakes evenly from its speed to the bench's stop, in the bench's time.
   const r = stopOf(100);
   const end = laneAt(100, 70, 5);
-  assert.equal(end.metres, r.stopMetres); assert.equal(end.mph, 0); assert.equal(end.done, true);
+  assert.equal(end.metres, r.stopMetres); assert.equal(end.ms, 0); assert.equal(end.done, true);
   assert.ok(laneAt(100, 70, .3).metres < 0 && laneAt(100, 70, .3).braking === false, 'it arrives before the brake line');
+});
+
+test('the dial shows km/h, the sums use m/s, and the sum d = v² ÷ (2 × a) agrees with the bench to within a few centimetres', () => {
+  assert.deepEqual([50, 60, 100, 120].map(kmh), [80, 97, 161, 193]);
+  assert.equal(msOf(50), 22.35); assert.equal(msOf(100), 44.7); assert.equal(msOf(100), 2 * msOf(50), 'exactly twice in the sums');
+  assert.equal(brakesOf(), 20.92); assert.equal(aOf(), 21.19);
+  for (const car of TEST_CARS) for (let s = MIN_SPEED; s <= MAX_SPEED; s += SPEED_STEP) {
+    assert.ok(Math.abs(sumOf(s, car) - metresFrom(s, car)) < .05, `${car} at ${s}: ${sumOf(s, car)} against ${metresFrom(s, car)}`);
+    assert.equal(Math.round(msOf(s) * 3.6), kmh(s), 'the shown m/s gives the dial’s reading');
+  }
+  assert.equal(new Set(TEST_CARS.map(car => aOf(car))).size, TEST_CARS.length, 'each car in the free test brakes differently');
 });
 
 test('a child who does exactly what each prompt says passes every step, and the lesson’s runs pass the bench', () => {
@@ -83,26 +97,187 @@ test('a child who does exactly what each prompt says passes every step, and the 
   assert.ok(v.parts.slice(0, 6).every(p => p.done));
   const attempts = benchAttempts(v);
   assert.equal(benchPasses(attempts), true, 'the lesson’s own runs pass the bench’s goal');
-  assert.equal(benchPasses(attempts.filter(a => a.input.speedMph !== 100)), false, 'without the 100 mph run the bench is not passed');
+  assert.equal(benchPasses(attempts.filter(a => a.input.speedMph !== 100)), false, 'without the run from 161 km/h the bench is not passed');
 });
 
 test('words: Space brakes to a measured stop; the pads shift the weight; the lever moves 10% a press to 70% front', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-stopping');
   session.act('go'); until(session, x => x.ready);
-  assert.match(session.view().brian.text, /^11\.8 m from 50 mph\. That is its stopping distance/);
-  session.act('next');
+  assert.match(session.view().brian.text, /^The tape reads 11\.8 m, so the stopping distance from 80 km\/h is 11\.8 m/);
+  playThroughTo(session, 'word-weight');
   assert.equal(session.view().close.front, .5, 'standing, half and half');
   session.act('go'); until(session, x => x.lanes[0]?.braking);
   assert.equal(session.view().close.front, FRONT_LOAD, 'braking, the weight tips forward');
   until(session, x => x.ready);
-  assert.match(session.view().brian.text, /In a gentle stop the front tyres carry 69% and the back 31%/);
+  assert.match(session.view().brian.text, /the front tyres carry 69% of the weight and the back tyres carry 31%/);
   session.act('next');
   assert.equal(session.view().lever.front, 50);
   session.act('lever:front');
   assert.equal(session.view().lever.front, 60); assert.equal(session.view().ready, false);
   session.act('lever:front');
-  assert.match(session.view().brian.text, /^70% front: the front brakes do 70% of the braking, the back brakes 30%/);
+  assert.match(session.view().brian.text, /^At 70% front, the front brakes do 70% of the braking and the back brakes do 30%/);
+});
+
+test('deceleration and energy: the marks fall by the same speed, and the energy explains four times the road', () => {
+  const slow = createClassroomSession(lesson);
+  playThroughTo(slow, 'word-deceleration');
+  assert.match(slow.view().say, /written m\/s²/);
+  assert.match(slow.view().say, /Together they make 21\.19 m\/s²/);
+  slow.act('go'); until(slow, x => x.ready);
+  const marks = slow.view().timeMarks;
+  assert.deepEqual(marks.map(k => k.ms.toFixed(1)), ['34.1', '23.5', '12.9', '2.3']);
+  for (let i = 1; i < marks.length; i++) assert.ok(marks[i].metres - marks[i - 1].metres < (i > 1 ? marks[i - 1].metres - marks[i - 2].metres : marks[0].metres), 'the marks grow closer together');
+  assert.match(slow.view().brian.text, /^The car lost the same 10\.6 m\/s during every half second/);
+  assert.match(slow.view().brian.text, /44\.70 m\/s ÷ 21\.19 m\/s² = 2\.11 s/);
+
+  const energy = createClassroomSession(lesson);
+  playThroughTo(energy, 'word-energy');
+  assert.match(energy.view().say, /twice the speed carries 2 × 2 = 4 times the energy/);
+  assert.match(energy.view().say, /The same brakes remove the same amount of energy during each metre of road/);
+  assert.equal(energy.view().dial.kmh, 161);
+  assert.match(panelText(energy.view()), /\(44\.70 m\/s\)\^2 ÷ \(2 × 21\.19 m\/s\^2\) = 47\.15 m/);
+  assert.match(panelText(energy.view()), /The tape reads 47\.2 m\. The sum uses rounded numbers, and the game works out each stop in steps of 1\/120 of a second/, 'the difference is said, with its reason');
+  assert.match(panelText(energy.view()), /passive drag is part of a; without it the stop would be 0\.6 m longer/);
+  assert.match(panelText(energy.view()), /\(44\.70 m\/s ÷ 22\.35 m\/s\)\^2 = 4\.00 times the road/);
+  {
+    energy.act('go'); until(energy, x => x.ready);
+    assert.match(energy.view().brian.text, /the mass cancels and leaves d = v² ÷ \(2 × a\)/);
+  }
+  const before = energy.view().formulas[2].worked;
+  energy.act('speed:up');
+  assert.notEqual(energy.view().formulas[2].worked, before, 'the word step stays open, and the sum follows the dial');
+  assert.equal(energy.view().ready, true);
+  const words = energy.view().brian.text;
+  assert.ok(!/from 177 km\/h/.test(words), 'its closing words stay true at any speed');
+});
+
+test('the free test: the sums follow the dial and the car, only different settings count, and three open Continue', () => {
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  assert.ok(!free.view().ready);
+  assert.equal(free.view().dial.kmh, 80); assert.equal(free.view().car.name, 'Falcone F42');
+  assert.equal(free.view().lever, null);
+  assert.match(free.view().formulas.at(-1).worked, /\(22\.35 m\/s\)\^2 ÷ \(2 × 21\.19 m\/s\^2\) = 11\.79 m/, 'the sum shows before the run');
+  free.act('speed:up');
+  assert.match(free.view().formulas.at(-1).worked, /\(26\.82 m\/s\)\^2/, 'the dial changes the sum');
+  free.act('speed:down');
+  free.act('car:next');
+  assert.equal(free.view().car.name, 'Stuttgart 959-S');
+  assert.match(free.view().formulas.at(-1).worked, /2 × 23\.52 m\/s\^2/, 'the car changes the sum');
+  free.act('car:prev');
+  brake(free);
+  assert.match(free.view().brian.text, /^The Falcone F42 stopped from 80 km\/h in 11\.8 m\. The sum predicted 11\.79 m/);
+  assert.ok(!free.view().ready);
+  brake(free);
+  assert.ok(!free.view().ready, 'the same setting again does not count as a different one');
+  assert.equal(free.view().table.length, 2, 'the table keeps every result');
+  free.act('speed:up'); brake(free);
+  assert.ok(!free.view().ready);
+  free.act('car:next'); brake(free);
+  assert.ok(free.view().ready, 'three different settings open Continue');
+  assert.equal(free.view().table.at(-1).car, 'Stuttgart 959-S');
+  assert.ok(benchAttempts(free.view()).some(a => a.input.car === 'stuttgart_959s'), 'the bench is told which car ran');
+});
+
+test('Show me on the free test tries a different setting each time, so it reaches three and finishes', () => {
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  for (let i = 0; i < FREE_TRIES; i++) {
+    assert.ok(!free.view().ready, `not ready after ${i} tests`);
+    for (let k = 0; k < 3; k++) free.act('help');
+    const v = free.view();
+    assert.ok(v.pointer, 'Brian points');
+    assert.ok(targetPoint(v, v.pointer.action), 'at a place on the board');
+    if (i > 0) assert.match(v.brian.text, /I will turn the dial to \d+ km\/h, and then brake/, 'his words say what he will do');
+    run(free, SHOW_ME_S + .1);
+    until(free, x => x.keys.Space === 'go', 20);
+  }
+  assert.ok(free.view().ready, 'three Show mes finish the free test');
+  assert.equal(new Set(free.view().table.map(r => `${r.car}/${r.kmh}`)).size, FREE_TRIES);
+});
+
+test('the panel never gives away an open guess or question', () => {
+  const speed = createClassroomSession(lesson);
+  playThroughTo(speed, 'try-speed');
+  setTo(speed, 100);
+  for (const stage of ['the dial is set', 'the cards are open']) {
+    const shown = panelText(speed.view());
+    assert.doesNotMatch(shown, /47\.\d|4\.00 times|four times/i, `${stage}: ${shown}`);
+    if (stage === 'the dial is set') speed.act('go');
+  }
+  assert.equal(speed.view().cards.length, 3);
+  speed.act('answer:1');
+  assert.doesNotMatch(panelText(speed.view()), /47\.\d/, 'nor while the car is still braking');
+  until(speed, x => x.ready);
+  assert.match(panelText(speed.view()), /47\.15 m/, 'the sum shows once the car has stopped');
+
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'check-four');
+  assert.doesNotMatch(panelText(session.view()), /47\.\d|11\.\d|times/);
+  session.act('answer:1');
+  assert.match(panelText(session.view()), /47\.15 m/);
+  session.act('next');
+  assert.equal(session.view().step.id, 'check-balance');
+  assert.doesNotMatch(panelText(session.view()), /\d+%/, 'no share settles the question while it is open');
+  session.act('answer:2');
+  assert.match(panelText(session.view()), /20% < 31%/);
+  session.act('next');
+  assert.equal(session.view().step.id, 'check-game');
+  assert.doesNotMatch(panelText(session.view()), /\d%/, 'neither figure of the Tune page shows while the question is open');
+  session.act('answer:0');
+  assert.match(panelText(session.view()), /= \+2%/);
+});
+
+test('the pads appear only once weight shift has been explained', () => {
+  const session = createClassroomSession(lesson);
+  for (const id of ['word-speed', 'word-stopping', 'word-deceleration']) { playThroughTo(session, id); assert.equal(session.view().close.plain, true, id); }
+  playThroughTo(session, 'word-weight');
+  assert.ok(!session.view().close.plain, 'the pads show from the step that defines them');
+});
+
+test('every hint and message points the right way from any setting, and Show me says what it will do', () => {
+  const low = createClassroomSession(lesson);
+  playThroughTo(low, 'try-speed');
+  low.act('go');
+  assert.match(low.view().brian.text, /press ↑ until the dial reads 161/);
+  assert.match(low.view().hints[1], /Press ↑ until the dial reads 161/);
+  assert.match(low.view().hints[2], /I will turn the dial, and then you can guess/, 'Show me stops at the question, and says so');
+  setTo(low, 130);
+  low.act('go');
+  assert.match(low.view().brian.text, /press ↓ until the dial reads 161/, 'above the answer, the dial turns down');
+  assert.match(low.view().hints[1], /Press ↓ until the dial reads 161/);
+  setTo(low, 100);
+  assert.match(low.view().hints[1], /^The dial is set, so press Space/);
+  assert.match(low.view().hints[2], /I will press Space, and then you can guess/);
+
+  const slide = createClassroomSession(lesson);
+  playThroughTo(slide, 'try-slide');
+  brake(slide);
+  assert.match(slide.view().hints[1], /Press → until the lever reads 70% front/);
+  setTo(slide, 50, 90);
+  assert.match(slide.view().hints[1], /^The lever is far enough toward the front/, 'past the answer, no more presses of →');
+});
+
+test('a step’s opening words do not change with a dial or a lever, because the page keeps them', () => {
+  for (const [id, press] of [['word-speed', 'speed:up'], ['word-balance', 'lever:front'], ['word-energy', 'speed:up'], ['try-free', 'speed:up'], ['try-speed', 'speed:up']]) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, id);
+    const first = session.view().say;
+    session.act(press);
+    assert.equal(session.view().say, first, `${id}: the opening words stay the same`);
+  }
+});
+
+test('the sums on the screen add up from the figures shown', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  for (const gap of CORNERS) { setTo(session, fastestFor(gap), STEADY_FRONT); brake(session); }
+  const said = session.view().brian.text;
+  assert.match(said, /53\.64 m\/s, is twice the speed at the first, 26\.82 m\/s/);
+  assert.equal(53.64, 2 * 26.82);
+  assert.match(said, /67\.9 m is about four times the first stop of 17\.0 m/, '67.9 is not exactly 4 × 17.0, so it says about');
+  assert.equal(Number((4 * 11.8).toFixed(1)), 47.2);
 });
 
 test('the tries: Space at the wrong speed, every wrong guess and every slide says why with its numbers', () => {
@@ -110,22 +285,27 @@ test('the tries: Space at the wrong speed, every wrong guess and every slide say
   playThroughTo(speed, 'try-speed');
   assert.equal(speed.view().dial.speed, 50, 'it starts away from its answer');
   speed.act('go');
-  assert.match(speed.view().brian.text, /press ↑ until the dial reads 100/);
+  assert.match(speed.view().brian.text, /press ↑ until the dial reads 161/);
   setTo(speed, 100); speed.act('go');
   assert.equal(speed.view().cards.length, 3, 'set up, then guess from pictures of results');
   speed.act('answer:2'); until(speed, x => x.ready);
-  assert.match(speed.view().brian.text, /^It needed 47\.2 m: four times 11\.8 m, not eight/);
+  assert.match(speed.view().brian.text, /^The car needed 47\.2 m, which is four times 11\.8 m rather than eight times/);
+
+  const twice = createClassroomSession(lesson);
+  playThroughTo(twice, 'try-speed');
+  setTo(twice, 100); twice.act('go'); twice.act('answer:0'); until(twice, x => x.ready);
+  assert.match(twice.view().brian.text, /^The car needed 47\.2 m, not twice 11\.8 m\. Twice the speed carries four times the energy of motion/);
 
   const slide = createClassroomSession(lesson);
   playThroughTo(slide, 'try-slide');
   assert.equal(slide.view().lever.front, 50); assert.equal(slide.view().dial.locked, true);
   brake(slide);
-  assert.match(slide.view().brian.text, /^The back slid: its brakes did 50% of the braking, but braking leaves only 31% of the weight on the back tyres\. Press →/);
+  assert.match(slide.view().brian.text, /^The back of the car slid, because the back brakes did 50% of the braking, which is more than the 31% of the weight on the back tyres\. Press →/);
   assert.equal(slide.view().ready, false);
   setTo(slide, 50, 60); brake(slide);
-  assert.match(slide.view().brian.text, /^Still sliding at 60% front: the back brakes did 40%, more than the 31% on the back tyres/);
+  assert.match(slide.view().brian.text, /^The back of the car is still sliding at 60% front, because the back brakes did 40% of the braking, which is more than the 31%/);
   setTo(slide, 50, 70); brake(slide);
-  assert.match(slide.view().brian.text, /^70% front: the back brakes did 30%, less than the 31% the back tyres carry/);
+  assert.match(slide.view().brian.text, /^At 70% front the back brakes did 30% of the braking, which is less than the 31%/);
   assert.equal(slide.view().ready, true);
 });
 
@@ -133,22 +313,23 @@ test('Brian’s job: the fastest steady stop before each corner; too fast, too s
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'alone');
   assert.equal(session.view().line, 20);
+  assert.match(panelText(session.view()), /√\(2 × 21\.19 m\/s\^2 × 20 m\) = 29\.11 m\/s/, 'the panel works the gap’s fastest speed');
   setTo(session, 70, STEADY_FRONT); brake(session);
-  assert.match(session.view().brian.text, /^From 70 mph it needs 23\.1 m, and the gap is 20 m: it ran 3\.1 m past the corner/);
+  assert.match(session.view().brian.text, /^From 113 km\/h the car needs 23\.1 m, but the gap is only 20 m, so the car ran 3\.1 m past the corner/);
   setTo(session, 50, STEADY_FRONT); brake(session);
-  assert.match(session.view().brian.text, /^Stopped 8\.2 m short of the corner\. From 60 mph it still stops in time \(17\.0 m\)/);
+  assert.match(session.view().brian.text, /^The car stopped 8\.2 m short of the corner\. From 97 km\/h the car would still stop in time, in 17\.0 m/);
   setTo(session, 60, 50); brake(session);
-  assert.match(session.view().brian.text, /^The back slid/);
+  assert.match(session.view().brian.text, /^The back of the car slid/);
   setTo(session, 60, STEADY_FRONT); brake(session);
-  assert.match(session.view().brian.text, /^Right: 60 mph stops in 17\.0 m, inside 20 m/);
+  assert.match(session.view().brian.text, /^Correct\. From 97 km\/h the car stops in 17\.0 m, which is inside the 20 m gap/);
   assert.equal(session.view().line, 50); assert.equal(session.view().ready, false);
   for (const gap of CORNERS.slice(1)) { setTo(session, fastestFor(gap), STEADY_FRONT); brake(session); }
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /60, 100 and 120 mph/);
+  assert.match(session.view().brian.text, /97, 161 and 193 km\/h/);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me sets and brakes', () => {
-  for (const id of ['word-stopping', 'word-weight', 'word-balance', 'try-speed', 'try-slide', 'alone']) {
+  for (const id of ['word-speed', 'word-stopping', 'word-deceleration', 'word-energy', 'word-weight', 'word-balance', 'try-speed', 'try-slide', 'alone']) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
     const hints = session.view().hints;
@@ -170,9 +351,9 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
-    'check-four': [[0, /^It is more than twice: 11\.8 m from 50 mph, 47\.2 m from 100, four times as far\./], [2, /^Not the same/]],
+    'check-four': [[0, /^The car needs more than twice as much road\. It needs 11\.8 m from 80 km\/h and 47\.2 m from 161 km\/h, which is four times as far/], [2, /^The two distances are not the same/]],
     'check-balance': [[0, /^At 50% front the back brakes do 50% of the braking, but the back tyres carry only 31%/], [1, /^At 60% front the back brakes do 40%/]],
-    'check-game': [[1, /^It is a trade: Braking \+2%; cornering grip while braking −4%\./], [2, /^It changes the car/]],
+    'check-game': [[1, /^It is a trade rather than a gain in both\. The Tune page shows “Braking \+2%; cornering grip while braking −4%\.”/], [2, /^The setting does change the car/]],
   };
   for (const [id, picks] of Object.entries(answers)) for (const [pick, why] of picks) {
     const session = createClassroomSession(lesson);
@@ -201,6 +382,12 @@ test('mouse: the dial and the lever turn, a click on the strip brakes, and hover
   playThroughTo(speed, 'try-speed');
   v = speed.view();
   assert.equal(hitTest(v, ...targetPoint(v, 'lever:front')), null, 'the speed try’s lever is shut');
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  v = free.view();
+  for (const action of ['car:next', 'car:prev']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
+  assert.ok(hoverInfo(v, ...targetPoint(v, 'car:next')), 'the car chooser is named');
+  assert.ok(hoverInfo(v, 300, 200), 'the table is named');
 });
 
 test('the board draws every step and card', () => {
@@ -216,6 +403,7 @@ test('the board draws every step and card', () => {
   for (let i = 0; i < STEPS.length; i++) {
     session.act(`go:${i}`);
     if (STEPS[i].id === 'try-speed') { setTo(session, 100); session.act('go'); }
+    if (['word-stopping', 'word-deceleration', 'word-energy', 'word-weight', 'try-free'].includes(STEPS[i].id)) session.act('go');
     for (const t of [0, 1, 4]) {
       run(session, t);
       calls.clear(); drawBoard(fake(), session.view(), 1000, 680);
@@ -243,14 +431,21 @@ test('review fixes: turning the dial counts as busy; the slide try shows the sli
   assert.doesNotMatch(row.trade, /keeps the car turning in/);
 });
 
-test('the old lesson’s faults are gone: settings carry, the dial steps in whole 10 mph, and each try starts away from its answer', () => {
+test('the old lesson’s faults are gone: settings carry, the dial steps in whole steps, and each try starts away from its answer', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-balance');
-  session.act('lever:front'); session.act('lever:front'); session.act('lever:front');
+  session.act('lever:front'); session.act('lever:front');
+  assert.equal(session.view().ready, true);
+  session.act('lever:front');
+  assert.equal(session.view().lever.front, 80, 'the lever stays free after the word, to go on watching the sum');
+  assert.equal(session.view().ready, true);
+  assert.match(session.view().formulas[0].worked, /20% < 31%/, 'and the sum follows it');
+  session.act('next');
   playThroughTo(session, 'try-speed');
-  assert.equal(session.view().lever.front, STEADY_FRONT, 'the lever stopped at 70% and carries into the speed try');
+  assert.equal(session.view().lever.front, 80, 'the lever carries into the speed try where the player left it');
   session.act('speed:up');
-  assert.equal(session.view().dial.speed, 60, 'one press is 10 mph');
+  assert.equal(session.view().dial.speed, 60, 'one press is one step of the bench');
+  assert.equal(session.view().dial.kmh, 97);
   playThroughTo(session, 'try-slide');
   assert.equal(session.view().lever.front, 50, 'the slide try starts on a setting that slides');
   playThroughTo(session, 'alone');
