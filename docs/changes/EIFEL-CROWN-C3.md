@@ -159,3 +159,9 @@ first-lap pile-ups, 21 player wins (70%), 1.57 computer passes per race, and
 mean player time 342.569 s (range 332.177–350.468 s). It misses the written
 Medium win band (30–50%) and the three-pass target. The crash, finish, and
 pile-up limits pass. This measurement is committed before further tuning.
+
+Final Medium measurement at pace `.864` (30 seeds): all seven computers
+finished in 30/30 races; 3 computer crashes; 0 first-lap pile-ups; 15 player
+wins (50%); 1.60 computer passes per race; player time mean 343.405 s
+(range 331.936â€“353.309 s). The test passes. Finish, crash, pile-up and Medium
+win targets are met. The packet's 3 passes per Medium race is not met.
