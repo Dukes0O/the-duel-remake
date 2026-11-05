@@ -30,6 +30,11 @@ No game rule, challenge, reward, save or notebook id changes; every game number 
   strip and the coated trees. Question 1 now shows the burning pan and its lid rather than a forest.
 - **The challenge card** now starts from the bucket already on the hook, says to fill it in the lake and to hold H over the flames nearest the road, and
   keeps the challenge's own 7 minutes. The scenario checks that the bucket is fitted when the card shows.
+- **One independent review.** Fixed, each with a test: the panel, the thermometer, the crosses and a caption gave away the three guesses and question 2, so they now
+  wait for the result; "oxygen" and the triangle appeared before their steps, so the first word steps hide them on the page and the board; "1.00, so two trips"
+  now shows three decimals, which is exact for these figures; "as you saw in the job" is gone; the water left over has true words for each case of the game's rule;
+  Watch again no longer shows past-tense words over a burning fire; the panel's colon fragments are sentences; the arrows cover all eight touching cells, leaving out a
+  cell too weak to spread.
 - **A small fault fixed.** The pit's flame dipped and recovered on alternate frames while burning at full strength (`burn` in `fire-classroom.js`).
 
 ## Removed
@@ -40,7 +45,7 @@ No game rule, challenge, reward, save or notebook id changes; every game number 
 ## Changed assertions (for Claude's review, rule 18)
 
 - `tools/test-lab-classroom-fire.mjs`: every assertion on wording moves to the new sentence and keeps its numbers (180, 600, 150, 4, 3 trips, 2 spreads,
-  `OPEN_SPREADS` 4, `MINUTES`). The hover check on litres now allows one decimal (`[\d.]+`), because a part-doused cell's litres are shown as they come
+  `OPEN_SPREADS` 4, `MINUTES`); quotients that are rounded now say "about", and the switch hover names only the side. The hover check on litres now allows a decimal part (`\d+(\.\d+)?`), because a part-doused cell's litres are shown as they come
   out from its whole-number strength. It still requires a number, and the strength and litres agree with the panel. No check of behaviour is removed.
   `playThroughTo` gains the two new steps, and the "guided tries" test walks through the spread step to reach the strip.
 - Added: the eight settings and their reasons, the free test's counting, the sums following the switch, the aim and the rake, the spread step against the
@@ -59,7 +64,7 @@ Not recorded. Each matches what the lesson now says on its page.
 
 ## Checks
 
-- `node tools/test-lab-classroom-fire.mjs` 14/14; `tools/test-lab-classroom-page.mjs` 6/6; `tools/test-lab-classroom.mjs` 15/15.
+- `node tools/test-lab-classroom-fire.mjs` 18/18; `tools/test-lab-classroom-page.mjs` 6/6; `tools/test-lab-classroom.mjs` 15/15.
 - Source check of the two lesson files for `she`, `her`, `mph`, `decides`, "air takes", `takes`, `took`, `dies`: none (inside the suite).
 - Browser walkthrough `lab-classroom-fire` at 1920 by 1000 passes through to the helicopter challenge, and the pictures were read for fit.
 - Lane tier and build are left for the merge, as the brief says. No frame check: the classroom is a 2D board.

@@ -2,7 +2,7 @@
 // per side of the triangle, the triangle itself, the water and sand buckets, and the practice fire's forest seen from
 // above. Draws and hit-tests only.
 import {BOARD, GROUND_Y, theme, background, text, keyCap, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
-import {COLS, ROWS, STRIP, ROAD, CELL_M, SIDES, SIDE_NAME, SWITCH_NAME, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, WOOD_BURNS_C, WATER_BOILS_C, litres, litresFor, strengthOf} from './fire-classroom.js';
+import {COLS, ROWS, STRIP, ROAD, CELL_M, SIDES, SIDE_NAME, SWITCH_NAME, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, WOOD_BURNS_C, WATER_BOILS_C, GROW, SPREAD_FROM, litres, litresFor, strengthOf} from './fire-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
 
@@ -68,7 +68,7 @@ export function hoverInfo(view, x, y) {
     return 'This is the fire triangle, with one side each for heat, fuel and oxygen. A side is lit while the fire has it, and when any side is removed the fire goes out.';
   if (view.scene === 'pit') {
     if (view.plates) for (const side of SIDES) if (inBox(x, y, ...plateBox(side)))
-      return `The ${SWITCH_NAME[side]} switch controls the ${SIDE_LOWER[side]} side of the triangle.`;
+      return view.known.includes(side) ? `The ${SWITCH_NAME[side]} switch controls the ${SIDE_LOWER[side]}.` : `This is the ${SWITCH_NAME[side]} switch.`;
     for (const tool of ['water', 'sand']) if (view.tools && inBox(x, y, ...bucketBox(tool)))
       return tool === 'water' ? 'This is a bucket of water.' : 'This is a bucket of dry sand.';
     if (Math.abs(x - PIT_X) < RIM_RX && y > RIM_Y - 30 && y < GROUND_Y) return 'This steel fire pit has a gas burner under the wood and a lid on a hinge.';
@@ -80,7 +80,7 @@ export function hoverInfo(view, x, y) {
   const road = c[0] === ROAD ? ' This cell is beside the road.' : '';
   if (cell.state === 'burning') return `This cell is burning at a strength of ${strengthOf(cell.percent)}, so it needs ${litres(litresFor(cell.percent))} of water to go out.${road}`;
   if (cell.state === 'burnt') return `This cell is out, and nothing is burning here now.${road}`;
-  if (cell.state === 'raked') return 'This is the raked strip, which is bare ground with nothing to burn.';
+  if (cell.state === 'raked') return 'This is the raked strip of bare ground.';
   if (cell.state === 'coated') return `These trees are coated with ${litres(COAT_L)} of retardant, so they cannot catch fire.`;
   if (cell.state === 'damp') return `These trees are damp, so they are slower to catch fire for a while.${road}`;
   return `This is a cell of forest, ${CELL_M} metres across, with trees in it.${road}`;
@@ -229,7 +229,7 @@ function mechanism(ctx, p, time) {
   text(ctx, blocked ? 'Fresh air is stopped' : 'Fresh air', 270, 236, {size: 15, colour: blocked ? theme.faint : air});
   if (p.heat && p.putOut !== 'sand' && p.putOut !== 'water') {
     for (const dx of [-60, 0, 60]) flowArrow(ctx, PIT_X + dx, RIM_Y + 82, PIT_X + dx, RIM_Y + 26, SIDE_COLOUR.heat, time + dx * .01, {width: 3});
-    text(ctx, 'Heat from the gas', PIT_X - 216, RIM_Y + 44, {size: 15, colour: SIDE_COLOUR.heat});
+    text(ctx, 'Heat from the gas', PIT_X - 248, RIM_Y + 100, {size: 14, align: 'left', colour: SIDE_COLOUR.heat});
   }
   if (p.putOut === 'water' && p.pour?.age > .6) {
     for (const dx of [-70, 0, 70]) flowArrow(ctx, PIT_X + dx, RIM_Y - 40, PIT_X + dx * 1.3, RIM_Y - 170, 'rgba(235,240,245,.85)', time + dx * .01, {width: 3});
@@ -237,10 +237,10 @@ function mechanism(ctx, p, time) {
   }
 }
 // One sentence over the pit for each side the fire has lost, or the one sentence that says why it burns.
-function pitWords(ctx, p) {
+function pitWords(ctx, p, known) {
   const words = {heat: p.putOut === 'water' ? 'The water soaks up heat and turns to steam, so the wood is too cool to burn.' : 'With the gas off, nothing keeps the wood hot enough to burn.',
     fuel: 'With no wood in the pit, there is nothing to burn.', air: p.putOut === 'sand' ? 'The sand lies over the wood, so fresh air cannot reach the flames.' : 'The shut lid keeps fresh air out, so the fire has no oxygen.'};
-  const lines = p.missing.length ? p.missing.map(side => words[side]) : ['The wood has heat, fuel and oxygen all at once, so it burns.'];
+  const lines = p.missing.length ? p.missing.map(side => words[side]) : [known.includes('air') ? 'The wood has heat, fuel and oxygen all at once, so it burns.' : 'The wood is hot enough, so it burns.'];
   lines.forEach((line, k) => text(ctx, line, PIT_WORDS.x, PIT_WORDS.y + k * 28, {size: 17, align: 'left', weight: 600, colour: p.missing.length ? theme.text : theme.good}));
 }
 // The thermometer: the wood's temperature rising past the line where wood burns, or falling to where water boils.
@@ -251,7 +251,7 @@ function thermometer(ctx, p) {
   ctx.beginPath(); ctx.roundRect(x - 11, top, 22, base - top + 14, 10); ctx.fill(); ctx.stroke();
   ctx.fillStyle = degrees >= WOOD_BURNS_C ? '#f2551f' : '#d9a640'; ctx.fillRect(x - 6, level, 12, base - level + 6);
   ctx.beginPath(); ctx.arc(x, base + 14, 16, 0, Math.PI * 2); ctx.fill();
-  for (const [c, label, colour] of [[WOOD_BURNS_C, `${WOOD_BURNS_C} °C: wood burns`, '#f2a15a'], [WATER_BOILS_C, `${WATER_BOILS_C} °C: water boils`, '#8cc8f0']]) {
+  for (const [c, label, colour] of [[WOOD_BURNS_C, `Wood burns above ${WOOD_BURNS_C} °C`, '#f2a15a'], [WATER_BOILS_C, `Water boils at ${WATER_BOILS_C} °C`, '#8cc8f0']]) {
     const y = base - c * perC;
     ctx.strokeStyle = colour; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 14, y); ctx.lineTo(x + 20, y); ctx.stroke();
     text(ctx, label, x + 26, y, {size: 14, align: 'left', colour});
@@ -267,7 +267,7 @@ function plates(ctx, view) {
     const left = action ? x + 44 : x + 14;
     if (action) keyCap(ctx, x + 22, y + h / 2, PLATE_KEY[side]);
     text(ctx, SWITCH_NAME[side], left, y + 18, {size: 17, align: 'left'});
-    text(ctx, SIDE_NAME[side].toLowerCase(), left, y + 40, {size: 14, align: 'left', weight: 600, colour: on ? SIDE_COLOUR[side] : theme.faint});
+    if (view.known.includes(side)) text(ctx, SIDE_LOWER[side], left, y + 40, {size: 14, align: 'left', weight: 600, colour: on ? SIDE_COLOUR[side] : theme.faint});
     const state = side === 'fuel' ? (on ? 'IN' : 'OUT') : side === 'heat' ? (on ? 'ON' : 'OFF') : (on ? 'OPEN' : 'SHUT');
     text(ctx, state, x + w - 14, y + h / 2, {size: 20, align: 'right', colour: on ? theme.good : theme.bad});
     if (view.glow === action) halo(ctx, x + w / 2, y + h / 2, w / 2 + 6, view.time);
@@ -335,7 +335,7 @@ function drawPitScene(ctx, view) {
   drawPit(ctx, p, view.time);
   pouring(ctx, p.pour);
   mechanism(ctx, p, view.time);
-  pitWords(ctx, p);
+  pitWords(ctx, p, view.known);
   if (view.thermometer) thermometer(ctx, p);
   if (view.plates) plates(ctx, view);
   if (view.triangle) {
@@ -381,17 +381,26 @@ function strengthPlate(ctx, cell) {
   text(ctx, String(strengthOf(cell.percent)), x + 50, y + 49, {size: 18, colour: '#ffd27a', weight: 800});
 }
 // Where the flames can go at the next spread: an arrow to each touching cell of trees, and a cross where nothing can catch fire.
-function spreadArrows(ctx, cells, time) {
-  const at = new Map(cells.map(c => [`${c.i},${c.j}`, c]));
+export function spreadTargets(cells) {
+  const at = new Map(cells.map(c => [`${c.i},${c.j}`, c])), found = [];
   for (const cell of cells) {
-    if (cell.state !== 'burning') continue;
-    for (const [di, dj] of [[1, 0], [0, -1], [0, 1]]) {
+    // A cell lights its neighbours only if it reaches the game's limit after growing.
+    if (cell.state !== 'burning' || cell.percent + GROW < SPREAD_FROM) continue;
+    for (const di of [-1, 0, 1]) for (const dj of [-1, 0, 1]) {
       const to = at.get(`${cell.i + di},${cell.j + dj}`);
       if (!to || !['trees', 'damp', 'raked', 'coated'].includes(to.state)) continue;
-      const [x, y] = cellCentre(cell.i, cell.j), gx = x + di * CELL / 2, gy = y + dj * CELL / 2, stopped = to.state === 'raked' || to.state === 'coated';
-      flowArrow(ctx, gx - di * 16, gy - dj * 16, gx + di * (stopped ? 2 : 20), gy + dj * (stopped ? 2 : 20), stopped ? 'rgba(255,190,110,.6)' : '#ffb35a', time, {width: 3, dot: false});
-      if (stopped) blockedMark(ctx, gx + di * 16, gy + dj * 16, 8);
+      found.push({from: cell, di, dj, stopped: to.state === 'raked' || to.state === 'coated'});
     }
+  }
+  return found;
+}
+function spreadArrows(ctx, cells, time) {
+  for (const {from, di, dj, stopped} of spreadTargets(cells)) {
+    const [x, y] = cellCentre(from.i, from.j), gx = x + di * CELL / 2, gy = y + dj * CELL / 2;
+    // A corner arrow stays in its own cell and ends at the corner, so two arrows meeting there do not cross.
+    const corner = di !== 0 && dj !== 0, reach = stopped || corner ? (corner ? -2 : 2) : 16, back = corner ? 26 : 14;
+    flowArrow(ctx, gx - di * back, gy - dj * back, gx + di * reach, gy + dj * reach, stopped ? 'rgba(255,190,110,.6)' : '#ffb35a', time, {width: 3, dot: false});
+    if (stopped) blockedMark(ctx, gx + di * 14, gy + dj * 14, 7);
   }
 }
 function forest(ctx, view) {
@@ -501,7 +510,7 @@ function drawForestScene(ctx, view) {
     spaceKey(ctx, ...DROP_KEY); text(ctx, 'drop the bucket', FX + 254, under, {size: 15, align: 'left'});
   }
   if (view.keys.Space === 'burn' || view.keys.Space === 'spread') { const action = view.keys.Space; spaceKey(ctx, ...BURN_KEY); text(ctx, action === 'burn' ? 'let it burn' : 'run one spread', BURN_KEY[0] + 34, BURN_KEY[1], {size: 15, align: 'left'}); if (view.glow === action) halo(ctx, ...BURN_KEY, 40, view.time); }
-  if (f.raked && view.keys.Space !== 'rake') text(ctx, 'Nothing here can burn.', FX + (STRIP + .5) * CELL - 20, FY + ROWS * CELL + 22, {size: 15, colour: '#d9b58a'});
+  if (f.raked && view.removed) text(ctx, 'Nothing here can burn.', FX + (STRIP + .5) * CELL - 20, FY + ROWS * CELL + 22, {size: 15, colour: '#d9b58a'});
   if (f.coated) text(ctx, 'These trees cannot catch fire.', FX + (STRIP + .5) * CELL + 40, FY + ROWS * CELL + 22, {size: 15, colour: '#e58ea0'});
   if (f.road) text(ctx, 'The fire reached the road.', FX + COLS * CELL / 2, 70, {size: 26, colour: theme.bad});
   else if (view.job) text(ctx, f.burning ? `Trip ${view.job.trips + 1}` : 'The fire is out.', FX + COLS * CELL / 2, 70, {size: 24, colour: f.burning ? theme.accent : theme.good});

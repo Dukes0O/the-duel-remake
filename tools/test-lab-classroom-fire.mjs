@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, COLS, ROWS, ROAD, STRIP, MIDDLE, SIDES, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, MINUTES, JOB_HEAD_START, TRY_HEAD_START, OPEN_SPREADS, FREE_TRIES, MARKED_CELL, CHALLENGE_SPREADS, freeReason,
+import {STEPS, COLS, ROWS, ROAD, STRIP, MIDDLE, SIDES, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, MINUTES, JOB_HEAD_START, TRY_HEAD_START, OPEN_SPREADS, FREE_TRIES, MARKED_CELL, CHALLENGE_SPREADS, freeReason, leftOverWords,
   CHALLENGE_CARD, forestGrid, litFire, grown, reachedRoad, front, frontCell, dropOn, coatStrip, litresFor, pitBurning, pitMissing} from '../src/lab/lessons/fire-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/fire-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, spreadTargets} from '../src/lab/lessons/fire-board.js';
 import {fireBench, TAKES_AWAY} from '../src/lab/benches/fire.js';
 import {CHALLENGE_RULES, createChallenge} from '../src/lab/lab-challenges.js';
 import {FIRE, RETARDANT, spreadStep, cellIJ} from '../src/heli/heli-fire.js';
@@ -119,7 +119,7 @@ test('the words: wood alone does not burn, heat lights it, the lid puts it out, 
   assert.equal(session.act('gas:on') && session.view().pit.heat, false, 'only the step’s own switch works');
   session.act('wood:in');
   assert.equal(session.view().pit.fuel, true); assert.equal(session.view().pit.burning, false);
-  assert.match(say(session), /does not burn by itself, because it is not hot enough\. It needs heat/);
+  assert.match(say(session), /does not burn by itself, because it is not hot enough\. It needs to be heated/);
   session.act('next');
   session.act('gas:on'); run(session, .4);
   assert.equal(session.view().ready, false, 'the flames take a moment to catch');
@@ -289,7 +289,7 @@ test('the board draws every step and card, hit-tests its controls and points at 
     playThroughTo(s, id);
     const v = s.view();
     assert.equal(hitTest(v, ...targetPoint(v, v.target)).action, v.target, id);
-    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /switch controls the (fuel|heat|oxygen) side of the triangle/);
+    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /switch controls the (fuel|heat|oxygen)\./);
   }
   playThroughTo(s, 'try-water'); s.act('answer:1');
   assert.equal(hitTest(s.view(), ...targetPoint(s.view(), 'tip')).action, 'tip');
@@ -302,7 +302,7 @@ test('the board draws every step and card, hit-tests its controls and points at 
     const v = s.view();
     if (v.keys.Space !== 'drop') { run(s, .25); n--; continue; }
     assert.equal(hitTest(v, ...targetPoint(v, v.target)).action, v.target, 'a click on the pointed cell drops there');
-    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /This cell is burning at a strength of \d+, so it needs [\d.]+ litres of water to go out/);
+    assert.match(hoverInfo(v, ...targetPoint(v, v.target)), /This cell is burning at a strength of \d+, so it needs \d+(\.\d+)? litres of water to go out/);
     s.act(v.target);
   }
   // The keys drawn on the board take clicks too: Space under the job drops at the aim.
@@ -397,7 +397,7 @@ test('how a forest fire spreads: each press runs one game spread, and the sums f
   let fire = grown(litFire(), grid, TRY_HEAD_START);
   assert.deepEqual(session.view().keys, {Space: 'spread'});
   assert.equal(worked(session, 'Strength of the marked cell'), '25 + 25 = 50');
-  assert.equal(worked(session, 'How fast the front moves'), '1 × 20 m = 20 m, and 1 × 70 s = 70 s, so 20 ÷ 70 = 0.29 m/s');
+  assert.equal(worked(session, 'How fast the front moves'), '1 × 20 m = 20 m, and 1 × 70 s = 70 s, so 20 ÷ 70 = about 0.29 m/s');
   const seen = [];
   for (let n = 0; n < OPEN_SPREADS; n++) {
     assert.equal(session.view().ready, false);
@@ -409,8 +409,8 @@ test('how a forest fire spreads: each press runs one game spread, and the sums f
   assert.deepEqual(seen, ['50 + 25 = 75', '75 + 25 = 100', '100 + 25 is more than 100, so the cell stays at 100.', '100 + 25 is more than 100, so the cell stays at 100.'], 'the marked cell grows and stops at 100');
   assert.deepEqual(MARKED_CELL, [1, ROWS - 1]);
   assert.equal(session.view().ready, true); assert.equal(session.view().forest.road, true);
-  assert.equal(worked(session, 'How fast the front moves'), '5 × 20 m = 100 m, and 5 × 70 s = 350 s, so 100 ÷ 350 = 0.29 m/s');
-  assert.match(say(session), /5 spreads last 350 seconds, which is less than the 420 seconds of the challenge\. The front travelled 100 metres in that time, which is 0\.29 metres per second, written m\/s/);
+  assert.equal(worked(session, 'How fast the front moves'), '5 × 20 m = 100 m, and 5 × 70 s = 350 s, so 100 ÷ 350 = about 0.29 m/s');
+  assert.match(say(session), /5 spreads last 350 seconds, which is less than the 420 seconds of the challenge\. The front travelled 100 metres in that time, which is about 0\.29 metres per second, written m\/s/);
   // The challenge's own clock: a spread every 70 s, seven minutes, six spreads.
   assert.equal(CHALLENGE_RULES.fire.spreadEvery, 70); assert.equal(CHALLENGE_SPREADS, 6);
   assert.equal(session.act('spread') && session.view().forest.burning, fire.burning.length, 'the step stops once the fire has reached the road');
@@ -422,8 +422,7 @@ test('the sums: the strip and the job follow the controls, and every worked line
   assert.equal(worked(session, 'Cells the fire can reach'), `6 × 3 = 18 cells`);
   session.act('rake');
   assert.equal(worked(session, 'Cells the fire can reach'), `${STRIP} × 3 = 9 cells`, 'raking changes the sum on that press');
-  assert.equal(worked(session, 'Chance of catching fire'), 'The strip has no trees, so its chance is 0.');
-  playThroughTo(session, 'word-retardant');
+    playThroughTo(session, 'word-retardant');
   assert.equal(worked(session, 'How much the tank coats'), '600 ÷ 150 = 4 cells');
   assert.equal(worked(session, 'Coating the strip across this forest'), '3 × 150 = 450 litres');
   playThroughTo(session, 'alone');
@@ -442,7 +441,8 @@ test('the sums: the strip and the job follow the controls, and every worked line
     assert.equal(all[1].split(' + ').length, shown, 'one strength for each burning cell on the board');
     const trips = worked(session, 'The fewest trips left').match(/^([\d.]+) ÷ 600 = ([\d.]+), so (\w+) trips?$/);
     assert.equal(Number(trips[1]), need);
-    assert.equal(trips[2], (need / 600).toFixed(2));
+    assert.equal(trips[2], (need / 600).toFixed(3));
+    assert.equal(Math.ceil(Number(trips[2])), Math.ceil(need / 600), 'the quotient shown explains the trips');
     assert.equal(['one', 'two', 'three', 'four', 'five'][Math.ceil(need / 600) - 1], trips[3]);
   };
   assert.equal(worked(session, 'Water for all the flames now'), '(50 + 100 + 75 + 75 + 50 + 75 + 25 + 50 + 50 + 25 + 25 + 25) × 180 ÷ 100 = 1125 litres');
@@ -461,7 +461,7 @@ test('the sums: the strip and the job follow the controls, and every worked line
   q.act(`answer:${side('air')}`);
   assert.equal(worked(q, 'The rule of the fire triangle'), 'Oil yes, a hot stove yes, oxygen no, so no fire.');
   playThroughTo(q, 'check-game');
-  assert.equal(worked(q, 'One full bucket'), '600 ÷ 180 = 3.33 cells at full strength');
+  assert.equal(worked(q, 'One full bucket'), '600 ÷ 180 = about 3.33 cells at full strength');
   assert.equal(worked(q, 'Spreads during the challenge'), '420 s ÷ 70 s = 6 spreads');
 });
 
@@ -477,4 +477,112 @@ test('every step after the first shows the physics, and no object or physics wor
     for (const [fault, pattern] of [['she or her', /\b(she|her|hers|herself)\b/i], ['mph', /\bmph\b/i], ['decides', /\bdecides?\b/i], ['takes', /\b(takes?|took)\b/i], ['dies', /\b(dies|died)\b/i]])
       assert.ok(!pattern.test(source), `${file} has ${fault}: ${source.match(pattern)?.[0]}`);
   }
+});
+
+test('while a guess or question is open, the panel and the picture hold nothing that settles it', () => {
+  const panel = session => JSON.stringify(session.view().formulas);
+  const SETTLES = /missing|cool|steam|100 °C|300 °C|no trees|has none|smother|covers|\b(heat|fuel|oxygen) no\b|remove/i;
+  const session = createClassroomSession(lesson);
+  for (const id of ['try-water', 'try-sand']) {
+    playThroughTo(session, id);
+    assert.equal(session.view().cards.length, 3);
+    assert.ok(!SETTLES.test(panel(session)), `${id} during the guess: ${panel(session)}`);
+    assert.equal(session.view().thermometer, false, 'the thermometer waits for the test');
+    session.act(`answer:${side('fuel')}`);
+    assert.ok(!SETTLES.test(panel(session)), `${id} before the test: ${panel(session)}`);
+    session.act('tip'); until(session, v => v.ready);
+    assert.match(panel(session), /is missing/, 'the reason comes with the result');
+  }
+  assert.equal(worked(session, 'Why water cools the wood'), undefined, 'each try has only its own reason');
+  playThroughTo(session, 'try-strip');
+  assert.ok(!SETTLES.test(panel(session)), `the strip before the rake: ${panel(session)}`);
+  session.act('rake');
+  assert.ok(!SETTLES.test(panel(session)), `the strip during the guess: ${panel(session)}`);
+  assert.equal(session.view().arrows, false, 'the crosses at the strip wait for the test');
+  assert.equal(hoverInfo(session.view(), 60 + (STRIP + .5) * 100, 196 + 50), 'This is the raked strip of bare ground.');
+  const words = [], ctx = new Proxy({}, {get: (t, name) => name in t ? t[name] : name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : name === 'fillText' ? value => words.push(value) : () => {}, set: (t, name, value) => { t[name] = value; return true; }});
+  drawBoard(ctx, session.view(), 1000, 680);
+  assert.ok(!words.includes('Nothing here can burn.'), 'the picture does not answer the guess');
+  session.act(`answer:${side('air')}`); session.act('burn'); until(session, v => v.ready);
+  assert.equal(worked(session, 'Chance of catching fire'), 'The strip has no trees, so its chance is 0.');
+  words.length = 0; drawBoard(ctx, session.view(), 1000, 680);
+  assert.ok(words.includes('Nothing here can burn.'));
+  // The questions: nothing about where the retardant goes or which side the lid removes until the answer is given.
+  playThroughTo(session, 'check-coat');
+  assert.ok(!/coated cell cannot|strip/i.test(panel(session)), panel(session));
+  session.act('answer:0');
+  assert.match(panel(session), /coated cell cannot catch fire/);
+  playThroughTo(session, 'check-game');
+  assert.ok(!/road|front|flames/i.test(panel(session)), panel(session));
+});
+
+test('a word appears only after its step: the words, the panel, the switches and the triangle', () => {
+  const words = [], ctx = new Proxy({}, {get: (t, name) => name in t ? t[name] : name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : name === 'fillText' ? value => words.push(value) : () => {}, set: (t, name, value) => { t[name] = value; return true; }});
+  const onScreen = v => { words.length = 0; drawBoard(ctx, v, 1000, 680); return JSON.stringify([v.say, v.prompt, v.hints, v.formulas, words]); };
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-fuel');
+  const walk = (too, action) => {
+    assert.ok(!too.test(onScreen(session.view())), onScreen(session.view()));
+    session.act(action); until(session, v => v.ready);
+    assert.ok(!too.test(onScreen(session.view())), onScreen(session.view()));
+    session.act('next');
+  };
+  walk(/oxygen|triangle|\bheat\b/i, 'wood:in');
+  walk(/oxygen|triangle/i, 'gas:on');
+  walk(/triangle/i, 'lid:shut');
+  assert.equal(session.view().step.id, 'word-triangle');
+  assert.equal(session.view().triangle, true);
+  assert.match(onScreen(session.view()), /Fire triangle/);
+});
+
+test('the words stay true: the wonder while it plays again, the water left over in each case, and no fragment on the panel', () => {
+  const session = createClassroomSession(lesson);
+  const opening = say(session);
+  until(session, v => v.ready);
+  const closing = say(session);
+  assert.match(closing, /the flames went out\. Why did shutting a lid work/);
+  session.act('replay');
+  assert.equal(say(session), opening, 'Watch again starts with the fire burning, so the past-tense words wait');
+  assert.equal(session.view().ready, true);
+  until(session, v => say(session) === closing);
+  // The water left over, against the game's own rule.
+  const grid = forestGrid(), lone = {grid, raked: false, fire: litFire()};
+  const [i, j] = [0, MIDDLE];
+  assert.match(leftOverWords(lone, i, j), /soaked the trees around it, which are now damp/);
+  const after = dropOn(lone.fire, grid, i, j).fire;
+  assert.ok(after.damp.length > 0 && after.burning.length === 0, 'the game does make them damp');
+  const crowded = {grid, raked: false, fire: grown(litFire(), grid, JOB_HEAD_START)};
+  assert.match(leftOverWords(crowded, ...frontCell(crowded.fire)), /ran on to the burning cells next to it/);
+  const allBurnt = {grid, raked: false, fire: {...litFire(), burning: [[litFire().burning[0][0], 75]], burnt: [...grid.cells.keys()].filter(id => id !== litFire().burning[0][0])}};
+  assert.match(leftOverWords(allBurnt, i, j), /soaked into the burnt ground/);
+  // The word steps' panel lines are whole sentences, not a colon that skips a verb.
+  const w = createClassroomSession(lesson);
+  playThroughTo(w, 'word-heat');
+  assert.equal(worked(w, 'What a fire needs, so far'), 'The wood is in, so the fire has fuel. The gas is off, so nothing is heating the wood.');
+  w.act('gas:on');
+  assert.equal(worked(w, 'What a fire needs, so far'), 'The wood is in, so the fire has fuel. The gas is on, so the wood is being heated.');
+});
+
+test('the arrows show every spread the game allows, and Show me reaches three settings on the free test', () => {
+  const cells = [];
+  for (let k = 0; k < COLS * ROWS; k++) cells.push({i: k % COLS, j: Math.floor(k / COLS), state: 'trees'});
+  const middle = cells.find(c => c.i === 2 && c.j === 1);
+  Object.assign(middle, {state: 'burning', percent: 50});
+  const all = spreadTargets(cells);
+  assert.equal(all.length, 8, 'all eight touching cells, corners and backward included');
+  assert.ok(all.some(t => t.di === -1 && t.dj === -1) && all.some(t => t.di === -1 && t.dj === 0));
+  Object.assign(cells.find(c => c.i === 3 && c.j === 1), {state: 'raked'});
+  assert.equal(spreadTargets(cells).filter(t => t.stopped).length, 1);
+  middle.percent = 20;
+  assert.equal(spreadTargets(cells).length, 0, 'a cell too weak after growing lights nothing');
+  const s = createClassroomSession(lesson);
+  playThroughTo(s, 'try-free');
+  const opening = say(s);
+  for (let n = 1; n <= FREE_TRIES; n++) {
+    s.help(); s.help(); s.help();
+    run(s, SHOW_ME_S + 3);
+    assert.equal(s.view().freeRows.length, n, `Show me finds a new setting, press ${n}`);
+  }
+  assert.equal(s.view().ready, true);
+  assert.equal(s.view().page.at(-1).setup, opening, 'the step’s opening words do not change with the switches');
 });
