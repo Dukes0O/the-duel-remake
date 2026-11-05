@@ -1,22 +1,21 @@
-# WW-ART-BONEYARD — Round 1
+# WW-ART-BONEYARD — Round 2
 
-Three original wrecks now form the Scablands Boneyard. Each has an arched steel fuselage, exposed cabin ribs, broken low wing ramps, raised tails, cockpit remains and detached ground-level engine pods. The centre and side shells stay open at both ends. The deck is 5.1 m clear. Oxidised steel and faded paint use a procedural palette based on the existing yard and Rustwall recipes. No art-library donor was used, so no new external credit is needed.
+The recipe now builds a round, open ended aircraft hull with visible ribs, tapered torn wings, hanging flaps, and a swept tail. The deck sits on the dirt. Grey aluminium and faded enamel carry patchy wear; rust is limited to steel repairs and welds, with soot around the engines. A review-only yard car provides scale and is excluded from the GLB. No art-library donor or external credit was used.
 
-**Builder's look scores (1–5):** tail-up silhouette 4; rust and wear 3; drive-through readability 3; jump-ramp readability 2. The open tunnel and ramp use have not been driven in-game. Claude should judge the Blender sheet and, when WW-SCENE wires it in, check the game camera and vehicle clearance.
-
-**Review sheet:** `docs/board/looks/ww-art-boneyard/round-1.jpg` (82,983 bytes, under 500 KB). Three Blender views are in lane `.evidence/2026-11-04/ww-art-boneyard/round-1/` for reference.
+The previous round 1 sheet and note were replaced by a compressed comparison sheet and round 2 review. The sheet includes a car-height approach from about 40 m, a three-quarter yard view, the interior drive-through, and close wing repairs. The round 1 images are not exact matched camera views; the sheet labels the new approach as unmatched.
 
 ## Checks
 
-- Blender 4.5 round 1 export completed after fixing the empty scene world and preview lighting. Final authored geometry: 15,668 triangles; GLB: 1,464,728 bytes. Read back from the GLB: 15,668 triangles, 669 nodes and the `Scablands Boneyard` root. Both budgets pass (45,000 triangles; 2 MB).
+- Blender 4.5 round 2 export: passed. Authored geometry: 30,349 triangles; GLB: 1,934,476 bytes.
+- GLB readback: passed. 30,349 triangles, 1,934,476 bytes, 8 nodes, and `Scablands Boneyard` root; both card budgets pass (45,000 triangles; 2,000,000 bytes).
 - `node tools/test-blender-output.mjs`: passed, 192 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Placement is clean; repository size targets remain advisory.
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): 46 suites passed, 2 failed, 0 not run. `tools/test-circuit-eifel.mjs` failed on FFmpeg loudness measurement; its one same-commit rerun failed the same way. `tools/test-review-evidence.mjs` failed with `spawnSync ffmpeg EPERM`; its one same-commit rerun failed the same way. `ffmpeg` is not on this lane's PATH. No game code changed. These checks need a follow-up for the unreliable/missing local FFmpeg tool; assertions were not changed.
-- `npm.cmd run build`: passed (Vite 8.0.16; 632 modules). Existing dynamic-import and large-chunk warnings remain.
-- Browser checks: Claude runs. Please inspect round 1 for the steel/rust treatment, tail silhouette, 5.1 m interior and low ramp shape. No browser or frame check was run for this art card.
-- Changed assertions: none.
-- Race fingerprints: none; this lane changes no simulation or runtime wiring.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: pending final process exit. The log currently shows all 48 selected suites plus replay and test-runner guards passed; the command has not returned its exit code yet.
+- `npm run build`: pending.
+- Browser and game look checks: Claude runs. Please review the four views on the sheet, especially tail readability at distance, the ribbed 5.1 m clear tunnel, and whether the low wings read as torn welded jump ramps. In-game vehicle clearance belongs to WW-SCENE.
+- Frame checks: not run; this is art work.
+- Changed assertions: none. The blender-output registration now requests round 2; no assertion changed.
+- Race fingerprints: none expected for this art-only change. The lane replay guard passed with 297 checks across 33 cases, 31 events, 9 categories and three frame rates.
 
 ## Removed
 
-No old recipe, model, or asset was replaced.
+Replaced the round 1 review sheet and note in `docs/board/looks/ww-art-boneyard/` with the round 2 comparison and note. The temporary review car is removed before saving the Blender source and exporting the GLB. The previous model is overwritten by the round 2 model; no duplicate model was kept.

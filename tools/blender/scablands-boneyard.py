@@ -15,14 +15,14 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--round', type=int, default=1)
+parser.add_argument('--round', type=int, default=2)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/boneyard.glb'
 blend = root / 'art-build/scablands-boneyard/boneyard.blend'
 evidence = Path(os.environ.get('DUEL_EVIDENCE_DIR') or
-                root / '.evidence' / date.today().isoformat() / 'ww-art-boneyard' / 'round-1')
+                root / '.evidence' / date.today().isoformat() / 'ww-art-boneyard' / 'round-2')
 if not evidence.is_absolute():
     evidence = root / evidence
 if args.paths_only:
@@ -70,12 +70,29 @@ def mat(name, color, metal=0.0, rough=.86, rust=False):
         shader.inputs['Base Color'].default_value = (*color, 1)
     return m
 
-steel = mat('Salt-pitted oxidised aircraft steel', (.25,.20,.14), .56, .88, True)
-paint = mat('Faded service paint under rust', (.24,.28,.25), .28, .9, True)
+steel = mat('Pitted grey aircraft aluminium', (.30,.32,.31), .56, .88)
+paint = mat('Faded ivory aircraft enamel', (.55,.51,.43), .24, .86)
+for material, low, high in ((steel,(.20,.23,.23,1),(.39,.42,.40,1)),
+                           (paint,(.32,.32,.29,1),(.62,.59,.51,1))):
+    nodes, links = material.node_tree.nodes, material.node_tree.links
+    shader = nodes.get('Principled BSDF')
+    noise = nodes.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value=3.8
+    noise.inputs['Detail'].default_value=3.0; noise.inputs['Roughness'].default_value=.82
+    ramp = nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].position=.28; ramp.color_ramp.elements[0].color=low
+    ramp.color_ramp.elements[1].position=.74; ramp.color_ramp.elements[1].color=high
+    links.new(noise.outputs['Fac'],ramp.inputs['Fac'])
+    links.new(ramp.outputs['Color'],shader.inputs['Base Color'])
+    bump = nodes.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.16
+    bump.inputs['Distance'].default_value=.018
+    links.new(noise.outputs['Fac'],bump.inputs['Height'])
+    links.new(bump.outputs['Normal'],shader.inputs['Normal'])
 dark = mat('Soot-dark interior steel', (.045,.052,.05), .32, .94)
 glass = mat('Clouded cockpit glass', (.075,.105,.105), .48, .42)
 rubber = mat('Engine pod burnt rubber', (.035,.038,.036), .04, .98)
 earth = mat('Dry Scablands dirt', (.25,.17,.095), 0, 1)
+rust = mat('Rust limited to steel seams and repairs', (.25,.105,.038), .48, .94, True)
+soot = mat('Old soot and fuel stains', (.045,.043,.039), .08, .98)
 
 root_obj = bpy.data.objects.new('Scablands Boneyard', None)
 root_obj.empty_display_type = 'PLAIN_AXES'
@@ -112,59 +129,90 @@ def beam(name, a, b, radius, material, vertices=8):
     return obj
 
 def aircraft(label, center, yaw, damage):
-    """38 m twin aisle wreck; 5.2 m clear interior and open ends."""
+    """38 m airliner wreck; 5.1 m clear interior and open ends."""
     base=Vector(center); ca,sa=math.cos(yaw),math.sin(yaw)
     def p(x,y,z): return (base.x+ca*x-sa*z, base.y+y, base.z+sa*x+ca*z)
-    # Curved, segmented fuselage shell; lower belly partly buried, both ends open.
-    rings=[(-18,2.45,.98),(-13,2.72,1.08),(-7,2.78,1.12),(2,2.8,1.13),(11,2.72,1.08),(16,2.52,.98)]
-    n=24; verts=[]; faces=[]
+    # A circular tube with a clear cabin: sheet panels are broken into
+    # unequal lengths and leave the ragged open ends and roof tears visible.
+    rings=[(-18,2.60,1.53),(-16,2.73,1.62),(-12,2.79,1.66),(-7,2.80,1.67),
+    (0,2.82,1.68),(8,2.79,1.66),(14,2.72,1.61),(17,2.58,1.52)]
+    n=32; verts=[]; faces=[]
     for z,rx,ry in rings:
-        for j in range(n+1):
-            a=math.pi*(.04+.92*j/n)
+        for j in range(n):
+            a=math.tau*j/n
             verts.append(p(rx*math.cos(a),ry+ry*math.sin(a),z))
+    broken={(1,5),(1,6),(2,13),(2,14),(3,23),(4,7),(4,8),(5,18),(5,19)}
     for k in range(len(rings)-1):
         for j in range(n):
-            # Leave uneven tears at the ends and roof: recognizable torn sheet edges.
-            if (k==0 and j in (3,4,19)) or (k==4 and j in (8,9,10,21)):
+            if (k,j) in broken or (k in (0,6) and j in (2,3,12,13,20,21,28)):
                 continue
-            faces.append((k*(n+1)+j,k*(n+1)+j+1,(k+1)*(n+1)+j+1,(k+1)*(n+1)+j))
-    hull=mesh_obj(label+' torn fuselage shell',verts,faces,steel)
-    # Interior floor, cross ribs, broken longitudinal stringers.
-    for z in range(-15,15,3):
-        # Rib arches stop short of floor, leaving a wide unobstructed car path.
-        for j in range(15):
-            a=math.pi*.08+math.pi*.84*j/14
-            q1=p(2.55*math.cos(a),.98+1.02*math.sin(a),z)
-            q2=p(2.55*math.cos(a+math.pi*.84/14),.98+1.02*math.sin(a+math.pi*.84/14),z)
-            beam(label+' exposed cabin rib',q1,q2,.045,paint,6)
-    floorverts=[p(-2.55,.2,-16),p(2.55,.2,-16),p(2.55,.2,16),p(-2.55,.2,16)]
-    mesh_obj(label+' open drive-through deck',floorverts,[(0,1,2,3)],dark)
+            a=k*n+j; b=k*n+(j+1)%n; c=(k+1)*n+(j+1)%n; d=(k+1)*n+j
+            faces.append((a,b,c,d))
+    mesh_obj(label+' round torn fuselage shell',verts,faces,steel)
+    # Curved ribs frame the entire tube. The bottom ends disappear into the
+    # dirt; the deck sits on the ground so the tunnel has no floating floor.
+    for z in range(-15,16,3):
+        for j in range(n):
+            a=math.tau*j/n; b=math.tau*(j+1)/n
+            if (z in (-9,3,12) and j in (5,6,7,24,25)):
+                continue
+            beam(label+' curved cabin rib',p(2.58*math.cos(a),1.53+1.53*math.sin(a),z),
+                 p(2.58*math.cos(b),1.53+1.53*math.sin(b),z),.052,paint,6)
+    floorverts=[p(-2.55,.08,-16),p(2.55,.08,-16),p(2.55,.08,16),p(-2.55,.08,16)]
+    mesh_obj(label+' open drive-through deck at ground',floorverts,[(0,1,2,3)],dark)
     # Remains of window frames, deliberately sparse and asymmetric.
     for side in (-1,1):
         for z in range(-12,14,3):
             if (z*side+int(damage*10))%4==0: continue
-            x=side*2.48
+            x=side*2.58
             beam(label+' torn window mullion',p(x,.95,z-.62),p(x,.95,z+.62),.045,paint,6)
         for z in (-14,13):
             beam(label+' lower side stringer',p(side*2.45,.38,z),p(side*2.6,.48,z+2),.095,steel,8)
-    # Tailcone rises 6 m; forked remains are unmistakably an airliner tail.
-    beam(label+' raised tail boom',p(0,1.3,7),p(0,6.1,18),.48,steel,16)
-    box(label+' left vertical tail',p(-.38,4.6,15.7),(.72,3.6,4.6),paint,.12)
-    box(label+' right vertical tail',p(.38,4.6,15.7),(.72,3.6,4.6),steel,.12)
-    # Wing roots broken off; low ragged stubs form a pair of driveable ramps.
+        # Uneven replacement panels and short weld beads break up the clean
+        # tube surface. Their edges follow the fuselage curve rather than sit
+        # as flat decals.
+        for z0,span,ang in ((-10,2.6,0.02),(1.8,3.4,.08),(9.6,2.2,-.05)):
+            a0=ang if side>0 else math.pi-ang
+            pts=[]
+            for z,da in ((z0,-.19),(z0, .17),(z0+span,.13),(z0+span,-.14)):
+                aa=a0+da
+                pts.append(p(2.835*math.cos(aa),1.68+1.695*math.sin(aa),z))
+            mesh_obj(label+' hand-cut service patch',pts,[(0,1,2,3)],paint if z0!=1.8 else rust)
+            for dz in (0,span):
+                for t in range(1,5):
+                    z=z0+dz; aa=a0-.19+.36*t/5
+                    beam(label+' short patch weld',p(2.84*math.cos(aa),1.68+1.70*math.sin(aa),z),
+                         p(2.84*math.cos(aa+.018),1.68+1.70*math.sin(aa+.018),z+.08),.026,rust,5)
+    # A bent rear cone and swept fin make the landmark readable at distance.
+    beam(label+' raised tail keel',p(0,1.0,9),p(0,3.0,18),.32,steel,16)
+    fin=[p(0,2.5,12),p(0,7.0,16.5),p(0,6.35,18),p(0,1.9,17.4),p(0,1.5,14)]
+    mesh_obj(label+' swept vertical tail fin',fin,[(0,1,2,3,4)],paint)
     for side in (-1,1):
-        x0=side*2.35; x1=side*8.6
-        rampverts=[p(x0,.82,-1.8),p(x1,.08,-2.8),p(x1,.08,5.6),p(x0,.82,3.9),
-                   p(x0,.55,-1.8),p(x1,-.06,-2.8),p(x1,-.06,5.6),p(x0,.55,3.9)]
-        rampfaces=[(0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
-        mesh_obj(label+(' left low wing remnant' if side<0 else ' right low wing remnant'),rampverts,rampfaces,paint)
-        # Folded spar and torn ribs make ramps read as heavy welded aircraft structure.
-        for z in (-1.4,0,2,4.8):
-            beam(label+' exposed wing spar',p(x0,.5,z),p(x1,-.02,z),.10,steel,8)
-        for t in (.25,.56,.82):
-            x=x0+(x1-x0)*t
-            beam(label+' wing rib',p(x,.3,-1.2),p(x,-.03,4.7),.045,dark,6)
-        # Engine pods lie beside the fuselage, detached and scorched.
+        mesh_obj(label+' torn horizontal tailplane',
+          [p(0,3.0,14),p(side*5.1,2.7,16.8),p(side*4.0,2.55,17.6),p(side*.5,2.9,15.3)],
+          [(0,1,2,3)],paint)
+        beam(label+' tailplane exposed spar',p(side*.5,2.8,15.4),p(side*4.7,2.55,17.1),.10,rust,8)
+    # Broken, tapered low wings form broad ramps; loose flaps hang from torn
+    # trailing edges. Weld seams, bent spars and split tips replace flat slabs.
+    for side in (-1,1):
+        x0=side*2.35; x1=side*10.0; x2=side*8.5
+        wing=[p(x0,.88,-4.5),p(x1,.16,-3.9),p(x2,.12,4.9),p(side*6.2,.30,3.8),p(x0,.88,2.8)]
+        mesh_obj(label+(' left tapered low wing' if side<0 else ' right tapered low wing'),wing,
+                 [(0,1,2,3,4)],paint)
+        # Broken tip skins and a dropped flap are separate bent plates.
+        flap=[p(side*6.0,.10,3.6),p(side*8.3,-.16,4.35),p(side*8.8,-.95,5.05),p(side*6.2,-.65,4.65)]
+        mesh_obj(label+' hanging split flap',flap,[(0,1,2,3)],steel)
+        tip=[p(side*8.8,.12,4.1),p(side*10.5,.08,3.35),p(side*9.5,.02,2.2),p(side*8.1,.10,2.8)]
+        mesh_obj(label+' torn tapered wingtip',tip,[(0,1,2,3)],rust)
+        # Folded spars and short, welded ribs expose real structure underneath.
+        for z in (-3.8,-1.2,1.4,3.8):
+            beam(label+' exposed wing spar',p(x0,.55,z),p(side*9.0,.04,z*.72),.105,steel,8)
+        for t in (.28,.55,.8):
+            x=side*(2.35+7.3*t)
+            beam(label+' welded wing rib',p(x,.3,-3.3),p(x,.0,3.7*(1-.2*t)),.052,dark,6)
+        for z in (-2.8,-.4,2.1):
+            beam(label+' visible repair weld',p(side*2.7,.91,z),p(side*5.4,.58,z+.18),.022,rust,5)
+        # Detached, scorched engine pods remain in the yard.
         ex=side*4.2; ez=-2.7 if side<0 else 4.8
         pod=cylinder(label+' grounded engine pod',p(ex,.56,ez),.75,2.4,rubber,24)
         cylinder(label+' exposed engine intake rim',p(ex,.56,ez-1.21),.64,.12,steel,24)
@@ -173,10 +221,11 @@ def aircraft(label, center, yaw, damage):
             a=blade*math.tau/8
             beam(label+' bent turbine blade',p(ex,.56+.42*math.sin(a),ez-1.31+.42*math.cos(a)),
                  p(ex,.56+.17*math.sin(a+.18),ez-1.31+.17*math.cos(a+.18)),.025,steel,5)
-    # Cockpit remnant and fractured windscreen at the nose.
-    box(label+' cockpit crown',p(0,2.5,-17.2),(3.2,1.45,3.0),paint,.28)
+    # Faded cockpit nose uses a sloped shell and sparse broken glazing bars.
+    cockpit=[p(-1.5,1.65,-18),p(1.5,1.65,-18),p(1.2,2.9,-15.7),p(-1.2,2.9,-15.7)]
+    mesh_obj(label+' sloped cockpit crown',cockpit,[(0,1,2,3)],paint)
     for x in (-.8,0,.8):
-        beam(label+' cockpit glazing bar',p(x,2.2,-18.55),p(x*.85,3.0,-17.8),.055,glass,6)
+        beam(label+' broken cockpit glazing bar',p(x,1.75,-18.15),p(x*.82,2.8,-15.8),.055,glass,6)
     # Broken landing gear; one heavy leg still holds the tail end high.
     for x,z,h in ((-1.4,-5,.9),(1.4,-5,.5),(0,8,1.55)):
         beam(label+' buckled landing gear',p(x,.25,z),p(x*.9,-h,z+.35),.16,steel,10)
@@ -186,22 +235,26 @@ def aircraft(label, center, yaw, damage):
 aircraft('North wreck',(0,0,0),0,.23)
 aircraft('East wreck',(27,0,4),-.19,.64)
 aircraft('South wreck',(-27,0,-2),.14,.81)
-# Scablands dirt pad and scattered plate scrap frame the silhouettes.
-box('Boneyard dirt slab',(0,-.58,0),(78,.18,58),earth)
-for i,(x,z,a) in enumerate(((-20,-19,.22),(15,-17,-.3),(32,10,.5),(-35,12,-.4),(19,22,.8),(-12,21,-.6))):
-    obj=box('Loose rusted aircraft skin',(x,-.28,z),(2.8,.11,1.1),steel,.035); obj.rotation_euler[1]=a
+# Low, continuous dirt pad removes the old floating ground slab. Field scrap
+# uses larger, bent plates, torn gear and steel seams instead of tiny chips.
+box('Level compacted Scablands dirt',(0,-.16,0),(180,.32,150),earth,.06)
+for i,(x,z,a,sx,sz) in enumerate(((-20,-19,.22,5.4,3.2),(15,-17,-.3,4.6,2.7),
+    (32,10,.5,5.8,3.1),(-35,12,-.4,4.8,3.7),(19,22,.8,5.2,2.8),(-12,21,-.6,4.3,2.9),
+    (-43,-25,.45,6.2,3.5),(43,-23,-.2,5.5,3.0),(-48,27,-.7,4.8,3.4),(49,28,.3,6.0,3.8))):
+    obj=box('Large bent aircraft skin scrap',(x,.08,z),(sx,.16,sz),steel,.06); obj.rotation_euler[1]=a
+    beam('Scrap seam weld', (x-sx*.3,.18,z-.2),(x+sx*.3,.18,z+.3),.035,rust,6)
 
 bpy.context.view_layer.update()
 triangles=sum(len(poly.vertices)-2 for obj in objects if obj.type=='MESH' for poly in obj.data.polygons)
 print('boneyard authored triangle count:',triangles)
 assert 5000 < triangles <= 45000, f'triangle budget exceeded or unexpectedly sparse: {triangles}'
 
-# World setup for reproducible orthographic review angles.
+# World setup for reproducible close-to-ground review angles.
 scene=bpy.context.scene
 scene.render.engine='BLENDER_EEVEE_NEXT'
 scene.render.resolution_x=1200; scene.render.resolution_y=760; scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
-scene.render.resolution_percentage=70
+scene.render.resolution_percentage=85
 scene.world=bpy.data.worlds.new('Scablands review world')
 scene.world.use_nodes=True
 scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.22,.24,.26,1)
@@ -212,7 +265,14 @@ sun.rotation_euler=(math.radians(-66),math.radians(-24),math.radians(-31))
 fill_data=bpy.data.lights.new('Open sky fill','AREA'); fill_data.energy=14000; fill_data.shape='DISK'; fill_data.size=42
 fill=bpy.data.objects.new('Open sky fill',fill_data); scene.collection.objects.link(fill)
 fill.location=(-5,38,-8); fill.rotation_euler=(math.radians(-90),0,0)
-def point_camera(cam, target): cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler()
+scene.view_settings.view_transform='AgX'
+def point_camera(cam, target):
+    direction=(Vector(target)-cam.location).normalized()
+    world_up=Vector((0,1,0))
+    right=direction.cross(world_up).normalized()
+    up=right.cross(direction).normalized()
+    from mathutils import Matrix
+    cam.rotation_euler=Matrix((right,up,-direction)).transposed().to_euler()
 def render_view(name, position, target, scale=75):
     data=bpy.data.cameras.new(name+' camera'); cam=bpy.data.objects.new(name+' camera',data)
     scene.collection.objects.link(cam); cam.location=position; data.type='ORTHO'; data.ortho_scale=scale
@@ -220,9 +280,47 @@ def render_view(name, position, target, scale=75):
     scene.render.filepath=str(evidence/(name+'.png'))
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam,do_unlink=True); bpy.data.cameras.remove(data)
-render_view('quarter', (58,35,-67),(0,1,0),75)
-render_view('drive-through', (0,3,-47),(0,2,0),26)
-render_view('tail-and-wing', (0,34,39),(0,2,1),75)
+
+# Review-only yard car for scale. It is removed before the runtime export and
+# Blender source save, so the deliverable stays the airliner graveyard.
+review_objects=[]
+before=set(bpy.data.objects)
+box('Scale car chassis',(7,.74,-7),(4.0,.42,1.55),dark,.12)
+box('Scale car hood',(7,.98,-8.05),(1.25,.35,1.38),steel,.10)
+box('Scale car cabin',(7,1.34,-6.72),(1.42,.78,1.55),paint,.12)
+box('Scale car windshield',(7,1.42,-7.48),(1.18,.48,.08),glass,.02)
+box('Scale car rear glass',(7,1.42,-5.96),(1.18,.48,.08),glass,.02)
+for x in (5.82,8.18):
+    for z in (-8.05,-5.95):
+        cylinder('Scale car worn tyre',(x,.53,z),.43,.22,rubber,20,(0,math.pi/2,0))
+        cylinder('Scale car steel hub',(x+(.12 if x>7 else -.12),.53,z),.20,.025,steel,16,(0,math.pi/2,0))
+review_objects=[obj for obj in bpy.data.objects if obj not in before]
+
+# Verdict views: a car-height approach from about 40 m, three-quarter yard
+# silhouette, cabin-height drive-through, and close hand-built wing detail.
+render_view('approach-40m', (10,1.55,-40),(0,2.1,0),39)
+render_view('three-quarter', (35,10,-37),(0,3.3,0),51)
+render_view('drive-through-car-height', (0,1.45,-12),(0,1.55,12),11)
+render_view('close-wing-repairs', (8.8,3.7,3.7),(5.2,.8,1.8),9)
+
+# Keep the review scale prop out of both the saved recipe and the GLB.
+for obj in review_objects:
+    objects.remove(obj)
+    bpy.data.objects.remove(obj,do_unlink=True)
+
+# Consolidate the many welded ribs, seams and fragments by material. This
+# preserves their shapes while avoiding thousands of tiny GLB draw objects.
+for material in list(bpy.data.materials):
+    batch=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and
+           len(obj.data.materials)==1 and obj.data.materials[0]==material]
+    if len(batch)<2:
+        continue
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in batch: obj.select_set(True)
+    bpy.context.view_layer.objects.active=batch[0]
+    bpy.ops.object.join()
+    batch[0].name=material.name+' welded assembly'
+objects=[root_obj]+[obj for obj in bpy.context.scene.objects if obj.type=='MESH']
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 bpy.ops.object.select_all(action='DESELECT'); root_obj.select_set(True)
