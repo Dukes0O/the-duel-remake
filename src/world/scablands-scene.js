@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt} from './scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsGroundEdit} from './scablands-ground.js';
+import {createGroundView} from './ground-view.js';
+import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
@@ -127,6 +129,8 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
     tile.position.set(x*700+350,0,z*500+250);ground.add(tile);
   }
   const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
+  const editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+  const digFx=createDigFx({group,seed:course.seed});
   // A broad gravel ribbon follows the stable oval frame used by driving and
   // never changes the shared terrain height function.
   const roadPoints=[];
@@ -169,6 +173,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));}return false;});
   function dispose(){
     if(retired)return;retired=true;
+    editedGround.dispose();digFx.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
@@ -177,5 +182,13 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
+  // Call after a work order commits its edits. The same height layer drives
+  // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
+  group.userData.updateGroundView=()=>{
+    const changed=editedGround.update();
+    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
+    return changed;
+  };
+  group.userData.digFx=digFx;
   return {group,ready,solids:SCABLANDS_SOLIDS,dispose};
 }
