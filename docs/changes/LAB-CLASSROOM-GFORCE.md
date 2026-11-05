@@ -7,14 +7,20 @@
 - Removed KMH_PER_MPH and speedMph. Both older G-force lesson paths now use KMH_PER_SETTING where needed and the neutral setting name. Their lesson text contains no mph.
 - Rewrote the wonder step, first-person watch line, formula and prediction explanations. The speed try explains that 96.6 km/h is 1.5 times 64.4 km/h, so the square makes the reading about 2.25 times as large. The radius try explains that 75 m is 1.5 times 50 m, so the reading is two thirds as large. Correct and incorrect outcomes now differ.
 - Removed the repeated prediction branch and duplicate say property. Updated the keyboard scenario to use Launch's seven flags, memory-only profile setup, hidden body > details elements, and Lab map walk-room entry. It captures the word steps, open guesses, free-test table and recap for Claude's Chrome run.
+- The classroom screen and board share the UI's arrow-glyph keys (`←`, `→`, `↑`, `↓`), including held repeats paced at 0.14 s. The G-force view supplies `pointOnly` and `focus`; board targets have board points, while HTML answer cards stay point-only.
+- Replaced the small partial arm drawing with a complete circle that scales with radius and moves the car from `view.time`. The cord inset leans with the meter reading. Speed and radius panels keep values above their buttons; the taught radius uses RADIUS, and the results table appears only after a turn.
 
 ## Tests and browser checks
 
-- node --test tools/test-lab-classroom.mjs: 26/26 passed.
+- Screen and board rework: `node --test tools/test-lab-classroom.mjs` passed 27/27; `node --test tools/test-lab-classroom-page.mjs` passed 6/6; `npm.cmd run build` passed. PowerShell blocked `npm` itself under its script policy, so the Windows command launcher ran the same npm script. No lane tier or browser scenario was run; Claude runs the lane tier and plays the lesson in Chrome.
+- Added a contract test against the classroom UI's exported `KEY_NAMES`: every G-force key and repeat key is sendable, all lesson views provide the fields the screen reads, every board target has a point while HTML answer targets are point-only, the stand-in canvas receives `fitBoard`'s layout, and each reading card uses the board picture painter. Held arrows now follow the classroom's 0.14 s pacing.
+- Reworked the board to show the full overhead turn, moving car, radius, tangent speed and inward push, with a cord inset. Controls have separate label/value and button rows; the results panel appears only after a recorded run and fits three rows. Removed board-side answer drawing and answer hit tests; classroom answer cards remain responsible for answers. Reading cards now show a meter and the cord lean.
+
+- node --test tools/test-lab-classroom.mjs: 27/27 passed after the screen and board rework.
 - node --test tools/test-lab-classroom-page.mjs: 6/6 passed; G-force is in the language and formula page checks.
 - node --test tools/test-lab-lessons-workshop.mjs: 4/4 passed.
 - tools/scenarios/lab-classroom-gforce.mjs: not run here, as requested. Claude runs it in Chrome.
-- Lane tier (node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going): 44 of 46 suites passed. tools/test-review-evidence.mjs failed on the ffmpeg permission limit (8/9 checks). tools/test-full-check.mjs failed one setup case because spawnSync pwsh returned EACCES; its one same-version rerun failed the same way (45/46 passed). Both failures are environment setup issues; neither suite was changed. The lane run passed the workshop suite and the 799-check src/test.js suite.
+- Earlier lane-tier result, before this screen and board rework: 44 of 46 suites passed. `tools/test-review-evidence.mjs` hit the ffmpeg permission limit (8/9 checks). `tools/test-full-check.mjs` failed one setup case because `spawnSync pwsh` returned EACCES; its same-version rerun failed the same way (45/46 passed). Neither suite was changed. Claude will run the lane tier on this commit.
 - npm run build: passed. Vite reported its existing dynamic-import and large-chunk warnings.
 - node tools/build-status.mjs completed; STATUS reports the full tier stale for this lane commit.
 
@@ -40,3 +46,4 @@
 ## Removed
 
 - Removed the obsolete precise-setting note, duplicate prediction branch and duplicate say property. No files were removed; the legacy G-force path remains for its fallback.
+- Removed G-force's duplicate answer-card drawing and board hit tests; `classroom-ui.js` already owns drawing and activating those cards.

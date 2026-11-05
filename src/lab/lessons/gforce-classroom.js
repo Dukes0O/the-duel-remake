@@ -13,9 +13,9 @@ const MAX_RADIUS = 200;
 const RADIUS_STEP = 25;
 const FREE_TRIES = 3;
 const FREE_RADII = Object.freeze([10, 25, 35, 50, 60, 75, 85, 100, 110, 125, 135, 150, 160, 175, 185, 200]);
-const AUTO_GAP_S = .14;
-const SPEED_KEYS = Object.freeze({ArrowLeft: 'speed:down', ArrowRight: 'speed:up'});
-const RADIUS_KEYS = Object.freeze({ArrowDown: 'radius:down', ArrowUp: 'radius:up'});
+const AUTO_GAP_S = .14, HELD_GAP_S = .14;
+const SPEED_KEYS = Object.freeze({'←': 'speed:down', '→': 'speed:up'});
+const RADIUS_KEYS = Object.freeze({'↓': 'radius:down', '↑': 'radius:up'});
 
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'Why does the cord lean?'},
@@ -237,18 +237,21 @@ export function createModel() {
     return {kind: 'progress', say: m.say};
   }
 
-  function move(kind, direction, automatic = false) {
+  function move(kind, direction, automatic = false, held = false) {
     if (m.auto && !automatic) return null;
+    if (held && m.time - m.lastPress < HELD_GAP_S) return null;
     const before = kind === 'speed' ? speed : radius;
     if (kind === 'speed') speed = clampSpeed(speed + direction * SPEED_STEP);
     else radius = clampRadius(radius + direction * RADIUS_STEP);
     const after = kind === 'speed' ? speed : radius;
     if (before === after) {
+      if (held) return null;
       m.say = kind === 'speed'
         ? `${direction > 0 ? 'The speed dial is already at its top' : 'The speed dial is already at its bottom'}, ${kmh(speed).toFixed(1)} km/h.`
         : `The radius control is already at its ${direction > 0 ? 'outer' : 'inner'} limit, ${radius} m.`;
       return {kind: 'note', say: m.say};
     }
+    m.lastPress = m.time;
     if (id() === 'word-speed' && speed === BASE.speed && m.phase !== 'done') {
       m.phase = 'done';
       m.say = `The dial now shows ${kmh(speed).toFixed(1)} km/h. The formula changes that speed to ${mpsFromDial(speed).toFixed(2)} m/s by dividing by 3.6.`;
@@ -317,14 +320,15 @@ export function createModel() {
   }
 
   function act(action) {
-    const [kind, raw] = action.split(':');
+    const held = action.endsWith(':held');
+    const [kind, raw] = (held ? action.slice(0, -5) : action).split(':');
     if (kind === 'replay') {
       if (id() === 'wonder' || id() === 'watch') enter(m.index);
       return null;
     }
     if (kind === 'set' && raw === 'best') return startAuto();
-    if (kind === 'speed' && ['ready', 'set', 'done'].includes(m.phase)) return move('speed', raw === 'up' ? 1 : -1);
-    if (kind === 'radius' && ['ready', 'set', 'done'].includes(m.phase)) return move('radius', raw === 'up' ? 1 : -1);
+    if (kind === 'speed' && ['ready', 'set', 'done'].includes(m.phase)) return move('speed', raw === 'up' ? 1 : -1, false, held);
+    if (kind === 'radius' && ['ready', 'set', 'done'].includes(m.phase)) return move('radius', raw === 'up' ? 1 : -1, false, held);
     if (kind === 'run' && (['ready', 'set'].includes(m.phase) || id() === 'try-free' && m.phase === 'done')) return record();
     if (kind === 'answer' && (m.phase === 'guess' || m.phase === 'ask')) {
       const picked = Number(raw);
@@ -448,10 +452,12 @@ export function createModel() {
       formulas: formulasForView(),
       rows: rows.map(item => ({...item})),
       keys,
-      repeat: Object.keys(keys).filter(key => key.startsWith('Arrow')),
+      repeat: Object.keys(keys).filter(key => ['←', '→', '↑', '↓'].includes(key)),
       buttons: [],
       actions: done && (current === 'wonder' || current === 'watch') ? ['replay'] : [],
       cards: [],
+      focus: ['word-speed', 'try-speed'].includes(current) ? 'speed' : ['word-radius', 'try-radius'].includes(current) ? 'radius' : null,
+      pointOnly: answersOpen,
       asking: answersOpen,
       answered: check ? done : false,
       target: null,
