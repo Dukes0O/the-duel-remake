@@ -10,9 +10,9 @@ export const BOWL_COURSE = Object.freeze({
 
 const line = [
   [0.16, -5.2, 'junkCar', 0x53645b], [0.16, 0, 'junkCar', 0x935143], [0.16, 5.2, 'junkCar', 0x557185],
-  [0.31, -5.2, 'junkCar', 0x935143], [0.31, 0, 'junkCar', 0x557185], [0.31, 5.2, 'junkCar', 0x53645b],
-  [0.47, -5.2, 'junkCar', 0x557185], [0.47, 0, 'junkCar', 0x53645b], [0.47, 5.2, 'junkCar', 0x935143],
-  [0.63, -5.2, 'bowlBus', 0x806449], [0.63, 0, 'bowlBus', 0x806449], [0.63, 5.2, 'bowlRv', 0x596b70],
+  [0.31, -5.2, 'junkCar', 0x79644b], [0.31, 0, 'junkCar', 0x6b594e], [0.31, 5.2, 'junkCar', 0x486b60],
+  [0.47, -5.2, 'junkCar', 0x8a6248], [0.47, 0, 'junkCar', 0x66717a], [0.47, 5.2, 'junkCar', 0x716749],
+  [0.63, -5.2, 'bowlBus', 0x806449], [0.63, 0, 'bowlBus', 0x735648], [0.63, 5.2, 'bowlRv', 0x596b70],
   [0.78, -5.2, 'bowlBurningHeap', 0x49362b], [0.78, 0, 'bowlBurningHeap', 0x49362b], [0.78, 5.2, 'bowlBurningHeap', 0x49362b],
 ];
 
