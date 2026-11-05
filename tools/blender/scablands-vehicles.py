@@ -67,14 +67,15 @@ def cube(name, loc, scale, material, bevel=.025, parent=None):
         o.modifiers.new('Weld normals','WEIGHTED_NORMAL')
     o.data.materials.append(material)
     if parent:
-        o.parent=parent; o.matrix_parent_inverse=parent.matrix_world.inverted()
+        # Mesh coordinates are authored in the vehicle root's local frame.
+        o.parent=parent
     return o
 
 def cyl(name, loc, radius, depth, material, rot=(math.pi/2,0,0), vertices=16, parent=None):
     bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc, rotation=rot)
     o=bpy.context.object; o.name=name; o.data.materials.append(material)
     if parent:
-        o.parent=parent; o.matrix_parent_inverse=parent.matrix_world.inverted()
+        o.parent=parent
     return o
 
 def root_empty(name, x):
@@ -189,24 +190,25 @@ bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 # Render car-height side, three-quarter and close detail views for every vehicle.
 labels=('BIG BESS','OLD SMOKE','THIEF BUGGY')
 view_files=[]
-root_positions=[obj.location.x for obj in roots]
 for idx,(label,root_obj) in enumerate(zip(labels,roots)):
-    root_obj.location.x=0
+    center_x=root_obj.location.x
+    for obj in bpy.data.objects:
+        ancestor=obj
+        while ancestor.parent and ancestor not in roots: ancestor=ancestor.parent
+        owner=ancestor if ancestor in roots else None
+        if owner: obj.hide_render=(owner is not root_obj)
     bpy.context.view_layer.update()
-    bpy.ops.object.text_add(location=(-2.0,.03,-4.2),rotation=(math.pi/2,0,0))
-    title=bpy.context.object; title.name='Review label: '+label; title.data.body=label; title.data.size=.42; title.data.materials.append(paint)
     bpy.ops.object.camera_add(); camera=bpy.context.object; camera.data.type='ORTHO'; scene.camera=camera
     for view,loc,point,scale in (
-        ('side',(10,2.2,0),(0,1.25,0),8.4),
-        ('three-quarter',(8,5,8),(0,1.4,0),8.0),
-        ('detail',(4.5,3.2,3.6),(0,1.8,-.7),4.0)):
-        camera.location=loc; aim(camera,point); camera.data.ortho_scale=scale
+        ('side',(40,2.2,0),(0,1.25,0),16.0),
+        ('three-quarter',(18,8,18),(0,1.4,0),16.0),
+        ('detail',(6,4,6),(0,1.8,-.7),7.0)):
+        camera.location=(center_x+loc[0],loc[1],loc[2]); aim(camera,(center_x+point[0],point[1],point[2])); camera.data.ortho_scale=scale
         scene.render.filepath=str(evidence/f'{idx+1}-{view}.jpg')
         bpy.ops.render.render(write_still=True)
         view_files.append(str(evidence/f'{idx+1}-{view}.jpg'))
     bpy.data.objects.remove(camera,do_unlink=True)
-    bpy.data.objects.remove(title,do_unlink=True)
-for root_obj,x in zip(roots,root_positions): root_obj.location.x=x
+for obj in bpy.data.objects: obj.hide_render=False
 for obj in bpy.context.selected_objects: obj.select_set(False)
 for obj in list(bpy.data.objects):
     parent=obj.parent

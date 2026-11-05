@@ -2,22 +2,31 @@
 
 ## Changed
 
-- Added the Blender recipe `tools/blender/scablands-vehicles.py` for Big Bess, Old Smoke's rolling furnace and the thief buggy. It exports three named roots, with three independently named furnace vents, mouth parts and glow parts.
-- Registered the recipe in `tools/test-blender-output.mjs`. Generated the combined candidate model for budget and node readback, then removed it: the card says the vehicles are not wired into the game yet, and only game-loaded models belong in this commit.
-- Built one Blender review sheet at `docs/board/looks/ww-art-vehicles/round-1.jpg` (66,559 bytes) and recorded provisional scores and gaps in the round note. No family reference image or game capture was provided; Claude should judge the candidate and select round 2's focus.
-- Readback: 412,536-byte GLB, 6,228 triangles total across the three vehicles, under 12,000 each by the mesh count. Each vehicle is below the 1.5 MB total file budget. No external art-library files were used.
+- Added irregular cab and body repair plates, raised weld beads, gas tank plumbing and valve, furnace flank vents with separate dark mouths and glow inserts, and a sparse buggy frame.
+- Fixed child parenting so each exported vehicle stays with its named root instead of stacking vehicle meshes at the origin.
+- Replaced the round 1 review files with one compressed round comparison JPG and an honest round 2 score note. The JPG is 68,941 bytes.
+- GLB readback: Big Bess 2,652 triangles; Old Smoke 4,320; thief buggy 992. Total file 521,280 bytes. All are under the per-vehicle 12,000 triangle and 1.5 MB file limits.
 
 ## Checks
 
-- Blender recipe and render: passed with Blender 4.5.13 LTS.
-- `tools/test-blender-output.mjs`: passed, 192 checks; its lane-tier run also passed.
-- `tools/test-repo-hygiene.mjs`: passed; placement clean. The size report includes existing oversized assets; the new GLB and sheet are within this card's budgets.
-- Lane tier: completed its 47 selected suites, with one failure: `tools/test-circuit-eifel.mjs` failed at FFmpeg loudness measurement (`FFmpeg loudness measurement failed`). The one allowed same-commit rerun reproduced the failure (17 pass, 1 fail in that suite). The other completed suite outputs passed, including replay fingerprints (297 checks). The lane-runner process stayed open after its final suite and was stopped after its outputs were read.
-- `npm.cmd run build`: passed. PowerShell blocked the `npm` script shim under its execution policy, so the equivalent `npm.cmd` was used. Vite emitted existing dynamic-import and chunk-size warnings.
-- Browser checks and look verdict: Claude runs/reviews. No browser check or frame check was run; the models are not wired into the game.
-- Changed assertions: none.
-- Race fingerprints: not applicable; no race code or simulation changed.
+- Blender 4.5.13 recipe render and GLB export: passed.
+- `node tools/test-blender-output.mjs`: 192 checks passed.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement passed and size targets remain advisory.
+- Changed-file lane tier (`--tier lane --changed --jobs 4 --keep-going`): 47 suites ran. Most passed. `test-circuit-eifel.mjs` and `test-review-evidence.mjs` failed in FFmpeg loudness/codec measurement; each was rerun once on unchanged game code and failed again. No assertions changed. The test runner process did not return after printing all suite results and was stopped after the summary had finished.
+- `npm.cmd run build`: passed. Vite reported existing chunk-size and dynamic-import warnings.
+- GLB budget and root readback: passed (three named roots; per-vehicle counts above).
+- Browser and in-game look checks: Claude runs. No frame check was run.
+- Race fingerprints: not applicable; no race simulation code changed.
+
+## Claude review
+
+Please inspect `docs/board/looks/ww-art-vehicles/round-2.jpg`. The note records the camera/ground presentation problem and missing scale reference honestly. No browser check or in-game look check was run in this lane.
+
+## Assertions changed
+
+None.
 
 ## Removed
 
-- None. This is the first recipe and candidate asset for the card.
+- Replaced `round-1.jpg` and `round-1.md` with the round comparison sheet and `round-2.md`. The round 1 image is retained inside the new sheet.
+- Replaced the previous `vehicles.glb` with the corrected round 2 export.
