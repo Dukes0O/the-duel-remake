@@ -6,6 +6,7 @@ import {WARLORDS, WARLORD_LADDER, warlordUnlockSatisfied} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {waterNextUp, waterWallMarkup} from './story/water-ui.js';
+import {emberNextUp, emberWallMarkup} from './story/ember-ui.js';
 import {yardThingsToTry} from './yard-things-to-try.js';
 
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
@@ -50,7 +51,7 @@ export function yardNextStep(profile, {featureFlags} = {}) {
 }
 
 export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
-  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags, water = null}) {
+  armoryMarkup = '', message = '', arenaMarkup = '', warlordsAvailable = false, featureFlags, water = null, ember = null}) {
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
@@ -59,7 +60,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
   // With the Water Road on, the next step is its open chapter and that chapter's one button.
-  const story = canFight ? waterNextUp(water) : null;
+  const story = canFight ? emberNextUp(ember) ?? waterNextUp(water) : null;
   const fightCopy = story ? story.text : canFight ? yardNextStep(profile, {featureFlags}) : 'Warlord fights are coming later.';
   const storyButton = story?.button ?? '';
   const careerContent = `<div class="yard-home-intro"><h3>YOUR WASTELAND CAREER</h3><p>Notoriety rank ${career?.rank || 1} · ${Math.floor(career?.xp || 0).toLocaleString()} XP · ${claimed} territories claimed</p>${intro}<p>Win four events in a territory to fill its hold. ${fightCopy}</p>${storyButton}</div>`;
@@ -67,7 +68,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   if (panel === 'scrapdome' && arenaMarkup) content = arenaMarkup;
   else if (panel === 'territory') content = territoryPanel(profile,
     canFight ? {featureFlags} : {builtWarlordIds: [], featureFlags});
-  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = waterWallMarkup(water) + cardWallScreen(profile,escapeHTML);
+  else if (panel === 'cards' && career?.discoveredGate && featureFlags?.enabled('warlord-cards')) content = emberWallMarkup(ember) + waterWallMarkup(water) + cardWallScreen(profile,escapeHTML);
   else if (panel === 'crew') content = crewPanel(profile, escapeHTML,{gearEnabled:featureFlags?.enabled('crew-gear')===true,warlordCardsEnabled:featureFlags?.enabled('warlord-cards')===true && featureFlags?.enabled('crew-gear')===true});
   else if (panel === 'armory') content = armoryMarkup;
   else if (panel === 'career') content = careerContent;

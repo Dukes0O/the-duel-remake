@@ -22,6 +22,8 @@ import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneA
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
+import {EMBER_JOBS} from './story/ember-save.js';
+import {finishArenaEvent} from './arena/arena-event.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW,crewMember} from './crew.js';
 import {courseScreen as courseScreenMarkup, createCourseActions} from './screen-courses.js';
@@ -33,6 +35,8 @@ import './screen-team-room.css';
 import {createResultsScreen, screenAction} from './screen-results.js';
 import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js';
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
+import {createWorldHud} from './world/world-hud.js';
+import './world/world-hud.css';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';
@@ -93,6 +97,7 @@ const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
+const worldHud=createWorldHud({host:root.querySelector('#stage')});
 const heliUi=createHeliUi({host:root.querySelector('#stage'),app,onMenu:()=>refreshRaceSetup()});
 const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.
@@ -141,7 +146,7 @@ const routeMap=new RouteMap(ui['route-map'],{getDiscovery:()=>app.getHiddenRoadD
 let menuDiscoveryKey=null;
 const coursePreview=new CoursePreview(ui['menu-course-map'],ui['menu-elevation-profile']);
 const courseCardMaps=createCourseCardMaps({getSeed:index=>app.getMenuSeed(index)});
-if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();courseCardMaps.dispose();});
+if(import.meta.hot)import.meta.hot.dispose(()=>{uiDisposed=true;domEvents.abort();teamRoom.dispose();cardArt?.dispose();hiddenRoadUi.dispose();deepUi.dispose();sirenaHud.dispose();worldHud.dispose();heliUi.dispose();labUi.dispose();combatHud.dispose();app.dispose();readiness.dispose();routeMap.dispose();coursePreview.dispose();courseCardMaps.dispose();});
 const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textContent = v; };
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
@@ -253,6 +258,12 @@ root.addEventListener('click',e => {
     if(out?.setup==='race'){refreshRaceSetup();return;}
     lastScreen=null;renderState(app.duel.state);return;
   }
+  if(button.dataset.emberStep){const ok=app.everburnStep?.(button.dataset.emberStep);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
+  if(button.dataset.action==='ember-next-job'){
+    const job=app.duel.state.arena?.worldJob?.definition,index=job?.number;
+    const id=EMBER_JOBS[index];
+    if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;
+  }
   if (button.dataset.arenaVenue) {
     if (!(arenaMode === 'ambush-alley' && button.dataset.arenaVenue === 'pit' &&
       app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
@@ -324,8 +335,11 @@ root.addEventListener('click',e => {
       return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
+    case 'world-job-retry': {const number=app.duel.state.arena?.worldJob?.definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
-    case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
+    case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
+      finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;
+    } if(app.returnToYard())lastScreen=null; return;
     // WATER-SCREENS: the Story Wall holds the Water Road; opening it reads Hollis's note and V.'s notes so far.
     case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){app.openStory?.('water');openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
@@ -456,7 +470,7 @@ function renderState(s) {
     lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
-    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
+    const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;
     courseCardMaps.attach(ui['modal-layer']);
     const cardPictures=[...ui['modal-layer'].querySelectorAll('[data-card-view]')];
     if(cardPictures.length){
@@ -490,6 +504,7 @@ function renderState(s) {
   presentJumpHeight(jumpHeightReadout,s,app,ui,text);
   if(s.status!=='menu') updateHud(s);
   combatHud.update(s);
+  worldHud.update(s,app.duel,profile());
   const journeyView=hiddenRoadUiQa?.skipUpdate?lastHiddenRoadView:hiddenRoadUi.update(s,app.duel.course,yardActive);
   lastHiddenRoadView=journeyView;
   const deepView=deepUi.update(app.duel);sirenaHud.update(); // DEEP-SIRENA-VIEW

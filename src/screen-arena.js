@@ -3,6 +3,8 @@ import {arenaTeams} from './arena/arena-event.js';
 import {teamTotal} from './arena/warlord-event.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
+import {EMBER_CAPTIONS} from './story/ember-lines.js';
+import {EVERBURN_JOBS} from './world/jobs/everburn.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
 
@@ -20,6 +22,15 @@ export function arenaStyleLabel(participant) {
 export function arenaHud(state) {
   const arena = state?.arena;
   if (!arena) return null;
+  if (arena.mode === 'world-job') {
+    const worldJob = arena.worldJob;
+    const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+    return {worldJob: true, phase: arena.phase,
+      modeLabel: worldJob?.definition?.name ?? 'WORLD JOB',
+      timeLabel: 'TIME SPENT', remainingSec: Number.isFinite(state.stageTimeSec) ? state.stageTimeSec : 0,
+      place: 1, field: 1, placeText: '01', leaderText: 'JOB IN PROGRESS',
+      scoreText: step?.what ?? 'Keep going.', huntedBy: [], respawnSec: 0, rows: []};
+  }
   if (arena.mode === 'ambush-alley') {
     const alley = arena.ambushAlley;
     const living = (state.raids?.zones || []).flatMap(zone => zone.raiders)
@@ -201,6 +212,24 @@ const REASONS = Object.freeze({fuel: 'First to five deliveries.', 'three-wrecks'
 export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
   const arena = state.arena, result = arena?.result;
   if (!result) return null;
+  if (arena.mode === 'world-job') {
+    const definition = arena.worldJob?.definition ?? arena.worldJob?.job?.definition ?? arena.worldJob?.job;
+    const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
+    const won = result.winnerId === 'player';
+    const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
+    const next = won ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
+    const storyLine = lineId ? EMBER_CAPTIONS[lineId]?.text : null;
+    const description = won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
+      (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.');
+    const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
+    const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
+    return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description,
+      metrics: rewards + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
+      extra: '', actions: won ? (next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : action('BACK TO THE YARD', 'arena-yard', true)) +
+        action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu') :
+        action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
+  }
   if (arena.mode === 'ambush-alley') {
     const won = result.winnerId === 'player', waves = arena.ambushAlley.completedWaves;
     return {eyebrow: `AMBUSH ALLEY / ${won ? 'VICTORY' : 'FORT LOST'}`,

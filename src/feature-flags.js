@@ -59,6 +59,8 @@ export const FEATURE_STATES = Object.freeze({
   'kogane-invitation': 'on',
   // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.
   'water-road': 'on',
+  // Everburn story screens and Scablands jobs, still in development.
+  'story-everburn': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.
   'titan-bowl': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).

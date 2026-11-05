@@ -6,6 +6,7 @@ import {medalResultLines, earnedCarCards, medalProgressLine} from './earned-cars
 import {medalRowFor} from './medals.js';
 import {storyOn, storyResultMarkup} from './story/story-ui.js';
 import {waterResultLine} from './story/water-ui.js';
+import {emberResultLine} from './story/ember-ui.js';
 import {wantedPosterScreen} from './screen-card-wall.js';
 import {CARS, COURSE} from './config.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
@@ -186,7 +187,8 @@ function modalScreen(s) {
   const storyHtml=storyResultMarkup(r,{on:storyOn(app),carName:CARS[r.storyCar]?.name});
   // WATER-SCREENS: the Water Road's tick, on a won story job or a warlord's first defeat (only with its switch on).
   const waterLine=app._switches?.().enabled('water-road')===true?waterResultLine(s.arena?.result??r):'';
-  const waterHtml=waterLine?`<p class="result-bonuses water-road-tick" role="status"><i class="story-tick" aria-hidden="true"></i>${escapeHTML(waterLine)}</p>`:'';
+  const emberLine=app._switches?.().enabled('story-everburn')===true?emberResultLine(s.arena?.result??r):'';
+  const waterHtml=[waterLine,emberLine].filter(Boolean).map(line=>`<p class="result-bonuses water-road-tick" role="status"><i class="story-tick" aria-hidden="true"></i>${escapeHTML(line)}</p>`).join('');
   return `<section class="result-panel${r.grandPrix?' grand-prix-results':''}${earnedCards.length||medalLines.length||progressLine||storyHtml?' earned-car-results':''}" role="dialog" aria-modal="true" aria-labelledby="result-title"><p class="eyebrow"><i></i>${eyebrow}</p><h2 id="result-title">${title}</h2><p class="result-description">${description}</p>${r.grandPrix?medalHtml:''}${waterHtml}<div class="result-metrics${combatMetrics?' combat-result-summary':''}">${metrics}</div>${combatMetrics}${arenaExtra}${wantedPosterScreen(s,escapeHTML,{warlordCardsEnabled:app._switches?.().enabled('warlord-cards')===true,paint:app._racePaint})}${r.creditCharge?`<p class="result-bonuses">LOSS CHARGE −${credits(r.creditCharge)} CR</p>`:''}${r.policeFineCharge?`<p class="result-bonuses">POLICE FINE FROM RACE EARNINGS −${credits(r.policeFineCharge)} CR</p>`:''}${bonus?`<p class="result-bonuses">${bonus}</p>`:''}${repairs}${tunedLapHtml}${r.milestoneAwards?.length?`<p class="result-bonuses milestone-earned" role="status">${r.milestoneAwards.map(award=>`${escapeHTML(award.name).toUpperCase()} +${credits(award.reward)} CR`).join(" · ")}</p>`:''}${r.grandPrix?'':medalHtml}${storyHtml}${deepGarageNotice(app)}${grandPrixGhostNotice}${r.ghostRecorded?`<p class="result-bonuses ghost-saved" role="status">${app.ghostSaveStatus==='pending'?'SAVING BEST GHOST…':app.ghostSaved===false?'BEST GHOST SAVE FAILED · THIS SESSION ONLY. YOUR RACE RESULT IS SAFE.':'BEST GHOST SAVED'}</p>`:''}<div class="result-actions">${actions}</div>${s.paused && s.status === 'heli' ? `<p class="pause-help">${controlsHelp(app.duel).rows.map(([key, words]) => `${escapeHTML(key)}: ${escapeHTML(words)}`).join(' \u00b7 ')}</p>` : s.paused?'<p class="pause-help">ARROWS TO DRIVE · SPACE TO BOOST · C TO CHANGE CAMERA · H FOR ALL CONTROLS<br>Restarting or leaving forfeits unbanked race earnings. Saved credits are safe.</p>':''}</section>`;
 }
   return modalScreen;
