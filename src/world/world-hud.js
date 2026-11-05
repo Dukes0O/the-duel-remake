@@ -18,7 +18,7 @@ function nextFind(step, found) {
   return (step?.finds ?? []).find(item => !found.includes(item.id)) ?? null;
 }
 
-export function worldHudStep(step, {actors = [], inventory = [], found = []} = {}, places = SCABLANDS_PLACES) {
+export function worldHudStep(step, {actors = [], inventory = [], found = [], stepState = {}} = {}, places = SCABLANDS_PLACES) {
   if (!step) return {kind: null, line: 'Drive the Scablands', target: null};
   const actor = id => actors.find(item => item.id === id);
   let target = null, line;
@@ -44,16 +44,22 @@ export function worldHudStep(step, {actors = [], inventory = [], found = []} = {
       break;
     }
     case 'onfoot': {
-      target = step.places?.find(place => !found.includes(place.id)) ?? step.returnToCar;
-      line = target === step.returnToCar ? 'Return to your car' : `Walk to ${labelOf(target, places)}`;
+      target = step.places?.[stepState.index ?? 0] ?? step.returnToCar;
+      line = (stepState.index ?? 0) >= (step.places?.length ?? 0)
+        ? 'Return to your car' : `Walk to ${labelOf(target, places)}`;
       break;
     }
-    case 'heist':
-      target = inventory.includes(step.takeId) ? step.escapePlace : step.zone;
-      line = inventory.includes(step.takeId) ? `Carry ${labelOf({id: step.takeId}, places)} to your car` : `Take ${labelOf({id: step.takeId}, places)}`;
+    case 'heist': {
+      const phase = stepState.phase ?? 'infiltrate';
+      target = phase === 'return' ? step.carPlace : phase === 'escape' ? step.escapePlace : step.zone;
+      line = phase === 'return' ? `Carry ${labelOf({id: step.takeId}, places)} to your car`
+        : phase === 'escape' ? `Drive to ${labelOf(step.escapePlace, places)}` : `Take ${labelOf({id: step.takeId}, places)}`;
       break;
+    }
     case 'rescue': {
-      const person = step.people?.find(item => !inventory.includes(item.id));
+      const count = stepState.rescued ?? 0;
+      const needed = Math.min(step.people?.length ?? 0, step.seats ?? 2);
+      const person = count < needed ? step.people?.[count] : null;
       target = person ?? step.home;
       line = person ? `Rescue ${labelOf(person, places)}` : `Bring everyone to ${labelOf(step.home, places)}`;
       break;
@@ -63,7 +69,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = []} = {
       line = `Defend ${labelOf(target, places)}`;
       break;
     case 'explore': {
-      const find = nextFind(step, found);
+      const find = step.finds?.[stepState.index ?? 0] ?? nextFind(step, found);
       target = find;
       line = find ? `Find ${labelOf(find, places)}` : 'Explore the Scablands';
       break;
@@ -75,9 +81,10 @@ export function worldHudStep(step, {actors = [], inventory = [], found = []} = {
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
 
-export function worldHudModel({worldJob, player = null, heading = 0, found = [], places = SCABLANDS_PLACES} = {}) {
+export function worldHudModel({worldJob, player = null, found = [], places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
-  const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory, found}, places);
+  const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
+    found, stepState: job?.stepState}, places);
   const position = markerOf(player, places);
   const target = next.target;
   const dx = target && position ? target.x - position.x : 0;
@@ -86,9 +93,12 @@ export function worldHudModel({worldJob, player = null, heading = 0, found = [],
   const finds = [...(worldJob?.definition?.finds ?? []), ...(job?.steps ?? []).flatMap(item => item.finds ?? [])];
   return {
     line: next.line, kind: next.kind, target, bearing,
-    arrow: bearing === null ? null : (bearing - (Number.isFinite(heading) ? heading * 180 / Math.PI : 0) + 360) % 360,
+    arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
-    finds: finds.map(item => ({...markerOf(item, places), found: found.includes(item.id)})).filter(Boolean),
+    finds: finds.map(item => {
+      const marker = markerOf(item, places);
+      return marker ? {...marker, found: found.includes(item.id)} : null;
+    }).filter(Boolean),
     player: position,
   };
 }
@@ -162,10 +172,8 @@ export function createWorldHud({host}) {
       root.hidden = !active;
       if (!active) { setMapOpen(false); return; }
       const actor = state.onFoot && state.fighter ? state.fighter : state;
-      const frame = duel.course?.at?.(actor.s) ?? {};
       const point = duel.course?.worldAt?.(actor.s, actor.lateral);
-      const heading = (frame.heading ?? 0) + (actor.headingError ?? 0) + (actor.slipAngle ?? 0);
-      const model = worldHudModel({worldJob: state.arena.worldJob, player: point, heading,
+      const model = worldHudModel({worldJob: state.arena.worldJob, player: point,
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;

@@ -24,21 +24,24 @@ for (const [step, line, expectedTarget] of cases) {
   const point = expectedTarget.position ?? expectedTarget;
   const bearing = (Math.atan2(point.x, point.z) * 180 / Math.PI + 360) % 360;
   const model = worldHudModel({worldJob: {definition: {}, actors, inventory: [],
-    job: {steps: [step], stepIndex: 0}}, player: {x: 0, z: 0}, heading: 0, places: [target]});
+    job: {steps: [step], stepIndex: 0}}, player: {x: 0, z: 0}, places: [target]});
   assert.equal(model.bearing, bearing, `${step.kind} compass bearing`);
   assert.equal(model.arrow, bearing, `${step.kind} compass arrow`);
 }
 
-assert.equal(worldHudStep(cases[5][0], {inventory: ['valve-key']}, [target]).line, 'Carry valve key to your car', 'heist changes from taking the key to escaping');
+assert.equal(worldHudStep(cases[5][0], {stepState: {phase: 'return'}}, [target]).line, 'Carry valve key to your car', 'heist changes from taking the key to returning to the car');
+assert.equal(worldHudStep(cases[5][0], {stepState: {phase: 'escape'}}, [target]).line, 'Drive to car', 'heist points to its escape goal after reaching the car');
+assert.equal(worldHudStep(cases[4][0], {stepState: {index: 1}}, [target]).line, 'Return to your car', 'on-foot steps move to the car after the last marked place');
+assert.equal(worldHudStep(cases[6][0], {stepState: {rescued: 1}}, [target]).line, 'Bring everyone to Tin Town', 'rescue points home after collecting the required passengers');
 assert.equal(worldHudStep(cases[7][0], {found: ['tin-town']}, [target]).line, 'Defend Tin Town', 'defence line does not change when location is found');
-const explore = worldHudStep(cases[8][0], {found: ['flag']}, [target]);
+const explore = worldHudStep(cases[8][0], {found: ['flag'], stepState: {index: 1}}, [target]);
 assert.equal(explore.line, 'Explore the Scablands', 'exploration names its completed state');
 assert.equal(explore.target, null);
 
 const job = {definition: {finds: [place('crate', 0, 10, 'Old crate')]}, actors, inventory: [],
   job: {steps: [{kind: 'reach', place: target}], stepIndex: 0}};
 const before = JSON.stringify(job);
-const model = worldHudModel({worldJob: job, player: {x: 0, z: 0}, heading: 0,
+const model = worldHudModel({worldJob: job, player: {x: 0, z: 0},
   found: ['crate'], places: [target]});
 assert.equal(model.line, 'Drive to Tin Town');
 assert.equal(model.bearing, 90);
