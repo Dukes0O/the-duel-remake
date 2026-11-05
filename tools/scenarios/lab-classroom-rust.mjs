@@ -48,8 +48,8 @@ export async function run(c) {
   await next('watch');
   // Three days: Space at 7 days says to turn the dial; 3 days, a wrong guess says why.
   await at('try-days'); await shot('try-days'); await press('Space'); await saying('press ↓ until the dial reads 3', 'the wrong day says why');
-  await press('ArrowDown', 4); await prompt('3 days', 'the dial reads 3'); await summing('12% a day × 3 days = 36%', 'the sum follows the dial'); await press('Space'); await at('try-days', 's.cards === 3'); await wait(300); await shot('try-days-guess');
-  await press('Digit1'); await at('try-days', 's.ready'); await saying('salt water rusts the nail at 12% a day', 'a wrong guess says why'); await shot('try-days-done');
+  await press('ArrowDown', 4); await prompt('3 days', 'the dial reads 3'); await summing('12% a day × 3 days = ?', 'the sum follows the dial and waits for the answer'); await press('Space'); await at('try-days', 's.cards === 3'); await wait(300); await shot('try-days-guess');
+  await press('Digit1'); await at('try-days', 's.ready'); await saying('salt water rusts the nail at 12% a day', 'a wrong guess says why'); await summing('12% a day × 3 days = 36%', 'the sum shows its answer after the run'); await shot('try-days-done');
   await next('try-days');
   // The zinc: guess never (wrong), run on to day 25.
   await at('try-zinc', 's.cards === 3'); await wait(300); await shot('try-zinc-guess'); await press('Digit3');

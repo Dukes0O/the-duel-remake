@@ -59,6 +59,7 @@ export function targetPoint(view, action) {
   if (action === 'set:best' && view.best) {
     if (view.dial && !view.dial.locked && view.dial.days !== view.best.days) return view.dial.days < view.best.days ? DIAL.up : DIAL.down;
     if (view.switch && !view.switch.locked && view.switch.coat !== view.best.coat) return SWITCH[view.best.coat];
+    if (view.jarPick && !view.jarPick.locked && view.best.jar && view.jarPick.jar !== view.best.jar) return JAR_AT[view.best.jar];
   }
   if (action === 'days:up') return DIAL.up;
   if (action === 'days:down') return DIAL.down;
@@ -200,7 +201,8 @@ function chart(ctx, view) {
   for (let d = 0; d <= MAX_DAYS; d++) text(ctx, String(d), px(d), bottom + 12, {size: 12, colour: MUTED});
   text(ctx, 'days', right + 10, bottom + 12, {size: 12, align: 'left', colour: MUTED});
   const upTo = view.dial?.days ?? MAX_DAYS, running = view.dayTo != null, now = running ? Math.min(view.day, MAX_DAYS) : upTo, labels = [];
-  for (const row of view.shelf) {
+  // While the player works out a sum, the graph does not draw its answer.
+  for (const row of view.noPreview && !running ? [] : view.shelf) {
     const at = d => py(rustAfter(row.jar, row.coat, d).rust), colour = LINE[row.jar];
     ctx.strokeStyle = colour; ctx.lineWidth = 1.5; ctx.globalAlpha = .55; ctx.setLineDash([4, 5]);
     ctx.beginPath(); ctx.moveTo(px(0), at(0)); ctx.lineTo(px(upTo), at(upTo)); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
@@ -240,7 +242,7 @@ function closeRust(ctx, view) {
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   text(ctx, 'HOW RUST FORMS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: MUTED, weight: 800});
   const left = 70, width = 450, surface = 500, floor = 600, wet = view.shelf.find(r => r.jar === 'fresh'), dry = view.shelf.find(r => r.jar === 'dry'), rust = wet?.rust ?? 0;
-  text(ctx, 'white dots: oxygen from the air', left + width / 2, 418, {size: 16});
+  text(ctx, 'The white dots are oxygen from the air.', left + width / 2, 418, {size: 16});
   ctx.fillStyle = WATER; ctx.fillRect(left, surface, width, floor - surface);
   ctx.strokeStyle = 'rgba(210,225,232,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(left, surface); ctx.lineTo(left + width, surface); ctx.stroke();
   text(ctx, 'water', left + 38, surface + 16, {size: 15});
@@ -315,10 +317,10 @@ function closeCoat(ctx, view) {
       ctx.restore();
     }
     text(ctx, 'zinc coat', cx + 170, cy - 96, {size: 15});
-    text(ctx, 'blue arrows: electrons', cx + 158, cy + 112, {size: 14});
+    text(ctx, 'The blue arrows are electrons.', cx + 158, cy + 112, {size: 14});
   }
-  text(ctx, `Coat left: ${pct(row?.shownLeft ?? left)}`, 760, 444, {size: 28, colour: ZINC, weight: 800});
-  text(ctx, `Steel rusted: ${pct(row?.shown ?? rust)}`, 760, 490, {size: 24, colour: rust > RUST_OK ? BRIGHT_RUST : GREEN, weight: 800});
+  text(ctx, `Coat left ${pct(row?.shownLeft ?? left)}`, 760, 444, {size: 28, colour: ZINC, weight: 800});
+  text(ctx, `Steel rusted ${pct(row?.shown ?? rust)}`, 760, 490, {size: 24, colour: rust > RUST_OK ? BRIGHT_RUST : GREEN, weight: 800});
   wrap(ctx, left > 0 ? 'The zinc corrodes first, and its electrons flow into the steel, which protects the iron from rusting.' : 'The coat has gone, so nothing protects the steel, and now the steel rusts.', 760, 540, 340, {size: 17, weight: 600});
 }
 // The Sirena when it was raised: a car on the sea floor's sand, crusted orange.

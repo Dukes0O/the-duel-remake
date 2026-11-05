@@ -227,10 +227,12 @@ test('the sums: the day dial, the protection switch and the jar change the worke
   const job = createClassroomSession(lesson);
   playThroughTo(job, 'alone');
   assert.equal(worked(job)[0], '12% a day × 7 days = 84%');
+  assert.equal(worked(job).at(-1), undefined, 'the verdict waits for the run, because it is the choice the job asks for');
+  runWeek(job);
   assert.match(worked(job).at(-1), /^84% is more than 10%, so this is not clean/);
   job.act('coat:zinc');
   assert.deepEqual(worked(job).slice(0, 2), ['100% − 5% a day × 7 days = 65%', '7 days is no more than 20 days, so the rust is 0%.'], 'the switch changes the sums at once');
-  assert.match(worked(job).at(-1), /^0% is not more than 10%, so this is clean/);
+  assert.equal(worked(job).at(-1), undefined);
 
   // Whatever the settings, a sum shown is a sum a calculator gives, and it agrees with the bench.
   const free = createClassroomSession(lesson);
@@ -279,13 +281,113 @@ test('the free test: only different settings count, three open Continue, and the
   // A long test on the top of the dial, and rust that cannot pass 100%.
   free.act('coat:bare'); free.act('jar:salt'); setDays(free, FREE_MAX_DAYS); free.act('days:up');
   assert.equal(free.view().dial.days, FREE_MAX_DAYS);
-  free.act('go'); run(free, 5.5);
+  free.act('go');
+  assert.equal(free.view().ready, false, 'a line said during a run is not kept on the page as the result');
+  run(free, 5.5);
   assert.match(free.view().brian.text, /^After 30 days in salt water, the bare nail has 100% rust\. The nail has rusted all the way through, so the rust stops at 100%/);
   assert.match(free.view().formulas[0].worked, /= 360%, which stops at 100%/);
   // The mouse reaches the jar buttons, and hovering names them.
   const v = free.view();
   for (const jar of ['dry', 'fresh', 'salt']) assert.equal(hitTest(v, ...targetPoint(v, `jar:${jar}`))?.action, `jar:${jar}`);
   assert.ok(hoverInfo(v, ...targetPoint(v, 'jar:dry')));
+});
+
+test('the panel gives nothing away while a question is open, and shows no stale days', () => {
+  const said = session => JSON.stringify(session.view().formulas);
+  // The word step and the watch come before the question about how long the coat lasts.
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-zinc');
+  assert.doesNotMatch(said(session), /\b20\b/);
+  session.act('go'); until(session, x => x.ready);
+  assert.doesNotMatch(said(session), /\b20\b/);
+  session.act('next'); until(session, x => x.ready);
+  assert.equal(session.view().step.id, 'watch');
+  assert.doesNotMatch(said(session), /\b20\b/);
+  session.act('next');
+  // Three days: the sum follows the dial and waits for its answer until the run.
+  assert.equal(session.view().formulas[0].worked, '12% a day × 7 days = ?');
+  setDays(session, 3);
+  assert.equal(session.view().formulas[0].worked, '12% a day × 3 days = ?');
+  assert.doesNotMatch(said(session), /36%/);
+  assert.equal(session.view().noPreview, true, 'the graph does not draw the answer');
+  session.act('go');
+  assert.equal(session.view().cards.length, 3);
+  assert.doesNotMatch(said(session), /36%/);
+  session.act('answer:1'); until(session, x => x.ready);
+  assert.equal(session.view().formulas[0].worked, '12% a day × 3 days = 36%');
+  session.act('next');
+  // How long the coat lasts: the question is about a week, whatever the dial last read.
+  assert.equal(session.view().step.id, 'try-zinc');
+  assert.equal(session.view().formulas[0].worked, '100% − 5% a day × 7 days = 65%');
+  assert.doesNotMatch(said(session), /\b20\b/);
+  session.act('answer:0');
+  assert.doesNotMatch(said(session), /\b20\b/);
+  session.act('go'); until(session, x => x.ready);
+  assert.equal(session.view().formulas[1].worked, '12% a day × (25 − 20) days = 60%');
+});
+
+test('question 1 gives its rates in a sentence', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'check-five');
+  assert.equal(session.view().formulas[0].worked, 'The rate is 2% a day in fresh water and 12% a day in salt water.');
+});
+
+test('the hint and the note say which way to turn the dial from every setting', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-days');
+  for (let days = 1; days <= 7; days++) {
+    setDays(session, days);
+    const hint = session.view().hints[1];
+    if (days === 3) { assert.match(hint, /^The dial reads 3, so press Space/); continue; }
+    assert.match(hint, days < 3 ? /^Press ↑ until the dial reads 3/ : /^Press ↓ until the dial reads 3/);
+    session.act('go');
+    assert.match(session.view().brian.text, days < 3 ? /so press ↑ until the dial reads 3/ : /so press ↓ until the dial reads 3/);
+  }
+});
+
+test('Show me alone finishes the free test: each press tries a different setting, reaches three, and says what it will test', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  const seenSettings = new Set();
+  for (let round = 1; round <= FREE_TRIES; round++) {
+    assert.equal(session.view().ready, false, `not ready before round ${round}`);
+    for (let rung = 1; rung <= 3; rung++) session.act('help');
+    const v = session.view();
+    assert.ok(v.pointer, `round ${round}: Brian points`);
+    assert.ok(targetPoint(v, v.pointer.action), `round ${round}: at a place on the board`);
+    run(session, SHOW_ME_S + .1);
+    if (round > 1) assert.match(session.view().brian.text, /^That is how it is done\. I will test /);
+    until(session, x => x.rows.length === round && x.keys.Space === 'go', 30);
+    const row = session.view().rows.at(-1);
+    seenSettings.add(`${row.label}/${row.days}`);
+    assert.equal(seenSettings.size, round, `round ${round} tried a different setting`);
+    assert.match(session.view().prompt, round < FREE_TRIES ? new RegExp(`tested so far: ${round} of 3`) : /Press Enter to continue/);
+  }
+  assert.equal(session.view().ready, true, 'three rounds of Show me open Continue');
+  // From any setting already tested, by jar alone too, Show me still moves on.
+  for (let round = 0; round < 3; round++) {
+    for (let rung = 1; rung <= 3; rung++) session.act('help');
+    run(session, SHOW_ME_S + .1);
+    until(session, x => x.rows.at(-1) && !x.running && x.keys.Space === 'go', 30);
+  }
+  assert.equal(new Set(session.view().rows.map(r => `${r.label}/${r.days}`)).size, 6, 'the last six runs are six different settings');
+});
+
+test('a revisit to the three days keeps one set of words on the page while the dial turns', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-zinc');
+  session.act('back');
+  assert.equal(session.view().step.id, 'try-days');
+  const before = session.view(), row = before.page.at(-1), result = row.result;
+  assert.equal(before.brian.text, row.setup);
+  for (const action of ['days:down', 'days:down', 'days:up']) {
+    session.act(action);
+    const v = session.view();
+    assert.equal(v.say, before.say, 'the words do not change with the dial');
+    assert.deepEqual([v.page.at(-1).setup, v.page.at(-1).result], [row.setup, result], 'and the page keeps what it had');
+  }
+  assert.match(session.view().prompt, /The dial reads 6 days/, 'the prompt carries the live number');
+  assert.equal(session.view().formulas[0].worked, '12% a day × 6 days = ?', 'and so does the panel');
 });
 
 test('the board draws every step and card', () => {
