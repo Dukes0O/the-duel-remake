@@ -26,3 +26,14 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-BONEYARD.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: not yet, go to round 2, with a new sheet.** "Yard quarter" looks straight down with the ground as a tilted slab; "Open hull" has empty space under the ground.
+- The body is a square box. Make it a round tube, with ribs showing at the torn open end.
+- Wings are flat slabs with square tips: taper them, break the ends, let flaps hang. Keep the low wing jump shapes and the 5.1 m clear width.
+- The tail is a stick with a box on it: make a swept fin, the landmark seen from far off. Engines are good, keep them.
+- Airliners are aluminium, so they do not rust orange all over: faded white paint, grey metal, soot, with rust only on steel parts.
+- Show the drive-through from inside at car height. Add a proper field of scrap, with larger pieces.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
