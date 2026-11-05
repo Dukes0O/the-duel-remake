@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {join, relative} from 'node:path';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
+const tarExecutable=process.platform==='win32'?'C:\\Windows\\System32\\tar.exe':'tar';
 const before='5092a01865887432ce609be0eed942f60605a2ba';
 const fix='977efad9fc720329243b40c1557859b5b433eea3';
 const api=await import('./drive-through.mjs').catch(()=>null);
@@ -33,7 +34,7 @@ async function historical(run){
       'tools/track-script-drive.mjs','tools/blender/gunn-turret.json','public/assets/models/circuits/kits/manifest.json'],
       {cwd:root,encoding:'utf8',windowsHide:true});
     assert.equal(call.status,0,call.stderr);
-    const unpack=spawnSync('tar',['-xf',archive,'-C',directory],{encoding:'utf8',windowsHide:true});
+    const unpack=spawnSync(tarExecutable,['-xf',archive,'-C',directory],{encoding:'utf8',windowsHide:true});
     assert.equal(unpack.status,0,unpack.stderr);
     const dependencies=await realpath(join(root,'node_modules'));
     await symlink(dependencies,join(directory,'node_modules'),'junction');linked=true;

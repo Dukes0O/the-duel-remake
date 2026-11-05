@@ -340,8 +340,8 @@ root.addEventListener('click',e => {
     case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
       finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
-    // WATER-SCREENS: the Story Wall holds the Water Road; opening it reads Hollis's note and V.'s notes so far.
-    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){app.openStory?.('water');openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
+    // Opening a presentation screen must not mark story notes read or save a profile.
+    case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
     case 'wasteland-visit': if(app.duel.state.status!=='menu'||!hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu)return;armoryOpen=coursesOpen=garageOpen=playersOpen=leaderboardOpen=false;app.visitWasteland();lastScreen=null;break;
