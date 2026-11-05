@@ -2,6 +2,20 @@
 
 ## Changed
 
+- **Completion design decisions (5 November 2026):** forward successful real
+  weapon contacts from the existing projectile and flamethrower paths into
+  `worldJobThingsHit`, without changing damage or combat outcomes. Deliver
+  those hits to the job engine on the next fixed step and clear them after
+  consumption.
+- Restore the run's original loadout on every arena result and before the
+  app discards a world-job arena on return to menu, including a return while
+  paused. Verify the profile bytes written by the normal save path after each
+  exit.
+- Render the job's simulation actors using the renderer's existing vehicle
+  asset and arena actor transform path. WW-ART-VEHICLES replaces the thief,
+  Big Bess and furnace vehicle stand-ins; WW-ART-KIT replaces props; and
+  WW-ART-FOLK replaces raider/townsfolk stand-ins.
+
 - Added the `world-job` arena mode and its headless job runner. It steps the shared job engine, sends wave requests through raiders, sends follow requests to the arena pilot, and shows caption lines through callouts.
 - Allowed the player to step out and back in during a world job.
 - Added per-run weapon lending. A job loan is added to the active arena loadout and does not change the saved loadout.
