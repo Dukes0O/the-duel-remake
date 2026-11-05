@@ -1,4 +1,5 @@
 import './systems/index.js';
+import './town-ground.js';
 export {BUILDINGS, GOODS, buildingById, goodById, validateTownContent} from './content/registry.js';
 export {createTown, serializeTown, deserializeTown} from './town-state.js';
 export {TOWN_MIGRATIONS, TOWN_SAVE_VERSION, migrateTownData} from './town-migrate.js';
@@ -7,4 +8,5 @@ export {dispatchTownCommand, registerTownCommand, townBuildingCatalog, TOWN_WORK
 export {stepTown, registerTownSystem, registeredTownSystems} from './town-sim.js';
 export {createWorkOrder, createBuildingWorkOrder, createRouteWorkOrder, advanceWork, workOrderScaffold, prioritizeWorkOrders, workStageMinutes} from './town-work.js';
 export {TOWN_MONEY_PRICES, townLedger} from './town-money.js';
+export {groundWaterAt} from './town-ground.js';
 export {SCABLANDS_TOWN_REGION, TOWN_REGIONS, cellIsReserved, getTownChunk, TOWN_CELL_METRES, TOWN_CHUNK_CELLS} from './town-world-data.js';
