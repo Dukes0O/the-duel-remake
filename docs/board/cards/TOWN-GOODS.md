@@ -1,0 +1,13 @@
+# TOWN-GOODS
+
+The short board entry controls current state, ownership, dependencies and locks.
+
+`src/town/town-goods.js`, `town-haulers.js`, `src/town/content/goods.js`, `content/recipes.js`, registered. Section 11: stockpiles and warehouses by cell, goods with real weights, recipes in staffed buildings (salvage sorted, forge to steel, tin and pipe, kiln, sawmill, kitchen). Handcarts and trucks as real agents on the road graph: capacity in kg, speed by road and vehicle, fuel. Prices move with stock. A salvage gang walks to the Boneyard and back. Nothing moves by magic. `tools/test-town-goods.mjs`: a far site takes longer to supply than a near one; a truck out of fuel stops and says so; 200 agents on a 10,000 person town stay within the target.
+
+Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-long-dry.md](../../story/the-long-dry.md). Read sections 2, 3, 10, 11 and the checks in section 15 first. **This game is for years of play and years of building (Kyle, 5 November): no fixed limits on people, buildings, map size or years; content lives in data under `src/town/content/`; a town saved today must load in every later build.** A pure sim file imports no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. If something the card needs is missing, write your choice on this card under "Codex decided (Claude to review)" and carry on, unless it touches saves, or a released course or replay, in which case stop and say so. Real numbers wherever a real number exists, and note the source of any you add. Every player-facing word is plain, in whole sentences, with no em dashes. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list what Claude should look at. No Chrome under `codex exec`. Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+## Codex decided (Claude to review)
+
+The design names road and vehicle speed, carrying capacity, fuel use and good prices, but does not set starting values. I used initial simulation values: dirt, plank and paved roads at 15, 25 and 40 km/h; handcarts at 150 kg; trucks at 4,000 kg and 0.25 L/km. These are tuning values, not claims about a specific real vehicle. The starter prices are economy values and move with town stock. Goods use kilograms, except fuel and liquids sold by litre; automotive diesel uses 0.8359 kg/L at 15 C, from Measurement Canada's standard density table. Claude can tune these values after the feature is connected to the town simulation.

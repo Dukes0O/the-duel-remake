@@ -4,10 +4,15 @@
 // always keys off when the caption ends, when the player leaves the screen,
 // pauses or mutes. Sound and words only: nothing here changes a race or a flight.
 import {captionReadMs, captionText, storySequence} from './story-lines.js';
+import {townCaptionText} from '../town/content/lines.js';
 
 // How long the radio stays keyed for a caption: a short transmission, never
 // longer than the caption itself. The words stay on screen for the reading time.
 export const STORY_RADIO_HOLD_MS = 1200;
+
+function radioText(id) {
+  return captionText(id) ?? townCaptionText(id);
+}
 
 // Settings (all supplied by the game, so tests need no browser):
 //   getChain()  the radio chain (createRadioChain) or null when audio has not started
@@ -34,9 +39,10 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
     hide(id);
   }
   function startNext() {
-    const id = queue.shift();
-    if (id === undefined || disposed) return;
-    const text = captionText(id);
+    const item = queue.shift();
+    if (item === undefined || disposed) return;
+    const id = typeof item === 'string' ? item : item.id;
+    const text = typeof item === 'string' ? radioText(id) : item.text;
     if (text === null) { startNext(); return; }
     const readMs = captionReadMs(text);
     const chain = isMuted() ? null : getChain();
@@ -48,15 +54,22 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
 
   // Play one caption now; it replaces whatever is playing. The letter is never spoken.
   function say(id) {
-    if (disposed || captionText(id) === null) return false;
+    if (disposed || radioText(id) === null) return false;
     finish();
     queue = [id];
     startNext();
     return true;
   }
+  function sayTownLine(id, town) {
+    if (disposed || radioText(id) === null) return false;
+    finish();
+    queue = [{id, text:townCaptionText(id, town)}];
+    startNext();
+    return true;
+  }
   // Play several in order, each straight after the last one ends.
   function sayInOrder(ids) {
-    if (disposed || !ids.length || ids.some(id => captionText(id) === null)) return false;
+    if (disposed || !ids.length || ids.some(id => radioText(id) === null)) return false;
     finish();
     queue = [...ids];
     startNext();
@@ -80,6 +93,6 @@ export function createStoryRadio({getChain = () => null, show = () => {}, hide =
     stop();
     disposed = true;
   }
-  return {say, sayInOrder, saySequence, sayAna: () => saySequence('kogane', 'ana'), stop, leave, pause, mute, dispose,
+  return {say, sayTownLine, sayInOrder, saySequence, sayAna: () => saySequence('kogane', 'ana'), stop, leave, pause, mute, dispose,
     get playing() { return current ? current.id : null; }, get keyed() { return !!current?.chain; }};
 }

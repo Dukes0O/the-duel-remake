@@ -26,3 +26,7 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-MULE.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**5 November: the train has changed, from the next round on.** The story now makes the Mule Mrs Vane's secret water train (`docs/story/iron-mule.md`), not a scrap train. Keep the rails and bridge span, but the train is: a cab; **two tank wagons** with walkable roofs (named roof plates `tank-wagon-1`, `tank-wagon-2`); a guard wagon; and one old **box wagon with a barred door** for the prisoners. Couplings are named parts, and `cab-coupling` is the one you blow. It was once painted company white and is now filthy, dents and rust through the white, no lights on it at all, and a slow drip of water from under the tanks. It still has to look heavy and mean from car height. Rounds used so far still count toward the cap of three. The station is no longer needed here: `rail-halt` is on TOWN-ART-OUTPOSTS.
