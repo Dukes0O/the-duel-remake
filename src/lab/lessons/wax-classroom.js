@@ -84,7 +84,7 @@ export function sumOf(friction) {
 const A3 = value => value.toFixed(3);
 const FRICTION_NOTE = `In this game, a wax that suits the snow has ${FRICTION.right}, no wax has ${FRICTION.none}, and a wax that does not suit the snow has ${FRICTION.wrong}. A smaller number leaves more acceleration.`;
 const pullFormula = teach => ({title: 'How much gravity pulls the ski along the slope', formula: 'pull = g × sin(slope)', worked: `${G} × ${SIN_SHOWN} = ${A3(PULL)} m/s^2`,
-  ...(teach ? {note: `g is the acceleration caused by gravity, ${G} m/s^2 in the ski rules. sin ${SLOPE}° is ${SIN_SHOWN}, the share of gravity that acts along the slope.`} : {})});
+  ...(teach ? {note: `g is the acceleration caused by gravity. sin, short for sine, turns an angle into a share, and sin ${SLOPE}° is ${SIN_SHOWN}.`} : {})});
 const TIME_NOTE = '√ means the square root, the number that gives the number inside when it is multiplied by itself.';
 // Every sum for one wax on one snow. The Friction step explains g, sin and cos, and later steps leave those notes out, so the time stays in view.
 function sums(wax, snow, teach = false) {
@@ -92,7 +92,7 @@ function sums(wax, snow, teach = false) {
   return [
     {title: `The friction number with ${what} on ${snowName(snow)}`, formula: `friction = ${s.friction}`, note: FRICTION_NOTE},
     pullFormula(teach),
-    {title: 'How much friction slows the ski', formula: 'slowing = friction × g × cos(slope)', worked: `${s.friction} × ${G} × ${COS_SHOWN} = ${A3(s.slowing)} m/s^2`, ...(teach ? {note: `cos ${SLOPE}° is ${COS_SHOWN}, the share of the ski’s weight that presses into the snow.`} : {})},
+    {title: 'How much friction slows the ski', formula: 'slowing = friction × g × cos(slope)', worked: `${s.friction} × ${G} × ${COS_SHOWN} = ${A3(s.slowing)} m/s^2`, ...(teach ? {note: `cos, short for cosine, also turns an angle into a share. That share of the ski’s weight presses into the snow.`} : {})},
     {title: 'The acceleration that is left', formula: 'acceleration = pull − slowing', worked: `${A3(s.pull)} − ${A3(s.slowing)} = ${A3(s.acceleration)} m/s^2`},
     {title: 'The time down the strip', formula: 'time = √(2 × distance ÷ acceleration)', worked: `√(2 × ${STRIP_M} ÷ ${A3(s.acceleration)}) = ${s2(s.seconds)}`},
   ];
@@ -112,8 +112,10 @@ const threeTimes = () => [['A wax that suits the snow', FRICTION.right], ['No wa
 });
 // The first word step's sum: the gap between two times on the dry powder of the race.
 function gapFormula(pick) {
-  const hard = sumOf(FRICTION.right).seconds, other = sumOf(frictionOf(pick ?? 'soft', 'powder')).seconds;
-  return [{title: pick ? `${WAX_NAMES[pick]} wax against hard wax on dry powder` : 'The gap in the race you watched', formula: 'gap = other time − hard wax time', worked: `${s2(other)} − ${s2(hard)} = ${s2(other - hard)}`,
+  // Hard wax is compared with the soft wax it raced, because a time against itself would show nothing.
+  const faster = sumOf(FRICTION.right).seconds, slower = sumOf(frictionOf(pick && pick !== 'hard' ? pick : 'soft', 'powder')).seconds;
+  const title = !pick ? 'The gap in the race you watched' : pick === 'hard' ? 'Hard wax against soft wax on dry powder' : `${WAX_NAMES[pick]} wax against hard wax on dry powder`;
+  return [{title, formula: 'gap = slower time − faster time', worked: `${s2(slower)} − ${s2(faster)} = ${s2(slower - faster)}`,
     note: 'The stopwatches show one decimal place, and the sums use two.'}];
 }
 // The glide step's sums, at the whole seconds gone so far.
@@ -457,7 +459,7 @@ export function createModel() {
         ...(ready ? {keys: {Space: 'go'}, buttons: [{action: 'go', label: 'Release', key: 'Space'}], waiting: true, target: 'go', glow: 'ski'} : {}),
         actions: m.phase === 'done' ? ['replay'] : [],
         say: m.phase === 'done' ? m.say : m.phase === 'running' ? 'Watch the ski and the stopwatch, which runs at real speed.'
-          : `Glide is how smoothly a ski slides over the snow, and we measure the glide by timing the ski down the test strip. The ski starts at rest. Gravity, which is the pull of the Earth, pulls the ski down the slope of ${SLOPE} degrees, so the ski moves faster and faster. We give speed in metres per second, written m/s, which is the number of metres travelled during each second. The game’s own screens show kilometres per hour, written km/h. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, and we give acceleration in metres per second, per second, written m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
+          : `Glide is how smoothly a ski slides over the snow, and the stopwatch times the ski down the strip. The ski starts at rest. Gravity, the pull of the Earth, makes the ski move faster and faster down the slope. The slope is ${SLOPE} degrees, and this kind of degree measures an angle, not a temperature. Level ground is 0 degrees and straight up is 90 degrees. We give speed in metres per second, written m/s, the metres travelled during each second. The game’s own screens show kilometres per hour, written km/h. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. How quickly the speed grows is called acceleration, and we give acceleration in metres per second, per second, written m/s². An acceleration of 1 m/s² adds 1 m/s to the speed during every second.`,
         prompt: ready ? 'Press Space to release the ski.' : m.phase === 'running' ? 'Watch the stopwatch.' : 'Press Enter to continue, or press R to watch again.',
         hints: ready ? ['The ski waits at the top of the strip.', 'Press Space, or click the ski.', 'Watch my pointer. I will release the ski.'] : m.phase === 'running' ? ['Watch the ski.', 'Watch the stopwatch.', 'Wait a moment.'] : DONE_REPLAY};
     }

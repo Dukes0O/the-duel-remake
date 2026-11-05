@@ -333,7 +333,8 @@ test('the formulas follow every press of a control', () => {
   playThroughTo(wax, 'word-wax');
   assert.equal(wax.view().formulas[0].worked, '9.43 s − 8.88 s = 0.55 s');
   wax.act(key('hard'));
-  assert.equal(wax.view().formulas[0].worked, '8.88 s − 8.88 s = 0.00 s');
+  assert.equal(wax.view().formulas[0].worked, '9.43 s − 8.88 s = 0.55 s', 'hard wax is compared with the soft wax it raced, not with itself');
+  assert.equal(wax.view().formulas[0].title, 'Hard wax against soft wax on dry powder');
   const friction = createClassroomSession(lesson);
   playThroughTo(friction, 'word-friction');
   assert.equal(friction.view().formulas[2].worked, '0.05 × 9.81 × 0.98481 = 0.483 m/s^2');
@@ -512,6 +513,10 @@ test('every word is defined before it is used, in whole sentences, with one meas
   const opening = id => { const s = createClassroomSession(lesson); playThroughTo(s, id); return s.view().say; };
   assert.match(opening('wonder'), /read as “minus 15 degrees Celsius”\. Water freezes at 0 °C/);
   assert.match(opening('word-glide'), /metres per second, written m\/s/);
+  assert.match(opening('word-glide'), /this kind of degree measures an angle, not a temperature\. Level ground is 0 degrees and straight up is 90 degrees/);
+  { const s = createClassroomSession(lesson); playThroughTo(s, 'word-friction'); const notes = s.view().formulas.map(f => f.note).join(' '); assert.match(notes, /sin, short for sine, turns an angle into a share/); assert.match(notes, /cos, short for cosine, also turns an angle into a share/); }
+  // The slope's angle appears nowhere before Glide defines it.
+  { const s = createClassroomSession(lesson); for (const id of ['wonder', 'word-wax']) { playThroughTo(s, id); assert.doesNotMatch(wordsOf(s.view()), /\d+ degrees(?! Celsius)|\d°/, id); assert.doesNotMatch(hoverInfo(s.view(), 400, 260) ?? '', /degrees/, id); } }
   assert.match(opening('word-glide'), /kilometres per hour, written km\/h\. To change m\/s into km\/h you multiply by 3\.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres/);
   assert.match(opening('word-glide'), /acceleration in metres per second, per second, written m\/s²/);
   assert.match(opening('word-friction'), /^Friction is the force that resists when one surface slides over another/);
@@ -530,6 +535,13 @@ test('every word is defined before it is used, in whole sentences, with one meas
     assert.doesNotMatch(text, /[a-z]: (hard|soft|medium) wax\b/i, `${where}: no colon that skips a verb`);
     assert.doesNotMatch(text, /—/, `${where}: no long dashes`);
   }
+});
+
+test('the thermometer is one colour at every temperature, so it does not match a tin at an open pick', () => {
+  const source = readFileSync(new URL('../src/lab/lessons/wax-board.js', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('function thermometer('), source.indexOf('// Snow crystals:'));
+  assert.match(body, /ctx\.fillStyle = THERMOMETER_FILL;/);
+  assert.doesNotMatch(body, /WAX_COLOURS|#3f86d8|#9466d6|#d9573f/);
 });
 
 test('a hint or a prompt holds from every setting of its control', () => {

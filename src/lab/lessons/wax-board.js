@@ -10,7 +10,7 @@ export const pressMovesDrag = false;
 
 // Cold to warm: blue for hard, violet for medium, red for soft (the usual ski wax colours).
 export const WAX_COLOURS = Object.freeze({hard: '#3f86d8', medium: '#9466d6', soft: '#d9573f'});
-const LABEL = '#aab2ad', PLAIN = '#9aa3a8', PULL_COLOUR = '#9ff0b4', SLOW_COLOUR = '#f07a5a', LEFT_COLOUR = '#edc557', WATER = '#58b4e6';
+const THERMOMETER_FILL = '#55666f', LABEL = '#aab2ad', PLAIN = '#9aa3a8', PULL_COLOUR = '#9ff0b4', SLOW_COLOUR = '#f07a5a', LEFT_COLOUR = '#edc557', WATER = '#58b4e6';
 const SLOPE = Math.tan(10 * Math.PI / 180);
 const TINS = Object.freeze(WAXES.map((wax, i) => ({wax, x: 330 + i * 170, y: 600})));
 // The free test's three snow tabs, along the top right of the board.
@@ -52,7 +52,7 @@ export function hoverInfo(view, x, y) {
       const [sx, sy] = skiAt(view, i, j);
       if (Math.abs(x - sx) < 50 && Math.abs(y - sy) < 24) return l.wax ? `This ski has ${l.wax} wax on the base.` : 'This plain ski has no wax.';
     }
-    if (x > g.x && x < g.x + g.w && y > g.y - 30 && y < g.y + g.w * SLOPE + g.lane * s.lanes.length + 30) return `This is ${s.name.toLowerCase()} at ${s.celsius} °C, on a test strip ${STRIP_M} m long at a slope of 10 degrees.`;
+    if (x > g.x && x < g.x + g.w && y > g.y - 30 && y < g.y + g.w * SLOPE + g.lane * s.lanes.length + 30) return `This is ${s.name.toLowerCase()} at ${s.celsius} °C, on a test strip ${STRIP_M} m long.`;
   }
   return null;
 }
@@ -149,7 +149,8 @@ function ski(ctx, view, i, j, l, g) {
 function thermometer(ctx, x, y, h, celsius, big) {
   const k = Math.max(0, Math.min(1, (celsius + 15) / 15)), w = big ? 22 : 9;
   ctx.fillStyle = '#e9e4d6'; ctx.beginPath(); ctx.roundRect(x - w / 2, y, w, h, w / 2); ctx.fill();
-  ctx.fillStyle = k > .8 ? '#d9573f' : k > .4 ? '#9466d6' : '#3f86d8';
+  // One colour at every temperature, because the tins' colours here would answer an open pick.
+  ctx.fillStyle = THERMOMETER_FILL;
   ctx.beginPath(); ctx.roundRect(x - w / 2 + 2, y + 2 + (h - 4) * (1 - k), w - 4, (h - 4) * k + 1, w / 2 - 2); ctx.fill();
   ctx.beginPath(); ctx.arc(x, y + h + w * .4, w * .8, 0, Math.PI * 2); ctx.fill();
   if (big) for (const c of [0, -5, -10, -15]) { const ty = y + 2 + (h - 4) * (1 - (c + 15) / 15); ctx.strokeStyle = theme.text; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + w / 2, ty); ctx.lineTo(x + w / 2 + 10, ty); ctx.stroke(); text(ctx, `${c} °C`, x + w / 2 + 16, ty, {size: 15, align: 'left'}); }

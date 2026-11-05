@@ -23,6 +23,7 @@ challenge, the rewards, the save and the notebook ids are unchanged. Every time 
   they show, and they round to the stopwatch's time. While a choice or a question is open, the panel shows only the general rule.
 - The board no longer gives answers away while a question is open. Question 3 used to show the ski menu, and Question 1 used to
   show a hard wax lane. A tin's hover now gives only its name.
+- The thermometer has one neutral fill, because its old colours matched the tins and answered every open pick. Glide defines the degree of an angle, and the Friction panel defines sin and cos.
 - The word steps stay open after their answer. Brian's job now shows the day's temperature and crystals.
 
 ## Removed
@@ -52,7 +53,7 @@ Each new text replaces the line's whole entry in `src/lab/lab-lines.js`. For `la
 
 ## Checks
 
-- `node tools/test-lab-classroom-wax.mjs`: 22 of 22.
+- `node tools/test-lab-classroom-wax.mjs`: 23 of 23.
 - The source check for "she", "her", "mph", "decides" and "air takes" is part of that suite and passes.
 - Browser walkthrough `lab-classroom-wax`: passes at 1920 by 1000, with 40 pictures and no errors.
 - Look: the word steps, the free test, the questions and the recap were read from the walkthrough's pictures at 1920 by 1000.
