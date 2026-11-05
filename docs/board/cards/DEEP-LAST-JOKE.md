@@ -127,21 +127,13 @@ Any other changed assertion stops and comes back to this card for Claude's revie
 
 ### Codex requests (5 November 2026)
 
-The first manual run found required expectation updates outside the approved
-list: `test-deep-explorer` now has 17 goals because the duck is protected from
-rocks; `test-deep-look` must allow the required `test-deep-vasca` imports;
-`test-deep-save` must classify the new Deep save fixture as additive; and
-`test-sirena-car` must include the Vasca's Pacific Canyon first placement.
-The recorded otter take also uses stability 0.45 while the phone test expects
-the helicopter's 0.4. Recommended updates keep each guard intact and name the
-new expected behavior; none relaxes coverage. Claude review is required before
-those existing expectations change.
+Kyle's follow-up on 5 November authorizes the small `src/progression.js` hook:
+preserve an already-owned `falcone_vasca` when `deep-vasca` is off, and test a
+memory-only load/save. A disabled switch must not remove an earned car.
 
-The save review also found that `normalizeProfile` filters owned cars against
-the current `CARS` map. Because the Vasca is absent from that map when
-`deep-vasca` is off, loading and then saving a profile can discard ownership.
-`src/progression.js` is outside this card's named files. Director: please
-re-slice this card to include the save-preservation hook there, or specify an
-in-scope alternative before this card can pass its save review.
+The same follow-up allows the card-required expectation updates listed in
+`docs/changes/DEEP-LAST-JOKE.md`. The changes must name old and new values and
+reasons. Do not change gameplay tolerances. Claude reviews the assertion list
+and gives the independent save review after this lane.
 
 **After the merge.** Claude plays it end to end on a fresh memory-only save, gives the art and sound verdict and the frame check, turns `deep-vasca` on and releases under rule 18. Then Kyle hears the Deep is closed in the release note. No Preview step.

@@ -173,7 +173,7 @@ test('rock places are run state: rebuilt from the seed each dive, repeatable fro
 test('nothing the player looks for rides on a rock, and a rock lying on a goal never moves', () => {
   for(const {seed} of ROUTE_VARIANTS) {
     const d=race(seed), {zone,floor}=d.course.deepZone, rocks=deepRocks(zone,floor), goals=deepGoalPoints(zone);
-    assert.equal(goals.length,16,'7 sea life spots, 3 pearls, 6 Sirena finds');
+    assert.equal(goals.length,17,'7 sea life spots, 3 pearls, 6 Sirena finds and the protected optional Vasca find');
     for(const goal of goals) assert.ok(rocks.every(r=>Math.hypot(goal.x-r.x,goal.z-r.z)>=r.size+2),
       'goals are laid out from the trail, in open water away from every rock');
     // Were a big rock to lie on a goal, it would be the bounce kind, so it cannot slide over it.

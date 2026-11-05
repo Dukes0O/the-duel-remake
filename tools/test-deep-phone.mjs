@@ -37,6 +37,8 @@ ok(others.size >= 3, 'the other voices were found for the comparison');
 
 // One kept take per line: catalog record, hash, runtime copy, the same settings as the helicopter lines.
 const heliSettings = catalog.sounds.find(row => row.cue === 'heli.radio.liftoff.hold').settings;
+const jokeSettingsLines = new Set(['deep.ana.otter','deep.ana.squeak','deep.ana.whale','deep.ana.duck','deep.ana.heavy',
+  'deep.ana.maybe','deep.ana.reveal','deep.ana.bath','deep.ana.wheels','deep.ana.nino','deep.ana.towel','deep.ana.yours']);
 let creditsUsed = 0, runtimeBytes = 0;
 for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   const records = catalog.sounds.filter(row => row.cue === id);
@@ -44,7 +46,8 @@ for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   const [record] = records;
   ok(record.source === 'elevenlabs' && record.text === line.text && record.file === `audio-src/voices/${line.file}`, `${id}: text and file recorded`);
   ok(record.voiceId === DEEP_PHONE_VOICE.voiceId && record.model === 'eleven_multilingual_v2', `${id}: Bella, same model`);
-  same(record.settings, heliSettings, `${id}: the helicopter lines' settings`);
+  same(record.settings, jokeSettingsLines.has(id) ? {...heliSettings, stability: 0.45} : heliSettings,
+    `${id}: the helicopter lines' settings, with the re-recorded joke-line catalog stability`);
   const take = read(record.file), runtime = `public/assets/audio/voices/${line.file}`;
   same(sha(take), record.sha256, `${id}: the kept take matches its hash`);
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);

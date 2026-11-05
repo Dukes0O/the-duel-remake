@@ -1,1 +1,29 @@
-{"shape":"deep-vasca-additive-v1","storage":{"the-duel-players-v2":{"version":2,"activePlayerId":"bath-diver","players":[{"id":"bath-diver","name":"Bath Diver","profile":{"version":2,"credits":700,"unlockedCars":["falcone_sirena","falcone_vasca"],"deep":{"kit":true,"found":["kelp-coast"],"raised":["sirena-badge","sirena-steering-wheel","sirena-wheel","sirena-bonnet","sirena-door","sirena-car","falcone-vasca"]}}}]}},"assertions":[{"path":"players.0.profile.deep.raised","includes":["sirena-car","falcone-vasca"]},{"path":"players.0.profile.unlockedCars","includes":["falcone_vasca"]},{"path":"players.0.profile.credits","equals":700}]}
+{
+  "shape": "deep-vasca-additive-v1",
+  "storage": {
+    "the-duel-players-v2": {
+      "version": 2,
+      "activePlayerId": "bath-diver",
+      "players": [{
+        "id": "bath-diver",
+        "name": "Bath Diver",
+        "profile": {
+          "version": 2,
+          "credits": 700,
+          "unlockedCars": ["falcone_sirena", "falcone_vasca"],
+          "deep": {
+            "kit": true,
+            "found": ["kelp-coast"],
+            "raised": ["sirena-badge", "sirena-steering-wheel", "sirena-wheel", "sirena-bonnet", "sirena-door", "sirena-car", "falcone-vasca"]
+          }
+        }
+      }]
+    }
+  },
+  "assertions": [
+    {"path": "players.0.profile.deep.raised", "includes": "sirena-car"},
+    {"path": "players.0.profile.deep.raised", "includes": "falcone-vasca"},
+    {"path": "players.0.profile.unlockedCars", "includes": "falcone_vasca"},
+    {"path": "players.0.profile.credits", "equals": 700}
+  ]
+}

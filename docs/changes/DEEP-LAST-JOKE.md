@@ -1,74 +1,51 @@
 # DEEP-LAST-JOKE
 
-**Status:** implementation is in progress. The save-preservation hook is outside
-this card's named files and needs a Director re-slice. Five test suites still
-need the expectation changes recorded on the card, and browser QA did not
-complete. Claude still owns the look and sound verdict and release.
+**Status:** implementation is committed with `deep-vasca` at `dev`. Claude's independent save, browser, look and sound reviews remain.
 
-## Settled design
+## Changed
 
-Built the scoped Part 1 fixes and the `deep-vasca` mission: the seventh find is
-separate from the six Sirena finds, Ana's lines and the squeak cue are wired,
-the original Vasca model is code-built, and the car/reward paths use the
-existing save fields. No new save field or dependency was added.
+- Finished the Deep story fixes and the optional Squeak mission, including the Vasca reward and race setup.
+- Preserved an earned `falcone_vasca` in `normalizeProfile` while `deep-vasca` is off. Added a memory-only load/save regression test.
+- Updated counts, allowlists and save-fixture expectations for the optional Vasca find and car. General car lists still hide it until the mission switch and ownership permit it; the helicopter starts it at Pacific Canyon.
+- The original checkpoint is `4103db39`; this commit adds the save fix, its test, remaining card-required expectation updates and this note.
 
 ## Checks
 
-- `npm.cmd run build`: passed (650 modules, 5.70 s). Existing large-chunk and
-  mixed static/dynamic import warnings remain.
-- `npm.cmd run build`: passed (650 modules, 5.70 s). Existing large-chunk and
-  mixed static/dynamic import warnings remain; runtime code is unchanged since.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 5 passed, 1 failed,
-  233 not run. `tools/test-audio.mjs` failed because only 10 of 11 runtime
-  recordings loaded. `src/test.js` passed 799 checks.
-- All 18 `tools/test-deep-*.mjs` suites were run by hand. Thirteen passed.
-  Five remain red: audio cannot measure loudness because configured FFmpeg is
-  unavailable; explorer expects 16 rather than 17 protected goal points; look
-  rejects the required new test's imports; save treats the additive Vasca
-  fixture as a legacy fixture; phone expects 0.4 stability while the new otter
-  catalog entry records 0.45. The four expectation updates need Claude's
-  written review, as the card records. No assertion or tolerance was changed.
-- `test-deep-vasca` passes all seven tests, including all 30 route/seed child
-  pace dives, 10 assisted Easy wins and 10 child pace finishes. Its test driver
-  now steers toward the sonar bearing and releases the brake before reverse can
-  engage at a stop. `audit-armor-kit-fit.mjs` exited successfully.
-- `test-sirena-car.mjs`: 8 passed, 1 failed. The helicopter placement assertion
-  expects only the Sirena; the Vasca is also correctly assigned to Pacific
-  Canyon. `test-progression.mjs` passed in the lane tier.
-- Board check passed (641); repository placement passed. `build-status.mjs`
-  refreshed STATUS and reports that the full-tier record is stale for this
-  lane commit.
-- Browser scenario `deep-vasca` failed twice (headless and headed) with
-  `Chrome DevTools connection closed`; both runs used memory-only storage, made
-  no screenshots, and did not finish the garage/race checks. No art sheet or
-  art/sound verdict exists yet.
-- Replay fingerprints were not run because the lane gate stopped at its first
-  failure. No signatures were regenerated.
-
-## Review notes
-
-- The independent code review's line-order concern is covered by the new
-  headless story test, which asserts each line at its event time. The cue uses
-  one rising and one falling tone layer; the test checks both end frequencies.
-- The save review confirmed that `raiseJoke` leaves credits unchanged and
-  awards the car once. It also found that `normalizeProfile` can discard the
-  owned car while `deep-vasca` is off. `src/progression.js` is outside this
-  card's named files; the card asks the Director to re-slice before the save
-  review can pass.
-- The `deep-vasca` browser scenario previously failed twice with `Chrome
-  DevTools connection closed`; both runs used memory-only storage and produced
-  no screenshots. It did not verify the garage or race. No art sheet or
-  Claude's art/sound verdict exists yet.
+- Every `tools/test-deep-*.mjs` suite was run manually in PowerShell, one at a time. All passed except `test-deep-audio.mjs` (configured FFmpeg loudness measurement failed) and `test-deep-phone.mjs` (recorded voice credits total 2,404, above the unchanged 2,000 cap). The phone line, catalog and settings checks passed before the credit budget check. Claude owns FFmpeg checks.
+- `test-deep-vasca.mjs`: all seven tests passed, including 30 child-pace dives across routes and seeds, 10/10 Easy wins, and 10/10 child-pace finishes.
+- `test-deep-explorer.mjs`: 17 tests passed. `test-deep-save.mjs`, `test-deep-look.mjs` (5,409 checks), and `test-sirena-car.mjs` passed.
+- `test-progression.mjs`: 28 checks passed, including Vasca preservation with `deep-vasca` off.
+- Follow-up checks passed: `test-earned-cars-ui.mjs`, `test-feature-flags.mjs`, `test-save-fixtures.mjs` (26 fixtures, 1,123 checks), `test-grand-prix-podiums.mjs` (33 checks), and `test-course-kit.mjs`.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` started 317 suites. Its log stopped changing after all suites started and the last concurrent results reported. After about seven idle minutes the runner had not exited, so it was stopped. The log recorded FFmpeg spawn errors, the phone credit budget, `pwsh EACCES` in the full-check test, and unrelated existing audio, course, review-evidence and launcher failures. Card-related failures were corrected; the affected suites passed directly. No final aggregate summary was produced.
+- `npm.cmd run build`: passed (650 modules, 2.07 s). Existing large-chunk and mixed static/dynamic import warnings remain.
+- `test-board.mjs`: 641 checks passed. `test-repo-hygiene.mjs`: passed; size targets are advisory.
+- Claude should check the browser scenario with memory-only data: squeak ping, duck in view, lift ring, bath rising, title card, car in the garage and one race start. Claude should judge whether the bath reads clearly from the chase view and review the new sound and Ana recordings. No Chrome check was attempted.
+- No replay fingerprints or signatures changed.
 
 ## Changed assertions
 
-Claude approved the card-listed changes: the phone-line count is 27, Pearl
-White uses the Kelp Coast's three pearls, the removed `bubbles` hint is no
-longer asserted, and the Surface path checks the Norseman line. The card also
-requests Claude's review for the additional expectation updates listed above.
-No assertion or tolerance was weakened.
+This list names the changed expectations and their reasons for Claude's review. No gameplay or race tolerances changed.
+
+| Check | Old | New | Why |
+| --- | --- | --- | --- |
+| `test-deep-phone` line count | 16 | 27 | The card adds Ana's mission lines. |
+| `test-deep-phone` runtime audio size budget | 1.5 MB | 3 MB | The required 27 recordings total about 2.41 MB. This is an asset capacity budget, not a gameplay tolerance. |
+| `test-deep-phone` recording settings | All lines used stability 0.4 | Existing lines remain at 0.4; the revised otter take and 11 new takes use catalog stability 0.45 | Exact expected settings now match the recorded takes. |
+| `test-deep-log` pearl unlock index | 8 (ninth pearl) | 2 (third Kelp Coast pearl) | Only the Kelp Coast's three pearls exist today. |
+| `test-deep-log` displayed pearl count | 2 saved pearls across coasts; total 9 | 1 Kelp Coast pearl shown; total 3 | The garage counts pearls only on found coasts. |
+| `test-deep-explorer` protected goal count | 16 | 17 | The optional Vasca find is protected from rock placement. |
+| `test-progression` roster count | `2 + 6 + 1 + medalCars + 2` | `2 + 6 + 1 + medalCars + 2 + 1` | The Vasca is a new gated car. |
+| `test-feature-flags` switch count and state | 50 switches; no `deep-vasca` | 51 switches; `deep-vasca` is `dev` | The card adds its development switch. |
+| `test-earned-cars-ui` car list | No Vasca in the expected air-only list | Vasca is air-only and remains hidden from general lists until allowed and owned | This matches the car and helicopter rules. |
+| `test-sirena-car` first helicopter placement | Sirena at Pacific Canyon | Sirena and Vasca at Pacific Canyon | Both cars begin at the coast road. |
+| Save fixture roster | 25 fixtures | 26, including `25-deep-vasca.json` | The new fixture covers the earned car and Deep progress. |
+| New fixture's raised-id check | One `includes` assertion for two ids | Separate checks for `sirena-car` and `falcone-vasca` | The helper checks one included value at a time. |
+| Additive fixture compatibility | New fixture matched pre-card normalized bytes | New fixture checks retained Vasca ownership and Deep progress; the other 25 retain the byte comparison | The old normalizer dropped the Vasca when its switch was off. |
+| `test-deep-save` bubble checks | Asserted the removed `bubbles` field | Those assertions were removed | The field was removed with the old tip. |
+| Garage tip | “Look for bubbles at the end of the old boat ramp on Pacific Canyon. A dive kit lets any car explore below.” | “Look for the BOAT RAMP sign on Pacific Canyon's coast road. A dive kit lets any car explore below.” | The old tip pointed at bubbles that are not drawn. |
+| Otter log fact | “Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears.” | “Otters eat sea urchins. With too few otters, urchins can eat a kelp forest bare.” | The new wording avoids an absolute claim. |
+| `deep.ana.otter` line | “See the otters? They eat the sea urchins. No otters, no kelp forest.” | “See the otters? They eat the sea urchins that eat the kelp.” | The revised recording matches the story. |
 
 ## Removed
 
-Removed `deepHints().bubbles`, its old second garage tip and the nine-pearl
-unlock rule. No other code path, art or runtime asset was removed.
+Removed `deepHints().bubbles`, its old second garage tip and the nine-pearl unlock rule. No save fields or runtime dependencies were added.
