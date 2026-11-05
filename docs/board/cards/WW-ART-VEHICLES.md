@@ -43,3 +43,7 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Big Bess: start from the shipped convoy tanker's recipe, as the round 1 notes said, not from a cylinder. Scarred, sooty, no clean cream.
 - Old Smoke's furnace: huge, with a chimney, glowing doors and heavy wheels. The final chase has to feel frightening.
 - Thief buggy: an open frame of tubes with a seat and engine showing, not a box.
+
+**Round 3: merge, at the cap.** The camera is fixed at last, and the three are told apart: tank truck, furnace with chimney and glowing doors, open-frame buggy. The buggy is the best. Fixes for WW-SCENE and the jobs, none of them new art rounds:
+- Old Smoke's furnace is not yet frightening and shares Big Bess's cab. Scale it up by about half in the game and add the game's smoke and fire effects to its chimney and doors.
+- Judge all three again in the game at WW-FINISH. A merge here is not a release approval.
