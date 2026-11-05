@@ -255,74 +255,258 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
   assert.equal(hoverInfo(v, 500, 660), null);
 });
 
-test('G-force lesson is registered and its two-way controls follow the bench formula', () => {
+function reachGforceFreeTest(session) {
+  run(session, 2.6);
+  assert.equal(session.view().step.id, 'wonder');
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'word-speed');
+  session.act('speed:up');
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'word-radius');
+  session.act('radius:down');
+  session.act('radius:down');
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'word-acceleration');
+  session.act('next');
+  session.act('next');
+  session.act('next');
+  assert.equal(session.view().step.id, 'watch');
+  run(session, 6.1);
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-speed');
+}
+
+function finishGuidedGforceTries(session) {
+  session.act('answer:0');
+  for (let press = 0; press < 4; press++) session.act('speed:up');
+  session.act('run');
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  session.act('answer:0');
+  session.act('radius:up');
+  session.act('run');
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-free');
+}
+
+test('G-force is registered with its old notebook words, challenge and seven lesson parts', () => {
   const gforce = CLASSROOM_LESSONS.gforce;
   assert.ok(gforce);
   assert.equal(FEATURE_STATES['lab-classroom'], 'on');
-  const model = createGforceModel(); model.enter(0);
-  assert.equal(GFORCE_STEPS[0].id, 'wonder');
-  model.enter(1); model.act('speed:up');
-  let v = model.view();
-  assert.equal(v.speedKmh, 64.37376);
-  assert.equal(v.g, lateralG(40, 50));
-  assert.match(v.formulas[0].worked, /17\.88 m\/s/);
-  model.act('speed:down'); assert.equal(model.view().speedKmh, 32.18688);
-  model.enter(2); model.act('radius:down'); model.act('radius:down');
-  assert.equal(model.view().radiusM, 50);
-  model.act('radius:up'); assert.equal(model.view().radiusM, 75);
-  for (const idea of GFORCE_IDEAS) assert.match(idea.text, /\./);
+  assert.deepEqual([...new Set(GFORCE_STEPS.map(step => step.part))], PARTS.map((_, i) => i));
+  assert.deepEqual(GFORCE_STEPS.filter(step => step.word).map(step => step.word), [
+    'gforce-speed', 'radius', 'gforce-acceleration', 'gforce',
+  ]);
+  assert.deepEqual(gforce.words.map(word => word.id), ['gforce', 'one-g', 'radius', 'gforce-speed', 'gforce-acceleration']);
+  assert.equal(gforce.challengeCard.title, 'Reach 2 g in three different corners.');
+  assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
-test('G-force free experiment requires three distinct bench runs and changes its live sum', () => {
-  const gforce = CLASSROOM_LESSONS.gforce, session = createClassroomSession(gforce);
-  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
-  assert.equal(session.view().step.id,'try-free');
-  let v = session.view(); const original = v.formulas[0].worked;
-  session.act('speed:up'); v = session.view(); assert.notEqual(v.formulas[0].worked, original);
-  session.act('run'); assert.equal(session.view().rows.length, 1);
-  session.act('run'); assert.equal(session.view().rows.length, 1, 'repeating a setting does not count twice');
-  session.act('radius:up'); session.act('run');
-  session.act('speed:down'); session.act('run');
-  assert.equal(session.view().rows.length, 3); assert.equal(session.view().ready, true);
-  for (const row of session.view().rows) assert.equal(Number(row.g), Number(lateralG(row.speed / 1.609344, row.radius).toFixed(2)));
+test('G-force formula sums calculate from the exact metric values they show and match the challenge rule', () => {
+  const model = createGforceModel();
+  const formulaIndex = GFORCE_STEPS.findIndex(step => step.id === 'formula');
+  const radii = [10, 25, 50, 75, 100, 125, 150, 175, 200];
+  for (let speed = 10; speed <= 150; speed += 5) {
+    for (const radius of radii) {
+      model.enter(formulaIndex);
+      let state = model.state();
+      while (state.speed < speed) { model.act('speed:up'); state = model.state(); }
+      while (state.speed > speed) { model.act('speed:down'); state = model.state(); }
+      while (state.radius < radius) { model.act('radius:up'); state = model.state(); }
+      while (state.radius > radius) { model.act('radius:down'); state = model.state(); }
+      const worked = model.view().formulas.at(-1).worked;
+      const match = worked.match(/\((\d+\.\d{5}) m\/s\)² ÷ (\d+) m ÷ 9\.81 m\/s² = (\d+\.\d{2}) g/);
+      assert.ok(match, worked);
+      const [, metresPerSecond, shownRadius, shownG] = match;
+      const calculated = (Number(metresPerSecond) ** 2 / Number(shownRadius) / 9.81).toFixed(2);
+      assert.equal(shownG, calculated, `${speed} mph setting and ${radius} m radius`);
+      assert.equal(shownG, lateralG(speed, radius).toFixed(2), 'the displayed result matches the challenge function');
+    }
+  }
 });
 
-test('G-force guided prompts can be followed and wrong predictions explain the bench numbers', () => {
+test('a child can follow the G-force prompts through the speed and radius lessons', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
-  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
-  session.act('speed:up'); session.act('run'); session.act('radius:up'); session.act('run'); session.act('speed:up'); session.act('run'); session.act('next');
-  assert.equal(session.view().step.id, 'try-speed');
-  session.act('answer:1'); session.act('speed:up'); session.act('speed:up'); session.act('run');
+  reachGforceFreeTest(session);
+  assert.match(session.view().brian.text, /96\.6 km\/h and radius stays at 50 m/);
+  assert.equal(session.view().g, null, 'the open prediction has no live result');
+  assert.ok(session.view().formulas.every(entry => entry.worked === ''), 'the open prediction has no worked answer');
+  assert.ok(session.view().formulas.every(entry => entry.title.length > 0), 'every formula row has a title');
+  finishGuidedGforceTries(session);
+  session.act('speed:up');
+  session.act('run');
+  assert.equal(session.view().rows.length, 1);
+  assert.equal(session.view().ready, false);
+  session.act('radius:up');
+  session.act('run');
+  session.act('speed:up');
+  session.act('run');
+  assert.equal(session.view().rows.length, 3);
+  assert.equal(session.view().ready, true);
+  assert.equal(new Set(session.view().rows.map(row => `${row.speed}/${row.radius}`)).size, 3);
+});
+
+test('wrong G-force predictions explain the actual readings after the turn has run', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  reachGforceFreeTest(session);
+  let open = session.view();
+  assert.equal(open.g, null);
+  assert.ok(open.formulas.every(entry => entry.worked === ''));
+  session.act('answer:1');
+  for (let press = 0; press < 4; press++) session.act('speed:up');
+  session.act('run');
   assert.equal(session.view().brian.mood, 'explain');
-  assert.match(session.view().brian.text, /2\.61 g/);
+  assert.match(session.view().brian.text, /96\.6 km\/h/);
+  assert.match(session.view().brian.text, /1\.47 g/);
+  assert.match(session.view().brian.text, /0\.65 g/);
+  session.act('next');
+  session.act('answer:1');
+  session.act('radius:up');
+  session.act('run');
+  assert.equal(session.view().brian.mood, 'explain');
+  assert.match(session.view().brian.text, /75 m/);
+  assert.match(session.view().brian.text, /0\.43 g/);
   assert.match(session.view().brian.text, /0\.65 g/);
 });
 
-test('G-force solo test cannot pass at the untouched start and passes after a real bench change', () => {
+test('Show me points to a live control and records a new free-test setting on each use', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
-  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
-  session.act('speed:up'); session.act('run'); session.act('radius:up'); session.act('run'); session.act('speed:up'); session.act('run');
-  session.act('next'); session.act('answer:0'); session.act('speed:up'); session.act('speed:up'); session.act('run'); session.act('next');
-  session.act('answer:0'); session.act('radius:down'); session.act('run'); session.act('next');
-  assert.equal(session.view().step.id,'alone');
-  session.act('run'); assert.equal(session.view().brian.mood,'explain');
-  assert.match(session.view().brian.text,/below 2 g/);
-  session.act('speed:up'); session.act('speed:up'); session.act('run');
-  assert.equal(session.view().brian.mood,'cheer'); assert.match(session.view().brian.text,/2\.61 g/);
+  reachGforceFreeTest(session);
+  finishGuidedGforceTries(session);
+  for (let runIndex = 1; runIndex <= 3; runIndex++) {
+    for (let rung = 0; rung < 3; rung++) session.act('help');
+    let view = session.view();
+    assert.equal(view.pointer.action, 'set:best');
+    const point = gforceBoard.targetPoint(view, view.pointer.action);
+    const hit = gforceBoard.hitTest(view, ...point);
+    assert.ok(hit && ['speed:up', 'speed:down', 'radius:up', 'radius:down'].includes(hit.action));
+    run(session, SHOW_ME_S + .05);
+    assert.match(session.view().brian.text, /^That is how it is done\./);
+    until(session, current => current.rows.length >= runIndex, 4);
+    view = session.view();
+    assert.equal(view.rows.length, runIndex);
+    assert.equal(new Set(view.rows.map(row => `${row.speed}/${row.radius}`)).size, runIndex);
+  }
+  assert.equal(session.view().ready, true);
 });
 
-test('G-force board draws, hit-tests the two controls, and points Brian at a real control', () => {
+test('Brian’s 2 g test has a working Space key and needs a changed setting', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  reachGforceFreeTest(session);
+  finishGuidedGforceTries(session);
+  // Finish three different free runs through normal controls.
+  for (const action of ['speed:up', 'run', 'radius:up', 'run', 'speed:up', 'run']) session.act(action);
   session.act('next');
-  const v = session.view();
-  assert.equal(v.step.id, 'word-speed');
-  assert.equal(gforceBoard.hitTest(v, ...gforceBoard.targetPoint(v, 'speed:up'))?.action, 'speed:up');
+  assert.equal(session.view().step.id, 'alone');
+  let view = session.view();
+  assert.equal(view.keys.Space, 'run');
+  assert.match(view.prompt, /press Space/i);
+  session.act(view.keys.Space);
+  assert.equal(session.view().brian.mood, 'explain');
+  assert.match(session.view().brian.text, /below the 2 g target/);
+  for (let press = 0; press < 8; press++) session.act('speed:up');
+  view = session.view();
+  assert.equal(view.speedKmh, 128.7);
+  assert.equal(view.keys.Space, 'run');
+  session.act(view.keys.Space);
+  assert.equal(session.view().ready, true);
+  assert.match(session.view().brian.text, /2\.61 g/);
+});
+
+test('G-force questions have literal answers and keep their result sums hidden until answered', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  reachGforceFreeTest(session);
+  finishGuidedGforceTries(session);
+  for (const id of ['check-speed', 'check-radius', 'check-rule']) {
+    while (session.view().step.id !== id) {
+      const current = session.view();
+      if (current.step.id === 'try-free') {
+        for (const action of ['speed:up', 'run', 'radius:up', 'run', 'speed:up', 'run']) session.act(action);
+      } else if (current.step.id === 'alone') {
+        for (let press = 0; press < 8; press++) session.act('speed:up');
+        session.act('run');
+      }
+      session.act('next');
+    }
+    const view = session.view();
+    assert.equal(view.asking, true);
+    assert.ok(view.formulas.every(entry => entry.worked === ''), `${id}: the panel has no answer sum`);
+    session.act('answer:1');
+    assert.equal(session.view().ready, true);
+    assert.match(session.view().brian.text, /g|radius|speed/i);
+    assert.equal(session.view().cards[1].state, 'wrong');
+  }
+});
+
+test('G-force lesson words and board labels avoid the reviewed language faults', () => {
+  const forbidden = /\b(she|her|mph|bench|divisor|reference|decides)\b/i;
+  const model = createGforceModel();
+  for (let index = 0; index < GFORCE_STEPS.length; index++) {
+    model.enter(index);
+    const view = model.view();
+    const copy = [view.say, view.prompt, ...view.hints,
+      ...view.formulas.flatMap(row => [row.title, row.formula, row.worked, row.note]),
+      ...view.cards.map(card => card.label)].join(' ');
+    assert.doesNotMatch(copy, forbidden, GFORCE_STEPS[index].id);
+    assert.ok(view.formulas.every(row => row.title), `${GFORCE_STEPS[index].id}: formula entries have titles`);
+    const sentences = (view.say.match(/[.!?](?:\s|$)/g) ?? []).length;
+    assert.ok(sentences <= 2, `${GFORCE_STEPS[index].id}: Brian uses at most two sentences`);
+  }
+  const view = model.view();
+  assert.match(gforceBoard.hoverInfo(view, 274, 390), /centre to the car/);
+  assert.doesNotMatch(gforceBoard.hoverInfo(view, 274, 390), forbidden);
+
+  const labels = [];
+  const ctx = new Proxy({}, {
+    get: (_, name) => name === 'measureText'
+      ? value => ({width: String(value).length * 8})
+      : ['createLinearGradient', 'createRadialGradient'].includes(name)
+        ? () => ({addColorStop() {}})
+        : (...args) => { if (name === 'fillText') labels.push(String(args[0])); },
+    set: () => true,
+  });
+  model.enter(0);
+  gforceBoard.drawBoard(ctx, model.view());
+  assert.ok(labels.includes('ARM LENGTH'));
+  assert.ok(labels.includes('SIDEWAYS PUSH'));
+  assert.ok(!labels.includes('TURN RADIUS'));
+  assert.ok(!labels.includes('SIDEWAYS ACCELERATION'));
+  labels.length = 0;
+  model.enter(GFORCE_STEPS.findIndex(step => step.id === 'word-radius'));
+  gforceBoard.drawBoard(ctx, model.view());
+  assert.ok(labels.includes('TURN RADIUS'));
+  labels.length = 0;
+  model.enter(GFORCE_STEPS.findIndex(step => step.id === 'word-acceleration'));
+  gforceBoard.drawBoard(ctx, model.view());
+  assert.ok(labels.includes('SIDEWAYS ACCELERATION'));
+});
+
+test('G-force board draws the car, radius line, speed arrow, sideways push, cord and results table', () => {
+  const calls = new Set();
+  const ctx = new Proxy({}, {
+    get: (_, name) => name === 'measureText'
+      ? value => ({width: String(value).length * 8})
+      : ['createLinearGradient', 'createRadialGradient'].includes(name)
+        ? () => ({addColorStop() {}})
+        : (...args) => calls.add(name),
+    set: () => true,
+  });
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  reachGforceFreeTest(session);
+  finishGuidedGforceTries(session);
   session.act('speed:up');
-  session.act('next');
-  const radiusView = session.view();
-  assert.equal(radiusView.step.id, 'word-radius');
-  assert.equal(gforceBoard.hitTest(radiusView, ...gforceBoard.targetPoint(radiusView, 'radius:down'))?.action, 'radius:down');
-  const calls = new Set(); const ctx = new Proxy({}, {get: (_, name) => name === 'measureText' ? t => ({width:String(t).length*8}) : ['createLinearGradient','createRadialGradient'].includes(name) ? () => ({addColorStop(){}}) : (...args) => calls.add(name), set: () => true});
-  gforceBoard.drawBoard(ctx,v,1000,680);
-  assert.ok(calls.has('fillText') && calls.has('arc'));
+  session.act('run');
+  gforceBoard.drawBoard(ctx, session.view(), 1000, 680);
+  assert.ok(calls.has('fillText'));
+  assert.ok(calls.has('arc'));
+  assert.ok(calls.has('lineTo'));
+  const view = session.view();
+  for (const action of ['speed:up', 'speed:down', 'radius:up', 'radius:down', 'run']) {
+    assert.deepEqual(gforceBoard.hitTest(view, ...gforceBoard.targetPoint(view, action)), {action});
+  }
 });

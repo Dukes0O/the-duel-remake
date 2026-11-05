@@ -1,20 +1,34 @@
-// G-force as a classroom lesson. The meter always uses the G-force bench rule.
+// The G-force classroom lesson. It uses the same turning rule as the G-force challenge.
 import {lateralG} from '../benches/gforce.js';
 
-const GRAVITY = 9.81, KMH_PER_BENCH_SPEED = 0.44704 * 3.6;
+const GRAVITY = 9.81;
+const KMH_PER_MPH = 1.609344;
+const KMH_PER_MS = 3.6;
 const BASE = Object.freeze({speed: 40, radius: 50});
-const speedKmh = speed => speed * KMH_PER_BENCH_SPEED;
-const meter = (speed, radius) => lateralG(speed, radius);
-const shown = value => value.toFixed(2);
+const MIN_SPEED = 10;
+const MAX_SPEED = 150;
+const SPEED_STEP = 5;
+const MIN_RADIUS = 10;
+const MAX_RADIUS = 200;
+const RADIUS_STEP = 25;
+const FREE_TRIES = 3;
+const FREE_RADII = Object.freeze([10, 25, 35, 50, 60, 75, 85, 100, 110, 125, 135, 150, 160, 175, 185, 200]);
+const AUTO_GAP_S = .14;
+const SPEED_KEYS = Object.freeze({ArrowLeft: 'speed:down', ArrowRight: 'speed:up'});
+const RADIUS_KEYS = Object.freeze({ArrowDown: 'radius:down', ArrowUp: 'radius:up'});
+
 export const STEPS = Object.freeze([
-  {id: 'wonder', part: 0, title: 'Why does the cord lean? '},
-  {id: 'word-speed', part: 1, title: 'Speed and metres per second', word: 'gforce-speed'},
-  {id: 'word-radius', part: 1, title: 'Radius and the centre of a turn', word: 'radius'},
-  {id: 'watch', part: 2, title: 'Speed and radius change the meter'},
+  {id: 'wonder', part: 0, title: 'Why does the cord lean?'},
+  {id: 'word-speed', part: 1, title: 'Speed and its units', word: 'gforce-speed'},
+  {id: 'word-radius', part: 1, title: 'The radius of a turn', word: 'radius'},
+  {id: 'word-acceleration', part: 1, title: 'Velocity and acceleration', word: 'gforce-acceleration'},
+  {id: 'word-g', part: 1, title: 'Measuring sideways push', word: 'gforce'},
+  {id: 'formula', part: 1, title: 'The G-force rule'},
+  {id: 'watch', part: 2, title: 'Speed and radius change the reading'},
+  {id: 'try-speed', part: 3, title: 'Predict a faster turn'},
+  {id: 'try-radius', part: 3, title: 'Predict a tighter turn'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
-  {id: 'try-speed', part: 3, title: 'Predict the faster turn'},
-  {id: 'try-radius', part: 3, title: 'Predict the tighter turn'},
-  {id: 'alone', part: 4, title: 'Brian’s 2 g test'},
+  {id: 'alone', part: 4, title: "Brian's 2 g test"},
   {id: 'check-speed', part: 5, title: 'Question 1 of 3'},
   {id: 'check-radius', part: 5, title: 'Question 2 of 3'},
   {id: 'check-rule', part: 5, title: 'Question 3 of 3'},
@@ -22,153 +36,592 @@ export const STEPS = Object.freeze([
 ].map(Object.freeze));
 
 export const KEY_IDEAS = Object.freeze([
-  {id: 'speed', text: 'The game squares speed, so twice the speed gives four times the G-force at the same radius.'},
-  {id: 'radius', text: 'The game divides by radius, so half the radius gives twice the G-force at the same speed.'},
-  {id: 'challenge', text: 'The G-force lap counts three different corners that reach at least 2 g while the car stays on the road.'},
-].map(Object.freeze));
-export const CHALLENGE_CARD = Object.freeze({title: 'Reach 2 g in three different corners.', text: 'Drive a lap on a course you own. Reach at least 2 g in three different corners without leaving the road.'});
-export const WORDS = Object.freeze([
-  {id: 'gforce', word: 'G-force', meaning: 'G-force is the sideways acceleration a driver feels while a car turns.'},
-  {id: 'one-g', word: 'One g', meaning: 'One g is the acceleration caused by Earth’s gravity near the ground, 9.81 m/s².'},
-  {id: 'radius', word: 'Radius', meaning: 'Radius is the distance from the centre of a circular turn to the car, measured in metres, written m.'},
-  {id: 'gforce-speed', word: 'Speed', meaning: 'Speed is the distance travelled during a set time. This lesson shows speed in kilometres per hour, written km/h, and uses metres per second, written m/s, in its formula.'},
+  {id: 'turning', text: 'A turning car keeps changing direction, so it needs a sideways push. The driver feels that push.'},
+  {id: 'speed', text: 'The game squares speed, so doubling speed makes four times the G-force when radius stays fixed.'},
+  {id: 'radius', text: 'The game divides by turn radius, so doubling radius halves the G-force when speed stays fixed.'},
 ].map(Object.freeze));
 
-const FORMULA = 'G-force (g) = speed (m/s)² ÷ radius (m) ÷ 9.81 m/s²';
-function formulas(speed, radius) {
-  const ms = speed * 0.44704, square = Number((ms * ms).toFixed(2));
-  return [{title: "The game's turning rule", formula: FORMULA,
-    worked: `(${ms.toFixed(2)} m/s)² ÷ ${radius} m ÷ ${GRAVITY} m/s² = ${shown(meter(speed, radius))} g`,
-    note: 'The meter uses the G-force bench function. The speed conversion and meter reading follow the bench settings.'}];
+export const CHALLENGE_CARD = Object.freeze({
+  title: 'Reach 2 g in three different corners.',
+  text: 'Drive a lap on a course you own. Reach at least 2 g in three different corners without leaving the road.',
+});
+
+// Keep the notebook ids from the earlier lesson so saved notebooks still match.
+export const WORDS = Object.freeze([
+  {id: 'gforce', word: 'G-force', meaning: 'G-force is sideways acceleration compared with Earth’s gravitational acceleration near the ground.'},
+  {id: 'one-g', word: 'One g', meaning: 'One g is Earth’s gravitational acceleration near the ground, about 9.81 metres per second squared (m/s²).'},
+  {id: 'radius', word: 'Radius', meaning: 'Radius is the distance from the centre of a circular turn to the car, measured in metres (m).'},
+  {id: 'gforce-speed', word: 'Speed', meaning: 'Speed is distance travelled during a set time. The dial uses kilometres per hour (km/h), and the formula uses metres per second (m/s).'},
+  {id: 'gforce-acceleration', word: 'Acceleration', meaning: 'Acceleration is how quickly velocity changes. Velocity is speed in a direction.'},
+].map(Object.freeze));
+
+const kmh = speed => Number((speed * KMH_PER_MPH).toFixed(1));
+const mpsFromDial = speed => kmh(speed) / KMH_PER_MS;
+const meter = (speed, radius) => lateralG(speed, radius);
+const shown = value => value.toFixed(2);
+const settingsKey = (speed, radius) => `${speed}/${radius}`;
+const FORMULA = 'G-force (g) = (speed in m/s)² ÷ radius in m ÷ 9.81 m/s²';
+
+function formulaRows(speed, radius, {worked = true, includeSpeed = true} = {}) {
+  const entries = [];
+  const exactKmh = Number((speed * KMH_PER_MPH).toFixed(5));
+  const exactMps = Number((exactKmh / KMH_PER_MS).toFixed(5));
+  const sumFromShownSpeed = (exactMps ** 2 / radius / GRAVITY).toFixed(2);
+  if (includeSpeed) {
+    entries.push({
+      title: 'Change the speed unit',
+      formula: 'speed in m/s = speed in km/h ÷ 3.6',
+      worked: worked ? `${exactKmh.toFixed(5)} km/h ÷ 3.6 = ${exactMps.toFixed(5)} m/s` : '',
+      note: `The dial rounds ${exactKmh.toFixed(5)} km/h to ${kmh(speed).toFixed(1)} km/h. The sum keeps the precise setting.`,
+    });
+  }
+  entries.push({
+    title: 'The turning rule in this game',
+    formula: FORMULA,
+    worked: worked
+      ? `(${exactMps.toFixed(5)} m/s)² ÷ ${radius} m ÷ ${GRAVITY} m/s² = ${sumFromShownSpeed} g`
+      : '',
+    note: worked
+      ? 'The final number counts sideways acceleration in units of one g. The meter and the sum use the same turn settings.'
+      : 'The last division compares sideways acceleration with one g, which is 9.81 m/s².',
+  });
+  return entries;
 }
-const checks = {
-  'check-speed': {question: 'At the same 50 m radius, which speed gives the larger reading: half of 64.4 km/h or 64.4 km/h?', correct: 0,
-    answers: ['64.4 km/h gives the larger reading.', 'Half of 64.4 km/h gives the larger reading.', 'Both speeds give the same reading.'],
-    right: `At 64.4 km/h the meter reads ${shown(meter(40, 50))} g. At half speed it reads ${shown(meter(20, 50))} g, because the game squares speed.`,
-    wrong: `The meter reads ${shown(meter(40, 50))} g at 64.4 km/h and ${shown(meter(20, 50))} g at half that speed. Halving speed quarters the reading because speed is squared.`},
-  'check-radius': {question: 'At 64.4 km/h, which radius gives the larger reading: 25 m or 100 m?', correct: 0,
+
+const reading = (speed, radius) => shown(meter(speed, radius));
+const baseReading = reading(BASE.speed, BASE.radius);
+
+const CHECKS = Object.freeze({
+  'check-speed': Object.freeze({
+    question: 'At the same 50 m radius, which speed gives the larger reading: 32.2 km/h or 64.4 km/h?',
+    answers: ['64.4 km/h gives the larger reading.', '32.2 km/h gives the larger reading.', 'Both speeds give the same reading.'],
+    correct: 0,
+    right: `Correct: 64.4 km/h gives ${reading(40, 50)} g, while 32.2 km/h gives ${reading(20, 50)} g. Halving speed quarters the reading because the game squares speed.`,
+    wrong: `64.4 km/h gives ${reading(40, 50)} g, while 32.2 km/h gives ${reading(20, 50)} g. Halving speed quarters the reading because the game squares speed.`,
+  }),
+  'check-radius': Object.freeze({
+    question: 'At 64.4 km/h, which turn radius gives the larger reading: 25 m or 100 m?',
     answers: ['25 m gives the larger reading.', '100 m gives the larger reading.', 'Both radii give the same reading.'],
-    right: `At 25 m the meter reads ${shown(meter(40, 25))} g. At 100 m it reads ${shown(meter(40, 100))} g, because the rule divides by radius.`,
-    wrong: `At 25 m the meter reads ${shown(meter(40, 25))} g, and at 100 m it reads ${shown(meter(40, 100))} g. The larger radius is the larger divisor, so its reading is lower.`},
-  'check-rule': {question: "Which statement matches the game's G-force rule?", correct: 0,
-    answers: ['The reading rises with the square of speed and falls as radius grows.', 'The reading rises in direct proportion to speed and radius.', 'The reading falls as speed rises and radius shrinks.'],
-    right: 'That is the rule: the game squares speed and divides by radius.',
-    wrong: 'The game squares speed and divides by radius. Faster speed raises the squared value, and a smaller radius reduces the divisor, so both changes raise the reading.'},
-};
+    correct: 0,
+    right: `Correct: 25 m gives ${reading(40, 25)} g, while 100 m gives ${reading(40, 100)} g. The larger radius divides the result more.`,
+    wrong: `25 m gives ${reading(40, 25)} g, while 100 m gives ${reading(40, 100)} g. Radius divides the result, so the wider turn has the lower reading.`,
+  }),
+  'check-rule': Object.freeze({
+    question: 'Which sentence describes the G-force rule used in this game?',
+    answers: [
+      'The reading rises with the square of speed and falls as radius grows.',
+      'The reading rises in direct proportion to speed and radius.',
+      'The reading falls as speed rises and radius shrinks.',
+    ],
+    correct: 0,
+    right: 'Correct. The game squares speed and divides by radius.',
+    wrong: 'The game squares speed and divides by radius. More speed raises the squared value, and a shorter radius also raises the reading.',
+  }),
+});
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const clampSpeed = speed => clamp(speed, MIN_SPEED, MAX_SPEED);
+const clampRadius = radius => clamp(radius, MIN_RADIUS, MAX_RADIUS);
+const isCheck = id => Object.hasOwn(CHECKS, id);
 
 export function createModel() {
-  let index = 0, time = 0, speed = BASE.speed, radius = BASE.radius, phase = 'ready', count = 0, answer = null, say = '';
-  const rows = [], distinct = new Set();
-  const step = () => STEPS[index], result = () => meter(speed, radius);
-  function enter(i) {
-    index = i; time = 0; answer = null; phase = 'ready'; say = '';
-    const id = step().id;
-    if (id === 'wonder') { speed = BASE.speed; radius = BASE.radius; phase = 'watch'; }
-    if (id === 'word-speed') { speed = 20; radius = BASE.radius; phase = 'adjust-speed'; }
-    if (id === 'word-radius') { speed = BASE.speed; radius = 100; phase = 'adjust-radius'; }
-    if (id === 'watch') { speed = BASE.speed; radius = BASE.radius; phase = 'watch'; }
-    if (id === 'try-free') { speed = BASE.speed; radius = BASE.radius; phase = 'set'; }
-    if (id === 'try-speed') { speed = BASE.speed; radius = BASE.radius; phase = 'guess'; }
-    if (id === 'try-radius') { speed = BASE.speed; radius = BASE.radius; phase = 'guess'; }
-    if (id === 'alone') { speed = BASE.speed; radius = BASE.radius; phase = 'set'; }
+  const tested = new Set();
+  const rows = [];
+  let speed = BASE.speed;
+  let radius = BASE.radius;
+  let m = {index: 0, time: 0, phase: 'watch', say: '', guess: null, auto: null, lastPress: -1};
+  const step = () => STEPS[m.index];
+  const id = () => step().id;
+  const result = () => meter(speed, radius);
+
+  function row(kind, currentSpeed, currentRadius, g) {
+    return {kind, speed: kmh(currentSpeed), radius: currentRadius, g: shown(g)};
   }
-  function press(kind, dir) {
-    if (kind === 'speed' && (['adjust-speed', 'set'].includes(phase) || step().id === 'word-speed' && phase === 'done')) speed = Math.max(10, Math.min(150, speed + dir * 20));
-    if (kind === 'radius' && (['adjust-radius', 'set'].includes(phase) || step().id === 'word-radius' && phase === 'done')) radius = Math.max(10, Math.min(200, radius + dir * 25));
-    if (step().id === 'word-speed' && speed === BASE.speed && phase !== 'done') { phase = 'done'; say = 'The speed dial is now at 64.4 km/h, which is about 17.88 m/s. The game uses the metres-per-second value in its G-force formula.'; return {kind:'right', say}; }
-    if (step().id === 'word-radius' && radius === BASE.radius && phase !== 'done') { phase = 'done'; say = 'The radius is now 50 m, measured from the middle of the turn to the car. A wider turn has a larger radius.'; return {kind:'right', say}; }
-    say = `The speed is ${speedKmh(speed).toFixed(1)} km/h and the radius is ${radius} m. The meter reads ${shown(result())} g.`;
-    return {kind: 'progress', say};
+
+  function enter(index) {
+    m = {index, time: 0, phase: 'ready', say: '', guess: null, auto: null, lastPress: -1};
+    switch (id()) {
+      case 'wonder':
+      case 'formula':
+      case 'watch':
+      case 'alone':
+      case 'recap':
+        speed = BASE.speed;
+        radius = BASE.radius;
+        break;
+      case 'try-free':
+        speed = BASE.speed;
+        radius = BASE.radius;
+        rows.splice(0);
+        tested.clear();
+        break;
+      case 'word-speed':
+        speed = BASE.speed - SPEED_STEP;
+        radius = BASE.radius;
+        break;
+      case 'word-radius':
+        speed = BASE.speed;
+        radius = 100;
+        break;
+      case 'word-acceleration':
+      case 'word-g':
+        speed = BASE.speed;
+        radius = BASE.radius;
+        break;
+      case 'try-speed':
+        speed = BASE.speed;
+        radius = BASE.radius;
+        m.phase = 'guess';
+        break;
+      case 'try-radius':
+        speed = BASE.speed;
+        radius = BASE.radius;
+        m.phase = 'guess';
+        break;
+      default:
+        if (isCheck(id())) m.phase = 'ask';
+    }
   }
-  function run() {
-    const key = `${speed}/${radius}`;
-    if (step().id === 'try-free') {
-      if (speed === BASE.speed && radius === BASE.radius || distinct.has(key)) return {kind:'note', say:'Change the speed or radius before you run a different comparison.'};
-      distinct.add(key); rows.push({speed: speedKmh(speed), radius, g: shown(result())});
-      if (distinct.size >= 3) phase = 'done';
-      say = `At ${speedKmh(speed).toFixed(1)} km/h around ${radius} m, the meter reads ${shown(result())} g. Change at least one setting and test another different turn.`;
-      return {kind: 'right', say};
+
+  function goal() {
+    switch (id()) {
+      case 'word-speed': return {speed: BASE.speed, radius};
+      case 'word-radius': return {speed, radius: BASE.radius};
+      case 'try-speed': return {speed: 60, radius: BASE.radius};
+      case 'try-radius': return {speed: BASE.speed, radius: 75};
+      case 'alone': return {speed: 80, radius: BASE.radius};
+      case 'try-free': {
+        const preferred = [
+          {speed: 50, radius: 50},
+          {speed: 40, radius: 75},
+          {speed: 60, radius: 50},
+        ];
+        const nextPreferred = preferred.find(choice => !tested.has(settingsKey(choice.speed, choice.radius)));
+        if (nextPreferred) return nextPreferred;
+        for (let candidateSpeed = MIN_SPEED; candidateSpeed <= MAX_SPEED; candidateSpeed += SPEED_STEP) {
+          for (const candidateRadius of FREE_RADII) {
+            const key = settingsKey(candidateSpeed, candidateRadius);
+            if (key !== settingsKey(BASE.speed, BASE.radius) && !tested.has(key)) {
+              return {speed: candidateSpeed, radius: candidateRadius};
+            }
+          }
+        }
+        return {speed, radius};
+      }
+      default: return {speed, radius};
     }
-    if (step().id === 'try-speed') {
-      if (speed !== 80) return {kind:'note',say:`Change the speed from ${speedKmh(speed).toFixed(1)} km/h to ${speedKmh(80).toFixed(1)} km/h before you run the turn.`};
-      phase='done'; const correct=answer===0;
-      say=correct?`Correct. The meter reads ${shown(meter(80,50))} g, four times the ${shown(meter(40,50))} g reference because the game squares speed.`:`The meter reads ${shown(meter(80,50))} g, four times the ${shown(meter(40,50))} g reference. Doubling speed multiplies the squared speed term by four.`;
-      return {kind:correct?'right':'wrong',say};
+  }
+
+  function autoText(target) {
+    const changes = [];
+    if (target.speed !== speed) changes.push(`set the speed dial to ${kmh(target.speed).toFixed(1)} km/h`);
+    if (target.radius !== radius) changes.push(`set the turn radius to ${target.radius} m`);
+    const action = id() === 'try-free' || id() === 'alone' ? ' and run the turn' : '';
+    return changes.length
+      ? `I will ${changes.join(' and ')}${action}.`
+      : 'I will run this turn now.';
+  }
+
+  function targetAction() {
+    const next = goal();
+    if (next.speed !== speed || next.radius !== radius) return 'set:best';
+    if (id() === 'try-free' || id() === 'alone') return 'run';
+    return null;
+  }
+
+  function startAuto() {
+    if (m.auto) return null;
+    m.auto = goal();
+    m.lastPress = m.time;
+    m.say = autoText(m.auto);
+    return {kind: 'progress', say: m.say};
+  }
+
+  function move(kind, direction, automatic = false) {
+    if (m.auto && !automatic) return null;
+    const before = kind === 'speed' ? speed : radius;
+    if (kind === 'speed') speed = clampSpeed(speed + direction * SPEED_STEP);
+    else radius = clampRadius(radius + direction * RADIUS_STEP);
+    const after = kind === 'speed' ? speed : radius;
+    if (before === after) {
+      m.say = kind === 'speed'
+        ? `${direction > 0 ? 'The speed dial is already at its top' : 'The speed dial is already at its bottom'}, ${kmh(speed).toFixed(1)} km/h.`
+        : `The radius control is already at its ${direction > 0 ? 'outer' : 'inner'} limit, ${radius} m.`;
+      return {kind: 'note', say: m.say};
     }
-    if (step().id === 'try-radius') {
-      if (radius !== 25) return {kind:'note',say:`Change the radius from ${radius} m to 25 m before you run the turn.`};
-      phase='done'; const correct=answer===0;
-      say=correct?`Correct. The meter reads ${shown(meter(40,25))} g, twice the ${shown(meter(40,50))} g reference because the radius halves.`:`The meter reads ${shown(meter(40,25))} g, twice the ${shown(meter(40,50))} g reference. Halving radius halves the divisor and doubles the result.`;
-      return {kind:correct?'right':'wrong',say};
+    if (id() === 'word-speed' && speed === BASE.speed && m.phase !== 'done') {
+      m.phase = 'done';
+      m.say = `The dial now shows ${kmh(speed).toFixed(1)} km/h. The formula changes that speed to ${mpsFromDial(speed).toFixed(2)} m/s by dividing by 3.6.`;
+      return {kind: 'right', say: m.say};
     }
-    if (step().id === 'alone') {
-      if (speed === BASE.speed && radius === BASE.radius) return {kind:'fail',say:`The starting turn reads ${shown(result())} g, which is below 2 g. Change the speed or radius before you run again.`};
-      if (result() < 2) return {kind:'fail',say:`This turn reads ${shown(result())} g, which is below the 2 g target. Raise speed or shorten the radius, then try again.`};
-      phase='done'; say=`The turn reads ${shown(result())} g, which reaches the target of at least 2 g. The speed and radius changes are shown in the formula.`;
-      return {kind:'pass',say};
+    if (id() === 'word-radius' && radius === BASE.radius && m.phase !== 'done') {
+      m.phase = 'done';
+      m.say = `The radius is now ${radius} m, measured from the marked centre to the car.`;
+      return {kind: 'right', say: m.say};
+    }
+    m.say = `The dial shows ${kmh(speed).toFixed(1)} km/h, and the radius is ${radius} m. The turning rule gives ${reading(speed, radius)} g.`;
+    return {kind: 'progress', say: m.say};
+  }
+
+  function record() {
+    const key = settingsKey(speed, radius);
+    if (id() === 'try-free') {
+      if (key === settingsKey(BASE.speed, BASE.radius)) {
+        m.say = `The starting turn reads ${reading(speed, radius)} g. Change the speed or radius before recording a comparison.`;
+        return {kind: 'note', say: m.say};
+      }
+      if (tested.has(key)) {
+        m.say = 'That speed and radius are already in the table. Change at least one setting before recording another turn.';
+        return {kind: 'note', say: m.say};
+      }
+      tested.add(key);
+      rows.push(row('free', speed, radius, result()));
+      m.say = `At ${kmh(speed).toFixed(1)} km/h and ${radius} m, the meter reads ${reading(speed, radius)} g. Change a setting before you run a different turn.`;
+      if (tested.size >= FREE_TRIES) m.phase = 'done';
+      return {kind: 'right', say: m.say};
+    }
+    if (id() === 'try-speed' || id() === 'try-radius') {
+      const expected = goal();
+      if (speed !== expected.speed || radius !== expected.radius) {
+        m.say = `Set the speed to ${kmh(expected.speed).toFixed(1)} km/h and the radius to ${expected.radius} m, then run the turn.`;
+        return {kind: 'note', say: m.say};
+      }
+      rows.push(row(id(), speed, radius, result()));
+      m.phase = 'done';
+      const correct = m.guess === 0;
+      if (id() === 'try-speed') {
+        m.say = correct
+          ? `Correct: ${kmh(speed).toFixed(1)} km/h gives ${reading(speed, radius)} g, while 64.4 km/h gives ${baseReading} g at 50 m. Speed is squared, so the faster reading is higher.`
+          : `${kmh(speed).toFixed(1)} km/h gives ${reading(speed, radius)} g, while 64.4 km/h gives ${baseReading} g at 50 m. Speed is squared, so the faster reading is higher.`;
+      } else {
+        m.say = correct
+          ? `Correct: 64.4 km/h and 75 m gives ${reading(speed, radius)} g, while a 50 m radius gives ${baseReading} g. The larger radius divides the result more.`
+          : `64.4 km/h and 75 m gives ${reading(speed, radius)} g, while a 50 m radius gives ${baseReading} g. The larger radius divides the result more.`;
+      }
+      return {kind: correct ? 'right' : 'wrong', say: m.say};
+    }
+    if (id() === 'alone') {
+      if (key === settingsKey(BASE.speed, BASE.radius)) {
+        m.say = `The starting turn reads ${reading(speed, radius)} g, below the 2 g target. Change speed or radius before running it again.`;
+        return {kind: 'fail', say: m.say};
+      }
+      if (result() < 2) {
+        m.say = `This turn reads ${reading(speed, radius)} g, below the 2 g target. Raise speed or shorten the radius, then try again.`;
+        return {kind: 'fail', say: m.say};
+      }
+      m.phase = 'done';
+      m.say = `This turn reads ${reading(speed, radius)} g, which reaches the target of at least 2 g after a setting changed.`;
+      return {kind: 'pass', say: m.say};
     }
     return null;
   }
+
   function act(action) {
     const [kind, raw] = action.split(':');
-    if (kind === 'speed') return press('speed', raw === 'up' ? 1 : -1);
-    if (kind === 'radius') return press('radius', raw === 'up' ? 1 : -1);
-    if (kind === 'run' && phase === 'set') return run();
-    if (kind === 'answer' && phase === 'guess') {
-      const check = step().id === 'try-speed' ? 0 : 1, correct = raw === String(check);
-      answer=Number(raw); phase='set';
-      say=check===0?'Your prediction is recorded. Raise the speed to 128.7 km/h, keep the radius at 50 m, and run the turn.':'Your prediction is recorded. Shorten the radius to 25 m, keep the speed at 64.4 km/h, and run the turn.';
-      return {kind:'progress',say};
+    if (kind === 'replay') {
+      if (id() === 'wonder' || id() === 'watch') enter(m.index);
+      return null;
     }
-    if (kind === 'answer' && checks[step().id]) {
-      const q = checks[step().id], picked = Number(raw); if (!q.answers[picked]) return null;
-      answer = picked; phase = 'done'; say = picked === q.correct ? q.right : q.wrong;
-      return {kind: picked === q.correct ? 'right' : 'wrong', say};
+    if (kind === 'set' && raw === 'best') return startAuto();
+    if (kind === 'speed' && ['ready', 'set', 'done'].includes(m.phase)) return move('speed', raw === 'up' ? 1 : -1);
+    if (kind === 'radius' && ['ready', 'set', 'done'].includes(m.phase)) return move('radius', raw === 'up' ? 1 : -1);
+    if (kind === 'run' && (['ready', 'set'].includes(m.phase) || id() === 'try-free' && m.phase === 'done')) return record();
+    if (kind === 'answer' && (m.phase === 'guess' || m.phase === 'ask')) {
+      const picked = Number(raw);
+      if (!Number.isInteger(picked) || picked < 0 || picked > 2) return null;
+      if (isCheck(id())) {
+        const check = CHECKS[id()];
+        m.phase = 'done';
+        m.guess = picked;
+        m.say = picked === check.correct ? check.right : check.wrong;
+        return {kind: picked === check.correct ? 'right' : 'wrong', say: m.say};
+      }
+      m.guess = picked;
+      m.phase = 'set';
+      if (id() === 'try-speed') {
+        m.say = picked === 0
+          ? `Your prediction is recorded. Now raise the speed to ${kmh(60).toFixed(1)} km/h, keep the radius at 50 m, and run the turn.`
+          : `Your prediction is recorded. Now raise the speed to ${kmh(60).toFixed(1)} km/h, keep the radius at 50 m, and run the turn.`;
+      } else {
+        m.say = `Your prediction is recorded. Now keep the speed at 64.4 km/h, set the radius to 75 m, and run the turn.`;
+      }
+      return {kind: 'progress', say: m.say};
     }
     return null;
   }
+
   function tick(dt) {
-    time += dt;
-    if (step().id === 'watch' && phase === 'watch') {
-      if (time < 2) { speed=80; radius=50; } else { speed=40; radius=100; }
-      if (time >= 3) { phase = 'done'; say = 'The same car turns around the same 50 m radius. When speed doubles from 64.4 to 128.7 km/h, the meter rises from 0.65 g to 2.61 g. When radius doubles from 50 to 100 m, the meter falls from 0.65 g to 0.33 g.'; return {kind:'right', say}; }
+    m.time += dt;
+    if (m.auto) {
+      if (m.time - m.lastPress < AUTO_GAP_S) return null;
+      m.lastPress = m.time;
+      if (speed !== m.auto.speed) return move('speed', Math.sign(m.auto.speed - speed), true);
+      if (radius !== m.auto.radius) return move('radius', Math.sign(m.auto.radius - radius), true);
+      m.auto = null;
+      if (['try-free', 'try-speed', 'try-radius', 'alone'].includes(id())) return record();
+      if (id() === 'word-speed' || id() === 'word-radius') {
+        m.phase = 'done';
+        return null;
+      }
     }
+    if ((id() === 'wonder' || id() === 'watch') && m.phase !== 'done' && m.time >= (id() === 'wonder' ? 2.5 : 6)) {
+      m.phase = 'done';
+      if (id() === 'watch') {
+        rows.push(row('watch-speed', 80, 50, meter(80, 50)));
+        rows.push(row('watch-radius', 40, 100, meter(40, 100)));
+        m.say = `At 64.4 km/h and 50 m, the meter reads ${baseReading} g; at 128.7 km/h and 50 m, it reads ${reading(80, 50)} g, about four times as much. At 64.4 km/h and 100 m, it reads ${reading(40, 100)} g, about half as much.`;
+        return {kind: 'right', say: m.say};
+      }
+      m.say = `The cord leans away from the turn's centre, and the sideways arrow grows with the meter from ${baseReading} g at 64.4 km/h and 50 m. A turning car needs a sideways push because its direction keeps changing; which change might make this car's reading larger while the other setting stays fixed?`;
+      return {kind: 'right', say: m.say};
+    }
+    return null;
   }
+
+  function formulasForView() {
+    const current = id();
+    if (current === 'wonder') return [];
+    if (current === 'word-speed') return formulaRows(speed, radius, {worked: true, includeSpeed: true}).slice(0, 1);
+    if (current === 'word-radius') return [{
+      title: 'Measure the turn radius',
+      formula: 'radius = distance from the marked centre to the car',
+      worked: `${radius} m`,
+      note: 'The arm moves the car inward for a shorter radius and outward for a longer radius.',
+    }];
+    if (current === 'word-acceleration') return [{
+      title: 'Acceleration and velocity',
+      formula: 'acceleration = change in velocity ÷ time',
+      worked: '',
+      note: 'Velocity is speed in a direction. The unit m/s² means a change in m/s during each second.',
+    }];
+    if (current === 'word-g') return [{
+      title: 'One g',
+      formula: '1 g = 9.81 m/s²',
+      worked: '',
+      note: 'Dividing one acceleration by another compares their sizes.',
+    }];
+    if (current === 'try-speed' && m.phase === 'guess') return formulaRows(speed, radius, {worked: false, includeSpeed: true});
+    if (current === 'try-radius' && m.phase === 'guess') return formulaRows(speed, radius, {worked: false, includeSpeed: true});
+    if (isCheck(current) && m.phase === 'ask') return formulaRows(BASE.speed, BASE.radius, {worked: false, includeSpeed: false});
+    if (current === 'formula') return formulaRows(speed, radius, {worked: true, includeSpeed: true});
+    if (current === 'try-speed' && m.phase === 'set' && m.guess !== null) return formulaRows(speed, radius);
+    if (current === 'try-radius' && m.phase === 'set' && m.guess !== null) return formulaRows(speed, radius);
+    if (current === 'watch') return formulaRows(speed, radius);
+    if (current === 'try-free' || current === 'alone' || current === 'recap') return formulaRows(speed, radius);
+    return [];
+  }
+
   function view() {
-    const id = step().id, q = checks[id], done = phase === 'done';
-    const live = !q && !['wonder','try-speed','try-radius'].includes(id) && (id !== 'word-speed' || done);
-    const formulasForView = live && !['wonder'].includes(id) ? formulas(speed, radius) : [];
-    const controls = ['word-speed','word-radius','try-free','try-speed','try-radius','alone'].includes(id);
+    const current = id();
+    const done = m.phase === 'done';
+    const check = isCheck(current) ? CHECKS[current] : null;
+    const answersOpen = m.phase === 'guess' || m.phase === 'ask';
+    const controlsOn = ['word-speed', 'word-radius', 'try-speed', 'try-radius', 'try-free', 'alone'].includes(current);
     const keys = {};
-    if (controls && (phase === 'set' || phase.startsWith('adjust') || phase === 'done' && ['word-speed','word-radius'].includes(id))) {
-      if (id !== 'word-radius') { keys.ArrowLeft='speed:down'; keys.ArrowRight='speed:up'; }
-      if (id !== 'word-speed') { keys.ArrowUp='radius:up'; keys.ArrowDown='radius:down'; }
-      if (['try-free','try-speed','try-radius'].includes(id)) keys.Space = id === 'try-free' ? 'run' : 'run';
+    if (controlsOn && !m.auto && (!done || ['word-speed', 'word-radius', 'try-free'].includes(current))) {
+      Object.assign(keys, SPEED_KEYS, RADIUS_KEYS);
+      if (['try-free', 'alone'].includes(current)) keys.Space = 'run';
+      if (['try-speed', 'try-radius'].includes(current) && m.phase === 'set') keys.Space = 'run';
     }
-    if (q && !done) { keys['1']='answer:0'; keys['2']='answer:1'; keys['3']='answer:2'; }
-    const base = {scene: id, time, speedKmh: speedKmh(speed), radiusM: radius, g: result(), formulas: formulasForView,
-      rows: rows.map(row => ({...row})), keys, repeat: Object.keys(keys).filter(k => k.startsWith('Arrow')), buttons: [], cards: [], target: null, glow: null,
-      waiting: !done && (controls || id === 'wonder' || id === 'watch'), ready: done || id === 'recap', say: say || '', prompt: '', hints: [],
-      meterBaseline: shown(meter(BASE.speed, BASE.radius))};
-    if (id === 'wonder') return {...base, ready: true, waiting:false, say:'A car turns on an arm while a cord hangs from the car. The meter reads 0.65 g. What makes the reading larger: faster speed, a wider turn, or both?', prompt:'Press Enter to look at speed and radius.', hints:['Watch the cord as the car turns.','The meter measures sideways acceleration.','Press Enter to continue.']};
-    if (id === 'word-speed') return {...base, say: done ? say : 'Speed is distance travelled during a set time. This dial shows kilometres per hour, written km/h. The formula uses metres per second, written m/s; divide km/h by 3.6 to convert because an hour has 3,600 seconds and a kilometre has 1,000 metres.', prompt:done?'Press Enter to continue, or change the speed.':`The dial shows ${speedKmh(speed).toFixed(1)} km/h. Press Right to raise speed or Left to lower it until it reads 64.4 km/h.`, hints:['The speed dial changes the car’s speed.','Press Right until the dial reads 64.4 km/h.','Brian will point to the speed dial.'], target:done?null:'speed:up', ready:done};
-    if (id === 'word-radius') return {...base, say: done ? say : 'Radius is the distance from the centre of a circular turn to the car. The arm labels that distance in metres, written m. Acceleration is how quickly velocity changes. The formula measures acceleration in metres per second squared, written m/s², and one g is 9.81 m/s². Move the car inward until the arm measures 50 m.', prompt:done?'Press Enter to continue, or change the radius.':`The radius is ${radius} m. Press Down to shorten it or Up to lengthen it.`, hints:['Follow the arm from its centre to the car.','Press Down until the radius is 50 m.','Brian will point to the radius control.'], target:done?null:'radius:down', ready:done};
-    if (id === 'watch') return {...base, formulas: formulas(speed,radius), waiting: !done, ready: done, say: done ? say : 'Brian changes one setting at a time. Watch the cord and meter as he changes speed, then radius.', prompt:done?'Press Enter to continue.':'Watch the meter.', hints:['The faster car gives a larger reading.','The wider turn gives a smaller reading.','Wait for Brian to finish.']};
-    if (id === 'try-free') return {...base, waiting: !done, ready: done, say: say || 'Choose a speed and a radius. Read the meter, predict the result, and press Space to record a turn. Change at least one setting before each of two more runs.', prompt:done?'Press Enter to continue, or keep testing.':`Speed ${speedKmh(speed).toFixed(1)} km/h; radius ${radius} m. Change speed or radius, then press Space to record a different setting. Different settings tested: ${distinct.size} of 3.`, hints:['The formula follows both controls.','Change the speed or the radius before the next run.','Brian will point to the run control.'], target:done?null:'run'};
-    if (id === 'try-speed' || id === 'try-radius') return {...base, formulas: [], waiting:!done, ready:done,
-      say: done ? say : phase === 'guess' ? (id==='try-speed'?'The reference is 64.4 km/h around 50 m, which reads 0.65 g. Predict the meter if speed doubles and the radius stays fixed.':'The reference is 64.4 km/h around 50 m, which reads 0.65 g. Predict the meter if the radius halves and speed stays fixed.') : say,
-      prompt:done?'Press Enter to continue.':phase==='guess'?'Choose your prediction before changing the control.':say,
-      ...(phase==='guess'?{asking:true,target:'answer:0',keys:{1:'answer:0',2:'answer:1',3:'answer:2'},cards:(id==='try-speed'?['Four times as large.','Twice as large.','The same.']:['Twice as large.','Half as large.','The same.']).map((label,i)=>({id:`answer:${i}`,key:String(i+1),label,picture:{kind:'meter',g:meter(BASE.speed,BASE.radius)},state:null})),prompt:'Pick a card, or press 1, 2 or 3.'}:{target:id==='try-speed'?(speed===80?'run':'speed:up'):(radius===25?'run':'radius:down'),keys:{ArrowLeft:'speed:down',ArrowRight:'speed:up',ArrowUp:'radius:up',ArrowDown:'radius:down',Space:'run'},meterReference:shown(meter(BASE.speed,BASE.radius))}), hints:['Compare the squared speed or the radius divisor.','Keep one setting fixed and change the other.','Brian will point to the next control or prediction.']};
-    if (id === 'alone') return {...base, formulas:done?formulas(speed,radius):formulas(speed,radius), waiting:!done, ready:done,
-      say:done?say:'Brian’s test starts at 64.4 km/h around 50 m, which reads 0.65 g. Change at least one control, then run a turn that reaches 2 g or more.',
-      prompt:done?'Press Enter to continue.':`The meter reads ${shown(result())} g. Change speed or radius, then press Space to test.`,
-      target:done?null:(speed===BASE.speed&&radius===BASE.radius?'speed:up':'run'), glow:done?null:'speed', hints:['A higher speed or a shorter radius raises the reading.','Try 128.7 km/h around 50 m, then run the turn.','Brian will point to the next control.']};
-    if (q) return {...base, formulas: [], waiting:!done, ready:done, asking:!done, say:q.question, prompt:done?'Press Enter to continue.':'Pick an answer, or press 1, 2 or 3.', keys:done?{}:{1:'answer:0',2:'answer:1',3:'answer:2'}, cards:q.answers.map((label,i)=>({id:`answer:${i}`,key:String(i+1),label,picture:{kind:'meter',g:meter(BASE.speed,BASE.radius)},state:answer===null?null:(i===q.correct?'right':answer===i?'wrong':null)})), hints:['Read the formula and compare the settings.','Speed is squared and radius is the divisor.','Pick the answer that matches the rule.']};
-    if (id === 'recap') return {...base,ready:true, waiting:false, ideas:KEY_IDEAS, formulas:formulas(BASE.speed,BASE.radius), say:'The game squares speed and divides by turn radius and Earth’s gravitational acceleration. Doubling speed gives four times the reading, while doubling radius halves it. The G-force lap still asks for three different corners at 2 g without leaving the road.', prompt:'Enter finishes the lesson and opens the existing G-force lap challenge.', hints:KEY_IDEAS.map(item=>item.text)};
-    return base;
+    if (answersOpen) Object.assign(keys, {1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
+
+    const base = {
+      scene: current,
+      time: m.time,
+      speedMph: speed,
+      speedKmh: kmh(speed),
+      radiusM: radius,
+      g: answersOpen ? null : result(),
+      formulas: formulasForView(),
+      rows: rows.map(item => ({...item})),
+      keys,
+      repeat: Object.keys(keys).filter(key => key.startsWith('Arrow')),
+      buttons: [],
+      cards: [],
+      asking: answersOpen,
+      answered: check ? done : false,
+      target: null,
+      glow: null,
+      waiting: false,
+      ready: done || current === 'recap',
+      say: m.say,
+      prompt: '',
+      hints: [],
+      meterBaseline: baseReading,
+      best: goal(),
+      radiusKnown: m.index >= STEPS.findIndex(step => step.id === 'word-radius'),
+      accelerationKnown: m.index >= STEPS.findIndex(step => step.id === 'word-acceleration'),
+    };
+
+    if (current === 'wonder') return {
+      ...base,
+      waiting: !done,
+      ready: done,
+      say: done ? m.say : 'Speed is distance travelled during a set time, and this dial shows 64.4 kilometres per hour, written km/h. The arm measures 50 metres, written m, from its marked centre to the car, and the meter gives the sideways push in g, where one g is Earth’s gravitational acceleration near the ground.',
+      prompt: done ? 'Press Enter to continue.' : 'Watch the cord and the sideways arrow.',
+      hints: ['Watch the cord and the arrow beside the car.', 'The sideways arrow grows with the meter reading.', 'Wait for Brian to finish.'],
+    };
+
+    if (current === 'word-speed') {
+      const target = targetAction();
+      return {
+        ...base,
+        waiting: !done,
+        target,
+        glow: 'speed',
+        say: done ? m.say : m.auto ? m.say : 'Speed is distance travelled during a set time, and the dial shows kilometres per hour, written km/h. The formula uses metres per second, written m/s, which counts metres travelled each second; divide km/h by 3.6 because a kilometre is 1,000 metres and an hour is 3,600 seconds.',
+        prompt: done ? 'Press Enter to continue, or keep changing the speed.' : `The dial reads ${kmh(speed).toFixed(1)} km/h. Press ← to lower it or → to raise it until it reads 64.4 km/h.`,
+        hints: ['The speed is shown on the right dial.', 'Use ← to lower the reading or → to raise it until it shows 64.4 km/h.', 'Watch my pointer. I will set the speed dial to 64.4 km/h.'],
+      };
+    }
+
+    if (current === 'word-radius') {
+      return {
+        ...base,
+        waiting: !done,
+        target: done ? null : 'set:best',
+        glow: 'radius',
+        say: done ? m.say : m.auto ? m.say : 'Radius is the distance from the centre of a circular turn to the car. The arm marks this distance, and its control moves the car inward for a shorter radius or outward for a longer radius.',
+        prompt: done ? 'Press Enter to continue, or keep changing the radius.' : `The radius is ${radius} m. Press ↓ to shorten it or ↑ to lengthen it until it reads 50 m.`,
+        hints: ['Follow the arm from the marked centre to the car.', 'Use ↓ to shorten the radius or ↑ to lengthen it until it reads 50 m.', 'Watch my pointer. I will set the radius to 50 m.'],
+      };
+    }
+
+    if (current === 'word-acceleration') return {
+      ...base,
+      ready: true,
+      say: 'Velocity is speed in a direction, and acceleration is how quickly velocity changes. Metres per second squared, written m/s², means a speed change measured in m/s during each second; the turning car changes direction, so its velocity changes even when speed stays the same.',
+      prompt: 'Press Enter to continue.',
+      hints: ['Velocity includes a direction.', 'Acceleration measures a change in velocity over time.', 'Press Enter to continue.'],
+    };
+
+    if (current === 'word-g') return {
+      ...base,
+      ready: true,
+      say: 'G-force is the car’s sideways acceleration compared with Earth’s gravitational acceleration near the ground, and one g is about 9.81 m/s². Speed matters twice because a faster car has more velocity to change, and its direction changes sooner around the same turn.',
+      prompt: 'Press Enter to see the rule that gives the reading.',
+      hints: ['One g is 9.81 m/s².', 'The meter compares sideways acceleration with one g.', 'Press Enter to continue.'],
+    };
+
+    if (current === 'formula') return {
+      ...base,
+      ready: true,
+      say: 'In this game, we square speed in m/s, divide by radius in m to get sideways acceleration in m/s², then divide by 9.81 m/s² to count it in g. One g equals 9.81 m/s², and the sum uses the same dial setting and arm position shown on the board.',
+      prompt: 'Press Enter to watch how speed and radius change the reading.',
+      hints: ['Speed is squared in this rule.', 'Radius and 9.81 m/s² divide the squared speed.', 'Press Enter to continue.'],
+    };
+
+    if (current === 'watch') return {
+      ...base,
+      waiting: !done,
+      ready: done,
+      say: done ? m.say : 'Brian raises the speed from 64.4 to 128.7 km/h while the radius stays at 50 m, then restores the speed and widens the radius to 100 m. Watch the cord, arrow, meter and formula as he changes one setting at a time.',
+      prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the car turn and the readings change.',
+      hints: ['Watch the sideways arrow as the car goes faster.', 'Then watch the cord and meter as the turn radius grows.', 'Wait for Brian to finish.'],
+    };
+
+    if (current === 'try-speed' || current === 'try-radius') {
+      const speedTry = current === 'try-speed';
+      if (answersOpen) {
+        const labels = speedTry
+          ? [`About ${reading(60, 50)} g.`, `About ${reading(50, 50)} g.`, `About ${baseReading} g.`]
+          : [`About ${reading(40, 75)} g.`, `About ${reading(40, 100)} g.`, `About ${baseReading} g.`];
+        return {
+          ...base,
+          g: null,
+          waiting: true,
+          ready: false,
+          target: 'answer:0',
+          say: speedTry
+            ? 'The turning-arm model starts at 64.4 km/h and 50 m. What reading will the meter show if speed becomes 96.6 km/h and radius stays at 50 m?'
+            : 'The turning-arm model starts at 64.4 km/h and 50 m. What reading will the meter show if radius becomes 75 m and speed stays at 64.4 km/h?',
+          prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
+          cards: labels.map((label, i) => ({id: `answer:${i}`, key: String(i + 1), label, picture: {kind: 'reading', g: null}, state: null})),
+          hints: speedTry
+            ? ['A faster car changes its direction sooner.', 'Use the rule with 96.6 km/h and 50 m, but do not run the turn yet.', 'Pick the answer that matches the formula.']
+            : ['Radius is the distance from the centre to the car.', 'Use the rule with 64.4 km/h and 75 m, but do not run the turn yet.', 'Pick the answer that matches the formula.'],
+        };
+      }
+      const g = goal();
+      const target = targetAction();
+      return {
+        ...base,
+        waiting: !done,
+        ready: done,
+        target,
+        glow: speedTry ? 'speed' : 'radius',
+        say: m.say || (speedTry
+          ? 'Your prediction is recorded. Change the speed to 96.6 km/h, keep the radius at 50 m, and run the turn.'
+          : 'Your prediction is recorded. Keep the speed at 64.4 km/h, change the radius to 75 m, and run the turn.'),
+        prompt: done ? 'Press Enter to continue.' : `Set the speed to ${kmh(g.speed).toFixed(1)} km/h and the radius to ${g.radius} m, then press Space to run the turn.`,
+        hints: ['The formula follows the two settings.', speedTry ? 'Use ← or → to set 96.6 km/h.' : 'Use ↑ or ↓ to set 75 m.', 'Watch my pointer. I will set the requested value and run the turn.'],
+      };
+    }
+
+    if (current === 'try-free') return {
+      ...base,
+      waiting: !done,
+      ready: done,
+      target: done ? null : targetAction(),
+      glow: 'settings',
+      say: m.say || 'You can change speed and radius freely, and the formula follows every change so you can predict before pressing Space. The table keeps three different settings and their readings.',
+      prompt: done ? 'Press Enter to continue, or keep testing new settings.' : `Change speed or radius, then press Space to record a turn. Different settings tested: ${tested.size} of ${FREE_TRIES}.`,
+      hints: ['Change either dial before you run a comparison.', 'The table keeps different settings, so repeats do not count twice.', 'Watch my pointer. I will choose a new setting and run the turn.'],
+    };
+
+    if (current === 'alone') return {
+      ...base,
+      waiting: !done,
+      ready: done,
+      target: done ? null : targetAction(),
+      glow: 'settings',
+      say: done ? m.say : 'Brian’s test starts at 64.4 km/h and 50 m; change at least one setting, then find a turn that reaches 2 g or more. Predict from the formula and press Space to run the turn.',
+      prompt: done ? 'Press Enter to continue.' : `The meter reads ${reading(speed, radius)} g. Change speed or radius, then press Space to run the turn.`,
+      hints: ['A higher speed or a shorter radius raises the reading.', 'Use ← or → to raise speed, or ↑ or ↓ to change the radius; then run the turn.', 'Watch my pointer. I will set 128.7 km/h and run the turn.'],
+    };
+
+    if (check) return {
+      ...base,
+      waiting: !done,
+      ready: done,
+      asking: !done,
+      say: check.question,
+      prompt: done ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.',
+      cards: check.answers.map((label, i) => ({id: `answer:${i}`, key: String(i + 1), label, picture: {kind: 'reading', g: null}, state: !done ? null : i === check.correct ? 'right' : i === m.guess ? 'wrong' : null})),
+      hints: done ? ['Press Enter to continue.', 'Press Enter to continue.', 'Press Enter to continue.'] : [
+        'Use the formula to compare the two settings.',
+        current === 'check-speed' ? 'The formula squares speed.' : current === 'check-radius' ? 'Radius divides the result.' : 'Speed is squared, and radius divides the result.',
+        'Pick the sentence that matches the formula.',
+      ],
+      say: done ? m.say : check.question,
+    };
+
+    return {
+      ...base,
+      ready: true,
+      waiting: false,
+      ideas: KEY_IDEAS,
+      say: 'A turning car keeps changing direction, so it needs a sideways push that the driver feels. In this game the reading rises with the square of speed and falls as radius grows, and the G-force lap still asks you to reach at least 2 g in three different corners without leaving the road.',
+      prompt: 'Press Enter to finish the lesson and open the existing G-force lap challenge.',
+      hints: KEY_IDEAS.map(item => item.text),
+    };
   }
-  return {enter, act, tick, view, state: () => ({speed, radius, rows})};
+
+  function state() {
+    return {speed, radius, rows: rows.map(item => ({...item})), tested: [...tested]};
+  }
+
+  return {enter, act, tick, view, state};
 }
 
 export const PASS_SAY = 'You have passed G-force. Drive a lap on a course you own and reach 2 g in three different corners without leaving the road.';
-export const lesson = Object.freeze({id:'gforce', steps:STEPS, createModel, keyIdeas:KEY_IDEAS, challengeCard:CHALLENGE_CARD, words:WORDS, finishLabel:'Finish the lesson', passSay:PASS_SAY});
+export const lesson = Object.freeze({
+  id: 'gforce',
+  steps: STEPS,
+  createModel,
+  keyIdeas: KEY_IDEAS,
+  challengeCard: CHALLENGE_CARD,
+  words: WORDS,
+  finishLabel: 'Finish the lesson',
+  passSay: PASS_SAY,
+});
