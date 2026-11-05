@@ -41,3 +41,10 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - First, the sheet: flat ground and level camera, plain daylight. Copy the working cameras from ww-art-tintown (	ools/blender/scablands-tintown.py).
 - Large invented shop signs readable from 40 m, shopfronts with broken glass, a floor of cracked tile and sand. Someone must be able to say "that's a mall" from one picture.
 - Show the stuck escalator from the floor, with a person beside it.
+
+**Round 3: merge, at the cap, not good enough to release as it stands.** It now reads as a row of shops: tile floor, shopfronts, signs, stuck escalator, and the camera is right. But it is clean, pale and small, with no grit. Fixes for WW-SCENE, none of them new art rounds:
+- Darker, dirtier materials in the game, with rust streaks and soot.
+- Signs in strong contrast: "DRY GOODS" grey on green is hard to read from a distance.
+- Kit rubble, sand drifts and the Ash Men lamps dressed through it. Scale it up if a car feels cramped.
+- The upright orange rods on the shopfronts read as stray sticks: remove them if the model allows it, or hide them with rubble.
+- I judge it again in the game at WW-FINISH.
