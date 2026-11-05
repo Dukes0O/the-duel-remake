@@ -1555,3 +1555,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov night: merged the first Wasteland batch of eight cards (Codex build, Codex review with two faults fixed, changed suites, circuits, replays; switches off) and QA-BUNDLE-NO-COPY (browser test copy 373 MB to 7 MB).
 - 5 Nov night: merged Grip and Suspension classrooms, old lessons removed (all 23 lab browser scenarios pass, lane 44/45: test-review-evidence fails on a midnight date mismatch, carded, build). Live with the next release.
 - 5 Nov night: merged EIFEL-CROWN-C3 (lane 57/57, circuits, build; Claude reviewed the Medium limit, back on the written 30 to 50%).
+- 5 Nov night: merged WW-HOOKS and WW-EVERBURN-JOBS (Codex build, two Codex reviews with faults fixed; nine jobs 10/10 at child pace through real inputs; lane 100/100, build, arena-fuel-run, arena-ambush-alley).
