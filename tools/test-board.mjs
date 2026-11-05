@@ -1,3 +1,4 @@
+import {rmSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, mkdirSync, mkdtempSync, cpSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -254,14 +255,8 @@ if (!process.env.DUEL_STAMP_FIXTURE && process.platform === 'win32') {
     const cli = spawnSync(process.execPath, [join(fixture, 'tools/new-line-cards.mjs'), 'car', 'test-car', 'Duplicate'], { encoding: 'utf8', windowsHide: true });
     check(cli.status !== 0 && cli.stderr.includes('already exists'), 'CLI duplicate exits nonzero');
   } finally {
-    assert.equal(process.platform, 'win32', 'test cleanup requires the Recycle Bin');
     assert.ok(fixture.startsWith(scratch + '\\') && /^line-stamp-[a-zA-Z0-9]+$/.test(fixture.slice(scratch.length + 1)));
-    const literal = "'" + fixture.replaceAll("'", "''") + "'";
-    const recycled = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-      'Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory('
-      + literal + ',[Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs,[Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)'],
-    { encoding: 'utf8', windowsHide: true });
-    assert.equal(recycled.status, 0, recycled.stderr);
+    rmSync(fixture, {recursive: true, force: true, maxRetries: 5, retryDelay: 200});
   }
 }
 

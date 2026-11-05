@@ -79,23 +79,19 @@ export async function validateQaBundle(path, {realPath = realpath, read = readFi
   return actual;
 }
 
-export async function recycleQaBundle(path, {realPath = realpath, start = launch, wait = waitForExit, platform = process.platform} = {}) {
+// Deleted outright, never sent to the Recycle Bin (Kyle): a browser run's bundle is about 400 MB of rebuildable output, and recycled
+// bundles filled the disk on 28 October and again on 5 November.
+export async function removeQaBundle(path, {realPath = realpath, remove = rm} = {}) {
   const owned = resolveQaBundle(path), target = resolveQaBundle(await realPath(owned));
   if (relative(owned, target)) throw Error('QA bundle cleanup refuses a redirected target.');
-  if (platform !== 'win32') throw Error('QA bundle recycling requires the Windows Recycle Bin.');
   // The owner supplies only its mkdtemp leaf; never recurse through another root.
-  const literal = "'" + target.replaceAll("'", "''") + "'";
-  const script = 'Add-Type -AssemblyName Microsoft.VisualBasic; ' +
-    '[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(' + literal +
-    ', [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)';
-  const encoded = Buffer.from(script, 'utf16le').toString('base64');
-  await wait(start('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded]), 'QA bundle recycle');
+  await remove(target, {recursive: true, force: true, maxRetries: 5, retryDelay: 200});
 }
 
 export async function buildQaBundle({
   hasVite = () => existsSync(VITE_CLI), makeDirectory = mkdir, makeTemp = mkdtemp,
   start = launch, wait = waitForExit, read = readFile, write = writeFile,
-  recycle = recycleQaBundle,
+  cleanup = removeQaBundle,
 } = {}) {
   if (!hasVite()) throw Error('Vite is missing. Run npm ci in this isolated worktree.');
   const qaRoot = join(PROJECT_ROOT, '.qa-dist');
@@ -112,7 +108,7 @@ export async function buildQaBundle({
     await write(join(bundle, 'qa-bundle.json'), JSON.stringify({schema: 1, projectRoot: PROJECT_ROOT, qa: true}) + '\n');
     return bundle;
   } catch (error) {
-    await recycle(bundle);
+    await cleanup(bundle);
     throw error;
   }
 }

@@ -1,5 +1,6 @@
 // Medal sheets and earned cars (docs/EARNED_CARS.md, card EARN-MEDALS).
 // Memory-only: no browser storage is read or written.
+import {rmSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
@@ -306,16 +307,9 @@ console.log('scratch medal cars passed');
     assert.equal(run.status, 0, run.stdout + run.stderr);
     assert.match(run.stdout, /scratch medal cars passed/);
   } finally {
-    assert.equal(process.platform, 'win32', 'test cleanup requires the Recycle Bin');
     const part = relative(join(root, '.qa-dist'), scratch);
     assert.ok(/^medals-test-[a-zA-Z0-9]+$/.test(part), 'recycle only the folder this test made');
-    const literal = "'" + scratch.replaceAll("'", "''") + "'";
-    const script = 'Add-Type -AssemblyName Microsoft.VisualBasic; ' +
-      '[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(' + literal +
-      ',[Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs,[Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)';
-    const cleanup = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand',
-      Buffer.from(script, 'utf16le').toString('base64')], {windowsHide: true, encoding: 'utf8'});
-    assert.equal(cleanup.status, 0, cleanup.stderr);
+    rmSync(scratch, {recursive: true, force: true, maxRetries: 5, retryDelay: 200});
   }
 });
 
