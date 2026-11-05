@@ -6,4 +6,5 @@ export {townCalendarAt, TOWN_TIME} from './town-calendar.js';
 export {dispatchTownCommand, registerTownCommand, townBuildingCatalog, TOWN_WORK_STATES} from './town-commands.js';
 export {stepTown, registerTownSystem, registeredTownSystems} from './town-sim.js';
 export {createWorkOrder, createBuildingWorkOrder, createRouteWorkOrder, advanceWork, workOrderScaffold, prioritizeWorkOrders, workStageMinutes} from './town-work.js';
+export {TOWN_MONEY_PRICES, townLedger} from './town-money.js';
 export {SCABLANDS_TOWN_REGION, TOWN_REGIONS, cellIsReserved, getTownChunk, TOWN_CELL_METRES, TOWN_CHUNK_CELLS} from './town-world-data.js';
