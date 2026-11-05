@@ -27,10 +27,12 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat']);
+const artCandidates = new Set(['wildcat', 'town-machines-1']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -437,6 +439,39 @@ try {
       // export checks return when it passes and moves into public/.
       check(generator.script + ' keeps its candidate out of the runtime folder until it passes', () => {
         assert.ok(!existsSync(join(root, generator.glb[0])), `${generator.glb[0]} is published before passing`);
+      });
+      if (generator.id === 'town-machines-1') check('TOWN-ART-MACHINES-1 private GLB keeps its family, joints and per-machine budgets', () => {
+        const path = join(root, '.qa-dist/town-machines-1/machines-1.glb');
+        if (!existsSync(path)) return; // Private round output is removed after review evidence is built.
+        const bytes = readFileSync(path);
+        assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+        assert.equal(bytes.readUInt32LE(4), 2);
+        assert.equal(bytes.readUInt32LE(8), bytes.length);
+        assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+        const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+        assert.equal(gltf.images?.length, 1, 'one embedded wear atlas');
+        assert.equal(gltf.images[0].mimeType, 'image/jpeg', 'compact embedded photo atlas');
+        const names = gltf.nodes.map(node => node.name || '');
+        const ids = ['trencher', 'excavator', 'dump-truck', 'dozer'];
+        assert.ok(names.includes('town-machines-1'), 'one family root');
+        for (const id of ids) assert.ok(names.includes(id), `${id} root is missing`);
+        const requiredJoints = ['trencher:boom','trencher:chain','excavator:cab','excavator:boom','excavator:arm',
+          'excavator:bucket','dump-truck:bed','dump-truck:load','dozer:blade'];
+        for (const name of requiredJoints) assert.ok(names.includes(name), `${name} pivot node is missing`);
+        const children = gltf.nodes.map(node => node.children || []);
+        const nodeByName = new Map(gltf.nodes.map((node, index) => [node.name, index]));
+        const familyChildren = children[nodeByName.get('town-machines-1')];
+        assert.deepEqual(familyChildren.map(index => gltf.nodes[index].name).sort(), [...ids].sort(), 'one direct child root per machine');
+        const descendants = (index) => [index, ...children[index].flatMap(descendants)];
+        const primitiveCount = (nodeIndex) => {
+          const meshIds = new Set(descendants(nodeIndex).map(index => gltf.nodes[index].mesh).filter(Number.isInteger));
+          return [...meshIds].reduce((sum, meshId) => sum + gltf.meshes[meshId].primitives.reduce((partial, primitive) =>
+            partial + gltf.accessors[primitive.indices].count / 3, 0), 0);
+        };
+        for (const id of ids) {
+          const triangles = primitiveCount(nodeByName.get(id));
+          assert.ok(triangles > 1000 && triangles <= 15000, `${id}: ${triangles} triangles`);
+        }
       });
       continue;
     }
