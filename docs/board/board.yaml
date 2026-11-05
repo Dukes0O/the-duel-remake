@@ -1118,6 +1118,16 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-OUTPOST-SCENE.md"
 
+  - id: TOWN-BOWL-LINK
+    title: "Town: the Bowl's gate, tickets, crowd and the Rex in the square"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-WORLD","TOWN-HOOKS","BOWL-HOOKS","BOWL-REX-FIGHT"]
+    locks: [busy-game-files]
+    details: "docs/board/cards/TOWN-BOWL-LINK.md"
+
   - id: TOWN-MAP-VIEW
     title: "Town: the Scablands from above"
     owner: "codex"
