@@ -332,7 +332,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     details: "docs/board/cards/QA-MAP-FINISH-TABLE.md"
@@ -342,7 +342,7 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     details: "docs/board/cards/QA-AUDIO-CRASH-PEAK-3.md"
@@ -365,7 +365,7 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "M"
-    status: "backlog"
+    status: "building"
     needs: [LAB-CLASSROOM]
     locks: []
     flag: "lab-classroom"
