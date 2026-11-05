@@ -396,7 +396,7 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "gear-find"
@@ -407,7 +407,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -418,7 +418,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -429,7 +429,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: [save-shape]
     flag: "story-everburn"
@@ -440,7 +440,7 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "story-everburn"
@@ -451,7 +451,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -462,7 +462,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -473,7 +473,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "S"
-    status: "ready"
+    status: "building"
     needs: []
     locks: [save-shape]
     flag: "titan-bowl"
@@ -484,7 +484,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -495,7 +495,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -506,7 +506,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -517,7 +517,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -528,7 +528,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -539,7 +539,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -550,7 +550,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -561,7 +561,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "scablands"
@@ -572,7 +572,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -583,7 +583,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -594,7 +594,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
@@ -605,7 +605,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: []
     locks: []
     flag: "titan-bowl"
