@@ -25,9 +25,10 @@ if not evidence.is_absolute():
     evidence = root / evidence
 if a.paths_only:
     import json
-    print(json.dumps({'blend': [str(root / 'art-build/scablands-mall/mall.blend')], 'glb': [],
+    print(json.dumps({'blend': [str(root / 'art-build/scablands-mall/mall.blend')],
+                      'glb': [str(root / a.out)],
                       'json': [], 'evidence': [str(evidence)],
-                      'summary': [str(root / 'docs/board/looks/ww-art-mall/round-1.jpg')]}))
+                      'summary': [str(root / 'docs/board/looks/ww-art-mall/round-3.jpg')]}))
     raise SystemExit(0)
 
 import bpy
