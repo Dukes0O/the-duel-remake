@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "id": "town-17",
+  "name": "Fixture Town",
+  "seed": 17,
+  "rngState": 17,
+  "tick": 25,
+  "calendar": {"hour": 0, "day": 2, "month": 1, "season": "Spring", "year": 1},
+  "founders": [{"id": "founder-1", "name": "Ari"}],
+  "people": [],
+  "buildings": [],
+  "regions": {"scablands": {"chunks": {}}}
+}
