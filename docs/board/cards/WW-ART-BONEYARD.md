@@ -37,3 +37,8 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Show the drive-through from inside at car height. Add a proper field of scrap, with larger pieces.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass, merge.** Reads as dead airliners at once: grey round bodies, swept fins, faded wings. Three faults to look at when WW-SCENE places it, and round 3 is kept for them:
+- Landing legs poke out below the ground in the 40 m and open-hull views. Trim them or sink the wreck.
+- The hull's open end is a thin hoop, and a column stands in the middle of the view through it. Check that the car can really drive through at 5.1 m, and thicken the hoop.
+- Wings are too clean for this world: add soot, streaks and torn edges.
