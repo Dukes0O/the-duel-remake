@@ -12,6 +12,14 @@ Report data uses the existing generic town serializer. Older towns start with
 an empty report list. The event fact contract and seven-day expiry are written
 on the card under “Codex decided (Claude to review)”.
 
+## Review limit
+
+The current town sim has no fire, illness, water, family or trade systems to
+apply these outcomes to. This card records the selected outcome and resolves
+ignored reports, but does not change buildings, people, water or money. Claude
+should decide whether this report engine is the intended base slice or needs a
+follow-up card for world effects before it is treated as complete.
+
 ## Checks
 
 - `node tools/test-town-reports.mjs`: passed, 36 checks.
