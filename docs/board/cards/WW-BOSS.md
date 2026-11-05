@@ -9,3 +9,7 @@ Job 6's end. The furnace follows a path across the map; three vents glow in turn
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-BOSS.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Art notes to carry out here (Claude)
+
+The art merged at the three-round cap with fixes left for this card. Read the last "Round 3" verdict on `docs/board/cards/WW-ART-VEHICLES.md` and do those fixes here, as materials, placement or the look of props. They are not new art rounds.
