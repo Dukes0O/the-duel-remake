@@ -2,41 +2,43 @@
 
 ## Changed
 
-- **Completion design decisions (5 November 2026):** replace the synthetic
-  `stepJob` driver with the fixed-step `Duel` and only player controls. A
-  small input helper will steer the car or fighter to the job's live marker;
-  job steps, enemy health, contacts and hit reports remain owned by the real
-  simulation. Keep job settings unless the real run proves a specific
-  definition prevents Easy completion; any adjustment must say why here.
-- Visible actors use the renderer's existing car-asset path and existing
-  source props as temporary stand-ins. WW-ART-VEHICLES replaces the thief,
-  Big Bess and furnace vehicle stand-ins; WW-ART-KIT replaces the barricade,
-  ember pot and smaller job props; WW-ART-FOLK replaces townspeople and Ash
-  Men.
-
-- Added six Everburn story jobs and three Tin Town side jobs as data in `src/world/jobs/everburn.js`.
-- Added `tools/test-everburn-easy.mjs`, which runs each definition through the existing headless job engine for ten deterministic Easy passes and checks completion, restart count and an action limit.
+- Replaced the synthetic `stepJob` driver with a fixed-step `Duel` driver that
+  uses player controls and runs all six story jobs and three side jobs.
+- Added render-car choices for the thief, Big Bess and Old Smoke's furnace.
+- Kept shared combat numbers and job settings unchanged while checking the
+  real Easy path.
 
 ## Checks
 
-- `node tools/test-everburn-easy.mjs` — passed; each of the nine jobs won 10/10 scripted Easy runs.
-- `npm run build` — passed via `npm.cmd run build` because PowerShell blocked the `npm.ps1` shim. Vite emitted the existing dynamic-import and large-chunk warnings.
-- Lane tier — not run, as directed; Claude runs it.
-- Browser/look checks — Claude runs. Please check that each mission's current marker and prompt match its objective, the on-foot job clearly prompts exit and return, and the Everburn finale progresses from three defence waves to three glowing furnace vents.
+- `node tools/test-everburn-easy.mjs` — **not accepted**. An experimental
+  version with instant mouse-look finished eight jobs 10/10, but it did not
+  meet the child-pace requirement. The Everburn finale finished 0/10 and
+  remained on its first defence wave. A separate Cinder hand-flamer diagnostic
+  also finished 0/10 with no raider hits; the player stayed outside its
+  six-metre range. The child-pace run has not produced a complete result.
+- Lane tier and build — not run after this acceptance failure. Do not hand this
+  card to integration until the Easy path is settled and the check passes.
+- Browser and look checks — Claude runs after the Easy proof passes. Check that
+  each mission's marker and prompt match its objective, the on-foot job clearly
+  prompts exit and return, and the finale progresses from three defence waves
+  to three glowing furnace vents.
 
 ## Changed assertions
 
-- None.
+- None. The check still requires at least 8 wins in 10 runs for every job.
 
 ## Race fingerprints
 
-- Not applicable. These job definitions do not alter race simulation or replay fixtures.
+- Not applicable. These job definitions do not alter race simulation or replay
+  fixtures.
 
 ## Removed
 
-- None.
+- Removed the synthetic job-engine-only driver and its false 10/10 acceptance
+  report.
 
-## Review follow-up still needed
+## Waiting on Claude
 
-- `tools/test-everburn-easy.mjs` still simulates `stepJob` directly and its 10/10 report does not prove the actual arena mode. Replacing it with a child-pace input driver remains required before this card can be accepted.
-- The review fix adds definitions for the thief, Big Bess and Old Smoke's furnace paths, but the current mode actors are simulation-only. Visible vehicle props, real hit handling for the furnace vents, and complete real-mode runs remain unverified.
+- Settle the finale's Easy path. Options and Codex's recommendation are in the
+  card's open question. Keep the current job data and shared combat numbers
+  until that decision is recorded.

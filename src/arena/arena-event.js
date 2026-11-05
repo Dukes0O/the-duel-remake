@@ -16,7 +16,7 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
-import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobPilotGoal} from './modes/world-job.js';
+import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
 import {armorDamageFor} from '../combat-armor.js';
@@ -214,6 +214,7 @@ function finish(duel, reason, winnerId = null) {
     winnerId === 'player' ? ['player', 'cpu-1'] : ['raiders', 'player', 'cpu-1'] :
     winnerId ? [winnerId, ...ranked.filter(id => id !== winnerId)] : ranked;
   arena.phase = 'over';
+  cleanupWorldJobLoan(duel);
   arena.result = {placings, winnerId: placings[0], reason};
   state.status = 'arena_result';
   state.results = {arena: arena.result};
@@ -226,6 +227,8 @@ function finish(duel, reason, winnerId = null) {
     `${winner.name} WINS`, 3);
   duel.emit({arenaPhase: {phase: 'over'}, arenaResult: {result: arena.result}});
 }
+
+export {finish as finishArenaEvent};
 
 function stepClock(duel, dt) {
   const arena = duel.state.arena;
@@ -388,8 +391,8 @@ export function stepArenaEvent(duel, dt) {
   if (onFoot) strikeFighterFromVehicles(duel);
   const fuelDecision = arena.mode === 'fuel-run' ? stepFuelRun(duel, dt) : null;
   const ambushDecision = ambush ? stepAmbushAlley(duel, dt) : null;
-  if (arena.mode === 'world-job') stepRaiders(duel, dt);
   const worldJobDecision = arena.mode === 'world-job' ? stepWorldJob(duel, dt) : null;
+  if (arena.mode === 'world-job') stepRaiders(duel, dt);
   creditWrecks(duel);
   if (arena.result) return;
   if (arena.mode === 'bounty-hunt') stepBountyHunt(duel, dt);

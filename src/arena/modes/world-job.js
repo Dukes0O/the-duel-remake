@@ -23,6 +23,16 @@ export function initializeWorldJob(duel, definition) {
   applyStepLoan(state, worldJob);
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
+  state.worldJobThingsHit = [];
+  return true;
+}
+
+export function cleanupWorldJobLoan(duel) {
+  const worldJob = duel.state.arena?.mode === 'world-job' ? duel.state.arena.worldJob : null;
+  if (!worldJob || !Array.isArray(worldJob.originalWeaponLoadout)) return false;
+  duel.state.weaponLoadout = [...worldJob.originalWeaponLoadout];
+  worldJob.activeLoan = null;
+  worldJob.settled = true;
   return true;
 }
 
@@ -43,7 +53,7 @@ function updateJobActors(worldJob, dt) {
     const start = actorDef.path?.[0]?.position ?? actorDef.path?.[0];
     if (!start) return;
     actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
-      pathProgress: 0, speed: 0};
+      pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null};
     worldJob.actors.push(actor);
   }
   const follow = worldJob.follow;
@@ -91,7 +101,13 @@ function spawnWave(duel, worldJob, request, key) {
 
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
-    if (request.type === 'marker') worldJob.marker = request.place ?? null;
+    if (request.type === 'marker') {
+      worldJob.marker = request.place ?? null;
+      const at = request.place?.position ?? request.place;
+      duel.state.arena.markers = at && Number.isFinite(at.x) && Number.isFinite(at.z)
+        ? [{kind: 'ring', id: 'world-job-marker', x: at.x, y: at.y ?? 0,
+          z: at.z, radius: request.place?.radius ?? 4}] : [];
+    }
     else if (request.type === 'follow') worldJob.follow = {...request,
       actorId: request.actorId ?? worldJob.job.steps[worldJob.job.stepIndex]?.targetId};
     else if (request.type === 'spawnWave') {
@@ -118,7 +134,17 @@ export function stepWorldJob(duel, dt) {
       !worldJob.clearedWaves.includes(waveNumber)) worldJob.clearedWaves.push(waveNumber);
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = position(duel, player);
-  const playerView = {position: point, s: player.s, lateral: player.lateral};
+  const playerView = {position: point, s: player.s, lateral: player.lateral,
+    speed: player.speedMph ?? 0};
+  const thingsHit = [...(state.worldJobThingsHit || []),
+    ...(state.onFoot && state.input?.interact &&
+      worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
+      ? [{id: worldJob.job.steps[worldJob.job.stepIndex].takeId, kind: 'take'}] : [])];
+  for (const hit of thingsHit) {
+    const targetId = hit.actorId ?? hit.id;
+    const actor = worldJob.actors.find(item => item.id === targetId);
+    if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
+  }
   const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);
   const contact = targetActor && Math.hypot(point.x - targetActor.position.x, point.z - targetActor.position.z) <=
     (worldJob.job.steps[worldJob.job.stepIndex]?.contactRadius ?? 3)
@@ -128,15 +154,18 @@ export function stepWorldJob(duel, dt) {
     pathProgress: actor.pathProgress, atDestination: actor.atDestination})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
-  const view = {player: playerView, onFoot: !!state.onFoot, fighter: state.fighter,
+  const view = {player: playerView, onFoot: !!state.onFoot,
+    fighter: state.fighter ? {...state.fighter, position: point} : null,
+    carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,
-    thingsHit: state.worldJobThingsHit || (state.onFoot && state.input?.interact ? [{id: worldJob.job.steps[worldJob.job.stepIndex]?.takeId, kind: 'take'}] : []),
+    thingsHit,
     carrying: worldJob.carrying, inventory: worldJob.inventory ?? [], lamps: worldJob.job.steps[worldJob.job.stepIndex]?.lamps ?? [],
     places: worldJob.places ?? {}, placeHealth: worldJob.placeHealth,
     contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  state.worldJobThingsHit = [];
   updateJobActors(worldJob, dt);
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
   if (next.stepIndex !== previousStep) applyStepLoan(state, worldJob);
@@ -167,6 +196,40 @@ export function stepWorldJob(duel, dt) {
   }
   applyRequests(duel, worldJob, next.requests);
   return null;
+}
+
+// Combat paths call this after a real projectile or flame contact. It only
+// records job evidence; it does not alter projectile, damage, or hit results.
+export function reportWorldJobThingHit(duel, hit) {
+  const state = duel.state, worldJob = state.arena?.worldJob;
+  if (!worldJob || !hit?.id) return false;
+  state.worldJobThingsHit ??= [];
+  if (state.worldJobThingsHit.some(item => item.id === hit.id)) return false;
+  state.worldJobThingsHit.push({...hit});
+  return true;
+}
+
+export function worldJobHitTargets(duel) {
+  const worldJob = duel.state.arena?.worldJob;
+  if (!worldJob) return [];
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  const targets = [];
+  for (const actor of worldJob.actors) {
+    if (actor.health > 0 && actor.position) {
+      targets.push({id: actor.id, actorId: actor.id, kind: actor.id.includes('furnace') ? 'furnace' : 'vehicle',
+        position: actor.position, radius: 3});
+      if (actor.id === 'old-smoke-furnace') for (let index = 1; index <= 3; index++)
+        targets.push({id: `old-smoke-furnace:glowing-vent-${index}`, actorId: actor.id,
+          kind: 'furnace-vent', position: {x: actor.position.x + index - 2,
+            y: actor.position.y + 1, z: actor.position.z}, radius: 1.2, damage: 1});
+    }
+  }
+  for (const barrier of step?.barriers ?? []) {
+    const at = barrier.position ?? barrier;
+    targets.push({id: barrier.id, kind: 'barricade', position: at,
+      radius: 2, burnable: true});
+  }
+  return targets;
 }
 
 export function worldJobPilotGoal(duel, actor) {

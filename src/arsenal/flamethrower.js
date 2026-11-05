@@ -3,6 +3,7 @@ import {applyArmorDamage, armorDamageFor, combatShielded} from '../combat-armor.
 import {combatOwnerId, hostile, outOfPlay} from '../combat-teams.js';
 import {targetFor, targetIdentity, actorForTarget} from './targeting.js';
 import {setCarEffect} from './car-effects.js';
+import {reportWorldJobThingHit, worldJobHitTargets} from '../arena/modes/world-job.js';
 
 export const FLAME_RULES = Object.freeze({
   duration: 3, range: 9, halfConeRadians: 15 * Math.PI / 180,
@@ -76,6 +77,23 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
       combat.flameBurns[id] = {remainingSec: FLAME_RULES.burnDuration,
         ownerId: burst.ownerId};
       setCarEffect(actor, 'burning', {duration: FLAME_RULES.burnDuration});
+    }
+    if (live > 0 && duel.state.arena?.mode === 'world-job' && owner) {
+      burst.worldJobHits ??= [];
+      const at = point(duel, owner), heading = at.heading + (owner.headingError || 0);
+      for (const thing of worldJobHitTargets(duel)) {
+        if (burst.worldJobHits.includes(thing.id)) continue;
+        const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
+        const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
+          Math.cos(Math.atan2(dx, dz) - heading));
+        if (Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
+            Math.abs(angle) <= FLAME_RULES.halfConeRadians &&
+            Math.abs((thing.position.y || 0) - at.y) < 3) {
+          burst.worldJobHits.push(thing.id);
+          reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,
+            burnable: thing.kind === 'barricade' && thing.burnable});
+        }
+      }
     }
     burst.age += dt;
     if (burst.age + EPS >= FLAME_RULES.duration || !live) {

@@ -617,7 +617,9 @@ export class Duel {
       airborne: false, airHeight: 0, _jumpY: null, _verticalSpeed: 0, _jumpOrigin: null,
       completedLaps: 0, nextLapGate: 0, lapTimes: [], lapStartedAt: 0 }));
     const first = s.opponents[0];
-    this.rivalSpec = applyDriverModifiers(upgradedCar(CARS[first.car], first.upgrades), first.driverId, first.car);
+    this.rivalSpec = first
+      ? applyDriverModifiers(upgradedCar(CARS[first.car], first.upgrades), first.driverId, first.car)
+      : null;
     [s, ...s.opponents].forEach((actor, index) => {
       const slot = s.arena.spawnSlots[slots[index]];
       placeActor(this, actor, slot);

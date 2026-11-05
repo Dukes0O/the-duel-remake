@@ -1,46 +1,91 @@
 import assert from 'node:assert/strict';
-import {Duel} from '../src/game.js';
-import {fireWeapon} from '../src/combat-weapons.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
 import {canLeaveCar} from '../src/onfoot-transition.js';
+import {finishArenaEvent} from '../src/arena/arena-event.js';
+import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 
 const dt = 1 / 120;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true};
-const duel = new Duel({seed: 1989, featureFlags: flags});
-duel.state.wastelandGateDiscovered = true;
-const profile = {wasteland: {loadout: ['bomb']}};
-const savedLoadout = structuredClone(profile.wasteland.loadout);
-const job = {id: 'test-job', seed: 1989, lend: ['flamethrower'], captions: {start: 'GO TO THE YARD'},
-  steps: [{kind: 'reach', lineId: 'start', place: {position: {x: 500, z: 500}}, radius: 1}]};
-assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
-  seed: 1989, opponents: [{car: 'dusthawk_rally'}], weaponLoadout: profile.wasteland.loadout,
-  job}), true, 'a real headless Duel accepts a world job');
-assert.equal(duel.state.arena.mode, 'world-job');
-assert.equal(duel.state.objective, null, 'world jobs leave the race objective inactive');
-assert(duel.state.weaponLoadout.includes('flamethrower'), 'the run receives the job loan');
-duel.state.countdown = 0;
-duel.step(dt);
-assert.equal(duel.state.status, 'racing');
-assert.equal(canLeaveCar(duel), true, 'the player can leave the car during a job');
-assert.equal(fireWeapon(duel, 'flamethrower'), true, 'the lent weapon fires in the real arena simulation');
-Object.assign(duel.state.opponents[0], {combatWrecking: true, combatWreckTimer: 10000});
+const values = new Map();
+globalThis.localStorage = {
+  getItem: key => values.get(String(key)) ?? null,
+  setItem: (key, value) => values.set(String(key), String(value)),
+  removeItem: key => values.delete(String(key)),
+};
+globalThis.cancelAnimationFrame ??= () => {};
 
-duel.setInput({interact: true});
-for (let n = 0; n < 75; n++) duel.step(dt);
-assert.equal(duel.state.onFoot, true, 'holding F steps out');
-duel.setInput({interact: false}); duel.step(dt);
-duel.setInput({interact: true});
-for (let n = 0; n < 75; n++) duel.step(dt);
-assert.equal(duel.state.onFoot, false, 'holding F beside the car gets back in');
-assert.deepEqual(profile.wasteland.loadout, savedLoadout, 'the loan does not change the saved loadout');
+function start({complete = false, seed = 1989} = {}) {
+  values.clear();
+  const app = new App();
+  app.audio.unlock = () => {};
+  app.duel.featureFlags = createFeatureFlags({storage: null, overrides: flags});
+  app.profile = {...app.profile, wasteland: {...app.profile.wasteland,
+    discoveredGate: true, loadout: ['bomb', 'crossbow', 'ufo', 'star']}};
+  assert.equal(app._saveProfile(), true, 'the baseline player profile is saved through the normal path');
+  const savedLoadoutBytes = Buffer.from(JSON.stringify(app.profile.wasteland.loadout));
+  const job = {id: 'test-job', seed, lend: ['flamethrower'], captions: {start: 'GO TO THE YARD'},
+    steps: [{kind: 'reach', lineId: 'start', place: {position: {x: 500, z: 500}}, radius: complete ? 5000 : 1}]};
+  app.runId = `world-job-${seed}`;
+  app._runPlayerId = app.player.id;
+  app.duel.state.wastelandGateDiscovered = true;
+  assert.equal(app.duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    playerId: app.player.id, seed, opponents: [], weaponLoadout: app.profile.wasteland.loadout, job}), true);
+  assert.equal(app.duel.state.arena.mode, 'world-job');
+  assert.equal(app.duel.state.objective, null, 'the world job leaves the race objective inactive');
+  assert(app.duel.state.weaponLoadout.includes('flamethrower'), 'the run receives the loan');
+  app.duel.state.countdown = 0;
+  app.duel.step(dt);
+  assert.equal(app.duel.state.status, 'racing');
+  return {app, savedLoadoutBytes, job};
+}
 
-const arena = duel.state.arena;
-const at = duel.course.worldAt(duel.state.s, duel.state.lateral);
-arena.worldJob.job.steps[0].place = {position: {x: at.x, z: at.z}};
-arena.worldJob.job.steps[0].radius = 100;
-duel.step(dt);
-assert.equal(duel.state.status, 'arena_result', 'a completed job reaches normal arena settlement');
-assert.equal(arena.result.reason, 'job-complete');
-const result = arena.result;
-duel.step(dt);
-assert.equal(arena.result, result, 'settlement happens only once');
-console.log('PASS world-job mode: start, step out and in, loaned weapon, isolated save loadout, one settlement');
+function assertSavedLoadout(app, expectedBytes, exit) {
+  const raw = values.get(PLAYERS_KEY);
+  assert.equal(typeof raw, 'string', `${exit}: game wrote its player registry`);
+  const saved = loadPlayers().players.find(player => player.id === app.player.id)?.profile;
+  assert(saved, `${exit}: the saved player profile can be read back`);
+  const afterBytes = Buffer.from(JSON.stringify(saved.wasteland.loadout));
+  assert.deepEqual(afterBytes, expectedBytes, `${exit}: saved loadout bytes are identical`);
+  assert(!saved.wasteland.loadout.includes('flamethrower'), `${exit}: the loan is absent from the saved profile`);
+  assert.deepEqual(app.duel.state.weaponLoadout, saved.wasteland.loadout,
+    `${exit}: run loadout is restored to the saved loadout`);
+}
+
+// The real arena mode accepts no CPU driver, and the combat action accepts the
+// lent weapon. F steps out and back in through the normal fixed-step transition.
+{
+  const {app} = start();
+  assert.equal(canLeaveCar(app.duel), true);
+  assert.equal(app.duel.fireWeapon('flamethrower'), true);
+  app.duel.setInput({interact: true});
+  for (let n = 0; n < 75; n++) app.duel.step(dt);
+  assert.equal(app.duel.state.onFoot, true, 'holding F steps out');
+  app.duel.setInput({interact: false}); app.duel.step(dt);
+  app.duel.setInput({interact: true});
+  for (let n = 0; n < 75; n++) app.duel.step(dt);
+  assert.equal(app.duel.state.onFoot, false, 'holding F beside the car gets back in');
+  app.returnToMenu();
+  app.dispose?.();
+}
+
+for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
+  const {app, savedLoadoutBytes} = start({complete: exit === 'win', seed: 1990 + exit.length});
+  if (exit === 'win') {
+    app.duel.step(dt);
+    assert.equal(app.duel.state.status, 'arena_result', 'the job completes through the real job engine');
+    assert.equal(app.duel.state.arena.result.reason, 'job-complete');
+  } else if (exit === 'fail') {
+    finishArenaEvent(app.duel, 'job-failed', 'cpu-1');
+    assert.equal(app.duel.state.arena.result.winnerId, 'cpu-1', 'the arena uses its ordinary failure result path');
+  } else {
+    if (exit === 'leave during pause') app.togglePause();
+    assert.equal(app.duel.state.paused, exit === 'leave during pause');
+    app.returnToMenu();
+    assert.equal(app.duel.state.status, 'menu');
+  }
+  assertSavedLoadout(app, savedLoadoutBytes, exit);
+  app.dispose?.();
+}
+
+console.log('PASS world-job: real Duel inputs, fire, F out/in, and saved loadout cleanup on win, fail, menu quit, and paused exit');
