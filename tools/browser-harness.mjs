@@ -108,8 +108,8 @@ export async function buildQaBundle({
   await makeDirectory(qaRoot, {recursive: true});
   const bundle = resolveQaBundle(await makeTemp(join(qaRoot, 'browser-suite-')));
   try {
-    const startedAt = Date.now();
     console.log('Building one isolated QA bundle...');
+    const startedAt = Date.now();
     await wait(start(process.execPath, [VITE_CLI, 'build', '--config', 'tools/vite-qa.config.js',
       '--outDir', bundle]), 'QA build');
     const htmlPath = join(bundle, 'tools', 'menu-check.html');
