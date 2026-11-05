@@ -12,6 +12,13 @@ never appears in the main menu's circuit picker (it is not in COURSE).
 venue should use a plain oval for its frame with the road as ground colour. Recommended: a wide plain frame the way the Salt Flats does it, with the visible road only
 a surface, so positions are world space and no frame folds over itself.
 
+### Codex decided (Claude to review)
+
+Use a wide oval course frame around the map and keep the winding dirt road in
+world-space ground data. The road will be a surface band, not the course frame,
+so the existing frame projection stays stable and the ground can use the same
+height and surface queries for physics and rendering.
+
 **Ground:** one height function and one surface function, shared by physics and later the renderer, as `freestyleSurfaceHeightAt` matches its grid. About 1.4 km by 1.0 km. Flats at each of the eight places
 (table in section 3), dirt road linking them, steep ridge round the edge, far wall behind it. Own `floorSpeedMph` about 115. Keep hillside driving: no invisible wall where a hill does the job.
 
