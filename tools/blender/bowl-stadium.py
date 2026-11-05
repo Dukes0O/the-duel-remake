@@ -1,4 +1,4 @@
-"""Build the original, rusted Bowl show stadium and its first art review sheet."""
+"""Build the original, rusted Bowl show stadium and its second-round review captures."""
 import argparse, json, math, sys
 from pathlib import Path
 
@@ -10,11 +10,12 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv
 root = Path(args.root).resolve()
 glb = root / 'public/assets/models/wasteland/bowl/stadium.glb'
 blend = root / 'art-build/bowl/stadium.blend'
-evidence = Path(args.render) if args.render else root / '.evidence/2026-11-04/bowl-art-stadium/round-1'
+evidence = Path(args.render) if args.render else root / '.evidence/2026-11-05/bowl-art-stadium/round-2'
 if not evidence.is_absolute(): evidence = root / evidence
-sheet = root / 'docs/board/looks/bowl-art-stadium/round-1.jpg'
+sheet = evidence / 'blender-round-2.jpg'
+summary = root / 'docs/board/looks/bowl-art-stadium/round-1.jpg'
 if args.paths_only:
-    print(json.dumps({'blend':[str(blend)], 'glb':[str(glb)], 'evidence':[str(evidence)], 'summary':[str(sheet)]}))
+    print(json.dumps({'blend':[str(blend)], 'glb':[str(glb)], 'evidence':[str(evidence)], 'summary':[str(summary)]}))
     raise SystemExit(0)
 
 import bpy
@@ -67,20 +68,20 @@ def finalize():
       obj.data.from_pydata(verts,[],faces); obj.data.update()
 
 # 94 m open-air arena: compacted dirt, a broken concrete retaining wall and four rising terraces.
-box('bowl-dirt-floor',dirt,(0,0,0),(94,.55,74))
+box('bowl-dirt-floor',dirt,(0,-.32,0),(94,.55,74))
 for side in (-1,1):
   x=side*37
-  for row in range(14):
-    y=2.1+row*1.05; z=side*(29+row*.69)
-    box('bowl-concrete-terraces',concrete,(0,y,z),(76,.78,1.15))
-    box('bowl-rusted-riser-joints',rust,(0,y-.42,z-side*.48),(76,.08,.09))
-    # Sparse crowd figures in every row, with uneven gaps and five muted cloth materials.
-    for col in range(76):
-      if (col*7+row*11)%3==0: continue
-      px=-36+col*.96+(.13 if row%2 else 0); pz=z-side*.3
+  for row in range(10):
+    y=2.15+row*1.34+(.12 if row%3==0 else 0); z=side*(27.5+row*.93)
+    box('bowl-concrete-terraces',concrete,(0,y,z),(74-(row%3)*1.1,1.12,1.52))
+    box('bowl-rusted-riser-joints',rust,(0,y-.57,z-side*.65),(72-(row%3),.14,.12))
+    # Crowd cards in every row, with deliberate aisle breaks and blocky silhouettes.
+    for col in range(59):
+      if col%12 in (5,6) or (col*7+row*11)%13==0: continue
+      px=-34+col*1.16+(.18 if row%2 else 0); pz=z-side*.42
       cloth=crowds[(row*3+col*7)%len(crowds)]
-      cylinder('crowd-heads',cloth,(px,y+1.22,pz),.13, .24,6)
-      box('crowd-coats',cloth,(px,y+.83,pz),(.29,.53,.22),((col%3)-1)*.1)
+      cylinder('crowd-heads',cloth,(px,y+1.15,pz),.17,.31,6)
+      box('crowd-coats',cloth,(px,y+.77,pz),(.48,.65,.34),((col%3)-1)*.11)
   # Sloped outer retaining bank, exposed welded railings and repair plates.
   for i in range(10):
     z=side*(19+i*2.65)
@@ -107,6 +108,14 @@ for idx,(x,z,angle) in enumerate([(-24,2,.15),(24,2,-.15),(-13,-21,-.12),(13,-21
   beam(name+'-right-rib',rust,(x+3.5,1.2,z-4),(x+1.5,4.2,z+4),.35)
   beam(name+'-crown',steel,(x-1.5,4.2,z+4),(x+1.5,4.2,z+4),.32)
   for rib in range(9): box(name+'-traction-ribs',rust,(x,1.3+rib*.27,z-3.6+rib*.82),(6.2,.13,.16),angle)
+  # Bent cheek plates, crude patch welds and broken footings show repeated repairs.
+  for edge in (-1,1):
+    beam(name+'-left-rib',rust,(x+edge*3.8,.5,z-4),(x+edge*2.15,3.6,z+2.8),.42)
+    for seam in range(4):
+      beam(name+'-traction-ribs',rust,(x+edge*(3.5-seam*.25),.8+seam*.55,z-3+seam*1.4),
+           (x+edge*(3.2-seam*.25),.9+seam*.55,z-2.4+seam*1.4),.07)
+  for rubble in range(5):
+    box(name+'-plate',steel,(x-4+rubble*1.7,.05,z+5.3),(.9,.28,.7),rubble*.31)
   # Paired flame jets in squat welded housings, a clear authored part for future wiring.
   for dx in (-2.2,2.2):
     box(name+'-flame-jet-housings',soot,(x+dx,.5,z-5.8),(1.15,.8,1.25))
@@ -131,6 +140,9 @@ for x in (-15,15):
 box('bowl-scoreboard-frame',steel,(0,28,35),(34,9,1.4))
 box('bowl-scoreboard-dark-face',soot,(0,28,34.2),(32,7.2,.25))
 for x in range(-14,15,2): box('bowl-scoreboard-rusted-ribs',rust,(x,28,34),(.11,7,.09))
+for y in (26.4,27.2,28.0,28.8,29.6):
+  for x in (-11,-9,-5,-3,3,5,9,11):
+    box('bowl-scoreboard-bolts',rust,(x,y,34.0),(1.05,.38,.12))
 for x in (-16,16): cylinder('bowl-scoreboard-bolts',rust,(x,31,34),.18,.12,8)
 
 # Central podium: scarred concrete steps and a welded, unpainted top plate.
@@ -140,6 +152,15 @@ box('bowl-podium-welded-cap',rust,(0,1.85,-1),(4.6,.18,3.6))
 for x in (-1.8,1.8):
   cylinder('bowl-podium-posts',steel,(x,2.2,-1),.11,.68,8)
 box('bowl-podium-rail',steel,(0,2.52,-1),(3.8,.15,.15))
+
+# Ragged oxide banners, scorched wrecks and exhaust plumes complete the show floor.
+for side,z in [(-1,-34),(1,34)]:
+  for idx,x in enumerate((-25,0,25)):
+    beam('bowl-handrails',steel,(x,12,z),(x,18,z),.12)
+    box('bowl-rustwall-panels',paint,(x,15,z),(3.2,3.2,.12),(.05 if idx%2 else -.08))
+for idx,(x,z) in enumerate([(-33,-7),(33,12),(-31,18),(31,-20)]):
+  box('bowl-crushed-car-wrecks',steel,(x,.55,z),(5.2,1.25,2.1),idx*.21)
+  box('bowl-rustwall-panels',paint,(x,.9,z),(2.8,.25,2.2),idx*.21)
 
 finalize()
 triangles=0
@@ -154,7 +175,7 @@ bpy.context.view_layer.objects.active=root_obj
 bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',use_selection=True,export_yup=True,export_animations=False,export_materials='EXPORT')
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 
-# Three clear views in the one authored round: overhead layout, low show-facing hero, and side structure.
+# Three night views requested by Claude: floor truck-height, top-row and overhead.
 scene=bpy.context.scene; scene.render.engine='CYCLES'; scene.cycles.samples=24
 scene.render.resolution_x=1050; scene.render.resolution_y=700; scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG'; scene.render.film_transparent=False
@@ -164,28 +185,36 @@ for name,location,power,size,color in [('Warm show flood',(-30,42,-28),8500,16,(
   ob=bpy.data.objects.new(name,light); bpy.context.collection.objects.link(ob); ob.location=v(location); ob.rotation_euler=(Vector(v((0,5,0)))-ob.location).to_track_quat('-Z','Y').to_euler()
 camdata=bpy.data.cameras.new('Bowl review camera'); cam=bpy.data.objects.new('Bowl review camera',camdata); bpy.context.collection.objects.link(cam); scene.camera=cam; camdata.sensor_fit='VERTICAL'; camdata.sensor_height=32
 scene.view_settings.view_transform='Standard'; scene.view_settings.look='Medium High Contrast'; scene.view_settings.exposure=.8
-views=[('overview',(86,88,-110),(0,8,0),58),('hero',(0,34,-69),(0,14,0),60),('structure',(82,27,8),(0,13,0),63)]
+views=[('floor-truck-height',(0,2.6,-10),(0,15,22),80),('top-row',(0,14,-29),(0,5,0),72),('overhead',(0,112,0),(0,4,0),66)]
 paths=[]
 for name,position,target,fov in views:
+  if not any(k.startswith('review-scale-') for k in groups):
+    box('review-scale-truck-body',paint,(-10,.9,2),(4.4,1.45,2.05))
+    for dx in (-1.45,1.45): cylinder('review-scale-truck-wheels',soot,(-10+dx,.52,2),.54,.32,10)
+    # Finalize only the render-only scale truck after the stadium GLB was exported.
+    for marker in ('review-scale-truck-body','review-scale-truck-wheels'):
+      obj,verts,faces=groups[marker]; obj.data.from_pydata(verts,[],faces); obj.data.update()
+    for marker in ('review-scale-truck-body','review-scale-truck-wheels'):
+      groups[marker][0].select_set(False)
   cam.location=v(position); cam.rotation_euler=(Vector(v(target))-cam.location).to_track_quat('-Z','Y').to_euler(); camdata.lens=32/(2*math.tan(math.radians(fov)/2))
   scene.render.filepath=str(evidence/f'{name}.png'); bpy.ops.render.render(write_still=True); paths.append(evidence/f'{name}.png')
 
 # Compose labelled, equally sized Blender views into one review sheet; labels are deliberately factual.
-tilew,tileh=480,320; sheet_img=bpy.data.images.new('Bowl art round 1 contact sheet',width=tilew*3,height=tileh+38,alpha=False)
+tilew,tileh=480,320; sheet_img=bpy.data.images.new('Bowl art round 2 contact sheet',width=tilew*3,height=tileh+38,alpha=False)
 canvas=np.zeros((tileh+38,tilew*3,4),dtype=np.float32); canvas[:,:,:3]=(.055,.06,.06); canvas[:,:,3]=1
 glyph={'OVERVIEW':(12,),'HERO':(1,),'STRUCTURE':(2,)}
 def write_label(text,x,y):
   # compact 3x5 bitmap font
-  font={'A':['010','101','111','101','101'],'E':['111','100','110','100','111'],'H':['101','101','111','101','101'],'I':['111','010','010','010','111'],'O':['111','101','101','101','111'],'R':['110','101','110','101','101'],'S':['111','100','111','001','111'],'T':['111','010','010','010','010'],'U':['101','101','101','101','111'],'V':['101','101','101','101','010'],'W':['101','101','101','111','101']}
+  font={'A':['010','101','111','101','101'],'C':['111','100','100','100','111'],'E':['111','100','110','100','111'],'F':['111','100','110','100','100'],'G':['111','100','101','101','111'],'H':['101','101','111','101','101'],'I':['111','010','010','010','111'],'K':['101','101','110','101','101'],'L':['100','100','100','100','111'],'O':['111','101','101','101','111'],'P':['110','101','110','100','100'],'R':['110','101','110','101','101'],'S':['111','100','111','001','111'],'T':['111','010','010','010','010'],'U':['101','101','101','101','111'],'V':['101','101','101','101','010'],'W':['101','101','101','111','101']}
   for c in text:
     pat=font.get(c,['000']*5)
     for yy,row in enumerate(pat):
       for xx,pixel in enumerate(row):
        if pixel=='1': canvas[y+yy*2:y+(yy+1)*2,x+xx*2:x+(xx+1)*2,:3]=.9
     x+=8
-for i,(name,path) in enumerate(zip(['OVERVIEW','HERO','STRUCTURE'],paths)):
+for i,(name,path) in enumerate(zip(['FLOOR TRUCK HEIGHT','TOP ROW','OVERHEAD'],paths)):
   image=bpy.data.images.load(str(path),check_existing=False); w,h=image.size; px=np.empty(w*h*4,dtype=np.float32); image.pixels.foreach_get(px); data=px.reshape(h,w,4)[::-1]
   scale=min(tilew/w,tileh/h); nw,nh=round(w*scale),round(h*scale); sampled=data[(np.arange(nh)/scale).astype(int)[:,None],(np.arange(nw)/scale).astype(int)[None,:],:]
   ox=i*tilew+(tilew-nw)//2; oy=38+(tileh-nh)//2; canvas[oy:oy+nh,ox:ox+nw]=sampled; write_label(name,i*tilew+12,10); bpy.data.images.remove(image)
-sheet_img.pixels.foreach_set(canvas.ravel()); sheet_img.filepath_raw=str(sheet); sheet_img.file_format='JPEG'; sheet_img.save(quality=83); bpy.data.images.remove(sheet_img)
+sheet_img.pixels.foreach_set(canvas[::-1].ravel()); sheet_img.filepath_raw=str(sheet); sheet_img.file_format='JPEG'; sheet_img.save(quality=83); bpy.data.images.remove(sheet_img)
 print(json.dumps({'triangles':triangles,'draws':len(groups),'bytes':glb.stat().st_size,'sheetBytes':sheet.stat().st_size,'renders':[str(p) for p in paths]}))
