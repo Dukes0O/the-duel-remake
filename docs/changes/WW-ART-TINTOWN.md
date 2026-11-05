@@ -7,7 +7,7 @@ Status: round 2 recipe and model built; awaiting Claude's art verdict. Kind: art
 - Reworked `tools/blender/scablands-tintown.py`: varied shack footprints and angles; pitched, overhanging roofs with corrugation and patches; added person-height doors and windows, exposed scaffold landings and ladders, irregular edge drifts, and a person for scale.
 - Moved the cold forge into its court and framed its stack, hearth and anvil in a dedicated close view. Put the notice board at the entrance and aimed its paper toward the approach.
 - Rebuilt `public/assets/models/wasteland/scablands/tintown.glb`: **20,412 triangles**, **1,447,572 bytes**, within the 60,000-triangle and 2.5 MB limits.
-- Rendered car-height at 40 m, three-quarter and close forge views in `.evidence/2026-11-05/WW-ART-TINTOWN/`. Replaced the prior sheet with one round comparison JPG at `docs/board/looks/ww-art-tintown/round-1.jpg` (**135,425 bytes**). The score note is `round-2-review.md`.
+- Rendered car-height at 40 m, three-quarter and close forge views in `.evidence/2026-11-05/WW-ART-TINTOWN/`. Replaced the prior sheet with one round comparison JPG at `docs/board/looks/ww-art-tintown/round-2.jpg` (**135,425 bytes**). The score note is `round-2-review.md`.
 
 ## Checks
 
