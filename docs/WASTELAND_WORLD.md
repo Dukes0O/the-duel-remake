@@ -184,6 +184,8 @@ the kinds Everburn does not use:
 
 ## 6. More stories after that
 
+**Changed 5 November 2026:** `docs/story/the-long-dry.md` is now the map of every Wasteland story and wins over this section where they differ (section 7 there). The Iron Mule is Vane's secret water train, and Ships in the Sand no longer leads to The Deep.
+
 Claude writes every line of each before its cards go on the board. Each uses a kind
 of job the one before did not lean on.
 

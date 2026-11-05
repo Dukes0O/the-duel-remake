@@ -523,3 +523,603 @@ tasks:
     needs: [WW-FINISH]
     locks: []
     details: "docs/board/cards/STORY-IRON-MULE.md"
+
+  - id: TOWN-ART-BASE
+    title: "Art: the town kit's shared base"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/TOWN-ART-BASE.md"
+
+  - id: TOWN-ART-WATER
+    title: "Art: town water works"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-WATER.md"
+
+  - id: TOWN-ART-SANITATION
+    title: "Art: town sanitation"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SANITATION.md"
+
+  - id: TOWN-ART-HOMES
+    title: "Art: town homes"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-HOMES.md"
+
+  - id: TOWN-ART-FOOD
+    title: "Art: town food and shops"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-FOOD.md"
+
+  - id: TOWN-ART-POWER
+    title: "Art: town power and fuel"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-POWER.md"
+
+  - id: TOWN-ART-SAFETY
+    title: "Art: town walls and safety"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SAFETY.md"
+
+  - id: TOWN-ART-SERVICES
+    title: "Art: town services"
+    owner: "codex"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-SERVICES.md"
+
+  - id: TOWN-ART-FUN
+    title: "Art: town attractions"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-FUN.md"
+
+  - id: TOWN-ART-STAGES
+    title: "Art: building stages, ruins and street things"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-STAGES.md"
+
+  - id: TOWN-ART-DOME
+    title: "Art: the Scrapdome from outside"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-DOME.md"
+
+  - id: TOWN-ART-OUTPOSTS
+    title: "Art: the neighbours"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-OUTPOSTS.md"
+
+  - id: TOWN-ART-VANE
+    title: "Art: Vane Reclamation"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-VANE.md"
+
+  - id: TOWN-ART-TRUCKS-1
+    title: "Art: fire truck, tanker, supply truck, tow rig"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-TRUCKS-1.md"
+
+  - id: TOWN-ART-TRUCKS-2
+    title: "Art: dozer, ambulance, Vane trucks"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-TRUCKS-2.md"
+
+  - id: TOWN-ART-WALKERS
+    title: "Art: townsfolk for the crowd"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-BASE"]
+    locks: []
+    details: "docs/board/cards/TOWN-ART-WALKERS.md"
+
+  - id: WILD-ART-DESERT
+    title: "Animals: desert and coast"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-DESERT.md"
+
+  - id: WILD-ART-CITY
+    title: "Animals: Asia and cities"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-CITY.md"
+
+  - id: WILD-ART-WASTE
+    title: "Animals: the Wasteland and the farm"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WILD-ART-WASTE.md"
+
+  - id: CAR-ART-RATTLER
+    title: "Art car: the Rattler"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-RATTLER.md"
+
+  - id: CAR-ART-LONGHAUL
+    title: "Art car: the Longhaul"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-LONGHAUL.md"
+
+  - id: CAR-ART-SCARAB
+    title: "Art car: the Scarab"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-SCARAB.md"
+
+  - id: CAR-ART-BULLY
+    title: "Art car: the Bully"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/CAR-ART-BULLY.md"
+
+  - id: TOWN-CORE
+    title: "Town: state, grid, commands and the tick"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/TOWN-CORE.md"
+
+  - id: TOWN-SAVE
+    title: "Town: the save"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: ["save-shape"]
+    details: "docs/board/cards/TOWN-SAVE.md"
+
+  - id: TOWN-LINKS
+    title: "Town: what your career opens"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-LINKS.md"
+
+  - id: TOWN-UTILITY
+    title: "Town: water, clean, power, sanitation, sickness"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-UTILITY.md"
+
+  - id: TOWN-PEOPLE
+    title: "Town: people, homes, moods and thoughts"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-PEOPLE.md"
+
+  - id: TOWN-MONEY
+    title: "Town: the till and the Ledger"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-MONEY.md"
+
+  - id: TOWN-FIRE
+    title: "Town: fire"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-FIRE.md"
+
+  - id: TOWN-REPORTS
+    title: "Town: reports and events"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-REPORTS.md"
+
+  - id: TOWN-CHAPTERS
+    title: "Town: chapters, Next line and every line"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-CHAPTERS.md"
+
+  - id: TOWN-EASY
+    title: "Town: a child can do it, proved"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-UTILITY","TOWN-PEOPLE","TOWN-MONEY","TOWN-FIRE","TOWN-REPORTS","TOWN-CHAPTERS","TOWN-LINKS"]
+    locks: []
+    details: "docs/board/cards/TOWN-EASY.md"
+
+  - id: TOWN-VIEW
+    title: "Town: the 3D town"
+    owner: "codex"
+    lane: "UI"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-CORE","WW-SCENE"]
+    locks: []
+    details: "docs/board/cards/TOWN-VIEW.md"
+
+  - id: TOWN-VIEW-LIFE
+    title: "Town: walkers, smoke and moving parts"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-VIEW","TOWN-ART-WALKERS"]
+    locks: []
+    details: "docs/board/cards/TOWN-VIEW-LIFE.md"
+
+  - id: TOWN-UI
+    title: "Town: the screen and placing things"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: []
+    details: "docs/board/cards/TOWN-UI.md"
+
+  - id: TOWN-PANELS
+    title: "Town: reports, cards, Why? and the Ledger"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-UI","TOWN-REPORTS","TOWN-MONEY"]
+    locks: []
+    details: "docs/board/cards/TOWN-PANELS.md"
+
+  - id: TOWN-HOOKS
+    title: "Town: the button in the yard"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-SAVE","TOWN-UI","TOWN-VIEW"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/TOWN-HOOKS.md"
+
+  - id: TOWN-VEHICLES
+    title: "Town: drivable work vehicles"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-ART-TRUCKS-1"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/TOWN-VEHICLES.md"
+
+  - id: TOWN-WORLD
+    title: "Town: your town is solid in the Scablands"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-CORE","WW-SCENE"]
+    locks: []
+    details: "docs/board/cards/TOWN-WORLD.md"
+
+  - id: TOWN-FIRE-JOB
+    title: "Town: the fire call"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-FIRE","TOWN-VEHICLES","TOWN-WORLD","TOWN-HOOKS","TOWN-PANELS"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/TOWN-FIRE-JOB.md"
+
+  - id: TOWN-VIEW-ART
+    title: "Town: real buildings replace the boxes"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-VIEW","TOWN-ART-WATER","TOWN-ART-SANITATION","TOWN-ART-HOMES","TOWN-ART-FOOD","TOWN-ART-POWER","TOWN-ART-SAFETY","TOWN-ART-SERVICES","TOWN-ART-FUN","TOWN-ART-STAGES","TOWN-ART-DOME"]
+    locks: []
+    details: "docs/board/cards/TOWN-VIEW-ART.md"
+
+  - id: TOWN-T1-FINISH
+    title: "Claude plays Founding end to end"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-EASY","TOWN-VIEW-LIFE","TOWN-FIRE-JOB","TOWN-VIEW-ART"]
+    locks: []
+    details: "docs/board/cards/TOWN-T1-FINISH.md"
+
+  - id: TOWN-OUTPOSTS
+    title: "Town: neighbours, standing, trade and protection"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-REPORTS","TOWN-MONEY","TOWN-CHAPTERS"]
+    locks: []
+    details: "docs/board/cards/TOWN-OUTPOSTS.md"
+
+  - id: TOWN-JOBS-2
+    title: "Town: the jobs that are not fights"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-FIRE-JOB","TOWN-OUTPOSTS"]
+    locks: []
+    details: "docs/board/cards/TOWN-JOBS-2.md"
+
+  - id: TOWN-SUPPORT
+    title: "Town: support vehicles"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-FIRE-JOB"]
+    locks: []
+    details: "docs/board/cards/TOWN-SUPPORT.md"
+
+  - id: TOWN-OUTPOST-SCENE
+    title: "Town: neighbours in the world"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-ART-OUTPOSTS","TOWN-WORLD"]
+    locks: []
+    details: "docs/board/cards/TOWN-OUTPOST-SCENE.md"
+
+  - id: TOWN-MAP-VIEW
+    title: "Town: the Scablands from above"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-VIEW","TOWN-OUTPOSTS"]
+    locks: []
+    details: "docs/board/cards/TOWN-MAP-VIEW.md"
+
+  - id: TOWN-DEEDS
+    title: "Town: deeds, sets, tolls and bids"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-LINKS","TOWN-MONEY","TOWN-REPORTS"]
+    locks: []
+    details: "docs/board/cards/TOWN-DEEDS.md"
+
+  - id: TOWN-DISPATCH
+    title: "Town: sending crew, scouting and logs"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-REPORTS","TOWN-LINKS"]
+    locks: []
+    details: "docs/board/cards/TOWN-DISPATCH.md"
+
+  - id: TOWN-PEACE
+    title: "Town: what became of the warlords"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-DEEDS","TOWN-JOBS-2"]
+    locks: []
+    details: "docs/board/cards/TOWN-PEACE.md"
+
+  - id: TOWN-WMAP-UI
+    title: "Town: the Wasteland map"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-DEEDS","TOWN-DISPATCH","TOWN-MAP-VIEW"]
+    locks: []
+    details: "docs/board/cards/TOWN-WMAP-UI.md"
+
+  - id: TOWN-VANE
+    title: "Town: Mrs Vane"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-DEEDS","TOWN-OUTPOSTS"]
+    locks: []
+    details: "docs/board/cards/TOWN-VANE.md"
+
+  - id: TOWN-JOBS-3
+    title: "Town: Free Water Day and both sides of the road"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-JOBS-2","TOWN-VANE","TOWN-ART-TRUCKS-2"]
+    locks: []
+    details: "docs/board/cards/TOWN-JOBS-3.md"
+
+  - id: TOWN-VANE-SCENE
+    title: "Town: Vane in the world"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-ART-VANE","TOWN-WORLD","TOWN-VANE"]
+    locks: []
+    details: "docs/board/cards/TOWN-VANE-SCENE.md"
+
+  - id: WEAPON-WATER-CANNON
+    title: "New gear: water cannon"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["TOWN-FIRE-JOB"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/WEAPON-WATER-CANNON.md"
+
+  - id: SKIN-WASTE
+    title: "New paints for the Wasteland"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/SKIN-WASTE.md"
+
+  - id: CAR-DRIVE-WASTE
+    title: "The Wasteland cars become drivable"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["CAR-ART-RATTLER","CAR-ART-LONGHAUL","CAR-ART-SCARAB","CAR-ART-BULLY"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/CAR-DRIVE-WASTE.md"
+
+  - id: HELI-RUSTWALL
+    title: "Kestrel One over the wall"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-WORLD","TOWN-OUTPOSTS"]
+    locks: []
+    details: "docs/board/cards/HELI-RUSTWALL.md"
+
+  - id: DEEP-LAST-JOKE
+    title: "The Deep: one last funny car mission"
+    owner: "claude"
+    lane: "DESIGN"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/DEEP-LAST-JOKE.md"
