@@ -599,23 +599,25 @@ function reachGripFreeTest(session) {
   until(session, view => view.ready); session.act('next');
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); // formula
-  session.act('slide:up'); // the formula follows a live setting change
-  assert.match(session.view().formulas[0].worked, /1\.006555/);
-  session.act('next');
-  until(session, view => view.ready, 5); session.act('next'); // rolling-road watch
-  session.act('next'); // open the guess at 4.5 degrees
+  for (let index = 0; index < 10; index++) session.act('slide:up');
+  assert.match(session.view().formulas[0].worked, /0\.94 × 100 = 94%/);
+  session.act('next'); // open the first prediction
   assert.equal(session.view().step.id, 'try-edge');
+  session.act('answer:0'); session.act('run');
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-far');
   session.act('answer:1'); session.act('run');
   session.act('next');
+  until(session, view => view.ready, 5); session.act('next'); // rolling-road watch, then free test
 }
 
 function reachGripQuestion(session) {
   until(session, view => view.ready); session.act('next');
   session.act('slide:up'); session.act('next');
   session.act('next'); session.act('next'); session.act('next');
-  until(session, view => view.ready, 5); session.act('next');
+  session.act('next');
   assert.equal(session.view().step.id, 'try-edge');
-  assert.equal(session.view().asking, true);
+  assert.equal(session.view().cards.length, 3);
 }
 
 test('Grip is registered as the classroom lesson with the kept notebook ids and challenge wording', () => {
@@ -638,17 +640,24 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   assert.equal(session.view().ready, true);
   session.act('next'); session.act('next'); session.act('next');
   assert.equal(session.view().step.id, 'formula');
-  assert.match(session.view().formulas[0].worked, /99\.\d+%|100\.0000%/);
-  session.act('slide:up');
-  assert.ok(session.view().formulas[0].worked.includes(session.view().slip.toFixed(6)));
-  session.act('next'); until(session, view => view.ready, 5); session.act('next');
-  assert.equal(session.view().asking, true);
+  for (let index = 0; index < 10; index++) session.act('slide:up');
+  assert.equal(session.view().formulas[0].worked, '0.94 × 100 = 94%');
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-edge');
+  assert.equal(session.view().cards.length, 3);
   assert.equal(session.view().grip, null);
   assert.ok(session.view().formulas.every(row => row.worked === ''), 'the open guess has no worked result');
-  session.act('answer:1'); session.act('run');
+  session.act('answer:0'); session.act('run');
   assert.equal(session.view().ready, true);
-  assert.match(session.view().brian.text, /4\.5 degrees.*4\.297.*0\.203.*0\.9973779.*99\.7378%.*99%/);
+  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
   session.act('next');
+  assert.equal(session.view().step.id, 'try-far');
+  assert.equal(session.view().cards.length, 3);
+  assert.ok(session.view().formulas.every(row => row.worked === ''), 'the second open guess hides its result');
+  session.act('answer:1'); session.act('run');
+  assert.match(session.view().brian.text, /9 degrees.*93\.9%.*99\.7%.*4\.5 degrees/);
+  session.act('next');
+  until(session, view => view.ready, 5); session.act('next');
   assert.equal(session.view().step.id, 'try-free');
   assert.equal(session.view().keys.Space, 'run');
   // A repeated setting does not count; three distinct settings complete the free test.
@@ -673,21 +682,24 @@ test('a player can follow each Grip prompt, compare three settings, and pass the
   const history = attempts.map(attempt => ({input: attempt.input, settings: attempt.input, result: gripBench.run(attempt.input)}));
   assert.equal(gripBench.goalMet(history), true);
   session.act('next');
-  assert.equal(session.view().step.id, 'check-band');
-  session.act('answer:1'); session.act('next');
+  for (const [step, answer] of [['check-best', 'answer:1'], ['check-loss', 'answer:1'], ['check-driving', 'answer:0']]) {
+    assert.equal(session.view().step.id, step);
+    assert.equal(session.view().cards.length, 3);
+    session.act(answer);
+    session.act('next');
+  }
   assert.equal(session.view().step.id, 'recap');
   assert.ok(session.view().ready);
 });
 
-test('Grip explanations use the actual tyre numbers and correct the false 100% label at 4.5 degrees', () => {
+test('Grip predictions explain the small loss at 4.5 degrees with rounded, readable numbers', () => {
   const session = createClassroomSession(CLASSROOM_LESSONS.grip);
   reachGripQuestion(session);
-  session.act('answer:0'); session.act('run');
+  session.act('answer:1'); session.act('run');
   const view = session.view();
   assert.equal(view.brian.mood, 'explain');
-  assert.match(view.brian.text, /0\.9973779/);
-  assert.match(view.brian.text, /99\.7378%/);
-  assert.match(view.brian.text, /board shows as 99%/);
+  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.doesNotMatch(view.brian.text, /\d+\.\d{3,}/);
 });
 
 test('Show me records three different free Grip settings and finishes the free test', () => {
@@ -709,7 +721,7 @@ test('Show me records three different free Grip settings and finishes the free t
   assert.equal(session.view().ready, true);
 });
 
-test('Grip formulas calculate from the displayed slip, its controls update the sum, and open guesses hide it', () => {
+test('Grip percent formula uses rounded displayed values and open guesses hide results', () => {
   const model = createGripModel();
   const formulaIndex = GRIP_STEPS.findIndex(step => step.id === 'formula');
   for (const angle of [0, 2, 3, 4, 4.5, 9, 12]) {
@@ -717,14 +729,11 @@ test('Grip formulas calculate from the displayed slip, its controls update the s
     let view = model.view();
     while (view.slideDeg < angle) { model.act('slide:up'); view = model.view(); }
     while (view.slideDeg > angle) { model.act('slide:down'); view = model.view(); }
-    const worked = view.formulas[0].worked;
-    const match = worked.match(/clamp\(\((\d+\.\d{6}) − 1\) ÷ 0\.25, 0, 1\) = (\d+\.\d{6})/);
-    assert.ok(match, worked);
-    const [, slip, shown] = match;
-    const calculated = (1 - .1 * Math.max(0, Math.min(1, (Number(slip) - 1) / .25))).toFixed(6);
-    assert.equal(shown, calculated, `${angle} degrees`);
+    assert.match(view.formulas[0].formula, /grip kept as a fraction × 100/);
     assert.equal(view.grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
     assert.equal(view.percent, pctForGrip(view.grip));
+    if (angle === 9) assert.equal(view.formulas[0].worked, '0.94 × 100 = 94%');
+    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{3,}/i);
   }
   model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
   assert.ok(model.view().formulas.every(row => row.worked === ''));
@@ -739,16 +748,15 @@ test('the Grip watch moves through its four live settings and its closing words 
     model.tick(.8);
     assert.equal(model.view().slideDeg, angle);
     assert.equal(model.view().grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
-    assert.match(model.view().formulas[0].worked, new RegExp(gripBench.run({slideDeg: angle, driver: 'casual'}).slip.toFixed(6)));
   }
   const event = model.tick(.8);
   assert.equal(event.kind, 'right');
-  assert.match(event.say, /3 and 4 degrees.*100%.*4\.5 and 9 degrees.*99% and 94%.*4\.297/);
+  assert.match(event.say, /3 and 4 degrees.*100%.*4\.5 degrees.*99\.7%.*9 degrees.*93\.9%.*loss grows/);
   assert.equal(model.view().rows.length, 4);
 });
 
 test('Grip words and labels follow the reviewed classroom language rules', () => {
-  const forbidden = /\b(she|her|mph|bench|decides)\b/i;
+  const forbidden = /\b(she|her|mph|bench|decides|clamp|tyre model|tyre function|casual tyre reading|slip 1|0\.25 slip|same angle curve)\b/i;
   const model = createGripModel();
   for (let index = 0; index < GRIP_STEPS.length; index++) {
     model.enter(index);
@@ -764,11 +772,87 @@ test('Grip words and labels follow the reviewed classroom language rules', () =>
   const lines = [];
   model.enter(0);
   gripBoard.drawBoard(fakeCanvas(lines), model.view());
-  assert.ok(lines.includes('GRIP KEPT AS THE TYRE SLIDES'));
+  assert.ok(lines.includes('GRIP AS THE ANGLE CHANGES'));
+  assert.ok(lines.includes('SIDEWAYS SLIDE ANGLE'));
+  assert.ok(lines.includes('TYRE POINTS'));
+  assert.ok(lines.includes('TRAVEL'));
   assert.doesNotMatch(lines.join(' '), forbidden);
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
+  const guessLines = [];
+  gripBoard.drawBoard(fakeCanvas(guessLines), model.view());
+  assert.ok(!guessLines.some(line => line.includes('BEST ANGLE')));
+  assert.equal(model.view().grip, null);
+  assert.equal(model.view().percent, null);
 });
 
-const pctForGrip = grip => grip === 1 ? 100 : Math.min(99, Math.round(grip * 100));
+test('each Grip check has one correct card, and the graph label fits between its panels', () => {
+  for (const step of ['check-best', 'check-loss', 'check-driving']) {
+    const outcomes = GRIP_STEPS.map((item, answer) => ({item, answer}))
+      .filter(({item}) => item.id === step)
+      .flatMap(({item}) => [0, 1, 2].map(answer => {
+        const model = createGripModel();
+        model.enter(GRIP_STEPS.indexOf(item));
+        return model.act(`answer:${answer}`).kind;
+      }));
+    assert.equal(outcomes.filter(kind => kind === 'right').length, 1, step);
+  }
+
+  const rectangles = [], labels = [], transforms = [];
+  let font = '';
+  let matrix = [1, 0, 0, 1, 0, 0];
+  const transformPoint = (x, y) => [matrix[0] * x + matrix[2] * y + matrix[4], matrix[1] * x + matrix[3] * y + matrix[5]];
+  const multiply = ([a, b, c, d, e, f], [g, h, i, j, k, l]) => [
+    a * g + c * h, b * g + d * h, a * i + c * j, b * i + d * j,
+    a * k + c * l + e, b * k + d * l + f,
+  ];
+  const bounds = (x, y, width, height) => {
+    const points = [[x, y], [x + width, y], [x, y + height], [x + width, y + height]].map(point => transformPoint(...point));
+    const xs = points.map(point => point[0]), ys = points.map(point => point[1]);
+    rectangles.push([Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)]);
+  };
+  const ctx = new Proxy({}, {
+    get: (_, name) => name === 'roundRect'
+      ? (x, y, width, height) => bounds(x, y, width, height)
+      : name === 'fillRect'
+        ? (x, y, width, height) => bounds(x, y, width, height)
+      : name === 'fillText'
+        ? (value, x, y) => labels.push({text: String(value), x: transformPoint(x, y)[0], y: transformPoint(x, y)[1], font})
+        : name === 'measureText'
+          ? value => ({width: String(value).length * 8})
+          : name === 'save'
+            ? () => transforms.push([...matrix])
+            : name === 'restore'
+              ? () => { matrix = transforms.pop() ?? [1, 0, 0, 1, 0, 0]; }
+              : name === 'translate'
+                ? (x, y) => { matrix = multiply(matrix, [1, 0, 0, 1, x, y]); }
+                : name === 'rotate'
+                  ? angle => { matrix = multiply(matrix, [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle), 0, 0]); }
+                  : name === 'scale'
+                    ? (x, y) => { matrix = multiply(matrix, [x, 0, 0, y, 0, 0]); }
+                    : name === 'setTransform'
+                      ? (...values) => { matrix = values.length === 1 ? [1, 0, 0, 1, 0, 0] : values; }
+                      : name === 'resetTransform'
+                        ? () => { matrix = [1, 0, 0, 1, 0, 0]; }
+          : ['createLinearGradient', 'createRadialGradient'].includes(name)
+            ? () => ({addColorStop() {}})
+            : () => {},
+    set: (_, name, value) => { if (name === 'font') font = value; return true; },
+  });
+  const model = createGripModel();
+  gripBoard.drawBoard(ctx, model.view());
+  model.enter(GRIP_STEPS.length - 1);
+  gripBoard.drawBoard(ctx, model.view());
+  for (const [x, y, width, height] of rectangles) {
+    assert.ok(x >= 0 && y >= 0 && x + width <= 1000 && y + height <= 700, `panel fits: ${[x, y, width, height]}`);
+  }
+  const graphPanel = rectangles.find(([x, y]) => x === 54 && y === 48);
+  const axis = labels.find(label => label.text === 'SIDEWAYS SLIDE ANGLE');
+  const size = Number(axis.font.match(/\d+(?:\.\d+)?px/)?.[0].replace('px', ''));
+  assert.ok(axis.y + size / 2 < graphPanel[1] + graphPanel[3], 'the full sideways label fits inside the graph panel');
+  assert.ok(graphPanel[1] + graphPanel[3] < 522, 'the graph and tyre panels do not overlap');
+});
+
+const pctForGrip = grip => Math.round(grip * 1000) / 10;
 
 test('Grip screen contract uses sendable keys, complete views and board points for every target', () => {
   const sent = new Set(Object.values(KEY_NAMES));
@@ -799,5 +883,5 @@ test('Grip screen contract uses sendable keys, complete views and board points f
     const view = live.view(), point = gripBoard.targetPoint(view, action);
     assert.deepEqual(gripBoard.hitTest(view, ...point), {action: action === 'run' ? 'run' : action});
   }
-  assert.equal(bestSlideDegrees().toFixed(3), '4.297');
+  assert.equal(Number(bestSlideDegrees().toFixed(1)), 4.3);
 });

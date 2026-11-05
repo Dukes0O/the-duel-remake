@@ -40,32 +40,39 @@ export async function run(c) {
 
   await at('wonder'); await wait(2_400); await at('wonder', 'value.ready'); await shot('grip-wonder'); await next('wonder');
   await at('word-slide'); await press('ArrowUp'); await at('word-slide', 'value.ready'); await next('word-slide');
-  await next('word-grip'); await next('word-slip');
+  await next('word-grip'); await next('word-limit');
   await at('formula');
-  await press('ArrowUp');
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('1.006555'))`))) throw new Error('The formula did not follow the angle dial.');
+  await press('ArrowUp', 10);
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('100%'))`))) throw new Error('The percent formula did not show a worked example.');
   await shot('grip-formula'); await next('formula');
-  await at('watch'); await wait(3_400); await at('watch', 'value.ready'); await shot('grip-watch'); await next('watch');
 
-  await at('try-edge', 'value.asking');
+  await at('try-edge', 'value.cards?.length > 0');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].every(line => line.textContent.trim() === '')`))) throw new Error('An open guess shows a worked answer.');
-  await shot('grip-guess'); await press('Digit2'); await press('Space'); await at('try-edge', 'value.ready'); await shot('grip-result');
-  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('0.9973779') && document.querySelector('.lc-bubble')?.textContent.includes('shown as 99%')`, 'the result explains the small grip loss');
+  await shot('grip-guess'); await press('Digit1'); await press('Space'); await at('try-edge', 'value.ready'); await shot('grip-result');
+  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('99.7%')`, 'the result explains the small grip loss');
   await next('try-edge');
+
+  await at('try-far', 'value.cards?.length > 0');
+  await shot('grip-far-guess'); await press('Digit2'); await press('Space');
+  await at('try-far', 'value.ready'); await shot('grip-far-result'); await next('try-far');
+
+  await at('watch'); await wait(3_400); await at('watch', 'value.ready'); await shot('grip-watch'); await next('watch');
 
   await at('try-free');
   for (const [target, presses] of [[3, 2], [4.5, 3], [9, 9]]) {
     await press('ArrowUp', presses); await press('Space');
-    await c.waitFor(`${state}?.rows?.some(row => row.slideDeg === ${target})`, `${target} degree comparison`);
+    await c.waitFor(`document.querySelector('.lc-past')?.textContent.includes('At ${target} degrees')`, `${target} degree comparison`);
   }
   await at('try-free', 'value.ready'); await shot('grip-free-test'); await next('try-free');
 
   await at('challenge');
   await press('ArrowUp', 4); await press('Space');
-  await c.waitFor(`${state}?.challengeAttempts?.length === 1`, 'full-grip run');
+  await c.waitFor(`document.querySelector('.lc-past')?.textContent.includes('At 4 degrees the tyre kept 100% grip')`, 'full-grip run');
   await press('ArrowUp'); await press('Space');
   await at('challenge', 'value.ready'); await shot('grip-two-run-test'); await next('challenge');
-  await at('check-band', 'value.asking'); await press('Digit2'); await at('check-band', 'value.ready'); await next('check-band');
+  for (const [step, answer] of [['check-best', 'Digit2'], ['check-loss', 'Digit2'], ['check-driving', 'Digit1']]) {
+    await at(step, 'value.cards?.length > 0'); await press(answer); await at(step, 'value.ready'); await press('Enter');
+  }
   await at('recap'); await shot('grip-recap');
 
   // Enter invokes the real inline bench challenge from lab-view.js. Its two attempts

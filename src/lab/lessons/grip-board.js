@@ -7,7 +7,7 @@ export const pressMovesDrag = false;
 
 const DOWN = [755, 210], UP = [905, 210], RUN = [820, 515];
 const hit = (x, y, cx, cy, rx = 60, ry = 26) => Math.abs(x - cx) <= rx && Math.abs(y - cy) <= ry;
-const graph = Object.freeze({left: 92, right: 630, top: 180, bottom: 485});
+const graph = Object.freeze({left: 92, right: 630, top: 180, bottom: 452});
 const px = degree => graph.left + degree / 12 * (graph.right - graph.left);
 const py = percent => graph.bottom - (percent - 88) / 12 * (graph.bottom - graph.top);
 
@@ -19,7 +19,7 @@ export function hitTest(view, x, y) {
 }
 
 export function hoverInfo(view, x, y) {
-  if (hit(x, y, 350, 330, 280, 170)) return 'The blue line shows the grip percentage returned by the tyre model at each slide angle.';
+  if (hit(x, y, 350, 330, 280, 170)) return 'The blue line shows how much grip the tyre keeps at each slide angle.';
   if (hit(x, y, ...DOWN) || hit(x, y, ...UP)) return `The slide dial reads ${view.slideDeg} degrees.`;
   if (hit(x, y, ...RUN, 100, 34) && view.keys.Space) return 'Run the tyre at the selected angle and record its grip reading.';
   return null;
@@ -55,8 +55,8 @@ function button(ctx, [x, y], label, key, enabled, width = 112) {
 }
 
 function drawGraph(ctx, view) {
-  panel(ctx, 54, 48, 610, 470);
-  text(ctx, 'GRIP KEPT AS THE TYRE SLIDES', 78, 78, {size: 16, align: 'left', weight: 900, colour: '#d5b65f'});
+  panel(ctx, 54, 48, 610, 465);
+  text(ctx, 'GRIP AS THE ANGLE CHANGES', 78, 78, {size: 16, align: 'left', weight: 900, colour: '#d5b65f'});
   const limit = bestSlideDegrees();
   ctx.strokeStyle = '#4c5658'; ctx.lineWidth = 1;
   for (const value of [90, 95, 100]) {
@@ -65,21 +65,24 @@ function drawGraph(ctx, view) {
   }
   ctx.strokeStyle = '#abb1b0'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(graph.left, graph.top); ctx.lineTo(graph.left, graph.bottom); ctx.lineTo(graph.right, graph.bottom); ctx.stroke();
-  ctx.strokeStyle = '#dfb84e'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
-  ctx.beginPath(); ctx.moveTo(px(limit), graph.top); ctx.lineTo(px(limit), graph.bottom); ctx.stroke(); ctx.setLineDash([]);
-  text(ctx, `PEAK ${limit.toFixed(2)}°`, px(limit), graph.top - 13, {size: 11, align: 'center', weight: 900, colour: '#e4c56d'});
+  if (!view.predictionPending) {
+    ctx.strokeStyle = '#dfb84e'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(px(limit), graph.top); ctx.lineTo(px(limit), graph.bottom); ctx.stroke(); ctx.setLineDash([]);
+    text(ctx, 'BEST ANGLE ABOUT 4.3°', px(limit), graph.top - 13, {size: 11, align: 'center', weight: 900, colour: '#e4c56d'});
 
-  ctx.strokeStyle = '#68b7e5'; ctx.lineWidth = 4; ctx.beginPath();
-  for (let value = 0; value <= 12.001; value += .25) {
-    const reading = gripBench.run({slideDeg: value, driver: 'casual'});
-    const point = [px(value), py(reading.grip * 100)];
-    if (value === 0) ctx.moveTo(...point); else ctx.lineTo(...point);
+    ctx.strokeStyle = '#68b7e5'; ctx.lineWidth = 4; ctx.beginPath();
+    for (let value = 0; value <= 12.001; value += .05) {
+      const reading = gripBench.run({slideDeg: value, driver: 'casual'});
+      const point = [px(value), py(reading.grip * 100)];
+      if (value === 0) ctx.moveTo(...point); else ctx.lineTo(...point);
+    }
+    ctx.stroke();
+
+    const current = gripBench.run({slideDeg: view.slideDeg, driver: 'casual'});
+    const cx = px(view.slideDeg), cy = py(current.grip * 100);
+    ctx.fillStyle = '#f1cf66'; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#f1cf66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
   }
-  ctx.stroke();
-  const current = gripBench.run({slideDeg: view.slideDeg, driver: 'casual'});
-  const cx = px(view.slideDeg), cy = py(current.grip * 100);
-  ctx.fillStyle = '#f1cf66'; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#f1cf66'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
   for (const value of [0, 3, 4, 4.5, 9, 12]) {
     const x = px(value); ctx.strokeStyle = '#c5c2b7'; ctx.beginPath(); ctx.moveTo(x, graph.bottom); ctx.lineTo(x, graph.bottom + 6); ctx.stroke();
     text(ctx, `${value}°`, x, graph.bottom + 23, {size: 11, colour: '#d1caba'});
@@ -88,18 +91,44 @@ function drawGraph(ctx, view) {
 }
 
 function drawTyre(ctx, view) {
-  panel(ctx, 54, 535, 610, 112);
-  text(ctx, 'ROLLING ROAD', 76, 558, {size: 12, align: 'left', weight: 900, colour: '#d5b65f'});
-  ctx.strokeStyle = '#687477'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(88, 615); ctx.lineTo(630, 615); ctx.stroke();
-  ctx.strokeStyle = '#d5b65f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(88, 605); ctx.lineTo(630, 605); ctx.stroke();
-  const x = px(view.slideDeg), y = 590;
-  ctx.save(); ctx.translate(x, y); ctx.rotate((view.slideDeg / 12) * .28);
-  const tyre = ctx.createLinearGradient(-24, 0, 24, 0); tyre.addColorStop(0, '#171b1c'); tyre.addColorStop(.5, '#50595b'); tyre.addColorStop(1, '#171b1c');
-  ctx.fillStyle = tyre; ctx.strokeStyle = '#121516'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(-23, -22, 46, 44, 11); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = '#a0a7a5'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-13, -10); ctx.lineTo(13, -10); ctx.moveTo(-13, 0); ctx.lineTo(13, 0); ctx.moveTo(-13, 10); ctx.lineTo(13, 10); ctx.stroke();
+  panel(ctx, 54, 522, 610, 155);
+  text(ctx, 'VIEW FROM ABOVE', 76, 546, {size: 12, align: 'left', weight: 900, colour: '#d5b65f'});
+  ctx.strokeStyle = '#687477'; ctx.lineWidth = 24; ctx.beginPath(); ctx.moveTo(90, 608); ctx.lineTo(625, 608); ctx.stroke();
+  ctx.strokeStyle = '#d5b65f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(90, 608); ctx.lineTo(625, 608); ctx.stroke();
+  const x = 355, y = 608;
+  const angle = view.slideDeg * Math.PI / 180;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+  ctx.fillStyle = '#202526'; ctx.strokeStyle = '#aeb5b3'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(-21, -31, 42, 62, 9); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#808988'; ctx.lineWidth = 2;
+  for (let mark = -1; mark <= 1; mark++) {
+    ctx.beginPath(); ctx.moveTo(-13, mark * 12); ctx.lineTo(13, mark * 12); ctx.stroke();
+  }
   ctx.restore();
-  text(ctx, 'The tyre rolls on the strip while the dial sets its sideways angle.', 350, 638, {size: 12, colour: '#ddd6c8'});
+
+  function arrow(x1, y1, x2, y2, colour, label, labelY) {
+    ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const head = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 10 * Math.cos(head - .45), y2 - 10 * Math.sin(head - .45));
+    ctx.lineTo(x2 - 10 * Math.cos(head + .45), y2 - 10 * Math.sin(head + .45));
+    ctx.closePath(); ctx.fill();
+    text(ctx, label, x2 + 2, labelY, {size: 11, weight: 800, colour});
+  }
+  arrow(x, y - 4, x + 102, y - 4, '#69c5eb', 'TRAVEL', y + 31);
+  arrow(x, y - 4, x + 102 * Math.cos(angle), y - 4 - 102 * Math.sin(angle), '#e3c56f', 'TYRE POINTS', y - 36);
+  ctx.strokeStyle = '#f0b36c'; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.arc(x, y - 4, 25, -angle, 0); ctx.stroke();
+  text(ctx, `${view.slideDeg.toFixed(1)}°`, x + 34, y - 14, {size: 11, weight: 900, colour: '#f0b36c'});
+
+  const beyondBest = Math.max(0, view.slideDeg - 4.3);
+  const markLength = 4 + beyondBest * 3;
+  ctx.strokeStyle = '#433d35'; ctx.lineWidth = 2 + beyondBest * .35;
+  for (let mark = 0; mark < 3; mark++) {
+    const startX = x - 27 - mark * 12, startY = y - 18 + mark * 10;
+    ctx.beginPath(); ctx.moveTo(startX - markLength, startY - 8); ctx.lineTo(startX + markLength, startY + 8); ctx.stroke();
+  }
 }
 
 function drawControls(ctx, view) {
@@ -148,12 +177,12 @@ function drawRecap(ctx, view) {
       ctx.stroke(); text(ctx, 'SLIDE ANGLE', gx, 555, {size: 12, weight: 900, colour: '#c2d3d8'});
     }
     if (idea.id === 'limit') {
-      text(ctx, `${bestSlideDegrees().toFixed(3)}°`, x + width / 2, 430, {size: 23, weight: 900, colour: '#e3c56f'});
+      text(ctx, 'ABOUT 4.3°', x + width / 2, 430, {size: 23, weight: 900, colour: '#e3c56f'});
       text(ctx, 'best grip in this game', x + width / 2, 462, {size: 13});
     }
     if (idea.id === 'target') {
       text(ctx, '3° and 4°  →  100%', x + width / 2, 420, {size: 15, weight: 900, colour: '#a8dba6'});
-      text(ctx, '4.5°  →  99%', x + width / 2, 460, {size: 15, weight: 900, colour: '#e0b368'});
+      text(ctx, '4.5°  →  99.7%', x + width / 2, 460, {size: 15, weight: 900, colour: '#e0b368'});
     }
   });
 }

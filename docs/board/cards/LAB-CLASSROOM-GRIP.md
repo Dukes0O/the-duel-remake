@@ -24,29 +24,28 @@ If the challenge is a bench run ('inline' from `onChallenge` in `lab-view.js`), 
 classroom's machine runs to it: the pendulum only needed the flying path, and `lesson-ui.js`
 refuses 'inline' with a message until a lesson wires it.
 
-## Codex draft script (Claude to review)
+## Codex revised script (4 November 2026)
 
-**Number rules.** The rolling-road dial moves from 0 to 12 degrees in half-degree steps.
-Each reading comes from `gripBench.run({slideDeg, driver: 'casual'})`. In this game the
-tyre reaches its best grip at about 4.297 degrees. At 4 degrees the tyre model returns full
-grip; at 4.5 degrees it returns 0.9973779 grip, which is 99.73779% and must be shown as
-99%, not rounded to 100%. At 9 degrees it returns 0.9392003 grip, or 94% when rounded.
-The challenge asks for one full-grip run at 3 degrees or more and one run after grip has
-started to fall. With this dial, 3 and 4 degrees meet the first part; 4.5 degrees meets
-the second. The board uses the same tyre result as the challenge.
+**Design decision.** Teach the road contact and the driver's experience first. Use slide angle throughout the lesson. Keep the notebook ids `grip`, `slip` and `limit`; define Slip in one plain sentence. The challenge rule, reward and save stay unchanged. Keep the casual driver for the rolling-road lesson, matching `src/lab/benches/tunnel.js` and the casual/pro tyre table in `src/config.js`.
 
-| Step | Brian says and set-up | Guess, run and explanation |
-| --- | --- | --- |
-| Wonder | A tyre rolls against a road strip. The rolling road slowly turns the tyre sideways, while a dial marks the angle. Brian asks: What changes as the tyre moves farther sideways? | The words and controls follow. No answer is printed beside the dial yet. |
-| Sideways slide | Brian says: A tyre has sideways slide when it moves a little across the road instead of following the direction it points. This dial measures the slide angle in degrees; a degree is one small unit for measuring an angle. | The player turns the dial to 2 degrees. The mark moves on the angle scale. |
-| Grip | Brian says: Grip is the tyre's ability to push against the road without sliding farther. The graph shows how much of the tyre's full grip remains at each slide angle. | At 2 degrees the result is 100%. The player presses Run to compare it with the next demonstration. |
-| Slip and the limit | Brian says: In this game, slip is the tyre's sideways movement compared with the point where grip is strongest. At slip 1, grip is strongest; after slip 1, the model lowers grip. The angle at that point is about 4.297 degrees. | Brian explains the challenge's target: a full-grip run at 3 degrees or more, then a run where grip has fallen. On the half-degree dial, 3 or 4 degrees meets the first target, and 4.5 degrees is past the limit. The formula panel shows the casual-tyre rule and current grip result, but hides the worked result while a guess is open. |
-| Watch the tyre | Brian says: I will test 3, 4, 4.5 and 9 degrees. Watch the blue point and the grip reading as the tyre moves farther sideways. The readings come from the same rolling-road rule used by the challenge. | The board runs 3 degrees: 100%; 4 degrees: 100%; 4.5 degrees: 99%; and 9 degrees: 94%. At 3 degrees the squeal has begun, but the tyre still has full grip. At 4.5 degrees the tyre has crossed the 4.297-degree peak, so the tyre model reports less than full grip. |
-| Predict at 4.5 degrees | Brian asks: At 4.5 degrees, does this tyre still have all its grip, or has grip started to fall? The setup is fixed at 4.5 degrees before answer cards appear. | Cards: "The tyre still has 100% grip." / "The tyre has lost some grip." / "The tyre has lost more than 10% of its grip." Only the second is correct. For either wrong card, Brian says: At 4.5 degrees the tyre is about 0.203 degrees past the 4.297-degree peak. The tyre model returns 0.9973779 grip, or 99.73779%, so the board shows 99% and a small loss, not 100% or a loss greater than 10%. |
-| Try with help | Brian asks the player to set 4 degrees, predict whether the tyre keeps full grip, choose a picture, and run the test. | Correct: At 4 degrees the tyre model returns 1.0000000 grip, so the tyre keeps all its grip. That is below the 4.297-degree peak. Wrong: The run still returns 1.0000000 grip, or 100%, because 4 degrees is about 0.297 degrees below the peak; the tyre has not crossed the point where this model lowers grip. |
-| Test your settings | Brian says: You can change the angle freely and compare three different runs. The formula and graph follow the dial, and the table keeps each result so you can compare before you choose another angle. | The player records three different dial settings. Repeating a setting does not count. At 3 and 4 degrees the tyre model returns 100%; at 4.5 it returns 99%; and at 9 it returns 94%. Only general formulas appear while the player is predicting; a worked result appears after each run. |
-| Brian's test | Brian asks: Find one setting with full grip at 3 degrees or more, then one setting where grip has fallen. Set up each angle, predict, then run it. | A changed setting is required for each run. For full grip, 3 or 4 degrees returns 100%. For fallen grip, 4.5 degrees returns 99%. A failure explains the current angle, the tyre model's returned grip, and whether the run meets either part of the target. Completing both runs passes the existing grip challenge. |
-| Check | Brian asks which setting shows the first loss of grip among 4, 4.5 and 9 degrees. Each answer is a complete statement. | 4.5 degrees, because the peak is 4.297 degrees and the tyre model returns 99.73779% (shown as 99%). Wrong answers explain all compared settings with the same tyre-model values. |
-| Recap | Brian says: This tyre keeps full grip through four degrees, and the game starts lowering grip after about four point three degrees. The Grip challenge asks for full grip at three degrees or more, then a run after grip has started to fall. | The recap picture marks 3 and 4 degrees in the full-grip band, the peak at about 4.297 degrees, and 4.5 degrees just past it. Finish opens the unchanged Grip challenge. |
+The graph plots unrounded casual grip readings at small angle steps. The board shows the tyre from above on the strip. It draws the direction the tyre points, the direction it travels, and the angle between those arrows. Rubber streaks grow as the tyre slides farther past its best angle. The graph keeps its 90–100% scale; Brian says the loss is small on this game's casual tyres and grows on the slide.
 
-**Proposed recorded lines.** `lab.brian.grip.intro`: A tyre rolls against a road strip while the dial turns it sideways, and a graph shows how much grip remains. `lab.brian.grip.explain`: This tyre keeps full grip through four degrees, and the game starts lowering grip after about four point three degrees. The Grip challenge asks for full grip at three degrees or more, then a run after grip has started to fall. `lab.brian.grip.pass`: You have found full grip at three degrees or more and found a setting where grip has started to fall.
+| Step | Brian's words and action |
+| --- | --- |
+| Wonder | Rubber presses against the road, and that lets the tyre push the car. A tyre needs a little sideways slide to turn. |
+| Measure | A tyre points along one direction but travels a little sideways. Slide angle is the angle between those directions. |
+| Grip | Grip is the tyre pushing against the road. A small slide lets the tyre push the car around a corner. |
+| Best angle | Grip grows as the slide angle grows, up to the best angle. In this game, that is about 4.3 degrees. |
+| Past the best angle | Past the best angle, the tyre slides more and pushes less. The driver feels the car start to skid. A corner at the best angle is fastest. |
+| Percent | Grip kept as a fraction times 100 gives grip kept as a percent. For example, 0.94 × 100 = 94%. This is the simple part; the exact road rule is in this game. |
+| Watch | Test 3, 4, 4.5 and 9 degrees. At 3 and 4 the tyre keeps 100%; at 4.5 it keeps about 99.7%, a small loss for casual tyres; at 9 it keeps about 93.9%. |
+| Predict at 4.5 | Ask if the grip loss is less than 1% or more than 10%. Hide the graph, marker, reading and worked sum while the guess is open. After the guess and run, show about 99.7% grip and the rounded sum 100% less 99.7% = about 0.3% lost. |
+| Predict at 9 | Ask if grip has fallen more or less than at 4.5. After the guess, compare about 93.9% with about 99.7%; the farther slide loses more grip. |
+| Free test | Record three different dial settings. Show one decimal place in percentages and a worked percent sum only when rounding the fraction first gives the displayed result. |
+| Brian's test | Preserve the existing challenge: find full grip at 3 degrees or more, then run after grip starts to fall. Preserve its reward and save. |
+| Three checks | Ask which setting is closest to the best angle, which is the lowest setting past it, and where the tyre should be for the fastest corner. Each has one correct answer. |
+| Recap | Restate the road grip, the small slide needed to turn, the best angle, and the driver's skid feeling in short sentences. |
+
+**Recorded lines.** The lesson uses the existing intro and explain audio cues. Brian's on-screen words give the plain language and rounded readings for every step. Preserve the existing pass line and challenge wording contract.
+
+**Assertion changes.** Replace assertions that pinned hidden tyre variables, six-decimal sums, or the old one-question flow with checks for the rounded percent sum, hidden answers while a prediction is open, the two distinct prediction explanations, three check cards, and the unchanged two-run challenge. The challenge goal, run count, distinct free settings, saved reward and profile behavior remain behavior checks; none are loosened.

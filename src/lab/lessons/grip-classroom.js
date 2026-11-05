@@ -1,6 +1,5 @@
-// Grip and slip follow the same tyre rule as the rolling-road challenge.
-import {TYRE_SLIP} from '../../config.js';
-import {gripBench, bestSlideDegrees} from '../benches/tunnel.js';
+// Grip follows the same tyre rule as the rolling-road challenge.
+import {gripBench} from '../benches/tunnel.js';
 
 const BASE = 2;
 const MIN = 0, MAX = 12, STEP = .5;
@@ -8,30 +7,34 @@ const FREE_RUNS = 3;
 const HELD_GAP_S = .14, AUTO_GAP_S = .14;
 const DIRECTIONS = Object.freeze({'↑': 'slide:up', '↓': 'slide:down'});
 const clamp = value => Math.max(MIN, Math.min(MAX, value));
-const pct = grip => grip === 1 ? 100 : Math.min(99, Math.round(grip * 100));
+const pct = grip => Math.round(grip * 1000) / 10;
 const runAt = slideDeg => gripBench.run({slideDeg, driver: 'casual'});
 const showPct = slideDeg => pct(runAt(slideDeg).grip);
-const slipText = value => value.toFixed(6);
+const roundedPercent = slideDeg => Math.round(runAt(slideDeg).grip * 1000) / 10;
+const percentText = slideDeg => roundedPercent(slideDeg).toFixed(1);
 const settingsKey = slideDeg => String(slideDeg);
 
 export const STEPS = Object.freeze([
   {id: 'wonder', part: 0, title: 'What changes as a tyre slides?', voice: 'lab.brian.grip.intro'},
   {id: 'word-slide', part: 1, title: 'Measure sideways slide', word: 'grip-slide'},
   {id: 'word-grip', part: 1, title: 'What grip means', word: 'grip'},
-  {id: 'word-slip', part: 1, title: 'The tyre limit', word: 'grip-slip'},
-  {id: 'formula', part: 1, title: 'How this tyre model counts grip'},
-  {id: 'watch', part: 2, title: 'Watch the grip reading'},
+  {id: 'word-limit', part: 1, title: 'The best angle'},
+  {id: 'formula', part: 1, title: 'Grip as a percentage'},
   {id: 'try-edge', part: 3, title: 'Predict at 4.5 degrees'},
+  {id: 'try-far', part: 3, title: 'Predict at 9 degrees'},
+  {id: 'watch', part: 2, title: 'Watch the grip reading'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'challenge', part: 4, title: "Brian's two-run test"},
-  {id: 'check-band', part: 5, title: 'Check the target band'},
+  {id: 'check-best', part: 5, title: 'Question 1 of 3'},
+  {id: 'check-loss', part: 5, title: 'Question 2 of 3'},
+  {id: 'check-driving', part: 5, title: 'Question 3 of 3'},
   {id: 'recap', part: 6, title: 'What you found out', voice: 'lab.brian.grip.explain'},
 ].map(Object.freeze));
 
 export const KEY_IDEAS = Object.freeze([
-  {id: 'sideways', text: 'The rolling-road dial measures how far the tyre points away from its path, in degrees.'},
-  {id: 'limit', text: `In this game, the tyre reaches its best grip at about ${bestSlideDegrees().toFixed(3)} degrees. Grip begins to fall after that point.`},
-  {id: 'target', text: `The Grip challenge needs full grip at 3 degrees or more, then a run with less than full grip. On this dial, 3 or 4 degrees and 4.5 degrees meet those two targets.`},
+  {id: 'sideways', text: 'Rubber grips because it presses against the road. A tyre needs a small slide angle to turn the car.'},
+  {id: 'limit', text: 'At a small slide angle, the tyre pushes harder as the angle grows. Its best angle is about 4.3 degrees.'},
+  {id: 'target', text: 'Past the best angle, the tyre slides more and pushes less. The driver feels the car start to skid; a corner at the best angle is fastest.'},
 ].map(Object.freeze));
 
 export const CHALLENGE_CARD = Object.freeze({
@@ -41,39 +44,42 @@ export const CHALLENGE_CARD = Object.freeze({
 
 // Keep the earlier notebook identifiers so saved Lab notes still match.
 export const WORDS = Object.freeze([
-  {id: 'grip', word: 'Grip', meaning: "Grip is a tyre's ability to push against the road without sliding farther."},
-  {id: 'slip', word: 'Slip', meaning: "Slip is the tyre's sideways movement compared with the point where grip is strongest."},
-  {id: 'limit', word: 'Limit', meaning: `The limit is the point where this game's tyre model starts to lower grip, at about ${bestSlideDegrees().toFixed(3)} degrees.`},
+  {id: 'grip', word: 'Grip', meaning: 'Grip is the push a tyre gets from rubber pressing against the road.'},
+  {id: 'slip', word: 'Slip', meaning: 'Slip is another word for a tyre sliding a little sideways as it turns.'},
+  {id: 'limit', word: 'Best angle', meaning: 'The best angle is about 4.3 degrees in this game; past it, the tyre slides more and pushes less.'},
 ].map(Object.freeze));
 
-const SLIDE_GRIP = TYRE_SLIP.casual.slideGrip;
-const SLIP_WIDTH = TYRE_SLIP.width;
-const FORMULA = `grip kept = 1 − (1 − ${SLIDE_GRIP.toFixed(2)}) × clamp((slip − 1) ÷ ${SLIP_WIDTH.toFixed(2)}, 0, 1)`;
+const FORMULA = 'grip kept (%) = grip kept as a fraction × 100';
 const formulaRow = (slideDeg, worked = true) => {
-  const result = runAt(slideDeg);
-  const normalized = Math.max(0, Math.min(1, (result.slip - 1) / TYRE_SLIP.width));
-  const computed = 1 - (1 - SLIDE_GRIP) * normalized;
-  const slip = slipText(result.slip);
+  const fraction = runAt(slideDeg).grip;
+  const roundedFraction = Number(fraction.toFixed(2));
+  const workedText = `${roundedFraction.toFixed(2)} × 100 = ${(roundedFraction * 100).toFixed(0)}%`;
   return [{
-    title: 'The casual tyre rule in this game',
+    title: 'Grip as a percentage',
     formula: FORMULA,
-    worked: worked ? `1 − (1 − ${SLIDE_GRIP.toFixed(2)}) × clamp((${slip} − 1) ÷ ${SLIP_WIDTH.toFixed(2)}, 0, 1) = ${computed.toFixed(6)} (${(computed * 100).toFixed(4)}%)` : '',
+    worked: worked && slideDeg === 9 ? workedText : '',
     note: worked
-      ? 'The result comes from the same tyre function as the challenge. The board shows a whole percent and never rounds a real grip loss up to 100%.'
-      : 'The rule starts to lower grip after slip passes 1. The question is still open, so the panel does not show a worked result.',
+      ? 'In this game, grip changes as the tyre slides farther.'
+      : 'The guess is still open, so the panel shows only the general percent rule.',
   }];
 };
 
-const CHECK = Object.freeze({
-  question: 'Which setting is the first one past the point where grip starts to fall: 4, 4.5 or 9 degrees?',
-  answers: [
-    'At 4 degrees, the tyre has just started to lose grip.',
-    'At 4.5 degrees, the tyre has just started to lose grip.',
-    'At 9 degrees, the tyre has just started to lose grip.',
-  ],
-  correct: 1,
-  right: `The peak is about ${bestSlideDegrees().toFixed(3)} degrees. At 4 degrees the tyre model gives 100%; at 4.5 degrees it gives ${(runAt(4.5).grip * 100).toFixed(4)}%, shown as 99%, and at 9 degrees it gives ${showPct(9)}%.`,
-  wrong: `The peak is about ${bestSlideDegrees().toFixed(3)} degrees. At 4 degrees the tyre model gives 100%; at 4.5 degrees it gives ${(runAt(4.5).grip * 100).toFixed(4)}%, shown as 99%, and at 9 degrees it gives ${showPct(9)}%, so 4.5 degrees is first past the peak.`,
+const CHECKS = Object.freeze({
+  'check-best': {
+    question: 'Which angle is closest to this tyre’s best grip: 3, 4.5 or 9 degrees?',
+    answers: ['3 degrees is closest.', '4.5 degrees is closest.', '9 degrees is closest.'], correct: 1,
+    reason: 'The best angle is about 4.3 degrees, so 4.5 degrees is closest.',
+  },
+  'check-loss': {
+    question: 'Which is the lowest setting past the best angle: 4, 4.5 or 9 degrees?',
+    answers: ['4 degrees is past it.', '4.5 degrees is the lowest setting past it.', '9 degrees is the lowest setting past it.'], correct: 1,
+    reason: 'Four degrees is before the best angle. Both 4.5 and 9 are past it, and 4.5 is the lower setting.',
+  },
+  'check-driving': {
+    question: 'For the fastest corner, where should the tyre’s slide angle be?',
+    answers: ['Near the best angle, before it slides too far.', 'Far past the best angle.', 'At zero slide, so the car cannot turn.'], correct: 0,
+    reason: 'A corner at the best angle is fastest because the tyre pushes hardest there.',
+  },
 });
 
 export function createModel() {
@@ -86,7 +92,7 @@ export function createModel() {
   const currentGrip = () => result().grip;
   const challengeMet = () => gripBench.goalMet(challengeRows.map(input => ({input, result: runAt(input.slideDeg), settings: input})));
   const freeTarget = () => [3, 4.5, 9].find(value => !freeTested.has(settingsKey(value))) ?? [0, .5, 1].find(value => !freeTested.has(settingsKey(value)));
-  const goal = () => id() === 'word-slide' ? 2 : id() === 'try-free' ? freeTarget() : id() === 'challenge' ? (challengeRows.some(row => row.slideDeg >= 3 && runAt(row.slideDeg).grip === 1) ? 4.5 : 4) : 4;
+  const goal = () => id() === 'word-slide' ? 2 : id() === 'try-free' ? freeTarget() : id() === 'try-far' ? 9 : id() === 'challenge' ? (challengeRows.some(row => row.slideDeg >= 3 && runAt(row.slideDeg).grip === 1) ? 4.5 : 4) : 4;
   const targetAction = () => {
     if (id() === 'try-free' && freeTested.size >= FREE_RUNS) return null;
     if (id() === 'challenge' && challengeMet()) return null;
@@ -97,12 +103,13 @@ export function createModel() {
     m = {index, time: 0, phase: 'ready', say: '', guess: null, auto: null, lastPress: -1, watchDone: false};
     if (id() === 'wonder') slideDeg = 0;
     if (id() === 'word-slide') slideDeg = 1.5;
-    if (id() === 'word-grip' || id() === 'word-slip' || id() === 'formula') slideDeg = 4;
+    if (id() === 'word-grip' || id() === 'word-limit' || id() === 'formula') slideDeg = 4;
     if (id() === 'watch') slideDeg = 3;
     if (id() === 'try-edge') { slideDeg = 4.5; m.phase = 'guess'; }
+    if (id() === 'try-far') { slideDeg = 9; m.phase = 'guess'; }
     if (id() === 'try-free') { slideDeg = BASE; freeTested.clear(); freeRows.splice(0); }
     if (id() === 'challenge') { slideDeg = BASE; challengeRows.splice(0); }
-    if (id() === 'check-band') m.phase = 'ask';
+    if (CHECKS[id()]) m.phase = 'ask';
   }
 
   function targetSetting() { return goal(); }
@@ -141,33 +148,37 @@ export function createModel() {
         return {kind: 'progress', say: m.say};
       }
       freeTested.add(key); freeRows.push(row('free'));
-      m.say = `At ${slideDeg} degrees, the tyre model returns ${result().grip.toFixed(7)} grip, shown as ${showPct(slideDeg)}%. Change the dial before comparing another setting.`;
+      m.say = `At ${slideDeg} degrees, the tyre keeps about ${percentText(slideDeg)}% grip. Change the dial before comparing another setting.`;
       if (freeTested.size >= FREE_RUNS) m.phase = 'done';
       return {kind: 'right', say: m.say};
     }
-    if (id() === 'try-edge') {
+    if (id() === 'try-edge' || id() === 'try-far') {
       const g = currentGrip();
       m.phase = 'done';
-      m.say = m.guess === 1
-        ? `That is right: at 4.5 degrees the peak is about ${bestSlideDegrees().toFixed(3)} degrees, so the tyre is ${Math.abs(4.5 - bestSlideDegrees()).toFixed(3)} degrees past it. The tyre model returns ${g.toFixed(7)} grip, or ${(g * 100).toFixed(4)}%, which the board shows as ${showPct(slideDeg)}%.`
-        : `At 4.5 degrees the peak is about ${bestSlideDegrees().toFixed(3)} degrees, so the tyre is ${Math.abs(4.5 - bestSlideDegrees()).toFixed(3)} degrees past it. The tyre model returns ${g.toFixed(7)} grip, or ${(g * 100).toFixed(4)}%, which the board shows as ${showPct(slideDeg)}%; grip has started to fall.`;
-      return {kind: m.guess === 1 ? 'right' : 'wrong', say: m.say};
+      const correct = m.guess === (id() === 'try-edge' ? 0 : 1);
+      m.say = id() === 'try-edge'
+        ? correct
+          ? `That is right. At 4.5 degrees the tyre keeps about ${percentText(4.5)}% grip. 100% less 99.7% is about 0.3% lost.`
+          : `At 4.5 degrees the tyre keeps about ${percentText(4.5)}% grip. 100% less 99.7% is about 0.3% lost, not more than 10%.`
+        : correct
+          ? `That is right. At 9 degrees the tyre keeps about ${percentText(9)}% grip, less than the about ${percentText(4.5)}% at 4.5 degrees. Its greater slide means a greater loss.`
+          : `At 9 degrees the tyre keeps about ${percentText(9)}% grip, less than the about ${percentText(4.5)}% at 4.5 degrees. It has lost more than a little because it slides much farther.`;
+      return {kind: correct ? 'right' : 'wrong', say: m.say};
     }
     if (id() === 'challenge') {
       challengeRows.push({slideDeg});
-      const g = currentGrip();
       if (challengeMet()) {
         m.phase = 'done';
-        m.say = `The ${slideDeg}-degree run returned ${g.toFixed(7)} grip, shown as ${showPct(slideDeg)}%. Together with your earlier run, this meets both targets from the Grip challenge.`;
+        m.say = `At ${slideDeg} degrees the tyre kept about ${percentText(slideDeg)}% grip. Together with your earlier run, this meets both targets from the Grip challenge.`;
         return {kind: 'pass', say: m.say};
       }
       const hasFull = challengeRows.some(item => item.slideDeg >= 3 && runAt(item.slideDeg).grip === 1);
       const hasLoss = challengeRows.some(item => runAt(item.slideDeg).grip < 1);
       m.say = hasFull
-        ? `At ${slideDeg} degrees the tyre returned ${g.toFixed(7)} grip, shown as ${showPct(slideDeg)}%. The full-grip run is recorded; now test beyond ${bestSlideDegrees().toFixed(3)} degrees to find a loss.`
+        ? `At ${slideDeg} degrees the tyre kept ${showPct(slideDeg)}% grip. The full-grip run is recorded; now test beyond about 4.3 degrees to find a loss.`
         : hasLoss
-          ? `At ${slideDeg} degrees the tyre returned ${g.toFixed(7)} grip, shown as ${showPct(slideDeg)}%. This shows a loss; now find full grip at 3 degrees or more.`
-          : `At ${slideDeg} degrees the tyre returned ${g.toFixed(7)} grip, shown as ${showPct(slideDeg)}%. This run meets neither target yet; use 3 or 4 degrees for full grip, or 4.5 degrees to find a loss.`;
+          ? `At ${slideDeg} degrees the tyre kept ${showPct(slideDeg)}% grip. This shows a loss; now find full grip at 3 degrees or more.`
+          : `At ${slideDeg} degrees the tyre kept ${showPct(slideDeg)}% grip. This run meets neither target yet; use 3 or 4 degrees for full grip, or 4.5 degrees to find a loss.`;
       return {kind: hasFull || hasLoss ? 'progress' : 'fail', say: m.say};
     }
     return null;
@@ -196,13 +207,14 @@ export function createModel() {
       const picked = Number(raw);
       if (!Number.isInteger(picked) || picked < 0 || picked > 2) return null;
       m.guess = picked; m.phase = 'set';
-      if (id() === 'check-band') {
-        m.phase = 'done'; m.say = picked === CHECK.correct ? CHECK.right : CHECK.wrong;
-        return {kind: picked === CHECK.correct ? 'right' : 'wrong', say: m.say};
+      if (CHECKS[id()]) {
+        const check = CHECKS[id()];
+        m.phase = 'done'; m.say = check.reason;
+        return {kind: picked === check.correct ? 'right' : 'wrong', say: m.say};
       }
-      m.say = picked === 1
-        ? 'Your prediction is recorded. Press Space to run the tyre at 4.5 degrees.'
-        : 'Your prediction is recorded. Press Space to compare it with the tyre at 4.5 degrees.';
+      m.say = id() === 'try-far'
+        ? 'Your prediction is recorded. Press Space to test the tyre at 9 degrees.'
+        : 'Your prediction is recorded. Press Space to run the tyre at 4.5 degrees.';
       return {kind: 'progress', say: m.say};
     }
     return null;
@@ -224,7 +236,7 @@ export function createModel() {
     }
     if (id() === 'watch' && !m.watchDone && m.time >= 3.2) {
       m.watchDone = true;
-      m.say = `At 3 and 4 degrees the tyre keeps ${showPct(3)}% grip, while at 4.5 and 9 degrees it keeps ${showPct(4.5)}% and ${showPct(9)}%. The peak is about ${bestSlideDegrees().toFixed(3)} degrees, so the 4.5-degree run crosses it.`;
+      m.say = `At 3 and 4 degrees the tyre keeps 100% grip. At 4.5 degrees it keeps about ${percentText(4.5)}%, a small loss for this game's casual tyres. At 9 degrees it keeps about ${percentText(9)}%; the loss grows as the tyre slides farther.`;
       freeRows.splice(0, freeRows.length, ...[3, 4, 4.5, 9].map(value => ({kind: 'watch', slideDeg: value, slip: runAt(value).slip, grip: runAt(value).grip, percent: showPct(value)})));
       m.phase = 'done';
       return {kind: 'right', say: m.say};
@@ -237,31 +249,39 @@ export function createModel() {
   }
 
   function formulasForView(current, answersOpen) {
-    if (['word-grip'].includes(current)) return [{title: 'Grip as a percentage', formula: 'grip kept (%) = grip kept × 100', worked: `1.000000 × 100 = ${showPct(slideDeg)}%`, note: 'The current result uses the rolling-road tyre function.'}];
-    if (['word-slip'].includes(current)) return [{title: 'The slip scale', formula: 'slip = 1 at the strongest-grip point', worked: `${slipText(result().slip)} slip at ${slideDeg} degrees`, note: 'The dial angle is converted to slip by the same angle curve as the game.'}];
+    if (current === 'word-slide') return [{
+      title: 'Measure the slide angle',
+      formula: 'slide angle = angle between tyre direction and travel direction',
+      worked: `${slideDeg.toFixed(1)} degrees`,
+      note: 'This dial measures the angle in degrees.',
+    }];
+    if (current === 'word-grip') return [{title: 'Grip as a percentage', formula: 'grip kept (%) = grip kept × 100', worked: '', note: 'In this game, the reading is shown as a percent after each run.'}];
+    if (current === 'word-limit') return [{title: 'The best angle', formula: 'The tyre pushes hardest near its best slide angle.', worked: '', note: 'In this game, the best angle is about 4.3 degrees.'}];
     if (current === 'formula' || current === 'watch' || current === 'try-free' || current === 'challenge' || current === 'recap') return formulaRow(slideDeg, true);
-    if (answersOpen) return formulaRow(slideDeg, false);
-    if (current === 'try-edge' && m.phase === 'set') return formulaRow(slideDeg, true);
+    if (answersOpen || ['try-edge', 'try-far'].includes(current) && m.phase !== 'done') return formulaRow(slideDeg, false);
     return [];
   }
 
   function view() {
     const current = id(), done = m.phase === 'done';
     const answersOpen = m.phase === 'guess' || m.phase === 'ask';
-    const controlsOn = ['word-slide', 'formula', 'try-free', 'challenge'].includes(current) || current === 'try-edge' && m.phase === 'set';
+    const resultHidden = answersOpen || ['try-edge', 'try-far'].includes(current) && m.phase !== 'done';
+    const controlsOn = ['word-slide', 'formula', 'try-free', 'challenge'].includes(current) || ['try-edge', 'try-far'].includes(current) && m.phase === 'set';
     const keys = {};
     if (controlsOn && !m.auto && (!done || current === 'word-slide' || current === 'try-free')) {
       Object.assign(keys, DIRECTIONS);
       if (current === 'try-free' || current === 'challenge') keys.Space = 'run';
-      if (current === 'try-edge' && m.phase === 'set') keys.Space = 'run';
+      if (['try-edge', 'try-far'].includes(current) && m.phase === 'set') keys.Space = 'run';
     }
     if (answersOpen) Object.assign(keys, {1: 'answer:0', 2: 'answer:1', 3: 'answer:2'});
-    const cards = answersOpen ? (current === 'check-band' ? CHECK.answers : [
-      'This tyre keeps all its grip.', 'This tyre has lost some grip.', 'This tyre has lost at least 10% of its grip.',
-    ]).map((label, i) => ({id: `answer:${i}`, key: String(i + 1), label, picture: {kind: 'grip', percent: null}, state: done ? i === CHECK.correct ? 'right' : i === m.guess ? 'wrong' : null : null})) : [];
+    const predictionAnswers = current === 'try-far'
+      ? ['At 9 degrees, grip has fallen less than at 4.5 degrees.', 'At 9 degrees, grip has fallen more than at 4.5 degrees.', 'At 9 degrees, grip is still full.']
+      : ['At 4.5 degrees, grip loss is less than 1%.', 'At 4.5 degrees, grip loss is more than 10%.', 'At 4.5 degrees, grip is still full.'];
+    const answers = CHECKS[current]?.answers ?? predictionAnswers;
+    const cards = answersOpen ? answers.map((label, i) => ({id: `answer:${i}`, key: String(i + 1), label, picture: {kind: 'grip', percent: null}, state: null})) : [];
     const base = {
-      scene: current, time: m.time, slideDeg, bestSlideDeg: goal(), slip: result().slip, grip: answersOpen ? null : result().grip,
-      percent: answersOpen ? null : showPct(slideDeg), rows: freeRows.map(item => ({...item})),
+      scene: current, time: m.time, slideDeg, bestSlideDeg: goal(), slip: result().slip, grip: resultHidden ? null : result().grip,
+      percent: resultHidden ? null : showPct(slideDeg), predictionPending: resultHidden, rows: freeRows.map(item => ({...item})),
       challengeAttempts: challengeRows.map(item => ({...item})), formulas: formulasForView(current, answersOpen),
       actions: done && ['wonder', 'watch'].includes(current) ? ['replay'] : [], buttons: [], cards, keys,
       repeat: Object.keys(keys).filter(key => key === '↑' || key === '↓'),
@@ -273,47 +293,55 @@ export function createModel() {
       prompt: done ? 'Press Enter to continue.' : 'Watch the dial and the blue graph as the tyre slides.',
       hints: ['Watch the dial beside the rolling road.', 'The blue mark follows the tyre.', 'Wait for Brian to finish.']};
     if (current === 'word-slide') return {...base, waiting: !done, ready: done, target: done ? null : 'set:best', glow: 'slide',
-      say: done ? m.say : 'A tyre has sideways slide when it moves across the road instead of following the direction it points. This dial measures the slide angle in degrees; a degree is one small unit for measuring an angle.',
-      prompt: done ? 'Press Enter to continue, or keep changing the dial.' : `The dial reads ${slideDeg} degrees. Press ↑ to raise it or ↓ to lower it until it reads 2 degrees.`,
-      hints: ['The dial is beside the rolling road.', 'Press ↑ to raise the angle or ↓ to lower it until it reads 2 degrees.', 'Watch my pointer. I will set the dial to 2 degrees.']};
+      say: done ? m.say : 'A tyre points in one direction but travels a little sideways. The angle between those directions is its slide angle.',
+      prompt: done ? 'Press Enter to continue, or keep changing the dial.' : `Set the slide angle to 2 degrees. The dial reads ${slideDeg} degrees.`,
+      hints: ['The dial is beside the rolling road.', 'Use the arrows to change the angle until it reads 2 degrees.', 'Watch my pointer. I will set the dial to 2 degrees.']};
     if (current === 'word-grip') return {...base, ready: true,
-      say: "Grip is a tyre's ability to push against the road without sliding farther. The blue graph shows how much of the tyre's full grip remains at each slide angle.",
-      prompt: 'Press Enter to see how the tyre model describes a limit.', hints: ['The percentage is shown beside the graph.', 'The full reading is 100%.', 'Press Enter to continue.']};
-    if (current === 'word-slip') return {...base, ready: true,
-      say: `In this game, slip measures the tyre's sideways movement compared with the point where grip is strongest. The tyre reaches that point at about ${bestSlideDegrees().toFixed(3)} degrees; the model lowers grip after slip passes 1.`,
-      prompt: 'Press Enter to see the rule that gives the grip reading.', hints: ['Slip 1 marks the strongest-grip point.', 'The dial angle is converted to slip by the tyre model.', 'Press Enter to continue.']};
+      say: "Rubber presses against the road, and that lets the tyre push the car. A tyre needs a little sideways slide to turn.",
+      prompt: 'Press Enter to find the angle where the tyre pushes hardest.', hints: ['Rubber presses on the road.', 'A small slide helps the tyre turn the car.', 'Press Enter to continue.']};
+    if (current === 'word-limit') return {...base, ready: true,
+      say: 'As the slide angle grows, the tyre pushes harder up to its best angle. In this game, that angle is about 4.3 degrees.',
+      prompt: 'Press Enter to see what happens past the best angle.', hints: ['The best angle is about 4.3 degrees.', 'Grip grows up to the best angle.', 'Press Enter to continue.']};
     if (current === 'formula') return {...base, ready: true,
-      say: 'The game keeps full grip through slip 1, then lowers the casual tyre reading toward 90% over the next 0.25 slip; clamp keeps that amount between zero and one. The dial and formula use the same tyre rule as the challenge.',
-      prompt: 'Press Enter to watch the rolling-road readings.', hints: ['The rule starts after slip 1.', 'The casual tyre loses at most 10% in this model.', 'Press Enter to continue.']};
+      say: 'Past the best angle, this game lets the tyre slide more and push less. Grip as a fraction times 100 gives grip as a percent.',
+      prompt: 'Press Enter to watch the rolling-road readings.', hints: ['Past the best angle, grip falls as the tyre slides farther.', 'The loss grows as the tyre slides farther.', 'Press Enter to continue.']};
     if (current === 'watch') return {...base, waiting: !done, ready: done,
       say: done ? m.say : 'I will test 3, 4, 4.5 and 9 degrees. Watch the tyre, the graph and the grip reading as the angle changes.',
       prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the readings change.',
       hints: ['At 3 degrees, the squeal begins while grip stays full.', 'The tyre crosses its peak between 4 and 4.5 degrees.', 'Wait for Brian to finish.']};
     if (current === 'try-edge' && answersOpen) return {...base, waiting: true, ready: false, target: 'answer:0', glow: 'answer',
-      say: 'At 4.5 degrees, has grip started to fall, or does the tyre still have all its grip?',
+      say: 'At 4.5 degrees, is the grip loss less than 1% or more than 10%?',
       prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
-      hints: ['The peak is just below 4.5 degrees.', 'Choose whether grip has changed at this setting.', 'Pick the sentence that matches the tyre model.']};
+      hints: ['The angle is just past the best angle.', 'The panel will not show the answer before the run.', 'Pick the sentence that matches your prediction.']};
+    if (current === 'try-far' && answersOpen) return {...base, waiting: true, ready: false, target: 'answer:0', glow: 'answer',
+      say: 'At 9 degrees, has the tyre lost more grip than it has at 4.5 degrees?',
+      prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
+      hints: ['The angle is farther past the best angle.', 'Compare the amount of slide at 9 and 4.5 degrees.', 'Pick the sentence that matches what you learned.']};
     if (current === 'try-edge') return {...base, waiting: !done, ready: done, target: done ? null : 'run', glow: 'slide',
       say: m.say || 'Your prediction is recorded. The dial is already set to 4.5 degrees.',
       prompt: done ? 'Press Enter to continue.' : 'Press Space to run the tyre at 4.5 degrees.',
       hints: ['The angle is already 4.5 degrees.', 'Press Space to run this setting.', 'Watch my pointer. I will run the tyre at 4.5 degrees.']};
+    if (current === 'try-far') return {...base, waiting: !done, ready: done, target: done ? null : 'run', glow: 'slide',
+      say: m.say || 'Your prediction is recorded. The dial is already set to 9 degrees.',
+      prompt: done ? 'Press Enter to continue.' : 'Press Space to run the tyre at 9 degrees.',
+      hints: ['The angle is already 9 degrees.', 'Press Space to run this setting.', 'Watch my pointer. I will run the tyre at 9 degrees.']};
     if (current === 'try-free') return {...base, waiting: !done, ready: done, target: done ? null : targetAction(), glow: 'settings',
       say: m.say || 'You can change the angle freely, and the formula follows the dial. The table keeps three different settings so you can compare each result.',
       prompt: done ? 'Press Enter to continue, or keep testing new settings.' : `Change the angle, then press Space to record a run. Different settings tested: ${freeTested.size} of ${FREE_RUNS}.`,
       hints: ['Change the dial before recording a run.', 'The table counts only different settings.', 'Watch my pointer. I will choose a new angle and record it.']};
     if (current === 'challenge') return {...base, waiting: !done, ready: done, target: done ? null : targetAction(), glow: 'settings',
-      say: done ? m.say : m.say || "Run the tyre at 3 degrees or more while it keeps full grip, then run it again after grip starts to fall. Predict from the formula before each run.",
+      say: done ? m.say : m.say || 'Run the tyre at 3 degrees or more while it keeps full grip, then run it again after grip starts to fall.',
       prompt: done ? 'Press Enter to continue.' : challengeRows.some(item => item.slideDeg >= 3 && runAt(item.slideDeg).grip === 1)
-        ? `The full-grip run is recorded. Set 4.5 degrees to move past the ${bestSlideDegrees().toFixed(3)}-degree peak, then press Space.`
+        ? 'The full-grip run is recorded. Set 4.5 degrees, then press Space to find a loss.'
         : challengeRows.some(item => runAt(item.slideDeg).grip < 1)
           ? 'The grip loss is recorded. Set 3 or 4 degrees for full grip, then press Space.'
           : `The dial reads ${slideDeg} degrees and keeps ${showPct(slideDeg)}% grip. Set 3 or 4 degrees for full grip, or 4.5 degrees to find a loss, then press Space.`,
       hints: ['A full-grip result must be at 3 degrees or more.', 'Use 3 or 4 degrees for full grip, and 4.5 degrees for a loss.', 'Watch my pointer. I will set a qualifying angle and run the tyre.']};
-    if (current === 'check-band') return {...base, waiting: !done, ready: done, asking: !done,
-      say: CHECK.question, prompt: done ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.',
-      hints: ['The limit is near 4.3 degrees.', 'Compare 4, 4.5 and 9 degrees with the limit.', 'Pick the sentence that matches the rule.']};
+    if (CHECKS[current]) return {...base, waiting: !done, ready: done, asking: !done,
+      say: CHECKS[current].question, prompt: done ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.',
+      hints: ['Think about the best angle and what a driver feels.', 'Use the earlier tyre tests before you choose.', 'Pick the sentence that matches the rule.']};
     return {...base, ready: true, waiting: false, ideas: KEY_IDEAS,
-      say: 'This tyre keeps full grip through four degrees, and the game starts lowering grip after about four point three degrees. The Grip challenge asks for full grip at three degrees or more, then a run after grip has started to fall.',
+      say: 'At a small slide angle, the tyre pushes harder as the angle grows, up to its best angle. Past that, it slides more and pushes less; the driver feels the car start to skid.',
       prompt: 'Press Enter to finish and open the Grip challenge.', hints: KEY_IDEAS.map(item => item.text)};
   }
 
