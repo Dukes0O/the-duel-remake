@@ -6496,7 +6496,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.strength.intro",
       "cue": "lab.brian.strength.intro",
-      "text": "\"Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps.\"",
+      "text": "Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6517,7 +6517,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.strength.explain",
       "cue": "lab.brian.strength.explain",
-      "text": "\"Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.\"",
+      "text": "Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6538,7 +6538,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.strength.pass",
       "cue": "lab.brian.strength.pass",
-      "text": "\"That arm holds the load for the least weight, which is the right choice for a helicopter.\"",
+      "text": "That arm holds the load for the least weight, which is the right choice for a helicopter.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6559,7 +6559,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.rust.intro",
       "cue": "lab.brian.rust.intro",
-      "text": "\"Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water.\"",
+      "text": "Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6580,7 +6580,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.rust.explain",
       "cue": "lab.brian.rust.explain",
-      "text": "\"Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it.\"",
+      "text": "Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6601,7 +6601,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.rust.pass",
       "cue": "lab.brian.rust.pass",
-      "text": "\"You have chosen the right protection for each part. That is how you keep metal from rusting away.\"",
+      "text": "You have chosen the right protection for each part. That is how you keep metal from rusting away.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6685,7 +6685,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.headings.intro",
       "cue": "lab.brian.headings.intro",
-      "text": "\"This map table has a compass and a ruler on it, and with them you can find the heading and the distance from one pad to another.\"",
+      "text": "This map table has a compass and a ruler on it, and with them you can find the heading and the distance from one pad to another.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6706,7 +6706,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.headings.explain",
       "cue": "lab.brian.headings.explain",
-      "text": "\"A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last.\"",
+      "text": "A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6727,7 +6727,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.headings.pass",
       "cue": "lab.brian.headings.pass",
-      "text": "\"With a heading and a distance, you can find any place on a map.\"",
+      "text": "With a heading and a distance, you can find any place on a map.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6874,7 +6874,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.braking.intro",
       "cue": "lab.brian.braking.intro",
-      "text": "\"Three identical cars will now brake at the same line. Two have the lever at seventy percent front, one from eighty kilometres per hour and one from a hundred and thirteen. The third brakes from eighty kilometres per hour with the lever at fifty percent front. Watch where each car stops, and watch the back of the third car.\"",
+      "text": "Three identical cars will now brake at the same line. Two have the lever at seventy percent front, one from eighty kilometres per hour and one from a hundred and thirteen. The third brakes from eighty kilometres per hour with the lever at fifty percent front. Watch where each car stops, and watch the back of the third car.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6895,7 +6895,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.braking.explain",
       "cue": "lab.brian.braking.explain",
-      "text": "\"A car's stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides.\"",
+      "text": "A car's stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6916,7 +6916,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.braking.pass",
       "cue": "lab.brian.braking.pass",
-      "text": "\"Twice the speed needs four times the road, because it carries four times the energy for the same brakes to remove. So brake early, and brake in a straight line.\"",
+      "text": "Twice the speed needs four times the road, because it carries four times the energy for the same brakes to remove. So brake early, and brake in a straight line.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7000,7 +7000,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fuel.intro",
       "cue": "lab.brian.fuel.intro",
-      "text": "\"The scale shows the mass of the petrol as the tank empties. Then three identical cars race to about ninety seven kilometres per hour, with a full tank, half a tank and an empty tank.\"",
+      "text": "The scale shows the mass of the petrol as the tank empties. Then three identical cars race to about ninety seven kilometres per hour, with a full tank, half a tank and an empty tank.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7021,7 +7021,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fuel.explain",
       "cue": "lab.brian.fuel.explain",
-      "text": "\"Every litre of petrol has a mass of nought point seven four kilograms, so a full tank of seventy litres adds fifty one point eight kilograms to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster. In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set.\"",
+      "text": "Every litre of petrol has a mass of nought point seven four kilograms, so a full tank of seventy litres adds fifty one point eight kilograms to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster. In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7042,7 +7042,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fuel.pass",
       "cue": "lab.brian.fuel.pass",
-      "text": "\"Less petrol means less mass, so the same car accelerates faster. The petrol must still last the whole race.\"",
+      "text": "Less petrol means less mass, so the same car accelerates faster. The petrol must still last the whole race.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7126,7 +7126,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.wax.intro",
       "cue": "lab.brian.wax.intro",
-      "text": "\"This test puts skis on three kinds of snow with three waxes, and we will time every glide.\"",
+      "text": "This test puts skis on three kinds of snow with three waxes, and we will time every glide.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7147,7 +7147,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.wax.explain",
       "cue": "lab.brian.wax.explain",
-      "text": "\"Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.\"",
+      "text": "Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7168,7 +7168,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.wax.pass",
       "cue": "lab.brian.wax.pass",
-      "text": "\"You chose the right wax for the snow, and that made your ski faster at no cost.\"",
+      "text": "You chose the right wax for the snow, and that made your ski faster at no cost.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
