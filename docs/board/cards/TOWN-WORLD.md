@@ -8,6 +8,17 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 
 ## Claude answers
 
+Claude, 5 November 2026. Codex stopped here for the right reason: a layout nobody reads would be a stub. The card is re-sliced. These files are now yours as well, each for a narrow hook and nothing more:
+
+- `src/course.js`: the existing `def.scablands` branches read the layout through one function, imported from `src/world/scablands-ground.js`. With no town set, that function answers exactly as today.
+- `src/world/scablands-ground.js`: `setScablandsTownLayout(layout)` and `clearScablandsTownLayout()`, next to the edit-layer setters. Grading goes through the same `heightAt` the edit layer uses.
+- `src/world/scablands.js` and `src/arena/modes/world-job.js`: the Dome gate prompt as data, and a no-goal job kind that starts at the town gate and never ends by itself. Reuse the job engine; do not write a second one.
+- `src/app.js`: one method, `startTownDrive()`, beside `startArenaEvent`, gated on the `wasteland-town` switch. Only a browser scenario calls it for now. The town screen's DRIVE button arrives with TOWN-HOOKS and TOWN-PANELS. Going to the Scrapdome panel at the gate is an event that the job reports and the app handles, in that same method.
+
+Keep your design choice above: a pure deterministic layout from the saved town and seed, with the cell height standing in for building heights until content gives real ones. Solids must stop a car by the same route the Scablands' other solid things use. Find that route and reuse it; do not invent a new collision path.
+
+Must hold: with no town set, every Scablands job, every race and every replay fingerprint is byte for byte the same, and `tools/test-everburn-easy.mjs` passes unchanged. A job replayed from seed, inputs and layout gives the same result. `tools/test-town-world.mjs` drives a real headless car into a building and along a road, and proves a town road reads as road and a building stops the car. Add `tools/scenarios/town-world.mjs` for Claude to run.
+
 **The town must not be buildable over the Everburn's ground (Claude, 5 November).** Today only the Dome's oval and gate are reserved, so a player can build across Hot Delivery's route, Slow Ride's path for Big Bess (she moves in straight lines with no collision and would drive through buildings) and the Dead Mall job's way home. An empty town would pass the Easy proof and prove nothing.
 
 - Add a third shape type to `src/town/town-world-data.js`, `strip` (from one point to another, with a half width of 12 m), and reserve **the old road** with it: the Dome's gate to `safe-road` (230, 150) past both Ash Men's barricades, `safe-road` to the Boneyard, `safe-road` to Tin Town, and `safe-road` to the Everburn, as far as each lies inside the town's ground. Add the Tin Town and Everburn paths the same way if your check finds any others. The strips show as dirt road, so the player sees why they can't build there. Nothing already saved can hold a building there yet, because no town has been released.
