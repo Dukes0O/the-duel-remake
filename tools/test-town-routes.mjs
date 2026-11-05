@@ -26,6 +26,8 @@ assert.equal(order.stages[0].kind,'survey','work order starts with survey');
 assert.equal(order.stages[1].kind,'grade','roads are graded rather than trenched');
 assert.equal(order.stages[2].kind,'lay','the route is laid after ground work');
 assert.ok(order.ingredients.gravel>0,'work order carries actual materials');
+const flatRoute=makeTownRouteWorkOrder({length:100,cut:0,points:[{x:0,z:0},{x:100,z:0}],ingredients:{},machines:[],pumps:0},'road');
+assert.ok(!flatRoute.stages.some(stage=>stage.kind==='fill'&&stage.amount===0),'a flat route omits its zero-volume fill stage');
 assert.notEqual(order.route,road.points,'work order owns a plain copy of its route');
 assert.throws(()=>planTownRoutes({...input,kind:'canal'}),TypeError,'unknown route kind is rejected');
 assert.throws(()=>planTownRoutes({...input,groundAt:()=>NaN}),TypeError,'invalid ground data is rejected');

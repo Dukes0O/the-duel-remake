@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {advanceWork, createBuildingWorkOrder, createRouteWorkOrder, createWorkOrder, prioritizeWorkOrders, workOrderScaffold, workStageMinutes} from '../src/town/index.js';
+import {advanceWork, createBuildingWorkOrder, createRouteWorkOrder, createWorkOrder, createTown, prioritizeWorkOrders, workOrderScaffold, workStageMinutes, townReports} from '../src/town/index.js';
 
 let checks=0;
 function check(value,message){assert.ok(value,message);checks++;}
@@ -14,9 +14,11 @@ check(workOrderScaffold(buildingOrder)===0,'the site begins at scaffold zero');
 
 const stock={timber:0};
 check(advanceWork(buildingOrder,0,1,stock).ok,'site preparation can finish before materials arrive');
-const short=advanceWork(buildingOrder,1,40,stock);
+const town=createTown(701,'Shortage Test');
+const short=advanceWork(buildingOrder,1,40,stock,town);
 check(!short.ok&&buildingOrder.stages[1].completed===0,'short materials stop work without advancing it');
 check(short.report.job.orderId===buildingOrder.id&&short.report.job.good==='timber','a shortage report includes a job for the missing good');
+check(townReports(town).some(report=>report.eventId==='site-stopped'&&report.job?.good==='timber'&&report.job.orderId===buildingOrder.id), 'a shortage is visible in the town report panel with its ingredient job');
 same(stock,{timber:0},'a shortage does not take any materials');
 
 const light=createWorkOrder({id:'tent-1',stages:[{kind:'tent',amount:2,ingredients:{timber:4}}]});

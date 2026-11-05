@@ -12,6 +12,17 @@ check(TOWN_EVENTS.length === 10, 'the event data includes the ten town report ki
 for (const event of TOWN_EVENTS) {
   check(event.answers.length <= 3 && event.answers.length > 0, `${event.id} has up to three answers`);
   check(event.answers.every(answer => /[.!?]$/.test(answer.label) && answer.label === answer.outcome), `${event.id} tells what each answer will do`);
+  const sample = createTown(900 + checks, `Effect ${event.id}`);
+  sample.people = [{id:'sick-1',health:40}];
+  sample.goods = {stockpiles:{'scablands:0:0':{goods:{salvage:20}}}};
+  sample.buildings = [{id:'site-1',fireDamage:0}];
+  const raised = raiseTownReport(sample, event.id, {...Object.fromEntries(Object.entries(event.requires)), siteId:'site-1', personIds:['sick-1'], stockpileKey:'scablands:0:0', good:'salvage'});
+  check(raised.ok, `${event.id} can be raised with its event facts`);
+  const answer = event.answers.find(row => row.id !== 'leave') || event.answers[0];
+  const beforeEffects = sample.reportEffects?.length || 0;
+  check(answerReport(sample, raised.report.id, answer.id).ok, `${event.id} answer resolves`);
+  check(sample.reportEffects.length === beforeEffects + 1 && raised.report.effect.type === event.id,
+    `${event.id} applies and records its promised town effect`);
 }
 check(!raiseTownReport(town, 'fire-at-site').ok, 'events need their stated facts');
 const fire = raiseTownReport(town, 'fire-at-site', {fire: true, where: "Moss's garage"});

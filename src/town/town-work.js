@@ -1,3 +1,5 @@
+import {raiseTownReport} from './town-reports.js';
+
 const LIGHT_KINDS = new Set(['tent', 'barrow']);
 
 function wholeNumber(value, label) {
@@ -61,14 +63,22 @@ export function workOrderScaffold(order) {
   return Math.min(order.stages.length - 1, done + (current ? Math.floor(current.completed / current.amount) : 0));
 }
 
-function shortageReport(order, stageIndex, good, amount) {
+function shortageReport(order, stageIndex, good, amount, town) {
   const report = {type:'work-shortage', message:`Work stopped. It needs ${amount} more ${good}.`, job:{type:'get-ingredient', orderId:order.id, stageIndex, good, amount}};
   order.reports.push(report);
+  if (town) {
+    const townReport = raiseTownReport(town, 'site-stopped', {siteStopped:true, where:order.targetId || 'Building site', detail:report.message});
+    if (townReport.ok) {
+      townReport.report.job = {...report.job};
+      townReport.report.shortage = {...report.job};
+      report.townReport = townReport.report;
+    }
+  }
   order.status = 'waiting-materials';
   return {ok:false, advanced:0, message:report.message, report};
 }
 
-export function advanceWork(order, stageIndex, units, materials = {}) {
+export function advanceWork(order, stageIndex, units, materials = {}, town = null) {
   if (!order || !Array.isArray(order.stages)) throw new TypeError('Choose a work order.');
   wholeNumber(stageIndex, 'stage number');
   positiveNumber(units, 'work amount');
@@ -83,7 +93,7 @@ export function advanceWork(order, stageIndex, units, materials = {}) {
   for (const [good, total] of Object.entries(stage.ingredients)) {
     const needed = total * ratio;
     const have = Number.isFinite(materials[good]) && materials[good] >= 0 ? materials[good] : 0;
-    if (have + 1e-9 < needed) return shortageReport(order, stageIndex, good, Number((needed - have).toFixed(6)));
+    if (have + 1e-9 < needed) return shortageReport(order, stageIndex, good, Number((needed - have).toFixed(6)), town);
   }
   for (const [good, total] of Object.entries(stage.ingredients)) materials[good] = Math.max(0, materials[good] - total * ratio);
   stage.completed += advanced;

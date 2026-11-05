@@ -1,4 +1,5 @@
-import {registerStoryLines} from '../../story/story-lines.js';
+
+import {registerTownCaptions} from '../../story/story-lines.js';
 
 const caption = (who, where, text) => Object.freeze({who, where, text, captionOnly:true});
 
@@ -71,6 +72,9 @@ export const TOWN_CAPTIONS = Object.freeze({
   'town.heli.dune': caption('Dune', 'No pilot yet', "I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask."),
 });
 
+const RADIO_CAPTIONS = Object.fromEntries(Object.entries(TOWN_CAPTIONS).map(([id, value]) => [`story.town.${id.replace(/^town\./, '')}`, value]));
+registerTownCaptions(RADIO_CAPTIONS);
+
 const SMALL = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 function numberWords(value) {
@@ -95,6 +99,3 @@ export function townCaptionText(id, town = {}) {
   const year = BigInt(town?.calendar?.year ?? 1);
   return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year));
 }
-
-const RADIO_CAPTIONS = Object.fromEntries(Object.entries(TOWN_CAPTIONS).map(([id, value]) => [`story.town.${id.replace(/^town\./, '')}`, value]));
-registerStoryLines('town', {captions:RADIO_CAPTIONS});

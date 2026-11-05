@@ -4,7 +4,6 @@
 // always keys off when the caption ends, when the player leaves the screen,
 // pauses or mutes. Sound and words only: nothing here changes a race or a flight.
 import {captionReadMs, captionText, storySequence} from './story-lines.js';
-import '../town/content/lines.js';
 import {townCaptionText} from '../town/content/lines.js';
 
 // How long the radio stays keyed for a caption: a short transmission, never
@@ -12,7 +11,7 @@ import {townCaptionText} from '../town/content/lines.js';
 export const STORY_RADIO_HOLD_MS = 1200;
 
 function radioText(id) {
-  return captionText(id) ?? (typeof id === 'string' ? captionText(`story.town.${id.replace(/^town\./, '')}`) : null);
+  return captionText(id) ?? townCaptionText(id);
 }
 
 // Settings (all supplied by the game, so tests need no browser):

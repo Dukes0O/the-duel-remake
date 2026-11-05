@@ -134,7 +134,9 @@ export function moveTownRouteWaypoint(input,index,nextPoint) {
 export function makeTownRouteWorkOrder(route,kind) {
   if(!route||!finite(route.length)||!Array.isArray(route.points)||route.points.length<2) throw new TypeError('A planned route is required.');
   if(!ROUTE_KINDS.includes(kind)) throw new TypeError('Route kind must be pipe, road, sewer, wire or rail.');
-  return {kind,route:route.points.map(p=>({x:p.x,z:p.z})),length:route.length,cut:route.cut,ingredients:{...route.ingredients},machines:[...route.machines],pumps:route.pumps,stages:[{kind:'survey',amount:route.length,unit:'metres'},{kind:kind==='road'||kind==='rail'?'grade':'trench',amount:route.length,unit:'metres'},{kind:'lay',amount:route.length,unit:'metres'},{kind:'fill',amount:route.cut,unit:'cubic metres'}]};
+  const stages=[{kind:'survey',amount:route.length,unit:'metres'},{kind:kind==='road'||kind==='rail'?'grade':'trench',amount:route.length,unit:'metres'},{kind:'lay',amount:route.length,unit:'metres'}];
+  if (route.cut > 0) stages.push({kind:'fill',amount:route.cut,unit:'cubic metres'});
+  return {kind,route:route.points.map(p=>({x:p.x,z:p.z})),length:route.length,cut:route.cut,ingredients:{...route.ingredients},machines:[...route.machines],pumps:route.pumps,stages};
 }
 
 export {ROUTE_KINDS};

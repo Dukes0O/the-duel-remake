@@ -28,7 +28,7 @@ export function raiseTownReport(town, eventId, facts = {}) {
     where: typeof facts.where === 'string' && facts.where.trim() ? facts.where.trim() : 'Town',
     priority: event.priority, bad: event.bad, createdTick: BigInt(town.tick),
     expiresTick: BigInt(town.tick) + BigInt(ANSWER_TICKS), unanswered: true,
-    answers: event.answers.map(answer => ({...answer})), outcome: null,
+    answers: event.answers.map(answer => ({...answer, effect:{type:eventId, answerId:answer.id, facts:{...facts}}})), outcome: null, facts: {...facts},
   };
   reports.push(report);
   return {ok: true, report};
@@ -40,11 +40,39 @@ export function answerReport(town, reportId, answerId) {
   if (!report.unanswered) return {ok: false, message: 'That report already has an answer.'};
   const answer = report.answers.find(item => item.id === answerId);
   if (!answer) return {ok: false, message: 'Choose one of the answers on the report.'};
+  const effect = answer.effect;
+  applyReportEffect(town, effect);
   report.unanswered = false;
   report.answeredTick = BigInt(town.tick);
   report.answerId = answer.id;
   report.outcome = answer.outcome;
+  report.effect = effect;
   return {ok: true, report, message: answer.outcome};
+}
+
+function applyReportEffect(town, effect) {
+  const facts = effect.facts || {};
+  town.reportEffects ||= [];
+  town.reportEffects.push({...effect});
+  if (effect.type === 'sickness-in-town' && effect.answerId !== 'leave') {
+    for (const person of town.people || []) {
+      if (!facts.personIds || facts.personIds.includes(person.id)) person.health = Math.min(100, (person.health ?? 50) + 25);
+    }
+  } else if (effect.type === 'road-rat-raid' && effect.answerId === 'leave') {
+    const stocks = Object.values(town.goods?.stockpiles || {});
+    const stock = facts.stockpileKey ? town.goods?.stockpiles?.[facts.stockpileKey] : stocks.find(item => Object.keys(item.goods || {}).length);
+    if (stock) {
+      const good = facts.good || Object.keys(stock.goods || {})[0];
+      const loss = Math.min(stock.goods?.[good] || 0, facts.amount || Math.max(1, Math.ceil((stock.goods?.[good] || 0) * 0.1)));
+      if (loss) stock.goods[good] -= loss;
+    }
+  } else if (effect.type === 'fire-at-site' && effect.answerId === 'leave') {
+    const site = (town.buildings || []).find(building => building.id === facts.siteId);
+    if (site) site.fireDamage = Math.min(100, (site.fireDamage || 0) + 25);
+  } else {
+    town.conditions ||= {};
+    town.conditions[`${effect.type}:${effect.answerId}`] = true;
+  }
 }
 
 export function settleIgnoredReports(town) {
