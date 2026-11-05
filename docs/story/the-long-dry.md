@@ -283,6 +283,9 @@ clock finally has a 2:15.
 gatehouse and Hollis's reveal. **It no longer leads to The Deep** (Kyle, 5 November:
 the Deep is paused). Ana's single radio line in Act 5 is the only link.
 
+Both are now written line by line: `docs/story/iron-mule.md` and
+`docs/story/ships-in-the-sand.md`.
+
 **Later:** section 11.
 
 ## 8. The Deep

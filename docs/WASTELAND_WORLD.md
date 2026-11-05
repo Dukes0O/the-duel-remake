@@ -184,7 +184,7 @@ the kinds Everburn does not use:
 
 ## 6. More stories after that
 
-**Changed 5 November 2026:** `docs/story/the-long-dry.md` is now the map of every Wasteland story and wins over this section where they differ (section 7 there). The Iron Mule is Vane's secret water train, and Ships in the Sand no longer leads to The Deep.
+**Changed 5 November 2026:** `docs/story/the-long-dry.md` is now the map of every Wasteland story and wins over this section where they differ (section 7 there). The Iron Mule is Vane's secret water train, and Ships in the Sand no longer leads to The Deep. Their full scripts are `docs/story/iron-mule.md` and `docs/story/ships-in-the-sand.md`.
 
 Claude writes every line of each before its cards go on the board. Each uses a kind
 of job the one before did not lean on.
@@ -358,7 +358,6 @@ not depend on each other. Slice 2 needs slice 1. Claude keeps the browser checks
 | 2 | BOWL-REX-FIGHT | Scrapasaurus night five | BOWL-HOOKS, BOWL-ART-REX | |
 | Claude | WW-FINISH | Plays Everburn end to end in the browser, frames, release | everything above for it | release |
 | Claude | BOWL-FINISH | Plays Show Night, frames, release | everything above for it | release |
-| Claude | STORY-IRON-MULE | Every line and the job list for story 2, then its cards | WW-FINISH | |
 
 ## 12. Checks in common
 

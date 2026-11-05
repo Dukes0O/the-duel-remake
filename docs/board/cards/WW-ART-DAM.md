@@ -11,7 +11,7 @@ Nothing on the board draws the Dry Dam, and two stories and Act 5 need it. This 
 - `dam:rail-gate`, a steel door at the foot, big enough for a train, with rails running under it; and `dam:rail-gate-broken`, the same door burst inwards, shown after job 6.
 - `dam:filling-shed`, a long room behind the rail gate: rows of big tanks, pipes coming through the back wall, and that wall wet and white with salt crust. It must read as wet from the cab of a train.
 - `dam:sea-gate`, the great gate high in the middle, plainly shut for a very long time; and `dam:sea-wheel`, a wheel as big as a house on a walkway.
-- `dam:spillway`, a channel down one side, choked with forty years of wrecks (Act 5).
+- `dam:spillway`, a channel down one side, choked with decades of wrecks (Act 5).
 - `gatehouse`, a small stone hut with a dead lamp and a bench, on its own pad, and `gatehouse:door`.
 
 The other side of the dam is never modelled. Nobody sees the ocean until Act 5. Show the sheet from car height at 40 m and from the lake bed at 200 m, as well as the filling shed from inside.
