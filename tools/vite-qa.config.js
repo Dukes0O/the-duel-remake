@@ -1,16 +1,86 @@
 import {defineConfig} from 'vite';
 import {fileURLToPath} from 'node:url';
-import {dirname,resolve} from 'node:path';
+import {dirname,relative,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
+import {createReadStream} from 'node:fs';
+import {stat,realpath} from 'node:fs/promises';
+import {extname,sep} from 'node:path';
 import {buildVersionPlugin} from './build-version-plugin.mjs';
+
+const MIME_TYPES = {
+  '.avif':'image/avif','.bin':'application/octet-stream','.css':'text/css; charset=utf-8',
+  '.flac':'audio/flac','.glb':'model/gltf-binary','.gltf':'model/gltf+json','.hdr':'image/vnd.radiance','.html':'text/html; charset=utf-8',
+  '.jpeg':'image/jpeg','.jpg':'image/jpeg','.js':'text/javascript; charset=utf-8',
+  '.json':'application/json; charset=utf-8','.ktx2':'image/ktx2','.md':'text/markdown; charset=utf-8','.mp3':'audio/mpeg',
+  '.ogg':'audio/ogg','.otf':'font/otf','.png':'image/png','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8',
+  '.ttf':'font/ttf','.wav':'audio/wav','.webm':'audio/webm','.webp':'image/webp',
+  '.woff':'font/woff','.woff2':'font/woff2',
+};
+
+// Vite's preview static handler runs first, so files emitted into the bundle
+// win. This serves only missing files from public/ without copying that tree.
+export function publicFallbackPlugin({publicDir} = {}) {
+  let publicRoot = publicDir;
+  return {
+    name:'qa-public-fallback',
+    configResolved(config) { publicRoot ??= resolve(config.root, 'public'); },
+    configurePreviewServer(server) {
+      return () => server.middlewares.use(async (req,res,next) => {
+        if (!['GET','HEAD'].includes(req.method ?? 'GET')) return next();
+        let pathname;
+        try { pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://qa.local').pathname); }
+        catch { return next(); }
+        if (pathname.includes('\0') || pathname.includes('\\')) return next();
+        const pieces = pathname.split('/').filter(Boolean);
+        if (pieces.some(piece => piece === '.' || piece === '..')) return next();
+        const target = resolve(publicRoot, ...pieces);
+        const part = relative(publicRoot, target);
+        if (part === '..' || part.startsWith('..' + sep) || part.includes(':')) return next();
+        let actual, info;
+        try {
+          actual = await realpath(target);
+          const root = await realpath(publicRoot);
+          const actualPart = relative(root, actual);
+          if (actualPart === '..' || actualPart.startsWith('..' + sep) || actualPart.includes(':')) return next();
+          info = await stat(actual);
+          if (!info.isFile()) return next();
+        } catch { return next(); }
+        let start = 0, end = info.size - 1, status = 200;
+        const range = req.headers?.range;
+        if (range) {
+          const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+          if (!match || (!match[1] && !match[2]) || info.size === 0) {
+            res.statusCode = 416; res.setHeader('Accept-Ranges','bytes');
+            res.setHeader('Content-Range',`bytes */${info.size}`); return res.end();
+          }
+          if (match[1]) { start = Number(match[1]); end = match[2] ? Number(match[2]) : end; }
+          else { const suffix = Number(match[2]); start = Math.max(0,info.size-suffix); }
+          if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= info.size) {
+            res.statusCode = 416; res.setHeader('Accept-Ranges','bytes');
+            res.setHeader('Content-Range',`bytes */${info.size}`); return res.end();
+          }
+          end = Math.min(end,info.size-1); status = 206;
+          res.setHeader('Content-Range',`bytes ${start}-${end}/${info.size}`);
+        }
+        res.statusCode = status;
+        res.setHeader('Content-Type',MIME_TYPES[extname(actual).toLowerCase()] ?? 'application/octet-stream');
+        res.setHeader('Content-Length',String(Math.max(0,end-start+1)));
+        res.setHeader('Accept-Ranges','bytes');
+        if (req.method === 'HEAD' || info.size === 0) return res.end();
+        const stream = createReadStream(actual,{start,end});
+        stream.on('error',next); stream.pipe(res);
+      });
+    },
+  };
+}
 
 // Explicit test-only hybrid: Claude's frozen authored definition, our engine.
 // Normal QA and production builds never enable this fixture.
 const harbourSource = process.env.P4_KIT_HARBOUR_SOURCE;
 const expectedHarbourSource = 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/p4-harbour/src/circuits/harbour-lights.js';
 const harbourHead = 'e96d52bb4eb1f841b7be477a3e9ec707ff415ba7';
-let aliases = [],plugins = [buildVersionPlugin()];
+let aliases = [],plugins = [buildVersionPlugin(),publicFallbackPlugin()];
 if (harbourSource) {
   const source = resolve(harbourSource);
   assert.equal(source.replaceAll('\\','/').toLowerCase(),expectedHarbourSource.toLowerCase(),
@@ -48,5 +118,5 @@ const input = {
 
 export default defineConfig({
   plugins:plugins,resolve:{alias:aliases},define:{__DUEL_QA__:'true'},
-  build:{outDir:'.qa-dist',rollupOptions:{input}},server:{hmr:false},
+  publicDir:false,appType:'mpa',build:{outDir:'.qa-dist',copyPublicDir:false,rollupOptions:{input}},server:{hmr:false},
 });

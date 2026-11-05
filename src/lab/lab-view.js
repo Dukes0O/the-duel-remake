@@ -9,7 +9,7 @@ import {restoreOffer, restoreSirena, restoreStageAt, RUNNING_SECONDS, BODY_SECON
 import {getPaintState} from '../paint-presets.js';
 import {checkProtections} from './lab-workshop.js';
 import {labOf} from './lab-save.js';
-import {LAB_LINES} from './lab-lines.js';
+import {LAB_MACHINE_WORDS, LAB_LINES} from './lab-lines.js';
 import {createSceneKeeper, createLabScene} from './lab-scene.js';
 // LAB-FAN-VIEW: secret pages; all saved transitions still go through labCommit.
 import {fanView, fanEntry, fanMarkup, fanLoad, tunnelLesson, createFanSound} from './fan-view.js';
@@ -109,7 +109,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (panel.kind === 'brian') {
       const lesson = rows.find(r => r.id === panel.id), next = rows.find(r => r.open && !r.done);
       const answer = panel.answer === 'next' ? (next ? `Try ${next.name}. It opens ${next.reward}.` : 'You have passed every open lesson. Check the door board for what opens next.') :
-        panel.answer === 'machine' ? lineText(panel.id, 'intro') : '';
+        panel.answer === 'machine' ? LAB_MACHINE_WORDS[panel.id] ?? '' : '';
       return `${walkBack}<section class="lab-brian"><h3>Ask Brian</h3><p>Beside ${escapeWalk(lesson?.name ?? 'the Lift bench')}.</p>` +
         '<button type="button" data-lab="brian-next">What should I try next?</button><button type="button" data-lab="brian-machine">Tell me about this machine.</button>' +
         `${answer ? `<p role="status">${escapeWalk(answer)}</p>` : ''}</section>`;
@@ -403,7 +403,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     switch (d.lab) {
       case 'walk-back': ui.walkPanel = null; render(); keeper.scene?.canvas.focus({preventScroll: true}); break;
       case 'brian-next': ui.walkPanel.answer = 'next'; render(); break;
-      case 'brian-machine': ui.walkPanel.answer = 'machine'; say(ui.lastMachine, 'intro'); render(); break;
+      case 'brian-machine': ui.walkPanel.answer = 'machine'; render(); break;
       // LAB-FAN-VIEW
       case 'fan-reverse': reverseFan(); break;
       case 'fan-blueprint':

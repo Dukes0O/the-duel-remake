@@ -1,7 +1,7 @@
 // The Lift lesson's board (docs/board/cards/LAB-CLASSROOM-LIFT.md): the collective lever with its
-// kilogram scale, the weighing pad, Kestrel One and her load. Draws and hit-tests only.
+// kilogram scale, the weighing pad, Kestrel One and its load. Draws and hit-tests only.
 import {BOARD, GROUND_Y, theme, background, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
-import {BAND_M, CAR_KG, CRATE_KG, MAX_CRATES, MOST_KG, OWN_KG, kg, weightOf} from './lift-classroom.js';
+import {BAND_M, CAR_KG, CRATE_KG, HOLD_S, MAX_CRATES, MOST_KG, OWN_KG, kg, leverPct, weightOf} from './lift-classroom.js';
 export {BOARD};
 // Pressing on the lever moves it there at once.
 export const pressMovesDrag = true;
@@ -11,7 +11,7 @@ const GX = 100, G0 = 575, G1 = 150, SCALE_KG = 4000, PER_KG = (G0 - G1) / SCALE_
 const leverY = kgValue => G0 - Math.max(0, Math.min(SCALE_KG, kgValue)) * PER_KG;
 // The pad scene is drawn 1.2 times its own units, so Kestrel One reads at a glance.
 const PAD_X = 505, SCENE = 1.2, PAD_HALF = 225, METRE = 24, CRATE = Object.freeze({w: 38, h: 32}), LOAD_X = 60, CABLE_PX = 90, HOOK = 22;
-const BOX = Object.freeze({x: 770, y: 14, w: 216, h: 236});
+const BOX = Object.freeze({x: 770, y: 14, w: 216, h: 272});
 const STOCK_X = 805, PARKED_CAR_X = 935, DIAL_X = PAD_X - 140, DIAL_Y = GROUND_Y + 42;
 
 // ---- where everything is, in the pad's own units (ground at 0, pad centre at x 0) ----
@@ -54,22 +54,22 @@ export function hoverInfo(view, x, y) {
   if (view.scene === 'wonder' || view.scene === 'recap') return null;
   const f = view.flight;
   if (view.gauge || view.keys.W) {
-    if (Math.abs(y - leverY(f.most)) < 7 && x > GX - 40 && x < GX + 60) return `The top stop: the most her rotor can push, ${kg(Math.floor(f.most))}.`;
-    if (view.gauge === 'weight' && Math.abs(y - redLineY(f)) < 8 && x > GX - 30 && x < GX + 150) return `The red line is her weight, ${kg(f.weight)}. With the lever here, lift is the same as weight.`;
-    if (x > GX - 50 && x < GX + 80 && y > G1 - 24 && y < G0 + 30) return `The collective lever: ${kg(f.lift)} of lift now. Up means more lift. Drag it, or use W and S.`;
+    if (Math.abs(y - leverY(f.most)) < 7 && x > GX - 40 && x < GX + 60) return `The top stop is the most that the rotor can push, ${kg(Math.floor(f.most))}.`;
+    if (view.gauge === 'weight' && Math.abs(y - redLineY(f)) < 8 && x > GX - 30 && x < GX + 150) return `The red line marks the total weight, ${kg(f.weight)}. With the lever here, lift equals weight.`;
+    if (x > GX - 50 && x < GX + 80 && y > G1 - 24 && y < G0 + 30) return `This is the collective lever, now giving ${kg(f.lift)} of lift. Raising it tilts the blades more steeply, which gives more lift. Drag it, or use W and S.`;
   }
-  if (view.readouts && x > BOX.x && y > BOX.y && x < BOX.x + BOX.w && y < BOX.y + BOX.h) return 'Green is lift, the rotor’s push up. Red is weight, the Earth’s pull down.';
-  if (view.band && y < bandY(BAND_M[0]) && y > bandY(BAND_M[1])) return `The game’s band: hold the car ${BAND_M[0]} to ${BAND_M[1]} m off the ground for 10 seconds.`;
+  if (view.readouts && x > BOX.x && y > BOX.y && x < BOX.x + BOX.w && y < BOX.y + BOX.h) return 'Green shows lift, the rotor’s push upward. Red shows weight, the Earth’s pull downward.';
+  if (view.band && y < bandY(BAND_M[0]) && y > bandY(BAND_M[1])) return `In the challenge you hold the Dusthawk inside this strip, ${BAND_M[0]} to ${BAND_M[1]} m above the ground, for ${HOLD_S} seconds.`;
   if (!f || view.scene !== 'pad') return null;
   const [lx, ly] = local(view, x, y), g = setGeometry(f);
-  if (Math.abs(lx - g.hx) < 128 && ly > g.hy - 46 && ly < g.hy - 26) return 'The rotor: long blades that spin and throw air down. The air pushes her up: that push is lift.';
-  if (Math.abs(lx - g.hx) < 60 && ly > g.hy - 28 && ly < g.hy + 34) return `Kestrel One, with her pilot and a full tank: ${kg(OWN_KG)}.`;
-  if (g.carAt && Math.abs(lx - g.carAt.x) < 42 && Math.abs(ly - g.carAt.y) < 26) return `The Dusthawk rally car: ${kg(CAR_KG)}.`;
-  if (g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 && Math.abs(ly - c.y) < CRATE.h / 2)) return `A crate: ${kg(CRATE_KG)}.`;
-  if (view.stock && x > STOCK_X - 8 && x < STOCK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 10 && y < GROUND_Y) return `Spare crates, ${kg(CRATE_KG)} each.` + (view.keys[1] ? ' Click to load one.' : '');
-  if (view.stock === 'all' && !f.car && Math.abs(x - PARKED_CAR_X) < 44 && y > GROUND_Y - 50 && y < GROUND_Y) return `The Dusthawk: ${kg(CAR_KG)}.` + (view.keys[3] ? ' Click to hook it.' : '');
-  if (Math.hypot(x - DIAL_X, y - DIAL_Y) < 32) return 'The weighing pad’s dial: what the pad feels, her weight less the rotor’s lift.';
-  if (y > GROUND_Y - 10 && y < GROUND_Y + 20 && Math.abs(x - PAD_X) < PAD_HALF * SCENE) return 'The weighing pad: it weighs whatever rests on it.';
+  if (Math.abs(lx - g.hx) < 128 && ly > g.hy - 46 && ly < g.hy - 26) return 'The rotor is the set of long blades that spin and throw air down. The air pushes the rotor up, and that push is lift.';
+  if (Math.abs(lx - g.hx) < 60 && ly > g.hy - 28 && ly < g.hy + 34) return `Kestrel One, with its pilot and a full tank of fuel, weighs ${kg(OWN_KG)}.`;
+  if (g.carAt && Math.abs(lx - g.carAt.x) < 42 && Math.abs(ly - g.carAt.y) < 26) return `The Dusthawk rally car weighs ${kg(CAR_KG)}.`;
+  if (g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 && Math.abs(ly - c.y) < CRATE.h / 2)) return `This crate weighs ${kg(CRATE_KG)}.`;
+  if (view.stock && x > STOCK_X - 8 && x < STOCK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 10 && y < GROUND_Y) return `These are spare crates, ${kg(CRATE_KG)} each.` + (view.keys[1] ? ' Click them to load one.' : '');
+  if (view.stock === 'all' && !f.car && Math.abs(x - PARKED_CAR_X) < 44 && y > GROUND_Y - 50 && y < GROUND_Y) return `The Dusthawk weighs ${kg(CAR_KG)}.` + (view.keys[3] ? ' Click it to hang it from the cable.' : '');
+  if (Math.hypot(x - DIAL_X, y - DIAL_Y) < 32) return 'This dial shows the weight still resting on the pad, which is the total weight less the rotor’s lift.';
+  if (y > GROUND_Y - 10 && y < GROUND_Y + 20 && Math.abs(x - PAD_X) < PAD_HALF * SCENE) return 'The weighing pad weighs whatever rests on it.';
   return null;
 }
 const redLineY = f => f.weight <= f.most ? leverY(f.weight) : Math.min(leverY(f.weight), leverY(f.most) - 16);
@@ -77,7 +77,7 @@ export function targetPoint(view, action) {
   const f = view.flight;
   if (!f) return null;
   const g = setGeometry(f);
-  if (action === 'lever:up' || action === 'lever:down') return [GX, leverY(f.lift)];
+  if (action === 'lever:up' || action === 'lever:down' || action === 'set:best') return [GX, leverY(f.lift)];
   if (action === 'lever:weight') return [GX, leverY(Math.min(f.weight, f.most))];
   if (action === 'lever:mark') return [GX, leverY(view.mark)];
   if (action === 'lever:top') return [GX, leverY(f.most)];
@@ -108,21 +108,23 @@ function pad(ctx) {
   ctx.fillStyle = g; ctx.fillRect(-PAD_HALF, -10, 2 * PAD_HALF, 10);
   ctx.fillStyle = '#d6a43a'; for (let x = -PAD_HALF + 5; x < PAD_HALF - 5; x += 40) ctx.fillRect(x, -10, 20, 3);
 }
-function dial(ctx, feels, x, y) {
+function dial(ctx, reads, x, y) {
   ctx.fillStyle = theme.dial; ctx.strokeStyle = theme.beamDark; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.strokeStyle = '#3a3a34'; ctx.lineWidth = 1.2;
   for (let i = 0; i <= 10; i++) { const a = Math.PI * .75 + i * Math.PI * .15; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 21, y + Math.sin(a) * 21); ctx.lineTo(x + Math.cos(a) * 25, y + Math.sin(a) * 25); ctx.stroke(); }
-  const a = Math.PI * .75 + Math.min(1, feels / 5000) * Math.PI * 1.5;
+  const a = Math.PI * .75 + Math.min(1, reads / 5000) * Math.PI * 1.5;
   ctx.strokeStyle = theme.bad; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 22, y + Math.sin(a) * 22); ctx.stroke();
-  text(ctx, `the pad feels ${kg(feels)}`, x + 40, y, {size: 17, align: 'left'});
+  text(ctx, `the pad reads ${kg(reads)}`, x + 40, y, {size: 17, align: 'left'});
 }
+// The air the rotor throws down: more arrows, and faster, as the lift grows.
 function air(ctx, hx, hy, liftKg, time) {
-  const n = Math.round(Math.min(1, liftKg / MOST_KG) * 6);
-  ctx.strokeStyle = 'rgba(200,225,235,.35)'; ctx.lineWidth = 2;
+  const share = Math.min(1, liftKg / MOST_KG), n = Math.max(2, Math.round(share * 7));
+  ctx.strokeStyle = 'rgba(170,220,245,.75)'; ctx.lineWidth = 2.4;
   for (let i = 0; i < n; i++) {
-    const x = hx - 100 + i * (200 / Math.max(1, n - 1)), y = hy - 20 + ((time * 120 + i * 37) % 80);
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 16); ctx.lineTo(x - 4, y + 10); ctx.moveTo(x, y + 16); ctx.lineTo(x + 4, y + 10); ctx.stroke();
+    const x = hx - 110 + i * (220 / (n - 1)), y = hy - 28 + ((time * (70 + share * 110) + i * 37) % 76);
+    if (y + 18 > -12) continue; // The air stops at the pad.
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 18); ctx.lineTo(x - 4, y + 12); ctx.moveTo(x, y + 18); ctx.lineTo(x + 4, y + 12); ctx.stroke();
   }
 }
 function arrow(ctx, x, y, length, up, colour, width = 10) {
@@ -136,9 +138,9 @@ function arrow(ctx, x, y, length, up, colour, width = 10) {
 function drawSet(ctx, f, time, {rest = true, strain = false} = {}) {
   const g = setGeometry(f, {rest});
   pad(ctx);
-  if (f.dropped) crate(ctx, LOAD_X + 120, -8 - CRATE.h / 2);
+  for (let i = 0; i < (f.dropped ?? 0); i++) crate(ctx, LOAD_X + 100 + i * (CRATE.w + 2), -8 - CRATE.h / 2);
   if (g.loadedSet) {
-    // Slings from the ring to the load, and the cable from her hook, slack until she takes it up.
+    // Slings from the ring to the load, and the cable from the helicopter's hook, slack until the helicopter rises.
     ctx.strokeStyle = theme.line; ctx.lineWidth = 1.4;
     for (const c of g.crates) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(c.x, c.y - CRATE.h / 2); ctx.stroke(); }
     if (g.carAt) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x - 26, g.carAt.y - 4); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x + 26, g.carAt.y - 4); ctx.stroke(); }
@@ -178,7 +180,7 @@ function gauge(ctx, view) {
     const y = redLineY(f), glow = view.glow === 'lever:weight';
     ctx.strokeStyle = theme.bad; ctx.lineWidth = glow ? 4 + Math.sin(view.time * 6) * 1.5 : 3;
     ctx.beginPath(); ctx.moveTo(GX - 20, y); ctx.lineTo(GX + 64, y); ctx.stroke();
-    text(ctx, f.weight <= f.most ? 'her weight' : 'weight: above the top!', GX + 68, y, {size: 13, align: 'left', colour: theme.bad});
+    text(ctx, f.weight <= f.most ? 'weight' : 'weight above top', GX + 68, y, {size: 13, align: 'left', colour: theme.bad});
   }
   // The handle: a T grip the player drags.
   const y = leverY(lift), glow = view.glow === 'lever:up' || view.glow === 'lever:top';
@@ -188,7 +190,7 @@ function gauge(ctx, view) {
   ctx.strokeStyle = glow ? theme.accent : 'rgba(0,0,0,.5)'; ctx.lineWidth = glow ? 3 + Math.sin(view.time * 6) * 1.5 : 1.5; ctx.stroke();
   if (interactive) { keyCap(ctx, GX - 22, G0 + 34, 'W'); text(ctx, 'up', GX - 8, G0 + 34, {size: 14, align: 'left'}); keyCap(ctx, GX + 26, G0 + 34, 'S'); text(ctx, 'down', GX + 40, G0 + 34, {size: 14, align: 'left'}); }
 }
-const STATUS = {pad: 'On the pad', taut: 'Load still on the pad', rising: 'Lifting', hovering: 'Hovering: holding still', climbing: 'Climbing', high: 'Still climbing', sinking: 'Sinking'};
+const STATUS = {pad: 'On the pad', taut: 'Load still on the pad', rising: 'Lifting', hovering: 'Hovering', climbing: 'Climbing', high: 'Still climbing', sinking: 'Sinking'};
 function readouts(ctx, view) {
   const f = view.flight, kind = view.readouts;
   ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
@@ -197,17 +199,35 @@ function readouts(ctx, view) {
   const row = (label, value, colour) => { text(ctx, label, BOX.x + 14, y, {size: 17, align: 'left', weight: 600}); text(ctx, value, BOX.x + BOX.w - 14, y, {size: 21, align: 'right', colour}); y += 30; };
   if (kind === 'lift' || kind === 'both') row('Lift', kg(f.lift), theme.good);
   if (kind === 'weight' || kind === 'both') row('Weight', kg(f.weight), theme.bad);
+  if ((kind === 'lift' || kind === 'both') && view.leverRow) row('Lever', `${f.lever}%`, theme.accent);
   if (kind === 'weight') for (const part of f.parts) { text(ctx, part, BOX.x + 14, y, {size: 14, align: 'left', weight: 600, colour: theme.faint}); y += 22; }
+  if (view.blade) blade(ctx, f, view.time);
   if (kind === 'both') {
-    // The two arrows side by side, on one scale: when they are the same length, she hovers.
-    const mid = BOX.y + 150, per = 62 / SCALE_KG;
+    // The two arrows side by side, on one scale: when they are the same length, the helicopter hovers.
+    const mid = BOX.y + 172, per = 62 / SCALE_KG;
     ctx.strokeStyle = theme.faint; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(BOX.x + 40, mid); ctx.lineTo(BOX.x + BOX.w - 40, mid); ctx.stroke();
     arrow(ctx, BOX.x + 80, mid, f.lift * per, true, theme.good);
     arrow(ctx, BOX.x + 136, mid, f.weight * per, false, theme.bad);
     text(ctx, 'lift', BOX.x + 56, mid - 12, {size: 13, colour: theme.good, align: 'right'});
     text(ctx, 'weight', BOX.x + 156, mid + 12, {size: 13, colour: theme.bad, align: 'left'});
-    text(ctx, STATUS[f.status], BOX.x + BOX.w / 2, BOX.y + BOX.h - 16, {size: 15, colour: f.status === 'hovering' ? theme.good : theme.accent});
+    text(ctx, STATUS[f.status], BOX.x + BOX.w / 2, BOX.y + BOX.h - 14, {size: 15, colour: f.status === 'hovering' ? theme.good : theme.accent});
   }
+}
+// One blade seen end on, drawn large: a higher lever tilts the blade more steeply, and more air goes down.
+function blade(ctx, f, time) {
+  const x = BOX.x + BOX.w / 2, y = BOX.y + 134, share = Math.min(1, f.lift / f.most), tilt = (3 + share * 22) * Math.PI / 180;
+  text(ctx, 'One blade, seen end on', x, BOX.y + 92, {size: 14, colour: theme.accent});
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-tilt);
+  ctx.fillStyle = theme.iron[0]; ctx.strokeStyle = theme.iron[2]; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(0, 0, 44, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  const n = f.lift > 0 ? Math.max(1, Math.round(share * 5)) : 0;
+  ctx.strokeStyle = 'rgba(170,220,245,.85)'; ctx.lineWidth = 2.2;
+  for (let i = 0; i < n; i++) {
+    const ax = x - 40 + (n === 1 ? 40 : i * (80 / (n - 1))), ay = y + 14 + (time * (30 + share * 50) + i * 13) % 22;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 24); ctx.lineTo(ax - 4, ay + 18); ctx.moveTo(ax, ay + 24); ctx.lineTo(ax + 4, ay + 18); ctx.stroke();
+  }
+  text(ctx, f.lift > 0 ? 'air thrown down' : 'rotor stopped', x, BOX.y + BOX.h - 16, {size: 14, colour: f.lift > 0 ? 'rgba(170,220,245,.95)' : theme.faint});
 }
 function stock(ctx, view) {
   const f = view.flight, spare = MAX_CRATES - f.crates;
@@ -231,15 +251,17 @@ function band(ctx) {
   ctx.strokeStyle = 'rgba(86,214,131,.6)'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2;
   for (const y of [y0, y1]) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); }
   ctx.setLineDash([]);
-  text(ctx, `${BAND_M[0]} to ${BAND_M[1]} m: the game’s band`, x1 - 5, y0 - 12, {size: 14, align: 'right', colour: theme.good});
+  text(ctx, `${BAND_M[0]} to ${BAND_M[1]} m above the ground`, x1 - 5, y0 - 12, {size: 14, align: 'right', colour: theme.good});
 }
-function table(ctx, rows, x = 230, y = 20) {
-  const w = 330, h = 30 + rows.length * 30;
+function table(ctx, rows, {x = 230, y = 20, w = 330, title = null} = {}) {
+  const h = 30 + rows.length * 30 + (title ? 26 : 0);
   ctx.fillStyle = 'rgba(10,14,15,.65)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+  if (title) text(ctx, title, x + 14, y + 20, {size: 15, align: 'left', colour: theme.accent});
+  const top = y + 26 + (title ? 26 : 0);
   rows.forEach((row, i) => {
-    text(ctx, row.label, x + 14, y + 26 + i * 30, {size: 16, align: 'left', weight: 600});
-    text(ctx, row.value ?? '…', x + w - 14, y + 26 + i * 30, {size: 18, align: 'right', colour: row.value ? theme.good : theme.faint});
+    text(ctx, row.label, x + 14, top + i * 30, {size: 16, align: 'left', weight: 600});
+    text(ctx, row.value ?? '…', x + w - 14, top + i * 30, {size: 18, align: 'right', colour: row.value ? theme.good : theme.faint});
   });
 }
 function drawPad(ctx, view) {
@@ -250,14 +272,21 @@ function drawPad(ctx, view) {
   const g = drawSet(ctx, f, view.time, {strain: f.status === 'taut' && f.lift >= f.most - .5});
   if (view.air) air(ctx, g.hx, g.hy, f.lift, view.time);
   if (view.glow === 'rotor') halo(ctx, g.hx, g.hy - 35, 70, view.time);
-  // Lift on the rotor, as an arrow: the same scale as the readout.
+  // Lift on the rotor and weight on the helicopter, as arrows on one scale, so that equal arrows mean a hover.
   if (view.readouts === 'lift' || view.readouts === 'both') arrow(ctx, g.hx, g.hy - 44, f.lift * .035, true, theme.good, 8);
+  // The label sits on the side of the arrow away from the readouts.
+  if (view.forces && f.lift > 0) text(ctx, 'air pushes the rotor up', g.hx + (g.hx > 20 ? -14 : 14), g.hy - 44 - Math.max(16, f.lift * .03), {size: 13, align: g.hx > 20 ? 'right' : 'left', colour: theme.good});
+  if (view.forces && view.readouts === 'both') {
+    arrow(ctx, g.hx + 74, g.hy - 12, f.weight * .035, false, theme.bad, 8);
+    text(ctx, 'weight', g.hx + 86, g.hy + 4, {size: 13, align: 'left', colour: theme.bad});
+  }
   ctx.restore();
   dial(ctx, f.pad, DIAL_X, DIAL_Y);
   if (view.stock) stock(ctx, view);
   if (view.gauge) gauge(ctx, view);
   if (view.readouts) readouts(ctx, view);
   if (view.table) table(ctx, view.table);
+  if (view.freeTable?.length) table(ctx, view.freeTable, {x: 285, y: 14, w: 345, title: 'Your results'});
   if (view.keys.Space === 'rotor') keyCap(ctx, ...toBoard(g.hx, g.hy - 70), 'Space');
 }
 function drawThree(ctx, view) {
@@ -270,11 +299,11 @@ function drawThree(ctx, view) {
     if (!view.hideWeights) text(ctx, `weighs ${kg(f.weight)}`, columns[i], GROUND_Y + 2, {size: 19, colour: theme.bad});
     if (f.lift > 0) {
       const top = f.lift >= f.most - .5 && f.weight > f.most;
-      text(ctx, top ? `lever at the top: ${kg(Math.floor(f.most))}` : `lift ${kg(f.lift)}`, columns[i], GROUND_Y + 30, {size: 17, colour: theme.good});
+      text(ctx, top ? `lever at the top, ${kg(Math.floor(f.most))}` : `lift ${kg(f.lift)}, lever ${leverPct(f.lift)}%`, columns[i], GROUND_Y + 30, {size: 17, colour: theme.good});
       text(ctx, f.status === 'hovering' ? 'hovers' : f.status === 'taut' ? 'stays down' : STATUS[f.status].toLowerCase(), columns[i], GROUND_Y + 58, {size: 20, colour: f.status === 'hovering' ? theme.good : theme.accent});
     }
   });
-  text(ctx, `The most her rotor can push: ${kg(Math.floor(MOST_KG))}`, BOARD.width / 2, 40, {size: 20, colour: theme.accent});
+  text(ctx, `The most that the rotor can push is ${kg(Math.floor(MOST_KG))}.`, BOARD.width / 2, 40, {size: 20, colour: theme.accent});
 }
 function drawWonder(ctx, view) {
   outdoors(ctx);
@@ -283,8 +312,8 @@ function drawWonder(ctx, view) {
   const g = drawSet(ctx, f, view.time, {strain: f.status === 'taut'});
   air(ctx, g.hx, g.hy, f.lift, view.time);
   ctx.restore();
-  if (f.status === 'taut') text(ctx, 'lever all the way up', ...toBoard(g.hx, g.hy - 62), {size: 18, colour: theme.accent});
-  if (f.dropped && f.h > 0) text(ctx, 'one crate left behind', ...toBoard(LOAD_X + 120, -46), {size: 16, colour: theme.accent});
+  if (f.status === 'taut') text(ctx, 'engine at full power', ...toBoard(g.hx, g.hy - 62), {size: 18, colour: theme.accent});
+  if (f.dropped && f.h > 0) text(ctx, 'two crates left behind', ...toBoard(LOAD_X + 120, -56), {size: 16, colour: theme.accent});
 }
 function drawRecap(ctx, view) {
   const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;
@@ -293,14 +322,14 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 420); ctx.clip();
-    ctx.translate(x + w / 2 - 20, 430); ctx.scale(.55, .55);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 300); ctx.clip();
+    ctx.translate(x + w / 2 - 20, 372); ctx.scale(.55, .55);
     const t = view.time;
     if (idea.id === 'match') { const f = mini({}, OWN_KG, 1.5 + Math.sin(t * 1.4) * .06); drawSet(ctx, f, t); arrow(ctx, 0, -40 - f.h * METRE - 44, OWN_KG * .04, true, theme.good, 10); arrow(ctx, 0, -40 - f.h * METRE + 40, OWN_KG * .04, false, theme.bad, 10); }
     if (idea.id === 'most') drawSet(ctx, mini({car: 1, crates: 2}, MOST_KG, 0, 1), t, {strain: true});
     if (idea.id === 'ease') { ctx.fillStyle = 'rgba(86,214,131,.14)'; ctx.fillRect(-PAD_HALF, -8 - BAND_M[1] * METRE, 2 * PAD_HALF, (BAND_M[1] - BAND_M[0]) * METRE); drawSet(ctx, mini({car: 1}, weightOf({car: 1}), 3.2 + Math.sin(t * 1.2) * .1, 1), t); }
     ctx.restore();
-    wrap(ctx, idea.text, x + w / 2, 550, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 416, w - 30, {size: 19, weight: 600});
   });
 }
 const mini = (load, lift, h, taut = 0) => {

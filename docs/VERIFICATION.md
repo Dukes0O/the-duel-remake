@@ -1998,3 +1998,15 @@ on its tests and pictures.
 Rule 19: whole-tier pass 8361997b. Since then Lab code, tests, notes and voice, the European animals, `heli-session.js` view fields, the bucket
 fit and the crate's arrow, `heli-scene.js` drawing, `pilot-map-view.js` flags and `tune-view.js` wording; no physics or save shape. No frame
 check: the light columns are the ski pads' own, shown only during a Lab challenge.
+
+
+## Release, 5 November 2026, LAB-CLASSROOM-LANGUAGE batch 3 and G-force (Claude, Release Manager)
+
+Air and altitude, Braking, Strength, Fuel, Wax, Headings, Lift and Pendulums rewritten to Kyle's standard, with thirty of Brian's lines re-recorded; LAB-CLASSROOM-GFORCE
+(Codex, reviewed by the main session). "Tell me about this machine" now shows a description of each machine. Eighteen lines lost stray quotation marks in their text. Show me
+wording, the page and the panel are shared with the earlier batches. NO-RECYCLE-BUILDS: browser bundles and test fixtures are deleted outright. Goals, rewards and the save shape
+are unchanged; new notebook word ids use the existing list.
+Lane tier 120/120, build, every test-lab-* suite, Lab scenarios: 21 of 23 in the batch at --jobs 3, with lab-view failing on the laptop's network buffers (ERR_NO_BUFFER_SPACE, rule 3)
+and lab-walk on an expected phrase that this batch fixed; both pass alone at --jobs 1. Three reviews with their faults fixed, listed in each lesson's note. Rule 19: whole-tier pass
+8361997b. Since then Lab code, tests, notes and voice, the European animals, tool cleanup, and the earlier Lab releases' small helicopter view changes; no physics or save shape. No
+frame check: the classroom is a 2D board and no race scene changed.

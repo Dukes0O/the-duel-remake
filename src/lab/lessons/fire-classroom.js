@@ -582,7 +582,7 @@ export function createModel() {
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
         check: id, answered,
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     return {...base, scene: 'recap', plates: false, ready: true, ideas: KEY_IDEAS, formulas: [{title: 'The rule of the fire triangle', formula: RULE_WORDS, note: 'One “no” is enough to stop the fire.'}, bucketFormula, tankFormula, challengeFormula],
       say: 'A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.',
@@ -631,7 +631,7 @@ export function createModel() {
       prompt: 'Press Space, or click the rake.', hints: ['The rake is over the column of trees in front of the flames.', 'Press Space.', 'Watch my pointer, which is on the rake.']};
     if (m.phase === 'guess') return {...common, keys: PICK_KEYS(3), waiting: true,
       cards: SIDE_CARDS.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: c.picture, state: null})),
-      say: t.ask, prompt: 'Pick a card: click it, or press 1, 2 or 3.',
+      say: t.ask, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
       hints: [strip ? 'What is missing in the strip that the flames need?' : `What does ${t.name} do to the fire?`, 'Which one of heat, fuel and oxygen does it remove?', 'Any guess is fine. Pick one, and then we will test it.']};
     if (m.phase === 'tool') {
       const action = strip ? 'burn' : 'tip';
