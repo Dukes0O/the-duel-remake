@@ -31,6 +31,12 @@ assert(next.events.some(event => event.type === 'say'));
 job = tick(next, { player: { position: pos(0) }, actors: [{ id: 'runner', position: pos(2), health: 0 }] });
 assert.equal(job.done, true);
 
+// A chase whose target has not spawned yet is not caught.
+job = createJob({ steps: [{ kind: 'chase', targetId: 'runner', path: [pos(0)] }] });
+next = tick(job, { player: { position: pos(0) }, actors: [] });
+assert.equal(next.done, false);
+assert.equal(next.failedStep ?? false, false);
+
 // Escort gets one rest at zero health; the next breakdown restarts its leg.
 job = createJob({ steps: [{ kind: 'escort', actorId: 'bess', path: [pos(0)], destination: pos(10) }] });
 next = tick(job, { actors: [{ id: 'bess', health: 0 }] });
