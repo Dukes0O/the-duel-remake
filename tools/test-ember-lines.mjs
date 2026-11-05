@@ -1,0 +1,58 @@
+// WW-LINES: every caption in docs/WASTELAND_WORLD.md section 5 is registered.
+import assert from 'node:assert/strict';
+import {EMBER_CAPTIONS, EMBER_LINE_IDS, EMBER_NOTE, EMBER_NOTE_ID} from '../src/story/ember-lines.js';
+import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
+
+const EXPECTED = [
+  ['Job 1 start', 'Cinder', 'This pot holds the last of the Everburn. Don\'t drop it. I mean it.'],
+  ['Job 1 start', 'Cinder', 'I\'ve bolted a flamethrower to your car. Press its number and burn anything in the way.'],
+  ['First barricade', 'Cinder', 'Ash Men\'s fence. Get close, and burn it.'],
+  ['Crash, pot spills', 'Cinder', 'You dropped my fire! Go back, I\'ve got more. Slower this time.'],
+  ['Tin Town in sight', 'Auntie Solder', 'Is that smoke coming from your roof, or are you just pleased to see us?'],
+  ['Job 1 won', 'Auntie Solder', 'A live ember. I haven\'t seen one in a year. Bring it in.'],
+  ['Job 2 start', 'Auntie Solder', 'You can\'t get that car down my alleys. You\'ve legs, haven\'t you?'],
+  ['Job 2 start', 'Cinder', 'Hold F to step out. Take my Hand Flamer. It only reaches six metres, so get close.'],
+  ['First lamp', 'Cinder', 'One lit. Two more. Watch your eyebrows.'],
+  ['Raiders', 'Cinder', 'Ash Men on the walkway. Fire works on them too.'],
+  ['Job 2 won', 'Auntie Solder', 'Three lamps. Now we can see how bad it is. The board\'s by the door if you want work.'],
+  ['Job 3 start', 'Auntie Solder', 'Thief! He\'s got my bellows! Heading for the Boneyard!'],
+  ['In the Boneyard', 'Cinder', 'He\'s going through the planes. So are you.'],
+  ['Falling behind', 'Cinder', 'Closer! You\'re losing him!'],
+  ['Job 3 won', 'Cinder', 'Those are good bellows. Keep the flamethrower. You\'ve earned it.'],
+  ['Job 4 start', 'Big Bess\'s driver, Moss', 'Bess does twenty miles an hour, downhill, with a tailwind. Keep them off us.'],
+  ['Bess hit', 'Moss', 'That one hurt her feelings.'],
+  ['Bess resting', 'Moss', 'She needs a minute. Hold on.'],
+  ['Job 4 won', 'Auntie Solder', 'Listen to that. That\'s a forge. That is a forge, you lovely thing.'],
+  ['Job 5 start', 'Cinder', 'Old Smoke keeps the well key in the old mall. Leave the car outside. Too loud.'],
+  ['Inside the mall', 'Cinder', 'Stay out of their lamps. If they see you, run. Nobody\'s cross with you for running.'],
+  ['Key taken', 'Cinder', 'Got it? You\'ll walk slow with that. Mind the way back.'],
+  ['Alarm', 'Cinder', 'They\'ve seen you! Run for the car!'],
+  ['Job 5 won', 'Old Smoke', 'Little driver. You took my key. Come and give it back, up at the well.'],
+  ['Job 6 start', 'Cinder', 'Hold them off while I work the valve. Three lots, I\'d guess.'],
+  ['Waves over', 'Cinder', 'Valve\'s free. Hang on, what\'s that noise?'],
+  ['Old Smoke appears', 'Old Smoke', 'Fire is mine. Everything goes grey in the end.'],
+  ['Chase starts', 'Cinder', 'He\'s running! When a vent glows, hit it!'],
+  ['First vent', 'Cinder', 'One down. Stay on him!'],
+  ['Second vent', 'Old Smoke', 'My beautiful furnace! Stop that!'],
+  ['Third vent', 'Cinder', 'That\'s it! Get clear! GET CLEAR!'],
+  ['Job 6 won', 'Cinder', 'Well, look at that. A hundred years old and still showing off.'],
+  ['Job 6 won', 'Cinder', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'],
+  ['Job 6 won', 'Hollis', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'],
+];
+
+assert.equal(Object.keys(EMBER_CAPTIONS).length, EXPECTED.length, 'every table caption is included');
+assert.equal(EMBER_LINE_IDS.length, EXPECTED.length + 1, 'the note is included in the owned ids');
+assert.equal(new Set(EMBER_LINE_IDS).size, EMBER_LINE_IDS.length, 'all ids are unique');
+assert.ok(EMBER_LINE_IDS.every(id => id.startsWith('story.ember.')), 'ids use story.ember.*');
+const entries = Object.values(EMBER_CAPTIONS);
+assert.deepEqual(entries.map(({where, who, text}) => [where, who, text]), EXPECTED, 'captions match the design table word for word');
+assert.ok(entries.every(({who, where, text, captionOnly}) => who && where && text && captionOnly === true), 'every caption has a speaker, place and words');
+assert.ok(entries.every(({text}) => !text.includes(String.fromCharCode(0x2014))), 'captions contain no em dash');
+assert.equal(EMBER_NOTE.id, EMBER_NOTE_ID);
+assert.equal(EMBER_NOTE.text, 'Driver, the forge at Tin Town has gone cold, and no forge means no boiler parts. A woman named Cinder is at the back gate with a pot of fire and a bad attitude. I like her. Go and see. Hollis');
+assert.equal(EMBER_NOTE.spoken, false, 'Hollis\'s note is never spoken');
+assert.deepEqual(storyLineKeys().includes('ember'), true, 'the Everburn registers its story');
+assert.equal(storyLetter('ember'), EMBER_NOTE, 'the note is available as the story letter');
+for (const [id, caption] of Object.entries(EMBER_CAPTIONS)) assert.equal(captionText(id), caption.text, `${id} is registered`);
+assert.equal(captionText(EMBER_NOTE_ID), null, 'the note is not a caption');
+console.log(`test-ember-lines: ${EXPECTED.length} captions and note passed`);
