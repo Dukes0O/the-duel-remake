@@ -36,3 +36,6 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - This is a story landmark seen from across the map. Make the stack much taller, as tall as a building, with guy wires and a ladder.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass for the well, merge.** Tall stack, guy wires, ladder, scattered scrap and a worker for size, all as asked. The well head is the part to keep.
+The flame is still pale salmon, my first note last round. This may come from Blender's render colour settings, so judge it in the game once WW-SCENE places it. If it is still pink there, use round 3 on the flame alone: white-yellow core, orange shell, ragged tongues.
