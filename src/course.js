@@ -19,6 +19,7 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
+import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -36,6 +37,7 @@ const ROAD_LANDFORMS={
   ridge:[[.15,.12,12],[.34,.08,-4],[.71,.06,-12],[.91,.065,8]],
 };
 const ROUTE_SHAPES={
+  scablands:[1.28,.917,0,0,0,0,0],
   // x/z aspect, broad two/three/five-lobe bends, paired four/six-lobe bends.
   canyon:[1.24,.87,.09,.05,.012,.030,.003],
   highland:[1.08,.93,.15,.075,.012,.040,.008],
@@ -83,6 +85,7 @@ export class Course {
   themeAt(s){return this.sectionAt(s).theme;}
   _height(s){
     if(this.script)return this.script.heightAt(s);
+    if(this.def.scablands)return 0;
     if(this.def.expansion)return expansionHeight(this.def,s);
     if(this.def.arena)return 0;
     const p=this.phase(s),a=p/this.length*TAU;
@@ -113,12 +116,14 @@ export class Course {
     const cityLoop=this.def.kind==='chase'||this.def.layout==='city'?roundedCityLoop():null;
     // Distinct flowing layouts include gentle reverse bends and longer
     // straights. Their tightest radius stays beyond the near-terrain ribbon.
-    const shape=ROUTE_SHAPES[this.def.layout]||[1.08,.93,0,.055,.018,0,0];
+    const shape=ROUTE_SHAPES[this.def.scablands?'scablands':this.def.layout]||[1.08,.93,0,.055,.018,0,0];
     for(let i=0;i<=count;i++){const a=i/count*TAU,r=arena?1:1+shape[2]*Math.cos(a*2+phase*.2)+shape[3]*Math.cos(a*3+phase)+shape[4]*Math.sin(a*5+phase)+shape[5]*Math.sin(a*4+phase*.5)+shape[6]*Math.cos(a*6-phase*.3);
-      const city=this.def.expansion?expansionPoint(this.def,i/count):cityLoop?.(i/count);raw.push({x:city?city.x:Math.cos(a)*r*(arena?1.3:shape[0]),z:city?city.z:Math.sin(a)*r*(arena?.8:shape[1]),s:0});
+      const city=this.def.expansion?expansionPoint(this.def,i/count):cityLoop?.(i/count);
+      const frameX=this.def.scablands?shape[0]:arena?1.3:shape[0],frameZ=this.def.scablands?shape[1]:arena?.8:shape[1];
+      raw.push({x:city?city.x:Math.cos(a)*r*frameX,z:city?city.z:Math.sin(a)*r*frameZ,s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});
-    const origin=this.def.saltFlats?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
+    const origin=this.def.saltFlats||this.def.scablands?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
     for(let s=0;s<=this.length;s+=STEP){while(cursor<raw.length-1&&raw[cursor].s<s)cursor++;
       const a=raw[cursor-1],b=raw[cursor],t=(s-a.s)/(b.s-a.s);
       this.samples.push({s,x:lerp(a.x,b.x,t)-origin.x,z:lerp(a.z,b.z,t),y:this._height(s),heading:0,curvature:0});}
@@ -190,6 +195,7 @@ export class Course {
     return width;
   }
   surfaceAt(s,lateral=0){const p=this.phase(s),roadHalfWidth=this.roadHalfWidthAt(p);
+    if(this.def.scablands){const world=this.worldAt(s,lateral);return scablandsSurfaceAt(world.x,world.z);}
     if(this.def.practice){const world=this.worldAt(s,lateral);if(onFreestyleDrag(world.x,world.z))return {road:true,mainRoad:true,shortcutId:null,roadHalfWidth:16};}
     const cut=this.features.shortcuts.find(c=>p>=c.start&&p<=c.end&&Math.abs(lateral-this.shortcutOffset(c,p))<=c.halfWidth);
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
@@ -205,6 +211,7 @@ export class Course {
     return{a:turns(.003),b:turns(.007),c:turns(.012),d:turns(.004),e:turns(.13),f:turns(.038)};}
   _relief(s,off){
     if(this.def.pit)return pitRampHeight(this,s,off);
+    if(this.def.scablands){const p=this.worldAt(s,off);return scablandsSurfaceHeightAt(p.x,p.z)-p.y;}
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
@@ -417,7 +424,7 @@ export class Course {
   worldAt(s,lat=0){const f=this.def.pit||Object.hasOwn(this,'at')?this.at(s):this._frame(s);return{x:f.x+Math.cos(f.heading)*lat,y:this.script&&lat?f.y+this.script.bankLift(s,lat):f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){if(this.def.pit)return pitNearest(this,x,z,referenceS);
     const nearest=this._nearestIndex.lookup(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step;
-    if(this.def.saltFlats){
+    if(this.def.saltFlats||this.def.scablands){
       // Solve the same sampled frame's normal projection, including scenery
       // coordinates inside and outside the driving band. No coordinate oracle.
       const residual=s=>{const frame=this.at(s);return (x-frame.x)*Math.sin(frame.heading)+(z-frame.z)*Math.cos(frame.heading);};
@@ -456,7 +463,7 @@ export class Course {
   }
   // The place along the route nearest (x, z): `nearest(x, z).s` without building the rest of the frame.
   nearestS(x,z){
-    if(this.def.pit||this.def.saltFlats)return this.nearest(x,z).s;
+    if(this.def.pit||this.def.saltFlats||this.def.scablands)return this.nearest(x,z).s;
     const nearest=this._nearestIndex.lookup(x,z);
     return this._refineS(x,z,nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step);
   }

@@ -3,6 +3,7 @@ import {CIRCUIT_MANIFESTS} from './circuit-manifests.js';
 // Each new player feature starts here. Release Manager changes dev -> beta -> on
 // only after the checks and play-test rules in SPEC.md section 4.4 are met.
 export const FEATURE_STATES = Object.freeze({
+  'gear-find': 'dev',
   'seeker-rockets': 'on',
   'convoy-raid': 'on',
   tollkeeper: 'on',
@@ -58,6 +59,8 @@ export const FEATURE_STATES = Object.freeze({
   'kogane-invitation': 'on',
   // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.
   'water-road': 'on',
+  // The Bowl's air control and Show Night are built behind this switch.
+  'titan-bowl': 'dev',
   // WARLORD-NINE: Magnus the Magnet, the ninth warlord (docs/SCRAPDOME.md), after Baron Blackiron; chapter 9 of the Water Road. On in the game (2 November 2026, no Preview step).
   'warlord-nine': 'on',
 });
