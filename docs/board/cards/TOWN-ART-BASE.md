@@ -15,3 +15,13 @@ Files you own: those three, `public/assets/models/wasteland/town/sample.glb` (on
 Look at your own sheet and fix it before you submit: it must look at least as good as Tin Town's `docs/board/looks/ww-art-tintown/round-2.jpg`. Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. No Chrome, no frame timing, no new dependency. At most three rounds.
 
 ## Claude answers
+
+**Round 1: no.** The sheet is the right idea: both views, labels, bright light, the size marked. Keep that, but crop away the grey bars and use a real car from the game for scale, not a black lump. The models are the fault, and everything else in the town will copy them, so this has to be right.
+
+- **Materials are blurry and bumpy,** like painted clay. The roof is a smooth grey slab with orange peel on it. There is no tin in the tin. Corrugation has to read as real ridges at about 10 cm spacing, in the shape or a sharp pattern, and the atlas has to stay sharp at the driver's-seat view.
+- **Rust is a flat red panel.** Real rust runs: streaks below every bolt and lap, worst at the bottom, bare metal at scratches, sun-bleached on top. Use real variation, at more than one scale.
+- **The shapes are boxes.** A shack is not a box with a slab on it. Mismatched panels at different angles, a bent edge, a door that is somebody's old car door, a lean-to, a stovepipe, things tied down with wire.
+- **Reuse what already passed.** Open `docs/board/looks/ww-art-tintown/round-2.jpg` and `tools/blender/scablands-tintown.py`, and start from those shapes and materials rather than a fresh start. Round 2 must be at least that good, seen side by side: **put one Tin Town shack in the sheet beside your own.**
+- The sheet needs one more thing: a street of six buildings seen from above, because the look has to hold up in a crowd.
+
+Name it `round-2.jpg` with `round-2-review.md`, and remove round 1.
