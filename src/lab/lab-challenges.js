@@ -175,7 +175,7 @@ export function stepChallenge(ch, view, dt = 1 / 120) {
     const released = wasHooked && events.find(event => (event.type === 'released' || event.type === 'releasedHigh') && event.id === rule.carId);
     if (released) {
       if (released.type === 'releasedHigh') return retry('Set the car down, do not drop it.');
-      if (!ch.lastAt || horizontal(ch.lastAt, ch.spots.target) > rule.targetRadius) return retry('That is not the place: carry it across the woods.');
+      if (!ch.lastAt || horizontal(ch.lastAt, ch.spots.target) > rule.targetRadius) return retry('That is not the place. Carry the car to the orange light and set it down inside the ring.');
       if (!(ch.lastSwing < rule.swingMetres)) return retry('The car was still swinging when you let go.');
       ch.swing = ch.lastSwing;
       return pass();
@@ -210,6 +210,23 @@ export function challengeProps(ch) {
       percent: burning.get(cell) ?? 0, burnt: burnt.has(cell), road: c.i === ch.roadColumn})));
   }
   return Object.freeze([]);
+}
+
+// LAB-TARGETS (Kyle, 4 November 2026: "no visible target... no indication where to land"): what the pilot flies to now.
+// The screen draws a light and a ring on each one, a flag on the map, and a bearing and distance to the nearest. The heading
+// flight has none on purpose: finding its smoke from the heading alone is that lesson.
+// bucketWater: litres in the bucket, for the water challenges. landingZone: the Summit Run zone, once the crate is there.
+export function challengeTargets(ch, {bucketWater = 0, landingZone = null} = {}) {
+  if (ch.id === 'pendulum') return Object.freeze([Object.freeze({kind: 'place', label: 'Set the car down here', ...ch.spots.target})]);
+  if (ch.id === 'altitude') return Object.freeze(landingZone ? [Object.freeze({kind: 'place', label: 'Land here', x: landingZone.x, y: landingZone.y, z: landingZone.z, radius: 12})] : []);
+  if (ch.id !== 'projectile' && ch.id !== 'fire') return Object.freeze([]);
+  // An empty bucket's next stop is the lake.
+  if (!(bucketWater > 1)) return Object.freeze([Object.freeze({kind: 'water', label: 'Fill the bucket here', ...ch.spots.scoop, radius: 15})]);
+  if (ch.id === 'projectile') return Object.freeze(ch.spots.buoys.filter((_, index) => !ch.hit[index]).map(buoy =>
+    Object.freeze({kind: 'place', label: 'Buoy', x: buoy.x, y: buoy.y, z: buoy.z, radius: CHALLENGE_RULES.projectile.hitRadius})));
+  const rule = CHALLENGE_RULES.fire, {i0, j0, y} = ch.spots.fire;
+  return Object.freeze([Object.freeze({kind: 'place', label: 'The practice fire', x: (i0 + rule.columns / 2) * FIRE.cell, y, z: (j0 + rule.rows / 2) * FIRE.cell,
+    radius: rule.columns * FIRE.cell / 2})]);
 }
 
 // The words and numbers the board shows for the challenge (the screen adds the rest).

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-04T23:02:32.187Z
+Observed at: 2026-11-05T03:24:32.598Z
 
-Observation commit: a2df093a755736627f779a6e5a07d2fbc2ab675c
+Observation commit: 601a96f8b59d62ad734f942e51eb840ada2e5452
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a2df093a755736627f779a6e5a07d2fbc2ab675c
+Integration HEAD: 601a96f8b59d62ad734f942e51eb840ada2e5452
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,6 +29,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/eifel-c3 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/eifel-c3 |
+| codex/lab-gforce | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-gforce |
 | codex/perf-high-night | 20 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
 
 ## Unmerged branches for idle review
@@ -37,6 +39,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
+| codex/eifel-c3 | unknown | 2026-11-04T19:50:55-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/EIFEL-CROWN-C3.md, src/race-field.js |
+| codex/lab-gforce | unknown | 2026-11-04T20:03:41-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/board/cards/LAB-CLASSROOM-GFORCE.md, src/lab/classroom/classroom-lessons.js, tools/test-lab-classroom.mjs, docs/changes/LAB-CLASSROOM-GFORCE.md, src/lab/lessons/gforce-board.js |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 20 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 
 ## Size targets
@@ -51,25 +55,25 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 37,757,113 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 4,288,598 B | -12,103,851 B | 5,000,000 B |
-| All `public/` | 387,951,516 B | +316,397 B | unavailable |
-| Git objects | 877,475,840 B | +3,312,640 B | unavailable |
+| Added bytes in last merge | 394,970 B | -3,893,628 B | 5,000,000 B |
+| All `public/` | 388,729,335 B | +777,819 B | unavailable |
+| Git objects | 884,948,992 B | +7,473,152 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: a2df093a755736627f779a6e5a07d2fbc2ab675c
+- Local master: 601a96f8b59d62ad734f942e51eb840ada2e5452
 - Local main: missing
-- Local integration/wasteland: a2df093a755736627f779a6e5a07d2fbc2ab675c
+- Local integration/wasteland: 601a96f8b59d62ad734f942e51eb840ada2e5452
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit a2df093a755736627f779a6e5a07d2fbc2ab675c.
+- Remote origin/master: matches local; cached commit 601a96f8b59d62ad734f942e51eb840ada2e5452.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit a2df093a755736627f779a6e5a07d2fbc2ab675c.
+- Remote origin/integration/wasteland: matches local; cached commit 601a96f8b59d62ad734f942e51eb840ada2e5452.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
