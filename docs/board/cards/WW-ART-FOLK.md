@@ -36,3 +36,7 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - One row, larger, on a mid-tone ground, side by side with a crew model.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass, merge.** A huge step: real bodies from the crew, no more dolls, and they fit beside Rook. Keep round 3 for two small faults on the named people, before WW-FINISH:
+- Auntie Solder's visor looks to float above her head. Sit it on her head.
+- The apron is a stiff board beside the legs, not on the body. Shape it around her.
