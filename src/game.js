@@ -59,6 +59,7 @@ import {WARLORDS, BUILT_WARLORD_IDS} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
+import {initializeWorldJob} from './arena/modes/world-job.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
@@ -522,7 +523,7 @@ export class Duel {
   startArenaEvent({ venueId = 'scrapdome', mode = 'last-car-rolling', car, difficulty,
     cpuDifficulty = DEFAULT_CPU_DIFFICULTY, playerId = null, driverId = DEFAULT_DRIVER, upgrades = {},
     seed, opponents = [], weaponLevels, weaponLoadout, arsenalRank = 1, combatArmorKit = null, combatCarbonPlates = false, combatRoofLook = null, crewId = 'rook',
-    warlordId = null } = {}) {
+    warlordId = null, job = null } = {}) {
     const venue = ARENA_VENUES[venueId], rules = ARENA_MODES[mode];
     const ambush = mode === 'ambush-alley';
     const warlord = warlordId === null ? null : WARLORDS[warlordId];
@@ -542,10 +543,10 @@ export class Duel {
         (ambush && (!this.featureFlags.enabled('ambush-alley') ||
           !['pit', 'salt-flats'].includes(venueId) || !Number.isSafeInteger(arsenalRank) ||
           arsenalRank < 12)) || !venue || !rules ||
-        !Array.isArray(opponents) ||
+        !Array.isArray(opponents) || mode === 'world-job' && !Array.isArray(job?.steps) ||
         (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
-        opponents.length < (ambush ? 0 : 1) || opponents.length > maxOpponents ||
+        opponents.length < (ambush || mode === 'world-job' ? 0 : 1) || opponents.length > maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];
@@ -581,11 +582,11 @@ export class Duel {
     s.lives = LIVES.start; s.totalTimeSec = 0; s.penaltySec = 0; s.score = 0; s.nearMisses = 0;
     s.majorCrashes = 0; s.catastrophic = false; s.boundaryResets = 0;
     s.damageZones = { front: 0, rear: 0, left: 0, right: 0 };
-    this._loadArena(venue, mode, opponents);
+    this._loadArena(venue, mode, opponents, job);
     return true;
   }
 
-  _loadArena(venue, mode, opponentSpecs) {
+  _loadArena(venue, mode, opponentSpecs, job = null) {
     clearArsenalState(this);
     const s = this.state;
     // Keep a valid index for code that reads the course list; the arena
@@ -604,10 +605,10 @@ export class Duel {
     s.results = null; s.lastCrashReason = null; s.crashFlash = 0;
     s.traffic = []; s.hiddenRoadJourney = null; s.muddyHollowDeparture = null; delete s.raids;
     s.arena = createArenaEvent({mode, venueId: venue.id, course: this.course,
-      opponentBrains: opponentSpecs.map(spec => spec.brain)});
+      opponentBrains: opponentSpecs.map(spec => spec.brain), job});
     const slots = startingSlots(s.arena.spawnSlots.length, opponentSpecs.length + 1);
     s.opponents = opponentSpecs.map((spec, index) => ({
-      arenaId: `cpu-${index + 1}`, car: spec.car, driverId: spec.driverId || DEFAULT_DRIVER,
+      arenaId: `cpu-${index + 1}`, jobId: spec.jobId || null, car: spec.car, driverId: spec.driverId || DEFAULT_DRIVER,
       upgrades: Object.fromEntries(UPGRADE_KEYS.map(key => [key, CARS[spec.car].factoryMaxed ? 3 :
         clamp(Math.floor(spec.upgrades?.[key] ?? spec.upgradeLevel ?? 0), 0, 3)])),
       speedMph: 0, finished: false, finishTime: null, headingError: 0, yawVelocity: 0, pushVelocity: 0,
@@ -631,6 +632,9 @@ export class Duel {
     applyArenaArmor(this);
     initializeFootTransition(this);
     initializeFootWeapons(this);
+    if (mode === 'world-job') {
+      initializeWorldJob(this, job);
+    }
     if (mode === 'ambush-alley') {
       Object.assign(s.opponents[0], {arenaRole: 'ambush-buggy', finished: true,
         weaponsDisabledUntil: Infinity, weaponLoadout: []});

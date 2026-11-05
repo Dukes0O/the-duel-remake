@@ -16,6 +16,7 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobPilotGoal} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
 import {armorDamageFor} from '../combat-armor.js';
@@ -31,6 +32,7 @@ export const ARENA_MODES = Object.freeze({
   'bounty-hunt': Object.freeze({timeLimitSec: BOUNTY_RULES.timeLimitSec,
     suddenDeathSec: BOUNTY_RULES.suddenDeathSec, maxOpponents: 3}),
   'fuel-run': Object.freeze({timeLimitSec: FUEL_RULES.timeLimitSec, suddenDeathSec: Infinity, maxOpponents: 3}),
+  'world-job': Object.freeze({timeLimitSec: Infinity, suddenDeathSec: Infinity, maxOpponents: 3}),
   warlord: Object.freeze({timeLimitSec: WARLORD_RULES.timeLimitSec,
     suddenDeathSec: WARLORD_RULES.suddenDeathSec, maxOpponents: 2}),
   'last-car-rolling': Object.freeze({timeLimitSec: 150, suddenDeathSec: 30, maxOpponents: 3}),
@@ -47,7 +49,7 @@ export const ARENA_RULES = Object.freeze({
   armorScale: 1.21,
 });
 
-export function createArenaEvent({mode, venueId, opponentBrains, course}) {
+export function createArenaEvent({mode, venueId, opponentBrains, course, job}) {
   const rules = ARENA_MODES[mode];
   const participants = [{id: 'player', team: 'player', kind: 'player', brain: null, name: 'YOU'}];
   opponentBrains.forEach((brain, index) => participants.push({id: `cpu-${index + 1}`,
@@ -61,6 +63,7 @@ export function createArenaEvent({mode, venueId, opponentBrains, course}) {
       reactionSec: 0, goal: null, wreckCounted: false, spawnSlot: null})),
     spawnSlots: spawnSlots(course),
     result: null,
+    ...(mode === 'world-job' ? {worldJob: createWorldJob(job)} : {}),
   };
 }
 
@@ -215,7 +218,7 @@ function finish(duel, reason, winnerId = null) {
   state.status = 'arena_result';
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
-  duel._callout(arena.mode === 'ambush-alley' ?
+  duel._callout(arena.mode === 'world-job' ? 'JOB COMPLETE / YOU WIN' : arena.mode === 'ambush-alley' ?
     winnerId === 'player' ? 'AMBUSH ALLEY / YOU WIN' : 'THE FORT FELL' : winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
       arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' :
@@ -294,7 +297,7 @@ export function stepArenaEvent(duel, dt) {
 
   stepCombat(duel, dt);
 
-  const onFoot = (['fuel-run', 'convoy-raid'].includes(arena.mode) ||
+  const onFoot = (['fuel-run', 'convoy-raid', 'world-job'].includes(arena.mode) ||
     arena.format === 'convoy-raid' || ambush) && stepFootTransition(duel, dt);
   if (ambush) {
     const spawn = ambushBuggySpawn(duel);
@@ -344,12 +347,13 @@ export function stepArenaEvent(duel, dt) {
       containInArena(duel, actor, dt);
       continue;
     }
-    const goal = thinkBrain(duel, participant, actor, dt);
+    const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor) : null;
+    const pilotGoal = goal || thinkBrain(duel, participant, actor, dt);
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
       continue;
     }
-    pilotStep(duel, actor, goal, dt);
+    pilotStep(duel, actor, pilotGoal, dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
     containInArena(duel, actor, dt);
   }
@@ -384,11 +388,14 @@ export function stepArenaEvent(duel, dt) {
   if (onFoot) strikeFighterFromVehicles(duel);
   const fuelDecision = arena.mode === 'fuel-run' ? stepFuelRun(duel, dt) : null;
   const ambushDecision = ambush ? stepAmbushAlley(duel, dt) : null;
+  if (arena.mode === 'world-job') stepRaiders(duel, dt);
+  const worldJobDecision = arena.mode === 'world-job' ? stepWorldJob(duel, dt) : null;
   creditWrecks(duel);
   if (arena.result) return;
   if (arena.mode === 'bounty-hunt') stepBountyHunt(duel, dt);
   if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
   if (ambushDecision) { finish(duel, ambushDecision.reason, ambushDecision.winnerId); return; }
+  if (worldJobDecision) { finish(duel, worldJobDecision.reason, worldJobDecision.winnerId); return; }
   if (!ambush) for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
   stepClock(duel, dt);
 }
