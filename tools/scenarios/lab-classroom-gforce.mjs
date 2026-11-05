@@ -34,6 +34,7 @@ export async function run(c) {
     app.audio.setMuted?.(true);
     app.addPlayer('G-force QA');
     app.profile={...app.profile,
+      drivingLessons:{version:1,done:{corner:true}},
       courses:{version:1,unlocked:['tremblant-woods','summit-run']},
       heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3}};
     app._saveProfile();

@@ -450,6 +450,7 @@ export function createModel() {
       keys,
       repeat: Object.keys(keys).filter(key => key.startsWith('Arrow')),
       buttons: [],
+      actions: done && (current === 'wonder' || current === 'watch') ? ['replay'] : [],
       cards: [],
       asking: answersOpen,
       answered: check ? done : false,

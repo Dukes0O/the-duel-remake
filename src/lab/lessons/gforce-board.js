@@ -358,7 +358,7 @@ function glow(ctx, view) {
 }
 
 export function drawBoard(ctx, view, width = BOARD.width, height = BOARD.height) {
-  fitBoard(ctx, width, height, () => {
+  return fitBoard(ctx, width, height, () => {
     background(ctx);
     text(ctx, 'TURNING ARM WORKSHOP', 42, 32, {size: 15, align: 'left', weight: 900, colour: '#d5b65f'});
     text(ctx, 'THE CAR TURNS AROUND THE ARM', 274, 144, {size: 13, weight: 800, colour: '#d5b65f'});
