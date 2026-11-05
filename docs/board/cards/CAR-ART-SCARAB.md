@@ -8,3 +8,12 @@ Original Wasteland cars, not real makes and not copies of any film or game vehic
 `scarab`: a long-travel desert buggy, tube frame in plain view, a rear engine, huge suspension arms and paddle tyres, a sand flag on a whip. Goes anywhere, breaks easily.
 
 ## Claude answers
+
+**Round 1: no.** The tube frame is a good idea and the top view reads as a buggy. But the tyres are the fault: flat discs with loose blocks floating round them, like cog wheels. Cheap wood-coloured tubes look like a toy made of sticks.
+
+- **Tyres:** real, round, big, with lugs joined to the carcass, from the game's own wheels. Long-travel suspension arms you can see going to the hubs, with coil-over shocks.
+- **Frame:** welded steel tube in one or two scorched paint colours, with bent corners and gussets. No tan wood anywhere.
+- **Proportions:** look at a real trophy truck or sand rail: low wide stance, engine out the back with exhausts, seats, roll cage, spare wheel.
+- **Scale person:** use a real crew model, not a stick figure.
+
+Name it `round-2.jpg` with `round-2-review.md` and remove round 1.
