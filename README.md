@@ -9,6 +9,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 - **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
   Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
   ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.
+- **Every Lab lesson but two now teaches in whole sentences.** Air and altitude, Braking,
+  Strength, Fuel, Ski wax, Headings, Lift and Pendulums are rewritten, and G-force is now a
+  classroom lesson too. Each uses metric units explained on first use, a formula panel whose sums
+  follow the controls, and a step for testing your own settings. Asking Brian about a machine
+  now gets a plain description of it. Grip and Suspension are on their way.
 - **The Lab's flight challenges show where to go.** A tall light and a ring on the
   ground mark the target, orange for a place and blue for the lake that fills the bucket.
   A line under the compass gives the bearing and the distance, and the pilot's map has a flag.
