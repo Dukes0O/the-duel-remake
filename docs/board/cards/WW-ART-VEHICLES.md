@@ -26,3 +26,14 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-VEHICLES.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: no, new sheet and rebuild.** One view with the ground standing as a wall and the three vehicles piled together, so it cannot be judged. What shows is a barrel on boxes.
+- One clear view per vehicle, wheels on flat ground, beside a yard car. (The builder's scores say no reference exists: use the items below.)
+- Big Bess: start from the shipped convoy tanker's recipe; a long banded tank and a cab, scarred and sooty, no clean cream.
+- Old Smoke's furnace is the final chase: huge and frightening, with a chimney, glowing doors and heavy wheels.
+- Thief buggy: light open frame, plainly fast, plainly a different size from the other two.
+- No model on the branch yet.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
