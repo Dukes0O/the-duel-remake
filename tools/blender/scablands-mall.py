@@ -161,7 +161,7 @@ if not a.no_build:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=.22, location=(x,4.55,z))
         lamp=bpy.context.object; lamp.name=f'ash-men-lamp-{i+1}-amber-lens'; lamp.data.materials.append(lampmat)
     # A standing scale figure beside the escalator anchors the floor-level view.
-    px,pz=2.6,-2.2
+    px,pz=-2.4,-2.2
     cyl('entry-scale-person-body',(px,1.0,pz),.22,1.05,steel,8)
     bpy.ops.mesh.primitive_uv_sphere_add(segments=10,ring_count=6,radius=.18,location=(px,1.62,pz))
     bpy.context.object.name='entry-scale-person-head'; bpy.context.object.data.materials.append(rust)
@@ -212,8 +212,8 @@ for name,loc,target,lens in views:
     cam=camera(name,loc,target,lens)
     bpy.ops.object.text_add()
     label=bpy.context.object; label.name=f'review-label-{name}'; label.data.body=name.replace('-', ' ').upper()
-    label.data.size=.28; label.data.extrude=0; label.data.materials.append(tilemat)
-    label.location=cam.matrix_world @ Vector((-5.4,-3.1,-9)); label.rotation_euler=cam.rotation_euler
+    label.data.size=.36; label.data.extrude=0; label.data.materials.append(tilemat)
+    label.location=cam.location + cam.rotation_euler.to_matrix() @ Vector((-5.4,-3.1,-9)); label.rotation_euler=cam.rotation_euler
     scene.render.filepath=str(evidence/f'{name}.png'); bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(label,do_unlink=True)
 # Replace the prior sheet with a comparison: prior two rounds above, final round below.
