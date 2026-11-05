@@ -43,16 +43,16 @@ export async function run(c) {
   await next('word-grip'); await next('word-limit');
   await at('formula');
   await press('ArrowUp', 10);
-  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('100%'))`))) throw new Error('The percent formula did not show a worked example.');
+  if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(line => line.textContent.includes('× 100 ='))`))) throw new Error('The percent formula did not show a worked example.');
   await shot('grip-formula'); await next('formula');
 
-  await at('try-edge', 'value.cards?.length > 0');
+  await at('try-edge', 'value.cards > 0');
   if (!(await c.evaluate(`[...document.querySelectorAll('.lc-worked')].every(line => line.textContent.trim() === '')`))) throw new Error('An open guess shows a worked answer.');
   await shot('grip-guess'); await press('Digit1'); await press('Space'); await at('try-edge', 'value.ready'); await shot('grip-result');
   await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('99.7%')`, 'the result explains the small grip loss');
   await next('try-edge');
 
-  await at('try-far', 'value.cards?.length > 0');
+  await at('try-far', 'value.cards > 0');
   await shot('grip-far-guess'); await press('Digit2'); await press('Space');
   await at('try-far', 'value.ready'); await shot('grip-far-result'); await next('try-far');
 
@@ -71,7 +71,7 @@ export async function run(c) {
   await press('ArrowUp'); await press('Space');
   await at('challenge', 'value.ready'); await shot('grip-two-run-test'); await next('challenge');
   for (const [step, answer] of [['check-best', 'Digit2'], ['check-loss', 'Digit2'], ['check-driving', 'Digit1']]) {
-    await at(step, 'value.cards?.length > 0'); await press(answer); await at(step, 'value.ready'); await press('Enter');
+    await at(step, 'value.cards > 0'); await press(answer); await at(step, 'value.ready'); await press('Enter');
   }
   await at('recap'); await shot('grip-recap');
 

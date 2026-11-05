@@ -57,7 +57,7 @@ const formulaRow = (slideDeg, worked = true) => {
   return [{
     title: 'Grip as a percentage',
     formula: FORMULA,
-    worked: worked && slideDeg === 9 ? workedText : '',
+    worked: worked ? workedText : '',
     note: worked
       ? 'In this game, grip changes as the tyre slides farther.'
       : 'The guess is still open, so the panel shows only the general percent rule.',
