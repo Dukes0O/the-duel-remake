@@ -41,8 +41,14 @@ const generators = [
   { script: 'tools/blender/rook-p2.py', args: ['--stage', 'neutral'], glb: [] },
   { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide','falcone_sirena','mcmurtry_speirling','nissan_skyline_gtr_r34'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
+  { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
+  { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
+  { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
+  { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
+  { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
+  { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -504,6 +510,84 @@ try {
       }
     });
   }
+  check('scablands-tintown exports its bounded named walkable town model', () => {
+    const path = join(root, 'public/assets/models/wasteland/scablands/tintown.glb');
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 2500000, `${bytes.length} bytes exceeds 2.5 MB`);
+    const length = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + length));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 300 && triangles <= 60000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name);
+    assert.ok(names.includes('tintown-root'), 'named root empty');
+    for (const id of [1, 2, 3]) {
+      assert.ok(names.includes(`forge-lamp-${id}-glass-lit`), `lit forge lamp ${id}`);
+      assert.ok(names.includes(`forge-lamp-${id}-glass-unlit`), `unlit forge lamp ${id}`);
+    }
+    for (const alley of ['main-alley','cross-alley','forge-court']) {
+      assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
+    }
+  });
+
+  check('Scablands kit candidate stays inside its triangle and file budgets with named prop parts', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/scablands/kit.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 1_500_000, `${bytes.length} bytes`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 0 && triangles <= 30_000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name || '');
+    for (const part of ['scablands-kit', 'basalt-rock-1', 'basalt-cliff-face-1', 'sign-post',
+      'sign-painted-ash-road', 'sign-painted-well-6', 'mast-leg', 'yard-lamp-glass-1',
+      'barricade-whole-salvage-slat', 'barricade-whole-ballast-tyre',
+      'barricade-burnt-salvage-slat', 'ember-pot-drum', 'side-job-flag-weathered-cloth']) {
+      assert.ok(names.includes(part), `missing named prop part ${part}`);
+    }
+  });
+
+  check('WW-ART-EVERBURN exports a bounded well with selectable capped and burning parts', () => {
+    const path = join(root, 'public/assets/models/wasteland/scablands/everburn.glb');
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(4), 2);
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 1024 * 1024, `${bytes.length} bytes exceeds 1 MB`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 500 && triangles <= 20000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name);
+    for (const part of ['everburn-root', 'everburn-hand-wheel', 'everburn-cap-plate',
+      'everburn-flame-outer', 'everburn-flame-core', 'everburn-flare-stack']) {
+      assert.ok(names.includes(part), `missing named part ${part}`);
+    }
+    const materials = gltf.materials.map(item => item.name);
+    for (const name of ['everburn-flame-orange', 'everburn-flame-core', 'everburn-ash-men-cap']) {
+      assert.ok(materials.includes(name), `missing state material ${name}`);
+    }
+  });
+
+  check('Bowl stadium GLB stays under its triangle and file budgets with named scene parts', () => {
+    const path = join(root, 'public/assets/models/wasteland/bowl/stadium.glb');
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the 3 MB target`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 10_000 && triangles <= 80_000, `${triangles} triangles`);
+    const names = new Set(gltf.nodes.map(node => node.name));
+    for (const part of ['bowl-stadium', 'bowl-dirt-floor', 'bowl-concrete-terraces', 'bowl-scoreboard-frame',
+      'bowl-podium-welded-cap', 'bowl-ramp-0-flame-jet-housings', 'bowl-floodlight-1-24-legs']) {
+      assert.ok(names.has(part), `missing named stadium part ${part}`);
+    }
+  });
 
   for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
     const plans = fixtureRoots.map(fixtureRoot => kitPathPlan(generator, fixtureRoot));

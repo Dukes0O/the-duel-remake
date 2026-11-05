@@ -26,3 +26,17 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/WW-ART-FOLK.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: no, start again.** These are toy dolls: big round heads, sausage arms, ball hands. That breaks "never toy-like", and I agree with the builder's 2 of 10.
+- Start from the real body in 	ools/blender/crew-fighters.py, as the card says, with its proportions, hands and neck. Check beside a shipped crew model.
+- Everyone has the same outline. Auntie Solder and Moss must be told apart by shape alone: height, build, and clothes such as a welder's mask and apron.
+- Ash Men should look like a threat from far off: long grey dust coats, scarves, goggles, soot.
+- One row, larger, on a mid-tone ground, side by side with a crew model.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass, merge.** A huge step: real bodies from the crew, no more dolls, and they fit beside Rook. Keep round 3 for two small faults on the named people, before WW-FINISH:
+- Auntie Solder's visor looks to float above her head. Sit it on her head.
+- The apron is a stiff board beside the legs, not on the body. Shape it around her.
