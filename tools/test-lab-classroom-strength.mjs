@@ -474,3 +474,57 @@ test('the words follow the standard: no she or her, no mph, no decides, no colon
   for (const idea of lesson.keyIdeas) assert.ok(!/: /.test(idea.text), idea.id);
   assert.ok(!/: /.test(lesson.passSay));
 });
+
+test('review: Show me’s words are true from every setting, on Thick enough and on Brian’s job', () => {
+  const words = {40: /make the arm thicker and hang the car/, 100: /make the arm thinner and hang the car/, 80: /hang the car on this arm/};
+  for (const [mm, said] of Object.entries(words)) {
+    const steel = createClassroomSession(lesson);
+    playThroughTo(steel, 'try-steel');
+    build(steel, 'steel', Number(mm));
+    assert.match(steel.view().hints[2], said, `from ${mm} mm`);
+    for (let k = 0; k < 3; k++) steel.act('help');
+    until(steel, x => x.ready, 20);
+    assert.equal(steel.view().handle.mm, 80, `Show me from ${mm} mm reaches 80 mm`);
+  }
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  assert.match(job.view().hints[2], /build the arm and hang the car/);
+  build(job, 'carbon fibre', 50);
+  assert.match(job.view().hints[2], /hang the car on this arm/);
+});
+
+test('review: once carbon fibre is picked, Too thin no longer asks for it, and Show me presses Space', () => {
+  const snap = createClassroomSession(lesson);
+  playThroughTo(snap, 'try-snap');
+  assert.match(snap.view().prompt, /Press 3 for carbon fibre/);
+  assert.match(snap.view().hints[2], /I will pick carbon fibre/);
+  snap.act('go');
+  assert.match(snap.view().brian.text, /press 3 first/);
+  snap.act('material:2');
+  assert.equal(snap.view().brian.text, 'You have picked carbon fibre, so press Space.', 'the note to press 3 does not stay up');
+  assert.deepEqual(snap.view().buttons.at(-1), {action: 'go', label: 'Go on', key: 'Space'}, 'Space goes to the guess, so the button does not promise the car');
+  assert.equal(snap.view().target, 'go');
+  assert.ok(!/Press 3/.test(snap.view().prompt) && !/Press 3/.test(snap.view().hints[1]), 'carbon fibre is already picked');
+  assert.match(snap.view().hints[2], /I will press Space, and then you can say what will happen/);
+  for (let k = 0; k < 3; k++) snap.act('help');
+  run(snap, SHOW_ME_S + .1);
+  assert.equal(snap.view().cards.length, 3, 'Brian stops at the guess, as he said');
+});
+
+test('review: an empty bar is not asked for another weight, and every sum in the panel has a heading', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-strength');
+  const empty = /The load on the bar is 0 kg\. Press ↑ to hang 10 kg/;
+  assert.match(session.view().prompt, empty);
+  assert.ok(!session.view().buttons.some(b => b.action === 'load:off'), 'an empty bar has nothing to take off');
+  session.act('load:add');
+  assert.match(session.view().prompt, /The load on the bar is 10 kg\. Press ↑ to hang another 10 kg/);
+  session.act('load:add'); session.act('load:off');
+  assert.match(session.view().prompt, empty, 'a fresh bar is empty too');
+  const model = lesson.createModel();
+  STEPS.forEach((step, i) => { model.enter(i); for (const f of model.view().formulas) assert.ok(f.title, `${step.id}: ${f.formula ?? f.worked}`); });
+  for (const f of armFormulas('steel', 80)) assert.ok(f.title, f.formula);
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-bars');
+  assert.equal(check.view().prompt, 'Pick a card by clicking it, or press 1, 2 or 3.');
+});

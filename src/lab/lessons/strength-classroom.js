@@ -135,7 +135,7 @@ const armWeightSum = (material, mm, title = 'Weight of the arm') => ({title, for
   worked: `${num(densityOf(material))} kg/m³ × ${ARM.lengthM} m × ${ARM.widthM} m × ${mm / 1000} m = ${fixed(armKgShown(material, mm), 2)} kg`});
 const perKgSum = (material, mm) => {
   const carry = Math.round(carryOf(material, ARM_WIDE, mm)), kg = armKgShown(material, mm);
-  return {title: '', formula: 'load for each kg of arm = most load ÷ weight', worked: `${num(carry)} kg ÷ ${fixed(kg, 2)} kg = ${num(carry / kg)} kg`, note: 'This is the arm’s strength against its weight.'};
+  return {title: 'Strength against weight, for this arm', formula: 'load for each kg of arm = most load ÷ weight', worked: `${num(carry)} kg ÷ ${fixed(kg, 2)} kg = ${num(carry / kg)} kg`};
 };
 const specificSum = () => ({title: 'Strength against weight, for the materials', formula: 'strength ÷ density',
   worked: NAMES.map(name => `${capital(name)} ${num(strengthOf(name))} ÷ ${num(densityOf(name))} = ${(strengthOf(name) / densityOf(name)).toFixed(3)}`).join('; '),
@@ -319,6 +319,7 @@ export function createModel() {
   function pick(i) {
     if (!canPick() || m.auto || !NAMES[i]) return null;
     m.material = NAMES[i]; m.hang = null;
+    if (step().id === 'try-snap') return {kind: 'progress', sound: 'lab.clunk', say: m.material === CARBON ? 'You have picked carbon fibre, so press Space.' : `You have picked ${m.material}. This test uses carbon fibre, so press 3.`};
     return {kind: 'sound', sound: 'lab.clunk'};
   }
   // ↑ thickens and ↓ thins the arm 10 mm a press, between 10 and 120 mm.
@@ -526,7 +527,7 @@ export function createModel() {
         arms: id === 'check-game' ? check.answers.map(a => armOutcome(a.picture.material, a.picture.mm)) : null,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or by pressing 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [carrySum(STEEL, BAR_WIDE, shownBarMm(STEEL), 'What the 1 kg steel bar can carry'), carrySum(CARBON, BAR_WIDE, shownBarMm(CARBON), 'What the 1 kg carbon fibre bar can carry'), specificSum(), armWeightSum(LIGHTEST.material, LIGHTEST.thicknessMm, 'Weight of the lightest arm')],
       say: 'Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.',
@@ -548,11 +549,11 @@ export function createModel() {
     }
     if (id === 'word-strength') {
       const done = m.phase === 'done', first = !seen.has(id);
-      const buttons = [...(done ? [] : [{action: 'load:add', label: `Add ${WEIGHT_KG} kg`, key: '↑'}]), {action: 'load:off', label: done ? 'Fit a fresh bar' : `Take off ${WEIGHT_KG} kg`, key: '↓'}];
+      const buttons = [...(done ? [] : [{action: 'load:add', label: `Add ${WEIGHT_KG} kg`, key: '↑'}]), ...(done || m.load ? [{action: 'load:off', label: done ? 'Fit a fresh bar' : `Take off ${WEIGHT_KG} kg`, key: '↓'}] : [])];
       return {...base, rigs, section: true, formulas: barFormulas(STEEL, m.load), keys: done ? {'↓': 'load:off'} : {'↑': 'load:add', '↓': 'load:off'}, repeat: done ? [] : ['↑'], buttons,
         ...(!done && first ? {waiting: true, target: 'load:add', glow: 'weights'} : {}),
         say: m.closing || m.say || `A load is the weight that hangs from a part. A load on the end of this bar bends the bar, which stretches the top of the bar and squeezes the bottom, as the arrows will show. Stress is the force on each square millimetre of the material, and we measure stress in newtons per square millimetre, written N/mm². A newton, written N, is a unit of force, and gravity pulls on each kilogram with a force of 9.81 N. The strength of a material is the greatest stress that it can withstand before it bends for good or breaks, and bending for good means staying bent after the load comes off. The strength of steel is ${num(strengthOf(STEEL))} N/mm². Press ↑ to hang ${WEIGHT_KG} kg on this steel bar, and watch the Strength used gauge, which shows the stress as a percentage of the strength.`,
-        prompt: done ? 'Press Enter to continue, or press ↓ to fit a fresh bar and test it again.' : `The load on the bar is ${m.load} kg. Press ↑ to hang another ${WEIGHT_KG} kg, or click the hanger.`,
+        prompt: done ? 'Press Enter to continue, or press ↓ to fit a fresh bar and test it again.' : `The load on the bar is ${m.load} kg. Press ↑ to hang ${m.load ? 'another ' : ''}${WEIGHT_KG} kg, or click the hanger.`,
         hints: done || !first ? DONE : ['The hanger is at the end of the bar.', `Press ↑ to hang ${WEIGHT_KG} kg, and watch the needle.`, 'Watch my pointer. I will hang a weight.']};
     }
     if (id === 'word-stiff') {
@@ -585,27 +586,27 @@ export function createModel() {
     const g = goal(), atGoal = m.material === g.material && m.mm === g.mm;
     const target = !setNow ? null : atGoal ? 'go' : 'build:best';
     const keys = !setNow ? {} : {...(canPick() ? MATERIAL_KEYS : {}), ...(canTurn() ? THICK_KEYS : {}), Space: 'go'};
-    const buttons = !setNow ? [] : [...(canPick() ? materialButtons() : []), ...(canTurn() ? thickButtons() : []), HANG];
+    const buttons = !setNow ? [] : [...(canPick() ? materialButtons() : []), ...(canTurn() ? thickButtons() : []), tryId === 'try-snap' ? {action: 'go', label: 'Go on', key: 'Space'} : HANG];
     const now = armOutcome(m.material, m.mm);
     const v = {...base, rigs, rack, handle, keys, repeat: canTurn() && setNow ? ['↑', '↓'] : [], buttons, target, glow: setNow ? 'build' : null, waiting: setNow || m.phase === 'guess',
       best: g, mass: now.arm.massKg, formulas: tryId !== 'try-snap' ? armFormulas(m.material, m.mm) : m.hang ? armFormulas(m.material, m.mm, {perKg: false, rules: false}) : openGuessFormulas(m.material)};
     if (tryId === 'try-snap') {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: OUTCOMES.map((o, i) => ({id: `answer:${i}`, key: String(i + 1), label: o.label, picture: {kind: 'outcome', state: o.state}, state: null})),
-        say: m.say, prompt: 'Pick a card by clicking it, or by pressing 1, 2 or 3.',
+        say: m.say, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
         hints: ['Carbon fibre is brittle, and this arm is thin.', 'A thin arm has a high stress, because thickness is squared in the sum.', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'hanging') return {...v, say: m.say, prompt: 'Watch the arm.', hints: ['Watch the Strength used gauge.', 'Past 100%, the arm gives way.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: m.guess != null && OUTCOMES[m.guess].state === m.hang.outcome.state ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now we leave the test bars and build a hook arm, which is half a metre long and ${ARM_WIDE} mm wide and must carry the ${kg0(CAR_KG)} car. This arm is ${SNAP_MM} mm thick. Press 3 to pick carbon fibre, then press Space to hang the car.`,
-        prompt: `The ${m.material} arm is ${m.mm} mm thick. Press 3 for carbon fibre, or click it in the rack, then press Space.`,
-        hints: ['The rack has three materials, each with its own key.', 'Press 3 for carbon fibre, then press Space.', 'Watch my pointer. I will pick carbon fibre.']};
+      return {...v, say: m.auto ? autoSay() : m.say || `Now we leave the test bars and build a hook arm, which is half a metre long and ${ARM_WIDE} mm wide and must carry the ${kg0(CAR_KG)} car. This arm is ${SNAP_MM} mm thick. Press 3 to pick carbon fibre, then press Space, and I will ask you what will happen to the arm.`,
+        prompt: `The ${m.material} arm is ${m.mm} mm thick. ${m.material === CARBON ? 'Press Space to go on.' : 'Press 3 for carbon fibre, or click it in the rack, then press Space.'}`,
+        hints: ['The rack has three materials, each with its own key.', m.material === CARBON ? 'You have picked carbon fibre, so press Space.' : 'Press 3 for carbon fibre, then press Space.', atGoal ? 'Watch my pointer. I will press Space, and then you can say what will happen to the arm.' : 'Watch my pointer. I will pick carbon fibre, and then you can say what will happen to the arm.']};
     }
     if (tryId === 'try-steel') {
       if (m.phase === 'hanging') return {...v, say: m.say, prompt: 'Watch the gauges.', hints: ['Watch the Strength used gauge.', 'Is the needle inside the green?', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...v, say: m.auto ? autoSay() : m.say || `Now make a steel arm that holds the ${kg0(CAR_KG)} car. I have two rules for a hook arm. The first rule is my safety line, which keeps a metal arm at no more than two thirds (${pct(safeLine(STEEL))}) of its strength, so that a bump on the cable cannot bend the arm for good. The second rule is that the end of the arm may dip no more than ${DIP_MM} mm. The sums beside the picture change with the thickness, so you can work out the answer before you press Space.`,
         prompt: `The steel arm is ${m.mm} mm thick and weighs ${kg1(now.arm.massKg)}. Press ↑ to make the arm thicker or ↓ to make it thinner, then press Space to hang the car.`,
-        hints: ['A thicker arm is stronger, and the arrows on the handle change the thickness.', towards(m.mm, STEEL_HOLDS.mm), 'Watch my pointer. I will make the arm thicker and hang the car.']};
+        hints: ['A thicker arm is stronger, and the arrows on the handle change the thickness.', towards(m.mm, STEEL_HOLDS.mm), m.mm < STEEL_HOLDS.mm ? 'Watch my pointer. I will make the arm thicker and hang the car.' : m.mm > STEEL_HOLDS.mm ? 'Watch my pointer. I will make the arm thinner and hang the car.' : 'Watch my pointer. I will hang the car on this arm.']};
     }
     if (tryId === 'try-free') {
       const tests = m.tests.map(t => ({...t})), intro = `Now you can experiment. Press 1, 2 and 3 to change the material, and ↑ and ↓ to change the thickness. The sums change as you do, so predict what will happen before you press Space. A carbon fibre arm has a lower safety line of one third (${pct(safeLine(CARBON))}), because carbon fibre snaps with no warning. Test at least ${FREE_TRIES} different arms. The table keeps your results so that you can compare them.`;
@@ -622,7 +623,7 @@ export function createModel() {
     return {...v, job,
       say: m.auto ? autoSay() : m.say || `Here is a job for you. Kestrel One, the helicopter, needs a Heavy hook, so please build the lightest arm that holds the ${kg0(CAR_KG)} car under both of my rules. You may use any material and any thickness. Your steel arm weighs ${kg1(steelKg())}.`,
       prompt: `The ${m.material} arm is ${m.mm} mm thick and weighs ${kg1(now.arm.massKg)}. Press 1, 2 or 3 to pick the material, ↑ or ↓ to change the thickness, and Space to hang the car.`,
-      hints: ['Which material has the lowest density? Try that material, thick enough that both needles stay in the green.', `${m.material === CARBON ? '' : 'Press 3 for carbon fibre. '}${towards(m.mm, LIGHTEST.thicknessMm)}`, 'Watch my pointer. I will build the arm and hang the car.']};
+      hints: ['Which material has the lowest density? Try that material, thick enough that both needles stay in the green.', `${m.material === CARBON ? '' : 'Press 3 for carbon fibre. '}${towards(m.mm, LIGHTEST.thicknessMm)}`, atGoal ? 'Watch my pointer. I will hang the car on this arm.' : 'Watch my pointer. I will build the arm and hang the car.']};
   }
 
   return {enter, act, tick, view, state: () => m};

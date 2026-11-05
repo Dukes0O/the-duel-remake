@@ -387,8 +387,8 @@ function drawRig(ctx, view) {
   if (view.section && one) sectionPanel(ctx, view.rigs[0]);
   if (view.tests) testsCard(ctx, view);
   else if (one && view.rigs[0].kind === 'arm' && (view.rack || view.job)) armCard(ctx, view);
-  if (view.glow === 'build' && view.target === 'go') glowBox(ctx, view, TIP_X - 110, 312, 180, FLOOR - 302);
-  if (view.keys.Space === 'go' && view.rigs[0]?.kind === 'arm' && view.rigs[0].lower === 0) text(ctx, 'Press Space to hang the car', TIP_X - 16, 296, {size: 15, align: 'right', colour: LABEL});
+  if (view.glow === 'build' && view.target === 'go') glowBox(ctx, view, TIP_X - 90, 312, 160, FLOOR - 302);
+  if (view.keys.Space === 'go' && !view.handle?.brian && view.rigs[0]?.kind === 'arm' && view.rigs[0].lower === 0) text(ctx, 'Press Space to hang the car', TIP_X - 16, 296, {size: 15, align: 'right', colour: LABEL});
 }
 // The wonder's arms: each holds the car; what it is and what it weighs, big.
 function armRow(ctx, r, y) {

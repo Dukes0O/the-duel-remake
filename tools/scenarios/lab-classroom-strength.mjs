@@ -45,7 +45,7 @@ export async function playThrough(c, shot = async () => {}) {
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: rack.x, y: rack.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: rack.x, y: rack.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
-  await prompt('The carbon fibre arm is 20 mm thick', 'the click on the rack picks carbon fibre');
+  await prompt('The carbon fibre arm is 20 mm thick', 'the click on the rack picks carbon fibre'); await shot('try-snap-picked');
   await press('Space'); await at('try-snap', 's.cards === 3'); await shot('try-snap-guess');
   if (await c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes('164%'))`)) throw Error('The panel gave away the answer to the guess.');
   await press('Digit1'); await at('try-snap', 's.ready'); await saying('The arm snapped', 'a wrong guess says what happened'); await wait(400); await shot('try-snap-snapped');

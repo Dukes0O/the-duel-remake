@@ -30,6 +30,10 @@ Every number comes from the bench's `loadBar` and `hookArm`.
 - **Hints.** A hint that names a direction reads the handle ("Press ↓ until the handle reads 80 mm" from 110 mm). Show me's words stop at
   the guess on the Too thin step, because that is where it stops.
 
+One independent review. Real faults, all fixed with tests: Show me's words were wrong from some handle settings; Too thin still asked for
+carbon fibre after it was picked; an empty bar was asked for "another" weight; one panel entry had an empty heading. The look check then
+found a stale "press 3 first", a button that promised the car before the guess, and a glow crossing a label.
+
 ## Removed
 
 - All of the old wording in this lesson, the colons that skipped a verb, and the word "tough", which was never defined.
@@ -62,7 +66,7 @@ in its own suite.
 
 ## Checks
 
-- `tools/test-lab-classroom-strength.mjs` 21/21.
+- `tools/test-lab-classroom-strength.mjs` 24/24.
 - Browser: `lab-classroom-strength` and `lab-view` (which plays this lesson at 1280 by 720) through the shared slot helper.
 - Look: the word steps, the free test, a question with cards open and the recap read at 1920 by 1000. Text fits, labels do not collide,
   and the question is fully visible. Fixes from the look: readable small labels, a shorter arm panel, a caption that overran its card.
