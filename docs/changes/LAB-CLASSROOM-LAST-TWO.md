@@ -16,6 +16,7 @@ removal stays with LAB-CLASSROOM-LIVE.
 - `tools/test-lab-lessons-tunnel.mjs`: it tested only the replaced Grip and Suspension lessons.
 - `tools/scenarios/lab-lesson-frame.mjs`: it borrowed the replaced Grip lesson and its five-step `.lab-teaching` panel.
 - `tools/scenarios/lab-lessons-tunnel.mjs`: it exercised only the replaced Grip and Suspension lesson panels. Their classroom scenarios remain in `lab-classroom-grip.mjs` and `lab-classroom-suspension.mjs`.
+- `tools/scenarios/lab-polish.mjs` now checks every lesson through its classroom registration and entry view; it no longer imports the deleted legacy lesson modules.
 
 The remaining `.lab-teaching` checks in classroom scenarios assert that the old
 panel does not open beside a classroom. They still test a live UI condition.
