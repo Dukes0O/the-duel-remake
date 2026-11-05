@@ -18,6 +18,8 @@ const MS_PER_SPEED = DRIVE.mphToWorld, KMH_PER_MS = 3.6;
 // The bench's own car, the slow and fast settings of "twice the speed", and the cars of the free test (their brakes all differ).
 const CAR_IDS = Object.keys(CARS);
 export const BENCH_CAR = CAR_IDS[0], SLOW = 50, FAST = 100;
+// The deceleration step and the Watch brake from other speeds, so that nothing settles the "Twice the speed" guess before it is answered.
+export const DECEL_SPEED = 80, WATCH_SPEED = 70;
 export const TEST_CARS = Object.freeze(['falcone_f42', 'stuttgart_959s', 'titan_monster', 'viper_proto', 'mcmurtry_speirling']);
 export const FREE_TRIES = 3;
 
@@ -62,12 +64,12 @@ export const STEPS = Object.freeze([
   {id: 'word-speed', part: 1, title: 'Kilometres per hour and metres per second', word: 'braking-metres-per-second'},
   {id: 'word-stopping', part: 1, title: 'Stopping distance', word: 'braking-word-0'},
   {id: 'word-deceleration', part: 1, title: 'Deceleration', word: 'braking-deceleration'},
-  {id: 'word-energy', part: 1, title: 'Energy of motion', word: 'braking-energy'},
   {id: 'word-weight', part: 1, title: 'Weight shift', word: 'braking-word-1'},
   {id: 'word-balance', part: 1, title: 'Brake balance', word: 'braking-word-2'},
   {id: 'watch', part: 2, title: 'Three cars at the same line', voice: 'lab.brian.braking.intro'},
-  {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'try-speed', part: 3, title: 'Twice the speed'},
+  {id: 'word-energy', part: 3, title: 'Energy of motion', word: 'braking-energy'},
+  {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'try-slide', part: 3, title: 'Keeping the back in line'},
   {id: 'alone', part: 4, title: 'Brian’s job'},
   {id: 'check-four', part: 5, title: 'Question 1 of 3'},
@@ -77,11 +79,14 @@ export const STEPS = Object.freeze([
 ].map(Object.freeze));
 
 export const S50 = metresFrom(SLOW), S100 = metresFrom(FAST);
-const K50 = kmh(SLOW), K100 = kmh(FAST), V50 = msOf(SLOW), V100 = msOf(FAST);
+const K50 = kmh(SLOW), K100 = kmh(FAST), V50 = msOf(SLOW), V100 = msOf(FAST), KD = kmh(DECEL_SPEED), VD = msOf(DECEL_SPEED), KW = kmh(WATCH_SPEED);
+// The wonder stops the clock when the slower car has stopped, so the faster car's stopping distance stays unknown.
+const WONDER_S = RUNUP_S + stopOf(SLOW).stopSeconds + 1e-9;
+const WONDER_LEFT = Math.round(laneAt(FAST, STEADY_FRONT, WONDER_S).ms * KMH_PER_MS);
 export const KEY_IDEAS = Object.freeze([
   {id: 'four', text: `Twice the speed needs four times the road, because it carries four times the energy of motion for the same brakes to remove. The car needs ${m1(S50)} from ${K50} km/h and ${m1(S100)} from ${K100} km/h.`},
   {id: 'weight', text: `Braking moves weight forward. In a steady stop the front tyres carry ${pct(FRONT_LOAD)} of the weight, so the front brakes can do most of the work.`},
-  {id: 'balance', text: `If the back brakes do more than the ${pct(REAR_LOAD)} of the weight on the back tyres, the back of the car slides. The Tune page in the garage calls this setting Brake balance.`},
+  {id: 'balance', text: `If the back brakes do more than ${pct(REAR_LOAD)} of the braking, which is the share of the weight on the back tyres, the back of the car slides. The Tune page in the garage calls this setting Brake balance.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Twice the speed needs four times the road.',
   text: 'Brake balance is on the Tune page in the garage. Moving it toward the rear makes the car brake a little harder, and moving it toward the front keeps more grip for turning while the car brakes.'});
@@ -146,19 +151,22 @@ const kmhFormula = speed => ({title: 'From m/s to km/h', formula: 'km/h = m/s ×
 const brakesFormula = (car = BENCH_CAR) => ({title: `The brakes of the ${carName(car)}`, formula: `brakes = ${BRAKES_BASE} m/s^2 × brake strength`, worked: `${BRAKES_BASE} m/s^2 × ${CARS[car].braking.toFixed(2)} = ${ms2(brakesOf(car))} m/s^2`, note: `In this game every car has a brake strength, and ${BRAKES_BASE} m/s² is what a brake strength of 1 gives.`});
 const aFormula = (car = BENCH_CAR) => ({title: 'Deceleration, written a', formula: 'a = brakes + passive drag', worked: `${ms2(brakesOf(car))} m/s^2 + ${DRAG_SHOWN} m/s^2 = ${ms2(aOf(car))} m/s^2`, note: `Passive drag is a small steady slowing of ${DRAG_SHOWN} m/s² that the game applies to a moving car even without its brakes.`});
 const timeFormula = (speed, car = BENCH_CAR) => ({title: 'Time taken to stop', formula: 't = v ÷ a', worked: `${ms2(msOf(speed))} m/s ÷ ${ms2(aOf(car))} m/s^2 = ${(msOf(speed) / aOf(car)).toFixed(2)} s`, note: 'v is the speed when the brakes go on.'});
-const leftFormula = (speed, t, car = BENCH_CAR) => { const at = Number(t.toFixed(2)), left = Math.max(0, msOf(speed) - aOf(car) * at); return {title: 'Speed left after t seconds', formula: 'speed left = v − a × t', worked: `${ms2(msOf(speed))} m/s − ${ms2(aOf(car))} m/s^2 × ${at.toFixed(2)} s = ${left.toFixed(2)} m/s`}; };
+const leftFormula = (speed, t, car = BENCH_CAR) => {
+  const stopAt = msOf(speed) / aOf(car), stopped = t >= stopAt, at = stopped ? stopAt.toFixed(4) : (Math.floor(t * 100) / 100).toFixed(2), left = Math.abs(msOf(speed) - aOf(car) * Number(at));
+  return {title: 'Speed left after t seconds', formula: 'speed left = v − a × t', worked: `${ms2(msOf(speed))} m/s − ${ms2(aOf(car))} m/s^2 × ${at} s = ${left.toFixed(2)} m/s`, note: stopped ? `The car stops at ${at} s, which is ${stopAt.toFixed(2)} s when rounded.` : undefined};
+};
 const energyFormula = (speed, car = BENCH_CAR) => ({title: 'Energy of motion', formula: 'energy = ½ × m × v^2', worked: `½ × ${whole(carMassKg(car))} kg × (${ms2(msOf(speed))} m/s)^2 = ${whole(carMassKg(car) * msOf(speed) ** 2 / 2)} J`, note: 'm is the mass of the car, and energy is measured in joules, written J. The speed is multiplied by itself, so twice the speed gives four times the energy.'});
 const perMetreFormula = (car = BENCH_CAR) => ({title: 'Energy removed during each metre', formula: 'energy per metre = m × a', worked: `${whole(carMassKg(car))} kg × ${ms2(aOf(car))} m/s^2 = ${whole(carMassKg(car) * aOf(car))} J per metre`, note: 'The same brakes remove the same energy during every metre, whatever the speed.'});
-const SUM_NOTE = 'The sum uses rounded numbers, and the game works out each stop in steps of 1/120 of a second, so the two can differ by a few centimetres.';
-function stopFormula(speed, car = BENCH_CAR, {tape = true, title = 'Stopping distance', full = false} = {}) {
+const SUM_NOTE = 'The tape can differ from this sum by a few centimetres, because the sum uses rounded numbers and the game works out each stop in steps of 1/120 of a second.';
+function stopFormula(speed, car = BENCH_CAR, {reading = false, title = 'Stopping distance', full = false} = {}) {
   const without = msOf(speed) ** 2 / (2 * brakesOf(car)) - sumOf(speed, car);
   return {title, formula: 'd = v^2 ÷ (2 × a)', worked: `(${ms2(msOf(speed))} m/s)^2 ÷ (2 × ${ms2(aOf(car))} m/s^2) = ${m2(sumOf(speed, car))}`,
-    note: !tape ? 'd is the stopping distance, v is the speed and a is the deceleration.' : full ? `The tape reads ${m1(metresFrom(speed, car))}. ${SUM_NOTE} The passive drag is part of a; without it the stop would be ${m1(without)} longer.` : `The tape reads ${m1(metresFrom(speed, car))}.`};
+    note: [reading ? `The tape reads ${m1(metresFrom(speed, car))}.` : 'd is the stopping distance, v is the speed and a is the deceleration.', full ? `${SUM_NOTE} The passive drag is part of a; without it the stop would be ${m1(without)} longer.` : ''].filter(Boolean).join(' ')};
 }
 const generalStop = () => ({title: 'Stopping distance', formula: 'd = v^2 ÷ (2 × a)', note: `d is the stopping distance, v is the speed and a is the deceleration, which is ${ms2(aOf())} m/s² for this car.`});
 const ratioFormula = speed => ({title: `Compared with ${K50} km/h`, formula: `road needed = (v ÷ ${ms2(V50)} m/s)^2`, worked: `(${ms2(msOf(speed))} m/s ÷ ${ms2(V50)} m/s)^2 = ${((msOf(speed) / V50) ** 2).toFixed(2)} times the road`});
 const maxFormula = gap => { const v = Math.sqrt(2 * aOf() * gap); return {title: 'The fastest speed that stops in the gap', formula: 'v = √(2 × a × d)', worked: `√(2 × ${ms2(aOf())} m/s^2 × ${gap} m) = ${v.toFixed(2)} m/s`, note: `That is ${(v * KMH_PER_MS).toFixed(1)} km/h. Choose the highest reading on the dial that does not go above it.`}; };
-const frontFormula = () => ({title: 'Share of the weight on the front tyres', formula: 'front share = 0.5 + h ÷ L', worked: `0.5 + ${BRAKE_RIG.centreHeightM} m ÷ ${BRAKE_RIG.wheelbaseM} m = ${FRONT_LOAD.toFixed(2)}`, note: 'h is the height of the car’s centre of mass and L is the distance between the front and back wheels. This is the share in a steady stop at 9.8 m/s², and in this game the bench uses it for every stop.'});
+const frontFormula = () => ({title: 'Share of the weight on the front tyres', formula: 'front share = 0.5 + h ÷ L', worked: `0.5 + ${BRAKE_RIG.centreHeightM} m ÷ ${BRAKE_RIG.wheelbaseM} m = ${FRONT_LOAD.toFixed(2)}`, note: 'h is the height of the car’s centre of mass and L is the distance between the front and back wheels. This is the share in a steady stop at 9.8 m/s², and in this game the lesson uses it for every stop.'});
 const balanceFormula = front => ({title: 'Does the back of the car slide?', formula: 'the back slides if back brakes > back weight', worked: stopOf(SLOW, front).rearSlides ? `${100 - front}% > ${pct(REAR_LOAD)}, so the back slides` : `${100 - front}% < ${pct(REAR_LOAD)}, so the back stays in line`, note: `At ${front}% front the back brakes do ${100 - front}% of the braking. The back tyres carry ${pct(REAR_LOAD)} of the weight.`});
 
 export function createModel() {
@@ -176,10 +184,10 @@ export function createModel() {
     if (id === 'wonder') { m.lanes = [lane(SLOW, STEADY_FRONT, from(SLOW)), lane(FAST, STEADY_FRONT, from(FAST))]; m.race = {at: .5, t: null}; m.phase = 'running'; }
     if (id === 'word-speed') { set.speed = SLOW; m.phase = 'turn'; }
     if (id === 'word-stopping' || id === 'word-weight') { m.lanes = [lane(SLOW, STEADY_FRONT, from(SLOW))]; m.phase = 'ready'; }
-    if (id === 'word-deceleration') { m.lanes = [lane(FAST, STEADY_FRONT, from(FAST))]; m.phase = 'ready'; }
+    if (id === 'word-deceleration') { m.lanes = [lane(DECEL_SPEED, STEADY_FRONT, from(DECEL_SPEED))]; m.phase = 'ready'; }
     if (id === 'word-energy') { set.speed = FAST; m.phase = 'ready'; }
     if (id === 'word-balance') { set.front = 50; m.phase = 'lever'; }
-    if (id === 'watch') { m.lanes = [lane(SLOW, STEADY_FRONT, `${K50} km/h, 70% front`), lane(FAST, STEADY_FRONT, `${K100} km/h, 70% front`), lane(SLOW, 50, `${K50} km/h, 50% front`)]; m.race = {at: .8, t: null}; m.phase = 'running'; }
+    if (id === 'watch') { m.lanes = [lane(SLOW, STEADY_FRONT, `${K50} km/h, 70% front`), lane(WATCH_SPEED, STEADY_FRONT, `${KW} km/h, 70% front`), lane(SLOW, 50, `${K50} km/h, 50% front`)]; m.race = {at: .8, t: null}; m.phase = 'running'; }
     if (id === 'try-free') { set.speed = SLOW; set.car = BENCH_CAR; set.front = Math.max(set.front, STEADY_FRONT); m.phase = 'set'; }
     if (id === 'try-speed') { set.speed = SLOW; set.front = Math.max(set.front, STEADY_FRONT); m.phase = 'set'; }
     if (id === 'try-slide') { set.speed = SLOW; set.front = 50; m.phase = 'set'; }
@@ -318,15 +326,15 @@ export function createModel() {
     if (id === 'word-stopping') { m.phase = 'done'; seen.add(id); m.say = `The tape reads ${m1(r.stopMetres)}, so the stopping distance from ${K50} km/h is ${m1(r.stopMetres)}. The car used that much road between the moment the brakes went on and the moment it stopped.`; return {kind: 'right', say: m.say}; }
     if (id === 'word-deceleration') {
       m.phase = 'done'; seen.add(id);
-      m.say = `The car lost the same ${(aOf() / 2).toFixed(1)} m/s during every half second, which is what a steady deceleration means. The marks grew closer together, because a slower car covers less road in the same time. The stop took ${ms2(V100)} m/s ÷ ${ms2(aOf())} m/s² = ${(V100 / aOf()).toFixed(2)} s. A road car on a dry road in real life can brake at about 10 m/s², so the cars in this game brake about twice as hard as that, but the rules that follow are the same.`;
+      m.say = `The car lost the same ${(aOf() / 2).toFixed(1)} m/s during every half second, which is what a steady deceleration means. The marks grew closer together, because a slower car covers less road in the same time. The stop took ${ms2(VD)} m/s ÷ ${ms2(aOf())} m/s² = ${(VD / aOf()).toFixed(2)} s. A road car on a dry road in real life can brake at about 10 m/s², so this car brakes about twice as hard as that, but the rules that follow are the same.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-energy') {
       m.phase = 'done'; seen.add(id);
-      m.say = `Each block takes the same ${m1(S50)} of road to remove, so a car from ${K100} km/h uses four stretches of road where a car from ${K50} km/h uses one. That is where the sum comes from. The energy of motion is ½ × mass × speed², and the brakes remove mass × deceleration during each metre. When you divide the first by the second, the mass cancels and leaves d = v² ÷ (2 × a). The time tells the same story, because a car at twice the speed brakes for twice as long at twice the average speed, and 2 × 2 = 4. You can turn the dial and brake again to test other speeds.`;
+      m.say = `Each block needs the same ${m1(S50)} of road, so a car from ${K100} km/h uses four stretches of road where a car from ${K50} km/h uses one. That is where the sum comes from. The energy of motion is ½ × mass × speed², and the brakes remove mass × deceleration during each metre. When you divide the first by the second, the mass cancels and leaves d = v² ÷ (2 × a). The time tells the same story, because a car at twice the speed brakes for twice as long at twice the average speed, and 2 × 2 = 4. You can turn the dial and brake again to test other speeds.`;
       return {kind: 'right', say: m.say};
     }
-    if (id === 'word-weight') { m.phase = 'done'; seen.add(id); m.say = `When the car stands still, each end carries half of its weight. In a steady stop at 9.8 m/s², the front tyres carry ${pct(FRONT_LOAD)} of the weight and the back tyres carry ${pct(REAR_LOAD)}. Harder braking would move even more of the weight forward, but in this game the bench uses the figures of that steady stop for every run.`; return {kind: 'right', say: m.say}; }
+    if (id === 'word-weight') { m.phase = 'done'; seen.add(id); m.say = `When the car stands still, each end carries half of its weight. In a steady stop at 9.8 m/s², the front tyres carry ${pct(FRONT_LOAD)} of the weight and the back tyres carry ${pct(REAR_LOAD)}. Harder braking would move even more of the weight forward, but in this game the lesson uses the figures of that steady stop for every run.`; return {kind: 'right', say: m.say}; }
     if (id === 'try-free') {
       m.phase = 'set'; m.tested.add(`${l.car}/${l.speed}`); m.tries = m.tested.size;
       if (m.tries >= FREE_TRIES) seen.add(id);
@@ -337,9 +345,9 @@ export function createModel() {
     if (id === 'try-speed') {
       m.phase = 'done'; seen.add(id);
       const right = m.guess === 1;
-      m.say = right ? `Correct. The tape reads ${m1(r.stopMetres)}, which is 4 × ${m1(S50)}, because twice the speed carries four times the energy of motion for the same brakes to remove.`
-        : m.guess === 0 ? `The car needed ${m1(r.stopMetres)}, not twice ${m1(S50)}. Twice the speed carries four times the energy of motion, so the car needs four times the road: 4 × ${m1(S50)} = ${m1(r.stopMetres)}.`
-          : `The car needed ${m1(r.stopMetres)}, which is four times ${m1(S50)} rather than eight times. The speed is multiplied by itself in the sum, so twice the speed gives 2 × 2 = 4 times the road.`;
+      m.say = right ? `Correct. The tape reads ${m1(r.stopMetres)}, which is 4 × ${m1(S50)}. The next step explains why.`
+        : m.guess === 0 ? `The car needed ${m1(r.stopMetres)}, not twice ${m1(S50)}. It needed four times the road, because 4 × ${m1(S50)} = ${m1(r.stopMetres)}. The next step explains why.`
+          : `The car needed ${m1(r.stopMetres)}, which is four times ${m1(S50)} rather than eight times. The next step explains why.`;
       return {kind: right ? 'right' : 'wrong', say: m.say};
     }
     m.phase = 'set';
@@ -380,7 +388,7 @@ export function createModel() {
     }
     if (!m.race || m.phase !== 'running' && !(CHECKS[id])) return null;
     if (m.race.t == null) { if (m.time < m.race.at) return null; m.race.t = 0; }
-    const end = runEnd(m.lanes), before = m.race.t;
+    const end = id === 'wonder' ? WONDER_S + SETTLE_S : runEnd(m.lanes), before = m.race.t;
     if (before >= end) return null;
     m.race.t = Math.min(end, before + dt);
     const brakeAt = RUNUP_S;
@@ -398,7 +406,7 @@ export function createModel() {
   }
 
   function laneViews() {
-    const t = m.race?.t;
+    const t = step().id === 'wonder' && m.race?.t != null ? Math.min(m.race.t, WONDER_S) : m.race?.t;
     return m.lanes.map(l => {
       const r = stopOf(l.speed, l.front, l.car), at = t == null ? {metres: -RUNUP_S * l.speed * MS_PER_SPEED, ms: l.speed * MS_PER_SPEED, braking: false, done: false, brakeShare: 0} : laneAt(l.speed, l.front, t, l.car);
       return {label: l.label, speed: l.speed, front: l.front, startMs: l.speed * MS_PER_SPEED, metres: at.metres, ms: at.ms, braking: at.braking, done: at.done, stopMetres: r.stopMetres,
@@ -416,25 +424,28 @@ export function createModel() {
     return out;
   }
 
+  // Whether the car on the board has braked to a stop from this setting, so that the tape has a reading to quote.
+  const stoppedAt = (speed, car = BENCH_CAR) => m.phase !== 'running' && m.lanes.some(l => l.speed === speed && l.car === car) && m.race?.t != null;
+
   function formulas(id) {
     const s = set.speed;
     if (id === 'word-speed') return [{title: 'Speed', formula: 'speed = distance ÷ time', worked: `${ms2(msOf(s))} m ÷ 1 s = ${ms2(msOf(s))} m/s`, note: 'The result is in metres per second, written m/s.'}, kmhFormula(s)];
     if (id === 'word-stopping') return [kmhFormula(SLOW), {title: 'Stopping distance', formula: 'measured from the yellow line to the stopped car', worked: seen.has(id) ? `The tape reads ${m1(S50)}` : `The tape will show the distance from ${K50} km/h`}];
-    if (id === 'word-deceleration') return [brakesFormula(), aFormula(), timeFormula(FAST), leftFormula(FAST, Math.min(braked(), V100 / aOf()))];
-    if (id === 'word-energy') return [energyFormula(s), perMetreFormula(), stopFormula(s, BENCH_CAR, {full: true}), ratioFormula(s)];
+    if (id === 'word-deceleration') return [brakesFormula(), aFormula(), timeFormula(DECEL_SPEED), leftFormula(DECEL_SPEED, braked())];
+    if (id === 'word-energy') return [energyFormula(s), perMetreFormula(), stopFormula(s, BENCH_CAR, {full: true, reading: stoppedAt(s)}), ratioFormula(s)];
     if (id === 'word-weight') return [frontFormula(), {title: 'Share of the weight on the back tyres', formula: 'back share = 1 − front share', worked: `1 − ${FRONT_LOAD.toFixed(2)} = ${(1 - Number(FRONT_LOAD.toFixed(2))).toFixed(2)}`}];
     if (id === 'word-balance') return [balanceFormula(set.front), frontFormula()];
-    if (id === 'watch') return [stopFormula(SLOW, BENCH_CAR, {title: `From ${K50} km/h`, tape: false}), stopFormula(FAST, BENCH_CAR, {title: `From ${K100} km/h`}), balanceFormula(50)];
-    if (id === 'try-free') return [brakesFormula(set.car), aFormula(set.car), kmhFormula(s), stopFormula(s, set.car, {full: true})];
-    // The guess stays open until the car has stopped: until then the panel shows only the general sum, with no result.
-    if (id === 'try-speed') return m.phase === 'done' ? [kmhFormula(s), stopFormula(s), ratioFormula(s)] : [kmhFormula(s), generalStop()];
-    if (id === 'try-slide') return [balanceFormula(set.front), stopFormula(s)];
-    if (id === 'alone') return [maxFormula(CORNERS[Math.min(m.corner, CORNERS.length - 1)]), stopFormula(s), balanceFormula(set.front)];
-    if (id === 'check-four') return m.answered === null ? [generalStop()] : [stopFormula(SLOW, BENCH_CAR, {title: `From ${K50} km/h`, tape: false}), stopFormula(FAST, BENCH_CAR, {title: `From ${K100} km/h`})];
+    if (id === 'watch') return [kmhFormula(WATCH_SPEED), {title: 'What the tape shows', worked: seen.has(id) ? `${K50} km/h: ${m1(S50)}, ${KW} km/h: ${m1(metresFrom(WATCH_SPEED))}` : 'The tape shows each distance when the car stops.'}, balanceFormula(50)];
+    if (id === 'try-free') return [brakesFormula(set.car), aFormula(set.car), kmhFormula(s), stopFormula(s, set.car, {full: true, reading: stoppedAt(s, set.car)})];
+    // The guess stays open until the car has stopped, and the sum for the distance comes with the next step, which explains it.
+    if (id === 'try-speed') return m.phase === 'done' ? [kmhFormula(s), {title: `Compared with ${K50} km/h`, formula: 'road needed ÷ road from the lower speed', worked: `${m1(S100)} ÷ ${m1(S50)} = ${(Number(S100.toFixed(1)) / Number(S50.toFixed(1))).toFixed(2)}`}] : [kmhFormula(s), {title: 'Stopping distance', formula: 'measured from the yellow line to the stopped car'}];
+    if (id === 'try-slide') return [balanceFormula(set.front), stopFormula(s, BENCH_CAR, {reading: stoppedAt(s)})];
+    if (id === 'alone') return [maxFormula(CORNERS[Math.min(m.corner, CORNERS.length - 1)]), stopFormula(s, BENCH_CAR, {reading: stoppedAt(s)}), balanceFormula(set.front)];
+    if (id === 'check-four') return m.answered === null ? [generalStop()] : [stopFormula(SLOW, BENCH_CAR, {title: `From ${K50} km/h`, reading: true}), stopFormula(FAST, BENCH_CAR, {title: `From ${K100} km/h`, reading: true})];
     if (id === 'check-balance') return m.answered === null ? [{title: 'Does the back of the car slide?', formula: 'the back slides if back brakes > back weight', note: 'Compare the share of the braking that the back brakes do with the share of the weight on the back tyres.'}] : [balanceFormula(50), balanceFormula(60), balanceFormula(80)];
     if (id === 'check-game') return m.answered === null ? [{title: 'What a step of Brake balance does', note: 'Each step toward the rear gives the back brakes a larger share of the braking.'}]
       : [{title: 'Braking, two steps toward the rear', worked: `2 × ${signed(LAB_TUNE.brakes.brakingPerStep)} = ${signed(2 * LAB_TUNE.brakes.brakingPerStep)}`}, {title: 'Grip for turning while braking', worked: `2 × ${signed(LAB_TUNE.brakes.cornerLeftPerStep).replace('-', '−')} = ${signed(2 * LAB_TUNE.brakes.cornerLeftPerStep).replace('-', '−')}`}];
-    if (id === 'recap') return [kmhFormula(FAST), aFormula(), energyFormula(FAST), stopFormula(FAST), frontFormula()];
+    if (id === 'recap') return [kmhFormula(FAST), aFormula(), energyFormula(FAST), stopFormula(FAST, BENCH_CAR, {reading: true}), frontFormula()];
     return [];
   }
 
@@ -454,16 +465,16 @@ export function createModel() {
         keys: answered ? {} : ANSWER_KEYS, waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, close: null,
       say: 'A car’s stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides.',
       prompt: 'Press Enter to finish the lesson and open Brake balance on the Tune page in the garage.', hints: KEY_IDEAS.map(i => i.text)};
     if (id === 'wonder') return {...base, close: {...close, plain: true}, line: LINE_M, actions: ['replay'],
-      say: seen.has(id) ? `The car from ${K50} km/h stopped in ${S50.toFixed(1)} metres, written ${m1(S50)}, before the chequered line ${LINE_M} m ahead. The car from ${K100} km/h ran past that line and needed ${m1(S100)}. The second car was only twice as fast, yet it needed four times as much road. Why did twice the speed need four times the road?`
-        : `Two identical cars will now brake at the same yellow line. One is travelling at ${K50} kilometres per hour, which is written km/h, and the other is travelling at ${K100} km/h, which is twice as fast. Both readings are rounded to whole numbers, and the next step shows the exact figures. Watch where each car stops.`,
+      say: seen.has(id) ? `The car from ${K50} km/h stopped in ${S50.toFixed(1)} metres, written ${m1(S50)}, before the chequered line ${LINE_M} m ahead. At that moment the car from ${K100} km/h had already passed the line and was still travelling at ${WONDER_LEFT} km/h. The second car was only twice as fast at the start, so why does it need so much more road?`
+        : `Two identical cars will now brake at the same yellow line. One is travelling at ${K50} kilometres per hour, which is written km/h, and the other is travelling at ${K100} km/h, which is twice as fast. Both readings are rounded to whole numbers, and the next step shows the exact figures. Watch the two cars.`,
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out why, or press R to watch again.' : 'Watch the two cars.',
-      hints: ['Watch where each car stops.', 'One car arrived twice as fast as the other.', seen.has(id) ? 'Press Enter when you are ready to find out why.' : 'Watch the cars stop, then press Enter.']};
+      hints: ['Watch the two cars.', 'One car arrived twice as fast as the other.', seen.has(id) ? 'Press Enter when you are ready to find out why.' : 'Watch the cars, then press Enter.']};
     if (id === 'word-speed') {
       const done = m.phase === 'done';
       return {...base, close: {...close, plain: true}, dial: dialView(false), perSecond: msOf(set.speed), best: goal(), keys: DIAL_KEYS, repeat: ['↑', '↓'],
@@ -476,7 +487,7 @@ export function createModel() {
       const ready = m.phase === 'ready', done = m.phase === 'done', slowing = id === 'word-deceleration', stopping = id === 'word-stopping';
       return {...base, close: {...close, plain: id !== 'word-weight'}, ...(ready ? {keys: {Space: 'go'}, waiting: true, target: 'go', glow: 'strip', buttons: [BRAKE]} : {}), forces: id === 'word-weight', timeMarks: slowing ? timeMarks() : null, actions: done ? ['replay', 'slow'] : ['slow'],
         say: done ? m.say : stopping ? `Stopping distance is the length of road that a car uses while its brakes slow it to a stop. We measure it from the yellow line, where the brakes go on, to the place where the car stops. Press Space to brake from ${K50} km/h, and read the tape.`
-          : slowing ? `Deceleration is how quickly a speed falls. We measure it in metres per second, per second, which is written m/s². A deceleration of 10 m/s² removes 10 m/s of speed during every second. This car’s brakes give a deceleration of ${ms2(brakesOf())} m/s². The game also applies a passive drag, which is a small steady slowing of ${DRAG_SHOWN} m/s² that acts on a moving car even without its brakes. Together they make ${ms2(aOf())} m/s². Press Space to brake from ${K100} km/h, and watch the marks on the road, which show where the car was at each half second.`
+          : slowing ? `Deceleration is how quickly a speed falls. We measure it in metres per second, per second, which is written m/s². A deceleration of 10 m/s² removes 10 m/s of speed during every second. This car’s brakes give a deceleration of ${ms2(brakesOf())} m/s². The game also applies a passive drag, which is a small steady slowing of ${DRAG_SHOWN} m/s² that acts on a moving car even without its brakes. Together they make ${ms2(aOf())} m/s². Press Space to brake from ${KD} km/h, and watch the marks on the road, which show where the car was at each half second.`
             : `Weight shift is the change in how much of the car’s weight presses on each pair of tyres. The tyres slow the car at the road, but the car’s centre of mass, which is the point where its mass balances, sits about ${BRAKE_RIG.centreHeightM} m above the road and carries on moving forward, which presses the front tyres down and lifts some of the load off the back tyres. A weighing pad under each pair of tyres shows the share of the weight that it carries. Press Space to brake, and watch the two pads.`,
         prompt: ready ? 'Press Space to brake, or click the road.' : done ? 'Press Enter to continue, or press R to watch again.' : stopping ? 'Watch the tape.' : slowing ? 'Watch the marks on the road.' : 'Watch the pads.',
         hints: done ? DONE : [stopping ? 'The tape measures from the yellow line to the place where the car stops.' : slowing ? 'Each mark shows where the car was after another half second.' : 'Watch the numbers on the two pads.', 'Press Space.', 'Watch my pointer. I will brake.']};
@@ -484,22 +495,22 @@ export function createModel() {
     if (id === 'word-energy') {
       const running = m.phase === 'running';
       return {...base, close: null, dial: dialView(running), energy: true, keys: running ? {} : {...DIAL_KEYS, Space: 'go'}, repeat: running ? [] : ['↑', '↓'], buttons: running ? [] : [BRAKE], target: running ? null : 'go', waiting: m.phase === 'ready',
-        say: m.phase === 'done' || (running && seen.has(id)) ? m.say : `Now we can answer the question. A moving car carries energy of motion, which is the energy that it has because it is moving. The brakes must remove all of that energy before the car can stop, and they turn it into heat. Energy of motion depends on the square of the speed, which means the speed multiplied by itself, so twice the speed carries 2 × 2 = 4 times the energy. The same brakes remove the same amount of energy during each metre of road, so four times the energy needs four times the road. Each gold block shows the energy of the car at ${K50} km/h. Press Space to brake, and watch the blocks disappear along the road.`,
+        say: m.phase === 'done' || (running && seen.has(id)) ? m.say : `Now we can explain that result. A moving car carries energy of motion, which is the energy that it has because it is moving. The brakes must remove all of that energy before the car can stop, and they turn it into heat. Energy of motion depends on the square of the speed, which means the speed multiplied by itself, so twice the speed carries 2 × 2 = 4 times the energy. The same brakes remove the same amount of energy during each metre of road, so four times the energy needs four times the road. Each gold block shows the energy of the car at ${K50} km/h. Press Space to brake, and watch the blocks disappear along the road.`,
         prompt: running ? 'Watch the blocks and the road.' : seen.has(id) ? 'Press Enter to continue, or change the speed with ↑ and ↓ and press Space.' : 'Press Space to brake, or change the speed with ↑ and ↓ first.',
         hints: running ? ['Watch the blocks and the road.', 'Each block lasts for the same length of road.', 'Wait a moment.'] : ['Each block is the energy of the car at the lower speed.', 'Press Space.', 'Watch my pointer. I will brake.']};
     }
     if (id === 'word-balance') {
       const done = m.phase === 'done';
       return {...base, lever: {front: set.front, locked: false}, balance: true, best: goal(), keys: LEVER_KEYS, repeat: ['←', '→'], buttons: leverButtons(), ...(done ? {} : {waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'lever'}),
-        say: done ? m.say : m.auto ? autoSay() : `Brake balance is how the braking is divided between the front brakes and the back brakes. A tyre can grip the road only in proportion to the weight pressing it down, so the back tyres, which carry only ${pct(REAR_LOAD)} of the weight while the car brakes, can do only about ${pct(REAR_LOAD)} of the braking. If the back brakes ask for more than that, the back tyres stop turning, which is called locking, and a locked tyre slides. The lever starts at 50% front. Move it to ${STEADY_FRONT}% front, and watch the sum beside the picture.`,
+        say: done ? m.say : m.auto ? autoSay() : `Brake balance is how the braking is divided between the front brakes and the back brakes. In this game, the back tyres can do only about as large a share of the braking as the share of the weight they carry, which is ${pct(REAR_LOAD)} while the car brakes. If the back brakes do more than that, the back tyres stop turning, which is called locking, and a locked tyre slides. The game applies this rule only to the back tyres, so more braking at the front causes no slide, and the lever does not change the stopping distance. The lever starts at 50% front. Move it to ${STEADY_FRONT}% front, and watch the sum beside the picture.`,
         prompt: done ? 'Press Enter to continue, or keep moving the lever with ← and →.' : `The lever is at ${set.front}% front and ${100 - set.front}% back. Press → to move it toward the front, or click the lever.`,
         hints: done ? DONE : ['The lever slides between the back brakes and the front brakes.', `Press → until the lever reads ${STEADY_FRONT}% front.`, 'Watch my pointer. I will move the lever.']};
     }
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'],
-        say: done ? `The car from ${K50} km/h stopped in ${m1(S50)} and the car from ${K100} km/h stopped in ${m1(S100)}, which is four times the road for twice the speed. The back brakes of the third car did 50% of the braking, which is more than the ${pct(REAR_LOAD)} of the weight on its back tyres, so those tyres locked and the back of the car slid.`
-          : `Three identical cars will now brake at the same line. Two have the lever at 70% front, one from ${K50} km/h and one from ${K100} km/h. The third brakes from ${K50} km/h with the lever at 50% front. Watch where each car stops, and watch the back of the third car.`,
+        say: done ? `The car from ${K50} km/h stopped in ${m1(S50)} and the car from ${KW} km/h stopped in ${m1(metresFrom(WATCH_SPEED))}, so the faster car needed more road. The back brakes of the third car did 50% of the braking, which is more than the ${pct(REAR_LOAD)} of the weight on its back tyres, so those tyres locked and the back of the car slid. It still stopped in ${m1(S50)}, because in this game the lever does not change the stopping distance.`
+          : `Three identical cars will now brake at the same line. Two have the lever at 70% front, one from ${K50} km/h and one from ${KW} km/h. The third brakes from ${K50} km/h with the lever at 50% front. Watch where each car stops, and watch the back of the third car.`,
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the three cars.',
         hints: ['Watch where each car stops.', 'Then watch the back of the bottom car.', done ? 'Press R to watch again.' : 'Wait a moment.']};
     }
@@ -522,7 +533,7 @@ export function createModel() {
     if (id === 'try-speed') {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'stops', metres: [S50, c.metres]}, state: null})),
-        say: m.say, prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`From ${K50} km/h the car needed ${m1(S50)}.`, 'Twice the speed carries four times the energy of motion.', 'Pick a card. Any guess lets you go on.']};
+        say: m.say, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`From ${K50} km/h the car needed ${m1(S50)}.`, 'The faster car covers more road during each second, and it also brakes for longer.', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the car stops.', 'Count the marks every 10 m.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...v, say: m.auto ? autoSay() : m.say || `From ${K50} km/h the car stopped in ${m1(S50)}. Turn the dial to ${K100} km/h, which is twice as fast, and watch the sum beside the picture. Then press Space, and you can guess where the car will stop.`,

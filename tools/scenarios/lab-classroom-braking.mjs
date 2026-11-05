@@ -52,17 +52,12 @@ export async function run(c) {
   await press('Space'); await at('word-stopping', 's.ready'); await shot('word-stopping-done');
   if (!(await c.evaluate(`document.querySelector('.lc-nudge').hidden`))) throw Error('The offer should go once the player acts.');
   await next('word-stopping');
-  // Deceleration: the marks at each half second. Energy: the blocks empty along the road.
+  // Deceleration: the marks at each half second.
   await at('word-deceleration'); await shot('word-deceleration'); await press('Space'); await wait(1900); await shot('word-deceleration-braking'); await at('word-deceleration', 's.ready'); await shot('word-deceleration-done');
   await next('word-deceleration');
-  await at('word-energy'); await shot('word-energy'); await press('Space'); await wait(1700); await shot('word-energy-braking'); await at('word-energy', 's.ready'); await shot('word-energy-done');
-  await press('ArrowUp');
-  if (!(await worked('(49.17 m/s)'))) throw Error('The energy sums did not follow the dial.');
-  await press('ArrowDown');
-  await next('word-energy');
   await at('word-weight'); await shot('word-weight'); await press('Space'); await wait(800); await shot('word-weight-braking'); await at('word-weight', 's.ready');
   // Backspace goes back one step, which stays done; Enter comes forward again.
-  await press('Backspace'); await at('word-energy', 's.ready'); await shot('previous-step'); await press('Enter');
+  await press('Backspace'); await at('word-deceleration', 's.ready'); await shot('previous-step'); await press('Enter');
   await next('word-weight');
   await at('word-balance'); await shot('word-balance'); await press('ArrowRight', 2); await at('word-balance', 's.ready'); await shot('word-balance-done');
   await press('ArrowRight');
@@ -70,6 +65,18 @@ export async function run(c) {
   await next('word-balance');
   await at('watch'); await wait(1300); await shot('watch-braking'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
+  // Twice the speed: Space at 80 km/h says to turn the dial; 161 km/h, a wrong guess says why. The panel keeps the answer until the car stops.
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 161', 'the wrong speed says why');
+  await press('ArrowUp', 5); await prompt('161 km/h', 'the dial reads 161'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
+  if (await c.evaluate(`document.querySelector('.lc-formulas').textContent.includes('47.')`)) throw Error('The panel gave away the guess.');
+  await press('Digit1'); await at('try-speed', 's.ready'); await saying('It needed four times the road', 'a wrong guess says why'); await shot('try-speed-done');
+  await next('try-speed');
+  // Energy of motion explains the result: the blocks empty along the road.
+  await at('word-energy'); await shot('word-energy'); await press('Space'); await wait(1700); await shot('word-energy-braking'); await at('word-energy', 's.ready'); await shot('word-energy-done');
+  await press('ArrowUp');
+  if (!(await worked('(49.17 m/s)'))) throw Error('The energy sums did not follow the dial.');
+  await press('ArrowDown');
+  await next('word-energy');
   // The free test: the dial and the car move the sums at once, and three different settings open Continue.
   await at('try-free'); await shot('try-free');
   await press('ArrowUp', 2); await wait(200);
@@ -81,12 +88,6 @@ export async function run(c) {
   await press('Space'); await prompt('tested so far: 2', 'two settings counted'); await wait(300);
   await press('ArrowUp', 3); await press('Space'); await at('try-free', 's.ready'); await shot('try-free-three');
   await next('try-free');
-  // Twice the speed: Space at 80 km/h says to turn the dial; 161 km/h, a wrong guess says why. The panel keeps the answer until the car stops.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 161', 'the wrong speed says why');
-  await press('ArrowUp', 5); await prompt('161 km/h', 'the dial reads 161'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
-  if (await c.evaluate(`document.querySelector('.lc-formulas').textContent.includes('47.')`)) throw Error('The panel gave away the guess.');
-  await press('Digit1'); await at('try-speed', 's.ready'); await saying('Twice the speed carries four times the energy', 'a wrong guess says why'); await shot('try-speed-done');
-  await next('try-speed');
   // Keeping the back in line: brake as it is (the back slides), one click on the lever, then → and brake again.
   await at('try-slide'); await shot('try-slide'); await press('Space'); await saying('The back of the car slid', 'the slide says why'); await wait(300); await shot('try-slide-slid');
   const lever = await toScreen(910, 280);

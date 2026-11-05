@@ -133,7 +133,7 @@ function closeUp(ctx, view) {
   // The lever's share against the weight on the back tyres, in the same words as the sum.
   if (view.balance && view.lever) {
     const backBrakes = 100 - view.lever.front, steady = view.lever.front >= STEADY_FRONT;
-    text(ctx, `back brakes ${backBrakes}% ${steady ? 'is less than' : 'is more than'} back tyres ${pct(REAR_LOAD)}`, 310, 30, {size: 17, colour: steady ? GREEN : theme.bad});
+    text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, 310, 30, {size: 14, colour: steady ? GREEN : theme.bad});
   }
 }
 function dial(ctx, view) {
@@ -295,7 +295,7 @@ function energyScene(ctx, view) {
     text(ctx, `${count.toFixed(2)} times the energy of the car at ${slowKmh} km/h`, x + 110, ry + 8, {size: 14, align: 'left', colour: 'rgba(245,240,220,.75)'});
     blocks(ctx, x + 14, ry + 28, count, count * share);
   });
-  wrap(ctx, together(`Each block takes the same ${m1(S50)} of road to remove.`), LEVER.x + LEVER.w / 2, 230, LEVER.w - 30, {size: 22});
+  wrap(ctx, together(`Each block needs the same ${m1(S50)} of road.`), LEVER.x + LEVER.w / 2, 230, LEVER.w - 30, {size: 22});
   // The road: one numbered stretch for each block.
   rows.forEach((row, i) => {
     const ry = ROAD.y[i], l = row.lane, stretch = S50 * ROAD.perM, count = row.stop / S50;
