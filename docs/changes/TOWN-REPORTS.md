@@ -15,7 +15,8 @@ on the card under “Codex decided (Claude to review)”.
 ## Checks
 
 - `node tools/test-town-reports.mjs`: passed, 36 checks.
-- `npm run build`: pending.
+- `npm.cmd run build`: passed. Vite reported the existing dynamic import warning
+  for `src/game.js` and warned that some built chunks exceed 500 kB.
 - Lane tier: Claude runs it.
 - Browser and look checks: not run here. Claude should check report order,
   who/what/where text, answer outcomes, the three-bad-report limit, and the
