@@ -20,6 +20,7 @@
 - `npm.cmd run build`: passed (650 modules, 2.07 s). Existing large-chunk and mixed static/dynamic import warnings remain.
 - `test-board.mjs`: 641 checks passed. `test-repo-hygiene.mjs`: passed; size targets are advisory.
 - Claude should check the browser scenario with memory-only data: squeak ping, duck in view, lift ring, bath rising, title card, car in the garage and one race start. Claude should judge whether the bath reads clearly from the chase view and review the new sound and Ana recordings. No Chrome check was attempted.
+- The card's look sheet and verdict are still missing. Claude should make and review `docs/board/looks/vasca/round-1.jpg` and its review note, showing the chase and side views, the duck on its chain in the Shallows, and the bath rising beside the reference.
 - No replay fingerprints or signatures changed.
 
 ## Changed assertions
