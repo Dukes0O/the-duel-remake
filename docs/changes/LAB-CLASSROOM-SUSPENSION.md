@@ -5,8 +5,9 @@
 Suspension now opens as a classroom lesson under `lab-classroom`. Brian teaches
 springs, body shake and body roll before asking the learner to predict. The
 board measures the same four spring and road combinations as the suspension
-bench. Its free test counts three distinct settings, and Show me selects and
-runs a new setting pair each time. The existing bench goal still checks all
+bench. The Watch step changes its settings and live readings as Brian describes.
+Its free test counts three distinct settings, and Show me selects and runs a
+new setting pair each time. The existing bench goal still checks all
 four combinations, so the challenge rules and reward path remain unchanged.
 
 The lesson preserves the existing notebook ids `suspension-word-0` through
@@ -35,11 +36,11 @@ voice. No audio files or shared voice tables changed in this lane.
 
 ## Checks
 
-- `node --test tools/test-lab-classroom.mjs`: 34 passed, 0 failed. Added checks
+- `node --test tools/test-lab-classroom.mjs`: 35 passed, 0 failed. Added checks
   for the complete screen contract, hidden answers while guessing, exact bench
-  results, the lesson gate, all four challenge settings, three distinct free
-  tests and Show me choosing a different setting each time. Existing
-  assertions were not changed.
+  results, the lesson gate, all four challenge settings, the live Watch, three
+  distinct free tests and Show me choosing a different setting each time.
+  Existing assertions were not changed.
 - `node --test tools/test-lab-classroom-page.mjs`: 6 passed, 0 failed.
 - `npm.cmd run build`: passed. PowerShell blocks the `npm` script shim, so the
   equivalent Windows `npm.cmd` entry point ran the requested build. Vite

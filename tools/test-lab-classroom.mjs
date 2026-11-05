@@ -282,6 +282,17 @@ test('the Suspension classroom challenge submits the same four settings to the u
   assert.equal(suspensionBench.goalMet(attempts.map(attempt=>({result:{settings:attempt.input}}))),true);
 });
 
+test('the Suspension Watch changes the rig settings and live readings as Brian describes', () => {
+  const model=createSuspensionModel(); model.enter(4);
+  model.tick(.5); assert.deepEqual(model.view().setup,{spring:'soft',road:'bumpy'});
+  const softShake=model.view().result.bodyShake;
+  model.tick(.7); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
+  const stiffShake=model.view().result.bodyShake; assert.notEqual(stiffShake,softShake);
+  model.tick(1); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
+  assert.notEqual(model.view().result.bodyShake,stiffShake);
+  model.tick(1); assert.equal(model.view().ready,true); assert.match(model.view().say,/6\.5° and 2\.2°/);
+});
+
 test('Suspension exposes the complete screen contract and drawable targets on every step', () => {
   const sent = new Set(Object.values(KEY_NAMES)), model = createSuspensionModel();
   for (let index=0;index<SUSPENSION_STEPS.length;index++) {

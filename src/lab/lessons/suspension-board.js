@@ -56,9 +56,9 @@ function rig(ctx,view) {
 function controls(ctx,view) {
   panel(ctx,520,150,430,275); text(ctx,'SELECT THE TEST SETTINGS',545,178,{size:14,align:'left',weight:900,colour:'#d5b65f'});
   text(ctx,'SPRING',545,218,{size:13,align:'left',weight:900});
-  button(ctx,SOFT,'Soft','1',view.setup.spring==='soft',Boolean(view.keys['1'])); button(ctx,STIFF,'Stiff','2',view.setup.spring==='stiff',Boolean(view.keys['2']));
+  button(ctx,SOFT,'Soft','1',view.setup.spring==='soft',!view.asking&&Boolean(view.keys['1'])); button(ctx,STIFF,'Stiff','2',view.setup.spring==='stiff',!view.asking&&Boolean(view.keys['2']));
   text(ctx,'ROAD SURFACE',545,305,{size:13,align:'left',weight:900});
-  button(ctx,BUMPY,'Bumpy','3',view.setup.road==='bumpy',Boolean(view.keys['3'])); button(ctx,SMOOTH,'Smooth','4',view.setup.road==='smooth',Boolean(view.keys['4']));
+  button(ctx,BUMPY,'Bumpy','3',view.setup.road==='bumpy',!view.asking&&Boolean(view.keys['3'])); button(ctx,SMOOTH,'Smooth','4',view.setup.road==='smooth',!view.asking&&Boolean(view.keys['4']));
   if(view.keys.Space) button(ctx,RUN,'Run the rig','Sp',false,true);
 }
 function results(ctx,view) {

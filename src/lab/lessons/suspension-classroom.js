@@ -93,7 +93,10 @@ export function createModel() {
   }
   function tick(dt) { time += dt; if (auto && time - lastPress >= .14) { const action = auto.shift(); lastPress = time; const result = act(action); if (!auto.length) auto = null; return result; }
     if (id() === 'wonder' && phase !== 'done' && time >= 1.8) { phase = 'done'; say = 'The soft spring moves less on the bumps, while the stiff spring keeps the car flatter in a bend. We will measure both effects.'; return {kind: 'right', say}; }
-    if (id() === 'watch' && phase !== 'done' && time >= 3) { phase = 'done'; say = `On bumps, the soft spring gives ${values(resultLabel('soft','bumpy'))}; the stiff spring gives ${values(resultLabel('stiff','bumpy'))}. In the model bend, their body-roll angles are 6.5° and 2.2°.`; return {kind: 'right', say}; }
+    if (id() === 'watch' && phase !== 'done') {
+      setup = time < 1 ? {...SETUPS[0]} : time < 2 ? {...SETUPS[1]} : {...SETUPS[2]};
+      if (time >= 3) { phase = 'done'; say = `On bumps, the soft spring gives ${values(resultLabel('soft','bumpy'))}; the stiff spring gives ${values(resultLabel('stiff','bumpy'))}. In the model bend, their body-roll angles are 6.5° and 2.2°.`; return {kind: 'right', say}; }
+    }
     return null;
   }
   function formulaRows() {
