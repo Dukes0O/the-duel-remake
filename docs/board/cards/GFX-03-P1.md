@@ -18,3 +18,7 @@ These are the card's detailed design, acceptance and recorded decisions.
     acceptance:
       - "Reach all art scores of four, prove all nine cars and three tiers in game, and keep the four-car whole-scene cost within ten percent. Keep wheels, lamps and glass clear and existing purchases unchanged."
 ```
+
+## Claude's verdict (5 November 2026)
+
+Rejected, nothing merged. Rounds 9 and 10 split the door plates, but the change is hard to see at game distance and no score rose (3/4/4/3). The new models also break `test-sal-art.mjs` and `test-warlord-gunn-art.mjs`, which pin the approved kit bytes, and moving those pins is not worth it for no visible gain. The lane is dropped. Stop here; the card stays in the backlog until a design for much larger, distinct plates exists.

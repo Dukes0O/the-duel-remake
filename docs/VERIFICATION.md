@@ -1981,3 +1981,32 @@ build. One review: real faults found and fixed, listed in docs/changes/LAB-CLASS
 Rule 19: the last whole-tier pass is 8361997b. Since then Lab code, tests and notes, the European animals release, and a
 four-line guard in `heli-session.js` `startChallenge` (no physics or save shape), whose suites ran in the lane tier
 (`test-lab-challenges` included). No frame check: the classroom is a 2D board and no race scene changed.
+
+
+## Release, 4 November 2026, LAB-TARGETS and LAB-CLASSROOM-LANGUAGE batch 2 (Claude, Release Manager)
+
+LAB-TARGETS, from Kyle's report that the Pendulums flight had no visible target: every flown Lab challenge except the heading flight
+now shows a light column, a ring at the scored radius, a bearing and distance line, and a map flag; no rule or scored spot changed.
+Language batch 2: Rust, Downforce and Fire rewritten, eleven of Brian's lines re-recorded, Show me on the free tests fixed in Projectile
+and Launch, Tune page in km/h, parts panel in sentences; goals, rewards and save shape unchanged.
+LAB-TARGETS: test-lab-challenges 27/27, test-lab-view 32/32, test-pilot-map, lane tier 79/79, build, lab-classroom, projectile, fire, altitude
+and lab-view scenarios, pictures read. Batch 2: every test-lab-* suite, lane tier 143/143, build, 23 Lab scenarios (lab-restore moved to
+the reworded line and passed alone), one review with its faults fixed. Change notes: docs/changes/LAB-TARGETS.md, LAB-CLASSROOM-LANGUAGE.md
+and its -RUST, -DOWNFORCE and -FIRE notes. LAB-TARGETS had no independent review; its change is drawing and words only, and it is judged
+on its tests and pictures.
+
+Rule 19: whole-tier pass 8361997b. Since then Lab code, tests, notes and voice, the European animals, `heli-session.js` view fields, the bucket
+fit and the crate's arrow, `heli-scene.js` drawing, `pilot-map-view.js` flags and `tune-view.js` wording; no physics or save shape. No frame
+check: the light columns are the ski pads' own, shown only during a Lab challenge.
+
+
+## Release, 5 November 2026, LAB-CLASSROOM-LANGUAGE batch 3 and G-force (Claude, Release Manager)
+
+Air and altitude, Braking, Strength, Fuel, Wax, Headings, Lift and Pendulums rewritten to Kyle's standard, with thirty of Brian's lines re-recorded; LAB-CLASSROOM-GFORCE
+(Codex, reviewed by the main session). "Tell me about this machine" now shows a description of each machine. Eighteen lines lost stray quotation marks in their text. Show me
+wording, the page and the panel are shared with the earlier batches. NO-RECYCLE-BUILDS: browser bundles and test fixtures are deleted outright. Goals, rewards and the save shape
+are unchanged; new notebook word ids use the existing list.
+Lane tier 120/120, build, every test-lab-* suite, Lab scenarios: 21 of 23 in the batch at --jobs 3, with lab-view failing on the laptop's network buffers (ERR_NO_BUFFER_SPACE, rule 3)
+and lab-walk on an expected phrase that this batch fixed; both pass alone at --jobs 1. Three reviews with their faults fixed, listed in each lesson's note. Rule 19: whole-tier pass
+8361997b. Since then Lab code, tests, notes and voice, the European animals, tool cleanup, and the earlier Lab releases' small helicopter view changes; no physics or save shape. No
+frame check: the classroom is a 2D board and no race scene changed.

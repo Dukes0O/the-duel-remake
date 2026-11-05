@@ -6181,7 +6181,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.lift.intro",
       "cue": "lab.brian.lift.intro",
-      "text": "Kestrel One is on the weighing pad. Add fuel and cargo, raise the collective, and see if she leaves the ground.",
+      "text": "Here are three loads, and each time the lever goes up until the lift equals the weight of that load. Watch how far the lever has to go.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6190,19 +6190,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 111,
+      "creditsUsed": 135,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-intro.mp3",
-      "sha256": "2f41fde1c12839421e090818fb425950ce85ac5db4f20c13e568c92654f2c3cd",
-      "bytes": 104950,
-      "generated": "2026-10-24"
+      "sha256": "6a12240d907465a3e74793dbdd76a93803479d39a0a67f6be3ee6200caa827e8",
+      "bytes": 117907,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.lift.explain",
       "cue": "lab.brian.lift.explain",
-      "text": "To hover, the rotor has to push the air down as hard as gravity pulls the helicopter down. More weight needs more push, and every rotor has a most it can give.",
+      "text": "To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a limit to how hard it can push.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6211,19 +6211,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 159,
+      "creditsUsed": 241,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-explain.mp3",
-      "sha256": "23357597b80c9829e939636900f25930c83ecdfda1f5844842401ad7a40bff30",
-      "bytes": 151762,
-      "generated": "2026-10-24"
+      "sha256": "028115da5c910d6150049550290d7f73b39c7270f5c4cfa7ed435e77ab8e968b",
+      "bytes": 208186,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.lift.pass",
       "cue": "lab.brian.lift.pass",
-      "text": "Good. Now you know why a heavy load is a hard lift.",
+      "text": "That is well done. Now you know why a heavy load is a hard lift.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6232,13 +6232,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 51,
-      "creditsEstimated": true,
+      "creditsUsed": 150,
+      "creditsEstimated": false,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-lift-pass.mp3",
-      "sha256": "a2ab0fe125ab2e8eee9854232d9c5b486c3fc883aaa6872e457d3fa77428cc80",
-      "bytes": 46436,
-      "generated": "2026-10-24"
+      "sha256": "ea27ceca8cd0087f577e668d3aa38820a7d544a1409ee5a3059d60df2ded52e2",
+      "bytes": 64408,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6307,7 +6307,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fire.intro",
       "cue": "lab.brian.fire.intro",
-      "text": "Three switches: gas for heat, wood for fuel, and a lid for air. Let's put the fire out three different ways.",
+      "text": "This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. I will remove one side of the triangle at a time. Watch the switches and the triangle.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6316,19 +6316,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 301,
-      "creditsEstimated": false,
+      "creditsUsed": 203,
+      "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-intro.mp3",
-      "sha256": "3d60805af1618df29fb70fd170bb3d0698c3631c04435b69f96df550858fabb9",
-      "bytes": 107876,
-      "generated": "2026-10-24"
+      "sha256": "dea29e47da4dca624a28c907b124a454a9716dc5ba35764ce3052411f572a16c",
+      "bytes": 216545,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fire.explain",
       "cue": "lab.brian.fire.explain",
-      "text": "Fire needs heat, fuel and air. Take away any one and it dies. Water takes the heat, a lid takes the air, a cleared strip takes the fuel. Retardant coats plants so they char instead of burn, so planes drop it in front of a fire, not on it.",
+      "text": "A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6337,19 +6337,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 238,
+      "creditsUsed": 441,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-explain.mp3",
-      "sha256": "487679f927e6ca9f20fc19ad96fa63712fcacd52965a6d21744cfae9c2a3a27f",
-      "bytes": 265447,
-      "generated": "2026-10-24"
+      "sha256": "48da586846471e3658e737bf42a50a3a982d49b69c478ce9a3d0fec9856d3235",
+      "bytes": 435556,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fire.pass",
       "cue": "lab.brian.fire.pass",
-      "text": "Heat, fuel, air. Break any one and the fire is done.",
+      "text": "Heat, fuel and oxygen are the three sides of the fire triangle. When any one of them is removed, the fire goes out.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6358,19 +6358,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 52,
+      "creditsUsed": 115,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-pass.mp3",
-      "sha256": "715c26144f14d2c07667f9d95e2d6bcf0add16b382f7a9e139f2f45886743350",
-      "bytes": 56049,
-      "generated": "2026-10-24"
+      "sha256": "dbde225a047bfba0720aae3e45e31f89d3d1b9e56a865671ba915b2327ea2e78",
+      "bytes": 106622,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.intro",
       "cue": "lab.brian.pendulum.intro",
-      "text": "Three weights on three strings, then a heavier weight on the same string. The stopwatch times every swing.",
+      "text": "Here are two strings of different lengths, 15 metres and 25 metres, with the same 20 kilogram weight on each. Both weights start together, and a stopwatch above each string times one full swing.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6379,19 +6379,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 106,
+      "creditsUsed": 194,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-intro.mp3",
-      "sha256": "cff698ab1eb0018480315155f057950494c5e5cdefa75584b67a991f0acdd2e5",
-      "bytes": 97845,
-      "generated": "2026-10-24"
+      "sha256": "2c55aa4e1d71a6f18d7eda09fd2ba13106a126af218b17b267948f361cba807a",
+      "bytes": 203171,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.explain",
       "cue": "lab.brian.pendulum.explain",
-      "text": "A swing takes longer on a longer string, and the weight makes no difference. Slow swings are gentler and easier to calm, but a longer cable needs more height.",
+      "text": "A longer string makes a slower swing, because the weight has further to travel. The weight makes no difference, because a heavier weight is pulled harder but is also harder to get moving. How far you pull the weight back makes no difference either, because a wider swing travels further but also faster. In the helicopter, the car on its 15 metre cable is a pendulum too. Carry the car to the orange light, and hover still inside the ring until the car stops swinging. Then set the car down.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6400,19 +6400,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 158,
+      "creditsUsed": 491,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-explain.mp3",
-      "sha256": "2ffbd9326ad1e6119801d8516e61a0f8f7687f1f5613c1acd28d2ca280f50d35",
-      "bytes": 150508,
-      "generated": "2026-10-24"
+      "sha256": "d7a4121ed60a04e635bf765f3e9eb8b24ea1c0c9c204580e64f13786980e1bfa",
+      "bytes": 461887,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.pendulum.pass",
       "cue": "lab.brian.pendulum.pass",
-      "text": "A long cable swings slow, and a slow swing is easy to settle.",
+      "text": "A longer cable makes a slower swing, and hovering still lets any swing settle.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6421,19 +6421,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 61,
+      "creditsUsed": 78,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-pendulum-pass.mp3",
-      "sha256": "70e46d728ee5edda06b8199f442dfa3927570f6603491b45a50cb1780a2463ac",
-      "bytes": 60647,
-      "generated": "2026-10-24"
+      "sha256": "14864b507c3fa03e00348d83f212ed2c0bec96a0b04c39738b65f3f4a9027733",
+      "bytes": 77783,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.altitude.intro",
       "cue": "lab.brian.altitude.intro",
-      "text": "A rotor on a test stand at sea level, at Panorama Ridge and at Summit Run. Measure its lift at each.",
+      "text": "\"Now the stand will visit each place in turn. At each place the lever goes all the way up, and we",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6442,19 +6442,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 285,
-      "creditsEstimated": false,
+      "creditsUsed": 97,
+      "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-intro.mp3",
-      "sha256": "f8b0093c84a1769aac28a24848d72a9fc5370837d03af273c2494786a588e2f5",
-      "bytes": 111220,
-      "generated": "2026-10-24"
+      "sha256": "cf0a4f7077bc150559af15086d4a682006ff4e8af0ec3012920dd8a182df7c18",
+      "bytes": 91576,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.altitude.explain",
       "cue": "lab.brian.altitude.explain",
-      "text": "Higher up the air is thinner. At Summit Run each lungful holds about three quarters of the air it would at sea level, so the rotor has less to push on and the engine makes less power. The game rounds this down a little, to seventy one percent.",
+      "text": "\"Higher up there is less air above to press down, so the air is thinner. The rotor then has less",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6463,19 +6463,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 243,
+      "creditsUsed": 96,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-explain.mp3",
-      "sha256": "0caab65860186ecea6cf7b5949b526db38526aff0af488eb9d776054ea61903b",
-      "bytes": 241623,
-      "generated": "2026-10-24"
+      "sha256": "2b0f884f081e311224a3222fca44af01e1b9a58eb9491d0d8e51a7aa1281e084",
+      "bytes": 100771,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.altitude.pass",
       "cue": "lab.brian.altitude.pass",
-      "text": "Thin air, less lift. Plan your load for the high country.",
+      "text": "\"Thinner air gives the rotor less to push against, so always plan your load for the height where",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6484,19 +6484,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 57,
+      "creditsUsed": 96,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-altitude-pass.mp3",
-      "sha256": "00b30fa2680e72341e8565543b3ecdeef27b422551809d162160b946e0aba062",
-      "bytes": 58975,
-      "generated": "2026-10-24"
+      "sha256": "9528fefd57331a88033051f602ebb1f0c150a6ec5a7d6fa68be6dd3282e5ae08",
+      "bytes": 94083,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.intro",
       "cue": "lab.brian.strength.intro",
-      "text": "Three bars of the same weight: aluminium, steel and carbon fibre. Load them until they bend or snap.",
+      "text": "Here are three bars of the same weight, made of aluminium, steel and carbon fibre. The ram will load all three together until each one bends for good or snaps.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6505,19 +6505,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 100,
+      "creditsUsed": 161,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-intro.mp3",
-      "sha256": "647d8f610f976d4ff7406517ec94597a8c3ba78a1a3d3ab33d6026293ca41f28",
-      "bytes": 104950,
-      "generated": "2026-10-24"
+      "sha256": "134275a54f3c898b4d37a589dde128fac8e248767f1fe912d463e59e141b338a",
+      "bytes": 149672,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.explain",
       "cue": "lab.brian.strength.explain",
-      "text": "Aluminium is about a third the weight of steel, size for size. Carbon fibre is lighter still and very stiff, but it snaps instead of bending. Engineers choose by what the part has to do.",
+      "text": "Aluminium is about a third of the weight of steel for the same size. Carbon fibre is lighter still and very strong for its weight, but it snaps instead of bending for good. For the same weight, a lighter material makes a thicker part, and a thicker part is far stronger and stiffer. Engineers choose the material by what the part has to do.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6526,19 +6526,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 186,
+      "creditsUsed": 342,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-explain.mp3",
-      "sha256": "d5bce8c642c254e765f5788bde1de6cf9901131b54dc11219731205986af7f0e",
-      "bytes": 194812,
-      "generated": "2026-10-24"
+      "sha256": "f36c621098cd7da07f014f50e0dc17c89cd0041253cb874007e166a16eddbbe8",
+      "bytes": 328141,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.strength.pass",
       "cue": "lab.brian.strength.pass",
-      "text": "That arm holds the load for the least weight. Well chosen.",
+      "text": "That arm holds the load for the least weight, which is the right choice for a helicopter.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6547,19 +6547,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 58,
+      "creditsUsed": 91,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-strength-pass.mp3",
-      "sha256": "84716a2d6b902ba361576e42e5be05ac73c1607fef69a13793621258c57da26a",
-      "bytes": 56049,
-      "generated": "2026-10-24"
+      "sha256": "db6763206314bce7c1668568434553471b80f14303d39cae858d7b09db264c9b",
+      "bytes": 75275,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.rust.intro",
       "cue": "lab.brian.rust.intro",
-      "text": "Four steel nails in jars for a week. Dry air, fresh water, salt water, and one with a zinc coat in salt water.",
+      "text": "Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6568,19 +6568,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 110,
+      "creditsUsed": 161,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-intro.mp3",
-      "sha256": "67e4f99afab6372f7b5fbb3c7a81f592271b559cef53ab1aef1549b8744a2826",
-      "bytes": 122087,
-      "generated": "2026-10-25"
+      "sha256": "84fbea8cb99f7360c700ca273fef8ba3f5a88aa718dd4bd2bdca508a462dfc82",
+      "bytes": 161375,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.rust.explain",
       "cue": "lab.brian.rust.explain",
-      "text": "Iron rusts when water and oxygen reach it, and salt water makes it rust much faster. A zinc coat rusts first and saves the steel under it.",
+      "text": "Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6589,19 +6589,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 138,
+      "creditsUsed": 215,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-explain.mp3",
-      "sha256": "0d58d9cae3af2947b73c1218675239c1b8ef170afb3b5d6c8ab3a8419032c9e2",
-      "bytes": 143821,
-      "generated": "2026-10-25"
+      "sha256": "0a2d2853a853436a3484ad55b10b375701dd517bfd0b6e4909d46c29eed6f10e",
+      "bytes": 208186,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.rust.pass",
       "cue": "lab.brian.rust.pass",
-      "text": "Right protection for the right part. That's how you keep metal alive.",
+      "text": "You have chosen the right protection for each part. That is how you keep metal from rusting away.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6610,13 +6610,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 69,
+      "creditsUsed": 99,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-pass.mp3",
-      "sha256": "61d85914a0f7c42e5be3c5219e410120be31dc03e921fbaac2e763e66b17a949",
-      "bytes": 68588,
-      "generated": "2026-10-25"
+      "sha256": "ff53157cce04abf9c220bac4f9632830bff3940b1cae8c99a7d752f67830bfcd",
+      "bytes": 83634,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6685,7 +6685,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.headings.intro",
       "cue": "lab.brian.headings.intro",
-      "text": "A map table with a compass and a ruler. Find the heading and the distance between two pads.",
+      "text": "This map table has a compass and a ruler on it, and with them you can find the heading and the distance from one pad to another.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6694,19 +6694,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 91,
+      "creditsUsed": 130,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-intro.mp3",
-      "sha256": "0b1d034344145bc7d308773020495e013b0a416b99247c3f2df83b524bdd0022",
-      "bytes": 89486,
-      "generated": "2026-10-25"
+      "sha256": "fc643155d6af46ce3942a6ab0fbf3868153f2cd3e14eb1aa3f6d4386d818c79c",
+      "bytes": 117907,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.headings.explain",
       "cue": "lab.brian.headings.explain",
-      "text": "A heading is the compass direction you point. Zero is north, ninety is east, one eighty is south and two seventy is west. A map's scale says how many real metres one map unit stands for.",
+      "text": "A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6715,19 +6715,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 186,
+      "creditsUsed": 549,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-explain.mp3",
-      "sha256": "f552f6f0a1a4f0f17c10ab9efc209f172ac6036a8d3542b515aa722987bb75e0",
-      "bytes": 191886,
-      "generated": "2026-10-25"
+      "sha256": "067e8a05cffa76d1633a904bb41e2e542dd122274c1c67dc738e9da7393b193a",
+      "bytes": 535448,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.headings.pass",
       "cue": "lab.brian.headings.pass",
-      "text": "A heading and a distance. With those two you can find anything.",
+      "text": "With a heading and a distance, you can find any place on a map.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6736,13 +6736,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 63,
+      "creditsUsed": 65,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-pass.mp3",
-      "sha256": "e49028dbdf930e79d326fb6d056a1eead8ddb4db7571d02969a850a0d9666faa",
-      "bytes": 60647,
-      "generated": "2026-10-25"
+      "sha256": "e09fef218c4c5a0f2b3ebdec9a6a16063d9318528b6e36f255040aa8f4adaead",
+      "bytes": 56885,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6811,7 +6811,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.downforce.intro",
       "cue": "lab.brian.downforce.intro",
-      "text": "A wing in the smoke. Turn the fan from fifty to a hundred and fifty miles an hour, and watch the scale.",
+      "text": "The wing is now steep, and the fan will run at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6820,19 +6820,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 103,
+      "creditsUsed": 176,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-intro.mp3",
-      "sha256": "3d3cb2400e56d47a0cd8c6ca0cdb4072279a591bf075f0596bb304b3aee3faf7",
-      "bytes": 91576,
-      "generated": "2026-10-25"
+      "sha256": "813aea570f06547ee7c9a2ea46ec461a2a181e9bab8bbd1444a740d40ed18373",
+      "bytes": 158449,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.downforce.explain",
       "cue": "lab.brian.downforce.explain",
-      "text": "A racing wing is an aeroplane wing upside down, so it pushes the car onto the road. Twice the speed gives four times the push. More push means more grip in fast corners, but the wing also drags, so top speed falls.",
+      "text": "A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6841,19 +6841,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 214,
+      "creditsUsed": 420,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-explain.mp3",
-      "sha256": "7f0406db2c81d3cfdd9aa5b73c7f04533f3e7dd7572aafb960d1690fc0caf7c6",
-      "bytes": 230756,
-      "generated": "2026-10-25"
+      "sha256": "f7827ac32a936cfa0be40b2170de7b10275cad5069117aa39e7f4579244673b7",
+      "bytes": 428451,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.downforce.pass",
       "cue": "lab.brian.downforce.pass",
-      "text": "More wing, more grip, less top speed. Choose for the track.",
+      "text": "More wing gives more grip and a lower top speed, so you choose the wing that suits the track.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6862,19 +6862,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 59,
+      "creditsUsed": 93,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-pass.mp3",
-      "sha256": "b5e045a6e89990a0e37801ed5200549a59fef96984e8a2732a8ada073e740d02",
-      "bytes": 58139,
-      "generated": "2026-10-25"
+      "sha256": "b9c3a2a0a500d5e985f5d0a2f2581239a6e92393de71975c72e134ddcb1a50ef",
+      "bytes": 83634,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.braking.intro",
       "cue": "lab.brian.braking.intro",
-      "text": "The car brakes from fifty and from a hundred miles an hour. You can slide the braking between front and back.",
+      "text": "Three identical cars will now brake at the same line. Two have the lever at seventy percent front, one from eighty kilometres per hour and one from a hundred and thirteen. The third brakes from eighty kilometres per hour with the lever at fifty percent front. Watch where each car stops, and watch the back of the third car.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6883,19 +6883,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 109,
+      "creditsUsed": 326,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-intro.mp3",
-      "sha256": "c51671e73af05d157fe52206ef8f25598f1e65a8b13e5c1ff3fbde6ebb500f8f",
-      "bytes": 107876,
-      "generated": "2026-10-25"
+      "sha256": "044f22c44b6d58e947912871ffa00983becc94eea1fb08ade004038fc05fe67b",
+      "bytes": 313094,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.braking.explain",
       "cue": "lab.brian.braking.explain",
-      "text": "From a hundred miles an hour a car needs four times the road it needs from fifty. Braking tips the weight forward onto the front tyres, so the front brakes do most of the work. Too much rear brake and the back slides. The bench shows the weight shift at a gentle stop; the distances use the car's full braking.",
+      "text": "A car's stopping distance grows with the square of its speed, because twice the speed carries four times the energy of motion, and the same brakes remove the same energy during each metre of road. Braking moves weight forward onto the front tyres, so the front brakes can do most of the work. If the back brakes do more of the braking than the weight on the back tyres allows, the back tyres lock and the back of the car slides.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6904,19 +6904,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 310,
+      "creditsUsed": 430,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-explain.mp3",
-      "sha256": "96ffb57b827cf3b2ff38269674ac1800f7f990aac36440d3be4c5e210767154c",
-      "bytes": 290942,
-      "generated": "2026-10-25"
+      "sha256": "13983599533c98ce2fd40bc7c88566ca2898c2be956e684bd909bbd051265a6b",
+      "bytes": 417166,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.braking.pass",
       "cue": "lab.brian.braking.pass",
-      "text": "Double the speed, four times the road. Brake early and brake straight.",
+      "text": "Twice the speed needs four times the road, because it carries four times the energy for the same brakes to remove. So brake early, and brake in a straight line.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6925,13 +6925,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 70,
+      "creditsUsed": 162,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-braking-pass.mp3",
-      "sha256": "160e4414185254ff2dad71286e9487b0f38a0d174f6c79a8cd94552fccdc32ad",
-      "bytes": 64408,
-      "generated": "2026-10-25"
+      "sha256": "de9a30d7c306c827918a73b878d27a1f697203da7244c1456d584c2809342b9a",
+      "bytes": 149672,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7000,7 +7000,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fuel.intro",
       "cue": "lab.brian.fuel.intro",
-      "text": "A jerry can on the scale, then the car timed from nought to sixty, full and half full.",
+      "text": "The scale shows the mass of the petrol as the tank empties. Then three identical cars race to about ninety seven kilometres per hour, with a full tank, half a tank and an empty tank.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7009,19 +7009,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 86,
+      "creditsUsed": 184,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-intro.mp3",
-      "sha256": "f1f9f52ed20cafa25b74fa01c2426794af17d98eda807942838b09ef209583e9",
-      "bytes": 84888,
-      "generated": "2026-10-25"
+      "sha256": "a123edf87755cc7646cf55cabdbfaabc8d06120e4d3ca05d120b2b98c81836dc",
+      "bytes": 180183,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fuel.explain",
       "cue": "lab.brian.fuel.explain",
-      "text": "Petrol weighs about three quarters of a kilo a litre, so a seventy litre tank holds about fifty two kilos. A lighter car speeds up quicker. Electric cars carry batteries instead, which weigh the same full or empty.",
+      "text": "Every litre of petrol has a mass of nought point seven four kilograms, so a full tank of seventy litres adds fifty one point eight kilograms to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster. In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7030,19 +7030,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 214,
+      "creditsUsed": 592,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-explain.mp3",
-      "sha256": "3e665112ede257c62c7a91fbbdb818ef1c01ae62d84df9fc454428b65c3607f7",
-      "bytes": 218217,
-      "generated": "2026-10-25"
+      "sha256": "e7365f5193ea6941f878aa93cab8565e8e822f446d69697093e6403ab185d238",
+      "bytes": 598560,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fuel.pass",
       "cue": "lab.brian.fuel.pass",
-      "text": "Less fuel, less weight, a quicker car. But you still have to finish the race.",
+      "text": "Less petrol means less mass, so the same car accelerates faster. The petrol must still last the whole race.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7051,13 +7051,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 77,
+      "creditsUsed": 109,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-pass.mp3",
-      "sha256": "e8ffa84126e7a25e81f141caa63ed6fc8122835cc110c637ca82c2088a6c0381",
-      "bytes": 76947,
-      "generated": "2026-10-25"
+      "sha256": "ce3d18a885f2a74b8ac6921d997962e0a203c49369b0cc8cec72fb521f779983",
+      "bytes": 111220,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7126,7 +7126,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.wax.intro",
       "cue": "lab.brian.wax.intro",
-      "text": "Skis on three kinds of snow, with three waxes. We'll time every glide.",
+      "text": "This test puts skis on three kinds of snow with three waxes, and we will time every glide.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7135,19 +7135,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 70,
+      "creditsUsed": 92,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-intro.mp3",
-      "sha256": "bc230d2573e99814a1f506ce5054f0e17232f3f4627a91ab72ed1b0b10749601",
-      "bytes": 76111,
-      "generated": "2026-10-25"
+      "sha256": "845169923e7ea3caffe8ecaa851a65655611a9a01ac3583314e6fa52e07e7d00",
+      "bytes": 93247,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.wax.explain",
       "cue": "lab.brian.wax.explain",
-      "text": "Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.",
+      "text": "Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7156,19 +7156,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 168,
+      "creditsUsed": 382,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-explain.mp3",
-      "sha256": "2e58c3c63b9451ec9bd7c83ecb22aae936b84f510dbf22ac965dd4b25aa0fd8e",
-      "bytes": 177257,
-      "generated": "2026-10-25"
+      "sha256": "6d99d226e5f6f4a1cb0ea99d0b2cf7b302c3a8a2a0d6c2efe73dbbf4ed0b65d7",
+      "bytes": 415076,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.wax.pass",
       "cue": "lab.brian.wax.pass",
-      "text": "Right wax for the snow. That's free speed.",
+      "text": "You chose the right wax for the snow, and that made your ski faster at no cost.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7177,13 +7177,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 42,
+      "creditsUsed": 81,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-pass.mp3",
-      "sha256": "57d994a7d32ed22c442085177718c3c04391e5a99462ae25881a69d2b893a6f9",
-      "bytes": 41003,
-      "generated": "2026-10-25"
+      "sha256": "4fe6c936d8f00a2a115ea1e69e22f7f8b1671395700acb27e79845ff02280edd",
+      "bytes": 75275,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7273,7 +7273,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.restore.start",
       "cue": "lab.brian.restore.start",
-      "text": "Salt has been working on her metal for sixty years. First a long soak in fresh water to draw it out, then a small electric current to loosen the rust.",
+      "text": "Salt has been working on the metal of the Sirena for sixty years. The first step is a long soak in fresh water to draw the salt out, and then a small electric current loosens the rust.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7282,19 +7282,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 150,
+      "creditsUsed": 184,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-restore-start.mp3",
-      "sha256": "aa511f421273052efb00cad383848916e051b3f84678e64ad51ba840b106c997",
-      "bytes": 137969,
-      "generated": "2026-10-25"
+      "sha256": "5fc9fc0c1257e7663b25c111b20e05dcbb10ee5af671145166e2e976a46a2a1a",
+      "bytes": 174750,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.restore.done",
       "cue": "lab.brian.restore.done",
-      "text": "Strip, rebuild, paint. There she is. Sixty years under the sea, and she's ready to race.",
+      "text": "The Sirena has been stripped, rebuilt and painted. After sixty years under the sea, the car is ready to race.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7303,13 +7303,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 88,
+      "creditsUsed": 109,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-restore-done.mp3",
-      "sha256": "269f418ca6670b6788ae4f05e56e9e5c1b14ca1712531115a12ec26d5e1c548f",
-      "bytes": 91576,
-      "generated": "2026-10-25"
+      "sha256": "793b74f4a408f554a3df09e4e6e28a7221db621b4e0c771b5b76d74007d70ad4",
+      "bytes": 94501,
+      "generated": "2026-11-05"
     },
     {
       "source": "synthesis",

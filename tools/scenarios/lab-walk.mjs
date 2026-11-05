@@ -1,6 +1,5 @@
 import {readFileSync} from 'node:fs';
 import {WALK, WALK_LAYOUT, machineApproaches} from '../../src/lab/lab-walk.js';
-import {definition as gforceLesson} from '../../src/lab/lessons/gforce-lesson.js';
 // LAB-WALK: real keyboard navigation in the existing private memory-only harness.
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
@@ -104,17 +103,11 @@ export async function run(context) {
     await lookAt(at[0], at[1]);
     await context.waitFor(`${canvas}.dataset.labWalkTarget === 'machine'`, model + ' facing machine');
     await tap('KeyE');
-    // G-force teaches on the five-step lesson frame and Strength as a classroom: this machine's own lesson opens, and no old bench panel does.
-    if (id === 'strength') {
-      await context.waitFor(`JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')?.step === 'wonder'`, model + ' classroom');
-      if (await context.evaluate(`!!document.querySelector('.lab-bench') || !!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error(model + ': an old panel opened beside the classroom.');
-      await context.evaluate(`document.querySelector('.lc-leave').click()`);
-      await context.waitFor(`!document.querySelector('.lab-classroom')`, model + ' classroom closes');
-    } else {
-      await context.waitFor(`!document.querySelector('.lab-teaching')?.hidden && document.querySelector('.lab-teaching').textContent.includes(${JSON.stringify(gforceLesson.wonder.text)})`, model + ' lesson');
-      if (await context.evaluate(`!!document.querySelector('.lab-bench')`)) throw Error(model + ': the old bench panel opened beside the lesson.');
-      await context.evaluate(`document.querySelector('[data-teach="back"]').click()`);
-    }
+    // Each machine opens its own classroom, and no old panel opens beside it.
+    await context.waitFor(`JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')?.step === 'wonder'`, model + ' classroom');
+    if (await context.evaluate(`!!document.querySelector('.lab-bench') || !!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error(model + ': an old panel opened beside the classroom.');
+    await context.evaluate(`document.querySelector('.lc-leave').click()`);
+    await context.waitFor(`!document.querySelector('.lab-classroom')`, model + ' classroom closes');
     await lookAtBrian();
     await context.waitFor(`document.querySelector('.lab-walk-prompt')?.textContent === 'E: ask Brian'`, model + ' Brian prompt');
     await tap('KeyE');

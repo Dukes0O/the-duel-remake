@@ -1,6 +1,7 @@
 // Arena venues (docs/SCRAPDOME.md section 2). Venues are deliberately not in
 // COURSE, so no venue can appear in the main menu's circuit picker.
 import {createPitVenue} from './venues/pit.js';
+import {SCABLANDS_VENUE} from '../world/scablands.js';
 
 export const SCRAPDOME_LAYOUT = Object.freeze({
   // Drivable floor either side of the centreline. The outer side (positive
@@ -57,6 +58,7 @@ export const SALT_FLATS_VENUE = Object.freeze({
 });
 
 export const ARENA_VENUES = Object.freeze({
+  scablands: SCABLANDS_VENUE,
   scrapdome: SCRAPDOME_VENUE,
   'salt-flats': SALT_FLATS_VENUE,
   pit: createPitVenue(SCRAPDOME_VENUE),

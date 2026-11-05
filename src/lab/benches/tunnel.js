@@ -6,6 +6,8 @@
 import {CARS, DRIVE, TYRE_SLIP, tyreSlipAngle, tyreSlipGrip, tyreSlipRawSound} from '../../config.js';
 import {GRAVITY} from '../../heli/heli-flight.js';
 import {carMassKg} from '../../heli/heli-cable.js';
+// For the classroom lesson, which reads the helicopter's rules only through this bench.
+export {carMassKg};
 import {control, choice, makeBench} from './bench-core.js';
 
 const MPH = DRIVE.mphToWorld;
