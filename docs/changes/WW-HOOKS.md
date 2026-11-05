@@ -17,29 +17,35 @@
   Dusthawk Rally for the thief buggy until WW-ART-VEHICLES provides their
   models. WW-EVERBURN-JOBS adds a timber-and-iron crate stand-in for the supply
   crate planned in WW-ART-KIT.
+- Fixed defend refills so they happen once at Hollis's crate between cleared
+  waves, not while a wave is active. Raiders within 10 m now wear down the
+  defended place; the well restarts the current wave when it falls, at a slower
+  rate on Easy. Projectile and flame checks reuse the active world-job target
+  list.
 - Added a real-Duel check for leaving and re-entering the car, firing a loaned
   weapon, settlement and saved-loadout cleanup.
+- Added real-mode checks for between-wave refills, in-wave resource stability,
+  and the well-driven restart.
 
 ## Checks
 
-- `node tools/test-world-job-mode.mjs` and `node tools/test-world-jobs.mjs` —
-  passed after the Everburn follow-up.
-- `node tools/test-everburn-easy.mjs` — all nine jobs passed 10/10 on Easy;
+- `node tools/test-everburn-easy.mjs` - all nine jobs passed 10/10 on Easy;
   see `docs/changes/WW-EVERBURN-JOBS.md` for the finale path.
-- `node tools/test-replays.mjs` — passed, 297 exact replay checks. No world job
+- `node tools/test-world-job-mode.mjs` - passed, including refill and restart checks.
+- `node tools/test-world-jobs.mjs` - passed, all step scenarios and repeatability.
+- `node tools/test-replays.mjs` - passed, 297 exact replay checks. No world job
   ran during the replay check.
-- `node tools/test-combat-replays.mjs` — passed, 12 checks.
-- `node tools/test-scablands-ground.mjs` — passed, 5 tests.
-- `npm.cmd run build` — passed after PowerShell blocked `npm.ps1` by policy.
-- Lane tier — not run, as instructed for this lane.
-- Browser and look checks — Claude runs. Check one job from start to finish,
+- `node tools/test-combat-replays.mjs` - passed, 12 checks.
+- `npm.cmd run build` - passed.
+- Lane tier - not run, as instructed for this lane.
+- Browser and look checks - Claude runs. Check one job from start to finish,
   including captions, marker, raider wave, following target, visible actor and
   loaned weapon.
 
 ## Assertions and fingerprints
 
-- No existing assertion changed. The new mode test adds assertions for this
-  card's behavior.
+- No existing assertion changed. The real-mode test adds assertions for the
+  fixes above.
 - No replay fingerprints changed. Other arena modes keep their existing
   simulation paths; the new rules run only for `world-job`.
 
@@ -49,9 +55,6 @@
 
 ## Review
 
-- **Blocked:** the real-mode defence does not update well health, so the
-  promised restart after the well falls is not reachable.
-- **Blocked:** projectile and flame contact checks allocate world-job target
-  arrays and target objects repeatedly during simulation. The fix reaches
-  combat files outside this card's named hooks and needs a re-slice.
+- Fixed the three review findings on this branch. All requested checks pass;
+  Easy finishes all nine jobs 10/10.
 - Claude's browser and look checks remain.

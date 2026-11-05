@@ -15,7 +15,7 @@ globalThis.localStorage = {
 };
 globalThis.cancelAnimationFrame ??= () => {};
 
-function start({complete = false, seed = 1989} = {}) {
+function start({complete = false, seed = 1989, job: suppliedJob = null} = {}) {
   values.clear();
   const app = new App();
   app.audio.unlock = () => {};
@@ -24,7 +24,7 @@ function start({complete = false, seed = 1989} = {}) {
     discoveredGate: true, loadout: ['bomb', 'crossbow', 'ufo', 'star']}};
   assert.equal(app._saveProfile(), true, 'the baseline player profile is saved through the normal path');
   const savedLoadoutBytes = Buffer.from(JSON.stringify(app.profile.wasteland.loadout));
-  const job = {id: 'test-job', seed, lend: ['flamethrower'], captions: {start: 'GO TO THE YARD'},
+  const job = suppliedJob ?? {id: 'test-job', seed, lend: ['flamethrower'], captions: {start: 'GO TO THE YARD'},
     steps: [{kind: 'reach', lineId: 'start', place: {position: {x: 500, z: 500}}, radius: complete ? 5000 : 1}]};
   app.runId = `world-job-${seed}`;
   app._runPlayerId = app.player.id;
@@ -38,6 +38,56 @@ function start({complete = false, seed = 1989} = {}) {
   app.duel.step(dt);
   assert.equal(app.duel.state.status, 'racing');
   return {app, savedLoadoutBytes, job};
+}
+
+// The real mode refills only after a cleared wave, and a nearby raider can
+// wear down the defend place until the current wave restarts.
+{
+  const place = {position: {x: 0, y: 0, z: 0}};
+  const job = {id: 'test-defend', seed: 307, lend: ['flamethrower'], steps: [{kind: 'defend', place,
+    placeId: 'test-well', health: .1, waveCount: 2, waves: [{count: 1}, {count: 1}],
+    raiderEntry: place, refill: {place, crateId: 'hollis-test-crate',
+      carWeapon: 'flamethrower', footAmmo: 'rpg'}}]};
+  const {app} = start({job});
+  const worldJob = app.duel.state.arena.worldJob;
+  app.duel.state.combat.cooldowns.flamethrower = 7;
+  app.duel.state.footWeapons = {ammo: 1};
+  app.duel.state.footGear = {name: 'LONGHORN RPG', ammo: 1};
+  for (let n = 0; n < 3; n++) app.duel.step(dt);
+  assert(app.duel.state.combat.cooldowns.flamethrower > 0 &&
+    app.duel.state.combat.cooldowns.flamethrower < 7,
+  'car weapon cooldown continues naturally instead of being reset during a wave');
+  assert.equal(app.duel.state.footWeapons.ammo, 1, 'RPG ammo stays unchanged during a wave');
+  const raider = worldJob.actors.find(actor => Number.isFinite(actor.x) && Number.isFinite(actor.z));
+  assert(raider, 'the real mode spawned the defend wave');
+  const firstWave = worldJob.waveZones['0:0'];
+  raider.x = place.position.x; raider.z = place.position.z;
+  for (let n = 0; n < 180; n++) app.duel.step(dt);
+  assert.notEqual(worldJob.waveZones['0:0'], firstWave,
+    'the real mode replaces the current wave after nearby raiders wear down the well');
+  assert(worldJob.places['test-well'].health > 0,
+    'the real mode restores the well when it restarts the wave');
+  assert.equal(worldJob.job.stepState.restarting, false, 'the real mode resumed the same wave');
+  assert(app.duel.state.combat.cooldowns.flamethrower > 0,
+    'a restart does not refill during the wave');
+  app.duel.state.combat.cooldowns.flamethrower = 9;
+  app.duel.state.footWeapons.ammo = 1;
+  const currentRaider = worldJob.waveZones['0:0'].raiders[0];
+  currentRaider.knockedDown = true;
+  app.duel.step(dt);
+  assert.equal(app.duel.state.combat.cooldowns.flamethrower, 0,
+    'the cleared wave refills the car weapon at the crate');
+  assert.equal(app.duel.state.footWeapons.ammo, 3,
+    'the cleared wave refills RPG ammo at the crate');
+  assert.equal(worldJob.refillCrate.id, 'hollis-test-crate');
+  app.duel.state.combat.cooldowns.flamethrower = 6;
+  app.duel.state.footWeapons.ammo = 2;
+  app.duel.step(dt);
+  assert(app.duel.state.combat.cooldowns.flamethrower > 0,
+    'the next wave does not repeat the refill');
+  assert.equal(app.duel.state.footWeapons.ammo, 2,
+    'the next wave does not repeat the RPG refill');
+  app.returnToMenu(); app.dispose?.();
 }
 
 function assertSavedLoadout(app, expectedBytes, exit) {

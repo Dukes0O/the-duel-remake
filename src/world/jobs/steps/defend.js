@@ -14,11 +14,17 @@ export function stepDefend(step, state, view) {
   if (state.restarting) events.push({ type: 'waveStarted', wave });
   const cleared = (view.waveCleared ?? []).includes?.(wave) || view.waveCleared === wave || view.waveCleared === true;
   if (cleared) { events.push({ type: 'waveCleared', wave }); wave++; }
-  const requests = wave < (waves?.length ?? step.waveCount ?? 1)
+  const waveCount = waves?.length ?? step.waveCount ?? 1;
+  const requests = cleared && wave < waveCount
     ? [{ type: 'refill', ...step.refill }, { type: 'spawnWave', ...waves?.[wave],
       n: waves?.[wave]?.count ?? step.waveSize ?? 1, at: step.place,
       from: waves?.[wave]?.from ?? step.raiderEntry, approachSpeed: step.approachSpeed,
       hold: step.raiderHold, stopDistance: step.defendStopDistance }]
-    : [];
-  return { state: { wave, restarting: false }, complete: wave >= (waves?.length ?? step.waveCount ?? 1), events, requests };
+    : !cleared && !state.started && wave < waveCount
+      ? [{ type: 'spawnWave', ...waves?.[wave], n: waves?.[wave]?.count ?? step.waveSize ?? 1,
+        at: step.place, from: waves?.[wave]?.from ?? step.raiderEntry,
+        approachSpeed: step.approachSpeed, hold: step.raiderHold,
+        stopDistance: step.defendStopDistance }]
+      : [];
+  return { state: { wave, restarting: false, started: true }, complete: wave >= waveCount, events, requests };
 }

@@ -6,12 +6,15 @@ const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
   return {x: at.x, y: at.y, z: at.z};
 };
+const EMPTY_HIT_TARGETS = [];
+const WELL_WEAR_RANGE = 10;
+const WELL_WEAR_PER_SECOND = 1;
 
 export function createWorldJob(definition) {
   if (!definition) throw new TypeError('World Job mode needs a job definition');
   return {job: createJob(definition, definition.seed ?? 0), definition,
     marker: null, follow: null, spawnedWaves: 0, spawnedWaveKeys: [],
-    clearedWaves: [], settled: false};
+    clearedWaves: [], hitTargets: [], settled: false};
 }
 
 export function initializeWorldJob(duel, definition) {
@@ -169,6 +172,20 @@ export function stepWorldJob(duel, dt) {
   const point = position(duel, player);
   const playerView = {position: point, s: player.s, lateral: player.lateral,
     speed: player.speedMph ?? 0};
+  const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (currentStep?.kind === 'defend' && currentStep.placeId) {
+    worldJob.places ??= {};
+    const place = currentStep.place?.position ?? currentStep.place;
+    const placeState = worldJob.places[currentStep.placeId] ??= {health: currentStep.health ?? 100};
+    const difficultyScale = state.cpuDifficulty === 'easy' ? .1 : 1;
+    let nearbyRaiders = 0;
+    for (const raider of worldJob.actors) {
+      if (raider.knockedDown || !Number.isFinite(raider.x) || !Number.isFinite(raider.z)) continue;
+      if (Math.hypot(raider.x - place.x, raider.z - place.z) <= WELL_WEAR_RANGE) nearbyRaiders++;
+    }
+    placeState.health = Math.max(0, placeState.health - nearbyRaiders *
+      WELL_WEAR_PER_SECOND * difficultyScale * dt);
+  }
   const thingsHit = [...(state.worldJobThingsHit || []),
     ...(state.onFoot && state.input?.interact &&
       worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
@@ -206,6 +223,11 @@ export function stepWorldJob(duel, dt) {
   if (next.stepIndex !== previousStep) applyStepLoan(state, worldJob);
   for (const event of next.events) {
     if (event.type === 'waveRestarted') {
+      const step = next.steps[next.stepIndex];
+      if (step?.kind === 'defend' && step.placeId) {
+        worldJob.places ??= {};
+        worldJob.places[step.placeId] = {health: step.health ?? 100};
+      }
       const key = `${next.stepIndex}:${event.wave ?? 0}`;
       const zone = worldJob.waveZones?.[key];
       if (zone) {
@@ -246,9 +268,10 @@ export function reportWorldJobThingHit(duel, hit) {
 
 export function worldJobHitTargets(duel) {
   const worldJob = duel.state.arena?.worldJob;
-  if (!worldJob) return [];
+  if (!worldJob || worldJob.settled || duel.state.arena?.result) return EMPTY_HIT_TARGETS;
   const step = worldJob.job.steps[worldJob.job.stepIndex];
-  const targets = [];
+  const targets = worldJob.hitTargets;
+  targets.length = 0;
   for (const actor of worldJob.actors) {
     if (actor.health > 0 && actor.position) {
       targets.push({id: actor.id, actorId: actor.id, kind: actor.id.includes('furnace') ? 'furnace' : 'vehicle',
