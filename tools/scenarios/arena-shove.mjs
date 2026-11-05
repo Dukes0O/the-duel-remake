@@ -5,6 +5,7 @@ import {mkdtempSync, realpathSync, readFileSync, existsSync, openSync, closeSync
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {join, resolve, sep} from 'node:path';
+const tarExecutable=process.platform==='win32'?'C:\\Windows\\System32\\tar.exe':'tar';
 import {removeQaBundle} from '../browser-harness.mjs';
 import {DRIVE} from '../../src/config.js';
 import {arenaParticipant, outOfPlay, arenaTargetOutOfPlay} from '../../src/combat-teams.js';
@@ -128,7 +129,7 @@ export async function preparePublicBaseline(options = {}) {
   assert.ok(resolve(home).toLowerCase().startsWith((resolve(qa)+sep).toLowerCase()));
   const archive=join(home,'reference.tar'),snapshot=join(home,'snapshot');await mkdir(snapshot);
   execFileSync('git',['archive','--format=tar','--output',archive,commit,'src','public','tools','index.html','package.json','package-lock.json','vite.config.js'],{cwd:lane});
-  execFileSync('tar',['-xf',archive,'-C',snapshot]);
+  execFileSync(tarExecutable,['-xf',archive,'-C',snapshot]);
   await mkdir(join(snapshot,'tools/scenarios'),{recursive:true});
   const archived=execFileSync('git',['ls-tree','-rz',commit,'--','src','public','tools','index.html','package.json','package-lock.json','vite.config.js'],{cwd:lane,encoding:'utf8'}).split('\0').filter(Boolean);
   for(const entry of archived){const [header,path]=entry.split('\t'),[mode,kind,expected]=header.split(' ');assert.equal(kind,'blob');
@@ -228,7 +229,7 @@ async function prepareCurrentBaseline() {
     await mkdir(snapshot);
     const archive = join(home, 'reference.tar');
     execFileSync('git', ['archive', '--format=tar', '--output', archive, commit, ...ARCHIVE_PATHS], {cwd: SCENARIO_ROOT, windowsHide: true});
-    execFileSync('tar', ['-xf', archive, '-C', snapshot], {windowsHide: true});
+    execFileSync(tarExecutable, ['-xf', archive, '-C', snapshot], {windowsHide: true});
     for (const row of rows)
       assert.equal(blobHash(readFileSync(join(snapshot, row.path))), row.hash, 'every original archive byte: ' + row.path);
     await copyFile(fileURLToPath(import.meta.url), join(snapshot, RECIPE_PATH));

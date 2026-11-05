@@ -29,6 +29,9 @@ export async function run(context) {
   // ---- The switch off: nothing drawn, nothing loaded --------------------------
   await context.navigate('/tools/menu-check.html');
   await context.waitFor(MENU_READY, 'menu with the wildlife switch off', 90_000);
+  // Wildlife is released and therefore on by default. Make this negative-control
+  // page explicitly disable the switch instead of relying on the old dev default.
+  await context.evaluate(`(()=>{const app=window.__qaApp,original=app._switches.bind(app);app._switches=()=>{const flags=original();return {...flags,enabled:name=>name==='wildlife'?false:flags.enabled(name)};};})()`);
   await startRace(context);
   await pause(1500);
   const off = await context.evaluate(GROUP);

@@ -31,6 +31,17 @@ export function publicFallbackPlugin({publicDir} = {}) {
         let pathname;
         try { pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://qa.local').pathname); }
         catch { return next(); }
+        // Browser checks and the preview page share this isolated MPA server.
+        // The launcher-only stamp is not copied into the QA bundle, but the
+        // preview badge still needs a successful response in this build.
+        if (pathname === '/preview-build.json') {
+          const body = JSON.stringify({builtAt: new Date().toISOString()}) + '\n';
+          res.statusCode = 200;
+          res.setHeader('Content-Type','application/json; charset=utf-8');
+          res.setHeader('Content-Length',String(Buffer.byteLength(body)));
+          res.setHeader('Cache-Control','no-store');
+          return res.end(req.method === 'HEAD' ? undefined : body);
+        }
         if (pathname.includes('\0') || pathname.includes('\\')) return next();
         const pieces = pathname.split('/').filter(Boolean);
         if (pieces.some(piece => piece === '.' || piece === '..')) return next();
