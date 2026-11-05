@@ -266,9 +266,9 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.gforce.intro` | A car on a turning arm. Set the speed and the radius, and watch the weight on the string lean. |
 | `lab.brian.gforce.explain` | In a corner the car pushes you sideways. One g is a push as strong as your own weight. Twice the speed makes four times the push, and half the radius makes twice the push. The cars in this game are allowed between two and a half and three and a half g. |
 | `lab.brian.gforce.pass` | That's a proper corner. You can feel that in the seat. |
-| `lab.brian.headings.intro` | A map table with a compass and a ruler. Find the heading and the distance between two pads. |
-| `lab.brian.headings.explain` | A heading is the compass direction you point. Zero is north, ninety is east, one eighty is south and two seventy is west. A map's scale says how many real metres one map unit stands for. |
-| `lab.brian.headings.pass` | A heading and a distance. With those two you can find anything. |
+| `lab.brian.headings.intro` | "This map table has a compass and a ruler on it, and with them you can find the heading and the distance from one pad to another." |
+| `lab.brian.headings.explain` | "A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last." |
+| `lab.brian.headings.pass` | "With a heading and a distance, you can find any place on a map." |
 | `lab.brian.grip.intro` | A tyre on the rolling road. Each run, we slide it a little more and graph the grip. |
 | `lab.brian.grip.explain` | In the game a tyre keeps all its grip up to four point three degrees of slide. Past that the rubber skates and grip falls. A short squeal says you are at the limit. A long screech says you are past it. |
 | `lab.brian.grip.pass` | Right at the limit and no further. That's grip. |
@@ -281,15 +281,15 @@ than the world it says so. Lines never name credits or prices.
 | `lab.brian.suspension.intro` | A shaker rig under each wheel, a bumpy road and a smooth one. Try soft springs and stiff springs. |
 | `lab.brian.suspension.explain` | Soft springs let the body ride over a bump, so it is shaken less, but it leans more in a corner. Stiff springs pass every bump up into the body and shake it harder, but keep it flatter. |
 | `lab.brian.suspension.pass` | Soft for bumps, stiff for smooth. Now you can set up for the road. |
-| `lab.brian.fuel.intro` | A jerry can on the scale, then the car timed from nought to sixty, full and half full. |
-| `lab.brian.fuel.explain` | Petrol weighs about three quarters of a kilo a litre, so a seventy litre tank holds about fifty two kilos. A lighter car speeds up quicker. Electric cars carry batteries instead, which weigh the same full or empty. |
-| `lab.brian.fuel.pass` | Less fuel, less weight, a quicker car. But you still have to finish the race. |
+| `lab.brian.fuel.intro` | "The scale shows the mass of the petrol as the tank empties. Then three identical cars race to about ninety seven kilometres per hour, with a full tank, half a tank and an empty tank." |
+| `lab.brian.fuel.explain` | "Every litre of petrol has a mass of nought point seven four kilograms, so a full tank of seventy litres adds fifty one point eight kilograms to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster. In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set." |
+| `lab.brian.fuel.pass` | "Less petrol means less mass, so the same car accelerates faster. The petrol must still last the whole race." |
 | `lab.brian.launch.intro` | This is my small launcher. Watch the tape as it throws the skier from five ramps, one after another, all at the same speed. |
 | `lab.brian.launch.explain` | On level ground, a ramp of about forty five degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. More speed carries the skier further. When the landing is lower than the ramp, a flatter ramp goes furthest. |
 | `lab.brian.launch.pass` | That landed right on target, and that is how you plan a jump. |
-| `lab.brian.wax.intro` | Skis on three kinds of snow, with three waxes. We'll time every glide. |
-| `lab.brian.wax.explain` | Very cold, dry snow has hard, sharp crystals, so it needs a hard wax. Medium snow wants a medium wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out. |
-| `lab.brian.wax.pass` | Right wax for the snow. That's free speed. |
+| `lab.brian.wax.intro` | "This test puts skis on three kinds of snow with three waxes, and we will time every glide." |
+| `lab.brian.wax.explain` | "Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner." |
+| `lab.brian.wax.pass` | "You chose the right wax for the snow, and that made your ski faster at no cost." |
 | `lab.brian.secret.reverse` | Huh. A fan that sucks the car onto the road, even standing still. Someone really built that. |
 | `lab.brian.secret.1970` | In 1970 the Chaparral 2J raced with two fans sucking it to the ground. |
 | `lab.brian.secret.1978` | In 1978 the Brabham BT46B fan car won its first race, the Swedish Grand Prix, and was withdrawn straight after. |

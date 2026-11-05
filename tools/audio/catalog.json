@@ -6685,7 +6685,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.headings.intro",
       "cue": "lab.brian.headings.intro",
-      "text": "A map table with a compass and a ruler. Find the heading and the distance between two pads.",
+      "text": "\"This map table has a compass and a ruler on it, and with them you can find the heading and the distance from one pad to another.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6694,19 +6694,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 91,
+      "creditsUsed": 130,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-intro.mp3",
-      "sha256": "0b1d034344145bc7d308773020495e013b0a416b99247c3f2df83b524bdd0022",
-      "bytes": 89486,
-      "generated": "2026-10-25"
+      "sha256": "fc643155d6af46ce3942a6ab0fbf3868153f2cd3e14eb1aa3f6d4386d818c79c",
+      "bytes": 117907,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.headings.explain",
       "cue": "lab.brian.headings.explain",
-      "text": "A heading is the compass direction you point. Zero is north, ninety is east, one eighty is south and two seventy is west. A map's scale says how many real metres one map unit stands for.",
+      "text": "\"A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6715,19 +6715,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 186,
+      "creditsUsed": 549,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-explain.mp3",
-      "sha256": "f552f6f0a1a4f0f17c10ab9efc209f172ac6036a8d3542b515aa722987bb75e0",
-      "bytes": 191886,
-      "generated": "2026-10-25"
+      "sha256": "067e8a05cffa76d1633a904bb41e2e542dd122274c1c67dc738e9da7393b193a",
+      "bytes": 535448,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.headings.pass",
       "cue": "lab.brian.headings.pass",
-      "text": "A heading and a distance. With those two you can find anything.",
+      "text": "\"With a heading and a distance, you can find any place on a map.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6736,13 +6736,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 63,
+      "creditsUsed": 65,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-headings-pass.mp3",
-      "sha256": "e49028dbdf930e79d326fb6d056a1eead8ddb4db7571d02969a850a0d9666faa",
-      "bytes": 60647,
-      "generated": "2026-10-25"
+      "sha256": "e09fef218c4c5a0f2b3ebdec9a6a16063d9318528b6e36f255040aa8f4adaead",
+      "bytes": 56885,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7000,7 +7000,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fuel.intro",
       "cue": "lab.brian.fuel.intro",
-      "text": "A jerry can on the scale, then the car timed from nought to sixty, full and half full.",
+      "text": "\"The scale shows the mass of the petrol as the tank empties. Then three identical cars race to about ninety seven kilometres per hour, with a full tank, half a tank and an empty tank.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7009,19 +7009,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 86,
+      "creditsUsed": 184,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-intro.mp3",
-      "sha256": "f1f9f52ed20cafa25b74fa01c2426794af17d98eda807942838b09ef209583e9",
-      "bytes": 84888,
-      "generated": "2026-10-25"
+      "sha256": "a123edf87755cc7646cf55cabdbfaabc8d06120e4d3ca05d120b2b98c81836dc",
+      "bytes": 180183,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fuel.explain",
       "cue": "lab.brian.fuel.explain",
-      "text": "Petrol weighs about three quarters of a kilo a litre, so a seventy litre tank holds about fifty two kilos. A lighter car speeds up quicker. Electric cars carry batteries instead, which weigh the same full or empty.",
+      "text": "\"Every litre of petrol has a mass of nought point seven four kilograms, so a full tank of seventy litres adds fifty one point eight kilograms to the car. The engine pushes with the same force whatever the tank holds, and acceleration is force divided by mass, so the same car with less petrol accelerates faster. In a Grand Prix the petrol must still last the race, so carry the petrol you need and no more. All of this belongs to petrol cars. An electric car carries batteries instead, and a battery has the same mass whether it is full or empty, so an electric car has no Fuel load to set.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7030,19 +7030,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 214,
+      "creditsUsed": 592,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-explain.mp3",
-      "sha256": "3e665112ede257c62c7a91fbbdb818ef1c01ae62d84df9fc454428b65c3607f7",
-      "bytes": 218217,
-      "generated": "2026-10-25"
+      "sha256": "e7365f5193ea6941f878aa93cab8565e8e822f446d69697093e6403ab185d238",
+      "bytes": 598560,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fuel.pass",
       "cue": "lab.brian.fuel.pass",
-      "text": "Less fuel, less weight, a quicker car. But you still have to finish the race.",
+      "text": "\"Less petrol means less mass, so the same car accelerates faster. The petrol must still last the whole race.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7051,13 +7051,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 77,
+      "creditsUsed": 109,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fuel-pass.mp3",
-      "sha256": "e8ffa84126e7a25e81f141caa63ed6fc8122835cc110c637ca82c2088a6c0381",
-      "bytes": 76947,
-      "generated": "2026-10-25"
+      "sha256": "ce3d18a885f2a74b8ac6921d997962e0a203c49369b0cc8cec72fb521f779983",
+      "bytes": 111220,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7126,7 +7126,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.wax.intro",
       "cue": "lab.brian.wax.intro",
-      "text": "Skis on three kinds of snow, with three waxes. We'll time every glide.",
+      "text": "\"This test puts skis on three kinds of snow with three waxes, and we will time every glide.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7135,19 +7135,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 70,
+      "creditsUsed": 92,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-intro.mp3",
-      "sha256": "bc230d2573e99814a1f506ce5054f0e17232f3f4627a91ab72ed1b0b10749601",
-      "bytes": 76111,
-      "generated": "2026-10-25"
+      "sha256": "845169923e7ea3caffe8ecaa851a65655611a9a01ac3583314e6fa52e07e7d00",
+      "bytes": 93247,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.wax.explain",
       "cue": "lab.brian.wax.explain",
-      "text": "Cold snow has hard, sharp crystals, so it needs a hard wax. Warm wet snow sticks by suction, so it needs a softer wax and fine grooves in the base to let the water out.",
+      "text": "\"Very cold, dry snow has hard, sharp crystals that press into a soft wax, so very cold snow needs a hard wax. Cool snow lies in the middle, so cool snow needs a medium wax. Warm, wet snow holds a ski by suction through a sheet of water, so wet snow needs a softer wax, which breaks the water into beads. Less friction leaves more acceleration, so the ski reaches the finish sooner.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7156,19 +7156,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 168,
+      "creditsUsed": 382,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-explain.mp3",
-      "sha256": "2e58c3c63b9451ec9bd7c83ecb22aae936b84f510dbf22ac965dd4b25aa0fd8e",
-      "bytes": 177257,
-      "generated": "2026-10-25"
+      "sha256": "6d99d226e5f6f4a1cb0ea99d0b2cf7b302c3a8a2a0d6c2efe73dbbf4ed0b65d7",
+      "bytes": 415076,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.wax.pass",
       "cue": "lab.brian.wax.pass",
-      "text": "Right wax for the snow. That's free speed.",
+      "text": "\"You chose the right wax for the snow, and that made your ski faster at no cost.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7177,13 +7177,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 42,
+      "creditsUsed": 81,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-wax-pass.mp3",
-      "sha256": "57d994a7d32ed22c442085177718c3c04391e5a99462ae25881a69d2b893a6f9",
-      "bytes": 41003,
-      "generated": "2026-10-25"
+      "sha256": "4fe6c936d8f00a2a115ea1e69e22f7f8b1671395700acb27e79845ff02280edd",
+      "bytes": 75275,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
