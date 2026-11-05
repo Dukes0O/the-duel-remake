@@ -43,6 +43,7 @@ const generators = [
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
+  { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
