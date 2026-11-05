@@ -114,3 +114,23 @@ reference laps are unchanged. The released Eifel's replay fingerprint is unchang
 Nothing replaced. The released-road pace row `eifel-crown` is kept until C7 removes the old
 entry. Trial logs inside the lane's ignored `.qa-dist` folder were deleted; the helper scripts
 used for tuning sat in Claude's scratchpad folder and were left there.
+
+## Current pass status (4 November 2026)
+
+Stopped before changing game code. The requested seeded race batch and lane/build gates remain required. Factory section 8 requires counting the outermost running Node jobs before starting them. This Windows session has 18 `node.exe` processes, but `Get-CimInstance Win32_Process` returns Access denied and `wmic` is not installed, so their commands and parent relationships cannot be checked. Starting another heavy job could exceed the three-job limit.
+
+### Checks not run
+
+- `tools/test-circuits.mjs`: not run; heavy-job admission could not be verified.
+- `tools/test-circuit-eifel.mjs`: not run; heavy-job admission could not be verified.
+- Lane tier and `npm run build`: not run; heavy-job admission could not be verified.
+- Browser checks: none required by the C3 card.
+
+### Assertions and fingerprints
+
+- Changed assertions: none.
+- Race fingerprints: none recorded. The required new Eifel replay fingerprint has not been produced; no other course fingerprint changed in this pass.
+
+### Removed
+
+- Nothing in this pass.
