@@ -355,7 +355,7 @@ test('the pad menu: bucket loads, the line, the challenges, the door and the cha
   assert.ok(door.includes('data-heli-lab="door"'));
   assert.ok(!lessonsMarkup(view, session.lessonBoard(), {lab: false}).includes('data-heli-lab'));
   assert.equal(challengeMarkup(view), '', 'no challenge, no line');
-  assert.match(challengeGoal({id: 'projectile', props: [{hit: true}, {hit: false}, {hit: false}]}), /1\/3/);
+  assert.match(challengeGoal({id: 'projectile', props: [{hit: true}, {hit: false}, {hit: false}]}), /Buoys hit so far: 1 of 3/);
   assert.match(challengeGoal({id: 'headings', briefing: {headingDeg: 70, distanceM: 550}}), /heading 070/);
   assert.match(noticeText({type: 'challengePassed', challenge: 'fire'}), /Fire triangle/);
   app.returnToMenu();
