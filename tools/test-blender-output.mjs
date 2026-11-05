@@ -43,6 +43,7 @@ const generators = [
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
+  { script: 'tools/blender/scablands-kit.py', args: [], glb: ['.qa-dist/WW-ART-KIT/kit.glb'], budget: 30000, maxBytes: 1500000 },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -504,6 +505,22 @@ try {
       }
     });
   }
+
+  check('Scablands kit candidate stays inside its triangle and file budgets with named prop parts', () => {
+    const bytes = readFileSync(join(root, '.qa-dist/WW-ART-KIT/kit.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 1_500_000, `${bytes.length} bytes`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 0 && triangles <= 30_000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name || '');
+    for (const part of ['scablands-kit', 'basalt-rock-1', 'sign-post', 'mast-leg',
+      'barricade-whole-salvage-slat', 'barricade-burnt-salvage-slat', 'ember-pot-drum', 'side-job-flag-weathered-cloth']) {
+      assert.ok(names.includes(part), `missing named prop part ${part}`);
+    }
+  });
 
   for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
     const plans = fixtureRoots.map(fixtureRoot => kitPathPlan(generator, fixtureRoot));
