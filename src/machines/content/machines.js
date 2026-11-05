@@ -18,6 +18,16 @@ export const MACHINE_CONTENT = Object.freeze({
     tools:Object.freeze({bed:Object.freeze({kind:'bed', capacityM3:8, radiusM:1.8, dischargeRateM3s:2})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['bed'])}),
   }),
+  trencher: Object.freeze({
+    id:'trencher', name:'Trencher', driveKind:'tracks', massKg:8_500, maxSpeedMps:0.8,
+    turnRateRadPerSecond:0.55, trackWidthM:1.8, maxLoadKg:0,
+    joints:Object.freeze([
+      Object.freeze({name:'boom', control:'boom', modelNode:'ChainBoom', parent:null, origin:[0,0.7,-1.3], axis:[1,0,0], limits:[-0.15,0.75], rate:0.8}),
+    ]),
+    tools:Object.freeze({chain:Object.freeze({kind:'chain', joint:'boom', offset:[0,-0.6,-0.8], widthM:1, depthM:1.5,
+      radiusM:0.5, cutRateM3s:1.5, ridgeOffsetM:1.4, ridgeRadiusM:0.5})}),
+    controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['boom','chain'])}),
+  }),
 });
 
 export function machineDefinition(id) {
