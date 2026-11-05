@@ -41,6 +41,7 @@ const generators = [
   { script: 'tools/blender/rook-p2.py', args: ['--stage', 'neutral'], glb: [] },
   { script: 'tools/blender/armor-kits.py', args: [], glb: ['falcone_f42','stuttgart_959s','falcone_heritage','aurora_gt','dusthawk_rally','banshee_muscle','viper_proto','titan_monster','koenigsegg_jesko','ferrari_enzo','mclaren_f1','bugatti_bolide','falcone_sirena','mcmurtry_speirling','nissan_skyline_gtr_r34'].map(name => `public/assets/models/wasteland/kits/${name}.glb`) },
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
+  { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
@@ -504,6 +505,27 @@ try {
       }
     });
   }
+  check('scablands-tintown exports its bounded named walkable town model', () => {
+    const path = join(root, 'public/assets/models/wasteland/scablands/tintown.glb');
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 2500000, `${bytes.length} bytes exceeds 2.5 MB`);
+    const length = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + length));
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 300 && triangles <= 60000, `${triangles} triangles`);
+    const names = gltf.nodes.map(node => node.name);
+    assert.ok(names.includes('tintown-root'), 'named root empty');
+    for (const id of [1, 2, 3]) {
+      assert.ok(names.includes(`forge-lamp-${id}-glass-lit`), `lit forge lamp ${id}`);
+      assert.ok(names.includes(`forge-lamp-${id}-glass-unlit`), `unlit forge lamp ${id}`);
+    }
+    for (const alley of ['main-alley','cross-alley','forge-court']) {
+      assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
+    }
+  });
 
   for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
     const plans = fixtureRoots.map(fixtureRoot => kitPathPlan(generator, fixtureRoot));
