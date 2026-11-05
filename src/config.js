@@ -3,6 +3,7 @@
 import { EXPANSION_COURSES } from './expansion-courses.js';
 import { FREESTYLE_COURSE } from './freestyle-course.js';
 import { applyCircuits } from './circuits/index.js';
+import { BOWL_COURSE } from './bowl/bowl-course.js';
 import { featureFlags } from './feature-flags.js';
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
@@ -199,6 +200,7 @@ export const COURSE = applyCircuits([
   {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
+  ...(featureFlags.enabled('titan-bowl') ? [BOWL_COURSE] : []),
   // The registry appends new events and replaces explicitly slotted ids.
 ]);
 
