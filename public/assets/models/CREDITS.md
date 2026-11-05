@@ -190,3 +190,11 @@ Characters, Standard](https://quaternius.com), CC0, as the rescue people do (see
 them and adds original one-piece suits, helmets, goggles, boots, gloves, skis and poles; no Quaternius
 texture is shipped. The slalom poles, giant-slalom gates, timing arches, pad flags, kicker and safety
 netting are original project geometry with flat colours; no outside model, texture or photograph.
+
+## Scablands town proof
+
+`wasteland/town/sample.glb` contains a packed 1K town wear atlas. Its
+galvanised tin and sand tiles are built from two original images generated on
+5 November 2026 with OpenAI's built-in image generation tool. No third-party
+photographs, models or textures are included. The prompts and original image
+locations are recorded in `docs/changes/TOWN-ART-BASE.md`.

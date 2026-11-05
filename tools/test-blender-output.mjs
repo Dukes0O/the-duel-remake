@@ -29,6 +29,8 @@ const westWildlife = [
 // Its recipe stays for a later card; its GLB stays out of public/.
 const artCandidates = new Set(['wildcat']);
 const generators = [
+  {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -104,6 +106,7 @@ const nativeGenerators = [
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
+  {script:'tools/blender/town-sheet.py',args:[],render:false,summary:['docs','board','looks','town-art-base','round-3.jpg']},
   {script:'tools/blender/deep-art-sheet.py',args:[],render:false,summary:['docs','board','looks','deep-art','round-2.jpg']},
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
   // EARN-CAR-3: four review renders of a code-built car into one evidence folder.
@@ -334,7 +337,7 @@ function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false,
   return call;
 }
 check('all Blender asset generators are covered', () => {
-  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && name !== 'fidelity-sheet.py')
+  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py'].includes(name))
     .map(name => `tools/blender/${name}`);
   assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators, ...kitGenerators].map(item => item.script).sort());
 });

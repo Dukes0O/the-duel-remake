@@ -25,3 +25,5 @@ Look at your own sheet and fix it before you submit: it must look at least as go
 - The sheet needs one more thing: a street of six buildings seen from above, because the look has to hold up in a crowd.
 
 Name it `round-2.jpg` with `round-2-review.md`, and remove round 1.
+
+**Round 3: pass.** Real corrugated tin with real rust, warm light, a street that varies. Merge. Every town family starts from this, and the picture-baked materials are why it works.
