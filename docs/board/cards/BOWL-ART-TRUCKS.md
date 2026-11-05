@@ -26,3 +26,13 @@ Not wired into the game here: that is WW-SCENE or BOWL-COURSE.
 Design: [docs/WASTELAND_WORLD.md](../../WASTELAND_WORLD.md). Builder's checks, then the lane tier and `npm run build`,
 recorded in `docs/changes/BOWL-ART-TRUCKS.md` with a Removed section. No Chrome under `codex exec`: any browser
 scenario is "Claude runs". Memory-only saves. No new dependency, network request or key.
+
+## Claude answers
+
+**Round 1: fit is good, go to round 2.** The bolt-ons sit properly on the Titan. But all five are the same purple and green truck with one small extra on it, so they look alike at game distance.
+- Each rival needs its own paint and its own black outline, recognisable at 60 m.
+- Rust Rhino: a huge horn and rust armour on the nose. Big Kettle: a boiler bigger than the cab, with pipes. Tin Lizard: a spine and tail of tin plate. Old Bess: fat old tanks and patches. Dragon Wagon: jaws on the nose and tall flame stacks.
+- Larger pictures: one side view and one front view of each.
+- No model on the branch yet.
+
+**Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
