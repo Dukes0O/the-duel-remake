@@ -1,7 +1,7 @@
-"""One-round, procedural Scablands folk cast. Blender Z-up; GLB export is Y-up.
+"""Build Scablands folk from the shipped crew body and raider rig.
 
-Run: blender -b --python tools/blender/scablands-folk.py -- --root .
-The output is a review candidate; WW-SCENE will wire it into the game.
+Run: blender -b --python tools/blender/scablands-folk.py -- --root . --round 2
+Blender Z-up; GLB export is Y-up. WW-SCENE wires the selected art later.
 """
 import argparse
 import json
@@ -12,13 +12,13 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--round', type=int, default=1)
+p.add_argument('--round', type=int, default=2)
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/folk.glb'
 blend = root / 'art-build/scablands-folk.blend'
 evidence = root / '.evidence/2026-11-05/WW-ART-FOLK'
-sheet = root / 'docs/board/looks/ww-art-folk/round-1.jpg'
+sheet = root / 'docs/board/looks/ww-art-folk/round-2.jpg'
 if a.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -58,11 +58,10 @@ def mat(name, color, metal=0, rough=.86):
 
 cloth = mat('sun-faded canvas', (.26,.20,.14))
 darkcloth = mat('soot-stained workwear', (.095,.09,.075))
-rust = mat('welded rusted steel', (.30,.105,.045), .72)
-iron = mat('bare dark iron', (.105,.12,.115), .82)
+rust = mat('salt-flats rusted salvage', (.31,.16,.078), .24, .88)
+iron = mat('rustwall dark weathered steel', (.075,.09,.09), .55, .84)
 leather = mat('cracked brown leather', (.19,.095,.04), .05)
-skin = mat('dust-worn skin', (.42,.27,.17), 0, .92)
-grey = mat('Ash Men ash-grey cloth', (.19,.20,.19))
+grey = mat('Ash Men ash-grey cloth', (.12,.13,.13))
 amber = mat('goggle amber glass', (.43,.19,.035), .22, .32)
 bone = mat('bleached canvas', (.50,.43,.31))
 green = mat('oxidised forge green', (.15,.19,.13), .12)
@@ -77,22 +76,7 @@ def box(name, loc, scale, material, bevel=.035):
         o.modifiers.new('weighted corner normals','WEIGHTED_NORMAL')
     return o
 
-def orb(name, loc, scale, material):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1, location=loc)
-    o=bpy.context.object; o.name=name; o.scale=scale; o.data.materials.append(material)
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    for f in o.data.polygons: f.use_smooth=True
-    return o
-
-def cylinder(name, loc, radius, depth, material, rot=None, vertices=10):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc,
-                                        rotation=rot or (0,0,0))
-    o=bpy.context.object; o.name=name; o.data.materials.append(material)
-    o.modifiers.new('weighted corner normals','WEIGHTED_NORMAL')
-    return o
-
-# Names and visual language follow the Tin Town/Everburn story. Positions are
-# review staging only; the scene card will place individual actors later.
+# Cast roles and costume materials follow the Tin Town and Ash Men story.
 folk = [
  ('Auntie Solder','tintown-worker',green,leather,'grey-knot'),
  ('Moss','gas-hauler',darkcloth,leather,'cap'),
@@ -102,97 +86,100 @@ folk = [
  ('Ash Man raider 1','ash-raider',grey,rust,'goggles'),
  ('Ash Man raider 2','ash-raider',darkcloth,rust,'goggles'),
 ]
-all_objects=[]
+# Replace the round-one block-built bodies with the actual shipped crew body
+# and raider skeleton. All seven copies share its mesh and atlas; only salvage
+# clothes and character-scale changes differ. This keeps the rig and budget.
+cast_names=['auntie-solder','moss','tin-town-resident-1','tin-town-resident-2',
+            'tin-town-resident-3','ash-man-raider-1','ash-man-raider-2']
+for obj in list(scene.objects):
+    if any(obj.name.startswith(prefix) for prefix in cast_names):
+        bpy.data.objects.remove(obj,do_unlink=True)
+source_start=set(scene.objects)
+bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/wasteland/crew/rook.glb'))
+source_objects=[obj for obj in scene.objects if obj not in source_start]
+source_rig=next(obj for obj in source_objects if obj.type=='ARMATURE')
+source_meshes=[obj for obj in source_objects if obj.type=='MESH' and obj.name.startswith('rook-near')]
+# The shipped far LOD is scene-selected by runtime distance and must not overlap
+# the near mesh in this static review/export. The tiny importer helper is not art.
+for obj in source_objects:
+    if obj is not source_rig and obj not in source_meshes:
+        bpy.data.objects.remove(obj,do_unlink=True)
+source_rig.name='shipped Rook comparison rig'
+source_rig.location.x=-8.0
+cast=[]
+wardrobe={}
+rig_roots={}
+def add_wear(name,rig,material,loc,size,bone='chest',bevel=.02,rotation=0):
+    obj=box(name,loc,size,material,bevel)
+    obj.rotation_euler[1]=rotation
+    # Costume pieces follow the actor root. The body keeps the crew skeleton;
+    # rigid armor and tools stay put instead of being warped by a single bone.
+    obj.parent=rig_roots[rig]
+    obj.matrix_parent_inverse=rig_roots[rig].matrix_world.inverted()
+    cast.append(obj)
+    wardrobe.setdefault(rig,[]).append(obj)
+    return obj
+def add_canister(name,rig,loc):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=16,radius=.08,depth=.22,
+                                        location=loc,rotation=(math.pi/2,0,0))
+    obj=bpy.context.object; obj.name=name; obj.data.materials.append(iron)
+    bevel=obj.modifiers.new('worn canister rim','BEVEL'); bevel.width=.012; bevel.segments=1
+    obj.parent=rig_roots[rig]; obj.matrix_parent_inverse=rig_roots[rig].matrix_world.inverted()
+    cast.append(obj); wardrobe.setdefault(rig,[]).append(obj)
 for idx,(name,role,coat,gear,headwear) in enumerate(folk):
-    x=(idx-3)*1.65
     prefix=name.lower().replace(' ','-')
+    x=(idx-3)*1.65
     root_obj=bpy.data.objects.new(prefix+' root',None); scene.collection.objects.link(root_obj)
-    # Legs and boots: practical, slightly mismatched salvage.
-    for side,dx in [('L',-.15),('R',.15)]:
-        box(prefix+' '+side+' boot',(x+dx,.12,.13),(.25,.43,.24),iron)
-        box(prefix+' '+side+' trouser',(x+dx,.05,.55),(.24,.32,.66),coat)
-        box(prefix+' '+side+' knee patch',(x+dx,-.12,.64),(.20,.035,.16),gear,.012)
-    box(prefix+' oilskin coat',(x,0,1.18),(.65,.36,.76),coat,.065)
-    box(prefix+' chest plate',(x,-.205,1.28),(.42,.055,.33),rust,.015)
-    # Repairs are individually welded patches and rivets, intentionally rough.
-    for j in range(3):
-        box(prefix+f' coat patch {j}',(x-.20+j*.20,-.238,.98+(j%2)*.13),(.10,.025,.08),gear,.008)
-        orb(prefix+f' rivet {j}',(x-.16+j*.16,-.272,1.30),(.025,.015,.025),iron)
-    cylinder(prefix+' belt',(x,-.01,.86),.28,.075,leather,vertices=12)
-    box(prefix+' buckle',(x,-.215,.86),(.12,.04,.09),rust,.01)
-    # Arms angle down with visible sleeves, forearms, gloves and scrap cuffs.
-    for side,dx in [('L',-.43),('R',.43)]:
-        upper=orb(prefix+' '+side+' sleeve',(x+dx,.0,1.25),(.16,.19,.34),coat)
-        upper.rotation_euler[1]=(-.12 if side=='L' else .12)
-        orb(prefix+' '+side+' hand',(x+dx*1.12,-.015,.83),(.105,.12,.13),leather)
-        box(prefix+' '+side+' wrist cuff',(x+dx*1.1,-.02,.96),(.21,.23,.09),iron,.015)
-    orb(prefix+' head',(x,0,1.82),(.23,.22,.27),skin)
-    cylinder(prefix+' neck',(x,0,1.57),.11,.20,skin,vertices=10)
-    # Deep-set eyes and uneven brow lines give these adults a human read.
-    for dx in (-.085,.085):
-        orb(prefix+' eye socket',(x+dx,-.202,1.87),(.058,.024,.040),iron)
-        orb(prefix+' eye',(x+dx,-.222,1.875),(.026,.014,.022),bone)
-        box(prefix+' brow',(x+dx,-.217,1.925),(.105,.038,.028),darkcloth,.01)
-    orb(prefix+' nose',(x,-.238,1.80),(.047,.064,.075),skin)
-    box(prefix+' mouth',(x,-.213,1.72),(.115,.025,.025),leather,.008)
-    # Individually readable silhouettes: scarf, cap, tied hair, or a patched hood.
+    rig=source_rig.copy(); rig.data=source_rig.data; scene.collection.objects.link(rig)
+    rig.name=prefix+' crew raider rig'; rig.location.x=0; rig.parent=root_obj
+    root_obj.location.x=x
+    root_obj.scale=(1.22,1,.90) if name=='Moss' else ((.88,1,1.12) if name=='Auntie Solder' else (1,1,1))
+    rig_roots[rig]=root_obj
+    cast.extend([root_obj,rig])
+    for original in source_meshes:
+        body=original.copy(); body.data=original.data
+        scene.collection.objects.link(body); body.name=prefix+' '+original.name
+        body.parent=rig; body.matrix_parent_inverse.identity()
+        for modifier in body.modifiers:
+            if modifier.type=='ARMATURE': modifier.object=rig
+        cast.append(body)
+    # Outfits are role-specific so the cast reads by silhouette first.
     if headwear=='grey-knot':
-        orb(prefix+' silver hair knot',(x,.04,2.09),(.24,.22,.12),bone)
-        orb(prefix+' pinned knot',(x,.16,2.10),(.095,.09,.09),iron)
+        add_wear(prefix+' raised welder visor',rig,iron,(x,-.06,2.06),(.22,.10,.075),'head',.014)
+        add_wear(prefix+' mask glass',rig,amber,(x,-.115,2.06),(.14,.012,.022),'head',.003)
+        add_wear(prefix+' heavy smith apron',rig,leather,(x,-.22,.63),(.44,.065,.68),'chest',.022)
+        for j in range(5): add_wear(prefix+f' apron weld seam {j}',rig,rust,(x-.17+j*.085,-.258,.42),(.025,.014,.22),'chest',.003)
     elif headwear=='cap':
-        box(prefix+' driver cap',(x,0,2.06),(.43,.38,.14),gear,.035)
-    elif headwear=='goggles':
-        box(prefix+' respirator',(x,-.205,1.77),(.28,.12,.15),iron,.025)
-        for dx in (-.095,.095): cylinder(prefix+' amber goggle',(x+dx,-.226,1.92),.07,.035,amber,(math.pi/2,0,0),12)
-        box(prefix+' ash hood',(x,0,2.02),(.48,.39,.15),grey,.04)
+        add_canister(prefix+' gas filter canister',rig,(x+.25,-.15,1.28))
+        for j in range(3): add_wear(prefix+f' filter rib {j}',rig,rust,(x+.25,-.273,1.24+j*.04),(.10,.01,.012),'chest',.003)
+        add_wear(prefix+' hose sleeve',rig,leather,(x+.28,.01,1.12),(.06,.06,.32),'chest',.018,.28)
+    elif role=='ash-raider':
+        # Ash Men get long, split dust coats with uneven armour patches and ties.
+        for side in (-1,1):
+            add_wear(prefix+f' long coat panel {side}',rig,grey,(x+side*.21,-.13,.69),(.18,.07,.91),'chest',.012,side*.06)
+            add_wear(prefix+f' trailing dust coat {side}',rig,grey,(x+side*.27,.16,.72),(.14,.08,.90),'chest',.01,side*.07)
+            add_wear(prefix+f' torn coat hem {side}',rig,rust,(x+side*.21,.025,.23),(.13,.10,.12),'chest',.005)
+        for j in range(3):
+            add_wear(prefix+f' salvage coat plate {j}',rig,rust if j%2 else iron,
+                     (x-.23+(j%2)*.46,-.19,.55+(j//2)*.29),(.14,.025,.19),'chest',.006,(-1 if j%2 else 1)*.08)
+        add_wear(prefix+' soot scarf',rig,darkcloth,(x,-.24,1.53),(.38,.06,.14),'chest',.012)
+        for side in (-1,1): add_wear(prefix+f' amber goggles {side}',rig,amber,(x+side*.085,-.24,1.77),(.09,.035,.065),'head',.02)
+    elif name.startswith('Tin Town resident'):
+        add_wear(prefix+' canvas shoulder wrap',rig,coat,(x+.24,-.18,1.25),(.12,.06,.48),'chest',.012,.12)
+        add_wear(prefix+' tool roll',rig,leather,(x+.34,.04,1.04),(.18,.20,.28),'chest',.018)
     else:
-        box(prefix+' head wrap',(x,0,2.06),(.42,.36,.12),gear,.025)
-        box(prefix+' scarf',(x,-.225,1.62),(.42,.08,.16),gear,.02)
-    strap=box(prefix+' shoulder webbing',(x+.02,-.245,1.14),(.09,.035,.48),leather,.012)
-    strap.rotation_euler[1]=-.31 if idx%2 else .31
-    box(prefix+' tool roll',(x+.34,.04,1.12),(.18,.24,.31),gear,.025)
-    for j in range(3):
-        box(prefix+f' hem patch {j}',(x-.24+j*.20,-.192,.82),(.12,.025,.065),rust if j==1 else iron,.006)
-    for j in range(4):
-        orb(prefix+f' seam rivet {j}',(x-.27+j*.18,-.218,.72+(j%2)*.06),(.018,.012,.018),iron)
-    # Welded shoulder scrap, asymmetrical on purpose.
-    box(prefix+' shoulder scrap',(x-.39,-.02,1.42),(.25,.31,.19),rust,.025)
+        add_wear(prefix+' asymmetrical work vest',rig,gear,(x-.12,-.20,1.20),(.18,.05,.40),'chest',.018,.05)
+    # Individual scorched/rusted plates and hanging ties make wear uneven.
     for j in range(2):
-        orb(prefix+f' shoulder bolt {j}',(x-.39,-.19,1.39+j*.07),(.026,.02,.026),iron)
-    # Expose a compact raider-style deform rig with stable names for later use.
-    arm=bpy.data.armatures.new(prefix+' raider rig')
-    rig=bpy.data.objects.new(prefix+' armature',arm); scene.collection.objects.link(rig)
-    bpy.context.view_layer.objects.active=rig; rig.select_set(True)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bones=[('root',(x,0,0),(x,0,.15),None),('pelvis',(x,0,.94),(x,0,1.09),'root'),
-           ('chest',(x,0,1.09),(x,0,1.47),'pelvis'),('neck',(x,0,1.47),(x,0,1.56),'chest'),
-           ('head',(x,0,1.56),(x,0,1.8),'neck')]
-    for side,suffix in [(-1,'L'),(1,'R')]:
-        bones.extend([('thigh.'+suffix,(x+side*.108,0,.94),(x+side*.15,-.033,.56),'pelvis'),
-            ('shin.'+suffix,(x+side*.15,-.033,.56),(x+side*.173,0,.20),'thigh.'+suffix),
-            ('foot.'+suffix,(x+side*.173,0,.20),(x+side*.175,-.18,.06),'shin.'+suffix),
-            ('upper_arm.'+suffix,(x+side*.235,0,1.425),(x+side*.279,-.014,1.18),'chest'),
-            ('forearm.'+suffix,(x+side*.279,-.014,1.18),(x+side*.293,-.043,.95),'upper_arm.'+suffix)])
-    for bn,head,tail,parent in bones:
-        b=arm.edit_bones.new(bn); b.head=head; b.tail=tail
-        if parent: b.parent=arm.edit_bones[parent]
-    bpy.ops.object.mode_set(mode='OBJECT'); rig.select_set(False)
-    rig.parent=root_obj
-    for o in list(scene.objects):
-        if o is rig or o is root_obj or o.name.startswith(prefix+' '):
-            if o is not root_obj:
-                o.parent=rig if o.type=='MESH' else root_obj
-                if o.type=='MESH':
-                    mod=o.modifiers.new('raider skin','ARMATURE'); mod.object=rig
-                    label=o.name.lower()
-                    suffix='L' if ' l ' in label or '.l' in label else 'R'
-                    if any(k in label for k in ('head','hair','eye','brow','nose','mouth','goggle')): bone_name='head'
-                    elif 'boot' in label: bone_name='foot.'+suffix
-                    elif any(k in label for k in ('trouser','knee','hem')): bone_name='thigh.'+suffix
-                    elif any(k in label for k in ('arm','sleeve','hand','wrist')): bone_name='upper_arm.'+suffix
-                    else: bone_name='chest'
-                    group=o.vertex_groups.new(name=bone_name); group.add(list(range(len(o.data.vertices))),1,'REPLACE')
-            all_objects.append(o)
+        add_wear(prefix+f' rust patch {j}',rig,rust if j==0 else iron,
+                 (x-.18+j*.32,-.245,.75+j*.23),(.075,.018,.07),'chest',.004,.12-j*.22)
+for rig,parts in wardrobe.items():
+    # One wardrobe mesh per actor keeps the GLB compact and preserves its material slots.
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in parts: obj.select_set(True)
+    bpy.context.view_layer.objects.active=parts[0]
+    bpy.ops.object.join()
+    parts[0].name=rig.name.replace(' crew raider rig','')+' welded clothing'
 
 # Staged for a single Blender-rendered comparison sheet; additional six clean
 # views stay private evidence and document the cast at full size.
@@ -206,19 +193,95 @@ bpy.ops.mesh.primitive_plane_add(size=30, location=(0,0,-.025)); ground=bpy.cont
 ground.name='dust ground'; ground.data.materials.append(floor_mat)
 evidence.mkdir(parents=True,exist_ok=True); out.parent.mkdir(parents=True,exist_ok=True); blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
-for view, location in [('front',(0,-16,4.4)),('side',(16,0,4.4)),('rear',(0,16,4.4))]:
+# Three readable art views: full lineup at 40 m from car height, then a
+# three-quarter and detail view of the named leads. A crew GLB is staged beside
+# the cast for shape comparison, but is excluded from the folk export.
+crew_objects=source_objects
+views=[
+    ('car-height-40m',(-1.5,-40,1.2),Vector((-1.5,0,1.05)),90,'row'),
+    ('three-quarter',(2.85,-9,4.0),Vector((-4.15,0,1.05)),58,'leads'),
+    ('close',(-.35,-4.8,2.25),Vector((-4.15,0,1.45)),72,'leads'),
+]
+renders=[]
+for view,location,target,lens,kind in views:
     bpy.ops.object.camera_add(location=location); cam=bpy.context.object
-    target=Vector((0,0,1.04))
-    if view=='side':
-        target=Vector((0,0,1.04)); cam.location=Vector((16,0,4.4))
     cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler()
-    cam.data.type='ORTHO'; cam.data.ortho_scale=3.3 if view=='side' else 13.7; scene.camera=cam
+    cam.data.type='PERSP'; cam.data.lens=lens; scene.camera=cam
+    cam.data.dof.use_dof=False
+    scene.render.resolution_x=1800 if kind=='row' else 1200
+    scene.render.resolution_y=820
     scene.render.filepath=str(evidence/f'folk-{view}.png')
     bpy.ops.render.render(write_still=True)
+    renders.append(scene.render.filepath)
+# The same flattened JPG is the round comparison sheet; Blender's NumPy
+# buffers keep the old evidence and the new renders together without a new tool.
+import numpy as np
+old=bpy.data.images.load(str(sheet.with_name('round-1.jpg')),check_existing=False)
+tiles=[old,*[bpy.data.images.load(path,check_existing=False) for path in renders]]
+canvas=bpy.data.images.new('WW-ART-FOLK rounds comparison',width=1600,height=410,alpha=False)
+pixels=np.zeros((410,1600,4),dtype=np.float32); pixels[:,:,:3]=(.10,.105,.10); pixels[:,:,3]=1
+def paste(image,x,y,w,h):
+    iw,ih=image.size; src=np.empty(iw*ih*4,dtype=np.float32); image.pixels.foreach_get(src)
+    src=src.reshape(ih,iw,4)[::-1]
+    scale=min(w/iw,h/ih); nw,nh=max(1,round(iw*scale)),max(1,round(ih*scale))
+    image.scale(nw,nh); dst=np.empty(nw*nh*4,dtype=np.float32); image.pixels.foreach_get(dst)
+    dst=dst.reshape(nh,nw,4)[::-1]
+    pixels[y+(h-nh)//2:y+(h-nh)//2+nh,x+(w-nw)//2:x+(w-nw)//2+nw]=dst
+paste(tiles[0],12,80,520,310)
+for i,tile in enumerate(tiles[1:]): paste(tile,544+i*350,80,340,310)
+glyphs={
+ 'A':['01110','10001','10001','11111','10001','10001','10001'],
+ 'C':['01111','10000','10000','10000','10000','10000','01111'],
+ 'E':['11111','10000','10000','11110','10000','10000','11111'],
+ 'D':['11110','10001','10001','10001','10001','10001','11110'],
+ 'H':['10001','10001','10001','11111','10001','10001','10001'],
+ 'M':['10001','11011','10101','10101','10001','10001','10001'],
+ 'N':['10001','11001','10101','10011','10001','10001','10001'],
+ 'O':['01110','10001','10001','10001','10001','10001','01110'],
+ 'Q':['01110','10001','10001','10001','10101','10010','01101'],
+ 'R':['11110','10001','10001','11110','10100','10010','10001'],
+ 'S':['01111','10000','10000','01110','00001','00001','11110'],
+ 'T':['11111','00100','00100','00100','00100','00100','00100'],
+ 'U':['10001','10001','10001','10001','10001','10001','01110'],
+ 'V':['10001','10001','10001','10001','10001','01010','00100'],
+ 'W':['10001','10001','10001','10101','10101','11011','10001'],
+ 'L':['10000','10000','10000','10000','10000','10000','11111'],
+ '1':['010','110','010','010','010','010','111'],
+ '2':['11110','00001','00010','00100','01000','10000','11111'],
+ '3':['11110','00001','00001','01110','00001','00001','11110'],
+ '4':['10010','10010','10010','11111','00010','00010','00010'],
+ '0':['01110','10001','10011','10101','11001','10001','01110'],
+ ' ':['000']*7,
+}
+def label(text,x,y):
+    for char in text:
+        rows=glyphs.get(char,glyphs[' '])
+        for gy,row in enumerate(rows):
+            for gx,pixel in enumerate(row):
+                if pixel=='1': pixels[y+gy*3:y+(gy+1)*3,x+gx*3:x+(gx+1)*3,:3]=(.88,.84,.74)
+        x+=(len(rows[0])+1)*3
+label('ROUND 1',24,18)
+label('ROUND 2',544,18)
+label('40M ROW',560,48)
+label('THREE QUARTER',910,48)
+label('CLOSE',1260,48)
+canvas.pixels.foreach_set(pixels[::-1].reshape(-1))
+canvas.filepath_raw=str(sheet); canvas.file_format='JPEG'; scene.render.image_settings.quality=76
+canvas.save()
+for image in tiles: bpy.data.images.remove(image)
+bpy.data.images.remove(canvas)
 bpy.ops.object.select_all(action='DESELECT')
 for ob in scene.objects:
-    if ob.type in {'MESH','ARMATURE','EMPTY'} and ob.name != 'dust ground': ob.select_set(True)
-bpy.context.view_layer.objects.active=next(ob for ob in scene.objects if ob.type=='EMPTY')
+    if ob.type in {'MESH','ARMATURE','EMPTY'} and ob.name != 'dust ground' and ob not in crew_objects: ob.select_set(True)
+bpy.context.view_layer.objects.active=next(ob for ob in scene.objects if ob.type=='EMPTY' and ob not in crew_objects)
+# Keep enough texture resolution for game distance and trim redundant mesh
+# detail while preserving the crew proportions and the full raider skeleton.
+for image in list(bpy.data.images):
+    if image.name.startswith('rook-color') and image.size[0]>512: image.scale(512,512)
+    elif image.name.startswith('rook-surface') and image.size[0]>256: image.scale(256,256)
+for ob in scene.objects:
+    if ob.type=='MESH' and ob.name.endswith('rook-near'):
+        decimate=ob.modifiers.new('compact crew fidelity','DECIMATE'); decimate.ratio=.58
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=True,export_yup=True,
                           export_animations=False,export_apply=True)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'triangles':sum(len(p.vertices)-2 for ob in scene.objects if ob.type=='MESH' for p in ob.data.polygons)}))

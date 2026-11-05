@@ -1,21 +1,37 @@
-# WW-ART-FOLK change note
+# WW-ART-FOLK
 
-## Changed
+## Round 2
 
-- Added the Blender recipe for Auntie Solder, Moss, three Tin Town residents and two Ash Men. Each figure has named pieces and the shared raider bone names. The recipe exports one Y-up `folk.glb`; WW-SCENE will wire it into the world.
-- Added the recipe to `tools/test-blender-output.mjs` with the 56,000-triangle maximum for seven figures at 8,000 each.
-- Added one first-round JPG and a short visual note under `docs/board/looks/ww-art-folk/`.
+Re-dressed seven people from the shipped Rook crew body and raider skeleton. Auntie Solder has a raised welding visor and a leather apron; Moss has a broader build and a gas filter; the Ash Men have long dark coats, goggles and soot scarves. Steel and oxide colors follow the Rustwall and Salt Flats recipes. The Blender recipe writes a single comparison sheet with the original round 1 sheet, a car-height lineup at 40 m, a three-quarter view and a close view. The Rook crew model stands beside the lineup.
 
-## Evidence and checks
+The GLB readback is 1,845,272 bytes, 27,382 triangles and seven skins. It stays under the 2 MB file budget and 8,000 triangles per fighter. The comparison JPG is 56,766 bytes. No art-library donor files or credits were needed.
 
-- Blender export completed. GLB read-back: 1,766,360 bytes, 30,984 triangles, 15 bones. These are within the 2 MB file and 56,000-triangle limits. The model is a review candidate and is not wired into the game.
-- Review sheet: 37,175 bytes (500 KB maximum). Self-scores: gritty/grounded 3/10, welded-steel and wear 4/10, non-toy realism 2/10. The cast is readable, but its regular shapes still look too toy-like. Claude should decide whether the direction merits another round.
-- `node tools/test-blender-output.mjs`: **passed**, 192 checks, 0 failures.
-- Lane tier: 44 named tool suites reported pass, including hygiene; two failed and the runner gave no final summary before it stopped producing output and had to be interrupted. Replay guard passed 297 checks across 33 cases. Same-commit reruns: `test-circuit-eifel` failed again because FFmpeg loudness measurement failed; `test-review-evidence` failed again on the crew recipe's date-based evidence path mismatch and `spawnSync ffmpeg EPERM`. No game code changed.
-- `npm.cmd run build`: **passed**. Vite reported its existing ineffective dynamic import and large-chunk warnings.
-- Browser and in-game look checks: Claude runs. No browser check or frame check was needed for this art card.
-- Changed assertions: none. Replay fingerprints: unchanged.
+### Checks
 
-## Removed
+- `node tools/test-blender-output.mjs` — passed, 192 checks.
+- `node tools/test-repo-hygiene.mjs` — passed; size targets are advisory.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` — selected 48 suites. The runner did not return its final summary. Two suites failed during FFmpeg loudness analysis (`test-circuit-eifel`, `test-review-evidence`); `test-review-evidence` first also saw the old tracked round 1 JPG missing before the changed look files were staged. Its one retry after staging passed the updated JPG publication checks but still failed its audio subtest with `spawnSync ffmpeg EPERM`. The Eifel suite's one standalone retry also failed with `FFmpeg loudness measurement failed`. `test-track-kits` did not report completion in the lane run; its standalone run completed the geometry and all listed course placement validations without an error.
+- `npm.cmd run build` — passed. PowerShell blocked `npm.ps1` under its execution policy; the `.cmd` entry point worked.
+- Blender rendered the sheet and the three private evidence views. No frame check was run. No browser check was run here; Claude should judge the 40 m lineup, Rook scale comparison, Auntie and Moss silhouettes, Ash Men coats and goggles, material wear, grounding, and whether the remaining angular costume shapes still read as toy-like.
 
-- No prior files or behavior were removed.
+### Scores (self-review, 1–5)
+
+- Resemblance to the written direction: **3**.
+- Readability at car height in the render: **3**; in-game readability is not measured because the art is not wired in.
+- Grounding: **4**.
+- Fit with the Wasteland look: **3**.
+- Frame cost: **not measured**; this is not wired into the game.
+
+Remaining visual gaps: costume pieces are attached to each actor root and do not follow head or chest bones in animation; townsfolk still share the Rook outline; the apron and armor plates remain geometric; Moss's shoulder filter is prominent; Ash coats need softer ragged edges and more uneven wear. The game-speed view is still for Claude to judge after integration.
+
+### Changed assertions
+
+None. The Blender output entry now requests round 2.
+
+### Race fingerprints
+
+None changed. This card changes art only and is not wired into the game.
+
+### Removed
+
+Replaced the old round 1 JPG and note with the single round comparison JPG and round 2 review note. Removed the superseded procedural block-figure body generation from the recipe; the delivered characters now use the shipped crew body and raider skeleton. The duplicated far LOD is omitted from this static cast asset.
