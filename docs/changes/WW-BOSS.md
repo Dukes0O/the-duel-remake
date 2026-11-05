@@ -2,39 +2,46 @@
 
 ## Changed
 
-- Added `src/world/jobs/old-smoke.js` for Old Smoke's deterministic three-vent
-  cycle. One vent is damageable for each three-second window, in order, then
-  the cycle repeats. The existing chase health ends the fight after three
-  valid hits.
-- Connected the active vent targets to the world-job combat hit list. Dark
-  vents remain targets for aiming but carry zero damage.
-- Did not change job path, speed, health, difficulty numbers, or any saved data.
+- Kept the deterministic, three-second Old Smoke vent cycle and its active-only
+  damage rules. No job timing, path, health, difficulty or save data changed.
+- In the Scablands scene, made the existing 1.5x furnace scale and chimney and
+  door effects line up with the model's placement and rotation. Chimney smoke
+  drifts, door flames flicker, and each named vent insert follows the same
+  `oldSmokeGlowingVent` clock used by the hit rules.
+- The scene sync reads world-job state only; its animation changes presentation
+  objects only.
 
 ## Checks
 
-- `node tools/test-old-smoke.mjs` - passed; cycle order, target positions,
-  active-only damage, live hit-target integration, and three-hit completion.
-- `node tools/test-everburn-easy.mjs` - passed; all nine jobs, including the
-  Everburn finale, finished 10/10 on Easy with real headless Duel inputs.
-- `npm run build` - PowerShell blocked the `npm.ps1` wrapper before the build
-  started. `npm.cmd run build` passed. Vite reported its existing large-chunk
-  and dynamic-import warnings.
-- Lane tier - not run, as instructed for this lane.
-- Browser and look checks - Claude runs. Please inspect the furnace in the
-  chase for the requested 1.5x scale, sequential visible vent glow, chimney
-  smoke, and fire at its doors. The card's unshared simulation hook owns this
-  lane; the renderer is a shared locked file and was not changed here, so these
-  art fixes are not yet visible in-game.
+- `node tools/test-old-smoke.mjs` - passed; deterministic cycle, active-only
+  damage, hit-target integration and three-hit finish.
+- `node tools/test-scablands-scene.mjs` - passed; furnace scale, live vent
+  glow, smoke and flame placement and presentation motion.
+- `node tools/test-everburn-easy.mjs` - passed; all nine Everburn jobs finished
+  10/10 on Easy with real headless Duel inputs.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going` -
+  passed: 41 suites, 0 failed, 0 not run. Replay fingerprints: 297 checks
+  passed across 33 cases, 31 events, 9 categories, three FPS values and three
+  runs.
+- `npm.cmd run build` - passed. Vite reported its dynamic-import and large-chunk
+  warnings.
+- Browser and look checks - Claude runs. Please inspect Everburn Job 6 while
+  Old Smoke is chased: furnace size against the other vehicles, each vent glow
+  switching with the live hit window, smoke rising from the chimney, and fire
+  at the furnace door. Also judge Big Bess, the furnace and the thief buggy in
+  game against the Round 3 verdict as WW-FINISH requests. This is a follow-up,
+  not a new art round.
 
 ## Changed assertions
 
-- Added focused assertions in `tools/test-old-smoke.mjs`. No existing test
-  assertion or tolerance changed.
+- Added scene assertions for the furnace scale, the rule-matched visible vent,
+  chimney and door effect placement, and smoke motion. No existing assertion or
+  tolerance changed.
 
 ## Race fingerprints
 
-- No replay fingerprint test was run for this card. The new rules only apply
-  to the existing Wasteland world-job furnace actor.
+- The lane replay fingerprint suite passed unchanged. This work changes scene
+  presentation only; the Old Smoke rule implementation remains deterministic.
 
 ## Removed
 
