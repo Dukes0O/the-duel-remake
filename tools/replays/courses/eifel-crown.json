@@ -1,0 +1,19 @@
+{
+  "eventId": "eifel-crown@3",
+  "cases": [
+    {
+      "id": "eifel-crown-duel",
+      "eventId": "eifel-crown",
+      "category": "duel",
+      "mode": "duel",
+      "car": "falcone_f42"
+    }
+  ],
+  "fingerprints": {
+    "eifel-crown-duel": {
+      "30": "dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb",
+      "60": "dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb",
+      "144": "dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb"
+    }
+  }
+}

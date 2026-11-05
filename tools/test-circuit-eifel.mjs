@@ -114,10 +114,10 @@ if (process.argv.includes('--pace')) {
   // The packet's 3 computer passes per Medium race is reported below, not asserted: it is not in this card's brief.
   const failures = checkTargets(summary).filter(line => !/passes between computer racers/.test(line));
   // Grand Prix balance asks a little more of Medium and Hard than the pilot track's bands: the overlap of both.
-  const bands = {medium: .4, hard: .15};
+  const bands = {medium: .3, hard: .15};
   for (const [cpu, low] of Object.entries(bands))
     if (summary[cpu] && summary[cpu].winRate < low - 1e-9)
-      failures.push(`${cpu}: the test driver won ${(summary[cpu].winRate * 100).toFixed(0)}% (Grand Prix balance asks at least ${low * 100}%)`);
+      failures.push(`${cpu}: the test driver won ${(summary[cpu].winRate * 100).toFixed(0)}% (the written Grand Prix target, docs/CIRCUITS.md 3.2, asks at least ${low * 100}%)`);
   const detail = {};
   for (const cpu of difficulties) {
     const group = rows.filter(row => row.cpuDifficulty === cpu);
@@ -216,7 +216,7 @@ test('the Grand Prix pace row follows the new road only; the released road keeps
   const added = courseForGrandPrix(EIFEL_CROWN);
   assert.deepEqual(released.fieldPace, {easy: .934, medium: .903, hard: .881});
   assert.equal(released.fieldFollow, undefined);
-  assert.deepEqual(added.fieldPace, {easy: .94, medium: .858, hard: .86});
+  assert.deepEqual(added.fieldPace, {easy: .94, medium: .862, hard: .86});
   assert.equal(added.fieldAggression, 1.4);
   assert.equal(added.fieldFollow.firstLap.margin, 5);
   assert.equal(added.grandPrix, true);

@@ -523,7 +523,7 @@ const EXISTING_GP_TUNING = Object.freeze({
   }),
   // The new Eifel road (layoutVersion 3, behind its switch) has its own row; the released road keeps the row above.
   'eifel-crown@3': Object.freeze({
-    fieldPace: Object.freeze({easy: .94, medium: .858, hard: .86}), fieldAggression: 1.4,
+    fieldPace: Object.freeze({easy: .94, medium: .862, hard: .86}), fieldAggression: 1.4,
     fieldFollow: EIFEL_GP_FIELD_FOLLOW,
   }),
   'harbor-highlands': Object.freeze({
