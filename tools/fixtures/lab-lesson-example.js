@@ -1,7 +1,7 @@
-// Test-only teaching packet: a ball and a fan, not the G-force lesson. It borrows the turning arm, a machine still on the
-// five-step frame (Rust and every lesson with a helicopter challenge open as classrooms now).
+// Test-only teaching packet: a ball and a fan, not the Grip lesson. It borrows the wind tunnel's Grip choice, a lesson still on
+// the five-step frame (every other lesson opens as a classroom now).
 export const exampleLesson = {
-  id: 'gforce', vocabulary: ['push'],
+  id: 'grip', vocabulary: ['push'],
   wonder: {text: 'Can a fan move this ball?', animation: 'ball', seconds: 2},
   words: [{id: 'push', word: 'Push', meaning: 'A push is a force that moves something away.', animation: 'push'}],
   worked: [
