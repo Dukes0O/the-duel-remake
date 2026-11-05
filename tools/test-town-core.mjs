@@ -4,7 +4,8 @@ import {join} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {
   BUILDINGS, GOODS, SCABLANDS_TOWN_REGION, TOWN_MIGRATIONS, TOWN_SAVE_VERSION,
-  cellIsReserved, createTown, deserializeTown, dispatchTownCommand, getTownChunk,
+  TOWN_REGIONS, TOWN_WORK_STATES,
+  cellIsReserved, createTown, deserializeTown, dispatchTownCommand, getTownChunk, registerTownCommand,
   registerTownSystem, serializeTown, stepTown, townCalendarAt, validateTownContent,
 } from '../src/town/index.js';
 
@@ -38,15 +39,29 @@ const town=createTown(1989,'First Town',[{id:'one',name:'Ari'}]);
 check(getTownChunk(town.regions.scablands,2,3)===null,'unused chunks do not exist');
 const first=dispatchTownCommand(town,{type:'placeBuilding',buildingId:'hand-well',x:90_000,z:-80_000});
 check(first.ok,'a cell far from the start can be built on');
+check(town.buildings.at(-1).state==='plan','a placed building starts as a plan');
+check(TOWN_WORK_STATES.includes(town.buildings.at(-1).state),'work states live in one exported list');
 check(town.regions.scablands.chunks['5625:-5000'],'only the used chunk is made');
 check(cellIsReserved('scablands',0,0),'the Dome oval is reserved');
 check(cellIsReserved('scablands',-3,-12),'the gate on the Dome south side is reserved');
 check(!cellIsReserved('scablands',90000,-80000),'far map cells remain open');
 const refused=dispatchTownCommand(town,{type:'placeBuilding',buildingId:'hand-well',x:90_000,z:-80_000});
 check(!refused.ok&&refused.message.endsWith('.'),'a refused command gives one plain sentence');
+const roadsTown=createTown(52,'Road Plans');
+const road=dispatchTownCommand(roadsTown,{type:'placeBuilding',buildingId:'road-dirt',x:30,z:30});
+check(road.ok&&roadsTown.buildings[0].state==='plan','a road starts as a work plan');
+check(getTownChunk(roadsTown.regions.scablands,30,30).cell.roadId==='building-1'&&getTownChunk(roadsTown.regions.scablands,30,30).cell.roadState==='plan','a planned road reserves a road cell');
 const custom={id:'test-shed',width:1,depth:1,materials:{timber:1},workerHours:1,upkeepMonthly:0,staff:0,gives:'A dry place',opensWith:'start'};
 const added=dispatchTownCommand(town,{type:'placeBuilding',buildingId:'test-shed',x:-12,z:44},{buildings:[...BUILDINGS,custom]});
 check(added.ok,'a new building works from its data row alone');
+const unregisterRefusal=registerTownCommand('testMutateThenRefuse',(draft)=>{draft.name='Changed';draft.people.push({name:'No'});draft.regions.scablands.chunks.extra={cells:{}};return {ok:false,message:'No.'};});
+const beforeRefusal=serializeTown(town), refusedAfterMutation=dispatchTownCommand(town,{type:'testMutateThenRefuse'});
+unregisterRefusal();
+check(!refusedAfterMutation.ok&&serializeTown(town)===beforeRefusal,'a refusal rolls every field back byte for byte');
+const unregisterThrow=registerTownCommand('testMutateThenThrow',(draft)=>{draft.people[0].name='Changed';Object.defineProperty(draft,'temporary',{value:true,configurable:true});throw new TypeError('No.');});
+const beforeThrow=serializeTown(town), thrown=dispatchTownCommand(town,{type:'testMutateThenThrow'});
+unregisterThrow();
+check(!thrown.ok&&serializeTown(town)===beforeThrow,'a throwing handler rolls every field back byte for byte');
 const punctuation=dispatchTownCommand(town,{type:'renameTown',name:'Town. Forget it'});
 check(punctuation.message==='The town name has changed.','a name cannot turn a command reply into multiple sentences');
 const idsTown=createTown(19,'Id test');
@@ -60,6 +75,26 @@ same(townCalendarAt(0),{hour:0,day:1,month:1,season:'Spring',year:1},'calendar b
 same(townCalendarAt(71),{hour:23,day:3,month:1,season:'Spring',year:1},'three days have 72 hourly ticks');
 same(townCalendarAt(24*30*3),{hour:0,day:1,month:4,season:'Summer',year:1},'seasons follow three 30-day months');
 same(townCalendarAt(24*30*12),{hour:0,day:1,month:1,season:'Spring',year:2},'a year has twelve months');
+const beyondSafe=BigInt(Number.MAX_SAFE_INTEGER)*8640n+12345678901234567890n;
+check(typeof townCalendarAt(beyondSafe).year==='bigint','the calendar accepts ticks past safe integer range');
+const boundaryTown=createTown(7,'Boundary');boundaryTown.tick=beyondSafe;boundaryTown.calendar=townCalendarAt(boundaryTown.tick);
+stepTown(boundaryTown);
+check(boundaryTown.tick===beyondSafe+1n&&boundaryTown.calendar.year===townCalendarAt(boundaryTown.tick).year,'a boundary tick advances with its calendar');
+same(deserializeTown(serializeTown(boundaryTown)).tick,boundaryTown.tick,'large ticks survive a save round trip');
+
+const secondRegion=Object.freeze({id:'test-range',cellMetres:8,chunkCells:16,groundHeightAt:()=>17,reservedShapes:Object.freeze([])});
+TOWN_REGIONS.set(secondRegion.id,secondRegion);
+const regionTown=createTown(5,'Two Regions');
+check(regionTown.regions[secondRegion.id]?.chunks,'new region state comes from region data at creation');
+const regionPlacement=dispatchTownCommand(regionTown,{type:'placeBuilding',buildingId:'hand-well',regionId:secondRegion.id,x:4,z:8});
+check(regionPlacement.ok&&regionTown.regions[secondRegion.id].chunks['0:0'],'placement can use a data-added region');
+const migratedRegion=deserializeTown(JSON.parse(readFileSync(new URL('./fixtures/town/town-v1.json',import.meta.url),'utf8')));
+check(migratedRegion.regions[secondRegion.id]?.chunks,'migration creates state for data-added regions');
+TOWN_REGIONS.delete(secondRegion.id);
+
+const townIndex=readFileSync(new URL('../src/town/index.js',import.meta.url),'utf8');
+const systemsIndex=readFileSync(new URL('../src/town/systems/index.js',import.meta.url),'utf8');
+check(townIndex.trim().startsWith("import './systems/index.js';")&&systemsIndex.includes("glob?.('./modules/*.js'"),'one system file is discovered through the town entry point');
 
 const fixture=readFileSync(new URL('./fixtures/town/town-v1.json',import.meta.url),'utf8');
 const fromFixture=deserializeTown(fixture);
@@ -93,7 +128,7 @@ function longRun(){
 }
 const runA=longRun(),runB=longRun();
 unregister();
-same(runA.tick,100000,'the long run reaches its requested tick');
+same(runA.tick,100000n,'the long run reaches its requested tick');
 same(serializeTown(runA),serializeTown(runB),'seeded commands produce one fingerprint after 100,000 ticks');
 
 const large=createTown(90210,'Large Town');

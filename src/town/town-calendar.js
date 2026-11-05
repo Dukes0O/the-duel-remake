@@ -6,9 +6,11 @@ const TICKS_PER_YEAR = TICKS_PER_MONTH * MONTHS_PER_YEAR;
 const SEASONS = Object.freeze(['Spring', 'Summer', 'Autumn', 'Winter']);
 
 export function townCalendarAt(tick) {
-  if (!Number.isSafeInteger(tick) || tick < 0) throw new RangeError('Town time must be a whole number of hours from zero.');
-  const year = Math.floor(tick / TICKS_PER_YEAR) + 1;
-  const inYear = tick % TICKS_PER_YEAR;
+  if (!(typeof tick === 'bigint' && tick >= 0n) && (!Number.isSafeInteger(tick) || tick < 0)) throw new RangeError('Town time must be a whole number of hours from zero.');
+  const value=typeof tick==='bigint'?tick:BigInt(tick);
+  const yearValue=value / BigInt(TICKS_PER_YEAR) + 1n;
+  const year=yearValue<=BigInt(Number.MAX_SAFE_INTEGER)?Number(yearValue):yearValue;
+  const inYear=Number(value % BigInt(TICKS_PER_YEAR));
   const month = Math.floor(inYear / TICKS_PER_MONTH) + 1;
   const day = Math.floor((inYear % TICKS_PER_MONTH) / TICKS_PER_DAY) + 1;
   const hour = inYear % TICKS_PER_DAY;

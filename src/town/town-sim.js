@@ -22,9 +22,11 @@ function townRng(town) {
 export function stepTown(town, commands=[]) {
   const inputs=Array.isArray(commands)?commands:(commands==null?[]:[commands]);
   const answers=inputs.map(command=>dispatchTownCommand(town,command));
-  town.tick++;
-  town.calendar=townCalendarAt(town.tick);
-  for (const system of systems) if (town.tick % system.everyTicks === 0) {
+  const nextTick=BigInt(town.tick)+1n;
+  const nextCalendar=townCalendarAt(nextTick);
+  town.tick=nextTick;
+  town.calendar=nextCalendar;
+  for (const system of systems) if (town.tick % BigInt(system.everyTicks) === 0n) {
     const source=townRng(town);
     system.fn({town,rng:source.random,tick:town.tick,calendar:town.calendar});
     source.finish();

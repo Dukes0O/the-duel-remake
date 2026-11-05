@@ -49,3 +49,12 @@ export function getTownChunk(regionState, cellX, cellZ, create=false) {
   if (!cell && create) cell = chunk.cells[cellKey] = {x:cellX,z:cellZ,buildingId:null};
   return cell ? {chunk,cell,key,cellKey,chunkKey:key} : null;
 }
+
+export function ensureTownRegion(town, regionId) {
+  const region=TOWN_REGIONS.get(regionId);
+  if(!region) return null;
+  if(!town.regions) town.regions={};
+  if(!town.regions[regionId]) town.regions[regionId]={chunks:{}};
+  if(!town.regions[regionId].chunks) town.regions[regionId].chunks={};
+  return town.regions[regionId];
+}
