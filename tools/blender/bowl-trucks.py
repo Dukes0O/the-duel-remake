@@ -46,6 +46,14 @@ rust = mat('Bowl oxide and scale', (.34,.12,.045), .48)
 red = mat('Bowl faded oxide red', (.42,.10,.045), .38)
 yellow = mat('Bowl old hazard paint', (.58,.39,.09), .35)
 soot = mat('Bowl soot black', (.035,.04,.035), .25)
+trim = mat('Bowl blackened welded edge steel', (.018,.021,.02), .5)
+paint = [
+    mat('Rust Rhino faded oxide red', (.43,.095,.047), .35),
+    mat('Big Kettle faded furnace ochre', (.53,.29,.075), .35),
+    mat('Tin Lizard oxidised blue-green', (.075,.29,.27), .35),
+    mat('Old Bess faded cream enamel', (.58,.48,.31), .3),
+    mat('Dragon Wagon faded soot-orange', (.56,.16,.035), .35),
+]
 names = []
 
 def xyz(p):
@@ -97,37 +105,54 @@ for i,n in enumerate(NAMES):
     start=len(names)
     if i==0: # Rust Rhino: twin forged, backward-swept plow horns.
         for s in (-1,1): horn(i,s)
+        # Broad split plow brow, with a chipped red outer plate and dark rim.
+        plate(tag(i,'rhino-nose-rim'),(0,.91,1.38),(1.05,.29,.20),trim,.025)
+        plate(tag(i,'rhino-painted-nose'),(0,.99,1.38),(.91,.24,.14),paint[i],.025)
+        for s in (-1,1):
+            plate(tag(i,'rhino-cheek-armour'),(s*.47,.88,1.14),(.20,.44,.32),rust,.025)
+            beam(tag(i,'rhino-horn-socket'),(s*.28,1.02,1.37),(s*.40,1.22,1.83),.17,trim,.24)
         plate(tag(i,'grille-guard'),(0,.75,1.61),(.76,.18,.10),rust)
     elif i==1: # Big Kettle: squat riveted boiler with flanged lid and stack.
-        plate(tag(i,'boiler-cradle'),(0,1.10,-.02),(.75,.16,.74),steel)
+        plate(tag(i,'boiler-cradle'),(0,1.10,-.02),(.90,.20,.82),trim)
         bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12, location=xyz((0,1.40,.04)))
-        o=bpy.context.object; o.name=tag(i,'boiler-shell'); o.scale=(.39,.35,.46); o.data.materials.append(rust); names.append(o)
+        o=bpy.context.object; o.name=tag(i,'boiler-shell'); o.scale=(.53,.48,.58); o.data.materials.append(paint[i]); names.append(o)
+        plate(tag(i,'boiler-front-rim'),(0,1.39,.54),(.52,.52,.08),trim,.025)
         for z in (-.24,.24):
-            pipe(tag(i,'boiler-band'),(-.37,1.39,z),(.37,1.39,z),.025,steel)
-        pipe(tag(i,'smoke-stack'),(0,1.62,.19),(0,2.17,.19),.12,soot)
+            pipe(tag(i,'boiler-band'),(-.49,1.39,z),(.49,1.39,z),.035,trim)
+        # Two unequal exhausts and a bent pressure pipe make the silhouette legible.
+        pipe(tag(i,'smoke-stack'),(0,1.70,.19),(0,2.42,.19),.15,soot)
+        pipe(tag(i,'steam-pipe-a'),(.40,1.54,.03),(.68,1.83,.03),.055,steel)
+        pipe(tag(i,'steam-pipe-b'),(.68,1.83,.03),(.70,2.10,.03),.055,rust)
         plate(tag(i,'stack-cap'),(0,2.17,.19),(.28,.07,.27),yellow)
         for s in (-1,1):
             for k in range(3): bolt(tag(i,'boiler-rivet'),(s*.34,1.40,-.26+k*.25),.024)
     elif i==2: # Tin Lizard: segmented articulated tail over the rear socket.
         for j in range(5):
             z=-.75-.28*j; y=1.16+.065*j; w=.39-.048*j
-            plate(tag(i,f'tail-segment-{j+1}'),(0,y,z),(w,.18,.31),rust if j%2 else steel,.04)
+            plate(tag(i,f'tail-segment-{j+1}'),(0,y,z),(w,.22,.34),paint[i] if j%2 else steel,.04)
+            beam(tag(i,'tail-dark-edge'),(-w*.48,y+.08,z+.12),(w*.48,y+.08,z+.12),.035,trim)
             beam(tag(i,'tail-spine'),(0,y+.13,z+.1),(0,y+.17,z-.1),.035,yellow)
-        plate(tag(i,'tail-fin'),(0,1.52,-2.05),(.12,.42,.42),red,.03)
+        plate(tag(i,'tail-fin-left'),(-.11,1.52,-2.05),(.10,.48,.44),trim,.03)
+        plate(tag(i,'tail-fin'),(0,1.54,-2.07),(.09,.39,.36),paint[i],.03)
+        plate(tag(i,'tail-fin-right'),(.11,1.52,-2.05),(.10,.48,.44),trim,.03)
     elif i==3: # Old Bess: two salvaged pressure tanks, valve guards and straps.
         for s in (-1,1):
-            bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=.22, depth=.88, location=xyz((s*.31,1.37,-.08)), rotation=(math.pi/2,0,0))
-            o=bpy.context.object; o.name=tag(i,'side-tank'); o.data.materials.append(yellow if s<0 else rust); names.append(o)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=.31, depth=1.08, location=xyz((s*.39,1.40,-.08)), rotation=(math.pi/2,0,0))
+            o=bpy.context.object; o.name=tag(i,'side-tank'); o.data.materials.append(paint[i] if s<0 else rust); names.append(o)
             for z in (-.47,.31):
                 beam(tag(i,'tank-strap'),(s*.31,1.16,z),(s*.31,1.59,z),.045,steel,.48)
             pipe(tag(i,'tank-valve'),(s*.31,1.58,.36),(s*.31,1.76,.36),.035,steel)
             beam(tag(i,'tank-cage'),(s*.52,1.14,-.56),(s*.52,1.62,.42),.045,steel)
         plate(tag(i,'rear-step'),(0,1.08,-.62),(.92,.13,.25),steel)
     else: # Dragon Wagon: paired flared flame stacks, furnace throat and guard.
+        # A welded jaw grille on the nose, framed in blackened steel.
+        plate(tag(i,'jaw-lower'),(0,.78,1.48),(.92,.20,.16),trim,.025)
         for s in (-1,1):
-            beam(tag(i,'stack-riser'),(s*.27,1.01,-.10),(s*.31,1.61,-.25),.12,steel,.15)
-            beam(tag(i,'stack-neck'),(s*.31,1.61,-.25),(s*.34,2.08,-.29),.105,rust,.13)
-            plate(tag(i,'flared-mouth'),(s*.34,2.09,-.29),(.25,.12,.23),soot,.025)
+            beam(tag(i,'jaw-tusk'),(s*.34,.83,1.50),(s*.26,1.12,1.53),.075,yellow,.09)
+            beam(tag(i,'jaw-bar'),(s*.44,.91,1.48),(s*.38,1.11,1.50),.055,rust,.07)
+            beam(tag(i,'stack-riser'),(s*.27,1.01,-.10),(s*.31,1.61,-.25),.14,trim,.17)
+            beam(tag(i,'stack-neck'),(s*.31,1.61,-.25),(s*.34,2.25,-.29),.13,paint[i],.16)
+            plate(tag(i,'flared-mouth'),(s*.34,2.25,-.29),(.31,.15,.29),soot,.025)
             for k in range(4): bolt(tag(i,'flange-rivet'),(s*.34+(k-1.5)*.04,1.60,-.25),.018)
         plate(tag(i,'heat-guard'),(0,1.04,-.18),(.67,.20,.18),yellow)
     # Shared bolt heads and weld tabs make the fittings read as fabricated.
@@ -177,16 +202,50 @@ if a.render:
     if not render.is_relative_to(root/'.evidence'):
         raise SystemExit('render output must stay under lane .evidence')
     render.mkdir(parents=True,exist_ok=True)
-    # Use the shipped Titan body in the look renders so the socket fit can be judged.
+    # Use the shipped Titan body in the look renders so fit and rival paint read together.
     bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/unlocks/titan_monster.glb'))
     titan=[o for o in bpy.context.scene.objects if o.type=='MESH' and o not in names]
     for o in titan: o.hide_render=False
-    # Hide other rivals to show each fitting in isolation, then capture three views.
+    # Neutral dirt floor and a rough human scale marker keep the kits grounded.
+    dirt=mat('Arena packed dirt',(.12,.105,.085),.05,.96)
+    bpy.ops.mesh.primitive_plane_add(size=200, location=(0,0,-.16))
+    floor=bpy.context.object; floor.name='look-only arena floor'; floor.data.materials.append(dirt)
+    before_person=set(bpy.context.scene.objects)
+    bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/models/wasteland/crew/cinder.glb'))
+    person_parts=[o for o in bpy.context.scene.objects if o not in before_person]
+    for o in person_parts:
+        if o.parent is None:
+            o.location.x += 2.0
+            o.scale *= .85
+    # Hide other rivals. Tint only the Titan's named body paints per rival; glass,
+    # rubber and metal stay intact. Capture matched front, side, 40 m and close views.
     for rival in NAMES:
         group=[o for o in names if o.get('rival')==rival]
         for o in names: o.hide_render=o not in group
-        for view,loc,target in [('front-three-quarter',(7,-9,5),(0,2.3,.2)),('side',(8,0,4),(0,2.3,.2)),('rear-three-quarter',(-7,8,5),(0,2.3,-.2))]:
-            camera(loc,target,10.5)
+        idx=NAMES.index(rival)
+        body_col=[(.40,.105,.052),(.52,.29,.085),(.08,.30,.28),(.57,.48,.32),(.57,.16,.045)][idx]
+        for obj in titan:
+            for slot in obj.material_slots:
+                if slot.material and slot.material.name in ('Race livery','Lacquered body'):
+                    slot.material.diffuse_color=(*body_col,1)
+                    bs=slot.material.node_tree.nodes.get('Principled BSDF') if slot.material.use_nodes else None
+                    if bs:
+                        bs.inputs['Base Color'].default_value=(*body_col,1)
+                        bs.inputs['Roughness'].default_value=.82
+                        bs.inputs['Metallic'].default_value=.16
+        views=[
+            ('front',(3,-10,3.5),(0,1.35,.1),8.2),
+            ('side',(10,-1,2.9),(0,1.32,.0),10.2),
+            ('forty-metre-car-height',(3,-40,1.45),(0,1.1,1.5),13.0),
+            ('close-three-quarter',(5,-6,3.0),(0,1.45,.1),5.0),
+        ]
+        for view,loc,target,scale in views:
+            camera(loc,target,scale)
+            c=scene.camera
+            if view=='forty-metre-car-height':
+                c.data.type='PERSP'; c.data.lens=180
+            else: c.data.type='ORTHO'; c.data.ortho_scale=scale
+            scene.render.resolution_x=1024; scene.render.resolution_y=768
             scene.render.filepath=str(render/f'{rival}-{view}.png')
             bpy.ops.render.render(write_still=True)
         for o in group: o.hide_render=False
