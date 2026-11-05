@@ -1,24 +1,28 @@
-# WW-ART-TINTOWN
+# WW-ART-TINTOWN — round 2
+
+Status: round 2 recipe and model built; awaiting Claude's art verdict. Kind: art. Flag: `scablands`.
 
 ## Changed
 
-- Added an original Blender recipe for Tin Town and its `tintown.glb` model.
-- Added collision-named ground volumes for the main alley, cross alley and forge court; included three individually named lamps with lit and unlit meshes.
-- Registered the recipe in `tools/test-blender-output.mjs` and added model, budget and named-node checks.
-- Rendered round 1 to `.evidence/2026-11-04/WW-ART-TINTOWN/`. The compressed Blender comparison sheet and builder review are under `docs/board/looks/ww-art-tintown/`.
-- Readback: 14,556 triangles and 1,028,808 bytes (limits: 60,000 triangles and 2,500,000 bytes).
+- Reworked `tools/blender/scablands-tintown.py`: varied shack footprints and angles; pitched, overhanging roofs with corrugation and patches; added person-height doors and windows, exposed scaffold landings and ladders, irregular edge drifts, and a person for scale.
+- Moved the cold forge into its court and framed its stack, hearth and anvil in a dedicated close view. Put the notice board at the entrance and aimed its paper toward the approach.
+- Rebuilt `public/assets/models/wasteland/scablands/tintown.glb`: **20,412 triangles**, **1,447,572 bytes**, within the 60,000-triangle and 2.5 MB limits.
+- Rendered car-height at 40 m, three-quarter and close forge views in `.evidence/2026-11-05/WW-ART-TINTOWN/`. Replaced the prior sheet with one round comparison JPG at `docs/board/looks/ww-art-tintown/round-1.jpg` (**135,425 bytes**). The score note is `round-2-review.md`.
 
 ## Checks
 
-- Blender export and readback: passed at the stated budgets.
-- `node tools/test-blender-output.mjs`: passed, 193 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed.
-- Lane tier: all 48 suites started. 43 reported pass, two failed on FFmpeg permission/loudness errors, and `src/test.js`, `tools/test-test-runner.mjs` and `tools/test-track-kits.mjs` did not return. The runner made no progress for about ten minutes and was stopped. The required one-time reruns confirmed both FFmpeg failures: `tools/test-circuit-eifel.mjs` (17 passed, 1 failed at loudness measurement) and `tools/test-review-evidence.mjs` (8 passed, 1 failed at `spawnSync ffmpeg EPERM`).
-- `npm.cmd run build`: passed; Vite built 632 modules. Existing chunk-size and dynamic-import warnings remain.
-- Browser and in-game look checks: Claude runs these. The model is not wired into the game by this card.
-- Changed assertions: none. Added assertions only for the new Tin Town asset contract.
-- Race fingerprints: no simulation code or fixtures changed; replay suite reported 297 checks passed across 33 cases.
+- Blender recipe and readback: passed; 20,412 triangles, 1,447,572 bytes.
+- `node tools/test-blender-output.mjs`: passed, 193 checks.
+- `node tools/test-repo-hygiene.mjs`: passed after the sheet replacement; repository placement passed and size targets remain advisory.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: **46 of 48 suites passed**. `test-circuit-eifel.mjs` failed at FFmpeg loudness measurement. `test-review-evidence.mjs` first also found the previous sheet missing while the replacement was being made. After the sheet was put back at the same path with the combined comparison, its focused rerun passed the JPG path and size checks; its only remaining failure is `spawnSync ffmpeg EPERM`. The Eifel rerun failed again at FFmpeg loudness measurement. No game code or test assertions changed.
+- `npm.cmd run build`: passed. Vite reported its existing dynamic-import and large-chunk warnings. `npm.ps1` was blocked by PowerShell execution policy before the build started.
+- Replay guard: 297 checks passed across 33 cases, 31 events, nine categories and three FPS values.
+- No browser check or frame check was run. The model is not wired into the game. Claude should judge the three full-size renders in the evidence folder.
+
+## Assertion changes and race fingerprints
+
+No assertions changed. Race behavior and fingerprints are unchanged; the replay guard passed.
 
 ## Removed
 
-- None.
+- Replaced the round-one JPG with the single comparison sheet and replaced its old review note with the combined round-two score note. No prior model path or test behavior was removed.

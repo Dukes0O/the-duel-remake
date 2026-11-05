@@ -99,21 +99,42 @@ def corrugated(name, center, width, height, mat, angle=0):
     count=max(3,int(width/.19))
     for i in range(count+1):
         xx=x-width/2+width*i/count
-        rib=cube(name+'-fold-%02d'%i,(xx,y,z),(.018,height*.98,.022),dark if i%4==0 else mat,.006)
+        rib=cube(name+'-fold-%02d'%i,(xx,y,z),(.013,height*.98,.018),rust if i%5==0 else mat,.004)
         rib.rotation_euler[2]=angle
+
+def rotate_group(objects, center, angle):
+    """Turn a shack about its own center in the game ground plane."""
+    c,s=math.cos(angle),math.sin(angle)
+    pivot=Vector((center[0],-center[1],0))
+    for obj in objects:
+        rel=obj.location-pivot
+        obj.location=pivot+Vector((rel.x*c-rel.y*s,rel.x*s+rel.y*c,rel.z))
+        obj.rotation_euler[2]+=angle
 
 # A single compact block. Three pedestrian alleys stay 2.2–2.7 m wide.
 cube('walkable-ground-main-alley-collision',(0,.04,0),(2.45,.08,24),ground,0)
 cube('walkable-ground-cross-alley-collision',(0,.045,0),(25,.09,2.35),ground,0)
 cube('walkable-ground-forge-court-collision',(0,.05,-5.8),(6.2,.10,3.0),ground,0)
 cube('slag-bed-under-town',(0,-.13,0),(28,.28,27),ground,.12)
+sand=material('Tin Town • windblown drift sand',(.29,.225,.145),0,.99,2.4)
+# Irregular drifts hide the slab edge and gather against the shack feet.
+for i,(x,z,w,d,h,angle) in enumerate([
+    (-12.4,-10.8,4.8,1.1,.48,-.12),(-8.0,-13.0,3.7,1.3,.36,.18),
+    (-1.0,-13.15,5.1,1.0,.31,-.08),(6.2,-12.7,4.4,1.45,.53,.15),
+    (12.0,-8.8,1.1,4.2,.46,-.12),(12.9,-1.4,1.0,4.0,.34,.13),
+    (11.6,8.7,2.0,3.7,.52,-.2),(5.8,12.0,4.1,1.5,.39,.1),
+    (-4.5,12.5,4.5,1.1,.44,-.15),(-12.6,8.4,1.0,3.8,.4,.08),
+    (-12.3,0.6,1.3,3.4,.32,-.1)]):
+    bank=cube(f'edge-sand-drift-{i+1}',(x,-.02,z),(w,h,d),sand,.22)
+    bank.rotation_euler[2]=angle
 
 # Uneven three-level scaffold rows leave the main lane and cross lane open.
-shacks=[(-5.2,-8.6,0,5.5,4.8,3.8), (4.6,-8.8,0,5.8,5.0,4.0),
-        (-5.0,-2.8,1,5.4,4.3,3.5),(4.8,-2.6,1,5.4,4.0,3.7),
-        (-5.2,3.8,0,5.5,4.6,3.6),(4.9,4.0,0,5.8,4.8,3.8),
-        (-5.4,9.2,1,5.2,4.6,3.4),(4.9,9.5,0,5.7,4.5,3.6)]
+shacks=[(-5.4,-8.9,0,5.2,4.6,3.7), (4.9,-9.1,0,6.1,4.4,4.1),
+        (-5.1,-2.7,1,4.5,4.1,3.1),(4.8,-2.4,1,5.7,4.5,4.0),
+        (-5.5,3.8,0,5.8,4.2,3.5),(4.7,4.3,0,4.8,5.0,3.9),
+        (-5.0,9.2,1,4.7,4.1,3.2),(4.9,9.3,0,6.0,4.4,3.8)]
 for idx,(x,z,level,w,d,h) in enumerate(shacks):
+    before=set(bpy.context.scene.objects)
     base=.18+level*3.25
     # Four-legged, cross-braced scaffold with visibly mismatched timber and iron joints.
     for sx in (-1,1):
@@ -127,6 +148,11 @@ for idx,(x,z,level,w,d,h) in enumerate(shacks):
     beam(f'scaffold-{idx}-brace-a',(x-w/2,.5,z-d/2),(x+w/2,base+h*.76,z-d/2),.075,rust)
     beam(f'scaffold-{idx}-brace-b',(x+w/2,.5,z-d/2),(x-w/2,base+h*.76,z-d/2),.075,wood)
     cube(f'shack-{idx}-floor',(x,base,z),(w+.15,.22,d+.15),wood,.035)
+    # A real upper landing, with a patched guard rail and a ladder a person can use.
+    cube(f'scaffold-{idx}-upper-walkway',(x,base+h*.76,z),(w+.42,.14,.68),wood,.03)
+    for rung in range(5):
+        yy=.32+rung*.43
+        beam(f'scaffold-{idx}-ladder-rung-{rung}',(x+w*.39,yy,z+d*.53),(x+w*.39,yy,z+d*.94),.075,rust)
     # Corrugated walls, patched roof plates and exposed rusty roof joists.
     corrugated(f'shack-{idx}-rear',(x,base+h*.475,z-d/2),w,h*.95,steel,.018*((idx%3)-1))
     corrugated(f'shack-{idx}-front',(x,base+h*.475,z+d/2),w,h*.95,rust if idx%3==0 else steel,.018*((idx%3)-1))
@@ -138,51 +164,79 @@ for idx,(x,z,level,w,d,h) in enumerate(shacks):
         for obj in set(bpy.context.scene.objects)-before:
             obj.location=pivot+Vector((-(obj.location.y-pivot.y),obj.location.x-pivot.x,obj.location.z-pivot.z))
             obj.rotation_euler[2]+=math.pi/2
+    # Two sloping, overhanging roof leaves. Individual rust patches replace
+    # the crate-like flat lid and leave the bent sheet edges visible.
+    ridge=base+h+.2
+    for side in (-1,1):
+        leaf=cube(f'shack-{idx}-pitched-roof-{side}',(x,ridge-.36,z+side*d*.22),(w*1.16,.09,d*.66),rust if (idx+side)%4==0 else steel,.018)
+        leaf.rotation_euler[0]=side*[.13,.24,.30,.16,.27,.11,.22,.18][idx]
+        # Long formed ribs catch the light along each sloped sheet, like roofing
+        # cut from corrugated salvage rather than flat crate lids.
+        for rib in range(13):
+            rx=x-w*.54+rib*w*.09
+            beam(f'shack-{idx}-roof-corrugation-{side}-{rib}',
+                 (rx,ridge-.04,z+side*.03),(rx,ridge-.68,z+side*d*.50),
+                 .035,rust if rib%6==0 else steel)
+        beam(f'shack-{idx}-roof-seam-{side}',(x-w*.56,ridge-.02,z),(x+w*.56,ridge-.02,z),.055,rust)
+        for j in range(3):
+            px=x+(j-1)*w*.34
+            patch=cube(f'shack-{idx}-roof-patch-{side}-{j}',(px,ridge-.32,z+side*d*.25),(.66,.045,.58),rust if (j+idx)%2 else steel,.012)
+            patch.rotation_euler[0]=side*.20
+    # Person-height entry and one deep window on each visible end.
+    cube(f'shack-{idx}-door',(x,base+1.05,z-d/2-.07),(1.0,2.05,.10),rust,.025)
+    cube(f'shack-{idx}-door-iron-strap',(x-.34,base+1.05,z-d/2-.13),(.12,1.95,.045),dark,.01)
+    cube(f'shack-{idx}-door-latch',(x+.34,base+1.02,z-d/2-.14),(.10,.14,.05),steel,.02)
+    cube(f'shack-{idx}-dark-window',(x+w*.28,base+2.25,z-d/2-.11),(.68,.72,.09),dark,.018)
+    beam(f'shack-{idx}-window-crossbar',(x+w*.28-.34,base+2.25,z-d/2-.17),(x+w*.28+.34,base+2.25,z-d/2-.17),.045,rust)
     for j in range(3):
-        px=x-w*.38+j*w*.38
-        beam(f'shack-{idx}-roof-rib-{j}',(px,base+h,z-d*.55),(px,base+h+.05,z+d*.55),.10,rust)
-    for j in range(3):
-        px=x+(j-1)*w*.32
-        cube(f'shack-{idx}-roof-sheet-{j}',(px,base+h+.06,z),(w*.35,.07,d*1.1),steel,.015)
-    # A rusty patch door and small deep-set opening.
-    cube(f'shack-{idx}-door',(x,base+1.0,z-d/2-.035),(1.05,2,.08),rust,.02)
-    cube(f'shack-{idx}-dark-window',(x+w*.27,base+2.2,z-d/2-.09),(.62,.72,.08),dark,.015)
-    # Flat scrap plates cover door seams and corners like repairs.
-    cube(f'shack-{idx}-door-patch',(x-.36,base+1.42,z-d/2-.09),(.20,.74,.035),steel,.008)
+        # Torn steel repair plates, deliberately mismatched in shape and finish.
+        px=x+(-.64+j*.52)
+        cube(f'shack-{idx}-welded-wall-patch-{j}',(px,base+2.8-(j%2)*.32,z-d/2-.095),(.48,.32,.045),rust if j%2 else steel,.018)
+    for bolt in range(4):
+        cube(f'shack-{idx}-visible-rivet-{bolt}',(x-w*.42+bolt*w*.28,base+h*.46,z-d/2-.10),(.07,.07,.035),dark,.025)
+    # Each shack sits at its own angle, not in a ruler-straight row.
+    rotate_group(set(bpy.context.scene.objects)-before,(x,z),math.radians([-5,7,3,-8,6,-4,-9,5][idx]))
 
-# Cold central forge and a massive soot-caked tapered chimney.
-fx,fz=0,0.0
+# Cold central forge in its own open court, with a massive soot-caked stack.
+fx,fz=0,-5.8
 cube('forge-foundation-slag',(fx,.25,fz),(4.2,.42,2.7),dark,.08)
 cube('forge-body-welded-steel',(fx,1.18,fz),(3.55,1.65,2.1),steel,.06)
 for x in (-1.45,1.45):
     for z in (fz-1.0,fz+1.0): beam('forge-rib',(x,.48,z),(x,1.98,z),.12,rust)
-cube('cold-forge-mouth-black',(0,1.02,fz-1.08),(1.52,.82,.06),dark,.015)
-cube('forge-mouth-ash-bed',(0,.63,fz-1.12),(1.20,.12,.10),rust,.01)
+cube('cold-forge-mouth-black',(0,1.02,fz+1.08),(1.52,.82,.06),dark,.015)
+cube('forge-mouth-ash-bed',(0,.63,fz+1.12),(1.20,.12,.10),rust,.01)
 for side in (-1,1):
-    for k in range(3): cube(f'forge-flange-bolt-{side}-{k}',(side*1.84,.72+k*.42,fz-.82),(.1,.1,.10),dark,.025)
+    for k in range(3): cube(f'forge-flange-bolt-{side}-{k}',(side*1.84,.72+k*.42,fz+.82),(.1,.1,.10),dark,.025)
 beam('chimney-lower-stack',(0,2.0,fz+.25),(0,6.1,fz+.25),.86,dark)
 for y in (2.0,2.6,3.5,4.35,5.2,6.0):
     cube(f'chimney-rust-band-{y:.1f}',(0,y,fz+.25),(1.0,.11,1.0),rust,.025)
 cube('chimney-mouth-lip',(0,6.12,fz+.25),(1.30,.25,1.30),steel,.04)
 cube('chimney-dark-mouth',(0,6.26,fz+.25),(.72,.08,.72),dark,.015)
 for z in (-.55,.55): beam('chimney-anchor-guy',(0,3.2,fz+.25),(z*2,.2,fz+.25+z),.045,rust)
+# Anvil and heavy hammer sit in the hearth court; both read at street scale.
+cube('forge-anvil-foot',(0,.55,fz+2.1),(.42,.44,.48),dark,.07)
+cube('forge-anvil-body',(0,.91,fz+2.1),(.74,.22,.42),steel,.06)
+cube('forge-anvil-horn',(0,.98,fz+2.48),(.38,.12,.34),rust,.05)
+beam('forge-hammer-handle',(-1.05,1.2,fz+1.95),(-.72,1.82,fz+1.95),.11,wood)
+cube('forge-hammer-head',(-.68,1.86,fz+1.95),(.58,.24,.26),dark,.06)
 
 # Lamps: every unit is named and has glass geometry in both states as children.
-for i,(x,y,z) in enumerate([(-2.6,3.1,-7.5),(2.7,3.4,-5.1),(0,4.7,-1.8)],1):
+for i,(x,y,z) in enumerate([(-2.6,3.1,-12.8),(2.7,3.4,-10.7),(0,4.7,-8.0)],1):
     beam(f'forge-lamp-{i}-bracket',(x,y,z),(x*.83,y+.28,z),.09,dark)
     cube(f'forge-lamp-{i}-cage',(x*.83,y+.08,z),(.30,.43,.30),dark,.025)
     cube(f'forge-lamp-{i}-glass-unlit',(x*.83,y+.08,z-.02),(.16,.27,.16),amber,.025)
     cube(f'forge-lamp-{i}-glass-lit',(x*.83,y+.08,z-.02),(.14,.23,.14),amber_on,.022)
 
 # Handrail notice board, chipped painted posts, rusted header and paper scraps.
+board_z=-13.0
 for x in (-2.35,2.35):
-    beam('notice-board-post',(x,.2,8.4),(x,2.95,8.4),.16,wood)
-cube('notice-board-steel-frame',(0,2.45,8.37),(4.9,1.65,.20),dark,.045)
-cube('notice-board-rusted-header',(0,3.25,8.26),(5.15,.24,.32),rust,.025)
-cube('notice-board-paper',(0,2.46,8.24),(4.45,1.25,.075),paper,.01)
+    beam('notice-board-post',(x,.2,board_z),(x,2.95,board_z),.16,wood)
+cube('notice-board-steel-frame',(0,2.45,board_z+.03),(4.9,1.65,.20),dark,.045)
+cube('notice-board-rusted-header',(0,3.25,board_z-.14),(5.15,.24,.32),rust,.025)
+cube('notice-board-paper',(0,2.46,board_z-.16),(4.45,1.25,.075),paper,.01)
 for i,(x,y,w,h) in enumerate([(-1.35,2.55,.84,.42),(-.25,2.57,.72,.50),(.85,2.54,.92,.34),(1.45,2.94,.62,.25),(-1.2,2.96,.54,.26)]):
-    cube(f'notice-job-slip-{i+1}',(x,y,8.185),(w,h,.025),cloth if i%2 else paper,.004)
-for x in (-1.6,-.7,.25,1.4): cube('notice-board-iron-fastener',(x,3.08,8.12),(.09,.09,.055),steel,.02)
+    cube(f'notice-job-slip-{i+1}',(x,y,board_z-.205),(w,h,.025),cloth if i%2 else paper,.004)
+for x in (-1.6,-.7,.25,1.4): cube('notice-board-iron-fastener',(x,3.08,board_z-.25),(.09,.09,.055),steel,.02)
 
 # Washing lines cross only the side courts; draped patchwork is individually legible.
 for idx,(x0,z0,x1,z1,y) in enumerate([(-7.7,-7.0,-3.6,-7.0,4.8),(3.4,-1.6,7.5,-1.6,4.2),(-7.4,6.0,-3.4,6.0,4.3)]):
@@ -197,22 +251,49 @@ for i,(x,z,s) in enumerate([(-1.8,-9.5,.7),(1.7,-9.1,.5),(-7.7,-4.3,.8),(7.6,3.0
     o=cube(f'salvage-scrap-{i+1}',(x,.22,z),(s,.15,s*.62),rust if i%2 else steel,.025)
     o.rotation_euler[2]=.12*(i-2)
 
+# A person beside the outer lane gives the whole block a reliable human scale.
+# Work clothes are soot-dark and patched; the figure is a measure, not a mascot.
+def person_piece(name, loc, scale, mat):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8,
+        radius=1, location=(loc[0],-loc[2],loc[1]))
+    obj=bpy.context.object; obj.name=name; obj.scale=(scale[0]/2,scale[2]/2,scale[1]/2)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj.data.materials.append(mat); obj.parent=root_obj
+    return obj
+px,pz=-1.5,-12.0
+person_piece('scale-person-left-boot',(px-.14,.12,pz),(.24,.20,.37),dark)
+person_piece('scale-person-right-boot',(px+.14,.12,pz),(.24,.20,.37),dark)
+person_piece('scale-person-left-leg',(px-.14,.52,pz),(.23,.75,.25),wood)
+person_piece('scale-person-right-leg',(px+.14,.52,pz),(.23,.75,.25),wood)
+person_piece('scale-person-coat',(px,1.16,pz),(.64,.82,.40),dark)
+person_piece('scale-person-apron',(px,1.12,pz-.22),(.43,.66,.08),rust)
+person_piece('scale-person-head',(px,1.70,pz),(.32,.36,.32),wood)
+person_piece('scale-person-head-wrap',(px,1.87,pz),(.40,.13,.37),rust)
+person_piece('scale-person-left-arm',(px-.38,1.22,pz),(.20,.74,.22),wood)
+person_piece('scale-person-right-arm',(px+.38,1.22,pz),(.20,.74,.22),wood)
+
 # Scene preview uses a smoky neutral world and soft overhead light; no added runtime lights.
 if a.render:
     folder=root/a.render if not Path(a.render).is_absolute() else Path(a.render)
     folder.mkdir(parents=True,exist_ok=True)
     scene=bpy.context.scene; scene.render.engine='CYCLES'; scene.cycles.samples=24; scene.cycles.use_denoising=True
     scene.render.resolution_x=1100; scene.render.resolution_y=760; scene.render.resolution_percentage=100
-    scene.view_settings.view_transform='Standard'; scene.view_settings.look='Medium High Contrast'; scene.view_settings.exposure=-.35
+    scene.view_settings.view_transform='Standard'; scene.view_settings.look='Medium High Contrast'; scene.view_settings.exposure=.12
     scene.world=bpy.data.worlds.new('Scablands smoke haze'); scene.world.use_nodes=True
-    bg=scene.world.node_tree.nodes['Background']; bg.inputs['Color'].default_value=(.12,.13,.13,1); bg.inputs['Strength'].default_value=.45
-    for loc,power,size,color in [((8,-11,18),2600,10,(1,.73,.47)),((-12,-2,10),1700,12,(.58,.68,.73)),((0,8,13),1200,9,(.9,.51,.28))]:
+    bg=scene.world.node_tree.nodes['Background']; bg.inputs['Color'].default_value=(.12,.13,.13,1); bg.inputs['Strength'].default_value=.60
+    for loc,power,size,color in [((8,-11,18),3300,10,(1,.73,.47)),((-12,-2,10),2300,12,(.58,.68,.73)),((0,8,13),1700,9,(.9,.51,.28))]:
         bpy.ops.object.light_add(type='AREA',location=loc); l=bpy.context.object; l.data.energy=power; l.data.shape='DISK'; l.data.size=size; l.data.color=color
         l.rotation_euler=(Vector((0,2,0))-l.location).to_track_quat('-Z','Y').to_euler()
-    cams=[('overview',(25,-34,25),(0,-1,2)),('alley',(10,-19,8),(0,1,2)),('forge',(11,-12,9),(0,-1,2))]
-    for name,loc,target in cams:
-        bpy.ops.object.camera_add(location=loc); cam=bpy.context.object; cam.data.lens=42
-        cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler(); scene.camera=cam
+    def blender_point(point):
+        return Vector((point[0],-point[2],point[1]))
+    # Three verdict views: 40 m away at car height, a broad raised three-quarter,
+    # and a close forge portrait with the roof line kept out of the focal frame.
+    cams=[('car-height-40m',(31,1.65,-25),(0,3,-.3),50),
+          ('three-quarter',(12,15,-25),(0,3,-.3),45),
+          ('close-cold-forge',(0,5,5.5),(0,3.3,-5.8),32)]
+    for name,loc,target,lens in cams:
+        bpy.ops.object.camera_add(location=blender_point(loc)); cam=bpy.context.object; cam.data.lens=lens
+        cam.rotation_euler=(blender_point(target)-cam.location).to_track_quat('-Z','Y').to_euler(); scene.camera=cam
         scene.render.filepath=str(folder/f'{name}.png'); bpy.ops.render.render(write_still=True)
         bpy.data.objects.remove(cam,do_unlink=True)
 
