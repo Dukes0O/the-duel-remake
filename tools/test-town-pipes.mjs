@@ -14,10 +14,23 @@ assert.equal(wide.taps[0].queueMinutes,10_000/7.5,'the tap queue uses its real 7
 assert.deepEqual(wide.overlay[0],{id:'tap',x:1000,z:0,pressureMetres:wide.taps[0].pressureMetres,litresPerDay:10_000,shortfallLitresPerDay:90_000},'water shortfalls include the map cell to show');
 const localWell=solveTownWater({pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100}],sources:[{kind:'well',x:0,z:0,elevation:12,litresPerDay:1000}],taps:[{x:10,z:0,elevation:0,litresPerDay:1000}],groundAt:()=>0,waterLimitLitresPerDay:0});
 assert.equal(localWell.delivered,1000,'the Water Road limit does not cap a local well');
-assert.equal(solveTownWater({
+const dryBranch=solveTownWater({pipes:[{from:{x:10,z:0},to:{x:20,z:0},sizeMm:100}],sources:[{id:'remote',x:0,z:0,elevation:12,litresPerDay:1000},{id:'dry',x:10,z:0,elevation:12,litresPerDay:0}],
+  taps:[{x:20,z:0,litresPerDay:500}],groundAt:()=>0});
+assert.equal(dryBranch.delivered,0,'an unrelated full source cannot supply a tap connected only to a dry source');
+const pooledSources=solveTownWater({pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100},{from:{x:10,z:0},to:{x:20,z:0},sizeMm:100},{from:{x:20,z:0},to:{x:30,z:0},sizeMm:100}],
+  sources:[{id:'north-well',x:0,z:0,elevation:12,litresPerDay:100},{id:'south-well',x:20,z:0,elevation:12,litresPerDay:100}],
+  taps:[{id:'shared-tap',x:30,z:0,litresPerDay:200}],groundAt:()=>0});
+assert.equal(pooledSources.delivered,200,'one tap draws enough from multiple connected sources to meet its demand');
+assert.deepEqual([...pooledSources.taps[0].sourceIds].sort(),['north-well','south-well'],'the tap reports every source that supplied it');
+const drySource=solveTownWater({pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100}],sources:[{id:'dry-well',x:0,z:0,elevation:12,litresPerDay:0}],
+  taps:[{id:'dry-tap',x:10,z:0,elevation:0,litresPerDay:500}],groundAt:()=>0});
+assert.equal(drySource.taps[0].message,'dry-tap has no water available.','a connected but empty source is not reported as a pressure problem');
+const highTap=solveTownWater({
   pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100}],sources:[{x:0,z:0,elevation:12,litresPerDay:1000}],
   taps:[{id:'high tap',x:10,z:0,elevation:13,litresPerDay:1000}],groundAt:()=>13,
-}).delivered,0,'a tap above its tower gets no water');
+});
+assert.equal(highTap.delivered,0,'a tap above its tower gets no water');
+assert.equal(highTap.taps[0].message,'high tap is higher than its water tower.','a source with water but too little head is reported as a pressure problem');
 assert.equal(solveTownWater({pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100}],sources:[{id:'tower',kind:'water-tower',x:0,z:0,litresPerDay:1000}],
   taps:[{x:10,z:0,litresPerDay:1000}],groundAt:()=>5}).taps[0].pressureMetres>11,true,'a 12 metre tower adds real head above local ground');
 
@@ -33,16 +46,37 @@ assert.equal(latrine.peopleWithoutLatrine,22,'extra people need another latrine'
 assert.equal(latrine.filled,true,'the pit fills after about two years');
 
 assert.deepEqual(treatTownWater({turbidity:10,stage:'raw'},['settling','sand-filter','chlorine']).turbidity,0.5,'settling and a sand filter lower turbidity while chlorine carries that number through');
-const sewage=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{id:'homes',x:10,z:0,litresPerDay:500}],groundAt:(x)=>-x,reedBeds:[{x:10,z:0,capacityLitresPerDay:1000}]});
+const sewage=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{id:'homes',x:0,z:0,litresPerDay:500}],groundAt:(x)=>-x,reedBeds:[{id:'bed',x:10,z:0,capacityLitresPerDay:1000}]});
 assert.equal(sewage.cleanedLitresPerDay,500,'a downhill sewer carries waste to a reed bed');
 assert.equal(sewage.sewers[0].flows,true,'the sewer falls toward its outlet');
-const blocked=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{x:10,z:0,litresPerDay:500}],groundAt:(x)=>x,reedBeds:[{x:10,z:0,capacityLitresPerDay:1000}]});
+const chainedSewer=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}},{from:{x:10,z:0},to:{x:20,z:0}}],loads:[{x:0,z:0,litresPerDay:500}],groundAt:(x)=>-x,reedBeds:[{x:20,z:0,capacityLitresPerDay:1000}]});
+assert.equal(chainedSewer.cleanedLitresPerDay,500,'sewage follows connected sewer segments to the downstream reed bed');
+const uphillSewerSegment=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}},{from:{x:10,z:0},to:{x:20,z:0}}],loads:[{x:0,z:0,litresPerDay:500}],
+  groundAt:(x)=>x===10?5:x===20?-10:0,reedBeds:[{x:20,z:0,capacityLitresPerDay:1000}]});
+assert.equal(uphillSewerSegment.cleanedLitresPerDay,0,'a downhill total cannot carry sewage across an uphill segment');
+assert.equal(uphillSewerSegment.loads[0].flows,false,'the sewer chain stops when its next segment rises');
+const blocked=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{x:0,z:0,litresPerDay:500}],groundAt:(x)=>x,reedBeds:[{x:10,z:0,capacityLitresPerDay:1000}]});
 assert.equal(blocked.cleanedLitresPerDay,0,'an uphill sewer does not carry waste');
-const limitedBed=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{x:10,z:0,litresPerDay:600},{x:10,z:0,litresPerDay:600}],groundAt:(x)=>-x,reedBeds:[{x:10,z:0,capacityLitresPerDay:1000}]});
+const limitedBed=solveTownSewers({sewers:[{from:{x:0,z:0},to:{x:10,z:0}}],loads:[{x:0,z:0,litresPerDay:600},{x:0,z:0,litresPerDay:600}],groundAt:(x)=>-x,reedBeds:[{x:10,z:0,capacityLitresPerDay:1000}]});
 assert.equal(limitedBed.cleanedLitresPerDay,1000,'one reed bed cannot clean more than its daily capacity');
 const treatment=runTownTreatment({water:{litresPerDay:1200,quality:{turbidity:10}},plants:[{id:'works',capacityLitresPerDay:1000,stages:['settling','sand-filter','boil']}]});
 assert.equal(treatment.cleanLitresPerDay,1000,'the plant only treats its real daily capacity');
 assert.equal(treatment.plants[0].quality.turbidity,0.5,'the plant keeps the water quality changes with its output');
+const treatedNetwork=solveTownWater({pipes:[{from:{x:0,z:0},to:{x:10,z:0},sizeMm:100},{from:{x:10,z:0},to:{x:20,z:0},sizeMm:100}],
+  sources:[{id:'well',x:0,z:0,elevation:12,litresPerDay:1000,quality:{turbidity:10,stage:'raw'}}],
+  taps:[{id:'homes',x:20,z:0,litresPerDay:1000}],treatments:[{id:'works',x:10,z:0,capacityLitresPerDay:800,stages:['settling','sand-filter','chlorine']}],groundAt:()=>0});
+assert.equal(treatedNetwork.taps[0].quality.turbidity,2.4,'treatment quality reaches downstream taps with the treated water volume');
+assert.equal(treatedNetwork.taps[0].treatedLitresPerDay,800,'a treatment plant cannot pass more than its daily capacity');
+assert.equal(treatedNetwork.treatments[0].processedLitresPerDay,800,'the treatment report matches water that passed through its node');
+const linkedTreatment=runTownTreatment({water:{litresPerDay:1000,quality:{turbidity:10}},plants:[{id:'works',capacityLitresPerDay:800,stages:['settling','sand-filter','chlorine']}],waterNetwork:treatedNetwork});
+assert.equal(linkedTreatment.cleanLitresPerDay,800,'the treatment report uses only treated water on the live network');
+const sequentialTreatments={pipes:[{from:{x:5,z:0},to:{x:0,z:0},sizeMm:100},{from:{x:5,z:0},to:{x:10,z:0},sizeMm:100},{from:{x:15,z:0},to:{x:10,z:0},sizeMm:100}],
+  sources:[{id:'raw-well',x:0,z:0,elevation:12,litresPerDay:100,quality:{turbidity:10,stage:'raw'}}],taps:[{id:'treated-homes',x:15,z:0,litresPerDay:100}],groundAt:()=>0};
+const treatmentStages=[{id:'settling-tank',x:5,z:0,capacityLitresPerDay:100,stages:['settling']},{id:'sand-filter',x:10,z:0,capacityLitresPerDay:100,stages:['sand-filter']}];
+const routeOrdered=solveTownWater({...sequentialTreatments,treatments:treatmentStages});
+const inputReversed=solveTownWater({...sequentialTreatments,treatments:[...treatmentStages].reverse()});
+assert.equal(routeOrdered.taps[0].quality.turbidity,0.5,'treatment stages apply in the order water reaches them');
+assert.equal(inputReversed.taps[0].quality.turbidity,0.5,'treatment order follows the route rather than the input array');
 
 const power=solveTownPower({generators:[{id:'wind',kind:'windmill',x:0,z:0},{id:'sun',kind:'solar-rack',x:0,z:0},{id:'engine',kind:'generator',x:0,z:0}],
   demands:[{id:'plant',x:0,z:0,kw:57}],wind:1,sunlight:1});

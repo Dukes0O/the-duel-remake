@@ -121,8 +121,9 @@ function shortestSupply(graph,sources,target,flow) {
 }
 
 /** Solve one town's water pressure and daily delivery from plain saved arrays. */
-export function solveTownWater({pipes=[],sources=[],taps=[],groundAt=()=>0,waterLimitLitresPerDay=Infinity,minutesAvailable=24*60}) {
+export function solveTownWater({pipes=[],sources=[],taps=[],treatments=[],groundAt=()=>0,waterLimitLitresPerDay=Infinity,minutesAvailable=24*60}) {
   if(!Array.isArray(pipes)||!Array.isArray(sources)||!Array.isArray(taps)) throw new TypeError('Water pipes, sources and taps must be lists.');
+  if(!Array.isArray(treatments)) throw new TypeError('Water treatment plants must be a list.');
   if(typeof groundAt!=='function') throw new TypeError('Water needs a ground height function.');
   if(!finite(minutesAvailable)||minutesAvailable<0) throw new TypeError('Water time must be zero or more minutes.');
   if((finite(waterLimitLitresPerDay)&&waterLimitLitresPerDay<0)||Number.isNaN(waterLimitLitresPerDay)) throw new TypeError('The Water Road limit must be zero or more litres a day.');
@@ -132,21 +133,75 @@ export function solveTownWater({pipes=[],sources=[],taps=[],groundAt=()=>0,water
   }).map(source=>source.kind==='water-road'
     ? {...source,litresPerDay:Math.min(source.litresPerDay,waterLimitLitresPerDay)}:source),
     demands=taps.map(tap=>validateDemand({...tap,elevation:tap?.elevation??groundAt(tap.x,tap.z)}));
+  const treatmentState=treatments.map((item,index)=>{
+    const point=validPoint(item,`Treatment plant ${index+1}`),capacity=Number(item.capacityLitresPerDay??200_000),stages=item.stages??[];
+    if(!finite(capacity)||capacity<0||!Array.isArray(stages)) throw new TypeError(`Treatment plant ${index+1} needs a non-negative capacity and treatment stages.`);
+    return {...point,id:String(item.id??`treatment-${index+1}`),capacity,remaining:capacity,stages,processed:0,quality:null};
+  });
   const sourceLimit=availableSources.reduce((sum,source)=>sum+source.litresPerDay,0);
-  let remaining=sourceLimit,totalDelivered=0;
+  const remainingBySource=new Map(availableSources.map(source=>[source,source.litresPerDay]));
+  let totalDelivered=0;
   const networkFlowLitresPerSecond=Math.min(sourceLimit,demands.reduce((sum,tap)=>sum+tap.litresPerDay,0))/86_400;
   const results=demands.map(tap=>{
-    const path=shortestSupply(graph,availableSources,tap,networkFlowLitresPerSecond);
     const ground=groundAt(tap.x,tap.z);
     if(!finite(ground)) throw new TypeError('Ground heights must be finite numbers.');
-    const head=path?path.source.elevation-ground-path.loss:-Infinity;
-    const pressure=Math.max(0,head);
-    const pressureFactor=Math.min(1,pressure/10);
     const queueLitres=Math.min(tap.litresPerDay,TAP_LITRES_MINUTE*minutesAvailable);
-    const delivered=path&&head>0?Math.min(remaining,queueLitres*pressureFactor):0;
-    remaining-=delivered;totalDelivered+=delivered;
-    return {id:tap.id,x:tap.x,z:tap.z,pressureMetres:finite(pressure)?pressure:0,litresPerDay:Math.floor(delivered),queueMinutes:delivered/TAP_LITRES_MINUTE,connected:Boolean(path),sourceId:path?.source.id??null,quality:path?.source.quality??null,
-      message:delivered>0?`${tap.id} gets ${Math.floor(delivered)} litres a day.`:path&&head<=0?`${tap.id} is higher than its water tower.`:`${tap.id} has no connected water pipe.`};
+    const allocations=[];
+    let delivered=0,pressure=0;
+    while(delivered<queueLitres){
+      const paths=availableSources.filter(source=>(remainingBySource.get(source)??0)>0)
+        .map(source=>shortestSupply(graph,[source],tap,networkFlowLitresPerSecond))
+        .filter(path=>path&&path.source.elevation-ground-path.loss>0)
+        .sort((a,b)=>a.loss-b.loss||a.source.id.localeCompare(b.source.id));
+      const path=paths[0];
+      if(!path) break;
+      const head=path.source.elevation-ground-path.loss,pressureFactor=Math.min(1,head/10);
+      const amount=Math.min(queueLitres-delivered,(remainingBySource.get(path.source)??0)*pressureFactor);
+      if(amount<=0) break;
+      remainingBySource.set(path.source,Math.max(0,(remainingBySource.get(path.source)??0)-amount/pressureFactor));
+      allocations.push({path,amount,head});
+      delivered+=amount;
+      pressure=Math.max(pressure,head);
+    }
+    totalDelivered+=delivered;
+    let qualityTurbidity=0,qualityVolume=0,tapTreatedLitres=0;
+    const qualityStages=[];
+    const treatmentIds=new Set();
+    for(const allocation of allocations){
+      let sourceQuality=allocation.path.source.quality??null;
+      if(sourceQuality){
+        let allocationTreated=0,currentKey=pointKey(allocation.path.source);
+        const routeKeys=[currentKey];
+        for(const edge of allocation.path.edges.slice().reverse()){
+          currentKey=edge.a.key===currentKey?edge.b.key:edge.a.key;
+          routeKeys.push(currentKey);
+        }
+        const routeOrder=new Map(routeKeys.map((key,index)=>[key,index]));
+        const routePlants=treatmentState.filter(plant=>routeOrder.has(pointKey(plant)))
+          .sort((a,b)=>routeOrder.get(pointKey(a))-routeOrder.get(pointKey(b))||a.id.localeCompare(b.id));
+        for(const plant of routePlants){
+          const processed=Math.min(allocation.amount,plant.remaining);
+          if(processed<=0) continue;
+          const treatedQuality=treatTownWater(sourceQuality,plant.stages);
+          sourceQuality=processed<allocation.amount
+            ? {...treatedQuality,turbidity:Number(((treatedQuality.turbidity*processed+sourceQuality.turbidity*(allocation.amount-processed))/allocation.amount).toFixed(3)),stage:'mixed'}
+            : treatedQuality;
+          plant.remaining-=processed;plant.processed+=processed;plant.quality=treatedQuality;
+          treatmentIds.add(plant.id);allocationTreated=Math.max(allocationTreated,processed);
+        }
+        tapTreatedLitres+=allocationTreated;
+        qualityTurbidity+=sourceQuality.turbidity*allocation.amount;
+        qualityVolume+=allocation.amount;
+        qualityStages.push(sourceQuality.stage??'raw');
+      }
+    }
+    const primary=allocations[0];
+    const reachable=availableSources.map(source=>shortestSupply(graph,[source],tap,networkFlowLitresPerSecond)).filter(Boolean);
+    const hasPath=reachable.length>0,hasHead=reachable.some(path=>path.source.elevation-ground-path.loss>0);
+    const hasSupply=reachable.some(path=>(remainingBySource.get(path.source)??0)>0);
+    return {id:tap.id,x:tap.x,z:tap.z,pressureMetres:finite(pressure)?pressure:0,litresPerDay:Math.floor(delivered),queueMinutes:delivered/TAP_LITRES_MINUTE,connected:hasPath,sourceId:primary?.path.source.id??null,sourceIds:[...new Set(allocations.map(item=>item.path.source.id))],quality:qualityVolume?{turbidity:Number((qualityTurbidity/qualityVolume).toFixed(3)),stage:qualityStages.length===1?qualityStages[0]:'mixed'}:null,
+      treatmentIds:[...treatmentIds],treatedLitresPerDay:Math.floor(tapTreatedLitres),
+      message:delivered>0?`${tap.id} gets ${Math.floor(delivered)} litres a day.`:!hasPath?`${tap.id} has no connected water pipe.`:!hasSupply?`${tap.id} has no water available.`:!hasHead?`${tap.id} is higher than its water tower.`:`${tap.id} gets no water today.`};
   });
   const pipeResults=pipes.map((pipe,index)=>{
     const checked=validPipe(pipe,index);
@@ -155,6 +210,7 @@ export function solveTownWater({pipes=[],sources=[],taps=[],groundAt=()=>0,water
   });
   const demand=demands.reduce((sum,tap)=>sum+tap.litresPerDay,0);
   return {sources:availableSources.length,demand,delivered:Math.floor(totalDelivered),shortfall:Math.max(0,Math.ceil(demand-totalDelivered)),pipes:pipeResults,taps:results,
+    treatments:treatmentState.map(({id,processed,quality,capacity})=>({id,processedLitresPerDay:Math.floor(processed),capacityLitresPerDay:capacity,quality})),
     overlay:results.map(({id,x,z,pressureMetres,litresPerDay})=>({id,x,z,pressureMetres,litresPerDay,shortfallLitresPerDay:Math.max(0,demands.find(tap=>tap.id===id).litresPerDay-litresPerDay)}))};
 }
 
@@ -206,14 +262,24 @@ export function solveTownSewers({sewers=[],loads=[],groundAt=()=>0,reedBeds=[]})
   });
   let cleaned=0;
   const remainingCapacity=new Map(reedBeds.map((bed,index)=>[bed,Number(bed.capacityLitresPerDay??0)]));
+  const treatedLoads=[];
   for(const load of loads){
-    const destination=validPoint(load,`Sewage load ${load.id??''}`),amount=Number(load.litresPerDay??0);
+    const origin=validPoint(load,`Sewage load ${load.id??''}`),amount=Number(load.litresPerDay??0);
     if(!finite(amount)||amount<0) throw new TypeError('Sewage loads must be non-negative litres per day.');
-    const connected=valid.some(sewer=>sewer.flows&&distance(sewer.to,destination)<=1);
-    const bed=reedBeds.find(item=>distance(item,destination)<=30);
-    if(connected&&bed){const treated=Math.min(amount,remainingCapacity.get(bed)??0);cleaned+=treated;remainingCapacity.set(bed,(remainingCapacity.get(bed)??0)-treated);}
+    let current=valid.find(sewer=>sewer.flows&&distance(sewer.from,origin)<=1),outlet=origin;
+    const chain=[],visited=new Set();
+    while(current&&!visited.has(current.id)){
+      visited.add(current.id);chain.push(current);outlet=current.to;
+      current=valid.find(sewer=>sewer.flows&&!visited.has(sewer.id)&&distance(sewer.from,outlet)<=1);
+    }
+    const fall=groundAt(outlet.x,outlet.z)-groundAt(origin.x,origin.z),flows=chain.length>0&&fall<0;
+    const bed=flows?reedBeds.find(item=>distance(item,outlet)<=30):null;
+    const treated=bed?Math.min(amount,remainingCapacity.get(bed)??0):0;
+    cleaned+=treated;
+    if(bed) remainingCapacity.set(bed,(remainingCapacity.get(bed)??0)-treated);
+    treatedLoads.push({id:String(load.id??`sewage-${treatedLoads.length+1}`),litresPerDay:amount,treatedLitresPerDay:treated,outlet,fallMetres:-fall,flows,reedBedId:bed?.id??null});
   }
-  return {sewers:valid,cleanedLitresPerDay:cleaned,untreatedLitresPerDay:loads.reduce((sum,load)=>sum+Number(load.litresPerDay??0),0)-cleaned};
+  return {sewers:valid,loads:treatedLoads,cleanedLitresPerDay:cleaned,untreatedLitresPerDay:loads.reduce((sum,load)=>sum+Number(load.litresPerDay??0),0)-cleaned};
 }
 
 registerTownSystem('water-network',35,24,({town})=>{
@@ -223,7 +289,7 @@ registerTownSystem('water-network',35,24,({town})=>{
   const groundAt=(x,z)=>region.groundHeightAt(x,z);
   const sources=utilities.sources.map(source=>({...source,elevation:source.elevation??groundAt(source.x,source.z)+(source.kind==='water-tower'?(source.towerHeight??12):0)}));
   const taps=utilities.taps.map(tap=>({...tap,elevation:tap.elevation??groundAt(tap.x,tap.z)}));
-  utilities.waterResult=solveTownWater({pipes:utilities.pipes,sources,taps,groundAt,
+  utilities.waterResult=solveTownWater({pipes:utilities.pipes,sources,taps,treatments:utilities.treatmentPlants??[],groundAt,
     waterLimitLitresPerDay:utilities.waterRoadLimitLitresPerDay??10_000});
   town.water={in:utilities.waterResult.delivered,out:utilities.waterResult.demand,shortfall:utilities.waterResult.shortfall,overlay:utilities.waterResult.overlay};
   utilities.sewerResult=solveTownSewers({sewers:utilities.sewers,loads:utilities.sewage,groundAt,reedBeds:utilities.reedBeds??[]});

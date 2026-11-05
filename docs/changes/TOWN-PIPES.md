@@ -7,13 +7,16 @@
   route work is finished, and stay on a utility layer separate from roads.
 - Water pressure includes source height, ground height, pipe length, flow and
   pipe size. Taps use 7.5 L/min, account for daily queues, and show delivery,
-  pressure and shortfall at map coordinates. Water Road limits apply to the
-  Water Road source alone.
+  pressure and shortfall at map coordinates. A tap can draw from multiple
+  connected sources, within each source's remaining supply. Water Road limits
+  apply to the Water Road source alone.
 - Water quality follows the source through settling, sand filtering and
   boiling or chlorine. The teaching estimate uses 50% turbidity reduction in
   settling and 90% in sand filtering, within EPA guidance ranges; boiling and
   chlorine disinfect but do not change turbidity:
   https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=200021OB.TXT
+  A treatment node applies its stages and capacity along the pipe path, and
+  downstream taps receive the treated volume and quality.
   Latrine checks use 20 people, 30 metres, downhill
   placement and 730 days to fill. Sewers need a fall; reed beds are limited by
   their daily capacity.
@@ -36,11 +39,14 @@
 
 - `node tools/test-town-pipes.mjs`: passed. It checks the real arithmetic for
   the Water Road cap, 7.5 L/min queue, bucket trips and hours, 15 to 50 L per
-  person, latrine distance and capacity, turbidity stages, sewer fall and
-  reed-bed capacity, power totals and shortfalls, route completion, overlays,
-  and save/load.
+  person, latrine distance and capacity, turbidity stages and route-ordered
+  treatment, dry-source and low-pressure reporting, sewer fall and reed-bed
+  capacity, a sewer chain with an uphill segment, two-source tap supply, power
+  totals and shortfalls, route completion, overlays, and save/load.
 - `npm.cmd run build` (`npm run build` through PowerShell's command shim):
-  passed. Vite reported existing chunk-size and dynamic-import warnings.
+  passed. Vite reported the existing chunk-size and dynamic-import warnings.
+- Sewer loads connect at their upstream point and follow connected segments
+  only while each segment falls, then use a reed bed near the outlet.
 - Lane tier: not run; Claude runs it for this card.
 - Browser and look checks: not run. Claude should check a low tap and a tap
   above its tower, long 50 mm versus 200 mm routes, the capped Water Road tap,
@@ -50,9 +56,15 @@
   sentence.
 - Race fingerprints: not run. This change does not touch race code or replay
   inputs; there are no changed fingerprint assertions.
-- Changed assertions: none. The card test is new.
+- Changed assertions: Added focused assertions for a tap supplied by two
+  sources, treatment order and mixing, dry and low-pressure reports, and a
+  sewer chain with an uphill segment before a lower outlet.
 
 ## Removed
 
-- No prior implementation was replaced. No temporary test renders or assets
-  were created.
+- Replaced the single-source-per-tap allocation with allocation across
+  connected sources. Rejected a sewer chain at its first rising segment.
+- Treatment order no longer follows the input list, and dry connected sources
+  no longer use the pressure warning.
+- No temporary test renders or assets were created. The ignored `dist/`
+  output is the build's normal scratch output.

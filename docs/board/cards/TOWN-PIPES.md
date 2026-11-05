@@ -20,3 +20,12 @@ The system tick has no player profiles. It reads the Water Road limit from
 `town.utilities.waterRoadLimitLitresPerDay`, supplied by the town link layer,
 and defaults old towns to 10,000 litres a day. This keeps the profile read
 outside the pure simulation.
+
+For one tap, draw from each reachable source in order of lowest pipe loss
+until its demand or daily queue is met. Track each source's own remaining
+supply. Treatment plants process water in the order it reaches them on each
+source-to-tap route. A plant treats up to its remaining capacity; its output
+mixes with untreated water before continuing to the next plant. A sewer chain
+stops at its first segment that does not fall; a lower final outlet cannot
+make an uphill segment flow. A connected source with no available water has a
+different report from a tap that lacks pressure.
