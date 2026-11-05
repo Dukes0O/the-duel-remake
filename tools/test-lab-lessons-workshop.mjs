@@ -19,7 +19,7 @@ test('the card-named comparison sheet has a valid review home', () => {
 });
 const finish = session => { for (let i = 0; i < 220; i++) session.tick(.1); };
 const goodInputs = {
-  gforce: [{speedMph: 80, radiusM: 50}, {speedMph: 20, radiusM: 50}, {speedMph: 40, radiusM: 50}],
+  gforce: [{setting: 80, radiusM: 50}, {setting: 20, radiusM: 50}, {setting: 40, radiusM: 50}],
 };
 for (const packet of packets) test(`${packet.definition.id}: real teaching sequence, retries, checks and challenge`, () => {
   const {definition: d, hooks} = packet;
@@ -56,11 +56,11 @@ for (const packet of packets) test(`${packet.definition.id}: real teaching seque
 });
 
 test('G-force predictions, metre radii, arrow lengths and hardest-turn pictures use lateralG', () => {
-  const base = lateralG(G_BASE.speedMph, G_BASE.radiusM);
-  for (let speedMph = 20; speedMph <= 80; speedMph += 20) for (let radiusM = 25; radiusM <= 100; radiusM += 25) {
-    const g = lateralG(speedMph, radiusM), actual = Math.abs(g - base) < 1e-9 ? 'same' : g > base ? 'more' : 'less';
+  const base = lateralG(G_BASE.setting, G_BASE.radiusM);
+  for (let setting = 20; setting <= 80; setting += 20) for (let radiusM = 25; radiusM <= 100; radiusM += 25) {
+    const g = lateralG(setting, radiusM), actual = Math.abs(g - base) < 1e-9 ? 'same' : g > base ? 'more' : 'less';
     for (let tryIndex = 0; tryIndex < 3; tryIndex++) {
-      const result = gforce.hooks.evaluate({tryIndex, input: {speedMph, radiusM}, prediction: actual});
+      const result = gforce.hooks.evaluate({tryIndex, input: {setting, radiusM}, prediction: actual});
       assert.equal(result.actual, actual); assert.equal(result.passed, actual === ['more', 'less', 'same'][tryIndex]);
     }
   }
@@ -71,7 +71,7 @@ test('G-force predictions, metre radii, arrow lengths and hardest-turn pictures 
     assert.ok(draw.x * draw.forces[0].direction[0] + draw.z * draw.forces[0].direction[2] < 0, 'push points into the turn');
   }
   const check = gforce.definition.checks[0];
-  const most = [...check.answers].sort((a, b) => lateralG(gforceSamples[b.id].speedMph, gforceSamples[b.id].radiusM) - lateralG(gforceSamples[a.id].speedMph, gforceSamples[a.id].radiusM))[0];
+  const most = [...check.answers].sort((a, b) => lateralG(gforceSamples[b.id].setting, gforceSamples[b.id].radiusM) - lateralG(gforceSamples[a.id].setting, gforceSamples[a.id].radiusM))[0];
   assert.equal(check.correct, most.id);
 });
 

@@ -2,19 +2,20 @@ import {lateralG} from '../benches/gforce.js';
 import {createUnlockedVehicle} from '../../unlock-vehicles.js';
 import {box, camera, arrow, thickArrows, mountMachine, pictureBase, pictureArrow} from './workshop-display.js';
 
-export const G_BASE = Object.freeze({speedMph: 40, radiusM: 50});
+export const G_BASE = Object.freeze({setting: 40, radiusM: 50});
+const kmh = setting => (setting * 1.609344).toFixed(1);
 export const readGforce = input => ({...G_BASE, ...input});
 export function gforceOutcome(input) {
-  const g = lateralG(input.speedMph, input.radiusM), base = lateralG(G_BASE.speedMph, G_BASE.radiusM);
+  const g = lateralG(input.setting, input.radiusM), base = lateralG(G_BASE.setting, G_BASE.radiusM);
   return Math.abs(g - base) < 1e-9 ? 'same' : g > base ? 'more' : 'less';
 }
 export const gforceSamples = {
-  more: {speedMph: 80, radiusM: 50}, less: {speedMph: 20, radiusM: 50}, same: G_BASE,
-  'fast-tight': {speedMph: 80, radiusM: 25}, 'slow-tight': {speedMph: 40, radiusM: 25}, 'fast-wide': {speedMph: 80, radiusM: 100},
+  more: {setting: 80, radiusM: 50}, less: {setting: 20, radiusM: 50}, same: G_BASE,
+  'fast-tight': {setting: 80, radiusM: 25}, 'slow-tight': {setting: 40, radiusM: 25}, 'fast-wide': {setting: 80, radiusM: 100},
 };
 export function gforceDrawing(input, time, mode = 'turn') {
-  const load = readGforce(input), g = lateralG(load.speedMph, load.radiusM);
-  const phase = time * load.speedMph / 80, r = load.radiusM / 50;
+  const load = readGforce(input), g = lateralG(load.setting, load.radiusM);
+  const phase = time * load.setting / 80, r = load.radiusM / 50;
   const x = Math.cos(phase) * r, z = Math.sin(phase) * r;
   const lean = Math.atan(g), hangingLength = .75 * .55 + .49 * .4;
   const weight = [x + Math.cos(phase) * Math.sin(lean) * hangingLength,
@@ -23,7 +24,7 @@ export function gforceDrawing(input, time, mode = 'turn') {
   const drawing = {input: load, actual: gforceOutcome(load), reading: g, phase, r, x, z,
     hideLabels: true, metresPerNewton: .0055,
     forces: [force], objects: [
-      {...box('crank', [-1.25, 1.0, .85], [.4, .2, .4], '#edc557', 'speedMph'), opacity: 0},
+      {...box('crank', [-1.25, 1.0, .85], [.4, .2, .4], '#edc557', 'setting'), opacity: 0},
       {...box('radius-handle', [1.25, 1.0, .85], [.4, .2, .4], '#619dff', 'radiusM'), opacity: 0},
     ],
     props: [{id: 'speed', model: 'speed-wheel', position: [-1.25, .95, .85]},
@@ -31,7 +32,7 @@ export function gforceDrawing(input, time, mode = 'turn') {
       {id: 'speed-stand', model: 'control-stand', position: [-1.25, 0, .85], scale: .95},
       {id: 'radius-stand', model: 'control-stand', position: [1.25, 0, .85], scale: .95},
       {id: 'driver-weight', model: 'mass-weight', position: weight, scale: .4, rotation: [0, -phase, lean]}],
-    captions: [`${load.speedMph} mph · ${load.radiusM} m`, `${g.toFixed(2)} g\n${(g * 80).toFixed(0)} kg sideways for an 80 kg driver`],
+    captions: [`${kmh(load.setting)} km/h · ${load.radiusM} m`, `${g.toFixed(2)} g\n${(g * 80).toFixed(0)} kg sideways for an 80 kg driver`],
     captionAnchors: [[-1.25, 1.0, .85], weight], captionOffsets: [[-140, 25], [35, 30]],
     camera: camera([2.8, 1.9, 3.7], [0, .8, 0]),
   };
@@ -51,12 +52,12 @@ export function mountGforce(options) {
   });
 }
 export function gforcePicture(load) {
-  const g = lateralG(load.speedMph, load.radiusM);
+  const g = lateralG(load.setting, load.radiusM);
   return (ctx, w, h) => {
     pictureBase(ctx, w, h);
     ctx.strokeStyle = '#91a69c'; ctx.lineWidth = 8; ctx.beginPath(); ctx.ellipse(115, 80, load.radiusM < 50 ? 48 : 80, 28, 0, Math.PI, 2 * Math.PI); ctx.stroke();
     ctx.fillStyle = '#d97b3d'; ctx.fillRect(102, 49, 49, 25);
     pictureArrow(ctx, 126, 42, -Math.min(93, g * 23), 0);
-    ctx.fillStyle = '#f5f0dc'; ctx.fillText(`${load.speedMph} mph · ${load.radiusM} m`, w / 2, 116);
+    ctx.fillStyle = '#f5f0dc'; ctx.fillText(`${kmh(load.setting)} km/h · ${load.radiusM} m`, w / 2, 116);
   };
 }
