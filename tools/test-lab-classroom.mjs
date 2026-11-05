@@ -7,6 +7,9 @@ import {STEPS, LENGTHS, HOOK_X} from '../src/lab/lessons/pendulum-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, bobPoint} from '../src/lab/lessons/pendulum-board.js';
 import {stringPeriod} from '../src/lab/benches/pendulum.js';
 import {FEATURE_STATES} from '../src/feature-flags.js';
+import {STEPS as GFORCE_STEPS, KEY_IDEAS as GFORCE_IDEAS, createModel as createGforceModel} from '../src/lab/lessons/gforce-classroom.js';
+import * as gforceBoard from '../src/lab/lessons/gforce-board.js';
+import {lateralG} from '../src/lab/benches/gforce.js';
 
 const lesson = CLASSROOM_LESSONS.pendulum;
 const s1 = seconds => `${seconds.toFixed(1)} s`;
@@ -250,4 +253,76 @@ test('hovering explains the parts of the picture: hooks, weights, stopwatches', 
   assert.match(hoverInfo(v, ...bobPoint(grey)), /grey weight/);
   assert.match(hoverInfo(v, grey.x - 30, 50), /Stopwatch/);
   assert.equal(hoverInfo(v, 500, 660), null);
+});
+
+test('G-force lesson is registered and its two-way controls follow the bench formula', () => {
+  const gforce = CLASSROOM_LESSONS.gforce;
+  assert.ok(gforce);
+  assert.equal(FEATURE_STATES['lab-classroom'], 'on');
+  const model = createGforceModel(); model.enter(0);
+  assert.equal(GFORCE_STEPS[0].id, 'wonder');
+  model.enter(1); model.act('speed:up');
+  let v = model.view();
+  assert.equal(v.speedKmh, 64.37376);
+  assert.equal(v.g, lateralG(40, 50));
+  assert.match(v.formulas[0].worked, /17\.88 m\/s/);
+  model.act('speed:down'); assert.equal(model.view().speedKmh, 32.18688);
+  model.enter(2); model.act('radius:down'); model.act('radius:down');
+  assert.equal(model.view().radiusM, 50);
+  model.act('radius:up'); assert.equal(model.view().radiusM, 75);
+  for (const idea of GFORCE_IDEAS) assert.match(idea.text, /\./);
+});
+
+test('G-force free experiment requires three distinct bench runs and changes its live sum', () => {
+  const gforce = CLASSROOM_LESSONS.gforce, session = createClassroomSession(gforce);
+  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
+  assert.equal(session.view().step.id,'try-free');
+  let v = session.view(); const original = v.formulas[0].worked;
+  session.act('speed:up'); v = session.view(); assert.notEqual(v.formulas[0].worked, original);
+  session.act('run'); assert.equal(session.view().rows.length, 1);
+  session.act('run'); assert.equal(session.view().rows.length, 1, 'repeating a setting does not count twice');
+  session.act('radius:up'); session.act('run');
+  session.act('speed:down'); session.act('run');
+  assert.equal(session.view().rows.length, 3); assert.equal(session.view().ready, true);
+  for (const row of session.view().rows) assert.equal(Number(row.g), Number(lateralG(row.speed / 1.609344, row.radius).toFixed(2)));
+});
+
+test('G-force guided prompts can be followed and wrong predictions explain the bench numbers', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
+  session.act('speed:up'); session.act('run'); session.act('radius:up'); session.act('run'); session.act('speed:up'); session.act('run'); session.act('next');
+  assert.equal(session.view().step.id, 'try-speed');
+  session.act('answer:1'); session.act('speed:up'); session.act('speed:up'); session.act('run');
+  assert.equal(session.view().brian.mood, 'explain');
+  assert.match(session.view().brian.text, /2\.61 g/);
+  assert.match(session.view().brian.text, /0\.65 g/);
+});
+
+test('G-force solo test cannot pass at the untouched start and passes after a real bench change', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  session.act('next'); session.act('speed:up'); session.act('next'); session.act('radius:down'); session.act('radius:down'); session.act('next'); run(session,4); session.act('next');
+  session.act('speed:up'); session.act('run'); session.act('radius:up'); session.act('run'); session.act('speed:up'); session.act('run');
+  session.act('next'); session.act('answer:0'); session.act('speed:up'); session.act('speed:up'); session.act('run'); session.act('next');
+  session.act('answer:0'); session.act('radius:down'); session.act('run'); session.act('next');
+  assert.equal(session.view().step.id,'alone');
+  session.act('run'); assert.equal(session.view().brian.mood,'explain');
+  assert.match(session.view().brian.text,/below 2 g/);
+  session.act('speed:up'); session.act('speed:up'); session.act('run');
+  assert.equal(session.view().brian.mood,'cheer'); assert.match(session.view().brian.text,/2\.61 g/);
+});
+
+test('G-force board draws, hit-tests the two controls, and points Brian at a real control', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.gforce);
+  session.act('next');
+  const v = session.view();
+  assert.equal(v.step.id, 'word-speed');
+  assert.equal(gforceBoard.hitTest(v, ...gforceBoard.targetPoint(v, 'speed:up'))?.action, 'speed:up');
+  session.act('speed:up');
+  session.act('next');
+  const radiusView = session.view();
+  assert.equal(radiusView.step.id, 'word-radius');
+  assert.equal(gforceBoard.hitTest(radiusView, ...gforceBoard.targetPoint(radiusView, 'radius:down'))?.action, 'radius:down');
+  const calls = new Set(); const ctx = new Proxy({}, {get: (_, name) => name === 'measureText' ? t => ({width:String(t).length*8}) : ['createLinearGradient','createRadialGradient'].includes(name) ? () => ({addColorStop(){}}) : (...args) => calls.add(name), set: () => true});
+  gforceBoard.drawBoard(ctx,v,1000,680);
+  assert.ok(calls.has('fillText') && calls.has('arc'));
 });
