@@ -53,5 +53,13 @@ export async function run(c) {
   if(!moved)throw Error('Keyboard drive did not advance the first Everburn job');
   await c.waitFor('window.__qaApp.duel.state.arena.worldJob.job.stepIndex>0','first job step advances');
   await c.screenshot('everburn-driving');
-  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:7,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved})+'\n');
+  await c.evaluate(`(()=>{const a=window.__qaApp,j=a.duel.state.arena.worldJob.job;j.stepIndex=j.steps.length;j.done=true;a.advance(0.1)})()`);
+  await c.waitFor('window.__qaApp.duel.state.status==="arena_result"','Hot Delivery result');
+  await c.evaluate(`(()=>{const text=document.body.innerText;if(/LAST CAR ROLLING|REMATCH/i.test(text))throw Error('Arena results leaked into a world job');if(!text.includes('HOT DELIVERY')||!text.includes('NEXT JOB: GET OUT AND WALK'))throw Error('World job result or next job is missing');if(/PLACE|WRECKS|WRECKED|HOLD/i.test(text))throw Error('Arena metrics leaked into world job results')})()`);
+  await c.screenshot('everburn-hot-delivery-result');
+  await click(c,'[data-action="ember-next-job"]');
+  await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"&&window.__qaApp.duel.state.arena.worldJob.definition.number===2','Get Out and Walk starts',60000);
+  await c.waitFor('document.querySelector(".world-hud-line")?.textContent.includes("three lamps")','job 2 first step');
+  await c.screenshot('everburn-job-two');
+  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:9,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
 }

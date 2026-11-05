@@ -22,6 +22,8 @@ import {createGarageScreen, handleDriverAction, handleGarageUpgrade, handleTuneA
 import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
+import {EMBER_JOBS} from './story/ember-save.js';
+import {finishArenaEvent} from './arena/arena-event.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW,crewMember} from './crew.js';
 import {courseScreen as courseScreenMarkup, createCourseActions} from './screen-courses.js';
@@ -257,6 +259,11 @@ root.addEventListener('click',e => {
     lastScreen=null;renderState(app.duel.state);return;
   }
   if(button.dataset.emberStep){const ok=app.everburnStep?.(button.dataset.emberStep);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
+  if(button.dataset.action==='ember-next-job'){
+    const job=app.duel.state.arena?.worldJob?.definition,index=job?.number;
+    const id=EMBER_JOBS[index];
+    if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;
+  }
   if (button.dataset.arenaVenue) {
     if (!(arenaMode === 'ambush-alley' && button.dataset.arenaVenue === 'pit' &&
       app.ambushAlleyAvailable?.()) && !app.arenaVenueAvailable(button.dataset.arenaVenue)) return;
@@ -328,8 +335,11 @@ root.addEventListener('click',e => {
       return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
+    case 'world-job-retry': {const number=app.duel.state.arena?.worldJob?.definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
-    case 'arena-yard': if(app.returnToYard())lastScreen=null; return;
+    case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
+      finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;
+    } if(app.returnToYard())lastScreen=null; return;
     // WATER-SCREENS: the Story Wall holds the Water Road; opening it reads Hollis's note and V.'s notes so far.
     case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){app.openStory?.('water');openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;

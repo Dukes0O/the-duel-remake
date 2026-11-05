@@ -5,24 +5,31 @@
 - Added `ember-road.js` to derive the Everburn's open job, completed ticks and notice-board availability from saved progress.
 - Added `ember-ui.js` for the Story choice, Story Wall, Next up, free-drive gate, side-job list and won-job result line. Screen code reads props and emits actions; it does not save progress or change race state.
 - Added the Everburn screen test and the browser scenario for Claude.
+- Added a world-job results branch beside the arena results. It names the job under THE EVERBURN, shows its story completion sentence and saved scrap/item reward, and omits arena metrics. Won jobs offer the next open job; failed and quit jobs offer a retry without rewards.
+- Wired NEXT JOB and TRY AGAIN through the existing Everburn start action. Quitting a live job now opens its no-reward results screen before the player returns to the yard.
+- Pointed jobs with suitable completion captions to their existing WW-LINES entries; added a whole-sentence result line to each job definition with no suitable caption.
+- Extended the world-job wiring test for won, failed and quit results, the result actions, and duplicate settlement. Extended Claude's Everburn scenario to reject arena results and advance from Hot Delivery to Get Out and Walk.
 
-The shared app, yard and menu hook files were outside this card's owned files, and the WW-HOOKS dependency is not present in this checkout. The scenario expects the hook owner to wire `storyProps('ember')`, the screen modules and the named action attributes before Claude runs it. The screen contract is ready for that wiring; this lane does not claim the live app is fully connected.
+The existing App story action starts the jobs, and the screen router handles the next-job, retry, yard and menu actions. Water Road and all arena modes keep their existing result presentation.
 
 ## Checks
 
-- `node tools/test-ember-screens.mjs`: passed, 23 checks.
-- `npm.cmd run build` (PowerShell `npm` shim was blocked by execution policy): passed. Vite reported the existing dynamic-import and large-chunk warnings.
-- Lane tier: not run, per Kyle's lane instruction; Claude runs it.
-- Browser scenario `tools/scenarios/everburn.mjs`: Claude runs after WW-HOOKS and WW-SAVE integration. No browser check or look check was run in this lane.
+- `node tools/test-everburn-easy.mjs`: passed; all nine jobs finished 10/10 on Easy.
+- `node tools/test-world-job-mode.mjs`: passed, including won, failed and quit results, action markup, and one-time reward settlement.
+- `node tools/test-replays.mjs`: passed; 297 checks across 33 cases, fingerprints unchanged.
+- `node tools/test-combat-replays.mjs`: passed; 12 checks across 4 encounters.
+- `npm.cmd run build`: passed. Vite reported the existing dynamic-import and large-chunk warnings.
+- Browser scenario `tools/scenarios/everburn-play.mjs`: not run here; Claude runs it. No browser check or look check was run in this lane.
+- Lane tier: not run, as requested.
 
 ## Changed assertions
 
-- None. The new focused test adds behavior checks; existing assertions were not changed.
+- None. The wiring test adds behavior checks; existing assertions were not changed.
 
 ## Race fingerprints
 
-- None captured. This is screen presentation code and does not touch race simulation.
+- Replay and combat fingerprints unchanged. This is screen presentation and result navigation; race rules are unchanged.
 
 ## Removed
 
-- None.
+- No existing files or modes were removed; world jobs now take their own results branch.

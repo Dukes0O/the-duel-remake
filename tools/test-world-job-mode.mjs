@@ -5,7 +5,7 @@ import {canLeaveCar} from '../src/onfoot-transition.js';
 import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {worldHudModel} from '../src/world/world-hud.js';
-import {arenaHud} from '../src/screen-arena.js';
+import {arenaHud, arenaResultsScreen} from '../src/screen-arena.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 
 const dt = 1 / 120;
@@ -52,6 +52,25 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.equal(result.settlementSaved,true,'finished job settles through the shared Wasteland save helper');
   assert.equal(result.emberJob,'hot-delivery','finished job records the WW-SAVE story mark');
   assert.equal(app.profile.story.ember.jobs.includes('hot-delivery'),true);
+  const wonScreen=arenaResultsScreen(app.duel.state,{metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
+  assert.equal(wonScreen.eyebrow,'THE EVERBURN','won job results identify the story');
+  assert.equal(wonScreen.title,'HOT DELIVERY','won job results use the job name');
+  assert.match(wonScreen.description,/A live ember\./,'results use the existing story completion line');
+  assert.match(wonScreen.metrics,/SCRAP EARNED/,'won job results show scrap');
+  assert.doesNotMatch(wonScreen.metrics,/HOLD|WRECKS|PLACE/,'world job results omit arena metrics');
+  assert.match(wonScreen.actions,/NEXT JOB: GET OUT AND WALK/,'first win names the next job');
+  assert.match(wonScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
+  const failedScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-failed'},worldJob:arena.worldJob}},
+    {metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
+  assert.match(failedScreen.actions,/TRY AGAIN/,'failed job offers a retry');
+  assert.doesNotMatch(failedScreen.metrics,/SCRAP EARNED|FOUND/,'failed job shows no reward');
+  assert.match(failedScreen.actions,/world-job-retry/,'retry action is wired to the same job');
+  assert.match(failedScreen.actions,/BACK TO THE YARD.*MAIN MENU/,'failed result keeps yard and menu actions');
+  const quitScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-quit'},worldJob:arena.worldJob}},
+    {metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
+  assert.match(quitScreen.description,/left the job unfinished/,'quitting explains that the job did not finish');
+  assert.match(quitScreen.actions,/TRY AGAIN/,'quit job offers a retry');
+  assert.doesNotMatch(quitScreen.metrics,/SCRAP EARNED|FOUND/,'quit job shows no reward');
   assert.equal(app._settleArenaResult({result},app.duel.state),false,'duplicate result cannot award twice');
   assert.equal(app.profile.wasteland.scrap,paid,'duplicate result leaves the reward unchanged');
   app.returnToMenu();app.dispose?.();
