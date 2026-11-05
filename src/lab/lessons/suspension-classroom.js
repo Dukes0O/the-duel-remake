@@ -35,17 +35,36 @@ export const STEPS = Object.freeze([
 
 export const KEY_IDEAS = Object.freeze([
   {id: 'spring', text: 'A spring connects each wheel to the car body. A stiffer spring compresses less under the same force.'},
-  {id: 'transfer', text: 'In a corner, weight transfer loads the outside wheels and unloads the inside wheels. The car body leans as the suspension moves.'},
-  {id: 'tradeoff', text: 'A stiffer spring reduces body roll in this model, but sends more bump motion into the body. It can make a rough road less comfortable.'},
+  {
+    id: 'transfer',
+    text: 'A turn pushes the car sideways at the road. The car’s weight sits above the road, so the car wants to tip outward. That is why it leans.',
+  },
+  {
+    id: 'tradeoff',
+    text: 'A soft spring suits a rough road because it soaks up bumps. A stiff spring suits a smooth road '
+      + 'and keeps the body flatter in a bend, but it can pass bumps into the body and briefly lift a tyre.',
+  },
 ].map(Object.freeze));
 
 // Keep existing word ids so notebook entries already saved still match.
 export const WORDS = Object.freeze([
-  {id: 'suspension-word-0', word: 'Spring', meaning: 'A spring is a coil between a wheel and the car body. It compresses when the wheel and body move closer and stretches when they move apart.'},
-  {id: 'suspension-word-1', word: 'Spring stiffness', meaning: 'Spring stiffness describes how strongly a spring resists being compressed or stretched. A stiffer spring moves less under the same force.'},
-  {id: 'suspension-word-2', word: 'Weight transfer', meaning: 'Weight transfer is a change in how the car’s weight presses on its tyres. In a corner, the outside tyres carry more and the inside tyres carry less.'},
+  {
+    id: 'suspension-word-0', word: 'Spring',
+    meaning: 'A spring is a coil between a wheel and the car body. It compresses when the wheel and body move closer and stretches when they move apart.',
+  },
+  {
+    id: 'suspension-word-1', word: 'Spring stiffness',
+    meaning: 'Spring stiffness describes how strongly a spring resists being compressed or stretched. A stiffer spring moves less under the same force.',
+  },
+  {
+    id: 'suspension-word-2', word: 'Weight transfer',
+    meaning: 'Weight transfer is a change in how the car’s weight presses on its tyres. In a corner, the outside tyres carry more and the inside tyres carry less.',
+  },
   {id: 'suspension-word-3', word: 'Body roll', meaning: 'Body roll is the sideways angle of the car body as the car turns, measured in degrees (°).'},
-  {id: 'suspension-body-shake', word: 'Body shake', meaning: 'Body shake is the root mean square of the body’s up-and-down acceleration during the rig’s 20-second run, measured in metres per second squared (m/s²).'},
+  {
+    id: 'suspension-body-shake', word: 'Body shake',
+    meaning: 'Body shake tells how hard the body shakes up and down during the test. Its unit, m/s², means how quickly the body’s speed changes.',
+  },
 ].map(Object.freeze));
 
 // This card and the four required runs are the existing challenge contract.
@@ -64,12 +83,12 @@ const CHECKS = Object.freeze({
     feedback: 'The soft spring gives 4.09 m/s² here. The stiff spring gives 4.77 m/s², so the soft spring has less body shake on these bumps.',
   }),
   'guess-roll': Object.freeze({
-    question: 'In the model bend, which spring gives the smaller body-roll angle?',
+    question: 'In this bend, which spring gives the smaller body-roll angle?',
     correct: 1,
-    right: 'Right. The stiff spring gives 2.2 degrees of body roll, less than the soft spring’s 6.5 degrees in this model bend.',
+    right: 'Right. In this bend, the soft spring leans 6.5 degrees and the stiff spring leans 2.2 degrees.',
     wrong: 'That prediction is not right. The soft spring gives 6.5 degrees of body roll, greater than the stiff spring’s 2.2 degrees.',
     answers: ['Soft spring: 6.5°.', 'Stiff spring: 2.2°.', 'Both springs: the same angle.'],
-    feedback: 'The soft spring gives 6.5° of body roll in this model. The stiff spring gives 2.2°, so it leans less here.',
+    feedback: 'The numbers come from this test: 6.5° ÷ 2.2° is about 3, so the stiff spring leans about a third as much.',
   }),
   'check-spring': Object.freeze({
     question: 'What does a stiffer spring do under the same force?',
@@ -80,17 +99,21 @@ const CHECKS = Object.freeze({
   }),
   'check-transfer': Object.freeze({
     question: 'As the car turns, where does weight transfer?',
-    answers: ['More load goes to the outside tyres and less to the inside tyres.', 'All the car’s weight moves to the front tyres.', 'The car’s total weight becomes greater.'],
+    answers: [
+      'More load goes to the outside tyres and less to the inside tyres.',
+      'All the car’s weight moves to the front tyres.',
+      'The car’s total weight becomes greater.',
+    ],
     correct: 0,
     right: 'Correct. Weight transfer changes how the load is shared across the tyres; it does not change the car’s total weight.',
     wrong: 'In a corner, the outside tyres carry more load and the inside tyres carry less. The car’s total weight stays the same.',
   }),
   'check-formula': Object.freeze({
-    question: 'In this model, what happens to body roll when spring stiffness increases?',
+    question: 'In this bend, what happens to body roll when spring stiffness increases?',
     answers: ['The calculated roll angle gets smaller.', 'The calculated roll angle gets larger.', 'Spring stiffness does not appear in the roll rule.'],
     correct: 0,
-    right: 'Correct. Stiffness is in the denominator, so a larger stiffness gives a smaller roll angle.',
-    wrong: 'Spring stiffness is in the denominator of the roll rule. Increasing it makes the calculated roll angle smaller.',
+    right: 'Correct. A stiffer spring pushes back harder, so the body leans less.',
+    wrong: 'A stiffer spring pushes back harder, so the body leans less.',
   }),
 });
 
@@ -99,22 +122,12 @@ const resultBySetup = Object.freeze(Object.fromEntries(SETUPS.map(({spring, road
 const setupKey = setup => `${setup.spring}/${setup.road}`;
 const shown = (value, digits = 2) => Number(value).toFixed(digits);
 const values = result => `${shown(result.bodyShake)} m/s² body shake and ${shown(result.leanDeg, 1)}° body roll`;
-const rollFormula = 'roll angle = atan(mass × corner force × centre height ÷ (spring stiffness × track²))';
-const shakeFormula = 'body shake = √(Σ(body acceleration²) ÷ number of time samples)';
 const formulaTitles = Object.freeze({
   wonder: 'The shaker rig', 'word-spring': 'The spring', 'word-stiffness': 'Spring stiffness',
   'word-weight': 'Weight transfer', 'word-roll': 'Body roll', 'word-shake': 'Body shake',
-  formula: 'The model’s roll rule', 'guess-bumps': 'Predict body shake', 'guess-roll': 'Predict body roll',
+  formula: 'Compare body roll', 'guess-bumps': 'Predict body shake', 'guess-roll': 'Predict body roll',
   watch: 'Live readings', 'try-free': 'Your recorded runs', alone: 'Your recorded runs', recap: 'What the rig showed',
 });
-
-function rollWorked(stiffness) {
-  const numerator = CORNER.carMassKg * CORNER.cornerG * GRAVITY * CORNER.centreHeightM;
-  const denominator = stiffness * CORNER.trackM ** 2;
-  const radians = Math.atan(numerator / denominator);
-  const degrees = radians * 180 / Math.PI;
-  return `atan(${CORNER.carMassKg} kg × ${CORNER.cornerG} × ${GRAVITY} m/s² × ${CORNER.centreHeightM} m ÷ (${stiffness} N/m × ${CORNER.trackM}² m²)) = atan(${shown(numerator, 2)} ÷ ${shown(denominator, 2)}) = ${shown(degrees, 2)}°`;
-}
 
 function rollDegrees(stiffness) {
   const numerator = CORNER.carMassKg * CORNER.cornerG * GRAVITY * CORNER.centreHeightM;
@@ -124,16 +137,12 @@ function rollDegrees(stiffness) {
 
 function formulaRows(id, setup, {asking = false} = {}) {
   const rows = [];
-  if (['word-shake', 'formula', 'guess-bumps', 'guess-roll', 'watch', 'try-free', 'alone', 'check-spring', 'check-transfer', 'check-formula', 'recap'].includes(id)) {
-    rows.push({title: 'How the rig measures body shake', formula: shakeFormula,
-      worked: asking ? '' : 'The rig uses the body’s acceleration samples from a 20 s run.',
-      note: 'Root mean square gives one reading for the changing up-and-down motion.'});
-  }
   if (['formula', 'guess-bumps', 'guess-roll', 'watch', 'try-free', 'alone', 'check-spring', 'check-transfer', 'check-formula', 'recap'].includes(id)) {
-    const stiffness = id === 'formula' ? 40000 : CORNER.springs[setup.spring];
-    const worked = asking ? '' : rollWorked(stiffness);
-    rows.push({title: 'How the model calculates body roll', formula: rollFormula, worked,
-      note: `This model uses a ${CORNER.cornerG} g corner, a ${CORNER.carMassKg} kg car, a ${CORNER.centreHeightM} m centre height, and a ${CORNER.trackM} m track. Spring stiffness is measured in N/m.`});
+    const soft = resultBySetup['soft/smooth'].leanDeg;
+    const stiff = resultBySetup['stiff/smooth'].leanDeg;
+    const worked = asking ? '' : `${shown(soft, 1)}° ÷ ${shown(stiff, 1)}° ≈ 3. The numbers come from this test, so the stiff spring leans about a third as much.`;
+    rows.push({title: 'What this bend showed', formula: '', worked,
+      note: 'A stiffer spring pushes back harder, so the body leans less.'});
   }
   return rows.map(row => ({...row, title: row.title || formulaTitles[id]}));
 }
@@ -183,11 +192,13 @@ export function createModel() {
     const result = settingResult();
     rows.push({spring: setup.spring, road: setup.road, shake: shown(result.bodyShake), roll: shown(result.leanDeg, 1), contact: shown(result.contactShare * 100, 2)});
     if (['try-free', 'alone'].includes(id())) tested.add(key);
-    say = `The ${setup.spring} spring on the ${setup.road} road measured ${values(result)}. Tyre contact was ${(result.contactShare * 100).toFixed(2)}%.`;
+    say = `The ${setup.spring} spring on the ${setup.road} road measured ${values(result)}. `
+      + `Tyre contact shows how much of the test the tyre touched the road: `
+      + `${(result.contactShare * 100).toFixed(2)}%.`;
     if (id() === 'try-free' && tested.size >= FREE_RUNS) phase = 'done';
     if (id() === 'alone' && setup.spring === 'stiff' && result.leanDeg < 3) {
       phase = 'done';
-      say += ' You reached the target: less than 3° of body roll in this model bend.';
+      say += ' You reached the target: less than 3° of body roll in this bend.';
     }
     return {kind: 'right', say};
   }
@@ -249,7 +260,11 @@ export function createModel() {
       }
       if (time >= 3.2) {
         phase = 'done'; setup = {...SETUPS[3]};
-        say = `The readings changed with the settings. On bumps, soft gives ${shown(resultBySetup['soft/bumpy'].bodyShake)} m/s² and stiff gives ${shown(resultBySetup['stiff/bumpy'].bodyShake)} m/s². In the model bend, their roll angles are ${shown(resultBySetup['soft/smooth'].leanDeg, 1)}° and ${shown(resultBySetup['stiff/smooth'].leanDeg, 1)}°.`;
+        say = `The readings changed with the settings. On bumps, soft gives `
+          + `${shown(resultBySetup['soft/bumpy'].bodyShake)} m/s² and stiff gives `
+          + `${shown(resultBySetup['stiff/bumpy'].bodyShake)} m/s². In this bend, `
+          + `their roll angles are ${shown(resultBySetup['soft/smooth'].leanDeg, 1)}° `
+          + `and ${shown(resultBySetup['stiff/smooth'].leanDeg, 1)}°.`;
         return {kind: 'right', say};
       }
     }
@@ -268,7 +283,11 @@ export function createModel() {
     let hints = ['Read the words and look at the rig.', 'Use the panel to compare the settings.', 'Press Enter when you are ready.'];
     if (['word-spring', 'word-stiffness', 'word-weight', 'word-roll', 'word-shake', 'try-free', 'alone'].includes(current)) {
       Object.assign(keys, ARROW_ACTIONS);
-      for (const [key, action, label] of [['←', 'spring:soft', 'Soft spring'], ['→', 'spring:stiff', 'Stiff spring'], ['↓', 'road:bumpy', 'Bumpy road'], ['↑', 'road:smooth', 'Smooth road']]) {
+      const controls = [
+        ['←', 'spring:soft', 'Soft spring'], ['→', 'spring:stiff', 'Stiff spring'],
+        ['↓', 'road:bumpy', 'Bumpy road'], ['↑', 'road:smooth', 'Smooth road'],
+      ];
+      for (const [key, action, label] of controls) {
         buttons.push({action, label, key});
       }
     }
@@ -280,26 +299,44 @@ export function createModel() {
       target = 'answer:0';
     }
     if (current === 'word-spring') {
-      waiting = false; localSay = 'A spring is a coil between the wheel and the car body. When a bump pushes a wheel up, the spring compresses; as the wheel moves down, it stretches again. The body rides above the spring.';
+      waiting = false;
+      localSay = 'A spring is a coil between the wheel and the car body. '
+        + 'When a bump pushes a wheel up, the spring compresses. '
+        + 'When the wheel drops, the spring stretches again. The body rides above it.';
       prompt = 'Press Enter to learn what spring stiffness means.';
     } else if (current === 'word-stiffness') {
-      waiting = false; localSay = 'Spring stiffness tells us how strongly a spring resists being compressed or stretched. Under the same force, a stiffer spring moves less. That can reduce sideways lean in a turn, but it sends more bump motion into the body and can make this car less comfortable.';
+      waiting = false;
+      localSay = 'Spring stiffness tells us how strongly a spring resists being compressed or stretched. '
+        + 'A stiffer spring moves less under the same force. It sends more bump motion into the body, '
+        + 'so it can make this car less comfortable on a rough road.';
       prompt = 'Press Enter to learn what changes in a corner.';
     } else if (current === 'word-weight') {
-      waiting = false; localSay = 'When a car turns, its direction changes and the tyres push sideways on it. Weight transfer means the outside tyres carry more load while the inside tyres carry less. The car body leans outward as the suspension lets the sides move by different amounts.';
+      waiting = false;
+      localSay = 'A turning car pushes sideways at the road. Its weight sits above the road, '
+        + 'so the car wants to tip outward. The outside tyres carry more load and the inside tyres carry less. '
+        + 'That is why the body leans.';
       prompt = 'Press Enter to learn the name for this sideways lean.';
     } else if (current === 'word-roll') {
-      waiting = false; localSay = 'Body roll is the sideways angle of the car body in a turn. Weight transfer loads the outside suspension more than the inside suspension, so one side compresses while the other extends. The body leans until the springs and other forces balance.';
+      waiting = false;
+      localSay = 'Body roll is the sideways angle of the car body in a turn. '
+        + 'The outside tyre pushes the spring in more, while the inside spring stretches. '
+        + 'The body leans until the forces balance.';
       prompt = 'Press Enter to learn how the rig measures body shake.';
     } else if (current === 'word-shake') {
-      waiting = false; localSay = 'Body shake is a single reading for the body’s up-and-down acceleration during a 20-second run. Acceleration measures how quickly speed or direction changes. The unit m/s² means metres per second squared.';
-      prompt = 'Press Enter to see the model’s roll formula.';
+      waiting = false;
+      localSay = 'The rig gives one body-shake reading for this test. A higher reading means harder shaking.';
+      prompt = 'Press Enter to compare body roll in a bend.';
     } else if (current === 'formula') {
-      waiting = false; localSay = `This model estimates body roll from the car’s mass, corner force, centre height, track width and spring stiffness. It uses ${CORNER.cornerG} g for the corner. The example uses a spring stiffness of 40,000 N/m, between the rig’s two settings, so it does not predict either answer card.`;
-      localSay += ' Here, g means Earth gravity near the ground: 1 g is 9.81 metres per second squared. The formula uses 0.8 g. N/m means newtons of force per metre of spring movement. Track is the distance between the left and right tyres. The atan function turns the ratio into an angle.';
+      waiting = false;
+      localSay = 'A stiffer spring pushes back harder, so the body leans less. '
+        + 'In this bend, the soft spring leans 6.5° and the stiff spring leans 2.2°. '
+        + 'The numbers come from this test: 6.5 ÷ 2.2 is about 3, '
+        + 'so the stiff spring leans about a third as much.';
       prompt = 'Check the worked sum, then press Enter to make your first prediction.';
     } else if (current === 'wonder') {
-      waiting = phase !== 'done'; ready = phase === 'done'; localSay = say || 'This shaker rig moves a wheel over a rough road while the car body rides above it. Watch the wheel and body move.';
+      waiting = phase !== 'done'; ready = phase === 'done';
+      localSay = say || 'This shaker rig moves a wheel over a rough road while the car body rides above it. '
+        + 'Watch the wheel and body move.';
       prompt = ready ? 'Press Enter to begin.' : 'Watch the wheel and the body move.';
       hints = ['Watch the wheel move over the rough surface.', 'The body above it moves too.', 'Wait for Brian to finish the demonstration.'];
     } else if (current === 'guess-bumps' || current === 'guess-roll') {
@@ -307,8 +344,12 @@ export function createModel() {
       if (asking) {
         localSay = check.question; prompt = 'Pick a card by clicking it, or press 1, 2 or 3.';
         hints = current === 'guess-bumps'
-          ? ['Compare what the two springs do on the same road.', 'A spring that compresses more can isolate the body from bumps.', 'Choose the body-shake reading that is smaller.']
-          : ['Think about the spring’s resistance to movement in a corner.', 'The model divides by spring stiffness.', 'Choose the smaller angle.'];
+          ? [
+            'Compare what the two springs do on the same road.',
+            'A spring that compresses more can soften bumps for the body.',
+            'Choose the body-shake reading that is smaller.',
+          ]
+          : ['A stiffer spring pushes back harder.', 'In this bend, the numbers come from this test.', 'Choose the smaller angle.'];
       } else {
         localSay = say; prompt = 'Press Enter to continue.';
       }
@@ -320,13 +361,23 @@ export function createModel() {
     } else if (current === 'try-free') {
       waiting = phase !== 'done'; ready = phase === 'done'; target = ready ? null : 'show'; glow = 'settings';
       localSay = say || 'Choose a spring and a road, then run the rig. The results table keeps your measurements so you can compare three different setting pairs.';
-      prompt = ready ? 'You tested three setting pairs. Press Enter to continue.' : `Choose settings and press Space to run. Different pairs tested: ${tested.size} of ${FREE_RUNS}.`;
+      prompt = ready
+        ? 'You tested three setting pairs. Press Enter to continue.'
+        : `Choose settings and press Space to run. Different pairs tested: ${tested.size} of ${FREE_RUNS}.`;
       hints = ['Use the arrows to choose a spring and road.', 'A repeated setting pair does not count twice.', 'I will select a new pair and run it.'];
     } else if (current === 'alone') {
       const reached = phase === 'done'; waiting = !reached; ready = reached; target = reached ? null : 'show'; glow = 'settings';
-      localSay = say || 'On your own, find a setup with less than 3° of body roll. Choose a spring and road, then run the rig. You can check the formula before each run.';
-      prompt = reached ? 'You reached the target. Press Enter to continue.' : `Target: less than 3° of body roll. Current model reading: ${shown(settingResult().leanDeg, 1)}°. Change the setup and press Space.`;
-      hints = ['A stiffer spring gives a smaller roll angle in this model.', 'Set the stiff spring and run the model bend.', 'I will set the stiff spring on the smooth road and run the rig.'];
+      localSay = say || 'On your own, find a setup with less than 3° of body roll. '
+        + 'Choose a spring and road, then run the rig.';
+      prompt = reached
+        ? 'You reached the target. Press Enter to continue.'
+        : `Target: less than 3° of body roll. Current reading: ${shown(settingResult().leanDeg, 1)}°. `
+          + 'Change the setup and press Space.';
+      hints = [
+        'A stiffer spring pushes back harder, so the body leans less.',
+        'Set the stiff spring and run the rig.',
+        'I will set the stiff spring on the smooth road and run the rig.',
+      ];
     } else if (check && current.startsWith('check-')) {
       waiting = asking; ready = !asking;
       if (asking) {
@@ -334,12 +385,23 @@ export function createModel() {
         hints = ['Use the lesson words and the formula.', 'Think through what changes in this case.', 'Choose the sentence that answers the question.'];
       } else { localSay = say; prompt = 'Press Enter to continue.'; }
     } else if (current === 'recap') {
-      waiting = false; ready = true; localSay = 'The spring joins each wheel to the body. In a corner, weight transfers toward the outside tyres and the body rolls. A stiffer spring reduces roll in this model, but can pass more bumps into the body. The suspension challenge asks for all four spring and road comparisons.';
+      waiting = false; ready = true;
+      localSay = 'A turn pushes the car sideways at the road, while its weight sits above it, '
+        + 'so the car wants to tip outward. A soft spring suits a rough road because it soaks up bumps. '
+        + 'A stiff spring suits a smooth road and keeps the body flatter, but a rough road can shake '
+        + 'the driver and briefly lift a tyre.';
       prompt = 'Press Enter to finish the lesson and open the suspension challenge.';
     }
-    const cards = asking ? answerLabels.map((label, answerIndex) => ({id: `answer:${answerIndex}`, key: String(answerIndex + 1), label, picture: {kind: 'result', shake: null, roll: null}, state: null})) : [];
+    const cards = asking ? answerLabels.map((label, answerIndex) => ({
+      id: `answer:${answerIndex}`, key: String(answerIndex + 1), label,
+      picture: {kind: 'result', shake: null, roll: null}, state: null,
+    })) : [];
     if (current.startsWith('check-') && !asking && check) {
-      cards.push(...answerLabels.map((label, answerIndex) => ({id: `answer:${answerIndex}`, key: String(answerIndex + 1), label, picture: {kind: 'result', shake: null, roll: null}, state: answerIndex === check.correct ? 'right' : answerIndex === quizAnswer ? 'wrong' : null})));
+      cards.push(...answerLabels.map((label, answerIndex) => ({
+        id: `answer:${answerIndex}`, key: String(answerIndex + 1), label,
+        picture: {kind: 'result', shake: null, roll: null},
+        state: answerIndex === check.correct ? 'right' : answerIndex === quizAnswer ? 'wrong' : null,
+      })));
     }
     return {
       scene: current, time, setup: {...setup}, result,

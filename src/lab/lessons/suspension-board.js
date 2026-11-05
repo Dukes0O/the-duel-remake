@@ -112,7 +112,7 @@ function carFromBehind(ctx, view) {
   const push = 24 + rollDegrees * 2.2;
   arrow(ctx, centreX - 175, bodyY + 100, centreX - 175 - push, bodyY + 100, '#ef7654', 5);
   arrow(ctx, centreX + 175, bodyY + 100, centreX + 175 + push, bodyY + 100, '#ef7654', 5);
-  text(ctx, `MODEL BODY ROLL ${rollDegrees.toFixed(1)}°`, centreX, 165, {size: 14, weight: 900, colour: '#edc557'});
+  text(ctx, `BODY ROLL ${rollDegrees.toFixed(1)}°`, centreX, 165, {size: 14, weight: 900, colour: '#edc557'});
   text(ctx, 'LEFT SPRING COMPRESSES', centreX - 105, 493, {size: 11, weight: 900, colour: '#edc557'});
   text(ctx, 'RIGHT SPRING EXTENDS', centreX + 105, 493, {size: 11, weight: 900, colour: '#79bce2'});
   fixedKey(ctx);
@@ -187,9 +187,9 @@ function recap(ctx, view) {
       text(ctx, 'OUTSIDE LOAD INCREASES', x + width / 2, 492, {size: 14, weight: 900, colour: '#edc557'});
     }
     if (idea.id === 'tradeoff') {
-      text(ctx, 'SOFT · MODEL BEND', x + width / 2, 374, {size: 14, weight: 900});
+      text(ctx, 'SOFT · THIS BEND', x + width / 2, 374, {size: 14, weight: 900});
       text(ctx, '6.5° body roll', x + width / 2, 410, {size: 17, colour: '#a9d9aa'});
-      text(ctx, 'STIFF · MODEL BEND', x + width / 2, 466, {size: 14, weight: 900});
+      text(ctx, 'STIFF · THIS BEND', x + width / 2, 466, {size: 14, weight: 900});
       text(ctx, '2.2° body roll', x + width / 2, 502, {size: 17, colour: '#a9d9aa'});
     }
   });

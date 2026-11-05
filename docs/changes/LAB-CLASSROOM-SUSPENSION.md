@@ -2,52 +2,47 @@
 
 ## What changed
 
-Expanded Suspension to a 16-step classroom lesson. Brian teaches spring,
-spring stiffness, weight transfer, body roll, body shake, and the costs of a
-stiffer spring before the predictions. The formula panel shows a worked roll
-calculation from visible metric inputs. The Watch changes through all four
-spring and road pairs; its board readings change with those settings. The
-learner predicts two different comparisons, tests three unique settings,
-works toward a less-than-3-degree target, answers three review questions, and
-gets recap cards with readings.
+Reworded Suspension for a young player and parent. Brian describes body shake
+as one reading for the test; the lesson defines m/s² as how quickly the body’s
+speed changes. The shake formula panel is gone. The roll
+panel compares the test’s 6.5° soft-spring and 2.2° stiff-spring readings:
+6.5 ÷ 2.2 is about 3, so the stiff spring leans about a third as much.
 
-The rear-view board draws the car at its measured roll angle, with one spring
-compressing and the other extending. A fixed corner key names the body,
-compression, extension and sideways push. The physics panel keeps worked
-answers hidden while a prediction or check is open. The board contract checks
-sendable arrow glyphs, held-key pacing, targets, hit areas and rectangle bounds,
-including the run button.
+Brian now explains why a turning car leans outward, what tyre contact measures,
+and which spring suits rough or smooth roads. He also explains that a stiff
+spring can pass bumps into the body, shake the driver and briefly lift a tyre.
+The board labels use “this bend” and “body roll.” The lesson and board code
+split long lines into readable statements.
 
-The old challenge prompt now asks for both springs on each road. Its four-pair
-goal, reward, save and classroom attempt path are unchanged. Legacy answer and
-result wording now uses “body roll” consistently. The Lab-map scenario now
-walks to the wind tunnel, opens its lesson list, selects Suspension and sets
-the driving lesson gate in memory. It captures a screenshot for every lesson
-step when Claude runs it.
+The suspension bench readings, four-pair challenge, reward, save, and lesson
+flow are unchanged.
 
 ## Checks
 
-- `node --test tools/test-lab-classroom.mjs`: **40 passed, 0 failed**.
+- `node --test tools/test-lab-classroom.mjs`: **41 passed, 0 failed**.
 - `node --test tools/test-lab-classroom-page.mjs`: **6 passed, 0 failed**.
-- `npm run build`: PowerShell blocked `npm.ps1`; the same build passed as
-  `npm.cmd run build`. Vite reported its existing large-chunk and dynamic
-  import warnings.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`:
-  all 45 selected suites reached PASS in the output log. The command process
-  had not returned when this note was written; final process status is recorded
-  after it exits.
-- Browser scenario: not run because Chrome is unavailable in this job. The
-  keyboard-only scenario is ready for Claude and captures each step.
-- The sorted-unique classroom-part assertion now allows predictions before
-  Watch. That order keeps the Watch readings from giving away the predictions;
-  all seven parts remain required. The wrong-prediction assertion now checks
-  the two real readings, whose explanation spells out “m/s squared.” Neither
-  change weakens an acceptance check.
+- `npm.cmd run build`: **passed**. Vite reported existing large-chunk and
+  dynamic-import warnings.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: **42 passed, 1
+  failed, 2 not run**. `tools/test-review-evidence.mjs` failed because the job
+  could not start `ffmpeg` (`spawnSync ffmpeg EPERM`); fail-fast left two suites
+  unrun. This is outside the Suspension files.
+- Browser scenario: not run here; Claude will play it in Chrome.
 - Race fingerprints: none recorded or changed. Suspension race rules were
   untouched.
 
+## Assertion changes
+
+The scenario now checks Brian’s body-shake explanation and confirms there is
+no shake formula panel. Its roll check looks for the new 6.5° ÷ 2.2° ≈ 3 sum
+on the roll step. The lesson tests make the same wording change and retain the
+assertions that the four challenge settings pass the unchanged bench goal,
+the readings match the bench, questions hide results until answered, and three
+distinct free runs are required. These changes check the revised lesson copy;
+they do not weaken a behavior check.
+
 ## Removed
 
-- Removed the outdated “other spring” challenge wording and “lean” challenge
-  labels from the legacy Suspension lesson specification.
+- Removed the shake formula and the old roll calculation full of constants
+  from the player-facing lesson.
 - No source files removed; legacy lesson removal remains LAB-CLASSROOM-LIVE.

@@ -58,9 +58,14 @@ export async function run(c) {
   await d.open(); await shot('wonder'); await d.next('wonder');
   for (const step of ['word-spring', 'word-stiffness', 'word-weight', 'word-roll', 'word-shake', 'formula']) {
     await d.at(step); await shot(step);
+    if (step === 'word-shake') {
+      const words = await c.evaluate(`(() => ({brian: document.querySelector('.lc-bubble')?.textContent ?? '', formulas: document.querySelector('.lc-formulas')?.textContent ?? ''}))()`);
+      if (!words.brian.includes('one body-shake reading for this test')) throw new Error(`Body shake words are missing: ${words.brian}`);
+      if (words.formulas.includes('body shake')) throw new Error(`Body shake still has a formula panel: ${words.formulas}`);
+    }
     if (step === 'formula') {
       const shown = await c.evaluate(`document.querySelector('.lc-formulas')?.textContent`);
-      if (!shown?.includes('atan(5101.20 ÷ 90000.00) = 3.25°')) throw new Error(`Formula panel does not show the calculator sum: ${shown}`);
+      if (!shown?.includes('6.5° ÷ 2.2° ≈ 3')) throw new Error(`Roll panel does not show the calculator sum: ${shown}`);
     }
     await d.next(step);
   }
@@ -100,7 +105,7 @@ export async function run(c) {
     const past = document.querySelectorAll('.lc-past > *').length;
     return {hasRoll: panel.includes('body roll'), past};
   })()`);
-  if (!contract.hasRoll) throw new Error('Physics panel does not show the body-roll rule.');
+  if (!contract.hasRoll) throw new Error('Physics panel does not show the body-roll explanation.');
   if (contract.past < 12) throw new Error(`The lesson page did not keep earlier steps: ${contract.past}`);
   await select('Enter'); await wait(1200); await shot('challenge');
   await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('completed the Suspension lesson')`, 'four suspension bench comparisons pass the unchanged challenge', 20_000);

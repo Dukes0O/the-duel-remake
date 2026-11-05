@@ -321,12 +321,20 @@ test('Suspension questions explain every wrong answer with the challenge bench r
   assert.match(model.view().say,/6\.5.*2\.2/);
 });
 
-test('Suspension guided prompts work, the formulas follow settings, and three distinct free runs open Continue', () => {
+test('Suspension guided prompts keep the measured roll comparison and three distinct free runs open Continue', () => {
   const model=createSuspensionModel();
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
   const initial=model.view().formulas.at(-1).worked;
   model.act('spring:stiff'); model.act('road:smooth');
-  assert.notEqual(model.view().formulas.at(-1).worked,initial,'the roll sum tracks control settings');
+  assert.equal(model.view().formulas.at(-1).worked,initial,'the roll comparison uses the same measured test readings');
+  assert.match(initial,/6\.5° ÷ 2\.2° ≈ 3/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
+  assert.match(model.view().say,/one body-shake reading for this test/);
+  assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
+  assert.ok(model.view().formulas.every(row=>!row.title.toLowerCase().includes('shake')),'body shake has no formula panel');
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  model.act('spring:stiff'); model.act('road:smooth');
+  assert.equal(model.view().formulas.at(-1).worked,initial,'the roll comparison uses the same measured test readings');
   model.act('run'); model.act('road:bumpy'); model.act('run'); model.act('spring:soft'); model.act('run');
   assert.equal(model.view().rows.length,3); assert.equal(model.view().ready,true);
   assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
@@ -342,15 +350,23 @@ test('Show me selects and runs a different setting pair each time in the free te
   assert.equal(model.view().ready,true);
 });
 
-test('Suspension roll formula uses visible numbers and gives a calculator result', () => {
+test('Suspension roll comparison shows the measured numbers and a simple calculator sum', () => {
   const model=createSuspensionModel();
   model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='formula'));
-  const row=model.view().formulas.find(item=>item.title==='How the model calculates body roll');
-  assert.ok(row.worked.includes('1300 kg') && row.worked.includes('9.81 m/s'));
-  assert.ok(row.worked.includes('40000 N/m') && row.worked.includes('1.5'));
-  assert.ok(row.worked.includes('5101.20') && row.worked.includes('90000.00'));
-  const degrees=Math.atan((1300*.8*9.81*.5)/(40000*1.5**2))*180/Math.PI;
-  assert.ok(row.worked.endsWith(`${degrees.toFixed(2)}${String.fromCharCode(176)}`));
+  const row=model.view().formulas.find(item=>item.title==='What this bend showed');
+  assert.match(row.worked,/6\.5° ÷ 2\.2° ≈ 3/);
+  assert.match(row.worked,/stiff spring leans about a third as much/);
+  assert.match(row.worked,/numbers come from this test/);
+});
+
+test('Suspension reading words define body shake and explain tyre contact plainly', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
+  assert.match(model.view().say,/one body-shake reading for this test/);
+  assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  model.act('run');
+  assert.match(model.view().say,/Tyre contact shows how much of the test the tyre touched the road/);
 });
 
 test('Suspension held controls use classroom arrows and wait for their repeat interval', () => {
