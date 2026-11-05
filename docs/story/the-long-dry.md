@@ -110,10 +110,10 @@ share of the camp's water.
 | 4 | **Soup** | A kitchen, and paint ground for homes | People build for themselves |
 | 5 | **The Smell** | A latrine, downhill and well away from the well (or find out why) | The sickness lesson; the Clean Water map |
 | 6 | **The First Winter** | Nights are getting cold and tents will not do. Eight shacks before the frost, short of tin the whole way | Everyone lives. Some years you will not make it in time, and people will remember |
-| 11 | **First Fire** | The soup kitchen is alight, a year's work. Run to the old fire engine, drive it through your own town, put the fire out | The Fire Truck, for good. Reports begin. Ash on the ground leads to Cinder |
-| 12 | **Pay Day** | Read the Ledger. Have a good month, then a good year | How the till works |
-| 13 | **Pipes** | Carrying water is taking half the town's day. Lay your first pipe, up a tower, down to taps | Pressure: why a tower is tall |
-| 14 | **A Proper Town** | A hundred people, and a Town Hall in real brick, which takes a season | The statue, and the first neighbours call |
+| 7 | **First Fire** | The soup kitchen is alight, a year's work. Run to the old fire engine, drive it through your own town, put the fire out | The Fire Truck, for good. Reports begin. Ash on the ground leads to Cinder |
+| 8 | **Pay Day** | Read the Ledger. Have a good month, then a good year | How the till works |
+| 9 | **Pipes** | Carrying water is taking half the town's day. Lay your first pipe, up a tower, down to taps | Pressure: why a tower is tall |
+| 10 | **A Proper Town** | A hundred people, and a Town Hall in real brick, which takes a season | The statue, and the first neighbours call |
 
 Long stretches of this have nothing to do with chapters: a dry summer, a family leaving,
 a good harvest, who runs the kitchen now.
@@ -150,10 +150,10 @@ them in one sitting: each opens months or years after the last.
 
 | # | Chapter | Who | You do | The town gets |
 | --- | --- | --- | --- | --- |
-| 7 | **Ten Sacks of Flour** | Dot | Drive flour out, drive pies back | Pies: food, and a mood lift. A trade road |
-| 8 | **Dot's Is on Fire** | Dot | Road Rats throw a lamp through her window. Take the truck, put it out, drive the Rats off. Then offer protection and drop a fence around her, stop by stop | How protection works, and Dot's protection money |
-| 9 | **One Piece of Chalk** | Miss Quill, Bo | Bring chalk and books through the Boneyard without spilling them | The School. Children's drawings arrive in your reports |
-| 10 | **Mind the Goats** | Old Tam | Only the Titan or the rally car gets up the Ridge. Bring salt, bring goats down | Goat pens. And Tam says seas do not dry up in a fortnight |
+| 11 | **Ten Sacks of Flour** | Dot | Drive flour out, drive pies back | Pies: food, and a mood lift. A trade road |
+| 12 | **Dot's Is on Fire** | Dot | Road Rats throw a lamp through her window. Take the truck, put it out, drive the Rats off. Then offer protection and drop a fence around her, stop by stop | How protection works, and Dot's protection money |
+| 13 | **One Piece of Chalk** | Miss Quill, Bo | Bring chalk and books through the Boneyard without spilling them | The School. Children's drawings arrive in your reports |
+| 14 | **Mind the Goats** | Old Tam | Only the Titan or the rally car gets up the Ridge. Bring salt, bring goats down | Goat pens. And Tam says seas do not dry up in a fortnight |
 | 15 | **Sea's Late** | Captain Imre | Drive a water tanker across the dead sea. Fill their tank, and trade for salt | Salt to sell, and Deck Town on the map |
 | 16 | **The 2:15** | Pim | Fix his water crane on foot with a wrench. Sit up with him at night and watch a train with no lights go past, leaking water | The start of the Iron Mule |
 
@@ -357,11 +357,11 @@ Voice is a later card, and no release waits for it.
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `dot.flour.dot` | Dot | Chapter 15 | This is Dot, out on the Boneyard road. I've got a pie oven and no flour. Bring me ten sacks and I'll send you back pies. Don't ask about the coffee. |
+| `dot.flour.dot` | Dot | Chapter 11 | This is Dot, out on the Boneyard road. I've got a pie oven and no flour. Bring me ten sacks and I'll send you back pies. Don't ask about the coffee. |
 | `dot.flour.bump` | Dot | Sacks spilled | That's flour on the road, that is! Go back and get more! |
 | `dot.flour.won` | Dot | Delivered | Sit down. Have a coffee. No, don't. I like you. |
 | `dot.flour.pies` | Odessa | Pies home | Everyone's in a better mood. That's what a trade road does. It also means we have to keep it open. |
-| `dot.fire.fire` | Dot | Chapter 16 | Road Rats threw a lamp through my window! Now my diner's on fire and I am VERY cross! |
+| `dot.fire.fire` | Dot | Chapter 12 | Road Rats threw a lamp through my window! Now my diner's on fire and I am VERY cross! |
 | `dot.fire.cinder` | Cinder | On the way, if she has joined | That's an amateur fire. Put it out before I get embarrassed for them. |
 | `dot.fire.saved` | Dot | Fire out | It's still got a roof. Mostly. They'll be back, you know. |
 | `dot.fire.offer` | Hollis | Report: Offer protection | She's on her own out there. Run a fence round her and put a lookout on it, and she'll pay us a bit a week. It's not a threat. Make sure she knows it's not a threat. |
