@@ -126,7 +126,9 @@ function ski(ctx, view, i, j, l, g) {
   ctx.strokeStyle = '#e8e2d0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(len / 2 - 2, -5); ctx.quadraticCurveTo(len / 2 + 10, -6, len / 2 + 12, -16); ctx.stroke();
   ctx.fillStyle = '#2b3236'; ctx.fillRect(-8, -16, 16, 7);
   ctx.restore();
-  text(ctx, l.label, l.done ? x - 12 : x, y - 26 * g.scale, {size: 13 * g.scale + 2, align: l.done ? 'right' : 'center', colour: l.wax ? WAX_COLOURS[l.wax] : LABEL});
+  // A finished ski's name moves clear of the finish line: beyond its stopwatch where the lanes are close together, otherwise before the line.
+  const named = !l.done ? {x, y: y - 26 * g.scale, align: 'center'} : g.scale < 1 ? {x: surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale)[0] + 108, y: surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale)[1] - 11, align: 'left'} : {x: x - 12, y: y - 26 * g.scale, align: 'right'};
+  text(ctx, l.label, named.x, named.y, {size: 13 * g.scale + 2, align: named.align, colour: l.wax ? WAX_COLOURS[l.wax] : LABEL});
   // The ski's speed as an arrow along the slope: the arrow grows as the ski speeds up.
   if (view.glide && view.glide.speed > .1) {
     const length = view.glide.speed * 8, ux = Math.cos(a), uy = Math.sin(a), ax = x + 50 * ux, ay = y - 22 + 50 * uy;
@@ -380,7 +382,7 @@ function drawRecap(ctx, view) {
 }
 function menuMini(ctx, x, y, w) {
   ctx.fillStyle = 'rgba(14,20,24,.92)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x, y, w, 120, 8); ctx.fill(); ctx.stroke();
-  text(ctx, 'Today’s snow:', x + 14, y + 26, {size: 16, align: 'left', colour: theme.faint});
+  text(ctx, 'Today’s snow:', x + 14, y + 26, {size: 16, align: 'left', colour: LABEL});
   text(ctx, 'Cool snow, -5 °C', x + 14, y + 56, {size: 20, align: 'left'});
   ['hard', 'medium', 'soft'].forEach((wax, k) => { ctx.fillStyle = WAX_COLOURS[wax]; ctx.beginPath(); ctx.roundRect(x + 14 + k * 76, y + 78, 68, 26, 5); ctx.fill(); if (wax === 'medium') { ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.stroke(); } });
 }

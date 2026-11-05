@@ -54,6 +54,10 @@ Each new text replaces the line's whole entry in `src/lab/lab-lines.js`. For `la
 
 - `node tools/test-lab-classroom-wax.mjs`: 22 of 22.
 - The source check for "she", "her", "mph", "decides" and "air takes" is part of that suite and passes.
-- Browser walkthrough `lab-classroom-wax`: see the run line below.
+- Browser walkthrough `lab-classroom-wax`: passes at 1920 by 1000, with 40 pictures and no errors.
 - Look: the word steps, the free test, the questions and the recap were read from the walkthrough's pictures at 1920 by 1000.
 - The lane tier and the build run at the merge, as the brief asks.
+
+## A game rule worth knowing
+
+The game knows only a right and a wrong wax, so soft wax and medium wax both have 0.06 on dry powder, and a wrong wax is slower than no wax. The lesson says "in this game" wherever that matters.
