@@ -47,4 +47,4 @@ Changed one exact assertion in `tools/test-circuit-eifel.mjs`: the layout 3 Medi
 
 ## Removed
 
-Removed only the malformed trailing characters from the Eifel replay JSON. Temporary `.qa-dist` logs will be removed after these results are recorded here.
+Removed only the malformed trailing characters from the Eifel replay JSON. The race and check outputs remain in `.qa-dist` as requested.
