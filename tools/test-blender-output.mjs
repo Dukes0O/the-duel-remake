@@ -46,6 +46,7 @@ const generators = [
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
+  { script: 'tools/blender/bowl-crush.py', args: [], glb: ['public/assets/models/wasteland/bowl/crush.glb'], budget: 20000 },
   { script: 'tools/blender/water-works.py', args: [], glb: ['public/assets/models/wasteland/scrapdome/water-works.glb'] },
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
@@ -593,6 +594,17 @@ try {
       'bowl-podium-welded-cap', 'bowl-ramp-0-flame-jet-housings', 'bowl-floodlight-1-24-legs']) {
       assert.ok(names.has(part), `missing named stadium part ${part}`);
     }
+  });
+
+  check('Bowl crush GLB stays within its 20,000-triangle and 1 MB card budget', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/bowl/crush.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF', 'valid GLB header');
+    assert.ok(bytes.length <= 1_000_000, `${bytes.length} bytes`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength).trim());
+    const triangles = (gltf.meshes || []).flatMap(mesh => mesh.primitives || [])
+      .reduce((sum, primitive) => sum + (gltf.accessors[primitive.indices]?.count || 0) / 3, 0);
+    assert.ok(triangles > 100 && triangles <= 20_000, `${triangles} triangles`);
   });
 
   for (const generator of kitGenerators) check(generator.script + ' plans exact kit/evidence homes without Blender, donor reads or writes', () => {
