@@ -1,25 +1,25 @@
-﻿# BOWL-ART-CRUSH
+# BOWL-ART-CRUSH ? round 2
 
-Status: one art round complete; awaiting Claude's look verdict.
+Status: Blender art round submitted for Claude's judgment.
 
-## Design
+## Changed
 
-Built original van, bus, RV and burning two-bus stack props using Blender with worn steel, oxide paint, soot and rubber materials. The recipe exports the Bowl crush GLB. It is not wired into a game scene in this card. Round 1 sheet and honest preliminary scores are in `docs/board/looks/bowl-art-crush/round-1.jpg` and its adjacent note. The note flags boxy forms and artificial-looking flames for Claude's review.
+Rebuilt `tools/blender/bowl-crush.py` with named vehicle body, glass, wheel and frame meshes under one root. The recipe adds whole and collapsed van, bus and RV forms, a scorched crushed-bus heap, flat dirt, uneven rust and steel materials, and shaped flames. Blender's Y-up design axes are mapped into its Z-up render space. The existing Titan model appears in review renders only; it is not included in the obstacle GLB.
+
+Rebuilt `public/assets/models/wasteland/bowl/crush.glb`: 934,364 bytes and 15,254 triangles, within the 1 MB and 20,000-triangle limits. Replaced the standalone round 1 sheet with `docs/board/looks/bowl-art-crush/round-2.jpg`, a 66,682-byte comparison sheet. It shows round 1 on top and four round 2 Blender views below. The round 1 scores and findings are carried into `round-2-review.md`. Raw views stay under `.evidence/`.
+
+Builder visual scores are estimates, not Claude's verdict: outline/distinction 2/5, wear/detail 3/5, crushed shape 3/5, fire/heap 2/5, grounding/scale 3/5. Game-distance readability and frame cost are unmeasured. The note lists the remaining art gaps and does not claim a pass.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: passed, 193 checks, including Blender-free path planning and GLB file/triangle budgets (12,564 triangles; 648,200 bytes, read from the exported file). The initial run exposed an early `bpy` import in the paths-only mode; the recipe was corrected and the same suite passed on rerun.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: all 48 selected suites completed green; the appended replay fingerprints (297 checks) and test-runner checks passed. The runner did not return its final summary after the last output and was stopped as hung. Treat the command-level lane gate as incomplete.
-- `npm.cmd run build`: passed (Vite build). Existing dynamic-import and large-chunk warnings remain.
-- Browser/game check: not applicable because this card does not wire the model into a scene; Claude runs browser checks after wiring.
-- No frame check (art card).
-- Assertions added: one GLB budget check for this model. No existing assertions or tolerances changed.
-- Race fingerprints: not applicable; no race code changed.
+- Blender 4.5.13 LTS render and export: passed; four PNG views saved in `.evidence/2026-11-05/BOWL-ART-CRUSH/round-2/`.
+- `node tools/test-blender-output.mjs`: passed, 193 checks; GLB budget passed.
+- `node tools/test-repo-hygiene.mjs`: passed; no oversized look sheets.
+- Lane tier: all 48 suite results were written. Two suites reported FFmpeg `EPERM`: `test-circuit-eifel.mjs` (17/18 checks passed) and `test-review-evidence.mjs` (fixed review-note pairing, then 8/9 checks passed on direct rerun). The Eifel suite rerun also failed at the same FFmpeg loudness call. Other suites in the lane output passed. The lane process stayed open after printing the suite results; it was interrupted, so it produced no final runner summary. No assertions changed.
+- `npm.cmd run build`: passed. Vite reported existing dynamic-import and large-chunk warnings.
+- Replay guard in the lane output: passed, 297 checks. This is art-only; no race fingerprints changed or were recaptured.
+- Browser and in-game look checks: not run here. Claude should judge the comparison sheet and run the browser look check when the Bowl scene is wired. No frame check was run.
 
 ## Removed
 
-None.
-
-## Claude review
-
-Please judge the round sheet, especially the silhouettes, deformation, rust/wear, and fire treatment. The score note identifies visual gaps; no in-game resemblance, grounding, readability or frame-cost pass is claimed. Browser review is not needed for this unwired asset.
+Replaced the separate round 1 sheet and note with the comparison sheet and one review note that carries forward round 1's scores and findings. No tests, assertions, game code or runtime dependencies were removed or changed.
