@@ -14,10 +14,21 @@ a surface, so positions are world space and no frame folds over itself.
 
 ### Codex decided (Claude to review)
 
-Use a wide oval course frame around the map and keep the winding dirt road in
-world-space ground data. The road will be a surface band, not the course frame,
-so the existing frame projection stays stable and the ground can use the same
-height and surface queries for physics and rendering.
+Use a stable world-space oval frame through the eight places, centered at the
+map origin. Keep the dirt road as a surface band over that frame, not as a
+winding course route. `course.js` must preserve the world origin and use the
+Salt Flats normal-projection nearest solver for this stable oval. The frame's
+600 m by 430 m radii keep every place within the map's 700 m by 500 m extent;
+the surface road follows that same oval so a car can drive from each place to
+the next. Terrain height provides the steep outer ridge and far wall, not an
+invisible car boundary.
+
+Both cars and fighters use the full 1.4 km by 1.0 km world-space rectangle.
+Cars keep their normal frame mapping across that rectangle and can use the
+hills to turn back. Fighters on this venue use the same world rectangle rather
+than the arena's 278 m wall offset or the usual 150 m car radius; the hills and
+shared ground height still govern movement. Other arenas retain their existing
+limits.
 
 **Ground:** one height function and one surface function, shared by physics and later the renderer, as `freestyleSurfaceHeightAt` matches its grid. About 1.4 km by 1.0 km. Flats at each of the eight places
 (table in section 3), dirt road linking them, steep ridge round the edge, far wall behind it. Own `floorSpeedMph` about 115. Keep hillside driving: no invisible wall where a hill does the job.

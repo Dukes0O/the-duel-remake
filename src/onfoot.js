@@ -46,6 +46,7 @@ function blockedByScenery(course, from, to, fromS, toS) {
 
 function allowedGround(course, point, car, {arena = course.def?.arena === true} = {}) {
   if (point.y <= T.seaLevel) return false;
+  if (course.def?.scablands) return Math.abs(point.x) <= 700 && Math.abs(point.z) <= 500;
   if (arena) return Math.abs(point.lateral) <= (course.def?.venue === true
     ? course.def.scrapdome.wallOffset - T.radius : T.arenaLateralLimit);
   const anchor = carPoint(course, car);

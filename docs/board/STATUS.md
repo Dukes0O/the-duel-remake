@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-05T04:39:45.070Z
+Observed at: 2026-11-05T06:34:04.012Z
 
-Observation commit: 9a0975b10dd63f960f518e15253e13ed5f37299d
+Observation commit: 2e304fca5002735200f2628bca51b4b97373e764
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 9a0975b10dd63f960f518e15253e13ed5f37299d
+Integration HEAD: 2e304fca5002735200f2628bca51b4b97373e764
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -29,9 +29,25 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
+| codex/bowl-air | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-air |
+| codex/bowl-art-stadium | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-art-stadium |
+| codex/bowl-save | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-save |
+| codex/bowl-show | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-show |
 | codex/eifel-c3 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/eifel-c3 |
-| codex/lab-gforce | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-gforce |
+| codex/gear-find | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/gear-find |
+| codex/lab-grip | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-grip |
+| codex/lab-suspension | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-suspension |
 | codex/perf-high-night | 20 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night |
+| codex/qa-bundle-no-copy | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-bundle-no-copy |
+| codex/ww-art-boneyard | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-boneyard |
+| codex/ww-art-everburn | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-everburn |
+| codex/ww-art-kit | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-kit |
+| codex/ww-art-tintown | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-tintown |
+| codex/ww-batch-1 | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-batch-1 |
+| codex/ww-ground | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-ground |
+| codex/ww-jobs-core | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-jobs-core |
+| codex/ww-lines | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-lines |
+| codex/ww-save | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-save |
 
 ## Unmerged branches for idle review
 
@@ -39,8 +55,24 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/eifel-c3 | unknown | 2026-11-04T21:04:34-07:00 | 0 | last commit 2026-11-04T21:04:34-07:00 | docs/changes/EIFEL-CROWN-C3.md, src/race-field.js |
+| codex/bowl-air | unknown | 2026-11-04T22:37:03-07:00 | 0 | last commit 2026-11-04T22:37:03-07:00 | docs/board/board.yaml, docs/board/cards/BOWL-AIR.md, docs/board/cards/GFX-04-P1.md, docs/changes/BOWL-AIR.md, src/bowl/bowl-air.js |
+| codex/bowl-art-stadium | unknown | 2026-11-04T22:41:24-07:00 | 0 | last commit 2026-11-04T22:41:24-07:00 | docs/board/looks/bowl-art-stadium/round-1.jpg, docs/board/looks/bowl-art-stadium/round-1.md, docs/changes/BOWL-ART-STADIUM.md, tools/blender/bowl-stadium.py, tools/test-blender-output.mjs |
+| codex/bowl-save | unknown | 2026-11-04T22:44:21-07:00 | 0 | last commit 2026-11-04T22:44:21-07:00 | docs/board/board.yaml, docs/board/cards/BOWL-SAVE.md, docs/board/cards/GFX-04-P1.md, docs/changes/BOWL-SAVE.md, src/bowl/bowl-save.js |
+| codex/bowl-show | unknown | 2026-11-04T22:16:16-07:00 | 0 | last commit 2026-11-04T22:16:16-07:00 | docs/changes/BOWL-SHOW.md, src/bowl/bowl-show.js, tools/test-bowl-show.mjs |
+| codex/eifel-c3 | unknown | 2026-11-04T23:25:46-07:00 | 0 | last commit 2026-11-04T23:25:46-07:00 | docs/changes/EIFEL-CROWN-C3.md, src/race-field.js, tools/test-circuit-eifel.mjs |
+| codex/gear-find | unknown | 2026-11-04T22:25:15-07:00 | 0 | last commit 2026-11-04T22:25:15-07:00 | docs/SCRAPDOME.md, docs/changes/GEAR-FIND.md, src/feature-flags.js, src/screen-arena.js, src/screen-armory.js |
+| codex/lab-grip | unknown | 2026-11-04T23:27:51-07:00 | 0 | last commit 2026-11-04T23:27:51-07:00 | docs/board/STATUS.md, docs/board/board.yaml, docs/board/cards/GFX-04-P1.md, docs/board/cards/LAB-CLASSROOM-GRIP.md, docs/changes/LAB-CLASSROOM-GRIP.md |
+| codex/lab-suspension | unknown | 2026-11-04T23:28:28-07:00 | 0 | last commit 2026-11-04T23:28:28-07:00 | docs/board/board.yaml, docs/board/cards/GFX-03-P1.md, docs/board/cards/GFX-04-P1.md, docs/board/cards/LAB-CLASSROOM-SUSPENSION.md, docs/changes/LAB-CLASSROOM-SUSPENSION.md |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 20 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/qa-bundle-no-copy | unknown | 2026-11-04T22:16:57-07:00 | 0 | last commit 2026-11-04T22:16:57-07:00 | docs/board/board.yaml, docs/board/cards/GFX-04-P1.md, docs/changes/QA-BUNDLE-NO-COPY.md, tools/browser-harness.mjs, tools/test-audio-crash-peak.mjs |
+| codex/ww-art-boneyard | unknown | 2026-11-04T22:43:34-07:00 | 0 | last commit 2026-11-04T22:43:34-07:00 | docs/board/board.yaml, docs/board/cards/GFX-03-P1.md, docs/board/cards/GFX-04-P1.md |
+| codex/ww-art-everburn | unknown | 2026-11-04T23:26:28-07:00 | 0 | last commit 2026-11-04T23:26:28-07:00 | docs/board/board.yaml, docs/board/cards/GFX-04-P1.md, docs/board/looks/ww-art-everburn/round-1.jpg, docs/board/looks/ww-art-everburn/round-1.md, docs/changes/WW-ART-EVERBURN.md |
+| codex/ww-art-kit | unknown | 2026-11-04T22:43:34-07:00 | 0 | last commit 2026-11-04T22:43:34-07:00 | docs/board/board.yaml, docs/board/cards/GFX-03-P1.md, docs/board/cards/GFX-04-P1.md |
+| codex/ww-art-tintown | unknown | 2026-11-04T23:16:23-07:00 | 0 | last commit 2026-11-04T23:16:23-07:00 | docs/board/looks/ww-art-tintown/round-1-review.md, docs/board/looks/ww-art-tintown/round-1.jpg, docs/changes/WW-ART-TINTOWN.md, public/assets/models/wasteland/scablands/tintown.glb, tools/blender/scablands-tintown.py |
+| codex/ww-batch-1 | unknown | 2026-11-04T22:45:28-07:00 | 0 | last commit 2026-11-04T22:45:28-07:00 | docs/SCRAPDOME.md, docs/board/board.yaml, docs/board/cards/BOWL-AIR.md, docs/board/cards/BOWL-SAVE.md, docs/board/cards/GFX-03-P1.md |
+| codex/ww-jobs-core | unknown | 2026-11-04T22:21:42-07:00 | 0 | last commit 2026-11-04T22:21:42-07:00 | docs/changes/WW-JOBS-CORE.md, src/world/jobs/job-engine.js, src/world/jobs/steps/carry.js, src/world/jobs/steps/chase.js, src/world/jobs/steps/defend.js |
+| codex/ww-lines | unknown | 2026-11-04T22:20:23-07:00 | 0 | last commit 2026-11-04T22:20:23-07:00 | docs/board/board.yaml, docs/board/cards/GFX-04-P1.md, docs/changes/WW-LINES.md, src/story/ember-lines.js, tools/test-ember-lines.mjs |
+| codex/ww-save | unknown | 2026-11-04T22:34:33-07:00 | 0 | last commit 2026-11-04T22:34:33-07:00 | docs/board/board.yaml, docs/board/cards/GFX-04-P1.md, docs/changes/WW-SAVE.md, src/story/ember-save.js, src/world/world-save.js |
 
 ## Size targets
 
@@ -48,15 +80,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | unavailable | unavailable | 250,000,000 B |
+| Build `dist/` | 396,089,386 B | unavailable | 250,000,000 B |
 | Wasteland models | 117,929,200 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 495,896 B | +0 B | 500,000 B |
 | Review `looks/` | 37,757,113 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 5,511,628 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 220,470 B | -5,291,158 B | 5,000,000 B |
 | All `public/` | 388,729,335 B | +0 B | unavailable |
-| Git objects | 885,854,208 B | +0 B | unavailable |
+| Git objects | 920,690,688 B | +34,836,480 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -65,7 +97,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 601a96f8b59d62ad734f942e51eb840ada2e5452
 - Local main: missing
-- Local integration/wasteland: 56ac80bd7294d36cc45b6bb26c6b61758689b3be
+- Local integration/wasteland: 785a3c5416c4176a04d0c6109847a7a0370f3aa9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -73,8 +105,24 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 
 - Remote origin/master: matches local; cached commit 601a96f8b59d62ad734f942e51eb840ada2e5452.
 - Remote origin/main: missing; cached commit missing.
-- Remote origin/integration/wasteland: matches local; cached commit 56ac80bd7294d36cc45b6bb26c6b61758689b3be.
+- Remote origin/integration/wasteland: behind local; cached commit 56ac80bd7294d36cc45b6bb26c6b61758689b3be.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
+Issue: codex/bowl-air: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-air' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-air/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-air
+Issue: codex/bowl-art-stadium: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-art-stadium' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-art-stadium/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-art-stadium
+Issue: codex/bowl-save: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-save' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-save/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-save
+Issue: codex/bowl-show: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-show' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-show/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/bowl-show
 Issue: codex/eifel-c3: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/eifel-c3' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/eifel-c3/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/eifel-c3
+Issue: codex/gear-find: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/gear-find' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/gear-find/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/gear-find
+Issue: codex/lab-grip: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-grip' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-grip/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-grip
+Issue: codex/lab-suspension: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-suspension' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-suspension/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-suspension
 Issue: codex/perf-high-night: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/perf-high-night
+Issue: codex/qa-bundle-no-copy: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-bundle-no-copy' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-bundle-no-copy/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/qa-bundle-no-copy
+Issue: codex/ww-art-boneyard: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-boneyard' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-boneyard/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-boneyard
+Issue: codex/ww-art-everburn: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-everburn' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-everburn/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-everburn
+Issue: codex/ww-art-kit: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-kit' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-kit/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-kit
+Issue: codex/ww-art-tintown: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-tintown' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-tintown/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-art-tintown
+Issue: codex/ww-batch-1: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-batch-1' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-batch-1/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-batch-1
+Issue: codex/ww-jobs-core: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-jobs-core' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-jobs-core/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-jobs-core
+Issue: codex/ww-lines: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-lines' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-lines/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-lines
+Issue: codex/ww-save: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-save' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-save/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/ww-save

@@ -123,7 +123,7 @@ export class Course {
       raw.push({x:city?city.x:Math.cos(a)*r*frameX,z:city?city.z:Math.sin(a)*r*frameZ,s:0});
       if(i)raw[i].s=raw[i-1].s+Math.hypot(raw[i].x-raw[i-1].x,raw[i].z-raw[i-1].z);}
     const scale=this.length/raw.at(-1).s;raw.forEach(p=>{p.x*=scale;p.z*=scale;p.s*=scale;});
-    const origin=this.def.saltFlats?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
+    const origin=this.def.saltFlats||this.def.scablands?{x:0,z:0}:raw[0];let cursor=1;this.samples=[];
     for(let s=0;s<=this.length;s+=STEP){while(cursor<raw.length-1&&raw[cursor].s<s)cursor++;
       const a=raw[cursor-1],b=raw[cursor],t=(s-a.s)/(b.s-a.s);
       this.samples.push({s,x:lerp(a.x,b.x,t)-origin.x,z:lerp(a.z,b.z,t),y:this._height(s),heading:0,curvature:0});}
@@ -424,7 +424,7 @@ export class Course {
   worldAt(s,lat=0){const f=this.def.pit||Object.hasOwn(this,'at')?this.at(s):this._frame(s);return{x:f.x+Math.cos(f.heading)*lat,y:this.script&&lat?f.y+this.script.bankLift(s,lat):f.y,z:f.z-Math.sin(f.heading)*lat,heading:f.heading};}
   nearest(x,z,referenceS){if(this.def.pit)return pitNearest(this,x,z,referenceS);
     const nearest=this._nearestIndex.lookup(x,z);let bestS=nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step;
-    if(this.def.saltFlats){
+    if(this.def.saltFlats||this.def.scablands){
       // Solve the same sampled frame's normal projection, including scenery
       // coordinates inside and outside the driving band. No coordinate oracle.
       const residual=s=>{const frame=this.at(s);return (x-frame.x)*Math.sin(frame.heading)+(z-frame.z)*Math.cos(frame.heading);};
@@ -463,7 +463,7 @@ export class Course {
   }
   // The place along the route nearest (x, z): `nearest(x, z).s` without building the rest of the frame.
   nearestS(x,z){
-    if(this.def.pit||this.def.saltFlats)return this.nearest(x,z).s;
+    if(this.def.pit||this.def.saltFlats||this.def.scablands)return this.nearest(x,z).s;
     const nearest=this._nearestIndex.lookup(x,z);
     return this._refineS(x,z,nearest.index<0?0:this.samples[nearest.index-1].s+nearest.t*this.step);
   }

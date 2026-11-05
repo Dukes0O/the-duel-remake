@@ -14,10 +14,10 @@ export const SCABLANDS_PLACES = Object.freeze([
 export const SCABLANDS_LAYOUT = Object.freeze({
   halfWidth:700, halfDepth:500,
   frameRadiusX:600, frameRadiusZ:430,
-  roadHalfWidth:12,
+  roadHalfWidth:36,
   ridgeStart:.94, ridgeCrest:1.08, wallStart:1.25,
-  // The arena's normal-frame bounds sit beyond the steep hillside.
-  floorHalfWidth:278, wallOffset:278, outerWallOffset:278,
+  // Arena combat bounds sit beyond the whole map; the ridge is the driving limit.
+  floorHalfWidth:2000, wallOffset:2000, outerWallOffset:2000,
   floorSpeedMph:115, floorSpeedReferenceMph:200, floorSpeedExponent:.35,
   floorTraction:.92, floorScrub:.025, floorRoughness:.12,
   rampFractions:Object.freeze([]), rampLength:0, rampHeight:0,
