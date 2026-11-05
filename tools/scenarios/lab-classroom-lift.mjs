@@ -55,17 +55,6 @@ async function play(c) {
   await next('watch-lever');
   await at('watch-loads', 's.ready'); await shot('watch-loads');
   await next('watch-loads');
-  // The free test: the load and the lever move the sums at once, repeats do not count, and three settings open Continue.
-  await at('try-free'); await shot('try-free');
-  await press('KeyW'); await press('KeyW');
-  if (!(await worked('0.2573 × 3,887 kg = 1,000 kg'))) throw Error('The sums did not follow the lever.');
-  await press('Space'); await saying('Change a setting', 'the first test says its result'); await wait(200); await shot('try-free-first');
-  await press('Space'); await saying('already tested', 'a repeat does not count');
-  await press('Digit3');
-  if (!(await worked('2,910 kg ÷ 3,887 kg = 0.7486'))) throw Error('The sums did not follow the load.');
-  await hold('KeyW', 10); await wait(1800); await press('Space'); await saying('hovers', 'the second test says its result'); await wait(200); await shot('try-free-hover');
-  await press('Digit1'); await press('Digit1'); await hold('KeyW', 12); await wait(1800); await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
-  await next('try-free');
   // The guided try: Brian's help climbs to his pointer, Show me hooks the car, then a wrong guess and why.
   await at('try-car'); await shot('try-car');
   for (const rung of [1, 2, 3]) { await press('KeyH'); await at('try-car', `s.help === ${rung}`); }
@@ -78,6 +67,17 @@ async function play(c) {
   await press('Digit2'); await hold('KeyW', 12);
   await at('try-heavy', 's.ready'); await shot('try-heavy-right');
   await next('try-heavy');
+  // The free test: the load and the lever move the sums at once, repeats do not count, and three settings open Continue.
+  await at('try-free'); await shot('try-free');
+  await press('KeyW'); await press('KeyW');
+  if (!(await worked('0.2573 × 3,887 kg = 1,000 kg'))) throw Error('The sums did not follow the lever.');
+  await press('Space'); await saying('Change a setting', 'the first test says its result'); await wait(200); await shot('try-free-first');
+  await press('Space'); await saying('already tested', 'a repeat does not count');
+  await press('Digit3');
+  if (!(await worked('2,910 kg ÷ 3,887 kg = 0.7486'))) throw Error('The sums did not follow the load.');
+  await hold('KeyW', 10); await wait(1800); await press('Space'); await saying('hovers', 'the second test says its result'); await wait(200); await shot('try-free-hover');
+  await press('Digit1'); await press('Digit1'); await hold('KeyW', 12); await wait(1800); await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
+  await next('try-free');
   // Brian's job: the Dusthawk alone has room to spare; one crate more is the answer.
   await at('alone'); await hold('KeyW', 10); await at('alone', 's.help === 1'); await shot('alone-room-for-more');
   await press('Digit1'); await hold('KeyW', 10); await at('alone', 's.ready'); await wait(300); await shot('alone-pass');

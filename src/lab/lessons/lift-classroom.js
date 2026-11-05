@@ -34,9 +34,9 @@ export const STEPS = Object.freeze([
   {id: 'word-hover', part: 1, title: 'Hovering', word: 'lift-hover'},
   {id: 'watch-lever', part: 2, title: 'Less lift, equal lift and more lift'},
   {id: 'watch-loads', part: 2, title: 'Three loads', voice: 'lab.brian.lift.intro'},
-  {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'try-car', part: 3, title: 'The Dusthawk'},
   {id: 'try-heavy', part: 3, title: 'Two more crates'},
+  {id: 'try-free', part: 3, title: 'Test your own settings'},
   {id: 'alone', part: 4, title: 'Brian’s job'},
   {id: 'check-heavy', part: 5, title: 'Question 1 of 3'},
   {id: 'check-more', part: 5, title: 'Question 2 of 3'},
@@ -46,17 +46,17 @@ export const STEPS = Object.freeze([
 
 export const KEY_IDEAS = Object.freeze([
   {id: 'match', text: 'Lift is the rotor’s push upward, and weight is the Earth’s pull downward. When the two are equal, they cancel each other, and the helicopter hovers.'},
-  {id: 'most', text: `Every rotor has a most that it can push, which for this rotor near the ground is ${MOST}. When the total weight is greater than that, the load stays on the ground, even with the lever at the top.`},
-  {id: 'ease', text: 'In the game, once the Dusthawk has left the ground, press S a little at a time until the helicopter holds still.'},
+  {id: 'most', text: `Every rotor has a limit to how hard it can push, and near the ground the limit of this rotor is ${MOST}. When the total weight is greater than that, the load stays on the ground, even with the lever at the top.`},
+  {id: 'ease', text: 'To hold the Dusthawk at one height, lift must come back to equal weight. In Assisted flying, letting go of W does that for you. In Real flying, W and S move the lever itself, so press S a little at a time until the helicopter holds still.'},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: 'Lift must match weight.',
-  text: `Lift the Dusthawk and hold it between ${BAND_M[0]} and ${BAND_M[1]} m above the pad for ${HOLD_S} seconds. Once the Dusthawk has left the ground, press S a little at a time until the helicopter holds still.`});
+  text: `Lift the Dusthawk and hold it between ${BAND_M[0]} and ${BAND_M[1]} m above the pad for ${HOLD_S} seconds. In Assisted flying, let go of W when the Dusthawk is high enough. In Real flying, press S a little at a time until the helicopter holds still.`});
 // The notebook's words, under the ids the old lesson saved, so a player's notebook keeps them.
 export const WORDS = Object.freeze([
   {id: 'lift-weight', word: 'Weight', meaning: 'Mass is how much matter an object contains, measured in kilograms, written kg. Weight is how hard the Earth pulls on that mass. It is a force, measured in newtons, written N, and each kilogram is pulled with 9.81 N. This game gives a weight in kilograms, meaning the pull on that many kilograms.'},
   {id: 'lift-rotor', word: 'Rotor', meaning: 'The rotor is the set of long blades on top of a helicopter. As the rotor spins, the tilted blades throw air downward.'},
   {id: 'lift-lift', word: 'Lift', meaning: 'Lift is the upward push that the air gives the rotor, because the rotor pushes the air down. The game gives lift in kilograms, so that it can be compared with weight: a lift of 500 kg could hold up a mass of 500 kg.'},
-  {id: 'lift-collective', word: 'Collective', meaning: 'The collective is the lever by the pilot’s left hand. Raising it tilts all of the blades more steeply at the same moment, so the rotor throws more air down and the lift grows. W raises it in the helicopter and S lowers it.'},
+  {id: 'lift-collective', word: 'Collective', meaning: 'The collective is the lever by the pilot’s left hand. Raising it tilts all of the blades more steeply at the same moment, so the rotor throws more air down and the lift grows. In Real flying W raises it and S lowers it. In Assisted flying W and S ask for a climb or a descent, and the helicopter moves the lever for you.'},
   {id: 'lift-hover', word: 'Hover', meaning: 'To hover is to stay still in the air, which happens when lift is exactly as great as weight.'},
 ].map(Object.freeze));
 
@@ -134,7 +134,7 @@ const newtonSum = (f, note = false) => ({title: 'The weight in newtons', formula
 const kgPushSum = f => ({title: 'A force in kilograms', formula: 'kilograms of push = newtons ÷ g', worked: `${newtons(f.lift)} N ÷ ${GRAVITY} = ${kg(f.lift)}`,
   note: 'The game gives each force in kilograms, so that lift and weight can be compared directly. A lift of 500 kg is a push that could hold up a mass of 500 kg.'});
 const padSum = f => ({title: 'What the pad’s dial reads', formula: 'dial = weight − lift',
-  worked: f.lift >= weightOf(f) - .5 ? `${whole(weightOf(f))} − ${whole(f.lift)} is not above 0, so the dial reads 0 kg` : `${whole(weightOf(f))} − ${whole(f.lift)} = ${kg(weightOf(f) - f.lift)}`});
+  worked: f.h > 0 ? 'The helicopter is off the pad, so the dial reads 0 kg' : f.lift >= weightOf(f) - .5 ? `${whole(weightOf(f))} − ${whole(f.lift)} is not above 0, so the dial reads 0 kg` : `${whole(weightOf(f))} − ${whole(f.lift)} = ${kg(weightOf(f) - f.lift)}`});
 const mostSum = (note = false) => ({title: 'The most the rotor can push', formula: `most push = ${BASE_SHOWN} kg × ${GROUND}`, worked: `${BASE_SHOWN} × ${GROUND} = ${MOST}`,
   note: note ? `${BASE_SHOWN} kg is the most the rotor can push when the helicopter is well above the ground. Close to the ground the air thrown down cannot get away so easily, which gives 15% more push, so we multiply by ${GROUND}. Every push in this lesson is measured close to the pad.` : null});
 const pushSum = (f, note = false) => ({title: 'The lift at this lever setting', formula: 'push = lever × most push', worked: `${leverShare(f.lift).toFixed(4)} × ${MOST} = ${kg(f.lift)}`,
@@ -149,7 +149,7 @@ function extraSum(f, note = false) {
   const what = extra > 0 ? 'so the helicopter is pushed upward' : extra === 0 ? 'so the two forces cancel and the helicopter holds its height'
     : f.h > 0 ? 'so the helicopter sinks' : loaded(f) ? 'so the load stays on the pad' : 'so the helicopter stays on the pad';
   return {title: 'The force left over', formula: 'extra push = lift − weight', worked: `${whole(lift)} − ${whole(w)} = ${extra < 0 ? '−' : ''}${kg(Math.abs(extra))}, ${what}`,
-    note: note ? 'With the lever on the red line, this test raises the helicopter gently to 1 m and holds it there. A pilot moves the lever a little past the line to rise, then back to the line to stop rising.' : null};
+    note: note ? 'With the lever on the red line, this test raises the helicopter gently to one metre, written 1 m, and holds it there. A pilot moves the lever a little past the line to rise, then back to the line to stop rising.' : null};
 }
 
 const parts = f => [`Kestrel One ${kg(OWN_KG)}`, ...(f.car ? [`Dusthawk ${kg(CAR_KG)}`] : []), ...(f.crates ? [`${f.crates} crate${f.crates > 1 ? 's' : ''} ${kg(f.crates * CRATE_KG)}`] : [])];
@@ -183,7 +183,7 @@ const TRIES = {
     wrongSetup: f => f.crates > 0 ? 'This test is for the Dusthawk alone, with no crates. Take the crate off by pressing 2.' : 'This test is for the Dusthawk alone. Hang the Dusthawk from the cable by pressing 3.',
     setupHints: ['The Dusthawk is the white rally car parked on the right.', 'Click the Dusthawk, or press 3.', 'Watch my pointer. I will hang the Dusthawk from the cable.'],
     guessSay: () => `With the Dusthawk on the cable, the total weight is ${kg(weightOf({car: 1}))}. The most that the rotor can push is ${MOST}. Can the helicopter lift this load off the pad?`,
-    guessHints: [`Compare the two numbers, a weight of ${kg(weightOf({car: 1}))} and a most push of ${MOST}.`, 'When the most push is greater than the weight, the helicopter can lift the load.', 'Any guess is fine. Pick one, and then we will test it.'],
+    guessHints: [`Compare the two numbers, a weight of ${kg(weightOf({car: 1}))} and a push of at most ${MOST}.`, 'When the rotor can push more than the weight, the helicopter can lift the load.', 'Any guess is fine. Pick one, and then we will test it.'],
     leverTarget: 'lever:weight',
     leverSay: 'Now pull the lever up to the red line, which marks the total weight.',
     leverPrompt: 'Hold W (or ↑), or drag the lever, up to the red line.',
@@ -200,7 +200,7 @@ const TRIES = {
     wrongSetup: (f, kind) => kind === 'car' ? 'Keep the Dusthawk on the cable, because we are adding crates to it.' : 'This test needs two crates. Add a crate by pressing 1.',
     setupHints: ['The crates are stacked on the right, and each one weighs 500 kg.', 'Click the crates, or press 1, until two crates are on the cable.', 'Watch my pointer. I will add a crate.'],
     guessSay: () => `The total weight is now ${kg(weightOf({car: 1, crates: 2}))}. The most that the rotor can push is ${MOST}. Can the helicopter lift this load off the pad?`,
-    guessHints: [`Compare the two numbers, a weight of ${kg(weightOf({car: 1, crates: 2}))} and a most push of ${MOST}.`, 'When the weight is greater than the most push, the helicopter cannot lift the load.', 'Any guess is fine. Pick one, and then we will test it.'],
+    guessHints: [`Compare the two numbers, a weight of ${kg(weightOf({car: 1, crates: 2}))} and a push of at most ${MOST}.`, 'When the weight is more than the rotor can push, the helicopter cannot lift the load.', 'Any guess is fine. Pick one, and then we will test it.'],
     leverTarget: 'lever:top',
     leverSay: 'Now pull the lever all the way up, as far as it goes.',
     leverPrompt: 'Hold W (or ↑), or drag the lever, all the way to the top.',
@@ -232,13 +232,13 @@ const CHECKS = {
     hints: ['When the helicopter is hovering, lift and weight are equal.', 'A higher lever gives more lift. What does more lift than weight do?', 'Pick “The helicopter climbs”.'],
   },
   'check-game': {
-    question: `In the helicopter challenge you must hold the Dusthawk between ${BAND_M[0]} and ${BAND_M[1]} metres, written m, above the ground for ${HOLD_S} seconds. Once the helicopter has lifted the Dusthawk, what should you do with the lever?`,
-    answers: [{label: 'Keep the lever all the way up', picture: {kind: 'lever', at: 'top'}}, {label: 'Lower the lever until the helicopter holds still', picture: {kind: 'lever', at: 'match'}}, {label: 'Push the lever all the way down', picture: {kind: 'lever', at: 'bottom'}}],
+    question: `In the helicopter challenge you must hold the Dusthawk between ${BAND_M[0]} and ${BAND_M[1]} metres, written m, above the ground for ${HOLD_S} seconds. Once the Dusthawk is high enough, what must happen to the lift so that the helicopter stays at that height?`,
+    answers: [{label: 'The lift must stay greater than the weight', picture: {kind: 'lever', at: 'top'}}, {label: 'The lift must come back to equal the weight', picture: {kind: 'lever', at: 'match'}}, {label: 'The lift must fall to nothing', picture: {kind: 'lever', at: 'bottom'}}],
     correct: 1,
-    right: () => `Correct. Lower the lever until lift equals weight, and the helicopter holds still between ${BAND_M[0]} and ${BAND_M[1]} m.`,
-    wrong: picked => picked === 0 ? `With the lever all the way up, the rotor pushes ${MOST} against a weight of ${kg(weightOf({car: 1}))}, so the helicopter keeps climbing and rises above ${BAND_M[1]} m. Lower the lever until the helicopter holds still.`
-      : 'With no lift, the helicopter drops the Dusthawk back on the ground. Lower the lever only until the helicopter holds still.',
-    hints: ['To stay at one height, the helicopter must hover.', 'Hovering needs lift equal to weight, and too much lift makes the helicopter climb.', 'Pick “Lower the lever until the helicopter holds still”.'],
+    right: () => `Correct. When lift equals weight, the helicopter holds still between ${BAND_M[0]} and ${BAND_M[1]} m. In Assisted flying the helicopter does this for you when you let go of W. In Real flying you press S a little at a time until the helicopter holds still.`,
+    wrong: picked => picked === 0 ? `While lift is greater than weight, the helicopter keeps climbing and rises above ${BAND_M[1]} m. Lift must come back to equal the weight of ${kg(weightOf({car: 1}))}. In Assisted flying, letting go of W does that, and in Real flying you press S a little at a time.`
+      : `With no lift, the helicopter would fall. Lift must come back only as far as the weight of ${kg(weightOf({car: 1}))}. In Assisted flying, letting go of W does that, and in Real flying you press S a little at a time.`,
+    hints: ['To stay at one height, the helicopter must hover.', 'Hovering needs lift equal to weight, and too much lift makes the helicopter climb.', 'Pick “The lift must come back to equal the weight”.'],
   },
 };
 
@@ -481,7 +481,7 @@ export function createModel() {
     const base = {scene: 'pad', time: m.time, flight: m.f ? drawn(m.f) : null, sets: m.sets?.map(drawn) ?? null, formulas: [], keys: {}, repeat: [], buttons: [], cards: [], actions: [], target: null, glow: null,
       waiting: false, ready: seen.has(id), gauge: false, readouts: false, stock: false, leverRow: true, blade: false};
     if (id === 'wonder') return {...base, scene: 'wonder', actions: ['replay'],
-      say: 'This helicopter is called Kestrel One. A load is whatever hangs from the helicopter’s cable, and here the load is a rally car and three crates. The engine is at full power, but the load does not leave the ground. Then two crates are taken off, and the rest of the load rises. Why did taking crates off make the difference?',
+      say: 'This helicopter is called Kestrel One. A load is whatever hangs from the helicopter’s cable, and here the load is a rally car called the Dusthawk and three crates. The engine is at full power, but the load does not leave the ground. Then two crates are taken off, and the rest of the load rises. Why did taking crates off make the difference?',
       prompt: seen.has(id) ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the load on the pad.',
       hints: ['Watch what happens when the crates come off.', 'With two crates fewer, the load is lighter, and the helicopter can lift it.', 'Press Enter when you are ready to find out why.']};
     if (id === 'word-weight') {
@@ -504,7 +504,7 @@ export function createModel() {
       const done = seen.has(id);
       return {...base, readouts: 'lift', gauge: 'plain', air: true, forces: true, blade: true, keys: LEVER_KEYS, repeat: REPEAT, waiting: !done, target: done ? null : 'lever:mark', glow: done ? null : 'lever:up', mark: 2 * NOTCH_KG,
         formulas: [pushSum(m.f, true), mostSum(), padSum(m.f)],
-        say: 'The collective lever, which we will simply call the lever, sits by the pilot’s left hand, and the pilot uses it to control the lift. Raising the lever tilts every blade of the rotor more steeply, all at the same moment, which is why it is called collective. A more steeply tilted blade throws more air down each second, so the air pushes back harder and the lift grows. Lowering the lever flattens the blades, and the lift falls. The engine supplies the extra power that this needs. The scale beside the lever shows the lift in kilograms, and at the top stop the rotor is pushing as hard as it can. In the helicopter, W raises the lever and S lowers it.',
+        say: 'The collective lever, which we will simply call the lever, sits by the pilot’s left hand, and the pilot uses it to control the lift. Raising the lever tilts every blade of the rotor more steeply, all at the same moment, which is why it is called collective. A more steeply tilted blade throws more air down each second, so the air pushes back harder and the lift grows. Lowering the lever flattens the blades, and the lift falls. The engine supplies the extra power that this needs. The scale beside the lever shows the lift in kilograms, and at the top stop the rotor is pushing as hard as it can. In this lesson, W raises the lever and S lowers it, and the same is true in the helicopter’s Real flying. In its Assisted flying, W asks for a climb, S asks for a descent, and the helicopter moves the lever for you.',
         prompt: done ? 'Press Enter to continue, or keep moving the lever with W and S and watch the sums change.' : `Pull the lever up to the ${kg(2 * NOTCH_KG)} mark by dragging it, or press W (or ↑).`,
         hints: done ? DONE : ['The lever is on the left of the board, with kilograms up its side.', `Press W until the lever reaches the ${kg(2 * NOTCH_KG)} mark, or drag the handle up to it.`, 'Watch my pointer. I will move the lever to the mark.']};
     }
@@ -557,7 +557,7 @@ export function createModel() {
     }
     const example = flight({car: 1}, weightOf({car: 1}));
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, formulas: [pushSum(example), hoverSum(example), extraSum(example), mostSum()],
-      say: 'To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a most that it can push.',
+      say: 'To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a limit to how hard it can push.',
       prompt: 'Try it for real in the helicopter, or go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
@@ -575,9 +575,9 @@ export function createModel() {
     if (m.phase === 'setup') {
       const target = !f.car ? 'car' : f.crates < BEST_CRATES ? 'crate:add' : f.crates > BEST_CRATES ? 'crate:remove' : 'lever:weight';
       return {...common, keys: {...LOAD_KEYS, ...LEVER_KEYS}, repeat: REPEAT, waiting: true, target,
-        formulas: [massSum(f), mostSum(), pushSum(f), hoverSum(f), general({title: 'The crates the helicopter can carry', formula: `crates = (most push − helicopter − Dusthawk) ÷ ${kg(CRATE_KG)}, rounded down`})],
-        say: 'Here is a job for you. Lift the Dusthawk with as many crates as the helicopter can carry, and hover with them. Load the crates first, and then move the lever.',
-        prompt: 'Press 1 to add a crate and 2 to take one off. Then hold W, or drag the lever, up to the red line.',
+        formulas: [massSum(f), mostSum(), pushSum(f), hoverSum(f), general({title: 'The crates the rotor can hold up', formula: `crates = (most push − helicopter − Dusthawk) ÷ ${kg(CRATE_KG)}, rounded down`})],
+        say: 'Here is a job for you. Lift the Dusthawk with as many crates as the rotor can hold up on this test pad, and hover with them. Load the crates first, and then move the lever.',
+        prompt: `Press 1 to add a crate and 2 to take one off. Then ${f.lift > weightOf(f) + .5 ? 'press S (or ↓), or drag the lever, back down to the red line' : 'hold W, or drag the lever, up to the red line'}.`,
         hints: [`The rotor can push ${MOST}. How much room is left with the Dusthawk on the cable?`, `With the Dusthawk the total weight is ${kg(weightOf({car: 1}))}, and each crate adds ${kg(CRATE_KG)}. How many crates fit under ${MOST}?`,
           target === 'lever:weight' ? 'Watch my pointer. I will move the lever to the red line.' : target === 'car' ? 'Watch my pointer. I will hang the Dusthawk from the cable.' : target === 'crate:add' ? 'Watch my pointer. I will add a crate.' : 'Watch my pointer. I will take a crate off.']};
     }
@@ -604,7 +604,7 @@ function loadedWith(f) {
   if (f.car) return `With the Dusthawk${f.crates ? ` and ${f.crates} crate${f.crates > 1 ? 's' : ''}` : ''} on the cable`;
   return f.crates ? `With ${f.crates} crate${f.crates > 1 ? 's' : ''} on the cable` : 'With no load on the cable';
 }
-const jobDone = w => `With the Dusthawk and ${BEST_CRATES} crate${BEST_CRATES > 1 ? 's' : ''} on the cable, the total weight is ${kg(w)} and the helicopter hovers. One more crate would be too heavy, so this is the most that the helicopter can carry, and the job is done.`;
+const jobDone = w => `With the Dusthawk and ${BEST_CRATES} crate${BEST_CRATES > 1 ? 's' : ''} on the cable, the total weight is ${kg(w)} and the helicopter hovers. One more crate would be more than the rotor can hold up, so the job is done. This test measures only the rotor. The hook on the real helicopter has a separate limit, and it refuses a load of more than ${kg(KESTREL.hookLimitKg)} until you own the Lab’s Heavy hook.`;
 // What Brian says under the board about where the helicopter is, during his lever demonstration.
 function caption(st, f) {
   if (st === 'pad') return f.lift > 0 ? `A lift of ${kg(f.lift)} is less than the weight, so the helicopter stays on the pad.` : 'The lever is all the way down, so there is no lift.';

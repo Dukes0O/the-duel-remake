@@ -24,6 +24,10 @@ No game rule, challenge, reward, save or notebook id changes; every weight and l
 - **Small faults fixed.** "Take the crate off with 2" appeared after the crate was already off. A hint saying to press W now says S when the lever is above the line. Brian's job now says why the helicopter climbs
   when the lever goes past the line. "Lever", "rotor" and "hover" no longer appear before the steps that define them.
 
+- **One independent review.** Fixed, with a test where one fits: the free test now follows both guided guesses, because its Show me answered them; Question 3 and the words about W and S are now true in both Assisted and Real
+  flying; Brian's job says that the hook has its own limit of 1,500 kg, separate from the rotor's; the job's prompt says to lower the lever when it is above the line; the dial's sum is true while the helicopter is off the pad;
+  metres are defined before "1 m" is used; "every rotor has a most" is reworded.
+
 ## Removed
 
 - All of the old wording, the `padFeels` name, the "the pad feels" label and the colon captions on the board.
@@ -33,7 +37,7 @@ No game rule, challenge, reward, save or notebook id changes; every weight and l
 
 - `tools/test-lab-classroom-lift.mjs`: each assertion on wording moves to the new sentence and keeps its numbers (1,630, 2,910, 3,410, 3,887, 3,910, 23 and 977 kg).
 - One number moves: the wonder's replay check expects 3 crates rather than 2, because the wonder must not show the answer to the Two more crates guess. It still proves that a replay restores the full load.
-- The walkthrough helper gains the free test. No check is removed or loosened.
+- The walkthrough helper gains the free test. Question 3's correct card keeps its position, and its words move so that they hold in both flying modes. No check is removed or loosened.
 - Added: the sums follow the load and the lever; the lever sums come out on a calculator at every setting; the free test's counting; Show me on the free test; nothing gives away an open guess or question; a hint is
   right from either side of the line; words are not used before they are defined; the lesson's band and hold time equal the challenge's own; and a source check that also bars "feels".
 - `tools/scenarios/lab-classroom-lift.mjs`: runs at 1920 by 1000. Added: the free test, sums following the controls, questions fully visible, no worked sum during a question, and earlier words staying on the page.
@@ -43,7 +47,7 @@ No game rule, challenge, reward, save or notebook id changes; every weight and l
 Not recorded. Each matches what the lesson now says on its page or its board.
 
 - `lab.brian.lift.intro`: Here are three loads, and each time the lever goes up until the lift equals the weight of that load. Watch how far the lever has to go.
-- `lab.brian.lift.explain`: To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a most that it can push.
+- `lab.brian.lift.explain`: To hover, the rotor has to throw air down hard enough that the air pushes back as hard as the Earth pulls the helicopter down. A greater weight needs more push, which means a higher lever, and every rotor has a limit to how hard it can push.
 - `lab.brian.lift.pass`: That is well done. Now you know why a heavy load is a hard lift.
 
 ## Checks

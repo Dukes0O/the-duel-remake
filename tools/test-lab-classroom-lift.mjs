@@ -346,3 +346,67 @@ test('a word does not appear before the step that defines it, and every view is 
     for (const pattern of [/\b(she|her|hers|herself)\b/i, /\bmph\b/i, /\bdecides?\b/i, /\b(air|wind)\s+(soon\s+)?takes\b/i, /\bfeels?\b/i]) assert.ok(!pattern.test(source), `${file}: ${source.match(pattern)?.[0]}`);
   }
 });
+
+test('review: the free test follows both guided guesses, so that its Show me cannot answer them', () => {
+  const at = id => STEPS.findIndex(s => s.id === id);
+  assert.ok(at('try-free') > at('try-car') && at('try-free') > at('try-heavy'));
+  assert.ok(at('try-free') < at('alone'));
+  assert.match(createClassroomSession(lesson).view().say, /a rally car called the Dusthawk/, 'the Dusthawk is named when it first appears');
+});
+
+test('review: what the words say about W and S holds in both Assisted and Real flying', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'check-game');
+  const v = session.view();
+  assert.equal(v.cards.findIndex(c => /come back to equal the weight/.test(c.label)), 1);
+  session.act('answer:1');
+  assert.match(session.view().brian.text, /In Assisted flying.*let go of W.*In Real flying you press S/);
+  const idea = lesson.keyIdeas.find(i => i.id === 'ease').text;
+  assert.match(idea, /In Assisted flying, letting go of W.*In Real flying, W and S move the lever/);
+  assert.match(lesson.challengeCard.text, /In Assisted flying.*In Real flying/);
+  assert.match(lesson.words.find(w => w.id === 'lift-collective').meaning, /In Real flying.*In Assisted flying/);
+  const word = createClassroomSession(lesson); playThroughTo(word, 'word-collective');
+  assert.match(word.view().say, /Real flying.*Assisted flying/);
+});
+
+test('review: the job separates the rotor’s limit from the hook’s, and its prompt is right above the line', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'alone');
+  session.act('crate:add');
+  assert.match(session.view().prompt, /hold W/);
+  session.act('hold:3700'); session.act('release');
+  assert.equal(session.view().flight.lift, 3700);
+  assert.match(session.view().prompt, /press S \(or ↓\), or drag the lever, back down to the red line/);
+  assert.doesNotMatch(session.view().prompt, /hold W/);
+  session.act('lever:weight'); until(session, v => v.ready, 5);
+  assert.equal(KESTREL.hookLimitKg, 1500);
+  assert.match(session.view().brian.text, /measures only the rotor.*separate limit.*more than 1,500 kg/);
+  assert.doesNotMatch(session.view().brian.text, /most that the helicopter can carry/);
+});
+
+test('review: the dial’s sum is true while the helicopter is off the pad, and it agrees with the dial', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-collective');
+  session.act('hold:3000'); session.act('release'); run(session, 2);
+  session.act('hold:1000'); session.act('release'); run(session, .1);
+  const v = session.view();
+  assert.ok(v.flight.h > 0, 'still in the air');
+  assert.equal(v.flight.pad, 0);
+  assert.equal(worked(v, 'What the pad’s dial reads'), 'The helicopter is off the pad, so the dial reads 0 kg');
+  run(session, 5);
+  assert.equal(worked(session.view(), 'What the pad’s dial reads'), '1,630 − 1,000 = 630 kg');
+});
+
+test('review: metres are defined before “1 m” is used, and the rotor’s limit is said in plain English', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  const hover = STEPS.findIndex(s => s.id === 'word-hover');
+  STEPS.forEach((step, i) => {
+    session.act(`go:${i}`);
+    const v = session.view(), words = [v.say, v.prompt, ...v.hints, ...v.formulas.flatMap(f => [f.worked, f.note])].filter(Boolean).join(' ');
+    if (i < hover) assert.doesNotMatch(words, /\d m\b/, `${step.id} uses metres too early`);
+    if (i === hover) assert.match(words, /one metre, written 1 m/);
+    assert.doesNotMatch(words, /has a most\b|a most push of/, step.id);
+  });
+  for (const idea of lesson.keyIdeas) assert.doesNotMatch(idea.text, /has a most\b/);
+});
