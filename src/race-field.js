@@ -503,8 +503,8 @@ const AZURE_GP_ENTRY_WIDTH = Object.freeze({start: 225, peak: 260, end: 295, hal
 const AZURE_GP_FIELD_FOLLOW = Object.freeze({wallRoom: 1,
   firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
 // EIFEL-CROWN-C3: the new road has real braking corners, so the field keeps more room to the car ahead.
-const EIFEL_GP_FIELD_FOLLOW = Object.freeze({reaction: .4, margin: 3.5, comfort: .5, leadBraking: 1.6, wallRoom: 1,
-  firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.4})});
+const EIFEL_GP_FIELD_FOLLOW = Object.freeze({reaction: .4, margin: 3.5, comfort: .5, leadBraking: 1.6, wallRoom: 1.3,
+  firstLap: Object.freeze({margin: 5, reaction: .5, closeIn: .8, wallRoom: 1.8})});
 const EXISTING_GP_TUNING = Object.freeze({
   'cloudbreak-skyway': Object.freeze({
     fieldPace: Object.freeze({easy: .981, medium: .948, hard: .934}), fieldAggression: .85,
@@ -523,7 +523,7 @@ const EXISTING_GP_TUNING = Object.freeze({
   }),
   // The new Eifel road (layoutVersion 3, behind its switch) has its own row; the released road keeps the row above.
   'eifel-crown@3': Object.freeze({
-    fieldPace: Object.freeze({easy: .94, medium: .858, hard: .86}), fieldAggression: 1.4,
+    fieldPace: Object.freeze({easy: .94, medium: .861, hard: .86}), fieldAggression: 1.4,
     fieldFollow: EIFEL_GP_FIELD_FOLLOW,
   }),
   'harbor-highlands': Object.freeze({

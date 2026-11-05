@@ -117,20 +117,45 @@ used for tuning sat in Claude's scratchpad folder and were left there.
 
 ## Current pass status (4 November 2026)
 
-Stopped before changing game code. The requested seeded race batch and lane/build gates remain required. Factory section 8 requires counting the outermost running Node jobs before starting them. This Windows session has 18 `node.exe` processes, but `Get-CimInstance Win32_Process` returns Access denied and `wmic` is not installed, so their commands and parent relationships cannot be checked. Starting another heavy job could exceed the three-job limit.
+Incomplete because the test environment ran out of memory. After Claude cleared
+the section 8 admission blocker, the six-race Medium tuning sample passed with
+pace `.861`, 1.8 aggression, overall `wallRoom: 1.3` and first-lap
+`wallRoom: 1.8`: all seven computer racers finished in every race, no crash or
+pile-up occurred, the test driver won 3 of 6, and computer passes averaged
+1.33 per race (below the packet's 3 target). The same sample with pace variation
+2.5 recorded one computer crash and no pass improvement. That variation was
+removed. The final unverified row keeps `.861` Medium pace and the Eifel edge
+margins; aggression is back at 1.4. Easy and Hard were not retuned.
 
-### Checks not run
+The next six-race Medium spread sample failed with Node's fatal out-of-memory
+error after one completed race. Its same-commit rerun failed immediately with a
+second Node heap out-of-memory error. Afterwards even `node -p "1+1"` failed
+from memory exhaustion, and the PowerShell host could not start a thread.
+Investigation stopped there. Do not treat the sample results as acceptance.
 
-- `tools/test-circuits.mjs`: not run; heavy-job admission could not be verified.
-- `tools/test-circuit-eifel.mjs`: not run; heavy-job admission could not be verified.
-- Lane tier and `npm run build`: not run; heavy-job admission could not be verified.
+### Checks
+
+- `tools/test-circuits.mjs`: not run; PowerShell could not start the requested
+  test process due to the Windows resource failure.
+- `tools/test-circuit-eifel.mjs`: six-race Medium samples only; no complete
+  30-seed difficulty run. The spread trial failed twice as described above.
+- Lane tier and `npm run build`: not run; the Node and PowerShell resource
+  failures prevented them.
 - Browser checks: none required by the C3 card.
 
 ### Assertions and fingerprints
 
 - Changed assertions: none.
-- Race fingerprints: none recorded. The required new Eifel replay fingerprint has not been produced; no other course fingerprint changed in this pass.
+- Race fingerprints: none recorded. The required new Eifel replay fingerprint
+  has not been produced; no other course fingerprint changed in this pass.
 
 ### Removed
 
-- Nothing in this pass.
+- Removed the unproven `fieldSpread` trial. No other file was removed.
+
+The completed 30-race Medium batch at `.861` supersedes the six-race tuning sample:
+30/30 races had all seven computers finish; there were 2 computer crashes, 0
+first-lap pile-ups, 21 player wins (70%), 1.57 computer passes per race, and
+mean player time 342.569 s (range 332.177–350.468 s). It misses the written
+Medium win band (30–50%) and the three-pass target. The crash, finish, and
+pile-up limits pass. This measurement is committed before further tuning.
