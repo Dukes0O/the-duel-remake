@@ -7,6 +7,8 @@ const step = (kind, fields) => Object.freeze({kind, ...fields});
 const yard = place('yard-gate', 0, 0), tinTown = place('tin-town', 600, 0, 18);
 const boneyard = place('boneyard', 424, 304, 18), mall = place('dead-mall', 0, 430, 14);
 const well = place('everburn', -424, 304, 18), safeRoad = place('safe-road', 230, 150, 16);
+const wellApproach = place('everburn-well-approach', -448, 288, 8);
+const wellRaidersHold = place('everburn-well-raiders-hold', -426, 303, 8);
 const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];
@@ -46,14 +48,18 @@ export const EVERBURN_JOBS = Object.freeze([
       alarmWaveSize:2, alarmLineId:'everburn-job-5-alarm', lentWeapon:'cinders-hand-flamer',
       startLineId:'everburn-job-5-start', takenLineId:'everburn-job-5-key-taken', wonLineId:'everburn-job-5-won'})]}),
   Object.freeze({id:'everburn-the-everburn', storyId:'everburn', number:6, name:'The Everburn', kind:'defence-then-finish',
-    easy:Object.freeze({placeHealth:120, waves:[2,2,3], furnaceHealth:3, ventRadius:10}), lineId:'everburn-job-6-start',
+    easy:Object.freeze({placeHealth:120, waves:[1,2,2], furnaceHealth:3, ventRadius:10}), lineId:'everburn-job-6-start',
     steps:[step('defend',{place:well, placeId:'everburn-valve', health:120, waveCount:3,
-      waves:[{count:2},{count:2},{count:3}], restartLineId:'everburn-job-6-wave-restart',
+      waves:[{count:2},{count:2},{count:3}], easyWaves:[{count:1},{count:2},{count:2}],
+      raiderEntry:wellApproach, raiderHold:wellRaidersHold, approachSpeed:1.5,
+      refill:{place:well,crateId:'hollis-well-supply',carWeapon:'flamethrower',footAmmo:'rpg'},
+      lentWeapon:'flamethrower',
+      restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
       step('chase',{targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', renderCar:'titan_monster', health:3, speed:14,
         path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250))}, path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250)),
         targetSpeed:14, leashDistance:180, contactRadius:10, targetHealth:3, hitPart:'glowing-vent',
-        requiredHits:3, startLineId:'everburn-job-6-chase-start', wonLineId:'everburn-job-6-won'})],
+        requiredHits:3, lentWeapon:'flamethrower', startLineId:'everburn-job-6-chase-start', wonLineId:'everburn-job-6-won'})],
     rewards:['cinder-crew-member','cinders-hand-flamer','ember-paint','everburn-lit']}),
 ]);
 

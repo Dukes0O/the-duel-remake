@@ -68,7 +68,8 @@ function moveTowardMarker(duel, target) {
   const desired = Math.atan2(dx, dz), turn = wrap(desired - (car.heading + (state.headingError || 0)));
   const speed = Math.abs(state.speedMph || 0);
   const nearRescue = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'rescue' && gap < 14;
-  const targetSpeed = nearRescue ? 0 : gap < 10 ? 12 : 52;
+  const defending = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'defend';
+  const targetSpeed = nearRescue ? 0 : defending ? gap < 9 ? 4 : 20 : gap < 10 ? 12 : 52;
   duel.setInput({throttle: speed < targetSpeed && Math.abs(turn) < 1.35 ? 1 : 0,
     brake: speed > targetSpeed + 2 || Math.abs(turn) > 1.8 ? 1 : 0,
     steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
@@ -79,11 +80,24 @@ function playerInput(duel) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   const phase = worldJob.job.stepState.phase;
   const needsRelease = state.footTransition?.needsRelease === true;
-  const target = currentMarker(duel);
+  let target = currentMarker(duel);
   const raiders = worldJob.actors.filter(actor => Number.isFinite(actor.health) &&
     Number.isFinite(actor.x) && !actor.knockedDown);
-  const wantsFoot = step.kind === 'onfoot' || step.kind === 'heist' && phase !== 'escape' ||
-    step.kind === 'defend' && raiders.length > 0;
+  if (step.kind === 'defend' && raiders.length && !state.onFoot) {
+    const raider = raiders.sort((a, b) => Math.hypot(a.x - state.x, a.z - state.z) -
+      Math.hypot(b.x - state.x, b.z - state.z))[0];
+    const car = duel.course.groundAt(state.s, state.lateral);
+    const dx = raider.x - car.x, dz = raider.z - car.z;
+    const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0)));
+    if (Math.hypot(dx, dz) <= 9 && Math.abs(turn) <= Math.PI / 12) {
+      duel.setInput({throttle: 0, brake: Math.abs(state.speedMph) > 1 ? 1 : 0,
+        steer: 0, boost: false, interact: false});
+      duel.fireWeapon(worldJob.activeLoan);
+      return;
+    }
+    target = {x: raider.x, z: raider.z};
+  }
+  const wantsFoot = step.kind === 'onfoot' || step.kind === 'heist' && phase !== 'escape';
   const shouldExitNearMarker = wantsFoot && !state.onFoot &&
     Math.hypot((target?.x ?? 0) - duel.course.groundAt(state.s, state.lateral).x,
       (target?.z ?? 0) - duel.course.groundAt(state.s, state.lateral).z) < 10;
@@ -107,7 +121,7 @@ function playerInput(duel) {
   moveTowardMarker(duel, target);
   if (!state.onFoot) {
     // Player weapon inputs use the ordinary weapon API. Shots resolve in Duel.step.
-    if (step.kind === 'chase' || step.kind === 'defend') {
+    if (step.kind === 'chase') {
       const weapon = worldJob.activeLoan || state.weaponLoadout?.[0];
       if (weapon) duel.fireWeapon(weapon);
     }

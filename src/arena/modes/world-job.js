@@ -1,5 +1,6 @@
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
+import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -80,13 +81,20 @@ function spawnWave(duel, worldJob, request, key) {
   const zone = zones[0];
   const at = request.at?.position ?? request.at;
   if (at && Number.isFinite(at.x) && Number.isFinite(at.z)) {
-    const place = duel.course.nearest(at.x, at.z, zone.s);
-    zone.s = place.s; zone.side = Math.sign(place.lateral || 1);
-    zone.lateral = place.lateral;
+    const center = request.from?.position ?? request.from ?? at;
+    const dx = at.x - center.x, dz = at.z - center.z, distance = Math.hypot(dx, dz) || 1;
+    const sideX = dz / distance, sideZ = -dx / distance;
+    const hold = request.hold?.position ?? request.hold;
+    const stop = Math.max(0, request.stopDistance || 0);
+    const approachTarget = hold && Number.isFinite(hold.x) && Number.isFinite(hold.z)
+      ? {...hold} : {x: at.x - dx / distance * stop,
+        y: at.y, z: at.z - dz / distance * stop};
     zone.raiders.forEach((raider, index) => {
-      const pose = duel.course.worldAt(place.s + (index - 1) * 5, place.lateral);
-      Object.assign(raider, {s: pose.s, lateral: pose.lateral, x: pose.x,
-        y: pose.y, z: pose.z, groundY: pose.y});
+      const offset = (index - (request.n - 1) / 2) * .5;
+      const x = center.x + sideX * offset, z = center.z + sideZ * offset;
+      const ground = duel.course.nearest(x, z, zone.s);
+      Object.assign(raider, {s: ground.s, lateral: ground.lateral, x, y: ground.y,
+        z, groundY: ground.y, approachTarget, approachSpeed: request.approachSpeed || 0});
     });
   }
   const count = Math.max(1, Math.min(zone.raiders.length, Math.floor(request.n) || 1));
@@ -121,6 +129,31 @@ function applyRequests(duel, worldJob, requests) {
     else if (request.type === 'lendWeapon' && typeof request.weapon === 'string') {
       duel.state.weaponLoadout = [...new Set([...(duel.state.weaponLoadout || []), request.weapon])];
     }
+    else if (request.type === 'refill') {
+      const {combat, footWeapons, footGear} = duel.state;
+      if (request.carWeapon && combat?.cooldowns?.[request.carWeapon] !== undefined)
+        combat.cooldowns[request.carWeapon] = 0;
+      if (request.footAmmo === 'rpg' && footWeapons) {
+        footWeapons.ammo = COMBAT_TUNING.foot.rpgAmmo;
+        if (footGear?.name === 'LONGHORN RPG') footGear.ammo = footWeapons.ammo;
+      }
+      const at = request.place?.position ?? request.place;
+      if (request.crateId && at) worldJob.refillCrate = {id: request.crateId, position: {...at}};
+    }
+  }
+}
+
+function moveJobRaiders(worldJob, dt) {
+  for (const actor of worldJob.actors) {
+    if (!actor.approachTarget || actor.knockedDown || !(actor.approachSpeed > 0)) continue;
+    const dx = actor.approachTarget.x - actor.x, dz = actor.approachTarget.z - actor.z;
+    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt;
+    if (gap <= travel) {
+      actor.x = actor.approachTarget.x; actor.z = actor.approachTarget.z;
+    } else {
+      actor.x += dx / gap * travel; actor.z += dz / gap * travel;
+    }
+    actor.yaw = Math.atan2(dx, dz);
   }
 }
 
@@ -161,11 +194,13 @@ export function stepWorldJob(duel, dt) {
     thingsHit,
     carrying: worldJob.carrying, inventory: worldJob.inventory ?? [], lamps: worldJob.job.steps[worldJob.job.stepIndex]?.lamps ?? [],
     places: worldJob.places ?? {}, placeHealth: worldJob.placeHealth,
+    difficulty: state.cpuDifficulty,
     contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
   state.worldJobThingsHit = [];
+  moveJobRaiders(worldJob, dt);
   updateJobActors(worldJob, dt);
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
   if (next.stepIndex !== previousStep) applyStepLoan(state, worldJob);
