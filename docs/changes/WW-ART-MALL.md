@@ -1,22 +1,17 @@
-# WW-ART-MALL
+﻿# WW-ART-MALL
 
-## Changed
+Changed the Blender recipe to add a recognizable open-front mall shell, broken roof plates, shop recesses and shutters, rust runoff, welded supports, an entry scale figure and lower eye-level review cameras. Round 2 replaces the prior published sheet with a single JPG comparison of both rounds. The candidate GLB is generated for review; it is not wired into the game here.
 
-- Added `tools/blender/scablands-mall.py`: an open-roof, half-buried mall shell with welded steel, rust, invented shop signs, a stuck escalator, sand drifts, named Ash Men lamps and a named heist route.
-- Registered the Blender-free output plan in `tools/test-blender-output.mjs`. The recipe keeps its editable `.blend` in ignored `art-build/`; it does not publish a runtime GLB because WW-SCENE owns installation.
-- Rendered the one requested art round. The comparison sheet is `docs/board/looks/ww-art-mall/round-1.jpg` (72,506 bytes), with the builder’s scores and review request in `docs/board/looks/ww-art-mall/round-1.md`.
-- The temporary candidate GLB measured 12,208 triangles and 611,812 bytes, within the 50,000 triangle / 2 MB limits. It was removed after inspection and is not committed.
+**Art checks:** Blender rendered four views. The GLB readback is 13,940 triangles and 740,216 bytes, within 50,000 triangles and 2 MB. The JPG is 85,131 bytes. `node tools/test-blender-output.mjs` passed (192 checks).
 
-## Checks
+**Lane tier:** all 48 listed suites completed and replay fingerprints passed (297 checks). The runner did not return its summary after those results and was interrupted. Its log showed two suite failures: `test-circuit-eifel.mjs` failed its FFmpeg loudness measurement; `test-review-evidence.mjs` saw the old sheet absent while the deletion was unstaged and also hit `spawnSync ffmpeg EPERM`. The one rerun of each suite did not pass: Eifel repeated the FFmpeg measurement failure; review-evidence no longer failed the old-sheet assertion after staging was attempted, but FFmpeg still returned EPERM (staging itself was denied by filesystem permissions).
 
-- Blender build and four review renders: completed after correcting an unsupported Blender view-look name. One first invocation stopped before rendering; the corrected invocation completed round 1.
-- `node tools/test-blender-output.mjs`: 192 checks passed. Two early attempts exposed recipe planning issues (Blender import before `--paths-only`, then incorrectly marking a recipe with an editable source as `recipeOnly`); both were corrected before the green run.
-- Lane tier: 25 suites passed, 1 failed, 0 not run. `tools/test-review-evidence.mjs` failed twice: its crew path assertion compares the fixed 4 November date with the current 5 November date, and its audio-analysis case received `spawnSync ffmpeg EPERM`. Seven of nine subtests passed on the rerun. No assertion changed.
-- `npm.cmd run build`: passed. Vite reported existing chunk-size and dynamic-import warnings.
-- Browser scenario and in-game look check: Claude runs. Claude should review the round-one sheet for exterior silhouette, interior readability, material wear and whether the camera framing proves the open-roof design. Builder scores are deliberately low; the views mostly show undersides.
-- Frames: not applicable to art. Race fingerprints: not applicable; no simulation or course code changed.
+**Build:** `npm.cmd run build` passed. Plain `npm run build` could not start because PowerShell blocked `npm.ps1`; using the Windows npm command succeeded. Build warnings were the existing dynamic import and large-chunk warnings.
+
+**Browser and look review:** Claude runs the browser checks if needed and judges `docs/board/looks/ww-art-mall/round-2.jpg`; four Blender source renders are in `.evidence/2026-11-05/WW-ART-MALL/round-2/`. No frame check applies to art.
+
+**Changed assertions:** none. **Race fingerprints:** unchanged; replay guard passed in the lane run. No game simulation code changed.
 
 ## Removed
 
-- Removed the temporary `public/assets/models/wasteland/scablands/mall.glb` after budget inspection. WW-SCENE will generate/install it when the game loads it.
-- No prior source, test or asset was replaced.
+Removed the round 1 sheet and note after replacing them with the round 2 comparison and review note. No runtime model or game asset was replaced.
