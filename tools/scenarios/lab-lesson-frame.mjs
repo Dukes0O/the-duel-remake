@@ -10,10 +10,12 @@ export async function run(c) {
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: code === 'KeyE' ? 'e' : code.slice(3).toLowerCase(), windowsVirtualKeyCode: code === 'KeyE' ? 69 : undefined});
   async function walk(code, expression) { await key(code, 'keyDown'); try { await c.waitFor(expression, code, 15_000); } finally { await key(code, 'keyUp'); } await new Promise(r => setTimeout(r, 550)); }
-  // The example borrows the turning arm (a five-step machine); the Lab map's click-to-go opens it as a player's click does.
+  // The example borrows the wind tunnel's Grip choice (still five steps); the Lab map's click-to-go opens it as a player's click does.
   async function useMachine() {
-    await c.evaluate(`document.querySelector('[data-go="turning-arm"]').click()`);
-    await c.waitFor(`${canvas}.dataset.labWalkArrived === 'turning-arm'`, 'machine', 30_000);
+    await c.evaluate(`document.querySelector('[data-go="wind-tunnel"]').click()`);
+    await c.waitFor(`${canvas}.dataset.labWalkArrived === 'wind-tunnel'`, 'machine', 30_000);
+    await c.waitFor(`!!document.querySelector('[data-lab-lesson="start:grip"]')`, 'tunnel choices', 30_000);
+    await c.evaluate(`document.querySelector('[data-lab-lesson="start:grip"]').click()`);
   }
   await useMachine();
   const text = `document.querySelector('.lab-teaching')?.textContent`;
@@ -47,7 +49,7 @@ export async function run(c) {
   }
   await click('answer:near'); await c.waitFor(`${text}?.includes('Watch the highlighted picture')`, 'wrong check replays correct picture');
   await c.screenshot('check'); await click('next'); await click('answer:far'); await click('next');
-  if (!(await c.evaluate(`window.__qaApp.profile.lab.notebook.includes('push') && !window.__qaApp.profile.lab.done.gforce`))) throw Error('Notebook or reward isolation failed.');
+  if (!(await c.evaluate(`window.__qaApp.profile.lab.notebook.includes('push') && !window.__qaApp.profile.lab.done.grip`))) throw Error('Notebook or reward isolation failed.');
   // The key-idea card over a helicopter challenge is checked by the classroom scenarios (lab-classroom-fire and others).
   await c.screenshot('key-idea');
   await c.evaluate(`window.__qaApp.closeLab(); window.__qaApp.openLab()`);
@@ -65,7 +67,7 @@ export async function run(c) {
     document.querySelectorAll('body > details').forEach(e => e.open = false); a.openLab(); })()`);
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'plain room', 60_000);
   await useMachine();
-  await c.waitFor(`!document.querySelector('.lab-teaching').hidden && ${text}?.includes('1 / 5')`, 'real G-force lesson opens');
+  await c.waitFor(`!document.querySelector('.lab-teaching').hidden && ${text}?.includes('1 / 5')`, 'real Grip lesson opens');
   if (await c.evaluate(`${text}.includes('Can a fan move') || !!document.querySelector('.lab-bench')`)) throw Error('The test lesson reached the released Lab.');
   await c.evaluate(`window.__qaApp.closeLab()`);
 }

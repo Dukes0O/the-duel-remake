@@ -4,7 +4,7 @@
 import {SKI_PADS} from '../../src/ski/ski-session.js';
 
 export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await c.navigate('/tools/menu-check.html?flags=lab-classroom,lab-2,helicopter,forest-fire,rescue,heli-skiing,summit-run');
   await c.waitFor(`!!window.__qaApp && !document.querySelector('#start-engine')?.disabled`, 'menu', 90_000);
   await c.evaluate(`(() => { const a=window.__qaApp; a.audio.setMuted(true); a.addPlayer('Wax QA');
@@ -12,7 +12,7 @@ export async function run(c) {
       heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3}};
     a._saveProfile(); document.querySelectorAll('body > details').forEach(e=>e.hidden=true); a.openLab(); })()`);
   const canvas = `document.querySelector('.lab-canvas')`, state = `JSON.parse(document.querySelector('.lab-classroom')?.dataset.classroom ?? 'null')`;
-  const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], ArrowRight: ['ArrowRight', 39], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
+  const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], KeyH: ['h', 72], ArrowRight: ['ArrowRight', 39], ArrowLeft: ['ArrowLeft', 37], Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51]};
   const shot = name => c.screenshot(name);
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const key = (code, type) => c.command('Input.dispatchKeyEvent', {type, code, key: KEYS[code][0], windowsVirtualKeyCode: KEYS[code][1]});
@@ -20,6 +20,8 @@ export async function run(c) {
   const at = (step, extra = 'true') => c.waitFor(`${state}?.step === '${step}' && (s => ${extra})(${state})`, `${step} ${extra}`, 40_000);
   const next = async (step, extra = 's.ready') => { await at(step, extra); await press('Enter'); };
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
+  const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 30_000);
+  const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
   const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
     return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
   async function clearCard() {
@@ -47,16 +49,45 @@ export async function run(c) {
   await at('word-wax', 's.ready'); await shot('word-wax-picked');
   if (!(await bubble()).startsWith('That is medium wax')) throw Error('The click did not pick the medium tin: ' + await bubble());
   await next('word-wax');
-  await at('word-glide'); await press('Space'); await wait(4000); await shot('word-glide-running'); await at('word-glide', 's.ready'); await shot('word-glide');
+  await at('word-glide'); await shot('word-glide-ready'); await press('Space'); await wait(4000); await shot('word-glide-running'); await at('word-glide', 's.ready'); await shot('word-glide');
   await next('word-glide');
+  // Friction: the arrows, the bars and the sums follow the tin.
+  await at('word-friction'); await shot('word-friction');
+  if (!(await worked('0.05 × 9.81 × 0.98481'))) throw Error('The sums should start on a ski with no wax.');
+  await press('Digit1'); await at('word-friction', 's.ready'); await wait(300); await shot('word-friction-hard');
+  if (!(await worked('0.045 × 9.81 × 0.98481'))) throw Error('The sums did not follow the tin.');
+  await next('word-friction');
   await at('word-crystals'); await shot('word-crystals-cold'); await press('ArrowRight', 3); await at('word-crystals', 's.ready'); await shot('word-crystals-warm');
+  // The dial stays open after the answer.
+  await press('ArrowLeft'); await wait(200);
+  if (!(await worked('0 − (-5)'))) throw Error('The tray should stay free after the answer.');
   await next('word-crystals');
+  // The reasons: the close-up follows the tin.
+  await at('why-cold'); await shot('why-cold'); await press('Digit1'); await at('why-cold', 's.ready'); await wait(300); await shot('why-cold-hard');
+  await next('why-cold');
+  await at('why-wet'); await shot('why-wet'); await press('Digit3'); await at('why-wet', 's.ready'); await wait(300); await shot('why-wet-soft');
+  await next('why-wet');
   await at('watch'); await wait(5000); await shot('watch-racing'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
-  // Cool snow: the wrong tin first, and Brian says why; then medium.
-  await at('try-cool'); await shot('try-cool'); await press('Digit1'); await press('Space'); await at('try-cool', 's.ready'); await shot('try-cool-wrong');
-  if (!(await bubble()).startsWith('Hard wax is for snow at -10 °C and colder')) throw Error('The wrong tin did not say why: ' + await bubble());
-  await press('Digit2'); await press('Space'); await c.waitFor(`document.querySelector('.lc-bubble').textContent.startsWith('Right! Medium wax')`, 'medium wins', 30_000); await shot('try-cool-right');
+  // The free test: the snow and the wax move the sums at once, the table keeps the results, and three settings open Continue.
+  await at('try-free'); await shot('try-free');
+  await press('ArrowRight'); await wait(200);
+  if (!(await worked('√(2 × 50 ÷ 1.124)'))) throw Error('The sums did not follow the snow.');
+  await press('Digit2'); await wait(200);
+  if (!(await worked('√(2 × 50 ÷ 1.269)'))) throw Error('The sums did not follow the wax.');
+  await shot('try-free-set');
+  await press('Space'); await wait(3000); await shot('try-free-racing'); await saying('test a different setting', 'the first race says its result');
+  await press('Digit3'); await press('Space'); await saying('so the ski was slower', 'the second race says its result'); await c.waitFor(`document.querySelector('.lc-prompt')?.textContent.includes('tested so far: 2')`, 'two settings counted', 10_000);
+  await shot('try-free-two');
+  await press('ArrowRight'); await press('Digit1'); await wait(200); await shot('try-free-wet-hard');
+  await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
+  await next('try-free');
+  // Cool snow: the wrong tin first, and Brian says why; then medium. The panel names no wax while the choice is open.
+  await at('try-cool'); await shot('try-cool'); await press('Digit1'); await wait(200);
+  if (await c.evaluate(`[...document.querySelectorAll('.lc-formulas')].some(e => /hard|medium|soft|8\\.88/i.test(e.textContent))`)) throw Error('The panel gives away the choice.');
+  await press('Space'); await at('try-cool', 's.ready'); await shot('try-cool-wrong');
+  if (!(await bubble()).startsWith('Hard wax suits snow at -10 °C and colder')) throw Error('The wrong tin did not say why: ' + await bubble());
+  await press('Digit2'); await press('Space'); await saying('Correct. Medium wax', 'medium wins'); await shot('try-cool-right');
   await next('try-cool');
   await at('try-wet'); await press('Digit3'); await press('Space'); await at('try-wet', 's.ready'); await shot('try-wet');
   await next('try-wet');
@@ -70,7 +101,9 @@ export async function run(c) {
   await press('Digit3'); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
   await next('alone');
   for (const [step, answer] of [['check-cold', 'Digit1'], ['check-rule', 'Digit1'], ['check-game', 'Digit1']]) {
-    await at(step); await shot(step); await press(answer); await at(step, 's.ready'); await wait(1500); await shot(`${step}-answered`);
+    await at(step); await wait(300); await shot(step);
+    if (!(await c.evaluate(`(() => { const p = document.querySelector('.lc-page').getBoundingClientRect(), b = document.querySelector('.lc-bubble').getBoundingClientRect(); return b.top >= p.top - 1 && (b.bottom <= p.bottom + 1 || b.height > p.height); })()`))) throw Error(`${step}: Brian's question is cut off.`);
+    await press(answer); await at(step, 's.ready'); await wait(1500); await shot(`${step}-answered`);
     await press('Enter');
   }
   await at('recap'); await wait(1500); await shot('recap');
@@ -109,5 +142,5 @@ export async function run(c) {
   }
   await new Promise(r=>setTimeout(r,6000)); await clearCard(); await shot('wax-challenge');
   if(await c.evaluate(`window.__qaApp.profile.lab?.done?.wax===true`)) throw Error('Unfinished run granted wax reward.');
-  if (!(await c.evaluate(`document.querySelector('.lab-key-idea')?.textContent.includes('Hard wax for cold, soft wax for warm.')`))) throw Error('The key idea card is not the lesson’s.');
+  if (!(await c.evaluate(`document.querySelector('.lab-key-idea')?.textContent.includes('Cold snow needs a hard wax, and warm snow needs a soft wax.')`))) throw Error('The key idea card is not the lesson’s.');
 }

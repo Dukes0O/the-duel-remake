@@ -1,12 +1,12 @@
 // LAB-CLASSROOM: the pendulum classroom played by keyboard alone, from walking up to the machine
 // to the recap, on the harness's memory-only origin.
 export async function run(c) {
-  await c.command('Emulation.setDeviceMetricsOverride', {width: 1440, height: 900, deviceScaleFactor: 1, mobile: false});
+  await c.command('Emulation.setDeviceMetricsOverride', {width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false});
   await play(c);
 }
 
 const KEYS = {Enter: ['Enter', 13], Space: [' ', 32], Escape: ['Escape', 27], KeyH: ['h', 72], KeyE: ['e', 69], KeyW: ['w', 87], KeyA: ['a', 65],
-  Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit5: ['5', 53]};
+  Digit1: ['1', 49], Digit2: ['2', 50], Digit3: ['3', 51], Digit5: ['5', 53], ArrowUp: ['ArrowUp', 38], ArrowDown: ['ArrowDown', 40]};
 
 async function play(c) {
   await c.navigate('/tools/menu-check.html?flags=lab-classroom,rescue,summit-run');
@@ -46,35 +46,64 @@ async function play(c) {
   await at('word-pendulum'); await new Promise(r => setTimeout(r, 600)); await shot('word-pendulum');
   await press('Space'); await new Promise(r => setTimeout(r, 1800)); await shot('word-pendulum-swinging');
   await next('word-pendulum');
+  // String length and metres: a wrong string says why, then the tape and the person to scale.
+  await at('word-length'); await shot('word-length-start'); await press('Digit1'); await shot('word-length-wrong'); await press('Digit3'); await shot('word-length');
+  await next('word-length');
   // Tap along: early taps are explained, a tap on the return counts.
-  await at('word-swing-time');
+  await at('word-swing-time'); await shot('word-swing-time-start');
   for (let i = 0; i < 60 && !(await c.evaluate(`${state}.ready`)); i++) { await press('Space'); await new Promise(r => setTimeout(r, 120)); }
   await shot('word-swing-time');
   await next('word-swing-time');
-  await at('word-length'); await press('Digit1'); await shot('word-length-wrong'); await press('Digit3'); await shot('word-length');
-  await next('word-length');
   await at('watch-lengths'); await new Promise(r => setTimeout(r, 5000)); await shot('watch-lengths-running');
   await at('watch-lengths', 's.ready'); await new Promise(r => setTimeout(r, 400)); await shot('watch-lengths');
   await next('watch-lengths');
-  await at('watch-weights', 's.ready'); await shot('watch-weights');
-  await next('watch-weights');
+  const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
+  const noPanel = async label => { if (await c.evaluate(`!document.querySelector('.lc-physics').hidden`)) throw Error(`${label}: the panel is open while the guess or the question is open.`); };
   // The guided try: Brian's help climbs to his pointer, then the set-up, a wrong guess and why.
   await at('try-short'); await shot('try-short');
   for (const rung of [1, 2, 3]) { await press('KeyH'); await at('try-short', `s.help === ${rung}`); }
   await new Promise(r => setTimeout(r, 700)); await shot('try-short-show-me');
   // Show me: Brian's pointer presses the 5 m hook and hands the guess back.
-  await at('try-short', 's.cards === 3'); await shot('try-short-guess');
+  await at('try-short', 's.cards === 3'); await new Promise(r => setTimeout(r, 300)); await shot('try-short-guess'); await noPanel('the short string');
   await press('Digit2'); await press('Space');
   await at('try-short', 's.ready'); await new Promise(r => setTimeout(r, 300)); await shot('try-short-wrong-guess');
   await next('try-short');
-  await at('try-heavy'); await press('Digit5'); await at('try-heavy', 's.cards === 3'); await press('Digit3'); await press('Space');
-  await at('try-heavy', 's.ready'); await shot('try-heavy-right');
+  // A press of the wrong hook says what to do, and the prompt follows it.
+  await at('try-heavy'); await press('Digit3'); await new Promise(r => setTimeout(r, 200)); await shot('try-heavy-wrong-hook');
+  if (!(await c.evaluate(`document.querySelector('.lc-prompt').textContent.includes('15 m hook')`))) throw Error('The prompt should ask for the 15 m hook after a wrong press.');
+  await press('Digit2'); await press('Digit5'); await at('try-heavy', 's.cards === 3'); await new Promise(r => setTimeout(r, 300)); await shot('try-heavy-guess'); await noPanel('the heavy weight');
+  await press('Digit3'); await press('Space');
+  await at('try-heavy', 's.ready'); await new Promise(r => setTimeout(r, 1200)); await shot('try-heavy-right');
+  if (!(await worked('(200 × 9.81) ÷ 200 = 9.81'))) throw Error('The heavy weight’s sum is missing.');
   await next('try-heavy');
-  await at('alone'); await press('Space'); await at('alone', 's.help === 1'); await shot('alone-too-quick');
+  // The formula: a hook and a weight move the sums.
+  await at('try-formula'); await new Promise(r => setTimeout(r, 300)); await shot('try-formula');
+  if (!(await worked('√(15 ÷ 9.81) = 7.77 s'))) throw Error('The formula should start on the 15 m string.');
+  await press('Digit1');
+  if (!(await worked('√(5 ÷ 9.81) = 4.48 s'))) throw Error('The hook did not move the sum.');
+  await press('Digit5');
+  if (!(await worked('(200 × 9.81) ÷ 200 = 9.81')) || !(await worked('√(5 ÷ 9.81) = 4.48 s'))) throw Error('The weight should move the lower sum and leave the swing time.');
+  await at('try-formula', 's.ready'); await new Promise(r => setTimeout(r, 300)); await shot('try-formula-done');
+  await next('try-formula');
+  // The free test: string, weight and pull-back; three different settings open Continue.
+  await at('try-free'); await new Promise(r => setTimeout(r, 300)); await shot('try-free');
+  await press('ArrowUp');
+  if (!(await worked('4 × 15 × (25 ÷ 57.3) = 26.2 m'))) throw Error('The pull-back did not move the sum.');
+  await shot('try-free-pulled');
+  const freeRun = async text => { await press('Space'); await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, text, 20_000); await new Promise(r => setTimeout(r, 300)); };
+  await press('Digit5'); await new Promise(r => setTimeout(r, 200)); await press('Space'); await new Promise(r => setTimeout(r, 2000)); await shot('try-free-swinging');
+  await c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes('Change a setting')`, 'the first test says its result', 20_000); await new Promise(r => setTimeout(r, 300));
+  await press('Digit1'); await freeRun('the string length changed'); await shot('try-free-two');
+  await press('Digit3'); await press('ArrowDown'); await freeRun('Press Enter when you have tested enough'); await at('try-free', 's.ready'); await shot('try-free-three');
+  await next('try-free');
+  await at('alone'); await new Promise(r => setTimeout(r, 300)); await shot('alone'); await press('Space'); await at('alone', 's.help === 1'); await shot('alone-too-quick');
   await press('Digit3'); await press('Space'); await at('alone', 's.ready'); await shot('alone-pass');
   await next('alone');
   for (const step of ['check-slowest', 'check-heavy', 'check-settle']) {
-    await at(step); await shot(step); await press('Digit2'); await at(step, 's.ready'); await new Promise(r => setTimeout(r, 600)); await shot(`${step}-answered`);
+    await at(step); await new Promise(r => setTimeout(r, 300)); await shot(step);
+    if (step !== 'check-slowest') await noPanel(step);
+    if (!(await c.evaluate(`(() => { const p = document.querySelector('.lc-page').getBoundingClientRect(), b = document.querySelector('.lc-bubble').getBoundingClientRect(); return b.top >= p.top - 1 && (b.bottom <= p.bottom + 1 || b.height > p.height); })()`))) throw Error(`${step}: Brian's question is cut off.`);
+    await press('Digit2'); await at(step, 's.ready'); await new Promise(r => setTimeout(r, 600)); await shot(`${step}-answered`);
     await press('Enter');
   }
   await at('recap'); await new Promise(r => setTimeout(r, 1500)); await shot('recap');

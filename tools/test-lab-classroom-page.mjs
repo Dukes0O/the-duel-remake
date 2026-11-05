@@ -65,7 +65,7 @@ test('a step done again shows its opening words before anything it found out the
 });
 
 // Every lesson moves onto this list as it is rewritten (card, "Order"); when all are on it, it becomes the whole of CLASSROOM_LESSONS.
-const REWRITTEN = ['projectile', 'launch', 'rust', 'downforce', 'fire', 'gforce', 'grip'];
+const REWRITTEN = ['projectile', 'launch', 'rust', 'downforce', 'fire', 'gforce', 'altitude', 'braking', 'strength', 'fuel', 'wax', 'headings', 'lift', 'pendulum', 'grip'];
 test('a rewritten lesson calls no object she or her, uses one measurement system, and has physics that determines rather than decides', () => {
   for (const id of REWRITTEN) for (const file of [`${id}-classroom.js`, `${id}-board.js`]) {
     const source = readFileSync(new URL(`../src/lab/lessons/${file}`, import.meta.url), 'utf8');
@@ -74,13 +74,16 @@ test('a rewritten lesson calls no object she or her, uses one measurement system
   }
 });
 
+// Pendulums holds its one formula until the player has found out by testing that length matters and weight does not, because showing it sooner
+// would settle both guesses, and its last questions ask about those same two things.
+const HOLDS_FORMULAS_BACK = {pendulum: ['word-pendulum', 'word-length', 'word-swing-time', 'watch-lengths', 'try-short', 'try-heavy', 'check-heavy', 'check-settle']};
 test('a rewritten lesson shows formulas on every step after the first', () => {
   for (const id of REWRITTEN) {
     const lesson = CLASSROOM_LESSONS[id], model = lesson.createModel();
     lesson.steps.forEach((step, i) => {
       if (i === 0) return;
       model.enter(i);
-      assert.ok(model.view().formulas?.length > 0, `${step.id} shows the physics`);
+      if (!HOLDS_FORMULAS_BACK[id]?.includes(step.id)) assert.ok(model.view().formulas?.length > 0, `${step.id} shows the physics`);
     });
   }
 });

@@ -490,7 +490,7 @@ export function createModel() {
         keys: answered ? {} : ANSWER_KEYS, waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, rig: null,
       say: 'A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.',
@@ -553,7 +553,7 @@ export function createModel() {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'push', kg: [T60, c.kg]}, state: null})),
         say: m.say || `At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}. At ${kmh(TRY_TO)} km/h, which is about twice as fast, how hard do you think the tilted wing will push? Pick a card.`,
-        prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}.`, 'Twice the speed gives more than twice the push.', 'Pick a card. Any guess lets you go on.']};
+        prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`At ${kmh(TRY_FROM)} km/h the tilted wing pushed ${kg(T60)}.`, 'Twice the speed gives more than twice the push.', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'scale', say: m.say, prompt: 'Watch the scale.', hints: ['Watch the push on the scale.', 'Compare the push with the first row of the table.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, focus: 'scale', times: true, mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...v, buttons: setNow ? [TO_GUESS] : [], spaceWords: 'goes to the guess', say: m.auto ? autoSay() : m.say || `The tilted wing pushes ${kg(T60)} at ${kmh(TRY_FROM)} km/h. Turn the fan up to ${kmh(TRY_TO)} km/h, which is about twice as fast, and then press Space, and you can guess how hard the tilted wing will push.`,
@@ -564,7 +564,7 @@ export function createModel() {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: COST_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'wing', wing: c.wing}, state: null})),
         say: `The fan is now set to ${kmh(set.speed)} km/h. Which wing will leave the car with the highest top speed: the flat wing, the tilted wing or the steep wing? Pick a card, and then you will test all three.`,
-        prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: ['The car stops gaining speed when drag uses up all of the engine’s power.', 'Which wing turns the least air?', 'Pick a card. Any guess lets you go on.']};
+        prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: ['The car stops gaining speed when drag uses up all of the engine’s power.', 'Which wing turns the least air?', 'Pick a card. Any guess lets you go on.']};
       if (m.phase === 'running') return {...v, focus: 'rope', say: m.say, prompt: 'Watch the scale and the rope.', hints: ['Read the push and the drag.', 'The table keeps each wing.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, mood: COST_GUESSES[m.guess]?.wing === 'flat' ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       const left = WINGS.filter(w => !m.tried.includes(w)).map(wingWord).join(' wing and the ');

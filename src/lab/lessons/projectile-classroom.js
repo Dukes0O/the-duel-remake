@@ -504,7 +504,7 @@ export function createModel() {
       const cards = HEIGHT_GUESSES.map((g, i) => ({id: `answer:${i}`, key: String(i + 1), label: g.label, picture: g.picture,
         state: m.phase !== 'result' ? null : g.id === 'same' ? 'right' : g.id === m.guess ? 'wrong' : null}));
       const question = `Two helicopters fly at 10 m/s and release water directly above the post. One is ${LOW_M} m above the lake and the other is ${HIGH_M} m above the lake. How far ahead will the water from the higher helicopter land, compared with the water from the lower one?`;
-      if (m.phase === 'guess') return {...base, keys: PICK_KEYS, waiting: true, cards, say: question, prompt: 'Pick a card: click it, or press 1, 2 or 3.',
+      if (m.phase === 'guess') return {...base, keys: PICK_KEYS, waiting: true, cards, say: question, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
         hints: ['Remember the stone and the water: the air slows the water.', 'The higher water falls for longer. Is it still moving forward during all of that time?', 'Any guess is fine. Pick one, and then we will test it.']};
       if (m.phase === 'ready') return {...base, ...space('Release'), cards: [], say: 'Now let both helicopters release their water, and compare the two splashes.', prompt: 'Press Space: both helicopters will release their water above the post.',
         hints: ['Space sets both helicopters off.', 'Press Space, or click a helicopter.', 'Watch my pointer, which is on the helicopter.']};
@@ -519,7 +519,7 @@ export function createModel() {
         letGo: answered && id !== 'check-over' ? m.helis[0].release : null, ghostLetGo: answered && id === 'check-faster' ? check.buoy - water(10) : null,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue, or press R to watch again.' : 'Pick a picture: click it, or press 1, 2 or 3.', hints: answered ? DONE_HINTS : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue, or press R to watch again.' : 'Pick a picture by clicking it, or press 1, 2 or 3.', hints: answered ? DONE_HINTS : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS,
       say: 'An object dropped from a moving helicopter keeps moving forward at the speed it had when it was released, so it lands ahead of the place where it was released. At the same time, gravity pulls the object downward, and its downward speed grows by 9.8 m/s during every second of the fall. The air slows a spray of water far more than it slows a stone, so the water does not travel as far forward and lands closer to the point of release than the stone does.',
