@@ -37,3 +37,5 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Lose the straight-cut edge of the pad; drift sand against the walls.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: pass, merge.** Now a town: rusted roofs at different slopes, shacks on legs, washing lines, ladders, and a forge you can pick out. The best sheet of the set. For WW-SCENE: bury the pad's straight edge in the map's ground. Round 3 stays unused.
