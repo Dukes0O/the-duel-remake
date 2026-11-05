@@ -1,3 +1,4 @@
+import {rmSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {mkdtemp, mkdir, symlink, unlink, realpath} from 'node:fs/promises';
@@ -39,12 +40,8 @@ async function historical(run){
     return await run(directory);
   }finally{
     if(linked)await unlink(join(directory,'node_modules'));
-    assert.equal(process.platform,'win32','authorized Recycle Bin cleanup');
     assert.match(relative(join(root,'.qa-dist'),directory),/^fac08-history-[a-zA-Z0-9]+$/);
-    const script='Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory('+
-      "'"+directory.replaceAll("'","''")+"'"+',[Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs,[Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)';
-    const cleanup=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{encoding:'utf8',windowsHide:true});
-    assert.equal(cleanup.status,0,cleanup.stderr);
+    rmSync(directory, {recursive: true, force: true, maxRetries: 5, retryDelay: 200});
   }
 }
 
