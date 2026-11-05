@@ -28,6 +28,8 @@ import {lesson as rust} from '../lessons/rust-classroom.js';
 import * as rustBoard from '../lessons/rust-board.js';
 import {lesson as gforce} from '../lessons/gforce-classroom.js';
 import * as gforceBoard from '../lessons/gforce-board.js';
+import {lesson as grip} from '../lessons/grip-classroom.js';
+import * as gripBoard from '../lessons/grip-board.js';
 
 export const CLASSROOM_LESSONS = Object.freeze({
   pendulum: Object.freeze({...pendulum, name: 'Pendulums', board: pendulumBoard}),
@@ -44,4 +46,5 @@ export const CLASSROOM_LESSONS = Object.freeze({
   launch: Object.freeze({...launch, name: 'Launch angles', board: launchBoard}),
   rust: Object.freeze({...rust, name: 'Rust', board: rustBoard}),
   gforce: Object.freeze({...gforce, name: 'G-force', board: gforceBoard}),
+  grip: Object.freeze({...grip, name: 'Grip', board: gripBoard}),
 });
