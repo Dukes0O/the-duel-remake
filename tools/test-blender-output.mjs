@@ -27,7 +27,7 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat', 'bowl-trucks']);
+const artCandidates = new Set(['wildcat']);
 const generators = [
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -872,8 +872,7 @@ try {
 }
 
 check('BOWL-ART-TRUCKS GLB meets its five-rival file and triangle budgets', () => {
-  const path = join(root, '.qa-dist/bowl-trucks.glb');
-  if (!existsSync(path)) return; // Art stays a candidate until Claude picks a round.
+  const path = join(root, 'public/assets/models/wasteland/bowl/trucks.glb');
   const bytes = readFileSync(path);
   assert.ok(bytes.length <= 1024 * 1024, `GLB is ${bytes.length} bytes; budget is 1 MB`);
   assert.equal(bytes.toString('ascii', 0, 4), 'glTF');

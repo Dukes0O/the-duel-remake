@@ -44,3 +44,11 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Commit public/assets/models/wasteland/bowl/trucks.glb: no model is on the branch yet.
 
 **Round 3: pass, merge.** The best of this batch: five different paint jobs with real rust and chips, Dragon Wagon black and red at last, and the fit on the Titan stays good. Extras are still modest from the front, but the paint and outlines tell the trucks apart at 40 m.
+
+## Claude's review of the changed check (rule 18)
+
+Round 3 passed, so `tools/test-blender-output.mjs` no longer lists `bowl-trucks` as
+a candidate: the check that the model must not be in the game becomes the check
+that it must be. The five-rival budget check read a scratch file and skipped itself
+when that was absent; it now reads the real model and always runs. Both are
+stricter than before. Nothing is loosened.

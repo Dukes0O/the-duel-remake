@@ -1,6 +1,6 @@
 # WW-ART-VEHICLES round 3
 
-The single comparison sheet, `round-2.jpg`, keeps the round 1 and 2 sheet and adds flat-ground side, three-quarter and detail views for each round 3 vehicle. The new views use the repaired Z-up review cameras and a person for scale. The sheet is 74,305 bytes.
+The single comparison sheet, `round-3.jpg`, keeps the round 1 and 2 sheet and adds flat-ground side, three-quarter and detail views for each round 3 vehicle. The new views use the repaired Z-up review cameras and a person for scale. The sheet is 74,305 bytes.
 
 ## Scores (1–5)
 
