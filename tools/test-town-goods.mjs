@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {createTown} from '../src/town/town-state.js';
+import {GOODS} from '../src/town/content/goods.js';
+import {RECIPES} from '../src/town/content/recipes.js';
+import {priceForGood,runTownRecipe,stockMassKg,storeGood,takeGood} from '../src/town/town-goods.js';
+import {createHauler,dispatchSalvageGang,findHaulRoute,stepHauler,stepSalvageGang} from '../src/town/town-haulers.js';
+
+let checks=0;
+const check=(condition,message)=>{assert.ok(condition,message);checks++;};
+const town=createTown(504,'Goods test');
+check(GOODS.every(g=>Number.isFinite(g.kgPerUnit)&&g.kgPerUnit>0&&Number.isFinite(g.price)&&g.price>0),'every good has a physical mass and a price');
+check(RECIPES.some(r=>r.buildingId==='forge')&&RECIPES.some(r=>r.buildingId==='kiln')&&RECIPES.some(r=>r.buildingId==='sawmill')&&RECIPES.some(r=>r.buildingId==='soup-kitchen'),'production is content data for the named staffed buildings');
+check(storeGood(town,{x:1,z:1},'salvage',100).ok,'a stockpile accepts listed goods');
+check(stockMassKg(town,{x:1,z:1})===100,'stock weight uses the good definition');
+const fullPrice=priceForGood(town,'salvage');
+storeGood(town,{x:2,z:1},'salvage',900);
+check(priceForGood(town,'salvage')<fullPrice,'more town stock lowers the market price');
+check(!takeGood(town,{x:1,z:1},'salvage',101).ok,'a stockpile cannot give away goods it does not hold');
+storeGood(town,{x:1,z:1},'fuel',4);
+const forge={buildingId:'forge',regionId:'scablands',x:1,z:1,staff:3};
+check(runTownRecipe(town,forge,'forge-steel').ok,'a staffed forge turns salvage and fuel into steel');
+check(!runTownRecipe(town,{...forge,staff:0},'forge-tin').ok,'an unstaffed building cannot produce goods');
+
+const roads=[];
+for(let x=0;x<=40;x++) roads.push({regionId:'scablands',x,z:0,state:'built',roadClass:'dirt'});
+const near=findHaulRoute(roads,{x:1,z:0},{x:3,z:0});
+const far=findHaulRoute(roads,{x:1,z:0},{x:31,z:0});
+check(near&&far&&far.hours>near.hours,'a far site takes longer to supply than a near site');
+const truck=createHauler({id:'truck-1',from:{x:1,z:0},to:{x:31,z:0},roads,vehicle:'truck',fuelLitres:0,goods:{steel:400}});
+check(truck.ok,'a load within truck capacity starts on the road');
+const stopped=stepHauler(truck.agent,roads);
+check(stopped.status==='out-of-fuel'&&stopped.message.includes('run out of fuel'),'a truck out of fuel stops and says so');
+check(!createHauler({id:'overload',from:{x:1,z:0},to:{x:2,z:0},roads,vehicle:'truck',fuelLitres:10,goods:{steel:5000}}).ok,'a truck cannot carry more than its rated mass');
+const gang=dispatchSalvageGang({from:{x:1,z:0},to:{x:31,z:0},roads});
+check(gang.ok&&gang.agent.kind==='salvage-gang','a salvage gang gets a road route to and from the Boneyard');
+stepSalvageGang(gang.agent,roads,1200);
+stepSalvageGang(gang.agent,roads,1200);
+check(gang.agent.goods.salvage===1200&&gang.agent.status==='arrived','a gang loads salvage at the Boneyard and brings it home');
+
+town.people=Array.from({length:10000},(_,i)=>({id:`person-${i}`}));
+const agents=Array.from({length:200},(_,i)=>createHauler({id:`agent-${i}`,from:{x:1,z:0},to:{x:31,z:0},roads,vehicle:i%2?'truck':'handcart',fuelLitres:10,goods:{salvage:20}}).agent);
+const start=performance.now();
+for(const agent of agents) stepHauler(agent,roads);
+const elapsed=performance.now()-start;
+check(agents.every(agent=>agent&&agent.path.length===31),'200 haulers advance with a town of 10,000 people');
+check(elapsed<30,`200 haulers step under 30 ms (observed ${elapsed.toFixed(2)} ms)`);
+console.log(`Town goods: ${checks} checks passed; 200 haulers ${elapsed.toFixed(2)} ms.`);
