@@ -216,7 +216,7 @@ test('the Grand Prix pace row follows the new road only; the released road keeps
   const added = courseForGrandPrix(EIFEL_CROWN);
   assert.deepEqual(released.fieldPace, {easy: .934, medium: .903, hard: .881});
   assert.equal(released.fieldFollow, undefined);
-  assert.deepEqual(added.fieldPace, {easy: .94, medium: .864, hard: .86});
+  assert.deepEqual(added.fieldPace, {easy: .94, medium: .862, hard: .86});
   assert.equal(added.fieldAggression, 1.4);
   assert.equal(added.fieldFollow.firstLap.margin, 5);
   assert.equal(added.grandPrix, true);

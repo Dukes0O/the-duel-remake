@@ -1,82 +1,50 @@
 # EIFEL-CROWN-C3: Eifel Crown pace
 
-Status: **not complete**. The row has full 30-race measurements for each
-computer difficulty, but Easy and Hard exceed the crash limit, Easy also misses
-the win band, Medium misses the three-pass target, and the switched-off lane
-cannot publish the preview reference lap. The preview switch remains `dev`.
+Status: **C3 pace pass complete**. The road stays behind its development switch.
 
-## Final measured row
+## Claude's decision
 
-`src/race-field.js`, entry `eifel-crown@3`: pace Easy `.94`, Medium `.864`,
-Hard `.86`; aggression `1.4`; following `wallRoom: 1.3`, first-lap
-`wallRoom: 1.8`.
+Accepted: restore `EIFEL_GP_FIELD_FOLLOW` to following `wallRoom: 1` and first-lap `wallRoom: 1.4`. Final pace is Easy `.94`, Medium `.862`, Hard `.86`.
 
-| Difficulty | Computer finishers | Computer crashes | First-lap pile-ups | Player wins | Computer passes/race | Mean player time |
+Accepted: Medium computer passes remain below 3 per race because single-file road sections make passes rare, and raising pace for more passes raises crashes. Easy may remain a little over the crash limit (up to 5 in 30). Do not change test bands or tolerances.
+
+Hard was not rerun, as directed. Claude's retained result is 20% player wins and 3 computer crashes at `.86` with this room.
+
+## Final measurements
+
+Easy and Medium runs used `node tools/test-circuit-eifel.mjs --pace <difficulty>`, 30 seeded races each. Raw final outputs were written to `.qa-dist/eifel-easy-lastpace.log` and `.qa-dist/eifel-medium-finalpace.log`.
+
+| Difficulty | Computers finish all races | Computer crashes | First-lap pile-ups | Player wins | Computer passes/race | Mean player time |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Easy | 30/30 races all seven | 14 | 0 | 27/30 (90%) | 1.30 | 337.973 s (328.711–358.436) |
-| Medium | 30/30 races all seven | 3 | 0 | 15/30 (50%) | 1.60 | 343.405 s (331.936–353.309) |
-| Hard | 30/30 races all seven | 4 | 0 | 6/30 (20%) | 2.03 | 347.307 s (338.744–355.306) |
+| Easy `.94` | 30/30 | 4 | 0 | 22/30 (73.3%) | 1.03 | 340.336 s (330.502-354.941) |
+| Medium `.862` | 30/30 | 1 | 0 | 10/30 (33.3%) | 1.53 | 345.583 s (334.294-358.493) |
+| Hard `.86` | Not rerun | - | - | 20% (Claude's retained result) | - | - |
 
-Targets met: all computer racers finished every race; no first-lap pile-ups;
-Medium and Hard player win bands; Medium crash limit. Targets missed: Easy win
-band (90%, target 60–80%); Easy and Hard computer crash limit (14 and 4,
-maximum 3 per 30); Medium computer passes (1.60, target at least 3); Hard
-crash limit (4, maximum 3).
+At `.861`, the completed batch won 17/30 (56.7%), outside Claude's band. I raised Medium by `.001` once to `.862`; its final batch is within the 30-50% band. An interrupted `.862` attempt after 10 races was discarded and excluded. No further pace change or measurement was made.
 
-A lower wall buffer trial (`wallRoom: .5`, first lap `.8`) produced five
-computer crashes in its third Easy race. I stopped that six-race calibration
-after four races and removed the trial. The remaining tuning needed to lower
-Easy mistake severity and raise computer passing without increasing crashes;
-those controls are outside this card's Eifel pace row. Do not treat the
-partial trial as acceptance.
+The final Medium pace command exits on the existing Grand Prix lower-bound assertion: 33% is below its 40% minimum. Claude's decision sets the accepted band at 30-50%. That assertion remains unchanged for Claude's review. The Medium passes average is below the target of 3 as accepted above. Easy's 4 crashes are above the built-in maximum of 3 and within Claude's stated 5-per-30 waiver. No assertion, band or tolerance was weakened.
 
 ## Reference lap and replay
 
-`node tools/build-reference-laps.mjs --event=eifel-crown --probe` rebuilt the
-layout 3 reference in memory: **105,600 ms (1:45.6)**, within 1:40–1:46;
-281 samples; road fingerprint `track-v1-f45ae84e`. The reference was not
-published because the Eifel switch remains off and the builder forbids
-publishing a switched-on course reference while its released replacement is
-still active.
+The layout 3 reference remains **105,600 ms (1:45.6)**, within 1:40-1:46; 281 samples; road fingerprint `track-v1-f45ae84e`.
 
-Recorded the layout 3 Eifel replay in
-`tools/replays/courses/eifel-crown.json`. The new replay fingerprint is
-`dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb` at 30,
-60 and 144 FPS. The one fingerprint that moves at C7 is
-`eifel-crown-duel`: released-road
-`ded9069111c028875ff7c5ac29c09933d33e5b9adaf407e8f78b0abbaf967aac` to the
-layout 3 value above. The course file is marked `eifel-crown@3` so the replay
-guard keeps using the released case until C7 removes that old case and
-activates the layout 3 recording. No other replay fingerprint changed.
+`node tools/test-replays.mjs` passed 297 checks across 33 cases, 31 events, 9 categories, three FPS values and three runs. The layout 3 Eifel replay fingerprint remains `dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb` at 30, 60 and 144 FPS; no re-record was needed. The released-road fingerprint remains `ded9069111c028875ff7c5ac29c09933d33e5b9adaf407e8f78b0abbaf967aac`.
+
+The Eifel replay fixture had a literal `\n` after its closing brace, so the replay test could not parse it. Removed those two invalid trailing characters; valid JSON now passes the replay suite.
 
 ## Checks
 
-- Pace runs: Easy, Medium and Hard, 30 races each, memory-only. Full results
-  are listed above. Easy and Hard exited with crash/win target failures;
-  Medium passed its test thresholds but missed the packet's passes target.
-- `node tools/test-circuits.mjs`: passed; 232,142 geometry checks with the
-  switch off and 232,138 with it on.
-- `node tools/test-circuit-eifel.mjs`: 17/18 passed on rerun; the remaining
-  sound loudness check could not run because FFmpeg is not available.
-- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4
-  --keep-going`): 53 passed, 3 failed. The failures were the Eifel loudness
-  check and P4 audio (both could not start FFmpeg), plus a duplicate Eifel
-  replay fingerprint while the layout 3 fixture was first staged. After
-  marking the preview recording for layout 3, `node tools/test-replays.mjs`
-  passed 297 checks across 33 cases; the two FFmpeg failures remain.
-- `npm.cmd run build`: passed. PowerShell blocks `npm.ps1`; the `.cmd` shim
-  ran the same build script. Vite reported its existing large-chunk warning.
-- Browser checks: none required for C3.
+- `node tools/test-circuit-eifel.mjs`: 17/18 passed; the only failure is its FFmpeg loudness measurement (FFmpeg unavailable).
+- `node tools/test-replays.mjs`: passed, 297 checks.
+- `node tools/test-circuits.mjs`: passed, 232,142 checks with the switch off and 232,138 with it on.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 8`): 19 suites passed, one failed, 36 not run; only failure was the same FFmpeg loudness measurement. Generic checks reported 799 passed, 0 failed.
+- `npm.cmd run build`: passed; existing large-chunk and dynamic-import warnings remain.
+- Browser and frame checks: not required for C3.
 
 ## Assertions and fingerprints
 
-Changed one exact assertion in `tools/test-circuit-eifel.mjs`: the layout 3
-Medium pace expectation is `.864`, the final 30-race measured row. No band,
-tolerance or result assertion was weakened. The replay fingerprint change is
-only the Eifel layout 3 recording described above. Other course roads,
-signatures, reference laps, replay fingerprints and pace rows were not edited.
+Changed one exact assertion in `tools/test-circuit-eifel.mjs`: the layout 3 Medium pace expectation now matches final `.862` (previously `.864`). The race-target assertions remain unchanged, including the 40% minimum that the final 33% result fails. No replay fingerprint changed.
 
 ## Removed
 
-Removed the unproven `.5/.8` wall-buffer trial. No generated lane logs or
-scratch scripts are retained. No other course data or live save was changed.
+Removed only the malformed trailing characters from the Eifel replay JSON. Temporary `.qa-dist` logs will be removed after these results are recorded here.
