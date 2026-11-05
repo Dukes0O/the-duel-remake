@@ -3,6 +3,8 @@
 // plates only cut kit weight), so the numbers are standard engineering values for the three materials and
 // the maths is the textbook cantilever: tip drop = F L^3 / (3 E I), outer-fibre stress = 6 F L / (w t^2).
 import {GRAVITY, KESTREL} from '../../heli/heli-flight.js';
+// For the classroom lesson, which reads the helicopter's rules only through this bench.
+export {GRAVITY};
 import {control, choice, makeBench} from './bench-core.js';
 
 // density kg/m3, stiffness E (Pa), strength (Pa) where it bends for good (ductile) or snaps (brittle).

@@ -10,7 +10,7 @@ import {RUST_PARTS, PROTECTIONS, rustOf, rightProtection, checkProtections, RUST
 import {BENCH_OF, CHALLENGE_KIND, readoutRows, openBench, setControl, runBench, goalMet, challengeState, shopRows, choiceRows, boardRows,
   lineId, lineText, lineIdsOf, passIn, buyIn} from '../src/lab/lab-model.js';
 import {LAB_LESSONS} from '../src/lab/lab-lessons.js';
-import {LAB_LINES} from '../src/lab/lab-lines.js';
+import {LAB_MACHINE_WORDS, LAB_LINES} from '../src/lab/lab-lines.js';
 import {LAB_UPGRADES} from '../src/lab/lab-shop.js';
 import {labOf} from '../src/lab/lab-save.js';
 import {createProfile} from '../src/progression.js';
@@ -174,6 +174,7 @@ test('every lesson has a bench, a challenge kind and Brian\'s three lines', () =
     assert.ok(BENCH_OF[lesson.id], `${lesson.id} has a bench`);
     assert.ok(CHALLENGE_KIND[lesson.id], `${lesson.id} has a challenge kind`);
     assert.equal(lineIdsOf(lesson.id).length, 3, `${lesson.id} has intro, explain and pass`);
+    assert.match(LAB_MACHINE_WORDS[lesson.id] ?? '', /^(This is|These are) .+\./, `${lesson.id}: Brian can say what its machine is`);
     for (const step of ['intro', 'explain', 'pass']) assert.equal(lineText(lesson.id, step), LAB_LINES[lineId(lesson.id, step)].text, 'the caption is the line\'s text');
   }
   assert.equal(Object.keys(MODEL_OF_LESSON).length, LAB_LESSONS.length, 'every lesson has a bench in the room');

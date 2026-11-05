@@ -92,6 +92,15 @@ reviewed by Claude: longer lines are what Kyle asked for, the files load only wh
 peak are still checked. `tools/test-lab-tune-view.mjs` moves with the Tune page's wording. One independent review of the three lessons;
 its faults are fixed, listed in each lesson's note, and added to the rewrite brief for the lessons still to come.
 
+## Batch 3: the rest of the older lessons
+
+Air and altitude, Braking, Strength, Fuel, Wax, Headings, Lift and Pendulums, each with its own note `docs/changes/LAB-CLASSROOM-LANGUAGE-<ID>.md`.
+Thirty more of Brian's lines are recorded. Reviews: one for each group of lessons; their faults are fixed and listed in each lesson's note. Braking and
+Strength read `carMassKg` and `GRAVITY` through their benches, as `tools/test-heli-mode.mjs` requires. `tools/test-lab-radio.mjs`: Wax's recording now says what its
+caption says, so no line is allowed a difference; that is stricter than before. `tools/test-lab-classroom-page.mjs`: Pendulums may hold its formula back on the listed
+steps, reviewed by Claude: showing it sooner would settle the lesson's two guesses. G-force's merge left three walkthroughs expecting its old lesson: `lab-walk` now
+expects its classroom, `lab-lesson-frame` borrows Grip, and `lab-lessons-workshop` is deleted with the lesson it walked.
+
 ## Review
 
 One independent review (read-only agent). Real faults, all fixed with a test where one fits: the main explanations left the

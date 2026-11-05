@@ -432,7 +432,7 @@ export function createModel() {
         keys: answered ? {} : ANSWER_KEYS, waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
-        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card: click it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
+        say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, rig: null,
       say: 'On level ground, a ramp of about 45 degrees sends the skier furthest, because it divides the speed evenly between moving forward and staying in the air. Greater speed carries the skier further, because the skier moves forward faster and also stays in the air for longer. When the landing is lower than the ramp, the skier has longer to fall, so a flatter ramp goes furthest. On the Aerials run the kicker sets the angle, so the part you can change is your speed.',
@@ -495,7 +495,7 @@ export function createModel() {
       if (m.phase === 'guess') return {...flagged, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: TILT_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'tilt', way: c.way}, state: null})),
         say: `A flag stands at ${FLAG_M} m on the tape. With the ramp at 45 degrees and the dial at ${kmh(SHOW_MS)} km/h, the skier lands ${D(45)}, which is beyond the flag. The speed must stay at ${kmh(SHOW_MS)} km/h. Which way should you tilt the ramp to bring the skier back to the flag?`,
-        prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: ['A ramp at 45 degrees sends the skier furthest.', 'Does a steeper ramp land shorter? Does a flatter ramp?', 'Pick a card. Any guess lets you go on.']};
+        prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: ['A ramp at 45 degrees sends the skier furthest.', 'Does a steeper ramp land shorter? Does a flatter ramp?', 'Pick a card. Any guess lets you go on.']};
       if (flying) return {...flagged, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands against the flag.', 'Compare this launch with the 45 degree row.', 'Wait a moment.']};
       if (m.phase === 'done') return {...flagged, focus: 'tape', mood: TILT_GUESSES[m.guess]?.way === 'either' ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...flagged, say: m.auto ? autoSay() : m.say,
@@ -505,7 +505,7 @@ export function createModel() {
     if (id === 'try-speed') {
       if (m.phase === 'guess') return {...v, keys: ANSWER_KEYS, buttons: [], target: null, glow: null, waiting: true,
         cards: SLOW_GUESSES.map((c, i) => ({id: `answer:${i}`, key: String(i + 1), label: c.label, picture: {kind: 'tape', at: [distanceOf(45, SHOW_MS), c.at]}, state: null})),
-        say: m.say, prompt: 'Pick a card: click it, or press 1, 2 or 3.', hints: [`At ${kmh(SHOW_MS)} km/h the skier landed ${D(45)}.`, 'A slower skier lands shorter, but by how much?', 'Pick a card. Any guess lets you go on.']};
+        say: m.say, prompt: 'Pick a card by clicking it, or press 1, 2 or 3.', hints: [`At ${kmh(SHOW_MS)} km/h the skier landed ${D(45)}.`, 'A slower skier lands shorter, but by how much?', 'Pick a card. Any guess lets you go on.']};
       if (flying) return {...v, focus: 'tape', say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the skier lands.', 'Compare this launch with the first row.', 'Wait a moment.']};
       if (m.phase === 'done') return {...v, focus: 'tape', mood: m.guess === 1 ? 'cheer' : 'explain', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
       return {...v, say: m.auto ? autoSay() : m.say || `The ramp stays at 45 degrees. At ${kmh(SHOW_MS)} km/h the skier landed ${D(45)} along the tape. Turn the dial down to ${kmh(SLOW_MS)} km/h, then press Space, and you can guess where the skier will land.`,
