@@ -6,6 +6,7 @@ import {WARLORDS, WARLORD_LADDER, warlordUnlockSatisfied} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {featureFlags as defaultFeatureFlags} from './feature-flags.js';
 import {waterNextUp, waterWallMarkup} from './story/water-ui.js';
+import {yardThingsToTry} from './yard-things-to-try.js';
 
 const button = (label, action) => `<button type="button" data-action="${action}">${label}</button>`;
 const courseNames = new Map(COURSE.map(course => [course.id, course.name]));
@@ -73,7 +74,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   else {
     const homeCopy = canFight ? `The Scrapdome is open. ${fightCopy}` :
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>`;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${featureFlags?.enabled('gear-find') ? yardThingsToTry(profile, escapeHTML) : ''}`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }

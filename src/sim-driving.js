@@ -14,6 +14,7 @@ import {carEffect,carGrip,carTopSpeed,carAcceleration,carAlongPush,dampCarAlongP
 import {FIELD, nitroLocked} from './race-field.js';
 import {avalancheDriftAt} from './summit-avalanche.js';
 import {stepPitService,limitPitSpeed} from './pit-lane.js';
+import {stepBowlAir} from './bowl/bowl-air.js';
 
 export function _surface(distance, lateral) {
   const halfWidth = this.course.roadHalfWidthAt?.(distance) ?? DRIVE.roadHalfWidth;
@@ -377,6 +378,7 @@ function rampLaunchGrade(course) {
 }
 
 export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
+  stepBowlAir(this, actor, dt);
   // Idle ram speed can be zero on arena cars; only Mortar owns this delegation.
   if (carMortarHop(actor)) {
     if (actor._ramVerticalSpeed != null && (actor._ramVerticalSpeed > 0 || actor.airHeight > 0)) {

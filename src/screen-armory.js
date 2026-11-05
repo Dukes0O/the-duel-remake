@@ -1,4 +1,5 @@
-import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST} from './weapon-upgrades.js';
+import {getProfileWeapons, WEAPON_UPGRADE_COSTS, WASTELAND_UPGRADE_COSTS, offeredArsenalWeapons, ARSENAL_WEAPON_COST, ARSENAL_WEAPONS} from './weapon-upgrades.js';
+import {rankForXp} from './notoriety.js';
 import {shownCars, wonCars} from './earned-cars-ui.js';
 import {WEAPONS} from './combat.js';
 import {CARS} from './config.js';
@@ -42,6 +43,26 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
     const loadout = getCarLoadout(saved,arsenalOptions());
     const available = availableCarWeapons(saved,arsenalOptions());
     return `<section class="armory-loadout" aria-labelledby="car-loadout-title"><div><p class="eyebrow">CAR WEAPONS</p><h3 id="car-loadout-title">YOUR FOUR SLOTS</h3><p>Choose a weapon for each key. Choosing one that is already equipped swaps its slot.</p></div><div class="armory-loadout-grid">${loadout.map((selected,slot)=>`<label class="armory-slot"><span>SLOT ${slot+1} · KEY ${slot+1} · D-PAD ${CAR_SLOT_DIRECTIONS[slot]}</span><select data-loadout-slot="${slot}" aria-label="Car weapon slot ${slot+1}, key ${slot+1}, D-pad ${CAR_SLOT_PAD[slot]}">${available.map(id=>`<option value="${id}" ${id===selected?'selected':''}>${escapeHTML(WEAPONS[id].name)}</option>`).join('')}</select></label>`).join('')}</div></section>`;
+  }
+  function weaponFindPanel(saved) {
+    const rank = rankForXp(saved?.wasteland?.xp);
+    const owned = getProfileWeapons(saved).unlocked;
+    const loadout = getCarLoadout(saved, arsenalOptions());
+    const ids = [...new Set([...Object.keys(WEAPONS), ...Object.keys(ARSENAL_WEAPONS)])];
+    const effects = {ufo: 'A short forward hop.', bomb: 'Drop an explosive behind your car.',
+      crossbow: 'Fire a bolt ahead.', star: 'Gain a short burst of invincibility.',
+      oil: 'Lay slippery oil behind you.', harpoon: 'Pull a rival toward you.',
+      caltrops: 'Scatter spikes behind your car.', smoke: 'Hide your car in smoke.',
+      rockets: 'Fire a guided rocket.', flamethrower: 'Burn rivals and barricades ahead.',
+      magnet: 'Pull nearby cars toward you.', mortar: 'Fire an arcing shell.',
+      tesla: 'Shock nearby cars.', decoy: 'Send a decoy car ahead.', nitro: 'Ram with a burst of speed.'};
+    const rankNeeded = id => ARSENAL_WEAPONS[id]?.rank ?? 1;
+    return `<section class="weapon-shop"><h3>CAR WEAPONS</h3><div class="upgrade-grid">${ids.map(id => {
+      const needed = rankNeeded(id), unlocked = owned.includes(id), open = unlocked || rank >= needed;
+      const newlyOpen = unlocked && rank === needed;
+      const slot = Math.max(0, loadout.findIndex(item => !owned.includes(item)));
+      return `<article class="upgrade-card"><h3>${escapeHTML(WEAPONS[id]?.name ?? id)}${newlyOpen ? ' <span>NEW</span>' : ''}</h3><p>${escapeHTML(effects[id] || 'A weapon for your car.')}</p>${open ? unlocked ? `<b>${newlyOpen ? 'NEW' : 'OPEN'}</b>` : `<b>Rank ${needed} reached · NEW</b>` : `<b>Rank ${needed} · you are rank ${rank}</b>`}${open && unlocked ? `<button type="button" data-weapon-fit="${escapeHTML(id)}" data-weapon-fit-slot="${slot}">FIT</button>` : ''}</article>`;
+    }).join('')}</div></section>`;
   }
   function armorKitPanel(saved) {
     const requested = getArmoryCar();
@@ -88,7 +109,7 @@ export function createArmoryScreen({profile, credits, escapeHTML, getGarageMessa
   function armoryScreen() {
     const garageMessage=getGarageMessage();
     const scrapCareer=kitsEnabled()&&profile().wasteland?.discoveredGate===true;
-    return `<section class="garage-panel" role="dialog" aria-modal="true" aria-labelledby="armory-title"><header class="shop-heading"><div><p class="eyebrow">THE ARMORY</p><h2 id="armory-title">UPGRADE YOUR WEAPONS${kitsEnabled()?' & ARMOR':''}.</h2></div><div class="shop-wallet"><span>${scrapCareer?'YOUR SCRAP':'YOUR CREDITS'}</span><b>${scrapCareer?profile().wasteland.scrap:credits(profile().credits)} ${scrapCareer?'SCRAP':'CR'}</b></div><button class="shop-close" data-action="armory-close" aria-label="Close armory">×</button></header>${scrapCareer?territoryPanel(profile(), {canFight: false, featureFlags}):''}${crewEnabled()?crewPanel(profile(),escapeHTML,crewContext(profile())):''}${loadoutsEnabled()?loadoutPanel(profile()):''}${arsenalOffers(profile())}${weaponUpgradePanel(profile(),kitsEnabled())}${kitsEnabled()?armorKitPanel(profile()):''}<p class="garage-message" role="status">${escapeHTML(garageMessage)||'Collect glowing road power-ups in Mad Max Duel to recharge a weapon instantly.'}</p><footer class="shop-footer">${action('BACK TO THE ROAD','armory-close')}</footer></section>`;
+    return `<section class="garage-panel" role="dialog" aria-modal="true" aria-labelledby="armory-title"><header class="shop-heading"><div><p class="eyebrow">THE ARMORY</p><h2 id="armory-title">UPGRADE YOUR WEAPONS${kitsEnabled()?' & ARMOR':''}.</h2></div><div class="shop-wallet"><span>${scrapCareer?'YOUR SCRAP':'YOUR CREDITS'}</span><b>${scrapCareer?profile().wasteland.scrap:credits(profile().credits)} ${scrapCareer?'SCRAP':'CR'}</b></div><button class="shop-close" data-action="armory-close" aria-label="Close armory">×</button></header>${scrapCareer?territoryPanel(profile(), {canFight: false, featureFlags}):''}${crewEnabled()?crewPanel(profile(),escapeHTML,crewContext(profile())):''}${loadoutsEnabled()?loadoutPanel(profile()):''}${scrapCareer&&featureFlags?.enabled?.('gear-find')===true?weaponFindPanel(profile()):''}${arsenalOffers(profile())}${weaponUpgradePanel(profile(),kitsEnabled())}${kitsEnabled()?armorKitPanel(profile()):''}<p class="garage-message" role="status">${escapeHTML(garageMessage)||'Collect glowing road power-ups in Mad Max Duel to recharge a weapon instantly.'}</p><footer class="shop-footer">${action('BACK TO THE ROAD','armory-close')}</footer></section>`;
   }
   armoryScreen.yardContent = () =>
     `${loadoutsEnabled()?loadoutPanel(profile()):''}`+
