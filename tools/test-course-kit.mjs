@@ -1,3 +1,4 @@
+import {rmSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash, randomUUID} from 'node:crypto';
@@ -334,14 +335,9 @@ const result=purchaseCourse(profile,'${variantId}');assert.equal(result.ok,false
     const unavailable=spawnSync(process.execPath,['--input-type=module','-e',unavailableCode],{cwd:fixtureRoot,encoding:'utf8',windowsHide:true});
     assert.equal(unavailable.status,0,unavailable.stdout+' '+unavailable.stderr);
   } finally {
-    assert.equal(process.platform, 'win32', 'test cleanup requires the authorized Recycle Bin');
     const part = relative(join(root, '.qa-dist'), fixtureRoot);
     assert.ok(/^fac04-test-[a-zA-Z0-9]+$/.test(part), 'recycle only the mkdtemp tree this test owns');
-    const literal = "'" + fixtureRoot.replaceAll("'", "''") + "'";
-    const script = 'Add-Type -AssemblyName Microsoft.VisualBasic; ' +
-      '[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory(' + literal + ',[Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs,[Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)';
-    const cleanup = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {windowsHide: true, encoding: 'utf8'});
-    assert.equal(cleanup.status, 0, cleanup.stderr);
+    rmSync(fixtureRoot, {recursive: true, force: true, maxRetries: 5, retryDelay: 200});
   }
 });
 

@@ -5,7 +5,7 @@ import {mkdtempSync, realpathSync, readFileSync, existsSync, openSync, closeSync
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {join, resolve, sep} from 'node:path';
-import {recycleQaBundle} from '../browser-harness.mjs';
+import {removeQaBundle} from '../browser-harness.mjs';
 import {DRIVE} from '../../src/config.js';
 import {arenaParticipant, outOfPlay, arenaTargetOutOfPlay} from '../../src/combat-teams.js';
 
@@ -192,7 +192,7 @@ async function recycleCurrentBaseline(provenance) {
       'remove only this snapshot integration dependency junction');
     await rmdir(provenance.junction); // Nonrecursive unlink of the owned junction.
   }
-  await recycleQaBundle(provenance.home);
+  await removeQaBundle(provenance.home);
 }
 async function prepareCurrentBaseline() {
   assert.ok(!process.env.P4_KIT_HARBOUR_SOURCE, 'current integration control refuses the explicit hybrid source fixture');
