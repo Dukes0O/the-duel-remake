@@ -2,6 +2,8 @@
 // 2 pi root(L/g). The cable bench hangs the load on the game's own cable (heli-cable.js stepCable) from
 // a hook that does not move, releases it a few degrees aside and times the swing the game really makes.
 import {GRAVITY, HELI_STEP} from '../../heli/heli-flight.js';
+// For the classroom lesson, which reads the helicopter's rules only through this bench.
+export {GRAVITY};
 import {createLoad, stepCable} from '../../heli/heli-cable.js';
 import {control, choice, makeBench} from './bench-core.js';
 

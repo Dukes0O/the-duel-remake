@@ -1,7 +1,7 @@
-// The pendulum lesson's board (docs/board/cards/LAB-CLASSROOM.md section 4): a 2D teaching
-// drawing at true scale and real speed. Draws and hit-tests only; it never changes the lesson.
+// The pendulum lesson's board (docs/board/cards/LAB-CLASSROOM.md section 4; wording: LAB-CLASSROOM-LANGUAGE.md): a 2D
+// teaching drawing at true scale and real speed. Draws and hit-tests only; it never changes the lesson.
 import {stringPeriod} from '../benches/pendulum.js';
-import {HOOK_X, LENGTHS, REFERENCE_X, SWING_RAD, WEIGHTS} from './pendulum-classroom.js';
+import {GUESS_CAPTIONS, HOOK_X, LENGTHS, REFERENCE_X, SWING_RAD, WEIGHTS, tripMetres} from './pendulum-classroom.js';
 import {BOARD, theme, background, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 export {BOARD};
 
@@ -9,6 +9,8 @@ const BEAM_Y = 150, METRE = 18, WATCH_Y = 50, WATCH_R = 28, DIAL_S = 12, PLATE_Y
 const SHELF = Object.freeze({light: [78, 618], heavy: [140, 608]});
 const radius = kg => kg > 100 ? 26 : 18;
 const CABLE_PERIOD = stringPeriod(15);
+// The free test's pull-back buttons, on the left of the beam.
+const PULL_BUTTONS = Object.freeze({'pull:up': [100, 285], 'pull:down': [100, 325]});
 
 export const bobPoint = (p, angle = p.angle) => [p.x + Math.sin(angle) * p.lengthM * METRE, BEAM_Y + Math.cos(angle) * p.lengthM * METRE];
 const pendulumById = (view, id) => view.pendulums.find(p => p.id === id);
@@ -19,6 +21,7 @@ export function hitTest(view, x, y) {
   const near = (point, r) => Math.hypot(x - point[0], y - point[1]) <= r;
   const drag = draggable(view);
   if (drag && view.keys.Space === 'release' && near(bobPoint(drag), radius(drag.weightKg) + 16)) return {drag: drag.id, action: 'release'};
+  if (view.pull && view.keys['↑']) for (const [action, [bx, by]] of Object.entries(PULL_BUTTONS)) if (Math.abs(x - bx) < 62 && Math.abs(y - by) < 17) return {action};
   if (view.keys[4] === 'weight:light') {
     for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return {action: `weight:${name}`};
     for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + length * METRE + 26) return {action: `hook:${length}`};
@@ -35,23 +38,27 @@ export function hoverInfo(view, x, y) {
   if (view.scene === 'wonder' || view.scene === 'settle' || view.scene === 'recap') return null;
   for (const p of view.pendulums) {
     const watchX = p.x - 30;
-    if ((view.stopwatches || view.lap) && near([watchX, WATCH_Y], WATCH_R + 6)) return 'Stopwatch: it stops after one full swing, out and back.';
+    if ((view.stopwatches || view.lap) && near([watchX, WATCH_Y], WATCH_R + 6)) return 'This stopwatch stops after one full swing, out and back.';
     if (near(bobPoint(p), radius(p.weightKg) + 8)) {
-      if (p.ghost) return 'The grey weight: 20 kg on 15 m, to compare with yours.';
-      return `${p.weightKg} kg weight on a ${p.lengthM} m string.` + (hitTest(view, x, y)?.drag ? ' Drag it aside and let go.' : '');
+      if (p.ghost) return 'This grey weight is 20 kg on a 15 m string, so that you can compare your weight with it.';
+      if (view.labels) return `This is the weight. ${hitTest(view, x, y)?.drag ? 'Drag it sideways and let go.' : 'It is swinging on its string.'}`;
+      return `This is a ${p.weightKg} kg weight on a ${p.lengthM} m string.` + (hitTest(view, x, y)?.drag ? ' Drag it sideways and let go.' : '');
     }
   }
+  if (view.pull && view.keys['↑'] && x > 38 && x < 162 && y > 190 && y < 345) return 'The pull-back is the angle between the string and straight down. A larger pull-back makes a longer trip.';
   if (view.keys[4] === 'weight:light') {
-    for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return `${WEIGHTS[name]} kg weight. Click it, or press ${name === 'light' ? 4 : 5}, to hang it.`;
-    for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + 30) return `The ${length} m hook. Click it, or press ${LENGTHS.indexOf(length) + 1}, to hang the weight here.`;
+    for (const [name, point] of Object.entries(SHELF)) if (near(point, 30)) return `This is the ${WEIGHTS[name]} kg weight. Click it, or press ${name === 'light' ? 4 : 5}, to hang it.`;
+    for (const length of LENGTHS) if (Math.abs(x - HOOK_X[length]) < 34 && y > PLATE_Y - 16 && y < BEAM_Y + 30) return `This is the ${length} m hook. Click it, or press ${LENGTHS.indexOf(length) + 1}, to hang the weight here.`;
   }
-  if (y > BEAM_Y - 18 && y < BEAM_Y + 12 && x > 60 && x < 940) return 'The beam: every string hangs from a hook on it.';
-  if (view.startMark && near(bobPoint(view.pendulums[0], Math.abs(view.pendulums[0].amplitude ?? SWING_RAD)), 40)) return 'The green start mark: one swing ends when the weight is back here.';
+  if (y > BEAM_Y - 18 && y < BEAM_Y + 12 && x > 60 && x < 940) return 'This is the steel beam, and every string hangs from a hook on it.';
+  if (view.startMark && near(bobPoint(view.pendulums[0], Math.abs(view.pendulums[0].amplitude ?? SWING_RAD)), 40)) return 'This green flag is where the weight starts, and one swing ends when the weight is back here.';
   return null;
 }
 
 export function targetPoint(view, action) {
   const [kind, value] = action.split(':');
+  if (kind === 'set') { const p = draggable(view); return p ? bobPoint(p) : null; }
+  if (kind === 'pull') return PULL_BUTTONS[action];
   if (kind === 'hook') return [HOOK_X[value], PLATE_Y];
   if (kind === 'weight') return SHELF[value];
   if (kind === 'release') { const p = draggable(view); return p ? bobPoint(p) : null; }
@@ -180,7 +187,7 @@ function startMark(ctx, p, flash, time) {
   ctx.fillStyle = theme.good; ctx.strokeStyle = theme.good; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 26, y + 30); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 46, y - 22); ctx.lineTo(x + 26, y - 14); ctx.fill();
-  text(ctx, 'start', x + 32, y + 44, {size: 15, colour: theme.good, align: 'left'});
+  text(ctx, 'start', x + 52, y - 22, {size: 15, colour: theme.good, align: 'left'});
   if (flash) { ctx.save(); ctx.strokeStyle = theme.good; ctx.lineWidth = 4; ctx.globalAlpha = .9; ctx.beginPath(); ctx.arc(x, y, 30 + 6 * Math.sin(time * 12), 0, Math.PI * 2); ctx.stroke(); ctx.restore(); text(ctx, 'TAP', x, y - 46, {size: 22, colour: theme.good}); }
 }
 function outAndBack(ctx, p) {
@@ -195,8 +202,8 @@ function outAndBack(ctx, p) {
   }
   ctx.restore();
 }
-function table(ctx, rows, x = 40, y = 450) {
-  const w = 230, h = 34 + rows.length * 34;
+function table(ctx, rows, x = 40, y = 450, w = 230) {
+  const h = 34 + rows.length * 34;
   ctx.fillStyle = 'rgba(10,14,15,.65)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
   text(ctx, 'One full swing', x + 14, y + 18, {size: 16, align: 'left', colour: theme.accent});
@@ -204,6 +211,45 @@ function table(ctx, rows, x = 40, y = 450) {
     text(ctx, row.label, x + 14, y + 50 + i * 34, {size: 18, align: 'left', weight: 600});
     text(ctx, row.value ?? '…', x + w - 14, y + 50 + i * 34, {size: 20, align: 'right', colour: row.value ? theme.good : theme.faint});
   });
+}
+// A label under a weight that says how far one swing travels, at the angle the weight was pulled back.
+function tripLabel(ctx, p, y) {
+  const deg = Math.round(Math.abs(p.held ? p.angle : p.amplitude ?? SWING_RAD) * 180 / Math.PI);
+  text(ctx, `one swing travels ${tripMetres(p.lengthM, deg).toFixed(1)} m`, p.x, y, {size: 15, colour: p.ghost ? theme.ghost : theme.accent});
+}
+// The pull of gravity on a weight: a longer arrow for the heavier weight, and the sum under it.
+function pullArrow(ctx, p) {
+  const [bx, by] = bobPoint(p), from = by + radius(p.weightKg) + 2, to = from + (p.weightKg > 100 ? 110 : 22);
+  ctx.strokeStyle = theme.bad; ctx.fillStyle = theme.bad; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(bx, from); ctx.lineTo(bx, to - 8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx - 8, to - 10); ctx.lineTo(bx + 8, to - 10); ctx.lineTo(bx, to + 3); ctx.closePath(); ctx.fill();
+  const pull = (p.weightKg * 9.81).toFixed(1);
+  text(ctx, `pull of gravity: ${pull} newtons`, p.x, 578, {size: 16, colour: theme.bad});
+  text(ctx, `${pull} ÷ ${p.weightKg} kg = 9.81 m/s²`, p.x, 602, {size: 16, colour: theme.good});
+}
+// The free test's pull-back: the angle on the string while the weight is held, and its two buttons.
+function pullAngle(ctx, p) {
+  const r = Math.min(70, p.lengthM * METRE * .6), a = p.angle, py = BEAM_Y + 10;
+  ctx.save(); ctx.setLineDash([4, 5]); ctx.strokeStyle = theme.faint; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(p.x, py); ctx.lineTo(p.x, BEAM_Y + p.lengthM * METRE); ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = theme.accent; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(p.x, py, r, Math.PI / 2 - Math.max(a, 0), Math.PI / 2 - Math.min(a, 0)); ctx.stroke();
+}
+function pullPanel(ctx, view, time) {
+  text(ctx, 'Pull-back', 100, 205, {size: 16, colour: theme.text});
+  text(ctx, `${view.pull.deg}°`, 100, 243, {size: 34, colour: theme.accent});
+  plate(ctx, ...PULL_BUTTONS['pull:up'], 'More', {key: '↑', time});
+  plate(ctx, ...PULL_BUTTONS['pull:down'], 'Less', {key: '↓', time});
+}
+// A sense of size for a metre: a grown-up beside a 1 m bar, at the same scale as the strings.
+function metreScale(ctx) {
+  const x = 870, foot = 620, head = foot - 1.8 * METRE;
+  ctx.strokeStyle = theme.text; ctx.fillStyle = theme.text; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, head + 4, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x, head + 8); ctx.lineTo(x, foot - 13); ctx.moveTo(x, foot - 13); ctx.lineTo(x - 5, foot); ctx.moveTo(x, foot - 13); ctx.lineTo(x + 5, foot); ctx.moveTo(x - 6, head + 14); ctx.lineTo(x + 6, head + 14); ctx.stroke();
+  ctx.fillStyle = theme.accent; ctx.fillRect(x + 22, foot - METRE, 6, METRE);
+  text(ctx, '1 m', x + 36, foot - METRE / 2, {size: 16, align: 'left', colour: theme.accent});
+  text(ctx, 'a grown-up, to scale', x + 8, foot + 20, {size: 15, colour: theme.text, weight: 600});
 }
 function shelf(ctx, chosen, view) {
   ctx.fillStyle = theme.beamDark; ctx.fillRect(40, 636, 140, 10);
@@ -235,12 +281,19 @@ function drawPendulumBoard(ctx, view) {
     }
     shelf(ctx, view.chosen, view);
   }
+  if (view.pull && view.keys.Space) pullPanel(ctx, view, view.time);
+  if (view.freeRows?.length) table(ctx, view.freeRows.slice(-5), 690, 172, 290);
+  if (view.scale) metreScale(ctx);
   for (const p of view.pendulums) {
     pendulum(ctx, p, {glow: view.glow === 'release' && p.id === 'you' || view.target === 'release' && view.labels && p.id === 'bob', time: view.time, path: p.swinging || view.outAndBack});
     const showWatch = view.stopwatches || view.lap;
     if (showWatch && !view.lap) stopwatch(ctx, p.x - 30, WATCH_Y, p.stopwatch, p.periodS, {ghost: p.ghost});
-    if (p.id === 'reference') text(ctx, 'grey: 15 m, 20 kg', p.x, BEAM_Y + p.lengthM * METRE + 44, {size: 15, colour: theme.ghost});
-    if (p.id === 'you' && view.guess) text(ctx, `your guess: ${view.guess === 'same' ? 'the same' : view.guess}`, p.x, BEAM_Y + p.lengthM * METRE + 44, {size: 15, colour: theme.accent});
+    const captionY = view.pulls ? 636 : BEAM_Y + p.lengthM * METRE + 44;
+    if (p.id === 'reference') text(ctx, 'grey: 15 m, 20 kg', p.x, captionY, {size: 15, colour: theme.ghost});
+    if (p.id === 'you' && view.guess) text(ctx, `your guess: ${GUESS_CAPTIONS[view.guess]}`, p.x, captionY, {size: 15, colour: theme.accent});
+    if (view.trips && (p.id === 'you' || p.id === 'reference')) tripLabel(ctx, p, BEAM_Y + p.lengthM * METRE + (view.guess || p.ghost ? 64 : 44));
+    if (view.pulls && (p.id === 'you' || p.id === 'reference')) pullArrow(ctx, p);
+    if (view.pull && p.id === 'you' && p.held) pullAngle(ctx, p);
     if (view.numbered) keyCap(ctx, p.x, BEAM_Y + p.lengthM * METRE + 42, String(LENGTHS.indexOf(p.lengthM) + 1));
   }
   if (view.lap) {
@@ -258,11 +311,11 @@ function drawPendulumBoard(ctx, view) {
   if (view.startMark) startMark(ctx, view.pendulums[0], view.tapFlash, view.time);
   for (const length of view.tapes ?? []) { const p = view.pendulums.find(q => q.lengthM === length); if (p) tape(ctx, p); }
   if (view.table) table(ctx, view.table, 40, 480);
-  if (view.lastTry) text(ctx, `last try: ${view.lastTry.lengthM} m, ${view.lastTry.weightKg} kg took ${view.lastTry.periodS.toFixed(1)} s`, 600, 660, {size: 18, colour: theme.bad});
+  if (view.lastTry) text(ctx, `last try: ${view.lastTry.lengthM} m and ${view.lastTry.weightKg} kg needed ${view.lastTry.periodS.toFixed(1)} s`, 600, 660, {size: 18, colour: theme.bad});
 }
 
 // ---- the helicopter scenes ----
-const CABLE_PX = 15 * METRE * .8, HELI_Y = 150;
+const CABLE_PX = 15 * METRE * .8, HELI_Y = 150, SETTLE_RATE = Math.log(3) / 16;
 function carOnCable(ctx, hx, angle, time) {
   const cx = hx + Math.sin(angle) * CABLE_PX, cy = HELI_Y + 34 + Math.cos(angle) * CABLE_PX;
   ctx.strokeStyle = theme.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, HELI_Y + 34); ctx.lineTo(cx, cy - 18); ctx.stroke();
@@ -278,18 +331,21 @@ function drawWonder(ctx, view) {
   carOnCable(ctx, x, angle, view.time);
   helicopter(ctx, x, HELI_Y, tilt, view.time);
   if (t >= stopAt) {
-    text(ctx, 'stopped', x, HELI_Y - 64, {size: 18, colour: theme.accent});
+    text(ctx, 'the helicopter has stopped', x, HELI_Y - 64, {size: 18, colour: theme.accent});
+    if (t < stopAt + CABLE_PERIOD / 2) text(ctx, 'the car is still moving', x, HELI_Y + 34 + CABLE_PX + 70, {size: 18, colour: theme.accent});
     swingPath(ctx, {x, lengthM: CABLE_PX / METRE, amplitude: .34}, true, HELI_Y + 34);
   }
 }
 function drawSettle(ctx, view) {
   outdoors(ctx);
-  const s = view.settle, since = s ? view.time - s.from : 0;
-  const amplitude = s ? .3 * Math.exp(-since * .45) : .3;
+  const s = view.settle, since = s ? s.since : 0;
+  // The game's own rate: a swing of 3 m to one side on the 15 m cable falls below 1 m in about 16 seconds (heli-cable.js).
+  const swingM = s ? 3 * Math.exp(-since * SETTLE_RATE) : 3, amplitude = Math.asin(swingM / 15);
   carOnCable(ctx, 500, amplitude * Math.sin(2 * Math.PI * view.time / CABLE_PERIOD), view.time);
   helicopter(ctx, 500, HELI_Y, 0, view.time);
-  if (s && amplitude < .05) text(ctx, 'settled: safe to set down', 500, 640, {size: 22, colour: theme.good});
+  if (s) text(ctx, swingM < 1 ? 'the swing is under 1 m, so the car is safe to set down' : `the swing reaches ${swingM.toFixed(1)} m to each side`, 500, 640, {size: 22, colour: swingM < 1 ? theme.good : theme.accent});
 }
+const RECAP_SWING = .2;
 function drawRecap(ctx, view) {
   const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;
   view.ideas.forEach((idea, i) => {
@@ -297,18 +353,19 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 420); ctx.clip(); ctx.translate(x + w / 2, 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 400); ctx.clip(); ctx.translate(x + w / 2, 0);
     const t = view.time;
-    const mini = (id, px, length, kg) => ({id, x: px, lengthM: length, weightKg: kg, ghost: false, swinging: true, amplitude: SWING_RAD,
-      angle: SWING_RAD * Math.cos(2 * Math.PI * t / stringPeriod(length))});
-    if (idea.id === 'lengths') { beamShort(ctx); for (const p of [mini('a', -60, 5, 20), mini('b', 60, 17, 20)]) pendulum(ctx, p); }
-    if (idea.id === 'weights') { beamShort(ctx); for (const p of [mini('a', -60, 15, 20), mini('b', 60, 15, 200)]) pendulum(ctx, p); }
+    // A smaller swing than the real 20 degrees, so that the weights stay inside their card.
+    const mini = (id, px, length, kg) => ({id, x: px, lengthM: length, weightKg: kg, ghost: false, swinging: true, amplitude: RECAP_SWING,
+      angle: RECAP_SWING * Math.cos(2 * Math.PI * t / stringPeriod(length))});
+    if (idea.id === 'lengths') { beamShort(ctx); for (const p of [mini('a', -60, 5, 20), mini('b', 55, 15, 20)]) pendulum(ctx, p); }
+    if (idea.id === 'weights') { beamShort(ctx); for (const p of [mini('a', -60, 15, 20), mini('b', 55, 15, 200)]) pendulum(ctx, p); }
     if (idea.id === 'settle') {
       const k = (t % 10) / 10, amplitude = .3 * Math.exp(-k * 4.5);
       ctx.translate(-500, 0); carOnCable(ctx, 500, amplitude * Math.sin(2 * Math.PI * t / CABLE_PERIOD), t); helicopter(ctx, 500, HELI_Y, 0, t, .8);
     }
     ctx.restore();
-    wrap(ctx, idea.text, x + w / 2, 550, w - 30);
+    wrap(ctx, idea.text, x + w / 2, 505, w - 30, {size: 19, weight: 600});
   });
 }
 function beamShort(ctx) { ctx.save(); ctx.translate(-500, 0); beam(ctx, 380, 620); ctx.restore(); }
@@ -332,7 +389,7 @@ export function drawPicture(ctx, picture, w, h) {
     stopwatch(ctx, w * .72, h * .48, {elapsed: mine, done: false}, 0, {r: 30, digits: false});
     text(ctx, 'grey', w * .28, h - 14, {size: 14, colour: theme.ghost});
     text(ctx, 'yours', w * .72, h - 14, {size: 14, colour: theme.accent});
-    text(ctx, picture.mine === 'quicker' ? '<' : picture.mine === 'slower' ? '>' : '=', w / 2, h * .48, {size: 30, colour: theme.text});
+    text(ctx, picture.mine === 'quicker' ? '>' : picture.mine === 'slower' ? '<' : '=', w / 2, h * .48, {size: 30, colour: theme.text});
   }
   if (picture.kind === 'watch') {
     stopwatch(ctx, w * .5, h * .5, {elapsed: picture.seconds, done: false}, 0, {r: 38, digits: false});
