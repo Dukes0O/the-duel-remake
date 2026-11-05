@@ -1,16 +1,16 @@
 // The Headings lesson's board (docs/board/cards/LAB-CLASSROOM-HEADINGS.md): a map seen from above, north up, in
-// squares of 100 m; Kestrel One on the pad with a compass ring round it and the angle shaded from north; the HEADING
+// boxes of 100 m; Kestrel One on the pad with a compass ring round it and the angle shaded from north; the HEADING
 // gauge beside the map; the ruler, the smoke, the flight tracks, and the right-angled triangle that the sums use.
 // Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
-import {MAP, RING_M, SQUARE_M, three, wrap as round} from './headings-classroom.js';
+import {MAP, RING_M, BOX_M, three, wrap as round} from './headings-classroom.js';
 export {BOARD};
 // Pressing on the compass ring turns the helicopter to that heading at once; pressing on the ruler moves its end there.
 export const pressMovesDrag = true;
 
 const EAST_COLOUR = '#70bfd2', NORTH_COLOUR = '#9ff0b4', PLAIN = 'rgba(245,240,220,.85)';
 
-// Map metres to board units: the pad at (300, 450), 0.6 units a metre (a 100 m square is 60 units).
+// Map metres to board units: the pad at (300, 450), 0.6 units a metre (a 100 m box is 60 units).
 const PAD = Object.freeze({x: 300, y: 450}), SCALE = .6, RING = 74;
 const PLATE = Object.freeze({left: 16, top: 16, right: 740, bottom: 664});
 const bx = x => PAD.x + x * SCALE, by = y => PAD.y - y * SCALE;
@@ -44,10 +44,10 @@ export function hoverInfo(view, x, y) {
   if (x > 760 && y > 40 && y < 190) return `The HEADING gauge reads ${view.gauge}, as it would in the helicopter.`;
   if (view.spot?.kind === 'smoke' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < RING_M * SCALE + 14) return `This is the smoke. Within ${RING_M} m of it counts as over it.`;
   if (view.spot?.kind === 'hut' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < 20) return 'This is a hut in the woods.';
-  if (view.spot?.kind === 'marker' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < 20) return 'This is the marker. The arrow keys move it one square at a time.';
+  if (view.spot?.kind === 'marker' && Math.hypot(x - bx(view.spot.x), y - by(view.spot.y)) < 20) return 'This is the marker. The arrow keys move it one box at a time.';
   if (view.ruler && onRuler(view, x, y)) return `The ruler reads ${Math.round(view.ruler.length)} m.`;
   if (Math.hypot((x - bx(LAKE.x)) / (LAKE.rx * SCALE), (y - by(LAKE.y)) / (LAKE.ry * SCALE)) < 1) return 'This is the lake, which lies east of the pad.';
-  if (x > PLATE.left && x < PLATE.right && y > PLATE.top && y < PLATE.bottom) return `One square of the map stands for ${SQUARE_M} m on the ground.`;
+  if (x > PLATE.left && x < PLATE.right && y > PLATE.top && y < PLATE.bottom) return `One box of the map stands for ${BOX_M} m on the ground.`;
   return null;
 }
 export function targetPoint(view, action) {
@@ -71,22 +71,22 @@ function plate(ctx, view) {
   ctx.fillStyle = '#2f3a2c'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.roundRect(PLATE.left, PLATE.top, PLATE.right - PLATE.left, PLATE.bottom - PLATE.top, 6); ctx.fill(); ctx.stroke();
   ctx.save(); ctx.beginPath(); ctx.rect(PLATE.left, PLATE.top, PLATE.right - PLATE.left, PLATE.bottom - PLATE.top); ctx.clip();
-  // The lake, the trees, then the squares over them.
+  // The lake, the trees, then the boxes over them.
   ctx.fillStyle = '#35606b'; ctx.beginPath(); ctx.ellipse(bx(LAKE.x), by(LAKE.y), LAKE.rx * SCALE, LAKE.ry * SCALE, -.2, 0, Math.PI * 2); ctx.fill();
   for (const t of TREES) { ctx.fillStyle = 'rgba(18,34,20,.85)'; ctx.beginPath(); ctx.arc(bx(t.x), by(t.y), t.r, 0, Math.PI * 2); ctx.fill(); }
-  ctx.strokeStyle = view.squares ? 'rgba(237,197,87,.42)' : 'rgba(227,220,203,.16)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = view.grid ? 'rgba(237,197,87,.42)' : 'rgba(227,220,203,.16)'; ctx.lineWidth = 1;
   ctx.beginPath();
-  for (let m = Math.ceil(MAP.west / SQUARE_M) * SQUARE_M; m <= MAP.east + SQUARE_M; m += SQUARE_M) { ctx.moveTo(bx(m), PLATE.top); ctx.lineTo(bx(m), PLATE.bottom); }
-  for (let m = Math.ceil(MAP.south / SQUARE_M) * SQUARE_M; m <= MAP.north + SQUARE_M; m += SQUARE_M) { ctx.moveTo(PLATE.left, by(m)); ctx.lineTo(PLATE.right, by(m)); }
+  for (let m = Math.ceil(MAP.west / BOX_M) * BOX_M; m <= MAP.east + BOX_M; m += BOX_M) { ctx.moveTo(bx(m), PLATE.top); ctx.lineTo(bx(m), PLATE.bottom); }
+  for (let m = Math.ceil(MAP.south / BOX_M) * BOX_M; m <= MAP.north + BOX_M; m += BOX_M) { ctx.moveTo(PLATE.left, by(m)); ctx.lineTo(PLATE.right, by(m)); }
   ctx.stroke();
   ctx.restore();
   // North arrow and the scale, at the map's corners.
   ctx.fillStyle = theme.text; ctx.beginPath(); ctx.moveTo(52, 34); ctx.lineTo(62, 62); ctx.lineTo(52, 56); ctx.lineTo(42, 62); ctx.closePath(); ctx.fill();
   text(ctx, 'N', 52, 76, {size: 18});
   ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.beginPath(); ctx.roundRect(PLATE.left + 12, PLATE.bottom - 46, 214, 34, 5); ctx.fill();
-  ctx.strokeStyle = theme.text; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(PLATE.left + 24, PLATE.bottom - 22); ctx.lineTo(PLATE.left + 24 + SQUARE_M * SCALE, PLATE.bottom - 22);
-  ctx.moveTo(PLATE.left + 24, PLATE.bottom - 28); ctx.lineTo(PLATE.left + 24, PLATE.bottom - 16); ctx.moveTo(PLATE.left + 24 + SQUARE_M * SCALE, PLATE.bottom - 28); ctx.lineTo(PLATE.left + 24 + SQUARE_M * SCALE, PLATE.bottom - 16); ctx.stroke();
-  text(ctx, `1 square = ${SQUARE_M} m`, PLATE.left + 24 + SQUARE_M * SCALE + 12, PLATE.bottom - 29, {size: 14, align: 'left', colour: view.squares ? theme.accent : theme.text});
+  ctx.strokeStyle = theme.text; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(PLATE.left + 24, PLATE.bottom - 22); ctx.lineTo(PLATE.left + 24 + BOX_M * SCALE, PLATE.bottom - 22);
+  ctx.moveTo(PLATE.left + 24, PLATE.bottom - 28); ctx.lineTo(PLATE.left + 24, PLATE.bottom - 16); ctx.moveTo(PLATE.left + 24 + BOX_M * SCALE, PLATE.bottom - 28); ctx.lineTo(PLATE.left + 24 + BOX_M * SCALE, PLATE.bottom - 16); ctx.stroke();
+  text(ctx, `1 box = ${BOX_M} m`, PLATE.left + 24 + BOX_M * SCALE + 12, PLATE.bottom - 29, {size: 14, align: 'left', colour: view.grid ? theme.accent : theme.text});
 }
 function pad(ctx, label) {
   ctx.fillStyle = '#4a4f4b'; ctx.strokeStyle = theme.text; ctx.lineWidth = 2;
@@ -158,7 +158,7 @@ function triangleLines(ctx, view) {
   if (t.line && (e || n)) leg(x0, y0, xe, yn, theme.accent);
   if (n) leg(x0, y0, x0, yn, NORTH_COLOUR);
   if (e) leg(x0, yn, xe, yn, EAST_COLOUR);
-  // The square corner.
+  // The mark of the right angle.
   if (e && n) {
     const sx = Math.sign(e) * 11, sy = Math.sign(n) * 11;
     ctx.strokeStyle = theme.text; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 + sx, yn); ctx.lineTo(x0 + sx, yn + sy); ctx.lineTo(x0, yn + sy); ctx.stroke();
@@ -255,7 +255,7 @@ function gauge(ctx, view) {
   if (view.keys.A) { row(324, 'A', 'turn left: number down'); row(354, 'D', 'turn right: number up'); }
   if (view.keys['→'] === 'ruler:longer') { row(324, '→', 'ruler longer'); row(354, '←', 'ruler shorter'); }
   if (view.keys['→'] === 'length:longer') { row(384, '→', 'longer flight'); row(414, '←', 'shorter flight'); }
-  if (view.keys['↑']) { row(324, '↑', 'one square north'); row(354, '↓', 'one square south'); row(384, '→', 'one square east'); row(414, '←', 'one square west'); }
+  if (view.keys['↑']) { row(324, '↑', 'one box north'); row(354, '↓', 'one box south'); row(384, '→', 'one box east'); row(414, '←', 'one box west'); }
   // The free test's table: where each flight ended up.
   if (view.rows.length) {
     text(ctx, 'YOUR FLIGHTS', x + w / 2, 446, {size: 13, colour: theme.faint, weight: 800});
@@ -319,7 +319,7 @@ function miniScene(ctx, id, x, y, time) {
     keyCap(ctx, x + 30, y + 170, 'D'); text(ctx, 'up', x + 46, y + 170, {size: 14, align: 'left', colour: PLAIN});
   }
   if (id === 'scale') {
-    // Three squares east and four north, the triangle of the sums, at 45 units a square.
+    // Three boxes east and four north, the triangle of the sums, at 45 units a box.
     const s = 45, ox = x - 90, oy = y + 90;
     ctx.strokeStyle = 'rgba(237,197,87,.4)'; ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(ox - s / 2 + i * s, oy); ctx.lineTo(ox - s / 2 + i * s, oy - 4 * s); ctx.stroke(); }
@@ -327,7 +327,7 @@ function miniScene(ctx, id, x, y, time) {
     const side = (x1, y1, x2, y2, colour) => { ctx.strokeStyle = colour; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
     side(ox, oy, ox, oy - 4 * s, NORTH_COLOUR); side(ox, oy - 4 * s, ox + 3 * s, oy - 4 * s, EAST_COLOUR); side(ox, oy, ox + 3 * s, oy - 4 * s, theme.accent);
     tag(ctx, '300 m', ox + 1.5 * s, oy - 4 * s - 14, EAST_COLOUR); tag(ctx, '400 m', ox - 8, oy - 2 * s, NORTH_COLOUR); tag(ctx, '500 m', ox + 2.2 * s, oy - 1.5 * s, theme.accent);
-    text(ctx, '1 square = 100 m', x, y + 124, {size: 18, colour: theme.accent});
+    text(ctx, '1 box = 100 m', x, y + 124, {size: 18, colour: theme.accent});
   }
 }
 
@@ -337,7 +337,7 @@ export function drawBoard(ctx, view, width, height) {
     else drawMap(ctx, view);
   });
 }
-// The answer cards' pictures: a compass with one heading, a turn the short or long way, a distance in squares.
+// The answer cards' pictures: a compass with one heading, a turn the short or long way, a distance in boxes.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#2f3a2c'; ctx.fillRect(0, 0, w, h);
@@ -349,13 +349,18 @@ export function drawPicture(ctx, picture, w, h) {
   if (picture.kind === 'wrap') {
     const r = 40, at = d => [cx + Math.sin(d * Math.PI / 180) * r, cy - Math.cos(d * Math.PI / 180) * r];
     ctx.strokeStyle = 'rgba(245,240,220,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-    const arc = (from, to, colour) => { ctx.strokeStyle = colour; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(cx, cy, r, (from - 90) * Math.PI / 180, (to - 90) * Math.PI / 180); ctx.stroke(); };
-    if (picture.way === 'right' || picture.way === 'same') arc(350, 370, theme.accent);
-    if (picture.way === 'left' || picture.way === 'same') arc(10, 350, picture.way === 'same' ? theme.good : theme.accent);
+    // Only the way the turn sets off from 350, the same length each way, so the picture does not settle which turn is smaller.
+    const setOff = dir => {
+      const from = (350 - 90) * Math.PI / 180, to = (350 + dir * 14 - 90) * Math.PI / 180, ex = cx + Math.cos(to) * r, ey = cy + Math.sin(to) * r, tx = -Math.sin(to) * dir, ty = Math.cos(to) * dir, ox = Math.cos(to), oy = Math.sin(to);
+      ctx.strokeStyle = theme.accent; ctx.fillStyle = theme.accent; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, Math.min(from, to), Math.max(from, to)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex + tx * 11, ey + ty * 11); ctx.lineTo(ex + ox * 7, ey + oy * 7); ctx.lineTo(ex - ox * 7, ey - oy * 7); ctx.closePath(); ctx.fill();
+    };
+    if (picture.way === 'right' || picture.way === 'same') setOff(1);
+    if (picture.way === 'left' || picture.way === 'same') setOff(-1);
     for (const [d, l] of [[350, '350'], [10, '010']]) { const [x, y] = at(d); ctx.fillStyle = theme.text; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill(); text(ctx, l, x + (d === 350 ? -26 : 26), y + 2, {size: 15}); }
   }
-  if (picture.kind === 'squares') {
-    const sq = 26, n = picture.m / SQUARE_M, x0 = 14, y0 = cy;
+  if (picture.kind === 'boxes') {
+    const sq = 26, n = picture.m / BOX_M, x0 = 14, y0 = cy;
     ctx.strokeStyle = 'rgba(237,197,87,.45)'; ctx.lineWidth = 1;
     for (let i = 0; i * sq <= w - 28; i++) ctx.strokeRect(x0 + i * sq, y0 - sq / 2, sq, sq);
     const long = Math.min(n * sq, w - 28);

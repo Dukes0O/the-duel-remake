@@ -42,6 +42,7 @@ function playThroughTo(session, id) {
     else if (step === 'word-compass') { turnTo(session, 90); session.act('fly'); }
     else if (step === 'word-scale') { press(session, 'ruler:longer', 4); session.act('fly'); }
     else if (step === 'word-sums') moveMarker(session, 300, 400);
+    else if (step === 'word-distance') moveMarker(session, 400, 300);
     else if (step === 'word-quarters') moveMarker(session, 300, -200);
     else if (step === 'try-free') { flyFree(session); for (let i = 1; i < FREE_TRIES; i++) { session.act('turn:right'); flyFree(session); } }
     else if (step === 'try-turn') { turnTo(session, JOB.headingDeg); session.act('fly'); until(session, x => x.ready); }
@@ -93,30 +94,31 @@ test('a child who does exactly what each prompt says passes every step', () => {
   assert.equal(v.step.voice, 'lab.brian.headings.explain');
 });
 
-test('the words: D counts up, A counts down, east is 090, and the ruler counts squares', () => {
+test('the words: D counts up, A counts down, east is 090, and the ruler counts boxes', () => {
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'word-heading');
   assert.match(session.view().brian.text, /A heading is the direction in which the helicopter is pointing, measured clockwise from north, in degrees\./);
   assert.match(session.view().brian.text, /a full turn is divided into 360 equal parts/);
   session.act('turn:left');
   assert.equal(session.view().gauge, '355', 'past 000 turning left comes 355');
-  assert.match(session.view().brian.text, /went down, because A turns the helicopter to the left/);
+  assert.match(session.view().brian.text, /The gauge went from 000 to 355, because 5° to the left of north/, 'a first A from 000 does not say the number went down');
+  assert.doesNotMatch(session.view().brian.text, /number went down/);
   // Six presses of D after A: 30 degrees right since A, from 355 to 025.
   press(session, 'turn:right', 6);
-  assert.match(session.view().brian.text, /^The gauge read 025 after you had turned the helicopter 30 degrees to the right\. The number went up/);
+  assert.match(session.view().brian.text, /^The gauge read 025 after the helicopter had turned 30 degrees to the right\. The number went up/);
   session.act('next');
   turnTo(session, 120);
   session.act('fly');
   assert.match(session.view().brian.text, /The gauge read 120 when you pressed Space, which is 30 degrees too far to the right\. Press A to turn the helicopter back to the left, and the number goes down/);
   assert.equal(session.view().ready, false, 'a wrong heading is not east');
   press(session, 'turn:left', 6); session.act('fly');
-  assert.match(session.view().brian.text, /^Correct\. Heading 090 points east/);
+  assert.match(session.view().brian.text, /^Heading 090 points east/);
   assert.equal(session.view().ready, true);
   session.act('next');
   press(session, 'ruler:longer', 7); session.act('fly');
-  assert.match(session.view().brian.text, /The ruler read 450 m when you pressed Space, which is four and a half squares\. The hut is three squares from the pad, which is 300 m\./);
+  assert.match(session.view().brian.text, /The ruler read 450 m when you pressed Space, which is four and a half boxes\. The hut is three boxes from the pad, which is 300 m\./);
   press(session, 'ruler:shorter', 3); session.act('fly');
-  assert.match(session.view().brian.text, /^Correct\. The hut is three squares from the pad/);
+  assert.match(session.view().brian.text, /^The hut is three boxes from the pad/);
 });
 
 test('the formulas: every press of a control changes the sums at once, and each sum comes out on a calculator', () => {
@@ -130,19 +132,25 @@ test('the formulas: every press of a control changes the sums at once, and each 
   session.act('turn:right');
   assert.equal(worked(session)[0], '5° ÷ 360° = 0.014');
   turnTo(session, 90); session.act('fly'); session.act('next');
-  assert.equal(worked(session)[0], '1.00 squares × 100 m = 100 m');
+  assert.equal(worked(session)[0], '1.00 boxes × 100 m = 100 m');
   session.act('ruler:longer');
-  assert.equal(worked(session)[0], '1.50 squares × 100 m = 150 m', 'the ruler changes the sum');
+  assert.equal(worked(session)[0], '1.50 boxes × 100 m = 150 m', 'the ruler changes the sum');
   press(session, 'ruler:longer', 3); session.act('fly'); session.act('next');
   // The marker: atan and Pythagoras from the distances on the board.
-  assert.deepEqual(worked(session), ['atan(100 ÷ 100) = 45.0°', '√(100^2 + 100^2) = 141.4 m']);
+  assert.deepEqual(worked(session), ['atan(100 ÷ 100) = 45.0°']);
   session.act('marker:east');
-  assert.deepEqual(worked(session), ['atan(200 ÷ 100) = 63.4°', '√(200^2 + 100^2) = 223.6 m'], 'the marker changes the sums');
+  assert.deepEqual(worked(session), ['atan(200 ÷ 100) = 63.4°'], 'the marker changes the sum');
   assert.equal(session.view().gauge, '063', 'and the helicopter points at it');
   moveMarker(session, 300, 400);
-  assert.deepEqual(worked(session), ['atan(300 ÷ 400) = 36.9°', '√(300^2 + 400^2) = 500.0 m']);
-  assert.match(session.view().brian.text, /atan\(0\.75\) is 36\.9°.*√250,000 = 500 m/);
+  assert.deepEqual(worked(session), ['atan(300 ÷ 400) = 36.9°']);
+  assert.match(session.view().brian.text, /atan\(0\.75\) is 36\.9°/);
   assert.equal(Math.round(Math.atan(300 / 400) * 1800 / Math.PI) / 10, 36.9);
+  session.act('next');
+  // The distance: Pythagoras, and the same distance on a different heading.
+  assert.deepEqual(worked(session), ['atan(300 ÷ 400) = 36.9°', '√(300^2 + 400^2) = 500.0 m']);
+  moveMarker(session, 400, 300);
+  assert.deepEqual(worked(session), ['atan(400 ÷ 300) = 53.1°', '√(400^2 + 300^2) = 500.0 m'], 'the marker changes the sums');
+  assert.match(session.view().brian.text, /√\(160,000 \+ 90,000\) = √250,000 = 500 m/);
   session.act('next');
   // The correction by quarter: south adds 180, north and west adds 360, and each result is the gauge's heading.
   moveMarker(session, 300, -200);
@@ -249,7 +257,7 @@ test('a word step stays open after its answer, and its closing words stay true w
   press(session, 'ruler:longer', 4); session.act('fly');
   session.act('ruler:longer');
   assert.equal(session.view().ruler.length, 350); assert.ok(session.view().ready);
-  assert.equal(worked(session)[0], '3.50 squares × 100 m = 350 m');
+  assert.equal(worked(session)[0], '3.50 boxes × 100 m = 350 m');
 });
 
 test('a prompt never asks for what is already done, and a hint is right from every setting', () => {
@@ -308,7 +316,7 @@ test('the tries: a wrong heading says how far off and how far it passed; the sho
   assert.ok(!short.view().formulas.some(f => /320|40°/.test(f.note ?? '')));
   turnTo(short, 340, 'left'); assert.equal(short.view().gauge, '340');
   short.act('fly'); until(short, v => v.ready);
-  assert.match(short.view().brian.text, /^Correct\. A turned the helicopter left past 000/);
+  assert.match(short.view().brian.text, /^The helicopter turned left past 000/);
   assert.ok(worked(short).some(line => line === 'To the right, 340° − 20° = 320°. To the left, 360° − 320° = 40°.'), 'the result shows both turns');
 });
 
@@ -323,7 +331,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only s
   flyJob(session, 640);
   assert.match(session.view().brian.text, /^You flew on the right heading, but you stopped after 6\d\d m, which is \d+ m past the smoke\./);
   flyJob(session);
-  assert.match(session.view().brian.text, /^The helicopter stopped over the smoke\. You flew on heading 070 for 55\d m/);
+  assert.match(session.view().brian.text, /^The helicopter stopped over the smoke\. It flew on heading 070 for 55\d m/);
   assert.equal(session.view().ready, true);
   // Flying off the map brings the helicopter back to the pad.
   const off = createClassroomSession(lesson);
@@ -333,7 +341,7 @@ test('Brian’s job: each miss says what to change with the real numbers; only s
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me turns the helicopter and flies the job', () => {
-  for (const id of ['word-heading', 'word-compass', 'word-scale', 'word-sums', 'word-quarters', 'try-turn', 'try-wrap', 'alone']) {
+  for (const id of ['word-heading', 'word-compass', 'word-scale', 'word-sums', 'word-distance', 'word-quarters', 'try-turn', 'try-wrap', 'alone']) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
     const hints = session.view().hints;
@@ -351,12 +359,12 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
   run(job, SHOW_ME_S + .2);
   assert.equal(job.view().keys.Space, undefined, 'the keys are held while Brian flies');
   until(job, v => v.ready, 30);
-  assert.match(job.view().brian.text, /^The helicopter stopped over the smoke\. You flew on heading 070 for 550 m/);
+  assert.match(job.view().brian.text, /^The helicopter stopped over the smoke\. It flew on heading 070 for 550 m/);
 });
 
 test('every check says why a wrong answer is wrong, then shows it, and its panel settles nothing until it is answered', () => {
   const answers = {'check-west': [0, /^Heading 090 points east\. West is heading 270/], 'check-wrap': [1, /^A would reach heading 010, but it is the long way round, a turn of 340 degrees/],
-    'check-sum': [1, /^Heading 090 points straight east, but the hut is north of the pad as well\. East ÷ north is 300 ÷ 300 = 1, and atan\(1\) is 45°/], 'check-scale': [0, /five squares is 500 m, and half a square adds 50 m/]};
+    'check-sum': [1, /^Heading 090 points straight east, but the hut is north of the pad as well\. East ÷ north is 300 ÷ 300 = 1, and atan\(1\) is 45°/], 'check-scale': [0, /five boxes is 500 m, and half a box adds 50 m/]};
   for (const [id, [pick, why]] of Object.entries(answers)) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
@@ -439,6 +447,47 @@ test('the compass picture measures the angle from north, clockwise, round to the
   assert.ok(arcs.some(a => Math.abs(a.from - from) < 1e-9 && Math.abs(a.to - to) < 1e-9), 'an arc runs from north clockwise by 70 degrees');
 });
 
+test('review of Headings: a first A after D says the number went down, the cards print no sizes, the panel and the hint agree, and each new word is defined', () => {
+  const left = createClassroomSession(lesson);
+  playThroughTo(left, 'word-heading');
+  press(left, 'turn:right', 2); left.act('turn:left');
+  assert.equal(left.view().gauge, '005');
+  assert.match(left.view().brian.text, /^The number went down, because A turns the helicopter to the left/);
+  const wrap = createClassroomSession(lesson);
+  playThroughTo(wrap, 'check-wrap');
+  assert.ok(wrap.view().cards.every(c => !/\d/.test(c.label)), 'the sizes wait for the reply');
+  wrap.act('answer:0');
+  assert.match(wrap.view().brian.text, /only 20 degrees to reach 010, while the turn with A would be 340 degrees/);
+  const half = createClassroomSession(lesson);
+  playThroughTo(half, 'try-turn');
+  turnTo(half, 250);
+  assert.match(half.view().hints[1], /^Press D /);
+  assert.match(worked(half)[1], /half a turn\. Either way is 180°, so a turn of 180° to the right will do/, 'the panel agrees with the hint');
+  const words = createClassroomSession(lesson);
+  playThroughTo(words, 'word-sums');
+  let say = words.view().say;
+  for (const [word, definition] of [['atan(1)', /Atan, short for arctangent, is the button/], ['right-angled', /corner of a page/]]) { assert.ok(say.includes(word), word); assert.match(say, definition); }
+  assert.doesNotMatch(say, /square corner|back into an angle/);
+  moveMarker(words, 300, 400); words.act('next');
+  say = words.view().say;
+  for (const [word, definition] of [['300²', /To square a number means to multiply it by itself/], ['√25', /The square root of a number, written √/]]) {
+    assert.ok(say.includes(word), word); assert.match(say, definition);
+  }
+  assert.ok(say.indexOf('To square a number') < say.indexOf('square the east distance'), 'squaring is defined before its use');
+  moveMarker(words, 400, 300); words.act('next');
+  assert.match(words.view().say, /needs a correction/);
+  assert.doesNotMatch(words.view().say, /one correction/);
+  moveMarker(words, 300, -200);
+  assert.doesNotMatch(words.view().brian.text, /other correction/);
+  // Show me's closing words are true when Brian did the work.
+  const shown = createClassroomSession(lesson);
+  playThroughTo(shown, 'word-heading');
+  for (let i = 0; i < 3; i++) shown.act('help');
+  run(shown, SHOW_ME_S + .2); until(shown, v => v.ready, 5);
+  assert.doesNotMatch(shown.view().brian.text, /\byou had\b/);
+  for (const file of ['headings-classroom.js', 'headings-board.js']) assert.doesNotMatch(readFileSync(new URL(`../src/lab/lessons/${file}`, import.meta.url), 'utf8'), /\b(one|each|half a|\d) square\b(?! root)/i, 'a map box is never called a square');
+});
+
 test('replays: the wonder and the watch start again', () => {
   const session = createClassroomSession(lesson);
   until(session, v => v.ready);
@@ -476,7 +525,7 @@ test('review fixes: the ruler keeps its 50 m steps, and Show me always works and
   run(wrap, SHOW_ME_S + .2);
   assert.match(wrap.view().brian.text, /^That is how it is done\. I will start again from heading 020, turn the helicopter left to heading 340 and then fly 450 m\./, 'Brian says the heading he turns to');
   until(wrap, v => v.ready, 20);
-  assert.match(wrap.view().brian.text, /^Correct\. A turned the helicopter left past 000/);
+  assert.match(wrap.view().brian.text, /^The helicopter turned left past 000/);
 });
 
 test('review fixes: a practice flight ends at the map’s edge, and Brian’s pointer taps the heading he wants', () => {

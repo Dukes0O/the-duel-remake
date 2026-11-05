@@ -66,9 +66,9 @@ async function play(c) {
   for (let k = 1; k <= 5; k++) { await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: from.x + (to.x - from.x) * k / 5, y: from.y, button: 'left', buttons: 1}); await wait(40); }
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: to.x, y: to.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
-  await wait(300); await shot('word-scale-ruler'); await summing('3.00 squares × 100 m = 300 m', 'the sum follows the ruler');
+  await wait(300); await shot('word-scale-ruler'); await summing('3.00 boxes × 100 m = 300 m', 'the sum follows the ruler');
   await press('Space'); await at('word-scale', 's.ready'); await shot('word-scale-right');
-  if (!(await bubble()).startsWith('Correct. The hut is three squares')) throw Error('The ruler at the hut was not right: ' + await bubble());
+  if (!(await bubble()).startsWith('The hut is three boxes')) throw Error('The ruler at the hut was not right: ' + await bubble());
   await next('word-scale');
   // The sums: the marker moves atan and Pythagoras, then the correction south of the pad.
   await at('word-sums'); await shot('word-sums');
@@ -76,6 +76,10 @@ async function play(c) {
   await wait(200); for (let i = 0; i < 3; i++) { await press('ArrowUp'); }
   await at('word-sums', 's.ready'); await summing('atan(300 ÷ 400) = 36.9°', 'the triangle of 300 and 400'); await wait(300); await shot('word-sums-done');
   await next('word-sums');
+  await at('word-distance'); await shot('word-distance');
+  await press('ArrowRight'); await wait(200); await press('ArrowDown');
+  await at('word-distance', 's.ready'); await summing('√(400', 'the distance sum follows the marker'); await wait(300); await shot('word-distance-done');
+  await next('word-distance');
   await at('word-quarters'); await shot('word-quarters');
   for (let i = 0; i < 6; i++) await press('ArrowDown');
   await at('word-quarters', 's.ready'); await summing('−56.3° + 180° = 123.7°', 'the correction south of the pad'); await wait(300); await shot('word-quarters-done');

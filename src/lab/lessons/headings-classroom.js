@@ -6,8 +6,8 @@
 import {SMOKE, compassBearing, compassDirection} from '../benches/headings.js';
 
 // One press of A or D; how fast the helicopter turns and flies when Brian has the controls (its real turn rate, and a
-// cruise it can reach); one map square; how close counts as over the smoke (the challenge's own ring); the map.
-export const TURN_STEP = 5, TURN_RATE = 60, CRUISE_MS = 50, SQUARE_M = 100, RING_M = SMOKE.radius, RULER_STEP_M = 50;
+// cruise it can reach); one map box; how close counts as over the smoke (the challenge's own ring); the map.
+export const TURN_STEP = 5, TURN_RATE = 60, CRUISE_MS = 50, BOX_M = 100, RING_M = SMOKE.radius, RULER_STEP_M = 50;
 export const MAP = Object.freeze({west: -460, east: 720, south: -340, north: 700});
 export const FREE_TRIES = 3, KMH_PER_MS = 3.6;
 // The ruler stays on its 50 m steps, so → and ← always reach the hut again.
@@ -23,6 +23,7 @@ const HELD_GAP_S = .14;
 // The two steps with a marker: where the marker starts, where the step asks for it, and how far it may go.
 const MARKERS = Object.freeze({
   'word-sums': Object.freeze({start: {east: 100, north: 100}, goal: {east: 300, north: 400}, min: {east: 0, north: 100}, max: {east: 600, north: 600}}),
+  'word-distance': Object.freeze({start: {east: 300, north: 400}, goal: {east: 400, north: 300}, min: {east: 0, north: 100}, max: {east: 600, north: 600}}),
   'word-quarters': Object.freeze({start: {east: 300, north: 400}, goal: {east: 300, north: -200}, min: {east: -400, north: -300}, max: {east: 700, north: 700}}),
 });
 // What Show me tries on the free test: each press takes the first setting not yet tested.
@@ -56,6 +57,7 @@ export const STEPS = Object.freeze([
   {id: 'word-compass', part: 1, title: 'North, east, south, west', words: ['headings-north', 'headings-east', 'headings-south', 'headings-west']},
   {id: 'word-scale', part: 1, title: 'Scale', word: 'headings-scale'},
   {id: 'word-sums', part: 1, title: 'Finding a heading from a map'},
+  {id: 'word-distance', part: 1, title: 'The length of the straight line'},
   {id: 'word-quarters', part: 1, title: 'South and west of the pad'},
   {id: 'watch', part: 2, title: 'Brian flies a job'},
   {id: 'try-free', part: 3, title: 'Test your own settings'},
@@ -72,7 +74,7 @@ export const STEPS = Object.freeze([
 export const KEY_IDEAS = Object.freeze([
   {id: 'heading', text: 'A heading is a direction measured clockwise from north, in degrees. North is heading 000, east is 090, south is 180 and west is 270.'},
   {id: 'turn', text: 'D turns the helicopter to the right and the number counts up. A turns the helicopter to the left and the number counts down. After 359 the number comes round to 000.'},
-  {id: 'scale', text: `A map’s scale turns squares into metres, and here one square is ${SQUARE_M} m. With the distances east and north, atan(east ÷ north) gives the heading and the rule of Pythagoras gives the distance.`},
+  {id: 'scale', text: `A map’s scale turns boxes into metres, and here one box is ${BOX_M} m. With the distances east and north, atan(east ÷ north) gives the heading and the rule of Pythagoras gives the distance.`},
 ].map(Object.freeze));
 export const CHALLENGE_CARD = Object.freeze({title: `Turn until the gauge reads ${three(JOB.headingDeg)}.`,
   text: `D turns the helicopter to the right and the number counts up, and A turns it to the left and the number counts down. Then fly on to the smoke, which is ${metres(JOB.distanceM)} from the pad.`});
@@ -83,7 +85,7 @@ export const WORDS = Object.freeze([
   {id: 'headings-east', word: 'East', meaning: 'Heading 090, a quarter turn clockwise from north.'},
   {id: 'headings-south', word: 'South', meaning: 'Heading 180, half of a full turn from north.'},
   {id: 'headings-west', word: 'West', meaning: 'Heading 270, three quarter turns clockwise from north.'},
-  {id: 'headings-scale', word: 'Scale', meaning: `What one square of a map stands for on the ground, which is ${SQUARE_M} m on this map.`},
+  {id: 'headings-scale', word: 'Scale', meaning: `What one box of a map stands for on the ground, which is ${BOX_M} m on this map.`},
 ].map(Object.freeze));
 
 // ---- keys (the screen shows them on its buttons) ----
@@ -119,7 +121,7 @@ const turnBack = (deg, want) => offBy(deg, want) > 0 ? 'Press A to turn the heli
 // ---- the sums beside the board (each one comes out on a calculator from the figures it shows) ----
 const QUARTER = Object.freeze({title: 'A quarter turn', formula: 'quarter turn = 360° ÷ 4', worked: '360° ÷ 4 = 90°', note: 'Each of the four main directions is a quarter turn from the next one.'});
 const shareSum = deg => ({title: 'How much of a full turn', formula: 'share of a full turn = heading ÷ 360°', worked: `${Math.round(deg)}° ÷ 360° = ${(Math.round(deg) / 360).toFixed(3)}`, note: 'A heading is measured clockwise from north, and a full turn is 360°.'});
-const scaleSum = length => ({title: 'From squares to metres', formula: `distance = squares × ${SQUARE_M} m`, worked: `${(Math.round(length) / SQUARE_M).toFixed(2)} squares × ${SQUARE_M} m = ${Math.round(length)} m`, note: 'The scale of this map is one square for every 100 m on the ground.'});
+const scaleSum = length => ({title: 'From boxes to metres', formula: `distance = boxes × ${BOX_M} m`, worked: `${(Math.round(length) / BOX_M).toFixed(2)} boxes × ${BOX_M} m = ${Math.round(length)} m`, note: 'The scale of this map is one box for every 100 m on the ground.'});
 function headingSum(east, north) {
   const e = Math.round(east), n = Math.round(north), sum = {title: 'Heading', formula: 'heading = atan(east ÷ north)'};
   if (n === 0) return {...sum, worked: e === 0 ? 'The target is on the pad, so there is no direction to measure.' : `The north distance is 0 m and you cannot divide by 0. The target lies straight ${e > 0 ? 'east, on heading 090' : 'west, on heading 270'}.`};
@@ -138,7 +140,7 @@ function correctionSum(east, north) {
 }
 function distanceSum(east, north) {
   const e = Math.abs(Math.round(east)), n = Math.abs(Math.round(north));
-  return {title: 'Distance', formula: 'distance = √(east^2 + north^2)', worked: `√(${e}^2 + ${n}^2) = ${Math.hypot(e, n).toFixed(1)} m`, note: 'This is the rule of Pythagoras for the longest side of a right-angled triangle.'};
+  return {title: 'Distance', formula: 'distance = √(east^2 + north^2)', worked: `√(${e}^2 + ${n}^2) = ${Math.hypot(e, n).toFixed(1)} m`, note: 'This is the rule of Pythagoras for the longest side of a right-angled triangle. A small 2 means a number multiplied by itself, and √ means the square root.'};
 }
 const SPEED_SUM = Object.freeze({title: 'Speed', formula: 'km/h = m/s × 3.6', worked: `${CRUISE_MS} m/s × ${KMH_PER_MS} = ${CRUISE_MS * KMH_PER_MS} km/h`, note: 'An hour has 3,600 seconds and a kilometre has 1,000 metres, and 3,600 ÷ 1,000 = 3.6.'});
 const timeSum = (distanceM, title = 'Time to arrive') => ({title, formula: 'time = distance ÷ speed', worked: `${Math.round(distanceM)} m ÷ ${CRUISE_MS} m/s = ${(Math.round(distanceM) / CRUISE_MS).toFixed(1)} s`});
@@ -154,6 +156,7 @@ const flightNorth = (deg, distanceM, title = 'Where the flight ends: north') => 
 function turnNeeded(deg, want) {
   const h = Math.round(wrap(deg)), difference = want - h, way = d => d > 0 ? `${d}° to the right` : `${-d}° to the left`;
   const worked = difference === 0 ? `${want}° − ${h}° = 0°, so no turn is needed.`
+    : Math.abs(difference) === 180 ? `${want}° − ${h}° = ${minus(difference)}°, which is half a turn. Either way is 180°, so a turn of 180° to the right will do.`
     : Math.abs(difference) <= 180 ? `${want}° − ${h}° = ${minus(difference)}°, which is ${way(difference)}.`
       : difference > 0 ? `${want}° − ${h}° = ${difference}°, and ${difference}° − 360° = ${minus(difference - 360)}°, which is ${way(difference - 360)}.`
         : `${want}° − ${h}° = ${minus(difference)}°, and ${minus(difference)}° + 360° = ${difference + 360}°, which is ${way(difference + 360)}.`;
@@ -174,9 +177,9 @@ const CHECKS = {
   },
   'check-wrap': {
     question: 'The helicopter is on heading 350 and the smoke is on heading 010. Which turn reaches heading 010 with the smaller change of direction?',
-    answers: [{label: 'To the right with D, a turn of 20°', way: 'right'}, {label: 'To the left with A, a turn of 340°', way: 'left'}, {label: 'Both turns are the same size', way: 'same'}].map(a => ({...a, picture: {kind: 'wrap', way: a.way}})),
+    answers: [{label: 'The turn to the right with D', way: 'right'}, {label: 'The turn to the left with A', way: 'left'}, {label: 'Both turns are the same size', way: 'same'}].map(a => ({...a, picture: {kind: 'wrap', way: a.way}})),
     correct: 0, demo: {from: 350, to: 10, way: 'right'},
-    right: () => 'Correct. Past 359 the number comes round to 000, so D turns the helicopter only 20 degrees to reach 010.',
+    right: () => 'Correct. Past 359 the number comes round to 000, so D turns the helicopter only 20 degrees to reach 010, while the turn with A would be 340 degrees.',
     wrong: picked => picked === 1 ? 'A would reach heading 010, but it is the long way round, a turn of 340 degrees. Past 359 the number comes round to 000, so D turns the helicopter only 20 degrees to reach 010.'
       : 'The two turns are not the same size. Past 359 the number comes round to 000, so the turn with D is 20 degrees and the turn with A is 340 degrees.',
     hints: ['What number comes after 359?', 'Turning to the right, 350 goes on to 355, 000, 005 and 010.', 'Pick the turn to the right.'],
@@ -194,14 +197,14 @@ const CHECKS = {
     shown: () => [headingSum(SUM_HUT.east, SUM_HUT.north), distanceSum(SUM_HUT.east, SUM_HUT.north)],
   },
   'check-scale': {
-    question: `On this map one square stands for ${SQUARE_M} m. The smoke is five and a half squares from the pad. How many metres is that?`,
-    answers: [{label: '55 m', m: 55}, {label: '550 m', m: 550}, {label: '5,500 m', m: 5500}].map(a => ({...a, picture: {kind: 'squares', m: a.m}})),
+    question: `On this map one box stands for ${BOX_M} m. The smoke is five and a half boxes from the pad. How many metres is that?`,
+    answers: [{label: '55 m', m: 55}, {label: '550 m', m: 550}, {label: '5,500 m', m: 5500}].map(a => ({...a, picture: {kind: 'boxes', m: a.m}})),
     correct: 1, demo: {ruler: JOB.distanceM},
-    right: () => `Correct. Each square stands for ${SQUARE_M} m, so five and a half squares is 5.5 × ${SQUARE_M} m = 550 m.`,
-    wrong: () => `Each square stands for ${SQUARE_M} m, so five squares is 500 m, and half a square adds 50 m, which makes 550 m.`,
-    hints: [`One square stands for ${SQUARE_M} m on the ground.`, 'Five squares is 500 m. Then add half a square.', 'Pick 550 m.'],
-    open: () => [{title: 'From squares to metres', formula: 'distance = squares × metres in one square'}],
-    shown: () => [{title: 'From squares to metres', formula: `distance = squares × ${SQUARE_M} m`, worked: `5.5 squares × ${SQUARE_M} m = 550 m`}],
+    right: () => `Correct. Each box stands for ${BOX_M} m, so five and a half boxes is 5.5 × ${BOX_M} m = 550 m.`,
+    wrong: () => `Each box stands for ${BOX_M} m, so five boxes is 500 m, and half a box adds 50 m, which makes 550 m.`,
+    hints: [`One box stands for ${BOX_M} m on the ground.`, 'Five boxes is 500 m. Then add half a box.', 'Pick 550 m.'],
+    open: () => [{title: 'From boxes to metres', formula: 'distance = boxes × metres in one box'}],
+    shown: () => [{title: 'From boxes to metres', formula: `distance = boxes × ${BOX_M} m`, worked: `5.5 boxes × ${BOX_M} m = 550 m`}],
   },
 };
 
@@ -298,10 +301,15 @@ export function createModel() {
     if (id === 'word-heading') {
       if (m.rightRun >= 30) {
         m.phase = 'result'; seen.add(id);
-        m.say = `The gauge read ${three(m.heading)} after you had turned the helicopter ${Math.round(m.rightRun)} degrees to the right. The number went up because a turn to the right is clockwise, which moves the helicopter further round from north. A turns the helicopter to the left, and then the number goes down. Past 359 the number comes round to 000, because a full turn brings the helicopter back to north. You can keep turning the helicopter to watch the angle and the sum change.`;
+        m.say = `The gauge read ${three(m.heading)} after the helicopter had turned ${Math.round(m.rightRun)} degrees to the right. The number went up because a turn to the right is clockwise, which moves the helicopter further round from north. A turns the helicopter to the left, and then the number goes down. Past 359 the number comes round to 000, because a full turn brings the helicopter back to north. You can keep turning the helicopter to watch the angle and the sum change.`;
         return {kind: 'right', say: m.say};
       }
-      if (value === 'left' && !m.firstLeft) { m.firstLeft = true; return {kind: 'progress', say: 'The number went down, because A turns the helicopter to the left. Now try D.'}; }
+      if (value === 'left' && !m.firstLeft) {
+        m.firstLeft = true;
+        return {kind: 'progress', say: m.heading === 360 - TURN_STEP
+          ? 'A turned the helicopter to the left, which is the opposite of clockwise. The gauge went from 000 to 355, because 5° to the left of north is the same direction as 355° clockwise from north. From there, each further press of A makes the number go down. Now try D.'
+          : 'The number went down, because A turns the helicopter to the left. Now try D.'};
+      }
     }
     return null;
   }
@@ -312,7 +320,7 @@ export function createModel() {
     if (id === 'word-compass') {
       if (Math.abs(offBy(m.heading, HUT.headingDeg)) < TURN_STEP) {
         m.phase = 'result'; seen.add(id);
-        m.say = 'Correct. Heading 090 points east, towards the lake. If you keep turning to the right, heading 180 points south, heading 270 points west, and a full turn of 360° brings the helicopter back to north, which the gauge shows as 000. You can keep turning the helicopter to watch the sums change.';
+        m.say = 'Heading 090 points east, towards the lake. If you keep turning to the right, heading 180 points south, heading 270 points west, and a full turn of 360° brings the helicopter back to north, which the gauge shows as 000. You can keep turning the helicopter to watch the sums change.';
         return {kind: 'right', say: m.say};
       }
       return {kind: 'fail', say: `The gauge read ${three(m.heading)} when you pressed Space, which is ${turnSay(m.heading, HUT.headingDeg)}. ${turnBack(m.heading, HUT.headingDeg)} East is heading 090.`};
@@ -334,12 +342,12 @@ export function createModel() {
     return null;
   }
   function judgeRuler() {
-    const squares = m.ruler / SQUARE_M;
-    if (m.ruler === HUT.distanceM) { m.phase = 'result'; seen.add('word-scale'); m.say = `Correct. The hut is three squares from the pad and each square stands for ${SQUARE_M} m, so the hut is 300 m from the pad. You can keep moving the ruler to watch the sum change.`; return {kind: 'right', say: m.say}; }
-    return {kind: 'fail', say: `The ruler read ${metres(m.ruler)} when you pressed Space, which is ${squareWords(squares)}. The hut is three squares from the pad, which is 300 m.`};
+    const boxes = m.ruler / BOX_M;
+    if (m.ruler === HUT.distanceM) { m.phase = 'result'; seen.add('word-scale'); m.say = `The hut is three boxes from the pad and each box stands for ${BOX_M} m, so the hut is 300 m from the pad. You can keep moving the ruler to watch the sum change.`; return {kind: 'right', say: m.say}; }
+    return {kind: 'fail', say: `The ruler read ${metres(m.ruler)} when you pressed Space, which is ${boxWords(boxes)}. The hut is three boxes from the pad, which is 300 m.`};
   }
 
-  // The marker moves one square a press. Its steps open Continue when it reaches the place asked for, and stay open.
+  // The marker moves one box a press. Its steps open Continue when it reaches the place asked for, and stay open.
   function markerAct(id, kind, value, held) {
     const rule = MARKERS[id];
     if (kind === 'marker' && value === 'best') {
@@ -350,7 +358,7 @@ export function createModel() {
     }
     if (kind !== 'marker' || m.phase === 'auto-marker') return null;
     if (held === 'held' && m.time - m.lastPress < HELD_GAP_S) return null;
-    const axis = value === 'east' || value === 'west' ? 'east' : 'north', by = value === 'east' || value === 'north' ? SQUARE_M : -SQUARE_M;
+    const axis = value === 'east' || value === 'west' ? 'east' : 'north', by = value === 'east' || value === 'north' ? BOX_M : -BOX_M;
     const to = Math.max(rule.min[axis], Math.min(rule.max[axis], m.marker[axis] + by));
     if (to === m.marker[axis]) { if (held === 'held') return null; m.noted = true; return {kind: 'note', say: 'The marker cannot go any further that way in this step.'}; }
     m.marker = {...m.marker, [axis]: to}; m.lastPress = m.time;
@@ -363,8 +371,9 @@ export function createModel() {
   function markerDone(id) {
     m.phase = 'result'; m.auto = null; seen.add(id);
     m.say = id === 'word-sums'
-      ? 'At 300 m east and 400 m north, east ÷ north is 300 ÷ 400 = 0.75, and atan(0.75) is 36.9°. The gauge shows whole degrees, so a helicopter pointing at that place reads 037. The distance is √(300² + 400²) = √250,000 = 500 m, which is the straight line from the pad. You can keep moving the marker to watch the sums change.'
-      : 'At 300 m east and 200 m south, atan(300 ÷ −200) gives −56.3°, and that angle alone would point the helicopter north and west, which is the wrong way. Adding 180° gives 123.7°, which points the helicopter south and east, towards that place. You can now move the marker north and west of the pad to see the other correction, which adds 360°.';
+      ? 'At 300 m east and 400 m north, east ÷ north is 300 ÷ 400 = 0.75, and atan(0.75) is 36.9°. The gauge shows whole degrees, so a helicopter pointing at that place reads 037. You can keep moving the marker to watch the sum change.'
+      : id === 'word-distance' ? 'At 400 m east and 300 m north, the distance is √(400² + 300²) = √(160,000 + 90,000) = √250,000 = 500 m. That is the same distance as 300 m east and 400 m north, although the heading is different. You can keep moving the marker to watch the sums change.'
+      : 'At 300 m east and 200 m south, atan(300 ÷ −200) gives −56.3°, and that angle alone would point the helicopter north and west, which is the wrong way. Adding 180° gives 123.7°, which points the helicopter south and east, towards that place. You can now move the marker north and west of the pad, where the correction adds 360° instead.';
     return {kind: 'right', say: m.say};
   }
 
@@ -396,7 +405,7 @@ export function createModel() {
       if (m.time - m.lastPress < HELD_GAP_S) return null;
       m.lastPress = m.time;
       const axis = m.marker.east !== rule.goal.east ? 'east' : 'north';
-      m.marker = {...m.marker, [axis]: m.marker[axis] + Math.sign(rule.goal[axis] - m.marker[axis]) * SQUARE_M};
+      m.marker = {...m.marker, [axis]: m.marker[axis] + Math.sign(rule.goal[axis] - m.marker[axis]) * BOX_M};
       aimAtMarker();
       return atMarkerGoal(rule) ? markerDone(id) : null;
     }
@@ -466,7 +475,7 @@ export function createModel() {
     m.result = {right: Math.abs(off) < TURN_STEP};
     if (m.result.right) {
       m.say = longWay ? `The helicopter reached the smoke, but A was the short way round. A turn of 40 degrees to the left would have done, instead of your ${Math.round(Math.abs(m.turned))} degrees. Below 000 the number comes round to 355, and then on down to 340.`
-        : id === 'try-wrap' ? 'Correct. A turned the helicopter left past 000, round to 355 and on to 340, which is a turn of only 40 degrees.'
+        : id === 'try-wrap' ? 'The helicopter turned left past 000, round to 355 and on to 340, which is a turn of only 40 degrees.'
           : `The helicopter flew right over the smoke. Heading ${three(want.headingDeg)} points at the smoke, and ${metres(want.distanceM)} is how far away the smoke is, so the flight lasted ${want.distanceM / CRUISE_MS} seconds at ${CRUISE_MS} m/s.`;
       return {kind: 'right', say: m.say};
     }
@@ -477,7 +486,7 @@ export function createModel() {
   // Brian's job: the helicopter stopped over the smoke, or Brian says what to change, with the numbers.
   function judgeJob() {
     const gap = Math.hypot(m.x - m.target.x, m.y - m.target.y), off = offBy(m.heading, JOB.headingDeg), flown = m.flown;
-    if (gap <= RING_M) { m.phase = 'done'; seen.add('alone'); m.say = `The helicopter stopped over the smoke. You flew on heading ${three(m.heading)} for ${metres(flown)}, so a heading and a distance together were all you needed to find the smoke, and that finishes the job.`; return {kind: 'pass', say: m.say}; }
+    if (gap <= RING_M) { m.phase = 'done'; seen.add('alone'); m.say = `The helicopter stopped over the smoke. It flew on heading ${three(m.heading)} for ${metres(flown)}, so a heading and a distance together were all that was needed to find the smoke, and that finishes the job.`; return {kind: 'pass', say: m.say}; }
     m.phase = 'missed'; home();
     if (Math.abs(off) >= TURN_STEP) m.say = `You flew on heading ${three(m.heading)}, which is ${turnSay(m.heading, JOB.headingDeg)}, and stopped ${metres(gap)} from the smoke. Turn the helicopter to heading ${three(JOB.headingDeg)} by pressing ${off > 0 ? 'A' : 'D'}, then press Space to fly.`;
     else if (flown < JOB.distanceM) m.say = `You flew on the right heading, but you stopped after ${metres(flown)}, which is ${metres(JOB.distanceM - flown)} short. Watch the FLOWN panel and stop at ${metres(JOB.distanceM)}. Press Space to fly again.`;
@@ -504,7 +513,8 @@ export function createModel() {
     if (id === 'word-heading') return [shareSum(h)];
     if (id === 'word-compass') return [shareSum(h), QUARTER];
     if (id === 'word-scale') return [scaleSum(m.ruler ?? 0)];
-    if (id === 'word-sums') return [headingSum(m.marker.east, m.marker.north), distanceSum(m.marker.east, m.marker.north)];
+    if (id === 'word-sums') return [headingSum(m.marker.east, m.marker.north)];
+    if (id === 'word-distance') return [headingSum(m.marker.east, m.marker.north), distanceSum(m.marker.east, m.marker.north)];
     if (id === 'word-quarters') return [headingSum(m.marker.east, m.marker.north), correctionSum(m.marker.east, m.marker.north), distanceSum(m.marker.east, m.marker.north)];
     if (id === 'watch') {
       const t = pointAt(WATCH.headingDeg, WATCH.distanceM);
@@ -536,10 +546,10 @@ export function createModel() {
     const base = {scene: 'map', time: m.time, heli: {x: m.x, y: m.y, heading: m.heading}, flown: m.phase === 'flying' || m.flown > 0 ? m.flown : null, track: m.track, ghosts: m.ghosts,
       spot: m.marker ? {x: m.marker.east, y: m.marker.north, kind: 'marker', label: 'Marker'} : m.target, ruler: m.ruler == null || (free && !planning) ? null : {heading: m.heading, length: m.ruler},
       compass: !m.marker && !(free && m.phase === 'result'), gauge: three(m.heading), marker: m.marker, plan: planning ? m.ruler : null, rows: m.rows, labelGhosts: free, triangle: triangle(id),
-      keys: {}, repeat: [], buttons: [], cards: [], actions: [], glow: null, waiting: false, ready: seen.has(id), dragCompass: false, dragRuler: false, squares: Boolean(m.marker),
+      keys: {}, repeat: [], buttons: [], cards: [], actions: [], glow: null, waiting: false, ready: seen.has(id), dragCompass: false, dragRuler: false, grid: Boolean(m.marker),
       formulas: formulas(id), aim: m.phase === 'turn' ? goalHeading() : null};
     // Brian has the controls (Show me): no keys, and he says what he is doing.
-    if (m.phase === 'auto-turn' || m.phase === 'auto-ruler' || m.phase === 'auto-marker') return {...base, rose: id === 'word-compass', ...(id === 'word-scale' ? {squares: true, compass: false} : {}),
+    if (m.phase === 'auto-turn' || m.phase === 'auto-ruler' || m.phase === 'auto-marker') return {...base, rose: id === 'word-compass', ...(id === 'word-scale' ? {grid: true, compass: false} : {}),
       say: m.autoSay, prompt: 'Watch Brian.', hints: ['Watch Brian.', 'Watch the gauge.', 'Wait a moment.']};
     if (id === 'wonder') {
       const done = m.phase === 'done';
@@ -567,24 +577,25 @@ export function createModel() {
       const done = m.phase === 'result';
       return {...base, ...(done ? {keys: {...RULER_KEYS}, repeat: ['←', '→'], dragRuler: true, buttons: [...RULER_BUTTONS]} : {keys: {...RULER_KEYS, Space: 'fly'}, repeat: ['←', '→'], waiting: true, target: 'ruler:best', glow: 'ruler', dragRuler: true,
         buttons: [...RULER_BUTTONS, {action: 'fly', label: 'That is the hut', key: 'Space'}]}),
-        squares: true, compass: false, say: done ? m.say : `A map is much smaller than the ground it shows, so every map has a scale. The scale of a map says how far one square of the map stands for on the ground. On this map one square stands for ${SQUARE_M} m. Stretch the ruler from the pad to the hut, and watch the sum work out how many metres the ruler covers.`,
+        grid: true, compass: false, say: done ? m.say : `A map is much smaller than the ground it shows, so every map has a scale. Lines divide this map into equal boxes, and the scale says how far on the ground one box stands for. On this map one box stands for ${BOX_M} m. Stretch the ruler from the pad to the hut, and watch the sum work out how many metres the ruler covers.`,
         prompt: done ? 'Press Enter to continue, or keep moving the ruler with ← and →.' : m.ruler === HUT.distanceM ? 'The ruler reaches the hut, so press Space.' : `The ruler reads ${metres(m.ruler)}. Press → to make it longer or ← to make it shorter, or drag its end, until it reaches the hut. Then press Space.`,
-        hints: done ? DONE_HINTS : ['Count the squares from the pad to the hut.', m.ruler === HUT.distanceM ? 'The ruler already reaches the hut, so press Space.' : `The hut is three squares away, so press ${m.ruler < HUT.distanceM ? '→' : '←'} until the ruler reads 300 m, then press Space.`, 'Watch my pointer. I will set the ruler so that it reaches the hut.']};
+        hints: done ? DONE_HINTS : ['Count the boxes from the pad to the hut.', m.ruler === HUT.distanceM ? 'The ruler already reaches the hut, so press Space.' : `The hut is three boxes away, so press ${m.ruler < HUT.distanceM ? '→' : '←'} until the ruler reads 300 m, then press Space.`, 'Watch my pointer. I will set the ruler so that it reaches the hut.']};
     }
     if (MARKERS[id]) {
       const done = m.phase === 'result', rule = MARKERS[id], {east, north} = m.marker;
       const next = east !== rule.goal.east ? ['the east distance', east < rule.goal.east ? '→' : '←'] : ['the north distance', north < rule.goal.north ? '↑' : '↓'];
       return {...base, keys: {...MARKER_KEYS}, repeat: ['←', '→', '↑', '↓'], buttons: [...MARKER_BUTTONS], ...(done ? {} : {waiting: true, target: 'marker:best'}),
         say: done ? m.say : id === 'word-sums'
-          ? 'A message does not always come with a heading, but you can work one out from a map. Measure how far the target lies to the east of the pad and how far it lies to the north. Those two distances and the straight line from the pad to the target make a triangle with one square corner, which is called a right-angled triangle. The heading is the angle at the pad between north and the straight line, and the sum atan(east ÷ north) gives that angle. Atan is short for arctangent, which is the button on a calculator that turns the result of that division back into an angle. The distance is the straight line itself, and the rule of Pythagoras gives it: square the east distance, square the north distance, add them, and take the square root. The marker is 100 m east and 100 m north of the pad. Move it to 300 m east and 400 m north, and watch the triangle and the sums change.'
-          : 'A calculator’s atan button only gives angles between −90° and 90°, so the sum needs one correction for places south or west of the pad. We count a distance west of the pad as a negative east distance, and a distance south of the pad as a negative north distance. When the target is south of the pad, you add 180° to the result. When the target is north and west of the pad, you add 360°. North and east of the pad, the sum needs no correction. Move the marker south of the pad, to 300 m east and 200 m south, and watch the correction appear.',
+          ? 'A message does not always come with a heading, but you can work one out from a map. Measure how far the target lies to the east of the pad and how far it lies to the north. Those two distances and the straight line from the pad to the target make a triangle with one right angle, which is a corner like the corner of a page, so it is called a right-angled triangle. The heading is the angle at the pad between north and the straight line. Dividing the east distance by the north distance gives one number, and each direction has its own number. Atan, short for arctangent, is the button on a calculator that gives the angle belonging to that number, so the sum atan(east ÷ north) gives the heading. For example, atan(1) is 45°. The marker is 100 m east and 100 m north of the pad. Move it to 300 m east and 400 m north, and watch the triangle and the sum change.'
+          : id === 'word-distance' ? 'The distance from the pad to the target is the length of the straight line, which is the longest side of the triangle, and the rule of Pythagoras gives it. To use that rule you need two more ideas. To square a number means to multiply it by itself, and a small 2 shows this, so 300² means 300 × 300, which is 90,000. The square root of a number, written √, is the number that gives it when multiplied by itself, so √25 is 5 because 5 × 5 = 25. The rule says to square the east distance, square the north distance, add them, and take the square root. Move the marker to 400 m east and 300 m north, and watch the sum change.'
+          : 'A calculator’s atan button only gives angles between −90° and 90°, so the sum needs a correction for places south or west of the pad. We count a distance west of the pad as a negative east distance, and a distance south of the pad as a negative north distance. When the target is south of the pad, you add 180° to the result. When the target is north and west of the pad, you add 360°. North and east of the pad, the sum needs no correction. Move the marker south of the pad, to 300 m east and 200 m south, and watch the correction appear.',
         prompt: done ? 'Press Enter to continue, or keep moving the marker with the arrow keys.' : `The marker is ${place(east, north)} of the pad. Move it to ${place(rule.goal.east, rule.goal.north)} with the arrow keys.`,
-        hints: done ? DONE_HINTS : ['Each press of an arrow key moves the marker one square, which is 100 m.', `Press ${next[1]} to change ${next[0]}.`, 'Watch my pointer. I will move the marker.']};
+        hints: done ? DONE_HINTS : ['Each press of an arrow key moves the marker one box, which is 100 m.', `Press ${next[1]} to change ${next[0]}.`, 'Watch my pointer. I will move the marker.']};
     }
     if (id === 'watch') {
       const done = m.phase === 'done', t = pointAt(WATCH.headingDeg, WATCH.distanceM);
       return {...base, actions: ['replay', 'slow'],
-        say: done ? `The helicopter turned to the right from heading 000 to heading ${three(WATCH.headingDeg)}, and then flew ${metres(WATCH.distanceM)}, which is the length of four squares on the map, in ${WATCH.distanceM / CRUISE_MS} seconds. With a heading and a distance together, you know exactly where to go.`
+        say: done ? `The helicopter turned to the right from heading 000 to heading ${three(WATCH.headingDeg)}, and then flew ${metres(WATCH.distanceM)}, which is the length of four boxes on the map, in ${WATCH.distanceM / CRUISE_MS} seconds. With a heading and a distance together, you know exactly where to go.`
           : `Now I will fly a job, to show you how the pieces fit together. The hut is ${place(t.x, t.y)} of the pad, so the sums beside the picture give heading ${three(WATCH.headingDeg)} and a distance of about ${metres(WATCH.distanceM)}. On this map the helicopter flies at ${CRUISE_MS} metres per second, which is written ${CRUISE_MS} m/s and means ${CRUISE_MS} metres during each second. That is the same as ${CRUISE_MS * KMH_PER_MS} kilometres per hour, written km/h, because you multiply m/s by 3.6 to get km/h. At that speed a flight of ${metres(WATCH.distanceM)} lasts ${WATCH.distanceM / CRUISE_MS} seconds. Watch the gauge as I turn the helicopter, and then watch the FLOWN panel count the metres.`,
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the gauge, and then the FLOWN panel.',
         hints: ['Watch the HEADING gauge count up as the helicopter turns to the right.', 'Then watch the FLOWN panel count the metres.', done ? 'Press R to watch again.' : 'Wait a moment.']};
@@ -613,13 +624,13 @@ export function createModel() {
     if (id === 'alone') return jobView(base);
     if (CHECKS[id]) {
       const check = CHECKS[id], answered = m.answered !== null;
-      return {...base, compass: id !== 'check-scale', squares: id === 'check-scale' || id === 'check-sum', keys: answered ? {} : PICK_KEYS, actions: answered ? ['replay'] : [], waiting: !answered,
+      return {...base, compass: id !== 'check-scale', grid: id === 'check-scale' || id === 'check-sum', keys: answered ? {} : PICK_KEYS, actions: answered ? ['replay'] : [], waiting: !answered,
         cards: check.answers.map((a, i) => ({id: `answer:${i}`, key: String(i + 1), label: a.label, picture: a.picture,
           state: !answered ? null : i === check.correct ? 'right' : i === m.answered ? 'wrong' : null})),
         say: check.question, prompt: answered ? 'Press Enter to continue, or press R to watch again.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? REPLAY_HINTS : check.hints};
     }
     return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS,
-      say: `A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading 000, east is heading 090, south is heading 180 and west is heading 270. To find a heading from a map, you measure how far the target lies to the east and to the north, and the sum atan(east ÷ north) gives the angle. The rule of Pythagoras gives the distance, and a map’s scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last.`,
+      say: `A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading 000, east is heading 090, south is heading 180 and west is heading 270. To find a heading from a map, you measure how far the target lies to the east and to the north, and the sum atan(east ÷ north) gives the angle. The rule of Pythagoras gives the distance, and a map’s scale says how many metres one box stands for. Dividing the distance by the speed gives the time the flight will last.`,
       prompt: 'Press Enter to try it for real in the helicopter, or press Esc to go back to the Lab.', hints: KEY_IDEAS.map(i => i.text)};
   }
 
@@ -639,11 +650,11 @@ export function createModel() {
   return {enter, act, tick, view, state: () => m};
 }
 
-function squareWords(squares) {
-  const whole = Math.floor(squares), half = squares - whole >= .5;
-  if (whole === 0) return 'half a square';
+function boxWords(boxes) {
+  const whole = Math.floor(boxes), half = boxes - whole >= .5;
+  if (whole === 0) return 'half a box';
   const n = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][whole] ?? String(whole);
-  return `${n}${half ? ' and a half' : ''} square${whole === 1 && !half ? '' : 's'}`;
+  return `${n}${half ? ' and a half' : ''} ${whole === 1 && !half ? 'box' : 'boxes'}`;
 }
 
 export const lesson = Object.freeze({id: 'headings', steps: STEPS, createModel, keyIdeas: KEY_IDEAS, challengeCard: CHALLENGE_CARD, words: WORDS});

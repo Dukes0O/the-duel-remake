@@ -12,8 +12,8 @@ checked. The game's rules, the challenge (heading 070, 550 m, a 30 m ring), the 
   in that order: a heading is the direction measured clockwise from north, in degrees. Speed is defined where it is first used, in
   "Brian flies a job": 50 metres per second, written m/s, which is 180 km/h, with the reason for 3.6.
 - **New step "Finding a heading from a map".** The player moves a marker one square at a time. A right-angled triangle on the map
-  shows the distance north, the distance east and the straight line, and the panel shows atan(east ÷ north) and the rule of Pythagoras
-  changing on each press.
+  shows the distance north, the distance east and the straight line, and the panel shows atan(east ÷ north) changing on each press.
+- **New step "The length of the straight line".** Squaring and the square root are defined, then the rule of Pythagoras, again on the marker.
 - **New step "South and west of the pad".** The correction by quarter, because the lesson's own jobs need it (heading 120 and
   heading 340): add 180° south of the pad, and add 360° north and west of it.
 - **New step "Test your own settings".** The player chooses any heading and a flight of 100 m to 300 m. The panel shows
@@ -57,9 +57,13 @@ For `src/lab/lab-lines.js`; Claude records them at the merge. No credits were sp
 - `lab.brian.headings.explain`: "A heading is the direction in which a helicopter is pointing, measured clockwise from north, in degrees. North is heading zero, east is ninety, south is one hundred and eighty, and west is two hundred and seventy. To find a heading from a map, you measure how far the target lies to the east and to the north, and the arctangent of east divided by north gives the angle. The rule of Pythagoras gives the distance, and a map's scale says how many metres one square stands for. Dividing the distance by the speed gives the time the flight will last."
 - `lab.brian.headings.pass`: "With a heading and a distance, you can find any place on a map."
 
+## Review
+
+One independent review. Real faults, all fixed: a first A from 000 said the number went down when the gauge showed 355; the question 2 cards printed the two turn sizes, so they now wait for the reply and the card pictures show only the way each turn sets off; closing words said "you" after Show me had done the work; "square" had three meanings, so the map's unit is now a box, a right angle is explained as the corner of a page, and squaring, the square root and atan are defined in plain words before use, in a separate step for the distance so that the words fit on the screen; at gauge 250 the panel and the hint disagreed about half a turn; and "one correction" later became "the other correction".
+
 ## Checks
 
-- `node tools/test-lab-classroom-headings.mjs`: 20 of 20.
+- `node tools/test-lab-classroom-headings.mjs`: 21 of 21.
 - Source check for she, her, mph, decides and "air takes", the same patterns as `tools/test-lab-classroom-page.mjs`: none in either
   lesson file.
 - Browser walkthrough `lab-classroom-headings`, through the shared slot: passed, 45 screenshots, on the final code. Look: the word steps,
