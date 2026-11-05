@@ -42,3 +42,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Reuse the game's own junk cars for the stack, as the plan says. Only the van, bus and RV are new.
 - Each vehicle keeps its outline, with the roof pressed to the door handles, sides bulged and glass gone. Paint in several faded colours, with rust and soot.
 - Until this passes, BOWL-COURSE uses the existing junk cars.
+
+**Round 3: merge, at the cap, not good enough to release as it stands.** Flat ground at last. Flattened vehicles read at driving distance and the fallen bus heap is the best part, but all are still one salmon colour and thin as trays. Fixes for BOWL-COURSE, none of them new art rounds:
+- Use the game's own junk cars for most of the row, with only the bus and RV from this model.
+- Tint each vehicle a different faded colour in the game.
+- Remove the cone flame and use the game's fire effect on the heap.
+- I judge it again in the game at BOWL-FINISH.
