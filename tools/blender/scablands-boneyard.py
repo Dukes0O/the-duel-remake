@@ -308,18 +308,48 @@ for obj in review_objects:
     objects.remove(obj)
     bpy.data.objects.remove(obj,do_unlink=True)
 
-# Consolidate the many welded ribs, seams and fragments by material. This
-# preserves their shapes while avoiding thousands of tiny GLB draw objects.
-for material in list(bpy.data.materials):
-    batch=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and
-           len(obj.data.materials)==1 and obj.data.materials[0]==material]
+# Consolidate small welded fragments within clearly named aircraft parts.
+# This keeps the GLB compact without losing the fuselage, wings, tail, engines,
+# cockpit, landing gear, ground and yard-scrap parts required by the card.
+def part_key(name):
+    lowered=name.lower()
+    for prefix in ('north wreck','east wreck','south wreck'):
+        if lowered.startswith(prefix):
+            detail=lowered[len(prefix):]
+            if 'wing' in detail or 'flap' in detail or 'spar' in detail:
+                return prefix.title()+' wings'
+            if 'tail' in detail or 'keel' in detail:
+                return prefix.title()+' tail'
+            if 'engine' in detail or 'turbine' in detail or 'intake' in detail:
+                return prefix.title()+' engines'
+            if 'cockpit' in detail or 'glazing' in detail:
+                return prefix.title()+' cockpit'
+            if 'gear' in detail or 'tyre' in detail:
+                return prefix.title()+' landing gear'
+            return prefix.title()+' fuselage'
+    if 'ground' in lowered or 'dirt' in lowered:
+        return 'Boneyard ground'
+    return 'Boneyard field scrap'
+
+groups={}
+for obj in list(bpy.context.scene.objects):
+    if obj.type!='MESH' or len(obj.data.materials)!=1:
+        continue
+    key=(part_key(obj.name),obj.data.materials[0])
+    groups.setdefault(key,[]).append(obj)
+for (part,material),batch in groups.items():
     if len(batch)<2:
+        batch[0].name=part+' — '+material.name
         continue
     bpy.ops.object.select_all(action='DESELECT')
     for obj in batch: obj.select_set(True)
     bpy.context.view_layer.objects.active=batch[0]
     bpy.ops.object.join()
-    batch[0].name=material.name+' welded assembly'
+    batch[0].name=part+' — '+material.name
+part_names={part_key(obj.name) for obj in bpy.context.scene.objects if obj.type=='MESH'}
+for wreck in ('North Wreck','East Wreck','South Wreck'):
+    for part in ('fuselage','wings','tail','engines','cockpit','landing gear'):
+        assert wreck+' '+part in part_names, f'missing named part: {wreck} {part}'
 objects=[root_obj]+[obj for obj in bpy.context.scene.objects if obj.type=='MESH']
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
