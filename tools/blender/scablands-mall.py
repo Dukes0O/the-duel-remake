@@ -20,7 +20,7 @@ p.add_argument('--res', default='900,650')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(a.root).resolve()
 out = root / a.out
-evidence = Path(a.render).resolve() if a.render else root / '.evidence' / '2026-11-05' / 'WW-ART-MALL' / 'round-2'
+evidence = Path(a.render).resolve() if a.render else root / '.evidence' / '2026-11-05' / 'WW-ART-MALL' / 'round-3'
 if not evidence.is_absolute():
     evidence = root / evidence
 if a.paths_only:
@@ -223,11 +223,17 @@ old_path=root/'docs/board/looks/ww-art-mall/round-2.jpg'
 canvas=bpy.data.images.new('mall three-round comparison sheet',width=1200,height=1650,alpha=False)
 import numpy as np
 arr=np.zeros((1650,1200,4),dtype=np.float32); arr[:,:,:3]=(.08,.08,.075); arr[:,:,3]=1
-old=bpy.data.images.load(str(old_path),check_existing=False); oldpix=np.empty(old.size[0]*old.size[1]*4,dtype=np.float32); old.pixels.foreach_get(oldpix)
+previous_path = old_path if old_path.exists() else sheet_path
+old=bpy.data.images.load(str(previous_path),check_existing=False); oldpix=np.empty(old.size[0]*old.size[1]*4,dtype=np.float32); old.pixels.foreach_get(oldpix)
 olddata=oldpix.reshape(old.size[1],old.size[0],4)[::-1]; oh,ow=olddata.shape[:2]
-scale=min(1160/ow,620/oh); nw,nh=int(ow*scale),int(oh*scale)
-oldtile=olddata[(np.arange(nh)/scale).astype(int)[:,None],(np.arange(nw)/scale).astype(int)[None,:],:]
-arr[30:30+nh,20:20+nw,:]=oldtile; bpy.data.images.remove(old)
+if previous_path == sheet_path:
+    # The committed final sheet preserves the two prior rounds in this top band.
+    arr[:650,:]=olddata[:650,:,:]
+else:
+    scale=min(1160/ow,620/oh); nw,nh=int(ow*scale),int(oh*scale)
+    oldtile=olddata[(np.arange(nh)/scale).astype(int)[:,None],(np.arange(nw)/scale).astype(int)[None,:],:]
+    arr[30:30+nh,20:20+nw,:]=oldtile
+bpy.data.images.remove(old)
 for i,(name,_,_,_) in enumerate(views):
     im=bpy.data.images.load(str(evidence/f'{name}.png'),check_existing=False); pix=np.empty(width*height*4,dtype=np.float32); im.pixels.foreach_get(pix)
     data=pix.reshape(height,width,4)[::-1]
@@ -239,5 +245,5 @@ for i,(name,_,_,_) in enumerate(views):
     bpy.data.images.remove(im)
 canvas.pixels.foreach_set(arr[::-1].ravel()); canvas.filepath_raw=str(sheet_path); canvas.file_format='JPEG'; canvas.save(quality=80)
 if sheet_path.stat().st_size>500_000: raise RuntimeError(f'comparison sheet exceeds 500 KB: {sheet_path.stat().st_size}')
-old_path.unlink()
+if old_path.exists(): old_path.unlink()
 print(f'WW-ART-MALL round 3: {out.stat().st_size} bytes; sheet {sheet_path.stat().st_size} bytes')
