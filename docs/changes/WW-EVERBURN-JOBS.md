@@ -23,3 +23,8 @@
 ## Removed
 
 - None.
+
+## Review follow-up still needed
+
+- `tools/test-everburn-easy.mjs` still simulates `stepJob` directly and its 10/10 report does not prove the actual arena mode. Replacing it with a child-pace input driver remains required before this card can be accepted.
+- The review fix adds definitions for the thief, Big Bess and Old Smoke's furnace paths, but the current mode actors are simulation-only. Visible vehicle props, real hit handling for the furnace vents, and complete real-mode runs remain unverified.

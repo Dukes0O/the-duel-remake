@@ -18,11 +18,50 @@ export function initializeWorldJob(duel, definition) {
   const worldJob = arena?.worldJob;
   if (!worldJob) return false;
   // Loaned car weapons belong to this run. They never touch the player profile.
-  const lent = (definition.lend ?? []).filter(id => typeof id === 'string');
-  state.weaponLoadout = [...new Set([...(state.weaponLoadout || []), ...lent])];
+  worldJob.originalWeaponLoadout = [...(state.weaponLoadout || [])];
+  worldJob.activeLoan = null;
+  applyStepLoan(state, worldJob);
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   return true;
+}
+
+function applyStepLoan(state, worldJob) {
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  const loan = step?.lentWeapon ?? (worldJob.job.stepIndex === 0 ? worldJob.definition.lend?.[0] : null);
+  worldJob.activeLoan = typeof loan === 'string' ? loan : null;
+  state.weaponLoadout = [...new Set([...(worldJob.originalWeaponLoadout || []),
+    ...(worldJob.activeLoan ? [worldJob.activeLoan] : [])])];
+}
+
+function updateJobActors(worldJob, dt) {
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  const actorDef = step?.actor;
+  if (!actorDef) return;
+  let actor = worldJob.actors.find(item => item.id === actorDef.id);
+  if (!actor) {
+    const start = actorDef.path?.[0]?.position ?? actorDef.path?.[0];
+    if (!start) return;
+    actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
+      pathProgress: 0, speed: 0};
+    worldJob.actors.push(actor);
+  }
+  const follow = worldJob.follow;
+  if (!follow || follow.actorId && follow.actorId !== actor.id || !actorDef.path?.length) return;
+  const path = actorDef.path.map(item => item.position ?? item);
+  const index = Math.min(actor.pathIndex ?? 0, path.length - 1);
+  const target = path[index];
+  const dx = target.x - actor.position.x, dz = target.z - actor.position.z;
+  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt;
+  if (gap <= travel || gap < .01) {
+    actor.position = {...target};
+    actor.pathIndex = Math.min(index + 1, path.length - 1);
+    actor.pathProgress = path.length <= 1 ? 1 : actor.pathIndex / (path.length - 1);
+  } else {
+    actor.position.x += dx / gap * travel;
+    actor.position.z += dz / gap * travel;
+  }
+  if (actor.pathProgress >= 1 && actorDef.escort) actor.atDestination = true;
 }
 
 function spawnWave(duel, worldJob, request, key) {
@@ -80,17 +119,27 @@ export function stepWorldJob(duel, dt) {
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = position(duel, player);
   const playerView = {position: point, s: player.s, lateral: player.lateral};
+  const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);
+  const contact = targetActor && Math.hypot(point.x - targetActor.position.x, point.z - targetActor.position.z) <=
+    (worldJob.job.steps[worldJob.job.stepIndex]?.contactRadius ?? 3)
+    ? targetActor.id : null;
   const actors = [...worldJob.actors.map((actor, index) => ({id: actor.id ?? `raider-${index}`,
-    position: {x: actor.x, y: actor.y, z: actor.z}, health: actor.knockedDown ? 0 : actor.health})),
+    position: actor.position ?? {x: actor.x, y: actor.y, z: actor.z}, health: actor.knockedDown ? 0 : actor.health,
+    pathProgress: actor.pathProgress, atDestination: actor.atDestination})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
   const view = {player: playerView, onFoot: !!state.onFoot, fighter: state.fighter,
     actors, crashSize: state.lastCrashSize || 0,
-    thingsHit: state.worldJobThingsHit || [], waveCleared: worldJob.clearedWaves};
+    thingsHit: state.worldJobThingsHit || (state.onFoot && state.input?.interact ? [{id: worldJob.job.steps[worldJob.job.stepIndex]?.takeId, kind: 'take'}] : []),
+    carrying: worldJob.carrying, inventory: worldJob.inventory ?? [], lamps: worldJob.job.steps[worldJob.job.stepIndex]?.lamps ?? [],
+    places: worldJob.places ?? {}, placeHealth: worldJob.placeHealth,
+    contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  updateJobActors(worldJob, dt);
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
+  if (next.stepIndex !== previousStep) applyStepLoan(state, worldJob);
   for (const event of next.events) {
     if (event.type === 'waveRestarted') {
       const key = `${next.stepIndex}:${event.wave ?? 0}`;
@@ -103,11 +152,16 @@ export function stepWorldJob(duel, dt) {
       worldJob.spawnedWaveKeys = worldJob.spawnedWaveKeys.filter(existing => existing !== key);
     }
     if (event.type === 'waveCleared') worldJob.clearedWaves.push(event.wave);
+    if (event.type === 'taken') {
+      worldJob.carrying = event.id;
+      worldJob.inventory = [...new Set([...(worldJob.inventory ?? []), event.id])];
+    }
     if (event.type === 'say' && event.lineId) {
       duel._callout(worldJob.definition.captions?.[event.lineId] ?? event.lineId, 2.2);
     }
     if (event.type === 'done') {
       worldJob.settled = true;
+      state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
       return {reason: 'job-complete', winnerId: 'player'};
     }
   }

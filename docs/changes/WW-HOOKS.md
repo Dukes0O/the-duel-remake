@@ -23,3 +23,8 @@
 ## Removed
 
 - None.
+
+## Review follow-up still needed
+
+- The Easy proof still calls `stepJob` and invents outcomes; it has not been replaced with an input-only real-mode driver.
+- The new abstract path actors are not connected to visible vehicle props or real combat damage. Quit and pause loan cleanup are also untested. This change is not end-to-end acceptance for WW-HOOKS.
