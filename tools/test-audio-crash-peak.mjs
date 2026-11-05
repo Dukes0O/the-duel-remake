@@ -78,10 +78,12 @@ before(async()=>{
   await writeFile(join(scratchDir,'recorder-probe.js'),nativeRecorderEntry());
   await writeFile(join(scratchDir,'recorder-probe.html'),"<!doctype html><meta charset='utf-8'><link rel='icon' href='data:,'><script type='module' src='./recorder-probe.js'></script>");
   const plugin=new URL('./build-version-plugin.mjs',import.meta.url).href;
+  const qaConfig=new URL('./vite-qa.config.js',import.meta.url).href;
   const config="import {buildVersionPlugin} from "+JSON.stringify(plugin)+";\n"+
+    "import {publicFallbackPlugin} from "+JSON.stringify(qaConfig)+";\n"+
     "export default {root:"+JSON.stringify(resolve(root))+
-    ",plugins:[buildVersionPlugin()],define:{__DUEL_QA__:'true'},build:{outDir:"+JSON.stringify(join(scratchDir,'build'))+
-    ",emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+",recorder:"+JSON.stringify(join(scratchDir,'recorder-probe.html'))+"}}},server:{hmr:false}};\n";
+    ",publicDir:false,appType:'mpa',plugins:[buildVersionPlugin(),publicFallbackPlugin()],define:{__DUEL_QA__:'true'},build:{outDir:"+JSON.stringify(join(scratchDir,'build'))+
+    ",copyPublicDir:false,emptyOutDir:true,rollupOptions:{input:{menu:"+JSON.stringify(join(root,'tools/menu-check.html'))+",recorder:"+JSON.stringify(join(scratchDir,'recorder-probe.html'))+"}}},server:{hmr:false}};\n";
   await writeFile(join(scratchDir,'vite.config.mjs'),config);
   const log=[];
   const code=await new Promise((done,reject)=>{

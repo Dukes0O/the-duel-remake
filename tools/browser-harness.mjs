@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { randomInt } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, relative, resolve, sep } from 'node:path';
@@ -14,6 +14,16 @@ const TIMEOUT_MS = 45_000;
 const CLOSE_WAIT_MS = 3_000;
 const TREE_WAIT_MS = 3_000;
 const delay = ms => new Promise(done => setTimeout(done, ms));
+
+async function directoryBytes(path) {
+  let bytes = 0;
+  for (const entry of await readdir(path, {withFileTypes:true})) {
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) bytes += await directoryBytes(child);
+    else if (entry.isFile()) bytes += (await stat(child)).size;
+  }
+  return bytes;
+}
 
 export function parseArguments(args) {
   const [command, ...rest] = args;
@@ -90,7 +100,7 @@ export async function removeQaBundle(path, {realPath = realpath, remove = rm} = 
 
 export async function buildQaBundle({
   hasVite = () => existsSync(VITE_CLI), makeDirectory = mkdir, makeTemp = mkdtemp,
-  start = launch, wait = waitForExit, read = readFile, write = writeFile,
+  start = launch, wait = waitForExit, read = readFile, write = writeFile, measure = directoryBytes,
   cleanup = removeQaBundle,
 } = {}) {
   if (!hasVite()) throw Error('Vite is missing. Run npm ci in this isolated worktree.');
@@ -98,6 +108,7 @@ export async function buildQaBundle({
   await makeDirectory(qaRoot, {recursive: true});
   const bundle = resolveQaBundle(await makeTemp(join(qaRoot, 'browser-suite-')));
   try {
+    const startedAt = Date.now();
     console.log('Building one isolated QA bundle...');
     await wait(start(process.execPath, [VITE_CLI, 'build', '--config', 'tools/vite-qa.config.js',
       '--outDir', bundle]), 'QA build');
@@ -106,6 +117,7 @@ export async function buildQaBundle({
     if (!html.includes('<meta charset=')) throw Error('QA bundle is missing its menu entry.');
     await write(htmlPath, html.replace('<meta charset=', '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E"><meta charset='));
     await write(join(bundle, 'qa-bundle.json'), JSON.stringify({schema: 1, projectRoot: PROJECT_ROOT, qa: true}) + '\n');
+    console.log(`QA bundle ready: ${(await measure(bundle) / 1024 / 1024).toFixed(2)} MiB in ${((Date.now() - startedAt) / 1000).toFixed(1)} s.`);
     return bundle;
   } catch (error) {
     await cleanup(bundle);
