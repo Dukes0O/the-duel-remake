@@ -143,8 +143,9 @@ export function arenaYardPanel({opponents = 3, difficulty = 'medium', mode = 'la
   const selectedMode = convoy ? 'convoy-raid' : ambush ? 'ambush-alley' : bounty ? 'bounty-hunt' : fuel ? 'fuel-run' : 'last-car-rolling';
   const choices = ['last-car-rolling', ...(available ? ['fuel-run'] : []), ...(bountyAvailable ? ['bounty-hunt'] : []),
     ...(ambushAvailable ? ['ambush-alley'] : []), ...(convoyAvailable ? ['convoy-raid'] : [])];
-  const modes = choices.length > 1 ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
-    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'convoy-raid' ? 'CONVOY RAID' : id === 'ambush-alley' ? 'AMBUSH ALLEY' : id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') + '</div>' : '';
+  const modes = choices.length > 1 || profile?.wasteland?.discoveredGate ? '<div class="segmented" role="group" aria-label="Scrapdome mode">' +
+    choices.map(id => `<button type="button" class="choice${selectedMode === id ? ' on' : ''}" data-arena-mode="${id}" aria-pressed="${selectedMode === id}">${id === 'convoy-raid' ? 'CONVOY RAID' : id === 'ambush-alley' ? 'AMBUSH ALLEY' : id === 'fuel-run' ? 'FUEL RUN' : id === 'bounty-hunt' ? 'BOUNTY HUNT' : 'LAST CAR ROLLING'}</button>`).join('') +
+    (!ambushAvailable && featureFlags?.enabled('ambush-alley') ? `<button type="button" class="choice" disabled aria-label="Ambush Alley locked at rank 12">AMBUSH ALLEY · RANK 12</button><p>Hold the fort on foot through five waves. Rank 12 · you are rank ${profile?.wasteland?.rank || 1}</p><progress max="12" value="${Math.min(12, profile?.wasteland?.rank || 1)}" aria-label="Progress to Ambush Alley rank 12"></progress>` : '') + '</div>' : '';
   if (convoy) return `<div class="yard-home-intro arena-yard">${modes}
     <p class="arena-yard-mode">CONVOY RAID · SALT FLATS · 5:00</p>
     <p class="arena-yard-difficulty">TANKER + TWO ESCORTS · ${String(difficulty).toUpperCase()}</p>

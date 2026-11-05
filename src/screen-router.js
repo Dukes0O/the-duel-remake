@@ -299,6 +299,11 @@ root.addEventListener('click',e => {
   }
   if(button.closest('form')&&button.type==='submit')return;
   e.preventDefault();
+  if (button.hasAttribute('data-weapon-fit')) {
+    const result = app.equipCarWeapon(Number(button.dataset.weaponFitSlot || 0), button.dataset.weaponFit);
+    garageMessage = result.ok ? 'Car weapon fitted.' : result.reason;
+    lastScreen = null; renderState(app.duel.state); return;
+  }
   switch (button.dataset.action) {
     case 'yard-career': openYardPanel('career'); return;
     case 'yard-territory': openYardPanel('territory'); return;
