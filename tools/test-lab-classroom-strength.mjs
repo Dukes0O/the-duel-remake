@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, NAMES, LIGHTEST, STEP_MM, armOutcome, barUsed, failKg, barMm, safeLine, inReach, benchAttempts} from '../src/lab/lessons/strength-classroom.js';
+import {readFileSync} from 'node:fs';
+import {STEPS, NAMES, LIGHTEST, STEP_MM, FREE_TRIES, armOutcome, armFormulas, barFormulas, towards, pct, barUsed, failKg, barMm, safeLine, inReach, benchAttempts} from '../src/lab/lessons/strength-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/strength-board.js';
 import {MATERIALS, ARM, loadBar, hookArm, lightestArm, strengthBench} from '../src/lab/benches/strength.js';
 import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js';
@@ -26,10 +27,12 @@ function playThroughTo(session, id) {
   while (session.view().step.id !== id) {
     const step = session.view().step.id;
     if (step === 'wonder' || step === 'watch') until(session, x => x.ready);
+    else if (step === 'word-density') { session.act('material:0'); session.act('material:2'); }
     else if (step === 'word-strength') { session.act('load:add'); session.act('load:add'); }
     else if (step === 'word-stiff' || step === 'word-brittle') { session.act('go'); until(session, x => x.ready); }
     else if (step === 'try-snap') { session.act('material:2'); session.act('go'); session.act('answer:2'); until(session, x => x.ready); }
     else if (step === 'try-steel') { build(session, 'steel', 80); session.act('go'); until(session, x => x.ready); }
+    else if (step === 'try-free') { for (const material of ['steel', 'aluminium', 'carbon fibre']) { build(session, material, 80); session.act('go'); until(session, x => x.keys.Space === 'go'); } }
     else if (step === 'alone') { build(session, 'carbon fibre', 50); session.act('go'); until(session, x => x.ready); }
     else if (step === 'check-bars' || step === 'check-game') session.act('answer:1');
     else if (step === 'check-snap') session.act('answer:2');
@@ -102,23 +105,24 @@ test('words: ↑ hangs 10 kg on the steel bar until it bends; Space dips two bar
   playThroughTo(session, 'word-strength');
   assert.equal(session.view().rigs[0].used, 0);
   session.act('load:add');
-  assert.match(session.view().brian.text, /^10 kg uses 73% of its strength\. It dips 23\.7 mm/);
+  assert.match(session.view().brian.text, /^A load of 10 kg brings the stress to 73% of the strength of the steel\. The end of the bar dips 23\.7 mm/);
   assert.equal(session.view().ready, false);
   session.act('load:add');
-  assert.match(session.view().brian.text, /^20 kg used 145% of the bar’s strength: past 100%, so it bent for good/);
+  assert.match(session.view().brian.text, /^A load of 20 kg brings the stress to 145% of the strength of the steel\. That is past 100%, so the bar has bent for good/);
   assert.equal(session.view().rigs[0].state, 'bent');
   session.act('next');
   session.act('go'); run(session, 1);
   const [steel, carbon] = session.view().rigs;
   assert.ok(Math.abs(steel.dipMm - 23.7) < .1 && carbon.dipMm < .5, 'the dips show while the weights hang');
   until(session, x => x.ready);
-  assert.match(session.view().brian.text, /the steel bar dipped 23\.7 mm, the carbon fibre bar 0\.3 mm, and both sprang back/);
+  assert.deepEqual(session.view().rigs.map(r => r.peakMm.toFixed(1)), ['23.7', '0.3'], 'the board keeps what it measured after the bars spring back');
+  assert.match(session.view().brian.text, /the steel bar dipped 23\.7 mm and the carbon fibre bar dipped only 0\.3 mm, and both bars sprang back/);
   session.act('next');
   session.act('go'); run(session, 1);
   assert.equal(session.view().rigs[0].state, 'ok', 'it springs back until it snaps');
   until(session, x => x.ready);
   assert.equal(session.view().rigs[0].state, 'snapped');
-  assert.match(session.view().brian.text, /^It held 1,991 kg/);
+  assert.match(session.view().brian.text, /^The carbon fibre bar carried 1,991 kg/);
 });
 
 test('the watch loads three 1 kg bars together: steel bends first, then aluminium, and carbon fibre snaps', () => {
@@ -140,21 +144,21 @@ test('the tries: Space on the wrong arm, every wrong guess and every arm that fa
   snap.act('material:2'); snap.act('go');
   assert.equal(snap.view().cards.length, 3, 'set up, then guess from pictures of results');
   snap.act('answer:0'); until(snap, x => x.ready);
-  assert.match(snap.view().brian.text, /^It snapped\. The car used 164% of its strength: past 100%/);
+  assert.match(snap.view().brian.text, /^The arm snapped\. The car brought the stress to 164% of the strength of carbon fibre, which is past 100%/);
   const bend = createClassroomSession(lesson);
   playThroughTo(bend, 'try-snap');
   bend.act('material:2'); bend.act('go'); bend.act('answer:1'); until(bend, x => x.ready);
-  assert.match(bend.view().brian.text, /^It snapped, not bent: carbon fibre is brittle/);
+  assert.match(bend.view().brian.text, /^The arm snapped and did not bend, because carbon fibre is brittle/);
 
   const steel = createClassroomSession(lesson);
   playThroughTo(steel, 'try-steel');
   assert.equal(steel.view().rack.locked, true, 'the steel try keeps steel');
   build(steel, 'steel', 50); steel.act('go'); until(steel, x => x.keys.Space === 'go');
-  assert.match(steel.view().brian.text, /^Steel at 50 mm: the car used 157% of its strength, past 100%, so it bent for good\. Thicker: press ↑/);
+  assert.match(steel.view().brian.text, /^The steel arm at 50 mm bent for good, because the car brought the stress to 157% of the strength of steel, which is past 100%\. Make the arm thicker with ↑/);
   build(steel, 'steel', 70); steel.act('go'); until(steel, x => x.keys.Space === 'go');
-  assert.match(steel.view().brian.text, /^Steel at 70 mm held, but used 80% of its strength, over the line for metal, two thirds \(67%\)/);
+  assert.match(steel.view().brian.text, /^The steel arm at 70 mm held the car, but the car brought the stress to 80% of the strength of steel, which is over the safety line for metal of 67%/);
   build(steel, 'steel', 80); steel.act('go'); until(steel, x => x.ready);
-  assert.match(steel.view().brian.text, /^80 mm of steel holds the car: 61% of its strength, inside the line, and it dips 1\.6 mm\. But it weighs 18\.8 kg\./);
+  assert.match(steel.view().brian.text, /^A steel arm 80 mm thick holds the car\. The car brings the stress to 61% of the strength of steel, which is inside the safety line, and the end of the arm dips 1\.6 mm\. However, the arm weighs 18\.8 kg/);
 });
 
 test('Brian’s job: the lightest arm that holds; heavier arms and arms that fail say why, and the list keeps every arm that held', () => {
@@ -162,23 +166,23 @@ test('Brian’s job: the lightest arm that holds; heavier arms and arms that fai
   playThroughTo(session, 'alone');
   assert.deepEqual(session.view().job.held.map(h => [h.material, h.mm]), [['steel', 80]]);
   hang(session); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /^This arm held before, at 18\.8 kg\. Try a lighter material\./);
+  assert.match(session.view().brian.text, /^This arm held the car before, at 18\.8 kg\. Could a less dense material do the job\?/);
   build(session, 'aluminium', 80); session.act('go'); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /^It holds at 6\.5 kg, your lightest yet\. Can a lighter material do it\?/);
+  assert.match(session.view().brian.text, /^This arm holds the car at 6\.5 kg, which is your lightest so far\. Could a less dense material do the job\?/);
   build(session, 'carbon fibre', 40); session.act('go'); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /^Carbon fibre at 40 mm held, but used 41% of its strength, over carbon fibre’s line of 33%, and dipped 18\.9 mm, more than the 10 mm the hook may dip\./);
+  assert.match(session.view().brian.text, /^The carbon fibre arm at 40 mm held the car, but the car brought the stress to 41% of the strength of carbon fibre, which is over the safety line for carbon fibre of 33%, and the arm dipped 18\.9 mm, which is more than the 10 mm that my rule allows\./);
   build(session, 'carbon fibre', 20); session.act('go'); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /Carbon fibre is brittle, so it snapped\. Make it thicker, or try another material/);
+  assert.match(session.view().brian.text, /and carbon fibre is brittle\. Make the arm thicker, or try another material/);
   build(session, 'carbon fibre', 60); session.act('go'); until(session, x => x.keys.Space === 'go');
-  assert.match(session.view().brian.text, /^It holds at 2\.9 kg, your lightest yet\. Can a thinner one still hold\?/);
+  assert.match(session.view().brian.text, /^This arm holds the car at 2\.9 kg, which is your lightest so far\. Could a thinner arm still hold the car\?/);
   assert.equal(session.view().ready, false);
   build(session, 'carbon fibre', 50); session.act('go'); until(session, x => x.ready);
-  assert.match(session.view().brian.text, /^Carbon fibre at 50 mm holds the car and weighs 2\.4 kg: the lightest arm that can\./);
+  assert.match(session.view().brian.text, /^A carbon fibre arm 50 mm thick holds the car and weighs 2\.4 kg, which makes it the lightest arm that can\./);
   assert.deepEqual(session.view().job.held.map(h => h.mm).sort((a, b) => a - b), [50, 60, 80, 80]);
 });
 
 test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me picks, turns and hangs', () => {
-  for (const id of ['word-strength', 'word-stiff', 'word-brittle', 'try-snap', 'try-steel', 'alone']) {
+  for (const id of ['word-density', 'word-strength', 'word-stiff', 'word-brittle', 'try-snap', 'try-steel', 'alone']) {
     const session = createClassroomSession(lesson);
     playThroughTo(session, id);
     const hints = session.view().hints;
@@ -192,7 +196,7 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
     // Brian presses it, says "That is how it is done.", and goes on building where there is more to do.
     run(session, SHOW_ME_S + .1);
     assert.match(session.view().brian.text, /^That is how it is done. /);
-    if (id === 'word-strength') { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
+    if (id === 'word-strength' || id === 'word-density') { for (let k = 0; k < 3; k++) session.act('help'); run(session, SHOW_ME_S + .2); }
     if (id === 'try-snap') { until(session, x => x.cards.length === 3, 5); session.act('answer:2'); }
     until(session, x => x.ready, 30);
   }
@@ -206,9 +210,9 @@ test('help climbs from a nudge to a plain step to Brian’s pointer, and Show me
 
 test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
-    'check-bars': [[0, /^The aluminium bar held 128 kg; the steel bar bent at 14 kg\./], [2, /^Carbon fibre never bends for good: it held 1,991 kg, then snapped\./]],
-    'check-snap': [[0, /^Aluminium is a metal: it bends for good before it breaks/], [1, /^Steel is a metal/]],
-    'check-game': [[0, /^It holds, but it weighs 16\.4 kg more for the helicopter to lift/], [2, /^Carbon fibre at 30 mm held, but used 73% of its strength, over carbon fibre’s line of 33%, and dipped 44\.9 mm/]],
+    'check-bars': [[0, /^The aluminium bar carried 128 kg, but the steel bar bent for good at 14 kg\./], [2, /^Carbon fibre never bends for good, because it is brittle\. The carbon fibre bar carried 1,991 kg and then snapped\./]],
+    'check-snap': [[0, /^Aluminium is a metal, so it bends for good before it breaks/], [1, /^Steel is a metal/]],
+    'check-game': [[0, /^The steel arm holds the car, but it weighs 16\.4 kg more for the helicopter to lift/], [2, /^The carbon fibre arm at 30 mm held the car, but the car brought the stress to 73% of the strength of carbon fibre, which is over the safety line for carbon fibre of 33%, and the arm dipped 44\.9 mm/]],
   };
   for (const [id, picks] of Object.entries(answers)) for (const [pick, why] of picks) {
     const session = createClassroomSession(lesson);
@@ -275,12 +279,13 @@ test('review fixes: Brian’s job starts from the steel arm the player built, an
   playThroughTo(session, 'try-steel');
   build(session, 'steel', 100); session.act('go'); until(session, x => x.ready);
   session.act('next');
+  playThroughTo(session, 'alone');
   const v = session.view();
   assert.deepEqual(v.job.held.map(h => [h.material, h.mm]), [['steel', 100]]);
   assert.equal(v.handle.mm, 100);
   assert.match(v.brian.text, /Your steel arm weighs 23\.6 kg\./);
   build(session, 'carbon fibre', 50); session.act('go'); until(session, x => x.ready);
-  assert.match(session.view().brian.text, /Your steel arm weighed 23\.6 kg\. Job done\./);
+  assert.match(session.view().brian.text, /Your steel arm weighed 23\.6 kg\. That finishes the job\./);
 });
 
 test('the old lesson’s faults are gone: thickness and weight always show, every step is named, carbon fibre never bends for good', () => {
@@ -288,11 +293,184 @@ test('the old lesson’s faults are gone: thickness and weight always show, ever
   playThroughTo(session, 'try-steel');
   session.act('thick:up');
   let v = session.view();
-  assert.equal(v.handle.mm, 50); assert.match(v.prompt, /^Steel, 50 mm, 11\.8 kg\./);
-  assert.match(v.prompt, /Space to hang the car/, 'the hang step is in the prompt');
+  assert.equal(v.handle.mm, 50); assert.match(v.prompt, /^The steel arm is 50 mm thick and weighs 11\.8 kg\./);
+  assert.match(v.prompt, /press Space to hang the car/, 'the hang step is in the prompt');
   for (const material of NAMES) for (let mm = 10; mm <= 120; mm += STEP_MM) if (MATERIALS[material].brittle) assert.notEqual(armOutcome(material, mm).state, 'bends');
   session.act('help'); session.act('help');
-  assert.match(session.view().brian.text, /Press ↑ until it reads 80 mm, then Space/);
+  assert.match(session.view().brian.text, /Press ↑ until the handle reads 80 mm, then press Space/);
   v = session.view();
   assert.deepEqual(v.repeat, ['↑', '↓'], 'holding ↑ keeps turning');
+});
+
+test('density: each material shows its own 1 kg bar, the sum follows the key, and the keys stay open', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-density');
+  assert.equal(session.view().ready, false);
+  assert.equal(session.view().formulas[0].worked, '1 kg ÷ (7,850 kg/m³ × 0.5 m × 0.04 m) = 0.00637 m, which is 6.37 mm');
+  session.act('material:0');
+  assert.equal(session.view().formulas[0].worked, '1 kg ÷ (2,700 kg/m³ × 0.5 m × 0.04 m) = 0.01852 m, which is 18.52 mm');
+  assert.match(session.view().brian.text, /^Aluminium has a density of 2,700 kg\/m³, so its 1 kg bar is 18\.5 mm thick/);
+  assert.equal(session.view().ready, false);
+  const opening = session.view().page.at(-1).setup;
+  session.act('material:2');
+  assert.equal(session.view().ready, true);
+  assert.equal(session.view().formulas[0].worked, '1 kg ÷ (1,600 kg/m³ × 0.5 m × 0.04 m) = 0.03125 m, which is 31.25 mm');
+  const closing = session.view().brian.text;
+  session.act('material:1');
+  assert.equal(session.view().rack.chosen, 'steel', 'the keys stay open after the answer');
+  assert.match(session.view().formulas[0].worked, /6\.37 mm$/);
+  assert.equal(session.view().page.at(-1).result, closing, 'the closing words stay true while the player goes on');
+  assert.equal(session.view().page.at(-1).setup, opening, 'the opening words do not change with the keys');
+});
+
+test('strength: the sums follow each weight, ↓ takes a weight off, and a bent bar can be swapped while the closing words stay', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'word-strength');
+  session.act('load:add');
+  assert.deepEqual(session.view().formulas.map(f => f.worked), ['10 kg × 9.81 = 98.1 N', '6 × 98.1 N × 500 mm ÷ (40 mm × (6.37 mm)²) = 181.3 N/mm²', '181.3 ÷ 250 = 73%']);
+  session.act('load:off');
+  assert.equal(session.view().rigs[0].used, 0);
+  assert.match(session.view().brian.text, /sprung back/);
+  session.act('load:add'); session.act('load:add');
+  assert.equal(session.view().formulas[2].worked, '362.6 ÷ 250 = 145%');
+  const closing = session.view().page.at(-1).result;
+  assert.match(closing, /bent for good/);
+  session.act('load:off');
+  assert.equal(session.view().rigs[0].state, 'ok', 'a fresh bar');
+  assert.ok(session.view().ready);
+  session.act('load:add');
+  assert.equal(session.view().page.at(-1).result, closing, 'the page keeps the result');
+});
+
+test('every sum comes out on a calculator from the numbers it shows, and agrees with the bench', () => {
+  const value = text => Number(text.match(/= ([\d,.]+)[^=]*$/)[1].replaceAll(',', ''));
+  for (const material of NAMES) for (let mm = 10; mm <= 120; mm += STEP_MM) {
+    const o = armOutcome(material, mm), [weight, stress, used, dip] = armFormulas(material, mm).map(f => f.worked);
+    assert.equal(value(weight).toFixed(1), o.arm.massKg.toFixed(1), `${material} ${mm} weight`);
+    assert.match(armFormulas(material, mm)[1].note, /2,000 kg × 9\.81 = 19,620 N/);
+    assert.ok(Math.abs(value(stress) - o.arm.stressMPa) < .06, `${material} ${mm} stress`);
+    assert.equal(used.split(' = ')[1], pct(o.used), `${material} ${mm} strength used`);
+    assert.equal(value(dip).toFixed(1), o.arm.tipDropMm.toFixed(1), `${material} ${mm} dip`);
+    assert.ok(o.state !== 'holds' || (Math.round(o.used * 100) === Math.round(o.line * 100)) === false, `${material} ${mm}: a rounded figure never hides which side of the line it is on`);
+  }
+  assert.deepEqual(barFormulas('steel', 10).map(f => f.worked)[2], '181.3 ÷ 250 = 73%');
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch');
+  until(watch, x => x.ready);
+  const worked = watch.view().formulas.map(f => f.worked).filter(Boolean);
+  assert.match(worked[0], /= 128\.2 kg$/); assert.match(worked[1], /= 13\.8 kg$/); assert.match(worked[2], /= 1,991 kg$/);
+  assert.match(worked[3], /18\.52 mm ÷ 6\.37 mm = 2\.91 times as thick, and 2\.91² × \(275 ÷ 250\) = 9\.3 times the load/);
+  assert.ok(Math.abs(128.2 / 13.8 - 9.3) < .05, 'the two loads give the same figure');
+});
+
+test('the panel never settles an open guess or question', () => {
+  const answerless = (session, faults, label) => { for (const f of session.view().formulas) for (const text of [f.worked, f.note]) for (const fault of faults) assert.ok(!fault.test(text ?? ''), `${label}: "${text}" gives the answer away`); };
+  const snap = createClassroomSession(lesson);
+  playThroughTo(snap, 'try-snap');
+  const noResult = [/164%/, /N\/mm²$/, /2,452/, /safety line/];
+  answerless(snap, noResult, 'before the guess');
+  snap.act('material:2');
+  answerless(snap, noResult, 'after picking carbon fibre');
+  assert.match(snap.view().formulas[0].worked, /1,600 kg\/m³/, 'the key still moves the arm’s weight');
+  snap.act('go');
+  assert.equal(snap.view().cards.length, 3);
+  answerless(snap, noResult, 'while the guess is open');
+  snap.act('answer:0');
+  assert.ok(snap.view().formulas.some(f => /= 164%$/.test(f.worked ?? '')), 'the sums fill in once the guess is made');
+  assert.ok(!snap.view().formulas.some(f => /safety line/.test(f.note ?? '')), 'the safety line is not named before it is defined');
+
+  const bars = createClassroomSession(lesson);
+  playThroughTo(bars, 'check-bars');
+  answerless(bars, [/= [\d,.]+ (kg|mm)/, /\d mm/, /N\/mm/], 'question 1');
+  bars.act('answer:1');
+  assert.ok(bars.view().formulas.some(f => /13\.8 kg$/.test(f.worked ?? '')), 'the numbers come after the answer');
+  const snaps = createClassroomSession(lesson);
+  playThroughTo(snaps, 'check-snap');
+  answerless(snaps, [/brittle/i, /carbon/i, /metal/i], 'question 2');
+  const game = createClassroomSession(lesson);
+  playThroughTo(game, 'check-game');
+  answerless(game, [/= \d+%$/, /= [\d.]+ mm$/], 'question 3');
+  assert.ok(!game.view().formulas.some(f => /73%/.test(f.worked ?? '')), 'question 3 does not show that the thin arm is over its line');
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch');
+  run(watch, .5);
+  answerless(watch, [/1,991/, /128/, /13\.8/], 'the ram not yet run');
+});
+
+test('the free test: three different arms open Continue, the same arm does not count, and the sums move on every press', () => {
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  assert.equal(free.view().ready, false);
+  assert.equal(free.view().tests.length, 0);
+  assert.match(free.view().formulas[0].worked, /= 18\.84 kg$/, 'the sums show first, so the player can predict');
+  free.act('thick:up');
+  assert.match(free.view().formulas[0].worked, /= 21\.20 kg$/, 'the handle changes the sum');
+  free.act('material:0');
+  assert.match(free.view().formulas[0].worked, /= 7\.29 kg$/, 'the material changes the sum');
+  assert.match(free.view().formulas[2].worked, /= 44%$/);
+  free.act('go'); until(free, x => x.keys.Space === 'go');
+  assert.match(free.view().brian.text, /^The aluminium arm at 90 mm held the car under both rules, and the arm weighs 7\.3 kg\. An arm like this one could carry/);
+  free.act('go'); until(free, x => x.keys.Space === 'go');
+  assert.equal(free.view().ready, false, 'the same arm again is not a different one');
+  assert.equal(free.view().tests.length, 2, 'the table keeps each test');
+  build(free, 'carbon fibre', 20); free.act('go'); until(free, x => x.keys.Space === 'go');
+  assert.match(free.view().brian.text, /^The carbon fibre arm at 20 mm snapped/);
+  assert.equal(free.view().ready, false);
+  build(free, 'steel', 40); free.act('go'); until(free, x => x.keys.Space === 'go');
+  assert.equal(free.view().ready, true, 'three different arms open Continue');
+  assert.deepEqual(free.view().tests.map(t => t.holds), [true, true, false, false]);
+});
+
+test('Show me on the free test tries a different arm each time, reaches three and finishes', () => {
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  for (let round = 1; round <= FREE_TRIES; round++) {
+    for (let k = 0; k < 3; k++) free.act('help');
+    const third = free.view().brian.text;
+    assert.ok(free.view().pointer, `round ${round}: Brian points`);
+    if (round > 1) assert.match(third, /I will build a .* arm \d+ mm thick and hang the car/);
+    run(free, SHOW_ME_S + .1);
+    until(free, x => x.keys.Space === 'go' && x.tests.length === round, 10);
+  }
+  assert.equal(new Set(free.view().tests.map(t => `${t.material}/${t.mm}`)).size, FREE_TRIES);
+  assert.equal(free.view().ready, true, 'Show me alone finishes the step');
+});
+
+test('Show me says only what it does, and a direction is right from every setting', () => {
+  const snap = createClassroomSession(lesson);
+  playThroughTo(snap, 'try-snap');
+  for (let k = 0; k < 3; k++) snap.act('help');
+  run(snap, SHOW_ME_S + .1);
+  assert.match(snap.view().brian.text, /I will pick carbon fibre, and then you can say what will happen to the arm/);
+  assert.equal(towards(40, 80), 'Press ↑ until the handle reads 80 mm, then press Space.');
+  assert.equal(towards(100, 80), 'Press ↓ until the handle reads 80 mm, then press Space.');
+  assert.equal(towards(80, 80), 'The handle already reads 80 mm, so press Space.');
+  const steel = createClassroomSession(lesson);
+  playThroughTo(steel, 'try-steel');
+  build(steel, 'steel', 110);
+  assert.match(steel.view().hints[1], /Press ↓ until the handle reads 80 mm/);
+  build(steel, 'steel', 80);
+  assert.match(steel.view().hints[1], /already reads 80 mm/);
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone');
+  build(job, 'carbon fibre', 30);
+  assert.equal(job.view().hints[1], 'Press ↑ until the handle reads 50 mm, then press Space.');
+  build(job, 'aluminium', 80);
+  assert.equal(job.view().hints[1], 'Press 3 for carbon fibre. Press ↓ until the handle reads 50 mm, then press Space.');
+});
+
+test('the words follow the standard: no she or her, no mph, no decides, no colon that skips a verb, and sums on every step after the first', () => {
+  for (const file of ['strength-classroom.js', 'strength-board.js']) {
+    const source = readFileSync(new URL(`../src/lab/lessons/${file}`, import.meta.url), 'utf8');
+    for (const [fault, pattern] of [['she or her', /\b(she|her|hers|herself)\b/i], ['mph', /\bmph\b/i], ['decides', /\bdecides?\b/i], ['takes its speed', /\b(air|wind)\s+(soon\s+)?takes\b/i]])
+      assert.ok(!pattern.test(source), `${file} has ${fault}: ${source.match(pattern)?.[0]}`);
+  }
+  const model = lesson.createModel();
+  STEPS.forEach((step, i) => {
+    model.enter(i);
+    if (i > 0) assert.ok(model.view().formulas?.length > 0, `${step.id} shows the physics`);
+  });
+  for (const word of lesson.words) assert.match(word.meaning, /\.$/);
+  for (const idea of lesson.keyIdeas) assert.ok(!/: /.test(idea.text), idea.id);
+  assert.ok(!/: /.test(lesson.passSay));
 });
