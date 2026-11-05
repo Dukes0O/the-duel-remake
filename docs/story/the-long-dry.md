@@ -187,6 +187,8 @@ to go alone. He comes back with the logbook, and it is his handwriting:
 
 ### Act 5: The Day the Sea Came Back (Years 18 to 25 or so, to 200 hours and more)
 
+Every line and job: `docs/story/the-sea-works.md`, which wins on details. There, the new gear is 24 sections, each light enough for Kestrel One's hook.
+
 The biggest thing you can build: **the Sea Works**, about two million worker hours and
 400 tonnes of steel, the work of a whole generation of your town. People who were
 children in Act 2 run it. Some who started it do not see it finished, and their names go
@@ -273,7 +275,7 @@ the Deep is paused). Ana's single radio line in Act 5 is the only link.
 
 Both are now written line by line: `docs/story/iron-mule.md` and
 `docs/story/ships-in-the-sand.md`. Act 3's chapters 17 to 21 and section 5's warlord jobs are
-written the same way in `docs/story/the-polite-letter.md`.
+written the same way in `docs/story/the-polite-letter.md`, and Act 5 in `docs/story/the-sea-works.md`.
 
 **Later:** section 11.
 

@@ -1139,6 +1139,97 @@ tasks:
     flag: "wasteland-town"
     details: "docs/board/cards/WW-ART-PEACE.md"
 
+  - id: SEA-LINES
+    title: "Act 5: every line"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/SEA-LINES.md"
+
+  - id: WW-ART-SEA
+    title: "Art: the gear, the Causeway, the harbour wall, Mrs Vane and the water"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/WW-ART-SEA.md"
+
+  - id: SEA-WORKS
+    title: "Act 5: the Sea Works as town work, years of it"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-PACE","TOWN-VANE","TOWN-DEFEND","MACHINE-PLANT","MACHINE-ROADS","SHIPS-JOBS"]
+    locks: []
+    details: "docs/board/cards/SEA-WORKS.md"
+
+  - id: SEA-JOBS-1
+    title: "Act 5: The Long Ember, Finally, The Pour, The Haul"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["SEA-WORKS","SEA-LINES","MULE-JOBS","TOWN-PEACE","WW-ART-SEA"]
+    locks: []
+    details: "docs/board/cards/SEA-JOBS-1.md"
+
+  - id: SEA-LIFT
+    title: "Act 5: The Lift, on Kestrel One's hook"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["SEA-WORKS","SEA-LINES","HELI-RUSTWALL","WW-ART-SEA"]
+    locks: []
+    details: "docs/board/cards/SEA-LIFT.md"
+
+  - id: SEA-JOBS-2
+    title: "Act 5: The Spillway, The Line, The Wheel, The Convoy"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["SEA-JOBS-1","BOWL-RIVALS"]
+    locks: []
+    details: "docs/board/cards/SEA-JOBS-2.md"
+
+  - id: SEA-FLOOD
+    title: "Act 5: the sea on the map, for good"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["TOWN-WORLD","MULE-SCENE","SHIPS-SCENE","WW-ART-SEA"]
+    locks: [save-shape]
+    details: "docs/board/cards/SEA-FLOOD.md"
+
+  - id: SEA-RUN
+    title: "Act 5: The Last Run, A Fortnight and Bo's answer"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["SEA-FLOOD","SEA-JOBS-2","SEA-LIFT"]
+    locks: []
+    details: "docs/board/cards/SEA-RUN.md"
+
+  - id: SEA-FINISH
+    title: "Claude plays Act 5 end to end; pictures to Kyle"
+    owner: "claude"
+    lane: "FINISH"
+    size: "M"
+    status: "ready"
+    needs: ["SEA-RUN"]
+    locks: []
+    details: "docs/board/cards/SEA-FINISH.md"
+
   - id: TOWN-BOWL-LINK
     title: "Town: the Bowl's gate, tickets, crowd and the Rex in the square"
     owner: "codex"
