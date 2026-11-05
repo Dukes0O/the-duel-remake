@@ -55,6 +55,9 @@ const generators = [
   // The public candidate is installed only when a later scene card wires it into gameplay.
   { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '2'], candidate: true,
     budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
+  // CAR-ART-SCARAB: round-1 candidate waits for Claude's look verdict and a later install card.
+  { script: 'tools/blender/scarab.py', args: [], candidate: true,
+    budget: 25000, glb: ['public/assets/models/wasteland/cars/scarab.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -910,3 +913,5 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
+
+\n
