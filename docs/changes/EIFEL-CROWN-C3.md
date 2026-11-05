@@ -1,177 +1,82 @@
-# EIFEL-CROWN-C3: pace for the new Eifel road
+# EIFEL-CROWN-C3: Eifel Crown pace
 
-Status: partly done. The computer drivers finish every race and rarely crash, but Easy and
-Medium crashes are one or two over the limit, Medium wins are above the written band, and the reference lap is built but not yet published
-(see "Open"). Switch: `eifel-crown` stays `dev`; the released Eifel is untouched.
+Status: **not complete**. The row has full 30-race measurements for each
+computer difficulty, but Easy and Hard exceed the crash limit, Easy also misses
+the win band, Medium misses the three-pass target, and the switched-off lane
+cannot publish the preview reference lap. The preview switch remains `dev`.
 
-## Changed
+## Final measured row
 
-- `src/race-field.js`: a Grand Prix row for the new road, `eifel-crown@3` (layoutVersion 3).
-  `courseForGrandPrix` looks for the `id@layoutVersion` row first and falls back to the
-  `id` row, so the released Eifel keeps its old row (.934 / .903 / .881) until the switch is
-  flipped. New row: field pace Easy .94, Medium .858, Hard .86, aggression 1.4 as before, and
-  more room to the car ahead (`fieldFollow`: reaction .4 s, margin 3.5 m, comfort .5, lead
-  braking 1.6, and the first-lap care Harbour and Tremblant use). The old row can go when the
-  old entry is removed at C7.
-- `tools/test-circuit-eifel.mjs`: `node tools/test-circuit-eifel.mjs --pace [easy|medium|hard]
-  [--races N]` runs the seeded field races (30 per difficulty, `--races` only for tuning) on
-  the new road in slot 9. Stock Stuttgart 959-S, club driver, skill .95 along the racing line
-  (as `tools/ardennes-field-rate.mjs` does), seven computer cars, memory-only saves. It
-  asserts: every computer finishes in at least 29 of 30 races, at most 1 computer crash per 10
-  races, first-lap pile-ups and finish share as in `race-field-balance.mjs`, and the player's
-  win rate in Easy 60 to 80%, Medium 40 to 50%, Hard 15 to 25%. Those bands are where the
-  written Grand Prix targets (`docs/CIRCUITS.md` 3.2: 60-80, 30-50, 10-25) and the brief
-  (60-80, 40-60, 15-35) overlap; I found no other course with different written numbers.
-  The three-passes-per-Medium-race target of the packet is printed, not asserted (see Open).
-  One new road test checks that the new row follows only the new road.
-- `tools/build-reference-laps.mjs`: a course that stands in for a released one behind its
-  switch (a `slot`) is now built in the worker where its switch is on. Before, the tool
-  quietly rebuilt the released road under the new road's name.
+`src/race-field.js`, entry `eifel-crown@3`: pace Easy `.94`, Medium `.864`,
+Hard `.86`; aggression `1.4`; following `wallRoom: 1.3`, first-lap
+`wallRoom: 1.8`.
 
-## Why the player driver needed a following limit
+| Difficulty | Computer finishers | Computer crashes | First-lap pile-ups | Player wins | Computer passes/race | Mean player time |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Easy | 30/30 races all seven | 14 | 0 | 27/30 (90%) | 1.30 | 337.973 s (328.711–358.436) |
+| Medium | 30/30 races all seven | 3 | 0 | 15/30 (50%) | 1.60 | 343.405 s (331.936–353.309) |
+| Hard | 30/30 races all seven | 4 | 0 | 6/30 (20%) | 2.03 | 347.307 s (338.744–355.306) |
 
-The racing-line player driver does not watch the car ahead. In the first trials it drove into
-slower cars in the Start Kink and the cars it hit counted as computer crashes (3 to 5 a race
-in every setting, whatever the pace). The test gives that driver the same "never drive into
-the car ahead in your lane" limit `race-field-balance.mjs` gives its own driver. No shared
-driver file changed. With it, and the added room for the field, the crashes come from the
-computers themselves and are mostly gone.
+Targets met: all computer racers finished every race; no first-lap pile-ups;
+Medium and Hard player win bands; Medium crash limit. Targets missed: Easy win
+band (90%, target 60–80%); Easy and Hard computer crash limit (14 and 4,
+maximum 3 per 30); Medium computer passes (1.60, target at least 3); Hard
+crash limit (4, maximum 3).
 
-## Numbers
+A lower wall buffer trial (`wallRoom: .5`, first lap `.8`) produced five
+computer crashes in its third Easy race. I stopped that six-race calibration
+after four races and removed the trial. The remaining tuning needed to lower
+Easy mistake severity and raise computer passing without increasing crashes;
+those controls are outside this card's Eifel pace row. Do not treat the
+partial trial as acceptance.
 
-Before (released-road row .934 / .903 / .881 on the new road, 8-race trials, racing-line
-driver without the following limit): Medium 28 computer crashes in 8 races, player won 3 of 8;
-Hard 38 in 8, player won 2 of 8; first-lap pile-up in 1 of 8 on both. With the following limit
-added (6 Medium races): 8 crashes, player won 1 of 6.
+## Reference lap and replay
 
-After, 30 races per difficulty, final row (`.qa-dist` logs, not kept):
+`node tools/build-reference-laps.mjs --event=eifel-crown --probe` rebuilt the
+layout 3 reference in memory: **105,600 ms (1:45.6)**, within 1:40–1:46;
+281 samples; road fingerprint `track-v1-f45ae84e`. The reference was not
+published because the Eifel switch remains off and the builder forbids
+publishing a switched-on course reference while its released replacement is
+still active.
 
-| | Easy (.94) | Medium (.858) | Hard (.86) |
-| --- | --- | --- | --- |
-| Races where all 7 computers finished | 30 of 30 | 30 of 30 | 30 of 30 |
-| Computer crashes | 5 in 30 races (limit 3) | 4 in 30 races (limit 3) | 3 in 30 races |
-| First-lap pile-ups | 0 | 0 | 0 |
-| Player wins | 73% | 57% | 20% |
-| Computer passes per race | 1.0 | 1.6 | 2.0 |
-| Player race time, 3 laps | 340.5 s mean | 344.3 s mean | 347.6 s mean |
+Recorded the layout 3 Eifel replay in
+`tools/replays/courses/eifel-crown.json`. The new replay fingerprint is
+`dcfb0392a5fd6cdeaf9b92ac3c98ee9267b74d0e116218f40dbad4b9f985c8fb` at 30,
+60 and 144 FPS. The one fingerprint that moves at C7 is
+`eifel-crown-duel`: released-road
+`ded9069111c028875ff7c5ac29c09933d33e5b9adaf407e8f78b0abbaf967aac` to the
+layout 3 value above. The course file is marked `eifel-crown@3` so the replay
+guard keeps using the released case until C7 removes that old case and
+activates the layout 3 recording. No other replay fingerprint changed.
 
-Earlier full runs of the same road: rows .935 / .872 / .865 gave wins 80 / 27 / 10%, crashes
-5 / 7 / 4 in 30 races. Rows .94 / .863 / .86 gave Medium 33% wins and 1 crash in 30 races.
-Medium .863 was too hard for the player and .858 is too easy (57%, 4 crashes), so the
-right Medium value is between them (about .861, **not run**). Medium .858 is left in the row
-because it is the value that was measured; it meets the brief's 40 to 60% band, misses the
-written 30 to 50% band, and has one crash more than the limit.
+## Checks
 
-Reference lap (Stuttgart 959-S, club driver, Medium, the policy of `docs/CIRCUITS.md` 7b.1) on
-the new road, built with `node tools/build-reference-laps.mjs --event=eifel-crown --probe`:
-105,600 ms (1:45.6), inside 1:40 to 1:46. The released road's lap is 78,975 ms.
-
-## Gates
-
-- `tools/test-circuit-eifel.mjs`: 11 of 11 pass (the road tests and the new row test).
-- `tools/drive-through.mjs --course eifel-crown`: pass, 0 issues.
-- `tools/test-circuits.mjs`: 208,982 checks pass with the switch off, 208,978 with it on.
-- `tools/test-ground-rows-exact.mjs` and `tools/test-world-composition.mjs`: pass with the
-  switch off (40,696 heights; 57 checks), unchanged. With the switch on they differ for Eifel
-  as expected (new road scenery); the world signature is regenerated at C7 after a reviewed look.
-- Lane tier (`--changed --jobs 2 --keep-going`): 65 passed, 0 failed, 0 not run, 359 s. (An
-  earlier run failed `test-tyre-slip` only because I had moved the Eifel replay case out of the
-  hash-pinned `recorded-inputs.json`; that move is reverted, see Open 2.)
-- `npm run build`: passes.
+- Pace runs: Easy, Medium and Hard, 30 races each, memory-only. Full results
+  are listed above. Easy and Hard exited with crash/win target failures;
+  Medium passed its test thresholds but missed the packet's passes target.
+- `node tools/test-circuits.mjs`: passed; 232,142 geometry checks with the
+  switch off and 232,138 with it on.
+- `node tools/test-circuit-eifel.mjs`: 17/18 passed on rerun; the remaining
+  sound loudness check could not run because FFmpeg is not available.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4
+  --keep-going`): 53 passed, 3 failed. The failures were the Eifel loudness
+  check and P4 audio (both could not start FFmpeg), plus a duplicate Eifel
+  replay fingerprint while the layout 3 fixture was first staged. After
+  marking the preview recording for layout 3, `node tools/test-replays.mjs`
+  passed 297 checks across 33 cases; the two FFmpeg failures remain.
+- `npm.cmd run build`: passed. PowerShell blocks `npm.ps1`; the `.cmd` shim
+  ran the same build script. Vite reported its existing large-chunk warning.
+- Browser checks: none required for C3.
 
 ## Assertions and fingerprints
 
-No existing assertion changed. Other courses' pace rows, fingerprints, signatures and
-reference laps are unchanged. The released Eifel's replay fingerprint is unchanged.
-
-## Open
-
-1. **Reference lap not published.** `src/generated/reference-laps/eifel-crown.json` still holds
-   the released road. `tools/test-reference-laps.mjs` compares each record with the installed
-   road (the released one while the switch is off), and the Team Room reads it for the
-   released road, so a new-road record would fail that test and mislead the live game. C7
-   publishes it with the switch flip: `node tools/build-reference-laps.mjs --event=eifel-crown`
-   now builds the new road (105.6 s). The old record's laps archive with layoutVersion 3 as the
-   packet says.
-2. **Replay case not moved.** The released Eifel's case (`eifel-crown-duel`) sits in the shared
-   `tools/replays/recorded-inputs.json`, which `tools/test-tyre-slip.mjs` pins by hash, and the
-   replay guard replays whichever road is installed (the released one while the switch is off).
-   A course-owned case for the new road cannot be checked until the switch is on. C7
-   re-records it (`node tools/test-replays.mjs --record`), the one fingerprint that moves.
-3. **Easy crashes.** 5 computer crashes in 30 races, limit 3. They are cars running wide at
-   the Start Kink and First Ess in Easy's mistake rolls. Lower pace gives the player more wins
-   than the 80% ceiling, so Easy needs a different lever (a fuller Easy-only follow setting or
-   the mistake size), which is a racing change outside this card.
-4. **Passes between computers.** 1.0 (Easy), 2.0 (Hard) and 1.6 (Medium) per race against
-   the packet's 3 on Medium. The extra room that removed the crashes also removed passes;
-   Claude to say which matters more.
-5. **Controller.** The field-balance test driver (`installTestDriver`, `LINE_SKILL=.95`) laps
-   about 126 s on this road, the racing-line driver about 105 s. Both are used at skill .95;
-   this card follows Ardennes and uses the racing-line driver.
+Changed one exact assertion in `tools/test-circuit-eifel.mjs`: the layout 3
+Medium pace expectation is `.864`, the final 30-race measured row. No band,
+tolerance or result assertion was weakened. The replay fingerprint change is
+only the Eifel layout 3 recording described above. Other course roads,
+signatures, reference laps, replay fingerprints and pace rows were not edited.
 
 ## Removed
 
-Nothing replaced. The released-road pace row `eifel-crown` is kept until C7 removes the old
-entry. Trial logs inside the lane's ignored `.qa-dist` folder were deleted; the helper scripts
-used for tuning sat in Claude's scratchpad folder and were left there.
-
-## Current pass status (4 November 2026)
-
-Incomplete because the test environment ran out of memory. After Claude cleared
-the section 8 admission blocker, the six-race Medium tuning sample passed with
-pace `.861`, 1.8 aggression, overall `wallRoom: 1.3` and first-lap
-`wallRoom: 1.8`: all seven computer racers finished in every race, no crash or
-pile-up occurred, the test driver won 3 of 6, and computer passes averaged
-1.33 per race (below the packet's 3 target). The same sample with pace variation
-2.5 recorded one computer crash and no pass improvement. That variation was
-removed. The final unverified row keeps `.861` Medium pace and the Eifel edge
-margins; aggression is back at 1.4. Easy and Hard were not retuned.
-
-The next six-race Medium spread sample failed with Node's fatal out-of-memory
-error after one completed race. Its same-commit rerun failed immediately with a
-second Node heap out-of-memory error. Afterwards even `node -p "1+1"` failed
-from memory exhaustion, and the PowerShell host could not start a thread.
-Investigation stopped there. Do not treat the sample results as acceptance.
-
-### Checks
-
-- `tools/test-circuits.mjs`: not run; PowerShell could not start the requested
-  test process due to the Windows resource failure.
-- `tools/test-circuit-eifel.mjs`: six-race Medium samples only; no complete
-  30-seed difficulty run. The spread trial failed twice as described above.
-- Lane tier and `npm run build`: not run; the Node and PowerShell resource
-  failures prevented them.
-- Browser checks: none required by the C3 card.
-
-### Assertions and fingerprints
-
-- Changed assertions: none.
-- Race fingerprints: none recorded. The required new Eifel replay fingerprint
-  has not been produced; no other course fingerprint changed in this pass.
-
-### Removed
-
-- Removed the unproven `fieldSpread` trial. No other file was removed.
-
-The completed 30-race Medium batch at `.861` supersedes the six-race tuning sample:
-30/30 races had all seven computers finish; there were 2 computer crashes, 0
-first-lap pile-ups, 21 player wins (70%), 1.57 computer passes per race, and
-mean player time 342.569 s (range 332.177–350.468 s). It misses the written
-Medium win band (30–50%) and the three-pass target. The crash, finish, and
-pile-up limits pass. This measurement is committed before further tuning.
-
-Final Medium measurement at pace `.864` (30 seeds): all seven computers
-finished in 30/30 races; 3 computer crashes; 0 first-lap pile-ups; 15 player
-wins (50%); 1.60 computer passes per race; player time mean 343.405 s
-(range 331.936â€“353.309 s). The test passes. Finish, crash, pile-up and Medium
-win targets are met. The packet's 3 passes per Medium race is not met.
-
-Easy measurement at pace `.94` (30 seeds): all computers finished in 30/30;
-14 computer crashes; 0 first-lap pile-ups; 27 player wins (90%); 1.30
-computer passes per race; player time mean 337.973 s (range 328.711â€“358.436 s).
-The finish and pile-up targets pass. The Easy win band and crash limit fail.
-
-Hard measurement at pace `.86` (30 seeds): all computers finished in 30/30;
-4 computer crashes; 0 first-lap pile-ups; 6 player wins (20%); 2.03
-computer passes per race; player time mean 347.307 s (range 338.744â€“355.306 s).
-Finish, pile-up and win targets pass. The crash limit is exceeded by one.
+Removed the unproven `.5/.8` wall-buffer trial. No generated lane logs or
+scratch scripts are retained. No other course data or live save was changed.
