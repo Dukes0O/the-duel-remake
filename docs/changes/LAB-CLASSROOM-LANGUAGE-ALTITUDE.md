@@ -22,8 +22,8 @@ function.
 - The word steps stay open after the answer. Moving the stand changes the jar and the sums, and the closing words name their
   places, so they stay true.
 - New step "Test your own settings": any place and any number of crates, the sums change on each press, a table keeps the
-  results, and three different settings open Continue. Show me tries a different setting each time, so Show me alone can finish
-  the step.
+  results, and three different settings open Continue. Show me tries a different setting each time, changing the crates and the place in turn, so Show me
+  alone can finish the step and the comparison teaches both.
 - Pictures. A new column of air shows why the air thins, drawn to scale up to 11,000 m, with arrows for the air above pressing
   down. The rotor now throws a cloud of dots down, with fewer dots in thin air. New bars compare the push with the weight, so
   the player can see the green bar reach the red mark. The jar stays and keeps showing its dots.
@@ -72,10 +72,12 @@ Not recorded here. Claude records these at the merge, with `src/lab/lab-lines.js
 
 ## Checks
 
-- `node tools/test-lab-classroom-altitude.mjs`: 17 of 17.
+- `node tools/test-lab-classroom-altitude.mjs`: 18 of 18.
 - `node tools/test-lab-classroom-page.mjs` passes. The lesson's own suite also applies that file's source patterns and its
   formulas check to this lesson, because the lesson is not yet on that file's list.
 - Browser walkthrough `lab-classroom-altitude` at 1920 by 1000 passes. Screens read: the wonder, the word steps, the watch, both
   guesses, the free test, Brian's job, the three questions, the recap and the challenge card. Two look faults were found and fixed
   along the way: labels colliding in the air column and in the readouts, and the push label running under the readouts.
+- One independent review found wrong verbs ("the lever hovers", "takes 70% of the lever"), a load named when there were no crates,
+  and Show me testing no crates at all three places. All are fixed, with tests.
 - The lane tier and the build are left for the merge, as the brief asks. No frame check, because the classroom is a 2D board.

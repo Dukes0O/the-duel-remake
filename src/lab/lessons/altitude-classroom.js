@@ -147,7 +147,7 @@ const pushSum = (f, note = false) => ({title: 'The push at this lever setting', 
 const loadWords = f => f.car ? kg(CAR_KG) : `${f.crates} × ${kg(CRATE_KG)}`;
 const weightSum = (f, note = false) => ({title: 'The total weight', formula: 'weight = helicopter + load', worked: `${kg(OWN_KG)} + ${loadWords(f)} = ${kg(weightOf(f))}`,
   note: note ? `The helicopter’s ${kg(OWN_KG)} includes the pilot and a full tank. The load leaves the ground only when the push is greater than the weight.` : null});
-const HOVER_NOTE = 'The helicopter hovers when the push equals the weight. The push is lever × most push, so the lever that hovers is weight ÷ most push.';
+const HOVER_NOTE = 'The helicopter hovers when the push equals the weight. The push is lever × most push, so the helicopter hovers with the lever at weight ÷ most push.';
 function hoverSum(place, weight, {note = false, title = 'The lever needed to hover', before = ''} = {}) {
   const share = weight / Math.round(MOST[place]), reach = Math.round(weight / MOST[place] * 100);
   return {title, formula: 'lever to hover = weight ÷ most push', worked: `${before}${kg(weight)} ÷ ${kg(MOST[place])} = ${share.toFixed(4)}, which is ${reach}%${share > 1 ? ', so the lever cannot reach it' : ''}`, note: note ? HOVER_NOTE : null};
@@ -217,12 +217,15 @@ const CHECKS = {
     answers: [{label: 'Fly straight there and land', picture: {kind: 'route', what: 'straight'}},
       {label: 'Keep the lever all the way up for the whole flight', picture: {kind: 'route', what: 'lever'}}, {label: 'Fill the tank at a pump on the way', picture: {kind: 'route', what: 'pump'}}],
     correct: 0,
-    right: () => `Correct. With the crate on the cable, hovering by the pad at ${NAME[SUMMIT]} takes ${pct(GAME_TOP)} of the lever, against ${pct(GAME_SEA)} at ${NAME[SEA]}, and flying away from the ground takes more still. More lever burns more fuel every minute, so do not stay at ${NAME[SUMMIT]} for longer than you need.`,
+    right: () => `Correct. With the crate on the cable, hovering by the pad at ${NAME[SUMMIT]} needs ${pct(GAME_TOP)} of the lever, against ${pct(GAME_SEA)} at ${NAME[SEA]}, and flying away from the ground needs more still. More lever burns more fuel every minute, so do not stay at ${NAME[SUMMIT]} for longer than you need.`,
     wrong: picked => picked === 1 ? `Keeping the lever all the way up burns the most fuel, ${perMinute(fuelPerMinute(1))}. Use only the lever that the helicopter needs, and fly straight there.`
       : 'Refuelling once the crate is on the cable does not count in this challenge, because the crate must be carried on one tank. Fly straight there.',
     hints: [`At ${NAME[SUMMIT]} every minute burns more fuel than at ${NAME[SEA]}.`, 'More lever burns more fuel, and this challenge allows no refuelling on the way.', 'Pick the first card, which says to fly straight there and land.'],
   },
 };
+
+// The settings Show me tries on the free test, as [place, crates].
+const SHOW_ORDER = Object.freeze([[SEA, 0], [SEA, 2], [SUMMIT, 2], [SUMMIT, 4], [SEA, 4], [RIDGE, 3]]);
 
 export function createModel() {
   let m = null;
@@ -364,17 +367,16 @@ export function createModel() {
     m.phase = 'running'; m.settleAt = null; m.f.lever = 0; m.f.h = 0;
     return {kind: 'progress', say: goingUp(m.f)};
   }
-  const goingUp = f => `With ${crateWords(f.crates)} on the cable, the helicopter and its load weigh ${kg(weightOf(f))}. The lever is going up, so watch what happens.`;
+  // With no crates there is no load to name.
+  const weighing = f => f.crates ? `the helicopter and its load weigh ${kg(weightOf(f))}` : `the helicopter weighs ${kg(weightOf(f))} by itself`;
+  const goingUp = f => `With ${crateWords(f.crates)} on the cable, ${weighing(f)}. The lever is going up, so watch what happens.`;
   const settingKey = f => `${f.place}/${f.crates}`;
-  // Show me on the free test: a setting not tested yet, nearest the one on the board, so that it reaches three different ones.
+  // Show me on the free test: the first setting not tested yet. The order changes the crates and then the place in turn,
+  // so that the comparison teaches both, and every other setting follows it.
   function testNext() {
-    const f = m.f;
-    for (let crates = f.crates; crates <= RACK + f.crates; crates++) for (let shift = 0; shift < PLACES.length; shift++) {
-      const place = (f.place + shift) % PLACES.length, count = crates % (RACK + 1);
-      if (m.tested.has(`${place}/${count}`)) continue;
-      f.place = place; f.crates = count;
-      return liftOff();
-    }
+    const f = m.f, all = [...SHOW_ORDER, ...PLACES.flatMap((_, place) => Array.from({length: RACK + 1}, (_, crates) => [place, crates]))];
+    const next = all.find(([place, crates]) => !m.tested.has(`${place}/${crates}`));
+    if (next) [f.place, f.crates] = next;
     return liftOff();
   }
 
@@ -385,10 +387,10 @@ export function createModel() {
     if (fresh) m.results = [...m.results, {name: here, crates: f.crates, weight: w, most, hover: hoverShare(f.place, f)}];
     if (m.tested.size >= FREE_TRIES) seen.add('try-free');
     if (!hover) { f.lever = 0; f.h = 0; }
-    const what = hover ? `so the lever hovers the helicopter at ${pct(hoverShare(f.place, f))}, with ${kg(most - w)} of push to spare.`
+    const what = hover ? `so the helicopter hovers with the lever at ${pct(hoverShare(f.place, f))}, and ${kg(most - w)} of push is left to spare.`
       : `so the load stays on the ground, because the load is ${kg(w - most)} too heavy.`;
     const then = seen.has('try-free') ? 'Press Enter when you have tested enough settings.' : 'Change a setting and test a different one.';
-    m.say = `At ${here} with ${crateWords(f.crates)}, the helicopter and its load weigh ${kg(w)} and the rotor can push ${kg(most)}, ${what} ${then}`;
+    m.say = `At ${here} with ${crateWords(f.crates)}, ${weighing(f)} and the rotor can push ${kg(most)}, ${what} ${then}`;
     return {kind: 'right', say: m.say};
   }
 
@@ -586,7 +588,7 @@ export function createModel() {
         say: car ? 'Now pull the lever all the way up.' : `The red line is at ${pct(HOVER_TOP)}. Bring the lever to the line.`,
         prompt: car ? 'Hold W or ↑, or drag the lever, all the way to the top.' : above ? 'Hold S or ↓, or drag the lever, down to the red line.' : 'Hold W or ↑, or drag the lever, up to the red line.',
         hints: car ? ['The lever is on the left of the pad.', 'Hold W until the lever stops at the top.', 'Watch my pointer, which is on the top of the lever.']
-          : ['The red line marks the lever setting that hovers the helicopter at this place.', `Hold ${above ? 'S' : 'W'} until the lever reaches the red line, and the lever will stop there for you.`, 'Watch my pointer, which is on the red line.']};
+          : ['The red line marks the lever setting at which the helicopter hovers at this place.', `Hold ${above ? 'S' : 'W'} until the lever reaches the red line, and the lever will stop there for you.`, 'Watch my pointer, which is on the red line.']};
     }
     if (m.phase === 'running') return {...common, guess: m.guess, say: car ? 'The lever is all the way up. Watch the Dusthawk.' : 'The lever is on the red line. Watch the helicopter.', prompt: 'Watch the pad.', hints: ['Watch the load.', 'Watch the push and the weight.', WAIT]};
     const picks = car ? CAR_GUESSES : LEVER_GUESSES;

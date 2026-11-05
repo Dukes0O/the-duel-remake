@@ -176,7 +176,7 @@ test('the questions: each wrong answer says why with the numbers', () => {
   const answers = {
     'check-why': [[1, /The helicopter weighs 1,630 kg at Sea level and at Summit Run/], [2, /The rotor spins just as fast/], [0, /Correct\. A jar of air at Summit Run holds 75 dots/]],
     'check-car': [[0, /At Panorama Ridge the rotor can still push 3,513 kg, which is more than 2,910 kg/], [2, /At Summit Run the rotor can push only 2,777 kg, which is 133 kg short/], [1, /Correct\./]],
-    'check-game': [[1, /burns the most fuel, 48\.0 kg a minute/], [2, /Refuelling once the crate is on the cable does not count/], [0, /hovering by the pad at Summit Run takes 70% of the lever, against 50% at Sea level, and flying away from the ground takes more still/]],
+    'check-game': [[1, /burns the most fuel, 48\.0 kg a minute/], [2, /Refuelling once the crate is on the cable does not count/], [0, /hovering by the pad at Summit Run needs 70% of the lever, against 50% at Sea level, and flying away from the ground needs more still/]],
   };
   for (const [step, tries] of Object.entries(answers)) for (const [answer, why] of tries) {
     const session = createClassroomSession(lesson);
@@ -347,7 +347,7 @@ test('the free test: height and load move the sums, the table keeps different se
   assert.equal(worked(session, 'The lever needed to hover'), '2,130 kg ÷ 3,513 kg = 0.6063, which is 61%');
   assert.equal(say(session), intro, 'the opening words do not change with a control');
   testFree(session);
-  assert.match(say(session), /At Panorama Ridge with one crate, the helicopter and its load weigh 2,130 kg and the rotor can push 3,513 kg, so the lever hovers the helicopter at 61%, with 1,383 kg of push to spare\. Change a setting/);
+  assert.match(say(session), /At Panorama Ridge with one crate, the helicopter and its load weigh 2,130 kg and the rotor can push 3,513 kg, so the helicopter hovers with the lever at 61%, and 1,383 kg of push is left to spare\. Change a setting/);
   assert.equal(session.view().ready, false);
   testFree(session);
   assert.equal(session.view().results.length, 1, 'the same setting again does not count as a different one');
@@ -376,6 +376,9 @@ test('Show me on the free test tries a different setting each time, reaches thre
     assert.equal(session.view().results.length, shown, 'each Show me adds a new setting');
   }
   assert.equal(session.view().ready, true, 'Show me alone can finish the free test');
+  const {results} = session.view();
+  assert.ok(new Set(results.map(r => r.crates)).size > 1, 'Show me varies the crates');
+  assert.ok(new Set(results.map(r => r.name)).size > 1, 'and the place');
 });
 
 test('nothing on the panel or the board settles a guess or a question while it is open', () => {
@@ -445,7 +448,7 @@ test('directions are right from every setting, words are defined before use, and
   STEPS.forEach((step, i) => { if (i) { model.enter(i); assert.ok(model.view().formulas.length > 0, step.id + ' shows the physics'); } });
   for (const file of ['altitude-classroom.js', 'altitude-board.js']) {
     const source = readFileSync(new URL('../src/lab/lessons/' + file, import.meta.url), 'utf8');
-    for (const pattern of [/\b(she|her|hers|herself)\b/i, /\bmph\b/i, /\bdecides?\b/i, /\b(air|wind)\s+(soon\s+)?takes\b/i, /\bbits\b/i]) assert.ok(!pattern.test(source), file + ' has ' + source.match(pattern)?.[0]);
+    for (const pattern of [/lever (that )?hovers|hovers the helicopter/i, /\b(hovering|flying)\b[^.`]*\btakes\b/i, /\b(she|her|hers|herself)\b/i, /\bmph\b/i, /\bdecides?\b/i, /\b(air|wind)\s+(soon\s+)?takes\b/i, /\bbits\b/i]) assert.ok(!pattern.test(source), file + ' has ' + source.match(pattern)?.[0]);
   }
   for (const words of [...KEY_IDEAS.map(i => i.text), ...WORDS.map(w => w.meaning), CHALLENGE_CARD.title, CHALLENGE_CARD.text]) assert.match(words, /\.$/, 'a whole sentence: ' + words);
 });
@@ -458,4 +461,15 @@ test('Brian’s job keeps its opening words while the crates change, and the pro
   assert.equal(say(session), intro);
   assert.match(session.view().prompt, /At Sea level there are two crates on the cable, so the weight is 2,630 kg/);
   assert.equal(worked(session, 'The total weight'), '1,630 kg + 2 × 500 kg = 2,630 kg');
+});
+
+test('with no crates on the cable, Brian names no load', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  session.act('go');
+  assert.match(say(session), /^With no crates on the cable, the helicopter weighs 1,630 kg by itself\. The lever is going up/);
+  until(session, x => x.keys.Space === 'go', 15);
+  assert.match(say(session), /^At Sea level with no crates, the helicopter weighs 1,630 kg by itself and the rotor can push 3,887 kg, so the helicopter hovers with the lever at 42%, and 2,257 kg of push is left to spare\./);
+  session.act('crate:add'); session.act('go');
+  assert.match(say(session), /^With one crate on the cable, the helicopter and its load weigh 2,130 kg\./);
 });

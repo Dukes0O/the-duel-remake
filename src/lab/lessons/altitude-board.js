@@ -39,7 +39,7 @@ function geometry(f) {
   const top = Math.min(carAt ? carAt.y - 12 : 0, ...crates.map(c => c.y - CRATE.h / 2));
   const ringX = carAt ? (crates.length ? LOAD_X + 24 : LOAD_X) : crates.reduce((s, c) => s + c.x, 0) / crates.length;
   const ring = {x: ringX, y: top - 24};
-  // The helicopter waits beside the load until the lever comes up, then takes up the cable above the load.
+  // The helicopter waits beside the load until the lever comes up, then rises to hold the cable above the load.
   const k = f.h > 0 ? 1 : Math.min(1, f.lever / .15), s = k * k * (3 - 2 * k);
   return {hx: REST_X + (ring.x - REST_X) * s, hy: -40 + (ring.y - CABLE_PX - HOOK + 40) * s, loadedSet, crates, carAt, ring, k: s};
 }
