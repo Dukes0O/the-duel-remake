@@ -1558,3 +1558,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov night: merged WW-HOOKS and WW-EVERBURN-JOBS (Codex build, two Codex reviews with faults fixed; nine jobs 10/10 at child pace through real inputs; lane 100/100, build, arena-fuel-run, arena-ambush-alley).
 - 5 Nov night: merged WW-HUD, WW-SCREENS and the Everburn wiring (Claude played job 1 to job 2 in the browser; lane 261/262, the one failure from the backed-out midnight fix, then Vesper passes; build). Switch story-everburn stays dev until WW-SCENE and WW-FINISH.
 - 5 Nov: full tier alone on 8aa0b620, 584 passed, 1 failed (two misnamed art notes, fixed in 7f957dee, suite passes); 13 of 15 browser scenarios, preview-storage and drive-lesson-run carded.
+- 5 Nov: released Grip and Suspension classrooms and gear-find, master f12a474d, build 26.11.05 13:44 UTC; staged build checked on 5188; live server running, serves the new build; combat balance passed.
