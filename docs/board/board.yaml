@@ -82,7 +82,7 @@ tasks:
     title: "Scrapdome yard reference likeness polish"
     lane: "VIS"
     size: "M"
-    status: "building"
+    status: "backlog"
     needs: [GFX-04]
     flag: "hidden-road"
     priority: 16
