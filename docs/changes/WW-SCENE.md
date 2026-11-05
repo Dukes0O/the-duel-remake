@@ -10,7 +10,7 @@
 ## Checks
 
 - `node tools/test-scablands-scene.mjs` — passed.
-- `npm run build` — pending.
+- `npm run build` — passed with Vite 8.0.16 (650 modules transformed).
 - Browser check — Claude runs.
 - Look check — Claude runs: check mall sign contrast, rubble, lamps and stray rods; Old Smoke's scale, door flames and chimney smoke; the mast and Everburn plume at long distance; far-place silhouettes and near-place detail.
 - Frame check — Claude runs at the busiest view with eight cars, Performance and High quality.
