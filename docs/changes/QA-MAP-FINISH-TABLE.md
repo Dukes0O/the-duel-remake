@@ -39,4 +39,23 @@ Nothing. The lane's `.qa-dist` and `.evidence` scratch output was deleted.
 
 ## Claude's review (28 October 2026, night)
 
-Approved (rule 18 written review): the scenario's exact Table pay changes 500 to 1,750 to follow HELI-PAY-CONTINUE; still exact, still requires the find record and the logbook; paying once stays covered by test-map-secrets. Nothing loosened.
+Approved (rule 18 written review): the scenario's exact Table pay changes 500
+to 1,750 to follow HELI-PAY-CONTINUE; still exact, still requires the find
+record and the logbook; paying once stays covered by test-map-secrets. Nothing
+loosened.
+
+## Follow-up verification (4 November 2026)
+
+The assigned `codex/qa-map-finish` lane already contains this fix and the
+current Table reward code. No source code or assertions needed further change.
+The lane tier passed 9 suites (799 checks, 0 failed, 0 not run); the replay
+guard passed 297 checks with fingerprints unchanged. `npm.cmd run build --
+--configLoader runner` passed. The alternate loader kept Vite's temporary
+config writes out of the shared `node_modules` junction.
+
+The `map-finish` recheck could not reach its scenario: the stock QA build hit
+the shared-junction write restriction, and the lane-local bundle's preview
+closed Chrome DevTools before navigation. The report contains no screenshots or
+scenario assertion results. Direct `test-map-secrets.mjs` attempts were
+stopped after the heavy-job count rose above the limit, so no result is claimed
+for those invocations. This follow-up did not change assertions.

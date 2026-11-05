@@ -12,9 +12,9 @@ export const PROTECTIONS = Object.freeze([
 // jar: the bench jar that is how the part lives (the game does not wear armour out, so these are the lesson's own words).
 const part = (id, name, jar, lives) => Object.freeze({id, name, jar, lives});
 export const RUST_PARTS = Object.freeze([
-  part('underbody', 'Underbody', 'salt', 'Splashed with salt water from the road all winter.'),
-  part('exhaust', 'Exhaust', 'dry', 'Tucked up inside the car, where no water reaches it.'),
-  part('armour', 'Armour plate', 'fresh', 'Out in the rain, in fresh water.'),
+  part('underbody', 'Underbody', 'salt', 'This part is splashed with salt water from the road all winter.'),
+  part('exhaust', 'Exhaust', 'dry', 'This part is tucked up inside the car, where no water reaches it.'),
+  part('armour', 'Armour plate', 'fresh', 'This part stays out in the rain, in fresh water.'),
 ]);
 
 // The rust after a week for a part with a protection: the bench's jars, with the zinc coat on or off.

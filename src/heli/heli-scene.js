@@ -24,6 +24,7 @@ const loadModel = url => new GLTFLoader().loadAsync(url).then(gltf => gltf.scene
 // SKI-FINISH: the pickup pad's pump (tools/blender/heli-accessories.py) and the pads' light columns.
 export const SKI_PUMP_URL = '/assets/heli/fuel-pump.glb';
 const SKI_ORANGE = 0xff6a13;
+const LAB_WATER_BLUE = 0x4fb4ff;
 export const SKI_COLUMN = Object.freeze({height: 300, radius: 3.5, ringInner: 10.4, outWithin: 40});
 
 function ring(THREE, radius, color) {
@@ -196,6 +197,34 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
   pumpRing.name = 'Ski pump pad';
   skiMarks.add(pumpRing);
   const pump = {model: null, status: 'idle'};
+  // LAB-TARGETS: a Lab challenge's targets get the ski pads' light column and a ring the size that counts, orange for a place
+  // and blue for the lake to fill the bucket from. The column goes out as the helicopter comes in, and the ring stays.
+  const labTargets = new THREE.Group();
+  labTargets.name = 'Lab challenge targets';
+  group.add(labTargets);
+  const labTargetPool = [], waterMaterial = columnMaterial.clone();
+  waterMaterial.color.setHex(LAB_WATER_BLUE);
+  function labTargetsDraw(targets, h) {
+    const list = targets ?? [];
+    while (labTargetPool.length < list.length) {
+      const column = new THREE.Mesh(columnGeometry, columnMaterial), rim = padRing(SKI_ORANGE), mark = new THREE.Group();
+      column.name = 'Lab target light';
+      rim.position.y = .3;
+      mark.add(column, rim);
+      labTargets.add(mark);
+      labTargetPool.push({mark, column, rim});
+    }
+    labTargetPool.forEach((entry, i) => {
+      const at = list[i];
+      entry.mark.visible = !!at;
+      if (!at) return;
+      entry.mark.position.set(at.x, at.y, at.z);
+      entry.column.material = at.kind === 'water' ? waterMaterial : columnMaterial;
+      entry.rim.material.color.setHex(at.kind === 'water' ? LAB_WATER_BLUE : SKI_ORANGE);
+      entry.rim.scale.setScalar(at.radius / 12);
+      entry.column.visible = Math.hypot(h.x - at.x, h.z - at.z) > SKI_COLUMN.outWithin;
+    });
+  }
   function skiDraw(ski, h) {
     skiMarks.visible = !!ski;
     if (!ski) return;
@@ -309,6 +338,7 @@ export function createHeliView({THREE, scene, vehicleAssets = createVehicleAsset
         padMark.visible = view.courseId === 'tremblant-woods';
       }
       labDraw(view.challenge?.props); // LAB-VIEW
+      labTargetsDraw(view.challenge?.targets, h); // LAB-TARGETS
       // SKI-FINISH: not while a run is skied, so the ski scene's backdrop (painted from this world) never shows the marks.
       skiDraw(view.courseId === 'summit-run' && !view.ski?.run ? view.ski : null, h);
       fire.update(view, {dt});

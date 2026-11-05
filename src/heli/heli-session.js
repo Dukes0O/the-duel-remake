@@ -17,7 +17,7 @@ import {LESSON_RULES, LESSON_ORDER, SKIP_MARKS, lessonOpen, createLesson, stepLe
 import {CRATE} from './heli-cable.js';
 import {DAMAGE_NAMES, BUCKET, RETARDANT_LITRES, createBucket, stepBucket, setBucketWater, bucketHit, bucketWords, bucketHolds, aimPoint, aimLocked, aimRingRadius, bucketReading} from './heli-bucket.js';
 import {heliUpgrades, heliUpgradesOf, ownedLabUpgrades, chooseLabLine, CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge,
-  challengeProps, challengeBriefing, passLabChallenge, labChallengeOpen, labChallengesDone,
+  challengeProps, challengeTargets, challengeBriefing, passLabChallenge, labChallengeOpen, labChallengesDone,
   aerialsOpen, waxKitOwned, skiWaxFor, snowOfDay, WAXES, waxSetting, waxRunResult} from '../lab/lab-heli.js';
 import {createSkiRun, stepSkiRun, skiRunView, skiRunFingerprint, SKI_PADS, SKI_RUN_IDS, skiRunPad, skiRunName, skiRunLimits} from '../ski/ski-session.js';
 import {makeRng} from '../rng.js';
@@ -1021,6 +1021,13 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (why) emit({type: 'challengeStopped', challenge: id, why});
     return true;
   }
+  // LAB-TARGETS: where the challenge's pilot flies to now, and the bearing and distance to the nearest of them.
+  function targetsNow() {
+    const here = challenge.id === 'altitude' && site.courseId === CHALLENGE_RULES.altitude.courseId;
+    const targets = challengeTargets(challenge, {bucketWater: bucketLoad()?.water ?? 0, landingZone: here ? site.zone : null});
+    const nearest = targets.map(target => ({label: target.label, ...bearingTo(target.x, target.z)})).sort((a, b) => a.distance - b.distance)[0] ?? null;
+    return {targets, target: nearest ? Object.freeze(nearest) : null};
+  }
   function beginChallenge(id) {
     const spots = challengeSpots(id, world, site);
     if (!spots) return {ok: false, reason: 'This challenge has no room here.'};
@@ -1029,6 +1036,8 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     if (id === 'lift' || id === 'pendulum' || id === 'altitude') loads.push(layLabLoad(id, spots.load));
     // No arrow and no autopilot for the heading flight.
     if (id === 'headings') { autopilot.engaged = false; const kept = destination; aim(null); challengeDestination = kept; }
+    // The crate's flight starts with the arrow on Summit Run.
+    if (id === 'altitude' && site.courseId !== CHALLENGE_RULES.altitude.courseId) aim(CHALLENGE_RULES.altitude.courseId);
     emit({type: 'challengeStarted', challenge: id});
     return {ok: true};
   }
@@ -2528,7 +2537,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         ...(site?.courseId !== HOME_COURSE ? {returnLoad: returnBoardView()} : {}),
         lesson: lesson ? Object.freeze({id: lesson.id, held: lesson.held, spot: lesson.spot, target: lesson.target,
           guidance: carryGuidanceNow()}) : null,
-        ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge)})} : {}),
+        ...(challenge ? {challenge: Object.freeze({id: challenge.id, elapsed: challenge.elapsed, briefing: challengeBriefing(challenge), props: challengeProps(challenge), ...targetsNow()})} : {}),
         crate: site?.crate ?? null,
         readout: heli ? heliReadout(heli, {loadKg: loads.find(car => car.hooked)?.massKg ?? 0}) : null,
         zone: site?.zone ?? null, parking: site?.parking ?? null, area: site ? areaNow() : null,

@@ -6307,7 +6307,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.fire.intro",
       "cue": "lab.brian.fire.intro",
-      "text": "Three switches: gas for heat, wood for fuel, and a lid for air. Let's put the fire out three different ways.",
+      "text": "This pit has three switches. The gas controls the heat, the wood controls the fuel, and the lid controls the oxygen. I will remove one side of the triangle at a time. Watch the switches and the triangle.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6316,19 +6316,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 301,
-      "creditsEstimated": false,
+      "creditsUsed": 203,
+      "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-intro.mp3",
-      "sha256": "3d60805af1618df29fb70fd170bb3d0698c3631c04435b69f96df550858fabb9",
-      "bytes": 107876,
-      "generated": "2026-10-24"
+      "sha256": "dea29e47da4dca624a28c907b124a454a9716dc5ba35764ce3052411f572a16c",
+      "bytes": 216545,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fire.explain",
       "cue": "lab.brian.fire.explain",
-      "text": "Fire needs heat, fuel and air. Take away any one and it dies. Water takes the heat, a lid takes the air, a cleared strip takes the fuel. Retardant coats plants so they char instead of burn, so planes drop it in front of a fire, not on it.",
+      "text": "A fire needs heat, fuel and oxygen, all at the same time, and it goes out when any one of them is removed. Water cools the fire, which removes the heat. Sand or a lid smothers the fire, which removes the oxygen. A raked strip removes the fuel, because it leaves nothing to burn. Retardant is sprayed on the trees in front of a fire, so that those trees char instead of burning. To fight a forest fire, start with the flames nearest the road.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6337,19 +6337,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 238,
+      "creditsUsed": 441,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-explain.mp3",
-      "sha256": "487679f927e6ca9f20fc19ad96fa63712fcacd52965a6d21744cfae9c2a3a27f",
-      "bytes": 265447,
-      "generated": "2026-10-24"
+      "sha256": "48da586846471e3658e737bf42a50a3a982d49b69c478ce9a3d0fec9856d3235",
+      "bytes": 435556,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.fire.pass",
       "cue": "lab.brian.fire.pass",
-      "text": "Heat, fuel, air. Break any one and the fire is done.",
+      "text": "Heat, fuel and oxygen are the three sides of the fire triangle. When any one of them is removed, the fire goes out.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6358,13 +6358,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 52,
+      "creditsUsed": 115,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-fire-pass.mp3",
-      "sha256": "715c26144f14d2c07667f9d95e2d6bcf0add16b382f7a9e139f2f45886743350",
-      "bytes": 56049,
-      "generated": "2026-10-24"
+      "sha256": "dbde225a047bfba0720aae3e45e31f89d3d1b9e56a865671ba915b2327ea2e78",
+      "bytes": 106622,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6559,7 +6559,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.rust.intro",
       "cue": "lab.brian.rust.intro",
-      "text": "Four steel nails in jars for a week. Dry air, fresh water, salt water, and one with a zinc coat in salt water.",
+      "text": "\"Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6568,19 +6568,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 110,
+      "creditsUsed": 161,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-intro.mp3",
-      "sha256": "67e4f99afab6372f7b5fbb3c7a81f592271b559cef53ab1aef1549b8744a2826",
-      "bytes": 122087,
-      "generated": "2026-10-25"
+      "sha256": "84fbea8cb99f7360c700ca273fef8ba3f5a88aa718dd4bd2bdca508a462dfc82",
+      "bytes": 161375,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.rust.explain",
       "cue": "lab.brian.rust.explain",
-      "text": "Iron rusts when water and oxygen reach it, and salt water makes it rust much faster. A zinc coat rusts first and saves the steel under it.",
+      "text": "\"Iron rusts when water and oxygen both reach it, and salt water makes the rust form six times as fast, because salt helps the water carry electric charge. A zinc coat corrodes first and protects the steel under it.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6589,19 +6589,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 138,
+      "creditsUsed": 215,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-explain.mp3",
-      "sha256": "0d58d9cae3af2947b73c1218675239c1b8ef170afb3b5d6c8ab3a8419032c9e2",
-      "bytes": 143821,
-      "generated": "2026-10-25"
+      "sha256": "0a2d2853a853436a3484ad55b10b375701dd517bfd0b6e4909d46c29eed6f10e",
+      "bytes": 208186,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.rust.pass",
       "cue": "lab.brian.rust.pass",
-      "text": "Right protection for the right part. That's how you keep metal alive.",
+      "text": "\"You have chosen the right protection for each part. That is how you keep metal from rusting away.\"",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6610,13 +6610,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 69,
+      "creditsUsed": 99,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-rust-pass.mp3",
-      "sha256": "61d85914a0f7c42e5be3c5219e410120be31dc03e921fbaac2e763e66b17a949",
-      "bytes": 68588,
-      "generated": "2026-10-25"
+      "sha256": "ff53157cce04abf9c220bac4f9632830bff3940b1cae8c99a7d752f67830bfcd",
+      "bytes": 83634,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -6811,7 +6811,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.downforce.intro",
       "cue": "lab.brian.downforce.intro",
-      "text": "A wing in the smoke. Turn the fan from fifty to a hundred and fifty miles an hour, and watch the scale.",
+      "text": "The wing is now steep, and the fan will run at eighty kilometres per hour, then at a hundred and sixty-one and then at two hundred and forty-one. Watch the scale and the table.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6820,19 +6820,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 103,
+      "creditsUsed": 176,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-intro.mp3",
-      "sha256": "3d3cb2400e56d47a0cd8c6ca0cdb4072279a591bf075f0596bb304b3aee3faf7",
-      "bytes": 91576,
-      "generated": "2026-10-25"
+      "sha256": "813aea570f06547ee7c9a2ea46ec461a2a181e9bab8bbd1444a740d40ed18373",
+      "bytes": 158449,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.downforce.explain",
       "cue": "lab.brian.downforce.explain",
-      "text": "A racing wing is an aeroplane wing upside down, so it pushes the car onto the road. Twice the speed gives four times the push. More push means more grip in fast corners, but the wing also drags, so top speed falls.",
+      "text": "A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6841,19 +6841,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 214,
+      "creditsUsed": 420,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-explain.mp3",
-      "sha256": "7f0406db2c81d3cfdd9aa5b73c7f04533f3e7dd7572aafb960d1690fc0caf7c6",
-      "bytes": 230756,
-      "generated": "2026-10-25"
+      "sha256": "f7827ac32a936cfa0be40b2170de7b10275cad5069117aa39e7f4579244673b7",
+      "bytes": 428451,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.downforce.pass",
       "cue": "lab.brian.downforce.pass",
-      "text": "More wing, more grip, less top speed. Choose for the track.",
+      "text": "More wing gives more grip and a lower top speed, so you choose the wing that suits the track.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -6862,13 +6862,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 59,
+      "creditsUsed": 93,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-downforce-pass.mp3",
-      "sha256": "b5e045a6e89990a0e37801ed5200549a59fef96984e8a2732a8ada073e740d02",
-      "bytes": 58139,
-      "generated": "2026-10-25"
+      "sha256": "b9c3a2a0a500d5e985f5d0a2f2581239a6e92393de71975c72e134ddcb1a50ef",
+      "bytes": 83634,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
@@ -7273,7 +7273,7 @@
       "source": "elevenlabs",
       "key": "lab.brian.restore.start",
       "cue": "lab.brian.restore.start",
-      "text": "Salt has been working on her metal for sixty years. First a long soak in fresh water to draw it out, then a small electric current to loosen the rust.",
+      "text": "Salt has been working on the metal of the Sirena for sixty years. The first step is a long soak in fresh water to draw the salt out, and then a small electric current loosens the rust.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7282,19 +7282,19 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 150,
+      "creditsUsed": 184,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-restore-start.mp3",
-      "sha256": "aa511f421273052efb00cad383848916e051b3f84678e64ad51ba840b106c997",
-      "bytes": 137969,
-      "generated": "2026-10-25"
+      "sha256": "5fc9fc0c1257e7663b25c111b20e05dcbb10ee5af671145166e2e976a46a2a1a",
+      "bytes": 174750,
+      "generated": "2026-11-05"
     },
     {
       "source": "elevenlabs",
       "key": "lab.brian.restore.done",
       "cue": "lab.brian.restore.done",
-      "text": "Strip, rebuild, paint. There she is. Sixty years under the sea, and she's ready to race.",
+      "text": "The Sirena has been stripped, rebuilt and painted. After sixty years under the sea, the car is ready to race.",
       "voiceId": "nPczCjzI2devNBz1zQrb",
       "model": "eleven_multilingual_v2",
       "settings": {
@@ -7303,13 +7303,13 @@
         "style": 0.35,
         "use_speaker_boost": true
       },
-      "creditsUsed": 88,
+      "creditsUsed": 109,
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/lab-brian-restore-done.mp3",
-      "sha256": "269f418ca6670b6788ae4f05e56e9e5c1b14ca1712531115a12ec26d5e1c548f",
-      "bytes": 91576,
-      "generated": "2026-10-25"
+      "sha256": "793b74f4a408f554a3df09e4e6e28a7221db621b4e0c771b5b76d74007d70ad4",
+      "bytes": 94501,
+      "generated": "2026-11-05"
     },
     {
       "source": "synthesis",

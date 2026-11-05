@@ -104,8 +104,12 @@ export function mapModel({view, profile = null, jobs = [], movingMap = false} = 
   const summit = placeOfCourse(SKI_COURSE);
   const skiPads = summit && places.some(place => place.id === summit.id) ? (view?.ski?.marks ?? []).map(pad => ({name: pad.name, label: SKI_PAD_LABELS[pad.name] ?? pad.name,
     x: roundKm(summit.drawAt.x - pad.x / 1000), z: roundKm(summit.drawAt.z + pad.z / 1000)})) : [];
+  // LAB-TARGETS: a Lab challenge's targets, on the place the helicopter is at, in the same frame.
+  const hereDrawn = here ? places.find(place => place.id === here.id) : null;
+  const targetFlags = hereDrawn ? (view?.challenge?.targets ?? []).map(target => ({label: target.label, water: target.kind === 'water',
+    x: roundKm(hereDrawn.x - target.x / 1000), z: roundKm(hereDrawn.z + target.z / 1000)})) : [];
   return {
-    places, jobLines, heli: heliPoint, here: here?.id ?? null, fuelKg, skiPads,
+    places, jobLines, heli: heliPoint, here: here?.id ?? null, fuelKg, skiPads, targetFlags,
     reachKm: heliPoint ? Math.max(0, roundKm(reachKm(fuelKg))) : 0,
     found, table: tableSeen ? (secrets?.table === true ? 'found' : 'seen') : null,
     movingMap: movingMap === true, destination: view?.destination ?? null,
@@ -298,6 +302,15 @@ export function drawChart(ctx, model, {width, height, hover = null} = {}) {
     ctx.beginPath(); ctx.moveTo(px + 1, py - 16); ctx.lineTo(px + 11, py - 12.5); ctx.lineTo(px + 1, py - 9); ctx.closePath(); ctx.fill();
     ctx.font = 'bold 11px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#b8440b';
     ctx.fillText(`SKI · ${pad.label}`, px + 14, py - 8 + stack * 13); ctx.textAlign = 'center';
+  });
+  // LAB-TARGETS: the same flag for what a Lab challenge flies to, blue for the lake.
+  (model.targetFlags ?? []).forEach((flag, i, all) => {
+    const [px, py] = project(flag.x, flag.z), first = all.findIndex(other => other.label === flag.label) === i;
+    ctx.fillStyle = flag.water ? '#1f7fc4' : '#e0560f'; ctx.strokeStyle = INK; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillRect(px - 1, py - 16, 2, 14);
+    ctx.beginPath(); ctx.moveTo(px + 1, py - 16); ctx.lineTo(px + 11, py - 12.5); ctx.lineTo(px + 1, py - 9); ctx.closePath(); ctx.fill();
+    if (first) { ctx.font = 'bold 11px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillText(flag.label, px + 14, py - 8); ctx.textAlign = 'center'; }
   });
   // The helicopter: a small triangle pointing the way it faces (the gauge's number, clockwise from north).
   if (model.heli) {

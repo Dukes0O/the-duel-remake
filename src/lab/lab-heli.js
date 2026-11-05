@@ -36,7 +36,7 @@ export const ownedLabUpgrades = profile => labOf(profile).owned;
 export const chooseLabLine = (profile, metres, flags) => setCable(profile, metres, {flags});
 
 // The Lab's helicopter challenges (docs/LAB.md 4.1 and 4.2): the session starts, steps and ends them through this file.
-export {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeBriefing} from './lab-challenges.js';
+export {CHALLENGE_IDS, CHALLENGE_RULES, challengeSpots, createChallenge, stepChallenge, challengeProps, challengeTargets, challengeBriefing} from './lab-challenges.js';
 // The Snow lessons (the wax challenge, flown by the ski session) also need the skiing switch.
 const challengeFlags = Object.freeze({enabled: name => name === 'lab' || name === 'helicopter' || name === 'heli-skiing'});
 // Passing a challenge passes its Lab lesson (and, for Projectile motion, moves the drop ring on); false when it is not open.
