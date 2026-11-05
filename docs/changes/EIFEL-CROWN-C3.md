@@ -165,3 +165,8 @@ finished in 30/30 races; 3 computer crashes; 0 first-lap pile-ups; 15 player
 wins (50%); 1.60 computer passes per race; player time mean 343.405 s
 (range 331.936–353.309 s). The test passes. Finish, crash, pile-up and Medium
 win targets are met. The packet's 3 passes per Medium race is not met.
+
+Easy measurement at pace `.94` (30 seeds): all computers finished in 30/30;
+14 computer crashes; 0 first-lap pile-ups; 27 player wins (90%); 1.30
+computer passes per race; player time mean 337.973 s (range 328.711–358.436 s).
+The finish and pile-up targets pass. The Easy win band and crash limit fail.
