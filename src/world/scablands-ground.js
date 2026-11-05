@@ -1,4 +1,5 @@
 import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
+import {createGroundEdit} from './ground-edit.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -25,14 +26,23 @@ function naturalHeight(x,z){
   return rolling+ridge+wall;
 }
 
-export function scablandsSurfaceHeightAt(x,z){
-  if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('Scablands ground coordinates must be finite.');
+export function scablandsNaturalHeightAt(x,z){
   let height=naturalHeight(x,z);
   for(const place of SCABLANDS_PLACES){
     const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
     height+=(place.height-height)*weight;
   }
   return height;
+}
+
+// Physics and scenery share this sparse layer. It allocates nothing until a
+// cut or fill touches a sample, so the untouched Scablands stays unchanged.
+export const scablandsGroundEdit=createGroundEdit({region:{id:'scablands',editable:true},
+  naturalHeight:scablandsNaturalHeightAt});
+
+export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit){
+  if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('Scablands ground coordinates must be finite.');
+  return groundEdit.heightAt(x,z);
 }
 
 export function scablandsSurfaceAt(x,z){
