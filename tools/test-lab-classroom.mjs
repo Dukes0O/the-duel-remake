@@ -15,6 +15,14 @@ import {FEATURE_STATES} from '../src/feature-flags.js';
 import {STEPS as GFORCE_STEPS, KEY_IDEAS as GFORCE_IDEAS, createModel as createGforceModel} from '../src/lab/lessons/gforce-classroom.js';
 import * as gforceBoard from '../src/lab/lessons/gforce-board.js';
 import {lateralG} from '../src/lab/benches/gforce.js';
+import {STEPS as GRIP_STEPS, createModel as createGripModel, lesson as gripLesson} from '../src/lab/lessons/grip-classroom.js';
+import * as gripBoard from '../src/lab/lessons/grip-board.js';
+import {gripBench, slipAtAngle, bestSlideDegrees} from '../src/lab/benches/tunnel.js';
+import {tyreSlipGrip} from '../src/config.js';
+import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
+import * as suspensionBoard from '../src/lab/lessons/suspension-board.js';
+import {suspensionBench} from '../src/lab/benches/tunnel.js';
+import {lessonOpenState} from '../src/lab/lab-lessons.js';
 
 const lesson = CLASSROOM_LESSONS.pendulum;
 const fakeCanvas = (labels = null) => new Proxy({}, {
@@ -29,8 +37,17 @@ const fakeCanvas = (labels = null) => new Proxy({}, {
 });
 const s1 = seconds => `${seconds.toFixed(1)} s`;
 const run = (session, seconds) => { for (let t = 0; t < seconds; t += .05) session.tick(.05); };
-const until = (session, test, limit = 30) => { for (let t = 0; t < limit && !test(session.view()); t += .05) session.tick(.05); assert.ok(test(session.view()), 'condition not reached'); };
-const goTo = (session, id) => { while (session.view().step.id !== id) { const v = session.view(); assert.ok(v.ready, `step ${v.step.id} is not ready`); session.act('next'); } };
+const until = (session, test, limit = 30) => {
+  for (let t = 0; t < limit && !test(session.view()); t += .05) session.tick(.05);
+  assert.ok(test(session.view()), 'condition not reached');
+};
+const goTo = (session, id) => {
+  while (session.view().step.id !== id) {
+    const view = session.view();
+    assert.ok(view.ready, `step ${view.step.id} is not ready`);
+    session.act('next');
+  }
+};
 // The key a prompt names ("press 1", "press Space") must do what the prompt asks.
 function followPrompt(session) {
   const v = session.view(), key = v.prompt.match(/press (Space|\d)/i)?.[1];
@@ -437,7 +454,11 @@ test('the board draws every step and card, and hit-tests a drag of your weight',
     played.act(`go:${i}`); run(played, 1);
     calls.clear(); drawBoard(fake(), played.view(), 1000, 680);
     assert.ok((calls.has('fillText') || calls.has('fill')) && (calls.has('arc') || calls.has('fillRect')), `${STEPS[i].id} draws its board`);
-    for (const c of played.view().cards) { calls.clear(); drawPicture(fake(), c.picture, 220, 110); assert.ok(calls.has('arc') || calls.has('fillRect'), `${c.id} draws a picture`); }
+    for (const card of played.view().cards) {
+      calls.clear();
+      drawPicture(fake(), card.picture, 220, 110);
+      assert.ok(calls.has('arc') || calls.has('fillRect'), `${card.id} draws a picture`);
+    }
   }
   assert.ok(calls.has('arc') && calls.has('fillText'));
   const session = createClassroomSession(lesson);
@@ -550,6 +571,182 @@ test('review fixes: Show me only points where pressing for the player would be w
   const v = session.view();
   assert.ok(v.pointer && !v.ready && v.tapFlash !== undefined, 'the tap stays the player’s to make');
   assert.equal(v.keys[3], undefined);
+});
+
+test('Suspension keeps its notebook terms, bench challenge and ordered classroom parts', () => {
+  const suspension = CLASSROOM_LESSONS.suspension;
+  assert.ok(suspension);
+  assert.deepEqual([...new Set(SUSPENSION_STEPS.map(step => step.part))].sort(), [0,1,2,3,4,5,6]);
+  assert.deepEqual(SUSPENSION_WORDS.slice(0,4).map(word => word.id), ['suspension-word-0','suspension-word-1','suspension-word-2','suspension-word-3']);
+  assert.deepEqual(SUSPENSION_WORDS.map(word => word.word), ['Spring','Spring stiffness','Weight transfer','Body roll','Body shake']);
+  assert.equal(suspension.challengeCard.title, 'Compare both springs on both roads.');
+  assert.equal(suspension.challengeCard.text, 'Run the suspension rig with soft and stiff springs on the bumpy and smooth roads. Complete all four setting pairs.');
+});
+
+test('Suspension opens only after driving lesson 1, matching the Lab lesson gate', () => {
+  const flags={enabled:name=>name==='lab'};
+  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:false,note:'Opens after driving lesson 1'});
+  assert.deepEqual(lessonOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
+});
+
+test('the Suspension classroom challenge submits the same four settings to the unchanged bench goal', () => {
+  const attempts=CLASSROOM_LESSONS.suspension.benchAttempts();
+  assert.deepEqual(attempts.map(attempt=>attempt.input),[
+    {spring:'soft',road:'bumpy'},{spring:'stiff',road:'bumpy'},
+    {spring:'soft',road:'smooth'},{spring:'stiff',road:'smooth'},
+  ]);
+  assert.equal(suspensionBench.goalMet(attempts.map(attempt=>({result:{settings:attempt.input}}))),true);
+});
+
+test('the Suspension Watch changes the rig settings and live readings as Brian describes', () => {
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='watch'));
+  model.tick(.5); assert.deepEqual(model.view().setup,{spring:'soft',road:'bumpy'});
+  const softShake=model.view().result.bodyShake;
+  model.tick(.8); assert.deepEqual(model.view().setup,{spring:'stiff',road:'bumpy'});
+  const stiffShake=model.view().result.bodyShake; assert.notEqual(stiffShake,softShake);
+  model.tick(1.2); assert.deepEqual(model.view().setup,{spring:'soft',road:'smooth'});
+  assert.notEqual(model.view().result.bodyShake,stiffShake);
+  model.tick(1); assert.equal(model.view().ready,true); assert.match(model.view().say,/6\.5° and 2\.2°/);
+});
+
+test('Suspension exposes the complete screen contract and drawable targets on every step', () => {
+  const sent = new Set(Object.values(KEY_NAMES)), model = createSuspensionModel();
+  for (let index=0;index<SUSPENSION_STEPS.length;index++) {
+    model.enter(index); const v=model.view();
+    for (const field of ['actions','buttons','cards','keys','repeat','hints','formulas','target','glow','waiting','ready','asking','say','prompt']) assert.ok(field in v, `${v.scene} has ${field}`);
+    for (const key of Object.keys(v.keys)) assert.ok(sent.has(key), `${v.scene} offers unsendable key ${key}`);
+    for (const key of v.repeat) assert.ok(sent.has(key), `${v.scene} repeats unsendable key ${key}`);
+    if(v.target) { const point=suspensionBoard.targetPoint(v,v.target); if(v.pointOnly) assert.equal(point,null); else assert.ok(point?.every(Number.isFinite),`${v.scene} target ${v.target} has a board point`); }
+    if(v.asking) assert.equal(v.result,null,'an open question does not show the rig result');
+    for(const card of v.cards) { const labels=[]; suspensionBoard.drawPicture(fakeCanvas(labels),card.picture,220,110); assert.ok(labels.some(label=>label.includes('Reading?')),`${card.id} shows an unknown answer reading`); }
+  }
+  assert.deepEqual(suspensionBoard.drawBoard(fakeCanvas(),model.view(),800,600),{scale:.8,left:0,top:28});
+});
+
+test('Suspension questions explain every wrong answer with the challenge bench results', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='guess-bumps'));
+  assert.equal(model.view().scene,'guess-bumps');
+  assert.equal(model.view().cards.length,3);
+  assert.ok(model.view().formulas.every(row=>!row.worked), 'the open guess has no worked answer');
+  model.act('answer:1');
+  assert.match(model.view().say,/4\.77.*4\.09/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='guess-roll')); assert.equal(model.view().scene,'guess-roll');
+  model.act('answer:0');
+  assert.match(model.view().say,/6\.5.*2\.2/);
+});
+
+test('Suspension guided prompts keep the measured roll comparison and three distinct free runs open Continue', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  const initial=model.view().formulas.at(-1).worked;
+  model.act('spring:stiff'); model.act('road:smooth');
+  assert.equal(model.view().formulas.at(-1).worked,initial,'the roll comparison uses the same measured test readings');
+  assert.match(initial,/6\.5° ÷ 2\.2° ≈ 3/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
+  assert.match(model.view().say,/one body-shake reading for this test/);
+  assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
+  assert.ok(model.view().formulas.every(row=>!row.title.toLowerCase().includes('shake')),'body shake has no formula panel');
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  model.act('spring:stiff'); model.act('road:smooth');
+  assert.equal(model.view().formulas.at(-1).worked,initial,'the roll comparison uses the same measured test readings');
+  model.act('run'); model.act('road:bumpy'); model.act('run'); model.act('spring:soft'); model.act('run');
+  assert.equal(model.view().rows.length,3); assert.equal(model.view().ready,true);
+  assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
+  const actual=suspensionBench.run({spring:'soft',road:'bumpy'});
+  assert.equal(model.view().rows[2].shake,actual.bodyShake.toFixed(2));
+});
+
+test('Show me selects and runs a different setting pair each time in the free test', () => {
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  for(let i=0;i<3;i++) { const v=model.view(); assert.equal(v.target,'show'); model.act(v.target); }
+  assert.equal(model.view().rows.length,3);
+  assert.equal(new Set(model.view().rows.map(row=>`${row.spring}/${row.road}`)).size,3);
+  assert.equal(model.view().ready,true);
+});
+
+test('Suspension roll comparison shows the measured numbers and a simple calculator sum', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='formula'));
+  const row=model.view().formulas.find(item=>item.title==='What this bend showed');
+  assert.match(row.worked,/6\.5° ÷ 2\.2° ≈ 3/);
+  assert.match(row.worked,/stiff spring leans about a third as much/);
+  assert.match(row.worked,/numbers come from this test/);
+});
+
+test('Suspension reading words define body shake and explain tyre contact plainly', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-shake'));
+  assert.match(model.view().say,/one body-shake reading for this test/);
+  assert.match(SUSPENSION_WORDS.at(-1).meaning,/m\/s², means how quickly the body’s speed changes/);
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  model.act('run');
+  assert.match(model.view().say,/Tyre contact shows how much of the test the tyre touched the road/);
+});
+
+test('Suspension held controls use classroom arrows and wait for their repeat interval', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='word-stiffness'));
+  const arrows=[8592,8594,8595,8593].map(code=>String.fromCharCode(code));
+  assert.deepEqual(Object.keys(model.view().keys),arrows);
+  assert.deepEqual(arrows.map(key=>model.view().keys[key]),['spring:soft','spring:stiff','road:bumpy','road:smooth']);
+  assert.deepEqual(model.view().repeat,arrows);
+  for(const key of arrows) assert.ok(Object.values(KEY_NAMES).includes(key));
+  model.act('spring:soft'); model.act('spring:stiff:held');
+  assert.equal(model.state().setup.spring,'soft');
+  model.tick(.15); model.act('spring:stiff:held');
+  assert.equal(model.state().setup.spring,'stiff');
+});
+
+test('Suspension board targets hit every control and every drawn rectangle stays inside the board', () => {
+  const rectangles=[]; let matrix=[1,0,0,1,0,0]; const stack=[];
+  const transformed=(x,y,w,h)=>{
+    const points=[[x,y],[x+w,y],[x,y+h],[x+w,y+h]].map(([px,py])=>[matrix[0]*px+matrix[2]*py+matrix[4],matrix[1]*px+matrix[3]*py+matrix[5]]);
+    const xs=points.map(point=>point[0]),ys=points.map(point=>point[1]);
+    rectangles.push([Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)]);
+  };
+  const ctx=new Proxy({}, {get:(_,name)=>{
+    if(name==='measureText') return value=>({width:String(value).length*7});
+    if(['createLinearGradient','createRadialGradient'].includes(name)) return ()=>({addColorStop(){}});
+    return (...args)=>{
+      if(name==='save') stack.push([...matrix]);
+      else if(name==='restore') matrix=stack.pop()??[1,0,0,1,0,0];
+      else if(name==='translate') {matrix[4]+=matrix[0]*args[0]+matrix[2]*args[1];matrix[5]+=matrix[1]*args[0]+matrix[3]*args[1];}
+      else if(name==='scale') {matrix[0]*=args[0];matrix[1]*=args[0];matrix[2]*=args[1];matrix[3]*=args[1];}
+      else if(name==='rotate') {const [a,b,c,d]=matrix,co=Math.cos(args[0]),si=Math.sin(args[0]);matrix[0]=a*co+c*si;matrix[1]=b*co+d*si;matrix[2]=-a*si+c*co;matrix[3]=-b*si+d*co;}
+      else if(name==='roundRect'||name==='fillRect') transformed(...args.slice(0,4));
+    };
+  },set:()=>true});
+  const model=createSuspensionModel(); model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='try-free'));
+  const view=model.view();
+  for(const action of ['spring:soft','spring:stiff','road:bumpy','road:smooth','run']) {
+    const point=suspensionBoard.targetPoint(view,action);
+    assert.deepEqual(suspensionBoard.hitTest(view,...point),{action});
+  }
+  suspensionBoard.drawBoard(ctx,view); assert.ok(rectangles.length>10);
+  for(const [x,y,width,height] of rectangles) assert.ok(x>=0&&y>=0&&x+width<=1000&&y+height<=680,`rectangle stays inside board: ${[x,y,width,height]}`);
+  assert.ok(rectangles.some(([x,y,width,height])=>x===672&&y===370&&width===156&&height===44),'run button extents are checked');
+});
+
+test('Suspension on-your-own target and Show me use the same roll reading and target', () => {
+  const model=createSuspensionModel();
+  model.enter(SUSPENSION_STEPS.findIndex(step=>step.id==='alone'));
+  assert.match(model.view().prompt,/less than 3/);
+  model.act('show');
+  assert.equal(model.view().ready,true);
+  assert.match(model.view().say,/2\.2/);
+});
+
+test('Suspension review asks three questions and explains wrong choices without showing answers early', () => {
+  const model=createSuspensionModel();
+  for(const id of ['check-spring','check-transfer','check-formula']) {
+    model.enter(SUSPENSION_STEPS.findIndex(step=>step.id===id));
+    assert.equal(model.view().asking,true);
+    assert.ok(model.view().formulas.every(row=>row.worked===''));
+    model.act('answer:1');
+    assert.equal(model.view().ready,true);
+    assert.ok(model.view().say.length>30);
+  }
 });
 
 test('hovering explains the parts of the picture: hooks, weights, stopwatches', () => {
@@ -887,4 +1084,324 @@ test('G-force board draws the car, radius line, speed arrow, sideways push, cord
   for (const action of ['speed:up', 'speed:down', 'radius:up', 'radius:down', 'run']) {
     assert.deepEqual(gforceBoard.hitTest(view, ...gforceBoard.targetPoint(view, action)), {action});
   }
+});
+
+function reachGripFreeTest(session) {
+  until(session, view => view.ready); session.act('next');
+  session.act('slide:up'); session.act('next');
+  session.act('next'); session.act('next'); // formula
+  for (let index = 0; index < 10; index++) session.act('slide:up');
+  assert.match(session.view().formulas[0].worked, /0\.94 × 100 = 94%/);
+  session.act('next'); // watch the rolling-road readings
+  until(session, view => view.ready, 5);
+  session.act('next'); // open the first prediction
+  assert.equal(session.view().step.id, 'try-edge');
+  session.act('answer:0'); session.act('run');
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-far');
+  session.act('answer:1'); session.act('run');
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-free');
+}
+
+function reachGripQuestion(session) {
+  until(session, view => view.ready); session.act('next');
+  session.act('slide:up'); session.act('next');
+  session.act('next'); session.act('next'); session.act('next');
+  session.act('next'); // rolling-road watch
+  until(session, view => view.ready, 5);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-edge');
+  assert.equal(session.view().cards.length, 3);
+}
+
+test('Grip is registered as the classroom lesson with the kept notebook ids and challenge wording', () => {
+  assert.equal(CLASSROOM_LESSONS.grip.id, 'grip');
+  assert.equal(CLASSROOM_LESSONS.grip.name, 'Grip');
+  assert.deepEqual(gripLesson.words.map(word => word.id), ['grip', 'slip', 'limit']);
+  assert.equal(gripLesson.challengeCard.title, 'Find full grip, then find where it starts to fall.');
+  assert.equal(GRIP_STEPS.at(-1).voice, 'lab.brian.grip.explain');
+  const flags = {enabled: name => name === 'lab' || name === 'lab-classroom' || name === 'lab-tuning'};
+  assert.deepEqual(lessonOpenState({drivingLessons: {version: 1, done: {corner: true}}}, 'grip', flags), {open: true, note: ''});
+  assert.equal(lessonOpenState({}, 'grip', flags).open, false, 'the Wind tunnel remains locked before driving lesson 1');
+});
+
+test('a player can follow each Grip prompt, compare three settings, and pass the real two-run challenge', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.grip);
+  until(session, view => view.ready); session.act('next');
+  assert.equal(session.view().step.id, 'word-slide');
+  assert.equal(session.view().keys['↑'], 'slide:up');
+  session.act('slide:up');
+  assert.equal(session.view().ready, true);
+  session.act('next'); session.act('next'); session.act('next');
+  assert.equal(session.view().step.id, 'formula');
+  for (let index = 0; index < 10; index++) session.act('slide:up');
+  assert.equal(session.view().formulas[0].worked, '0.94 × 100 = 94%');
+  session.act('next');
+  until(session, view => view.ready, 5);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-edge');
+  assert.equal(session.view().cards.length, 3);
+  assert.equal(session.view().grip, null);
+  assert.ok(session.view().formulas.every(row => row.worked === ''), 'the open guess has no worked result');
+  session.act('answer:0'); session.act('run');
+  assert.equal(session.view().ready, true);
+  assert.match(session.view().brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-far');
+  assert.equal(session.view().cards.length, 3);
+  assert.ok(session.view().formulas.every(row => row.worked === ''), 'the second open guess hides its result');
+  session.act('answer:1'); session.act('run');
+  assert.match(session.view().brian.text, /9 degrees.*93\.9%.*99\.7%.*4\.5 degrees/);
+  session.act('next');
+  assert.equal(session.view().step.id, 'try-free');
+  assert.equal(session.view().keys.Space, 'run');
+  // A repeated setting does not count; three distinct settings complete the free test.
+  for (const [target, presses] of [[3, 2], [4.5, 3], [9, 9]]) {
+    for (let index = 0; index < presses; index++) session.act('slide:up');
+    session.act('run');
+    assert.equal(session.view().rows.at(-1).slideDeg, target);
+  }
+  assert.equal(session.view().rows.length, 3);
+  assert.equal(new Set(session.view().rows.map(row => row.slideDeg)).size, 3);
+  assert.equal(session.view().ready, true);
+  session.act('next');
+  assert.equal(session.view().step.id, 'challenge');
+  // The target angle is not enough by itself: each result comes from the same bench function.
+  for (let index = 0; index < 4; index++) session.act('slide:up');
+  session.act('run');
+  assert.equal(session.view().ready, false);
+  session.act('slide:up'); session.act('run');
+  assert.equal(session.view().ready, true);
+  assert.equal(session.view().challengeAttempts.length, 2);
+  const attempts = gripLesson.benchAttempts(session.view());
+  const history = attempts.map(attempt => ({input: attempt.input, settings: attempt.input, result: gripBench.run(attempt.input)}));
+  assert.equal(gripBench.goalMet(history), true);
+  session.act('next');
+  for (const [step, answer] of [['check-best', 'answer:1'], ['check-loss', 'answer:1'], ['check-driving', 'answer:0']]) {
+    assert.equal(session.view().step.id, step);
+    assert.equal(session.view().cards.length, 3);
+    session.act(answer);
+    session.act('next');
+  }
+  assert.equal(session.view().step.id, 'recap');
+  assert.ok(session.view().ready);
+});
+
+test('Grip predictions explain the small loss at 4.5 degrees with rounded, readable numbers', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.grip);
+  reachGripQuestion(session);
+  session.act('answer:1'); session.act('run');
+  const view = session.view();
+  assert.equal(view.brian.mood, 'explain');
+  assert.match(view.brian.text, /4\.5 degrees.*99\.7%.*100% less 99\.7% is about 0\.3%/);
+  assert.doesNotMatch(view.brian.text, /\d+\.\d{3,}/);
+});
+
+test('Show me records three different free Grip settings and finishes the free test', () => {
+  const session = createClassroomSession(CLASSROOM_LESSONS.grip);
+  reachGripFreeTest(session);
+  for (let index = 1; index <= 3; index++) {
+    for (let rung = 0; rung < 3; rung++) session.act('help');
+    const view = session.view();
+    assert.equal(view.pointer.action, 'set:best');
+    const point = gripBoard.targetPoint(view, view.pointer.action);
+    const hit = gripBoard.hitTest(view, ...point);
+    assert.ok(hit && ['slide:up', 'slide:down', 'run'].includes(hit.action));
+    run(session, SHOW_ME_S + .05);
+    assert.match(session.view().brian.text, /^That is how it is done\./);
+    until(session, current => current.rows.length >= index, 3);
+    assert.equal(session.view().rows.length, index);
+    assert.equal(new Set(session.view().rows.map(row => row.slideDeg)).size, index);
+  }
+  assert.equal(session.view().ready, true);
+});
+
+test('Grip percent formula uses rounded displayed values and open guesses hide results', () => {
+  const model = createGripModel();
+  const formulaIndex = GRIP_STEPS.findIndex(step => step.id === 'formula');
+  for (const angle of [0, 2, 3, 4, 4.5, 9, 12]) {
+    model.enter(formulaIndex);
+    let view = model.view();
+    while (view.slideDeg < angle) { model.act('slide:up'); view = model.view(); }
+    while (view.slideDeg > angle) { model.act('slide:down'); view = model.view(); }
+    assert.match(view.formulas[0].formula, /grip kept as a fraction × 100/);
+    assert.equal(view.grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
+    assert.equal(view.percent, pctForGrip(view.grip));
+    if (angle === 9) assert.equal(view.formulas[0].worked, '0.94 × 100 = 94%');
+    assert.doesNotMatch(JSON.stringify(view.formulas), /clamp|\d+\.\d{3,}/i);
+  }
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
+  assert.ok(model.view().formulas.every(row => row.worked === ''));
+  assert.equal(model.view().percent, null);
+});
+
+test('the Grip watch moves through four settings without giving away either prediction', () => {
+  const model = createGripModel();
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'watch'));
+  assert.equal(model.view().slideDeg, 2);
+  for (const angle of [3, 4, 12]) {
+    model.tick(.8);
+    assert.equal(model.view().slideDeg, angle);
+    assert.equal(model.view().grip, gripBench.run({slideDeg: angle, driver: 'casual'}).grip);
+  }
+  const event = model.tick(.8);
+  assert.equal(event.kind, 'right');
+  assert.match(event.say, /2, 3 and 4 degrees.*100%.*12 degrees.*loss grows/);
+  assert.doesNotMatch(event.say, /4\.5|9 degrees/);
+  assert.equal(model.view().rows.length, 4);
+  assert.deepEqual(model.view().rows.map(row => row.slideDeg), [2, 3, 4, 12]);
+  assert.deepEqual(GRIP_STEPS.map(step => step.part), [...GRIP_STEPS.map(step => step.part)].sort((a, b) => a - b));
+});
+
+test('the Grip graph plots smooth unrounded readings past the best angle', () => {
+  const points = gripBoard.gripCurvePoints().filter(point => point.slideDeg >= bestSlideDegrees());
+  const changes = points.slice(1).map((point, index) => Math.abs(point.y - points[index].y));
+  assert.ok(changes.some(change => change > 0), 'the plotted grip line changes after its peak');
+  assert.ok(changes.every(change => change < .5), 'neighboring plotted points stay close for a smooth line');
+  const raw = tyreSlipGrip(slipAtAngle(6.27 * Math.PI / 180), 'casual');
+  const plotted = gripBoard.gripCurvePoints().find(point => Math.abs(point.slideDeg - 6.27) < .001);
+  assert.ok(plotted, 'the graph samples at fine angle steps');
+  assert.ok(Math.abs(plotted.y - (452 - (raw * 100 - 88) / 12 * 272)) < 1e-9, 'the graph uses the unrounded grip result');
+});
+
+test('Grip words and labels follow the reviewed classroom language rules', () => {
+  const forbidden = /\b(she|her|mph|bench|decides|clamp|tyre model|tyre function|casual tyre reading|slip 1|0\.25 slip|same angle curve)\b/i;
+  const model = createGripModel();
+  for (let index = 0; index < GRIP_STEPS.length; index++) {
+    model.enter(index);
+    const view = model.view();
+    const copy = [view.say, view.prompt, ...view.hints,
+      ...view.formulas.flatMap(row => [row.title, row.formula, row.worked, row.note]),
+      ...view.cards.map(card => card.label)].join(' ');
+    assert.doesNotMatch(copy, forbidden, GRIP_STEPS[index].id);
+    assert.ok(view.formulas.every(row => row.title), `${GRIP_STEPS[index].id}: formula entries have titles`);
+    assert.ok((view.say.match(/[.!?](?:\s|$)/g) ?? []).length <= 2, `${GRIP_STEPS[index].id}: Brian uses at most two sentences`);
+  }
+  const gripCopy = [
+    ...gripLesson.words.map(word => word.meaning),
+    ...gripLesson.keyIdeas.map(item => item.text),
+    gripLesson.challengeCard.text,
+    gripLesson.passSay,
+  ].join(' ');
+  assert.doesNotMatch(gripCopy, forbidden);
+  const lines = [];
+  model.enter(0);
+  gripBoard.drawBoard(fakeCanvas(lines), model.view());
+  assert.ok(lines.includes('GRIP AS THE ANGLE CHANGES'));
+  assert.ok(lines.includes('SIDEWAYS SLIDE ANGLE'));
+  assert.ok(lines.includes('TYRE POINTS'));
+  assert.ok(lines.includes('TRAVEL'));
+  assert.doesNotMatch(lines.join(' '), forbidden);
+  model.enter(GRIP_STEPS.findIndex(step => step.id === 'try-edge'));
+  const guessLines = [];
+  gripBoard.drawBoard(fakeCanvas(guessLines), model.view());
+  assert.ok(!guessLines.some(line => line.includes('BEST ANGLE')));
+  assert.equal(model.view().grip, null);
+  assert.equal(model.view().percent, null);
+});
+
+test('each Grip check has one correct card, and the graph label fits between its panels', () => {
+  for (const step of ['check-best', 'check-loss', 'check-driving']) {
+    const outcomes = GRIP_STEPS.map((item, answer) => ({item, answer}))
+      .filter(({item}) => item.id === step)
+      .flatMap(({item}) => [0, 1, 2].map(answer => {
+        const model = createGripModel();
+        model.enter(GRIP_STEPS.indexOf(item));
+        return model.act(`answer:${answer}`).kind;
+      }));
+    assert.equal(outcomes.filter(kind => kind === 'right').length, 1, step);
+  }
+
+  const rectangles = [], labels = [], transforms = [];
+  let font = '';
+  let matrix = [1, 0, 0, 1, 0, 0];
+  const transformPoint = (x, y) => [matrix[0] * x + matrix[2] * y + matrix[4], matrix[1] * x + matrix[3] * y + matrix[5]];
+  const multiply = ([a, b, c, d, e, f], [g, h, i, j, k, l]) => [
+    a * g + c * h, b * g + d * h, a * i + c * j, b * i + d * j,
+    a * k + c * l + e, b * k + d * l + f,
+  ];
+  const bounds = (x, y, width, height) => {
+    const points = [[x, y], [x + width, y], [x, y + height], [x + width, y + height]].map(point => transformPoint(...point));
+    const xs = points.map(point => point[0]), ys = points.map(point => point[1]);
+    rectangles.push([Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)]);
+  };
+  const ctx = new Proxy({}, {
+    get: (_, name) => name === 'roundRect'
+      ? (x, y, width, height) => bounds(x, y, width, height)
+      : name === 'fillRect'
+        ? (x, y, width, height) => bounds(x, y, width, height)
+      : name === 'fillText'
+        ? (value, x, y) => labels.push({text: String(value), x: transformPoint(x, y)[0], y: transformPoint(x, y)[1], font})
+        : name === 'measureText'
+          ? value => ({width: String(value).length * 8})
+          : name === 'save'
+            ? () => transforms.push([...matrix])
+            : name === 'restore'
+              ? () => { matrix = transforms.pop() ?? [1, 0, 0, 1, 0, 0]; }
+              : name === 'translate'
+                ? (x, y) => { matrix = multiply(matrix, [1, 0, 0, 1, x, y]); }
+                : name === 'rotate'
+                  ? angle => { matrix = multiply(matrix, [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle), 0, 0]); }
+                  : name === 'scale'
+                    ? (x, y) => { matrix = multiply(matrix, [x, 0, 0, y, 0, 0]); }
+                    : name === 'setTransform'
+                      ? (...values) => { matrix = values.length === 1 ? [1, 0, 0, 1, 0, 0] : values; }
+                      : name === 'resetTransform'
+                        ? () => { matrix = [1, 0, 0, 1, 0, 0]; }
+          : ['createLinearGradient', 'createRadialGradient'].includes(name)
+            ? () => ({addColorStop() {}})
+            : () => {},
+    set: (_, name, value) => { if (name === 'font') font = value; return true; },
+  });
+  const model = createGripModel();
+  gripBoard.drawBoard(ctx, model.view());
+  model.enter(GRIP_STEPS.length - 1);
+  gripBoard.drawBoard(ctx, model.view());
+  for (const [x, y, width, height] of rectangles) {
+    assert.ok(x >= 0 && y >= 0 && x + width <= 1000 && y + height <= 700, `panel fits: ${[x, y, width, height]}`);
+  }
+  const graphPanel = rectangles.find(([x, y]) => x === 54 && y === 48);
+  const axis = labels.find(label => label.text === 'SIDEWAYS SLIDE ANGLE');
+  const size = Number(axis.font.match(/\d+(?:\.\d+)?px/)?.[0].replace('px', ''));
+  assert.ok(axis.y + size / 2 < graphPanel[1] + graphPanel[3], 'the full sideways label fits inside the graph panel');
+  assert.ok(graphPanel[1] + graphPanel[3] < 522, 'the graph and tyre panels do not overlap');
+});
+
+const pctForGrip = grip => Math.round(grip * 1000) / 10;
+
+test('Grip screen contract uses sendable keys, complete views and board points for every target', () => {
+  const sent = new Set(Object.values(KEY_NAMES));
+  const model = createGripModel();
+  for (let index = 0; index < GRIP_STEPS.length; index++) {
+    model.enter(index);
+    const view = model.view();
+    const fields = [
+      'actions', 'buttons', 'cards', 'keys', 'repeat', 'hints', 'formulas',
+      'target', 'glow', 'waiting', 'ready', 'asking', 'say', 'prompt',
+    ];
+    for (const field of fields) assert.ok(field in view, `${view.scene} has ${field}`);
+    for (const key of Object.keys(view.keys)) assert.ok(sent.has(key), `${view.scene} offers unsendable key ${key}`);
+    for (const key of view.repeat) assert.ok(sent.has(key), `${view.scene} repeats unsendable key ${key}`);
+    if (view.target) {
+      const point = gripBoard.targetPoint(view, view.target);
+      if (view.pointOnly) assert.equal(point, null, `${view.scene} target ${view.target} belongs to classroom HTML`);
+      else assert.ok(point?.every(Number.isFinite), `${view.scene} target ${view.target} has a board point`);
+    }
+    for (const card of view.cards) {
+      assert.equal(card.picture.kind, 'grip');
+      const labels = [];
+      gripBoard.drawPicture(fakeCanvas(labels), card.picture, 220, 110);
+      assert.ok(labels.some(label => label.includes('Grip?')));
+    }
+  }
+  const initial = model.view();
+  assert.deepEqual(gripBoard.drawBoard(fakeCanvas(), initial, 800, 600), {scale: .8, left: 0, top: 28});
+  const live = createClassroomSession(CLASSROOM_LESSONS.grip);
+  reachGripFreeTest(live);
+  for (const action of ['slide:up', 'slide:down', 'run']) {
+    const view = live.view(), point = gripBoard.targetPoint(view, action);
+    assert.deepEqual(gripBoard.hitTest(view, ...point), {action: action === 'run' ? 'run' : action});
+  }
+  assert.equal(Number(bestSlideDegrees().toFixed(1)), 4.3);
 });
