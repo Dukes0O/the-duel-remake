@@ -51,6 +51,10 @@ const generators = [
   { script: 'tools/blender/magnus-magnet.py', args: [], glb: ['public/assets/models/wasteland/kits/magnus-magnet.glb'] },
   { script: 'tools/blender/scablands-kit.py', args: [], glb: ['public/assets/models/wasteland/scablands/kit.glb'], budget: 30000, maxBytes: 1500000 },
   { id: 'bowl-trucks', script: 'tools/blender/bowl-trucks.py', args: [], glb: ['public/assets/models/wasteland/bowl/trucks.glb'], budget: 8000 },
+  // Candidate art is generated and read back in its lane, then waits for Claude's look verdict.
+  // The public candidate is installed only when a later scene card wires it into gameplay.
+  { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '2'], candidate: true,
+    budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -516,7 +520,22 @@ try {
         } else {
           assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
         }
+        if (!generator.candidate) assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
       }
+    });
+    if (generator.candidate) check(`${generator.script} candidate GLB stays within its art budget when present`, () => {
+      const path = join(root, generator.glb[0]);
+      if (!existsSync(path)) return; // Claude's approved look is installed by the scene card.
+      const bytes = readFileSync(path);
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(4), 2);
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      const jsonLength = bytes.readUInt32LE(12);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+      const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+        .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+      assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
     });
   }
   check('scablands-tintown exports its bounded named walkable town model', () => {
