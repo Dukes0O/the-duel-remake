@@ -35,3 +35,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - Build the skin from crushed car bodies, bonnets and doors over the frame. Headlights for eyes.
 - The battery boxes must be seen as targets from the truck, but the two small dots on each make them look like cartoon faces. Remove the dots, and use bright cables and hazard paint instead.
 - Show jaw and tail moving (two poses) and the fire breath's nozzle. Commit public/assets/models/wasteland/bowl/scrapasaurus.glb and read back its size: no model is on the branch yet.
+
+**Round 2: merge so BOWL-REX-FIGHT can start. Round 3 is owed before BOWL-FINISH.** Now it reads as a dinosaur: the head and jaw are good, and so are the tail and battery boxes. But it stands like a long low lizard on stubs, not a two-storey monster. Round 3, the last:
+- Stand it up on two huge hind legs with the body tilted and the head high, so it towers over the Titan. Keep the part names the fight uses.
+- Skin the box body with crushed car bodies, bonnets and doors.
+- Check the dots are gone from the battery boxes.
+- Light the sheet: it is too dark to judge detail.
