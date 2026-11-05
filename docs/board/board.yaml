@@ -507,7 +507,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [WW-JOBS-CORE, WW-GROUND, WW-SAVE]
     locks: []
     flag: "story-everburn"
@@ -518,7 +518,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: [WW-JOBS-CORE, WW-GROUND]
     locks: [busy-game-files]
     flag: "scablands"
