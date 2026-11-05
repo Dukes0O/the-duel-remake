@@ -1,20 +1,20 @@
 # Story 3: Ships in the Sand
 
-Claude, 5 November 2026. Act 4 of `docs/story/the-long-dry.md`, chapter 23, around Year 15 to 18 of a town. Every line and
+Claude, 5 November 2026. Act 4 of `docs/story/the-long-dry.md`, chapter 23, across game Years 15 to 18 of a town. Every line and
 every job. Where this page and `docs/WASTELAND_WORLD.md` section 6 differ, this page wins.
 It no longer leads to The Deep. Kyle and Gratian can overrule anything.
 
 ## 1. The story in one breath
 
-Vesper goes to see her father in the lockup. His logbook is years and years of rent, and one
+Brian tests the water from the dam's wall, and it is the sea. Vesper goes to see her father in the lockup, for the first time in years. His logbook is years and years of rent, and one
 odd bill: a barrel of lamp oil, every month since Vesper was six, for a lighthouse where
 his wife died. The oil goes through Deck Town, so you ask Captain Imre, who has never once
 had anything to report. You climb his ships for their logs and see the light come on.
-You drive out through a dust storm at night, and Vesper's mother is at the top of the
-stairs, cross about the door. Isolde tells you what happened to the sea. Then you tow her
+Then you wait for the spring dust, the only cover from Mr Crisp's lamps, and you drive out through it at night, and Vesper's mother is at the top of the
+stairs, cross about the door. Isolde tells you what happened to the sea. She takes months to pack. Then you tow her
 drawings home in a forty-foot boat, across a dead sea, with Mr Crisp bumping you. At your
-gate she looks at Hollis and says "I know you." He asks you to drive him up to the old
-gatehouse on the Ridge, and to wait by the car.
+gate she looks at Hollis and says "I know you." He says nothing about it for most of a year.
+Then he asks you to drive him up to the old gatehouse on the Ridge, and to wait by the car.
 
 **No fights to finish it.** The last job is a drive and a wait, and its ending is one man
 walking out of a door.
@@ -26,9 +26,9 @@ the `{aground}` word from Long Dry section 10 (thirty plus the town's year, in w
 
 | When | What |
 | --- | --- |
-| 31 years before Year 1 | The sea gate is shut, on orders, on a falling tide. Hollis is nineteen and was told it was for a fortnight. Isolde Blackiron drew the gate |
+| A little over thirty years before the town | The sea gate is shut, on orders, on a falling tide. Hollis is nineteen and was told it was for a fortnight (he is fifty when you meet him and about sixty-five by this story). Isolde Blackiron drew the gate |
 | That fortnight | The tide goes out and does not come back. Harbours are dry and the fishing is over. This is what people mean when they say the sea went in a fortnight, and what Old Tam watched from the Ridge |
-| A year on | The sun has taken about two metres of water, and with no tide to lift them the ships in the harbour touch bottom. Captain Imre has counted from that day (`{aground}`) |
+| A year on, thirty years before the town | The sun has taken about two metres of water, and with no tide to lift them the ships in the harbour touch bottom. Captain Imre has counted from that day (`{aground}`) |
 | The years after | The rest of the sea sinks slowly, with nobody looking any more. Under the water was salt and metal, and Vane Reclamation starts digging |
 | A few years on | Isolde understands what the gate was for and says no, in writing. She keeps the lighthouse and marries the Baron, who rents the road from Vane. Vesper is born |
 | When Vesper is six | Some men come, very politely. Isolde dies, on paper, and the Baron says so. He pays for her lamp oil every month and never tells a soul |
@@ -49,8 +49,25 @@ logbook" in Hollis's scene means the gate log.
 | 5 | **Under Tow** | Tow | Hook the pilot boat, drawings and all, and tow it slowly across the lake bed to your north gate, with Mr Crisp's pickups bumping you and your crew driving them off | The boat at your gate. Isolde moves into town |
 | 6 | **The Gatehouse** | Drive, then wait | Drive Hollis up the Ridge in the Titan, the rally car or Big Mo's show truck. Wait by the car. He comes out with the gate log | **The Sea Works opens (Act 5)** |
 
-Chapter 23 opens from the town's own state: chapter 22 done, and at least one game year since. Its
-jobs then open one after another, with no game-time wait.
+### The pace: what happens between the jobs
+
+Each job opens from what is true of the town, never from a clock (`docs/story/iron-mule.md`
+section 2). The gaps are real work and real seasons, with the town going on around them.
+
+| When, roughly | What has to be true | Why it takes that long |
+| --- | --- | --- |
+| Year 15 or later | Chapter 22 done, and a year or more since | Bottled water from the dam's wall goes to Brian |
+| About a month | **Brian's test** at the Lab: 35 grams of salt in a litre | That number is the sea, and nothing else |
+| When the test is in | **Job 1** | |
+| About a month | **Mr Pell reads the logbook,** which gives the lamp oil sum | One barrel a month is what a lighthouse lamp burns |
+| Standing with Deck Town at 30 or more | **Job 2.** Nobody climbs Imre's ships until you have been a friend | Standing comes from the salt trade and water runs |
+| The next spring | **Job 3,** on the first dust storm of spring (dust comes in spring, section 3 of the town page) | In clear air, Mr Crisp's lamps see every car on that road. It can be most of a year |
+| That same night | **Job 4** | |
+| About four months | **The lamp keeper:** two of Deck Town learn the lamp, because Isolde will not leave it dark | |
+| About three weeks | **The trailer mended:** 1 tonne of steel and six tyres, 3 people, on site at the lighthouse | It has stood for decades |
+| Both done | **Job 5** | A boat of about fifteen tonnes |
+| About two months, then six | **The Drawing Office:** Isolde's own building (timber, glass, 4 people), then a season and more copying every drawing, with two people from the town who went through the school | The children you met in Act 2 are grown |
+| At least a year after job 5 | **Job 6,** when she has read every drawing and needs the other half of the codes | Hollis has been putting it off |
 
 Each job pays like a Wasteland win and counts toward rank. Fail, and that step restarts with
 one press. There is no racing clock.
@@ -84,9 +101,9 @@ may have him say otherwise.
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `story.ships.1.start` | Vesper | Job starts | I want to see my father. Drive me round the back of the Dome. If I say turn round, don't listen. |
+| `story.ships.1.start` | Vesper | Job starts | I want to see my father. It's been years. Drive me round the back of the Dome. If I say turn round, don't listen. |
 | `story.ships.1.exit` | Vesper | Arrived | Hold F to step out. Walk me to the door. I'll be fine after that. I'll be fine anyway. |
-| `story.ships.1.baron` | The Baron | At the cell door | Daughter. You've come to gloat. Do sit down. I would offer you the chair, but I'm chained to it. |
+| `story.ships.1.baron` | The Baron | At the cell door | Daughter. You've come to gloat at last. Do sit down. I would offer you the chair, but I'm chained to it. |
 | `story.ships.1.vesper` | Vesper | Straight after | What's the book, Father? You've had it under your arm since we locked you up. |
 | `story.ships.1.rent` | The Baron | Straight after | My logbook. Years and years of rent, paid on time. I was an excellent tenant. Ask anyone. I was robbed. By my landlord. |
 | `story.ships.1.oil` | Vesper | She opens it | Lamp oil. One barrel a month, every month since I was six, sent to the lighthouse. Father, nobody lives in the lighthouse. Mother died there. |
@@ -111,13 +128,13 @@ may have him say otherwise.
 | `story.ships.2.mast.go` | Captain Imre | Heading for the mast | I go up the mast every evening, about now. You may as well see it. It's only a ladder. It's a long ladder. |
 | `story.ships.2.mast` | Vesper | At the top of the mast | The light. It's lit. That lighthouse is lit, and it's been lit all this time, and nobody thought to mention it. |
 | `story.ships.2.light` | Captain Imre | Straight after | Evening watch. Light on. Nothing to report. |
-| `story.ships.2.won` | Vesper | Job won | Somebody up there is trimming that lamp. I'm going tonight. There's a dust storm coming. I am still going. |
+| `story.ships.2.won` | Vesper | Job won | Somebody up there is trimming that lamp. Mr Crisp watches that road, and in clear air his lamps see everything. The spring dust will hide us. We wait for the dust. |
 
 ### Job 3: Night Watch
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `story.ships.3.start` | Captain Imre | Job starts | Two of our lookouts went out with the oil cart, and the storm has them. Steer by the lighthouse. Nothing to report, but I would hurry. |
+| `story.ships.3.start` | Captain Imre | Job starts | First dust of spring, and two of our lookouts went out with the oil cart, and the storm has them. Steer by the lighthouse. Nothing to report, but I would hurry. |
 | `story.ships.3.vesper` | Vesper | Straight after | You can't see a thing in this. Watch for the beam coming round, and follow the arrow. |
 | `story.ships.3.dustmonger` | The Dustmonger | In the storm, if at peace | Still not my dust. I checked. Whoever's dust it is, I'd like it noted that it isn't mine. |
 | `story.ships.3.crisp` | Mr Crisp | In the storm | So sorry, this road is closed for maintenance. Also, I'm told it isn't a road. Terribly sorry. |
@@ -140,6 +157,7 @@ may have him say otherwise.
 | `story.ships.4.cup` | Isolde | Straight after | A letter a year. I never found a way to send them that wouldn't send Prudence Vane to you. Sit down. There's only the one cup. You have it. |
 | `story.ships.4.sea` | Isolde | Straight after | You've been told the sea dried up. It never did. The ocean is on the other side of that dam, as high as it ever was. We shut the sea gate, and the sun did the rest. |
 | `story.ships.4.why` | Isolde | Straight after | Under the water was salt and metal, worth far more than the water. Prudence knew that. I was her chief engineer, and I drew that gate. When I understood what it was for, I said no, in writing. |
+| `story.ships.4.leak` | Isolde | Straight after | The dam leaks, of course. One litre a second through one crack is eighty-six thousand litres a day. She boils the salt out and sells it to you by the bottle. Prudence built a business on a leak. |
 | `story.ships.4.salt` | Jax | Straight after, on the radio | So THAT'S why the wall tastes of salt. I'd like it known I said so. |
 | `story.ships.4.letgo` | Vesper | Straight after | And she just let you go? |
 | `story.ships.4.dead2` | Isolde | Straight after | She sent a very nice letter. Then some men came, very politely. So I died. She doesn't look for dead people. She is far too tidy. |
@@ -150,7 +168,7 @@ may have him say otherwise.
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `story.ships.5.start` | Isolde | Job starts | I am not leaving my drawings. They're in the pilot boat, on the trailer out the back. Forty feet of her. Yes, a boat. Yes, it's a desert. She was here first. |
+| `story.ships.5.start` | Isolde | Job starts | I am packed. My drawings are in the pilot boat, on the trailer out the back. Forty feet of her, about fifteen tonnes. Yes, a boat. Yes, it's a desert. She was here first. |
 | `story.ships.5.vane` | Mr Crisp | Straight after | So sorry, Mrs Blackiron. Mrs Vane sends her kind regards, and some men. Nothing personal. |
 | `story.ships.5.hand` | Isolde | Straight after | Tell Prudence her handwriting has got worse. |
 | `story.ships.5.hook` | Odessa | Vehicle ready | That's the tow rig. Back up to the trailer and stop. Then go slowly, because that line snaps if you pull too hard. |
@@ -158,19 +176,20 @@ may have him say otherwise.
 | `story.ships.5.bump` | Mr Crisp | Pickups arrive | So sorry, would you mind awfully stopping? I've been told to bump you until you do. |
 | `story.ships.5.snap` | Isolde | The line snaps | You've snapped my line. How fast did you think a boat goes? Back up and hook on again. |
 | `story.ships.5.imre` | Captain Imre | Passing Deck Town | Deck Town, afternoon watch. Boat going by on a trailer, on dry land, in our sea. Nothing to report. |
-| `story.ships.5.bo` | Bo | At the north gate, grown up by now | Is that your real boat? I'm all grown up now, you know. Can I drive it? Can I drive it now? |
+| `story.ships.5.bo` | Bo | At the north gate, grown up by now | That's a real boat. I've got a very good truck of my own now, you know. I could tow that better than you. Can I drive it? |
 | `story.ships.5.know` | Isolde | Straight after, seeing Hollis | You. I know you. You've got old. |
 | `story.ships.5.maam` | Hollis | Straight after | Yes, ma'am. |
 | `story.ships.5.what` | Vesper | Straight after | Hollis? What was that? |
-| `story.ships.5.won` | Hollis | Job won | Leave the boat there. Nobody's to sit in it. Driver, there's a gatehouse up on the Ridge. I'd like you to drive me. |
+| `story.ships.5.won` | Hollis | Job won | Leave the boat there. Nobody's to sit in it. |
 
 ### Job 6: The Gatehouse
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
-| `story.ships.6.start` | Hollis | Job starts | I've not been up there since I was nineteen. I'll need something that climbs. |
+| `story.ships.6.start` | Hollis | Job starts | There's a gatehouse up on the Ridge. I've not been up there since I was nineteen. I'd like you to drive me, in something that climbs. |
 | `story.ships.6.mo` | Big Mo | Owns neither the Titan nor the rally car | LADIES AND GENTLEMEN AND ALSO DOGS, THE SHOW TRUCK IS OUT ON LOAN! PLEASE DO NOT SCRATCH IT! HE SAID PLEASE! |
 | `story.ships.6.left` | Hollis | Leaving the road | Left here. |
+| `story.ships.6.knees` | Hollis | First big bump | Mind the bumps. I've had these knees a long time. |
 | `story.ships.6.green` | Hollis | Halfway up | It was greener. |
 | `story.ships.6.tam` | Old Tam | Higher | Who's that on my ridge? Is that young Hollis? Tell that boy he still owes me a goat. |
 | `story.ships.6.goat` | Hollis | Straight after | I do. |
@@ -189,6 +208,24 @@ may have him say otherwise.
 | `story.ships.oil.start` | Captain Imre | Job starts | First of the month. Barrel's on your roof. Standing orders: leave it, take the empty. You may knock now, if you like. Nothing to report. |
 | `story.ships.oil.spill` | Captain Imre | Barrel spilled | Oil on the sea bed. I shall not be writing that down. Come back for another. |
 | `story.ships.oil.won` | Captain Imre | Delivered | Evening watch. Light on. Nothing to report. |
+
+### Between the jobs
+
+These reach you as reports, with the radio click.
+
+| Id | Who | When | Line |
+| --- | --- | --- | --- |
+| `story.ships.b0.odessa` | Odessa | Report: chapter 23 opens | That bottle of water from the dam has been on my shelf long enough. I'm sending it to Brian. If it's only a salty well, I want to know, and then I can stop thinking about it. |
+| `story.ships.b0.brian` | Brian | Test finished | I boiled a litre dry and weighed what was left. Thirty-five grams of salt. That number is the sea, driver, nearly everywhere on Earth. Not a salty well. The sea. So why is it in your dam? |
+| `story.ships.b0.hollis` | Hollis | Straight after | Hm. |
+| `story.ships.b1.pell` | Mr Pell | Report: after job 1, a month later | I've read the Baron's logbook. His rent adds up, sadly. A barrel is two hundred litres, so that oil is about six and a half litres a night, and that is exactly what a lighthouse lamp burns. Somebody is burning it. |
+| `story.ships.b1.friend` | Captain Imre | Report: standing too low | Deck Town, forenoon watch. We do not show our logs to strangers. Bring water and buy salt for a while. Nothing to report. |
+| `story.ships.b4.pack` | Isolde | Report: after job 4 | I will come when I am packed, and not before. All those years of drawings, in order. The trailer wants new tyres and an axle. And somebody learns that lamp before I leave it. Go home. I'll send word. |
+| `story.ships.b4.keeper` | Captain Imre | Report: the keeper learns | Deck Town, forenoon watch. Two of ours are learning the lamp. She has made one of them cry. Nothing to report. |
+| `story.ships.b5.office` | Isolde | Report: after job 5 | I need a dry room, a long table and good light. Then I need two people who can draw a straight line. Your school has turned out a few by now. I will teach them the rest. |
+| `story.ships.b5.copying` | Vesper | Report: copying under way | She's had them copying every bolt of that dam. Nobody knows what it's for yet. I asked Hollis. He went and looked at the gate for a while. |
+| `story.ships.b5.ready` | Isolde | Report: every drawing read | I have read every sheet twice. I still need the other half of the codes. It has been a year, Hollis. |
+| `story.ships.b5.know` | Hollis | Straight after | I know. |
 
 ## 5. The job list, as data
 
@@ -210,8 +247,19 @@ const deckTown = place('deck-town', 0, -430, 20, -2), lighthouse = place('lighth
 const trailer = place('pilot-boat-trailer', 158, -378, 8, -.5), northGate = place('town-north-gate', 0, -205, 14, .2);
 const gatehouse = place('old-gatehouse', -400, -405, 10, 30.1);
 
+// The work between the jobs: rows for src/town/content/, as IRON_WORK in docs/story/iron-mule.md.
+export const SHIPS_WORK = Object.freeze([
+  Object.freeze({id:'brian-salt-test', kind:'make', at:'lab', people:1, days:30, startLineId:'story.ships.b0.odessa', doneLineIds:['story.ships.b0.brian', 'story.ships.b0.hollis']}),
+  Object.freeze({id:'pell-reads-logbook', kind:'desk', at:'town-hall', people:1, days:30, doneLineIds:['story.ships.b1.pell']}),
+  Object.freeze({id:'lamp-keeper', kind:'make', at:'lighthouse', people:2, days:120, startLineIds:['story.ships.b4.pack'], midLineId:'story.ships.b4.keeper'}),
+  Object.freeze({id:'mend-boat-trailer', kind:'site', at:'lighthouse', people:3, days:21, needs:Object.freeze({steelKg:1000, tyres:6})}),
+  Object.freeze({id:'drawing-office', kind:'site', at:'town', people:4, days:60, needs:Object.freeze({timberKg:4000, glassKg:300}), startLineId:'story.ships.b5.office'}),
+  Object.freeze({id:'copy-the-drawings', kind:'desk', at:'drawing-office', people:2, schooled:true, days:180, after:'drawing-office', midLineId:'story.ships.b5.copying', doneLineIds:['story.ships.b5.ready', 'story.ships.b5.know']}),
+]);
+
 export const SHIPS_JOBS = Object.freeze([
   Object.freeze({id:'ships-visiting-hours', storyId:'ships', number:1, name:'Visiting Hours', kind:'on-foot',
+    opensWhen:Object.freeze({chapterDone:22, yearAtLeast:15, yearsSinceChapter:Object.freeze({22:1}), workDone:['brian-salt-test']}),
     lineId:'story.ships.1.start', resultLineId:'story.ships.1.won', easy:Object.freeze({markerRadius:8}),
     steps:[
       step('reach',{what:'Drive Vesper round to the lockup behind the Dome.', place:lockup, radius:8, wonLineId:'story.ships.1.exit'}),
@@ -220,6 +268,7 @@ export const SHIPS_JOBS = Object.freeze([
         opening:['story.ships.1.baron', 'story.ships.1.vesper', 'story.ships.1.rent', 'story.ships.1.oil', 'story.ships.1.word']}),
     ], rewards:['baron-logbook']}),
   Object.freeze({id:'ships-nothing-to-report', storyId:'ships', number:2, name:'Nothing to Report', kind:'on-foot',
+    opensWhen:Object.freeze({jobDone:'ships-visiting-hours', workDone:['pell-reads-logbook'], standingAtLeast:Object.freeze({'deck-town':30}), lowLineId:'story.ships.b1.friend'}),
     lineId:'story.ships.2.start', resultLineId:'story.ships.2.won', easy:Object.freeze({markerRadius:3, knockedDownRecovery:'last-marker'}),
     steps:[step('onfoot',{what:'Climb the three ships for their logs, then climb the mast.',
       places:[
@@ -231,6 +280,7 @@ export const SHIPS_JOBS = Object.freeze([
       startLineId:'story.ships.2.vesper', afterStartLineId:'story.ships.2.imre'})],
     rewards:['lighthouse-on-map']}),
   Object.freeze({id:'ships-night-watch', storyId:'ships', number:3, name:'Night Watch', kind:'rescue',
+    opensWhen:Object.freeze({jobDone:'ships-nothing-to-report', season:'spring', weather:'dust-storm'}),
     lineId:'story.ships.3.start', resultLineId:'story.ships.3.won', easy:Object.freeze({seats:2, boardSeconds:1.5, radius:10}),
     steps:[step('rescue',{what:'Steer by the beam. Pick up two lookouts, then reach the lighthouse.',
       people:[place('lost-lookout-1', 70, -385, 10, -2), place('lost-lookout-2', 120, -415, 10)], seats:2, boardSeconds:1.5, radius:10, stopSpeed:.5,
@@ -239,6 +289,7 @@ export const SHIPS_JOBS = Object.freeze([
       sayOnce:[{lineId:'story.ships.3.dustmonger', ifPeace:'dustmonger'}, {lineId:'story.ships.3.crisp'}]})],
     rewards:['deck-town-standing']}),
   Object.freeze({id:'ships-the-keeper', storyId:'ships', number:4, name:'The Keeper', kind:'on-foot',
+    opensWhen:Object.freeze({jobDone:'ships-night-watch'}),
     lineId:'story.ships.4.start', resultLineId:'story.ships.4.clue', easy:Object.freeze({markerRadius:3}),
     steps:[step('onfoot',{what:'Climb the lighthouse stairs behind Vesper.',
       places:[
@@ -246,11 +297,12 @@ export const SHIPS_JOBS = Object.freeze([
         Object.freeze({...place('stairs-landing-2', 168, -393, 3, 16), action:'use', lineId:'story.ships.4.letters'}),
         Object.freeze({...place('lamp-room', 170, -397, 3, 24), action:'use'}),
       ], radius:3, climbs:true, weather:'dust-night',
-      closing:['story.ships.4.isolde', 'story.ships.4.dead', 'story.ships.4.told', 'story.ships.4.years', 'story.ships.4.cup', 'story.ships.4.sea', 'story.ships.4.why', 'story.ships.4.salt', 'story.ships.4.letgo', 'story.ships.4.dead2', 'story.ships.4.lamp']})],
+      closing:['story.ships.4.isolde', 'story.ships.4.dead', 'story.ships.4.told', 'story.ships.4.years', 'story.ships.4.cup', 'story.ships.4.sea', 'story.ships.4.why', 'story.ships.4.leak', 'story.ships.4.salt', 'story.ships.4.letgo', 'story.ships.4.dead2', 'story.ships.4.lamp']})],
     rewards:['isolde-found']}),
   Object.freeze({id:'ships-under-tow', storyId:'ships', number:5, name:'Under Tow', kind:'tow',
+    opensWhen:Object.freeze({jobDone:'ships-the-keeper', workDone:['lamp-keeper', 'mend-boat-trailer']}),
     lineId:'story.ships.5.start', resultLineId:'story.ships.5.won', easy:Object.freeze({raiders:1, snapSpeed:14}),
-    vehicle:'tow-rig', steps:[step('tow',{what:'Hook the boat and tow it slowly to your north gate.', load:'pilot-boat', origin:trailer, hookRadius:6,
+    vehicle:'tow-rig', steps:[step('tow',{what:'Hook the boat and tow it slowly to your north gate.', load:'pilot-boat', loadTonnes:15, origin:trailer, hookRadius:6,
       path:path(trailer, place('tow-past-deck-town', 60, -345, 12, -.1), place('tow-lake-shore', 0, -300, 12, 1.1), northGate),
       destination:northGate, radius:14, snapSpeed:12, easySnapSpeed:14, snapLineId:'story.ships.5.snap', restartFrom:'last-marker',
       side:'defend', raiders:path(place('clean-pickup-a', 120, -350, 8), place('clean-pickup-b', 30, -320, 8)), easyRaiders:1, supportCrew:'vesper',
@@ -259,11 +311,12 @@ export const SHIPS_JOBS = Object.freeze([
       closing:['story.ships.5.bo', 'story.ships.5.know', 'story.ships.5.maam', 'story.ships.5.what']})],
     rewards:['pilot-boat-at-gate', 'isolde-in-town']}),
   Object.freeze({id:'ships-the-gatehouse', storyId:'ships', number:6, name:'The Gatehouse', kind:'story',
+    opensWhen:Object.freeze({jobDone:'ships-under-tow', yearsSinceJob:Object.freeze({'ships-under-tow':1}), workDone:['drawing-office', 'copy-the-drawings']}),
     lineId:'story.ships.6.start', resultLineId:'story.ships.6.reveal', easy:Object.freeze({}),
     vehicle:Object.freeze({oneOf:['titan_monster', 'dusthawk_rally'], lendIfNone:'titan_monster', lendLineId:'story.ships.6.mo'}),
     steps:[
       step('reach',{what:'Drive Hollis up the Ridge to the old gatehouse.', place:gatehouse, radius:10,
-        sayAt:[{distance:300, lineId:'story.ships.6.left'}, {distance:180, lineId:'story.ships.6.green'}, {distance:110, lineId:'story.ships.6.tam'}, {distance:100, lineId:'story.ships.6.goat'}],
+        sayAt:[{distance:300, lineId:'story.ships.6.left'}, {distance:230, lineId:'story.ships.6.knees'}, {distance:180, lineId:'story.ships.6.green'}, {distance:110, lineId:'story.ships.6.tam'}, {distance:100, lineId:'story.ships.6.goat'}],
         wonLineId:'story.ships.6.view'}),
       step('hold',{what:'Hollis asked to go in alone. Wait by the car.', place:gatehouse, radius:30, seconds:20, easySeconds:20,
         sayAt:[{seconds:5, lineId:'story.ships.6.wait.vesper'}, {seconds:10, lineId:'story.ships.6.wait.isolde'}, {seconds:17, lineId:'story.ships.6.out'}], noRaiders:true,
@@ -290,6 +343,9 @@ export const SHIPS_SIDE_JOBS = Object.freeze([
 - **Lines on a step.** The player from MULE-RAILS (`docs/story/iron-mule.md` section 5). A `sayOnce`
   entry with `ifPeace` plays only if that warlord is at peace. `sayAt` by `distance` counts metres
   left to the place, and by `seconds` counts time on a `hold`.
+- **`opensWhen`** also reads `standingAtLeast`, `season`, `weather`, `yearsSinceChapter` and `yearsSinceJob`,
+  alongside the fields in `docs/story/iron-mule.md` section 5. `lowLineId` plays as a report when only
+  the standing is short, and the NEXT line says why.
 - **`vehicle`** on a job picks what you drive, through `src/town/work-vehicles.js` (TOWN-VEHICLES)
   or the player's own garage. `lendIfNone` lends for that job and never touches the save.
 
