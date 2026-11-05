@@ -56,16 +56,12 @@ export async function run(c) {
 
   // From the Lab map, walk to the tunnel, open its list, and choose Suspension.
   await d.open(); await shot('wonder'); await d.next('wonder');
-  for (const step of ['word-spring', 'word-stiffness', 'word-weight', 'word-roll', 'word-shake', 'formula']) {
+  for (const step of ['word-spring', 'word-stiffness', 'word-weight', 'word-roll', 'word-shake']) {
     await d.at(step); await shot(step);
     if (step === 'word-shake') {
       const words = await c.evaluate(`(() => ({brian: document.querySelector('.lc-bubble')?.textContent ?? '', formulas: document.querySelector('.lc-formulas')?.textContent ?? ''}))()`);
       if (!words.brian.includes('one body-shake reading for this test')) throw new Error(`Body shake words are missing: ${words.brian}`);
       if (words.formulas.includes('body shake')) throw new Error(`Body shake still has a formula panel: ${words.formulas}`);
-    }
-    if (step === 'formula') {
-      const shown = await c.evaluate(`document.querySelector('.lc-formulas')?.textContent`);
-      if (!shown?.includes('6.5° ÷ 2.2° ≈ 3')) throw new Error(`Roll panel does not show the calculator sum: ${shown}`);
     }
     await d.next(step);
   }
@@ -76,12 +72,19 @@ export async function run(c) {
   await select('Digit2'); await d.say('4.09 m/s²', 'bump prediction explains the readings'); await shot('guess-bumps-answered');
   await d.next('guess-bumps');
   await d.at('guess-roll'); await shot('guess-roll');
-  await select('Digit1'); await d.say('2.2°', 'roll prediction explains the readings'); await shot('guess-roll-answered');
+  await select('Digit1'); await d.say('2.2 degrees', 'roll prediction explains the readings'); await shot('guess-roll-answered');
   await d.next('guess-roll');
 
   // Watch runs through all four spring-road settings; the values really change.
   await d.at('watch'); await shot('watch-start'); await wait(2500); await shot('watch-changing');
   await d.at('watch', 'value.ready'); await shot('watch-finished'); await d.next('watch');
+
+  await d.at('formula'); await shot('formula');
+  {
+    const shown = await c.evaluate(`document.querySelector('.lc-formulas')?.textContent`);
+    if (!shown?.includes('6.5° ÷ 2.2° ≈ 3')) throw new Error(`Roll panel does not show the calculator sum: ${shown}`);
+  }
+  await d.next('formula');
 
   await d.at('try-free'); await shot('try-free');
   await select('ArrowRight'); await select('ArrowDown'); await select('Space');
@@ -103,7 +106,7 @@ export async function run(c) {
   const contract = await c.evaluate(`(() => {
     const panel = document.querySelector('.lc-physics')?.textContent ?? '';
     const past = document.querySelectorAll('.lc-past > *').length;
-    return {hasRoll: panel.includes('body roll'), past};
+    return {hasRoll: panel.includes('body leans'), past};
   })()`);
   if (!contract.hasRoll) throw new Error('Physics panel does not show the body-roll explanation.');
   if (contract.past < 12) throw new Error(`The lesson page did not keep earlier steps: ${contract.past}`);

@@ -132,11 +132,11 @@ function controls(ctx, view) {
   text(ctx, 'SPRING', 552, 135, {size: 12, align: 'left', weight: 900});
   button(ctx, SOFT, 'Soft', '←', view.setup.spring === 'soft', Boolean(view.keys['←']));
   button(ctx, STIFF, 'Stiff', '→', view.setup.spring === 'stiff', Boolean(view.keys['→']));
-  text(ctx, 'ROAD', 552, 231, {size: 12, align: 'left', weight: 900});
+  text(ctx, 'ROAD', 552, 245, {size: 12, align: 'left', weight: 900});
   button(ctx, BUMPY, 'Bumpy', '↓', view.setup.road === 'bumpy', Boolean(view.keys['↓']));
   button(ctx, SMOOTH, 'Smooth', '↑', view.setup.road === 'smooth', Boolean(view.keys['↑']));
   if (view.result && !view.asking) {
-    text(ctx, `${view.setup.spring.toUpperCase()} SPRING · ${view.setup.road.toUpperCase()} ROAD`, 742, 327, {size: 11, weight: 900, colour: theme.accent});
+    text(ctx, `${view.setup.spring.toUpperCase()} SPRING · ${view.setup.road.toUpperCase()} ROAD`, 742, 338, {size: 11, weight: 900, colour: theme.accent});
   }
 }
 

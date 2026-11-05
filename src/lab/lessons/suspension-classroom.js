@@ -21,10 +21,10 @@ export const STEPS = Object.freeze([
   {id: 'word-weight', part: 1, title: 'Weight transfer in a corner', word: 'suspension-word-2'},
   {id: 'word-roll', part: 1, title: 'Body roll', word: 'suspension-word-3'},
   {id: 'word-shake', part: 1, title: 'Body shake', word: 'suspension-body-shake'},
-  {id: 'formula', part: 1, title: 'The roll formula'},
-  {id: 'guess-bumps', part: 3, title: 'Predict body shake on bumps'},
-  {id: 'guess-roll', part: 3, title: 'Predict body roll in a bend'},
+  {id: 'guess-bumps', part: 2, title: 'Predict body shake on bumps'},
+  {id: 'guess-roll', part: 2, title: 'Predict body roll in a bend'},
   {id: 'watch', part: 2, title: 'Watch the rig change'},
+  {id: 'formula', part: 3, title: 'The roll sum'},
   {id: 'try-free', part: 3, title: 'Test three setting pairs'},
   {id: 'alone', part: 4, title: 'Find a flatter cornering setup'},
   {id: 'check-spring', part: 5, title: 'Question 1 of 3'},
@@ -77,9 +77,9 @@ const CHECKS = Object.freeze({
   'guess-bumps': Object.freeze({
     question: 'On the same bumps, which spring gives the smaller body-shake reading?',
     correct: 0,
-    right: 'Right. 4.09 m/s squared is lower than 4.77 m/s squared, so the soft spring shakes less on these bumps.',
-    wrong: 'That prediction is not right. 4.77 m/s squared is higher than 4.09 m/s squared. The stiff spring shakes more in this test.',
-    answers: ['Soft spring: 4.09 m/s².', 'Stiff spring: 4.77 m/s².', 'Both springs: the same reading.'],
+    right: 'Right. 4.09 m/s² is lower than 4.77 m/s², so the soft spring shakes less on these bumps.',
+    wrong: 'That prediction is not right. 4.77 m/s² is higher than 4.09 m/s². The stiff spring shakes more in this test.',
+    answers: ['The soft spring.', 'The stiff spring.', 'Both springs give the same reading.'],
     feedback: 'The soft spring gives 4.09 m/s² here. The stiff spring gives 4.77 m/s², so the soft spring has less body shake on these bumps.',
   }),
   'guess-roll': Object.freeze({
@@ -87,7 +87,7 @@ const CHECKS = Object.freeze({
     correct: 1,
     right: 'Right. In this bend, the soft spring leans 6.5 degrees and the stiff spring leans 2.2 degrees.',
     wrong: 'That prediction is not right. The soft spring gives 6.5 degrees of body roll, greater than the stiff spring’s 2.2 degrees.',
-    answers: ['Soft spring: 6.5°.', 'Stiff spring: 2.2°.', 'Both springs: the same angle.'],
+    answers: ['The soft spring.', 'The stiff spring.', 'Both springs lean the same.'],
     feedback: 'The numbers come from this test: 6.5° ÷ 2.2° is about 3, so the stiff spring leans about a third as much.',
   }),
   'check-spring': Object.freeze({
@@ -137,7 +137,7 @@ function rollDegrees(stiffness) {
 
 function formulaRows(id, setup, {asking = false} = {}) {
   const rows = [];
-  if (['formula', 'guess-bumps', 'guess-roll', 'watch', 'try-free', 'alone', 'check-spring', 'check-transfer', 'check-formula', 'recap'].includes(id)) {
+  if (['formula', 'watch', 'try-free', 'alone', 'check-spring', 'check-transfer', 'check-formula', 'recap'].includes(id)) {
     const soft = resultBySetup['soft/smooth'].leanDeg;
     const stiff = resultBySetup['stiff/smooth'].leanDeg;
     const worked = asking ? '' : `${shown(soft, 1)}° ÷ ${shown(stiff, 1)}° ≈ 3. The numbers come from this test, so the stiff spring leans about a third as much.`;
@@ -355,7 +355,7 @@ export function createModel() {
       }
     } else if (current === 'watch') {
       waiting = phase !== 'done'; ready = phase === 'done';
-      localSay = say || 'Brian is changing the spring and road settings. Watch the wheel, body, spring and readings as the rig moves.';
+      localSay = say || 'I am changing the spring and road settings. Watch the wheel, body, spring and readings as the rig moves.';
       prompt = ready ? 'Press Enter to try your own settings.' : 'Watch the readings change.';
       hints = ['Watch the spring compress and extend as the wheel moves.', 'The panel follows each change in setting.', 'Wait for Brian to finish the demonstration.'];
     } else if (current === 'try-free') {
