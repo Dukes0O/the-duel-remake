@@ -36,3 +36,9 @@ scenario is "Claude runs". Memory-only saves. No new dependency, network request
 - No model on the branch yet.
 
 **Every round from now on:** use `tools/blender/kit-sheet.py` or `fidelity-sheet.py`, as above. Flat ground at the bottom of the picture; a view from car height at about 40 m, a three-quarter view and a close view; a yard car or person beside it for size; the subject filling the frame; readable labels. Spend the triangle budget on real shape (bent edges, ragged holes, hanging parts, weld seams). Wear is uneven: streaks and patches, not one mottled colour all over. The round that passes commits the model and its readback.
+
+**Round 2: close, one more round, then merge.** The sheet is good and each truck now has its own paint. Round 3, the last:
+- Dragon Wagon and Rust Rhino are nearly the same orange-brown at 40 m. Make Dragon Wagon black and red.
+- The extras are still small from the front. Make them about half as big again: Rhino's horn, Kettle's boiler, Lizard's tail, Dragon's jaws and stacks.
+- Too clean for this world: mud, dents, chipped paint on every body.
+- Commit public/assets/models/wasteland/bowl/trucks.glb: no model is on the branch yet.
