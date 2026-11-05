@@ -22,10 +22,16 @@
 
 ## Checks
 
-- `node tools/test-world-job-mode.mjs` — passed before the Everburn follow-up;
-  rerun requested checks in this lane.
-- `node tools/test-everburn-easy.mjs` — passes 10/10 for all nine jobs; see
-  `docs/changes/WW-EVERBURN-JOBS.md` for the finale path.
+- `node tools/test-world-job-mode.mjs` and `node tools/test-world-jobs.mjs` —
+  passed after the Everburn follow-up.
+- `node tools/test-everburn-easy.mjs` — all nine jobs passed 10/10 on Easy;
+  see `docs/changes/WW-EVERBURN-JOBS.md` for the finale path.
+- `node tools/test-replays.mjs` — passed, 297 exact replay checks. No world job
+  ran during the replay check.
+- `node tools/test-combat-replays.mjs` — passed, 12 checks.
+- `node tools/test-scablands-ground.mjs` — passed, 5 tests.
+- `npm.cmd run build` — passed after PowerShell blocked `npm.ps1` by policy.
+- Lane tier — not run, as instructed for this lane.
 - Browser and look checks — Claude runs. Check one job from start to finish,
   including captions, marker, raider wave, following target, visible actor and
   loaned weapon.
@@ -41,8 +47,11 @@
 
 - None.
 
-## Review follow-up still needed
+## Review
 
-- One independent code review and the requested focused checks and build remain
-  before handoff.
+- **Blocked:** the real-mode defence does not update well health, so the
+  promised restart after the well falls is not reachable.
+- **Blocked:** projectile and flame contact checks allocate world-job target
+  arrays and target objects repeatedly during simulation. The fix reaches
+  combat files outside this card's named hooks and needs a re-slice.
 - Claude's browser and look checks remain.

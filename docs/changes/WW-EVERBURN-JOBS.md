@@ -26,9 +26,15 @@
 
 - `node tools/test-everburn-easy.mjs` — passed; all nine jobs finished 10/10
   on Easy through real `Duel` inputs.
-- `node tools/test-world-job-mode.mjs`, `node tools/test-world-jobs.mjs`,
-  `node tools/test-replays.mjs`, `node tools/test-combat-replays.mjs`,
-  `node tools/test-scablands-ground.mjs`, and `npm run build` — pending.
+- `node tools/test-world-job-mode.mjs` and `node tools/test-world-jobs.mjs` —
+  passed.
+- `node tools/test-replays.mjs` — passed, 297 checks; no world job ran and
+  replay fingerprints stayed exact.
+- `node tools/test-combat-replays.mjs` — passed, 12 checks.
+- `node tools/test-scablands-ground.mjs` — passed, 5 tests.
+- `npm.cmd run build` — passed. The PowerShell `npm.ps1` wrapper was blocked
+  by execution policy, so the same npm build ran through `npm.cmd`.
+- Lane tier — not run, as instructed for this lane.
 - Browser and look check — Claude runs; Chrome is unavailable in this job.
 
 ## Changed assertions
@@ -43,3 +49,21 @@
 
 - Removed temporary trace output used to diagnose the Easy driver. No scratch
   diagnostics are part of the game or test.
+
+## Review
+
+- **Blocked:** `stepDefend` requests the job refill on every tick while a wave
+  remains. The mode clears the car weapon cooldown and restores RPG ammo each
+  time, so this is continuous supply during combat rather than a between-wave
+  refill.
+- **Blocked:** the real mode passes `worldJob.placeHealth` to the job step, but
+  never updates it when raiders reach the well. The well-fall wave restart
+  cannot occur in a real defence.
+- **Blocked:** projectile and flame contact paths request newly allocated
+  world-job target arrays and target objects repeatedly during simulation.
+  These paths need a shared per-step snapshot or non-allocating iteration.
+- The first issue needs a change to the defend-step hook; target snapshots
+  also touch combat files outside the named WW-HOOKS hooks. Re-slice those
+  fixes before changing code. Focused checks and the build passed, but do not
+  cover these findings. Replay fingerprints remained exact in the reported
+  replay check.
