@@ -515,10 +515,12 @@ try {
       const ids=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck'];
       assert.ok(names.includes('town-machines-2'),'family root is missing');
       for(const id of ids)assert.ok(names.includes(id),`${id} root is missing`);
-      for(const joint of ['loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook'])
+      for(const joint of ['loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook','pipe-truck:pipe-1','pipe-truck:pipe-2','pipe-truck:pipe-3','pipe-truck:pipe-4','pipe-truck:pipe-5'])
         assert.ok(names.includes(joint),`${joint} pivot node is missing`);
       const children=gltf.nodes.map(node=>node.children||[]);const ix=names.indexOf('town-machines-2');
       assert.deepEqual(children[ix].map(i=>names[i]).sort(),ids.slice().sort(),'family root has one direct child per machine');
+      const familyX=ids.map(id=>gltf.nodes[names.indexOf(id)].translation?.[0]??0);
+      assert.equal(new Set(familyX).size,ids.length,'each machine has its own family-row position');
       assert.ok(bytes.length<=3_000_000,'machine family exceeds 3 MB');
       const descendants=index=>[index,...children[index].flatMap(descendants)];
       for(const id of ids){
