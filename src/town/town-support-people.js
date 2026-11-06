@@ -17,8 +17,10 @@ function deliveredWater(town) {
   if (Number.isFinite(network) && network > 0) return network;
   let wellWater = 0;
   for (const region of Object.values(town.regions || {})) {
-    for (const well of Object.values(region?.groundWater?.wells || {})) {
-      if (Number.isFinite(well.waterLitres) && well.waterLitres > 0) wellWater += well.waterLitres;
+      for (const well of Object.values(region?.groundWater?.wells || {})) {
+      const reserve=Number.isFinite(well.waterLitres)?well.waterLitres:0;
+      const yieldPerDay=Number.isFinite(well.yieldLitresPerDay)?well.yieldLitresPerDay:reserve;
+      if (reserve>0&&yieldPerDay>0) wellWater += Math.min(reserve,yieldPerDay);
     }
   }
   return wellWater;

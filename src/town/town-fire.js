@@ -1,5 +1,6 @@
 import {buildingById} from './content/registry.js';
 import {registerTownSystem} from './town-sim.js';
+import {registerTownCommand} from './town-commands.js';
 import {ensureHomeGround} from './town-home-ground.js';
 
 const HOURS_PER_YEAR = 360 * 24;
@@ -31,6 +32,8 @@ export function igniteTownFire(town,buildingId) {
   building.fireStartedTick=tick;
   return true;
 }
+registerTownCommand('igniteTownFire',(town,command)=>igniteTownFire(town,command.buildingId)
+  ?{ok:true,message:'The site is burning.'}:{ok:false,message:'That site cannot catch fire.'});
 
 // Reports the amount one hose can deliver in the current game hour. It does
 // not alter the town; callers decide how to apply the water and spend it.

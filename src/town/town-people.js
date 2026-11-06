@@ -203,6 +203,22 @@ function recordPassing(town, person, tick, age) {
   town.book.push({type:'passing', personId:person.id, name:person.name, tick, text:`${person.name} ${line.toLowerCase()} They are remembered in the Old Ground.`});
 }
 
+// Keep saved household records and their six-month improvement rule. Places
+// for arrivals are measured separately from plots in town-support-people.
+function updateHomes(town, householdNeeds) {
+  const plots=town.homePlots||[];
+  let remaining=plots.reduce((sum,plot)=>sum+(plot.household&&!plot.burning?(TOWN_HOME_TYPES[plot.tier]?.places||0):0),0);
+  for(const home of town.homes||[]) {
+    const needs=householdNeeds.get(home.id),supported=Boolean(needs?.members&&needs.supported),goodMood=Boolean(needs?.members&&needs.goodMood);
+    const painted=remaining>0;if(painted)remaining--;
+    if(painted&&supported&&goodMood){home.goodDays=(home.goodDays||0)+1;home.hardDays=0;if(home.goodDays>=180){home.tier++;home.goodDays=0;}}
+    else if(home.tier>0&&(!painted||!supported||needs?.poorMood)){home.hardDays=(home.hardDays||0)+1;home.goodDays=0;if(home.hardDays>=359){home.tier--;home.hardDays=0;}}
+    home.type=TOWN_HOME_TYPES[home.tier]?.label||`home tier ${home.tier+1}`;
+  }
+  const homeById=new Map((town.homes||[]).map(home=>[home.id,home]));
+  for(const person of town.people) {const home=homeById.get(person.home);if(home){person.homeTier=home.tier;person.homeType=home.type;}}
+}
+
 export function stepTownPeople({town, rng, tick, calendar}) {
   if (!Array.isArray(town.people)) town.people = [];
   if (!town.people.length && !town.foundingRecorded) {
@@ -357,7 +373,7 @@ export function stepTownPeople({town, rng, tick, calendar}) {
     for (const person of town.people) if (work.passedPartners[person.id]) person.partnerId = null;
   }
   town.homesReady = true;
-  // Housing tiers now belong to painted plots and advance in town-home-ground.
+  if(town.homePlots?.length) updateHomes(town,new Map(Object.entries(work.householdNeeds)));
   town.nextPersonNumber = BigInt(work.nextIdBig ?? work.nextId);
   town.peopleIdsReady = true;
   matchJobs(town, work.hasBuildingAssignments);

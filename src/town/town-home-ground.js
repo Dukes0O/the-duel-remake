@@ -6,7 +6,6 @@ import {stockpileAt, takeGood} from './town-goods.js';
 import {raiseTownReport} from './town-reports.js';
 
 const DAY = 24;
-const TIER = new Map(TOWN_HOME_TYPES.map((row,index)=>[row.id,index]));
 export function ensureHomeGround(town) { if (!Array.isArray(town.homePlots)) town.homePlots=[]; return town.homePlots; }
 function plotKey(plot) { return `${plot.regionId}:${plot.x}:${plot.z}`; }
 function validCell(cell) { return cell && Number.isSafeInteger(cell.x) && Number.isSafeInteger(cell.z); }
@@ -48,16 +47,14 @@ function findHousehold(town,plot) {
   }
   return [...families.entries()].find(([family])=>!town.homePlots.some(p=>p.household===family))||null;
 }
-function beginBuild(town,plot) {
-  const next=TOWN_HOME_TYPES[plot.tier+1]; if(!next) return;
-  const family=findHousehold(town,plot); if(!family){plot.waitingGood=null;return;}
+function startConstruction(town,plot,next,family) {
   const store=storeCell(town,plot);
   if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;reportShortage(town,plot,next);return;}
   for(const [good,amount] of Object.entries(next.goods)) if((stockpileAt(town,{regionId:store.regionId,x:store.x,z:store.z})[good]||0)<amount) {
     plot.waitingGood=good;reportShortage(town,plot,next);return;
   }
   for(const [good,amount] of Object.entries(next.goods)) takeGood(town,{regionId:store.regionId,x:store.x,z:store.z},good,amount);
-  plot.household=family[0]; plot.family=family[0]; plot.progressDays=0; plot.waitingGood=null;
+  plot.household=family; plot.family=family; plot.progressDays=0; plot.building=true; plot.waitingGood=null;
   for(const person of town.people) if(person.family===plot.family) {person.home=plot.id;person.homeType='Under construction';}
 }
 function reportShortage(town,plot,type) {
@@ -70,15 +67,22 @@ export function stepTownHomeGround({town,tick}) {
   const plots=ensureHomeGround(town); if(BigInt(tick)%BigInt(DAY)!==0n) return;
   for(const plot of plots) {
     if(plot.burning) continue;
-    if(!plot.household) {beginBuild(town,plot);continue;}
+    if(!plot.household) {const family=findHousehold(town,plot);if(family)startConstruction(town,plot,TOWN_HOME_TYPES[plot.tier+1],family[0]);continue;}
     const next=TOWN_HOME_TYPES[plot.tier+1]; if(!next) continue;
-    plot.progressDays++;
+    if(plot.building) plot.progressDays++;
+    else {
+      const household=(town.people||[]).filter(person=>person.family===plot.family);
+      const supported=household.length&&household.every(person=>person.mood>=50&&person.needs?.shelter!==false&&person.needs?.waterLitres>=person.needs?.waterNeedLitres&&person.needs?.foodCalories>=2100);
+      plot.goodDays=supported?(plot.goodDays||0)+1:0;
+      if(plot.goodDays>=180) {plot.goodDays=0;startConstruction(town,plot,next,plot.household);}
+      continue;
+    }
     if(plot.progressDays>=next.days) {
       plot.tier++;
       for(const person of town.people) if(person.family===plot.family) {
         person.home=plot.id;person.homeType=next.label;person.homeTier=plot.tier;
       }
-      plot.progressDays=0; plot.waitingGood=null;
+      plot.progressDays=0; plot.building=false; plot.waitingGood=null;
     }
   }
 }
