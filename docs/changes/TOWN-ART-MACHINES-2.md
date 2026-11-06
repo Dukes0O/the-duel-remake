@@ -2,7 +2,7 @@
 
 ## Changed
 
-Round 5 tightens the truck cab shells, changes truck bonnets to chamfered panels and lowers tyre tread relief to 5.5 cm. The round 5 sheet shows all seven machines at rest and work from the exported GLB imported into a clean Blender scene. The GLB is 2,878,416 bytes and each machine remains below 15,000 triangles.
+Round 5 tightens the truck cab shells, changes truck bonnets to chamfered panels and lowers tyre tread relief to 5.5 cm. The round 5 sheet shows all seven machines at rest and work from the exported GLB imported into a clean Blender scene. The GLB is 2,878,416 bytes and each machine remains below 15,000 triangles. This round did not rebuild the mixer, crane, pipe truck or roller with `photo_model.py`, although that kit is present after the merge; the recipe still uses the earlier construction method. That part of the card acceptance remains open for Claude’s review.
 
 ## Checks
 
