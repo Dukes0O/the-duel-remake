@@ -8,3 +8,5 @@ Original Wasteland cars, not real makes and not copies of any film or game vehic
 `longhaul`: a six-wheeled desert truck, cab forward, big fuel tanks either side, a tool rack and spare wheels, a bull bar. Slow, heavy and hard to stop.
 
 ## Claude answers
+
+Round 5 of 6 (Kyle's limit is six). Merged as the working model: a believable, gritty six-wheel recovery truck, with its paint, cab, tanks and rear load right. Still short of the photo: the bull bar is square rather than tubular, the tread is a little spiky and the boom is slender. Not yet wired into the game.
