@@ -84,6 +84,13 @@ const otherStep={kind:'drivetrain',path:[point('a',0),point('loop',50),point('b'
 let other=createJob({steps:[otherStep]});other=tick(other,{},10);
 assert.equal(other.stepState.otherTrainMetres,50,'other train reaches the loop and waits without a token');
 assert(other.requests.some(request=>request.type==='train'&&request.actorId==='wednesday'));
+let arriving=createJob({steps:[{...otherStep,otherTrain:{...otherStep.otherTrain,arrivesWith:'player'}}]});
+arriving.stepState={metres:25,speed:0,otherTrainMetres:25};
+arriving=tick(arriving,{controls:{throttle:1}},1);
+const arrivingTrain=arriving.requests.find(request=>request.type==='train'&&request.actorId==='wednesday');
+assert(Math.abs(arrivingTrain.metres-(arriving.stepState.metres/50*50))<.01,
+  'the other train matches the player approach to the loop');
+assert(arrivingTrain.speed<=otherStep.otherTrain.speed*2,'the other train stays within twice its listed speed');
 const hoopStep={kind:'drivetrain',path:[point('a',0),point('hoop',50),point('b',100)],massTonnes:70,
   tokenHoop:{place:point('hoop',50),kmh:40,windowMetres:20,backMetres:300,missLineId:'miss',fastLineId:'fast'}};
 let hoop=createJob({steps:[hoopStep]});hoop.stepState={metres:61,speed:12};
