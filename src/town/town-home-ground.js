@@ -3,6 +3,7 @@ import {registerTownSystem} from './town-sim.js';
 import {cellIsReserved, ensureTownRegion, getTownChunk, TOWN_REGIONS} from './town-world-data.js';
 import {TOWN_HOME_TYPES} from './content/homes.js';
 import {stockpileAt, takeGood} from './town-goods.js';
+import {raiseTownReport} from './town-reports.js';
 
 const DAY = 24;
 const TIER = new Map(TOWN_HOME_TYPES.map((row,index)=>[row.id,index]));
@@ -51,13 +52,19 @@ function beginBuild(town,plot) {
   const next=TOWN_HOME_TYPES[plot.tier+1]; if(!next) return;
   const family=findHousehold(town,plot); if(!family){plot.waitingGood=null;return;}
   const store=storeCell(town,plot);
-  if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;return;}
+  if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;reportShortage(town,plot,next);return;}
   for(const [good,amount] of Object.entries(next.goods)) if((stockpileAt(town,{regionId:store.regionId,x:store.x,z:store.z})[good]||0)<amount) {
-    plot.waitingGood=good;return;
+    plot.waitingGood=good;reportShortage(town,plot,next);return;
   }
   for(const [good,amount] of Object.entries(next.goods)) takeGood(town,{regionId:store.regionId,x:store.x,z:store.z},good,amount);
   plot.household=family[0]; plot.family=family[0]; plot.progressDays=0; plot.waitingGood=null;
   for(const person of town.people) if(person.family===plot.family) {person.home=plot.id;person.homeType='Under construction';}
+}
+function reportShortage(town,plot,type) {
+  const count=(town.homePlots||[]).filter(item=>item.tier===plot.tier&&item.waitingGood).length;
+  const label=type.label.endsWith('s')?type.label:`${type.label}s`;
+  raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,where:`${plot.regionId} ${plot.x}, ${plot.z}`,
+    detail:`${label} going up, ${count} of ${(town.homePlots||[]).length}. Short of ${plot.waitingGood}.`});
 }
 export function stepTownHomeGround({town,tick}) {
   const plots=ensureHomeGround(town); if(BigInt(tick)%BigInt(DAY)!==0n) return;

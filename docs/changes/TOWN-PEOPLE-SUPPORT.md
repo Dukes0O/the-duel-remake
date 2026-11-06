@@ -5,6 +5,7 @@
 - Replaced the first-pass building-bed estimate with an open-ended saved plot list and the settled home tier data table.
 - Added `paintHomeGround` and `clearHomeGround` town commands, daily construction work that takes goods from the nearest stockpile, legacy-save migration to an empty plot list, plot-based shelter measurement, and fire loss that returns residents to canvas.
 - Updated the people system to use the new home tier labels and removed its old bed-count-driven plot proxy.
+- Added the `home-goods-shortage` report to the existing town reports catalog; plots waiting for a specific good raise a plain-language report with the home count and missing good.
 
 ## Checks
 
