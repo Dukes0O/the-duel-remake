@@ -1581,3 +1581,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 WW-ART-RAIL engine merged, card still open: the 2:15's engine and drift pass (round 3), on the new photo-model kit (tools/blender/photo_model.py; method in ASSET_PIPELINE); lane tier and build passed on 6689d50a.
 WW-ART-CREW props merged, card still open: the harpoon, piano and Gerald pass (round 5), rewritten by Claude on the photo kit, which gains Photo.bleed and shrink; lane tier 47/47 and build passed on ab36be8e.
 - 6 Nov: merged the fire engine (TOWN-ART-TRUCKS-1 round 9, past six rounds with Kyle's approval): carved from four photos by the new tools/blender/hull_model.py; 284 art checks, hygiene, build. Tanker, supply truck and tow rig still open.
+- 5 Nov: TOWN-ART-VANE merged; verdict on its card.
