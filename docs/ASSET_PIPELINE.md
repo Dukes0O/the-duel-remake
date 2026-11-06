@@ -371,3 +371,28 @@ Style: premium automotive visualization and environment concept art, physically 
 ### Expanded scene reference
 
 `public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Falcone Heritage retains the former F42 sport version of the licensed concept body. Aurora shares that source with original carbon aero and gold-wheel materials; neither is a separately scanned vehicle. The other six cars retain their separate original bodies and matching portable exports.
+
+## Models from photos (Claude, 6 November 2026)
+
+This is how to build anything that has to look like a real, worn object. Tiling swatches cut from a photo failed on every card that tried it, and so did modelling a shape by eye and projecting a photo on it: the shape misses the picture, and the sky shows on the model.
+
+Use `tools/blender/photo_model.py`, and copy `tools/blender/rail-trains.py`, the worked example:
+
+1. Generate dead-on photos of one object (side, front, rear, or overhead) in flat light on a plain pale background. Measure in them.
+2. Make the mask with `Photo.sky(seeds)`. Give one seed for each opening where sky shows through, and look at the mask. A pale, slightly coloured sky may need a larger `grey`.
+3. Build each part: `trace` and `slab` for anything flat, with its real holes; `box` for plain blocks, naming one picture rectangle per face; `lathe` for anything round, with its radius read off the mask.
+4. Each part has its own place in the picture, so nothing is drawn twice and no face shows the background. A face that cannot see a part of the photo takes a rectangle of real material at about true size, never the UVs of the edge beside it, which make streaks.
+5. Avoid the edge pixels of a lathe's picture: they are the outline, and often the sky. Scale the arc by about 0.85.
+6. Render from the exported GLB in an empty scene, with the view transform set to Standard and flat light, beside the photo at the same angle.
+
+Two faces in the same place flicker, so the underside of a shell needs a real gap from its top.
+
+### Vehicles and anything that curves in every direction
+
+Flat parts come apart at an angle on a cab, bonnet or wing. Use `tools/blender/hull_model.py` instead, with the fire truck in `tools/blender/town-trucks-1.py` as the worked example (`docs/board/looks/town-art-trucks-1/round-9.jpg`):
+
+1. Generate dead-on photos of one object: side, front, rear and overhead. Keep them in the model's `textures` folder, not in `.evidence`.
+2. Measure each photo by hand: where the ground is, where the subject starts and ends, and each wheel's centre and radius. Give each view a `pick` function from metres to pixels.
+3. Trim what is not the body from each mask: ground shadow, thin mirrors, and anything you will build as its own moving part.
+4. Keep only voxels above the frame, with room cut for the wheels. Let `carve_hull` do the rest.
+5. Build wheels, axles and moving parts as round parts at their true world positions, and bleed each photo's background out using a wider colour match that takes in the ground shadow.
