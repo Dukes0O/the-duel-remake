@@ -227,3 +227,26 @@ Common prompt for each four-view turnaround: "Create a photographic modeling ref
 - `tow-side.jpg`, `tow-front.jpg`, `tow-rear.jpg`, `tow-overhead.jpg`: the prompt above plus "faded dusty ochre-brown paint, exposed heavy rear chassis, braced lattice recovery crane and hanging steel hook, single front tires and dual rear tires."
 
 These are original generated images. No outside photography, manufacturer references, logos or third-party materials were used.
+
+## TOWN-ART-TRUCKS-1, round 11: separate supply load
+
+Generated with OpenAI image generation on 6 November 2026, using the round 10
+sheet as the visual reference. The four named crops below are embedded in the
+model as the rebuild inputs for the hideable load hull. A crop appears beside
+the exported-model views on the round 11 review sheet.
+
+Prompt: "Photographic orthographic 2x2 turnaround sheet of the same original
+faded olive-gray 1950s supply truck referenced in the recent review sheet:
+rounded cab, one front axle, tandem rear axle, open slatted wooden flatbed.
+This time the bed is richly but compactly loaded with aged crates, canvas
+sacks, wrapped bundles and metal tins, all tightly lashed with visible rope,
+cargo within bed width and raised above a visible wood bed floor. Exact left
+side, straight front, straight rear, true overhead, each full truck visible
+with pale gray margin. Worn dusty paint, real wood grain and canvas weave,
+realistic tires, diffuse bright overcast light, plain pale gray floor and
+background, no perspective, no labels, no people or logos, no watermark."
+
+- `supply-load-side.jpg`, `supply-load-front.jpg`, `supply-load-rear.jpg`,
+  `supply-load-overhead.jpg`: the four measured source views for
+  `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
+  inputs.

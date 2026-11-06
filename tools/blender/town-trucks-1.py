@@ -162,7 +162,7 @@ def merge_static_meshes(root_obj):
 
 # All four trucks use the same measured photo and hull pipeline. The fire engine
 # below remains the approved model; the three other silhouettes use the tables.
-from photo_model import Photo, Mesh as PhotoMesh, lathe
+from photo_model import Photo, Mesh as PhotoMesh, lathe, trace, slab
 from hull_model import View, occupancy, largest_part, carve_hull
 import numpy as np
 
@@ -347,6 +347,7 @@ def build_photo_truck(identifier, spec):
     front_photo = Photo(textures / f'{side_file}-front.jpg')
     rear_photo = Photo(textures / f'{side_file}-rear.jpg')
     top_photo = Photo(textures / f'{side_file}-overhead.jpg')
+    crane_photo = Photo(textures / 'tow-side.jpg') if identifier=='tow-rig' else None
     length,width,height = spec['length'],spec['width'],spec['height']
     front_px,rear_px,ground,axle_px,wheel_y,wheel_r_px = spec['side']
     side_scale = length/(rear_px-front_px)
@@ -381,7 +382,7 @@ def build_photo_truck(identifier, spec):
             mask[:235,420:]=False
             mask[55:185,850:]=False
         if identifier=='tow-rig':
-            mask[:185,430:]=False
+            mask[:275,430:]=False
         return mask
     def trim_end(row, supply=False):
         def trim(mask):
@@ -393,6 +394,9 @@ def build_photo_truck(identifier, spec):
         side_pick,(-1,0,0),trim_side)
     right=View('side',side_photo,[(5,5)],side_pick,(1,0,0),trim_side)
     right.mask=left.mask
+    tow_lattice_mask=(~crane_photo.sky([(5,5),(crane_photo.w-6,5),(5,crane_photo.h-6)],
+                                      tolerance=70,grey=30)
+                      if identifier=='tow-rig' else None)
     front=View('front',front_photo,[(5,5),(front_photo.w-6,5),(5,front_photo.h-6)],
         front_pick,(0,0,-1),trim_end(end_ground,identifier=='supply-truck'))
     rear=View('rear',rear_photo,[(5,5),(rear_photo.w-6,5),(5,rear_photo.h-6)],
@@ -412,10 +416,10 @@ def build_photo_truck(identifier, spec):
     solid,xs,ys,zs=occupancy(((-width/2-.08,width/2+.08),(0,height),(z0-.08,-z0+.08)),
         voxel,occupancy_views,clear_of_wheels)
     solid=largest_part(solid)
-    side_photo.bleed(left.mask & ~side_photo.sky([(5,5),(side_photo.w-6,5),(5,side_photo.h-6)],tolerance=70,grey=26))
-    front_photo.bleed(front.mask & ~front_photo.sky([(5,5),(front_photo.w-6,5),(5,front_photo.h-6)],tolerance=70,grey=26))
-    rear_photo.bleed(rear.mask & ~rear_photo.sky([(5,5),(rear_photo.w-6,5),(5,rear_photo.h-6)],tolerance=70,grey=26))
-    top_photo.bleed(top.mask & ~top_photo.sky([(5,5),(top_photo.w-6,5),(5,top_photo.h-6),(top_photo.w-6,top_photo.h-6)],tolerance=70,grey=26))
+    side_photo.bleed(left.mask & ~side_photo.sky([(5,5),(side_photo.w-6,5),(5,side_photo.h-6)],tolerance=70,grey=30))
+    front_photo.bleed(front.mask & ~front_photo.sky([(5,5),(front_photo.w-6,5),(5,front_photo.h-6)],tolerance=70,grey=30))
+    rear_photo.bleed(rear.mask & ~rear_photo.sky([(5,5),(rear_photo.w-6,5),(5,rear_photo.h-6)],tolerance=70,grey=30))
+    top_photo.bleed(top.mask & ~top_photo.sky([(5,5),(top_photo.w-6,5),(5,top_photo.h-6),(top_photo.w-6,top_photo.h-6)],tolerance=70,grey=30))
     face_materials={'side':side_photo.material(),'front':front_photo.material(),
         'rear':rear_photo.material(),'overhead':top_photo.material()}
     root_obj=pivot(identifier,(0,0,0));TRUCKS[identifier]=root_obj
@@ -459,18 +463,51 @@ def build_photo_truck(identifier, spec):
         lens=bpy.context.object;lens.name=identifier+':headlamp-'+label;lens.data.materials.append(lamp);parent_keep_world(lens,lamp_group)
 
     if identifier=='supply-truck':
+        # The loaded truck is carved from its own four measured views. Its
+        # low limit leaves the photo-carved bed floor and rails visible below.
         load=pivot(identifier+':load',(0,0,0));attach(load,root_obj)
-        bed_y=1.55
-        for x,z,w,d,h in [(-.46,.40,.72,.66,1.25),(.35,.82,.68,.64,1.38),(-.34,1.54,.74,.70,1.32),(.36,2.35,.64,.62,1.45)]:
-            crate=box(identifier+':load-crate',(x,bed_y+h/2,z),(w,h,d),wood,.055)
-            parent_keep_world(crate,load)
-        for x,z in [(-.70,.95),(.68,1.30),(-.63,2.25),(.66,2.72)]:
-            bpy.ops.mesh.primitive_uv_sphere_add(segments=20,ring_count=12,radius=1,location=game_vector((x,bed_y+1.25,z)))
-            sack=bpy.context.object;sack.name=identifier+':load-sack';sack.scale=(.28,.43,.36);sack.data.materials.append(canvas);parent_keep_world(sack,load)
-        for z in (.55,2.38):
-            rope=pipe(identifier+':load-lashing',[(.66,2.88,z),(.42,3.00,z+.04),
-                (-.42,3.00,z+.04),(-.66,2.88,z)],.012,dark_metal)
-            for obj in rope if isinstance(rope,list) else [rope]: parent_keep_world(obj,load)
+        loaded={view:Photo(textures/f'supply-load-{view}.jpg')
+                for view in ('side','front','rear','overhead')}
+        side_ground,side_front,side_rear=449,104,954
+        load_scale=8.2/(side_rear-side_front)
+        load_z0=-4.1
+        def load_side_pick(x,y,z):
+            return side_front+(z-load_z0)/load_scale, side_ground-y/load_scale
+        def load_front_pick(x,y,z):
+            return 222-x/.0105,397-y/.0105
+        def load_rear_pick(x,y,z):
+            return 300+x/.00955,402-y/.00955
+        def load_top_pick(x,y,z):
+            return 72+(z-load_z0)*762/8.2,230+x/.00948
+        load_left=View('side',loaded['side'],[(5,5),(1078,5),(5,495)],
+            load_side_pick,(-1,0,0))
+        load_right=View('side',loaded['side'],[(5,5)],load_side_pick,(1,0,0))
+        load_right.mask=load_left.mask
+        load_front=View('front',loaded['front'],[(5,5),(438,5),(5,495)],
+            load_front_pick,(0,0,-1))
+        load_rear=View('rear',loaded['rear'],[(5,5),(594,5),(5,507)],
+            load_rear_pick,(0,0,1))
+        load_top=View('overhead',loaded['overhead'],[(5,5),(922,5),(5,507),(922,507)],
+            load_top_pick,(0,1,0))
+        side_seeds=[(5,5),(1078,5),(5,495)]
+        front_seeds=[(5,5),(438,5),(5,495)]
+        rear_seeds=[(5,5),(594,5),(5,507)]
+        top_seeds=[(5,5),(922,5),(5,507),(922,507)]
+        for view,mask,seeds in ((load_left,load_left.mask,side_seeds),
+            (load_front,load_front.mask,front_seeds),(load_rear,load_rear.mask,rear_seeds),
+            (load_top,load_top.mask,top_seeds)):
+            view.photo.bleed(mask & ~view.photo.sky(seeds,tolerance=70,grey=30))
+        def load_ends_allow(x,y,z):
+            return load_front.covers(x,y,z)|load_rear.covers(x,y,z)
+        voxel=.035
+        load_solid,lxs,lys,lzs=occupancy(((-1.16,1.16),(1.53,3.85),(-.72,4.12)),voxel,
+            [load_left.covers,load_top.covers,load_ends_allow])
+        load_solid=largest_part(load_solid)
+        load_materials={name:photo.material() for name,photo in loaded.items()}
+        cargo=carve_hull(identifier+':load-carved',
+            [load_left,load_right,load_front,load_rear,load_top],load_materials,
+            load_solid,lxs,lys,lzs,voxel,2000)
+        attach(cargo,load)
     elif identifier=='water-tanker':
         for side in (-1,1):
             pipe(identifier+':valve-drain',[(side*.78,1.1,.25),(side*.91,.67,.25),(side*.76,.67,1.1)],.035,dark_metal)
@@ -478,14 +515,31 @@ def build_photo_truck(identifier, spec):
             for drip in range(4):
                 pipe(identifier+':tank-drip',[(side*.91,1.7,.4+drip*.9),(side*.91,1.45,.4+drip*.9)],.014,dark_metal)
     else:
-        hook_point=(0,1.45,length/2+.82)
-        hook=pivot(identifier+':hook',(0,0,0));attach(hook,root_obj,hook_point)
-        cable=pipe(identifier+':hook-cable',[(0,3.55,length*.46),(0,1.75,length/2+.72),hook_point],.032,dark_metal)
+        # Trace the side-photo lattice, retaining its open holes, then give the
+        # sheet a real 14 cm thickness across the truck.
+        tow_roi=(430,18,1006,292)
+        # Save the original mask before background bleeding changes its pale
+        # pixels; tracing the bled image would mistake its painted fill for steel.
+        crane_mask=tow_lattice_mask.copy()
+        crane_mask[38:178,962:986]=False  # the hoist line is a separate part
+        loops=trace(crane_mask,tow_roi,tolerance=1.0,min_area=5)
+        crane_mesh=PhotoMesh()
+        def crane_world(px,py,d):
+            return (d,(ground-py)*side_scale,z0+(px-front_px)*side_scale)
+        slab(crane_mesh,'side',crane_photo,loops,crane_world,-.07,.07,
+             wall_scale=side_scale)
+        boom=crane_mesh.finish(identifier+':crane-boom',{'side':crane_photo.material()})
+        attach(boom,root_obj)
+        tip_px,tip_py=978,28
+        tip_z=z0+(tip_px-front_px)*side_scale
+        tip_y=(ground-tip_py)*side_scale
+        hook_y=(ground-228)*side_scale
+        hook=pivot(identifier+':hook',(0,0,0));attach(hook,root_obj,(0,hook_y,tip_z))
+        cable=pipe(identifier+':hook-cable',[(0,tip_y,tip_z),(0,hook_y+.18,tip_z)],.014,dark_metal)
         for obj in cable if isinstance(cable,list) else [cable]: parent_keep_world(obj,hook)
-        hook_z=length/2+.82
-        forged=pipe(identifier+':hook-forged',[(0,1.65,hook_z),(0,1.43,hook_z),
-            (.08,1.25,hook_z),(.23,1.23,hook_z),(.25,1.35,hook_z),
-            (.18,1.43,hook_z)],.045,tin)
+        forged=pipe(identifier+':hook-forged',[(0,hook_y+.22,tip_z),(0,hook_y,tip_z),
+            (0,hook_y-.16,tip_z),(.07,hook_y-.30,tip_z),(.18,hook_y-.27,tip_z),
+            (.21,hook_y-.15,tip_z)],.035,tin)
         for obj in forged if isinstance(forged,list) else [forged]: parent_keep_world(obj,hook)
     return root_obj
 
@@ -545,7 +599,7 @@ scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(1,1
 scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=1
 bpy.ops.import_scene.gltf(filepath=str(output))
 # Blender is Z-up after import; the road plane lies in XY at Z=0.
-bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,0))
+bpy.ops.mesh.primitive_plane_add(size=2000,location=(0,0,0))
 floor=bpy.context.object; floor.name='plain pale review ground'
 floor_mat=bpy.data.materials.new('plain pale review ground'); floor_mat.use_nodes=True
 floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.38,.38,.38,1)
@@ -584,7 +638,10 @@ for identifier,_,_,_ in specs:
     render_view(identifier,'three-quarter-front',(-length*1.3,length*1.3,height*1.4),width=length*1.35,resolution=(900,630))
     render_view(identifier,'three-quarter-rear',(length*1.3,-length*1.3,height*1.4),width=length*1.35,resolution=(900,630))
     render_view(identifier,'mayor-height',(length*1.5,length*1.5,length*2.0),target=(0,0,0),width=length*1.65)
-    render_view(identifier,'road-view',(-length*1.6,length*1.2,.65),target=(0,0,1.3),width=length*1.35)
+    # Round 9's driver-height side camera shows the entire truck at its ground
+    # line, without the clipped view and pale band from the old angled camera.
+    render_view(identifier,'road-view',(-length*1.5,0,1.9),target=(0,0,1.5),
+                width=length*1.18,resolution=(1100,700))
 print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
                   'trucks':truck_metrics,'renderedFromImportedGlb':True,'viewTransform':'Standard',
                   'reviewViews':'seven per truck','evidence':str(evidence)}))
