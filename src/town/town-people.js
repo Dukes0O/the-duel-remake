@@ -41,7 +41,7 @@ function makePerson(town, rng, data = {}) {
   const family = data.family || townFamilyName(rng, number - 1n);
   const homeId = data.home || `canvas-${family}`;
   town.homes ||= [];
-  if (!data.home) town.homes.push({id:homeId, tier:0, goodDays:0, hardDays:0, type:TOWN_HOME_TYPES[0]});
+  if (!data.home) town.homes.push({id:homeId, tier:0, goodDays:0, hardDays:0, type:TOWN_HOME_TYPES[0].label});
   return {
     id,
     name: typeof data.name === 'string' && data.name.trim() ? data.name.trim() : townPersonName(rng),
@@ -51,7 +51,7 @@ function makePerson(town, rng, data = {}) {
     family,
     home: homeId,
     homeTier: 0,
-    homeType: TOWN_HOME_TYPES[0],
+    homeType: TOWN_HOME_TYPES[0].label,
     job: null,
     jobBuildingId: null,
     workHours: 0,
@@ -203,40 +203,6 @@ function recordPassing(town, person, tick, age) {
   town.book.push({type:'passing', personId:person.id, name:person.name, tick, text:`${person.name} ${line.toLowerCase()} They are remembered in the Old Ground.`});
 }
 
-function updateHomes(town, homeById, householdNeeds) {
-  const paintedLimit = Number.isFinite(town.peopleConditions?.paintedHomePlaces)
-    ? Math.max(0, town.peopleConditions.paintedHomePlaces) : 0;
-  for (let index = 0; index < town.homes.length; index++) {
-    const home = town.homes[index];
-    const needs = householdNeeds.get(home.id);
-    const supported = Boolean(needs?.members && needs.supported);
-    const goodMood = Boolean(needs?.members && needs.goodMood);
-    const poorMood = !needs?.members || needs.poorMood;
-    const paintedGround = index < paintedLimit;
-    if (paintedGround && supported && goodMood) {
-      home.goodDays++;
-      home.hardDays = 0;
-      if (home.goodDays >= 180) {
-        home.tier++;
-        home.goodDays = 0;
-      }
-    } else if (home.tier > 0 && (!paintedGround || !supported || poorMood)) {
-      home.hardDays++;
-      home.goodDays = 0;
-      if (home.hardDays >= 360) {
-        home.tier--;
-        home.hardDays = 0;
-      }
-    }
-    home.type = TOWN_HOME_TYPES[home.tier] || `home tier ${home.tier + 1}`;
-  }
-  for (const person of town.people) {
-    const home = homeById.get(person.home);
-    person.homeTier = home.tier;
-    person.homeType = home.type;
-  }
-}
-
 export function stepTownPeople({town, rng, tick, calendar}) {
   if (!Array.isArray(town.people)) town.people = [];
   if (!town.people.length && !town.foundingRecorded) {
@@ -299,11 +265,11 @@ export function stepTownPeople({town, rng, tick, calendar}) {
       if (!person.family) person.family = person.id;
       if (!person.home) person.home = `canvas-${person.family}`;
       if (!Number.isSafeInteger(person.homeTier) || person.homeTier < 0) person.homeTier = 0;
-      if (typeof person.homeType !== 'string') person.homeType = TOWN_HOME_TYPES[person.homeTier] || `home tier ${person.homeTier + 1}`;
+      if (typeof person.homeType !== 'string') person.homeType = TOWN_HOME_TYPES[person.homeTier]?.label || `home tier ${person.homeTier + 1}`;
       if (!work.knownHomes[person.home]) {
         town.homes ||= [];
         const tier = Number.isSafeInteger(person.homeTier) && person.homeTier > 0 ? person.homeTier : 0;
-        const type = TOWN_HOME_TYPES[tier] || `home tier ${tier + 1}`;
+        const type = TOWN_HOME_TYPES[tier]?.label || `home tier ${tier + 1}`;
         town.homes.push({id:person.home, tier, goodDays:0, hardDays:0, type});
         work.hasUpgradedHomes ||= tier > 0;
         work.knownHomes[person.home] = true;
@@ -391,12 +357,7 @@ export function stepTownPeople({town, rng, tick, calendar}) {
     for (const person of town.people) if (work.passedPartners[person.id]) person.partnerId = null;
   }
   town.homesReady = true;
-  const paintedLimit = Number.isFinite(town.peopleConditions?.paintedHomePlaces)
-    ? Math.max(0, town.peopleConditions.paintedHomePlaces) : 0;
-  if (paintedLimit || work.hasUpgradedHomes) {
-    const homeById = new Map((town.homes || []).map(home => [home.id, home]));
-    updateHomes(town, homeById, new Map(Object.entries(work.householdNeeds)));
-  }
+  // Housing tiers now belong to painted plots and advance in town-home-ground.
   town.nextPersonNumber = BigInt(work.nextIdBig ?? work.nextId);
   town.peopleIdsReady = true;
   matchJobs(town, work.hasBuildingAssignments);
@@ -418,7 +379,7 @@ export function stepTownPeople({town, rng, tick, calendar}) {
     });
     town.peopleIdsReady = true;
     child.homeTier = person.homeTier || 0;
-    child.homeType = person.homeType || TOWN_HOME_TYPES[0];
+    child.homeType = person.homeType || TOWN_HOME_TYPES[0].label;
     town.people.push(child);
     town.book.push({type:'birth', personId:child.id, name:child.name, tick, text:`${child.name} was born in the town.`});
   }

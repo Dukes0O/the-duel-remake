@@ -16,6 +16,7 @@ export const TOWN_MIGRATIONS = Object.freeze([
     }
     if (!Array.isArray(data.people)) data.people = [];
     if (!Array.isArray(data.buildings)) data.buildings = [];
+    if (!Array.isArray(data.homePlots)) data.homePlots = [];
     if (!Number.isSafeInteger(data.nextBuildingNumber) || data.nextBuildingNumber < 1) data.nextBuildingNumber = 1;
     data.version = 1;
     return data;
@@ -27,6 +28,7 @@ export function migrateTownData(input, {clone=true}={}) {
   const version = Number.isSafeInteger(data.version) ? data.version : 0;
   for (const migration of TOWN_MIGRATIONS) if (version < migration.version) migration.migrate(data);
   if (!data.regions || typeof data.regions !== 'object') data.regions={};
+  if (!Array.isArray(data.homePlots)) data.homePlots=[];
   for(const id of TOWN_REGIONS.keys()) {
     if(!data.regions[id]||typeof data.regions[id]!=='object') data.regions[id]={chunks:{}};
     if(!data.regions[id].chunks||typeof data.regions[id].chunks!=='object') data.regions[id].chunks={};

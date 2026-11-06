@@ -1,5 +1,6 @@
 import {buildingById} from './content/registry.js';
 import {registerTownSystem} from './town-sim.js';
+import {ensureHomeGround} from './town-home-ground.js';
 
 const HOURS_PER_YEAR = 360 * 24;
 const BUILDING_FUEL = Object.freeze({timber:24, canvas:8, fuel:1});
@@ -95,6 +96,14 @@ export function stepTownFire({town,rng,tick,calendar}) {
       if(target && rng.chance(Math.min(0.8,0.2*wind))) {
         target.fireStage=1;
         target.fireStartedTick=tick;
+      }
+      const plot=ensureHomeGround(town).find(item=>item.regionId===fire.regionId&&item.x===fire.x+wx&&item.z===fire.z+wz&&!item.burning);
+      if(plot&&rng.chance(Math.min(0.8,0.2*wind))) {
+        plot.burning=true;plot.burningDays=0;plot.tier=0;plot.progressDays=0;plot.waitingGood=null;
+        for(const person of town.people||[]) if(person.home===plot.id) {
+          person.home=`canvas-${person.family}`;person.homeTier=0;person.homeType='Canvas';
+        }
+        plot.household=null;plot.family=null;
       }
     }
     return;

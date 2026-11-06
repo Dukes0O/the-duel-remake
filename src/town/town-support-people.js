@@ -1,21 +1,13 @@
-import {buildingById} from './content/registry.js';
-
-const FOUNDERS_CAMP_PLACES = 12;
-function isFinishedHome(building, row) {
-  return (building.state === 'finished' || building.state === 'complete')
-    && !building.fireStage && !building.fireOut
-    && !String(building.state).startsWith('burnt-')
-    && Number.isFinite(row?.beds) && row.beds > 0;
-}
+import {TOWN_HOME_TYPES} from './content/homes.js';
 
 function homePlaces(town) {
-  let places = FOUNDERS_CAMP_PLACES;
+  let places = 12;
   let painted = 0;
-  for (const building of town.buildings || []) {
-    const row = buildingById.get(building.buildingId);
-    if (!isFinishedHome(building, row)) continue;
-    places += row.beds;
-    if (building.paintedHomeGround === true || building.groundPainted === true) painted += row.beds;
+  for (const plot of town.homePlots || []) {
+    const home = TOWN_HOME_TYPES[plot.tier];
+    if (!home || !plot.household || plot.burning) continue;
+    places += home.places;
+    painted += home.places;
   }
   return {places, painted};
 }
