@@ -1587,3 +1587,4 @@ WW-ART-RAIL carriage and van merged, card still open: both pass (round 4), built
 - RAIL-STEPS merged: the railway engine, with marks, gradient, token, hoop, sand drag, ride-along, runaway, dig and whistle; lane tier and build passed on f854505c.
 - 6 Nov: TOWN-ART-TRUCKS-1 merged; verdict on its card.
 - WW-ART-CREW merged, card done: every prop passes (round 6), on the photo and hull kits; lane tier and build passed on e8562557.
+WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (round 7); lane tier and build passed on 946dc4d8.

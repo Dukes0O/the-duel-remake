@@ -32,6 +32,7 @@ from mathutils import Vector
 sys.path.insert(0, str(recipe.parent))
 import town_base as town
 from photo_model import Mesh, Photo, box, lathe, rect_loop, slab, tidy, trace
+from hull_model import View, occupancy, largest_part, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
@@ -668,7 +669,213 @@ for px in (330, 1010, 1690):
           lambda i, d, r, a, px=px: van_side.uv(px + math.cos(a) * 9, 85 + i * 7), sides=12)
 van.finish('the-2-15-van', van_materials)
 objects['the-2-15-van'] = van
-print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
+
+# Wednesday is one closed, photo-carved body, with her measured wheels and rods
+# as separate round and flat parts. The original generated photos are retained
+# in the texture folder and also supply the coal heap picture.
+wed_side = Photo(textures / 'wednesday-side.jpg')
+wed_front = Photo(textures / 'wednesday-front.jpg')
+wed_rear = Photo(textures / 'wednesday-rear.jpg')
+coal = Photo(textures / 'coal-sand.jpg')
+for photo in (wed_side, wed_front, wed_rear):
+    # Scaled in memory only: the source photo on disk stays whole.
+    if max(photo.image.size) > 1024:
+        scale = 1024 / max(photo.image.size)
+        photo.image.scale(round(photo.image.size[0] * scale), round(photo.image.size[1] * scale))
+        photo.image_w, photo.image_h = photo.image.size
+        photo.w, photo.h = photo.image.size
+        photo._rgb = None
+coal_material = town.make_materials({'sand': textures / 'coal-sand.jpg'})['sand']
+WED, WFRONT, WREAR = 'side', 'front', 'rear'
+wed_materials = {WED: wed_side.material(), WFRONT: wed_front.material(), WREAR: wed_rear.material()}
+SW, SH = wed_side.w, wed_side.h
+FW, FH = wed_front.w, wed_front.h
+RW, RH = wed_rear.w, wed_rear.h
+# Measured to the photo's ground and subject bounds. Wednesday is 5.5 m long,
+# 2.5 m wide, and 3.2 m high. The engine faces +X; its far side mirrors the
+# side view. The two end views close the hull and keep the cab openings carved.
+SIDE_GROUND, SIDE_TOP = int(SH * .98), int(SH * .07)
+SIDE_LEFT, SIDE_RIGHT = int(SW * .05), int(SW * .95)
+SIDE_SCALE = 5.5 / (SIDE_RIGHT - SIDE_LEFT)
+SIDE_CX = (SIDE_LEFT + SIDE_RIGHT) / 2
+END_GROUND = int(min(FH, RH) * .97)
+END_TOP = int(min(FH, RH) * .03)
+END_SCALE = 3.2 / (END_GROUND - END_TOP)
+END_CX_F, END_CX_R = FW / 2, RW / 2
+def side_pick(x, y, z):
+    return SIDE_CX + x / SIDE_SCALE, SIDE_GROUND - y / SIDE_SCALE
+def far_pick(x, y, z):
+    # She is the same either side: a point reads the same place in the photo.
+    return SIDE_CX + x / SIDE_SCALE, SIDE_GROUND - y / SIDE_SCALE
+def front_pick(x, y, z):
+    return END_CX_F - z / END_SCALE, END_GROUND - y / END_SCALE
+def rear_pick(x, y, z):
+    return END_CX_R + z / END_SCALE, END_GROUND - y / END_SCALE
+# One seed for each opening where sky shows through, so her cab is really open.
+SIDE_SEEDS = [(3, 3), (3, SH-4), (SW-4, 3), (150, 120)]
+FRONT_SEEDS = [(3, 3), (3, FH-4), (FW-4, FH-4), (150, 190), (250, 170), (390, 170), (480, 190)]
+REAR_SEEDS = [(3, 3), (3, RH-4), (RW-4, RH-4), (200, 160), (440, 160)]
+side_view = View('side', wed_side, SIDE_SEEDS, side_pick, (0, 0, 1.5), grey=22, tolerance=20)
+far_view = View('side', wed_side, SIDE_SEEDS, far_pick, (0, 0, -1.5), grey=22, tolerance=20)
+front_view = View('front', wed_front, FRONT_SEEDS[:3], front_pick, (1, 0, 0), grey=22, tolerance=20)
+rear_view = View('rear', wed_rear, REAR_SEEDS[:3], rear_pick, (-1, 0, 0), grey=22, tolerance=20)
+def top_pick(x, y, z):
+    # Every upward face wears worn plate from the boiler's top, never the photo's sky.
+    return 290 + (x + 2.75) / 5.5 * 290, 105 + (z + 1.25) / 2.5 * 60
+top_view = View('side', wed_side, [(3, 3)], top_pick, (0, 1, 0),
+                solid=lambda mask: np.ones_like(mask), grey=22, tolerance=20)
+WHEEL_R = .47
+WHEEL_PX = [int(SW*.372), int(SW*.661)]
+WHEEL_X = [(px-SIDE_CX)*SIDE_SCALE for px in WHEEL_PX]
+def clear_of_wheels(x, y, z):
+    keep = y >= WHEEL_R
+    outer = np.abs(z) > .72
+    for axle in WHEEL_X:
+        keep &= ~(outer & ((x-axle)**2 + (y-WHEEL_R)**2 < (WHEEL_R+.035)**2))
+    return keep
+# The hull carves only her body. Above it, the end photos would turn a chimney into
+# a wide plate, and thin posts would lose the roof, so the cab, roof, chimney and dome
+# are built from the kit below, as the 2:15's engine is.
+BODY_TOP, BUNKER_TOP = 2.66, 2.05
+front_openings = wed_front.sky(FRONT_SEEDS[3:], tolerance=20, grey=22)
+def keep_body(x, y, z):
+    return clear_of_wheels(x, y, z) & (y <= np.where(x < -.85, BUNKER_TOP, BODY_TOP))
+VOXEL = .045
+solid, xs, ys, zs = occupancy(((-2.75, 2.75), (0.02, 3.2), (-1.26, 1.26)), VOXEL,
+                              [side_view.covers, far_view.covers, front_view.covers, rear_view.covers], keep_body)
+solid = largest_part(solid)
+# End photos shape the full silhouette, but are UV sources only at their own
+# ends. Without this gate a front photo repeats across every curved boiler face.
+front_covers, rear_covers = front_view.covers, rear_view.covers
+front_view.covers = lambda x, y, z: (x > 2.25) & front_covers(x, y, z)
+rear_view.covers = lambda x, y, z: (x < -2.25) & rear_covers(x, y, z)
+def body_only(view, photo, seeds):
+    return view.mask & ~photo.sky(seeds, tolerance=20, grey=22)
+wed_side.bleed(body_only(side_view, wed_side, SIDE_SEEDS))
+wed_front.bleed(body_only(front_view, wed_front, FRONT_SEEDS))
+wed_rear.bleed(body_only(rear_view, wed_rear, REAR_SEEDS))
+hull = carve_hull('wednesday', [side_view, far_view, front_view, rear_view, top_view], wed_materials,
+                  solid, xs, ys, zs, VOXEL, 9000)
+objects['wednesday'] = hull
+def WX(px): return (px - SIDE_CX) * SIDE_SCALE
+def WY(py): return (SIDE_GROUND - py) * SIDE_SCALE
+def on_wed_side(px, py, d): return (WX(px), WY(py), d)
+CAB_Z, EAVE_Y, CROWN_Y = 1.03, WY(68), WY(30)
+cab = Mesh()
+# Cab sides, traced with the door opening, levers and pillars just as they are.
+cab_side = trace(side_view.mask, (42, 68, 272, int(SIDE_GROUND - BUNKER_TOP / SIDE_SCALE) + 2), tolerance=1.0, min_area=30)
+for sign in (1, -1):
+    slab(cab, WED, wed_side, cab_side, on_wed_side, sign * (CAB_Z - .05), sign * CAB_Z, wall_scale=SIDE_SCALE)
+# Cab front, with its real windows; the middle, where its picture shows the chimney, is plain plate.
+FRONT_S = CAB_Z / 230
+def on_wed_front(px, py, d):
+    return (d, BUNKER_TOP + (262 - py) * (EAVE_Y - BUNKER_TOP) / (262 - 100), -(px - 320) * FRONT_S)
+front_sheet = front_view.mask & ~front_openings
+front_sheet[100:262, 215:425] = False
+cab_front = trace(front_sheet, (90, 100, 550, 262), tolerance=1.2, min_area=60)
+slab(cab, WFRONT, wed_front, cab_front, on_wed_front, WX(262), WX(272), wall_scale=FRONT_S)
+box(cab, WX(262), WX(272), BUNKER_TOP, EAVE_Y, -.56, .56, {'+x': (WFRONT, wed_front, (100, 280, 140, 420)), '-x': (WFRONT, wed_front, (100, 280, 140, 420))})
+# Two rear pillars, from the rear photo.
+for z, rect in ((-.86, (112, 120, 140, 320)), (.86, (500, 120, 528, 320))):
+    box(cab, WX(82), WX(100), BUNKER_TOP, EAVE_Y, z - .06, z + .06, {
+        '-x': (WREAR, wed_rear, rect), '+x': (WREAR, wed_rear, rect), '+z': (WREAR, wed_rear, rect), '-z': (WREAR, wed_rear, rect)})
+# The roof: the arch in the rear photo, with a real gap beneath its top.
+ROOF_SEGMENTS = 14
+def wed_roof(a, px, inset=0):
+    return (WX(px), EAVE_Y - inset + (CROWN_Y - EAVE_Y) * math.sin(a), (CAB_Z + .1) * math.cos(a))
+def wed_roof_top(t, px):
+    return wed_side.uv(px, 60 - 22 * (1 - abs(2 * t - 1)))
+def wed_roof_under(t, px):
+    return wed_rear.uv(150 + (px - 42) / 220 * 340, 90 - (1 - abs(2 * t - 1)) * 40)
+for k in range(ROOF_SEGMENTS):
+    t0, t1 = k / ROOF_SEGMENTS, (k + 1) / ROOF_SEGMENTS
+    a0, a1 = t0 * math.pi, t1 * math.pi
+    out = (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2))
+    cab.face((wed_roof(a0, 42), wed_roof(a0, 262), wed_roof(a1, 262), wed_roof(a1, 42)),
+             (wed_roof_top(t0, 42), wed_roof_top(t0, 262), wed_roof_top(t1, 262), wed_roof_top(t1, 42)), WED, out)
+    cab.face((wed_roof(a0, 42, .04), wed_roof(a0, 262, .04), wed_roof(a1, 262, .04), wed_roof(a1, 42, .04)),
+             (wed_roof_under(t0, 42), wed_roof_under(t0, 262), wed_roof_under(t1, 262), wed_roof_under(t1, 42)),
+             WREAR, tuple(-c for c in out))
+# Chimney and dome, each row's width read from the side photo.
+def wed_turned(cx, py0, py1, half, max_px, cap=None):
+    rows = []
+    for py in range(py0, py1, 5):
+        row = np.nonzero(side_view.mask[py, cx - half:cx + half])[0]
+        if len(row):
+            rows.append((py, min(max_px, (row[-1] - row[0]) / 2)))
+    profile = [(WY(py), r * SIDE_SCALE) for py, r in reversed(rows)]
+    def uv(index, distance, radius, angle):
+        arc = .84 * math.degrees(math.asin(math.sin(angle))) / 90
+        return wed_side.uv(cx + radius / SIDE_SCALE * arc, SIDE_GROUND - distance / SIDE_SCALE)
+    lathe(cab, WED, (WX(cx), 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 0), profile, uv, sides=16, cap_end=cap)
+wed_turned(638, 10, 112, 40, 30, (WED, lambda a, f: wed_side.uv(640 + math.cos(a) * f * 14, 165 + math.sin(a) * f * 8)))
+wed_turned(460, 32, 95, 62, 48)
+# The brass pot, pipes and rail on her top, on the centre plane.
+for rect in ((272, 36, 412, 96), (506, 64, 612, 96)):
+    fittings = trace(side_view.mask, rect, tolerance=1.0, min_area=20)
+    if fittings:
+        slab(cab, WED, wed_side, fittings, on_wed_side, -.03, .03, wall_scale=SIDE_SCALE)
+objects['wednesday:cab'] = cab.finish('wednesday:cab', wed_materials)
+
+# Wheels, axles and side rods are the only parts below the running frame.
+wheel_centres = [(WHEEL_X[i], WHEEL_R, WHEEL_PX[i], int(SIDE_GROUND-WHEEL_R/SIDE_SCALE))
+                 for i in range(2)]
+wheel_mesh = Mesh()
+for x, y, wheel_px, wheel_py in wheel_centres:
+    for z in (-.86, .86):
+        lathe(wheel_mesh, WED, (x, y, z), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(-.10, .41), (-.075, .47), (.075, .47), (.10, .41)],
+              lambda i, d, r, a: wed_front.uv(74 + math.cos(a)*8, FH-70 + d*100), sides=24,
+              cap_start=(WED, lambda a, f, px=wheel_px, py=wheel_py: wed_side.uv(px+math.cos(a)*.47/SIDE_SCALE*f*.86, py-math.sin(a)*.47/SIDE_SCALE*f*.86)),
+              cap_end=(WED, lambda a, f, px=wheel_px, py=wheel_py: wed_side.uv(px+math.cos(a)*.47/SIDE_SCALE*f*.86, py-math.sin(a)*.47/SIDE_SCALE*f*.86)))
+objects['wednesday:wheels'] = wheel_mesh.finish('wednesday:wheels', wed_materials)
+axle_mesh = Mesh()
+for x, y, wheel_px, wheel_py in wheel_centres:
+    lathe(axle_mesh, WED, (x, y, -.76), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+          [(0, .055), (1.52, .055)],
+          lambda i, d, r, a, x=x, y=y: wed_side.uv(SIDE_CX+x/SIDE_SCALE+math.cos(a)*r/SIDE_SCALE,
+                                                    SIDE_GROUND-(y+.10+d)/SIDE_SCALE), sides=12)
+objects['wednesday:axles'] = axle_mesh.finish('wednesday:axles', wed_materials)
+rod_mesh = Mesh()
+for z in (-.98, .98):
+    for x0, x1 in ((-1.50, 1.48),):
+        # Thin connecting rod follows the photo's rod band, kept proud of the wheel faces.
+        pts = ((x0, .49, z), (x1, .49, z), (x1, .54, z), (x0, .54, z))
+        rod_mesh.face(pts, [wed_side.uv(SIDE_CX+x/SIDE_SCALE, SIDE_GROUND-y/SIDE_SCALE) for x,y,_ in pts], WED, (0,0,1))
+objects['wednesday:rods'] = rod_mesh.finish('wednesday:rods', wed_materials)
+
+# Three lumpy, feathered heightfields. The surface is allowed to pass around
+# the engine because it is a separate node. The chimney just clears the full heap.
+def coal_height(x, z, level):
+    radius = math.sqrt((x / 6.5) ** 2 + ((z + .3) / 3.6) ** 2)
+    edge = 1 - smooth((radius - .55) / .45)
+    base = max(0.0, edge) * (3.25 - level * .85)
+    lumps = (.10 * math.sin(x * 2.1 + z * .7) + .07 * math.sin(x * .8 - z * 1.8) + .035 * math.sin(x * 4.1 + z * 2.7)) * edge
+    return max(-.02, base + lumps)
+for heap_name, level in (('coal-heap-full', 0), ('coal-heap-half', 1), ('coal-heap-low', 2)):
+    heap = Mesh()
+    nx, nz = 56, 40
+    rows = []
+    for i in range(nx + 1):
+        row = []
+        x = -7 + 14 * i / nx
+        for j in range(nz + 1):
+            z = -5 + 10 * j / nz
+            row.append((heap.vertex((x, coal_height(x, z, level), z)), (x / 1.2, z / 1.2)))
+        rows.append(row)
+    for i in range(nx):
+        for j in range(nz):
+            a, ua = rows[i][j]; b, ub = rows[i + 1][j]
+            c, uc = rows[i + 1][j + 1]; d, ud = rows[i][j + 1]
+            heap.indexed((a, b, c, d), (ua, ub, uc, ud), 'sand', (0, 1, 0), True)
+    heap.finish(heap_name, {'sand': coal_material})
+    objects[heap_name] = heap
+def object_triangles(obj):
+    if hasattr(obj, 'triangles'):
+        return obj.triangles()
+    obj.data.calc_loop_triangles()
+    return len(obj.data.loop_triangles)
+print('TRIANGLES=' + json.dumps({name: object_triangles(mesh) for name, mesh in objects.items()}))
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
@@ -747,3 +954,27 @@ shot('van-side', (0, 2.0, 24), (0, 2.0, 0), 1000, 430, ortho=14.5)
 shot('van-end', (24, 2.0, 0), (0, 2.0, 0), 600, 620, ortho=4.5)
 shot('van-quarter', (10, 1.7, 9.5), (0, 1.7, 0), 1000, 620, lens=31)
 shot('van-quarter-rear', (-10, 1.7, 9.5), (-.5, 1.7, 0), 1000, 620, lens=31)
+
+# Round 6 review renders: every view comes from the exported GLB imported above.
+def rail_shot(name, names, eye, target, width, height, ortho=None, lens=35):
+    for obj in scene.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = not any(obj.name.startswith(n) for n in names)
+    scene.render.resolution_x, scene.render.resolution_y = width, height
+    eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
+    camera.location = eye_v
+    camera.rotation_euler = (target_v - eye_v).to_track_quat('-Z', 'Y').to_euler()
+    if ortho:
+        camera.data.type = 'ORTHO'; camera.data.ortho_scale = ortho
+    else:
+        camera.data.type = 'PERSP'; camera.data.lens = lens
+    scene.render.filepath = str(render_dir / (name + '.png'))
+    bpy.ops.render.render(write_still=True)
+
+rail_shot('wednesday-side', ['wednesday'], (0, 1.6, 25), (0, 1.6, 0), 1000, 620, ortho=8.0)
+rail_shot('wednesday-front', ['wednesday'], (15, 1.6, 0), (0, 1.6, 0), 700, 850, ortho=4.2)
+rail_shot('wednesday-rear', ['wednesday'], (-15, 1.6, 0), (0, 1.6, 0), 700, 850, ortho=4.2)
+rail_shot('wednesday-quarter', ['wednesday'], (5, 1.7, 5), (0, 1.5, 0), 900, 700, lens=42)
+rail_shot('wednesday-quarter-rear', ['wednesday'], (-5, 1.7, 5), (0, 1.5, 0), 900, 700, lens=42)
+for heap_name, eye in (('coal-heap-full', (10, 5, 10)), ('coal-heap-half', (10, 5, 10)), ('coal-heap-low', (10, 5, 10))):
+    rail_shot(heap_name, ['wednesday', heap_name], eye, (0, 1, 0), 1000, 700, lens=35)

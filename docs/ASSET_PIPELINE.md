@@ -396,3 +396,12 @@ Flat parts come apart at an angle on a cab, bonnet or wing. Use `tools/blender/h
 3. Trim what is not the body from each mask: ground shadow, thin mirrors, and anything you will build as its own moving part.
 4. Keep only voxels above the frame, with room cut for the wheels. Let `carve_hull` do the rest.
 5. Build wheels, axles and moving parts as round parts at their true world positions, and bleed each photo's background out using a wider colour match that takes in the ground shadow.
+
+Lessons from Wednesday, a small engine carved with the hull kit (Claude, 6 November 2026). `tools/blender/rail-trains.py` has her recipe.
+
+- Carve only the solid body. Above it, a chimney in the side photo meets the cab roof in the end photos and becomes a wide plate, and anything joined by thin posts is lost to `largest_part`. Build the roof, thin sheets, chimney and dome with the photo kit.
+- A symmetrical object reads the same place in the photo from both sides. A far-side `pick` that mirrors X cuts one end's openings through the other end.
+- Keep the sky tolerance narrow, about 20. A wide one treats pale highlights on metal as sky and carves them away.
+- A top-facing view must read real material, never the photo's sky.
+- Scale pictures in memory. Never save over a source photo.
+
