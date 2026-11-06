@@ -1,46 +1,38 @@
-# TOWN-ART-FOOD
+# TOWN-ART-FOOD round 2
 
 ## Changed
 
-- Added the town food Blender recipe and `food.glb` with all 12 named plots.
-  The soup kitchen is the focal building; the recipe also models the
-  greenhouse, goat pen, chicken run, three stalls, three shopfronts, canteen
-  and market hall.
-- Added four credited 512 px food material pictures. The exported GLB embeds
-  its pictures as separate 256 px JPEGs.
-- Added per-building geometry, texture, UV and metallic checks to
-  `tools/test-blender-output.mjs`.
-- Submitted the round 1 comparison sheet for Claude's review.
+- Rebuilt the soup-kitchen apron as two shaped, thickened cloth surfaces with
+  gravity folds, a torn hem and stitched picture detail. Reshaped the pot as a
+  curved, soot-darkened cauldron with a rolled rim; added a rough stone ring,
+  split logs, visible flame tongues, separate timber benches and a stocked rear
+  shelf.
+- Corrected the corrugated wall UVs so the fine ribs repeat at their intended
+  scale. Reused the food family's existing material pictures and added distinct
+  food, tool and repair displays to the matching shops.
+- Rendered the exported GLB after re-import. The comparison ground is even
+  mid-grey-brown, and the sheet shows close driver and mayor views of every
+  building.
+- Replaced the round 1 sheet and builder review with round 2. No test assertion
+  changed. No race rules or replay fingerprints changed; this card only changes
+  art.
 
 ## Checks
 
-- Blender 4.5.13 LTS: exported the GLB, imported it into an empty scene and
-  rendered soup-kitchen and family views. The render log has no errors.
-- `node tools/test-blender-output.mjs`: passed, 267 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing size targets are
-  advisory; the new sheet is 167,439 bytes.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio
-  evidence subtest could not start `ffmpeg` (`EPERM`). One same-state rerun
-  had the same result. The sheet publication subtest passed.
-- Browser check: Claude runs the art look check. No browser or frame check was
-  run in this art lane.
-- The model is 1,757,980 bytes and has 25,680 triangles across the family.
-  All 12 plot budgets pass. Embedded images total 589,824 pixels.
-- Race fingerprints: none changed; no race code changed.
-
-## Changed assertions
-
-No existing assertions changed. Added a check for each plot's name, parent,
-triangle limit, picture coordinates, texture budget and metallic value.
+- Blender export and re-import render: passed.
+- `node tools/test-blender-output.mjs`: passed, 276 checks; 0 failed. Soup
+  kitchen: 4,964 triangles. Food family: 27,864 triangles. GLB: 1,898,152
+  bytes.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement is clean.
+- Lane tier and build: not run, as directed for this art card.
+- Browser and in-game look checks: not run here. Claude should compare the soup
+  kitchen at driver height with its reference, then inspect every building at
+  both heights and check the food family in the mayor and road views.
 
 ## Removed
 
-Removed the temporary Blender log, renders and sheet-building script from
-the lane after recording their results. No prior asset or source was replaced.
-
-## Claude should review
-
-Please judge the soup-kitchen proportions and materials beside the photo,
-then check whether the roof, three market goods and FOOD, TOOLS and FIX-IT
-signs read at town and driver distances. The round sheet is
-`docs/board/looks/town-art-food/round-1.jpg`.
+- Removed the round 1 sheet and review note, the flat soup awning panels, the
+  rectangular kitchen ground plate, the soup sign, unused stacked bowls and
+  redundant pot lip.
+- Removed generated render captures and task scratch files after composing the
+  review sheet.

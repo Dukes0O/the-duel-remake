@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/town-art-food/round-1'
+evidence = root / '.evidence/2026-11-06/town-art-food/round-2'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-2.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -56,8 +56,17 @@ def simple(name, color, roughness=.88, metallic=0):
     bsdf.inputs['Metallic'].default_value = min(metallic, .29)
     return m
 
-mat['dark-steel'] = simple('Town / charred pot steel', (.105, .088, .067), .84, .22)
+mat['dark-steel'] = mat['rusted-steel'].copy()
+mat['dark-steel'].name = 'Town / soot-blackened cauldron steel'
+pot_bsdf=mat['dark-steel'].node_tree.nodes.get('Principled BSDF')
+pot_bsdf.inputs['Base Color'].default_value=(.24,.235,.22,1)
+pot_bsdf.inputs['Roughness'].default_value=.86
+pot_bsdf.inputs['Metallic'].default_value=.12
 mat['fire'] = simple('Town / firelight', (.72, .255, .045), .72)
+fire_bsdf=mat['fire'].node_tree.nodes.get('Principled BSDF')
+if fire_bsdf.inputs.get('Emission Color'):
+    fire_bsdf.inputs['Emission Color'].default_value=(.58,.105,.018,1)
+    fire_bsdf.inputs['Emission Strength'].default_value=.8
 mat['leaf'] = simple('Town / dusty greens', (.12, .205, .105), .94)
 mat['fruit-red'] = simple('Town / bruised red fruit', (.38, .12, .075), .84)
 mat['fruit-yellow'] = simple('Town / dried yellow fruit', (.47, .34, .12), .86)
@@ -120,7 +129,9 @@ def mesh_object(name, vertices, faces, material, uv_mode='planar'):
     for poly in mesh.polygons:
         for li in poly.loop_indices:
             x,y,z=vertices[mesh.loops[li].vertex_index]
-            uv.data[li].uv=(x/2, z/2) if uv_mode=='planar' else (x, z)
+            if uv_mode == 'wall': uv.data[li].uv=(x/.20, y/2)
+            elif uv_mode == 'canvas': uv.data[li].uv=(x/1.5, y/1.5)
+            else: uv.data[li].uv=(x/2, z/2) if uv_mode=='planar' else (x, z)
     obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
     return keep(obj)
 
@@ -149,7 +160,7 @@ def tin_wall(name, x, y, z, width, height):
     for i in range(count):
         face=(i,i+1,count+2+i,count+1+i)
         faces.extend((face,tuple(reversed(tuple(k+front for k in face)))))
-    return mesh_object(name,verts,faces,mat['galvanised-tin'])
+    return mesh_object(name,verts,faces,mat['galvanised-tin'],'wall')
 
 def sign(name, center, text, width=1.3):
     x,y,z=center
@@ -167,7 +178,6 @@ def ground_clutter(name,x,z,material=mat['sand']):
 
 # Make the soup kitchen first: its 4 m canopy, fire, pot and benches anchor the family.
 add_building('soup-kitchen',(30,0,-14))
-ground_clutter('soup-kitchen',0,0)
 # Six welded uprights, three diagonal braces, front and rear lintels, all real stock.
 for x in (-1.85,0,1.85):
     for z in (-1.55,1.55):
@@ -184,51 +194,96 @@ tin_roof('soup-kitchen:roof-sheet-right',1.0,2.83,0,2.1,3.35,-.065)
 for x in (-.95,1.02):
     for z in (-1.58,1.58):
         beam(f'soup-kitchen:roof-rafter-{x}-{z}',(x,2.68,z),(x,2.83,0),.075,mat['rusted-steel'])
-# Wind-torn canvas apron is separated into overlapping stitched panels, not a flat wall.
-for i,(x,width,drop) in enumerate(((-1.38,1.05,.62),(-.25,1.12,.46),(.95,1.2,.72)),1):
-    y=2.30-drop/2
-    box(f'soup-kitchen:patched-awning-panel-{i}',(x,y,-1.54),(width,drop,.035),mat['patched-canvas'],.015)
-    beam(f'soup-kitchen:canvas-seam-{i}',(x-width/2,y,-1.565),(x+width/2,y,-1.565),.022,mat['weathered-plank'])
+# A continuous apron crosses the opening and falls down its left side. Soft
+# curves, irregular hems and folds give the canvas gravity and cloth thickness.
+def draped_canvas(name, start, end, width, top_y, sag, material):
+    verts=[];faces=[];steps=22;rows=3
+    dx=end[0]-start[0];dz=end[1]-start[1];length=max(.001,math.hypot(dx,dz))
+    nx,nz=dz/length,-dx/length
+    for row in range(rows):
+        t=row/(rows-1)
+        for i in range(steps+1):
+            u=i/steps
+            x=start[0]*(1-u)+end[0]*u;z=start[1]*(1-u)+end[1]*u
+            fold=(.045*math.sin(u*math.tau*6)+.018*math.sin(u*math.tau*13))*(.25+.75*t)
+            hem=(.07*math.sin(u*math.tau*4)+.025*math.sin(u*math.tau*11)) if row==rows-1 else 0
+            y=top_y-sag*t-fold-hem
+            verts.append((x+nx*width*(t-.5),y,z+nz*width*(t-.5)))
+    faces=[];stride=steps+1
+    for row in range(rows-1):
+        for i in range(steps):
+            a=row*stride+i;faces.append((a,a+1,a+stride+1,a+stride))
+    obj=mesh_object(name,verts,faces,material,'canvas')
+    obj.modifiers.new('stitched cloth thickness','SOLIDIFY').thickness=.018
+    return obj
+draped_canvas('soup-kitchen:continuous-patched-canvas-front',(-1.92,-1.59),(1.92,-1.59),.08,2.52,.90,mat['patched-canvas'])
+draped_canvas('soup-kitchen:canvas-down-left-side',(-1.90,-1.58),(-1.90,1.52),.54,2.52,2.08,mat['patched-canvas'])
+for i,x in enumerate((-1.58,-.65,.36,1.43),1):
+    beam(f'soup-kitchen:canvas-rope-loop-{i}',(x,2.45,-1.62),(x,2.62,-1.58),.025,mat['rusted-steel'])
 # The back wall is three separately lapped 100 mm corrugated sheets, not one block.
 for i,x in enumerate((-1.3,0,1.3),1):
     tin_wall(f'soup-kitchen:rear-corrugated-panel-{i}',x,1.38,1.53,1.32,1.88)
     for y in (.44,2.32): beam(f'soup-kitchen:rear-panel-edge-{i}-{y}',(x-.67,y,1.53),(x+.67,y,1.53),.045,mat['rusted-steel'])
-# Kitchen work shelf, buckets, charcoal-black stockpot, rolled rim, handles and hanging ladle.
-box('soup-kitchen:work-table',(-1.25,1.10,.68),(1.25,.14,.84),mat['weathered-plank'],.035)
-for x in (-1.72,-.78): beam(f'soup-kitchen:table-leg-{x}',(x,.16,.68),(x,1.05,.68),.07,mat['rusted-steel'])
-cylinder('soup-kitchen:iron-soup-pot',(0,1.05,-.12),.57,.76,mat['dark-steel'],24)
-cylinder('soup-kitchen:pot-belly-band',(0,1.10,-.12),.585,.10,mat['rusted-steel'],24)
-cylinder('soup-kitchen:pot-rim',(0,1.47,-.12),.60,.075,mat['galvanised-tin'],24)
-cylinder('soup-kitchen:pot-lid',(0,1.52,-.12),.50,.045,mat['dark-steel'],24)
-sphere('soup-kitchen:pot-lid-knob',(0,1.60,-.12),(.10,.11,.10),mat['iron-dark'],10,6)
+# Back shelf with rough brackets, dented pails, milk cans, pans and a crate.
+box('soup-kitchen:back-shelf-planks',(0,1.22,1.23),(2.85,.16,.40),mat['weathered-plank'],.035)
+for x in (-1.15,0,1.15): beam(f'soup-kitchen:shelf-bracket-{x}',(x,.35,1.45),(x,1.13,1.23),.09,mat['rusted-steel'])
+for i,x in enumerate((-.75,0,.75),1):
+    cylinder(f'soup-kitchen:shelf-milk-can-{i}',(x,1.56,1.22),.20 if i%2 else .16,.56,mat['galvanised-tin'],12)
+    cylinder(f'soup-kitchen:shelf-can-neck-{i}',(x,1.86,1.22),.095,.10,mat['rusted-steel'],12)
+for i,x in enumerate((-.65,.55),1):
+    cylinder(f'soup-kitchen:shelf-pan-{i}',(x,1.31,1.20),.22,.045,mat['dark-steel'],10)
+box('soup-kitchen:shelf-crate',(1.18,1.44,1.22),(.48,.43,.36),mat['weathered-plank'],.035)
+# A large curved sheet-metal cauldron, modelled from its belly profile.
+def lathe_pot(name, center, profile, material, segments=32):
+    verts=[];faces=[]
+    for radius,height in profile:
+        for i in range(segments):
+            angle=math.tau*i/segments
+            verts.append((center[0]+math.cos(angle)*radius,center[1]+height,center[2]+math.sin(angle)*radius))
+    for row in range(len(profile)-1):
+        for i in range(segments):
+            a=row*segments+i;b=row*segments+(i+1)%segments
+            faces.append((a,b,b+segments,a+segments))
+    obj=mesh_object(name,verts,faces,material,'round')
+    for poly in obj.data.polygons:poly.use_smooth=True
+    return obj
+lathe_pot('soup-kitchen:iron-soup-pot',(0,.37,-.12),((.36,.02),(.52,.08),(.70,.27),(.78,.49),(.75,.68),(.66,.83),(.61,.87)),mat['dark-steel'],24)
+bpy.ops.mesh.primitive_torus_add(major_segments=16,minor_segments=5,major_radius=.61,minor_radius=.055,location=town.game_vector((0,1.24,-.12)))
+obj=bpy.context.object;obj.name='soup-kitchen:pot-rolled-rim';obj.data.materials.append(mat['rusted-steel']);keep(obj)
 for side in (-1,1):
-    beam(f'soup-kitchen:pot-handle-{side}',(side*.54,1.29,-.12),(side*.77,1.29,-.12),.07,mat['iron-dark'])
-    cylinder(f'soup-kitchen:pot-handle-grip-{side}',(side*.76,1.29,-.12),.10,.11,mat['weathered-plank'],10,'X')
+    beam(f'soup-kitchen:pot-handle-{side}',(side*.62,1.00,-.12),(side*.92,1.02,-.12),.075,mat['iron-dark'])
+    cylinder(f'soup-kitchen:pot-handle-grip-{side}',(side*.92,1.02,-.12),.09,.12,mat['weathered-plank'],10,'X')
 # Rough hearth with embedded stone and linked split wood, coal and a controlled flame cluster.
-box('soup-kitchen:hearth-bed',(0,.23,-.12),(1.78,.30,1.45),mat['brick'],.13)
 rng=random.Random(205)
 for i in range(7):
     a=math.tau*i/7; x=math.cos(a)*.72; z=-.12+math.sin(a)*.58
-    sphere(f'soup-kitchen:hearth-stone-{i+1}',(x,.39,z),(.32,.25,.28),mat['cracked-concrete'],8,5)
+    sphere(f'soup-kitchen:hearth-stone-{i+1}',(x,.29,z),(.31,.22,.27),mat['cracked-concrete'],8,5)
 for i in range(4):
     x=-.42+i*.26
-    beam(f'soup-kitchen:split-firewood-{i+1}',(x,.47,-.42),(x+.22,.54,.21),.10,mat['weathered-plank'])
-for i,offset in enumerate((-.18,.0,.18),1):
-    sphere(f'soup-kitchen:fire-core-{i}',(offset,.64,-.12),(.11,.34,.09),mat['fire'],8,5)
+    beam(f'soup-kitchen:split-firewood-{i+1}',(x,.35,-.48),(x+.22,.39,.21),.12,mat['weathered-plank'])
+for i,(x,z,lean) in enumerate(((-.72,-.10,-.10),(.72,-.10,.11),(-.42,-.60,.08),(.46,-.60,-.08)),1):
+    verts=[]
+    for y,radius in ((.32,.12),(.61,.095)):
+        for angle in (0,math.pi/2,math.pi,math.pi*1.5):
+            verts.append((x+math.cos(angle)*radius,y,z+math.sin(angle)*radius))
+    verts.append((x+lean,1.02,z-.015))
+    faces=[]
+    for side in range(4):
+        nxt=(side+1)%4
+        faces.append((side,nxt,nxt+4,side+4))
+        faces.append((side+4,nxt+4,8))
+    mesh_object(f'soup-kitchen:fire-tongue-{i}',verts,faces,mat['fire'],'round')
 # Two joined trestle benches flank the fire; they are rough, thick timber, not plank planes.
-for side,z in enumerate((-1.10,1.10),1):
-    box(f'soup-kitchen:bench-{side}-seat',(0,.48,z),(2.65,.14,.46),mat['weathered-plank'],.035)
+for side,z in enumerate((-.98,1.14),1):
+    for plank in range(3):
+        box(f'soup-kitchen:bench-{side}-split-seat-{plank+1}',(0,.55,z+(plank-1)*.16),(2.8,.13,.18),mat['weathered-plank'],.045)
     for x in (-.98,.98):
-        beam(f'soup-kitchen:bench-{side}-leg-{x}',(x,.10,z-.16),(x,.44,z-.16),.09,mat['weathered-plank'])
-        beam(f'soup-kitchen:bench-{side}-leg-back-{x}',(x,.10,z+.16),(x,.44,z+.16),.09,mat['weathered-plank'])
-        beam(f'soup-kitchen:bench-{side}-crossbar-{x}',(x,.23,z-.20),(x,.23,z+.20),.07,mat['rusted-steel'])
+        for dz in (-.20,.20):beam(f'soup-kitchen:bench-{side}-trestle-{x}-{dz}',(x,.08,z+dz),(x,.49,z+dz),.12,mat['weathered-plank'])
+        beam(f'soup-kitchen:bench-{side}-trestle-foot-{x}',(x-.18,.16,z-.20),(x+.18,.16,z+.20),.09,mat['weathered-plank'])
+        beam(f'soup-kitchen:bench-{side}-crossbar-{x}',(x,.32,z-.22),(x,.32,z+.22),.075,mat['rusted-steel'])
 for i,x in enumerate((-1.73,-1.35),1):
-    cylinder(f'soup-kitchen:water-can-{i}',(x,.54,.72),.19,.72,mat['galvanised-tin'],12)
+    cylinder(f'soup-kitchen:water-can-{i}',(x,.54,.72),.19,.72,mat['galvanised-tin'],10)
     cylinder(f'soup-kitchen:can-neck-{i}',(x,.94,.72),.07,.12,mat['rusted-steel'],10)
-for i in range(4):
-    box(f'soup-kitchen:stacked-bowl-{i+1}',(-.95+i*.27,1.31,.55),(.22,.09,.22),mat['galvanised-tin'],.035)
-sign('soup-kitchen',(0,2.17,-1.6),'HOT SOUP',1.55)
-
 # Supporting food buildings use the same welded framing, separate materials and real-thickness parts.
 add_building('greenhouse',(-16,0,-14))
 ground_clutter('greenhouse',0,0)
@@ -340,6 +395,20 @@ def shopfront(building, offset, label):
     for x in (-.35,.35): beam(f'{building}:hatch-shutter-chain-{x}',(x,1.94,.70),(x,2.18,.16),.025,mat['rusted-steel'])
     sign(building,(0,2.12,-.72),label,1.85)
     box(f'{building}:counter',(0,.98,-.90),(2.0,.18,.55),mat['weathered-plank'],.035)
+    if label=='FOOD':
+        for i,x in enumerate((-.58,.08,.62),1):
+            box(f'{building}:food-crate-{i}',(x,1.23,-.91),(.48,.32,.42),mat['weathered-plank'],.045)
+            for j in range(3):
+                sphere(f'{building}:root-veg-{i}-{j}',(x-.13+j*.13,1.44,-.90),(.09,.13,.09),mat['fruit-yellow'] if j%2 else mat['leaf'],8,5)
+    elif label=='TOOLS':
+        for i,x in enumerate((-.62,-.2,.25,.62),1):
+            beam(f'{building}:hanging-tool-shaft-{i}',(x,1.55,.60),(x+.08,1.96,.60),.045,mat['weathered-plank'])
+            beam(f'{building}:hanging-tool-head-{i}',(x-.10,1.90,.60),(x+.18,1.90,.60),.06,mat['rusted-steel'])
+    else:
+        for i,x in enumerate((-.55,.05,.61),1):
+            cylinder(f'{building}:repair-pipe-{i}',(x,1.33,-.91),.11,.58,mat['rusted-steel'],12)
+            bpy.ops.mesh.primitive_torus_add(major_segments=14,minor_segments=5,major_radius=.22,minor_radius=.06,location=town.game_vector((x,1.36,.62)))
+            obj=bpy.context.object;obj.name=f'{building}:repair-tyre-{i}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
 
 shopfront('shopfront-a',(20,0,12),'FOOD')
 shopfront('shopfront-b',(28,0,12),'TOOLS')
@@ -432,16 +501,26 @@ scene.world=bpy.data.worlds.new('bright overcast review sky')
 scene.world.color=(.72,.72,.72)
 scene.render.film_transparent=False
 world=scene.world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.68,.70,.72,1)
-world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+world.node_tree.nodes['Background'].inputs['Strength'].default_value=1.0
 def area(name, loc, power, size):
     data=bpy.data.lights.new(name,'AREA');data.energy=power;data.shape='DISK';data.size=size
     obj=bpy.data.objects.new(name,data);scene.collection.objects.link(obj);obj.location=loc;obj.rotation_euler=(Vector((6,1,-1))-obj.location).to_track_quat('-Z','Y').to_euler()
-area('bright overcast key',(3,12,6),1800,10);area('soft sky fill',(-8,9,-3),1100,9)
-ground=town.cube('review ground',(5,-.16,0),(90,.3,70),simple('review ground / neutral',(.30,.31,.30),.94),0)
+area('bright overcast key',(3,18,9),750,48);area('soft sky fill',(-8,16,5),650,44)
+ground_material=simple('review ground / neutral',(.255,.245,.225),.94)
+ground_nodes=ground_material.node_tree.nodes;ground_nodes.clear();ground_links=ground_material.node_tree.links
+ground_output=ground_nodes.new('ShaderNodeOutputMaterial');ground_emission=ground_nodes.new('ShaderNodeEmission')
+ground_emission.inputs['Color'].default_value=(.255,.245,.225,1);ground_emission.inputs['Strength'].default_value=.7
+ground_links.new(ground_emission.outputs[0],ground_output.inputs['Surface'])
+ground=town.cube('review ground',(5,-.16,0),(1000,.3,1000),ground_material,0)
 def render_view(name, target, camera_loc, focal=52):
     camdata=bpy.data.cameras.new(name);camdata.lens=focal
     cam=bpy.data.objects.new(name,camdata);scene.collection.objects.link(cam);cam.location=camera_loc
     cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
+    scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
+def render_view_world(name,target,camera_loc,focal=52):
+    camdata=bpy.data.cameras.new(name);camdata.lens=focal
+    cam=bpy.data.objects.new(name,camdata);scene.collection.objects.link(cam);cam.location=camera_loc
+    cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
     scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
 def under(obj, ancestor):
     while obj:
@@ -455,6 +534,31 @@ for obj in scene.objects:
 render_view('soup-overhead',(30,1.1,-14),(36,25,13),58)
 render_view('soup-driver-seat',(30,1.2,-14),(33,25,4.0),57)
 for obj in scene.objects: obj.hide_render=False
-render_view('family-overhead',(6,1.2,0),(6,80,72),47)
-render_view('family-driver-seat',(6,1.0,0),(6,100,18),42)
+render_view('family-mayor',(6,1.2,0),(6,70,60),47)
+render_view('family-driver',(6,1.0,0),(6,60,12),42)
+# Every shop and food building gets its own frame at road and mayor heights.
+building_ids=('greenhouse','goat-pen','chicken-run','soup-kitchen','stall-a','stall-b','stall-c',
+              'shopfront-a','shopfront-b','shopfront-c','canteen','market-hall')
+roots={o.name:o for o in scene.objects if o.type=='EMPTY' and o.name in building_ids}
+for building in building_ids:
+    root_obj=roots[building]
+    members=[o for o in scene.objects if o.type=='MESH' and under(o,root_obj)]
+    corners=[o.matrix_world @ Vector(corner) for o in members for corner in o.bound_box]
+    lo=Vector((min(p.x for p in corners),min(p.y for p in corners),min(p.z for p in corners)))
+    hi=Vector((max(p.x for p in corners),max(p.y for p in corners),max(p.z for p in corners)))
+    target=(lo+hi)*.5
+    extent=max(hi.x-lo.x,hi.y-lo.y,hi.z-lo.z)
+    driver_distance=max(9,extent*2.8)
+    mayor_distance=max(26,extent*7.5)
+    driver_camera=target+Vector((0,driver_distance,extent*.58))
+    mayor_camera=target+Vector((0,mayor_distance*.70,mayor_distance*.70))
+    mayor_lens=min(180,max(65,16*(mayor_camera-target).length/extent))
+    # Hide all family members except the one under review.
+    for candidate in roots.values():
+        for member in scene.objects:
+            if member==candidate or under(member,candidate):
+                member.hide_render=(candidate!=root_obj)
+    render_view_world(f'{building}-driver',target,driver_camera,52)
+    render_view_world(f'{building}-mayor',target,mayor_camera,mayor_lens)
+    for member in scene.objects: member.hide_render=False
 print(json.dumps({'glb':str(out),'evidence':str(evidence)}))
