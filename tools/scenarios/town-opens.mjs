@@ -53,10 +53,13 @@ export async function run(context){
   await context.waitFor(`document.querySelectorAll('.town-map-pin:not([hidden])').length>0`,'Scablands map markers after zooming out',15_000);
   await picture(context,'town-map-far');
   const mapBefore=await context.evaluate(`document.querySelector('.town-entry').__townCameraState()`);
-  await context.evaluate(`document.querySelector('.town-map-pin:not([hidden])').click()`);
+  await context.evaluate(`document.querySelector('.town-map-pin[data-marker-kind="place"]:not([hidden])').click()`);
   await context.waitFor(`Math.abs(document.querySelector('.town-entry').__townCameraState().target.x-${mapBefore.target.x})+Math.abs(document.querySelector('.town-entry').__townCameraState().target.z-${mapBefore.target.z})>1`,'marker camera flight',10_000);
-  const visibleMarkers=await context.evaluate(`document.querySelectorAll('.town-map-pin:not([hidden])').length`);
-  if(!visibleMarkers)throw new Error('The Scablands zoom showed no map markers.');
+  await context.waitFor(`document.querySelector('.town-entry').__townCameraState().zoom<=.2401`,'the marker flight to end, zoomed in',5_000);
+  await context.waitFor(`document.querySelectorAll('.town-map-pin:not([hidden])').length===0`,'pins to clear when zoomed in',5_000);
+  await picture(context,'town-map-flown');
+  await context.evaluate(`(() => {const canvas=document.querySelector('.town-entry>canvas');for(let i=0;i<48;i++)canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:120,cancelable:true}));})()`);
+  await context.waitFor(`document.querySelectorAll('.town-map-pin:not([hidden])').length>0`,'pins back after zooming out',15_000);
   await context.evaluate(`(() => {const host=document.querySelector('.town-entry'),target=host.__townCameraState().target;(host.__town.reports||=[]).push({id:'qa-map-report',what:'A report on the map.',where:'Town',unanswered:true,priority:9,x:target.x,z:target.z,answers:[{id:'help',label:'Help'}]});host.__townCommand({type:'setSpeed',speed:4});})()`);
   await context.waitFor(`!!document.querySelector('[data-marker-id="report:qa-map-report"]:not([hidden])')`,'report pin with saved coordinates',15_000);
   await context.evaluate(`document.querySelector('[data-marker-id="report:qa-map-report"]').click()`);
