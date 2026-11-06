@@ -24,3 +24,8 @@ Removed the screen-percentage placement formula, the automatic camera zoom rise,
 ## Claude's review notes (5 November 2026)
 
 Independent review, three findings. (1) The change to the base colour in `groundColour` applies only to edited ground, and released Scablands jobs have none, so nothing changes for a player; left as is. (2) One town pointer on the laptop means one town: `docs/WASTELAND_TOWN.md` section 13 allows it to belong to one player or be shared, so whoever opens it becomes a mayor. Kyle was asked whether he wants a shared town or one each; this is the shared answer, and it changes easily. (3) The Book kept at most eight notes a year and lost the rest; it now keeps every note, and the page's sentence stays short. A test covers it.
+
+## Changed assertions (Claude's review, rule 18)
+
+- `tools/test-town-core.mjs`: the Dome oval moved with the Dome model (`src/town/town-world-data.js`), to where its geometry really stands. The check follows it, and a new check proves the ground in front of the gate is buildable. Nothing is loosened.
+- `tools/test-town-people.mjs`: the thirty-year town now has latrines. With TOWN-HEALTH joined, a town with none stays sick and has few children, which is the design working; the check on generations is unchanged.
