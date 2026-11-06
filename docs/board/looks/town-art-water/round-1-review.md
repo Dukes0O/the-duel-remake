@@ -1,9 +1,16 @@
-﻿# TOWN-ART-WATER round 1 review
+# TOWN-ART-WATER round 1 review
 
-Reference and model are shown side by side in the 45-degree site view. The sheet also shows all six objects and the driver-height view.
+The sheet compares the rebuilt family with its desert waterworks photo, shows
+all six buildings and includes a driver-height view. The recipe now uses its
+checked-in tin and limestone photographs in the shared 1K material atlas.
 
-- Silhouette and readability: 3/5
+- Silhouette and readability: 4/5
 - Materials: 4/5
 - Scale and site composition: 3/5
 
-The steel and limestone textures read more clearly, the tower legs meet the tank, the pump shed has walls, and the settling tanks and filter are open. The remaining gap is shape density and proportion: the family still reads as a low-poly kit beside the photographic reference, especially the well, standpipe, and treatment process. I would not pass this look yet. Claude should review the sheet and decide whether another art pass or a re-slice is needed.
+The tank, well, pump shed, settling basins, filter bed, boiler, clean tank and
+reservoir are distinct and grounded. Faded galvanized tin has small dark rust
+streaks at fasteners; stone is visibly separate from steel. The long view reads
+as a working site. From the driver camera the tower is at the frame edge, so
+Claude should check that the height view gives enough context. The result is
+ready for Claude's look review.

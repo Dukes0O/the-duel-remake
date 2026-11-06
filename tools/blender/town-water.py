@@ -31,7 +31,11 @@ import town_base as town
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
-materials = town.make_materials()
+materials = town.make_materials({
+    'galvanised-tin': Path(__file__).with_name('town-water-tin.jpg'),
+    'rusted-steel': Path(__file__).with_name('town-water-tin.jpg'),
+    'cracked-concrete': Path(__file__).with_name('town-water-limestone.jpg'),
+})
 mat = materials
 def solid(name, color, roughness=.88, metallic=0):
     material = bpy.data.materials.new(name)
@@ -383,14 +387,14 @@ def render_view(filename, location, target, lens=38):
     scene.camera = camera; scene.render.filepath = str(evidence/filename); bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera, do_unlink=True)
 render_view('above-45.png',(35,52,-46),(0,2,0),48)
-render_view('driver-seat.png',(1,1.65,-31),(0,4,7),40)
+render_view('driver-seat.png',(1,1.65,-31),(4,4,7),16)
 centers = {
-    'hand-well': (0,1.3,0, (7,7,-9), 48),
-    'standpipe': (0,1.2,0, (1,5,-9), 48),
+    'hand-well': (0,1.7,0, (7,7,-9), 48),
+    'standpipe': (0,1.7,0, (1,5,-9), 38),
     'water-tower': (0,8,0, (15,23,-18), 30),
-    'pump-house': (0,1.8,0, (9,7,-12), 38),
-    'treatment-plant': (0,2,0, (0,28,-28), 35),
-    'reservoir': (0,0,0, (18,22,-23), 42),
+    'pump-house': (0,2.0,0, (9,8,-12), 32),
+    'treatment-plant': (0,2.5,0, (0,28,-28), 46),
+    'reservoir': (0,0,0, (18,22,-23), 32),
 }
 def set_tree_render(obj, visible):
     obj.hide_render = not visible
