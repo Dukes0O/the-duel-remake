@@ -51,6 +51,10 @@ def save_mask(name, mask):
     image.save()
 
 def photo_mask(name, photo, seeds):
+    # The pale studio backdrop is darker than the rail-photo sample. Lift only
+    # the detector's in-memory pixels to the neutral seed range; the image used
+    # by materials remains the untouched generated photograph.
+    photo._rgb = np.clip(photo.rgb() + 25, 0, 255).astype(np.int16)
     mask = tidy(~photo.sky(seeds, grey=26), 2)
     save_mask(name, mask)
     return mask
@@ -58,8 +62,8 @@ def photo_mask(name, photo, seeds):
 # The grey studio is slightly blue. The kit's 26-grey flood limit keeps it
 # connected while preserving dark windows and genuine shadow detail.
 side_solid = photo_mask('side', side, [(8, 8), (side.w - 8, 8), (8, side.h - 8), (side.w - 8, side.h - 8)])
-front_solid = photo_mask('front', front, [(8, 8), (front.w - 8, 8)])
-rear_solid = photo_mask('rear', rear, [(8, 8), (rear.w - 8, 8)])
+front_solid = photo_mask('front', front, [(8, 8), (front.w - 8, 8), (8, front.h - 8), (front.w - 8, front.h - 8)])
+rear_solid = photo_mask('rear', rear, [(8, 8), (rear.w - 8, 8), (8, rear.h - 8), (rear.w - 8, rear.h - 8)])
 top_solid = photo_mask('top', top, [(8, 8), (top.w - 8, 8), (8, top.h - 8), (top.w - 8, top.h - 8)])
 
 def cut_ellipse(mask, cx, cy, rx, ry):
@@ -88,8 +92,8 @@ SIDE_GROUND = 790
 SIDE_Y = 2.08 / (790 - 100)
 def side_point(px, py, x): return (x, (SIDE_GROUND - py) * SIDE_Y, (SIDE_CX - px) * S)
 def end_x(px, photo): return (px - photo.w / 2) * .00165
-def front_point(px, py, z): return (end_x(px, front), (1140 - py) * .00188, z)
-def rear_point(px, py, z): return (end_x(px, rear), (990 - py) * .00208, z)
+def front_point(px, py, z): return (end_x(px, front), max(0, (1140 - py) * .00188), z)
+def rear_point(px, py, z): return (end_x(px, rear), max(0, (990 - py) * .00208), z)
 def top_point(px, py, y): return ((px - top.w / 2) * 2.12 / 610, y, (780 - py) * .00302)
 
 vehicle = bpy.data.objects.new('rattler', None)
@@ -104,7 +108,7 @@ vehicle['round'] = 8
 # a continuous volume. Its measured wheel arches and side-photo UVs prevent the
 # intersecting, shredded panel strips from round 7.
 body = Mesh()
-body_loops = trace(side_solid, (28, 90, side.w - 20, 815), tolerance=1.1, min_area=130)
+body_loops = trace(side_solid, (28, 100, side.w - 20, 790), tolerance=1.1, min_area=130)
 if not body_loops:
     raise RuntimeError('No closed Rattler body outline in the side photograph')
 slab(body, 'side', side, body_loops, side_point, -.96, .96, wall_scale=SIDE_Y)
@@ -126,7 +130,7 @@ for label, photo, mask, point, z0, z1, rect in (
 
 # Separate, closed top volumes use only their matching overhead-photo regions.
 for name, rect, y0, y1, area in (
-    ('cab roof', (255, 400, 770, 940), 2.075, 2.13, 1600),
+    ('cab roof', (255, 400, 770, 940), 2.04, 2.09, 1600),
     ('plank bed top', (270, 905, 760, 1485), 1.35, 1.40, 1400),
 ):
     loops = trace(top_solid, rect, tolerance=1.6, min_area=area)
@@ -302,8 +306,8 @@ scene.view_settings.view_transform = 'Standard'
 scene.render.resolution_percentage = 100
 scene.world = bpy.data.worlds.new('flat neutral overcast')
 scene.world.use_nodes = True
-scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.40, .40, .40, 1)
-scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = .35
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.30, .30, .30, 1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 1
 before = set(bpy.data.objects)
 bpy.ops.import_scene.gltf(filepath=str(glb))
 imported = [obj for obj in bpy.data.objects if obj not in before]
@@ -324,10 +328,10 @@ floor_mat = bpy.data.materials.new('plain mid-grey floor')
 floor_mat.use_nodes = True
 floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.34, .34, .34, 1)
 floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
-bpy.ops.mesh.primitive_plane_add(size=24, location=(0, 0, -.015))
+bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.015))
 bpy.context.object.name = 'review floor'; bpy.context.object.data.materials.append(floor_mat)
 bpy.ops.object.light_add(type='AREA', location=(-2, -1, 7))
-light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 1150; light.data.shape = 'DISK'; light.data.size = 9
+light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 850; light.data.shape = 'DISK'; light.data.size = 9
 light.rotation_euler = (Vector((0, 0, .7)) - light.location).to_track_quat('-Z', 'Y').to_euler()
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera); scene.camera = camera
@@ -341,9 +345,9 @@ def aim(eye, target, scale, name, size=(900, 640)):
 
 # Blender imports the glTF Y-up asset upright as Z-up; no corrective root
 # rotation is applied. These matched projections use +Z as the vehicle front.
-aim((0, -12, 1.12), (0, 0, .95), 5.1, 'photo-side')
-aim((0, -9, 1.12), (0, 0, .98), 4.8, 'photo-front', (700, 700))
-aim((0, 9, 1.12), (0, 0, .98), 4.8, 'photo-rear', (700, 700))
+aim((-12, 0, 1.12), (0, 0, .95), 5.1, 'photo-side')
+aim((0, -9, 1.12), (0, 0, .98), 2.9, 'photo-front', (700, 700))
+aim((0, 9, 1.12), (0, 0, .98), 2.9, 'photo-rear', (700, 700))
 aim((0, 0, 10), (0, 0, .95), 5.1, 'photo-top')
 aim((5.8, -7.3, 3.1), (0, 0, .95), 5.5, 'front-three-quarter')
 aim((5.8, 7.3, 3.1), (0, 0, .95), 5.5, 'rear-three-quarter')
