@@ -20,6 +20,7 @@ import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {buildBowlFeatures} from './bowl/bowl-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -141,6 +142,9 @@ export class Course {
     else if(this.def.saltFlats){
       this.saltFlatsGeometry=saltFlatsPhysicalGeometry(this);
       f.ramps.push(...this.saltFlatsGeometry.ramps);
+    }
+    else if(this.def.bowl){
+      buildBowlFeatures(this);
     }
     else if(this.def.scrapdome&&!this.def.scablands){
       // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
