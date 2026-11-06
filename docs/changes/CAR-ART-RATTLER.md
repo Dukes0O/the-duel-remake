@@ -2,21 +2,22 @@
 
 ## Changed
 
-- Added a generated photographic rat-rod reference and a generated picture-based steel/rust material. Both full prompts are in `docs/WASTELAND_ART.md`; the texture is packed in the GLB and its credit is in the adjacent `CREDITS.md`.
-- Rebuilt `tools/blender/rattler.py` with a curved cab shell and separate roof, slit windshield, short pickup bed, detailed V8 parts, game-style torus tyres with tread, overcast render lights and five requested views.
-- Exported the Rattler model at 20,408 triangles and 7,803,604 bytes, within the card's 25,000 triangle and 8 MB limits.
-- Added the photographic crop and five views to `docs/board/looks/car-art-rattler/round-3.jpg` (within the 500 KB sheet limit).
-- The art does **not pass**. My side-by-side review still reads as toy-like: the cab looks like an oval cap rather than a shaped cab with open window apertures, the engine and nose overlap, and the generated texture stretches into broad streaks. I stopped after targeted silhouette, lighting and nose corrections failed to make the model resemble the reference. Claude should judge the round-3 sheet and use its review gaps to direct another round.
+- Reworked the Rattler recipe around a low, long pickup stance: slimmer chassis rails, a folded grille surround with separate bars, a framed side window, pressed door ribs, and tread lugs built into each tire.
+- Added generated photographs for dark body steel and ground dust. The dust texture sits on the lower cab hem; every generated image and its full prompt are credited in `docs/WASTELAND_ART.md` and `public/assets/models/wasteland/cars/CREDITS.md`.
+- Normalized mesh UV layer names to `UVMap`. The recipe now checks the exported GLB for only `TEXCOORD_0`, non-flat coordinates, and metallic factors at or below 0.3.
+- Rendered the five-view sheet by importing `rattler.glb` into an empty Blender scene. The sheet includes a crop of the round-four photo reference and is 219,755 bytes.
+- The GLB measures 23,582 triangles and 2,668,400 bytes. Its intended envelope is 4.52 m long, 2.12 m wide and 2.08 m high; rear and front tire radii are 0.54 m and 0.45 m.
+- Round four is ready for Claude's look review. The front three-quarter view shows the requested engine, grille, chassis and lugs. The broad lower cab panels, simplified engine shapes and blocky tread still look more stylized than the photo; Claude should judge whether those gaps need another art round.
 
 ## Checks
 
-- Blender recipe rendered all five views and exported the GLB successfully. The final export measured 20,408 triangles and 7,803,604 bytes.
-- Blender output placement passed 232 checks in the lane tier. The lane command selected 48 suites; 46 passed. `tools/test-circuit-eifel.mjs` failed because FFmpeg loudness measurement failed, and its same-commit rerun failed the same way. `tools/test-review-evidence.mjs` failed because spawning FFmpeg returned `EPERM`, and its same-commit rerun failed the same way. No Eifel, audio or game code changed in this card. All selected suites reported; the runner did not exit after the suite results, so I interrupted it.
-- `npm.cmd run build` passed. Vite reported the existing dynamic-import and large-chunk warnings.
-- No browser checks or frame tests were run. Claude should inspect the five renders beside the reference crop in the round-3 sheet.
-- No assertions changed. No race or game code changed; race fingerprints are not applicable to this model-only card.
+- `blender -b -t 4 --python-exit-code 1 --python tools/blender/rattler.py -- --root .`: passed; exported the model, checked the GLB UVs and metallic factors, and rendered all five views from the re-imported GLB.
+- `node tools/test-blender-output.mjs`: passed, 232 checks and 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed. Existing size targets are advisory; no oversized look sheets were reported.
+- No browser or game look check was run. Claude should review the photo against the front three-quarter view, then check the rear, side, top and beside-person views for proportions, panel shape, dust placement, grille and tire tread.
+- No test assertions changed. No race or game code changed; race fingerprints are not applicable.
 
 ## Removed
 
-- Kept the round-2 sheet and review note as the earlier card round. Deleted round-3 temporary photo and render evidence after placing a crop on the review sheet and packing the material texture into the GLB.
-- No source model, save, runtime file or unrelated asset was removed.
+- Replaced the old note that said the card was blocked by a three-round cap. This follow-up completes the requested round-four handoff.
+- No source model, save, runtime path or unrelated asset was removed. Temporary renders, logs and the generated photo source were used for the sheet and are removed from the lane before commit.
