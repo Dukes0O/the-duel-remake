@@ -19,4 +19,3 @@ The gate does not match the reference's bulky bus sides yet. The front crop is r
 ## Claude look review
 
 Check the road view against the reference for the bus proportions and spacing, bridge sitting on the roofs, sign scale and Heap visibility. Check the mirrored wall from 40 m and the Heap and dirt ring in the mayor view. Browser and in-game checks remain with Claude.
-
