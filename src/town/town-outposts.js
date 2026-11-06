@@ -14,6 +14,7 @@ function stateFor(town, neighbourId) {
   let state=town.outposts[neighbourId];
   if(!state) state=town.outposts[neighbourId]={standing:definition.standing, tradeRuns:0, protected:false, lastReportMonth:null, trucks:[], nextTruckNumber:1};
   if(!Array.isArray(state.trucks)) state.trucks=[];
+  state.trucks=state.trucks.filter(truck=>truck?.status==='on-road');
   if(!Number.isSafeInteger(state.nextTruckNumber)||state.nextTruckNumber<1) state.nextTruckNumber=1;
   if(!Number.isFinite(state.standing)) state.standing=definition.standing;
   state.standing=clampStanding(state.standing);
@@ -77,6 +78,7 @@ export function townOutpostChapters() { return OUTPOST_CHAPTERS; }
 function updateOutposts({town, calendar}) {
   for(const neighbour of TOWN_NEIGHBOURS) {
     const state=stateFor(town,neighbour.id);
+    const activeTrucks=[];
     for(const truck of state.trucks) {
       if(truck.status!=='on-road') continue;
       truck.travelledKm=Math.min(truck.routeKm,truck.travelledKm+truck.speedKmh);
@@ -89,8 +91,9 @@ function updateOutposts({town, calendar}) {
         truck.rewardGood=neighbour.rewardGood;
         truck.rewardAmount=Math.floor(neighbour.rewardAmount*multiplier);
         storeGood(town,truck.sourceCell,truck.rewardGood,truck.rewardAmount);
-      }
+      } else activeTrucks.push(truck);
     }
+    state.trucks=activeTrucks;
   }
   for(const report of town.reports||[]) {
     if(report.facts?.outpostId && report.unanswered===false && !report.outpostSettled) {

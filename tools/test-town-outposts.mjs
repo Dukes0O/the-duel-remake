@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import '../src/town/systems/index.js';
-import {createTown, stepTown} from '../src/town/index.js';
+import {createTown, stepTown, serializeTown, deserializeTown} from '../src/town/index.js';
 import {getTownNext} from '../src/town/town-chapters.js';
 import {changeTownNeighbourStanding, completeTownNeighbourTrade, setTownOutpostProtection, townNeighbourStanding} from '../src/town/town-outposts.js';
 import {townCaptionText} from '../src/town/content/lines.js';
@@ -26,8 +26,13 @@ assert.equal(delivery.truck.status,'on-road');
 assert.equal(stockpileAt(town,yard).food ?? 0,0);
 stepTown(town);
 assert.equal(delivery.truck.status,'delivered');
+assert.equal(town.outposts.dot.trucks.length,0,'delivered trucks leave the active list');
 assert.equal(stockpileAt(town,yard).pie,10);
 assert.equal(townNeighbourStanding(town,'dot'),10);
+
+const oldTruckSave=JSON.parse(serializeTown(town));
+oldTruckSave.outposts.dot.trucks=Array.from({length:100},(_,i)=>({id:`old-${i}`,status:'delivered'}));
+assert.equal(deserializeTown(oldTruckSave).outposts.dot.trucks.length,0,'old delivered trucks are trimmed on load');
 assert.equal(changeTownNeighbourStanding(town,'dot',100).standing,100);
 assert.equal(changeTownNeighbourStanding(town,'dot',100).standing,100);
 assert.equal(changeTownNeighbourStanding(town,'missing',1).ok,false);

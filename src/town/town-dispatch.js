@@ -19,11 +19,14 @@ function ageAtYear(joinedYear, year) {
 }
 
 function dispatchState(town) {
-  town.dispatch ||= {nextId:1n, crew:{}, active:[], completed:[], explored:[]};
+  town.dispatch ||= {nextId:1n, crew:{}, active:[], open:[], completed:[], totals:{}, explored:[]};
   town.dispatch.crew ||= {};
   town.dispatch.active ||= [];
+  town.dispatch.open ||= [];
   town.dispatch.completed ||= [];
+  town.dispatch.totals ||= {};
   town.dispatch.explored ||= [];
+  town.dispatch.completed = town.dispatch.completed.slice(-40);
   if (typeof town.dispatch.nextId === 'number' && Number.isSafeInteger(town.dispatch.nextId))
     town.dispatch.nextId = BigInt(town.dispatch.nextId);
   if (typeof town.dispatch.nextId !== 'bigint' || town.dispatch.nextId < 1n) town.dispatch.nextId = 1n;
@@ -78,15 +81,19 @@ function startDispatch(town, command) {
   if (BigInt(town.tick) < BigInt(member.unavailableUntil || 0)) return {ok:false, message:'That crew member is resting after a hard job.'};
   if (state.active.some(job => job.crewId === command.crewId)) return {ok:false, message:'That crew member is already out on a job.'};
   const kind = command.kind.trim().toLowerCase();
+  const retryIndex = command.jobId ? state.open.findIndex(job => job.id === command.jobId) : -1;
+  if (command.jobId && retryIndex < 0) return {ok:false, message:'That open job is no longer available.'};
+  const prior = retryIndex >= 0 ? state.open[retryIndex] : null;
   const skill = crewSkill(member, command.crewId, kind);
   const chance = townDispatchChance({crewSkill:skill, vehicleBonus:command.vehicleBonus,
     standing:command.standing, difficulty:command.difficulty});
   const days = command.days ?? 1;
-  if (kind === 'scout' && (!Number.isSafeInteger(command.chunkX) || !Number.isSafeInteger(command.chunkZ)))
+  if (kind === 'scout' && !prior && (!Number.isSafeInteger(command.chunkX) || !Number.isSafeInteger(command.chunkZ)))
     return {ok:false, message:'Choose a whole-number map chunk for the scout to visit.'};
-  const job = {id:`dispatch-${state.nextId++}`, crewId:command.crewId, kind,
+  if (prior) state.open.splice(retryIndex, 1);
+  const job = {...(prior || {}), id:prior?.id || `dispatch-${state.nextId++}`, crewId:command.crewId, kind,
     chance, chanceWords:townDispatchChanceWords(chance), skill, startedTick:BigInt(town.tick),
-    daysRemaining:days, days, target:kind === 'scout' ? {
+    daysRemaining:days, days, attempts:(prior?.attempts || 0)+1, target:kind === 'scout' ? prior?.target || {
       regionId:typeof command.regionId === 'string' && command.regionId ? command.regionId : 'scablands',
       chunkX:command.chunkX, chunkZ:command.chunkZ,
     } : null};
@@ -119,9 +126,19 @@ function finishDispatch(town, state, job, rng, tick) {
   const outcome = {id:job.id, crewId:job.crewId, kind:job.kind, succeeded,
     tick:BigInt(tick), chance:job.chance, days:elapsedDays,
     text:`Day ${elapsedDays}. ${line}`};
+  state.totals[job.kind] = (state.totals[job.kind] || 0) + 1;
+  const year = String(town.calendar?.year ?? 1);
+  state.yearTotals ||= {};
+  state.yearTotals[year] ||= {};
+  state.yearTotals[year][job.kind] = (state.yearTotals[year][job.kind] || 0) + 1;
   state.completed.push(outcome);
+  if (state.completed.length > 40) state.completed.splice(0, state.completed.length - 40);
   town.book ||= [];
-  town.book.push({type:'crew-dispatch', crewId:job.crewId, tick:BigInt(tick), text:outcome.text});
+  const firstOfKind = !state.bookedKinds?.includes(job.kind);
+  state.bookedKinds ||= [];
+  if (firstOfKind) state.bookedKinds.push(job.kind);
+  if (firstOfKind || !succeeded || job.kind === 'rescue')
+    town.book.push({type:'crew-dispatch', crewId:job.crewId, tick:BigInt(tick), text:outcome.text});
   return outcome;
 }
 
@@ -135,7 +152,10 @@ export function dispatchTownSystem({town, rng, tick}) {
   for (const job of state.active) {
     job.daysRemaining--;
     if (job.daysRemaining > 0) stillActive.push(job);
-    else finishDispatch(town, state, job, rng, tick);
+    else {
+      const outcome = finishDispatch(town, state, job, rng, tick);
+      if (!outcome.succeeded) state.open.push({...job, daysRemaining:0, progress:job.progress ?? 0, lastFailure:outcome.text});
+    }
   }
   state.active = stillActive;
 }
@@ -144,5 +164,5 @@ registerTownSystem('town-dispatch', 70, TOWN_TIME.ticksPerDay, dispatchTownSyste
 
 export function townDispatchRecords(town) {
   const state = town?.dispatch;
-  return {crew:state?.crew || {}, active:state?.active || [], completed:state?.completed || [], explored:state?.explored || []};
+  return {crew:state?.crew || {}, active:state?.active || [], open:state?.open || [], completed:state?.completed || [], totals:state?.totals || {}, explored:state?.explored || []};
 }
