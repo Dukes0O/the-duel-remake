@@ -2,27 +2,31 @@
 
 ## Changed
 
-- The town opens the Wasteland map after zooming out to the far end. Zooming in, Escape or Return to the town closes it. M opens and closes it. The town clock and race state are not changed by opening the map.
-- The map uses data coordinates and region colors from `src/town/content/deeds.js`, with roads to each territory and a named Scablands town marker. Fogged territories show a cloud without their name. Deed cards open by click and include plain-language prices, owner state, bids and set bonuses. Dispatch cards name the crew, job and chance in words and numbers.
-- Map deed actions run through the town command dispatcher with the player profile. Buying updates the real town, till and owner. Refusals are shown in the map status. Visiting another player's town hides purchase and bid controls, and its commands remain refused by the visit session.
-- Updated the map tests with a real town deed purchase and an unclaimed-territory refusal. Added `tools/scenarios/town-wmap.mjs` for Claude's browser run.
+- The town routes every command through `stepTown`; its optional context reaches the dispatcher, so deed purchases and bids receive the player's profile.
+- The Ledger shows the wallet and till, offers deposits of 100, 1,000 or the recorded shortfall, and labels withdrawals with the amount returned after the half-town levy. Successful transfers save the profile and town. Visiting players see no transfer buttons.
+- A deed refusal caused by a short till offers a one-press deposit for the exact missing amount when the wallet can cover it.
+- The Wasteland map scenario now gives its QA player in-memory scrap, checks refusal at an empty till, funds the till through the map button, buys The Pipe Road, and checks the price leaves the till.
 
 ## Checks
 
-- `node tools/test-town-wasteland-map.mjs`: passed, 28 checks.
-- `node tools/test-town-visits.mjs`: passed.
+- `node tools/test-town-money.mjs`: passed, 38 checks; Ledger balance held through 30 years.
+- `node tools/test-town-wasteland-map.mjs`: passed, 35 checks.
+- `node tools/test-town-visits.mjs`: passed; visited-town data remains read-only.
 - `node tools/test-town-hooks.mjs`: passed.
-- `npm.cmd run build`: passed. Vite reported its existing dynamic-import and large-chunk warnings.
-- Lane tier: not run, as requested. Browser scenario: not run; Claude runs it.
-- Race fingerprints: not applicable. This work does not alter race code or rules.
-- Changed assertions: updated the map markup expectation to match the new whole-sentence copy; no behavior checks were weakened.
+- `node tools/test-town-panels.mjs`: passed, 35 checks.
+- `node tools/test-town-health.mjs`: passed.
+- `npm.cmd run build`: passed. Vite reported its dynamic-import and large-chunk warnings.
+- Lane tier and browser scenario were not run, as requested. Claude should run `tools/scenarios/town-wmap.mjs` and check the refusal, one-press deposit, purchase, and updated till amount.
+- Race fingerprints: not applicable; race code and rules did not change.
+- Changed assertions: none. New assertions cover context routing, exact wallet/till movement, the empty-till deed purchase, Ledger controls, and read-only visits. No existing assertions were weakened.
 
 ## Claude should review
 
-- Check the far-zoom transition, return paths, M key, preservation of town pause/run state, and that no race state changes.
-- Run `tools/scenarios/town-wmap.mjs`. Check the paper look, region placement, road drawing, cloud fog, deed open/purchase/refresh flow, visit-mode controls and dispatch readability.
-- The pilot-map directory contains only GLB props and no paper image to reuse. The map uses a CSS grain and parchment color treatment until a reusable paper picture is available.
+- Run the browser scenario and confirm the map refusal offers the correct deposit, the real button funds the till, The Pipe Road purchase succeeds, and the till drops by its price.
+- Check the Ledger wallet/till display, deposit controls, withdrawal levy wording, and absence of transfer buttons on look-only visits.
+- Check the existing map paper, roads, cloud fog, deed cards and dispatch cards remain visually sound.
 
 ## Removed
 
-- Removed the ring-based territory layout and its inline styles. The map-specific styles now live in `src/town/ui/town-screen.css`.
+- Removed the deed purchase and bid special case that dispatched outside the town session.
+

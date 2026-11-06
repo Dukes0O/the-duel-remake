@@ -67,6 +67,8 @@ const shortProfile={wasteland:{scrap:100,territories:{sal:{claimed:true}}}};
 const emptyTillRefusal=stepTown(shortTill,{type:'buyDeed',deedId:'sal-road'},{profile:shortProfile})[0];
 equal(emptyTillRefusal.ok,false,'an empty town till refuses a deed purchase');
 ok(emptyTillRefusal.message.includes('till does not have enough scrap'),'the refusal explains that the town till is short');
+const shortMap=townWastelandMapMarkup(townWastelandMapModel(shortTill,{profile:shortProfile,canTrade:true,message:emptyTillRefusal.message,shortfall:100}));
+ok(shortMap.includes('Put in 100 scrap to cover the shortfall'),'the refusal offers one button for the exact missing amount');
 const deposit=stepTown(shortTill,{type:'tillIn',amount:100},{profile:shortProfile})[0];
 equal(deposit.ok,true,'the player can put scrap in through stepTown');
 const paid=stepTown(shortTill,{type:'buyDeed',deedId:'sal-road'},{profile:shortProfile})[0];
