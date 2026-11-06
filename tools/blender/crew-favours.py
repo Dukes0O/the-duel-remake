@@ -294,6 +294,21 @@ lathe(flag_mesh, 'flag', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1), pole_rows,
 flag_photo.bleed(flag_solid, passes=20)
 finish(flag_mesh, 'wren-flag', {'flag': flag_photo.material()})
 
+# --- regret-door: the donor's body meshes combine door and bonnet with the shell --------
+# The game donor inspected is Falcone F42, its plainest classic coupe. Its glTF body
+# is one combined shell, so the detached panel is measured from this car-part photo.
+regret_door_photo = Photo(textures / 'ww-regret-door.jpg')
+regret_door_sky = regret_door_photo.sky([(10, 10), (755, 10), (400, 100)], grey=26)
+regret_door_solid = tidy(~regret_door_sky)
+regret_door_photo.bleed(regret_door_solid, passes=20)
+regret_door_mesh = Mesh()
+DOOR_SCALE = 1.1 / 570
+def door_world(px, py, d): return ((px - 380) * DOOR_SCALE, (490 - py) * DOOR_SCALE, d)
+door_loops = trace(regret_door_solid, (70, 12, 690, 486), tolerance=2.2, min_area=30)
+slab(regret_door_mesh, 'door', regret_door_photo, door_loops, door_world, -.025, .025,
+     wall_scale=DOOR_SCALE * 3)
+finish(regret_door_mesh, 'regret-door', {'door': regret_door_photo.material()})
+
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
     if layer_object.type == 'MESH':
@@ -327,7 +342,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -364,3 +379,5 @@ shot('ash-hat', 'ash-hat', (0, .06, 1.2), (0, .06, 0), 900, 650, ortho=.25, show
 shot('ash-hat-quarter', 'ash-hat', (-.28, .25, .48), (0, .04, 0), 900, 650, lens=50, show_ground=False)
 shot('wren-flag', 'wren-flag', (.02, .22, 1.3), (.02, .22, 0), 900, 700, ortho=.48, show_ground=False)
 shot('wren-flag-quarter', 'wren-flag', (-.23, .38, .72), (.02, .22, 0), 900, 700, lens=50, show_ground=False)
+shot('regret-door', 'regret-door', (0, .42, 2.0), (0, .42, 0), 1000, 700, ortho=1.35, show_ground=False)
+shot('regret-door-quarter', 'regret-door', (-.9, .52, 1.7), (0, .42, 0), 1000, 700, lens=50, show_ground=False)

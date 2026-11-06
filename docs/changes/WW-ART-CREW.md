@@ -25,11 +25,20 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 - `dynamite-box` was tried in two renders, then omitted. The photo wrapped into
   a collage and the recessed contents did not read; further changes did not
   improve it.
+- `open-engine` was tried in two renders, then omitted. Cropping and aligning
+  the views did not fix the broken overlapping surfaces; it still did not read
+  as one engine. Its trial photos and geometry were removed.
+- Added `regret-door` from the dead-on faded-red donor photo. Falcone F42 is the
+  plainest classic coupe in the game; its GLB has one combined body shell, so
+  the door was built from the photo with the real window opening and thin edge.
+  The exported front and quarter renders match the reference and do not read as
+  a toy.
+- Added `ww-regret-door.jpg` and its prompt credit.
 
 ## Checks
 
 - Blender 4.5 recipe: rendered the exported GLB in an empty scene. It reports
--  19,740 triangles across six props and the GLB is 1,722,580 bytes.
+- 19,916 triangles across seven props and the GLB is 1,796,328 bytes.
 - Inspected `gerald-box` front and three-quarter renders, and `ash-hat` side and
   three-quarter renders beside their photos.
 - `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs`:

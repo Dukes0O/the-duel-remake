@@ -100,6 +100,10 @@ edges. No objects, gear, pool, scene, text, or watermark.
   faded dusty cloth with a torn edge and a muted yellow knot. Plain pale
   background, flat overcast light, whole object, no perspective, people, text,
   other objects or watermark.”
+- `ww-regret-door.jpg`: Codex ImageGen photograph of a detached faded red old
+  car door. Prompt: “A side-on weathered sun-faded red compact-car door on a
+  plain pale ground, with its window opening empty; chipped red paint, dusty
+  dark rust, no logos or other objects.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
