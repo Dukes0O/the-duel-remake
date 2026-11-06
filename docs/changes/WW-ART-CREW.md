@@ -1,31 +1,31 @@
-# WW-ART-CREW
+# WW-ART-CREW round 4
 
 ## Changed
 
-- Replaced the four tiled swatch textures with the harpoon, piano and lizard
-  photographs, recorded their prompts in the existing texture credits, and
-  removed the superseded swatches.
-- Updated the recipe with a 16-sided harpoon shaft profile, raised rope bands,
-  an iron socket, front and side photo projections for the piano, and a low
-  12-station Gerald body with splayed five-toe feet. The harpoon photo receives
-  a four-corner perspective transform.
-- Rebuilt `crew-favours.glb` and the round 3 comparison sheet from the
-  reimported GLB.
+- Replaced Gerald's separate body and log legs with a closed overhead-photo
+  relief grid. The source mask includes all four feet and the full tail; the
+  nose-to-hip span is 0.30 m, the spine reaches 45 mm, and joint bumps lift the
+  elbows and knees by 15 mm.
+- Replaced the round 3 harpoon and piano recipe with outline lathe and measured
+  slab recipes. Those two models are still pending in this staged change.
+- Committed Gerald's current photo, model and first comparison row. The full
+  three-row sheet will replace this first-row sheet after the remaining models.
 
 ## Checks
 
-- Blender export and GLB reimport: passed, 6,512 triangles, 1,051,696 bytes.
-- Visual check: failed. All three still look toy-like beside their references;
-  see `docs/board/looks/ww-art-crew/round-3-review.md`.
-- `tools/test-blender-output.mjs`: passed, 258 checks; 0 failed.
-- `tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
-- Self-look was run and failed; Claude still owns the art verdict. Browser check: not run.
-- Changed assertions: none.
-- Race fingerprints: not applicable; no race code changed.
+- Gerald Blender export, GLB reimport and matched renders: passed; 16,328
+  triangles, 805,084 bytes. Render brightness: overhead 121.7 vs photo 130.0;
+  side 120.4 vs photo 127.8.
+- Visual self-check: overhead reads as a real lizard relief. The shallow side
+  profile reads thin because the specified spine height is 45 mm; Claude should
+  judge the paired side reference.
+- `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs`: pending the
+  complete model.
+- Browser checks: not run; Claude owns browser and look checks.
+- Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- Removed `ww-gerald-scales.jpg`, `ww-harpoon-iron.jpg`,
-  `ww-harpoon-oak.jpg` and `ww-piano-veneer.jpg` and their credits.
-- Removed the superseded round 2 sheet and review note; Git history retains them.
-- No other model parts were added.
+- Removed Gerald's separate body/head/tail and straight leg geometry when the
+  staged recipe replaces them. Round 3 sheet and note are replaced by round 4.
+- No unrelated favours were added.

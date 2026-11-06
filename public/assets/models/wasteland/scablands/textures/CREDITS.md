@@ -80,21 +80,31 @@ irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
 
-## WW-ART-CREW round 3 photo skins (2026-11-06)
+## WW-ART-CREW round 4 photographs (2026-11-06)
 
-The three JPGs below come from the round 2 Codex ImageGen photographs. The
-harpoon photo receives a four-corner perspective transform to straighten its
-shaft. The photographs are packed into `crew-favours.glb` as non-repeating
-projection materials; they are not tiled swatches.
+All three photographs are embedded in `crew-favours.glb` as direct colour
+images. Gerald's runtime JPG is the original overhead view cropped from the
+source photo; a cyan-background edit was used only to make his outline mask.
+The piano front is perspective-warped from its original photograph.
 
-- `ww-harpoon-photo.jpg`: perspective-corrected harpoon and workbench photograph,
-  used for the shaft, socket and forged head. Prompt: photographic old whaling
-  harpoon, oak pole and iron head, lying on a scarred workbench in bright
-  overcast daylight.
-- `ww-piano-photo.jpg`: upright piano photo, full front and left-side view,
-  used as the front projection. Prompt: battered 1.5 m upright piano, one
-  panel missing, exposed hammers and strings, chipped keys, three-quarter
-  view in even daylight.
-- `ww-gerald-photo.jpg`: desert lizard photo, side and overhead views, used
-  for the lofted skin projection. Prompt: real 30 cm desert lizard photographed
-  from the side and overhead on pale dusty ground in overcast daylight.
+- `ww-gerald-photo.jpg`: original overhead image of a desert lizard on dusty
+  ground, cropped to the full animal from nose to tail. Prompt: realistic desert
+  lizard, side and overhead photographs, plain dusty ground, overcast daylight.
+- `ww-harpoon-photo.jpg`: Codex ImageGen photograph of a complete historic
+  whaling harpoon, dead side-on and level on a flat pale background. Prompt:
+  Photographic reference image of one complete historic whaling harpoon, seen
+  precisely dead side-on at eye-level with no perspective tilt, arranged
+  horizontally across a plain pale grey studio ground. The entire object is in
+  frame from the rounded butt of its long straight dark oak pole to the sharp
+  point of its forged iron head. Real proportions: overall 2.5 metres long;
+  slim wooden shaft, rope binding around the iron socket, heavy pitted dark iron
+  socket and shank, one large flat barbed harpoon head with distinct
+  backward-pointing barbs. Very old, weathered, dusty, muted dark brown oak,
+  deep brown-black pitted iron with subdued rust; realistic fine grain,
+  scratches and corrosion. Soft flat overcast daylight, crisp silhouette,
+  uniform pure pale neutral background, no cast shadow crossing the object, no
+  table, no hands, no text, no labels, no other objects. Wide landscape
+  composition, highest available resolution.
+- `ww-piano-photo.jpg`: original old upright piano photograph, perspective
+  warped to a 1500 x 1300 front view. Prompt: battered upright piano with its
+  action exposed, photographed in even neutral daylight.
