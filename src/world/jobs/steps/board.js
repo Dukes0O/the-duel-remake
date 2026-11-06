@@ -5,20 +5,29 @@ const at=value=>value?.position??value;
 export function stepBoard(step,state,view,dt) {
   const path=step.path??[], length=ironLineLength(path), metres=Math.min(length,(state.trainMetres??0)+(step.speed??8)*dt);
   const train=view.train??view.actors?.find(actor=>actor.id===(step.actorId??step.actor?.id??'iron-mule'));
+  const roofHeight=step.roofHeight??3.5;
   const movingTrain={...(train??{}),id:step.actorId??step.actor?.id??'iron-mule',position:sampleIronLine(path,metres),
-    speed:metres>=length?0:step.speed??8,roofPlates:train?.roofPlates??[]};
+    speed:metres>=length?0:step.speed??8,roofPlates:train?.roofPlates??(step.roofWalk??[]).map(id=>{
+      const behind=id==='tank-wagon-2'?42:22, sample=sampleIronLine(path,Math.max(0,metres-behind));
+      return {id,position:{...sample,y:sample.y+roofHeight},radius:4};
+    })};
   const plates=movingTrain.roofPlates;
   let stage=state.stage??'ground', index=state.index??0, hold=state.hold??0;
+  let boardedNow=false;
   const player=view.fighter?.position??view.player?.position;
-  const nearTrain=distance(player,movingTrain.position)<= (step.grappleRadius??8);
+  const nearTrain=distance(player,movingTrain.position)<= (step.grappleRadius??8)||
+    plates.some(plate=>distance(player,plate.position??plate)<=(step.grappleRadius??8));
   const line=[];
   const underSpeed=(movingTrain.speed??0)*3.6<=(step.boardUnderKmh??90);
   if(stage==='ground'&&view.onFoot&&nearTrain&&view.grapple&&underSpeed) {
-    stage='roof'; index=0;
+    stage='roof';
+    boardedNow=true;
+    if(plates[index])line.push({type:'roofBoard',position:plates[index].position});
     if(step.roofLineId) line.push({type:'say',lineId:step.roofLineId});
   }
-  if(stage==='roof') {
+  if(stage==='roof'&&!boardedNow) {
     const target=plates[index];
+    const roofReference=target?.position??target??(index>=plates.length?at(train?.coupling??movingTrain.position):null);
     const guards=view.difficulty==='easy'?(step.easyRoofGuards??0):(step.roofGuards??0);
     if(guards>0&&!state.guardPushed&&index===0&&target&&distance(player,target.position??target)<=(target.radius??3)) {
       stage='ground';hold=0;
@@ -27,7 +36,7 @@ export function stepBoard(step,state,view,dt) {
         requests:[{type:'marker',place:target},{type:'train',actorId:movingTrain.id,position:movingTrain.position,path,
           metres,pathLength:length,progress:length?metres/length:1,speed:movingTrain.speed,roofPlates:step.roofWalk}]};
     }
-    if(!view.onFoot||distance(player,target?.position??target)>(step.fallDistance??15)) {
+    if(!view.onFoot||roofReference&&distance(player,roofReference)>(step.fallDistance??25)) {
       stage='ground';hold=0;
       line.push({type:'fell',plateIndex:index});
       if(step.fallLineId)line.push({type:'say',lineId:step.fallLineId});
@@ -49,6 +58,8 @@ export function stepBoard(step,state,view,dt) {
     }
   } else if(stage==='ground'&&view.onFoot&&view.interact&&nearTrain&&underSpeed) {
     stage='roof';
+    boardedNow=true;
+    if(plates[index])line.push({type:'roofBoard',position:plates[index].position});
   }
   if(stage==='clear') {
     if(distance(player,movingTrain.position)>=(step.clearDistance??15)) return {state:{stage,index,hold,trainMetres:metres},complete:true,events:line,

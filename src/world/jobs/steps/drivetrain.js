@@ -21,7 +21,7 @@ export function stepDrivetrain(step, state, view, dt) {
     if(previous<=gate&&metres>=gate) {
       const minimumSpeed=view.difficulty==='easy'?(step.gate.easySpeed??step.gate.speed??20):(step.gate.speed??20);
       if(speed<minimumSpeed) {
-        metres=Math.max(0,gate-150); speed=16;
+        metres=Math.max(0,gate-300); speed=0;
         requests.push({type:'say',lineId:step.gate.tooSlowLineId});
         events.push({type:'gateBounced'});
       } else {
@@ -29,6 +29,12 @@ export function stepDrivetrain(step, state, view, dt) {
         requests.push({type:'say',lineId:step.gate.throughLineId});
         events.push({type:'gateBroken'});
       }
+    }
+  }
+  const crushed=new Set(state.crushedPickups??[]);
+  for(const pickup of step.crushOnTrack??[]) {
+    if(!crushed.has(pickup.id)&&previous/length<pickup.progress&&metres/length>=pickup.progress) {
+      crushed.add(pickup.id);speed=Math.max(0,speed-2);events.push({type:'pickupCrushed',id:pickup.id});
     }
   }
   const place=sampleIronLine(path,metres);
@@ -39,9 +45,7 @@ export function stepDrivetrain(step, state, view, dt) {
   for(const cue of sayAt) if(!said.has(cue.lineId)&&previous/length<cue.progress&&metres/length>=cue.progress) {
     said.add(cue.lineId); requests.push({type:'say',lineId:cue.lineId});
   }
-  const complete=step.stopAtEnd&&metres>=length-0.01&&speed<=0.05;
-  if(step.gate&&gatePassed) for(const pickup of step.crushOnTrack??[]) {
-    if(previous/length<pickup.progress&&metres/length>=pickup.progress) {speed=Math.max(0,speed-2);events.push({type:'pickupCrushed',id:pickup.id});}
-  }
-  return {state:{metres,speed,gatePassed,said:[...said]},complete,events,requests};
+  const atEnd=metres>=length-0.01;
+  const complete=step.stopAtEnd?atEnd&&speed<=0.05:atEnd&&(!step.gate||gatePassed);
+  return {state:{metres,speed,gatePassed,said:[...said],crushedPickups:[...crushed]},complete,events,requests};
 }

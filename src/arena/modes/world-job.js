@@ -168,7 +168,7 @@ function applyRequests(duel, worldJob, requests) {
       actor.roofPlates=(request.roofPlates??['tank-wagon-2','tank-wagon-1']).map(id=>{
         const behind=id==='tank-wagon-2'?42:22;
         const sample=sampleIronLine(path,Math.max(0,metres-behind));
-        return {id,position:sample??actor.position,radius:4};
+        return {id,position:sample?{...sample,y:sample.y+(request.roofHeight??3.5)}:actor.position,radius:4};
       });
       const cab=sampleIronLine(path,Math.max(0,metres-8))??actor.position;
       actor.coupling={x:cab.x-Math.sin(cab.heading??0)*4,y:cab.y+1,z:cab.z-Math.cos(cab.heading??0)*4};
@@ -222,10 +222,12 @@ export function stepWorldJob(duel, dt) {
   if (waveZone?.raiders.length && waveZone.raiders.every(raider => raider.knockedDown) &&
       !worldJob.clearedWaves.includes(waveNumber)) worldJob.clearedWaves.push(waveNumber);
   const player = state.onFoot && state.fighter ? state.fighter : state;
-  const point = position(duel, player);
+  const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const playerView = {position: point, s: player.s, lateral: player.lateral,
     speed: player.speedMph ?? 0};
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
+  const previousRoofStage=worldJob.job.stepState.stage==='roof';
   if (currentStep?.kind === 'defend' && currentStep.placeId) {
     worldJob.places ??= {};
     const place = currentStep.place?.position ?? currentStep.place;
@@ -300,6 +302,10 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'say' && event.lineId) {
       duel._callout(worldJob.definition.captions?.[event.lineId] ?? event.lineId, 2.2);
     }
+    if(event.type==='roofBoard'&&state.fighter) {
+      Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
+      worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
+    }
     if (event.type === 'done') {
       worldJob.settled = true;
       state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
@@ -313,6 +319,24 @@ export function stepWorldJob(duel, dt) {
   applyRequests(duel, worldJob, next.requests);
   worldJob.controls=null;
   const train=worldJob.actors.find(actor=>actor.train);
+  if(train&&state.onFoot&&state.fighter&&next.stepState.stage==='roof') {
+    if(worldJob.roofRide&&trainBefore) {
+      const dx=train.position.x-trainBefore.x,dz=train.position.z-trainBefore.z;
+      state.fighter.x+=dx;state.fighter.z+=dz;
+      state.fighter.y=train.roofPlates?.[next.stepState.index??0]?.position.y??
+        state.fighter.y+train.position.y-trainBefore.y;
+      state.fighter.groundY=state.fighter.y;
+      worldJob.roofRide={x:state.fighter.x,y:state.fighter.y,z:state.fighter.z};
+    } else if(!worldJob.roofRide) {
+      const plate=train.roofPlates?.[next.stepState.index??0];
+      if(plate)Object.assign(state.fighter,{x:plate.position.x,y:plate.position.y,z:plate.position.z,groundY:plate.position.y});
+    }
+  }
+  if(train&&state.onFoot&&state.fighter&&previousRoofStage&&next.stepState.stage==='ground') {
+    const ground=duel.course.nearest(state.fighter.x,state.fighter.z,state.s);
+    state.fighter.y=state.fighter.groundY=ground.y;
+  }
+  if(next.stepState.stage!=='roof')worldJob.roofRide=null;
   if(train&&!state.onFoot) {
     const nearest=duel.course.nearest(train.position.x,train.position.z,state.s);
     state.s=state.prevS=nearest.s;state.lateral=state.prevLateral=nearest.lateral;

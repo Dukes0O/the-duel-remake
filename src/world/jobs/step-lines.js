@@ -4,30 +4,41 @@ export function stepLines(step,state,view,dt,outcome) {
   const base={...state,...(outcome?.state??{})};
   let queue=[...(state.lineQueue??[])], remaining=state.lineRemaining??0;
   let started=state.linesStarted??false, closing=state.linesClosing??false;
+  const lineHistory=new Set(state.lineHistory??[]);
   const nonCaption=(outcome?.requests??[]).filter(request=>request.type!=='say');
-  queue.push(...(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId));
-  const emit=(lineId, rest=[])=>({state:{...base,lineQueue:rest,lineRemaining:2.2,linesStarted:started,linesClosing:closing},
+  const newlyRequested=(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId);
+  for(const lineId of newlyRequested) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
+  const emit=(lineId, rest=[], blocking=false)=>({state:{...base,lineQueue:rest,lineRemaining:2.2,
+    lineBlocking:blocking,lineHistory:[...lineHistory],linesStarted:started,linesClosing:closing},
     complete:false,events:outcome?.events??[],requests:[...nonCaption,{type:'say',lineId}]});
-  const skip=view.controls?.whistle===true;
+  const skip=state.lineBlocking&&view.controls?.whistle===true;
   if(remaining>0&&!skip) {
     remaining=Math.max(0,remaining-dt);
-    if(remaining>0)return {...outcome,state:{...base,lineQueue:queue,lineRemaining:remaining,linesStarted:started,linesClosing:closing},
-      complete:false,requests:nonCaption};
+    if(remaining>0)return {...outcome,state:{...base,lineQueue:queue,lineRemaining:remaining,
+      lineBlocking:state.lineBlocking===true,lineHistory:[...lineHistory],linesStarted:started,linesClosing:closing},requests:nonCaption};
   }
-  if(queue.length) {const lineId=nextCaption(queue);return emit(lineId,queue);}
+  if(queue.length) {
+    const lineId=nextCaption(queue), blocking=state.lineBlocking===true&&remaining>0||
+      [...(step.opening??[]),...(step.closing??[])].includes(lineId);
+    return emit(lineId,queue,blocking);
+  }
   if(!started) {
     started=true;
-    queue=[...(step.opening??[]),...queue];
-    if(step.afterStartLineId)queue.unshift(step.afterStartLineId);
-    if(step.startLineId)queue.unshift(step.startLineId);
-    if(queue.length) {const result=emit(nextCaption(queue),queue);result.state.linesStarted=true;return result;}
+    const opening=[...(step.opening??[])];
+    for(const lineId of opening) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
+    for(const lineId of [step.afterStartLineId,step.startLineId])
+      if(lineId&&!lineHistory.has(lineId)) {queue.unshift(lineId);lineHistory.add(lineId);}
+    if(queue.length) {const lineId=nextCaption(queue);const result=emit(lineId,queue,opening.includes(lineId));
+      result.state.linesStarted=true;return result;}
   }
   if(outcome?.complete&&!closing&&(step.closing?.length??0)>0) {
-    closing=true;queue.push(...step.closing);
-    const result=emit(nextCaption(queue),queue);result.state.linesStarted=started;result.state.linesClosing=true;
+    closing=true;
+    for(const lineId of step.closing) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
+    const lineId=nextCaption(queue),result=emit(lineId,queue,true);result.state.linesStarted=started;result.state.linesClosing=true;
     return result;
   }
-  return {...outcome,state:{...base,lineQueue:[],lineRemaining:0,linesStarted:started,linesClosing:closing},requests:nonCaption};
+  return {...outcome,state:{...base,lineQueue:[],lineRemaining:0,lineBlocking:false,
+    lineHistory:[...lineHistory],linesStarted:started,linesClosing:closing},requests:nonCaption};
 }
 
 const distance=(a,b)=>Math.hypot((a?.x??0)-(b?.x??0),(a?.y??0)-(b?.y??0),(a?.z??0)-(b?.z??0));

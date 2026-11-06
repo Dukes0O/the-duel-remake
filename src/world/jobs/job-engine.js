@@ -34,10 +34,18 @@ export function stepJob(job, view = {}, dt = 0) {
   const result = { ...job, stepState: clone(job.stepState), events: [], requests: [], failedStep: false };
   if (result.done || result.stepIndex >= result.steps.length) { result.done = true; return result; }
   const step = result.steps[result.stepIndex];
-  if(!result.stepState.linesStarted||result.stepState.lineRemaining>0||result.stepState.lineQueue?.length) {
-    const gate=stepLines(step,result.stepState,view,dt,{state:result.stepState,complete:false,events:[],requests:[]});
-    result.stepState=gate.state??result.stepState;result.requests=gate.requests??[];
-    if(result.requests.length||result.stepState.lineRemaining>0||result.stepState.lineQueue?.length) return result;
+  if(!result.stepState.linesStarted&&!result.stepState.lineBlocking&&
+      !(step.startLineId||step.afterStartLineId)&&step.opening?.length) {
+    const openingOutcome=runners[step.kind](step,result.stepState,
+      {...view,controls:{...(view.controls??{}),throttle:0,brake:0}},0,result.seed);
+    const opening=stepLines(step,result.stepState,view,dt,{...openingOutcome,complete:false});
+    result.stepState=opening.state??result.stepState;result.requests=opening.requests??[];
+    if(result.stepState.lineBlocking)return result;
+  }
+  if(result.stepState.lineBlocking) {
+    const held=stepLines(step,result.stepState,view,dt,{state:result.stepState,complete:false,events:[],requests:[]});
+    result.stepState=held.state??result.stepState;result.requests=held.requests??[];
+    return result;
   }
   const outcome = runners[step.kind](step, result.stepState, view, dt, result.seed);
   const triggered = stepLineTriggers(step, result.stepState, view, outcome);

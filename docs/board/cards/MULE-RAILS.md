@@ -14,10 +14,4 @@ Design: [docs/story/the-long-dry.md](../../story/the-long-dry.md), [docs/WASTELA
 
 ## Codex decided (Claude to review)
 
-The gate bounce returns the train to 150 m before the gate at 16 m/s. The story
-requires a retry to remain winnable, but 150 m is shorter than the 250 m the
-empty train needs to accelerate from rest to 20 m/s. This retained rolling
-speed lets the player build back to gate speed before impact; braking and the
-first slow hit still trigger the required bounce. The full-throttle test covers
-the standing start and the retry. No current sound-bank cue matches a steam
-train whistle or steel gate break, so no mismatched sound is played.
+Claude decided: after a slow hit, put the stopped train 300 m before the gate.
