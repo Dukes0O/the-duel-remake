@@ -1568,3 +1568,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: TOWN-ART-TRUCKS-1 stopped at round 6 of 6, not merged; branch kept. Next step needs Kyle's word on a download (card).
 - 5 Nov: TOWN-ART-DOME merged at round 6 of 6 as the working set; what is short is on its card.
 - 6 Nov: merged BOARD-LINES, The Notice Board's 91 lines (lane 25/25 on the branch, build).
+- 5 Nov: TOWN-ART-WATER merged at round 4 of 6; verdict on its card.
