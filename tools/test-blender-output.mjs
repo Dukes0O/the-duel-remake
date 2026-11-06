@@ -31,6 +31,8 @@ const artCandidates = new Set(['wildcat']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-water',script:'tools/blender/town-water.py',args:['--round','1'],candidate:true,
+    glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:2500000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -541,6 +543,43 @@ try {
       assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
     });
   }
+  check('TOWN-ART-WATER family exports six grounded nodes and one shared 1K atlas', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/water.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the card\'s 3 MB limit`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const nodes = new Set(gltf.nodes.map(node => node.name));
+    for (const name of ['town-water','hand-well','standpipe','water-tower','pump-house','treatment-plant','reservoir',
+      'water-tower:fill-1','water-tower:fill-2','water-tower:fill-3','pump-house:flywheel',
+      'treatment-plant:settle','treatment-plant:filter','treatment-plant:boil','treatment-plant:clean','reservoir:water']) {
+      assert.ok(nodes.has(name), `missing scene node ${name}`);
+    }
+    const budgets = {'hand-well':1800,'standpipe':1800,'water-tower':5000,'pump-house':5000,
+      'treatment-plant':14000,'reservoir':14000};
+    const familyTriangles = Object.fromEntries(Object.keys(budgets).map(name => [name,0]));
+    for (const node of gltf.nodes) {
+      if (!Number.isInteger(node.mesh)) continue;
+      const family = node.name.split(':')[0];
+      if (familyTriangles[family] === undefined) continue;
+      familyTriangles[family] += gltf.meshes[node.mesh].primitives.reduce((sum, primitive) =>
+        sum + gltf.accessors[primitive.indices].count / 3, 0);
+    }
+    for (const [family, budget] of Object.entries(budgets)) {
+      assert.ok(familyTriangles[family] > 0, `${family} has no mesh geometry`);
+      assert.ok(familyTriangles[family] <= budget, `${family} has ${familyTriangles[family]} triangles; budget ${budget}`);
+    }
+    assert.equal(gltf.images?.length, 1, 'the family uses one shared atlas');
+    const image = gltf.images[0];
+    assert.equal(image.mimeType, 'image/png');
+    assert.ok(Number.isInteger(image.bufferView), 'the shared atlas is embedded in the GLB');
+    const view = gltf.bufferViews[image.bufferView];
+    const start = 28 + jsonLength + (view.byteOffset || 0);
+    assert.equal(bytes.toString('ascii', start + 1, start + 4), 'PNG');
+    assert.equal(bytes.readUInt32BE(start + 16), 1024, 'atlas width');
+    assert.equal(bytes.readUInt32BE(start + 20), 1024, 'atlas height');
+  });
   check('scablands-tintown exports its bounded named walkable town model', () => {
     const path = join(root, 'public/assets/models/wasteland/scablands/tintown.glb');
     const bytes = readFileSync(path);
