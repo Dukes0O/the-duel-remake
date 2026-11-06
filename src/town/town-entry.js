@@ -88,14 +88,15 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   let dragStart=null,rightDrag=null;
   canvas.addEventListener('pointerdown',event=>{flight=null;
     if(event.button===2){rightDrag={x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,moved:false};canvas.setPointerCapture(event.pointerId);event.preventDefault();return;}
-    if(event.button!==0)return;const selected=input.getPlacement().buildingId;if(!selected)return;const point=placementAt(event);if(!point)return;dragStart=point;canvas.setPointerCapture(event.pointerId);
+    if(event.button!==0)return;const placement=input.getPlacement();if(!placement.buildingId&&!placement.homeTool)return;const point=placementAt(event);if(!point)return;dragStart=point;canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove',event=>{flight=null;
     if(rightDrag){const dx=event.clientX-rightDrag.x,dy=event.clientY-rightDrag.y;if(Math.hypot(event.clientX-rightDrag.startX,event.clientY-rightDrag.startY)>3)rightDrag.moved=true;if(rightDrag.moved){const rect=canvas.getBoundingClientRect();sceneView.move({right:-dx/rect.width*60,forward:dy/rect.height*60,delta:1/60});}rightDrag.x=event.clientX;rightDrag.y=event.clientY;return;}
-    const selected=input.getPlacement().buildingId,row=buildingById.get(selected),point=placementAt(event);if(!row||!point){sceneView.state.ghost.visible=false;return;}const valid=placementValid(row,point.x,point.z);sceneView.setPlacement(point.x,point.z,{valid,width:row.width,depth:row.depth});
+    const placement=input.getPlacement(),selected=placement.buildingId,row=buildingById.get(selected),point=placementAt(event);if(placement.homeTool||!row||!point){sceneView.state.ghost.visible=false;return;}const valid=placementValid(row,point.x,point.z);sceneView.setPlacement(point.x,point.z,{valid,width:row.width,depth:row.depth});
   });
   canvas.addEventListener('pointerup',event=>{
-    if(rightDrag){if(!rightDrag.moved&&input.getPlacement().buildingId){input.cancel();sceneView.state.ghost.visible=false;}rightDrag=null;return;}if(!dragStart)return;const selected=input.getPlacement().buildingId,row=buildingById.get(selected),start=dragStart,end=placementAt(event)||dragStart;dragStart=null;if(!row)return;
+    if(rightDrag){if(!rightDrag.moved&&(input.getPlacement().buildingId||input.getPlacement().homeTool)){input.cancel();sceneView.state.ghost.visible=false;}rightDrag=null;return;}if(!dragStart)return;const placement=input.getPlacement(),selected=placement.buildingId,row=buildingById.get(selected),start=dragStart,end=placementAt(event)||dragStart;dragStart=null;
+    if(placement.homeTool){const minX=Math.min(start.x,end.x),maxX=Math.max(start.x,end.x),minZ=Math.min(start.z,end.z),maxZ=Math.max(start.z,end.z),cells=[];for(let x=minX;x<=maxX;x++)for(let z=minZ;z<=maxZ;z++)cells.push({x,z});command({type:placement.homeTool==='paint'?'paintHomeGround':'clearHomeGround',cells});return;}if(!row)return;
     const points=row.id.startsWith('road-')?roadLine(start,end):[start];
     sceneView.state.ghost.visible=false;
     for(const cell of points)command({type:'placeBuilding',buildingId:row.id,x:cell.x,z:cell.z});
