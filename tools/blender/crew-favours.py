@@ -17,17 +17,28 @@ sys.path.insert(0,str(root/'tools/blender')); import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; root_obj=bpy.data.objects.new('crew-favours',None); scene.collection.objects.link(root_obj)
 texture_dir=root/'public/assets/models/wasteland/scablands/textures'
-oak_tex=texture_dir/'ww-harpoon-oak.jpg'
-iron_tex=texture_dir/'ww-harpoon-iron.jpg'
-lizard_tex=texture_dir/'ww-gerald-scales.jpg'
-M=town.make_materials({'weathered-plank':str(oak_tex),'rusted-steel':str(iron_tex),'sand':str(lizard_tex)})
-# Darken and warm the actual harpoon-oak photograph so the pole reads as aged
-# oak in overcast light instead of pale new wood.
-import numpy as np
-oak_node=next(n for n in M['weathered-plank'].node_tree.nodes if n.type=='TEX_IMAGE')
-oak_pixels=np.empty(512*512*4,dtype=np.float32); oak_node.image.pixels.foreach_get(oak_pixels)
-oak_pixels=oak_pixels.reshape((512,512,4)); oak_pixels[:,:,:3]*=np.array([.72,.52,.34],dtype=np.float32)
-oak_node.image.pixels.foreach_set(oak_pixels.ravel()); oak_node.image.pack()
+harpoon_tex=texture_dir/'ww-harpoon-photo.jpg'
+piano_tex=texture_dir/'ww-piano-photo.jpg'
+lizard_tex=texture_dir/'ww-gerald-photo.jpg'
+M=town.make_materials()
+
+photo_images={}
+def photo_material(name, path):
+    key=str(path.resolve())
+    if key not in photo_images:
+        image=bpy.data.images.load(key,check_existing=False); image.pack(); photo_images[key]=image
+    image=photo_images[key]
+    material=bpy.data.materials.new(name); material.use_nodes=True
+    bsdf=material.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Metallic'].default_value=.08; bsdf.inputs['Roughness'].default_value=.9
+    tex=material.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=image; tex.extension='EXTEND'
+    material.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color'])
+    return material
+
+# Each source is the full photograph, sampled without repeating a small swatch.
+M['weathered-plank']=photo_material('Harpoon / full photograph',harpoon_tex)
+M['rusted-steel']=photo_material('Harpoon iron / full photograph',harpoon_tex)
+M['sand']=photo_material('Gerald / full photograph',lizard_tex)
 def attach(o,name):
     o.name=name; o.parent=root_obj; o['part']=name.split('-')[0]; return o
 def cube(n,c,s,m,b=.025): return attach(town.cube(n,c,s,m,b),n)
@@ -129,13 +140,12 @@ def tapered(name,a,b,r1,r2,mat):
     bpy.ops.mesh.primitive_cone_add(vertices=10,radius1=r1,radius2=r2,depth=d.length,location=(va+vb)/2); o=bpy.context.object; o.rotation_euler=d.to_track_quat('Z','Y').to_euler(); o.data.materials.append(mat); attach(o,name)
 sphere('gerald-low-torso',(x,.12,z),(.078,.052,.095),M['sand'])
 sphere('gerald-blunt-head',(x,.14,z-.115),(.061,.043,.058),M['sand'])
-sphere('gerald-eye-left',(x-.05,.158,z-.145),(.012,.012,.012),M['iron-dark']); sphere('gerald-eye-right',(x+.05,.158,z-.145),(.012,.012,.012),M['iron-dark'])
 tapered('gerald-tapering-tail',(x,.11,z+.06),(x,.075,z+.19),.043,.005,M['sand'])
 for sx in (-1,1):
     for sz in (-1,1):
-        shoulder=(x+sx*.045,.11,z+sz*.045); hip=(x+sx*.09,.065,z+sz*.105)
-        tapered(f'gerald-leg-upper-{sx}-{sz}',shoulder,hip,.016,.012,M['sand'])
-        foot=(x+sx*.115,.035,z+sz*.13); tapered(f'gerald-leg-lower-{sx}-{sz}',hip,foot,.012,.008,M['sand'])
+        shoulder=(x+sx*.045,.040,z+sz*.035); hip=(x+sx*.12,.025,z+sz*.105)
+        tapered(f'gerald-leg-upper-{sx}-{sz}',shoulder,hip,.012,.009,M['sand'])
+        foot=(x+sx*.15,.012,z+sz*.13); tapered(f'gerald-leg-lower-{sx}-{sz}',hip,foot,.009,.006,M['sand'])
         for t in (-1,0,1): tapered(f'gerald-toe-{sx}-{sz}-{t}',foot,(foot[0]+sx*.045,.026,foot[2]+t*.022),.0045,.0015,M['sand'])
 cube('gerald-box',(x+1,.22,z),(.52,.38,.44),M['weathered-plank'],.045)
 for sx in (-.13,.13):
@@ -161,17 +171,39 @@ for obj in list(scene.objects):
 for obj in list(scene.objects):
     if obj.name.startswith(('jax-harpoon','jax-shoe-shop')): bpy.data.objects.remove(obj,do_unlink=True)
 x=-8
-bpy.ops.mesh.primitive_cone_add(vertices=16,radius1=.021,radius2=.045,depth=2.12,location=town.game_vector((x+.12,.12,0)))
-shaft=bpy.context.object; shaft.name='jax-harpoon-oak-shaft'; shaft.rotation_euler[1]=math.pi/2; shaft.data.materials.append(M['weathered-plank']); attach(shaft,shaft.name)
+# A measured, 16-sided lathe gives the oak pole its swelling grip and taper.
+shaft_stations=[(-1.16,.027),(-.95,.032),(-.72,.039),(-.30,.045),(.18,.050),(.62,.047),(.98,.041),(1.16,.032)]
+shaft_verts=[]; shaft_faces=[]; shaft_sides=16
+for along,radius in shaft_stations:
+    for side in range(shaft_sides):
+        angle=2*math.pi*side/shaft_sides
+        shaft_verts.append(tuple(town.game_vector((x+along,.12+radius*math.cos(angle),radius*math.sin(angle)))))
+for row in range(len(shaft_stations)-1):
+    for side in range(shaft_sides):
+        a=row*shaft_sides+side; b=row*shaft_sides+(side+1)%shaft_sides
+        shaft_faces.append((a,b,b+shaft_sides,a+shaft_sides))
+shaft_mesh=bpy.data.meshes.new('jax measured oak pole lathe'); shaft_mesh.from_pydata(shaft_verts,[],shaft_faces); shaft_mesh.update()
+shaft_uv=shaft_mesh.uv_layers.new(name='UVMap')
+for poly in shaft_mesh.polygons:
+    for li in poly.loop_indices:
+        vi=shaft_mesh.loops[li].vertex_index; station=vi//shaft_sides; side=vi%shaft_sides
+        angle=2*math.pi*side/shaft_sides
+        shaft_uv.data[li].uv=(station/(len(shaft_stations)-1),.78+math.cos(angle)*.08)
+shaft=bpy.data.objects.new('jax-harpoon-oak-shaft',shaft_mesh); scene.collection.objects.link(shaft); shaft_mesh.materials.append(M['weathered-plank']); attach(shaft,shaft.name)
+cyl('jax-harpoon-thick-iron-socket',(x-.91,.12,0),.060,.25,M['rusted-steel'],16,(1,0,0))
 cyl('jax-harpoon-iron-shank',(x-.97,.12,0),.016,.34,M['rusted-steel'],16,(1,0,0))
 head_game=[(x-1.25,.12,-.045),(x-.99,.17,-.045),(x-1.045,.255,-.045),(x-1.13,.17,-.045),(x-1.045,.035,-.045),(x-.99,.08,-.045)]
 head_mesh=bpy.data.meshes.new('jax-harpoon forged flat barb'); head_mesh.from_pydata([tuple(town.game_vector(p)) for p in head_game],[],[(0,1,2,3,4,5)]); head_mesh.update()
 head_uv=head_mesh.uv_layers.new(name='UVMap')
-for loop in head_mesh.loops: head_uv.data[loop.index].uv=((head_game[loop.vertex_index][0]-x+1.25)/.3,head_game[loop.vertex_index][1]/.3)
+for loop in head_mesh.loops:
+    point=head_game[loop.vertex_index]
+    head_uv.data[loop.index].uv=(.83+max(0,min(1,(point[0]-x+1.25)/.30))*.17,.72+max(0,min(1,point[1]/.30))*.20)
 head=bpy.data.objects.new('jax-harpoon-flat-barb',head_mesh); scene.collection.objects.link(head); head.data.materials.append(M['rusted-steel']); attach(head,head.name)
 head.modifiers.new('forged plate thickness','SOLIDIFY').thickness=.008
 edge=head.modifiers.new('rounded forged edge','BEVEL'); edge.width=.006; edge.segments=2
-for i in range(6): cyl(f'jax-harpoon-rope-turn-{i}',(x-.82+i*.022,.12,0),.008,.16,M['patched-canvas'],8,(1,0,0))
+for i in range(6):
+    bpy.ops.mesh.primitive_torus_add(major_radius=.036,minor_radius=.009,major_segments=12,minor_segments=6,location=town.game_vector((x-.82+i*.022,.12,0)))
+    wrap=bpy.context.object; wrap.name=f'jax-harpoon-rope-raised-band-{i}'; wrap.rotation_euler[1]=math.pi/2; wrap.data.materials.append(M['patched-canvas']); attach(wrap,wrap.name)
 # Piano proportions: 1.5 m wide, 1.3 m high, 0.6 m deep. Replace the solid
 # box with rounded side panels and rails, leaving its action exposed.
 for obj in list(scene.objects):
@@ -190,19 +222,32 @@ for obj in shell:
     if bevel: bevel.segments=3
 for obj in scene.objects:
     if obj.name.startswith(('piano-upright-key-','piano-upright-string-')): obj.location.y+=.12
-for i in range(22):
-    kx=-4.29+i*.0275
-    beam(f'piano-upright-action-rod-{i:02}',(kx,.84,-.37),(kx,.99,-.32),.012,M['weathered-plank'])
-    sphere(f'piano-upright-hammer-head-{i:02}',(kx,1.005,-.325),(.013,.017,.016),M['weathered-plank'])
+for obj in [o for o in scene.objects if o.name.startswith(('piano-upright-string-','piano-upright-action-rod-','piano-upright-hammer-head-','piano-upright-iron-caster-'))]:
+    bpy.data.objects.remove(obj,do_unlink=True)
+for sx in (-1,1):
+    cube(f'piano-upright-square-foot-{sx}',(-4+sx*.66,.07,-.02),(.25,.14,.56),M['weathered-plank'],.035)
+    for sz in (-.21,.21):
+        cyl(f'piano-upright-caster-{sx}-{sz}',(-4+sx*.63,.025,sz),.045,.055,M['iron-dark'],12,(0,1,0))
+for sx in (-1,1):
+    cube(f'piano-upright-brass-pedal-{sx}',(-4+sx*.12,.045,-.26),(.045,.025,.13),M['galvanised-tin'],.01)
 # The piano has a distinct worn walnut finish, kept separate from the harpoon's oak.
-piano_image=bpy.data.images.load(str(texture_dir/'ww-piano-veneer.jpg'),check_existing=False); piano_image.pack()
-piano_wood=bpy.data.materials.new('Piano / chipped walnut veneer'); piano_wood.use_nodes=True
-piano_bsdf=piano_wood.node_tree.nodes.get('Principled BSDF'); piano_bsdf.inputs['Metallic'].default_value=.05; piano_bsdf.inputs['Roughness'].default_value=.88
-piano_tex_node=piano_wood.node_tree.nodes.new('ShaderNodeTexImage'); piano_tex_node.image=piano_image; piano_tex_node.extension='REPEAT'
-piano_wood.node_tree.links.new(piano_tex_node.outputs['Color'],piano_bsdf.inputs['Base Color'])
+piano_wood=photo_material('Piano / full front photograph',piano_tex)
 for obj in scene.objects:
-    if obj.name.startswith('piano-upright-shell-'):
+    if obj.name.startswith(('piano-upright-shell-','piano-upright-key-')):
         obj.data.materials.clear(); obj.data.materials.append(piano_wood)
+        uv_layer=obj.data.uv_layers.active
+        for poly in obj.data.polygons:
+            for li in poly.loop_indices:
+                vertex=obj.data.vertices[obj.data.loops[li].vertex_index].co
+                v=Vector((obj.location.x+vertex.x,obj.location.y+vertex.y,obj.location.z+vertex.z))
+                # Project the front from the photo camera; stretch adjacent wood across hidden faces.
+                if abs(poly.normal.y)>.5:
+                    uv_layer.data[li].uv=((v.x+4.75)/1.5, v.z/1.3)
+                elif abs(poly.normal.x)>.5:
+                    local_y=vertex.y
+                    uv_layer.data[li].uv=(.025+max(0,min(1,(local_y+.30)/.60))*.11, v.z/1.3)
+                else:
+                    uv_layer.data[li].uv=(.24+max(0,min(1,(v.x+4.75)/1.5))*.52, .972)
 # Gerald spans 30 cm nose to tail. Replace the disconnected sphere stack with
 # one continuous tapered body, head and tail surface; feet overlap the body.
 gerald=[o for o in scene.objects if o.name.startswith('gerald-') and o.type=='MESH']
@@ -210,12 +255,13 @@ for obj in gerald:
     if 'box' in obj.name: bpy.data.objects.remove(obj,do_unlink=True)
     elif obj.name in ('gerald-low-torso','gerald-blunt-head','gerald-tapering-tail'):
         bpy.data.objects.remove(obj,do_unlink=True)
-body_stations=[(-.15,.004,.004,.115),(-.12,.020,.022,.125),(-.09,.030,.028,.125),(-.05,.045,.032,.125),(-.02,.048,.035,.12),(0,.042,.030,.115),(.03,.025,.020,.105),(.08,.015,.013,.095),(.13,.007,.006,.085),(.15,.001,.002,.08)]
+body_stations=[(-.15,.003,.003,.078),(-.125,.012,.015,.080),(-.10,.024,.025,.082),(-.075,.034,.030,.082),(-.04,.043,.033,.080),(0,.047,.034,.078),(.035,.041,.030,.076),(.07,.028,.023,.072),(.10,.018,.015,.070),(.125,.010,.009,.068),(.145,.004,.004,.066),(.15,.001,.002,.065)]
 verts=[]; faces=[]; rings=16
 for zc,rx,ry,yc in body_stations:
     for j in range(rings):
         angle=2*math.pi*j/rings
-        verts.append(tuple(town.game_vector((20+rx*math.cos(angle),yc+ry*math.sin(angle),zc))))
+        vertical=ry*math.sin(angle) if math.sin(angle)>0 else .004*math.sin(angle)
+        verts.append(tuple(town.game_vector((20+rx*math.cos(angle),yc-.04+vertical,zc))))
 for i in range(len(body_stations)-1):
     for j in range(rings):
         a=i*rings+j; b=i*rings+(j+1)%rings; c=(i+1)*rings+(j+1)%rings; d=(i+1)*rings+j
@@ -223,15 +269,30 @@ for i in range(len(body_stations)-1):
 body_mesh=bpy.data.meshes.new('gerald continuous skin from neck through tail'); body_mesh.from_pydata(verts,[],faces); body_mesh.update()
 for polygon in body_mesh.polygons: polygon.use_smooth=True
 uv=body_mesh.uv_layers.new(name='UVMap')
+side_skin=photo_material('Gerald / side photo projection',lizard_tex)
+top_skin=photo_material('Gerald / overhead photo projection',lizard_tex)
+body_mesh.materials.append(side_skin); body_mesh.materials.append(top_skin)
 for poly in body_mesh.polygons:
     for li in poly.loop_indices:
-        vi=body_mesh.loops[li].vertex_index; uv.data[li].uv=(vi//rings/(len(body_stations)-1),vi%rings/rings)
-body=bpy.data.objects.new('gerald-body-connected-head-tail',body_mesh); scene.collection.objects.link(body); body_mesh.materials.append(M['sand']); attach(body,body.name)
+        vi=body_mesh.loops[li].vertex_index; station=vi//rings; side=vi%rings
+        xw,yw,zw=verts[vi]
+        u=(.15-yw)/.30
+        if poly.normal.z>.45:
+            poly.material_index=1
+            uv.data[li].uv=(u,.06+max(0,min(1,(xw-19.95)/.10))*.43)
+        else:
+            poly.material_index=0
+            uv.data[li].uv=(u,.57+max(0,min(1,(zw-.045)/.08))*.38)
+body=bpy.data.objects.new('gerald-body-connected-head-tail',body_mesh); scene.collection.objects.link(body); attach(body,body.name)
 body.modifiers.new('soft skin profile','SUBSURF').levels=1
-for obj in scene.objects:
-    if obj.name.startswith('gerald-eye-'):
-        side=-1 if obj.name.endswith('left') else 1
-        obj.location=town.game_vector((20+side*.028,.148,-.115)); obj.scale*=.25
+# Five long, individually thick toes fan from each low splayed foot.
+for obj in [o for o in scene.objects if o.name.startswith('gerald-toe-')]: bpy.data.objects.remove(obj,do_unlink=True)
+for sx in (-1,1):
+    for sz in (-1,1):
+        foot=(20+sx*.15,.012,sz*.13)
+        for toe in range(5):
+            spread=(toe-2)*.018
+            tapered(f'gerald-toe-{sx}-{sz}-{toe}',foot,(foot[0]+sx*(.055+abs(spread)*.45),.007,foot[2]+spread),.004,.0015,M['sand'])
 # Salvaged iron remains dull in real-time rendering; keep every exported
 # metallicFactor at or below the card's 0.3 ceiling.
 for material in M.values():
@@ -276,14 +337,14 @@ for part in ('jax-','piano-upright-','gerald-'):
     center=(lo+hi)*.5
     if part=='jax-': cam.location=center+Vector((0,max(2.2,(hi.y-lo.y)*3),.08))
     elif part=='gerald-': cam.location=center+Vector((-max(1.2,(hi.x-lo.x)*4),0,0))
-    else: cam.location=center+Vector((-1.0,max(2.2,(hi.y-lo.y)*3),.22))
+    else: cam.location=center+Vector((-1.0,max(2.2,(hi.y-lo.y)*3),2.2))
     cam.rotation_euler=(center-cam.location).to_track_quat('-Z','Y').to_euler()
     cam.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*980/560,hi.y-lo.y)*1.13; scene.render.filepath=str(root/'.qa-dist'/('render-'+part.rstrip('-')+'.png'))
     bpy.ops.render.render(write_still=True)
     if part=='gerald-':
         cam.location=center+Vector((0,0,max(1.2,(hi.z-lo.z)*4)))
         cam.rotation_euler=(center-cam.location).to_track_quat('-Z','Y').to_euler()
-        cam.data.ortho_scale=max(hi.x-lo.x,hi.y-lo.y)*1.2
+        cam.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*980/560)*1.2
         scene.render.filepath=str(root/'.qa-dist'/'render-gerald-top.png')
         bpy.ops.render.render(write_still=True)
 print('Rendered GLB portraits into .qa-dist for reference comparison.')

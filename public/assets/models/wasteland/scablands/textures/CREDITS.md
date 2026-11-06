@@ -80,11 +80,21 @@ irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
 
-## WW-ART-CREW reference crops
+## WW-ART-CREW round 3 photo skins (2026-11-06)
 
-These are cropped from original Codex ImageGen photographs made 2026-11-06 for round 2. The full reference images remain in lane scratch storage and are removed after the sheet is made. No outside source art is used.
+The three JPGs below come from the round 2 Codex ImageGen photographs. The
+harpoon photo receives a four-corner perspective transform to straighten its
+shaft. The photographs are packed into `crew-favours.glb` as non-repeating
+projection materials; they are not tiled swatches.
 
-- `ww-harpoon-oak.jpg`: 512 px color crop from the harpoon's aged oak pole; used on the 2.5 m handle. Prompt: photographic old whaling harpoon, oak pole and iron head, lying on a scarred workbench in bright overcast daylight.
-- `ww-harpoon-iron.jpg`: 512 px color crop from the forged harpoon head; used on the iron parts. Prompt: same harpoon reference, with a dark aged forged iron head and flat barb.
-- `ww-piano-veneer.jpg`: 512 px color crop from the piano's worn walnut case; used on the case and open frame. Prompt: battered 1.5 m upright piano, one panel missing, exposed hammers and strings, chipped keys, three-quarter view in even daylight.
-- `ww-gerald-scales.jpg`: 512 px color crop from the lizard's back; used on Gerald's skin. Prompt: real 30 cm desert lizard photographed from the side and overhead on pale dusty ground in overcast daylight.
+- `ww-harpoon-photo.jpg`: perspective-corrected harpoon and workbench photograph,
+  used for the shaft, socket and forged head. Prompt: photographic old whaling
+  harpoon, oak pole and iron head, lying on a scarred workbench in bright
+  overcast daylight.
+- `ww-piano-photo.jpg`: upright piano photo, full front and left-side view,
+  used as the front projection. Prompt: battered 1.5 m upright piano, one
+  panel missing, exposed hammers and strings, chipped keys, three-quarter
+  view in even daylight.
+- `ww-gerald-photo.jpg`: desert lizard photo, side and overhead views, used
+  for the lofted skin projection. Prompt: real 30 cm desert lizard photographed
+  from the side and overhead on pale dusty ground in overcast daylight.
