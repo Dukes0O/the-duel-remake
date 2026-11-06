@@ -2,27 +2,29 @@
 
 ## Design
 
-The card's salt heap has no fixed depth. Use the generated profile photo for the front silhouette and planar UV projection, then taper the rear outlines to give it volume. Set the full photo frame to 18 m wide; the heap spans about 14 m. The front sits 3.2 m from center; five outlines taper over 6.4 m of total depth. The quarter view remains subject to Claude's art judgment.
+Round 2 follows the card's five ordered corrections. The station keeps its clock and canopy. Its deck is a one-metre timber structure about four metres wide; the station is about 20 m long. The canopy posts stand on the deck. The pan uses 12 m salt tiles with alternating quarter turns and 40 cm crust walls. The heap is a 14 m round, 5 m high salt heightfield with a feathered base.
 
 ## Changed
 
-- Replaced the symmetric radial heap with a silhouette measured from `whites-salt-heap.jpg`.
-- Kept the full photo projection on the front face. The back and cut edges use the existing cracked-salt material.
-- Reframed the exported-GLB side render to match the source photo's 3:1 frame and widened the quarter camera for a clearer depth view.
-- Added the `ww-art-whites` output entry and checks for triangle/byte budgets, `TEXCOORD_0`, UV range and metallic caps.
-- Added Blender-free `--paths-only` output planning after the new entry exposed the missing hook.
-- Added the round-1 comparison sheet and visual notes.
+- Rebuilt the station deck as a full timber wall and added three steps.
+- Shortened the station from about 30 m to about 20 m. Raised the canopy posts, bench and clock support to meet the deck.
+- Scaled the cracked-salt repeat from 2 m to 12 m and rotated alternate tiles. Set the pan wall thickness and height to 40 cm and darkened its photo material.
+- Replaced the photo-faced heap cutout with a lumpy radial heightfield. Its cracked-salt UVs repeat at the existing 2 m scale.
+- Rebuilt all look views from the exported GLB in a fresh Blender scene with Standard view transform. Added the side, end, two station quarter views, pan and heap to the round-2 sheet.
+- Kept the clock and canopy from round 1.
 
 ## Checks
 
-- Blender recipe: `blender -b --python tools/blender/rail-whites.py -- --root . --through salt-heap` - passed; 16,482 total triangles, 1,156,284 bytes.
-- Blender-free plan: `python tools/blender/rail-whites.py -- --root . --through salt-heap --paths-only` - passed without writing output.
-- `node tools/test-blender-output.mjs` - passed, 296 checks, 0 failed. Its first run found the missing `--paths-only` hook; the recipe now supports it.
-- `node tools/test-repo-hygiene.mjs` - passed; placement is clean and size targets are advisory.
-- No lane tier, build, game look or frame check: this is an art-only card, and it is not wired into gameplay.
-- The exported side and quarter renders are in the comparison sheet. The quarter view awaits Claude's look judgment.
+- `blender -b --python tools/blender/rail-whites.py -- --root . --through works-platform` - passed for the station changes; exported-GLB side, end and quarter renders inspected.
+- `blender -b --python tools/blender/rail-whites.py -- --root . --through salt-pan` - passed; exported-GLB pan side, quarter and top renders inspected.
+- `blender -b --python tools/blender/rail-whites.py -- --root . --through salt-heap` - passed; exported-GLB station, pan and heap renders inspected.
+- `node tools/test-blender-output.mjs` - passed, 296 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs` - passed; repository placement clean. Size targets remain advisory.
+- Browser and in-game look checks were not run here. Claude should inspect the full round-2 sheet, especially whether the end view and 40 cm pan walls read clearly from car height.
+- Changed assertions: none. Race fingerprints: not applicable; no race code or rules changed.
 
 ## Removed
 
-- Removed the symmetric radial mound geometry. The photo-measured outline and projected front replace it in the same recipe and GLB.
-- No texture source was removed. The existing source images and `CREDITS.md` entries remain.
+- Removed the obsolete `whites-salt-heap.jpg` cutout reference and its credit entry. The generated heap now uses the cracked-salt picture.
+- Replaced the round-1 comparison sheet and review note with round 2.
+- Deleted temporary renders, logs and sheet-generation scratch from `.qa-dist` before handoff.

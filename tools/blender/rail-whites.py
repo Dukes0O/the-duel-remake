@@ -254,7 +254,7 @@ def build_pan():
     walls.finish('salt-pan', wall_mats)
     objects['salt-pan'] = walls
 
-    # A modestly uneven crust follows true-size two-metre texture repeats.
+    # A modestly uneven crust follows 12 m cracked-salt texture tiles.
     nx = nz = 80
     verts, faces = [], []
     for i in range(nx + 1):
@@ -391,12 +391,13 @@ def shot(piece, name, eye, target, width, height, ortho=None, lens=35):
     bpy.ops.render.render(write_still=True)
 
 if last_stage >= 0:
-    shot('works-platform', 'side', (0, 2.1, 36), (0, 2.1, 0), 1400, 470, ortho=34)
-    shot('works-platform', 'end', (9, 2.1, 0), (0, 2.1, 0), 850, 720, ortho=5.5)
-    shot('works-platform', 'quarter', (8.6, 1.2, 15.0), (3.5, 2.1, 0), 1500, 650, lens=17)
+    shot('works-platform', 'side', (0, 2.1, 36), (0, 2.1, 0), 1024, 341, ortho=34)
+    shot('works-platform', 'end', (9, 2.1, 0), (0, 2.1, 0), 1024, 683, ortho=5.5)
+    shot('works-platform', 'quarter', (8.6, 1.2, 15.0), (0, 2.1, 0), 1500, 650, lens=20)
+    shot('works-platform', 'quarter-back', (-8.6, 1.2, -15.0), (0, 2.1, 0), 1500, 650, lens=20)
 if last_stage >= 1:
     shot('salt-pan', 'side', (0, 2.1, 37), (0, .35, 0), 1200, 520, ortho=33)
-    shot('salt-pan', 'quarter', (10.6, 1.2, 10.6), (0, .35, 0), 1100, 720, lens=12)
+    shot('salt-pan', 'quarter', (16, 1.2, 16), (6, .35, 6), 1100, 720, lens=26)
     shot('salt-pan', 'top', (0, 30, 0), (0, .3, 0), 850, 850, ortho=33)
 if last_stage >= 2:
     shot('salt-heap', 'side', (0, 2.4, 17), (0, 2.4, 0), 1536, 512, ortho=18)
