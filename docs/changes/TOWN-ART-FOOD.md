@@ -1,38 +1,27 @@
-# TOWN-ART-FOOD round 2
+# TOWN-ART-FOOD round 3
 
 ## Changed
 
-- Rebuilt the soup-kitchen apron as two shaped, thickened cloth surfaces with
-  gravity folds, a torn hem and stitched picture detail. Reshaped the pot as a
-  curved, soot-darkened cauldron with a rolled rim; added a rough stone ring,
-  split logs, visible flame tongues, separate timber benches and a stocked rear
-  shelf.
-- Corrected the corrugated wall UVs so the fine ribs repeat at their intended
-  scale. Reused the food family's existing material pictures and added distinct
-  food, tool and repair displays to the matching shops.
-- Rendered the exported GLB after re-import. The comparison ground is even
-  mid-grey-brown, and the sheet shows close driver and mayor views of every
-  building.
-- Replaced the round 1 sheet and builder review with round 2. No test assertion
-  changed. No race rules or replay fingerprints changed; this card only changes
-  art.
+- Updated the food family recipe for a 24-sided smooth iron pot with rolled rim, paired handles and three legs; a nine-rock hearth with logs and emissive crossed flames; and benches with separate seat planks.
+- Kept the back shelf set dressing and patched awning. Added two visible rows of canteen windows, axle support blocks, serving awnings and small diner seats.
+- Gave the market stalls distinct awning materials and reduced stall C to two stacks of two tyres. Removed the common ground slabs beneath the stalls and shopfronts.
+- Rebuilt `food.glb` and the round 3 sheet from the exported model imported into an empty Blender scene. The sheet includes a photo crop and uses tighter framing without the pale band across driver images.
+- Resolved the integration conflict in `tools/test-blender-output.mjs` by retaining both the food and town-vane generator entries.
 
 ## Checks
 
-- Blender export and re-import render: passed.
-- `node tools/test-blender-output.mjs`: passed, 276 checks; 0 failed. Soup
-  kitchen: 4,964 triangles. Food family: 27,864 triangles. GLB: 1,898,152
-  bytes.
-- `node tools/test-repo-hygiene.mjs`: passed; repository placement is clean.
-- Lane tier and build: not run, as directed for this art card.
-- Browser and in-game look checks: not run here. Claude should compare the soup
-  kitchen at driver height with its reference, then inspect every building at
-  both heights and check the food family in the mayor and road views.
+- `tools/test-blender-output.mjs`: 297 checks, 0 failures on the final export. It checks file and triangle budgets, named parts, UV coordinate attributes and material metallic values.
+- Blender recipe export and reimport render completed successfully. Food GLB: 2,031,348 bytes.
+- `tools/test-repo-hygiene.mjs`: passed; repository placement is clean. Size targets are advisory.
+- No browser or look check was run; Claude should review the comparison and family images listed in the round review.
+- No changed test assertions. No race fingerprints apply to this art-only card.
 
 ## Removed
 
-- Removed the round 1 sheet and review note, the flat soup awning panels, the
-  rectangular kitchen ground plate, the soup sign, unused stacked bowls and
-  redundant pot lip.
-- Removed generated render captures and task scratch files after composing the
-  review sheet.
+- Removed the round 2 sheet and review note as replaced by round 3.
+- Removed repeated ground slabs beneath the food stalls and shopfronts.
+- Removed the Blender scratch renders and test logs after review.
+
+## Open visual work
+
+The round 3 review records the remaining differences from the photo and acceptance card. In particular, painted sign textures, a convincing rounded bus body, richer market-hall goods, and greenhouse glazing/plants still need art work. Claude should review the current candidate and decide whether another art round is needed.

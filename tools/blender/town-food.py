@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/town-art-food/round-2'
+evidence = root / '.evidence/2026-11-06/town-art-food/round-3'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-3.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -67,6 +67,11 @@ fire_bsdf=mat['fire'].node_tree.nodes.get('Principled BSDF')
 if fire_bsdf.inputs.get('Emission Color'):
     fire_bsdf.inputs['Emission Color'].default_value=(.58,.105,.018,1)
     fire_bsdf.inputs['Emission Strength'].default_value=.8
+mat['fire-yellow'] = simple('Town / flame yellow',(.95,.48,.06),.68)
+yellow_bsdf=mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
+if yellow_bsdf.inputs.get('Emission Color'):
+    yellow_bsdf.inputs['Emission Color'].default_value=(1.0,.30,.018,1)
+    yellow_bsdf.inputs['Emission Strength'].default_value=1.35
 mat['leaf'] = simple('Town / dusty greens', (.12, .205, .105), .94)
 mat['fruit-red'] = simple('Town / bruised red fruit', (.38, .12, .075), .84)
 mat['fruit-yellow'] = simple('Town / dried yellow fruit', (.47, .34, .12), .86)
@@ -131,6 +136,7 @@ def mesh_object(name, vertices, faces, material, uv_mode='planar'):
             x,y,z=vertices[mesh.loops[li].vertex_index]
             if uv_mode == 'wall': uv.data[li].uv=(x/.20, y/2)
             elif uv_mode == 'canvas': uv.data[li].uv=(x/1.5, y/1.5)
+            elif uv_mode == 'round': uv.data[li].uv=(math.atan2(z, x)/math.tau, y)
             else: uv.data[li].uv=(x/2, z/2) if uv_mode=='planar' else (x, z)
     obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
     return keep(obj)
@@ -216,7 +222,7 @@ def draped_canvas(name, start, end, width, top_y, sag, material):
     obj=mesh_object(name,verts,faces,material,'canvas')
     obj.modifiers.new('stitched cloth thickness','SOLIDIFY').thickness=.018
     return obj
-draped_canvas('soup-kitchen:continuous-patched-canvas-front',(-1.92,-1.59),(1.92,-1.59),.08,2.52,.90,mat['patched-canvas'])
+draped_canvas('soup-kitchen:continuous-patched-canvas-front',(-1.92,-1.59),(1.92,-1.59),.08,2.52,.34,mat['patched-canvas'])
 draped_canvas('soup-kitchen:canvas-down-left-side',(-1.90,-1.58),(-1.90,1.52),.54,2.52,2.08,mat['patched-canvas'])
 for i,x in enumerate((-1.58,-.65,.36,1.43),1):
     beam(f'soup-kitchen:canvas-rope-loop-{i}',(x,2.45,-1.62),(x,2.62,-1.58),.025,mat['rusted-steel'])
@@ -243,36 +249,45 @@ def lathe_pot(name, center, profile, material, segments=32):
     for row in range(len(profile)-1):
         for i in range(segments):
             a=row*segments+i;b=row*segments+(i+1)%segments
-            faces.append((a,b,b+segments,a+segments))
+            faces.append((a,a+segments,b+segments,b))
     obj=mesh_object(name,verts,faces,material,'round')
     for poly in obj.data.polygons:poly.use_smooth=True
     return obj
-lathe_pot('soup-kitchen:iron-soup-pot',(0,.37,-.12),((.36,.02),(.52,.08),(.70,.27),(.78,.49),(.75,.68),(.66,.83),(.61,.87)),mat['dark-steel'],24)
-bpy.ops.mesh.primitive_torus_add(major_segments=16,minor_segments=5,major_radius=.61,minor_radius=.055,location=town.game_vector((0,1.24,-.12)))
+lathe_pot('soup-kitchen:iron-soup-pot',(0,.66,-.12),((.32,.02),(.45,.08),(.59,.27),(.65,.49),(.62,.68),(.55,.83),(.51,.87)),mat['dark-steel'],24)
+bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=.51,minor_radius=.055,location=town.game_vector((0,1.53,-.12)))
 obj=bpy.context.object;obj.name='soup-kitchen:pot-rolled-rim';obj.data.materials.append(mat['rusted-steel']);keep(obj)
 for side in (-1,1):
-    beam(f'soup-kitchen:pot-handle-{side}',(side*.62,1.00,-.12),(side*.92,1.02,-.12),.075,mat['iron-dark'])
-    cylinder(f'soup-kitchen:pot-handle-grip-{side}',(side*.92,1.02,-.12),.09,.12,mat['weathered-plank'],10,'X')
+    beam(f'soup-kitchen:pot-handle-{side}',(side*.52,1.30,-.12),(side*.79,1.34,-.12),.075,mat['dark-steel'])
+    cylinder(f'soup-kitchen:pot-handle-grip-{side}',(side*.79,1.34,-.12),.075,.12,mat['dark-steel'],10,'X')
+for i,angle in enumerate((.35,2.45,4.55),1):
+    x,z=math.cos(angle)*.43,-.12+math.sin(angle)*.43
+    beam(f'soup-kitchen:pot-short-leg-{i}',(x,.40,z),(x,.69,z),.10,mat['dark-steel'])
 # Rough hearth with embedded stone and linked split wood, coal and a controlled flame cluster.
 rng=random.Random(205)
 for i in range(7):
-    a=math.tau*i/7; x=math.cos(a)*.72; z=-.12+math.sin(a)*.58
-    sphere(f'soup-kitchen:hearth-stone-{i+1}',(x,.29,z),(.31,.22,.27),mat['cracked-concrete'],8,5)
+    a=math.tau*i/9; x=math.cos(a)*.82; z=-.12+math.sin(a)*.72
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=1,location=town.game_vector((x,.22,z)))
+    stone=bpy.context.object;stone.name=f'soup-kitchen:hearth-stone-{i+1}'
+    stone.scale=(.22+.025*(i%3),.16+.018*((i+1)%3),.20+.02*((i+2)%4))
+    stone.rotation_euler[1]=a*.37;stone.data.materials.append(mat['cracked-concrete'])
+    for poly in stone.data.polygons: poly.use_smooth=False
+    keep(stone)
 for i in range(4):
     x=-.42+i*.26
     beam(f'soup-kitchen:split-firewood-{i+1}',(x,.35,-.48),(x+.22,.39,.21),.12,mat['weathered-plank'])
-for i,(x,z,lean) in enumerate(((-.72,-.10,-.10),(.72,-.10,.11),(-.42,-.60,.08),(.46,-.60,-.08)),1):
+for i,(x,z,lean) in enumerate(((-.48,-.10,-.12),(.45,-.10,.12),(-.30,-.52,.10),(.32,-.52,-.10),(-.12,-.26,.04)),1):
     verts=[]
-    for y,radius in ((.32,.12),(.61,.095)):
+    for y,radius in ((.28,.105),(.53,.085)):
         for angle in (0,math.pi/2,math.pi,math.pi*1.5):
             verts.append((x+math.cos(angle)*radius,y,z+math.sin(angle)*radius))
-    verts.append((x+lean,1.02,z-.015))
+    verts.append((x+lean,.82,z-.015))
     faces=[]
     for side in range(4):
         nxt=(side+1)%4
         faces.append((side,nxt,nxt+4,side+4))
         faces.append((side+4,nxt+4,8))
-    mesh_object(f'soup-kitchen:fire-tongue-{i}',verts,faces,mat['fire'],'round')
+    flame=mesh_object('soup-kitchen:lamp',verts,faces,mat['fire-yellow'] if i%2==0 else mat['fire'],'round')
+    flame.name=f'soup-kitchen:lamp-{i}'
 # Two joined trestle benches flank the fire; they are rough, thick timber, not plank planes.
 for side,z in enumerate((-.98,1.14),1):
     for plank in range(3):
@@ -343,7 +358,7 @@ for x in (-.25,.25): sphere(f'chicken-run:egg-{x}',(x,.56,-.88),(.10,.07,.08),ma
 box('chicken-run:feed-tray',(0,.16,1.05),(.85,.19,.30),mat['galvanised-tin'],.045)
 
 def market_stall(building, offset, kind):
-    add_building(building,offset); ground_clutter(building,0,0)
+    add_building(building,offset)
     for x in (-1.15,1.15):
         beam(f'{building}:post-{x}',(x,.12,-1.08),(x,2.18,-1.08),.085,mat['rusted-steel'])
         beam(f'{building}:rear-post-{x}',(x,.12,1.0),(x,1.85,1.0),.075,mat['weathered-plank'])
@@ -351,13 +366,15 @@ def market_stall(building, offset, kind):
     beam(f'{building}:rear-lintel',(-1.25,1.85,1.0),(1.25,1.85,1.0),.075,mat['weathered-plank'])
     for x in (-.65,.65):
         beam(f'{building}:awning-arm-{x}',(x,1.7,-1.1),(x,2.18,-.22),.055,mat['rusted-steel'])
-    awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat['patched-canvas'],.035)
+    awning_material={'fruit':'fruit-yellow','tools':'weathered-plank','tyres':'patched-canvas'}[kind]
+    awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat[awning_material],.035)
     awning.rotation_euler[0]=-.10
     box(f'{building}:display-counter',(0,.91,-.24),(2.18,.20,.83),mat['weathered-plank'],.04)
     for x in (-.85,.85): beam(f'{building}:counter-leg-{x}',(x,.12,-.24),(x,.84,-.24),.08,mat['rusted-steel'])
     if kind=='fruit':
         for row,z in enumerate((-.45,.05),1):
-            box(f'{building}:fruit-crate-{row}',(0,1.14,z),(1.85,.34,.52),mat['weathered-plank'],.04)
+            crate=box(f'{building}:fruit-crate-{row}',(0,1.14,z),(1.85,.34,.52),mat['weathered-plank'],.04)
+            crate.rotation_euler[2]=(-.12 if row==1 else .16)
             for j in range(6):
                 x=-.72+j*.29; color=mat['fruit-red'] if (j+row)%2 else mat['fruit-yellow']
                 sphere(f'{building}:produce-{row}-{j+1}',(x,1.40,z),(.115,.11,.12),color,8,5)
@@ -369,10 +386,11 @@ def market_stall(building, offset, kind):
             box(f'{building}:small-tool-box-{x}',(x,1.29,.18),(.42,.18,.38),mat['rusted-steel'],.035)
     else:
         for i in range(4):
-            z=-.5+i*.31
+            x=-.72+(i%2)*1.44
+            y=.46+(i//2)*.52
             bpy.ops.mesh.primitive_torus_add(major_radius=.38,minor_radius=.12,major_segments=16,minor_segments=6,
-                                               location=town.game_vector((-.55+i*.36,1.47,z)))
-            obj=bpy.context.object;obj.name=f'{building}:display-tyre-{i+1}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
+                                               location=town.game_vector((x,y,.12)))
+            obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{i+1}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
     sign(building,(0,1.88,-1.16),'FRUIT' if kind=='fruit' else 'TOOLS' if kind=='tools' else 'TYRES',1.15)
 
 market_stall('stall-a',(20,0,2),'fruit')
@@ -380,7 +398,7 @@ market_stall('stall-b',(28,0,2),'tools')
 market_stall('stall-c',(36,0,2),'tyres')
 
 def shopfront(building, offset, label):
-    add_building(building,offset);ground_clutter(building,0,0)
+    add_building(building,offset)
     for x in (-1.12,1.12):
         beam(f'{building}:corner-post-{x}',(x,.12,-.68),(x,2.5,-.68),.10,mat['rusted-steel'])
         beam(f'{building}:rear-post-{x}',(x,.12,.72),(x,2.05,.72),.075,mat['weathered-plank'])
@@ -415,10 +433,16 @@ shopfront('shopfront-b',(28,0,12),'TOOLS')
 shopfront('shopfront-c',(36,0,12),'FIX-IT')
 
 # Bus canteen: bent sheet-metal shell with rounded front and wheel arches.
-add_building('canteen',(8,0,12));ground_clutter('canteen',0,0)
-for x in (-2.8,2.8):
-    for z in (-1.55,1.55):
-        sphere(f'canteen:salvaged-wheel-{x}-{z}',(x,.55,z),(.38,.55,.38),mat['rubber'],12,7)
+add_building('canteen',(8,0,12))
+# Salvage blocks lift the bus body; the removed wheels sit aside as spare stock.
+for x in (-2.45,2.45):
+    for z in (-1.25,1.25):
+        box(f'canteen:axle-support-block-{x}-{z}',(x,.34,z),(.72,.38,.62),mat['cracked-concrete'],.06)
+for x in (-3.25,3.25):
+    for z in (-1.2,1.2):
+        bpy.ops.mesh.primitive_torus_add(major_segments=18,minor_segments=7,major_radius=.43,minor_radius=.13,
+                                         location=town.game_vector((x,.40,z)))
+        tyre=bpy.context.object;tyre.name=f'canteen:spare-tyre-{x}-{z}';tyre.rotation_euler[0]=math.pi/2;tyre.data.materials.append(mat['rubber']);keep(tyre)
 # A continuous curved roofline and rounded bonnet make this read as a bus body.
 xs=(-3.25,-2.85,-1.95,1.95,2.85,3.25)
 roofline=((1.35,1.60),(2.25,2.42),(2.65,2.78),(2.65,2.78),(2.25,2.42),(1.35,1.60))
@@ -434,13 +458,23 @@ for z in (-1.50,1.50): beam(f'canteen:roof-rim-{z}',(-3.15,2.55,z),(3.15,2.55,z)
 for i,x in enumerate((-2.35,-1.35,-.35,.65,1.65,2.48),1):
     box(f'canteen:dark-window-{i}',(x,2.02,-1.535),(.78,.86,.04),mat['glass'],.07)
     box(f'canteen:window-frame-{i}',(x,2.02,-1.565),(.84,.92,.035),mat['weathered-plank'],.05)
+    box(f'canteen:far-side-window-{i}',(x,2.02,1.535),(.78,.86,.04),mat['glass'],.07)
+    box(f'canteen:far-side-window-frame-{i}',(x,2.02,1.565),(.84,.92,.035),mat['weathered-plank'],.05)
 box('canteen:serving-apron',(0,1.39,-1.57),(3.7,.20,.07),mat['faded-hand-paint'],.04)
 box('canteen:serving-counter',(0,1.25,-1.95),(3.55,.13,.68),mat['weathered-plank'],.04)
 tin_roof('canteen:roof-panels',0,2.67,0,6.2,3.05,.025)
+for x in (-2.6,-1.3,0,1.3,2.6):
+    beam(f'canteen:serving-awning-arm-{x}',(x,1.58,-1.55),(x,2.18,-2.10),.055,mat['rusted-steel'])
+box('canteen:canvas-serving-awning',(0,2.16,-1.94),(5.6,.09,.82),mat['patched-canvas'],.06)
+box('canteen:far-side-serving-apron',(0,1.39,1.57),(3.7,.20,.07),mat['faded-hand-paint'],.04)
+box('canteen:far-side-serving-counter',(0,1.25,1.95),(3.55,.13,.68),mat['weathered-plank'],.04)
+box('canteen:far-side-canvas-awning',(0,2.16,1.94),(5.6,.09,.82),mat['patched-canvas'],.06)
 for x in (-1.2,1.2):
     for z in (-.7,.7): beam(f'canteen:diner-table-leg-{x}-{z}',(x,.12,z),(x,.74,z),.055,mat['rusted-steel'])
 box('canteen:interior-dining-table',(0,.78,.52),(2.5,.14,.76),mat['weathered-plank'],.04)
-for z in (-1.05,.85): box(f'canteen:bench-{z}',(0,.5,z),(2.45,.12,.38),mat['weathered-plank'],.04)
+for z in (-1.05,.85):
+    box(f'canteen:bench-{z}',(0,.5,z),(2.45,.12,.38),mat['weathered-plank'],.04)
+    for x in (-.82,.82): beam(f'canteen:stool-leg-{z}-{x}',(x,.10,z),(x,.44,z),.09,mat['rusted-steel'])
 for x in (-1.8,1.8): beam(f'canteen:front-bumper-{x}',(x,.47,-1.57),(x,.47,-1.95),.085,mat['rusted-steel'])
 sign('canteen',(0,2.42,-1.63),'CANTEEN',2.0)
 
