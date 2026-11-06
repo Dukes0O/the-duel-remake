@@ -1,14 +1,35 @@
 # Rattler runtime texture credits
 
-## Round 7 shape photos
+## Round 8 shape photos
 
-Generated with OpenAI built-in image generation on 2026-11-06 for the photo
-measuring recipe. Original fictional 1950s-style pickup; no maker, logo or
-licensed reference. Source photos: `.evidence/car-art-rattler/{side,front,rear,top}.jpg`.
-The GLB embeds the photo-mapped surface regions. The prompt requested the same
-worn pickup in dead-on side, front, rear and overhead views, flat pale studio
-light, rounded-roof upright cab, flat windshield, separate front wings, visible
-engine, plank bed, large rear tires and smaller fronts.
+Generated with OpenAI built-in image generation on 2026-11-06. These are four
+original photographs of the same fictional 1950s hand-built rat-rod pickup,
+with no maker, logo, or licensed reference. The JPEGs are embedded in
+`rattler.glb` and supply the measured paint for the matching body faces.
+
+### `rattler-side.jpg`
+
+Prompt:
+
+> Photorealistic orthographic studio reference photograph of one original fictional hand-built 1950s rat-rod pickup truck, exact dead-on left side view, full vehicle centered and fully visible, camera level at wheel-hub height, no perspective distortion. The same design as a compact chopped pickup: two-door cab with short rounded roof and flat upright windshield, exposed V8 engine and paired short side exhaust pipes in front, separate rounded metal front fenders, short open wooden plank bed and simple roll hoop behind the cab. Four wheels only; larger rear tires about 20 percent taller than front tires; simple dark steel rims. Weathered dark charcoal-grey primer and deep brown rust, dusty, realistic hand-welded vehicle, plausible long wheelbase, not toy-like. Plain pale neutral grey studio background and floor, soft even overcast lighting, only soft contact shadow. Single side view only, sharp full-size photograph, truck fills 85 percent of the image width. No other angle, no collage, no duplicate vehicle, no text, no labels, no logo, no watermark, no people.
+
+### `rattler-front.jpg`
+
+Prompt:
+
+> Photorealistic orthographic studio reference photograph of one original fictional hand-built 1950s rat-rod pickup truck, exact dead-on front view, camera level at axle height, centered, no perspective, full front silhouette visible. Same design as the side, rear and overhead photos: compact cab with short rounded roof and flat upright windshield; long exposed V8 engine; narrow rounded vertical grille; two round headlights; separate curved front wings; front tires smaller than rear; four dark steel wheels total; top of short wooden pickup bed just visible behind the cab; roll hoop behind cab. Weathered dark charcoal-grey primer and deep brown rust, dusty, realistic hand-welded parts and plausible proportions. Pale neutral grey studio floor and background, soft even overcast light, gentle contact shadow, high-detail realistic photo. One front view only, vehicle fills 80 percent of image, no collage or other views, no extra vehicle, no text, no labels, no logos, no watermark, no people.
+
+### `rattler-rear.jpg`
+
+Prompt:
+
+> Photorealistic orthographic studio reference photograph of one original fictional hand-built 1950s rat-rod pickup truck, exact dead-on rear view, centered at axle height, no perspective, entire rear visible. Same vehicle design as this exact target: compact two-door cab with rounded roof, short open wooden plank pickup bed, large rear tires wider and taller than front, dark steel wheels, paired vertical exhaust tips behind the cab, simple rear bumper and taillights, roll hoop visible behind cab. Weathered dark charcoal-grey primer, deep brown rust and dark old wood, dusty, hand-welded and plausible, no saturated colors. Pale neutral grey studio background and floor, soft even overcast light, gentle contact shadow, high detail. One rear view only, subject fills 80 percent of frame, no collage or other views, no additional vehicles, no text, logos, watermark, labels or people.
+
+### `rattler-top.jpg`
+
+Prompt:
+
+> Photorealistic straight-down overhead orthographic studio reference photograph of one original fictional hand-built 1950s rat-rod pickup truck, camera directly above, no perspective or tilt, vehicle aligned vertically and fully visible. The FRONT of the truck is at the top of the image: hood and exposed V8 at top; two-door cab with rounded roof and flat upright windshield in the middle; short open wooden plank pickup bed at bottom; roll hoop directly behind cab. Four wheels only, smaller front wheels and visibly larger rear wheels beside the bed. Same weathered dark charcoal-grey primer, deep brown rust, dusty wood and dark steel. Plausible hand-built vehicle proportions, no saturated colors. Plain pale neutral grey studio floor and background visible evenly around the vehicle, soft flat overcast light, subtle contact shadow. Crisp detailed full-size photograph; whole vehicle fills about 80 percent of image height. One overhead view only, no collage, no duplicate truck, no text, logos, labels, watermark or people.
 
 OpenAI's built-in image generator made these original material pictures on
 2026-11-05. They are not scans or licensed source images. Each is an optimized
