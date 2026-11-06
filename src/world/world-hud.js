@@ -87,13 +87,17 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     found, stepState: job?.stepState}, places);
   const position = markerOf(player, places);
   const target = next.target;
+  const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
+  const at=pointOf(player);
+  const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8
+    ?gate.prompt:'';
   const dx = target && position ? target.x - position.x : 0;
   const dz = target && position ? target.z - position.z : 0;
   const bearing = target && position ? (Math.atan2(dx, dz) * 180 / Math.PI + 360) % 360 : null;
   const finds = [...(worldJob?.definition?.finds ?? []), ...(job?.steps ?? []).flatMap(item => item.finds ?? [])];
   return {
     line: next.line, kind: next.kind, target, bearing,
-    prompt: step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : '',
+    prompt: townGatePrompt || (step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     arrow: bearing,

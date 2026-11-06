@@ -233,6 +233,11 @@ export class App {
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
+      if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
+      if(event.townGate&&state.arena?.mode==='world-job'){
+        // The event fires inside duel.step(), which still needs the arena: leave once the step has finished.
+        queueMicrotask(()=>{if(this.duel.state.arena?.mode==='world-job'&&this.returnToYard())this._openTownScrapdomePanel=true;});
+      }
       if(event.hiddenRoadArrived)this._waterYardArrived(); // WATER-HOOKS: Hollis's end lines, once
       // WATER-SCREENS: a story job's radio line plays at GO (a race) or as the fight begins (an arena game), once loaded.
       if((event.go||event.arenaPhase?.phase==='fight')&&this._waterStartLine){const line=this._waterStartLine;this._waterStartLine=null;this._storySay(line);}
@@ -1839,12 +1844,24 @@ export class App {
     if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||!EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open'))return false;
     return this._startArenaFight({venueId, mode, opponents, job});
   }
+  async startTownDrive(town) {
+    if(this._switches().enabled('wasteland-town')!==true||!town||!this.isYardHomeActive())return false;
+    const [{createTownWorld},{setScablandsTownLayout,clearScablandsTownLayout}]=await Promise.all([
+      import('./town/town-world.js'),import('./world/scablands-ground.js')]);
+    const layout=createTownWorld(town);
+    setScablandsTownLayout(layout);
+    const job={id:'town-drive',kind:'town-drive',seed:town.seed??0,steps:[],layout};
+    if(this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job}))return true;
+    clearScablandsTownLayout();
+    return false;
+  }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
-    const available = mode==='world-job' ? this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&!!job : warlordId ? this.warlordsAvailable() :
+    const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
+      (job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();

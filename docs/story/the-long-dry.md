@@ -406,7 +406,7 @@ The story has no last page. Each of these can become a whole strand, added as ne
 
 ## 12. This is one strand
 
-**Two new strands are written:** `docs/story/the-far-side.md`, the goat, the boring machine and the place where it rains; and `docs/story/the-notice-board.md`, a favour from each of the crew, which needs no town and can be played first.
+**Three new strands are written:** `docs/story/the-far-side.md`, the goat, the boring machine and the place where it rains; `docs/story/the-notice-board.md`, a favour from each of the crew, which needs no town and can be played first; and `docs/story/there-is-no-2-15.md`, Pim's railway and the train that never came in, which opens once the Mule is yours.
 
 Kyle, 5 November, after reading this page: "I do like the storyline and how it's held together. But this is just one storyline... we can continue to write new stories." So nothing in the game may depend on The Long Dry being the only story. How the town is built is in `docs/MACHINES.md`, and these fit the story where they meet it:
 
