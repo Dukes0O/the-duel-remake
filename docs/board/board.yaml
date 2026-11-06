@@ -393,6 +393,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-DRIVE-LESSON-RUN-BOARD.md"
 
+  - id: QA-EVERBURN-SCREENS
+    title: "Everburn: connect the yard's gate buttons and the result line"
+    owner: "codex"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-EVERBURN-SCREENS.md"
+
   - id: QA-SKI-FINISH-TIMEOUT
     title: "ski-finish browser scenario times out after the slalom"
     owner: "codex"

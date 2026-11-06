@@ -15,7 +15,6 @@ registerStoryCard({
   steps: Object.fromEntries(EMBER_JOBS.map((id, index) => [id, {
     name: EMBER_JOB_NAMES[index], primary: true,
     button: index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`,
-    start: 'startEverburnJob',
   }])),
   footer: view => view.ended ? '<p class="story-prize">The Everburn burns again. Cinder is part of your crew.</p>' : '',
 });
