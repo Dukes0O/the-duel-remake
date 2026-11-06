@@ -55,7 +55,13 @@ def photo_mask(name, photo, seeds):
     # the detector's in-memory pixels to the neutral seed range; the image used
     # by materials remains the untouched generated photograph.
     photo._rgb = np.clip(photo.rgb() + 25, 0, 255).astype(np.int16)
-    mask = tidy(~photo.sky(seeds, grey=26), 2)
+    # Sample the gradient around the whole frame, not only the four corners.
+    seeds = list(seeds)
+    seeds.extend((x, 8) for x in range(80, photo.w - 8, 120))
+    seeds.extend((x, photo.h - 9) for x in range(80, photo.w - 8, 120))
+    seeds.extend((8, y) for y in range(80, photo.h - 8, 120))
+    seeds.extend((photo.w - 9, y) for y in range(80, photo.h - 8, 120))
+    mask = tidy(~photo.sky(seeds, tolerance=40, grey=26), 3)
     save_mask(name, mask)
     return mask
 
@@ -326,12 +332,16 @@ if height_z < 1.9 or height_z > 2.2 or length_y < 4.3 or width_x < 1.8:
 
 floor_mat = bpy.data.materials.new('plain mid-grey floor')
 floor_mat.use_nodes = True
-floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.34, .34, .34, 1)
-floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
-bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.015))
+floor_nodes = floor_mat.node_tree.nodes
+floor_nodes.clear()
+floor_out = floor_nodes.new('ShaderNodeOutputMaterial')
+floor_emission = floor_nodes.new('ShaderNodeEmission')
+floor_emission.inputs['Color'].default_value = (.34, .34, .34, 1)
+floor_mat.node_tree.links.new(floor_emission.outputs['Emission'], floor_out.inputs['Surface'])
+bpy.ops.mesh.primitive_plane_add(size=2000, location=(0, 0, -.015))
 bpy.context.object.name = 'review floor'; bpy.context.object.data.materials.append(floor_mat)
 bpy.ops.object.light_add(type='AREA', location=(-2, -1, 7))
-light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 850; light.data.shape = 'DISK'; light.data.size = 9
+light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 650; light.data.shape = 'DISK'; light.data.size = 9
 light.rotation_euler = (Vector((0, 0, .7)) - light.location).to_track_quat('-Z', 'Y').to_euler()
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera); scene.camera = camera
@@ -339,13 +349,14 @@ def aim(eye, target, scale, name, size=(900, 640)):
     camera.location = eye
     camera.rotation_euler = (Vector(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     camera.data.type = 'ORTHO'; camera.data.ortho_scale = scale
+    camera.data.clip_start = .1; camera.data.clip_end = 5000
     scene.render.resolution_x, scene.render.resolution_y = size
     scene.render.filepath = str(render_dir / (name + '.png'))
     bpy.ops.render.render(write_still=True)
 
 # Blender imports the glTF Y-up asset upright as Z-up; no corrective root
 # rotation is applied. These matched projections use +Z as the vehicle front.
-aim((-12, 0, 1.12), (0, 0, .95), 5.1, 'photo-side')
+aim((12, 0, 1.12), (0, 0, .95), 5.1, 'photo-side')
 aim((0, -9, 1.12), (0, 0, .98), 2.9, 'photo-front', (700, 700))
 aim((0, 9, 1.12), (0, 0, .98), 2.9, 'photo-rear', (700, 700))
 aim((0, 0, 10), (0, 0, .95), 5.1, 'photo-top')
@@ -362,10 +373,10 @@ person_min_z = min(point.z for point in person_points)
 person_height = max(point.z for point in person_points) - person_min_z
 person = bpy.data.objects.new('review-only 1.72 m person', None); scene.collection.objects.link(person)
 person.scale = (1.72 / person_height,) * 3
-person.location = (-1.75, 0, -person_min_z * person.scale.x)
+person.location = (1.75, 0, -person_min_z * person.scale.x)
 for obj in person_parts:
     obj.parent = person
-aim((5.8, -7.3, 3.1), (-.45, 0, .95), 6.0, 'beside-person')
+aim((7.5, -8.0, 3.1), (.45, 0, .95), 6.2, 'beside-person')
 
 (render_dir / 'manifest.json').write_text(json.dumps({
     'id': 'rattler', 'dimensions_m': {'width': round(width_x, 3), 'length': round(length_y, 3), 'height': round(height_z, 3)},
