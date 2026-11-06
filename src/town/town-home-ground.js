@@ -86,4 +86,4 @@ export function stepTownHomeGround({town,tick}) {
     }
   }
 }
-registerTownSystem('home-ground',11,1,stepTownHomeGround);
+registerTownSystem('home-ground',11,24,stepTownHomeGround);
