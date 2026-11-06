@@ -5,13 +5,20 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
 import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+import {animateScene,syncScene} from '../src/scene-systems.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
 const loaded=[];
 const scene=createScablandsScene(course,{loadAsset:async path=>{
   loaded.push(path);const root=new THREE.Group();root.name=path;
   if(path===SCABLANDS_ASSETS.vehicles){
-    for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace",'Thief buggy']){const part=new THREE.Group();part.name=name;root.add(part);}
+    for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace",'Thief buggy']){
+      const part=new THREE.Group();part.name=name;root.add(part);
+      if(name==="Old Smoke's rolling furnace")for(let index=1;index<=3;index++){
+        const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xff8020,emissive:0xff8020,emissiveIntensity:2}));
+        vent.name=`old-smoke-vent-${index}-glow`;part.add(vent);
+      }
+    }
   }
   return {scene:root};
 }});
@@ -51,6 +58,30 @@ resetScablandsGroundEdit();
 assert.ok(scene.group.getObjectByName('Radio mast visible across the Scablands'),'mast is placed in the world');
 assert.ok(scene.group.getObjectByName('Everburn smoke pillar visible across the Scablands'),'smoke pillar is placed in the world');
 assert.ok(scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke"),'furnace art gets its smoke and fire treatment');
+const furnaceLod=scene.group.getObjectByName('The Everburn full detail');
+const furnace=furnaceLod.children.find(child=>child.name==="Old Smoke's rolling furnace");
+assert.ok(furnace,'Everburn places the furnace model');
+assert.equal(furnace.scale.x,1.5,'Old Smoke is scaled up by half in the world');
+const ventMaterials=[1,2,3].map(index=>scene.group.getObjectByName(`old-smoke-vent-${index}-glow`).material);
+const chaseState={arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'chase'}]},
+  actors:[{id:'old-smoke-furnace',startedAtSec:0}]}}};
+syncScene(scene.group,chaseState);
+assert.deepEqual(ventMaterials.map(material=>material.emissiveIntensity),[2.8,.15,.15],
+  'the visible first vent matches the live first chase vent');
+chaseState.arena.worldJob.clockSec=3;
+syncScene(scene.group,chaseState);
+assert.deepEqual(ventMaterials.map(material=>material.emissiveIntensity),[.15,2.8,.15],
+  'the visible glow advances with the simulation clock');
+const furnaceFire=scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke");
+const everburn=places.get('everburn');
+assert.ok(Math.abs(furnaceFire.children[0].position.x-(everburn.x+17.28))<.001,
+  'fire is placed at the furnace door on its forward face');
+assert.ok(Math.abs(furnaceFire.children[6].position.x-(everburn.x+19.77))<.001&&
+  Math.abs(furnaceFire.children[6].position.z-(everburn.z+.93))<.001,
+  'smoke starts over the scaled furnace chimney');
+const soot=furnaceFire.children[6];
+const smokeY=soot.position.y;animateScene(scene.group,2);
+assert.notEqual(soot.position.y,smokeY,'chimney smoke moves as presentation');
 assert.ok(scene.group.getObjectByName('Dead Mall sand drifts and rubble'),'mall art gets rubble dressing');
 assert.equal(scene.group.userData.solids,SCABLANDS_SOLIDS,'scene exposes the tested static collision set');
 scene.dispose();
