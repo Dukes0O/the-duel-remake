@@ -1,5 +1,4 @@
 // Each system registers itself when imported. Add a line here for a new one.
 import './modules/calendar.js';
-import './modules/people.js';
 import '../town-money.js';
 import '../town-fire.js';

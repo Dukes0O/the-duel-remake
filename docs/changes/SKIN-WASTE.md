@@ -47,3 +47,5 @@
 
 - Removed the obsolete statement that an active full-tier hold blocked the
   paint tests and build. The first inbox entry is a RELEASED line.
+
+Claude removed `tools/blender/skin-waste-sheet.py` from the merge. It did not meet the checks for a review helper, and round 1 does not pass. Round 2 of this open card brings its recipe back.
