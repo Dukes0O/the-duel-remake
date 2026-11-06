@@ -1,4 +1,4 @@
-﻿# Longhaul shape, round 2
+# Longhaul shape, round 2
 
 This round rebuilt the candidate from the photo target. The main comparison uses the same front three-quarter direction and matching vehicle scale. Review views are rendered from the exported GLB after importing it into an otherwise empty Blender scene.
 

@@ -1,4 +1,4 @@
-﻿# Longhaul runtime texture credits
+# Longhaul runtime texture credits
 
 Generated with the built-in image generator for The Duel on 5 November 2026.
 The original generated images are development material samples; these compressed
