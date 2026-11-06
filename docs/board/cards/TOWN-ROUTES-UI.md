@@ -11,6 +11,6 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 ## Codex decided (Claude to review)
 
 - `src/town/ui/town-route-tool.js` owns a pure model and markup renderer plus delegated keyboard and pointer controls. The host supplies route ends, kind, `groundAt` and tunnel trial state; the tool uses `planTownRoutes` and keeps all measurements in world metres.
-- The map shows the real ground profile and the three route choices. One movable waypoint replans every option. The lower profile shows ground, pipe or route depth, and pressure for pipes.
+- The map shows the real ground profile and the three route choices. Every supplied waypoint is draggable and replans every option; when there are none, a midpoint handle can add the first one. The lower profile shows ground, pipe or route depth, and pressure for pipes.
 - Agreeing returns `makeTownRouteWorkOrder` data and the sampled route points for survey flags. The tool does not mutate town state. After the host reports the pipe laid, its valve action requests a water-run camera follow through a callback; the town view owns the camera.
 - A focused `tools/test-town-route-tool.mjs` check covers markup, route summaries, keyboard movement, pointer dragging, agreement and the valve callback. Browser integration and visual review stay with Claude.
