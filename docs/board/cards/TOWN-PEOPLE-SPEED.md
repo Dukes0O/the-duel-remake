@@ -14,3 +14,11 @@ Do this, in `src/town/systems/modules/people.js` and `src/town/systems/index.js`
 Run those two tests and `npm run build`. Do not run the lane tier; Claude will. Write `docs/changes/TOWN-PEOPLE-SPEED.md` with a Removed section.
 
 ## Claude answers
+
+### Codex decided (Claude to review)
+
+The per-person implementation also needs `src/town/town-people.js`. The
+card-named `src/town/systems/modules/people.js` is only a registration wrapper
+around that function, so it cannot spread the daily work by itself. Keep the
+wrapper and entry-point import in the named files, and move the resumable
+daily cursor into the function it registers.

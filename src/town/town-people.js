@@ -15,6 +15,15 @@ function personAge(person, tick, hoursPerYear = BigInt(HOURS_PER_YEAR)) {
   return years <= 0n ? 0 : Number(years);
 }
 
+function ageFromBorn(born, tick, hoursPerYear) {
+  const tickNumber = Number(tick);
+  const elapsed = tickNumber - born;
+  if (Number.isSafeInteger(born) && Number.isSafeInteger(tickNumber) && Number.isSafeInteger(elapsed)) {
+    return Math.max(0, Math.floor(elapsed / Number(hoursPerYear)));
+  }
+  return personAge({born}, tick, hoursPerYear);
+}
+
 function takeUniqueName(rng, used) {
   for (let attempt = 0; attempt < 100; attempt++) {
     const name = townPersonName(rng);
@@ -118,14 +127,14 @@ function arrivalYearGrowth(year) {
   return Math.log2(Number(`0.${digits.slice(0, 15)}`)) + (digits.length - 1) * Math.log2(10);
 }
 
-function matchJobs(town) {
+function matchJobs(town, hasBuildingAssignments = town.people.some(person => person.jobBuildingId)) {
   const vacancies = [];
   for (const building of town.buildings || []) {
     const data = buildingById.get(building.buildingId);
     if (building.state !== 'complete' || !data?.staff) continue;
     for (let seat = 0; seat < data.staff; seat++) vacancies.push({building, data});
   }
-  const staleAssignments = !vacancies.length && town.people.some(person => person.jobBuildingId);
+  const staleAssignments = !vacancies.length && hasBuildingAssignments;
   if (!vacancies.length && !staleAssignments) return;
   for (const person of town.people) {
     person.job = null;
@@ -178,32 +187,12 @@ function pairAdults(town) {
   }
 }
 
-function recordPassing(town, person, tick, age, peopleById) {
+function recordPassing(town, person, tick, age) {
   const oldAge = age >= 65;
   const line = oldAge ? 'Passed gently in old age.' : 'Passed after a hard season.';
   const entry = {id:person.id, name:person.name, family:person.family, born:person.born, passed:tick, history:[...person.history, line]};
   town.oldGround.push(entry);
   town.book.push({type:'passing', personId:person.id, name:person.name, tick, text:`${person.name} ${line.toLowerCase()} They are remembered in the Old Ground.`});
-  if (person.partnerId && peopleById) {
-    const partner = peopleById.get(person.partnerId);
-    if (partner) partner.partnerId = null;
-  }
-}
-
-function ensureHomes(town) {
-  if (!Array.isArray(town.homes)) town.homes = [];
-  const byId = new Map(town.homes.map(home => [home.id, home]));
-  for (const person of town.people) {
-    person.home ||= `canvas-${person.family || person.id}`;
-    let home = byId.get(person.home);
-    if (!home) {
-      const tier = Number.isSafeInteger(person.homeTier) && person.homeTier > 0 ? person.homeTier : 0;
-      home = {id:person.home, tier, goodDays:0, hardDays:0, type:TOWN_HOME_TYPES[tier] || `home tier ${tier + 1}`};
-      town.homes.push(home);
-      byId.set(home.id, home);
-    }
-  }
-  return byId;
 }
 
 function updateHomes(town, homeById, householdNeeds) {
@@ -251,53 +240,96 @@ export function stepTownPeople({town, rng, tick, calendar}) {
   town.oldGround ||= [];
   const tickHours = BigInt(tick);
   const hoursPerYear = BigInt(HOURS_PER_YEAR);
-  if (!town.peopleIdsReady) {
+  let work = town.peopleDailyWork;
+  if (!work) {
     let nextId;
     try { nextId = BigInt(town.nextPersonNumber || 1); } catch { nextId = 1n; }
     if (nextId < 1n) nextId = 1n;
-    const usedIds = new Set();
-    for (const person of town.people) {
-      if (!person.id || usedIds.has(person.id)) {
-        person.id = `person-${nextId}`;
-        nextId++;
+    const safeNextId = Number(nextId);
+    const nextIdBig = Number.isSafeInteger(safeNextId) ? null : nextId.toString();
+    const segmentsTotal = 24 - Number((BigInt(tick) - 1n) % 24n);
+    const knownHomes = {};
+    let hasUpgradedHomes = false;
+    for (const home of town.homes || []) {
+      knownHomes[home.id] = true;
+      hasUpgradedHomes ||= home.tier > 0;
+    }
+    work = town.peopleDailyWork = {
+      segment:0, segmentsTotal, peopleCount:town.people.length,
+      nextId:Number.isSafeInteger(safeNextId) ? safeNextId : 1, nextIdBig,
+      seenIds:{}, knownHomes, normalizing:!town.peopleIdsReady,
+      hasBuildingAssignments:false, hasPartners:false, hasUnpairedAdults:false, hasUpgradedHomes,
+      deadIndices:[], passedPartners:{}, householdNeeds:{},
+      thoughtSeason:`${calendar.season}:${calendar.month}`,
+      noMeasuredConditions:!town.peopleConditions || Object.keys(town.peopleConditions).length === 0,
+      hasSchool:(town.buildings || []).some(building => building.buildingId === 'school' && building.state === 'complete'),
+    };
+  }
+  const start = Math.floor(work.peopleCount * work.segment / work.segmentsTotal);
+  const end = Math.floor(work.peopleCount * (work.segment + 1) / work.segmentsTotal);
+  for (let index = start; index < end; index++) {
+    const person = town.people[index];
+    if (work.normalizing) {
+      if (!person.id || work.seenIds[person.id]) {
+        if (work.nextIdBig !== null) {
+          const next = BigInt(work.nextIdBig);
+          person.id = `person-${next}`;
+          work.nextIdBig = (next + 1n).toString();
+        } else person.id = `person-${work.nextId++}`;
       }
-      usedIds.add(person.id);
+      work.seenIds[person.id] = true;
       const match = /^person-(\d+)$/.exec(person.id);
-      if (match && BigInt(match[1]) >= nextId) nextId = BigInt(match[1]) + 1n;
+      if (match) {
+        const number = Number(match[1]);
+        if (Number.isSafeInteger(number)) {
+          if (work.nextIdBig === null && number >= work.nextId) work.nextId = number + 1;
+        } else {
+          const next = (BigInt(match[1]) + 1n).toString();
+          if (work.nextIdBig === null || BigInt(next) > BigInt(work.nextIdBig)) work.nextIdBig = next;
+        }
+      }
       if (!person.family) person.family = person.id;
       if (!person.home) person.home = `canvas-${person.family}`;
+      if (!Number.isSafeInteger(person.homeTier) || person.homeTier < 0) person.homeTier = 0;
+      if (typeof person.homeType !== 'string') person.homeType = TOWN_HOME_TYPES[person.homeTier] || `home tier ${person.homeTier + 1}`;
+      if (!work.knownHomes[person.home]) {
+        town.homes ||= [];
+        const tier = Number.isSafeInteger(person.homeTier) && person.homeTier > 0 ? person.homeTier : 0;
+        const type = TOWN_HOME_TYPES[tier] || `home tier ${tier + 1}`;
+        town.homes.push({id:person.home, tier, goodDays:0, hardDays:0, type});
+        work.hasUpgradedHomes ||= tier > 0;
+        work.knownHomes[person.home] = true;
+        person.homeTier = tier;
+        person.homeType = type;
+      }
       if (!Number.isFinite(person.health)) person.health = 100;
       if (!Number.isFinite(person.mood)) person.mood = 60;
-      if (typeof person.born !== 'bigint' && !Number.isSafeInteger(person.born)) person.born = 0n;
+      const bornNumber = typeof person.born === 'number' && Number.isSafeInteger(person.born) ? person.born : null;
+      if (typeof person.born !== 'bigint' && bornNumber === null) person.born = 0n;
       else person.born = BigInt(person.born);
-      if (typeof person.nextBirthday !== 'bigint' || tickHours >= person.nextBirthday) {
-        person.age = personAge(person, tickHours, hoursPerYear);
-        person.nextBirthday = person.born + BigInt(person.age + 1) * hoursPerYear;
-      }
       if (!person.needs) person.needs = {waterLitres:null, foodCalories:null, shelter:null};
       if (!person.skills) person.skills = {};
       if (!Array.isArray(person.history)) person.history = [];
+      if (typeof person.nextBirthday !== 'bigint' || tickHours >= person.nextBirthday) {
+        person.age = bornNumber === null ? personAge(person, tickHours, hoursPerYear) : ageFromBorn(bornNumber, tickHours, hoursPerYear);
+        person.nextBirthday = person.born + BigInt(person.age + 1) * hoursPerYear;
+      }
     }
-    town.nextPersonNumber = nextId;
-    town.peopleIdsReady = true;
-  }
-  const homeById = town.homesReady
-    ? new Map(town.homes.map(home => [home.id, home])) : ensureHomes(town);
-  town.homesReady = true;
-  for (const person of town.people) if (tickHours >= person.nextBirthday) {
-    person.age = personAge(person, tickHours, hoursPerYear);
-    person.nextBirthday = person.born + BigInt(person.age + 1) * hoursPerYear;
-  }
-  const peopleById = town.people.some(person => person.partnerId)
-    ? new Map(town.people.map(person => [person.id, person])) : null;
-  const thoughtSeason = `${calendar.season}:${calendar.month}`;
-
-  const surviving = [];
-  const householdNeeds = new Map();
-  for (let index = 0; index < town.people.length; index++) {
-    const person = town.people[index];
+    work.hasPartners ||= Boolean(person.partnerId);
+    if (typeof person.nextBirthday !== 'bigint' || tickHours >= person.nextBirthday) {
+      person.age = personAge(person, tickHours, hoursPerYear);
+      person.nextBirthday = person.born + BigInt(person.age + 1) * hoursPerYear;
+    }
+    work.hasUnpairedAdults ||= person.age >= 18 && person.age <= 45;
+    work.hasBuildingAssignments ||= Boolean(person.jobBuildingId);
     const age = person.age;
-    const supported = conditionsFor(town, person, index);
+    let supported;
+    if (work.noMeasuredConditions) {
+      person.needs.waterLitres = null;
+      person.needs.foodCalories = null;
+      person.needs.shelter = null;
+      supported = true;
+    } else supported = conditionsFor(town, person, index);
     if (!supported) {
       person.health = Math.max(0, person.health - 1);
       person.mood = Math.max(0, person.mood - 1.5);
@@ -311,39 +343,59 @@ export function stepTownPeople({town, rng, tick, calendar}) {
       person.workHours = 8;
       if (!person.job) person.job = 'townhand';
     }
-    if (age >= 6 && age < 16) {
-      const school = town.buildings?.some(building => building.buildingId === 'school' && building.state === 'complete');
-      if (school) {
-        person.schoolDays = (person.schoolDays || 0) + 1;
-        if (person.schoolDays % 180 === 0) person.skills.learning = (person.skills.learning || 0) + 1;
-      }
+    if (age >= 6 && age < 16 && work.hasSchool) {
+      person.schoolDays = (person.schoolDays || 0) + 1;
+      if (person.schoolDays % 180 === 0) person.skills.learning = (person.skills.learning || 0) + 1;
     }
     const ageRisk = age < 65 ? 0 : 0.00015 + Math.max(0, age - 65) * 0.00008;
     const poorHealthRisk = person.health <= 20 ? 0.002 : 0;
     const passingRisk = Math.min(0.25, ageRisk + poorHealthRisk);
     if (person.health <= 0 || passingRisk > 0 && rng.chance(passingRisk)) {
-      recordPassing(town, person, tick, age, peopleById);
+      recordPassing(town, person, tick, age);
+      if (person.partnerId) work.passedPartners[person.partnerId] = true;
+      work.deadIndices.push(index);
       continue;
     }
-    if (person.thoughtSeason !== thoughtSeason) {
+    if (person.thoughtSeason !== work.thoughtSeason) {
       person.thought = townThoughtFor(person.id, calendar.season, calendar.month);
-      person.thoughtSeason = thoughtSeason;
+      person.thoughtSeason = work.thoughtSeason;
     }
-    const household = householdNeeds.get(person.home) || {members:0, supported:true, goodMood:true, poorMood:false};
+    const household = work.householdNeeds[person.home] || {members:0, supported:true, goodMood:true, poorMood:false};
     household.members++;
     household.supported &&= supported;
     household.goodMood &&= person.mood >= 70;
     household.poorMood ||= person.mood < 35;
-    householdNeeds.set(person.home, household);
-    surviving.push(person);
+    work.householdNeeds[person.home] = household;
   }
-  town.people = surviving;
-  updateHomes(town, homeById, householdNeeds);
-  matchJobs(town);
-  pairAdults(town);
-
-  for (const person of town.people) {
-    const partner = peopleById?.get(person.partnerId);
+  work.segment++;
+  if (work.segment < work.segmentsTotal) return;
+  if (work.deadIndices.length) {
+    const surviving = [];
+    let deadCursor = 0;
+    for (let index = 0; index < work.peopleCount; index++) {
+      if (work.deadIndices[deadCursor] === index) { deadCursor++; continue; }
+      const person = town.people[index];
+      if (work.passedPartners[person.id]) person.partnerId = null;
+      surviving.push(person);
+    }
+    town.people = surviving;
+  } else if (Object.keys(work.passedPartners).length) {
+    for (const person of town.people) if (work.passedPartners[person.id]) person.partnerId = null;
+  }
+  town.homesReady = true;
+  const paintedLimit = Number.isFinite(town.peopleConditions?.paintedHomePlaces)
+    ? Math.max(0, town.peopleConditions.paintedHomePlaces) : 0;
+  if (paintedLimit || work.hasUpgradedHomes) {
+    const homeById = new Map((town.homes || []).map(home => [home.id, home]));
+    updateHomes(town, homeById, new Map(Object.entries(work.householdNeeds)));
+  }
+  town.nextPersonNumber = BigInt(work.nextIdBig ?? work.nextId);
+  town.peopleIdsReady = true;
+  matchJobs(town, work.hasBuildingAssignments);
+  if (work.hasUnpairedAdults) pairAdults(town);
+  const peopleById = work.hasPartners ? new Map(town.people.map(person => [person.id, person])) : null;
+  if (peopleById) for (const person of town.people) {
+    const partner = peopleById.get(person.partnerId);
     if (!partner || person.id.localeCompare(partner.id) >= 0) continue;
     const age = person.age;
     const partnerAge = partner.age;
@@ -362,7 +414,6 @@ export function stepTownPeople({town, rng, tick, calendar}) {
     town.people.push(child);
     town.book.push({type:'birth', personId:child.id, name:child.name, tick, text:`${child.name} was born in the town.`});
   }
-
   const ticksPerMonth = BigInt(TOWN_TIME.ticksPerDay * TOWN_TIME.daysPerMonth);
   if (tick % ticksPerMonth === 0n && hasMeasuredSupport(town, town.people.length)) {
     const averageMood = town.people.length ? town.people.reduce((sum, person) => sum + person.mood, 0) / town.people.length : 50;
@@ -380,4 +431,5 @@ export function stepTownPeople({town, rng, tick, calendar}) {
       town.book.push({type:'arrival', personId:person.id, name:person.name, tick, text:`${person.name} arrived looking for a home.`});
     }
   }
+  delete town.peopleDailyWork;
 }
