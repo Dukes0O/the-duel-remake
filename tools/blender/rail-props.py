@@ -72,13 +72,13 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     photo._rgb = None
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
     shadow_seeds = {
-        'case-books': (500, 960),
-        'case-teeth': (800, 970),
-        'case-megaphone': (700, 980),
-        'case-hollis': (500, 970),
+        'case-books': ((500, 920), (500, 930)),
+        'case-teeth': ((820, 960), (800, 970)),
+        'case-megaphone': ((700, 950), (800, 950)),
+        'case-hollis': ((500, 920), (500, 930)),
     }
     if name in shadow_seeds:
-        seeds.append(shadow_seeds[name])
+        seeds.extend(shadow_seeds[name])
     if name == 'token-ring':
         # The open centre between the leather hanger and brass token is sky.
         seeds.append((576, 350))
@@ -93,7 +93,10 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     rows = np.minimum((np.arange(photo.image_h) * solid.shape[0] / photo.image_h).astype(int), solid.shape[0] - 1)
     cols = np.minimum((np.arange(photo.image_w) * solid.shape[1] / photo.image_w).astype(int), solid.shape[1] - 1)
     photo.bleed(solid[rows][:, cols], passes=18)
-    loops = trace(solid, (0, 0, photo.w, photo.h), tolerance=1.7, min_area=16)
+    if name in shadow_seeds:
+        loops = trace(solid, (0, 0, photo.w, photo.h), tolerance=2.4, min_area=64)
+    else:
+        loops = trace(solid, (0, 0, photo.w, photo.h), tolerance=1.7, min_area=16)
     points = [p for loop in loops for p in loop]
     if not points:
         raise ValueError(f'{name}: photo mask has no subject')
