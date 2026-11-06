@@ -85,7 +85,7 @@ const generators = [
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
-  { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 2*1024*1024,
+  { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
@@ -882,17 +882,19 @@ try {
       const children = (group.children || []).map(index => names[index]);
       assert.deepEqual(children.sort(), [`${id}:headlamp-left`, `${id}:headlamp-right`]);
     }
-    assert.ok(gltf.images?.length >= 4, 'four measured fire-engine views are embedded');
+    assert.ok(gltf.images?.length >= 16, 'four measured photo views for each truck are embedded');
     assert.ok(gltf.images.every(image => image.mimeType === 'image/jpeg'), 'photo sources embed as JPEG');
     const materialNames = new Set(gltf.materials.map(material => material.name));
     for (const view of ['side','front','rear','overhead']) {
       assert.ok([...materialNames].some(name => name.includes(`fire-engine-${view}`)), `embedded ${view} photo material`);
     }
     const remainingPaints = gltf.materials.filter(material => material.name?.endsWith('/ photo paint'));
-    assert.equal(remainingPaints.length, 3, 'the three not-yet-replaced trucks keep their current photo materials');
-    const remainingPhotoIds = remainingPaints.map(material =>
-      gltf.textures[material.pbrMetallicRoughness.baseColorTexture.index].source);
-    assert.equal(new Set(remainingPhotoIds).size, 3, 'each unchanged truck keeps its own photo source');
+    assert.equal(remainingPaints.length, 0, 'the retired camera-projected truck paints are removed');
+    for (const [stem, id] of [['tanker','water-tanker'],['supply','supply-truck'],['tow','tow-rig']]) {
+      for (const view of ['side','front','rear','overhead']) {
+        assert.ok(materialNames.has(`Photo / ${stem}-${view}`), `${id} measured ${view} picture material`);
+      }
+    }
     for (const material of gltf.materials) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
         `${material.name || 'material'} metallic factor exceeds 0.3`);

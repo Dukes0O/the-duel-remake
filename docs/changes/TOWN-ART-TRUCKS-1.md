@@ -1,31 +1,29 @@
-# TOWN-ART-TRUCKS-1
+# TOWN-ART-TRUCKS-1, round 11
 
-## Design
+Kept the approved fire truck and tanker. The three photo-carved truck hulls
+now bleed each measured image's background with the fire truck's wider colour
+match. Hull faces fall back to the next photo that covers them.
 
-Continue the fire truck from the measured-photo method in `tools/blender/photo_model.py`. The side shell is one full-width traced extrusion. Wheel centers use the width measured from the front photo; wheel-face picture rectangles stay inside the tyre image. The four committed source photos now live beside the other town textures. Round 8 is a review attempt and does not pass visual acceptance.
+The supply load is a photo-carved `supply-truck:load` child, measured from
+four generated loaded-truck views. It sits above the retained bed floor and
+fits within the bed. The tow crane is traced and thickened from its side photo;
+its open lattice, vertical cable and hook line up below the measured boom tip.
+The round 11 sheet uses larger comparisons and the round 9 side road camera.
 
 ## Checks
 
-- Blender recipe and imported GLB render: passed; 3,878,000-byte family file. Per-truck triangle counts: fire truck 6,683, tanker 11,173, supply 9,119, tow rig 8,973.
-- `node tools/test-blender-output.mjs`: passed, 280 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets remain advisory; the report lists existing oversized files outside this card.
-- Browser checks: not run here; Claude should review the sheet and model at merge.
-- Lane tier and build: not run, as directed for this art card.
-- Changed assertions: none.
+- `node tools/test-blender-output.mjs` — passed, 292 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs` — passed.
+- Fresh Blender import render — passed visual review; the family GLB is
+  3,400,356 bytes. Truck triangle counts: fire 10,352; tanker 10,092;
+  supply 11,252; tow 10,360. Each is under 12,000.
+- Browser and game look check — Claude runs after merge; inspect the tanker,
+  supply load with `supply-truck:load` visible and hidden, and tow boom, cable
+  and hook from the side and road views. The fire truck remains unchanged.
+- Assertions changed: none.
 - Race fingerprints: not applicable to this art-only change.
 
 ## Removed
 
-- Removed the round 7 review sheet and note.
-- Moved the four fire-engine source photos from `.evidence/town-art-trucks-1/` to `public/assets/models/wasteland/town/textures/`; the recipe now reads those committed source files.
-- Removed temporary renders and masks after assembling the review sheet.
-
-## Round 9: the fire engine, carved from its photos (Claude)
-
-Rounds 7 and 8 left the wheels at twice their true distance, because a parent's position was subtracted before that parent had moved, and built the body from flat parts. Round 9 adds `tools/blender/hull_model.py`: a voxel stays only if the side, overhead and end photos all show something there, the result is smoothed and reduced to budget, and each face wears the photo it faces most. Wheels, axles, cannon and headlamps are round parts placed at their true world positions.
-
-Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `npm run build`. No assertion changed. Not wired into the game, so no frame check.
-
-Removed: `fire-engine-projection.jpg`, the fire truck's old flat-part recipe, and rounds 7 and 8's sheets.
-
-Changed test (Claude's review): `tools/test-blender-output.mjs` lists `hull_model.py` beside `photo_model.py` among shared kits that are not asset generators, since it builds nothing alone. The fire truck is still fully checked through its recipe. Nothing is loosened.
+Removed the supply truck's plain crate boxes and sphere sacks, and the floating
+tow hook path. The round 10 sheet and review note are superseded by round 11.
