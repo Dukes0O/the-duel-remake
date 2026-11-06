@@ -57,6 +57,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
+  {id:'town-machines-2',script:'tools/blender/town-machines-2.py',args:[],
+    glb:['public/assets/models/wasteland/town/machines-2.glb'],budget:105000,maxBytes:3000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
 
@@ -504,6 +506,26 @@ try {
       for (const id of ids) {
         const triangles = primitiveCount(nodeByName.get(id));
         assert.ok(triangles > 1000 && triangles <= 15000, `${id}: ${triangles} triangles`);
+      }
+    });
+    if (generator.id === 'town-machines-2') check('TOWN-ART-MACHINES-2 exports all machine roots and articulated parts', () => {
+      const bytes=readFileSync(join(root,generator.glb[0]));
+      const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+      const names=gltf.nodes.map(node=>node.name||'');
+      const ids=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck'];
+      assert.ok(names.includes('town-machines-2'),'family root is missing');
+      for(const id of ids)assert.ok(names.includes(id),`${id} root is missing`);
+      for(const joint of ['loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook'])
+        assert.ok(names.includes(joint),`${joint} pivot node is missing`);
+      const children=gltf.nodes.map(node=>node.children||[]);const ix=names.indexOf('town-machines-2');
+      assert.deepEqual(children[ix].map(i=>names[i]).sort(),ids.slice().sort(),'family root has one direct child per machine');
+      assert.ok(bytes.length<=3_000_000,'machine family exceeds 3 MB');
+      const descendants=index=>[index,...children[index].flatMap(descendants)];
+      for(const id of ids){
+        const machineIndex=names.indexOf(id);
+        const meshes=new Set(descendants(machineIndex).map(i=>gltf.nodes[i].mesh).filter(Number.isInteger));
+        const triangles=[...meshes].reduce((sum,mesh)=>sum+gltf.meshes[mesh].primitives.reduce((part,p)=>part+gltf.accessors[p.indices].count/3,0),0);
+        assert.ok(triangles<=15_000,`${id} has ${triangles} triangles, above 15,000`);
       }
     });
     if (artCandidates.has(generator.id)) {
