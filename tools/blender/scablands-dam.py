@@ -19,6 +19,9 @@ sheet = root / f'docs/board/looks/ww-art-dam/round-{args.round}.jpg'
 texture_dir = root / 'public/assets/models/wasteland/scablands/textures'
 ref = Path.home() / '.codex/generated_images/wasteland-dam-reference.png'
 projection = texture_dir / 'dam-face-projection.jpg'
+salt_photo = texture_dir / 'dam-salt-wall-photo.jpg'
+stone_photo = texture_dir / 'dam-gatehouse-stone.jpg'
+silt_photo = texture_dir / 'dam-wet-silt.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(raw)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -51,6 +54,7 @@ if args.assemble_only:
     raise SystemExit(0)
 
 import bpy
+import numpy as np
 from mathutils import Vector, Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
@@ -78,7 +82,7 @@ materials['sand'].name = 'Dam / lake-bed silt'
 materials['iron-dark'].name = 'Dam / blackened iron'
 materials['dirty-glass'].name = 'Dam / dusty glass'
 materials['salvaged-brick'].name = 'Dam / dark masonry'
-salt_image = bpy.data.images.load(str((texture_dir / 'dam-salt-crust.jpg').resolve()), check_existing=False)
+salt_image = bpy.data.images.load(str(salt_photo.resolve()), check_existing=False)
 salt_material = bpy.data.materials.new('Dam / wet salt crust photo')
 salt_material.name = 'Dam / wet salt crust photo'
 salt_material.use_nodes = True
@@ -88,15 +92,36 @@ salt_bsdf.inputs['Metallic'].default_value = 0
 salt_bsdf.inputs['Roughness'].default_value = .92
 salt_tex = salt_nodes.new('ShaderNodeTexImage')
 salt_tex.image = salt_image
-salt_tex.extension = 'REPEAT'
+salt_tex.extension = 'EXTEND'
 salt_material.node_tree.links.new(salt_tex.outputs['Color'], salt_bsdf.inputs['Base Color'])
-silt_material = bpy.data.materials.new('Dam / dark wet silt')
+silt_image = bpy.data.images.load(str(silt_photo.resolve()), check_existing=False)
+silt_material = bpy.data.materials.new('Dam / dark wet silt photograph')
 silt_material.diffuse_color = (.035, .03, .024, 1)
 silt_material.use_nodes = True
 silt_bsdf = silt_material.node_tree.nodes.get('Principled BSDF')
 silt_bsdf.inputs['Base Color'].default_value = (.035, .03, .024, 1)
 silt_bsdf.inputs['Metallic'].default_value = 0
 silt_bsdf.inputs['Roughness'].default_value = .98
+silt_tex = silt_material.node_tree.nodes.new('ShaderNodeTexImage')
+silt_tex.image = silt_image
+silt_tex.extension = 'REPEAT'
+silt_material.node_tree.links.new(silt_tex.outputs['Color'], silt_bsdf.inputs['Base Color'])
+silt_pixels = np.empty(len(silt_image.pixels), dtype=np.float32)
+silt_image.pixels.foreach_get(silt_pixels)
+silt_pixels = silt_pixels.reshape((-1, 4))
+silt_pixels[:, :3] *= .55
+silt_image.pixels.foreach_set(silt_pixels.ravel())
+silt_image.update()
+stone_image = bpy.data.images.load(str(stone_photo.resolve()), check_existing=False)
+stone_material = bpy.data.materials.new('Gatehouse / weathered stone photograph')
+stone_material.use_nodes = True
+stone_bsdf = stone_material.node_tree.nodes.get('Principled BSDF')
+stone_bsdf.inputs['Metallic'].default_value = 0
+stone_bsdf.inputs['Roughness'].default_value = .91
+stone_tex = stone_material.node_tree.nodes.new('ShaderNodeTexImage')
+stone_tex.image = stone_image
+stone_tex.extension = 'REPEAT'
+stone_material.node_tree.links.new(stone_tex.outputs['Color'], stone_bsdf.inputs['Base Color'])
 materials['cracked-concrete'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = 0
 materials['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .28
 materials['galvanised-tin'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .28
@@ -270,9 +295,8 @@ for xi in range(len(xs) - 1):
         xmid = (xs[xi] + xs[xi + 1]) / 2
         a = xi * len(ys) + yi
         b = (xi + 1) * len(ys) + yi
-        if not (abs(xmid) < 8 and ymid < 20):
-            front_face_indices.add(len(faces))
-            faces.append((a, a + 1, b + 1, b))
+        front_face_indices.add(len(faces))
+        faces.append((a, a + 1, b + 1, b))
         # Back shell is closed with less visible faces, keeping a real wall thickness.
         faces.append((len(front) + a, len(front) + b, len(front) + b + 1, len(front) + a + 1))
 for yi in range(len(ys) - 1):
@@ -298,8 +322,15 @@ for poly in wall.data.polygons:
             uv_layer.data[loop_index].uv = ((vertex.x + 75) / 150, vertex.z / 55)
 wall['dimensions_m'] = [150, 55, 12]
 
-# Tall concrete piers are shallow relief at the positions photographed on the
-# face. Their outward faces sample the same face projection as the wall behind.
+# One projection camera maps every visible front surface to the same photo crop.
+def project_face_uv(obj, polygon, left=-75, bottom=0, width=150, height=55):
+    uv = obj.data.uv_layers.active
+    polygon.material_index = 1
+    for loop_index in polygon.loop_indices:
+        vertex = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+        uv.data[loop_index].uv = ((vertex.x - left) / width, (vertex.z - bottom) / height)
+
+# Tall concrete piers are shallow relief placed over their photographic selves.
 for i, x in enumerate((-55, -24, -18, 17, 46, 67)):
     height = 54 if abs(x) > 45 else 55
     front_z = -54
@@ -319,81 +350,21 @@ for i, x in enumerate((-55, -24, -18, 17, 46, 67)):
     for polygon in pier.data.polygons:
         # Only the photographed face gets the projection. Relief sides retain
         # the specific concrete tile and do not duplicate painted pier edges.
-        if polygon.index == 2:
-            polygon.material_index = 1
-            for loop_index in polygon.loop_indices:
-                vertex = pier.data.vertices[pier.data.loops[loop_index].vertex_index].co
-                pier_uv.data[loop_index].uv = ((vertex.x + 75) / 150, vertex.z / 55)
+        if polygon.index in (2, 4):
+            project_face_uv(pier, polygon)
     bevel = pier.modifiers.new('worn poured edges', 'BEVEL')
     bevel.width = .14
     bevel.segments = 1
 
 # Removed the zig-zag rock stubs. The surrounding world supplies the hills.
 
-# Rail gate: a real arched train tunnel, two steel leaves and the burst-in state.
-rail_gate_part_start = len(parts)
-for side in (-1, 1):
-    box(f'dam-rail-jamb-{side}', (side * 7.3, 4.6, 0), (2.5, 9.2, 9), materials['cracked-concrete'], 'dam:rail-gate', .18)
-    box(f'dam-rail-jamb-shoe-{side}', (side * 7.0, .35, 0), (5.0, .7, 18), materials['cracked-concrete'], 'dam:rail-gate', .10)
-# Concrete ring segments form a proper arch around the tunnel mouth.
-arch_inner, arch_outer, spring, depth = 6.0, 7.25, 4.6, 8.6
-for i in range(16):
-    a0, a1 = math.pi * i / 16, math.pi * (i + 1) / 16
-    inner0 = (arch_inner * math.cos(a0), spring + arch_inner * math.sin(a0), .15)
-    inner1 = (arch_inner * math.cos(a1), spring + arch_inner * math.sin(a1), .15)
-    outer0 = (arch_outer * math.cos(a0), spring + arch_outer * math.sin(a0), .15)
-    outer1 = (arch_outer * math.cos(a1), spring + arch_outer * math.sin(a1), .15)
-    for side_z in (0, depth):
-        quad = [(inner0[0], inner0[1], side_z), (inner1[0], inner1[1], side_z),
-                (outer1[0], outer1[1], side_z), (outer0[0], outer0[1], side_z)]
-        mesh(f'dam-rail-arch-ring-{i}-{side_z}', quad, [(0, 1, 2, 3)],
-             materials['cracked-concrete'], 'dam:rail-gate')
-    beam(f'dam-rail-arch-depth-{i}', (outer0[0], outer0[1], 0),
-         (outer0[0], outer0[1], depth), .16, materials['cracked-concrete'], 'dam:rail-gate')
-for side in (-1, 1):
-    box(f'dam-rail-arch-foot-{side}', (side * 6.6, 2.3, depth / 2), (1.25, 4.6, depth),
-        materials['cracked-concrete'], 'dam:rail-gate', .12)
-for side in (-1, 1):
-    leaf = box('dam:rail-gate' if side < 0 else 'dam-rail-gate-right-leaf',
-               (side * 3.0, 4.05, .48), (5.95, 8.05, .52), materials['rusted-steel'], 'dam:rail-gate', .08)
-    leaf.rotation_euler[1] = side * .015
-    for x in (-2.2, -1.1, 0, 1.1, 2.2):
-        beam(f'dam-gate-vertical-rib-{side}-{x}', (side * 3.0 + x, .25, .84),
-             (side * 3.0 + x, 7.9, .84), .11, materials['galvanised-tin'], 'dam:rail-gate')
-    for y in (1.1, 3.0, 5.0, 7.5):
-        beam(f'dam-gate-horizontal-rib-{side}-{y}', (side * 3.0 - 2.9, y, .88),
-             (side * 3.0 + 2.9, y, .88), .11, materials['rusted-steel'], 'dam:rail-gate')
-    beam(f'dam-gate-crossbrace-{side}', (side * 3.0 - 2.8, .5, .92),
-         (side * 3.0 + 2.8, 7.65, .92), .10, materials['galvanised-tin'], 'dam:rail-gate')
-# Broken variant sits deeper in the tunnel and is folded inward, with lifted corners.
-broken = box('dam:rail-gate-broken', (.5, 1.0, -8), (7.7, .5, 7.8), materials['rusted-steel'], 'dam:rail-gate-broken', .08)
-broken.rotation_euler[0] = -.17
-broken.rotation_euler[2] = -.12
-for i in range(8):
-    x = -3.2 + i * .92
-    beam(f'dam-broken-door-torn-rib-{i}', (x, .25, -4), (x + (-.8 if i % 2 else .8), 1.5 + (i % 3) * .55, -11),
-         .09, materials['galvanised-tin'], 'dam:rail-gate-broken')
-rail_path = [(0, 16), (0, -9), (-2, -14), (-7, -19), (-13, -25), (-17, -32), (-17, -43)]
-for side in (-.72, .72):
-    for i, ((ax, az), (bx, bz)) in enumerate(zip(rail_path, rail_path[1:])):
-        beam(f'dam-curved-rail-{side}-{i}', (ax + side, .18, az), (bx + side, .18, bz),
-             .12, materials['galvanised-tin'], 'dam:rail-gate')
-for segment, ((ax, az), (bx, bz)) in enumerate(zip(rail_path, rail_path[1:])):
-    dx, dz = bx - ax, bz - az
-    length = math.hypot(dx, dz)
-    count = max(1, round(length / 2.7))
-    angle = math.atan2(dx, -dz)
-    for j in range(count):
-        t = j / count
-        sleeper = box(f'dam-curved-sleeper-{segment}-{j}',
-                      (ax + dx * t, .07, az + dz * t), (2.6, .15, .30),
-                      materials['weathered-plank'], 'dam:rail-gate', .04)
-        sleeper.rotation_euler[2] = angle
-
-# Place the arch, leaves and track at the photographed opening in the dam face.
-for obj in parts[rail_gate_part_start:]:
-    obj.location += Vector((0, 54, 8))
-
+# The reference picture already contains the rail arch, dark recess and door.
+# Retain named part hooks while letting the shared photo carry those details.
+for gate_name, gate_part in (('dam:rail-gate', 'dam:rail-gate'),
+                             ('dam:rail-gate-broken', 'dam:rail-gate-broken')):
+    gate_hook = bpy.data.objects.new(gate_name, None)
+    scene.collection.objects.link(gate_hook)
+    attach(gate_hook, gate_name, gate_part)
 # Wide, low filling hall at the specified offset, open to the train cab.
 sx, sz = -17, -23
 box('dam:filling-shed', (sx, .18, sz), (36, .36, 30), materials['cracked-concrete'], 'dam:filling-shed', .05)
@@ -407,7 +378,7 @@ for poly in salt_wall.data.polygons:
     if abs(poly.normal.y) > .9:
         for loop_index in poly.loop_indices:
             vertex = salt_wall.data.vertices[salt_wall.data.loops[loop_index].vertex_index].co
-            salt_wall.data.uv_layers.active.data[loop_index].uv = (vertex.x / 12, vertex.z / 12)
+            salt_wall.data.uv_layers.active.data[loop_index].uv = ((vertex.x + 16.25) / 32.5, (vertex.z + 5.9) / 11.8)
 for row, z in enumerate((-18, -27, -36)):
     for col, x in enumerate((-29, -5)):
         tank_y = 2.3
@@ -511,25 +482,28 @@ for z in (-65.2, -58.8):
 ring_gear('dam-gearbox-empty-seven-metre-seat', (7, 32.4, -62), 3.5, .28,
           materials['galvanised-tin'], 'dam:gearbox', 24)
 
-# Rotten original gear at the foot, half buried in silt; its teeth and open hub stay visible.
-old = ring_gear('dam:gear-old', (10, 1.35, 3.8), 4.0, .48, materials['rusted-steel'], 'dam:gear-old', 24)
-old.rotation_euler[0] = .35
-for i in range(6):
-    a = math.tau * i / 6
-    beam(f'dam-old-gear-spoke-{i}', (10 + math.cos(a) * .6, 1.35 + math.sin(a) * .6 * math.cos(.35), 3.8 + math.sin(a) * .6 * math.sin(.35)),
-         (10 + math.cos(a) * 3.25, 1.35 + math.sin(a) * 3.25 * math.cos(.35), 3.8 + math.sin(a) * 3.25 * math.sin(.35)), .22,
-         materials['rusted-steel'], 'dam:gear-old')
-gear_hub = torus('dam-old-gear-hub', (10, 1.35, 3.8), .58, .22, materials['galvanised-tin'], 'dam:gear-old', 'Z', 24, 8)
-gear_hub.rotation_euler[0] = .35
-bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1,
-    location=town.game_vector((10, .3, 3.8)))
-silt = bpy.context.object
-silt.name = 'dam-old-gear-wet-silt-mound'
-silt.scale = (6.3, 3.5, .95)
-bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-silt.data.materials.append(silt_material)
-attach(silt, silt.name, 'dam:gear-old')
-
+# Rotten original gear, about seven metres across, buried more than halfway in
+# an irregular heap that spreads into the basin floor.
+old = ring_gear('dam:gear-old', (13, 1.05, 8), 3.5, .42, materials['rusted-steel'], 'dam:gear-old', 28)
+gear_pivot = town.game_vector((13, 1.05, 8))
+gear_tilt = Matrix.Rotation(.62, 4, 'X')
+for vertex in old.data.vertices:
+    vertex.co = gear_pivot + gear_tilt @ (vertex.co - gear_pivot)
+# Overlapping wet-clay lobes make an irregular heap instead of a flat plate.
+for index, (dx, dz, rx, rz, ry) in enumerate((
+    (-4.0, -1.6, 4.0, 3.3, 1.05), (-1.1, 1.8, 4.1, 3.4, 1.3),
+    (2.8, -1.4, 3.6, 3.7, 1.1), (4.8, 1.5, 2.3, 2.9, .72),
+    (-5.5, 2.5, 2.1, 2.6, .62), (0.0, 0.0, 4.8, 3.8, .7),
+)):
+    center = (13 + dx, .28 + ry * .48, 8 + dz)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1,
+                                         location=town.game_vector(center))
+    lobe = bpy.context.object
+    lobe.name = f'dam-old-gear-wet-silt-lobe-{index}'
+    lobe.scale = (rx, rz, ry)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    lobe.data.materials.append(silt_material)
+    attach(lobe, lobe.name, 'dam:gear-old')
 # Boiler room outside the shed, in the specified east-side position.
 for i, x in enumerate((21.8, 27.3)):
     cylinder('dam:boilers' if i == 0 else f'dam-boiler-{i}', (x, 3.4, 5), 2.25, 6.8, materials['rusted-steel'], 'dam:boilers', 'Y', 48)
@@ -550,12 +524,13 @@ for x in (22, 27):
 
 # Spillway down the east side, blocked by a layered pile of rusted wrecks.
 spill_x, spill_z = 85, 25
-mesh('dam:spillway', [(spill_x - 7, 18, 5), (spill_x + 7, 18, 5),
-     (spill_x + 7, .3, 68), (spill_x - 7, .3, 68)], [(0, 1, 2, 3)],
+spill_top_y, spill_end_z = 42, 35
+mesh('dam:spillway', [(spill_x - 7, spill_top_y, 5), (spill_x + 7, spill_top_y, 5),
+     (spill_x + 7, .3, spill_end_z), (spill_x - 7, .3, spill_end_z)], [(0, 1, 2, 3)],
      materials['cracked-concrete'], 'dam:spillway', uv_scale=5)
 for side in (-1, 1):
-    wall_vertices = [(spill_x + side * 6.8, 18, 5), (spill_x + side * 9.2, 18, 5),
-                     (spill_x + side * 11, .3, 68), (spill_x + side * 6.8, .3, 68)]
+    wall_vertices = [(spill_x + side * 6.8, spill_top_y, 5), (spill_x + side * 9.2, spill_top_y, 5),
+                     (spill_x + side * 11, .3, spill_end_z), (spill_x + side * 6.8, .3, spill_end_z)]
     mesh(f'dam-spillway-retaining-wall-{side}', wall_vertices, [(0, 1, 2, 3)],
          materials['cracked-concrete'], 'dam:spillway', uv_scale=5)
     beam(f'dam-spillway-retaining-cap-{side}', wall_vertices[1], wall_vertices[2], .38,
@@ -584,10 +559,12 @@ for obj in imported:
         bpy.data.objects.remove(obj, do_unlink=True)
 
 placements = [
-    (83.0, 13.0, 0.0), (87.0, 18.0, .35), (84.0, 23.0, .7),
-    (87.0, 29.0, .15), (82.5, 34.0, .55), (86.0, 39.0, 1.0),
-    (83.0, 44.0, .25), (87.0, 49.0, .8), (83.0, 54.0, .3),
-    (86.0, 59.0, .85), (82.5, 64.0, .35), (86.0, 67.0, 1.1),
+    (81.0, 7.5, .2), (85.0, 8.0, 1.0), (89.0, 8.8, .5),
+    (88.5, 12.0, .8), (84.5, 12.8, .1), (80.8, 13.5, 1.1),
+    (81.0, 17.0, .7), (85.2, 17.8, 1.3), (89.0, 18.5, .2),
+    (88.7, 22.0, 1.2), (84.8, 22.8, .3), (80.8, 23.5, .8),
+    (81.0, 27.0, .1), (85.1, 27.8, .9), (89.0, 28.5, .4),
+    (88.5, 32.0, 1.0), (84.5, 32.8, .2), (80.8, 33.5, .7),
 ]
 templates = {}
 for kind, family in families.items():
@@ -598,7 +575,7 @@ for kind, family in families.items():
     }
 for index, (x, z, stack_y) in enumerate(placements):
     kind = ('van', 'bus', 'rv')[index % 3]
-    y = 18 - (z - 5) * (17.7 / 63) + .3 + stack_y
+    y = spill_top_y - (z - 5) * ((spill_top_y - .3) / (spill_end_z - 5)) + .12 + stack_y
     wreck_root = bpy.data.objects.new(f'dam-spillway-wreck-{index}-{kind}', None)
     scene.collection.objects.link(wreck_root)
     wreck_root.parent = root_obj
@@ -606,10 +583,13 @@ for index, (x, z, stack_y) in enumerate(placements):
     wreck_root['part'] = 'dam:spillway'
     template = templates[kind]
     target = town.game_vector((x, y, z))
-    yaw = (-.24, .16, -.08, .27)[index % 4]
-    tilt = (.10, -.14, .21)[index % 3]
-    rotation = Matrix.Rotation(math.pi / 2 + yaw, 4, 'Z') @ Matrix.Rotation(math.pi / 2 + tilt, 4, 'X')
-    transform = Matrix.Translation(target) @ rotation @ Matrix.Translation(-template['center'])
+    yaw = (-.72, .38, -.18, .92, -.42, .16)[index % 6]
+    tilt = (.18, -.24, .36, -.12)[index % 4]
+    source_points = [world @ Vector(corner) for source, world in template['meshes'] for corner in source.bound_box]
+    source_extent = max(max(point[axis] for point in source_points) - min(point[axis] for point in source_points) for axis in range(3))
+    scale = 6.5 / max(source_extent, .01)
+    rotation = Matrix.Rotation(yaw, 4, 'Z') @ Matrix.Rotation(tilt, 4, 'X')
+    transform = Matrix.Translation(target) @ rotation @ Matrix.Scale(scale, 4) @ Matrix.Translation(-template['center'])
     for source, source_world in template['meshes']:
         duplicate = source.copy()
         duplicate.data = source.data
@@ -623,14 +603,38 @@ for object_name in imported_names:
     if obj is not None:
         bpy.data.objects.remove(obj, do_unlink=True)
 
+# Wet silt packs into the remaining gaps and softens the exposed chute edges.
+for index, (x, z, radius) in enumerate(((80, 12, .8), (90, 13, .65), (84, 18, .72),
+                                        (80, 24, .65), (91, 27, .85), (84, 31, .7))):
+    y = spill_top_y - (z - 5) * ((spill_top_y - .3) / (spill_end_z - 5)) + .12
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1,
+                                         location=town.game_vector((x, y, z)))
+    patch = bpy.context.object
+    patch.name = f'dam-spillway-wet-silt-{index}'
+    patch.scale = (radius * 2.0, radius * .8, radius * .22)
+    patch.rotation_euler[0] = math.radians(54)
+    patch.data.materials.append(silt_material)
+    attach(patch, patch.name, 'dam:spillway')
+
 # The gatehouse stands on its own raised pad, well above the bed.
 gx, gy, gz = 45, 30, -48
 box('gatehouse-own-pad', (gx, gy - .25, gz), (4.2, .5, 5.2), materials['cracked-concrete'], 'gatehouse', .14)
-box('gatehouse', (gx, gy + 1.25, gz), (3.2, 2.5, 4.0), materials['cracked-concrete'], 'gatehouse', .09)
+hut = box('gatehouse', (gx, gy + 1.25, gz), (3.2, 2.5, 4.0), stone_material, 'gatehouse', .09)
+for poly in hut.data.polygons:
+    for loop_index in poly.loop_indices:
+        vertex = hut.data.vertices[hut.data.loops[loop_index].vertex_index].co
+        normal = poly.normal
+        if abs(normal.x) > .9:
+            u, v = vertex.y, vertex.z
+        elif abs(normal.y) > .9:
+            u, v = vertex.x, vertex.z
+        else:
+            u, v = vertex.x, vertex.y
+        hut.data.uv_layers.active.data[loop_index].uv = (u / 2.5, v / 2.5)
 mesh('gatehouse-gable-front', [(gx - 1.6, gy + 2.5, gz + 2.02), (gx + 1.6, gy + 2.5, gz + 2.02),
-     (gx, gy + 3.05, gz + 2.02)], [(0, 1, 2)], materials['cracked-concrete'], 'gatehouse')
+     (gx, gy + 3.05, gz + 2.02)], [(0, 1, 2)], stone_material, 'gatehouse', uv_scale=2.5)
 mesh('gatehouse-gable-back', [(gx - 1.6, gy + 2.5, gz - 2.02), (gx + 1.6, gy + 2.5, gz - 2.02),
-     (gx, gy + 3.05, gz - 2.02)], [(0, 1, 2)], materials['cracked-concrete'], 'gatehouse')
+     (gx, gy + 3.05, gz - 2.02)], [(0, 1, 2)], stone_material, 'gatehouse', uv_scale=2.5)
 for side in (-1, 1):
     roof_vertices = [(gx, gy + 3.05, gz - 2.4), (gx, gy + 3.05, gz + 2.4),
                      (gx + side * 2.05, gy + 2.5, gz + 2.4), (gx + side * 2.05, gy + 2.5, gz - 2.4)]
@@ -726,11 +730,11 @@ def camera(name, location, target, focal=50):
 views = [
     ('dam-match', (0, 27, 220), (0, 27, -57), 38),
     ('dam-context', (159, 79, 128), (12, 20, -25), 36),
-    ('filling-shed-interior', (-17, 2.0, -10), (-17, 3.4, -38), 35),
-    ('spillway', (104, 25, 82), (85, 7, 25), 42),
-    ('wrecks', (111, 26, 40), (85, 8, 40), 50),
+    ('filling-shed-interior', (-17, 4.0, -5), (-17, 5.5, -37), 35),
+    ('spillway', (104, 30, 60), (85, 18, 20), 42),
+    ('wrecks', (111, 36, 35), (85, 15, 20), 50),
     ('gatehouse', (53, 34, -35), (45, 32, -48), 52),
-    ('gear-old', (17, 8, 20), (10, 1.35, 3.8), 60),
+    ('gear-old', (22, 9, 27), (13, 1.35, 8), 60),
 ]
 captures = []
 for name, location, target, focal in views:
@@ -748,6 +752,10 @@ for name, location, target, focal in views:
             if obj.type == 'MESH':
                 obj.hide_render = (obj.name != 'review ground only'
                     and not obj.name.startswith(visible_prefixes))
+    elif name == 'gatehouse':
+        for obj in imported:
+            obj.hide_render = (obj.name != 'review ground only'
+                and not obj.name.startswith(('gatehouse',)))
     bpy.ops.render.render(write_still=True)
     for obj in imported:
         if obj.type == 'MESH':
