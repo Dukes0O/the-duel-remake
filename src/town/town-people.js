@@ -1,6 +1,7 @@
 import {buildingById} from './content/registry.js';
 import {TOWN_HOME_TYPES} from './content/homes.js';
 import {townThoughtFor} from './content/thoughts.js';
+import {TOWN_PACE} from './content/pace.js';
 import {townFamilyName, townPersonName} from './town-names.js';
 import {TOWN_TIME} from './town-calendar.js';
 
@@ -403,7 +404,8 @@ export function stepTownPeople({town, rng, tick, calendar}) {
   if (tick % ticksPerMonth === 0n && hasMeasuredSupport(town, town.people.length)) {
     const averageMood = town.people.length ? town.people.reduce((sum, person) => sum + person.mood, 0) / town.people.length : 50;
     const laterYears = arrivalYearGrowth(calendar.year);
-    const monthlyTarget = Math.max(1, Math.floor(1 + averageMood / 25 + laterYears));
+    const monthlyTarget = Math.max(1, Math.floor(TOWN_PACE.arrivalMoodBase
+      + averageMood / TOWN_PACE.arrivalMoodScale + TOWN_PACE.arrivalYearScale * laterYears));
     const room = Math.max(0, Math.floor(town.peopleConditions.shelterPlaces - town.people.length));
     const usedNames = new Set(town.people.map(person => person.name));
     for (let index = 0; index < Math.min(monthlyTarget, room); index++) {
