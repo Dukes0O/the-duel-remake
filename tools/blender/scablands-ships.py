@@ -50,6 +50,7 @@ scene.view_settings.view_transform = 'Standard'
 scene.view_settings.look = 'Medium High Contrast'
 scene.view_settings.exposure = 0
 scene.view_settings.gamma = 1
+scene.world = bpy.data.worlds.new('Ship photo review overcast')
 scene.world.color = (.32, .32, .32)
 
 materials = town.make_materials(inputs)
