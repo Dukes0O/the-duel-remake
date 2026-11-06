@@ -1,5 +1,15 @@
 # Rattler runtime texture credits
 
+## Round 7 shape photos
+
+Generated with OpenAI built-in image generation on 2026-11-06 for the photo
+measuring recipe. Original fictional 1950s-style pickup; no maker, logo or
+licensed reference. Source photos: `.evidence/car-art-rattler/{side,front,rear,top}.jpg`.
+The GLB embeds the photo-mapped surface regions. The prompt requested the same
+worn pickup in dead-on side, front, rear and overhead views, flat pale studio
+light, rounded-roof upright cab, flat windshield, separate front wings, visible
+engine, plank bed, large rear tires and smaller fronts.
+
 OpenAI's built-in image generator made these original material pictures on
 2026-11-05. They are not scans or licensed source images. Each is an optimized
 1024 by 1024 JPEG embedded in `rattler.glb`; full asset intake is also in

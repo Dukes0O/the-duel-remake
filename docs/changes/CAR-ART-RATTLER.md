@@ -23,3 +23,48 @@
 
 
 - Lane tier and build were not run, as instructed for this art card.
+# CAR-ART-RATTLER · round 7
+
+**Status:** submitted for Claude's art judgment; visual result needs more work.
+
+The lane was merged with `integration/wasteland` before the photo-model work.
+The `tools/test-blender-output.mjs` merge conflict was resolved with both the
+Rattler and Longhaul entries retained. The photos, credits and
+`tools/blender/rattler-photo.py` use Claude's photo-measured `Photo.sky`,
+`trace`, `slab`, `box` and `lathe` kit. The recipe exports metre units, the
+`rattler` id, four separate round wheels with the contract radii and the eight
+vehicle socket names. It reads the source photos from
+`.evidence/car-art-rattler/` and renders the exported GLB in a clean
+scene with Standard view transform.
+
+Blender reported 1,728 triangles and 433,920 bytes for the exported GLB. The
+side, front, rear and top matched renders, five requested views and a
+person-scale view are in the round-7 comparison sheet. The rendered body is
+visibly broken into broad, flat picture-mapped panels; some surfaces show the
+wrong photo region. The four reference photos are consistent, but the model
+does not yet match them and is not a visual pass. Claude should inspect the
+photo crops, masks, four matched views, front and rear three-quarter views,
+side, top, person scale, component names and socket transforms.
+
+**Checks:** Blender export and clean-scene GLB renders passed: 1,728 triangles
+and 433,900 bytes. The first `tools/test-blender-output.mjs` run after the
+conflict fix passed 281 checks. Restoring the integration branch's historical
+Rattler recipe-only check briefly duplicated its generator entry; the next run
+reported three coverage/paths errors. I removed the duplicate entry without
+changing assertions. Final `node tools/test-blender-output.mjs` passed 281
+checks, 0 failures. `node tools/test-repo-hygiene.mjs` passed; no oversized
+look sheets. No lane tier or build was run, as directed. No game behavior or
+test assertions changed. Race fingerprints: not applicable to this model-only
+art task.
+
+**Photo credit:** the four generated reference photos are committed in
+`.evidence/car-art-rattler/`; their prompt credit is in
+`public/assets/models/wasteland/cars/textures/CREDITS.md`. The comparison
+sheet includes crops beside the clean-scene GLB renders. Raw captures remain
+in the ignored evidence folder.
+
+## Removed
+
+Moved the round-4 and round-6 sheets and review notes to the Recycle Bin as
+superseded by round 7. Removed temporary renders and logs after assembling the
+sheet. The source photos remain in `.evidence` for Claude's review.

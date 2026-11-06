@@ -23,7 +23,8 @@ sheet = root / 'docs/board/looks/car-art-rattler/round-6.jpg'
 evidence = root / '.evidence' / date.today().isoformat() / 'CAR-ART-RATTLER' / 'round-6'
 reference = root / '.qa-dist/rattler-round-6/reference.jpg'
 if args.paths_only:
-    print(json.dumps({'blend':[str(blend)], 'glb':[str(out)], 'evidence':[str(evidence)], 'summary':[str(sheet)]}))
+    # Round 7 supersedes this scene-building recipe; retain it only as historical code.
+    print(json.dumps({'blend':[], 'glb':[str(out)], 'evidence':[], 'summary':[]}))
     raise SystemExit(0)
 
 import bpy
