@@ -79,3 +79,54 @@ Prompt: Square macro photograph of dark charcoal-brown wet reservoir clay, soft
 irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
+
+## Ships in the Sand photo projections
+
+The following three crops are original Codex ImageGen photographs made on
+2026-11-05. They are cropped and JPEG-compressed from the generated reference
+photographs. The model embeds them from this folder so its Blender recipe can
+rebuild the projection materials. No third-party source art is used.
+
+### `ships-hull-photo.jpg`
+
+Use: 2048 x 384 front-side photo projection on the hulls of the three
+maintained stranded freighters.
+
+Prompt: Photorealistic daylight modeling reference: a huge 70-metre rusted
+coastal freighter aground on a dry salt sea bed, low car-height three-quarter
+side view. Whole vessel fills frame: long narrow hull with true curved bow and
+stern, deep keel, visible propeller, three deck levels with ladders, aft chart
+room, large faded dark blue-grey paint patches over dark brown-black rust,
+distinct repair plates, trailing anchor chain. Old but maintained. Tiny
+ordinary car for scale, dusty mid-tone ground, bright overcast light, natural
+photographic proportions, no water, no broken hull, no illustration, no text,
+no watermark.
+
+### `lighthouse-stone-photo.jpg`
+
+Use: 512 x 1024 front-side photo projection on the stone lighthouse tower.
+
+Prompt: Photorealistic daylight modeling reference for a full-scale weathered
+coastal lighthouse standing alone on a dry inland salt flat. Old pale
+grey-brown stone tower about 28 metres tall with tapered round masonry, three
+distinct narrow landings and exterior windows, a working lantern room with a
+warm lit lamp, small swept stone step and maintained dark wooden door. Broad
+realistic proportions, salt stains, repaired mortar, crisp detail, low
+car-height three-quarter view from 35 metres, the complete lighthouse fills
+most of the frame. Bright even overcast daylight, mid-tone ground, no sea, no
+people, no text, no illustration, no toy look.
+
+### `pilot-boat-photo.jpg`
+
+Use: 1536 x 512 front-side photo projection on the pilot boat's hull.
+
+Prompt: Photorealistic daylight modeling reference: an absurdly oversized but
+genuine 40-foot coastal pilot boat secured on a heavy road trailer, parked on
+a dry desert salt flat. Three-quarter front-side view at car height, entire
+boat and trailer fill frame. Real afloatable deep V hull, broad stern, raised
+pilot cabin, windows, hand rails, bow cleat, faded off-white paint with a dark
+blue-green band, patched and maintained. Trailer has a long steel frame, four
+pairs of large dusty road wheels, leaf springs, hitch and safety chains.
+Bright even overcast light, realistic human scale, plain mid-tone dusty
+ground, no water, no people, no text or labels, no illustration, no toy
+appearance.
