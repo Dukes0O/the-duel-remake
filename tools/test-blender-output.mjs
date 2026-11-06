@@ -57,7 +57,7 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
-  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-POWER/round-1',
+  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-POWER/round-2',
     glb:['public/assets/models/wasteland/town/power.glb'],budget:1800,maxBytes:3000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
@@ -619,7 +619,30 @@ try {
       const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-      assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      if (generator.id === 'town-power') {
+        for (const id of ['windmill','power-pole']) {
+          const rootIndex = gltf.nodes.findIndex(node => node.name === id);
+          assert.ok(rootIndex >= 0, `missing building ${id}`);
+          const pending = [rootIndex], visited = new Set();
+          let buildingTriangles = 0;
+          while (pending.length) {
+            const index = pending.pop();
+            if (visited.has(index)) continue;
+            visited.add(index);
+            const node = gltf.nodes[index];
+            if (node.mesh !== undefined) {
+              buildingTriangles += gltf.meshes[node.mesh].primitives
+                .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+            }
+            pending.push(...(node.children || []));
+          }
+          assert.ok(buildingTriangles > 100 && buildingTriangles <= generator.budget,
+            `${id}: ${buildingTriangles} triangles exceeds its ${generator.budget} triangle building budget`);
+        }
+        assert.ok(triangles <= generator.budget * 2, `${triangles} triangles across two 1x1 buildings`);
+      } else {
+        assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      }
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
       if (generator.id === 'town-stages') {
@@ -652,8 +675,9 @@ try {
         assert.ok(names.includes('town-power'), 'named family root');
         assert.ok(names.includes('windmill'), 'named windmill building');
         assert.ok(names.includes('windmill:rotor'), 'named movable rotor part');
-        assert.ok(!names.some(name => ['generator','solar-rack','fuel-depot','power-pole'].includes(name)),
-          'round one contains only the windmill asset');
+        assert.ok(names.includes('power-pole'), 'named power pole building');
+        assert.ok(!names.some(name => ['generator','solar-rack','fuel-depot'].includes(name)),
+          'round two contains the windmill and pole only');
         for (const material of gltf.materials) {
           assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallicFactor`);
         }

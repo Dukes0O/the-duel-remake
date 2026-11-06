@@ -1,26 +1,28 @@
-﻿# TOWN-ART-POWER change note
+# TOWN-ART-POWER — round 2
 
 ## Changed
 
-- Added `tools/blender/town-power.py`, a rebuildable recipe for the first card asset: `windmill`, with a separate `windmill:rotor` node. Reused the existing town material pictures and `town_base.py` geometry/export helpers.
-- Exported `public/assets/models/wasteland/town/power.glb` and rendered the comparison views from the exported GLB imported into a fresh Blender scene.
-- Added the `town-power` output entry and focused GLB assertions to `tools/test-blender-output.mjs`.
-- Submitted one compressed comparison sheet at `docs/board/looks/town-art-power/round-1.jpg` (under 500 KB) with scores and review note beside it.
+- Rebuilt the windmill mast with four splayed corner legs, four closed horizontal rings and X bracing. Printed endpoint checks show a maximum brace-to-leg distance of 0.00 m (limit 0.05 m).
+- Made `windmill:rotor` pivot at the axle. Exported and reimported a second GLB with the rotor turned 37°; the front render shows the blades turning around the hub.
+- Added three tapered spring-steel blades, a bolted hub, alternator cooling ribs, tail arm and vane, a clipped and clamped cable, a shaped concrete slab and bolted foot plates.
+- Added the crooked power pole, transformer, insulators and sagging wire stubs. The card's other three buildings remain unstarted pending the windmill and pole look review.
+- Replaced the round 1 recipe and GLB, updated the town-power output assertion, and added the round 2 comparison sheet and review.
 
-## Checks
+## Checks and review
 
-- Blender 4.5.13 build and GLB re-import: completed; rendered driver-height and 45-degree mayor views. The final GLB passed the 1,800-triangle and 3 MB candidate limits; exported metallic factors are at or below 0.28.
-- `node tools/test-blender-output.mjs`: 275 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; placement clean. Existing repository size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 8 passed, 1 failed on both runs. The unrelated audio-analysis test could not spawn `ffmpeg` (`spawnSync ffmpeg EPERM`); JPG publication checks passed. No assertions were changed.
-- Browser and game look checks: not run here; Claude should inspect the comparison sheet, especially hub-to-blade integration, photo likeness and roof-view readability.
-- No race simulation changed; replay fingerprints not applicable.
-- No assertions were weakened.
+- `tools/test-blender-output.mjs`: passed, 275 checks, 0 failed. The exported family is 2,600 triangles; windmill 1,788 and power pole 812, each under the 1,800 triangle 1x1 limit.
+- `tools/test-repo-hygiene.mjs`: passed; the size targets remain advisory.
+- `tools/test-review-evidence.mjs`: 8 of 9 subtests passed. One unrelated audio-analysis subtest could not launch `ffmpeg` (`spawnSync ffmpeg EPERM`).
+- Blender export/reimport and model and turned-rotor renders: passed. The endpoint print is 0.00 m maximum.
+- Chrome, browser and in-game look checks: not run here. Claude should compare the round 2 sheet as listed in `round-2-review.md`.
+- Changed assertions: the output check now requires `power-pole` and still excludes `generator`, `solar-rack` and `fuel-depot`. Its old single-asset 1,800-triangle total is now two descendant checks (windmill and pole, 1,800 each) plus their combined 3,600 limit. This applies the existing per-building budget to the two requested 1x1 assets in one family file; no per-building limit was raised. Claude's written review is required before merge.
+- Race fingerprints: not applicable; art only.
 
-## Scope and review
+## Limits for Claude's look review
 
-This is the one-piece first round requested by the card instructions. Generator, solar rack, fuel depot and power pole are not included yet. My self-review scores are 2/5 photo likeness, 2/5 materials, 3/5 shape and 3/5 construction. The gap is recorded in the round note; Claude should judge whether this is adequate to continue with the next card asset.
+The pole's repeated wood texture still looks striped, the tail vane does not yet read as cream paint, and the head and blades remain more geometric than the photo. The model has the requested parts and dimensions, but this note does not call the look accepted.
 
 ## Removed
 
-- No tracked runtime asset, recipe or test was replaced. Temporary renders, generated reference copy, Blend scene and Blender logs were removed after creating the comparison sheet.
+- Replaced the round 1 windmill recipe and `power.glb` in place. The round 1 sheet and review remain as prior review evidence.
+- No runtime textures or dependencies added. Temporary Blender renders, the trial rotated GLB, reference copy and logs are scratch evidence and will be removed before commit.
