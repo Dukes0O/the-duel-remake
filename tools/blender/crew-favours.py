@@ -311,6 +311,30 @@ slab(regret_door_mesh, 'door', regret_door_photo, door_loops, door_world, -.025,
      wall_scale=DOOR_SCALE * 3)
 finish(regret_door_mesh, 'regret-door', {'door': regret_door_photo.material()})
 
+# --- regret-bonnet: a traced 2 cm top skin, with a separate rust-only underside -----------
+bonnet_photo = Photo(textures / 'ww-regret-bonnet.jpg')
+bonnet_solid = tidy(~bonnet_photo.sky([(8, 8), (bonnet_photo.w - 8, 8),
+                                       (8, bonnet_photo.h - 8)], grey=26))
+bonnet_loops = trace(bonnet_solid, (0, 0, bonnet_photo.w, bonnet_photo.h), tolerance=2.0, min_area=100)
+bonnet_photo.bleed(shrink(bonnet_solid, 3), passes=24)
+all_bonnet_points = [point for loop in bonnet_loops for point in loop]
+BX0 = min(p[0] for p in all_bonnet_points); BX1 = max(p[0] for p in all_bonnet_points)
+BY0 = min(p[1] for p in all_bonnet_points); BY1 = max(p[1] for p in all_bonnet_points)
+BONNET_SCALE = 1.25 / (BX1 - BX0)
+BONNET_CX = (BX0 + BX1) * .5
+def bonnet_world(px, py, d): return ((px - BONNET_CX) * BONNET_SCALE, .48 + d, (BY0 + BY1 - 2 * py) * BONNET_SCALE)
+bonnet_mesh = Mesh()
+slab(bonnet_mesh, 'top', bonnet_photo, bonnet_loops, bonnet_world, 0, .02, wall_scale=BONNET_SCALE)
+rust_photo = Photo(textures / 'ww-regret-bonnet-rust.jpg')
+rust_loops = [[((px - BX0) / (BX1 - BX0) * rust_photo.w,
+                (py - BY0) / (BY1 - BY0) * rust_photo.h) for px, py in loop] for loop in bonnet_loops]
+def rust_world(px, py, d):
+    return bonnet_world(BX0 + px / rust_photo.w * (BX1 - BX0),
+                        BY0 + py / rust_photo.h * (BY1 - BY0), d)
+slab(bonnet_mesh, 'rust', rust_photo, rust_loops, rust_world, -.002, -.001,
+     wall_scale=BONNET_SCALE)
+finish(bonnet_mesh, 'regret-bonnet', {'top': bonnet_photo.material(), 'rust': rust_photo.material()})
+
 # --- regret-wheel: old steel wheel measured from its own dead-on photo -------------------
 wheel_photo = Photo(textures / 'ww-regret-wheel-photo.jpg')
 wheel_solid = tidy(~wheel_photo.sky([(8, 8), (1014, 8), (8, 1014)], grey=26))
@@ -406,7 +430,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box', 'regret-bonnet')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -454,3 +478,6 @@ shot('regret-wheel-quarter', 'regret-wheel', (1.8, .9, 1.4), (0, .4, 0), 900, 70
 shot('dynamite-box', 'dynamite-box', (0, .23, 1.7), (0, .23, 0), 900, 650, ortho=.88)
 shot('dynamite-box-quarter', 'dynamite-box', (-.9, 1.3, .9), (0, .18, 0), 900, 650, lens=50)
 shot('dynamite-box-top', 'dynamite-box', (0, 1.5, 0), (0, .18, 0), 900, 900, ortho=.86)
+shot('regret-bonnet', 'regret-bonnet', (0, 2.1, 0), (0, .48, 0), 900, 700, ortho=1.5, show_ground=False)
+shot('regret-bonnet-quarter', 'regret-bonnet', (-1.4, 1.3, 1.3), (0, .48, 0), 900, 700, lens=50, show_ground=False)
+shot('regret-bonnet-under', 'regret-bonnet', (0, -1.1, 1.3), (0, .48, 0), 900, 700, lens=50, show_ground=False)

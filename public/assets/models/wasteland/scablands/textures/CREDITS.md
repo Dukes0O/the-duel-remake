@@ -122,6 +122,15 @@ edges. No objects, gear, pool, scene, text, or watermark.
   removed. A real recessed dark wooden floor holds rows of short paper-wrapped
   cylindrical bundles. Full rim, old damp weathered planks, pale grey ground,
   flat bright overcast light, no people or tools.”
+- `ww-regret-bonnet.jpg`: Codex ImageGen overhead photograph matched to the
+  faded red and wear of `ww-regret-door.jpg`. Prompt: “One detached bonnet
+  panel from directly above, camera perpendicular, broad gently curved outline,
+  sun-faded dusty muted red paint with chips exposing dark rust and bare steel.
+  Full part, plain pale grey ground, bright even overcast light, no car body,
+  people, logos or text.”
+- `ww-regret-bonnet-rust.jpg`: a 512 × 316 crop from the heavily rusted lower
+  edge of `ww-regret-door.jpg`, enlarged for the bonnet underside. It shows
+  dark rust across the whole rectangle and is not the bonnet top photo.
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.

@@ -18,6 +18,13 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
   not a toy.
 - Added `ww-dynamite-front.jpg` and `ww-dynamite-top.jpg`, with prompts in
   `CREDITS.md`.
+- Added `regret-bonnet` as a photo-traced 2 cm panel. Its underside is a
+  separate rust-only slab, 1 mm below the upper skin, using a crop of the
+  existing door photograph. The exported top and quarter views match the
+  faded red photo; the underside render is uniformly dark rust. It reads as a
+  real thin car panel, not a toy.
+- Added `ww-regret-bonnet.jpg` and a rust crop from `ww-regret-door.jpg`, with
+  both sources documented in `CREDITS.md`.
 - Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
   Its front and three-quarter views were rendered from the exported GLB and
   inspected beside the front reference. It reads as a small weathered wooden
