@@ -31,6 +31,8 @@ const artCandidates = new Set(['wildcat']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-05/TOWN-ART-STAGES/art-build',
+    glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -538,7 +540,17 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
-      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
+      const maxBytes = generator.maxBytes ?? 2_500_000;
+      assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
+      if (generator.id === 'town-stages') {
+        const names = gltf.nodes.map(node => node.name || '');
+        assert.ok(names.includes('town-stages'), 'named family root');
+        for (const id of ['scaffold-1','scaffold-2','scaffold-3','scaffold-4',
+          'rubble-1','rubble-2','rubble-3','rubble-4','burnt-1','burnt-2','burnt-3','burnt-4',
+          'street-lamp','barrel-fire','crate-stack','barrels','washing-line','bench','bin','signpost','sandbags','junk-pile','dead-tree']) {
+          assert.ok(names.includes(id), `missing building ${id}`);
+        }
+      }
     });
   }
   check('scablands-tintown exports its bounded named walkable town model', () => {
