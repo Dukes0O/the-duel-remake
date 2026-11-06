@@ -6,6 +6,7 @@ All measurements use the photo_model kit in glTF metres, X right, Y up, Z toward
 import argparse
 import json
 import math
+import struct
 import sys
 from pathlib import Path
 
@@ -408,7 +409,9 @@ def photo_material(name, photo):
 def build_conveyor():
     photo = conveyor_photo
     w, h = photo.w, photo.h
-    sky = photo.sky(((4, 4), (w - 5, 4), (4, h - 5), (w - 5, h - 5)), tolerance=20, grey=26)
+    sky = photo.sky(((4, 4), (w - 5, 4), (4, h - 5), (w - 5, h - 5),
+                     (360, int(.70*h)), (690, int(.64*h)), (1010, int(.58*h)),
+                     (1320, int(.52*h)), (1640, int(.45*h))), tolerance=20, grey=26)
     solid = tidy(~sky, 1)
     x0, x1 = .012 * w, .988 * w
     top, bottom = .13 * h, .82 * h
@@ -475,6 +478,7 @@ def build_hut(name):
     ew, eh = end.w, end.h
     side_sky = side.sky(((4,4),(sw-5,4),(4,sh-5),(sw-5,sh-5)), tolerance=20, grey=26)
     side_solid = tidy(~side_sky, 1)
+    side.bleed(side_solid)
     wall_mask = side_solid.copy()
     wall_mask[:int(cfg['wall_top'] * sh), :] = False
     cut_rectangles(wall_mask, cfg['side_holes'])
@@ -521,9 +525,10 @@ def build_hut(name):
 
     # Broad roof sheets bridge the photo-traced eaves. School has a pitched
     # gable; the canteen and pay office use separate shallow shed roofs.
-    roof_uv = (side.uv(.08*sw,.08*sh), side.uv(.92*sw,.08*sh),
-               side.uv(.92*sw,max(1,int(cfg['roof_cut']*sh))),
-               side.uv(.08*sw,max(1,int(cfg['roof_cut']*sh))))
+    # A narrow measured tin strip below the sky line paints the roof faces.
+    roof_rect = (.08*sw, .205*sh, .92*sw, .245*sh)
+    roof_uv = (side.uv(roof_rect[0],roof_rect[1]), side.uv(roof_rect[2],roof_rect[1]),
+               side.uv(roof_rect[2],roof_rect[3]), side.uv(roof_rect[0],roof_rect[3]))
     if cfg['roof'] == 'gable':
         for za, zb, ya, yb in ((-2.30,0,3.28,3.58),(0,2.30,3.58,3.28)):
             top = ((-4.12,ya,za),(4.12,ya,za),(4.12,yb,zb),(-4.12,yb,zb))
@@ -593,45 +598,57 @@ def build_hut(name):
 def build_fence():
     photo = fence_photo
     w, h = photo.w, photo.h
-    # The image provides measured posts and salt-worn wire; the sign itself is
-    # a separate clean picture. Mesh openings stay real and clear.
+    # Transparent photo panels preserve the very fine wire at car height.
     sky = photo.sky(((4,4),(w-5,4),(4,h-5),(w-5,h-5)), tolerance=20, grey=26)
     solid = tidy(~sky, 1)
     x0, x1 = .02*w, .98*w
-    y0, y1 = .30*h, .92*h
-    def point(px, py, depth):
-        return (((px-x0)*30/(x1-x0))-15, (y1-py)*3/(y1-y0), depth)
+    y0, y1 = .28*h, .72*h
+    rgba = np.empty((h, w, 4), dtype=np.float32)
+    rgba[:, :, :3] = photo.rgb().astype(np.float32) / 255
+    alpha = solid.copy()
+    # The clean sign is a separate, unmasked panel and keeps its exact lettering.
+    alpha[int(.40*h):int(.55*h), int(.44*w):int(.57*w)] = False
+    rgba[:, :, 3] = alpha.astype(np.float32)
+    mesh_image = bpy.data.images.new('Vane fence wire with alpha', w, h, alpha=True)
+    mesh_image.pixels.foreach_set(rgba[::-1].ravel())
+    mesh_image.filepath_raw = str(textures / 'vane-fence-wire-alpha.png')
+    mesh_image.file_format = 'PNG'
+    mesh_image.save()
+    mesh_image.pack()
+    wire_mat = bpy.data.materials.new('Vane fence / photo wire mask')
+    wire_mat.use_nodes = True
+    wire_bsdf = wire_mat.node_tree.nodes['Principled BSDF']
+    wire_bsdf.inputs['Metallic'].default_value = 0
+    wire_bsdf.inputs['Roughness'].default_value = .9
+    tex = wire_mat.node_tree.nodes.new('ShaderNodeTexImage')
+    tex.image = mesh_image
+    wire_mat.node_tree.links.new(tex.outputs['Color'], wire_bsdf.inputs['Base Color'])
+    wire_mat.node_tree.links.new(tex.outputs['Alpha'], wire_bsdf.inputs['Alpha'])
+    wire_mat.surface_render_method = 'DITHERED'
+    wire_mat.use_transparency_overlap = False
     mesh = Mesh()
-    # Trace the ten iron posts separately from their actual photo positions.
-    for i in range(10):
-        centre = x0 + (x1-x0)*i/9
-        loops = trace(solid, (int(centre-.012*w), int(y0), int(centre+.012*w), int(y1)),
-                      tolerance=1.0, min_area=12)
-        if loops:
-            for z in (-.055,.055):
-                slab(mesh, 'fence', photo, loops, point, z-.025, z+.025, wall_scale=.006)
-
-    # Open diamond wire lattice, with each strand a thin traced-photo strip.
-    cols, rows = 50, 6
-    dx, dy = 30/cols, 3/rows
-    half_wire = .009
-    def add_wire(a, b, z, flip=False):
-        ax, ay = a; bx, by = b
-        length = math.hypot(bx-ax, by-ay) or 1
-        ox, oy = -(by-ay)/length*half_wire, (bx-ax)/length*half_wire
-        pts = ((ax+ox,ay+oy),(bx+ox,by+oy),(bx-ox,by-oy),(ax-ox,ay-oy))
-        verts = [((x-15),y,z) for x,y in pts]
-        pxa = x0 + (ax+15)/30*(x1-x0); pxb = x0 + (bx+15)/30*(x1-x0)
-        pya = y1 - ay/3*(y1-y0); pyb = y1 - by/3*(y1-y0)
-        uv = (photo.uv(pxa,pya),photo.uv(pxb,pyb),photo.uv(pxb,pyb),photo.uv(pxa,pya))
-        mesh.face(verts, uv, 'fence', (0,0,1))
-        mesh.face(tuple((x,y,-z) for x,y,z in reversed(verts)), tuple(reversed(uv)), 'fence', (0,0,-1))
-    for row in range(rows):
-        for col in range(cols):
-            xa, xb = -15+col*dx, -15+(col+1)*dx
-            ya, yb = .04+row*dy, .04+(row+1)*dy
-            add_wire((xa,ya),(xb,yb),.055)
-            add_wire((xa,yb),(xb,ya),.055)
+    iron = bpy.data.materials.new('Vane fence / narrow rusted iron posts')
+    iron.diffuse_color = (.22,.16,.12,1)
+    iron.use_nodes = True
+    iron.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.22,.16,.12,1)
+    iron.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = .2
+    iron.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .85
+    # Ten 8 cm posts, each bay is one thin photo panel on both sides.
+    count = 10
+    for i in range(count - 1):
+        xa, xb = x0 + (x1-x0)*i/(count-1), x0 + (x1-x0)*(i+1)/(count-1)
+        wx0, wx1 = -15 + 30*i/(count-1), -15 + 30*(i+1)/(count-1)
+        ya, yb = (y1-y0)*0 + .04, 2.96
+        uv = (photo.uv(xa,y1), photo.uv(xb,y1), photo.uv(xb,y0), photo.uv(xa,y0))
+        quad = ((wx0,ya,.052),(wx1,ya,.052),(wx1,yb,.052),(wx0,yb,.052))
+        mesh.face(quad, uv, 'wire', (0,0,1))
+        mesh.face(tuple((x,y,-.052) for x,y,z in reversed(quad)), tuple(reversed(uv)), 'wire', (0,0,-1))
+    post_width = .08
+    for i in range(count):
+        x = -15 + 30*i/(count-1)
+        lathe(mesh, 'iron', (x,0,0), (0,1,0), (1,0,0), (0,0,1),
+              ((0,post_width/2),(3,post_width/2)),
+              lambda index, distance, radius, angle: (index/12, distance/3), sides=12)
 
     # A small clean photo sign carries the required exact words.
     sign_mat = sign_photo.material()
@@ -639,7 +656,7 @@ def build_fence():
         '+z': ('sign', sign_photo, (0,0,w,h)),
         '-z': ('sign', sign_photo, (0,0,w,h)),
     })
-    mesh.finish('vane-fence', {'fence': photo.material(), 'sign': sign_mat})
+    mesh.finish('vane-fence', {'wire': wire_mat, 'sign': sign_mat, 'iron': iron})
     objects['vane-fence'] = mesh
 
 build_platform()
@@ -661,6 +678,35 @@ if last_stage >= 7:
 print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
+if last_stage >= 7:
+    # The shared exporter defaults to JPEG, which drops texture alpha. Re-export
+    # with AUTO so the wire's RGBA PNG is embedded, then make the mask mode explicit.
+    bpy.ops.export_scene.gltf(filepath=str(glb), export_format='GLB', export_yup=True,
+                              export_apply=True, export_materials='EXPORT', export_image_format='AUTO')
+    raw = glb.read_bytes()
+    offset = 12
+    json_bytes = b''
+    chunks = []
+    while offset < len(raw):
+        length, kind = struct.unpack_from('<I4s', raw, offset)
+        data = raw[offset+8:offset+8+length]
+        chunks.append([kind, data])
+        if kind == b'JSON':
+            doc = json.loads(data.decode('utf-8').rstrip(' \t\r\n\0'))
+            for material in doc.get('materials', []):
+                if 'Vane fence / photo wire mask' in material.get('name', ''):
+                    material['alphaMode'] = 'MASK'
+                    material['alphaCutoff'] = .5
+            json_bytes = json.dumps(doc, separators=(',', ':')).encode('utf-8')
+            json_bytes += b' ' * ((-len(json_bytes)) % 4)
+            chunks[-1][1] = json_bytes
+        offset += 8 + length
+    output = bytearray(struct.pack('<4sII', b'glTF', 2, 0))
+    for kind, data in chunks:
+        output.extend(struct.pack('<I4s', len(data), kind))
+        output.extend(data)
+    struct.pack_into('<I', output, 8, len(output))
+    glb.write_bytes(output)
 
 # Review images always come from the exported file imported into an empty scene.
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -731,3 +777,36 @@ for hut in ('canteen', 'school-hut', 'pay-office'):
 if last_stage >= 7:
     shot('vane-fence', 'side', (0, 1.5, 18), (0, 1.5, 0), 1500, 520, ortho=38)
     shot('vane-fence', 'quarter', (12, 1.3, 14), (0, 1.6, 0), 1200, 760, lens=20)
+
+    # One family view on a shared near-white ground. The eight pieces sit in
+    # two rows; each group is centered by its imported GLB bounds.
+    names = ('works-platform', 'salt-pan', 'salt-heap', 'dead-conveyor',
+             'canteen', 'school-hut', 'pay-office', 'vane-fence')
+    for index, piece in enumerate(names):
+        def belongs(obj):
+            if obj.type != 'MESH':
+                return False
+            if piece == 'salt-pan':
+                return obj.name.startswith(('salt-pan', 'salt pan cracked crust'))
+            if piece == 'salt-heap':
+                return obj.name.startswith(('salt-heap', 'wind-worn cracked salt heap'))
+            return obj.name.startswith(piece)
+        members = [obj for obj in scene.objects if belongs(obj)]
+        bounds = [obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+        if not bounds:
+            continue
+        target_x = (-57, -19, 19, 57)[index % 4]
+        target_y = -10 if index < 4 else 10
+        dx = target_x - (min(p.x for p in bounds)+max(p.x for p in bounds))/2
+        dy = target_y - (min(p.y for p in bounds)+max(p.y for p in bounds))/2
+        dz = .02 - min(p.z for p in bounds)
+        for obj in members:
+            obj.location += Vector((dx, dy, dz))
+            obj.hide_render = False
+    scene.render.resolution_x, scene.render.resolution_y = 1800, 650
+    camera.location = (0, -100, 62)
+    camera.rotation_euler = (Vector((0,0,0)) - camera.location).to_track_quat('-Z','Y').to_euler()
+    camera.data.type = 'ORTHO'
+    camera.data.ortho_scale = 158
+    scene.render.filepath = str(render_dir / 'family-two-rows.png')
+    bpy.ops.render.render(write_still=True)
