@@ -10,7 +10,7 @@ The road camera is 2.2 m above the road and 21 m from the gate. Its sheet-only d
 
 ## Export
 
-The exported GLB was re-imported into an empty Blender scene before rendering. It is 1,213,824 bytes, with 12 embedded pictures in 19 textures and no atlas. It has 39 primitives, only `TEXCOORD_0` on every primitive with a non-zero UV range, and a maximum metallic factor of 0.22. The submitted JPG is 273,984 bytes.
+The exported GLB was re-imported into an empty Blender scene before rendering. It is 1,213,824 bytes, with 12 embedded pictures in 19 textures and no atlas. It has 39 primitives, only `TEXCOORD_0` on every primitive with a non-zero UV range, and a maximum metallic factor of 0.22. The submitted JPG is 276,402 bytes.
 
 ## What is still short
 
@@ -19,3 +19,4 @@ The gate does not match the reference's bulky bus sides yet. The front crop is r
 ## Claude look review
 
 Check the road view against the reference for the bus proportions and spacing, bridge sitting on the roofs, sign scale and Heap visibility. Check the mirrored wall from 40 m and the Heap and dirt ring in the mayor view. Browser and in-game checks remain with Claude.
+
