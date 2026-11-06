@@ -60,12 +60,14 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-vane',script:'tools/blender/town-vane.py',args:['--round','3'],candidate:true,
+    glb:['public/assets/models/wasteland/town/vane.glb'],budget:40000,maxBytes:3000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:30000,maxBytes:2000000},
+    glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:80000,maxBytes:5000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
 
@@ -109,6 +111,7 @@ const generators = [
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
   { script: 'tools/blender/scablands-vehicles.py', args: [], glb: ['public/assets/models/wasteland/scablands/vehicles.glb'] },
+  { script: 'tools/blender/rattler-photo.py', args: [], glb: ['public/assets/models/wasteland/cars/rattler.glb'], budget: 25000, maxBytes: 8000000 },
   { id: 'longhaul', script: 'tools/blender/longhaul.py', args: [], glb: ['public/assets/models/wasteland/cars/longhaul.glb'], budget: 25000, maxBytes: 8000000 },
   // WW-SCENE owns installation; this card keeps its generated GLB out of public/.
     { script: 'tools/blender/scablands-mall.py', args: [], glb: ['public/assets/models/wasteland/scablands/mall.glb'] },
@@ -656,6 +659,7 @@ try {
         const names = new Set(gltf.nodes.map(node => node.name));
         assert.ok(names.has('the-2-15-engine'), 'named dug-out engine node');
         assert.ok(names.has('the-2-15-drift'), 'separate named salt drift node');
+        assert.ok(names.has('the-2-15-van'), 'separate named guard van node');
         const binaryOffset = 20 + jsonLength + 8;
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
@@ -751,6 +755,35 @@ try {
       for(let vertex=0;vertex<uv.count;vertex++)for(let axis=0;axis<2;axis++){const value=bytes.readFloatLE(start+vertex*stride+axis*4);min[axis]=Math.min(min[axis],value);max[axis]=Math.max(max[axis],value);}
       assert.ok(max[0]-min[0]>.01&&max[1]-min[1]>.01,'UVs cover a visible texture range');
     }
+  });
+  check('TOWN-ART-VANE exports six named buildings, a separate beacon, valid UVs and per-building budgets', () => {
+    const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/vane.glb'));
+    assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);
+    assert.equal(bytes.readUInt32LE(8),bytes.length);assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds 3 MB`);
+    const jsonLength=bytes.readUInt32LE(12),gltf=JSON.parse(bytes.toString('utf8',20,20+jsonLength));
+    const names=new Set(gltf.nodes.map(node=>node.name));
+    for(const id of ['town-vane','vane-kiosk','vane-tank','vane-depot','vane-fence','vane-billboard','vane-tower','vane-tower:lamp'])
+      assert.ok(names.has(id),`missing named Vane node ${id}`);
+    const budgets={'vane-kiosk':1800,'vane-tank':5000,'vane-depot':9000,'vane-fence':1800,'vane-billboard':1800,'vane-tower':14000};
+    const triangles=Object.fromEntries(Object.keys(budgets).map(id=>[id,0]));
+    const binStart=20+jsonLength+8;
+    for(const node of gltf.nodes){
+      if(!Number.isInteger(node.mesh))continue;
+      const owner=node.name.split(':')[0];if(triangles[owner]===undefined)continue;
+      for(const primitive of gltf.meshes[node.mesh].primitives){
+        triangles[owner]+=gltf.accessors[primitive.indices].count/3;
+        const keys=Object.keys(primitive.attributes).filter(key=>key.startsWith('TEXCOORD_'));
+        assert.deepEqual(keys,['TEXCOORD_0'],`${node.name} has only TEXCOORD_0`);
+        const uv=gltf.accessors[primitive.attributes.TEXCOORD_0];
+        assert.ok(uv && uv.type==='VEC2' && uv.componentType===5126,`${node.name} UVs are float pairs`);
+        const view=gltf.bufferViews[uv.bufferView],start=binStart+(view.byteOffset??0)+(uv.byteOffset??0),stride=view.byteStride??8;
+        const min=[Infinity,Infinity],max=[-Infinity,-Infinity];
+        for(let i=0;i<uv.count;i++)for(let axis=0;axis<2;axis++){const value=bytes.readFloatLE(start+i*stride+axis*4);min[axis]=Math.min(min[axis],value);max[axis]=Math.max(max[axis],value);}
+        assert.ok(max.some((value,axis)=>value-min[axis]>.01),`${node.name} UVs have a usable range`);
+      }
+    }
+    for(const [id,budget] of Object.entries(budgets))assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
+    for(const entry of gltf.materials||[])assert.ok((entry.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${entry.name} metallic exceeds .3`);
   });
   check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
     const path = join(root, 'public/assets/models/wasteland/town/dome.glb');

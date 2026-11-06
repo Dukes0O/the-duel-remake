@@ -161,11 +161,18 @@ def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target):
     for polygon in mesh.polygons:
         n = polygon.normal
         facing = normals @ np.array((n.x, n.z, -n.y))
+        chosen = gltf[list(polygon.vertices)]
+        middle = chosen.mean(axis=0)[None, :]
+        # The photo this face looks at most, if that photo shows the subject here.
+        # A wheel's wing can stand outside the end photo's own outline.
         pick = int(np.argmax(facing))
+        for option in np.argsort(-facing):
+            if facing[option] > 0 and views[option].covers(middle[:, 0], middle[:, 1], middle[:, 2])[0]:
+                pick = int(option)
+                break
         view = views[pick]
         polygon.material_index = pick
         polygon.use_smooth = True
-        chosen = gltf[list(polygon.vertices)]
         px, py = view.pick(chosen[:, 0], chosen[:, 1], chosen[:, 2])
         for loop_index, u, v in zip(polygon.loop_indices, px, py):
             uv_layer.data[loop_index].uv = view.photo.uv(float(u), float(v))
