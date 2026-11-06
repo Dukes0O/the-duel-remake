@@ -533,6 +533,109 @@ triangles['regret-engine'] = sum(triangles.pop(k, 0) for k in ('regret-engine-tr
 triangles['regret-engine'] += sum(len(o.data.loop_triangles) if o.type == 'MESH' else 0
                                   for o in (engine_block, stand_obj, pipe_obj, nest_obj))
 
+# --- dune-ladder: a 2.7 m fallen ladder, traced with its open rung spaces ------------------
+ladder_photo = Photo(textures / 'ww-dune-ladder.jpg')
+ladder_solid = tidy(~ladder_photo.sky([(8, 8), (ladder_photo.w - 8, 8),
+                                       (8, ladder_photo.h - 8)], grey=26))
+ladder_loops = trace(ladder_solid, (0, 0, ladder_photo.w, ladder_photo.h), tolerance=1.6, min_area=24)
+ladder_photo.bleed(shrink(ladder_solid, 2), passes=24)
+ladder_pts = [point for loop in ladder_loops for point in loop]
+LADDER_X0 = min(p[0] for p in ladder_pts); LADDER_X1 = max(p[0] for p in ladder_pts)
+LADDER_Y0 = min(p[1] for p in ladder_pts); LADDER_Y1 = max(p[1] for p in ladder_pts)
+LADDER_S = 2.7 / (LADDER_X1 - LADDER_X0)
+ladder_mesh = Mesh()
+def ladder_world(px, py, depth):
+    return ((px - (LADDER_X0 + LADDER_X1) * .5) * LADDER_S,
+            .025 + depth,
+            ((LADDER_Y0 + LADDER_Y1) * .5 - py) * LADDER_S)
+slab(ladder_mesh, 'ladder', ladder_photo, ladder_loops, ladder_world, 0, .025,
+     wall_scale=LADDER_S)
+finish(ladder_mesh, 'dune-ladder', {'ladder': ladder_photo.material()})
+
+# --- dune-camp: three small photographed props grouped under one named root ----------------
+camp_root = bpy.data.objects.new('dune-camp', None)
+scene.collection.objects.link(camp_root)
+camp_root.parent = root_object
+def camp_face(photo, rect, material): return (material, photo, rect)
+
+bedroll_photo = Photo(textures / 'ww-dune-bedroll.jpg')
+bedroll_solid = tidy(~bedroll_photo.sky([(8, 8), (bedroll_photo.w - 8, 8),
+                                         (8, bedroll_photo.h - 8)], grey=26))
+bedroll_photo.bleed(shrink(bedroll_solid, 2), passes=24)
+BED_CX = bedroll_photo.w * .5
+bedroll_rows = []
+for px in range(8, bedroll_photo.w - 8, 8):
+    rows = np.nonzero(bedroll_solid[:, px])[0]
+    if len(rows) > 8:
+        bedroll_rows.append(((px - BED_CX) * .90 / (bedroll_photo.w - 40),
+                             (rows[-1] - rows[0]) * .45 / (bedroll_photo.h - 40)))
+bedroll_rows.sort()
+def bedroll_uv(index, distance, radius, angle):
+    return bedroll_photo.uv(BED_CX + distance * (bedroll_photo.w - 40) / .90,
+                            bedroll_photo.h * .5 - math.sin(angle) * radius * (bedroll_photo.h - 40) / .45)
+bedroll_mesh = Mesh()
+lathe(bedroll_mesh, 'bedroll', (-.43, .105, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+      bedroll_rows, bedroll_uv, sides=12)
+bedroll_obj = finish(bedroll_mesh, 'dune-camp-bedroll', {'bedroll': bedroll_photo.material()})
+bedroll_obj.parent = camp_root
+
+stove_photo = Photo(textures / 'ww-dune-stove.jpg')
+stove_solid = tidy(~stove_photo.sky([(8, 8), (stove_photo.w - 8, 8),
+                                     (8, stove_photo.h - 8)], grey=26))
+stove_photo.bleed(shrink(stove_solid, 2), passes=24)
+stove_mesh = Mesh()
+STOVE_BODY = (170, 260, 600, 585)
+STOVE_SIDE = (165, 350, 225, 540)
+STOVE_TOP = (175, 265, 600, 310)
+STOVE_LEG = (185, 600, 245, 755)
+box(stove_mesh, -.17, .17, .11, .39, -.12, .12, {
+    '+z': camp_face(stove_photo, STOVE_BODY, 'stove'),
+    '-z': camp_face(stove_photo, STOVE_BODY, 'stove'),
+    '+x': camp_face(stove_photo, STOVE_SIDE, 'stove'), '-x': camp_face(stove_photo, STOVE_SIDE, 'stove'),
+    '+y': camp_face(stove_photo, STOVE_TOP, 'stove'), '-y': camp_face(stove_photo, STOVE_LEG, 'stove')})
+box(stove_mesh, -.045, .045, .39, .68, -.045, .045, {
+    '+z': camp_face(stove_photo, (340, 22, 422, 270), 'stove'),
+    '-z': camp_face(stove_photo, (340, 22, 422, 270), 'stove'),
+    '+x': camp_face(stove_photo, (340, 22, 390, 270), 'stove'),
+    '-x': camp_face(stove_photo, (370, 22, 422, 270), 'stove'),
+    '+y': camp_face(stove_photo, (340, 16, 422, 44), 'stove'),
+    '-y': camp_face(stove_photo, (340, 22, 422, 270), 'stove')})
+for sx in (-1, 1):
+    for sz in (-1, 1):
+        x0 = sx * .125 if sx > 0 else -.16
+        x1 = .16 if sx > 0 else -.125
+        z0 = sz * .075 if sz > 0 else -.10
+        z1 = .10 if sz > 0 else -.075
+        box(stove_mesh, x0, x1, .0, .12, z0, z1,
+            {key: camp_face(stove_photo, STOVE_LEG, 'stove') for key in ('+z','-z','+x','-x','+y','-y')})
+stove_obj = finish(stove_mesh, 'dune-camp-stove', {'stove': stove_photo.material()})
+stove_obj.parent = camp_root
+
+can_photo = Photo(textures / 'ww-dune-watercan.jpg')
+can_solid = tidy(~can_photo.sky([(8, 8), (can_photo.w - 8, 8),
+                                 (8, can_photo.h - 8)], grey=26))
+can_photo.bleed(shrink(can_solid, 2), passes=24)
+can_mesh = Mesh()
+CAN_BODY = (120, 145, 650, 475)
+CAN_SIDE = (100, 230, 190, 440)
+CAN_TOP = (205, 150, 585, 250)
+CAN_HANDLE = (270, 18, 518, 154)
+box(can_mesh, .30, .55, .0, .24, -.08, .08, {
+    '+z': camp_face(can_photo, CAN_BODY, 'can'), '-z': camp_face(can_photo, CAN_BODY, 'can'),
+    '+x': camp_face(can_photo, CAN_SIDE, 'can'), '-x': camp_face(can_photo, CAN_SIDE, 'can'),
+    '+y': camp_face(can_photo, CAN_TOP, 'can'), '-y': camp_face(can_photo, CAN_BODY, 'can')})
+# Three joined box bars make a handle; a short angled-looking spout is two joined boxes.
+box(can_mesh, .365, .485, .24, .275, -.025, .025,
+    {key: camp_face(can_photo, CAN_HANDLE, 'can') for key in ('+z','-z','+x','-x','+y','-y')})
+box(can_mesh, .365, .395, .24, .345, -.025, .025,
+    {key: camp_face(can_photo, CAN_HANDLE, 'can') for key in ('+z','-z','+x','-x','+y','-y')})
+box(can_mesh, .455, .485, .24, .345, -.025, .025,
+    {key: camp_face(can_photo, CAN_HANDLE, 'can') for key in ('+z','-z','+x','-x','+y','-y')})
+box(can_mesh, .25, .31, .205, .29, .04, .11,
+    {key: camp_face(can_photo, (102, 55, 245, 190), 'can') for key in ('+z','-z','+x','-x','+y','-y')})
+can_obj = finish(can_mesh, 'dune-camp-water-can', {'can': can_photo.material()})
+can_obj.parent = camp_root
+
 
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
@@ -567,7 +670,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box', 'regret-bonnet', 'open-engine', 'regret-engine')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box', 'regret-bonnet', 'open-engine', 'regret-engine', 'dune-ladder', 'dune-camp')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -621,3 +724,8 @@ shot('open-engine-quarter', 'open-engine', (1.7, 1.3, -1.5), (0, .42, 0), 1000, 
 shot('open-engine-top', 'open-engine', (0, 1.9, 0), (0, .42, 0), 900, 650, ortho=1.8)
 shot('regret-engine', 'regret-engine', (3.2, 1.1, .2), (1.25, .45, 0), 1000, 700, lens=50)
 shot('regret-engine-quarter', 'regret-engine', (2.8, 1.3, -1.4), (1.25, .45, 0), 1000, 700, lens=50)
+shot('dune-ladder', 'dune-ladder', (0, 1.45, 2.3), (0, .02, 0), 1000, 420, ortho=3.5, show_ground=False)
+shot('dune-ladder-quarter', 'dune-ladder', (-1.3, 1.0, 1.5), (0, .02, 0), 1000, 650, lens=50)
+shot('dune-camp', 'dune-camp', (0, 1.0, 2.2), (0, .26, 0), 1000, 700, lens=50)
+shot('dune-camp-quarter', 'dune-camp', (-1.0, 1.2, 1.6), (0, .25, 0), 1000, 700, lens=50)
+shot('dune-camp-top', 'dune-camp', (0, 1.8, 0), (0, .16, 0), 900, 650, ortho=1.3)
