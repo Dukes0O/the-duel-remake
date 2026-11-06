@@ -14,7 +14,7 @@
 
 ## Checks
 
-- `node tools/test-town-store.mjs`: passed. Covers crash recovery during installation and before/after the career pointer commit, retry after an interrupted replacement, byte-preserved careers without towns, failed and atomic writes, damaged-copy fallback, complete career export/import over an existing town, and a Year 30 town under 5 MB through store export and import.
+- `node tools/test-town-store.mjs`: passed. Covers crash recovery during installation and before/after the career pointer commit, rollback after an ordinary post-commit error, retry after an interrupted replacement, byte-preserved careers without towns, failed and atomic writes, damaged-copy fallback, complete career export/import over an existing town, and a Year 30 town under 5 MB through store export and import.
 - `node tools/test-town-apprentices.mjs`: passed (16 checks).
 - `node tools/test-career-backup.mjs`: passed, including no static town import, no town loader call for an old career, and a town-store rejection that still produces a verified byte-exact migration backup with a plain warning.
 - `node tools/test-save-fixtures.mjs`: passed (26 historical shapes, 1 forged, 1,123 checks).

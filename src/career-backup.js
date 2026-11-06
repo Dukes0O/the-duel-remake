@@ -399,8 +399,8 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
   }
   catch (error) {
     try {
-      if(archive.townRecords?.length){towns??=await townApi(townStore);for(const town of archive.townRecords)await towns.store.load(town.id);}
       applyEntries(source, prior);installCareerArchive(source,backup.archives);
+      if(archive.townRecords?.length){towns??=await townApi(townStore);for(const town of archive.townRecords)await towns.store.load(town.id);}
     }
     catch (rollbackError) {
       throw new Error('Import failed and browser storage could not be restored. IndexedDB backup ' + backup.id + ' is available. ' + rollbackError.message, { cause: error });
@@ -446,10 +446,10 @@ async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIn
   }catch(error){
     if(error?.simulatedCrash) throw error;
     try{
-      const touchedIds=new Set([...(priorTownRecords.map(town=>town.id)),...(record.townRecords??[]).map(town=>town.id)]);
-      for(const townId of touchedIds)await towns.store.load(townId);
       applyEntries(source,priorEntries);
       installCareerArchive(source,priorArchives);
+      const touchedIds=new Set([...(priorTownRecords.map(town=>town.id)),...(record.townRecords??[]).map(town=>town.id)]);
+      for(const townId of touchedIds)await towns.store.load(townId);
     }catch(rollbackError){
       throw new Error('Career restore failed and rollback failed. Recovery backup '+id+' remains available. '+rollbackError.message,{cause:error});
     }

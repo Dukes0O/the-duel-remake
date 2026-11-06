@@ -118,7 +118,7 @@ for (const stopAt of ['replacement-written', 'copies-removed']) {
   assert.equal((await reopened.load('retry-town')).town.year, 4, 'a repeated interrupted restore retains the true original town');
 }
 // Career and town recovery agree at every durable restore boundary.
-for (const stopAt of ['before-install', 'replacement-written', 'copies-removed', 'after-install', 'after-apply-entries', 'after-finish-recovery']) {
+for (const stopAt of ['before-install', 'replacement-written', 'copies-removed', 'after-install', 'after-apply-entries', 'after-finish-recovery', 'rollback-after-apply']) {
   const durable = { towns: new Map(), copies: new Map() };
   const current = storage({ [TOWN_POINTER_KEY]: JSON.stringify({ version: 1, ids: ['career-town'] }) });
   const oldTown = { ...intact, id: 'career-town', town: { ...first, id: 'career-town', year: 4 } };
@@ -134,8 +134,12 @@ for (const stopAt of ['before-install', 'replacement-written', 'copies-removed',
     if (step === stopAt) { const error = new Error('simulated close'); error.simulatedCrash = true; throw error; }
   } });
   const options = { storage: current, backupStore, townStore: crashingStore,
-    onRestoreStep(step) { if (step === stopAt) { const error = new Error('simulated close'); error.simulatedCrash = true; throw error; } } };
-  await assert.rejects(restoreCareerBackup('restore-source', options), /simulated close/);
+    onRestoreStep(step) { if (step === (stopAt === 'rollback-after-apply' ? 'after-apply-entries' : stopAt)) {
+      const error = new Error(stopAt === 'rollback-after-apply' ? 'simulated failure' : 'simulated close');
+      if (stopAt !== 'rollback-after-apply') error.simulatedCrash = true;
+      throw error;
+    } } };
+  await assert.rejects(restoreCareerBackup('restore-source', options), stopAt === 'rollback-after-apply' ? /Career restore failed/ : /simulated close/);
   const reopened = createTownStore({ memoryOnly: true, memory: durable, storage: current });
   const loaded = await reopened.load('career-town');
   const careerPointer = JSON.parse(current.getItem(TOWN_POINTER_KEY));
