@@ -1,19 +1,18 @@
-# TOWN-ART-SAFETY
+# TOWN-ART-SAFETY — round 2
 
-Built `safety.glb` and its Blender recipe. The watchtower is the focal piece: 9.1 m to the roof, a braced four-leg frame, ladder, bolted lookout deck, chair, emissive lamp and patched gable roof. The family also contains the straight, corner and end fence and wall modules, a moving gate leaf, guard post, searchlight, fire station with hose tower, clinic with a raised roof cross and water tank, and hydrant. Parts use the existing town texture set.
+Updated the watchtower recipe and exported family. The tower now has 25 cm splayed legs, a lower roofline, half-sunk timber feet and fewer ladder rungs to stay inside its 1,800 triangle budget. The recipe writes a two-view family sheet from a GLB re-import. It reuses the existing credited town materials; no runtime texture was added.
 
-No open design question was left on the card. The main check reads back all required node names, direct building children, UV sets, metallic factors, emissive materials and per-building triangle tiers.
+The submitted sheet is under 500 KB and includes the round-one watchtower photo crop. The model is under 3 MB. Claude should check the watchtower proportions, the open and shut gate, and the family render framing. Several exported family panels appear blank or only partly visible in the Blender sheet, so the family look is not confirmed by this round and needs Claude's review.
 
 ## Checks
 
-- Blender export and empty-scene GLB reimport renders: passed. The comparison sheet is the one submitted round; it is 1280 × 900 JPG and under 500 KB.
-- `node tools/test-blender-output.mjs`: passed, 275 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; placement clean. Size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio-analysis subtest failed twice because Windows returned `spawnSync ffmpeg EPERM`; it is unrelated to this model. No assertions were changed.
-- Browser checks: Claude should judge the submitted sheet; the card is not wired into a playable town here. No browser scenario or frame check was run.
-- Changed assertions: none. New readback assertions cover this model's own node, budget and material contract.
-- Race fingerprints: not applicable; this is candidate art and changes no race code.
+- Blender recipe/export and GLB re-import render: completed.
+- `node tools/test-blender-output.mjs`: passed, 296 checks, 0 failed after reducing ladder rungs. The earlier run was 1,816 triangles and failed the 1,800 watchtower budget; this assertion was not changed.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement clean, size targets advisory.
+- Browser/look check: not run here. Claude should review the round-two sheet and family readability.
+- Lane tier and build: not run; art-card instruction excludes them.
+- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
 
 ## Removed
 
-Removed this run's raw render PNGs, generated `.blend`, and scratch logs before handoff. No prior asset or file was removed.
+The superseded round-one sheet and review note remain because the Recycle Bin operation stalled and the safety review rejected permanent deletion. The existing texture files and their credits remain. Generated round-two render captures and check logs are still in `.evidence/` and `.qa-dist/` for the same cleanup block.

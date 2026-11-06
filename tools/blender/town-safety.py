@@ -11,10 +11,10 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--reference', default=r'C:/Users/kyleb/.codex/generated_images/01a1b133-66d4-72f1-99e8-b49f9c090c93/exec-a09fd17d-45d5-4f90-a98a-13420165421a.png')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/TOWN-ART-SAFETY/round-1'
+evidence = root / '.evidence/2026-11-06/TOWN-ART-SAFETY/round-2'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-2.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
     raise SystemExit(0)
@@ -202,9 +202,9 @@ b['footprint_cells']=[1,1]
 for sx in (-.72,.72):
     for sz in (-.72,.72):
         x,z=sx,sz
-        beam('watchtower-splayed-leg',(x*.78,0,z*.78),(x,7.55,z),.16,materials['weathered-plank'])
-        cube('watchtower-foot',(x*.78,.16,z*.78),(.42,.32,.42),materials['cracked-concrete'],0)
-        for y in (1.05,5.1,7.35):
+        beam('watchtower-splayed-leg',(x*.94,0,z*.94),(x*.72,7.15,z*.72),.25,materials['weathered-plank'])
+        cube('watchtower-foot',(x*.94,.16,z*.94),(.58,.32,.58),materials['weathered-plank'],.025)
+        for y in (1.05,):
             cube('watchtower-bolted-collar',(x*(.78+y/7.55*.22),y,z*(.78+y/7.55*.22)),(.29,.12,.29),materials['rusted-steel'],0)
 for y in (1.15,3.2,5.15,7.45):
     for edge in (-1,1):
@@ -216,8 +216,8 @@ for y0,y1 in ((1.15,3.2),(3.2,5.15),(5.15,7.35)):
         beam('watchtower-X-brace',(x0,y0,z),(-x0,y1,z),.075,materials['rusted-steel'])
 # Ladder is attached to the road-facing side, with a real 300 mm rung pitch.
 for x in (-.34,.34): pipe('watchtower-ladder-stile',(x,.04,-.88),(x,7.72,-.88),.045,materials['rusted-steel'],sides=8)
-for i in range(14):
-    y=.30+i*.55
+for i in range(12):
+    y=.30+i*.64
     pipe(f'watchtower-ladder-rung-{i+1}',(-.34,y,-.88),(.34,y,-.88),.027,materials['iron-dark'],sides=6)
 # Platform and open guard rails.
 for i in range(3):
@@ -254,6 +254,7 @@ for x in (-.02,.38):
 beam('watchtower-chair-back',(.20,7.84,.45),(.20,8.38,.45),.055,materials['weathered-plank'])
 lamp('watchtower:lamp',(0,8.52,.91),(.25,.24,.18))
 pipe('watchtower-lamp-bracket',(.0,8.60,.84),(.0,8.45,1.13),.035,materials['rusted-steel'])
+b.scale.z = .77
 
 # Scrap gate across a road; its moving leaf is a separately named node.
 b=building('gate-scrap',(2,1))
@@ -454,3 +455,45 @@ Path(out).parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',q
 sheet.parent.mkdir(parents=True,exist_ok=True)
 subprocess.run(['python','-c',sheet_code,args.reference,str(render_dir/'watchtower-above.png'),
                 str(render_dir/'watchtower-driver-seat.png'),str(sheet)],check=True)
+
+# Round two shows every member of the family from above and at driver height.
+ids=['watchtower','gate-scrap','guard-post','searchlight','fire-station','clinic','hydrant',
+     'fence-wood-straight','fence-wood-corner','fence-wood-end','fence-chain-straight',
+     'fence-chain-corner','fence-chain-end','wall-scrap-straight','wall-scrap-corner',
+     'wall-scrap-end','wall-steel-straight','wall-steel-corner','wall-steel-end']
+by_name={obj.name:obj for obj in scene.objects}
+next(obj for obj in scene.objects if obj.name=='neutral dusty ground').hide_render=True
+captures=[]
+for building_id in ids:
+    root_obj=by_name[building_id];visible={root_obj,*root_obj.children_recursive}
+    ancestor=root_obj.parent
+    while ancestor is not None:visible.add(ancestor);ancestor=ancestor.parent
+    for obj in scene.objects:
+        if obj.type in {'MESH','EMPTY'}:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
+    bpy.context.view_layer.update()
+    corners=[obj.matrix_world @ Vector(corner) for obj in visible if obj.type=='MESH' for corner in obj.bound_box]
+    lo=[min(v[i] for v in corners) for i in range(3)];hi=[max(v[i] for v in corners) for i in range(3)]
+    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3));size=max(span*1.35,1.5)
+    views=[]
+    for tag,direction in (('above',(1,1.2,-1)),('driver',(1,.35,-1))):
+        data=bpy.data.cameras.new(f'{building_id}-{tag}');cam=bpy.data.objects.new(f'{building_id}-{tag}',data);scene.collection.objects.link(cam)
+        cam.location=center+Vector(direction).normalized()*span*2.5;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=size;scene.camera=cam
+        scene.render.resolution_x=480;scene.render.resolution_y=360
+        out=render_dir/f'{building_id}-{tag}.png';scene.render.filepath=str(out);bpy.ops.render.render(write_still=True);views.append(out)
+    captures.append((building_id,views))
+sheet_code=r'''from PIL import Image,ImageDraw,ImageFont,ImageOps
+from pathlib import Path
+import sys
+reference=Path(sys.argv[1]);paths=[Path(p) for p in sys.argv[2:-1]];out=Path(sys.argv[-1]);page=Image.new('RGB',(1600,2240),(117,110,96));d=ImageDraw.Draw(page)
+title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',24);label=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',15)
+d.text((30,20),'TOWN SAFETY | ROUND 2 | EXPORTED GLB',font=title,fill=(245,238,222))
+ref=ImageOps.fit(Image.open(reference).convert('RGB'),(190,160),method=Image.Resampling.LANCZOS)
+page.paste(ref,(1380,12));d.text((1380,174),'PHOTO TARGET',font=label,fill=(245,238,222))
+for i in range(0,len(paths),2):
+ x=24+(i//2%4)*394;y=72+(i//2//4)*430;name=paths[i].stem.rsplit('-',1)[0]
+ d.rounded_rectangle((x,y,x+380,y+408),radius=8,fill=(151,143,126));d.text((x+10,y+8),name.upper(),font=title,fill=(38,36,31))
+ for j,p in enumerate(paths[i:i+2]):
+  im=ImageOps.fit(Image.open(p).convert('RGB'),(176,300),method=Image.Resampling.LANCZOS);page.paste(im,(x+10+j*184,y+54));d.text((x+10+j*184,y+360),('ABOVE' if j==0 else 'DRIVER'),font=label,fill=(38,36,31))
+out.parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',quality=82,optimize=True,progressive=True)
+'''
+subprocess.run(['python','-c',sheet_code,args.reference,*[str(path) for _,views in captures for path in views],str(sheet)],check=True)
