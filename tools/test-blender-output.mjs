@@ -55,7 +55,7 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
-  {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:[],candidate:true,recipeOnly:true,
+  {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
