@@ -19,8 +19,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepat
 if not Path(a.paint_photo).exists():raise FileNotFoundError(a.paint_photo)
 mats=town.make_materials({'rusted-steel':Path(a.paint_photo),'galvanised-tin':Path(a.paint_photo),'sand':Path(a.paint_photo)})
 steel=mats['rusted-steel'];paint=mats['galvanised-tin'];tin=mats['rusted-steel'];black=mats['iron-dark'];glass=mats['dirty-glass'];rubber=mats['iron-dark'];sand=mats['sand']
-# Pull the generated atlas back toward the photo's low-saturation olive, steel
-# and earth colors; keep its chip and weld detail while reducing orange.
+# Keep the atlas in the dusty olive, faded ochre and dark steel range.
 for mat,value,saturation in ((steel,.96,.48),(paint,1.08,.70),(tin,.76,.42)):
  nodes=mat.node_tree.nodes;links=mat.node_tree.links;bsdf=nodes.get('Principled BSDF')
  source=next((n.outputs['Color'].links[0].from_node for n in nodes if n.type=='TEX_IMAGE' and n.outputs['Color'].links),None)
@@ -30,7 +29,7 @@ for mat,value,saturation in ((steel,.96,.48),(paint,1.08,.70),(tin,.76,.42)):
   hue.inputs['Value'].default_value=value;hue.inputs['Saturation'].default_value=saturation
   links.new(hue.outputs['Color'],bsdf.inputs['Base Color'])
 # Keep the single shared 1K atlas compact inside the GLB.
-atlas=bpy.data.images['Scablands shared town wear atlas 1K'];atlas.file_format='JPEG';atlas.filepath_raw=str(root/'.qa-dist/town-machines-1/atlas.jpg');Path(atlas.filepath_raw).parent.mkdir(parents=True,exist_ok=True);atlas.save();atlas.pack()
+atlas=bpy.data.images['Scablands shared town wear atlas 1K'];atlas.file_format='JPEG';bpy.context.scene.render.image_settings.file_format='JPEG';bpy.context.scene.render.image_settings.quality=72;atlas.filepath_raw=str(root/'.qa-dist/town-machines-1/atlas.jpg');Path(atlas.filepath_raw).parent.mkdir(parents=True,exist_ok=True);atlas.save();atlas.pack()
 def box(name,loc,size,mat=steel,bevel=.035,parent=None):
  bpy.ops.mesh.primitive_cube_add(size=1,location=loc);o=bpy.context.object;o.name=name;o.dimensions=size;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);o.data.materials.append(mat)
  if bevel:
@@ -65,7 +64,7 @@ def uv_surface(mesh,mapper):
 def lugged_tyre(name,x,y,z,r,width,parent):
  # Continuous carcass with the chevrons formed into its silhouette, adapted
  # from the accepted Scarab paddle-tyre recipe. X is the axle direction.
- seg,rings=40,10;verts=[];faces=[]
+ seg,rings=32,10;verts=[];faces=[]
  for i in range(seg):
   theta=math.tau*i/seg
   for j in range(rings):
@@ -114,12 +113,18 @@ def gear_track(name,x,cy,z0,length,height,parent,width=.60):
  for i in range(len(path)):
   n=(i+1)%len(path);faces.append((2*i,2*n,2*n+1,2*i+1))
  mesh=bpy.data.meshes.new(name+' forged loop mesh');mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(name+' heavy track belt',mesh);bpy.context.collection.objects.link(o);o.data.materials.append(black);parent_keep(o,parent)
+ for side in (-1,1):
+  rail=bpy.data.curves.new(name+' side chain rail','CURVE');rail.dimensions='3D';rail.resolution_u=1;rail.bevel_depth=.035;rail.bevel_resolution=1
+  spline=rail.splines.new('POLY');spline.points.add(len(path)-1)
+  for pnt,(xx,zz) in zip(spline.points,path):pnt.co=(x+side*width*.44,cy+xx,z0+zz,1)
+  spline.use_cyclic_u=True;rail_obj=bpy.data.objects.new(name+(' left' if side<0 else ' right')+' continuous side rail',rail);bpy.context.collection.objects.link(rail_obj);rail_obj.data.materials.append(black);parent_keep(rail_obj,parent)
  for i,(xx,zz) in enumerate(path):
   # plate orientation around loop, every shoe follows the curve
-  ang=math.atan2(zz,xx)
-  shoe=box(name+f' shoe {i:02d}',(x,cy+xx,z0+zz),(.37,width*.94,.055),black,.015,parent)
+  cap_center=math.copysign(straight,xx) if abs(xx)>straight else 0
+  radial=math.atan2(zz,xx-cap_center);ang=radial+math.pi/2
+  shoe=box(name+f' shoe {i:02d}',(x,cy+xx,z0+zz),(width*.96,.37,.055),black,0,parent)
   shoe.rotation_euler[0]=ang
-  bar=box(name+f' raised grouser {i:02d}',(x,cy+xx,z0+zz+.035),(.20,width*.94,.055),steel,.018,parent);bar.rotation_euler[0]=ang
+  bar=box(name+f' raised grouser {i:02d}',(x,cy+xx+math.cos(radial)*.05,z0+zz+math.sin(radial)*.05),(width*.96,.12,.07),steel,0,parent);bar.rotation_euler[0]=ang
   cyl(name+f' shoe pin {i:02d}',(x-width*.51,cy+xx,z0+zz),.035,.04,tin,'X',8,parent)
  # Continuous steel frame, drive sprocket, front idler and real running rollers.
  box(name+' heavy track frame',(x,cy,z0-.02),(.42,length*.69,.33),black,.07,parent)
@@ -141,6 +146,7 @@ def tractor(prefix,root):
  box(prefix+' radiator grille',(0,-1.76,1.76),(.82,.08,.75),black,.035,root)
  for x in (-.31,-.16,0,.16,.31):box(prefix+f' grille rib {x}',(x,-1.815,1.76),(.035,.025,.62),tin,.012,root)
  for x in (-.70,.70):
+  box(prefix+' headlamp mounting plate',(x,-1.72,2.06),(.30,.12,.30),black,.035,root)
   cyl(prefix+' headlamp',(x,-1.83,2.06),.14,.11,glass,'Y',16,root)
   cyl(prefix+' lamp rim',(x,-1.89,2.06),.17,.05,tin,'Y',16,root)
   box(prefix+' bent rear fender',(x,.83,1.59),(.38,1.62,.11),steel,.06,root)
@@ -298,11 +304,19 @@ def dump_truck(root):
  for side in (-1,1):
   beam('dump truck hoist cylinder',(side*.58,1.15,1.29),(side*.58,1.02,2.32),.12,steel,root)
   beam('dump truck hoist polished rod',(side*.58,-2.08,.87),(side*.58,-2.45,1.33),.05,tin,bed)
- load=empty('dump-truck:load',(0,-1.18,.54),bed)
- # lumpy heaped spoil with irregular triangular facets and darker mineral bands
- verts=[(-1.10,-1.96,.08),(1.10,-1.96,.08),(1.10,1.10,.08),(-1.10,1.10,.08),(0,-1.65,1.48),(-.56,-.70,1.72),(.36,.10,1.78),(-.34,.78,1.42),(.82,.48,.38),(-.86,.31,.50)]
- faces=[(0,1,5),(0,5,4),(1,2,6),(1,6,5),(2,3,7),(2,7,6),(3,0,4),(3,4,7),(4,5,6),(4,6,7),(0,4,9),(0,9,3),(3,9,7),(1,8,2),(1,6,8),(2,8,7),(7,8,6)]
- mesh=bpy.data.meshes.new('wet brown soil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load wet brown earth',mesh);bpy.context.collection.objects.link(heap);soil=bpy.data.materials.new('wet dark brown packed earth');soil.diffuse_color=(.105,.065,.038,1);soil.use_nodes=True;soil.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.105,.065,.038,1);soil.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.94;soilnoise=soil.node_tree.nodes.new('ShaderNodeTexNoise');soilnoise.inputs['Scale'].default_value=7;soilnoise.inputs['Detail'].default_value=3;soilramp=soil.node_tree.nodes.new('ShaderNodeValToRGB');soilramp.color_ramp.elements[0].color=(.045,.025,.015,1);soilramp.color_ramp.elements[1].color=(.20,.105,.055,1);soil.node_tree.links.new(soilnoise.outputs['Fac'],soilramp.inputs[0]);soil.node_tree.links.new(soilramp.outputs['Color'],soil.node_tree.nodes['Principled BSDF'].inputs['Base Color']);heap.data.materials.append(soil);parent_keep(heap,load)
+ # Keep the wet soil local to the load node so it rides the bed and stays inside.
+ load=empty('dump-truck:load',(0,-1.20,.30),bed)
+ verts=[];grid=tuple(-1+i*.25 for i in range(9))
+ for j,y in enumerate(tuple(-1.25+i*.3125 for i in range(9))):
+  for i,x in enumerate(grid):
+   mound=max(0,1-(x/1.08)**4-(y/1.5)**4)
+   z=.16+1.25*mound**.55+(.018*math.sin(i*2.7+j*1.9) if mound else 0)
+   verts.append((x,y,z))
+ faces=[]
+ for j in range(8):
+  for i in range(8):
+   a=j*9+i;b=a+1;c=a+10;d=a+9;faces.extend(((a,b,c),(a,c,d)))
+ mesh=bpy.data.meshes.new('wet brown soil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load wet brown earth',mesh);bpy.context.collection.objects.link(heap);soil=bpy.data.materials.new('wet dark brown packed earth');soil.diffuse_color=(.045,.026,.014,1);soil.use_nodes=True;soil.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.045,.026,.014,1);soil.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96;soilnoise=soil.node_tree.nodes.new('ShaderNodeTexNoise');soilnoise.inputs['Scale'].default_value=3.5;soilnoise.inputs['Detail'].default_value=3;soilramp=soil.node_tree.nodes.new('ShaderNodeValToRGB');soilramp.color_ramp.elements[0].color=(.012,.006,.003,1);soilramp.color_ramp.elements[1].color=(.085,.040,.018,1);soil.node_tree.links.new(soilnoise.outputs['Fac'],soilramp.inputs[0]);soil.node_tree.links.new(soilramp.outputs['Color'],soil.node_tree.nodes['Principled BSDF'].inputs['Base Color']);heap.data.materials.append(soil);parent_keep(heap,load)
  for poly in mesh.polygons:poly.use_smooth=False
  for x in (-.88,.88):
   for y in (-2.28,-1.54,-.80,-.06,.68):box('dump bed longitudinal wear strip',(x,y,.48),(.11,.07,.09),tin,.02,bed)
@@ -389,17 +403,61 @@ for name,builder,pos in [('trencher',trencher,(-12,0,0)),('excavator',excavator,
  elif name=='dozer':parent_keep(joints[0],rootobj)
  rootobj.location=pos
 
+# Put each moving node's origin on its real hinge. The meshes were authored in
+# machine coordinates, so preserve their world transforms while rebuilding
+# the hierarchy around the measured pin centres.
+bpy.context.view_layer.update()
+def set_joint_pivot(name,parent_name,anchor):
+ joint=bpy.data.objects[name];parent=bpy.data.objects[parent_name]
+ machine=machines[parent_name.split(':')[0]]
+ children=list(joint.children)
+ for child in children:reparent_world(child,machine)
+ reparent_world(joint,machine)
+ joint.matrix_world.translation=machine.matrix_world @ Vector(anchor)
+ reparent_world(joint,parent)
+ for child in children:reparent_world(child,joint)
+
+for name,parent_name,anchor in (
+ ('trencher:boom','trencher',(0,1.82,1.02)),
+ ('trencher:chain','trencher:boom',(0,3.73,1.09)),
+ ('excavator:cab','excavator',(0,.12,1.88)),
+ ('excavator:boom','excavator:cab',(0,-.24,.72)),
+ ('excavator:arm','excavator:boom',(0,-5.74,1.84)),
+ ('excavator:bucket','excavator:arm',(0,-8.08,.19)),
+ ('dump-truck:bed','dump-truck',(0,3.10,1.45)),
+ ('dozer:blade','dozer',(0,-1.76,1.24)),
+):set_joint_pivot(name,parent_name,anchor)
+
+# Keep articulated pivots as distinct nodes, but combine fixed geometry that
+# shares a parent and material. This removes per-object GLB overhead without
+# simplifying the visible meshes or changing their local transforms.
+def merge_fixed_meshes():
+ groups={}
+ for obj in list(bpy.context.scene.objects):
+  if obj.type!='MESH' or obj.children or obj.animation_data:continue
+  key=(obj.parent,tuple(slot.material.name if slot.material else '' for slot in obj.material_slots))
+  groups.setdefault(key,[]).append(obj)
+ for objects in groups.values():
+  if len(objects)<2:continue
+  bpy.ops.object.select_all(action='DESELECT')
+  for obj in objects:obj.select_set(True)
+  bpy.context.view_layer.objects.active=objects[0]
+  bpy.ops.object.convert(target='MESH')
+  bpy.ops.object.join()
+  bpy.context.view_layer.objects.active.select_set(False)
+merge_fixed_meshes()
+
 # Fix pivots to their real joints and keep mesh world poses intact.
 for name in ('trencher:boom','trencher:chain','excavator:cab','excavator:boom','excavator:arm','excavator:bucket','dump-truck:bed','dump-truck:load','dozer:blade'):
  obj=bpy.data.objects.get(name)
  if not obj:raise RuntimeError('missing articulated part '+name)
 
-scene=bpy.context.scene;scene.unit_settings.system='METRIC';scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1040;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.render.image_settings.file_format='PNG';scene.world=bpy.data.worlds.new('bright overcast scrapyard day');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.50,.51,.49,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
+scene=bpy.context.scene;scene.unit_settings.system='METRIC';scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1040;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.render.image_settings.file_format='PNG';scene.world=bpy.data.worlds.new('bright overcast scrapyard day');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.72,.74,.72,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.9
 scene.view_settings.view_transform='AgX'
 def aim(o,p):o.rotation_euler=(Vector(p)-o.location).to_track_quat('-Z','Y').to_euler()
-for loc,power,size in [((12,-12,19),3000,12),((-10,-3,10),1500,10)]:
+for loc,power,size in [((12,-12,19),5200,12),((-10,-3,10),2600,10)]:
  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;aim(light,(0,0,0))
-bpy.ops.mesh.primitive_plane_add(size=80,location=(0,0,-.055));ground=bpy.context.object;ground.name='temporary render floor';floor=bpy.data.materials.new('plain mid-grey-brown photo floor');floor.diffuse_color=(.26,.25,.23,1);floor.use_nodes=True;floor.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.26,.25,.23,1);floor.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96;ground.data.materials.append(floor)
+bpy.ops.mesh.primitive_plane_add(size=80,location=(0,0,-.055));ground=bpy.context.object;ground.name='temporary render floor';floor=bpy.data.materials.new('plain mid-grey-brown photo floor');floor.diffuse_color=(.19,.18,.16,1);floor.use_nodes=True;floor.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.19,.18,.16,1);floor.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96;ground.data.materials.append(floor)
 if a.render:
  evidence.mkdir(parents=True,exist_ok=True)
  expected_parent={'trencher:boom':'trencher','trencher:chain':'trencher:boom','excavator:cab':'excavator','excavator:boom':'excavator:cab','excavator:arm':'excavator:boom','excavator:bucket':'excavator:arm','dump-truck:bed':'dump-truck','dump-truck:load':'dump-truck:bed','dozer:blade':'dozer'}
@@ -426,29 +484,39 @@ if a.render:
   world_points=[obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
   minz=min(v.z for v in world_points);maxz=max(v.z for v in world_points)
   miny=min(v.y for v in world_points);maxy=max(v.y for v in world_points)
-  span=max(maxz-minz,maxy-miny,5.5);distance=max(14.5,span*1.80)
+  span=max(maxz-minz,maxy-miny,5.5);distance=max(11.0,span*(1.42 if name in ('excavator','trencher') else 1.16))
   target=(o.location.x,(miny+maxy)*.5,(minz+maxz)*.5)
-  bpy.ops.object.camera_add(location=(o.location.x+distance*.92,-distance,1.70));cam=bpy.context.object;cam.data.lens=62;aim(cam,target);scene.camera=cam
+  bpy.ops.object.camera_add(location=(o.location.x+distance*.82,-distance,1.70));cam=bpy.context.object;cam.data.lens=55;aim(cam,target);scene.camera=cam
   for other,ro in machines.items():hide_tree(ro,other!=name)
   for pose in ('rest','work'):
-   moving={'trencher':('trencher:boom',-.22),'excavator':('excavator:boom',-.22),'dump-truck':('dump-truck:bed',-.785),'dozer':('dozer:blade',.30)}[name]
+   moving={'trencher':('trencher:boom',-.22),'excavator':('excavator:boom',-.22),'dump-truck':('dump-truck:bed',-.785),'dozer':('dozer:blade',.62)}[name]
    j=bpy.data.objects[moving[0]];j.rotation_euler[0]=0 if pose=='rest' else moving[1]
    if name=='excavator' and pose=='work':
     bpy.data.objects['excavator:arm'].rotation_euler[0]=-.24;bpy.data.objects['excavator:bucket'].rotation_euler[0]=.32
    if name=='trencher' and pose=='work':bpy.data.objects['trencher:chain'].rotation_euler[0]=.70
    if name=='dump-truck':
-    load=bpy.data.objects['dump-truck:load'];load.location.y=0 if pose=='rest' else .34
+    load=bpy.data.objects['dump-truck:load'];load.location.y=-1.20 if pose=='rest' else -.92
+   bpy.context.view_layer.update()
+   posed_points=[obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+   posed_min_y=min(v.y for v in posed_points);posed_max_y=max(v.y for v in posed_points)
+   posed_min_z=min(v.z for v in posed_points);posed_max_z=max(v.z for v in posed_points)
+   aim(cam,(o.location.x,(posed_min_y+posed_max_y)*.5,(posed_min_z+posed_max_z)*.5))
+   if name=='dump-truck' and pose=='work':
+    cam.location=(o.location.x+distance*1.15,distance*.75,1.70)
+    aim(cam,(o.location.x,(posed_min_y+posed_max_y)*.5,(posed_min_z+posed_max_z)*.5))
    assert_working_pivots()
    scene.render.filepath=str(evidence/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True)
    if pose=='work':
-    focus={'trencher':'trencher:boom','excavator':'excavator:boom','dump-truck':'dump-truck:bed','dozer':'dozer:blade'}[name]
+    focus={'trencher':'trencher:boom','excavator':'excavator:arm','dump-truck':'dump-truck:bed','dozer':'dozer:blade'}[name]
     point=bpy.data.objects[focus].matrix_world.translation
-    close=(point.x+3.0,point.y-5.6,max(2.1,point.z+2.0))
-    bpy.ops.object.camera_add(location=close);detail=bpy.context.object;detail.data.lens=55;aim(detail,point);scene.camera=detail
+    if name=='dump-truck':
+     point=Vector((o.location.x,2.62,.92));close=(o.location.x+3.2,5.1,2.55)
+    else:close=(point.x+2.2,point.y-3.4,max(1.7,point.z+1.2))
+    bpy.ops.object.camera_add(location=close);detail=bpy.context.object;detail.data.lens=65;aim(detail,point);scene.camera=detail
     scene.render.filepath=str(evidence/f'{name}-close.png');bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(detail,do_unlink=True)
    j.rotation_euler[0]=0
-   if name=='dump-truck':bpy.data.objects['dump-truck:load'].location.y=0
+   if name=='dump-truck':bpy.data.objects['dump-truck:load'].location.y=-1.20
    if name=='excavator':
     bpy.data.objects['excavator:arm'].rotation_euler[0]=0;bpy.data.objects['excavator:bucket'].rotation_euler[0]=0
    if name=='trencher':bpy.data.objects['trencher:chain'].rotation_euler[0]=0
