@@ -71,21 +71,13 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     photo.image_w, photo.image_h = photo.image.size
     photo._rgb = None
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
-    shadow_seeds = {
-        'case-books': ((500, 920), (500, 930)),
-        'case-teeth': ((820, 960), (800, 970)),
-        'case-megaphone': ((700, 950), (800, 950)),
-        'case-hollis': ((500, 920), (500, 930)),
-    }
-    if name in shadow_seeds:
-        seeds.extend(shadow_seeds[name])
+    shadow_props = {'case-books', 'case-teeth', 'case-megaphone', 'case-hollis'}
     if name == 'token-ring':
         # The open centre between the leather hanger and brass token is sky.
         seeds.append((576, 350))
-    if name in ('case-books', 'case-teeth', 'case-megaphone', 'case-hollis'):
-        # The shadow seeds remove the connected pale fringe without cutting
-        # the photographed object into a jagged outline.
-        outline_shrink = 1
+    if name in shadow_props:
+        # Erode the outline slightly to remove the photographed shadow fringe.
+        outline_shrink = 8
     else:
         outline_shrink = 1
     solid = shrink(tidy(~photo.sky(seeds, tolerance=20, grey=26), passes=2),
@@ -93,7 +85,7 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     rows = np.minimum((np.arange(photo.image_h) * solid.shape[0] / photo.image_h).astype(int), solid.shape[0] - 1)
     cols = np.minimum((np.arange(photo.image_w) * solid.shape[1] / photo.image_w).astype(int), solid.shape[1] - 1)
     photo.bleed(solid[rows][:, cols], passes=18)
-    if name in shadow_seeds:
+    if name in shadow_props:
         loops = trace(solid, (0, 0, photo.w, photo.h), tolerance=2.4, min_area=64)
     else:
         loops = trace(solid, (0, 0, photo.w, photo.h), tolerance=1.7, min_area=16)
@@ -281,8 +273,8 @@ car.parent = root_obj
 parts['case-tin-car'] = car
 for x in (-.18, .18):
     for z in (-.125, .125):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.043, depth=.020,
-            location=(x, -math.copysign(.132, z), .043), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.035, depth=.012,
+            location=(x, -math.copysign(.105, z), .043), rotation=(math.pi/2, 0, 0))
         wheel = bpy.context.object
         wheel.name = 'case-tin-car-wheel'
         wheel.parent = car
@@ -292,8 +284,8 @@ for x in (-.18, .18):
         rubber.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.045,.04,.035,1)
         rubber.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .92
         wheel.data.materials.append(rubber)
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.018, depth=.022,
-            location=(x, -math.copysign(.132, z), .043), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.014, depth=.012,
+            location=(x, -math.copysign(.105, z), .043), rotation=(math.pi/2, 0, 0))
         hub = bpy.context.object
         hub.name = 'case-tin-car-hub'
         hub.parent = car
@@ -365,12 +357,12 @@ lineup = {}
 first_row = [name for name in prop_ids[:9] if name != 'sand-drag']
 second_row = prop_ids[9:]
 for index, name in enumerate(first_row):
-    lineup[name] = ((index - (len(first_row)-1)/2) * .86, 1.35)
+    lineup[name] = ((index - (len(first_row)-1)/2) * .90, 1.4)
 for index, name in enumerate(second_row):
-    lineup[name] = ((index - (len(second_row)-1)/2) * .82, -1.35)
+    lineup[name] = ((index - (len(second_row)-1)/2) * .90 + .45, -.9)
 # Give the 15 m drag room to read as a real site, behind and to the left of
 # the two close rows of hand-sized props.
-lineup['sand-drag'] = (-11.0, -6.0)
+lineup['sand-drag'] = (0.0, -12.0)
 
 def cam(eye, target):
     eye_b, target_b = town.game_vector(eye), town.game_vector(target)
@@ -403,8 +395,8 @@ for name in prop_ids:
     elif name == 'case-tin-car': w=.62
     else: w=max(.32,h*.95)
     if name == 'sand-drag':
-        render(name+'-dead-on',name,(0,1.5,18),(0,.75,0),None)
-        render(name+'-quarter',name,(3,1.5,17.7),(0,.75,0),None)
+        render(name+'-dead-on',name,(18,1.5,0),(0,.75,0),None,size=(1800,600))
+        render(name+'-quarter',name,(17,1.5,6),(0,.75,0),None,size=(1800,600))
     else:
         render(name+'-dead-on',name,(0,h*.52,4),(0,h*.52,0),max(w,h)*1.14)
         render(name+'-quarter',name,(w*.62,h*.58,3),(0,h*.48,0),max(w,h)*1.24)
@@ -416,8 +408,8 @@ for name,(x,z) in lineup.items():
 ground.hide_render=False
 for members in groups.values():
     for obj in members: obj.hide_render=False
-scene.render.resolution_x, scene.render.resolution_y = 1800, 700
-camera.data.type='PERSP'; camera.data.lens=45
-cam((-23.5,1.5,24),(-7.5,-1.5,-4.2))
+scene.render.resolution_x, scene.render.resolution_y = 1600, 900
+camera.data.type='PERSP'; camera.data.lens=40
+cam((0,1.5,12),(0,.5,-3.7))
 scene.render.filepath=str(render_dir/'lineup.png')
 bpy.ops.render.render(write_still=True)

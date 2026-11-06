@@ -4,21 +4,25 @@ Date: 6 November 2026
 
 ## Changed
 
-- Renamed the suitcase model and number-label child from `case-fourteen` to the story id `case-hollis`; kept its source photo filename.
-- Seeded each requested photo shadow as sky, keeping it outside the object mask; retained the one-pixel outline shrink and photo bleed to avoid jagged edges.
-- Seeded the token hoop's pale opening at source-photo pixel (576, 350), confirmed as clear background, so the mask leaves a real hole.
-- Replaced the sand-drag cutout with a 15 m long, 1.5 m high feathered heightfield, photo-textured rails and sleepers, and a thick timber stop block. Set its review views at car height, 18 m away.
-- Narrowed the toy-car tires from 46 mm to 20 mm, reduced the diameter to 86 mm, seated them on the ground and against the body, and fitted thin tin hubs.
-- Checked the prop dimensions against the story brief: the bare lever is 1.20 m tall; the small lost-property cases remain 0.28–0.34 m tall (about 1.5 times real size).
-- Repacked the line-up as two close rows on one ground. Put the full-size sand drag behind them, turned across the row, and framed the whole group from car height. Transformed each placement through the Y-up game coordinates so both rows sit on the ground plane.
+- Kept the Hollis suitcase model id and label child as `case-hollis`; retained the source image name `case-fourteen.jpg`. Review shots now use `case-hollis`.
+- Tightened the book, tooth-jar, megaphone and suitcase outlines by 8 pixels to reduce the photo shadow fringe. A faint pale edge remains and is called out for Claude's look review.
+- Kept the token-ring mask seed in the hoop centre; the exported render shows a real open hole.
+- Kept the 15 m sand drag as a 1.5 m feathered heightfield with rail stub and thick timber stop. Its two car-height views are at about 18 m and frame the ridge across its length.
+- Reduced tin-car wheel radius to 35 mm and width to 12 mm, moved them nearer the body, and reduced hub size.
+- Kept the 1.20 m lever and small case dimensions. Tightened the two-row lineup and moved the sand ridge behind the props.
+- Added `rail-props.py` and its GLB budget to the Blender output coverage list. This adds generator coverage only; no existing assertion was weakened.
+- Added the round 8 comparison sheet. No new reference pictures were added; existing source pictures remain credited in `CREDITS.md`.
 
 ## Checks
 
-- No Blender run yet. The remaining card changes will be rendered together, then the two named checks will run.
+- Blender recipe: passed; imported the exported GLB into an empty scene for every prop and the lineup. No `SKY seed` warnings or Blender errors. GLB readback: 20,336 triangles, 2,428,476 bytes, and only `TEXCOORD_0`; metallic factors are at or under 0.3.
+- `node tools/test-blender-output.mjs`: passed, 296 checks, 0 failures. First run exposed the missing `rail-props.py` coverage entry; added the entry and reran.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- Browser and look checks: not run in this job; Claude should inspect `docs/board/looks/ww-art-rail/round-8.jpg`.
 
 ## Changed assertions
 
-- None.
+- Added one expected generator entry to the existing coverage list because `rail-props.py` produces a committed Blender asset. No assertion was removed or loosened.
 
 ## Race fingerprints
 
@@ -30,4 +34,6 @@ Date: 6 November 2026
 
 ## Claude should inspect
 
-- Round 8 sheet: photo and three-quarter render comparisons for every prop, plus the two-row line-up.
+- The faint pale edge at the base of the books, tooth jar, megaphone and suitcase.
+- Whether the sand ridge overlaps too much of the second prop row in the lineup.
+- The tin-car wheel placement and open token-ring centre.
