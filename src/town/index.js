@@ -20,6 +20,8 @@ export {createWorkOrder, createBuildingWorkOrder, createRouteWorkOrder, advanceW
 export {startTeachingSession, updateTeachingSession, finishTeachingSession, canDelegate, advanceDelegatedWork} from './town-apprentices.js';
 export {TOWN_MONEY_PRICES, townLedger} from './town-money.js';
 export {groundWaterAt} from './town-ground.js';
+export {townFoodSummary} from './town-food.js';
+export {stepTownWeather} from './town-weather.js';
 export {answerReport, raiseTownReport, townReports} from './town-reports.js';
 export {TOWN_EVENTS, TOWN_EVENT_BY_ID} from './content/events.js';
 export {SCABLANDS_TOWN_REGION, TOWN_REGIONS, cellIsReserved, getTownChunk, TOWN_CELL_METRES, TOWN_CHUNK_CELLS} from './town-world-data.js';
