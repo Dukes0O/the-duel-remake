@@ -61,10 +61,10 @@ def build_platform():
     mesh = Mesh()
     mats = {'side': platform_side.material(), 'end': platform_end.material(), 'clock': clock_photo.material()}
 
-    # Side photo is measured across the full platform. The deck is a full metre
+    # Side photo is measured across the 20 m platform. The deck is a full metre
     # high and four metres wide, with the canopy above its top.
-    def X(px): return (px - 512) * (30 / 970)
-    def Y(py): return .65 + (260 - py) * .014
+    def X(px): return (px - 512) * (20 / 970)
+    def Y(py): return 1.0 + (247 - py) * .014
     def point(px, py, depth): return (X(px), Y(py), depth)
 
     side_sky = platform_side.sky(
@@ -97,9 +97,11 @@ def build_platform():
             for z in (-1.48, 1.48):
                 slab(mesh, 'side', platform_side, loops, point, z - .09, z + .09,
                      wall_scale=.014)
+    platform_start = X(16)
     for step in range(3):
-        x0, x1 = X(17 + step * 12), X(30 + step * 12)
-        y0, y1 = .08 + step * .14, .22 + step * .14
+        x0 = platform_start - .9 + step * .3
+        x1 = x0 + .3
+        y0, y1 = step / 3, (step + 1) / 3
         box(mesh, x0, x1, y0, y1, -1.54, 1.54, {
             '+z': photo_rect('side', platform_side, (18, 250, 80, 276)),
             '-z': photo_rect('side', platform_side, (18, 250, 80, 276)),
@@ -155,7 +157,7 @@ def build_platform():
     # Bench slats, legs and the blank name board use their own measured pieces.
     bench_x = X(291)
     for j in range(3):
-        y = .94 + j * .16
+        y = 1.08 + j * .16
         box(mesh, bench_x - 1.0, bench_x + 1.0, y, y + .065, -.37, .37, {
             '+z': photo_rect('side', platform_side, (224, 204, 357, 213)),
             '-z': photo_rect('side', platform_side, (224, 204, 357, 213)),
@@ -163,7 +165,7 @@ def build_platform():
         })
     for x in (bench_x - .79, bench_x + .79):
         for z in (-.28, .28):
-            box(mesh, x - .05, x + .05, .58, .97, z - .045, z + .045, {
+            box(mesh, x - .05, x + .05, 1.0, 1.38, z - .045, z + .045, {
                 '+z': photo_rect('side', platform_side, (224, 214, 236, 236)),
                 '-z': photo_rect('side', platform_side, (224, 214, 236, 236)),
             })
@@ -177,7 +179,7 @@ def build_platform():
         '-z': photo_rect('side', platform_side, (612, 138, 744, 188)),
     })
     for x in (sign_x0 + .07, sign_x1 - .07):
-        box(mesh, x - .045, x + .045, .65, sign_y0 + .10, -.08, .08, {
+        box(mesh, x - .045, x + .045, 1.0, sign_y0 + .10, -.08, .08, {
             '+z': photo_rect('side', platform_side, (612, 188, 623, 253)),
             '-z': photo_rect('side', platform_side, (612, 188, 623, 253)),
         })
@@ -211,7 +213,7 @@ def build_platform():
     # A substantial post and two short brackets make the clock visible above
     # the platform from car height, with no extra face or hand over the dial.
     post_x = clock_x
-    box(mesh, post_x - .09, post_x + .09, .62, 3.62, -.10, .10, {
+    box(mesh, post_x - .09, post_x + .09, 1.0, 3.62, -.10, .10, {
         '+z': photo_rect('side', platform_side, (854, 140, 876, 255)),
         '-z': photo_rect('side', platform_side, (854, 140, 876, 255)),
     })
