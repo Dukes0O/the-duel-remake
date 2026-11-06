@@ -6,4 +6,5 @@ import '../town-fire.js';
 import '../town-weather.js';
 import '../town-food.js';
 import '../town-outposts.js';
+import '../town-deeds.js';
 import '../town-dispatch.js';
