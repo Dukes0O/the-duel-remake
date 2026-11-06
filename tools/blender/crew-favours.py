@@ -16,7 +16,18 @@ from mathutils import Vector
 sys.path.insert(0,str(root/'tools/blender')); import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; root_obj=bpy.data.objects.new('crew-favours',None); scene.collection.objects.link(root_obj)
-M=town.make_materials()
+texture_dir=root/'public/assets/models/wasteland/scablands/textures'
+oak_tex=texture_dir/'ww-harpoon-oak.jpg'
+iron_tex=texture_dir/'ww-harpoon-iron.jpg'
+lizard_tex=texture_dir/'ww-gerald-scales.jpg'
+M=town.make_materials({'weathered-plank':str(oak_tex),'rusted-steel':str(iron_tex),'sand':str(lizard_tex)})
+# Darken and warm the actual harpoon-oak photograph so the pole reads as aged
+# oak in overcast light instead of pale new wood.
+import numpy as np
+oak_node=next(n for n in M['weathered-plank'].node_tree.nodes if n.type=='TEX_IMAGE')
+oak_pixels=np.empty(512*512*4,dtype=np.float32); oak_node.image.pixels.foreach_get(oak_pixels)
+oak_pixels=oak_pixels.reshape((512,512,4)); oak_pixels[:,:,:3]*=np.array([.72,.52,.34],dtype=np.float32)
+oak_node.image.pixels.foreach_set(oak_pixels.ravel()); oak_node.image.pack()
 def attach(o,name):
     o.name=name; o.parent=root_obj; o['part']=name.split('-')[0]; return o
 def cube(n,c,s,m,b=.025): return attach(town.cube(n,c,s,m,b),n)
@@ -123,9 +134,9 @@ tapered('gerald-tapering-tail',(x,.11,z+.06),(x,.075,z+.19),.043,.005,M['sand'])
 for sx in (-1,1):
     for sz in (-1,1):
         shoulder=(x+sx*.045,.11,z+sz*.045); hip=(x+sx*.09,.065,z+sz*.105)
-        tapered(f'gerald-leg-upper-{sx}-{sz}',shoulder,hip,.025,.018,M['sand'])
-        foot=(x+sx*.115,.035,z+sz*.13); tapered(f'gerald-leg-lower-{sx}-{sz}',hip,foot,.019,.012,M['sand'])
-        for t in (-1,0,1): tapered(f'gerald-toe-{sx}-{sz}-{t}',foot,(foot[0]+sx*.045,.026,foot[2]+t*.022),.009,.002,M['sand'])
+        tapered(f'gerald-leg-upper-{sx}-{sz}',shoulder,hip,.016,.012,M['sand'])
+        foot=(x+sx*.115,.035,z+sz*.13); tapered(f'gerald-leg-lower-{sx}-{sz}',hip,foot,.012,.008,M['sand'])
+        for t in (-1,0,1): tapered(f'gerald-toe-{sx}-{sz}-{t}',foot,(foot[0]+sx*.045,.026,foot[2]+t*.022),.0045,.0015,M['sand'])
 cube('gerald-box',(x+1,.22,z),(.52,.38,.44),M['weathered-plank'],.045)
 for sx in (-.13,.13):
     for sz in (-.14,.14): cyl(f'gerald-box-air-hole-{sx}-{sz}',(x+1+sx,.24,z+sz),.025,.012,M['iron-dark'],10,(0,1,0))
@@ -139,11 +150,100 @@ for sx in (-1,1):
     beam(f'ash-walker-back-{sx}',(x+sx*.32,.02,z+.28),(x+sx*.32,.84,z+.28),.035,M['iron-dark'])
     beam(f'ash-walker-side-{sx}',(x+sx*.32,.84,z-.25),(x+sx*.32,.84,z+.28),.035,M['iron-dark'])
 
+# Round 2 includes only the three individually judged props. Delete every
+# unrelated Round 1 object, including Gerald's transport box.
+for obj in list(scene.objects):
+    if obj is root_obj or obj.name.startswith(('jax-harpoon','jax-shoe-shop','piano-upright')) or (obj.name.startswith('gerald-') and 'box' not in obj.name):
+        continue
+    bpy.data.objects.remove(obj,do_unlink=True)
+# Rebuild the harpoon lying along the bench: a 2.5 m tapered oak pole, thumb-
+# thin iron shank, and a forged flat head with a swept-back barb.
+for obj in list(scene.objects):
+    if obj.name.startswith(('jax-harpoon','jax-shoe-shop')): bpy.data.objects.remove(obj,do_unlink=True)
+x=-8
+bpy.ops.mesh.primitive_cone_add(vertices=16,radius1=.021,radius2=.045,depth=2.12,location=town.game_vector((x+.12,.12,0)))
+shaft=bpy.context.object; shaft.name='jax-harpoon-oak-shaft'; shaft.rotation_euler[1]=math.pi/2; shaft.data.materials.append(M['weathered-plank']); attach(shaft,shaft.name)
+cyl('jax-harpoon-iron-shank',(x-.97,.12,0),.016,.34,M['rusted-steel'],16,(1,0,0))
+head_game=[(x-1.25,.12,-.045),(x-.99,.17,-.045),(x-1.045,.255,-.045),(x-1.13,.17,-.045),(x-1.045,.035,-.045),(x-.99,.08,-.045)]
+head_mesh=bpy.data.meshes.new('jax-harpoon forged flat barb'); head_mesh.from_pydata([tuple(town.game_vector(p)) for p in head_game],[],[(0,1,2,3,4,5)]); head_mesh.update()
+head_uv=head_mesh.uv_layers.new(name='UVMap')
+for loop in head_mesh.loops: head_uv.data[loop.index].uv=((head_game[loop.vertex_index][0]-x+1.25)/.3,head_game[loop.vertex_index][1]/.3)
+head=bpy.data.objects.new('jax-harpoon-flat-barb',head_mesh); scene.collection.objects.link(head); head.data.materials.append(M['rusted-steel']); attach(head,head.name)
+head.modifiers.new('forged plate thickness','SOLIDIFY').thickness=.008
+edge=head.modifiers.new('rounded forged edge','BEVEL'); edge.width=.006; edge.segments=2
+for i in range(6): cyl(f'jax-harpoon-rope-turn-{i}',(x-.82+i*.022,.12,0),.008,.16,M['patched-canvas'],8,(1,0,0))
+# Piano proportions: 1.5 m wide, 1.3 m high, 0.6 m deep. Replace the solid
+# box with rounded side panels and rails, leaving its action exposed.
+for obj in list(scene.objects):
+    if obj.name in ('piano-upright-case','piano-upright-open-frame'): bpy.data.objects.remove(obj,do_unlink=True)
+shell=[]
+for sx in (-1,1): shell.append(cube(f'piano-upright-shell-side-{sx}',(-4+sx*.68,.67,0),(.14,1.30,.60),M['weathered-plank'],.07))
+for name,center,size in (
+ ('piano-upright-shell-top',(-4,1.30,0),(1.5,.12,.60)),
+ ('piano-upright-shell-bottom',(-4,.08,0),(1.5,.16,.60)),
+ ('piano-upright-shell-back',(-4,.70,.25),(1.23,1.08,.08)),
+ ('piano-upright-shell-lower-panel',(-4,.31,-.275),(1.24,.32,.05)),
+ ('piano-upright-shell-key-shelf',(-4,.53,-.29),(1.28,.09,.16))):
+    shell.append(cube(name,center,size,M['weathered-plank'],.045))
+for obj in shell:
+    bevel=next((m for m in obj.modifiers if m.type=='BEVEL'),None)
+    if bevel: bevel.segments=3
+for obj in scene.objects:
+    if obj.name.startswith(('piano-upright-key-','piano-upright-string-')): obj.location.y+=.12
+for i in range(22):
+    kx=-4.29+i*.0275
+    beam(f'piano-upright-action-rod-{i:02}',(kx,.84,-.37),(kx,.99,-.32),.012,M['weathered-plank'])
+    sphere(f'piano-upright-hammer-head-{i:02}',(kx,1.005,-.325),(.013,.017,.016),M['weathered-plank'])
+# The piano has a distinct worn walnut finish, kept separate from the harpoon's oak.
+piano_image=bpy.data.images.load(str(texture_dir/'ww-piano-veneer.jpg'),check_existing=False); piano_image.pack()
+piano_wood=bpy.data.materials.new('Piano / chipped walnut veneer'); piano_wood.use_nodes=True
+piano_bsdf=piano_wood.node_tree.nodes.get('Principled BSDF'); piano_bsdf.inputs['Metallic'].default_value=.05; piano_bsdf.inputs['Roughness'].default_value=.88
+piano_tex_node=piano_wood.node_tree.nodes.new('ShaderNodeTexImage'); piano_tex_node.image=piano_image; piano_tex_node.extension='REPEAT'
+piano_wood.node_tree.links.new(piano_tex_node.outputs['Color'],piano_bsdf.inputs['Base Color'])
+for obj in scene.objects:
+    if obj.name.startswith('piano-upright-shell-'):
+        obj.data.materials.clear(); obj.data.materials.append(piano_wood)
+# Gerald spans 30 cm nose to tail. Replace the disconnected sphere stack with
+# one continuous tapered body, head and tail surface; feet overlap the body.
+gerald=[o for o in scene.objects if o.name.startswith('gerald-') and o.type=='MESH']
+for obj in gerald:
+    if 'box' in obj.name: bpy.data.objects.remove(obj,do_unlink=True)
+    elif obj.name in ('gerald-low-torso','gerald-blunt-head','gerald-tapering-tail'):
+        bpy.data.objects.remove(obj,do_unlink=True)
+body_stations=[(-.15,.004,.004,.115),(-.12,.020,.022,.125),(-.09,.030,.028,.125),(-.05,.045,.032,.125),(-.02,.048,.035,.12),(0,.042,.030,.115),(.03,.025,.020,.105),(.08,.015,.013,.095),(.13,.007,.006,.085),(.15,.001,.002,.08)]
+verts=[]; faces=[]; rings=16
+for zc,rx,ry,yc in body_stations:
+    for j in range(rings):
+        angle=2*math.pi*j/rings
+        verts.append(tuple(town.game_vector((20+rx*math.cos(angle),yc+ry*math.sin(angle),zc))))
+for i in range(len(body_stations)-1):
+    for j in range(rings):
+        a=i*rings+j; b=i*rings+(j+1)%rings; c=(i+1)*rings+(j+1)%rings; d=(i+1)*rings+j
+        faces.append((a,b,c,d))
+body_mesh=bpy.data.meshes.new('gerald continuous skin from neck through tail'); body_mesh.from_pydata(verts,[],faces); body_mesh.update()
+for polygon in body_mesh.polygons: polygon.use_smooth=True
+uv=body_mesh.uv_layers.new(name='UVMap')
+for poly in body_mesh.polygons:
+    for li in poly.loop_indices:
+        vi=body_mesh.loops[li].vertex_index; uv.data[li].uv=(vi//rings/(len(body_stations)-1),vi%rings/rings)
+body=bpy.data.objects.new('gerald-body-connected-head-tail',body_mesh); scene.collection.objects.link(body); body_mesh.materials.append(M['sand']); attach(body,body.name)
+body.modifiers.new('soft skin profile','SUBSURF').levels=1
+for obj in scene.objects:
+    if obj.name.startswith('gerald-eye-'):
+        side=-1 if obj.name.endswith('left') else 1
+        obj.location=town.game_vector((20+side*.028,.148,-.115)); obj.scale*=.25
+# Salvaged iron remains dull in real-time rendering; keep every exported
+# metallicFactor at or below the card's 0.3 ceiling.
+for material in M.values():
+    bsdf=material.node_tree.nodes.get('Principled BSDF') if material.use_nodes else None
+    if bsdf: bsdf.inputs['Metallic'].default_value=min(.3,bsdf.inputs['Metallic'].default_value)
 # Deterministic UV layer naming prevents joined parts from exporting extra TEXCOORD sets.
 for obj in scene.objects:
     if obj.type=='MESH':
         if not obj.data.uv_layers: obj.data.uv_layers.new(name='UVMap')
         for layer in obj.data.uv_layers: layer.name='UVMap'
+        if obj.name.startswith('gerald-'):
+            for polygon in obj.data.polygons: polygon.use_smooth=True
         obj.parent=root_obj if obj is not root_obj else None
 out.parent.mkdir(parents=True,exist_ok=True); town.export_glb(out)
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(out))
@@ -151,23 +251,39 @@ objs=list(bpy.context.scene.objects); meshes=[o for o in objs if o.type=='MESH']
 print(json.dumps({'triangles':tris,'bytes':out.stat().st_size,'meshes':len(meshes)}))
 if tris>40000 or out.stat().st_size>2*1024*1024: raise RuntimeError('crew-favours exceeds card budget')
 
-# The review is rendered only from the GLB reimport above, with fresh lights and ground.
+# Matched asset portraits are rendered from the exported GLB after reimport.
 scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.render.resolution_x=2200; scene.render.resolution_y=920; scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='JPEG'; scene.render.image_settings.quality=91
-scene.view_settings.view_transform='AgX'; scene.world=bpy.data.worlds.new('Overcast crew favour review'); scene.world.color=(.56,.56,.55)
-ground=bpy.data.materials.new('Review ground'); ground.diffuse_color=(.24,.25,.24,1)
-bpy.ops.mesh.primitive_plane_add(size=70,location=(8,-.05,0)); bpy.context.object.name='review ground only'; bpy.context.object.data.materials.append(ground)
-for location,power,size in (((8,32,15),18000,22),((-18,18,8),10000,18),((30,14,-15),8500,14)):
-    bpy.ops.object.light_add(type='AREA',location=town.game_vector(location)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size
-    direction=town.game_vector((8,.6,0))-light.location; light.rotation_euler=direction.to_track_quat('-Z','Y').to_euler()
-bpy.ops.object.camera_add(location=town.game_vector((8,10,-42))); cam=bpy.context.object
-cam.data.type='ORTHO'; cam.data.ortho_scale=35; direction=town.game_vector((8,.55,0))-cam.location; cam.rotation_euler=direction.to_track_quat('-Z','Y').to_euler(); scene.camera=cam
-ink=bpy.data.materials.new('Review label ink'); ink.diffuse_color=(.055,.06,.055,1); ink.use_nodes=True
-ink.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.055,.06,.055,1)
-for px,text_value in ((-8,'JAX / HARPOON'),(-4,'TUSK / PIANO'),(.7,'ROOK / REGRET'),(5,'NELL / SMALL'),(8,'ODESSA / ENGINE'),(11,'WREN / FLAG'),(15,'DUNE / AIRLINER'),(21,'GERALD'),(24,'ASH / HAT')):
-    curve=bpy.data.curves.new('Review / '+text_value,'FONT'); curve.body=text_value; curve.size=.30; curve.extrude=.001
-    obj=bpy.data.objects.new('review label / '+text_value,curve); scene.collection.objects.link(obj); obj.location=town.game_vector((px,.025,.7)); obj.rotation_euler=(-math.pi/2,0,0); curve.materials.append(ink)
-review=root/'docs/board/looks/ww-art-crew/round-1.jpg'; review.parent.mkdir(parents=True,exist_ok=True)
-scene.render.filepath=str(review); bpy.ops.render.render(write_still=True)
-print('Review sheet:',review)
+scene.render.resolution_x=980; scene.render.resolution_y=560; scene.render.resolution_percentage=100
+scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='AgX'
+scene.world=bpy.data.worlds.new('Bright overcast crew prop review'); scene.world.color=(.58,.58,.57)
+ground=bpy.data.materials.new('Review ground'); ground.diffuse_color=(.31,.32,.31,1)
+bpy.ops.mesh.primitive_plane_add(size=70,location=(8,0,-.05)); plane=bpy.context.object; plane.name='review ground only'; plane.data.materials.append(ground)
+for location,power,size in (((8,15,10),10500,10),((-18,10,8),7000,8),((30,8,-15),6500,7)):
+    bpy.ops.object.light_add(type='AREA',location=location); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size
+    light.rotation_euler=(Vector((8,.6,0))-light.location).to_track_quat('-Z','Y').to_euler()
+bpy.ops.object.camera_add(location=(0,1,-5)); cam=bpy.context.object; cam.data.type='ORTHO'; scene.camera=cam
+all_objects=list(scene.objects)
+for obj in all_objects:
+    if obj.name.startswith('review label /'): obj.hide_render=True
+for part in ('jax-','piano-upright-','gerald-'):
+    selected=[o for o in all_objects if o.type=='MESH' and o.name.startswith(part) and 'box' not in o.name]
+    if not selected: raise RuntimeError('missing rendered part '+part)
+    for obj in all_objects:
+        if obj.type=='MESH' and obj is not plane: obj.hide_render=obj not in selected
+    points=[o.matrix_world @ Vector(c) for o in selected for c in o.bound_box]
+    lo=Vector((min(p.x for p in points),min(p.y for p in points),min(p.z for p in points)))
+    hi=Vector((max(p.x for p in points),max(p.y for p in points),max(p.z for p in points)))
+    center=(lo+hi)*.5
+    if part=='jax-': cam.location=center+Vector((0,max(2.2,(hi.y-lo.y)*3),.08))
+    elif part=='gerald-': cam.location=center+Vector((-max(1.2,(hi.x-lo.x)*4),0,0))
+    else: cam.location=center+Vector((-1.0,max(2.2,(hi.y-lo.y)*3),.22))
+    cam.rotation_euler=(center-cam.location).to_track_quat('-Z','Y').to_euler()
+    cam.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*980/560,hi.y-lo.y)*1.13; scene.render.filepath=str(root/'.qa-dist'/('render-'+part.rstrip('-')+'.png'))
+    bpy.ops.render.render(write_still=True)
+    if part=='gerald-':
+        cam.location=center+Vector((0,0,max(1.2,(hi.z-lo.z)*4)))
+        cam.rotation_euler=(center-cam.location).to_track_quat('-Z','Y').to_euler()
+        cam.data.ortho_scale=max(hi.x-lo.x,hi.y-lo.y)*1.2
+        scene.render.filepath=str(root/'.qa-dist'/'render-gerald-top.png')
+        bpy.ops.render.render(write_still=True)
+print('Rendered GLB portraits into .qa-dist for reference comparison.')

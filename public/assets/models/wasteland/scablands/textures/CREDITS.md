@@ -79,3 +79,12 @@ Prompt: Square macro photograph of dark charcoal-brown wet reservoir clay, soft
 irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
+
+## WW-ART-CREW reference crops
+
+These are cropped from original Codex ImageGen photographs made 2026-11-06 for round 2. The full reference images remain in lane scratch storage and are removed after the sheet is made. No outside source art is used.
+
+- `ww-harpoon-oak.jpg`: 512 px color crop from the harpoon's aged oak pole; used on the 2.5 m handle. Prompt: photographic old whaling harpoon, oak pole and iron head, lying on a scarred workbench in bright overcast daylight.
+- `ww-harpoon-iron.jpg`: 512 px color crop from the forged harpoon head; used on the iron parts. Prompt: same harpoon reference, with a dark aged forged iron head and flat barb.
+- `ww-piano-veneer.jpg`: 512 px color crop from the piano's worn walnut case; used on the case and open frame. Prompt: battered 1.5 m upright piano, one panel missing, exposed hammers and strings, chipped keys, three-quarter view in even daylight.
+- `ww-gerald-scales.jpg`: 512 px color crop from the lizard's back; used on Gerald's skin. Prompt: real 30 cm desert lizard photographed from the side and overhead on pale dusty ground in overcast daylight.
