@@ -12,13 +12,9 @@ const fedTowns = new WeakSet();
 function stepDay(town) {
   // A well-fed town: TOWN-FARM now works out each day's food from what is in the stores.
   if (town.name === 'Repeatable' || fedTowns.has(town)) storeGood(town, {x:0, z:0}, 'food', (town.people?.length || 0) * 2100 / 3600 + 1);
-  // The town advances one hour per step, but people change only once a day.
-  // Jump to the hour before each daily boundary to test 30 years without
-  // spending time on the 23 unchanged hours between updates.
-  town.tick = BigInt(town.tick) + 23n;
-  stepTown(town);
-  // People work is spread across all 24 hours, then daily changes settle.
+  const startTick=BigInt(town.tick);
   for (let hour = 0; hour < TOWN_TIME.ticksPerDay; hour++) stepTown(town);
+  return BigInt(town.tick)-startTick;
 }
 
 check(registeredTownSystems().some(system => system.name === 'town-people' && system.everyTicks === 1), 'people work is scheduled every town tick');
@@ -30,7 +26,7 @@ for (const [season, lines] of Object.entries(TOWN_SEASON_THOUGHTS)) {
 
 const town = createTown(1989, 'First Town');
 town.buildings.push({id:'school-1', buildingId:'school', state:'complete'});
-stepDay(town);
+same(stepDay(town),BigInt(TOWN_TIME.ticksPerDay),'a simulated day advances exactly 24 town ticks');
 same(town.people.length, 12, 'the first day creates the twelve founders');
 check(town.people.every(person => person.id && person.name && person.born <= 0 && person.family && person.home && person.skills && person.health && person.mood !== undefined && person.history.length), 'founders are individual records');
 check(new Set(town.people.map(person => person.name)).size === 12, 'founders have unique names');

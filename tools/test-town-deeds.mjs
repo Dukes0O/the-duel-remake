@@ -65,6 +65,29 @@ assert.ok(townDeedReports(raidTown).some(row=>row.type==='raid'));
 assert.equal(missionResult(raidTown,{runId:'road-win-1',deedId:'mirage-road',won:true}).settled,true);
 assert.equal(missionResult(raidTown,{runId:'road-win-1',deedId:'mirage-road',won:true}).settled,false,'a repeated mission result cannot award the deed twice');
 assert.equal(raidTown.deeds.items['mirage-road'].ownerId,'player');
+raidTown.deeds.reports.push({id:'answered-report',type:'raid',deedId:'mirage-road',unanswered:false});
+assert.ok(!townDeedReports(raidTown).some(row=>row.id==='answered-report'),'answered deed reports are dropped');
+
+const longTown=createTown(612,'Thirty Years of Deeds');
+stepTown(longTown);
+for(const deed of TOWN_DEEDS) longTown.deeds.items[deed.id]={ownerId:'player',guarded:true,unguardedMonths:0,bid:null};
+for(let month=0;month<30*12;month++) {
+  longTown.tick=BigInt((month+1)*24*30-1);
+  stepTown(longTown);
+  const runId=`long-run-${month}`;
+  missionResult(longTown,{runId,deedId:'sal-road',won:month%2===0});
+  if(month%4===0) missionResult(longTown,{runId,deedId:'sal-road',won:true});
+}
+assert.equal(longTown.calendar.year,31,'the deed schedule advances through thirty years');
+assert.ok(longTown.deeds.reports.length<=32,'unanswered deed reports stay within the bounded recent list');
+assert.ok(longTown.deeds.settledMissions.length<=128,'settled mission ids stay within the bounded recent list');
+const legacyData=JSON.parse(serializeTown(longTown));
+legacyData.deeds.reports.push(...Array.from({length:80},(_,i)=>({id:`old-${i}`,unanswered:i%2===0})));
+legacyData.deeds.settledMissions=Array.from({length:300},(_,i)=>`old-run-${i}`);
+const legacy=deserializeTown(legacyData);
+townDeedReports(legacy);
+assert.ok(legacy.deeds.reports.length<=32,'old saves trim deed reports when loaded');
+assert.ok(legacy.deeds.settledMissions.length<=128,'old saves trim settled mission ids when loaded');
 
 const saved=deserializeTown(serializeTown(raidTown));
 assert.equal(saved.deeds.items['mirage-road'].ownerId,'player','new deed records survive town save and load');
@@ -78,4 +101,4 @@ assert.equal(badLedger.deeds.items['sal-road'].ownerId,null);
 assert.equal(badLedger.till,1500n);
 assert.equal(dispatchTownCommand(raidTown,{type:'missionResult',runId:'forged',deedId:'dustmonger-road',won:true}).ok,false,
   'fight results are not accepted as ordinary town commands');
-console.log('Town deeds: data, purchase, set perk, toll, bid, raid, mission result and save checks passed.');
+console.log('Town deeds: data, purchase, set perk, toll, bid, raid, mission result, bounded history and save checks passed.');

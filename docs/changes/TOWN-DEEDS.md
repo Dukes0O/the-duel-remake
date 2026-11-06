@@ -2,7 +2,10 @@
 
 ## Changed
 
-- Added the 24 deeds, eight territory set perks and starter prices to `src/town/content/deeds.js`.
+- Follow-up review fixes: Sal reduces the town's timber buy price by 20%, the Dustmonger reduces its fuel buy price by 20%, Mirage raises sale prices by 10%, and the Twin Vultures reduce monthly building upkeep by 5%. The checks compare the same market stock or upkeep amount with and without the full deed set.
+- Removed the unused guard-cost, home-mood and water-road perk promises. Those deed territories have no perk until the game has a system that can apply one.
+- Deed reports now discard answered entries and retain at most 32 unanswered entries. Settled mission ids retain only the latest 128. Older saved lists are filtered and trimmed on first deed access.
+- Added the 24 deeds, territory set data and starter prices to `src/town/content/deeds.js`.
 - Added saved deed ownership, purchases, set bonuses, road toll accounting, four-month Mrs Vane bids, six-month unguarded raids, deed reports and an idempotent `missionResult` settlement hook.
 - Registered the town deed system and commands.
 - Added `tools/test-town-deeds.mjs` for data, purchase, perk, toll, bid, raid, settlement and save checks.
@@ -11,7 +14,9 @@ The open number choices and their reasons are written on the TOWN-DEEDS card. Th
 
 ## Checks
 
-- `node tools/test-town-deeds.mjs`: passed.
+- `node tools/test-town-deeds.mjs`: passed, including the 30-year bid and repeated-fight bounded-history checks.
+- `node tools/test-town-goods.mjs`: passed, 19 checks, including the three deed price effects.
+- `node tools/test-town-money.mjs`: passed, 32 checks, including discounted upkeep.
 - `npm.cmd run build`: passed. The `npm` PowerShell wrapper was blocked by the machine execution policy before starting, so the installed `npm.cmd` entry point ran the same build script. Vite reported dynamic-import and large-chunk warnings.
 - Independent review: passed after corrections for trusted mission settlement, Ledger validation and the bid close month.
 - Lane tier: not run; Claude runs it for this card.
@@ -30,7 +35,8 @@ The open number choices and their reasons are written on the TOWN-DEEDS card. Th
 - Review the starter values and four-month bid schedule recorded on the card.
 - Confirm the town screen connects the saved deed reports and the direct `missionResult` hook to the authenticated road fight result.
 - Run the card's browser checks and the lane tier.
+- Check that the town UI presents the timber and fuel buy prices and trade sale price from `priceForGood` with deed effects, and that the money Ledger records discounted upkeep.
 
 ## Removed
 
-- Nothing. This card adds a new simulation feature and does not replace an existing path.
+- Removed the guard-cost, home-mood and water-road perk claims because no cost, mood or water-road system exists to apply them yet.

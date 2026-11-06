@@ -5,6 +5,8 @@ import {registerTownSystem} from './town-sim.js';
 const record=value=>value&&typeof value==='object'&&!Array.isArray(value);
 const amount=value=>typeof value==='bigint'&&value>=0n?value:Number.isSafeInteger(value)&&value>=0?BigInt(value):null;
 const monthKey=calendar=>`${calendar.year}-${String(calendar.month).padStart(2,'0')}`;
+const MAX_DEED_REPORTS=32;
+const MAX_SETTLED_MISSIONS=128;
 
 function stateFor(town) {
   if(!record(town.deeds)||town.deeds.version!==1) town.deeds={version:1,items:{},reports:[],nextReport:1,settledMissions:[],pendingReceipts:0n,pendingCosts:0n};
@@ -12,7 +14,9 @@ function stateFor(town) {
   for(const deed of TOWN_DEEDS) if(!record(state.items[deed.id]))
     state.items[deed.id]={ownerId:null,guarded:false,unguardedMonths:0,bid:null};
   if(!Array.isArray(state.reports)) state.reports=[];
+  state.reports=state.reports.filter(row=>record(row)&&row.unanswered===true).slice(-MAX_DEED_REPORTS);
   if(!Array.isArray(state.settledMissions)) state.settledMissions=[];
+  state.settledMissions=state.settledMissions.filter(id=>typeof id==='string'&&id).slice(-MAX_SETTLED_MISSIONS);
   if(!Number.isSafeInteger(state.nextReport)||state.nextReport<1) state.nextReport=1;
   if(amount(state.pendingReceipts)===null) state.pendingReceipts=0n;
   if(amount(state.pendingCosts)===null) state.pendingCosts=0n;
@@ -23,6 +27,7 @@ function report(state,type,deed,detail) {
   if(state.reports.some(row=>row.type===type&&row.deedId===deed.id&&row.unanswered)) return;
   state.reports.push({id:`deed-report-${state.nextReport++}`,type,deedId:deed.id,
     text:detail,createdMonth:null,unanswered:true});
+  if(state.reports.length>MAX_DEED_REPORTS) state.reports.splice(0,state.reports.length-MAX_DEED_REPORTS);
 }
 
 function holdsSet(state,territoryId) {
@@ -39,7 +44,7 @@ export function townDeedReports(town) { return stateFor(town).reports.map(row=>(
 
 export function hasTownDeedPerk(town,perkId) {
   const state=stateFor(town);
-  return TOWN_DEED_TERRITORIES.some(territory=>territory.perk.id===perkId&&holdsSet(state,territory.id));
+  return TOWN_DEED_TERRITORIES.some(territory=>territory.perk?.id===perkId&&holdsSet(state,territory.id));
 }
 
 function ownsTerritory(profile,territoryId) {
@@ -103,6 +108,7 @@ export function missionResult(town,{runId,deedId,territoryId,won}={}) {
   if(!target||typeof runId!=='string'||!runId||typeof won!=='boolean') return {ok:false,message:'That road fight result is not clear.'};
   if(state.settledMissions.includes(runId)) return {ok:true,settled:false,message:'That road fight already has a result.'};
   state.settledMissions.push(runId);
+  if(state.settledMissions.length>MAX_SETTLED_MISSIONS) state.settledMissions.splice(0,state.settledMissions.length-MAX_SETTLED_MISSIONS);
   if(won) {state.items[target.id].ownerId='player';state.items[target.id].bid=null;state.items[target.id].unguardedMonths=0;}
   return {ok:true,settled:true,message:won?`You won ${target.name} back.`:'The deed stays with its current owner.'};
 }

@@ -2,6 +2,7 @@
 
 ## Changed
 
+- Follow-up review fix: the 30-year helper now advances exactly 24 hourly ticks per simulated day. The previous merged helper jumped 23 ticks, ran one step, then ran 24 more steps, so it simulated 48 ticks per day. Population, generation, mood, health, family, history, and no-cap checks remain active.
 - Registered the people system through the town entry point. It now runs each
   town tick and processes a stable slice of the population across the day.
 - Saved the slice cursor, identity work, deaths, and household totals on the
@@ -14,19 +15,16 @@
 
 ## Checks
 
-- `node tools/test-town-core.mjs` - passed, 641 checks. The 10,000-person,
-  5,000-building day took 27.69 ms; the slowest tick took 4.89 ms. The
-  100,000-tick replay matched.
-- `node tools/test-town-people.mjs` - passed, 35 checks. The 30-year towns
-  produced 7,188 living people and 38 Old Ground entries. The 10,000-person
-  day took 28.95 ms.
-- `npm.cmd run build` - passed. Vite reported non-blocking dynamic-import and
-  large-chunk warnings.
+- `node tools/test-town-people.mjs` - passed all 36 checks in 26.95 seconds. The 30-year town produced 1,410 living people and 999 Old Ground entries; the 10,000-person day took 20.32 ms.
+- `node tools/test-town-core.mjs` - passed 641 checks. The slowest tick was 7.88 ms; its 100,000-tick replay matched.
+- `node tools/test-town-deeds.mjs`, `node tools/test-town-money.mjs`, and `node tools/test-town-goods.mjs` - passed.
+- `npm.cmd run build` - passed. Vite reported non-blocking dynamic-import and large-chunk warnings.
 - Browser and look checks - not named by this card. No race fingerprints
   apply; the town core replay comparison passed.
 
 ## Changed assertions
 
+- Added a check that each simulated day advances exactly 24 ticks. No population or performance assertions were weakened.
 - Updated the people-system cadence check from one run every 24 ticks to one
   run each tick, as required to spread its work across the day. This does not
   loosen the check. Added entry-point registration, mid-day save/load resume,
