@@ -14,6 +14,7 @@ export {townCalendarAt, TOWN_TIME} from './town-calendar.js';
 export {dispatchTownCommand, registerTownCommand, townBuildingCatalog, TOWN_WORK_STATES} from './town-commands.js';
 export {stepTown, registerTownSystem, registeredTownSystems} from './town-sim.js';
 export {createWorkOrder, createBuildingWorkOrder, createRouteWorkOrder, advanceWork, workOrderScaffold, prioritizeWorkOrders, workStageMinutes} from './town-work.js';
+export {startTeachingSession, updateTeachingSession, finishTeachingSession, canDelegate, advanceDelegatedWork} from './town-apprentices.js';
 export {TOWN_MONEY_PRICES, townLedger} from './town-money.js';
 export {groundWaterAt} from './town-ground.js';
 export {answerReport, raiseTownReport, townReports} from './town-reports.js';
