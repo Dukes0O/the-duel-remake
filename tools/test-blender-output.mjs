@@ -55,6 +55,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/food.glb'],budget:30000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
@@ -796,6 +798,68 @@ try {
       const triangles=descendants.reduce((sum,index)=>{const mesh=nodes[index].mesh;if(mesh===undefined)return sum;return sum+gltf.meshes[mesh].primitives.reduce((n,primitive)=>n+gltf.accessors[primitive.indices].count/3,0);},0);
       const budget=id.startsWith('block-')||id==='terrace-a'?5000:1800;
       assert.ok(triangles>100&&triangles<=budget,`${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
+    }
+  });
+
+  check('TOWN-ART-FOOD keeps every food plot selectable inside its footprint budgets', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/food.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const binaryStart = 28 + jsonLength;
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const nodes = gltf.nodes || [];
+    const names = nodes.map(node => node.name || '');
+    const parent = new Map(); nodes.forEach((node, index) => (node.children || []).forEach(child => parent.set(child, index)));
+    const family = names.indexOf('town-food'); assert.ok(family >= 0, 'missing family root');
+    const plots = {
+      greenhouse: 9000, 'goat-pen': 5000, 'chicken-run': 1800, 'soup-kitchen': 5000,
+      'stall-a': 1800, 'stall-b': 1800, 'stall-c': 1800,
+      'shopfront-a': 1800, 'shopfront-b': 1800, 'shopfront-c': 1800,
+      canteen: 5000, 'market-hall': 9000,
+    };
+    for (const [id, budget] of Object.entries(plots)) {
+      const index = names.indexOf(id); assert.ok(index >= 0, `missing ${id}`);
+      assert.equal(parent.get(index), family, `${id} must be a direct family child`);
+      const descendants = [];
+      const visit = nodeIndex => { descendants.push(nodeIndex); for (const child of nodes[nodeIndex].children || []) visit(child); };
+      visit(index);
+      const triangles = descendants.reduce((sum, nodeIndex) => {
+        const mesh = nodes[nodeIndex].mesh;
+        return mesh === undefined ? sum : sum + gltf.meshes[mesh].primitives.reduce((n, primitive) => n + gltf.accessors[primitive.indices].count / 3, 0);
+      }, 0);
+      assert.ok(triangles > 100 && triangles <= budget, `${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
+    }
+    const imagePixels = gltf.images.reduce((sum, image) => {
+      const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
+      const dimensions = jpegDimensions(bytes, start, view.byteLength);
+      assert.ok(dimensions.width <= 256 && dimensions.height <= 256, `${dimensions.width}x${dimensions.height} food texture exceeds 256 px`);
+      return sum + dimensions.width * dimensions.height;
+    }, 0);
+    assert.ok(imagePixels <= 1024 * 1024, `${imagePixels} texture pixels exceed the 1K budget`);
+    for (const material of gltf.materials || []) {
+      assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallic exceeds .3`);
+    }
+    for (const mesh of gltf.meshes || []) for (const primitive of mesh.primitives || []) {
+      const texcoords = Object.keys(primitive.attributes || {}).filter(key => key.startsWith('TEXCOORD_'));
+      assert.ok(texcoords.length <= 1 && (!texcoords.length || texcoords[0] === 'TEXCOORD_0'), 'food primitive must use TEXCOORD_0 only');
+      if (primitive.material !== undefined && gltf.materials[primitive.material]?.pbrMetallicRoughness?.baseColorTexture) {
+        assert.deepEqual(texcoords, ['TEXCOORD_0'], 'textured food primitive needs TEXCOORD_0');
+        const accessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
+        const view = gltf.bufferViews[accessor.bufferView];
+        assert.equal(accessor.type, 'VEC2', 'food UV attributes use pairs of floats');
+        assert.equal(accessor.componentType, 5126, 'food UV attributes use float32');
+        const stride = view.byteStride || 8;
+        const start = binaryStart + (view.byteOffset || 0) + (accessor.byteOffset || 0);
+        const low = [Infinity, Infinity], high = [-Infinity, -Infinity];
+        for (let i = 0; i < accessor.count; i++) for (let axis = 0; axis < 2; axis++) {
+          const value = bytes.readFloatLE(start + i * stride + axis * 4);
+          assert.ok(Number.isFinite(value), 'food UV values must be finite');
+          low[axis] = Math.min(low[axis], value); high[axis] = Math.max(high[axis], value);
+        }
+        assert.ok(high[0] - low[0] > .01 || high[1] - low[1] > .01, 'food UV coordinates must span a range');
+      }
     }
   });
 

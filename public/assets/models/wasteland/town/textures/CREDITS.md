@@ -167,3 +167,71 @@ compression, no green plants. Neutral diffuse overcast daylight, camera
 perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
+
+## TOWN-ART-FOOD materials
+
+Generated with OpenAI ImageGen for the soup-kitchen photo and material study.
+The Blender recipe embeds each texture separately as a 256 px JPEG in
+`food.glb`. The complete reference photo stays outside the repository; its
+small comparison crop appears on the round sheet.
+
+- `town-food-steel.jpg`: Crop from this generated image: "Straight-on close
+  photograph of battered desert-cookhouse materials: one large central
+  field of dark brown oxidized steel plate with dusty faded charcoal paint
+  and irregular 2 to 15 cm chips exposing dark brown rust and rubbed grey
+  metal edges, sparse rivet heads and sharp vertical rust trails beneath
+  them; a smaller distinct area of bleached grey-brown plank grain and
+  patched dirty beige canvas edge visible near the border. True scale, flat
+  orthographic, bright diffuse daylight, sharp detail; no orange rust, text
+  or watermark."
+- `town-food-plank.jpg`: 512 px resize of a generated square tile. Prompt:
+  "Use case: photorealistic-natural. Asset type: seamless square repeating
+  albedo texture for a realistic Wasteland game model. Sharp close-up
+  photograph of one weather-beaten grey-brown plank from a desert market
+  bench: elongated straight wood grain, aged nail holes, split fibers,
+  rubbed lighter edges and compacted dust in grooves; muted deep grey-brown
+  tone, not orange and not pale. The grain runs vertically through the
+  square, plank material fills the entire tile, flat orthographic macro, no
+  perspective, bright diffuse overcast daylight, seamless on all four edges.
+  Real scale detail, avoid steel, canvas, objects, text, blur, noise-only
+  pattern, border, watermark."
+- `town-food-canvas.jpg`: 512 px resize of a generated square tile. Prompt:
+  "Use case: photorealistic-natural. Asset type: seamless square repeating
+  albedo texture for a realistic Wasteland game model. Sharp close-up
+  photograph of a single weather-beaten desert cookhouse canvas awning
+  material: dirty muted beige-grey heavy cotton canvas, visible woven threads
+  at true scale, faded soot shadows, uneven sun bleaching, small frayed 2 to
+  15 cm tears and stitched repair seams with dark thread. One material only
+  fills the full square; flat orthographic macro, no perspective, evenly lit
+  bright overcast daylight, seamless edges on all four sides. Avoid steel,
+  wood, objects, text, orange/brown saturation, blur, noise-only texture,
+  border, watermark."
+- `town-food-corrugated.jpg`: 512 px resize of a generated square tile.
+  Prompt: "Use case: photorealistic-natural. Asset type: seamless square
+  repeating albedo texture for a realistic desert-market game model. One
+  close orthographic photograph of weathered corrugated galvanized roofing
+  tin at true scale, about 10 cm ridges. Dark muted charcoal-zinc steel,
+  dusty brown-grey patina, irregular deep umber rust streaks below small nail
+  heads, scuffed edges with a little rubbed dull silver, some old faded brown
+  paint still visible; uneven wear, not a flat color. Crisp small surface
+  scratches and dust, bright diffuse overcast daylight, no glare, no
+  perspective, no cast shadows, material fills the square and tiles
+  seamlessly on every edge. Avoid bright silver, blue-grey, saturated orange,
+  repeated stripes painted flat, blur, noise-only, objects, text, border,
+  logos, watermark."
+
+Soup-kitchen photo reference prompt: "Use case: photorealistic-natural.
+Asset type: real-world production reference for a Wasteland town Blender
+model. Documentary photograph of a small roadside soup kitchen built by hand
+from salvaged materials in a dusty desert settlement, viewed at eye level in
+bright overcast daylight against a plain mid-grey yard. A 2 m by 4 m
+open-sided cook shelter with a faded patched canvas awning, thin welded
+rusted steel posts and braces, corrugated tin roof panels, a big
+soot-blackened iron soup pot over a contained wood fire on a low stone hearth,
+two rough plank benches, dented water cans and stacked bowls. Real human-scale
+proportions, sharp dark-brown rust under fasteners, rubbed bare steel corners,
+soot around pot and fire, dusty weathering low down, sun-faded canvas with
+stitched repairs, battered timber grain. One whole shelter fills the frame in
+a three-quarter front view with no people. Avoid logos, signs, text, watermark,
+toy-like shapes, clean new materials, illustration or franchise references."
+The reference and uncropped material study stay outside the repository.
