@@ -889,6 +889,16 @@ tasks:
     locks: []
     details: "docs/board/cards/TOWN-JOBS-2.md"
 
+  - id: TOWN-PEOPLE-SUPPORT
+    title: "Town: homes and water bring people"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/TOWN-PEOPLE-SUPPORT.md"
+
   - id: TOWN-SUPPORT
     title: "Town: support vehicles"
     owner: "codex"
