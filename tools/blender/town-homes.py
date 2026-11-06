@@ -3,7 +3,7 @@
 Run with Blender 4.5: blender -b --python tools/blender/town-homes.py -- --root . --render .evidence/DATE/TOWN-ART-HOMES
 Footprints and coordinates are in game metres, X right, Y up, front -Z.
 """
-import argparse, base64, json, math, random, sys, struct
+import argparse, json, math, random, sys, struct
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
@@ -18,19 +18,25 @@ from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 out.parent.mkdir(parents=True,exist_ok=True);blend.parent.mkdir(parents=True,exist_ok=True)
-town_tin_source=Path(__file__).resolve().with_name('town-homes-tin.jpg.b64')
-town_tin_photo=root/'.qa-dist/town-homes-tin.jpg';town_tin_photo.parent.mkdir(parents=True,exist_ok=True)
-town_tin_photo.write_bytes(base64.b64decode(town_tin_source.read_bytes()))
-materials=town.make_materials({'galvanised-tin':str(town_tin_photo)})
+texture_dir=root/'public/assets/models/wasteland/town/textures'
+materials=town.make_materials({
+    'galvanised-tin':str(texture_dir/'rusted-corrugated-tin.jpg'),
+    'rusted-steel':str(texture_dir/'faded-yellow-steel.jpg'),
+    'weathered-plank':str(texture_dir/'bleached-plank.jpg'),
+    'faded-hand-paint':str(texture_dir/'faded-yellow-steel.jpg'),
+    'patched-canvas':str(texture_dir/'patched-canvas.jpg'),
+})
 canvas_bsdf=materials['patched-canvas'].node_tree.nodes.get('Principled BSDF')
-canvas_bsdf.inputs['Emission Color'].default_value=(.12,.075,.04,1);canvas_bsdf.inputs['Emission Strength'].default_value=.05
 atlas=bpy.data.images.get('Scablands shared town wear atlas 1K')
 # Keep the photo's corrosion and rivets, but bring its clean steel base into
 # the warmer, darker range of the accepted Scablands town materials.
 import numpy as np
 pixels=np.empty(1024*1024*4,dtype=np.float32);atlas.pixels.foreach_get(pixels)
-pixels=pixels.reshape((1024,1024,4));pixels[:256,256:512,:3]*=np.array([.58,.39,.25],dtype=np.float32)[None,None,:]
-pixels[256:512,:256,:3]*=np.array([.45,.34,.22],dtype=np.float32)[None,None,:]
+pixels=pixels.reshape((1024,1024,4));pixels[:256,256:512,:3]*=np.array([1.22,1.18,1.08],dtype=np.float32)[None,None,:]
+pixels[:256,:256,:3]*=np.array([.62,.61,.58],dtype=np.float32)[None,None,:]
+pixels[:256,512:768,:3]*=np.array([.42,.42,.40],dtype=np.float32)[None,None,:]
+yellow=pixels[256:512,768:1024,:3].copy();luma=yellow[:,:,0:1]*.30+yellow[:,:,1:2]*.59+yellow[:,:,2:3]*.11
+pixels[256:512,768:1024,:3]=np.clip(yellow*.45+luma*.55,0,1)
 # Darken the canvas swatch so desert light does not wash the tents to cream.
 pixels[:256,768:1024,:3]*=np.array([.72,.70,.67],dtype=np.float32)[None,None,:]
 atlas.pixels.foreach_set(pixels.reshape(-1))
@@ -77,7 +83,6 @@ def lamp(home,loc):
     return obj
 tent_lining=bpy.data.materials.new('Town / canvas underside');tent_lining.use_nodes=True
 lining_bsdf=tent_lining.node_tree.nodes.get('Principled BSDF');lining_bsdf.inputs['Base Color'].default_value=(.30,.21,.13,1);lining_bsdf.inputs['Roughness'].default_value=.95
-lining_bsdf.inputs['Emission Color'].default_value=(.18,.12,.07,1);lining_bsdf.inputs['Emission Strength'].default_value=.34
 def create(name,foot=(1,1)):
     h=empty(name,root_obj);homes[name]=h
     # Leave >= 0.5 m on every side inside the cell footprint.
@@ -88,12 +93,29 @@ def tin_wall(name,center,width,height,material,parent,axis='x'):
     size=(width,height,.08) if axis=='x' else (.08,height,width)
     return cube(name,center,size,material,.012,parent)
 def fabric_surface(name,points,material,parent,reverse=False):
-    face=tuple(reversed(range(len(points)))) if reverse else tuple(range(len(points)));mesh=bpy.data.meshes.new(name+' stitched canvas')
-    vertices=[town.game_vector(p) for p in points];mesh.from_pydata(vertices,[],[face])
+    mesh=bpy.data.meshes.new(name+' stitched canvas')
+    if 'canvas roof' in name:
+        vertices=[];faces=[];steps=8;a,b,c,d=points
+        for j in range(steps+1):
+            v=j/steps
+            for i in range(steps+1):
+                u=i/steps
+                p=tuple((1-u)*(1-v)*a[k]+u*(1-v)*b[k]+u*v*c[k]+(1-u)*v*d[k] for k in range(3))
+                p=(p[0],p[1]-.17*math.sin(math.pi*u)*math.sin(math.pi*v),p[2])
+                vertices.append(town.game_vector(p))
+        for j in range(steps):
+            for i in range(steps):
+                q=j*(steps+1)+i;faces.append((q,q+1,q+steps+2,q+steps+1))
+        mesh.from_pydata(vertices,[],faces)
+    else:
+        face=tuple(reversed(range(len(points)))) if reverse else tuple(range(len(points)))
+        vertices=[town.game_vector(p) for p in points];mesh.from_pydata(vertices,[],[face])
     mesh.materials.append(material);mesh.update();uv=mesh.uv_layers.new(name='canvas weave')
     for poly in mesh.polygons:
         for li in poly.loop_indices:
-            v=vertices[mesh.loops[li].vertex_index];uv.data[li].uv=(v.x/2,v.y/2)
+            v=vertices[mesh.loops[li].vertex_index]
+            second_axis=v.y if ('canvas roof' in name or 'canvas underside' in name) else v.z
+            uv.data[li].uv=(v.x/2,second_axis/2)
     o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o)
     return part(parent,o)
 def window(home,x,y,z,w=.58,h=.55):
@@ -171,6 +193,9 @@ for idx,name in enumerate(('tent-a','tent-b')):
             fabric_surface(name+' sloped canvas repair',[
                 slope_point(x-.38,lo),slope_point(x+.38,lo),slope_point(x+.38,hi),slope_point(x-.38,hi)],patch_material,h)
         for j in range(7):beam(name+' guy line',(s*w*.43,.16,s*d*.4),(s*w*.43+(.75 if j%2 else -.6),.08+j*.018,s*d*.4+(j-3)*.24),.022,mat['iron-dark'],h)
+    for x,z in ((-w*.43,-d*.44),(w*.43,-d*.44),(-w*.43,d*.44),(w*.43,d*.44)):
+        beam(name+' tied guy rope',(x,ridge*.73,z),(x*1.12,.12,z*1.12),.035,mat['iron-dark'],h)
+        cube(name+' rope ground stake',(x*1.12,.12,z*1.12),(.12,.24,.12),mat['rusted-steel'],.02,h)
     cube(name+' ground tarp',(0,.13,0),(w,.12,d),mat['patched-canvas'],.02,h)
     for x in (-w*.28,w*.28):beam(name+' tarp stake',(x,.15,d*.44),(x,.05,d*.58),.045,mat['rusted-steel'],h)
     drum(h,-.72,0,-1.82);chair(h,.82,0,-2.08);lamp(h,(-2.25,1.42,-d*.42))
@@ -189,6 +214,10 @@ for idx,name in enumerate(('shack-a','shack-b','shack-c')):
     for z in (-d*.42,d*.42):beam(name+' sill rail',(-w*.44,.3,z),(w*.44,.3,z),.12,mat['iron-dark'],h)
     for side in (-1,1):tin_wall(name+' corrugated front-back',(0,1.5,side*d*.41),w*.90,2.48,mat['galvanised-tin'],h)
     for side in (-1,1):tin_wall(name+' corrugated side',(side*w*.44,1.5,0),d*.83,2.48,mat['rusted-steel'] if side>0 else mat['galvanised-tin'],h,'z')
+    for px,py,pw,ph,finish,tilt in ((-2.28,1.48,1.12,1.42,'faded-hand-paint',-.08),
+                                    (2.18,2.04,1.32,.83,'weathered-plank',.06),
+                                    (-.95,2.26,.72,.52,'rusted-steel',-.04)):
+        patch=cube(name+' overlapped salvage wall patch',(px,py,-d*.455),(pw,ph,.055),mat[finish],.018,h);patch.rotation_euler[1]=tilt
     door(h,0,.27,-d*.45);window(h,1.85,1.72,-d*.45-.04)
     # Rust falls below fasteners in visible bands; bars are deliberately irregular.
     for x in (-2.7,-1.05,1.24,2.62):
@@ -358,8 +387,8 @@ def merge_surfaces():
 if a.render:
     render.mkdir(parents=True,exist_ok=True);scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=12;scene.cycles.use_denoising=True
     scene.render.resolution_x=960;scene.render.resolution_y=680;scene.render.resolution_percentage=100
-    scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.25
-    scene.world=bpy.data.worlds.new('Bright overcast Scablands');scene.world.use_nodes=True;bg=scene.world.node_tree.nodes['Background'];bg.inputs['Color'].default_value=(.60,.65,.67,1);bg.inputs['Strength'].default_value=1.0
+    scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=-.18
+    scene.world=bpy.data.worlds.new('Bright overcast Scablands');scene.world.use_nodes=True;bg=scene.world.node_tree.nodes['Background'];bg.inputs['Color'].default_value=(.32,.30,.27,1);bg.inputs['Strength'].default_value=1.0
     bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.06));ground=bpy.context.object;ground.name='render only sand';ground.data.materials.append(mat['sand'])
     for loc,power,size in [((2,14,21),6000,22),((-18,2,13),3800,22),((0,15,18),2800,20),((0,12,13),1200,14)]:
         bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((0,2,0))-light.location).to_track_quat('-Z','Y').to_euler()
@@ -385,9 +414,10 @@ if a.render:
     for h in homes.values():
         h.hide_render=False
         for child in h.children_recursive:child.hide_render=False
-    placements=[(-36,0,-11),(-18,0,-11),(0,0,-11),(18,0,-11),(36,0,-11),(-36,0,9),(-18,0,9),(0,0,9),(18,0,9),(36,0,9)]
+    placements=[(-39.6+8.8*i,0,0) for i in range(10)]
     for h,pos in zip(homes.values(),placements):h.location=town.game_vector(pos)
-    aim((1,56,-75),(0,1,0),28);scene.render.resolution_x=1600;scene.render.resolution_y=950;scene.render.filepath=str(render/'street-overhead.png');bpy.ops.render.render(write_still=True)
+    aim((0,54,-76),(0,2,0),35);scene.render.resolution_x=1600;scene.render.resolution_y=950;scene.render.filepath=str(render/'street-overhead.png');bpy.ops.render.render(write_still=True)
+    aim((0,8,-82),(0,3,0),28);scene.render.filepath=str(render/'street-road.png');bpy.ops.render.render(write_still=True)
     for h in homes.values():h.location=(0,0,0)
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.objects.remove(ground,do_unlink=True)
 
