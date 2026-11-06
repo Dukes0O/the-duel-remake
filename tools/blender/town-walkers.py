@@ -1,272 +1,465 @@
-"""Build town walkers from the game's licensed Quaternius people.
+"""Carve the Wasteland town walkers from four-view photographic turnarounds.
 
-Run: blender -b --python tools/blender/town-walkers.py -- --root . --render .evidence/DATE/TOWN-ART-WALKERS
-The standing Quaternius figures are reused from public/assets/heli/people/.
-The source pack is CC0; see public/assets/models/CREDITS.md.
+Run: blender -b -t 4 --python-exit-code 1 --python tools/blender/town-walkers.py -- --root . --render-dir .qa-dist/town-walkers
+The four small photo sets are rebuild inputs in the adjacent textures folder.
 """
-import argparse, json, math, sys
+import argparse
+import json
+import math
+import struct
+import sys
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
-a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
-out=root/'public/assets/models/wasteland/town/walkers.glb';blend=root/'art-build/town/walkers.blend'
-render=Path(a.render);render=render if render.is_absolute() else root/render
-if a.paths_only:
- print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(render)] if a.render else []}));raise SystemExit(0)
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--people', default='all')
+parser.add_argument('--render-dir', default='.qa-dist/town-walkers')
+parser.add_argument('--paths-only', action='store_true')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(args.root).resolve()
+script = root / 'tools/blender/town-walkers.py'
+glb = root / 'public/assets/models/wasteland/town/walkers.glb'
+textures = root / 'public/assets/models/wasteland/town/textures'
+blend = root / 'art-build/town/walkers.blend'
+render_dir = Path(args.render_dir)
+render_dir = render_dir if render_dir.is_absolute() else root / render_dir
 
-import bpy, bmesh
+PEOPLE = [
+    ('walker-a', 'walker-a', 1.70, 'dust coat', .83, 'brown'),
+    ('walker-b', 'walker-b', 1.70, 'poncho', .82, 'olive'),
+    ('walker-c', 'walker-c', 1.70, 'welding apron', .84, 'slate'),
+    ('walker-d', 'walker-a', 1.70, 'patched long coat', .81, 'rust'),
+    ('walker-e', 'walker-c', 1.70, 'work apron', .84, 'blue'),
+    ('walker-f', 'walker-b', 1.70, 'hooded poncho', .82, 'charcoal'),
+    ('walker-g', 'walker-c', 1.70, 'rolled sleeve overalls', .83, 'ochre'),
+    ('walker-h', 'walker-a', 1.70, 'head scarf and overalls', .82, 'moss'),
+    ('walker-kid-a', 'walker-kid-a', 1.30, 'child jacket and patched shorts', .66, 'ochre'),
+    ('walker-kid-b', 'walker-kid-a', 1.30, 'child overshirt and trousers', .66, 'blue'),
+    ('walker-guard', 'walker-b', 1.70, 'guard coat with slung rifle', .83, 'charcoal'),
+    ('walker-trader', 'walker-a', 1.70, 'long coat and loaded pack', .83, 'rust'),
+    ('walker-vane', 'walker-c', 1.70, 'white overalls and blue drop', .84, 'white'),
+]
+if args.paths_only:
+    print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)], 'evidence': [str(render_dir)]}))
+    raise SystemExit(0)
+
+import bpy
+import numpy as np
 from mathutils import Vector
-bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
-scene=bpy.context.scene;out.parent.mkdir(parents=True,exist_ok=True);blend.parent.mkdir(parents=True,exist_ok=True)
-texdir=root/'public/assets/models/wasteland/town/textures'
-SPECS=[
- ('walker-a','driver-standing','coat','hood'),('walker-b','hiker-standing','overalls','cap'),
- ('walker-c','driver-standing','poncho','broad-hat'),('walker-d','driver-standing','long-coat','hood'),
- ('walker-e','hiker-standing','work-shirt','knit-cap'),('walker-f','driver-standing','dust-coat','wide-brim'),
- ('walker-g','hiker-standing','overalls','hardhat'),('walker-h','driver-standing','shawl','wrap'),
- ('walker-kid-a','driver-standing','short-coat','hood'),('walker-kid-b','hiker-standing','overall-shorts','cap'),
- ('walker-guard','driver-standing','guard-coat','helmet'),('walker-trader','hiker-standing','layered-coat','turban'),
- ('walker-vane','driver-standing','white-overalls','bare-head')]
 
-def child(parent,obj):
- world=obj.matrix_world.copy();obj.parent=parent;obj.matrix_world=world;return obj
+sys.path.insert(0, str(script.parent))
+from hull_model import View, occupancy, largest_part, carve_hull
+from photo_model import Photo
 
-def make_cloth(name,path,tint=(1,1,1)):
- im=bpy.data.images.load(str(path),check_existing=False);im.filepath_raw=str(path);im.file_format='JPEG';im.pack()
- mat=bpy.data.materials.new(name);mat.diffuse_color=(*tint,1);mat.use_nodes=True
- bs=mat.node_tree.nodes.get('Principled BSDF');bs.inputs['Metallic'].default_value=0;bs.inputs['Roughness'].default_value=.93
- image=mat.node_tree.nodes.new('ShaderNodeTexImage');image.image=im;image.extension='REPEAT'
- mat.node_tree.links.new(image.outputs['Color'],bs.inputs['Base Color']);return mat
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.context.preferences.filepaths.save_version = 0
+scene = bpy.context.scene
+blend.parent.mkdir(parents=True, exist_ok=True)
+glb.parent.mkdir(parents=True, exist_ok=True)
+render_dir.mkdir(parents=True, exist_ok=True)
 
-def mesh_subset(src,name,polys,origin=(0,0,0),material_overrides=None):
- old=src.data;uvold=old.uv_layers.active;mapping={};verts=[];faces=[];mids=[];uvfaces=[]
- for poly in polys:
-  face=[];uv=[]
-  for li in poly.loop_indices:
-   vi=old.loops[li].vertex_index
-   if vi not in mapping:
-    mapping[vi]=len(verts);verts.append(tuple(old.vertices[vi].co-Vector(origin)))
-   face.append(mapping[vi]);uv.append(tuple(uvold.data[li].uv) if uvold else (old.vertices[vi].co.x,old.vertices[vi].co.z))
-  faces.append(face);mids.append(poly.material_index);uvfaces.append(uv)
- data=bpy.data.meshes.new(name+' mesh');data.from_pydata(verts,[],faces);data.materials.clear()
- for mat in (material_overrides or old.materials):data.materials.append(mat)
- data.update();uv=data.uv_layers.new(name='UVMap')
- for poly,uvrow,mid in zip(data.polygons,uvfaces,mids):
-  poly.material_index=min(mid,len(data.materials)-1)
-  poly.use_smooth=True
-  for li,coord in zip(poly.loop_indices,uvrow):uv.data[li].uv=coord
- obj=bpy.data.objects.new(name,data);scene.collection.objects.link(obj);return obj
+# Hand measurements on the 190 x 256 crops: adult head top y=7, ground y=253,
+# centreline x=95, hip y=133. The child uses the same measured photo span,
+# scaled to 1.30 m; her hip is y=128. Each panel was reduced without distortion.
+PHOTO = {'adult': (7, 253, 95, 133), 'child': (7, 253, 95, 128)}
+VOXEL = .015
+COLOURS = {
+    'brown': (1.00, .92, .82, 1), 'olive': (1.00, 1.00, .90, 1),
+    'slate': (1.00, 1.00, 1.00, 1), 'rust': (1.00, .88, .76, 1),
+    'blue': (.78, .86, .91, 1), 'charcoal': (.70, .70, .68, 1),
+    'ochre': (1.00, .91, .68, 1), 'moss': (.84, .90, .76, 1),
+    'white': (1.0, 1.0, 1.0, 1),
+}
 
-def assign_photo_cloth(obj,ident):
- path=texdir/f'{ident}-cloth.jpg';fabric=make_cloth(ident+' worn photo-cloth',path)
- mats=[]
- for old in obj.data.materials:
-  lower=(old.name if old else '').lower()
-  if any(k in lower for k in ('boot','steel','visor','goggle')):
-   copy=old.copy() if old else fabric
-   mats.append(copy)
-  else:mats.append(fabric)
- obj.data.materials.clear()
- for mat in mats:obj.data.materials.append(mat)
+def frame_seeds(photo):
+    seeds = [(5, 5), (photo.w - 6, 5), (5, photo.h - 6), (photo.w - 6, photo.h - 6)]
+    seeds += [(x, 4) for x in range(32, photo.w - 8, 32)]
+    seeds += [(x, photo.h - 5) for x in range(32, photo.w - 8, 32)]
+    seeds += [(4, y) for y in range(32, photo.h - 8, 32)]
+    seeds += [(photo.w - 5, y) for y in range(32, photo.h - 8, 32)]
+    return seeds
 
-def hat(parent,ident,kind,cloth):
- # Low-poly curved hat/hood dome, shaped around a real head rather than a box.
- sides=10;cx,cy,cz=0,-.005,1.62
- if kind in ('bare-head','wrap'):return
- verts=[];rings=[(.17,.16,.025),(.145,.14,.105),(.09,.09,.16)]
- for rx,ry,zoff in rings:
-  for i in range(sides):
-   ang=2*math.pi*i/sides;verts.append((cx+rx*math.cos(ang),cy+ry*math.sin(ang),cz+zoff))
- faces=[]
- for r in range(2):
-  for i in range(sides):faces.append((r*sides+i,r*sides+(i+1)%sides,(r+1)*sides+(i+1)%sides,(r+1)*sides+i))
- faces.append(tuple(range(2*sides,3*sides)))
- # Small wrap-around brim is a real curved strip.
- base=len(verts)
- for z,rx,ry in ((cz+.025,.19,.18),(cz+.055,.17,.16)):
-  for i in range(sides):
-   ang=2*math.pi*i/sides;verts.append((cx+rx*math.cos(ang),cy+ry*math.sin(ang),z))
- for i in range(sides):faces.append((base+i,base+(i+1)%sides,base+sides+(i+1)%sides,base+sides+i))
- data=bpy.data.meshes.new(ident+' hat mesh');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
- for poly in data.polygons:
-  for li in poly.loop_indices:
-   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x*3,v.z*3)
- obj=bpy.data.objects.new(ident+' hat silhouette',data);scene.collection.objects.link(obj);child(parent,obj)
+def measurements(height, kind):
+    top, ground, centre, hips = PHOTO[kind]
+    scale = height / (ground - top)
+    ground_y = (ground - top) * scale
+    return scale, centre, ground, hips, ground_y
 
-def coat_shell(parent,ident,cloth):
- # Open-front, tapered drape with an uneven below-knee hem.
- sides=14;verts=[];rings=[(.23,.14,1.21),(.27,.17,.83),(.34,.21,.43)]
- for rx,ry,z in rings:
-  for i in range(sides+1):
-   ang=math.radians(57)+math.radians(246)*i/sides
-   hem=1+(.025*math.sin(i*2.3) if z<.5 else 0)
-   verts.append((rx*math.sin(ang)*hem,-.005+ry*math.cos(ang)*hem,z))
- faces=[]
- for r in range(2):
-  for i in range(sides):faces.append((r*(sides+1)+i,r*(sides+1)+i+1,(r+1)*(sides+1)+i+1,(r+1)*(sides+1)+i))
- data=bpy.data.meshes.new(ident+' tailored coat shell');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
- for poly in data.polygons:
-  poly.use_smooth=True
-  for li in poly.loop_indices:
-   v=data.vertices[data.loops[li].vertex_index].co
-   angle=(math.atan2(v.x,v.y+.005)-math.radians(57))/math.radians(246)
-   uv.data[li].uv=(angle,(v.z-.43)/.78)
- obj=bpy.data.objects.new(ident+' long coat shell',data);scene.collection.objects.link(obj);child(parent,obj)
+def views_for(photo_set, height, kind):
+    scale, centre, ground, hips, world_height = measurements(height, kind)
+    photos = {name: Photo(textures / f'{photo_set}-{name}.jpg') for name in ('front', 'side', 'back', 'top')}
 
-def named_drop(parent):
- verts=[(0,0,.06),(-.035,0,.005),(0,-.008,-.055),(.035,0,.005),(0,.018,.005)]
- faces=[(0,1,4),(0,4,3),(1,2,4),(4,2,3)]
- data=bpy.data.meshes.new('Vane blue drop mesh');data.from_pydata(verts,[],faces);data.materials.append(vane_blue);uv=data.uv_layers.new(name='UVMap')
- for poly in data.polygons:
-  for li in poly.loop_indices:
-   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x+0.05,v.z+0.06)
- obj=bpy.data.objects.new('walker-vane blue drop',data);scene.collection.objects.link(obj);child(parent,obj)
+    def front_pick(x, y, z):
+        return centre + x / scale, ground - y / scale
+    def side_pick(x, y, z):
+        return centre + z / scale, ground - y / scale
+    def back_pick(x, y, z):
+        return centre - x / scale, ground - y / scale
+    def top_pick(x, y, z):
+        return centre + x / scale, 256 - z / scale
 
-def trader_pack(parent,cloth):
- sides=8;verts=[];rings=[(.13,.14,.0),(.19,.20,.18),(.15,.16,.40)]
- for rx,ry,z in rings:
-  for i in range(sides):
-   angle=2*math.pi*i/sides;verts.append((rx*math.cos(angle),.24+ry*math.sin(angle),.84+z))
- faces=[]
- for r in range(2):
-  for i in range(sides):faces.append((r*sides+i,r*sides+(i+1)%sides,(r+1)*sides+(i+1)%sides,(r+1)*sides+i))
- faces.extend([tuple(reversed(range(sides))),tuple(range(2*sides,3*sides))])
- data=bpy.data.meshes.new('Trader pack mesh');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
- for poly in data.polygons:
-  for li in poly.loop_indices:
-   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x+.2,v.z-.84)
- obj=bpy.data.objects.new('walker-trader pack main',data);scene.collection.objects.link(obj);child(parent,obj)
+    specs = [
+        ('front', front_pick, (0, 0, 1)),
+        ('side', side_pick, (1, 0, 0)),
+        ('back', back_pick, (0, 0, -1)),
+        ('top', top_pick, (0, 1, 0)),
+    ]
+    result = []
+    for name, pick, normal in specs:
+        photo = photos[name]
+        view = View(name, photo, frame_seeds(photo), pick, normal, grey=28, tolerance=34)
+        result.append(view)
+    return result, scale, centre, ground, hips, world_height
 
-def build(spec):
- ident,donor,outfit,hatkind=spec;is_kid='kid' in ident;height=1.30 if is_kid else 1.70
- source=bpy.data.objects.new(ident+' donor source',donor_templates[donor].copy());scene.collection.objects.link(source)
- bpy.ops.object.select_all(action='DESELECT');source.select_set(True);bpy.context.view_layer.objects.active=source
- source.data.calc_loop_triangles();initial=len(source.data.loop_triangles)
- dec=source.modifiers.new('Preserve human silhouette under town budget','DECIMATE');dec.ratio=220/initial;dec.use_collapse_triangulate=True
- bpy.ops.object.modifier_apply(modifier=dec.name);source.data.calc_loop_triangles()
- factor=height/max(v.co.z for v in source.data.vertices)
- for v in source.data.vertices:
-  if is_kid:
-   # Children have shorter legs, a compressed torso and a slightly larger head.
-   z=v.co.z
-   if z<.93:v.co.z*=.70
-   elif z<1.48:v.co.z=.651+(z-.93)*.84
-   else:v.co.z=.651+.55*.84+(z-1.48)*1.12
-  v.co*=factor
- source.data.update()
- bpy.ops.object.select_all(action='DESELECT');source.select_set(True);bpy.context.view_layer.objects.active=source
- bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(island_margin=.02);bpy.ops.object.mode_set(mode='OBJECT')
- source.data.uv_layers.active.name='UVMap'
- actor=bpy.data.objects.new(ident,None);scene.collection.objects.link(actor);actor.parent=root_obj;actor['height_m']=height;actor['source']='Quaternius Universal Base Characters, Standard (CC0)'
- assign_photo_cloth(source,ident)
- # Classify the decimated donor surface into a head, an upper body, and two legs.
- hip=height*.51
- upper=[];legs=[[],[]]
- for poly in source.data.polygons:
-  center=poly.center;z=center.z
-  if z<hip:legs[0 if center.x<0 else 1].append(poly)
-  else:upper.append(poly)
- legparts=[]
- for index,label in enumerate(('leg-l','leg-r')):
-  pivot=bpy.data.objects.new(ident+':'+label,None);scene.collection.objects.link(pivot);child(actor,pivot)
-  pivot.location=( (-.105 if index==0 else .105),0,hip);pivot['swing_axis']='X'
-  obj=mesh_subset(source,ident+' articulated '+label,legs[index],origin=tuple(pivot.location),material_overrides=source.data.materials);child(pivot,obj);legparts.append(obj)
- body=mesh_subset(source,ident+' donor body',upper,material_overrides=source.data.materials);child(actor,body)
- # Keep the donor's complete head joined to its shoulders. A small shaded face
- # insert is a separate adjustable part and stays within the head-node budget.
- bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=4,radius=1,location=(0,-.095,height*.90))
- head=bpy.context.object;head.name=ident+' head';head.scale=(.075,.025,.10)
- bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
- head.data.materials.append(skin_mat);head.data.uv_layers.active.name='UVMap' if head.data.uv_layers.active else None;child(actor,head)
- bpy.data.objects.remove(source,do_unlink=True)
- # Custom outfit markups stay within the body budget; shells follow cloth rather than cube primitives.
- fabric=next(m for m in body.data.materials if m and m.name.startswith(ident+' worn'))
- if outfit in ('coat','long-coat','dust-coat','guard-coat','layered-coat','short-coat'):
-  coat_shell(actor,ident,fabric)
- hat(actor,ident,hatkind,fabric)
- if ident=='walker-trader':trader_pack(actor,fabric)
- if ident=='walker-vane':named_drop(actor)
- triangles=0
- for ob in actor.children_recursive:
-  if ob.type=='MESH':ob.data.calc_loop_triangles();triangles+=len(ob.data.loop_triangles)
- if triangles>450:raise RuntimeError(f'{ident}: {triangles} triangles exceeds 450')
- actor['triangle_count']=triangles
- for ob in actor.children_recursive:
-  if ob.type=='MESH' and ob.data.uv_layers.active:ob.data.uv_layers.active.name='UVMap'
- print('WALKER',ident,'triangles',triangles,'height',height)
- return actor
+def look_any(view, x, y, z):
+    return view.covers(x, y, z)
 
-donor_templates={}
-for donor in sorted({spec[1] for spec in SPECS}):
- bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/heli/people'/f'{donor}.glb'))
- imported=next(o for o in bpy.context.selected_objects if o.type=='MESH')
- bpy.ops.object.select_all(action='DESELECT');imported.select_set(True);bpy.context.view_layer.objects.active=imported
- bpy.ops.object.transform_apply(location=True,rotation=True,scale=True)
- donor_templates[donor]=imported.data.copy()
- bpy.data.objects.remove(imported,do_unlink=True)
-scene=bpy.context.scene
-vane_blue=bpy.data.materials.new('Mrs Vane chipped blue workwear mark');vane_blue.diffuse_color=(.10,.24,.30,1);vane_blue.use_nodes=True
-vane_blue.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.10,.24,.30,1)
-vane_blue.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=0
-skin_mat=bpy.data.materials.new('Muted dusty skin under shade');skin_mat.diffuse_color=(.24,.18,.13,1);skin_mat.use_nodes=True
-skin_bs=skin_mat.node_tree.nodes.get('Principled BSDF');skin_bs.inputs['Base Color'].default_value=(.24,.18,.13,1);skin_bs.inputs['Roughness'].default_value=.96
-root_obj=bpy.data.objects.new('town-walkers',None);scene.collection.objects.link(root_obj);root_obj.empty_display_type='PLAIN_AXES'
-actors=[build(spec) for spec in SPECS]
+def add_actor(person, index):
+    ident, photo_set, height, outfit, hip_fraction, colour_key = person
+    kind = 'child' if 'kid' in ident else 'adult'
+    views, scale, centre, ground, hips_px, world_height = views_for(photo_set, height, kind)
+    for view in views:
+        ys, xs = np.nonzero(view.mask)
+        print('PHOTO_MASK', ident, view.name, round(float(view.mask.mean()), 3),
+              int(xs.min()), int(xs.max()), int(ys.min()), int(ys.max()))
+    materials = {view.name: view.photo.material(.94) for view in views}
+    for material in materials.values():
+        bsdf = material.node_tree.nodes['Principled BSDF']
+        bsdf.inputs['Base Color'].default_value = COLOURS[colour_key]
+        bsdf.inputs['Metallic'].default_value = 0
+
+    hip_y = (ground - hips_px) * scale
+    half_x = .47 if kind == 'adult' else .39
+    body_bounds = ((-half_x, half_x), (0, height + .10), (-.38, .38))
+    leg_bounds = ((-.34, .34), (0, hip_y + .06), (-.30, .30))
+    actor = bpy.data.objects.new(ident, None)
+    scene.collection.objects.link(actor)
+    actor.parent = root_node
+
+    def upper_keep(x, y, z):
+        # The coat/apron photographed below the hip stays with the torso;
+        # the two leg hulls sit behind its open split and swing at the hip.
+        if outfit in ('dust coat', 'patched long coat', 'long coat and loaded pack', 'welding apron', 'work apron'):
+            return (y >= hip_y) | (np.abs(x) >= .22)
+        return y >= hip_y
+    def left_keep(x, y, z):
+        return (y < hip_y + .015) & (x <= .012)
+    def right_keep(x, y, z):
+        return (y < hip_y + .015) & (x >= -.012)
+
+    # An upright body has no 1.7 m ground-plane footprint. The overhead image
+    # is measured and used to paint upward-facing surfaces, while the front,
+    # profile and back masks define occupancy.
+    tests = [view.covers for view in views if view.name != 'top']
+    parts = []
+    for label, bounds, keep, target in (
+        ('upper', body_bounds, upper_keep, 205),
+        ('leg-l', leg_bounds, left_keep, 75),
+        ('leg-r', leg_bounds, right_keep, 75),
+    ):
+        solid, xs, ys, zs = occupancy(bounds, VOXEL, tests, keep)
+        print('OCCUPANCY', ident, label, int(solid.sum()), tuple(solid.shape))
+        if not solid.any():
+            raise RuntimeError(f'{ident}:{label} photo masks do not overlap')
+        solid = largest_part(solid)
+        if not solid.any():
+            raise RuntimeError(f'{ident}:{label} photo carve is empty')
+        mesh = carve_hull(f'{ident}:{label}', views, materials, solid, xs, ys, zs, VOXEL, target)
+        mesh['piece'] = label
+        if label == 'upper':
+            mesh.parent = actor
+            parts.append(mesh)
+        else:
+            side = 'l' if label.endswith('l') else 'r'
+            pivot = bpy.data.objects.new(f'{ident}:{label}', None)
+            scene.collection.objects.link(pivot)
+            pivot.parent = actor
+            pivot.location = (-.095 if side == 'l' else .095, 0, hip_y)
+            pivot['swing_axis'] = 'X'
+            mesh.location = (0, 0, -hip_y)
+            mesh.parent = pivot
+            parts.append(mesh)
+
+    actor['height_m'] = height
+    actor['photo_set'] = photo_set
+    actor['hip_height_m'] = round(hip_y, 3)
+    actor['outfit'] = outfit
+    add_outfit_parts(actor, ident, outfit, height, colour_key)
+    count = 0
+    for obj in actor.children_recursive:
+        if obj.type == 'MESH':
+            obj.data.calc_loop_triangles()
+            count += len(obj.data.loop_triangles)
+    if count > 450:
+        raise RuntimeError(f'{ident}: {count} triangles exceeds 450')
+    actor['triangle_count'] = count
+    print('WALKER', ident, 'triangles', count, 'height', height, 'hip', round(hip_y, 3))
+    return actor
+
+def accessory_material(name, color, metallic=0):
+    mat = bpy.data.materials.new(name)
+    mat.diffuse_color = (*color, 1)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes['Principled BSDF']
+    bsdf.inputs['Base Color'].default_value = (*color, 1)
+    bsdf.inputs['Metallic'].default_value = min(metallic, .3)
+    bsdf.inputs['Roughness'].default_value = .92
+    return mat
+
+def make_ellipsoid(name, actor, center, radius, material, segments=8, rings=5):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, radius=1, location=center)
+    obj = bpy.context.object
+    obj.name = name
+    obj.scale = radius
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj.data.materials.append(material)
+    uv = obj.data.uv_layers.active
+    if uv:
+        uv.name = 'UVMap'
+    obj.parent = actor
+    return obj
+
+def make_rifle(name, actor, material):
+    # A narrow, slung salvage rifle follows the guard's shoulder to opposite hip.
+    points = [(-.23, -.16, 1.38), (.19, -.17, .87)]
+    curve = bpy.data.curves.new(name + ' strap', 'CURVE')
+    curve.dimensions = '3D'
+    curve.bevel_depth = .018
+    curve.bevel_resolution = 1
+    spline = curve.splines.new('POLY')
+    spline.points.add(1)
+    for p, co in zip(spline.points, points):
+        p.co = (*co, 1)
+    strap = bpy.data.objects.new(name + ' strap', curve)
+    scene.collection.objects.link(strap)
+    strap.data.materials.append(material)
+    strap.parent = actor
+    # Slim parts show a plausible stock, receiver and barrel at town scale.
+    beam(name + ' stock', actor, (-.20, -.19, 1.27), (-.05, -.19, 1.10), .050, material)
+    beam(name + ' receiver', actor, (-.05, -.19, 1.10), (.10, -.19, .98), .044, material)
+    beam(name + ' barrel', actor, (.10, -.19, .98), (.28, -.19, .83), .018, material)
+
+def beam(name, actor, start, end, radius, material):
+    a, b = Vector(start), Vector(end)
+    direction = b - a
+    mid = (a + b) * .5
+    bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=radius, depth=direction.length, location=mid)
+    obj = bpy.context.object
+    obj.name = name
+    obj.rotation_euler = direction.to_track_quat('Z', 'Y').to_euler()
+    obj.data.materials.append(material)
+    uv = obj.data.uv_layers.active
+    if uv:
+        uv.name = 'UVMap'
+    obj.parent = actor
+    return obj
+
+def add_outfit_parts(actor, ident, outfit, height, colour_key):
+    if outfit == 'poncho':
+        cloth = accessory_material(ident + ' hat cloth', (.24, .22, .17))
+        make_ellipsoid(ident + ' broad patched hat', actor, (0, 0, 1.66), (.22, .19, .045), cloth)
+        make_ellipsoid(ident + ' hat crown', actor, (0, 0, 1.72), (.13, .125, .07), cloth)
+    if outfit == 'hooded poncho':
+        cloth = accessory_material(ident + ' hood cloth', (.18, .19, .17))
+        make_ellipsoid(ident + ' hood', actor, (0, -.01, 1.65), (.16, .15, .13), cloth)
+    if outfit == 'guard coat with slung rifle':
+        steel = accessory_material(ident + ' blued steel', (.10, .11, .10), .2)
+        wood = accessory_material(ident + ' dark rifle wood', (.16, .11, .07))
+        make_rifle(ident + ' slung rifle', actor, steel)
+        beam(ident + ' rifle grip', actor, (-.07, -.195, 1.12), (-.04, -.195, 1.02), .025, wood)
+    if outfit == 'long coat and loaded pack':
+        canvas = accessory_material(ident + ' salvage pack canvas', (.25, .21, .15))
+        make_ellipsoid(ident + ' trader pack', actor, (0, .21, 1.05), (.22, .17, .31), canvas)
+        beam(ident + ' pack roll', actor, (-.14, .18, 1.29), (.14, .18, 1.29), .045, canvas)
+    if outfit == 'white overalls and blue drop':
+        blue = accessory_material(ident + ' blue drop', (.07, .23, .31))
+        # White multiplies the real welder photo; the blue maker's drop is a separate part.
+        make_ellipsoid(ident + ' uniform bib', actor, (0, -.13, .90), (.23, .025, .30),
+                       accessory_material(ident + ' faded white bib', (.88, .87, .80)))
+        make_ellipsoid(ident + ' blue drop', actor, (.19, -.16, 1.12), (.035, .025, .06), blue, 7, 4)
 
 def setup_scene():
- scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1200;scene.render.resolution_y=850;scene.render.resolution_percentage=100
- scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.world=bpy.data.worlds.new('bright overcast')
- scene.world.color=(.48,.49,.50)
- for loc,power,size in [((0,-4,5),650,5),((4,1,3),260,4),((-3,2,4),320,3)]:
-  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
-  light.rotation_euler=(Vector((0,0,1))-light.location).to_track_quat('-Z','Y').to_euler()
- bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.02));ground=bpy.context.object;ground.name='mid grey-brown dirt'
- ground.data.materials.append(bpy.data.materials.new('mid grey-brown dirt'))
- ground.data.materials[0].diffuse_color=(.24,.22,.19,1)
- ground.data.materials[0].use_nodes=True;ground.data.materials[0].node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.24,.22,.19,1)
- return scene
+    scene = bpy.context.scene
+    scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    scene.render.resolution_x = 1400
+    scene.render.resolution_y = 850
+    scene.render.resolution_percentage = 100
+    scene.view_settings.view_transform = 'Standard'
+    scene.view_settings.look = 'Medium High Contrast'
+    world = bpy.data.worlds.new('even overcast grey')
+    world.use_nodes = True
+    world.node_tree.nodes['Background'].inputs['Color'].default_value = (.36, .35, .32, 1)
+    world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
+    scene.world = world
+    bpy.ops.object.light_add(type='AREA', location=(0, -5, 8))
+    light = bpy.context.object
+    light.data.energy = 560
+    light.data.shape = 'DISK'
+    light.data.size = 13
+    light.rotation_euler = (Vector((0, 0, 1)) - light.location).to_track_quat('-Z', 'Y').to_euler()
+    bpy.ops.mesh.primitive_plane_add(size=4000, location=(0, 0, -.02))
+    ground = bpy.context.object
+    ground.name = 'plain mid grey-brown ground'
+    mat = accessory_material('grey-brown earth', (.23, .22, .19))
+    ground.data.materials.append(mat)
 
-def camera(scene,loc,target,lens):
- bpy.ops.object.camera_add(location=loc);cam=bpy.context.object;cam.data.lens=lens;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
+def look_render():
+    if not args.render_dir:
+        return
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+    bpy.ops.import_scene.gltf(filepath=str(glb))
+    setup_scene()
+    people = [o for o in scene.objects if o.type == 'EMPTY' and o.name in {p[0] for p in selected}]
+    if not people:
+        return
+    # The real game car is the scale reference. Fit its measured longest ground
+    # dimension to 4.2 m and park it beside the first photographed person.
+    before = set(scene.objects)
+    car_path = root / 'public/assets/models/wasteland/cars/rattler.glb'
+    if car_path.exists():
+        bpy.ops.import_scene.gltf(filepath=str(car_path))
+        car_parts = [o for o in scene.objects if o not in before and o.type == 'MESH']
+        if car_parts:
+            scene.view_layers.update()
+            corners = [o.matrix_world @ Vector(corner) for o in car_parts for corner in o.bound_box]
+            low = Vector((min(p.x for p in corners), min(p.y for p in corners), min(p.z for p in corners)))
+            high = Vector((max(p.x for p in corners), max(p.y for p in corners), max(p.z for p in corners)))
+            length = max(high.x - low.x, high.y - low.y)
+            scale_car = 4.2 / max(length, .001)
+            for obj in car_parts:
+                obj.location *= scale_car
+                obj.scale *= scale_car
+            car_root = bpy.data.objects.new('actual game car for scale', None)
+            scene.collection.objects.link(car_root)
+            car_root.location = (3.1, 0, 0)
+            for obj in car_parts:
+                world = obj.matrix_world.copy()
+                obj.parent = car_root
+                obj.matrix_world = world
+    # Matched three-quarter views from the exported file; one even light and dirt.
+    for i, actor in enumerate(people):
+        for other in people:
+            other.location.x = (people.index(other) - (len(people) - 1) / 2) * .72
+        for obj in scene.objects:
+            if obj.type == 'MESH':
+                parent = obj
+                belongs = False
+                while parent:
+                    if parent == actor:
+                        belongs = True
+                        break
+                    parent = parent.parent
+                obj.hide_render = not (belongs or obj.name == 'plain mid grey-brown ground' or obj in locals().get('car_parts', []))
+        bpy.ops.object.camera_add(location=(1.9, -4.6, 2.0))
+        camera = bpy.context.object
+        camera.data.lens = 52
+        camera.rotation_euler = (Vector((0, 0, .87)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.camera = camera
+        scene.render.resolution_x = 600
+        scene.render.resolution_y = 680
+        scene.render.filepath = str(render_dir / f'{actor.name}-exported.png')
+        bpy.ops.render.render(write_still=True)
+        for distance in (40, 80):
+            camera.location = (distance * .52, -distance, distance * .5)
+            camera.data.lens = 50
+            camera.rotation_euler = (Vector((0, 0, .82)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+            scene.render.resolution_x = 900
+            scene.render.resolution_y = 600
+            scene.render.filepath = str(render_dir / f'{actor.name}-{distance}m.png')
+            bpy.ops.render.render(write_still=True)
+        bpy.data.objects.remove(camera, do_unlink=True)
+    for obj in scene.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = False
+    for i, actor in enumerate(people):
+        actor.location = ((i - (len(people) - 1) / 2) * .60, 0, 0)
+    bpy.ops.object.camera_add(location=(0, -10, 3.5))
+    camera = bpy.context.object
+    camera.data.lens = 38
+    camera.rotation_euler = (Vector((0, 0, .80)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    scene.camera = camera
+    scene.render.resolution_x = 1800
+    scene.render.resolution_y = 620
+    scene.render.filepath = str(render_dir / 'family-lineup.png')
+    bpy.ops.render.render(write_still=True)
+    # Reuse the exported figures for a 40-person mayor-height crowd view.
+    sources = {actor.name: actor for actor in people}
+    originals = list(scene.objects)
+    def clone_actor(source, offset):
+        subtree = []
+        def visit(obj):
+            subtree.append(obj)
+            for child in obj.children:
+                visit(child)
+        visit(source)
+        copies = {}
+        for obj in subtree:
+            dup = obj.copy()
+            if obj.data:
+                dup.data = obj.data
+            scene.collection.objects.link(dup)
+            copies[obj] = dup
+        for obj, dup in copies.items():
+            if obj.parent in copies:
+                dup.parent = copies[obj.parent]
+        copies[source].location = offset
+    for i in range(40):
+        source = people[i % len(people)]
+        clone_actor(source, ((i % 8 - 3.5) * 1.0, (i // 8) * 1.0, 0))
+    bpy.ops.object.camera_add(location=(0, -42, 31))
+    camera = bpy.context.object
+    camera.data.lens = 45
+    camera.rotation_euler = (Vector((0, 0, 0)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    scene.camera = camera
+    scene.render.resolution_x = 1400
+    scene.render.resolution_y = 850
+    scene.render.filepath = str(render_dir / 'mayor-crowd-40.png')
+    bpy.ops.render.render(write_still=True)
 
-def render_sheet_views():
- if not a.render:return
- render.mkdir(parents=True,exist_ok=True)
- # Every look view follows the exported GLB, imported into an empty scene.
- bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene;bpy.ops.import_scene.gltf(filepath=str(out));setup_scene()
- targets=[o for o in scene.objects if o.type=='MESH']
- for ob in targets:ob.hide_render=not ob.name.startswith('walker-a ')
- camera(scene,(2.4,-3.5,2.3),(0,0,.86),55);scene.render.filepath=str(render/'walker-a-three-quarter.png');bpy.ops.render.render(write_still=True)
- for ob in targets:ob.hide_render=False
- # Row of all thirteen separately, filling frame.
- actors2=[o for o in scene.objects if o.type=='EMPTY' and o.name.startswith('walker-') and ':' not in o.name]
- for i,actor in enumerate(actors2):actor.location.x=(i-6)*.53
- scene.render.resolution_x=2200;scene.render.resolution_y=700
- camera(scene,(0,-8,3.5),(0,0,.65),30);scene.render.filepath=str(render/'family-row.png');bpy.ops.render.render(write_still=True)
- # Crowd view from the mayor's height, 40 instances from the exported family.
- bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene;bpy.ops.import_scene.gltf(filepath=str(out));setup_scene()
- family=[o for o in scene.objects if o.type=='EMPTY' and o.name.startswith('walker-') and ':' not in o.name]
- sources={o.name:o for o in family};
- def duplicate_person(source,offset,rotation):
-  originals=[]
-  def walk(obj):
-   originals.append(obj)
-   for child_obj in obj.children:walk(child_obj)
-  walk(source);copies={}
-  for obj in originals:
-   duplicate=obj.copy()
-   if obj.data:duplicate.data=obj.data.copy()
-   scene.collection.objects.link(duplicate);copies[obj]=duplicate
-  for obj,duplicate in copies.items():
-   if obj.parent in copies:duplicate.parent=copies[obj.parent]
-  root_copy=copies[source];root_copy.location=offset;root_copy.rotation_euler.z=rotation
- for i in range(40):
-  source=sources[SPECS[i%len(SPECS)][0]]
-  duplicate_person(source,((i%8-3.5)*.85,(i//8)*.85,0),((i*7)%11)*.12)
- camera(scene,(0,-15,5),(0,0,0),42);scene.render.resolution_x=1400;scene.render.resolution_y=900
- scene.render.filepath=str(render/'crowd-40.png');bpy.ops.render.render(write_still=True)
+selected = PEOPLE if args.people == 'all' else [p for p in PEOPLE if p[0] in set(args.people.split(','))]
+if not selected:
+    raise SystemExit('No walkers selected; use --people all or a comma-separated list')
+root_node = bpy.data.objects.new('town-walkers', None)
+scene.collection.objects.link(root_node)
+actors = []
+for person in selected:
+    # Create the root first, so the carve pieces have their final ground origin.
+    # The routine sets the parent after geometry is complete; no origin is shifted.
+    actors.append(add_actor(person, len(actors)))
+    actors[-1].parent = root_node
 
-out.parent.mkdir(parents=True,exist_ok=True)
-bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=False,export_yup=True,export_apply=True,export_materials='EXPORT',export_image_format='JPEG',export_image_quality=84)
-bpy.ops.wm.save_as_mainfile(filepath=str(blend));render_sheet_views()
-print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'blend':str(blend)}))
+bpy.ops.object.select_all(action='DESELECT')
+for obj in [root_node, *root_node.children_recursive]:
+    obj.select_set(True)
+bpy.context.view_layer.objects.active = root_node
+bpy.ops.export_scene.gltf(filepath=str(glb), export_format='GLB', use_selection=True,
+                           export_yup=True, export_apply=True, export_materials='EXPORT',
+                           export_image_format='JPEG', export_image_quality=84)
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+look_render()
+
+def read_glb(path):
+    raw = path.read_bytes()
+    length = struct.unpack_from('<I', raw, 12)[0]
+    return json.loads(raw[20:20 + length].decode('utf-8').rstrip('\0 '))
+
+gltf = read_glb(glb)
+nodes = gltf.get('nodes', [])
+for person in selected:
+    ident = person[0]
+    index = next(i for i, node in enumerate(nodes) if node.get('name') == ident)
+    stack = [index]
+    descendants = []
+    while stack:
+        node_index = stack.pop()
+        descendants.append(node_index)
+        stack.extend(nodes[node_index].get('children', []))
+    count = sum(gltf['accessors'][primitive['indices']]['count'] // 3
+                for node_index in descendants if nodes[node_index].get('mesh') is not None
+                for primitive in gltf['meshes'][nodes[node_index]['mesh']]['primitives'])
+    if count > 450:
+        raise RuntimeError(f'{ident} has {count} triangles, over 450')
+if glb.stat().st_size > 1024 * 1024:
+    raise RuntimeError(f'walkers.glb is {glb.stat().st_size} bytes, over 1 MB')
+print(json.dumps({'glb': str(glb), 'bytes': glb.stat().st_size, 'people': len(selected)}))

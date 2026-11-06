@@ -255,3 +255,47 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+## TOWN-ART-WALKERS, round 3
+
+The following four small photo sets are original OpenAI ImageGen turnarounds,
+generated on 6 November 2026. Each generated four-panel sheet was cropped into
+the front, side, back and straight-overhead JPEGs used by the carving recipe.
+The photos are 190 by 256 pixels; the original sheets remain outside the repo.
+
+- `walker-a-*.jpg`: one woman in a dark umber dust coat over patched brown
+  overalls and a wrapped headscarf. Prompt: "One adult woman survivor,
+  standing still in a worn dark umber long dust coat over patched brown work
+  overalls, practical dark boots, wrapped headscarf. Natural proportions;
+  arms hang slightly away from body, legs slightly apart. Four equal panels:
+  dead-on front, exact side profile, dead-on back, straight overhead. Same
+  identity, clothes and scale. Plain pale neutral background, even flat
+  diffuse daylight, full body in frame, documentary photograph, visibly worn
+  fabric and seams. No text, props, extra people, shadows or watermark."
+- `walker-b-*.jpg`: one man in a hooded patched olive-brown poncho, broad
+  battered cloth hat, dusty trousers and boots. Prompt: "One adult man wearing
+  a heavy faded olive-brown patched poncho with a rough hood and a broad
+  battered cloth hat, dusty dark trousers and boots. Neutral standing pose,
+  arms slightly away, legs apart. Four equal panels, same man, clothes and
+  scale: dead-on front, exact side, dead-on back, straight overhead. Plain
+  pale background, even flat daylight, full body, realistic woven fabric and
+  repairs, no weapon, labels, text or watermark."
+- `walker-c-*.jpg`: one woman in a worn leather welding apron over slate-blue
+  work clothes, gloves and boots. Prompt: "One adult woman welder with real
+  adult proportions, wearing a worn dark leather welding apron over faded
+  slate-blue work clothes, heavy gloves and boots, small raised protective
+  hood pushed back so face visible, a welding mask attached at her hip, no
+  tools held. Neutral standing pose, arms slightly away, legs apart. Four
+  equal panels, same person, clothes and scale: dead-on front, exact side,
+  dead-on back, straight overhead. Plain pale background, even flat daylight,
+  full body, stitched leather texture, dust and grime, no labels, text or
+  watermark."
+- `walker-kid-a-*.jpg`: one child about eight in a faded mustard canvas
+  jacket, patched shorts, leggings and small boots. Prompt: "One child about
+  8 years old, visibly real child proportions with shorter limbs, smaller
+  shoulders and rounder face, wearing a faded mustard canvas jacket, patched
+  shorts over leggings and small worn boots. Neutral standing pose, arms
+  slightly away, legs apart. Four equal panels, same child, clothes and
+  scale: dead-on front, exact side, dead-on back, straight overhead. Plain
+  pale background, even flat daylight, full body, dusty worn fabric,
+  documentary photograph, no labels, text or watermark."
