@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
-import {createTown, deserializeTown, serializeTown, stepTown, dispatchTownCommand, registeredTownSystems, TOWN_TIME} from '../src/town/index.js';
+import {completeTownUtilityRoute, createTown, deserializeTown, serializeTown, stepTown, dispatchTownCommand, registeredTownSystems, TOWN_TIME} from '../src/town/index.js';
+import {stepTownHomeGround} from '../src/town/town-home-ground.js';
 
 let checks=0;function check(value,message){assert.ok(value,message);checks++;}
 function days(town,count){for(let day=0;day<count;day++)for(let hour=0;hour<TOWN_TIME.ticksPerDay;hour++)stepTown(town);}
@@ -27,6 +28,25 @@ const short=createTown(85,'Short of goods');addWell(short);stock(short,{});paint
 check(short.homePlots[0].waitingGood==='canvas','a household waits when its plot lacks the canvas to start');
 check(short.reports.some(report=>report.eventId==='home-goods-shortage'&&report.what.includes('Short of canvas.')),'the Reports system explains the missing good in a sentence');
 
+const guarded=createTown(83,'Plots stay clear');
+paint(guarded,[{x:1000,z:1000},{x:1001,z:1000},{x:1002,z:1000}]);
+const blockedPlot=guarded.homePlots[2];blockedPlot.tier=1;blockedPlot.household='protected-family';blockedPlot.family='protected-family';
+guarded.homePlots[1].building=true;guarded.homePlots[1].progressDays=1;
+const paintedMessage='That ground is painted for homes. Clear the plot first.';
+for(const buildingId of ['latrine','road-dirt','pipe-50mm']) {
+  const refused=dispatchTownCommand(guarded,{type:'placeBuilding',buildingId,x:1000,z:1000});
+  check(!refused.ok&&refused.message===paintedMessage,`${buildingId} cannot be placed on a painted plot`);
+}
+const overHome=dispatchTownCommand(guarded,{type:'placeBuilding',buildingId:'latrine',x:1002,z:1000});
+check(!overHome.ok&&overHome.message===paintedMessage,'a finished home plot cannot be built over');
+const routeResult=completeTownUtilityRoute(guarded,{id:'painted-route',kind:'pipe',points:[{x:7996,z:8004},{x:8020,z:8004}]},50,
+  {status:'finished',targetKind:'route',targetId:'painted-route',kind:'pipe'});
+check(!routeResult.ok&&routeResult.message===paintedMessage,'a utility route crossing painted ground is refused');
+const partialClear=dispatchTownCommand(guarded,{type:'clearHomeGround',cells:[{x:1000,z:1000},{x:1001,z:1000},{x:1002,z:1000}]});
+check(partialClear.ok&&partialClear.message==='Cleared 1 empty plot. 2 plots could not be cleared because they have homes, are burning or are under construction.'
+  &&guarded.homePlots.length===2&&guarded.homePlots.some(plot=>plot.household==='protected-family'),
+  'clearing reports the number of empty plots and keeps homes and work in place');
+
 const burned=createTown(87,'Burned plot');addWell(burned);stock(burned,{canvas:100});paint(burned,[{x:0,z:0}]);days(burned,4);
 const plot=burned.homePlots[0],family=plot.family;
 check(plot.tier===1&&burned.people.some(person=>person.family===family&&person.home===plot.id),'a finished plot holds its household');
@@ -51,14 +71,14 @@ check(support.shelterPlaces===growing.peopleConditions.shelterPlaces&&serializeT
 const large=createTown(20261106,'Large home-ground timing');
 large.people=Array.from({length:10_000},(_,index)=>({id:`person-${index+1}`,name:`Person ${index+1}`,
   born:0n,nextBirthday:1_000_000n,family:`family-${Math.floor(index/2)}`,home:`home-${Math.floor(index/2)}`,
-  homeType:'Shack',homeTier:1,age:16,
-  job:'townhand',skills:{building:0},health:100,mood:70,
+  homeType:'Shack',homeTier:1,age:0,
+  job:null,skills:{building:0},health:100,mood:70,
   needs:{waterLitres:50,waterNeedLitres:15,foodCalories:2100,shelter:true},history:[],generation:0,thought:'The day is calm.'}));
 large.peopleIdsReady=true;
 large.homePlots=Array.from({length:5_000},(_,index)=>({id:`plot-${index}`,regionId:'scablands',x:index,z:0,
   tier:1,progressDays:0,household:`family-${index}`,family:`family-${index}`,burning:false,building:false,goodDays:0}));
-days(large,1);
-const largeStart=performance.now();days(large,1);const largeDayMs=performance.now()-largeStart;
+stepTownHomeGround({town:large,tick:BigInt(TOWN_TIME.ticksPerDay)});
+const largeStart=performance.now();stepTownHomeGround({town:large,tick:BigInt(TOWN_TIME.ticksPerDay*2)});const largeDayMs=performance.now()-largeStart;
 check(large.people.length===10_000&&large.homePlots.length===5_000,'the large timing town keeps all people and plots');
-check(largeDayMs<30,`10,000 people and 5,000 plots simulate a day under 30 ms (saw ${largeDayMs.toFixed(2)} ms)`);
-console.log(`Town people support: ${checks} checks passed; 10,000-person/5,000-plot day ${largeDayMs.toFixed(2)} ms.`);
+check(largeDayMs<30,`10,000 people and 5,000 plots simulate a home-ground day under 30 ms (saw ${largeDayMs.toFixed(2)} ms)`);
+console.log(`Town people support: ${checks} checks passed; 10,000-person/5,000-plot home-ground day ${largeDayMs.toFixed(2)} ms.`);

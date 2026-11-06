@@ -28,9 +28,14 @@ registerTownCommand('paintHomeGround',(town,command)=>{
 registerTownCommand('clearHomeGround',(town,command)=>{
   const plots=ensureHomeGround(town), cells=Array.isArray(command.cells)?command.cells:[];
   const remove=new Set(cells.filter(validCell).map(cell=>`${command.regionId||'scablands'}:${cell.x}:${cell.z}`));
-  const kept=plots.filter(plot=>!remove.has(plotKey(plot))||plot.tier>0||plot.household||plot.progressDays>0||plot.burning);
-  const count=plots.length-kept.length;town.homePlots=kept;
-  return {ok:count>0,message:count?`Cleared ${count} empty plot${count===1?'':'s'}.`:'Only an empty plot can be cleared.'};
+  const canClear=plot=>plot.tier===0&&!plot.household&&!plot.progressDays&&!plot.building&&!plot.burning;
+  const cleared=plots.filter(plot=>remove.has(plotKey(plot))&&canClear(plot)).length;
+  const blocked=plots.filter(plot=>remove.has(plotKey(plot))&&!canClear(plot)).length;
+  town.homePlots=plots.filter(plot=>!remove.has(plotKey(plot))||!canClear(plot));
+  if(blocked) return {ok:cleared>0,message:`Cleared ${cleared} empty ${cleared===1?'plot':'plots'}. ${blocked===1
+    ?'1 plot could not be cleared because it has a home, is burning or is under construction.'
+    :`${blocked} plots could not be cleared because they have homes, are burning or are under construction.`}`};
+  return {ok:cleared>0,message:cleared?`Cleared ${cleared} empty plot${cleared===1?'':'s'}.`:'Only an empty plot can be cleared. Cleared 0 plots.'};
 });
 function storeCell(town,plot) {
   const stores=Object.entries(town.goods?.stockpiles||{}).map(([key,stock])=>({key,stock,parts:key.split(':')}))
