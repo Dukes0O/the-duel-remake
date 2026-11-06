@@ -15,8 +15,7 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', action='store_true')
 parser.add_argument('--assemble-sheet', action='store_true')
-parser.add_argument('--tin-photo',default='C:/Users/kyleb/.codex/generated_images/01a1ad6e-43d4-7433-8e9f-43e20e0258d9/exec-d503a008-f319-4f8c-8e2b-9e16908bde89.png')
-parser.add_argument('--sand-photo',default='C:/Users/kyleb/.codex/generated_images/01a1ad6e-43d4-7433-8e9f-43e20e0258d9/exec-d7c1cbbb-f80e-4027-a01a-224d0467927c.png')
+parser.add_argument('--textures',default='')
 parser.add_argument('--evidence', default='.evidence/2026-11-05/TOWN-ART-WORKS')
 cli_args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 args = parser.parse_args(cli_args)
@@ -24,7 +23,7 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/town/works.glb'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-works/round-2.jpg'
 blend = root / 'art-build/town/works.blend'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)],
@@ -35,18 +34,18 @@ if args.paths_only:
 if args.assemble_sheet:
     from PIL import Image, ImageDraw, ImageFont, ImageOps
     cards=[
-      ('test-pit','1x1 • pit and spoil'),('trench','1x1 • straight + corner'),
-      ('valve-box','1x1 • hand valve'),('pipe-stack','1x1 • hollow pipe'),
-      ('handcart','1x1 • salvage cart'),('barrow','1x1 • wheelbarrow'),
-      ('flatbed','1x1 • flatbed + load'),('pile-salvage','1x1 • salvage'),
-      ('pile-steel','1x1 • plate steel'),('pile-tin','1x1 • corrugated tin'),
-      ('pile-timber','1x1 • logs'),('pile-brick','1x1 • brick'),
-      ('pile-pipe','1x1 • pipe'),('pile-sand','1x1 • sand'),
-      ('pile-clay','1x1 • clay'),('salvage-yard','3x3 • working yard'),
-      ('warehouse','3x3 • tin warehouse'),('sawmill','3x2 • open saw'),
-      ('kiln','2x2 • beehive kiln'),('old-ground','3x3 • burial ground')]
+      ('test-pit','1x1 / pit and spoil'),('trench','1x1 / straight + corner'),
+      ('valve-box','1x1 / hand valve'),('pipe-stack','1x1 / hollow pipe'),
+      ('handcart','1x1 / salvage cart'),('barrow','1x1 / wheelbarrow'),
+      ('flatbed','1x1 / flatbed + load'),('pile-salvage','1x1 / salvage'),
+      ('pile-steel','1x1 / plate steel'),('pile-tin','1x1 / corrugated tin'),
+      ('pile-timber','1x1 / logs'),('pile-brick','1x1 / brick'),
+      ('pile-pipe','1x1 / pipe'),('pile-sand','1x1 / sand'),
+      ('pile-clay','1x1 / clay'),('salvage-yard','3x3 / working yard'),
+      ('warehouse','3x3 / tin warehouse'),('sawmill','3x2 / open saw'),
+      ('kiln','2x2 / beehive kiln'),('old-ground','3x3 / burial ground')]
     tile_w,tile_h=390,230;sheet_w=4*tile_w;sheet_h=5*tile_h+250
-    canvas=Image.new('RGB',(sheet_w,sheet_h),(32,33,30));draw=ImageDraw.Draw(canvas)
+    canvas=Image.new('RGB',(sheet_w,sheet_h),(105,96,82));draw=ImageDraw.Draw(canvas)
     fonts=Path('C:/Windows/Fonts')
     title_font=ImageFont.truetype(str(fonts/'segoeuib.ttf'),28)
     label_font=ImageFont.truetype(str(fonts/'segoeuib.ttf'),18)
@@ -58,25 +57,25 @@ if args.assemble_sheet:
     scale_crop=base_sheet.crop((220,2380,760,2920))
     scale_guide=ImageOps.fit(scale_crop,(190,190),method=Image.Resampling.LANCZOS,centering=(.5,.5))
     canvas.paste(scale_guide,(760,15))
-    draw.text((18,20),'SCABLANDS WORKS | ROUND 1',font=title_font,fill=(240,226,198))
-    draw.text((18,62),'Separate building origins • bright overcast • 8 m grid basis',font=small_font,fill=(215,207,188))
-    draw.text((18,108),'Photographic reference crop',font=small_font,fill=(220,174,115))
+    draw.text((18,20),'SCABLANDS WORKS | ROUND 2',font=title_font,fill=(240,226,198))
+    draw.text((18,62),'Separate origins / bright overcast / 8 m grid basis',font=small_font,fill=(244,233,213))
+    draw.text((18,108),'Photographic material references',font=small_font,fill=(220,174,115))
     draw.text((612,15),'SCALE',font=small_font,fill=(220,174,115))
     draw.text((612,38),'Car, person, 8 m grid',font=small_font,fill=(215,207,188))
     for i,(ident,label) in enumerate(cards):
         cx=(i%4)*tile_w;cy=230+(i//4)*tile_h
         draw.rectangle((cx,cy,cx+tile_w-4,cy+tile_h-4),fill=(39,40,36),outline=(107,93,70),width=2)
         draw.text((cx+8,cy+5),ident,font=label_font,fill=(236,202,156))
-        draw.text((cx+8,cy+28),label,font=small_font,fill=(214,210,195))
+        draw.text((cx+8,cy+28),label,font=small_font,fill=(244,233,213))
         for view in ('above','driver'):
             path=evidence/f'{ident}-{view}.png'
             if not path.exists():raise FileNotFoundError(f'missing comparison view: {path}')
             with Image.open(path) as im:
                 im=ImageOps.fit(im.convert('RGB'),(180,164),method=Image.Resampling.LANCZOS,centering=(.5,.5))
                 canvas.paste(im,(cx+8+('above','driver').index(view)*186,cy+62))
-        draw.text((cx+12,cy+48),'ABOVE 45°',font=small_font,fill=(232,215,188))
+        draw.text((cx+12,cy+48),'ABOVE 45 DEG',font=small_font,fill=(244,233,213))
         draw.text((cx+198,cy+48),'DRIVER HEIGHT',font=small_font,fill=(232,215,188))
-    draw.text((18,sheet_h-20),'Blender views • generated reference crop only • no new runtime texture',font=small_font,fill=(215,207,188))
+    draw.text((18,sheet_h-20),'Blender views / photo textures cropped from generated references',font=small_font,fill=(244,233,213))
     sheet.parent.mkdir(parents=True,exist_ok=True)
     for quality in (78,74,70,66,62,58,54):
         canvas.save(sheet,'JPEG',quality=quality,optimize=True,progressive=True)
@@ -93,15 +92,22 @@ import town_base as town
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
-tin_photo=Path(args.tin_photo);sand_photo=Path(args.sand_photo)
-for source in (tin_photo,sand_photo):
+texture_dir=Path(args.textures) if args.textures else root/'public/assets/models/wasteland/town/textures'
+photos={name:texture_dir/file for name,file in {
+    'rusted-steel':'pipe-rusted-steel.jpg','galvanised-tin':'tin-corrugated-rust.jpg',
+    'sand':'sand-pale-fine.jpg','weathered-plank':'timber-weathered-logs.jpg',
+    'salvaged-brick':'brick-red-orange.jpg','cracked-concrete':'clay-wet-red-brown.jpg',
+    'patched-canvas':'salvage-mixed.jpg','iron-dark':'plate-steel-mill.jpg'}.items()}
+for source in photos.values():
     if not source.exists():raise FileNotFoundError(f'material reference missing: {source}')
-m = town.make_materials({'galvanised-tin':tin_photo,'rusted-steel':tin_photo,'sand':sand_photo})
+m = town.make_materials({name:str(path) for name,path in photos.items()})
 # The shared atlas is opaque. Keep it as one 1K image, saved as JPEG so this
 # family stays inside its 3 MB file budget.
 atlas=bpy.data.images.get('Scablands shared town wear atlas 1K')
 atlas_temp=root/'.qa-dist/town-works-atlas.jpg';atlas_temp.parent.mkdir(parents=True,exist_ok=True)
-atlas.filepath_raw=str(atlas_temp);atlas.file_format='JPEG';atlas.save()
+atlas.filepath_raw=str(atlas_temp);atlas.file_format='JPEG'
+bpy.context.scene.render.image_settings.quality=58
+atlas.save()
 photo_atlas=bpy.data.images.load(str(atlas_temp),check_existing=False);photo_atlas.pack()
 for material in m.values():
     for node in material.node_tree.nodes:
@@ -301,14 +307,26 @@ def build_valve():
     sphere('valve-box-handle',(0,1.17,0),(.07,.06,.07),m['rusted-steel'])
 make_group('valve-box',build_valve)
 
+def join_named_meshes(prefix):
+    targets=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith(prefix)]
+    if len(targets)<2:return
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in targets:obj.select_set(True)
+    bpy.context.view_layer.objects.active=targets[0]
+    bpy.ops.object.join()
+    bpy.context.object.select_set(False)
+
 def build_pipe_stack():
-    for i in range(4):
-        y=.18+(i//3)*.31;z=((i%3)-1)*.27
+    for i in range(15):
+        row=i//5; col=i%5; y=.18+row*.31;z=(col-2)*.30
         # Long steel pipe and raised lips make the hollow end readable above.
-        cylinder(f'pipe-stack-pipe-{i+1}',(0,y,z),.18,2.05,m['rusted-steel'],axis='X')
-        torus(f'pipe-stack-rim-{i+1}',(-1.0,y,z),.18,.025,m['galvanised-tin'],axis='X')
-        torus(f'pipe-stack-far-rim-{i+1}',(1.0,y,z),.18,.025,m['rusted-steel'],axis='X')
+        cylinder(f'pipe-stack-pipe-{i+1}',(0,y,z),.14,3.8,m['rusted-steel'],axis='X',vertices=10)
+        cylinder(f'pipe-stack-dark-mouth-{i+1}',(-1.91,y,z),.095,.018,m['iron-dark'],axis='X',vertices=8)
+        cylinder(f'pipe-stack-far-dark-mouth-{i+1}',(1.91,y,z),.095,.018,m['iron-dark'],axis='X',vertices=8)
+    for z in (-.78,.78): beam(f'pipe-stack-chock-{z}',(-2.05,.10,z),(2.05,.10,z),.16,m['weathered-plank'])
+    join_named_meshes('pipe-stack-pipe-')
 make_group('pipe-stack',build_pipe_stack)
+
 
 def wheel(name,x,y,z,r=.43):
     torus(name,(x,y,z),r*.72,r*.28,m['iron-dark'],axis='X')
@@ -368,30 +386,35 @@ def stockpile(ident, kind):
         for i in range(3):beam(f'{ident}-welded-strap-{i+1}',(-1.25,1.0,-.7+i*.7),(1.25,1.0,-.7+i*.7),.045,m['iron-dark'])
     elif kind=='tin':
         for i in range(9):
-            p=corrugated(f'{ident}-sheet-{i+1}',((i%3-1)*.36,.13+(i//3)*.15,(i%2-.5)*.42),1.65,1.55,m['galvanised-tin'],bent=(i%3-1)*.10)
+            col=i%3;row=i//3
+            p=corrugated(f'{ident}-sheet-{i+1}',((col-1)*1.16,.12+row*.065,(row-1)*1.12),1.25,1.35,m['galvanised-tin'],bent=(i%3-1)*.10)
             p.rotation_euler[0]=math.pi/2+(i%3-1)*.06
     elif kind=='timber':
         for layer in range(4):
-            y=.22+layer*.27
-            for j in range(4):cylinder(f'{ident}-log-{layer}-{j}',((j%2)*.24-.12,y,(j-1.5)*.44),.16,2.4,m['weathered-plank'],axis='X',vertices=12)
+            y=.25+layer*.28
+            count=5-layer
+            for j in range(count):cylinder(f'{ident}-log-{layer}-{j}',(0,y,(j-(count-1)/2)*.32),.17,4.4,m['weathered-plank'],axis='X',vertices=10)
     elif kind=='brick':
-        for layer in range(4):
-            for j in range(6):
-                x=(j-2.5)*.34+(layer%2)*.16;z=((j%3)-1)*.45
-                box(f'{ident}-brick-{layer}-{j}',(x,.15+layer*.17,z),(.31,.16,.19),m['salvaged-brick'],.02)
+        # A full pallet-sized block carries the photographic running-bond
+        # texture; six real loose bricks on top give it a stacked silhouette.
+        box(f'{ident}-stacked-pallet-block',(0,.88,0),(5.7,1.55,3.7),m['salvaged-brick'],.025)
+        for layer in range(2):
+            for j in range(3):
+                x=(j-1)*.42+(layer%2)*.20
+                box(f'{ident}-loose-brick-{layer}-{j}',(x,1.72+layer*.26,.55+layer*.18),(.40,.24,.26),m['salvaged-brick'],0)
     elif kind=='pipe':
-        for i in range(6):
-            x=((i%3)-1)*.36;y=.17+(i//3)*.27;z=(i%2-.5)*.36
-            cylinder(f'{ident}-open-pipe-{i+1}',(0,y,z),.18,2.8,m['rusted-steel'],axis='X')
-            torus(f'{ident}-pipe-mouth-{i+1}',(-1.38,y,z),.18,.025,m['galvanised-tin'],axis='X')
+        for i in range(18):
+            row=i//6;col=i%6;x=((col-2.5)*.31);y=.16+row*.26;z=(col-2.5)*.30
+            cylinder(f'{ident}-open-pipe-{i+1}',(0,y,z),.135,4.0,m['rusted-steel'],axis='X',vertices=10)
+            cylinder(f'{ident}-pipe-dark-mouth-{i+1}',(-1.99,y,z),.09,.018,m['iron-dark'],axis='X',vertices=8)
     elif kind=='sand':
         # Distinct broad low sand bank, lumpy at its toe and wind-creased.
-        mound(f'{ident}-main-ridge',(0,0,0),1.5,1.13,.95,m['sand'],342)
+        mound(f'{ident}-main-ridge',(0,0,0),2.25,1.8,1.5,m['sand'],342)
         for i in range(7):sphere(f'{ident}-wind-toe-{i+1}',(-.85+i*.28,.12,.72),(.27,.12,.19),m['sand'],8)
         for i in range(4):beam(f'{ident}-wind-scar-{i+1}',(-.8+i*.43,.78,-.62),(-.5+i*.43,.76,-.84),.018,m['cracked-concrete'])
     elif kind=='clay':
-        mound(f'{ident}-clay-bank-a',(-.28,0,.12),.98,.76,.68,m['salvaged-brick'],451)
-        mound(f'{ident}-clay-bank-b',(.44,0,-.32),.66,.53,.52,m['cracked-concrete'],452)
+        mound(f'{ident}-clay-bank-a',(-.18,0,.10),2.0,1.7,1.5,m['cracked-concrete'],451)
+        mound(f'{ident}-clay-bank-b',(.62,0,-.35),1.0,.8,.8,m['cracked-concrete'],452)
         for i in range(5):
             beam(f'{ident}-dry-seam-{i+1}',(-.7+i*.28,.42,-.34+i*.07),(-.36+i*.28,.42,-.60+i*.06),.022,m['iron-dark'])
 make_group('pile-salvage',lambda:stockpile('pile-salvage','salvage'))
@@ -606,16 +629,16 @@ if args.render:
     # First set roots in a measured display grid. Regions scale by plot size,
     # with every compact prop large enough to inspect from the mayor's view.
     cards=[
-      ('test-pit','1x1 • pit and spoil',7),('trench','1x1 • straight + corner',7),
-      ('valve-box','1x1 • hand valve',7),('pipe-stack','1x1 • hollow pipe',7),
-      ('handcart','1x1 • salvage cart',7),('barrow','1x1 • wheelbarrow',7),
-      ('flatbed','1x1 • flatbed + load',7),('pile-salvage','1x1 • salvage',7),
-      ('pile-steel','1x1 • plate steel',7),('pile-tin','1x1 • corrugated tin',7),
-      ('pile-timber','1x1 • logs',7),('pile-brick','1x1 • brick',7),
-      ('pile-pipe','1x1 • pipe',7),('pile-sand','1x1 • sand',7),
-      ('pile-clay','1x1 • clay',7),('salvage-yard','3x3 • working yard',23),
-      ('warehouse','3x3 • tin warehouse',23),('sawmill','3x2 • open saw',23),
-      ('kiln','2x2 • beehive kiln',15),('old-ground','3x3 • burial ground',23)]
+      ('test-pit','1x1 / pit and spoil',7),('trench','1x1 / straight + corner',7),
+      ('valve-box','1x1 / hand valve',7),('pipe-stack','1x1 / hollow pipe',7),
+      ('handcart','1x1 / salvage cart',7),('barrow','1x1 / wheelbarrow',7),
+      ('flatbed','1x1 / flatbed + load',7),('pile-salvage','1x1 / salvage',7),
+      ('pile-steel','1x1 / plate steel',7),('pile-tin','1x1 / corrugated tin',7),
+      ('pile-timber','1x1 / logs',7),('pile-brick','1x1 / brick',7),
+      ('pile-pipe','1x1 / pipe',7),('pile-sand','1x1 / sand',7),
+      ('pile-clay','1x1 / clay',7),('salvage-yard','3x3 / working yard',23),
+      ('warehouse','3x3 / tin warehouse',23),('sawmill','3x2 / open saw',23),
+      ('kiln','2x2 / beehive kiln',15),('old-ground','3x3 / burial ground',23)]
     # Hide child meshes first, then place each owner at the center of its cell.
     def hierarchy(obj):
         result=[obj];
@@ -688,3 +711,4 @@ if args.render:
     subprocess.run(['python',str(Path(__file__).resolve()),'--root',str(root),
                     '--evidence',str(evidence),'--assemble-sheet'],check=True)
     print(json.dumps({'sheet':str(sheet),'glb':str(out)}))
+
