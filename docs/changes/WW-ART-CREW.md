@@ -4,6 +4,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 
 ## Changed
 
+- Fixed `ash-hat`'s crown cap UVs to stay within the crown in the side photo,
+  and bled colours inward from a shrunken mask. Rebuilt the GLB and inspected
+  its three-quarter render; the pale background patch is gone.
 - Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
   Its front and three-quarter views were rendered from the exported GLB and
   inspected beside the front reference. It reads as a small weathered wooden

@@ -240,7 +240,6 @@ finish(gb, 'gerald-box', {'carrier': gerald_box_photo.material()})
 
 # --- ash-hat: lathed side silhouette, with its radius measured from the mask -------------
 hat_side = Photo(textures / 'ww-ash-hat-side.jpg')
-hat_top = Photo(textures / 'ww-ash-hat-top.jpg')
 hat_solid = tidy(~hat_side.sky([(12, 12), (hat_side.w - 12, 12), (12, hat_side.h - 12)], grey=26))
 HAT_CX = hat_side.w / 2
 HAT_BOTTOM = hat_side.h - 36
@@ -252,18 +251,21 @@ for py in range(HAT_BOTTOM, 0, -2):
         HAT_ROWS.append(((HAT_BOTTOM - py) * .00017, radius * .00017))
 HAT_ROWS.sort()
 hat_solid[HAT_BOTTOM + 1:] = False
-hat_side.bleed(hat_solid, passes=24)
-HAT_TOP_CX, HAT_TOP_CY = hat_top.w * .50, hat_top.h * .51
-HAT_TOP_R = min(hat_top.w, hat_top.h) * .25
+hat_side.bleed(shrink(hat_solid, 4), passes=24)
 def hat_uv(index, distance, radius, angle):
     px = HAT_CX + radius / .00017 * .85 * math.cos(angle)
     py = HAT_BOTTOM - distance / .00017
     return hat_side.uv(px, py)
 hat_mesh = Mesh()
+def hat_top_uv(angle, fraction):
+    # The cap is a tiny cut across the side photo's crown. Keep its UVs inside
+    # the dark crown silhouette instead of sampling the pale overhead backdrop.
+    px = HAT_CX + math.cos(angle) * fraction * 42
+    py = 24 + math.sin(angle) * fraction * 16
+    return hat_side.uv(px, py)
 lathe(hat_mesh, 'side', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1), HAT_ROWS, hat_uv, sides=24,
-      cap_end=('side', lambda a, f: hat_side.uv(HAT_CX + math.cos(a) * f * 65,
-                                                70 + math.sin(a) * f * 42)))
-finish(hat_mesh, 'ash-hat', {'side': hat_side.material(), 'top': hat_top.material()})
+      cap_end=('side', hat_top_uv))
+finish(hat_mesh, 'ash-hat', {'side': hat_side.material()})
 
 # --- wren-flag: rag outline is traced from the photo; pole radius is measured from it ----
 flag_photo = Photo(textures / 'ww-wren-flag.jpg')
