@@ -37,3 +37,5 @@ Round 6 of 6 (Kyle's limit, 5 November): **failed, not merged.** The photos are 
 For Kyle in the morning: a local photo-to-model tool, such as TripoSR (held earlier because of disk space), is the next thing to try. It needs his word for the download. Other route: a licence-clear ready-made truck to adapt.
 
 Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds, starting with `fire-truck`. Claude judges `round-7.jpg`.
+
+Round 9, 6 November: **`fire-truck` passes** (`docs/board/looks/town-art-trucks-1/round-9.jpg`). The tanker, supply truck and tow rig follow the same way, with the fire truck as the worked example.

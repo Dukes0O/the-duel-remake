@@ -19,3 +19,11 @@ Continue the fire truck from the measured-photo method in `tools/blender/photo_m
 - Removed the round 7 review sheet and note.
 - Moved the four fire-engine source photos from `.evidence/town-art-trucks-1/` to `public/assets/models/wasteland/town/textures/`; the recipe now reads those committed source files.
 - Removed temporary renders and masks after assembling the review sheet.
+
+## Round 9: the fire engine, carved from its photos (Claude)
+
+Rounds 7 and 8 left the wheels at twice their true distance, because a parent's position was subtracted before that parent had moved, and built the body from flat parts. Round 9 adds `tools/blender/hull_model.py`: a voxel stays only if the side, overhead and end photos all show something there, the result is smoothed and reduced to budget, and each face wears the photo it faces most. Wheels, axles, cannon and headlamps are round parts placed at their true world positions.
+
+Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `npm run build`. No assertion changed. Not wired into the game, so no frame check.
+
+Removed: `fire-engine-projection.jpg`, the fire truck's old flat-part recipe, and rounds 7 and 8's sheets.

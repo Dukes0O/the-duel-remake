@@ -74,7 +74,6 @@ for image in list(bpy.data.images):
 materials = dict(shared)
 
 PAINT_FILES = {
-    'fire-truck': ('fire-engine-projection.jpg', (.30, .055, .032, 1)),
     'water-tanker': ('water-tanker-projection.jpg', (.13, .16, .17, 1)),
     'supply-truck': ('supply-truck-projection.jpg', (.18, .19, .10, 1)),
     'tow-rig': ('tow-rig-projection.jpg', (.20, .12, .045, 1)),
@@ -546,169 +545,173 @@ def merge_static_meshes(root_obj):
                 decimate=bpy.context.object.modifiers.new('truck detail budget reduction','DECIMATE')
                 decimate.ratio=.45 if material_name.endswith('/ photo paint') else .20
 
-# The fire engine is built directly from measured photographs with photo_model.py.
-# The existing three builds below remain until their own photo rounds.
-from photo_model import Photo, Mesh as PhotoMesh, trace, tidy, slab, box as photo_box, lathe
+# The fire engine is carved from its four photos by hull_model.py, so one solid
+# body is right from every side. The three other trucks follow in their own rounds.
+from photo_model import Photo, Mesh as PhotoMesh, lathe
+from hull_model import View, occupancy, largest_part, carve_hull
 import numpy as np
 
-PHOTO_ROOT = textures
-fire_photos = {name: Photo(PHOTO_ROOT / f'fire-engine-{name}.jpg')
-               for name in ('side','front','rear','overhead')}
-FIRE_PARTS = {
-    'bonnet': {'view':'side','rect':(78,315,640,705),'half_width':1.20},
-    'cab': {'view':'side','rect':(345,145,795,650),'half_width':1.06},
-    'equipment-body': {'view':'side','rect':(650,210,1708,710),'half_width':1.22},
-    'chassis': {'view':'side','rect':(85,650,1694,790),'half_width':1.08},
-    'front-face': {'view':'front','rect':(315,95,1220,800),'width':2.82},
-    'rear-face': {'view':'rear','rect':(320,95,1215,815),'width':2.82},
-    'bonnet-roof': {'view':'overhead','rect':(180,72,850,460),'height':1.70},
-    'cab-roof': {'view':'overhead','rect':(255,345,780,770),'height':2.62},
-    'tank-top': {'view':'overhead','rect':(280,700,780,1110),'height':2.72},
-    'rear-deck': {'view':'overhead','rect':(210,1060,840,1430),'height':2.35},
-}
-FIRE_S = .00430
-FIRE_FRONT_Z = -3.45
-FIRE_REAR_Z = 3.43
+# Measured on the photos, in pixels.
+SIDE_S = 7.40 / (1690 - 85)     # bumper to tail, 7.4 m
+SIDE_FRONT, SIDE_GROUND = 85, 779
+END_S = 2.65 / (967 - 117)      # ground to cab roof in the front photo, the same 2.65 m as the side
+FRONT_CX, FRONT_GROUND = 763, 967
+REAR_CX, REAR_GROUND = 767, 966
+TOP_CX, TOP_FRONT, TOP_REAR = 511, 76, 1500
+TRUCK_W = (1156 - 370) * END_S  # bumper end to bumper end
+TOP_XS = TRUCK_W / (826 - 196)
+LENGTH = 7.40
+Z0 = -3.70
+WHEEL_R = 113 * SIDE_S
+FRONT_AXLE = Z0 + (325 - SIDE_FRONT) * SIDE_S
+REAR_AXLE = Z0 + (1325 - SIDE_FRONT) * SIDE_S
+TRACK_X = 326 * END_S           # from the middle of the truck to the middle of a tyre
+TYRE_HALF = 51 * END_S
+CHASSIS_Y = (SIDE_GROUND - 690) * SIDE_S  # the underside of the frame
 
-def save_photo_mask(name, mask):
-    image=bpy.data.images.new('review mask '+name, mask.shape[1], mask.shape[0], alpha=False)
-    grey=mask[::-1].astype(np.float32)
-    image.pixels.foreach_set(np.dstack((grey,grey,grey,np.ones_like(grey))).ravel())
-    image.filepath_raw=str(evidence / ('mask-'+name+'.png'))
-    image.file_format='PNG'; image.save()
+side_photo = Photo(textures / 'fire-engine-side.jpg')
+front_photo = Photo(textures / 'fire-engine-front.jpg')
+rear_photo = Photo(textures / 'fire-engine-rear.jpg')
+top_photo = Photo(textures / 'fire-engine-overhead.jpg')
 
-# The generated warm/blue-gray studio floor needs the photo kit's wider grey cut.
-fire_masks={}
-seed_sets={
-    'side':[(20,20),(1750,860),(20,850)],
-    'front':[(20,20),(20,1000),(1510,1000)],
-    'rear':[(20,20),(20,1000),(1510,1000)],
-    'overhead':[(20,20),(1000,20),(20,1510),(1000,1510)],
-}
-for name,photo in fire_photos.items():
-    fire_masks[name]=tidy(~photo.sky(seed_sets[name],grey=26))
-    save_photo_mask(name,fire_masks[name])
+def side_pick(x, y, z):
+    return SIDE_FRONT + (z - Z0) / SIDE_S, SIDE_GROUND - y / SIDE_S
+def front_pick(x, y, z):
+    return FRONT_CX - x / END_S, FRONT_GROUND - y / END_S
+def rear_pick(x, y, z):
+    return REAR_CX + x / END_S, REAR_GROUND - y / END_S
+def top_pick(x, y, z):
+    return TOP_CX + x / TOP_XS, TOP_FRONT + (z - Z0) * (TOP_REAR - TOP_FRONT) / LENGTH
 
-fire_root=pivot('fire-truck',(0,0,0)); TRUCKS['fire-truck']=fire_root
-side_mask=fire_masks['side'].copy()
-for cx,cy,rx,ry in ((333,675,91,101),(1375,675,93,103)):
-    yy,xx=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
-    side_mask[((xx-cx)/rx)**2+((yy-cy)/ry)**2<=1]=False
-save_photo_mask('side-wheel-openings',side_mask)
-body_mesh=PhotoMesh()
-def side_point(px,py,x):
-    return (x,(780-py)*FIRE_S,(px-78)*FIRE_S-3.45)
-side_loops=trace(side_mask,(72,135,1715,790),tolerance=1.0,min_area=90)
-if not side_loops: raise RuntimeError('fire-truck: no complete measured side outline')
-# One continuous, closed extrusion makes the cab, bonnet, equipment body and
-# chassis meet. Both outside faces use the measured side photo.
-slab(body_mesh,'side',fire_photos['side'],side_loops,
-     lambda px,py,d:side_point(px,py,d),-1.17,1.17,wall_scale=FIRE_S)
+def trim_side(mask):
+    """The ground shadow, roof mirror and water cannon are not part of the body."""
+    mask = mask.copy()
+    mask[SIDE_GROUND:, :] = False
+    mask[:204, :700] = False
+    mask[:188, 840:1020] = False
+    return mask
+def trim_end(ground):
+    def trim(mask):
+        mask = mask.copy()
+        mask[ground:, :] = False
+        return mask
+    return trim
 
-# Front and rear shells keep their photographed opaque cab glass and close the body.
-for name in ('front-face','rear-face'):
-    part=FIRE_PARTS[name]; photo=fire_photos[part['view']]
-    end_mask=fire_masks[part['view']].copy()
-    for cx,cy,rx,ry in ((540,870,108,122),(1000,870,108,122)):
-        yy,xx=np.ogrid[:end_mask.shape[0],:end_mask.shape[1]]
-        end_mask[((xx-cx)/rx)**2+((yy-cy)/ry)**2<=1]=False
-    save_photo_mask(part['view']+'-wheel-openings',end_mask)
-    loops=trace(end_mask,part['rect'],tolerance=1.5,min_area=250)
-    if not loops: raise RuntimeError(f'{name}: no measured outline in {part["rect"]}')
-    z0=FIRE_FRONT_Z if name=='front-face' else FIRE_REAR_Z
-    def end_point(px,py,d,z0=z0):
-        return ((px-768)*.0035,(948-py)*.0035,z0+d)
-    slab(body_mesh,part['view'],photo,loops,end_point,0,.085,wall_scale=.0035)
+left = View('side', side_photo, [(20, 20), (1750, 860), (20, 850)], side_pick, (-1, 0, 0), trim_side)
+right = View('side', side_photo, [(20, 20)], side_pick, (1, 0, 0), trim_side)
+right.mask = left.mask
+front = View('front', front_photo, [(20, 20), (20, 1000), (1510, 1000)], front_pick, (0, 0, -1), trim_end(FRONT_GROUND))
+rear = View('rear', rear_photo, [(20, 20), (20, 1000), (1510, 1000)], rear_pick, (0, 0, 1), trim_end(REAR_GROUND))
+top = View('overhead', top_photo, [(20, 20), (1000, 20), (20, 1510), (1000, 1510)], top_pick, (0, 1, 0))
 
-# Roof shapes are measured in the real top photo at each part's actual height.
-def top_point(px,py,y):
-    return ((px-512)*.0046,y,(py-58)*.0046-3.42)
-for name in ('bonnet-roof','cab-roof','tank-top','rear-deck'):
-    part=FIRE_PARTS[name]; photo=fire_photos['overhead']
-    loops=trace(fire_masks['overhead'],part['rect'],tolerance=1.7,min_area=240)
-    if not loops: raise RuntimeError(f'{name}: no measured overhead outline in {part["rect"]}')
-    slab(body_mesh,'overhead',photo,loops,top_point,part['height']-.045,part['height'],wall_scale=.0046)
+def ends_allow(x, y, z):
+    # The two ends are one silhouette: either photo may show a part the other hides.
+    return front.covers(x, y, z) | rear.covers(x, y, z)
+def clear_of_wheels(x, y, z):
+    # Above the frame only, with room cut for each wheel to turn in its arch.
+    keep = y >= CHASSIS_Y
+    outer = np.abs(x) > TRACK_X - TYRE_HALF - .04
+    for axle in (FRONT_AXLE, REAR_AXLE):
+        keep &= ~(outer & ((z - axle) ** 2 + (y - WHEEL_R) ** 2 < (WHEEL_R + .05) ** 2))
+    return keep
 
-def side_radial(photo,cx,cy,radius_px):
-    def uv(index,distance,radius,angle):
-        arc=.85
-        return photo.uv(cx-math.cos(angle)*radius_px*arc,cy-math.sin(angle)*radius_px*arc)
-    return uv
+VOXEL = .03
+solid, xs, ys, zs = occupancy(((-TRUCK_W / 2 - .05, TRUCK_W / 2 + .05), (0, 2.95), (Z0 - .05, Z0 + LENGTH + .05)),
+    VOXEL, [left.covers, top.covers, ends_allow], clear_of_wheels)
+solid = largest_part(solid)
 
-# Round axle shafts join the chassis and wheels; both use photo-measured lathe UVs.
-def axle_uv(index,distance,radius,angle):
-    return side_radial(fire_photos['side'],860,766,15)(index,distance,radius,angle)
-for cx,cy in ((333,675),(1375,675)):
-    wheel_y=(780-cy)*FIRE_S; wheel_z=(cx-78)*FIRE_S-3.45
-    lathe(body_mesh,'side',(0,wheel_y,wheel_z),(1,0,0),(0,0,1),(0,1,0),
-          [(-1.08,.07),(1.08,.07)],axle_uv,sides=16)
+# The photo's own colours replace its background, so it cannot show on an edge.
+# A wider colour match also takes in the soft ground shadow round the subject.
+def body_only(view, photo, seeds):
+    return view.mask & ~photo.sky(seeds, tolerance=70, grey=30)
+side_photo.bleed(body_only(left, side_photo, [(20, 20), (1750, 860), (20, 850)]))
+front_photo.bleed(body_only(front, front_photo, [(20, 20), (20, 1000), (1510, 1000)]))
+rear_photo.bleed(body_only(rear, rear_photo, [(20, 20), (20, 1000), (1510, 1000)]))
+top_photo.bleed(body_only(top, top_photo, [(20, 20), (1000, 20), (20, 1510), (1000, 1510)]))
+fire_materials = {'side': side_photo.material(), 'front': front_photo.material(),
+                  'rear': rear_photo.material(), 'overhead': top_photo.material()}
 
-# Photo-derived tyres and rims stand at the measured 0.49 m radius and ground height.
-for cx,cy,suffix in ((333,675,'front-left'),(333,675,'front-right'),
-                     (1375,675,'rear-left'),(1375,675,'rear-right')):
-    # Front photo puts the tyre centres at x=+/-0.80 m. At 0.49 m radius,
-    # their outer faces stay just within the 1.41 m wing outline.
-    x=.80 if suffix.endswith('left') else -.80
-    centre=(x,.49,(cx-78)*FIRE_S-3.45)
-    steer=None
-    if suffix.startswith('front'):
-        steer=pivot('fire-truck:steer-'+suffix,centre); parent_keep_world(steer,fire_root)
-    spin=pivot('fire-truck:spin-'+suffix,centre); parent_keep_world(spin,steer or fire_root)
-    wheel=PhotoMesh(); photo=fire_photos['side']
-    tire_cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*112*f,cy-math.sin(a)*112*f)
-    lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
-          [(-.13,.38),(-.12,.49),(.12,.49),(.13,.38)],side_radial(photo,cx,cy,112),sides=28,
-          cap_start=('side',tire_cap),cap_end=('side',tire_cap))
-    cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*52*.85*f,cy-math.sin(a)*52*.85*f)
-    lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.14,.24),(.14,.24)],
-          side_radial(photo,cx,cy,55),sides=24,cap_start=('side',cap),cap_end=('side',cap))
-    wheel_obj=wheel.finish('fire-truck:'+suffix,{'side':photo.material()})
-    wheel_obj.location=game_vector(centre); parent_keep_world(wheel_obj,spin)
+fire_root = pivot('fire-truck', (0, 0, 0)); TRUCKS['fire-truck'] = fire_root
+def world_of(obj):
+    place = Vector((0, 0, 0))
+    while obj:
+        place += obj.location
+        obj = obj.parent
+    return place
+def attach(obj, parent, gltf_point=(0, 0, 0)):
+    """Put obj at a world point under parent, whatever parent's own parents are."""
+    obj.parent = parent
+    obj.matrix_parent_inverse.identity()
+    obj.location = game_vector(gltf_point) - world_of(parent)
 
-# Side-photo lathes preserve the real hose-reel outlines without their edge pixels.
-for sign in (-1,1):
-    reel=PhotoMesh(); photo=fire_photos['side']; rcx,rcy=905,594
-    lathe(reel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
-          [(-.16,.28),(-.14,.39),(.14,.39),(.16,.28)],side_radial(photo,rcx,rcy,72),sides=24)
-    obj=reel.finish('fire-truck:hose-reel-'+str(sign),{'side':photo.material()})
-    obj.location=game_vector((sign*1.22,(780-rcy)*FIRE_S,(rcx-78)*FIRE_S-3.45))
-    parent_keep_world(obj,fire_root)
+hull = carve_hull('fire-truck:body', [left, right, front, rear, top], fire_materials,
+                  solid, xs, ys, zs, VOXEL, 9000)
+attach(hull, fire_root)
 
-# Roof ladder rails and rungs use individual measured rectangles from the top photo.
-ladder_mesh=PhotoMesh(); overhead=fire_photos['overhead']
-def ladder_box(x0,x1,y0,y1,z0,z1,rect):
-    photo_box(ladder_mesh,x0,x1,y0,y1,z0,z1,{'+y':('overhead',overhead,rect)})
-for x,rect in ((-.66,(255,730,305,1340)),(.58,(715,730,765,1340))):
-    ladder_box(x-.055,x+.055,2.88,2.98,-.35,2.55,rect)
-for i in range(13):
-    z=-.25+i*.215; px=335+i*28
-    ladder_box(-.66,.58,2.89,2.96,z-.025,z+.025,(px,785,px+24,805))
-ladder_obj=ladder_mesh.finish('fire-truck:roof-ladder',{'overhead':overhead.material()})
-parent_keep_world(ladder_obj,fire_root)
+def disc_uv(photo, cx, cy, radius_px, spread=.92):
+    """A round part's face wears the same round part in the photo."""
+    return lambda a, f: photo.uv(cx - math.cos(a) * radius_px * f * spread, cy - math.sin(a) * radius_px * f * spread)
+def tread_uv(photo, cx, cy, radius_px):
+    """The tread wears the tyre's outer band in the photo, never the background."""
+    return lambda index, distance, radius, angle: photo.uv(cx - math.cos(angle) * radius_px * .93,
+                                                          cy - math.sin(angle) * radius_px * .93)
 
-# A separate cannon object turns around the origin at the measured roof pivot.
-cannon=pivot('fire-truck:cannon',(0,2.89,-.18)); parent_keep_world(cannon,fire_root)
-cannon_mesh=PhotoMesh(); photo=fire_photos['side']
-lathe(cannon_mesh,'side',(0,0,0),(0,0,-1),(1,0,0),(0,1,0),
-      [(0,.16),(-.24,.13),(-.72,.085)],side_radial(photo,795,158,35),sides=18)
-cannon_obj=cannon_mesh.finish('fire-truck:cannon-barrel',{'side':photo.material()})
-cannon_obj.location=game_vector((0,2.89,-.18)); parent_keep_world(cannon_obj,cannon)
+# Wheels are round parts on real axles. Each stands on the ground just inside its wing.
+side_face = 113
+for side_name, x in (('left', -TRACK_X), ('right', TRACK_X)):
+    for axle_name, axle, cx in (('front', FRONT_AXLE, 325), ('rear', REAR_AXLE, 1325)):
+        centre = (x, WHEEL_R, axle)
+        suffix = axle_name + '-' + side_name
+        steer = None
+        if axle_name == 'front':
+            steer = pivot('fire-truck:steer-' + suffix, (0, 0, 0))
+            attach(steer, fire_root, centre)
+        spin = pivot('fire-truck:spin-' + suffix, (0, 0, 0))
+        attach(spin, steer or fire_root, centre)
+        wheel = PhotoMesh()
+        face = disc_uv(side_photo, cx, 665, side_face)
+        lathe(wheel, 'side', (0, 0, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+              [(-TYRE_HALF, WHEEL_R * .90), (-TYRE_HALF * .8, WHEEL_R), (TYRE_HALF * .8, WHEEL_R), (TYRE_HALF, WHEEL_R * .90)],
+              tread_uv(side_photo, cx, 665, side_face), sides=32,
+              cap_start=('side', lambda a, f, face=face: face(a, f * .90)),
+              cap_end=('side', lambda a, f, face=face: face(a, f * .90)))
+        wheel_obj = wheel.finish('fire-truck:' + suffix, {'side': side_photo.material()})
+        attach(wheel_obj, spin, centre)
 
-# Round headlights are traced from the two circles in the front photo.
-lamp_group=pivot('fire-truck:lamp',(0,0,0)); parent_keep_world(lamp_group,fire_root)
-front_photo=fire_photos['front']
-for side,cx in (('left',520),('right',1014)):
-    cy=610; light_mesh=PhotoMesh()
-    lathe(light_mesh,'front',(0,0,0),(0,0,1),(1,0,0),(0,1,0),
-          [(-.045,.16),(.025,.16)],side_radial(front_photo,cx,cy,61),sides=24,
-          cap_end=('front',lambda a,f,cx=cx,cy=cy:front_photo.uv(cx-math.cos(a)*55*f,cy-math.sin(a)*55*f)))
-    head=light_mesh.finish('fire-truck:headlamp-'+side,{'front':front_photo.material()})
-    head.location=game_vector(((cx-768)*.0035,(948-cy)*.0035,FIRE_FRONT_Z-.035))
-    parent_keep_world(head,lamp_group)
+# Axles join the wheels under the frame.
+axle_mesh = PhotoMesh()
+for axle in (FRONT_AXLE, REAR_AXLE):
+    lathe(axle_mesh, 'side', (0, WHEEL_R, axle), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+          [(-TRACK_X, .055), (TRACK_X, .055)], tread_uv(side_photo, 325, 665, 60), sides=12)
+axle_obj = axle_mesh.finish('fire-truck:axles', {'side': side_photo.material()})
+attach(axle_obj, fire_root)
 
-photo_body=body_mesh.finish('fire-truck:photo measured shell',
-    {name:photo.material() for name,photo in fire_photos.items()})
-parent_keep_world(photo_body,fire_root)
+# The water cannon stands on the roof and turns about its own post.
+CANNON = (0, (SIDE_GROUND - 182) * SIDE_S, Z0 + (985 - SIDE_FRONT) * SIDE_S)
+cannon = pivot('fire-truck:cannon', (0, 0, 0)); attach(cannon, fire_root, CANNON)
+cannon_mesh = PhotoMesh()
+def barrel_uv(index, distance, radius, angle):
+    return side_photo.uv(985 + distance / SIDE_S, 163 - math.sin(angle) * radius * .7 / SIDE_S)
+lathe(cannon_mesh, 'side', (0, .08, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+      [(-.60, .035), (-.56, .055), (-.30, .045), (.05, .06), (.12, .035)], barrel_uv, sides=14)
+def post_uv(index, distance, radius, angle):
+    return side_photo.uv(985 + math.cos(angle) * radius * .7 / SIDE_S, 182 - distance / SIDE_S)
+lathe(cannon_mesh, 'side', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+      [(-.03, .075), (.05, .055), (.08, .045)], post_uv, sides=12)
+cannon_obj = cannon_mesh.finish('fire-truck:cannon-barrel', {'side': side_photo.material()})
+attach(cannon_obj, cannon, CANNON)
+
+# Headlamps stand a little proud of the wings, and glow at night.
+lamp_group = pivot('fire-truck:lamp', (0, 0, 0)); attach(lamp_group, fire_root)
+for lamp_side, px in (('left', 1028), ('right', 504)):
+    lens = PhotoMesh()
+    x = (FRONT_CX - px) * END_S
+    y = (FRONT_GROUND - 610) * END_S
+    lathe(lens, 'lens', (0, 0, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0), [(.02, .118), (-.012, .125)],
+          lambda index, distance, radius, angle, px=px: front_photo.uv(px - math.cos(angle) * 46, 610 - math.sin(angle) * 46),
+          sides=20, cap_end=('lens', disc_uv(front_photo, px, 610, 46, 1)))
+    lens_obj = lens.finish('fire-truck:headlamp-' + lamp_side, {'lens': lamp})
+    attach(lens_obj, lamp_group, (x, y, Z0 + (168 - SIDE_FRONT) * SIDE_S))
 
 specs=(('fire-truck',7.5,(-2.45,2.23),'fire'),
        ('water-tanker',9.0,(-3.00,2.55),'tanker'),
@@ -716,7 +719,7 @@ specs=(('fire-truck',7.5,(-2.45,2.23),'fire'),
        ('tow-rig',7.0,(-2.15,1.95),'tow'))
 for identifier,length,axles,kind in specs:
     if identifier == 'fire-truck':
-        continue  # The measured Photo model above owns this geometry.
+        continue  # Carved from its photos above.
     build_truck(identifier,length,axles,materials[identifier+'-paint'],kind)
     set_photo_camera(projection_camera, target=(0,0,1.65))
     projected=[materials[identifier+'-paint']]
@@ -746,7 +749,7 @@ for identifier,_,_,_ in specs:
     truck_metrics[identifier]={
         'triangles':sum(mesh_triangles(obj,depsgraph) for obj in truck_meshes),
         'paintImage':('four measured Photo sources' if identifier=='fire-truck' else PAINT_FILES[identifier][0]),
-        'paintImageBytes':(sum((PHOTO_ROOT/f'fire-engine-{view}.jpg').stat().st_size for view in fire_photos)
+        'paintImageBytes':(sum((textures/f'fire-engine-{view}.jpg').stat().st_size for view in fire_materials)
                            if identifier=='fire-truck' else (textures/PAINT_FILES[identifier][0]).stat().st_size),
         'paintImageDimensions':('four source views' if identifier=='fire-truck' else list(bpy.data.images[identifier+' camera projected photo'].size)),
     }
@@ -766,8 +769,8 @@ scene.cycles.samples=24; scene.cycles.use_denoising=True
 scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'
 scene.render.resolution_percentage=100; scene.render.resolution_x=900; scene.render.resolution_y=600
 scene.world=bpy.data.worlds.new('flat pale overcast review'); scene.world.use_nodes=True
-scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.43,.43,.43,1)
-scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.8
+scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(1,1,1,1)
+scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=1
 bpy.ops.import_scene.gltf(filepath=str(output))
 # Blender is Z-up after import; the road plane lies in XY at Z=0.
 bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,0))
@@ -776,7 +779,7 @@ floor_mat=bpy.data.materials.new('plain pale review ground'); floor_mat.use_node
 floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.38,.38,.38,1)
 floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.98
 floor.data.materials.append(floor_mat)
-for loc,power,size in [((4,1,9),1100,8)]:
+for loc,power,size in []:
     bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object
     light.data.energy=power; light.data.shape='DISK'; light.data.size=size
     light.rotation_euler=(Vector((0,0,1.35))-light.location).to_track_quat('-Z','Y').to_euler()
@@ -796,21 +799,21 @@ def render_view(name, location, target=(0,0,1.35), width=8.4, resolution=(900,60
     camera.location=location
     camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale=width
-    scene.render.filepath=str(evidence/('round-8-'+name+'.png'))
+    scene.render.filepath=str(evidence/('round-9-'+name+'.png'))
     bpy.ops.render.render(write_still=True)
 
 # Dead-on photos use the same orthographic camera directions and scale.
-render_view('side-render',(-10,0,1.4),width=8.4,resolution=(900,450))
-render_view('front-render',(0,10,1.4),width=4.8,resolution=(720,600))
-render_view('rear-render',(0,-10,1.4),width=4.8,resolution=(720,600))
+render_view('side-render',(-10,0,1.42),target=(0,0,1.42),width=8.6,resolution=(1000,500))
+render_view('front-render',(0,10,1.5),target=(0,0,1.5),width=4.8,resolution=(720,720))
+render_view('rear-render',(0,-10,1.5),target=(0,0,1.5),width=4.8,resolution=(720,720))
 render_view('overhead-render',(0,0,14),target=(0,0,0),width=8.1,resolution=(600,900))
 # Two three-quarter views, then the mayor's high view and the driver's 20 m view.
 moving_cannon=bpy.data.objects.get('fire-truck:cannon')
 if moving_cannon: moving_cannon.rotation_euler[2]=math.radians(38)
-render_view('three-quarter-front',(-9,9,5.5),width=8.6)
-render_view('three-quarter-rear',(9,-9,5.2),width=8.6)
-render_view('mayor-height',(12,15,13),width=20)
-render_view('driver-height-20m',(0,20,1.55),target=(0,0,1.45),width=12)
+render_view('three-quarter-front',(-9,9,4.2),width=9.4,resolution=(1000,700))
+render_view('three-quarter-rear',(9,-9,4.2),width=9.4,resolution=(1000,700))
+render_view('mayor-height',(11,11,15),width=14)
+render_view('driver-height-20m',(-14,14,1.55),target=(0,0,1.45),width=10)
 print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
                   'trucks':truck_metrics,'renderedFromImportedGlb':True,'viewTransform':'Standard',
                   'reviewViews':8,'evidence':str(evidence)}))
