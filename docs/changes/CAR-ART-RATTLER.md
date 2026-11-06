@@ -68,3 +68,9 @@ in the ignored evidence folder.
 Moved the round-4 and round-6 sheets and review notes to the Recycle Bin as
 superseded by round 7. Removed temporary renders and logs after assembling the
 sheet. The source photos remain in `.evidence` for Claude's review.
+
+## Round 9 (Claude)
+
+`tools/blender/rattler-photo.py` carves the body from four photos with `tools/blender/hull_model.py`, which now also uses a photo on a face only if that photo shows the subject there. Dark glass replaces the pale studio seen through the cab. Sockets, separate wheels and names follow the vehicle contract; the wheel radii now follow the photo, 0.38 m front and 0.51 m rear. Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs`, build. No assertion changed; the old recipe's entry goes with the recipe.
+
+Removed: `tools/blender/rattler.py`, and rounds 7 and earlier.

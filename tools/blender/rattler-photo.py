@@ -30,7 +30,8 @@ import bpy
 import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(script.parent))
-from photo_model import Mesh, Photo, box, lathe, slab, tidy, trace
+from photo_model import Mesh, Photo, lathe
+from hull_model import View, occupancy, largest_part, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -39,68 +40,109 @@ render_dir.mkdir(parents=True, exist_ok=True)
 photos = {name: Photo(textures / f'rattler-{name}.jpg') for name in ('side', 'front', 'rear', 'top')}
 side, front, rear, top = (photos[name] for name in ('side', 'front', 'rear', 'top'))
 materials = {name: photo.material(.92) for name, photo in photos.items()}
-for material in materials.values():
-    material.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = 0
 
-def save_mask(name, mask):
-    image = bpy.data.images.new('Rattler mask ' + name, mask.shape[1], mask.shape[0], alpha=False)
-    grey = mask[::-1].astype(np.float32)
-    image.pixels.foreach_set(np.dstack((grey, grey, grey, np.ones_like(grey))).ravel())
-    image.filepath_raw = str(render_dir / ('mask-' + name + '.png'))
-    image.file_format = 'PNG'
-    image.save()
+# Measured on the photos, in pixels. Forward is +Z on a car.
+LENGTH = 4.52
+S = LENGTH / (1728 - 41)          # side: nose to tail
+SIDE_NOSE, SIDE_GROUND = 41, 793
+FRONT_S = (793 - 126) * S / (1153 - 98)   # the cab roof is the same height in every photo
+FRONT_CX, FRONT_GROUND = 660, 1153
+REAR_S = (793 - 126) * S / (1091 - 128)
+REAR_CX, REAR_GROUND = 699.5, 1091
+TOP_XS, TOP_CX = .00337, 510
+TOP_ZS, TOP_NOSE = LENGTH / (1496 - 21), 21
+FRONT_AXLE = LENGTH / 2 - (207 - SIDE_NOSE) * S
+REAR_AXLE = LENGTH / 2 - (1501 - SIDE_NOSE) * S
+FRONT_R, REAR_R = 142 * S, 190 * S
+FRONT_X, FRONT_W = 487 * FRONT_S, 149 * FRONT_S
+REAR_X, REAR_W = 530 * REAR_S, 255 * REAR_S
+FRAME_Y = (SIDE_GROUND - 695) * S
+BODY_X = .80
 
-def photo_mask(name, photo, seeds):
-    # The pale studio backdrop is darker than the rail-photo sample. Lift only
-    # the detector's in-memory pixels to the neutral seed range; the image used
-    # by materials remains the untouched generated photograph.
-    photo._rgb = np.clip(photo.rgb() + 25, 0, 255).astype(np.int16)
-    # Sample the gradient around the whole frame, not only the four corners.
-    seeds = list(seeds)
+def side_pick(x, y, z):
+    return SIDE_NOSE + (LENGTH / 2 - z) / S, SIDE_GROUND - y / S
+def front_pick(x, y, z):
+    return FRONT_CX + x / FRONT_S, FRONT_GROUND - y / FRONT_S
+def rear_pick(x, y, z):
+    return REAR_CX - x / REAR_S, REAR_GROUND - y / REAR_S
+def top_pick(x, y, z):
+    return TOP_CX - x / TOP_XS, TOP_NOSE + (LENGTH / 2 - z) / TOP_ZS
+
+def frame_seeds(photo):
+    """The grey studio shades across the frame, so sample it all the way round."""
+    seeds = [(8, 8), (photo.w - 8, 8), (8, photo.h - 8), (photo.w - 8, photo.h - 8)]
     seeds.extend((x, 8) for x in range(80, photo.w - 8, 120))
     seeds.extend((x, photo.h - 9) for x in range(80, photo.w - 8, 120))
     seeds.extend((8, y) for y in range(80, photo.h - 8, 120))
     seeds.extend((photo.w - 9, y) for y in range(80, photo.h - 8, 120))
-    mask = tidy(~photo.sky(seeds, tolerance=40, grey=26), 3)
-    save_mask(name, mask)
-    return mask
+    return seeds
+def lift(photo):
+    # The studio is darker than a pale sky. Only the measuring copy is lifted.
+    photo.rgb()
+    photo._rgb = np.clip(photo._rgb + 25, 0, 255).astype(np.int16)
+for photo in photos.values():
+    lift(photo)
+def above_ground(ground):
+    def trim(mask):
+        mask = mask.copy()
+        mask[ground:, :] = False
+        return mask
+    return trim
 
-# The grey studio is slightly blue. The kit's 26-grey flood limit keeps it
-# connected while preserving dark windows and genuine shadow detail.
-side_solid = photo_mask('side', side, [(8, 8), (side.w - 8, 8), (8, side.h - 8), (side.w - 8, side.h - 8)])
-front_solid = photo_mask('front', front, [(8, 8), (front.w - 8, 8), (8, front.h - 8), (front.w - 8, front.h - 8)])
-rear_solid = photo_mask('rear', rear, [(8, 8), (rear.w - 8, 8), (8, rear.h - 8), (rear.w - 8, rear.h - 8)])
-top_solid = photo_mask('top', top, [(8, 8), (top.w - 8, 8), (8, top.h - 8), (top.w - 8, top.h - 8)])
+side_a = View('side', side, frame_seeds(side), side_pick, (1, 0, 0), above_ground(SIDE_GROUND), grey=26, tolerance=40)
+side_b = View('side', side, [(8, 8)], side_pick, (-1, 0, 0), None, grey=26, tolerance=40)
+side_b.mask = side_a.mask
+front_v = View('front', front, frame_seeds(front), front_pick, (0, 0, 1), above_ground(FRONT_GROUND), grey=26, tolerance=40)
+rear_v = View('rear', rear, frame_seeds(rear), rear_pick, (0, 0, -1), above_ground(REAR_GROUND), grey=26, tolerance=40)
+top_v = View('top', top, frame_seeds(top), top_pick, (0, 1, 0), None, grey=30, tolerance=45)
 
-def cut_ellipse(mask, cx, cy, rx, ry):
-    yy, xx = np.ogrid[:mask.shape[0], :mask.shape[1]]
-    mask[((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 1] = False
+def ends_allow(x, y, z):
+    return front_v.covers(x, y, z) | rear_v.covers(x, y, z)
+BED_Z0, BED_Z1 = LENGTH / 2 - (1720 - SIDE_NOSE) * S, LENGTH / 2 - (1160 - SIDE_NOSE) * S
+BED_FLOOR = (SIDE_GROUND - 395) * S
+def clear(x, y, z):
+    keep = y >= FRAME_Y
+    for axle, radius, track, width in ((FRONT_AXLE, FRONT_R, FRONT_X, FRONT_W), (REAR_AXLE, REAR_R, REAR_X, REAR_W)):
+        outer = np.abs(x) > track - width / 2 - .03
+        keep &= ~(outer & ((z - axle) ** 2 + (y - radius) ** 2 < (radius + .04) ** 2))
+    # Outside the body only a wing stands, close over its own wheel. The overhead photo's
+    # tyres reach a little further than the side photo's, and would leave a loose panel.
+    wing = np.zeros(x.shape, dtype=bool)
+    for axle, radius, track, width in ((FRONT_AXLE, FRONT_R, FRONT_X, FRONT_W), (REAR_AXLE, REAR_R, REAR_X, REAR_W)):
+        wing |= (z - axle) ** 2 + (y - radius) ** 2 < (radius + .24) ** 2
+    keep &= (np.abs(x) < BODY_X) | wing
+    # The bed is open: its floor sits below the rails.
+    keep &= ~((np.abs(x) < .60) & (z > BED_Z0) & (z < BED_Z1) & (y > BED_FLOOR))
+    return keep
 
-# Open wheel wells are measured around the tyres in each view. The tyres are
-# fitted inside these openings, with a small visible clearance.
-for cx, cy, rx, ry in ((221, 641, 188, 181), (1458, 610, 236, 223)):
-    cut_ellipse(side_solid, cx, cy, rx, ry)
-# Keep the side-photo engine opening open. Its measured outlines are filled by
-# the V8 and pipes below, not by another flat panel over them.
-side_solid[322:505, 350:590] = False
-for cx, cy, rx, ry in ((260, 965, 228, 245), (1050, 965, 228, 245)):
-    cut_ellipse(front_solid, cx, cy, rx, ry)
-for cx, cy, rx, ry in ((190, 855, 276, 270), (1210, 855, 276, 270)):
-    cut_ellipse(rear_solid, cx, cy, rx, ry)
-for name, mask in (('side-openings', side_solid), ('front-openings', front_solid), ('rear-openings', rear_solid)):
-    save_mask(name, mask)
-side_solid[790:, :] = False
+VOXEL = .018
+solid, xs, ys, zs = occupancy(((-1.24, 1.24), (0, 2.1), (-LENGTH / 2 - .03, LENGTH / 2 + .03)),
+                              VOXEL, [side_a.covers, top_v.covers, ends_allow], clear)
+solid = largest_part(solid)
 
-# Pixel calibration follows the wheel centres and the full bumper-to-tailgate span.
-S = 4.52 / (side.w - 40)
-SIDE_CX = side.w / 2
-SIDE_GROUND = 790
-SIDE_Y = 2.08 / (790 - 100)
-def side_point(px, py, x): return (x, (SIDE_GROUND - py) * SIDE_Y, (SIDE_CX - px) * S)
-def end_x(px, photo): return (px - photo.w / 2) * .00165
-def front_point(px, py, z): return (end_x(px, front), max(0, (1140 - py) * .00188), z)
-def rear_point(px, py, z): return (end_x(px, rear), max(0, (990 - py) * .00208), z)
-def top_point(px, py, y): return ((px - top.w / 2) * 2.12 / 610, y, (780 - py) * .00302)
+# The pale studio seen through the cab is painted as dark glass.
+def dark_glass(photo, rect, factor):
+    x0, y0, x1, y1 = rect
+    pixels = np.empty(photo.image_w * photo.image_h * 4, dtype=np.float32)
+    photo.image.pixels.foreach_get(pixels)
+    array = pixels.reshape(photo.image_h, photo.image_w, 4)
+    part = array[photo.image_h - y1:photo.image_h - y0, x0:x1, :3]
+    pale = part.mean(axis=2) > .30
+    part[pale] *= factor
+    photo.image.pixels.foreach_set(array.ravel())
+    photo.image.update()
+    photo.image.pack()
+dark_glass(side, (762, 215, 1036, 345), .22)
+dark_glass(front, (340, 205, 976, 386), .34)
+dark_glass(rear, (502, 222, 896, 340), .30)
+
+# The studio's own colour must not show on an edge.
+def body_only(view, photo, tolerance):
+    return view.mask & ~photo.sky(frame_seeds(photo), tolerance=tolerance, grey=34)
+bleeds = [(side, body_only(side_a, side, 60)), (front, body_only(front_v, front, 60)),
+          (rear, body_only(rear_v, rear, 60)), (top, body_only(top_v, top, 60))]
+for photo, mask in bleeds:
+    photo.bleed(mask)
 
 vehicle = bpy.data.objects.new('rattler', None)
 bpy.context.collection.objects.link(vehicle)
@@ -108,129 +150,47 @@ vehicle['vehicle_id'] = 'rattler'
 vehicle['units'] = 'metres'
 vehicle['forward'] = '+Z'
 vehicle['up'] = '+Y'
-vehicle['round'] = 8
 
-# One thick, measured side silhouette closes the cab, bonnet, wings and bed as
-# a continuous volume. Its measured wheel arches and side-photo UVs prevent the
-# intersecting, shredded panel strips from round 7.
-body_loops = trace(side_solid, (28, 100, side.w - 20, 790), tolerance=1.1, min_area=130)
-if not body_loops:
-    raise RuntimeError('No closed Rattler body outline in the side photograph')
-for label, d0, d1 in (('left', .94, .99), ('right', -.99, -.94)):
-    body = Mesh()
-    slab(body, 'side', side, body_loops, side_point, d0, d1, wall_scale=S)
-    body.finish(f'rattler body closed {label} side skin', materials).parent = vehicle
+body = carve_hull('rattler body', [side_a, side_b, front_v, rear_v, top_v], materials, solid, xs, ys, zs, VOXEL, 19000)
+body.parent = vehicle
 
-# The photo-measured end skins meet the side shell and close the full body at
-# both bumpers. Wheel openings remain real holes, not flat pictures.
-for label, photo, mask, point, z0, z1, rect in (
-    ('front', front, front_solid, front_point, 2.205, 2.265, (60, 70, front.w - 60, 1135)),
-    ('rear', rear, rear_solid, rear_point, -2.265, -2.205, (60, 60, rear.w - 60, 995)),
-):
-    loops = trace(mask, rect, tolerance=1.4, min_area=160)
-    if not loops:
-        raise RuntimeError(f'No closed {label} body outline in its photograph')
-    end = Mesh()
-    slab(end, label, photo, loops, point, z0, z1, wall_scale=.0019)
-    end.finish(f'rattler {label} closing shell', materials).parent = vehicle
-
-# Windshield and rear cab bulkheads close the cab between its measured side
-# skins. The matched end-view crops include their real window frames and roof.
-for label, photo, mask, point, z0, z1, rect in (
-    ('windshield bulkhead', front, front_solid, front_point, .76, .82, (240, 82, 1072, 430)),
-    ('cab rear bulkhead', rear, rear_solid, rear_point, -.66, -.60, (300, 62, 1100, 445)),
-):
-    loops = trace(mask, rect, tolerance=1.4, min_area=120)
-    if not loops:
-        raise RuntimeError(f'No measured {label} outline in its photograph')
-    bulkhead = Mesh()
-    slab(bulkhead, 'front' if photo is front else 'rear', photo, loops, point, z0, z1, wall_scale=.0019)
-    bulkhead.finish('rattler ' + label, materials).parent = vehicle
-
-# Separate, closed top volumes use only their matching overhead-photo regions.
-for name, rect, y0, y1, area in (
-    ('cab roof', (255, 400, 770, 940), 2.04, 2.09, 1600),
-    ('plank bed floor', (270, 905, 760, 1485), .90, .95, 1400),
-):
-    loops = trace(top_solid, rect, tolerance=1.6, min_area=area)
-    if not loops:
-        raise RuntimeError(f'No measured {name} outline in the overhead photograph')
-    cap = Mesh()
-    slab(cap, 'top', top, loops, top_point, y0, y1, wall_scale=.00302)
-    cap.finish('rattler ' + name, materials).parent = vehicle
-
-# Chassis rails and a compact V8 block are supported by the shell and keep the
-# engine bay open and readable from three-quarter views.
-frame = Mesh()
-for x in (-.66, .66):
-    box(frame, x - .07, x + .07, .28, .48, -1.93, 1.78,
-        {'+y': ('side', side, (390, 730, 1420, 765)), '-y': ('side', side, (390, 730, 1420, 765)),
-         '+z': ('front', front, (360, 880, 950, 1020)), '-z': ('rear', rear, (360, 770, 1050, 840))})
-for z in (-1.5, -.35, .85, 1.6):
-    box(frame, -.68, .68, .32, .42, z - .06, z + .06,
-        {'+y': ('side', side, (510, 742, 1320, 770)), '-y': ('side', side, (510, 742, 1320, 770)),
-         '+x': ('front', front, (400, 900, 910, 945)), '-x': ('front', front, (400, 900, 910, 945))})
-frame.finish('rattler ladder chassis and crossmembers', materials).parent = vehicle
-
-engine = Mesh()
-box(engine, -.50, .50, .78, 1.19, .72, 1.68,
-    {'+y': ('top', top, (405, 250, 630, 410)), '+z': ('front', front, (435, 520, 880, 840)),
-     '-z': ('rear', rear, (440, 600, 900, 780)), '+x': ('side', side, (430, 420, 600, 560)),
-     '-x': ('side', side, (430, 420, 600, 560))})
-box(engine, -.39, .39, 1.20, 1.34, .86, 1.47,
-    {'+y': ('top', top, (420, 305, 612, 390)), '+x': ('side', side, (460, 408, 590, 442)),
-     '-x': ('side', side, (460, 408, 590, 442)), '+z': ('front', front, (480, 470, 830, 520))})
-
-def cylinder_between(mesh, name, start, end, radius, photo_key, uv_rect, sides=16):
-    start, end = Vector(start), Vector(end)
-    axis = (end - start).normalized()
-    e1 = axis.cross(Vector((0, 1, 0)))
-    if e1.length < .01:
-        e1 = axis.cross(Vector((1, 0, 0)))
-    e1.normalize()
-    e2 = axis.cross(e1).normalized()
-    photo = photos[photo_key]
-    x0, y0, x1, y1 = uv_rect
-    uv = lambda i, d, r, a: photo.uv(x0 + (x1 - x0) * i, y0 + (y1 - y0) * (a % (2 * math.pi)) / (2 * math.pi))
-    lathe(mesh, photo_key, start, axis, e1, e2, [(0, radius), ((end - start).length, radius)], uv, sides=sides)
-
-# Round air filter, paired exhausts, grille bars, lamps and the hoop are lathed
-# or thick photo parts. The arcs stay inside the photographed outline pixels.
-cylinder_between(engine, 'air filter', (0, 1.34, 1.05), (0, 1.49, 1.05), .30, 'side', (380, 315, 560, 358), 32)
-for side_sign in (-1, 1):
-    cylinder_between(engine, 'exhaust', (side_sign * .48, .53, .24), (side_sign * .48, .53, 1.30), .055, 'side', (440, 600, 565, 635), 20)
-for x in (-.60, -.45, -.30, -.15, 0, .15, .30, .45, .60):
-    cylinder_between(engine, 'grille bar', (x, .48, 2.245), (x, 1.14, 2.245), .018, 'front', (566, 550, 592, 860), 10)
-for x in (-.70, .70):
-    cylinder_between(engine, 'headlight', (x, .82, 2.23), (x, .82, 2.27), .155, 'front', (410, 835, 525, 952), 28)
-    cylinder_between(engine, 'roll hoop upright', (x, 1.35, -.12), (x, 2.04, -.12), .055, 'side', (1050, 100, 1130, 150), 14)
-cylinder_between(engine, 'roll hoop crown', (-.70, 2.04, -.12), (.70, 2.04, -.12), .055, 'rear', (520, 82, 835, 135), 14)
-engine.finish('rattler V8, exhaust, grille, lights and roll hoop', materials).parent = vehicle
-
-# The four tyre meshes are independent, round, correctly grounded parts. Their
-# centres sit just inside the measured fender edges; radial UV arcs avoid sky.
+def disc(cx, cy, radius_px):
+    return lambda angle, fraction: side.uv(cx + math.cos(angle) * fraction * radius_px * .93,
+                                           cy - math.sin(angle) * fraction * radius_px * .93)
+def tread(cx, cy, radius_px):
+    return lambda index, distance, radius, angle: side.uv(cx + math.cos(angle) * radius_px * .95,
+                                                          cy - math.sin(angle) * radius_px * .95)
+def head_on(photo, scale, cx, half, py0, py1):
+    # A tyre's tread as the end photo shows it, running back and forth round the wheel.
+    def uv(index, distance, radius, angle):
+        wave = abs(((angle * 8 / (2 * math.pi)) % 2) - 1)
+        return photo.uv(cx + max(-half, min(half, distance / scale)), py0 + (py1 - py0) * wave)
+    return uv
 wheel_specs = (
-    ('front-left', .45, 1.70, .91, .22, 221, 641),
-    ('front-right', .45, 1.70, -.91, .22, 221, 641),
-    ('rear-left', .54, -1.53, .91, .28, 1458, 610),
-    ('rear-right', .54, -1.53, -.91, .28, 1458, 610),
+    ('front-left', FRONT_R, FRONT_AXLE, FRONT_X, FRONT_W, 207, 652, 142, 'front', head_on(front, FRONT_S, 172, 66, 960, 1130)),
+    ('front-right', FRONT_R, FRONT_AXLE, -FRONT_X, FRONT_W, 207, 652, 142, 'front', head_on(front, FRONT_S, 172, 66, 960, 1130)),
+    ('rear-left', REAR_R, REAR_AXLE, REAR_X, REAR_W, 1501, 599, 190, 'rear', head_on(rear, REAR_S, 170, 118, 860, 1075)),
+    ('rear-right', REAR_R, REAR_AXLE, -REAR_X, REAR_W, 1501, 599, 190, 'rear', head_on(rear, REAR_S, 170, 118, 860, 1075)),
 )
 wheel_nodes = {}
-for name, radius, z, x, width, px, py in wheel_specs:
+for name, radius, z, x, width, px, py, radius_px, tread_view, tread_uv in wheel_specs:
     wheel = Mesh()
-    cy = py
-    def radial(i, distance, r, angle, px=px, cy=cy, radius=radius):
-        arc = .85 * math.degrees(math.asin(max(-1, min(1, math.sin(angle))))) / 90
-        return side.uv(px + r / S * arc, cy - r / SIDE_Y * math.cos(angle))
-    def cap_uv(angle, fraction, px=px, cy=cy, radius=radius):
-        return side.uv(px + math.cos(angle) * fraction * radius / S * .85,
-                       cy - math.sin(angle) * fraction * radius / SIDE_Y * .85)
-    lathe(wheel, 'side', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
-          [(-width / 2, radius * .83), (-width * .34, radius), (width * .34, radius), (width / 2, radius * .83)],
-          radial, sides=40, cap_start=('side', cap_uv), cap_end=('side', cap_uv))
-    wheel_obj = wheel.finish('rattler wheel ' + name, materials)
+    face = disc(px, py, radius_px)
+    lathe(wheel, tread_view, (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+          [(-width / 2, radius * .975), (-width * .44, radius), (width * .44, radius), (width / 2, radius * .975)],
+          tread_uv, sides=36,
+          cap_start=('side', lambda a, f, face=face: face(a, f * 1.03)),
+          cap_end=('side', lambda a, f, face=face: face(a, f * 1.03)))
+    wheel_obj = wheel.finish('rattler wheel ' + name, {'side': materials['side'], tread_view: materials[tread_view]})
     wheel_obj.parent = vehicle
     wheel_nodes[name] = wheel_obj
+
+# Axles join the wheels under the frame.
+axles = Mesh()
+for z, radius, track in ((FRONT_AXLE, FRONT_R, FRONT_X), (REAR_AXLE, REAR_R, REAR_X)):
+    lathe(axles, 'side', (0, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0), [(-track, .05), (track, .05)],
+          tread(700, 690, 18), sides=10)
+axles.finish('rattler axles', {'side': materials['side']}).parent = vehicle
 
 # The sockets follow the shared vehicle contract exactly and remain named nodes.
 socket_locations = {
@@ -303,16 +263,17 @@ if triangle_count > 25000 or glb.stat().st_size > 8 * 1024 * 1024:
     raise RuntimeError(f'Budget exceeded: {triangle_count} triangles, {glb.stat().st_size} bytes')
 for name, radius, *_ in wheel_specs:
     node = nodes['rattler wheel ' + name]
-    primitive = gltf['meshes'][node['mesh']]['primitives'][0]
-    bounds = gltf['accessors'][primitive['attributes']['POSITION']]
-    diameter = bounds['max'][1] - bounds['min'][1]
-    if abs(diameter - 2 * radius) > .015:
-        raise RuntimeError(f'{name} exported wheel diameter {diameter:.4f} m, expected {2 * radius:.2f}')
+    # A wheel has one primitive for its tread and one for its faces: measure both.
+    parts = [gltf['accessors'][primitive['attributes']['POSITION']] for primitive in gltf['meshes'][node['mesh']]['primitives']]
+    diameter = max(part['max'][1] for part in parts) - min(part['min'][1] for part in parts)
+    if abs(diameter - 2 * radius) > .03:
+        raise RuntimeError(f'{name} exported wheel diameter {diameter:.4f} m, expected {2 * radius:.3f}')
 if 'rattler' not in nodes:
     raise RuntimeError('GLB lost its rattler root node')
 print(f'GLB readback: {triangle_count} triangles, {glb.stat().st_size} bytes, {len(uv_ranges)} UV0 primitives')
 
 # Every review image comes from a fresh scene containing only this exported GLB.
+FRONT_R_OUT, REAR_R_OUT = FRONT_R, REAR_R
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = 'BLENDER_EEVEE_NEXT'
@@ -325,7 +286,7 @@ scene.view_settings.view_transform = 'Standard'
 scene.render.resolution_percentage = 100
 scene.world = bpy.data.worlds.new('flat neutral overcast')
 scene.world.use_nodes = True
-scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.30, .30, .30, 1)
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (1, 1, 1, 1)
 scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 1
 before = set(bpy.data.objects)
 bpy.ops.import_scene.gltf(filepath=str(glb))
@@ -340,7 +301,7 @@ min_z = min(point.z for point in body_bounds)
 height_z = max(point.z for point in body_bounds) - min_z
 width_x = max(point.x for point in body_bounds) - min(point.x for point in body_bounds)
 length_y = max(point.y for point in body_bounds) - min(point.y for point in body_bounds)
-if height_z < 1.9 or height_z > 2.2 or length_y < 4.3 or width_x < 1.8:
+if height_z < 1.7 or height_z > 2.3 or length_y < 4.3 or width_x < 1.8:
     raise RuntimeError(f'Imported GLB axes or envelope are wrong: Blender extents X/Y/Z={width_x:.3f}/{length_y:.3f}/{height_z:.3f}')
 
 floor_mat = bpy.data.materials.new('plain mid-grey floor')
@@ -349,12 +310,12 @@ floor_nodes = floor_mat.node_tree.nodes
 floor_nodes.clear()
 floor_out = floor_nodes.new('ShaderNodeOutputMaterial')
 floor_emission = floor_nodes.new('ShaderNodeEmission')
-floor_emission.inputs['Color'].default_value = (.34, .34, .34, 1)
+floor_emission.inputs['Color'].default_value = (.42, .41, .39, 1)
 floor_mat.node_tree.links.new(floor_emission.outputs['Emission'], floor_out.inputs['Surface'])
 bpy.ops.mesh.primitive_plane_add(size=2000, location=(0, 0, -.015))
 bpy.context.object.name = 'review floor'; bpy.context.object.data.materials.append(floor_mat)
 bpy.ops.object.light_add(type='AREA', location=(-2, -1, 7))
-light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 650; light.data.shape = 'DISK'; light.data.size = 9
+light = bpy.context.object; light.name = 'single even studio light'; light.data.energy = 0; light.data.shape = 'DISK'; light.data.size = 9
 light.rotation_euler = (Vector((0, 0, .7)) - light.location).to_track_quat('-Z', 'Y').to_euler()
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera); scene.camera = camera
@@ -369,9 +330,9 @@ def aim(eye, target, scale, name, size=(900, 640)):
 
 # Blender imports the glTF Y-up asset upright as Z-up; no corrective root
 # rotation is applied. These matched projections use +Z as the vehicle front.
-aim((12, 0, 1.12), (0, 0, .95), 5.1, 'photo-side')
-aim((0, -9, 1.12), (0, 0, .98), 2.9, 'photo-front', (700, 700))
-aim((0, 9, 1.12), (0, 0, .98), 2.9, 'photo-rear', (700, 700))
+aim((12, 0, 1.05), (0, 0, 1.05), 5.2, 'photo-side', (1000, 500))
+aim((0, -9, 1.0), (0, 0, 1.0), 2.9, 'photo-front', (700, 700))
+aim((0, 9, 1.0), (0, 0, 1.0), 2.9, 'photo-rear', (700, 700))
 aim((0, 0, 10), (0, 0, .95), 5.1, 'photo-top')
 aim((5.8, -7.3, 3.1), (0, 0, .95), 5.5, 'front-three-quarter')
 aim((5.8, 7.3, 3.1), (0, 0, .95), 5.5, 'rear-three-quarter')
@@ -393,7 +354,7 @@ aim((7.5, -8.0, 3.1), (.45, 0, .95), 6.2, 'beside-person')
 
 (render_dir / 'manifest.json').write_text(json.dumps({
     'id': 'rattler', 'dimensions_m': {'width': round(width_x, 3), 'length': round(length_y, 3), 'height': round(height_z, 3)},
-    'wheel_radius_m': {'front': .45, 'rear': .54}, 'triangles': triangle_count, 'bytes': glb.stat().st_size,
+    'wheel_radius_m': {'front': round(FRONT_R_OUT, 3), 'rear': round(REAR_R_OUT, 3)}, 'triangles': triangle_count, 'bytes': glb.stat().st_size,
     'sockets': sorted(socket_locations), 'wheels': sorted(wheel_nodes), 'readback': 'GLB nodes, UV0 and wheel POSITION bounds checked',
 }, indent=2) + '\n')
 print('Clean-scene GLB renders: photo-side, photo-front, photo-rear, photo-top, front-three-quarter, rear-three-quarter, beside-person')
