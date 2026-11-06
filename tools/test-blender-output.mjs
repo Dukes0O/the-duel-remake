@@ -48,6 +48,8 @@ function jpegDimensions(bytes, start, length) {
 const generators = [
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-safety',script:'tools/blender/town-safety.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:3000000},
   {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
@@ -643,6 +645,66 @@ try {
             min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
           }
           assert.ok(min[0] < max[0] && min[1] < max[1], 'town UVs cover a range of values');
+        }
+      }
+      if (generator.id === 'town-safety') {
+        const names = gltf.nodes.map(node => node.name || '');
+        assert.ok(names.includes('town-safety'), 'named safety family root');
+        const nodeIndex = new Map(gltf.nodes.map((node,index) => [node.name || '',index]));
+        const familyNode=nodeIndex.get('town-safety');
+        const familyChildren=new Set(gltf.nodes[familyNode].children || []);
+        for (const id of ['fence-wood-straight','fence-wood-corner','fence-wood-end',
+          'fence-chain-straight','fence-chain-corner','fence-chain-end',
+          'wall-scrap-straight','wall-scrap-corner','wall-scrap-end',
+          'wall-steel-straight','wall-steel-corner','wall-steel-end','gate-scrap',
+          'watchtower','guard-post','searchlight','fire-station','clinic','hydrant']) {
+          assert.ok(familyChildren.has(nodeIndex.get(id)), `${id} is a direct building child`);
+        }
+        const expected = [
+          'fence-wood-straight','fence-wood-corner','fence-wood-end',
+          'fence-chain-straight','fence-chain-corner','fence-chain-end',
+          'wall-scrap-straight','wall-scrap-corner','wall-scrap-end',
+          'wall-steel-straight','wall-steel-corner','wall-steel-end',
+          'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
+          'searchlight','searchlight:beam','fire-station','clinic','hydrant',
+        ];
+        for (const id of expected) assert.ok(names.includes(id), `missing ${id}`);
+        const children = gltf.nodes.map(node => node.children || []);
+        const primitiveCount = (index) => {
+          const meshId=gltf.nodes[index].mesh;
+          const own=Number.isInteger(meshId) ? gltf.meshes[meshId].primitives.reduce((sum,p) =>
+            sum+gltf.accessors[p.indices].count/3,0) : 0;
+          return own+children[index].reduce((sum,child) => sum+primitiveCount(child),0);
+        };
+        const budgeted = [
+          ...expected.filter(id => /^(fence-|wall-|watchtower$|searchlight$|hydrant$)/.test(id)).map(id => [id,1800]),
+          ['gate-scrap',5000],['guard-post',5000],['clinic',5000],['fire-station',9000],
+        ];
+        for (const [id,budget] of budgeted) {
+          const count=primitiveCount(nodeIndex.get(id));
+          assert.ok(count>0 && count<=budget, `${id}: ${count} triangles exceeds the ${budget} triangle size tier`);
+        }
+        for (const material of gltf.materials) {
+          const metallic=material.pbrMetallicRoughness?.metallicFactor ?? 0;
+          assert.ok(metallic<=.3, `${material.name} metallic factor ${metallic} exceeds the town reflection limit`);
+        }
+        assert.ok(gltf.materials.some(material => material.emissiveFactor?.some(value => value>0)),
+          'watchtower lamp and searchlight beam include emissive material');
+        const binaryOffset = 28 + jsonLength;
+        for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+          const coords = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+          assert.deepEqual(coords, ['TEXCOORD_0'], `${mesh.name} exports one picture-coordinate set`);
+          const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+          assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV values are float pairs');
+          const view = gltf.bufferViews[uv.bufferView];
+          const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+          const stride = view.byteStride ?? 8;
+          const min = [Infinity,Infinity], max = [-Infinity,-Infinity];
+          for (let i=0;i<uv.count;i++) for (let axis=0;axis<2;axis++) {
+            const value=bytes.readFloatLE(start+i*stride+axis*4);
+            min[axis]=Math.min(min[axis],value);max[axis]=Math.max(max[axis],value);
+          }
+          assert.ok(min[0]<max[0] && min[1]<max[1], `${mesh.name} UVs cover a range`);
         }
       }
     });
