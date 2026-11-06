@@ -33,10 +33,10 @@ export async function run(context){
   await press(context,'KeyC');await picture(context,'the-dig-cab');
   await press(context,'KeyC');await picture(context,'the-dig-work-view');
   await press(context,'KeyC');
-  await hold(context,'Space',2000);
-  const afterDig=await context.evaluate(`(()=>{const s=window.__theDig.simulation;return JSON.stringify({dug:s.excavatedM3,mode:s.mode,message:s.lastMessage,angles:s.haul.machines.excavator.jointAngles,load:s.haul.machines.excavator.load});})()`);
-  context.log?.(afterDig);
-  await context.waitFor('window.__theDig.simulation.excavatedM3>0',`excavator dug dirt ${afterDig}`,10000);
+  // Hold each key until the game has acted on it, as a player does; under load frames can be slow.
+  await key(context,'Space','keydown');
+  await context.waitFor('window.__theDig.simulation.excavatedM3>.3','excavator dug dirt',30000);
+  await key(context,'Space','keyup');
   await picture(context,'the-dig-excavated');
   await hold(context,'KeyW',700);await hold(context,'KeyA',4200);await picture(context,'the-dig-swing-to-truck');
   await press(context,'KeyE');
@@ -44,12 +44,14 @@ export async function run(context){
   await press(context,'KeyQ');
   await context.waitFor('window.__theDig.simulation.activeMachine==="dumpTruck"','dump truck selected',3000);
   await picture(context,'the-dig-truck-loaded');
-  await hold(context,'KeyW',1500);await press(context,'Tab');await hold(context,'Space',2600);
-  await context.waitFor('window.__theDig.simulation.tippedM3>0','truck tipped a heap',10000);
+  await hold(context,'KeyW',1500);await press(context,'Tab');await key(context,'Space','keydown');
+  await context.waitFor('window.__theDig.simulation.tippedM3>0','truck tipped a heap',30000);
+  await picture(context,'the-dig-bed-lifted');await key(context,'Space','keyup');
   await picture(context,'the-dig-truck-tipped');
   await press(context,'KeyQ');await context.waitFor('window.__theDig.simulation.activeMachine==="trencher"','trencher selected',3000);
-  await press(context,'Tab');await key(context,'KeyW','keydown');await hold(context,'Space',6000);await key(context,'KeyW','keyup');
-  await context.waitFor('window.__theDig.simulation.trencher.cutVolumeM3>0','trencher cut a ditch',10000);
+  await press(context,'Tab');await key(context,'KeyW','keydown');await key(context,'Space','keydown');
+  await context.waitFor('window.__theDig.simulation.trencher.cutVolumeM3>4','trencher cut a ditch',60000);
+  await key(context,'Space','keyup');await key(context,'KeyW','keyup');
   await picture(context,'the-dig-trencher-ditch');
   await press(context,'Escape');
   await context.waitFor('!document.querySelector(".the-dig")&&window.__qaApp.isYardHomeActive()','back in yard',5000);

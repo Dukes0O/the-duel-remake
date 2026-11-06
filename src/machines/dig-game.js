@@ -5,7 +5,7 @@ import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
-import {createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {closeDigSandbox,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
@@ -70,7 +70,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
-  let sim=createDigSandbox(),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
+  let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
   let shownMessage='',messageUntil=0;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
@@ -92,24 +92,6 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else soundAfter=now+120;
     if(app?.audio?.context&&!app.audio.muted)app.audio._playCue?.(cue,{scale:cue===MACHINE_SOUND_CUES.engine ? .45 : .7});
   };
-  try{
-    const [machineAsset,domeAsset]=await Promise.all([new GLTFLoader().loadAsync(MODEL),new GLTFLoader().loadAsync(DOME)]);
-    if(stopped){renderer.dispose();return {stop(){}};}
-    modelAsset=machineAsset;
-    const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
-    const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
-    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
-    for(const id of MACHINE_IDS){
-      const root=machineRoot(machineAsset,id);
-      if(!root)throw new Error(`The machine model is missing ${id}.`);
-      const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:sound});
-      machineViews.set(id,view);
-    }
-  }catch(error){
-    failed=true;message.textContent='The yard model could not be loaded. Check the machine and Dome models.';
-    const alert=document.createElement('p');alert.className='the-dig-error';alert.setAttribute('role','alert');alert.textContent='The yard model could not be loaded. You can return to the yard.';host.append(alert);
-    console.warn('THE DIG model load failed:',error?.message||error);
-  }
   function resize(){const width=host.clientWidth,height=host.clientHeight;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();}
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
   const actionFor=()=>{
@@ -133,10 +115,28 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   document.addEventListener('keydown',onDown,true);document.addEventListener('keyup',onUp,true);window.addEventListener('blur',onBlur);
   host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;});
   host.querySelector('.the-dig-close').addEventListener('click',stop);
+  try{
+    const [machineAsset,domeAsset]=await Promise.all([new GLTFLoader().loadAsync(MODEL),new GLTFLoader().loadAsync(DOME)]);
+    if(stopped){renderer.dispose();return {stop(){}};}
+    modelAsset=machineAsset;
+    const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
+    const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
+    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
+    for(const id of MACHINE_IDS){
+      const root=machineRoot(machineAsset,id);
+      if(!root)throw new Error(`The machine model is missing ${id}.`);
+      const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:sound});
+      machineViews.set(id,view);
+    }
+  }catch(error){
+    failed=true;message.textContent='The yard model could not be loaded. Check the machine and Dome models.';
+    const alert=document.createElement('p');alert.className='the-dig-error';alert.setAttribute('role','alert');alert.textContent='The yard model could not be loaded. You can return to the yard.';host.append(alert);
+    console.warn('THE DIG model load failed:',error?.message||error);
+  }
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
-    effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();host.remove();onExit();
+    effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;

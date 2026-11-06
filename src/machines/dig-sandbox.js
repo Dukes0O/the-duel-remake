@@ -3,7 +3,7 @@ import {machineToolPosition} from './machine.js';
 import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
-import {scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
+import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 
@@ -34,9 +34,10 @@ function newGround(seed) {
 }
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} = {}) {
   const edit = ground || newGround(seed);
-  const saved = globalThis.__theDigGroundMemory;
+  const memory = globalThis.__theDigGroundMemory ??= {};
+  const saved = memory[playerId];
   let loaded = false;
   if (!ground && saved?.version === 1) {
     try { edit.loadSave(saved); loaded = true; } catch { /* An old in-memory shape is ignored safely. */ }
@@ -44,14 +45,17 @@ export function createDigSandbox({seed = 1, ground = null} = {}) {
   // TOWN-STORE replaces this page-lifetime memory save; career storage is never used.
   if (!ground && !loaded) {
     for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:DIG_HEAP.x,z:DIG_HEAP.z,radius},'topsoil',volume);
-    globalThis.__theDigGroundMemory=edit.toSave();
+    memory[playerId]=edit.toSave();
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
-  return {ground:edit,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
+  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
+
+/** Leaving the yard hands the Scablands back with its own ground, so a later job is unchanged. */
+export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
   const ids=['excavator','dumpTruck','trencher'];
@@ -71,7 +75,7 @@ function fixedStep(sim,input) {
     const haul={...sim.haul,activeMachine:sim.activeMachine};
     let advanced=stepMachineHaul(haul,input.controls,STEP);
     // The bed lifts while Space is held and settles back after; the load slides once it is high enough.
-    const truck=advanced.machines.dumpTruck,tipping=input.action==='tip'&&machineLoadVolume(truck)>1e-6;
+    const truck=advanced.machines.dumpTruck,tipping=input.action==='tip';
     const bedAngle=Math.max(0,Math.min(.85,(truck.bedAngle??0)+(tipping?.6:-.5)*STEP));
     advanced={...advanced,machines:{...advanced.machines,dumpTruck:{...truck,bedAngle}}};
     if(input.action==='tip'&&bedAngle<.4)return {...next,haul:{...advanced,activeMachine:'excavator'},events};
@@ -115,7 +119,7 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   let carry=sim.fixedCarry+dtSeconds,next={...sim,events:[]};
   while(carry+1e-10>=STEP){next=fixedStep(next,input);carry-=STEP;}
   next.fixedCarry=carry;next.elapsed=sim.elapsed+dtSeconds;
-  if(next.dirty){globalThis.__theDigGroundMemory=next.ground.toSave();next.dirty=false;}
+  if(next.dirty){(globalThis.__theDigGroundMemory??={})[next.playerId]=next.ground.toSave();next.dirty=false;}
   return next;
 }
 

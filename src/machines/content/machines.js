@@ -4,6 +4,7 @@ export const MACHINE_CONTENT = Object.freeze({
     id:'excavator', name:'Excavator', driveKind:'tracks', massKg:18_000, maxSpeedMps:2.2,
     turnRateRadPerSecond:0.9, trackWidthM:2.2, maxLoadKg:3_200, startAngles:Object.freeze({boom:0.42}),
     cabEye:Object.freeze([-0.72,3.05,0.1]), cabTurnsWith:'house',
+    // A tool's radius is at least 0.71 m, so it always covers a sample of the 1 m ground grid wherever it lands.
     // Pivots and lengths come from machines-1.glb, so the bucket the sim digs with is the bucket on screen.
     joints:Object.freeze([
       Object.freeze({name:'house', control:'swing', modelNode:'excavator:cab', parent:null, origin:[0,1.88,-0.12], axis:[0,-1,0], limits:[-Math.PI,Math.PI], rate:0.75}),
@@ -11,7 +12,7 @@ export const MACHINE_CONTENT = Object.freeze({
       Object.freeze({name:'arm', control:'arm', modelNode:'excavator:arm', parent:'boom', origin:[0,1.12,5.5], axis:[-1,0,0], limits:[-1.2,0.9], rate:0.65}),
       Object.freeze({name:'bucket', control:'bucket', modelNode:'excavator:bucket', parent:'arm', origin:[0,-1.65,2.34], axis:[-1,0,0], limits:[-1.1,1.1], rate:0.9}),
     ]),
-    tools:Object.freeze({bucket:Object.freeze({kind:'bucket', joint:'bucket', offset:[0,-0.7,0.55], capacityM3:0.8, radiusM:0.55, cutRateM3s:0.45, dischargeRateM3s:0.8})}),
+    tools:Object.freeze({bucket:Object.freeze({kind:'bucket', joint:'bucket', offset:[0,-0.7,0.55], capacityM3:0.8, radiusM:0.8, cutRateM3s:0.45, dischargeRateM3s:0.8})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['swing','boom','arm','bucket'])}),
   }),
   dumpTruck: Object.freeze({
@@ -27,7 +28,7 @@ export const MACHINE_CONTENT = Object.freeze({
       Object.freeze({name:'boom', control:'boom', modelNode:'trencher:boom', parent:null, origin:[0,1.02,-1.82], axis:[1,0,0], limits:[-0.9,0.2], rate:0.8}),
     ]),
     tools:Object.freeze({chain:Object.freeze({kind:'chain', joint:'boom', offset:[0,-0.6,-0.8], widthM:1, depthM:1.5, rearM:3,
-      radiusM:0.5, cutRateM3s:1.5, ridgeOffsetM:1.4, ridgeRadiusM:0.5})}),
+      radiusM:0.75, cutRateM3s:1.5, ridgeOffsetM:1.4, ridgeRadiusM:0.5})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['boom','chain'])}),
   }),
 });

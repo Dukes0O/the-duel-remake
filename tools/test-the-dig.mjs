@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
 import {machineControlInput,keyboardAction} from '../src/input-contexts.js';
-import {createDigSandbox,createPendingDigActions,DIG_HEAP,digSandboxMachineState,stepDigSandbox,switchDigMachine} from '../src/machines/dig-sandbox.js';
+import {closeDigSandbox,createDigSandbox,createPendingDigActions,DIG_HEAP,digSandboxMachineState,stepDigSandbox,switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {machineLoadVolume} from '../src/machines/tools.js';
 import {machineToolPosition} from '../src/machines/machine.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
+import {scablandsGroundEdit,scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 
 const flags=enabled=>({enabled:name=>name==='wasteland-town'&&enabled});
 const home=featureFlags=>yardHomeScreen({profile:{wasteland:{}},playerName:'Test',escapeHTML:value=>String(value),featureFlags});
@@ -38,6 +39,8 @@ let lowered=0;
 while(tipNow(sim).y>sim.ground.heightAt(tipNow(sim).x,tipNow(sim).z)+.05&&lowered++<300)sim=stepDigSandbox(sim,{controls:{boom:-1}},dt);
 assert.ok(lowered<300,'lowering the boom brings the bucket tip to ground height');
 assert.ok(lowered>10,'the bucket starts well above the ground, so lowering it is a real step');
+for(const toolDefinition of [machineDefinition('excavator').tools.bucket,machineDefinition('trencher').tools.chain])
+  assert.ok(toolDefinition.radiusM>=Math.SQRT1_2,'a digging tool always covers a sample of the 1 m ground grid, so there are no dead spots');
 let high=createDigSandbox({seed:417});
 const highResult=stepDigSandbox(high,{action:'dig'},dt);
 assert.equal(highResult.excavatedM3,0,'Space does not dig while the bucket is above the ground');
@@ -97,6 +100,12 @@ assert.ok(sim.trencher.ridgeLooseVolumeM3>=sim.trencher.cutVolumeM3*1.25-1e-5,
   `the cut material is deposited in a ridge beside the ditch (${sim.trencher.cutVolumeM3} cut, ${sim.trencher.ridgeLooseVolumeM3} ridge)`);
 assert.ok(sim.ground.chunkCount>0,'the sandbox has persistent edited ground');
 assert.equal(trenchState.machine.timeSeconds>0,true,'the machine state advances in fixed simulation time');
+const emptyTruck={...createDigSandbox({seed:21,playerId:'empty-bed'}),activeMachine:'dumpTruck',mode:'work'};
+assert.ok(stepDigSandbox(emptyTruck,{controls:{},action:'tip'},.5).haul.machines.dumpTruck.bedAngle>0,'the bed lifts with no load, so the control always answers');
+const otherPlayer=createDigSandbox({seed:417,playerId:'someone-else'});
+assert.equal(otherPlayer.ground.heightAt(truck.x,truck.z),scablandsNaturalHeightAt(truck.x,truck.z),'another player starts with their own untouched ground');
+closeDigSandbox();
+assert.equal(scablandsGroundEdit.heightAt(truck.x,truck.z),scablandsNaturalHeightAt(truck.x,truck.z),'leaving the yard hands the Scablands back with its natural ground');
 const savedHeight=sim.ground.heightAt(truck.x,truck.z);
 const nextVisit=createDigSandbox({seed:417});
 assert.equal(nextVisit.ground.heightAt(truck.x,truck.z),savedHeight,'edited ground remains in memory across sandbox visits');
