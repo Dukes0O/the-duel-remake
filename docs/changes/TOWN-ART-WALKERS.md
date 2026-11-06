@@ -15,7 +15,7 @@ Use a single lightweight GLB family with one root and thirteen named direct chil
 - `node tools/test-blender-output.mjs`: passed, 296 checks. The first run caught a mismatched trader-pack node name; the recipe and GLB were corrected, and the rerun passed.
 - `node tools/test-repo-hygiene.mjs`: passed. The reported size targets are advisory.
 - `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; the audio analysis subtest failed twice with `spawnSync ffmpeg EPERM`. This tool-launch failure is unrelated to the walker files.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: stopped after 13 suites passed and `tools/test-circuit-eifel.mjs` failed; 33 suites did not run. The one-suite rerun failed again while Three.js could not load `blob:nodedata:` textures. This test is unrelated to the walker files.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: stopped after 13 suites passed and `tools/test-circuit-eifel.mjs` failed; 33 suites did not run. The one-suite rerun failed again while Three.js could not load `blob:nodedata:` textures. This test is unrelated to the walker files. The tier ran before removing an unused color lookup; the final recipe was rechecked by the 296-check Blender output suite.
 - `npm.cmd run build`: passed. Vite reported existing chunk-size and dynamic-import warnings.
 - No art frame check or browser scenario applies. No tests or assertions were changed.
 
