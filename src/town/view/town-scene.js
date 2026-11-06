@@ -64,7 +64,7 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
   };
   const addLandmarks=async()=>{
     for(const [id,url] of [['dome','/assets/models/wasteland/scrapdome/yard.glb'],['tin-town','/assets/models/wasteland/scablands/tintown.glb']]){
-      try{const model=await loadModel(url);if(state.disposed){model.traverse(object=>{object.geometry?.dispose?.();});return;}model.name=`${id} landmark`;model.userData.landmark=id;assets.add(model);}catch{/* The ground and town remain usable if optional distant art is absent. */}
+      try{const model=await loadModel(url);if(state.disposed){model.traverse(object=>{object.geometry?.dispose?.();});return;}model.traverse(object=>{if(object.name)object.name=object.name.replaceAll(':','');});model.name=`${id} landmark`;model.userData.landmark=id;assets.add(model);}catch{/* The ground and town remain usable if optional distant art is absent. */}
     }
     for(const place of SCABLANDS_PLACES){const beacon=new THREE.Mesh(new THREE.CylinderGeometry(0.4,2,Math.max(3,place.height||8),6),new THREE.MeshStandardMaterial({color:0x8b6b48,roughness:.95}));beacon.position.set(place.x,(place.height||0)/2,place.z);beacon.name=`Scablands ${place.id||'place'}`;assets.add(beacon);}
   };
