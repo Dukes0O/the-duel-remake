@@ -1,21 +1,21 @@
-# TOWN-ART-FUN
+﻿# TOWN-ART-FUN round 2
 
 ## Changed
 
-- Added the `town-fun` Blender recipe and `fun.glb` with the ten building IDs and named moving or lit parts from the card. The fountain was modeled first as a pressed bonnet basin with curved exhaust pipes, a central salvaged pedestal and dark water.
-- Reused the town material and geometry helpers and existing Wasteland town texture pictures. The review views import the exported GLB into an empty Blender scene.
-- Added one output-test entry and a focused check for family IDs, named parts, UV coordinates, metallic values, per-building triangle budgets and the 3 MB file cap.
-- Added round 1's comparison sheet and honest look scores. Claude should review the photo-to-fountain match and the other family silhouettes.
+- Rebuilt the town-fun GLB from the current recipe. The fountain bonnet has a shaped nose and shoulder curve, a shallow central dip, rusted steel material and a brighter named water pool. Exported model size: 2,606,188 bytes (2.49 MiB), below the 5 MB round limit.
+- Added generated, compressed reference photos for the fountain front, side and overhead views, plus the big wheel, tavern and scrap coaster. Prompts and credits are recorded in the texture folder's `CREDITS.md`.
+- Added `round-2.jpg` (164,681 bytes) and `round-2-review.md`. The sheet includes the fountain front comparison and both family overviews, covering all ten pieces at driver and mayor heights.
 
 ## Checks
 
-- Blender recipe and imported-GLB review render: passed; GLB 2,606,584 bytes; sheet 201,546 bytes.
-- `node tools/test-blender-output.mjs`: passed, 276 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; repository placement is clean, size reports are advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio-analysis subtest failed twice because `ffmpeg` could not start (`spawnSync ffmpeg EPERM`); the review-JPG size/publication subtest passed.
-- Browser, lane tier and build: not run; this art card is not wired into the game and the card assigns browser review to Claude.
-- Changed assertions: none. Race fingerprints: none; no simulation code changed.
+- `node tools/test-blender-output.mjs` — passed, 297 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs` — passed. Existing advisory size reports remain; no placement failure.
+- Blender export and imported-GLB renders completed. The individual framing attempt did not produce reliable subject views, so the sheet uses the full-family overviews. The family pieces are small in those views and still need Claude's look review.
+- Browser checks and game look checks were not run; Claude owns those checks for this art lane. Claude should compare the fountain, big wheel, tavern and coaster references with the model and inspect every family piece from both elevations.
+- Changed assertions: none. Race fingerprints: not applicable; this card changes art only.
 
 ## Removed
 
-- No files or prior behavior were removed.
+- Removed the superseded `round-1.jpg` and `round-1-review.md` after adding the round-2 review sheet.
+- No runtime code or test behavior was removed.
+

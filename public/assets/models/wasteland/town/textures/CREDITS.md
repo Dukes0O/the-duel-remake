@@ -250,3 +250,14 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+## TOWN-ART-FUN round 2 references
+
+Generated with the built-in ImageGen tool, 6 November 2026. Original development references; compressed JPEGs are stored here for recipe rebuilds and the review sheet.
+
+- `fountain-front.jpg`, `fountain-side.jpg`, `fountain-above.jpg`: three-panel prompt based on the round-1 fountain reference: “Same improvised bonnet fountain, strict front, side and overhead views, plain pale background, flat overcast light; rusted faded green car bonnet with true pressed outline and curved dip, exhaust outlets and central can, dark reflective water and thin bright streams; every part connected.”
+- `big-wheel.jpg`: “Tall precarious steel big wheel assembled from truck axles and welded salvage, twelve worn car seats hanging on paired steel hangers; central axle, spokes, inner and outer rim; rotated with seats hanging down; plain pale studio background, flat overcast documentary photo.”
+- `tavern.jpg`: “Tall leaning two-storey roadside tavern from rusted corrugated panels, timber, truck doors and salvage signs; large sign, damaged entrance, pickup crashed through the right wall and visibly interlocked; front view, plain pale background, flat overcast documentary photo.”
+- `scrap-coaster.jpg`: “Welded scaffold roller coaster with thick steel beams meeting at joints, one steep drop and an improbable full vertical loop; three-car scrap train at the drop; whole ride, plain pale background, flat overcast documentary photo.”
+
+Credit: OpenAI built-in image generation. No outside image source or runtime service is used.

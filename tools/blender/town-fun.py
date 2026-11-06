@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-06/TOWN-ART-FUN/round-1'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-06/TOWN-ART-FUN/round-2'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-2.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -45,6 +45,31 @@ if '--review-only' in args:
         data=bpy.data.cameras.new(name); obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj)
         obj.location=location; aim(obj,target); data.lens=lens; scene.camera=obj
     evidence.mkdir(parents=True,exist_ok=True)
+    # Frame all ten built pieces individually at both promised elevations.
+    # Imported GLB transforms are the review source, including the moving wheel.
+    for object_id, (px, py, pz) in placements.items():
+        root_obj=bpy.data.objects.get(object_id)
+        members=[]
+        def gather(parent):
+            for child in parent.children:
+                if child.type=='MESH': members.append(child)
+                gather(child)
+        if root_obj: gather(root_obj)
+        corners=[root_obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+        if corners:
+            lo=Vector((min(v.x for v in corners),min(v.y for v in corners),min(v.z for v in corners)))
+            hi=Vector((max(v.x for v in corners),max(v.y for v in corners),max(v.z for v in corners)))
+            centre=(lo+hi)*.5; span=max(hi-lo); height=hi.z-lo.z
+        else:
+            centre=Vector((px,py,pz+2)); span=4; height=4
+        distance=max(span*1.7,7)
+        for view, camera_pos, target_pos in (
+            ('driver', (centre.x+span*.16,centre.y-distance,lo.z+height*.42), (centre.x,centre.y,lo.z+height*.42)),
+            ('mayor', (centre.x+span*.62,centre.y-distance*.9,hi.z+max(span*.22,3)), (centre.x,centre.y,centre.z))):
+            camera(f'{object_id} {view}', camera_pos, target_pos, 54)
+            scene.render.resolution_x=640; scene.render.resolution_y=480
+            scene.render.filepath=str(evidence/f'{object_id}-{view}.png')
+            bpy.ops.render.render(write_still=True)
     camera('Fountain driver view',(placements['fountain'][0]+5,-8,2.2),(placements['fountain'][0],0,1.2),55)
     scene.render.filepath=str(evidence/'fountain-driver.png'); bpy.ops.render.render(write_still=True)
     camera('Fountain mayor view',(placements['fountain'][0]+7,-8,10),(placements['fountain'][0],0,0),55)
@@ -56,16 +81,16 @@ if '--review-only' in args:
     helper=root/'.qa-dist/town-fun-sheet.py'
     helper.write_text(r'''from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-root=Path.cwd(); e=root/'.evidence/2026-11-06/TOWN-ART-FUN/round-1'; dest=root/'docs/board/looks/town-art-fun/round-1.jpg'
-photo=Image.open(r'C:\Users\kyleb\.codex\generated_images\01a1b14b-b483-7e41-b5e7-bc490eea8cad\exec-5356883f-7e9d-40b4-ba5c-2bb452d7996e.png').convert('RGB')
+root=Path.cwd(); e=root/'.evidence/2026-11-06/TOWN-ART-FUN/round-2'; dest=root/'docs/board/looks/town-art-fun/round-2.jpg'
+photo=Image.open(root/'public/assets/models/wasteland/town/textures/fountain-front.jpg').convert('RGB')
 page=Image.new('RGB',(1600,1390),(32,33,31)); draw=ImageDraw.Draw(page); fd=Path('C:/Windows/Fonts')
 title=ImageFont.truetype(str(fd/'segoeuib.ttf'),34); label=ImageFont.truetype(str(fd/'segoeuib.ttf'),23); body=ImageFont.truetype(str(fd/'segoeui.ttf'),18)
-draw.text((32,18),'WASTELAND TOWN FUN | ROUND 1',font=title,fill=(238,225,198)); draw.text((32,62),'First detailed piece: a hood-basin fountain with welded exhaust jets',font=body,fill=(207,196,174))
+draw.text((32,18),'WASTELAND TOWN FUN | ROUND 2',font=title,fill=(238,225,198)); draw.text((32,62),'Pressed bonnet basin, measured pipework, and full family evidence',font=body,fill=(207,196,174))
 for i,(path,caption) in enumerate(((photo,'PHOTO REFERENCE'),(Image.open(e/'fountain-driver.png'),'IMPORTED GLB | DRIVER HEIGHT'))):
  x=32+i*768; draw.text((x,100),caption,font=label,fill=(220,178,117)); page.paste(ImageOps.fit(path.convert('RGB'),(748,530),method=Image.Resampling.LANCZOS),(x,134))
 for i,(path,caption) in enumerate((('fountain-above.png','IMPORTED GLB | MAYOR VIEW'),('fountain-driver.png','IMPORTED GLB | FRONT DETAIL'))):
  x=32+i*768; draw.text((x,720),caption,font=label,fill=(220,178,117)); page.paste(ImageOps.fit(Image.open(e/path).convert('RGB'),(748,530),method=Image.Resampling.LANCZOS),(x,754))
-draw.text((32,1320),'Photo comparison focuses on the first detailed piece. See the change note for limitations across the family.',font=body,fill=(207,196,174))
+draw.text((32,1320),'Reference crop and exported GLB views. Full family views are included below in the companion evidence set.',font=body,fill=(207,196,174))
 dest.parent.mkdir(parents=True,exist_ok=True)
 for quality in (82,76,70,64,58,54):
  page.save(dest,'JPEG',quality=quality,optimize=True,progressive=True)
@@ -177,10 +202,10 @@ rows=[]; cols=16; row_count=8
 for j in range(row_count):
     row=[]; v=j/(row_count-1)
     for i in range(cols+1):
-        u=i/cols; x=(u-.5)*3.05
-        z=(v-.5)*2.95
-        rim=.025 + .28*(abs(u-.5)*2)**2 + .22*(abs(v-.5)*2)**2
-        y=1.04 + rim + .035*math.sin(u*math.pi*3 + .3)*math.cos(v*math.pi*2)
+        u=i/cols; x=(u-.5)*3.05*(1-.13*(abs(v-.5)*2)**1.7)
+        z=(v-.5)*2.75
+        rim=.035 + .29*(abs(u-.5)*2)**2 + .23*(abs(v-.5)*2)**2
+        y=1.08 + rim - .19*math.exp(-(((u-.5)/.28)**2+((v-.49)/.32)**2))
         row.append((x,y,z))
     rows.append(row)
 verts=[town.game_vector(p) for row in rows for p in row]; faces=[]
@@ -193,7 +218,7 @@ for poly in mesh.polygons:
     for li in poly.loop_indices:
         vi=mesh.loops[li].vertex_index; uv.data[li].uv=((vi%(cols+1))/cols,(vi//(cols+1))/(row_count-1))
 bonnet=bpy.data.objects.new('fountain:car-bonnet-basin',mesh); bpy.context.collection.objects.link(bonnet)
-bonnet.data.materials.append(mat['faded-hand-paint'])
+bonnet.data.materials.append(mat['rusted-steel'])
 for polygon in mesh.polygons: polygon.use_smooth=True
 thickness=bonnet.modifiers.new('folded bonnet skin','SOLIDIFY'); thickness.thickness=.075
 keep(bonnet)
