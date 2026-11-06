@@ -1,4 +1,4 @@
-"""Build the photo-proportioned Rattler pickup and its round-four sheet.
+"""Build the photo-proportioned Rattler pickup and its round-five sheet.
 
 Run: blender -b -t 4 --python-exit-code 1 --python tools/blender/rattler.py -- --root .
 Model coordinates are metres, +Y up and +Z forward. Review-only objects never export.
@@ -19,9 +19,9 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/cars/rattler.glb'
 textures = root / 'public/assets/models/wasteland/cars/textures'
 blend = root / 'art-build/cars/rattler.blend'
-sheet = root / 'docs/board/looks/car-art-rattler/round-4.jpg'
-evidence = root / '.evidence' / date.today().isoformat() / 'CAR-ART-RATTLER' / 'round-4'
-reference = root / '.qa-dist/rattler-round-4/reference.jpg'
+sheet = root / 'docs/board/looks/car-art-rattler/round-5.jpg'
+evidence = root / '.evidence' / date.today().isoformat() / 'CAR-ART-RATTLER' / 'round-5'
+reference = root / '.qa-dist/rattler-round-5/reference.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)], 'glb':[str(out)], 'evidence':[str(evidence)], 'summary':[str(sheet)]}))
     raise SystemExit(0)
@@ -153,15 +153,18 @@ def torus(name, loc, major, minor, mat, axis='X', maj=36, minr=10):
 def tyre(name, center, radius, width):
     """One closed carcass mesh with its shallow tread lugs grown into it."""
     cx,cy,cz=center; around=48; rings=8; verts=[]; faces=[]; uvs=[]
+    # A softly rounded carcass carries shallow rectangular tread blocks. The
+    # blocks fade out before the shoulder so they do not scallop the silhouette.
     for i in range(around):
         theta=2*math.pi*i/around
         for j in range(rings):
             phi=2*math.pi*j/rings
             shoulder=math.sin(phi)
-            lugzone=max(0.0, min(1.0,(abs(shoulder)-.17)/.40))
+            lugzone=max(0.0, min(1.0,(abs(shoulder)-.28)/.33))
             pitch=2*math.pi/24
-            delta=abs((theta+pitch/2)%pitch-pitch/2)
-            lug=.028*(.5+.5*math.cos(theta*24))*lugzone
+            phase=(theta+pitch/2)%pitch
+            block=1.0 if phase < pitch*.70 else 0.0
+            lug=.012*block*lugzone
             rr=radius-.115 + .115*shoulder + lug
             verts.append((cx+width*.5*math.cos(phi),cy+rr*math.sin(theta),cz+rr*math.cos(theta)))
     for i in range(around):
@@ -179,6 +182,44 @@ def tyre(name, center, radius, width):
         if delta<.012:poly.use_smooth=False
     o=bpy.data.objects.new(name,mesh); scene.collection.objects.link(o); o.parent=vehicle; parts.append(o)
     return o
+
+def closed_cab_shell():
+    """One continuous closed steel shell with a shallow chopped roof crown."""
+    stations=[(-1.55,.76,1.03),(-1.38,.82,1.77),(-1.12,.84,1.91),(-.70,.84,1.94),(-.25,.83,1.91),(.10,.79,1.82),(.24,.73,1.53)]
+    around=24; verts=[]; faces=[]; uvs=[]
+    for z,width,top in stations:
+        for k in range(around):
+            a=2*math.pi*k/around
+            sn,cs=math.sin(a),math.cos(a)
+            # Broad vertical flanks turn into the roof through a generous radius.
+            x=width*sn
+            y=.69+(top-.69)*max(0.0,cs)**.62 if cs>=0 else .69+.34*cs
+            verts.append((x,y,z))
+    for s in range(len(stations)-1):
+        for k in range(around):
+            a=s*around+k; b=s*around+(k+1)%around
+            faces.append((a,b,b+around,a+around))
+    faces.append(tuple(range(around-1,-1,-1)))
+    end=(len(stations)-1)*around; faces.append(tuple(end+k for k in range(around)))
+    me=bpy.data.meshes.new('single closed formed pickup cab shell');me.from_pydata(verts,[],faces);me.materials.append(paint);me.update()
+    uv=me.uv_layers.new(name='UVMap')
+    for p in me.polygons:
+        p.use_smooth=True
+        for li,vi in zip(p.loop_indices,p.vertices):
+            x,y,z=verts[vi];uv.data[li].uv=(z/.35, y/.35)
+    ob=bpy.data.objects.new('closed rounded chopped cab shell',me);scene.collection.objects.link(ob);ob.parent=vehicle;parts.append(ob)
+    solid=ob.modifiers.new('formed steel wall thickness','SOLIDIFY');solid.thickness=.045
+    ob.modifiers.new('rolled cab edges','BEVEL').width=.012
+    # Dark inset shapes read as narrow glazed openings, while the steel shell
+    # remains continuous behind them and keeps the cab closed.
+    for side in (-1,1):
+        panel('low slit side window inset',[(1.48,-1.26),(1.48,-.84),(1.57,-.72),(1.69,-.70),(1.76,-.80),(1.77,-1.23),(1.68,-1.30),(1.55,-1.31)],side*.875,glass,.006)
+        # A narrow closed-window surround and a door shut line sit on the shell.
+        for a,b in [((1.46,-1.29),(1.46,-.82)),((1.46,-.82),(1.55,-.67)),((1.55,-.67),(1.70,-.66)),((1.70,-.66),(1.80,-.78)),((1.80,-.78),(1.80,-1.26)),((1.80,-1.26),(1.69,-1.34)),((1.69,-1.34),(1.53,-1.34)),((1.53,-1.34),(1.46,-1.29))]:
+            beam('rolled low side window shut lip',(side*.878,a[0],a[1]),(side*.878,b[0],b[1]),.012,edge,8)
+        beam('rounded door front shut line',(side*.879,.76,-.12),(side*.879,1.32,-.12),.009,dark,6)
+        beam('rounded door rear shut line',(side*.879,.76,-1.12),(side*.879,1.32,-1.12),.009,dark,6)
+    return ob
 
 # A 4.55 m long, 2.12 m wide pickup. Roof is 2.08 m high; rear/front tires
 # are 1.08/0.90 m across. Rear axle sits 1.42 m behind the front axle.
@@ -257,6 +298,7 @@ beam('curved upper windshield frame',(-.54,1.87,.015),(.54,1.87,.015),.018,paint
 # Dark inset side panes reproduce the deep window shadow in the reference.
 panel('rear window smoky glass',[(1.48,-1.48),(1.80,-1.46),(1.80,-1.43),(1.49,-1.40)],0,glass,.012)
 cube('rear cab bulkhead behind bench',(0,.96,-1.43),(1.49,.69,.075),paint,.06)
+closed_cab_shell()
 
 # Short pickup bed behind the cab: folded metal sides, ribs, seams and tailgate.
 cube('short pickup bed floor',(0,.79,-1.88),(1.34,.075,.62),steel,.025)
@@ -296,6 +338,25 @@ for x in (-.90,.90):
         beam('shock lower mount',(shockx,rad-.08,z-.22),(shockx,rad+.20,z-.18),.045,steel)
         beam('shock polished piston',(shockx,rad+.05,z-.18),(shockx,rad+.55,z-.18),.022,edge,8)
         beam('shock barrel',(shockx,rad+.12,z-.18),(shockx,rad+.47,z-.18),.043,steel,10)
+
+# Thin rounded front mudguards wrap just the tops of the narrow front tires.
+for side in (-1,1):
+    cx,cy,cz=side*.90,.45,1.57; verts=[]; faces=[]; steps=24
+    for i in range(steps+1):
+        a=math.pi*i/steps
+        for r in (.49,.54):
+            verts.append((cx+side*.045,cy+r*math.cos(a),cz+r*math.sin(a)))
+    for i in range(steps):
+        k=i*2;faces.append((k,k+2,k+3,k+1))
+    me=bpy.data.meshes.new('thin curved front wheel guard');me.from_pydata(verts,[],faces);me.materials.append(paint);me.update()
+    uv=me.uv_layers.new(name='UVMap')
+    for poly in me.polygons:
+        for li,vi in zip(poly.loop_indices,poly.vertices):
+            x,y,z=verts[vi];uv.data[li].uv=(y/.35,z/.35)
+    guard=bpy.data.objects.new('rounded front mudguard with thin rolled edge',me);scene.collection.objects.link(guard);guard.parent=vehicle;parts.append(guard)
+    solid=guard.modifiers.new('thin pressed fender steel','SOLIDIFY');solid.thickness=.025
+    guard.modifiers.new('rolled fender edges','BEVEL').width=.012
+    for z in (1.25,1.89):beam('front mudguard stay',(side*.58,.63,z),(side*.90,.88,z),.018,steel,8)
 
 # Open, recognizable longitudinal V8 engine in the exposed long bonnet gap.
 cube('V8 cast iron crankcase',(0,.91,.83),(.72,.56,.83),steel,.065)
@@ -405,6 +466,19 @@ for side in (-1,1):
     bent_pipe('roll hoop swept rear upright',[(side*.55,.62,-1.58),(side*.55,1.82,-1.58),(side*.52,2.13,-1.58)],.032,steel)
 bent_pipe('roll hoop curved crown',[(-.52,2.13,-1.58),(-.38,2.18,-1.58),(.38,2.18,-1.58),(.52,2.13,-1.58)],.032,edge)
 
+# The first four rounds' open window frames and separate cab panels are replaced
+# by the single closed, formed shell above. Remove the old floating pieces.
+obsolete=('curved cab quarter skin','door lower skin','narrow swept A pillar sheet',
+          'rounded rear cab pillar','roof drip edge over side glass','small rounded dark side window',
+          'formed rounded side-window lip','welded irregular repair patch','road-dusted lower cab folded hem',
+          'curved chopped pickup roof skin','split smoky windshield glass','windscreen centre post',
+          'curved lower windshield frame','curved upper windshield frame','rear window smoky glass',
+          'rear cab bulkhead behind bench')
+for obj in list(parts):
+    if any(obj.name.startswith(prefix) for prefix in obsolete):
+        bpy.data.objects.remove(obj,do_unlink=True)
+        parts.remove(obj)
+
 def aim(obj, point):
     forward=(Vector(point)-obj.location).normalized()
     up_hint=Vector((0,0,1) if obj.name == 'review camera top' else (0,1,0))
@@ -470,8 +544,8 @@ scene.render.resolution_x=900;scene.render.resolution_y=620;scene.render.resolut
 scene.render.image_settings.file_format='JPEG';scene.render.image_settings.quality=91;scene.render.film_transparent=False
 scene.view_settings.view_transform='AgX';scene.view_settings.look='AgX - Medium High Contrast'
 world=bpy.data.worlds.new('Bright neutral overcast export review');world.use_nodes=True
-world.node_tree.nodes['Background'].inputs['Color'].default_value=(.42,.42,.42,1)
-world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8;scene.world=world
+world.node_tree.nodes['Background'].inputs['Color'].default_value=(.62,.62,.62,1)
+world.node_tree.nodes['Background'].inputs['Strength'].default_value=1.8;scene.world=world
 bpy_scene_before=set(bpy.data.objects)
 bpy.ops.import_scene.gltf(filepath=str(out))
 imported=[o for o in bpy.data.objects if o not in bpy_scene_before]
@@ -489,13 +563,13 @@ min_z=min(p.z for p in points); height=max(p.z for p in points)-min_z; scale=1.7
 person=bpy.data.objects.new('review-only 1.72 m Cinder scale figure',None);scene.collection.objects.link(person)
 person.rotation_euler.x=-math.pi/2;person.scale=(scale,)*3;person.location=(-1.62,-min_z*scale,-.05)
 for o in person_roots:o.parent=person
-floor_mat=material('Plain mid-grey studio ground',(.15,.15,.15),.99,.0)
-bpy.ops.mesh.primitive_plane_add(size=200,location=(0,-.012,0),rotation=(math.pi/2,0,0))
+floor_mat=material('Plain mid-grey studio ground',(.26,.26,.26),.99,.0)
+bpy.ops.mesh.primitive_plane_add(size=2000,location=(0,-.012,0),rotation=(math.pi/2,0,0))
 floor=bpy.context.object;floor.name='review-only mid-grey ground';floor.data.materials.append(floor_mat)
 for loc,power,size in [((-4,7,5),1550,7),((4,6,-4),1200,7),((0,8,1),800,8)]:
     bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object
     light.data.energy=power;light.data.shape='DISK';light.data.size=size;aim(light,(0,.8,0))
-views=[('front-three-quarter',(-5,1.22,6),(0,.82,0),4.50),('rear-three-quarter',(5,1.22,-6),(0,.82,-.15),4.80),('side',(-8,1.22,0),(0,.82,0),4.80),('top',(0,8,0),(0,.72,0),6.8),('beside-person',(-5,1.22,6),(-.55,.82,0),5.55)]
+views=[('front-three-quarter',(-5,1.22,6),(0,.82,0),5.15),('rear-three-quarter',(5,1.22,-6),(0,.82,-.15),5.0),('side',(-8,1.22,0),(0,.82,0),5.0),('top',(0,8,0),(0,.72,0),6.1),('beside-person',(-5,1.22,6),(-.55,.82,0),5.4)]
 renders=[]
 for name,loc,target,scale in views:
     for o in person_parts:o.hide_render=(name!='beside-person')
