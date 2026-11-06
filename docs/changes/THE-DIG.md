@@ -44,3 +44,7 @@ Still to come: the model's parts sample the atlas's empty white cells in the gam
 - `tools/test-machine-trencher.mjs`: reserved shapes move to where the chain now cuts, 3 m behind the machine. Nothing is loosened, and a refusal must now also move no soil at all.
 - `tools/test-machine-view.mjs`: nodes use the spelling a loaded model really has; the view reads the state the machine actually starts in.
 - `tools/test-the-dig.mjs`: follows the new layout and controls, and adds a check that D steers right on screen.
+
+- `tools/test-p4-audio.mjs`: the four new machine cues join the exclusions; every earlier cue must still match its hash.
+
+Lane tier: 117 passed; the one failure was this pin, now updated and passing. Build passed. `the-dig` passes in the test browser.
