@@ -14,7 +14,7 @@ function requestResult(request) {
 }
 
 // Pass memoryOnly:true in tests and previews. It never opens the browser's database.
-export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = false, memory = {}, now = () => new Date() } = {}) {
+export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = false, memory = {}, now = () => new Date(), onInstallStep = () => {} } = {}) {
   const memoryTowns = memory.towns ?? new Map(), memoryCopies = memory.copies ?? new Map();
   let opened;
   function open() {
@@ -67,11 +67,52 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town storage could not be saved.'));
     });
   }
+  async function installRecord(record, previous, copies) {
+    const recoveryId = '@recovery:' + record.id;
+    const recovery = { id: recoveryId, townId: record.id, recovery: true,
+      previous: previous ? clone(previous) : null, copies: copies.map(clone) };
+    if (memoryOnly) {
+      memoryCopies.set(recoveryId, recovery);
+      memoryTowns.set(record.id, clone(record));
+      return recoveryId;
+    }
+    const db = await open();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE, COPIES], 'readwrite');
+      tx.objectStore(COPIES).put(recovery);
+      tx.objectStore(STORE).put(clone(record));
+      tx.oncomplete = resolve;
+      tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town replacement could not be saved.'));
+    });
+    return recoveryId;
+  }
+  async function recoverInstall(id) {
+    const recoveryId = '@recovery:' + id;
+    const marker = await read(COPIES, recoveryId);
+    if (!marker?.recovery) return '';
+    if (memoryOnly) {
+      if (marker.previous) memoryTowns.set(id, clone(marker.previous)); else memoryTowns.delete(id);
+      for (const copy of marker.copies) memoryCopies.set(copy.id, clone(copy));
+      memoryCopies.delete(recoveryId);
+    } else {
+      const db = await open();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE, COPIES], 'readwrite');
+        const towns = tx.objectStore(STORE), copies = tx.objectStore(COPIES);
+        if (marker.previous) towns.put(marker.previous); else towns.delete(id);
+        for (const copy of marker.copies) copies.put(copy);
+        copies.delete(recoveryId);
+        tx.oncomplete = resolve;
+        tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town recovery could not be saved.'));
+      });
+    }
+    return 'An unfinished town restore was found. The previous town has been put back.';
+  }
   async function allCopies(townId) {
-    if (memoryOnly) return [...memoryCopies.values()].filter(row => row.townId === townId).map(clone);
+    if (memoryOnly) return [...memoryCopies.values()].filter(row => row.townId === townId && !row.recovery).map(clone);
     const db = await open();
     const rows = await requestResult(db.transaction(COPIES, 'readonly').objectStore(COPIES).getAll());
-    return rows.filter(row => row.townId === townId);
+    return rows.filter(row => row.townId === townId && !row.recovery);
   }
   async function deleteCopies(ids) {
     if (memoryOnly) { ids.forEach(id => memoryCopies.delete(id)); return; }
@@ -106,14 +147,15 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       return clone(record);
     },
     async load(id) {
+      const recoveryMessage = await recoverInstall(id);
       const record = await read(STORE, id);
       const copies = (await allCopies(id)).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
       if (copies.length && !valid(copies[0])) {
         const goodCopy = copies.slice(1).find(valid);
-        if (goodCopy) return { town: clone(goodCopy.town), message: 'The latest town save was damaged. The last good copy has been opened.' };
+        if (goodCopy) return { town: clone(goodCopy.town), message: [recoveryMessage, 'The latest town save was damaged. The last good copy has been opened.'].filter(Boolean).join(' ') };
       }
-      if (!copies.length && valid(record)) return { town: clone(record.town), message: '' };
-      if (copies.length && valid(copies[0])) return { town: clone(copies[0].town), message: '' };
+      if (!copies.length && valid(record)) return { town: clone(record.town), message: recoveryMessage };
+      if (copies.length && valid(copies[0])) return { town: clone(copies[0].town), message: recoveryMessage };
       const good = copies.find(valid);
       return good ? { town: clone(good.town), message: 'The latest town save was damaged. The last good copy has been opened.' }
         : { town: null, message: 'This town save is damaged and no good copy is available.' };
@@ -131,18 +173,29 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       return this.save(file.town, 'file restore');
     },
     async towns(ids) { return Promise.all(ids.map(id => read(STORE, id))); },
-    async install(records) {
+    async install(records, { retainRecovery = false } = {}) {
       if (!Array.isArray(records) || records.some(record => !valid(record))) throw new Error('The career file has invalid town data.');
       for (const record of records) {
         const previous = await read(STORE, record.id), copies = await allCopies(record.id);
+        await installRecord(record, previous, copies);
+        await onInstallStep('replacement-written', record.id);
         await deleteCopies(copies.map(copy => copy.id));
-        try { await write(STORE, clone(record)); }
-        catch (error) {
-          if (previous) await write(STORE, previous);
-          for (const copy of copies) await write(COPIES, copy);
-          throw error;
-        }
+        await onInstallStep('copies-removed', record.id);
+        if (!retainRecovery) await this.finishInstallRecovery(record.id);
       }
+    },
+    async finishInstallRecovery(id) {
+        const recoveryId = '@recovery:' + id;
+        if (memoryOnly) memoryCopies.delete(recoveryId);
+        else {
+          const db = await open();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(COPIES, 'readwrite');
+            tx.objectStore(COPIES).delete(recoveryId);
+            tx.oncomplete = resolve;
+            tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town recovery record could not be cleared.'));
+          });
+        }
     },
   });
 }

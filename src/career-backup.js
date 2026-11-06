@@ -5,7 +5,26 @@ import { PROFILE_KEY, PLAYERS_KEY, loadPlayers, normalizeProfile } from './progr
 import { LEADERBOARD_KEY, loadLeaderboard } from './leaderboard.js';
 import { GHOST_KEY, GHOST_ENABLED_KEY, loadGhosts } from './ghost.js';
 import { ARCHIVE_POINTER_KEY, readCareerArchivePointer, installCareerArchive } from './career-archives.js';
-import { TOWN_POINTER_KEY, readTownPointer, createTownStore, withTownSaveLock } from './town/town-store.js';
+export const TOWN_POINTER_KEY = 'the-duel-town-pointer-v1';
+let townModuleLoader = () => import('./town/town-store.js');
+let townSaveQueue = Promise.resolve();
+function withTownSaveLock(work) {
+  const run = () => globalThis.navigator?.locks?.request
+    ? globalThis.navigator.locks.request('the-duel-town-pointer', work) : work();
+  const pending = townSaveQueue.then(run, run);
+  townSaveQueue = pending.catch(() => {});
+  return pending;
+}
+async function townApi(injected, required = true) {
+  if (injected) return { store: injected, readTownPointer: storage => {
+    const raw = storage?.getItem(TOWN_POINTER_KEY);
+    try { const p = JSON.parse(raw); return p?.version === 1 && Array.isArray(p.ids) ? [...new Set(p.ids)] : []; } catch { return []; }
+  } };
+  if (!required) return null;
+  const module = await townModuleLoader();
+  return { store: module.createTownStore(), readTownPointer: module.readTownPointer };
+}
+export function setTownModuleLoaderForTests(loader) { townModuleLoader = loader ?? (() => import('./town/town-store.js')); }
 
 export const CAREER_FORMAT = 'the-duel-career';
 export const LEGACY_SHARED_BEST_KEY = 'duel_redline_best_v4';
@@ -190,12 +209,13 @@ export function createCareerExport(storage, now = () => new Date()) {
   if(has(entries,TOWN_POINTER_KEY))throw new Error('This career has saved towns. Use the complete career export.');
   return JSON.stringify({ format: CAREER_FORMAT, version: 1, exportedAt: now().toISOString(), entries }, null, 2);
 }
-export async function createCompleteCareerExport(storage, store=createIndexedDbBackupStore(), now=()=>new Date(), townStore=createTownStore()){
+export async function createCompleteCareerExport(storage, store=createIndexedDbBackupStore(), now=()=>new Date(), townStore){
   const source=storageOrThrow(storage),entries=captureCareer(source),pointer=readCareerArchivePointer(source);
-  const townIds=readTownPointer(source);
+  const towns=await townApi(townStore, has(entries,TOWN_POINTER_KEY));
+  const townIds=towns?.readTownPointer(source) ?? [];
   if(!pointer&&!townIds.length)return createCareerExport(source,now);
   if(!pointer){
-    const townRecords=await townStore.towns(townIds);
+    const townRecords=await towns.store.towns(townIds);
     if(townRecords.some((record,index)=>!record||record.id!==townIds[index]))throw new Error('A saved town could not be read. No partial export was made.');
     return JSON.stringify({format:CAREER_FORMAT,version:1,exportedAt:now().toISOString(),entries,townRecords},null,2);
   }
@@ -204,7 +224,7 @@ export async function createCompleteCareerExport(storage, store=createIndexedDbB
     throw new Error('The IndexedDB career archives could not be read. No partial export was made.');
   }
   if(!sameEntries(captureCareer(source),entries))throw new Error('The career changed during export. Retry.');
-  const townRecords=await townStore.towns(townIds);
+  const townRecords=await towns.store.towns(townIds);
   if(townRecords.some((record,index)=>!record||record.id!==townIds[index]))throw new Error('A saved town could not be read. No partial export was made.');
   return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives,townRecords},null,2);
 }
@@ -293,19 +313,23 @@ export function createIndexedDbBackupStore(factory = globalThis.indexedDB) {
     },
   };
 }
-export async function backupCareer(storage, backupStore = createIndexedDbBackupStore(), reason = 'migration', now = () => new Date(), townStore = createTownStore()) {
+export async function backupCareer(storage, backupStore = createIndexedDbBackupStore(), reason = 'migration', now = () => new Date(), townStore) {
   const source=storageOrThrow(storage),entries = captureCareer(source),pointer=readCareerArchivePointer(source);
   const archives=pointer?await backupStore.load(pointer.id):null;
   if(pointer&&(!archives||archives.id!==pointer.id||!Array.isArray(archives.leaderboardRows)||!Array.isArray(archives.ghostRows))){
     throw new Error('The current IndexedDB career archive cannot be backed up.');
   }
   const id = 'career-' + now().getTime() + '-' + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
-  const townRecords=await townStore.towns(readTownPointer(source));
-  if(townRecords.some(record=>!record))throw new Error('The current town saves could not be backed up.');
-  const record = { id, reason, createdAt: now().toISOString(), entries, archives, townRecords };
+  let townRecords=[],townWarning='';
+  if(has(entries,TOWN_POINTER_KEY)) {
+    try { const towns=await townApi(townStore);townRecords=await towns.store.towns(towns.readTownPointer(source));
+      if(townRecords.some(record=>!record))throw new Error('A town is missing.');
+    } catch { townRecords=[];townWarning='The town could not be read. The career was backed up without it.'; }
+  }
+  const record = { id, reason, createdAt: now().toISOString(), entries, archives, townRecords, townWarning };
   await backupStore.save(record);
   const saved = await backupStore.load(id);
-  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives) || JSON.stringify(saved.townRecords)!==JSON.stringify(townRecords)) throw new Error('The career backup could not be verified.');
+  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives) || JSON.stringify(saved.townRecords)!==JSON.stringify(townRecords) || saved.townWarning!==townWarning) throw new Error('The career backup could not be verified.');
   return record;
 }
 export async function retireSharedBest(storage, backupStore = createIndexedDbBackupStore()) {
@@ -344,12 +368,13 @@ function applyEntries(storage, entries) {
   for (const [key, value] of Object.entries(entries)) storage.setItem(key, value);
   if (!sameEntries(captureCareer(storage), entries)) throw new Error('Career storage verification failed.');
 }
-async function importCareerUnlocked(text, { storage, backupStore = createIndexedDbBackupStore(), townStore = createTownStore() } = {}) {
+async function importCareerUnlocked(text, { storage, backupStore = createIndexedDbBackupStore(), townStore } = {}) {
   const archive = parseCareerExport(text), source = storageOrThrow(storage), prior = captureCareer(source);
   const backup = await backupCareer(source, backupStore, 'before-import');
   if (!sameEntries(captureCareer(source), prior)) {
     throw new Error('The current career changed while its backup was being made. Retry the import.');
   }
+  let towns = null;
   try {
     const entries={...archive.entries};
     delete entries[LEGACY_SHARED_BEST_KEY];
@@ -361,15 +386,20 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
       if(JSON.stringify(saved)!==JSON.stringify(importedArchives))throw new Error('The imported IndexedDB archives could not be verified.');
       entries[ARCHIVE_POINTER_KEY]=JSON.stringify({version:1,id:importedArchives.id});
     }
-    if(archive.townRecords){
-      await townStore.install(archive.townRecords);
+    if(archive.townRecords?.length){
+      towns=await townApi(townStore);
+      await towns.store.install(archive.townRecords, { retainRecovery: true });
       entries[TOWN_POINTER_KEY]=JSON.stringify({version:1,ids:archive.townRecords.map(record=>record.id)});
     }
     applyEntries(source,entries);
     installCareerArchive(source,importedArchives);
+    if(archive.townRecords?.length)for(const town of archive.townRecords)await towns.store.finishInstallRecovery(town.id);
   }
   catch (error) {
-    try { if(Array.isArray(backup.townRecords))await townStore.install(backup.townRecords);applyEntries(source, prior);installCareerArchive(source,backup.archives); }
+    try {
+      if(archive.townRecords?.length){towns??=await townApi(townStore);for(const town of archive.townRecords)await towns.store.load(town.id);}
+      applyEntries(source, prior);installCareerArchive(source,backup.archives);
+    }
     catch (rollbackError) {
       throw new Error('Import failed and browser storage could not be restored. IndexedDB backup ' + backup.id + ' is available. ' + rollbackError.message, { cause: error });
     }
@@ -380,14 +410,16 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
 export function importCareer(text, options = {}) {
   return withTownSaveLock(() => importCareerUnlocked(text, options));
 }
-async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIndexedDbBackupStore(), townStore = createTownStore() } = {}) {
+async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIndexedDbBackupStore(), townStore } = {}) {
   const record = await backupStore.load(id);
   if (!record || !isObject(record.entries)) throw new Error('Career backup was not found.');
   const source=storageOrThrow(storage);
   const priorEntries=captureCareer(source),priorPointer=readCareerArchivePointer(source);
   const priorArchives=priorPointer?await backupStore.load(priorPointer.id):null;
   if(priorPointer&&(!priorArchives||priorArchives.id!==priorPointer.id))throw new Error('The current IndexedDB career archive cannot be protected before restore.');
-  const priorTownRecords=await townStore.towns(readTownPointer(source));
+  const pointer = source.getItem(TOWN_POINTER_KEY);
+  const towns = await townApi(townStore, !!pointer || !!record.townRecords?.length);
+  const priorTownRecords=towns ? await towns.store.towns(towns.readTownPointer(source)) : [];
   if(priorTownRecords.some(saved=>!saved))throw new Error('The current towns cannot be protected before restore.');
   if(record.archives){
     await backupStore.save(record.archives);
@@ -395,12 +427,14 @@ async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIn
     if(JSON.stringify(saved)!==JSON.stringify(record.archives))throw new Error('Recovery archive verification failed.');
   }
   try{
-    if(Array.isArray(record.townRecords))await townStore.install(record.townRecords);
+    if(Array.isArray(record.townRecords)&&record.townRecords.length)await towns.store.install(record.townRecords,{retainRecovery:true});
     applyEntries(source, record.entries);
     installCareerArchive(source,record.archives);
+    if(record.townRecords?.length)for(const town of record.townRecords)await towns.store.finishInstallRecovery(town.id);
   }catch(error){
     try{
-      await townStore.install(priorTownRecords);
+      const touchedIds=new Set([...(priorTownRecords.map(town=>town.id)),...(record.townRecords??[]).map(town=>town.id)]);
+      for(const townId of touchedIds)await towns.store.load(townId);
       applyEntries(source,priorEntries);
       installCareerArchive(source,priorArchives);
     }catch(rollbackError){

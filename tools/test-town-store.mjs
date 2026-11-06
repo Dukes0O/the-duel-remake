@@ -85,4 +85,29 @@ const year30 = { id: 'soak-town', version: 1, mayors: ['player-a'], year: 30,
   book: Array.from({ length: 360 }, (_, month) => ({ year: 1 + Math.floor(month / 12), month: month % 12 + 1, events: [] })) };
 const year30Bytes = new TextEncoder().encode(JSON.stringify(year30)).length;
 assert.ok(year30Bytes < 5 * 1024 * 1024, `Year 30 town is under 5 MB (${year30Bytes} bytes)`);
-console.log('town store: byte-safe legacy career, isolated writes, rolling fallback, complete export/import, and Year 30 size passed');
+// Exercise every durable install boundary with a fresh store instance after the simulated crash.
+for (const stopAt of ['replacement-written', 'copies-removed']) {
+  const durable = { towns: new Map(), copies: new Map() };
+  const before = { ...intact, town: { ...first, id: 'crash-town', year: 4 } };
+  before.id = 'crash-town'; before.town.id = 'crash-town';
+  const after = { ...before, town: { ...before.town, year: 30 } };
+  const seed = createTownStore({ memoryOnly: true, memory: durable });
+  await seed.install([before]);
+  await seed.save(before.town);
+  const crashing = createTownStore({ memoryOnly: true, memory: durable, onInstallStep(step) {
+    if (step === stopAt) throw new Error('simulated close');
+  } });
+  await assert.rejects(crashing.install([after]), /simulated close/);
+  const reopened = createTownStore({ memoryOnly: true, memory: durable });
+  const recovered = await reopened.load('crash-town');
+  assert.equal(recovered.town.year, 4, stopAt + ': previous town comes back after reopening');
+  assert.match(recovered.message, /previous town has been put back/i, stopAt + ': player is told recovery happened');
+  assert.ok((await reopened.exportTown('crash-town')).includes('"year":4'), stopAt + ': real export has recovered town');
+}
+const yearStore = createTownStore({ memoryOnly: true });
+await yearStore.save(year30);
+const yearExport = await yearStore.exportTown('soak-town');
+const yearImport = createTownStore({ memoryOnly: true });
+await yearImport.importTown(yearExport);
+assert.equal((await yearImport.load('soak-town')).town.year, 30, 'Year 30 town survives real store export and import');
+console.log('town store: byte-safe legacy career, isolated writes, rolling fallback, durable restore recovery, complete export/import, and Year 30 store roundtrip passed');
