@@ -67,7 +67,7 @@ def wheel(n,x,y,z,r,w,par):
  for i in range(seg):
   theta=math.tau*i/seg
   for j in range(rings):
-   phi=math.tau*j/rings;across=abs((phi-math.pi/2+math.pi)%(math.tau)-math.pi);pitch=math.tau/12;sweep=(phi-math.pi/2)*.60;delta=(theta-sweep+math.pi)%(math.tau)-math.pi;dist=abs((delta+pitch/2)%pitch-pitch/2);lug=.13*max(0,1-dist/.20)*max(0,1-across/.82) if dist<.20 else 0;radius=r*.78+r*.22*math.sin(phi)+lug;verts.append((x+w*.5*math.cos(phi),y+radius*math.sin(theta),z+radius*math.cos(theta)))
+   phi=math.tau*j/rings;across=abs((phi-math.pi/2+math.pi)%(math.tau)-math.pi);pitch=math.tau/12;sweep=(phi-math.pi/2)*.60;delta=(theta-sweep+math.pi)%(math.tau)-math.pi;dist=abs((delta+pitch/2)%pitch-pitch/2);lug=.055*max(0,1-dist/.20)*max(0,1-across/.82) if dist<.20 else 0;radius=r*.78+r*.22*math.sin(phi)+lug;verts.append((x+w*.5*math.cos(phi),y+radius*math.sin(theta),z+radius*math.cos(theta)))
  for i in range(seg):
   for j in range(rings):
    q=i*rings+j;faces.append((q,((i+1)%seg)*rings+j,((i+1)%seg)*rings+(j+1)%rings,i*rings+(j+1)%rings))
@@ -85,8 +85,18 @@ def wheel(n,x,y,z,r,w,par):
 def tyre_pair(id,par,y,r=.72):
  for x in (-.98,.98):wheel(id+' industrial tyre',x,y,r,r,.56,par)
 def cab(id,par,x=0,y=-.1,z=1.8):
+ # Closed welded cab shell: floor, roof, front/rear panels and full side walls.
+ # The glazed apertures are closed panes set into painted sheet-metal frames.
  box(id+' cab sill',(x,y,z),(1.12,1.48,.16),paint,par,.05);box(id+' cab roof',(x,y,z+1.70),(1.26,1.54,.12),paint,par,.04)
+ for face_y,label in ((y-.68,'front'),(y+.68,'rear')):
+  box(id+' cab '+label+' lower steel wall',(x,face_y,z+.27),(1.12,.14,.38),paint,par,.035)
+  box(id+' cab '+label+' roof header',(x,face_y,z+1.57),(1.12,.14,.22),paint,par,.035)
+  for side in (-1,1):
+   box(id+' cab '+label+' window jamb',(x+side*.49,face_y,z+.96),(.14,.14,1.12),paint,par,.025)
  for s in (-1,1):
+  box(id+' solid cab side lower wall',(x+s*.55,y,z+.31),(.12,1.34,.48),paint,par,.04)
+  box(id+' solid cab side upper frame',(x+s*.55,y,z+1.52),(.12,1.34,.26),paint,par,.035)
+  box(id+' cab side window divider',(x+s*.55,y-.05,z+.99),(.13,.075,.98),paint,par,.025)
   beam(id+' narrow cab front post',(x+s*.55,y-.68,z+.08),(x+s*.55,y-.68,z+1.68),.035,steel,par);beam(id+' narrow cab rear post',(x+s*.55,y+.68,z+.08),(x+s*.55,y+.68,z+1.68),.035,tin,par);beam(id+' cab side sill',(x+s*.55,y-.68,z+.12),(x+s*.55,y+.68,z+.12),.025,tin,par)
   beam(id+' cab side window divider',(x+s*.555,y-.05,z+.60),(x+s*.555,y-.05,z+1.54),.025,steel,par)
  box(id+' dark windscreen',(x,y-.69,z+1.06),(.86,.025,.94),glass,par,.012);box(id+' rear cab glazing',(x,y+.69,z+1.06),(.82,.025,.90),glass,par,.012)
@@ -209,7 +219,7 @@ def basic_family():
   for yy in (-length*.40,-length*.20,0,length*.20,length*.40):box(id+' welded crossmember',(0,yy,.73),(1.75,.18,.28),steel,r,.045)
   # The cab is a closed, steel-framed work cab with dark panes and an inset roof.
   cab(id,r,0,-length*.27,1.34)
-  bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=(0,-length*.39,1.30));hood=bpy.context.object;hood.name=id+' curved bonnet';hood.scale=(.92,.96,.48);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);hood.data.materials.append(paint);hood.data.uv_layers.active.name='UVMap';parent(hood,r)
+  hood=box(id+' chamfered flat-faced bonnet',(0,-length*.39,1.30),(1.78,1.52,.92),paint,r,.18)
   box(id+' recessed radiator',(0,-length*.39-.87,1.29),(1.00,.045,.58),black,r,.04)
   for x in (-.42,-.30,-.18,-.06,.06,.18,.30,.42):box(id+' radiator vertical bar '+str(x),(x,-length*.39-.90,1.29),(.035,.025,.51),tin,r,.01)
   for s in (-1,1):
@@ -343,7 +353,7 @@ def basic_family():
  for s in (-1,1):
   beam('crane boom gusset',(s*.37,.20,2.82),(s*.22,-1.00,3.10),.07,steel,boom)
   box_beam('crane hydraulic outrigger',(s*.84,.84,.72),(s*1.82,.84,.72),.15,.20,steel,crane,.025)
-  box('crane outrigger foot',(s*1.82,.84,.12),(.48,.50,.16),black,crane,.045)
+  beam('crane outrigger support leg',(s*1.82,.84,.70),(s*1.82,.84,.20),.075,steel,crane);box('crane outrigger foot',(s*1.82,.84,.12),(.48,.50,.16),black,crane,.045)
  beam('crane ram barrel',(0,.85,1.98),(0,-.50,2.75),.13,steel,turret);beam('crane ram rod',(0,-.12,2.63),(0,-1.34,3.05),.06,tin,turret)
  hook=empty('crane-truck:hook',(0,-3.60,3.82),boom)
  beam('crane hoist cable',(0,-3.60,3.82),(0,-3.60,2.60),.028,black,hook)
@@ -472,7 +482,7 @@ if a.render:
       pipe=joints[f'pipe-truck:pipe-{index}'];pipe.rotation_euler[1]=0 if pose=='rest' or index!=1 else -.78
    target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
    for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
-   view_scale=1.0 if name=='loader' else .67 if name in ('mixer-truck','roller','paver','pipe-truck') else 1.62 if name=='drill-rig' else .82
+   view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
    bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=43;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  print('Rendered all seven machines at rest and work poses from imported GLB')
 print('exported',glb,glb.stat().st_size)
