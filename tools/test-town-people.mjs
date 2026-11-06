@@ -17,9 +17,11 @@ function stepDay(town) {
   // spending time on the 23 unchanged hours between updates.
   town.tick = BigInt(town.tick) + 23n;
   stepTown(town);
+  // People work is spread across all 24 hours, then daily changes settle.
+  for (let hour = 0; hour < TOWN_TIME.ticksPerDay; hour++) stepTown(town);
 }
 
-check(registeredTownSystems().some(system => system.name === 'town-people' && system.everyTicks === 24), 'people update once each town day');
+check(registeredTownSystems().some(system => system.name === 'town-people' && system.everyTicks === 1), 'people work is scheduled every town tick');
 check(TOWN_THOUGHTS.length >= 80, 'thought content includes at least 80 lines');
 for (const [season, lines] of Object.entries(TOWN_SEASON_THOUGHTS)) {
   check(lines.length >= 20, `${season} has seasonal thoughts`);

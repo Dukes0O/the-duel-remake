@@ -6,7 +6,7 @@ import {
   BUILDINGS, GOODS, SCABLANDS_TOWN_REGION, TOWN_MIGRATIONS, TOWN_SAVE_VERSION,
   TOWN_REGIONS, TOWN_WORK_STATES,
   cellIsReserved, createTown, deserializeTown, dispatchTownCommand, getTownChunk, registerTownCommand,
-  registerTownSystem, serializeTown, stepTown, townCalendarAt, validateTownContent,
+  registerTownSystem, registeredTownSystems, serializeTown, stepTown, townCalendarAt, validateTownContent,
 } from '../src/town/index.js';
 
 let checks=0;
@@ -18,6 +18,7 @@ assert.equal(new Set(BUILDINGS.map(row=>row.id)).size,BUILDINGS.length); checks+
 assert.equal(TOWN_SAVE_VERSION,1); checks++;
 assert.equal(TOWN_MIGRATIONS[0].version,1); checks++;
 assert.equal(SCABLANDS_TOWN_REGION.groundHeightAt(0,0),0); checks++;
+check(registeredTownSystems().some(system=>system.name==='town-people' && system.everyTicks===1), 'people system is registered through the town entry point and runs each tick');
 
 // Keep the data contract in step with every authored art id. IDs with a
 // numeric suffix are expanded below; part names such as "building:lamp" are
@@ -133,16 +134,28 @@ same(runA.tick,100000n,'the long run reaches its requested tick');
 same(serializeTown(runA),serializeTown(runB),'seeded commands produce one fingerprint after 100,000 ticks');
 
 const large=createTown(90210,'Large Town');
-large.people=Array.from({length:10000},(_,i)=>({id:`person-${i}`,name:`Person ${i}`,born:i,skills:{building:i%8}}));
+large.people=Array.from({length:10000},(_,i)=>({id:`person-${i}`,name:`Person ${i}`,born:i,family:`family-${Math.floor(i/5)}`,home:`canvas-${Math.floor(i/5)}`,skills:{building:i%8}}));
 large.buildings=Array.from({length:5000},(_,i)=>({id:`building-${i}`,buildingId:'hand-well',regionId:'scablands',x:i*2,z:-i,width:1,depth:1,groundY:0}));
 const start=performance.now();
 const largeLoaded=deserializeTown(serializeTown(large));
 const dayStart=performance.now();
-for(let tick=0;tick<24;tick++)stepTown(largeLoaded);
+let slowestTick=0;
+for(let tick=0;tick<24;tick++) {
+  const tickStart=performance.now();
+  stepTown(largeLoaded);
+  slowestTick=Math.max(slowestTick,performance.now()-tickStart);
+}
 const dayElapsed=performance.now()-dayStart;
 const elapsed=performance.now()-start;
 same(largeLoaded.people.length,10000,'all people survive save, load and a sim day');
 same(largeLoaded.buildings.length,5000,'all building records survive save, load and a sim day');
 check(dayElapsed<30,`a 10,000-person, 5,000-building sim day stays under 30 ms (observed ${dayElapsed.toFixed(2)} ms)`);
+check(slowestTick<10,`no single tick for 10,000 people takes 10 ms (slowest ${slowestTick.toFixed(2)} ms)`);
 
-console.log(`Town core: ${checks} checks passed; 100,000 ticks repeat; large save/load/day ${elapsed.toFixed(2)} ms total, ${dayElapsed.toFixed(2)} ms to step.`);
+const midDay=createTown(712,'Midday Save');
+for(let tick=0;tick<11;tick++) stepTown(midDay);
+const midDayLoaded=deserializeTown(serializeTown(midDay));
+for(let tick=0;tick<13;tick++) { stepTown(midDay); stepTown(midDayLoaded); }
+same(serializeTown(midDayLoaded),serializeTown(midDay),'a save loaded in the middle of the day resumes the same people update');
+
+console.log(`Town core: ${checks} checks passed; 100,000 ticks repeat; large save/load/day ${elapsed.toFixed(2)} ms total, ${dayElapsed.toFixed(2)} ms to step, slowest tick ${slowestTick.toFixed(2)} ms.`);
