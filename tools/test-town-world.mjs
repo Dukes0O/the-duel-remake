@@ -76,6 +76,24 @@ test('a town drive remains open ended and repeatable from seed and layout', () =
   assert.equal(run().settled,false);
 });
 
+test('town drive teardown clears its layout on every ending and before the next job or race', () => {
+  const layout=createTownWorld(createTown(1405,'Test town'));
+  const ordinaryObstacleCount=new Course(ARENA_VENUES.scablands,1989).obstaclesNear(0).length;
+  for(const ending of ['gate','Escape','wreck','giving up','menu']){
+    const duel=new Duel({seed:1989,featureFlags:{'wasteland-town':true}});
+    duel.state.wastelandGateDiscovered=true;
+    setScablandsTownLayout(layout);
+    assert.equal(duel.startArenaEvent({venueId:'scablands',mode:'world-job',job:{id:'town-drive',kind:'town-drive',steps:[],seed:1989,layout}}),true,
+      `${ending}: the town drive starts`);
+    assert.equal(duel.course.townLayout,layout,`${ending}: the active drive uses its town layout`);
+    assert.equal(cleanupWorldJobLoan(duel),true,`${ending}: the shared drive teardown runs`);
+    assert.equal(duel.course.townLayout,null,`${ending}: the course drops the layout`);
+    assert.equal(scablandsSurfaceAt(0,0).road,false,`${ending}: town road grading is removed`);
+    assert.equal(duel.course.obstaclesNear(0).length,ordinaryObstacleCount,
+      `${ending}: ordinary jobs and races see their original obstacles`);
+  }
+});
+
 test('every unreserved town cell can be occupied while the old roads stay driveable', () => {
   const town=createTown(2026,'Crowded test town');let number=0;
   for(let x=-88;x<88;x++)for(let z=-63;z<63;z++)if(!cellIsReserved('scablands',x,z))

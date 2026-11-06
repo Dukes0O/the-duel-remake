@@ -233,6 +233,7 @@ export class App {
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
+      if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
       if(event.townGate&&state.arena?.mode==='world-job'){
         if(this.returnToYard())this._openTownScrapdomePanel=true;
       }
@@ -1843,7 +1844,7 @@ export class App {
     return this._startArenaFight({venueId, mode, opponents, job});
   }
   async startTownDrive(town) {
-    if(this._switches().enabled('wasteland-town')!==true||!town||this.duel.state.arena)return false;
+    if(this._switches().enabled('wasteland-town')!==true||!town||!this.isYardHomeActive())return false;
     const [{createTownWorld},{setScablandsTownLayout,clearScablandsTownLayout}]=await Promise.all([
       import('./town/town-world.js'),import('./world/scablands-ground.js')]);
     const layout=createTownWorld(town);
@@ -1858,7 +1859,8 @@ export class App {
     // Admission reads the current durable owner before creating any run state.
     // The existing failed-save guard keeps unsaved session progress intact.
     this._refreshPlayer();
-    const available = mode==='world-job' ? this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&!!job : warlordId ? this.warlordsAvailable() :
+    const available = mode==='world-job' ? this.wastelandUnlocked()&&!!job&&
+      (job.kind==='town-drive'?this._switches().enabled('wasteland-town')===true:this._switches().enabled('story-everburn')===true) : warlordId ? this.warlordsAvailable() :
       mode === 'fuel-run' ? this.fuelRunAvailable() : mode === 'bounty-hunt' ? this.bountyHuntAvailable() :
         mode === 'convoy-raid' ? this.convoyRaidAvailable() :
         mode === 'ambush-alley' ? this.ambushAlleyAvailable() : this.arenaAvailable();
