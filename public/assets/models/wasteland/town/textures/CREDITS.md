@@ -215,3 +215,15 @@ Reuses the four round 7 fire-engine photographs above. They were moved from
 `.evidence/town-art-trucks-1/` into this runtime texture folder so the model
 recipe can rebuild from committed source images. No new runtime picture was
 generated for this round.
+
+## TOWN-ART-TRUCKS-1, round 10: tanker, supply truck and tow rig
+
+Generated with OpenAI built-in image generation on 6 November 2026. The original PNG turnarounds remain outside the repository. The four named JPEG crops for each truck are the rebuild and projection inputs for `tools/blender/town-trucks-1.py`; each shows one matching original 1950s work truck against a pale background in flat light, with no branding. The supply truck's retained crops use the edited empty-bed turnaround so the load is separate geometry and can be hidden.
+
+Common prompt for each four-view turnaround: "Create a photographic modeling reference sheet for one original 1950s wasteland work truck. Show the exact same truck in four orthographic views arranged in a 2x2 grid: left side, front, rear, and true overhead. Whole vehicle visible in each panel. Plain pale warm-gray seamless background and floor, bright flat overcast light, soft contact shadow, crisp realistic photography. Keep the rounded bonnet cab and proportions in the family of a 1950s fire engine. No logos, maker names, text, people or watermark."
+
+- `tanker-side.jpg`, `tanker-front.jpg`, `tanker-rear.jpg`, `tanker-overhead.jpg`: the prompt above plus "long flatbed chassis, faded dusty blue-gray paint, long horizontal riveted galvanized steel tank, restrained dark rust streaks, valves and small drips, single front tires and tandem rear axles."
+- `supply-side.jpg`, `supply-front.jpg`, `supply-rear.jpg`, `supply-overhead.jpg`: the prompt above plus "faded olive-gray cab and open timber slatted flatbed with rails and stakes, empty bed, no cargo." Edited from the loaded turnaround to preserve the same truck while separating crates and sacks into the named hideable load group.
+- `tow-side.jpg`, `tow-front.jpg`, `tow-rear.jpg`, `tow-overhead.jpg`: the prompt above plus "faded dusty ochre-brown paint, exposed heavy rear chassis, braced lattice recovery crane and hanging steel hook, single front tires and dual rear tires."
+
+These are original generated images. No outside photography, manufacturer references, logos or third-party materials were used.

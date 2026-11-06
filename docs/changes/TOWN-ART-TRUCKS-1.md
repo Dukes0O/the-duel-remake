@@ -1,31 +1,21 @@
-# TOWN-ART-TRUCKS-1
+# TOWN-ART-TRUCKS-1 change note
 
-## Design
+## Changed
 
-Continue the fire truck from the measured-photo method in `tools/blender/photo_model.py`. The side shell is one full-width traced extrusion. Wheel centers use the width measured from the front photo; wheel-face picture rectangles stay inside the tyre image. The four committed source photos now live beside the other town textures. Round 8 is a review attempt and does not pass visual acceptance.
+- Replaced the tanker, supply-truck and tow-rig box recipes and camera-projected paint with the measured multi-view `carve_hull` path. The accepted fire-truck code and pictures remain unchanged.
+- Added 12 photo crops to the town texture folder, with prompts and credits. Generated photo textures for timber, tin, rusted steel and canvas now supply sharp repeating materials for non-body parts.
+- Added photo-measured axle, ground, wheel and track tables. The tanker uses tandem rear axles; the tow rig uses dual rear tires. The supply cargo is separate under `supply-truck:load`, and the tow cable and hook sit under `tow-rig:hook`.
+- Removed the retired camera projection materials, helper and three projection images.
 
 ## Checks
 
-- Blender recipe and imported GLB render: passed; 3,878,000-byte family file. Per-truck triangle counts: fire truck 6,683, tanker 11,173, supply 9,119, tow rig 8,973.
-- `node tools/test-blender-output.mjs`: passed, 280 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets remain advisory; the report lists existing oversized files outside this card.
-- Browser checks: not run here; Claude should review the sheet and model at merge.
-- Lane tier and build: not run, as directed for this art card.
-- Changed assertions: none.
-- Race fingerprints: not applicable to this art-only change.
+- Blender export and imported-GLB render: passed. Family file: 3,128,640 bytes. Triangle counts: fire truck 10,352; water tanker 10,092; supply truck 9,690; tow rig 9,536. Each stays below 12,000 triangles and the family stays below 8 MB.
+- `node tools/test-blender-output.mjs`: passed, 284 checks and 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; no placement failures or oversized look sheets.
+- Browser and independent look review: Claude should inspect `round-10.jpg` and the imported model. No browser run in this art lane.
+- No race simulation, saves, rewards or physics changed; race fingerprints do not apply.
+- Changed assertions: the truck Blender check now expects the retired projected-paint materials to be absent and all four measured photos per truck to be embedded. The assertion remains strict about names, UV channels, image formats, triangle budgets and metallic factors.
 
 ## Removed
 
-- Removed the round 7 review sheet and note.
-- Moved the four fire-engine source photos from `.evidence/town-art-trucks-1/` to `public/assets/models/wasteland/town/textures/`; the recipe now reads those committed source files.
-- Removed temporary renders and masks after assembling the review sheet.
-
-## Round 9: the fire engine, carved from its photos (Claude)
-
-Rounds 7 and 8 left the wheels at twice their true distance, because a parent's position was subtracted before that parent had moved, and built the body from flat parts. Round 9 adds `tools/blender/hull_model.py`: a voxel stays only if the side, overhead and end photos all show something there, the result is smoothed and reduced to budget, and each face wears the photo it faces most. Wheels, axles, cannon and headlamps are round parts placed at their true world positions.
-
-Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `npm run build`. No assertion changed. Not wired into the game, so no frame check.
-
-Removed: `fire-engine-projection.jpg`, the fire truck's old flat-part recipe, and rounds 7 and 8's sheets.
-
-Changed test (Claude's review): `tools/test-blender-output.mjs` lists `hull_model.py` beside `photo_model.py` among shared kits that are not asset generators, since it builds nothing alone. The fire truck is still fully checked through its recipe. Nothing is loosened.
+Removed `build_truck`'s tanker, supply and tow branches, `project_paint_from_camera`, the three `*-projection.jpg` inputs and unused shape helpers. These paths were replaced by the measured photo hull builder and named parts.
