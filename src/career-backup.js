@@ -224,6 +224,7 @@ export async function createCompleteCareerExport(storage, store=createIndexedDbB
     throw new Error('The IndexedDB career archives could not be read. No partial export was made.');
   }
   if(!sameEntries(captureCareer(source),entries))throw new Error('The career changed during export. Retry.');
+  if(!townIds.length)return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives},null,2);
   const townRecords=await towns.store.towns(townIds);
   if(townRecords.some((record,index)=>!record||record.id!==townIds[index]))throw new Error('A saved town could not be read. No partial export was made.');
   return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives,townRecords},null,2);
@@ -395,7 +396,6 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
     }
     applyEntries(source,entries);
     installCareerArchive(source,importedArchives);
-    if(archive.townRecords?.length)for(const town of archive.townRecords)await towns.store.finishInstallRecovery(town.id);
   }
   catch (error) {
     try {
@@ -406,6 +406,10 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
       throw new Error('Import failed and browser storage could not be restored. IndexedDB backup ' + backup.id + ' is available. ' + rollbackError.message, { cause: error });
     }
     throw new Error('Import failed; the previous career was restored. ' + error.message, { cause: error });
+  }
+  // The career is committed. A marker left behind is harmless: the next load keeps the new town by its restoreId.
+  for(const town of archive.townRecords??[]){
+    try{await towns.store.finishInstallRecovery(town.id);}catch{/* Resolved on the next load. */}
   }
   return { backupId: backup.id, playerCount: has(archive.entries, PLAYERS_KEY) ? JSON.parse(archive.entries[PLAYERS_KEY]).players.length : 1 };
 }

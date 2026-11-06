@@ -29,3 +29,5 @@ Removed the static town-store import from career backup so town code stays unloa
 
 
 Claude, 5 November 2026: third review. Once the career is committed, a recovery marker that will not clear no longer rolls anything back: the next load keeps the new town by its `restoreId`. A two-town test covers it.
+
+The lane tier caught one more: exporting a career with archived players and no town crashed, because the export read towns that were never loaded. It now exports exactly as before for such a career. Import follows the restore's rule for an uncleared marker. Lane tier 47 of 48 before this fix; `test-career-archives`, `test-town-store`, `test-career-backup` and `test-save-fixtures` pass after it. Three independent reviews.
