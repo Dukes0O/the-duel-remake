@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createTown,dispatchTownCommand} from '../src/town/index.js';
+import {createTown,dispatchTownCommand,stepTown} from '../src/town/index.js';
 import {bindTownWastelandMap, townWastelandMapMarkup, townWastelandMapModel} from '../src/town/ui/town-wasteland-map.js';
 
 let checks=0;
@@ -61,5 +61,17 @@ equal(realTown.deeds.items['sal-road'].ownerId,'player','the real town records t
 const refused=dispatchTownCommand(realTown,{type:'buyDeed',deedId:'gunn-road'},{profile:townProfile});
 equal(refused.ok,false,'the real town refuses an unclaimed territory deed');
 ok(/Beat Gearhead Gunn before buying its deeds\./.test(refused.message),'a refused purchase explains why in a full sentence');
+
+const shortTill=createTown(402,'Short Deed Till',[{id:'mayor'}]);shortTill.mayors=['mayor'];shortTill.till=0n;
+const shortProfile={wasteland:{scrap:100,territories:{sal:{claimed:true}}}};
+const emptyTillRefusal=stepTown(shortTill,{type:'buyDeed',deedId:'sal-road'},{profile:shortProfile})[0];
+equal(emptyTillRefusal.ok,false,'an empty town till refuses a deed purchase');
+ok(emptyTillRefusal.message.includes('till does not have enough scrap'),'the refusal explains that the town till is short');
+const deposit=stepTown(shortTill,{type:'tillIn',amount:100},{profile:shortProfile})[0];
+equal(deposit.ok,true,'the player can put scrap in through stepTown');
+const paid=stepTown(shortTill,{type:'buyDeed',deedId:'sal-road'},{profile:shortProfile})[0];
+equal(paid.ok,true,'the deed can be bought after the town till is funded');
+equal(shortTill.deeds.items['sal-road'].ownerId,'player','the funded deed records its owner');
+equal(shortTill.till,0n,'the deed price comes out of the funded town till');
 
 console.log(`Town Wasteland map: ${checks} checks passed.`);
