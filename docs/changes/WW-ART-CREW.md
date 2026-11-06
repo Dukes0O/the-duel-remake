@@ -25,6 +25,13 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
   real thin car panel, not a toy.
 - Added `ww-regret-bonnet.jpg` and a rust crop from `ww-regret-door.jpg`, with
   both sources documented in `CREDITS.md`.
+- Added `open-engine` from side, pulley-end and top photos, carved as one
+  solid hull. Its head-off bores, six piston crowns, four-post box stand and
+  nest in the open exhaust read clearly from the exported GLB. Added a 70%
+  tilted copy as `regret-engine`, with a lathed bark trunk and two traced leaf
+  slabs from one scrub-tree photo. Neither engine reads as a toy.
+- Added the three engine views and `ww-regret-engine-tree.jpg`, with prompts in
+  `CREDITS.md`.
 - Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
   Its front and three-quarter views were rendered from the exported GLB and
   inspected beside the front reference. It reads as a small weathered wooden
@@ -46,9 +53,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 - `dynamite-box` was tried in two renders, then omitted. The photo wrapped into
   a collage and the recessed contents did not read; further changes did not
   improve it.
-- `open-engine` was tried in two renders, then omitted. Cropping and aligning
-  the views did not fix the broken overlapping surfaces; it still did not read
-  as one engine. Its trial photos and geometry were removed.
+- Earlier `open-engine` drafts were omitted because their overlapping surfaces
+  did not read as one engine. This version replaces those drafts with one
+  photo-carved hull.
 - Added `regret-door` from the dead-on faded-red donor photo. Falcone F42 is the
   plainest classic coupe in the game; its GLB has one combined body shell, so
   the door was built from the photo with the real window opening and thin edge.
@@ -72,8 +79,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 ## Changed assertions
 
 - Raised only the `WW-ART-CREW` model file cap in `tools/test-blender-output.mjs`
-  from 2 MiB to 4 MiB. The two additional 1024 px crate photos raise the
-  exported model to 2,399,432 bytes. Triangle budget is unchanged.
+  from 2 MiB to 4 MiB. The new photo-built wheel, crate, bonnet and engine
+  textures bring the current export to 3,788,272 bytes. Triangle budget is
+  unchanged.
 
 ## Race fingerprints
 

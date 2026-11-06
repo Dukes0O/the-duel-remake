@@ -30,6 +30,7 @@ from mathutils import Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
 from photo_model import Mesh, Photo, box, lathe, rect_loop, shrink, slab, tidy, trace
+from hull_model import View, occupancy, largest_part, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
@@ -396,6 +397,142 @@ crate_panel((-.32, .32, .08, .10, -.22, .22), {
     '+z': crate_face(crate_front, SIDE_PLANK, front_mat), '-z': crate_face(crate_front, SIDE_PLANK, front_mat)})
 finish(crate_mesh, 'dynamite-box', {front_mat: crate_front.material(), top_mat: crate_top.material()})
 
+# --- open-engine: one carved engine block, with a boxed stand and a nest in its exhaust -----
+engine_side_photo = Photo(textures / 'ww-open-engine-side.jpg')
+engine_end_photo = Photo(textures / 'ww-open-engine-end.jpg')
+engine_top_photo = Photo(textures / 'ww-open-engine-top.jpg')
+ENGINE_Z0, ENGINE_Z1 = -.65, .65
+ENGINE_X0, ENGINE_X1 = -.38, .38
+ENGINE_Y0, ENGINE_Y1 = .04, .85
+def engine_side_pick(x, y, z):
+    return (45 + (z - ENGINE_Z0) / (ENGINE_Z1 - ENGINE_Z0) * 930,
+            20 + (ENGINE_Y1 - y) / (ENGINE_Y1 - ENGINE_Y0) * 480)
+def engine_end_pick(x, y, z):
+    return (30 + (x - ENGINE_X0) / (ENGINE_X1 - ENGINE_X0) * (engine_end_photo.w - 60),
+            35 + (ENGINE_Y1 - y) / (ENGINE_Y1 - ENGINE_Y0) * 930)
+def engine_top_pick(x, y, z):
+    return (30 + (z - ENGINE_Z0) / (ENGINE_Z1 - ENGINE_Z0) * 960,
+            18 + (x - ENGINE_X0) / (ENGINE_X1 - ENGINE_X0) * (engine_top_photo.h - 36))
+engine_side_view = View('engine-side', engine_side_photo,
+    [(8, 8), (1016, 8), (8, 504), (1016, 504)], engine_side_pick, (1, 0, 0))
+engine_end_view = View('engine-end', engine_end_photo,
+    [(8, 8), (engine_end_photo.w - 8, 8), (8, engine_end_photo.h - 8),
+     (engine_end_photo.w - 8, engine_end_photo.h - 8)], engine_end_pick, (0, 0, -1))
+engine_top_view = View('engine-top', engine_top_photo,
+    [(8, 8), (1016, 8), (8, engine_top_photo.h - 8), (1016, engine_top_photo.h - 8)], engine_top_pick, (0, 1, 0))
+ENGINE_VOXEL = .035
+engine_solid, engine_xs, engine_ys, engine_zs = occupancy(
+    ((ENGINE_X0, ENGINE_X1), (ENGINE_Y0, ENGINE_Y1), (ENGINE_Z0, ENGINE_Z1)),
+    ENGINE_VOXEL, [engine_side_view.covers, engine_end_view.covers, engine_top_view.covers])
+engine_solid = largest_part(engine_solid)
+engine_materials = {'engine-side': engine_side_photo.material(),
+                    'engine-end': engine_end_photo.material(),
+                    'engine-top': engine_top_photo.material()}
+engine_block = carve_hull('open-engine', [engine_side_view, engine_end_view, engine_top_view],
+    engine_materials, engine_solid, engine_xs, engine_ys, engine_zs, ENGINE_VOXEL, 3500)
+engine_block.parent = root_object
+engine_block['part'] = 'open-engine'
+engine_block.data.uv_layers[0].name = 'UVMap'
+engine_block.data.calc_loop_triangles()
+triangles['open-engine'] = len(engine_block.data.loop_triangles)
+for photo, view, seeds in ((engine_side_photo, engine_side_view, [(8, 8), (1016, 8), (8, 504), (1016, 504)]),
+                           (engine_end_photo, engine_end_view, [(8, 8), (1016, 8), (8, 1016), (1016, 1016)]),
+                           (engine_top_photo, engine_top_view, [(8, 8), (1016, 8), (8, engine_top_photo.h - 8), (1016, engine_top_photo.h - 8)])):
+    photo.bleed(view.mask, passes=20)
+
+# Four box feet and upright posts hold the block, with no wide plate faces.
+stand_mesh = Mesh()
+STAND_RECT = ('engine-side', engine_side_photo, (650, 410, 900, 486))
+stand_faces = {key: STAND_RECT for key in ('+z', '-z', '+x', '-x', '+y', '-y')}
+box(stand_mesh, -.48, -.38, 0, .07, -.55, .55, stand_faces)
+box(stand_mesh, .38, .48, 0, .07, -.55, .55, stand_faces)
+for x0, x1 in ((-.44, -.38), (.38, .44)):
+    for z0, z1 in ((-.49, -.42), (.42, .49)):
+        box(stand_mesh, x0, x1, .07, .46, z0, z1, stand_faces)
+stand_obj = finish(stand_mesh, 'open-engine-stand', {'engine-side': engine_side_photo.material()})
+
+# A short open exhaust tube is fixed to the right side; the twig bundle touches its lip.
+pipe_mesh = Mesh()
+def engine_pipe_uv(index, distance, radius, angle):
+    return engine_side_photo.uv(600 + distance / .20 * 100,
+                                305 + math.sin(angle) * radius / .08 * 70)
+lathe(pipe_mesh, 'engine-side', (.30, .45, -.28), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+      [(0, .08), (.03, .085), (.18, .075)], engine_pipe_uv, sides=16)
+pipe_obj = finish(pipe_mesh, 'open-engine-exhaust', {'engine-side': engine_side_photo.material()})
+twig_mesh = Mesh()
+for k in range(8):
+    angle = 2 * math.pi * k / 8
+    dy, dz = math.cos(angle), math.sin(angle)
+    origin = (.48, .45 - .075 * dy, -.28 - .075 * dz)
+    lathe(twig_mesh, 'engine-side', origin, (0, dy, dz), (1, 0, 0), (0, -dz, dy),
+          [(0, .004), (.15, .0025)], engine_pipe_uv, sides=6)
+nest_obj = finish(twig_mesh, 'open-engine-nest', {'engine-side': engine_side_photo.material()})
+
+# --- regret-engine: a 70% tilted copy, with one measured scrub tree through the block ------
+regret_root = bpy.data.objects.new('regret-engine', None)
+scene.collection.objects.link(regret_root)
+regret_root.parent = root_object
+regret_root.location = (1.25, 0, 0)
+regret_root.rotation_euler[1] = math.radians(7)
+regret_root.scale = (.70, .70, .70)
+for source in (engine_block, stand_obj, pipe_obj, nest_obj):
+    clone = source.copy()
+    clone.data = source.data
+    scene.collection.objects.link(clone)
+    clone.name = 'regret-engine-' + source.name
+    clone.parent = regret_root
+    clone.matrix_parent_inverse.identity()
+    clone.location = source.location.copy()
+    clone.rotation_euler = source.rotation_euler.copy()
+    clone.scale = source.scale.copy()
+
+tree_photo = Photo(textures / 'ww-regret-engine-tree.jpg')
+tree_solid = tidy(~tree_photo.sky([(8, 8), (tree_photo.w - 8, 8),
+                                   (8, tree_photo.h - 8)], grey=26))
+tree_photo.bleed(shrink(tree_solid, 3), passes=24)
+tree_mesh = Mesh()
+TREE_CX = int(tree_photo.w * .47)
+TREE_GROUND, TREE_CROWN_BASE = tree_photo.h - 20, int(tree_photo.h * .42)
+TREE_S = .82 / (TREE_GROUND - TREE_CROWN_BASE)
+tree_stations = []
+for py in range(TREE_GROUND, TREE_CROWN_BASE, -8):
+    row = np.nonzero(tree_solid[py, max(0, TREE_CX - 32):min(tree_photo.w, TREE_CX + 33)])[0]
+    if len(row):
+        radius = max(TREE_CX - (max(0, TREE_CX - 32) + row[0]),
+                     (max(0, TREE_CX - 32) + row[-1]) - TREE_CX)
+        tree_stations.append(((TREE_GROUND - py) * TREE_S, max(2, radius) * TREE_S * .60))
+if len(tree_stations) < 2:
+    tree_stations = [(0, .035), (.4, .025), (.82, .012)]
+def tree_trunk_uv(index, distance, radius, angle):
+    return tree_photo.uv(TREE_CX + math.cos(angle) * radius / TREE_S / .60,
+                         TREE_GROUND - distance / TREE_S)
+lathe(tree_mesh, 'tree', (0, .40, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+      sorted(tree_stations), tree_trunk_uv, sides=12,
+      cap_start=('tree', lambda a, f: tree_photo.uv(TREE_CX + math.cos(a) * 18 * f, TREE_GROUND - 4)),
+      cap_end=('tree', lambda a, f: tree_photo.uv(TREE_CX + math.cos(a) * 10 * f, TREE_CROWN_BASE + 70)))
+tree_root_obj = finish(tree_mesh, 'regret-engine-tree', {'tree': tree_photo.material()})
+tree_root_obj.parent = regret_root
+tree_root_obj.location = (0, 0, 0)
+
+leaves_mesh = Mesh()
+leaf_mask = tree_solid.copy()
+leaf_mask[int(tree_photo.h * .51):] = False
+leaf_world_scale = .0010
+def on_tree_leaf(px, py, depth):
+    z = (px - TREE_CX) * leaf_world_scale
+    y = 1.05 + (TREE_CROWN_BASE - py) * leaf_world_scale
+    return (depth, y, z)
+leaf_loops = trace(leaf_mask, (0, 0, tree_photo.w, int(tree_photo.h * .51)), tolerance=2.0, min_area=180)
+for depth in (-.06, .06):
+    slab(leaves_mesh, 'leaves', tree_photo, leaf_loops, on_tree_leaf, depth, depth + .012,
+         wall_scale=leaf_world_scale)
+leaves_obj = finish(leaves_mesh, 'regret-engine-leaves', {'leaves': tree_photo.material()})
+leaves_obj.parent = regret_root
+leaves_obj.location = (0, 0, 0)
+triangles['regret-engine'] = sum(triangles.pop(k, 0) for k in ('regret-engine-tree', 'regret-engine-leaves'))
+triangles['regret-engine'] += sum(len(o.data.loop_triangles) if o.type == 'MESH' else 0
+                                  for o in (engine_block, stand_obj, pipe_obj, nest_obj))
+
 
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
@@ -430,16 +567,14 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box', 'regret-bonnet')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box', 'regret-bonnet', 'open-engine', 'regret-engine')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
     for key, obj in parts.items():
-        obj.hide_render = key != subject
-        if key == 'regret-wheel':
-            for wheel_piece in scene.objects:
-                if wheel_piece.name.startswith('regret-wheel-'):
-                    wheel_piece.hide_render = key != subject
+        for piece in scene.objects:
+            if piece.name.startswith(key):
+                piece.hide_render = key != subject
     ground.hide_render = not show_ground
     scene.render.resolution_x, scene.render.resolution_y = width, height
     eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
@@ -481,3 +616,8 @@ shot('dynamite-box-top', 'dynamite-box', (0, 1.5, 0), (0, .18, 0), 900, 900, ort
 shot('regret-bonnet', 'regret-bonnet', (0, 2.1, 0), (0, .48, 0), 900, 700, ortho=1.5, show_ground=False)
 shot('regret-bonnet-quarter', 'regret-bonnet', (-1.4, 1.3, 1.3), (0, .48, 0), 900, 700, lens=50, show_ground=False)
 shot('regret-bonnet-under', 'regret-bonnet', (0, -1.1, 1.3), (0, .48, 0), 900, 700, lens=50, show_ground=False)
+shot('open-engine', 'open-engine', (2.1, .9, .3), (0, .42, 0), 1000, 700, lens=50)
+shot('open-engine-quarter', 'open-engine', (1.7, 1.3, -1.5), (0, .42, 0), 1000, 700, lens=50)
+shot('open-engine-top', 'open-engine', (0, 1.9, 0), (0, .42, 0), 900, 650, ortho=1.8)
+shot('regret-engine', 'regret-engine', (3.2, 1.1, .2), (1.25, .45, 0), 1000, 700, lens=50)
+shot('regret-engine-quarter', 'regret-engine', (2.8, 1.3, -1.4), (1.25, .45, 0), 1000, 700, lens=50)

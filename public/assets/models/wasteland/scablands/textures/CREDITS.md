@@ -131,6 +131,18 @@ edges. No objects, gear, pool, scene, text, or watermark.
 - `ww-regret-bonnet-rust.jpg`: a 512 × 316 crop from the heavily rusted lower
   edge of `ww-regret-door.jpg`, enlarged for the bonnet underside. It shows
   dark rust across the whole rectangle and is not the bonnet top photo.
+- `ww-open-engine-side.jpg`, `ww-open-engine-end.jpg` and
+  `ww-open-engine-top.jpg`: Codex ImageGen dead-on photos of one worn inline
+  six engine, with its head removed and bores exposed. Prompt set: “One large
+  old inline six-cylinder automotive engine, rusty red-brown cast iron, dark
+  grease and chipped paint, plain pale grey ground, flat bright overcast light,
+  no people or text; side view, pulley end view, and overhead view respectively.
+  Same engine and proportions in all three views.”
+- `ww-regret-engine-tree.jpg`: Codex ImageGen photograph of one small drought-
+  stunted scrub tree, dead-on, with crooked bark and sparse grey-green leaves.
+  Prompt: “A single drought-stunted desert tree about 1.2 m tall, narrow crooked
+  woody trunk, sparse branches with dusty grey-green leaves, plain pale grey
+  background, flat bright overcast daylight, no people or text.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
