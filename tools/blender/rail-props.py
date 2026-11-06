@@ -60,7 +60,7 @@ PROP_SPECS = [
     ('case-gloves', 'case-gloves.jpg', 'Pair of old forge gloves.', 'height', .28, .05),
     ('case-megaphone', 'case-megaphone.jpg', 'Rolled paper megaphone.', 'height', .28, .05),
     ('case-umbrella', 'case-umbrella.jpg', 'The clean, furled black umbrella.', 'height', .82, .05),
-    ('case-fourteen', 'case-fourteen.jpg', 'Battered suitcase with its number 14 label.', 'height', .30, .05),
+    ('case-hollis', 'case-fourteen.jpg', 'Hollis’s battered suitcase with its number 14 label.', 'height', .30, .05),
 ]
 
 def silhouette_prop(name, filename, description, axis, target, depth):
@@ -100,16 +100,16 @@ def silhouette_prop(name, filename, description, axis, target, depth):
 for spec in PROP_SPECS:
     silhouette_prop(*spec)
 
-# The story's identifier is case-books (not the card's earlier case-sums).
+# The story's identifier is case-hollis; keep the source photograph filename.
 # The label numeral is a small physical overlay on the blank tag in the photo.
-suitcase = parts['case-fourteen']
-label = bpy.data.curves.new('case-fourteen-number', 'FONT')
+suitcase = parts['case-hollis']
+label = bpy.data.curves.new('case-hollis-number', 'FONT')
 label.body = '14'
 label.size = .052
 label.align_x = 'CENTER'
 label.align_y = 'CENTER'
 label.extrude = .0007
-label_obj = bpy.data.objects.new('case-fourteen-number', label)
+label_obj = bpy.data.objects.new('case-hollis-number', label)
 scene.collection.objects.link(label_obj)
 label_obj.parent = suitcase
 label_obj.location = town.game_vector((-.012, .145, .037))
