@@ -241,6 +241,13 @@ def read_glb(path):
 
 gltf = read_glb(glb)
 nodes = {node.get('name'): node for node in gltf.get('nodes', [])}
+raw_glb = glb.read_bytes()
+json_length = struct.unpack_from('<I', raw_glb, 12)[0]
+bin_header = 20 + json_length
+bin_length = struct.unpack_from('<I', raw_glb, bin_header)[0]
+if raw_glb[bin_header + 4:bin_header + 8] != b'BIN\0':
+    raise RuntimeError('GLB has no embedded binary geometry buffer')
+binary = raw_glb[bin_header + 8:bin_header + 8 + bin_length]
 required = {f'vehicle-socket-{key}' for key in socket_locations} | {f'rattler wheel {name}' for name, *_ in wheel_specs}
 if not required.issubset(nodes):
     raise RuntimeError('GLB is missing vehicle contract nodes: ' + ', '.join(sorted(required - set(nodes))))
@@ -255,7 +262,11 @@ for mesh_data in gltf.get('meshes', []):
         if uv_keys != ['TEXCOORD_0']:
             raise RuntimeError(f'{mesh_data["name"]} has UV attributes {uv_keys}')
         uv = gltf['accessors'][attrs['TEXCOORD_0']]
-        span = max(uv['max'][i] - uv['min'][i] for i in range(2))
+        view = gltf['bufferViews'][uv['bufferView']]
+        start = view.get('byteOffset', 0) + uv.get('byteOffset', 0)
+        stride = view.get('byteStride', 8)
+        values = [struct.unpack_from('<ff', binary, start + index * stride) for index in range(uv['count'])]
+        span = max(max(pair[axis] for pair in values) - min(pair[axis] for pair in values) for axis in range(2))
         if span < .01:
             raise RuntimeError(f'{mesh_data["name"]} UVs have no range')
         uv_ranges.append(span)
