@@ -8,7 +8,7 @@ const number = value => typeof value==='number'?new Intl.NumberFormat('en').form
 export function townScreenModel(town,{speed=1,paused=false,next='Nothing needs your attention. Make a plan.',tab='roads',overlay=null,unlockedBuildingIds,availableBuildingIds}={}) {
   const date=town.calendar||townCalendarAt(town.tick||0);
   const year=typeof date.year==='bigint'?date.year.toString():date.year;
-  return {name:town.name,date:`Year ${year}, ${date.season}, day ${date.day}`,till:town.till??null,people:town.people?.length??0,
+  return {name:town.name,date:`Year ${year}, ${date.season}, day ${date.day}`,till:town.till??0,people:town.people?.length??0,
     mood:town.mood??null,waterIn:town.water?.in??null,waterOut:town.water?.out??null,powerIn:town.power?.in??null,powerOut:town.power?.out??null,
     next,paused,speed,overlay,menu:townBuildMenuModel({tab,unlockedBuildingIds,availableBuildingIds})};
 }

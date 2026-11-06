@@ -14,7 +14,7 @@ export function updateTownCamera(camera, delta = 0) {
   const state = camera?.userData?.townView;
   if (!state) throw new TypeError('Choose a town camera first.');
   const distance = THREE.MathUtils.lerp(TOWN_ZOOM.street, TOWN_ZOOM.scablands, state.zoom);
-  const elevation = THREE.MathUtils.lerp(18, distance * 0.72, state.zoom);
+  const elevation = distance * Math.SQRT1_2;
   const horizontal = Math.sqrt(Math.max(0, distance * distance - elevation * elevation));
   const desired = new THREE.Vector3(
     state.target.x + Math.sin(state.heading) * horizontal,
