@@ -255,3 +255,27 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+## Town Hall orthographic reference views (round 2)
+
+Generated with Codex Image Generation on 6 November 2026. The four compressed views are cropped from one generated orthographic reference sheet. The original remains outside the repository. The front view is traced and embedded in `services.glb`; the side, rear and overhead views are measurement references for the recipe.
+
+Prompt: Photorealistic orthographic reference sheet of one abandoned desert-town hall, four dead-on views arranged 2x2: front, left side, rear, perfectly straight-down roof plan. Same 24m square building in every view, no perspective. Lower brick base, tall dark timber upper walls, huge asymmetrical broad pitched roof of mismatched corrugated tin sheets in muted silver, dark rust brown and faded oxide red, irregular repairs, raised narrow clerestory along ridge with dirty windows, brick chimney and vents. Front gable has a salvaged car wheel clock with visible spokes and hands. Deep timber porch with thick posts, diagonal braces and broad worn steps; leaning poles with torn cloth flags; outdoor notice board with pinned papers. Dust, grime, rust streaks, weathering. Flat bright overcast daylight, plain pale warm gray background, crisp whole subject, no labels, people, or other buildings.
+
+## Forge front reference (round 2)
+
+Generated with Codex Image Generation on 6 November 2026. The compressed front view is the photo traced by the model recipe. Original output remains outside the repository.
+
+Prompt: Photorealistic orthographic front elevation of one compact 16m by 16m abandoned desert scrapyard forge building, whole building fully visible against a plain pale warm-grey background. A soot-dark salvaged brick furnace building with a massive arched open furnace mouth glowing with real yellow-white hot coals and orange edges, steel doors thrown open, thick riveted iron lintel, uneven old brickwork and black soot stains rising up to a tall brick chimney. Lean-to roof of mismatched dark grey and muted rusty corrugated steel, visible vents and a small side fuel pipe. Outside stand one heavy anvil on a stump and a few real tools. Dust, oxidized steel, ash around the furnace, realistic wear, neutral bright overcast daylight with the furnace as the one warm light source. Flat camera straight-on, no perspective, crisp believable scale, no people, signs, text, or neighboring buildings.
+
+## Scrapyard orthographic photos (round 2)
+
+Generated with Codex Image Generation on 6 November 2026. Compressed front and overhead views are cropped from one four-view reference. The front is photo-traced into the yard front; the overhead view covers the top view of the yard. Original output remains outside the repository.
+
+Prompt: A photographic orthographic 2x2 reference sheet of one original 24 by 24 metre desert scrapyard, same exact layout in all four views: front elevation top left, right side elevation top right, rear elevation bottom left, perfectly straight-down overhead plan bottom right. Flat view cameras, aligned grid with pale plain background and no labels. Centerpiece is a real welded steel gantry crane spanning the full yard, narrow truss legs, bracing, rusty crossbeam, hoist trolley, cable and heavy round electromagnet. Under it, two irregular stacks of five heavily crushed real cars, twisted steel bodies with clearly visible wheel arches, exposed dusty tyres, shattered windows and muted faded blue, worn oxblood red and bare brown rust. Uneven rubble and gravel between the cars, low rusty fence around yard. Real proportions and photo detail, bright overcast light, dark rust and dusty ground, no toy-like boxes, no people, text, logos, or other buildings.
+
+## Workshop orthographic photos (round 2)
+
+Generated with Codex Image Generation on 6 November 2026. The compressed front and overhead views are cropped from one four-view reference. The front is traced into the open-bay face; the overhead view covers the roof-facing view. Original output remains outside the repository.
+
+Prompt: Photorealistic orthographic 2x2 reference sheet of one original 24m wide by 16m deep desert repair workshop, same building in all views: front elevation top left, right side top right, rear bottom left, straight-down overhead plan bottom right. Dead-on views, even pale background. Low long industrial shed built from dark stained timber and mismatched rusted corrugated tin, three open bays, strong steel roof trusses, bent gutters, visible clerestory panels and several irregular roof repairs. In the central bay a worn red 1970s utility car sits on a real two-post lift with wheels just off the ground; black dusty tyres stacked beside the wall, tool benches and a hanging work lamp. Realistic thin beams, bracing and open doors, no giant blank panels. Faded paint under dark brown rust, grime low down and dusty sand. Bright flat overcast daylight, natural photographic details. Whole subject inside every panel, no text, logos, labels, or people.

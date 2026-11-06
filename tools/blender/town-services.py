@@ -7,20 +7,23 @@ scene, so the submitted view matches the exported material and UV data.
 import argparse, json, math, sys
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--review',action='store_true');p.add_argument('--paths-only',action='store_true')
+p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--evidence',default='.qa-dist/town-services');p.add_argument('--review',action='store_true');p.add_argument('--paths-only',action='store_true')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
-glb=root/'public/assets/models/wasteland/town/services.glb';blend=root/'art-build/town/services.blend'
-sheet=root/'docs/board/looks/town-art-services/round-1.jpg';evidence=root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-1'
+glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
+if not blend.is_absolute():blend=root/blend
+sheet=root/'docs/board/looks/town-art-services/round-2.jpg';review_output=root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-2'
 if a.paths_only:
- print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(evidence)],'summary':str(sheet)}));raise SystemExit(0)
+ print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
+from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, tidy as photo_tidy, trace as photo_trace
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
 m=town.make_materials({'galvanised-tin':tex/'town-water-corrugated.jpg','rusted-steel':tex/'town-water-tin.jpg',
                       'salvaged-brick':tex/'town-services-brick.jpg'})
 steel=m['rusted-steel'];tin=m['galvanised-tin'];dark=m['iron-dark'];brick=m['salvaged-brick'];wood=m['weathered-plank'];paint=m['faded-hand-paint'];sand=m['sand'];glass=m['dirty-glass'];canvas=m['patched-canvas']
+hall_roof_photo=Photo(tex/'rusted-corrugated-tin.jpg');hall_roof_material=hall_roof_photo.material()
 for mat in m.values():
  mat.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=min(mat.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value,.28)
 root_obj=bpy.data.objects.new('town-services',None);bpy.context.collection.objects.link(root_obj);root_obj.empty_display_type='PLAIN_AXES'
@@ -44,8 +47,8 @@ def cyl(name,c,r,depth,mat=steel,verts=20,parent=None):
 def sphere(name,c,r,mat,parent=None):
  bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,radius=r,location=town.game_vector(c));o=bpy.context.object;o.name=name;o.data.materials.append(mat)
  return parent_keep(o,parent) if parent else o
-def tube(name,c,major,minor,mat,parent=None):
- bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=24,minor_segments=8,location=town.game_vector(c));o=bpy.context.object;o.name=name;o.data.materials.append(mat)
+def tube(name,c,major,minor,mat,parent=None,major_segments=24,minor_segments=8):
+ bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=major_segments,minor_segments=minor_segments,location=town.game_vector(c));o=bpy.context.object;o.name=name;o.data.materials.append(mat)
  return parent_keep(o,parent) if parent else o
 def shell(name,x0,x1,z0,z1,h,material,parent):
  box(name+' foundation',(0,.18,0),(x1-x0,.36,z1-z0),dark,.045,parent)
@@ -92,15 +95,15 @@ def gable(name,x0,x1,z0,z1,eave,ridge,mat,parent):
     beam(name+' roof lap',(xx,yy+.06,z-.5),(xx,yy+.06,z+.5),.04,dark,parent)
  for x in (x0*.82,x1*.82):
   for j in range(3):sphere(name+' roof rivet',(x,eave+(ridge-eave)*(1-abs(x)/max(abs(x0),abs(x1)))+.08,z0+(z1-z0)*(j+.5)/3),.035,dark,parent)
-def make(name,foot):return empty(name,root_obj,foot)
+building_roots={}
+def make(name,foot):
+ o=empty(name,root_obj,foot);building_roots[name]=o;return o
 
 # 3x3 Town Hall: the deliberately detailed visual anchor for this family.
 h=make('town-hall',(3,3));shell('hall',-10.7,10.7,-10.7,10.7,5.5,brick,h)
-gable('hall',-10.9,10.9,-11,11,5.55,10.3,tin,h)
-# Patchy roof repairs, extractor, attic vent, cable and rooftop salvage.
-for x,z,sx,sz,mat in [(-7,-6,3.4,2.1,steel),(6,5,2.4,3.2,tin),(-4,7,2.2,1.3,steel),(7,-7,1.6,2.4,steel)]:
- box('Hall lapped roof repair',(x,8.18,z),(sx,.08,sz),mat,.025,h)
- for edge in (-1,1):beam('Repair weld bead',(x-sx*.42,8.25,z+edge*sz*.43),(x+sx*.42,8.25,z+edge*sz*.43),.035,dark,h)
+gable('hall',-10.9,10.9,-11,11,5.55,10.3,hall_roof_material,h)
+# Photo-material roof repairs follow the broad roof; vents and a cable break up
+# the silhouette without flat coloured patches.
 for x,z in [(-6,-4),(5,7)]:
  box('Roof vent collar',(x,8.4,z),(.9,.3,.9),steel,.06,h);cyl('Roof vent stack',(x,9.15,z),.24,1.35,dark,16,h);cyl('Vent rain cap',(x,9.86,z),.42,.12,steel,16,h)
 # Car-wheel clock: thick tyre ring, hub, spokes, hand-painted clock face.
@@ -121,7 +124,9 @@ for x in (-7.3,-4.0,4.0,7.3):
 for i,x in enumerate((-7.7,7.7)):
  beam('Flag pole',(x,6.3,-6),(x,12,-6),.10,dark,h)
  for sx in (-1,1):beam('Flag guy',(x,5.4,-6),(x+sx*.75,.2,-6),.035,steel,h)
- cloth=box('Patched town flag',(x+1.05,10.8,-6),(.98,1.0,.045),canvas,.012,h);cloth.rotation_euler[2]=-.09
+ flag_points=[(x,11.35,-6),(x+1.82,11.25,-6),(x+1.45,10.88,-6),(x+1.72,10.48,-6),(x+.84,10.67,-6),(x,10.55,-6)]
+ flag_mesh=bpy.data.meshes.new('torn cloth flag mesh');flag_mesh.from_pydata([town.game_vector(p) for p in flag_points],[],[(0,1,5),(1,2,5),(2,4,5),(2,3,4)]);flag_mesh.materials.append(canvas);flag_mesh.update()
+ cloth=bpy.data.objects.new('Torn patched town flag',flag_mesh);bpy.context.collection.objects.link(cloth);parent_keep(cloth,h)
  for q in (-.28,.3):beam('Flag repair seam',(x+.56,10.8+q,-6.04),(x+1.52,10.8+q,-6.04),.035,paint,h)
 # Raised roof monitor salvaged from an industrial clerestory, with its own
 # thick rafters, small pane divisions and visibly separate patch roof.
@@ -155,6 +160,41 @@ for dx in (-1.48,-.55,.45,1.35):box('Notice paper',(board_x+dx,1.68,-12.68),(.62
 for dx in (-1.72,1.72):beam('Notice board post',(board_x+dx,2.8,-12.55),(board_x+dx,.12,-12.55),.14,steel,h)
 beam('Notice hood',(board_x-1.9,2.8,-12.75),(board_x+1.9,2.8,-12.75),.12,tin,h)
 for dx in (-1.35,1.35):beam('Notice diagonal brace',(board_x+dx,1.25,-12.55),(board_x+dx*.8,.25,-12.55),.09,wood,h)
+# The hall's four elevations and roof are measured from generated orthographic
+# photographs. The traced skins replace the clean brick read at game distance;
+# the existing porch, braces, steps, clock, vents and chimney remain real depth.
+hall_photo=Photo(tex/'town-hall-front.jpg')
+hall_front_solid=photo_tidy(~hall_photo.sky([(12,12)],grey=26),2)
+hall_front_loops=photo_trace(hall_front_solid,(0,0,hall_photo.w,hall_photo.h),tolerance=2.2,min_area=90)
+if not hall_front_loops:raise RuntimeError('photo outline missing for town hall front')
+hall_front_mesh=PhotoMesh()
+photo_slab(hall_front_mesh,'hall-front',hall_photo,hall_front_loops,
+ lambda px,py,d:((px-384)*.030,(430-py)*.026,d-11.2),-.06,.10,wall_scale=.03)
+hall_photo.bleed(hall_front_solid,passes=5)
+hall_front_mesh.finish('town-hall photo-traced front facade',{'hall-front':hall_photo.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='town-hall photo-traced front facade':parent_keep(obj,h)
+# Salvaged sheets patch the biggest roof in town in different oxide colours.
+rust_patch=Photo(tex/'town-water-tin.jpg');oxide_patch=Photo(tex/'red-oxide.jpg')
+patch_mesh=PhotoMesh();patch_materials={'rust':rust_patch.material(),'oxide':oxide_patch.material()}
+for i,(cx,cz,kind,outline) in enumerate([
+ (-5.5,-5.5,'rust',[(-3,-2.0),(1.8,-2.0),(3,-.8),(2.3,1.5),(.6,2.1),(-2.8,1.5),(-3.2,.1)]),
+ (5.5,-5.5,'oxide',[(-2.3,-2.0),(2.4,-1.8),(3,0),(1.8,2.2),(-1.1,1.9),(-2.8,.6)]),
+ (-5.5,5.5,'oxide',[(-2.6,-1.7),(1.9,-2.0),(2.8,-.1),(2.1,1.8),(-1.2,2.0),(-3,.4)]),
+ (5.5,5.5,'rust',[(-1.8,-2.5),(1.7,-2.8),(2.4,-.8),(1.8,2.5),(-.4,2.7),(-2.2,1.0)])]):
+ photo=rust_patch if kind=='rust' else oxide_patch
+ points=[(cx+dx,10.3-abs(cz+dz)/11*4.75+.11,cz+dz) for dx,dz in outline]
+ uvs=[photo.uv((dx+3.4)/6.8*photo.w,(dz+3.0)/6.0*photo.h) for dx,dz in outline]
+ patch_mesh.face(points,uvs,kind,(0,1,0))
+ for j,(p0,p1) in enumerate(zip(points,points[1:]+points[:1])):
+  beam('Hall roof repair rolled edge '+str(i+1),p0,p1,.035,dark,h)
+patch_mesh.finish('town-hall irregular photo rust repairs',patch_materials)
+for obj in bpy.context.scene.objects:
+ if obj.name=='town-hall irregular photo rust repairs':parent_keep(obj,h)
+# The photographed wheel clock stays backed by a real tyre, spokes and hands.
+wheel=tube('Hall clock car tyre',(0,6.85,-11.55),1.28,.15,dark,h);wheel.rotation_euler[0]=math.pi/2
+for angle in range(0,360,45):
+ ang=math.radians(angle);beam('Hall clock steel spoke',(0,6.85,-11.57),(.95*math.sin(ang),6.85+.95*math.cos(ang),-11.57),.055,steel,h)
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
 ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
 for n in ids:
@@ -190,7 +230,7 @@ for n in ids:
   box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
  heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4,'toll-bank':4.4,'school':5.2}
  ht=heights.get(n,5.0);mat=brick if n in ('forge','toll-bank') else wood if n=='school' else tin
- shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
+ if n!='scrapyard':shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
  if n in ('forge','school'):
   # Brick gable edges and pitch roof with exposed purlins.
   for side in (-1,1):
@@ -198,29 +238,22 @@ for n in ids:
    beam(n+' gable slope',(x0+.4,ht,z),(0,ht+2,z),.16,brick,b);beam(n+' gable slope',(0,ht+2,z),(x1-.4,ht,z),.16,brick,b)
   for side in (-1,1):
    roof=box(n+' pitched roof',(0,ht+1,side*d*.18),(w*.58,.14,d*.55),tin,.025,b);roof.rotation_euler[2]=side*.48
- else:
+ elif n!='scrapyard':
   # Leanto roof with a true fall and thin ridge, patched with corrugated plates.
   for ix in range(4):
    z=z0+1+ix*(d-2)/3
    roof=box(n+' formed roof panel',(0,ht+.55,z),(w+1.2,.16,(d-1)/3+.12),tin,.025,b);roof.rotation_euler[2]=.02
   for x in (-w/2+1,w/2-1):beam(n+' roof side seam',(x,ht+.75,z0+.5),(x,ht+.75,z1-.5),.08,steel,b)
  # Asymmetric corrugated wall patchwork and windows with deep jambs.
- for i,x in enumerate([-w*.32,0,w*.32]):
-  box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
-  if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
- if n=='forge':
-  # Furnace mouth, thick brick arch surround, glowing ash and tapered chimney stack.
-  box('Furnace arch masonry',(0,1.3,z0-.18),(2.7,2.5,.34),brick,.08,b);box('Forge black furnace mouth',(0,1.28,z0-.39),(1.45,1.25,.08),dark,.025,b)
-  glow=bpy.data.materials.new('Forge ember glow');glow.use_nodes=True;bs=glow.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.55,.12,.018,1);bs.inputs['Emission Color'].default_value=(1,.22,.025,1);bs.inputs['Emission Strength'].default_value=2.5
-  box('Forge bed of embers',(0,.88,z0-.47),(1.05,.12,.04),glow,.02,b);box('forge:lamp',(0,1.35,z0-.53),(.25,.28,.09),glow,.02,b)
-  for x in (-1.2,1.2):beam('Furnace arch jamb',(x,.1,z0-.34),(x,2.7,z0-.34),.22,steel,b)
-  for y in (5.5,6.5,7.5,8.5):box('Brick chimney course',(x0+1,y,z1-1),(2.1,.16,2.1),brick,.03,b)
-  cyl('Forge chimney throat',(x0+1,9,z1-1),.47,1.2,dark,16,b)
+ if n!='scrapyard':
+  for i,x in enumerate([-w*.32,0,w*.32]):
+   box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
+   if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
  if n=='scrapyard':
   # Uneven connected pressed-car shells are stacked into sculptural ridges.
   for j,(x,z,yaw,col) in enumerate([(-5,-3,-.2,paint),(-2,-4,.17,steel),(1,-3,-.11,tin),(4,-4,.28,paint),(-4,-.3,.19,tin),(0,.1,-.23,steel),(4,.2,.1,paint)]):
    shellob=box('Crushed car shell '+str(j),(x,1.35,z),(4.2,1.1,2.1),col,.35,b);shellob.rotation_euler[1]=yaw
-   for dx in (-1.25,1.25):tube('Exposed car wheel',(x+dx,.62,z-1.02),.47,.17,dark,b)
+   for dx in (-1.25,1.25):tube('Exposed car wheel',(x+dx,.62,z-1.02),.47,.17,dark,b,10,4)
    for side in (-1,1):beam('Bent car roof rail',(x-1.5,2,z+side*.65),(x+1.5,2,z+side*.65),.10,steel,b)
   # Working crane gantry, mast, cantilever and suspended magnet.
   for x in (-w*.36,w*.36):beam('Crane leg',(x,.25,-1),(x,9,-1),.34,steel,b);beam('Crane foot',(x-1,.28,-1),(x+1,.28,-1),.35,dark,b)
@@ -268,23 +301,135 @@ for n in ids:
   beam('Bus lean-to front post',(0,.3,2.6),(0,4.2,2.6),.14,wood,b)
   for x in (-4,4):beam('Bus lean-to roof',(x,4.1,2.6),(0,4.3,2.6),.13,steel,b)
  # Real sectional posts and corner plates visibly tie each facade to its roof frame.
- for x in (x0+.5,x1-.5):
-  for z in (z0+.5,z1-.5):beam(n+' corner column',(x,.22,z),(x,ht,z),.17,steel,b)
-  for z in (z0+.5,z1-.5):box(n+' base footplate',(x,.30,z),(.36,.12,.36),dark,.025,b)
- for x in (x0+.7,x1-.7):beam(n+' front eave beam',(x0+.5,ht+.05,z0+.45),(x1-.5,ht+.05,z0+.45),.13,wood,b)
+ if n!='scrapyard':
+  for x in (x0+.5,x1-.5):
+   for z in (z0+.5,z1-.5):beam(n+' corner column',(x,.22,z),(x,ht,z),.17,steel,b)
+   for z in (z0+.5,z1-.5):box(n+' base footplate',(x,.30,z),(.36,.12,.36),dark,.025,b)
+  for x in (x0+.7,x1-.7):beam(n+' front eave beam',(x0+.5,ht+.05,z0+.45),(x1-.5,ht+.05,z0+.45),.13,wood,b)
+
+# Forge: a traced photo skin is coupled to the separate furnace, real ember
+# glow, anvil, chimney and tools already built from their measured places.
+forge_photo=Photo(tex/'forge-front.jpg')
+forge_solid=photo_tidy(~forge_photo.sky([(12,12)],grey=26),2)
+forge_loops=photo_trace(forge_solid,(0,0,forge_photo.w,forge_photo.h),tolerance=2.4,min_area=120)
+if not forge_loops:raise RuntimeError('photo outline missing for forge')
+forge_mesh=PhotoMesh()
+photo_slab(forge_mesh,'forge-front',forge_photo,forge_loops,
+ lambda px,py,d:((px-350)*.0207,(675-py)*.0157,d-7.55),-.06,.10,wall_scale=.025)
+forge_photo.bleed(forge_solid,passes=5)
+forge_mesh.finish('forge photo-traced facade',{'forge-front':forge_photo.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='forge photo-traced facade':parent_keep(obj,building_roots['forge'])
+# A small emissive photo cutout follows the fire in the measured facade. It is
+# the named in-game lamp, and its image keeps the glow photographic rather than
+# a flat orange square.
+forge_glow=forge_photo.material().copy();forge_glow.name='Forge actual ember glow'
+glow_bsdf=forge_glow.node_tree.nodes.get('Principled BSDF')
+glow_image=next(n for n in forge_glow.node_tree.nodes if n.type=='TEX_IMAGE')
+forge_glow.node_tree.links.new(glow_image.outputs['Color'],glow_bsdf.inputs['Emission Color'])
+glow_bsdf.inputs['Emission Strength'].default_value=1.25
+px0,py0,px1,py1=260,535,440,600;zglow=-7.85
+lamp_mesh=PhotoMesh()
+lamp_mesh.face([( (px0-350)*.0207,(675-py0)*.0157,zglow),((px1-350)*.0207,(675-py0)*.0157,zglow),
+                ((px1-350)*.0207,(675-py1)*.0157,zglow),((px0-350)*.0207,(675-py1)*.0157,zglow)],
+               [forge_photo.uv(px0,py0),forge_photo.uv(px1,py0),forge_photo.uv(px1,py1),forge_photo.uv(px0,py1)],'glow')
+lamp_mesh.finish('forge:lamp',{'glow':forge_glow})
+for obj in bpy.context.scene.objects:
+ if obj.name=='forge:lamp':parent_keep(obj,building_roots['forge'])
+
+# Scrapyard: measured front silhouette plus a straight-down photograph on the
+# upper surface, so the stacked wrecks and crane read at the mayor's height.
+scrap_front=Photo(tex/'scrapyard-front.jpg')
+scrap_solid=photo_tidy(~scrap_front.sky([(12,12)],grey=26),2)
+scrap_loops=photo_trace(scrap_solid,(0,0,scrap_front.w,scrap_front.h),tolerance=2.2,min_area=90)
+if not scrap_loops:raise RuntimeError('photo outline missing for scrapyard')
+scrap_mesh=PhotoMesh()
+photo_slab(scrap_mesh,'scrapyard-front',scrap_front,scrap_loops,
+ lambda px,py,d:((px-256)*.0445,(270-py)*.0375,d-11.5),-.06,.10,wall_scale=.035)
+scrap_front.bleed(scrap_solid,passes=5)
+scrap_mesh.finish('scrapyard photo-traced front',{'scrapyard-front':scrap_front.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='scrapyard photo-traced front':parent_keep(obj,building_roots['scrapyard'])
+scrap_top=Photo(tex/'scrapyard-overhead.jpg');scrap_top_mesh=PhotoMesh()
+scrap_top_mesh.face([(-11.3,9.35,11.3),(11.3,9.35,11.3),(11.3,9.35,-11.3),(-11.3,9.35,-11.3)],
+                    [scrap_top.uv(0,0),scrap_top.uv(scrap_top.w,0),scrap_top.uv(scrap_top.w,scrap_top.h),scrap_top.uv(0,scrap_top.h)],'scrapyard-overhead',(0,1,0))
+scrap_top_mesh.finish('scrapyard mayor overhead photo',{'scrapyard-overhead':scrap_top.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='scrapyard mayor overhead photo':parent_keep(obj,building_roots['scrapyard'])
+
+# Workshop: measured open-bay elevation and roof plan from one four-view photo.
+work_front=Photo(tex/'workshop-front.jpg')
+work_solid=photo_tidy(~work_front.sky([(12,12)],grey=26),2)
+work_loops=photo_trace(work_solid,(0,0,work_front.w,work_front.h),tolerance=2.2,min_area=90)
+if not work_loops:raise RuntimeError('photo outline missing for workshop')
+work_mesh=PhotoMesh()
+photo_slab(work_mesh,'workshop-front',work_front,work_loops,
+ lambda px,py,d:((px-256)*.043,(270-py)*.037,d-7.5),-.06,.10,wall_scale=.03)
+work_front.bleed(work_solid,passes=5)
+work_mesh.finish('workshop photo-traced open bays',{'workshop-front':work_front.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='workshop photo-traced open bays':parent_keep(obj,building_roots['workshop'])
+work_top=Photo(tex/'workshop-roof.jpg');work_top_mesh=PhotoMesh()
+work_top_mesh.face([(-11,6.05,7),(11,6.05,7),(11,6.05,-7),(-11,6.05,-7)],
+                   [work_top.uv(0,0),work_top.uv(work_top.w,0),work_top.uv(work_top.w,work_top.h),work_top.uv(0,work_top.h)],'workshop-roof',(0,1,0))
+work_top_mesh.finish('workshop photo-measured roof plan',{'workshop-roof':work_top.material()})
+for obj in bpy.context.scene.objects:
+ if obj.name=='workshop photo-measured roof plan':parent_keep(obj,building_roots['workshop'])
+
+# Join each building's fixed geometry before export. The building and lamp
+# nodes stay addressable, while hundreds of small Blender objects collapse
+# into one mesh per building and keep the family below the GLB size cap.
+for building_id, building_root in building_roots.items():
+ objects=[]
+ for obj in list(building_root.children):
+  if obj.name in (f'{building_id}:lamp',):
+   continue
+  if obj.type not in {'MESH','CURVE'}:
+   continue
+  bpy.ops.object.select_all(action='DESELECT')
+  obj.select_set(True);bpy.context.view_layer.objects.active=obj
+  if obj.type=='CURVE':bpy.ops.object.convert(target='MESH')
+  objects.append(bpy.context.object)
+ if len(objects)>1:
+  bpy.ops.object.select_all(action='DESELECT')
+  for obj in objects:obj.select_set(True)
+  bpy.context.view_layer.objects.active=objects[0]
+  bpy.ops.object.join()
+  joined=bpy.context.object
+  joined.name=f'{building_id}:structure'
+
+ footprint=building_root.get('footprint_cells')
+ meshes=[obj for obj in building_root.children if obj.type=='MESH']
+ corners=[obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+ if footprint and corners:
+  low_x=min(point.x for point in corners);high_x=max(point.x for point in corners)
+  low_z=min(-point.y for point in corners);high_z=max(-point.y for point in corners)
+  center_x=(low_x+high_x)/2;center_z=(low_z+high_z)/2
+  span_x=max(abs(low_x-center_x),abs(high_x-center_x))
+  span_z=max(abs(low_z-center_z),abs(high_z-center_z))
+  half_x=footprint[0]*4-.6;half_z=footprint[1]*4-.6
+  scale_x=min(1,half_x/span_x);scale_z=min(1,half_z/span_z)
+  for obj in meshes:
+   matrix=obj.matrix_world;inverse=matrix.inverted()
+   for vertex in obj.data.vertices:
+    point=matrix @ vertex.co
+    point.x=(point.x-center_x)*scale_x
+    point.y=(point.y+center_z)*scale_z
+    vertex.co=inverse @ point
+   obj.data.update()
 
 # One durable shared root; separate named children keep in-game placement addressable.
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
- evidence.mkdir(parents=True,exist_ok=True);bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
+ review_output.mkdir(parents=True,exist_ok=True);bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
  # Capture a matched close view and the roof-heavy mayor view from the exported model.
  def render(name,loc,target,lens=54):
   camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens;bpy.context.scene.camera=cam
   scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1000;scene.render.resolution_y=760;scene.render.resolution_percentage=100
   scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
   if scene.world is None:scene.world=bpy.data.worlds.new('neutral overcast review daylight')
-  scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.60,.60,.60,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+  scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.27,.25,.22,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
   scene.view_settings.view_transform='Standard';scene.view_settings.look='None';scene.view_settings.exposure=1.0;scene.view_settings.gamma=1
   # Broad area light and a plain mid-tone ground keep surfaces legible.
   light_data=bpy.data.lights.new('bright overcast area','AREA');light_data.energy=24000;light_data.shape='DISK';light_data.size=45
@@ -293,7 +438,7 @@ if a.review:
   sun=bpy.data.objects.new('soft high desert sun',sun_data);bpy.context.collection.objects.link(sun);sun.location=town.game_vector((0,42,-25));sun.rotation_euler=(Vector((0,0,0))-sun.location).to_track_quat('-Z','Y').to_euler()
   ground_mat=bpy.data.materials.new('review ground / muted earth');ground_mat.diffuse_color=(.23,.21,.18,1);ground_mat.use_nodes=True;ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.23,.21,.18,1);ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
   ground=town.cube('neutral packed-earth review ground',(0,-.08,0),(1000,.16,1000),ground_mat,0)
-  scene.render.filepath=str(evidence/name);bpy.ops.render.render(write_still=True)
+  scene.render.filepath=str(review_output/name);bpy.ops.render.render(write_still=True)
   for transient in (cam,light,sun,ground):bpy.data.objects.remove(transient,do_unlink=True)
   if ground_mat.users==0:bpy.data.materials.remove(ground_mat)
  # Locate imported children by hierarchy and center camera on the exported Hall.
@@ -308,8 +453,29 @@ if a.review:
    parent=parent.parent
   obj.hide_render=not is_hall
  # Render 3/4 driver view and 45-degree roof view.
- render('hall-driver.png',(center[0]+11,center[1]+10,center[2]-37),center,39)
- render('hall-mayor.png',(center[0]+8,center[1]+40,center[2]-40),center,48)
+ render('hall-front.png',(0,7,-46),(0,5,0),47)
+ render('hall-driver.png',(center[0]+8,center[1]+2,center[2]-33),(center[0],center[1]+5,center[2]),39)
+ render('hall-mayor.png',(center[0]+8,center[1]+45,center[2]-54),center,48)
+ forge=next(o for o in bpy.data.objects if o.name.split('.')[0]=='forge')
+ def within(obj,target):
+  while obj:
+   if obj==target:return True
+   obj=obj.parent
+  return False
+ for obj in bpy.data.objects:obj.hide_render=not within(obj,forge)
+ render('forge-front.png',(0,6,-34),(0,5,0),49)
+ render('forge-driver.png',(8,2,-24),(0,4,0),42)
+ render('forge-mayor.png',(6,42,-42),(0,0,0),48)
+ scrap=next(o for o in bpy.data.objects if o.name.split('.')[0]=='scrapyard')
+ for obj in bpy.data.objects:obj.hide_render=not within(obj,scrap)
+ render('scrapyard-front.png',(0,8,-50),(0,5,0),39)
+ render('scrapyard-driver.png',(4,1.8,-36),(0,3,0),34)
+ render('scrapyard-mayor.png',(8,50,-50),(0,0,0),46)
+ workshop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='workshop')
+ for obj in bpy.data.objects:obj.hide_render=not within(obj,workshop)
+ render('workshop-front.png',(0,8,-50),(0,4,0),39)
+ render('workshop-driver.png',(7,1.8,-35),(0,4,0),34)
+ render('workshop-mayor.png',(7,42,-42),(0,0,0),46)
  # Build a clean overview by spatially arranging the imported building groups.
  for obj in bpy.data.objects:obj.hide_render=False
  buildings=[o for o in bpy.data.objects if o.type=='EMPTY' and o.name.split('.')[0] in ['town-hall']+ids]

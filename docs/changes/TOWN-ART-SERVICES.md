@@ -1,28 +1,34 @@
-# TOWN-ART-SERVICES
+# TOWN-ART-SERVICES ? Round 2
+
+## Design settled before export
+
+Use the generated photos only as measured face and roof textures. Keep the Town Hall roof, porch, clock, vents, and signs as 3D parts. Keep each service building under its named root, with its lamp as a separate child. Join fixed parts by building before export, then fit every building inside its listed plot. This preserves placement and lamp hooks while keeping the GLB under 3 MB.
 
 ## Changed
 
-- Added the `town-services` Blender recipe and `services.glb` with all twelve named buildings. The Town Hall is the first detailed piece; the rest are family blockouts.
-- Added one 512 × 512 generated brick texture for the Hall, with its prompt in `CREDITS.md` and `docs/WASTELAND_ART.md`.
-- Added one round-1 photo/GLB comparison sheet and an honest self-review under `docs/board/looks/town-art-services/`.
-- Added the Blender output registration and checks for all required ids, the separate family children, per-footprint triangle budgets, one UV channel, the file-size limit, and the metallic cap.
+- Rebuilt the Town Hall front from a traced reference view. Kept its pitched roof, porch, steps, clerestory, chimney, vents, clock, flags, and notice board as 3D geometry.
+- Added a tyre ring and steel spokes to the car-wheel clock.
+- Added photo-traced fronts for the Forge, Scrapyard, and Workshop, plus roof views for the Scrapyard and Workshop.
+- Joined fixed geometry by building and fitted every building within its listed footprint, with a 0.6 m edge margin. Preserved separate forge and radio mast lamp nodes.
+- Re-rendered the exported GLB at driver and mayor views for the Town Hall, Forge, Scrapyard, and Workshop. The round 2 sheet compares those views with the reference photos.
 
 ## Checks
 
-- Blender 4.5.13 recipe and exported-GLB renders: passed. The Hall renders from the re-imported GLB in an empty scene. Final family output is 2,587,280 bytes.
-- `node tools/test-blender-output.mjs`: passed, 276 checks, 0 failed. Its first runs exposed the Hall and radio-mast triangle overages and the exported 0.3 metallic rounding; the recipe was corrected to meet the existing budgets and cap. No assertion was weakened.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing advisory size targets remain unchanged.
-- `node tools/test-review-evidence.mjs`: 8 passed, 1 failed; same-commit rerun reproduced `spawnSync ffmpeg EPERM` in the audio-analysis subtest. The other review JPG, evidence-path, and manifest checks passed both runs.
-- Browser / in-game look check: not run in this lane. Claude should judge the round-1 comparison sheet and later inspect the town-hall and family GLB in the town scene.
-- Changed assertions: added the TOWN-ART-SERVICES GLB contract check. No existing assertion changed.
-- Race fingerprints: not applicable; the card changes only art recipes, art assets, and their output check.
+- Blender export and GLB reimport: passed. GLB is 2,694,256 bytes and contains 37,303 triangles.
+- Per-building footprint audit after GLB import: all models fit within their listed plots with at least 0.6 m of margin.
+- `node tools/test-blender-output.mjs`: pending.
+- `node tools/test-repo-hygiene.mjs`: pending.
+- `node --test tools/test-review-evidence.mjs`: pending.
+- Browser and in-game look: not run; this is an art-only lane. Claude's art verdict is pending.
+- Changed assertions: none.
+- Race fingerprints: not applicable; this model is not wired into the race.
+
+## Review handoff
+
+The builder review scores and remaining differences are in `docs/board/looks/town-art-services/round-2-review.md`. This is a round 2 submission, not an art pass. It still needs Claude's verdict before the card can close.
 
 ## Removed
 
-- Removed the duplicate mast cross-ties and one excess mast lattice level to meet the 1×1 plot budget.
-- Removed a redundant clock rim after the Hall exceeded its 3×3 plot budget. Existing checks were not relaxed.
-- Deleted local render logs, temporary renders, the rebuildable `.blend`, and Python bytecode before handoff.
-
-## Claude review
-
-The sheet self-review scores resemblance 3/5 and detail 2/5; this is a first-round candidate, not an art pass. The Hall geometry and brick/tin materials are in place, but the wear, roof repairs, and small-scale family buildings need review. The sheet is under the 500 KB limit (242,191 bytes).
+- Removed the superseded round 1 review note after carrying its findings into the round 2 review.
+- Removed the unused full-resolution Town Hall reference PNG from `public/`; its compressed source views remain for the recipe.
+- Replaced the old round 1 brick gable and grey roof planes with the photo-traced front and measured, repaired roof geometry.
