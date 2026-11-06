@@ -1,4 +1,4 @@
-﻿# Rattler runtime texture credits
+# Rattler runtime texture credits
 
 OpenAI's built-in image generator made these original material pictures on
 2026-11-05. They are not scans or licensed source images. Each is an optimized
@@ -64,3 +64,5 @@ under bright overcast daylight, with dark rusty tube frame, dirt-caked paddle
 tyres, rear air-cooled engine, two worn seats, four coil-over shocks, exposed
 suspension arms, spare tyre and a sand flag; no person, logos or franchise
 resemblance.
+
+# Longhaul runtime texture credits

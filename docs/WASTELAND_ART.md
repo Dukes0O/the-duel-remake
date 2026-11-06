@@ -394,67 +394,63 @@ Prompt (full procedural art brief):
 
 `rank-student.png`, `rank-private.png`, `rank-commercial.png`, `rank-mountain.png`, and `rank-chief.png`: original procedural paint textures for The Duel, 26 October 2026. Blender 4.5.13 LTS and NumPy, recipe `tools/blender/heli-logbook-paints.py`. No external source art or licensed marks. Original kestrel silhouettes are polygon coordinates in the recipe; the airframe is Claude's original Kestrel One. Round 2 candidates; Claude's paint review is pending. The Commercial and Chief kestrels moved to the tail boom at Claude's direction; the skid scuffs are original object-space shader marks, generated without external source art. Credits are recorded here because the game does not load a separate credits document from the texture folder.
 
-## Rattler round 3 embedded steel and rust map
 
-Date: 2026-11-05
-Tool: Codex built-in image generation
-Use: Embedded base-color image in `public/assets/models/wasteland/cars/rattler.glb`, as a picture-based surface for the Rattler's sandblasted steel and restrained iron oxide.
-Prompt:
-> Use case: photorealistic-natural. Asset type: square seamless close-up albedo photograph for a real-time game material on a hand-built rat rod. Straight-on flat macro view of sandblasted bare automotive steel panel with convincing fine abrasive grain, several localized reddish iron-oxide blooms and tiny chipped remnants of muted faded oxide primer, shallow scratches, hammered irregularities and a few small weld seams. Neutral medium grey steel dominates, rust is brown-orange and restrained, realistic crisp sharp surface detail at fine and medium scales. Uniform diffuse overcast illumination, no shadows, no glare, no perspective, true color only. Continuous tile on all four edges, evenly distributed texture with no central feature. No vehicle, parts, tools, text, logos, border, grid, watermark, illustration or noise effect. Opaque photographic material texture.
+## `public/assets/models/wasteland/town/textures/town-water-timber.jpg`
 
-Original image remains outside the repository in Codex generated images. It is packed into the GLB; the compressed comparison sheet contains the reference crop and model views.
-
-## Rattler round 3 photographic reference
-
-Date: 2026-11-05
-Tool: Codex built-in image generation
-Use: Photographic shape and wear reference for the original Rattler pickup. The generated photograph itself stays outside the repository; a small crop appears on `docs/board/looks/car-art-rattler/round-3.jpg` beside the Blender views.
-Prompt:
-> Use case: photorealistic-natural. Asset type: documentary automotive photograph reference for an original real-world rat rod pickup, outdoors in plain bright overcast daylight. One believable home-built late-1930s pickup hot rod with a chopped rounded cab and crowned roof, very narrow slit windshield, low long stance, exposed detailed V8 engine with belts and headers ahead of a narrow grille shell, open cycle fenders, short steel pickup bed, oversized rear tires and narrow front tires, simple welded roll hoop, sandblasted bare steel with patchy reddish rust and faded primer. Dusty, used, mechanically plausible, imperfect hand-built craftsmanship. Camera at low front three-quarter angle, full vehicle fills frame, neutral pale gravel yard, soft shadow, natural exposure preserving steel highlights without clipping, high-detail photographic surface. No logos, badges, text, people, franchise cues, dramatic sunset, studio gloss, CGI look, illustration, watermark.
-
-The round-3 review records the shape and material gaps found in that comparison.
-
-## public/assets/models/wasteland/cars/textures/faded-paint-rust.jpg
-
-Date: 2026-11-06
-Tool: OpenAI built-in image generation
-Use: Repeating base-color picture for the Rattler's cab, doors, body and bed. The square image is UV mapped at about 0.35 m per repeat and packed in `rattler.glb`.
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating timber albedo for the tower legs, braces and platform.
 
 Prompt:
-> Use case: photorealistic-natural. Asset type: seamless repeating color texture for a real-time game material on a hand-built rat-rod pickup body panel. Square, straight-on macro photograph of weathered automotive steel with a very dark charcoal-gray primer coat beneath irregular dark umber iron rust. The charcoal primer dominates about 70 percent; rust blooms and chipped edges occupy the rest, in deep brown and muted red-brown only. Add crisp fine pitting, 2 to 15 cm paint chips at real-world scale, shallow scratches, rubbed bare-steel flecks and faint weld/crease marks. No large rivets or central feature. Bright neutral diffuse overcast albedo, no cast shadows, no glare, no gradient. Dark, restrained, realistic color; absolutely no pink, peach, pale sand, tan, orange, blue paint, bright silver or clean gloss. Repeat seamlessly on all four edges. Texture only: no vehicle, scene, objects, text, logos, border, grid, illustration, noise blur or watermark.
 
-## public/assets/models/wasteland/cars/textures/dusty-rubber.jpg
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of weathered sun-bleached grey-brown timber planks from a desert water tower brace; faded grain, dust in grain, worn edges, irregular small chips, dark nail marks at true hand scale. Flat orthographic surface, seamless square edges. Bright diffuse overcast daylight, even exposure. Avoid blur, noise-only pattern, objects, text, border, watermark.
 
-Date: 2026-11-05
-Tool: OpenAI built-in image generation
-Use: Repeating UV base-color picture for the Rattler tires. The UVs repeat the 1024 square at roughly 0.8 m along the tread and are packed in `rattler.glb`.
+## `public/assets/models/wasteland/town/textures/town-water-tin.jpg`
 
-Prompt:
-> Use case: photorealistic-natural. Asset type: repeating close-up game color texture for vintage vehicle tires. A square straight-on macro photograph of dusty, aged black tire rubber with tight molded tread grain, shallow scuffs, embedded pale gray-brown road dust concentrated in creases, worn raised edges, very subtle rubber sheen. Real restrained charcoal black, not gray, no colored paint. Uniform neutral diffuse overcast light, no shadows/highlights. Edge-to-edge and seamless on all four sides, no tire silhouette, wheel, scene, text, logo, border, blur or noise. Surface texture only, details sized for a few centimeters when mapped on a 0.75 m radius tire.
-
-## public/assets/models/wasteland/cars/textures/blackened-steel.jpg
-
-Date: 2026-11-05
-Tool: OpenAI built-in image generation
-Use: Repeating base-color picture on the Rattler's chassis, engine, exhaust and dark steel fittings, packed in `rattler.glb`.
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating albedo for the smooth tank shell and cap.
 
 Prompt:
-> Use case: photorealistic-natural. Asset type: seamless repeating close-up color texture for blackened exhaust and chassis steel on a vintage rat-rod pickup. Square straight-on material photograph of old oily steel: charcoal gray metal, dark brown oxidation in pits, short streaks under tiny bolts, fine brushed abrasion and occasional small exposed silver edge scratches. Very dark muted palette, predominantly charcoal and brown, physical scale 2–15 cm. Even bright neutral diffuse light without directional shadow or highlights. Texture only, no objects, scene, text, logos, border or gradients. Seamless edge-to-edge repeat in both directions. Avoid orange, pink, sand, bright silver, blurred uniform noise, polished or plastic appearance.
 
-## Rattler round 4 photographic reference
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a realistic game model. Sharp close photograph of the smooth curved galvanized steel wall of a neglected desert water tank, muted dusty zinc-grey sheet metal, broad riveted horizontal lap seams at realistic 2 metre scale, rows of small 2 cm rivets, restrained dark brown rust streaks below some fasteners, scratched and sun-worn edges. Flat orthographic surface view filling the square, seamless repeating edges, no perspective. Bright diffuse overcast daylight without glare. Avoid corrugations or ribs, white flat panels, orange saturation, blur, text, border, watermark.
 
-Date: 2026-11-06
-Tool: OpenAI built-in image generation
-Use: Shape and wear reference for the Rattler; only a small crop is on `docs/board/looks/car-art-rattler/round-4.jpg`. The full generated photo stays outside the repository.
+## `public/assets/models/wasteland/town/textures/town-water-corrugated.jpg`
 
-Prompt:
-> Use case: photorealistic-natural. Asset type: documentary automotive photograph reference for an original rat-rod pickup, to compare proportions and weathering in a game art review. Plain bright overcast daylight in a neutral gravel yard. A believable home-built late-1930s short pickup hot rod: long low chassis, low narrow body, chopped rounded cab with creased sheet-metal panels and a short curved roof, narrow slit windshield, exposed detailed V8 engine ahead of a narrow real-bar grille, visible chassis rails, open thin cycle fenders, short steel pickup bed, large rear tires and smaller front tires with deep blocky lugs visible in silhouette, simple welded roll hoop. Dark sandblasted steel, subdued brown rust, patches of charcoal primer, dusty black rubber, heavy road dust low around the tires and lower panels, dust fades upward. Camera at a low front three-quarter angle; full vehicle fills frame; realistic photographic proportions, crisp material detail, natural even exposure, plain mid-grey gravel background. No logos, badges, text, people, franchise cues, dramatic sunset, glossy studio finish, toy appearance, CGI or illustration.
-
-## public/assets/models/wasteland/cars/textures/ground-dust.jpg
-
-Date: 2026-11-06
-Tool: OpenAI built-in image generation
-Use: Repeating base-color picture for the folded lower cab hem. UV scale is 0.35 m per repeat; the mapping aligns the dustier edge with the bottom of the vehicle. Embedded in `rattler.glb`.
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating corrugated tin albedo for the pump shed walls and roof.
 
 Prompt:
-> Use case: photorealistic-natural. Asset type: seamless close-up albedo texture for a small real-time game material on the lower body of a hand-built rat-rod pickup. Straight-on square macro photograph of a charcoal steel rocker panel under a layer of road dust: fine dark gray-brown powder settled into seams, a few caked dusty edges, tiny grit grains, shallow rubbed patches revealing blackened steel, subtle rust only in pits. The dust is strongest at the bottom edge and thins upward within the square. Restrained dark charcoal and muted umber; no beige, pale sand, orange, pink, bright metal or clean paint. Uniform neutral overcast diffuse illumination, no shadows, no directional highlight, no perspective. Photographic material only, crisp detail at about 2 to 15 cm physical scale, seamless repeat on all four edges, no vehicle, tools, text, logos, border, grid or watermark.
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of galvanized corrugated steel from a neglected desert water tank; dusty muted zinc-grey, clear 10 cm corrugations, rivet heads every 20 cm, restrained dark brown rust streaks below some rivets, scratched and worn edges. Orthographic macro, seamless edges, real scale. Bright diffuse overcast light without glare. Avoid white panels, orange saturation, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-concrete.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating concrete albedo for open treatment basins and the well surround.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close photograph of old rough poured concrete from a rural settling basin, mid grey-brown cement, sharp exposed small aggregate, pores, irregular damp mineral stains and a waterline mark. Flat orthographic, seamless edges, realistic scale. Bright even overcast daylight. Avoid white concrete, smooth flat wall, large crack, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-earth.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating compacted soil albedo for reservoir banks and yard dirt.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Macro photograph of compacted dark umber soil from a hand-built reservoir bank; earthy clods, gritty gravel, compressed shovel marks, naturally darker damp patches, realistic scale. Top-down orthographic tile, seamless edges, diffuse overcast light, no hard shadows. Avoid sand-colored flat surface, plants, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating murky water albedo for the reservoir and settling stages.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close top-down photograph of still murky reservoir water, deep olive-brown translucent water with small wind ripples, suspended sediment, subtle sky reflections, irregular natural color and sharp fine detail. Seamless square tile, soft bright overcast light. Avoid blue pool water, flat color, shores, objects, blur, text, border, watermark.

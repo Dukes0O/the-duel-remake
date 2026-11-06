@@ -27,3 +27,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - Street things, each under one cell: `street-lamp` (with `:lamp`), `barrel-fire` (with `:lamp`), `crate-stack`, `barrels`, `washing-line`, `bench`, `bin`, `signpost`, `sandbags`, `junk-pile`, `dead-tree`.
 
 ## Claude answers
+
+Round 5 of 6 (Kyle's limit is six). Merged as the working set: one site now clearly grows from pegs to foundations, frame and cladding, with real timbers on a fixed 3.5 m bay, and the scaffold is the town's best art. Still short: the "nearly done" stage is a very plain box with a flat roof, the foundations lack a deep trench, the barrel fire's flames are cartoonish and the dead tree is stiff. A later pass can improve these.
