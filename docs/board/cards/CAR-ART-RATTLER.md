@@ -12,3 +12,5 @@ Original Wasteland cars, not real makes and not copies of any film or game vehic
 Round 6 of 6 (Kyle's limit, 5 November): **failed, not merged.** Rounds 5 and 6 gave an egg-shaped cab; round 4 had the better stance and engine. The cab is the fault: the Falcone cut-out trial fell apart and was dropped. Branch `codex/car-art-rattler` holds the recipe and rounds 4 to 6. Waits with the town trucks for the photo-to-model decision on TOWN-ART-TRUCKS-1.
 
 Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds. Claude judges `round-7.jpg`.
+
+Round 9, 6 November: **pass**, past six rounds with Kyle's approval. Carved from four photos with `tools/blender/hull_model.py`: matches its photo from the side and holds together from every angle. See `docs/board/looks/car-art-rattler/round-9-review.md` for what is short of the photo and the wheel radii the drivable card should use.
