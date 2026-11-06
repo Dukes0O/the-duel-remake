@@ -12,6 +12,40 @@ The intake check reports planned images that are still absent; it fails when a
 present image has invalid dimensions, missing transparency, an excessive file
 size, or incomplete provenance.
 
+## `public/assets/models/wasteland/scablands/textures/dam-concrete.jpg`
+
+Date: 2026-11-05  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating concrete albedo for the Dry Dam's concrete shoulders,
+arches and supporting structures. The wall's main front uses a photo projection.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a 3D dam model. Primary request: a square, tileable close photograph of weathered grey poured concrete from an old hydroelectric dam. Subject: cool neutral-grey concrete with fine aggregate, subtle horizontal lift-joint traces, sparse hairline cracks and dark mineral damp stains; photographic detail, realistic scale for a 2 metre repeat. Style/medium: sharp macro surface photography. Composition: flat orthographic surface filling the square, seamless on all four edges, no perspective. Lighting/mood: bright even overcast daylight, no cast shadows or glare. Materials/textures: specific concrete grain and worn cement, controlled contrast, no blur or noise-only pattern. Constraints: no writing, no border, no objects, no landscape, no recognizable large crack, no orange rust, no sandy color, no illustration, no watermark.
+
+## `public/assets/models/wasteland/scablands/textures/dam-salt-crust.jpg`
+
+Date: 2026-11-05  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating wet concrete and salt-crust albedo for the filling
+hall's back wall and localized marks.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: repeating albedo texture for the back wall of an abandoned dam filling hall. Primary request: a square close photograph of wet, salt-encrusted grey concrete, with unmistakable dark water running down and thick chalky white mineral crust. Subject: aged concrete, deep charcoal wet vertical streaks 5 to 20 cm wide, layered pale white salt deposits and crystals along the streak edges, damp olive-grey shadow at the bottom; no painted stripes. Style/medium: realistic macro surface photography, sharp detail at real scale. Composition: flat-on crop with even physical scale and seamless repeating edges, no perspective. Lighting/mood: bright even overcast daylight. Materials/textures: wet dark concrete and brittle white efflorescence, no blur, no noise-only effect. Constraints: no text, no objects, no landscape, no saturated green, no pink, no orange rust, no illustration, no watermark.
+
+## `public/assets/models/wasteland/scablands/textures/dam-face-projection.jpg`
+
+Date: 2026-11-05  
+Tool: Blender photo projection and JPEG bake from the original Codex ImageGen
+reference supplied with WW-ART-DAM round 3  
+Use: 2048 x 750 projection on the dam's broad front face, preserving its lift
+joints, waterline and dark wet stains. The original reference remains outside
+the repository at `~/.codex/generated_images/wasteland-dam-reference.png`.
+
+The reference source prompt was not carried with the round 3 asset. This image
+is a crop and bake from that reference, not a new generated picture.
+
 ## Fitting existing models (Claude, 30 September 2026)
 
 Rules for every card that turns a picked CC0 source into game art (SPEC 0.11).

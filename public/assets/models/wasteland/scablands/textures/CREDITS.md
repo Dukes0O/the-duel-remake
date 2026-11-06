@@ -1,27 +1,38 @@
 # Dry Dam texture credits
 
-All four pictures below are original Codex ImageGen outputs created on
-2026-11-05. Each is a 512 x 512 compressed JPEG used by
-`tools/blender/scablands-dam.py` as its own repeating material picture. The
-Blender recipe embeds JPEG copies in `dam.glb`; these source JPGs stay beside
-the model so it can be rebuilt. No external source art or licensed material
-is used.
+The concrete, salt-crust, rust and galvanized-steel pictures below are original
+Codex ImageGen outputs created on 2026-11-05. They are 512 x 512 compressed
+JPEGs used as repeating material pictures. `dam-face-projection.jpg` is a
+2048 x 750 baked crop from
+the original photographic dam reference, kept outside the repository at
+`~/.codex/generated_images/wasteland-dam-reference.png`. The Blender recipe
+embeds the JPEGs in `dam.glb`; these source pictures stay beside the model so
+it can be rebuilt. No licensed source art is used.
 
 ## `dam-concrete.jpg`
 
 Use: 2 m repeating colour texture for the dam's cracked aggregate concrete.
 
-Prompt:
+Prompt (Codex ImageGen, 2026-11-05):
 
-> Photographic close-up square albedo texture of aged structural concrete on a massive old hydroelectric dam. Real medium cool grey concrete with exposed fine aggregate, subtle pale mineral grains, short hairline branching cracks and shallow formwork abrasion, localized soot and damp mineral discoloration at restrained contrast. Even flat neutral overcast daylight, no shadows, no perspective, no recognizable single crack, no edge frame. Uniform surface scale across the frame, intended to tile at about 2 metres per repeat on a huge dam. Close macro photograph, physically credible sharp surface detail. No text, no tools, no water, no wall corner, no illustration, no noise-only effect, no orange or sandy color.
+> Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a 3D dam model. Primary request: a square, tileable close photograph of weathered grey poured concrete from an old hydroelectric dam. Subject: cool neutral-grey concrete with fine aggregate, subtle horizontal lift-joint traces, sparse hairline cracks and dark mineral damp stains; photographic detail, realistic scale for a 2 metre repeat. Style/medium: sharp macro surface photography. Composition: flat orthographic surface filling the square, seamless on all four edges, no perspective. Lighting/mood: bright even overcast daylight, no cast shadows or glare. Materials/textures: specific concrete grain and worn cement, controlled contrast, no blur or noise-only pattern. Constraints: no writing, no border, no objects, no landscape, no recognizable large crack, no orange rust, no sandy color, no illustration, no watermark.
 
-## `dam-water-stains.jpg`
+## `dam-salt-crust.jpg`
 
-Use: 2 m repeating colour texture for localized wet streaks and salt deposits.
+Use: 2 m repeating colour texture for the filling hall's unmistakably wet,
+salt-encrusted back wall and localized water marks.
 
-Prompt:
+Prompt (Codex ImageGen, 2026-11-05):
 
-> Square macro photograph used as a repeating color texture of wet water streaks and salt crust on a huge old concrete dam. Medium cool grey concrete aggregate as the base, distinct dark charcoal and deep muted brown-green vertical runoff streaks several centimetres to half a metre wide, darker wet trails flowing down 1 to 2 metres, pale chalky white mineral edges and salt crystals beside the darkest trails, irregular hard waterline deposits. Strong clear surface contrast, realistic damp concrete, no orange rust. Flat even overcast daylight, no shadows, no directional shine, orthographic close surface, uniform physical scale across the full square, suitable for 2 metre repeating patches. No landscape, no wall edge, no complete recognizable crack, no noise-only pattern, no words, no illustration.
+> Use case: photorealistic-natural. Asset type: repeating albedo texture for the back wall of an abandoned dam filling hall. Primary request: a square close photograph of wet, salt-encrusted grey concrete, with unmistakable dark water running down and thick chalky white mineral crust. Subject: aged concrete, deep charcoal wet vertical streaks 5 to 20 cm wide, layered pale white salt deposits and crystals along the streak edges, damp olive-grey shadow at the bottom; no painted stripes. Style/medium: realistic macro surface photography, sharp detail at real scale. Composition: flat-on crop with even physical scale and seamless repeating edges, no perspective. Lighting/mood: bright even overcast daylight. Materials/textures: wet dark concrete and brittle white efflorescence, no blur, no noise-only effect. Constraints: no text, no objects, no landscape, no saturated green, no pink, no orange rust, no illustration, no watermark.
+
+## `dam-face-projection.jpg`
+
+Use: a baked photo projection for the dam's broad front face. The source is
+the original Codex ImageGen photographic reference supplied with WW-ART-DAM's
+round 3 review. The recipe crops pixels (112, 104) to (1605, 651), maps them to
+the front-face UVs and saves a 2048 x 750 JPEG. The source photo itself is not
+stored in the repository.
 
 ## `dam-rust.jpg`
 
