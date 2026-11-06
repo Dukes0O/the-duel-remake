@@ -27,3 +27,5 @@ Rounds 7 and 8 left the wheels at twice their true distance, because a parent's 
 Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `npm run build`. No assertion changed. Not wired into the game, so no frame check.
 
 Removed: `fire-engine-projection.jpg`, the fire truck's old flat-part recipe, and rounds 7 and 8's sheets.
+
+Changed test (Claude's review): `tools/test-blender-output.mjs` lists `hull_model.py` beside `photo_model.py` among shared kits that are not asset generators, since it builds nothing alone. The fire truck is still fully checked through its recipe. Nothing is loosened.
