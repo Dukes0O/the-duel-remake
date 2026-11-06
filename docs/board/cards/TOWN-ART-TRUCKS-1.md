@@ -35,3 +35,9 @@ Each at most 12,000 triangles, file at most 3 MB.
 Round 6 of 6 (Kyle's limit, 5 November): **failed, not merged.** The photos are excellent; the models never came near them, whichever way they were built: blocks, smooth surfaces, or the photo projected on. The branch `codex/town-art-trucks-1` holds the recipe, the four photos, and rounds 5 and 6. Hand modelling in a script has reached its limit for a 1950s truck's pressed-steel curves. TOWN-ART-TRUCKS-2 and TOWN-VEHICLES wait for this.
 
 For Kyle in the morning: a local photo-to-model tool, such as TripoSR (held earlier because of disk space), is the next thing to try. It needs his word for the download. Other route: a licence-clear ready-made truck to adapt.
+
+Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds, starting with `fire-truck`. Claude judges `round-7.jpg`.
+
+Round 9, 6 November: **`fire-truck` passes** (`docs/board/looks/town-art-trucks-1/round-9.jpg`). The tanker, supply truck and tow rig follow the same way, with the fire truck as the worked example.
+
+Round 11, 6 November: **pass for all four trucks**, past six rounds with Kyle's approval, carved from photos. Codex built the tanker, supply truck and tow rig from the fire truck's worked example. Small flaws, none worth another round: pale edges under the tanker's wheel arches and along the supply truck's sills. `supply-truck:load` lifts away to leave an empty bed, and `tow-rig:hook` hangs below the boom's tip. The family file is 3.4 MB. TOWN-VEHICLES can use these.
