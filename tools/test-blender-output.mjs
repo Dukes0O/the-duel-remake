@@ -31,7 +31,7 @@ const artCandidates = new Set(['wildcat']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
-  {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-05/TOWN-ART-STAGES/art-build',
+  {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-STAGES/round-4',
     glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
@@ -549,6 +549,22 @@ try {
           'rubble-1','rubble-2','rubble-3','rubble-4','burnt-1','burnt-2','burnt-3','burnt-4',
           'street-lamp','barrel-fire','crate-stack','barrels','washing-line','bench','bin','signpost','sandbags','junk-pile','dead-tree']) {
           assert.ok(names.includes(id), `missing building ${id}`);
+        }
+        const binaryOffset = 20 + jsonLength + 8;
+        for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
+          const texCoords = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+          assert.deepEqual(texCoords, ['TEXCOORD_0'], 'town material meshes use only TEXCOORD_0');
+          const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+          assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'town UV accessor uses float pairs');
+          const view = gltf.bufferViews[uv.bufferView];
+          const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+          const stride = view.byteStride ?? 8;
+          const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+          for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+          }
+          assert.ok(min[0] < max[0] && min[1] < max[1], 'town UVs cover a range of values');
         }
       }
     });

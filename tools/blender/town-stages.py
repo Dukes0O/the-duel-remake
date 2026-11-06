@@ -42,7 +42,7 @@ def beam(a,b,width,depth,material,name='timber member'):
 rectangular_beam=beam
 
 OUT=Path(__file__).resolve().parents[2]/'public/assets/models/wasteland/town/stages.glb'
-EVIDENCE=Path(__file__).resolve().parents[2]/'.evidence/2026-11-05/TOWN-ART-STAGES'
+EVIDENCE=Path(__file__).resolve().parents[2]/'.evidence/2026-11-06/TOWN-ART-STAGES/round-4'
 ids=['scaffold-1','scaffold-2','scaffold-3','scaffold-4']+[f'rubble-{i}' for i in range(1,5)]+[f'burnt-{i}' for i in range(1,5)]+['street-lamp','barrel-fire','crate-stack','barrels','washing-line','bench','bin','signpost','sandbags','junk-pile','dead-tree']
 def reset():
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
@@ -68,6 +68,7 @@ def build():
                     for i,tint in enumerate(((.54,.50,.45),(.70,.63,.54),(.82,.74,.62)))]
     tin_variants=[photo_material(f'Town / scaffold tin {i+1}',texture_dir/'tin.jpg',tint,.18)
                   for i,tint in enumerate(((.20,.15,.11),(.28,.21,.15),(.36,.27,.19)))]
+    charred=photo_material('Town / charred timber',texture_dir/'charred-wood.jpg',(.07,.06,.055))
     scene=bpy.context.scene
     scene.render.engine='CYCLES';scene.cycles.samples=24
     scene.render.resolution_x=900;scene.render.resolution_y=620;scene.render.resolution_percentage=100
@@ -79,28 +80,47 @@ def build():
     def beam(n,a,b,w,m):return t.beam(n,a,b,w,m)
     def scaffold(prefix,w,d,h,stage):
         start=set(scene.objects)
-        # Each early stage tells a different point in the build sequence.
+        # The accepted two-storey scaffold is built separately below. The
+        # other models show survey, braced frame and near-complete cladding.
         if stage == 1:
-          for side in (-1,1):
-            beam(prefix+':foundation-trench',(-w*.40,.04,side*d*.40),(w*.40,.04,side*d*.40),.42,mats['iron-dark'])
           for x in (-w*.42,w*.42):
             for z in (-d*.42,d*.42):
-              cube(prefix+':layout-peg',(x,.24,z),(.10,.48,.10),mats['weathered-plank'])
-              beam(prefix+':layout-string',(x,.42,z),(-x,.42,-z),.018,mats['patched-canvas'])
-        else:
-          # Visible masonry pads lift every standard clear of the dirt.
-          for x in (-w*.47,w*.47):
-            for z in (-d*.47,d*.47):
-              cube(prefix+':base-block',(x,.18,z),(.48,.36,.48),mats['cracked-concrete'],.035)
+              cube(prefix+':layout-peg',(x,.24,z),(.085,.48,.085),mats['weathered-plank'])
+          for z in (-d*.42,d*.42):beam(prefix+':layout-string',(-w*.42,.37,z),(w*.42,.37,z),.018,mats['patched-canvas'])
+          for x in (-w*.42,w*.42):beam(prefix+':layout-string',(x,.37,-d*.42),(x,.37,d*.42),.018,mats['patched-canvas'])
+          for i,x in enumerate((-.42,-.14,.14,.42)):
+            cube(prefix+f':chalk-mark-{i}',(x,.015,-d*.39),(.19,.018,.035),mats['faded-hand-paint'],.002)
+          beam(prefix+':measuring-rod',(-w*.30,.03,-d*.30),(w*.18,.03,-d*.30),.04,mats['rusted-steel'])
+          for obj in set(scene.objects)-start:
+            if obj.parent is None:obj.parent=root
+          return
+        # Visible masonry pads lift every standard clear of the dirt.
+        for x in (-w*.47,w*.47):
+          for z in (-d*.47,d*.47):cube(prefix+':base-block',(x,.18,z),(.48,.36,.48),mats['cracked-concrete'],.035)
         # timber standards, steel ledgers, cross braces and real plank walkways
         for x in (-w*.47,w*.47):
-          for z in (-d*.47,d*.47):beam(prefix+':post',(x,.08,z),(x,h,z),.13,mats['weathered-plank'])
+          for z in (-d*.47,d*.47):
+            if stage!=4 or z>0 or x<0:beam(prefix+':post',(x,.08,z),(x,h,z),.25,mats['weathered-plank'])
         levels=[.75,h*.58,h*.92] if stage>=2 else [.75,h*.82]
         for y in levels:
-          for z in (-d*.47,d*.47):beam(prefix+':ledger',( -w*.5,y,z),(w*.5,y,z),.09,mats['rusted-steel'])
-          for x in (-w*.47,w*.47):beam(prefix+':side-ledger',(x,y,-d*.48),(x,y,d*.48),.08,mats['rusted-steel'])
-        for z in (-d*.47,d*.47):beam(prefix+':cross-brace',(-w*.46,.15,z),(w*.46,h*.84,z),.065,mats['rusted-steel'])
-        for x in (-w*.47,w*.47):beam(prefix+':side-brace',(x,.15,-d*.46),(x,h*.8,d*.46),.06,mats['rusted-steel'])
+          for z in (-d*.47,d*.47):
+            if stage!=4 or z>0:beam(prefix+':ledger',(-w*.5,y,z),(w*.5,y,z),.16,mats['rusted-steel'])
+          for x in (-w*.47,w*.47):beam(prefix+':side-ledger',(x,y,-d*.48),(x,y,d*.48),.15,mats['rusted-steel'])
+        for z in (-d*.47,d*.47):
+          if stage!=4 or z>0:beam(prefix+':cross-brace',(-w*.46,.15,z),(w*.46,h*.84,z),.12,mats['rusted-steel'])
+        for x in (-w*.47,w*.47):beam(prefix+':side-brace',(x,.15,-d*.46),(x,h*.8,d*.46),.12,mats['rusted-steel'])
+        # The building's own timber frame sits inside the scaffold. This gives
+        # stage three a clear enclosed structure to clad in the next stage.
+        if stage in (3,4):
+          inner=w*.30
+          for x in (-inner,inner):
+            for z in (-inner,inner):beam(prefix+':building-post',(x,.14,z),(x,h*.78,z),.22,mats['weathered-plank'])
+          for y in (h*.34,h*.68):
+            for z in (-inner,inner):beam(prefix+':building-wall-plate',(-inner,y,z),(inner,y,z),.18,mats['weathered-plank'])
+            for x in (-inner,inner):beam(prefix+':building-side-plate',(x,y,-inner),(x,y,inner),.18,mats['weathered-plank'])
+          for x in (-inner,inner):
+            beam(prefix+':roof-rafter',(x,h*.78,-inner),(x,h*.98,inner),.16,mats['weathered-plank'])
+            beam(prefix+':roof-rafter',(x,h*.98,-inner),(x,h*.78,inner),.16,mats['weathered-plank'])
         for y in levels[:-1]:
           # A narrow work platform at the scaffold face leaves the interior
           # open; full-floor decks read as a roof slab at the mayor's camera.
@@ -108,10 +128,14 @@ def build():
             px=-w*.44+plank*.44
             cube(prefix+':walkway-plank',(px,y+.07,-d*.28),(.42,.12,.78),mats['weathered-plank'],.012)
         # exposed half-wall of pressed tin and rough infill varies by stage
-        if stage>=3:
+        if stage==4:
           for x in (-w*.25,w*.25):
             t.corrugated_sheet(prefix+':wall-panel',(x,h*.44,-d*.49),w*.42,h*.67,mats,bent=.025*(1 if x>0 else -1))
           beam(prefix+':ridge-pole',(-w*.48,h*.94,0),(w*.48,h*.94,0),.12,mats['rusted-steel'])
+          # Patchy tin closes the roof over the smaller timber building.
+          for i,x in enumerate((-inner*.72,0,inner*.72)):
+            roof=cube(prefix+f':patched-roof-{i}',(x,h*.98,0),(inner*.72,.12,inner*1.65),tin_variants[i%len(tin_variants)],.025)
+            roof.rotation_euler[0]=(-.12,.08,.16)[i];roof.parent=root
         if stage == 4:
           for x in (-w*.33,w*.33):
             sheet=t.corrugated_sheet(prefix+':removed-sheet',(x,.85,-d*.62),w*.28,1.5,mats,bent=.08,turn=.48)
@@ -146,6 +170,16 @@ def build():
               for dx in (-.085,.085):
                 bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=5,radius=.032,location=t.game_vector((x+dx,y,z-.145)))
                 bolt=bpy.context.object;bolt.name=f'{prefix}:bolt-{ix}-{iz}-{int(y)}';bolt.data.materials.append(mats['iron-dark']);bolt.parent=root
+        # Foundation work remains visible around the approved frame: a cut
+        # trench, spare footing blocks and a low, uneven spoil pile.
+        for x in (-5.6,5.6):
+          trench=cube(f'{prefix}:foundation-trench-{x}',(x,.025,5.25),(.58,.05,3.6),mats['sand'],.02);trench.parent=root
+        for i in range(5):
+          block=cube(f'{prefix}:spare-foundation-block-{i}',(-5.6+i*.42,.22,6.55),(.38,.44,.42),mats['cracked-concrete'],.025);block.parent=root
+        for i in range(14):
+          x=-1.2+(i%5)*.48;z=6.3+(i//5)*.38;y=.12+(i%3)*.09
+          spoil=cube(f'{prefix}:foundation-spoil-{i}',(x,y,z),(.34+(i%2)*.19,.16,.25+(i%3)*.08),mats['salvaged-brick'],.025)
+          spoil.rotation_euler[2]=-.5+(i%4)*.28;spoil.parent=root
 
         # Mid-bay standards carry the long floor beams and make the 16 m
         # structure read as working scaffold rather than four isolated poles.
@@ -190,7 +224,6 @@ def build():
         for i,x in enumerate((-5.45,-2.75,0,.2,2.95,5.5)):
           sheet=t.corrugated_sheet(f'{prefix}:half-wall-tin-{i}',(x,4.5,-half+.06),2.7,3.0,mats,bent=.015*(i%2))
           sheet.parent=root;sheet.data.materials.clear();sheet.data.materials.append(tin('wall tin'))
-
         # A ground-to-first-deck ladder with substantial rails and closely spaced rungs.
         ladder_x=4.4;front=-half-.22
         for side in (0,1):
@@ -237,29 +270,61 @@ def build():
         for i in range(4):
           bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=8,radius=1,location=t.game_vector((-6.5+i*.48,.31,-7.28)))
           sack=bpy.context.object;sack.name=f'{prefix}:dusty-sack-{i}';sack.scale=(.46,.25,.34);sack.data.materials.append(mats['patched-canvas']);sack.parent=root
+        # The upper deck dominates the mayor's view. Darken it with uneven
+        # site wear and break the regular plank grid with loose boards/tools.
+        stainmat=photo_material(prefix+' / deck stain',texture_dir/'rusted-steel.jpg',(.32,.29,.25),.12)
+        for i,(x,z,sx,sz) in enumerate(((-4.6,-3.9,1.8,.72),(-2.0,4.8,1.35,.62),(3.7,2.1,.9,.52))):
+          stain=cube(f'{prefix}:deck-oil-stain-{i}',(x,6.061,z),(sx,.012,sz),stainmat,.025);stain.parent=root
+        for i in range(8):
+          x=-5.2+i*.47
+          member(f'{prefix}:scattered-deck-plank-{i}',(x,6.11,4.6),(x+rng.uniform(.8,2.4),6.11,4.6+rng.uniform(-.3,.3)),.22,.08,wood('loose deck plank'))
+        for i in range(4):
+          member(f'{prefix}:tool-pile-{i}',(4.6+i*.16,6.14,3.8),(5.0+i*.12,6.14,4.0+i*.06),.07,.045,steel('hand tool'))
     for n in range(1,5):
       w=d=8*n;h=2.4+1.05*n;root=bpy.data.objects.new(f'scaffold-{n}',None);scene.collection.objects.link(root);root.parent=family;roots.append(root)
       if n==2:scaffold_two_storey('scaffold-2',root)
       else:scaffold(f'scaffold-{n}',w-1.2,d-1.2,h,n)
     for n in range(1,5):
-      prefix=f'rubble-{n}';root=bpy.data.objects.new(prefix,None);scene.collection.objects.link(root);root.parent=family;roots.append(root);rng=random.Random(880+n); span=2.2*n
-      for k in range(22+12*n):
-        x=rng.uniform(-span/2,span/2);z=rng.uniform(-span/2,span/2);y=rng.uniform(.12,.55+1.4*n/4);a=rng.uniform(.35,1.2);o=cube(prefix+':broken-member',(x,y,z),(a,rng.uniform(.12,.28),rng.uniform(.12,.35)),rng.choice([mats['weathered-plank'],mats['rusted-steel'],mats['galvanised-tin']]),.02);o.rotation_euler[0]=rng.uniform(-.7,.7);o.rotation_euler[2]=rng.uniform(-.9,.9);o.parent=root
-      for k in range(7):beam(prefix+':bent-frame',(rng.uniform(-span*.4,span*.4),.2,rng.uniform(-span*.4,span*.4)),(rng.uniform(-span*.4,span*.4),rng.uniform(1,2.4),rng.uniform(-span*.4,span*.4)),.085,mats['rusted-steel']).parent=root
+      prefix=f'rubble-{n}';root=bpy.data.objects.new(prefix,None);scene.collection.objects.link(root);root.parent=family;roots.append(root);rng=random.Random(880+n); span=6.6*n
+      for k in range(12+8*n):
+        x=rng.uniform(-span/2,span/2);z=rng.uniform(-span/2,span/2);y=rng.uniform(.12,.55+1.4*n/4);a=rng.uniform(.35,1.2)
+        mat=rng.choice([mats['salvaged-brick'],mats['cracked-concrete'],mats['sand'],charred])
+        o=cube(prefix+':broken-masonry',(x,y,z),(a,rng.uniform(.12,.38),rng.uniform(.12,.50)),mat,.025)
+        o.rotation_euler[0]=rng.uniform(-.7,.7);o.rotation_euler[2]=rng.uniform(-.9,.9);o.parent=root
+      # Few readable structural remains rise above the rubble; dark timber is
+      # mixed with rusted roof steel, rather than a pile of identical blocks.
+      for k in range(7):rectangular_beam((rng.uniform(-span*.4,span*.4),.2,rng.uniform(-span*.4,span*.4)),(rng.uniform(-span*.4,span*.4),rng.uniform(1,2.4),rng.uniform(-span*.4,span*.4)),.085,.13,charred,prefix+':collapsed-rafter').parent=root
+      for k in range(1):
+        sheet=t.corrugated_sheet(prefix+':fallen-tin',(rng.uniform(-span*.3,span*.3),.42+k*.08,rng.uniform(-span*.3,span*.3)),rng.uniform(1.2,2.4),rng.uniform(.8,1.4),mats,bent=rng.uniform(-.18,.18),turn=rng.uniform(-.22,.22))
+        sheet.rotation_euler[0]=math.pi/2+rng.uniform(-.28,.28);sheet.rotation_euler[2]=rng.uniform(-.8,.8);sheet.parent=root
     for n in range(1,5):
-      prefix=f'burnt-{n}';root=bpy.data.objects.new(prefix,None);scene.collection.objects.link(root);root.parent=family;roots.append(root);span=2.5*n;h=2.5+.8*n
+      prefix=f'burnt-{n}';root=bpy.data.objects.new(prefix,None);scene.collection.objects.link(root);root.parent=family;roots.append(root);span=6.5*n;h=2.5+.65*n
       for x in (-span*.42,span*.42):
-        for z in (-span*.42,span*.42):beam(prefix+':charred-post',(x,.08,z),(x,h*(.72 if x<0 else 1),z),.14,mats['iron-dark']).parent=root
+        for z in (-span*.42,span*.42):rectangular_beam((x,.08,z),(x,h*(.72 if x<0 else 1),z),.18,.20,charred,prefix+':charred-post').parent=root
       for y in (h*.36,h*.72):
-        beam(prefix+':blackened-beam',(-span*.48,y,-span*.42),(span*.48,y*.92,span*.42),.13,mats['rusted-steel']).parent=root
-      for x in (-span*.42,span*.42):beam(prefix+':broken-rafter',(x,h*.72,-span*.42),(x*.6,h*.5,span*.42),.11,mats['iron-dark']).parent=root
+        rectangular_beam((-span*.48,y,-span*.42),(span*.48,y*.92,span*.42),.16,.18,charred,prefix+':blackened-beam').parent=root
+      for x in (-span*.42,span*.42):rectangular_beam((x,h*.72,-span*.42),(x*.6,h*.5,span*.42),.13,.15,charred,prefix+':broken-rafter').parent=root
+      for i in range(3):
+        x=-span*.28+i*span*.28
+        rectangular_beam((x,h*.62,-span*.25),(x*.55,.22,span*.38),.14,.17,charred,prefix+':collapsed-charred-rafter').parent=root
+      for i in range(1):
+        sheet=t.corrugated_sheet(prefix+':scorched-tin',(span*.24-i*.16,.9+i*.08,-span*.44),span*.25,1.8,mats,bent=.14,turn=.10)
+        sheet.rotation_euler[0]=-.22;sheet.parent=root
+      rng=random.Random(410+n)
+      for i in range(18+8*n):
+        x=rng.uniform(-span*.42,span*.42);z=rng.uniform(-span*.42,span*.42)
+        chunk=cube(prefix+':charcoal-and-brick',(x,.10+rng.random()*.23,z),(.24+rng.random()*.45,.16,.20+rng.random()*.38),rng.choice((charred,mats['salvaged-brick'],mats['cracked-concrete'])),.02)
+        chunk.rotation_euler[2]=rng.uniform(-1,1);chunk.parent=root
       ember=bpy.data.materials.new(prefix+' ember glow');ember.diffuse_color=(1,.12,.015,1);ember.use_nodes=True;bs=ember.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(1,.035,.002,1);bs.inputs['Emission Color'].default_value=(1,.035,.002,1);bs.inputs['Emission Strength'].default_value=2
       e=cube(prefix+':ember',(0,.12,0),(.34,.18,.34),ember,.03);e.parent=root;e.name=prefix+':ember'
     # under-cell street objects; separate emissive named children where specified
     def prop(id):
       r=bpy.data.objects.new(id,None);scene.collection.objects.link(r);r.parent=family;roots.append(r);return r
     r=prop('street-lamp');beam('street-lamp:post',(0,0,0),(0,4.2,0),.09,mats['rusted-steel']).parent=r;beam('street-lamp:arm',(0,4.0,0),(.65,4.15,0),.07,mats['rusted-steel']).parent=r
-    em=bpy.data.materials.new('street lamp emission');em.use_nodes=True;em.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=3;em.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value=(1,.48,.12,1);cube('street-lamp:lamp',(.68,4.08,0),(.32,.14,.25),em).parent=r
+    em=bpy.data.materials.new('street lamp emission');em.diffuse_color=(1,.28,.035,1);em.use_nodes=True
+    embs=em.node_tree.nodes.get('Principled BSDF');embs.inputs['Base Color'].default_value=(1,.28,.035,1);embs.inputs['Emission Strength'].default_value=2.5;embs.inputs['Emission Color'].default_value=(1,.28,.035,1)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.18,location=t.game_vector((.68,4.08,0)))
+    lamp=bpy.context.object;lamp.name='street-lamp:lamp';lamp.data.materials.append(em);lamp.scale=(1,.8,1);lamp.parent=r
     r=prop('barrel-fire');t.drum('barrel-fire:drum',(0,.48,0),mats);[setattr(o,'parent',r) for o in set(scene.objects) if o.name.startswith('barrel-fire:') and o.parent is None]; e=cube('barrel-fire:lamp',(0,1.1,0),(.36,.28,.36),em);e.parent=r
     for id,count in [('crate-stack',3),('barrels',3),('washing-line',1),('bench',1),('bin',1),('signpost',1),('sandbags',1),('junk-pile',1),('dead-tree',1)]:
       r=prop(id)
@@ -296,6 +361,12 @@ def build():
     # Keep each named building root, but join static mesh pieces within it by
     # material. Emissive parts keep their required names. This only changes
     # object packaging, not any other id's shape or surface.
+    # Blender joins UV layers by name. Give every material mesh one shared
+    # coordinate layer so the GLB carries texture coordinates as TEXCOORD_0.
+    for obj in scene.objects:
+      if obj.type=='MESH':
+        if len(obj.data.uv_layers)==0:obj.data.uv_layers.new(name='UVMap')
+        for layer in obj.data.uv_layers:layer.name='UVMap'
     for building in roots:
       merge_groups={}
       for obj in scene.objects:
@@ -322,17 +393,19 @@ def build():
     scene.world=bpy.data.worlds.new('Even overcast world');scene.world.use_nodes=True
     scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.72,.75,.77,1)
     scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.72
-    visible_root=next(obj for obj in scene.objects if obj.name=='scaffold-2')
     family_root=next(obj for obj in scene.objects if obj.name=='town-stages')
-    for obj in scene.objects:
-      ancestor=obj
-      while ancestor.parent is not None and ancestor.parent is not family_root:ancestor=ancestor.parent
-      obj.hide_render=(obj.type=='MESH' and ancestor is not visible_root)
     ground=bpy.data.materials.new('Plain mid-brown render dirt');ground.diffuse_color=(.20,.14,.085,1);ground.use_nodes=True
     ground.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.08,.05,.025,1)
     floor=t.cube('render-only plain brown dirt',(0,-.08,0),(300,.16,300),ground,0)
     bpy.ops.object.light_add(type='AREA',location=t.game_vector((0,15,-10)));bpy.context.object.data.energy=18000;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=16
     EVIDENCE.mkdir(parents=True,exist_ok=True)
+    def show_only(root_names):
+      visible={next(obj for obj in scene.objects if obj.name==name) for name in root_names}
+      for obj in scene.objects:
+        if obj.type!='MESH':continue
+        ancestor=obj
+        while ancestor.parent is not None and ancestor.parent is not family_root:ancestor=ancestor.parent
+        obj.hide_render=ancestor not in visible
     def render_view(name,location,target,lens):
       camera_location=t.game_vector(location);look_at=t.game_vector(target)
       bpy.ops.object.camera_add(location=camera_location);cam=bpy.context.object
@@ -340,7 +413,19 @@ def build():
       scene.camera=cam;scene.render.resolution_x=1200;scene.render.resolution_y=900;scene.render.resolution_percentage=100
       scene.render.image_settings.file_format='PNG';scene.render.filepath=str(EVIDENCE/name);bpy.ops.render.render(write_still=True)
       bpy.data.objects.remove(cam,do_unlink=True)
-    render_view('low-eye-1_7m.png',(20,1.7,-24),(0,4,0),50)
+    for n in range(1,5):
+      show_only({1:['scaffold-1'],2:['scaffold-2'],3:['scaffold-3'],4:['scaffold-4']}[n])
+      scale=8*n;target_y=(.5 if n==1 else 4 if n==2 else 3.2*n)
+      render_view(f'stage-{n}-low.png',(scale*1.2,1.7,-scale*1.45),(0,target_y,0),50)
+    show_only(['scaffold-2'])
     # 60 m range, 45 degree down angle; the longer lens keeps the cell large.
     render_view('mayor-45deg-60m.png',(30,46.4,-30),(0,4,0),68)
+    show_only(['burnt-1'])
+    render_view('burnt-ruin-low.png',(9,2.3,-12),(0,1.4,0),52)
+    for prop_id in ('street-lamp','barrel-fire','crate-stack','barrels','washing-line','bench','bin','signpost','sandbags','junk-pile','dead-tree'):
+      show_only([prop_id])
+      tall=prop_id in ('street-lamp','signpost','dead-tree')
+      target_y={'street-lamp':2.1,'signpost':1.2,'dead-tree':1.4}.get(prop_id,1.0)
+      camera=(5.2,4.4,-7.2) if prop_id=='street-lamp' else ((4.2,3.2,-5.4) if tall else (4.0,2.8,-5.2))
+      render_view(f'{prop_id}.png',camera,(0,target_y,0),48 if prop_id=='street-lamp' else 56)
 if __name__=='__main__':build()

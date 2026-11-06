@@ -1,25 +1,25 @@
-# TOWN-ART-STAGES round 3
+# TOWN-ART-STAGES round 4
 
 ## Changed
 
-- Rebuilt only `scaffold-2` in `tools/blender/town-stages.py`. Added a rectangular `beam(a, b, width, depth, material)` helper and used it for solid timber and steel members with the card's metre dimensions. The scaffold has four corner posts and four supporting mid-bay posts on concrete blocks, floors at 3 m and 6 m, full plank decks with 25 cm boards and gaps, X braces, a real ladder, pulley hoist, rope, bucket, half-clad tin wall, a leaning panel and ground salvage.
-- Removed the model's ground plate. The dirt plane exists only in the render scene and is not exported.
-- Replaced the atlas material path with four individual repeating photo JPEGs: weathered timber, dark rusted steel, rusted tin and rubble. Material variants keep the scaffold members distinct. Metallic factors stay at or below 0.3.
-- Packed and compressed the family GLB at 1,681,808 bytes and 52,776 triangles. The family remains under its 3 MB and 60,000-triangle limits.
-- Added `round-3.jpg` with the generated photo, low 1.7 m view and 45-degree mayor view at 60 m. Both model views were rendered from the exported GLB imported into an empty Blender scene. The source photo remains outside the repository. Added its prompts and credits beside the runtime textures.
-- Other ids stay as they are for now.
+- Kept the round 3 `scaffold-2` frame and added the requested deck wear: darker stain patches, scattered planks and a small tool pile. Added foundation trenching, spare blocks and spoil at ground level.
+- Made `scaffold-1` a pegged and strung plot, `scaffold-3` an open framed building with scaffold, and `scaffold-4` a partly clad building with patched tin roofing and a scaffold bay coming down. All sit within their cell footprints and have no ground plate.
+- Reworked the rubble and burned families with larger debris fields, fallen tin and collapsed members. Reused the credited town photos in `public/assets/models/wasteland/town/textures/`; no new runtime picture was added.
+- Added individual street prop renders and retained each required named root and emissive `:lamp`/`:ember` part.
+- Normalized recipe UV layer names to `UVMap`. The test now reads UV float data from the exported GLB and checks that every material primitive has only `TEXCOORD_0` with values spanning both axes.
+- Added `round-4.jpg` (265,526 bytes). Its model images were rendered from the exported GLB imported into an empty Blender scene. The sheet includes the round 3 construction photo beside the stage views and the charred timber photo tile beside the ruin.
+- Final family GLB: 1,964,028 bytes and 59,444 triangles; below the 3 MB and 60,000 triangle limits.
 
 ## Checks
 
-- Blender recipe, GLB export and both render views: passed. Render inspected against the photo before making the sheet.
-- `node tools/test-blender-output.mjs`: passed, 238 checks; the GLB size, triangle budget and required ids pass.
-- `node tools/test-repo-hygiene.mjs`: passed. Reported size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 8/9 passed. The audio analysis check failed on the known `spawnSync ffmpeg EPERM`; no rerun was made.
-- Browser and game look checks: not run in this lane. Claude should check low-view member thickness, timber/tin color, ground clutter readability and the mayor camera framing.
-- Changed assertions: none. No race or simulation code changed; race fingerprints are unchanged.
+- Blender recipe, GLB export and review renders: passed.
+- `node tools/test-blender-output.mjs`: passed, 238 checks. Includes ids, family size, triangle budget and UV checks.
+- Two earlier exports exceeded the 60,000-triangle cap; optional tin and debris were trimmed until the final GLB passed at 59,444 triangles.
+- `node tools/test-repo-hygiene.mjs`: passed. Size targets remain advisory.
+- Browser and in-game look checks: not run in this lane. Claude should review: whether the 1-to-4 stages read as a clear progression; the stage 3 and 4 frame thickness; the ruin's charred darkness and rubble density; each street prop at town scale; and the mayor view's deck contrast and clutter.
+- Changed assertions: none were weakened. Added a GLB UV-range assertion that reads the binary accessor values because this Blender export omits accessor `min`/`max` metadata. No race or simulation code changed; race fingerprints are unchanged.
 
 ## Removed
 
-- Removed the shared atlas from this recipe and the prior round's scaffold texture use. The four separate JPEGs now supply the model materials.
-- Removed the previous round 2-over-budget GLB by replacing it with the current export; no backup copy was kept.
-- No other family id, runtime code or player data was removed.
+- Replaced the prior candidate `stages.glb` in place; kept no backup.
+- Removed this run's raw Blender renders, test logs and sheet-building scratch file after creating the review sheet. No game code, player data or credited texture source was removed.
