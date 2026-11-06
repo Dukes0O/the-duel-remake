@@ -365,8 +365,9 @@ for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,
 
 # One export root holds every named story place while preserving map coordinates.
 world_root=root_obj('wasteland-ships-root',(0,0,0),'wasteland-ships')
-for child in [*roots.values(),light_root,boat,lightpart]:
-    parent(child,world_root)
+for child in list(scene.objects):
+    if child is not world_root and child.parent is None:
+        parent(child,world_root)
 
 # One neutral mid-tone floor supports review only; it is never exported.
 
