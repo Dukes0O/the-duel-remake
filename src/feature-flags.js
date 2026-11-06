@@ -26,6 +26,7 @@ export const FEATURE_STATES = Object.freeze({
   ...Object.fromEntries(CIRCUIT_MANIFESTS.map(manifest => [manifest.flag, manifest.state])),
   // The Deep (docs/THE_DEEP.md): the hidden underwater world. Released 25 October 2026.
   'the-deep': 'on',
+  'deep-vasca': 'dev',
   // The helicopter (docs/HELICOPTER.md): Kestrel One, H1 First flight. Released 14 October 2026.
   helicopter: 'on',
   // H2 Fire (docs/HELI_FIRE.md): forest fires, the bucket and burnt courses. Works only with the helicopter on.

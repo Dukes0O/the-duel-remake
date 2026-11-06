@@ -125,4 +125,15 @@ Also: every `test-deep-*`, `test-sirena-car`, `test-progression`, the lane tier 
 
 Any other changed assertion stops and comes back to this card for Claude's review.
 
+### Codex requests (5 November 2026)
+
+Kyle's follow-up on 5 November authorizes the small `src/progression.js` hook:
+preserve an already-owned `falcone_vasca` when `deep-vasca` is off, and test a
+memory-only load/save. A disabled switch must not remove an earned car.
+
+The same follow-up allows the card-required expectation updates listed in
+`docs/changes/DEEP-LAST-JOKE.md`. The changes must name old and new values and
+reasons. Do not change gameplay tolerances. Claude reviews the assertion list
+and gives the independent save review after this lane.
+
 **After the merge.** Claude plays it end to end on a fresh memory-only save, gives the art and sound verdict and the frame check, turns `deep-vasca` on and releases under rule 18. Then Kyle hears the Deep is closed in the release note. No Preview step.
