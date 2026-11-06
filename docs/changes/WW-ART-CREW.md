@@ -1,24 +1,34 @@
 # WW-ART-CREW change note
 
-## Result
+## Changed
 
-Stopped before modeling. The task brief requires Gerald to start from a real wildlife donor in `tools/blender/wildlife/`. Those recipes and bundled wildlife assets contain no lizard, gecko or snake donor. The local art library has a turtle source for the Deep, but it is a different body plan and is not a suitable donor for a 30 cm desert lizard. Adapting a mammal or turtle would not meet the required method, and making an original lizard would depart from it.
+- Added a Blender recipe for the notice-board props and exported a candidate
+  GLB. The recipe uses `town_base.py` and reuses part of the Boneyard GLB.
+- Added the generator to the Blender output placement registry.
+- Added one review sheet and a review note. The art is not accepted; see the
+  review note for the specific gaps.
 
-A photographic lizard reference was generated for this work, but no model or review sheet was made. The reference remains outside the repository.
+## Checks
 
-## Checks and review
+- Blender 4.5.13 export, empty-scene reimport and review render: completed.
+- GLB readback: 21,338 triangles and 1,520,692 bytes, within 40,000 triangles
+  and 2 MB.
+- `node tools/test-blender-output.mjs`: 258 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement is clean.
+- Review sheet: 68,860 bytes. Browser checks are not applicable to this art
+  candidate. Claude should review
+  `docs/board/looks/ww-art-crew/round-1.jpg`.
 
-- `tools/test-blender-output.mjs`: not run; no Blender recipe or GLB was produced.
-- `tools/test-repo-hygiene.mjs`: passed.
-- Browser and look checks: not run; no candidate sheet exists. Claude should review the lizard donor choice before modeling resumes.
-- Changed assertions: none.
-- Race fingerprints: not applicable; simulation files were not changed.
+## Changed assertions
+
+- None.
+
+## Race fingerprints
+
+- Not applicable; no race code changed.
 
 ## Removed
 
-- Removed the temporary in-lane copy of the generated lizard reference after confirming there was no compatible donor.
-- No existing files or assets were removed.
-
-## Needed to continue
-
-Provide or approve a suitable licensed reptile donor, or revise the direction to allow an original lizard model. Once that choice is settled, the remaining props can follow the card's required order.
+- No prior implementation existed to remove. Blender logs and the temporary
+  reference copy were removed from `.qa-dist/`; the supplied `task.md` was
+  left untouched.
