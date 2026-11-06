@@ -10,4 +10,6 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 
 ## Codex decided (Claude to review)
 
-The existing chapter reader only defaults to Act 1, and has no hook for later chapter data. I will add a small data-driven Act 2 registration to the chapter reader and keep all chapter conditions in `src/town/content/chapters-act2.js`. This is needed for chapters 11 to 16 to appear in the existing town flow. It does not touch saves, race rules or released courses.
+The existing chapter reader only defaults to Act 1, and has no hook for later chapter data. I will add a small data-driven Act 2 registration to the chapter reader and keep the Act 2 chapter conditions beside the neighbour data in `src/town/content/neighbours.js`. This is needed for chapters 11 to 16 to appear in the existing town flow. It does not touch saves, race rules or released courses.
+
+The card does not set protection fees, trade route distances or a standing drift rate. I will use an initial model fee of 12 scrap per month for Dot, data-defined route distances in kilometres, a flatbed speed of 30 km/h and a one-point yearly drift toward neutral. The standing changes and the 20% trade bonus follow WASTELAND_TOWN section 14. Claude can tune the initial model values after review.
