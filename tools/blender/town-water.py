@@ -387,7 +387,7 @@ def render_view(filename, location, target, lens=38):
     scene.camera = camera; scene.render.filepath = str(evidence/filename); bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera, do_unlink=True)
 render_view('above-45.png',(35,52,-46),(0,2,0),48)
-render_view('driver-seat.png',(1,1.65,-31),(4,4,7),16)
+render_view('driver-seat.png',(1,1.65,-31),(15,8,-9),20)
 centers = {
     'hand-well': (0,1.7,0, (7,7,-9), 48),
     'standpipe': (0,1.7,0, (1,5,-9), 38),

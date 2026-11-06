@@ -11,6 +11,7 @@ checked-in tin and limestone photographs in the shared 1K material atlas.
 The tank, well, pump shed, settling basins, filter bed, boiler, clean tank and
 reservoir are distinct and grounded. Faded galvanized tin has small dark rust
 streaks at fasteners; stone is visibly separate from steel. The long view reads
-as a working site. From the driver camera the tower is at the frame edge, so
-Claude should check that the height view gives enough context. The result is
-ready for Claude's look review.
+as a working site. The driver camera focuses on the tower and pump shed at 27 m
+so the tank and flywheel are visible at road height. Claude should check the
+treatment stages from above and the tower's shape against the photo. The
+result is ready for Claude's look review.

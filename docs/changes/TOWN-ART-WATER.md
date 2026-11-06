@@ -9,13 +9,14 @@ read at both scales. The reservoir water remains a flat movable scoop surface.
 
 ## Review
 
-`docs/board/looks/town-art-water/round-1.jpg` is 294,236 bytes. The revised
+`docs/board/looks/town-art-water/round-1.jpg` is 282,264 bytes. The revised
 sheet was inspected after the rebuild. Self-review: silhouette/readability
 4/5, materials 4/5, scale/site composition 3/5. The family reads as a gritty
-waterworks site with distinct buildings and visible process stages. Claude
-should check the driver-height view's tower framing and the treatment plant's
-stage readability from above. No browser or Chrome checks were run; Claude
-owns those checks.
+waterworks site with distinct buildings and visible process stages. The
+driver-height view shows the water tower and pump shed at 27 m. Claude should
+check the treatment plant's stage readability from above and the tower shape
+against the photo. No browser or Chrome checks were run; Claude owns those
+checks.
 
 ## Checks
 
