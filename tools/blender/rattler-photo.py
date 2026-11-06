@@ -134,10 +134,23 @@ for label, photo, mask, point, z0, z1, rect in (
     slab(end, label, photo, loops, point, z0, z1, wall_scale=.0019)
     end.finish(f'rattler {label} closing shell', materials).parent = vehicle
 
+# Windshield and rear cab bulkheads close the cab between its measured side
+# skins. The matched end-view crops include their real window frames and roof.
+for label, photo, mask, point, z0, z1, rect in (
+    ('windshield bulkhead', front, front_solid, front_point, .76, .82, (240, 82, 1072, 430)),
+    ('cab rear bulkhead', rear, rear_solid, rear_point, -.66, -.60, (300, 62, 1100, 445)),
+):
+    loops = trace(mask, rect, tolerance=1.4, min_area=120)
+    if not loops:
+        raise RuntimeError(f'No measured {label} outline in its photograph')
+    bulkhead = Mesh()
+    slab(bulkhead, 'front' if photo is front else 'rear', photo, loops, point, z0, z1, wall_scale=.0019)
+    bulkhead.finish('rattler ' + label, materials).parent = vehicle
+
 # Separate, closed top volumes use only their matching overhead-photo regions.
 for name, rect, y0, y1, area in (
     ('cab roof', (255, 400, 770, 940), 2.04, 2.09, 1600),
-    ('plank bed top', (270, 905, 760, 1485), 1.35, 1.40, 1400),
+    ('plank bed floor', (270, 905, 760, 1485), .90, .95, 1400),
 ):
     loops = trace(top_solid, rect, tolerance=1.6, min_area=area)
     if not loops:
