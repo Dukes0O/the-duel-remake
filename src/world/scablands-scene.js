@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt, scablandsGroundEdit} from './scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsTownLayout} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
@@ -123,6 +123,28 @@ function addFurnaceFire(parent,place,scale=1.5){
 export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().loadAsync(path)}={}){
   const group=new THREE.Group();group.name='The Scablands';
   let retired=false;
+  let townDraw=null;
+  const townLayout=getScablandsTownLayout();
+  const addTown=async()=>{
+    if(!townLayout)return;
+    const {buildTownChunkInstances}=await import('../town/view/town-instances.js');
+    if(retired)return;
+    const town={regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
+    const chunks=new Set();
+    for(const building of town.buildings)if(building.regionId==='scablands')chunks.add(`${Math.floor(building.x/16)}:${Math.floor(building.z/16)}`);
+    const root=new THREE.Group();root.name='Town roads, sites and buildings';
+    for(const key of chunks){const [x,z]=key.split(':').map(Number);for(const mesh of buildTownChunkInstances(town,{x,z},'near'))root.add(mesh);}
+    const roadMat=new THREE.MeshStandardMaterial({color:0x756b59,roughness:1});
+    for(const road of townLayout.roads||[]){
+      const dx=road.b.x-road.a.x,dz=road.b.z-road.a.z,length=Math.hypot(dx,dz);
+      if(!length)continue;
+      const mesh=new THREE.Mesh(new THREE.BoxGeometry(length,.16,road.halfWidth*2),roadMat);
+      const x=(road.a.x+road.b.x)/2,z=(road.a.z+road.b.z)/2;
+      mesh.position.set(x,scablandsSurfaceHeightAt(x,z)+.12,z);mesh.rotation.y=-Math.atan2(dz,dx);mesh.name=`Town road ${road.id}`;root.add(mesh);
+    }
+    group.add(root);townDraw=root;
+  };
+  void addTown();
   const furnaceVents=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
@@ -239,7 +261,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
     for(const material of materials)material.dispose();
-    group.clear();group.userData.assetStatus='retired';
+    group.clear();group.userData.assetStatus='retired';townDraw=null;
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;

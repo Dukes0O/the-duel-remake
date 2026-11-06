@@ -31,7 +31,7 @@ await saveTown(town,{store,storage,reason:'first visit'});
 assert.deepEqual(readTownPointer(storage),[town.id],'the first visit records its town pointer');
 const firstLoad=await store.load(readTownPointer(storage)[0]);
 assert.equal(firstLoad.town.name,'Tin Flat','the first visit saves the named town');
-const placed=stepTown(firstLoad.town,{type:'placeBuilding',buildingId:'road-dirt',x:20,z:20})[0];
+const placed=stepTown(firstLoad.town,{type:'placeBuilding',buildingId:'road-dirt',x:19,z:-12})[0];
 assert.equal(placed.ok,true,'the first visit can place a road');
 await saveTown(firstLoad.town,{store,storage,reason:'leaving'});
 const secondLoad=await store.load(readTownPointer(storage)[0]);

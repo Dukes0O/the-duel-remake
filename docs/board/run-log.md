@@ -1562,4 +1562,9 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov evening: merged CREW-STORY-JOIN (lane 61/61 on the branch, build; Claude reviewed the diff). Cinder and Jax won in a story now really join under their rank.
 - 5 Nov night: merged MULE-RAILS, the Iron Line, boarding and driving the train (lane 70/70 on the branch; Claude reviewed it twice, 11 faults fixed; a real headless run on Easy and Hard; import conflict in world-job.js resolved and its suites rerun). Not yet reachable in play: MULE-JOBS and MULE-SCENE.
 - 5 Nov night: merged WW-ART-DAM round 9, the Dry Dam's face from a projected photo, gates, salt wall and gatehouse (Blender output and hygiene passed; Claude's verdict: passed for the Iron Mule and Ships). Wrecks, gantry wheels and silt carded as WW-ART-DAM-2.
-- 5 Nov: TOWN-MAP-VIEW merged. Lane 38/39: `test-review-evidence` fails only between 4 pm and midnight on this laptop, because the browser plan names its evidence folder by local date while the Python plan's differs in that window; not map code. Card to follow. Trade trucks show no pin until trips have real routes.
+- 5 Nov: TOWN-MAP-VIEW merged. Lane 38/39: `test-review-evidence` fails at night (seen 23:20 local, UTC-8): the browser plan and another plan name their evidence folder by different dates; not map code. Card to follow. Trade trucks show no pin until trips have real routes.
+- 5 Nov: TOWN-ART-HOMES merged at round 6 of 6 as the working set; what is short is on its card.
+- 5 Nov: TOWN-WORLD merged. DRIVE from the town starts a drive in the Scablands with the town drawn and solid; the gate leads to the Scrapdome. Lane 223/224: `test-review-evidence` date failure only. Replays and world signatures unchanged. Off for players.
+- 5 Nov: TOWN-ART-TRUCKS-1 stopped at round 6 of 6, not merged; branch kept. Next step needs Kyle's word on a download (card).
+- 5 Nov: TOWN-ART-DOME merged at round 6 of 6 as the working set; what is short is on its card.
+- 6 Nov: merged BOARD-LINES, The Notice Board's 91 lines (lane 25/25 on the branch, build).

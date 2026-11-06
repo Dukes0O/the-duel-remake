@@ -46,6 +46,10 @@ function jpegDimensions(bytes, start, length) {
 }
 
 const generators = [
+  {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
+    glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
+    glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
 
@@ -589,7 +593,7 @@ try {
       assert.equal(relativePlans[0].blend.length, generator.recipeOnly ? 0 : generator.glb.length || 1,
         generator.recipeOnly ? 'recipe-only exports plan no editable Blend files' : 'one editable Blend per exported model is expected');
       for (const runtimePath of [...relativePlans[0].glb, ...relativePlans[0].json]) {
-        if (artCandidates.has(generator.id)) {
+        if (artCandidates.has(generator.id) && runtimePath.startsWith('public/')) {
           assert.ok(!existsSync(join(root, runtimePath)), `${runtimePath} is published before art approval`);
         } else {
           assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
@@ -609,6 +613,8 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      const byteBudget = generator.maxBytes || 2_500_000;
+      assert.ok(bytes.length <= byteBudget, `${bytes.length} bytes exceeds ${byteBudget} bytes`);
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} byte budget`);
     });
@@ -667,6 +673,62 @@ try {
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= 0.3,
         `${material.name} metallic factor exceeds the reflection limit`);
+  check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
+    const path = join(root, 'public/assets/models/wasteland/town/dome.glb');
+    if (!existsSync(path)) return; // Generated and read back in the art lane; not a runtime asset yet.
+    const bytes = readFileSync(path);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(4), 2);
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const binStart = 20 + jsonLength + 8;
+    for (const [meshIndex, mesh] of gltf.meshes.entries()) {
+      for (const [primitiveIndex, primitive] of mesh.primitives.entries()) {
+        const label = `${mesh.name || `mesh ${meshIndex}`} primitive ${primitiveIndex}`;
+        const uvNames = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+        assert.deepEqual(uvNames, ['TEXCOORD_0'], `${label} has only TEXCOORD_0`);
+        const uvAccessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
+        assert.equal(uvAccessor?.componentType, 5126, `${label} TEXCOORD_0 stores float values`);
+        assert.equal(uvAccessor?.type, 'VEC2', `${label} TEXCOORD_0 stores UV pairs`);
+        const view = gltf.bufferViews[uvAccessor.bufferView];
+        const stride = view.byteStride || 8;
+        const start = binStart + (view.byteOffset || 0) + (uvAccessor.byteOffset || 0);
+        const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+        for (let i = 0; i < uvAccessor.count; i++) {
+          for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value);
+            max[axis] = Math.max(max[axis], value);
+          }
+        }
+        assert.ok(min.some((value, axis) => value < max[axis]),
+          `${label} TEXCOORD_0 is not a single repeated point`);
+      }
+    }
+    const names = gltf.nodes.map(node => node.name);
+    for (const name of ['town-dome', 'dome-outer', 'dome-gate', 'dome-outer:lamp', 'dome-gate:SCRAPDOME-lettering']) {
+      assert.ok(names.includes(name), `missing named town node ${name}`);
+    }
+    assert.ok(gltf.nodes.find(node => node.name === 'town-dome').children?.length >= 2, 'both buildings are children of the family root');
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 1000 && triangles <= 30_000, `${triangles} triangles`);
+    assert.ok(gltf.images.length >= 8, `${gltf.images.length} separate texture pictures`);
+    assert.ok(!gltf.images.some(image => /atlas/i.test(image.name || image.uri || '')), 'no packed atlas');
+    for (const material of gltf.materials) {
+      const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+      assert.ok(metallic <= 0.3, `${material.name || 'material'} metallic ${metallic} exceeds 0.3`);
+    }
+    const lettering = gltf.nodes.find(node => node.name === 'dome-gate:SCRAPDOME-lettering');
+    assert.ok(lettering && lettering.mesh === undefined, 'painted sign has no computer-font mesh');
+    for (const image of gltf.images) {
+      assert.equal(image.mimeType, 'image/jpeg', `${image.name || 'picture'} is a JPEG`);
+      const view = gltf.bufferViews[image.bufferView];
+      const jpeg = bytes.subarray(binStart + view.byteOffset, binStart + view.byteOffset + view.byteLength);
+      assert.equal(jpeg[0], 0xff, `${image.name || 'picture'} JPEG start`);
+      assert.equal(jpeg[1], 0xd8, `${image.name || 'picture'} JPEG marker`);
     }
   });
   check('scablands-tintown exports its bounded named walkable town model', () => {
@@ -688,6 +750,49 @@ try {
     }
     for (const alley of ['main-alley','cross-alley','forge-court']) {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
+    }
+  });
+
+  check('TOWN-ART-HOMES exports separate compact material pictures, named homes and per-plot budgets', () => {
+    const path=join(root,'public/assets/models/wasteland/town/homes.glb');const bytes=readFileSync(path);
+    assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
+    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds 3 MB`);
+    const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));const nodes=gltf.nodes||[];
+      const imageIndexes=(gltf.textures||[]).map(texture=>texture.source);
+      assert.ok(gltf.images?.length>1,'separate pictures replace the shared atlas');
+      assert.equal(new Set(imageIndexes).size,imageIndexes.length,'materials do not sample a shared atlas image');
+      assert.equal(gltf.images.length,imageIndexes.length,'every material picture resolves to its own image');
+      assert.ok(gltf.images.every(image=>image.mimeType==='image/jpeg'),'material pictures use JPEG');
+      const binStart=28+bytes.readUInt32LE(12);let texturePixels=0;
+      for(const image of gltf.images){
+        const view=gltf.bufferViews[image.bufferView];const start=binStart+(view.byteOffset||0);let width=0,height=0,offset=start+2;
+        while(offset+9<start+view.byteLength){
+          if(bytes[offset]!==0xff){offset++;continue;}
+          const marker=bytes[offset+1];const length=bytes.readUInt16BE(offset+2);
+          if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+            height=bytes.readUInt16BE(offset+5);width=bytes.readUInt16BE(offset+7);break;
+          }
+          if(length<2)break;offset+=2+length;
+        }
+        assert.ok(width>0&&height>0&&width<=256&&height<=256,`${width}x${height} material exceeds 256 px`);
+        texturePixels+=width*height;
+      }
+      assert.ok(texturePixels<=1024*1024,`${texturePixels} total texture pixels exceed the 1K atlas budget`);
+      for(const material of gltf.materials){
+        const metallic=material.pbrMetallicRoughness?.metallicFactor??0;
+        assert.ok(metallic<=.3,`${material.name} metallic factor ${metallic} exceeds .3`);
+      }
+    const names=nodes.map(node=>node.name||'');assert.ok(names.includes('town-homes'),'named family root');
+    const ids=['tent-a','tent-b','shack-a','shack-b','shack-c','stack-a','stack-b','block-a','block-b','terrace-a'];
+    const parent=new Map();nodes.forEach((node,index)=>(node.children||[]).forEach(child=>parent.set(child,index)));
+    const find=id=>nodes.findIndex(node=>node.name===id);const familyRoot=find('town-homes');
+    for(const id of ids){
+      const home=find(id),lamp=find(`${id}:lamp`);assert.ok(home>=0,`missing ${id}`);assert.ok(lamp>=0,`missing named lamp ${id}`);
+      assert.equal(parent.get(home),familyRoot,`${id} must be a direct family child`);assert.equal(parent.get(lamp),home,`${id}:lamp must be a direct home child`);
+      const descendants=[];const visit=index=>{descendants.push(index);for(const child of nodes[index].children||[])visit(child);};visit(home);
+      const triangles=descendants.reduce((sum,index)=>{const mesh=nodes[index].mesh;if(mesh===undefined)return sum;return sum+gltf.meshes[mesh].primitives.reduce((n,primitive)=>n+gltf.accessors[primitive.indices].count/3,0);},0);
+      const budget=id.startsWith('block-')||id==='terrace-a'?5000:1800;
+      assert.ok(triangles>100&&triangles<=budget,`${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
     }
   });
 

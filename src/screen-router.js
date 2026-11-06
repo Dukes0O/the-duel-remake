@@ -435,6 +435,9 @@ root.addEventListener('change',event=>{
 },{signal:domEvents.signal});
 function renderState(s) {
   buildUpdates.syncState();
+  if(app._openTownScrapdomePanel&&app.isYardHomeActive?.()){
+    yardPanel='scrapdome';app._openTownScrapdomePanel=false;lastScreen=null;
+  }
   if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
       !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   const yardActive=app.isYardHomeActive?.()===true;
