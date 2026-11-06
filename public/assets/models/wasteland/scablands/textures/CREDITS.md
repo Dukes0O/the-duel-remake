@@ -168,4 +168,4 @@ All three are embedded in `crew-favours.glb` as direct colour pictures; none rep
   warped to a 1500 x 1300 front view and reduced to 1200 x 1040. Prompt:
   battered upright piano with its
   action exposed, photographed in even neutral daylight.
-- \ww-dune-ladder.jpg\, \ww-dune-bedroll.jpg\, \ww-dune-stove.jpg\, \ww-dune-watercan.jpg\: Codex ImageGen, 6 November 2026. Prompts: one old, worn, real object each, dead-on in flat overcast light on a plain background: a hand-made wooden ladder, a rolled canvas bedroll with two straps, a small iron camp stove, a dented water can. Used for \dune-ladder\ and \dune-camp\.
+- `ww-dune-ladder.jpg`, `ww-dune-bedroll.jpg`, `ww-dune-stove.jpg`, `ww-dune-watercan.jpg`: Codex ImageGen, 6 November 2026. Prompts: one old, worn, real object each, dead-on in flat overcast light on a plain background: a hand-made wooden ladder, a rolled canvas bedroll with two straps, a small iron camp stove, a dented water can. Used for `dune-ladder` and `dune-camp`.
