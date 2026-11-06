@@ -2,6 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
+import {oldSmokeVentTargets} from '../../world/jobs/old-smoke.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -77,7 +78,8 @@ function updateJobActors(worldJob, dt) {
     const start = actorDef.path?.[0]?.position ?? actorDef.path?.[0];
     if (!start) return;
     actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
-      pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null};
+      pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null,
+      ...(actorDef.id === 'old-smoke-furnace' ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
     worldJob.actors.push(actor);
   }
   const follow = worldJob.follow;
@@ -183,6 +185,7 @@ function moveJobRaiders(worldJob, dt) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  worldJob.clockSec = state.stageTimeSec;
   const waveKey = `${worldJob.job.stepIndex}:${worldJob.job.stepState.wave ?? 0}`;
   const waveZone = worldJob.waveZones?.[waveKey];
   const waveNumber = worldJob.job.stepState.wave ?? 0;
@@ -300,10 +303,9 @@ export function worldJobHitTargets(duel) {
     if (actor.health > 0 && actor.position) {
       targets.push({id: actor.id, actorId: actor.id, kind: actor.id.includes('furnace') ? 'furnace' : 'vehicle',
         position: actor.position, radius: 3});
-      if (actor.id === 'old-smoke-furnace') for (let index = 1; index <= 3; index++)
-        targets.push({id: `old-smoke-furnace:glowing-vent-${index}`, actorId: actor.id,
-          kind: 'furnace-vent', position: {x: actor.position.x + index - 2,
-            y: actor.position.y + 1, z: actor.position.z}, radius: 1.2, damage: 1});
+      if (actor.id === 'old-smoke-furnace')
+        targets.push(...oldSmokeVentTargets(actor,
+          Math.max(0, (worldJob.clockSec ?? 0) - actor.startedAtSec)));
     }
   }
   for (const barrier of step?.barriers ?? []) {

@@ -142,7 +142,7 @@ The runtime text in `deep-phone-lines.js` and `deep-log.js` was checked on
 | Ana: sound at 1,500 m/s | Good approximation; temperature and pressure vary it. [NOAA](https://oceanservice.noaa.gov/facts/sound.html). |
 | Ana: one litre lifts about one kilo | Buoyancy estimate is sound for one litre displaced **at depth**, not one surface litre compressed below. Seawater is about 1.025 kg/litre; bag/tank weights matter. Four 200-litre bags for a fictional 700 kg submerged car is plausible, not a salvage calculation. |
 | Ana: Chrysler lost in 1956 | Contemporary Chrysler press release confirms the Norseman on Andrea Doria. [Chrysler release reproduced by automotive archive](https://www.carsandracingstuff.com/library/articles/10720.php). “Still there today” is not freshly verified. |
-| Ana/log: no otters means no kelp | **Too absolute.** Otters help prevent urchin grazing; kelp also depends on other predators and environmental conditions. Suggest “Otters help keep urchins from eating the forest.” Keep the recorded line pending Claude's choice; voice credits are on hold. [Aquarium research](https://www.montereybayaquarium.org/change-impact/our-conservation-work/kelp-forest-resilience-and-recovery). |
+| Ana/log: no otters means no kelp | **Too absolute.** Otters eat sea urchins. With too few otters, urchins can eat a kelp forest bare. The line now reads “See the otters? They eat the sea urchins that eat the kelp.” [Aquarium research](https://www.montereybayaquarium.org/change-impact/kelp-forest-resilience-and-recovery). |
 | Ana: rare abalone pearls | Supported, including blue and green colours. [GIA](https://www.gia.edu/gems-gemology/fall-2015-labnotes-large-natural-pearls-haliotis-abalone-species). |
 | Sardines: schooling and predator confusion | Supported. [Aquarium](https://montereybayaquarium.tumblr.com/post/122880091133/we-just-added-15000-new-sardines-to-our-open-sea). |
 | Green turtles: name and California | Name from fat and Southern California residence supported; **diet as the certain cause of green fat is doubtful**. NOAA says it was originally attributed to diet and other sea turtles also have greenish fat. Suggest omit the cause. [NOAA species](https://www.fisheries.noaa.gov/species/green-turtle), [California research](https://www.fisheries.noaa.gov/west-coast/science-data/green-turtle-research-and-conservation-southern-california). |
@@ -261,4 +261,3 @@ merged result. One independent review: nothing blocking; four small points
 taken (lift ring moved above the sonar, chart floor so the panel fits 600 px,
 "the lift bags" for the Sirena, the ring's own class). Look check at 1280 x
 600: the panel and the ring fit, nothing overlaps.
-

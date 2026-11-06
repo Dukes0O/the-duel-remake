@@ -185,6 +185,9 @@ function verifyCandidate(provenance) {
   for (const row of archiveRows(SCENARIO_ROOT, provenance.commit).filter(row => /^(src|public)\//.test(row.path)))
     assert.equal(blobHash(readFileSync(join(SCENARIO_ROOT, row.path))), row.hash, 'actual candidate runtime bytes: ' + row.path);
 }
+export function needsCurrentSourceComparison(candidateSourceTree, baselineSourceTree) {
+  return candidateSourceTree !== baselineSourceTree;
+}
 async function recycleCurrentBaseline(provenance) {
   if (!provenance) return;
   assert.equal(resolve(realpathSync(provenance.home)), resolve(provenance.home), 'snapshot home is not redirected');
@@ -273,6 +276,13 @@ export function verifyPublicBaseline(reference, {mode = 'historical', provenance
 }
 
 async function automaticPublicBaseline(c) {
+  const candidateCommit = gitAt(SCENARIO_ROOT, ['rev-parse', 'HEAD']).trim();
+  const integrationTip = gitAt(SCENARIO_ROOT, ['rev-parse', 'integration/wasteland']).trim();
+  const baseCommit = gitAt(SCENARIO_ROOT, ['merge-base', candidateCommit, integrationTip]).trim();
+  const candidateSourceTree = treeAt(SCENARIO_ROOT, candidateCommit, 'src');
+  const baselineSourceTree = treeAt(SCENARIO_ROOT, baseCommit, 'src');
+  if (!needsCurrentSourceComparison(candidateSourceTree, baselineSourceTree))
+    return {status: 'retired-identical-source', commit: baseCommit};
   const provenance = await preparePublicBaseline({mode: 'current-integration'});
   const output = join(provenance.snapshot, '.evidence', 'arena-public-baseline');
   const retained = join(c.outputDir, 'public-baseline');
@@ -656,9 +666,9 @@ export async function run(c) {
   const supplied=process.env.ARENA_SHOVE_PUBLIC_INPUTS_FILE;
   const automatic=!publicOnly&&!supplied?await automaticPublicBaseline(c):null;
   const reference=automatic?.reference||(supplied?JSON.parse(readFileSync(resolve(supplied),'utf8')):null);
-  const baselineOptions=automatic?{mode:'current-integration',provenance:automatic.provenance}:undefined;
+  const baselineOptions=automatic?.provenance?{mode:'current-integration',provenance:automatic.provenance}:undefined;
   if(reference)verifyPublicBaseline(reference,{...baselineOptions,runtimeAssetTree});
-  const report={publicWalls:[],roleCases:[],extraWalls:[],obliques:[],publicOnly:process.env.ARENA_SHOVE_PUBLIC_ONLY==='1',sourceCommit,runtimeAssetTree,baselineVerifiedArchivedFiles:baseline?.verifiedArchivedFiles||null,baselineMode:baseline?.mode||baselineOptions?.mode||'historical',sourceTree:baseline?.sourceTree,archiveManifestSha256:baseline?.archiveManifestSha256,recipeOverlaySha256:baseline?.recipeOverlaySha256,referenceCommit:automatic?.provenance.commit||baseline?.commit||REFERENCE,publicSeed:PUBLIC_SEED,cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
+  const report={publicWalls:[],roleCases:[],extraWalls:[],obliques:[],publicOnly:process.env.ARENA_SHOVE_PUBLIC_ONLY==='1',sourceCommit,runtimeAssetTree,baselineVerifiedArchivedFiles:baseline?.verifiedArchivedFiles||null,baselineMode:automatic?.status||baseline?.mode||baselineOptions?.mode||'historical',sourceTree:baseline?.sourceTree,archiveManifestSha256:baseline?.archiveManifestSha256,recipeOverlaySha256:baseline?.recipeOverlaySha256,referenceCommit:automatic?.provenance.commit||automatic?.commit||baseline?.commit||REFERENCE,publicSeed:PUBLIC_SEED,cases:[],walls:[],frames:[],fixtures:'Memory-only discovered profile, stopped/approach poses, one-armor native wreck setup, real recovery timers, existing held CPU goals and isolated weapon/crate timers. Contacts and subsequent 120 Hz physics remain genuine.',
     limits:'Scripted contact/state captures do not prove natural CPU behavior, human Preview feel, listening or resolved historical HUD overlaps. Native all-mass/FPS/traffic controls remain independent.'};
   const save=()=>writeFile(join(c.outputDir,'arena-shove-browser.json'),JSON.stringify(report,null,2)+'\n');
   for(const quality of ['high','performance']){
@@ -719,6 +729,6 @@ export async function run(c) {
     }else{report.frames.push({quality,status:'not-run',reason:'Separate quiet manual measurement; no frame pass.'});await save();}
   }
   await c.evaluate('window.__qaApp.stop()');
-  if(automatic)await comparePublicWalls(automatic.path,join(c.outputDir,'arena-shove-browser.json'),join(c.outputDir,'public-wall-comparison.json'),baselineOptions);
+  if(automatic?.reference)await comparePublicWalls(automatic.path,join(c.outputDir,'arena-shove-browser.json'),join(c.outputDir,'public-wall-comparison.json'),baselineOptions);
   console.log('Arena shove recipe completed its scoped native assertions. Public mesh/solid clearance requires the matched baseline comparison; browser/frame/art/human/listening clearance remains independent.');
 }

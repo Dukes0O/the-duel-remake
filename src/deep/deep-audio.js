@@ -192,7 +192,7 @@ export function createDeepAudio({audio}) {
       placeSound = sound === 'deep.cave' || sound === 'deep.whale' ? sound : null;
     }
     if (!audible(state)) return;
-    if (ev.deepSonar) play('deep.sonar');
+    if (ev.deepSonar) play(ev.deepSonar.squeak ? 'deep.squeak' : 'deep.sonar');
     if (ev.deepLift) {
       liftVoice?.stop();
       liftVoice = play('deep.liftbag', {seconds: ev.deepLift.seconds});

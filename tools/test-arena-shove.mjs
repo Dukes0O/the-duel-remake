@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {test, after} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {verifyPublicBaseline} from './scenarios/arena-shove.mjs';
+import {needsCurrentSourceComparison, verifyPublicBaseline} from './scenarios/arena-shove.mjs';
 import {Duel} from '../src/game.js';
 import {CARS, COURSE, DRIVE} from '../src/config.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
@@ -809,6 +809,10 @@ for (const side of [-1, 1]) test(`NORMAL INCIDENT: continued CPU throttle side${
 
 // Pure provenance controls: no browser, snapshot generation or native scenario.
 test('Public baseline keeps historical identity separate from a captured integration control', () => {
+  eq(needsCurrentSourceComparison('candidate-src-tree', 'integration-src-tree'), true,
+    'changed committed source still receives a current integration comparison');
+  eq(needsCurrentSourceComparison('same-src-tree', 'same-src-tree'), false,
+    'identical committed source retires its redundant comparison');
   const provenance = {mode: 'current-integration', commit: 'a'.repeat(40), candidateCommit: 'b'.repeat(40),
     sourceTree: 'src-tree', runtimeAssetTree: 'public-tree', verifiedArchivedFiles: 12,
     archiveManifestSha256: 'archive-sha', recipeOverlaySha256: 'recipe-sha'};
