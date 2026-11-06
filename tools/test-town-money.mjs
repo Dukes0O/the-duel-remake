@@ -48,6 +48,12 @@ check(dispatchTownCommand(unpaid,{type:'tillIn',amount:1000},{profile:spareProfi
 month(unpaid);
 check(unpaid.buildings[0].operational===true,'a stopped building can return to work once its bill is paid');
 
+const deedMaintenance=createTown(17,'Deed maintenance');
+deedMaintenance.deeds={version:1,items:{'vultures-road':{ownerId:'player'},'vultures-works':{ownerId:'player'},'vultures-outpost':{ownerId:'player'}}};
+deedMaintenance.buildings=[{id:'maintained',buildingId:'hand-well',state:'finished',upkeepMonthly:100,staff:0}];
+month(deedMaintenance);
+check(townLedger(deedMaintenance).entries.some(entry=>entry.kind==='monthly-upkeep'&&entry.amount===95n),'the Twin Vultures set reduces upkeep by five percent');
+
 const loanTown=createTown(16,'Hollis Keeps Count');
 loanTown.buildings=[{id:'pump',buildingId:'pump-house',state:'finished',upkeepMonthly:600,staff:0}];
 for(let i=0;i<6;i++)month(loanTown);
