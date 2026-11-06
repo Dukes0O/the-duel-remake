@@ -30,3 +30,11 @@ Homes grow by themselves, so each tier must plainly look better than the one bef
 Every home has a `<id>:lamp` part.
 
 ## Claude answers
+
+## Claude answers
+
+Round 6 of 6, Kyle's limit (5 November). Merged as the working set. The colours, roofs, braced upper floors and canvas tents read well from the mayor's height, and ten homes make a lively street. Still short of the photo: the shapes are boxy, the roofs are large and plain, and patches look placed rather than grown. A later art pass can take these from the photo by projecting it, as the Dam did.
+
+Test change reviewed (rule 18): `tools/test-blender-output.mjs` no longer asks for one shared atlas, because `town_base.py` removed the atlas for every town family. It now checks each picture is a separate JPEG and holds the same total picture area to the old 1K budget. Named homes, plot sizes and triangle budgets are unchanged. Nothing is loosened.
+
+This card also owns its pictures in `public/assets/models/wasteland/town/textures/` and their lines in `CREDITS.md`.

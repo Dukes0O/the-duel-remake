@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const TOWN_ZOOM = Object.freeze({street: 28, scablands: 1450});
+export const TOWN_ZOOM = Object.freeze({street: 28, scablands: 2450});
 
 export function createTownCamera({width = 1, height = 1, target = {x: 0, y: 0, z: 0}, zoom = 0.08} = {}) {
   const camera = new THREE.PerspectiveCamera(48, width / Math.max(1, height), 0.1, 9000);

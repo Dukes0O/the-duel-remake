@@ -154,8 +154,8 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       await deleteCopies(copies.filter(item => !keep.has(item.id)).map(item => item.id));
       return clone(record);
     },
-    async load(id) {
-      const recoveryMessage = await recoverInstall(id);
+    async load(id, { readOnly = false } = {}) {
+      const recoveryMessage = readOnly ? '' : await recoverInstall(id);
       const record = await read(STORE, id);
       const copies = (await allCopies(id)).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
       if (copies.length && !valid(copies[0])) {
