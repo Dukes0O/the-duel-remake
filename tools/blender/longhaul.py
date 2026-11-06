@@ -11,8 +11,8 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/cars/longhaul.glb'
 texture_dir = root / 'public/assets/models/wasteland/cars/textures'
 blend = root / 'art-build/longhaul/longhaul.blend'
-evidence = root / '.evidence/2026-11-06/CAR-ART-LONGHAUL/round-4'
-sheet = root / 'docs/board/looks/car-art-longhaul/round-4.jpg'
+evidence = root / '.evidence/2026-11-06/CAR-ART-LONGHAUL/round-5'
+sheet = root / 'docs/board/looks/car-art-longhaul/round-5.jpg'
 reference = root / '.qa-dist/longhaul-reference.png'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(evidence)],'summary':[str(sheet)]}))
@@ -57,10 +57,13 @@ rust=mat('exposed iron oxide',(.085,.035,.02),.18,.94,'longhaul-rusted-paint.jpg
 steel=mat('scuffed dark steel',(.12,.105,.084),.24,.78,'longhaul-rusted-paint.jpg',repeat=.6)
 frame=mat('soot-dark chassis and underbody',(.028,.027,.024),.25,.9)
 rubber=mat('dusty cracked truck tyre rubber',(.035,.036,.032),.01,.97,'longhaul-dusty-rubber.jpg','UV',repeat=1.0)
-glass=mat('dark dusty cab glass',(.008,.012,.014),.08,.78)
+glass=mat('dusty smoke grey cab glass',(.10,.115,.11),.04,.84)
+glass.node_tree.nodes.get('Principled BSDF').inputs['Alpha'].default_value=.66
+glass.surface_render_method='DITHERED'
 lens=mat('clouded headlamp glass',(.55,.48,.34),.04,.38)
 metal=mat('rubbed bare edge steel',(.22,.20,.16),.22,.68)
 dust=mat('pale ground-in dust',(.13,.12,.10),.01,.96,'longhaul-dusty-rubber.jpg',repeat=.58)
+boom_paint=mat('worn ochre-yellow recovery boom enamel',(.34,.25,.07),.08,.92)
 
 vehicle=bpy.data.objects.new('longhaul',None); scene.collection.objects.link(vehicle)
 vehicle['vehicle_id']='longhaul'; vehicle['units']='metres'; vehicle['forward']='+Z'; vehicle['up']='+Y'
@@ -116,8 +119,8 @@ def tyre(name, center, major=.52, section=.18, width=.42, segments=42, rings=14,
         for loop_index,coord in zip(poly.loop_indices,coords): uv.data[loop_index].uv=coord
     # Twenty-four separate raised blocks per tyre make the working tread clear
     # in the silhouette and on the top view, while leaving the round carcass.
-    for i in range(24):
-        theta=2*math.pi*i/24
+    for i in range(18):
+        theta=2*math.pi*i/18
         radial=Vector((0,math.sin(theta),math.cos(theta)))
         tangent=Vector((0,-math.cos(theta),math.sin(theta)))
         center=Vector((cx,cy,cz))+radial*.725
@@ -150,7 +153,7 @@ box('rear chassis bumper',(0,.62,-3.60),(2.26,.20,.24),steel,.03)
 for axle,z in enumerate(axles,1):
     for side in (-1,1):
         x=side*1.16
-        tyre(f'axle {axle} round tread tyre',(x,wheel_y,z),.54,.16,.44,36,10,24)
+        tyre(f'axle {axle} round tread tyre',(x,wheel_y,z),.54,.16,.44,32,10,18)
         cylinder('pressed steel wheel rim',(side*1.36,wheel_y,z),.40,.15,frame,'X',32)
         cylinder('rusted rim dish',(side*1.45,wheel_y,z),.30,.07,rust,'X',28)
         cylinder('wheel hub',(side*1.52,wheel_y,z),.17,.10,frame,'X',24)
@@ -186,7 +189,7 @@ cab_bottom,cab_top=1.34,3.54
 cab_back,cab_front=.47,2.47
 box('continuous cab lower shell',(0,1.78,1.48),(2.32,.96,1.88),paint,.045)
 box('cab rear wall',(0,2.43,.49),(2.32,1.30,.10),rust,.025)
-box('cab roof pressed edge',(0,3.50,1.44),(2.40,.12,2.02),paint,.045)
+box('cab roof pressed edge',(0,3.43,1.44),(2.40,.16,2.02),paint,.045)
 for z in (.60,1.94):
     box('cab mount crossmember fixed to rails',(0,1.28,z),(2.08,.14,.22),steel,.02)
 for side in (-1,1):
@@ -206,17 +209,18 @@ for side in (-1,1):
     beam('wing mirror arm',(x,2.72,1.69),(x*1.19,2.78,1.88),.035,steel,8)
     box('wing mirror housing',(x*1.19,2.91,1.90),(.10,.38,.25),frame,.035)
 
-# Slightly sloped windshield glass is inset into the flat front face and split
-# into two panes. Front lower edge reaches forward; the roof edge sits back.
-panel('left front windshield pane',[(-1.03,2.53,2.48),(-.035,2.53,2.48),(-.035,3.35,2.36),(-1.03,3.35,2.36)],glass,.025)
-panel('right front windshield pane',[(.035,2.53,2.48),(1.03,2.53,2.48),(1.03,3.35,2.36),(.035,3.35,2.36)],glass,.025)
-for x in (-1.10,0,1.10): beam('windshield steel pillar',(x,2.48,2.51),(x,3.42,2.34),.04,paint,10)
-beam('front windshield lower seal',(-1.10,2.48,2.51),(1.10,2.48,2.51),.035,rust)
-beam('front windshield upper seal',(-1.10,3.42,2.34),(1.10,3.42,2.34),.035,rust)
-box('front cowl and dash',(0,2.32,2.53),(2.28,.18,.25),paint,.025)
+# Thick pillars carry the lowered roof. A full-width painted front panel runs
+# from the windscreen down to the bumper, closing the cab face.
+box('full width painted cab front panel',(0,1.56,2.48),(2.32,1.80,.18),paint,.035)
+panel('left front windshield pane',[(-1.03,2.53,2.48),(-.035,2.53,2.48),(-.035,3.30,2.39),(-1.03,3.30,2.39)],glass,.025)
+panel('right front windshield pane',[(.035,2.53,2.48),(1.03,2.53,2.48),(1.03,3.30,2.39),(.035,3.30,2.39)],glass,.025)
+for x in (-1.12,0,1.12): beam('thick painted windshield pillar',(x,2.47,2.51),(x,3.42,2.34),.085,paint,12)
+beam('front windshield lower seal',(-1.10,2.48,2.51),(1.10,2.48,2.51),.04,rust)
+beam('front windshield upper seal',(-1.10,3.42,2.34),(1.10,3.42,2.34),.04,rust)
+box('front cowl and dash',(0,2.42,2.50),(2.28,.20,.25),paint,.025)
 # A shadowed seat and steering wheel are the only cabin objects visible through glass.
-box('dark driver seat cushion',(-.34,1.87,1.42),(.58,.18,.58),frame,.08)
-box('dark driver seat back',(-.34,2.21,1.16),(.58,.70,.18),frame,.07)
+box('dark driver seat cushion',(-.34,2.02,1.58),(.58,.18,.58),frame,.08)
+box('dark driver seat back',(-.34,2.35,1.30),(.58,.70,.18),frame,.07)
 beam('steering column',(-.34,2.22,1.83),(-.34,2.52,2.18),.045,steel,10)
 steer=[]
 for i in range(17):
@@ -236,11 +240,15 @@ for i in range(7):
 for side in (-1,1):
     cylinder('headlamp housing',(side*.88,1.54,2.96),.18,.11,frame,'X',24)
     cylinder('clouded lamp lens',(side*.95,1.54,2.96),.13,.03,lens,'X',24)
-    box('round lamp protective hoop',(side*.96,1.54,2.96),(.035,.43,.43),steel,.18)
-    beam('bull bar outer upright',(side*1.15,.48,3.06),(side*1.15,1.90,3.12),.085,steel,14)
+    hoop=[]
+    for i in range(17):
+        a=2*math.pi*i/16
+        hoop.append((side*.99,1.54+.235*math.sin(a),2.96+.235*math.cos(a)))
+    for a,b in zip(hoop,hoop[1:]): beam('round lamp protective hoop',a,b,.022,steel,8)
+    beam('bull bar outer upright',(side*1.15,.48,3.06),(side*1.15,1.74,3.12),.085,steel,14)
     beam('bull bar mount',(side*.90,.54,2.45),(side*.90,.74,3.10),.075,rust)
 beam('bull bar lower crossbar',(-1.15,.50,3.06),(1.15,.50,3.06),.09,rust,14)
-beam('bull bar upper crossbar',(-1.15,1.90,3.12),(1.15,1.90,3.12),.075,steel,14)
+beam('bull bar upper crossbar',(-1.15,1.74,3.12),(1.15,1.74,3.12),.075,steel,14)
 for side in (-1,1):
     cx=side*.76; cy=.48; cz=3.19; r=.12
     points=[]
@@ -285,7 +293,7 @@ for side in (-1,1):
     tyre('deck mounted spare tyre',center,.50,.15,.32,32,12,20)
     cylinder('spare rim',(side*.56,2.02,-2.25),.30,.10,frame,'X',28)
     cylinder('spare hub',(side*.62,2.02,-2.25),.13,.05,metal,'X',20)
-toolbox=mat('faded red toolbox enamel',(.30,.055,.032),.10,.90)
+toolbox=mat('dark rust red toolbox enamel',(.14,.025,.018),.10,.93)
 for x in (-.70,.70):
     box('latched red recovery toolbox',(x,1.64,-1.45),(.52,.48,.66),toolbox,.035)
     box('tool chest lid seam',(x,1.89,-1.45),(.53,.035,.67),metal,.012)
@@ -296,17 +304,26 @@ for x in (-.60,-.42,.42,.60):
         beam('hanging recovery chain link',(x,y,-2.98),(x+(.035 if i%2 else -.035),y-.09,-2.98),.018,rust,8)
 beam('rear recovery winch drum',(-.42,1.48,-1.32),(.42,1.48,-1.32),.10,frame,16)
 # Bed-mounted A-frame with gusseted feet, cross head and a real recovery cable.
-beam('A-frame left leg',(-.76,1.45,-2.82),(-.08,3.05,-2.45),.075,steel,12)
-beam('A-frame right leg',(.76,1.45,-2.82),(.08,3.05,-2.45),.075,steel,12)
-beam('A-frame cross head',(-.10,3.05,-2.45),(.10,3.05,-2.45),.09,rust,14)
-beam('A-frame rear brace',(-.54,1.52,-2.72),(-.08,2.82,-2.52),.05,rust,10)
-beam('A-frame rear brace',(.54,1.52,-2.72),(.08,2.82,-2.52),.05,rust,10)
-beam('winch cable',(-.42,1.48,-1.32),(0,2.96,-2.45),.018,metal,8)
+beam('A-frame left leg',(-.76,1.45,-2.82),(-.08,3.62,-2.45),.075,boom_paint,12)
+beam('A-frame right leg',(.76,1.45,-2.82),(.08,3.62,-2.45),.075,boom_paint,12)
+beam('A-frame cross head',(-.10,3.62,-2.45),(.10,3.62,-2.45),.09,boom_paint,14)
+beam('A-frame rear brace',(-.54,1.52,-2.72),(-.08,3.25,-2.52),.05,boom_paint,10)
+beam('A-frame rear brace',(.54,1.52,-2.72),(.08,3.25,-2.52),.05,boom_paint,10)
+beam('winch cable',(-.42,1.48,-1.32),(0,3.53,-2.45),.018,metal,8)
+for i in range(7):
+    y=3.42-i*.16
+    beam('hanging crane chain link',(-.02,y,-2.45),(.02,y-.10,-2.45),.025,rust,8)
+beam('recovery hook stem',(.02,2.25,-2.45),(.02,2.05,-2.45),.05,steel,10)
+for a,b in [((.02,2.05,-2.45),(.17,1.92,-2.45)),((.17,1.92,-2.45),(.25,2.02,-2.45)),((.25,2.02,-2.45),(.21,2.11,-2.45))]: beam('forged recovery hook',a,b,.045,steel,10)
+beam('crane pulley axle',(-.18,3.61,-2.45),(.18,3.61,-2.45),.06,steel,12)
+cylinder('crane pulley wheel',(0,3.61,-2.45),.14,.10,frame,'X',20)
 for side in (-1,1):
     beam('rear towing bracket',(side*.64,.80,-3.06),(side*.64,.48,-3.31),.055,steel)
     for i in range(3): box('cab entry step',(side*1.17,.48+i*.20,.42),(.26,.075,.36),frame,.015)
-for x in (-.82,-.28,.28,.82):
-    cylinder('roof marker lamp',(x,3.61,2.05),.075,.12,lens,'Y',16)
+for x in (-.72,.72):
+    beam('roof lamp stalk',(x,3.48,2.05),(x,3.68,2.05),.035,steel,10)
+    cylinder('round roof work lamp',(x,3.76,2.05),.11,.20,steel,'X',20)
+    cylinder('dusty roof lamp lens',(x,3.76,2.16),.078,.025,lens,'Z',20)
 
 # Review-only scale person. The game crew model is imported only after GLB export.
 def aim(obj, point, world_up=(0,0,1)):

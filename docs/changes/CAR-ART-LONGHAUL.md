@@ -2,22 +2,21 @@
 
 ## Changed
 
-- Reworked `tools/blender/longhaul.py` for round 4: enclosed cab panels and smaller dark windows, grille mesh, bumper shackles, non-overlapping tandem axles, clear side tanks, visible tread blocks, dark hubs and joined bed recovery gear.
-- Kept the approved rusted paint and dusty rubber images and material settings unchanged. Their prompts and credits remain in `public/assets/models/wasteland/cars/textures/CREDITS.md`.
-- Re-exported `public/assets/models/wasteland/cars/longhaul.glb`: 24,956 triangles and 2,049,716 bytes. Its five view renders came from the exported GLB imported into an empty Blender scene.
-- Added `docs/board/looks/car-art-longhaul/round-4.jpg` (285,839 bytes) and `round-4-review.md`. The sheet includes a fitted reference view from the new generated photo and the five review views.
+- Updated `tools/blender/longhaul.py` for round 5. The cab roof is lower and supported by thick painted pillars. A full-width steel panel closes the cab front to the bumper. Glass is lighter and dusty, with the dark seat and steering wheel behind it.
+- Kept the approved side shape, fuel tanks, rusted paint, dusty rubber and six wheel assemblies. The bull bar uses rounded tube lamp guards. Two round roof work lamps replace the four blocks. The recovery crane is a raised ochre-yellow A-frame with a pulley, chain and hook. Bed rails remain tubes and the toolbox is darker rust red.
+- Re-exported `public/assets/models/wasteland/cars/longhaul.glb`. Blender rendered five views from the exported GLB imported into an empty scene. The model is 2,085,380 bytes; the output checker confirms it remains within the card budget.
+- Added `docs/board/looks/car-art-longhaul/round-5.jpg` (223,745 bytes) and `round-5-review.md`. The sheet places the prior generated photo beside the new front three-quarter view and includes rear, side, top and person-scale views.
+- Existing runtime textures and their prompts and credits are unchanged.
 
 ## Checks
 
-- Blender recipe export and re-import render: passed; five views rendered. GLB size and triangle count remain within the card limits.
-- GLB inspection: passed; all 537 primitives use a ranged `TEXCOORD_0` only, and the highest material metallic factor is 0.25.
-- `node tools/test-blender-output.mjs`: passed, 232 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; placement is valid and the reported size targets are advisory.
+- `tools/test-blender-output.mjs`: passed, 232 checks.
+- `tools/test-repo-hygiene.mjs`: passed; placement is valid and reported size targets are advisory.
 - No lane tier or build was run, as directed for this art card.
-- Browser and in-game look checks were not run in this lane. Claude should review cab shape and glass, mesh grille and bull bar, wheel-lug visibility and arch clearance, tank spacing, tandem axle spacing, rear A-frame, rack and full-truck framing in the round-4 sheet.
-- Changed assertions: none.
-- Race fingerprints: unchanged; no simulation or race code changed.
+- Browser and in-game look checks were not run in this lane. Claude should inspect the cab-to-bumper closure, seat and steering wheel behind the glass, round lamp guards, yellow A-frame with hanging hook and chain, tubular bed rails, and the ground horizon seam in the round-5 sheet. The side profile, wheels, paint and tanks passed in round 4.
+- Changed assertions: none. Race fingerprints: unchanged; no simulation or race code changed.
 
 ## Removed
 
-- Removed the round-1 and round-2 sheets and review notes as superseded by this round. Replaced the round-3 cab frame, large side panes, even axle spacing, subtle tyre tread and long side rub rails in the recipe and model. No backup model or trial render is retained.
+- Removed the superseded `round-3.jpg` and `round-3-review.md`.
+- Replaced the four roof marker blocks and low brown recovery frame. Temporary Blender renders and logs will be removed before commit.
