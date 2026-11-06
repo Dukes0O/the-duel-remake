@@ -47,8 +47,19 @@ carriage_side = Photo(textures / 'carriage-side.jpg', frame=(2172, 724))
 carriage_end = Photo(textures / 'carriage-end.jpg')
 carriage_canvas = Photo(textures / 'carriage-canvas.jpg')
 van_side = Photo(textures / 'van-side.jpg', frame=(2048, 683))
-van_end = Photo(textures / 'van-end.png')
+van_end = Photo(textures / 'van-end.jpg')
 van_canvas = van_side
+for photo in (carriage_side, carriage_end, van_side, van_end):
+    if max(photo.image.size) > 700:
+        photo.image.scale(round(photo.image.size[0] * 700 / max(photo.image.size)),
+                          round(photo.image.size[1] * 700 / max(photo.image.size)))
+        photo.image_w, photo.image_h = photo.image.size
+        photo._rgb = None
+        photo.image.pack()
+if max(carriage_canvas.image.size) > 512:
+    carriage_canvas.image.scale(round(carriage_canvas.image.size[0] * 512 / max(carriage_canvas.image.size)),
+                                round(carriage_canvas.image.size[1] * 512 / max(carriage_canvas.image.size)))
+    carriage_canvas.image.pack()
 
 # Sky in each photo. Seeds: the open sky, then each opening where sky shows through.
 side_solid = tidy(~side.sky([(30, 30), (1000, 40), (1950, 300), (340, 260), (272, 300), (190, 150), (700, 135), (850, 135)]))
@@ -413,6 +424,17 @@ for k in range(ROOF_STEPS):
                    photo.uv(423, 270), photo.uv(354, 270))
         carriage.face(corners, uvs, material, out if inset == 0 else tuple(-v for v in out))
 
+# The canvas hangs over each eave in a torn, photo-traced band. Three small
+# vents rise from the crown where they appear in the side photograph.
+carriage_eave = trace(carriage_side_solid, (30, 25, 2040, 132), tolerance=1.8, min_area=45)
+for sign in (-1, 1):
+    slab(carriage, C_SIDE, carriage_side, carriage_eave, carriage_side_point,
+         sign * 1.30, sign * 1.335, wall_scale=CS)
+for px in (500, 1170, 1770):
+    lathe(carriage, C_SIDE, (CX(px), 3.66, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+          [(0, .075), (.05, .075), (.09, .052)],
+          lambda i, d, r, a, px=px: carriage_side.uv(px + math.cos(a) * 10, 55 + i * 8), sides=12)
+
 # Bolster beams and the two four-wheel bogies, all read from the lower side photo.
 FRAME = (C_SIDE, carriage_side, (300, 473, 1900, 510))
 BOGIE = (C_SIDE, carriage_side, (175, 500, 670, 635))
@@ -425,6 +447,13 @@ for start, end in ((115, 700), (1450, 2020)):
         for sign in (1, -1):
             slab(carriage, C_SIDE, carriage_side, bogie_loops, carriage_side_point,
                  sign * .82, sign * 1.03, wall_scale=CS)
+
+# Trace the photographed centre underframe itself, including the tank and
+# truss rods between the bogies, onto each outer frame plane.
+underframe = trace(carriage_side_solid, (680, 470, 1510, 635), tolerance=1.8, min_area=55)
+for sign in (-1, 1):
+    slab(carriage, C_SIDE, carriage_side, underframe, carriage_side_point,
+         sign * 1.025, sign * 1.055, wall_scale=CS)
 
 WHEEL_CENTRES = ((238, 586, 73), (570, 586, 73), (1600, 586, 73), (1910, 586, 73))
 for cx, cy, radius_px in WHEEL_CENTRES:
@@ -477,7 +506,7 @@ V_SIDE, V_END = 'van-side', 'van-end'
 van_materials = {V_SIDE: van_side.material(), V_END: van_end.material()}
 
 # Main timber body. Keep the luggage doorway and the two lookout panes open.
-van_body = trace(van_side_solid, (90, 104, 1960, 495), tolerance=1.8, min_area=100)
+van_body = trace(van_side_solid, (130, 112, 1930, 495), tolerance=1.8, min_area=100)
 van_body.append(rounded(689, 171, 1117, 438, 8))
 for sign in (1, -1):
     slab(van, V_SIDE, van_side, van_body, van_side_point, sign * 1.22, sign * 1.29, wall_scale=VS)
@@ -507,7 +536,7 @@ box(van, VX(1510), VX(1842), 3.11, 3.49, -.88, .88,
 # End sheets carry the doorway and roof lookout through the matching end view.
 # Keep the body separate from the photographed buffers and bogies; those are
 # modelled in their proper places below.
-end_outline = trace(van_end_solid, (90, 190, 1108, 1000), tolerance=1.8, min_area=250)
+end_outline = trace(van_end_solid, (165, 190, 1055, 1000), tolerance=1.8, min_area=250)
 end_outline = [loop for loop in end_outline
                if max(p[0] for p in loop) - min(p[0] for p in loop) > 700
                and max(p[1] for p in loop) - min(p[1] for p in loop) > 500]
@@ -519,9 +548,9 @@ end_lookout += [rounded(388, 64, 566, 159, 8), rounded(628, 64, 812, 159, 8)]
 for x in (-6.24, 6.16):
     slab(van, V_END, van_end, end_outline, van_end_point,
          x, x + .08, wall_scale=.0026)
-    slab(van, V_END, van_end, end_lookout, van_end_point,
-         x, x + .08, wall_scale=.0026)
-box(van, -6.12, 6.10, .75, 3.68, -1.12, 1.12,
+slab(van, V_END, van_end, end_lookout, van_end_point,
+     5.35, 5.43, wall_scale=.0026)
+box(van, -6.12, 6.10, .75, 3.06, -1.12, 1.12,
     {'+x': (V_END, van_end, (458, 390, 742, 825)), '-x': (V_END, van_end, (458, 390, 742, 825))})
 
 # The canvas roof is a shallow arch across the van, continued along its length.
@@ -531,9 +560,9 @@ for k in range(16):
         return (VX(px), 3.06 + .34 * math.sin(a), 1.26 * math.cos(a))
     corners = (roof_point(a0, 90), roof_point(a0, 1960),
                roof_point(a1, 1960), roof_point(a1, 90))
-    py0, py1 = 106 + 40 * k / 16, 106 + 40 * (k + 1) / 16
-    uvs = (van_side.uv(90, py0), van_side.uv(1960, py0),
-           van_side.uv(1960, py1), van_side.uv(90, py1))
+    py0, py1 = 112 + 34 * k / 16, 112 + 34 * (k + 1) / 16
+    uvs = (van_side.uv(145, py0), van_side.uv(1905, py0),
+           van_side.uv(1905, py1), van_side.uv(145, py1))
     van.face(corners, uvs, V_SIDE, (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2)))
 
 # The photograph shows one central axle, with truss rods reaching the ends.
@@ -543,7 +572,7 @@ for wheel_x in wheel_centres:
     radius = radius_px * VS
     centre = (VX(wheel_x), radius, 0)
     face_uv = lambda a, f, x=wheel_x: van_side.uv(x + math.cos(a) * f * radius_px * .84,
-                                                   556 - math.sin(a) * f * radius_px * .84)
+                                                   580 - math.sin(a) * f * radius_px * .84)
     tread_uv = lambda i, d, r, a: van_side.uv(wheel_x + 46 + i * 14, 558 + abs(math.sin(a)) * 25)
     for sign in (1, -1):
         lathe(van, V_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
@@ -557,14 +586,11 @@ for wheel_x in wheel_centres:
         {'+z': (V_SIDE, van_side, (wheel_x - 70, 480, wheel_x + 70, 535)),
          '-z': (V_SIDE, van_side, (wheel_x - 70, 480, wheel_x + 70, 535)), '-y': (V_SIDE, van_side, (wheel_x - 70, 535, wheel_x + 70, 548))})
 
-TRUSS = (V_SIDE, van_side, (220, 507, 480, 544))
 for z in (-.82, .82):
-    slab(van, V_SIDE, van_side, [[(112, 524), (850, 548), (850, 559), (112, 533)]],
+    slab(van, V_SIDE, van_side, [[(350, 522), (850, 574), (850, 586), (350, 534)]],
          van_side_point, z, z + .035, wall_scale=VS)
-    slab(van, V_SIDE, van_side, [[(1160, 548), (1938, 524), (1938, 533), (1160, 559)]],
+    slab(van, V_SIDE, van_side, [[(1165, 574), (1650, 522), (1650, 534), (1165, 586)]],
          van_side_point, z, z + .035, wall_scale=VS)
-    box(van, VX(85), VX(1960), .56, .76, z - .04, z + .04,
-        {'+z': TRUSS, '-z': TRUSS, '-y': TRUSS})
 
 for x_sign in (-1, 1):
     for z_sign in (-1, 1):
@@ -576,7 +602,7 @@ for x_sign in (-1, 1):
 
 # Canvas side bands are traced from the photo's ragged eave, and the three
 # vents sit on the roof at the photographed centres.
-van_eave = trace(van_side_solid, (85, 90, 1955, 160), tolerance=1.8, min_area=35)
+van_eave = trace(van_side_solid, (125, 90, 1915, 160), tolerance=1.8, min_area=35)
 for sign in (-1, 1):
     slab(van, V_SIDE, van_side, van_eave, van_side_point, sign * 1.22, sign * 1.245, wall_scale=VS)
 for px in (330, 1010, 1690):
@@ -655,11 +681,12 @@ for obj in scene.objects:
         obj.hide_render = True
 shot('carriage-side', (0, 1.83, 24), (0, 1.83, 0), 1000, 334, ortho=15.0)
 shot('carriage-end', (12, 1.83, 0), (0, 1.83, 0), 600, 600, ortho=4.4)
-shot('carriage-quarter', (8, 1.7, 9), (1, 1.75, 0), 1000, 380, lens=26)
-shot('carriage-quarter-rear', (-8, 1.7, 9), (-1.6, 1.75, 0), 1000, 380, lens=26)
+shot('carriage-quarter', (10, 1.7, 9.5), (1, 1.75, 0), 1000, 620, lens=31)
+shot('carriage-quarter-rear', (-10, 1.7, 9.5), (-1.6, 1.75, 0), 1000, 620, lens=31)
 for obj in scene.objects:
     if obj.name.startswith(('the-2-15-engine', 'the-2-15-track', 'the-2-15-drift', 'the-2-15-carriage')):
         obj.hide_render = True
 shot('van-side', (0, 2.0, 24), (0, 2.0, 0), 1000, 430, ortho=14.5)
 shot('van-end', (24, 2.0, 0), (0, 2.0, 0), 600, 620, ortho=4.5)
-shot('van-quarter', (8, 2.0, 9), (0, 2.0, 0), 1000, 620, lens=29)
+shot('van-quarter', (10, 1.7, 9.5), (0, 1.7, 0), 1000, 620, lens=31)
+shot('van-quarter-rear', (-10, 1.7, 9.5), (-.5, 1.7, 0), 1000, 620, lens=31)
