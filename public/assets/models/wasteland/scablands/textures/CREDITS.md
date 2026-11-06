@@ -111,3 +111,7 @@ The piano front is perspective-warped from its original photograph.
   warped to a 1500 x 1300 front view and reduced to 1200 x 1040. Prompt:
   battered upright piano with its
   action exposed, photographed in even neutral daylight.
+
+- `ww-gerald-side.jpg`: original side-view crop from the two-view desert-lizard photograph used for `ww-gerald-photo.jpg`. Prompt: realistic desert lizard, side and overhead photographs, plain dusty ground, overcast daylight. Unedited source pixels; generated green cutout used only for the mask.
+
+- `ww-gerald-overhead-mask.png` and `ww-gerald-side-mask.png`: lizard silhouettes isolated by pure-green color mask from the green-background edit. Used only by the Blender recipe; the embedded model colors come from the unedited original photo crops.

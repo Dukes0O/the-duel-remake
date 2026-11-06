@@ -1,41 +1,28 @@
-# WW-ART-CREW round 4
+# WW-ART-CREW round 5 candidate
 
 ## Changed
 
-- Replaced Gerald's separate body and log legs with a closed overhead-photo
-  relief grid. The source mask includes all four feet and the full tail; the
-  nose-to-hip span is 0.30 m, the spine reaches 45 mm, and joint bumps lift the
-  elbows and knees by 15 mm.
-- Replaced the round 3 harpoon with a 120-column, 12-sided outline lathe from a
-  new level side-on photograph.
-- Rebuilt the piano from measured, unrounded slabs at the specified depths.
-  Its front faces use their own picture regions; wood returns use two-dimensional
-  photo crops, and the opening sides use darkened wood.
-- Completed the three-row comparison sheet from matched renders of the
-  exported and reimported GLB.
+- Inset harpoon ring UVs by 0.86 around each column centre, including the barb section.
+- Mirrored the piano geometry so the side strip appears on the viewer's left. Replaced the separate photo slabs with a measured photo-kit silhouette shell. Added front-left and front-right three-quarter renders.
+- Replaced Gerald's flat relief with a 40-station, 12-sided body using overhead and side photo UVs, plus 14 mm bent leg slabs traced from the green cutout masks. The masks retain the whole tail and toes and contain no shadow. The model uses the original photo pixels for color.
+- Exported from the recipe and rendered all views from a fresh GLB import. Final export: 6,614 triangles; 1,646,564 bytes.
 
 ## Checks
 
-- Blender 4.5 recipe rebuild, GLB reimport and matched renders: passed;
-  19,386 triangles, 1,676,328 bytes across all three props.
-- `node tools/test-blender-output.mjs`: passed, 258 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; size advisories only.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: failed in the
-  unrelated Eifel audio loudness check. Its same-commit rerun also failed.
-  FFmpeg is unavailable in this session, so that check could not measure the
-  audio. No test assertions changed.
-- `npm run build`: passed.
-- Browser checks: not run; no browser check is named on this card.
-- Claude's final look verdict: pending. The harpoon's light silhouette rim and
-  Gerald's shallow side profile remain called out for review.
-- Visual self-check: Gerald's overhead reads as a real lizard relief. Its
-  shallow side profile reads thin because the specified spine height is 45 mm.
-  The harpoon silhouette matches its reference, with a light rim to review. The
-  piano's front reads as an old upright with exposed action and no white edges.
+- Blender 4.5 rebuild and reimported renders: completed.
+- `node tools/test-blender-output.mjs`: passed, 279 checks.
+- `node tools/test-repo-hygiene.mjs`: passed; existing size advisories only.
+- Browser checks: not run; they are Claude's.
 - Changed assertions: none. Race fingerprints: not applicable.
+
+## Visual verdict
+
+This candidate does not meet the card's look acceptance and is not submitted as round 5. The harpoon still shows a pale edge at the barb. The piano's angled views still show pale photo areas around its silhouette. Gerald has more body height, but its legs and overall shape do not yet read as a convincing lizard. Do not treat any of the three as a pass. No round-5 comparison sheet was made; round 4 remains the latest submitted sheet.
+
+Claude should review the current exported model and render recipe before deciding the next art pass.
 
 ## Removed
 
-- Removed Gerald's separate body/head/tail and straight leg geometry and the
-  round 3 piano/harpoon shapes. Round 3 sheet and note are replaced by round 4.
-- No unrelated favours were added.
+- Replaced Gerald's round-4 overhead relief and the piano's separate slabs in the current recipe.
+- Removed round-5 generated cutout previews, render captures, test logs and the temporary Blender file after review.
+- No other props or assets were changed.
