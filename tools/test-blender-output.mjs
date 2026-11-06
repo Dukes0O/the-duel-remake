@@ -673,6 +673,8 @@ try {
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= 0.3,
         `${material.name} metallic factor exceeds the reflection limit`);
+    }
+  });
   check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
     const path = join(root, 'public/assets/models/wasteland/town/dome.glb');
     if (!existsSync(path)) return; // Generated and read back in the art lane; not a runtime asset yet.
