@@ -57,6 +57,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
+    glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:3000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
@@ -702,6 +704,22 @@ try {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= 0.3,
         `${material.name} metallic factor exceeds the reflection limit`);
     }
+  });
+  check('TOWN-ART-PLANTS round 1 exports the crusher with named working parts and photo materials', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(4), 2);
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the family limit`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const names = gltf.nodes.map(node => node.name || '');
+    assert.ok(names.includes('town-plants'), 'family root');
+    assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name), ['crusher'], 'one named piece in round 1');
+    for (const name of ['crusher:jaw', 'crusher:belt', 'crusher-discharge-chute', 'crusher-hopper-back', 'crusher-diesel-skid']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(gltf.images?.length >= 3, 'distinct embedded photo materials');
+    for (const material of gltf.materials) assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 1) <= .3, 'metallic finish must stay at or below 0.3');
   });
   check('TOWN-ART-SANITATION exports all five named buildings with sampled UV textures', () => {
     const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/sanitation.glb'));
