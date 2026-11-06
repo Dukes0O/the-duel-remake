@@ -243,7 +243,8 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
   loanSlot.type = 'button'; loanSlot.dataset.combatWeapon = 'flamethrower'; loanSlot.dataset.combatSlot = '3';
   loanSlot.title = `${WEAPONS.flamethrower.name} · Key 4`;
   loanSlot.innerHTML = `<span class="combat-slot-ring" aria-hidden="true"></span><span class="combat-slot-key">4 ↓</span><span class="combat-slot-name">${WEAPONS.flamethrower.name}</span><span class="combat-slot-state"></span>`;
-  loanSlot.hidden = true; slotBar.append(loanSlot); buttons.push(loanSlot);
+  // The loaned flamethrower joins the bar only while it is on loan, so the bar always holds the car's real slots.
+  loanSlot.hidden = true; buttons.push(loanSlot);
   const hitMarker = host.querySelector('.combat-hit-marker');
   const damageArrow = host.querySelector('.combat-damage-direction');
   const xpToast = host.querySelector('.combat-xp-toast');
@@ -345,6 +346,10 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
       button.hidden = slot === 3 && ((button === loanSlot) !== (id === 'flamethrower'));
+      if (button === loanSlot) {
+        if (button.hidden) button.remove();
+        else if (!button.isConnected) slotBar.append(button);
+      }
       if (button.hidden) continue;
       const weapon=WEAPONS[id];
       if(button.dataset.combatWeapon!==id)button.dataset.combatWeapon=id;

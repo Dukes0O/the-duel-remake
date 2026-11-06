@@ -45,3 +45,7 @@ Sand prompt:
 - Removed the superseded round 1 sheet and review. Kept round 2 for the requested comparison.
 - The proof asset `public/assets/models/wasteland/town/sample.glb` remains until `TOWN-ART-HOMES` supplies and passes the first real homes family; that card removes the sample GLB.
 - Blender scene files, render captures and material source copies are temporary. They will be removed after the final check; the original generated images remain outside the repository.
+
+## Fix found in the game (Claude, 5 November 2026)
+
+The base used one shared sheet, with Blender node maths to repeat one cell of it. glTF cannot carry that, so in the game every part sampled the whole sheet, including its empty white cells: 47% of the sample's points landed on white. The sheet looked right only because it was rendered from the Blender scene. Each material now has its own small repeating picture, and `export_glb` writes JPEG, so the sample fell from 2.0 MB to 1.0 MB with none of its points on white. **From now on every sheet is rendered from the exported model, imported back into an empty scene.** Every family built on this base rebuilds from its recipe.

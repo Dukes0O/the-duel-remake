@@ -59,6 +59,7 @@ import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
 import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
 import {createAmbushAlleyView} from './arena/modes/ambush-alley-view.js';
+import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -478,6 +479,8 @@ export function attachRenderer(host, app) {
   const fuelEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
+  // The Bowl view owns only course art; its switch never participates in race rules.
+  const bowlView=createBowlView();scene.add(bowlView.group);
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -1082,6 +1085,9 @@ export function attachRenderer(host, app) {
       bountyView.update(st,bountyEntries);
     }else bountyView.group.visible=false;
     ambushView.update(st);
+    const flags=app._switches?.()??app.duel.featureFlags;
+    bowlView.update(course,menu?{crushedProps:[]}:st,ambientNow,
+      flags?.enabled('titan-bowl')===true);
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
@@ -1269,6 +1275,7 @@ export function attachRenderer(host, app) {
     const release = () => {
       bountyView.dispose();
       ambushView.dispose();
+      bowlView.dispose();
       fuelView.dispose();
       tanker?.dispose();
       rearView.dispose();

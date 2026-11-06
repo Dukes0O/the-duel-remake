@@ -187,6 +187,8 @@ to go alone. He comes back with the logbook, and it is his handwriting:
 
 ### Act 5: The Day the Sea Came Back (Years 18 to 25 or so, to 200 hours and more)
 
+Every line and job: `docs/story/the-sea-works.md`, which wins on details. There, the new gear is 24 sections, each light enough for Kestrel One's hook.
+
 The biggest thing you can build: **the Sea Works**, about two million worker hours and
 400 tonnes of steel, the work of a whole generation of your town. People who were
 children in Act 2 run it. Some who started it do not see it finished, and their names go
@@ -273,7 +275,7 @@ the Deep is paused). Ana's single radio line in Act 5 is the only link.
 
 Both are now written line by line: `docs/story/iron-mule.md` and
 `docs/story/ships-in-the-sand.md`. Act 3's chapters 17 to 21 and section 5's warlord jobs are
-written the same way in `docs/story/the-polite-letter.md`.
+written the same way in `docs/story/the-polite-letter.md`, and Act 5 in `docs/story/the-sea-works.md`.
 
 **Later:** section 11.
 
@@ -403,6 +405,8 @@ Voice is a later card, and no release waits for it.
 The story has no last page. Each of these can become a whole strand, added as new files whenever Kyle and Gratian want it, and none needs anything already built to change: **a harbour** and what comes with it, boats and trade across the water; **land beyond the Ridge** and whoever lives there; **a second town** of yours and the road between them; **Magnus's biggest magnet**; **Bo's own story**, and his children's; **Hollis's last gate**; **a Wasteland race** along the new shore; **elections**, and who runs the town after you; **Mrs Vane's next idea**, because she will have one. Gratian's own ideas go here first.
 
 ## 12. This is one strand
+
+**Three new strands are written:** `docs/story/the-far-side.md`, the goat, the boring machine and the place where it rains; `docs/story/the-notice-board.md`, a favour from each of the crew, which needs no town and can be played first; and `docs/story/there-is-no-2-15.md`, Pim's railway and the train that never came in, which opens once the Mule is yours.
 
 Kyle, 5 November, after reading this page: "I do like the storyline and how it's held together. But this is just one storyline... we can continue to write new stories." So nothing in the game may depend on The Long Dry being the only story. How the town is built is in `docs/MACHINES.md`, and these fit the story where they meet it:
 

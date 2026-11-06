@@ -79,6 +79,7 @@ export const ENGINE_FIT = Object.freeze({
   mclaren_f1: Object.freeze({scale: 0.587}),
   bugatti_bolide: Object.freeze({scale: 0.513, power: 0.41}),
   falcone_sirena: Object.freeze({scale: 0.594, upgraded: [0.591, 0.59, {scale: 0.609, power: 0.27}]}),
+  ...(featureFlags.enabled('deep-vasca') ? {falcone_vasca: Object.freeze({scale: 1.2, upgraded: [1.2, 1.2, 1.2]})} : {}),
   ...(featureFlags.enabled('nissan-skyline') ? {
     nissan_skyline_gtr_r34: Object.freeze({scale: 0.601, upgraded: [0.598, 0.596, {scale: 0.613, power: 0.276}]}),
   } : {}),

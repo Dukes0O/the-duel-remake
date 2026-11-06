@@ -1883,6 +1883,7 @@ export class EngineAudio {
       this._playCue('vehicle.landing', {
         scale: 1 + clamp((ev.jumpLanded.distance || 0) / 16, 0, 1),
       });
+    if (ev.jumpLanded && state?.car === 'falcone_vasca' && this.flags.enabled('deep-vasca')) this._playCue('deep.squeak');
     if (ev.propCrushed?.byPlayer) this._crushImpact(ev.propCrushed.strength);
     if (ev.boostStarted) this._playCue('vehicle.boost-start');
     if (ev.nearMiss) {
@@ -2032,6 +2033,7 @@ export class EngineAudio {
         if (ev.explosion && !this.samples.explosion)
           this._playCue('combat.explosion-fallback');
       });
+    if (ev.crash && state?.car === 'falcone_vasca' && this.flags.enabled('deep-vasca')) this._playCue('deep.squeak');
   }
 
   _flutter() {

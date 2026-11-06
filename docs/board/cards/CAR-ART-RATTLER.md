@@ -8,3 +8,7 @@ Original Wasteland cars, not real makes and not copies of any film or game vehic
 `rattler`: a chopped 1930s-style pickup hot rod, engine out in the open with stub exhausts, oversized rear tyres, a roll hoop, sand-blasted bare steel. Light, fast and loud. The kind of car a teenager builds.
 
 ## Claude answers
+
+Round 6 of 6 (Kyle's limit, 5 November): **failed, not merged.** Rounds 5 and 6 gave an egg-shaped cab; round 4 had the better stance and engine. The cab is the fault: the Falcone cut-out trial fell apart and was dropped. Branch `codex/car-art-rattler` holds the recipe and rounds 4 to 6. Waits with the town trucks for the photo-to-model decision on TOWN-ART-TRUCKS-1.
+
+Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds. Claude judges `round-7.jpg`.
