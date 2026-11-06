@@ -6,7 +6,7 @@ export const GROUND_UV = 1 / 11;
 /** Soft, wide patches of colour; freshly turned earth is darker. Same answer for every ground mesh. */
 export function groundColour(x, z, turned = 0) {
   const patch = Math.sin(x * .031 + 1.3) * Math.sin(z * .027 + .4) * .5 + Math.sin(x * .083 + z * .061) * .3 + Math.sin(x * .19 - z * .17) * .2;
-  return new THREE.Color(0xc8b596).multiplyScalar((.9 + patch * .12) * (1 - turned * .42));
+  return new THREE.Color(0xbcb5a6).multiplyScalar((.9 + patch * .12) * (1 - turned * .42));
 }
 
 function makeChunk(row, heightAt) {
