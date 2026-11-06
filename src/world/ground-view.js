@@ -1,18 +1,29 @@
 import * as THREE from 'three';
-import {GROUND_MATERIALS} from './ground-edit.js';
 
 const SIDE = 32;
-const MATERIAL_COLOURS = Object.freeze([0x92734f, 0x9a7657, 0x82725e, 0x77736c]);
+export const GROUND_UV = 1 / 11;
+
+/** Soft, wide patches of colour; freshly turned earth is darker. Same answer for every ground mesh. */
+export function groundColour(x, z, turned = 0) {
+  const patch = Math.sin(x * .031 + 1.3) * Math.sin(z * .027 + .4) * .5 + Math.sin(x * .083 + z * .061) * .3 + Math.sin(x * .19 - z * .17) * .2;
+  return new THREE.Color(0xc8b596).multiplyScalar((.9 + patch * .12) * (1 - turned * .42));
+}
 
 function makeChunk(row, heightAt) {
-  const positions = [], colours = [], indices = [];
+  const positions = [], colours = [], uvs = [], indices = [];
   const x0 = row.x * SIDE, z0 = row.z * SIDE;
   for (let z = 0; z <= SIDE; z++) for (let x = 0; x <= SIDE; x++) {
     const wx = x0 + x, wz = z0 + z, index = Math.min(SIDE - 1, z) * SIDE + Math.min(SIDE - 1, x);
-    const material = GROUND_MATERIALS[row.material[index]] || 'topsoil';
-    const colour = new THREE.Color(MATERIAL_COLOURS[GROUND_MATERIALS.indexOf(material)]);
+    let turned=0;
+    for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+      const sx=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,z)+dz));
+      const sz=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,x)+dx));
+      turned+=Math.min(1,Math.abs(row.delta[sz*SIDE+sx])*1.5)/9;
+    }
+    const colour = groundColour(wx, wz, turned);
     positions.push(wx, heightAt(wx, wz) + .035, wz);
     colours.push(colour.r, colour.g, colour.b);
+    uvs.push(wx*GROUND_UV,wz*GROUND_UV);
     if (x < SIDE && z < SIDE) {
       const a = z * (SIDE + 1) + x, b = a + 1, c = a + SIDE + 1, d = c + 1;
       indices.push(a, c, b, b, c, d);
@@ -26,6 +37,7 @@ function makeChunk(row, heightAt) {
       for (const source of [a, b]) {
         positions.push(positions[source * 3], positions[source * 3 + 1] - 2, positions[source * 3 + 2]);
         colours.push(colours[source * 3], colours[source * 3 + 1], colours[source * 3 + 2]);
+        uvs.push(uvs[source*2],uvs[source*2+1]);
       }
       indices.push(a, base, b, b, base, base + 1);
     }
@@ -33,6 +45,7 @@ function makeChunk(row, heightAt) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;

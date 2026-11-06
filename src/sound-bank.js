@@ -58,6 +58,15 @@ export const SOUND_BANK = {
   'deep.whale': cue('ambience', {flag: 'the-deep', file: 'deep/whale.ogg', volume: .45, priority: 35, limit: 1}),
   'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.ogg', volume: .4, loop: true, priority: 30, limit: 1}),
   // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
+  // MACHINE-VIEW: machines reuse the bank's own recipes: a low diesel, a hiss of oil, earth and a load sliding.
+  'machine.engine': cue('vehicle', {flag: 'wasteland-town', volume: .3, limit: 1,
+    layers: [noise(150, .75, .5, 'lowpass'), tone(52, .75, .35, 'sawtooth')]}),
+  'machine.hydraulic': cue('vehicle', {flag: 'wasteland-town', volume: .14, limit: 1,
+    layers: [{...noise(1500, .7, .4), endFrequency: 1900, attack: .08}, tone(115, .7, .18, 'triangle', 0, 135)]}),
+  'machine.dig': cue('impacts', {flag: 'wasteland-town', volume: .28, limit: 2,
+    layers: [noise(340, .24, .5, 'lowpass'), tone(70, .16, .3, 'triangle', 0, 42)]}),
+  'machine.tip': cue('impacts', {flag: 'wasteland-town', volume: .32, limit: 1,
+    layers: [{...noise(380, 1.5, .7, 'lowpass'), endFrequency: 110, attack: .15}]}),
   'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
     layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),
   'deep.squeak': cue('vehicle', {flag: 'deep-vasca', volume: .28, limit: 1,

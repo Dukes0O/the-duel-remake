@@ -23,7 +23,9 @@ function digAt(ground, x, z, heading) {
   const ridge = [1, -1].map(side => ({
     x:x + Math.cos(heading) * tool.ridgeOffsetM * side,
     z:z - Math.sin(heading) * tool.ridgeOffsetM * side,
-    radius:tool.ridgeRadiusM,
+    // Ground edits use one-metre samples. A half-metre circle can miss every
+    // sample when its centre falls between cells, so keep one full cell covered.
+    radius:Math.max(tool.ridgeRadiusM,0.75),
   })).find(candidate => ground.refusal(candidate) === null);
   if (!ridge) return {cut:{ok:false, reason:BLOCKED_SENTENCE}, ridgeLooseVolumeM3:0};
   const cut = ground.cut(shape, ground.heightAt(x, z) - tool.depthM);
@@ -55,14 +57,17 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
     for (let index = 0; index < steps; index++) {
       const along = (WORK_STEP_M - distanceCarryM) + index * WORK_STEP_M;
       const fraction = clamp(along / distance, 0, 1);
-      const x = before.x + (machine.x - before.x) * fraction;
-      const z = before.z + (machine.z - before.z) * fraction;
+      const rear = MACHINE.tools.chain.rearM ?? 0;
+      const machineX = before.x + (machine.x - before.x) * fraction;
+      const machineZ = before.z + (machine.z - before.z) * fraction;
+      const x = machineX - Math.sin(machine.heading) * rear;
+      const z = machineZ - Math.cos(machine.heading) * rear;
       const {cut, ridgeLooseVolumeM3:ridgeLoose} = digAt(ground, x, z, machine.heading);
       if (!cut.ok) {
         events.push({type:'cut-refused', x, z, reason:cut.reason});
         // Stop at the refused spot. With a full carry the next step tries this
         // same spot again, so the chain stays put until the driver raises it.
-        machine = {...machine, x, z, speedMps:0};
+        machine = {...machine, x:machineX, z:machineZ, speedMps:0};
         distanceCarryM = WORK_STEP_M;
         stopped = true;
         break;
@@ -82,6 +87,9 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
     distanceCarryM = 0;
   }
 
+  const boomTarget = chainDown ? -0.7 : 0, boomNow = machine.jointAngles?.boom ?? 0;
+  machine = {...machine, jointAngles:{...machine.jointAngles,
+    boom:boomNow + Math.max(-0.8 * dtSeconds, Math.min(0.8 * dtSeconds, boomTarget - boomNow))}};
   return {state:{...state, machine, chainDown, distanceCarryM,
     speedFactor:chainDown ? Math.min(state.speedFactor ?? 1, hardestSpeed) : 1,
     cutVolumeM3:(state.cutVolumeM3 ?? 0) + cutVolumeM3,
