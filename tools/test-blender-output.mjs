@@ -33,6 +33,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
+  {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},

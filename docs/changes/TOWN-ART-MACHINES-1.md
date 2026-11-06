@@ -1,53 +1,21 @@
-# TOWN-ART-MACHINES-1
+# TOWN-ART-MACHINES-1 | Round 4
 
 ## Changed
 
-- Replaced the shared atlas and FRACT/cell material mapping with
-  `town.make_materials(texture_sources=...)` and `town.export_glb`.
-- Added separate compressed JPG sources for worn steel, faded yellow-green
-  paint and wet earth under the town texture asset folder. Materials own their
-  repeating picture in the GLB. UVs map a 512 px tile to about 2 m.
-- Kept machine roots, joint names, hinge centres and overall layout unchanged.
-- Exported the family, then rendered the sheet only after importing that GLB
-  into an empty Blender scene.
-- Added a GLB readback assertion for one unique embedded JPEG per textured
-  material and `metallicFactor` at or below 0.3.
+Rebuilt the excavator boom and dipper and trencher chain boom as rectangular welded plate sections. Added framing and guards to the trencher cab, darkened the running gear and hubs, strengthened the dump truck cab/bonnet and ribbed bed, and kept the dozer's curved painted blade with two push arms and two lift rams. Kept the yellow-green paint and wear. No new texture files were needed; the recipe still uses the existing credited photos.
+
+The recipe exported `public/assets/models/wasteland/town/machines-1.glb` at 2,685,192 bytes. Counts read from the GLB: trencher 14,788 triangles; excavator 7,616; dump truck 14,436; dozer 7,480. Every machine is below 15,000 triangles and the GLB is below 3 MB.
+
+**Pivots:** printed before and after. All nine joint-node translations match the round 3 GLB exactly; the table is in `docs/board/looks/town-art-machines-1/round-4-review.md`.
 
 ## Checks
 
-- Blender recipe export and reimport render: **passed**; GLB is 2,571,248 bytes.
-- `node tools/test-blender-output.mjs`: **passed**, 242 checks; 0 failed.
-- `node tools/test-repo-hygiene.mjs`: **passed**; repository placement passed.
-- Browser, in-game look and frame checks: Claude's review; none run in this lane.
-- Race fingerprints: not applicable; race code and simulation were not changed.
-
-## Changed assertion
-
-The prior GLB assertion required exactly one embedded image named as the wear
-atlas. That no longer proves the required runtime behavior because glTF cannot
-preserve the atlas cell math. It now follows every textured material to its
-own unique JPEG image and verifies that every material stays at or below the
-0.3 metallic limit. The 3 MB file limit and existing node, pivot and triangle
-checks remain. This change tightens the proof around the per-material picture
-contract; it does not loosen an existing limit. Claude should review it.
-The generic candidate-size check now uses the entry's `maxBytes` when set;
-TOWN-ART-MACHINES-1 declares 3,000,000 bytes, while candidates without an
-override keep the existing 2,500,000 byte default. The first test run caught
-that stale hardcoded cap and failed at 2,571,248 bytes; after this targeted
-change the suite passed.
-
-## Claude review requested
-
-Use the checks in `round-3-review.md` to review the sheet and the model in the
-game, with special attention to the Dig view and the dump load.
+- Blender recipe and GLB reimport renders: completed. Rendered rest, working and joint close-up views; round sheet made from the final GLB reimport.
+- `node tools/test-blender-output.mjs`: passed, 242 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement clean, size targets advisory.
+- Lane tier, build, browser scenario and look check: not run here. Claude should review the look items in the round 4 review note, especially cab support/clearance, hinge poses and retained paint in The Dig.
+- Changed assertions: none. Replay fingerprints: none; this is art only and is not wired into game logic in this lane.
 
 ## Removed
 
-- Removed the shared atlas construction and its cell-based UV assumptions.
-- Removed round 1's sheet and review note.
-- Removed the recipe texture inputs and original reference photo from
-  `tools/blender/`; runtime JPGs and their credits now live under
-  `public/assets/models/wasteland/town/textures/`, and the small photo crops
-  remain on the round 3 sheet.
-- Removed raw renders, intermediate PNGs, Blender output and test logs after
-  review; only the card's model, texture JPGs and round 3 sheet remain.
+Deleted the superseded `round-2.jpg` and `round-2-review.md`. Removed the temporary renders, Blender file and test logs from this lane after review.
