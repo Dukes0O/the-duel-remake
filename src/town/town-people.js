@@ -90,24 +90,32 @@ function createFounders(town, rng) {
 function conditionsFor(town, person, shelterIndex) {
   const conditions = town.peopleConditions || EMPTY_CONDITIONS;
   const water = Number.isFinite(conditions.waterLitresPerPerson) ? conditions.waterLitresPerPerson : null;
+  const waterNeed = Number.isFinite(conditions.waterNeedLitresPerPerson) ? conditions.waterNeedLitresPerPerson : 15;
   const food = Number.isFinite(conditions.foodCaloriesPerPerson) ? conditions.foodCaloriesPerPerson : null;
   const shelter = Number.isFinite(conditions.shelterPlaces) ? shelterIndex < conditions.shelterPlaces : null;
   person.needs.waterLitres = water;
+  person.needs.waterNeedLitres = waterNeed;
   person.needs.foodCalories = food;
-  person.needs.shelter = shelter;
-  return (water === null || water >= 15) && (food === null || food >= 2100) && (shelter === null || shelter);
+  const coldCanvas=Boolean(town.peopleConditions?.coldNight)&&String(person.homeType||'').toLowerCase().includes('canvas');
+  person.needs.shelter = coldCanvas?false:shelter;
+  // A cold night on canvas is hard on mood and risks sickness (town-health.js); it is not the same as no shelter.
+  return (water === null || water >= waterNeed) && (food === null || food >= 2100) && (shelter === null || shelter);
 }
 
 function needsMet(person) {
   const needs = person.needs || {};
+  const waterNeed=Number.isFinite(needs.waterNeedLitres)?needs.waterNeedLitres:15;
   return (needs.waterLitres == null || needs.waterLitres >= 15)
+    && (needs.waterLitres == null || needs.waterLitres >= waterNeed)
     && (needs.foodCalories == null || needs.foodCalories >= 2100)
     && (needs.shelter == null || needs.shelter);
 }
 
 function hasMeasuredSupport(town, livingCount) {
   const conditions = town.peopleConditions;
+  const waterNeed=Number.isFinite(conditions?.waterNeedLitresPerPerson)?conditions.waterNeedLitresPerPerson:15;
   return conditions && Number.isFinite(conditions.waterLitresPerPerson) && conditions.waterLitresPerPerson >= 15
+    && conditions.waterLitresPerPerson >= waterNeed
     && Number.isFinite(conditions.shelterPlaces) && conditions.shelterPlaces > livingCount;
 }
 

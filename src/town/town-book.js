@@ -34,6 +34,13 @@ function annualNotes(town, state) {
     else if (event.type === 'first') notes.push(event.text || 'The town had a first.');
   }
   state.seenEvents = town.book.length;
+  const previousYear=String((BigInt(town.tick) / HOURS_PER_YEAR));
+  const dispatchYear=town.dispatch?.yearTotals?.[previousYear];
+  if(dispatchYear) {
+    const count=Object.values(dispatchYear).reduce((sum,value)=>sum+(Number.isSafeInteger(value)?value:0),0);
+    if(count>0) notes.push(`The crew finished ${count} dispatch ${count===1?'job':'jobs'} this year.`);
+    delete town.dispatch.yearTotals[previousYear];
+  }
   const fires = new Set(state.fireIds);
   for (const building of town.buildings || []) {
     if ((building.fireStage || building.fireOut || String(building.state || '').startsWith('burnt-')) && !fires.has(building.id)) {
