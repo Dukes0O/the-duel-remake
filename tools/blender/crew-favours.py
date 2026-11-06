@@ -420,6 +420,11 @@ engine_end_view = View('engine-end', engine_end_photo,
      (engine_end_photo.w - 8, engine_end_photo.h - 8)], engine_end_pick, (0, 0, -1))
 engine_top_view = View('engine-top', engine_top_photo,
     [(8, 8), (1016, 8), (8, engine_top_photo.h - 8), (1016, engine_top_photo.h - 8)], engine_top_pick, (0, 1, 0))
+engine_far_side_view = View('engine-far-side', engine_side_photo,
+    [(8, 8), (1016, 8), (8, 504), (1016, 504)], lambda x, y, z: engine_side_pick(x, y, -z), (-1, 0, 0))
+engine_far_end_view = View('engine-far-end', engine_end_photo,
+    [(8, 8), (engine_end_photo.w - 8, 8), (8, engine_end_photo.h - 8),
+     (engine_end_photo.w - 8, engine_end_photo.h - 8)], lambda x, y, z: engine_end_pick(-x, y, z), (0, 0, 1))
 ENGINE_VOXEL = .035
 engine_solid, engine_xs, engine_ys, engine_zs = occupancy(
     ((ENGINE_X0, ENGINE_X1), (ENGINE_Y0, ENGINE_Y1), (ENGINE_Z0, ENGINE_Z1)),
@@ -427,8 +432,10 @@ engine_solid, engine_xs, engine_ys, engine_zs = occupancy(
 engine_solid = largest_part(engine_solid)
 engine_materials = {'engine-side': engine_side_photo.material(),
                     'engine-end': engine_end_photo.material(),
+                    'engine-far-side': engine_side_photo.material(),
+                    'engine-far-end': engine_end_photo.material(),
                     'engine-top': engine_top_photo.material()}
-engine_block = carve_hull('open-engine', [engine_side_view, engine_end_view, engine_top_view],
+engine_block = carve_hull('open-engine', [engine_side_view, engine_far_side_view, engine_end_view, engine_far_end_view, engine_top_view],
     engine_materials, engine_solid, engine_xs, engine_ys, engine_zs, ENGINE_VOXEL, 3500)
 engine_block.parent = root_object
 engine_block['part'] = 'open-engine'
@@ -535,10 +542,15 @@ triangles['regret-engine'] += sum(len(o.data.loop_triangles) if o.type == 'MESH'
 
 # --- dune-ladder: a 2.7 m fallen ladder, traced with its open rung spaces ------------------
 ladder_photo = Photo(textures / 'ww-dune-ladder.jpg')
-ladder_solid = tidy(~ladder_photo.sky([(8, 8), (ladder_photo.w - 8, 8),
-                                       (8, ladder_photo.h - 8)], grey=26))
-ladder_loops = trace(ladder_solid, (0, 0, ladder_photo.w, ladder_photo.h), tolerance=1.6, min_area=24)
-ladder_photo.bleed(shrink(ladder_solid, 2), passes=24)
+# Its grey floor is as mottled as its wood, so the outline is measured by hand: two
+# wavering rails, with one real opening between each pair of rungs.
+LADDER_RUNGS = (72, 136, 202, 266, 332, 396, 458, 520, 582, 643, 706)
+ladder_loops = [[(20, 72), (200, 68), (340, 70), (460, 80), (600, 76), (750, 68), (755, 190), (640, 195), (460, 197),
+                 (330, 200), (200, 198), (20, 202)]]
+for left, right in zip(LADDER_RUNGS, LADDER_RUNGS[1:]):
+    ladder_loops.append(rect_loop(left + 8, 93, right - 8, 176))
+ladder_loops.append(rect_loop(30, 93, LADDER_RUNGS[0] - 8, 176))
+ladder_loops.append(rect_loop(LADDER_RUNGS[-1] + 8, 88, 742, 174))
 ladder_pts = [point for loop in ladder_loops for point in loop]
 LADDER_X0 = min(p[0] for p in ladder_pts); LADDER_X1 = max(p[0] for p in ladder_pts)
 LADDER_Y0 = min(p[1] for p in ladder_pts); LADDER_Y1 = max(p[1] for p in ladder_pts)
@@ -568,14 +580,19 @@ for px in range(8, bedroll_photo.w - 8, 8):
     rows = np.nonzero(bedroll_solid[:, px])[0]
     if len(rows) > 8:
         bedroll_rows.append(((px - BED_CX) * .90 / (bedroll_photo.w - 40),
-                             (rows[-1] - rows[0]) * .45 / (bedroll_photo.h - 40)))
+                             (rows[-1] - rows[0]) / 2 * .90 / (bedroll_photo.w - 40)))
 bedroll_rows.sort()
 def bedroll_uv(index, distance, radius, angle):
+    # Read by arc, inside the outline, so the roll wears its canvas right over the top.
+    arc = math.degrees(math.asin(math.sin(angle))) / 90
     return bedroll_photo.uv(BED_CX + distance * (bedroll_photo.w - 40) / .90,
-                            bedroll_photo.h * .5 - math.sin(angle) * radius * (bedroll_photo.h - 40) / .45)
+                            127 - arc * .88 * radius * (bedroll_photo.w - 40) / .90)
+def bedroll_end_uv(angle, fraction):
+    # The wound-up end of the roll, from the canvas folds at the photo's left.
+    return bedroll_photo.uv(34 + math.cos(angle) * fraction * 16, 128 + math.sin(angle) * fraction * 60)
 bedroll_mesh = Mesh()
 lathe(bedroll_mesh, 'bedroll', (-.43, .105, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
-      bedroll_rows, bedroll_uv, sides=12)
+      bedroll_rows, bedroll_uv, sides=14, cap_start=('bedroll', bedroll_end_uv), cap_end=('bedroll', bedroll_end_uv))
 bedroll_obj = finish(bedroll_mesh, 'dune-camp-bedroll', {'bedroll': bedroll_photo.material()})
 bedroll_obj.parent = camp_root
 
@@ -619,7 +636,7 @@ can_mesh = Mesh()
 CAN_BODY = (120, 145, 650, 475)
 CAN_SIDE = (100, 230, 190, 440)
 CAN_TOP = (205, 150, 585, 250)
-CAN_HANDLE = (270, 18, 518, 154)
+CAN_HANDLE = (200, 300, 320, 340)
 box(can_mesh, .30, .55, .0, .24, -.08, .08, {
     '+z': camp_face(can_photo, CAN_BODY, 'can'), '-z': camp_face(can_photo, CAN_BODY, 'can'),
     '+x': camp_face(can_photo, CAN_SIDE, 'can'), '-x': camp_face(can_photo, CAN_SIDE, 'can'),
@@ -632,7 +649,7 @@ box(can_mesh, .365, .395, .24, .345, -.025, .025,
 box(can_mesh, .455, .485, .24, .345, -.025, .025,
     {key: camp_face(can_photo, CAN_HANDLE, 'can') for key in ('+z','-z','+x','-x','+y','-y')})
 box(can_mesh, .25, .31, .205, .29, .04, .11,
-    {key: camp_face(can_photo, (102, 55, 245, 190), 'can') for key in ('+z','-z','+x','-x','+y','-y')})
+    {key: camp_face(can_photo, CAN_SIDE, 'can') for key in ('+z','-z','+x','-x','+y','-y')})
 can_obj = finish(can_mesh, 'dune-camp-water-can', {'can': can_photo.material()})
 can_obj.parent = camp_root
 
@@ -722,6 +739,7 @@ shot('regret-bonnet-under', 'regret-bonnet', (0, -1.1, 1.3), (0, .48, 0), 900, 7
 shot('open-engine', 'open-engine', (2.1, .9, .3), (0, .42, 0), 1000, 700, lens=50)
 shot('open-engine-quarter', 'open-engine', (1.7, 1.3, -1.5), (0, .42, 0), 1000, 700, lens=50)
 shot('open-engine-top', 'open-engine', (0, 1.9, 0), (0, .42, 0), 900, 650, ortho=1.8)
+shot('open-engine-far', 'open-engine', (-1.7, 1.2, 1.7), (0, .42, 0), 1000, 700, lens=50)
 shot('regret-engine', 'regret-engine', (3.2, 1.1, .2), (1.25, .45, 0), 1000, 700, lens=50)
 shot('regret-engine-quarter', 'regret-engine', (2.8, 1.3, -1.4), (1.25, .45, 0), 1000, 700, lens=50)
 shot('dune-ladder', 'dune-ladder', (0, 1.45, 2.3), (0, .02, 0), 1000, 420, ortho=3.5, show_ground=False)
@@ -729,3 +747,27 @@ shot('dune-ladder-quarter', 'dune-ladder', (-1.3, 1.0, 1.5), (0, .02, 0), 1000, 
 shot('dune-camp', 'dune-camp', (0, 1.0, 2.2), (0, .26, 0), 1000, 700, lens=50)
 shot('dune-camp-quarter', 'dune-camp', (-1.0, 1.2, 1.6), (0, .25, 0), 1000, 700, lens=50)
 shot('dune-camp-top', 'dune-camp', (0, 1.8, 0), (0, .16, 0), 900, 650, ortho=1.3)
+
+# The card's picture: every prop on one ground, from car height at 8 m.
+LINEUP = {'dynamite-box': (-4.8, 0), 'gerald-box': (-3.2, 0), 'gerald': (-1.6, 0), 'ash-hat': (0, 0), 'wren-flag': (1.4, 0),
+          'regret-wheel': (2.8, 0), 'regret-door': (4.4, 0), 'piano-upright': (-7, -3), 'open-engine': (-4.2, -3),
+          'regret-engine': (-1.8, -3), 'regret-bonnet': (.6, -3), 'dune-camp': (3, -3), 'jax-harpoon': (6.4, -3),
+          'dune-ladder': (0, -6.5)}
+root_object = next(o for o in bpy.data.objects if o.name.startswith('crew-favours'))
+for piece in root_object.children:
+    matches = [name for name in LINEUP if piece.name.startswith(name)]
+    if matches:
+        x, z = LINEUP[max(matches, key=len)]
+        piece.location.x += x
+        piece.location.y -= z
+for piece in scene.objects:
+    if piece != ground:
+        piece.hide_render = False
+ground.hide_render = False
+camera.data.type = 'PERSP'
+camera.data.lens = 24
+scene.render.resolution_x, scene.render.resolution_y = 1600, 560
+camera.location = (0, -11, 1.2)
+camera.rotation_euler = (Vector((0, 2, .45)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+scene.render.filepath = str(render_dir / 'lineup.png')
+bpy.ops.render.render(write_still=True)
