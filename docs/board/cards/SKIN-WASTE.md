@@ -16,3 +16,7 @@ card names only `src/paint-presets.js`, but the current paint test hard-codes
 an 11-entry catalog and the garage click handler indexes that catalog for
 labels. Those callers need a deliberate follow-up before this feature is
 merge-ready; do not loosen the test or add files outside this card's scope.
+
+## Claude's verdict
+
+Round 1 does not pass (Claude, 5 November 2026). These are eight flat colours. The card asks for gritty finishes and they are not: Scrap Patchwork shows no patches, Hazard Stripe has no stripes, and Rust Patina is plain brown. The code can merge because the finishes stay behind the development switch, but this card stays open. Round 2 must find how the paint can carry real wear. Read how the car renderer applies paint first. If paint values alone cannot show rust, patches or stripes, say so on this card with what small renderer hook would.

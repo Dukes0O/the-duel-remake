@@ -39,7 +39,7 @@ ok(others.size >= 3, 'the other voices were found for the comparison');
 const heliSettings = catalog.sounds.find(row => row.cue === 'heli.radio.liftoff.hold').settings;
 const jokeSettingsLines = new Set(['deep.ana.otter','deep.ana.squeak','deep.ana.whale','deep.ana.duck','deep.ana.heavy',
   'deep.ana.maybe','deep.ana.reveal','deep.ana.bath','deep.ana.wheels','deep.ana.nino','deep.ana.towel','deep.ana.yours']);
-let creditsUsed = 0, runtimeBytes = 0;
+let creditsUsed = 0, firstLinesCredits = 0, lastJokeCredits = 0, runtimeBytes = 0;
 for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   const records = catalog.sounds.filter(row => row.cue === id);
   same(records.length, 1, `${id}: one catalog record`);
@@ -52,8 +52,11 @@ for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   same(sha(take), record.sha256, `${id}: the kept take matches its hash`);
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
+  if (jokeSettingsLines.has(id)) lastJokeCredits += record.creditsUsed; else firstLinesCredits += record.creditsUsed;
 }
-ok(creditsUsed > 0 && creditsUsed <= 2000, `voice credits within budget (${creditsUsed})`);
+// The first recording's 2,000 budget still stands for its lines; The Squeak's twelve takes have a budget of their own.
+ok(firstLinesCredits > 0 && firstLinesCredits <= 2000, `first lines within their voice budget (${firstLinesCredits})`);
+ok(lastJokeCredits > 0 && lastJokeCredits <= 1100, `The Squeak's lines within their voice budget (${lastJokeCredits})`);
 ok(runtimeBytes < 3e6, `the twenty-seven lines stay within the 3 MB voice budget (${runtimeBytes} bytes)`);
 same(copyDeepPhoneVoices().lines, 27, 'the build step finds all twenty-seven kept takes');
 

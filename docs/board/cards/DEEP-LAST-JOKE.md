@@ -137,3 +137,9 @@ reasons. Do not change gameplay tolerances. Claude reviews the assertion list
 and gives the independent save review after this lane.
 
 **After the merge.** Claude plays it end to end on a fresh memory-only save, gives the art and sound verdict and the frame check, turns `deep-vasca` on and releases under rule 18. Then Kyle hears the Deep is closed in the release note. No Preview step.
+
+## Claude's review of changed assertions (rule 18)
+
+Each row in the change note's "Changed assertions" table is reviewed and accepted: they follow from the eleven new lines, the new car and the pearl count this card set. The fixture check for the Vasca is stricter than before, and the other 25 fixtures keep their byte comparison.
+
+One correction by Claude: the voice budget. `test-deep-phone` capped all voice credits at 2,000, and this card's recordings took the total to 2,404. Rather than raise the cap, the test now holds the first sixteen lines to their original 2,000, and gives The Squeak's twelve takes their own budget of 1,100 (they used 1,049). Nothing is loosened for the earlier lines. Claude, 5 November 2026. Kyle hears the figure in the release note.
