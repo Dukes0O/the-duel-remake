@@ -55,6 +55,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:[],candidate:true,recipeOnly:true,
+    glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
@@ -674,6 +676,23 @@ try {
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= 0.3,
         `${material.name} metallic factor exceeds the reflection limit`);
+    }
+  });
+  check('TOWN-ART-SANITATION exports all five named buildings with sampled UV textures', () => {
+    const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/sanitation.glb'));
+    assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(8),bytes.length);
+    const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)).trim());
+    const names=new Set(gltf.nodes.map(node=>node.name));
+    for(const id of ['town-sanitation','latrine','bathhouse','reed-bed','trash-sorter','compost-heap']) assert.ok(names.has(id),`missing ${id}`);
+    const total=gltf.meshes.flatMap(mesh=>mesh.primitives).reduce((sum,p)=>sum+gltf.accessors[p.indices].count/3,0);
+    assert.ok(total>300&&total<=14000,`${total} triangles`);assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes`);
+    for(const mesh of gltf.meshes) for(const primitive of mesh.primitives){
+      assert.deepEqual(Object.keys(primitive.attributes).filter(key=>key.startsWith('TEXCOORD_')),['TEXCOORD_0'],'one readable UV channel per primitive');
+      const uv=gltf.accessors[primitive.attributes.TEXCOORD_0],view=gltf.bufferViews[uv.bufferView],stride=view.byteStride??8;
+      assert.ok(uv.count>3,'UVs contain multiple vertices');const start=28+bytes.readUInt32LE(12)+(view.byteOffset??0)+(uv.byteOffset??0);
+      const min=[Infinity,Infinity],max=[-Infinity,-Infinity];
+      for(let vertex=0;vertex<uv.count;vertex++)for(let axis=0;axis<2;axis++){const value=bytes.readFloatLE(start+vertex*stride+axis*4);min[axis]=Math.min(min[axis],value);max[axis]=Math.max(max[axis],value);}
+      assert.ok(max[0]-min[0]>.01&&max[1]-min[1]>.01,'UVs cover a visible texture range');
     }
   });
   check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
