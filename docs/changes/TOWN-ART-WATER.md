@@ -2,37 +2,39 @@
 
 ## Design
 
-Built the six waterworks models from the town plan and the photo reference.
-The recipe uses the checked-in tin and limestone photographs to make the
-shared 1K atlas, and frames close and driver-height views so the structures
-read at both scales. The reservoir water remains a flat movable scoop surface.
+Round 2 rebuilds the waterworks tower with heavier timber legs, three tiers of
+cross bracing, a ladder and a tank walkway. The pump house has four walls, an
+open engine doorway and a pitched roof over the flywheel. The reservoir uses
+earth banks, a stained rim, water and sandbags. The recipe renders the exported
+GLB after importing it into an empty Blender scene. The existing tin,
+limestone and photo reference JPGs moved from `tools/blender/` to
+`public/assets/models/wasteland/town/textures/` and are credited there.
 
 ## Review
 
-`docs/board/looks/town-art-water/round-1.jpg` is 282,264 bytes. The revised
-sheet was inspected after the rebuild. Self-review: silhouette/readability
-4/5, materials 4/5, scale/site composition 3/5. The family reads as a gritty
-waterworks site with distinct buildings and visible process stages. The
-driver-height view shows the water tower and pump shed at 27 m. Claude should
-check the treatment plant's stage readability from above and the tower shape
-against the photo. No browser or Chrome checks were run; Claude owns those
-checks.
+The submitted sheet is `docs/board/looks/town-art-water/round-2.jpg` (276,613
+bytes). It includes mayor and road views for each building, both site views,
+and the generated photo reference. I inspected the sheet and the imported-GLB
+renders. The construction reads more clearly than round 1, but the model still
+needs Claude's visual judgment, especially the tower silhouette, exposed
+treatment stages and the pump-house roof. Claude should compare those views
+directly with the photo reference. Browser checks and the look verdict belong
+to Claude; no browser check was run here.
 
 ## Checks
 
+- Blender 4.5.13 rebuilt and exported the GLB, then rendered the imported GLB:
+  passed.
 - `tools/test-blender-output.mjs`: passed, 239 checks.
-- `tools/test-repo-hygiene.mjs`: failed because its placement rule rejects
-  JPGs anywhere under `tools/`, while this card explicitly requires the tin
-  and limestone source pictures under `tools/blender/`. The assertions were
-  left unchanged and the recipe inputs remain in the required location.
-- `tools/test-review-evidence.mjs`: 8 checks passed, 1 failed because
-  `ffmpeg` could not start (`spawnSync ffmpeg EPERM`), the known environment
-  failure for this suite.
-- Blender 4.5.13 rebuild and eight evidence renders: passed; exported GLB is
-  `public/assets/models/wasteland/town/water.glb`.
-- No game code, race behavior, assertions, or fingerprints changed.
+- `tools/test-repo-hygiene.mjs`: passed.
+- `tools/test-review-evidence.mjs`: 8 of 9 checks passed. The audio evidence
+  check failed with the known `spawnSync ffmpeg EPERM` environment error.
+- No lane tier or build was run, as directed.
+- No race logic changed; race fingerprints are not applicable. No test
+  assertions were weakened.
 
 ## Removed
 
-Removed the donor import and replacement path that deleted the authored meshes
-and overlaid mis-scaled donor parts. Removed no existing player assets or saves.
+Moved the three existing town-water JPG inputs out of `tools/blender/` and into
+the model texture folder required by the card. Removed no player assets, saves
+or prior review sheets.

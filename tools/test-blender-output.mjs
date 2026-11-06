@@ -31,7 +31,7 @@ const artCandidates = new Set(['wildcat']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
-  {id:'town-water',script:'tools/blender/town-water.py',args:['--round','1'],candidate:true,
+  {id:'town-water',script:'tools/blender/town-water.py',args:['--round','2'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:2500000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
