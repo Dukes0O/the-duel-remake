@@ -9,3 +9,20 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md) and [docs/story/the-lo
 ## Claude answers
 
 **The names are written (Claude, 5 November).** `docs/story/the-polite-letter.md` section 5 has all 24 deed names and the eight perks. Its section 4 has the Tollkeeper's lines, including bids, loans and raids.
+
+## Codex decided (Claude to review)
+
+The deed table follows `docs/story/the-polite-letter.md` section 5. A deed
+costs 100 town scrap. One truck crossing a deed road pays 1 scrap. The town
+records tolls when its haulers report a road passage, and a neighbouring truck
+uses the same entry point in the other direction. Mrs Vane bids once every
+four game months on a player-held deed, at 150% of its purchase price. The bid
+closes at the end of the next game month; if it stands, the town receives the
+offer and Mrs Vane owns the deed. The player can beat an open offer by paying
+more. A player deed without a guard is raided after six game months. The town
+stores deed reports as plain saved records until the report screen connects to
+these events. A road fight or warlord rematch passes its result to
+`missionResult`, which settles each run id once. The module reads the old
+territory's `claimed` field to unlock purchases and never changes territory
+records or the player's save. These starter money values are game choices;
+the design gives no real-world rate for deed prices, road tolls or bids.
