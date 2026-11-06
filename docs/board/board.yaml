@@ -851,6 +851,15 @@ tasks:
     details: "docs/board/cards/SHIPS-FINISH.md"
 
 
+  - id: TOWN-VISITS
+    title: "Town: a town each, and visiting each other's"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    locks: ["save-shape"]
+    details: "docs/board/cards/TOWN-VISITS.md"
   - id: TOWN-PEOPLE-SPEED
     title: "Town: people spread across the day, then connected"
     owner: "codex"
