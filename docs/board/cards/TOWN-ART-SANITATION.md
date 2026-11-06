@@ -28,3 +28,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `compost-heap` 1x1: steaming heap in a pallet pen with a fork stuck in it.
 
 ## Claude answers
+
+Round 2 of 6 (Kyle's limit is six). Merged as the working set: the reed bed, latrine and bathhouse read clearly from the mayor's height, and everything is joined and grounded. Still short: the plank picture looks woven close up, the trash sorter's roof hides its work, and the compost bays are weak. A later pass can improve these.
