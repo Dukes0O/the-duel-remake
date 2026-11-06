@@ -7,7 +7,7 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--render', default='.evidence/2026-11-06/TOWN-ART-DOME/round-4')
+parser.add_argument('--render', default='.qa-dist/town-dome/round-5')
 parser.add_argument('--evidence', default='.qa-dist/town-dome')
 parser.add_argument('--candidate', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
@@ -78,7 +78,7 @@ def game_mesh(name, vertices, faces, material, parent, origin=(0, 0, 0), rotatio
     mesh.from_pydata([town.game_vector(v) for v in vertices], [], faces)
     mesh.materials.append(material)
     mesh.update()
-    uv = mesh.uv_layers.new(name='2m salvaged panel texture')
+    uv = mesh.uv_layers.new(name='UVMap')
     for polygon in mesh.polygons:
         for loop_index in polygon.loop_indices:
             x, y, z = vertices[mesh.loops[loop_index].vertex_index]
@@ -123,7 +123,7 @@ def photo_car_wall(name='dome-outer:three-row-photo-car-wall',rx=106,rz=72,skip_
         faces.extend(((a,b,b+1,a+1),(a+1,b+1,b,a)))
     mesh=bpy.data.meshes.new('three rows of real crushed cars / curved wall')
     mesh.from_pydata([town.game_vector(v) for v in verts],[],faces);mesh.materials.append(wall_photo);mesh.update()
-    layer=mesh.uv_layers.new(name='photo strip / 12.5 repeats around dome')
+    layer=mesh.uv_layers.new(name='UVMap')
     for poly_index,poly in enumerate(mesh.polygons):
         for li in poly.loop_indices:
             vi=mesh.loops[li].vertex_index;i=vi//2;top=vi%2
@@ -220,9 +220,9 @@ def hulk_bowl():
     # A photo-projected stack of wrecks fills the inter-car gaps, while the
     # individual shells in front give the wall its real layered relief.
     photo_car_wall('dome-outer:projected-stacked-wrecks',106,72,True)
-    # Three dense rows of individual wrecks form the visible wall. No photo
-    # strip or continuous backing may cover them from outside.
-    levels = [(106-i*1.0,72-i*.7,count,0.0) for i,count in enumerate((28,24,20))]
+    # One grounded row adds real relief in front of the photo's two and three
+    # car stacks. The picture carries the upper tiers; no unsupported hulks float.
+    levels = [(106,72,28,1.1)]
     serial = 0
     rng = __import__('random').Random(1105)
     for tier, (rx, rz, count, base_y) in enumerate(levels):
@@ -235,7 +235,7 @@ def hulk_bowl():
             px, pz = rx*math.cos(angle), rz*math.sin(angle)
             tangent = math.atan2(rz*math.cos(angle), -rx*math.sin(angle))
             wobble = rng.uniform(-.32,.32)
-            wreck(f'dome-outer:hulk-{serial:03}', (px+2.0*math.cos(angle), 1.1+tier*3.45+rng.uniform(-.08,.12),
+            wreck(f'dome-outer:hulk-{serial:03}', (px+2.0*math.cos(angle), base_y+rng.uniform(-.04,.04),
                   pz+1.5*math.sin(angle)),
                   tangent+wobble, outer, serial, detail=False, variant=serial%5)
     # The Heap is an uneven 18 m mound: its own stacked-wreck photograph wraps
@@ -302,30 +302,30 @@ def hulk_bowl():
             awning.rotation_euler[0]=-.12 if i%4==0 else .10
     # Scaffold tube guard rail: 100 mm members and 3 m post spacing around
     # the full oval rim. Each segment has a real six-sided circular section.
-    rail_segments=192
+    rail_segments=72
     for i in range(rail_segments):
         a0=math.tau*i/rail_segments;a1=math.tau*(i+1)/rail_segments
         for y in (18.1,20.3):
             scaffold_tube(f'dome-outer:walkway-rail-{i}-{y}',
                 (102*math.cos(a0),y,69*math.sin(a0)),
-                (102*math.cos(a1),y,69*math.sin(a1)),.10,dark,outer)
+                (102*math.cos(a1),y,69*math.sin(a1)),.16,dark,outer)
         scaffold_tube(f'dome-outer:walkway-post-{i}',
             (102*math.cos(a0),17.8,69*math.sin(a0)),
-            (102*math.cos(a0),20.4,69*math.sin(a0)),.10,steel,outer)
-    # Four lattice floodlight towers. Each independently named lamp can glow at night.
+            (102*math.cos(a0),20.4,69*math.sin(a0)),.14,steel,outer)
+    # Three sturdier lattice floodlight towers. Each lamp can glow at night.
     emission=bpy.data.materials.new('Dome floodlight amber emissive'); emission.diffuse_color=(1,.39,.075,1); emission.use_nodes=True
     sh=emission.node_tree.nodes.get('Principled BSDF')
     sh.inputs['Emission Color'].default_value=(1,.26,.035,1); sh.inputs['Emission Strength'].default_value=3.0
-    for i in range(4):
-        a=math.tau*i/4+.15
+    for i in range(3):
+        a=math.tau*i/3+.15
         x,z=108*math.cos(a),74*math.sin(a)
         for side in (-1,1):
-            beam(f'dome-outer:tower-leg-{i}-{side}',(x+side*1.5,18,z),(x+side*.85,33,z),.12,dark,outer)
-        beam(f'dome-outer:mast-{i}',(x,18,z),(x,33,z),.13,steel,outer)
+            beam(f'dome-outer:tower-leg-{i}-{side}',(x+side*1.5,18,z),(x+side*.85,33,z),.18,dark,outer)
+        beam(f'dome-outer:mast-{i}',(x,18,z),(x,33,z),.20,steel,outer)
         for y in (21,25,29,33):
-            beam(f'dome-outer:tower-rung-{i}-{y}',(x-1.35,y,z),(x+1.35,y,z),.085,steel,outer)
-        beam(f'dome-outer:tower-cross-a-{i}',(x-1.4,20,z),(x+1.4,25,z),.065,steel,outer)
-        beam(f'dome-outer:tower-cross-b-{i}',(x+1.4,20,z),(x-1.4,25,z),.065,steel,outer)
+            beam(f'dome-outer:tower-rung-{i}-{y}',(x-1.35,y,z),(x+1.35,y,z),.12,steel,outer)
+        beam(f'dome-outer:tower-cross-a-{i}',(x-1.4,20,z),(x+1.4,25,z),.10,steel,outer)
+        beam(f'dome-outer:tower-cross-b-{i}',(x+1.4,20,z),(x-1.4,25,z),.10,steel,outer)
         beam(f'dome-outer:mast-cross-{i}',(x-2.3,32,z),(x+2.3,32,z),.13,dark,outer)
         lamp=empty('dome-outer:lamp' if i==0 else f'dome-outer:lamp-{i}',outer)
         lamp.location=town.game_vector((x,29+(i%3),z))
@@ -343,10 +343,10 @@ def hulk_bowl():
 
 hulk_bowl()
 
-# Gate at the road side: upright 4.4 m double-deck buses face the approach.
+# Gate at the road side: horizontal 4.4 m double-deck buses face the approach.
 for side in (-1,1):
     x=side*8.2;z=-91.2
-    body=cube(f'dome-gate:bus-{side}:body',(x,2.2,z),(2.5,11.0,4.4),
+    body=cube(f'dome-gate:bus-{side}:body',(x,2.2,z),(2.5,4.4,11.0),
               paint,gate,.42,side*.012)
     front=bus_front_left if side<0 else bus_front_right
     side_photo=bus_side_left if side<0 else bus_side_right
@@ -378,6 +378,25 @@ for side in (-1,1):
 for side in (-1,1):
     beam(f'dome-gate:bus-header-post-{side}',(side*10.4,8.9,-92),(side*10.4,13.2,-92),.24,dark,gate)
     beam(f'dome-gate:bus-header-cross-{side}',(side*5.8,8.4,-92),(side*10.5,11,-92),.14,steel,gate)
+    # Braced towers, torn tarps and rails rise above both bus roofs.
+    for dx in (-1.1,1.1):
+        beam(f'dome-gate:sign-scaffold-upright-{side}-{dx}',
+             (side*10.8+dx,8.8,-92.15),(side*10.8+dx,15.1,-92.15),.16,dark,gate)
+    for y in (10.2,12.4,14.9):
+        beam(f'dome-gate:sign-scaffold-rail-{side}-{y}',
+             (side*9.55,y,-92.15),(side*12.05,y,-92.15),.14,steel,gate)
+    beam(f'dome-gate:sign-scaffold-brace-{side}',
+         (side*9.65,9.0,-92.15),(side*11.95,12.3,-92.15),.12,bright,gate)
+    tarp=[(side*12.2,13.0,-92.8),(side*16.4,13.0,-92.8),
+          (side*16.0,14.2,-91.1),(side*12.0,14.8,-91.2)]
+    game_mesh(f'dome-gate:bus-top-tarp-{side}',tarp,[(0,1,2,3)],paint if side<0 else tin_photo,gate)
+# Sagging bunting crosses the scaffold above the sign.
+beam('dome-gate:bunting-cable',(-13.5,15.3,-91.8),(13.5,15.3,-91.8),.065,dark,gate)
+for i in range(12):
+    x=-12+i*2.15;y=15.18+(.35 if i%2 else 0)
+    game_mesh(f'dome-gate:bunting-flag-{i:02}',
+              [(x,y,-91.82),(x+1.35,y,-91.82),(x+.95,y-1.05,-91.78)],
+              [(0,1,2)],paint if i%2 else bright,gate)
 # Hand-painted header hangs above the drive-through throat, facing the -Z road.
 sign=cube('dome-gate:SCRAPDOME-painted-sign',(0,11.0,-92),(13.6,4.7,.42),sign_photo,gate,.11)
 # Fit the sign photograph to the broad road-facing face of the thick plate.
@@ -431,6 +450,25 @@ for side in (-1,1):
 
 # Join fixed scenery by building to avoid thousands of tiny scene nodes. Keep the
 # independently named emissive lamp assembly and sign lettering as child parts.
+def normalize_uv_layers(building):
+    """Keep one shared UV layer name so Blender joins do not lose picture UVs."""
+    for obj in bpy.context.scene.objects:
+        if obj.type != 'MESH':
+            continue
+        parent_obj=obj.parent
+        while parent_obj and parent_obj != building:
+            parent_obj=parent_obj.parent
+        if parent_obj != building:
+            continue
+        layers=obj.data.uv_layers
+        if not layers:
+            continue
+        active=layers.active or layers[0]
+        for layer in list(layers):
+            if layer != active:
+                layers.remove(layer)
+        active.name='UVMap'
+
 def join_building_static(building):
     keep=set()
     pending=list(building.children)
@@ -465,6 +503,8 @@ def join_building_static(building):
         joined.name=building.name+':fixed-salvage'
         joined.parent=building
 
+normalize_uv_layers(outer)
+normalize_uv_layers(gate)
 join_building_static(outer)
 join_building_static(gate)
 # Save the editable Blender source and render candidate in ignored QA staging.
@@ -483,9 +523,9 @@ bpy.ops.import_scene.gltf(filepath=str(out))
 scene=bpy.context.scene
 scene.render.engine='CYCLES';scene.cycles.samples=16;scene.cycles.use_denoising=True
 scene.render.resolution_x=1280;scene.render.resolution_y=820;scene.render.resolution_percentage=100
-scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.05
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.45
 scene.world=bpy.data.worlds.new('Overcast desert daylight');scene.world.use_nodes=True
-scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.68,.72,.76,1)
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.34,.31,.27,1)
 scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 
 def area(name,pos,target,energy,size,color):
@@ -496,23 +536,22 @@ area('large soft daylight',(-35,145,-45),(0,0,0),18000,100,(1.0,.87,.71))
 area('sky bounce',(75,90,20),(0,2,0),9000,95,(.67,.78,1.0))
 scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
 render_dir.mkdir(parents=True,exist_ok=True)
-# A camera-only road extension supports the approach composition; it is not
-# exported and does not alter the gate's natural dirt slope.
-road_vertices=[(-24,0,-146),(24,0,-146),(24,0,-112),(-24,0,-112)]
-road=game_mesh('review-only road extension',road_vertices,[(0,3,2,1)],
-               next(m for m in bpy.data.materials if m.name.startswith('Dome / tire marked dirt')),None)
-road_uv=road.data.uv_layers.active
-for poly in road.data.polygons:
-    for li in poly.loop_indices:
-        x,y,z=road_vertices[road.data.loops[li].vertex_index]
-        road_uv.data[li].uv=(x/48+.5,(z+146)/34)
+# A plain sheet-only ground plane reaches the camera and sits beneath the gate.
+ground_mat=bpy.data.materials.new('Review ground / mid grey brown')
+ground_mat.diffuse_color=(.32,.29,.25,1);ground_mat.use_nodes=True
+ground_bsdf=ground_mat.node_tree.nodes.get('Principled BSDF')
+ground_bsdf.inputs['Base Color'].default_value=(.32,.29,.25,1)
+ground_bsdf.inputs['Roughness'].default_value=.95
+road_vertices=[(-250,.005,-280),(250,.005,-280),(250,.005,35),(-250,.005,35)]
+road=game_mesh('review-only road ground',road_vertices,[(0,3,2,1)],ground_mat,None)
 def render_view(filename,location,target,lens,resolution=(1280,820)):
     scene.render.resolution_x,scene.render.resolution_y=resolution
     bpy.ops.object.camera_add(location=town.game_vector(location));camera=bpy.context.object;camera.data.lens=lens
     camera.rotation_euler=(town.game_vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     scene.camera=camera;scene.render.filepath=str(render_dir/filename);bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera,do_unlink=True)
+render_view('dome-gate-road-30m.png',(0,1.7,-123),(0,4.5,-92),30)
+bpy.data.objects.remove(road,do_unlink=True)
 render_view('dome-outer-above-45.png',(0,178,-181),(0,8,0),35)
-render_view('dome-gate-road-30m.png',(0,1.7,-123),(0,2,-92),28)
-render_view('dome-outer-side-40m.png',(0,9,112),(0,9,72),45)
+render_view('dome-outer-side-40m.png',(0,8,112),(0,5,72),45)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'blend':str(blend),'renders':str(render_dir),'render_source':'exported GLB re-imported into empty scene'}))

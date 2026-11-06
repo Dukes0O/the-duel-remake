@@ -606,6 +606,30 @@ try {
     assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
     const jsonLength = bytes.readUInt32LE(12);
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const binStart = 20 + jsonLength + 8;
+    for (const [meshIndex, mesh] of gltf.meshes.entries()) {
+      for (const [primitiveIndex, primitive] of mesh.primitives.entries()) {
+        const label = `${mesh.name || `mesh ${meshIndex}`} primitive ${primitiveIndex}`;
+        const uvNames = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+        assert.deepEqual(uvNames, ['TEXCOORD_0'], `${label} has only TEXCOORD_0`);
+        const uvAccessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
+        assert.equal(uvAccessor?.componentType, 5126, `${label} TEXCOORD_0 stores float values`);
+        assert.equal(uvAccessor?.type, 'VEC2', `${label} TEXCOORD_0 stores UV pairs`);
+        const view = gltf.bufferViews[uvAccessor.bufferView];
+        const stride = view.byteStride || 8;
+        const start = binStart + (view.byteOffset || 0) + (uvAccessor.byteOffset || 0);
+        const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+        for (let i = 0; i < uvAccessor.count; i++) {
+          for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value);
+            max[axis] = Math.max(max[axis], value);
+          }
+        }
+        assert.ok(min.some((value, axis) => value < max[axis]),
+          `${label} TEXCOORD_0 is not a single repeated point`);
+      }
+    }
     const names = gltf.nodes.map(node => node.name);
     for (const name of ['town-dome', 'dome-outer', 'dome-gate', 'dome-outer:lamp', 'dome-gate:SCRAPDOME-lettering']) {
       assert.ok(names.includes(name), `missing named town node ${name}`);
@@ -622,7 +646,6 @@ try {
     }
     const lettering = gltf.nodes.find(node => node.name === 'dome-gate:SCRAPDOME-lettering');
     assert.ok(lettering && lettering.mesh === undefined, 'painted sign has no computer-font mesh');
-    const binStart = 20 + jsonLength + 8;
     for (const image of gltf.images) {
       assert.equal(image.mimeType, 'image/jpeg', `${image.name || 'picture'} is a JPEG`);
       const view = gltf.bufferViews[image.bufferView];
