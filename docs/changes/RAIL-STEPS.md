@@ -2,31 +2,34 @@
 
 ## Changed
 
-- Added the railway fields and the `runaway`, `dig` and `whistle` step kinds to the existing world-job engine.
-- Drivetrain acceleration and braking use force divided by consist mass. Grade force uses 9.81 m/s² and the configured signed ratio. Stop marks keep the best error as a number in the job's additive `storyMarks` field; ride along reads the prior stop distance.
-- Runaways conserve momentum on a soft coupling and bounce on a hard contact. Token locks, hoop retries and sand drags keep the job recoverable. Digging tracks pile tonnes, fires the reveal once and can hand the remaining work to an apprentice. Whistle calls start a silent goat wait.
-- No job data is wired into the game. No save format or released-course replay changed.
+- Sand drag now resets the attempt without permanently blocking completion.
+- Stop marks record signed distance when the stopped train is within 40 m before the mark or beyond it. A stop 60 m past the path end is clamped to a stop. Ride-along trains preserve the player's signed stop distance, including overruns.
+- Token swaps now use held interact at rest. Throttle stops at the loop until the swap; the warning plays once, and the step cannot finish before the swap.
+- Dig progress comes only from delivered `haulTonnes`. Dig cues fire at their configured fractions, the engine reveal fires at two-thirds, and the pile view receives `{type:'pile', id, fraction}` each tick. Bo learns at half; the player completes all six 20 tonne loads, and the handover fires with completion.
+- Easy braking, over-speed and continuous-brake cues, `brakeBoardMetres`, runaway proximity and progress cues, and `arrivesWith: 'player'` now affect the simulation. The other train is capped at twice its listed speed.
+- Drivetrain logic has named helpers for brake force and stop targeting, and its multi-action statements were split for review. A regression check confirms a job with no rail fields keeps its prior state and throttle result.
+- `waitsForWork` belongs to RAIL-JOBS-2. `requiresExit` is handled by the existing on-foot step. Neither field needed a change in this card.
+- No save format or released-course replay code changed. Race fingerprints are unchanged.
 
 ## Checks
 
-- `node tools/test-rail-steps.mjs` — passed. This includes headless real Duel braking input and the specified new-step scenarios.
-- The 260 tonne, 1 in 30 bank stopped from 9 m/s in **191.5 m**. At 15 m/s it reached the **500.3 m** sand drag and returned to the top. These values follow the configured mass, 140 kN brake force and grade. The 9 m/s result is 1.5 m beyond the card's approximate 190 m figure.
-- `tools/test-iron-line.mjs` — passed. No `tools/test-iron-mule-*.mjs` file exists in this lane.
-- `tools/test-heli-job-clarity.mjs` — passed, 1,530 checks. `tools/test-heli-jobs.mjs` — passed, 5,802 checks. `tools/test-world-job-mode.mjs` and `tools/test-world-jobs.mjs` — passed.
+- `node tools/test-rail-steps.mjs` — passed. Bank stops remain 191.5 m at 9 m/s; 15 m/s reaches the 500.3 m sand drag. Regression checks cover all listed rail-step faults and legacy drivetrain behavior.
+- `node tools/test-iron-line.mjs` — passed.
+- `node tools/test-world-job-mode.mjs` — passed.
+- `node tools/test-world-jobs.mjs` — passed.
+- `node tools/test-heli-jobs.mjs` — passed, 5,802 checks.
 - `node tools/test-repo-hygiene.mjs` — passed.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4` — all 29 suites reported `PASS`; the runner stayed open after the final suite, so it did not return an exit code or summary.
-- `npm run build` — passed after the review fixes. Vite reported the existing dynamic-import and large-chunk warnings.
-- Claude should check the later rail-job integration against stop marks, token swaps and hoops, runaway recovery, the dig reveal, whistle wait, and ride-along stopping. No browser or look check is needed for this engine-only change.
-- Reviewer follow-up: corrected stop marks to retain the true stopping distance past the path endpoint, show the overrun position, and made coupled wagons share the consist speed. The focused suite passes with these regressions covered. The production token view hook still needs the Director’s scope decision.
+- `npm run build` — passed. Vite reported the existing dynamic-import and large-chunk warnings.
+- Browser checks were not run in this lane. Claude should review stop marks, token interaction, the dig pile/reveal/handover, runaway cues, and the passing train in the browser.
 
 ## Changed assertions
 
-One existing consist-speed assertion now expects the configured tractive force divided by consist mass. The prior expectation incorrectly subtracted coast drag while throttle was held. Added assertions cover unchanged legacy throttle behavior, measured stop error, and braking a coupled consist. The new compatibility assertion caught an initial throttle/coasting difference during development; the old throttle branch behavior was restored and the final focused suite passed.
-
-## Race fingerprints
-
-Unchanged. No released course or replay code was changed.
+- Replaced the old token `hasToken` assertion with no-token throttle blocking, one-time warning, held-interact swap, and completion-after-swap checks. The story says each driver carries a token; the swap is an exchange.
+- Replaced interact-based digging and automatic apprentice completion checks with six delivered-load checks, fraction cue checks, and a handover-at-completion check. This follows the machine-game flow and the story's six loads.
+- Added short-stop, distant-short-stop and 60 m overrun assertions. The mark scores signed distance and never fails a valid stop.
+- Added copied-stop overrun and short-stop assertions, plus Easy brake, brake cue, brake-board, runaway cue and `arrivesWith` checks.
+- The unchanged legacy drivetrain assertion still passes; no tolerance or replay assertion was loosened.
 
 ## Removed
 
-Nothing.
+- Removed button-driven digging behavior and the assumption that a player token flag gates movement. Nothing else was removed.
