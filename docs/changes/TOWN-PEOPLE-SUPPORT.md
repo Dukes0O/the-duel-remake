@@ -7,6 +7,7 @@
 - Updated the people system to use the new home tier labels and removed its old bed-count-driven plot proxy.
 - Added the `home-goods-shortage` report to the existing town reports catalog; plots waiting for a specific good raise a plain-language report with the home count and missing good.
 - Added the plot paint and clear controls to the Homes and Shops tab. Mouse drags map to 8 m cells and send the plot commands; visits remain look-only because the build panel is absent there.
+- Added plot visuals to the existing per-chunk town building renderer: pegs and string for empty plots, the four scaffold models during construction, and tier variants cloned from `homes.glb` when complete. Render state is derived from plots and cannot write to the sim.
 
 ## Checks
 

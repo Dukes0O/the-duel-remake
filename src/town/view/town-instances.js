@@ -33,7 +33,7 @@ function makeInstances(rows, lod, color, yOffset = 0) {
   return mesh;
 }
 
-export function buildTownChunkInstances(town, chunk, lod = townChunkLod({position:{x:chunk.x*128,z:chunk.z*128}}, chunk)) {
+export function buildTownChunkInstances(town, chunk, lod = townChunkLod({position:{x:chunk.x*128,z:chunk.z*128}}, chunk), homeAssets = {}) {
   const region = town.regions?.scablands;
   if (!region) return [];
   const rows = [];
@@ -51,7 +51,28 @@ export function buildTownChunkInstances(town, chunk, lod = townChunkLod({positio
   for(const zone of town.zones||[]) if(zone.regionId==='scablands'&&Math.floor(zone.x/16)===chunk.x&&Math.floor(zone.z/16)===chunk.z) {
     const color=zone.color??COLORS.zone;if(!byColor.has(color))byColor.set(color,[]);byColor.get(color).push({...zone,width:1,depth:1,groundY:zone.groundY??0,color});
   }
-  return [...byColor].map(([color, entries]) => makeInstances(entries, lod, color, entries[0].buildingId?.startsWith('road-') ? 0.08 : 0)).filter(Boolean);
+  const meshes=[...byColor].map(([color, entries]) => makeInstances(entries, lod, color, entries[0].buildingId?.startsWith('road-') ? 0.08 : 0)).filter(Boolean);
+  for(const plot of town.homePlots||[]) {
+    if(plot.regionId!=='scablands'||Math.floor(plot.x/16)!==chunk.x||Math.floor(plot.z/16)!==chunk.z) continue;
+    const y=plot.groundY??0,x=(plot.x+.5)*TOWN_CELL_METRES,z=(plot.z+.5)*TOWN_CELL_METRES;
+    if(plot.tier>0&&!plot.burning) {
+      const names=[['tent-a','tent-b'],['shack-a','shack-b','shack-c'],['stack-a','stack-b'],['block-a','block-b'],['terrace-a']];
+      const options=names[Math.min(4,plot.tier-1)]||[];
+      const model=homeAssets.homes?.getObjectByName(options[Math.abs(plot.x*31+plot.z*17)%options.length]||'');
+      if(model){const clone=model.clone(true);clone.position.set(x,y,z);clone.userData.sharedTownAsset=true;meshes.push(clone);}
+    } else if(plot.household&&!plot.burning) {
+      const stage=Math.max(1,Math.min(4,Math.ceil(((plot.progressDays||0)+1)/Math.max(1,(plot.nextDays||2)/4))));
+      const model=homeAssets.stages?.getObjectByName(`scaffold-${stage}`);
+      if(model){const clone=model.clone(true);clone.position.set(x,y,z);clone.userData.sharedTownAsset=true;meshes.push(clone);}
+    } else if(!plot.burning) {
+      const pegs=new THREE.Group();pegs.userData.sharedTownAsset=true;
+      const wood=new THREE.MeshStandardMaterial({color:0x786748,roughness:1}),string=new THREE.MeshBasicMaterial({color:0xc7b78e});
+      for(const [dx,dz] of [[-3.45,-3.45],[3.45,-3.45],[-3.45,3.45],[3.45,3.45]]){const peg=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,.38,5),wood);peg.position.set(x+dx,y+.19,z+dz);pegs.add(peg);}
+      const line=(a,b)=>{const delta=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),mesh=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,delta.length(),5),string);mesh.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());pegs.add(mesh);};
+      line([x-3.45,y+.3,z-3.45],[x+3.45,y+.3,z-3.45]);line([x-3.45,y+.3,z+3.45],[x+3.45,y+.3,z+3.45]);line([x-3.45,y+.3,z-3.45],[x-3.45,y+.3,z+3.45]);line([x+3.45,y+.3,z-3.45],[x+3.45,y+.3,z+3.45]);meshes.push(pegs);
+    }
+  }
+  return meshes;
 }
 
 export function createTownPlacementGhost({valid = true, width = 1, depth = 1} = {}) {

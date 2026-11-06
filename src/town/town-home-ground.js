@@ -22,7 +22,7 @@ registerTownCommand('paintHomeGround',(town,command)=>{
   for(const cell of command.cells) {
     if(!validCell(cell)||occupied(town,regionId,cell.x,cell.z)||plots.some(p=>p.regionId===regionId&&p.x===cell.x&&p.z===cell.z))
       return {ok:false,message:'Plots need clear ground. Roads, pipes and buildings must stay clear.'};
-    fresh.push({id:`plot-${regionId}-${cell.x}-${cell.z}`,regionId,x:cell.x,z:cell.z,tier:0,progressDays:0,household:null,burning:false,waitingGood:null});
+    fresh.push({id:`plot-${regionId}-${cell.x}-${cell.z}`,regionId,x:cell.x,z:cell.z,groundY:TOWN_REGIONS.get(regionId).groundHeightAt((cell.x+.5)*8,(cell.z+.5)*8),tier:0,progressDays:0,household:null,burning:false,waitingGood:null});
   }
   plots.push(...fresh);
   return {ok:true,message:`Painted ${fresh.length} home ${fresh.length===1?'plot':'plots'}.`};
