@@ -179,3 +179,9 @@ perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
 - `stages-rusted-steel.jpg`: the building stages' own rusted steel picture, generated for TOWN-ART-STAGES.
+
+## town-services-brick.jpg
+
+Generated with OpenAI image generation for TOWN-ART-SERVICES (6 November 2026). It supplies the small repeating brick picture for the Town Hall walls and gable.
+
+Prompt: Photorealistic seamless square close-up of old red-brown fired brick masonry from a remote desert civic building. Individual bricks about 22 cm long by 7 cm tall, clear horizontal mortar joints, irregular faded brick faces, rubbed corners, fine dust in mortar, small chips, mild soot and darker weathering low down. Muted brick reds and dark brown mortar, matte, no strong perspective, even diffuse daylight, no labels or writing. Tile edges blend seamlessly. Avoid rubble, piles of broken bricks, orange saturation, smooth stone, uniform noise, blur, logos, watermark.
