@@ -13,15 +13,14 @@ export function createMachineState(definition, {x = 0, z = 0, heading = 0} = {})
     load:{}, toolVolumes:{}};
 }
 
-const INNER_STEP = 1 / 120;
+const INNER_STEP = 1 / 240;
 
-/** Advance one machine by elapsed seconds, in equal small steps so any frame rate gives the same machine. */
+/** Advance one machine by elapsed seconds, in fixed small steps so any frame rate gives the same machine. */
 export function stepMachine(definition, state, controls = {}, dtSeconds = 0) {
   if (!definition || !state || !finite(dtSeconds) || dtSeconds < 0) throw new TypeError('A machine state and non-negative elapsed seconds are required.');
-  const steps = Math.max(1, Math.round(dtSeconds / INNER_STEP));
-  let next = state;
-  for (let index = 0; index < steps; index++) next = stepOnce(definition, next, controls, dtSeconds / steps);
-  return next;
+  let carry = (state.stepCarrySeconds ?? 0) + dtSeconds, next = state;
+  while (carry >= INNER_STEP - 1e-9) { next = stepOnce(definition, next, controls, INNER_STEP); carry -= INNER_STEP; }
+  return {...next, stepCarrySeconds:Math.max(0, carry), timeSeconds:state.timeSeconds + dtSeconds};
 }
 
 /** One small step. Constant controls follow an exact arc. */
