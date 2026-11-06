@@ -1589,3 +1589,4 @@ WW-ART-RAIL carriage and van merged, card still open: both pass (round 4), built
 - WW-ART-CREW merged, card done: every prop passes (round 6), on the photo and hull kits; lane tier and build passed on e8562557.
 WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (round 7); lane tier and build passed on 946dc4d8.
 - 6 Nov: merged TOWN-WMAP-UI: the Wasteland map past the town's far zoom, deed buying and bids, and the Ledger's till buttons that nothing called before (lane 40/40, browser town-wmap and town-opens, money, visits, build; two reviews: one wording of the command route fixed by giving stepTown an optional context, one save fault fixed). Switch still off.
+- WW-ART-RAIL merged, card done: the 2:15, carriage, van, Wednesday, coal heap and small props pass; lane tier and build passed on f6761be4.
