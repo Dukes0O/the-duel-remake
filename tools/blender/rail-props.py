@@ -346,9 +346,15 @@ groups = {name: [obj for obj in scene.objects
                  if belongs_to(obj, item) or obj.name.startswith(name + '-')]
           for name, item in roots.items()}
 lineup = {}
-for index, name in enumerate(prop_ids):
-    col, row = index % 6, index // 6
-    lineup[name] = ((col - 2.5) * 1.1, (row - 1) * 2.4)
+first_row = [name for name in prop_ids[:9] if name != 'sand-drag']
+second_row = prop_ids[9:]
+for index, name in enumerate(first_row):
+    lineup[name] = ((index - (len(first_row)-1)/2) * .86, 1.35)
+for index, name in enumerate(second_row):
+    lineup[name] = ((index - (len(second_row)-1)/2) * .82, -1.35)
+# Give the 15 m drag room to read as a real site, behind and to the left of
+# the two close rows of hand-sized props.
+lineup['sand-drag'] = (-11.0, -6.0)
 
 def cam(eye, target):
     eye_b, target_b = town.game_vector(eye), town.game_vector(target)
@@ -387,12 +393,15 @@ for name in prop_ids:
         render(name+'-dead-on',name,(0,h*.52,4),(0,h*.52,0),max(w,h)*1.14)
         render(name+'-quarter',name,(w*.62,h*.58,3),(0,h*.48,0),max(w,h)*1.24)
 
-for name,(x,z) in lineup.items(): roots[name].location=(x,0,z)
+for name,(x,z) in lineup.items():
+    roots[name].location=(x,0,z)
+    if name == 'sand-drag':
+        roots[name].rotation_euler[2]=math.radians(90)
 ground.hide_render=False
 for members in groups.values():
     for obj in members: obj.hide_render=False
-scene.render.resolution_x, scene.render.resolution_y = 1800, 900
-camera.data.type='PERSP'; camera.data.lens=55
-cam((0,2.4,12),(0,.9,0))
+scene.render.resolution_x, scene.render.resolution_y = 1800, 700
+camera.data.type='PERSP'; camera.data.lens=40
+cam((-7.5,1.5,24),(-7.5,.9,-4.2))
 scene.render.filepath=str(render_dir/'lineup.png')
 bpy.ops.render.render(write_still=True)

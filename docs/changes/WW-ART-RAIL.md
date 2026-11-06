@@ -10,6 +10,7 @@ Date: 6 November 2026
 - Replaced the sand-drag cutout with a 15 m long, 1.5 m high feathered heightfield, photo-textured rails and sleepers, and a thick timber stop block. Set its review views at car height, 18 m away.
 - Narrowed the toy-car tires from 46 mm to 26 mm, moved them snug to the body, and fitted matching thin tin hub caps.
 - Checked the prop dimensions against the story brief: the bare lever is 1.20 m tall; the small lost-property cases remain 0.28–0.34 m tall (about 1.5 times real size).
+- Repacked the line-up as two close rows on one ground. Put the full-size sand drag behind them, turned across the row, and framed the whole group from car height.
 
 ## Checks
 
