@@ -6,6 +6,7 @@ Date: 6 November 2026
 
 - Renamed the suitcase model and number-label child from `case-fourteen` to the story id `case-hollis`; kept its source photo filename.
 - Tightened the silhouettes of the books, teeth jar, paper megaphone and Hollis suitcase by five pixels before photo bleed, trimming pale cast-shadow fringes.
+- Seeded the token hoop's clear center as sky so its photo mask keeps the opening transparent.
 
 ## Checks
 

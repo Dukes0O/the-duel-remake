@@ -71,6 +71,9 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     photo.image_w, photo.image_h = photo.image.size
     photo._rgb = None
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
+    if name == 'token-ring':
+        # The open centre between the leather hanger and brass token is sky.
+        seeds.append((photo.w // 2, round(photo.h * .40)))
     if name in ('case-books', 'case-teeth', 'case-megaphone', 'case-hollis'):
         # Pull the photo shadow off the silhouette, then bleed subject colour
         # beyond the new edge so filtering cannot bring the pale fringe back.
