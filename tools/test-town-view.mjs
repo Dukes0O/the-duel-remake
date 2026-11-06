@@ -5,6 +5,8 @@ import {visibleTownChunks,townChunkLod} from '../src/town/view/town-chunks.js';
 import {buildTownChunkInstances,createTownPlacementGhost} from '../src/town/view/town-instances.js';
 import {pickTownItem} from '../src/town/view/town-pick.js';
 import {createTownScene} from '../src/town/view/town-scene.js';
+import {createGroundEdit} from '../src/world/ground-edit.js';
+import {setScablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
 
 const camera=createTownCamera({width:800,height:600,target:{x:10,y:2,z:-4},zoom:0});
 const streetDistance=camera.position.distanceTo(camera.userData.townView.target);
@@ -46,6 +48,24 @@ assert.ok(sceneView.ground === undefined || sceneView.state.ground.children.leng
 sceneView.setPlacement(1,2,{valid:false,width:2,depth:1});
 assert.equal(sceneView.state.ghost.visible,true); assert.equal(sceneView.state.ghost.userData.placementValid,false);
 sceneView.setUnderground(true); assert.equal(sceneView.state.overlays.visible,true);
+const editLayer=createGroundEdit({region:{id:'view-edit',editable:true},naturalHeight:()=>0});
+editLayer.cut({x:0,z:0,radius:1},-2);
+setScablandsGroundEdit(editLayer);
+sceneView.update();
+const terrainChunk=sceneView.state.ground.children.find(chunk=>chunk.userData.chunkKey==='0:0');
+assert.ok(terrainChunk,'the scene has a rebuilt terrain chunk after an edit-layer change');
+assert.ok(Array.from(terrainChunk.geometry.attributes.position.array).some((value,index,array)=>index%3===1&&array[index]<-1),
+  'town terrain uses the edited surface height');
+resetScablandsGroundEdit();
+sceneView.setUnderground(true);
+const utilityTown={...town,buildings:[],utilities:{pipes:[{from:{x:0,z:0},to:{x:24,z:0}}],
+  sewers:[{from:{x:0,z:8},to:{x:24,z:8}}],wires:[{from:{x:0,z:16},to:{x:24,z:16}}]}};
+const utilityView=createTownScene({town:utilityTown,width:800,height:600,loadModel:async()=>new THREE.Group()});
+utilityView.setUnderground(true);
+assert.equal(utilityView.state.overlays.children.length,3,'underground view draws utility routes without matching buildings');
+assert.deepEqual(utilityView.state.overlays.children.map(route=>route.material.color.getHex()),[0x377e9d,0x775343,0xd5b754],
+  'pipes, sewers and wires keep their established colors');
+utilityView.dispose();
 sceneView.setCalendar({season:'winter'},{hour:21}); assert.equal(sceneView.state.lights.visible,true);
 sceneView.dispose();
 

@@ -29,6 +29,28 @@ assert.equal(trenchGround.heightAt(0, 50), -1.5, 'the ditch floor is 1.5 metres 
 assert.ok(trenchGround.heightAt(1.4, 50) > 0, 'the side chute leaves a raised ridge beside the ditch');
 assert.ok(trenchGround.heightAt(4, 50) > -0.01, 'ground outside the ditch stays at its original grade');
 
+const reservedGround = createGroundEdit({region:{id:'reserved-ridge',editable:true}, seed:17, naturalHeight:() => 0,
+  reservedShapes:[{x:1.4,z:0,radius:0.8}]});
+let reservedState=createTrencherState();
+const beforeVolume=Array.from({length:15},(_,z)=>Array.from({length:15},(_,x)=>reservedGround.heightAt(x-7,z-7)))
+  .flat().reduce((sum,height)=>sum+height,0);
+for(let frame=0;reservedState.machine.z<1.1&&frame<200;frame++){
+  const result=stepTrencher(reservedState,{forward:1,chainDown:true},1/60,reservedGround);
+  reservedState=result.state;
+}
+const afterVolume=Array.from({length:15},(_,z)=>Array.from({length:15},(_,x)=>reservedGround.heightAt(x-7,z-7)))
+  .flat().reduce((sum,height)=>sum+height,0);
+assert.ok(reservedState.cutVolumeM3>0,'the trench still cuts beside a reserved ridge area');
+assert.ok(Math.abs(afterVolume-beforeVolume)<1e-5,'cut and deposited material conserve total ground volume beside a reserved area');
+
+const blockedGround=createGroundEdit({region:{id:'blocked-ridges',editable:true},naturalHeight:()=>0,
+  reservedShapes:[{x:1.4,z:1,radius:0.8},{x:-1.4,z:1,radius:0.8}]});
+const blockedStep=stepTrencher(createTrencherState(),{forward:1,chainDown:true},2,blockedGround);
+assert.equal(blockedStep.cutVolumeM3,0,'the trencher stops before cutting when both ridge sides are reserved');
+assert.equal(blockedStep.events[0]?.reason,'Both sides are blocked, so the trencher stopped without removing soil.',
+  'the stopped cut gives a plain reason');
+assert.ok(Math.abs(blockedGround.heightAt(0,1))<0.03,'a refused ridge placement restores the cut ground');
+
 // A car wheel over the edited path reads the lower ground height; the same
 // ground query used by vehicle suspension makes the ditch a real obstacle.
 const carWheelHeight = trenchGround.heightAt(0, 50);

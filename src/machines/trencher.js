@@ -19,14 +19,21 @@ function digAt(ground, x, z, heading) {
   const shape = {x, z, radius:tool.radiusM};
   const targetHeight = ground.heightAt(x, z) - tool.depthM;
   const cut = ground.cut(shape, targetHeight);
-  const ridgeX = x + Math.cos(heading) * tool.ridgeOffsetM;
-  const ridgeZ = z - Math.sin(heading) * tool.ridgeOffsetM;
   let ridgeLooseVolumeM3 = 0;
   for (const [material, compactedM3] of Object.entries(cut.volumes)) {
     const looseM3 = compactedM3 * 1.25;
     if (looseM3 <= 0) continue;
-    const deposited = ground.fill({x:ridgeX, z:ridgeZ, radius:tool.ridgeRadiusM}, material, looseM3);
-    if (deposited.ok) ridgeLooseVolumeM3 += deposited.looseVolume;
+    const sides = [1, -1].map(side => ground.fill({
+      x:x + Math.cos(heading) * tool.ridgeOffsetM * side,
+      z:z - Math.sin(heading) * tool.ridgeOffsetM * side,
+      radius:tool.ridgeRadiusM,
+    }, material, looseM3));
+    const deposited = sides.find(result => result.ok);
+    if (deposited) { ridgeLooseVolumeM3 += deposited.looseVolume; continue; }
+    // The cut is reversible inside the same editable area. Put material back
+    // at the trench before reporting that both ridge sides are blocked.
+    ground.fill(shape, material, looseM3);
+    return {cut:{...cut,ok:false,reason:'Both sides are blocked, so the trencher stopped without removing soil.'},ridgeLooseVolumeM3};
   }
   return {cut, ridgeLooseVolumeM3};
 }
@@ -55,7 +62,8 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
       const {cut, ridgeLooseVolumeM3:ridgeLoose} = digAt(ground, x, z, machine.heading);
       if (!cut.ok) {
         events.push({type:'cut-refused', x, z, reason:cut.reason});
-        continue;
+        distanceCarryM = 0;
+        break;
       }
       cutVolumeM3 += cut.volume;
       ridgeLooseVolumeM3 += ridgeLoose;

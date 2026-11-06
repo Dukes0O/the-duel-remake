@@ -16,7 +16,7 @@
 
 ## Changed assertions
 
-- None. The new card test adds behavior checks and changes no existing assertion.
+- `tools/test-feature-flags.mjs`: expected switch count increased from 50 to 51 and `wasteland-town` was added to the expected `dev` switches and message. Reason: one new development switch; nothing loosened.
 
 ## Race fingerprints
 
