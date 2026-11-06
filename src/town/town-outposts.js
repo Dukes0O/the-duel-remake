@@ -12,7 +12,7 @@ function stateFor(town, neighbourId) {
   if(!definition) return null;
   town.outposts ||= {};
   let state=town.outposts[neighbourId];
-  if(!state) state=town.outposts[neighbourId]={standing:definition.standing, tradeRuns:0, protected:false, lastReportMonth:null, trucks:[], nextTruckNumber:1};
+  if(!state) state=town.outposts[neighbourId]={...(definition.placeId?{placeId:definition.placeId}:{}),standing:definition.standing, tradeRuns:0, protected:false, lastReportMonth:null, trucks:[], nextTruckNumber:1};
   if(!Array.isArray(state.trucks)) state.trucks=[];
   state.trucks=state.trucks.filter(truck=>truck?.status==='on-road');
   if(!Number.isSafeInteger(state.nextTruckNumber)||state.nextTruckNumber<1) state.nextTruckNumber=1;

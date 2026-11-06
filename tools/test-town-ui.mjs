@@ -12,6 +12,7 @@ const model=townScreenModel(town,{next:'Build a road.',speed:2});
 equal(model.date,'Year 1, Spring, day 1','the first town date is clear');
 equal(model.people,1,'people count comes from current town data');
 const html=townScreenMarkup(model);
+ok(html.includes('data-town-action="visit">VISIT</button>')&&!html.includes('THE BOOK: VISIT'),'the visit button has its short label');
 ok(html.includes('NEXT')&&html.includes('Build a road.'),'the next line stays visible');
 ok(html.includes('Rustwall &lt;Camp&gt;'),'town names are escaped');
 for(const label of ['TILL','PEOPLE','MOOD','WATER IN','WATER OUT','POWER IN','POWER OUT','THE YARD','THE BOOK']) ok(html.includes(label),`${label} is on the screen`);
