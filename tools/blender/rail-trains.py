@@ -43,6 +43,9 @@ rear = Photo(textures / '2-15-rear.jpg')
 salt = Photo(textures / 'packed-salt.jpg')
 salt.image.scale(640, 640)
 materials = {'side': side.material(), 'front': front.material(), 'rear': rear.material()}
+carriage_side = Photo(textures / 'carriage-side.jpg', frame=(2172, 724))
+carriage_end = Photo(textures / 'carriage-end.jpg')
+carriage_canvas = Photo(textures / 'carriage-canvas.jpg')
 
 # Sky in each photo. Seeds: the open sky, then each opening where sky shows through.
 side_solid = tidy(~side.sky([(30, 30), (1000, 40), (1950, 300), (340, 260), (272, 300), (190, 150), (700, 135), (850, 135)]))
@@ -317,6 +320,142 @@ for i in range(NX):
         drift.indexed((a, b, c, d), (ua, ub, uc, ud), 'salt', (0, 1, 0), True)
 objects['the-2-15-drift'] = drift
 drift.finish('the-2-15-drift', {'salt': salt.material()})
+
+# The first wooden works carriage, measured from its side and coupling-end photos.
+# X is the 14 m length, Y is height above the rail, and Z is the 2.7 m width.
+CS = 14.0 / 1990
+CY_SCALE = 3.7 / (656 - 24)
+def CX(px): return (px - 1025) * CS
+def CY(py): return (656 - py) * CY_SCALE
+def CZ(px): return -(px - 627) * (2.7 / 952)
+def carriage_side_point(px, py, z): return (CX(px), CY(py), z)
+def carriage_end_point(px, py, x): return (x, (1180 - py) * (3.7 / 1080), CZ(px))
+
+carriage_side_solid = tidy(~carriage_side.sky([(8, 20), (8, 350), (2160, 30), (2160, 350)], grey=26))
+carriage_end_solid = tidy(~carriage_end.sky([(35, 35), (1215, 35)], grey=26))
+carriage = Mesh()
+C_SIDE = 'carriage-side'
+C_END = 'carriage-end'
+C_CANVAS = 'carriage-canvas'
+carriage_materials = {C_SIDE: carriage_side.material(), C_END: carriage_end.material(),
+                      C_CANVAS: carriage_canvas.material()}
+
+# Trace the timber body from the photograph, then cut the dark windows and open
+# doorways as real holes. The dark interior remains visible through both walls.
+carriage_wall = trace(carriage_side_solid, (30, 126, 2040, 478), tolerance=1.5, min_area=300)
+for x0, x1 in ((331, 449), (517, 635), (704, 822), (891, 1009),
+               (1077, 1195), (1263, 1381), (1449, 1567), (1635, 1753)):
+    carriage_wall.append(rounded(x0, 181, x1, 339, 12))
+carriage_wall += [rounded(258, 151, 318, 477, 8), rounded(1882, 151, 1984, 477, 10)]
+for sign in (1, -1):
+    slab(carriage, C_SIDE, carriage_side, carriage_wall, carriage_side_point,
+         sign * 1.28, sign * 1.34, wall_scale=CS)
+
+# Dark inner walls and floor make the missing glazing and open doors read as
+# empty, unlit space rather than pale background.
+DARK_SIDE = (C_SIDE, carriage_side, (354, 220, 423, 270))
+box(carriage, CX(70), CX(2000), .78, 3.12, -1.22, -1.16,
+    {'+z': DARK_SIDE, '-z': DARK_SIDE})
+box(carriage, CX(70), CX(2000), .76, .84, -1.22, 1.22,
+    {'+z': DARK_SIDE, '-z': DARK_SIDE, '+y': DARK_SIDE})
+
+# The actual door leaves come from their own picture areas and swing outward.
+def swing_door(loop, hinge_px, sign):
+    hinge_x = CX(hinge_px)
+    angle = math.radians(70)
+    def placed(px, py, depth):
+        x = CX(px)
+        dx = x - hinge_x
+        return (hinge_x + dx * math.cos(angle), CY(py),
+                sign * (1.34 + abs(dx) * math.sin(angle) + depth))
+    slab(carriage, C_SIDE, carriage_side, [loop], placed, 0, .045, wall_scale=CS)
+
+for sign in (1, -1):
+    swing_door([(177, 145), (230, 145), (244, 164), (244, 457), (225, 477), (177, 465)], 244, sign)
+    swing_door([(1930, 150), (1980, 151), (2014, 176), (2012, 455), (1963, 477), (1930, 462)], 1930, sign)
+
+# End sheets use the dead-on coupling photograph, with empty windows and a door.
+end_wall = trace(carriage_end_solid, (152, 95, 1104, 900), tolerance=1.5, min_area=250)
+end_wall += [rounded(248, 287, 430, 587, 18), rounded(828, 287, 1010, 587, 18),
+             rounded(505, 215, 712, 850, 10)]
+for x in (-7.0, 6.92):
+    slab(carriage, C_END, carriage_end, end_wall, carriage_end_point,
+         x, x + .08, wall_scale=.0035)
+
+# The end openings look into the same unlit compartment, not through to the sky.
+DARK_END = (C_END, carriage_end, (550, 390, 650, 470))
+box(carriage, -6.84, 6.84, .98, 3.46, -1.24, 1.24,
+    {'+x': DARK_END, '-x': DARK_END})
+
+# Shallow canvas roof, with a clear space beneath it to prevent coplanar flicker.
+ROOF_STEPS = 20
+for k in range(ROOF_STEPS):
+    t0, t1 = k / ROOF_STEPS, (k + 1) / ROOF_STEPS
+    a0, a1 = t0 * math.pi, t1 * math.pi
+    def roof_point(a, px, inset=0):
+        return (CX(px), 3.15 - inset + .55 * math.sin(a), 1.35 * math.cos(a))
+    out = (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2))
+    for inset, material, photo in ((0, C_CANVAS, carriage_canvas),
+                                   (.075, C_SIDE, carriage_side)):
+        corners = (roof_point(a0, 30, inset), roof_point(a0, 2020, inset),
+                   roof_point(a1, 2020, inset), roof_point(a1, 30, inset))
+        t0, t1 = a0 / math.pi, a1 / math.pi
+        if inset == 0:
+            u0, u1 = (CX(30) + 7) / 2.4, (CX(2020) + 7) / 2.4
+            v0, v1 = t0 * 2.7 / 2.4, t1 * 2.7 / 2.4
+            uvs = (photo.uv(u0 * photo.w, v0 * photo.h), photo.uv(u1 * photo.w, v0 * photo.h),
+                   photo.uv(u1 * photo.w, v1 * photo.h), photo.uv(u0 * photo.w, v1 * photo.h))
+        else:
+            uvs = (photo.uv(354, 220), photo.uv(423, 220),
+                   photo.uv(423, 270), photo.uv(354, 270))
+        carriage.face(corners, uvs, material, out if inset == 0 else tuple(-v for v in out))
+
+# Bolster beams and the two four-wheel bogies, all read from the lower side photo.
+FRAME = (C_SIDE, carriage_side, (300, 473, 1900, 510))
+BOGIE = (C_SIDE, carriage_side, (175, 500, 670, 635))
+for x0, x1 in ((CX(90), CX(2080)), (CX(180), CX(700)), (CX(1460), CX(1980))):
+    box(carriage, x0, x1, .62, 1.03, -.94, .94,
+        {'+z': FRAME, '-z': FRAME, '-y': FRAME})
+for start, end in ((115, 700), (1450, 2020)):
+    bogie_loops = trace(carriage_side_solid, (start, 490, end, 642), tolerance=1.8, min_area=130)
+    if bogie_loops:
+        for sign in (1, -1):
+            slab(carriage, C_SIDE, carriage_side, bogie_loops, carriage_side_point,
+                 sign * .82, sign * 1.03, wall_scale=CS)
+
+WHEEL_CENTRES = ((238, 586, 73), (570, 586, 73), (1600, 586, 73), (1910, 586, 73))
+for cx, cy, radius_px in WHEEL_CENTRES:
+    radius = radius_px * CY_SCALE
+    centre = (CX(cx), radius, 0)
+    def wheel_face(angle, fraction, cx=cx, cy=cy, radius_px=radius_px):
+        return carriage_side.uv(cx + math.cos(angle) * fraction * radius_px,
+                                cy - math.sin(angle) * fraction * radius_px)
+    def wheel_tread(index, distance, r, angle, cx=cx):
+        u = 0.84 * math.degrees(math.asin(math.sin(angle))) / 90
+        return carriage_side.uv(cx + 32 + u * 40, 594 + (1 - index) * 46)
+    for sign in (1, -1):
+        lathe(carriage, C_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(sign * .76, radius), (sign * .96, radius)], wheel_tread, sides=32,
+              cap_start=(C_SIDE, wheel_face), cap_end=(C_SIDE, wheel_face))
+        lathe(carriage, C_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(sign * .96, .16), (sign * 1.02, .13)], wheel_tread, sides=14,
+              cap_end=(C_SIDE, lambda a, f, face=wheel_face: face(a, .22)))
+
+# Buffer stocks and heads follow the engine's lathe profile at all four corners.
+for x_sign in (-1, 1):
+    for z_sign in (-1, 1):
+        start_x = x_sign * 6.98
+        end_x = x_sign * 7.25
+        stations_buffer = [(0, .09), (.16, .09), (.20, .15), (.27, .225)]
+        lathe(carriage, C_SIDE, (start_x, 1.02, z_sign * .92), (x_sign, 0, 0),
+              (0, 0, 1), (0, 1, 0), stations_buffer,
+              lambda i, d, r, a: carriage_side.uv(1980 + i * 10, 502 + math.sin(a) * 12),
+              sides=16,
+              cap_end=(C_END, lambda a, f: carriage_end.uv(300 + math.cos(a) * f * 95,
+                                                            940 - math.sin(a) * f * 95)))
+
+carriage.finish('the-2-15-carriage', carriage_materials)
+objects['the-2-15-carriage'] = carriage
 print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -373,3 +512,12 @@ shot('quarter', (8.5, 1.7, 9.5), (.3, 1.75, 0), 1000, 620, lens=30)
 shot('quarter-rear', (-9, 1.7, 8.5), (-1.2, 1.75, 0), 1000, 620, lens=30)
 shot('buried', (8.5, 1.7, 13), (.3, 1.75, 0), 1000, 620, lens=30, show_drift=True)
 shot('buried-windward', (9, 3.2, -14), (.3, 2.0, 0), 1000, 620, lens=30, show_drift=True)
+
+# Carriage review views also come from the exported GLB in this empty scene.
+for obj in scene.objects:
+    if obj.name.startswith(('the-2-15-engine', 'the-2-15-track', 'the-2-15-drift')):
+        obj.hide_render = True
+shot('carriage-side', (0, 1.83, 24), (0, 1.83, 0), 1000, 334, ortho=15.0)
+shot('carriage-end', (12, 1.83, 0), (0, 1.83, 0), 600, 600, ortho=4.4)
+shot('carriage-quarter', (8, 1.7, 9), (1, 1.75, 0), 1000, 380, lens=26)
+shot('carriage-quarter-rear', (-8, 1.7, 9), (-1.6, 1.75, 0), 1000, 380, lens=26)

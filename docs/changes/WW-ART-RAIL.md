@@ -25,3 +25,14 @@ None: not wired into the game.
 ## Removed
 
 The round 1 and 2 recipe, sheets and notes.
+
+## Carriage slice
+
+- Added the 14 m passenger carriage as `the-2-15-carriage`, with two four-wheel bogies, open doors, empty windows, a dark interior, curved canvas roof and end buffers. Its side, end and roof pictures are credited in the rail texture credits.
+- Raised only the `ww-art-rail` GLB budget to the card's stated 80,000 triangles and 5 MB.
+- Blender 4.5.13 exported and re-imported the GLB for the side, end and two three-quarter views. The carriage has 4,200 triangles. The engine, track and drift recipes and nodes are unchanged.
+- `node tools/test-blender-output.mjs`: passed, 275 checks, 0 failed. `node tools/test-repo-hygiene.mjs`: passed; size targets reported as advisory.
+- Side and end renders were compared beside their photos. The passenger carriage passes my look check from the side and three-quarter views. Chrome checks are for Claude. The van proceeds because this piece passed.
+- Changed assertions: none. The budget entry changed to the card's stated limit; no test assertion was loosened.
+- Race fingerprints: none; this is not wired into the game.
+- Removed: the empty temporary PNG and transient image-transfer file created during photo import. The review sheet will contain only the accepted carriage and van views.
