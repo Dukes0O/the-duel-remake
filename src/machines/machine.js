@@ -13,9 +13,19 @@ export function createMachineState(definition, {x = 0, z = 0, heading = 0} = {})
     load:{}, toolVolumes:{}};
 }
 
-/** Advance one machine by elapsed seconds. Constant controls follow an exact arc. */
+const INNER_STEP = 1 / 120;
+
+/** Advance one machine by elapsed seconds, in equal small steps so any frame rate gives the same machine. */
 export function stepMachine(definition, state, controls = {}, dtSeconds = 0) {
   if (!definition || !state || !finite(dtSeconds) || dtSeconds < 0) throw new TypeError('A machine state and non-negative elapsed seconds are required.');
+  const steps = Math.max(1, Math.round(dtSeconds / INNER_STEP));
+  let next = state;
+  for (let index = 0; index < steps; index++) next = stepOnce(definition, next, controls, dtSeconds / steps);
+  return next;
+}
+
+/** One small step. Constant controls follow an exact arc. */
+function stepOnce(definition, state, controls, dtSeconds) {
   const maxLoad = definition.maxLoadKg || 1;
   const carriedKg = loadMass(state.load);
   const loadFactor = Math.max(0.35, 1 - 0.25 * Math.min(1, carriedKg / maxLoad));
