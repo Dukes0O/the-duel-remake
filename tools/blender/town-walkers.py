@@ -25,19 +25,19 @@ render_dir = Path(args.render_dir)
 render_dir = render_dir if render_dir.is_absolute() else root / render_dir
 
 PEOPLE = [
-    ('walker-a', 'walker-a', 1.70, 'dust coat', .83, 'brown'),
-    ('walker-b', 'walker-b', 1.70, 'poncho', .82, 'olive'),
-    ('walker-c', 'walker-c', 1.70, 'welding apron', .84, 'slate'),
-    ('walker-d', 'walker-a', 1.70, 'patched long coat', .81, 'rust'),
-    ('walker-e', 'walker-c', 1.70, 'work apron', .84, 'blue'),
-    ('walker-f', 'walker-b', 1.70, 'hooded poncho', .82, 'charcoal'),
-    ('walker-g', 'walker-c', 1.70, 'rolled sleeve overalls', .83, 'ochre'),
-    ('walker-h', 'walker-a', 1.70, 'head scarf and overalls', .82, 'moss'),
-    ('walker-kid-a', 'walker-kid-a', 1.30, 'child jacket and patched shorts', .66, 'ochre'),
-    ('walker-kid-b', 'walker-kid-a', 1.30, 'child overshirt and trousers', .66, 'blue'),
-    ('walker-guard', 'walker-b', 1.70, 'guard coat with slung rifle', .83, 'charcoal'),
-    ('walker-trader', 'walker-a', 1.70, 'long coat and loaded pack', .83, 'rust'),
-    ('walker-vane', 'walker-c', 1.70, 'white overalls and blue drop', .84, 'white'),
+    ('walker-a', 'walker-a', 1.70, 'dust coat', .83),
+    ('walker-b', 'walker-b', 1.70, 'poncho', .82),
+    ('walker-c', 'walker-c', 1.70, 'welding apron', .84),
+    ('walker-d', 'walker-d', 1.70, 'patched long coat', .81),
+    ('walker-e', 'walker-e', 1.70, 'work apron', .84),
+    ('walker-f', 'walker-f', 1.70, 'hooded poncho', .82),
+    ('walker-g', 'walker-g', 1.70, 'rolled sleeve overalls', .83),
+    ('walker-h', 'walker-h', 1.70, 'head scarf and overalls', .82),
+    ('walker-kid-a', 'walker-kid-a', 1.30, 'child jacket and patched shorts', .66),
+    ('walker-kid-b', 'walker-kid-b', 1.30, 'child overshirt and trousers', .66),
+    ('walker-guard', 'walker-guard', 1.70, 'guard coat with slung rifle', .83),
+    ('walker-trader', 'walker-trader', 1.70, 'long coat and loaded pack', .83),
+    ('walker-vane', 'walker-vane', 1.70, 'white overalls and blue drop', .84),
 ]
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)], 'evidence': [str(render_dir)]}))
@@ -63,14 +63,6 @@ render_dir.mkdir(parents=True, exist_ok=True)
 # scaled to 1.30 m; her hip is y=128. Each panel was reduced without distortion.
 PHOTO = {'adult': (7, 253, 95, 133), 'child': (7, 253, 95, 128)}
 VOXEL = .015
-COLOURS = {
-    'brown': (1.00, .92, .82, 1), 'olive': (1.00, 1.00, .90, 1),
-    'slate': (1.00, 1.00, 1.00, 1), 'rust': (1.00, .88, .76, 1),
-    'blue': (.78, .86, .91, 1), 'charcoal': (.70, .70, .68, 1),
-    'ochre': (1.00, .91, .68, 1), 'moss': (.84, .90, .76, 1),
-    'white': (1.0, 1.0, 1.0, 1),
-}
-
 def frame_seeds(photo):
     seeds = [(5, 5), (photo.w - 6, 5), (5, photo.h - 6), (photo.w - 6, photo.h - 6)]
     seeds += [(x, 4) for x in range(32, photo.w - 8, 32)]
@@ -115,18 +107,12 @@ def look_any(view, x, y, z):
     return view.covers(x, y, z)
 
 def add_actor(person, index):
-    ident, photo_set, height, outfit, hip_fraction, colour_key = person
+    ident, photo_set, height, outfit, hip_fraction = person
     kind = 'child' if 'kid' in ident else 'adult'
     views, scale, centre, ground, hips_px, world_height = views_for(photo_set, height, kind)
-    for view in views:
-        ys, xs = np.nonzero(view.mask)
-        print('PHOTO_MASK', ident, view.name, round(float(view.mask.mean()), 3),
-              int(xs.min()), int(xs.max()), int(ys.min()), int(ys.max()))
     materials = {view.name: view.photo.material(.94) for view in views}
     for material in materials.values():
-        bsdf = material.node_tree.nodes['Principled BSDF']
-        bsdf.inputs['Base Color'].default_value = COLOURS[colour_key]
-        bsdf.inputs['Metallic'].default_value = 0
+        material.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = 0
 
     hip_y = (ground - hips_px) * scale
     half_x = .47 if kind == 'adult' else .39
@@ -139,8 +125,9 @@ def add_actor(person, index):
     def upper_keep(x, y, z):
         # The coat/apron photographed below the hip stays with the torso;
         # the two leg hulls sit behind its open split and swing at the hip.
-        if outfit in ('dust coat', 'patched long coat', 'long coat and loaded pack', 'welding apron', 'work apron'):
-            return (y >= hip_y) | (np.abs(x) >= .22)
+        if outfit in ('dust coat', 'patched long coat', 'long coat and loaded pack',
+                      'welding apron', 'work apron', 'poncho', 'hooded poncho'):
+            return (y >= hip_y) | (np.abs(x) >= .12)
         return y >= hip_y
     def left_keep(x, y, z):
         return (y < hip_y + .015) & (x <= .012)
@@ -152,13 +139,14 @@ def add_actor(person, index):
     # profile and back masks define occupancy.
     tests = [view.covers for view in views if view.name != 'top']
     parts = []
+    upper_target = 180 if ident == 'walker-guard' else 205
+    leg_target = 65 if ident == 'walker-guard' else 75
     for label, bounds, keep, target in (
-        ('upper', body_bounds, upper_keep, 205),
-        ('leg-l', leg_bounds, left_keep, 75),
-        ('leg-r', leg_bounds, right_keep, 75),
+        ('upper', body_bounds, upper_keep, upper_target),
+        ('leg-l', leg_bounds, left_keep, leg_target),
+        ('leg-r', leg_bounds, right_keep, leg_target),
     ):
         solid, xs, ys, zs = occupancy(bounds, VOXEL, tests, keep)
-        print('OCCUPANCY', ident, label, int(solid.sum()), tuple(solid.shape))
         if not solid.any():
             raise RuntimeError(f'{ident}:{label} photo masks do not overlap')
         solid = largest_part(solid)
@@ -184,7 +172,7 @@ def add_actor(person, index):
     actor['photo_set'] = photo_set
     actor['hip_height_m'] = round(hip_y, 3)
     actor['outfit'] = outfit
-    add_outfit_parts(actor, ident, outfit, height, colour_key)
+    add_outfit_parts(actor, ident, outfit, height)
     count = 0
     for obj in actor.children_recursive:
         if obj.type == 'MESH':
@@ -219,25 +207,13 @@ def make_ellipsoid(name, actor, center, radius, material, segments=8, rings=5):
     obj.parent = actor
     return obj
 
-def make_rifle(name, actor, material):
+def make_rifle(name, actor, steel, wood, strap_material):
     # A narrow, slung salvage rifle follows the guard's shoulder to opposite hip.
-    points = [(-.23, -.16, 1.38), (.19, -.17, .87)]
-    curve = bpy.data.curves.new(name + ' strap', 'CURVE')
-    curve.dimensions = '3D'
-    curve.bevel_depth = .018
-    curve.bevel_resolution = 1
-    spline = curve.splines.new('POLY')
-    spline.points.add(1)
-    for p, co in zip(spline.points, points):
-        p.co = (*co, 1)
-    strap = bpy.data.objects.new(name + ' strap', curve)
-    scene.collection.objects.link(strap)
-    strap.data.materials.append(material)
-    strap.parent = actor
+    beam(name + ' leather sling', actor, (-.23, -.17, 1.38), (.19, -.18, .87), .012, strap_material)
     # Slim parts show a plausible stock, receiver and barrel at town scale.
-    beam(name + ' stock', actor, (-.20, -.19, 1.27), (-.05, -.19, 1.10), .050, material)
-    beam(name + ' receiver', actor, (-.05, -.19, 1.10), (.10, -.19, .98), .044, material)
-    beam(name + ' barrel', actor, (.10, -.19, .98), (.28, -.19, .83), .018, material)
+    beam(name + ' stock', actor, (-.20, -.19, 1.27), (-.05, -.19, 1.10), .028, wood)
+    beam(name + ' receiver', actor, (-.05, -.19, 1.10), (.10, -.19, .98), .024, steel)
+    beam(name + ' barrel', actor, (.10, -.19, .98), (.28, -.19, .83), .010, steel)
 
 def beam(name, actor, start, end, radius, material):
     a, b = Vector(start), Vector(end)
@@ -254,28 +230,20 @@ def beam(name, actor, start, end, radius, material):
     obj.parent = actor
     return obj
 
-def add_outfit_parts(actor, ident, outfit, height, colour_key):
-    if outfit == 'poncho':
-        cloth = accessory_material(ident + ' hat cloth', (.24, .22, .17))
-        make_ellipsoid(ident + ' broad patched hat', actor, (0, 0, 1.66), (.22, .19, .045), cloth)
-        make_ellipsoid(ident + ' hat crown', actor, (0, 0, 1.72), (.13, .125, .07), cloth)
-    if outfit == 'hooded poncho':
-        cloth = accessory_material(ident + ' hood cloth', (.18, .19, .17))
-        make_ellipsoid(ident + ' hood', actor, (0, -.01, 1.65), (.16, .15, .13), cloth)
+def add_outfit_parts(actor, ident, outfit, height):
     if outfit == 'guard coat with slung rifle':
         steel = accessory_material(ident + ' blued steel', (.10, .11, .10), .2)
         wood = accessory_material(ident + ' dark rifle wood', (.16, .11, .07))
-        make_rifle(ident + ' slung rifle', actor, steel)
+        strap = accessory_material(ident + ' worn leather rifle sling', (.12, .075, .045))
+        make_rifle(ident + ' slung rifle', actor, steel, wood, strap)
         beam(ident + ' rifle grip', actor, (-.07, -.195, 1.12), (-.04, -.195, 1.02), .025, wood)
     if outfit == 'long coat and loaded pack':
         canvas = accessory_material(ident + ' salvage pack canvas', (.25, .21, .15))
-        make_ellipsoid(ident + ' trader pack', actor, (0, .21, 1.05), (.22, .17, .31), canvas)
+        make_ellipsoid(ident + ' pack main', actor, (0, .21, 1.05), (.22, .17, .31), canvas)
         beam(ident + ' pack roll', actor, (-.14, .18, 1.29), (.14, .18, 1.29), .045, canvas)
     if outfit == 'white overalls and blue drop':
         blue = accessory_material(ident + ' blue drop', (.07, .23, .31))
-        # White multiplies the real welder photo; the blue maker's drop is a separate part.
-        make_ellipsoid(ident + ' uniform bib', actor, (0, -.13, .90), (.23, .025, .30),
-                       accessory_material(ident + ' faded white bib', (.88, .87, .80)))
+        # The model's white overalls are carved from the separate Vane photo set.
         make_ellipsoid(ident + ' blue drop', actor, (.19, -.16, 1.12), (.035, .025, .06), blue, 7, 4)
 
 def setup_scene():
@@ -288,8 +256,8 @@ def setup_scene():
     scene.view_settings.look = 'Medium High Contrast'
     world = bpy.data.worlds.new('even overcast grey')
     world.use_nodes = True
-    world.node_tree.nodes['Background'].inputs['Color'].default_value = (.36, .35, .32, 1)
-    world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
+    world.node_tree.nodes['Background'].inputs['Color'].default_value = (.23, .22, .19, 1)
+    world.node_tree.nodes['Background'].inputs['Strength'].default_value = 1.0
     scene.world = world
     bpy.ops.object.light_add(type='AREA', location=(0, -5, 8))
     light = bpy.context.object
@@ -297,10 +265,17 @@ def setup_scene():
     light.data.shape = 'DISK'
     light.data.size = 13
     light.rotation_euler = (Vector((0, 0, 1)) - light.location).to_track_quat('-Z', 'Y').to_euler()
-    bpy.ops.mesh.primitive_plane_add(size=4000, location=(0, 0, -.02))
+    bpy.ops.mesh.primitive_plane_add(size=1000000, location=(0, 0, -.02))
     ground = bpy.context.object
     ground.name = 'plain mid grey-brown ground'
-    mat = accessory_material('grey-brown earth', (.23, .22, .19))
+    mat = bpy.data.materials.new('mid grey-brown dirt, evenly lit')
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    nodes.clear()
+    emission = nodes.new('ShaderNodeEmission')
+    emission.inputs['Color'].default_value = (.23, .22, .19, 1)
+    output = nodes.new('ShaderNodeOutputMaterial')
+    mat.node_tree.links.new(emission.outputs['Emission'], output.inputs['Surface'])
     ground.data.materials.append(mat)
 
 def look_render():
@@ -339,8 +314,9 @@ def look_render():
                 obj.matrix_world = world
     # Matched three-quarter views from the exported file; one even light and dirt.
     for i, actor in enumerate(people):
+        actor_index = people.index(actor)
         for other in people:
-            other.location.x = (people.index(other) - (len(people) - 1) / 2) * .72
+            other.location.x = (people.index(other) - actor_index) * .72
         for obj in scene.objects:
             if obj.type == 'MESH':
                 parent = obj
@@ -350,30 +326,37 @@ def look_render():
                         belongs = True
                         break
                     parent = parent.parent
-                obj.hide_render = not (belongs or obj.name == 'plain mid grey-brown ground' or obj in locals().get('car_parts', []))
+                obj.hide_render = not (belongs or obj.name == 'plain mid grey-brown ground')
         bpy.ops.object.camera_add(location=(1.9, -4.6, 2.0))
         camera = bpy.context.object
         camera.data.lens = 52
+        camera.location = (0, -4.6, 1.0)
         camera.rotation_euler = (Vector((0, 0, .87)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
         scene.camera = camera
         scene.render.resolution_x = 600
         scene.render.resolution_y = 680
         scene.render.filepath = str(render_dir / f'{actor.name}-exported.png')
         bpy.ops.render.render(write_still=True)
+        for obj in locals().get('car_parts', []):
+            obj.hide_render = False
         for distance in (40, 80):
-            camera.location = (distance * .52, -distance, distance * .5)
+            camera.location = (distance * .35, -distance * .66, distance * .66)
             camera.data.lens = 50
             camera.rotation_euler = (Vector((0, 0, .82)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
             scene.render.resolution_x = 900
             scene.render.resolution_y = 600
             scene.render.filepath = str(render_dir / f'{actor.name}-{distance}m.png')
             bpy.ops.render.render(write_still=True)
+        for obj in locals().get('car_parts', []):
+            obj.hide_render = True
         bpy.data.objects.remove(camera, do_unlink=True)
     for obj in scene.objects:
         if obj.type == 'MESH':
-            obj.hide_render = False
+            obj.hide_render = obj in locals().get('car_parts', [])
     for i, actor in enumerate(people):
         actor.location = ((i - (len(people) - 1) / 2) * .60, 0, 0)
+        if actor.name == 'walker-trader':
+            actor.rotation_euler.z = math.pi
     bpy.ops.object.camera_add(location=(0, -10, 3.5))
     camera = bpy.context.object
     camera.data.lens = 38
@@ -407,9 +390,9 @@ def look_render():
     for i in range(40):
         source = people[i % len(people)]
         clone_actor(source, ((i % 8 - 3.5) * 1.0, (i // 8) * 1.0, 0))
-    bpy.ops.object.camera_add(location=(0, -42, 31))
+    bpy.ops.object.camera_add(location=(0, -60, 60))
     camera = bpy.context.object
-    camera.data.lens = 45
+    camera.data.lens = 55
     camera.rotation_euler = (Vector((0, 0, 0)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     scene.camera = camera
     scene.render.resolution_x = 1400

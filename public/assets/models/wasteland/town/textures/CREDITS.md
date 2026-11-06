@@ -299,3 +299,20 @@ The photos are 190 by 256 pixels; the original sheets remain outside the repo.
   scale: dead-on front, exact side, dead-on back, straight overhead. Plain
   pale background, even flat daylight, full body, dusty worn fabric,
   documentary photograph, no labels, text or watermark."
+- `walker-vane-*.jpg`: one woman in worn white-grey canvas overalls, patched
+  shirt and work boots, with a small blue droplet sewn onto the chest. Prompt:
+  "One adult woman with real adult proportions, wearing worn but clearly
+  white-grey canvas overalls over a faded shirt, rolled sleeves, practical
+  work boots, cloth shoulder straps and a distinct small blue droplet emblem
+  sewn on the upper chest. Standing still, arms slightly away, legs slightly
+  apart. Four equal panels, same person, clothes and scale: dead-on front,
+  exact side profile, dead-on back, straight overhead. Plain pale neutral
+  studio background, even flat diffuse daylight, full body visible, dusty
+  seams and repair patches. No text, labels, extra people, props or watermark."
+
+The alternate sets for `walker-d`, `walker-e`, `walker-f`, `walker-g`,
+`walker-h`, `walker-kid-b`, `walker-guard` and `walker-trader` use the same
+measured photo shape as the matching original wearer, with a restrained
+per-person fabric tint applied to the photographed figure while leaving the
+pale background intact. This keeps the low-poly carved body inside the 1 MB
+family budget while separating their clothing colours.
