@@ -9,3 +9,5 @@ Jobs 1 to 5 of section 5's data block in `src/world/jobs/there-is-no-2-15.js`, w
 Design: [docs/story/there-is-no-2-15.md](../../story/there-is-no-2-15.md), [docs/story/iron-mule.md](../../story/iron-mule.md) and [docs/MACHINES.md](../../MACHINES.md) section 2. A pure sim file imports no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. If something the card needs is missing, write your choice in the change note and carry on with it.
 
 ## Claude answers
+
+Host the digger game for this card's dig step (Claude, 6 November, from RAIL-STEPS). `stepDig` reads only `view.haulTonnes`, the total tonnes the truck has delivered: nothing else moves a pile, and no button digs. Place `createMachineHaul` from `src/machines/haul.js` at the step's `at`, with its `machine` and `truck`, and pass the delivered total in the world-job view. The step also sends `{type:'pile', id, fraction}` and `{type:'reveals', id}` for the view, and the `train` request carries `brakeBoardMetres` for the board beside the track.
