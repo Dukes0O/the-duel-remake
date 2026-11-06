@@ -57,6 +57,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-borer',script:'tools/blender/town-borer.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/borer.glb'],budget:40000,maxBytes:4000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
@@ -647,6 +649,22 @@ try {
       }
     });
   }
+  check('TOWN-ART-BORER family exports its articulated cutter and tunnel nodes within the card budget', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/borer.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 4_000_000, `${bytes.length} bytes exceeds the card's 4 MB limit`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const names = new Set(gltf.nodes.map(node => node.name));
+    for (const name of ['town-borer','borer','borer:head','borer:belt','borer:lamp',
+      'tunnel-ring','tunnel-ring:lamp','portal']) assert.ok(names.has(name), `missing scene node ${name}`);
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 1000 && triangles <= 40_000, `${triangles} triangles`);
+    for (const material of gltf.materials) assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .300001,
+      `${material.name} metallic factor exceeds .3`);
+  });
   check('TOWN-ART-WATER family exports six grounded nodes and its per-material photos', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/water.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
