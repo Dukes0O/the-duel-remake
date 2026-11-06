@@ -1190,6 +1190,47 @@ tasks:
     locks: []
     details: "docs/board/cards/FAR-FINISH.md"
 
+  - id: BOARD-LINES
+    title: "The Notice Board: every line"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/BOARD-LINES.md"
+
+  - id: WW-ART-CREW
+    title: "Art: the crew's favours, from the dynamite to Gerald"
+    owner: "codex"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/WW-ART-CREW.md"
+
+  - id: BOARD-JOBS
+    title: "The Notice Board: twelve jobs, one story for each of the crew"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["BOARD-LINES","SKIN-WASTE"]
+    locks: []
+    details: "docs/board/cards/BOARD-JOBS.md"
+
+  - id: BOARD-FINISH
+    title: "Claude plays The Notice Board"
+    owner: "claude"
+    lane: "FINISH"
+    size: "S"
+    status: "ready"
+    needs: ["BOARD-JOBS","WW-ART-CREW","WW-FINISH"]
+    locks: []
+    details: "docs/board/cards/BOARD-FINISH.md"
+
   - id: TOWN-BOWL-LINK
     title: "Town: the Bowl's gate, tickets, crowd and the Rex in the square"
     owner: "codex"
