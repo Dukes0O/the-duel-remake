@@ -7,7 +7,7 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--render', default='.evidence/2026-11-05/TOWN-ART-DOME/round-2')
+parser.add_argument('--render', default='.evidence/2026-11-05/TOWN-ART-DOME/round-3')
 parser.add_argument('--evidence', default='.qa-dist/town-dome')
 parser.add_argument('--candidate', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
@@ -28,72 +28,39 @@ import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
 texdir = root / 'public/assets/models/wasteland/town/textures'
-import numpy as np
-# Pack the credited photo crops into one 1K image for the model. The entire
-# bottom strip keeps the three rows of crushed cars at their natural aspect.
-atlas=bpy.data.images.new('Dome photographic salvage atlas 1K',1024,1024,alpha=False)
-atlas_pixels=np.zeros((1024,1024,4),dtype=np.float32);atlas_pixels[:,:,3]=1
-sources=[('crushed-car-wall.jpg',(0,0,1024,256)),('scrapdome-sign.jpg',(0,256,1024,512)),
-         ('bus-front.jpg',(0,512,256,768)),('bus-side.jpg',(256,512,512,768)),
-         ('ticket-booth.jpg',(512,512,768,768)),('corrugated-tin.jpg',(768,512,1024,768)),
-         ('dirt.jpg',(0,768,256,1024))]
-for filename,(x0,y0,x1,y1) in sources:
-    src=bpy.data.images.load(str((texdir/filename).resolve()),check_existing=False)
-    src.scale(x1-x0,y1-y0);pixels=np.empty((x1-x0)*(y1-y0)*4,dtype=np.float32)
-    src.pixels.foreach_get(pixels);atlas_pixels[y0:y1,x0:x1]=pixels.reshape((y1-y0,x1-x0,4))
-    bpy.data.images.remove(src)
-atlas.pixels.foreach_set(atlas_pixels.ravel());atlas.pack()
+def photo_material(name, filename, color=(.32,.25,.18), metal=0):
+    """One independently repeating, credited picture per material."""
+    image=bpy.data.images.load(str((texdir/filename).resolve()),check_existing=False)
+    image.pack()
+    mat=bpy.data.materials.new('Dome / '+name);mat.diffuse_color=(1,1,1,1);mat.use_nodes=True
+    bsdf=mat.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Metallic'].default_value=min(metal,.3);bsdf.inputs['Roughness'].default_value=.9
+    tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.image=image
+    tex.interpolation='Linear';tex.extension='REPEAT'
+    mat.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color'])
+    return mat
 
-def atlas_material(name,color,cell=None,car_strip=False,wide_strip=False,metal=0):
-    m=bpy.data.materials.new('Dome / '+name);m.diffuse_color=(*color,1);m.use_nodes=True
-    nodes=m.node_tree.nodes;links=m.node_tree.links;bsdf=nodes.get('Principled BSDF')
-    bsdf.inputs['Base Color'].default_value=(*color,1);bsdf.inputs['Metallic'].default_value=metal
-    bsdf.inputs['Roughness'].default_value=.9
-    if cell is not None or car_strip:
-        tex=nodes.new('ShaderNodeTexImage');tex.image=atlas;tex.interpolation='Linear';tex.extension='REPEAT'
-        uv=nodes.new('ShaderNodeTexCoord').outputs['UV']
-        if car_strip or wide_strip:
-            scale=nodes.new('ShaderNodeVectorMath');scale.operation='MULTIPLY';scale.inputs[1].default_value=(1,.25,1)
-            links.new(uv,scale.inputs[0]);mapped=scale.outputs['Vector']
-            if wide_strip:
-                offset=nodes.new('ShaderNodeVectorMath');offset.operation='ADD';offset.inputs[1].default_value=(0,.25,0)
-                links.new(mapped,offset.inputs[0]);mapped=offset.outputs['Vector']
-            links.new(mapped,tex.inputs['Vector'])
-        else:
-            sep=nodes.new('ShaderNodeSeparateXYZ');links.new(uv,sep.inputs[0]);parts=[]
-            for axis in ('X','Y'):
-                fract=nodes.new('ShaderNodeMath');fract.operation='FRACT';links.new(sep.outputs[axis],fract.inputs[0]);parts.append(fract.outputs[0])
-            mulx=nodes.new('ShaderNodeMath');mulx.operation='MULTIPLY';mulx.inputs[1].default_value=.25;links.new(parts[0],mulx.inputs[0])
-            muly=nodes.new('ShaderNodeMath');muly.operation='MULTIPLY';muly.inputs[1].default_value=.25;links.new(parts[1],muly.inputs[0])
-            addx=nodes.new('ShaderNodeMath');addx.operation='ADD';addx.inputs[1].default_value=(cell%4)*.25;links.new(mulx.outputs[0],addx.inputs[0])
-            addy=nodes.new('ShaderNodeMath');addy.operation='ADD';addy.inputs[1].default_value=(cell//4)*.25;links.new(muly.outputs[0],addy.inputs[0])
-            combine=nodes.new('ShaderNodeCombineXYZ');links.new(addx.outputs[0],combine.inputs['X']);links.new(addy.outputs[0],combine.inputs['Y'])
-            links.new(combine.outputs['Vector'],tex.inputs['Vector'])
-        links.new(tex.outputs['Color'],bsdf.inputs['Base Color'])
-    return m
-
-wall_photo=atlas_material('three rows of crushed cars',(0.3,.2,.15),car_strip=True)
-bus_photo=atlas_material('bus front',(0.3,.2,.15),cell=8)
-side_photo=atlas_material('bus side',(0.3,.2,.15),cell=9)
-sign_photo=atlas_material('painted SCRAPDOME sign',(.68,.24,.055),wide_strip=True)
-sign_paint=atlas_material('orange rust sign plate',(.68,.24,.055))
-booth_photo=atlas_material('ticket booth',(0.3,.2,.15),cell=10)
-tin_photo=atlas_material('corrugated tin',(0.3,.2,.15),cell=11)
-dirt_photo=atlas_material('tire-marked dirt',(0.32,.25,.16),cell=12)
-steel=atlas_material('dark rusted steel',(.22,.12,.075),metal=.35)
-bright=atlas_material('worn galvanized steel',(.36,.37,.34),cell=11,metal=.42)
-dark=atlas_material('dark iron',(.055,.06,.055),metal=.55)
-sand=atlas_material('packed desert dirt',(.32,.25,.16),cell=12)
-glass=atlas_material('broken dark glass',(.075,.105,.10),metal=.05)
-paint=atlas_material('rust orange paint',(.39,.17,.08),cell=6)
-car_paints=[]
-for label, color in (('dusty red',(.34,.105,.075,1)),('faded blue',(.19,.29,.32,1)),
-                     ('old cream',(.48,.43,.34,1)),('oxide brown',(.25,.105,.065,1)),
-                     ('sun-bleached white',(.53,.50,.43,1))):
-    m=bpy.data.materials.new('Dome car paint / '+label);m.diffuse_color=color;m.use_nodes=True
-    bsdf=m.node_tree.nodes.get('Principled BSDF');bsdf.inputs['Base Color'].default_value=color
-    bsdf.inputs['Metallic'].default_value=.12;bsdf.inputs['Roughness'].default_value=.91
-    car_paints.append(m)
+wall_photo=photo_material('three rows of crushed cars','crushed-car-wall.jpg')
+heap_photo=photo_material('wreck photograph around the Heap','heap-wrecks.jpg')
+bus_front_left=photo_material('bus front left crop','bus-face-left.jpg',(.42,.15,.12))
+bus_front_right=photo_material('bus front right crop','bus-face-right.jpg',(.42,.15,.12))
+bus_side_left=photo_material('bus left side with two decks','bus-side-left.jpg',(.38,.14,.12))
+bus_side_right=photo_material('bus right side with two decks','bus-side-right.jpg',(.38,.14,.12))
+sign_photo=photo_material('brush painted Scrapdome sign','scrapdome-brush-sign.jpg',(.42,.24,.12))
+sign_paint=photo_material('rusted sign plate','rusted-steel.jpg',(.3,.16,.10))
+booth_photo=photo_material('ticket booth','ticket-booth.jpg')
+tin_photo=photo_material('corrugated tin','corrugated-tin.jpg',(.33,.34,.31))
+dirt_photo=photo_material('tire marked dirt','dirt.jpg',(.32,.25,.16))
+steel=photo_material('dark rusted steel','rusted-steel.jpg',(.22,.12,.075),.22)
+bright=photo_material('worn galvanized steel','corrugated-tin.jpg',(.36,.37,.34),.18)
+dark=photo_material('dusty tyre rubber','tire-rubber.jpg',(.055,.06,.055))
+sand=photo_material('packed desert dirt','dirt.jpg',(.32,.25,.16))
+glass=photo_material('broken dark bus glass','broken-glass.jpg',(.075,.105,.10),.08)
+paint=photo_material('faded red bus paint','bus-red-paint.jpg',(.39,.17,.12),.08)
+car_paints=[photo_material('wreck paint / '+label,filename,color,.08) for label,filename,color in (
+    ('faded red','bus-side-left.jpg',(.34,.105,.075)),('faded blue','heap-wrecks.jpg',(.19,.29,.32)),
+    ('old cream','ticket-booth.jpg',(.48,.43,.34)),('oxide brown','rusted-steel.jpg',(.25,.105,.065)),
+    ('sun bleached','crushed-car-wall.jpg',(.53,.50,.43)))]
 
 def empty(name, parent=None):
     obj = bpy.data.objects.new(name, None)
@@ -130,6 +97,15 @@ def photo_panel(name, center, size, material, parent):
     obj=game_mesh(name,verts,[(0,3,2,1)],material,parent,center)
     uv=obj.data.uv_layers.active
     for loop,coord in zip(uv.data,[(0,0),(0,1),(1,1),(1,0)]):loop.uv=coord
+    return obj
+
+def photo_side_panel(name,center,size,material,parent,side):
+    w,h=size
+    verts=[(0,-h/2,-w/2),(0,-h/2,w/2),(0,h/2,w/2),(0,h/2,-w/2)]
+    obj=game_mesh(name,verts,[(0,1,2,3)],material,parent,center)
+    uv=obj.data.uv_layers.active
+    for loop,coord in zip(uv.data,[(0,0),(1,0),(1,1),(0,1)]):loop.uv=coord
+    obj.location.x += side*.012
     return obj
 
 def photo_car_wall(name='dome-outer:three-row-photo-car-wall',rx=106,rz=72,skip_front=True):
@@ -179,6 +155,21 @@ def cylinder(name, pos, radius, depth, material, parent, vertices=8, axis='Z'):
     obj.parent = parent
     return obj
 
+def scaffold_tube(name,a,b,diameter,material,parent):
+    """A six-sided round hollow-ended scaffold tube with a real measured diameter."""
+    from mathutils import Vector
+    va=town.game_vector(a);vb=town.game_vector(b);axis=(vb-va).normalized()
+    across=axis.cross(Vector((0,1,0)))
+    if across.length<.01:across=axis.cross(Vector((1,0,0)))
+    across.normalize();up=axis.cross(across).normalized();radius=diameter/2
+    ring=[(across*math.cos(math.tau*i/6)+up*math.sin(math.tau*i/6))*radius for i in range(6)]
+    verts=[tuple(va+v) for v in ring]+[tuple(vb+v) for v in ring]
+    faces=[(i,(i+1)%6,(i+1)%6+6,i+6) for i in range(6)]
+    mesh=bpy.data.meshes.new(name+' measured scaffold tube')
+    mesh.from_pydata(verts,[],faces);mesh.materials.append(material);mesh.update()
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);obj.parent=parent
+    return obj
+
 def wreck(name, pos, rotation, parent, seed, detail=True, variant=0):
     """A distinct low-poly wreck shape with a folded hood, cabin and buried wheels."""
     x, y, z = pos
@@ -214,6 +205,8 @@ def wreck(name, pos, rotation, parent, seed, detail=True, variant=0):
             cube(name + ':welded-lap', (x-.15,y+1.24,z), (.62,.06,1.02), bright if seed%2 else steel,
                  parent, .015, rotation)
 
+    return body
+
 def hulk_bowl():
     # The hard-packed oval pad anchors the landmark and gives the inside bowl a floor.
     floor_vertices=[(0,-.16,0)]+[(111.0*math.cos(math.tau*i/64),-.16,78.5*math.sin(math.tau*i/64)) for i in range(64)]
@@ -247,7 +240,7 @@ def hulk_bowl():
     # deliberately faceted and mostly hidden behind the car shells.
     ring_segments=56;bank_vertices=[];bank_faces=[]
     for tier in range(4):
-        rx,rz=99-tier*4.7,67-tier*3.2
+        rx,rz=102-tier*1.0,69-tier*.6
         for i in range(ring_segments):
             angle=math.tau*i/ring_segments
             waviness=math.sin(i*2.7+tier*1.6)*.48+math.sin(i*.71-tier)*.27
@@ -261,25 +254,43 @@ def hulk_bowl():
             a=tier*ring_segments+i;b=tier*ring_segments+(i+1)%ring_segments
             c=(tier+1)*ring_segments+(i+1)%ring_segments;d=(tier+1)*ring_segments+i
             bank_faces.append((a,d,c,b))
-    game_mesh('dome-outer:rough-wreck-backing',bank_vertices,bank_faces,steel,outer)
-    # The Heap is a banked mound under a sloped mass of individual wrecks.
+    bank=game_mesh('dome-outer:rough-wreck-backing',bank_vertices,bank_faces,wall_photo,outer)
+    bank_uv=bank.data.uv_layers.active
+    for poly in bank.data.polygons:
+        for li in poly.loop_indices:
+            vi=bank.data.loops[li].vertex_index;tier=vi//ring_segments;around=vi%ring_segments
+            bank_uv.data[li].uv=(around/ring_segments*12.5,tier/3)
+    # The Heap is an uneven 18 m mound: its own stacked-wreck photograph wraps
+    # around the support while ninety full-size car bodies overlap the slope.
     mound=[];mound_faces=[];segments=32
-    mound_rings=((25,0),(22,3.8),(18,7.3),(14,10.7),(10,14),(6,16.8),(1.5,18.0))
+    mound_rings=((25,0),(22,3.8),(18,7.3),(14,10.7),(10,14),(6,16.8),(3,17.7),(1.5,18.0))
     for ri,(radius,level) in enumerate(mound_rings):
         for i in range(segments):
-            a=math.tau*i/segments;wobble=math.sin(i*2.2+ri)*.9
+            a=math.tau*i/segments;wobble=math.sin(i*2.2+ri)*.9+math.sin(i*.67-ri*.4)*.28
             mound.append(((radius+wobble)*math.cos(a),level,(radius+wobble)*math.sin(a)))
     for ri in range(len(mound_rings)-1):
         for i in range(segments):
             a=ri*segments+i;b=ri*segments+(i+1)%segments
             c=(ri+1)*segments+(i+1)%segments;d=(ri+1)*segments+i
             mound_faces.append((a,b,c,d))
-    game_mesh('dome-outer:heap-shaped-backing',mound,mound_faces,steel,outer)
-    for ring, (radius, count, level) in enumerate(((22,14,4.0),(18,11,7.5),(14,9,10.9),(10,6,14.2),(6,4,17.0),(2.5,2,17.7))):
+    mound_obj=game_mesh('dome-outer:heap-wreck-photo-mound',mound,mound_faces,heap_photo,outer)
+    mound_uv=mound_obj.data.uv_layers.active
+    for poly in mound_obj.data.polygons:
+        for li in poly.loop_indices:
+            vi=mound_obj.data.loops[li].vertex_index;ri=vi//segments;around=vi%segments
+            mound_uv.data[li].uv=(around/segments*14,ri/(len(mound_rings)-1))
+    heap_rings=((22,18,3.8),(18,16,7.3),(14,14,10.7),(10,12,14),(7,10,16),(4.5,8,17.1),(2.5,6,17.65),(1.2,6,17.9))
+    rng=__import__('random').Random(5105);serial=0
+    for ring,(radius,count,level) in enumerate(heap_rings):
         for i in range(count):
-            a = math.tau*i/count + ring*.31
-            wreck(f'dome-outer:heap-{ring}-{i:02}', (radius*math.cos(a), level, radius*math.sin(a)),
-                  a+math.pi/2, outer, 600+ring*30+i, variant=(ring+i)%5)
+            serial+=1;a=math.tau*i/count+ring*.29
+            jitter=rng.uniform(-.35,.35);r=radius+jitter
+            rotation=a+math.pi/2+rng.uniform(-.22,.22)
+            px,pz=r*math.cos(a),r*math.sin(a)
+            body=wreck(f'dome-outer:heap-wreck-{serial:02}',(px,level-.72+rng.uniform(-.10,.12),pz),
+                       rotation,outer,600+serial,detail=False,variant=serial%5)
+            body.rotation_euler[0]+=rng.uniform(-.13,.13)
+            body.rotation_euler[1]+=rng.uniform(-.10,.10)
     # A packed-dirt race ring encircles the Heap, visible from above.
     # Broad eight-piece wedges avoid an expensive solid slab under the entire bowl.
     for i in range(12):
@@ -311,15 +322,18 @@ def hulk_bowl():
             awning=cube(f'dome-outer:awning-{i}',(x,22.7,z),(width*.92,.12,3.3),
                         paint if i%4==0 else steel,outer,.025,tang)
             awning.rotation_euler[0]=-.12 if i%4==0 else .10
-    # Thin rail segments join the stand bays into a complete walkway guard.
-    for i in range(32):
-        a0=math.tau*i/32;a1=math.tau*(i+1)/32
+    # Scaffold tube guard rail: 100 mm members and 3 m post spacing around
+    # the full oval rim. Each segment has a real six-sided circular section.
+    rail_segments=192
+    for i in range(rail_segments):
+        a0=math.tau*i/rail_segments;a1=math.tau*(i+1)/rail_segments
         for y in (18.1,20.3):
-            beam(f'dome-outer:walkway-rail-{i}-{y}',(102*math.cos(a0),y,69*math.sin(a0)),
-                 (102*math.cos(a1),y,69*math.sin(a1)),.075,dark,outer)
-        if i%2==0:
-            beam(f'dome-outer:walkway-post-{i}',(102*math.cos(a0),17.8,69*math.sin(a0)),
-                 (102*math.cos(a0),20.4,69*math.sin(a0)),.065,steel,outer)
+            scaffold_tube(f'dome-outer:walkway-rail-{i}-{y}',
+                (102*math.cos(a0),y,69*math.sin(a0)),
+                (102*math.cos(a1),y,69*math.sin(a1)),.10,dark,outer)
+        scaffold_tube(f'dome-outer:walkway-post-{i}',
+            (102*math.cos(a0),17.8,69*math.sin(a0)),
+            (102*math.cos(a0),20.4,69*math.sin(a0)),.10,steel,outer)
     # Four lattice floodlight towers. Each independently named lamp can glow at night.
     emission=bpy.data.materials.new('Dome floodlight amber emissive'); emission.diffuse_color=(1,.39,.075,1); emission.use_nodes=True
     sh=emission.node_tree.nodes.get('Principled BSDF')
@@ -351,28 +365,41 @@ def hulk_bowl():
 
 hulk_bowl()
 
-# Gate at the exact -Z road side: two whole city buses stand upright as piers,
-# with front faces toward the approaching driver and a 12 m truck opening.
+# Gate at the road side: each bus is its real 11 x 2.5 x 4.4 m envelope,
+# stood on its rear with its nose facing the -Z approach.
 for side in (-1,1):
     x=side*8.2;z=-91.2
-    cube(f'dome-gate:bus-{side}:body',(x,4.65,z),(4.3,9.3,2.8),car_paints[0],gate,.28,side*.045)
-    photo_panel(f'dome-gate:bus-{side}:photo-front',(x,4.65,z-1.44),(4.0,8.95),bus_photo,gate)
-    # The upper windscreen, broken panes and destination box identify each bus.
-    cube(f'dome-gate:bus-{side}:windscreen',(x,7.55,z-1.43),(3.25,1.65,.08),glass,gate,.14)
-    beam(f'dome-gate:bus-{side}:windscreen-post',(x,6.72,z-1.51),(x,8.38,z-1.51),.11,dark,gate)
-    cube(f'dome-gate:bus-{side}:destination',(x,8.65,z-1.48),(2.45,.34,.09),dark,gate,.035)
-    # A real pressed front has a deep grille, bumper and paired round lamps.
-    cube(f'dome-gate:bus-{side}:grille',(x,2.15,z-1.49),(1.65,1.0,.10),dark,gate,.08)
+    body=cube(f'dome-gate:bus-{side}:body',(x,5.5,z),(2.5,11.0,4.4),
+              paint,gate,.42,side*.035)
+    front=bus_front_left if side<0 else bus_front_right
+    side_photo=bus_side_left if side<0 else bus_side_right
+    photo_panel(f'dome-gate:bus-{side}:photo-front',(x,2.2,z-2.29),(2.5,4.4),front,gate)
+    # The stood-up flanks face the road: two broad decks of broken glass climb
+    # the full bus length, so the red piers read as buses above their nose crops.
+    for deck,yy in enumerate((5.45,8.55)):
+        for pane,xx in enumerate((x-.68,x+.68)):
+            cube(f'dome-gate:bus-{side}:road-facing-deck-{deck}-pane-{pane}',
+                 (xx,yy,z-2.235),(.62,.92,.055),glass,gate,.08)
+    # Two real decks survive along each bus flank as dark, broken window bands.
+    for window_row,yy in enumerate((5.1,8.15)):
+        for window_col,zz in enumerate((-1.42,-.48,.48,1.42)):
+            cube(f'dome-gate:bus-{side}:deck-{window_row}-window-{window_col}',
+                 (x+side*1.27,yy,z+zz),(.075,1.05,.72),glass,gate,.055)
+            if (window_row+window_col+side)%3==0:
+                beam(f'dome-gate:bus-{side}:broken-glass-edge-{window_row}-{window_col}',
+                     (x+side*1.32,yy-.45,z+zz-.28),(x+side*1.32,yy+.26,z+zz+.31),.035,bright,gate)
+    # Deep radiator, honest bars, paired lamps and bumper across the exposed nose.
+    cube(f'dome-gate:bus-{side}:radiator',(x,.78,z-2.28),(1.35,.82,.12),dark,gate,.08)
     for j in range(7):
-        beam(f'dome-gate:bus-{side}:grille-bar-{j}',(x-.68+j*.225,1.7,z-1.56),(x-.68+j*.225,2.6,z-1.56),.045,bright,gate)
+        beam(f'dome-gate:bus-{side}:radiator-bar-{j}',(x-.56+j*.187,.38,z-2.36),
+             (x-.56+j*.187,1.18,z-2.36),.035,bright,gate)
     for lamp_side in (-1,1):
-        cylinder(f'dome-gate:bus-{side}:headlamp',(x+lamp_side*1.38,2.55,z-1.55),.25,.10,bright,gate,12,'Y')
-        cylinder(f'dome-gate:bus-{side}:wheel',(x+lamp_side*1.95,.48,z),.46,.36,dark,gate,12,'Y')
-    beam(f'dome-gate:bus-{side}:bumper',(x-1.9,1.25,z-1.55),(x+1.9,1.25,z-1.55),.20,bright,gate)
-    # Side windows and narrow folded sheet repairs make the standing bodies read as vehicles.
-    for row in range(4):
-        yy=3.2+row*1.05
-        cube(f'dome-gate:bus-{side}:side-window-{row}',(x+side*2.18,yy,z),(0.08,.67,1.35),glass,gate,.06)
+        cylinder(f'dome-gate:bus-{side}:headlamp',(x+lamp_side*.84,1.28,z-2.38),.19,.10,bright,gate,12,'Y')
+        cylinder(f'dome-gate:bus-{side}:wheel',(x+lamp_side*.72,.18,z-.95),.34,.22,dark,gate,8,'X')
+        cylinder(f'dome-gate:bus-{side}:wheel-rear',(x+lamp_side*.72,.18,z+.95),.34,.22,dark,gate,8,'X')
+    beam(f'dome-gate:bus-{side}:bumper',(x-1.18,.52,z-2.43),(x+1.18,.52,z-2.43),.14,bright,gate)
+    # A narrow side photo keeps the two decks and their long bus proportions readable.
+    photo_side_panel(f'dome-gate:bus-{side}:two-deck-side',(x+side*1.32,5.55,z),(4.2,11.0),side_photo,gate,side)
     for row in range(3):
         wreck(f'dome-gate:foot-hulk-{side}-{row}',(side*(8.0+row*.95),.18,-89-row*2.5),
               side*.09,gate,800+side*6+row,variant=row+1)
@@ -381,21 +408,28 @@ for side in (-1,1):
     beam(f'dome-gate:bus-header-post-{side}',(side*10.4,8.9,-92),(side*10.4,13.2,-92),.24,dark,gate)
     beam(f'dome-gate:bus-header-cross-{side}',(side*5.8,8.4,-92),(side*10.5,11,-92),.14,steel,gate)
 # Hand-painted header hangs above the drive-through throat, facing the -Z road.
-sign=cube('dome-gate:SCRAPDOME-painted-sign',(0,11.0,-92),(18.8,4.7,.42),sign_paint,gate,.11)
-photo_panel('dome-gate:SCRAPDOME-photo-face',(0,11.0,-92.25),(18.5,4.62),sign_photo,gate)
+sign=cube('dome-gate:SCRAPDOME-painted-sign',(0,11.0,-92),(21.5,4.7,.42),sign_photo,gate,.11)
+# Fit the sign photograph to the broad road-facing face of the thick plate.
+for poly in sign.data.polygons:
+    if poly.normal.y>.98:
+        for li in poly.loop_indices:
+            vertex=sign.data.vertices[sign.data.loops[li].vertex_index].co
+            sign.data.uv_layers.active.data[li].uv=((10.75-vertex.x)/21.5,(vertex.z+2.35)/4.7)
 beam('dome-gate:sign-top-weld',( -9.4,13.32,-92.28),(9.4,13.32,-92.28),.11,bright,gate)
-font=bpy.data.curves.new('hand-painted SCRAPDOME lettering','FONT');font.body='SCRAPDOME';font.size=2.15;font.extrude=.012
-font.align_x='CENTER';font.align_y='CENTER'
-text=bpy.data.objects.new('dome-gate:SCRAPDOME-lettering',font);bpy.context.collection.objects.link(text)
-text.location=town.game_vector((0,11.0,-92.55));text.rotation_euler=Matrix(((-1,0,0),(0,0,1),(0,1,0))).to_euler()
-font.materials.append(dark);text.parent=gate
+empty('dome-gate:SCRAPDOME-lettering',gate)
 # Uneven chips, rust streaks and fasteners keep the large painted plate from reading clean.
 for i,(x,y,w,h) in enumerate(((-8.7,12.7,.24,.10),(-7.4,9.0,.14,.32),(-5.2,12.9,.20,.12),
                                 (5.3,9.0,.13,.28),(7.6,12.8,.24,.11),(8.8,9.4,.16,.22),
                                 (-8.6,10.1,.13,.30),(6.4,10.3,.22,.10))):
     cube(f'dome-gate:sign-rust-chip-{i}',(x,y,-92.48),(w,h,.035),steel,gate,.01,(i%3-1)*.10)
-for i,x in enumerate((-8.8,-6.0,6.0,8.8)):
+for i,x in enumerate((-10.0,-7.0,7.0,10.0)):
     for y in (8.9,13.1):cylinder(f'dome-gate:sign-rivet-{i}-{y}',(x,y,-92.48),.075,.09,dark,gate,10,'Y')
+for side in (-1,1):
+    for link in range(10):
+        y=10.4-link*.28;x=side*(9.0+link*.08);z=-92.3
+        bpy.ops.mesh.primitive_torus_add(major_radius=.12,minor_radius=.035,major_segments=8,minor_segments=4,
+            location=town.game_vector((x,y,z)),rotation=(math.pi/2,(link%2)*.28,0))
+        obj=bpy.context.object;obj.name=f'dome-gate:sign-chain-{side}-{link}';obj.data.materials.append(dark);obj.parent=gate
 # Ticket booth and battered sheet-metal awning to the road's right side.
 cube('dome-gate:ticket-booth-core',(15.0,1.65,-89.0),(4.0,3.3,3.4),steel,gate,.16)
 photo_panel('dome-gate:ticket-booth-photo',(15.0,1.65,-90.72),(3.8,3.1),booth_photo,gate)
@@ -407,19 +441,29 @@ for side in (-1,1):
 for i in range(5):
     beam(f'dome-gate:ticket-bars-{i}',(13.8+i*.6,1.65,-90.88),(13.8+i*.6,2.72,-90.88),.055,bright,gate)
 cube('dome-gate:booth-number-plate',(15.0,3.0,-90.82),(2.7,.72,.08),sign_paint,gate,.04)
-ticket_font=bpy.data.curves.new('TICKETS brush board','FONT');ticket_font.body='TICKETS';ticket_font.size=.58;ticket_font.extrude=.004
-ticket_font.align_x='CENTER';ticket_font.align_y='CENTER'
-ticket_text=bpy.data.objects.new('dome-gate:TICKETS-lettering',ticket_font);bpy.context.collection.objects.link(ticket_text)
-ticket_text.location=town.game_vector((15.0,3.0,-90.94));ticket_text.rotation_euler=Matrix(((-1,0,0),(0,0,1),(0,1,0))).to_euler()
-ticket_font.materials.append(dark);ticket_text.parent=gate
-# A small banked road skirt closes the space at the gate and carries dusty tire marks.
-apron_vertices=[(-20,.01,-103.5),(20,.01,-103.5),(20,.01,-80.5),(-20,.01,-80.5)]
-apron=game_mesh('dome-gate:banked-dirt-skirt',apron_vertices,[(0,1,2,3)],dirt_photo,gate)
+empty('dome-gate:TICKETS-lettering',gate)
+# The dirt skirt rises gently under the gate and fades into the surrounding grade.
+# Its uneven mesh reaches ground level at every boundary, with no hard slab edge.
+x_steps=(-25,-20,-15,-8,0,8,15,20,25)
+z_steps=(-112,-107,-102,-97,-92,-87,-82,-77,-72)
+apron_vertices=[]
+for zi,z in enumerate(z_steps):
+    for xi,x in enumerate(x_steps):
+        xfade=max(0,1-abs(x)/25);zfade=max(0,1-abs(z+92)/20)
+        height=.46*xfade*zfade
+        height+=.045*math.sin(x*.31+z*.17)*xfade*zfade
+        apron_vertices.append((x,max(0,height),z))
+apron_faces=[]
+for zi in range(len(z_steps)-1):
+    for xi in range(len(x_steps)-1):
+        a=zi*len(x_steps)+xi;b=a+1;c=b+len(x_steps);d=a+len(x_steps)
+        apron_faces.extend(((a,b,c),(a,c,d)))
+apron=game_mesh('dome-gate:banked-dirt-skirt',apron_vertices,apron_faces,dirt_photo,gate)
 apron_uv=apron.data.uv_layers.active
 for poly in apron.data.polygons:
     for li in poly.loop_indices:
         x,y,z=apron_vertices[apron.data.loops[li].vertex_index]
-        apron_uv.data[li].uv=(x/40+.5,(z+103.5)/23)
+        apron_uv.data[li].uv=(x/50+.5,(z+112)/40)
 for track in (-1,1):
     points=[]
     for i in range(9):
@@ -433,43 +477,6 @@ for child in list(gate.children):child.location-=gate_origin
 for side in (-1,1):
     beam(f'dome-gate:leaning-guard-{side}',(side*13,.12,-98),(side*11,.85,-90),.20,bright,gate)
     cube(f'dome-gate:sand-bank-{side}',(side*15,.18,-95),(4.8,.34,10),sand,gate,.14,side*.12)
-
-# Shared outside scale lights: high clear overcast source, with a weak warm fill.
-scene=bpy.context.scene
-scene.render.engine='CYCLES';scene.cycles.samples=16;scene.cycles.use_denoising=True
-scene.render.resolution_x=1280;scene.render.resolution_y=820;scene.render.resolution_percentage=100
-scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.05
-scene.world=bpy.data.worlds.new('Overcast desert daylight');scene.world.use_nodes=True
-scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.68,.72,.76,1)
-scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
-def area(name, pos, target, energy, size, color):
-    bpy.ops.object.light_add(type='AREA',location=town.game_vector(pos));light=bpy.context.object;light.name=name
-    light.data.energy=energy;light.data.shape='DISK';light.data.size=size;light.data.color=color
-    light.rotation_euler=(town.game_vector(target)-light.location).to_track_quat('-Z','Y').to_euler()
-area('large soft daylight',(-35,145,-45),(0,0,0),18000,100,(1.0,.87,.71))
-area('sky bounce',(75,90,20),(0,2,0),9000,95,(.67,.78,1.0))
-scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
-render_dir.mkdir(parents=True,exist_ok=True)
-def render_view(filename, location, target, lens, resolution=(1280,820)):
-    scene.render.resolution_x,scene.render.resolution_y=resolution
-    bpy.ops.object.camera_add(location=town.game_vector(location));camera=bpy.context.object;camera.data.lens=lens
-    camera.rotation_euler=(town.game_vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
-    scene.camera=camera;scene.render.filepath=str(render_dir/filename);bpy.ops.render.render(write_still=True)
-    bpy.data.objects.remove(camera,do_unlink=True)
-render_view('dome-outer-above-45.png',(0,178,-181),(0,8,0),35)
-# The road is a camera-only continuation of the gate's dirt skirt. It puts
-# ground under the 30 m approach view without enlarging the exported building.
-preview_vertices=[(-20,0,-145),(20,0,-145),(20,0,-103.5),(-20,0,-103.5)]
-preview_road=game_mesh('render-only dirt beyond the gate skirt',preview_vertices,[(0,3,2,1)],dirt_photo,None)
-preview_uv=preview_road.data.uv_layers.active
-for poly in preview_road.data.polygons:
-    for li in poly.loop_indices:
-        x,y,z=preview_vertices[preview_road.data.loops[li].vertex_index]
-        preview_uv.data[li].uv=(x/40+.5,(z+145)/41.5)
-preview_road.hide_render=False
-render_view('dome-gate-road-30m.png',(0,1.7,-123),(0,2.0,-92),28)
-preview_road.hide_render=True
-render_view('dome-outer-side-40m.png',(0,9,112),(0,9,72),45)
 
 # Join fixed scenery by building to avoid thousands of tiny scene nodes. Keep the
 # independently named emissive lamp assembly and sign lettering as child parts.
@@ -511,10 +518,50 @@ join_building_static(outer)
 join_building_static(gate)
 # Save the editable Blender source and render candidate in ignored QA staging.
 for obj in list(bpy.context.scene.objects):
-    if obj.type in {'CAMERA','LIGHT'} or obj == preview_road:
+    if obj.type in {'CAMERA','LIGHT'}:
         bpy.data.objects.remove(obj,do_unlink=True)
 blend.parent.mkdir(parents=True,exist_ok=True);out.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
                           export_apply=True,export_materials='EXPORT',export_image_format='JPEG')
-print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'blend':str(blend),'renders':str(render_dir)}))
+
+# Judge exactly what the game receives: discard the authoring scene, import the
+# exported GLB into an empty scene, then add only review cameras and daylight.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(out))
+scene=bpy.context.scene
+scene.render.engine='CYCLES';scene.cycles.samples=16;scene.cycles.use_denoising=True
+scene.render.resolution_x=1280;scene.render.resolution_y=820;scene.render.resolution_percentage=100
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.05
+scene.world=bpy.data.worlds.new('Overcast desert daylight');scene.world.use_nodes=True
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.68,.72,.76,1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+
+def area(name,pos,target,energy,size,color):
+    bpy.ops.object.light_add(type='AREA',location=town.game_vector(pos));light=bpy.context.object
+    light.name=name;light.data.energy=energy;light.data.shape='DISK';light.data.size=size;light.data.color=color
+    light.rotation_euler=(town.game_vector(target)-light.location).to_track_quat('-Z','Y').to_euler()
+area('large soft daylight',(-35,145,-45),(0,0,0),18000,100,(1.0,.87,.71))
+area('sky bounce',(75,90,20),(0,2,0),9000,95,(.67,.78,1.0))
+scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
+render_dir.mkdir(parents=True,exist_ok=True)
+# A camera-only road extension supports the approach composition; it is not
+# exported and does not alter the gate's natural dirt slope.
+road_vertices=[(-24,0,-146),(24,0,-146),(24,0,-112),(-24,0,-112)]
+road=game_mesh('review-only road extension',road_vertices,[(0,3,2,1)],
+               next(m for m in bpy.data.materials if m.name.startswith('Dome / tire marked dirt')),None)
+road_uv=road.data.uv_layers.active
+for poly in road.data.polygons:
+    for li in poly.loop_indices:
+        x,y,z=road_vertices[road.data.loops[li].vertex_index]
+        road_uv.data[li].uv=(x/48+.5,(z+146)/34)
+def render_view(filename,location,target,lens,resolution=(1280,820)):
+    scene.render.resolution_x,scene.render.resolution_y=resolution
+    bpy.ops.object.camera_add(location=town.game_vector(location));camera=bpy.context.object;camera.data.lens=lens
+    camera.rotation_euler=(town.game_vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.camera=camera;scene.render.filepath=str(render_dir/filename);bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(camera,do_unlink=True)
+render_view('dome-outer-above-45.png',(0,178,-181),(0,8,0),35)
+render_view('dome-gate-road-30m.png',(0,1.7,-123),(0,2,-92),28)
+render_view('dome-outer-side-40m.png',(0,9,112),(0,9,72),45)
+print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'blend':str(blend),'renders':str(render_dir),'render_source':'exported GLB re-imported into empty scene'}))

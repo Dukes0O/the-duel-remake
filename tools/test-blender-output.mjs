@@ -544,7 +544,7 @@ try {
       assert.ok(bytes.length <= byteBudget, `${bytes.length} bytes exceeds ${byteBudget} bytes`);
     });
   }
-  check('TOWN-ART-DOME GLB keeps both named structures, lamp hook, atlas and card budgets', () => {
+  check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
     const path = join(root, '.qa-dist/town-dome/dome.glb');
     if (!existsSync(path)) return; // Generated and read back in the art lane; not a runtime asset yet.
     const bytes = readFileSync(path);
@@ -562,28 +562,22 @@ try {
     const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
       .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
     assert.ok(triangles > 1000 && triangles <= 30_000, `${triangles} triangles`);
-    assert.equal(gltf.images.length, 1, 'one embedded texture atlas');
-    const atlas = gltf.images[0];
-    assert.equal(atlas.mimeType, 'image/jpeg', 'compact embedded atlas format');
-    const view = gltf.bufferViews[atlas.bufferView];
-    const binStart = 20 + jsonLength + 8;
-    const jpeg = bytes.subarray(binStart + view.byteOffset, binStart + view.byteOffset + view.byteLength);
-    assert.equal(jpeg[0], 0xff);
-    assert.equal(jpeg[1], 0xd8);
-    let width = 0, height = 0, offset = 2;
-    while (offset + 8 < jpeg.length) {
-      if (jpeg[offset] !== 0xff) { offset++; continue; }
-      const marker = jpeg[offset + 1];
-      const length = jpeg.readUInt16BE(offset + 2);
-      if ([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)) {
-        height = jpeg.readUInt16BE(offset + 5);
-        width = jpeg.readUInt16BE(offset + 7);
-        break;
-      }
-      offset += 2 + length;
+    assert.ok(gltf.images.length >= 8, `${gltf.images.length} separate texture pictures`);
+    assert.ok(!gltf.images.some(image => /atlas/i.test(image.name || image.uri || '')), 'no packed atlas');
+    for (const material of gltf.materials) {
+      const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+      assert.ok(metallic <= 0.3, `${material.name || 'material'} metallic ${metallic} exceeds 0.3`);
     }
-    assert.equal(width, 1024, 'shared atlas width');
-    assert.equal(height, 1024, 'shared atlas height');
+    const lettering = gltf.nodes.find(node => node.name === 'dome-gate:SCRAPDOME-lettering');
+    assert.ok(lettering && lettering.mesh === undefined, 'painted sign has no computer-font mesh');
+    const binStart = 20 + jsonLength + 8;
+    for (const image of gltf.images) {
+      assert.equal(image.mimeType, 'image/jpeg', `${image.name || 'picture'} is a JPEG`);
+      const view = gltf.bufferViews[image.bufferView];
+      const jpeg = bytes.subarray(binStart + view.byteOffset, binStart + view.byteOffset + view.byteLength);
+      assert.equal(jpeg[0], 0xff, `${image.name || 'picture'} JPEG start`);
+      assert.equal(jpeg[1], 0xd8, `${image.name || 'picture'} JPEG marker`);
+    }
   });
   check('scablands-tintown exports its bounded named walkable town model', () => {
     const path = join(root, 'public/assets/models/wasteland/scablands/tintown.glb');
