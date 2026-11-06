@@ -20,20 +20,32 @@ const rows=[];
 for(const seed of SOAK_SEEDS){
   let town=createTown(seed,`Thirty year town ${seed}`);
   town.peopleConditions={waterLitresPerPerson:50,foodCaloriesPerPerson:2100,shelterPlaces:10000,paintedHomePlaces:10000};
-  let elapsedMs=0;
+  let elapsedMs=0,previousPeople=0;
   for(let year=1;year<=SOAK_YEARS;year++){
     const start=performance.now();
     for(let day=0;day<DAYS_PER_YEAR;day++) stepDay(town);
-    elapsedMs+=performance.now()-start;
+    const yearElapsedMs=performance.now()-start;
+    elapsedMs+=yearElapsedMs;
+    const records=town.people.length+town.buildings.length+town.book.length+town.oldGround.length;
+    const saveBytes=compactJsonBytes(town);
     const snapshot={seed,year,people:town.people.length,buildings:town.buildings.length,
       bookEntries:town.book.length,oldGroundEntries:town.oldGround.length,
-      saveBytes:compactJsonBytes(town),elapsedMs:Number(elapsedMs.toFixed(1))};
+      saveBytes,saveBytesPerRecord:Number((saveBytes/Math.max(1,records)).toFixed(1)),
+      yearElapsedMs:Number(yearElapsedMs.toFixed(1)),elapsedMs:Number(elapsedMs.toFixed(1)),
+      yearMsPerAveragePerson:Number((yearElapsedMs/Math.max(1,(previousPeople+town.people.length)/2)).toFixed(4))};
     rows.push(snapshot);
+    previousPeople=town.people.length;
     town=deserializeTown(serializeTown(town));
   }
+  const firstYear=rows.find(row=>row.seed===seed&&row.year===1);
+  const lastYear=rows.at(-1);
   check(town.calendar.year===SOAK_YEARS+1,`seed ${seed}: the town reaches game year ${SOAK_YEARS+1}`);
   check(town.people.length>0,`seed ${seed}: the town remains alive after ${SOAK_YEARS} years`);
   check(rows.at(-1).saveBytes>0,`seed ${seed}: the town keeps a readable save`);
+  check(lastYear.saveBytesPerRecord<=firstYear.saveBytesPerRecord*2,
+    `seed ${seed}: save bytes per retained record stay within 2 times Year 1`);
+  check(lastYear.yearMsPerAveragePerson<=firstYear.yearMsPerAveragePerson*4,
+    `seed ${seed}: yearly sim time per resident stays within 4 times Year 1`);
 }
 
 const large=createTown(20261106,'Ten thousand person timing');
