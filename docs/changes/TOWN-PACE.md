@@ -9,9 +9,9 @@
 
 ## Checks
 
-- `node tools/test-town-pace.mjs`: passed, 45 checks across ten seeds. First-winter counts were 22 to 29; Year 2 counts were 80 to 95.
-- `node tools/soak-town.mjs`: pending.
-- `npm run build`: pending.
+- `node tools/test-town-pace.mjs`: passed, 45 checks across ten seeds. First winter: 22 people for all seeds. Year 1: 28 for all seeds. Year 2: 90 to 95.
+- `node tools/soak-town.mjs`: passed, 32 checks across ten seeds and 30 game years. Year 30 populations were 5,758 to 6,004; the largest save was 17,686,521 bytes; the slowest full 30-year run took 62,670.5 ms. The 10,000-person, 5,000-building day took 8.25 ms, under the 30 ms target.
+- `npm.cmd run build`: passed. Vite reported the existing `src/game.js` static/dynamic import warning and large-chunk warnings.
 - Browser and look checks: Claude to run. Please check that NEXT stays useful for a player who ignores it, and that the first-winter and Year 2 population milestones feel right in a played town.
 - Lane tier: Claude to run as requested.
 

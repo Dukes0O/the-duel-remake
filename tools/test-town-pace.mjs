@@ -54,4 +54,5 @@ for(let day=0;day<daysPerYear;day++) stepDay(greedy);
 check(duringShortage<beforeShortage,`a greedy town loses people after it outgrows its support (${beforeShortage} to ${duringShortage})`);
 check(greedy.people.length>duringShortage,`the town recovers after water, food and homes return (${duringShortage} to ${greedy.people.length})`);
 
-console.log(`Town pace: ${checks} checks passed across ${paceSeeds.length} seeds; first-winter to Year 2 population range ${Math.min(...results.map(result=>result.winter[9]))}-${Math.max(...results.map(result=>result.winter[23]))}.`);
+const rangeAt=index=>`${Math.min(...results.map(result=>result.winter[index]))}-${Math.max(...results.map(result=>result.winter[index]))}`;
+console.log(`Town pace: ${checks} checks passed across ${paceSeeds.length} seeds; first-winter ${rangeAt(9)}, Year 1 ${rangeAt(11)}, Year 2 ${rangeAt(23)} people.`);
