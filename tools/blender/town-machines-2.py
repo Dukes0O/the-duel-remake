@@ -12,14 +12,20 @@ from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tx=root/'public/assets/models/wasteland/town/textures'
-m=town.make_materials({'rusted-steel':tx/'machine-wear.jpg','galvanised-tin':tx/'machine-wear.jpg','iron-dark':tx/'machine-wear.jpg','faded-hand-paint':tx/'yellow-green-paint.jpg','sand':tx/'dirt.jpg'})
+m=town.make_materials({'rusted-steel':tx/'machines2-dusty-steel.jpg','galvanised-tin':tx/'machines2-dusty-steel.jpg','iron-dark':tx/'machines2-dusty-steel.jpg','faded-hand-paint':tx/'yellow-green-paint.jpg','sand':tx/'dirt.jpg'})
 def shade_picture(material_name,value,saturation,tint=(1,1,1)):
  mat=m[material_name];image=next(node.image for node in mat.node_tree.nodes if node.type=='TEX_IMAGE');pixels=np.empty(image.size[0]*image.size[1]*4,dtype=np.float32);image.pixels.foreach_get(pixels);pixels=pixels.reshape((image.size[1],image.size[0],4));rgb=pixels[:,:,:3];lum=rgb[:,:,0:1]*.30+rgb[:,:,1:2]*.59+rgb[:,:,2:3]*.11;rgb[:]=np.clip((lum+(rgb-lum)*saturation)*value*np.asarray(tint,dtype=np.float32)[None,None,:],0,1);image.pixels.foreach_set(pixels.ravel());image.pack()
-shade_picture('rusted-steel',.58,.68,(.90,.82,.70));shade_picture('faded-hand-paint',.56,.68,(.94,.90,.74));shade_picture('galvanised-tin',.60,.72);shade_picture('iron-dark',.24,.38,(.84,.82,.78));shade_picture('sand',.88,.92,(1,.78,.58))
+shade_picture('rusted-steel',.58,.68,(.90,.82,.70));shade_picture('faded-hand-paint',.56,.68,(.68,.78,.42));shade_picture('galvanised-tin',.60,.72);shade_picture('iron-dark',.24,.38,(.84,.82,.78));shade_picture('sand',.88,.92,(1,.78,.58))
+shade_picture('dirty-glass',.12,.35,(.65,.68,.66))
 for v in m.values():v.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=min(.29,v.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value)
+glass=m['dirty-glass'];glass.diffuse_color=(.025,.035,.034,.88);glass.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.025,.035,.034,1);glass.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.02;glass.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.34
+black=m['iron-dark'];black.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.16
+rubber_image=bpy.data.images.load(str((tx/'machines2-dusty-rubber.jpg').resolve()),check_existing=False);rubber_image.scale(256,256);rubber_pixels=np.empty(256*256*4,dtype=np.float32);rubber_image.pixels.foreach_get(rubber_pixels);rubber_pixels=rubber_pixels.reshape((256,256,4));rubber_pixels[:,:,:3]*=.52;rubber_image.pixels.foreach_set(rubber_pixels.ravel());rubber_image.file_format='JPEG';rubber_image.pack()
+rubber=bpy.data.materials.new('Machines / dusty black rubber');rubber.diffuse_color=(.018,.020,.019,1);rubber.use_nodes=True;rubber_bsdf=rubber.node_tree.nodes['Principled BSDF'];rubber_bsdf.inputs['Base Color'].default_value=(.018,.020,.019,1);rubber_bsdf.inputs['Metallic'].default_value=.01;rubber_bsdf.inputs['Roughness'].default_value=.94
+rubber_tex=rubber.node_tree.nodes.new('ShaderNodeTexImage');rubber_tex.image=rubber_image;rubber_tex.extension='REPEAT';rubber.node_tree.links.new(rubber_tex.outputs['Color'],rubber_bsdf.inputs['Base Color'])
 loader_enamel=bpy.data.materials.new('Loader / faded olive enamel');loader_enamel.diffuse_color=(.10,.12,.04,1);loader_enamel.use_nodes=True
 loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.10,.12,.04,1);loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.16;loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.78
-steel=m['rusted-steel'];tin=m['galvanised-tin'];paint=m['faded-hand-paint'];black=m['iron-dark'];glass=m['dirty-glass']
+steel=m['rusted-steel'];tin=m['galvanised-tin'];paint=m['faded-hand-paint'];glass=m['dirty-glass']
 def parent(o,p):
  bpy.context.view_layer.update();world=o.matrix_world.copy();parent_world=p.matrix_world.copy();o.parent=p;o.matrix_parent_inverse.identity();o.matrix_basis=parent_world.inverted_safe()@world
 def empty(name,loc,par=None):
@@ -36,7 +42,10 @@ def box(n,loc,sz,mat=steel,par=None,bevel=.06):
   for li in poly.loop_indices:
    co=o.data.vertices[o.data.loops[li].vertex_index].co
    uv.data[li].uv=((co.x,co.z) if abs(normal.y)>max(abs(normal.x),abs(normal.z)) else (co.x,co.y))
- if bevel:mod=o.modifiers.new('worn plate edges','BEVEL');mod.width=bevel;mod.segments=1;o.modifiers.new('weighted normals','WEIGHTED_NORMAL')
+ if bevel:
+  mod=o.modifiers.new('worn plate edges','BEVEL');mod.width=bevel;mod.segments=1
+  weighted=o.modifiers.new('weighted normals','WEIGHTED_NORMAL')
+  bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=mod.name);bpy.ops.object.modifier_apply(modifier=weighted.name)
  if par:parent(o,par)
  return o
 def beam(n,a,b,r,mat=steel,par=None):
@@ -45,13 +54,16 @@ def beam(n,a,b,r,mat=steel,par=None):
  return o
 def box_beam(n,a,b,width,height,mat=steel,par=None,bevel=.03):
  d=Vector(b)-Vector(a);bpy.ops.mesh.primitive_cube_add(size=1,location=(Vector(a)+Vector(b))/2);o=bpy.context.object;o.name=n;o.dimensions=(width,height,d.length);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);o.rotation_euler=d.to_track_quat('Z','Y').to_euler();o.data.materials.append(mat)
- if bevel:mod=o.modifiers.new('rolled welded edges','BEVEL');mod.width=bevel;mod.segments=1;o.modifiers.new('weighted plate normals','WEIGHTED_NORMAL')
+ if bevel:
+  mod=o.modifiers.new('rolled welded edges','BEVEL');mod.width=bevel;mod.segments=1
+  weighted=o.modifiers.new('weighted plate normals','WEIGHTED_NORMAL')
+  bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=mod.name);bpy.ops.object.modifier_apply(modifier=weighted.name)
  o.data.uv_layers.active.name='UVMap'
  if par:parent(o,par)
  return o
 def wheel(n,x,y,z,r,w,par):
  # Continuous carcass with moulded chevrons, based on the accepted machines-1 tyre.
- seg,rings=24,8;verts=[];faces=[]
+ seg,rings=24,12;verts=[];faces=[]
  for i in range(seg):
   theta=math.tau*i/seg
   for j in range(rings):
@@ -59,13 +71,13 @@ def wheel(n,x,y,z,r,w,par):
  for i in range(seg):
   for j in range(rings):
    q=i*rings+j;faces.append((q,((i+1)%seg)*rings+j,((i+1)%seg)*rings+(j+1)%rings,i*rings+(j+1)%rings))
- mesh=bpy.data.meshes.new(n+' continuous chevron tyre');mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(n+' molded rubber carcass',mesh);bpy.context.collection.objects.link(o);o.data.materials.append(black);parent(o,par);uv=mesh.uv_layers.new(name='UVMap')
+ mesh=bpy.data.meshes.new(n+' continuous chevron tyre');mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(n+' molded rubber carcass',mesh);bpy.context.collection.objects.link(o);o.data.materials.append(rubber);parent(o,par);uv=mesh.uv_layers.new(name='UVMap')
  for poly in mesh.polygons:
   poly.use_smooth=True
   for li in poly.loop_indices:
    vi=mesh.loops[li].vertex_index;uv.data[li].uv=(verts[vi][1]/2,verts[vi][0]/2)
  for side in (-1,1):
-  bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=r*.59,depth=w*.50,location=(x+side*w*.29,y,z),rotation=(0,math.pi/2,0));rim=bpy.context.object;rim.name=n+' dirty painted steel rim';rim.data.materials.append(paint);rim.data.uv_layers.active.name='UVMap';parent(rim,par)
+  bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=r*.59,depth=w*.50,location=(x+side*w*.29,y,z),rotation=(0,math.pi/2,0));rim=bpy.context.object;rim.name=n+' dark steel rim';rim.data.materials.append(black);rim.data.uv_layers.active.name='UVMap';parent(rim,par)
   bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=r*.55,minor_radius=.045,location=(x+side*w*.44,y,z),rotation=(0,math.pi/2,0));ring=bpy.context.object;ring.name=n+' rolled rim bead';ring.data.materials.append(tin);ring.data.uv_layers.active.name='UVMap';parent(ring,par)
   bpy.ops.mesh.primitive_cylinder_add(vertices=16,radius=r*.23,depth=w*.16,location=(x+side*w*.49,y,z),rotation=(0,math.pi/2,0));hub=bpy.context.object;hub.name=n+' forged hub';hub.data.materials.append(black);hub.data.uv_layers.active.name='UVMap';parent(hub,par)
   for i in range(6):
@@ -77,8 +89,12 @@ def cab(id,par,x=0,y=-.1,z=1.8):
  for s in (-1,1):
   beam(id+' narrow cab front post',(x+s*.55,y-.68,z+.08),(x+s*.55,y-.68,z+1.68),.035,steel,par);beam(id+' narrow cab rear post',(x+s*.55,y+.68,z+.08),(x+s*.55,y+.68,z+1.68),.035,tin,par);beam(id+' cab side sill',(x+s*.55,y-.68,z+.12),(x+s*.55,y+.68,z+.12),.025,tin,par)
   beam(id+' cab side window divider',(x+s*.555,y-.05,z+.60),(x+s*.555,y-.05,z+1.54),.025,steel,par)
- box(id+' dark windscreen',(x,y-.69,z+.99),(1.02,.025,1.16),glass,par,.012);box(id+' rear cab glazing',(x,y+.69,z+.99),(1.00,.025,1.14),glass,par,.012)
- for s in (-1,1):box(id+' dark side glazing',(x+s*.55,y,z+1.00),(.025,1.14,1.08),glass,par,.012)
+ box(id+' dark windscreen',(x,y-.69,z+1.06),(.86,.025,.94),glass,par,.012);box(id+' rear cab glazing',(x,y+.69,z+1.06),(.82,.025,.90),glass,par,.012)
+ for s in (-1,1):
+  box(id+' dark side glazing',(x+s*.55,y,z+1.06),(.025,.82,.80),glass,par,.012)
+  beam(id+' painted window top rail',(x+s*.57,y-.48,z+1.52),(x+s*.57,y+.48,z+1.52),.035,paint,par)
+  beam(id+' painted window lower rail',(x+s*.57,y-.48,z+.60),(x+s*.57,y+.48,z+.60),.04,paint,par)
+  beam(id+' painted windshield header',(x-.49,y-.70,z+1.56),(x+.49,y-.70,z+1.56),.04,paint,par)
  for s in (-1,1):
   box(id+' painted cab door',(x+s*.565,y+.12,z+.37),(.055,.82,.50),paint,par,.025)
   beam(id+' cab door front seam',(x+s*.595,y-.30,z+.12),(x+s*.595,y-.30,z+.62),.018,black,par)
@@ -186,114 +202,196 @@ def articulated_loader():
   beam('loader bucket Z-bar link',bucket_pt((s*.57,-.06,.32)),bucket_pt((s*.57,.47,.10)),.065,black,bucket)
  return root,arms,bucket
 def basic_family():
- # The loader receives the full authored treatment; these companion originals
- # have distinct chassis, silhouettes and card-required moving assemblies.
  root=empty('town-machines-2',(0,0,0));loader,arms,bucket=articulated_loader();parent(loader,root)
- def road_truck(id,length=6.1):
+ def road_truck(id,length=7.2,axles=3):
   r=empty(id,(0,0,0),root)
-  for side in (-1,1):box(id+' ladder frame rail',(side*.72,0,.70),(.22,length,.42),black,r,.055)
-  for yy in (-length*.38,-length*.16,length*.08,length*.30,length*.42):box(id+' chassis crossmember',(0,yy,.68),(1.55,.20,.30),steel,r,.035)
-  cab(id,r,0,-length*.23,1.30)
-  box(id+' olive engine bonnet',(0,-length*.36,1.38),(1.66,1.55,.80),paint,r,.12)
-  box(id+' dark radiator grille',(0,-length*.36-.79,1.34),(.92,.035,.50),black,r,.035)
-  for x in (-.33,-.22,-.11,0,.11,.22,.33):box(id+' radiator slat '+str(x),(x,-length*.36-.815,1.34),(.035,.025,.43),tin,r,.009)
+  for side in (-1,1):box(id+' deep ladder rail',(side*.82,0,.74),(.24,length,.44),black,r,.08)
+  for yy in (-length*.40,-length*.20,0,length*.20,length*.40):box(id+' welded crossmember',(0,yy,.73),(1.75,.18,.28),steel,r,.045)
+  # The cab is a closed, steel-framed work cab with dark panes and an inset roof.
+  cab(id,r,0,-length*.27,1.34)
+  bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=(0,-length*.39,1.30));hood=bpy.context.object;hood.name=id+' curved bonnet';hood.scale=(.92,.96,.48);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);hood.data.materials.append(paint);hood.data.uv_layers.active.name='UVMap';parent(hood,r)
+  box(id+' recessed radiator',(0,-length*.39-.87,1.29),(1.00,.045,.58),black,r,.04)
+  for x in (-.42,-.30,-.18,-.06,.06,.18,.30,.42):box(id+' radiator vertical bar '+str(x),(x,-length*.39-.90,1.29),(.035,.025,.51),tin,r,.01)
   for s in (-1,1):
-   box(id+' headlamp',(s*.65,-length*.36-.82,1.64),(.22,.09,.18),tin,r,.045)
-   box(id+' front mudguard',(s*1.02,-length*.28,.95),(.20,1.55,.16),steel,r,.04)
-   box(id+' side fuel tank',(s*.88,.42,.94),(.28,1.05,.45),tin,r,.06)
-   box(id+' side step',(s*1.08,-.82,.77),(.20,.88,.12),black,r,.025)
-  box(id+' front bumper',(0,-length*.36-1.02,.72),(2.35,.22,.25),steel,r,.07)
-  for yy in (-length*.32,length*.18,length*.34):tyre_pair(id,r,yy,.48)
+   box(id+' headlamp',(s*.68,-length*.39-.88,1.62),(.24,.10,.20),tin,r,.055)
+   # Rolled fenders follow the wheel instead of forming a thin lower frame.
+   bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=1,location=(s*1.0,-length*.35,.98));f=bpy.context.object;f.name=id+' pressed wheel arch';f.scale=(.23,1.02,.16);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);f.data.materials.append(paint);f.data.uv_layers.active.name='UVMap';parent(f,r)
+   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.20,depth=1.05,location=(s*.90,.35,.94),rotation=(0,math.pi/2,0));tank=bpy.context.object;tank.name=id+' oval fuel tank';tank.data.materials.append(steel);tank.data.uv_layers.active.name='UVMap';parent(tank,r)
+   box(id+' steel access step',(s*1.05,-.92,.82),(.28,.94,.13),black,r,.035)
+  box(id+' forged front bumper',(0,-length*.39-1.12,.72),(2.52,.24,.30),steel,r,.09)
+  axles_y=[-length*.32] + ([length*.23,length*.37] if axles==3 else [length*.31])
+  for yy in axles_y:tyre_pair(id,r,yy,.62 if axles==3 else .66)
   return r
- mixer=road_truck('mixer-truck',7.2);dr=empty('mixer-truck:drum',(0,.72,2.05),mixer)
- profile=[(-1.55,.57),(-1.34,.76),(-1.02,.90),(.82,.90),(1.18,.79),(1.48,.62)];segments=32;verts=[];faces=[]
- for yy,radius in profile:
-  for j in range(segments):
-   angle=math.tau*j/segments;verts.append((math.cos(angle)*radius,.72+yy,2.05+math.sin(angle)*radius))
- for ring_index in range(len(profile)-1):
-  for j in range(segments):q=ring_index*segments+j;faces.append((q,ring_index*segments+(j+1)%segments,(ring_index+1)*segments+(j+1)%segments,(ring_index+1)*segments+j))
- dm=bpy.data.meshes.new('mixer rolled tapered drum');dm.from_pydata(verts,[],faces);dm.update();dobj=bpy.data.objects.new('mixer rolled tapered drum',dm);bpy.context.collection.objects.link(dobj);dm.materials.append(paint);duv=dm.uv_layers.new(name='UVMap')
+ def band_track(id,side,center_y,length,track_parent):
+  # A continuous rounded belt wraps front and rear rollers; tread shoes sit on it.
+  x=side*1.22;radius=.46;lo=center_y-length/2+radius;hi=center_y+length/2-radius
+  for yy in (lo,hi):
+   bpy.ops.mesh.primitive_uv_sphere_add(segments=20,ring_count=10,radius=1,location=(x,yy,.58));o=bpy.context.object;o.name=id+' track end roller';o.scale=(.32,radius,.43);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);o.data.materials.append(black);o.data.uv_layers.active.name='UVMap';parent(o,track_parent)
+  for s in (-1,1):
+   box(id+' continuous track side belt',(x+s*.15,center_y,.58),(.14,length-2*radius,.76),rubber,track_parent,.13)
+  count=18
+  for end in (lo,hi):
+   for j in range(8):
+    ang=math.pi*j/7;yy=end+math.cos(ang)*radius;zz=.58+math.sin(ang)*radius
+    box(id+' molded track shoe',(x,yy,zz),(.62,.22,.12),steel,track_parent,.035)
+  for j in range(count):
+   yy=lo+(hi-lo)*j/(count-1)
+   box(id+' lower track pad',(x,yy,.18),(.68,.20,.11),steel,track_parent,.03)
+   box(id+' upper track pad',(x,yy,.98),(.68,.20,.11),black,track_parent,.03)
+ # Mixer: three real axles carry a tilted tapered drum; spiral flights, ladder and chute read at a distance.
+ mixer=road_truck('mixer-truck',8.0,3);dr=empty('mixer-truck:drum',(0,.92,2.15),mixer)
+ profile=[(-1.72,.54),(-1.42,.75),(-1.12,.94),(.78,.94),(1.18,.82),(1.50,.63)];seg=40;verts=[];faces=[]
+ for yy,rad in profile:
+  for j in range(seg):q=math.tau*j/seg;verts.append((math.cos(q)*rad,yy,math.sin(q)*rad))
+ for ri in range(len(profile)-1):
+  for j in range(seg):q=ri*seg+j;faces.append((q,ri*seg+(j+1)%seg,(ri+1)*seg+(j+1)%seg,(ri+1)*seg+j))
+ dm=bpy.data.meshes.new('mixer tapered drum shell');dm.from_pydata(verts,[],faces);dm.update();dobj=bpy.data.objects.new('mixer tapered drum shell',dm);bpy.context.collection.objects.link(dobj);dm.materials.append(paint);uv=dm.uv_layers.new(name='UVMap')
  for poly in dm.polygons:
-  for li in poly.loop_indices:
-   vi=dm.loops[li].vertex_index;duv.data[li].uv=((vi%segments)/segments,(vi//segments)/(len(profile)-1))
- parent(dobj,dr)
- cap_verts=[];cap_faces=[];cap_rings=((profile[0][0],profile[0][1],-1),(profile[-1][0],profile[-1][1],1))
- for yy,radius,direction in cap_rings:
-  center=len(cap_verts);cap_verts.append((0,.72+yy,2.05));start=len(cap_verts)
-  for j in range(segments):angle=math.tau*j/segments;cap_verts.append((math.cos(angle)*radius,.72+yy,2.05+math.sin(angle)*radius))
-  for j in range(segments):tri=(center,start+j,start+(j+1)%segments);cap_faces.append(tri if direction>0 else tuple(reversed(tri)))
- cm=bpy.data.meshes.new('mixer drum end plates');cm.from_pydata(cap_verts,[],cap_faces);cm.update();caps=bpy.data.objects.new('mixer drum end plates',cm);bpy.context.collection.objects.link(caps);cm.materials.append(steel);cuv=cm.uv_layers.new(name='UVMap')
- for poly in cm.polygons:
-  for li in poly.loop_indices:
-   co=cap_verts[cm.loops[li].vertex_index];cuv.data[li].uv=(co[0]/2,co[2]/2)
- parent(caps,dr)
- for yy,radius in ((-.98,.905),(.78,.905)):
-  bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=8,major_radius=radius,minor_radius=.045,location=(0,.72+yy,2.05),rotation=(math.pi/2,0,0));ring=bpy.context.object;ring.name='mixer drum rolled strengthening band';ring.data.materials.append(steel);ring.data.uv_layers.active.name='UVMap';parent(ring,dr)
- chute=empty('mixer-truck:chute',(.70,2.04,1.72),mixer)
- box('mixer discharge chute',(.92,2.58,1.39),(.42,1.10,.12),tin,chute,.035)
- for side in (-1,1):box('mixer chute side flange',(.92+side*.22,2.58,1.56),(.06,1.10,.34),steel,chute,.025)
- beam('mixer chute pivot rod',(.32,2.04,1.72),(1.08,2.04,1.72),.07,black,mixer)
- beam('mixer chute support link',(.45,1.82,1.50),(.86,2.34,1.56),.045,steel,mixer)
+  poly.use_smooth=True
+  for li in poly.loop_indices:uv.data[li].uv=((dm.loops[li].vertex_index%seg)/seg,(dm.loops[li].vertex_index//seg)/(len(profile)-1))
+ dobj.location=(0,.92,2.15);parent(dobj,dr)
+ for side in (-1,1):
+  bpy.ops.mesh.primitive_cylinder_add(vertices=40,radius=.12,depth=.30,location=(side*.14,-.80,2.15),rotation=(math.pi/2,0,0));cap=bpy.context.object;cap.name='mixer steel end plate';cap.data.materials.append(steel);cap.data.uv_layers.active.name='UVMap';parent(cap,dr)
+ # Three continuous spiral flights are real steel ribs, pitched around the tapered shell.
+ for phase in (0,math.tau/3,2*math.tau/3):
+  points=[]
+  for j in range(25):
+   t=j/24;y=-1.58+3.00*t;rad=.70+.20*math.sin(math.pi*t);ang=phase+t*math.tau*2.25
+   points.append((math.cos(ang)*rad,y+.92,math.sin(ang)*rad+2.15))
+  for j in range(len(points)-1):beam('mixer welded helical flight',points[j],points[j+1],.046,tin,dr)
+ for y,rad in ((-1.05,.86),(.86,.88)):
+  bpy.ops.mesh.primitive_torus_add(major_segments=40,minor_segments=8,major_radius=rad,minor_radius=.05,location=(0,y+.92,2.15),rotation=(math.pi/2,0,0));o=bpy.context.object;o.name='mixer drum support ring';o.data.materials.append(steel);o.data.uv_layers.active.name='UVMap';parent(o,dr)
+ dr.rotation_euler[0]=-.12
+ for s in (-1,1):
+  beam('mixer drum cradle rail',(s*.58,-.05,1.32),(s*.58,1.65,1.85),.11,steel,mixer)
+  beam('mixer drum ladder rail',(s*1.03,.40,1.38),(s*1.03,1.72,2.54),.055,tin,mixer)
+ for y in (.58,.87,1.16,1.45):beam('mixer ladder rung',(-1.03,y,1.5),(1.03,y,1.5),.035,steel,mixer)
+ chute=empty('mixer-truck:chute',(.70,2.65,1.63),mixer)
+ box('mixer folded steel chute',(1.0,3.04,1.30),(.40,1.15,.12),tin,chute,.035)
+ for s in (-1,1):box('mixer chute high side flange',(1.0+s*.23,3.04,1.49),(.06,1.15,.35),steel,chute,.025)
+ beam('mixer chute hinge pin',(.40,2.65,1.63),(1.0,2.65,1.63),.07,black,mixer)
+ # Roller: smooth drum, sculpted rear hood, open canopy and a visible yoke.
  roller=empty('roller',(0,0,0),root)
- box('roller rear engine housing',(0,1.08,1.42),(2.08,2.05,.92),paint,roller,.18)
- box('roller operator platform',(0,-.02,1.16),(1.75,1.52,.22),steel,roller,.07)
+ box('roller ladder chassis',(0,.56,.76),(1.72,3.12,.52),black,roller,.12)
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=28,ring_count=16,radius=1,location=(0,1.18,1.43));hood=bpy.context.object;hood.name='roller rounded engine hood';hood.scale=(1.03,1.16,.88);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);hood.data.materials.append(paint);hood.data.uv_layers.active.name='UVMap';parent(hood,roller)
+ box('roller dark rear grille',(0,2.27,1.38),(1.18,.04,.52),black,roller,.05)
+ for x in (-.50,-.35,-.20,-.05,.10,.25,.40,.55):box('roller grille bars',(x,2.30,1.38),(.035,.03,.47),tin,roller,.01)
+ box('roller operator deck',(0,-.06,1.17),(1.82,1.10,.18),steel,roller,.055)
  for s in (-1,1):
-  beam('roller canopy front post',(s*.62,.05,1.25),(s*.62,.05,3.15),.055,steel,roller)
-  beam('roller canopy rear post',(s*.62,1.12,1.25),(s*.62,1.12,3.15),.055,steel,roller)
- box('roller sun canopy',(0,.58,3.15),(1.55,1.42,.12),tin,roller,.04)
- box('roller operator seat',(0,.68,1.65),(.52,.46,.50),black,roller,.09)
- drum=empty('roller:drum',(0,-1.65,.94),roller)
- bpy.ops.mesh.primitive_cylinder_add(vertices=48,radius=.94,depth=2.02,location=(0,-1.65,.94),rotation=(0,math.pi/2,0));o=bpy.context.object;o.name='roller steel drum';o.data.materials.append(tin);o.data.uv_layers.active.name='UVMap';parent(o,drum)
+  beam('roller canopy front post',(s*.66,-.30,1.24),(s*.66,-.30,3.04),.045,paint,roller)
+  beam('roller canopy rear post',(s*.66,.70,1.24),(s*.66,.70,3.04),.045,paint,roller)
+  beam('roller canopy side rail',(s*.66,-.30,2.94),(s*.66,.70,2.94),.038,steel,roller)
+ box('roller open sun canopy',(0,.20,3.04),(1.68,1.44,.13),paint,roller,.07)
+ box('roller seat',(0,.18,1.63),(.48,.42,.54),black,roller,.09)
+ beam('roller drum yoke left',(-.94,-1.72,1.34),(-.94,-1.72,1.91),.12,paint,roller);beam('roller drum yoke right',(.94,-1.72,1.34),(.94,-1.72,1.91),.12,paint,roller)
+ drum=empty('roller:drum',(0,-1.68,.94),roller)
+ bpy.ops.mesh.primitive_cylinder_add(vertices=64,radius=.95,depth=1.98,location=(0,-1.68,.94),rotation=(0,math.pi/2,0));o=bpy.context.object;o.name='roller smooth full-width steel drum';o.data.materials.append(steel);o.data.uv_layers.active.name='UVMap';parent(o,drum)
+ for angle in (0,math.tau/3,2*math.tau/3):
+  y=-1.68+math.cos(angle)*.93;z=.94+math.sin(angle)*.93
+  beam('roller drum longitudinal wear seam',(-.98,y,z),(.98,y,z),.025,black,drum)
  for s in (-1,1):
-  bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=.82,depth=.025,location=(s*1.03,-1.65,.94),rotation=(0,math.pi/2,0));cap=bpy.context.object;cap.name='roller drum end plate';cap.data.materials.append(black);parent(cap,drum)
-  box('roller drum scraper blade',(s*.72,-.57,1.06),(.14,.16,.62),steel,roller,.035)
- beam('roller drum welded seam',(-.96,-1.65,1.88),(.96,-1.65,1.88),.035,tin,drum)
- tyre_pair('roller',roller,1.55,.65)
- paver=empty('paver',(0,0,0),root);box('paver main chassis',(0,.10,1.22),(2.30,2.92,.94),black,paver,.10)
+  bpy.ops.mesh.primitive_cylinder_add(vertices=40,radius=.78,depth=.04,location=(s*1.01,-1.68,.94),rotation=(0,math.pi/2,0));o=bpy.context.object;o.name='roller drum end cap';o.data.materials.append(black);o.data.uv_layers.active.name='UVMap';parent(o,drum)
+  beam('roller drum scraper', (s*.78,-.60,1.05),(s*.78,-.60,1.62),.055,steel,roller)
+ for yy in (.94,1.60):tyre_pair('roller',roller,yy,.66)
+ # Paver: low wide feed hopper, tracked chassis, screed and open operator's station.
+ paver=empty('paver',(0,0,0),root);tracks=empty('paver:tracks',(0,0,0),paver)
+ box('paver low steel chassis',(0,.14,1.04),(2.34,3.10,.60),black,paver,.12)
+ for s in (-1,1):band_track('paver',s,0,3.70,tracks)
+ box('paver wide front hopper floor',(0,-1.52,1.34),(3.25,1.08,.18),steel,paver,.08)
  for s in (-1,1):
-  box('paver continuous track carcass',(s*1.25,.08,.52),(.46,3.35,.58),black,paver,.14)
-  for yy in (-1.05,-.35,.35,1.05):wheel('paver road roller',s*1.34,yy,.55,.31,.28,paver)
-  box('paver track top guard',(s*1.25,.05,.88),(.44,2.95,.15),steel,paver,.035)
- cab('paver',paver,0,.78,1.78)
- box('paver feed hopper rear wall',(0,-1.46,1.68),(2.25,.14,.95),tin,paver,.05)
- box('paver feed hopper side left',(-1.05,-1.04,1.72),(.16,.92,.93),steel,paver,.035)
- box('paver feed hopper side right',(1.05,-1.04,1.72),(.16,.92,.93),steel,paver,.035)
- box('paver hopper nose',(0,-1.88,1.70),(2.14,.18,.74),paint,paver,.05)
- box('paver paving screed',(0,1.91,.68),(3.40,.55,.24),steel,paver,.045)
- drill=road_truck('drill-rig',7);mast=empty('drill-rig:mast',(0,1.1,1.10),drill)
- beam('drill mast welded spine',(0,1.1,1.10),(0,1.2,5.65),.15,paint,mast)
- for side in (-1,1):
-  beam('drill mast side stile',(side*.58,1.1,1.10),(side*.58,1.2,5.4),.075,steel,mast)
-  for height in (1.55,2.1,2.65,3.2,3.75,4.3,4.85):beam('drill mast ladder rung '+str(height),(-.58,1.16,height),(.58,1.16,height),.035,tin,mast)
- beam('drill mast crown pulley axle',(-.68,1.2,5.5),(.68,1.2,5.5),.11,steel,mast)
- string=empty('drill-rig:string',(0,.78,5.45),mast);beam('drill steel string',(0,.78,5.45),(0,.78,3.35),.07,tin,string)
- crane=road_truck('crane-truck',7)
- box('crane slew platform',(0,.80,1.18),(1.62,1.32,.30),steel,crane,.08)
- box('crane boom pedestal',(0,.80,2.16),(.88,.92,1.72),paint,crane,.10)
- for side in (-1,1):beam('crane boom pedestal brace',(side*.70,.80,1.42),(side*.39,.80,3.12),.10,steel,crane)
- boom=empty('crane-truck:boom',(0,.80,3.25),crane)
- box_beam('crane telescopic outer boom',(0,.80,3.25),(0,-1.85,4.01),.46,.40,paint,boom,.055)
- box_beam('crane sliding inner boom',(0,-1.25,3.84),(0,-3.15,4.37),.27,.25,tin,boom,.035)
- beam('crane lift ram barrel',(0,1.10,2.45),(0,-.60,3.25),.12,steel,boom);beam('crane lift ram chrome rod',(0,-.18,3.12),(0,-1.20,3.60),.055,tin,boom)
- for side in (-1,1):
-  box_beam('crane stabilizer outrigger',(side*.82,.80,.72),(side*1.68,.80,.72),.14,.18,steel,crane,.02)
-  box('crane stabilizer ground pad',(side*1.68,.80,.12),(.40,.42,.14),black,crane,.04)
- hook=empty('crane-truck:hook',(0,-3.15,4.37),boom);beam('crane hoist cable',(0,-3.15,4.37),(0,-3.15,2.87),.025,black,hook);box('crane forged hook',(0,-3.15,2.79),(.16,.20,.28),tin,hook,.06)
- pipes=road_truck('pipe-truck',7.2);box('pipe truck flatbed',(0,.55,1.35),(2.1,4.0,.20),steel,pipes,.04)
- for i in range(5):
-  y=-.85+i*.58
-  pipe_node=empty('pipe-truck:pipe-'+str(i+1),(0,y,1.64),pipes)
-  bpy.ops.mesh.primitive_cylinder_add(vertices=16,radius=.18,depth=1.8,location=(0,y,1.64),rotation=(0,math.pi/2,0));q=bpy.context.object;q.name='pipe-truck salvaged pipe '+str(i+1);q.data.materials.append(tin);q.data.uv_layers.active.name='UVMap';parent(q,pipe_node)
- # Place roots only after every part is attached. Each machine then keeps its
- # own local origin when a consumer clones it out of this family row.
+  box_beam('paver sloped hopper side',(s*.72,-1.90,1.42),(s*1.54,-1.12,2.05),.11,.82,paint,paver,.045)
+  beam('paver hopper rolled lip',(s*1.55,-1.72,1.86),(s*1.55,-.92,2.31),.07,tin,paver)
+ box('paver rear hopper bulkhead',(0,-.93,1.72),(2.92,.16,.85),paint,paver,.06)
+ box('paver open operator deck',(0,.56,1.42),(1.60,1.10,.18),steel,paver,.04)
+ box('paver operator seat',(0,.36,1.72),(.48,.38,.48),black,paver,.08)
+ for s in (-1,1):
+  beam('paver handrail post',(s*.72,.13,1.50),(s*.72,.13,2.28),.035,tin,paver);beam('paver platform rail',(s*.72,.13,2.28),(s*.72,1.0,2.28),.035,tin,paver)
+ screed=empty('paver:screed',(0,1.70,.76),paver)
+ box('paver rear screed deck',(0,1.90,.76),(3.60,.42,.25),steel,screed,.08)
+ box('paver screed wear plate',(0,2.02,.58),(3.52,.18,.08),black,screed,.025)
+ for s in (-1,1):beam('paver screed end wing',(s*1.70,1.76,.67),(s*1.94,2.12,.67),.07,tin,screed)
+ # Drill rig: low crawler chassis and a braced lattice mast with a rotary head.
+ drill=empty('drill-rig',(0,0,0),root);tracks=empty('drill-rig:undercarriage',(0,0,0),drill)
+ box('drill rig tracked base',(0,.52,.92),(2.06,3.10,.72),black,drill,.10)
+ for s in (-1,1):band_track('drill-rig',s,.45,3.65,tracks)
+ box('drill engine rear housing',(0,1.63,1.65),(1.72,1.10,.92),paint,drill,.16)
+ for s in (-1,1):
+  box('drill perforated side service panel',(s*.88,1.55,1.64),(.055,.76,.58),steel,drill,.08)
+  beam('drill mast hinge trunnion',(s*.50,-.10,1.50),(s*.50,.08,1.50),.14,tin,drill)
+ mast=empty('drill-rig:mast',(0,-.14,1.50),drill)
+ for s in (-1,1):
+  beam('drill mast outer chord',(s*.60,-.14,1.50),(s*.47,-.02,6.25),.075,paint,mast)
+  for h in (.40,.92,1.44,1.96,2.48,3.0,3.52,4.04,4.56):
+   beam('drill lattice crossmember',(s*.60,-.14,1.50+h),(s*.60,-.14,1.60+h),.04,steel,mast)
+  for h in (.25,.77,1.29,1.81,2.33,2.85,3.37,3.89,4.41):beam('drill lattice diagonal',(s*.60,-.14,1.50+h),(0,-.09,2.02+h),.045,tin,mast)
+ beam('drill mast crown axle',(-.68,-.02,6.22),(.68,-.02,6.22),.11,steel,mast)
+ bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=8,major_radius=.25,minor_radius=.06,location=(0,-.02,6.22),rotation=(0,math.pi/2,0));pulley=bpy.context.object;pulley.name='drill crown pulley';pulley.data.materials.append(black);pulley.data.uv_layers.active.name='UVMap';parent(pulley,mast)
+ string=empty('drill-rig:string',(0,-.22,6.16),mast)
+ box('drill rotary head',(0,-.22,5.68),(.62,.38,.74),steel,string,.08)
+ beam('drill feed string',(0,-.22,5.38),(0,-.22,2.98),.075,tin,string)
+ bpy.ops.mesh.primitive_cone_add(vertices=12,radius1=.17,radius2=.03,depth=.34,location=(0,-.22,2.84));bit=bpy.context.object;bit.name='drill bit';bit.data.materials.append(steel);bit.data.uv_layers.active.name='UVMap';parent(bit,string)
+ # Crane truck: long chassis, genuine slew turret and a braced telescopic boom.
+ crane=road_truck('crane-truck',9.0,3)
+ turret=empty('crane rotating turret',(0,.82,1.22),crane)
+ box('crane slew ring',(0,.82,1.28),(1.76,1.78,.22),steel,turret,.11)
+ box('crane turret counterweight',(0,1.52,1.83),(1.45,.70,.98),paint,turret,.16)
+ for s in (-1,1):beam('crane cab grab rail',(s*.80,.20,1.50),(s*.80,.60,2.30),.05,tin,turret)
+ box('crane boom heel yoke',(0,.35,2.34),(.88,.90,.78),steel,turret,.10)
+ boom=empty('crane-truck:boom',(0,.35,2.34),turret)
+ box_beam('crane telescopic outer boom',(0,.38,2.70),(0,-2.35,3.45),.50,.44,paint,boom,.055)
+ box_beam('crane sliding inner boom',(0,-1.58,3.24),(0,-3.60,3.82),.30,.27,tin,boom,.035)
+ for s in (-1,1):
+  beam('crane boom gusset',(s*.37,.20,2.82),(s*.22,-1.00,3.10),.07,steel,boom)
+  box_beam('crane hydraulic outrigger',(s*.84,.84,.72),(s*1.82,.84,.72),.15,.20,steel,crane,.025)
+  box('crane outrigger foot',(s*1.82,.84,.12),(.48,.50,.16),black,crane,.045)
+ beam('crane ram barrel',(0,.85,1.98),(0,-.50,2.75),.13,steel,turret);beam('crane ram rod',(0,-.12,2.63),(0,-1.34,3.05),.06,tin,turret)
+ hook=empty('crane-truck:hook',(0,-3.60,3.82),boom)
+ beam('crane hoist cable',(0,-3.60,3.82),(0,-3.60,2.60),.028,black,hook)
+ for s in (-1,1):beam('crane forged hook shank',(s*.10,-3.60,2.62),(s*.10,-3.60,2.39),.075,tin,hook)
+ beam('crane hook curve',(-.10,-3.60,2.39),(0,-3.60,2.30),.06,tin,hook);beam('crane hook curve',(0,-3.60,2.30),(.10,-3.60,2.39),.06,tin,hook)
+ # Pipe truck: long deck, stakes, crosswise steel pipes in a tied-down stack.
+ pipes=road_truck('pipe-truck',9.4,3);box('pipe truck flatbed deck',(0,.26,1.40),(2.40,5.72,.20),steel,pipes,.07)
+ for s in (-1,1):
+  for y in (-2.30,-.90,.50,1.90,2.72):
+   beam('pipe stake socket',(s*1.02,y,1.48),(s*1.02,y,1.72),.09,black,pipes)
+   beam('pipe truck upright stake',(s*1.02,y,1.62),(s*1.02,y,2.62),.06,paint,pipes)
+   beam('stake gusset',(s*.78,y,1.58),(s*1.02,y,1.86),.045,tin,pipes)
+ # Nine pipes sit in a stable triangular stack; first five have independent drop pivots.
+ pipe_index=0
+ for row,count in enumerate((3,2,1)):
+  for j in range(count):
+   pipe_index+=1;x=(j-(count-1)/2)*.49;y=-1.70+((row+j)%3)*1.58;z=1.69+row*.37
+   node=empty('pipe-truck:pipe-'+str(pipe_index),(x+.94,y,z),pipes) if pipe_index<=5 else pipes
+   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.205,depth=1.94,location=(x,y,z),rotation=(0,math.pi/2,0));q=bpy.context.object;q.name='pipe truck round steel pipe '+str(pipe_index);q.data.materials.append(tin);q.data.uv_layers.active.name='UVMap';parent(q,node)
+   for s in (-1,1):
+    bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=5,major_radius=.17,minor_radius=.018,location=(x+s*.83,y,z),rotation=(0,math.pi/2,0));o=bpy.context.object;o.name='pipe rolled end lip';o.data.materials.append(steel);o.data.uv_layers.active.name='UVMap';parent(o,node)
+ # Each root remains a separate family child with a real-scale local origin.
  mixer.location.x=11;roller.location.x=22;paver.location.x=33;drill.location.x=44;crane.location.x=55;pipes.location.x=66
  return root
 family=basic_family();bpy.context.view_layer.update()
 # Merge the many static salvage pieces into one mesh per rigid assembly. This
 # keeps the exported family compact while leaving every named moving joint.
-joint_names={'loader:front-frame','loader:rear-frame','loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook',*(f'pipe-truck:pipe-{i}' for i in range(1,6))}
+joint_names={'loader:front-frame','loader:rear-frame','loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','paver:screed','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook',*(f'pipe-truck:pipe-{i}' for i in range(1,6))}
 machine_names={'loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck'}
-triangle_targets={'loader':8000,'mixer-truck':4000,'roller':3500,'paver':3000,'drill-rig':3500,'crane-truck':3000,'pipe-truck':2500}
+triangle_targets={'loader':5600,'mixer-truck':5600,'roller':5600,'paver':5600,'drill-rig':5600,'crane-truck':5600,'pipe-truck':5600}
+# Reduce individual source parts before joining them. This keeps a tire round
+# and avoids collapsing disconnected beams into large plates.
+for machine_name in machine_names:
+ root_obj=bpy.data.objects[machine_name];parts=[]
+ def gather_parts(node):
+  for child in node.children:
+   if child.type=='MESH':parts.append(child)
+   gather_parts(child)
+ gather_parts(root_obj);counts=[];depsgraph=bpy.context.evaluated_depsgraph_get()
+ for obj in parts:
+  evaluated=obj.evaluated_get(depsgraph);mesh=evaluated.to_mesh();counts.append((obj,sum(max(1,len(poly.vertices)-2) for poly in mesh.polygons)));evaluated.to_mesh_clear()
+ total=sum(triangles for _,triangles in counts)
+ if total>triangle_targets[machine_name]:
+  ratio=triangle_targets[machine_name]/total
+  for obj,triangles in counts:
+   if triangles<50 or 'molded rubber carcass' in obj.name or 'pipe truck round steel pipe' in obj.name or 'roller smooth full-width steel drum' in obj.name:continue
+   decimate=obj.modifiers.new('compact mesh details','DECIMATE');decimate.ratio=ratio;decimate.use_collapse_triangulate=False
+   bpy.context.view_layer.objects.active=obj;bpy.ops.object.modifier_apply(modifier=decimate.name)
 for machine_name in machine_names:
  groups={}
  for obj in list(bpy.context.scene.objects):
@@ -307,7 +405,7 @@ for machine_name in machine_names:
   if owner.name!=machine_name and owner.name not in joint_names:continue
   if owner.name==machine_name or owner.name in joint_names:groups.setdefault(owner.name,[]).append(obj)
  for owner_name,objects in groups.items():
-  if len(objects)<2 or owner_name in joint_names:continue
+  if len(objects)<2:continue
   bpy.ops.object.select_all(action='DESELECT')
   for obj in objects:obj.select_set(True)
   bpy.context.view_layer.objects.active=objects[0];bpy.ops.object.join();merged=bpy.context.view_layer.objects.active;merged.name=owner_name+' rigid assembly'
@@ -339,7 +437,7 @@ for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.data.uv_layers.active:obj.data.uv_layers.active.name='UVMap'
 for mat in bpy.data.materials:
  for node in mat.node_tree.nodes if mat.use_nodes else []:
-  if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>256:node.image.scale(256,256)
+  if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:node.image.scale(192,192)
  blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
 if a.render:
  bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='AgX';scene.world=bpy.data.worlds.new('Overcast loader daylight');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.54,.56,.55,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.78
@@ -364,16 +462,17 @@ if a.render:
    elif name=='mixer-truck':
     joints['mixer-truck:drum'].rotation_euler[1]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
    elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
+   elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
    elif name=='drill-rig':
-    joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .12;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
+    joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .22;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
    elif name=='crane-truck':
-    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.15;joints['crane-truck:hook'].location.z=1.12 if pose=='rest' else .57
+    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45;joints['crane-truck:hook'].location.z=1.12 if pose=='rest' else .57
    elif name=='pipe-truck':
-    for index in range(1,6):
-     pipe=joints[f'pipe-truck:pipe-{index}'];pipe.location.x=0 if pose=='rest' or index!=1 else 2.0;pipe.location.z=1.64 if pose=='rest' or index!=1 else .35
-   target=origin+Vector((0,-1.0,1.8))
+     for index in range(1,6):
+      pipe=joints[f'pipe-truck:pipe-{index}'];pipe.rotation_euler[1]=0 if pose=='rest' or index!=1 else -.78
+   target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
    for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
-   view_scale=1.0 if name=='loader' else .67 if name in ('mixer-truck','roller','paver','pipe-truck') else 1.15 if name=='drill-rig' else .82
+   view_scale=1.0 if name=='loader' else .67 if name in ('mixer-truck','roller','paver','pipe-truck') else 1.62 if name=='drill-rig' else .82
    bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=43;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  print('Rendered all seven machines at rest and work poses from imported GLB')
 print('exported',glb,glb.stat().st_size)

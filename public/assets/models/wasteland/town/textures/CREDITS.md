@@ -179,3 +179,10 @@ perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
 - `stages-rusted-steel.jpg`: the building stages' own rusted steel picture, generated for TOWN-ART-STAGES.
+
+## TOWN-ART-MACHINES-2 round 4
+
+Generated with Codex built-in image generation on 6 November 2026. The model embeds each as a separate 256 px JPEG tile; the original PNGs remain outside the repository.
+
+- `machines2-dusty-steel.jpg`: close-up photographic tile of salvaged galvanized steel plate, cool zinc-grey grain, small dents and scratches, subdued rust at fasteners, diffuse overcast light. Prompt: “Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a realistic 3D construction-machine game model. A close straight-on material photograph of salvaged galvanized steel plate, muted cool charcoal and zinc-grey with fine grain, shallow scratches, small dents, a few subdued dark brown rust spots and narrow rust streaks below fasteners, a thin rubbed bright-metal edge here and there. The whole image is steel surface only, even scale, no object outline. Flat diffuse bright overcast illumination, no directional shadows or glare, seamless tile edges, realistic 10 cm scale, crisp detail, no text, logo, watermark, orange saturation or wood grain.”
+- `machines2-dusty-rubber.jpg`: close-up photographic tile of dusty black industrial tyre rubber, fine grain, shallow cracks, scuffs, embedded dust, matte finish. Prompt: “Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for black industrial construction-machine tyres in a realistic 3D game. A straight-on macro photograph of dusty deep black tire rubber, subtle fine grain and tiny cracks, crisp raised chevron tread blocks partially visible near the edges, embedded grey-brown dust in the grooves, worn contact scuffs, no lettering or sidewall logos. Whole surface evenly sharp, true small scale, matte rubber, no strong highlights. Flat diffuse overcast light, no cast shadows, seamless square tile edges, no objects, no text, no watermark.”

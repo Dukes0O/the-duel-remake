@@ -1,64 +1,31 @@
-# TOWN-ART-MACHINES-2 · Round 3 candidate
+# TOWN-ART-MACHINES-2 · Round 4
 
-## Settled design for rounds 3–6
+**Status:** committed for Claude's art review. This packet does not claim that the family passes its look gate.
 
-- Keep the same full-scale articulated wheel-loader reference and camera. Remove the photo crop from the cab: it reads like a sticker rather than paint.
-- Rebuild the bucket as a deep, curved steel scoop with real side cheeks, a formed back, wear plates and separated teeth. Reduce the oversized arm rails, make their hydraulic links read as one connected mechanism, and give the cab a thinner frame and a clear door seam.
-- Kyle's 5 November inbox note permits up to six rounds per art card, replacing the older three-round cap. Two rounds were submitted before this change. Keep round 3 as a candidate until it passes self-review; use rounds 4–6 only to close gaps that remain.
-- Show all seven machines in the same low three-quarter view at rest and at work. Keep working parts in named pivots, and keep the family roots separate in the exported row.
+## Design and changes
 
-## Round 2
+Built the other six machines around their own working silhouettes and kept the articulated loader. The mixer has a tapered tilted drum with helical flights, ladder and hinged chute. The roller has a smooth front drum in a yoke, rounded rear engine body and four-post open canopy. The paver has a wide front hopper, open platform, tracked base and hinged screed. The drill rig has a tracked base and lattice mast with a feed string. The crane uses a turret, hinged boom and hook. The pipe truck carries round steel pipes between stakes, and one pipe rolls from a pivot at the bed edge.
 
-## Changed
+All bodies use worn olive-yellow paint, with a separate photographic galvanized-steel tile and a separate dusty-rubber tile. Cab glass is dark and framed by painted rails. Each exported part has `TEXCOORD_0`; metallic factors stay at or below 0.29. The exported GLB is 2,828,316 bytes. The current model is below 15,000 triangles per machine.
 
-- Rebuilt the loader around separate front and rear frame nodes, four continuous
-  dark chevron tyres, two boxed lift arms, two visible hydraulic rams, a Z-bar,
-  a curved bucket shell, a thick cutting edge and teeth. `loader:arms` and
-  `loader:bucket` pivot at their hinges and show distinct rest and scoop poses
-  in renders from the exported and reimported GLB.
-- Reused the machines-1 picture materials and dark tyre treatment. Added a
-  small crop of the round-2 reference on the cab door and recorded its origin in
-  the town texture credits.
-- Preserved the seven required roots and moving-node names. The family GLB is
-  1,966,836 bytes. Read-back triangle counts: loader 11,096; mixer truck 5,942;
-  roller 4,636; paver 4,612; drill rig 5,554; crane truck 4,678; pipe truck
-  3,870. A direct read-back check found 198 primitives with only `TEXCOORD_0`
-  and a nonzero UV range; maximum `metallicFactor` was 0.29.
-- Added the round-2 comparison sheet and self-review. The loader still fails the
-  visual comparison. The mixer, roller and drill rig have not had a look round.
+## Evidence and review
+
+`docs/board/looks/town-art-machines-2/round-4.jpg` is 459,061 bytes. It shows a reference crop beside rest and work poses rendered from the exported GLB imported into an empty Blender scene. Claude should compare all seven silhouettes, paint and steel surfaces, cab framing, tyre lug shape, and hinge poses against the photo crops. The family is not wired into the game, so no browser or in-game look check was run.
+
+Blender exported and rendered all seven machines. It reported three warnings that meshes `Cube.321`, `Cube.044` and `Cube.361` may export wrongly. The GLB checks below passed; Claude should inspect those areas on the sheet.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: passed, 262 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Its size report lists pre-existing
-  advisory targets; this change added no oversized runtime file or look sheet.
-- Direct GLB read-back: all named machine roots and stated family budgets are
-  within limits; UV and metallic checks passed.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed on both runs.
-  The audio-analysis subtest failed twice because starting `ffmpeg` returned
-  `EPERM`. No test assertion changed.
-- No browser or in-game check was run in this lane. No race fingerprints apply
-  to this art-only change.
-
-## Claude should review
-
-- The loader's proportions, boxed arm attachment, cab posts and door crop
-  against the reference; the builder verdict is fail.
-- Rest and scoop pivots, particularly whether the bucket appears connected to
-  the Z-bar and rams in both poses.
-- The mixer truck, roller, paver, drill rig, crane truck and pipe truck in a
-  later look round; this round's sheet shows only the loader.
+- `tools/test-blender-output.mjs`: **passed**, 274 checks; this includes the machine roots, added paver screed joint, triangle and file budgets, UV channel/range rules, and metallic cap.
+- `tools/test-repo-hygiene.mjs`: **passed**; repository placement passed. Reported size targets are advisory.
+- `tools/test-review-evidence.mjs`: **7 of 9 subtests passed; 2 failed**. One failure is the test's hard-coded expectation that `round-2.jpg` exists; this task explicitly required deleting round 2. The other failure is `spawnSync ffmpeg EPERM` in the unrelated audio-analysis subtest. I did not change that test.
+- No lane tier or build was run, as instructed for this art card. No browser check was run.
+- Race fingerprints: not applicable to this model-only art change.
 
 ## Changed assertions
 
-None.
-
-## Race fingerprints
-
-Not applicable; no simulation code changed.
+Added an expected `paver:screed` joint, required a positive triangle count within the 15,000 cap, checked for only ranged `TEXCOORD_0` UVs on each primitive, and capped every material's `metallicFactor` at 0.3. No existing assertion was loosened.
 
 ## Removed
 
-- Deleted `round-1.jpg` and `round-1-review.md` after replacing their review
-  evidence with the round-2 sheet and note.
-- Replaced the round-1 torus tyres with a continuous chevron carcass.
+Deleted the superseded `round-2.jpg`, `round-2-review.md` and `round-3.jpg` from the looks folder as directed. No round-3 review note was present. Removed this run's temporary Blender renders, generated sheet helper, test logs and scratch blend before committing.
