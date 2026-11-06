@@ -11,8 +11,8 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/cars/longhaul.glb'
 texture_dir = root / 'public/assets/models/wasteland/cars/textures'
 blend = root / 'art-build/longhaul/longhaul.blend'
-evidence = root / '.evidence/2026-11-05/CAR-ART-LONGHAUL/round-2'
-sheet = root / 'docs/board/looks/car-art-longhaul/round-2.jpg'
+evidence = root / '.evidence/2026-11-06/CAR-ART-LONGHAUL/round-3'
+sheet = root / 'docs/board/looks/car-art-longhaul/round-3.jpg'
 reference = root / '.qa-dist/longhaul-reference.png'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(evidence)],'summary':[str(sheet)]}))
@@ -77,7 +77,9 @@ def beam(name, a, b, radius, material, sides=12):
     bpy.ops.mesh.primitive_cylinder_add(vertices=sides,radius=radius,depth=d.length,location=(a+b)/2)
     o=bpy.context.object; o.name=name; o.rotation_euler=d.to_track_quat('Z','Y').to_euler(); o.data.materials.append(material); o.parent=vehicle; parts.append(o); return o
 def cylinder(name, pos, radius, depth, material, axis='X', vertices=16):
-    rot={'X':(0,math.pi/2,0),'Y':(0,0,0),'Z':(math.pi/2,0,0)}[axis]
+    # In the authoring scene Y is up and Z is the truck's length. Blender
+    # cylinders are Z-aligned, so map each requested model axis explicitly.
+    rot={'X':(0,math.pi/2,0),'Y':(math.pi/2,0,0),'Z':(0,0,0)}[axis]
     bpy.ops.mesh.primitive_cylinder_add(vertices=vertices,radius=radius,depth=depth,location=xyz(pos),rotation=rot)
     o=bpy.context.object; o.name=name; o.data.materials.append(material); o.parent=vehicle; parts.append(o); return o
 def panel(name, points, material, thickness=.035):
@@ -86,8 +88,8 @@ def panel(name, points, material, thickness=.035):
     solid=o.modifiers.new('visible folded sheet thickness','SOLIDIFY'); solid.thickness=thickness
     bevel=o.modifiers.new('creased panel edge','BEVEL'); bevel.width=.018; bevel.segments=1
     return o
-def tyre(name, center, major=.49, section=.18, width=.42, segments=32, rings=10, pitch_count=12):
-    """One continuous carcass with raised chevrons built into its rolling surface."""
+def tyre(name, center, major=.52, section=.18, width=.42, segments=42, rings=14, pitch_count=32):
+    """A round continuous carcass with shallow tread blocks in its rolling surface."""
     cx,cy,cz=center; verts=[]; faces=[]; uvs=[]
     for i in range(segments):
         theta=2*math.pi*i/segments
@@ -96,7 +98,7 @@ def tyre(name, center, major=.49, section=.18, width=.42, segments=32, rings=10,
             sweep=(phi-math.pi/2)*.38
             delta=(theta-sweep+math.pi/pitch_count)%(2*math.pi/pitch_count)-math.pi/pitch_count
             across=abs((phi-math.pi/2+math.pi)%(2*math.pi)-math.pi)
-            lug=.065 if abs(delta)<.105 and across<.74 else 0
+            lug=.008 if abs(delta)<.07 and across<.62 else 0
             radius=major+section*math.sin(phi)+lug
             verts.append((cx+width*.5*math.cos(phi),cy+radius*math.sin(theta),cz+radius*math.cos(theta)))
     for i in range(segments):
@@ -108,170 +110,150 @@ def tyre(name, center, major=.49, section=.18, width=.42, segments=32, rings=10,
                         ((i+1)/segments*4.2,(j+1)/rings*.72),(i/segments*4.2,(j+1)/rings*.72)))
     mesh=bpy.data.meshes.new(name); mesh.from_pydata(verts,[],faces); mesh.materials.append(rubber); mesh.update()
     ob=bpy.data.objects.new(name,mesh); scene.collection.objects.link(ob); ob.parent=vehicle; parts.append(ob)
-    uv=mesh.uv_layers.new(name='one-metre dusty rubber picture')
+    uv=mesh.uv_layers.new(name='UVMap')
     for poly,coords in zip(mesh.polygons,uvs):
         poly.use_smooth=True
         for loop_index,coord in zip(poly.loop_indices,coords): uv.data[loop_index].uv=coord
     return ob
 
-# Photo measured envelope: 7.15 m long, 2.72 m wide, 3.53 m high.
-# Tyres are 1.34 m across; ride height under the chassis is about .48 m.
-for x in (-.92,.92):
-    box('deep ladder chassis rail',(x,.99,-.15),(.18,.28,6.18),frame,.035)
-for z in (-2.75,-1.55,-.35,.85,2.45): box('heavy chassis crossmember',(0,.95,z),(2.08,.18,.16),steel,.02)
-for x in (-.56,.56):
-    box('outer chassis web flange',(x,1.12,-.18),(.07,.12,5.95),metal,.012)
-box('oil-stained belly skid',(0,.70,-.10),(1.92,.11,3.45),frame,.02)
+# Reference envelope: 7.2 m long, 2.8 m wide, 3.6 m high. Model coordinates
+# are X across, Y up and Z forward; all load-bearing pieces meet the chassis.
+wheel_y=.70
+axles=(2.12,-.02,-2.12)
+for x in (-.91,.91):
+    box('continuous ladder chassis rail',(x,1.05,-.12),(.20,.32,6.25),frame,.035)
+for z in (-2.90,-1.95,-.75,.45,1.45,2.72):
+    box('chassis crossmember',(0,1.00,z),(2.04,.20,.18),steel,.025)
+box('joined belly skid plate',(0,.78,-.15),(1.78,.10,4.55),frame,.025)
+box('front chassis bumper',(0,.63,3.03),(2.30,.20,.24),steel,.03)
+box('rear chassis bumper',(0,.62,-3.28),(2.26,.20,.24),steel,.03)
 
-# Cab-forward silhouette: high, flat roof; long sloped windscreen; square lower nose.
-for side in (-1,1):
-    x=side
-    panel('cab door outer skin',[(x*1.03,1.58,.48),(x*1.03,1.62,2.17),(x*1.03,2.89,2.04),(x*1.03,3.10,.96)],paint,.045)
-    panel('cab upper rear wall',[(x*.98,2.02,.42),(x*.98,3.08,.96),(x*.98,3.10,1.02),(x*.98,2.04,.50)],rust,.035)
-    # Front sloped windshield and long side window are dark inset planes with thin welded frames.
-    panel('side cab window glass',[(x*1.095,2.06,.70),(x*1.095,2.90,1.03),(x*1.095,2.89,1.94),(x*1.095,2.07,2.02)],glass,.018)
-    for y,z0,z1 in ((2.02,.67,2.08),(2.93,1.00,1.97)):
-        beam('pressed window frame',(x*1.075,y,z0),(x*1.075,y+.02,z1),.035,steel,8)
-    beam('cab window division',(x*1.08,2.45,.82),(x*1.08,2.44,2.05),.024,rust,8)
-    # Door gaps, hinge straps, handle, and stepped repair patches.
-    beam('door front seam',(x*1.075,1.69,.58),(x*1.075,2.91,.88),.012,frame,6)
-    beam('door rear seam',(x*1.075,1.68,.57),(x*1.075,1.74,2.23),.012,frame,6)
-    for yy in (1.88,2.10):
-        box('external door hinge',(x*1.105,yy,1.54),(.035,.12,.32),rust,.008)
-        for zz in (1.44,1.65): cylinder('hinge pin',(x*1.13,yy,zz),.028,.028,metal,'X',10)
-    box('door latch',(x*1.11,2.50,1.36),(.045,.14,.055),metal,.01)
-    # Front and side mudguard sheet arcs above the wheels.
-    for zc in (-2.42,-.22,1.98):
-        for step in range(9):
-            ang=math.pi*step/8
-            zz=zc+.75*math.cos(ang); yy=.80+.75*math.sin(ang)
-            if step<8:
-                ang2=math.pi*(step+1)/8; z2=zc+.75*math.cos(ang2); y2=.80+.75*math.sin(ang2)
-                panel('pressed steel wheel-arch fender',[(x*1.07,yy,zz),(x*1.07,y2,z2),(x*1.28,y2,z2),(x*1.28,yy,zz)],paint,.035)
-    # Dual long cylindrical tanks with strap bands, protected below the doors.
-    cylinder('long external diesel tank',(x*1.06,.95,.02),.40,2.17,paint,'Z',32)
-    for zz in (-.91,-.18,.88): cylinder('tank steel saddle strap',(x*1.09,.95,zz),.415,.055,steel,'Z',24)
-    cylinder('fuel cap',(x*1.06,1.34,1.13),.09,.09,rust,'X',16)
-    box('low tank stone guard',(x*1.13,.55,.01),(.13,.11,2.0),frame,.018)
-    # Rear rack has real vertical posts, cross rails and diagonal supports.
-    for zz in (-3.10,-1.02):
-        beam('rack upright welded to deck',(x*1.08,1.49,zz),(x*1.08,3.38,zz),.052,steel)
-    beam('rack upper longitudinal rail',(x*1.08,3.36,-3.12),(x*1.08,3.36,-1.02),.060,rust)
-    for y in (1.68,2.28,2.92): beam('rack cross bar',(-1.07,y,-3.10),(1.07,y,-3.10),.038,metal)
-    beam('rack diagonal support',(x*1.08,1.58,-3.10),(x*1.08,3.29,-1.02),.042,steel)
-
-# Curved cab roof and sloped glazing. The side silhouette is built from thin sheet, not a box.
-panel('cab roof pressed crown',[(-1.02,3.25,.90),(-.78,3.39,.88),(.78,3.39,.88),(1.02,3.25,.90),(.99,3.24,2.13),(-.99,3.24,2.13)],paint,.055)
-panel('sloped front windshield', [(-.91,1.83,2.84),(.91,1.83,2.84),(.78,3.17,2.16),(-.78,3.17,2.16)],glass,.025)
-for x in (-.94,-.47,0,.47,.94):
-    beam('windshield rubber and steel division',(x*.92,1.80,2.87),(x*.82,3.20,2.18),.025,steel,8)
-panel('front cowl beneath windshield',[(-.94,1.42,2.95),(.94,1.42,2.95),(.91,1.82,2.84),(-.91,1.82,2.84)],rust,.04)
-panel('lower cab nose', [(-1.05,.80,3.13),(1.05,.80,3.13),(1.02,1.52,3.10),(-1.02,1.52,3.10)],paint,.06)
-
-# Engine reads as a working inline diesel ahead of the cab and behind the grille.
-box('exposed diesel block',(0,1.12,2.29),(.96,.68,.62),frame,.04)
-for i in range(6):
-    x=-.42+i*.168
-    box('cast cylinder head',(x,1.51,2.32),(.125,.18,.47),metal,.022)
-    for n in range(5): beam('cooling fin',(x-.062,1.47+n*.048,2.20),(x+.062,1.47+n*.048,2.44),.014,steel,6)
-beam('injection fuel rail',(-.47,1.73,2.40),(.47,1.73,2.40),.035,rust,8)
-for i in range(6): beam('diesel injector line',(-.40+i*.16,1.73,2.40),(-.36+i*.16,1.86,2.53),.012,metal,6)
-for side in (-1,1):
-    beam('exhaust manifold',(side*.45,1.26,2.33),(side*.66,1.10,2.71),.065,rust)
-    beam('vertical stack exhaust',(side*.66,1.10,2.71),(side*.68,3.42,2.71),.072,steel)
-    cylinder('exhaust rain lip',(side*.68,3.42,2.71),.08,.12,frame,'Y',16)
-
-# Front face: recessed radiator, individual grille bars, round lamps and a layered bull bar.
-box('dark recessed radiator cavity',(0,1.10,3.19),(1.44,.70,.12),frame,.018)
-for i in range(13):
-    x=-.60+i*.10
-    box('vertical radiator grille blade',(x,1.10,3.27),(.035,.55,.035),metal,.008)
-for yy in (.84,1.35): box('horizontal grille support',(0,yy,3.28),(1.28,.034,.04),steel,.008)
-for side in (-1,1):
-    cylinder('round headlamp housing',(side*.82,1.22,3.20),.17,.12,frame,'X',24)
-    cylinder('headlamp glass lens',(side*.895,1.22,3.20),.125,.025,lens,'X',24)
-    box('lamp guard upright',(side*.82,1.20,3.28),(.025,.31,.32),rust,.008)
-    beam('bullbar vertical wing',(side*1.16,.52,3.20),(side*1.14,1.73,3.36),.075,steel)
-    beam('bullbar upper corner',(side*1.14,1.73,3.36),(side*.94,1.91,3.36),.075,rust)
-beam('bullbar upper beam',(-.94,1.91,3.36),(.94,1.91,3.36),.075,steel)
-beam('bullbar lower beam',(-1.13,.53,3.19),(1.13,.53,3.19),.08,rust)
-for side in (-1,1):
-    beam('tow hook shank',(side*.72,.47,3.18),(side*.72,.34,3.32),.045,metal,10)
-    beam('tow hook return',(side*.72,.34,3.32),(side*.72,.43,3.41),.035,metal,10)
-
-# Rear work deck: spare wheels, tool boxes and a readable hydraulic winch / crane rack.
-box('flat rear steel service deck',(0,1.43,-2.22),(2.1,.13,1.86),steel,.025)
-for side in (-1,1):
-    # Two vertically strapped spare wheels across the bed, each with visible rim and six lugs.
-    center=(side*.46,2.02,-2.72)
-    tyre('full-size strapped spare tyre with raised chevrons',center,.50,.18,.38,24,8,10)
-    cylinder('spare wheel dish',(side*.66,2.02,-2.72),.34,.13,frame,'X',28)
-    cylinder('spare hub',(side*.74,2.02,-2.72),.17,.06,metal,'X',20)
-    for i in range(8):
-        a=2*math.pi*i/8; cylinder('spare rim bolt',(side*.78,2.02+.25*math.sin(a),-2.72+.25*math.cos(a)),.026,.03,rust,'X',8)
-for x in (-.60,.60):
-    box('latched rear tool chest',(x,1.72,-1.60),(.72,.50,.68),rust,.025)
-    for yy in (1.51,1.95): box('locker hinge',(x,yy,-1.22),(.16,.045,.03),metal,.006)
-box('service rack floor panel',(0,1.56,-2.80),(1.88,.07,.45),frame,.015)
-beam('hand winch steel drum',(-.42,1.91,-1.20),(.42,1.91,-1.20),.11,rust,16)
-for x in (-.34,-.20,-.06,.08,.22,.36): cylinder('winch drum rib',(x,1.91,-1.20),.12,.025,metal,'X',12)
-beam('rear recovery boom foot',(0,1.52,-1.08),(0,2.82,-1.12),.070,steel)
-beam('rear crane arm',(0,2.82,-1.12),(0,3.24,-2.22),.075,rust)
-beam('crane cable',(.02,3.23,-2.20),(.02,2.05,-2.20),.018,frame,8)
-beam('crane hook',(-.02,2.05,-2.20),(.02,1.98,-2.20),.025,metal,8)
-
-# Three axles with real leaf spring packs, hydraulic dampers, hubs and silhouette lugs.
-wheel_radius=.67; wheel_y=.71
-for axle,z in enumerate((2.35,.05,-2.25),1):
+# Three full axles support six round 1.4 m tyres. Suspension members meet the
+# rails, axles, hubs and wheels rather than hanging as isolated details.
+for axle,z in enumerate(axles,1):
     for side in (-1,1):
         x=side*1.16
-        tyre(f'axle {axle} integrated chevron tyre',(x,wheel_y,z),.49,.18,.42,44,12,12)
-        cylinder('dish wheel rim',(side*1.34,wheel_y,z),.43,.14,frame,'X',24)
-        cylinder('rusted rim plate',(side*1.43,wheel_y,z),.32,.07,rust,'X',20)
-        cylinder('axle hub',(side*1.49,wheel_y,z),.18,.08,metal,'X',20)
-        cylinder('grease cap',(side*1.54,wheel_y,z),.105,.06,frame,'X',16)
-        for i in range(8):
-            a=2*math.pi*i/8
-            cylinder('wheel rim bolt',(side*1.55,wheel_y+.255*math.sin(a),z+.255*math.cos(a)),.027,.03,metal,'X',8)
-        beam('solid axle tube',(side*.38,.82,z),(side*1.18,.82,z),.085,frame)
-        # Three connected leaves are curved slightly by segment joints and visibly clamp together.
-        for leaf in range(4):
-            yy=.64+leaf*.045
-            beam('leaf spring forward half',(side*.42,yy,z-.67),(side*.84,yy+.035,z),.035,steel,8)
-            beam('leaf spring rear half',(side*.84,yy+.035,z),(side*.42,yy,z+.67),.035,steel,8)
-        for end in (-1,1):
-            beam('spring shackle',(side*.43,.68,z+end*.64),(side*.55,.81,z+end*.64),.032,rust,8)
-        beam('damper cylinder',(side*.77,.84,z-.41),(side*.79,1.54,z+.38),.060,frame)
-        beam('damper polished shaft',(side*.79,1.22,z+.03),(side*.79,1.64,z+.48),.026,metal,10)
-        # Visible helical spring wrapping its shock.
-        pts=[]
-        for j in range(33):
-            t=j/32; angle=t*math.pi*10
-            pts.append(xyz((side*.77+.094*math.cos(angle),.90+.61*t,z-.41+.79*t+.094*math.sin(angle))))
-        curve=bpy.data.curves.new('five-turn leaf suspension helper coil','CURVE'); curve.dimensions='3D'; curve.bevel_depth=.018; curve.bevel_resolution=0
-        spl=curve.splines.new('POLY'); spl.points.add(len(pts)-1)
-        for point,co in zip(spl.points,pts): point.co=(*co,1)
-        coil=bpy.data.objects.new('heavy helper coil spring',curve); scene.collection.objects.link(coil); coil.data.materials.append(rust); coil.parent=vehicle; parts.append(coil)
+        tyre(f'axle {axle} round tread tyre',(x,wheel_y,z),.54,.16,.44,42,14,32)
+        cylinder('pressed steel wheel rim',(side*1.36,wheel_y,z),.40,.15,frame,'X',32)
+        cylinder('rusted rim dish',(side*1.45,wheel_y,z),.30,.07,rust,'X',28)
+        cylinder('wheel hub',(side*1.52,wheel_y,z),.17,.10,metal,'X',24)
+        for i in range(10):
+            a=2*math.pi*i/10
+            cylinder('wheel lug nut',(side*1.57,wheel_y+.235*math.sin(a),z+.235*math.cos(a)),.032,.045,steel,'X',10)
+        beam('solid axle tube',(side*.36,.80,z),(side*1.18,.80,z),.095,frame)
+        beam('leaf spring pack front',(side*.42,.67,z-.70),(side*.86,.78,z),.055,steel)
+        beam('leaf spring pack rear',(side*.86,.78,z),(side*.42,.67,z+.70),.055,steel)
+        beam('shock absorber',(side*.78,.76,z-.36),(side*.78,1.35,z+.30),.065,frame)
+        beam('polished shock shaft',(side*.78,1.18,z+.12),(side*.78,1.48,z+.44),.028,metal,10)
 
-# Dust gathers under the chassis and wheel arches; seams and clipped plates break up broad paint.
-for side in (-1,1):
-    for z in (-2.75,-1.75,-.62,.52,1.54):
-        box('overlapping irregular repair plate',(side*1.055,1.46,z),(.055,.30,.50),paint if z%2 else rust,.012)
-        for yy in (1.34,1.57):
-            cylinder('repair plate rivet',(side*1.092,yy,z),.025,.03,metal,'X',10)
-    for z in (-2.64,-2.39,-2.14,-1.89):
-        beam('raised longitudinal weld bead',(side*1.08,1.72,z),(side*1.08,1.72,z+.11),.014,metal,6)
-    # Dust skirts only span gaps, leaving the wheel and axle structure visible.
-    for z0,z1 in ((-3.22,-2.95),(-1.57,-.85),(.72,1.15)):
-        panel('dust-caked hanging fender sheet',[(side*1.24,.82,z0),(side*1.24,1.08,z0),(side*1.24,1.08,z1),(side*1.24,.82,z1)],dust,.025)
+# Low deck is fixed to both rails. The cab and bed sit directly on this frame.
+box('flatbed deck behind cab',(0,1.30,-2.10),(2.18,.16,2.12),steel,.03)
+for x in (-.97,.97):
+    box('bed side wall',(x,1.53,-2.12),(.11,.30,2.05),rust,.025)
+box('tailgate panel',(0,1.60,-3.15),(2.0,.53,.10),paint,.025)
+for y in (1.42,1.62,1.82): beam('tailgate pressed rib',(-.90,y,-3.215),(.90,y,-3.215),.026,metal,8)
 
-# Rear-facing panel ribs, tail lamps, towing hardware and ladder steps.
-panel('rear cargo gate',[(-1.0,.92,-3.34),(1.0,.92,-3.34),(1.0,1.86,-3.34),(-1.0,1.86,-3.34)],rust,.045)
-for y in (1.08,1.34,1.60): beam('tailgate pressed rib',(-.91,y,-3.39),(.91,y,-3.39),.026,metal,8)
+# Two horizontal 2 m fuel tanks sit along the chassis between axle one and two.
 for side in (-1,1):
-    for y in (1.08,1.51): cylinder('rear lamp',(side*.87,y,-3.40),.09,.06,lens,'Z',16)
-    beam('rear tow bracket',(side*.63,.53,-3.13),(side*.63,.38,-3.46),.060,steel)
-for i in range(3): box('cab entry ladder step',(1.08,.47+i*.22,.64),(.36,.08,.31),frame,.015)
+    x=side*1.07
+    cylinder('horizontal 2 m fuel tank',(x,.94,1.03),.34,2.0,paint,'Z',40)
+    for z in (.18,.72,1.30,1.84):
+        cylinder('tank securing saddle',(x,.94,z),.355,.055,steel,'Z',32)
+    cylinder('tank filler cap',(x,.94,2.08),.075,.10,rust,'Y',16)
+    box('tank lower stone guard',(x,.57,1.03),(.20,.10,1.92),frame,.02)
+
+# Cab envelope 2.4 wide x 2.2 tall x 2.0 deep. Its lower shell, two side
+# doors, rear wall and roof join into one closed cab; the front face is flat.
+cab_bottom,cab_top=1.34,3.54
+cab_back,cab_front=.47,2.47
+box('continuous cab lower shell',(0,1.78,1.48),(2.32,.88,1.88),paint,.045)
+box('cab rear wall',(0,2.43,.49),(2.32,1.30,.10),rust,.025)
+box('cab roof pressed edge',(0,3.50,1.44),(2.40,.12,2.02),paint,.045)
+for z in (.60,1.94):
+    box('cab mount crossmember fixed to rails',(0,1.28,z),(2.08,.14,.22),steel,.02)
+for side in (-1,1):
+    x=side*1.16
+    box('full side door skin',(x,2.02,1.45),(.09,.90,1.88),paint,.035)
+    # Side glass sits between front/rear pillars above the door skin.
+    for z0,z1 in ((.82,1.40),(1.50,2.23)):
+        panel('divided side cab window glass',[(x,2.55,z0),(x,2.55,z1),(x,3.32,z1),(x,3.32,z0)],glass,.022)
+        for z in (z0,z1): beam('side window steel upright',(x,2.50,z),(x,3.37,z),.034,steel,8)
+        for y in (2.50,3.37): beam('side window steel sill',(x,y,z0),(x,y,z1),.034,rust,8)
+    beam('door rear seam',(x*1.025,1.58,.70),(x*1.025,2.45,.70),.012,frame,6)
+    for y in (1.77,1.98): box('door hinge',(x*1.06,y,.74),(.05,.13,.30),rust,.01)
+    box('door handle',(x*1.07,2.22,1.14),(.045,.16,.06),metal,.01)
+
+# Slightly sloped windshield glass is inset into the flat front face and split
+# into two panes. Front lower edge reaches forward; the roof edge sits back.
+panel('left front windshield pane',[(-1.04,2.28,2.49),(-.035,2.28,2.49),(-.035,3.35,2.34),(-1.04,3.35,2.34)],glass,.025)
+panel('right front windshield pane',[(.035,2.28,2.49),(1.04,2.28,2.49),(1.04,3.35,2.34),(.035,3.35,2.34)],glass,.025)
+for x in (-1.10,0,1.10): beam('windshield steel pillar',(x,2.22,2.52),(x,3.42,2.34),.045,steel,10)
+beam('front windshield lower seal',(-1.10,2.22,2.52),(1.10,2.22,2.52),.035,rust)
+beam('front windshield upper seal',(-1.10,3.42,2.34),(1.10,3.42,2.34),.035,rust)
+box('front cowl and dash',(0,2.08,2.53),(2.28,.25,.25),rust,.025)
+
+# Compact diesel nose, radiator, six grille bars and a broad bull bar.
+box('forward engine cover',(0,1.47,2.63),(1.80,.62,.62),paint,.06)
+box('recessed radiator',(0,1.45,2.96),(1.36,.57,.10),frame,.015)
+for i in range(11):
+    x=-.58+i*.116
+    box('radiator vertical bar',(x,1.45,3.02),(.035,.48,.035),metal,.009)
+for side in (-1,1):
+    cylinder('headlamp housing',(side*.88,1.54,2.96),.18,.11,frame,'X',24)
+    cylinder('clouded lamp lens',(side*.95,1.54,2.96),.13,.03,lens,'X',24)
+    beam('bull bar outer upright',(side*1.15,.48,3.06),(side*1.15,1.90,3.12),.085,steel,14)
+    beam('bull bar mount',(side*.90,.54,2.45),(side*.90,.74,3.10),.075,rust)
+beam('bull bar lower crossbar',(-1.15,.50,3.06),(1.15,.50,3.06),.09,rust,14)
+beam('bull bar upper crossbar',(-1.15,1.90,3.12),(1.15,1.90,3.12),.075,steel,14)
+beam('bull bar center brace',(0,.50,3.07),(0,1.90,3.13),.06,metal,12)
+
+# Body-integrated pressed wheel arch crowns over all six wheels.
+for side in (-1,1):
+    for zc in axles:
+        verts=[]; faces=[]
+        for i in range(13):
+            a=math.pi*i/12
+            y=.71+.78*math.sin(a); z=zc+.78*math.cos(a)
+            if i<12:
+                b=math.pi*(i+1)/12
+                y2=.71+.78*math.sin(b); z2=zc+.78*math.cos(b)
+                k=len(verts); verts.extend(((side*1.08,y,z),(side*1.08,y2,z2),(side*1.31,y2,z2),(side*1.31,y,z)))
+                faces.append((k,k+1,k+2,k+3))
+        mesh=bpy.data.meshes.new('continuous pressed wheel arch fender'); mesh.from_pydata(verts,[],faces); mesh.materials.append(paint); mesh.update()
+        arch=bpy.data.objects.new('continuous pressed wheel arch fender',mesh); scene.collection.objects.link(arch); arch.parent=vehicle; parts.append(arch)
+        solid=arch.modifiers.new('folded fender sheet','SOLIDIFY'); solid.thickness=.045
+        edge=arch.modifiers.new('rounded fender edge','BEVEL'); edge.width=.012; edge.segments=1
+    for y in (1.46,1.70):
+        beam('longitudinal body rub rail',(side*1.20,y,-3.17),(side*1.20,y,2.72),.035,steel,8)
+    for z in (-2.76,-1.68,-.56,.62,1.72):
+        box('riveted repair patch',(side*1.22,1.36,z),(.06,.25,.36),rust,.012)
+
+# Compact braced rack rises from the bed and stays inside the tail. Two upright
+# spares, paired tool chests and hanging chains are secured to the deck.
+for x in (-.88,.88):
+    for z in (-3.00,-1.18):
+        beam('rack post welded to bed',(x,1.40,z),(x,2.80,z),.05,steel)
+    beam('rack top longitudinal rail',(x,2.80,-3.00),(x,2.80,-1.18),.055,rust)
+for y in (1.52,2.05,2.78):
+    beam('rack rear crossbar',(-.88,y,-3.00),(.88,y,-3.00),.04,metal)
+for x in (-.88,.88): beam('rack diagonal brace',(x,1.46,-3.00),(x,2.72,-1.18),.04,steel)
+for side in (-1,1):
+    center=(side*.40,2.02,-2.25)
+    tyre('deck mounted spare tyre',center,.50,.15,.32,32,12,20)
+    cylinder('spare rim',(side*.56,2.02,-2.25),.30,.10,frame,'X',28)
+    cylinder('spare hub',(side*.62,2.02,-2.25),.13,.05,metal,'X',20)
+for x in (-.70,.70):
+    box('latched steel tool chest',(x,1.64,-1.45),(.52,.48,.66),rust,.035)
+    box('tool chest lid seam',(x,1.89,-1.45),(.53,.035,.67),metal,.012)
+    for y in (1.63,1.81): box('tool chest latch',(x,y,-1.10),(.10,.06,.025),steel,.008)
+for x in (-.60,-.42,.42,.60):
+    for i in range(6):
+        y=2.55-i*.18
+        beam('hanging recovery chain link',(x,y,-2.98),(x+(.035 if i%2 else -.035),y-.09,-2.98),.018,rust,8)
+beam('rear recovery winch drum',(-.42,1.48,-1.32),(.42,1.48,-1.32),.10,frame,16)
+for side in (-1,1):
+    beam('rear towing bracket',(side*.64,.80,-3.06),(side*.64,.48,-3.31),.055,steel)
+    for i in range(3): box('cab entry step',(side*1.17,.48+i*.20,.42),(.26,.075,.36),frame,.015)
 
 # Review-only scale person. The game crew model is imported only after GLB export.
 def aim(obj, point, world_up=(0,0,1)):
@@ -284,7 +266,7 @@ out.parent.mkdir(parents=True,exist_ok=True); blend.parent.mkdir(parents=True,ex
 for ob in parts:
     if ob.type!='MESH' or ob.data.uv_layers:
         continue
-    uv=ob.data.uv_layers.new(name='metre-scaled surface picture')
+    uv=ob.data.uv_layers.new(name='UVMap')
     matrix=ob.matrix_world
     for poly in ob.data.polygons:
         normal=matrix.to_3x3() @ poly.normal
@@ -304,7 +286,7 @@ bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=Tr
 # Render only the exported model imported into an otherwise empty Blender scene.
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; scene.unit_settings.system='METRIC'; scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.view_settings.view_transform='AgX'; scene.world=bpy.data.worlds.new('empty-scene neutral light'); scene.world.color=(.31,.31,.31)
+scene.view_settings.view_transform='AgX'; scene.world=bpy.data.worlds.new('empty-scene bright overcast'); scene.world.color=(.42,.42,.42)
 scene.render.resolution_percentage=100; scene.render.image_settings.file_format='JPEG'; scene.render.image_settings.quality=88
 bpy.ops.import_scene.gltf(filepath=str(out))
 car=[o for o in bpy.context.scene.objects if o.type in {'MESH','CURVE'}]
@@ -316,7 +298,7 @@ hmin=min(c.z for c in corners); h=max(c.z for c in corners)-hmin; scale=1.72/max
 person=bpy.data.objects.new('review-only Cinder for scale',None); scene.collection.objects.link(person); person.scale=(scale,)*3; person.location=(-4.6,-.3,-hmin*scale)
 roots=[o for o in human_parts if o.parent not in human_parts]
 for o in roots:o.parent=person
-floor_mat=mat('plain mid-grey review ground',(.34,.34,.34),0,.95)
+floor_mat=mat('plain mid-grey review ground',(.62,.62,.62),0,.95)
 bpy.ops.mesh.primitive_plane_add(size=5000,location=(0,0,-.045)); floor=bpy.context.object; floor.name='review-only ground'; floor.data.materials.append(floor_mat)
 for loc,power,size in [((-6,-5,9),2100,7),((5,4,7),1450,6),((0,0,7),900,8)]:
     bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,(0,0,1.55))
@@ -327,7 +309,7 @@ def render(name, loc, target, scale, show_person=False):
     for ob in human_parts: ob.hide_render=not show_person
     scene.render.resolution_x=1100; scene.render.resolution_y=720; scene.render.filepath=str(evidence/f'{name}.jpg')
     bpy.ops.render.render(write_still=True); bpy.data.objects.remove(cam,do_unlink=True)
-views=[('front-three-quarter',(-9,-10,1.72),(0,0,1.75),9.8,False),('rear-three-quarter',(-9,9,1.72),(0,0,1.75),9.8,False),('side',(11,-.2,1.72),(0,0,1.75),9.6,False),('top',(0,0,13),(0,0,0),13.0,False),('scale-person',(-9,-10,1.72),(-.3,-.05,1.65),10.8,True)]
+views=[('front-three-quarter',(-9,-10,1.72),(0,0,1.75),7.5,False),('rear-three-quarter',(-9,9,1.72),(0,0,1.75),7.5,False),('side',(11,-.2,1.72),(0,0,1.75),7.5,False),('top',(0,0,13),(0,0,0),9.2,False),('scale-person',(-9,-10,1.72),(-.3,-.05,1.65),8.9,True)]
 for row in views:render(*row)
 
 if args.render:

@@ -2,21 +2,21 @@
 
 ## Changed
 
-- Rebuilt `tools/blender/longhaul.py` from the generated photo target, using measured proportions and a low three-quarter view at about 1.7 m eye height.
-- Replaced the first candidate in `public/assets/models/wasteland/cars/longhaul.glb`. The exported model has 24,676 triangles and is 1,878,576 bytes.
-- Added `longhaul-rusted-paint.jpg`, `longhaul-dusty-rubber.jpg` and their prompt/credit record under `public/assets/models/wasteland/cars/textures/`.
-- Added the round-2 matched-scale photo/model sheet and self-review at `docs/board/looks/car-art-longhaul/round-2.jpg` and `round-2-review.md`. The sheet is 216,903 bytes.
+- Rebuilt the truck geometry in `tools/blender/longhaul.py` to correct the fuel tank axes, join the cab and chassis, mount the cab and cargo to the rails and deck, and make the wheels round with continuous arches.
+- Re-exported `public/assets/models/wasteland/cars/longhaul.glb` (23,668 triangles, 1,664,140 bytes). Existing paint and rubber pictures and material settings are unchanged.
+- Added the exported-GLB comparison sheet `docs/board/looks/car-art-longhaul/round-3.jpg` (316,331 bytes) and its review note.
 
 ## Checks
 
+- Blender recipe render: passed; exported GLB imported into an empty scene and all five review views rendered.
+- Exported GLB UV inspection: passed; 291 of 291 primitives use only `TEXCOORD_0`, and all have a non-degenerate coordinate range.
 - `node tools/test-blender-output.mjs`: passed, 232 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; repository placement is valid. Size totals are advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; 433 checks were reported. The audio-analysis subtest failed on the known `spawnSync ffmpeg EPERM` environment error.
-- No lane tier or build was run, per the art-card instructions.
-- No browser, frame or in-game look check was run. Claude should review the matched photo/model view, truck proportions, texture scale, cab glass, tire tread, rack connections and person scale.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement is valid. Reported size targets remain advisory.
+- No lane tier or build was run, as directed for art cards.
+- Browser and in-game look checks were not run in this lane. Claude should review the round-3 sheet, especially the flat-fronted cab, windshield and side windows, horizontal tanks, chassis-to-cab and deck connections, wheel outline and arches, rack contents and truck scale.
 - Changed assertions: none.
 - Race fingerprints: unchanged; no simulation or race code changed.
 
 ## Removed
 
-- Replaced the round-1 Longhaul model and recipe geometry in place. Removed its broad smoothed shell, flat color/noise material treatment, and separate block tread lugs. No backup model was kept.
+- Replaced the round-2 upright tank cylinders, separated cab panels, disconnected supports and angular tread outline in the recipe and GLB. No backup model or trial render is retained.
