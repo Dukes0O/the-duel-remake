@@ -1,28 +1,46 @@
 # TOWN-PEOPLE-SUPPORT
 
-## Changes
+## Status
 
-- Replaced the first-pass building-bed estimate with an open-ended saved plot list and the settled home tier data table.
-- Added `paintHomeGround` and `clearHomeGround` town commands, daily construction work that takes goods from the nearest stockpile, legacy-save migration to an empty plot list, plot-based shelter measurement, and fire loss that returns residents to canvas.
-- Updated the people system to use the new home tier labels and removed its old bed-count-driven plot proxy.
-- Added the `home-goods-shortage` report to the existing town reports catalog; plots waiting for a specific good raise a plain-language report with the home count and missing good.
-- Added the plot paint and clear controls to the Homes and Shops tab. Mouse drags map to 8 m cells and send the plot commands; visits remain look-only because the build panel is absent there.
-- Added plot visuals to the existing per-chunk town building renderer: pegs and string for empty plots, the four scaffold models during construction, and tier variants cloned from `homes.glb` when complete. Render state is derived from plots and cannot write to the sim.
-- Added the requested support acceptance checks for no work, plot construction, incoming residents, shortages, water, legacy saves and read-only measurement.
-- Changed only the setup in `tools/test-town-people.mjs`: added a `setMeasuredHousing` fixture that paints real plot cells, marks them as existing finished homes, creates a measured well and stocks food; called it for the two long-run towns and the recovery town; and replenishes that fixture well per current population in `stepDay`. Turned off that replenishment when the test dries the well. No assertions changed.
+Follow-up pass in progress. This commit fixes report history only; population
+timing, home-ground cost and plot/build conflicts remain for the next commits.
 
-## Checks
+## Settled design
 
-- `node tools/test-town-people-support.mjs`: passed, 20 checks.
-- `node tools/test-town-people.mjs`: passed, 36 checks; 30-year run produced 1,574 living people and 950 Old Ground entries; 10,000-person day 25.89 ms.
-- The existing people test assertions were not changed. Setup-only edits are exactly: added `dispatchTownCommand` to imports; added `setMeasuredHousing` to paint 8 m cells and fixture them as finished homes, create a measured well and stock food; called that helper for `first`, `second`, `supported` and the recovery setup for `challenged`; added one warmup day after installing support; replenished the fixture well in `stepDay` to 50 L per current person; and disabled that replenishment for the dry-well case.
-- Merged `codex/town-pace`, replaced the hand-written support conditions in its 10-seed helper with NEXT tasks, pit and well commands, a supplied and completed soup kitchen, painted plots, and additional working wells. Food and home materials arrive through `deliverTownGoods`. Tuned only `src/town/content/pace.js`: first winter 29–32, Year 1 34–38, Year 2 101–130 people across ten seeds. `tools/test-town-pace.mjs` passed, 364 checks; its acceptance assertions were kept.
-- Updated `tools/soak-town.mjs` to seed its long-run towns with painted finished plots and a measured well after the support migration. `node tools/soak-town.mjs` ran the default 30 years across ten seeds, then failed its existing save-density check: seed 5101 grew from 95,251 bytes in Year 1 to 3,540,938 bytes in Year 30 (102 people, 309 book entries); about 2.9 MB was accumulated reports. The test assertions and 30-year default were unchanged. This is not a timeout, so no reduced-year flag was used.
-- Added `tools/scenarios/town-homes.mjs`: opens a new town, selects plot painting in Homes and Shops, paints with a real drag, captures pegs, delivers canvas by command, advances time, then captures a finished tent. This browser scenario was not run; Claude should review both screenshots and verify look-only visits do not show the tool.
-- Browser and look checks: Claude to inspect the plot drawing, fire and rebuilt-home states.
-- Browser and look checks: Claude to inspect the plot drawing, fire and rebuilt-home states.
-- Changed assertions: none yet. Race fingerprints: not applicable; town simulation only.
+- Repeated open reports refresh when their kind and place match. Different
+  places can keep separate reports open.
+- Keep the latest 24 resolved routine reports and report effects. Preserve
+  unanswered reports, non-routine reports and reports held by the Book.
+- Old saves trim routine report history during the first daily report step.
+  The Book itself is not trimmed.
+
+## Evidence
+
+- Before change, `node tools/soak-town.mjs`: seed 5101 reached 3,508,331 saved
+  bytes and failed the unchanged save-size check. A diagnostic run found 1,313
+  resolved sickness reports, 336 resolved trader reports, two open reports and
+  1,649 report effects.
+- After change, the soak's save-size checks passed for all ten seeds. Year 30
+  saves ranged from 255,403 to 273,659 bytes. The run then failed the existing
+  10,000-person/5,000-building timing check at 38.43 ms; step 2 addresses that.
+- `node tools/test-town-reports.mjs`: 75 checks passed.
+- Browser check: Claude runs it. Please check that report updates keep the
+  current place and detail, and that resolved report history stays readable.
+- Race fingerprints: none recorded; this slice changes town reports only.
+
+## Assertions changed
+
+- The report-kind count changed from 10 to 11 because the current event table
+  includes `home-goods-shortage`.
+- The report sentence check now verifies that choice labels and outcomes are
+  each complete sentences. It no longer requires them to be identical; the
+  home-goods choices use an action label and a separate outcome sentence.
+- The report sorting check now checks the highest priority and kind because
+  reports of the same kind may now be open at different places.
+- The former no-duplicate assertion now checks that a same-kind, same-place
+  report refreshes in place, and a separate-place case checks that both remain.
 
 ## Removed
 
-- Removed the building-bed and painted-building place estimate and the old people-system home tier updater; painted plot simulation now owns those facts.
+- Unbounded resolved routine report and report-effect history.
+- No files removed.
