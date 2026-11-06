@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, rmdirSync, symlinkSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -27,10 +28,12 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat']);
+const artCandidates = new Set(['wildcat', 'town-trucks-1']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
+    glb:['.qa-dist/art-candidates/town-trucks-1.glb'],runtimeGlb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:3000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -432,11 +435,13 @@ try {
       }
     });
     if (artCandidates.has(generator.id)) {
-      // Not passed: built only under the ignored .qa-dist (--candidate),
+      // Not passed: built only under the ignored .qa-dist candidate folder,
       // never in public/, so the game's model table and the disk agree. Its
-      // export checks return when it passes and moves into public/.
+      // export checks are covered below; runtime installation waits for art
+      // approval and a task that loads the model.
       check(generator.script + ' keeps its candidate out of the runtime folder until it passes', () => {
-        assert.ok(!existsSync(join(root, generator.glb[0])), `${generator.glb[0]} is published before passing`);
+        const runtimePath = generator.runtimeGlb?.[0] || generator.glb[0];
+        assert.ok(!existsSync(join(root, runtimePath)), `${runtimePath} is published before passing`);
       });
       continue;
     }
@@ -519,7 +524,8 @@ try {
         generator.recipeOnly ? 'recipe-only exports plan no editable Blend files' : 'one editable Blend per exported model is expected');
       for (const runtimePath of [...relativePlans[0].glb, ...relativePlans[0].json]) {
         if (artCandidates.has(generator.id)) {
-          assert.ok(!existsSync(join(root, runtimePath)), `${runtimePath} is published before art approval`);
+          const publishedPath = generator.runtimeGlb?.[0] || runtimePath;
+          assert.ok(!existsSync(join(root, publishedPath)), `${publishedPath} is published before art approval`);
         } else {
           assert.ok(existsSync(join(root, runtimePath)), `${runtimePath} is missing from the runtime recipe`);
         }
@@ -538,9 +544,88 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
-      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
+      assert.ok(bytes.length <= (generator.maxBytes || 2_500_000),
+        `${bytes.length} bytes exceeds ${generator.maxBytes || 2_500_000} bytes`);
     });
   }
+  check('TOWN-ART-TRUCKS-1 reads back four named work trucks, movable parts and per-truck budgets', () => {
+    const candidateSuffix = `-readback-${process.pid}-${randomUUID()}`;
+    const modelPath = join(root, '.qa-dist/art-candidates', `town-trucks-1${candidateSuffix}.glb`);
+    try {
+      const blender = process.env.BLENDER_BIN ||
+        'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+      const build = spawnSync(blender, ['-b', '--python-exit-code', '1', '--python',
+        join(root, 'tools/blender/town-trucks-1.py'), '--', '--root', root, '--export-only',
+        `--candidate-suffix=${candidateSuffix}`],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
+      assert.equal(build.error, undefined, build.error?.message);
+      assert.equal(build.status, 0, `truck candidate build failed: ${(build.stderr || build.stdout || '').slice(-4000)}`);
+      assert.ok(existsSync(modelPath), 'fresh truck candidate build must produce the GLB before readback');
+    const bytes = readFileSync(modelPath);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const names = gltf.nodes.map(node => node.name || '');
+    for (const name of ['town-trucks-1', 'fire-truck', 'water-tanker', 'supply-truck', 'tow-rig',
+      'fire-truck:cannon', 'supply-truck:load', 'tow-rig:hook',
+      'fire-truck:spin-front-left', 'fire-truck:steer-front-left',
+      'fire-truck:lamp', 'water-tanker:lamp', 'supply-truck:lamp', 'tow-rig:lamp']) {
+      assert.ok(names.includes(name), `missing named truck part ${name}`);
+    }
+    const parentByIndex = new Map();
+    gltf.nodes.forEach((node, parent) => (node.children || []).forEach(child => parentByIndex.set(child, parent)));
+    const byName = new Map(names.map((name, index) => [name, index]));
+    const lampMaterial = gltf.materials.find(material => material.name === 'Aged amber lamp lens');
+    assert.ok(lampMaterial?.emissiveFactor?.some(value => value > 0), 'lamp lens material must emit light');
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      const group = gltf.nodes[byName.get(`${id}:lamp`)];
+      const children = (group.children || []).map(index => names[index]);
+      assert.deepEqual(children.sort(), [`${id}:headlamp-left`, `${id}:headlamp-right`]);
+    }
+    assert.equal(gltf.images?.length, 1, 'one embedded 1K shared wear atlas');
+    const binStart = 28 + bytes.readUInt32LE(12);
+    const imageView = gltf.bufferViews[gltf.images[0].bufferView];
+    const imageStart = binStart + (imageView.byteOffset || 0);
+    assert.equal(gltf.images[0].mimeType, 'image/png');
+    assert.ok(bytes.readUInt32BE(imageStart + 16) <= 1024 && bytes.readUInt32BE(imageStart + 20) <= 1024,
+      'wear atlas must stay at or under 1K');
+    const familyIndex = byName.get('town-trucks-1');
+    const familyChildren = (gltf.nodes[familyIndex].children || []).map(index => names[index]);
+    assert.deepEqual(familyChildren.sort(), ['fire-truck', 'supply-truck', 'tow-rig', 'water-tanker']);
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      for (const side of ['left', 'right']) {
+        const spinName = `${id}:spin-front-${side}`;
+        const steerName = `${id}:steer-front-${side}`;
+        const spinIndex = byName.get(spinName);
+        const steerIndex = byName.get(steerName);
+        assert.ok(Number.isInteger(spinIndex) && Number.isInteger(steerIndex), `${id} ${side} steering pivots`);
+        assert.equal(parentByIndex.get(spinIndex), steerIndex, `${spinName} follows its steering pivot`);
+        const localPosition = gltf.nodes[spinIndex].translation || [0, 0, 0];
+        assert.ok(localPosition.every(value => Math.abs(value) <= 0.001), `${spinName} stays at its steering pivot`);
+      }
+    }
+    const countTruck = id => {
+      let total = 0;
+      const visit = index => {
+        const node = gltf.nodes[index];
+        if (Number.isInteger(node.mesh)) {
+          total += gltf.meshes[node.mesh].primitives.reduce((sum, primitive) =>
+            sum + gltf.accessors[primitive.indices].count / 3, 0);
+        }
+        for (const child of node.children || []) visit(child);
+      };
+      visit(byName.get(id));
+      return total;
+    };
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      const triangles = countTruck(id);
+      assert.ok(triangles > 500 && triangles <= 12_000, `${id}: ${triangles} triangles`);
+    }
+    } finally {
+      rmSync(modelPath, { force: true });
+    }
+  });
   check('scablands-tintown exports its bounded named walkable town model', () => {
     const path = join(root, 'public/assets/models/wasteland/scablands/tintown.glb');
     const bytes = readFileSync(path);
