@@ -273,8 +273,8 @@ car.parent = root_obj
 parts['case-tin-car'] = car
 for x in (-.18, .18):
     for z in (-.125, .125):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.057, depth=.026,
-            location=(x, -math.copysign(.132, z), .060), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.043, depth=.020,
+            location=(x, -math.copysign(.132, z), .043), rotation=(math.pi/2, 0, 0))
         wheel = bpy.context.object
         wheel.name = 'case-tin-car-wheel'
         wheel.parent = car
@@ -284,8 +284,8 @@ for x in (-.18, .18):
         rubber.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.045,.04,.035,1)
         rubber.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .92
         wheel.data.materials.append(rubber)
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.023, depth=.028,
-            location=(x, -math.copysign(.132, z), .060), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.018, depth=.022,
+            location=(x, -math.copysign(.132, z), .043), rotation=(math.pi/2, 0, 0))
         hub = bpy.context.object
         hub.name = 'case-tin-car-hub'
         hub.parent = car
