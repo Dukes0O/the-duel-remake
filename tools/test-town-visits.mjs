@@ -5,12 +5,15 @@ import {createTownStore,readTownPointer,saveTown} from '../src/town/town-store.j
 import {backupCareer,createCompleteCareerExport,importCareer,parseCareerExport} from '../src/career-backup.js';
 import {LEADERBOARD_KEY} from '../src/leaderboard.js';
 import {townScreenModel,townScreenMarkup} from '../src/town/ui/town-screen.js';
+import {createTownSession,townsAvailableToVisit} from '../src/town/town-session.js';
 const entry=await readFile(new URL('../src/town/town-entry.js',import.meta.url),'utf8');
 const storageData=new Map([[LEADERBOARD_KEY,JSON.stringify({version:1,entries:[]})]]),storage={getItem:key=>storageData.get(key)??null,setItem:(key,value)=>storageData.set(key,String(value)),removeItem:key=>storageData.delete(key)};
 const memory={towns:new Map(),copies:new Map()},store=createTownStore({memoryOnly:true,memory,storage});
 const playerTown=(player,name,base)=>{let hash=2166136261;for(const char of player)hash=Math.imul(hash^char.charCodeAt(0),16777619);const seed=(base^hash)>>>0||1;const town=createTown(seed,name,[{id:player}]);town.id=`town-${player}-${seed}`;town.mayors=[player];return town;};
 const a=playerTown('player-a','Tin Flat',1989),b=playerTown('player-b','Dust Home',1989);
 assert.notEqual(a.id,b.id);assert.notEqual(a.seed,b.seed);await saveTown(a,{store,storage});await saveTown(b,{store,storage});
+const oldTown={id:'town-42',town:{id:'town-42',name:'Old Flat',mayors:[]}};
+assert.deepEqual(townsAvailableToVisit([{id:a.id,town:a},{id:b.id,town:b},oldTown],{currentTownId:a.id,ownedTownId:a.id,unclaimedIds:[oldTown.id]}).map(row=>row.id),[b.id],'the picker excludes the current town and never offers an unclaimed old town');
 assert.deepEqual(readTownPointer(storage),[a.id,b.id]);
 assert.deepEqual((await store.towns(readTownPointer(storage))).map(row=>row.town.mayors[0]),['player-a','player-b']);
 const exportText=await createCompleteCareerExport(storage,undefined,()=>new Date('2026-11-05T00:00:00Z'),store);const bundle=parseCareerExport(exportText);
@@ -26,9 +29,38 @@ const before=JSON.stringify(memory.towns.get(b.id),(_key,value)=>typeof value===
 assert.match(markup,/Visiting Dust Home, Gratian's town/);assert.doesNotMatch(markup,/data-town-speed|data-town-build|data-town-action="backup"/);
 assert.match(markup,/data-town-action="the-book"/);assert.match(markup,/data-town-overlay/);
 assert.equal(BigInt(b.tick),tick);assert.equal(JSON.stringify(memory.towns.get(b.id),(_key,value)=>typeof value==="bigint"?String(value):value),before);
-assert.match(entry,/if\(visiting\)\{message="Visiting this town\. You can look around\. Nothing you do here changes it\."/);
+assert.match(entry,/if\(visiting\)\{message=session\.command\(cmd\)\.message/);
 assert.match(entry,/store\.load\(townId,\{readOnly:visiting\}\)/,'visits load towns without running recovery writes');
-assert.match(entry,/accumulator\+=visiting\?0:/);assert.match(entry,/if\(changed&&!visiting\)/);
-assert.match(entry,/town\.mayors=\[playerId\]/,'a legacy town is assigned to its first current owner');
+assert.match(entry,/accumulator\+=visiting\?0:/);assert.match(entry,/session\.frame\(1\)/);
+assert.match(entry,/data-takeover/,'legacy unclaimed towns require an explicit takeover action');
 assert.match(entry,/seed=\(seed\^hash\)>>>0/,'new seeds include the player id');
-console.log('TOWN-VISITS passed: player-specific towns, complete export ownership, read-only visit UI, no visit stepping or save, legacy owner assignment.');
+
+const serialize=value=>JSON.stringify(value,(_key,item)=>typeof item==='bigint'?String(item):item);
+const makeRecorder=records=>{const writes=[];return {writes,async load(id,{readOnly}={}){assert.equal(readOnly,true);return{town:structuredClone(records.get(id)),message:''};},async save(town,reason){writes.push({reason,town:structuredClone(town)});records.set(town.id,structuredClone(town));}};};
+const visitedRecord=structuredClone(b),visitedBytes=serialize(visitedRecord),records=new Map([[a.id,structuredClone(a)],[b.id,visitedRecord]]),recorder=makeRecorder(records);
+let returnStarts=0;const visitedSession=createTownSession({town:structuredClone(a),store:recorder,clock:{step(target){target.tick++;},command(target,cmd){target.commands=(target.commands||[]).concat(cmd);return[{ok:true}];}},save:(target,reason)=>recorder.save(target,reason),onReturn:()=>{returnStarts++;}});
+assert.equal((await visitedSession.enter(b.id)).ok,true,'the session enters the real visited record');
+for(let i=0;i<1200;i++)visitedSession.frame(1,4);
+assert.equal(visitedSession.town.tick,b.tick,'top speed frames never advance a visit');
+assert.equal(visitedSession.command({type:'placeBuilding',buildingId:'road-dirt',x:10,z:10}).ok,false,'build commands are refused during a visit');
+assert.equal(visitedSession.book().readOnly,true);assert.equal(visitedSession.card('person-1').readOnly,true);
+await visitedSession.escape();await visitedSession.return();
+assert.equal(returnStarts,1,'Escape plus a second RETURN routes exactly once');
+assert.equal(recorder.writes.length,1,'the owner town is saved once when the player returns');
+assert.equal(recorder.writes[0].town.tick,a.tick,'the owner town tick stays unchanged during the visit');
+assert.equal(serialize(records.get(b.id)),visitedBytes,'the visited town record bytes remain identical');
+
+const zeroRecords=new Map([[b.id,structuredClone(b)]]),zeroRecorder=makeRecorder(zeroRecords),zeroBefore=serialize(zeroRecords.get(b.id));
+const readOnlySession=createTownSession({town:structuredClone(b),store:zeroRecorder,visiting:true,clock:{step(target){target.tick++;},command(target,cmd){target.commands=(target.commands||[]).concat(cmd);return[{ok:true}];}},save:(target,reason)=>zeroRecorder.save(target,reason)});
+for(let i=0;i<1000;i++)readOnlySession.frame(1,4);
+readOnlySession.command({type:'placeBuilding',buildingId:'road-dirt',x:2,z:3});readOnlySession.book();readOnlySession.card('person-1');
+await readOnlySession.escape();
+assert.equal(zeroRecorder.writes.length,0,'leaving a visit by Escape performs no store writes');
+assert.equal(serialize(zeroRecords.get(b.id)),zeroBefore,'Escape leaves the stored record byte-for-byte unchanged');
+
+const returnRecords=new Map([[b.id,structuredClone(b)]]),returnRecorder=makeRecorder(returnRecords),returnBefore=serialize(returnRecords.get(b.id));
+const returnSession=createTownSession({town:structuredClone(b),store:returnRecorder,visiting:true,clock:{step(target){target.tick++;}},save:(target,reason)=>returnRecorder.save(target,reason)});
+await returnSession.return();await returnSession.return();
+assert.equal(returnRecorder.writes.length,0,'leaving a visit by RETURN performs no store writes');
+assert.equal(serialize(returnRecords.get(b.id)),returnBefore,'RETURN leaves the stored record byte-for-byte unchanged');
+console.log('TOWN-VISITS passed: player-specific towns, export ownership, visit lifecycle, zero visited-town writes, one guarded return save.');
