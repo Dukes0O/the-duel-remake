@@ -91,6 +91,16 @@ export function captionReadMs(text) {
 //   sequences  optional {name: [ids]}: captions that play one after the other (Kogane's `ana`)
 // Lookup then works across all of them; the radio and the cards never name a story.
 const TABLES = new Map();
+const TOWN_CAPTIONS = new Map();
+
+// Town dialogue shares caption lookup, but is not a story/save registry entry.
+export function registerTownCaptions(captions) {
+  if (!captions || typeof captions !== 'object') throw new TypeError('Town captions need a table.');
+  for (const [id, caption] of Object.entries(captions)) {
+    if (typeof caption?.text !== 'string' || !caption.text) throw new Error(`The town caption "${id}" has no words.`);
+    TOWN_CAPTIONS.set(id, caption);
+  }
+}
 
 export function registerStoryLines(key, {captions, letter = null, sequences = {}} = {}) {
   if (typeof key !== 'string' || !/^[a-z][a-z0-9-]*$/.test(key)) throw new Error(`Story lines need a story key, not ${JSON.stringify(key)}.`);
@@ -112,7 +122,7 @@ export const storyLineKeys = () => [...TABLES.keys()];
 // The words for a caption id in any registered story, or null (a letter is not a caption).
 export function captionText(id) {
   for (const table of TABLES.values()) if (Object.hasOwn(table.captions, id)) return table.captions[id].text;
-  return null;
+  return TOWN_CAPTIONS.get(id)?.text ?? null;
 }
 
 // A story's letter, or null.

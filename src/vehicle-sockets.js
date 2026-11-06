@@ -17,6 +17,7 @@ const ADJUSTMENTS = Object.freeze({
   mclaren_f1: Object.freeze({ frontY: 0.36, roofLift: 0.10, roofZ: -0.18, shieldLift: 0 }),
   bugatti_bolide: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
   falcone_sirena: Object.freeze({ frontY: 0.34, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }),
+  ...(featureFlags.enabled('deep-vasca') ? {falcone_vasca: Object.freeze({frontY: .55, roofLift: .15, roofZ: -.2, shieldLift: 0})} : {}),
   mcmurtry_speirling: Object.freeze({ frontY: 0.32, roofLift: 0.08, roofZ: -0.10, shieldLift: 0 }),
   // The Kogane prize car exists only with its switch on (as in config.js); without sockets its first appearance in a race or garage threw.
   ...(featureFlags.enabled('nissan-skyline') ? { nissan_skyline_gtr_r34: Object.freeze({ frontY: 0.46, roofLift: 0.08, roofZ: -0.22, shieldLift: 0 }) } : {}),

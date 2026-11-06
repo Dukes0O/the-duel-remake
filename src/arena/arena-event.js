@@ -16,7 +16,7 @@ import {CONVOY_RULES, initializeConvoyRaid, stepConvoyRig,
   stepConvoyRaid} from './modes/convoy-raid.js';
 import {AMBUSH_RULES, stepAmbushAlley, ambushBuggySpawn, ambushFortTargets,
   damageAmbushFort} from './modes/ambush-alley.js';
-import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal} from './modes/world-job.js';
+import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, worldJobPilotGoal, prepareWorldJobControls} from './modes/world-job.js';
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
 import {armorDamageFor} from '../combat-armor.js';
@@ -302,6 +302,7 @@ export function stepArenaEvent(duel, dt) {
 
   const onFoot = (['fuel-run', 'convoy-raid', 'world-job'].includes(arena.mode) ||
     arena.format === 'convoy-raid' || ambush) && stepFootTransition(duel, dt);
+  if(arena.mode==='world-job') prepareWorldJobControls(duel);
   if (ambush) {
     const spawn = ambushBuggySpawn(duel);
     if (spawn) {

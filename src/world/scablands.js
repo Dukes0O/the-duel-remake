@@ -27,7 +27,8 @@ export const SCABLANDS_LAYOUT = Object.freeze({
 export const SCABLANDS_VENUE = Object.freeze({
   id:'scablands', venue:true, layoutVersion:1, theme:'arena', stage:32,
   name:'The Scablands', lengthU:3290, closed:true, laps:1, kind:'arena',
-  arena:true, scrapdome:SCABLANDS_LAYOUT,
+  arena:true, townGate:Object.freeze({id:'scrapdome-gate',x:0,z:-92,radius:32,
+    prompt:'Drive up to the Scrapdome gate to go inside.'}), scrapdome:SCABLANDS_LAYOUT,
   scablands:SCABLANDS_LAYOUT, hasRadar:false, hasRival:false,
   speedLimitMph:200,
   sections:Object.freeze([Object.freeze({theme:'arena',name:'The Scablands',share:1})]),

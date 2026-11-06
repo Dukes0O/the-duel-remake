@@ -204,7 +204,7 @@ export function placeCar(profile, carId, courseId, {enabled} = {}) {
 
 // Where a car stands before the helicopter has ever moved it: the home pad's course, except for the
 // Sirena, which the Lab trucks to Pacific Canyon for the Coast Cup (docs/THE_DEEP.md 6.2).
-export const FIRST_PLACE = Object.freeze({falcone_sirena: 'pacific-canyon'});
+export const FIRST_PLACE = Object.freeze({falcone_sirena: 'pacific-canyon', falcone_vasca: 'pacific-canyon'});
 export function carAt(profile, carId, fallback = FIRST_PLACE[carId] ?? 'tremblant-woods') {
   const heli = heliOf(profile);
   return validCar(carId) && Object.hasOwn(heli.carsAt, carId) ? heli.carsAt[carId] : fallback;

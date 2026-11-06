@@ -1,4 +1,4 @@
-// DEEP-RADIO: Ana's sixteen lines on the through-water phone and the phone chain
+// DEEP-RADIO: Ana's twenty-seven lines on the through-water phone and the phone chain
 // (docs/THE_DEEP.md section 6.7).
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -25,7 +25,7 @@ const catalog = JSON.parse(read('tools/audio/catalog.json'));
 const design = String(read('docs/THE_DEEP.md'));
 const section = design.slice(design.indexOf('### 6.7'), design.indexOf('### 6.8'));
 const table = Object.fromEntries([...section.matchAll(/^\| `(deep\.ana\.[a-z]+)` \| (.+?) \|$/gm)].map(m => [m[1], m[2]]));
-same(Object.keys(table).length, 16, 'the design lists sixteen lines');
+same(Object.keys(table).length, 27, 'the design lists twenty-seven lines');
 same(Object.fromEntries(Object.entries(DEEP_PHONE_LINES).map(([id, line]) => [id, line.text])), table, 'the lines match the design word for word');
 ok(Object.values(DEEP_PHONE_LINES).every(line => !/credit|price|dollar|\$/i.test(line.text)), 'no line names a price');
 
@@ -37,25 +37,31 @@ ok(others.size >= 3, 'the other voices were found for the comparison');
 
 // One kept take per line: catalog record, hash, runtime copy, the same settings as the helicopter lines.
 const heliSettings = catalog.sounds.find(row => row.cue === 'heli.radio.liftoff.hold').settings;
-let creditsUsed = 0, runtimeBytes = 0;
+const jokeSettingsLines = new Set(['deep.ana.otter','deep.ana.squeak','deep.ana.whale','deep.ana.duck','deep.ana.heavy',
+  'deep.ana.maybe','deep.ana.reveal','deep.ana.bath','deep.ana.wheels','deep.ana.nino','deep.ana.towel','deep.ana.yours']);
+let creditsUsed = 0, firstLinesCredits = 0, lastJokeCredits = 0, runtimeBytes = 0;
 for (const [id, line] of Object.entries(DEEP_PHONE_LINES)) {
   const records = catalog.sounds.filter(row => row.cue === id);
   same(records.length, 1, `${id}: one catalog record`);
   const [record] = records;
   ok(record.source === 'elevenlabs' && record.text === line.text && record.file === `audio-src/voices/${line.file}`, `${id}: text and file recorded`);
   ok(record.voiceId === DEEP_PHONE_VOICE.voiceId && record.model === 'eleven_multilingual_v2', `${id}: Bella, same model`);
-  same(record.settings, heliSettings, `${id}: the helicopter lines' settings`);
+  same(record.settings, jokeSettingsLines.has(id) ? {...heliSettings, stability: 0.45} : heliSettings,
+    `${id}: the helicopter lines' settings, with the re-recorded joke-line catalog stability`);
   const take = read(record.file), runtime = `public/assets/audio/voices/${line.file}`;
   same(sha(take), record.sha256, `${id}: the kept take matches its hash`);
   ok(existsSync(new URL(runtime, root)) && sha(read(runtime)) === record.sha256, `${id}: the runtime file is the kept take, unchanged`);
   creditsUsed += record.creditsUsed; runtimeBytes += take.length;
+  if (jokeSettingsLines.has(id)) lastJokeCredits += record.creditsUsed; else firstLinesCredits += record.creditsUsed;
 }
-ok(creditsUsed > 0 && creditsUsed <= 2000, `voice credits within budget (${creditsUsed})`);
-ok(runtimeBytes < 1.5e6, `the sixteen lines stay small (${runtimeBytes} bytes)`);
-same(copyDeepPhoneVoices().lines, 16, 'the build step finds all sixteen kept takes');
+// The first recording's 2,000 budget still stands for its lines; The Squeak's twelve takes have a budget of their own.
+ok(firstLinesCredits > 0 && firstLinesCredits <= 2000, `first lines within their voice budget (${firstLinesCredits})`);
+ok(lastJokeCredits > 0 && lastJokeCredits <= 1100, `The Squeak's lines within their voice budget (${lastJokeCredits})`);
+ok(runtimeBytes < 3e6, `the twenty-seven lines stay within the 3 MB voice budget (${runtimeBytes} bytes)`);
+same(copyDeepPhoneVoices().lines, 27, 'the build step finds all twenty-seven kept takes');
 
-// The bank: sixteen cues behind the-deep, on the voice bus, playing like the helicopter's radio.
-same(Object.keys(DEEP_PHONE_CUES).length, 16, 'sixteen phone cues');
+// The bank: twenty-seven cues behind the-deep, on the voice bus, playing like the helicopter's radio.
+same(Object.keys(DEEP_PHONE_CUES).length, 27, 'twenty-seven phone cues');
 const heli = SOUND_BANK['heli.radio.liftoff.hold'];
 for (const [id, cue] of Object.entries(DEEP_PHONE_CUES)) {
   ok(SOUND_BANK[id] === cue, `${id}: in the sound bank`);

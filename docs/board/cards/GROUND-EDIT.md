@@ -1,0 +1,13 @@
+# GROUND-EDIT
+
+The short board entry controls current state, ownership, dependencies and locks.
+
+MACHINES section 10. `src/world/ground-edit.js`, pure: regions marked `editable`, sparse 32 m chunks of 1 m samples made on first edit, `heightAt` as natural plus edits, `cut(shape, target)` and `fill(shape, material, volume)` returning real volumes by material from seeded ground layers (topsoil, clay, gravel, rock, by depth), bulking, reserved shapes that refuse with a sentence, typed-array save form. The hook in `src/world/scablands-ground.js` so that physics and rendering read it, with no change at all when nothing has been dug. `tools/test-ground-edit.mjs`: volumes are conserved to within bulking; same inputs give the same ground; an undug world is identical to today's, so Everburn's Easy proof and its fingerprints do not move; a 200 chunk quarry saves under 2 MB; 10,000 small cuts stay fast.
+
+Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md). Read MACHINES sections 1, 2, 8 and the section this card names. **No button makes a thing. Real materials, machines and physics, no paperwork. The game will be added to for years: no fixed limits, content in data, and a town saved today loads in every later build.** Pure sim files import no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. Everything is behind `wasteland-town`. Keyboard always works. If something the card needs is missing, write your choice under "Codex decided (Claude to review)" and carry on, unless it touches saves, a released course or a replay, in which case stop and say so. Every player-facing word is plain, in whole sentences, no em dashes. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list exactly what Claude should try in the browser. No Chrome under `codex exec`. Memory-only saves. No network, account or key; a library only if MACHINES section 12 names it.
+
+## Claude answers
+
+## Codex decided (Claude to review)
+
+Use circular edit and reserved shapes (`{x, z, radius}`); this gives the first Scablands jobs a clear, compact contract without adding polygon machinery. `cut` treats `target` as the finished elevation, and returns in-place material volumes plus their 1.25 loose-volume estimate. `fill` accepts loose cubic metres, compacts them by 1.25, and reports the material actually placed. The Scablands owns one shared editable layer; it has no stored chunks and changes no heights until a cut or fill runs.

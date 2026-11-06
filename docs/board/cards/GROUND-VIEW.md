@@ -1,0 +1,19 @@
+# GROUND-VIEW
+
+The short board entry controls current state, ownership, dependencies and locks.
+
+MACHINES section 10. `src/world/ground-view.js` and the hook in `src/world/scablands-scene.js`. An edited chunk draws from a fine mesh, updating only changed samples and their normals, with a skirt so that no seam shows, and fresh-cut colour by material. Far ground is rebuilt from the edits when a job ends. Dirt plumes and flying clods: `src/world/dig-fx.js`, using Kenney's particle pack from `C:/Users/kyleb/dev/art-library/kenney-particle-pack` (CC0, credit it) and `src/combat-vfx-atlas.js`, thrown in the direction a tool throws them. A dev key to dig under the cursor, for testing. Rock and dirt textures from Poly Haven (CC0) if a public download works without an account. Must hold rule 8's frame limit while digging. `tools/test-ground-view.mjs` for what runs without a browser.
+
+Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md). Read MACHINES sections 1, 2, 8 and the section this card names. **No button makes a thing. Real materials, machines and physics, no paperwork. The game will be added to for years: no fixed limits, content in data, and a town saved today loads in every later build.** Pure sim files import no DOM, no Three.js and nothing from `src/app.js`. Stay inside the files named here. Everything is behind `wasteland-town`. Keyboard always works. If something the card needs is missing, write your choice under "Codex decided (Claude to review)" and carry on, unless it touches saves, a released course or a replay, in which case stop and say so. Every player-facing word is plain, in whole sentences, no em dashes. Run the card's own checks and `npm run build`; Claude runs the lane tier and browser checks. Write `docs/changes/<card>.md` with a Removed section, and list exactly what Claude should try in the browser. No Chrome under `codex exec`. Memory-only saves. No network, account or key; a library only if MACHINES section 12 names it.
+
+## Claude answers
+
+### Codex decided (Claude to review)
+
+The scene hook has no camera, cursor ray or browser input owner, so this card
+cannot safely bind a dev key that digs under the cursor without editing files
+outside its ownership. Expose `group.userData.updateGroundView()` and
+`group.userData.digFx.burst(...)` for the owning world/job hook to call. The
+scene still uses its existing ground edit layer, so physics reads the edited
+height immediately; the view refresh is explicit after a job edit. Claude
+should decide where the dev input belongs when the world hook is built.

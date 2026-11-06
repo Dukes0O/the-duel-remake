@@ -3,6 +3,7 @@
 import { EXPANSION_COURSES } from './expansion-courses.js';
 import { FREESTYLE_COURSE } from './freestyle-course.js';
 import { applyCircuits } from './circuits/index.js';
+import { BOWL_COURSE } from './bowl/bowl-course.js';
 import { featureFlags } from './feature-flags.js';
 
 // Five crash slots; a stage win restores up to two, never above the starting reserve.
@@ -119,6 +120,13 @@ export const CARS = {
     color:0x9c1217,accent:0xf1ede2,offRoadGrip:.6,offRoadSpeed:52,offRoadScrub:.62,mass:810,
     collision:{halfWidth:1.1,halfLength:2.45},height:1.06,kind:'prototype',
   },
+  ...(featureFlags.enabled('deep-vasca') ? {falcone_vasca: {
+    name: 'Falcone Vasca', homage: 'A bath with wheels', gearbox: 'manual',
+    unlockRequirement: 'deep-vasca', excludeFromCompletion: true,
+    topSpeed: 168, accel: 8.4, grip: 0.84, braking: 0.92, gears: [48, 84, 120, 148, 168],
+    color: 0xf1ede2, accent: 0x9c1217, offRoadGrip: .6, offRoadSpeed: 52, offRoadScrub: .62, mass: 900,
+    collision: {halfWidth: .9, halfLength: 1.9}, height: .95, kind: 'prototype',
+  }} : {}),
   // LAB-FAN: built on the fan bench, never bought from the garage.
   mcmurtry_speirling: {
     name: 'McMurtry Spéirling', homage: 'Electric fan car', gearbox: 'single', electric: true,
@@ -199,6 +207,7 @@ export const COURSE = applyCircuits([
   {id:'timberline-rush',layout:'timberline',layoutSeed:1989,layoutVersion:2,theme:'alpine',stage:8,name:'Timberline Checkpoint Rush',lengthU:3800,closed:true,laps:2,kind:'checkpoint',offroad:true,requiredCar:'dusthawk_rally',hasRadar:false,hasRival:false,speedLimitMph:100,checkpointRush:{gatesPerLap:6,initialTimeSec:{easy:40,medium:34,hard:30},extensionSec:{easy:12,medium:8,hard:7}},sections:[{theme:'desert',name:'Dry Creek',share:.35},{theme:'alpine',name:'Timberline Summit',share:.65}]},
   ...EXPANSION_COURSES,
   FREESTYLE_COURSE,
+  ...(featureFlags.enabled('titan-bowl') ? [BOWL_COURSE] : []),
   // The registry appends new events and replaces explicitly slotted ids.
 ]);
 

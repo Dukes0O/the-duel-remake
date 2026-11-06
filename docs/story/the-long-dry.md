@@ -44,7 +44,7 @@ of the same story, and each one has a job at the end.
 | **The Twin Vultures**: "Do the math." | They become your accountants | They work out what the sea is worth, and it is a lot |
 | **The Tollkeeper**: "This road has a price." | He runs the deeds office | He holds Mrs Vane's old paperwork |
 | **The Everburn** and Cinder | The flame that never went out | The only fire hot enough to drive the gate's steam engines |
-| **Tin Town's forge** and Auntie Solder | The only forge left | Casts the new gear wheel |
+| **Tin Town's forge** and Auntie Solder | The oldest forge left, and the only one big enough for a casting that size. Your town's own forge makes steel and pipe | Casts the new gear wheel |
 | **The Iron Mule** and Jax | Vane's secret water train, which you steal | Hauls the gear to the dam |
 | **Kestrel One** and Roger (the helicopter) | The first thing from your side of the Rustwall to come over and help | You fly the gear into place |
 | **The Titan** and **the Bowl**, Big Mo's rival trucks | Show trucks, then the only machines that can clear the spillway | They push the wrecks out of the way in front of a crowd |
@@ -129,18 +129,6 @@ Neither changes, and both now plug in:
   your homes), Show Nights put ticket money in the till, and the beaten
   Scrapasaurus stands in your town square, not just in the yard.
 
-### The Everburn and the Bowl (already being built)
-
-Neither changes, and both now plug in:
-
-- **The Everburn** starts from the ash left at the first fire, if you have not
-  started it already. Lighting the forge opens steel buildings. When Old Smoke
-  falls, Cinder moves in and runs your **Fire Station**: "Nobody else lets me bring
-  the pot."
-- **The Bowl**: Big Mo's crowd gets bigger as your town does (fans walk over from
-  your homes), Show Nights put ticket money in the till, and the beaten
-  Scrapasaurus stands in your town square, not just in the yard.
-
 ### Act 2: Neighbours (Years 3 to 7, to about 40 hours)
 
 The Wasteland is full of people, and they need things. None of these is about
@@ -153,7 +141,7 @@ them in one sitting: each opens months or years after the last.
 | 11 | **Ten Sacks of Flour** | Dot | Drive flour out, drive pies back | Pies: food, and a mood lift. A trade road |
 | 12 | **Dot's Is on Fire** | Dot | Road Rats throw a lamp through her window. Take the truck, put it out, drive the Rats off. Then offer protection and drop a fence around her, stop by stop | How protection works, and Dot's protection money |
 | 13 | **One Piece of Chalk** | Miss Quill, Bo | Bring chalk and books through the Boneyard without spilling them | The School. Children's drawings arrive in your reports |
-| 14 | **Mind the Goats** | Old Tam | Only the Titan or the rally car gets up the Ridge. Bring salt, bring goats down | Goat pens. And Tam says seas do not dry up in a fortnight |
+| 14 | **Mind the Goats** | Old Tam | Only the Titan or the rally car gets up the Ridge, and if you own neither, Big Mo lends you his show truck. Bring salt, bring goats down | Goat pens. And Tam says seas do not dry up in a fortnight |
 | 15 | **Sea's Late** | Captain Imre | Drive a water tanker across the dead sea. Fill their tank, and trade for salt | Salt to sell, and Deck Town on the map |
 | 16 | **The 2:15** | Pim | Fix his water crane on foot with a wrench. Sit up with him at night and watch a train with no lights go past, leaking water | The start of the Iron Mule |
 
@@ -198,6 +186,8 @@ to go alone. He comes back with the logbook, and it is his handwriting:
 > of help.
 
 ### Act 5: The Day the Sea Came Back (Years 18 to 25 or so, to 200 hours and more)
+
+Every line and job: `docs/story/the-sea-works.md`, which wins on details. There, the new gear is 24 sections, each light enough for Kestrel One's hook.
 
 The biggest thing you can build: **the Sea Works**, about two million worker hours and
 400 tonnes of steel, the work of a whole generation of your town. People who were
@@ -249,8 +239,8 @@ fine. Nothing here touches the existing ladder.
 | **Kettle Kingpin** | Has given up fighting to be a dentist | Fetch his chair from the Scrapdome. It is very large | Your Clinic works twice as fast | "Stand still. It hurts less." |
 | **The Twin Vultures** | Offering to do your books | Bring them the town's receipts, which blew away. Find them all over the map | The Ledger shows what is coming next week, and they find you money | "Two columns. One of you. Do the math." |
 | **The Tollkeeper** | Runs the deeds office. He always did love paperwork | No job: chapter 19 | Loans and deeds | "This road has a price. Sign here." |
-| **Baron Blackiron** | In chains in the yard, sorry for himself, writing his memoirs | Bring Vesper to see him. No fighting | His logbook, the clue to Act 4 | "I was robbed. By my tenant's landlord." |
-| **Magnus the Magnet** | Builds a bigger magnet. Comes back about every few weeks | A town disaster: his crane drags your tin roofs off into the sky. Chase him down, and get them back | Nothing, until Act 5 | "EVERYTHING metal comes to Magnus. I have upgraded." |
+| **Baron Blackiron** | In chains in the yard, sorry for himself, writing his memoirs | Bring Vesper to see him. No fighting | His logbook, the clue to Act 4 | "I was robbed. By my landlord." |
+| **Magnus the Magnet** | Builds a bigger magnet. Comes back about every two years | A town disaster: his crane drags your tin roofs off into the sky. Chase him down, and get them back | Nothing, until Act 5 | "EVERYTHING metal comes to Magnus. I have upgraded." |
 
 ## 6. The helicopter comes over the wall
 
@@ -284,7 +274,8 @@ gatehouse and Hollis's reveal. **It no longer leads to The Deep** (Kyle, 5 Novem
 the Deep is paused). Ana's single radio line in Act 5 is the only link.
 
 Both are now written line by line: `docs/story/iron-mule.md` and
-`docs/story/ships-in-the-sand.md`.
+`docs/story/ships-in-the-sand.md`. Act 3's chapters 17 to 21 and section 5's warlord jobs are
+written the same way in `docs/story/the-polite-letter.md`, and Act 5 in `docs/story/the-sea-works.md`.
 
 **Later:** section 11.
 
@@ -343,6 +334,8 @@ Voice is a later card, and no release waits for it.
 | `town.7.spray` | Odessa | First in the truck | Drive right up to it. Hold H to spray. She holds three minutes of water. When the tank runs dry, stop at any tap to fill up. |
 | `town.7.won` | Odessa | Fire out | Still standing. You smell terrible. Well done. |
 | `town.7.ash` | Hollis | After the fire | There's ash on the ground, and it isn't from the fire. Somebody started this. There's a woman named Cinder who knows about ash. |
+| `town.7.ash.going` | Hollis | After the fire, Everburn started and Old Smoke not beaten | There's ash on the ground, and it isn't from the fire. That's Ash Men's work. Cinder said they'd come this way. |
+| `town.7.ash.done` | Cinder | After the fire, Old Smoke beaten | That's Ash Men's work. Leftovers, with no boss. I'll have a word. |
 | `town.8.payday` | Hollis | Chapter 8 | Bills are in. The till is the town's money and your scrap is yours. Bills only ever come out of the till. Have a look at the Ledger. |
 | `town.8.books` | Hollis | Ledger opened, Vultures not at peace | Money in, money out. What's left is the profit. I have added it up twice and got two answers. |
 | `town.8.vultures` | The Vultures | Ledger opened, at peace | Two columns. One of you. Do the math. |
@@ -375,6 +368,7 @@ Voice is a later card, and no release waits for it.
 | `quill.won` | Miss Quill | Delivered | Children, say thank you. Bo, get out of the truck. |
 | `quill.drawing` | Miss Quill | Later report, with a child's picture | The children drew your town. Bo has drawn it on fire. He says that's how he likes it best. |
 | `tam.tam` | Hollis | Chapter 14 | There's an old fellow on the Ridge with the last good goats anywhere, and he won't come down. You'll have to go up. Only the Titan or the rally car will get that far. |
+| `tam.tam.lent` | Hollis | Chapter 14, owning neither | There's an old fellow on the Ridge with the last good goats anywhere, and he won't come down. Nothing you own will get up there, so Big Mo's lending you his show truck. He says he'll know if you dent it. It's all dents. |
 | `tam.up` | Old Tam | You arrive | You drove all the way up here? Mad. Salt's on the shelf. Goats are in the kitchen. Mind the goats. |
 | `tam.sea` | Old Tam | Loading | I was up here the day the sea went. People say it dried up. Seas don't dry up in a fortnight, driver. |
 | `imre.imre` | Captain Imre | Chapter 15 | Deck Town, afternoon watch. Nothing to report. Sea's late. Our tank is dry, if you have any water going. |
@@ -394,7 +388,7 @@ Voice is a later card, and no release waits for it.
 | `town.heli.roger` | Roger | First flight over | Kestrel One, Tremblant. Say again your position? I didn't know that wall had another side. |
 | `town.heli.dune` | Dune | No pilot yet | I'll take the job. I don't fly, but I know a man who owes me a helicopter. Don't ask. |
 
-### Act 3, opening lines (the rest are written with their cards)
+### Act 3, opening lines (all the rest: `docs/story/the-polite-letter.md`)
 
 | Id | Who | When | Line |
 | --- | --- | --- | --- |
@@ -409,3 +403,14 @@ Voice is a later card, and no release waits for it.
 ## 11. After the sea, and everything else
 
 The story has no last page. Each of these can become a whole strand, added as new files whenever Kyle and Gratian want it, and none needs anything already built to change: **a harbour** and what comes with it, boats and trade across the water; **land beyond the Ridge** and whoever lives there; **a second town** of yours and the road between them; **Magnus's biggest magnet**; **Bo's own story**, and his children's; **Hollis's last gate**; **a Wasteland race** along the new shore; **elections**, and who runs the town after you; **Mrs Vane's next idea**, because she will have one. Gratian's own ideas go here first.
+
+## 12. This is one strand
+
+**Two new strands are written:** `docs/story/the-far-side.md`, the goat, the boring machine and the place where it rains; and `docs/story/the-notice-board.md`, a favour from each of the crew, which needs no town and can be played first.
+
+Kyle, 5 November, after reading this page: "I do like the storyline and how it's held together. But this is just one storyline... we can continue to write new stories." So nothing in the game may depend on The Long Dry being the only story. How the town is built is in `docs/MACHINES.md`, and these fit the story where they meet it:
+
+- **Bo** is your apprentice when he is old enough, on whichever machine you choose. He has been asking for years.
+- **The boring machine's** biggest parts come through neighbours: a ship's propeller shaft from Captain Imre, the gears from Tin Town's forge. Whoever builds it names it.
+- **The Teeth,** a mountain range beyond the Ridge, is reached only by tunnel and has room for stories of its own.
+- **Vane Reclamation** dug and drained with machines like yours, thirty years ago, so an old abandoned one out on the dead sea is a fine place to find parts.

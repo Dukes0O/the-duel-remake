@@ -42,41 +42,39 @@ it should take you years to build it.
 
 ## 2. How long it takes
 
-There is no finishing it. These are how far along you should be, roughly, tested by
-the game's test players:
+**The building of it is the game, and how you build is in `docs/MACHINES.md`.** That page
+wins over this one: no button makes a thing, you do each job first, and then you can teach
+someone and hand it over. Read it before anything else here.
 
-| Where you are | Game time | Hours of play | People |
-| --- | --- | --- | --- |
-| Through the first winter, with a road, a well and shacks | Year 1 | 3 to 5 | 30 |
-| A real settlement, Town Hall built, the first fire behind you | Year 3 | 10 to 15 | 100 |
-| Neighbours met, and clean water from a plant you built | Year 6 or 7 | about 40 | 500 |
-| The school's first children running things, deeds and territory | Year 10 | about 80 | 1,500 |
-| Mrs Vane's contest at its height | Year 15 | about 130 | 3,000 |
-| The sea comes back | Year 25 or so | 200 to 300 | 6,000 or more |
-| After that | For as long as you like | | No limit |
+There is no finishing it. It should take a long time because there is so much to do, and
+never because you are waiting. These are roughly how far along you should be, tested by the
+game's test players:
 
-**A year** is about 4 and a half hours at normal speed, and just over an hour at the
-fastest. Twelve months of thirty days, with real seasons.
+| Where you are | Hours of play | People |
+| --- | --- | --- |
+| A road, a well, shacks, your first machine, through the first winter | 3 to 6 | 30 |
+| The heart of the town stands: a square, a Town Hall, the first fire behind you | 10 to 15 (the first or second game year) | 100 |
+| Neighbours met, clean water from a plant you built, a real works | about 40 | 500 |
+| Your apprentices running most of it, deeds and territory | about 80 | 1,500 |
+| Mrs Vane's contest at its height, tunnels through the Ridge | about 130 | 3,000 |
+| The sea comes back | 200 to 300 | 6,000 or more |
+| After that | For as long as you like | No limit |
 
-**What makes it take that long is the work, not waiting.** There are no timers to sit
-out. Things take as long as they would if people had to do them:
+**Nothing makes you wait around.** A small building goes up in a minute or two, and a big
+one in a few minutes to half an hour, faster if you are in the cab. Things that grow, set or
+cook take minutes while you do something else. You can run the clock fast, you can stop it to
+think, and a job you have handed over carries on without you.
 
-- Nothing appears when you click. A plan goes down, then workers walk out, then
-  materials have to get there, then it goes up, stage by stage, in front of you.
-- A shack takes a couple of people a few days. A treatment plant takes forty people
-  most of a season, and twelve tonnes of steel somebody had to find. The Sea Works takes
-  a generation.
-- If a site is short of steel, it stops and says so, and you can go and fetch it.
-- You can run the clock fast through the slow parts, and you will often want to stop
-  it and think.
-
-And you are never without something to do, because there is always a report, a job or
-a neighbour, and every mission still plays out in real time at the wheel.
+**The calendar** is there for seasons and for people growing up: a year is about 4 and a half
+hours at normal speed, and just over an hour at the fastest. It goes more slowly while you are
+in a machine or on a mission. Chapters open from what you have done, never from a date.
 
 ## 3. Real where it can be
 
 Real numbers from the real world, showing when you look closer and never in your way.
-Anything a child learns here is true, and Brian can teach it in the Lab.
+Anything a child learns here is true, and Brian can teach it in the Lab. **Real materials,
+machines and physics, no paperwork:** no permits or approvals, ever. If something real is not
+fun, it is left out or a machine does it.
 
 - **Water is measured in litres.** A person needs 15 litres a day to get by and 50 to
   live well (the real standard aid workers use). A tap runs about 7 litres a minute, so
@@ -130,11 +128,13 @@ anything already built.
 the camp's water, carried in buckets until you do better. Each of the twelve has a name,
 and the town remembers them as its founders.
 
-**Building.** You draw a plan. Workers build it from what is in your stockpile, and each
-building's card says what it needs, what has come and what it is short of. You choose
-what goes first. You paint ground for homes and shops and people build there themselves,
-improving them over years: tent, shack, tall tin stack, stacked shipping containers, then
-proper brick.
+**Building.** You place it, city-builder style, on the real map, and it goes up in scaffolding
+in front of you, once what it needs is there. Long things like roads and pipes use the route
+tool (`docs/MACHINES.md` section 3). Everything needs its ingredients, and every stage is
+something you do, or something you have taught someone to do (`docs/MACHINES.md` sections 2 and
+4). You choose what goes first. You paint ground for homes and shops and people build there
+themselves, improving them over time: tent, shack, tall tin stack, stacked shipping containers,
+then proper brick.
 
 **Money and goods.** The town has its own money, **the till**, and your scrap stays yours,
 so bills can never eat what you saved for a flamethrower. If the till is short, one press
@@ -216,6 +216,8 @@ live. They use the job engine the Everburn uses, driving through the real town a
 
 | Job | The goal | Vehicle |
 | --- | --- | --- |
+| **Building work** | Everything in `docs/MACHINES.md`: trenching, digging, hauling, pouring, boring. Do it, or teach it and hand it over | Machines |
+| **Defend the works** | Radar or a scout says they are heading for a wellhead. Go and meet them | Your cars, plus support |
 | **Salvage haul** | Drive out to the Boneyard, load what the gang has cut, bring it home without shedding it. Your very first job | Flatbed |
 | **Fire call** | Drive up, hold H to spray, refill at any tap or hydrant, hit the worst of it first. It spreads with the wind | Fire truck |
 | **Fire on the Ridge** | Scoop, fly, pour | Kestrel One |
@@ -325,19 +327,20 @@ These are settled. A card's own open question goes on the card in writing first.
   refused command returns a sentence for a child, and that is what the screen shows.
 - **Systems register.** `registerTownSystem(name, order, everyTicks, fn)`, each in its own file, with `src/town/index.js`
   one import line each, so cards do not fight over one file.
-- **Ground and earthworks.** `heightAt(x, z)` = the region's natural height + a sparse grading layer the town keeps, read
-  by rendering, physics, pipes and sewers alike. Building on a slope needs grading, which takes workers. The Dome's oval
-  and the gate are reserved. Everything on the map stays where it is.
+- **Ground and earthworks.** `docs/MACHINES.md` section 10: `heightAt(x, z)` = the region's natural height + the edit layer,
+  read by rendering, physics, pipes and sewers alike. Building on a slope needs levelling, which is real work. The Dome's oval,
+  the gate and story places are reserved.
 - **Ground water.** A seeded depth and yield field per region, shallower along old creek lines, known only where someone
   has dug a test pit. Wells draw it down and droughts lower it.
-- **Water network.** Three pipe sizes, laid by workers along any path, on their own underground layer. A connected network has
-  sources (wells, pumps, towers, the Water Road tap), and each cell's pressure in metres of head = the source's height
-  (ground + tower) - the ground at that cell - friction by distance, flow and pipe size. Solved by walking outward from the
-  sources when the network or demand changes, not by a full flow solver: real behaviour, cheap and explainable in one
-  sentence. Taps and hydrants deliver what pressure and pipe allow. Sewers are the same in reverse and need a fall. Water
+- **Water network.** Three pipe sizes, laid by routes (`docs/MACHINES.md` section 3), on their own underground layer. A connected
+  network has sources (wells, pumps, towers, the Water Road tap). TOWN-PIPES first tries the real EPANET engine through `epanet-js`
+  (`docs/MACHINES.md` section 12). If that does not qualify: each cell's pressure in metres of head = the source's height (ground + tower)
+  - the ground at that cell - friction by distance, flow and pipe size, solved by walking outward from the sources when the network or
+  demand changes. Taps and hydrants deliver what pressure and pipe allow. Sewers are the same in reverse and need a fall. Water
   quality travels with the water. Wires carry kW, with generation against demand. Overlays show all of it.
-- **Construction.** A plan makes a site with a list of materials and worker hours. Haulers bring materials, builders add
-  hours, and the site shows `scaffold-N` until finished. Short of something: it stops and raises a report with a job.
+- **Construction.** A plan makes a work order with stages, ingredients and amounts (`docs/MACHINES.md` section 8), with the site showing
+  `scaffold-N` until finished. Short of something: it stops and raises a report with a job. Section 14's worker hours are a starting
+  point for light work; TOWN-PACE keeps small buildings to a minute or two and big ones to under half an hour.
 - **Goods and hauling.** Stockpiles and warehouses by cell. Recipes run in buildings with workers. Handcarts and trucks are
   agents on the road graph, with capacity in kg, speed by road class and vehicle, fuel used. They are real in the sim, and the
   view draws them. Prices move with stock.
@@ -397,8 +400,8 @@ Kyle's town may be years old. On 28 October a full disk let Chrome clear careers
 
 - **Its own store.** Each town is an IndexedDB record, as `career-archives.js` does for ghosts, with a pointer key in `CAREER_KEYS`, so that `createCompleteCareerExport`
   and import include it. Target under 5 MB at Year 30, tested by the soak run. The career stays small and unaffected.
-- **Town ids and mayors.** A town has an id and a list of players who can open it (`mayors`), so it can belong to one player or be shared. Links (warlords beaten) read
-  whoever is playing, and a shared town counts the best of its mayors.
+- **Town ids and mayors.** Each player has a town of their own (Kyle, 5 November 2026), and its id and seed include the player's id. `mayors` holds the owner. Links (warlords beaten) read
+  whoever is playing. A player can **visit** another player's town on this laptop: look-only, and the visited town never advances or saves (TOWN-VISITS).
 - **Rolling copies.** Saved on leaving, each game month and before each mission. It keeps the last 3 saves and one copy from the start of each real week for 8 weeks,
   all in the same store.
 - **A file on the disk.** A BACK UP button, and a monthly reminder from the Vultures, write the town to a file the player chooses (File System Access API where the browser
@@ -475,7 +478,8 @@ Other art-card buildings (`compost-heap`, `market-hall`, `paint-shop`, `searchli
 
 | Slice | What you can do |
 | --- | --- |
-| **T1 Founding** | Years 1 to 3: the twelve, roads, wells, pipes, sites going up, goods and hauling, the first salvage haul, the first winter, the first fire, the Ledger, the Book |
+| **T0 The Dig** | Before any town: a sandbox on the Scablands with the trencher, excavator and dump truck, and the tunnel trial (`docs/MACHINES.md`) |
+| **T1 Founding** | The twelve, routes, roads, wells, pipes, sites going up, ingredients and hauling, apprentices, the first winter, the first fire, the Ledger, the Book |
 | **T2 Neighbours** | Your town solid in the world, zoom to the Scablands, Dot, Quill, Tam, Imre, Pim, jobs that aren't fights |
 | **T3 Territory** | The Wasteland map, deeds, sending crew, scouting and logs, what became of the warlords |
 | **T4 Mrs Vane** | Kiosks, bids, Free Water Day, both-sided road fights, water cannon, cars, paints |
