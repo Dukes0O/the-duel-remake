@@ -1,7 +1,7 @@
 // Arrival pace is tuned to the town milestones in docs/WASTELAND_TOWN.md, section 2.
 // This is a growth rate, not a limit: later years keep increasing arrivals.
 export const TOWN_PACE=Object.freeze({
-  arrivalMoodBase:0.5,
+  arrivalMoodBase:2.5,
   arrivalMoodScale:100,
-  arrivalYearScale:4.5,
+  arrivalYearScale:5.5,
 });

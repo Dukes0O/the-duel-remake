@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
-import {createTown, deserializeTown, serializeTown, stepTown, TOWN_TIME} from '../src/town/index.js';
+import {createTown, dispatchTownCommand, deserializeTown, serializeTown, stepTown, TOWN_TIME} from '../src/town/index.js';
 import {storeGood} from '../src/town/town-goods.js';
 
 const DAYS_PER_YEAR=TOWN_TIME.daysPerMonth*TOWN_TIME.monthsPerYear;
@@ -19,7 +19,9 @@ function check(value,message){assert.ok(value,message);checks++;}
 const rows=[];
 for(const seed of SOAK_SEEDS){
   let town=createTown(seed,`Thirty year town ${seed}`);
-  town.peopleConditions={waterLitresPerPerson:50,foodCaloriesPerPerson:2100,shelterPlaces:10000,paintedHomePlaces:10000};
+  dispatchTownCommand(town,{type:'paintHomeGround',cells:Array.from({length:25},(_,index)=>({x:200+index,z:200}))});
+  town.homePlots.forEach((plot,index)=>{plot.tier=1;plot.household=`soak-household-${index}`;plot.family=plot.household;});
+  town.regions.scablands.groundWater={pits:{},wellJobs:{},wells:{fixture:{x:0,z:0,yieldLitresPerDay:1500,waterLitres:1500,drawdownLitres:0}},droughtDays:0};
   let elapsedMs=0,previousPeople=0;
   for(let year=1;year<=SOAK_YEARS;year++){
     const start=performance.now();
@@ -39,6 +41,7 @@ for(const seed of SOAK_SEEDS){
   }
   const firstYear=rows.find(row=>row.seed===seed&&row.year===1);
   const lastYear=rows.at(-1);
+  console.log(`Town soak seed ${seed}: Year 1 ${firstYear.saveBytes} bytes/${firstYear.people} people/${firstYear.bookEntries} pages; Year 30 ${lastYear.saveBytes} bytes/${lastYear.people} people/${lastYear.bookEntries} pages.`);
   check(town.calendar.year===SOAK_YEARS+1,`seed ${seed}: the town reaches game year ${SOAK_YEARS+1}`);
   check(town.people.length>0,`seed ${seed}: the town remains alive after ${SOAK_YEARS} years`);
   check(rows.at(-1).saveBytes>0,`seed ${seed}: the town keeps a readable save`);
