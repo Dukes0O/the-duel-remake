@@ -177,6 +177,25 @@ assert.deepEqual(plainTrain.stepState,{metres:.8,speed:.8,gatePassed:false,said:
   lineQueue:[],lineRemaining:0,lineBlocking:false,lineHistory:[],linesStarted:true,linesClosing:false},
   'drivetrain jobs without rail fields keep their prior force, speed and state');
 
+let easyBrake=createJob({steps:[{kind:'drivetrain',path:[point('a',0),point('b',100)],massTonnes:100,
+  brakeKn:100,easyBrakeKn:50,brakeBoardMetres:25,sayOverSpeed:{ms:10,lineId:'fast'},
+  sayBrakeSeconds:{seconds:2,lineId:'long-brake'} }]});
+easyBrake.stepState={metres:10,speed:11};
+easyBrake=tick(easyBrake,{difficulty:'easy',controls:{brake:1}},1);
+assert.equal(easyBrake.stepState.speed,10.5,'easyBrakeKn overrides the normal brake force on Easy');
+assert(easyBrake.requests.some(request=>request.lineId==='fast'));
+assert.equal(easyBrake.requests.find(request=>request.type==='train').brakeBoardMetres,25);
+easyBrake=tick(easyBrake,{difficulty:'easy',controls:{brake:1}},1);
+assert(easyBrake.requests.some(request=>request.lineId==='long-brake')||easyBrake.stepState.lineQueue.includes('long-brake'));
+easyBrake=tick(easyBrake,{difficulty:'easy',controls:{}},1);
+assert.equal(easyBrake.stepState.brakeSeconds,0,'releasing the brake resets the continuous hold timer');
+
+let runawayCue=createJob({steps:[{...runawayStep,closeLineId:'close-wagons',sayAt:[{progress:.1,lineId:'ahead'}]}]});
+runawayCue.stepState={metres:8,speed:10,wagonMetres:1,wagonSpeed:0};
+runawayCue=tick(runawayCue,{controls:{throttle:1}},1);
+assert(runawayCue.requests.some(request=>request.lineId==='close-wagons'));
+assert(runawayCue.requests.some(request=>request.lineId==='ahead')||runawayCue.stepState.lineQueue.includes('ahead'));
+
 // Exercise the brake input through Duel -> arena event -> world-job -> rail step.
 const duel=new Duel({seed:8123});duel.startCampaign();duel.state.wastelandGateDiscovered=true;
 const bankStep={kind:'drivetrain',path:line,massTonnes:260,tractiveKn:110,brakeKn:140,maxSpeed:22,stopAtEnd:true,

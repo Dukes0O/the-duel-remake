@@ -25,12 +25,24 @@ export function stepDrivetrain(step,state,view,dt) {
   const path=step.path??[],length=ironLineLength(path);
   if(length<=0)return {state,complete:false,requests:[]};
   const consistMass=step.consist?.reduce((sum,id)=>sum+(CONSIST_TONNES[id]??0),0)??0;
-  const mass=consistMass||(step.massTonnes??100),tractive=step.tractiveKn??80,brake=step.brakeKn??100;
+  const mass=consistMass||(step.massTonnes??100),tractive=step.tractiveKn??80;
+  const brake=view.difficulty==='easy'?(step.easyBrakeKn??step.brakeKn??100):(step.brakeKn??100);
   const acceleration=tractive/mass,deceleration=brake/mass;
   let metres=step.stopMark&&step.stopAtEnd||step.rideAlong?.copiesPlayerStop
     ?Math.max(0,state.metres??0):clamp(state.metres??0,0,length);
   let speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
   const controls=view.controls??{}, previous=metres, requests=[], events=[];
+  const said=new Set(state.said??[]);
+  let brakeSeconds=controls.brake>0?(state.brakeSeconds??0)+dt:0;
+  if(step.sayOverSpeed&&speed>step.sayOverSpeed.ms&&!said.has(step.sayOverSpeed.lineId)) {
+    said.add(step.sayOverSpeed.lineId);
+    requests.push({type:'say',lineId:step.sayOverSpeed.lineId});
+  }
+  if(step.sayBrakeSeconds&&controls.brake>0&&brakeSeconds>=step.sayBrakeSeconds.seconds&&
+    !said.has(step.sayBrakeSeconds.lineId)) {
+    said.add(step.sayBrakeSeconds.lineId);
+    requests.push({type:'say',lineId:step.sayBrakeSeconds.lineId});
+  }
   const tokenMetres=step.tokenSwap?nearestIronLineDistance(path,step.tokenSwap.place).metres:Infinity;
   const atTokenPlace=!!step.tokenSwap&&!state.tokenSwapped&&metres>=tokenMetres;
   const waitingForSwap=atTokenPlace;
@@ -60,7 +72,13 @@ export function stepDrivetrain(step,state,view,dt) {
     const waitAt=step.otherTrain.waitAt??step.tokenSwap?.place;
     const waitMetres=waitAt?nearestIronLineDistance(step.otherTrain.path,waitAt).metres:otherLength;
     const otherLimit=state.tokenSwapped?otherLength:waitMetres;
-    const otherMetres=Math.min(otherLimit,(state.otherTrainMetres??0)+Math.max(0,step.otherTrain.speed??0)*dt);
+    const otherSpeed=Math.max(0,step.otherTrain.speed??0);
+    const maxOtherAdvance=otherSpeed*(step.otherTrain.arrivesWith==='player'?2:1)*dt;
+    const playerApproach=step.otherTrain.arrivesWith==='player'&&step.tokenSwap
+      ?clamp(metres/Math.max(.001,tokenMetres),0,1):null;
+    const desiredOther=playerApproach===null?otherLimit:waitMetres*playerApproach;
+    const otherMetres=Math.min(otherLimit,Math.max(state.otherTrainMetres??0,
+      Math.min(desiredOther,(state.otherTrainMetres??0)+maxOtherAdvance)));
     requests.push({type:'train',actorId:step.otherTrain.id,position:sampleIronLine(step.otherTrain.path,otherMetres),
       progress:otherLength?otherMetres/otherLength:1,speed:otherMetres>=otherLength?0:step.otherTrain.speed??0,
       metres:otherMetres,path:step.otherTrain.path,pathLength:otherLength,model:step.otherTrain.model});
@@ -108,7 +126,7 @@ export function stepDrivetrain(step,state,view,dt) {
   for(const pickup of step.crushOnTrack??[])if(!crushed.has(pickup.id)&&previous/length<pickup.progress&&metres/length>=pickup.progress){
     crushed.add(pickup.id);speed=Math.max(0,speed-2);events.push({type:'pickupCrushed',id:pickup.id});
   }
-  const sayAt=step.sayAt??[],said=new Set(state.said??[]);
+  const sayAt=step.sayAt??[];
   for(const cue of sayAt)if(!said.has(cue.lineId)&&previous/length<cue.progress&&metres/length>=cue.progress){said.add(cue.lineId);requests.push({type:'say',lineId:cue.lineId});}
   if(step.apprentice&&step.taughtLineId&&metres/length>=(step.teachAt??.5)&&!state.apprenticeTaught){
     state={...state,apprenticeTaught:true};requests.push({type:'say',lineId:step.taughtLineId},{type:'apprenticeTaught',person:step.apprentice,kind:'driving'});
@@ -132,6 +150,8 @@ export function stepDrivetrain(step,state,view,dt) {
   }
   const place=trainPosition(path,metres,length);
   requests.push({type:'train',actorId:step.actorId??'iron-mule',position:place,progress:metres/length,speed,metres,path,pathLength:length,
-    roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1']});
-  return {state:{...state,metres,speed,gatePassed,said:[...said],crushedPickups:[...crushed]},complete,events,requests};
+    roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1'],
+    ...(step.brakeBoardMetres!==undefined?{brakeBoardMetres:step.brakeBoardMetres}:{})});
+  return {state:{...state,metres,speed,gatePassed,said:[...said],
+    ...(step.sayBrakeSeconds?{brakeSeconds}:{}),crushedPickups:[...crushed]},complete,events,requests};
 }
