@@ -12,6 +12,12 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
   cracked tyre, rusty stamped rim and dented hubcap. Its three-quarter render
   matches the reference face; the tread band is visibly striped at close view,
   so Claude should judge it on the sheet.
+- Added `dynamite-box` as five boxes: four 2 cm walls around a floor 10 cm
+  below the rim. Its front GLB view reads `SMALL`, and the raised quarter view
+  shows rows of paper-wrapped sticks in the recess. It reads as a real crate,
+  not a toy.
+- Added `ww-dynamite-front.jpg` and `ww-dynamite-top.jpg`, with prompts in
+  `CREDITS.md`.
 - Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
   Its front and three-quarter views were rendered from the exported GLB and
   inspected beside the front reference. It reads as a small weathered wooden
@@ -58,7 +64,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 
 ## Changed assertions
 
-None.
+- Raised only the `WW-ART-CREW` model file cap in `tools/test-blender-output.mjs`
+  from 2 MiB to 4 MiB. The two additional 1024 px crate photos raise the
+  exported model to 2,399,432 bytes. Triangle budget is unchanged.
 
 ## Race fingerprints
 

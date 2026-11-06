@@ -110,6 +110,18 @@ edges. No objects, gear, pool, scene, text, or watermark.
   face-on: perished dusty black tyre, rusty stamped steel rim, dented faded
   hubcap. Plain pale grey background, bright flat overcast daylight, crisp
   realistic wear. No people, text, logos or extra objects.”
+- `ww-dynamite-front.jpg`: Codex ImageGen photograph of a damp dark wooden
+  crate with its handwritten `SMALL` label, dead-on, reduced to 1024 px.
+  Prompt: “One small old wooden crate, straight-on front view, plain
+  rectangular dark damp planks, hand-written pale label with exactly the word
+  SMALL. Worn, heavy wood. Full object on pale grey ground in flat overcast
+  light, no perspective, people, other items, logos or watermark.”
+- `ww-dynamite-top.jpg`: Codex ImageGen photograph of the same crate from
+  directly above, lid removed, with paper-wrapped inert bundles in rows.
+  Prompt: “One old rectangular wooden storage crate seen directly down, lid
+  removed. A real recessed dark wooden floor holds rows of short paper-wrapped
+  cylindrical bundles. Full rim, old damp weathered planks, pale grey ground,
+  flat bright overcast light, no people or tools.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.

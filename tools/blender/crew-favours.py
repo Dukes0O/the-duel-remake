@@ -334,6 +334,44 @@ lathe(wheel_mesh, 'wheel', (0, .40, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
       cap_start=('wheel', wheel_face_uv), cap_end=('wheel', wheel_face_uv))
 finish(wheel_mesh, 'regret-wheel', {'wheel': wheel_photo.material()})
 
+# --- dynamite-box: five thick boards around a real recessed, photographed interior --------
+crate_front = Photo(textures / 'ww-dynamite-front.jpg')
+crate_top = Photo(textures / 'ww-dynamite-top.jpg')
+crate_mesh = Mesh()
+front_mat, top_mat = 'crate-front', 'crate-top'
+FRONT_PLANK = (112, 205, 912, 620)
+SIDE_PLANK = (125, 205, 205, 620)
+BACK_PLANK = (818, 205, 900, 620)
+TOP_STICKS = (125, 100, 900, 580)
+TOP_RIM_FRONT = (80, 16, 940, 72)
+TOP_RIM_BACK = (80, 610, 940, 665)
+TOP_RIM_LEFT = (18, 72, 78, 610)
+TOP_RIM_RIGHT = (944, 72, 1006, 610)
+def crate_face(photo, rect, material): return (material, photo, rect)
+def crate_panel(rect, faces): box(crate_mesh, *rect, faces)
+crate_panel((-.34, .34, .10, .38, .22, .24), {
+    '+z': crate_face(crate_front, FRONT_PLANK, front_mat), '-z': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+x': crate_face(crate_front, BACK_PLANK, front_mat), '-x': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+y': crate_face(crate_top, TOP_RIM_FRONT, top_mat), '-y': crate_face(crate_front, SIDE_PLANK, front_mat)})
+crate_panel((-.34, .34, .10, .38, -.24, -.22), {
+    '-z': crate_face(crate_front, FRONT_PLANK, front_mat), '+z': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+x': crate_face(crate_front, BACK_PLANK, front_mat), '-x': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+y': crate_face(crate_top, TOP_RIM_BACK, top_mat), '-y': crate_face(crate_front, SIDE_PLANK, front_mat)})
+crate_panel((-.34, -.32, .10, .38, -.22, .22), {
+    '+x': crate_face(crate_front, SIDE_PLANK, front_mat), '-x': crate_face(crate_front, BACK_PLANK, front_mat),
+    '+z': crate_face(crate_front, SIDE_PLANK, front_mat), '-z': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+y': crate_face(crate_top, TOP_RIM_LEFT, top_mat), '-y': crate_face(crate_front, SIDE_PLANK, front_mat)})
+crate_panel((.32, .34, .10, .38, -.22, .22), {
+    '-x': crate_face(crate_front, SIDE_PLANK, front_mat), '+x': crate_face(crate_front, BACK_PLANK, front_mat),
+    '+z': crate_face(crate_front, BACK_PLANK, front_mat), '-z': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+y': crate_face(crate_top, TOP_RIM_RIGHT, top_mat), '-y': crate_face(crate_front, SIDE_PLANK, front_mat)})
+# The floor is 10 cm below the rim, and its only visible top wears the contents photo.
+crate_panel((-.32, .32, .08, .10, -.22, .22), {
+    '+y': crate_face(crate_top, TOP_STICKS, top_mat), '-y': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+x': crate_face(crate_front, SIDE_PLANK, front_mat), '-x': crate_face(crate_front, SIDE_PLANK, front_mat),
+    '+z': crate_face(crate_front, SIDE_PLANK, front_mat), '-z': crate_face(crate_front, SIDE_PLANK, front_mat)})
+finish(crate_mesh, 'dynamite-box', {front_mat: crate_front.material(), top_mat: crate_top.material()})
+
 
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
@@ -368,7 +406,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel', 'dynamite-box')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -413,3 +451,6 @@ shot('regret-door', 'regret-door', (0, .42, 2.0), (0, .42, 0), 1000, 700, ortho=
 shot('regret-door-quarter', 'regret-door', (-.9, .52, 1.7), (0, .42, 0), 1000, 700, lens=50, show_ground=False)
 shot('regret-wheel', 'regret-wheel', (1.25, .4, 0), (0, .4, 0), 900, 900, ortho=1.08, show_ground=False)
 shot('regret-wheel-quarter', 'regret-wheel', (1.8, .9, 1.4), (0, .4, 0), 900, 700, lens=50, show_ground=False)
+shot('dynamite-box', 'dynamite-box', (0, .23, 1.7), (0, .23, 0), 900, 650, ortho=.88)
+shot('dynamite-box-quarter', 'dynamite-box', (-.9, 1.3, .9), (0, .18, 0), 900, 650, lens=50)
+shot('dynamite-box-top', 'dynamite-box', (0, 1.5, 0), (0, .18, 0), 900, 900, ortho=.86)
