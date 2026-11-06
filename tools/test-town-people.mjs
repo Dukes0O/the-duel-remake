@@ -3,11 +3,15 @@ import {performance} from 'node:perf_hooks';
 await import('../src/town/systems/modules/people.js');
 const {createTown, stepTown, serializeTown, deserializeTown, registeredTownSystems, TOWN_TIME} = await import('../src/town/index.js');
 import {TOWN_THOUGHTS, TOWN_SEASON_THOUGHTS} from '../src/town/content/thoughts.js';
+import {storeGood} from '../src/town/town-goods.js';
 
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 function same(actual, expected, message) { assert.deepEqual(actual, expected, message); checks++; }
+const fedTowns = new WeakSet();
 function stepDay(town) {
+  // A well-fed town: TOWN-FARM now works out each day's food from what is in the stores.
+  if (town.name === 'Repeatable' || fedTowns.has(town)) storeGood(town, {x:0, z:0}, 'food', (town.people?.length || 0) * 2100 / 3600 + 1);
   // The town advances one hour per step, but people change only once a day.
   // Jump to the hour before each daily boundary to test 30 years without
   // spending time on the 23 unchanged hours between updates.
@@ -53,6 +57,7 @@ check(first.people.some(person => person.skills.learning > 0), 'school years bui
 
 const supported = createTown(23, 'Room to Grow');
 supported.peopleConditions = {waterLitresPerPerson:50, foodCaloriesPerPerson:2100, shelterPlaces:1000};
+fedTowns.add(supported);
 stepDay(supported);
 const originalPopulation = supported.people.length;
 check(supported.people.every(person => person.workHours === 8), 'adults work eight hours when no staffed buildings are open');

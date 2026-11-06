@@ -21,3 +21,11 @@
 ## Removed
 
 - Nothing.
+
+## Changed assertions (Claude's review, rule 18)
+
+With weather and food running, two older tests had to say what they assumed. `tools/test-town-pipes.mjs`: the windmill now makes what the wind of the day gives, checked against the solver, where it used to assume a fixed wind. `tools/test-town-people.mjs`: its thirty-year town is now really fed, from a store topped up each day, since food comes from stores and not from a set number. Its checks are unchanged.
+
+A note for TOWN-CHAPTERS: a town with no food now goes hungry at once, with health about 25 and few children. Recoverable, and right, but the first chapter must start with Hollis's stores or the town starves before the player has a farm.
+
+`tools/test-town-farm.mjs`, reviewed by Claude: a cold night on canvas no longer costs health directly. It cost one health a night and only 0.05 came back each day, so a whole winter left every town at about 22 health and 1 mood, with almost no children. Cold still marks the shelter as unsafe, and TOWN-HEALTH's cold risk makes people sick. With that, a fed town at Year 30 has health 96 and mood 98.

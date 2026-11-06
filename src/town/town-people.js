@@ -98,7 +98,8 @@ function conditionsFor(town, person, shelterIndex) {
   person.needs.foodCalories = food;
   const coldCanvas=Boolean(town.peopleConditions?.coldNight)&&String(person.homeType||'').toLowerCase().includes('canvas');
   person.needs.shelter = coldCanvas?false:shelter;
-  return (water === null || water >= waterNeed) && (food === null || food >= 2100) && (shelter === null || shelter) && !coldCanvas;
+  // A cold night on canvas is hard on mood and risks sickness (town-health.js); it is not the same as no shelter.
+  return (water === null || water >= waterNeed) && (food === null || food >= 2100) && (shelter === null || shelter);
 }
 
 function needsMet(person) {

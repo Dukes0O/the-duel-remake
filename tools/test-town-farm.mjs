@@ -100,7 +100,7 @@ cold.people=[{id:'tent-person',name:'T',born:0n,nextBirthday:999999n,age:20,fami
 cold.homes=[{id:'canvas-f',tier:0,goodDays:0,hardDays:0,type:'canvas'}];
 cold.peopleIdsReady=true;cold.homesReady=true;cold.peopleConditions={coldNight:true};
 stepTownPeople({town:cold,rng:rngFrom(48),tick:24n,calendar:calendar(1,10,2,'Winter')});
-check(cold.people[0].needs.shelter===false&&cold.people[0].health===99,'a freezing winter night makes canvas shelter unsafe');
+check(cold.people[0].needs.shelter===false&&cold.people[0].health===100,'a freezing winter night makes canvas shelter unsafe: it risks sickness through town-health, and does not drain health by itself');
 const hotTown=createTown(49,'Hot town');
 hotTown.people=[
   {id:'hot-a',name:'A',born:0n,nextBirthday:999999n,age:25,family:'a',home:'a',homeType:'brick home',partnerId:'hot-b',health:100,mood:80,needs:{},skills:{},history:[],schoolDays:0},
