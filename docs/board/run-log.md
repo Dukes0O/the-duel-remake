@@ -1572,3 +1572,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: CAR-ART-LONGHAUL merged; verdict on its card.
 - 5 Nov: CAR-ART-RATTLER stopped at round 6 of 6, not merged; branch kept.
 - 5 Nov: TOWN-ART-SANITATION merged; verdict on its card.
+- 5 Nov: TOWN-ART-STAGES merged at round 5 of 6; verdict on its card.
