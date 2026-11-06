@@ -880,6 +880,14 @@ tasks:
     details: "docs/board/cards/SHIPS-FINISH.md"
 
 
+  - id: TOWN-PEOPLE-SPEED
+    title: "Town: people spread across the day, then connected"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: ["TOWN-CORE"]
+    details: "docs/board/cards/TOWN-PEOPLE-SPEED.md"
   - id: TOWN-STORE
     title: "Town: a save that lasts for years"
     owner: "codex"
