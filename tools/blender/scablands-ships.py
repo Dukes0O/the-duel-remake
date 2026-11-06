@@ -43,7 +43,7 @@ if args.compose_sheet:
     except OSError:
         font = ImageFont.load_default()
         title_font = font
-    draw.text((42, 20), 'WW-ART-SHIPS | Patience | round 4 | exported GLB reimport', fill=(245, 244, 236), font=title_font)
+    draw.text((42, 20), f'WW-ART-SHIPS | Patience | round {args.round} | exported GLB reimport', fill=(245, 244, 236), font=title_font)
     frames = ((42, 84, 1150, 500), (1208, 84, 1150, 500),
               (42, 650, 1150, 740), (1208, 650, 1150, 740))
     labels = ('Photographic reference | side view', 'Patience | same side angle and scale',
@@ -199,7 +199,7 @@ def photo_box(name, center, dims, part, deck=5.0, roof=True):
     for poly in mesh.polygons:
         for li in poly.loop_indices:
             px,py,pz=corners[mesh.loops[li].vertex_index]
-            if poly.index in (0,1):
+            if poly.index in (2,4):
                 u=min(.995,max(.005,(px+37.0)/74.0))
                 row=min(120.0,max(0.0,(deck+7.2-py)*15.4))
                 v=1.0-row/384.0
@@ -244,7 +244,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     # instead of reading as a flat strip laid over a simple block.
     stations=[(-.50,.22),(-.485,.42),(-.46,.62),(-.43,.78),(-.39,.89),(-.34,.95),
               (-.28,.98),(-.20,1.0),(-.10,1.0),(0,.995),(.12,.99),(.23,.97),
-              (.32,.94),(.39,.90),(.44,.84),(.475,.73),(.50,.55)]
+              (.32,.94),(.39,.90),(.44,.84),(.475,.62),(.49,.34),(.50,.06)]
     rings=[]
     for t,breadth in stations:
         x=t*length
@@ -268,7 +268,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
         for j in range(section_size):
             faces.append((i*section_size+j,i*section_size+(j+1)%section_size,
                           (i+1)*section_size+(j+1)%section_size,(i+1)*section_size+j))
-            photo_side=j in (1,2,3,4,7,8,9,10)
+            photo_side=j in range(1,11)
             material_ids.append(1 if photo_side else (0 if j==0 else 2))
     faces.extend([tuple(range(section_size-1,-1,-1)),
                   tuple((len(rings)-1)*section_size+j for j in range(section_size))]); material_ids.extend((2,2))
@@ -286,7 +286,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             u=.02 + ((co[0]/length)+.5)*.96
             # This source image is a hull-only crop with its deck edge at the top.
             # The white bridge, deck fittings and rigging are real geometry above it.
-            v=min(1,max(0,(co[1]-keel)/(deck-keel)))
+            v=.11 + min(1,max(0,(co[1]-keel)/(deck-keel)))*.73
             uv.data[li].uv=(u,v)
     parent(obj,root)
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
@@ -468,32 +468,32 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             a=blade*math.pi/2
             b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,shaft_root)
 
-# Patience's mast, platform and bell: 14 m above the main deck.
+# Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
+# the main deck is y=11 and the platform is y=25.
 pat=roots['ship-patience']; mastx=-15; mastz=6; platform_y=19
 mast_root=root_obj('ship-patience:mast',(0,0,0),'ship-patience:mast'); parent(mast_root,pat)
 bell_root=root_obj('ship-patience:bell',(0,0,0),'ship-patience:bell'); parent(bell_root,mast_root)
-for dx in (-.72,.72):
-    beamobj=beam(f'patience-mast-leg-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y+1,mastz),.15,steel,'ship-patience:mast'); parent(beamobj,mast_root)
-    cross=beam(f'patience-mast-crossbar-{dx}',(mastx+dx,9,mastz),(mastx-dx,9,mastz),.10,iron,'ship-patience:mast'); parent(cross,mast_root)
-platform=cube('ship-patience:mast-platform',(mastx,platform_y,mastz),(3.3,.26,3.3),steel,'ship-patience:mast',.08); parent(platform,mast_root)
-mast=cylinder('patience-mast-main-spar',(mastx,12.3,mastz),.32,14.6,steel,'ship-patience:mast',24); parent(mast,mast_root)
-for yard_y,yard_w in ((12.8,4.8),(15.8,6.8),(18.0,3.8)):
-    yard=beam(f'patience-mast-yard-{yard_y}',(mastx-yard_w/2,yard_y,mastz),(mastx+yard_w/2,yard_y,mastz),.13,steel,'ship-patience:mast',.12); parent(yard,mast_root)
-    for side in (-1,1):
-        stay=rail(f'patience-mast-yard-stay-{yard_y}-{side}',(mastx+side*yard_w/2,yard_y,mastz),(mastx,platform_y+.25,mastz),.035,iron,'ship-patience:mast'); parent(stay,mast_root)
+mast=cylinder('patience-mast-main-spar',(mastx,12.3,mastz),.38,14.6,steel,'ship-patience:mast',24); parent(mast,mast_root)
+for dx in (-2.4,2.4):
+    kingpost=beam(f'patience-mast-kingpost-{dx}',(mastx+dx,11.3,mastz),(mastx+dx,16.8,mastz),.18,steel,'ship-patience:mast',.16); parent(kingpost,mast_root)
+for y in (11.5,16.6):
+    cross=beam(f'patience-mast-kingpost-crossbar-{y}',(mastx-2.4,y,mastz),(mastx+2.4,y,mastz),.14,rust,'ship-patience:mast',.14); parent(cross,mast_root)
 for side in (-1,1):
-    for axis in (-1,1):
-        a=(mastx+axis*1.65,platform_y+.92,mastz+side*1.5)
-        b=(mastx+axis*1.65,platform_y+.92,mastz-side*1.5)
-        rail_obj=beam(f'patience-mast-platform-rail-{side}-{axis}',a,b,.07,iron,'ship-patience:mast'); parent(rail_obj,mast_root)
-    rail_obj=beam(f'patience-mast-platform-end-rail-{side}',(mastx-1.65,platform_y+.92,mastz+side*1.5),(mastx+1.65,platform_y+.92,mastz+side*1.5),.07,iron,'ship-patience:mast'); parent(rail_obj,mast_root)
-for level in range(1,42):
-    y=5+level*.34
-    rung=beam(f'patience-mast-ladder-rung-{level}',(mastx-.72,y,mastz),(mastx+.72,y,mastz),.055,iron,'ship-patience:mast'); parent(rung,mast_root)
-for dx in (-.72,.72):
-    side=beam(f'patience-mast-ladder-side-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y,mastz),.065,steel,'ship-patience:mast'); parent(side,mast_root)
-bell=cylinder('patience-bell-metal',(mastx,platform_y+1.15,mastz),.42,.7,steel,'ship-patience:bell',24)
-clapper=beam('patience-bell-clapper',(mastx,platform_y+.72,mastz),(mastx,platform_y+.26,mastz),.10,iron,'ship-patience:bell')
+    start=(mastx+side*2.4,15.2,mastz)
+    end=(mastx+side*6.6,12.9,mastz)
+    boom=beam(f'patience-mast-derrick-boom-{side}',start,end,.20,steel,'ship-patience:mast',.18); parent(boom,mast_root)
+    stay=rail(f'patience-mast-derrick-stay-{side}',(mastx+side*2.4,16.8,mastz),end,.045,iron,'ship-patience:mast'); parent(stay,mast_root)
+platform=cube('ship-patience:mast-platform',(mastx,platform_y,mastz),(2.0,.26,2.0),steel,'ship-patience:mast',.08); parent(platform,mast_root)
+for side in (-1,1):
+    rail_obj=beam(f'patience-mast-platform-rail-{side}',(mastx,platform_y+.9,mastz+side*1.0),(mastx,platform_y+.9,mastz-side*1.0),.06,iron,'ship-patience:mast'); parent(rail_obj,mast_root)
+    rail_obj=beam(f'patience-mast-platform-end-{side}',(mastx-1.0,platform_y+.9,mastz+side*1.0),(mastx+1.0,platform_y+.9,mastz+side*1.0),.06,iron,'ship-patience:mast'); parent(rail_obj,mast_root)
+for level in range(1,26):
+    y=11+level*.31
+    rung=beam(f'patience-mast-ladder-rung-{level}',(mastx-.26,y,mastz),(mastx+.26,y,mastz),.045,iron,'ship-patience:mast'); parent(rung,mast_root)
+for dx in (-.26,.26):
+    side=beam(f'patience-mast-ladder-side-{dx}',(mastx+dx,11.1,mastz),(mastx+dx,18.8,mastz),.055,steel,'ship-patience:mast'); parent(side,mast_root)
+bell=cylinder('patience-bell-metal',(mastx,18.45,mastz),.38,.65,steel,'ship-patience:bell',24)
+clapper=beam('patience-bell-clapper',(mastx,18.1,mastz),(mastx,17.65,mastz),.08,iron,'ship-patience:bell')
 for o in (bell,clapper): parent(o,bell_root)
 
 if args.stage == 'family':
@@ -693,6 +693,7 @@ def render_imported_review():
                    @ Matrix.Scale(car_scale,4) @ Matrix.Translation(-center))
     for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
         obj.matrix_world=car_transform @ obj.matrix_world
+    bpy.context.view_layer.update()
     for obj in car_objects:
         obj.hide_render=False
     placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
@@ -702,22 +703,28 @@ def render_imported_review():
     car_fit=Matrix.Translation(car_target) @ Matrix.Scale(4.5/max(car_dimensions),4) @ Matrix.Translation(-car_target)
     for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
         obj.matrix_world=car_fit @ obj.matrix_world
+    bpy.context.view_layer.update()
     placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
     car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
                     max(p.y for p in placed_points)-min(p.y for p in placed_points),
                     max(p.z for p in placed_points)-min(p.z for p in placed_points))
+    correction=4.5/max(car_dimensions)
+    if abs(max(car_dimensions)-4.5)>.01:
+        correction_matrix=(Matrix.Translation(car_target) @ Matrix.Scale(correction,4)
+                           @ Matrix.Translation(-car_target))
+        for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
+            obj.matrix_world=correction_matrix @ obj.matrix_world
+        bpy.context.view_layer.update()
+        placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
+        car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
+                        max(p.y for p in placed_points)-min(p.y for p in placed_points),
+                        max(p.z for p in placed_points)-min(p.z for p in placed_points))
     bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0,-2.0,-440)))
     review_ground=bpy.context.object; review_ground.name='review-only mid-tone lake bed'
     review_material=bpy.data.materials.new('Review ground / neutral lake-bed earth'); review_material.diffuse_color=(.34,.31,.26,1)
     review_material.use_nodes=True; review_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.34,.31,.26,1)
     review_material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
     review_ground.data.materials.append(review_material)
-    profile_mesh=bpy.data.meshes.new('review-only low sand profile')
-    profile_mesh.from_pydata([gv(p) for p in ((-120,-28,-460),(160,-28,-460),
-                                                (160,-2.0,-460),(-120,-2.0,-460))],[],[(0,1,2,3)])
-    profile_mesh.materials.append(review_material); profile_mesh.update()
-    side_profile=bpy.data.objects.new('review-only side-view ground profile',profile_mesh)
-    scene.collection.objects.link(side_profile)
     # Render view and light objects are created only after GLB import.
     add_lighting()
     # Preserve the source photograph unchanged; compare at the same broadside
@@ -732,7 +739,6 @@ def render_imported_review():
     side_cam.data.type='ORTHO'; side_cam.data.ortho_scale=82
     scene.camera=side_cam; scene.render.resolution_x,scene.render.resolution_y=(2048,900)
     scene.render.filepath=str(raw/'broadside.jpg'); bpy.ops.render.render(write_still=True)
-    side_profile.hide_render=True
     for obj in exported_objects:
         if obj.type=='MESH': obj.hide_render=False
     quarter_cam=camera('review bow three-quarter', (74,-1.15,-426), (27,5,-470), 25)
