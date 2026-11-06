@@ -253,9 +253,9 @@ def build_pan():
         for j in range(nz):
             a = i * (nz + 1) + j
             b, c, d = a + nz + 1, a + nz + 2, a + 1
-            faces.append((a, b, c, d))
+            faces.append((a, d, c, b))
     mesh_data = bpy.data.meshes.new('salt pan cracked crust')
-    mesh_data.from_pydata(verts, [], faces)
+    mesh_data.from_pydata([town.game_vector(vertex) for vertex in verts], [], faces)
     uv_layer = mesh_data.uv_layers.new(name='UVMap')
     for poly in mesh_data.polygons:
         for loop_index in poly.loop_indices:
@@ -360,7 +360,7 @@ if last_stage >= 0:
     shot('works-platform', 'quarter', (8.6, 1.2, 15.0), (3.5, 2.1, 0), 1500, 650, lens=17)
 if last_stage >= 1:
     shot('salt-pan', 'side', (0, 2.1, 37), (0, .35, 0), 1200, 520, ortho=33)
-    shot('salt-pan', 'quarter', (10.6, 1.2, 10.6), (0, .35, 0), 1100, 720, lens=22)
+    shot('salt-pan', 'quarter', (10.6, 1.2, 10.6), (0, .35, 0), 1100, 720, lens=12)
     shot('salt-pan', 'top', (0, 30, 0), (0, .3, 0), 850, 850, ortho=33)
 if last_stage >= 2:
     shot('salt-heap', 'side', (0, 2.4, 17), (0, 2.4, 0), 1200, 520, ortho=17)
