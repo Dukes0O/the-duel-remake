@@ -7,7 +7,7 @@ private GLB under .qa-dist, and --paths-only for a no-write plan.
 import argparse, json, math, sys
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--candidate',action='store_true');p.add_argument('--paint-photo',default='C:/Users/kyleb/.codex/generated_images/01a1adc0-a5ff-7e93-9239-5f1fad064264/exec-d53872c5-d976-4b22-a386-ec9340923250.png');p.add_argument('--paths-only',action='store_true')
+p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--candidate',action='store_true');p.add_argument('--paint-photo',default=str(Path(__file__).with_name('machine-wear.jpg')));p.add_argument('--paths-only',action='store_true')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve();glb=root/('.qa-dist/town-machines-1/machines-1.glb' if a.candidate else 'public/assets/models/wasteland/town/machines-1.glb');blend=root/'art-build/town/machines-1.blend';evidence=Path(a.render);evidence=evidence if evidence.is_absolute() else root/evidence
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)] if a.render else []}));raise SystemExit(0)
@@ -17,8 +17,18 @@ sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 if not Path(a.paint_photo).exists():raise FileNotFoundError(a.paint_photo)
-mats=town.make_materials({'rusted-steel':Path(a.paint_photo),'galvanised-tin':Path(a.paint_photo)})
+mats=town.make_materials({'rusted-steel':Path(a.paint_photo),'galvanised-tin':Path(a.paint_photo),'sand':Path(a.paint_photo)})
 steel=mats['rusted-steel'];paint=mats['galvanised-tin'];tin=mats['rusted-steel'];black=mats['iron-dark'];glass=mats['dirty-glass'];rubber=mats['iron-dark'];sand=mats['sand']
+# Pull the generated atlas back toward the photo's low-saturation olive, steel
+# and earth colors; keep its chip and weld detail while reducing orange.
+for mat,value,saturation in ((steel,.96,.48),(paint,1.08,.70),(tin,.76,.42)):
+ nodes=mat.node_tree.nodes;links=mat.node_tree.links;bsdf=nodes.get('Principled BSDF')
+ source=next((n.outputs['Color'].links[0].from_node for n in nodes if n.type=='TEX_IMAGE' and n.outputs['Color'].links),None)
+ if source:
+  links.new(source.outputs['Color'],nodes.new('ShaderNodeHueSaturation').inputs['Color'])
+  hue=next(n for n in nodes if n.type=='HUE_SAT')
+  hue.inputs['Value'].default_value=value;hue.inputs['Saturation'].default_value=saturation
+  links.new(hue.outputs['Color'],bsdf.inputs['Base Color'])
 # Keep the single shared 1K atlas compact inside the GLB.
 atlas=bpy.data.images['Scablands shared town wear atlas 1K'];atlas.file_format='JPEG';atlas.filepath_raw=str(root/'.qa-dist/town-machines-1/atlas.jpg');Path(atlas.filepath_raw).parent.mkdir(parents=True,exist_ok=True);atlas.save();atlas.pack()
 def box(name,loc,size,mat=steel,bevel=.035,parent=None):
@@ -28,9 +38,12 @@ def box(name,loc,size,mat=steel,bevel=.035,parent=None):
  if parent: parent_keep(o,parent)
  return o
 def parent_keep(o,parent):
- # Geometry is authored in family-local coordinates. Preserve that local
- # transform so all children follow their real parent hinge when it moves.
+ # Mesh coordinates are authored in their immediate part's local space.
  o.parent=parent;o.matrix_parent_inverse.identity()
+def reparent_world(o,parent):
+ # Use only when moving an already-authored pivot under a new machine part.
+ bpy.context.view_layer.update();world=o.matrix_world.copy();o.parent=parent
+ o.matrix_parent_inverse.identity();o.matrix_world=world
 def empty(name,loc,parent=None):
  o=bpy.data.objects.new(name,None);bpy.context.collection.objects.link(o);o.location=loc
  if parent:parent_keep(o,parent)
@@ -49,18 +62,40 @@ def weld(name,a,b,parent=None):return beam(name,a,b,.022,tin,parent)
 def uv_surface(mesh,mapper):
  layer=mesh.uv_layers.new(name='physical-scale material mapping')
  for loop in mesh.loops:layer.data[loop.index].uv=mapper(mesh.vertices[loop.vertex_index].co)
-def wheel(name,x,y,z,r,width,parent,drive=False):
- cyl(name+' tyre',(x,y,z),r,width,rubber,'X',24,parent)
- cyl(name+' rusty rim',(x*1.015,y,z),r*.61,width*1.06,steel,'X',20,parent)
- cyl(name+' hub',(x*1.03,y,z),r*.23,width*1.12,tin,'X',16,parent)
- for i in range(10):
-  angle=i*math.tau/10;cyl(name+f' lug {i}',(x*1.04,y+math.sin(angle)*r*.43,z+math.cos(angle)*r*.43),.035,width*1.14,black,'X',8,parent)
+def lugged_tyre(name,x,y,z,r,width,parent):
+ # Continuous carcass with the chevrons formed into its silhouette, adapted
+ # from the accepted Scarab paddle-tyre recipe. X is the axle direction.
+ seg,rings=40,10;verts=[];faces=[]
+ for i in range(seg):
+  theta=math.tau*i/seg
+  for j in range(rings):
+   phi=math.tau*j/rings;across=abs((phi-math.pi/2+math.pi)%(math.tau)-math.pi)
+   pitch=math.tau/12;sweep=(phi-math.pi/2)*.60
+   delta=(theta-sweep+math.pi)%(math.tau)-math.pi
+   dist=abs((delta+pitch/2)%pitch-pitch/2)
+   lug=.095*max(0,1-dist/.18)*max(0,1-across/.82) if dist<.18 else 0
+   radius=r*.78+r*.22*math.sin(phi)+lug
+   verts.append((x+width*.5*math.cos(phi),y+radius*math.sin(theta),z+radius*math.cos(theta)))
+ for i in range(seg):
+  for j in range(rings):
+   a=i*rings+j;b=((i+1)%seg)*rings+j;c=((i+1)%seg)*rings+(j+1)%rings;d=i*rings+(j+1)%rings;faces.append((a,b,c,d))
+ mesh=bpy.data.meshes.new(name+' molded chevron carcass');mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(name+' continuous chevron tread',mesh);bpy.context.collection.objects.link(o);o.data.materials.append(rubber);parent_keep(o,parent)
+ uv=mesh.uv_layers.new(name='metre-scaled tread');
+ for poly in mesh.polygons:
+  poly.use_smooth=True
+  for li in poly.loop_indices:
+   vi=mesh.loops[li].vertex_index;uv.data[li].uv=(verts[vi][1]*2,verts[vi][0]*2)
  for side in (-1,1):
-  for i in range(24):
-   angle=i*math.tau/24
-   # deep, separate rubber cleats wrap the shoulder in purposeful groups
-   if i%8==0:box(name+f' tread {side} {i}',(x+side*width*.29,y+math.sin(angle)*r*.89,z+math.cos(angle)*r*.89),(.10,r*.17,.08),black,.018,parent)
-def gear_track(name,x,cy,z0,length,height,parent):
+  cyl(name+' dished rim',(x+side*width*.30,y,z),r*.60,width*.42,steel,'X',24,parent)
+  cyl(name+' sidewall ring',(x+side*width*.39,y,z),r*.53,width*.12,black,'X',24,parent)
+  cyl(name+' hub',(x+side*width*.45,y,z),r*.25,width*.10,tin,'X',16,parent)
+  for i in range(12):
+   angle=math.tau*i/12
+   cyl(name+f' rim bolt {side} {i}',(x+side*width*.51,y+math.sin(angle)*r*.45,z+math.cos(angle)*r*.45),.025,width*.055,steel,'X',8,parent)
+
+def wheel(name,x,y,z,r,width,parent,drive=False):
+ lugged_tyre(name,x,y,z,r,width,parent)
+def gear_track(name,x,cy,z0,length,height,parent,width=.60):
  # broad reinforced rubberized loop with a row of unmistakable individual steel shoes
  r=height/2;straight=length/2-r;outline=[(-straight,-r),(straight,-r),(straight,r),(-straight,r)]
  # stadium side band, low-sided extruded mesh in (along,up) plane
@@ -74,7 +109,7 @@ def gear_track(name,x,cy,z0,length,height,parent):
    ang=ang0+math.pi*j/8;path.append((cx+math.cos(ang)*r,math.sin(ang)*r))
  path=path[:9]+path[9:]
  verts=[]
- for xx,zz in path:verts.extend([(x-.16,cy+xx,z0+zz),(x+.16,cy+xx,z0+zz)])
+ for xx,zz in path:verts.extend([(x-width/2,cy+xx,z0+zz),(x+width/2,cy+xx,z0+zz)])
  faces=[]
  for i in range(len(path)):
   n=(i+1)%len(path);faces.append((2*i,2*n,2*n+1,2*i+1))
@@ -82,12 +117,21 @@ def gear_track(name,x,cy,z0,length,height,parent):
  for i,(xx,zz) in enumerate(path):
   # plate orientation around loop, every shoe follows the curve
   ang=math.atan2(zz,xx)
-  shoe=box(name+f' shoe {i:02d}',(x,cy+xx,z0+zz),(.36,.30,.13),steel,.025,parent)
+  shoe=box(name+f' shoe {i:02d}',(x,cy+xx,z0+zz),(.37,width*.94,.055),black,.015,parent)
   shoe.rotation_euler[0]=ang
-  cyl(name+f' pin {i:02d}',(x-.193,cy+xx,z0+zz),.045,.025,tin,'X',8,parent)
+  bar=box(name+f' raised grouser {i:02d}',(x,cy+xx,z0+zz+.035),(.20,width*.94,.055),steel,.018,parent);bar.rotation_euler[0]=ang
+  cyl(name+f' shoe pin {i:02d}',(x-width*.51,cy+xx,z0+zz),.035,.04,tin,'X',8,parent)
+ # Continuous steel frame, drive sprocket, front idler and real running rollers.
+ box(name+' heavy track frame',(x,cy,z0-.02),(.42,length*.69,.33),black,.07,parent)
+ for end,label in ((-straight,'drive sprocket'),(straight,'front idler')):
+  cyl(name+' '+label,(x,cy+end,z0),r*.78,width*.80,steel,'X',24,parent)
+  cyl(name+' '+label+' dark hub',(x-width*.43,cy+end,z0),r*.36,.08,black,'X',16,parent)
  for i in range(5):
-  yy=cy-length*.30+i*length*.15
-  cyl(name+f' road roller {i}',(x,yy,z0),r*.34,.26,steel,'X',16,parent)
+  yy=cy-length*.27+i*length*.135
+  cyl(name+f' bottom road roller {i}',(x,yy,z0-r*.25),r*.30,width*.64,steel,'X',18,parent)
+ for i in range(2):
+  yy=cy-length*.18+i*length*.36
+  cyl(name+f' top return roller {i}',(x,yy,z0+r*.66),r*.16,width*.44,steel,'X',14,parent)
 
 def tractor(prefix,root):
  # Narrow agricultural donor proportions: long bonnet, open rear wheel stance.
@@ -96,12 +140,13 @@ def tractor(prefix,root):
  hood=box(prefix+' hood crown',(0,-1.02,2.22),(1.05,1.23,.12),tin,.045,root);hood.rotation_euler[0]=-.06
  box(prefix+' radiator grille',(0,-1.76,1.76),(.82,.08,.75),black,.035,root)
  for x in (-.31,-.16,0,.16,.31):box(prefix+f' grille rib {x}',(x,-1.815,1.76),(.035,.025,.62),tin,.012,root)
- for x in (-.64,.64):
+ for x in (-.70,.70):
   cyl(prefix+' headlamp',(x,-1.83,2.06),.14,.11,glass,'Y',16,root)
   cyl(prefix+' lamp rim',(x,-1.89,2.06),.17,.05,tin,'Y',16,root)
-  box(prefix+' bent fender',(x,.03,1.55),(.30,1.35,.10),steel,.06,root)
-  # big back wheels, smaller front steering pair: close to the photographic tractor
-  wheel(prefix+(' rear' if abs(x)>.6 else ' front'),x*1.05,.90 if abs(x)>.6 else -1.10,.79,.93 if abs(x)>.6 else .53,.34,root)
+  box(prefix+' bent rear fender',(x,.83,1.59),(.38,1.62,.11),steel,.06,root)
+  # 1.7 m rear wheels and 1 m steering wheels, matching a farm tractor.
+  wheel(prefix+' large rear wheel',x,1.02,.86,.85,.38,root)
+  wheel(prefix+' small front wheel',x,-1.08,.52,.50,.30,root)
  # seat and open rollover hoop
  box(prefix+' sprung seat',(0,.47,1.60),(.55,.48,.20),black,.07,root)
  beam(prefix+' steering column',(0,-.15,1.86),(0,-.38,2.20),.05,black,root)
@@ -118,169 +163,187 @@ def tractor(prefix,root):
   for y in (-.43,.25):cyl(prefix+' fender rivet',(x,y,1.61),.038,.06,tin,'X',8,root)
 def trencher(root):
  tractor('trencher tractor',root)
- # rear hitch and side throw chute
+ # Four-metre rear boom has two formed cheek plates, a chain and a side spoil chute.
  box('trencher three point hitch',(0,1.67,.83),(.72,.42,.55),steel,.06,root)
- chute=box('trencher side dirt chute',(.88,1.10,1.45),(.52,1.34,.24),tin,.08,root);chute.rotation_euler[0]=-.18
- for i in range(4):beam(f'trencher chute brace {i}',(.57,.60+i*.21,1.53),(.97,.66+i*.20,1.58),.028,steel,root)
+ chute=box('trencher side dirt chute',(.93,1.25,1.50),(.55,1.75,.25),tin,.08,root);chute.rotation_euler[0]=-.18
+ for i in range(4):beam(f'trencher chute brace {i}',(.59,.60+i*.28,1.55),(1.13,.66+i*.27,1.62),.028,steel,root)
  boom=empty('trencher:boom',(0,1.82,1.02),root)
- # curved twin girders slant to the trenching tooth at ground level
- beam('trencher boom near cheek',(-.34,0,.03),(-.34,2.65,-.42),.11,paint,boom)
- beam('trencher boom far cheek',(.34,0,.03),(.34,2.65,-.42),.11,steel,boom)
- for i in range(8):
-  t=i/7;y=t*2.65;z=.03-t*.45
+ beam('trencher boom near cheek',(-.34,0,.03),(-.34,3.85,-.42),.13,paint,boom)
+ beam('trencher boom far cheek',(.34,0,.03),(.34,3.85,-.42),.13,steel,boom)
+ for i in range(12):
+  t=i/11;y=t*3.85;z=.03-t*.45
   beam(f'trencher chain cross pin {i}',(-.35,y,z),(.35,y,z),.045,tin,boom)
   for side in (-1,1):box(f'trencher digging tooth {i} {side}',(side*.36,y,z-.065),(.13,.17,.11),steel,.02,boom)
  # separate rotating chain node, pivot at drive sprocket centre
  chain=empty('trencher:chain',(0,0,0),boom);chain.location=(0,0,.07)
  links=[]
- for i in range(24):
-  ang=math.tau*i/24;links.append((1.32+1.38*math.cos(ang),.02+.36*math.sin(ang)))
+ for i in range(32):
+  ang=math.tau*i/32;links.append((1.91+1.91*math.cos(ang),.02+.36*math.sin(ang)))
  for i,(yy,zz) in enumerate(links):
   nxt=links[(i+1)%len(links)];direction=math.atan2(nxt[1]-zz,nxt[0]-yy)
   for x in (-.40,.40):
-   shoe=box(f'trencher chain forged link {i} {x}',(x,yy,zz),(.18,.21,.085),black,.018,chain);shoe.rotation_euler[0]=direction
+   shoe=box(f'trencher chain forged link {i} {x}',(x,yy,zz),(.18,.21,.055),black,.012,chain);shoe.rotation_euler[0]=direction
    if i%3==0:
     tooth=box(f'trencher chain replaceable tooth {i} {x}',(x,yy,zz-.07),(.12,.10,.095),tin,.018,chain);tooth.rotation_euler[0]=direction
- # exposed landing-gear ram to lower the boom
- cyl('trencher hydraulic cylinder',(0,2.10,1.31),.12,.72,steel,'X',16,root)
- beam('trencher ram chrome rod',(0,1.91,1.22),(0,1.91,.62),.055,tin,root)
+ # Paired aircraft landing-gear rams tie chassis and moving boom at its pins.
+ for side in (-1,1):
+  beam('trencher hydraulic barrel',(side*.42,1.28,1.35),(side*.42,2.43,1.12),.10,steel,root)
+  beam('trencher polished piston',(side*.42,.61,.10),(side*.42,1.20,-.08),.045,tin,boom)
  # Build poses rotate at pivot around X, matching the lateral hinge.
  return boom,chain
 
 def excavator(root):
- for x in (-.91,.91):gear_track('excavator track '+str(x),x,.30,.68,3.45,1.20,root)
- box('excavator lower carbody',(0,.38,1.04),(2.0,2.82,.55),black,.12,root)
- box('excavator engine counterweight',(0,1.22,1.71),(1.88,1.20,1.05),paint,.19,root)
- box('excavator rear counterweight cap',(0,1.80,1.89),(1.62,.24,.62),steel,.12,root)
- cyl('excavator turntable bearing',(0,.12,1.47),.82,.22,black,'Z',32,root)
- cyl('excavator bearing ring',(0,.12,1.59),.77,.08,tin,'Z',32,root)
- cab=empty('excavator:cab',(0,-.40,1.57),root)
- box('excavator cab lower tub',(0,0,.65),(1.36,1.26,.94),paint,.13,cab)
- # cab rises forward, with broad glazed windscreen and mesh side window guards
- box('excavator cab roof',(0,-.02,1.92),(1.42,1.42,.15),steel,.065,cab)
- box('excavator front glass',(0,-.665,1.34),(1.08,.035,.87),glass,.016,cab)
- for x in (-.61,.61):beam('excavator cab front pillar',(x,-.70,.92),(x,-.62,1.98),.055,steel,cab)
- for y in (-.52,.49):beam('excavator cab side pillar',(0.70,y,.98),(.70,y,1.97),.045,tin,cab)
- box('excavator side door',(0.716,.03,1.34),(.045,.84,.88),paint,.03,cab)
- box('excavator door glass',(.744,.02,1.58),(.026,.56,.40),glass,.01,cab)
- for i in range(5):beam('excavator cab safety mesh',(.765,-.38+i*.18,1.18),(.765,-.38+i*.18,1.88),.012,steel,cab)
- for i in range(4):beam('excavator cab mesh cross',(.765,-.38,1.20+i*.19),(.765,.34,1.20+i*.19),.012,steel,cab)
- boom=empty('excavator:boom',(0,-.25,.65),cab)
- # heavy arched box-section boom forged from tapered polygon sides
- beam('excavator boom lower beam',(0,0,0),(0,-1.48,.58),.21,paint,boom)
- beam('excavator boom upper beam',(0,-.08,.37),(0,-1.51,.91),.145,steel,boom)
- for x in (-.18,.18):beam('excavator boom side cheek',(x,-.03,.14),(x,-1.46,.77),.065,tin,boom)
- arm=empty('excavator:arm',(0,-1.48,.58),boom)
- beam('excavator dipper arm',(0,0,0),(0,-1.72,-1.18),.14,paint,arm)
- beam('excavator dipper reinforcing spine',(0,-.10,.10),(0,-1.65,-1.08),.06,steel,arm)
- bucket=empty('excavator:bucket',(0,-1.72,-1.18),arm)
- # curved shell from heavy back plate, cheeks, serrated lip and teeth
- box('excavator bucket back',(0,-.14,-.20),(.78,.22,.68),steel,.09,bucket)
- for x in (-.37,.37):
-  cheek=box('excavator bucket side cheek',(x,-.20,-.41),(.10,.68,.65),paint,.07,bucket);cheek.rotation_euler[0]=-.30
- box('excavator bucket cutting lip',(0,-.54,-.59),(.94,.24,.14),tin,.035,bucket)
+ # 4.6 m undercarriage, 3 m overall width, 0.6 m shoes and 0.9 m belt height.
+ for x in (-1.20,1.20):gear_track('excavator track '+str(x),x,.25,.90,4.60,.90,root,.60)
+ box('excavator lower carbody',(0,.38,1.43),(2.05,2.82,.55),black,.12,root)
+ box('excavator low swing deck',(0,.12,1.73),(2.45,2.60,.32),steel,.13,root)
+ box('excavator engine counterweight',(0,1.22,2.08),(2.08,1.20,.72),paint,.19,root)
+ box('excavator rear counterweight cap',(0,1.80,2.20),(1.82,.24,.42),steel,.12,root)
+ cyl('excavator turntable bearing',(0,.12,1.88),.90,.22,black,'Z',32,root)
+ cyl('excavator bearing ring',(0,.12,2.00),.84,.08,tin,'Z',32,root)
+ cab=empty('excavator:cab',(-.64,-.34,1.96),root)
+ # Real 1 m wide cab, offset to the left of the boom; open posts and glass.
+ box('excavator cab lower tub',(0,0,.70),(1.0,1.48,.82),paint,.09,cab)
+ box('excavator cab roof',(0,-.02,1.60),(1.14,1.65,.12),steel,.05,cab)
+ box('excavator front glass',(0,-.755,1.14),(.77,.025,.88),glass,.012,cab)
+ for x in (-.46,.46):beam('excavator cab front pillar',(x,-.78,.78),(x,-.70,1.66),.035,steel,cab)
+ for y in (-.68,.68):beam('excavator cab side pillar',(x if y>0 else -.48,y,.78),(x if y>0 else -.48,y,1.65),.032,tin,cab)
+ box('excavator side door',(.51,.02,1.16),(.035,.84,.92),paint,.022,cab)
+ box('excavator door glass',(.535,.02,1.42),(.02,.56,.46),glass,.01,cab)
+ for i in range(5):beam('excavator cab door mesh',(.55,-.38+i*.18,.96),(.55,-.38+i*.18,1.63),.009,steel,cab)
+ for i in range(4):beam('excavator cab mesh cross',(.55,-.38,.98+i*.19),(.55,.34,.98+i*.19),.009,steel,cab)
+ box('excavator driver seat',(-.06,.14,.92),(.44,.46,.18),black,.05,cab)
+ beam('excavator joystick',(.27,.35,.90),(.27,.28,1.20),.025,black,cab)
+ boom=empty('excavator:boom',(0,-.24,.72),root)
+ # Long bent boom built from plated sections: 5.7 m to the dipper pin.
+ beam('excavator boom lower beam',(0,0,0),(0,-4.70,.62),.26,paint,boom)
+ beam('excavator boom upper beam',(0,-.08,.42),(0,-5.55,1.20),.17,steel,boom)
+ beam('excavator boom side cheek',(-.21,-.03,.14),(-.21,-5.40,1.0),.08,tin,boom)
+ beam('excavator boom side cheek',(.21,-.03,.14),(.21,-5.40,1.0),.08,tin,boom)
+ arm=empty('excavator:arm',(0,-5.50,1.12),boom)
+ # 2.9 m dipper with a visible dog-leg and a compact 1 m toothed bucket.
+ beam('excavator dipper arm',(0,0,0),(0,-2.34,-1.65),.16,paint,arm)
+ beam('excavator dipper reinforcing spine',(0,-.10,.10),(0,-2.25,-1.52),.065,steel,arm)
+ bucket=empty('excavator:bucket',(0,-2.34,-1.65),arm)
+ # Rounded scoop shell from faceted formed plates, cheeks, cutting lip and teeth.
+ box('excavator bucket back',(0,-.18,-.20),(.84,.30,.62),steel,.10,bucket)
+ for x in (-.39,.39):
+  cheek=box('excavator bucket side cheek',(x,-.24,-.42),(.12,.72,.62),paint,.07,bucket);cheek.rotation_euler[0]=-.30
+ box('excavator bucket cutting lip',(0,-.57,-.58),(.98,.24,.13),steel,.025,bucket)
  for i in range(5):
-  x=-.36+i*.18;tooth=box('excavator bucket tooth '+str(i),(x,-.68,-.62),(.12,.30,.10),steel,.025,bucket);tooth.rotation_euler[0]=-.12
+  x=-.36+i*.18;tooth=box('excavator bucket tooth '+str(i),(x,-.70,-.61),(.10,.27,.085),tin,.02,bucket);tooth.rotation_euler[0]=-.12
  # real hinge pins and visible hydraulic cylinders follow component hierarchy
  cyl('excavator boom hinge pin',(0,0,0),.19,.54,tin,'X',20,boom)
- cyl('excavator arm hinge pin',(0,-1.48,.58),.15,.48,tin,'X',20,boom)
+ cyl('excavator arm hinge pin',(0,-5.50,1.12),.15,.48,tin,'X',20,boom)
  cyl('excavator bucket hinge pin',(0,0,0),.14,.54,tin,'X',18,bucket)
  for side in (-1,1):
-  beam('excavator boom ram barrel',(side*.42,.05,.30),(side*.42,-.48,.72),.105,steel,cab)
-  beam('excavator ram chrome rod',(side*.42,-.48,.72),(side*.42,-.72,1.05),.043,tin,cab)
-  beam('excavator arm ram barrel',(side*.32,-.35,.38),(side*.32,-1.02,.70),.085,steel,boom)
-  beam('excavator arm chrome rod',(side*.32,-1.02,.70),(side*.32,-1.63,.33),.038,tin,boom)
-  beam('excavator bucket ram',(side*.29,-.24,.17),(side*.29,-.82,.30),.067,steel,arm)
-  beam('excavator bucket rod',(side*.29,-.82,.30),(side*.29,-1.43,-.25),.032,tin,arm)
+  beam('excavator boom ram barrel',(side*.42,-.05,1.65),(side*.42,-1.12,1.48),.105,steel,root)
+  beam('excavator ram chrome rod',(side*.42,-.88,.76),(side*.42,-1.52,.93),.043,tin,boom)
+  beam('excavator arm ram barrel',(side*.32,-.60,.42),(side*.32,-5.35,1.05),.085,steel,boom)
+  beam('excavator arm chrome rod',(side*.32,0,0),(side*.32,.78,.08),.038,tin,arm)
+  beam('excavator bucket ram',(side*.29,-.46,.16),(side*.29,-2.30,-1.45),.067,steel,arm)
+  beam('excavator bucket rod',(side*.29,0,0),(side*.29,.68,.10),.032,tin,bucket)
+ # Flexible dark hoses loop from the swing house, follow the boom and turn at
+ # the arm; the two runs have real bends rather than painted stripes.
+ for side in (-1,1):
+  pts=[(side*.34,-.20,.88),(side*.36,-.85,1.20),(side*.36,-1.55,1.13),(side*.36,-2.10,.96),(side*.36,-3.65,.78),(side*.36,-5.15,.95)]
+  curve=bpy.data.curves.new('excavator boom hydraulic hose','CURVE');curve.dimensions='3D';curve.bevel_depth=.035;curve.bevel_resolution=2
+  spline=curve.splines.new('POLY');spline.points.add(len(pts)-1)
+  for pnt,co in zip(spline.points,pts):pnt.co=(*co,1)
+  hose=bpy.data.objects.new('excavator black pressure hose',curve);bpy.context.collection.objects.link(hose);hose.data.materials.append(black);parent_keep(hose,boom)
  # roof handrail, exhaust, tie-down lugs, undercarriage sand guards
  cyl('excavator exhaust stack',(.62,1.10,2.56),.08,.55,black,'Z',12,root)
  for i in range(7):box('excavator counterweight vent '+str(i),(-.66+i*.22,1.82,1.55),(.10,.03,.22),black,.02,root)
  return cab,boom,arm,bucket
 
 def dump_truck(root):
- box('dump truck ladder frame',(0,.05,1.16),(2.15,5.40,.42),black,.12,root)
- box('dump truck front axle',(0,-1.88,.88),(2.75,.34,.24),steel,.05,root)
- box('dump truck rear bogie',(0,1.43,.86),(2.82,.50,.34),steel,.07,root)
+ box('dump truck ladder frame',(0,.18,1.16),(2.35,7.30,.42),black,.12,root)
+ box('dump truck front axle',(0,-2.55,.88),(3.00,.34,.24),steel,.05,root)
+ box('dump truck rear bogie',(0,2.02,.86),(3.04,.58,.34),steel,.07,root)
  # six industrial tyres, two steering and four tandem rear. Deep shoulder tread blocks.
  for side in (-1,1):
-  for i,y in enumerate((-1.85,.96,1.86)):
-   wheel(f'dump truck wheel {side} {i}',side*1.23,y,.91,.72,.38,root)
+  for i,y in enumerate((-2.50,1.35,2.68)):
+   wheel(f'dump truck wheel {side} {i}',side*1.30,y,.86,.80,.46,root)
  # forward control cab with a tapering rounded hood, radiator, screen and hand rails
- box('dump truck cab lower sill',(0,-1.72,1.68),(1.92,1.48,.92),paint,.18,root)
- box('dump truck bonnet',(0,-2.48,1.82),(1.80,1.12,.68),steel,.19,root)
- box('dump truck grille',(0,-3.055,1.81),(1.18,.08,.51),black,.045,root)
- for x in (-.45,-.23,0,.23,.45):box('dump truck radiator bar '+str(x),(x,-3.108,1.81),(.045,.035,.42),tin,.015,root)
+ box('dump truck cab lower sill',(0,-2.30,1.75),(1.70,1.40,.82),paint,.16,root)
+ box('dump truck bonnet',(0,-3.05,1.79),(1.90,1.25,.68),steel,.19,root)
+ box('dump truck grille',(0,-3.69,1.78),(1.32,.08,.58),black,.045,root)
+ for x in (-.55,-.33,-.11,.11,.33,.55):box('dump truck radiator bar '+str(x),(x,-3.75,1.78),(.045,.035,.49),tin,.015,root)
  for side in (-1,1):
-  box('dump truck windshield',(side*.46,-2.52,2.43),(.75,.045,.87),glass,.025,root).rotation_euler[1]=side*.08
-  beam('dump truck windscreen pillar',(side*.88,-2.59,1.95),(side*.87,-2.31,2.92),.055,steel,root)
-  beam('dump truck mirror stalk',(side*.93,-2.15,2.26),(side*1.20,-2.30,2.66),.035,tin,root)
-  box('dump truck mirror',(side*1.20,-2.33,2.69),(.22,.10,.32),steel,.03,root)
-  for y in (-2.62,-2.18):cyl('dump truck headlamp',(side*.79,y,1.88),.13,.07,glass,'Y',12,root)
-  box('dump truck step',(side*1.12,-1.24,1.17),(.22,.72,.09),tin,.025,root)
+  beam('dump truck narrow cab post',(side*.70,-2.90,1.96),(side*.66,-2.83,2.88),.045,steel,root)
+  beam('dump truck narrow cab rear post',(side*.70,-1.58,1.96),(side*.70,-1.58,2.88),.045,tin,root)
+  box('dump truck windshield',(side*.34,-2.85,2.42),(.60,.035,.82),glass,.02,root).rotation_euler[1]=side*.08
+  beam('dump truck cab roof rail',(side*.70,-2.90,2.88),(side*.70,-1.58,2.88),.045,steel,root)
+  beam('dump truck mirror stalk',(side*.75,-2.48,2.28),(side*1.08,-2.62,2.57),.035,tin,root)
+  box('dump truck mirror',(side*1.08,-2.65,2.60),(.20,.08,.28),steel,.03,root)
+  for y in (-3.18,-2.76):cyl('dump truck headlamp',(side*.84,y,1.88),.14,.07,glass,'Y',12,root)
+  box('dump truck step',(side*1.10,-1.90,1.18),(.22,.82,.09),tin,.025,root)
  # tip body: hinged at rear, polygonal tray with sloped front bulkhead and folded side ribs
- bed=empty('dump-truck:bed',(0,2.35,1.45),root)
+ bed=empty('dump-truck:bed',(0,3.10,1.45),root)
  # local bed origin is the actual rear hinge pin, all steel is forward (negative y)
- box('dump tray floor',(0,-.88,.30),(2.20,3.82,.18),steel,.06,bed)
+ box('dump tray floor',(0,-1.20,.30),(2.55,4.50,.18),steel,.06,bed)
  for side in (-1,1):
   # plate panels rise and widen at their upper lips
-  verts=[(side*1.00,-2.75,.35),(side*1.00,.98,.35),(side*1.20,.98,1.55),(side*1.20,-2.75,1.55),(side*1.03,-2.75,.55),(side*1.03,.98,.55)]
+  verts=[(side*1.22,-3.45,.35),(side*1.22,1.05,.35),(side*1.42,1.05,1.55),(side*1.42,-3.45,1.55),(side*1.25,-3.45,.55),(side*1.25,1.05,.55)]
   mesh=bpy.data.meshes.new('dump tray pressed side');mesh.from_pydata(verts,[],[(0,1,2,3)]);mesh.update();uv_surface(mesh,lambda v:(v.y/2,v.z/2));obj=bpy.data.objects.new('dump tray rolled side wall',mesh);bpy.context.collection.objects.link(obj);obj.data.materials.append(paint);parent_keep(obj,bed)
   for i in range(7):
-   y=-2.52+i*.53;weld(f'dump tray side rib {side} {i}',(side*1.03,y,.47),(side*1.20,y,1.44),bed)
-   cyl(f'dump tray rivet {side} {i}',(side*1.21,y,1.32),.045,.035,tin,'X',8,bed)
+   y=-3.18+i*.68;weld(f'dump tray side rib {side} {i}',(side*1.25,y,.47),(side*1.42,y,1.44),bed)
+   cyl(f'dump tray rivet {side} {i}',(side*1.43,y,1.32),.045,.035,tin,'X',8,bed)
  # front bulkhead tapers into the cab guard
- wall=box('dump tray headboard',(0,-2.66,.94),(2.10,.20,1.35),steel,.12,bed);wall.rotation_euler[0]=-.10
- box('dump tray tailgate',(0,1.00,.96),(2.15,.17,1.25),paint,.07,bed)
+ wall=box('dump tray headboard',(0,-3.37,.94),(2.50,.20,1.35),steel,.12,bed);wall.rotation_euler[0]=-.10
+ box('dump tray tailgate',(0,1.04,.96),(2.50,.17,1.25),paint,.07,bed)
  for x in (-.70,.70):
-  weld('dump tray hinge bracket',(x,.95,.24),(x,1.35,.14),bed)
-  cyl('dump truck rear hinge pin',(x,2.35,1.45),.16,.34,tin,'X',16,root)
+  weld('dump tray hinge bracket',(x,1.00,.24),(x,1.38,.14),bed)
+  cyl('dump truck rear hinge pin',(x,3.10,1.45),.16,.34,tin,'X',16,root)
  for side in (-1,1):
-  beam('dump truck hoist cylinder',(side*.48,.18,1.32),(side*.48,-.22,2.57),.13,steel,root)
-  beam('dump truck hoist polished rod',(side*.48,-.22,2.57),(side*.48,-.53,2.85),.055,tin,root)
- load=empty('dump-truck:load',(0,-.82,.70),bed)
+  beam('dump truck hoist cylinder',(side*.58,1.15,1.29),(side*.58,1.02,2.32),.12,steel,root)
+  beam('dump truck hoist polished rod',(side*.58,-2.08,.87),(side*.58,-2.45,1.33),.05,tin,bed)
+ load=empty('dump-truck:load',(0,-1.18,.54),bed)
  # lumpy heaped spoil with irregular triangular facets and darker mineral bands
- verts=[(-.88,-1.45,.08),(.88,-1.45,.08),(.92,1.10,.08),(-.92,1.10,.08),(0,-1.12,.70),(-.46,-.38,1.02),(.30,.26,1.10),(-.28,.82,.82),(.70,.65,.40),(-.72,.37,.52)]
+ verts=[(-1.10,-1.96,.08),(1.10,-1.96,.08),(1.10,1.10,.08),(-1.10,1.10,.08),(0,-1.65,1.48),(-.56,-.70,1.72),(.36,.10,1.78),(-.34,.78,1.42),(.82,.48,.38),(-.86,.31,.50)]
  faces=[(0,1,5),(0,5,4),(1,2,6),(1,6,5),(2,3,7),(2,7,6),(3,0,4),(3,4,7),(4,5,6),(4,6,7),(0,4,9),(0,9,3),(3,9,7),(1,8,2),(1,6,8),(2,8,7),(7,8,6)]
- mesh=bpy.data.meshes.new('compacted spoil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load spoil heap',mesh);bpy.context.collection.objects.link(heap);heap.data.materials.append(sand);heap.data.materials.append(steel);parent_keep(heap,load)
- for poly in mesh.polygons:
-  if poly.index in (4,7,10,12,15):poly.material_index=1
+ mesh=bpy.data.meshes.new('wet brown soil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load wet brown earth',mesh);bpy.context.collection.objects.link(heap);soil=bpy.data.materials.new('wet dark brown packed earth');soil.diffuse_color=(.105,.065,.038,1);soil.use_nodes=True;soil.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.105,.065,.038,1);soil.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.94;soilnoise=soil.node_tree.nodes.new('ShaderNodeTexNoise');soilnoise.inputs['Scale'].default_value=7;soilnoise.inputs['Detail'].default_value=3;soilramp=soil.node_tree.nodes.new('ShaderNodeValToRGB');soilramp.color_ramp.elements[0].color=(.045,.025,.015,1);soilramp.color_ramp.elements[1].color=(.20,.105,.055,1);soil.node_tree.links.new(soilnoise.outputs['Fac'],soilramp.inputs[0]);soil.node_tree.links.new(soilramp.outputs['Color'],soil.node_tree.nodes['Principled BSDF'].inputs['Base Color']);heap.data.materials.append(soil);parent_keep(heap,load)
+ for poly in mesh.polygons:poly.use_smooth=False
  for x in (-.88,.88):
   for y in (-2.28,-1.54,-.80,-.06,.68):box('dump bed longitudinal wear strip',(x,y,.48),(.11,.07,.09),tin,.02,bed)
  return bed,load
 
 def dozer(root):
- for x in (-1.06,1.06):gear_track('dozer track '+str(x),x,.12,.69,3.85,1.40,root)
- box('dozer main chassis',(0,.30,1.27),(2.15,3.35,.64),black,.15,root)
- box('dozer engine hood',(0,.19,1.91),(1.88,1.70,1.08),paint,.21,root)
+ for x in (-1.06,1.06):gear_track('dozer track '+str(x),x,.12,.70,3.60,1.10,root,.52)
+ box('dozer main chassis',(0,.30,1.35),(2.15,3.35,.64),black,.15,root)
+ box('dozer engine hood',(0,-.02,2.02),(1.72,2.10,1.08),paint,.21,root)
  box('dozer radiator grille',(0,-.73,1.89),(1.25,.09,.67),black,.04,root)
  for x in (-.48,-.24,0,.24,.48):box('dozer grille slat',(x,-.79,1.89),(.055,.025,.53),tin,.018,root)
- box('dozer cab tub',(0,.86,2.11),(1.46,1.55,1.24),steel,.15,root)
- box('dozer front glass',(0,.07,2.38),(1.14,.045,.62),glass,.025,root)
- box('dozer roof plate',(0,.88,2.83),(1.65,1.71,.15),paint,.07,root)
+ box('dozer cab tub',(0,1.18,2.16),(1.04,1.22,.72),steel,.10,root)
+ box('dozer front glass',(0,.55,2.48),(.82,.035,.72),glass,.018,root)
+ box('dozer roof plate',(0,1.18,2.87),(1.20,1.40,.13),paint,.06,root)
  for x in (-.64,.64):
-  beam('dozer cab front pillar',(x,.06,2.00),(x,.14,2.86),.055,tin,root)
-  beam('dozer cab rear pillar',(x,1.60,2.00),(x,1.62,2.86),.055,steel,root)
-  box('dozer door glass',(x*1.02,.85,2.38),(.035,1.20,.58),glass,.016,root)
-  for j in range(5):beam('dozer safety window guard',(x*1.04,.30+j*.23,2.09),(x*1.04,.30+j*.23,2.71),.014,steel,root)
+  x*=.72
+  beam('dozer cab front pillar',(x,.53,2.04),(x,.56,2.91),.035,tin,root)
+  beam('dozer cab rear pillar',(x,1.80,2.04),(x,1.80,2.91),.035,steel,root)
+  box('dozer door glass',(x*1.02,1.17,2.48),(.025,1.06,.68),glass,.012,root)
+  for j in range(5):beam('dozer safety window guard',(x*1.04,.68+j*.22,2.14),(x*1.04,.68+j*.22,2.78),.012,steel,root)
+ box('dozer seat',(0,1.35,2.12),(.46,.48,.16),black,.05,root)
+ beam('dozer control lever',(.35,1.15,2.05),(.35,1.13,2.44),.025,tin,root)
  # blade is a concave curved mouldboard panel, with heavy end cheeks, cutting edge and caps.
  blade=empty('dozer:blade',(0,-1.76,1.24),root)
  xs=[-1.72,-1.30,-.86,-.43,0,.43,.86,1.30,1.72];verts=[]
  for x in xs:
-  rise=.23*(1-(abs(x)/1.72)**2);sweep=.18*(1-(abs(x)/1.72)**2)
-  verts.extend([(x,-sweep,.05+rise),(x,-sweep-.18,.72+rise),(x,.04,.78+rise),(x,.12,.02+rise)])
+  rise=.22*(1-(abs(x)/1.72)**2);sweep=.18*(1-(abs(x)/1.72)**2)
+  verts.extend([(x,-sweep,.05+rise),(x,-sweep-.28,1.43+rise),(x,.04,1.48+rise),(x,.12,.02+rise)])
  faces=[]
  for i in range(len(xs)-1):
   j=i*4;k=(i+1)*4;faces.extend([(j,j+1,k+1,k),(j+1,j+2,k+2,k+1),(j+2,j+3,k+3,k+2)])
  mesh=bpy.data.meshes.new('curved dozer blade swept mouldboard');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.z/2));panel=bpy.data.objects.new('dozer curved welded mouldboard',mesh);bpy.context.collection.objects.link(panel);panel.data.materials.append(steel);parent_keep(panel,blade)
  for x in (-1.67,1.67):
-  cheek=box('dozer blade end cheek',(x,-.08,.49),(.20,.37,.89),steel,.07,blade);cheek.rotation_euler[1]=-.11*math.copysign(1,x)
- box('dozer blade replaceable cutting edge',(0,-.09,.03),(3.54,.22,.15),tin,.035,blade)
- for i in range(12):
-  x=-1.48+i*.27;cyl('dozer blade cutting bolt '+str(i),(x,-.22,.04),.05,.045,black,'Y',10,blade)
+  cheek=box('dozer blade end cheek',(x,-.08,.75),(.20,.37,1.55),steel,.07,blade);cheek.rotation_euler[1]=-.11*math.copysign(1,x)
+ box('dozer blade replaceable bare-steel cutting edge',(0,-.09,.03),(3.80,.22,.15),tin,.035,blade)
+ for i in range(16):
+  x=-1.65+i*.22;cyl('dozer blade cutting bolt '+str(i),(x,-.22,.04),.05,.045,black,'Y',10,blade)
  for side in (-1,1):
   beam('dozer lift arm',(side*.93,-1.06,1.37),(side*1.38,-1.76,.90),.11,steel,root)
   beam('dozer blade lift ram',(side*.83,-.54,2.22),(side*1.29,-1.57,1.65),.09,steel,root)
-  beam('dozer ram chrome piston',(side*1.29,-1.57,1.65),(side*1.42,-1.82,1.36),.043,tin,root)
+  beam('dozer ram chrome piston',(side*.05,1.0,.42),(side*.05,.64,.18),.043,tin,blade)
  for side in (-1,1):
   for i in range(8):box('dozer hood side vent',(side*.96,-.34+i*.18,1.88),(.05,.09,.48),black,.015,root)
  cyl('dozer exhaust stack',(.63,.24,2.80),.10,.92,black,'Z',12,root)
@@ -319,7 +382,7 @@ for name,builder,pos in [('trencher',trencher,(-12,0,0)),('excavator',excavator,
     if obj is not boom and obj.parent is not chain:parent_keep(obj,boom)
  elif name=='excavator':
   cab,boom,arm,bucket=joints
-  parent_keep(cab,rootobj);parent_keep(boom,cab);parent_keep(arm,boom);parent_keep(bucket,arm)
+  parent_keep(cab,rootobj);reparent_world(boom,cab);parent_keep(arm,boom);parent_keep(bucket,arm)
   # Nodes made while constructing each child are attached to its moving parent.
  elif name=='dump-truck':
   bed,load=joints;parent_keep(bed,rootobj);parent_keep(load,bed)
@@ -331,33 +394,61 @@ for name in ('trencher:boom','trencher:chain','excavator:cab','excavator:boom','
  obj=bpy.data.objects.get(name)
  if not obj:raise RuntimeError('missing articulated part '+name)
 
-scene=bpy.context.scene;scene.unit_settings.system='METRIC';scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1100;scene.render.resolution_y=820;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.world=bpy.data.worlds.new('bright overcast scrapyard day');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.65,.68,.68,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
+scene=bpy.context.scene;scene.unit_settings.system='METRIC';scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1040;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.render.image_settings.file_format='PNG';scene.world=bpy.data.worlds.new('bright overcast scrapyard day');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.50,.51,.49,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
 scene.view_settings.view_transform='AgX'
 def aim(o,p):o.rotation_euler=(Vector(p)-o.location).to_track_quat('-Z','Y').to_euler()
 for loc,power,size in [((12,-12,19),3000,12),((-10,-3,10),1500,10)]:
  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;aim(light,(0,0,0))
-bpy.ops.mesh.primitive_plane_add(size=80,location=(0,0,-.055));ground=bpy.context.object;ground.name='temporary render floor';ground.data.materials.append(sand)
+bpy.ops.mesh.primitive_plane_add(size=80,location=(0,0,-.055));ground=bpy.context.object;ground.name='temporary render floor';floor=bpy.data.materials.new('plain mid-grey-brown photo floor');floor.diffuse_color=(.26,.25,.23,1);floor.use_nodes=True;floor.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.26,.25,.23,1);floor.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96;ground.data.materials.append(floor)
 if a.render:
  evidence.mkdir(parents=True,exist_ok=True)
+ expected_parent={'trencher:boom':'trencher','trencher:chain':'trencher:boom','excavator:cab':'excavator','excavator:boom':'excavator:cab','excavator:arm':'excavator:boom','excavator:bucket':'excavator:arm','dump-truck:bed':'dump-truck','dump-truck:load':'dump-truck:bed','dozer:blade':'dozer'}
+ def assert_working_pivots():
+  bpy.context.view_layer.update()
+  for name,parent_name in expected_parent.items():
+   joint=bpy.data.objects[name];parent=bpy.data.objects.get(parent_name)
+   if joint.parent is not parent:raise RuntimeError(f'{name} detached from parent {parent_name}')
+   # Verify the world-space pin follows the moving parent's authored local pin.
+   expected=parent.matrix_world @ joint.location
+   error=(joint.matrix_world.translation-expected).length
+   if error>.002:raise RuntimeError(f'{name} pivot drifted {error:.4f} m from parent')
  # Hide the other three machines so each pair is easy to inspect and compare.
  def hide_tree(o,value):
   o.hide_render=value
   for c in o.children:hide_tree(c,value)
  for name,o in machines.items():
   hide_tree(o,False)
-  aim_y={'trencher':.9,'excavator':-.7,'dump-truck':.1,'dozer':-.3}[name]
-  camera_y=13 if name=='trencher' else -10
-  if name=='trencher':aim_y=2.0
-  bpy.ops.object.camera_add(location=(o.location.x+5,camera_y,8 if name=='trencher' else 6.5));cam=bpy.context.object;cam.data.lens=52;aim(cam,(o.location.x,aim_y,1.5));scene.camera=cam
+  meshes=[]
+  def collect(meshroot):
+   if meshroot.type=='MESH':meshes.append(meshroot)
+   for child in meshroot.children:collect(child)
+  collect(o)
+  world_points=[obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+  minz=min(v.z for v in world_points);maxz=max(v.z for v in world_points)
+  miny=min(v.y for v in world_points);maxy=max(v.y for v in world_points)
+  span=max(maxz-minz,maxy-miny,5.5);distance=max(14.5,span*1.80)
+  target=(o.location.x,(miny+maxy)*.5,(minz+maxz)*.5)
+  bpy.ops.object.camera_add(location=(o.location.x+distance*.92,-distance,1.70));cam=bpy.context.object;cam.data.lens=62;aim(cam,target);scene.camera=cam
   for other,ro in machines.items():hide_tree(ro,other!=name)
   for pose in ('rest','work'):
-   moving={'trencher':('trencher:boom',-0.42),'excavator':('excavator:boom',-0.30),'dump-truck':('dump-truck:bed',-.52),'dozer':('dozer:blade',.42)}[name]
+   moving={'trencher':('trencher:boom',-.22),'excavator':('excavator:boom',-.22),'dump-truck':('dump-truck:bed',-.785),'dozer':('dozer:blade',.30)}[name]
    j=bpy.data.objects[moving[0]];j.rotation_euler[0]=0 if pose=='rest' else moving[1]
    if name=='excavator' and pose=='work':
-    bpy.data.objects['excavator:arm'].rotation_euler[0]=-.32;bpy.data.objects['excavator:bucket'].rotation_euler[0]=.36
+    bpy.data.objects['excavator:arm'].rotation_euler[0]=-.24;bpy.data.objects['excavator:bucket'].rotation_euler[0]=.32
    if name=='trencher' and pose=='work':bpy.data.objects['trencher:chain'].rotation_euler[0]=.70
+   if name=='dump-truck':
+    load=bpy.data.objects['dump-truck:load'];load.location.y=0 if pose=='rest' else .34
+   assert_working_pivots()
    scene.render.filepath=str(evidence/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True)
+   if pose=='work':
+    focus={'trencher':'trencher:boom','excavator':'excavator:boom','dump-truck':'dump-truck:bed','dozer':'dozer:blade'}[name]
+    point=bpy.data.objects[focus].matrix_world.translation
+    close=(point.x+3.0,point.y-5.6,max(2.1,point.z+2.0))
+    bpy.ops.object.camera_add(location=close);detail=bpy.context.object;detail.data.lens=55;aim(detail,point);scene.camera=detail
+    scene.render.filepath=str(evidence/f'{name}-close.png');bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(detail,do_unlink=True)
    j.rotation_euler[0]=0
+   if name=='dump-truck':bpy.data.objects['dump-truck:load'].location.y=0
    if name=='excavator':
     bpy.data.objects['excavator:arm'].rotation_euler[0]=0;bpy.data.objects['excavator:bucket'].rotation_euler[0]=0
    if name=='trencher':bpy.data.objects['trencher:chain'].rotation_euler[0]=0
