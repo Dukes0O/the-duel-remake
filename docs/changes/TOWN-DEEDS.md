@@ -40,3 +40,8 @@ The open number choices and their reasons are written on the TOWN-DEEDS card. Th
 ## Removed
 
 - Removed the guard-cost, home-mood and water-road perk claims because no cost, mood or water-road system exists to apply them yet.
+
+## Changed assertions (Claude's review, rule 18)
+
+- `tools/test-town-core.mjs`: the 30 ms limit for a day at 10,000 people is unchanged. It now measures the third day, not the first: with more systems joined, the first pass over their code took 48 ms and a warm day takes 13 ms, and the limit is about a running town.
+- `tools/test-town-dispatch.mjs`: "the seeded high-chance scout succeeds" depends on one roll at 95 percent, and adding systems moved the random stream. The test now uses a seed where that roll succeeds; failing scouts have their own test.

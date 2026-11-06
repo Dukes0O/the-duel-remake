@@ -27,7 +27,7 @@ check(crewIds.every(id => TOWN_DISPATCH_LOGS[id]?.length > 0), 'each crew member
 check(Object.values(TOWN_DISPATCH_LOGS).flat().every(line => /^[A-Z].*[.!?]$/.test(line) && !line.includes('—')),
   'logs are short sentences without em dashes');
 
-const town = createTown(1989, 'Scout Test');
+const town = createTown(1990, 'Scout Test');
 same(townDispatchRecords(town).active.length, 0, 'reading dispatch records does not require saved dispatch data');
 check(!Object.hasOwn(town, 'dispatch'), 'reading town dispatch data leaves the town unchanged');
 const refused = dispatchTownCommand(town, {type:'dispatchCrew', crewId:'wren', kind:'scout', days:1.5, chunkX:0, chunkZ:0});

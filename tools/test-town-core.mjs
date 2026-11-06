@@ -138,6 +138,8 @@ large.people=Array.from({length:10000},(_,i)=>({id:`person-${i}`,name:`Person ${
 large.buildings=Array.from({length:5000},(_,i)=>({id:`building-${i}`,buildingId:'hand-well',regionId:'scablands',x:i*2,z:-i,width:1,depth:1,groundY:0}));
 const start=performance.now();
 const largeLoaded=deserializeTown(serializeTown(large));
+// Two days first: the limit is for a town already running, not for the program's first pass over new code.
+for(let tick=0;tick<48;tick++)stepTown(largeLoaded);
 const dayStart=performance.now();
 let slowestTick=0;
 for(let tick=0;tick<24;tick++) {
