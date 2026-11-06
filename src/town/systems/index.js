@@ -2,3 +2,4 @@
 import './modules/calendar.js';
 import '../town-money.js';
 import '../town-fire.js';
+import '../town-dispatch.js';
