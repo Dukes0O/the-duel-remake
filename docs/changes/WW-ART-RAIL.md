@@ -6,7 +6,7 @@ Date: 6 November 2026
 
 - Renamed the suitcase model and number-label child from `case-fourteen` to the story id `case-hollis`; kept its source photo filename.
 - Seeded each requested photo shadow as sky, keeping it outside the object mask; retained the one-pixel outline shrink and photo bleed to avoid jagged edges.
-- Seeded the token hoop's clear center as sky so its photo mask keeps the opening transparent.
+- Seeded the token hoop's pale opening at source-photo pixel (576, 350), confirmed as clear background, so the mask leaves a real hole.
 - Replaced the sand-drag cutout with a 15 m long, 1.5 m high feathered heightfield, photo-textured rails and sleepers, and a thick timber stop block. Set its review views at car height, 18 m away.
 - Narrowed the toy-car tires from 46 mm to 26 mm, moved them snug to the body, and fitted matching thin tin hub caps.
 - Checked the prop dimensions against the story brief: the bare lever is 1.20 m tall; the small lost-property cases remain 0.28–0.34 m tall (about 1.5 times real size).

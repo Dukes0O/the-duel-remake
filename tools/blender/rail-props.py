@@ -81,7 +81,7 @@ def silhouette_prop(name, filename, description, axis, target, depth):
         seeds.append(shadow_seeds[name])
     if name == 'token-ring':
         # The open centre between the leather hanger and brass token is sky.
-        seeds.append((photo.w // 2, round(photo.h * .40)))
+        seeds.append((576, 350))
     if name in ('case-books', 'case-teeth', 'case-megaphone', 'case-hollis'):
         # The shadow seeds remove the connected pale fringe without cutting
         # the photographed object into a jagged outline.
