@@ -8658,7 +8658,7 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/deep-ana-squeak.mp3",
-      "sha256": "1ce72c8d98202e5b0919d614b7a3bdcc1783298d3887e11e1c88fc161aae4138",
+      "sha256": "eeb169701892a6b0f89ab1da51176592bbe12e4ff33b2537e7cd89b0d3c9b870",
       "bytes": 130446,
       "generated": "2026-11-05"
     },
@@ -8784,7 +8784,7 @@
       "creditsEstimated": true,
       "license": "ElevenLabs free plan, non-commercial, attribution",
       "file": "audio-src/voices/deep-ana-bath.mp3",
-      "sha256": "f3e3ad69c3dbda2e95159de4c28eb81288530ae02ca7afdca74e2b7f147b5956",
+      "sha256": "2806e5e1442c4131ee11b1826575f9ac28c61dbfd8b669cbc6f235320e8db21c",
       "bytes": 13835,
       "generated": "2026-11-05"
     },
