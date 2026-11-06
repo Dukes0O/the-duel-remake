@@ -61,8 +61,8 @@ def build_platform():
     mesh = Mesh()
     mats = {'side': platform_side.material(), 'end': platform_end.material(), 'clock': clock_photo.material()}
 
-    # Side photo is measured across the full 30 m platform. The lower deck is
-    # set at 0.65 m; the canopy is 3.5 m above it and the clock is higher still.
+    # Side photo is measured across the full platform. The deck is a full metre
+    # high and four metres wide, with the canopy above its top.
     def X(px): return (px - 512) * (30 / 970)
     def Y(py): return .65 + (260 - py) * .014
     def point(px, py, depth): return (X(px), Y(py), depth)
@@ -81,9 +81,9 @@ def build_platform():
     mask_image.save()
     # The long timber deck and steps are closed, measured boxes with their own
     # photo rectangles on the visible faces.
-    box(mesh, X(16), X(1008), .30, .65, -1.72, 1.72, {
-        '+z': photo_rect('side', platform_side, (20, 245, 1004, 276)),
-        '-z': photo_rect('side', platform_side, (20, 245, 1004, 276)),
+    box(mesh, X(16), X(1008), 0, 1.0, -2.0, 2.0, {
+        '+z': photo_rect('side', platform_side, (20, 260, 1004, 293)),
+        '-z': photo_rect('side', platform_side, (20, 260, 1004, 293)),
         '+y': photo_rect('end', platform_end, (275, 365, 757, 432)),
         '-y': photo_rect('side', platform_side, (30, 270, 1000, 289)),
         '+x': photo_rect('end', platform_end, (130, 535, 892, 652)),
@@ -97,7 +97,7 @@ def build_platform():
             for z in (-1.48, 1.48):
                 slab(mesh, 'side', platform_side, loops, point, z - .09, z + .09,
                      wall_scale=.014)
-    for step in range(4):
+    for step in range(3):
         x0, x1 = X(17 + step * 12), X(30 + step * 12)
         y0, y1 = .08 + step * .14, .22 + step * .14
         box(mesh, x0, x1, y0, y1, -1.54, 1.54, {
