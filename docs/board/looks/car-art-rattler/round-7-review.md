@@ -9,7 +9,7 @@ The three-quarter view is especially poor. Claude should judge the photos,
 the four matched views, all five card views, the part names and sockets, then
 decide whether the photo measurements need a different decomposition.
 
-The model is 1,728 triangles and 433,920 bytes. It is under both limits, but
+The model is 1,728 triangles and 433,900 bytes. It is under both limits, but
 the visual result is not a pass.
 
 
