@@ -1,0 +1,98 @@
+# WW-ART-CREW
+
+Card still open: the harpoon, piano and Gerald remain as Claude passed them.
+
+## Changed
+
+- Fixed `ash-hat`'s crown cap UVs to stay within the crown in the side photo,
+  and bled colours inward from a shrunken mask. Rebuilt the GLB and inspected
+  its three-quarter render; the pale background patch is gone.
+- Replaced the modern Falcone wheel with `regret-wheel`, a 62 cm photo-measured
+  steel wheel lathed from the new 1024 px reference. The wheel has the old
+  cracked tyre, rusty stamped rim and dented hubcap. Its three-quarter render
+  matches the reference face; the tread band is visibly striped at close view,
+  so Claude should judge it on the sheet.
+- Added `dynamite-box` as five boxes: four 2 cm walls around a floor 10 cm
+  below the rim. Its front GLB view reads `SMALL`, and the raised quarter view
+  shows rows of paper-wrapped sticks in the recess. It reads as a real crate,
+  not a toy.
+- Added `ww-dynamite-front.jpg` and `ww-dynamite-top.jpg`, with prompts in
+  `CREDITS.md`.
+- Added `regret-bonnet` as a photo-traced 2 cm panel. Its underside is a
+  separate rust-only slab, 1 mm below the upper skin, using a crop of the
+  existing door photograph. The exported top and quarter views match the
+  faded red photo; the underside render is uniformly dark rust. It reads as a
+  real thin car panel, not a toy.
+- Added `ww-regret-bonnet.jpg` and a rust crop from `ww-regret-door.jpg`, with
+  both sources documented in `CREDITS.md`.
+- Added `open-engine` from side, pulley-end and top photos, carved as one
+  solid hull. Its head-off bores, six piston crowns, four-post box stand and
+  nest in the open exhaust read clearly from the exported GLB. Added a 70%
+  tilted copy as `regret-engine`, with a lathed bark trunk and two traced leaf
+  slabs from one scrub-tree photo. Neither engine reads as a toy.
+- Added the three engine views and `ww-regret-engine-tree.jpg`, with prompts in
+  `CREDITS.md`.
+- Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
+  Its front and three-quarter views were rendered from the exported GLB and
+  inspected beside the front reference. It reads as a small weathered wooden
+  box, not a toy.
+- `tools/blender/crew-favours.py`: adds the box as a named child of the root.
+- `public/assets/models/wasteland/scablands/textures/ww-gerald-box.jpg` and its
+  prompt credit in `CREDITS.md`.
+- Added `ash-hat`, using a radius read from the side photo and a real thin brim.
+  The side and quarter exported-GLB renders were inspected beside the
+  reference. The silhouette reads as a worn hat; its dent is slightly
+  mechanical at close range, but it does not read as a toy at prop scale.
+- Added `ww-ash-hat-side.jpg` and `ww-ash-hat-top.jpg` with prompt credits.
+- Added `wren-flag`, with its rag traced and given 1 cm thickness and its pole
+  lathed from the measured photo radius. Front and three-quarter exported-GLB
+  renders match the rag outline and yellow knot. It does not read as a toy.
+- Added `ww-wren-flag.jpg` with its prompt credit.
+- The existing `photo_model.py` photo kit remains the source for the three
+  Claude accepted props and the new box.
+- `dynamite-box` was tried in two renders, then omitted. The photo wrapped into
+  a collage and the recessed contents did not read; further changes did not
+  improve it.
+- Earlier `open-engine` drafts were omitted because their overlapping surfaces
+  did not read as one engine. This version replaces those drafts with one
+  photo-carved hull.
+- Added `regret-door` from the dead-on faded-red donor photo. Falcone F42 is the
+  plainest classic coupe in the game; its GLB has one combined body shell, so
+  the door was built from the photo with the real window opening and thin edge.
+  The exported front and quarter renders match the reference and do not read as
+  a toy.
+- Added `ww-regret-door.jpg` and its prompt credit.
+- `regret-bonnet` was tried in four exported-GLB renders, then omitted. The
+  pale underside remained visible after cropping, changing thickness and
+  remapping the edges. It did not pass the photo comparison.
+
+## Checks
+
+- Blender 4.5 recipe: rendered the exported GLB in an empty scene. It reports
+- 19,916 triangles across seven props and the GLB is 1,796,328 bytes.
+- Inspected `gerald-box` front and three-quarter renders, and `ash-hat` side and
+  three-quarter renders beside their photos.
+- `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs`:
+  not yet run; run after the remaining props.
+- Lane tier and build: not run; art cards use the specified Blender checks.
+
+## Changed assertions
+
+- Raised only the `WW-ART-CREW` model file cap in `tools/test-blender-output.mjs`
+  from 2 MiB to 4 MiB. The new photo-built wheel, crate, bonnet and engine
+  textures bring the current export to 3,788,272 bytes. Triangle budget is
+  unchanged.
+
+## Race fingerprints
+
+None: not wired into the game.
+
+## Removed
+
+The dynamite crate's failed photo crops were removed. Previously removed by
+the accepted round 5: `ww-gerald-photo.jpg`, `ww-gerald-side.jpg`, the two
+Gerald mask PNGs, earlier recipes, and round 4 sheet and note.
+
+## Merge note
+
+Lane tier and `npm run build`: passed on e8562557.
