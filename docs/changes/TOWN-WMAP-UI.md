@@ -30,3 +30,7 @@
 
 - Removed the deed purchase and bid special case that dispatched outside the town session.
 
+
+## Claude's fixes
+
+The browser check found that the map's Return to the town button did nothing, because it read its empty attribute as false; a test now covers it. One review pass found the wallet and town saves could disagree silently: `saveWalletChange` now waits out a save under way and tells the player if either save did not take. It rejected the first review's point about `dispatchTownCommand` by giving `stepTown` an optional context, so every command takes the one route.

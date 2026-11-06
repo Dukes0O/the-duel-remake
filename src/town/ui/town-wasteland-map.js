@@ -51,7 +51,7 @@ export function townWastelandMapMarkup(model){
 export function bindTownWastelandMap(root,{onCommand=()=>{},onClose=()=>{}}={}){
   const click=event=>{
     const target=event.target?.closest?.('[data-town-map-buy],[data-town-map-bid],[data-town-map-close],[data-town-map-till-in]');if(!target)return;
-    if(target.dataset.townMapClose){onClose();return;}if(target.disabled)return;
+    if(target.hasAttribute?.('data-town-map-close')){onClose();return;}if(target.disabled)return;
     if(target.dataset.townMapTillIn){onCommand({type:'tillIn',amount:Number(target.dataset.townMapTillIn)});return;}
     if(target.dataset.townMapBuy)onCommand({type:'buyDeed',deedId:target.dataset.townMapBuy});
     else{const input=root.querySelector?.(`[data-town-map-offer="${target.dataset.townMapBid}"]`),offer=Number(input?.value);if(Number.isSafeInteger(offer)&&offer>=0)onCommand({type:'deedBid',deedId:target.dataset.townMapBid,offer});}

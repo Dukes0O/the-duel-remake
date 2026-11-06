@@ -76,4 +76,12 @@ equal(paid.ok,true,'the deed can be bought after the town till is funded');
 equal(shortTill.deeds.items['sal-road'].ownerId,'player','the funded deed records its owner');
 equal(shortTill.till,0n,'the deed price comes out of the funded town till');
 
+// The map's close button has an empty attribute, as the markup writes it.
+let closed=0;
+const closeRoot={addEventListener:(_type,handler)=>{closeRoot.handler=handler;},removeEventListener(){}};
+bindTownWastelandMap(closeRoot,{onClose:()=>{closed++;}});
+const closeButton={dataset:{townMapClose:''},hasAttribute:name=>name==='data-town-map-close',closest:()=>closeButton};
+closeRoot.handler({target:closeButton});
+equal(closed,1,'the close button closes the map');
+
 console.log(`Town Wasteland map: ${checks} checks passed.`);
