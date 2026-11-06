@@ -10,8 +10,8 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--stage',choices=('gerald','harpoon','piano','all'),default='all')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]); root=Path(args.root).resolve()
-if args.stage=='all': stages=('gerald','harpoon','piano')
-else: stages=(args.stage,)
+all_stages=('gerald','harpoon','piano')
+stages=all_stages if args.stage=='all' else all_stages[:all_stages.index(args.stage)+1]
 import bpy, numpy as np
 from mathutils import Vector
 sys.path.insert(0,str(root/'tools/blender')); import town_base as town
@@ -29,6 +29,7 @@ def photo_material(name,path,darken=1.0):
         px[:]=np.clip(px*darken,0,1); image.pixels.foreach_set(px)
     image.pack(); mat=bpy.data.materials.new(name); mat.use_nodes=True
     bsdf=mat.node_tree.nodes.get('Principled BSDF'); bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=.85
+    if bsdf.inputs.get('Specular IOR Level'): bsdf.inputs['Specular IOR Level'].default_value=0
     tex=mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=image; tex.interpolation='Linear'; tex.extension='EXTEND'
     mat.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color']); mat.diffuse_color=(.26,.22,.17,1)
     return mat
@@ -136,7 +137,7 @@ def build_harpoon():
     faces[-2]=tuple([n*sides]+[j for j in range(sides-1,-1,-1)])
     faces[-1]=tuple([(n*sides+1)]+[(n-1)*sides+j for j in range(sides)])
     mat=photo_material('Jax / outline photograph',paths['harpoon'])
-    make_obj('jax-harpoon-outline-lathe',verts,faces,uvs,mat,True)
+    make_obj('jax-harpoon-outline-lathe',verts,faces,uvs,mat,False)
 
 # Piano rectangles are measured in the rectified 1500 x 1300 front image.
 PIANO_RECTS=[
@@ -218,11 +219,18 @@ scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transfor
 scene.world=bpy.data.worlds.new('neutral bright overcast'); scene.world.color=(.22,.22,.22)
 for location,power,size in (((0,3,-3),145,4),((2,3,3),90,4)):
     bpy.ops.object.light_add(type='AREA',location=location); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size
+    light.name='round4 global overcast fill'
     light.rotation_euler=(Vector((0,.4,0))-light.location).to_track_quat('-Z','Y').to_euler()
 cam_obj=None
 for stage in stages:
     prefix={'gerald':'gerald-','harpoon':'jax-harpoon-','piano':'piano-upright-'}[stage]
     selected=[o for o in scene.objects if o.type=='MESH' and o.name.startswith(prefix)]
+    for light in [o for o in scene.objects if o.type=='LIGHT']:
+        light.hide_render=stage=='harpoon' and light.name=='round4 global overcast fill'
+        if light.name=='Harpoon flat front light': light.hide_render=stage!='harpoon'
+    if stage=='harpoon' and not any(o.name=='Harpoon flat front light' for o in scene.objects):
+        bpy.ops.object.light_add(type='AREA',location=(0,-10,0)); light=bpy.context.object; light.name='Harpoon flat front light'; light.data.energy=900; light.data.shape='DISK'; light.data.size=20
+        light.rotation_euler=(Vector((0,0,0))-light.location).to_track_quat('-Z','Z').to_euler()
     for obj in scene.objects:
         if obj.type=='MESH': obj.hide_render=obj not in selected
     pts=[o.matrix_world @ Vector(c) for o in selected for c in o.bound_box]

@@ -2,7 +2,7 @@
 
 Date: 6 November 2026
 Sheet: `round-4.jpg`
-Status: **Gerald rendered; harpoon and piano still pending.**
+Status: **Gerald and harpoon rendered; piano still pending.**
 
 Gerald is one photo-mapped relief made from the overhead mask. It includes the
 head, four feet, toes and tail. Nose-to-hip measures 0.30 m; the tail is about
@@ -20,5 +20,10 @@ view against the side photo. I would not mistake the overhead for a toy. The
 side view is too shallow to read as a whole animal without the paired overhead
 view.
 
-The sheet contains Gerald only so far. The remaining two rows will be added to
-the same round 4 sheet after their GLBs are rendered and inspected.
+The harpoon is one 120-column, 12-sided outline lathe spanning 2.5 m. Its shaft,
+binding, socket and barbed head follow the photograph, and the main surface
+detail is in the right place. Render brightness is 87.3 vs photo 80.5. The
+render has a light rim along parts of the silhouette; Claude should check
+whether it reads as an unwanted edge. I would not mistake the harpoon for a toy.
+
+The sheet now contains Gerald and the harpoon. The piano row is still pending.
