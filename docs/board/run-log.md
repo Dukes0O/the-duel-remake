@@ -1583,3 +1583,5 @@ WW-ART-CREW props merged, card still open: the harpoon, piano and Gerald pass (r
 - 6 Nov: merged the fire engine (TOWN-ART-TRUCKS-1 round 9, past six rounds with Kyle's approval): carved from four photos by the new tools/blender/hull_model.py; 284 art checks, hygiene, build. Tanker, supply truck and tow rig still open.
 - 5 Nov: TOWN-ART-VANE merged; verdict on its card.
 - 6 Nov: merged the Rattler (CAR-ART-RATTLER round 9, past six rounds with Kyle's approval), carved from four photos; 292 art checks, hygiene, build. TOWN-ART-VANE's line above is also 6 Nov.
+WW-ART-RAIL carriage and van merged, card still open: both pass (round 4), built by Codex on the photo kit; lane tier and build passed on 0b669912 (one timeout, passed on its rerun alone).
+- RAIL-STEPS merged: the railway engine, with marks, gradient, token, hoop, sand drag, ride-along, runaway, dig and whistle; lane tier and build passed on f854505c.
