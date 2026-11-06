@@ -51,7 +51,7 @@ export function buildTownChunkInstances(town, chunk, lod = townChunkLod({positio
   for(const zone of town.zones||[]) if(zone.regionId==='scablands'&&Math.floor(zone.x/16)===chunk.x&&Math.floor(zone.z/16)===chunk.z) {
     const color=zone.color??COLORS.zone;if(!byColor.has(color))byColor.set(color,[]);byColor.get(color).push({...zone,width:1,depth:1,groundY:zone.groundY??0,color});
   }
-  return [...byColor].map(([color, entries]) => makeInstances(entries, lod, color, entries[0].buildingId?.startsWith('road-') ? -0.12 : 0)).filter(Boolean);
+  return [...byColor].map(([color, entries]) => makeInstances(entries, lod, color, entries[0].buildingId?.startsWith('road-') ? 0.08 : 0)).filter(Boolean);
 }
 
 export function createTownPlacementGhost({valid = true, width = 1, depth = 1} = {}) {

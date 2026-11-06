@@ -42,7 +42,8 @@ check(first.ok,'a cell far from the start can be built on');
 check(town.buildings.at(-1).state==='plan','a placed building starts as a plan');
 check(TOWN_WORK_STATES.includes(town.buildings.at(-1).state),'work states live in one exported list');
 check(town.regions.scablands.chunks['5625:-5000'],'only the used chunk is made');
-check(cellIsReserved('scablands',0,0),'the Dome oval is reserved');
+check(cellIsReserved('scablands',0,-21),'the Dome oval is reserved, where the Dome model really stands');
+check(!cellIsReserved('scablands',0,0),'the ground in front of the gate is free to build on');
 check(cellIsReserved('scablands',-3,-12),'the gate on the Dome south side is reserved');
 check(!cellIsReserved('scablands',90000,-80000),'far map cells remain open');
 const refused=dispatchTownCommand(town,{type:'placeBuilding',buildingId:'hand-well',x:90_000,z:-80_000});
@@ -94,7 +95,7 @@ TOWN_REGIONS.delete(secondRegion.id);
 
 const townIndex=readFileSync(new URL('../src/town/index.js',import.meta.url),'utf8');
 const systemsIndex=readFileSync(new URL('../src/town/systems/index.js',import.meta.url),'utf8');
-check(townIndex.trim().startsWith("import './systems/index.js';")&&systemsIndex.includes("glob?.('./modules/*.js'"),'one system file is discovered through the town entry point');
+check(townIndex.trim().startsWith("import './systems/index.js';")&&systemsIndex.includes("import './modules/calendar.js'"),'each system is imported through the town entry point, one line each, as docs/WASTELAND_TOWN.md section 11 says');
 
 const fixture=readFileSync(new URL('./fixtures/town/town-v1.json',import.meta.url),'utf8');
 const fromFixture=deserializeTown(fixture);

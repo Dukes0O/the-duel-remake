@@ -104,8 +104,10 @@ town.utilities={pipes:[{id:'saved-pipe',from:{x:0,z:0},to:{x:1,z:0},sizeMm:100}]
 for(let i=0;i<24;i++) stepTown(town);
 assert.equal(town.utilities.waterResult.delivered,500,'the daily water system reports its delivered amount');
 assert.deepEqual(town.water,{in:500,out:500,shortfall:0,overlay:town.utilities.waterResult.overlay},'the town summary exposes water totals and overlay cells');
-assert.equal(town.power.generationKw,5,'the power system runs from saved utility inputs');
-assert.deepEqual([town.power.in,town.power.out],[5,2],'the town summary shows power in and out');
+// TOWN-FARM's weather now sets the wind each hour; the windmill follows it.
+assert.ok(town.utilities.windFactor>0&&town.power.generationKw>0,'the power system runs from saved generators and the wind of the weather');
+assert.equal(town.power.generationKw,solveTownPower({generators:town.utilities.generators,demands:town.utilities.powerDemands,wires:town.utilities.wires,wind:town.utilities.windFactor,sunlight:town.utilities.sunFactor}).generationKw,'the windmill makes what the wind of the day gives');
+assert.deepEqual([town.power.in,town.power.out],[town.power.generationKw,2],'the town summary shows power in and out');
 const loaded=deserializeTown(serializeTown(town));
 assert.deepEqual(loaded.utilities,town.utilities,'the utility network and its overlay inputs survive save and load');
 assert.deepEqual(loaded.power,town.power,'the power result survives save and load');

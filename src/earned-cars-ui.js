@@ -15,7 +15,7 @@ const escape = value => String(value).replace(/[&<>"']/g, character =>
 // place in the lists belong to DEEP-SIRENA-VIEW. Every list stays exactly what it was.
 // NISSAN-SKYLINE-GTR-R34-V6: the Nissan Skyline is the Kogane Invitation's prize (unlockRequirement 'kogane-duel'), never a
 // shop car. It is on no list until the player owns it, as the Sirena is; `wonCars` adds it for an owner.
-export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'mcmurtry_speirling' && id !== KOGANE_SKYLINE && (enabled === true || !medalRequirement(id));
+export const isShownCar = (id, enabled) => Object.hasOwn(CARS, id) && id !== 'falcone_sirena' && id !== 'falcone_vasca' && id !== 'mcmurtry_speirling' && id !== KOGANE_SKYLINE && (enabled === true || !medalRequirement(id));
 export const shownCarIds = enabled => Object.keys(CARS).filter(id => isShownCar(id, enabled));
 export const shownCars = enabled => Object.entries(CARS).filter(([id]) => isShownCar(id, enabled));
 // The story prize cars this player owns, as [id, car] pairs to add after the shown cars (garage, armory, scores, rival picker).

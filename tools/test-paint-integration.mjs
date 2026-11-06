@@ -17,6 +17,14 @@ app.duel._loadStage(normal+1);check(app.getPaintPreset(car)===copper,'campaign s
 // A stale garage must re-read a changed wallet before any cosmetic purchase.
 memory.clear();app=new App();app.profile.credits=1000;app._saveProfile();const stale=new App();app.profile.credits=20;app._saveProfile();check(!stale.purchasePaint(car,'copper_metallic').ok&&stale.profile.credits===20,'stale garage cannot overspend a newer saved wallet');check(getPaintAppearance(activePlayer(loadPlayers()).profile,car)===null,'failed purchase cannot grant saved paint');
 app.profile.credits=1000;app._saveProfile();check(stale.purchasePaint(car,'copper_metallic').ok&&stale.profile.credits===750,'stale garage can buy after valid wallet refresh');const reloaded=new App();check(reloaded.getPaintPreset(car)===copper&&reloaded.profile.credits===750,'fresh instance restores exact debit and selected finish');
+// Wasteland finishes stay saved while the town is off, and race setup reads them only when it is on.
+memory.clear();app=new App();app.profile.wasteland={version:1,discoveredGate:true,scrap:500};app._saveProfile();
+let wastelandTownEnabled=true;app._switches=()=>({enabled:name=>name==='wasteland-town'&&wastelandTownEnabled});
+check(app.purchasePaint(car,'rust-patina').ok&&app.profile.wasteland.scrap===250,'Wasteland finish is bought for 250 scrap');
+app.startCampaign({startStage:normal,car});check(app.getPaintPreset(car)===getPaintAppearance(app.profile,car,{wastelandTownEnabled:true}),'enabled Wasteland finish reaches the race appearance');
+app.returnToMenu();wastelandTownEnabled=false;app.startCampaign({startStage:normal,car});
+check(app.getPaintPreset(car)===null,'disabled Wasteland town keeps the race in factory paint');
+app.returnToMenu();check(app.profile.cosmetics[car].selected==='rust-patina'&&app.profile.wasteland.scrap===250,'disabled town preserves the saved finish and scrap');
 // Session-only careers must retain owned finishes across profile switches.
 globalThis.localStorage={getItem(){throw Error('denied');},setItem(){throw Error('denied');}};const offline=new App();offline.profile.credits=1000;offline._saveProfile();check(offline.purchasePaint(car,'glacier_satin').ok&&offline.profileSaved===false,'blocked storage supports session-only paint');const offlineId=offline.player.id;offline.addPlayer('Session player');check(offline.getPaintPreset(car)===null,'second session-only player does not inherit paint');offline.selectPlayer(offlineId);check(offline.getPaintPreset(car)===glacier&&offline.profile.credits===600,'session-only ownership and debit survive switching back');offline.startCampaign({startStage:normal,car});check(offline.getPaintPreset(car)===glacier,'session-only paint reaches race snapshot');
 console.log(`Paint App integration: ${checks} persistence, ownership, wallet and race-snapshot checks passed`);

@@ -1,31 +1,27 @@
-# TOWN-WORLD
-
-## Design
-
-The town world is a deterministic view of the saved town. Each town building becomes an 8 m high solid with its footprint measured in 8 m cells. The Dome, gate, Everburn routes, and Bowl approach use reserved ground. The old roads grade as dirt road while the town is set. Clearing the layout restores the prior Scablands queries.
-
-The town drive uses the existing world-job mode and starts outside the gate at (0, -112). It has no goal and stays open. The gate prompt is part of the layout and appears through the world HUD model when the car reaches it. The app entry point is gated by `wasteland-town` and takes the current town as input.
+# TOWN-WORLD second pass
 
 ## Changed
 
-- Added the pure town layout builder, including building solids, road segments, walkers, the Dome and gate.
-- Added strip reservations for the old routes to Tin Town, the Boneyard, the Everburn and the Bowl gate.
-- Added opt-in Scablands town ground and building collision queries.
-- Added `startTownDrive()` and a browser scenario for Claude.
-- Added the card test for deterministic layout, road grading, native collision sweeps, open-ended drive replay, and a fully occupied unreserved footprint.
+- Merged `integration/wasteland` as requested. Resolved the conflicts in the world-job mode and course imports while retaining the landed Deep, Bowl and The Dig work.
+- Town collision lookup now uses 8 m world cells. Each collision query checks only the nearby cells; it does not walk the town's buildings or people. This removes the town-wide candidate scan.
+- Reserved the Everburn chase route through the Boneyard and the return paths for the prospectors. These are drawn as dirt roads, so crowded towns cannot block those jobs.
+- When a town layout is active, the Scablands scene dynamically loads the town instance builder and draws its roads, sites and buildings. Without a layout, that builder is not imported.
+- A town gate interaction returns to the yard and opens its Scrapdome panel through the app event handler.
+- Moved the Dome collider to z = -168.5 to match the town-world data and town view.
+- Updated `tools/scenarios/town-world.mjs` for Claude's browser check.
 
 ## Checks
 
-- `node --test tools/test-town-world.mjs`: passed, 4 tests.
+- `node tools/test-town-world.mjs`: passed, 4 tests.
 - `node tools/test-everburn-easy.mjs`: passed unchanged; all nine jobs finished 10/10.
-- The full Everburn proof with every unreserved town cell filled was attempted several times and stopped after about eight minutes without a result. It remains unverified. The town test does verify that all unreserved cells can be occupied, the story road points remain road, and the native collision query keeps those routes clear.
-- `npm.cmd run build`: passed. PowerShell blocked `npm.ps1`, so the Windows command shim ran the same `npm run build` script. Vite reported its existing dynamic import and large chunk warnings.
-- Browser scenario: not run here. Claude should run it, inspect the town drive entry and gate prompt, and judge whether the remaining UI and scene hooks are needed before this card can be called complete.
-- The gate reports `townGate`, but the allowed app hook has no route into the Scrapdome panel. The Scablands scene also does not draw the town solids or reserved road strips. Those acceptance points need a screen/scene hook before the world can be called complete.
-- Race fingerprints: no race definitions or replay rules changed. Everburn's unchanged Easy proof passed.
-- Changed assertions: none.
+- Crowded-town proof: the unchanged Easy driver ran against a town filling every unreserved cell; all nine jobs finished 10/10 in about 35 seconds.
+- `node tools/test-replays.mjs`: passed (exit 0).
+- `node tools/test-world-composition.mjs`: passed (exit 0).
+- `npm.cmd run build`: passed. Existing dynamic-import and large-chunk warnings remain.
+- Browser scenario: Claude runs. Check the town drive start, gate prompt, interaction return to the Scrapdome panel, roads, sites and stand-in building boxes. No browser check was run in this lane.
+- Race fingerprints: no replay fixture changed. `test-replays` and the unchanged Everburn Easy proof passed.
+- Changed assertions: none. The building collision fixture now places its hall on the Scablands driving line so the test exercises a car's real approach to a town solid.
 
 ## Removed
 
-- Removed the duplicated old-road coordinates from the town layout builder. The builder now reads the reserved strip data directly.
-- No other code, tests, documents or assets were removed.
+- Replaced the town obstacle course-distance list with the cell index. Removed the temporary crowded-proof runners after the check. No other tests, docs, code paths, assets or tools were removed.

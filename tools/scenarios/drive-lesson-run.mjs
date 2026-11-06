@@ -63,15 +63,23 @@ export async function run(context){
   const board = await context.evaluate(`(()=>{
     const panel=document.querySelector('.drive-lesson-board');
     const choices=[...panel.querySelectorAll('input[name="drive-lesson-course"]')];
-    return {text:panel.textContent,enabled:choices.filter(n=>!n.disabled).map(n=>n.dataset.driveCourse),
-      locked:[...panel.querySelectorAll('.lesson-board-locked')].map(n=>({text:n.textContent,cursor:getComputedStyle(n).cursor,color:getComputedStyle(n).color}))};})()`);
-  if(board.enabled.join(',')!=='panorama-ridge,tremblant-woods,ardennes-forest'||/not owned|buy /i.test(board.text)
-      ||board.locked.length!==3||board.locked.some(n=>n.cursor==='pointer'||!/Opens later/.test(n.text)))
+    const corners=window.__qaApp.driveLessonProps().corners.map(({courseId,cornerName})=>({courseId,cornerName}));
+    return {text:panel.textContent,corners,choices:choices.map(n=>({courseId:n.dataset.driveCourse,
+        label:n.closest('label')?.textContent.replace(/\\s+/g,' ').trim(),disabled:n.disabled})),
+      locked:[...panel.querySelectorAll('.lesson-board-locked')].map(n=>({text:n.textContent,cursor:getComputedStyle(n).cursor,
+        actions:n.querySelectorAll('button,[data-drive-action]').length}))};})()`);
+  const expectedCorners=board.corners.filter((corner,index,all)=>all.findIndex(item=>item.courseId===corner.courseId)===index)
+    .map(({courseId,cornerName})=>`${courseId} : ${cornerName}`).sort();
+  const shownCorners=board.choices.map(({courseId,label})=>`${courseId} : ${label?.slice(label.indexOf(': ')+2)}`).sort();
+  if(JSON.stringify(shownCorners)!==JSON.stringify(expectedCorners)||board.choices.some(choice=>choice.disabled)
+      ||/not owned|buy /i.test(board.text)||board.locked.length!==3
+      ||board.locked.some(n=>n.cursor==='pointer'||n.actions!==0||!/Opens later/.test(n.text)))
     throw Error('New-player board choices or locked lesson reasons are wrong: '+JSON.stringify(board));
   report.newPlayerBoard=board;
   report.captures.push(await context.screenshot('driving-lesson-new-player-board'));
-  for(const courseId of ['ardennes-forest','tremblant-woods','panorama-ridge']) {
-    await click(context,`.drive-lesson-board [data-drive-course="${courseId}"]`);
+  for(const choice of board.choices) {
+    const courseId=choice.courseId;
+    await click(context,`.drive-lesson-board [name="drive-lesson-course"][data-drive-course="${courseId}"]`);
     const selected=await context.evaluate(`window.__qaApp.driveLessonCourse`);
     if(selected!==courseId)throw Error('Unowned corner choice did not respond: '+courseId);
   }

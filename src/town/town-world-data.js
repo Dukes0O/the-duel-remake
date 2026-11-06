@@ -3,7 +3,7 @@ import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
 export const TOWN_CELL_METRES = 8;
 export const TOWN_CHUNK_CELLS = 16;
 
-const oval = Object.freeze({id:'dome-oval', type:'ellipse', x:0, z:0, halfWidth:112, halfDepth:80});
+const oval = Object.freeze({id:'dome-oval', type:'ellipse', x:0, z:-168.5, halfWidth:112, halfDepth:80});
 const gate = Object.freeze({id:'dome-gate', type:'rectangle', x:0, z:-92, halfWidth:24, halfDepth:12, heading:0});
 const strip = (id, a, b, halfWidth=12) => Object.freeze({id,type:'strip',ax:a[0],az:a[1],bx:b[0],bz:b[1],halfWidth});
 const oldRoads = Object.freeze([
@@ -13,6 +13,13 @@ const oldRoads = Object.freeze([
   strip('old-road-safe-boneyard',[230,150],[424,304]),
   strip('old-road-safe-tintown',[230,150],[600,0]),
   strip('old-road-safe-everburn',[230,150],[-424,304]),
+  strip('old-road-everburn-chase-1',[424,304],[280,380]),
+  strip('old-road-everburn-chase-2',[280,380],[140,470]),
+  strip('old-road-prospector-return',[424,304],[600,0]),
+  strip('old-road-tintown-to-boneyard',[600,0],[541,189]),
+  strip('old-road-boneyard-approach',[541,189],[424,304]),
+  strip('old-road-prospector-home',[400,330],[541,189]),
+  strip('old-road-prospector-home-tintown',[541,189],[600,0]),
   strip('old-road-mall-safe',[0,430],[230,150]),
   strip('old-road-bowl-gate',[0,-104],[-340,20]),
 ]);

@@ -19,7 +19,8 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
-import {getScablandsTownLayout,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsSurfaceAt,scablandsSurfaceHeightAt,getScablandsTownLayout} from './world/scablands-ground.js';
+import {buildBowlFeatures} from './bowl/bowl-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -34,10 +35,9 @@ function townObstacleBuckets(course,layout){
   if(buckets)return buckets;
   buckets=new Map();
   for(const solid of layout.solids){
-    const nearest=course.nearest(solid.x,solid.z),obstacle={...solid,s:course.phase(nearest.s),off:nearest.lateral,kind:'building',theme:'arena'};
-    const bucket=Math.floor(obstacle.s/64);
-    if(!buckets.has(bucket))buckets.set(bucket,[]);
-    buckets.get(bucket).push(obstacle);
+    const cellX=Math.floor(solid.x/8),cellZ=Math.floor(solid.z/8),key=`${cellX}:${cellZ}`;
+    if(!buckets.has(key))buckets.set(key,[]);
+    buckets.get(key).push(solid);
   }
   byCourse.set(key,buckets);
   return buckets;
@@ -159,6 +159,9 @@ export class Course {
     else if(this.def.saltFlats){
       this.saltFlatsGeometry=saltFlatsPhysicalGeometry(this);
       f.ramps.push(...this.saltFlatsGeometry.ramps);
+    }
+    else if(this.def.bowl){
+      buildBowlFeatures(this);
     }
     else if(this.def.scrapdome&&!this.def.scablands){
       // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
@@ -436,9 +439,12 @@ export class Course {
       const layout=getScablandsTownLayout();
       if(layout){
         const townBuckets=townObstacleBuckets(this,layout);
-        for(let d=0;d<=span+64;d+=32){
-          const b=Math.floor(this.phase(start+d)/64);
-          for(const obstacle of townBuckets.get(b)??[])found.add(obstacle);
+        for(let d=0;d<=span+32;d+=16){
+          const s=this.phase(start+d),frame=this.worldAt(s),cx=Math.floor(frame.x/8),cz=Math.floor(frame.z/8);
+          for(let x=cx-1;x<=cx+1;x++)for(let z=cz-1;z<=cz+1;z++)for(const solid of townBuckets.get(`${x}:${z}`)??[]){
+            const cellObstacle={...solid,s,off:Math.hypot(solid.x-frame.x,solid.z-frame.z),kind:'building',theme:'arena'};
+            found.add(cellObstacle);
+          }
         }
       }
     }

@@ -24,6 +24,14 @@ export async function run(context) {
   fact(Math.hypot(started.start.x,started.start.z+112)<8,'the car starts outside the Dome gate');
   fact(started.layout?.solids?.some(solid=>solid.id==='test-hall'),'the saved town supplies solid buildings');
   fact(started.layout?.gate?.prompt==='Drive up to the Scrapdome gate to go inside.','the gate carries a player-facing prompt');
+  const gate=await context.evaluate(`(()=>{
+    const app=window.__qaApp,state=app.duel.state,point=app.duel.course.nearest(0,-92);
+    state.status='racing';state.s=point.s;state.lateral=point.lateral;
+    app.duel.setInput({interact:true});app.duel.step(1/120);
+    return {prompt:state.townGatePrompt,yard:app.isYardHomeActive(),panel:document.querySelector('.yard-home-panel .arena-yard')?.textContent||''};
+  })()`);
+  fact(gate.prompt==='Drive up to the Scrapdome gate to go inside.','the HUD shows the gate prompt at the gate');
+  fact(gate.yard&&gate.panel.includes('Scrapdome'),'using the gate interaction returns to the Scrapdome panel');
   report.notes.push('Claude should drive to the gate, check that the HUD prompt appears, and confirm the Scrapdome panel handoff.');
   await context.writeFile('report.json',JSON.stringify(report,null,2)+'\n');
   if(fail.length)throw Error('Town world facts failed: '+fail.join(' | '));

@@ -1,5 +1,8 @@
-// Vite includes every system file. Node's headless tests use this fallback.
-const systems=import.meta.glob?.('./modules/*.js',{eager:true})||{};
-if(!Object.keys(systems).length) await import('./modules/calendar.js');
-await import('../town-money.js');
-await import('../town-fire.js');
+// Each system registers itself when imported. Add a line here for a new one.
+import './modules/calendar.js';
+import '../town-money.js';
+import '../town-fire.js';
+import '../town-weather.js';
+import '../town-food.js';
+import '../town-outposts.js';
+import '../town-dispatch.js';

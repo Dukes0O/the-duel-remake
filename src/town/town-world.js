@@ -33,7 +33,7 @@ export function createTownWorld(town) {
   if(!town||typeof town!=='object')throw new TypeError('A saved town is needed to make its world.');
   const ground=TOWN_REGIONS.get('scablands').groundHeightAt;
   const solids=[
-    Object.freeze({id:'scrapdome',x:0,y:ground(0,0),z:0,heading:0,halfX:112,halfZ:80,height:8,shape:'ellipse'}),
+    Object.freeze({id:'scrapdome',x:0,y:ground(0,-168.5),z:-168.5,heading:0,halfX:112,halfZ:80,height:8,shape:'ellipse'}),
     Object.freeze({id:'scrapdome-gate',x:0,y:ground(0,-92),z:-92,heading:0,halfX:24,halfZ:12,height:8,shape:'box'}),
   ],roads=oldRoads(),walkers=[];
   for(const building of town.buildings??[]) {
@@ -46,7 +46,7 @@ export function createTownWorld(town) {
     const position=walkerPosition(town.people[i],i,town.seed??0,solids);
     if(position)walkers.push(position);
   }
-  return Object.freeze({seed:town.seed??0,roads:Object.freeze(roads),solids:Object.freeze(solids),walkers:Object.freeze(walkers),
+  return Object.freeze({seed:town.seed??0,buildings:Object.freeze((town.buildings??[]).map(building=>Object.freeze({...building}))),roads:Object.freeze(roads),solids:Object.freeze(solids),walkers:Object.freeze(walkers),
     start:Object.freeze({x:0,y:TOWN_REGIONS.get('scablands').groundHeightAt(0,-112),z:-112,heading:0}),
     dome:Object.freeze({x:0,z:0,halfWidth:112,halfDepth:80,height:8}),
     gate:Object.freeze({x:0,z:-92,halfWidth:24,halfDepth:12,height:8,

@@ -94,8 +94,14 @@ function founderNames(town) {
 }
 
 export function townCaptionText(id, town = {}) {
-  const text = TOWN_CAPTIONS[id]?.text ?? null;
+  let text = TOWN_CAPTIONS[id]?.text ?? null;
   if (text === null) return null;
+  if (id === 'town.bo.16' || id === 'town.bo.grown') {
+    const bo=(town.people||[]).find(person=>person.name==='Bo');
+    const age=Number.isFinite(bo?.age)?bo.age:null;
+    if (age !== null && age < 16) return null;
+    if (age !== null) text=TOWN_CAPTIONS[age<18?'town.bo.16':'town.bo.grown'].text;
+  }
   const year = BigInt(town?.calendar?.year ?? 1);
   return text.replaceAll('{founders}', founderNames(town)).replaceAll('{aground}', numberWords(30n + year));
 }

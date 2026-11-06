@@ -11,7 +11,7 @@ const flags = createFeatureFlags({catalog:{'wasteland-town':'dev'}, qa:true, sea
 assert.equal(flags.enabled('wasteland-town'), true, 'the town feature can be enabled in a test build');
 assert.equal(keyboardAction('machine', 'KeyQ'), 'machine-switch', 'one keyboard key switches machines');
 
-let haul = createMachineHaul({ground, excavator:{x:0,z:0}, truck:{x:4.3,z:0}});
+let haul = createMachineHaul({ground, excavator:{x:0,z:0}, truck:{x:-8.6,z:0.7}});
 assert.equal(machineDefinition('excavator').driveKind, 'tracks');
 assert.equal(machineDefinition('dumpTruck').driveKind, 'wheels');
 
@@ -22,7 +22,9 @@ const bucketVolume = Object.values(haul.machines.excavator.load).reduce((sum, vo
 assert.ok(bucketVolume > 0, 'the easy driver digs real material from editable ground');
 haul = stepMachineHaul(haul, {swing:1}, 2);
 const bucketAtTruck = machineToolPosition(machineDefinition('excavator'), haul.machines.excavator, 'bucket');
-assert.ok(Math.hypot(bucketAtTruck.x - haul.machines.dumpTruck.x, bucketAtTruck.z - haul.machines.dumpTruck.z) < 1.8,
+const bedTool = machineDefinition('dumpTruck').tools.bed;
+assert.ok(Math.abs(bucketAtTruck.x - haul.machines.dumpTruck.x) <= bedTool.widthM / 2 &&
+  Math.abs(bucketAtTruck.z - haul.machines.dumpTruck.z - bedTool.centerZ) <= bedTool.lengthM / 2,
   'the excavator swings its bucket over the truck bed');
 haul = switchHaulMachine(haul);
 assert.equal(haul.activeMachine, 'dumpTruck');
@@ -34,9 +36,9 @@ assert.ok(Object.values(haul.machines.dumpTruck.load).reduce((sum, volume) => su
 assert.equal(Object.keys(haul.machines.excavator.load).length, 0, 'the bucket is empty after loading');
 
 const emptySpeed = stepMachineHaul({...haul, activeMachine:'dumpTruck', machines:{...haul.machines,
-  dumpTruck:{...haul.machines.dumpTruck, load:{}}}}, {forward:0.5}, 1).machines.dumpTruck.speedMps;
+  dumpTruck:{...haul.machines.dumpTruck, load:{}}}}, {forward:0.5}, 8).machines.dumpTruck.speedMps;
 haul = switchHaulMachine(haul);
-haul = stepMachineHaul(haul, {forward:0.5}, 1);
+haul = stepMachineHaul(haul, {forward:0.5}, 8);
 assert.ok(haul.machines.dumpTruck.speedMps < emptySpeed, 'a loaded truck drives more slowly');
 const tipAt = {x:haul.machines.dumpTruck.x, z:haul.machines.dumpTruck.z};
 haul = operateMachineHaul(haul, {action:'tip', dtSeconds:5, shape:{...tipAt, radius:1}});

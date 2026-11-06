@@ -26,14 +26,16 @@ test('town world is stable, reserves story roads, and exposes solid building cel
 });
 
 test('Scablands town layout adds road ground and a car collider, then clears cleanly', () => {
-  const town=createTown(1405,'Test town');
-  town.buildings.push({id:'hall',buildingId:'town-hall',regionId:'scablands',x:70,z:50,width:2,depth:3,state:'finished',groundY:0});
-  const layout=createTownWorld(town),course=new Course(ARENA_VENUES.scablands,1989);
+  const town=createTown(1405,'Test town'),course=new Course(ARENA_VENUES.scablands,1989),point=course.worldAt(300);
+  const x=Math.floor(point.x/8),z=Math.floor(point.z/8);
+  town.buildings.push({id:'hall',buildingId:'town-hall',regionId:'scablands',x,z,width:2,depth:3,state:'finished',groundY:0});
+  const layout=createTownWorld(town);
   const untouched=course.obstaclesNear(0).length;
   assert.equal(scablandsSurfaceAt(0,0).road,false);
   setScablandsTownLayout(layout);
   assert.equal(scablandsSurfaceAt(230,150).road,true);
-  const solid=course.obstaclesNear(course.nearest(568,412).s).find(item=>item.id==='hall');
+  const buildingX=(x+1)*8,buildingZ=(z+1.5)*8;
+  const solid=course.obstaclesNear(course.nearest(buildingX,buildingZ).s).find(item=>item.id==='hall');
   assert.ok(solid,'building is visible to the native course obstacle query');
   assert.ok(sweepObstacle({x:solid.x-20,y:solid.y,z:solid.z},{x:solid.x,y:solid.y,z:solid.z},solid,0,{height:1.5}),
     'the native car sweep collides with the town building');
