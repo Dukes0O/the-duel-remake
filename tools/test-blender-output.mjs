@@ -27,10 +27,10 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat', 'town-dome']);
+const artCandidates = new Set(['wildcat']);
 const generators = [
-  {id:'town-dome',script:'tools/blender/town-dome.py',args:[],candidate:true,evidence:'.qa-dist/town-dome',
-    glb:['.qa-dist/town-dome/dome.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
+    glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
   {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
@@ -599,7 +599,7 @@ try {
     });
   }
   check('TOWN-ART-DOME GLB keeps both structures, separate picture materials and card budgets', () => {
-    const path = join(root, '.qa-dist/town-dome/dome.glb');
+    const path = join(root, 'public/assets/models/wasteland/town/dome.glb');
     if (!existsSync(path)) return; // Generated and read back in the art lane; not a runtime asset yet.
     const bytes = readFileSync(path);
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');

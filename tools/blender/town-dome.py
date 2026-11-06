@@ -13,7 +13,7 @@ parser.add_argument('--candidate', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-out = root / args.evidence / 'dome.glb'
+out = root / 'public/assets/models/wasteland/town/dome.glb'
 blend = root / args.evidence / 'dome.blend'
 render_dir = root / args.render
 if args.paths_only:
