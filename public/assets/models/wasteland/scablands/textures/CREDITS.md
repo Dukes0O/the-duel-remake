@@ -82,6 +82,14 @@ edges. No objects, gear, pool, scene, text, or watermark.
 
 ## WW-ART-CREW photographs (2026-11-06)
 
+- `ww-gerald-box.jpg`: Codex ImageGen original product photograph of a
+  weathered 40 cm wooden animal carrier with photographed ventilation holes.
+  Prompt: “A single dead-on, level product photograph of the front of a small
+  old wooden animal carrier, 40 centimetres long. Three orderly rows of small
+  dark round ventilation holes through weathered faded brown boards. Flat
+  overcast daylight, pale background, no perspective, people, text or objects.”
+
+
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
 
 - `ww-gerald-cutout.jpg`: Codex ImageGen, an original desert lizard seen from the side and from directly above, edited onto a flat colour so that its outline can be read by script. Prompt: realistic desert lizard, side and overhead views, the same animal in both. The recipe replaces the flat colour before export, so it never reaches the model.

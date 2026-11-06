@@ -226,6 +226,18 @@ gerald.bleed(shrink(solid, 3), passes=40)
 gerald.image.scale(1280, 853)
 finish(mesh, 'gerald', {'gerald': gerald.material()})
 
+# --- gerald-box: small photo-built carrier; its ventilation holes stay in the picture ---
+gerald_box_photo = Photo(textures / 'ww-gerald-box.jpg')
+gb = Mesh()
+GB_RECT = (0, 0, gerald_box_photo.w, gerald_box_photo.h)
+GB_WOOD = (210, 190, 490, 270)
+box(gb, -.20, .20, 0, .21, -.09, .09, {
+    '+z': ('carrier', gerald_box_photo, GB_RECT),
+    '-z': ('carrier', gerald_box_photo, GB_RECT),
+    '+x': ('carrier', gerald_box_photo, GB_WOOD), '-x': ('carrier', gerald_box_photo, GB_WOOD),
+    '+y': ('carrier', gerald_box_photo, GB_WOOD), '-y': ('carrier', gerald_box_photo, GB_WOOD)})
+finish(gb, 'gerald-box', {'carrier': gerald_box_photo.material()})
+
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
     if layer_object.type == 'MESH':
@@ -259,7 +271,8 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in ('jax-harpoon', 'piano-upright', 'gerald')}
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box')
+parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
     for key, obj in parts.items():
@@ -289,3 +302,5 @@ shot('piano-right', 'piano-upright', (2.1, 1.3, 3.1), (0, .62, .3), 900, 780, le
 shot('gerald-top', 'gerald', (.15, 2, 0), (.15, 0, 0), 1000, 460, ortho=.68)
 shot('gerald-side', 'gerald', (.15, .07, 3), (.15, .07, 0), 1000, 250, ortho=.68)
 shot('gerald-quarter', 'gerald', (-.45, .36, .75), (-.02, .04, 0), 1000, 620, lens=50)
+shot('gerald-box', 'gerald-box', (0, .11, 1.4), (0, .11, 0), 900, 650, ortho=.43)
+shot('gerald-box-quarter', 'gerald-box', (-.50, .50, .85), (0, .10, 0), 900, 650, lens=50)
