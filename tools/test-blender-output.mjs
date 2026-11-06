@@ -66,6 +66,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
+  {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:14000,maxBytes:5000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:80000,maxBytes:5000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
@@ -653,6 +655,32 @@ try {
             min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
           }
           assert.ok(min[0] < max[0] && min[1] < max[1], 'town UVs cover a range of values');
+        }
+      }
+      if (generator.id === 'town-art-outposts') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        assert.ok(names.has('town-outposts'), 'named family root');
+        assert.ok(names.has('dot-diner'), 'round 1 building root');
+        assert.ok(names.has('dot-diner:body'), 'photo-built diner mesh');
+        const binaryOffset = 20 + jsonLength + 8;
+        for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+          assert.deepEqual(Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_')),
+            ['TEXCOORD_0'], `${mesh.name} has only TEXCOORD_0`);
+          const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+          assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV accessor is float VEC2');
+          const view = gltf.bufferViews[uv.bufferView];
+          const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+          const stride = view.byteStride ?? 8;
+          const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+          for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+          }
+          assert.ok(min[0] < max[0] && min[1] < max[1], 'TEXCOORD_0 spans a visible picture range');
+        }
+        for (const material of gltf.materials || []) {
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
+            `${material.name || 'material'} metallicFactor exceeds .3`);
         }
       }
       if (generator.id === 'ww-art-rail') {
