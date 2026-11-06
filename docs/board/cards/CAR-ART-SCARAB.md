@@ -17,3 +17,7 @@ Original Wasteland cars, not real makes and not copies of any film or game vehic
 - **Scale person:** use a real crew model, not a stick figure.
 
 Name it `round-2.jpg` with `round-2-review.md` and remove round 1.
+
+## Claude's verdict
+
+Round 3 passes (Claude, 5 November 2026). Rusted tube frame, caked paddle tyres, coil-over shocks, and it stands up beside its reference. Other cars and machines take their method from this recipe.

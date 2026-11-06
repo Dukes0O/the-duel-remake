@@ -14,26 +14,23 @@ export function createTrencherState({x = 0, z = 0, heading = 0} = {}) {
     speedFactor:1, cutVolumeM3:0, ridgeLooseVolumeM3:0};
 }
 
+const BLOCKED_SENTENCE = 'Both sides are blocked, so the trencher stopped without removing soil.';
+
 function digAt(ground, x, z, heading) {
   const tool = MACHINE.tools.chain;
   const shape = {x, z, radius:tool.radiusM};
-  const targetHeight = ground.heightAt(x, z) - tool.depthM;
-  const cut = ground.cut(shape, targetHeight);
+  // Choose the ridge side before any soil moves, so a refusal changes nothing.
+  const ridge = [1, -1].map(side => ({
+    x:x + Math.cos(heading) * tool.ridgeOffsetM * side,
+    z:z - Math.sin(heading) * tool.ridgeOffsetM * side,
+    radius:tool.ridgeRadiusM,
+  })).find(candidate => ground.refusal(candidate) === null);
+  if (!ridge) return {cut:{ok:false, reason:BLOCKED_SENTENCE}, ridgeLooseVolumeM3:0};
+  const cut = ground.cut(shape, ground.heightAt(x, z) - tool.depthM);
+  if (!cut.ok) return {cut, ridgeLooseVolumeM3:0};
   let ridgeLooseVolumeM3 = 0;
   for (const [material, compactedM3] of Object.entries(cut.volumes)) {
-    const looseM3 = compactedM3 * 1.25;
-    if (looseM3 <= 0) continue;
-    const sides = [1, -1].map(side => ground.fill({
-      x:x + Math.cos(heading) * tool.ridgeOffsetM * side,
-      z:z - Math.sin(heading) * tool.ridgeOffsetM * side,
-      radius:tool.ridgeRadiusM,
-    }, material, looseM3));
-    const deposited = sides.find(result => result.ok);
-    if (deposited) { ridgeLooseVolumeM3 += deposited.looseVolume; continue; }
-    // The cut is reversible inside the same editable area. Put material back
-    // at the trench before reporting that both ridge sides are blocked.
-    ground.fill(shape, material, looseM3);
-    return {cut:{...cut,ok:false,reason:'Both sides are blocked, so the trencher stopped without removing soil.'},ridgeLooseVolumeM3};
+    if (compactedM3 > 0) ridgeLooseVolumeM3 += ground.fill(ridge, material, compactedM3 * 1.25).looseVolume;
   }
   return {cut, ridgeLooseVolumeM3};
 }
@@ -46,10 +43,11 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
   const chainDown = controls.chainDown === true || finite(controls.chain) && controls.chain > 0.5;
   const definition = state.speedFactor === 1 ? MACHINE : {...MACHINE, maxSpeedMps:MACHINE.maxSpeedMps * state.speedFactor};
   const before = state.machine;
-  const machine = stepMachine(definition, before, controls, dtSeconds);
+  let machine = stepMachine(definition, before, controls, dtSeconds);
   const distance = Math.hypot(machine.x - before.x, machine.z - before.z);
   let distanceCarryM = state.distanceCarryM ?? 0;
   let cutVolumeM3 = 0, ridgeLooseVolumeM3 = 0, hardestSpeed = 1;
+  let stopped = false;
   const events = [];
 
   if (chainDown && distance > 0) {
@@ -62,7 +60,11 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
       const {cut, ridgeLooseVolumeM3:ridgeLoose} = digAt(ground, x, z, machine.heading);
       if (!cut.ok) {
         events.push({type:'cut-refused', x, z, reason:cut.reason});
-        distanceCarryM = 0;
+        // Stop at the refused spot. With a full carry the next step tries this
+        // same spot again, so the chain stays put until the driver raises it.
+        machine = {...machine, x, z, speedMps:0};
+        distanceCarryM = WORK_STEP_M;
+        stopped = true;
         break;
       }
       cutVolumeM3 += cut.volume;
@@ -75,7 +77,7 @@ export function stepTrencher(state, controls = {}, dtSeconds = 0, ground) {
         events.push({type:'dirt-plume', x, z, volumeM3:cut.looseVolume, materials:{...cut.volumes}});
       }
     }
-    distanceCarryM = (distanceCarryM + distance) % WORK_STEP_M;
+    if (!stopped) distanceCarryM = (distanceCarryM + distance) % WORK_STEP_M;
   } else if (!chainDown) {
     distanceCarryM = 0;
   }

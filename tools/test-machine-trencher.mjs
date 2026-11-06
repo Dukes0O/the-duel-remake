@@ -28,6 +28,7 @@ assert.equal(plumes, 100, 'each metre of cut emits a dirt plume event');
 assert.equal(trenchGround.heightAt(0, 50), -1.5, 'the ditch floor is 1.5 metres below its original grade');
 assert.ok(trenchGround.heightAt(1.4, 50) > 0, 'the side chute leaves a raised ridge beside the ditch');
 assert.ok(trenchGround.heightAt(4, 50) > -0.01, 'ground outside the ditch stays at its original grade');
+assert.equal(trenchGround.heightAt(-1.4, 50), 0, 'the dirt goes to one side only, so none is doubled');
 
 const reservedGround = createGroundEdit({region:{id:'reserved-ridge',editable:true}, seed:17, naturalHeight:() => 0,
   reservedShapes:[{x:1.4,z:0,radius:0.8}]});
@@ -49,7 +50,14 @@ const blockedStep=stepTrencher(createTrencherState(),{forward:1,chainDown:true},
 assert.equal(blockedStep.cutVolumeM3,0,'the trencher stops before cutting when both ridge sides are reserved');
 assert.equal(blockedStep.events[0]?.reason,'Both sides are blocked, so the trencher stopped without removing soil.',
   'the stopped cut gives a plain reason');
-assert.ok(Math.abs(blockedGround.heightAt(0,1))<0.03,'a refused ridge placement restores the cut ground');
+assert.equal(blockedGround.heightAt(0,1),0,'a refused ridge placement moves no soil at all');
+assert.ok(blockedStep.state.machine.z<=1+1e-9,'the machine stops at the refused spot');
+assert.equal(blockedStep.state.machine.speedMps,0,'the machine has no speed left at the refused spot');
+const blockedAgain=stepTrencher(blockedStep.state,{forward:1,chainDown:true},1,blockedGround);
+assert.equal(blockedAgain.state.machine.z,blockedStep.state.machine.z,'with the chain down it stays at the refused spot');
+assert.equal(blockedAgain.cutVolumeM3,0,'trying again still removes nothing');
+const chainRaised=stepTrencher(blockedAgain.state,{forward:1,chainDown:false},1,blockedGround);
+assert.ok(chainRaised.state.machine.z>blockedAgain.state.machine.z,'raising the chain lets the driver move on');
 
 // A car wheel over the edited path reads the lower ground height; the same
 // ground query used by vehicle suspension makes the ditch a real obstacle.

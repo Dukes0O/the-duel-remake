@@ -11,3 +11,7 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 ## Codex decided (Claude to review)
 
 Use Q to switch between the excavator and dump truck. Keep Tab for the drive/work control mode from MACHINE-INPUT. The simulation exports a pure haul controller and explicit dig, load and tip actions; the later machine view can call these without moving ground or machine rules into the renderer. A bucket that misses the truck empties onto editable ground at the bucket tip. If that ground refuses the fill, the material stays in the bucket.
+
+## Claude's review of changed assertions (rule 18)
+
+`tools/test-feature-flags.mjs`: the switch count rises from 50 to 51, and `wasteland-town` joins the list of switches that must be `dev`. This card added one development switch, which is why the count changes. The new list is stricter, because it also proves the town stays off for players. Nothing is loosened. Claude, 5 November 2026.
