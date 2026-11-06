@@ -386,3 +386,22 @@ Use `tools/blender/photo_model.py`, and copy `tools/blender/rail-trains.py`, the
 6. Render from the exported GLB in an empty scene, with the view transform set to Standard and flat light, beside the photo at the same angle.
 
 Two faces in the same place flicker, so the underside of a shell needs a real gap from its top.
+
+### Vehicles and anything that curves in every direction
+
+Flat parts come apart at an angle on a cab, bonnet or wing. Use `tools/blender/hull_model.py` instead, with the fire truck in `tools/blender/town-trucks-1.py` as the worked example (`docs/board/looks/town-art-trucks-1/round-9.jpg`):
+
+1. Generate dead-on photos of one object: side, front, rear and overhead. Keep them in the model's `textures` folder, not in `.evidence`.
+2. Measure each photo by hand: where the ground is, where the subject starts and ends, and each wheel's centre and radius. Give each view a `pick` function from metres to pixels.
+3. Trim what is not the body from each mask: ground shadow, thin mirrors, and anything you will build as its own moving part.
+4. Keep only voxels above the frame, with room cut for the wheels. Let `carve_hull` do the rest.
+5. Build wheels, axles and moving parts as round parts at their true world positions, and bleed each photo's background out using a wider colour match that takes in the ground shadow.
+
+Lessons from Wednesday, a small engine carved with the hull kit (Claude, 6 November 2026). `tools/blender/rail-trains.py` has her recipe.
+
+- Carve only the solid body. Above it, a chimney in the side photo meets the cab roof in the end photos and becomes a wide plate, and anything joined by thin posts is lost to `largest_part`. Build the roof, thin sheets, chimney and dome with the photo kit.
+- A symmetrical object reads the same place in the photo from both sides. A far-side `pick` that mirrors X cuts one end's openings through the other end.
+- Keep the sky tolerance narrow, about 20. A wide one treats pale highlights on metal as sky and carves them away.
+- A top-facing view must read real material, never the photo's sky.
+- Scale pictures in memory. Never save over a source photo.
+
