@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createTown} from '../src/town/town-state.js';
+import {createTown,serializeTown} from '../src/town/town-state.js';
 import {stepTown,registeredTownSystems} from '../src/town/town-sim.js';
 import {townVaneState,setTownVaneBrownStreets,recordTownVaneEvent,ACT3_CHAPTERS,VANE_LETTERS} from '../src/town/town-vane.js';
 import {ACT3_CAPTIONS} from '../src/town/content/lines-act3.js';
@@ -21,8 +21,12 @@ for(const [id,line] of Object.entries(ACT3_CAPTIONS)) {
 }
 
 const town=createTown(41,'Dry Town');
+const untouched=serializeTown(town);
+assert.equal(townVaneState(town).started,false);
+assert.equal(serializeTown(town),untouched,'reading Vane state never writes a save');
 assert.equal(setTownVaneBrownStreets(town,['east-road','west-road']).ok,true);
 town.vane={version:1,started:true,startedAt:83,kiosks:[],brownStreets:['east-road','west-road'],letters:[],pendingLetters:[],lastLetterMonth:null,lastVisitMonth:null,events:{},chapterFacts:{}};
+town.utilities={waterResult:{taps:[{id:'east-road',litresPerDay:500,quality:{turbidity:10}},{id:'west-road',litresPerDay:500,quality:{turbidity:10}}]}};
 assert.deepEqual(recordTownVaneEvent(town,'town-hall-built'),{ok:true,added:true});
 assert.deepEqual(recordTownVaneEvent(town,'town-hall-built'),{ok:true,added:false});
 // Tick 84 months, month 1: the queued letter arrives once and the next brown street
@@ -38,3 +42,24 @@ stepTown(town);
 assert.equal(townVaneState(town).letters.length,1);
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
+
+// Old saves acquire their optional Vane field on the first simulation month.
+const oldSave=createTown(901,'Old Save');delete oldSave.vane;
+assert.equal(Object.hasOwn(oldSave,'vane'),false);
+for(let i=0;i<30;i++)stepTown(oldSave);
+assert.equal(Object.hasOwn(oldSave,'vane'),true,'monthly simulation initializes old saves');
+
+// Long-run deterministic towns remain playable while Vane's existing deed
+// rules can press deeds. No system removes the town hall or all residents.
+for(let seed=1;seed<=10;seed++) {
+  const longTown=createTown(seed,'Long Town');
+  longTown.people=Array.from({length:12},(_,index)=>({id:`p-${index}`,name:`Person ${index}`,health:50}));
+  longTown.buildings.push({id:'hall-1',buildingId:'town-hall',finished:true});
+  longTown.story={completed:{16:true}};
+  // Roll one whole town year at a time; real stepTown calls keep every
+  // registered system and its normal seeded inputs in the loop.
+  for(let tick=0;tick<30*360*24;tick++)stepTown(longTown);
+  assert.ok(longTown.people.length>0,`seed ${seed}: Vane never removes the town's people`);
+  assert.ok(longTown.buildings.some(row=>(row.buildingId??row.id).includes('town-hall')),`seed ${seed}: Vane never removes Town Hall`);
+  assert.ok(townVaneState(longTown).started,`seed ${seed}: Vane remains present`);
+}

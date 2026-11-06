@@ -1,7 +1,26 @@
 // Letter wording and trigger names are from The Polite Letter, section 4.
 // Conditions are strings so later town systems can report new events without
 // changing this content table.
-const letter=(id,condition,text,repeatable=false)=>Object.freeze({id,condition,text:`${text}`,repeatable});
+const DETECT=Object.freeze({
+  'statue-built':'town.buildings contains a finished statue','town-hall-built':'town.buildings contains a finished town-hall',
+  'school-built':'town.buildings contains a finished school','clinic-built':'town.buildings contains a finished clinic',
+  'building-burned':'waiting: fire history is not retained on town state','dry-summer':'town.weather.drought during Summer',
+  'wet-month':'waiting: rain is not recorded by town weather','winter-in-canvas':'waiting: housing occupants are not linked to shelter types',
+  'goat-pen-built':'town.buildings contains a finished goat-pen','bo-fifteen':'waiting: Bo age is not available in this simulation',
+  'kettle-at-peace':'waiting: warlord peace choices are not recorded on town state','vultures-at-peace':'waiting: warlord peace choices are not recorded on town state',
+  'magnus-visited-twice':'waiting: repeat visit count is not available','sal-driven-off':'waiting: warlord choices are not recorded on town state',
+  'mirage-driven-off':'waiting: warlord choices are not recorded on town state','raided-vane-truck':'waiting: no Vane truck raid event exists',
+  'escorted-fuel-truck':'waiting: no Vane fuel escort event exists','outbid-vane':'waiting: deed bid wins are not retained as a separate event',
+  'vane-won-deed':'town.deeds.items has ownerId vane','player-holds-deed-set':'town.deeds.items has three player-owned deeds in one territory',
+  'vane-holds-twelve-deeds':'town.deeds.items has twelve ownerId vane','player-won-deed-duel':'waiting: deed-duel result is not retained',
+  'population-500':'town.people.length >= 500','population-1000':'town.people.length >= 1000','family-left-town':'waiting: family departures are not recorded',
+  'water-brown-again':'town.water/taps contain brown water after a clean period','reservoir-built':'town.buildings contains a finished reservoir',
+  'kestrel-over-vane-tower':'waiting: Kestrel flight proximity is not reported','won-at-scrapdome':'waiting: Scrapdome results are not stored on town',
+  'scrapasaurus-beaten':'waiting: Scrapasaurus result is not stored on town','quiet-yearly-visit':'each game year after Year 7',
+  'quiet-yearly-road':'waiting: road changes are not summarized annually','quiet-yearly-book':'waiting: Town Book annual event is not exposed',
+  'quiet-yearly-no-reply':'each game year after Year 7','quiet-yearly-reply':'waiting: player replies are not stored on town',
+});
+const letter=(id,condition,text,repeatable=false)=>Object.freeze({id,condition,detect:DETECT[condition]??'waiting: detection not mapped',text:`${text}`,repeatable});
 export const VANE_LETTERS=Object.freeze([
   letter('vane.l.statue','statue-built','Dear Neighbour, I can see your statue from my window. I have asked for the window to be cleaned. Kind regards.'),
   letter('vane.l.hall','town-hall-built','Dear Neighbour, congratulations on your Town Hall. I do so admire brick. It is what people use before they can afford anything else. Kind regards.'),
