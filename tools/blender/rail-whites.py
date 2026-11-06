@@ -11,7 +11,9 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--through', choices=('works-platform', 'salt-pan', 'salt-heap'), default='salt-heap')
+parser.add_argument('--through', choices=('works-platform', 'salt-pan', 'salt-heap', 'dead-conveyor',
+                                          'canteen', 'school-hut', 'pay-office', 'vane-fence'),
+                    default='vane-fence')
 parser.add_argument('--render-dir', default='.qa-dist/ww-art-whites')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
@@ -44,13 +46,36 @@ clock_photo = Photo(textures / 'whites-clock.jpg')
 salt_wall = Photo(textures / 'whites-salt-wall.jpg', frame=(1024, 341))
 salt_crust = Photo(textures / 'whites-cracked-salt.jpg')
 
+def fitted_photo(path, max_dimension=1024):
+    photo = Photo(path)
+    width, height = photo.image.size
+    scale = min(1.0, max_dimension / max(width, height))
+    width = max(1, round(width * scale))
+    height = max(1, round(height * scale))
+    if (width, height) != tuple(photo.image.size):
+        photo.image.scale(width, height)
+    photo.image_w = photo.w = width
+    photo.image_h = photo.h = height
+    photo._rgb = None
+    return photo
+
+conveyor_photo = fitted_photo(textures / 'dead-conveyor-side.jpg')
+hut_photos = {
+    'canteen': (fitted_photo(textures / 'canteen-side.jpg'), fitted_photo(textures / 'canteen-end.jpg')),
+    'school-hut': (fitted_photo(textures / 'school-hut-side.jpg'), fitted_photo(textures / 'school-hut-end.jpg')),
+    'pay-office': (fitted_photo(textures / 'pay-office-side.jpg'), fitted_photo(textures / 'pay-office-end.jpg')),
+}
+fence_photo = fitted_photo(textures / 'vane-fence-side.jpg')
+sign_photo = fitted_photo(textures / 'vane-sign.jpg')
+
 # The kit supplies a photo-backed, non-metallic salt surface for the pan crust
 # and the heap's cut faces. Its tiled UV scale is two metres per repeat.
 town.PALETTE['sand'] = ((.91, .91, .89), 0)
 surface_material = town.make_materials({'sand': textures / 'whites-cracked-salt.jpg'})['sand']
 
 objects = {}
-stage_order = ('works-platform', 'salt-pan', 'salt-heap')
+stage_order = ('works-platform', 'salt-pan', 'salt-heap', 'dead-conveyor',
+               'canteen', 'school-hut', 'pay-office', 'vane-fence')
 last_stage = stage_order.index(args.through)
 
 def photo_rect(name, photo, rect):
@@ -85,8 +110,8 @@ def build_platform():
         '-z': photo_rect('side', platform_side, (20, 260, 1004, 293)),
         '+y': photo_rect('end', platform_end, (275, 365, 757, 432)),
         '-y': photo_rect('side', platform_side, (30, 270, 1000, 289)),
-        '+x': photo_rect('end', platform_end, (130, 535, 892, 652)),
-        '-x': photo_rect('end', platform_end, (130, 535, 892, 652)),
+        '+x': photo_rect('side', platform_side, (20, 258, 1004, 293)),
+        '-x': photo_rect('side', platform_side, (20, 258, 1004, 293)),
     })
     # Photo-traced timber piers support the low deck at regular intervals.
     for centre in (43, 179, 331, 485, 650, 825, 990):
@@ -97,16 +122,36 @@ def build_platform():
                 slab(mesh, 'side', platform_side, loops, point, z - .09, z + .09,
                      wall_scale=.014)
     platform_start = X(16)
+    tread_depth, tread_rise = .32, 1 / 3
     for step in range(3):
-        x0 = platform_start - .9 + step * .3
-        x1 = x0 + .3
-        y0, y1 = step / 3, (step + 1) / 3
-        box(mesh, x0, x1, y0, y1, -1.54, 1.54, {
-            '+z': photo_rect('side', platform_side, (18, 250, 80, 276)),
-            '-z': photo_rect('side', platform_side, (18, 250, 80, 276)),
-            '+y': photo_rect('end', platform_end, (220, 372, 810, 406)),
-            '-y': photo_rect('side', platform_side, (20, 272, 80, 286)),
+        x0 = platform_start - tread_depth * (3 - step)
+        x1 = x0 + tread_depth
+        y0, y1 = step * tread_rise, (step + 1) * tread_rise
+        box(mesh, x0, x1, y0, y1, -1.02, 1.02, {
+            '+z': photo_rect('end', platform_end, (350, 535, 675, 590)),
+            '-z': photo_rect('end', platform_end, (350, 535, 675, 590)),
+            '+y': photo_rect('end', platform_end, (350, 545, 675, 570)),
+            '-y': photo_rect('end', platform_end, (360, 580, 660, 602)),
+            '+x': photo_rect('end', platform_end, (350, 575, 675, 612)),
+            '-x': photo_rect('end', platform_end, (350, 575, 675, 612)),
         })
+
+    # Two thick side stringers carry the treads back into the deck. Their
+    # measured end-view projection follows the sloping rails in the photo.
+    rail_profile = ((platform_start - .98, .02), (platform_start - .82, .02),
+                    (platform_start + .04, .98), (platform_start - .12, .98))
+    for zc in (-1.13, 1.13):
+        half_z = .09
+        front = [(x, y, zc + half_z) for x, y in rail_profile]
+        back = [(x, y, zc - half_z) for x, y in rail_profile]
+        uv = [platform_end.uv(340, 540), platform_end.uv(390, 540),
+              platform_end.uv(635, 625), platform_end.uv(585, 625)]
+        mesh.face(front, uv, 'end', (0, 0, 1))
+        mesh.face(back, uv, 'end', (0, 0, -1))
+        for i in range(4):
+            j = (i + 1) % 4
+            mesh.face((front[i], back[i], back[j], front[j]),
+                      (uv[i], uv[i], uv[j], uv[j]), 'end')
 
     # Trace the actual canopy outline, then build a thin roof with air below it.
     roof = trace(side_solid, (14, 39, 525, 107), tolerance=1.2, min_area=40)
@@ -193,10 +238,11 @@ def build_platform():
             '+y': photo_rect('side', platform_side, (centre - 5, 92, centre + 5, 100)),
         })
 
-    # The station clock's case is a measured lathe with its dead-on face photo.
-    # Its cap is the only face using this image; there are no hands in the source.
+    # A deep two-faced clock drum has a rolled iron rim on both sides. The
+    # clock photo supplies the numerals only; neither face has hands.
     clock_x = X(868)
     clock_y = 3.25
+    clock_z = 1.30
     radius = .82
     radius_px = 484
     centre_px = (512, 512)
@@ -204,21 +250,35 @@ def build_platform():
         return clock_photo.uv(centre_px[0] + math.cos(angle) * fraction * radius_px * .84,
                               centre_px[1] - math.sin(angle) * fraction * radius_px * .84)
     def clock_edge(index, distance, r, angle):
-        return clock_photo.uv(centre_px[0] + math.cos(angle) * radius_px * .84,
-                              centre_px[1] - math.sin(angle) * radius_px * .84)
-    lathe(mesh, 'clock', (clock_x, clock_y, .05), (0, 0, 1), (1, 0, 0), (0, 1, 0),
-          [(0, radius), (.105, radius), (.13, radius * .94)], clock_edge, sides=64,
+        # Keep the photograph square to both faces while mapping the edge to
+        # its own narrow band from the same worn case photograph.
+        return clock_photo.uv(centre_px[0] + math.cos(angle) * radius_px * .97,
+                              centre_px[1] - math.sin(angle) * radius_px * .97)
+    lathe(mesh, 'clock', (clock_x, clock_y, clock_z), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+          [(-.125, radius * .97), (-.105, radius), (.105, radius), (.125, radius * .97)], clock_edge, sides=64,
           cap_start=('clock', clock_face), cap_end=('clock', clock_face))
+    # Raised iron beads protect both glass faces and make the quarter-metre
+    # case read as a drum from the side.
+    for sign in (-1, 1):
+        z = .05 + sign * .128
+        lathe(mesh, 'clock', (clock_x, clock_y, clock_z + sign * .078), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(0, radius * .99), (.014, radius * .99)], clock_edge, sides=64)
     # A substantial post and two short brackets make the clock visible above
     # the platform from car height, with no extra face or hand over the dial.
     post_x = clock_x
-    box(mesh, post_x - .09, post_x + .09, 1.0, 3.62, -.10, .10, {
+    post_z = clock_z
+    box(mesh, post_x - .09, post_x + .09, .10, 3.62, post_z - .10, post_z + .10, {
         '+z': photo_rect('side', platform_side, (854, 140, 876, 255)),
         '-z': photo_rect('side', platform_side, (854, 140, 876, 255)),
     })
-    box(mesh, post_x - .11, post_x + .11, 3.48, 3.62, -.30, .30, {
+    box(mesh, post_x - .11, post_x + .11, 3.48, 3.62, post_z - .30, post_z + .30, {
         '+z': photo_rect('side', platform_side, (858, 133, 876, 143)),
         '-z': photo_rect('side', platform_side, (858, 133, 876, 143)),
+    })
+    box(mesh, post_x - .25, post_x + .25, .10, .22, post_z - .24, post_z + .24, {
+        '+z': photo_rect('side', platform_side, (850, 247, 890, 258)),
+        '-z': photo_rect('side', platform_side, (850, 247, 890, 258)),
+        '+y': photo_rect('side', platform_side, (850, 247, 890, 254)),
     })
     mesh.finish('works-platform', mats)
     objects['works-platform'] = mesh
@@ -254,7 +314,7 @@ def build_pan():
     walls.finish('salt-pan', wall_mats)
     objects['salt-pan'] = walls
 
-    # A modestly uneven crust follows 12 m cracked-salt texture tiles.
+    # Crust repeats at six metres, with neighbouring tiles quarter-turned.
     nx = nz = 80
     verts, faces = [], []
     for i in range(nx + 1):
@@ -274,13 +334,13 @@ def build_pan():
     for poly in mesh_data.polygons:
         centre_x = sum(mesh_data.vertices[mesh_data.loops[i].vertex_index].co.x for i in poly.loop_indices) / len(poly.loop_indices)
         centre_z = sum(mesh_data.vertices[mesh_data.loops[i].vertex_index].co.y for i in poly.loop_indices) / len(poly.loop_indices)
-        tile_x = math.floor((centre_x + half) / 12)
-        tile_z = math.floor((centre_z + half) / 12)
+        tile_x = math.floor((centre_x + half) / 6)
+        tile_z = math.floor((centre_z + half) / 6)
         rotate = (tile_x + tile_z) % 2 == 1
         for loop_index in poly.loop_indices:
             vertex = mesh_data.vertices[mesh_data.loops[loop_index].vertex_index].co
-            u = (vertex.x + half) / 12 - tile_x
-            v = (vertex.y + half) / 12 - tile_z
+            u = (vertex.x + half) / 6 - tile_x
+            v = (vertex.y + half) / 6 - tile_z
             if rotate:
                 u, v = 1 - v, u
             uv_layer.data[loop_index].uv = (u, v)
@@ -291,35 +351,43 @@ def build_pan():
     bpy.context.collection.objects.link(crust)
 
 def build_heap():
-    # A radial heightfield makes a full 14 m mound rather than a projected
-    # front face. Its edge falls to ground level with no raised rim.
-    radius, height = 7.0, 5.0
-    radial_steps, segments = 36, 96
-    verts = [(0, height, 0)]
-    for ring in range(1, radial_steps + 1):
-        fraction = ring / radial_steps
-        for segment in range(segments):
-            angle = math.tau * segment / segments
-            angular_lump = (math.sin(3 * angle + fraction * 4.1)
-                            + .55 * math.sin(7 * angle - fraction * 6.3)
-                            + .30 * math.cos(11 * angle + fraction * 2.7))
-            radial_lump = 1 + .055 * angular_lump * math.sin(math.pi * fraction)
-            falloff = max(0, 1 - fraction * fraction) ** .82
-            y = height * falloff * radial_lump
-            x = radius * fraction * math.cos(angle)
-            z = radius * fraction * math.sin(angle)
-            verts.append((x, y, z))
+    # Several offset heaps, shoulders and wind-cut gullies combine into one
+    # irregular 16 m footprint. A soft falloff buries the edge below the pan.
+    radius, height = 8.0, 5.0
+    steps = 112
+    def smoothstep(v): return v * v * (3 - 2 * v)
+    def heap_height(x, z):
+        components = (
+            (3.75, -1.1, .35, 3.05, 2.55),
+            (1.32, 2.55, -1.6, 2.0, 1.65),
+            (1.16, -4.4, 1.9, 2.25, 1.20),
+            (.82, .5, 3.15, 3.25, .63),
+            (.60, 3.7, 2.7, 2.15, .72),
+        )
+        y = sum(a * math.exp(-(((x-cx)/sx)**2 + ((z-cz)/sz)**2) * 1.15)
+                for a, cx, cz, sx, sz in components)
+        # Narrow eroded channels cut down the facing slope; their curves do
+        # not repeat around the mound like decorative radial grooves.
+        for offset, width, depth in ((-1.0, .33, .72), (1.65, .27, .52), (3.1, .38, .45)):
+            channel_x = offset + .22 * math.sin(z * .34 + offset)
+            y -= depth * math.exp(-((x - channel_x) / width) ** 2) * math.exp(-(z / 6.0) ** 4)
+        dist = math.hypot(x / 1.08, z)
+        fade = 1 - smoothstep(min(1, max(0, (dist - 6.6) / 1.8)))
+        wind_lump = 1 + .045 * math.sin(1.7*x + .8*z) * math.cos(.7*z - .25*x)
+        return max(-.18, y * fade * wind_lump - .18)
 
+    verts = []
     faces = []
-    for segment in range(segments):
-        faces.append((0, 1 + (segment + 1) % segments, 1 + segment))
-    for ring in range(1, radial_steps):
-        inner = 1 + (ring - 1) * segments
-        outer = 1 + ring * segments
-        for segment in range(segments):
-            next_segment = (segment + 1) % segments
-            faces.append((inner + segment, inner + next_segment,
-                          outer + next_segment, outer + segment))
+    for i in range(steps + 1):
+        x = -radius + 2 * radius * i / steps
+        for j in range(steps + 1):
+            z = -radius + 2 * radius * j / steps
+            verts.append((x, heap_height(x, z), z))
+    stride = steps + 1
+    for i in range(steps):
+        for j in range(steps):
+            a = i * stride + j
+            faces.append((a, a + 1, a + stride + 1, a + stride))
 
     mesh_data = bpy.data.meshes.new('wind-worn cracked salt heap')
     mesh_data.from_pydata([town.game_vector(vertex) for vertex in verts], [], faces)
@@ -327,18 +395,248 @@ def build_heap():
     for poly in mesh_data.polygons:
         for loop_index in poly.loop_indices:
             vertex = verts[mesh_data.loops[loop_index].vertex_index]
-            uv_layer.data[loop_index].uv = (vertex[0] / 2, vertex[2] / 2)
+            uv_layer.data[loop_index].uv = (vertex[0] / 5, vertex[2] / 5)
         poly.use_smooth = True
     mesh_data.materials.append(surface_material)
     mesh_data.update()
     mound = bpy.data.objects.new('salt-heap', mesh_data)
     bpy.context.collection.objects.link(mound)
 
+def photo_material(name, photo):
+    return photo.material()
+
+def build_conveyor():
+    photo = conveyor_photo
+    w, h = photo.w, photo.h
+    sky = photo.sky(((4, 4), (w - 5, 4), (4, h - 5), (w - 5, h - 5)), tolerance=20, grey=26)
+    solid = tidy(~sky, 1)
+    x0, x1 = .012 * w, .988 * w
+    top, bottom = .13 * h, .82 * h
+    def point(px, py, depth):
+        x = (px - x0) * (30 / (x1 - x0)) - 15
+        y = (bottom - py) * (6 / (bottom - top))
+        return (x, y, depth)
+    loops = trace(solid, (int(x0), int(top), int(x1), int(bottom)), tolerance=2.4, min_area=14)
+    if not loops:
+        raise RuntimeError('Dead-conveyor outline did not trace from its side photo')
+    mesh = Mesh()
+    for depth in (-.50, .50):
+        slab(mesh, 'photo', photo, loops, point, depth - .035, depth + .035, wall_scale=.006)
+    # Short, exposed rollers bridge the two open side frames. Their positions
+    # follow the conveyor slope and their surfaces sample the measured photo.
+    def roller_uv(index, distance, radius, angle):
+        return photo.uv((distance / 1.0 + 1) * .5 * w,
+                        .55 * h - math.sin(angle) * radius * (h / 6))
+    roller_count = 46
+    for index in range(roller_count):
+        x = -14.2 + 28.4 * index / (roller_count - 1)
+        y = 1.0 + (x + 14.2) / 28.4 * 4.7
+        lathe(mesh, 'photo', (x, y, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(-.50, .075), (.50, .075)], roller_uv, sides=8)
+    mesh.finish('dead-conveyor', {'photo': photo_material('dead-conveyor', photo)})
+    objects['dead-conveyor'] = mesh
+
+HUTS = {
+    'canteen': {
+        'wall_top': .24, 'roof_cut': .205,
+        'side_holes': ((.07,.40,.13,.81),(.20,.40,.26,.56),(.32,.40,.78,.56),(.86,.40,.91,.56)),
+        'end_holes': ((.40,.40,.60,.85),),
+        'roof': 'mono',
+    },
+    'school-hut': {
+        'wall_top': .31, 'roof_cut': .275,
+        'side_holes': ((.43,.39,.56,.84),(.15,.39,.28,.62),(.71,.39,.84,.62)),
+        'end_holes': ((.40,.40,.60,.86),),
+        'roof': 'gable',
+    },
+    'pay-office': {
+        'wall_top': .30, 'roof_cut': .255,
+        'side_holes': ((.78,.38,.90,.85),(.285,.38,.38,.65)),
+        'end_holes': ((.40,.33,.60,.89),),
+        'roof': 'mono',
+    },
+}
+
+def cut_rectangles(mask, rects):
+    h, w = mask.shape
+    for x0, y0, x1, y1 in rects:
+        left, right = int(x0 * w), int(x1 * w)
+        top, bottom = int(y0 * h), int(y1 * h)
+        mask[top:bottom, left:right] = False
+
+def dark_face(mesh, vertices, normal):
+    uv = ((0,0),(1,0),(1,1),(0,1))
+    mesh.face(vertices, uv, 'inside', normal)
+
+def build_hut(name):
+    side, end = hut_photos[name]
+    cfg = HUTS[name]
+    sw, sh = side.w, side.h
+    ew, eh = end.w, end.h
+    side_sky = side.sky(((4,4),(sw-5,4),(4,sh-5),(sw-5,sh-5)), tolerance=20, grey=26)
+    side_solid = tidy(~side_sky, 1)
+    wall_mask = side_solid.copy()
+    wall_mask[:int(cfg['wall_top'] * sh), :] = False
+    cut_rectangles(wall_mask, cfg['side_holes'])
+    side_bounds = (.025 * sw, cfg['wall_top'] * sh, .975 * sw, .89 * sh)
+    def side_point(px, py, depth):
+        x = (px - side_bounds[0]) * (8 / (side_bounds[2] - side_bounds[0])) - 4
+        y = (side_bounds[3] - py) * (3.5 / (side_bounds[3] - side_bounds[1]))
+        return (x, y, depth)
+    side_loops = trace(wall_mask, (int(side_bounds[0]), int(side_bounds[1]),
+                                   int(side_bounds[2]), int(side_bounds[3])),
+                       tolerance=2.1, min_area=20)
+    if not side_loops:
+        raise RuntimeError(f'{name} side wall did not trace from its photo')
+
+    # The roof remains a separate measured piece, leaving daylight under its
+    # lifted edge rather than baking a dark stripe into a solid wall.
+    roof_mask = side_solid.copy()
+    roof_mask[int(cfg['roof_cut'] * sh):, :] = False
+    roof_loops = trace(roof_mask, (int(.015 * sw), 0, int(.985 * sw), int(cfg['roof_cut'] * sh)),
+                       tolerance=2.1, min_area=20)
+
+    end_sky = end.sky(((4,4),(ew-5,4),(4,eh-5),(ew-5,eh-5)), tolerance=20, grey=26)
+    end_wall = tidy(~end_sky, 1)
+    end_wall[:int(.26 * eh), :] = False
+    cut_rectangles(end_wall, cfg['end_holes'])
+    end_bounds = (.08 * ew, .26 * eh, .92 * ew, .90 * eh)
+    def end_point(px, py, depth):
+        z = (px - (end_bounds[0] + end_bounds[2]) / 2) * (4.4 / (end_bounds[2] - end_bounds[0]))
+        y = (end_bounds[3] - py) * (3.5 / (end_bounds[3] - end_bounds[1]))
+        return (depth, y, z)
+    end_loops = trace(end_wall, (int(end_bounds[0]), int(end_bounds[1]),
+                                 int(end_bounds[2]), int(end_bounds[3])),
+                      tolerance=2.1, min_area=20)
+    if not end_loops:
+        raise RuntimeError(f'{name} end wall did not trace from its photo')
+
+    mesh = Mesh()
+    for z0, z1 in ((1.96, 2.08), (-2.08, -1.96)):
+        slab(mesh, 'side', side, side_loops, side_point, z0, z1, wall_scale=.006)
+        if roof_loops:
+            slab(mesh, 'side', side, roof_loops, side_point, z0 - .08, z1 + .08, wall_scale=.006)
+    for x0, x1 in ((3.94,4.06),(-4.06,-3.94)):
+        slab(mesh, 'end', end, end_loops, end_point, x0, x1, wall_scale=.006)
+
+    # Broad roof sheets bridge the photo-traced eaves. School has a pitched
+    # gable; the canteen and pay office use separate shallow shed roofs.
+    roof_uv = (side.uv(.08*sw,.08*sh), side.uv(.92*sw,.08*sh),
+               side.uv(.92*sw,max(1,int(cfg['roof_cut']*sh))),
+               side.uv(.08*sw,max(1,int(cfg['roof_cut']*sh))))
+    if cfg['roof'] == 'gable':
+        for za, zb, ya, yb in ((-2.30,0,3.28,3.58),(0,2.30,3.58,3.28)):
+            top = ((-4.12,ya,za),(4.12,ya,za),(4.12,yb,zb),(-4.12,yb,zb))
+            low = tuple((x,y-.075,z) for x,y,z in top)
+            mesh.face(top, roof_uv, 'side', (0,1,0))
+            mesh.face(tuple(reversed(low)), tuple(reversed(roof_uv)), 'side', (0,-1,0))
+    else:
+        roof = ((-4.12,3.30,-2.30),(4.12,3.30,-2.30),(4.12,3.48,2.30),(-4.12,3.48,2.30))
+        lower = tuple((x,y-.075,z) for x,y,z in roof)
+        mesh.face(roof, roof_uv, 'side', (0,1,0))
+        mesh.face(tuple(reversed(lower)), tuple(reversed(roof_uv)), 'side', (0,-1,0))
+
+    # A matte dark interior plane sits behind the real openings, so a window
+    # or doorway has visible depth without a painted black picture on its rim.
+    for x0, y0, x1, y1 in cfg['side_holes']:
+        xa = (x0 - .025) * 8 / .95 - 4
+        xb = (x1 - .025) * 8 / .95 - 4
+        ya = (side_bounds[3] - y1 * sh) * (3.5 / (side_bounds[3] - side_bounds[1]))
+        yb = (side_bounds[3] - y0 * sh) * (3.5 / (side_bounds[3] - side_bounds[1]))
+        dark_face(mesh, ((xa,ya,0),(xb,ya,0),(xb,yb,0),(xa,yb,0)), (0,0,1))
+    for x0, y0, x1, y1 in cfg['end_holes']:
+        za = (x0 - .5) * 4.4
+        zb = (x1 - .5) * 4.4
+        ya = (end_bounds[3] - y1 * eh) * (3.5 / (end_bounds[3] - end_bounds[1]))
+        yb = (end_bounds[3] - y0 * eh) * (3.5 / (end_bounds[3] - end_bounds[1]))
+        dark_face(mesh, ((0,ya,za),(0,ya,zb),(0,yb,zb),(0,yb,za)), (1,0,0))
+
+    if name == 'pay-office':
+        x0, y0, x1, y1 = cfg['side_holes'][1]
+        xa, xb = (x0-.025)*8/.95-4, (x1-.025)*8/.95-4
+        ya = (side_bounds[3] - y1*sh) * (3.5/(side_bounds[3]-side_bounds[1]))
+        yb = (side_bounds[3] - y0*sh) * (3.5/(side_bounds[3]-side_bounds[1]))
+        for i in range(4):
+            x = xa + (xb-xa) * (i+1) / 5
+            box(mesh, x-.018, x+.018, ya, yb, 2.03, 2.08,
+                {'+z': ('side', side, (int(x0*sw),int(y0*sh),int(x1*sw),int(y1*sh)))})
+        box(mesh, xa, xb, (ya+yb)/2-.018, (ya+yb)/2+.018, 2.03, 2.08,
+            {'+z': ('side', side, (int(x0*sw),int(y0*sh),int(x1*sw),int(y1*sh)))})
+
+    inside = bpy.data.materials.new(name + ' / dark interior')
+    inside.use_nodes = True
+    inside.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.012,.014,.014,1)
+    inside.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
+    mesh.finish(name, {'side': side.material(), 'end': end.material(), 'inside': inside})
+    objects[name] = mesh
+
+def build_fence():
+    photo = fence_photo
+    w, h = photo.w, photo.h
+    # The image provides measured posts and salt-worn wire; the sign itself is
+    # a separate clean picture. Mesh openings stay real and clear.
+    sky = photo.sky(((4,4),(w-5,4),(4,h-5),(w-5,h-5)), tolerance=20, grey=26)
+    solid = tidy(~sky, 1)
+    x0, x1 = .02*w, .98*w
+    y0, y1 = .30*h, .92*h
+    def point(px, py, depth):
+        return (((px-x0)*30/(x1-x0))-15, (y1-py)*3/(y1-y0), depth)
+    mesh = Mesh()
+    # Trace the ten iron posts separately from their actual photo positions.
+    for i in range(10):
+        centre = x0 + (x1-x0)*i/9
+        loops = trace(solid, (int(centre-.012*w), int(y0), int(centre+.012*w), int(y1)),
+                      tolerance=1.0, min_area=12)
+        if loops:
+            for z in (-.055,.055):
+                slab(mesh, 'fence', photo, loops, point, z-.025, z+.025, wall_scale=.006)
+
+    # Open diamond wire lattice, with each strand a thin traced-photo strip.
+    cols, rows = 50, 6
+    dx, dy = 30/cols, 3/rows
+    half_wire = .009
+    def add_wire(a, b, z, flip=False):
+        ax, ay = a; bx, by = b
+        length = math.hypot(bx-ax, by-ay) or 1
+        ox, oy = -(by-ay)/length*half_wire, (bx-ax)/length*half_wire
+        pts = ((ax+ox,ay+oy),(bx+ox,by+oy),(bx-ox,by-oy),(ax-ox,ay-oy))
+        verts = [((x-15),y,z) for x,y in pts]
+        pxa = x0 + (ax+15)/30*(x1-x0); pxb = x0 + (bx+15)/30*(x1-x0)
+        pya = y1 - ay/3*(y1-y0); pyb = y1 - by/3*(y1-y0)
+        uv = (photo.uv(pxa,pya),photo.uv(pxb,pyb),photo.uv(pxb,pyb),photo.uv(pxa,pya))
+        mesh.face(verts, uv, 'fence', (0,0,1))
+        mesh.face(tuple((x,y,-z) for x,y,z in reversed(verts)), tuple(reversed(uv)), 'fence', (0,0,-1))
+    for row in range(rows):
+        for col in range(cols):
+            xa, xb = -15+col*dx, -15+(col+1)*dx
+            ya, yb = .04+row*dy, .04+(row+1)*dy
+            add_wire((xa,ya),(xb,yb),.055)
+            add_wire((xa,yb),(xb,ya),.055)
+
+    # A small clean photo sign carries the required exact words.
+    sign_mat = sign_photo.material()
+    box(mesh, -2.35, 2.35, 1.95, 3.02, -.085, .085, {
+        '+z': ('sign', sign_photo, (0,0,w,h)),
+        '-z': ('sign', sign_photo, (0,0,w,h)),
+    })
+    mesh.finish('vane-fence', {'fence': photo.material(), 'sign': sign_mat})
+    objects['vane-fence'] = mesh
+
 build_platform()
 if last_stage >= 1:
     build_pan()
 if last_stage >= 2:
     build_heap()
+if last_stage >= 3:
+    build_conveyor()
+if last_stage >= 4:
+    build_hut('canteen')
+if last_stage >= 5:
+    build_hut('school-hut')
+if last_stage >= 6:
+    build_hut('pay-office')
+if last_stage >= 7:
+    build_fence()
 
 print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -392,7 +690,7 @@ def shot(piece, name, eye, target, width, height, ortho=None, lens=35):
 
 if last_stage >= 0:
     shot('works-platform', 'side', (0, 2.1, 36), (0, 2.1, 0), 1024, 341, ortho=34)
-    shot('works-platform', 'end', (9, 2.1, 0), (0, 2.1, 0), 1024, 683, ortho=5.5)
+    shot('works-platform', 'end', (9, 1.55, 0), (0, 1.55, 0), 1024, 683, ortho=6.8)
     shot('works-platform', 'quarter', (8.6, 1.2, 15.0), (0, 2.1, 0), 1500, 650, lens=20)
     shot('works-platform', 'quarter-back', (-8.6, 1.2, -15.0), (0, 2.1, 0), 1500, 650, lens=20)
 if last_stage >= 1:
@@ -402,3 +700,14 @@ if last_stage >= 1:
 if last_stage >= 2:
     shot('salt-heap', 'side', (0, 2.4, 17), (0, 2.4, 0), 1536, 512, ortho=18)
     shot('salt-heap', 'quarter', (10.6, 1.2, 10.6), (0, 1.8, 0), 1100, 720, lens=28)
+if last_stage >= 3:
+    shot('dead-conveyor', 'side', (0, 3.1, 38), (0, 3.1, 0), 1500, 520, ortho=37)
+    shot('dead-conveyor', 'quarter', (12, 1.3, 14), (0, 3.0, 0), 1200, 760, lens=18)
+for hut in ('canteen', 'school-hut', 'pay-office'):
+    if last_stage >= stage_order.index(hut):
+        shot(hut, 'side', (0, 1.55, 15), (0, 1.75, 0), 1200, 620, lens=35)
+        shot(hut, 'end', (10, 1.65, 0), (0, 1.65, 0), 900, 760, lens=35)
+        shot(hut, 'quarter', (9, 1.25, 11), (0, 1.75, 0), 1200, 760, lens=28)
+if last_stage >= 7:
+    shot('vane-fence', 'side', (0, 1.5, 18), (0, 1.5, 0), 1500, 520, ortho=38)
+    shot('vane-fence', 'quarter', (12, 1.3, 14), (0, 1.6, 0), 1200, 760, lens=20)
