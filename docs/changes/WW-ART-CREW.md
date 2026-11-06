@@ -11,6 +11,11 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 - `tools/blender/crew-favours.py`: adds the box as a named child of the root.
 - `public/assets/models/wasteland/scablands/textures/ww-gerald-box.jpg` and its
   prompt credit in `CREDITS.md`.
+- Added `ash-hat`, using a radius read from the side photo and a real thin brim.
+  The side and quarter exported-GLB renders were inspected beside the
+  reference. The silhouette reads as a worn hat; its dent is slightly
+  mechanical at close range, but it does not read as a toy at prop scale.
+- Added `ww-ash-hat-side.jpg` and `ww-ash-hat-top.jpg` with prompt credits.
 - The existing `photo_model.py` photo kit remains the source for the three
   Claude accepted props and the new box.
 - `dynamite-box` was tried in two renders, then omitted. The photo wrapped into
@@ -20,8 +25,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 ## Checks
 
 - Blender 4.5 recipe: rendered the exported GLB in an empty scene. It reports
-  6,816 triangles across the four props and the GLB is 1,279,820 bytes.
-- Inspected `gerald-box` front and three-quarter renders beside its photo.
+-  16,920 triangles across five props and the GLB is 1,583,276 bytes.
+- Inspected `gerald-box` front and three-quarter renders, and `ash-hat` side and
+  three-quarter renders beside their photos.
 - `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs`:
   not yet run; run after the remaining props.
 - Lane tier and build: not run; art cards use the specified Blender checks.

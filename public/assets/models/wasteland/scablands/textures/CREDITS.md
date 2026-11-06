@@ -88,6 +88,12 @@ edges. No objects, gear, pool, scene, text, or watermark.
   old wooden animal carrier, 40 centimetres long. Three orderly rows of small
   dark round ventilation holes through weathered faded brown boards. Flat
   overcast daylight, pale background, no perspective, people, text or objects.”
+- `ww-ash-hat-side.jpg` and `ww-ash-hat-top.jpg`: Codex ImageGen photograph
+  sheet of one worn small felt hat, cropped to the side and overhead views.
+  Prompt: “Two dead-on views of the same small battered felt hat: side and
+  directly above. Slightly too small, old, dusty, faded charcoal-brown felt,
+  narrow drooping brim and shallow dented crown. Plain pale background, flat
+  overcast daylight, no people, labels or props.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.

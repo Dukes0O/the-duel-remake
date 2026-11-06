@@ -238,6 +238,33 @@ box(gb, -.20, .20, 0, .21, -.09, .09, {
     '+y': ('carrier', gerald_box_photo, GB_WOOD), '-y': ('carrier', gerald_box_photo, GB_WOOD)})
 finish(gb, 'gerald-box', {'carrier': gerald_box_photo.material()})
 
+# --- ash-hat: lathed side silhouette, with its radius measured from the mask -------------
+hat_side = Photo(textures / 'ww-ash-hat-side.jpg')
+hat_top = Photo(textures / 'ww-ash-hat-top.jpg')
+hat_solid = tidy(~hat_side.sky([(12, 12), (hat_side.w - 12, 12), (12, hat_side.h - 12)], grey=26))
+HAT_CX = hat_side.w / 2
+HAT_BOTTOM = hat_side.h - 36
+HAT_ROWS = []
+for py in range(HAT_BOTTOM, 0, -2):
+    row = np.nonzero(hat_solid[py])[0]
+    if len(row) > 8:
+        radius = max(HAT_CX - row[0], row[-1] - HAT_CX)
+        HAT_ROWS.append(((HAT_BOTTOM - py) * .00017, radius * .00017))
+HAT_ROWS.sort()
+hat_solid[HAT_BOTTOM + 1:] = False
+hat_side.bleed(hat_solid, passes=24)
+HAT_TOP_CX, HAT_TOP_CY = hat_top.w * .50, hat_top.h * .51
+HAT_TOP_R = min(hat_top.w, hat_top.h) * .25
+def hat_uv(index, distance, radius, angle):
+    px = HAT_CX + radius / .00017 * .85 * math.cos(angle)
+    py = HAT_BOTTOM - distance / .00017
+    return hat_side.uv(px, py)
+hat_mesh = Mesh()
+lathe(hat_mesh, 'side', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1), HAT_ROWS, hat_uv, sides=24,
+      cap_end=('side', lambda a, f: hat_side.uv(HAT_CX + math.cos(a) * f * 65,
+                                                70 + math.sin(a) * f * 42)))
+finish(hat_mesh, 'ash-hat', {'side': hat_side.material(), 'top': hat_top.material()})
+
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
     if layer_object.type == 'MESH':
@@ -271,7 +298,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -304,3 +331,5 @@ shot('gerald-side', 'gerald', (.15, .07, 3), (.15, .07, 0), 1000, 250, ortho=.68
 shot('gerald-quarter', 'gerald', (-.45, .36, .75), (-.02, .04, 0), 1000, 620, lens=50)
 shot('gerald-box', 'gerald-box', (0, .11, 1.4), (0, .11, 0), 900, 650, ortho=.43)
 shot('gerald-box-quarter', 'gerald-box', (-.50, .50, .85), (0, .10, 0), 900, 650, lens=50)
+shot('ash-hat', 'ash-hat', (0, .06, 1.2), (0, .06, 0), 900, 650, ortho=.25, show_ground=False)
+shot('ash-hat-quarter', 'ash-hat', (-.28, .25, .48), (0, .04, 0), 900, 650, lens=50, show_ground=False)
