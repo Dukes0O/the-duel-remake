@@ -402,7 +402,7 @@ for name in prop_ids:
         render(name+'-quarter',name,(w*.62,h*.58,3),(0,h*.48,0),max(w,h)*1.24)
 
 for name,(x,z) in lineup.items():
-    roots[name].location=(x,0,z)
+    roots[name].location=town.game_vector((x,0,z))
     if name == 'sand-drag':
         roots[name].rotation_euler[2]=math.radians(90)
 ground.hide_render=False
