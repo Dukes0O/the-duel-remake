@@ -1,12 +1,12 @@
 import {buildingById} from '../content/registry.js';
 
-export function bindTownInput(root,{command=()=>{},viewAction=()=>{},onMessage=()=>{}}={}) {
+export function bindTownInput(root,{command=()=>{},viewAction=()=>{},onMessage=()=>{},onPlacementChange=()=>{}}={}) {
   if(!root?.addEventListener) throw new TypeError('Choose a place for town controls first.');
   let selectedBuilding=null,rotation=0,dragStart=null;
   const message=text=>{onMessage(text);const node=root.querySelector('[role="status"]');if(node)node.textContent=text;};
   const click=event=>{
     const target=event.target.closest?.('[data-town-tab],[data-town-build],[data-town-speed],[data-town-overlay],[data-town-action]');if(!target)return;
-    if(target.dataset.townBuild){selectedBuilding=target.dataset.townBuild;viewAction({type:'selectBuilding',buildingId:selectedBuilding,rotation});return;}
+    if(target.dataset.townBuild){selectedBuilding=target.dataset.townBuild;onPlacementChange(Boolean(selectedBuilding));viewAction({type:'selectBuilding',buildingId:selectedBuilding,rotation});return;}
     if(target.dataset.townTab){viewAction({type:'showBuildTab',tab:target.dataset.townTab});return;}
     if(target.dataset.townSpeed!==undefined){command({type:'setSpeed',speed:Number(target.dataset.townSpeed)});return;}
     if(target.dataset.townOverlay){viewAction({type:'setOverlay',overlay:target.dataset.townOverlay});return;}
@@ -23,7 +23,7 @@ export function bindTownInput(root,{command=()=>{},viewAction=()=>{},onMessage=(
     const building=rotation%180===90?{...row,width:row.depth,depth:row.width}:row;
     command({type:'placeBuilding',buildingId:selectedBuilding,building,x,z});dragStart=null;
   };
-  const cancel=()=>{selectedBuilding=null;dragStart=null;rotation=0;viewAction({type:'cancelPlacement'});};
+  const cancel=()=>{selectedBuilding=null;dragStart=null;rotation=0;onPlacementChange(false);viewAction({type:'cancelPlacement'});};
   const contextmenu=event=>{if(selectedBuilding){event.preventDefault();cancel();}};
   const keydown=event=>{
     if(event.key==='Escape'){cancel();return;}

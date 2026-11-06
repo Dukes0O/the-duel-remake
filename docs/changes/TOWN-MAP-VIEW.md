@@ -2,25 +2,29 @@
 
 ## Changed
 
-- Added `buildTownMapMarkers` to return uncapped, read-only marker records for Scablands places, outposts with saved coordinates, moving vehicles with saved positions or road paths, and unanswered reports with known locations.
-- Added `focusTownMapMarker` to move the town camera to a marker while keeping its current viewing angle.
-- Added a focused check for marker sources, road interpolation, report targeting, read-only town data and camera focus.
-- Recorded the card's coordinate and ownership decisions under “Codex decided (Claude to review)”.
-
-## Checks
-
-- `node tools/test-town-map-markers.mjs`: passed.
-- `npm.cmd run build`: passed. Vite reported the existing dynamic-import and large-chunk warnings.
-- `npm run build`: PowerShell blocked `npm.ps1` before the build began; reran the same build through `npm.cmd` successfully.
-- Lane tier and browser checks: not run; Claude owns them.
-- Browser checks for Claude: decide and verify the scene/UI wiring for rendering and clicking these markers. Confirm marker visibility at Scablands zoom, label readability, camera focus on click, and behavior for reports/outposts/trucks without saved coordinates.
-- Changed assertions: none.
-- Race fingerprints and world signatures: not applicable; no simulation, course or world-signature files changed.
+- Connected the read-only marker model to the town scene and added reusable HTML pins for places, outposts, routed trucks and unanswered reports.
+- Pins fade in toward Scablands zoom, stay clipped to the map view, and hide lower-priority overlaps. The layout updates only after a camera move, resize or town tick. There is no marker count cap.
+- Clicking a marker flies the camera there over about one second while keeping its heading. Mouse or arrow movement takes over from the flight.
+- Report pins open and select the matching Reports panel item. During a visit, reports remain read-only and have no answer controls.
+- Reports with saved top-level coordinates now get pins. The selected report stays selected when a town tick repaints the panel.
+- New outpost records keep a known place id. Old records read the id from content without writing to the save. Only the explicit Ridge mapping is placed; locations without coordinates remain unpinned.
+- Truck positions are calculated as a pure read from an explicit origin, destination, route and duration. Existing trade trucks have only a distance and no real route, so they correctly show no pin.
 
 ## Acceptance gap
 
-The card names only `src/town/view/town-map-markers.js`. Current outpost and trade-truck records do not consistently store map positions or road paths, and the scene/input files do not call a marker layer. This change provides the read-only marker and focus API without changing files outside the card's named ownership. The visible labels, pins and click-to-focus behavior still need a scene/UI integration task and coordinate data for outposts and trucks. Do not treat this module alone as the finished visible map feature.
+Closed: scene and input wiring now render and activate map pins. The existing trade-trip records have no saved route coordinates, so those trucks remain unpinned under the card's rule that trucks without a route show no pin.
+
+## Checks
+
+- All 28 `tools/test-town-*.mjs` scripts passed before review fixes. After review fixes, `node tools/test-town-map-markers.mjs` and `node tools/test-town-visits.mjs` passed.
+- `npm.cmd run build`: passed after review fixes. Vite reported its existing dynamic-import and large-chunk warnings.
+- `node --check tools/scenarios/town-opens.mjs`: passed after review fixes.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`) on the pre-review-fix snapshot: 25 suites passed before `tools/test-review-evidence.mjs` failed because the sandbox could not start `ffmpeg` (`spawnSync ffmpeg EPERM`); 13 later suites did not run. The one allowed rerun of that suite failed with the same tool error. This is unrelated to the town-map files; no assertions were changed. The review fixes then passed their focused tests and build; the lane tier was not rerun.
+- One independent code review and the required save-safety review passed. The code review's two findings were fixed and confirmed.
+- Browser scenario for Claude: run `tools/scenarios/town-opens.mjs` and inspect the Scablands zoom, label readability and overlap, the one-second marker flight, planning drag over pins, report selection, and read-only report display during a visit.
+- Race fingerprints: not run; this view-only change does not touch race rules or replay data.
+- Changed assertions: none loosened. Marker fixtures now use explicit trip route data instead of generic path/progress fields. The read-only assertion now serializes BigInt ticks as strings so it can compare the town snapshot.
 
 ## Removed
 
-- None.
+- Removed the old permissive truck path/progress interpretation, which could pin a truck without a saved origin, destination and route. The new route contract uses only explicit trip data.

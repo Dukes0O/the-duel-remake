@@ -7,6 +7,7 @@ import {buildTownChunkInstances, createTownPlacementGhost} from './town-instance
 import {createTownCamera, moveTownCamera, resizeTownCamera, updateTownCamera} from './town-camera.js';
 import {pickTownGround, pickTownItem} from './town-pick.js';
 import {GROUND_UV, groundColour} from '../../world/ground-view.js';
+import {buildTownMapMarkers, layoutTownMapMarkers} from './town-map-markers.js';
 
 function terrainChunk(chunk, material) {
   const segments = 16, positions = [], colours = [], uvs = [], indices = [], startX = chunk.x*TOWN_CHUNK_METRES, startZ = chunk.z*TOWN_CHUNK_METRES;
@@ -94,5 +95,7 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
   const setCalendar=(calendar,{hour=calendar?.hour??state.timeOfDay}={})=>{state.season=String(calendar?.season||state.season).toLowerCase();state.timeOfDay=hour;sun.color.set(state.season==='winter'?0xc7dcff:0xffe4b6);update();};
   const dispose=()=>{state.disposed=true;for(const root of [ground,buildings,overlays,lights,assets,ghost])root.traverse(object=>{object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(m=>m.dispose());else object.material?.dispose?.();});groundMaterial.dispose();dirtTexture?.dispose();};
   update(); void addLandmarks();
-  return {scene,camera,state,update,move:input=>moveTownCamera(camera,input),resize:(w,h)=>resizeTownCamera(camera,w,h),step:delta=>{updateTownCamera(camera,delta);update();},pick:pointer,pickGround,setPlacement,setUnderground,setCalendar,dispose};
+  return {scene,camera,state,update,move:input=>moveTownCamera(camera,input),resize:(w,h)=>resizeTownCamera(camera,w,h),step:delta=>{updateTownCamera(camera,delta);update();},
+    mapMarkers:()=>buildTownMapMarkers(town),layoutMarkers:(options={})=>layoutTownMapMarkers(options.markers||buildTownMapMarkers(town),camera,options),
+    pick:pointer,pickGround,setPlacement,setUnderground,setCalendar,dispose};
 }
