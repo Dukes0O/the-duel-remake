@@ -163,23 +163,28 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
         x=t*length
         top=deck-(abs(t)**4)*1.4
         ring=[(x,top,-width*breadth*.44),(x,top,width*breadth*.44),
-              (x,deck-2.2,width*breadth*.40),(x,deck-4.7,width*breadth*.25),(x,keel,0)]
+              (x,deck-2.2,width*breadth*.40),(x,deck-4.7,width*breadth*.25),(x,keel,0),
+              (x,deck-4.7,-width*breadth*.25),(x,deck-2.2,-width*breadth*.40)]
         rings.append(ring)
+    section_size=7
     verts=[gv(v) for ring in rings for v in ring]
     faces=[]; material_ids=[]
     for i in range(len(rings)-1):
-        for j in range(4):
-            faces.append((i*5+j,i*5+(j+1)%5,(i+1)*5+(j+1)%5,(i+1)*5+j))
-            material_ids.append(0 if j in (0,1) else 1)
-    faces.extend([tuple(range(4,-1,-1)),tuple((len(rings)-1)*5+j for j in range(5))]); material_ids.extend((1,1))
-    mesh=bpy.data.meshes.new(name+' welded hull'); mesh.from_pydata(verts,[],faces); mesh.materials.append(material); mesh.materials.append(rust); mesh.update()
+        for j in range(section_size):
+            faces.append((i*section_size+j,i*section_size+(j+1)%section_size,
+                          (i+1)*section_size+(j+1)%section_size,(i+1)*section_size+j))
+            material_ids.append(0 if j==0 else (1 if j in (1,2,5,6) else 2))
+    faces.extend([tuple(range(section_size-1,-1,-1)),
+                  tuple((len(rings)-1)*section_size+j for j in range(section_size))]); material_ids.extend((2,2))
+    mesh=bpy.data.meshes.new(name+' welded hull'); mesh.from_pydata(verts,[],faces)
+    mesh.materials.append(steel); mesh.materials.append(material); mesh.materials.append(rust); mesh.update()
     obj=bpy.data.objects.new(name,mesh); scene.collection.objects.link(obj); obj['part']=root.name
     uv=mesh.uv_layers.new(name='Photo projection UV')
     for poly,mi in zip(mesh.polygons,material_ids):
         poly.material_index=mi
         for li in poly.loop_indices:
             vi=mesh.loops[li].vertex_index
-            station=vi//5; section=vi%5
+            station=vi//section_size; section=vi%section_size
             co=rings[station][section]
             # One camera-like side projection shared by both long plates.
             u=(co[0]/length)+.5
@@ -428,10 +433,16 @@ def render_imported_review():
     add_lighting()
     targets=[((-45,8,-375),(-45,5,-415),18),((170,16,-425),(170,12,-395),80),((230,9,-390),(230,0,-430),90)]
     view_sizes=((1600,320),(512,1024),(1536,512))
+    target_ids=('ship-good-hope','lighthouse','pilot-boat')
     for index,(loc,target,lens) in enumerate(targets):
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj is not review_ground:
+                obj.hide_render=not obj.name.startswith(target_ids[index])
         cam=camera(f'review-camera-{index}',loc,target,lens)
         scene.render.resolution_x,scene.render.resolution_y=view_sizes[index]
         scene.camera=cam; scene.render.filepath=str(raw/f'model-{index}.jpg'); bpy.ops.render.render(write_still=True)
+    for obj in scene.objects:
+        if obj.type=='MESH' and obj is not review_ground: obj.hide_render=False
     # Context at car height, 40 m away, and a top-down map view.
     for index,(loc,target,lens) in enumerate((((-45,8,-375),(-45,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
         scene.render.resolution_x,scene.render.resolution_y=(1200,600)
