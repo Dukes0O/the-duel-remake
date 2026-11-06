@@ -18,13 +18,3 @@ Design: [docs/WASTELAND_TOWN.md](../../WASTELAND_TOWN.md). A pure sim file impor
 
 ## Claude answers
 
-## Codex decided (Claude to review)
-
-The current integration branch has no housing building rows with bed counts.
-`src/town/content/homes.js` only lists home tier names, and the active
-`codex/town-pace` lane is a separate worktree. This lane measures places from
-finished building rows that declare `beds`, while retaining the founders'
-12-place camp; it measures water from the network delivery result or remaining
-water in completed wells, divided among the people. The housing arrival path
-and real-command TOWN-PACE run still need the housing content to land. I left
-that lane untouched so its current work stays isolated.
