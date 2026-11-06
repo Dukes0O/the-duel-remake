@@ -431,8 +431,8 @@ for cx, cy, radius_px in WHEEL_CENTRES:
     radius = radius_px * CY_SCALE
     centre = (CX(cx), radius, 0)
     def wheel_face(angle, fraction, cx=cx, cy=cy, radius_px=radius_px):
-        return carriage_side.uv(cx + math.cos(angle) * fraction * radius_px,
-                                cy - math.sin(angle) * fraction * radius_px)
+        return carriage_side.uv(cx + math.cos(angle) * fraction * radius_px * .82,
+                                cy - math.sin(angle) * fraction * radius_px * .82)
     def wheel_tread(index, distance, r, angle, cx=cx):
         u = 0.84 * math.degrees(math.asin(math.sin(angle))) / 90
         return carriage_side.uv(cx + 32 + u * 40, 594 + (1 - index) * 46)
@@ -536,36 +536,53 @@ for k in range(16):
            van_side.uv(1960, py1), van_side.uv(90, py1))
     van.face(corners, uvs, V_SIDE, (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2)))
 
-# Two four-wheel bogies, springs, bolsters and the van's buffers and chain.
-for cx in (344, 1737):
-    for wheel_x in (cx - 82, cx + 82):
-        radius = .41
-        centre = (VX(wheel_x), radius, 0)
-        face_uv = lambda a, f, x=wheel_x: van_side.uv(x + math.cos(a) * f * 58, 500 - math.sin(a) * f * 58)
-        tread_uv = lambda i, d, r, a: van_end.uv(310 + i * 70, 1090 + abs(math.sin(a)) * 125)
-        for sign in (1, -1):
-            lathe(van, V_END, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
-                  [(sign * .77, radius), (sign * 1.0, radius)], tread_uv, sides=24,
-                  cap_start=(V_SIDE, face_uv), cap_end=(V_SIDE, face_uv))
-            lathe(van, V_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
-                  [(sign * 1.0, .15), (sign * 1.06, .12)],
-                  lambda i, d, r, a: van_side.uv(155, 548 + math.sin(a) * 16), sides=12,
-                  cap_end=(V_SIDE, lambda a, f, fn=face_uv: fn(a, .22)))
-    frame = (V_SIDE, van_side, (280, 474, 610, 532))
-    box(van, VX(cx - 142), VX(cx + 142), .48, .88, -.90, .90,
-        {'+z': frame, '-z': frame, '-y': frame})
+# The photograph shows one central axle, with truss rods reaching the ends.
+wheel_centres = (850, 1165)
+for wheel_x in wheel_centres:
+    radius_px = 84
+    radius = radius_px * VS
+    centre = (VX(wheel_x), radius, 0)
+    face_uv = lambda a, f, x=wheel_x: van_side.uv(x + math.cos(a) * f * radius_px * .84,
+                                                   556 - math.sin(a) * f * radius_px * .84)
+    tread_uv = lambda i, d, r, a: van_side.uv(wheel_x + 46 + i * 14, 558 + abs(math.sin(a)) * 25)
+    for sign in (1, -1):
+        lathe(van, V_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(sign * .77, radius), (sign * 1.0, radius)], tread_uv, sides=24,
+              cap_start=(V_SIDE, face_uv), cap_end=(V_SIDE, face_uv))
+        lathe(van, V_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+              [(sign * 1.0, .15), (sign * 1.06, .12)],
+              lambda i, d, r, a: van_side.uv(155, 548 + math.sin(a) * 16), sides=12,
+              cap_end=(V_SIDE, lambda a, f, fn=face_uv: fn(a, .22)))
+    box(van, VX(wheel_x - 92), VX(wheel_x + 92), .48, .88, -.90, .90,
+        {'+z': (V_SIDE, van_side, (wheel_x - 70, 480, wheel_x + 70, 535)),
+         '-z': (V_SIDE, van_side, (wheel_x - 70, 480, wheel_x + 70, 535)), '-y': (V_SIDE, van_side, (wheel_x - 70, 535, wheel_x + 70, 548))})
+
+TRUSS = (V_SIDE, van_side, (220, 507, 480, 544))
+for z in (-.82, .82):
+    slab(van, V_SIDE, van_side, [[(112, 524), (850, 548), (850, 559), (112, 533)]],
+         van_side_point, z, z + .035, wall_scale=VS)
+    slab(van, V_SIDE, van_side, [[(1160, 548), (1938, 524), (1938, 533), (1160, 559)]],
+         van_side_point, z, z + .035, wall_scale=VS)
+    box(van, VX(85), VX(1960), .56, .76, z - .04, z + .04,
+        {'+z': TRUSS, '-z': TRUSS, '-y': TRUSS})
 
 for x_sign in (-1, 1):
     for z_sign in (-1, 1):
-        if x_sign > 0:
-            # The matching end photograph already carries these two buffers;
-            # keep the far end's pair as geometry for three-quarter views.
-            continue
         lathe(van, V_SIDE, (x_sign * 6.25, .83, z_sign * .94), (x_sign, 0, 0),
               (0, 0, 1), (0, 1, 0), [(0, .1), (.16, .1), (.22, .22)],
               lambda i, d, r, a: van_side.uv(1950 + i * 15, 483 + math.sin(a) * 14), sides=16,
               cap_end=(V_END, lambda a, f: van_end.uv(302 + math.cos(a) * 80 * f,
                                                         924 - math.sin(a) * 80 * f)))
+
+# Canvas side bands are traced from the photo's ragged eave, and the three
+# vents sit on the roof at the photographed centres.
+van_eave = trace(van_side_solid, (85, 90, 1955, 160), tolerance=1.8, min_area=35)
+for sign in (-1, 1):
+    slab(van, V_SIDE, van_side, van_eave, van_side_point, sign * 1.22, sign * 1.245, wall_scale=VS)
+for px in (330, 1010, 1690):
+    lathe(van, V_SIDE, (VX(px), 3.12, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+          [(0, .075), (.05, .075), (.08, .055)],
+          lambda i, d, r, a, px=px: van_side.uv(px + math.cos(a) * 9, 85 + i * 7), sides=12)
 van.finish('the-2-15-van', van_materials)
 objects['the-2-15-van'] = van
 print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
