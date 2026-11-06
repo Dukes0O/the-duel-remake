@@ -108,7 +108,107 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     return obj
 
 for spec in PROP_SPECS:
-    silhouette_prop(*spec)
+    if spec[0] != 'sand-drag':
+        silhouette_prop(*spec)
+
+def sand_drag_box(mesh, name, center, size, photo, rect):
+    """Make one thick, photo-textured block from a measured source rectangle."""
+    x, y, z = center
+    sx, sy, sz = size
+    x0, x1 = x - sx / 2, x + sx / 2
+    y0, y1 = y - sy / 2, y + sy / 2
+    z0, z1 = z - sz / 2, z + sz / 2
+    px0, py0, px1, py1 = rect
+    uv = [photo.uv(px0, py0), photo.uv(px1, py0),
+          photo.uv(px1, py1), photo.uv(px0, py1)]
+    faces = (
+        ([(x0,y0,z1),(x1,y0,z1),(x1,y1,z1),(x0,y1,z1)], (0,0,1)),
+        ([(x1,y0,z0),(x0,y0,z0),(x0,y1,z0),(x1,y1,z0)], (0,0,-1)),
+        ([(x1,y0,z1),(x1,y0,z0),(x1,y1,z0),(x1,y1,z1)], (1,0,0)),
+        ([(x0,y0,z0),(x0,y0,z1),(x0,y1,z1),(x0,y1,z0)], (-1,0,0)),
+        ([(x0,y1,z1),(x1,y1,z1),(x1,y1,z0),(x0,y1,z0)], (0,1,0)),
+        ([(x0,y0,z0),(x1,y0,z0),(x1,y0,z1),(x0,y0,z1)], (0,-1,0)),
+    )
+    for points, normal in faces:
+        mesh.face(points, uv, 'source', normal)
+
+def build_sand_drag():
+    """A 15 m feathered sand ridge with the photographed rail and timber stop."""
+    photo = Photo(textures / 'sand-drag.jpg')
+    material = photo.material()
+    width, length = 8.0, 15.0
+    x0, x1, z0, z1 = -width / 2, width / 2, -length / 2, length / 2
+
+    def smooth(t):
+        t = min(1, max(0, t))
+        return t * t * (3 - 2 * t)
+
+    def drift_height(x, z):
+        # A rounded ridge rises from the far end, reaches 1.5 m, and feathers
+        # back to the track. Its width tapers to zero at both sides.
+        if z <= -1.5:
+            along = smooth((z - z0) / (length * .40))
+        else:
+            along = (1 - smooth((z + 1.5) / (length * .60))) ** 1.15
+        across = 1 - smooth((abs(x) - width * .29) / (width * .21))
+        ripple = .035 * math.sin(x * 1.7 + z * .45) + .022 * math.sin(x * .8 - z * 1.1)
+        return max(0.0, 1.5 * along * max(0.0, across) + ripple * along * across)
+
+    sand = Mesh()
+    nx, nz = 40, 64
+    rows = []
+    for i in range(nx + 1):
+        row = []
+        x = x0 + width * i / nx
+        for j in range(nz + 1):
+            z = z0 + length * j / nz
+            height = drift_height(x, z)
+            index = sand.vertex((x, height, z))
+            # The measured sand region in the source image fills the terrain.
+            uv = photo.uv(590 + (x - x0) / width * 420,
+                          185 + (z - z0) / length * 135)
+            row.append((index, uv))
+        rows.append(row)
+    for i in range(nx):
+        for j in range(nz):
+            a, ua = rows[i][j]
+            b, ub = rows[i + 1][j]
+            c, uc = rows[i + 1][j + 1]
+            d, ud = rows[i][j + 1]
+            sand.indexed((a,b,c,d), (ua,ub,uc,ud), 'source', (0,1,0), True)
+    root = sand.finish('sand-drag', {'source': material})
+    root.parent = root_obj
+    parts['sand-drag'] = root
+    components = [root]
+
+    # The track ends against a heavy crosswise stop block at the front of the
+    # ridge. Each member has true thickness and uses a measured picture crop.
+    timber_rect = (826, 136, 875, 246)
+    rail_rect = (350, 169, 540, 205)
+    sleeper_rect = (290, 190, 420, 240)
+    track = Mesh()
+    for x in (-.72, .72):
+        sand_drag_box(track, 'rail', (x,.12,4.0), (.10,.16,7.3), photo, rail_rect)
+    track_obj = track.finish('sand-drag-rails', {'source': material})
+    track_obj.parent = root
+    components.append(track_obj)
+
+    sleepers = Mesh()
+    for z in (6.8,6.2,5.6,5.0,4.4,3.8,3.2,2.6,2.0,1.4,.8,.2):
+        sand_drag_box(sleepers, 'sleeper', (0,.065,z), (1.75,.13,.22), photo, sleeper_rect)
+    sleeper_obj = sleepers.finish('sand-drag-sleepers', {'source': material})
+    sleeper_obj.parent = root
+    components.append(sleeper_obj)
+
+    stop = Mesh()
+    sand_drag_box(stop, 'stop-block', (0,.25,-.02), (2.0,.50,.42), photo, timber_rect)
+    stop_obj = stop.finish('sand-drag-stop-block', {'source': material})
+    stop_obj.parent = root
+    components.append(stop_obj)
+    triangles['sand-drag-components'] = sum(tri.triangles() for tri in (sand, track, sleepers, stop))
+    return root
+
+build_sand_drag()
 
 # The story's identifier is case-hollis; keep the source photograph filename.
 # The label numeral is a small physical overlay on the blank tag in the photo.
@@ -262,7 +362,10 @@ def render(name, subject, eye, target, ortho, size=(900,900), all_visible=False)
             obj.hide_render = not (all_visible or obj in visible)
     ground.hide_render = not all_visible
     scene.render.resolution_x, scene.render.resolution_y = size
-    camera.data.type='ORTHO'; camera.data.ortho_scale=ortho
+    if subject == 'sand-drag':
+        camera.data.type='PERSP'; camera.data.lens=38
+    else:
+        camera.data.type='ORTHO'; camera.data.ortho_scale=ortho
     cam(eye,target)
     scene.render.filepath=str(render_dir/f'{name}.png')
     bpy.ops.render.render(write_still=True)
@@ -277,8 +380,12 @@ for name in prop_ids:
     elif name == 'token-ring': w=.60
     elif name == 'case-tin-car': w=.62
     else: w=max(.32,h*.95)
-    render(name+'-dead-on',name,(0,h*.52,4),(0,h*.52,0),max(w,h)*1.14)
-    render(name+'-quarter',name,(w*.62,h*.58,3),(0,h*.48,0),max(w,h)*1.24)
+    if name == 'sand-drag':
+        render(name+'-dead-on',name,(0,1.5,18),(0,.75,0),None)
+        render(name+'-quarter',name,(3,1.5,17.7),(0,.75,0),None)
+    else:
+        render(name+'-dead-on',name,(0,h*.52,4),(0,h*.52,0),max(w,h)*1.14)
+        render(name+'-quarter',name,(w*.62,h*.58,3),(0,h*.48,0),max(w,h)*1.24)
 
 for name,(x,z) in lineup.items(): roots[name].location=(x,0,z)
 ground.hide_render=False
