@@ -79,14 +79,15 @@ for cx, cy, rx, ry in ((190, 855, 276, 270), (1210, 855, 276, 270)):
     cut_ellipse(rear_solid, cx, cy, rx, ry)
 for name, mask in (('side-openings', side_solid), ('front-openings', front_solid), ('rear-openings', rear_solid)):
     save_mask(name, mask)
+side_solid[790:, :] = False
 
 # Pixel calibration follows the wheel centres and the full bumper-to-tailgate span.
-S = 4.52 / (1740 - 34)
-SIDE_CX = 881
+S = 4.52 / (side.w - 40)
+SIDE_CX = side.w / 2
 SIDE_GROUND = 790
 SIDE_Y = 2.08 / (790 - 100)
 def side_point(px, py, x): return (x, (SIDE_GROUND - py) * SIDE_Y, (SIDE_CX - px) * S)
-def end_x(px, photo): return (px - photo.w / 2) * 2.12 / 1010
+def end_x(px, photo): return (px - photo.w / 2) * .00165
 def front_point(px, py, z): return (end_x(px, front), (1140 - py) * .00188, z)
 def rear_point(px, py, z): return (end_x(px, rear), (990 - py) * .00208, z)
 def top_point(px, py, y): return ((px - top.w / 2) * 2.12 / 610, y, (780 - py) * .00302)
@@ -178,7 +179,7 @@ for side_sign in (-1, 1):
 for x in (-.60, -.45, -.30, -.15, 0, .15, .30, .45, .60):
     cylinder_between(engine, 'grille bar', (x, .48, 2.245), (x, 1.14, 2.245), .018, 'front', (566, 550, 592, 860), 10)
 for x in (-.70, .70):
-    cylinder_between(engine, 'headlight', (x, .82, 2.24), (x, .82, 2.33), .155, 'front', (410, 835, 525, 952), 28)
+    cylinder_between(engine, 'headlight', (x, .82, 2.23), (x, .82, 2.27), .155, 'front', (410, 835, 525, 952), 28)
     cylinder_between(engine, 'roll hoop upright', (x, 1.35, -.12), (x, 2.04, -.12), .055, 'side', (1050, 100, 1130, 150), 14)
 cylinder_between(engine, 'roll hoop crown', (-.70, 2.04, -.12), (.70, 2.04, -.12), .055, 'rear', (520, 82, 835, 135), 14)
 engine.finish('rattler V8, exhaust, grille, lights and roll hoop', materials).parent = vehicle
