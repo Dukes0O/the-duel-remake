@@ -409,9 +409,10 @@ def photo_material(name, photo):
 def build_conveyor():
     photo = conveyor_photo
     w, h = photo.w, photo.h
-    sky = photo.sky(((4, 4), (w - 5, 4), (4, h - 5), (w - 5, h - 5),
-                     (360, int(.70*h)), (690, int(.64*h)), (1010, int(.58*h)),
-                     (1320, int(.52*h)), (1640, int(.45*h))), tolerance=20, grey=26)
+    # Every bay between the legs is open sky, so sky is read by colour, not by seeds.
+    rgb = photo.rgb()
+    backdrop = rgb[4:12, 4:12].reshape(-1, 3).mean(axis=0)
+    sky = (np.abs(rgb - backdrop).max(axis=2) < 26) & (rgb.max(axis=2) - rgb.min(axis=2) < 26)
     solid = tidy(~sky, 1)
     x0, x1 = .012 * w, .988 * w
     top, bottom = .13 * h, .82 * h
