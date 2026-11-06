@@ -27,3 +27,5 @@ Today the Scrapdome is only ever seen from inside. The town is built around it, 
 Budget 30,000 triangles, 3 MB. This one is the town's landmark: from the driver's seat it should fill the sky.
 
 ## Claude answers
+
+Round 6 of 6 (Kyle's limit, 5 November). Merged as the working set: the bowl, the Heap and the stacked-wreck wall pass, seen from the mayor's height. Still short of the photo: the gate's buses are small and their long sides are plain, and the wall's mirrored picture shows its symmetry close up. The true cause of earlier flat colours was lost picture coordinates (ART LESSON 10); `test-blender-output.mjs` now checks for it on this family. Its atlas check is replaced by separate-picture and metallic checks, because `town_base.py` removed the atlas; that is reviewed here and nothing is loosened (rule 18).
