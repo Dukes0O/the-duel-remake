@@ -58,3 +58,5 @@ Removed `deepHints().bubbles`, its old second garage tip and the nine-pearl unlo
 ## More changed assertions (Claude's review, rule 18)
 
 The pinned sound checks gain one exclusion each, as every earlier added car and cue did: `deep.squeak` in `tools/test-p4-audio.mjs` and `falcone_vasca` in `tools/test-arsenal-wave1-audio.mjs`. Every earlier cue still has to match its hash exactly, so nothing is loosened. `tools/test-blender-output.mjs` lists `skin-waste-sheet.py` as a review helper. `src/town/systems/index.js` now uses plain imports, so the rule against top-level waiting holds again; `tools/test-manifest-await.mjs` is unchanged.
+
+`tools/test-town-core.mjs`: its text check named the old glob; it now names the plain import lines. The old line also could not work in the bundle as intended (`import.meta.glob?.(` is not the form the bundler rewrites), so the people system might never have registered in the browser. Plain imports fix that. Claude's review, 5 November 2026.

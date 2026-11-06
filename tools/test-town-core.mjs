@@ -94,7 +94,7 @@ TOWN_REGIONS.delete(secondRegion.id);
 
 const townIndex=readFileSync(new URL('../src/town/index.js',import.meta.url),'utf8');
 const systemsIndex=readFileSync(new URL('../src/town/systems/index.js',import.meta.url),'utf8');
-check(townIndex.trim().startsWith("import './systems/index.js';")&&systemsIndex.includes("glob?.('./modules/*.js'"),'one system file is discovered through the town entry point');
+check(townIndex.trim().startsWith("import './systems/index.js';")&&systemsIndex.includes("import './modules/calendar.js'")&&systemsIndex.includes("import './modules/people.js'"),'each system is imported through the town entry point, one line each, as docs/WASTELAND_TOWN.md section 11 says');
 
 const fixture=readFileSync(new URL('./fixtures/town/town-v1.json',import.meta.url),'utf8');
 const fromFixture=deserializeTown(fixture);
