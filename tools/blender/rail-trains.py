@@ -34,8 +34,35 @@ import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
 
-# Read the side photograph as a colour mask, then measure its top silhouette
-# in 64 bins. The measured points drive the three main silhouette heights.
+# Make three inspectable photo masks. Bright, nearly neutral studio sky and
+# ground are background; darker and more chromatic pixels belong to the engine.
+mask_dir = root / '.qa-dist' / 'masks'
+mask_dir.mkdir(parents=True, exist_ok=True)
+photo_masks = {}
+photo_sizes = {}
+for view in ('side', 'front', 'rear'):
+    image = bpy.data.images.load(str(textures / f'2-15-{view}.jpg'), check_existing=False)
+    width, height = image.size
+    values = np.empty(width * height * 4, dtype=np.float32)
+    image.pixels.foreach_get(values)
+    rgb = values.reshape((height, width, 4))[::-1, :, :3]
+    brightness = rgb.mean(axis=2)
+    chroma = rgb.max(axis=2) - rgb.min(axis=2)
+    foreground = (brightness < .57) | (chroma > .11)
+    photo_masks[view] = foreground
+    photo_sizes[view] = (width, height)
+    mask_image = bpy.data.images.new(f'{view} engine/background mask', width, height, alpha=False)
+    mask_pixels = np.empty((height, width, 4), dtype=np.float32)
+    mask_pixels[:, :, :3] = foreground[::-1, :, None]
+    mask_pixels[:, :, 3] = 1
+    mask_image.pixels.foreach_set(mask_pixels.ravel())
+    mask_image.filepath_raw = str(mask_dir / f'{view}-mask.png')
+    mask_image.file_format = 'PNG'
+    mask_image.save()
+    bpy.data.images.remove(mask_image)
+    bpy.data.images.remove(image)
+
+# Read the side photograph mask and measure its silhouette in 64 bins.
 side_path = textures / '2-15-side.jpg'
 side_image = bpy.data.images.load(str(side_path), check_existing=False)
 side_width, side_height = side_image.size
@@ -45,7 +72,7 @@ pixels = pixels.reshape((side_height, side_width, 4))[::-1, :, :3]
 background_samples = np.concatenate((pixels[2:12, 30:90].reshape(-1, 3),
                                      pixels[2:12, side_width-90:side_width-30].reshape(-1, 3)))
 background = np.median(background_samples, axis=0)
-silhouette = np.max(np.abs(pixels - background[None, None, :]), axis=2) > .22
+silhouette = photo_masks['side']
 bins = 64
 profile = []
 for index in range(bins):
@@ -78,6 +105,9 @@ boiler_radius = max(.74, min(.96, outline_height_at(1.8) - 2.30))
 dome_top_y = max(3.20, min(3.62, outline_height_at(1.1)))
 tank_top_y = max(2.78, min(3.10, outline_height_at(-1.0) - .10))
 bpy.data.images.remove(side_image)
+print('PHOTO_MASKS=' + json.dumps({view: {'resolution': photo_sizes[view],
+    'foreground_share': float(photo_masks[view].mean()),
+    'background_share': float(1 - photo_masks[view].mean())} for view in ('side', 'front', 'rear')}))
 
 def photo_material(label, filename, metallic=.12):
     image = bpy.data.images.load(str((textures / filename).resolve()), check_existing=False)
@@ -111,6 +141,7 @@ cab_shadow_bsdf.inputs['Roughness'].default_value = 1
 materials = [side_mat, front_mat, rear_mat]
 engine_meshes = []
 drift_meshes = []
+part_names = {}
 
 def project_uv(point, view):
     x, y, z = point
@@ -121,6 +152,25 @@ def project_uv(point, view):
         image_row = min(side_height - 1, profile[idx] + 13)
         return ((x + 5.5) / 11.0, 1.0 - image_row / side_height + (z + 1.45) / 2.9 * .035)
     return ((x + 5.5) / 11.0, y / 4.1)
+
+def keep_uv_on_engine(view, uv):
+    """Move a projected corner off studio sky/ground onto the nearest masked pixel."""
+    mask = photo_masks[view]
+    height, width = mask.shape
+    px = max(0, min(width - 1, int(uv[0] * width)))
+    py = max(0, min(height - 1, int((1 - uv[1]) * height)))
+    if mask[py, px]:
+        return uv
+    for radius in range(1, 33):
+        x0, x1 = max(0, px-radius), min(width, px+radius+1)
+        y0, y1 = max(0, py-radius), min(height, py+radius+1)
+        candidates = np.argwhere(mask[y0:y1, x0:x1])
+        if candidates.size:
+            candidates[:, 0] += y0
+            candidates[:, 1] += x0
+            nearest = candidates[np.argmin((candidates[:, 0]-py)**2 + (candidates[:, 1]-px)**2)]
+            return (float(nearest[1]) / width, 1 - float(nearest[0]) / height)
+    return uv
 
 def mesh_object(name, points, faces, material, view='side', owner='engine'):
     mesh = bpy.data.meshes.new(name + ' geometry')
@@ -133,6 +183,11 @@ def mesh_object(name, points, faces, material, view='side', owner='engine'):
     else:
         mesh.materials.append(material)
     mesh.update()
+    part_id = len(part_names) + 1
+    part_names[part_id] = name
+    part_attr = mesh.attributes.new('source_part', 'INT', 'FACE')
+    for item in part_attr.data:
+        item.value = part_id
     uv = mesh.uv_layers.new(name='UVMap')
     for poly in mesh.polygons:
         face_view = view
@@ -156,7 +211,11 @@ def mesh_object(name, points, faces, material, view='side', owner='engine'):
             if face_view == 'salt':
                 uv.data[li].uv = (coord[0] / 2.4, coord[2] / 2.4)
             else:
-                uv.data[li].uv = project_uv(coord, face_view)
+                projected_uv = project_uv(coord, face_view)
+                if projected:
+                    photo_view = ('side', 'front', 'rear')[poly.material_index]
+                    projected_uv = keep_uv_on_engine(photo_view, projected_uv)
+                uv.data[li].uv = projected_uv
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     (drift_meshes if owner == 'drift' else engine_meshes).append(obj)
@@ -382,6 +441,40 @@ def join_group(objects, name):
 
 engine = join_group(engine_meshes, 'the-2-15-engine')
 drift = join_group(drift_meshes, 'the-2-15-drift')
+for obj in (engine, drift):
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    obj.select_set(False)
+# Report photo-background sampling by face. A face is counted as background if
+# any corner lands outside its source photo's engine mask.
+background_counts = {view: [0, 0] for view in ('side', 'front', 'rear')}
+worst_faces = []
+for polygon in engine.data.polygons:
+    mat_name = engine.data.materials[polygon.material_index].name
+    view = next((candidate for candidate in ('side', 'front', 'rear') if candidate + ' photograph' in mat_name), None)
+    if view is None:
+        continue
+    mask = photo_masks[view]
+    height, width = mask.shape
+    bg = 0
+    for loop_index in polygon.loop_indices:
+        uv = engine.data.uv_layers.active.data[loop_index].uv
+        px = max(0, min(width - 1, int(uv.x * width)))
+        py = max(0, min(height - 1, int((1 - uv.y) * height)))
+        if not mask[py, px]:
+            bg += 1
+    background_counts[view][0] += bg
+    background_counts[view][1] += len(polygon.loop_indices)
+    if bg:
+        part_id = engine.data.attributes.get('source_part').data[polygon.index].value
+        worst_faces.append((bg / len(polygon.loop_indices), part_names.get(part_id, 'unnamed'), view, bg))
+shares = {view: (counts[0] / counts[1] if counts[1] else 0) for view, counts in background_counts.items()}
+print('PHOTO_BACKGROUND_SHARES=' + json.dumps(shares, sort_keys=True))
+print('PHOTO_BACKGROUND_WORST_10=' + json.dumps(sorted(worst_faces, reverse=True)[:10]))
 # Separate named roots give the dug-out and buried states one engine and one
 # removable drift. A player can toggle the drift node without changing geometry.
 
@@ -399,7 +492,7 @@ scene=bpy.context.scene
 scene.render.engine='BLENDER_EEVEE_NEXT'
 scene.render.resolution_x=1200; scene.render.resolution_y=820; scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
-scene.view_settings.view_transform='AgX'
+scene.view_settings.view_transform='Standard'
 scene.world=bpy.data.worlds.new('flat bright overcast'); scene.world.use_nodes=True
 scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.78,.79,.78,1)
 scene.world.node_tree.nodes['Background'].inputs[1].default_value=.85

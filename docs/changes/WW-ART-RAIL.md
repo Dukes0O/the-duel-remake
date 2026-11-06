@@ -1,45 +1,26 @@
-# WW-ART-RAIL
+﻿# WW-ART-RAIL
 
 ## Changed
 
-- Added the round 1 Blender recipe for the 2:15 works passenger engine and its
-  removable salt drift. The recipe samples the generated side photo for a
-  64-bin silhouette trace, builds the engine at about 11 m by 2.9 m by 4 m,
-  projects side/front/rear photos, and exports with `town_base.export_glb`.
-- Added side, front, rear and salt JPG sources with credits, and the review
-  sheet at `docs/board/looks/ww-art-rail/round-1.jpg`.
-- The GLB has separate `the-2-15-engine` and `the-2-15-drift` nodes. It contains
-  13,996 triangles and is 1,296,880 bytes. The model is below the 30,000
-  triangle and 2 MB limits. Every primitive exports only `TEXCOORD_0`, with
-  a range of UV values; material metallic factors are at or below 0.3.
+- Added side, front and rear photo-mask generation to the rail recipe. It saves inspectable mask PNGs under `.qa-dist/masks/` and prints projected background corner shares plus the worst ten source parts.
+- Added nearest-mask UV correction for projected photo corners, recalculated outward mesh normals, and set the fresh imported-GLB render to Standard.
+- Replaced the round 1 look sheet and review note with the round 2 sheet and review note.
 
 ## Checks
 
-- Blender 4.5 export and fresh-empty-scene GLB import renders: passed.
-- `node tools/test-blender-output.mjs`: passed, 275 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Reported repository size targets
-  are advisory and do not fail this check.
-- Lane tier, build, browser and in-game look checks: not run. This is an art
-  card; Claude owns browser and look review.
-- Replay fingerprints: none. No race code or race rules changed.
+- Blender recipe: completed on Blender 4.5.13. Exported GLB: 1,296,752 bytes; 13,996 triangles total (11,500 engine, 2,496 drift).
+- Photo background corner shares after UV correction: side 18.33%, front 22.81%, rear 35.02%. Target is below 1% for each; failed.
+- `node tools/test-blender-output.mjs`: passed, 275 checks; 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed. Existing advisory size targets remain over target for total public bytes and look-directory bytes; no placement check failed.
+- Browser and look check: not run here. Claude should inspect round 2 sheet, especially pale faces around the cab roof, chimney, smokebox, wheels and track.
+- Changed assertions: none.
+- Race fingerprints: not applicable to this art card.
 
-## Assertions
+## Not complete
 
-- Added a card-specific candidate check for the named engine/drift nodes,
-  triangle and file budgets, `TEXCOORD_0` ranges and metallic factors. No
-  existing assertion was changed or weakened.
-
-## Review status
-
-Round 1 is **not ready to approve**. The side render is recognizable, but the
-fresh GLB renders show visible projection seams and flat patches, especially
-from the three-quarter camera. The model does not yet meet the card's look
-acceptance. Claude should review the sheet and choose the next modelling fix.
-No other card props were built.
+This round does not meet the card's requested mask-traced slabs, mask-derived lathe profiles, corrected front/rear face assignment and smokebox door, curved photo-derived roof, or wind-shaped drift. The rendered engine remains visibly assembled and does not yet read as a real dead locomotive from three-quarter views. I stopped this round after the mask projection change did not bring the background shares close to the 1% target. This needs another art pass before approval.
 
 ## Removed
 
-- Reverted the alpha-cutout material experiment and the inner side-photo plane
-  after their fresh GLB renders looked worse. They are not in the final model.
-- Removed the generated `.blend`, trial renders and check logs before handoff;
-  only the card's recipe, runtime GLB, JPG sources, sheet and notes remain.
+- Removed the round 1 look sheet and review note, replaced by round 2.
+- No source photos or generated textures were removed.
