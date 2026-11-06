@@ -158,6 +158,6 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     chunks = nextChunks;
   }
 
-  return Object.freeze({heightAt, cut, fill, toSave, loadSave, get chunkCount() { return chunks.size; },
+  return Object.freeze({heightAt, cut, fill, refusal, toSave, loadSave, get chunkCount() { return chunks.size; },
     get saveByteLength() { return chunks.size * SAMPLE_COUNT * 5 + chunks.size * 8 + 16; }});
 }

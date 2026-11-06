@@ -4,7 +4,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {
   backupBeforeMigration,backupCareer,captureCareer,createCareerExport,
-  importCareer,needsCareerMigration,parseCareerExport,restoreCareerBackup,
+  importCareer,needsCareerMigration,parseCareerExport,restoreCareerBackup,setTownModuleLoaderForTests,
 } from '../src/career-backup.js';
 import {createProfile,createPlayerRegistry,loadPlayers,savePlayers,PLAYERS_KEY} from '../src/progression.js';
 import {loadLeaderboard} from '../src/leaderboard.js';
@@ -61,6 +61,13 @@ for(const name of fixtures){
 const legacy=JSON.parse(readFileSync(new URL('01-single-profile.json',dir),'utf8'));
 const old=memoryStorage({'the-duel-profile-v1':JSON.stringify(legacy.storage['the-duel-profile-v1'])});
 const oldRaw=captureCareer(old),backups=memoryBackups();
+const backupSource=readFileSync(new URL('../src/career-backup.js',import.meta.url),'utf8');
+assert.doesNotMatch(backupSource,/^import .*town\//m,'town code is not statically imported by career backup');
+let townLoads=0;
+setTownModuleLoaderForTests(async()=>{townLoads++;throw new Error('unexpected town load');});
+await backupCareer(old,backups,'no-town-load');
+assert.equal(townLoads,0,'an old career with no town never invokes the town loader');
+assert.deepEqual(captureCareer(old),oldRaw,'the old career stays byte for byte unchanged');
 assert.equal(needsCareerMigration(old),true);
 const migration=await backupBeforeMigration(old,backups);
 assert.equal(migration.reason,'migration');
@@ -68,6 +75,17 @@ old.setItem('the-duel-players-v2',JSON.stringify({version:2,activePlayerId:'new'
 assert.deepEqual((await backups.load(migration.id)).entries,oldRaw,'migration backup predates write');
 assert.equal(needsCareerMigration(old),false);
 assert.equal(await backupBeforeMigration(old,backups),null,'no backup for unchanged format');
+const townFailureSource=memoryStorage({'the-duel-profile-v1':JSON.stringify(legacy.storage['the-duel-profile-v1']),
+  'the-duel-town-pointer-v1':JSON.stringify({version:1,ids:['unreadable-town']})});
+const townFailureBytes=captureCareer(townFailureSource),townFailureBackups=memoryBackups();
+setTownModuleLoaderForTests(async()=>{townLoads++;return {createTownStore:()=>({towns:async()=>{throw new Error('IndexedDB blocked');}}),
+  readTownPointer:()=>['unreadable-town']};});
+const townFailureMigration=await backupBeforeMigration(townFailureSource,townFailureBackups);
+assert.deepEqual(captureCareer(townFailureSource),townFailureBytes,'town storage failure does not alter migration bytes');
+assert.deepEqual((await townFailureBackups.load(townFailureMigration.id)).entries,townFailureBytes,'migration backup preserves exact career bytes');
+assert.match(townFailureMigration.townWarning,/town could not be read/i,'backup records a plain town read warning');
+assert.equal(townLoads,1,'only the career with a town pointer asks for the town module');
+setTownModuleLoaderForTests(undefined);
 assert.equal(needsCareerMigration(memoryStorage({'the-duel-leaderboard-v1':'{"version":1,"entries":[]}'})),true,'orphaned records are copied before a new player registry is written');
 const legacyWarlordProfile = {...createProfile(), raceSettings: {footCamera: 'first-person'}};
 legacyWarlordProfile.wasteland.warlords = {defeated: ['sal', 'future-legacy-warlord']};

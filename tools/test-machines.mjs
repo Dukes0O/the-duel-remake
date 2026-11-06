@@ -29,8 +29,8 @@ const loaded = transferMachineLoad(dug.state, truckState, dug.movedVolumeM3, tru
 assert.equal(loaded.movedVolumeM3, dug.groundResult.looseVolume, 'excavated load transfers to the truck bed');
 assert.equal(machineLoadVolume(loaded.sourceState), 0, 'bucket is empty after transfer');
 assert.equal(machineLoadVolume(loaded.targetState), dug.groundResult.looseVolume, 'truck carries the material removed from the ground');
-const emptyTruckSpeed = stepMachine(truck, truckState, {forward:1}, 1).speedMps;
-const loadedTruckSpeed = stepMachine(truck, loaded.targetState, {forward:1}, 1).speedMps;
+const emptyTruckSpeed = stepMachine(truck, truckState, {forward:1}, 12).speedMps;
+const loadedTruckSpeed = stepMachine(truck, loaded.targetState, {forward:1}, 12).speedMps;
 assert.ok(loadedTruckSpeed < emptyTruckSpeed, 'carried material changes vehicle handling');
 
 const tippedGround = flatGround();

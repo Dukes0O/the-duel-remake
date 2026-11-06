@@ -33,6 +33,10 @@ const generators = [
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
+  {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -59,6 +63,9 @@ const generators = [
   // The public candidate is installed only when a later scene card wires it into gameplay.
   { script: 'tools/blender/bowl-scrapasaurus.py', args: ['--round', '2'], candidate: true,
     budget: 60000, glb: ['public/assets/models/wasteland/bowl/scrapasaurus.glb'] },
+  // CAR-ART-SCARAB: round-3 candidate waits for Claude's look verdict and a later install card.
+  { script: 'tools/blender/scarab.py', args: [], candidate: true,
+    budget: 25000, glb: ['public/assets/models/wasteland/cars/scarab.glb'] },
   { script: 'tools/blender/test-fighter.py', args: [], glb: ['public/assets/models/wasteland/test-fighter.glb'] },
   { script: 'tools/blender/crew-fighters.py', args: [], glb: ['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/crew/${name}.glb`) },
   { script: 'tools/blender/first-person-gear.py', args: ['--round', '1'], glb: [
@@ -433,6 +440,49 @@ try {
         assert.deepEqual(readdirSync(fixtureRoot), []);
       }
     });
+    if (generator.id === 'town-machines-1') check('TOWN-ART-MACHINES-1 runtime GLB keeps its family, joints and per-machine budgets', () => {
+      const path = join(root, generator.glb[0]);
+      const bytes = readFileSync(path);
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(4), 2);
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+      const texturedMaterials = gltf.materials.filter(material => material.pbrMetallicRoughness?.baseColorTexture);
+      const textureIndexes = texturedMaterials.map(material => material.pbrMetallicRoughness.baseColorTexture.index);
+      assert.ok(texturedMaterials.length > 0, 'runtime materials carry photo textures');
+      assert.equal(new Set(textureIndexes).size, texturedMaterials.length, 'each textured material owns a distinct texture');
+      const imageIndexes = textureIndexes.map(index => gltf.textures[index]?.source);
+      assert.ok(imageIndexes.every(Number.isInteger), 'every material texture resolves to an embedded image');
+      assert.equal(new Set(imageIndexes).size, texturedMaterials.length, 'each textured material owns a distinct image');
+      assert.equal(gltf.images?.length, texturedMaterials.length, 'GLB contains only the per-material pictures it uses');
+      for (const index of imageIndexes) assert.equal(gltf.images[index].mimeType, 'image/jpeg', 'material pictures use compact JPEG');
+      for (const material of gltf.materials) {
+        const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+        assert.ok(metallic <= 0.3, `${material.name || 'unnamed material'} metallicFactor ${metallic} exceeds 0.3`);
+      }
+      const names = gltf.nodes.map(node => node.name || '');
+      const ids = ['trencher', 'excavator', 'dump-truck', 'dozer'];
+      assert.ok(names.includes('town-machines-1'), 'one family root');
+      for (const id of ids) assert.ok(names.includes(id), `${id} root is missing`);
+      const requiredJoints = ['trencher:boom','trencher:chain','excavator:cab','excavator:boom','excavator:arm',
+        'excavator:bucket','dump-truck:bed','dump-truck:load','dozer:blade'];
+      for (const name of requiredJoints) assert.ok(names.includes(name), `${name} pivot node is missing`);
+      const children = gltf.nodes.map(node => node.children || []);
+      const nodeByName = new Map(gltf.nodes.map((node, index) => [node.name, index]));
+      const familyChildren = children[nodeByName.get('town-machines-1')];
+      assert.deepEqual(familyChildren.map(index => gltf.nodes[index].name).sort(), [...ids].sort(), 'one direct child root per machine');
+      const descendants = (index) => [index, ...children[index].flatMap(descendants)];
+      const primitiveCount = (nodeIndex) => {
+        const meshIds = new Set(descendants(nodeIndex).map(index => gltf.nodes[index].mesh).filter(Number.isInteger));
+        return [...meshIds].reduce((sum, meshId) => sum + gltf.meshes[meshId].primitives.reduce((partial, primitive) =>
+          partial + gltf.accessors[primitive.indices].count / 3, 0), 0);
+      };
+      for (const id of ids) {
+        const triangles = primitiveCount(nodeByName.get(id));
+        assert.ok(triangles > 1000 && triangles <= 15000, `${id}: ${triangles} triangles`);
+      }
+    });
     if (artCandidates.has(generator.id)) {
       // Not passed: built only under the ignored .qa-dist (--candidate),
       // never in public/, so the game's model table and the disk agree. Its
@@ -540,7 +590,8 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
-      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
+      const maxBytes = generator.maxBytes ?? 2_500_000;
+      assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} byte budget`);
     });
   }
   check('scablands-tintown exports its bounded named walkable town model', () => {

@@ -122,19 +122,19 @@ test('the turtle and the crab count on both of their pages', () => {
   assert.equal(crab.profile.credits, 50 + 250 + 50 + 250);
 });
 
-test('each pearl pays 150 once; the ninth earns pearl white for every owned car, kept as the save holds it', () => {
+test('each pearl pays 150 once; the Kelp Coast three earn pearl white for every owned car, kept as the save holds it', () => {
   let profile = withMoney(0);
   for (const [index, id] of DEEP_PEARLS.entries()) {
     const result = recordPearl(profile, id, ON);
     assert.equal(result.paid, DEEP_LOG_PAY.pearl, id);
-    assert.equal(result.pearlWhite, index === 8, id);
+    assert.equal(result.pearlWhite, index === 2, id);
     assert.equal(recordPearl(result.profile, id, ON).paid, 0, id + ' pays once');
     profile = result.profile;
   }
   assert.equal(profile.credits, 9 * 150);
   assert.equal(recordPearl(withMoney(), 'kelp-9', ON).ok, false);
   const before = recordPearl(withMoney(), 'kelp-1', ON).profile;
-  assert.ok(!paintPresetsFor(before, 'falcone_f42').some(preset => preset.id === 'pearl_white'), 'not before nine');
+  assert.ok(!paintPresetsFor(before, 'falcone_f42').some(preset => preset.id === 'pearl_white'), 'not before the Kelp Coast\'s three');
   assert.ok(paintPresetsFor(profile, 'falcone_f42').some(preset => preset.id === 'pearl_white'));
   assert.ok(getPaintState(profile, 'stuttgart_959s').owned.includes('pearl_white'), 'for every owned car');
   assert.ok(!getPaintState(profile, 'titan_monster').owned.includes('pearl_white'), 'not for a car the player does not own');
@@ -167,7 +167,7 @@ test('the garage page: a row per coast found, grey shapes with no fact until fou
   const page = logPage(withMoney(0, {found: ['kelp-coast'], logged: ['otter', 'turtle'], pearls: ['kelp-1', 'reef-2']}));
   assert.deepEqual(page.rows.map(row => row.coast), ['kelp-coast']);
   assert.deepEqual(page.rows[0].creatures.filter(item => item.found).map(item => item.id), ['turtle', 'otter']);
-  assert.equal(page.rows[0].pearls, 1); assert.equal(page.pearls, 2); assert.equal(page.pearlTotal, 9);
+  assert.equal(page.rows[0].pearls, 1); assert.equal(page.pearls, 1); assert.equal(page.pearlTotal, 3);
   const known = logCardMarkup('turtle', {found: true}), unknown = logCardMarkup('turtle', {found: false});
   assert.ok(known.includes('Green turtle') && known.includes(DEEP_CREATURES.turtle.fact) && known.includes('/assets/deep/log/turtle.webp'));
   assert.ok(!unknown.includes('Green turtle') && !unknown.includes('seagrass') && unknown.includes('deep-log-unknown'), 'a grey shape tells nothing');

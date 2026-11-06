@@ -3,7 +3,7 @@ import {scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
 export const TOWN_CELL_METRES = 8;
 export const TOWN_CHUNK_CELLS = 16;
 
-const oval = Object.freeze({id:'dome-oval', type:'ellipse', x:0, z:0, halfWidth:112, halfDepth:80});
+const oval = Object.freeze({id:'dome-oval', type:'ellipse', x:0, z:-168.5, halfWidth:112, halfDepth:80});
 const gate = Object.freeze({id:'dome-gate', type:'rectangle', x:0, z:-92, halfWidth:24, halfDepth:12, heading:0});
 export const SCABLANDS_TOWN_REGION = Object.freeze({
   id:'scablands', cellMetres:TOWN_CELL_METRES, chunkCells:TOWN_CHUNK_CELLS,

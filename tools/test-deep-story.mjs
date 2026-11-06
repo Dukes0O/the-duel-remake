@@ -114,6 +114,13 @@ test('the way back up after the first part: the Norseman line once', () => {
   assert.equal(duel.state.deepJourney?.phase, 'ascending');
   duel.step(DT); duel.step(DT);
   assert.deepEqual(log.filter(line => line.startsWith('deep.ana.')), ['deep.ana.norseman']);
+
+  const surfaces= race(ROUTE_VARIANTS[1], {deepSave:{raised:['sirena-badge'],sonar:true},deepFound:['kelp-coast']}), surfacedLog=record(surfaces);
+  dive(surfaces); hold(surfaces,DT);
+  const raisedPart=findAt(surfaces,'sirena-bonnet');park(surfaces,raisedPart.x,raisedPart.z);hold(surfaces,SIRENA.liftSeconds+.2,true);
+  surfacedLog.length=0;
+  assert.equal(surfaces.deepSurface(),true,'U returns from the dive');
+  assert.deepEqual(surfacedLog.filter(line=>line.startsWith('deep.ana.')),['deep.ana.norseman'],'U says the Norseman line before the dive ends');
 });
 
 test('the sea-life log runs in the dive: a creature spot logs, a pearl is found', () => {
