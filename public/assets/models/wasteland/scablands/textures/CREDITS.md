@@ -94,6 +94,12 @@ edges. No objects, gear, pool, scene, text, or watermark.
   directly above. Slightly too small, old, dusty, faded charcoal-brown felt,
   narrow drooping brim and shallow dented crown. Plain pale background, flat
   overcast daylight, no people, labels or props.”
+- `ww-wren-flag.jpg`: Codex ImageGen original product photograph of a rag flag
+  on a thin weathered pole with a small yellow cloth knot. Prompt: “One
+  dead-on photograph of a small old rag flag on a thin straight wooden pole,
+  faded dusty cloth with a torn edge and a muted yellow knot. Plain pale
+  background, flat overcast light, whole object, no perspective, people, text,
+  other objects or watermark.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.

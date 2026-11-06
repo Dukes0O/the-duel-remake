@@ -16,6 +16,10 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
   reference. The silhouette reads as a worn hat; its dent is slightly
   mechanical at close range, but it does not read as a toy at prop scale.
 - Added `ww-ash-hat-side.jpg` and `ww-ash-hat-top.jpg` with prompt credits.
+- Added `wren-flag`, with its rag traced and given 1 cm thickness and its pole
+  lathed from the measured photo radius. Front and three-quarter exported-GLB
+  renders match the rag outline and yellow knot. It does not read as a toy.
+- Added `ww-wren-flag.jpg` with its prompt credit.
 - The existing `photo_model.py` photo kit remains the source for the three
   Claude accepted props and the new box.
 - `dynamite-box` was tried in two renders, then omitted. The photo wrapped into
@@ -25,7 +29,7 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 ## Checks
 
 - Blender 4.5 recipe: rendered the exported GLB in an empty scene. It reports
--  16,920 triangles across five props and the GLB is 1,583,276 bytes.
+-  19,740 triangles across six props and the GLB is 1,722,580 bytes.
 - Inspected `gerald-box` front and three-quarter renders, and `ash-hat` side and
   three-quarter renders beside their photos.
 - `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs`:

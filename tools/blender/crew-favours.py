@@ -265,6 +265,35 @@ lathe(hat_mesh, 'side', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1), HAT_ROWS, ha
                                                 70 + math.sin(a) * f * 42)))
 finish(hat_mesh, 'ash-hat', {'side': hat_side.material(), 'top': hat_top.material()})
 
+# --- wren-flag: rag outline is traced from the photo; pole radius is measured from it ----
+flag_photo = Photo(textures / 'ww-wren-flag.jpg')
+flag_solid = tidy(~flag_photo.sky([(12, 12), (flag_photo.w - 12, 12),
+                                   (12, flag_photo.h - 12)], grey=26))
+FLAG_S = .00040
+FLAG_POLE_X = 214
+FLAG_BOTTOM = flag_photo.h - 35
+flag_mesh = Mesh()
+flag_loops = trace(flag_solid, (218, 80, flag_photo.w - 90, 400), tolerance=2.0, min_area=40)
+def on_flag(px, py, d):
+    return ((px - FLAG_POLE_X) * FLAG_S, (FLAG_BOTTOM - py) * FLAG_S, d)
+slab(flag_mesh, 'flag', flag_photo, flag_loops, on_flag, .006, .016, wall_scale=FLAG_S)
+# The loose yellow tie is traced as its own small piece, joined at the pole and rag corner.
+yellow_loops = trace(flag_solid, (170, 55, 225, 170), tolerance=1.5, min_area=18)
+slab(flag_mesh, 'flag', flag_photo, yellow_loops, on_flag, .004, .014, wall_scale=FLAG_S)
+pole_rows = []
+for py in range(FLAG_BOTTOM, 20, -8):
+    row = np.nonzero(flag_solid[py, FLAG_POLE_X - 15:FLAG_POLE_X + 16])[0]
+    if len(row) > 1:
+        pole_rows.append(((FLAG_BOTTOM - py) * FLAG_S, (row[-1] - row[0] + 1) * FLAG_S / 2))
+pole_rows.sort()
+def flag_pole_uv(index, distance, radius, angle):
+    return flag_photo.uv(FLAG_POLE_X + radius / FLAG_S * .85 * math.cos(angle),
+                         FLAG_BOTTOM - distance / FLAG_S)
+lathe(flag_mesh, 'flag', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1), pole_rows,
+      flag_pole_uv, sides=10)
+flag_photo.bleed(flag_solid, passes=20)
+finish(flag_mesh, 'wren-flag', {'flag': flag_photo.material()})
+
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
     if layer_object.type == 'MESH':
@@ -298,7 +327,7 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
@@ -333,3 +362,5 @@ shot('gerald-box', 'gerald-box', (0, .11, 1.4), (0, .11, 0), 900, 650, ortho=.43
 shot('gerald-box-quarter', 'gerald-box', (-.50, .50, .85), (0, .10, 0), 900, 650, lens=50)
 shot('ash-hat', 'ash-hat', (0, .06, 1.2), (0, .06, 0), 900, 650, ortho=.25, show_ground=False)
 shot('ash-hat-quarter', 'ash-hat', (-.28, .25, .48), (0, .04, 0), 900, 650, lens=50, show_ground=False)
+shot('wren-flag', 'wren-flag', (.02, .22, 1.3), (.02, .22, 0), 900, 700, ortho=.48, show_ground=False)
+shot('wren-flag-quarter', 'wren-flag', (-.23, .38, .72), (.02, .22, 0), 900, 700, lens=50, show_ground=False)
