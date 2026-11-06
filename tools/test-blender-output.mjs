@@ -616,28 +616,35 @@ try {
     }
   });
 
-  check('TOWN-ART-HOMES exports every named home, lamp and per-plot budget in one 1K atlas', () => {
+  check('TOWN-ART-HOMES exports separate compact material pictures, named homes and per-plot budgets', () => {
     const path=join(root,'public/assets/models/wasteland/town/homes.glb');const bytes=readFileSync(path);
     assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
     assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds 3 MB`);
     const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));const nodes=gltf.nodes||[];
-    assert.equal(gltf.images?.length,1,'one shared embedded atlas');
-    const binStart=28+bytes.readUInt32LE(12);const imageView=gltf.bufferViews[gltf.images[0].bufferView];
-    const imageStart=binStart+(imageView.byteOffset||0);let imageWidth=0,imageHeight=0;
-    if(gltf.images[0].mimeType==='image/png'){
-      imageWidth=bytes.readUInt32BE(imageStart+16);imageHeight=bytes.readUInt32BE(imageStart+20);
-    }else if(gltf.images[0].mimeType==='image/jpeg'){
-      let offset=imageStart+2;
-      while(offset+9<bytes.length){
-        if(bytes[offset]!==0xff){offset++;continue;}
-        const marker=bytes[offset+1];const length=bytes.readUInt16BE(offset+2);
-        if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
-          imageHeight=bytes.readUInt16BE(offset+5);imageWidth=bytes.readUInt16BE(offset+7);break;
+      const imageIndexes=(gltf.textures||[]).map(texture=>texture.source);
+      assert.ok(gltf.images?.length>1,'separate pictures replace the shared atlas');
+      assert.equal(new Set(imageIndexes).size,imageIndexes.length,'materials do not sample a shared atlas image');
+      assert.equal(gltf.images.length,imageIndexes.length,'every material picture resolves to its own image');
+      assert.ok(gltf.images.every(image=>image.mimeType==='image/jpeg'),'material pictures use JPEG');
+      const binStart=28+bytes.readUInt32LE(12);let texturePixels=0;
+      for(const image of gltf.images){
+        const view=gltf.bufferViews[image.bufferView];const start=binStart+(view.byteOffset||0);let width=0,height=0,offset=start+2;
+        while(offset+9<start+view.byteLength){
+          if(bytes[offset]!==0xff){offset++;continue;}
+          const marker=bytes[offset+1];const length=bytes.readUInt16BE(offset+2);
+          if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+            height=bytes.readUInt16BE(offset+5);width=bytes.readUInt16BE(offset+7);break;
+          }
+          if(length<2)break;offset+=2+length;
         }
-        if(length<2)break;offset+=2+length;
+        assert.ok(width>0&&height>0&&width<=256&&height<=256,`${width}x${height} material exceeds 256 px`);
+        texturePixels+=width*height;
       }
-    }
-    assert.ok(imageWidth>0&&imageHeight>0&&imageWidth<=1024&&imageHeight<=1024,'atlas must fit 1K');
+      assert.ok(texturePixels<=1024*1024,`${texturePixels} total texture pixels exceed the 1K atlas budget`);
+      for(const material of gltf.materials){
+        const metallic=material.pbrMetallicRoughness?.metallicFactor??0;
+        assert.ok(metallic<=.3,`${material.name} metallic factor ${metallic} exceeds .3`);
+      }
     const names=nodes.map(node=>node.name||'');assert.ok(names.includes('town-homes'),'named family root');
     const ids=['tent-a','tent-b','shack-a','shack-b','shack-c','stack-a','stack-b','block-a','block-b','terrace-a'];
     const parent=new Map();nodes.forEach((node,index)=>(node.children||[]).forEach(child=>parent.set(child,index)));
