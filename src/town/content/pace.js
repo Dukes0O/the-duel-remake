@@ -3,5 +3,5 @@
 export const TOWN_PACE=Object.freeze({
   arrivalMoodBase:3,
   arrivalMoodScale:100,
-  arrivalYearScale:1.5,
+  arrivalYearScale:4,
 });
