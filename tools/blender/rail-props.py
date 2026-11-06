@@ -71,13 +71,21 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     photo.image_w, photo.image_h = photo.image.size
     photo._rgb = None
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
+    shadow_seeds = {
+        'case-books': (500, 960),
+        'case-teeth': (800, 970),
+        'case-megaphone': (700, 980),
+        'case-hollis': (500, 970),
+    }
+    if name in shadow_seeds:
+        seeds.append(shadow_seeds[name])
     if name == 'token-ring':
         # The open centre between the leather hanger and brass token is sky.
         seeds.append((photo.w // 2, round(photo.h * .40)))
     if name in ('case-books', 'case-teeth', 'case-megaphone', 'case-hollis'):
-        # Pull the photo shadow off the silhouette, then bleed subject colour
-        # beyond the new edge so filtering cannot bring the pale fringe back.
-        outline_shrink = 5
+        # The shadow seeds remove the connected pale fringe without cutting
+        # the photographed object into a jagged outline.
+        outline_shrink = 1
     else:
         outline_shrink = 1
     solid = shrink(tidy(~photo.sky(seeds, tolerance=20, grey=26), passes=2),

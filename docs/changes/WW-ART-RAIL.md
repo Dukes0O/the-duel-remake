@@ -5,7 +5,7 @@ Date: 6 November 2026
 ## Changed
 
 - Renamed the suitcase model and number-label child from `case-fourteen` to the story id `case-hollis`; kept its source photo filename.
-- Tightened the silhouettes of the books, teeth jar, paper megaphone and Hollis suitcase by five pixels before photo bleed, trimming pale cast-shadow fringes.
+- Seeded each requested photo shadow as sky, keeping it outside the object mask; retained the one-pixel outline shrink and photo bleed to avoid jagged edges.
 - Seeded the token hoop's clear center as sky so its photo mask keeps the opening transparent.
 - Replaced the sand-drag cutout with a 15 m long, 1.5 m high feathered heightfield, photo-textured rails and sleepers, and a thick timber stop block. Set its review views at car height, 18 m away.
 - Narrowed the toy-car tires from 46 mm to 26 mm, moved them snug to the body, and fitted matching thin tin hub caps.
