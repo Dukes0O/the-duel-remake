@@ -147,8 +147,8 @@ def rail(name,a,b,radius,material,part):
     o=bpy.context.object; o.rotation_euler=d.to_track_quat('Z','Y').to_euler(); o.data.materials.append(material)
     return attach(o,name,part)
 
-def torus(name,center,major,minor,material,part,axis='Y'):
-    bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=24,minor_segments=8,location=gv(center))
+def torus(name,center,major,minor,material,part,axis='Y',major_segments=24,minor_segments=8):
+    bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=major_segments,minor_segments=minor_segments,location=gv(center))
     o=bpy.context.object
     if axis=='X': o.rotation_euler[1]=math.pi/2
     o.data.materials.append(material)
@@ -199,7 +199,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
                 rivet=cylinder(f'{name}-patch-rivet-{index}-{side}-{k}',(x-w*.4+k*w*.2,y-h*.38,side*(width*.444+.04)),.045,.07,iron,root.name,8,'Z')
                 parent(rivet,root)
     # Text on the bow, in large, readable weathered paint.
-    label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.28; label.extrude=.012; label.bevel_depth=.008
+    label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.28; label.resolution_u=3; label.bevel_resolution=1; label.extrude=.008; label.bevel_depth=.004
     for side in (-1,1):
         obj=bpy.data.objects.new(name+' bow name '+str(side),label); scene.collection.objects.link(obj)
         obj.location=gv((length*.30,deck-2.05,side*(width*.448)))
@@ -242,9 +242,9 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
     # Each anchor chain has its own named detachable part and rests on the bed.
     for side in (-1,1):
         cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0],-1.5,loc[1]),f'{ident}:anchor-chain')
-        for i in range(15):
+        for i in range(12):
             x=length*.43+i*.48; z=side*(width*.52+i*.12)
-            link=torus(f'{ident}-anchor-link-{side}-{i}',(x,-1.8,z),.21,.045,iron,f'{ident}:anchor-chain','Z'); parent(link,cr)
+            link=torus(f'{ident}-anchor-link-{side}-{i}',(x,-1.8,z),.21,.045,iron,f'{ident}:anchor-chain','Z',8,4); parent(link,cr)
         anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+7,-1.9,side*(width*.52+2)),.34,.12,rust,f'{ident}:anchor-chain',12)
         parent(anchor,cr)
     # Slightly different lean about each grounded centre line.
@@ -298,13 +298,15 @@ tower=bpy.data.objects.new('lighthouse masonry tower',mesh); scene.collection.ob
 uv=mesh.uv_layers.new(name='Photographic front projection')
 for poly in mesh.polygons:
     for li in poly.loop_indices:
-        vi=mesh.loops[li].vertex_index; level=vi//N; i=vi%N; x,y,z=math.cos(i*2*math.pi/N),math.sin(i*2*math.pi/N), level
+        vi=mesh.loops[li].vertex_index; level=vi//N; i=vi%N; x,y=math.cos(i*2*math.pi/N),math.sin(i*2*math.pi/N)
+        height=mesh.vertices[vi].co.z
         angle=i*2*math.pi/N
         if math.sin(angle)<-.62:
-            uv.data[li].uv=(.5+(x*5.8)/12.0,.02+z*.94)
+            uv.data[li].uv=(.5+(x*5.8)/12.0,.02+((height+2)/27.3)*.94)
             poly.material_index=0
         else:
-            uv.data[li].uv=(.5+x*.46,.04+z*.90)
+            radius=((5.6,4.8,4.0,3.2,3.0)[level])
+            uv.data[li].uv=(angle*radius,.04+height/2)
             poly.material_index=1
 parent(tower,light_root)
 for y,rad in ((8,4.9),(16,3.8),(24,3.05)):
@@ -356,9 +358,9 @@ for side in (-1,1):
     for i,x in enumerate((-4,-1,2,5)):
         z=side*1.72
         tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.62,z),.72,.24,iron,'pilot-boat','Z')
-        for k in range(16):
-            a=k*2*math.pi/16
-            lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.62+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',.04)
+        for k in range(8):
+            a=k*2*math.pi/8
+            lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.62+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
         hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.62,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
         for spring in range(3):
             beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
@@ -402,7 +404,7 @@ def add_lighting():
     world=bpy.data.worlds.new('bright overcast sky') if not bpy.data.worlds else bpy.data.worlds[0]
     world.use_nodes=True; world.node_tree.nodes['Background'].inputs[0].default_value=(.65,.68,.70,1); world.node_tree.nodes['Background'].inputs[1].default_value=.8; scene.world=world
     data=bpy.data.lights.new('large overcast softbox','AREA'); light_obj=bpy.data.objects.new('large overcast softbox',data); scene.collection.objects.link(light_obj)
-    light_obj.location=gv((50,150,-180)); data.energy=36000; data.shape='DISK'; data.size=110
+    light_obj.location=gv((95,110,-410)); data.energy=100000; data.shape='DISK'; data.size=120
 
 def render_imported_review():
     global scene
@@ -424,14 +426,14 @@ def render_imported_review():
     review_ground.data.materials.append(review_material)
     # Render view and light objects are created only after GLB import.
     add_lighting()
-    targets=[((-5,8,-423),(-45,5,-415),18),((170,16,-425),(170,12,-395),80),((245,9,-465),(230,0,-430),90)]
+    targets=[((-45,8,-375),(-45,5,-415),18),((170,16,-425),(170,12,-395),80),((230,9,-390),(230,0,-430),90)]
     view_sizes=((1600,320),(512,1024),(1536,512))
     for index,(loc,target,lens) in enumerate(targets):
         cam=camera(f'review-camera-{index}',loc,target,lens)
         scene.render.resolution_x,scene.render.resolution_y=view_sizes[index]
         scene.camera=cam; scene.render.filepath=str(raw/f'model-{index}.jpg'); bpy.ops.render.render(write_still=True)
     # Context at car height, 40 m away, and a top-down map view.
-    for index,(loc,target,lens) in enumerate((((-5,8,-423),(-45,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
+    for index,(loc,target,lens) in enumerate((((-45,8,-375),(-45,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
         scene.render.resolution_x,scene.render.resolution_y=(1200,600)
         if index==2:
             scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.045,.055,.085,1)
