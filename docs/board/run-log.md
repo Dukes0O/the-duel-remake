@@ -1564,3 +1564,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov night: merged WW-ART-DAM round 9, the Dry Dam's face from a projected photo, gates, salt wall and gatehouse (Blender output and hygiene passed; Claude's verdict: passed for the Iron Mule and Ships). Wrecks, gantry wheels and silt carded as WW-ART-DAM-2.
 - 5 Nov: TOWN-MAP-VIEW merged. Lane 38/39: `test-review-evidence` fails at night (seen 23:20 local, UTC-8): the browser plan and another plan name their evidence folder by different dates; not map code. Card to follow. Trade trucks show no pin until trips have real routes.
 - 5 Nov: TOWN-ART-HOMES merged at round 6 of 6 as the working set; what is short is on its card.
+- 5 Nov: TOWN-WORLD merged. DRIVE from the town starts a drive in the Scablands with the town drawn and solid; the gate leads to the Scrapdome. Lane 223/224: `test-review-evidence` date failure only. Replays and world signatures unchanged. Off for players.
