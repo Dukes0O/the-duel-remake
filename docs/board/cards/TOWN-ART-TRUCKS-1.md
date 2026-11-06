@@ -38,4 +38,6 @@ For Kyle in the morning: a local photo-to-model tool, such as TripoSR (held earl
 
 Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds, starting with `fire-truck`. Claude judges `round-7.jpg`.
 
-Kyle, 6 November: one more try with the photo kit (`tools/blender/photo_model.py`), past the six rounds, starting with `fire-truck`. Claude judges `round-7.jpg`.
+Round 9, 6 November: **`fire-truck` passes** (`docs/board/looks/town-art-trucks-1/round-9.jpg`). The tanker, supply truck and tow rig follow the same way, with the fire truck as the worked example.
+
+Round 11, 6 November: **pass for all four trucks**, past six rounds with Kyle's approval, carved from photos. Codex built the tanker, supply truck and tow rig from the fire truck's worked example. Small flaws, none worth another round: pale edges under the tanker's wheel arches and along the supply truck's sills. `supply-truck:load` lifts away to leave an empty bed, and `tow-rig:hook` hangs below the boom's tip. The family file is 3.4 MB. TOWN-VEHICLES can use these.

@@ -76,6 +76,32 @@ class Photo:
                 queue.extend(((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)))
         return sky
 
+    def bleed(self, solid, passes=8):
+        """Replace everything outside `solid` with the subject's own nearby colours.
+
+        The background can then never show on a model's edge, however the
+        picture is filtered or compressed. `solid` must be at the image's own size.
+        """
+        pixels = np.empty(self.image_w * self.image_h * 4, dtype=np.float32)
+        self.image.pixels.foreach_get(pixels)
+        array = pixels.reshape(self.image_h, self.image_w, 4)
+        known = solid[::-1].copy()
+        colour = array[:, :, :3]
+        for _ in range(passes):
+            total = np.zeros_like(colour)
+            count = np.zeros(known.shape, dtype=np.float32)
+            for axis, step in ((0, 1), (0, -1), (1, 1), (1, -1)):
+                total += np.roll(colour * known[..., None], step, axis)
+                count += np.roll(known, step, axis)
+            grow = ~known & (count > 0)
+            colour[grow] = total[grow] / count[grow][..., None]
+            known = known | grow
+        colour[~known] = colour[known].mean(axis=0)
+        self.image.pixels.foreach_set(array.ravel())
+        self.image.update()
+        self.image.pack()
+        self._rgb = None
+
     def material(self, roughness=.9):
         if self._material is None:
             mat = bpy.data.materials.new('Photo / ' + self.path.stem)
@@ -98,6 +124,13 @@ def tidy(mask, passes=1):
             for dx in (-1, 0, 1):
                 count += np.roll(np.roll(mask, dy, 0), dx, 1).astype(np.int8)
         mask = count >= 5
+    return mask
+
+
+def shrink(mask, passes=1):
+    """Pull a mask in from its edge by one pixel a pass."""
+    for _ in range(passes):
+        mask = mask & np.roll(mask, 1, 0) & np.roll(mask, -1, 0) & np.roll(mask, 1, 1) & np.roll(mask, -1, 1)
     return mask
 
 
