@@ -1,26 +1,27 @@
-﻿# WW-ART-RAIL
+# WW-ART-RAIL
+
+Card still open: the engine and its drift have passed; the carriages, van, Wednesday and the props follow.
 
 ## Changed
 
-- Added side, front and rear photo-mask generation to the rail recipe. It saves inspectable mask PNGs under `.qa-dist/masks/` and prints projected background corner shares plus the worst ten source parts.
-- Added nearest-mask UV correction for projected photo corners, recalculated outward mesh normals, and set the fresh imported-GLB render to Standard.
-- Replaced the round 1 look sheet and review note with the round 2 sheet and review note.
+- `tools/blender/photo_model.py`: a new kit for building models from a photo's own outline: sky masks, outline tracing with holes, slabs, boxes with a measured picture rectangle per face, and lathes whose faces wear the picture they were read from.
+- `tools/blender/rail-trains.py`: rebuilt on that kit: `the-2-15-engine`, `the-2-15-track` and `the-2-15-drift`, in one GLB.
+- `docs/ASSET_PIPELINE.md`: how to use the kit.
 
 ## Checks
 
-- Blender recipe: completed on Blender 4.5.13. Exported GLB: 1,296,752 bytes; 13,996 triangles total (11,500 engine, 2,496 drift).
-- Photo background corner shares after UV correction: side 18.33%, front 22.81%, rear 35.02%. Target is below 1% for each; failed.
-- `node tools/test-blender-output.mjs`: passed, 275 checks; 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing advisory size targets remain over target for total public bytes and look-directory bytes; no placement check failed.
-- Browser and look check: not run here. Claude should inspect round 2 sheet, especially pale faces around the cab roof, chimney, smokebox, wheels and track.
-- Changed assertions: none.
-- Race fingerprints: not applicable to this art card.
+- Blender 4.5.13 recipe: 13,354 triangles, 1,971,248 bytes, read back; rendered from the exported GLB in an empty scene.
+- `node tools/test-blender-output.mjs` and `node tools/test-repo-hygiene.mjs`: passed. Art look: Claude, see `docs/board/looks/ww-art-rail/round-3-review.md`.
+- Lane tier and build: recorded at merge.
 
-## Not complete
+## Changed assertions
 
-This round does not meet the card's requested mask-traced slabs, mask-derived lathe profiles, corrected front/rear face assignment and smokebox door, curved photo-derived roof, or wind-shaped drift. The rendered engine remains visibly assembled and does not yet read as a real dead locomotive from three-quarter views. I stopped this round after the mask projection change did not bring the background shares close to the 1% target. This needs another art pass before approval.
+`tools/test-blender-output.mjs`: `photo_model.py` joins `town_base.py` in the list of shared helpers that are not asset generators. It makes no GLB of its own; nothing is loosened. Claude's review.
+
+## Race fingerprints
+
+None: not wired into the game.
 
 ## Removed
 
-- Removed the round 1 look sheet and review note, replaced by round 2.
-- No source photos or generated textures were removed.
+The round 1 and 2 recipe, sheets and notes.

@@ -1,9 +1,0 @@
-﻿# WW-ART-RAIL round 2
-
-**Look verdict: not ready to approve.** The engine still reads as a photo-textured assembly instead of one heavy dead locomotive. The exported GLB render has pale faces around the cab roof, chimney and smokebox, and the side/front/rear views do not match the source photos closely enough. The drift is not ready for look approval either.
-
-The recipe now writes side, front and rear photo masks to `.qa-dist/masks/` and reports the share of projected photo corners on background, with the worst ten source parts. The masks were opened and checked. The brightness/chroma threshold still includes bright engine panels and misses some subtle boundaries, so this is a useful diagnostic, not a reliable silhouette mask. The measured background shares are **18.33% side, 22.81% front and 35.02% rear** after nearest-mask UV correction. The target is below 1% on every view; this round misses it.
-
-The recipe also recalculates mesh normals, renders the reimported GLB with Standard view transform, and keeps the existing generated photos. It does not yet trace the listed side parts from masks, build mask-derived lathe profiles, correct the end-photo face assignments, form the curved cab roof, or reshape the wind drift. Wheel and track materials still show pale areas. No browser check was run; this art card is not wired into the game. Claude should inspect the exported-GLB side, front, rear, dug-out three-quarter and buried three-quarter panels, with particular attention to the remaining pale areas and incorrect proportions.
-
-Triangle count read back from the Blender mesh: 13,996 total (11,500 engine; 2,496 drift). GLB size: 1,296,752 bytes. Both are within the 30,000 triangle and 2 MB limits. No metallic factor exceeds 0.29. The GLB has not been independently checked for UV attribute layout by a passing card check yet.

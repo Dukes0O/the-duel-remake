@@ -1,7 +1,8 @@
-"""Round 1 of WW-ART-RAIL: the works passenger engine and its salt drift.
+"""WW-ART-RAIL: the 2:15's engine and its salt drift, from three photos.
 
 Run with Blender 4.5: blender -b --python tools/blender/rail-trains.py -- --root <repo>
-All authored dimensions use glTF metres, X along the track, Y up, Z across it.
+Metres, X along the track, Y up, Z across it. Rail top is Y = 0. The engine's
+parts are measured in the side photo at 2000 x 667, where 1 pixel is 6 mm.
 """
 import argparse
 import json
@@ -30,505 +31,345 @@ import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(recipe.parent))
 import town_base as town
+from photo_model import Mesh, Photo, box, lathe, rect_loop, slab, tidy, trace
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
-bpy.context.preferences.filepaths.save_version = 0
+blend.parent.mkdir(parents=True, exist_ok=True)
+render_dir.mkdir(parents=True, exist_ok=True)
 
-# Make three inspectable photo masks. Bright, nearly neutral studio sky and
-# ground are background; darker and more chromatic pixels belong to the engine.
-mask_dir = root / '.qa-dist' / 'masks'
-mask_dir.mkdir(parents=True, exist_ok=True)
-photo_masks = {}
-photo_sizes = {}
-for view in ('side', 'front', 'rear'):
-    image = bpy.data.images.load(str(textures / f'2-15-{view}.jpg'), check_existing=False)
-    width, height = image.size
-    values = np.empty(width * height * 4, dtype=np.float32)
-    image.pixels.foreach_get(values)
-    rgb = values.reshape((height, width, 4))[::-1, :, :3]
-    brightness = rgb.mean(axis=2)
-    chroma = rgb.max(axis=2) - rgb.min(axis=2)
-    foreground = (brightness < .57) | (chroma > .11)
-    photo_masks[view] = foreground
-    photo_sizes[view] = (width, height)
-    mask_image = bpy.data.images.new(f'{view} engine/background mask', width, height, alpha=False)
-    mask_pixels = np.empty((height, width, 4), dtype=np.float32)
-    mask_pixels[:, :, :3] = foreground[::-1, :, None]
-    mask_pixels[:, :, 3] = 1
-    mask_image.pixels.foreach_set(mask_pixels.ravel())
-    mask_image.filepath_raw = str(mask_dir / f'{view}-mask.png')
-    mask_image.file_format = 'PNG'
-    mask_image.save()
-    bpy.data.images.remove(mask_image)
-    bpy.data.images.remove(image)
+side = Photo(textures / '2-15-side.jpg', frame=(2000, 667))
+front = Photo(textures / '2-15-front.jpg')
+rear = Photo(textures / '2-15-rear.jpg')
+salt = Photo(textures / 'packed-salt.jpg')
+salt.image.scale(640, 640)
+materials = {'side': side.material(), 'front': front.material(), 'rear': rear.material()}
 
-# Read the side photograph mask and measure its silhouette in 64 bins.
-side_path = textures / '2-15-side.jpg'
-side_image = bpy.data.images.load(str(side_path), check_existing=False)
-side_width, side_height = side_image.size
-pixels = np.empty(side_width * side_height * 4, dtype=np.float32)
-side_image.pixels.foreach_get(pixels)
-pixels = pixels.reshape((side_height, side_width, 4))[::-1, :, :3]
-background_samples = np.concatenate((pixels[2:12, 30:90].reshape(-1, 3),
-                                     pixels[2:12, side_width-90:side_width-30].reshape(-1, 3)))
-background = np.median(background_samples, axis=0)
-silhouette = photo_masks['side']
-bins = 64
-profile = []
-for index in range(bins):
-    x0 = int(side_width * index / bins)
-    x1 = max(x0 + 1, int(side_width * (index + 1) / bins))
-    band = silhouette[:int(side_height * .88), x0:x1]
-    rows = np.flatnonzero(band.any(axis=1))
-    profile.append(float(rows[0]) if len(rows) else float(side_height * .88))
-valid = [p for p in profile if p < side_height * .75]
-if len(valid) < 30:
-    raise RuntimeError('side-photo colour mask found too little locomotive silhouette')
-top_px = min(valid)
-bottom_px = side_height * .90
-photo_span = bottom_px - top_px
-measured = []
-for x in (-5.5, -4.0, -2.5, -1.0, 0.5, 2.0, 3.5, 5.0):
-    idx = max(0, min(bins - 1, int((x + 5.5) / 11.0 * bins)))
-    height = max(.25, min(4.0, 4.0 * (bottom_px - profile[idx]) / photo_span))
-    measured.append((round(x, 3), round(height, 3)))
-print('PHOTO_MASK=' + json.dumps({'resolution': [side_width, side_height], 'background': background.tolist(),
-                                  'silhouette_bins': len(valid), 'top_px': top_px,
-                                  'outline_metres': measured}))
+# Sky in each photo. Seeds: the open sky, then each opening where sky shows through.
+side_solid = tidy(~side.sky([(30, 30), (1000, 40), (1950, 300), (340, 260), (272, 300), (190, 150), (700, 135), (850, 135)]))
+front_solid = tidy(~front.sky([(40, 40), (1150, 40), (310, 345), (885, 345)], grey=26))
+rear_solid = tidy(~rear.sky([(40, 40), (1270, 40)], grey=26))
+for name, mask in (('side', side_solid), ('front', front_solid), ('rear', rear_solid)):
+    image = bpy.data.images.new('mask ' + name, mask.shape[1], mask.shape[0], alpha=False)
+    grey = mask[::-1].astype(np.float32)
+    image.pixels.foreach_set(np.dstack((grey, grey, grey, np.ones_like(grey))).ravel())
+    image.filepath_raw = str(render_dir / f'mask-{name}.png')
+    image.file_format = 'PNG'
+    image.save()
 
-def outline_height_at(x):
-    at = max(0, min(bins - 1, round((x + 5.5) / 11.0 * (bins - 1))))
-    return max(.25, min(4.0, 4.0 * (bottom_px - profile[at]) / photo_span))
+S = .006
+def SX(px): return (px - 1000) * S
+def SY(py): return (640 - py) * S
+def FZ(px): return -(px - 598) * .00279
+def RZ(px): return (px - 655) * .00267
+def RY(py): return 1.44 + (770 - py) * .00323
+def FY(py):
+    # The front photo's cab is further off than its smokebox: eave at 255, tank top at 460.
+    return 3.37 + (255 - py) * (.0058 if py < 255 else .003)
 
-cab_roof_y = max(3.30, min(3.72, outline_height_at(-4.0) - .16))
-boiler_radius = max(.74, min(.96, outline_height_at(1.8) - 2.30))
-dome_top_y = max(3.20, min(3.62, outline_height_at(1.1)))
-tank_top_y = max(2.78, min(3.10, outline_height_at(-1.0) - .10))
-bpy.data.images.remove(side_image)
-print('PHOTO_MASKS=' + json.dumps({view: {'resolution': photo_sizes[view],
-    'foreground_share': float(photo_masks[view].mean()),
-    'background_share': float(1 - photo_masks[view].mean())} for view in ('side', 'front', 'rear')}))
+def on_side(px, py, d): return (SX(px), SY(py), d)
+def on_front(px, py, d): return (d, FY(py), FZ(px))
+def on_rear(px, py, d): return (d, RY(py), RZ(px))
 
-def photo_material(label, filename, metallic=.12):
-    image = bpy.data.images.load(str((textures / filename).resolve()), check_existing=False)
-    factor = min(1.0, 1280 / image.size[0], 1280 / image.size[1])
-    image.scale(round(image.size[0] * factor), round(image.size[1] * factor))
-    image.pack()
-    material = bpy.data.materials.new('2:15 / ' + label)
-    material.use_nodes = True
-    bsdf = material.node_tree.nodes.get('Principled BSDF')
-    bsdf.inputs['Metallic'].default_value = min(metallic, .29)
-    bsdf.inputs['Roughness'].default_value = .94
-    tex = material.node_tree.nodes.new('ShaderNodeTexImage')
-    tex.image = image
-    tex.interpolation = 'Linear'
-    tex.extension = 'REPEAT'
-    material.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
-    return material
+SHEET = ('side', side, (600, 186, 1320, 330))      # tank plate, for tops
+DARK = ('side', side, (1345, 255, 1420, 300))      # black boiler, for what is in shadow
+RUST = ('front', front, (130, 790, 330, 960))      # rusty beam, for undersides
 
-side_mat = photo_material('side photograph, planar projected', '2-15-side.jpg', .10)
-front_mat = photo_material('front photograph, planar projected', '2-15-front.jpg', .08)
-rear_mat = photo_material('rear photograph, planar projected', '2-15-rear.jpg', .08)
-salt_mat = town.make_materials({'sand': str(textures / 'packed-salt.jpg')})['sand']
-side_mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = .10
-cab_shadow = bpy.data.materials.new('2:15 / unlit dark cab interior')
-cab_shadow.use_nodes = True
-cab_shadow_bsdf = cab_shadow.node_tree.nodes.get('Principled BSDF')
-cab_shadow_bsdf.inputs['Base Color'].default_value = (.012,.016,.016,1)
-cab_shadow_bsdf.inputs['Metallic'].default_value = 0
-cab_shadow_bsdf.inputs['Roughness'].default_value = 1
+engine = Mesh()
 
-materials = [side_mat, front_mat, rear_mat]
-engine_meshes = []
-drift_meshes = []
-part_names = {}
+# Running plate and the two beams.
+box(engine, SX(100), SX(1905), SY(415), SY(385), -1.36, 1.36, {
+    '+z': ('side', side, (100, 385, 1905, 415)), '-z': ('side', side, (100, 385, 1905, 415)),
+    '+y': SHEET, '-y': RUST})
+box(engine, SX(1860), SX(1908), SY(510), SY(385), -1.41, 1.41, {
+    '+x': ('front', front, (85, 770, 1095, 965)), '-x': RUST,
+    '+z': ('side', side, (1860, 385, 1908, 510)), '-z': ('side', side, (1860, 385, 1908, 510)),
+    '+y': ('front', front, (85, 770, 1095, 790)), '-y': RUST})
+box(engine, SX(97), SX(140), SY(480), SY(390), -1.38, 1.38, {
+    '-x': ('rear', rear, (197, 770, 1115, 905)), '+x': RUST,
+    '+z': ('side', side, (97, 390, 140, 480)), '-z': ('side', side, (97, 390, 140, 480)),
+    '-y': RUST})
+box(engine, SX(1880), SX(1900), SY(590), SY(510), -.62, .62, {'+x': ('front', front, (360, 965, 830, 1100)), '-y': RUST})
+box(engine, SX(110), SX(130), SY(590), SY(480), -.62, .62, {'-x': ('rear', rear, (400, 905, 920, 1010)), '-y': RUST})
 
-def project_uv(point, view):
-    x, y, z = point
-    if view == 'end':
-        return ((z + 1.48) / 2.96, y / 4.1)
-    if view == 'top':
-        idx = max(0, min(bins - 1, round((x + 5.5) / 11.0 * (bins - 1))))
-        image_row = min(side_height - 1, profile[idx] + 13)
-        return ((x + 5.5) / 11.0, 1.0 - image_row / side_height + (z + 1.45) / 2.9 * .035)
-    return ((x + 5.5) / 11.0, y / 4.1)
+# Frames between the wheels, then the steps and the sandbox on the outer plane.
+frames = trace(side_solid, (180, 415, 1900, 590), tolerance=2.5, min_area=300)
+steps = trace(side_solid, (180, 415, 305, 590), min_area=120)
+block = trace(side_solid, (1762, 415, 1860, 540), min_area=120)
+for sign in (1, -1):
+    slab(engine, 'side', side, frames, on_side, sign * .62, sign * .70)
+    slab(engine, 'side', side, steps, on_side, sign * 1.18, sign * 1.24)
+    slab(engine, 'side', side, block, on_side, sign * 1.12, sign * 1.30)
 
-def keep_uv_on_engine(view, uv):
-    """Move a projected corner off studio sky/ground onto the nearest masked pixel."""
-    mask = photo_masks[view]
-    height, width = mask.shape
-    px = max(0, min(width - 1, int(uv[0] * width)))
-    py = max(0, min(height - 1, int((1 - uv[1]) * height)))
-    if mask[py, px]:
-        return uv
-    for radius in range(1, 33):
-        x0, x1 = max(0, px-radius), min(width, px+radius+1)
-        y0, y1 = max(0, py-radius), min(height, py+radius+1)
-        candidates = np.argwhere(mask[y0:y1, x0:x1])
-        if candidates.size:
-            candidates[:, 0] += y0
-            candidates[:, 1] += x0
-            nearest = candidates[np.argmin((candidates[:, 0]-py)**2 + (candidates[:, 1]-px)**2)]
-            return (float(nearest[1]) / width, 1 - float(nearest[0]) / height)
-    return uv
+# Side tanks.
+for sign, front_rect, rear_rect in ((1, (120, 460, 305, 765), (758, 470, 1160, 750)),
+                                    (-1, (895, 460, 1072, 765), (150, 470, 552, 750))):
+    z0, z1 = sorted((sign * .62, sign * 1.33))
+    box(engine, SX(440), SX(1325), SY(395), SY(180), z0, z1, {
+        '+z' if sign > 0 else '-z': ('side', side, (440, 180, 1325, 395)),
+        '-z' if sign > 0 else '+z': DARK,
+        '+x': ('front', front, front_rect), '-x': ('rear', rear, rear_rect),
+        '+y': SHEET})
 
-def mesh_object(name, points, faces, material, view='side', owner='engine'):
-    mesh = bpy.data.meshes.new(name + ' geometry')
-    mesh.from_pydata([town.game_vector(p) for p in points], [], faces)
-    projected = owner == 'engine' and material in (side_mat, front_mat, rear_mat)
-    if projected:
-        mesh.materials.clear()
-        for photo in (side_mat, front_mat, rear_mat):
-            mesh.materials.append(photo)
+# Boiler and smokebox: one radius, with the riveted bands standing proud where the photo has them.
+AXIS_PY = 252
+BANDS = ((1320, 1342, .022), (1465, 1486, .012), (1590, 1626, .026), (1808, 1838, .02))
+stations = [(SX(445), .666)]
+for start, end, proud in BANDS:
+    stations += [(SX(start - 2), .666), (SX(start), .666 + proud), (SX(end), .666 + proud), (SX(end + 2), .666)]
+stations = [station for station in stations if station[0] <= SX(1838)]
+stations[-1] = (SX(1838), .686)
+axis_y = SY(AXIS_PY)
+
+def boiler_uv(index, distance, radius, angle):
+    px = distance / S + 1000
+    theta = math.degrees(math.asin(math.sin(angle)))
+    top = AXIS_PY - radius / S
+    if px >= 1325:
+        return side.uv(px, AXIS_PY - (AXIS_PY - top) * .94 * theta / 90)
+    # Beside the tanks only the top shows in the photo, above the tank at py 180.
+    if theta >= 40:
+        return side.uv(px, 180 - (theta - 40) / 50 * (180 - max(top, 145)))
+    return side.uv(px, 180)
+
+def door_uv(radius_px):
+    return lambda angle, f: front.uv(598 - math.cos(angle) * f * radius_px, 515 - math.sin(angle) * f * radius_px)
+
+def backhead_uv(angle, f):
+    return rear.uv(655 + math.cos(angle) * f * 190, 475 - abs(math.sin(angle)) * f * 135)
+
+lathe(engine, 'side', (0, axis_y, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0), stations, boiler_uv, sides=28,
+      cap_start=('rear', backhead_uv), cap_end=('front', door_uv(268)))
+# The smokebox door stands proud of its flange.
+lathe(engine, 'front', (SX(1838), axis_y, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0), [(0, .585), (.06, .585)],
+      lambda i, d, r, a: front.uv(598 - math.cos(a) * 225, 515 - math.sin(a) * 225), sides=28,
+      cap_end=('front', door_uv(225)))
+box(engine, SX(1700), SX(1838), 1.46, 1.95, -.56, .56, {'+x': ('front', front, (400, 640, 800, 770))})
+# Below the boiler: pipes and shadow, not daylight.
+box(engine, SX(1325), SX(1770), SY(395), SY(335), -.52, .52, {
+    '+z': ('side', side, (1325, 335, 1770, 395)), '-z': ('side', side, (1325, 335, 1770, 395))})
+
+# Chimney and dome: each row's width is read off the photo.
+def turned(cx, py0, py1, step, half, max_px, cap):
+    rows = []
+    for py in range(py0, py1, step):
+        row = np.nonzero(side_solid[py, cx - half:cx + half])[0]
+        if len(row):
+            rows.append((py, min(max_px, (row[-1] - row[0]) / 2)))
+    profile = [(SY(py), r * S) for py, r in reversed(rows)]
+    def uv(index, distance, radius, angle):
+        arc = .84 * math.degrees(math.asin(math.sin(angle))) / 90
+        return side.uv(cx + radius / S * arc, 640 - distance / S)
+    lathe(engine, 'side', (SX(cx), 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 0), profile, uv, sides=18, cap_end=cap)
+
+dark_cap = ('side', lambda a, f: side.uv(1380 + math.cos(a) * f * 30, 278 + math.sin(a) * f * 20))
+turned(1662, 34, 152, 8, 110, 92, dark_cap)
+turned(1167, 30, 160, 8, 110, 82, None)
+
+# Pipes and the valve on the boiler's top, on the centre plane.
+for rect in ((600, 88, 1085, 146), (1245, 128, 1325, 146)):
+    fittings = trace(side_solid, rect, min_area=60)
+    if fittings:
+        slab(engine, 'side', side, fittings, on_side, -.04, .04)
+
+# The cab. Its side is traced with the door opening and levers just as they are.
+cab_wall = trace(side_solid, (78, 75, 600, 400), tolerance=1.3, min_area=60)
+for sign in (1, -1):
+    slab(engine, 'side', side, cab_wall, on_side, sign * 1.13, sign * 1.18)
+box(engine, SX(85), SX(205), SY(400), SY(200), -1.13, 1.13, {
+    '+x': RUST, '+y': ('rear', rear, (240, 480, 1070, 620))})
+box(engine, SX(205), SX(445), SY(415), SY(395), -1.13, 1.13, {'+y': RUST})
+
+# Rear sheet, with its real window openings; lower half is solid.
+def rounded(x0, y0, x1, y1, r):
+    return [(x0 + r, y0), (x1 - r, y0), (x1, y0 + r), (x1, y1 - r), (x1 - r, y1), (x0 + r, y1), (x0, y1 - r), (x0, y0 + r)]
+
+rear_upper = trace(rear_solid, (205, 55, 1110, 475), tolerance=1.5, min_area=400)
+rear_upper = [loop for loop in rear_upper if max(p[0] for p in loop) - min(p[0] for p in loop) > 500]
+rear_upper += [rounded(272, 178, 428, 452, 22), rounded(468, 135, 848, 470, 34), rounded(888, 178, 1044, 452, 22)]
+slab(engine, 'rear', rear, rear_upper, on_rear, SX(78), SX(88), wall_scale=.003)
+slab(engine, 'rear', rear, [rect_loop(228, 475, 1082, 770)], on_rear, SX(78), SX(88), wall_scale=.003)
+
+# Front sheet, with its window openings; the middle is cut out where the
+# picture shows the chimney, and plain plate goes behind the chimney instead.
+cab_mask = front_solid.copy()
+cab_mask[190:466, 480:720] = False
+cab_front = trace(cab_mask, (172, 190, 1022, 465), tolerance=1.5, min_area=200)
+slab(engine, 'front', front, cab_front, on_front, SX(590), SX(600), wall_scale=.003)
+box(engine, SX(590), SX(600), 2.6, 3.7, -.34, .34, {
+    '+x': ('front', front, (385, 240, 500, 420)), '-x': DARK})
+
+# Roof: the arch in the rear photo. Near the eave it wears the side photo's own roof.
+ROOF = 14
+def roof_point(a, px, inset=0):
+    return (SX(px), 3.37 - inset + .38 * math.sin(a), 1.25 * math.cos(a))
+def roof_top_uv(t, px):
+    arc = 1 - abs(2 * t - 1)
+    if arc < .45:
+        return side.uv(px, 75 - 60 * arc / .45)
+    return side.uv(600 + (px - 78) / 522 * 520, 185 + (arc - .45) / .55 * 200)
+def roof_under_uv(t, px):
+    return rear.uv(480 + (px - 78) / 522 * 360, 240 - (1 - abs(2 * t - 1)) * 100)
+for k in range(ROOF):
+    t0, t1 = k / ROOF, (k + 1) / ROOF
+    a0, a1 = t0 * math.pi, t1 * math.pi
+    out = (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2))
+    corners = (roof_point(a0, 78), roof_point(a0, 600), roof_point(a1, 600), roof_point(a1, 78))
+    engine.face(corners, (roof_top_uv(t0, 78), roof_top_uv(t0, 600), roof_top_uv(t1, 600), roof_top_uv(t1, 78)), 'side', out)
+    corners = (roof_point(a0, 78, .05), roof_point(a0, 600, .05), roof_point(a1, 600, .05), roof_point(a1, 78, .05))
+    engine.face(corners, (roof_under_uv(t0, 78), roof_under_uv(t0, 600), roof_under_uv(t1, 600), roof_under_uv(t1, 78)),
+                'rear', tuple(-c for c in out))
+
+# Five axles, as the photo has them. Each face wears its own wheel; the tread wears
+# the front photo's wheel, seen edge on.
+def tread(i, d, r, a):
+    wave = abs((a / math.pi) % 1 * 2 - 1)
+    return front.uv(255 + i * 78, 980 + wave * 215)
+
+WHEELS = ((470, 530, 125), (790, 525, 120), (1070, 523, 123), (1355, 522, 120), (1638, 520, 118))
+for cx, cy, r_px in WHEELS:
+    radius = r_px * S
+    centre = (SX(cx), radius, 0)
+    lathe(engine, 'rear', centre, (0, 0, 1), (1, 0, 0), (0, 1, 0), [(-.78, .08), (.78, .08)],
+          lambda i, d, r, a: rear.uv(560 + i * 60, 930 + a * 6), sides=8)
+    face = lambda a, f, cx=cx, cy=cy, r_px=r_px: side.uv(cx + math.cos(a) * f * r_px, cy - math.sin(a) * f * r_px)
+    hub = lambda a, f, cx=cx, cy=cy: side.uv(cx + math.cos(a) * f * 26, cy - math.sin(a) * f * 26)
+    hub_side = lambda i, d, r, a, cx=cx, cy=cy: side.uv(cx + math.cos(a) * 26, cy - math.sin(a) * 26)
+    for sign in (1, -1):
+        near, far = sign * .96, sign * .78
+        lathe(engine, 'front', centre, (0, 0, 1), (1, 0, 0), (0, 1, 0), [(far, radius), (near, radius)], tread, sides=32,
+              cap_start=('side', face), cap_end=('side', face))
+        lathe(engine, 'side', centre, (0, 0, 1), (1, 0, 0), (0, 1, 0), [(near, .15), (near + sign * .07, .13)],
+              hub_side, sides=12, cap_end=('side', hub))
+
+# Coupling rods and valve gear stand proud of the wheels.
+ROD = [[(450, 520), (780, 505), (1130, 505), (1500, 485), (1510, 510), (1130, 552), (780, 555), (450, 556)]]
+VALVE = [[(1350, 456), (1500, 456), (1700, 498), (1700, 520), (1500, 482), (1350, 482)]]
+for sign in (1, -1):
+    slab(engine, 'side', side, ROD, on_side, sign * 1.03, sign * 1.09)
+    slab(engine, 'side', side, VALVE, on_side, sign * 1.03, sign * 1.08)
+
+# Buffers: a thin stock and a broad head, the head's face from each end's photo.
+def buffer(x_start, x_end, y, z, head_uv, material):
+    direction = 1 if x_end > x_start else -1
+    length = abs(x_end - x_start)
+    profile = [(0, .1), (length * .62, .1), (length * .72, .16), (length * .78, .225), (length, .225)]
+    lathe(engine, 'side', (x_start, y, z), (direction, 0, 0), (0, 0, 1), (0, 1, 0), profile,
+          lambda i, d, r, a: side.uv((x_start + direction * d) / S + 1000, 438 - math.sin(a) * r / S), sides=16,
+          cap_end=(material, head_uv))
+
+for z, cx in ((1.05, 222), (-1.05, 980)):
+    buffer(SX(1908), SX(1985), SY(438), z,
+           lambda a, f, cx=cx: front.uv(cx - math.cos(a) * f * 85, 880 - math.sin(a) * f * 85), 'front')
+for z, cx in ((.95, 1015), (-.95, 306)):
+    buffer(SX(97), SX(12), SY(442), z,
+           lambda a, f, cx=cx: rear.uv(cx + math.cos(a) * f * 72, 840 - math.sin(a) * f * 72), 'rear')
+
+objects = {'the-2-15-engine': engine}
+engine.finish('the-2-15-engine', materials)
+
+# Track, under the engine, on its own.
+track = Mesh()
+RAIL = ('front', front, (205, 1225, 285, 1300))
+for z in (-.87, .87):
+    box(track, -7.2, 7.2, -.14, 0, z - .04, z + .04, {'+z': RAIL, '-z': RAIL, '+y': RAIL, '+x': RAIL, '-x': RAIL})
+SLEEPER = ('rear', rear, (560, 900, 760, 960))
+for k in range(21):
+    x = -7 + k * .7
+    box(track, x - .13, x + .13, -.26, -.14, -1.25, 1.25, {'+z': SLEEPER, '-z': SLEEPER, '+y': SLEEPER, '+x': SLEEPER, '-x': SLEEPER})
+objects['the-2-15-track'] = track
+track.finish('the-2-15-track', {'front': front.material(), 'rear': rear.material()})
+
+# The drift: high and smooth to windward (-Z), up to the tank tops; on the lee
+# side it comes down to the running board and runs out in a long tail.
+def smooth(t):
+    t = min(1, max(0, t))
+    return t * t * (3 - 2 * t)
+
+def drift_height(x, z):
+    if z <= -1.4:
+        h = 2.78 * smooth((z + 8.5) / 7.1) ** .8
+    elif z <= 1.4:
+        h = 2.78 + (1.74 - 2.78) * smooth((z + 1.4) / 2.8)
     else:
-        mesh.materials.append(material)
-    mesh.update()
-    part_id = len(part_names) + 1
-    part_names[part_id] = name
-    part_attr = mesh.attributes.new('source_part', 'INT', 'FACE')
-    for item in part_attr.data:
-        item.value = part_id
-    uv = mesh.uv_layers.new(name='UVMap')
-    for poly in mesh.polygons:
-        face_view = view
-        if projected:
-            p0, p1, p2 = (Vector(points[faces[poly.index][i]]) for i in range(3))
-            normal = (p1-p0).cross(p2-p0).normalized()
-            if abs(normal.x) >= abs(normal.y) and abs(normal.x) >= abs(normal.z):
-                if normal.x >= 0:
-                    poly.material_index = 1
-                else:
-                    poly.material_index = 2
-                face_view = 'end'
-            elif normal.y > .5:
-                poly.material_index = 0
-                face_view = 'top'
-            else:
-                poly.material_index = 0
-                face_view = 'side'
-        for li in poly.loop_indices:
-            coord = points[mesh.loops[li].vertex_index]
-            if face_view == 'salt':
-                uv.data[li].uv = (coord[0] / 2.4, coord[2] / 2.4)
-            else:
-                projected_uv = project_uv(coord, face_view)
-                if projected:
-                    photo_view = ('side', 'front', 'rear')[poly.material_index]
-                    projected_uv = keep_uv_on_engine(photo_view, projected_uv)
-                uv.data[li].uv = projected_uv
-    obj = bpy.data.objects.new(name, mesh)
-    bpy.context.collection.objects.link(obj)
-    (drift_meshes if owner == 'drift' else engine_meshes).append(obj)
-    return obj
+        h = 1.74 * (1 - smooth((z - 1.4) / 12)) ** 1.3
+    falloff = 1 - smooth((abs(x) - 4.4) / 8.6)
+    ripple = .1 * math.sin(x * .9 + z * .35) + .06 * math.sin(x * .31 - z * .8 + 1.2) + .03 * math.sin(x * 2.1 + z * 1.7)
+    height = h * falloff + ripple * min(1, h * falloff)
+    return height - .1 * (1 - min(1, h * falloff * 4))
 
-def box(name, center, size, material=side_mat, view='side'):
-    x, y, z = center
-    sx, sy, sz = (value / 2 for value in size)
-    points = [(x-sx,y-sy,z-sz),(x+sx,y-sy,z-sz),(x+sx,y+sy,z-sz),(x-sx,y+sy,z-sz),
-              (x-sx,y-sy,z+sz),(x+sx,y-sy,z+sz),(x+sx,y+sy,z+sz),(x-sx,y+sy,z+sz)]
-    faces = [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
-    obj = mesh_object(name, points, faces, material, view)
-    bevel_widths = {'deep cast frame':.075,'near running board':.045,'far running board':.045,
-                    'water tank':.045,'tank top lip':.025,'cab side lower panel':.035,
-                    'cab roof':.055,'cab back lower wall':.035,'front buffer beam':.04,
-                    'rear buffer beam':.04}
-    width = bevel_widths.get(name)
-    if width:
-        mod=obj.modifiers.new('small forged edge radius','BEVEL'); mod.width=width; mod.segments=2
-        bpy.context.view_layer.objects.active=obj
-        bpy.ops.object.modifier_apply(modifier=mod.name)
-        for polygon in obj.data.polygons: polygon.use_smooth=True
-    return obj
+drift = Mesh()
+NX, NZ = 64, 44
+X0, X1, Z0, Z1 = -14, 14, -9.5, 14.5
+rows = []
+for i in range(NX + 1):
+    row = []
+    for j in range(NZ + 1):
+        x = X0 + (X1 - X0) * i / NX
+        z = Z0 + (Z1 - Z0) * j / NZ
+        row.append((drift.vertex((x, drift_height(x, z), z)), (x / 5, z / 5)))
+    rows.append(row)
+for i in range(NX):
+    for j in range(NZ):
+        a, ua = rows[i][j]
+        b, ub = rows[i + 1][j]
+        c, uc = rows[i + 1][j + 1]
+        d, ud = rows[i][j + 1]
+        drift.indexed((a, b, c, d), (ua, ub, uc, ud), 'salt', (0, 1, 0), True)
+objects['the-2-15-drift'] = drift
+drift.finish('the-2-15-drift', {'salt': salt.material()})
+print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
 
-def cylinder_x(name, x0, x1, center_y, center_z, radius, material=side_mat, sides=24, view='side'):
-    points = []
-    for x in (x0, x1):
-        for i in range(sides):
-            a = math.tau * i / sides
-            points.append((x, center_y + math.sin(a) * radius, center_z + math.cos(a) * radius))
-    faces = []
-    for i in range(sides):
-        j = (i + 1) % sides
-        faces.append((i, j, sides + j, sides + i))
-    faces.extend((tuple(reversed(range(sides))), tuple(range(sides, 2*sides))))
-    obj=mesh_object(name, points, faces, material, view)
-    for polygon in obj.data.polygons: polygon.use_smooth=True
-    return obj
-
-def cylinder_z(name, z0, z1, center_x, center_y, radius, material=side_mat, sides=24):
-    points=[]
-    for z in (z0,z1):
-        for i in range(sides):
-            a=math.tau*i/sides
-            points.append((center_x+radius*math.cos(a),center_y+radius*math.sin(a),z))
-    faces=[]
-    for i in range(sides):
-        j=(i+1)%sides
-        faces.append((i,j,sides+j,sides+i))
-    faces.extend((tuple(reversed(range(sides))),tuple(range(sides,2*sides))))
-    obj=mesh_object(name,points,faces,material,'side')
-    for polygon in obj.data.polygons: polygon.use_smooth=True
-    return obj
-
-def lathe_x(name, x0, x1, cy, cz, profile, material=side_mat, sides=32):
-    points = []
-    for x, radius in profile:
-        for i in range(sides):
-            a = math.tau * i / sides
-            points.append((x, cy + radius * math.sin(a), cz + radius * math.cos(a)))
-    faces = []
-    for row in range(len(profile)-1):
-        for i in range(sides):
-            j = (i+1) % sides
-            a, b = row*sides+i, row*sides+j
-            faces.append((a,b,b+sides,a+sides))
-    obj=mesh_object(name, points, faces, material, 'side')
-    for polygon in obj.data.polygons: polygon.use_smooth=True
-    return obj
-
-def bar(name, a, b, width, material=side_mat):
-    av, bv = Vector(a), Vector(b)
-    direction = (bv-av).normalized()
-    ref = Vector((0,0,1)) if abs(direction.z) < .88 else Vector((0,1,0))
-    u = direction.cross(ref).normalized() * (width/2)
-    v = direction.cross(u).normalized() * (width/2)
-    points = [tuple(av-u-v),tuple(bv-u-v),tuple(bv+u-v),tuple(av+u-v),
-              tuple(av-u+v),tuple(bv-u+v),tuple(bv+u+v),tuple(av+u+v)]
-    faces = [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
-    return mesh_object(name, points, faces, material, 'side')
-
-# Six axle pairs: twelve full wheels, six visible per side, each with a real
-# web, rim, hub and ten spokes. The unusual 0-12-0 layout is this engine's
-# original works design and follows the generated side photograph.
-wheel_xs = (-3.25, -1.95, -.65, .65, 1.95, 3.25)
-wheel_radius = .58
-wheel_y = .70
-for side in (-1, 1):
-    z = side * .94
-    for axle, x in enumerate(wheel_xs):
-        segments = 32
-        points = []
-        # Thick disk with an open spoke web is assembled from a real rim and hub.
-        for zz in (z-.12, z+.12):
-            for radius in (wheel_radius, wheel_radius*.84, .20):
-                for i in range(segments):
-                    a = math.tau*i/segments
-                    points.append((x + radius*math.cos(a), wheel_y + radius*math.sin(a), zz))
-        faces = []
-        for base in (0, segments*3):
-            for i in range(segments):
-                j=(i+1)%segments
-                faces.append((base+i,base+j,base+segments+j,base+segments+i))
-                faces.append((base+segments+i,base+segments+j,base+2*segments+j,base+2*segments+i))
-        for i in range(segments):
-            j=(i+1)%segments
-            faces.append((i,j,segments*3+j,segments*3+i))
-            faces.append((2*segments+i,2*segments+j,5*segments+j,5*segments+i))
-        mesh_object(f'wheel {axle+1} side {side:+}',points,faces,side_mat,'side')
-        cylinder_z(f'wheel {axle+1} hub {side:+}',z-.19,z+.19,x,wheel_y,.20,side_mat,20)
-        for spoke in range(10):
-            a=math.tau*spoke/10
-            bar(f'wheel {axle+1} spoke {spoke+1} {side:+}',
-                (x+.17*math.cos(a),wheel_y+.17*math.sin(a),z),
-                (x+.68*math.cos(a),wheel_y+.68*math.sin(a),z),.095)
-    # Coupling rods link each consecutive crank pin and stand proud of the webs.
-    rod_z=z+side*.155
-    for axle in range(2):
-        bar(f'coupling rod {axle+1} {side:+}',
-            (wheel_xs[axle]-.08,wheel_y+.15,rod_z),
-            (wheel_xs[axle+1]+.08,wheel_y+.15,rod_z),.105)
-    for x in wheel_xs:
-        cylinder_z('crank boss',rod_z-.07,rod_z+.07,x,wheel_y+.15,.115,side_mat,16)
-
-# Frame, running boards, buffers and two lengths of real track.
-box('deep cast frame',(-.15,.84,0),(8.5,.38,1.45))
-box('near running board',(-.15,1.43,-1.22),(8.85,.20,.30))
-box('far running board',(-.15,1.43,1.22),(8.85,.20,.30))
-box('front buffer beam',(5.02,1.04,0),(.30,.38,2.50),front_mat,'end')
-box('rear buffer beam',(-5.10,1.04,0),(.30,.38,2.50),rear_mat,'end')
-for x in (-5.25,5.15):
-    for z in (-.95,.95):
-        cylinder_x('thick buffer',x-.19,x+.19,1.04,z,.18,front_mat if x>0 else rear_mat,20,'end')
-        cylinder_x('buffer head',x-.24,x+.24,1.04,z,.14,front_mat if x>0 else rear_mat,20,'end')
-for z in (-.7175,.7175):
-    box('rusted rail', (0,.14,z),(11.3,.16,.13))
-for index in range(23):
-    x=-5.45+index*.495
-    box(f'old timber sleeper {index+1}',(x,.055,0),(.22,.11,2.35))
-
-# Boiler and smokebox are turned solids with a round profile, 32 sided.
-lathe_x('boiler shell',.12,3.88,2.30,0,
-        [(.12,boiler_radius*.85),(.24,boiler_radius),(3.55,boiler_radius),(3.88,boiler_radius*.92)],side_mat,32)
-lathe_x('smokebox',3.55,4.78,2.30,0,
-        [(3.55,.87),(3.68,.97),(4.64,.97),(4.78,.88)],front_mat,32)
-# Smokebox face is projected from its own front camera.
-cylinder_x('smokebox front rim',4.75,4.88,2.30,0,.88,front_mat,32,'end')
-cylinder_x('smokebox door',4.86,4.90,2.30,0,.77,front_mat,32,'end')
-domed_radius = max(.34, min(.48, dome_top_y - 3.14))
-lathe_x('domed steam dome',1.08,1.92,3.14,0,
-        [(1.08,.06),(1.20,domed_radius*.70),(1.36,domed_radius),(1.62,domed_radius),(1.82,domed_radius*.72),(1.92,.08)],side_mat,24)
-lathe_x('tall flared chimney',3.61,4.30,3.33,0,
-        [(3.61,.24),(3.72,.30),(3.80,.24),(4.17,.24),(4.24,.39),(4.30,.42)],side_mat,24)
-lathe_x('chimney cap',4.22,4.35,3.33,0,[(4.22,.38),(4.35,.39)],side_mat,24)
-
-# Deep rectangular side tanks and the open driving cab, measured to the 4 m roofline.
-for z in (-.98,.98):
-    tank_mid=(1.55+tank_top_y)/2
-    box('water tank',(-.82,tank_mid,z),(4.85,tank_top_y-1.55,.88))
-    box('tank top lip',(-.82,tank_top_y,z),(4.92,.10,.94))
-# Cab is an open shell with a dark rear interior and four thick roof posts.
-for z in (-1.05,1.05):
-    box('cab side lower panel',(-4.06,2.03,z),(2.12,.88,.14))
-    for x in (-5.08,-3.05):
-        box('cab window post',(x,2.91,z),(.18,1.12,.18))
-    bar('cab side roof rail',(-5.17,cab_roof_y-.11,z),(-2.96,cab_roof_y-.11,z),.15)
-    bar('cab side sill',(-5.17,2.44,z),(-2.96,2.44,z),.12)
-box('cab back lower wall',(-5.12,2.02,0),(.18,.86,1.95),rear_mat,'end')
-box('cab roof',(-4.05,cab_roof_y,0),(2.65,.18,2.52))
-box('cab ceiling inner shadow',(-4.05,cab_roof_y-.13,0),(2.30,.045,2.18),cab_shadow)
-# Interior fixtures and footplate remain visible through the missing glass.
-box('cab floor',(-4.04,1.92,0),(2.15,.13,1.90),cab_shadow)
-box('firebox front',(-2.86,2.12,0),(.18,.88,1.05),cab_shadow)
-bar('reverser lever',(-4.78,2.02,-.58),(-4.55,2.86,-.58),.075)
-bar('cab handbrake',(-3.77,2.04,.54),(-3.89,2.80,.54),.075)
-
-# A few thick plumbing runs and brackets, all deliberately broad and tied to the shell.
-for z in (-.80,.80):
-    bar('side pipe',(.40,1.70,z),(3.70,1.70,z),.065)
-    bar('side pipe drop',(3.70,1.70,z),(3.92,2.10,z),.065)
-    for x in (-.20,1.35,2.95):
-        bar('pipe saddle',(x,1.62,z),(x,1.81,z),.075)
-bar('front coupling', (5.18,.79,0),(5.35,.79,0),.16,front_mat)
-bar('rear coupling', (-5.34,.79,0),(-5.18,.79,0),.16,rear_mat)
-
-# Smooth, asymmetric wind drift: buried to tank top on the near side and only
-# the running board on the far side. Independent mesh lets the viewer hide it.
-xs = [-6.5 + i*13/52 for i in range(53)]
-zs = [-4.2 + i*8.4/24 for i in range(25)]
-points=[]
-for x in xs:
-    for z in zs:
-        along = .90 + .13*math.sin(x*1.15) + .055*math.sin(x*2.3+.6)
-        if z <= -1.45:
-            fade = max(0.0, min(1.0, (4.2 + z) / 2.75))
-            peak = 3.05 * (fade * fade * (3.0 - 2.0 * fade))
-        elif z <= 1.45:
-            peak = 3.05 - (z + 1.45) / 2.9 * 1.60
-        else:
-            fade = max(0.0, min(1.0, (4.2 - z) / 2.75))
-            peak = 1.45 * (fade * fade * (3.0 - 2.0 * fade))
-        edge = max(0.0, 1.0 - (abs(x)/6.5)**5) * max(0.0, 1.0 - (abs(z)/4.2)**3)
-        y = .015 + edge * max(0.0, (peak + along - .015))
-        points.append((x,y,z))
-faces=[]
-row=len(zs)
-for i in range(len(xs)-1):
-    for j in range(len(zs)-1):
-        a=i*row+j
-        faces.append((a,a+row,a+row+1,a+1))
-drift = mesh_object('the-2-15-drift',points,faces,salt_mat,'salt','drift')
-for poly in drift.data.polygons: poly.use_smooth=True
-
-def join_group(objects, name):
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in objects: obj.select_set(True)
-    bpy.context.view_layer.objects.active=objects[0]
-    bpy.ops.object.join()
-    obj=bpy.context.object; obj.name=name
-    if not obj.data.uv_layers or obj.data.uv_layers.active.name != 'UVMap':
-        raise RuntimeError(name + ' lost its UVMap during join')
-    return obj
-
-engine = join_group(engine_meshes, 'the-2-15-engine')
-drift = join_group(drift_meshes, 'the-2-15-drift')
-for obj in (engine, drift):
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.normals_make_consistent(inside=False)
-    bpy.ops.object.mode_set(mode='OBJECT')
-    obj.select_set(False)
-# Report photo-background sampling by face. A face is counted as background if
-# any corner lands outside its source photo's engine mask.
-background_counts = {view: [0, 0] for view in ('side', 'front', 'rear')}
-worst_faces = []
-for polygon in engine.data.polygons:
-    mat_name = engine.data.materials[polygon.material_index].name
-    view = next((candidate for candidate in ('side', 'front', 'rear') if candidate + ' photograph' in mat_name), None)
-    if view is None:
-        continue
-    mask = photo_masks[view]
-    height, width = mask.shape
-    bg = 0
-    for loop_index in polygon.loop_indices:
-        uv = engine.data.uv_layers.active.data[loop_index].uv
-        px = max(0, min(width - 1, int(uv.x * width)))
-        py = max(0, min(height - 1, int((1 - uv.y) * height)))
-        if not mask[py, px]:
-            bg += 1
-    background_counts[view][0] += bg
-    background_counts[view][1] += len(polygon.loop_indices)
-    if bg:
-        part_id = engine.data.attributes.get('source_part').data[polygon.index].value
-        worst_faces.append((bg / len(polygon.loop_indices), part_names.get(part_id, 'unnamed'), view, bg))
-shares = {view: (counts[0] / counts[1] if counts[1] else 0) for view, counts in background_counts.items()}
-print('PHOTO_BACKGROUND_SHARES=' + json.dumps(shares, sort_keys=True))
-print('PHOTO_BACKGROUND_WORST_10=' + json.dumps(sorted(worst_faces, reverse=True)[:10]))
-# Separate named roots give the dug-out and buried states one engine and one
-# removable drift. A player can toggle the drift node without changing geometry.
-
-blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
-print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,
-                  'engine_triangles':sum(len(p.vertices)-2 for p in engine.data.polygons),
-                  'drift_triangles':sum(len(p.vertices)-2 for p in drift.data.polygons)}))
 
-# Review render comes only from a fresh scene reimporting the exported GLB.
+# Render from the exported file, imported into an empty scene.
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=str(glb))
-scene=bpy.context.scene
-scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.render.resolution_x=1200; scene.render.resolution_y=820; scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
-scene.view_settings.view_transform='Standard'
-scene.world=bpy.data.worlds.new('flat bright overcast'); scene.world.use_nodes=True
-scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.78,.79,.78,1)
-scene.world.node_tree.nodes['Background'].inputs[1].default_value=.85
-ground_mat=bpy.data.materials.new('render only pale salt ground'); ground_mat.use_nodes=True
-ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.56,.55,.51,1)
-ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
-bpy.ops.mesh.primitive_plane_add(size=120,location=(0,0,-.08)); plane=bpy.context.object
-plane.name='render only ground'; plane.data.materials.append(ground_mat)
-light_data=bpy.data.lights.new('soft overcast','AREA'); light_data.energy=21000; light_data.size=44
-light=bpy.data.objects.new('soft overcast',light_data); scene.collection.objects.link(light)
-light.location=(18,-32,40); light.rotation_euler=(Vector((0,0,2))-light.location).to_track_quat('-Z','Y').to_euler()
-print('RENDER_READY=' + str(glb))
+scene = bpy.context.scene
+scene.render.engine = 'BLENDER_EEVEE_NEXT'
+scene.render.image_settings.file_format = 'PNG'
+scene.render.image_settings.color_mode = 'RGB'
+scene.view_settings.view_transform = 'Standard'
+scene.world = bpy.data.worlds.new('flat overcast')
+scene.world.use_nodes = True
+scene.world.node_tree.nodes['Background'].inputs[0].default_value = (.84, .84, .86, 1)
+scene.world.node_tree.nodes['Background'].inputs[1].default_value = 1.0
+sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN'))
+sun.data.energy = .5
+sun.rotation_euler = (math.radians(50), 0, math.radians(35))
+scene.collection.objects.link(sun)
+bpy.ops.mesh.primitive_plane_add(size=120, location=(0, 0, -.27))
+ground = bpy.context.object
+ground_material = bpy.data.materials.new('ground')
+ground_material.use_nodes = True
+ground_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.72, .71, .69, 1)
+ground_material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
+ground.data.materials.append(ground_material)
+camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
+scene.collection.objects.link(camera)
+scene.camera = camera
+drift_object = next(o for o in bpy.data.objects if o.name.startswith('the-2-15-drift'))
 
-render_dir.mkdir(parents=True,exist_ok=True)
-engine_node=next((o for o in scene.objects if o.name == 'the-2-15-engine'),None)
-drift_node=next((o for o in scene.objects if o.name == 'the-2-15-drift'),None)
-if engine_node is None or drift_node is None:
-    raise RuntimeError('exported GLB is missing named engine or drift')
-def camera_at(name, location, target, lens=50, ortho=None):
-    bpy.ops.object.camera_add(location=location)
-    camera=bpy.context.object; camera.name=name; camera.data.lens=lens
-    if ortho is not None:
-        camera.data.type='ORTHO'; camera.data.ortho_scale=ortho
-    camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
-    scene.camera=camera
-    return camera
-def render(name, camera, width, height):
-    scene.render.resolution_x=width; scene.render.resolution_y=height; scene.render.resolution_percentage=100
-    scene.camera=camera; scene.render.filepath=str(render_dir/(name+'.png'))
+def shot(name, eye, target, width, height, ortho=None, lens=35, show_drift=False):
+    # eye and target in glTF metres.
+    drift_object.hide_render = not show_drift
+    scene.render.resolution_x, scene.render.resolution_y = width, height
+    eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
+    camera.location = eye_v
+    camera.rotation_euler = (target_v - eye_v).to_track_quat('-Z', 'Y').to_euler()
+    if ortho:
+        camera.data.type = 'ORTHO'
+        camera.data.ortho_scale = ortho
+    else:
+        camera.data.type = 'PERSP'
+        camera.data.lens = lens
+    scene.render.filepath = str(render_dir / f'{name}.png')
     bpy.ops.render.render(write_still=True)
-    bpy.data.objects.remove(camera,do_unlink=True)
-drift_node.hide_render=True
-render('engine-side',camera_at('side photo camera',(0,-27,2.0),(0,0,2.0),ortho=12.3),1600,534)
-render('engine-front',camera_at('front photo camera',(17,0,2.05),(0,0,2.05),ortho=4.55),720,720)
-render('engine-rear',camera_at('rear photo camera',(-17,0,2.05),(0,0,2.05),ortho=4.55),720,720)
-drift_node.hide_render=True
-render('engine-three-quarter',camera_at('person height camera',(13,-16,1.65),(0,1.85,0),lens=48),1200,820)
-drift_node.hide_render=False
-render('engine-buried-three-quarter',camera_at('person height buried camera',(13,-16,1.65),(0,1.85,0),lens=48),1200,820)
+
+shot('side', (0, 1.83, 30), (0, 1.83, 0), 1000, 334, ortho=12.0)
+shot('front', (30, 1.83, 0), (0, 1.83, 0), 600, 656, ortho=4.0)
+shot('rear', (-30, 1.83, 0), (0, 1.83, 0), 656, 600, ortho=4.0)
+shot('quarter', (8.5, 1.7, 9.5), (.3, 1.75, 0), 1000, 620, lens=30)
+shot('quarter-rear', (-9, 1.7, 8.5), (-1.2, 1.75, 0), 1000, 620, lens=30)
+shot('buried', (8.5, 1.7, 13), (.3, 1.75, 0), 1000, 620, lens=30, show_drift=True)
+shot('buried-windward', (9, 3.2, -14), (.3, 2.0, 0), 1000, 620, lens=30, show_drift=True)
