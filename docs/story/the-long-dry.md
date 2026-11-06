@@ -406,6 +406,8 @@ The story has no last page. Each of these can become a whole strand, added as ne
 
 ## 12. This is one strand
 
+**The first new strand is written: `docs/story/the-far-side.md`,** the goat, the boring machine and the place where it rains.
+
 Kyle, 5 November, after reading this page: "I do like the storyline and how it's held together. But this is just one storyline... we can continue to write new stories." So nothing in the game may depend on The Long Dry being the only story. How the town is built is in `docs/MACHINES.md`, and these fit the story where they meet it:
 
 - **Bo** is your apprentice when he is old enough, on whichever machine you choose. He has been asking for years.
