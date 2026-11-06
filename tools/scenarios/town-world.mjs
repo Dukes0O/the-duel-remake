@@ -47,11 +47,13 @@ export async function run(context) {
     const app=window.__qaApp,state=app.duel.state,point=app.duel.course.nearest(0,-92);
     state.status='racing';state.s=point.s;state.lateral=point.lateral;
     app.duel.setInput({interact:true});app.duel.step(1/120);
-    return {prompt:state.townGatePrompt,yard:app.isYardHomeActive(),panel:document.querySelector('.yard-home-panel .arena-yard')?.textContent||''};
+    return {prompt:state.townGatePrompt};
   })()`);
   fact(gate.prompt==='Drive up to the Scrapdome gate to go inside.','the HUD shows the gate prompt at the gate');
   await context.screenshot('town-world-gate-prompt');
-  fact(gate.yard&&gate.panel.includes('Scrapdome'),'using the gate interaction returns to the Scrapdome panel');
+  await context.waitFor(`window.__qaApp.isYardHomeActive()&&!!document.querySelector('.yard-home-panel .arena-yard')`,'the Scrapdome panel after the gate',30_000);
+  const panel=await context.evaluate(`document.querySelector('.yard-home-panel .arena-yard')?.textContent||''`);
+  fact(panel.includes('LAST CAR ROLLING'),'using the gate interaction returns to the Scrapdome panel');
   await context.screenshot('town-world-scrapdome-panel');
   report.notes.push('Claude should drive to the gate, check that the HUD prompt appears, and confirm the Scrapdome panel handoff.');
   await writeFile(join(context.outputDir,'report.json'),JSON.stringify(report,null,2)+'\n');

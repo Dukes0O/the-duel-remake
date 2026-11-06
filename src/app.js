@@ -235,7 +235,8 @@ export class App {
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
       if(event.gameover&&state.arena?.worldJob?.definition?.kind==='town-drive')cleanupWorldJobLoan(this.duel);
       if(event.townGate&&state.arena?.mode==='world-job'){
-        if(this.returnToYard())this._openTownScrapdomePanel=true;
+        // The event fires inside duel.step(), which still needs the arena: leave once the step has finished.
+        queueMicrotask(()=>{if(this.duel.state.arena?.mode==='world-job'&&this.returnToYard())this._openTownScrapdomePanel=true;});
       }
       if(event.hiddenRoadArrived)this._waterYardArrived(); // WATER-HOOKS: Hollis's end lines, once
       // WATER-SCREENS: a story job's radio line plays at GO (a race) or as the fight begins (an arena game), once loaded.
