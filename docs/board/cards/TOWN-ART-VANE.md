@@ -30,3 +30,5 @@ A rival company that sells water. It must look completely unlike everything else
 - `vane-tower` 6x6: Vane Reach. A slim white tower of blue glass with a water tank for a crown, standing on a clean plaza. Seen from a long way off. `vane-tower:lamp`.
 
 ## Claude answers
+
+Round 3, 6 November: **pass.** Mrs Vane's set is meant to be spotless, and its clean white beside the town's rust is the point of her. The tower reads from afar, with the blue shaft, frame and crown matching the photo, and the billboard says its words. Short of the photo: the tower has no ground floor lobby, and the kiosk and depot are plain up close. Worth a look when they stand in a town.
