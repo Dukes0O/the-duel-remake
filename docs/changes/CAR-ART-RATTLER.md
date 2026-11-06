@@ -37,7 +37,7 @@ vehicle socket names. It reads the source photos from
 `.evidence/car-art-rattler/` and renders the exported GLB in a clean
 scene with Standard view transform.
 
-Blender reported 1,728 triangles and 433,920 bytes for the exported GLB. The
+Blender reported 1,728 triangles and 433,900 bytes for the exported GLB. The
 side, front, rear and top matched renders, five requested views and a
 person-scale view are in the round-7 comparison sheet. The rendered body is
 visibly broken into broad, flat picture-mapped panels; some surfaces show the
