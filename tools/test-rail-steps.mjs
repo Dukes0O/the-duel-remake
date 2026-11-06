@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createJob,stepJob} from '../src/world/jobs/job-engine.js';
 import {ironLineLength} from '../src/world/iron-line.js';
 import {Duel} from '../src/game.js';
+import {stepDig} from '../src/world/jobs/steps/dig.js';
 
 const point=(id,x,y=0,z=0)=>({id,position:{x,y,z}});
 const line=[point('top',0,17),point('bottom',500,0)];
@@ -122,16 +123,40 @@ boShort.stepState={metres:8,speed:0,rideStopped:true};boShort=tick(boShort,{play
 assert.equal(boShort.requests.find(request=>request.type==='train').metres,8);
 assert(boShort.requests.some(request=>request.lineId==='good'));
 
-// Dig reduces the pile and emits the buried-model reveal once.
-let dig=createJob({steps:[{kind:'dig',tonnes:100,loadTonnes:20,reveals:'buried-engine'}]});
-dig=tick(dig,{interact:true},1);assert.equal(dig.stepState.tonnes,80);
-dig=tick(dig,{interact:true},1);assert(dig.events.some(event=>event.type==='reveals'&&event.id==='buried-engine'));
-assert.equal(dig.events.filter(event=>event.type==='reveals').length,1);
-let apprentice=createJob({steps:[{kind:'dig',tonnes:100,loadTonnes:60,apprentice:'bo',handsOverWork:'drift',taughtLineId:'taught'}]});
-apprentice=tick(apprentice,{interact:true},1);
-assert.equal(apprentice.stepState.handedOver,true,'apprentice takes the remaining work after learning');
-apprentice=tick(apprentice,{},1);
-assert.equal(apprentice.done,true,'handed over dig work completes without player input');
+// Dig progress comes from delivered truck tonnes, with cues at their configured fractions.
+let dig=createJob({steps:[{kind:'dig',id:'heap',tonnes:120,reveals:'buried-engine',
+  sayAt:[{progress:.33,lineId:'black'},{progress:.66,lineId:'chimney'}]}]});
+dig=tick(dig,{interact:true,controls:{dig:true}},1);
+assert.equal(dig.stepState.haulTonnes,0,'interact and dig controls do not change the pile');
+assert(dig.requests.some(request=>request.type==='pile'&&request.id==='heap'&&request.fraction===0));
+for(let load=1;load<=6;load++) {
+  dig=tick(dig,{haulTonnes:load*20},1);
+  if(load===4) {
+    assert(dig.requests.some(request=>request.type==='reveals'&&request.id==='buried-engine'));
+  }
+}
+assert.equal(dig.done,true,'six 20 tonne deliveries complete the pile');
+let cueState={};
+const cueResult=stepDig({tonnes:120,sayAt:[{progress:.33,lineId:'black'},{progress:.66,lineId:'chimney'}]},cueState,{haulTonnes:40});
+assert(cueResult.requests.some(request=>request.lineId==='black'));
+cueState=cueResult.state;
+const secondCue=stepDig({tonnes:120,sayAt:[{progress:.33,lineId:'black'},{progress:.66,lineId:'chimney'}]},cueState,{haulTonnes:80});
+assert(secondCue.requests.some(request=>request.lineId==='chimney'));
+let apprentice=createJob({steps:[{kind:'dig',id:'drift',tonnes:120,apprentice:'bo',handsOverWork:'drift',
+  taughtLineId:'taught',sayAt:[{progress:.03,lineId:'first-load'}]}]});
+apprentice=tick(apprentice,{haulTonnes:60},1);
+assert.equal(apprentice.stepState.apprenticeTaught,true,'Bo learns at half progress');
+assert.equal(apprentice.done,false,'Bo does not finish the pile after learning');
+let taughtLine=false;
+for(let load=4;load<=6;load++) {
+  apprentice=tick(apprentice,{haulTonnes:load*20},1);
+  taughtLine ||= apprentice.requests.some(request=>request.lineId==='taught');
+}
+if(!apprentice.done)apprentice=tick(apprentice,{haulTonnes:120},3);
+assert(taughtLine,'Bo’s teaching line is played');
+assert.equal(apprentice.done,true,'the player completes all six loads');
+assert(apprentice.events.some(event=>event.type==='workHandedOver'&&event.work==='drift'),
+  'handover fires only as the digging step completes');
 
 // Whistle counts separate held calls and starts its silent goat wait after the last.
 let whistle=createJob({steps:[{kind:'whistle',count:3,seconds:2,lineIds:['one','two','three'],goats:{seconds:40}}]});
