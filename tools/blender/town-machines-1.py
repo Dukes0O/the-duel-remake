@@ -7,29 +7,41 @@ private GLB under .qa-dist, and --paths-only for a no-write plan.
 import argparse, json, math, sys
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--candidate',action='store_true');p.add_argument('--paint-photo',default=str(Path(__file__).with_name('machine-wear.jpg')));p.add_argument('--paths-only',action='store_true')
+p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--candidate',action='store_true');p.add_argument('--paths-only',action='store_true')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve();glb=root/('.qa-dist/town-machines-1/machines-1.glb' if a.candidate else 'public/assets/models/wasteland/town/machines-1.glb');blend=root/'art-build/town/machines-1.blend';evidence=Path(a.render);evidence=evidence if evidence.is_absolute() else root/evidence
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)] if a.render else []}));raise SystemExit(0)
 import bpy
+import numpy as np
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
-if not Path(a.paint_photo).exists():raise FileNotFoundError(a.paint_photo)
-mats=town.make_materials({'rusted-steel':Path(a.paint_photo),'galvanised-tin':Path(a.paint_photo),'sand':Path(a.paint_photo)})
-steel=mats['rusted-steel'];paint=mats['galvanised-tin'];tin=mats['rusted-steel'];black=mats['iron-dark'];glass=mats['dirty-glass'];rubber=mats['iron-dark'];sand=mats['sand']
-# Keep the atlas in the dusty olive, faded ochre and dark steel range.
-for mat,value,saturation in ((steel,.96,.48),(paint,1.08,.70),(tin,.76,.42)):
- nodes=mat.node_tree.nodes;links=mat.node_tree.links;bsdf=nodes.get('Principled BSDF')
- source=next((n.outputs['Color'].links[0].from_node for n in nodes if n.type=='TEX_IMAGE' and n.outputs['Color'].links),None)
- if source:
-  links.new(source.outputs['Color'],nodes.new('ShaderNodeHueSaturation').inputs['Color'])
-  hue=next(n for n in nodes if n.type=='HUE_SAT')
-  hue.inputs['Value'].default_value=value;hue.inputs['Saturation'].default_value=saturation
-  links.new(hue.outputs['Color'],bsdf.inputs['Base Color'])
-# Keep the single shared 1K atlas compact inside the GLB.
-atlas=bpy.data.images['Scablands shared town wear atlas 1K'];atlas.file_format='JPEG';bpy.context.scene.render.image_settings.file_format='JPEG';bpy.context.scene.render.image_settings.quality=72;atlas.filepath_raw=str(root/'.qa-dist/town-machines-1/atlas.jpg');Path(atlas.filepath_raw).parent.mkdir(parents=True,exist_ok=True);atlas.save();atlas.pack()
+texture_dir=root/'public/assets/models/wasteland/town/textures'
+wear_photo=texture_dir/'machine-wear.jpg';paint_photo=texture_dir/'yellow-green-paint.jpg';soil_photo=texture_dir/'wet-brown-earth.jpg'
+for source in (wear_photo,paint_photo,soil_photo):
+ if not source.exists():raise FileNotFoundError(source)
+mats=town.make_materials({'rusted-steel':wear_photo,'galvanised-tin':wear_photo,'iron-dark':wear_photo,
+                         'faded-hand-paint':paint_photo,'sand':soil_photo})
+steel=mats['rusted-steel'];paint=mats['faded-hand-paint'];tin=mats['galvanised-tin'];black=mats['iron-dark'];glass=mats['dirty-glass'];rubber=mats['iron-dark'];sand=mats['sand']
+# The yard has no bright environment to reflect, so keep every finish matte.
+for mat in mats.values():
+ bsdf=mat.node_tree.nodes.get('Principled BSDF')
+ if bsdf:bsdf.inputs['Metallic'].default_value=min(float(bsdf.inputs['Metallic'].default_value),.3)
+def shade_picture(material_name,value,saturation,tint=(1,1,1)):
+ mat=mats[material_name];image=next(node.image for node in mat.node_tree.nodes if node.type=='TEX_IMAGE')
+ pixels=np.empty(image.size[0]*image.size[1]*4,dtype=np.float32);image.pixels.foreach_get(pixels)
+ pixels=pixels.reshape((image.size[1],image.size[0],4));rgb=pixels[:,:,:3]
+ luminance=rgb[:,:,0:1]*.30+rgb[:,:,1:2]*.59+rgb[:,:,2:3]*.11
+ rgb[:]=np.clip((luminance+(rgb-luminance)*saturation)*value*np.asarray(tint,dtype=np.float32)[None,None,:],0,1)
+ image.pixels.foreach_set(pixels.ravel());image.pack()
+# The RGB correction is baked into each material's own picture. No shader maths
+# is needed at runtime, so these tones survive the GLB export and reimport.
+shade_picture('faded-hand-paint',.82,.88)
+shade_picture('galvanised-tin',.66,.78)
+shade_picture('iron-dark',.14,.48)
+shade_picture('sand',.88,.92,(1,.78,.58))
+mats['sand'].node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.48
 def box(name,loc,size,mat=steel,bevel=.035,parent=None):
  bpy.ops.mesh.primitive_cube_add(size=1,location=loc);o=bpy.context.object;o.name=name;o.dimensions=size;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);o.data.materials.append(mat)
  if bevel:
@@ -83,7 +95,7 @@ def lugged_tyre(name,x,y,z,r,width,parent):
  for poly in mesh.polygons:
   poly.use_smooth=True
   for li in poly.loop_indices:
-   vi=mesh.loops[li].vertex_index;uv.data[li].uv=(verts[vi][1]*2,verts[vi][0]*2)
+   vi=mesh.loops[li].vertex_index;uv.data[li].uv=(verts[vi][1]/2,verts[vi][0]/2)
  for side in (-1,1):
   cyl(name+' dished rim',(x+side*width*.30,y,z),r*.60,width*.42,steel,'X',24,parent)
   cyl(name+' sidewall ring',(x+side*width*.39,y,z),r*.53,width*.12,black,'X',24,parent)
@@ -316,8 +328,8 @@ def dump_truck(root):
  for j in range(8):
   for i in range(8):
    a=j*9+i;b=a+1;c=a+10;d=a+9;faces.extend(((a,b,c),(a,c,d)))
- mesh=bpy.data.meshes.new('wet brown soil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load wet brown earth',mesh);bpy.context.collection.objects.link(heap);soil=bpy.data.materials.new('wet dark brown packed earth');soil.diffuse_color=(.045,.026,.014,1);soil.use_nodes=True;soil.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.045,.026,.014,1);soil.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96;soilnoise=soil.node_tree.nodes.new('ShaderNodeTexNoise');soilnoise.inputs['Scale'].default_value=3.5;soilnoise.inputs['Detail'].default_value=3;soilramp=soil.node_tree.nodes.new('ShaderNodeValToRGB');soilramp.color_ramp.elements[0].color=(.012,.006,.003,1);soilramp.color_ramp.elements[1].color=(.085,.040,.018,1);soil.node_tree.links.new(soilnoise.outputs['Fac'],soilramp.inputs[0]);soil.node_tree.links.new(soilramp.outputs['Color'],soil.node_tree.nodes['Principled BSDF'].inputs['Base Color']);heap.data.materials.append(soil);parent_keep(heap,load)
- for poly in mesh.polygons:poly.use_smooth=False
+ mesh=bpy.data.meshes.new('wet brown soil heap');mesh.from_pydata(verts,[],faces);mesh.update();uv_surface(mesh,lambda v:(v.x/2,v.y/2));heap=bpy.data.objects.new('dump load wet brown earth',mesh);bpy.context.collection.objects.link(heap);heap.data.materials.append(sand);parent_keep(heap,load)
+ for poly in mesh.polygons:poly.use_smooth=True
  for x in (-.88,.88):
   for y in (-2.28,-1.54,-.80,-.06,.68):box('dump bed longitudinal wear strip',(x,y,.48),(.11,.07,.09),tin,.02,bed)
  return bed,load
@@ -452,6 +464,13 @@ for name in ('trencher:boom','trencher:chain','excavator:cab','excavator:boom','
  obj=bpy.data.objects.get(name)
  if not obj:raise RuntimeError('missing articulated part '+name)
 
+blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
+if a.render:
+ # Review evidence must show the exported runtime asset, not the authoring scene.
+ bpy.ops.wm.read_factory_settings(use_empty=True)
+ bpy.ops.import_scene.gltf(filepath=str(glb))
+ machines={name:bpy.data.objects.get(name) for name in ('trencher','excavator','dump-truck','dozer')}
+ if any(obj is None for obj in machines.values()):raise RuntimeError('GLB reimport lost a machine root')
 scene=bpy.context.scene;scene.unit_settings.system='METRIC';scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1040;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.render.image_settings.file_format='PNG';scene.world=bpy.data.worlds.new('bright overcast scrapyard day');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.72,.74,.72,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.9
 scene.view_settings.view_transform='AgX'
 def aim(o,p):o.rotation_euler=(Vector(p)-o.location).to_track_quat('-Z','Y').to_euler()
@@ -486,7 +505,7 @@ if a.render:
   miny=min(v.y for v in world_points);maxy=max(v.y for v in world_points)
   span=max(maxz-minz,maxy-miny,5.5);distance=max(11.0,span*(1.42 if name in ('excavator','trencher') else 1.16))
   target=(o.location.x,(miny+maxy)*.5,(minz+maxz)*.5)
-  bpy.ops.object.camera_add(location=(o.location.x+distance*.82,-distance,1.70));cam=bpy.context.object;cam.data.lens=55;aim(cam,target);scene.camera=cam
+  bpy.ops.object.camera_add(location=(o.location.x+distance*.82,-distance,1.70));cam=bpy.context.object;cam.data.lens=62;aim(cam,target);scene.camera=cam
   for other,ro in machines.items():hide_tree(ro,other!=name)
   for pose in ('rest','work'):
    moving={'trencher':('trencher:boom',-.22),'excavator':('excavator:boom',-.22),'dump-truck':('dump-truck:bed',-.785),'dozer':('dozer:blade',.62)}[name]
@@ -502,7 +521,7 @@ if a.render:
    posed_min_z=min(v.z for v in posed_points);posed_max_z=max(v.z for v in posed_points)
    aim(cam,(o.location.x,(posed_min_y+posed_max_y)*.5,(posed_min_z+posed_max_z)*.5))
    if name=='dump-truck' and pose=='work':
-    cam.location=(o.location.x+distance*1.15,distance*.75,1.70)
+    cam.location=(o.location.x+distance*1.15,distance*.75,(posed_min_z+posed_max_z)*.5+distance*.72)
     aim(cam,(o.location.x,(posed_min_y+posed_max_y)*.5,(posed_min_z+posed_max_z)*.5))
    assert_working_pivots()
    scene.render.filepath=str(evidence/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True)
@@ -510,7 +529,7 @@ if a.render:
     focus={'trencher':'trencher:boom','excavator':'excavator:arm','dump-truck':'dump-truck:bed','dozer':'dozer:blade'}[name]
     point=bpy.data.objects[focus].matrix_world.translation
     if name=='dump-truck':
-     point=Vector((o.location.x,2.62,.92));close=(o.location.x+3.2,5.1,2.55)
+     point=Vector((o.location.x,1.85,2.65));close=(o.location.x+4.0,4.2,5.0)
     else:close=(point.x+2.2,point.y-3.4,max(1.7,point.z+1.2))
     bpy.ops.object.camera_add(location=close);detail=bpy.context.object;detail.data.lens=65;aim(detail,point);scene.camera=detail
     scene.render.filepath=str(evidence/f'{name}-close.png');bpy.ops.render.render(write_still=True)
@@ -524,5 +543,4 @@ if a.render:
 # Remove temporary render-only floor, lights, camera; none are in output GLB.
 for obj in list(bpy.context.scene.objects):
  if obj.type in ('CAMERA','LIGHT') or obj.name=='temporary render floor':bpy.data.objects.remove(obj,do_unlink=True)
-blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'render':str(evidence) if a.render else ''}))

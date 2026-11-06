@@ -1,13 +1,14 @@
 # TOWN-ART-MACHINES-1 reference credits
 
 Generated with the built-in Codex image generator, 5 November 2026. The
-original PNG files remain in Codex generated images; these compressed JPGs are
-the committed recipe inputs.
+source photo is not retained here; only comparison crops appear on the look
+sheets. Runtime material pictures and their prompts are credited beside the
+assets in `public/assets/models/wasteland/town/textures/CREDITS.md`.
 
-## machine-reference.jpg
+## Machine reference photo (crop source; original not kept here)
 
-Use: photo reference crops shown beside the Blender renders in round 2. Not a
-runtime image.
+Use: small reference crops shown beside the model renders on the round 2 and
+round 3 sheets. The generated source photo is not retained in the repository.
 
 Prompt: “Use case: photorealistic-natural. Asset type: photographic reference
 for realistic construction machine modeling. A documentary photograph in a
@@ -26,19 +27,3 @@ and olive paint, grey dust, hand-size chips, dark rust streaks at seams and
 bolts, dark steel tracks, bare polished ram rods, black hoses. Photographic
 natural detail, no cinematic color grade, no labels, no text, no logos, no
 people, no watermark.”
-
-## machine-wear.jpg
-
-Use: source swatch for the recipe’s packed 1K material atlas. The atlas is
-embedded in the family GLB; this JPG is not loaded by the game.
-
-Prompt: “Use case: photorealistic-natural. Asset type: square close-up
-material color texture used as source for a compact embedded 3D machine wear
-atlas. An overhead orthographic, seamless-looking close photographic tile of
-salvaged heavy industrial painted steel: faded dull olive and weathered
-construction ochre paint remnants, grey dust, dark brown rust drips at welds,
-tiny hand-scale paint chips and greasy streaks, some exposed steel, realistic
-2 to 15 cm wear scale. Neutral overcast flat illumination, no highlights or
-cast shadows, face-on surface with fine sharp detail and moderate contrast.
-Square repeating material study only, no recognizable machine or object. No
-orange saturation, no lettering, logos, symbols, border or watermark.”

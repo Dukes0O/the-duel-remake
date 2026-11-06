@@ -444,8 +444,19 @@ try {
       assert.equal(bytes.readUInt32LE(8), bytes.length);
       assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
       const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
-      assert.equal(gltf.images?.length, 1, 'one embedded wear atlas');
-      assert.equal(gltf.images[0].mimeType, 'image/jpeg', 'compact embedded photo atlas');
+      const texturedMaterials = gltf.materials.filter(material => material.pbrMetallicRoughness?.baseColorTexture);
+      const textureIndexes = texturedMaterials.map(material => material.pbrMetallicRoughness.baseColorTexture.index);
+      assert.ok(texturedMaterials.length > 0, 'runtime materials carry photo textures');
+      assert.equal(new Set(textureIndexes).size, texturedMaterials.length, 'each textured material owns a distinct texture');
+      const imageIndexes = textureIndexes.map(index => gltf.textures[index]?.source);
+      assert.ok(imageIndexes.every(Number.isInteger), 'every material texture resolves to an embedded image');
+      assert.equal(new Set(imageIndexes).size, texturedMaterials.length, 'each textured material owns a distinct image');
+      assert.equal(gltf.images?.length, texturedMaterials.length, 'GLB contains only the per-material pictures it uses');
+      for (const index of imageIndexes) assert.equal(gltf.images[index].mimeType, 'image/jpeg', 'material pictures use compact JPEG');
+      for (const material of gltf.materials) {
+        const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+        assert.ok(metallic <= 0.3, `${material.name || 'unnamed material'} metallicFactor ${metallic} exceeds 0.3`);
+      }
       const names = gltf.nodes.map(node => node.name || '');
       const ids = ['trencher', 'excavator', 'dump-truck', 'dozer'];
       assert.ok(names.includes('town-machines-1'), 'one family root');
@@ -575,7 +586,8 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
-      assert.ok(bytes.length <= 2_500_000, `${bytes.length} bytes exceeds 2.5 MB`);
+      const maxBytes = generator.maxBytes ?? 2_500_000;
+      assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} byte budget`);
     });
   }
   check('scablands-tintown exports its bounded named walkable town model', () => {
