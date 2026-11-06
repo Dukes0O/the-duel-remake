@@ -26,7 +26,7 @@ if args.paths_only:
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
 from photo_model import Mesh, Photo, box, lathe, rect_loop, shrink, slab, tidy, trace
@@ -309,6 +309,39 @@ slab(regret_door_mesh, 'door', regret_door_photo, door_loops, door_world, -.025,
      wall_scale=DOOR_SCALE * 3)
 finish(regret_door_mesh, 'regret-door', {'door': regret_door_photo.material()})
 
+# --- regret-wheel: copy the Falcone F42's separated front wheel with its materials --------
+donor_path = root / 'public/assets/models/classics/falcone_f42.glb'
+before_donor = set(scene.objects)
+bpy.ops.import_scene.gltf(filepath=str(donor_path))
+imported_donor = set(scene.objects) - before_donor
+donor_pivot = next(o for o in scene.objects if 'WheelPivot_0_front' in o.name)
+def donor_tree(obj):
+    yield obj
+    for child in obj.children:
+        yield from donor_tree(child)
+donor_spin = next(o for o in donor_pivot.children if 'WheelSpin_0' in o.name)
+donor_descendants = list(donor_tree(donor_spin))
+wheel_root = bpy.data.objects.new('regret-wheel', None)
+scene.collection.objects.link(wheel_root)
+wheel_root.parent = root_object
+# Imported glTF is converted into Blender's Z-up scene, so place the wheel at Z=.4 m.
+wheel_root.location = (0, 0, .4)
+for source_obj in donor_descendants:
+    if source_obj.type != 'MESH':
+        continue
+    copied = source_obj.copy()
+    copied.data = source_obj.data
+    scene.collection.objects.link(copied)
+    copied.name = 'regret-wheel-' + source_obj.name
+    copied.parent = wheel_root
+    # Mesh positions are already centered at each wheel pivot. Strip the car's
+    # body placement and retain the donor's geometry/materials as one loose wheel.
+    copied.matrix_parent_inverse = Matrix.Identity(4)
+    copied.matrix_basis = Matrix.Identity(4)
+for source_obj in imported_donor:
+    bpy.data.objects.remove(source_obj, do_unlink=True)
+
+
 print('TRIANGLES=' + json.dumps(triangles))
 for layer_object in scene.objects:
     if layer_object.type == 'MESH':
@@ -342,12 +375,16 @@ ground.data.materials.append(ground_material)
 camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
-part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door')
+part_names = ('jax-harpoon', 'piano-upright', 'gerald', 'gerald-box', 'ash-hat', 'wren-flag', 'regret-door', 'regret-wheel')
 parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in part_names}
 
 def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
     for key, obj in parts.items():
         obj.hide_render = key != subject
+        if key == 'regret-wheel':
+            for wheel_piece in scene.objects:
+                if wheel_piece.name.startswith('regret-wheel-'):
+                    wheel_piece.hide_render = key != subject
     ground.hide_render = not show_ground
     scene.render.resolution_x, scene.render.resolution_y = width, height
     eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
@@ -381,3 +418,5 @@ shot('wren-flag', 'wren-flag', (.02, .22, 1.3), (.02, .22, 0), 900, 700, ortho=.
 shot('wren-flag-quarter', 'wren-flag', (-.23, .38, .72), (.02, .22, 0), 900, 700, lens=50, show_ground=False)
 shot('regret-door', 'regret-door', (0, .42, 2.0), (0, .42, 0), 1000, 700, ortho=1.35, show_ground=False)
 shot('regret-door-quarter', 'regret-door', (-.9, .52, 1.7), (0, .42, 0), 1000, 700, lens=50, show_ground=False)
+shot('regret-wheel', 'regret-wheel', (1.25, .4, 0), (0, .4, 0), 900, 900, ortho=1.08, show_ground=False)
+shot('regret-wheel-quarter', 'regret-wheel', (1.8, .9, 1.4), (0, .4, 0), 900, 700, lens=50, show_ground=False)

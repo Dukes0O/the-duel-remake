@@ -34,6 +34,9 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
   The exported front and quarter renders match the reference and do not read as
   a toy.
 - Added `ww-regret-door.jpg` and its prompt credit.
+- `regret-bonnet` was tried in four exported-GLB renders, then omitted. The
+  pale underside remained visible after cropping, changing thickness and
+  remapping the edges. It did not pass the photo comparison.
 
 ## Checks
 
