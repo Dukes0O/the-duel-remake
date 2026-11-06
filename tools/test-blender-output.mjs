@@ -57,6 +57,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-POWER/round-1',
+    glb:['public/assets/models/wasteland/town/power.glb'],budget:1800,maxBytes:3000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
@@ -643,6 +645,17 @@ try {
             min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
           }
           assert.ok(min[0] < max[0] && min[1] < max[1], 'town UVs cover a range of values');
+        }
+      }
+      if (generator.id === 'town-power') {
+        const names = gltf.nodes.map(node => node.name || '');
+        assert.ok(names.includes('town-power'), 'named family root');
+        assert.ok(names.includes('windmill'), 'named windmill building');
+        assert.ok(names.includes('windmill:rotor'), 'named movable rotor part');
+        assert.ok(!names.some(name => ['generator','solar-rack','fuel-depot','power-pole'].includes(name)),
+          'round one contains only the windmill asset');
+        for (const material of gltf.materials) {
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallicFactor`);
         }
       }
     });
