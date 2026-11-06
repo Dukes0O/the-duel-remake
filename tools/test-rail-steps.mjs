@@ -62,9 +62,21 @@ assert(Math.abs((soft.stepState.metres-soft.stepState.wagonMetres)-0)<1,'the cou
 const tokenStep={kind:'drivetrain',path:[point('a',0),point('loop',50),point('b',100)],massTonnes:70,tractiveKn:80,
   tokenSwap:{place:point('loop',50),seconds:1,noTokenLineId:'no-token',swapLineId:'swap'}};
 let token=createJob({steps:[tokenStep]});token.stepState={metres:50,speed:0};
-token=tick(token,{hasToken:false,controls:{throttle:1}},.1);
+token=tick(token,{controls:{throttle:1}},.1);
 assert.equal(token.stepState.speed,0,'throttle is locked without the token');
 assert(token.requests.some(request=>request.lineId==='no-token'));
+assert.equal(token.done,false,'the token stop cannot complete before swapping');
+token=tick(token,{},3);
+let swapEvent=false,swapLine=false;
+for(let i=0;i<12;i++) {
+  token=tick(token,{controls:{interact:true}},.1);
+  swapEvent ||= token.requests.some(request=>request.type==='tokenSwap');
+  swapLine ||= token.requests.some(request=>request.lineId==='swap');
+}
+assert(swapEvent,'holding interact for one second swaps the token');
+assert(swapLine,'the swap line is played');
+token.stepState={...token.stepState,metres:100,speed:0};token=tick(token,{},0);
+assert.equal(token.done,true,'the token step completes after the swap and journey');
 const otherStep={kind:'drivetrain',path:[point('a',0),point('loop',50),point('b',100)],massTonnes:70,
   tokenSwap:{place:point('loop',50),seconds:1,noTokenLineId:'no-token',swapLineId:'swap'},
   otherTrain:{id:'wednesday',model:'missing-model',speed:10,path:[point('b',100),point('loop',50),point('a',0)]}};
@@ -84,10 +96,31 @@ let mark=createJob({steps:[markStep]});mark.stepState={metres:6,speed:4};
 for(let i=0;i<200&&!mark.storyMarks;i++)mark=tick(mark,{controls:{brake:1}},.1);
 assert(mark.storyMarks.stopMarks.goal>0,'a real stop beyond the mark records its measured error');
 assert(mark.requests.some(request=>request.type==='train'&&request.position.x>10),'an overrun remains visible beyond the track endpoint');
+let shortMark=createJob({steps:[markStep]});shortMark.stepState={metres:8,speed:0};
+shortMark=tick(shortMark,{},0);
+assert.equal(shortMark.done,true,'stopping two metres short records and completes');
+assert.equal(shortMark.storyMarks.lastStopMetres,-2);
+assert(shortMark.requests.some(request=>request.lineId==='close'));
+const longMark={...markStep,path:[point('start',0),point('mark',200)],stopMark:{...markStep.stopMark,place:point('goal',200)}};
+let distantShort=createJob({steps:[longMark]});distantShort.stepState={metres:50,speed:0};
+distantShort=tick(distantShort,{},0);
+assert.equal(distantShort.done,false,'stopping more than forty metres short is not recorded');
+const overrunMark={...markStep,path:[point('mark',0),point('end',10)],stopMark:{place:point('goal',10),bands:[.5,3,20],lineIds:['perfect','close','far','past']}};
+let overrun=createJob({steps:[overrunMark]});overrun.stepState={metres:69,speed:20};
+for(let i=0;i<100&&!overrun.done;i++)overrun=tick(overrun,{controls:{throttle:1}},.1);
+assert.equal(overrun.requests.find(request=>request.type==='train').metres,70,'overrun stops sixty metres past the track end');
+assert.equal(overrun.requests.find(request=>request.type==='train').speed,0);
+assert(overrun.requests.some(request=>request.lineId==='past'));
 let bo=createJob({steps:[{kind:'drivetrain',path:[point('a',0),point('b',10)],massTonnes:70,maxSpeed:6,stopAtEnd:true,
   rideAlong:{driver:'bo',copiesPlayerStop:true,goodLineId:'good',badLineId:'bad'}}]});
-bo.stepState={metres:10,speed:0};bo=tick(bo,{playerStopMetres:10},0);
-assert(bo.requests.some(request=>request.lineId==='bad'));assert.equal(bo.stepState.copiedStopMetres,10);
+bo.stepState={metres:15,speed:0,rideStopped:true};bo=tick(bo,{playerStopMetres:5},0);
+assert(bo.requests.some(request=>request.lineId==='bad'));
+assert.equal(bo.requests.find(request=>request.type==='train').metres,15);
+let boShort=createJob({steps:[{kind:'drivetrain',path:[point('a',0),point('b',10)],massTonnes:70,stopAtEnd:true,
+  rideAlong:{driver:'bo',copiesPlayerStop:true,goodLineId:'good',badLineId:'bad'}}]});
+boShort.stepState={metres:8,speed:0,rideStopped:true};boShort=tick(boShort,{playerStopMetres:-2},0);
+assert.equal(boShort.requests.find(request=>request.type==='train').metres,8);
+assert(boShort.requests.some(request=>request.lineId==='good'));
 
 // Dig reduces the pile and emits the buried-model reveal once.
 let dig=createJob({steps:[{kind:'dig',tonnes:100,loadTonnes:20,reveals:'buried-engine'}]});

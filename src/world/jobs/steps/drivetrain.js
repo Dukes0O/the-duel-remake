@@ -27,27 +27,32 @@ export function stepDrivetrain(step,state,view,dt) {
   const consistMass=step.consist?.reduce((sum,id)=>sum+(CONSIST_TONNES[id]??0),0)??0;
   const mass=consistMass||(step.massTonnes??100),tractive=step.tractiveKn??80,brake=step.brakeKn??100;
   const acceleration=tractive/mass,deceleration=brake/mass;
-  let metres=step.stopMark&&step.stopAtEnd?Math.max(0,state.metres??0):clamp(state.metres??0,0,length),speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
+  let metres=step.stopMark&&step.stopAtEnd||step.rideAlong?.copiesPlayerStop
+    ?Math.max(0,state.metres??0):clamp(state.metres??0,0,length);
+  let speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
   const controls=view.controls??{}, previous=metres, requests=[], events=[];
-  const tokenLocked=!!step.tokenSwap&&!view.hasToken&&!state.tokenSwapped;
   const tokenMetres=step.tokenSwap?nearestIronLineDistance(path,step.tokenSwap.place).metres:Infinity;
-  const waitingForSwap=!!step.tokenSwap&&view.hasToken&&!state.tokenSwapped&&metres>=tokenMetres;
+  const atTokenPlace=!!step.tokenSwap&&!state.tokenSwapped&&metres>=tokenMetres;
+  const waitingForSwap=atTokenPlace;
   const targetStop=step.rideAlong?.stopsOnMarkExactly&&step.stopMark
     ?nearestIronLineDistance(path,step.stopMark.place).metres
-    :step.rideAlong?.copiesPlayerStop?clamp(length+(view.playerStopMetres??0),0,length):length;
+    :step.rideAlong?.copiesPlayerStop?Math.max(0,length+(view.playerStopMetres??0)):length;
   const rideBraking=!!step.rideAlong&&(state.rideStopped||targetStop-metres<=speed*speed/(2*Math.max(.001,deceleration)));
   const grade=gradeAcceleration(step.grade,path,metres);
   if(step.rideAlong) {
     const throttle=rideBraking?0:1,braking=rideBraking;
     speed=Math.max(0,Math.min(step.maxSpeed??26,speed+(throttle*acceleration-(braking?deceleration:0)+grade)*dt));
-  } else if(controls.throttle>0&&!tokenLocked&&!waitingForSwap)
+  } else if(controls.throttle>0&&!waitingForSwap)
     speed=Math.min(step.maxSpeed??26,Math.max(0,speed+(acceleration+grade)*dt));
   else if(controls.brake>0||waitingForSwap)
     speed=Math.max(0,speed+(-deceleration+grade)*dt);
   else speed=Math.max(0,speed+(-deceleration*.12+grade)*dt);
   const proposed=metres+speed*dt;
-  if(step.rideAlong&&proposed>=targetStop&&rideBraking){metres=targetStop;speed=0;state={...state,rideStopped:true};}
+  if(step.tokenSwap&&!state.tokenSwapped&&proposed>=tokenMetres){metres=tokenMetres;speed=0;}
+  else if(step.rideAlong&&proposed>=targetStop&&rideBraking){metres=targetStop;speed=0;state={...state,rideStopped:true};}
   else if(step.stopAtEnd&&proposed>=length&&(!step.sandDrag||speed<=(step.sandDrag.overMs??0))&&!step.stopMark){metres=length;speed=Math.min(speed,1.5);}
+  else if(step.stopMark&&step.stopAtEnd&&proposed>=length+60){metres=length+60;speed=0;}
+  else if(step.rideAlong?.copiesPlayerStop)metres=Math.max(0,Math.min(targetStop,proposed));
   else metres=step.stopMark&&step.stopAtEnd?Math.max(0,proposed):clamp(proposed,0,length);
 
   if(step.otherTrain?.path?.length) {
@@ -62,19 +67,22 @@ export function stepDrivetrain(step,state,view,dt) {
     state={...state,otherTrainMetres:otherMetres};
   }
 
-  if(step.stopMark&&step.stopAtEnd&&metres>=length-.01&&speed<=.05&&!state.stopMarkRecorded) {
-    const mark=nearestIronLineDistance(path,step.stopMark.place).metres,error=Math.abs(metres-mark);
+  const markMetres=step.stopMark?nearestIronLineDistance(path,step.stopMark.place).metres:Infinity;
+  if(step.stopMark&&step.stopAtEnd&&metres>=markMetres-40&&speed<=.05&&!state.stopMarkRecorded) {
+    const mark=markMetres,signedError=metres-mark,error=Math.abs(signedError);
     const band=(step.stopMark.bands??[]).findIndex(limit=>error<=limit);
     const lineId=step.stopMark.lineIds?.[band<0?step.stopMark.lineIds.length-1:band];
-    requests.push({type:'stopMark',id:step.stopMark.place?.id??null,metres:metres-mark,error,lineId});
-    state={...state,stopMarkRecorded:true,playerStopMetres:metres-mark};
+    requests.push({type:'stopMark',id:step.stopMark.place?.id??null,metres:signedError,error,lineId});
+    state={...state,stopMarkRecorded:true,playerStopMetres:signedError};
   }
 
   if(step.tokenSwap&&!state.tokenSwapped&&metres>=tokenMetres) {
-    if(!view.hasToken){if(!state.noTokenWarned){state={...state,noTokenWarned:true};requests.push({type:'say',lineId:step.tokenSwap.noTokenLineId});}}
-    else if(speed<=.05&&(state.tokenHold??0)+dt>=step.tokenSwap.seconds) {
+    if(controls.interact||view.interact) {
+      if(speed<=.05&&(state.tokenHold??0)+dt>=step.tokenSwap.seconds) {
       state={...state,tokenSwapped:true};requests.push({type:'say',lineId:step.tokenSwap.swapLineId},{type:'tokenSwap'});
-    } else if(speed<=.05)state={...state,tokenHold:(state.tokenHold??0)+dt};
+      } else if(speed<=.05)state={...state,tokenHold:(state.tokenHold??0)+dt};
+    } else if(speed<=.05)state={...state,tokenHold:0};
+    if(controls.throttle>0&&!state.noTokenWarned){state={...state,noTokenWarned:true};requests.push({type:'say',lineId:step.tokenSwap.noTokenLineId});}
   }
   if(step.tokenHoop&&!state.tokenHoopPassed) {
     const hoop=nearestIronLineDistance(path,step.tokenHoop.place).metres;
@@ -106,7 +114,10 @@ export function stepDrivetrain(step,state,view,dt) {
     state={...state,apprenticeTaught:true};requests.push({type:'say',lineId:step.taughtLineId},{type:'apprenticeTaught',person:step.apprentice,kind:'driving'});
   }
   const atEnd=metres>=length-.01;
-  let complete=step.stopAtEnd?atEnd&&speed<=.05:atEnd&&(!step.gate||gatePassed);
+  let complete=step.stopMark?state.stopMarkRecorded:
+    step.rideAlong?.copiesPlayerStop?state.rideStopped&&speed<=.05:
+    step.stopAtEnd?atEnd&&speed<=.05:atEnd&&(!step.gate||gatePassed);
+  if(step.tokenSwap&&!state.tokenSwapped)complete=false;
   if(step.rideAlong&&complete&&step.rideAlong.copiesPlayerStop&&view.playerStopMetres!=null&&!state.copiedStop){
     requests.push({type:'say',lineId:Math.abs(view.playerStopMetres)<=(step.goodStopMetres??3)?step.rideAlong.goodLineId:step.rideAlong.badLineId});
     state={...state,copiedStop:true,copiedStopMetres:view.playerStopMetres};
