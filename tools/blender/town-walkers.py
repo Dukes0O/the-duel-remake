@@ -1,7 +1,8 @@
-"""Build the compact Wasteland town walker family and review views.
+"""Build town walkers from the game's licensed Quaternius people.
 
 Run: blender -b --python tools/blender/town-walkers.py -- --root . --render .evidence/DATE/TOWN-ART-WALKERS
-Game coordinates are metres, X right, Y up, front -Z. Blender stays Z-up.
+The standing Quaternius figures are reused from public/assets/heli/people/.
+The source pack is CC0; see public/assets/models/CREDITS.md.
 """
 import argparse, json, math, sys
 from pathlib import Path
@@ -11,243 +12,261 @@ a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 out=root/'public/assets/models/wasteland/town/walkers.glb';blend=root/'art-build/town/walkers.blend'
 render=Path(a.render);render=render if render.is_absolute() else root/render
 if a.paths_only:
-    print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(render)] if a.render else []}));raise SystemExit(0)
+ print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(render)] if a.render else []}));raise SystemExit(0)
 
-import bpy
+import bpy, bmesh
 from mathutils import Vector
-sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 scene=bpy.context.scene;out.parent.mkdir(parents=True,exist_ok=True);blend.parent.mkdir(parents=True,exist_ok=True)
-texture_dir=root/'public/assets/models/wasteland/town/textures'
-materials=town.make_materials({
-    'patched-canvas':str(texture_dir/'canvas-patched-cream.jpg'),
-    # People need cloth at this slot; the wood tile would make coats look like timber.
-    'weathered-plank':str(texture_dir/'patched-canvas.jpg'),
-    'rusted-steel':str(texture_dir/'red-oxide.jpg'),
-    'galvanised-tin':str(texture_dir/'rusted-corrugated-tin.jpg'),
-    'faded-hand-paint':str(texture_dir/'faded-yellow-steel.jpg'),
-    'iron-dark':str(texture_dir/'machine-wear.jpg'),
-    'sand':str(texture_dir/'wet-brown-earth.jpg'),
-})
-import numpy as np
-texture_tint={'patched-canvas':(.47,.41,.34),'weathered-plank':(.54,.46,.36),'rusted-steel':(.56,.38,.27),
-              'galvanised-tin':(.62,.60,.55),'faded-hand-paint':(.57,.50,.38),'iron-dark':(.68,.66,.60),'sand':(.62,.55,.44)}
-seen=set()
-for mat_name,mat in materials.items():
-    image=next((node.image for node in mat.node_tree.nodes if node.type=='TEX_IMAGE' and node.image),None)
-    if image and image.name not in seen:
-        image.scale(192,192);seen.add(image.name)
-        px=np.empty(192*192*4,dtype=np.float32);image.pixels.foreach_get(px);px=px.reshape((192,192,4))
-        px[:,:,:3]*=np.array(texture_tint.get(mat_name,(.60,.57,.52)),dtype=np.float32)[None,None,:]
-        image.pixels.foreach_set(px.ravel());image.pack()
-white=bpy.data.images.load(str(texture_dir/'container-white.jpg'),check_existing=False);white.scale(192,192)
-white.filepath_raw=str(texture_dir/'container-white.jpg');white.file_format='JPEG'
-white_mat=bpy.data.materials.new('Town walker / faded white workwear');white_mat.diffuse_color=(.72,.70,.63,1);white_mat.use_nodes=True
-white_bs=white_mat.node_tree.nodes.get('Principled BSDF');white_bs.inputs['Metallic'].default_value=0;white_bs.inputs['Roughness'].default_value=.92
-white_tex=white_mat.node_tree.nodes.new('ShaderNodeTexImage');white_tex.image=white;white_tex.extension='REPEAT'
-white_mat.node_tree.links.new(white_tex.outputs['Color'],white_bs.inputs['Base Color'])
-white.pack();materials['container-white']=white_mat
-blue=bpy.data.images.load(str(texture_dir/'paint-blue.jpg'),check_existing=False);blue.scale(192,192);blue.pack()
-blue_mat=bpy.data.materials.new('Town walker / chipped blue paint');blue_mat.diffuse_color=(.22,.34,.39,1);blue_mat.use_nodes=True
-blue_bs=blue_mat.node_tree.nodes.get('Principled BSDF');blue_bs.inputs['Metallic'].default_value=0;blue_bs.inputs['Roughness'].default_value=.9
-blue_tex=blue_mat.node_tree.nodes.new('ShaderNodeTexImage');blue_tex.image=blue;blue_tex.extension='REPEAT'
-blue_mat.node_tree.links.new(blue_tex.outputs['Color'],blue_bs.inputs['Base Color']);materials['paint-blue']=blue_mat
-skin_mat=bpy.data.materials.new('Town walker / sunlit skin');skin_mat.diffuse_color=(.31,.22,.16,1);skin_mat.use_nodes=True
-skin_bs=skin_mat.node_tree.nodes.get('Principled BSDF');skin_bs.inputs['Base Color'].default_value=(.31,.22,.16,1);skin_bs.inputs['Roughness'].default_value=.9;materials['walker-skin']=skin_mat
-face_mat=bpy.data.materials.new('Town walker / dark face detail');face_mat.diffuse_color=(.035,.024,.018,1);face_mat.use_nodes=True
-face_bs=face_mat.node_tree.nodes.get('Principled BSDF');face_bs.inputs['Base Color'].default_value=(.035,.024,.018,1);face_bs.inputs['Roughness'].default_value=.96;materials['walker-face-detail']=face_mat
-for m in materials.values():
-    bs=m.node_tree.nodes.get('Principled BSDF');bs.inputs['Metallic'].default_value=min(bs.inputs['Metallic'].default_value,.29)
+texdir=root/'public/assets/models/wasteland/town/textures'
+SPECS=[
+ ('walker-a','driver-standing','coat','hood'),('walker-b','hiker-standing','overalls','cap'),
+ ('walker-c','driver-standing','poncho','broad-hat'),('walker-d','driver-standing','long-coat','hood'),
+ ('walker-e','hiker-standing','work-shirt','knit-cap'),('walker-f','driver-standing','dust-coat','wide-brim'),
+ ('walker-g','hiker-standing','overalls','hardhat'),('walker-h','driver-standing','shawl','wrap'),
+ ('walker-kid-a','driver-standing','short-coat','hood'),('walker-kid-b','hiker-standing','overall-shorts','cap'),
+ ('walker-guard','driver-standing','guard-coat','helmet'),('walker-trader','hiker-standing','layered-coat','turban'),
+ ('walker-vane','driver-standing','white-overalls','bare-head')]
 
-root_obj=bpy.data.objects.new('town-walkers',None);bpy.context.collection.objects.link(root_obj);root_obj.empty_display_type='PLAIN_AXES'
-def part(parent,obj):
-    world=obj.matrix_world.copy();obj.parent=parent;obj.matrix_world=world;return obj
-def cube(name,c,size,mat,parent,bevel=.014):
-    # Export-time bevel expansion more than doubles these tiny meshes. Keep
-    # edges crisp here and spend the strict 450-triangle limit on silhouette.
-    obj=town.cube(name,c,size,mat,0)
-    if obj.data.uv_layers.active:obj.data.uv_layers.active.name='UVMap'
-    return part(parent,obj)
-def mesh(name,verts,faces,mat,parent):
-    # Shape coordinates are local game-space (Z-up for town_base conversion).
-    converted=[tuple(town.game_vector(v)) for v in verts]
-    data=bpy.data.meshes.new(name+' mesh');data.from_pydata(converted,[],faces);data.materials.append(mat);data.update()
-    uv=data.uv_layers.new(name='UVMap')
-    for poly in data.polygons:
-        for li in poly.loop_indices:
-            v=converted[data.loops[li].vertex_index];uv.data[li].uv=(v[0]/.35,v[2]/.35)
-    obj=bpy.data.objects.new(name,data);bpy.context.collection.objects.link(obj);return part(parent,obj)
-def tapered(name,center,low,high,mat,parent,sides=8):
-    x,y,z=center;verts=[]
-    for yy,wx,wz in ((y,low[0],low[1]),(y+high[2],high[0],high[1])):
-        for i in range(sides):
-            ang=2*math.pi*i/sides;verts.append((x+math.cos(ang)*wx/2,yy,z+math.sin(ang)*wz/2))
-    faces=[]
-    for i in range(sides):faces.append((i,(i+1)%sides,(i+1)%sides+sides,i+sides))
-    faces.extend([tuple(reversed(range(sides))),tuple(range(sides,2*sides))])
-    tris=sum(max(1,len(f)-2) for f in faces)
-    return mesh(name,verts,faces,mat,parent),tris
-def beam(name,a,b,width,depth,mat,parent):
-    # Closed eight-corner bar: thin but real volume, with the same UV layer name.
-    va=town.game_vector(a);vb=town.game_vector(b);axis=(vb-va).normalized();ref=Vector((0,0,1)) if abs(axis.z)<.9 else Vector((0,1,0))
-    side=axis.cross(ref).normalized()*width/2;up=axis.cross(side).normalized()*depth/2;verts=[]
-    for end in (va,vb):verts.extend([tuple(end-side-up),tuple(end+side-up),tuple(end+side+up),tuple(end-side+up)])
-    faces=[(0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
-    data=bpy.data.meshes.new(name+' mesh');data.from_pydata(verts,[],faces);data.materials.append(mat);data.update();data.uv_layers.new(name='UVMap')
-    obj=bpy.data.objects.new(name,data);bpy.context.collection.objects.link(obj);return part(parent,obj)
-def limb(name,a,b,width,depth,mat,parent):
-    va=town.game_vector(a);vb=town.game_vector(b);axis=(vb-va).normalized();ref=Vector((0,0,1)) if abs(axis.z)<.9 else Vector((0,1,0))
-    side=axis.cross(ref).normalized();up=axis.cross(side).normalized();verts=[];faces=[];sides=6
-    for endpoint in (va,vb):
-        for i in range(sides):
-            ang=2*math.pi*i/sides;verts.append(tuple(endpoint+side*math.cos(ang)*width/2+up*math.sin(ang)*depth/2))
-    for i in range(sides):faces.append((i,(i+1)%sides,(i+1)%sides+sides,i+sides))
-    faces.extend([tuple(reversed(range(sides))),tuple(range(sides,2*sides))])
-    data=bpy.data.meshes.new(name+' low-poly rounded limb');data.from_pydata(verts,[],faces);data.materials.append(mat);data.uv_layers.new(name='UVMap');data.update()
-    obj=bpy.data.objects.new(name,data);bpy.context.collection.objects.link(obj);return part(parent,obj)
+def child(parent,obj):
+ world=obj.matrix_world.copy();obj.parent=parent;obj.matrix_world=world;return obj
 
-# Each outfit uses one of the town's small photographic material tiles. The
-# shared shape began from the photographed long-coat proportions; role pieces
-# are added to that same connected, low-poly body instead of block figures.
-specs=[
- ('walker-a','adult','dust-coat','hood','patched-canvas','weathered-plank'),
- ('walker-b','adult','overalls','cap','galvanised-tin','patched-canvas'),
- ('walker-c','adult','poncho','broad-hat','weathered-plank','faded-hand-paint'),
- ('walker-d','adult','long-coat','hood','rusted-steel','weathered-plank'),
- ('walker-e','adult','work-shirt','knit-cap','patched-canvas','faded-hand-paint'),
- ('walker-f','adult','dust-coat','wide-brim','weathered-plank','patched-canvas'),
- ('walker-g','adult','overalls','hardhat','galvanised-tin','faded-hand-paint'),
- ('walker-h','adult','shawl','wrap','faded-hand-paint','weathered-plank'),
- ('walker-kid-a','kid','short-coat','hood','patched-canvas','rusted-steel'),
- ('walker-kid-b','kid','overall-shorts','cap','faded-hand-paint','patched-canvas'),
- ('walker-guard','adult','reinforced-coat','helmet','galvanised-tin','rusted-steel'),
- ('walker-trader','adult','layered-coat','turban','weathered-plank','patched-canvas'),
- ('walker-vane','adult','white-overalls','bare-head','container-white','paint-blue'),
-]
+def make_cloth(name,path,tint=(1,1,1)):
+ im=bpy.data.images.load(str(path),check_existing=False);im.filepath_raw=str(path);im.file_format='JPEG';im.pack()
+ mat=bpy.data.materials.new(name);mat.diffuse_color=(*tint,1);mat.use_nodes=True
+ bs=mat.node_tree.nodes.get('Principled BSDF');bs.inputs['Metallic'].default_value=0;bs.inputs['Roughness'].default_value=.93
+ image=mat.node_tree.nodes.new('ShaderNodeTexImage');image.image=im;image.extension='REPEAT'
+ mat.node_tree.links.new(image.outputs['Color'],bs.inputs['Base Color']);return mat
 
-def walker(spec):
-    ident,age,outfit,hat,coat_name,trim_name=spec;child=age=='kid';height=1.30 if child else 1.70;scale=height/1.70
-    body=bpy.data.objects.new(ident,None);bpy.context.collection.objects.link(body);part(root_obj,body);body['height_m']=height
-    body.scale=(1,1,1.06)
-    coat=materials[coat_name];trim=materials[trim_name];dark=materials['iron-dark'];skin=materials['walker-skin'];dust=materials['rusted-steel']
-    # Grounded long legs, each a named pivot assembly for the town walk cycle.
-    for side,label in ((-1,'leg-l'),(1,'leg-r')):
-        pivot=bpy.data.objects.new(ident+':'+label,None);bpy.context.collection.objects.link(pivot);part(body,pivot)
-        pivot.location=town.game_vector((side*.105*scale,.045*scale,0));pivot['swing_axis']='X'
-        hip=.92*scale;ankle=.13*scale
-        beam(ident+' '+label+' thigh',(side*.105*scale,.06*scale,0),(side*.105*scale,hip*.70,0),.13*scale,.15*scale,coat,pivot)
-        beam(ident+' '+label+' shin',(side*.105*scale,hip*.60,0),(side*.105*scale,ankle,.015*scale),.09*scale,.11*scale,trim,pivot)
-        cube(ident+' '+label+' boot',(side*.105*scale,.075*scale,-.045*scale),(.13*scale,.12*scale,.26*scale),dark,pivot,.012)
-        # Trouser patch follows the same pivot and reads as stitched cloth.
-        cube(ident+' '+label+' knee patch',(side*.105*scale,.55*scale,-.078*scale),(.07*scale,.08*scale,.018*scale),dust,pivot,.004)
-    # Tapered torso and two connected sleeves preserve a human shoulder-to-leg silhouette.
-    pelvis=cube(ident+' joined hip and waist',(0,.73*scale,0),(.34*scale,.22*scale,.24*scale),trim,body,.035)
-    torso,tris=tapered(ident+' fitted torso',(0,.73*scale,0),(.34*scale,.27*scale),(.47*scale,.35*scale,.45*scale),coat,body,10)
-    for side in (-1,1):
-        limb(ident+' sleeve',(side*.22*scale,1.10*scale,0),(side*.235*scale,.62*scale,-.015*scale),.14*scale,.15*scale,coat,body)
-        limb(ident+' hand',(side*.238*scale,.63*scale,-.015*scale),(side*.24*scale,.48*scale,-.015*scale),.072*scale,.09*scale,skin,body)
-    # A real overlapping front panel and side tails make the long coat read at town scale.
-    if outfit in ('dust-coat','long-coat','reinforced-coat','layered-coat'):
-        cube(ident+' hanging front placket',(0,.59*scale,-.135*scale),(.17*scale,.74*scale,.026*scale),trim,body,.012)
-        for side in (-1,1):
-            panel=cube(ident+' split coat tail',(side*.14*scale,.34*scale,.025*scale),(.20*scale,.72*scale,.055*scale),coat,body,.012)
-            panel.rotation_euler.x=side*.025
-        # Three small closure tabs and irregular repair patches, not a painted noise map.
-        if ident!='walker-trader':
-            cube(ident+' visible mended patch',(-.14*scale,.75*scale,-.157*scale),(.085*scale,.11*scale,.018*scale),dust,body,.004)
-    elif outfit=='poncho' or outfit=='shawl':
-        panel=cube(ident+' broad shoulder drape',(0,.88*scale,-.12*scale),(.70*scale,.54*scale,.10*scale),coat,body,.02)
-        panel.rotation_euler.x=-.05
-        cube(ident+' drape hem stripe',(0,.61*scale,-.177*scale),(.63*scale,.045*scale,.018*scale),trim,body,.004)
-    elif outfit in ('overalls','overall-shorts','white-overalls'):
-        cube(ident+' bib',(0,.82*scale,-.164*scale),(.29*scale,.28*scale,.025*scale),trim,body,.008)
-        for side in (-1,1):beam(ident+' overall strap',(side*.12*scale,1.16*scale,-.12*scale),(side*.12*scale,.94*scale,-.17*scale),.035*scale,.026*scale,trim,body)
-        cube(ident+' bib pocket',(0,.79*scale,-.183*scale),(.14*scale,.10*scale,.012*scale),coat,body,.003)
-    else:
-        cube(ident+' work vest',(0,.84*scale,-.15*scale),(.42*scale,.43*scale,.06*scale),trim,body,.012)
-    # Head, ears and nose are faceted enough to read as a person without a toy face.
-    beam(ident+' neck',(0,1.12*scale,-.005*scale),(0,1.33*scale,-.005*scale),.105*scale,.11*scale,skin,body)
-    cube(ident+' worn collar',(0,1.14*scale,-.008*scale),(.31*scale,.12*scale,.28*scale),trim,body,.025)
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=4,radius=1,location=town.game_vector((0,1.39*scale,0)))
-    head=bpy.context.object;head.name=ident+' head';head.scale=(.105*scale,.095*scale,.12*scale);head.data.materials.append(skin)
-    bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-    if head.data.uv_layers.active:head.data.uv_layers.active.name='UVMap'
-    part(body,head)
-    for side in (-1,1):cube(ident+' eye',(side*.040*scale,1.405*scale,-.114*scale),(.020*scale,.018*scale,.012*scale),materials['walker-face-detail'],body,.003)
-    cube(ident+' nose',(0,1.375*scale,-.115*scale),(.045*scale,.055*scale,.07*scale),skin,body,.014)
-    # Distinct hats are broad, thin and physically grounded in the head silhouette.
-    if hat in ('hood','turban'):
-        hood,tris_hood=tapered(ident+' raised hood',(0,1.38*scale,.07*scale),(.30*scale,.31*scale),(.28*scale,.30*scale,.16*scale),trim,body,9)
-        if hat=='hood':cube(ident+' hood brow',(0,1.48*scale,-.12*scale),(.25*scale,.075*scale,.09*scale),coat,body,.015)
-    elif hat in ('broad-hat','wide-brim'):
-        cube(ident+' hat crown',(0,1.52*scale,.005*scale),(.18*scale,.13*scale,.18*scale),trim,body,.025)
-        cube(ident+' broad brim',(0,1.48*scale,0),(.38*scale,.035*scale,.32*scale),coat,body,.018)
-    elif hat=='hardhat' or hat=='helmet':
-        h,tris_hat=tapered(ident+' hard helmet',(0,1.49*scale,.005*scale),(.29*scale,.29*scale),(.30*scale,.30*scale,.15*scale),coat,body,8)
-        cube(ident+' helmet rim',(0,1.445*scale,-.005*scale),(.36*scale,.035*scale,.32*scale),trim,body,.01)
-        if hat=='helmet':cube(ident+' face shield',(0,1.34*scale,-.125*scale),(.18*scale,.12*scale,.018*scale),dark,body,.008)
-    elif hat in ('cap','knit-cap'):
-        cube(ident+' cap crown',(0,1.49*scale,.005*scale),(.23*scale,.13*scale,.24*scale),coat,body,.03)
-        cube(ident+' cap peak',(0,1.45*scale,-.105*scale),(.22*scale,.025*scale,.15*scale),trim,body,.012)
-    # Trader carries a connected, shoulder-wide stitched pack.
-    if ident=='walker-trader':
-        cube(ident+' pack main',(0,.99,.20),(.38,.55,.24),trim,body,.025)
-        cube(ident+' pack flap',(0,1.25,.205),(.39,.12,.255),coat,body,.014)
-        for side in (-1,1):beam(ident+' pack strap',(side*.14,1.24,.15),(side*.13,.83,.16),.035,.025,dark,body)
-    # Vane's tiny blue drop is a crisp, readable mark on the white work suit.
-    if ident=='walker-vane':
-        cube(ident+' blue drop stem',(0,.91,-.182),(.035,.13,.018),materials['paint-blue'],body,.009)
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=4,radius=1,location=town.game_vector((0,.80,-.19)))
-        drop=bpy.context.object;drop.name=ident+' blue drop';drop.scale=(.055,.07,.022);drop.data.materials.append(materials['paint-blue'])
-        bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);part(body,drop)
-    # The armature substitute required by the town runtime is the named pivot group;
-    # keep the mesh descendants compact and leave all id roots under one family root.
-    poly_count=0
-    for ob in body.children_recursive:
-        if ob.type=='MESH':poly_count+=sum(max(1,len(poly.vertices)-2) for poly in ob.data.polygons)
-    if poly_count>450:raise RuntimeError(f'{ident} has {poly_count} triangles (limit 450)')
-    body['triangle_count']=poly_count
+def mesh_subset(src,name,polys,origin=(0,0,0),material_overrides=None):
+ old=src.data;uvold=old.uv_layers.active;mapping={};verts=[];faces=[];mids=[];uvfaces=[]
+ for poly in polys:
+  face=[];uv=[]
+  for li in poly.loop_indices:
+   vi=old.loops[li].vertex_index
+   if vi not in mapping:
+    mapping[vi]=len(verts);verts.append(tuple(old.vertices[vi].co-Vector(origin)))
+   face.append(mapping[vi]);uv.append(tuple(uvold.data[li].uv) if uvold else (old.vertices[vi].co.x,old.vertices[vi].co.z))
+  faces.append(face);mids.append(poly.material_index);uvfaces.append(uv)
+ data=bpy.data.meshes.new(name+' mesh');data.from_pydata(verts,[],faces);data.materials.clear()
+ for mat in (material_overrides or old.materials):data.materials.append(mat)
+ data.update();uv=data.uv_layers.new(name='UVMap')
+ for poly,uvrow,mid in zip(data.polygons,uvfaces,mids):
+  poly.material_index=min(mid,len(data.materials)-1)
+  poly.use_smooth=True
+  for li,coord in zip(poly.loop_indices,uvrow):uv.data[li].uv=coord
+ obj=bpy.data.objects.new(name,data);scene.collection.objects.link(obj);return obj
 
-for spec in specs:walker(spec)
+def assign_photo_cloth(obj,ident):
+ path=texdir/f'{ident}-cloth.jpg';fabric=make_cloth(ident+' worn photo-cloth',path)
+ mats=[]
+ for old in obj.data.materials:
+  lower=(old.name if old else '').lower()
+  if any(k in lower for k in ('boot','steel','visor','goggle')):
+   copy=old.copy() if old else fabric
+   mats.append(copy)
+  else:mats.append(fabric)
+ obj.data.materials.clear()
+ for mat in mats:obj.data.materials.append(mat)
 
-def set_camera(name,loc,target,lens=52):
-    data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(loc)
-    direction=town.game_vector(target)-cam.location;cam.rotation_euler=direction.to_track_quat('-Z','Y').to_euler();data.lens=lens;scene.camera=cam
-def lighting():
-    global scene
-    scene=bpy.context.scene
-    scene.render.engine='CYCLES';scene.cycles.samples=20;scene.render.resolution_x=1100;scene.render.resolution_y=850;scene.render.resolution_percentage=100
-    scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast'
-    world=bpy.data.worlds.new('plain overcast daylight');world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.46,.49,.51,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8;scene.world=world
-    ld=bpy.data.lights.new('large overcast softbox','AREA');lo=bpy.data.objects.new('large overcast softbox',ld);scene.collection.objects.link(lo);lo.location=town.game_vector((0,3,-3));ld.energy=520;ld.size=5
-    lo.rotation_euler=(Vector((0,0,0))-lo.location).to_track_quat('-Z','Y').to_euler()
-def render_views():
-    if not a.render:return
-    lighting();render.mkdir(parents=True,exist_ok=True)
-    # Export/import proof: review images must come from a fresh empty scene.
-    town.export_glb(out);bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene
-    bpy.ops.import_scene.gltf(filepath=str(out));scene=bpy.context.scene
-    bpy.ops.mesh.primitive_plane_add(size=24,location=(0,0,-.025));ground=bpy.context.object;ground.name='plain compacted dirt review floor'
-    ground_mat=bpy.data.materials.new('review floor / neutral dirt');ground_mat.diffuse_color=(.20,.18,.15,1);ground_mat.use_nodes=True
-    ground_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.20,.18,.15,1)
-    ground_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.96;ground.data.materials.append(ground_mat)
-    lighting()
-    visible=[o for o in scene.objects if o.type=='MESH']
-    for idx,o in enumerate(visible):
-        o.hide_render=not o.name.startswith('walker-a ')
-    target=(0,.86,0);set_camera('photo matched front three-quarter',(2.45,2.25,-3.25),target,55)
-    scene.render.filepath=str(render/'walker-a-three-quarter.png');bpy.ops.render.render(write_still=True)
-    for o in visible:o.hide_render=not o.name.startswith('walker-trader ')
-    set_camera('trader three-quarter', (2.5,2.35,-3.3),(.1,.9,-.06),55)
-    scene.render.filepath=str(render/'walker-trader-three-quarter.png');bpy.ops.render.render(write_still=True)
-    for o in visible:o.hide_render=False
-    for index,ident in enumerate(spec[0] for spec in specs):
-        actor=next((o for o in scene.objects if o.name==ident),None)
-        if actor:actor.location.x=(index-(len(specs)-1)/2)*.72
-    set_camera('family overhead 45 degrees',(0,7.4,-6.2),(0,.5,0),30)
-    scene.render.filepath=str(render/'family-overhead.png');bpy.ops.render.render(write_still=True)
+def hat(parent,ident,kind,cloth):
+ # Low-poly curved hat/hood dome, shaped around a real head rather than a box.
+ sides=10;cx,cy,cz=0,-.005,1.62
+ if kind in ('bare-head','wrap'):return
+ verts=[];rings=[(.17,.16,.025),(.145,.14,.105),(.09,.09,.16)]
+ for rx,ry,zoff in rings:
+  for i in range(sides):
+   ang=2*math.pi*i/sides;verts.append((cx+rx*math.cos(ang),cy+ry*math.sin(ang),cz+zoff))
+ faces=[]
+ for r in range(2):
+  for i in range(sides):faces.append((r*sides+i,r*sides+(i+1)%sides,(r+1)*sides+(i+1)%sides,(r+1)*sides+i))
+ faces.append(tuple(range(2*sides,3*sides)))
+ # Small wrap-around brim is a real curved strip.
+ base=len(verts)
+ for z,rx,ry in ((cz+.025,.19,.18),(cz+.055,.17,.16)):
+  for i in range(sides):
+   ang=2*math.pi*i/sides;verts.append((cx+rx*math.cos(ang),cy+ry*math.sin(ang),z))
+ for i in range(sides):faces.append((base+i,base+(i+1)%sides,base+sides+(i+1)%sides,base+sides+i))
+ data=bpy.data.meshes.new(ident+' hat mesh');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
+ for poly in data.polygons:
+  for li in poly.loop_indices:
+   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x*3,v.z*3)
+ obj=bpy.data.objects.new(ident+' hat silhouette',data);scene.collection.objects.link(obj);child(parent,obj)
 
-town.export_glb(out)
-bpy.ops.wm.save_as_mainfile(filepath=str(blend))
-render_views()
+def coat_shell(parent,ident,cloth):
+ # Open-front, tapered drape with an uneven below-knee hem.
+ sides=14;verts=[];rings=[(.23,.14,1.21),(.27,.17,.83),(.34,.21,.43)]
+ for rx,ry,z in rings:
+  for i in range(sides+1):
+   ang=math.radians(57)+math.radians(246)*i/sides
+   hem=1+(.025*math.sin(i*2.3) if z<.5 else 0)
+   verts.append((rx*math.sin(ang)*hem,-.005+ry*math.cos(ang)*hem,z))
+ faces=[]
+ for r in range(2):
+  for i in range(sides):faces.append((r*(sides+1)+i,r*(sides+1)+i+1,(r+1)*(sides+1)+i+1,(r+1)*(sides+1)+i))
+ data=bpy.data.meshes.new(ident+' tailored coat shell');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
+ for poly in data.polygons:
+  poly.use_smooth=True
+  for li in poly.loop_indices:
+   v=data.vertices[data.loops[li].vertex_index].co
+   angle=(math.atan2(v.x,v.y+.005)-math.radians(57))/math.radians(246)
+   uv.data[li].uv=(angle,(v.z-.43)/.78)
+ obj=bpy.data.objects.new(ident+' long coat shell',data);scene.collection.objects.link(obj);child(parent,obj)
+
+def named_drop(parent):
+ verts=[(0,0,.06),(-.035,0,.005),(0,-.008,-.055),(.035,0,.005),(0,.018,.005)]
+ faces=[(0,1,4),(0,4,3),(1,2,4),(4,2,3)]
+ data=bpy.data.meshes.new('Vane blue drop mesh');data.from_pydata(verts,[],faces);data.materials.append(vane_blue);uv=data.uv_layers.new(name='UVMap')
+ for poly in data.polygons:
+  for li in poly.loop_indices:
+   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x+0.05,v.z+0.06)
+ obj=bpy.data.objects.new('walker-vane blue drop',data);scene.collection.objects.link(obj);child(parent,obj)
+
+def trader_pack(parent,cloth):
+ sides=8;verts=[];rings=[(.13,.14,.0),(.19,.20,.18),(.15,.16,.40)]
+ for rx,ry,z in rings:
+  for i in range(sides):
+   angle=2*math.pi*i/sides;verts.append((rx*math.cos(angle),.24+ry*math.sin(angle),.84+z))
+ faces=[]
+ for r in range(2):
+  for i in range(sides):faces.append((r*sides+i,r*sides+(i+1)%sides,(r+1)*sides+(i+1)%sides,(r+1)*sides+i))
+ faces.extend([tuple(reversed(range(sides))),tuple(range(2*sides,3*sides))])
+ data=bpy.data.meshes.new('Trader pack mesh');data.from_pydata(verts,[],faces);data.materials.append(cloth);uv=data.uv_layers.new(name='UVMap')
+ for poly in data.polygons:
+  for li in poly.loop_indices:
+   v=data.vertices[data.loops[li].vertex_index].co;uv.data[li].uv=(v.x+.2,v.z-.84)
+ obj=bpy.data.objects.new('walker-trader pack main',data);scene.collection.objects.link(obj);child(parent,obj)
+
+def build(spec):
+ ident,donor,outfit,hatkind=spec;is_kid='kid' in ident;height=1.30 if is_kid else 1.70
+ source=bpy.data.objects.new(ident+' donor source',donor_templates[donor].copy());scene.collection.objects.link(source)
+ bpy.ops.object.select_all(action='DESELECT');source.select_set(True);bpy.context.view_layer.objects.active=source
+ source.data.calc_loop_triangles();initial=len(source.data.loop_triangles)
+ dec=source.modifiers.new('Preserve human silhouette under town budget','DECIMATE');dec.ratio=220/initial;dec.use_collapse_triangulate=True
+ bpy.ops.object.modifier_apply(modifier=dec.name);source.data.calc_loop_triangles()
+ factor=height/max(v.co.z for v in source.data.vertices)
+ for v in source.data.vertices:
+  if is_kid:
+   # Children have shorter legs, a compressed torso and a slightly larger head.
+   z=v.co.z
+   if z<.93:v.co.z*=.70
+   elif z<1.48:v.co.z=.651+(z-.93)*.84
+   else:v.co.z=.651+.55*.84+(z-1.48)*1.12
+  v.co*=factor
+ source.data.update()
+ bpy.ops.object.select_all(action='DESELECT');source.select_set(True);bpy.context.view_layer.objects.active=source
+ bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(island_margin=.02);bpy.ops.object.mode_set(mode='OBJECT')
+ source.data.uv_layers.active.name='UVMap'
+ actor=bpy.data.objects.new(ident,None);scene.collection.objects.link(actor);actor.parent=root_obj;actor['height_m']=height;actor['source']='Quaternius Universal Base Characters, Standard (CC0)'
+ assign_photo_cloth(source,ident)
+ # Classify the decimated donor surface into a head, an upper body, and two legs.
+ hip=height*.51
+ upper=[];legs=[[],[]]
+ for poly in source.data.polygons:
+  center=poly.center;z=center.z
+  if z<hip:legs[0 if center.x<0 else 1].append(poly)
+  else:upper.append(poly)
+ legparts=[]
+ for index,label in enumerate(('leg-l','leg-r')):
+  pivot=bpy.data.objects.new(ident+':'+label,None);scene.collection.objects.link(pivot);child(actor,pivot)
+  pivot.location=( (-.105 if index==0 else .105),0,hip);pivot['swing_axis']='X'
+  obj=mesh_subset(source,ident+' articulated '+label,legs[index],origin=tuple(pivot.location),material_overrides=source.data.materials);child(pivot,obj);legparts.append(obj)
+ body=mesh_subset(source,ident+' donor body',upper,material_overrides=source.data.materials);child(actor,body)
+ # Keep the donor's complete head joined to its shoulders. A small shaded face
+ # insert is a separate adjustable part and stays within the head-node budget.
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=4,radius=1,location=(0,-.095,height*.90))
+ head=bpy.context.object;head.name=ident+' head';head.scale=(.075,.025,.10)
+ bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ head.data.materials.append(skin_mat);head.data.uv_layers.active.name='UVMap' if head.data.uv_layers.active else None;child(actor,head)
+ bpy.data.objects.remove(source,do_unlink=True)
+ # Custom outfit markups stay within the body budget; shells follow cloth rather than cube primitives.
+ fabric=next(m for m in body.data.materials if m and m.name.startswith(ident+' worn'))
+ if outfit in ('coat','long-coat','dust-coat','guard-coat','layered-coat','short-coat'):
+  coat_shell(actor,ident,fabric)
+ hat(actor,ident,hatkind,fabric)
+ if ident=='walker-trader':trader_pack(actor,fabric)
+ if ident=='walker-vane':named_drop(actor)
+ triangles=0
+ for ob in actor.children_recursive:
+  if ob.type=='MESH':ob.data.calc_loop_triangles();triangles+=len(ob.data.loop_triangles)
+ if triangles>450:raise RuntimeError(f'{ident}: {triangles} triangles exceeds 450')
+ actor['triangle_count']=triangles
+ for ob in actor.children_recursive:
+  if ob.type=='MESH' and ob.data.uv_layers.active:ob.data.uv_layers.active.name='UVMap'
+ print('WALKER',ident,'triangles',triangles,'height',height)
+ return actor
+
+donor_templates={}
+for donor in sorted({spec[1] for spec in SPECS}):
+ bpy.ops.import_scene.gltf(filepath=str(root/'public/assets/heli/people'/f'{donor}.glb'))
+ imported=next(o for o in bpy.context.selected_objects if o.type=='MESH')
+ bpy.ops.object.select_all(action='DESELECT');imported.select_set(True);bpy.context.view_layer.objects.active=imported
+ bpy.ops.object.transform_apply(location=True,rotation=True,scale=True)
+ donor_templates[donor]=imported.data.copy()
+ bpy.data.objects.remove(imported,do_unlink=True)
+scene=bpy.context.scene
+vane_blue=bpy.data.materials.new('Mrs Vane chipped blue workwear mark');vane_blue.diffuse_color=(.10,.24,.30,1);vane_blue.use_nodes=True
+vane_blue.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.10,.24,.30,1)
+vane_blue.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=0
+skin_mat=bpy.data.materials.new('Muted dusty skin under shade');skin_mat.diffuse_color=(.24,.18,.13,1);skin_mat.use_nodes=True
+skin_bs=skin_mat.node_tree.nodes.get('Principled BSDF');skin_bs.inputs['Base Color'].default_value=(.24,.18,.13,1);skin_bs.inputs['Roughness'].default_value=.96
+root_obj=bpy.data.objects.new('town-walkers',None);scene.collection.objects.link(root_obj);root_obj.empty_display_type='PLAIN_AXES'
+actors=[build(spec) for spec in SPECS]
+
+def setup_scene():
+ scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1200;scene.render.resolution_y=850;scene.render.resolution_percentage=100
+ scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.world=bpy.data.worlds.new('bright overcast')
+ scene.world.color=(.48,.49,.50)
+ for loc,power,size in [((0,-4,5),650,5),((4,1,3),260,4),((-3,2,4),320,3)]:
+  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
+  light.rotation_euler=(Vector((0,0,1))-light.location).to_track_quat('-Z','Y').to_euler()
+ bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.02));ground=bpy.context.object;ground.name='mid grey-brown dirt'
+ ground.data.materials.append(bpy.data.materials.new('mid grey-brown dirt'))
+ ground.data.materials[0].diffuse_color=(.24,.22,.19,1)
+ ground.data.materials[0].use_nodes=True;ground.data.materials[0].node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.24,.22,.19,1)
+ return scene
+
+def camera(scene,loc,target,lens):
+ bpy.ops.object.camera_add(location=loc);cam=bpy.context.object;cam.data.lens=lens;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
+
+def render_sheet_views():
+ if not a.render:return
+ render.mkdir(parents=True,exist_ok=True)
+ # Every look view follows the exported GLB, imported into an empty scene.
+ bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene;bpy.ops.import_scene.gltf(filepath=str(out));setup_scene()
+ targets=[o for o in scene.objects if o.type=='MESH']
+ for ob in targets:ob.hide_render=not ob.name.startswith('walker-a ')
+ camera(scene,(2.4,-3.5,2.3),(0,0,.86),55);scene.render.filepath=str(render/'walker-a-three-quarter.png');bpy.ops.render.render(write_still=True)
+ for ob in targets:ob.hide_render=False
+ # Row of all thirteen separately, filling frame.
+ actors2=[o for o in scene.objects if o.type=='EMPTY' and o.name.startswith('walker-') and ':' not in o.name]
+ for i,actor in enumerate(actors2):actor.location.x=(i-6)*.53
+ scene.render.resolution_x=2200;scene.render.resolution_y=700
+ camera(scene,(0,-8,3.5),(0,0,.65),30);scene.render.filepath=str(render/'family-row.png');bpy.ops.render.render(write_still=True)
+ # Crowd view from the mayor's height, 40 instances from the exported family.
+ bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene;bpy.ops.import_scene.gltf(filepath=str(out));setup_scene()
+ family=[o for o in scene.objects if o.type=='EMPTY' and o.name.startswith('walker-') and ':' not in o.name]
+ sources={o.name:o for o in family};
+ def duplicate_person(source,offset,rotation):
+  originals=[]
+  def walk(obj):
+   originals.append(obj)
+   for child_obj in obj.children:walk(child_obj)
+  walk(source);copies={}
+  for obj in originals:
+   duplicate=obj.copy()
+   if obj.data:duplicate.data=obj.data.copy()
+   scene.collection.objects.link(duplicate);copies[obj]=duplicate
+  for obj,duplicate in copies.items():
+   if obj.parent in copies:duplicate.parent=copies[obj.parent]
+  root_copy=copies[source];root_copy.location=offset;root_copy.rotation_euler.z=rotation
+ for i in range(40):
+  source=sources[SPECS[i%len(SPECS)][0]]
+  duplicate_person(source,((i%8-3.5)*.85,(i//8)*.85,0),((i*7)%11)*.12)
+ camera(scene,(0,-15,5),(0,0,0),42);scene.render.resolution_x=1400;scene.render.resolution_y=900
+ scene.render.filepath=str(render/'crowd-40.png');bpy.ops.render.render(write_still=True)
+
+out.parent.mkdir(parents=True,exist_ok=True)
+bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=False,export_yup=True,export_apply=True,export_materials='EXPORT',export_image_format='JPEG',export_image_quality=84)
+bpy.ops.wm.save_as_mainfile(filepath=str(blend));render_sheet_views()
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'blend':str(blend)}))

@@ -1,4 +1,4 @@
-﻿# Town home texture credits
+# Town home texture credits
 
 The generated source pictures remain outside the repository. Every material uses its own repeating picture; the exported GLB embeds 15 separate JPEGs at or below 256 × 256 so the family stays under 3 MB without an atlas.
 
@@ -139,3 +139,7 @@ compression, no green plants. Neutral diffuse overcast daylight, camera
 perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
+
+## Town walker photo cloth (TOWN-ART-WALKERS)
+
+`walker-coat-reference.jpg` is a crop from the generated photographic reference used on the first town walker sheet. OpenAI ImageGen, 5 November 2026. Prompt: documentary-style full-body photograph of an adult survivor in a worn patched dust coat and work overalls, standing on dusty ground in bright overcast daylight; muted brown fabric, visible repairs, natural human proportions. The original full-size source is not retained. `walker-*-cloth.jpg` are 256 px crops derived from that coat patch and gently tinted for each outfit. They are the only walker textile pictures; the model recipe uses each image on its corresponding reduced Quaternius body.
