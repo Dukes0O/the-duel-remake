@@ -226,12 +226,21 @@ def build_platform():
 
 def build_pan():
     walls = Mesh()
-    wall_mats = {'wall': salt_wall.material()}
+    wall_material = salt_wall.material()
+    shader = wall_material.node_tree.nodes.get('Principled BSDF')
+    image_node = next(node for node in wall_material.node_tree.nodes if node.type == 'TEX_IMAGE')
+    shade = wall_material.node_tree.nodes.new('ShaderNodeMixRGB')
+    shade.blend_type = 'MULTIPLY'
+    shade.inputs[0].default_value = 1
+    shade.inputs[2].default_value = (.70, .68, .63, 1)
+    wall_material.node_tree.links.new(image_node.outputs['Color'], shade.inputs[1])
+    wall_material.node_tree.links.new(shade.outputs[0], shader.inputs['Base Color'])
+    wall_mats = {'wall': wall_material}
     # A 30 m square rim with 40 cm salt-crusted walls. The inset top remains
     # open so the cracked natural salt reads as a pan, not a white box.
     half = 15
     y0, y1 = 0, .4
-    t = .38
+    t = .40
     wall_rect = (0, 0, 1024, 341)
     for z in (-half + t / 2, half - t / 2):
         box(walls, -half, half, y0, y1, z - t / 2, z + t / 2, {
@@ -248,14 +257,13 @@ def build_pan():
 
     # A modestly uneven crust follows true-size two-metre texture repeats.
     nx = nz = 80
-    verts, faces, uvs = [], [], []
+    verts, faces = [], []
     for i in range(nx + 1):
         x = -half + 2 * half * i / nx
         for j in range(nz + 1):
             z = -half + 2 * half * j / nz
             lift = .014 * math.sin(x * .81 + z * .24) * math.sin(z * .63 - x * .12)
             verts.append((x, .405 + lift, z))
-            uvs.append((x / 2, z / 2))
     for i in range(nx):
         for j in range(nz):
             a = i * (nz + 1) + j
@@ -265,8 +273,18 @@ def build_pan():
     mesh_data.from_pydata([town.game_vector(vertex) for vertex in verts], [], faces)
     uv_layer = mesh_data.uv_layers.new(name='UVMap')
     for poly in mesh_data.polygons:
+        centre_x = sum(mesh_data.vertices[mesh_data.loops[i].vertex_index].co.x for i in poly.loop_indices) / len(poly.loop_indices)
+        centre_z = sum(mesh_data.vertices[mesh_data.loops[i].vertex_index].co.y for i in poly.loop_indices) / len(poly.loop_indices)
+        tile_x = math.floor((centre_x + half) / 12)
+        tile_z = math.floor((centre_z + half) / 12)
+        rotate = (tile_x + tile_z) % 2 == 1
         for loop_index in poly.loop_indices:
-            uv_layer.data[loop_index].uv = uvs[mesh_data.loops[loop_index].vertex_index]
+            vertex = mesh_data.vertices[mesh_data.loops[loop_index].vertex_index].co
+            u = (vertex.x + half) / 12 - tile_x
+            v = (vertex.y + half) / 12 - tile_z
+            if rotate:
+                u, v = 1 - v, u
+            uv_layer.data[loop_index].uv = (u, v)
         poly.use_smooth = True
     mesh_data.materials.append(surface_material)
     mesh_data.update()
