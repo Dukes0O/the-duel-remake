@@ -68,13 +68,15 @@ export function applyHoseFire(town,buildingId,litres) {
 }
 
 export function stepTownFire({town,rng,tick,calendar}) {
+  const weatherWind=Number.isFinite(town.weather?.windFactor)?town.weather.windFactor:1;
   const active=town.buildings.filter(building=>building.fireStage);
   if(active.length) {
-    const wind=SEASON_WIND[calendar.season]||0.8;
+    const wind=(SEASON_WIND[calendar.season]||0.8)*weatherWind;
     const day=(calendar.year-1)*360+(calendar.month-1)*30+calendar.day;
     if(town.fireWindDay!==day) {
       town.fireWindDay=day;
-      town.fireWindDirection=rng.int(0,3);
+      town.fireWindDirection=Number.isFinite(town.weather?.windDirection)
+        ?Math.floor((town.weather.windDirection+45)/90)%4:rng.int(0,3);
     }
     const direction=town.fireWindDirection;
     const offsets=[[1,0],[0,1],[-1,0],[0,-1]];
