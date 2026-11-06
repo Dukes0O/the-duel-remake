@@ -38,6 +38,8 @@ export const CAREER_KEYS = Object.freeze([
 const JSON_KEYS = new Set([PROFILE_KEY, PLAYERS_KEY, LEADERBOARD_KEY, GHOST_KEY, LEGACY_SHARED_BEST_KEY]);
 const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const has = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+const careerStringify = value => JSON.stringify(value, (_key, item) => typeof item === 'bigint' ? { $townBigInt: String(item) } : item, 2);
+const careerParse = text => JSON.parse(text, (_key, item) => item && typeof item === 'object' && Object.keys(item).length === 1 && typeof item.$townBigInt === 'string' ? BigInt(item.$townBigInt) : item);
 function sameEntries(left, right) {
   const keys = Object.keys(left);
   return keys.length === Object.keys(right).length && keys.every(key => has(right, key) && left[key] === right[key]);
@@ -217,7 +219,7 @@ export async function createCompleteCareerExport(storage, store=createIndexedDbB
   if(!pointer){
     const townRecords=await towns.store.towns(townIds);
     if(townRecords.some((record,index)=>!record||record.id!==townIds[index]))throw new Error('A saved town could not be read. No partial export was made.');
-    return JSON.stringify({format:CAREER_FORMAT,version:1,exportedAt:now().toISOString(),entries,townRecords},null,2);
+    return careerStringify({format:CAREER_FORMAT,version:1,exportedAt:now().toISOString(),entries,townRecords});
   }
   const archives=await store.load(pointer.id);
   if(!archives||archives.id!==pointer.id||!Array.isArray(archives.leaderboardRows)||!Array.isArray(archives.ghostRows)){
@@ -227,11 +229,11 @@ export async function createCompleteCareerExport(storage, store=createIndexedDbB
   if(!townIds.length)return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives},null,2);
   const townRecords=await towns.store.towns(townIds);
   if(townRecords.some((record,index)=>!record||record.id!==townIds[index]))throw new Error('A saved town could not be read. No partial export was made.');
-  return JSON.stringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives,townRecords},null,2);
+  return careerStringify({format:CAREER_FORMAT,version:2,exportedAt:now().toISOString(),entries,archives,townRecords});
 }
 export function parseCareerExport(text) {
   let archive;
-  try { archive = JSON.parse(text); } catch { throw new Error('This is not a valid JSON career file.'); }
+  try { archive = careerParse(text); } catch { throw new Error('This is not a valid JSON career file.'); }
   if (!isObject(archive) || archive.format !== CAREER_FORMAT || ![1,2].includes(archive.version) ||
     typeof archive.exportedAt !== 'string' || !Number.isFinite(Date.parse(archive.exportedAt))) {
     throw new Error('This career file format is unsupported.');
@@ -264,6 +266,16 @@ export function parseCareerExport(text) {
   if (archive.townRecords !== undefined && (!Array.isArray(archive.townRecords) ||
     archive.townRecords.some(record => record?.id !== record?.town?.id || !Array.isArray(record?.town?.mayors)))) {
     throw new Error('The complete career contains invalid town saves.');
+  }
+  if (has(archive.entries, TOWN_POINTER_KEY)) {
+    let townPointer;
+    try { townPointer = JSON.parse(archive.entries[TOWN_POINTER_KEY]); } catch { throw new Error('The complete career has an invalid town pointer.'); }
+    const townIds = archive.townRecords?.map(record => record.id) ?? [];
+    if (townPointer?.version !== 1 || !Array.isArray(townPointer.ids) ||
+      new Set(townPointer.ids).size !== townPointer.ids.length || new Set(townIds).size !== townIds.length ||
+      townPointer.ids.length !== townIds.length || townPointer.ids.some(id => !townIds.includes(id))) {
+      throw new Error('The complete career is missing one or more saved towns.');
+    }
   }
   return archive;
 }
@@ -330,7 +342,7 @@ export async function backupCareer(storage, backupStore = createIndexedDbBackupS
   const record = { id, reason, createdAt: now().toISOString(), entries, archives, townRecords, townWarning };
   await backupStore.save(record);
   const saved = await backupStore.load(id);
-  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives) || JSON.stringify(saved.townRecords)!==JSON.stringify(townRecords) || saved.townWarning!==townWarning) throw new Error('The career backup could not be verified.');
+  if (!saved || !isObject(saved.entries) || !sameEntries(saved.entries, entries) || JSON.stringify(saved.archives)!==JSON.stringify(archives) || careerStringify(saved.townRecords)!==careerStringify(townRecords) || saved.townWarning!==townWarning) throw new Error('The career backup could not be verified.');
   return record;
 }
 export async function retireSharedBest(storage, backupStore = createIndexedDbBackupStore()) {
