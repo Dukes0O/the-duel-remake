@@ -417,7 +417,7 @@ ground.hide_render=False
 for members in groups.values():
     for obj in members: obj.hide_render=False
 scene.render.resolution_x, scene.render.resolution_y = 1800, 700
-camera.data.type='PERSP'; camera.data.lens=40
-cam((-7.5,1.5,24),(-7.5,.9,-4.2))
+camera.data.type='PERSP'; camera.data.lens=45
+cam((-23.5,1.5,24),(-7.5,-1.5,-4.2))
 scene.render.filepath=str(render_dir/'lineup.png')
 bpy.ops.render.render(write_still=True)
