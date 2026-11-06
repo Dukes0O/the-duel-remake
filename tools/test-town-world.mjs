@@ -35,13 +35,27 @@ test('Scablands town layout adds road ground and a car collider, then clears cle
   setScablandsTownLayout(layout);
   assert.equal(scablandsSurfaceAt(230,150).road,true);
   const buildingX=(x+1)*8,buildingZ=(z+1.5)*8;
-  const solid=course.obstaclesNear(course.nearest(buildingX,buildingZ).s).find(item=>item.id==='hall');
+  const solid=course.obstaclesNear(course.nearest(buildingX,buildingZ).s,undefined,layout).find(item=>item.id==='hall');
   assert.ok(solid,'building is visible to the native course obstacle query');
   assert.ok(sweepObstacle({x:solid.x-20,y:solid.y,z:solid.z},{x:solid.x,y:solid.y,z:solid.z},solid,0,{height:1.5}),
     'the native car sweep collides with the town building');
   clearScablandsTownLayout();
   assert.equal(scablandsSurfaceAt(0,0).road,false);
   assert.equal(course.obstaclesNear(0).length,untouched);
+});
+
+test('town collision uses the job layout and finds buildings spanning multiple cells',()=>{
+  const course=new Course(ARENA_VENUES.scablands,1989),point=course.worldAt(300);
+  const wide={id:'wide-hall',x:point.x+16,y:point.y,z:point.z,heading:0,halfX:16,halfZ:12,height:8,shape:'box'};
+  const layoutA={solids:[wide],roads:[],walkers:[]},layoutB={solids:[],roads:[],walkers:[]};
+  setScablandsTownLayout(layoutB);
+  const queryS=course.nearest(point.x,point.z).s;
+  const hit=course.obstaclesNear(queryS,queryS,layoutA).filter(obstacle=>obstacle.id==='wide-hall');
+  assert.equal(hit.length,1,'the solid is returned once even when its footprint spans several cells');
+  assert.ok(hit[0],'the indexed footprint reaches the query at the building edge');
+  assert.equal(course.obstaclesNear(queryS,queryS,layoutB).some(obstacle=>obstacle.id==='wide-hall'),false,
+    'an active global town cannot replace the replay job layout');
+  clearScablandsTownLayout();
 });
 
 test('a town drive remains open ended and repeatable from seed and layout', () => {

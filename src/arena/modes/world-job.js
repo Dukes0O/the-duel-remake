@@ -31,6 +31,7 @@ export function initializeWorldJob(duel, definition) {
   worldJob.originalFootWeaponSelected = state.footWeapons?.selected ?? null;
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
+  if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   state.worldJobThingsHit = [];
@@ -50,7 +51,11 @@ export function cleanupWorldJobLoan(duel) {
   if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)
     duel.state.footWeapons.selected = worldJob.originalFootWeaponSelected;
   initializeCrewGear(duel);
-  if(worldJob.definition.kind==='town-drive')clearScablandsTownLayout();
+  if(worldJob.definition.kind==='town-drive'){
+    clearScablandsTownLayout();
+    duel.course.townLayout=null;
+    duel._obstacleQueryCache?.clear();
+  }
   worldJob.activeLoan = null;
   worldJob.settled = true;
   return true;
