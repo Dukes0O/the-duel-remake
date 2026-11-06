@@ -71,7 +71,14 @@ def silhouette_prop(name, filename, description, axis, target, depth):
     photo.image_w, photo.image_h = photo.image.size
     photo._rgb = None
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
-    solid = shrink(tidy(~photo.sky(seeds, tolerance=20, grey=26), passes=2), passes=1)
+    if name in ('case-books', 'case-teeth', 'case-megaphone', 'case-hollis'):
+        # Pull the photo shadow off the silhouette, then bleed subject colour
+        # beyond the new edge so filtering cannot bring the pale fringe back.
+        outline_shrink = 5
+    else:
+        outline_shrink = 1
+    solid = shrink(tidy(~photo.sky(seeds, tolerance=20, grey=26), passes=2),
+                   passes=outline_shrink)
     rows = np.minimum((np.arange(photo.image_h) * solid.shape[0] / photo.image_h).astype(int), solid.shape[0] - 1)
     cols = np.minimum((np.arange(photo.image_w) * solid.shape[1] / photo.image_w).astype(int), solid.shape[1] - 1)
     photo.bleed(solid[rows][:, cols], passes=18)
