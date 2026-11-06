@@ -5,7 +5,7 @@
 - Added pure town apprentice APIs to start and update a teaching session from a recorded machine demo, save learned rate and accuracy, gate delegation by learned job kind, improve skill through use, and allow a skilled apprentice to teach another person.
 - Added stepped delegated work through the existing work-order path. Each returned progress step carries the accuracy for the ground edit.
 - Exported the APIs from the town module entry point. Town apprenticeship records and the Book entry are stored on the town object.
-- Settled the missing live-demo callback as recorded on the card under “Codex decided (Claude to review).”
+- Settled the missing live-demo callback as recorded on the card under "Codex decided (Claude to review)."
 
 ## Checks
 
