@@ -8,6 +8,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--round', type=int, default=1)
+parser.add_argument('--stage', choices=('patience', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
@@ -21,6 +22,7 @@ inputs = {
     'weathered-plank': tex / 'dam-gatehouse-stone.jpg',
 }
 photos = {name: tex / f'{name}.jpg' for name in ('ships-hull-photo', 'lighthouse-stone-photo', 'pilot-boat-photo')}
+photos['ships-hull-photo'] = tex / 'patience-hull-projection.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(root / 'art-build/wasteland-ships/ships.blend')],
                       'glb': [str(out)], 'evidence': [str(raw)], 'summary': [str(sheet)]}))
@@ -164,23 +166,32 @@ def torus(name,center,major,minor,material,part,axis='Y',major_segments=24,minor
 def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     length,width,deck,keel=dimensions
     # Closed ship section: full submerged keel for the later floating scene.
-    stations=[(-.50,.42),(-.43,.82),(-.30,1.0),(.20,1.0),(.40,.96),(.48,.82),(.50,.56)]
+    # A narrow counter and sharp, flared bow grow into a full-length bilge.
+    # The dense stations keep the long photographed plate following the hull,
+    # instead of reading as a flat strip laid over a simple block.
+    stations=[(-.50,.28),(-.47,.54),(-.42,.76),(-.36,.90),(-.28,.98),(-.16,1.0),
+              (0,.99),(.16,.98),(.29,.95),(.37,.92),(.43,.87),(.47,.77),(.50,.59)]
     rings=[]
     for t,breadth in stations:
         x=t*length
         top=deck-(abs(t)**4)*1.4
-        ring=[(x,top,-width*breadth*.44),(x,top,width*breadth*.44),
-              (x,deck-2.2,width*breadth*.40),(x,deck-4.7,width*breadth*.25),(x,keel,0),
-              (x,deck-4.7,-width*breadth*.25),(x,deck-2.2,-width*breadth*.40)]
+        # Crown the deck, flare the sheer at the bow, then roll the bilge in
+        # through four real chine bands to the keel.
+        flare=1.0 + max(0,t)*.13
+        ring=[(x,top,-width*breadth*.47*flare),(x,top,width*breadth*.47*flare),
+              (x,deck-1.0,width*breadth*.45*flare),(x,deck-2.4,width*breadth*.40),
+              (x,deck-4.2,width*breadth*.31),(x,deck-6.0,width*breadth*.19),
+              (x,keel,0),(x,deck-6.0,-width*breadth*.19),(x,deck-4.2,-width*breadth*.31),
+              (x,deck-2.4,-width*breadth*.40),(x,deck-1.0,-width*breadth*.45*flare)]
         rings.append(ring)
-    section_size=7
+    section_size=11
     verts=[gv(v) for ring in rings for v in ring]
     faces=[]; material_ids=[]
     for i in range(len(rings)-1):
         for j in range(section_size):
             faces.append((i*section_size+j,i*section_size+(j+1)%section_size,
                           (i+1)*section_size+(j+1)%section_size,(i+1)*section_size+j))
-            material_ids.append(0 if j==0 else (1 if j in (1,2,5,6) else 2))
+            material_ids.append(1 if j in (1,2,3,4,7,8,9,10) else (0 if j==0 else 2))
     faces.extend([tuple(range(section_size-1,-1,-1)),
                   tuple((len(rings)-1)*section_size+j for j in range(section_size))]); material_ids.extend((2,2))
     mesh=bpy.data.meshes.new(name+' welded hull'); mesh.from_pydata(verts,[],faces)
@@ -202,31 +213,30 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
     deck_mesh=cube(name+'-weather-deck',(0,deck-.18,0),(length*.83,.36,width*.72),steel,root.name,.12)
     parent(deck_mesh,root)
-    # Patch plates sit over the photo paint and catch daylight on their raised seams.
-    for index,(x,y,w,h) in enumerate(((-24,deck-2.2,4.8,2.1),(-12,deck-5.1,5.4,1.5),(6,deck-3.7,5.8,2.4),(25,deck-1.9,4.5,2.0))):
-        for side in (-1,1):
-            plate=cube(f'{name}-renewal-patch-{index}-{side}',(x,y,side*width*.444),(w,h,.055),steel,root.name,.025)
-            parent(plate,root)
-            for k in range(5):
-                rivet=cylinder(f'{name}-patch-rivet-{index}-{side}-{k}',(x-w*.4+k*w*.2,y-h*.38,side*(width*.444+.04)),.045,.07,iron,root.name,8,'Z')
-                parent(rivet,root)
+    # The projection carries repair patches and seam wear; avoid floating
+    # overlays that hide the hull's curve.
     # Text on the bow, in large, readable weathered paint.
     if side_label:
-        label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.28; label.resolution_u=3; label.bevel_resolution=1; label.extrude=.008; label.bevel_depth=.004
+        label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.5; label.resolution_u=3; label.bevel_resolution=1; label.extrude=.008; label.bevel_depth=.004
         for side in (-1,1):
             obj=bpy.data.objects.new(name+' bow name '+str(side),label); scene.collection.objects.link(obj)
-            obj.location=gv((length*.30,deck-2.05,side*(width*.448)))
+            obj.location=gv((length*.37,deck-2.05,side*(width*.448)))
             obj.rotation_euler=(math.pi/2 if side>0 else -math.pi/2,0,0)
             label.materials.clear(); label.materials.append(name_paint)
             obj['part']=root.name; parent(obj,root)
-    # Three genuinely walkable deck levels with narrow ladders between them.
-    for level,height in enumerate((deck,deck+3.2,deck+6.3)):
-        for side in (-1,1):
-            walkway=cube(f'{name}-walkway-{level}-{side}',(0,height,-side*width*.16),(length*.66,.20,width*.15),wood,root.name,.05)
-            parent(walkway,root)
-            rail(f'{name}-guardrail-{level}-{side}',(-length*.28,height+.85,-side*width*.24),(length*.28,height+.85,-side*width*.24),.055,iron,root.name)
+    # A single heavy working deck at the story datum, with a raised foredeck.
+    # The source's upperworks are built as a chart room and mast, not repeated
+    # floating slabs that make the hull read like a model ship.
+    forecastle=cube(name+'-raised-forecastle',(length*.31,deck+.55,0),(length*.28,.34,width*.62),steel,root.name,.09)
+    parent(forecastle,root)
     for side in (-1,1):
-        for low,high,x in ((-1.8,deck,-length*.13),(deck,deck+3.2,-length*.05),(deck+3.2,deck+6.3,length*.02)):
+        rail(name+'-main-deck-rail',(-length*.40,deck+.92,side*width*.34),(length*.25,deck+.92,side*width*.34),.055,iron,root.name)
+        for i in range(8):
+            x=-length*.39+i*length*.08
+            post=beam(f'{name}-rail-stanchion-{side}-{i}',(x,deck,side*width*.34),(x,deck+.92,side*width*.34),.07,steel,root.name)
+            parent(post,root)
+    for side in (-1,1):
+        for low,high,x in ((-1.8,deck,-length*.13),):
             z=side*width*.29
             for dx in (-.35,.35): beam(f'{name}-ladder-rail-{side}-{low}-{dx}',(x+dx,low,z),(x+dx,high,z),.065,steel,root.name)
             for k in range(1,round((high-low)/.34)):
@@ -246,6 +256,8 @@ ships=[
     ('ship-marigold',(45,-440),'MARIGOLD',67,15,5.0,-8.8,-0.09),
     ('ship-patience',(5,-470),'PATIENCE',74,16,5.0,-9.1,0.07),
 ]
+if args.stage == 'patience':
+    ships=[ship for ship in ships if ship[0]=='ship-patience']
 roots={}
 for ident,loc,label,length,width,deck,keel,lean in ships:
     r=root_obj(ident,(loc[0]+22,0,loc[1]),ident); roots[ident]=r
@@ -298,96 +310,113 @@ bell=cylinder('patience-bell-metal',(mastx,platform_y+1.15,mastz),.42,.7,steel,'
 clapper=beam('patience-bell-clapper',(mastx,platform_y+.72,mastz),(mastx,platform_y+.26,mastz),.10,iron,'ship-patience:bell')
 for o in (bell,clapper): parent(o,bell_root)
 
-# The lighthouse is a tapered, photo-projected tower, with access at all three story landings.
-light_root=root_obj('lighthouse',(170,0,-395),'lighthouse')
-N=48; verts=[]; faces=[]
-for level,(y,radius) in enumerate(((-2,5.6),(6,4.8),(14,4.0),(22,3.2),(25.3,3.0))):
-    for i in range(N):
-        a=i*2*math.pi/N
-        verts.append(gv((math.cos(a)*radius,y,math.sin(a)*radius)))
-for level in range(4):
-    for i in range(N): faces.append((level*N+i,level*N+(i+1)%N,(level+1)*N+(i+1)%N,(level+1)*N+i))
-mesh=bpy.data.meshes.new('lighthouse tapered masonry'); mesh.from_pydata(verts,[],faces); mesh.materials.append(stone_photo); mesh.materials.append(materials['weathered-plank']); mesh.update()
-tower=bpy.data.objects.new('lighthouse masonry tower',mesh); scene.collection.objects.link(tower); tower['part']='lighthouse'
-uv=mesh.uv_layers.new(name='Photographic front projection')
-for poly in mesh.polygons:
-    for li in poly.loop_indices:
-        vi=mesh.loops[li].vertex_index; level=vi//N; i=vi%N; x,y=math.cos(i*2*math.pi/N),math.sin(i*2*math.pi/N)
-        height=mesh.vertices[vi].co.z
-        angle=i*2*math.pi/N
-        if math.sin(angle)<-.62:
-            uv.data[li].uv=(.5+(x*5.8)/12.0,.02+((height+2)/27.3)*.94)
-            poly.material_index=0
-        else:
-            radius=((5.6,4.8,4.0,3.2,3.0)[level])
-            uv.data[li].uv=(angle*radius,.04+height/2)
-            poly.material_index=1
-parent(tower,light_root)
-for y,rad in ((8,4.9),(16,3.8),(24,3.05)):
-    floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad+.7,.28,steel,'lighthouse',48)
-    parent(floor,light_root)
-    for i in range(24):
-        a=i*2*math.pi/24
-        beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad+.55),y,math.sin(a)*(rad+.55)),(math.cos(a)*(rad+.55),y+.9,math.sin(a)*(rad+.55)),.055,iron,'lighthouse')
-for i in range(66):
-    y=-1.6+i*.38; a=-math.pi/2+i*.135; radius=4.8-(y+2)*.075
-    x,z=math.cos(a)*radius,math.sin(a)*radius
-    beam(f'lighthouse-spiral-stair-{i}',(x,y,z),(x+math.cos(a+.4)*1.0,y+.20,z+math.sin(a+.4)*1.0),.12,wood,'lighthouse',.8)
-door=cube('lighthouse:door',(0,0,-5.54),(1.8,2.8,.16),wood,'lighthouse',.1); parent(door,light_root)
-step=cube('lighthouse-swept-step',(0,-1.78,-6.1),(3.2,.25,1.1),steel,'lighthouse',.04); parent(step,light_root)
-# Bright drawings and a box on the requested interior landings.
-for i in range(5):
-    board=cube(f'lighthouse-gate-drawing-{i}',(-1.8+i*.75,9.2,-4.25),(.58,.76,.04),paint,'lighthouse',.02); parent(board,light_root)
-letters=cube('lighthouse-box-of-letters',(1.6,17,-3.15),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
-lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),1.9,2.7,glass,'lighthouse:lamp',40)
-for poly in lamp_mesh.data.polygons: poly.use_smooth=True
-lamp_root=root_obj('lighthouse:lamp',(0,0,0),'lighthouse:lamp'); parent(lamp_root,light_root); parent(lamp_mesh,lamp_root)
-for i in range(8):
-    a=i*math.pi/4
-    b=beam(f'lighthouse-lantern-mullion-{i}',(math.cos(a)*1.9,25.6,math.sin(a)*1.9),(math.cos(a)*1.9,28.4,math.sin(a)*1.9),.08,iron,'lighthouse:lamp')
-    parent(b,lamp_root)
-lightpart=root_obj('lighthouse:beam',(0,0,0),'lighthouse:beam'); parent(lightpart,light_root)
-beam_obj=cube('lighthouse rotating beam',(0,27.2,-5),(1.0,.16,44),lamp,'lighthouse:beam',.03); parent(beam_obj,lightpart)
+if args.stage == 'family':
+    # The lighthouse is a tapered, photo-projected tower, with access at all three story landings.
+    light_root=root_obj('lighthouse',(170,0,-395),'lighthouse')
+    N=48; verts=[]; faces=[]
+    for level,(y,radius) in enumerate(((-2,5.6),(6,4.8),(14,4.0),(22,3.2),(25.3,3.0))):
+        for i in range(N):
+            a=i*2*math.pi/N
+            verts.append(gv((math.cos(a)*radius,y,math.sin(a)*radius)))
+    for level in range(4):
+        for i in range(N): faces.append((level*N+i,level*N+(i+1)%N,(level+1)*N+(i+1)%N,(level+1)*N+i))
+    mesh=bpy.data.meshes.new('lighthouse tapered masonry'); mesh.from_pydata(verts,[],faces); mesh.materials.append(stone_photo); mesh.materials.append(materials['weathered-plank']); mesh.update()
+    tower=bpy.data.objects.new('lighthouse masonry tower',mesh); scene.collection.objects.link(tower); tower['part']='lighthouse'
+    uv=mesh.uv_layers.new(name='Photographic front projection')
+    for poly in mesh.polygons:
+        for li in poly.loop_indices:
+            vi=mesh.loops[li].vertex_index; level=vi//N; i=vi%N; x,y=math.cos(i*2*math.pi/N),math.sin(i*2*math.pi/N)
+            height=mesh.vertices[vi].co.z
+            angle=i*2*math.pi/N
+            if math.sin(angle)<-.62:
+                uv.data[li].uv=(.5+(x*5.8)/12.0,.02+((height+2)/27.3)*.94)
+                poly.material_index=0
+            else:
+                radius=((5.6,4.8,4.0,3.2,3.0)[level])
+                uv.data[li].uv=(angle*radius,.04+height/2)
+                poly.material_index=1
+    parent(tower,light_root)
+    for y,rad in ((8,4.9),(16,3.8),(24,3.05)):
+        floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad+.7,.28,steel,'lighthouse',48)
+        parent(floor,light_root)
+        for i in range(24):
+            a=i*2*math.pi/24
+            beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad+.55),y,math.sin(a)*(rad+.55)),(math.cos(a)*(rad+.55),y+.9,math.sin(a)*(rad+.55)),.055,iron,'lighthouse')
+    for i in range(66):
+        y=-1.6+i*.38; a=-math.pi/2+i*.135; radius=4.8-(y+2)*.075
+        x,z=math.cos(a)*radius,math.sin(a)*radius
+        beam(f'lighthouse-spiral-stair-{i}',(x,y,z),(x+math.cos(a+.4)*1.0,y+.20,z+math.sin(a+.4)*1.0),.12,wood,'lighthouse',.8)
+    door=cube('lighthouse:door',(0,0,-5.54),(1.8,2.8,.16),wood,'lighthouse',.1); parent(door,light_root)
+    step=cube('lighthouse-swept-step',(0,-1.78,-6.1),(3.2,.25,1.1),steel,'lighthouse',.04); parent(step,light_root)
+    # Bright drawings and a box on the requested interior landings.
+    for i in range(5):
+        board=cube(f'lighthouse-gate-drawing-{i}',(-1.8+i*.75,9.2,-4.25),(.58,.76,.04),paint,'lighthouse',.02); parent(board,light_root)
+    letters=cube('lighthouse-box-of-letters',(1.6,17,-3.15),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
+    lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),1.9,2.7,glass,'lighthouse:lamp',40)
+    for poly in lamp_mesh.data.polygons: poly.use_smooth=True
+    lamp_root=root_obj('lighthouse:lamp',(0,0,0),'lighthouse:lamp'); parent(lamp_root,light_root); parent(lamp_mesh,lamp_root)
+    for i in range(8):
+        a=i*math.pi/4
+        b=beam(f'lighthouse-lantern-mullion-{i}',(math.cos(a)*1.9,25.6,math.sin(a)*1.9),(math.cos(a)*1.9,28.4,math.sin(a)*1.9),.08,iron,'lighthouse:lamp')
+        parent(b,lamp_root)
+    lightpart=root_obj('lighthouse:beam',(0,0,0),'lighthouse:beam'); parent(lightpart,light_root)
+    beam_obj=cube('lighthouse rotating beam',(0,27.2,-5),(1.0,.16,44),lamp,'lighthouse:beam',.03); parent(beam_obj,lightpart)
 
-# The ridiculous forty-foot pilot boat remains a real, buoyant hull.
-boat=root_obj('pilot-boat',(230,-.8,-430),'pilot-boat')
-boat_dims=(12.2,3.9,2.5,-1.2)
-photo_hull('pilot-boat-floatable-hull',boat,(12.2,3.9,2.5,-1.2),pilot_photo,'')
-boat_hull=bpy.data.objects.get('pilot-boat-floatable-hull')
-# The hull projection crop uses the workboat profile; a pale upper strake keeps its shape readable.
-for side in (-1,1):
-    upper=cube(f'pilot-boat-sheer-strake-{side}',(0,1.7,side*1.62),(10.2,.20,.12),steel,'pilot-boat',.05); parent(upper,boat)
-    for i in range(7):
-        win=cube(f'pilot-boat-cabin-window-{side}-{i}',(-1.8+i*.6,3.05,side*1.41),(.42,.55,.06),glass,'pilot-boat',.04); parent(win,boat)
-house_vertices=[(-2.6,1.65,-1.5),(2.6,1.65,-1.5),(2.6,1.65,1.5),(-2.6,1.65,1.5),
-                (-2.2,3.65,-1.32),(2.0,3.65,-1.32),(2.0,3.65,1.32),(-2.2,3.65,1.32)]
-house_faces=[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
-house_mesh=bpy.data.meshes.new('sloped pilot-house panels'); house_mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); house_mesh.materials.append(boat_paint); house_mesh.update()
-cabin=bpy.data.objects.new('pilot-boat-pilot-house',house_mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
-roof=cube('pilot-boat-cabin-roof',(0,3.72,0),(5.7,.25,3.0),steel,'pilot-boat',.1); parent(roof,boat)
-for side in (-1,1):
-    beam(f'pilot-boat-rail-{side}',(-2.8,2.1,side*1.72),(3.8,2.1,side*1.72),.09,steel,'pilot-boat')
-windshield=cube('pilot-boat-forward-windscreen',(2.02,3.05,0),(.07,.78,2.25),glass,'pilot-boat',.06); parent(windshield,boat)
-# A heavy 14 m trailer with eight complete road wheels and spring packs.
-trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
-for z in (-1.45,1.45): beam(f'pilot-trailer-long-rail-{z}',(-8,.3,z),(7,.3,z),.28,rust,'pilot-boat')
-for x in (-6,-2,2,6): beam(f'pilot-trailer-crossmember-{x}',(x,.18,-1.55),(x,.18,1.55),.22,steel,'pilot-boat')
-hitch=beam('pilot-trailer-hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
-for side in (-1,1):
-    for i,x in enumerate((-4,-1,2,5)):
-        z=side*1.72
-        tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.14,z),.72,.24,iron,'pilot-boat','Z')
-        for k in range(8):
-            a=k*2*math.pi/8
-            lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.14+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
-        hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.14,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
-        for spring in range(3):
-            beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
+    # The ridiculous forty-foot pilot boat remains a real, buoyant hull.
+    boat=root_obj('pilot-boat',(230,-.8,-430),'pilot-boat')
+    boat_dims=(12.2,3.9,2.5,-1.2)
+    photo_hull('pilot-boat-floatable-hull',boat,(12.2,3.9,2.5,-1.2),pilot_photo,'')
+    boat_hull=bpy.data.objects.get('pilot-boat-floatable-hull')
+    # The hull projection crop uses the workboat profile; a pale upper strake keeps its shape readable.
+    for side in (-1,1):
+        upper=cube(f'pilot-boat-sheer-strake-{side}',(0,1.7,side*1.62),(10.2,.20,.12),steel,'pilot-boat',.05); parent(upper,boat)
+        for i in range(7):
+            win=cube(f'pilot-boat-cabin-window-{side}-{i}',(-1.8+i*.6,3.05,side*1.41),(.42,.55,.06),glass,'pilot-boat',.04); parent(win,boat)
+    house_vertices=[(-2.6,1.65,-1.5),(2.6,1.65,-1.5),(2.6,1.65,1.5),(-2.6,1.65,1.5),
+                    (-2.2,3.65,-1.32),(2.0,3.65,-1.32),(2.0,3.65,1.32),(-2.2,3.65,1.32)]
+    house_faces=[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
+    house_mesh=bpy.data.meshes.new('sloped pilot-house panels'); house_mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); house_mesh.materials.append(boat_paint); house_mesh.update()
+    cabin=bpy.data.objects.new('pilot-boat-pilot-house',house_mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
+    roof=cube('pilot-boat-cabin-roof',(0,3.72,0),(5.7,.25,3.0),steel,'pilot-boat',.1); parent(roof,boat)
+    for side in (-1,1):
+        beam(f'pilot-boat-rail-{side}',(-2.8,2.1,side*1.72),(3.8,2.1,side*1.72),.09,steel,'pilot-boat')
+    windshield=cube('pilot-boat-forward-windscreen',(2.02,3.05,0),(.07,.78,2.25),glass,'pilot-boat',.06); parent(windshield,boat)
+    # A heavy 14 m trailer with eight complete road wheels and spring packs.
+    trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
+    for z in (-1.45,1.45): beam(f'pilot-trailer-long-rail-{z}',(-8,.3,z),(7,.3,z),.28,rust,'pilot-boat')
+    for x in (-6,-2,2,6): beam(f'pilot-trailer-crossmember-{x}',(x,.18,-1.55),(x,.18,1.55),.22,steel,'pilot-boat')
+    hitch=beam('pilot-trailer-hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
+    for side in (-1,1):
+        for i,x in enumerate((-4,-1,2,5)):
+            z=side*1.72
+            tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.14,z),.72,.24,iron,'pilot-boat','Z')
+            for k in range(8):
+                a=k*2*math.pi/8
+                lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.14+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
+            hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.14,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
+            for spring in range(3):
+                beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
-for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15))):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=gv((x,-2.45,z)))
-    mound=bpy.context.object; mound.name=f'ship-place-spread-sand-{index}'; mound.scale=(rx,.42,rz); bpy.ops.object.transform_apply(location=False,rotation=False,scale=True); mound.data.materials.append(sand)
+for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ((5,-470,55,22),)):
+    # Blender Z is map-up. A low, irregular radial heap fades into the bed
+    # rather than ending as an oval slab at the hull.
+    import random
+    rng=random.Random(811+index)
+    segments=48; rings=8; verts=[gv((x,-1.78,z))]; faces=[]
+    for ring in range(1,rings+1):
+        r=ring/rings
+        for i in range(segments):
+            a=2*math.pi*i/segments; wobble=1+rng.uniform(-.055,.055)
+            rise=max(0,1.35*math.sin(math.pi*r)**.82+rng.uniform(-.035,.035)*(1-r))
+            verts.append(gv((x+math.cos(a)*rx*r*wobble,-2.95+rise,z+math.sin(a)*rz*r*wobble)))
+    for i in range(segments): faces.append((0,1+i,1+(i+1)%segments))
+    for ring in range(rings-1):
+        a0=1+ring*segments; a1=a0+segments
+        for i in range(segments):
+            j=(i+1)%segments; faces.append((a0+i,a1+i,a1+j,a0+j))
+    mesh=bpy.data.meshes.new(f'ship-place-spread-sand-{index} mesh'); mesh.from_pydata(verts,[],faces); mesh.materials.append(sand); mesh.update()
+    mound=bpy.data.objects.new(f'ship-place-spread-sand-{index}',mesh); scene.collection.objects.link(mound)
 
 # One export root holds every named story place while preserving map coordinates.
 world_root=root_obj('wasteland-ships-root',(0,0,0),'wasteland-ships')
@@ -445,9 +474,14 @@ def render_imported_review():
     review_ground.data.materials.append(review_material)
     # Render view and light objects are created only after GLB import.
     add_lighting()
-    targets=[((-23,8,-375),(-23,5,-415),18),((170,13,-425),(170,13,-395),24),((230,5,-390),(230,0,-430),90)]
-    view_sizes=((1600,320),(512,1024),(1536,512))
-    target_ids=(('ship-good-hope',),('lighthouse',),('pilot-boat','pilot-trailer','pilot-wheel','pilot-leaf','pilot-tyre'))
+    if args.stage == 'patience':
+        targets=[((27,10,-430),(27,7,-470),18)]
+        view_sizes=((1536,480),)
+        target_ids=(('ship-patience',),)
+    else:
+        targets=[((-23,8,-375),(-23,5,-415),18),((170,13,-425),(170,13,-395),24),((230,5,-390),(230,0,-430),90)]
+        view_sizes=((1600,320),(512,1024),(1536,512))
+        target_ids=(('ship-good-hope',),('lighthouse',),('pilot-boat','pilot-trailer','pilot-wheel','pilot-leaf','pilot-tyre'))
     for index,(loc,target,lens) in enumerate(targets):
         for obj in scene.objects:
             if obj.type=='MESH' and obj is not review_ground:
@@ -458,7 +492,8 @@ def render_imported_review():
     for obj in scene.objects:
         if obj.type=='MESH' and obj is not review_ground: obj.hide_render=False
     # Context at car height, 40 m away, and a top-down map view.
-    for index,(loc,target,lens) in enumerate((((-23,8,-375),(-23,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
+    contexts=(((27,10,-430),(27,7,-470),18),) if args.stage == 'patience' else (((-23,8,-375),(-23,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))
+    for index,(loc,target,lens) in enumerate(contexts):
         scene.render.resolution_x,scene.render.resolution_y=(1200,600)
         if index==2:
             scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.045,.055,.085,1)

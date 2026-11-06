@@ -130,3 +130,9 @@ pairs of large dusty road wheels, leaf springs, hitch and safety chains.
 Bright even overcast light, realistic human scale, plain mid-tone dusty
 ground, no water, no people, no text or labels, no illustration, no toy
 appearance.
+
+### `patience-hull-projection.jpg`
+
+Use: tighter hull crop for Patience's side-projected hull material in
+WW-ART-SHIPS. Derived from the original Codex ImageGen photo
+`ships-hull-photo.jpg` above, 2026-11-05, with no third-party source art.
