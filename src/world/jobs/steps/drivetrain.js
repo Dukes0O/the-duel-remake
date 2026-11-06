@@ -119,7 +119,6 @@ export function stepDrivetrain(step,state,view,dt) {
       state={...state,sandDragged:true};requests.push({type:'say',lineId:step.sandDrag.lineId??step.dragLineId},{type:'sandDrag',place:dragPlace});
     }
   }
-  complete=!state.sandDragged&&complete;
   const place=trainPosition(path,metres,length);
   requests.push({type:'train',actorId:step.actorId??'iron-mule',position:place,progress:metres/length,speed,metres,path,pathLength:length,
     roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1']});

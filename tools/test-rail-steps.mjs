@@ -33,6 +33,14 @@ const fast=bankRun(15);
 assert.equal(fast.job.stepState.speed,0,'15 m/s run ends safely stopped in the sand drag');
 assert.equal(fast.job.stepState.metres,0,'sand drag returns the train to the top of the bank');
 assert(Math.abs(fast.distance-ironLineLength(line))<.01,'15 m/s train reaches the full 500.3 m bank before the drag');
+let dragRetry=createJob({steps:[{kind:'drivetrain',path:[point('start',0),point('drag',10),point('end',20)],
+  stopAtEnd:true,sandDrag:{place:point('drag',10),overMs:3,backTo:point('start',0)}}]});
+dragRetry.stepState={metres:9.9,speed:4};
+dragRetry=tick(dragRetry,{},.1);
+assert(dragRetry.stepState.sandDragged,'first fast attempt is sent back by the drag');
+dragRetry.stepState={...dragRetry.stepState,metres:20,speed:0};
+dragRetry=tick(dragRetry,{},.1);
+assert.equal(dragRetry.done,true,'a safe retry can complete after the drag has fired');
 
 // Contact conserves momentum when soft and separates on a hard hit.
 const runawayStep={kind:'runaway',path:[point('a',0),point('b',100)],massTonnes:70,softMs:2,
