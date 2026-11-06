@@ -1,44 +1,19 @@
-# TOWN-ART-TRUCKS-1
+# TOWN-ART-TRUCKS-1 change note
 
-The four-truck recipe now builds without missing external image files. It uses
-the shared deterministic town wear atlas. Each truck has a named `:lamp` group
-with two headlamp children and a nonzero emissive material. The readback check
-builds a uniquely named private candidate every run, validates it, and removes
-that temporary export without touching any existing candidate.
+Round 4 reduces repeated wheel tread and low-detail round hardware, batches static parts, and uses four distinct generated 512 by 512 JPEG paint pictures. The exported GLB is 2,463,052 bytes. The recipe reports evaluated triangles and each image's dimensions and byte size by truck, and stops if a truck exceeds 15,000 triangles. Counts: fire 10,056; tanker 10,160; supply 7,142; tow 7,252. The round 4 sheet compares reference photos with renders imported from the exported GLB in an empty scene.
 
-**Visual review:** the round 3 review still scores the earlier
-photo-textured render; it is not a verdict on the reproducible atlas output.
-No fourth look sheet was submitted. The rebuilt candidate is not a visual
-pass, and Claude's look verdict remains pending.
+The shared 1K PNG atlas assertion in `tools/test-blender-output.mjs` changed to require four unique embedded JPEGs, matching the card's photo-material design and the renderer's standalone image export. This does not loosen any size, node, or triangle assertion. The steering-pivot check also exposed an offset in the recipe; the pivot was corrected. The recipe now writes its editable `.blend` under ignored `art-build/` and its path plan points at the private candidate path.
 
-**Code review:** an independent review confirmed that the recipe inputs are
-reproducible, exported lamp parts emit light, and readback always uses a fresh
-candidate. It found no remaining faults in those paths.
+## Checks
 
-**Checks:** `node tools/test-blender-output.mjs` passed (239 checks, including
-a fresh unique-path Blender export and GLB readback). `node
-tools/test-repo-hygiene.mjs` and `node tools/test-board.mjs` passed.
-`npm.cmd run build` passed; Vite reported its existing chunk-size and
-dynamic-import warnings. The lane tier ran with `--jobs 4`: the latest run had
-13 suites pass, `tools/test-full-check.mjs` fail, and 12 suites not run after
-fail-fast. Its temporary-Git-copy test reported `spawnSync pwsh EACCES`; the
-isolated rerun on the same commit failed the same way. An earlier run also
-failed `tools/test-review-evidence.mjs` on `spawnSync ffmpeg EPERM`; its
-isolated rerun repeated that error. Neither failure touches truck code, and no
-assertions were weakened.
+- `node tools/test-blender-output.mjs` — 238 checks passed; 1 failed. The remaining candidate guard rejects `public/assets/models/wasteland/town/trucks-1.glb` because this task requires committing the model at that card path before Claude's art review. The guard and its assertion were left unchanged.
+- `node tools/test-repo-hygiene.mjs` — passed; repository placement is clean.
+- Blender recipe and empty-scene GLB renders — passed; per-truck counts and image dimensions are printed by the recipe.
+- Browser and in-game look checks — not run; Claude should review the remaining angular panels and weaker tanker, supply and tow surface wear shown in `docs/board/looks/town-art-trucks-1/round-4.jpg`.
+- Race fingerprints — not applicable; the model is not wired into the game.
 
-**Changed assertions:** the truck readback rebuilds with Blender in export-only
-mode to a unique path on every run, then checks four truck roots, named movable
-parts, four lamp groups and their children, positive emission, one embedded
-atlas, steering-parent placement, file size and each truck's triangle limit.
-The temporary export is removed after readback; an existing candidate is never
-used or deleted. The existing global art-candidate budget and runtime path
-protection remain in place.
+## Removed
 
-**Race fingerprints:** unchanged; no simulation files or world signatures
-changed.
-
-**Removed:** the recipe's three unresolved external image arguments were
-removed. A candidate built only for readback is deleted after the check. The
-export-only path does not create review renders or a `.blend` file. No runtime
-model was installed or replaced.
+- Deleted obsolete round 1 and round 2 comparison sheets and notes as requested.
+- Removed this run's temporary Blender renders, test logs and Python bytecode before commit.
+- No model, paint image or required recipe was removed.

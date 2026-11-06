@@ -1,11 +1,7 @@
-"""Build the four original Scablands work trucks and private look renders.
+"""Build four original Scablands work trucks and render from their GLB.
 
-Example:
-  blender -b --python-exit-code 1 --python tools/blender/town-trucks-1.py -- \
-    --root .
-
-Coordinates follow town_base: metres, +Y up, front -Z. Wheel proportions follow
-the game's Titan Monster truck GLB; the wheel shapes are rebuilt from primitives.
+Coordinates are metres, +Y up, front -Z. The candidate is always exported
+before a fresh empty Blender scene imports it for review renders.
 """
 import argparse
 import json
@@ -16,25 +12,28 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
-parser.add_argument('--export-only', action='store_true', help='build the private GLB without review renders or a saved Blend')
-parser.add_argument('--candidate-suffix', default='', help='unique suffix for a temporary private candidate export')
+parser.add_argument('--export-only', action='store_true')
+parser.add_argument('--candidate-suffix', default='')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 if args.candidate_suffix and (not args.candidate_suffix.startswith('-') or
-                              any(character not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-' for character in args.candidate_suffix)):
+        any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
+            for c in args.candidate_suffix)):
     parser.error('--candidate-suffix must start with a hyphen and contain only letters, digits and hyphens')
-output = root / '.qa-dist/art-candidates' / f'town-trucks-1{args.candidate_suffix}.glb'
-blend = root / 'art-build/town/trucks-1.blend'
+output = (root / '.qa-dist/art-candidates' / f'town-trucks-1{args.candidate_suffix}.glb'
+          if args.export_only else root / 'public/assets/models/wasteland/town/trucks-1.glb')
+blend = root / 'art-build/town-trucks-1.blend'
 evidence = root / '.evidence/2026-11-05/TOWN-ART-TRUCKS-1'
+textures = root / 'public/assets/models/wasteland/town/textures'
 if args.paths_only:
-    print(json.dumps({'blend': [str(blend)], 'glb': [str(output)], 'evidence': [str(evidence)]}))
+    candidate = root / '.qa-dist/art-candidates/town-trucks-1.glb'
+    print(json.dumps({'blend': [str(blend)], 'glb': [str(candidate)], 'evidence': [str(evidence)]}))
     raise SystemExit(0)
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-MatrixIdentity = Matrix.Identity(4)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -42,464 +41,500 @@ scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
 scene.render.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
-scene.cycles.samples = 64
-scene.cycles.use_denoising = False
-scene.render.resolution_x = 960
-scene.render.resolution_y = 640
+scene.cycles.samples = 32
+scene.cycles.use_denoising = True
+scene.render.resolution_x = 900
+scene.render.resolution_y = 600
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = 'PNG'
 scene.render.film_transparent = False
 scene.view_settings.view_transform = 'AgX'
-scene.world = bpy.data.worlds.new('Bright overcast truck review')
-scene.world.color = (.36, .38, .39)
-materials = town.make_materials()
-atlas = bpy.data.images.get('Scablands shared town wear atlas 1K')
-atlas.scale(512, 512)
-atlas.file_format = 'JPEG'
-atlas.pack()
-red = bpy.data.materials.new('Worn deep-red fire engine paint')
-red.diffuse_color = (.34,.055,.025,1)
-red.use_nodes = True
-red.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.34,.055,.025,1)
-red.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .12
-red.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .88
-rust = materials['rusted-steel']
+scene.world = bpy.data.worlds.new('bright overcast truck reference')
+scene.world.color = (.48, .49, .50)
+
+# Use the shared material factory for its palette, then use standalone image
+# nodes. Blender node maths cannot repeat one cell of an atlas in exported glTF.
+shared = town.make_materials()
+base_colors={
+    'rusted-steel':(.12,.045,.024,1), 'galvanised-tin':(.24,.27,.25,1),
+    'weathered-plank':(.15,.10,.055,1), 'patched-canvas':(.30,.23,.15,1),
+    'dirty-glass':(.045,.065,.065,1), 'iron-dark':(.045,.048,.045,1),
+}
+for material in shared.values():
+    bsdf = material.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Metallic'].default_value = min(.3, bsdf.inputs['Metallic'].default_value)
+    color=base_colors.get(material.name.removeprefix('Town / '),material.diffuse_color)
+    material.diffuse_color=color
+    bsdf.inputs['Base Color'].default_value = color
+    for node in list(material.node_tree.nodes):
+        if node.type == 'TEX_IMAGE':
+            material.node_tree.nodes.remove(node)
+for image in list(bpy.data.images):
+    if image.users == 0:
+        bpy.data.images.remove(image)
+materials = dict(shared)
+
+PAINT_FILES = {
+    'fire-truck': ('fire-engine-paint.jpg', (.30, .055, .032, 1)),
+    'water-tanker': ('water-tanker-paint.jpg', (.25, .28, .23, 1)),
+    'supply-truck': ('supply-truck-paint.jpg', (.18, .19, .10, 1)),
+    'tow-rig': ('tow-rig-paint.jpg', (.38, .25, .09, 1)),
+}
+for identifier, (filename, color) in PAINT_FILES.items():
+    material = shared['faded-hand-paint'].copy()
+    material.name = identifier + ' / photo paint'
+    material.diffuse_color = color
+    bsdf = material.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Base Color'].default_value = color
+    bsdf.inputs['Metallic'].default_value = .12
+    bsdf.inputs['Roughness'].default_value = .88
+    image = bpy.data.images.load(str(textures / filename), check_existing=False)
+    image.name = identifier + ' own repeating paint photograph'
+    image.file_format = 'JPEG'
+    image.pack()
+    texture = material.node_tree.nodes.new('ShaderNodeTexImage')
+    texture.image = image
+    texture.interpolation = 'Linear'
+    texture.extension = 'REPEAT'
+    material.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
+    materials[identifier + '-paint'] = material
+
+paint_rust = materials['rusted-steel']
 tin = materials['galvanised-tin']
-steel = materials['iron-dark']
+dark_metal = materials['iron-dark']
 glass = materials['dirty-glass']
-rubber = bpy.data.materials.new('Deeply worn truck tyre rubber')
-rubber.diffuse_color = (.035, .038, .034, 1)
-rubber.use_nodes = True
-rubber.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.035, .038, .034, 1)
-rubber.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .93
+wood = materials['weathered-plank']
+canvas = materials['patched-canvas']
 lamp = bpy.data.materials.new('Aged amber lamp lens')
-lamp.diffuse_color = (.48, .20, .035, 1)
-lamp.use_nodes = True
-lamp.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.58, .27, .055, 1)
-lamp.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .38
-lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value = (.58, .27, .055, 1)
-lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value = .8
-cratewood = bpy.data.materials.new('Dark weathered crate timber')
-cratewood.use_nodes = True
-cratewood.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.20,.12,.065,1)
-cratewood.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .94
-canvas = bpy.data.materials.new('Sun-dulled sack canvas')
-canvas.use_nodes = True
-canvas.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.34,.25,.14,1)
-canvas.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .96
-olivepaint = bpy.data.materials.new('Faded olive truck paint')
-olivepaint.use_nodes = True
-olivepaint.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.075,.095,.045,1)
-olivepaint.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .91
-ochrepaint = bpy.data.materials.new('Dusty ochre truck paint')
-ochrepaint.use_nodes = True
-ochrepaint.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (.16,.085,.025,1)
-ochrepaint.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .92
+lamp.use_nodes=True
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.42,.22,.075,1)
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=0
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.38
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value=(.45,.19,.035,1)
+lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=.8
+for name, mat in materials.items():
+    bsdf = mat.node_tree.nodes.get('Principled BSDF')
+    if bsdf:
+        bsdf.inputs['Metallic'].default_value = min(.3, bsdf.inputs['Metallic'].default_value)
 
-def parent_keep_world(obj, parent):
-    # Family empties only translate. Store each child in the parent's local
-    # space without relying on Blender's unevaluated matrix_world during build.
-    obj.location -= parent.location
-    obj.parent = parent
-    obj.matrix_parent_inverse = Matrix.Identity(4)
+def game_vector(p):
+    return Vector((p[0], -p[2], p[1]))
 
-def box(name, x, y, z, width, depth, height, material, bevel=0):
-    # town_base sizes are width, height, depth; its centers use game axes.
-    if bevel < .10: bevel = 0
-    obj = town.cube(name, (x, y, z), (width, height, depth), material, bevel)
+def box(name, center, size, material, bevel=.025):
+    return town.cube(name, center, size, material, bevel)
+
+def bar(name, a, b, width, material):
+    va, vb = game_vector(a), game_vector(b)
+    d = vb - va
+    obj = box(name, ((a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2),
+              (width, d.length, width), material, .012)
+    obj.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
     return obj
 
-def cylinder(name, x, y, z, radius, depth, material, axis='Y', vertices=24):
+def cylinder(name, center, radius, depth, material, axis='Y', vertices=24):
     bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth,
-                                         location=(x, -z, y))
+                                         location=game_vector(center))
     obj = bpy.context.object
     obj.name = name
-    if axis == 'Y':
-        obj.rotation_euler[0] = math.pi / 2
-    elif axis == 'X':
-        obj.rotation_euler[1] = math.pi / 2
+    if axis == 'X': obj.rotation_euler[1] = math.pi / 2
+    elif axis == 'Z': obj.rotation_euler[0] = math.pi / 2
     obj.data.materials.append(material)
-    bevel_mod = obj.modifiers.new('rounded rolled edge', 'BEVEL')
-    bevel_mod.width = .025
-    bevel_mod.segments = 1
-    obj.modifiers.new('weighted light normals', 'WEIGHTED_NORMAL')
+    bevel = obj.modifiers.new('rolled metal edge', 'BEVEL')
+    bevel.width = .018
+    bevel.segments = 1
+    obj.modifiers.new('weighted panel normals', 'WEIGHTED_NORMAL')
     return obj
 
-def pipe(name, a, b, radius, material):
+def pipe(name, points, radius, material):
     before = set(bpy.context.scene.objects)
-    town.pipe_run(name, [a, b], radius, material)
+    town.pipe_run(name, points, radius, material)
     created = list(set(bpy.context.scene.objects) - before)
-    if len(created) != 1:
-        raise RuntimeError(f'{name} expected one pipe segment, created {len(created)}')
-    return created[0]
+    if not created:
+        raise RuntimeError(f'{name}: expected pipe geometry')
+    return created[0] if len(created)==1 else created
 
-def wheel_donor():
-    donor = root / 'public/assets/models/unlocks/titan_monster.glb'
-    bpy.ops.import_scene.gltf(filepath=str(donor))
-    spin_roots = [bpy.data.objects.get(f'WheelSpin_{i}') for i in range(4)]
-    assemblies = []
-    for spin in spin_roots:
-        if spin is None:
-            raise RuntimeError('Titan donor wheel pivots changed; expected WheelSpin_0..3')
-        center = spin.matrix_world.translation.copy()
-        parts = []
-        for obj in bpy.context.scene.objects:
-            if obj.type != 'MESH' or obj.parent != spin:
-                continue
-            mesh = obj.data
-            mats = list(mesh.materials)
-            vertices = [tuple((obj.matrix_world @ v.co) - center) for v in mesh.vertices]
-            faces = [tuple(poly.vertices) for poly in mesh.polygons]
-            indices = [poly.material_index for poly in mesh.polygons]
-            parts.append((vertices, faces, mats, indices))
-        assemblies.append((center, parts))
-    for obj in list(bpy.context.scene.objects):
-        if obj.name.startswith(('WheelSpin_', 'WheelPivot_', 'Node_')) or obj.name == 'titan_monster' or obj.type == 'MESH':
-            bpy.data.objects.remove(obj, do_unlink=True)
-    return assemblies
-
-donor_wheels = wheel_donor()
-wheel_groups = [
-    ('fire-truck', 0, 2.42, (-1.72, 1.72)),
-    ('water-tanker', 1, 3.24, (-2.25, .95, 2.25)),
-    ('supply-truck', 2, 2.42, (-1.78, 1.78)),
-    ('tow-rig', 3, 2.42, (-1.85, 1.72)),
-]
-active_objects = []
-truck_roots = {}
-truck_center = {}
-
-def wheel(name, side, z_front, y_height=.58, radius=.54):
-    source_center, components = donor_wheels[len(active_objects) % len(donor_wheels)]
-    donor_points = [v for part in components for v in part[0]]
-    donor_radius = max(math.hypot(v[1], v[2]) for v in donor_points)
-    donor_width = max(v[0] for v in donor_points) - min(v[0] for v in donor_points)
-    fit = radius / donor_radius
-    fitted_radius = donor_radius * fit
-    fitted_width = donor_width * fit
-    center = (truck_center[name.split(':')[0]][0] + side * .97, -z_front, y_height)
-    pivot = bpy.data.objects.new(name, None)
-    bpy.context.collection.objects.link(pivot)
-    pivot.location = center
-    bpy.ops.mesh.primitive_torus_add(major_segments=20, minor_segments=8,
-                                     major_radius=fitted_radius*.70, minor_radius=fitted_radius*.30,
-                                     location=center, rotation=(0, math.pi/2, 0))
-    geometry=bpy.context.object;geometry.name=name+':Titan-profile rubber tyre'
-    geometry.data.materials.append(rubber)
-    for polygon in geometry.data.polygons: polygon.use_smooth=True
-    parent_keep_world(geometry,pivot)
-    sidewall=side
-    bpy.ops.mesh.primitive_torus_add(major_segments=10,minor_segments=3,
-        major_radius=fitted_radius*.63,minor_radius=.022,location=(center[0]+sidewall*fitted_width*.35,center[1],center[2]),rotation=(0,math.pi/2,0))
-    ring=bpy.context.object;ring.name=name+':raised sidewall bead';ring.data.materials.append(rubber)
-    for polygon in ring.data.polygons: polygon.use_smooth=True
-    parent_keep_world(ring,pivot)
-    # Road-grip blocks repeat around the full tyre. Dimensions come from the
-    # Titan's tyre width and diameter, fitted down to a road-work truck scale.
-    for block in range(8):
-        angle=math.tau*block/8
-        loc=(center[0],center[1]+math.cos(angle)*fitted_radius*.96,center[2]+math.sin(angle)*fitted_radius*.96)
-        bpy.ops.mesh.primitive_cube_add(size=1,location=loc,rotation=(angle,0,0))
-        lug=bpy.context.object;lug.name=name+':raised tread block'
-        lug.dimensions=(fitted_width*.83,.052,.028)
-        bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-        lug.data.materials.append(rubber);parent_keep_world(lug,pivot)
-    for sidewall in (-1,1):
-        hub_center=(center[0]+sidewall*fitted_width*.40,center[1],center[2])
-        bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=fitted_radius*.43,depth=.075,
-            location=hub_center,rotation=(0,math.pi/2,0))
-        hub=bpy.context.object;hub.name=name+':pressed steel wheel dish';hub.data.materials.append(tin)
-        parent_keep_world(hub,pivot)
-        for bolt in range(2):
-            angle=math.tau*bolt/2
-            bpy.ops.mesh.primitive_cylinder_add(vertices=6,radius=.022,depth=.025,
-                location=(center[0]+sidewall*fitted_width*.48,center[1]+math.cos(angle)*fitted_radius*.28,center[2]+math.sin(angle)*fitted_radius*.28),rotation=(0,math.pi/2,0))
-            nut=bpy.context.object;nut.name=name+':hub bolt';nut.data.materials.append(tin);parent_keep_world(nut,pivot)
-    return pivot
-
-def marker(name, location):
-    obj = bpy.data.objects.new(name, None)
-    bpy.context.collection.objects.link(obj)
-    obj.location = location
+def rounded_body(name, stations, material):
+    """Loft chamfered body sections so the panels have shoulders, not box corners."""
+    ring = ((-.37,-.50),(.37,-.50),(.50,-.37),(.50,.37),
+            (.37,.50),(-.37,.50),(-.50,.37),(-.50,-.37))
+    verts, faces = [], []
+    for z, width, height, cy in stations:
+        for x, y in ring:
+            verts.append((x * width, -z, cy + y * height))
+    for station in range(len(stations)-1):
+        for i in range(8):
+            a=station*8+i; b=station*8+(i+1)%8
+            faces.append((a,b,b+8,a+8))
+    faces.append(tuple(range(7,-1,-1)))
+    end=(len(stations)-1)*8
+    faces.append(tuple(end+i for i in range(8)))
+    mesh=bpy.data.meshes.new(name+' curved stamped panels')
+    mesh.from_pydata(verts,[],faces); mesh.update()
+    uv=mesh.uv_layers.new(name='two metre paint repeat')
+    for poly in mesh.polygons:
+        for li in poly.loop_indices:
+            v=verts[mesh.loops[li].vertex_index]
+            n=poly.normal
+            if abs(n.x)>=abs(n.y) and abs(n.x)>=abs(n.z): u,w=v[1],v[2]
+            elif abs(n.y)>=abs(n.z): u,w=v[0],v[2]
+            else: u,w=v[0],v[1]
+            uv.data[li].uv=(u/2,w/2)
+    obj=bpy.data.objects.new(name,mesh); bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(material)
+    bevel=obj.modifiers.new('soft rolled panel corners','BEVEL'); bevel.width=.035; bevel.segments=2
+    obj.modifiers.new('weighted panel normals','WEIGHTED_NORMAL')
     return obj
 
-def part_group(name, origin):
-    return marker(name, origin)
+def curved_glass(name, corners, material):
+    verts=[game_vector(p) for p in corners]
+    mesh=bpy.data.meshes.new(name); mesh.from_pydata(verts,[],[(0,1,2,3)]); mesh.update()
+    uv=mesh.uv_layers.new(name='window')
+    for li, coords in zip(mesh.polygons[0].loop_indices,((0,0),(1,0),(1,1),(0,1))):
+        uv.data[li].uv=coords
+    obj=bpy.data.objects.new(name,mesh); bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(material)
+    return obj
 
-def make_truck(identifier, index, color, length=5.5, width=2.45, axles=None):
-    x = index * 7.4
-    root_obj = bpy.data.objects.new(identifier, None)
-    bpy.context.collection.objects.link(root_obj)
-    root_obj.location.x = x
-    truck_roots[identifier] = root_obj
-    truck_center[identifier] = (x, 0)
-    made = []
-    lamp_group = part_group(identifier + ':lamp', (x, 1.30, -2.65))
-    parent_keep_world(lamp_group, root_obj)
-    def add(obj):
-        made.append(obj)
-        return obj
-    # Ladder chassis, crossmembers, axles, suspension leaves and exhaust.
-    for side in (-1, 1):
-        add(box(identifier + ':frame-rail', x + side * .66, .78, 0, .17, length - .2, .18, steel, .025))
-        for z_axle in (axles or (-length*.31, length*.30)):
-            add(cylinder(identifier + ':solid-axle', x + side * .83, .61, z_axle, .08, .34, rust, 'X', 12))
+def pivot(name, center):
+    obj=bpy.data.objects.new(name,None); bpy.context.collection.objects.link(obj)
+    obj.location=game_vector(center)
+    return obj
+
+def parent_keep_world(obj, parent):
+    obj.location -= parent.location
+    obj.parent=parent
+    obj.matrix_parent_inverse.identity()
+
+def export_glb(path):
+    """Keep the integration town_base export contract, including embedded JPEGs."""
+    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',export_yup=True,
+        export_apply=True,export_materials='EXPORT',export_image_format='JPEG',export_image_quality=80)
+
+# Use the shared entry point. This adapter supplies the current integration
+# branch's JPEG settings while this lane's older town_base still writes PNG.
+town.export_glb=export_glb
+
+def make_wheel(identifier, x, z, rear=False):
+    center=(x,.56,z); r=.55
+    root_obj=pivot(f'{identifier}:spin-{"rear" if rear else "front"}-{"left" if x>0 else "right"}',center)
+    # Deep continuous carcass and steel rim.
+    bpy.ops.mesh.primitive_torus_add(major_segments=16,minor_segments=6,
+        major_radius=r*.70,minor_radius=r*.30,location=game_vector(center),rotation=(0,math.pi/2,0))
+    tire=bpy.context.object;tire.name=identifier+':deep lug tyre';tire.data.materials.append(dark_metal)
+    parent_keep_world(tire,root_obj)
+    rim=cylinder(identifier+':pressed wheel rim',(x+(.28 if x>0 else -.28),.56,z),r*.47,.12,tin,'X',20)
+    parent_keep_world(rim,root_obj)
+    lugs=[]
+    for i in range(14):
+        a=math.tau*i/14
+        loc=(x,.56+math.sin(a)*r*.95,z+math.cos(a)*r*.95)
+        bpy.ops.mesh.primitive_cube_add(size=1,location=game_vector(loc),rotation=(a,0,0))
+        lug=bpy.context.object;lug.name=identifier+':integrated tread lug'
+        lug.dimensions=(.24,.13,.085)
+        bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+        lug.data.materials.append(dark_metal);parent_keep_world(lug,root_obj);lugs.append(lug)
+    bpy.ops.object.select_all(action='DESELECT')
+    for lug in lugs: lug.select_set(True)
+    bpy.context.view_layer.objects.active=lugs[0]
+    bpy.ops.object.join()
+    bpy.context.object.name=identifier+':joined deep tread lugs'
+    for i in range(6):
+        a=math.tau*i/6
+        bolt=cylinder(identifier+':rim bolt',(x+(.35 if x>0 else -.35),.56+math.sin(a)*r*.25,z+math.cos(a)*r*.25),.025,.035,dark_metal,'X',8)
+        parent_keep_world(bolt,root_obj)
+    return root_obj
+
+TRUCKS={}
+def build_truck(identifier, length, axle_z, paint, kind):
+    before=set(bpy.context.scene.objects)
+    root_obj=pivot(identifier,(0,0,0)); TRUCKS[identifier]=root_obj
+    # Ladder chassis, cross-members and exposed leaf springs.
+    for side in (-1,1):
+        box(identifier+':ladder frame rail',(side*.67,.80,0),(.16,.20,length-.5),dark_metal,.035)
+        for z in axle_z:
             for leaf in range(3):
-                add(box(identifier + ':leaf-spring', x + side * .83, .39 + leaf * .045, z_axle,
-                        .08, .92 - leaf * .12, .035, steel, .016))
-    for zcross in (-length*.33, -length*.04, length*.31):
-        add(box(identifier + ':crossmember', x, .74, zcross, 1.55, .15, .12, rust, .025))
-    axle_positions = list(axles or (-length*.31, length*.30))
-    for side in (-1, 1):
-        for axle_index, z_axle in enumerate(axle_positions):
-            axle_name = 'front' if axle_index == 0 else 'rear' if axle_index == len(axle_positions)-1 else 'middle'
-            spin = wheel(f'{identifier}:spin-{axle_name}-{"left" if side < 0 else "right"}',
-                         side, z_axle, radius=.53 if identifier != 'tow-rig' else .60)
-            if z_axle < 0:
-                steer = marker(f'{identifier}:steer-{axle_name}-{"left" if side < 0 else "right"}',
-                               (x + side * .97, -z_axle, .58))
-                parent_keep_world(spin, steer)
-                made.append(steer)
-            else:
-                made.append(spin)
-    # The cab is rounded, with a protruding hood, inset glass and real bumpers.
-    add(box(identifier + ':lower-cab', x, 1.24, -.72, 2.08, 2.00, .74, color, .18))
-    add(box(identifier + ':bonnet', x, 1.43, -1.91, 2.18, 1.08, .60, color, .19))
-    add(box(identifier + ':cab-roof', x, 2.42, -.47, 2.02, 1.54, .18, color, .11))
-    windshield=add(box(identifier + ':windshield', x, 2.00, -1.68, 1.72, .055, .72, glass, .065))
-    windshield.rotation_euler[0]=math.radians(10)
-    add(box(identifier + ':rear-window', x, 2.00, .25, 1.36, .055, .53, glass, .06))
-    for side in (-1, 1):
-        add(box(identifier + ':side-window', x + side * 1.025, 2.00, -.48, .05, .82, .60, glass, .055))
-        add(box(identifier + ':window-pillar', x + side * 1.04, 2.00, -1.26, .11, .12, .91, rust, .025))
-        add(box(identifier + ':door-weld-patch', x + side * 1.055, 1.30, -.37, .035, .75, .40, rust, .018))
-        add(box(identifier + ':door-handle', x + side * 1.085, 1.45, -.42, .05, .18, .035, tin, .012))
-        add(box(identifier + ':mirror-arm', x + side * 1.27, 1.96, -1.27, .08, .38, .055, steel, .02))
-        add(box(identifier + ':side-mirror', x + side * 1.30, 2.08, -1.28, .13, .23, .28, rust, .025))
-        # Uneven hammered fender lips sit outside the same source tyres.
-        for z_axle in axle_positions:
-            curve = bpy.data.curves.new(identifier + ' formed wheel arch', 'CURVE')
-            curve.dimensions = '3D'; curve.resolution_u = 1; curve.bevel_depth = .075; curve.bevel_resolution = 1
-            spline = curve.splines.new('POLY'); spline.points.add(16)
-            for i, point in enumerate(spline.points):
-                angle = math.pi * i / 16
-                point.co = (x + side * 1.13, -z_axle + math.cos(angle) * .67, .58 + math.sin(angle) * .67, 1)
-            fender = bpy.data.objects.new(identifier + ':formed-fender', curve); bpy.context.collection.objects.link(fender)
-            fender.data.materials.append(color); made.append(fender)
-    # Vertical slat grille, lamps and a battered transverse bumper.
-    add(box(identifier + ':grille-recess', x, 1.20, -2.52, .91, .05, .69, steel, .035))
-    for slat in range(9):
-        add(box(identifier + ':grille-slat', x - .39 + slat * .097, 1.22, -2.565,
-                .035, .035, .60, tin if slat % 3 else rust, .009))
-    for side in (-1, 1):
-        add(cylinder(identifier + ':headlamp-rim',x+side*.79,1.30,-2.59,.19,.09,rust,'Y',20))
-        lens = cylinder(identifier + ':headlamp-' + ('left' if side < 0 else 'right'),
-                         x+side*.79,1.30,-2.65,.13,.12,lamp,'Y',20)
-        parent_keep_world(lens, lamp_group)
-    add(box(identifier + ':front-bumper', x, .80, -2.76, 2.46, .26, .19, steel, .055))
-    add(box(identifier + ':rear-bumper', x, .78, length*.52, 2.32, .22, .18, rust, .045))
-    # Repair plates, exposed weld seams and bolts break up broad painted panels.
-    for side in (-1, 1):
-        for i, zpos in enumerate((-.80, .32, 1.31), 1):
-            add(box(identifier + ':uneven-sill-patch', x + side * 1.09, .92, zpos, .05, .52, .25,
-                    rust if i == 1 else tin, .025))
-            for fastener in (-1, 1):
-                add(cylinder(identifier + ':patch-bolt', x + side * 1.13, .94, zpos + fastener * .18,
-                             .033, .025, steel, 'X', 10))
-    for obj in made:
-        parent_keep_world(obj, root_obj)
-    active_objects.append(root_obj)
-    return root_obj, made
+                bar(identifier+':laminated leaf spring',(side*.82,.36+leaf*.045,z-.43),
+                    (side*.82,.36+leaf*.045,z+.43),.035,tin)
+    for z in axle_z:
+        cylinder(identifier+':solid cross axle',(0,.58,z),.09,1.92,dark_metal,'X',16)
+    for z in (-length*.32,0,length*.32):
+        box(identifier+':chassis cross member',(0,.73,z),(1.62,.14,.13),paint_rust,.018)
+    # Wheels at exactly 1.10 m diameter; axles are measured along the truck.
+    for z in axle_z:
+        for side in (-1,1):
+            wheel_root=make_wheel(identifier,side*1.02,z,rear=z>0)
+            if z<0:
+                steer=pivot(identifier+':steer-front-'+('left' if side>0 else 'right'),(side*1.02,.56,z))
+                parent_keep_world(wheel_root,steer)
 
-truck_specs = [
-    ('fire-truck', 0, red, 5.9, 2.45, (-1.68, 1.74)),
-    ('water-tanker', 1, tin, 7.0, 2.52, (-2.15, .40, 2.24)),
-    ('supply-truck', 2, olivepaint, 6.0, 2.48, (-1.80, 1.78)),
-    ('tow-rig', 3, ochrepaint, 6.6, 2.58, (-1.90, 1.82)),
-]
-truck_parts = {}
-for spec in truck_specs:
-    ident, index, color, length, width, axles = spec
-    truck_parts[ident] = make_truck(ident, index, color, length, width, axles)
+    # Nose, long bonnet, front fenders, and separate dark bumper.
+    rounded_body(identifier+':long curved bonnet',[(-3.68,1.78,.34,1.13),(-3.52,2.0,.56,1.22),
+        (-2.50,2.05,.61,1.22),(-1.68,1.88,.58,1.20)],paint)
+    rounded_body(identifier+':cab lower body',[(-1.95,2.14,.86,1.27),(-1.50,2.20,1.26,1.60),
+        (.05,2.20,1.30,1.60),(.12,2.12,.95,1.26)],paint)
+    rounded_body(identifier+':cab roof',[(-1.47,2.16,.13,2.62),(-.10,2.16,.13,2.62)],paint)
+    # Slanted two-pane windscreen and thin frames.
+    lamp_group=pivot(identifier+':lamp',(0,0,0))
+    for side in (-1,1):
+        x=side*.025
+        curved_glass(identifier+':split dark windscreen pane',[(x,1.98,-1.68),(x+side*.99,1.98,-1.68),
+            (x+side*.99,2.53,-1.29),(x,2.53,-1.29)],glass)
+        bar(identifier+':windscreen outer post',(side*1.04,1.94,-1.72),(side*1.04,2.68,-1.18),.065,tin)
+        bar(identifier+':split windscreen post',(x,1.98,-1.70),(x,2.55,-1.30),.04,dark_metal)
+        # Door window and fine window surround.
+        curved_glass(identifier+':side door glass',[(side*1.08,1.92,-1.13),(side*1.08,1.92,-.05),
+            (side*1.08,2.48,-.05),(side*1.08,2.48,-1.13)],glass)
+        for z in (-1.16,-.02):
+            bar(identifier+':window frame',(side*1.10,1.88,z),(side*1.10,2.54,z),.045,tin)
+        bar(identifier+':side window lower rail',(side*1.10,1.91,-1.14),(side*1.10,1.91,-.02),.045,tin)
+        bar(identifier+':door seam',(side*1.105,.96,-1.00),(side*1.105,1.83,-1.00),.018,dark_metal)
+        box(identifier+':door handle',(side*1.13,1.36,-.52),(.04,.035,.18),tin,.014)
+        # Thin arched swept mudguard with a folded outer lip.
+        for z in axle_z[:1]:
+            curve=bpy.data.curves.new(identifier+' swept mudguard','CURVE');curve.dimensions='3D';curve.resolution_u=1
+            curve.bevel_depth=.035;curve.bevel_resolution=2
+            spline=curve.splines.new('POLY');spline.points.add(16)
+            for i,p in enumerate(spline.points):
+                a=math.pi*i/16
+                p.co=(side*1.13,-z+math.cos(a)*.72,.60+math.sin(a)*.72,1)
+            f=bpy.data.objects.new(identifier+':separate sheet fender',curve);bpy.context.collection.objects.link(f)
+            f.data.materials.append(paint)
+        # Lamps on stalks, with round lenses kept under the named light group.
+        z=-3.25
+        bar(identifier+':headlamp stalk',(side*.78,.92,z-.06),(side*.88,1.23,z-.06),.055,tin)
+        cylinder(identifier+':round headlamp rim',(side*.88,1.23,z-.08),.19,.10,tin,'Z',24)
+        lens=cylinder(identifier+':headlamp-'+('left' if side>0 else 'right'),
+                      (side*.88,1.23,z-.145),.145,.035,lamp,'Z',24)
+        parent_keep_world(lens,lamp_group)
+    # Vertical grille bars in a recessed surround.
+    box(identifier+':grille surround',(0,1.18,-3.68),(.91,.83,.10),dark_metal,.06)
+    for i in range(11):
+        x=-.37+i*.074
+        bar(identifier+':individual grille bar',(x,.84,-3.755),(x,1.52,-3.755),.032,tin)
+    for x in (-.60,.60):
+        box(identifier+':split bumper horn',(x,.76,-3.82),(.42,.22,.20),dark_metal,.035)
+    # Utility rails, fuel tank, exhaust, and body hardware.
+    for side in (-1,1):
+        pipe(identifier+':steel side step',[(side*1.13,.71,-1.28),(side*1.13,.71,.20)],.032,tin)
+        cylinder(identifier+':fuel tank',(side*.75,.74,.58),.18,.72,dark_metal,'Z',20)
+        pipe(identifier+':exhaust stack',[(side*.72,1.42,-.25),(side*.72,2.30,-.25)],.055,paint_rust)
+        box(identifier+':mirror arm',(side*1.10,1.93,-1.57),(.45,.045,.045),dark_metal,.012)
+        box(identifier+':mirror head',(side*1.30,2.02,-1.58),(.11,.26,.20),tin,.025)
+    if kind=='fire':
+        box(identifier+':equipment locker',(0,1.58,.91),(2.02,1.22,2.65),paint,.12)
+        for side in (-1,1):
+            for i in range(3):
+                box(identifier+':red locker door',(side*1.02,1.52,.08+i*.76),(.045,.62,.69),paint,.035)
+                for y in (1.29,1.75):
+                    cylinder(identifier+':locker latch',(side*1.06,y,.08+i*.76),.025,.025,tin,'X',8)
+            # Hose reel core, curled hose, and metal cheek plates.
+            cylinder(identifier+':hose reel core',(side*1.18,1.88,.92),.42,.24,tin,'X',28)
+            for depth in (-.16,.16):
+                cylinder(identifier+':hose reel rim',(side*1.31,1.88,.92),.48,.045,paint_rust,'X',28)
+            cylinder(identifier+':coiled dark hose',(side*1.34,1.88,.92),.35,.07,dark_metal,'X',28)
+            pipe(identifier+':exposed pump pipe',[(side*1.14,1.28,1.02),(side*1.20,2.08,1.02),(side*.98,2.08,.23)],.055,tin)
+        # Longitudinal tank with rolled rings and a roof ladder.
+        cylinder(identifier+':fire water tank',(0,2.47,.83),.55,2.75,paint,'Z',40)
+        for z in (-.48,.10,.68,1.26,1.91):
+            bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,
+                major_radius=.55,minor_radius=.035,location=game_vector((0,2.47,z)),rotation=(math.pi/2,0,0))
+            bpy.context.object.name=identifier+':tank rolled band';bpy.context.object.data.materials.append(tin)
+        for x in (-.36,.36):
+            bar(identifier+':ladder rail',(x,2.94,-.47),(x,2.94,2.05),.065,tin)
+        for i in range(14):
+            z=-.44+i*.185
+            bar(identifier+':ladder rung',(-.36,2.94,z),(.36,2.94,z),.038,dark_metal)
+        cannon=pivot(identifier+':cannon',(0,2.88,-.48))
+        turntable=cylinder(identifier+':cannon turntable',(0,2.91,-.48),.22,.16,tin,'Y',20)
+        barrel=pipe(identifier+':water cannon barrel',[(0,3.00,-.48),(0,3.20,-1.15),(0,3.20,-1.72)],.115,dark_metal)
+        parent_keep_world(turntable,cannon)
+        for piece in barrel if isinstance(barrel,list) else [barrel]: parent_keep_world(piece,cannon)
+        parent_keep_world(cannon,root_obj)
+    elif kind=='tanker':
+        # Six-wheel, nine metre tanker with elliptical steel vessel and walkway.
+        cylinder(identifier+':riveted steel tanker',(0,1.96,2.15),.91,4.62,paint,'Z',48)
+        for z in (-.04,.64,1.32,2.00,2.68,3.36,4.04):
+            bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=6,
+                major_radius=.91,minor_radius=.035,location=game_vector((0,1.96,z)),rotation=(math.pi/2,0,0))
+            bpy.context.object.name=identifier+':tank band';bpy.context.object.data.materials.append(tin)
+        for side in (-1,1):
+            box(identifier+':narrow top walkway',(side*.52,2.94,2.15),(.22,.07,4.25),tin,.025)
+            for z in (.30,.80,1.30,1.80,2.30,2.80,3.30,3.80):
+                cylinder(identifier+':tank visible rivet',(side*.84,1.99,z),.035,.035,tin,'X',10)
+            pipe(identifier+':drain and valve pipe',[(side*.78,1.17,.10),(side*.95,.67,.10),(side*.78,.67,1.42)],.045,dark_metal)
+            cylinder(identifier+':large valve wheel',(side*.99,.68,1.42),.20,.06,paint_rust,'X',20)
+        for z in (-.16,4.46):
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,
+                location=game_vector((0,1.96,z)),rotation=(math.pi/2,0,0))
+            head=bpy.context.object;head.name=identifier+':domed tank head'
+            head.scale=(.91,.91,.20);head.data.materials.append(paint)
+        cylinder(identifier+':top fill neck',(0,2.98,2.12),.15,.42,paint_rust,'Y',20)
+        box(identifier+':rear bumper',(0,.76,4.48),(2.25,.22,.16),dark_metal,.035)
+    elif kind=='supply':
+        # Slatted open bed, timber headboard, mixed crates and lashed sacks.
+        load_group=pivot(identifier+':load',(0,0,0))
+        load_start=set(bpy.context.scene.objects)
+        for side in (-1,1):
+            for z in (-.05,.25,.55,.85,1.15,1.45,1.75,2.05,2.35,2.65,2.95):
+                box(identifier+':individual timber deck slat',(side*.48,1.04,z),(.86,.12,.18),wood,.025)
+            for y in (1.24,1.51,1.78):
+                bar(identifier+':wooden side stake',(side*.98,1.10,-.08),(side*.98,y,2.98),.065,wood)
+                bar(identifier+':iron bed rail',(side*.99,y,0),(side*.99,y,2.94),.06,tin)
+        for z in (.08,2.92):
+            box(identifier+':bed end board',(0,1.40,z),(1.88,.68,.10),wood,.03)
+        # Individually shaped slatted crates with bevelled edges.
+        for x,z,w,d,h in [(-.42,.34,.70,.64,.56),(.38,.50,.68,.70,.78),(-.33,1.48,.78,.74,.63),(.38,2.25,.68,.60,.55)]:
+            box(identifier+':loaded wooden crate',(x,1.28+h/2,z),(w,h,d),wood,.055)
+            for yy in (1.28+h*.28,1.28+h*.68):
+                box(identifier+':crate timber slat',(x,yy,z+d*.505),(w*.88,.075,.035),tin,.012)
+        for i,(x,z) in enumerate([(-.72,.76),(.72,1.02),(-.62,2.15),(.68,2.55)]):
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=20,ring_count=12,radius=1,location=game_vector((x,1.70,z)))
+            sack=bpy.context.object;sack.name=identifier+':stitched canvas sack'
+            sack.scale=(.28,.34,.38);sack.data.materials.append(canvas)
+            for side in (-1,1):
+                pipe(identifier+':cargo tie rope',[(side*.95,2.14,.20),(side*-.90,2.14,2.76)],.022,dark_metal)
+        for obj in set(bpy.context.scene.objects)-load_start:
+            if obj.parent is None: parent_keep_world(obj,load_group)
+    elif kind=='tow':
+        # Exposed rear chassis and a true braced lattice recovery boom.
+        for side in (-1,1):
+            bar(identifier+':crane upright',(side*.62,1.28,.45),(side*.62,3.48,1.06),.11,paint_rust)
+            bar(identifier+':boom lower chord',(side*.62,3.35,.97),(side*.62,3.84,3.36),.095,tin)
+            bar(identifier+':boom upper chord',(side*.62,3.62,1.00),(side*.62,4.11,3.39),.095,paint)
+            for t in (.20,.42,.64,.84):
+                z=.97+t*2.39;y=3.35+t*.49
+                bar(identifier+':lattice vertical',(side*.62,y,z),(side*.62,y+.26,z+.05),.055,paint_rust)
+            for t in (.20,.42,.64,.84):
+                z=.97+t*2.39;y=3.35+t*.49
+                bar(identifier+':lattice diagonal',(side*.62,y,z),(side*.62,y+.26,z+.30),.05,tin)
+        bar(identifier+':boom cross beam',(-.62,3.86,3.36),(.62,3.86,3.36),.11,dark_metal)
+        # Real grooved winch drum and hand-cranked gearbox.
+        cylinder(identifier+':winch drum',(0,1.76,1.08),.30,.86,dark_metal,'X',32)
+        for x in (-.39,.39):
+            cylinder(identifier+':winch cheek',(x,1.76,1.08),.38,.07,tin,'X',32)
+        for i in range(7):
+            bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=5,major_radius=.30,
+                minor_radius=.018,location=game_vector((-.30+i*.10,1.76,1.08)),rotation=(0,math.pi/2,0))
+            bpy.context.object.name=identifier+':winch drum groove';bpy.context.object.data.materials.append(paint_rust)
+        hook=pivot(identifier+':hook',(0,1.32,3.28))
+        cable=pipe(identifier+':crane cable',[(0,3.82,3.28),(0,1.68,3.28)],.028,dark_metal)
+        swivel=cylinder(identifier+':hook swivel',(0,1.58,3.28),.10,.18,tin,'X',16)
+        parent_keep_world(cable,hook);parent_keep_world(swivel,hook)
+        # Forged hook has a thick open throat, made from a smooth curve.
+        curve=bpy.data.curves.new(identifier+' forged hook','CURVE');curve.dimensions='3D';curve.bevel_depth=.075;curve.bevel_resolution=3
+        spline=curve.splines.new('POLY');spline.points.add(18)
+        for i,p in enumerate(spline.points):
+            a=math.radians(-68+i*18);p.co=(math.cos(a)*.28,0,math.sin(a)*.28,1)
+        obj=bpy.data.objects.new(identifier+':forged hook',curve);bpy.context.collection.objects.link(obj)
+        obj.location=game_vector((0,1.32,3.28));obj.data.materials.append(tin);parent_keep_world(obj,hook)
+        parent_keep_world(hook,root_obj)
+    # Axle sockets remain named and the body is one drivable child under each root.
+    for obj in list(set(bpy.context.scene.objects)-before):
+        if obj != root_obj and obj.parent is None:
+            parent_keep_world(obj,root_obj)
+    return root_obj
 
-def bed(name, index, z, length, material=steel):
-    x = index * 7.4
-    made = [box(name + ':flatbed-deck', x, 1.06, z, 2.18, length, .20, material, .045)]
-    for side in (-1, 1):
-        made.append(box(name + ':bed-rail', x + side * 1.0, 1.37, z, .08, length, .56, rust, .035))
-        for zi in range(1, max(2, int(length * 2))):
-            made.append(box(name + ':bed-stake', x + side * 1.0, 1.48, z - length*.48 + zi*.48,
-                            .075, .08, .78, steel, .02))
-    made.append(box(name + ':rear-crossbar', x, 1.30, z + length*.48, 2.04, .10, .44, tin, .025))
-    return made
-
-# Fire engine: elevated hose reels, a salvaged ladder and a roof-mounted water cannon.
-fire, fire_objects = truck_parts['fire-truck']; fx = 0
-fire_payload = [box('fire-truck:equipment-body', fx, 1.55, 1.03, 2.22, 2.78, 1.05, red, .14)]
-fire_payload.extend([box('fire-truck:side-equipment-door', fx + s*1.14, 1.53, 1.10, .045, 1.98, .66, rust, .025) for s in (-1,1)])
-for side in (-1, 1):
-    reel = cylinder('fire-truck:hose-reel', fx + side*1.26, 1.84, .82, .47, .22, steel, 'X', 28)
-    fire_payload.append(reel)
-    for band in (-.12, .12):
-        fire_payload.append(cylinder('fire-truck:reel-rim', fx + side*1.40, 1.84, .82, .43, .035, rust, 'X', 28))
-    fire_payload.append(cylinder('fire-truck:coiled-hose', fx + side*1.405, 1.84, .82, .34, .035, red, 'X', 28))
-for side in (-1,1):
-    fire_payload.append(town.beam('fire-truck:roof-ladder-rail', (fx+side*.44,2.66,.05),(fx+side*.44,2.66,2.45),.075,steel))
-for rung in range(12):
-    z = .10 + rung*.20
-    fire_payload.append(town.beam('fire-truck:ladder-rung',(fx-.44,2.66,z),(fx+.44,2.66,z),.045,tin))
-fire_payload.extend([cylinder('fire-truck:roof-water-tank',fx,2.94,.65,.48,2.08,tin,'Y',32),
-                     cylinder('fire-truck:tank-end-rim',fx,2.94,-.40,.51,.09,rust,'Y',32),
-                     cylinder('fire-truck:tank-end-rim',fx,2.94,1.70,.51,.09,rust,'Y',32)])
-cannon = part_group('fire-truck:cannon', (fx, .50, 2.70))
-cannon_objects = [cylinder('fire-truck:cannon-base',fx,2.62,-.50,.23,.34,rust,'Y',16),
-                  cylinder('fire-truck:cannon-barrel',fx,3.00,-.50,.13,1.14,steel,'Y',16),
-                  cylinder('fire-truck:cannon-muzzle',fx,3.00,-1.07,.19,.16,tin,'Y',16)]
-for obj in cannon_objects: parent_keep_world(obj,cannon)
-fire_payload.append(cannon)
-for obj in fire_payload: parent_keep_world(obj,fire)
-
-# Water tanker: long riveted cylinder, saddles, valves, fill cap and visible drops.
-tanker, tanker_objects = truck_parts['water-tanker']; tx=7.4
-tanker_payload=bed('water-tanker',1,0,3.95,tin)
-tanker_payload.extend([cylinder('water-tanker:horizontal-vessel',tx,1.91,.12,.91,3.82,tin,'Y',40),
-                       cylinder('water-tanker:domed-front-head',tx,1.91,-1.74,.87,.14,rust,'Y',40),
-                       cylinder('water-tanker:domed-rear-head',tx,1.91,1.98,.87,.14,rust,'Y',40)])
-for side in (-1,1):
-    for boltrow in range(8):
-        z= -1.48+boltrow*.42
-        tanker_payload.append(cylinder('water-tanker:body-rivet',tx+side*.84,1.91,z,.034,.035,steel,'X',10))
-    tanker_payload.append(pipe('water-tanker:lower-drain-line',(tx+side*.78,.86,.58),(tx+side*.78,.42,1.42),.052,rust))
-    tanker_payload.append(cylinder('water-tanker:valve-wheel',tx+side*.95,.68,1.44,.22,.10,steel,'X',20))
-for xoff in (-1.18,1.10):
-    tanker_payload.append(box('water-tanker:vessel-saddle',tx,1.20,xoff,2.15,.20,.16,steel,.04))
-tanker_payload.extend([cylinder('water-tanker:fill-neck',tx,2.79,.12,.16,.42,rust,'X',20),
-                       box('water-tanker:walkway',tx,2.57,.12,.72,2.80,.075,steel,.025)])
-for obj in tanker_payload: parent_keep_world(obj,tanker)
-
-# Supply flatbed: lashed frame, mixed crates, folded tarp and distinct sacks.
-supply, supply_objects=truck_parts['supply-truck']; sx=14.8
-load=part_group('supply-truck:load',(sx,0,0)); supply_payload=bed('supply-truck',2,.25,2.55,rust)
-for cx,cz,wood,dep,hei in [(-.38,.48,.72,.64,.66),(.38,.48,.77,.64,.55),(-.38,1.12,.88,.60,.54),(.38,1.12,.61,.60,.65)]:
-    obj=box('supply-truck:salvage-crate',sx+cx,1.58,cz,wood,dep,hei,cratewood,.055)
-    supply_payload.append(obj)
-    for rib in (-1,1):
-        supply_payload.append(box('supply-truck:crate-cleat',sx+cx+rib*(wood/2-.08),1.59,cz,.055,dep*.94,hei*.82,rust,.018))
-for i,(cx,cz) in enumerate([(-.78,.48),(.78,.48),(-.78,1.14),(.78,1.14)],1):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=10,radius=1,location=(sx+cx,-cz,1.72))
-    sack=bpy.context.object;sack.name=f'supply-truck:lashed-burlap-sack-{i}';sack.scale=(.30,.36,.25);sack.data.materials.append(canvas);supply_payload.append(sack)
-for side in (-1,1):
-    supply_payload.append(pipe('supply-truck:crossed-load-tie',(sx+side*.94,1.98,.28),(sx-side*.94,1.98,1.43),.026,steel))
-    supply_payload.append(pipe('supply-truck:load-tie',(sx+side*.94,1.98,1.43),(sx+side*.94,1.98,.28),.026,rust))
-rolled= cylinder('supply-truck:rolled-canvas',sx-.64,1.91,1.10,.22,1.28,
-                 canvas,'Y',20)
-supply_payload.append(rolled)
-for z in (.62,1.48):
-    supply_payload.append(box('supply-truck:canvas-tie',sx-.64,2.13,z,.42,.06,.045,rust,.018))
-for obj in supply_payload: parent_keep_world(obj,load)
-parent_keep_world(load,supply)
-
-# Tow rig: open rear frame and braced, crooked crane with a separately named hook.
-tow, tow_objects=truck_parts['tow-rig']; wx=22.2
-tow_payload=bed('tow-rig',3,1.10,2.60,steel)
-for side in (-1,1):
-    tow_payload.append(town.beam('tow-rig:crane-post',(wx+side*.72,1.37,.95),(wx+side*.72,3.72,.95),.15,rust))
-    tow_payload.append(town.beam('tow-rig:crane-boom',(wx+side*.72,3.72,.95),(wx+side*.72,3.34,3.15),.16,steel))
-    tow_payload.append(town.beam('tow-rig:crane-crossbrace',(wx+side*.72,2.00,.95),(wx+side*.72,3.55,2.55),.09,rust))
-    tow_payload.append(box('tow-rig:crane-head-crossbar',wx,3.69,.95,1.58,.18,.20,tin,.04))
-hook=part_group('tow-rig:hook',(wx,-3.06,1.35))
-hook_parts=[pipe('tow-rig:lowered-hook-chain',(wx,3.39,3.07),(wx,1.75,3.07),.033,steel),
-            cylinder('tow-rig:hook-swivel',wx,1.63,3.07,.12,.18,rust,'X',14)]
-for obj in hook_parts: parent_keep_world(obj,hook)
-# Curved C hook, made from a thick bent pipe so it remains a real forged shape.
-curve=bpy.data.curves.new('tow-rig forged C hook','CURVE');curve.dimensions='3D';curve.bevel_depth=.075;curve.bevel_resolution=2
-spline=curve.splines.new('POLY');spline.points.add(17)
-for i,p in enumerate(spline.points):
-    angle=math.radians(-72+i*18)
-    p.co=(math.cos(angle)*.28,0,math.sin(angle)*.28,1)
-hook_mesh=bpy.data.objects.new('tow-rig:forged-hook',curve);bpy.context.collection.objects.link(hook_mesh)
-hook_mesh.location=(wx,-3.06,1.35);hook_mesh.data.materials.append(tin);parent_keep_world(hook_mesh,hook)
-tow_payload.append(hook)
-for obj in tow_payload: parent_keep_world(obj,tow)
-
-# Keep wheel assemblies under their movable pivots and parent every truck part.
-for identifier, root_obj in truck_roots.items():
-    for obj in list(bpy.context.scene.objects):
-        if obj is root_obj or obj.parent is not None:
+def merge_static_meshes(root_obj):
+    """Keep named pivots while batching repeated panels and hardware by material."""
+    parents=[root_obj]+[obj for obj in root_obj.children_recursive if obj.type=='EMPTY']
+    for parent in parents:
+        if parent.name.endswith(':lamp'):
             continue
-        if obj in active_objects:
-            continue
-        # All unattached authored meshes belong to the truck whose X bay contains them.
-        if abs(obj.location.x - root_obj.location.x) < 4.0 and obj not in (root_obj,):
-            parent_keep_world(obj, root_obj)
+        groups={}
+        for child in list(parent.children):
+            if child.type=='MESH' and len(child.data.materials)==1:
+                groups.setdefault(child.data.materials[0].name,[]).append(child)
+        for material_name,objects in groups.items():
+            if len(objects)<2:
+                continue
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in objects: obj.select_set(True)
+            bpy.context.view_layer.objects.active=objects[0]
+            bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.join()
+            bpy.context.object.name=parent.name+':batched-'+material_name.replace(' ','-')
+            if ':spin-' not in parent.name:
+                decimate=bpy.context.object.modifiers.new('truck detail budget reduction','DECIMATE')
+                decimate.ratio=.30
 
-family_root = bpy.data.objects.new('town-trucks-1', None)
-bpy.context.collection.objects.link(family_root)
-for root_obj in truck_roots.values():
-    parent_keep_world(root_obj, family_root)
+specs=(('fire-truck',7.5,(-2.45,1.18,2.23),'fire'),
+       ('water-tanker',9.0,(-3.00,1.15,2.55),'tanker'),
+       ('supply-truck',7.5,(-2.35,2.22),'supply'),
+       ('tow-rig',7.0,(-2.15,1.95),'tow'))
+for identifier,length,axles,kind in specs:
+    build_truck(identifier,length,axles,materials[identifier+'-paint'],kind)
+for truck in TRUCKS.values(): merge_static_meshes(truck)
 
-# White-gray sand staging ground, deliberately render-only.
-floor_mat=bpy.data.materials.new('Neutral warm dry-earth studio')
-floor_mat.diffuse_color=(.43,.39,.32,1);floor_mat.use_nodes=True
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.43,.39,.32,1)
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.95
-floor=box('render-only compacted sand',11.1,-.13,0,31,12,.20,floor_mat,.02)
-floor.hide_render=False
-for location, target, power, size in [((-4,4,9),(3,0,1),5200,8),
-                                     ((17,-3,6),(12,0,1),2400,6),
-                                     ((28,5,10),(22,0,1),3600,8)]:
-    bpy.ops.object.light_add(type='AREA', location=location)
-    light_obj=bpy.context.object;light_obj.data.energy=power;light_obj.data.shape='DISK';light_obj.data.size=size
-    light_obj.rotation_euler=(Vector(target)-light_obj.location).to_track_quat('-Z','Y').to_euler()
+family=pivot('town-trucks-1',(0,0,0))
+for truck in TRUCKS.values(): parent_keep_world(truck,family)
 
-def camera(name, location, target, lens=52):
-    bpy.ops.object.camera_add(location=location)
-    cam=bpy.context.object;cam.name=name;cam.data.lens=lens
-    cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler()
-    scene.camera=cam
-    return cam
-
-def render_view(file_name, loc, target, lens=52):
-    cam=camera('render-only '+file_name,loc,target,lens)
-    scene.render.filepath=str(evidence/file_name)
-    bpy.ops.render.render(write_still=True)
-    bpy.data.objects.remove(cam,do_unlink=True)
-
-evidence.mkdir(parents=True,exist_ok=True)
-def set_truck_render(root_obj, visible):
-    # Empty visibility does not reliably cascade through glTF-style parenting.
-    for obj in bpy.context.scene.objects:
-        if obj.name == root_obj.name or obj.name.startswith(root_obj.name + ':'):
-            obj.hide_render = not visible
-
-if not args.export_only:
-    for ident,index,_,length,_,_ in truck_specs:
-        cx=index*7.4
-        for other_id, other_root in truck_roots.items():
-            set_truck_render(other_root, other_id == ident)
-        # Reference view: truck-sized, front left, near level; matching image crop.
-        render_view(f'{ident}-reference-angle.png',(cx+6.5,8.8,3.2),(cx,0,1.55),44)
-        # Mayor's view: all roof equipment and open loads visible at 45 degrees.
-        render_view(f'{ident}-above-45.png',(cx+5.7,7.0,8.0),(cx,0,1.1),48)
-        # Driver-height read is a close working distance, but keep the cab and
-        # front wheel in frame so their proportions can be judged together.
-        render_view(f'{ident}-driver-seat.png',(cx+6.0,8.5,1.65),(cx,0,1.4),44)
-for root_obj in truck_roots.values():
-    set_truck_render(root_obj, True)
-
-# Remove scene staging and camera/light objects before export. The receiver
-# only sees four named roots and their meshes and named working parts.
-for obj in list(bpy.context.scene.objects):
-    if obj == floor or obj.type in ('CAMERA','LIGHT'):
-        bpy.data.objects.remove(obj,do_unlink=True)
-for ident, root_obj in truck_roots.items():
-    # Explicit wheel pivot names mirror the game's steer/spin socket contract.
-    pass
-
-if not args.export_only:
-    blend.parent.mkdir(parents=True,exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+output.parent.mkdir(parents=True,exist_ok=True)
+blend.parent.mkdir(parents=True,exist_ok=True)
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(output)
-print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,
-                  'triangles':sum(len(o.data.polygons) for o in bpy.context.scene.objects if o.type=='MESH')*2,
-                  'evidence':str(evidence)}))
+def mesh_triangles(obj, depsgraph):
+    evaluated=obj.evaluated_get(depsgraph)
+    mesh=evaluated.to_mesh()
+    count=sum(max(0, len(poly.vertices)-2) for poly in mesh.polygons)
+    evaluated.to_mesh_clear()
+    return count
+
+truck_metrics={}
+depsgraph=bpy.context.evaluated_depsgraph_get()
+for identifier,_,_,_ in specs:
+    truck_meshes=[obj for obj in bpy.context.scene.objects
+                  if obj.type=='MESH' and obj.name.startswith(identifier)]
+    truck_metrics[identifier]={
+        'triangles':sum(mesh_triangles(obj,depsgraph) for obj in truck_meshes),
+        'paintImage':PAINT_FILES[identifier][0],
+        'paintImageBytes':(textures/PAINT_FILES[identifier][0]).stat().st_size,
+        'paintImageDimensions':list(bpy.data.images[identifier+' own repeating paint photograph'].size),
+    }
+triangles=sum(item['triangles'] for item in truck_metrics.values())
+if any(item['triangles']>15000 for item in truck_metrics.values()):
+    raise RuntimeError('A truck exceeds the 15,000 triangle round 4 budget: '+json.dumps(truck_metrics))
+if args.export_only:
+    print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
+                      'trucks':truck_metrics}))
+    raise SystemExit(0)
+
+# Read the delivered file into a genuinely empty scene before making any view.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU'
+scene.cycles.samples=32;scene.cycles.use_denoising=True
+scene.render.resolution_x=900;scene.render.resolution_y=600;scene.render.resolution_percentage=100
+scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX'
+scene.world=bpy.data.worlds.new('mid grey overcast review');scene.world.use_nodes=True
+scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.42,.43,.44,1)
+scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.8
+bpy.ops.import_scene.gltf(filepath=str(output))
+bpy.ops.mesh.primitive_plane_add(size=200,location=(0,-.02,0))
+floor=bpy.context.object;floor.name='plain mid-grey ground'
+floor_mat=bpy.data.materials.new('plain mid-grey ground');floor_mat.diffuse_color=(.34,.35,.36,1);floor_mat.use_nodes=True
+floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.34,.35,.36,1)
+floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.96;floor.data.materials.append(floor_mat)
+for loc,power,size in [((4,5,9),4300,7),((-5,-5,6),2600,6)]:
+    bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object
+    light.data.energy=power;light.data.shape='DISK';light.data.size=size
+    light.rotation_euler=(Vector((0,0,1.6))-light.location).to_track_quat('-Z','Y').to_euler()
+camera_data=bpy.data.cameras.new('matched low photo camera');camera=bpy.data.objects.new('matched low photo camera',camera_data)
+scene.collection.objects.link(camera);camera.location=(7.5,9.5,3.0)
+camera.rotation_euler=(Vector((0,0,1.65))-camera.location).to_track_quat('-Z','Y').to_euler()
+camera.data.lens=52;scene.camera=camera
+evidence.mkdir(parents=True,exist_ok=True)
+for identifier,_,_,_ in specs:
+    root_node=bpy.data.objects.get(identifier)
+    if root_node is None: raise RuntimeError('exported GLB lost truck root '+identifier)
+    # One truck is visible at a time in the imported scene.
+    all_roots=[bpy.data.objects.get(name) for name,_,_,_ in specs]
+    for other in all_roots:
+        if other:
+            hidden=other.name!=identifier
+            other.hide_render=hidden
+            for child in other.children_recursive: child.hide_render=hidden
+    scene.render.filepath=str(evidence/(identifier+'.png'))
+    bpy.ops.render.render(write_still=True)
+print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
+                  'trucks':truck_metrics,
+                  'renderedFromImportedGlb':True,'evidence':str(evidence)}))

@@ -583,13 +583,19 @@ try {
       const children = (group.children || []).map(index => names[index]);
       assert.deepEqual(children.sort(), [`${id}:headlamp-left`, `${id}:headlamp-right`]);
     }
-    assert.equal(gltf.images?.length, 1, 'one embedded 1K shared wear atlas');
-    const binStart = 28 + bytes.readUInt32LE(12);
-    const imageView = gltf.bufferViews[gltf.images[0].bufferView];
-    const imageStart = binStart + (imageView.byteOffset || 0);
-    assert.equal(gltf.images[0].mimeType, 'image/png');
-    assert.ok(bytes.readUInt32BE(imageStart + 16) <= 1024 && bytes.readUInt32BE(imageStart + 20) <= 1024,
-      'wear atlas must stay at or under 1K');
+    assert.equal(gltf.images?.length, 4, 'four individual paint photographs, no shared atlas');
+    assert.ok(gltf.images.every(image => image.mimeType === 'image/jpeg'), 'paint photographs embed as JPEG');
+    const paintMaterials = gltf.materials.filter(material => material.name?.endsWith('/ photo paint'));
+    assert.equal(paintMaterials.length, 4, 'each truck has its own photo paint material');
+    const paintImages = paintMaterials.map(material => {
+      const imageIndex = gltf.textures[material.pbrMetallicRoughness.baseColorTexture.index].source;
+      assert.ok(Number.isInteger(imageIndex), `${material.name} uses an embedded image`);
+      assert.ok((material.pbrMetallicRoughness.metallicFactor || 0) <= .3,
+        `${material.name} metallic factor stays at or below 0.3`);
+      return imageIndex;
+    });
+    assert.equal(new Set(paintImages).size, 4, 'paint sources are unique per truck');
+    assert.deepEqual([...paintImages].sort(), [0, 1, 2, 3]);
     const familyIndex = byName.get('town-trucks-1');
     const familyChildren = (gltf.nodes[familyIndex].children || []).map(index => names[index]);
     assert.deepEqual(familyChildren.sort(), ['fire-truck', 'supply-truck', 'tow-rig', 'water-tanker']);
