@@ -1,20 +1,21 @@
-# WW-ART-RAIL ? carriage and van, round 2
+# WW-ART-RAIL: carriage and guard van, round 4
 
-The lane remains open. The engine, track and drift were left unchanged. One passenger carriage and the guard van are in the family GLB; the scene card places `the-2-15-carriage` three times. No other carriage was modeled.
+Date: 6 November 2026
 
 ## Changed
 
-- `tools/blender/rail-trains.py`: isolated each subject in its own render; inset wheel-face photo coordinates; moved the van to its photographed central axle pair and added traced truss rods; added the carriage centre tank and rods, torn side eave bands and three vents; trimmed the van end/lookout joins; resized carriage and van photos in the recipe to 700 px on the long edge and canvas to 512 px.
-- `public/assets/models/wasteland/rail/rail-trains.glb`: rebuilt from the recipe and imported into an empty Blender scene for all sheet renders.
-- Rail textures: converted `van-end.png` to credited `van-end.jpg`.
-- Replaced the round 4 sheet and note with `carriages-round-2.jpg` and its review note. Round 3 is unchanged.
+- Rebuilt `rail-trains.glb` from the Blender recipe and rendered review views by importing that GLB into an empty Blender scene.
+- Thickened the carriage and guard-van underframes with photo-traced frames, central tanks and round truss rods. Kept the guard van's photographed single axle pair.
+- Added the guard-van cargo floor and refined its lookout, end panels and roof edge. Adjusted the carriage roof edge and underframe details.
+- Published `docs/board/looks/ww-art-rail/round-4.jpg` and its review note. The engine and drift remain accepted from the previous art review; this round works on the carriage and guard van.
 
 ## Checks
 
-- Blender 4.5.13 export and empty-scene import completed. GLB read-back: 21,776 triangles and 2,923,260 bytes.
-- `node tools/test-blender-output.mjs`: passed, 275 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: failed only on the requested filename `docs/board/looks/ww-art-rail/carriages-round-2.jpg`; its allowlist accepts `round-<n>.jpg` but not the exact task-required name. No test assertion was changed.
-- Browser and art look review: Claude should inspect the four photo/render pairs and four three-quarter renders in the review sheet. The builder assessment is that the three-quarter underframe and roof/end joins are not yet convincing enough to pass.
+- Blender 4.5.13 rebuilt and exported the GLB, then imported it into an empty scene for the renders.
+- `node tools/test-blender-output.mjs`: passed, 284 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; the current `round-4` sheet is 447,163 bytes and stays below the 500 KB cap.
+- No lane tier, build, browser check or frame timing; the card says this art is not wired into the game.
+- Art verdict is pending Claude's review. Round 4 improves the visible underframes; the review note calls out the remaining roof and lookout joins for a final decision.
 
 ## Changed assertions
 
@@ -26,6 +27,5 @@ None. This asset is not wired into a playable scene.
 
 ## Removed
 
-- Removed `van-end.png` after converting it to `van-end.jpg`.
-- Replaced `round-4.jpg` and `round-4-review.md` with the requested round 2 sheet and note; `round-3.jpg` and its note remain unchanged.
-- Temporary Blender renders, masks, and test logs in `.qa-dist` will be removed before handoff.
+- Removed the superseded carriage/van round 2 sheet and review note, and the earlier engine round 3 sheet and review note after carrying forward their verdicts and useful findings here.
+- Removed temporary Blender renders, masks, the sheet-making scratch script, and the generated `.blend` file after making the review sheet.

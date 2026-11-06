@@ -61,6 +61,12 @@ if max(carriage_canvas.image.size) > 512:
                                 round(carriage_canvas.image.size[1] * 512 / max(carriage_canvas.image.size)))
     carriage_canvas.image.pack()
 
+def bleed_solid(photo, solid):
+    """Resize a frame-space mask to the photo's current packed image size."""
+    rows = np.minimum((np.arange(photo.image_h) * solid.shape[0] / photo.image_h).astype(int), solid.shape[0] - 1)
+    cols = np.minimum((np.arange(photo.image_w) * solid.shape[1] / photo.image_w).astype(int), solid.shape[1] - 1)
+    photo.bleed(solid[rows][:, cols])
+
 # Sky in each photo. Seeds: the open sky, then each opening where sky shows through.
 side_solid = tidy(~side.sky([(30, 30), (1000, 40), (1950, 300), (340, 260), (272, 300), (190, 150), (700, 135), (850, 135)]))
 front_solid = tidy(~front.sky([(40, 40), (1150, 40), (310, 345), (885, 345)], grey=26))
@@ -345,8 +351,20 @@ def CZ(px): return -(px - 627) * (2.7 / 952)
 def carriage_side_point(px, py, z): return (CX(px), CY(py), z)
 def carriage_end_point(px, py, x): return (x, (1180 - py) * (3.7 / 1080), CZ(px))
 
-carriage_side_solid = tidy(~carriage_side.sky([(8, 20), (8, 350), (2160, 30), (2160, 350)], grey=26))
-carriage_end_solid = tidy(~carriage_end.sky([(35, 35), (1215, 35)], grey=26))
+carriage_side_solid = tidy(~carriage_side.sky([
+    (8, 20), (8, 350), (2160, 30), (2160, 350),
+    # Open sky between the centre tank and the diagonal truss rods.
+    (85, 573), (806, 573), (1270, 573), (2100, 573),
+], grey=26))
+carriage_end_solid = tidy(~carriage_end.sky([(35, 35), (1215, 35), (155, 135), (1085, 135)], grey=26))
+image = bpy.data.images.new('mask carriage-side', carriage_side_solid.shape[1], carriage_side_solid.shape[0], alpha=False)
+grey = carriage_side_solid[::-1].astype(np.float32)
+image.pixels.foreach_set(np.dstack((grey, grey, grey, np.ones_like(grey))).ravel())
+image.filepath_raw = str(render_dir / 'mask-carriage-side.png')
+image.file_format = 'PNG'
+image.save()
+bleed_solid(carriage_side, carriage_side_solid)
+bleed_solid(carriage_end, carriage_end_solid)
 carriage = Mesh()
 C_SIDE = 'carriage-side'
 C_END = 'carriage-end'
@@ -376,7 +394,7 @@ box(carriage, CX(70), CX(2000), .76, .84, -1.22, 1.22,
 # The actual door leaves come from their own picture areas and swing outward.
 def swing_door(loop, hinge_px, sign):
     hinge_x = CX(hinge_px)
-    angle = math.radians(70)
+    angle = math.radians(25)
     def placed(px, py, depth):
         x = CX(px)
         dx = x - hinge_x
@@ -481,7 +499,7 @@ for x_sign in (-1, 1):
         stations_buffer = [(0, .09), (.16, .09), (.20, .15), (.27, .225)]
         lathe(carriage, C_SIDE, (start_x, 1.02, z_sign * .92), (x_sign, 0, 0),
               (0, 0, 1), (0, 1, 0), stations_buffer,
-              lambda i, d, r, a: carriage_side.uv(1980 + i * 10, 502 + math.sin(a) * 12),
+          lambda i, d, r, a: carriage_side.uv(500 + i * 12, 492 + math.sin(a) * 9),
               sides=16,
               cap_end=(C_END, lambda a, f: carriage_end.uv(300 + math.cos(a) * f * 95,
                                                             940 - math.sin(a) * f * 95)))
@@ -499,8 +517,24 @@ def VZ(px): return -(px - 599.5) * (2.7 / 923)
 def van_side_point(px, py, z): return (VX(px), VYp(py), z)
 def van_end_point(px, py, x): return (x, .75 + (1000 - py) * (2.94 / 980), VZ(px))
 
-van_side_solid = tidy(~van_side.sky([(18, 18), (2020, 18)], grey=26))
-van_end_solid = tidy(~van_end.sky([(25, 25), (1170, 25)], grey=26))
+van_side_solid = tidy(~van_side.sky([
+    (18, 18), (2020, 18), (520, 560), (1500, 560), (1920, 555),
+], grey=26))
+van_end_solid = tidy(~van_end.sky([(25, 25), (1170, 25), (250, 100), (950, 100)], grey=26))
+image = bpy.data.images.new('mask van-side', van_side_solid.shape[1], van_side_solid.shape[0], alpha=False)
+grey = van_side_solid[::-1].astype(np.float32)
+image.pixels.foreach_set(np.dstack((grey, grey, grey, np.ones_like(grey))).ravel())
+image.filepath_raw = str(render_dir / 'mask-van-side.png')
+image.file_format = 'PNG'
+image.save()
+image = bpy.data.images.new('mask van-end', van_end_solid.shape[1], van_end_solid.shape[0], alpha=False)
+grey = van_end_solid[::-1].astype(np.float32)
+image.pixels.foreach_set(np.dstack((grey, grey, grey, np.ones_like(grey))).ravel())
+image.filepath_raw = str(render_dir / 'mask-van-end.png')
+image.file_format = 'PNG'
+image.save()
+bleed_solid(van_side, van_side_solid)
+bleed_solid(van_end, van_end_solid)
 van = Mesh()
 V_SIDE, V_END = 'van-side', 'van-end'
 van_materials = {V_SIDE: van_side.material(), V_END: van_end.material()}
@@ -518,6 +552,10 @@ box(van, VX(690), VX(1118), .80, 2.74, -1.14, 1.14,
 box(van, VX(690), VX(1118), .72, .80, -1.20, 1.20,
     {'+z': INTERIOR, '-z': INTERIOR, '+y': INTERIOR})
 
+# The cargo floor closes the underside between the two continuous side frames.
+box(van, VX(135), VX(1910), .69, .73, -1.14, 1.14,
+    {'+y': (V_SIDE, van_side, (740, 200, 850, 270))})
+
 # The door has rolled back along its iron rail, leaving the full cargo aperture.
 door_loop = trace(van_side_solid, (1110, 150, 1532, 455), tolerance=1.5, min_area=100)
 for sign in (1, -1):
@@ -529,7 +567,7 @@ lookout = trace(van_side_solid, (1495, 2, 1850, 116), tolerance=1.4, min_area=80
 lookout += [rounded(1564, 37, 1640, 86, 5), rounded(1686, 37, 1768, 87, 5)]
 for sign in (1, -1):
     slab(van, V_SIDE, van_side, lookout, van_side_point,
-         sign * .91, sign * .98, wall_scale=VS)
+         sign * .82, sign * .88, wall_scale=VS)
 box(van, VX(1510), VX(1842), 3.11, 3.49, -.88, .88,
     {'+z': (V_SIDE, van_side, (1538, 50, 1760, 92)), '-z': (V_SIDE, van_side, (1538, 50, 1760, 92))})
 
@@ -545,12 +583,12 @@ end_lookout = trace(van_end_solid, (280, 8, 920, 224), tolerance=1.5, min_area=1
 end_lookout = [loop for loop in end_lookout
                if max(p[0] for p in loop) - min(p[0] for p in loop) > 500]
 end_lookout += [rounded(388, 64, 566, 159, 8), rounded(628, 64, 812, 159, 8)]
-for x in (-6.24, 6.16):
+for x in (-6.05, 5.97):
     slab(van, V_END, van_end, end_outline, van_end_point,
          x, x + .08, wall_scale=.0026)
 slab(van, V_END, van_end, end_lookout, van_end_point,
-     5.35, 5.43, wall_scale=.0026)
-box(van, -6.12, 6.10, .75, 3.06, -1.12, 1.12,
+     5.46, 5.54, wall_scale=.0026)
+box(van, -5.97, 5.97, .75, 3.06, -1.12, 1.12,
     {'+x': (V_END, van_end, (458, 390, 742, 825)), '-x': (V_END, van_end, (458, 390, 742, 825))})
 
 # The canvas roof is a shallow arch across the van, continued along its length.
@@ -565,7 +603,28 @@ for k in range(16):
            van_side.uv(1905, py1), van_side.uv(145, py1))
     van.face(corners, uvs, V_SIDE, (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2)))
 
-# The photograph shows one central axle, with truss rods reaching the ends.
+# The photograph shows one central axle, with a heavy frame and truss rods
+# reaching to both ends. Trace the complete iron silhouette on each side.
+van_frame = trace(van_side_solid, (12, 475, 2038, 604), tolerance=1.8, min_area=35)
+for sign in (-1, 1):
+    slab(van, V_SIDE, van_side, van_frame, van_side_point,
+         sign * 1.18, sign * 1.24, wall_scale=VS)
+
+# Each truss rod is real round iron, wearing a narrow strip from the frame.
+def truss_rod(start, end, z):
+    p0 = Vector(van_side_point(start[0], start[1], z))
+    p1 = Vector(van_side_point(end[0], end[1], z))
+    delta = p1 - p0
+    length = delta.length
+    axis = delta.normalized()
+    e1 = Vector((0, 0, 1))
+    e1 = (e1 - axis * axis.dot(e1)).normalized()
+    e2 = axis.cross(e1).normalized()
+    def rust_uv(index, distance, radius, angle):
+        return van_side.uv(410 + distance / length * 90, 490 + math.sin(angle) * 7)
+    lathe(van, V_SIDE, p0, axis, e1, e2, [(0, .03), (length, .03)], rust_uv, sides=12)
+
+# The photograph shows a central pair of wheels with rods reaching the ends.
 wheel_centres = (850, 1165)
 for wheel_x in wheel_centres:
     radius_px = 84
@@ -587,10 +646,8 @@ for wheel_x in wheel_centres:
          '-z': (V_SIDE, van_side, (wheel_x - 70, 480, wheel_x + 70, 535)), '-y': (V_SIDE, van_side, (wheel_x - 70, 535, wheel_x + 70, 548))})
 
 for z in (-.82, .82):
-    slab(van, V_SIDE, van_side, [[(350, 522), (850, 574), (850, 586), (350, 534)]],
-         van_side_point, z, z + .035, wall_scale=VS)
-    slab(van, V_SIDE, van_side, [[(1165, 574), (1650, 522), (1650, 534), (1165, 586)]],
-         van_side_point, z, z + .035, wall_scale=VS)
+    truss_rod((350, 522), (850, 574), z)
+    truss_rod((1165, 574), (1650, 522), z)
 
 for x_sign in (-1, 1):
     for z_sign in (-1, 1):
