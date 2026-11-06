@@ -133,6 +133,20 @@ appearance.
 
 ### `patience-hull-projection.jpg`
 
-Use: tighter hull crop for Patience's side-projected hull material in
-WW-ART-SHIPS. Derived from the original Codex ImageGen photo
-`ships-hull-photo.jpg` above, 2026-11-05, with no third-party source art.
+Use: hull-only side projection for Patience in WW-ART-SHIPS. The crop uses
+rows 160 to 336 of the 2048 x 384 source photo, below the deck line. The
+bridge, gear and rails are modeled above it. Derived from the original Codex
+ImageGen photo `ships-hull-photo.jpg` above, 2026-11-05. No third-party source
+art is used.
+
+### `patience-white-painted-steel.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 1024 x 1024 repeating albedo tile for Patience's exposed chart-room
+roof, block ends and other white painted steel surfaces. The side-facing
+superstructure uses the full ship photo projection instead.
+
+Prompt:
+
+> Use case: photorealistic-natural. Create a seamless 1024 by 1024 square albedo tile from an orthographic close-up of a real ship's worn off-white painted steel superstructure. The paint is old ivory-grey, faded and chalky, with fine brush texture, thin rust drips from fasteners, scattered small chips exposing dark brown-black oxidized metal, and a few shallow panel seams. Chips are mostly 2 to 15 cm at true scale. No windows, doors, lettering, large objects, shadows, perspective or dramatic highlights. Uniform bright overcast daylight with flat diffuse illumination. Sharp photographic detail, specific paint and corrosion at more than one scale, no blurred noise. Make all four edges tile seamlessly. Opaque image, no border or watermark.

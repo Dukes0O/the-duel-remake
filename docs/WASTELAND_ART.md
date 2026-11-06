@@ -23,6 +23,18 @@ Prompt:
 
 > Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a 3D dam model. Primary request: a square, tileable close photograph of weathered grey poured concrete from an old hydroelectric dam. Subject: cool neutral-grey concrete with fine aggregate, subtle horizontal lift-joint traces, sparse hairline cracks and dark mineral damp stains; photographic detail, realistic scale for a 2 metre repeat. Style/medium: sharp macro surface photography. Composition: flat orthographic surface filling the square, seamless on all four edges, no perspective. Lighting/mood: bright even overcast daylight, no cast shadows or glare. Materials/textures: specific concrete grain and worn cement, controlled contrast, no blur or noise-only pattern. Constraints: no writing, no border, no objects, no landscape, no recognizable large crack, no orange rust, no sandy color, no illustration, no watermark.
 
+## `public/assets/models/wasteland/scablands/textures/patience-white-painted-steel.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 1024 x 1024 repeating albedo tile for Patience's exposed chart-room roof,
+block ends and other white painted steel surfaces. The side-facing
+superstructure uses the full ship photo projection instead.
+
+Prompt:
+
+> Use case: photorealistic-natural. Create a seamless 1024 by 1024 square albedo tile from an orthographic close-up of a real ship's worn off-white painted steel superstructure. The paint is old ivory-grey, faded and chalky, with fine brush texture, thin rust drips from fasteners, scattered small chips exposing dark brown-black oxidized metal, and a few shallow panel seams. Chips are mostly 2 to 15 cm at true scale. No windows, doors, lettering, large objects, shadows, perspective or dramatic highlights. Uniform bright overcast daylight with flat diffuse illumination. Sharp photographic detail, specific paint and corrosion at more than one scale, no blurred noise. Make all four edges tile seamlessly. Opaque image, no border or watermark.
+
 ## `public/assets/models/wasteland/scablands/textures/dam-salt-crust.jpg`
 
 Date: 2026-11-05  
