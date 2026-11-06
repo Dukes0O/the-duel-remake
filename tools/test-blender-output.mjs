@@ -68,6 +68,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:80000,maxBytes:5000000},
+  {id:'ww-art-whites',script:'tools/blender/rail-whites.py',args:['--through','salt-heap'],candidate:true,
+    glb:['public/assets/models/wasteland/rail/whites.glb'],budget:60000,maxBytes:5000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
 
@@ -664,6 +666,28 @@ try {
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
           assert.deepEqual(coordinates, ['TEXCOORD_0'], `${primitive.material} has only TEXCOORD_0`);
+          const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+          assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV accessor uses float pairs');
+          const view = gltf.bufferViews[uv.bufferView];
+          const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+          const stride = view.byteStride ?? 8;
+          const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+          for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+          }
+          assert.ok(min[0] < max[0] && min[1] < max[1], 'TEXCOORD_0 covers a range');
+        }
+        for (const material of gltf.materials) {
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
+            `${material.name} metallicFactor exceeds 0.3`);
+        }
+      }
+      if (generator.id === 'ww-art-whites') {
+        const binaryOffset = 20 + jsonLength + 8;
+        for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
+          const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+          assert.deepEqual(coordinates, ['TEXCOORD_0'], 'Whites models use only TEXCOORD_0');
           const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
           assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV accessor uses float pairs');
           const view = gltf.bufferViews[uv.bufferView];
