@@ -23,8 +23,8 @@ export async function run(context) {
   await context.waitFor('!!document.querySelector(".town-entry [data-town-action=drive]")','the town screen DRIVE button');
   await context.evaluate(`(()=>{
     const host=document.querySelector('.town-entry');
-    const hall=host.__townCommand({type:'placeBuilding',buildingId:'town-hall',x:70,z:50});
-    const road=host.__townCommand({type:'placeBuilding',buildingId:'road-dirt',x:74,z:50});
+    const hall=host.__townCommand({type:'placeBuilding',buildingId:'town-hall',x:15,z:-12});
+    const road=host.__townCommand({type:'placeBuilding',buildingId:'road-dirt',x:19,z:-12});
     if(!hall[0]?.ok||!road[0]?.ok)throw Error('Could not place the town features for the world picture');
     host.querySelector('[data-town-action="drive"]').click();
   })()`);

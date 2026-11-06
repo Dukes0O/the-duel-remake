@@ -6,7 +6,7 @@
 - Town-drive admission now works from the Scrapdome yard while `story-everburn` is off. Story jobs keep their existing switch gate.
 - DRIVE does nothing during a read-only town visit.
 - The town layout clears when the drive reaches the Scrapdome gate, ends in a wreck, or returns to the menu. The shared world-job cleanup also clears it when the player gives up or presses Escape.
-- The browser scenario now opens THE TOWN, creates a town, places a hall and road, and starts the drive with the town's DRIVE button.
+- The browser scenario now opens THE TOWN, creates a town, places a hall and road beside the gate where the drive can show them, and starts the drive with the town's DRIVE button.
 
 ## Checks
 
