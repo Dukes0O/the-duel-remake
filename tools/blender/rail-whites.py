@@ -536,6 +536,26 @@ def build_hut(name):
         mesh.face(roof, roof_uv, 'side', (0,1,0))
         mesh.face(tuple(reversed(lower)), tuple(reversed(roof_uv)), 'side', (0,-1,0))
 
+    if name == 'school-hut':
+        # The bell is measured from the end photograph: a narrow mounting
+        # plate beneath the ridge, a flared 0.45 m bell and its clapper.
+        px_per_m = .84 * ew / 4.4
+        py_per_m = .64 * eh / 3.5
+        bell_px, bell_py = .505 * ew, .275 * eh
+        bell_x = 4.10
+        def bell_uv(index, distance, radius, angle):
+            px = bell_px + math.sin(angle) * radius * px_per_m
+            py = bell_py + distance * py_per_m
+            return end.uv(px, py)
+        def bell_cap(angle, fraction):
+            return end.uv(bell_px + math.sin(angle) * .20 * px_per_m,
+                          bell_py + .39 * py_per_m)
+        lathe(mesh, 'end', (bell_x, 3.28, 0), (0, -1, 0), (1, 0, 0), (0, 0, 1),
+              ((0, .075), (.055, .10), (.14, .15), (.34, .23), (.40, .22)),
+              bell_uv, sides=20, cap_end=('end', bell_cap))
+        lathe(mesh, 'end', (bell_x, 2.80, 0), (0, -1, 0), (1, 0, 0), (0, 0, 1),
+              ((0, .025), (.07, .025)), bell_uv, sides=12)
+
     # A matte dark interior plane sits behind the real openings, so a window
     # or doorway has visible depth without a painted black picture on its rim.
     for x0, y0, x1, y1 in cfg['side_holes']:
