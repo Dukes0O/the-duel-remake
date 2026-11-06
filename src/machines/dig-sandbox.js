@@ -1,12 +1,15 @@
 import {createMachineHaul, operateMachineHaul, stepMachineHaul} from './haul.js';
 import {machineToolPosition} from './machine.js';
+import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 
-const YARD = Object.freeze({excavator:{x:0,z:34}, dumpTruck:{x:0,z:39}, trencher:{x:7,z:35}});
+// The bucket reaches four metres from the tracks. The bed is 4.6 m to the
+// right, and the heap is 4.6 m to the left, so either swing fits at rest.
+const YARD = Object.freeze({excavator:{x:0,z:34}, dumpTruck:{x:4.6,z:34}, trencher:{x:10,z:34}});
 const RESERVATIONS = Object.freeze([
   {x:0,z:0,radius:24,sentence:'The Dome is built here. Dig around it.'},
   {x:0,z:1120,radius:18,sentence:'The gate is protected ground. Dig around it.'},
@@ -14,6 +17,12 @@ const RESERVATIONS = Object.freeze([
     sentence:`${place.name} is a story place. Dig around it.`})),
 ]);
 const STEP = 1 / 60;
+
+/** Frame edges stay queued until a simulation step consumes them. */
+export function createPendingDigActions(){
+  const pending=new Set();
+  return Object.freeze({push(action){pending.add(action);},consume(action){if(!pending.has(action))return false;pending.delete(action);return true;}});
+}
 
 function newGround(seed) {
   return createGroundEdit({region:{id:'scablands',editable:true},seed,naturalHeight:scablandsNaturalHeightAt,
@@ -30,13 +39,13 @@ export function createDigSandbox({seed = 1, ground = null} = {}) {
   }
   // TOWN-STORE replaces this page-lifetime memory save; career storage is never used.
   if (!ground && !loaded) {
-    for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:10,z:39,radius},'topsoil',volume);
+    for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:-4.6,z:34,radius},'topsoil',volume);
     globalThis.__theDigGroundMemory=edit.toSave();
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
   return {ground:edit,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
-    cameraIndex:1,mode:'drive',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
+    cameraIndex:0,mode:'drive',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
 
@@ -58,6 +67,17 @@ function fixedStep(sim,input) {
     const haul={...sim.haul,activeMachine:sim.activeMachine};
     let advanced=stepMachineHaul(haul,input.controls,STEP);
     if(input.action==='dig'||input.action==='load'||input.action==='tip'){
+      if(input.action==='dig'){
+        const machine=haul.machines.excavator,tip=machineToolPosition(machineDefinition('excavator'),machine,'bucket');
+        if(machineLoadVolume(machine)>=machineDefinition('excavator').tools.bucket.capacityM3-1e-5){
+          next={...next,lastMessage:'The bucket is full. Load it into the truck.'};
+          return {...next,haul:sim.haul,events};
+        }
+        if(tip.y>sim.ground.heightAt(tip.x,tip.z)+.05){
+          next={...next,lastMessage:'Lower the boom until the bucket touches the ground.'};
+          return {...next,haul:sim.haul,events};
+        }
+      }
       advanced=operateMachineHaul(advanced,{action:input.action,dtSeconds:STEP});
       const operation=advanced.lastOperation;
       if(input.action==='dig')next={...next,excavatedM3:next.excavatedM3+(operation?.movedVolumeM3||0)};
@@ -70,8 +90,9 @@ function fixedStep(sim,input) {
         events.push({type:'dirt-plume',x:position.x,y:position.y,z:position.z,volumeM3:operation.movedVolumeM3,
           material:Object.keys(advanced.machines.excavator.load).at(-1)||'topsoil'});
       }
-      if(input.action==='tip'&&operation?.movedVolumeM3>0)events.push({type:'tip',volumeM3:operation.movedVolumeM3});
-      if(operation?.missed)events.push({type:'spill',volumeM3:operation.spilledVolumeM3});
+      if(input.action==='tip'&&operation?.movedVolumeM3>0){const truck=advanced.machines.dumpTruck;events.push({type:'tip',x:truck.x,y:0,z:truck.z,volumeM3:operation.movedVolumeM3});}
+      if(operation?.missed){const tip=machineToolPosition(machineDefinition('excavator'),advanced.machines.excavator,'bucket');events.push({type:'spill',...tip,volumeM3:operation.spilledVolumeM3});}
+      if(operation?.message)next={...next,lastMessage:operation.message};
     }
     next={...next,haul:{...advanced,activeMachine:'excavator'}};
   }

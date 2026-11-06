@@ -3,7 +3,6 @@ import {createMachineState, machineToolPosition, stepMachine} from './machine.js
 import {machineLoadVolume, operateMachineTool, transferMachineLoad} from './tools.js';
 
 const finite = Number.isFinite;
-const MISS_RADIUS_M = 1.8;
 
 /** Create one shared excavator and truck job on editable ground. */
 export function createMachineHaul({ground, excavator = {x:0, z:0}, truck = {x:0, z:4.5}} = {}) {
@@ -46,9 +45,11 @@ export function operateMachineHaul(haul, {action, dtSeconds = 0, targetHeight = 
     const truck = haul.machines.dumpTruck;
     const definition = machineDefinition('excavator');
     const tip = machineToolPosition(definition, excavator, 'bucket');
-    const distance = Math.hypot(tip.x - truck.x, tip.z - truck.z);
+    const dx=tip.x-truck.x,dz=tip.z-truck.z,c=Math.cos(truck.heading),s=Math.sin(truck.heading);
+    const localX=dx*c-dz*s,localZ=dx*s+dz*c;
     const contents = {...excavator.load};
-    if (distance <= MISS_RADIUS_M) {
+    const bed=machineDefinition('dumpTruck').tools.bed;
+    if (Math.abs(localX)<=bed.widthM/2&&Math.abs(localZ)<=bed.lengthM/2) {
       const moved = transferMachineLoad(excavator, truck, machineLoadVolume(excavator),
         machineDefinition('dumpTruck').tools.bed.capacityM3);
       const spill = moved.spilledVolumeM3 > 0
@@ -57,12 +58,12 @@ export function operateMachineHaul(haul, {action, dtSeconds = 0, targetHeight = 
       return {...haul, machines:{...haul.machines, excavator:sourceState, dumpTruck:moved.targetState},
         completedLoads:haul.completedLoads + Number(moved.movedVolumeM3 > 0),
         spilledVolumeM3:haul.spilledVolumeM3 + spill.volumeM3,
-        lastOperation:{...moved, spilledVolumeM3:spill.volumeM3}};
+        lastOperation:{...moved, spilledVolumeM3:spill.volumeM3,message:moved.movedVolumeM3>0?'The bucket is in the truck bed. The dirt is loaded.':'The truck bed is full.'}};
     }
     const spill = spillLoad(haul.ground, contents, machineLoadVolume(excavator), tip);
     return {...haul, machines:{...haul.machines, excavator:{...excavator, load:spill.remainingLoad}},
       spilledVolumeM3:haul.spilledVolumeM3 + spill.volumeM3,
-      lastOperation:{movedVolumeM3:0, spilledVolumeM3:spill.volumeM3, missed:true}};
+      lastOperation:{movedVolumeM3:0, spilledVolumeM3:spill.volumeM3, missed:true,message:'The bucket missed the truck. The dirt spilled on the ground.'}};
   }
   if (haul.activeMachine === 'dumpTruck' && action === 'tip') {
     const truck = haul.machines.dumpTruck;

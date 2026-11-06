@@ -1,22 +1,24 @@
-# THE-DIG
+# THE-DIG second pass
 
 ## Changed
 
-Added a switch-gated THE DIG button to the Scrapdome yard. The game loads on click and starts in the excavator cab beside the Dome. The trencher, excavator, dump truck and parked dozer use the town machine model; the dozer has no controls yet. Dirt, pipe props, reserved places, machine controls, camera cycling and a brief controls panel complete the yard. Ground edits use the Scablands layer and a page-memory save. The career save is untouched; TOWN-STORE replaces the temporary save later.
-
-Excavator digging, truck loading and tipping, and trencher cutting run on fixed simulation steps. The view shows edited ground and dirt effects. The machine view resolves the model's `<id>:<joint>` names. Trencher ridge placement covers at least one ground sample so cut soil is not lost between cells.
+- Queued E, Q, C and Tab edges until a fixed simulation step consumes them. The frame loop already rendered continuously; the matching screenshots came from capture timing, so the scenario now waits for two animation frames before every picture.
+- Opened in the exterior chase view. The first view frames the excavator, truck, Dome and heap; controls start open and the HUD panels use smaller text at the edges.
+- Moved the truck and heap to opposite sides of the excavator. The headless test proves each is within the bucket's reach after a 90 degree swing, without moving the tracks.
+- Digging now requires the bucket tip to touch ground. A raised bucket asks the player to lower the boom, and a full bucket asks the player to load the truck. Loading uses the truck bed rectangle. A miss spills the dirt into the ground layer and says so.
+- Replaced the plain yard floor with the Scablands dirt texture across the full yard. Natural and edited ground share one material and matching color variation; turned earth darkens with a soft edge. The ground extends beyond the fog range beneath the Dome.
+- Kept bucket and truck loads visible, grew the load heap with volume, and added larger dirt bursts, tip dust and a small bite shake. Track and truck speed now ease under acceleration and braking.
+- Updated the browser scenario to swing, lower, dig, swing to the truck, load, drive, tip, trench, and return with Escape. It takes a picture after each step.
 
 ## Checks
 
-- `node tools/test-the-dig.mjs` - passed. The headless input run dug, loaded, drove, tipped and trenched; it checked ground edits, material conservation, reserved ground, the gated yard button and memory persistence.
-- `node --check tools/scenarios/the-dig.mjs` - passed.
-- `npm.cmd run build` - passed. Vite emitted a separate 29.63 KB `dig-game` chunk. It also reported an ineffective `src/game.js` dynamic import and large chunk warnings.
-- `git diff --check` - passed.
-- Browser and look checks - not run here. Claude should run `tools/scenarios/the-dig.mjs` in the memory-only browser, inspect each screenshot from yard entry through the ditch, and confirm the model fit, excavator camera, edited ground, dirt plume, truck load and tip, trench and ridge, transient refusal message, C camera cycle, Q switching, Tab mode, control dismissal and Escape return. The browser scenario uses `/tools/menu-check.html?flags=wasteland-town` and `window.__qaApp`.
-- Lane tier - not run, as directed for this lane.
-- Race fingerprints - not measured; this sandbox card does not change race rules. The lane tier will check replay and world-signature guards.
-- Changed assertions - none.
+- `node tools/test-the-dig.mjs` - passed. Added checks for a queued press surviving a frame with no fixed step, both 90 degree reach swings, ground contact before digging, and a missed load spilling into persistent ground. Existing assertions remain unchanged.
+- `npm run build` - passed. Vite emitted the lazy `dig-game` chunk (32.46 KB) and reported the existing ineffective `src/game.js` dynamic-import and large-chunk warnings.
+- Browser and look checks - Claude should run `tools/scenarios/the-dig.mjs` with memory-only storage and review every capture. Check the opening composition and HUD, soil and chunk edges to the fog, bucket contact and load, bed heap growth, spill and dust, trench clods and ridge, controls, camera cycling, and Escape return.
+- Lane tier - not run, as directed.
+- Race fingerprints - not measured; this sandbox does not change race rules.
+- Changed assertions - none changed; the new assertions are additions.
 
 ## Removed
 
-Nothing. The temporary memory save is marked in code for replacement by TOWN-STORE.
+Replaced the separate flat floor and edited-chunk material treatment with the shared textured ground material.

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 const key=(context,code,type)=>context.evaluate(`document.dispatchEvent(new KeyboardEvent('${type}',{code:'${code}',bubbles:true,cancelable:true}))`);
+const picture=async(context,name)=>{await context.evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');await context.screenshot(name);};
 async function press(context,code,frames=1){
   await key(context,code,'keydown');
   if(frames>1)await context.evaluate(`new Promise(resolve=>setTimeout(resolve,${Math.ceil(frames*1000/60)}))`);
@@ -21,27 +22,31 @@ export async function run(context){
     app.advance(8);app.onFrame?.(app.duel.state);})()`);
   await context.waitFor('window.__qaApp.isYardHomeActive()&&document.querySelector("[data-action=yard-the-dig]")',
     'THE DIG button in the yard',60000);
-  await context.screenshot('the-dig-yard');
+  await picture(context,'the-dig-yard');
   await context.evaluate('document.querySelector("[data-action=yard-the-dig]").click()');
   await context.waitFor('!!window.__theDig?.host?.isConnected','machine yard loaded',60000);
   await context.waitFor('window.__theDig.failed||window.__theDig.simulation?.activeMachine==="excavator"','excavator ready',60000);
-  await context.screenshot('the-dig-excavator-ready');
+  await picture(context,'the-dig-excavator-ready');
   assert.equal(await context.evaluate('window.__theDig.failed'),false,'the machine and Dome models load');
-  await press(context,'Tab');await hold(context,'Space',1800);
+  await press(context,'Tab');await hold(context,'KeyA',2100);await picture(context,'the-dig-swing-to-heap');
+  await hold(context,'KeyW',1500);await picture(context,'the-dig-lowered');
+  await hold(context,'Space',1800);
   await context.waitFor('window.__theDig.simulation.excavatedM3>0','excavator dug dirt',10000);
-  await context.screenshot('the-dig-excavated');
+  await picture(context,'the-dig-excavated');
+  await hold(context,'KeyD',4200);await picture(context,'the-dig-swing-to-truck');
   await press(context,'KeyE');
   await context.waitFor('window.__theDig.simulation.loadedM3>0','truck loaded from bucket',10000);
   await press(context,'KeyQ');
   await context.waitFor('window.__theDig.simulation.activeMachine==="dumpTruck"','dump truck selected',3000);
-  await context.screenshot('the-dig-truck-loaded');
+  await picture(context,'the-dig-truck-loaded');
   await hold(context,'KeyW',1200);await press(context,'Tab');await hold(context,'Space',2000);
   await context.waitFor('window.__theDig.simulation.tippedM3>0','truck tipped a heap',10000);
-  await context.screenshot('the-dig-truck-tipped');
+  await picture(context,'the-dig-truck-tipped');
   await press(context,'KeyQ');await context.waitFor('window.__theDig.simulation.activeMachine==="trencher"','trencher selected',3000);
   await hold(context,'KeyW',1000);await press(context,'Tab');await hold(context,'Space',2200);
   await context.waitFor('window.__theDig.simulation.trencher.cutVolumeM3>0','trencher cut a ditch',10000);
-  await context.screenshot('the-dig-trencher-ditch');
+  await picture(context,'the-dig-trencher-ditch');
   await press(context,'Escape');
   await context.waitFor('!document.querySelector(".the-dig")&&window.__qaApp.isYardHomeActive()','back in yard',5000);
+  await picture(context,'the-dig-returned-to-yard');
 }

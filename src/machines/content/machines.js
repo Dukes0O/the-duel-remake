@@ -15,7 +15,7 @@ export const MACHINE_CONTENT = Object.freeze({
   dumpTruck: Object.freeze({
     id:'dump-truck', name:'Dump truck', driveKind:'wheels', massKg:12_000, maxSpeedMps:12,
     turnRateRadPerSecond:0.7, maxLoadKg:18_000, joints:Object.freeze([]),
-    tools:Object.freeze({bed:Object.freeze({kind:'bed', capacityM3:8, radiusM:1.8, dischargeRateM3s:2})}),
+    tools:Object.freeze({bed:Object.freeze({kind:'bed', capacityM3:8, radiusM:1.8, widthM:2.5, lengthM:5, dischargeRateM3s:2})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['bed'])}),
   }),
   trencher: Object.freeze({

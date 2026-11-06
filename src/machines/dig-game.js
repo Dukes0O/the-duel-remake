@@ -5,27 +5,31 @@ import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
-import {createDigSandbox, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
+import {machineToolPosition} from './machine.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const MODES=['chase','cab','work'];
 const MACHINE_IDS=['excavator','dumpTruck','trencher'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher'};
-const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:18px;top:18px;display:grid;gap:8px;max-width:min(370px,calc(100vw - 36px));padding:16px;background:#15211de8;border:1px solid #9d875c;box-shadow:0 8px 30px #0008}.the-dig-hud h1{font-size:22px;margin:0}.the-dig-hud p{margin:0}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:8px 12px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:18px;top:18px;width:270px;padding:12px 16px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:16px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:4px 0}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:18px;bottom:18px}.the-dig-message{min-height:2.6em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:72px;right:10px;width:210px}.the-dig-hud{left:10px;top:10px;padding:10px;font-size:14px}.the-dig-close{right:10px;bottom:10px}}`;
+const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
-function staticYard(scene,sim){
-  const floorGeometry=new THREE.PlaneGeometry(120,100,60,50);floorGeometry.rotateX(-Math.PI/2);
+function staticYard(scene,sim,groundMaterial){
+  const floorGeometry=new THREE.PlaneGeometry(600,600,300,300);floorGeometry.rotateX(-Math.PI/2);
   const position=floorGeometry.attributes.position;
+  floorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
   for(let i=0;i<position.count;i++){
     const x=position.getX(i),z=position.getZ(i);
     position.setY(i,scablandsNaturalHeightAt(x,z));
+    const variation=.86+(((Math.imul(Math.floor(x+300),73856093)^Math.imul(Math.floor(z+300),19349663))>>>0)%1000)/7000;
+    const color=new THREE.Color(0x887255).multiplyScalar(variation);floorGeometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
   }
-  floorGeometry.computeVertexNormals();const floor=new THREE.Mesh(floorGeometry,material(0x78664f));floor.name='Scablands natural ground';floor.receiveShadow=true;scene.add(floor);
+  floorGeometry.computeVertexNormals();const floor=new THREE.Mesh(floorGeometry,groundMaterial);floor.name='Scablands natural ground';floor.receiveShadow=true;scene.add(floor);
   const yard=new THREE.Group();yard.name='Machine yard props';
   const pipeMaterial=material(0x66706a,.7);
   for(let i=0;i<4;i++){
@@ -65,14 +69,17 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox(),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
   let shownMessage='',messageUntil=0;
-  const keys=Object.create(null),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
+  const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xf7e9ce,0x534333,2));
   const sun=new THREE.DirectionalLight(0xffe3b4,3.1);sun.position.set(-30,55,-20);sun.castShadow=true;scene.add(sun);
   const camera=new THREE.PerspectiveCamera(55,1,.1,900);
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;
-  const world=new THREE.Group();scene.add(world);staticYard(world,sim);
+  const world=new THREE.Group();scene.add(world);
+  const dirtTexture=new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.repeat.set(60,60);
+  const groundMaterial=new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1});
+  staticYard(world,sim,groundMaterial);
   const editedGroup=new THREE.Group();world.add(editedGroup);
-  const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground});
+  const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null;
   const sound=(cue,data)=>{
@@ -112,10 +119,10 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     if(['Tab','Escape','KeyQ','KeyC','Space','KeyW','KeyA','KeyS','KeyD','KeyI','KeyK','KeyJ','KeyL','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();
     if(!down&&event.code==='Space')keys.Space=false;
     else if(down&&!event.repeat&&event.code==='Escape'){event.stopImmediatePropagation();stop();return;}
-    else if(down&&!event.repeat&&event.code==='Tab'){event.stopImmediatePropagation();sim={...sim,mode:sim.mode==='drive'?'work':'drive'};return;}
-    else if(down&&!event.repeat&&event.code==='KeyQ'){event.stopImmediatePropagation();sim=switchDigMachine(sim);return;}
-    else if(down&&!event.repeat&&event.code==='KeyC'){event.stopImmediatePropagation();sim=cycleDigCamera(sim);return;}
-    if(event.code==='KeyE'&&down&&!event.repeat&&sim.activeMachine==='excavator')keys.loadEdge=true;
+    else if(down&&!event.repeat&&event.code==='Tab'){event.stopImmediatePropagation();pending.push('mode');return;}
+    else if(down&&!event.repeat&&event.code==='KeyQ'){event.stopImmediatePropagation();pending.push('machine');return;}
+    else if(down&&!event.repeat&&event.code==='KeyC'){event.stopImmediatePropagation();pending.push('camera');return;}
+    if(down&&!event.repeat&&event.code==='KeyE'&&sim.activeMachine==='excavator')pending.push('load');
     keys[event.code]=down;
   }
   const onDown=e=>keyboard(e,true),onUp=e=>keyboard(e,false),onBlur=()=>{for(const key of Object.keys(keys))keys[key]=false;};
@@ -131,24 +138,28 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     if(stopped)return;
     const elapsed=Math.min(.1,(now-lastTime)/1000);lastTime=now;accumulator+=elapsed;
     const padKeys={...keys};
-    const pressedAction=actionFor();
-    // A trencher travels while the chain is down, so WASD stays on drive controls in work mode.
-    const controls=machineControlInput(padKeys,null,sim.activeMachine==='trencher'?'drive':sim.mode);
     // Material loading is one clear action. It transfers real bucket contents to the truck.
-    const loadEdge=keys.loadEdge;keys.loadEdge=false;let loadPending=loadEdge;const frameEvents=[];
+    const frameEvents=[];
     while(accumulator>=1/60){
-      const action=loadPending?'load':pressedAction;loadPending=false;
-      sim=stepDigSandbox(sim,{controls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
+      if(pending.consume('mode'))sim={...sim,mode:sim.mode==='drive'?'work':'drive'};
+      if(pending.consume('machine'))sim=switchDigMachine(sim);
+      if(pending.consume('camera'))sim=cycleDigCamera(sim);
+      const stepControls=machineControlInput(padKeys,null,sim.activeMachine==='trencher'?'drive':sim.mode);
+      const action=pending.consume('load')?'load':actionFor();
+      sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
       if(view){view.update(state,elapsed,id===sim.activeMachine?frameEvents:[]);view.root.visible=true;}
     }
-    if(modelAsset){const view=machineViews.get(sim.activeMachine);if(view)updateMachineCamera(camera,definition,active,MODES[sim.cameraIndex]||'chase');}
+    if(modelAsset){const view=machineViews.get(sim.activeMachine);if(view){
+      if(sim.cameraIndex===0&&sim.activeMachine==='excavator'){camera.position.set(0,18,88);camera.lookAt(0,2,17);camera.updateMatrixWorld();}
+      else updateMachineCamera(camera,definition,active,MODES[sim.cameraIndex]||'chase');
+    }}
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
-    for(const event of frameEvents)if(event.type==='dirt-plume')effects.burst({x:event.x,y:event.y,z:event.z,
-      direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:1.8,material:event.material});
+    for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
+      direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
     groundView.update();effects.update(elapsed);
     const name=LABELS[sim.activeMachine],load=sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
@@ -157,7 +168,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     host.querySelector('.the-dig-load').textContent=load;
     if(sim.lastMessage&&sim.lastMessage!==shownMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
     if(now<messageUntil)message.textContent=shownMessage;
-    else if(!failed)message.textContent=sim.activeMachine==='excavator'?'Move the boom over dirt, then hold Space to dig. Press E to load the truck.':sim.activeMachine==='dumpTruck'?'Drive with WASD. Hold Space in work mode to tip the load.':'Drive with WASD. Hold Space in work mode to cut a ditch.';
+    else if(!failed&&sim.activeMachine==='excavator'){
+      const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
+      const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
+      message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'Swing over the heap and hold Space to dig.';
+    } else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with WASD. Press Tab, then hold Space to tip the load.':'Drive with WASD. Hold Space to cut a ditch.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);requestAnimationFrame(frame);
   }

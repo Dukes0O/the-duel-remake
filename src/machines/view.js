@@ -53,7 +53,7 @@ export function createMachineView({model, definition, parent = null, onSound = n
   if (definition.driveKind === 'tracks') parent?.add(trackMarks);
   parent?.add(root);
 
-  let lastState = null, dustCarry = 0, markCarry = 0, markIndex = 0;
+  let lastState = null, dustCarry = 0, markCarry = 0, markIndex = 0, biteTimer = 0;
   function update(state, dtSeconds = 0, events = []) {
     if (!state || !Number.isFinite(state.x) || !Number.isFinite(state.z) || !Number.isFinite(dtSeconds) || dtSeconds < 0)
       throw new TypeError('Machine view updates need a finite state and non-negative time.');
@@ -65,6 +65,11 @@ export function createMachineView({model, definition, parent = null, onSound = n
       node.rotation.set(0, 0, 0);
       node.quaternion.setFromAxisAngle(new THREE.Vector3(...joint.axis), angle);
     }
+    if(events.some(event=>event?.type==='dirt-plume'))biteTimer=.2;
+    biteTimer=Math.max(0,biteTimer-dtSeconds);
+    root.position.y+=(biteTimer>0?Math.sin((state.timeSeconds||0)*90)*.025:0);
+    const bucketNode=nodes.get('excavator:bucket')??nodes.get('Bucket');
+    if(bucketNode&&biteTimer>0)bucketNode.rotation.z+=Math.sin((state.timeSeconds||0)*110)*.035;
     const amounts = Object.values(state.load ?? {}).filter(Number.isFinite);
     const volume = amounts.reduce((sum, amount) => sum + Math.max(0, amount), 0);
     if (load) {
@@ -119,7 +124,8 @@ export function createMachineView({model, definition, parent = null, onSound = n
       if (event?.type === 'dirt-plume') onSound?.(MACHINE_SOUND_CUES.dig, event);
       else if (event?.type === 'tip') onSound?.(MACHINE_SOUND_CUES.tip, event);
     }
-    if (speed > 0.05) onSound?.(MACHINE_SOUND_CUES.engine, {speedMps:speed});
+    const working=Object.values(state.jointSpeeds??{}).some(value=>Math.abs(value)>.08)||events.some(event=>event?.type==='dirt-plume');
+    if (speed > 0.05||working) onSound?.(MACHINE_SOUND_CUES.engine, {speedMps:speed,working});
     if (state.jointAngles && Object.values(state.jointAngles).some(angle => Math.abs(angle) > 0.01))
       onSound?.(MACHINE_SOUND_CUES.hydraulic, {joints:state.jointAngles});
     lastState = {x:state.x, z:state.z};
