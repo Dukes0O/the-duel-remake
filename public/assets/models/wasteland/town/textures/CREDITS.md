@@ -53,3 +53,12 @@ seams, no rivets, no straight lines, no large objects. Opposite edges continue
 naturally in both directions, no visible tile boundary. Uniform diffuse
 overcast daylight, sharp photographic detail, no glare, no text, logos or
 watermark."
+
+## Round 5 surface grade
+
+The four photographs above remain the original image sources. For this round,
+their RGB levels were adjusted in the recipe inputs to make the fire red less
+saturated, the tanker cab blue-grey, the supply paint darker olive and the tow
+paint darker ochre. Their photographic chips and scratches remain; each image
+is still 512 by 512 and is embedded as its own JPEG. The model uses direct
+image-to-color links in glTF and no atlas.

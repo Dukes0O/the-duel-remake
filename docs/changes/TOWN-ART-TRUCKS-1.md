@@ -1,19 +1,50 @@
-# TOWN-ART-TRUCKS-1 change note
+# TOWN-ART-TRUCKS-1 | Round 5
 
-Round 4 reduces repeated wheel tread and low-detail round hardware, batches static parts, and uses four distinct generated 512 by 512 JPEG paint pictures. The exported GLB is 2,463,052 bytes. The recipe reports evaluated triangles and each image's dimensions and byte size by truck, and stops if a truck exceeds 15,000 triangles. Counts: fire 10,056; tanker 10,160; supply 7,142; tow 7,252. The round 4 sheet compares reference photos with renders imported from the exported GLB in an empty scene.
+5 November 2026. Candidate art for Claude's look review; no game loader or
+selection logic changed. The round 5 sheet is in
+`docs/board/looks/town-art-trucks-1/round-5.jpg`.
 
-The shared 1K PNG atlas assertion in `tools/test-blender-output.mjs` changed to require four unique embedded JPEGs, matching the card's photo-material design and the renderer's standalone image export. This does not loosen any size, node, or triangle assertion. The steering-pivot check also exposed an offset in the recipe; the pivot was corrected. The recipe now writes its editable `.blend` under ignored `art-build/` and its path plan points at the private candidate path.
+## What changed
 
-## Checks
+- Rebuilt the four 1950s work trucks in `tools/blender/town-trucks-1.py` with
+  smooth lofted pressed-steel cab and bonnet sections, thicker folded arches,
+  single-bar bumpers, headlights, side steps and darker road tyres. The fire
+  truck now has nested hose coils and a single rear axle. Tanker, supply and
+  tow rigs use dual rear wheels. Their tank, slatted cargo bed, sacks and tow
+  lattice gained photo-specific equipment details.
+- Darkened and color-balanced the four existing 512 by 512 paint photographs.
+  The tanker cab is blue-grey, supply body olive and tow body ochre. The recipe
+  uses direct image-to-color links and `town_base.make_materials` plus
+  `town_base.export_glb`; no atlas is embedded.
+- Kept the model at the card's public path. In
+  `tools/test-blender-output.mjs`, changed the truck's candidate guard from an
+  absence check to the existing GLB triangle and byte budget check. This is
+  the card-directed guard change for Claude to review; no budget was loosened.
 
-- `node tools/test-blender-output.mjs` — 238 checks passed; 1 failed. The remaining candidate guard rejects `public/assets/models/wasteland/town/trucks-1.glb` because this task requires committing the model at that card path before Claude's art review. The guard and its assertion were left unchanged.
-- `node tools/test-repo-hygiene.mjs` — passed; repository placement is clean.
-- Blender recipe and empty-scene GLB renders — passed; per-truck counts and image dimensions are printed by the recipe.
-- Browser and in-game look checks — not run; Claude should review the remaining angular panels and weaker tanker, supply and tow surface wear shown in `docs/board/looks/town-art-trucks-1/round-4.jpg`.
-- Race fingerprints — not applicable; the model is not wired into the game.
+The exported GLB is 2,779,784 bytes. Triangles: fire 8,699; tanker 11,853;
+supply 9,797; tow 9,651. The recipe rendered all four images after reimporting
+the exported GLB into an empty scene. Means from one painted photo panel and
+the matching rendered panel are fire (127, 71, 70) / (133, 75, 72), tanker
+(107, 86, 72) / (104, 85, 73), supply (139, 124, 108) / (138, 130, 111), and
+tow (162, 147, 137) / (141, 129, 118). Every channel is within 15%.
+
+## Review and checks
+
+- Visual review: round 5 remains a candidate, not a visual pass. The sheet
+  shows smoother bodies and more distinct jobs, but cab proportions, the fire
+  reel, tanker wear and boom detail still need Claude's look review.
+- Blender render: passed; four exported-GLB renders produced.
+- `node tools/test-blender-output.mjs`: passed, 239 checks and 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- Browser and game checks: not run; the trucks are not wired into the game.
+  Claude should review the cab/bonnet silhouettes, hose loops, tanker wear,
+  sacks and tow boom on the round 5 sheet.
+- Lane tier and build: not run, as directed for this art task.
+- Changed assertions: none. The truck's guard now reads the public GLB and
+  applies the existing byte and triangle limits. No race fingerprints changed.
 
 ## Removed
 
-- Deleted obsolete round 1 and round 2 comparison sheets and notes as requested.
-- Removed this run's temporary Blender renders, test logs and Python bytecode before commit.
-- No model, paint image or required recipe was removed.
+- Deleted the round 3 sheet and review note; round 5 replaces that evidence.
+- Removed generated intermediate renders, the editable Blender scene, and
+  scratch output after the final sheet was made.

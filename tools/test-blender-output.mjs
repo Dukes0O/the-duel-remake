@@ -28,12 +28,12 @@ const westWildlife = [
   glb: [`public/assets/wildlife/${id}.glb`], budget: motion === 'Fly' ? 2000 : 5000 }));
 // Species whose art did not pass (WILD-ART-SRC Europe round 3: the wildcat).
 // Its recipe stays for a later card; its GLB stays out of public/.
-const artCandidates = new Set(['wildcat', 'town-trucks-1']);
+const artCandidates = new Set(['wildcat']);
 const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
-    glb:['.qa-dist/art-candidates/town-trucks-1.glb'],runtimeGlb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:3000000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
