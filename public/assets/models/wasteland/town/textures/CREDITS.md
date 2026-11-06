@@ -117,6 +117,36 @@ Blender-packed material picture derived from `canvas-patched-cream.jpg` above. T
 
 # Wasteland town machine texture credits
 
+## TOWN-ART-TRUCKS-2, dozer photo views (round 1)
+
+Generated with OpenAI built-in image generation on 6 November 2026. The four
+view crops below are original photo-style modeling references. Blender reads
+the measured views directly and embeds them as JPEG pictures in `trucks-2.glb`.
+They are not third-party photos or licensed scans.
+
+- `town-trucks-2-dozer-side.jpg`
+- `town-trucks-2-dozer-front.jpg`
+- `town-trucks-2-dozer-rear.jpg`
+- `town-trucks-2-dozer-overhead.jpg`
+
+Exact prompt: “Create a realistic photographic orthographic reference sheet
+for an original rugged wasteland wheeled bulldozer, photographed in flat bright
+overcast daylight on a seamless pale neutral grey studio ground, no labels or
+text. Four separate large orthographic views in a clean 2x2 grid, each showing
+the exact same machine: left side, front, rear, overhead. This is a real heavy
+construction machine about 5.8 m long, 2.6 m wide and 3.2 m tall. Four huge
+black rubber block-tread tires, two axles, a long low steel frame, tall closed
+cab with broad dark glazing and thin steel pillars, exhaust stack, front
+hydraulic arms and a very wide deeply curved welded steel dozer blade with
+thick rolled cutting edge and visible reinforcement ribs. The blade is dirty
+dark desaturated ochre paint over steel, chipped to deep brown rust on edges,
+rubbed bare metal cutting lip, dusty lower panels, streaks below welds and
+bolts. Cab and chassis are faded military olive drab with hand-repaired
+mismatched panels and real weld seams, no logos, no guns, no spikes. Real
+proportions and believable engineering, handmade repairs, used and dusty,
+absolutely photoreal materials, crisp visible outlines, evenly lit, no dramatic
+shadows, no perspective distortion, no toys, no illustration, no concept art.”
+
 ## dirt.jpg — TOWN-ART-DOME round 4
 
 Generated with OpenAI image generation on 6 November 2026 for the Scrapdome
