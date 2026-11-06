@@ -1837,6 +1837,17 @@ export class App {
     if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||!EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open'))return false;
     return this._startArenaFight({venueId, mode, opponents, job});
   }
+  async startTownDrive(town) {
+    if(this._switches().enabled('wasteland-town')!==true||!town||this.duel.state.arena)return false;
+    const [{createTownWorld},{setScablandsTownLayout,clearScablandsTownLayout}]=await Promise.all([
+      import('./town/town-world.js'),import('./world/scablands-ground.js')]);
+    const layout=createTownWorld(town);
+    setScablandsTownLayout(layout);
+    const job={id:'town-drive',kind:'town-drive',seed:town.seed??0,steps:[],layout};
+    if(this._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job}))return true;
+    clearScablandsTownLayout();
+    return false;
+  }
   _startArenaFight({opponents, warlordId = null, venueId = 'scrapdome', mode = 'last-car-rolling', job = null}) {
     const state = this.duel.state;
     // Admission reads the current durable owner before creating any run state.

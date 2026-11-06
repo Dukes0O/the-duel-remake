@@ -19,11 +19,29 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
-import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {getScablandsTownLayout,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const angleDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+const townObstacleCache=new WeakMap();
+
+function townObstacleBuckets(course,layout){
+  let byCourse=townObstacleCache.get(layout);
+  if(!byCourse){byCourse=new Map();townObstacleCache.set(layout,byCourse);}
+  const key=`${course.def.id}:${course.seed}:${course.length}`;
+  let buckets=byCourse.get(key);
+  if(buckets)return buckets;
+  buckets=new Map();
+  for(const solid of layout.solids){
+    const nearest=course.nearest(solid.x,solid.z),obstacle={...solid,s:course.phase(nearest.s),off:nearest.lateral,kind:'building',theme:'arena'};
+    const bucket=Math.floor(obstacle.s/64);
+    if(!buckets.has(bucket))buckets.set(bucket,[]);
+    buckets.get(bucket).push(obstacle);
+  }
+  byCourse.set(key,buckets);
+  return buckets;
+}
 
 // Broad, authored landforms use lap fractions so the road, terrain and scenery
 // share the same crests. Compact cosine shoulders meet the original ground
@@ -413,7 +431,18 @@ export class Course {
     for(const r of f.rocks){const key=Math.floor(r.s/64);if(!this.rockBuckets.has(key))this.rockBuckets.set(key,[]);this.rockBuckets.get(key).push(r);}
   }
   obstaclesNear(from,to=from){const found=new Set(),span=Math.min(this.length,Math.abs(to-from)+40),start=this.phase(Math.min(from,to)-20);
-    for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
+    for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}
+    if(this.def.scablands){
+      const layout=getScablandsTownLayout();
+      if(layout){
+        const townBuckets=townObstacleBuckets(this,layout);
+        for(let d=0;d<=span+64;d+=32){
+          const b=Math.floor(this.phase(start+d)/64);
+          for(const obstacle of townBuckets.get(b)??[])found.add(obstacle);
+        }
+      }
+    }
+    return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
   at(s){if(this.def.pit)return pitFrame(this,s);
     const frame=this._frame(s);frame.tunnel=!!this.tunnelAt(s);return frame;}

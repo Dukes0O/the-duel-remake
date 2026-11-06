@@ -1,5 +1,6 @@
 import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
 import {createGroundEdit} from './ground-edit.js';
+import {townWorldRoadAt} from '../town/town-world.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -41,6 +42,17 @@ const createScablandsGroundEdit=()=>createGroundEdit({region:{id:'scablands',edi
   naturalHeight:scablandsNaturalHeightAt});
 
 export let scablandsGroundEdit=createScablandsGroundEdit();
+let scablandsTownLayout=null;
+
+export function setScablandsTownLayout(layout){
+  if(!layout||!Array.isArray(layout.solids)||!Array.isArray(layout.roads)||!Array.isArray(layout.walkers))
+    throw new TypeError('A Scablands town layout needs solids, roads and walkers.');
+  scablandsTownLayout=layout;
+  return scablandsTownLayout;
+}
+
+export function clearScablandsTownLayout(){scablandsTownLayout=null;return null;}
+export function getScablandsTownLayout(){return scablandsTownLayout;}
 
 export function setScablandsGroundEdit(groundEdit){
   if(!groundEdit||typeof groundEdit.heightAt!=='function')throw new TypeError('Scablands ground edits need a heightAt function.');
@@ -59,7 +71,7 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit){
 
 export function scablandsSurfaceAt(x,z){
   if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('Scablands surface coordinates must be finite.');
-  const nearest=ellipseClosest(x,z),road=nearest.distance<=roadHalfWidth;
+  const nearest=ellipseClosest(x,z),road=nearest.distance<=roadHalfWidth||townWorldRoadAt(scablandsTownLayout,x,z);
   return {road,mainRoad:false,shortcutId:null,roadHalfWidth,
     preparedGravel:road,mud:0,waterDepth:0,gripKind:'gravel'};
 }

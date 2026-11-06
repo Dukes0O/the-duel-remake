@@ -2,6 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
+import {clearScablandsTownLayout} from '../../world/scablands-ground.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -31,6 +32,11 @@ export function initializeWorldJob(duel, definition) {
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   state.worldJobThingsHit = [];
+  if(definition.kind==='town-drive'&&definition.layout?.start){
+    const start=definition.layout.start,pose=duel.course.nearest(start.x,start.z);
+    state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;
+    state.speedMph=0;state.headingError=0;state.townGatePrompt='';
+  }
   return true;
 }
 
@@ -42,6 +48,7 @@ export function cleanupWorldJobLoan(duel) {
   if (worldJob.originalFootWeaponSelected && duel.state.footWeapons)
     duel.state.footWeapons.selected = worldJob.originalFootWeaponSelected;
   initializeCrewGear(duel);
+  if(worldJob.definition.kind==='town-drive')clearScablandsTownLayout();
   worldJob.activeLoan = null;
   worldJob.settled = true;
   return true;
@@ -183,6 +190,17 @@ function moveJobRaiders(worldJob, dt) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  if(worldJob.definition.kind==='town-drive'){
+    const gate=worldJob.definition.layout?.gate;
+    if(gate){
+      const point=position(duel,state),near=Math.hypot(point.x-gate.x,point.z-gate.z)<=gate.halfWidth+8;
+      state.townGatePrompt=near?gate.prompt:'';
+      if(near&&state.input?.interact&&!worldJob.gateOpened){
+        worldJob.gateOpened=true;duel.emit?.({townGate:true});
+      }
+    }
+    return null;
+  }
   const waveKey = `${worldJob.job.stepIndex}:${worldJob.job.stepState.wave ?? 0}`;
   const waveZone = worldJob.waveZones?.[waveKey];
   const waveNumber = worldJob.job.stepState.wave ?? 0;
