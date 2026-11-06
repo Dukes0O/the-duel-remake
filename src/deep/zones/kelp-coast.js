@@ -225,5 +225,6 @@ export function kelpCoastProvider(ramp) {
       { id: 'sirena-door', trailIndex: lipDoor, offset: lipOffset(lipDoor, 1.5), below: 0 },
       { id: 'sirena-car', trailIndex: lipCar, offset: lipOffset(lipCar, 1), below: 3 },
     ],
+    joke: {id: 'falcone-vasca', trailIndex: 11, offset: -4, below: 1.6},
   };
 }

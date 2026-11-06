@@ -34,7 +34,7 @@ const CUES = [
 // DEEP-AUDIO and DEEP-GO-LIVE add only these IDs; historical hashes stay exact.
 const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sand-land',
   'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave',
-  'deep.sonar', 'deep.liftbag', 'deep.lift-cancel', 'deep.raised'];
+  'deep.sonar', 'deep.liftbag', 'deep.lift-cancel', 'deep.raised', 'deep.squeak'];
 const added = new Set(CUES);
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));

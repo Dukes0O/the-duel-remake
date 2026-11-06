@@ -60,6 +60,8 @@ export const SOUND_BANK = {
   // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
   'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
     layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),
+  'deep.squeak': cue('vehicle', {flag: 'deep-vasca', volume: .28, limit: 1,
+    layers: [tone(720, .13, .58, 'triangle', 0, 980), tone(1080, .12, .5, 'triangle', .12, 540)]}),
   'deep.liftbag': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
     layers: [{...noise(1100, 3, .6), endFrequency: 2600, attack: 2.6}]}),
   'deep.lift-cancel': cue('vehicle', {flag: 'the-deep', volume: .16, limit: 1,
@@ -889,6 +891,7 @@ export const CAR_VOICES = {
     exhaust: 0.2,
     intake: 0.1,
   },
+  falcone_vasca: {pitch:1.2,brightness:1.12,gain:.9,accent:.88,exhaust:.09,intake:.07},
   // Electric fan car: a higher motor whine and strong fan intake, without
   // petrol exhaust or gear-shift accents, using the same engine layers.
   mcmurtry_speirling: {

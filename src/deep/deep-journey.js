@@ -7,6 +7,7 @@ import { createZoneFrame } from './zone-frame.js'; // DEEP-TRAIL-JOINTS
 // DEEP-EXPLORER
 import {deepRocks, driveIntoDeepRocks} from './deep-rocks.js';
 import {flushDeepChart} from './deep-story.js';
+import {firstPartRaisedThisDive} from './deep-sirena.js';
 
 const NEUTRAL = Object.freeze({ throttle: 0, brake: 0, steer: 0, boost: false, shiftUp: false, shiftDown: false, interact: false });
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -235,6 +236,12 @@ export function surfaceDeep(duel) {
   const journey = duel.state.deepJourney;
   if (!admitted(duel) || !journey?.committed || duel.state.paused ||
       !['underwater', 'ascending'].includes(journey.phase)) return false;
+  const story = duel.deepStory;
+  if (journey.phase === 'underwater' && story && !story.saidNorseman &&
+      firstPartRaisedThisDive(story.partsAtStart, story.sirena.raised.filter(id => id !== 'sirena-badge' && id !== 'sirena-car').length)) {
+    story.saidNorseman = true;
+    duel.emit({deepPhone: {line: 'deep.ana.norseman'}});
+  }
   duel.course = duel.deepRuntime.raceCourse;
   placeRamp(duel, 0);
   exit(duel);
