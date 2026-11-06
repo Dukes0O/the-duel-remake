@@ -43,7 +43,7 @@ if args.compose_sheet:
     except OSError:
         font = ImageFont.load_default()
         title_font = font
-    draw.text((42, 20), 'WW-ART-SHIPS | Patience | round 3 | exported GLB reimport', fill=(245, 244, 236), font=title_font)
+    draw.text((42, 20), 'WW-ART-SHIPS | Patience | round 4 | exported GLB reimport', fill=(245, 244, 236), font=title_font)
     frames = ((42, 84, 1150, 500), (1208, 84, 1150, 500),
               (42, 650, 1150, 740), (1208, 650, 1150, 740))
     labels = ('Photographic reference | side view', 'Patience | same side angle and scale',
@@ -199,7 +199,7 @@ def photo_box(name, center, dims, part, deck=5.0, roof=True):
     for poly in mesh.polygons:
         for li in poly.loop_indices:
             px,py,pz=corners[mesh.loops[li].vertex_index]
-            if poly.index in (2,4):
+            if poly.index in (0,1):
                 u=min(.995,max(.005,(px+37.0)/74.0))
                 row=min(120.0,max(0.0,(deck+7.2-py)*15.4))
                 v=1.0-row/384.0
@@ -248,7 +248,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     rings=[]
     for t,breadth in stations:
         x=t*length
-        top=deck + max(0,t)**4*2.2 - max(0,-t)**4*1.0
+        top=deck + max(0,t)**4*4.0 - max(0,-t)**4*1.0
         # Crown the deck, flare the sheer at the bow, then roll the bilge in
         # through four real chine bands to the keel.
         flare=1.0 + max(0,t)*.22
@@ -269,8 +269,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             faces.append((i*section_size+j,i*section_size+(j+1)%section_size,
                           (i+1)*section_size+(j+1)%section_size,(i+1)*section_size+j))
             photo_side=j in (1,2,3,4,7,8,9,10)
-            bow_end=(stations[i][0]+stations[i+1][0])*.5>.455
-            material_ids.append((2 if bow_end else 1) if photo_side else (0 if j==0 else 2))
+            material_ids.append(1 if photo_side else (0 if j==0 else 2))
     faces.extend([tuple(range(section_size-1,-1,-1)),
                   tuple((len(rings)-1)*section_size+j for j in range(section_size))]); material_ids.extend((2,2))
     mesh=bpy.data.meshes.new(name+' welded hull'); mesh.from_pydata(verts,[],faces)
@@ -291,7 +290,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             uv.data[li].uv=(u,v)
     parent(obj,root)
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
-    deck_mesh=cube(name+'-weather-deck',(0,deck-.18,0),(length*.83,.36,width*.72),rust,root.name,.12)
+    deck_mesh=cube(name+'-weather-deck',(0,deck-.18,0),(length*.96,.36,width*.94),rust,root.name,.12)
     parent(deck_mesh,root)
     # The projection carries repair patches and seam wear; avoid floating
     # overlays that hide the hull's curve.
@@ -304,6 +303,8 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             obj.rotation_euler=(math.pi/2 if side>0 else -math.pi/2,0,0)
             label.materials.clear(); label.materials.append(name_paint)
             obj['part']=root.name; parent(obj,root)
+    if root.name == 'ship-patience':
+        return
     # A single heavy working deck at the story datum, with a raised foredeck.
     # The source's upperworks are built as a chart room and mast, not repeated
     # floating slabs that make the hull read like a model ship.
@@ -334,13 +335,13 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
 ships=[
     ('ship-good-hope',(-45,-415),'GOOD HOPE',72,16.5,5.0,-12.2,0.12),
     ('ship-marigold',(45,-440),'MARIGOLD',67,16.0,5.0,-12.0,-0.09),
-    ('ship-patience',(5,-470),'PATIENCE',74,17.2,5.0,-12.8,0.07),
+    ('ship-patience',(5,-470),'PATIENCE',72,12.0,5.0,-12.2,0.07),
 ]
 if args.stage == 'patience':
     ships=[ship for ship in ships if ship[0]=='ship-patience']
 roots={}
 for ident,loc,label,length,width,deck,keel,lean in ships:
-    r=root_obj(ident,(loc[0]+22,0,loc[1]),ident); roots[ident]=r
+    r=root_obj(ident,(loc[0]+22,6,loc[1]),ident); roots[ident]=r
     photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
     if ident=='ship-patience':
         # The aft bridge is three real, walkable tiers. Its side faces share the
@@ -355,11 +356,8 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             parent(cabin,r)
         for side in (-1,1):
             z=side*4.12
-            for row,(cy,xs) in enumerate(((9.55,(-30,-26,-22,-18,-14)),(12.18,(-27,-23,-19,-15)))):
-                for i,x in enumerate(xs):
-                    win=cube(f'patience-chart-window-{side}-{row}-{i}',(x,cy,z),(.86,.78,.08),glass,ident,.055); parent(win,r)
-                    for edge in (-1,1):
-                        mullion=beam(f'patience-window-mullion-{side}-{row}-{i}-{edge}',(x+edge*.44,cy-.48,z+side*.07),(x+edge*.44,cy+.48,z+side*.07),.055,steel,ident); parent(mullion,r)
+            # The real window positions already live in the full ship photo.
+            # Mapping both broad faces to that image avoids floating dark panes.
             for x in (-31,-26,-21,-16,-11):
                 rail(f'patience-chart-balcony-{side}-{x}',(x,8.45,z),(x+4.2,8.45,z),.045,iron,ident)
                 for postx in (x,x+2.1,x+4.2):
@@ -373,23 +371,27 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 rail(f'patience-chart-stair-handrail-{side}-{railside}',(-10.5,8.3,z),(-16.7,5.45,z),.055,iron,ident)
         # Long, thin working rails follow both sheer lines and close around the bow.
         for side in (-1,1):
-            z=side*width*.38
-            rail(f'patience-main-railing-top-{side}',(-33,6.1,z),(31,6.1,z),.055,steel,ident)
-            rail(f'patience-main-railing-mid-{side}',(-33,5.63,z),(31,5.63,z),.038,iron,ident)
-            for i in range(27):
-                x=-33+i*2.45
-                post=beam(f'patience-rail-stanchion-{side}-{i}',(x,5.05,z),(x,6.1,z),.065,steel,ident); parent(post,r)
+            z=side*width*.45
+            rail(f'patience-main-railing-top-{side}',(-35,6.1,z),(35,6.1,z),.045,rust,ident)
+            rail(f'patience-main-railing-mid-{side}',(-35,5.63,z),(35,5.63,z),.032,rust,ident)
+            for i in range(29):
+                x=-35+i*2.5
+                post=beam(f'patience-rail-stanchion-{side}-{i}',(x,5.05,z),(x,6.1,z),.045,rust,ident); parent(post,r)
             for i in range(8):
                 x=31+i*.68; z2=side*(width*.38-i*.38)
                 if z2*side<.25: break
                 post=beam(f'patience-bow-rail-stanchion-{side}-{i}',(x,5.0,z2),(x,6.1,z2),.065,steel,ident); parent(post,r)
                 rail(f'patience-bow-rail-top-{side}-{i}',(x,6.1,z2),(x+.75,6.1,z2-side*.38),.055,steel,ident)
+        rail('patience-stern-rail-top',(-35,6.1,-width*.45),(-35,6.1,width*.45),.045,rust,ident)
+        for i in range(5):
+            z=-width*.45+i*width*.225
+            post=beam(f'patience-stern-rail-post-{i}',(-35,5.05,z),(-35,6.1,z),.045,rust,ident); parent(post,r)
         # Raised forecastle, with short stairs and a hatch forward of the windlass.
-        forecastle=cube('patience-raised-forecastle',(26,5.54,0),(17,.42,13.8),rust,ident,.11); parent(forecastle,r)
+        forecastle=cube('patience-raised-forecastle',(26,5.54,0),(15,.42,11.0),rust,ident,.11); parent(forecastle,r)
         for side in (-1,1):
             for step in range(9):
                 stair=cube(f'patience-forecastle-step-{side}-{step}',(16.0+step*.43,5.12+step*.05,side*5.0),(.58,.13,2.2),steel,ident,.025); parent(stair,r)
-        for i,x in enumerate((-2,7,16)):
+        for i,x in enumerate((-3,7,17)):
             z=(-2.5,2.5,-2.5)[i]
             hatch=cube(f'patience-hatch-cover-{i}',(x,5.30,z),(6.4,.38,7.0),rust if i%2==0 else steel,ident,.12); parent(hatch,r)
             for side in (-1,1):
@@ -409,9 +411,9 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             cowl=cylinder(f'patience-vent-cowl-{i}',(x,6.55,z),.67,.18,steel,ident,20); parent(cowl,r)
             hood=beam(f'patience-vent-hood-{i}',(x,6.78,z),(x+.62,6.78,z),.16,rust,ident,.55); parent(hood,r)
         for side in (-1,1):
-            for x in (-30,31):
-                bollard=cylinder(f'patience-bollard-{side}-{x}',(x,5.7,side*6.3),.20,1.05,iron,ident,16); parent(bollard,r)
-                cap=cylinder(f'patience-bollard-cap-{side}-{x}',(x,6.25,side*6.3),.31,.12,steel,ident,16); parent(cap,r)
+            for x in (-31,-12,8,29):
+                bollard=cylinder(f'patience-bollard-{side}-{x}',(x,5.48,side*5.25),.20,.60,rust,ident,20); parent(bollard,r)
+                cap=cylinder(f'patience-bollard-cap-{side}-{x}',(x,5.80,side*5.25),.28,.08,iron,ident,20); parent(cap,r)
         # Two braced cargo derricks stand on their own feet, with cables and hooks.
         for i,(x,z,lean_side) in enumerate(((-4,-2.2,-1),(15,2.2,1))):
             base=cube(f'patience-derrick-pedestal-{i}',(x,5.36,z),(3.2,.45,2.6),rust,ident,.1); parent(base,r)
@@ -426,28 +428,30 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
     for side in (-1,1):
         cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0]+22,0,loc[1]),f'{ident}:anchor-chain')
         if ident=='ship-patience':
-            pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,3.25,side*7.6),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
+            pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,8.25,side*5.7),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
         for i in range(20):
-            x=length*.43+i*.52
-            y=2.8-min(4.8,i*.58) if i<9 else -2.05
-            z=side*(width*.44+min(2.4,i*.18))
+            x=length*.43+i*.48
+            y=8.15-min(10.15,i*1.27) if i<9 else -2.0
+            z=side*(width*.45+min(1.8,i*.11))
             link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.22,.055,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',10,6); parent(link,cr)
         anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+11,-2.1,side*(width*.44+2.7)),.42,.18,rust,f'{ident}:anchor-chain',12)
         parent(anchor,cr)
     if ident=='ship-patience':
         # A visible stern shaft, four-blade wheel and hanging rudder complete the hull.
         shaft_root=root_obj('ship-patience:propeller',(0,0,0),'ship-patience:propeller'); parent(shaft_root,r)
-        shaft=cylinder('patience-stern-propeller-shaft',(-38.5,-2.15,0),.32,7.2,steel,'ship-patience:propeller',24,'X'); parent(shaft,shaft_root)
-        hub=cylinder('patience-propeller-hub',(-42.2,-2.15,0),.67,.9,iron,'ship-patience:propeller',20,'X'); parent(hub,shaft_root)
+        shaft=cylinder('patience-stern-propeller-shaft',(-35,-8.15,0),.32,7.2,steel,'ship-patience:propeller',24,'X'); parent(shaft,shaft_root)
+        hub=cylinder('patience-propeller-hub',(-39,-8.15,0),.67,.9,iron,'ship-patience:propeller',20,'X'); parent(hub,shaft_root)
         for blade in range(4):
             a=blade*math.pi/2+.2
-            start=(-42.5,-2.15+math.sin(a)*.38,math.cos(a)*.38)
-            end=(-42.5,-2.15+math.sin(a)*1.38,math.cos(a)*1.38)
+            start=(-39.2,-8.15+math.sin(a)*.38,math.cos(a)*.38)
+            end=(-39.2,-8.15+math.sin(a)*1.38,math.cos(a)*1.38)
             propblade=beam(f'patience-propeller-blade-{blade}',start,end,.72,steel,'ship-patience:propeller',.18); parent(propblade,shaft_root)
-        rudder=cube('patience-stern-rudder',(-34.4,-1.45,0),(1.0,4.4,3.8),rust,'ship-patience:rudder',.28); parent(rudder,r)
-        stock=cylinder('patience-rudder-stock',(-34.2,-1.4,0),.28,4.8,steel,'ship-patience:rudder',18); parent(stock,r)
+        rudder=cube('patience-stern-rudder',(-34.4,-7.45,0),(1.0,4.4,3.8),rust,'ship-patience:rudder',.28); parent(rudder,r)
+        stock=cylinder('patience-rudder-stock',(-34.2,-7.4,0),.28,4.8,steel,'ship-patience:rudder',18); parent(stock,r)
     # Slightly different lean about each grounded centre line.
     r.rotation_euler[2]=lean
+    if ident == 'ship-patience':
+        r.rotation_euler[0]=math.radians(4)
     if ident=='ship-marigold':
         # The missing half of the rail exposes the old working deck.
         for side in (-1,1):
@@ -465,14 +469,14 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,shaft_root)
 
 # Patience's mast, platform and bell: 14 m above the main deck.
-pat=roots['ship-patience']; mastx=-15; mastz=8; platform_y=19
+pat=roots['ship-patience']; mastx=-15; mastz=6; platform_y=19
 mast_root=root_obj('ship-patience:mast',(0,0,0),'ship-patience:mast'); parent(mast_root,pat)
 bell_root=root_obj('ship-patience:bell',(0,0,0),'ship-patience:bell'); parent(bell_root,mast_root)
 for dx in (-.72,.72):
     beamobj=beam(f'patience-mast-leg-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y+1,mastz),.15,steel,'ship-patience:mast'); parent(beamobj,mast_root)
     cross=beam(f'patience-mast-crossbar-{dx}',(mastx+dx,9,mastz),(mastx-dx,9,mastz),.10,iron,'ship-patience:mast'); parent(cross,mast_root)
 platform=cube('ship-patience:mast-platform',(mastx,platform_y,mastz),(3.3,.26,3.3),steel,'ship-patience:mast',.08); parent(platform,mast_root)
-mast=cylinder('patience-mast-main-spar',(mastx,12.3,mastz),.20,14.6,steel,'ship-patience:mast',20); parent(mast,mast_root)
+mast=cylinder('patience-mast-main-spar',(mastx,12.3,mastz),.32,14.6,steel,'ship-patience:mast',24); parent(mast,mast_root)
 for yard_y,yard_w in ((12.8,4.8),(15.8,6.8),(18.0,3.8)):
     yard=beam(f'patience-mast-yard-{yard_y}',(mastx-yard_w/2,yard_y,mastz),(mastx+yard_w/2,yard_y,mastz),.13,steel,'ship-patience:mast',.12); parent(yard,mast_root)
     for side in (-1,1):
@@ -581,7 +585,7 @@ if args.stage == 'family':
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
 ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.34,.31,.26),.97)
-for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ((5,-470,55,22),)):
+for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ((27,-470,55,22),)):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.
     import random
@@ -592,7 +596,7 @@ for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,
         for i in range(segments):
             a=2*math.pi*i/segments; wobble=1+rng.uniform(-.055,.055)
             rise=max(0,.62*math.sin(math.pi*r)**.82+rng.uniform(-.025,.025)*(1-r))
-            verts.append(gv((x+math.cos(a)*rx*r*wobble,-2.95+rise,z+math.sin(a)*rz*r*wobble)))
+            verts.append(gv((x+math.cos(a)*rx*r*wobble,-2.0+rise,z+math.sin(a)*rz*r*wobble)))
     for i in range(segments): faces.append((0,1+(i+1)%segments,1+i))
     for ring in range(rings-1):
         a0=1+ring*segments; a1=a0+segments
@@ -606,6 +610,24 @@ world_root=root_obj('wasteland-ships-root',(0,0,0),'wasteland-ships')
 for child in list(scene.objects):
     if child is not world_root and child.parent is None:
         parent(child,world_root)
+
+def normalize_picture_coordinates():
+    for obj in scene.objects:
+        if obj.type != 'MESH':
+            continue
+        mesh = obj.data
+        if not mesh.uv_layers:
+            uv = mesh.uv_layers.new(name='UVMap')
+            for loop in mesh.loops:
+                co = mesh.vertices[loop.vertex_index].co
+                uv.data[loop.index].uv = (co.x, co.y)
+        primary = mesh.uv_layers.active or mesh.uv_layers[0]
+        primary.name = 'UVMap'
+        for layer in list(mesh.uv_layers):
+            if layer != primary:
+                mesh.uv_layers.remove(layer)
+        mesh.uv_layers.active = primary
+        primary.active_render = True
 
 def merge_meshes_by_story_part():
     groups={}
@@ -622,6 +644,7 @@ def merge_meshes_by_story_part():
         active.name=(part or 'lake-bed')+' geometry'
         if part: active['part']=part
 
+normalize_picture_coordinates()
 merge_meshes_by_story_part()
 
 # One neutral mid-tone floor supports review only; it is never exported.
@@ -665,7 +688,7 @@ def render_imported_review():
     center=(low+high)*.5
     source_length=max(high.x-low.x,high.y-low.y,high.z-low.z)
     car_scale=4.5/max(source_length,.01)
-    car_target=gv((5.0,-2.20,-456.0))
+    car_target=gv((5.0,-.90,-456.0))
     car_transform=(Matrix.Translation(car_target) @ Matrix.Rotation(math.pi/2,4,'Z')
                    @ Matrix.Scale(car_scale,4) @ Matrix.Translation(-center))
     for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
@@ -683,7 +706,7 @@ def render_imported_review():
     car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
                     max(p.y for p in placed_points)-min(p.y for p in placed_points),
                     max(p.z for p in placed_points)-min(p.z for p in placed_points))
-    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0,-2.95,-440)))
+    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0,-2.0,-440)))
     review_ground=bpy.context.object; review_ground.name='review-only mid-tone lake bed'
     review_material=bpy.data.materials.new('Review ground / neutral lake-bed earth'); review_material.diffuse_color=(.34,.31,.26,1)
     review_material.use_nodes=True; review_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.34,.31,.26,1)
@@ -691,7 +714,7 @@ def render_imported_review():
     review_ground.data.materials.append(review_material)
     profile_mesh=bpy.data.meshes.new('review-only low sand profile')
     profile_mesh.from_pydata([gv(p) for p in ((-120,-28,-460),(160,-28,-460),
-                                                (160,-2.95,-460),(-120,-2.95,-460))],[],[(0,1,2,3)])
+                                                (160,-2.0,-460),(-120,-2.0,-460))],[],[(0,1,2,3)])
     profile_mesh.materials.append(review_material); profile_mesh.update()
     side_profile=bpy.data.objects.new('review-only side-view ground profile',profile_mesh)
     scene.collection.objects.link(side_profile)
@@ -705,7 +728,7 @@ def render_imported_review():
         obj.hide_render=False
     for obj in exported_objects:
         if obj.type=='MESH': obj.hide_render=False
-    side_cam=camera('review broadside', (29,4,-320), (29,4,-470), 50)
+    side_cam=camera('review broadside', (29,9,-320), (29,9,-470), 50)
     side_cam.data.type='ORTHO'; side_cam.data.ortho_scale=82
     scene.camera=side_cam; scene.render.resolution_x,scene.render.resolution_y=(2048,900)
     scene.render.filepath=str(raw/'broadside.jpg'); bpy.ops.render.render(write_still=True)
@@ -717,7 +740,7 @@ def render_imported_review():
     scene.render.filepath=str(raw/'three-quarter.jpg'); bpy.ops.render.render(write_still=True)
     for obj in car_objects:
         obj.hide_render=True
-    deck_cam=camera('review deck looking aft', (39,6.75,-464), (-8,7.2,-470), 43)
+    deck_cam=camera('review deck looking aft', (39,12.75,-464), (-8,13.2,-470), 43)
     scene.camera=deck_cam; scene.render.resolution_x,scene.render.resolution_y=(1200,760)
     scene.render.filepath=str(raw/'deck-aft.jpg'); bpy.ops.render.render(write_still=True)
     print(json.dumps({'glb':str(out),'glb_bytes':glb_bytes,'triangles':triangle_count,
