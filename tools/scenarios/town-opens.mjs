@@ -49,6 +49,8 @@ export async function run(context){
   if(!returned.sameTown)throw new Error('Returning opened a different town.');
   for(const cell of returned.expected)if(!returned.cells.some(row=>row.x===cell.x&&row.z===cell.z))throw new Error(`The saved town lost road cell ${cell.x}, ${cell.z}.`);
   await picture(context,'town-return');
+  await context.evaluate(`document.querySelector('[data-town-action="yard"]').click()`);
+  await context.waitFor(`!document.querySelector('.town-entry')`,'leave the first town',30_000);
 
   await context.evaluate(`(() => {const app=window.__qaApp;window.__townVisitOwners={first:app.player.id};app.returnToMenu();const result=app.addPlayer('Gratian QA');if(!result.ok)throw Error('Could not add the second town player.');window.__townVisitOwners.second=result.player.id;app.profile={...app.profile,wasteland:{...app.profile.wasteland,discoveredGate:true}};app._saveProfile();if(!app.visitWasteland())throw Error('The second player could not enter the Wasteland.');app.advance(8);})()`);
   await context.waitFor(`!!document.querySelector('[data-action="yard-the-town"]')`,'the second player yard',30_000);
