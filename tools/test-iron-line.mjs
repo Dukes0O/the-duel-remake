@@ -105,11 +105,11 @@ captionJob=stepJob(captionJob,{controls:{throttle:1,whistle:true}},1/60);
 assert.equal(captionJob.requests.find(request=>request.type==='say')?.lineId,'two','Space advances the caption sequence');
 let sequence=createJob({id:'line-sequence',steps:[{kind:'reach',startLineId:'start',afterStartLineId:'next',opening:['open'],place:p('far',500)}]});
 sequence=stepJob(sequence,{player:{position:{x:0,y:0,z:0}}},1/60);
+assert.equal(sequence.requests.find(request=>request.type==='say')?.lineId,'open');
+sequence=stepJob(sequence,{controls:{whistle:true},player:{position:{x:0,y:0,z:0}}},2.21);
 assert.equal(sequence.requests.find(request=>request.type==='say')?.lineId,'start');
 sequence=stepJob(sequence,{controls:{whistle:true},player:{position:{x:0,y:0,z:0}}},2.21);
 assert.equal(sequence.requests.find(request=>request.type==='say')?.lineId,'next');
-sequence=stepJob(sequence,{controls:{whistle:true},player:{position:{x:0,y:0,z:0}}},2.21);
-assert.equal(sequence.requests.find(request=>request.type==='say')?.lineId,'open');
 
 const DT=1/120,flags={'hidden-road':true,arsenal:true,'arsenal-wave3':true,'warlord-cards':true,'crew-gear':true};
 const place=(id,x,z,y=0,radius=8)=>({id,position:{x,y,z},radius});
@@ -272,6 +272,36 @@ function runStory(difficulty) {
 const easyRun=runStory('easy'),easyRepeat=runStory('easy'),hardRun=runStory('hard');
 assert.deepEqual(easyRun,easyRepeat,'two real Easy runs with the same seed and input match');
 assert(hardRun.final,'the real Hard run reaches the Halt through the 20 m/s gate');
+// Claude's review: a repeatable line plays each time, a waiting line survives the end of its step,
+// and stepping off the side of a wagon is a fall.
+const repeatStep={kind:'drivetrain',path,maxSpeed:10,gate:{place:gate,speed:20,tooSlowLineId:'slow'}};
+let repeatJob=createJob({id:'repeat',steps:[repeatStep]},7);
+repeatJob={...repeatJob,stepState:{linesStarted:true,metres:299,speed:1}};
+let slowLines=0;
+for(let i=0;i<20000&&slowLines<2;i++){
+  repeatJob=stepJob(repeatJob,{controls:{throttle:1}},1/60);
+  slowLines+=repeatJob.requests.filter(request=>request.lineId==='slow').length;
+}
+assert.equal(slowLines,2,'hitting the gate too slowly says so every time');
+let carryJob=createJob({id:'carry-lines',steps:[
+  {kind:'reach',place:p('here',0),sayOnce:['first','second'],wonLineId:'won'},
+  {kind:'reach',place:p('far',500)},
+]},7);
+const carried=[];
+for(let i=0;i<1200;i++){
+  carryJob=stepJob(carryJob,{player:{position:{x:0,y:0,z:0}}},1/60);
+  carried.push(...carryJob.requests.filter(request=>request.type==='say').map(request=>request.lineId));
+}
+assert.deepEqual(carried,['first','second','won'],'lines waiting at the end of a step still play');
+const sideStep={kind:'board',path:[p('a',0),p('b',500)],speed:0,roofHeight:3.5};
+const plateAt={id:'wagon',position:{x:50,y:3.5,z:0},radius:4};
+const sideView=z=>({onFoot:true,difficulty:'medium',fighter:{position:{x:50,y:3.5,z}},train:{id:'iron-mule',position:{x:100,y:0,z:0},roofPlates:[plateAt]}});
+assert.equal(stepBoard(sideStep,{stage:'roof',index:0,trainMetres:100},sideView(0),1/60).state.index,1,'the middle of the roof is safe');
+assert.equal(stepBoard({...sideStep,fallDistance:25},{stage:'roof',index:1,trainMetres:100},{...sideView(2),train:{id:'iron-mule',position:{x:100,y:0,z:0},coupling:{x:60,y:1,z:0},roofPlates:[plateAt]}},1/60).state.stage,'roof','a step toward the edge is not a fall');
+const offSide=stepBoard(sideStep,{stage:'roof',index:1,trainMetres:100},{...sideView(6),train:{id:'iron-mule',position:{x:100,y:0,z:0},coupling:{x:60,y:1,z:0},roofPlates:[plateAt]}},1/60);
+assert.equal(offSide.state.stage,'ground','stepping off the side is a fall');
+assert.equal(offSide.state.index,1,'and keeps the place reached');
+
 console.log('test-iron-line: PASS');
 
 function nearest(route,target){let best=Infinity,metres=0,walked=0;for(let i=1;i<route.length;i++){const a=route[i-1].position,b=route[i].position,len=Math.hypot(b.x-a.x,b.z-a.z),t=Math.max(0,Math.min(1,(target.position.x-a.x)/(len||1)));const gap=Math.hypot(target.position.x-a.x-(b.x-a.x)*t,target.position.z-a.z-(b.z-a.z)*t);if(gap<best){best=gap;metres=walked+len*t;}walked+=len;}return {metres};}

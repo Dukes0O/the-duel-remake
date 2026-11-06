@@ -34,8 +34,7 @@ export function stepJob(job, view = {}, dt = 0) {
   const result = { ...job, stepState: clone(job.stepState), events: [], requests: [], failedStep: false };
   if (result.done || result.stepIndex >= result.steps.length) { result.done = true; return result; }
   const step = result.steps[result.stepIndex];
-  if(!result.stepState.linesStarted&&!result.stepState.lineBlocking&&
-      !(step.startLineId||step.afterStartLineId)&&step.opening?.length) {
+  if(!result.stepState.linesStarted&&!result.stepState.lineBlocking&&step.opening?.length) {
     const openingOutcome=runners[step.kind](step,result.stepState,
       {...view,controls:{...(view.controls??{}),throttle:0,brake:0}},0,result.seed);
     const opening=stepLines(step,result.stepState,view,dt,{...openingOutcome,complete:false});
@@ -58,8 +57,11 @@ export function stepJob(job, view = {}, dt = 0) {
     result.stepState = lined.state ?? {};
     result.failedStep = true;
   } else if (lined.complete) {
+    const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
     result.stepIndex += 1;
-    result.stepState = {};
+    const following = result.steps[result.stepIndex];
+    if (following?.opening?.length) result.stepState = waiting.length ? { carriedLines: waiting } : {};
+    else result.stepState = waiting.length || showing > 0 ? { lineQueue: waiting, lineRemaining: showing } : {};
     result.done = result.stepIndex >= result.steps.length;
     result.lineId = result.steps[result.stepIndex]?.lineId ?? result.lineId;
     if (result.done) result.events = [...result.events, { type: 'done' }];

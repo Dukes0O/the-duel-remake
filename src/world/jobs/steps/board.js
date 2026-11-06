@@ -1,4 +1,4 @@
-import {ironLineLength,sampleIronLine} from '../../iron-line.js';
+import {ironLineLength,nearestIronLineDistance,sampleIronLine} from '../../iron-line.js';
 const distance=(a,b)=>Math.hypot((a?.x??0)-(b?.x??0),(a?.y??0)-(b?.y??0),(a?.z??0)-(b?.z??0));
 const at=value=>value?.position??value;
 
@@ -36,7 +36,9 @@ export function stepBoard(step,state,view,dt) {
         requests:[{type:'marker',place:target},{type:'train',actorId:movingTrain.id,position:movingTrain.position,path,
           metres,pathLength:length,progress:length?metres/length:1,speed:movingTrain.speed,roofPlates:step.roofWalk}]};
     }
-    if(!view.onFoot||roofReference&&distance(player,roofReference)>(step.fallDistance??25)) {
+    const sideLimit=view.difficulty==='easy'?(step.easyFallSide??5):(step.fallSide??3);
+    const offSide=player&&length>0&&nearestIronLineDistance(path,player).distance>Math.hypot(sideLimit,roofHeight);
+    if(!view.onFoot||offSide||roofReference&&distance(player,roofReference)>(step.fallDistance??25)) {
       stage='ground';hold=0;
       line.push({type:'fell',plateIndex:index});
       if(step.fallLineId)line.push({type:'say',lineId:step.fallLineId});

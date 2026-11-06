@@ -2,7 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {sampleIronLine} from '../../world/iron-line.js';
+import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -228,6 +228,7 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
+  const trainMetresBefore=worldJob.job.stepState.trainMetres??0;
   if (currentStep?.kind === 'defend' && currentStep.placeId) {
     worldJob.places ??= {};
     const place = currentStep.place?.position ?? currentStep.place;
@@ -321,8 +322,10 @@ export function stepWorldJob(duel, dt) {
   const train=worldJob.actors.find(actor=>actor.train);
   if(train&&state.onFoot&&state.fighter&&next.stepState.stage==='roof') {
     if(worldJob.roofRide&&trainBefore) {
-      const dx=train.position.x-trainBefore.x,dz=train.position.z-trainBefore.z;
-      state.fighter.x+=dx;state.fighter.z+=dz;
+      // A rider moves with their own place on the train, so a long train round a bend keeps them on it.
+      const ridePath=currentStep.path, rideAt=nearestIronLineDistance(ridePath,{x:state.fighter.x,y:state.fighter.y-(currentStep.roofHeight??3.5),z:state.fighter.z}).metres;
+      const from=sampleIronLine(ridePath,rideAt), to=sampleIronLine(ridePath,rideAt+(next.stepState.trainMetres??trainMetresBefore)-trainMetresBefore);
+      state.fighter.x+=to.x-from.x;state.fighter.z+=to.z-from.z;
       state.fighter.y=train.roofPlates?.[next.stepState.index??0]?.position.y??
         state.fighter.y+train.position.y-trainBefore.y;
       state.fighter.groundY=state.fighter.y;

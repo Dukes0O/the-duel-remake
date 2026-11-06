@@ -7,7 +7,11 @@ export function stepLines(step,state,view,dt,outcome) {
   const lineHistory=new Set(state.lineHistory??[]);
   const nonCaption=(outcome?.requests??[]).filter(request=>request.type!=='say');
   const newlyRequested=(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId);
-  for(const lineId of newlyRequested) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
+  const once=new Set([step.startLineId,step.afterStartLineId,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
+  for(const lineId of newlyRequested) {
+    if(once.has(lineId)&&lineHistory.has(lineId))continue;
+    queue.push(lineId);if(once.has(lineId))lineHistory.add(lineId);
+  }
   const emit=(lineId, rest=[], blocking=false)=>({state:{...base,lineQueue:rest,lineRemaining:2.2,
     lineBlocking:blocking,lineHistory:[...lineHistory],linesStarted:started,linesClosing:closing},
     complete:false,events:outcome?.events??[],requests:[...nonCaption,{type:'say',lineId}]});
@@ -19,15 +23,16 @@ export function stepLines(step,state,view,dt,outcome) {
   }
   if(queue.length) {
     const lineId=nextCaption(queue), blocking=state.lineBlocking===true&&remaining>0||
-      [...(step.opening??[]),...(step.closing??[])].includes(lineId);
+      [...(state.carriedLines??[]),...(step.opening??[]),...(step.closing??[])].includes(lineId);
     return emit(lineId,queue,blocking);
   }
   if(!started) {
     started=true;
-    const opening=[...(step.opening??[])];
+    // Order: what the step before left waiting, the opening that holds the step, then the start lines.
+    const opening=[...(state.carriedLines??[]),...(step.opening??[])];
     for(const lineId of opening) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
-    for(const lineId of [step.afterStartLineId,step.startLineId])
-      if(lineId&&!lineHistory.has(lineId)) {queue.unshift(lineId);lineHistory.add(lineId);}
+    for(const lineId of [step.startLineId,step.afterStartLineId])
+      if(lineId&&!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
     if(queue.length) {const lineId=nextCaption(queue);const result=emit(lineId,queue,opening.includes(lineId));
       result.state.linesStarted=true;return result;}
   }

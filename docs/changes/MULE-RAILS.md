@@ -45,7 +45,20 @@
 - Claude should rerun `tools/test-warlord-tollkeeper.mjs` where `ffmpeg` is
   available.
 
+## Claude's review (Claude, 5 November)
+
+Reading the second pass found four more faults, fixed by Claude on this branch with tests:
+
+- A line that can happen more than once, such as a second slow hit on the gate or a second spill, had stopped playing, because every line played only once per step. Only start, opening and closing lines are now once only.
+- A line still waiting when a step ended was lost. It now plays in the next step.
+- The rider was carried by the cab's movement, so on a bend a rider further back slid off the train's line, hidden by a 25 m fall limit. A rider now moves with their own place on the train.
+- Walking off the side of a wagon left the fighter in the air for up to 25 m. More than 3 m to the side is now a fall (5 m on Easy), and it keeps the place reached.
+
+Lines at the start of a step now go in this order: lines left over from the step before, `opening`, then `startLineId` and `afterStartLineId`. A step with an `opening` always holds for it. On Time's last step needs this, since "Pulling out for home" comes after the discovery at the wall.
+
 ## Changed assertions
+
+- `tools/test-iron-line.mjs`, the order of start and opening lines: changed by Claude for the order above. Nothing is loosened.
 
 - Updated `tools/test-iron-line.mjs` to expect an opening caption to create the
   train at the path start without moving it. Nonblocking caption sequencing is
