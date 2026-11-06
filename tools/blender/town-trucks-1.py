@@ -23,7 +23,7 @@ if args.candidate_suffix and (not args.candidate_suffix.startswith('-') or
 output = (root / '.qa-dist/art-candidates' / f'town-trucks-1{args.candidate_suffix}.glb'
           if args.export_only else root / 'public/assets/models/wasteland/town/trucks-1.glb')
 blend = root / 'art-build/town-trucks-1.blend'
-evidence = root / '.evidence/2026-11-05/TOWN-ART-TRUCKS-1'
+evidence = root / '.evidence/town-art-trucks-1'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(output)], 'evidence': [str(evidence)]}))
@@ -61,7 +61,7 @@ base_colors={
 }
 for material in shared.values():
     bsdf = material.node_tree.nodes.get('Principled BSDF')
-    bsdf.inputs['Metallic'].default_value = min(.3, bsdf.inputs['Metallic'].default_value)
+    bsdf.inputs['Metallic'].default_value = min(.29, bsdf.inputs['Metallic'].default_value)
     color=base_colors.get(material.name.removeprefix('Town / '),material.diffuse_color)
     material.diffuse_color=color
     bsdf.inputs['Base Color'].default_value = color
@@ -127,7 +127,7 @@ lamp.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_
 for name, mat in materials.items():
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
     if bsdf:
-        bsdf.inputs['Metallic'].default_value = min(.3, bsdf.inputs['Metallic'].default_value)
+        bsdf.inputs['Metallic'].default_value = min(.29, bsdf.inputs['Metallic'].default_value)
 
 def game_vector(p):
     return Vector((p[0], -p[2], p[1]))
@@ -546,11 +546,178 @@ def merge_static_meshes(root_obj):
                 decimate=bpy.context.object.modifiers.new('truck detail budget reduction','DECIMATE')
                 decimate.ratio=.45 if material_name.endswith('/ photo paint') else .20
 
+# The fire engine is built directly from measured photographs with photo_model.py.
+# The existing three builds below remain until their own photo rounds.
+from photo_model import Photo, Mesh as PhotoMesh, trace, tidy, slab, box as photo_box, lathe
+import numpy as np
+
+PHOTO_ROOT = root / '.evidence/town-art-trucks-1'
+fire_photos = {name: Photo(PHOTO_ROOT / f'fire-engine-{name}.jpg')
+               for name in ('side','front','rear','overhead')}
+FIRE_PARTS = {
+    'bonnet': {'view':'side','rect':(78,315,640,705),'half_width':1.20},
+    'cab': {'view':'side','rect':(345,145,795,650),'half_width':1.06},
+    'equipment-body': {'view':'side','rect':(650,210,1708,710),'half_width':1.22},
+    'chassis': {'view':'side','rect':(85,650,1694,790),'half_width':1.08},
+    'front-face': {'view':'front','rect':(315,95,1220,800),'width':2.82},
+    'rear-face': {'view':'rear','rect':(320,95,1215,815),'width':2.82},
+    'bonnet-roof': {'view':'overhead','rect':(180,72,850,460),'height':1.70},
+    'cab-roof': {'view':'overhead','rect':(255,345,780,770),'height':2.62},
+    'tank-top': {'view':'overhead','rect':(280,700,780,1110),'height':2.72},
+    'rear-deck': {'view':'overhead','rect':(210,1060,840,1430),'height':2.35},
+}
+FIRE_S = .00430
+FIRE_FRONT_Z = -3.45
+FIRE_REAR_Z = 3.43
+
+def save_photo_mask(name, mask):
+    image=bpy.data.images.new('review mask '+name, mask.shape[1], mask.shape[0], alpha=False)
+    grey=mask[::-1].astype(np.float32)
+    image.pixels.foreach_set(np.dstack((grey,grey,grey,np.ones_like(grey))).ravel())
+    image.filepath_raw=str(PHOTO_ROOT / ('mask-'+name+'.png'))
+    image.file_format='PNG'; image.save()
+
+# The generated warm/blue-gray studio floor needs the photo kit's wider grey cut.
+fire_masks={}
+seed_sets={
+    'side':[(20,20),(1750,860),(20,850)],
+    'front':[(20,20),(20,1000),(1510,1000)],
+    'rear':[(20,20),(20,1000),(1510,1000)],
+    'overhead':[(20,20),(1000,20),(20,1510),(1000,1510)],
+}
+for name,photo in fire_photos.items():
+    fire_masks[name]=tidy(~photo.sky(seed_sets[name],grey=26))
+    save_photo_mask(name,fire_masks[name])
+
+fire_root=pivot('fire-truck',(0,0,0)); TRUCKS['fire-truck']=fire_root
+side_mask=fire_masks['side'].copy()
+for cx,cy,rx,ry in ((333,675,91,101),(1375,675,93,103)):
+    yy,xx=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
+    side_mask[((xx-cx)/rx)**2+((yy-cy)/ry)**2<=1]=False
+save_photo_mask('side-wheel-openings',side_mask)
+body_mesh=PhotoMesh()
+def side_point(px,py,x):
+    return (x,(780-py)*FIRE_S,(px-78)*FIRE_S-3.45)
+for name in ('bonnet','cab','equipment-body','chassis'):
+    part=FIRE_PARTS[name]; photo=fire_photos['side']
+    loops=trace(side_mask,part['rect'],tolerance=1.2,min_area=120)
+    if not loops: raise RuntimeError(f'{name}: Photo.sky found no outline in {part["rect"]}')
+    for sign in (-1,1):
+        half=part['half_width']
+        slab(body_mesh,'side',photo,loops,
+             lambda px,py,d,sign=sign:side_point(px,py,sign*d),
+             half-.055,half,wall_scale=FIRE_S)
+
+# Front and rear shells keep their photographed opaque cab glass and close the body.
+for name in ('front-face','rear-face'):
+    part=FIRE_PARTS[name]; photo=fire_photos[part['view']]
+    end_mask=fire_masks[part['view']].copy()
+    for cx,cy,rx,ry in ((540,870,108,122),(1000,870,108,122)):
+        yy,xx=np.ogrid[:end_mask.shape[0],:end_mask.shape[1]]
+        end_mask[((xx-cx)/rx)**2+((yy-cy)/ry)**2<=1]=False
+    save_photo_mask(part['view']+'-wheel-openings',end_mask)
+    loops=trace(end_mask,part['rect'],tolerance=1.5,min_area=250)
+    if not loops: raise RuntimeError(f'{name}: no measured outline in {part["rect"]}')
+    z0=FIRE_FRONT_Z if name=='front-face' else FIRE_REAR_Z
+    def end_point(px,py,d,z0=z0):
+        return ((px-768)*.0035,(948-py)*.0035,z0+d)
+    slab(body_mesh,part['view'],photo,loops,end_point,0,.085,wall_scale=.0035)
+
+# Roof shapes are measured in the real top photo at each part's actual height.
+def top_point(px,py,y):
+    return ((px-512)*.0046,y,(py-58)*.0046-3.42)
+for name in ('bonnet-roof','cab-roof','tank-top','rear-deck'):
+    part=FIRE_PARTS[name]; photo=fire_photos['overhead']
+    loops=trace(fire_masks['overhead'],part['rect'],tolerance=1.7,min_area=240)
+    if not loops: raise RuntimeError(f'{name}: no measured overhead outline in {part["rect"]}')
+    slab(body_mesh,'overhead',photo,loops,top_point,part['height']-.045,part['height'],wall_scale=.0046)
+
+def side_radial(photo,cx,cy,radius_px):
+    def uv(index,distance,radius,angle):
+        arc=.85
+        return photo.uv(cx-math.cos(angle)*radius_px*arc,cy-math.sin(angle)*radius_px*arc)
+    return uv
+
+# Round axle shafts join the chassis and wheels; both use photo-measured lathe UVs.
+def axle_uv(index,distance,radius,angle):
+    return side_radial(fire_photos['side'],860,766,15)(index,distance,radius,angle)
+for cx,cy in ((333,675),(1375,675)):
+    wheel_y=(780-cy)*FIRE_S; wheel_z=(cx-78)*FIRE_S-3.45
+    lathe(body_mesh,'side',(0,wheel_y,wheel_z),(1,0,0),(0,0,1),(0,1,0),
+          [(-1.08,.07),(1.08,.07)],axle_uv,sides=16)
+
+# Photo-derived tyres and rims stand at the measured 0.49 m radius and ground height.
+for cx,cy,suffix in ((333,675,'front-left'),(333,675,'front-right'),
+                     (1375,675,'rear-left'),(1375,675,'rear-right')):
+    x=1.09 if suffix.endswith('left') else -1.09
+    centre=(x,(780-cy)*FIRE_S,(cx-78)*FIRE_S-3.45)
+    steer=None
+    if suffix.startswith('front'):
+        steer=pivot('fire-truck:steer-'+suffix,centre); parent_keep_world(steer,fire_root)
+    spin=pivot('fire-truck:spin-'+suffix,centre); parent_keep_world(spin,steer or fire_root)
+    wheel=PhotoMesh(); photo=fire_photos['side']
+    tire_cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*112*f,cy-math.sin(a)*112*f)
+    lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
+          [(-.13,.38),(-.12,.49),(.12,.49),(.13,.38)],side_radial(photo,cx,cy,112),sides=28,
+          cap_start=('side',tire_cap),cap_end=('side',tire_cap))
+    cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*52*f,cy-math.sin(a)*52*f)
+    lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.14,.24),(.14,.24)],
+          side_radial(photo,cx,cy,55),sides=24,cap_start=('side',cap),cap_end=('side',cap))
+    wheel_obj=wheel.finish('fire-truck:'+suffix,{'side':photo.material()})
+    wheel_obj.location=game_vector(centre); parent_keep_world(wheel_obj,spin)
+
+# Side-photo lathes preserve the real hose-reel outlines without their edge pixels.
+for sign in (-1,1):
+    reel=PhotoMesh(); photo=fire_photos['side']; rcx,rcy=905,594
+    lathe(reel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
+          [(-.16,.28),(-.14,.39),(.14,.39),(.16,.28)],side_radial(photo,rcx,rcy,72),sides=24)
+    obj=reel.finish('fire-truck:hose-reel-'+str(sign),{'side':photo.material()})
+    obj.location=game_vector((sign*1.22,(780-rcy)*FIRE_S,(rcx-78)*FIRE_S-3.45))
+    parent_keep_world(obj,fire_root)
+
+# Roof ladder rails and rungs use individual measured rectangles from the top photo.
+ladder_mesh=PhotoMesh(); overhead=fire_photos['overhead']
+def ladder_box(x0,x1,y0,y1,z0,z1,rect):
+    photo_box(ladder_mesh,x0,x1,y0,y1,z0,z1,{'+y':('overhead',overhead,rect)})
+for x,rect in ((-.66,(255,730,305,1340)),(.58,(715,730,765,1340))):
+    ladder_box(x-.055,x+.055,2.88,2.98,-.35,2.55,rect)
+for i in range(13):
+    z=-.25+i*.215; px=335+i*28
+    ladder_box(-.66,.58,2.89,2.96,z-.025,z+.025,(px,785,px+24,805))
+ladder_obj=ladder_mesh.finish('fire-truck:roof-ladder',{'overhead':overhead.material()})
+parent_keep_world(ladder_obj,fire_root)
+
+# A separate cannon object turns around the origin at the measured roof pivot.
+cannon=pivot('fire-truck:cannon',(0,2.89,-.18)); parent_keep_world(cannon,fire_root)
+cannon_mesh=PhotoMesh(); photo=fire_photos['side']
+lathe(cannon_mesh,'side',(0,0,0),(0,0,-1),(1,0,0),(0,1,0),
+      [(0,.16),(-.24,.13),(-.72,.085)],side_radial(photo,795,158,35),sides=18)
+cannon_obj=cannon_mesh.finish('fire-truck:cannon-barrel',{'side':photo.material()})
+cannon_obj.location=game_vector((0,2.89,-.18)); parent_keep_world(cannon_obj,cannon)
+
+# Round headlights are traced from the two circles in the front photo.
+lamp_group=pivot('fire-truck:lamp',(0,0,0)); parent_keep_world(lamp_group,fire_root)
+front_photo=fire_photos['front']
+for side,cx in (('left',520),('right',1014)):
+    cy=610; light_mesh=PhotoMesh()
+    lathe(light_mesh,'front',(0,0,0),(0,0,1),(1,0,0),(0,1,0),
+          [(-.045,.16),(.025,.16)],side_radial(front_photo,cx,cy,61),sides=24,
+          cap_end=('front',lambda a,f,cx=cx,cy=cy:front_photo.uv(cx-math.cos(a)*55*f,cy-math.sin(a)*55*f)))
+    head=light_mesh.finish('fire-truck:headlamp-'+side,{'front':front_photo.material()})
+    head.location=game_vector(((cx-768)*.0035,(948-cy)*.0035,FIRE_FRONT_Z-.035))
+    parent_keep_world(head,lamp_group)
+
+photo_body=body_mesh.finish('fire-truck:photo measured shell',
+    {name:photo.material() for name,photo in fire_photos.items()})
+parent_keep_world(photo_body,fire_root)
+
 specs=(('fire-truck',7.5,(-2.45,2.23),'fire'),
        ('water-tanker',9.0,(-3.00,2.55),'tanker'),
        ('supply-truck',7.5,(-2.35,2.22),'supply'),
        ('tow-rig',7.0,(-2.15,1.95),'tow'))
 for identifier,length,axles,kind in specs:
+    if identifier == 'fire-truck':
+        continue  # The measured Photo model above owns this geometry.
     build_truck(identifier,length,axles,materials[identifier+'-paint'],kind)
     set_photo_camera(projection_camera, target=(0,0,1.65))
     projected=[materials[identifier+'-paint']]
@@ -579,9 +746,10 @@ for identifier,_,_,_ in specs:
                   if obj.type=='MESH' and obj.name.startswith(identifier)]
     truck_metrics[identifier]={
         'triangles':sum(mesh_triangles(obj,depsgraph) for obj in truck_meshes),
-        'paintImage':PAINT_FILES[identifier][0],
-        'paintImageBytes':(textures/PAINT_FILES[identifier][0]).stat().st_size,
-        'paintImageDimensions':list(bpy.data.images[identifier+' camera projected photo'].size),
+        'paintImage':('four measured Photo sources' if identifier=='fire-truck' else PAINT_FILES[identifier][0]),
+        'paintImageBytes':(sum((PHOTO_ROOT/f'fire-engine-{view}.jpg').stat().st_size for view in fire_photos)
+                           if identifier=='fire-truck' else (textures/PAINT_FILES[identifier][0]).stat().st_size),
+        'paintImageDimensions':('four source views' if identifier=='fire-truck' else list(bpy.data.images[identifier+' camera projected photo'].size)),
     }
 triangles=sum(item['triangles'] for item in truck_metrics.values())
 if any(item['triangles']>12000 for item in truck_metrics.values()):
@@ -591,50 +759,57 @@ if args.export_only:
                       'trucks':truck_metrics}))
     raise SystemExit(0)
 
-# Read the delivered file into a genuinely empty scene before making any view.
+# Reopen the exported GLB in an empty Blender scene. Every review frame is from
+# this imported deliverable, lit flat and rendered with the Standard transform.
 bpy.ops.wm.read_factory_settings(use_empty=True)
-scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU'
-scene.cycles.samples=32;scene.cycles.use_denoising=True
-scene.render.resolution_x=900;scene.render.resolution_y=600;scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX'
-scene.world=bpy.data.worlds.new('mid grey overcast review');scene.world.use_nodes=True
-scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.22,.23,.24,1)
-scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.24
+scene=bpy.context.scene; scene.render.engine='CYCLES'; scene.cycles.device='CPU'
+scene.cycles.samples=24; scene.cycles.use_denoising=True
+scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'
+scene.render.resolution_percentage=100; scene.render.resolution_x=900; scene.render.resolution_y=600
+scene.world=bpy.data.worlds.new('flat pale overcast review'); scene.world.use_nodes=True
+scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.72,.72,.70,1)
+scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.8
 bpy.ops.import_scene.gltf(filepath=str(output))
-bpy.ops.mesh.primitive_plane_add(size=200,location=(0,-.02,0))
-floor=bpy.context.object;floor.name='plain mid-grey ground'
-floor_mat=bpy.data.materials.new('plain mid-grey ground');floor_mat.diffuse_color=(.34,.35,.36,1);floor_mat.use_nodes=True
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.34,.35,.36,1)
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.96;floor.data.materials.append(floor_mat)
-for loc,power,size in [((4,5,9),1250,7),((-5,-5,6),620,6)]:
-    bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object
-    light.data.energy=power;light.data.shape='DISK';light.data.size=size
-    light.rotation_euler=(Vector((0,0,1.6))-light.location).to_track_quat('-Z','Y').to_euler()
-camera_data=bpy.data.cameras.new('matched low photo camera');camera=bpy.data.objects.new('matched low photo camera',camera_data)
-scene.collection.objects.link(camera);camera.location=(7.5,9.5,3.0)
-camera.rotation_euler=(Vector((0,0,1.65))-camera.location).to_track_quat('-Z','Y').to_euler()
-camera.data.lens=52;scene.camera=camera
+# Blender is Z-up after import; the road plane lies in XY at Z=0.
+bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,0))
+floor=bpy.context.object; floor.name='plain pale review ground'
+floor_mat=bpy.data.materials.new('plain pale review ground'); floor_mat.use_nodes=True
+floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.58,.58,.56,1)
+floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.98
+floor.data.materials.append(floor_mat)
+for loc,power,size in [((4,1,9),1100,8),((-5,-4,6),700,7)]:
+    bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object
+    light.data.energy=power; light.data.shape='DISK'; light.data.size=size
+    light.rotation_euler=(Vector((0,0,1.35))-light.location).to_track_quat('-Z','Y').to_euler()
+root_node=bpy.data.objects.get('fire-truck')
+if root_node is None: raise RuntimeError('exported GLB lost fire-truck')
+all_roots=[bpy.data.objects.get(name) for name,_,_,_ in specs]
+for other in all_roots:
+    if other:
+        hidden=other.name!='fire-truck'; other.hide_render=hidden
+        for child in other.children_recursive: child.hide_render=hidden
+camera_data=bpy.data.cameras.new('round 7 review camera')
+camera=bpy.data.objects.new('round 7 review camera',camera_data); scene.collection.objects.link(camera)
+scene.camera=camera; camera.data.type='ORTHO'
 evidence.mkdir(parents=True,exist_ok=True)
-for identifier,_,_,_ in specs:
-    root_node=bpy.data.objects.get(identifier)
-    if root_node is None: raise RuntimeError('exported GLB lost truck root '+identifier)
-    # One truck is visible at a time in the imported scene.
-    all_roots=[bpy.data.objects.get(name) for name,_,_,_ in specs]
-    for other in all_roots:
-        if other:
-            hidden=other.name!=identifier
-            other.hide_render=hidden
-            for child in other.children_recursive: child.hide_render=hidden
-    length=next(spec[1] for spec in specs if spec[0]==identifier)
-    camera.location=(-length*1.18, length*1.36, max(4.7,length*.64))
-    camera.rotation_euler=(Vector((0,0,1.55))-camera.location).to_track_quat('-Z','Y').to_euler()
-    camera.data.lens=48
-    scene.render.filepath=str(evidence/(identifier+'-photo-match.png'))
+def render_view(name, location, target=(0,0,1.35), width=8.4, resolution=(900,600)):
+    scene.render.resolution_x,scene.render.resolution_y=resolution
+    camera.location=location
+    camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+    camera.data.ortho_scale=width
+    scene.render.filepath=str(evidence/('round-7-'+name+'.png'))
     bpy.ops.render.render(write_still=True)
-    camera.location=(length*1.15, -length*1.2, max(5.0,length*.72))
-    camera.rotation_euler=(Vector((0,0,1.45))-camera.location).to_track_quat('-Z','Y').to_euler()
-    scene.render.filepath=str(evidence/(identifier+'-far-side-rear.png'))
-    bpy.ops.render.render(write_still=True)
+
+# Dead-on photos use the same orthographic camera directions and scale.
+render_view('side-render',(-10,0,1.4),width=8.4,resolution=(900,450))
+render_view('front-render',(0,10,1.4),width=4.8,resolution=(720,600))
+render_view('rear-render',(0,-10,1.4),width=4.8,resolution=(720,600))
+render_view('overhead-render',(0,0,14),target=(0,0,0),width=8.1,resolution=(600,900))
+# Two three-quarter views, then the mayor's high view and the driver's 20 m view.
+render_view('three-quarter-front',(-9,9,5.5),width=8.6)
+render_view('three-quarter-rear',(9,-9,5.2),width=8.6)
+render_view('mayor-height',(12,15,13),width=20)
+render_view('driver-height-20m',(0,20,1.55),target=(0,0,1.45),width=12)
 print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
-                  'trucks':truck_metrics,
-                  'renderedFromImportedGlb':True,'evidence':str(evidence)}))
+                  'trucks':truck_metrics,'renderedFromImportedGlb':True,'viewTransform':'Standard',
+                  'reviewViews':8,'evidence':str(evidence)}))

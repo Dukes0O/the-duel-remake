@@ -1,27 +1,24 @@
-# TOWN-ART-TRUCKS-1, round 6
+# TOWN-ART-TRUCKS-1, round 7
 
 ## Changed
 
-- Replaced the four tiled paint inputs with four generated, 1024-square truck photographs. The recipe applies camera-projected UV coordinates, mirrors the far side, and renders the exported GLB reimported into an empty scene from matched and alternate cameras.
-- Rebuilt the cab with square shoulders and a seated roof, and retained the 1.1 m tyres, connected bumper and working beds/equipment.
-- Added the round 6 comparison sheet and review. The review records that the projection is visibly offset and that the result does not pass visual acceptance.
-
-The Blender bake experiment smeared the camera projection across overlapping surfaces. I removed that bake stage and restored the direct photo textures, which render more clearly. The final JPEGs are the photo sources on camera-projected UVs; they are not baked into non-overlapping UV layouts. This is a known shortfall against the card's bake request.
-
-Final rendered GLB: 2,816,116 bytes. Triangles: fire 8,021; tanker 11,173; supply 9,119; tow 8,973. The four embedded JPEGs are 1024 x 1024. No metallic value exceeds 0.3.
+- Merged current `integration/wasteland` at `e0fe3c95c`; resolved the Blender output test conflict by retaining integration checks and restoring this card's truck checks. `node --check tools/test-blender-output.mjs` passed.
+- Rebuilt only `fire-truck` from four generated dead-on photos with `Photo.sky(grey=26)`, `trace`, `slab`, `box` and `lathe`. The measured rectangles and widths live in the recipe. The other three truck builders remain as before.
+- Added four source photos, credits, round 7 comparison sheet and review. The final family GLB is 3,999,832 bytes (about 3.81 MiB); the sheet is 155,819 bytes. Triangle counts: fire 8,107; tanker 11,173; supply 9,119; tow 8,973.
+- The builder does not judge this a visual pass: the direct views are readable, while wheels are pale and the three-quarter views show separated flat pieces. Claude should judge before further truck work.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs` — passed, 239 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs` — passed. Repository placement passed; the tool reported existing advisory size targets only.
-- `node tools/test-review-evidence.mjs` — failed 3 of 9 subtests. One uses a fixed 5 November crew evidence path while this lane uses 6 November; one expects `round-4.jpg`, which this task explicitly required deleting; one could not spawn `ffmpeg` (`EPERM`). No test assertions were changed.
-- Lane tier and build — not run, per the art-card instruction.
-- Browser checks: not run in this lane. Claude should judge the round 6 sheet, focusing on cab/bonnet alignment and image streaking, source-to-model frame size, far-side/rear finish, and whether the fire reel, tanker, supply load and tow boom read from the driver view.
-- Changed assertions: none.
-- Race fingerprints: not applicable; this art-only change does not touch race simulation.
+- `node --check tools/test-blender-output.mjs` - passed after conflict resolution and after the card check update.
+- `node tools/test-blender-output.mjs` - passed, 280 checks and 0 failures. The first run found a scratch-path mismatch and a metallic value rounded above 0.3; both were fixed before the passing run.
+- `node tools/test-repo-hygiene.mjs` - passed. It reported existing advisory size targets only.
+- Blender recipe - passed; exported the GLB, imported it into an empty scene, used the Standard view transform, and rendered all eight review views.
+- Lane tier and build - not run, per the art-card instructions.
+- Browser checks - not run. Claude should inspect all four direct photo comparisons, both three-quarter views, mayor-height view, driver-height view at 20 m, wheel grounding, the cab shell, the ladder and the cannon pivot.
+- Changed assertions: updated the family size ceiling from 3 MB to the task's 8 MB. Replaced the four-paint-image assumption with checks for four measured fire-engine views and the three remaining trucks' separate photo materials. Added TEXCOORD_0 range, metallic, named part and per-truck triangle checks. The source recipe caps metallic at 0.29 to avoid a 0.3 float rounding over the limit. These changes match the approved family budget and keep every triangle and UV bound intact.
+- Race fingerprints: not applicable; simulation code did not change.
 
 ## Removed
 
-- Removed the old tiled paint photographs after replacing them with the camera-projection photos.
-- Removed round 4 and round 5 sheets and review notes as requested.
-- Removed bake code that produced stretched, smeared projections.
+- Removed the round 6 sheet and review note as requested.
+- No truck id or prior model builder was removed.
