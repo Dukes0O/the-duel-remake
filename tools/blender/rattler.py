@@ -1,4 +1,4 @@
-"""Build the photo-proportioned Rattler pickup and its round-five sheet.
+"""Build the photo-proportioned Rattler pickup and its round-six sheet.
 
 Run: blender -b -t 4 --python-exit-code 1 --python tools/blender/rattler.py -- --root .
 Model coordinates are metres, +Y up and +Z forward. Review-only objects never export.
@@ -19,9 +19,9 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/cars/rattler.glb'
 textures = root / 'public/assets/models/wasteland/cars/textures'
 blend = root / 'art-build/cars/rattler.blend'
-sheet = root / 'docs/board/looks/car-art-rattler/round-5.jpg'
-evidence = root / '.evidence' / date.today().isoformat() / 'CAR-ART-RATTLER' / 'round-5'
-reference = root / '.qa-dist/rattler-round-5/reference.jpg'
+sheet = root / 'docs/board/looks/car-art-rattler/round-6.jpg'
+evidence = root / '.evidence' / date.today().isoformat() / 'CAR-ART-RATTLER' / 'round-6'
+reference = root / '.qa-dist/rattler-round-6/reference.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)], 'glb':[str(out)], 'evidence':[str(evidence)], 'summary':[str(sheet)]}))
     raise SystemExit(0)
@@ -83,6 +83,7 @@ vehicle = bpy.data.objects.new('rattler | chopped 1930s pickup, metres', None)
 scene.collection.objects.link(vehicle)
 vehicle['vehicle_id']='rattler'; vehicle['units']='metres'; vehicle['forward']='+Z'; vehicle['up']='+Y'
 parts = []
+
 
 def adopt(obj, name, mat, parent=True):
     obj.name = name
@@ -152,7 +153,7 @@ def torus(name, loc, major, minor, mat, axis='X', maj=36, minr=10):
 
 def tyre(name, center, radius, width):
     """One closed carcass mesh with its shallow tread lugs grown into it."""
-    cx,cy,cz=center; around=48; rings=8; verts=[]; faces=[]; uvs=[]
+    cx,cy,cz=center; around=32; rings=8; verts=[]; faces=[]; uvs=[]
     # A softly rounded carcass carries shallow rectangular tread blocks. The
     # blocks fade out before the shoulder so they do not scallop the silhouette.
     for i in range(around):
@@ -301,15 +302,14 @@ cube('rear cab bulkhead behind bench',(0,.96,-1.43),(1.49,.69,.075),paint,.06)
 closed_cab_shell()
 
 # Short pickup bed behind the cab: folded metal sides, ribs, seams and tailgate.
-cube('short pickup bed floor',(0,.79,-1.88),(1.34,.075,.62),steel,.025)
+wood=material('Photo: weathered dark bed planks',(.12,.095,.068),.94,.01,'ground-dust.jpg')
+for x in (-.47,-.23,0,.23,.47):cube('individual thick bed floor plank',(x,.79,-1.88),(.205,.075,.62),wood,.018)
 for side in (-1,1):
     x=side*.70
-    panel('rolled pickup bed side',[ (.80,-2.20),(1.10,-2.18),(1.15,-1.56),(.83,-1.54) ],x,paint,.035)
-    for z in (-2.05,-1.88,-1.71):beam('bed side pressed channel',(x, .87,z),(x,1.08,z),.018,edge,6)
-    for z in (-2.10,-1.65):cylinder('bed side bolt',(x*1.02,.98,z),.022,.04,edge,'X',10)
-cube('tailgate formed sheet',(0,.97,-2.22),(1.40,.36,.06),paint,.025)
-for x in (-.47,-.23,0,.23,.47):
-    cube('bed floor steel rib',(x,.84,-1.88),(.028,.025,.56),edge,.006)
+    for y in (.86,1.04,1.22):cube('thick weathered bed side plank',(x,y,-1.88),(.075,.13,.68),wood,.02)
+    for z in (-2.12,-1.64):beam('bed side steel stake',(x,.78,z),(x,1.29,z),.026,steel,8)
+    for z in (-2.10,-1.65):cylinder('bed side bolt',(x*1.02,1.20,z),.022,.04,edge,'X',10)
+for y in (.86,1.04,1.22):cube('thick tailgate plank',(0,y,-2.22),(1.42,.13,.075),wood,.02)
 for side in (-1,1):
     beam('tailgate hinge',(side*.54,.81,-2.24),(side*.54,1.00,-2.24),.024,steel)
 
