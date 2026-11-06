@@ -80,17 +80,11 @@ irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
 
-## WW-ART-CREW round 4 photographs (2026-11-06)
+## WW-ART-CREW photographs (2026-11-06)
 
-All three photographs are embedded in `crew-favours.glb` as direct colour
-images. Gerald's runtime JPG is the original overhead view cropped from the
-source photo; a cyan-background edit was used only to make his outline mask.
-The piano front is perspective-warped from its original photograph.
+All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
 
-- `ww-gerald-photo.jpg`: original overhead image of a desert lizard on dusty
-  ground, cropped to the full animal from nose to tail and reduced to 1200 x 476
-  for the review-sized texture. Prompt: realistic desert lizard, side and
-  overhead photographs, plain dusty ground, overcast daylight.
+- `ww-gerald-cutout.jpg`: Codex ImageGen, an original desert lizard seen from the side and from directly above, edited onto a flat colour so that its outline can be read by script. Prompt: realistic desert lizard, side and overhead views, the same animal in both. The recipe replaces the flat colour before export, so it never reaches the model.
 - `ww-harpoon-photo.jpg`: Codex ImageGen photograph of a complete historic
   whaling harpoon, dead side-on and level on a flat pale background, reduced to
   1700 x 567. Prompt:
@@ -111,7 +105,3 @@ The piano front is perspective-warped from its original photograph.
   warped to a 1500 x 1300 front view and reduced to 1200 x 1040. Prompt:
   battered upright piano with its
   action exposed, photographed in even neutral daylight.
-
-- `ww-gerald-side.jpg`: original side-view crop from the two-view desert-lizard photograph used for `ww-gerald-photo.jpg`. Prompt: realistic desert lizard, side and overhead photographs, plain dusty ground, overcast daylight. Unedited source pixels; generated green cutout used only for the mask.
-
-- `ww-gerald-overhead-mask.png` and `ww-gerald-side-mask.png`: lizard silhouettes isolated by pure-green color mask from the green-background edit. Used only by the Blender recipe; the embedded model colors come from the unedited original photo crops.

@@ -1,256 +1,291 @@
-"""Photo-outline recipes for Gerald, Jax's harpoon and the upright piano.
+"""WW-ART-CREW: the crew's favours, each built from its own photo with photo_model.
 
-Run from Blender 4.5 with -- --root . [--stage gerald|harpoon|piano|all].
-Every review portrait is rendered from the exported GLB after a fresh import.
+Run with Blender 4.5: blender -b --python tools/blender/crew-favours.py -- --root <repo>
+Metres, X right, Y up, Z towards the viewer. Each prop is a named part under one root.
 """
-import argparse, json, math, sys
+import argparse
+import json
+import math
+import sys
 from pathlib import Path
 
-parser=argparse.ArgumentParser()
-parser.add_argument('--root',required=True)
-parser.add_argument('--stage',choices=('gerald','harpoon','piano','all'),default='all')
-parser.add_argument('--paths-only',action='store_true')
-args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]); root=Path(args.root).resolve()
-out=root/'public/assets/models/wasteland/scablands/crew-favours.glb'
-blend=root/'art-build/crew-favours/crew-favours.blend'
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--render-dir', default='.qa-dist/ww-art-crew')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(args.root).resolve()
+glb = root / 'public/assets/models/wasteland/scablands/crew-favours.glb'
+blend = root / 'art-build/crew-favours/crew-favours.blend'
+render_dir = Path(args.render_dir)
+render_dir = render_dir if render_dir.is_absolute() else root / render_dir
+textures = root / 'public/assets/models/wasteland/scablands/textures'
 if args.paths_only:
-    print(json.dumps({'blend':[str(blend)],'glb':[str(out)]}))
+    print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)]}))
     raise SystemExit(0)
-all_stages=('gerald','harpoon','piano')
-stages=all_stages if args.stage=='all' else all_stages[:all_stages.index(args.stage)+1]
-import bpy, numpy as np
-from mathutils import Vector, Matrix
-sys.path.insert(0,str(root/'tools/blender')); import town_base as town
-texture_dir=root/'public/assets/models/wasteland/scablands/textures'
-paths={'gerald':texture_dir/'ww-gerald-photo.jpg', 'gerald_side':texture_dir/'ww-gerald-side.jpg', 'harpoon':texture_dir/'ww-harpoon-photo.jpg', 'piano':texture_dir/'ww-piano-photo.jpg'}
+
+import bpy
+import numpy as np
+from mathutils import Vector
+sys.path.insert(0, str(root / 'tools/blender'))
+import town_base as town
+from photo_model import Mesh, Photo, box, lathe, rect_loop, shrink, slab, tidy, trace
+
 bpy.ops.wm.read_factory_settings(use_empty=True)
-scene=bpy.context.scene; root_obj=bpy.data.objects.new('crew-favours',None); scene.collection.objects.link(root_obj)
-_base=town.make_materials()
+blend.parent.mkdir(parents=True, exist_ok=True)
+render_dir.mkdir(parents=True, exist_ok=True)
+scene = bpy.context.scene
+root_object = bpy.data.objects.new('crew-favours', None)
+scene.collection.objects.link(root_object)
+triangles = {}
 
-def photo_material(name,path,darken=1.0):
-    image=bpy.data.images.load(str(path.resolve()),check_existing=False)
-    if darken!=1:
-        px=np.empty(len(image.pixels),dtype=np.float32); image.pixels.foreach_get(px)
-        px[:]=np.clip(px*darken,0,1); image.pixels.foreach_set(px)
-    image.pack(); mat=bpy.data.materials.new(name); mat.use_nodes=True
-    bsdf=mat.node_tree.nodes.get('Principled BSDF'); bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=.85
-    if bsdf.inputs.get('Specular IOR Level'): bsdf.inputs['Specular IOR Level'].default_value=0
-    tex=mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=image; tex.interpolation='Linear'; tex.extension='EXTEND'
-    mat.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color']); mat.diffuse_color=(.26,.22,.17,1)
-    return mat
+def finish(mesh, name, materials):
+    obj = mesh.finish(name, materials)
+    obj.parent = root_object
+    obj['part'] = name
+    triangles[name] = mesh.triangles()
+    return obj
 
-def make_obj(name,verts,faces,uvs,mat,smooth=False):
-    # verts use game axes X right, Y up, Z depth; each UV is assigned per loop.
-    coords=[tuple(town.game_vector(v)) for v in verts]
-    mesh=bpy.data.meshes.new(name+' mesh'); mesh.from_pydata(coords,[],faces); mesh.update()
-    uv=mesh.uv_layers.new(name='UVMap')
-    for poly in mesh.polygons:
-        poly.use_smooth=smooth
-        for li in poly.loop_indices: uv.data[li].uv=uvs[mesh.loops[li].vertex_index]
-    obj=bpy.data.objects.new(name,mesh); scene.collection.objects.link(obj); obj.parent=root_obj
-    mesh.materials.append(mat); obj['part']=name.split('-')[0]; return obj
+# --- jax-harpoon, 2.5 m, along X with its head at +X ---------------------------------
+harpoon = Photo(textures / 'ww-harpoon-photo.jpg')
+harpoon_solid = tidy(~harpoon.sky([(50, 50), (1650, 500), (850, 500)], grey=26))
+HS = 2.5 / 1663
+def HX(px): return (px - 850) * HS
+HC = 287
+mesh = Mesh()
+stations = []
+for px in range(18, 1462, 12):
+    column = np.nonzero(harpoon_solid[:, px])[0]
+    if len(column):
+        stations.append((HX(px), max(3, (column[-1] - column[0]) / 2) * HS))
+# The butt end closes down on itself; the head's blade is a flat piece, below.
+def harpoon_uv(index, distance, radius, angle):
+    theta = math.degrees(math.asin(math.sin(angle)))
+    return harpoon.uv(distance / HS + 850, HC - radius / HS * .9 * theta / 90)
+lathe(mesh, 'harpoon', (0, 0, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0), stations, harpoon_uv, sides=12,
+      cap_start=('harpoon', lambda a, f: harpoon.uv(28 + math.cos(a) * f * 8, HC - math.sin(a) * f * 14)))
+blade = trace(shrink(harpoon_solid, 1), (1455, 215, 1690, 350), tolerance=1.0)
+def on_blade(px, py, d): return (HX(px), (HC - py) * HS, d)
+slab(mesh, 'harpoon', harpoon, blade, on_blade, -.009, .009, wall_scale=HS)
+harpoon.bleed(harpoon_solid)
+finish(mesh, 'jax-harpoon', {'harpoon': harpoon.material()})
 
-def aim_camera(camera,target,up_hint):
-    direction=(Vector(target)-camera.location).normalized()
-    up_hint=Vector(up_hint).normalized(); right=direction.cross(up_hint).normalized()
-    up=right.cross(direction).normalized(); back=-direction
-    camera.rotation_euler=Matrix((right,up,back)).transposed().to_euler()
+# --- piano-upright, 1.5 m wide, 1.3 m high, 0.6 m deep, its back at Z = 0 --------------
+piano = Photo(textures / 'ww-piano-photo.jpg')
+def PX(px): return (px - 647.5) * .001408
+def PY(py): return (1040 - py) * .00125
+SIDE_STRIP = 112
+WOOD = ('piano', piano, (205, 75, 620, 180))       # the upper panel, for hidden wood
+TOP = ('piano', piano, (205, 75, 1015, 180))
+DARK = ('piano', piano, (1046, 490, 1072, 700))    # the dark inside by the action
+def strip(y0, y1): return ('piano', piano, (62, y0, SIDE_STRIP, y1))
 
-def build_gerald():
-    from photo_model import Photo, Mesh, trace, slab
-    import numpy as np
-    overhead=Photo(paths['gerald']); side=Photo(paths['gerald_side'])
-    def read_mask(path):
-        image=bpy.data.images.load(str(path.resolve()),check_existing=False)
-        values=np.empty(len(image.pixels),dtype=np.float32); image.pixels.foreach_get(values)
-        mask=values.reshape((image.size[1],image.size[0],4))[:,:,0]>.5
-        bpy.data.images.remove(image); return mask
-    overhead_mask=read_mask(texture_dir/'ww-gerald-overhead-mask.png')
-    side_mask=read_mask(texture_dir/'ww-gerald-side-mask.png')
-    if overhead_mask.shape!=(overhead.h,overhead.w) or side_mask.shape!=(side.h,side.w):
-        raise RuntimeError('Gerald source and cutout mask dimensions differ')
-    x0,x1=np.where(overhead_mask)[1].min(),np.where(overhead_mask)[1].max()
-    centerline=238.0; station_px=np.linspace(x0,x1,40)
-    row=np.arange(overhead.h)
-    widths=[]
-    for px in station_px:
-        col=overhead_mask[:,int(round(px))]
-        active=row[np.logical_and(col,np.abs(row-centerline)<70)]
-        widths.append(max(2.,float(np.max(np.abs(active-centerline))) if len(active) else 2.))
-    widths=np.convolve(np.pad(widths,(4,4),mode='edge'),np.ones(9)/9,mode='valid')
-    nose_x=float(x0); hip_x=min(float(x1),nose_x+520); scale=.30/max(1.,hip_x-nose_x)
-    side_x0,side_x1=np.where(side_mask)[1].min(),np.where(side_mask)[1].max()
-    side_rows=np.arange(side.h); tops=[]; bottoms=[]
-    for px in np.linspace(side_x0,side_x1,40):
-        col=side_mask[:,int(round(px))]; active=side_rows[col]
-        top=int(active.min()); belly=active[active<=top+180]
-        tops.append(top); bottoms.append(int(belly.max()) if len(belly) else top+5)
-    tops=np.convolve(np.pad(tops,(4,4),mode='edge'),np.ones(9)/9,mode='valid')
-    bottoms=np.convolve(np.pad(bottoms,(4,4),mode='edge'),np.ones(9)/9,mode='valid')
-    mesh=Mesh(); ring_count=12; rings=[]
-    for i,px in enumerate(station_px):
-        si=i/39*(len(tops)-1); lo=int(si); hi=min(lo+1,len(tops)-1); frac=si-lo
-        top_px=float(tops[lo]*(1-frac)+tops[hi]*frac); bottom_px=float(bottoms[lo]*(1-frac)+bottoms[hi]*frac)
-        base_y=.002; top_y=max(base_y+.01,(bottom_px-top_px)*scale)
-        w=float(widths[i])*scale
-        ring=[]
-        for k in range(ring_count):
-            a=2*math.pi*k/ring_count; sn=math.sin(a); co=math.cos(a)
-            flatten=.08 if sn<-.72 else .5+.5*sn
-            y=base_y+(top_y-base_y)*flatten; z=w*co; x=(px-nose_x)*scale
-            ring.append((mesh.vertex((x,y,z)),x,y,z,px,a))
-        rings.append(ring)
-    overhead_mat=overhead.material(); side_mat=side.material()
-    for i in range(len(rings)-1):
-        for k in range(ring_count):
-            aa=(k+.5)*2*math.pi/ring_count; use_top=math.sin(aa)>abs(math.cos(aa))
-            material='overhead' if use_top else 'side'
-            photo=overhead if use_top else side
-            out=(0,math.sin(aa),math.cos(aa))
-            a=rings[i][k]; b=rings[i][(k+1)%ring_count]; c=rings[i+1][(k+1)%ring_count]; d=rings[i+1][k]
-            points=[mesh.verts[a[0]],mesh.verts[b[0]],mesh.verts[c[0]],mesh.verts[d[0]]]
-            uvs=[]
-            for v in (a,b,c,d):
-                _,x,y,z,px,ang=v
-                if use_top:
-                    py=centerline+z/scale; uv=overhead.uv(px,py)
-                else:
-                    si=(px-nose_x)/max(1.,x1-nose_x)*(side_x1-side_x0)+side_x0
-                    station=int(round((px-nose_x)/max(1.,x1-nose_x)*39)); bp=float(bottoms[station]); py=bp-y/scale
-                    uv=side.uv(si,py)
-                uvs.append(uv)
-            mesh.face(points,uvs,material,out,True)
-    for end_index,sign in ((0,-1),(-1,1)):
-        ring=rings[end_index]; center=mesh.verts[ring[0][0]]
-        for k in range(ring_count):
-            a=ring[k]; b=ring[(k+1)%ring_count]
-            uv0=overhead.uv(a[4],centerline+a[3]/scale); uv1=overhead.uv(b[4],centerline+b[3]/scale)
-            mesh.face((center,mesh.verts[a[0]],mesh.verts[b[0]]),(overhead.uv(a[4],centerline),uv0,uv1),'overhead',(sign,0,0),False)
-    bodymask=np.zeros_like(overhead_mask)
-    for i,px in enumerate(station_px):
-        col=int(round(px)); wpx=float(widths[i]); y0=max(0,int(centerline-wpx)); y1=min(overhead.h,int(centerline+wpx)+1); bodymask[y0:y1,col]=True
-    legmask=overhead_mask & ~bodymask
-    def leg_height(px,py):
-        idx=np.clip((px-nose_x)/max(1.,x1-nose_x)*39,0,39); wpx=float(np.interp(idx,np.arange(40),widths)); distance=max(0.,abs(py-centerline)-wpx)
-        return .045*math.sin(math.pi*min(distance/80.,1.))
-    for name,rect in (('front-near',(80,0,420,238)),('rear-near',(400,0,800,238)),('front-far',(80,238,420,476)),('rear-far',(400,238,800,476))):
-        loops=trace(legmask,rect,tolerance=1.2,min_area=20)
-        if not loops: continue
-        def leg_world(px,py,d): return ((px-nose_x)*scale,leg_height(px,py)+d,(py-centerline)*scale)
-        slab(mesh,'overhead',overhead,loops,leg_world,0,.014,wall_scale=.006)
-    obj=mesh.finish('gerald-body-and-bent-legs',{'overhead':overhead_mat,'side':side_mat}); obj.parent=root_obj; obj['part']='gerald'
-def build_harpoon():
-    image=bpy.data.images.load(str((root/'.qa-dist/harpoon-mask.png').resolve()),check_existing=False)
-    pixels=np.empty(len(image.pixels),dtype=np.float32); image.pixels.foreach_get(pixels)
-    mask=pixels.reshape((image.size[1],image.size[0],4))[:,:,0]>.5
-    bpy.data.images.remove(image)
-    image=bpy.data.images.load(str(paths['harpoon'].resolve()),check_existing=False)
-    photo=np.empty(len(image.pixels),dtype=np.float32); image.pixels.foreach_get(photo)
-    photo=photo.reshape((image.size[1],image.size[0],4))[:,:,:3]
-    bpy.data.images.remove(image)
-    h,w=mask.shape; ys,xs=np.where(mask); x0,x1=int(xs.min()),int(xs.max()); span=x1-x0
-    n=120; samples=np.linspace(x0,x1,n); verts=[]; uvs=[]; faces=[]; sides=12
-    for i,px in enumerate(samples):
-        col=int(round(px)); active=np.where(mask[:,col])[0]
-        if len(active)<2:
-            active=np.where(mask[:,max(x0,min(x1,col-1))])[0]
-        t,b=int(active.min()),int(active.max()); c=(t+b)/2; radius=max(1,(b-t)/2)*2.5/span
-        factor=.25 if px>x0+span*.76 else .52
-        for j in range(sides):
-            a=2*math.pi*j/sides; py=c-radius*span/2.5*math.cos(a)
-            gx=-1.25+2.5*i/(n-1); gy=(h/2-py)*2.5/span; gz=radius*factor*math.sin(a)
-            verts.append((gx,gy,gz)); photo_y=c+(py-c)*.86; uvs.append((px/w,1-photo_y/h))
-    for i in range(n-1):
-        for j in range(sides):
-            a=i*sides+j; b=i*sides+(j+1)%sides; faces.append((a,b,b+sides,a+sides))
-    faces.extend([tuple(range(sides-1,-1,-1)),tuple((n-1)*sides+j for j in range(sides))])
-    # Small end caps sample the nearest photo pixels.
-    verts.extend([verts[0],verts[(n-1)*sides]]); uvs.extend([uvs[0],uvs[(n-1)*sides]])
-    faces[-2]=tuple([n*sides]+[j for j in range(sides-1,-1,-1)])
-    faces[-1]=tuple([(n*sides+1)]+[(n-1)*sides+j for j in range(sides)])
-    mat=photo_material('Jax / outline photograph',paths['harpoon'])
-    make_obj('jax-harpoon-outline-lathe',verts,faces,uvs,mat,False)
+mesh = Mesh()
+def part(rect, z0, z1, left=DARK, right=DARK, top=WOOD, under=DARK, back=DARK):
+    x0, y0, x1, y1 = rect
+    faces = {'+z': ('piano', piano, rect), '-x': left, '+x': right, '+y': top, '-y': under, '-z': back}
+    box(mesh, PX(x0), PX(x1), PY(y1), PY(y0), z0, z1, faces)
 
-def build_piano():
-    from photo_model import Photo, Mesh, trace, slab
-    photo=Photo(paths['piano'])
-    sky=photo.sky([(10,700),(1190,700),(1190,1030),(10,500)],tolerance=45,grey=26)
-    sky[960:,:]=True
-    loops=trace(~sky,(0,0,photo.w,photo.h),tolerance=1.6,min_area=40)
-    if not loops: raise RuntimeError('piano photo mask found no solid outline')
-    mesh=Mesh()
-    def to_world(px,py,depth):
-        return ((.5-px/photo.w)*1.5,(1-py/photo.h)*1.3,depth)
-    slab(mesh,'piano photo',photo,loops,to_world,-.56,-.40,wall_scale=.001)
-    obj=mesh.finish('piano-upright-photo-shell',{'piano photo':photo.material()}); obj.parent=root_obj; obj['part']='piano-upright'
-for stage in stages:
-    if stage=='gerald': build_gerald()
-    elif stage=='harpoon': build_harpoon()
-    else: build_piano()
+part((115, 30, 1110, 470), 0, .44, strip(30, 470), strip(30, 470), TOP, DARK, TOP)        # upper case
+part((115, 470, 1100, 985), 0, .18, DARK, DARK, DARK, DARK, TOP)                          # lower case
+part((95, 0, 1130, 32), 0, .60, strip(0, 32), strip(0, 32), TOP, DARK, TOP)               # lid
+part((115, 32, 1110, 197), .44, .48, DARK, DARK, DARK)                                    # upper panel
+part((160, 197, 1075, 247), .44, .53)                                                     # hinge rail
+part((165, 247, 1085, 348), .44, .55)                                                     # fall board
+part((235, 348, 1135, 372), .44, .57)                                                     # behind the keys
+part((128, 432, 1172, 510), .30, .71, top=DARK)                                           # key bed's front
+# The keys slope down to the player, so they catch the light from above.
+keys = ((PX(235), PY(372), .57), (PX(1135), PY(372), .57), (PX(1135), PY(432), .71), (PX(235), PY(432), .71))
+mesh.face(keys, (piano.uv(235, 372), piano.uv(1135, 372), piano.uv(1135, 432), piano.uv(235, 432)), 'piano', (0, 1, 1))
+# The action on its back wall, and the strings further back: real depth in front of both.
+part((235, 470, 1105, 722), .26, .28)
+part((235, 700, 1030, 738), .28, .37, top=WOOD)
+part((240, 722, 1105, 892), .18, .20)
+box(mesh, PX(232), PX(236), PY(892), PY(470), .18, .60, {'+x': DARK})
+box(mesh, PX(1100), PX(1105), PY(892), PY(470), .18, .60, {'-x': DARK})
+# Posts, cheeks, plinth and feet.
+POST_WOOD = ('piano', piano, (172, 600, 240, 900))
+part((165, 510, 245, 930), .30, .57, POST_WOOD, POST_WOOD)
+part((1105, 462, 1172, 830), .30, .57, POST_WOOD, POST_WOOD)
+part((115, 470, 165, 1020), 0, .50, strip(470, 1020), DARK, WOOD, DARK)
+box(mesh, PX(1100), PX(1110), PY(985), PY(470), 0, .30, {'+x': strip(470, 985), '-z': TOP})
+part((250, 855, 1035, 985), .20, .57)
+part((175, 905, 250, 950), .30, .59, POST_WOOD, POST_WOOD, POST_WOOD)
+part((148, 950, 272, 1038), .30, .62, strip(925, 1020), POST_WOOD, POST_WOOD)
+part((1095, 815, 1165, 885), .30, .58, POST_WOOD, POST_WOOD, POST_WOOD)
+part((1040, 885, 1178, 972), .30, .60, POST_WOOD, POST_WOOD, POST_WOOD)
+box(mesh, PX(115), PX(145), PY(1020), PY(985), 0, .30, {'-x': strip(985, 1020)})
+# The cheeks, the keyboard's curved arms, by their outlines.
+LEFT_ARM = [[(125, 225), (165, 225), (168, 320), (212, 352), (238, 420), (240, 482), (126, 482)]]
+RIGHT_ARM = [[(1072, 228), (1098, 250), (1122, 288), (1190, 320), (1200, 400), (1200, 458), (1072, 472)]]
+def on_piano(px, py, d): return (PX(px), PY(py), d)
+slab(mesh, 'piano', piano, LEFT_ARM, on_piano, .44, .73, wall_scale=.012)
+slab(mesh, 'piano', piano, RIGHT_ARM, on_piano, .44, .73, wall_scale=.012)
+# Two pedals and the caster.
+for pedal in ([[(600, 935), (632, 935), (657, 996), (622, 1000)]], [[(675, 935), (706, 935), (736, 990), (700, 994)]]):
+    slab(mesh, 'piano', piano, pedal, on_piano, .55, .68, wall_scale=.012)
+def on_caster(px, py, d): return (PX(px), PY(py) - .025, d)
+slab(mesh, 'piano', piano, [rect_loop(1118, 982, 1142, 1014)], on_caster, .44, .49, wall_scale=.012)
+finish(mesh, 'piano-upright', {'piano': piano.material()})
 
-# All texture layers have one name and every metallic value is zero.
-for obj in scene.objects:
-    if obj.type=='MESH':
-        for layer in obj.data.uv_layers: layer.name='UVMap'
-        if not obj.data.uv_layers: obj.data.uv_layers.new(name='UVMap')
-for mat in bpy.data.materials:
-    if mat.use_nodes:
-        bsdf=mat.node_tree.nodes.get('Principled BSDF')
-        if bsdf: bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=.85
-town.export_glb(out)
-blend.parent.mkdir(parents=True,exist_ok=True)
+# --- gerald, one picture for the whole lizard: overhead and side views on one sheet ----
+gerald = Photo(textures / 'ww-gerald-cutout.jpg')
+rgb = gerald.rgb()
+background = (rgb[:, :, 2] > 170) & (rgb[:, :, 1] > 140) & (rgb[:, :, 0] < 130)
+solid = tidy(~background)
+GS = .60 / 1425
+OVERHEAD_TOP, SIDE_BOTTOM = 385, 345
+overhead_solid = solid.copy()
+overhead_solid[:OVERHEAD_TOP] = False
+side_solid = solid.copy()
+side_solid[SIDE_BOTTOM:] = False
+GROUND_PY = 330
+
+def table(points):
+    xs, ys = zip(*points)
+    return lambda x: float(np.interp(x, xs, ys))
+
+tail_points = []
+for x in range(860, 1500, 20):
+    column = np.nonzero(overhead_solid[:, x])[0]
+    if len(column):
+        tail_points.append((x, (column[0] + column[-1]) / 2))
+spine = table(((75, 672), (200, 672), (500, 680), (800, 672), *tail_points))
+width_table = table(((76, 5), (90, 28), (120, 48), (170, 66), (215, 66), (270, 58), (330, 68), (400, 90), (500, 112), (590, 110),
+                    (660, 85), (720, 62), (800, 48), (900, 36), (1000, 28), (1100, 22), (1250, 14), (1400, 7), (1498, 1.5)))
+tail_width = dict()
+for x, centre in tail_points:
+    column = np.nonzero(overhead_solid[:, x])[0]
+    tail_width[x] = (column[-1] - column[0]) / 2
+tail_table = table(sorted(tail_width.items()))
+def half_width(x):
+    return tail_table(x) if x >= 860 else width_table(x)
+belly = table(((85, 125), (110, 150), (170, 178), (260, 212), (330, 240), (420, 256), (560, 258), (640, 245), (720, 232),
+               (800, 225), (950, 240), (1150, 245), (1350, 232), (1497, 212)))
+def side_x(x): return 85 + (x - 75) * (1497 - 85) / (1500 - 75)
+
+raw_tops = {}
+for sx in range(85, 1498):
+    column = np.nonzero(side_solid[:, sx])[0]
+    if len(column):
+        raw_tops[sx] = int(column[0])
+def top_row(sx):
+    near = [raw_tops[k] for k in range(int(sx) - 5, int(sx) + 6) if k in raw_tops]
+    return float(np.median(near)) if near else belly(sx) - 2
+
+mesh = Mesh()
+SIDES = 14
+rings = []
+xs = list(np.linspace(76, 240, 12)) + list(np.linspace(260, 800, 18)) + list(np.linspace(830, 1498, 16))
+for x in xs:
+    sx = side_x(x)
+    w = half_width(x) * GS
+    top = min(top_row(sx), belly(sx) - 3)
+    y_bottom = (GROUND_PY - belly(sx)) * GS
+    y_top = (GROUND_PY - top) * GS
+    ring = []
+    for k in range(SIDES):
+        a = 2 * math.pi * k / SIDES
+        y = y_bottom + (y_top - y_bottom) * (.5 + .5 * math.sin(a))
+        z = w * math.cos(a)
+        ring.append((mesh.vertex(((x - 75) * GS - .15, y, z)), x, sx, y, z, y_bottom))
+    rings.append(ring)
+for r0, r1 in zip(rings, rings[1:]):
+    for k in range(SIDES):
+        corners = (r0[k], r0[(k + 1) % SIDES], r1[(k + 1) % SIDES], r1[k])
+        angle = 2 * math.pi * (k + .5) / SIDES
+        looks_up = math.sin(angle) > .62
+        uvs = []
+        for _, x, sx, y, z, y_bottom in corners:
+            if looks_up:
+                uvs.append(gerald.uv(x, spine(x) + z / GS * .8))
+            else:
+                uvs.append(gerald.uv(sx, belly(sx) - 2 - (y - y_bottom) / GS))
+        mesh.indexed([c[0] for c in corners], uvs, 'gerald', (0, math.sin(angle), math.cos(angle)), True)
+
+# Each leg and foot, traced from the overhead view with all its toes. Shoulder at the
+# body's flank, sloping to the wrist, then flat on the ground through the toes.
+drop = table(((0, .046), (50, .040), (100, .013), (130, .004), (400, .004)))
+thickness = table(((0, 1), (100, .55), (135, .25), (400, .25)))
+def on_leg(px, py, d):
+    distance = max(0, abs(py - spine(px)) - half_width(px))
+    return ((px - 75) * GS - .15, drop(distance) + d * thickness(distance), (py - spine(px)) * GS)
+yy, xx = np.mgrid[0:gerald.h, 0:gerald.w]
+body = np.abs(yy - np.vectorize(spine)(xx[0])[None, :]) < np.vectorize(half_width)(xx[0])[None, :]
+legs = shrink(overhead_solid, 1) & ~body
+# The body's edge scales leave thin slivers beside it: only a real limb is kept there.
+opened = shrink(legs, 5)
+for _ in range(6):
+    opened = opened | np.roll(opened, 1, 0) | np.roll(opened, -1, 0) | np.roll(opened, 1, 1) | np.roll(opened, -1, 1)
+near_body = np.abs(yy - np.vectorize(spine)(xx[0])[None, :]) < np.vectorize(half_width)(xx[0])[None, :] + 45
+legs = (legs & ~near_body) | (legs & opened & near_body)
+for rect in ((215, 400, 420, 640), (630, 400, 840, 625), (205, 730, 410, 975), (640, 725, 840, 1000)):
+    loops = trace(legs, rect, tolerance=1.0, min_area=200)
+    slab(mesh, 'gerald', gerald, loops, on_leg, 0, .012, wall_scale=GS * 1.5)
+gerald.bleed(shrink(solid, 3), passes=40)
+gerald.image.scale(1280, 853)
+finish(mesh, 'gerald', {'gerald': gerald.material()})
+
+print('TRIANGLES=' + json.dumps(triangles))
+for layer_object in scene.objects:
+    if layer_object.type == 'MESH':
+        layer_object.data.uv_layers[0].name = 'UVMap'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+town.export_glb(glb)
 
-# Reload the asset into an empty scene before every render.
-bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(out))
-scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'; scene.render.resolution_x=900; scene.render.resolution_y=600; scene.render.resolution_percentage=100
-scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'; scene.view_settings.look='Medium High Contrast'
-scene.world=bpy.data.worlds.new('neutral bright overcast'); scene.world.color=(.68,.68,.68)
-for location,power,size in (((0,3,-3),145,4),((2,3,3),90,4)):
-    bpy.ops.object.light_add(type='AREA',location=location); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size
-    light.name='round4 global overcast fill'
-    light.rotation_euler=(Vector((0,.4,0))-light.location).to_track_quat('-Z','Y').to_euler()
-cam_obj=None
-for stage in stages:
-    prefix={'gerald':'gerald-','harpoon':'jax-harpoon-','piano':'piano-upright-'}[stage]
-    selected=[o for o in scene.objects if o.type=='MESH' and o.name.startswith(prefix)]
-    for light in [o for o in scene.objects if o.type=='LIGHT']:
-        light.hide_render=stage=='harpoon' and light.name=='round4 global overcast fill'
-        if light.name=='Harpoon flat front light': light.hide_render=stage!='harpoon'
-    if stage=='harpoon' and not any(o.name=='Harpoon flat front light' for o in scene.objects):
-        bpy.ops.object.light_add(type='AREA',location=(0,-10,0)); light=bpy.context.object; light.name='Harpoon flat front light'; light.data.energy=900; light.data.shape='DISK'; light.data.size=20
-        light.rotation_euler=(Vector((0,0,0))-light.location).to_track_quat('-Z','Z').to_euler()
-    for obj in scene.objects:
-        if obj.type=='MESH': obj.hide_render=obj not in selected
-    pts=[o.matrix_world @ Vector(c) for o in selected for c in o.bound_box]
-    lo=Vector((min(p.x for p in pts),min(p.y for p in pts),min(p.z for p in pts))); hi=Vector((max(p.x for p in pts),max(p.y for p in pts),max(p.z for p in pts))); center=(lo+hi)*.5
-    bpy.ops.object.camera_add(location=center+Vector((0,2,-5))); cam_obj=bpy.context.object; scene.camera=cam_obj; cam_obj.data.type='ORTHO'
-    if stage=='gerald':
-        scene.render.resolution_x=1200; scene.render.resolution_y=480
-        cam_obj.location=center+Vector((0,0,2.5)); aim_camera(cam_obj,center,(0,1,0)); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*2.5)*1.10
-        scene.render.filepath=str(root/'.qa-dist'/'render-gerald-top.png'); bpy.ops.render.render(write_still=True)
-        scene.render.resolution_x=1200; scene.render.resolution_y=240
-        cam_obj.location=center+Vector((0,-2.8,0)); aim_camera(cam_obj,center,(0,0,1)); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*5)*1.15
-        scene.render.filepath=str(root/'.qa-dist'/'render-gerald-side.png'); bpy.ops.render.render(write_still=True)
-        scene.render.resolution_x=1200; scene.render.resolution_y=800
-        view_location=center+Vector((.45,.65,.40)); bpy.ops.object.camera_add(location=view_location)
-        view=bpy.context.object; scene.camera=view; view.data.type='PERSP'; view.data.lens=50; aim_camera(view,center,(0,0,1))
-        scene.render.filepath=str(root/'.qa-dist'/'render-gerald-threequarter.png'); bpy.ops.render.render(write_still=True); bpy.data.objects.remove(view,do_unlink=True)
+# --- Render from the exported file, in an empty scene ---------------------------------
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(glb))
+scene = bpy.context.scene
+scene.render.engine = 'BLENDER_EEVEE_NEXT'
+scene.render.image_settings.file_format = 'PNG'
+scene.render.image_settings.color_mode = 'RGB'
+scene.view_settings.view_transform = 'Standard'
+scene.world = bpy.data.worlds.new('flat overcast')
+scene.world.use_nodes = True
+scene.world.node_tree.nodes['Background'].inputs[0].default_value = (.85, .85, .85, 1)
+scene.world.node_tree.nodes['Background'].inputs[1].default_value = 1.0
+sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN'))
+sun.data.energy = .4
+sun.rotation_euler = (math.radians(40), math.radians(10), math.radians(-30))
+scene.collection.objects.link(sun)
+bpy.ops.mesh.primitive_plane_add(size=40, location=(0, 0, 0))
+ground = bpy.context.object
+ground_material = bpy.data.materials.new('ground')
+ground_material.use_nodes = True
+ground_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.66, .62, .56, 1)
+ground_material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 1
+ground.data.materials.append(ground_material)
+camera = bpy.data.objects.new('camera', bpy.data.cameras.new('camera'))
+scene.collection.objects.link(camera)
+scene.camera = camera
+parts = {name: next(o for o in bpy.data.objects if o.name.startswith(name)) for name in ('jax-harpoon', 'piano-upright', 'gerald')}
+
+def shot(name, subject, eye, target, width, height, ortho=None, lens=50, show_ground=True):
+    for key, obj in parts.items():
+        obj.hide_render = key != subject
+    ground.hide_render = not show_ground
+    scene.render.resolution_x, scene.render.resolution_y = width, height
+    eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
+    camera.location = eye_v
+    forward = (target_v - eye_v).normalized()
+    camera.rotation_euler = forward.to_track_quat('-Z', 'Y').to_euler()
+    if abs(forward.z) > .99:
+        camera.rotation_euler = (0, 0, 0)
+    if ortho:
+        camera.data.type = 'ORTHO'
+        camera.data.ortho_scale = ortho
     else:
-        if stage=='piano': scene.render.resolution_x=900; scene.render.resolution_y=780
-        else: scene.render.resolution_x=1200; scene.render.resolution_y=400
-        cam_obj.location=center+Vector((0,4 if stage=='piano' else -4,0)); aim_camera(cam_obj,center,(0,0,1))
-        aspect=scene.render.resolution_x/scene.render.resolution_y
-        cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*aspect)*1.10
-        scene.render.filepath=str(root/'.qa-dist'/f'render-{stage}.png'); bpy.ops.render.render(write_still=True)
-    if stage=='piano':
-        for side,offset in (('left',-1),('right',1)):
-            bpy.ops.object.camera_add(location=center+Vector((offset*1.8,2.2,.65)))
-            view=bpy.context.object; scene.camera=view; view.data.type='PERSP'; view.data.lens=50
-            aim_camera(view,center,(0,0,1)); scene.render.resolution_x=900; scene.render.resolution_y=780
-            scene.render.filepath=str(root/'.qa-dist'/f'render-piano-{side}-threequarter.png'); bpy.ops.render.render(write_still=True)
-            bpy.data.objects.remove(view,do_unlink=True)
-    bpy.data.objects.remove(cam_obj,do_unlink=True)
-meshes=[o for o in scene.objects if o.type=='MESH']; tris=sum(len(p.vertices)-2 for o in meshes for p in o.data.polygons)
-print(json.dumps({'triangles':tris,'bytes':out.stat().st_size,'meshes':len(meshes),'stages':stages}))
-if tris>30000 or out.stat().st_size>4*1024*1024: raise RuntimeError('round 4 exceeds the card budget')
+        camera.data.type = 'PERSP'
+        camera.data.lens = lens
+    scene.render.filepath = str(render_dir / f'{name}.png')
+    bpy.ops.render.render(write_still=True)
+
+shot('harpoon', 'jax-harpoon', (0, 0, 8), (0, 0, 0), 1400, 467, ortho=2.8, show_ground=False)
+shot('harpoon-quarter', 'jax-harpoon', (1.9, .5, 1.5), (.65, 0, 0), 1000, 620, lens=35, show_ground=False)
+shot('piano', 'piano-upright', (0, .65, 8), (0, .65, 0), 900, 780, ortho=1.62)
+shot('piano-left', 'piano-upright', (-2.1, 1.3, 3.1), (0, .62, .3), 900, 780, lens=45)
+shot('piano-right', 'piano-upright', (2.1, 1.3, 3.1), (0, .62, .3), 900, 780, lens=45)
+shot('gerald-top', 'gerald', (.15, 2, 0), (.15, 0, 0), 1000, 460, ortho=.68)
+shot('gerald-side', 'gerald', (.15, .07, 3), (.15, .07, 0), 1000, 250, ortho=.68)
+shot('gerald-quarter', 'gerald', (-.45, .36, .75), (-.02, .04, 0), 1000, 620, lens=50)
