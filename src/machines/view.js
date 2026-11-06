@@ -18,9 +18,11 @@ export function createMachineView({model, definition, parent = null, onSound = n
   root.add(body);
   const nodes = new Map();
   body.traverse(node => { if (node.name) nodes.set(node.name, node); });
-  const joints = definition.joints.map(joint => ({joint, node:nodes.get(joint.modelNode ?? joint.name)}));
-  const warnings = joints.filter(entry => !entry.node).map(entry => `Missing model node: ${entry.joint.modelNode ?? entry.joint.name}`);
-  const bed = nodes.get('Bed') ?? nodes.get('Bucket') ?? nodes.get('bed') ?? nodes.get('bucket');
+  const joints = definition.joints.map(joint => ({joint,
+    node:nodes.get(`${definition.id}:${joint.name}`) ?? nodes.get(joint.modelNode ?? joint.name)}));
+  const warnings = joints.filter(entry => !entry.node).map(entry => `Missing model node: ${definition.id}:${entry.joint.name}`);
+  const bed = nodes.get(`${definition.id}:bed`) ?? nodes.get(`${definition.id}:bucket`) ??
+    nodes.get('Bed') ?? nodes.get('Bucket') ?? nodes.get('bed') ?? nodes.get('bucket');
   const load = bed ? new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 8), material(0x65503a)) : null;
   if (load) { load.name = 'machine-load'; bed.add(load); load.position.set(0, 0.45, 0); load.visible = false; }
 

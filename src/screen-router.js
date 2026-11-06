@@ -321,6 +321,13 @@ root.addEventListener('click',e => {
     case 'yard-armory': openYardPanel('armory'); return;
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
+    case 'yard-the-dig': {
+      if(!app.isYardHomeActive()||app._switches().enabled('wasteland-town')!==true)return;
+      void import('./machines/dig-game.js').then(({startTheDig})=>startTheDig({app,onExit:()=>{lastScreen=null;renderState(app.duel.state);}}))
+        .then(game=>{if(game)window.__theDig=game;})
+        .catch(error=>{garageMessage='The machine yard could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);console.warn('THE DIG failed to open:',error?.message||error);});
+      return;
+    }
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';

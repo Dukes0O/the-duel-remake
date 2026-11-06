@@ -23,7 +23,9 @@ function digAt(ground, x, z, heading) {
   const ridge = [1, -1].map(side => ({
     x:x + Math.cos(heading) * tool.ridgeOffsetM * side,
     z:z - Math.sin(heading) * tool.ridgeOffsetM * side,
-    radius:tool.ridgeRadiusM,
+    // Ground edits use one-metre samples. A half-metre circle can miss every
+    // sample when its centre falls between cells, so keep one full cell covered.
+    radius:Math.max(tool.ridgeRadiusM,0.75),
   })).find(candidate => ground.refusal(candidate) === null);
   if (!ridge) return {cut:{ok:false, reason:BLOCKED_SENTENCE}, ridgeLooseVolumeM3:0};
   const cut = ground.cut(shape, ground.heightAt(x, z) - tool.depthM);
