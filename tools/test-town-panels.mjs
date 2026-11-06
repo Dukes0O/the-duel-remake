@@ -61,6 +61,12 @@ equal(ledger.income,'1,500','the Ledger shows the saved yearly income');
 ok(ledger.balanced,'the Ledger checks recorded debit and credit totals');
 ok(townLedgerMarkup(ledger).includes('Founding grant'),'the Ledger explains the grant account');
 ok(townLedgerMarkup(ledger).includes('The Ledger balances.'),'the Ledger explains its balance check');
+const moneyControls=townLedgerMarkup(townLedgerModel(town,{profile:{wasteland:{scrap:750}},canTrade:true,shortfall:100}));
+ok(moneyControls.includes('Your scrap: 750. Town till: 1,450.'),'the Ledger shows the player wallet beside the till');
+ok(moneyControls.includes('data-town-till-in="100"')&&moneyControls.includes('data-town-till-in="1000"'),'the Ledger offers 100 and 1,000 scrap deposits');
+ok(moneyControls.includes('data-town-till-in="100"')&&moneyControls.includes('clear the shortfall'),'the Ledger offers a deposit for the exact shortage');
+ok(moneyControls.includes('Take out 100 scrap. You get 50.'),'a withdrawal button states the amount the player receives after the levy');
+ok(!townLedgerMarkup(townLedgerModel(town,{profile:{wasteland:{scrap:750}},canTrade:false})).includes('data-town-till-in'),'a look-only visit has no wallet controls');
 
 const book = townBookViewModel(town);
 equal(book.pages.length,1,'the Book keeps its saved yearly page');
