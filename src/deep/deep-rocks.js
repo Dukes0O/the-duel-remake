@@ -31,7 +31,7 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 // a rock over a goal and hide it.
 export function deepGoalPoints(zone) {
   const on = {enabled: true}, log = createLog(zone, {}, on);
-  return [...log.spots, ...log.pearls, ...createSirena(zone, {}, on).finds];
+  return [...log.spots, ...log.pearls, ...createSirena(zone, {raised: ['sirena-car']}, {...on, joke: true}).finds];
 }
 
 // A fresh layout from the zone seed: the run's own copy, which only the car changes.

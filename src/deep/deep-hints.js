@@ -6,7 +6,13 @@ export const DEEP_KIT_COST = 150;
 export const DEEP_HINT_IDS = Object.freeze(['kelp-coast-5', 'kelp-coast-10']);
 export const DEEP_HINT_FINISHES = Object.freeze([3, 6]);
 const firstTip = 'Fishermen at the cove say the old boat ramp goes further than the beach.';
-const secondTip = 'Look for bubbles at the end of the old boat ramp on Pacific Canyon. A dive kit lets any car explore below.';
+const secondTip = 'Look for the BOAT RAMP sign on Pacific Canyon\'s coast road. A dive kit lets any car explore below.';
+export function deepSqueakTip(profile, {enabled = false} = {}) {
+  const deep = normalizeDeep(profile?.deep);
+  return enabled === true && (deep.raised ?? []).includes('sirena-car')
+    && !(deep.raised ?? []).includes('falcone-vasca')
+    ? 'Ana left a message. Her sonar has started squeaking. She would like you to come and hear it.' : null;
+}
 export function deepHints(snapshot) {
   const eligible = snapshot?.enabled === true && typeof snapshot.playerId === 'string' && snapshot.playerId.length > 0;
   const deep = normalizeDeep(snapshot), found = (deep.found?.length || 0) > 0;
@@ -15,7 +21,6 @@ export function deepHints(snapshot) {
   return {
     garageTip: hintIds.length ? (count >= DEEP_HINT_FINISHES[1] ? secondTip : firstTip) : null,
     hintIds,
-    bubbles: eligible && !found && count >= DEEP_HINT_FINISHES[1],
     kitAvailable: eligible && (hintIds.length > 0 || deep.hintsShown?.includes(DEEP_HINT_IDS[0]) === true),
     kitOwned: eligible && deep.kit === true,
     kitCost: DEEP_KIT_COST,

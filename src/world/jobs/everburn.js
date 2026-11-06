@@ -62,7 +62,7 @@ export const EVERBURN_JOBS = Object.freeze([
       lentWeapon:'flamethrower',
       restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
-      step('chase',{what:"Stop Old Smoke's furnace before it reaches Tin Town.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', renderCar:'titan_monster', health:3, speed:14,
+      step('chase',{what:"Stop Old Smoke's furnace before it reaches Tin Town.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
         path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250))}, path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250)),
         targetSpeed:14, leashDistance:180, contactRadius:10, targetHealth:3, hitPart:'glowing-vent',
         requiredHits:3, lentWeapon:'flamethrower', startLineId:'everburn-job-6-chase-start', wonLineId:'everburn-job-6-won'})],

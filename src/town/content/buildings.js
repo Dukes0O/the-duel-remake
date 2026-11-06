@@ -6,7 +6,7 @@ const row = (id, width, depth, materials, workerHours, upkeep, staff, gives, ope
 });
 
 export const BUILDINGS = Object.freeze([
-  row('road-dirt',1,1,{},10,0,0,'Speed'), row('road-plank',1,1,{timber:100},20,0,0,'Speed','Sal'), row('road-paved',1,1,{brick:600},60,0,0,'Speed','kiln'),
+  row('road-dirt',1,1,{},10,0,0,'Cars drive faster on it.'), row('road-plank',1,1,{timber:100},20,0,0,'Cars drive faster on it.','Sal'), row('road-paved',1,1,{brick:600},60,0,0,'Cars drive faster on it.','kiln'),
   row('pipe-50mm',1,1,{pipe:15},6,0,0,'Water'), row('pipe-100mm',1,1,{pipe:40},10,0,0,'Water','forge'), row('pipe-200mm',1,1,{pipe:120},18,0,0,'Water','forge'),
   row('hand-well',1,1,{timber:40},40,0,0,'About 1,000 L a day, brown'), row('standpipe',1,1,{pipe:30},16,2,0,'7.5 L a minute; 250 people'),
   row('water-tower',2,2,{steel:800,timber:400},600,5,0,'20,000 L, 12 m of head','Sal'), row('pump-house',2,2,{steel:600,brick:2000},800,20,2,'40,000 L a day; 3 kW','Dustmonger'),

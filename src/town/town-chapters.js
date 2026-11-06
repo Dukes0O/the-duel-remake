@@ -1,4 +1,5 @@
 import {ACT1_CHAPTERS} from './content/chapters-act1.js';
+import {OUTPOST_CHAPTERS} from './content/neighbours.js';
 import {townCaptionText} from './content/lines.js';
 
 function valueAt(root, path) {
@@ -20,11 +21,12 @@ function validChapter(chapter) {
     && Array.isArray(chapter.lineIds) && chapter.lineIds.length > 0;
 }
 
-export function getTownNext(town, chapters = ACT1_CHAPTERS) {
+export function getTownNext(town, chapters = [...ACT1_CHAPTERS, ...OUTPOST_CHAPTERS]) {
   if (!town || typeof town !== 'object' || !Array.isArray(chapters)) throw new TypeError('Town chapters need a town and a chapter list.');
   const urgent = town.urgentNext;
   if (typeof urgent === 'string' && urgent.trim()) return Object.freeze({chapter:null, sentence:urgent.trim(), mapTarget:town.urgentMapTarget ?? null});
   const active = chapters.find(chapter => validChapter(chapter)
+    && (!chapter.year || (town.calendar?.year ?? 1) >= chapter.year)
     && chapterConditionMet(town, chapter.when)
     && town.story?.completed?.[chapter.id] !== true);
   if (active) return Object.freeze({chapter:active, sentence:active.next, mapTarget:active.mapTarget ?? null});

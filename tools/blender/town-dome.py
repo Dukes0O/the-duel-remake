@@ -7,7 +7,7 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
-parser.add_argument('--render', default='.evidence/2026-11-05/TOWN-ART-DOME/round-3')
+parser.add_argument('--render', default='.evidence/2026-11-06/TOWN-ART-DOME/round-4')
 parser.add_argument('--evidence', default='.qa-dist/town-dome')
 parser.add_argument('--candidate', action='store_true')
 parser.add_argument('--paths-only', action='store_true')
@@ -217,10 +217,12 @@ def hulk_bowl():
         for li in poly.loop_indices:
             x,y,z=floor_vertices[ground.data.loops[li].vertex_index]
             uv.data[li].uv=(x/222+.5,z/157+.5)
-    photo_car_wall()
-    photo_car_wall('dome-outer:inner-three-row-photo-wall',98,66,False)
-    # Three rows of actual wrecks face outward around the curved perimeter.
-    levels = [(106-i*1.0,72-i*.7,count,0.0) for i,count in enumerate((16,14,12))]
+    # A photo-projected stack of wrecks fills the inter-car gaps, while the
+    # individual shells in front give the wall its real layered relief.
+    photo_car_wall('dome-outer:projected-stacked-wrecks',106,72,True)
+    # Three dense rows of individual wrecks form the visible wall. No photo
+    # strip or continuous backing may cover them from outside.
+    levels = [(106-i*1.0,72-i*.7,count,0.0) for i,count in enumerate((28,24,20))]
     serial = 0
     rng = __import__('random').Random(1105)
     for tier, (rx, rz, count, base_y) in enumerate(levels):
@@ -235,31 +237,7 @@ def hulk_bowl():
             wobble = rng.uniform(-.32,.32)
             wreck(f'dome-outer:hulk-{serial:03}', (px+2.0*math.cos(angle), 1.1+tier*3.45+rng.uniform(-.08,.12),
                   pz+1.5*math.sin(angle)),
-                  tangent+wobble, outer, serial, detail=True, variant=serial%5)
-    # A steep, irregular salvage bank supports the stepped wreck tiers. It is
-    # deliberately faceted and mostly hidden behind the car shells.
-    ring_segments=56;bank_vertices=[];bank_faces=[]
-    for tier in range(4):
-        rx,rz=102-tier*1.0,69-tier*.6
-        for i in range(ring_segments):
-            angle=math.tau*i/ring_segments
-            waviness=math.sin(i*2.7+tier*1.6)*.48+math.sin(i*.71-tier)*.27
-            bank_vertices.append(((rx+1.45+waviness)*math.cos(angle),tier*3.45,
-                                  (rz+1.05+waviness)*math.sin(angle)))
-    for tier in range(3):
-        for i in range(ring_segments):
-            angle=math.tau*(i+.5)/ring_segments
-            if tier<4 and abs((angle+math.pi/2+math.pi) % math.tau-math.pi)<.13:
-                continue
-            a=tier*ring_segments+i;b=tier*ring_segments+(i+1)%ring_segments
-            c=(tier+1)*ring_segments+(i+1)%ring_segments;d=(tier+1)*ring_segments+i
-            bank_faces.append((a,d,c,b))
-    bank=game_mesh('dome-outer:rough-wreck-backing',bank_vertices,bank_faces,wall_photo,outer)
-    bank_uv=bank.data.uv_layers.active
-    for poly in bank.data.polygons:
-        for li in poly.loop_indices:
-            vi=bank.data.loops[li].vertex_index;tier=vi//ring_segments;around=vi%ring_segments
-            bank_uv.data[li].uv=(around/ring_segments*12.5,tier/3)
+                  tangent+wobble, outer, serial, detail=False, variant=serial%5)
     # The Heap is an uneven 18 m mound: its own stacked-wreck photograph wraps
     # around the support while ninety full-size car bodies overlap the slope.
     mound=[];mound_faces=[];segments=32
@@ -302,7 +280,7 @@ def hulk_bowl():
         faces=[(0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
         game_mesh(f'dome-outer:dirt-ring-{i:02}', verts, faces, sand, outer)
     # Scaffold grandstands rise unevenly above the wreck rim.
-    for i in range(14):
+    for i in range(8):
         a=math.tau*i/14+.07
         rx,rz=103,70
         x,z=rx*math.cos(a),rz*math.sin(a)
@@ -365,41 +343,34 @@ def hulk_bowl():
 
 hulk_bowl()
 
-# Gate at the road side: each bus is its real 11 x 2.5 x 4.4 m envelope,
-# stood on its rear with its nose facing the -Z approach.
+# Gate at the road side: upright 4.4 m double-deck buses face the approach.
 for side in (-1,1):
     x=side*8.2;z=-91.2
-    body=cube(f'dome-gate:bus-{side}:body',(x,5.5,z),(2.5,11.0,4.4),
-              paint,gate,.42,side*.035)
+    body=cube(f'dome-gate:bus-{side}:body',(x,2.2,z),(2.5,11.0,4.4),
+              paint,gate,.42,side*.012)
     front=bus_front_left if side<0 else bus_front_right
     side_photo=bus_side_left if side<0 else bus_side_right
-    photo_panel(f'dome-gate:bus-{side}:photo-front',(x,2.2,z-2.29),(2.5,4.4),front,gate)
-    # The stood-up flanks face the road: two broad decks of broken glass climb
-    # the full bus length, so the red piers read as buses above their nose crops.
-    for deck,yy in enumerate((5.45,8.55)):
-        for pane,xx in enumerate((x-.68,x+.68)):
-            cube(f'dome-gate:bus-{side}:road-facing-deck-{deck}-pane-{pane}',
-                 (xx,yy,z-2.235),(.62,.92,.055),glass,gate,.08)
-    # Two real decks survive along each bus flank as dark, broken window bands.
-    for window_row,yy in enumerate((5.1,8.15)):
-        for window_col,zz in enumerate((-1.42,-.48,.48,1.42)):
+    photo_panel(f'dome-gate:bus-{side}:photo-front',(x,2.2,z-5.52),(2.5,4.4),front,gate)
+    # Two decks of side windows remain visible from the road-facing side.
+    for window_row,yy in enumerate((1.45,2.95)):
+        for window_col,zz in enumerate((-3.7,-2.15,-.6,.95,2.5,4.0)):
             cube(f'dome-gate:bus-{side}:deck-{window_row}-window-{window_col}',
-                 (x+side*1.27,yy,z+zz),(.075,1.05,.72),glass,gate,.055)
+                 (x+side*1.27,yy,z+zz),(.075,.72,1.1),glass,gate,.08)
             if (window_row+window_col+side)%3==0:
                 beam(f'dome-gate:bus-{side}:broken-glass-edge-{window_row}-{window_col}',
-                     (x+side*1.32,yy-.45,z+zz-.28),(x+side*1.32,yy+.26,z+zz+.31),.035,bright,gate)
+                     (x+side*1.32,yy-.32,z+zz-.45),(x+side*1.32,yy+.28,z+zz+.42),.035,bright,gate)
     # Deep radiator, honest bars, paired lamps and bumper across the exposed nose.
-    cube(f'dome-gate:bus-{side}:radiator',(x,.78,z-2.28),(1.35,.82,.12),dark,gate,.08)
+    cube(f'dome-gate:bus-{side}:radiator',(x,.85,z-5.58),(1.35,.82,.12),dark,gate,.08)
     for j in range(7):
-        beam(f'dome-gate:bus-{side}:radiator-bar-{j}',(x-.56+j*.187,.38,z-2.36),
-             (x-.56+j*.187,1.18,z-2.36),.035,bright,gate)
+        beam(f'dome-gate:bus-{side}:radiator-bar-{j}',(x-.56+j*.187,.45,z-5.66),
+             (x-.56+j*.187,1.25,z-5.66),.035,bright,gate)
     for lamp_side in (-1,1):
-        cylinder(f'dome-gate:bus-{side}:headlamp',(x+lamp_side*.84,1.28,z-2.38),.19,.10,bright,gate,12,'Y')
-        cylinder(f'dome-gate:bus-{side}:wheel',(x+lamp_side*.72,.18,z-.95),.34,.22,dark,gate,8,'X')
-        cylinder(f'dome-gate:bus-{side}:wheel-rear',(x+lamp_side*.72,.18,z+.95),.34,.22,dark,gate,8,'X')
-    beam(f'dome-gate:bus-{side}:bumper',(x-1.18,.52,z-2.43),(x+1.18,.52,z-2.43),.14,bright,gate)
+        cylinder(f'dome-gate:bus-{side}:headlamp',(x+lamp_side*.84,1.35,z-5.62),.19,.10,bright,gate,12,'Y')
+        cylinder(f'dome-gate:bus-{side}:wheel',(x+lamp_side*.72,.36,z-3.6),.34,.22,dark,gate,8,'X')
+        cylinder(f'dome-gate:bus-{side}:wheel-rear',(x+lamp_side*.72,.36,z+3.6),.34,.22,dark,gate,8,'X')
+    beam(f'dome-gate:bus-{side}:bumper',(x-1.18,.52,z-5.72),(x+1.18,.52,z-5.72),.14,bright,gate)
     # A narrow side photo keeps the two decks and their long bus proportions readable.
-    photo_side_panel(f'dome-gate:bus-{side}:two-deck-side',(x+side*1.32,5.55,z),(4.2,11.0),side_photo,gate,side)
+    photo_side_panel(f'dome-gate:bus-{side}:two-deck-side',(x+side*1.32,2.2,z),(11.0,4.4),side_photo,gate,side)
     for row in range(3):
         wreck(f'dome-gate:foot-hulk-{side}-{row}',(side*(8.0+row*.95),.18,-89-row*2.5),
               side*.09,gate,800+side*6+row,variant=row+1)
@@ -408,13 +379,13 @@ for side in (-1,1):
     beam(f'dome-gate:bus-header-post-{side}',(side*10.4,8.9,-92),(side*10.4,13.2,-92),.24,dark,gate)
     beam(f'dome-gate:bus-header-cross-{side}',(side*5.8,8.4,-92),(side*10.5,11,-92),.14,steel,gate)
 # Hand-painted header hangs above the drive-through throat, facing the -Z road.
-sign=cube('dome-gate:SCRAPDOME-painted-sign',(0,11.0,-92),(21.5,4.7,.42),sign_photo,gate,.11)
+sign=cube('dome-gate:SCRAPDOME-painted-sign',(0,11.0,-92),(13.6,4.7,.42),sign_photo,gate,.11)
 # Fit the sign photograph to the broad road-facing face of the thick plate.
 for poly in sign.data.polygons:
     if poly.normal.y>.98:
         for li in poly.loop_indices:
             vertex=sign.data.vertices[sign.data.loops[li].vertex_index].co
-            sign.data.uv_layers.active.data[li].uv=((10.75-vertex.x)/21.5,(vertex.z+2.35)/4.7)
+            sign.data.uv_layers.active.data[li].uv=((6.8-vertex.x)/13.6,(vertex.z+2.35)/4.7)
 beam('dome-gate:sign-top-weld',( -9.4,13.32,-92.28),(9.4,13.32,-92.28),.11,bright,gate)
 empty('dome-gate:SCRAPDOME-lettering',gate)
 # Uneven chips, rust streaks and fasteners keep the large painted plate from reading clean.
@@ -442,28 +413,8 @@ for i in range(5):
     beam(f'dome-gate:ticket-bars-{i}',(13.8+i*.6,1.65,-90.88),(13.8+i*.6,2.72,-90.88),.055,bright,gate)
 cube('dome-gate:booth-number-plate',(15.0,3.0,-90.82),(2.7,.72,.08),sign_paint,gate,.04)
 empty('dome-gate:TICKETS-lettering',gate)
-# The dirt skirt rises gently under the gate and fades into the surrounding grade.
-# Its uneven mesh reaches ground level at every boundary, with no hard slab edge.
-x_steps=(-25,-20,-15,-8,0,8,15,20,25)
-z_steps=(-112,-107,-102,-97,-92,-87,-82,-77,-72)
-apron_vertices=[]
-for zi,z in enumerate(z_steps):
-    for xi,x in enumerate(x_steps):
-        xfade=max(0,1-abs(x)/25);zfade=max(0,1-abs(z+92)/20)
-        height=.46*xfade*zfade
-        height+=.045*math.sin(x*.31+z*.17)*xfade*zfade
-        apron_vertices.append((x,max(0,height),z))
-apron_faces=[]
-for zi in range(len(z_steps)-1):
-    for xi in range(len(x_steps)-1):
-        a=zi*len(x_steps)+xi;b=a+1;c=b+len(x_steps);d=a+len(x_steps)
-        apron_faces.extend(((a,b,c),(a,c,d)))
-apron=game_mesh('dome-gate:banked-dirt-skirt',apron_vertices,apron_faces,dirt_photo,gate)
-apron_uv=apron.data.uv_layers.active
-for poly in apron.data.polygons:
-    for li in poly.loop_indices:
-        x,y,z=apron_vertices[apron.data.loops[li].vertex_index]
-        apron_uv.data[li].uv=(x/50+.5,(z+112)/40)
+# The rectangular apron is removed. The scene's graded ground and tire ruts
+# carry the dirt road to and through the gate.
 for track in (-1,1):
     points=[]
     for i in range(9):

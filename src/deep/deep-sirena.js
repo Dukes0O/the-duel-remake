@@ -21,7 +21,9 @@ export const SIRENA = Object.freeze({
 });
 export const SIRENA_FINDS = Object.freeze(['sirena-badge', 'sirena-steering-wheel', 'sirena-wheel',
   'sirena-bonnet', 'sirena-door', 'sirena-car']);
+export const JOKE_FIND = 'falcone-vasca';
 export const SIRENA_PAY = Object.freeze({part: 100, car: 500, coastCup: 1000});
+export const firstPartRaisedThisDive = (partsAtStart, partsNow) => partsAtStart === 0 && partsNow > 0;
 
 const BADGE = 'sirena-badge', CAR = 'sirena-car';
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -44,15 +46,17 @@ function place(zone, find) {
 // The state of one dive. deepSave is profile.deep (any shape, normalised here).
 // A zone without finds, or with the switch off, gives an inert state: nothing
 // pings, lifts, records or pays.
-export function createSirena(zone, deepSave, {enabled = false} = {}) {
-  const finds = (zone?.finds ?? []).map(find => place(zone, find));
-  const known = new Set(finds.map(find => find.id));
+export function createSirena(zone, deepSave, {enabled = false, joke = false} = {}) {
   const saved = normalizeDeep(deepSave);
+  const finds = [...(zone?.finds ?? []).map(find => place(zone, find)),
+    ...(joke === true && (saved.raised ?? []).includes(CAR) && zone?.joke ? [place(zone, zone.joke)] : [])];
+  const known = new Set(finds.map(find => find.id));
   const raised = (saved.raised ?? []).filter(id => known.has(id));
   return {zoneId: zone?.id ?? null, active: enabled === true && SIRENA_FINDS.every(id => known.has(id)), finds,
     // The sonar is given with the badge; an old save that has the badge raised has the sonar too.
     sonar: saved.sonar === true || raised.includes(BADGE), raised,
-    lastPing: -Infinity, lift: null, hold: null};
+    lastPing: -Infinity, lift: null, hold: null,
+    squeak: joke === true && finds.some(find => find.id === JOKE_FIND) && !raised.includes(JOKE_FIND)};
 }
 
 const isRaised = (state, id) => state.raised.includes(id);
@@ -79,10 +83,12 @@ export function pingSonar(state, car, seconds) {
     const away = distance(find, car);
     if (away <= SIRENA.range && (!best || away < best.away)) best = {find, away};
   }
-  if (!best) return [{deepSonar: {blip: null, echoSeconds: null}}];
+  if (!best) return [{deepSonar: {blip: null, echoSeconds: null,
+    ...(state.squeak && !isRaised(state, JOKE_FIND) ? {squeak: true} : {})}}];
   const bearing = Math.atan2(best.find.x - car.x, best.find.z - car.z);
   const relative = finite(car.heading) ? wrap(bearing - car.heading) : null;
   return [{deepSonar: {blip: {find: best.find.id, distance: best.away, bearing, relative},
+    ...(state.squeak && !isRaised(state, JOKE_FIND) ? {squeak: true} : {}),
     echoSeconds: 2 * best.away / SIRENA.soundSpeed}}];
 }
 
@@ -121,7 +127,7 @@ export function stepLift(state, car, input, dt) {
     state.hold = {find: BADGE, elapsed: Math.max(0, dt), seconds: SIRENA.badgeSeconds};
     if (state.hold.elapsed >= state.hold.seconds - 1e-9) claim(target);
   } else if (input?.lift === true) {
-    const seconds = target.id === CAR ? SIRENA.carLiftSeconds : SIRENA.liftSeconds;
+    const seconds = target.id === CAR || target.id === JOKE_FIND ? SIRENA.carLiftSeconds : SIRENA.liftSeconds;
     state.lift = {find: target.id, elapsed: 0, seconds};
     events.push({deepLift: {find: target.id, seconds}});
   }
@@ -177,6 +183,17 @@ export function raiseFind(profile, id, {enabled = false} = {}) {
   while (kept.length >= 128 && kept.some(other => !SIRENA_FINDS.includes(other))) kept = kept.filter((other, i) => i !== kept.findIndex(x => !SIRENA_FINDS.includes(x)));
   return {profile: {...profile, credits, deep: {...deep, raised: [...kept, id], ...(id === BADGE ? {sonar: true} : {})}}, ok: true, paid};
 }
+
+export function raiseJoke(profile, {enabled = false} = {}) {
+  const same = ok => ({profile, ok, paid: 0});
+  if (enabled !== true) return same(false);
+  const deep = normalizeDeep(profile?.deep), raised = deep.raised ?? [];
+  if (!raised.includes(CAR)) return same(false);
+  if (raised.includes(JOKE_FIND)) return same(true);
+  return {profile: {...profile, deep: {...deep, raised: [...raised, JOKE_FIND]},
+    unlockedCars: [...new Set([...(profile?.unlockedCars ?? []), 'falcone_vasca'])]}, ok: true, paid: 0};
+}
+
 
 // The Coast Cup finished in the restored Sirena (SIRENA-CAR calls this): 1,000
 // credits and deep.coastCup, once, and only once the car has been raised.
