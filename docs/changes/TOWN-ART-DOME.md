@@ -1,52 +1,20 @@
 # TOWN-ART-DOME
 
-Status: one art round built and submitted for Claude's look verdict. Not wired
-into the game.
+## Design and changes
 
-## Design
+Round 2 replaces the repeated rust slab look with photo-based materials and visible wreck forms. The recipe packs the new crops into one 1K atlas: three rows of colored crushed cars, bus fronts and sides, the painted sign, ticket booth, corrugated tin and tire-marked dirt. The outer wall has three rows of photo-backed car wrecks, sheet-metal support, a full walkway rail, crossed scaffolding, banners and four lattice floodlight towers. The Heap is a shaped 18 m mound with wrecks on its slope. The gate uses two upright bus bodies around a clear drive-through, a painted SCRAPDOME plate, the TICKETS booth and a dirt skirt.
 
-Built one 28 by 20 cell oval bowl and a separate 6 by 3 cell gate. The oval has
-seven rising wreck tiers, a rough steel support bank, a packed gravel floor,
-the Heap, scaffold stands, torn banners and emissive flood lamps. The gate uses
-two tilted bus bodies, a clear drive-through opening, a readable painted sign
-and a ticket booth. The shared atlas uses the generated rust tile and the
-existing rally gravel texture. Prompts and credits are recorded beside the
-candidate asset.
+The final GLB is `public/assets/models/wasteland/town/dome.glb`. It is not wired into the game in this card. The 1K atlas and seven compressed JPG source crops are under `public/assets/models/wasteland/town/textures/`, with prompts and credits beside them; the seven JPGs total 361,406 bytes. The mayor, road and 40 m side views are in `docs/board/looks/town-art-dome/round-2.jpg` (under 500 KB) with the review note.
 
-The exported candidate read back at 28,504 triangles and 2,301,280 bytes. It
-has the `town-dome` root, `dome-outer` and `dome-gate` children, the named lamp
-hook, and one embedded 1K JPEG atlas. The card says this model is not wired into
-the game, so the generated GLB stays in ignored `.qa-dist/` and is not committed.
+## Checks
 
-## Evidence and checks
-
-- One comparison sheet: `docs/board/looks/town-art-dome/round-1.jpg` (under
-  500 KB) with the photo reference, gate view, mayor view and driver view.
-- Claude should judge likeness, especially the rusty support bank versus the
-  reference's stacked crushed cars, along with the gate and roofline views.
-- `node tools/test-blender-output.mjs`: passed, 239 checks; the candidate read-back
-  measured 28,504 triangles and 2,301,280 bytes.
-- `node tools/test-repo-hygiene.mjs`: passed.
-- `node --test tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio
-  fixture failed twice at `spawnSync ffmpeg EPERM`; JPG size and review-note checks
-  passed.
-- Lane tier: all 47 suite results were written; 45 passed and two failed on the
-  same FFmpeg loudness/permission problem (`test-circuit-eifel` and
-  `test-review-evidence`). The runner did not return its summary after the final
-  suite, so its shell was stopped after the completed results were preserved.
-  `test-circuit-eifel` was rerun alone and failed at the same FFmpeg loudness step.
-- `npm.cmd run build`: passed. PowerShell blocked the `npm` script shim, so the
-  equivalent `npm.cmd` entry point ran the build.
-- Browser and frame checks: not run; the card says they belong to Claude and
-  no frame check applies to art.
-- Changed assertions: added the TOWN-ART-DOME read-back, name, triangle, byte
-  and 1K atlas checks. Private candidates in `.qa-dist/` are allowed to exist
-  before approval, while a candidate under `public/` must remain absent. The
-  existing candidate byte check now uses a card's declared `maxBytes` when
-  supplied; existing budgets remain unchanged.
-- Race fingerprints: not applicable; no game or race code changed.
+- `node tools/test-blender-output.mjs`: passed, 239 checks; 0 failed. GLB read-back: 29,722 triangles, 2,828,484 bytes, one 1K atlas.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement passed. Existing advisory size reports are unchanged.
+- `node --test tools/test-review-evidence.mjs`: 8/9 subtests passed. Audio analysis failed at `spawnSync ffmpeg EPERM`, the known environment failure. The JPG size and review-note checks passed.
+- Browser and game look checks: not run here; Claude should review the comparison sheet as listed in the round review.
+- Changed assertions: none.
+- Race fingerprints: not applicable; no race or game code changed.
 
 ## Removed
 
-Deleted trial Blender renders, the candidate GLB, temporary `.blend`, and logs
-after the final checks. No prior model or source asset was replaced.
+Removed the old repeated-material setup, the seven-tier exterior ring of repeated wrecks, the tilted bus arch recipe and its unused bus helper. Removed render-only road geometry before GLB export. No prior accepted town model was replaced.
