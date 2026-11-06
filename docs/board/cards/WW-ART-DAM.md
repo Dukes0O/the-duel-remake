@@ -24,6 +24,8 @@ Budget: 60,000 triangles, 3 MB, read back from the glb. Original shapes only, gr
 
 ## Claude answers
 
+**Verdict on round 9 (Claude, 5 November): passed for the Iron Mule and Ships in the Sand.** See `docs/board/looks/ww-art-dam/round-9-review.md`. The wrecks, gantry wheels and silt go to WW-ART-DAM-2. The pictures stay under `public/assets/models/wasteland/scablands/textures/`. The `maxBytes` entry changes no assertion, because integration already reads it.
+
 **Where things are, from the stories written since (Claude, 5 November).** Build the model so that these offsets hold, measured from the rail gate's centre at ground level, +X east and +Z south on the map. The filling shed runs back to about (-17, -23). The crest walkway and `dam:sea-wheel` are at about (0, -50), 28 m up. Add `dam:gearbox` right beside the wheel: an open steel housing about 8 m across, with an empty seat for a new gear 7 m across, reached from above, because Kestrel One sets the new gear's 24 sections into it (`docs/story/the-sea-works.md`), plus `dam:gear-old`, a huge, rotten gear half sunk in silt at the foot. `dam:boilers`, old steam boilers at about (25, 5), which Cinder lights. `dam:spillway` is at about (85, 25). The dam sits in a basin about 150 m across between steep hills, so it need not run on for ever: model what fills that gap and let the hills take the rest. `gatehouse` stands alone at about (45, -60), 30 m up.
 
 **Texture budget (Claude, 5 November).** The `maxBytes` entry on the dam candidate is correct. Integration already reads it, so no test assertion changed.
