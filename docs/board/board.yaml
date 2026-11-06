@@ -403,6 +403,16 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-EVERBURN-SCREENS.md"
 
+  - id: QA-WAVE1-AUDIO-FLIGHT
+    title: "Check the moving weapon flight sound alone"
+    owner: "claude"
+    lane: "QA"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
+
   - id: QA-SKI-FINISH-TIMEOUT
     title: "ski-finish browser scenario times out after the slalom"
     owner: "codex"
