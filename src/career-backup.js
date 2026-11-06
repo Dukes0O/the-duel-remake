@@ -378,6 +378,7 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
   try {
     const entries={...archive.entries};
     delete entries[LEGACY_SHARED_BEST_KEY];
+    let restoreId;
     let importedArchives=null;
     if(archive.version===2){
       importedArchives={...archive.archives,id:'archive-'+Date.now()+'-'+(globalThis.crypto?.randomUUID?.()??Math.random().toString(36).slice(2))};
@@ -388,8 +389,9 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
     }
     if(archive.townRecords?.length){
       towns=await townApi(townStore);
-      await towns.store.install(archive.townRecords, { retainRecovery: true });
-      entries[TOWN_POINTER_KEY]=JSON.stringify({version:1,ids:archive.townRecords.map(record=>record.id)});
+      restoreId = globalThis.crypto?.randomUUID?.() ?? 'restore-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      await towns.store.install(archive.townRecords, { retainRecovery: true, restoreId });
+      entries[TOWN_POINTER_KEY]=JSON.stringify({version:1,ids:archive.townRecords.map(record=>record.id),restoreId});
     }
     applyEntries(source,entries);
     installCareerArchive(source,importedArchives);
@@ -410,7 +412,7 @@ async function importCareerUnlocked(text, { storage, backupStore = createIndexed
 export function importCareer(text, options = {}) {
   return withTownSaveLock(() => importCareerUnlocked(text, options));
 }
-async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIndexedDbBackupStore(), townStore } = {}) {
+async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIndexedDbBackupStore(), townStore, onRestoreStep = () => {} } = {}) {
   const record = await backupStore.load(id);
   if (!record || !isObject(record.entries)) throw new Error('Career backup was not found.');
   const source=storageOrThrow(storage);
@@ -427,11 +429,22 @@ async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIn
     if(JSON.stringify(saved)!==JSON.stringify(record.archives))throw new Error('Recovery archive verification failed.');
   }
   try{
-    if(Array.isArray(record.townRecords)&&record.townRecords.length)await towns.store.install(record.townRecords,{retainRecovery:true});
-    applyEntries(source, record.entries);
+    let entries = record.entries;
+    let restoreId;
+    if(Array.isArray(record.townRecords)&&record.townRecords.length) {
+      restoreId = globalThis.crypto?.randomUUID?.() ?? 'restore-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      await onRestoreStep('before-install');
+      await towns.store.install(record.townRecords,{retainRecovery:true,restoreId});
+      await onRestoreStep('after-install');
+      entries = {...record.entries,[TOWN_POINTER_KEY]:JSON.stringify({version:1,ids:record.townRecords.map(town=>town.id),restoreId})};
+    }
+    applyEntries(source, entries);
+    await onRestoreStep('after-apply-entries');
     installCareerArchive(source,record.archives);
     if(record.townRecords?.length)for(const town of record.townRecords)await towns.store.finishInstallRecovery(town.id);
+    await onRestoreStep('after-finish-recovery');
   }catch(error){
+    if(error?.simulatedCrash) throw error;
     try{
       const touchedIds=new Set([...(priorTownRecords.map(town=>town.id)),...(record.townRecords??[]).map(town=>town.id)]);
       for(const townId of touchedIds)await towns.store.load(townId);

@@ -14,7 +14,7 @@ function requestResult(request) {
 }
 
 // Pass memoryOnly:true in tests and previews. It never opens the browser's database.
-export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = false, memory = {}, now = () => new Date(), onInstallStep = () => {} } = {}) {
+export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = false, memory = {}, storage = globalThis.localStorage, now = () => new Date(), onInstallStep = () => {} } = {}) {
   const memoryTowns = memory.towns ?? new Map(), memoryCopies = memory.copies ?? new Map();
   let opened;
   function open() {
@@ -67,9 +67,9 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town storage could not be saved.'));
     });
   }
-  async function installRecord(record, previous, copies) {
+  async function installRecord(record, previous, copies, restoreId) {
     const recoveryId = '@recovery:' + record.id;
-    const recovery = { id: recoveryId, townId: record.id, recovery: true,
+    const recovery = { id: recoveryId, townId: record.id, recovery: true, restoreId,
       previous: previous ? clone(previous) : null, copies: copies.map(clone) };
     if (memoryOnly) {
       memoryCopies.set(recoveryId, recovery);
@@ -90,23 +90,31 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
     const recoveryId = '@recovery:' + id;
     const marker = await read(COPIES, recoveryId);
     if (!marker?.recovery) return '';
+    let pointer;
+    try { pointer = JSON.parse(storage?.getItem(TOWN_POINTER_KEY) ?? 'null'); } catch {}
+    const committed = !!marker.restoreId && pointer?.restoreId === marker.restoreId && pointer?.ids?.includes(id);
     if (memoryOnly) {
-      if (marker.previous) memoryTowns.set(id, clone(marker.previous)); else memoryTowns.delete(id);
-      for (const copy of marker.copies) memoryCopies.set(copy.id, clone(copy));
+      if (!committed) {
+        if (marker.previous) memoryTowns.set(id, clone(marker.previous)); else memoryTowns.delete(id);
+        for (const copy of marker.copies) memoryCopies.set(copy.id, clone(copy));
+      }
       memoryCopies.delete(recoveryId);
     } else {
       const db = await open();
       await new Promise((resolve, reject) => {
         const tx = db.transaction([STORE, COPIES], 'readwrite');
         const towns = tx.objectStore(STORE), copies = tx.objectStore(COPIES);
-        if (marker.previous) towns.put(marker.previous); else towns.delete(id);
-        for (const copy of marker.copies) copies.put(copy);
+        if (!committed) {
+          if (marker.previous) towns.put(marker.previous); else towns.delete(id);
+          for (const copy of marker.copies) copies.put(copy);
+        }
         copies.delete(recoveryId);
         tx.oncomplete = resolve;
         tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('Town recovery could not be saved.'));
       });
     }
-    return 'An unfinished town restore was found. The previous town has been put back.';
+    return committed ? 'An unfinished town restore was found. The restored town was kept.'
+      : 'An unfinished town restore was found. The previous town has been put back.';
   }
   async function allCopies(townId) {
     if (memoryOnly) return [...memoryCopies.values()].filter(row => row.townId === townId && !row.recovery).map(clone);
@@ -173,11 +181,14 @@ export function createTownStore({ factory = globalThis.indexedDB, memoryOnly = f
       return this.save(file.town, 'file restore');
     },
     async towns(ids) { return Promise.all(ids.map(id => read(STORE, id))); },
-    async install(records, { retainRecovery = false } = {}) {
+    async install(records, { retainRecovery = false, restoreId } = {}) {
       if (!Array.isArray(records) || records.some(record => !valid(record))) throw new Error('The career file has invalid town data.');
       for (const record of records) {
-        const previous = await read(STORE, record.id), copies = await allCopies(record.id);
-        await installRecord(record, previous, copies);
+        const recoveryId = '@recovery:' + record.id;
+        const pending = await read(COPIES, recoveryId);
+        const previous = pending?.recovery ? pending.previous : await read(STORE, record.id);
+        const copies = pending?.recovery ? pending.copies : await allCopies(record.id);
+        await installRecord(record, previous, copies, restoreId ?? pending?.restoreId);
         await onInstallStep('replacement-written', record.id);
         await deleteCopies(copies.map(copy => copy.id));
         await onInstallStep('copies-removed', record.id);

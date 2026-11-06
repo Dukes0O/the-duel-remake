@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createTownStore, readTownPointer, saveTown, TOWN_POINTER_KEY } from '../src/town/town-store.js';
-import { captureCareer, createCompleteCareerExport, importCareer, parseCareerExport } from '../src/career-backup.js';
+import { captureCareer, createCompleteCareerExport, importCareer, parseCareerExport, restoreCareerBackup } from '../src/career-backup.js';
 
 function storage(initial = {}) {
   const rows = new Map(Object.entries(initial));
@@ -103,6 +103,45 @@ for (const stopAt of ['replacement-written', 'copies-removed']) {
   assert.equal(recovered.town.year, 4, stopAt + ': previous town comes back after reopening');
   assert.match(recovered.message, /previous town has been put back/i, stopAt + ': player is told recovery happened');
   assert.ok((await reopened.exportTown('crash-town')).includes('"year":4'), stopAt + ': real export has recovered town');
+}
+// A retry must keep the original town in the marker, not the first replacement.
+{
+  const durable = { towns: new Map(), copies: new Map() };
+  const before = { ...intact, id: 'retry-town', town: { ...first, id: 'retry-town', year: 4 } };
+  const after = { ...before, town: { ...before.town, year: 30 } };
+  const seed = createTownStore({ memoryOnly: true, memory: durable });
+  await seed.install([before]);
+  const crashing = createTownStore({ memoryOnly: true, memory: durable, onInstallStep(step) { if (step === 'replacement-written') throw new Error('simulated close'); } });
+  await assert.rejects(crashing.install([after]), /simulated close/);
+  await assert.rejects(crashing.install([after]), /simulated close/);
+  const reopened = createTownStore({ memoryOnly: true, memory: durable });
+  assert.equal((await reopened.load('retry-town')).town.year, 4, 'a repeated interrupted restore retains the true original town');
+}
+// Career and town recovery agree at every durable restore boundary.
+for (const stopAt of ['before-install', 'replacement-written', 'copies-removed', 'after-install', 'after-apply-entries', 'after-finish-recovery']) {
+  const durable = { towns: new Map(), copies: new Map() };
+  const current = storage({ [TOWN_POINTER_KEY]: JSON.stringify({ version: 1, ids: ['career-town'] }) });
+  const oldTown = { ...intact, id: 'career-town', town: { ...first, id: 'career-town', year: 4 } };
+  const newTown = { ...oldTown, town: { ...oldTown.town, year: 30 } };
+  const seed = createTownStore({ memoryOnly: true, memory: durable });
+  await seed.install([newTown]);
+  const backups = new Map([['restore-source', { id: 'restore-source', entries: {
+    'the-duel-profile-v1': JSON.stringify({ version: 1, credits: 7 }),
+    [TOWN_POINTER_KEY]: JSON.stringify({ version: 1, ids: ['career-town'] }),
+  }, townRecords: [oldTown] }]]);
+  const backupStore = { async load(id) { return structuredClone(backups.get(id)); }, async save(record) { backups.set(record.id, structuredClone(record)); } };
+  const crashingStore = createTownStore({ memoryOnly: true, memory: durable, storage: current, onInstallStep(step) {
+    if (step === stopAt) { const error = new Error('simulated close'); error.simulatedCrash = true; throw error; }
+  } });
+  const options = { storage: current, backupStore, townStore: crashingStore,
+    onRestoreStep(step) { if (step === stopAt) { const error = new Error('simulated close'); error.simulatedCrash = true; throw error; } } };
+  await assert.rejects(restoreCareerBackup('restore-source', options), /simulated close/);
+  const reopened = createTownStore({ memoryOnly: true, memory: durable, storage: current });
+  const loaded = await reopened.load('career-town');
+  const careerPointer = JSON.parse(current.getItem(TOWN_POINTER_KEY));
+  assert.ok([4, 30].includes(loaded.town.year), stopAt + ': recovery keeps one of the two valid towns');
+  assert.equal(loaded.town.year, careerPointer.restoreId ? 4 : 30, stopAt + ': career pointer and town agree');
+  assert.ok([4, 30].includes(loaded.town.year), stopAt + ': town is never an unrelated value');
 }
 const yearStore = createTownStore({ memoryOnly: true });
 await yearStore.save(year30);
