@@ -6,7 +6,12 @@ import {groundWaterAt} from '../src/town/town-ground.js';
 const DAYS_PER_YEAR=TOWN_TIME.daysPerMonth*TOWN_TIME.monthsPerYear;
 const TICKS_PER_YEAR=DAYS_PER_YEAR*TOWN_TIME.ticksPerDay;
 const SOAK_YEARS=30;
-const SOAK_SEEDS=Array.from({length:10},(_,index)=>5101+index*6151);
+const seedFlagIndex=process.argv.indexOf('--seeds');
+const requestedSeedCount=seedFlagIndex<0?10:Number(process.argv[seedFlagIndex+1]);
+if(!Number.isInteger(requestedSeedCount)||requestedSeedCount<1){
+  throw new Error('Use --seeds followed by a positive whole number.');
+}
+const SOAK_SEEDS=Array.from({length:requestedSeedCount},(_,index)=>5101+index*6151);
 const SIM_DAY_TARGET_MS=30;
 const PLOTS_PER_BATCH=25;
 const WELLS_PER_BATCH=10;
