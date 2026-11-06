@@ -46,6 +46,9 @@ materials = {'side': side.material(), 'front': front.material(), 'rear': rear.ma
 carriage_side = Photo(textures / 'carriage-side.jpg', frame=(2172, 724))
 carriage_end = Photo(textures / 'carriage-end.jpg')
 carriage_canvas = Photo(textures / 'carriage-canvas.jpg')
+van_side = Photo(textures / 'van-side.jpg', frame=(2048, 683))
+van_end = Photo(textures / 'van-end.png')
+van_canvas = van_side
 
 # Sky in each photo. Seeds: the open sky, then each opening where sky shows through.
 side_solid = tidy(~side.sky([(30, 30), (1000, 40), (1950, 300), (340, 260), (272, 300), (190, 150), (700, 135), (850, 135)]))
@@ -456,6 +459,115 @@ for x_sign in (-1, 1):
 
 carriage.finish('the-2-15-carriage', carriage_materials)
 objects['the-2-15-carriage'] = carriage
+
+# The guard's luggage van: 12.5 m long, with the roof lookout at the brake end.
+# Both views are traced and projected from the generated photographs.
+VS = 12.5 / 1870
+VY = 3.72 / 620
+def VX(px): return (px - 1024) * VS
+def VYp(py): return (620 - py) * VY
+def VZ(px): return -(px - 599.5) * (2.7 / 923)
+def van_side_point(px, py, z): return (VX(px), VYp(py), z)
+def van_end_point(px, py, x): return (x, .75 + (1000 - py) * (2.94 / 980), VZ(px))
+
+van_side_solid = tidy(~van_side.sky([(18, 18), (2020, 18)], grey=26))
+van_end_solid = tidy(~van_end.sky([(25, 25), (1170, 25)], grey=26))
+van = Mesh()
+V_SIDE, V_END = 'van-side', 'van-end'
+van_materials = {V_SIDE: van_side.material(), V_END: van_end.material()}
+
+# Main timber body. Keep the luggage doorway and the two lookout panes open.
+van_body = trace(van_side_solid, (90, 104, 1960, 495), tolerance=1.8, min_area=100)
+van_body.append(rounded(689, 171, 1117, 438, 8))
+for sign in (1, -1):
+    slab(van, V_SIDE, van_side, van_body, van_side_point, sign * 1.22, sign * 1.29, wall_scale=VS)
+
+# The doorway looks into the cases, not through a flat pale background.
+INTERIOR = (V_SIDE, van_side, (714, 193, 1101, 426))
+box(van, VX(690), VX(1118), .80, 2.74, -1.14, 1.14,
+    {'+z': INTERIOR, '-z': INTERIOR})
+box(van, VX(690), VX(1118), .72, .80, -1.20, 1.20,
+    {'+z': INTERIOR, '-z': INTERIOR, '+y': INTERIOR})
+
+# The door has rolled back along its iron rail, leaving the full cargo aperture.
+door_loop = trace(van_side_solid, (1110, 150, 1532, 455), tolerance=1.5, min_area=100)
+for sign in (1, -1):
+    slab(van, V_SIDE, van_side, door_loop, van_side_point,
+         sign * 1.30, sign * 1.36, wall_scale=VS)
+
+# Raised lookout: real empty windows with the opposite inner face behind them.
+lookout = trace(van_side_solid, (1495, 2, 1850, 116), tolerance=1.4, min_area=80)
+lookout += [rounded(1564, 37, 1640, 86, 5), rounded(1686, 37, 1768, 87, 5)]
+for sign in (1, -1):
+    slab(van, V_SIDE, van_side, lookout, van_side_point,
+         sign * .91, sign * .98, wall_scale=VS)
+box(van, VX(1510), VX(1842), 3.11, 3.49, -.88, .88,
+    {'+z': (V_SIDE, van_side, (1538, 50, 1760, 92)), '-z': (V_SIDE, van_side, (1538, 50, 1760, 92))})
+
+# End sheets carry the doorway and roof lookout through the matching end view.
+# Keep the body separate from the photographed buffers and bogies; those are
+# modelled in their proper places below.
+end_outline = trace(van_end_solid, (90, 190, 1108, 1000), tolerance=1.8, min_area=250)
+end_outline = [loop for loop in end_outline
+               if max(p[0] for p in loop) - min(p[0] for p in loop) > 700
+               and max(p[1] for p in loop) - min(p[1] for p in loop) > 500]
+end_outline.append(rounded(438, 373, 762, 852, 18))
+end_lookout = trace(van_end_solid, (280, 8, 920, 224), tolerance=1.5, min_area=150)
+end_lookout = [loop for loop in end_lookout
+               if max(p[0] for p in loop) - min(p[0] for p in loop) > 500]
+end_lookout += [rounded(388, 64, 566, 159, 8), rounded(628, 64, 812, 159, 8)]
+for x in (-6.24, 6.16):
+    slab(van, V_END, van_end, end_outline, van_end_point,
+         x, x + .08, wall_scale=.0026)
+    slab(van, V_END, van_end, end_lookout, van_end_point,
+         x, x + .08, wall_scale=.0026)
+box(van, -6.12, 6.10, .75, 3.68, -1.12, 1.12,
+    {'+x': (V_END, van_end, (458, 390, 742, 825)), '-x': (V_END, van_end, (458, 390, 742, 825))})
+
+# The canvas roof is a shallow arch across the van, continued along its length.
+for k in range(16):
+    a0, a1 = k * math.pi / 16, (k + 1) * math.pi / 16
+    def roof_point(a, px):
+        return (VX(px), 3.06 + .34 * math.sin(a), 1.26 * math.cos(a))
+    corners = (roof_point(a0, 90), roof_point(a0, 1960),
+               roof_point(a1, 1960), roof_point(a1, 90))
+    py0, py1 = 106 + 40 * k / 16, 106 + 40 * (k + 1) / 16
+    uvs = (van_side.uv(90, py0), van_side.uv(1960, py0),
+           van_side.uv(1960, py1), van_side.uv(90, py1))
+    van.face(corners, uvs, V_SIDE, (0, math.sin((a0 + a1) / 2), math.cos((a0 + a1) / 2)))
+
+# Two four-wheel bogies, springs, bolsters and the van's buffers and chain.
+for cx in (344, 1737):
+    for wheel_x in (cx - 82, cx + 82):
+        radius = .41
+        centre = (VX(wheel_x), radius, 0)
+        face_uv = lambda a, f, x=wheel_x: van_side.uv(x + math.cos(a) * f * 58, 500 - math.sin(a) * f * 58)
+        tread_uv = lambda i, d, r, a: van_end.uv(310 + i * 70, 1090 + abs(math.sin(a)) * 125)
+        for sign in (1, -1):
+            lathe(van, V_END, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+                  [(sign * .77, radius), (sign * 1.0, radius)], tread_uv, sides=24,
+                  cap_start=(V_SIDE, face_uv), cap_end=(V_SIDE, face_uv))
+            lathe(van, V_SIDE, centre, (0, 0, 1), (1, 0, 0), (0, 1, 0),
+                  [(sign * 1.0, .15), (sign * 1.06, .12)],
+                  lambda i, d, r, a: van_side.uv(155, 548 + math.sin(a) * 16), sides=12,
+                  cap_end=(V_SIDE, lambda a, f, fn=face_uv: fn(a, .22)))
+    frame = (V_SIDE, van_side, (280, 474, 610, 532))
+    box(van, VX(cx - 142), VX(cx + 142), .48, .88, -.90, .90,
+        {'+z': frame, '-z': frame, '-y': frame})
+
+for x_sign in (-1, 1):
+    for z_sign in (-1, 1):
+        if x_sign > 0:
+            # The matching end photograph already carries these two buffers;
+            # keep the far end's pair as geometry for three-quarter views.
+            continue
+        lathe(van, V_SIDE, (x_sign * 6.25, .83, z_sign * .94), (x_sign, 0, 0),
+              (0, 0, 1), (0, 1, 0), [(0, .1), (.16, .1), (.22, .22)],
+              lambda i, d, r, a: van_side.uv(1950 + i * 15, 483 + math.sin(a) * 14), sides=16,
+              cap_end=(V_END, lambda a, f: van_end.uv(302 + math.cos(a) * 80 * f,
+                                                        924 - math.sin(a) * 80 * f)))
+van.finish('the-2-15-van', van_materials)
+objects['the-2-15-van'] = van
 print('TRIANGLES=' + json.dumps({name: mesh.triangles() for name, mesh in objects.items()}))
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -521,3 +633,9 @@ shot('carriage-side', (0, 1.83, 24), (0, 1.83, 0), 1000, 334, ortho=15.0)
 shot('carriage-end', (12, 1.83, 0), (0, 1.83, 0), 600, 600, ortho=4.4)
 shot('carriage-quarter', (8, 1.7, 9), (1, 1.75, 0), 1000, 380, lens=26)
 shot('carriage-quarter-rear', (-8, 1.7, 9), (-1.6, 1.75, 0), 1000, 380, lens=26)
+for obj in scene.objects:
+    if obj.name.startswith(('the-2-15-engine', 'the-2-15-track', 'the-2-15-drift', 'the-2-15-carriage')):
+        obj.hide_render = True
+shot('van-side', (0, 2.0, 24), (0, 2.0, 0), 1000, 430, ortho=14.5)
+shot('van-end', (24, 2.0, 0), (0, 2.0, 0), 600, 620, ortho=4.5)
+shot('van-quarter', (8, 2.0, 9), (0, 2.0, 0), 1000, 620, lens=29)

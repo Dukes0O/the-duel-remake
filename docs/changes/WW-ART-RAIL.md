@@ -1,6 +1,6 @@
 # WW-ART-RAIL
 
-Card still open: the engine and its drift have passed; the carriages, van, Wednesday and the props follow.
+Card still open: the engine and its drift have passed; one passenger carriage and the guard van are now built. Two carriages, Wednesday, the railway props and the whole-train drift remain.
 
 ## Changed
 
@@ -36,3 +36,19 @@ The round 1 and 2 recipe, sheets and notes.
 - Changed assertions: none. The budget entry changed to the card's stated limit; no test assertion was loosened.
 - Race fingerprints: none; this is not wired into the game.
 - Removed: the empty temporary PNG and transient image-transfer file created during photo import. The review sheet will contain only the accepted carriage and van views.
+
+## Guard van design
+
+- Use the current side photograph and a matching dead-on end photograph as measured projections. Build a 12 m, 2.7 m wide luggage van with a raised two-window lookout, canvas roof, iron frame, two four-wheel bogies, buffers and coupling. Keep the sliding door open so the piled cases remain visible. Its wood and canvas are salt-bleached; iron is heavily rusted.
+- The end view is for geometry and projection only. Keep the side view's doorway, cargo and silhouette as the visual authority. The van is its own GLB mesh so it can be placed behind the three passenger carriages later.
+- Removed: none.
+
+## Guard van slice
+
+- Added `the-2-15-van` as a separate mesh, measured from credited side and end photos. It has an open cargo doorway with visible cases, raised lookout, canvas roof, timber walls, underframe, two four-wheel bogies and buffers.
+- Blender 4.5.13 exported and re-imported the GLB for the side, end and three-quarter renders. Current family total: 20,424 triangles and 4,501,116 bytes; both fit the card limits. The engine, track, drift and carriage nodes remain present.
+- `node tools/test-blender-output.mjs`: passed, 275 checks, 0 failed. `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory. Art jobs do not run the lane tier or app build.
+- The round 4 sheet compares the van's side and end renders with their source photos. Claude's art verdict is pending. The end render still shows narrow end returns; the review note asks if they need another round.
+- Changed assertion: `tools/test-blender-output.mjs` now requires the guard-van node. No assertions or tolerances were loosened.
+- Race fingerprints: none; these models are not wired into the game.
+- Removed: none in this slice.

@@ -651,6 +651,7 @@ try {
         const names = new Set(gltf.nodes.map(node => node.name));
         assert.ok(names.has('the-2-15-engine'), 'named dug-out engine node');
         assert.ok(names.has('the-2-15-drift'), 'separate named salt drift node');
+        assert.ok(names.has('the-2-15-van'), 'separate named guard van node');
         const binaryOffset = 20 + jsonLength + 8;
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
