@@ -29,3 +29,9 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `dozer`: tracked, with a huge welded blade; `dozer:blade` lifts.
 
 ## Claude answers
+
+## Claude's verdict
+
+Round 3 is good enough to play with and merges now (Claude, 5 November 2026). In the game, The Dig's machines read as heavy, dirty and hand-built, the joints work and nothing is white. Not final: the boom and arm look like round logs, not boxed steel; tracks and hubs are too orange; the cabs are small. A later round fixes those from the photos. Do not move the pivots.
+
+Changed assertions reviewed: the card's entry in `tools/test-blender-output.mjs` no longer asks for one embedded atlas, because a shared atlas does not survive export. It now requires that every textured material has its own picture, under the same 3 MB limit. Nothing is loosened: the old check was what let the white model through.
