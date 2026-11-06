@@ -101,4 +101,13 @@ stepTownHomeGround({town:large,tick:BigInt(TOWN_TIME.ticksPerDay)});
 const largeStart=performance.now();stepTownHomeGround({town:large,tick:BigInt(TOWN_TIME.ticksPerDay*2)});const largeDayMs=performance.now()-largeStart;
 check(large.people.length===10_000&&large.homePlots.length===5_000,'the large timing town keeps all people and plots');
 check(largeDayMs<30,`10,000 people and 5,000 plots simulate a home-ground day under 30 ms (saw ${largeDayMs.toFixed(2)} ms)`);
-console.log(`Town people support: ${checks} checks passed; 10,000-person/5,000-plot home-ground day ${largeDayMs.toFixed(2)} ms.`);
+const shortageTown=createTown(20261107,'Large shortage reports');
+shortageTown.people=Array.from({length:5000},(_,index)=>({id:`canvas-${index}`,family:`canvas-family-${index}`,home:'canvas',homeType:'Canvas'}));
+shortageTown.homePlots=Array.from({length:5000},(_,index)=>({id:`waiting-${index}`,regionId:'scablands',x:index,z:0,
+  tier:index%2?1:3,progressDays:0,household:null,family:null,burning:false,building:false,waitingGood:null}));
+const shortageStart=performance.now();stepTownHomeGround({town:shortageTown,tick:BigInt(TOWN_TIME.ticksPerDay)});const shortageDayMs=performance.now()-shortageStart;
+const openShortages=shortageTown.reports.filter(report=>report.unanswered&&report.eventId==='home-goods-shortage');
+check(shortageDayMs<30,`5,000 waiting plots simulate a home-ground day under 30 ms (saw ${shortageDayMs.toFixed(2)} ms)`);
+check(openShortages.length===2&&new Set(openShortages.map(report=>report.facts.good)).size===2,
+  '5,000 waiting plots produce one open town report for each missing good');
+console.log(`Town people support: ${checks} checks passed; 5,000 waiting plots ${shortageDayMs.toFixed(2)} ms, 10,000 people/5,000 plots ${largeDayMs.toFixed(2)} ms.`);

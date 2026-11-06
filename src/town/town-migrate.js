@@ -1,4 +1,4 @@
-import {TOWN_REGIONS} from './town-world-data.js';
+import {TOWN_REGIONS, cellIsReserved, getTownChunk} from './town-world-data.js';
 import {TOWN_HOME_TYPES} from './content/homes.js';
 
 export const TOWN_SAVE_VERSION = 2;
@@ -33,9 +33,19 @@ export const TOWN_MIGRATIONS = Object.freeze([
       groups.get(key).push(person);
     }
     const plots=[];
-    let x=1000,z=1000;
+    let x=24,z=24;
     for(const [home,people] of groups) {
-      while(data.homePlots?.some(plot=>plot.regionId==='scablands'&&plot.x===x&&plot.z===z)) x++;
+      while(cellIsReserved('scablands',x,z)
+        ||(data.homePlots||[]).some(plot=>plot.regionId==='scablands'&&plot.x===x&&plot.z===z)
+        ||(data.buildings||[]).some(building=>building.regionId==='scablands'&&x>=building.x&&x<building.x+(building.width||1)&&z>=building.z&&z<building.z+(building.depth||1))
+        ||Boolean(getTownChunk(data.regions?.scablands||{chunks:{}},x,z)?.cell.buildingId
+          ||getTownChunk(data.regions?.scablands||{chunks:{}},x,z)?.cell.roadId
+          ||getTownChunk(data.regions?.scablands||{chunks:{}},x,z)?.cell.pipeId
+          ||getTownChunk(data.regions?.scablands||{chunks:{}},x,z)?.cell.sewerId
+          ||getTownChunk(data.regions?.scablands||{chunks:{}},x,z)?.cell.wireId)) {
+        x++;
+        if(x>160){x=24;z++;}
+      }
       const person=people[0], tier=Math.max(1,Math.min(TOWN_HOME_TYPES.length-1,
         Number.isSafeInteger(person.homeTier)?person.homeTier:(TOWN_HOME_TYPES.findIndex(item=>item.label.toLowerCase()===String(person.homeType||'').toLowerCase())||1)));
       const id=`legacy-home-${plots.length+1}`;

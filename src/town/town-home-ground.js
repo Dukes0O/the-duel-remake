@@ -105,7 +105,12 @@ export function stepTownHomeGround({town}) {
   for(const [good,count] of shortages) {
     const type=TOWN_HOME_TYPES.find(item=>item.goods?.[good])||TOWN_HOME_TYPES[1];
     const label=type.label.endsWith('s')?type.label:`${type.label}s`;
-    raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,where:`Home plots: ${good}`,
+    const where=`Home plots: ${good}`;
+    for(const report of town.reports||[]) if(report.unanswered&&report.eventId==='home-goods-shortage'
+      &&report.where!==where&&(report.facts?.good===good||String(report.facts?.detail||'').includes(`Short of ${good}.`))) {
+      report.unanswered=false;report.outcome='This shortage is now included in the town-wide report.';report.answeredTick=BigInt(town.tick);
+    }
+    raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,good,where,
       detail:`${label} going up, ${count} of ${plots.length}. Short of ${good}.`});
   }
 }

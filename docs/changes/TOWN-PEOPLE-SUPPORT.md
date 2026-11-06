@@ -1,57 +1,30 @@
-# TOWN-PEOPLE-SUPPORT
+# TOWN-PEOPLE-SUPPORT change note
 
-## Status
+## Design
 
-Pace tuning and the named local checks are complete. Claude should run the lane
-tier and browser check.
-
-## Changed
-
-- Tuned `arrivalMoodBase` to 3 and `arrivalYearScale` to 5. This keeps the
-  Year 2 milestone near 100, leaves Year 1 below 100, and supports long-term
-  growth without breaking the 30-year lineage check.
-- The 30-year soak player delivers food, paints home plots, digs test pits and
-  builds wells through town commands. It does not set support conditions by
-  hand. The soak checks completed homes, working wells and measured water.
-- Added `--seeds N` to `tools/soak-town.mjs` for shorter tuning runs. Defaults
-  remain 10 seeds and 30 years.
+Applied the town design in `docs/WASTELAND_TOWN.md` sections 5, 6 and 13. Old saved households regain finished plots on clear, reserved-free ground near town. People with no saved home remain housed by the founders' camp, whose measured capacity expands to cover them. A fire-damaged plot becomes a tier-zero ruin when its fire ends; canvas families can rebuild it, and an empty ruin can be cleared. Shortage reports are town-wide, one open report per missing good, with shortage counts collected once per daily step.
 
 ## Checks
 
-- `node tools/test-town-people-support.mjs`: 30 checks passed. The
-  10,000-person/5,000-plot home-ground day took 8.57 ms.
-- `node tools/test-town-people.mjs`: 36 checks passed. The 30-year run ended
-  with 3,524 living people and 5,124 Old Ground entries; a 10,000-person day
-  took 20.34 ms.
-- `node tools/test-town-pace.mjs`: 364 checks passed across 10 seeds. First
-  winter: 36 to 40; Year 1: 42 to 48; Year 2: 98 to 135.
-- `node tools/soak-town.mjs --seeds 2`: 16 checks passed across two seeds and
-  30 years. Year 30 populations were 6,012 and 5,402. Both towns finished
-  1,500 home plots and had over 31 L/person/day. The 10,000-person day took
-  25.92 ms. The default 10-seed soak exceeded 20 minutes during tuning and was
-  stopped; the reduced run used the new flag.
-- `node tools/test-town-visits.mjs`: passed. The visit lifecycle and guarded
-  return save checks passed.
-- `npm.cmd run build`: passed. Vite reported its existing static/dynamic
-  import warning for `src/game.js` and large-chunk warnings.
-- Browser and look checks: Claude to run. Please check the first-winter and
-  Year 2 pace in play, and confirm the real home, well and goods route supports
-  newcomers.
-- Lane tier: Claude to run as requested.
+- `node tools/test-town-people-support.mjs` — passed, 37 checks; 5,000 waiting plots took 8.51 ms and produced two open reports for two missing goods. The separate 10,000-person / 5,000-plot day took 4.77 ms.
+- `node tools/test-town-people.mjs` — passed, 36 checks; 30-year run produced 3,524 living people and 5,124 Old Ground entries.
+- `node tools/test-town-pace.mjs` — passed, 364 checks across 10 seeds.
+- `node tools/test-town-fire.mjs` — passed, 15 checks.
+- `node tools/test-town-visits.mjs` — passed.
+- `node tools/test-town-view.mjs` — passed; includes charred remains visibility.
+- `npm.cmd run build` — passed. Vite reported its existing dynamic-import and large-chunk warnings.
+- Lane tier and browser checks were not run, as requested. Claude should check the town view after a plot fire goes out, while charred remains are visible, during rebuild, and after clearing an empty ruin.
 
-## Changed assertions
+## Assertions
 
-No existing assertions changed. Three trial pace settings were discarded
-after they failed a 30-year lineage or measured-needs assertion. The soak
-population assertions remain unchanged; observed Year 30 results are recorded
-above rather than adding a new population floor.
+- Updated the burned-plot acceptance assertion in `tools/test-town-people-support.mjs`: it now requires the extinguished plot to have `burning === false` and `burnt === true`, while retaining its tier-zero, no-capacity and family-return checks. This reflects the requested fire-out state; no assertion or tolerance was loosened.
+- Added coverage for 20 saved people through three months, plot rebuilding and clearing, one report per missing good, the 30 ms limit, and charred remains in the town view.
 
 ## Race fingerprints
 
-Not applicable. This changes town simulation values only.
+Not applicable. These changes affect town simulation and town rendering only.
 
 ## Removed
 
-- Removed the soak's direct fixture well and hand-tiered plots. The player now
-  builds support through town commands.
-- No assertions or other files were removed.
+- Removed location-specific shortage-report creation and replaced it with daily town-wide aggregation.
+- No other files or behavior were removed.
