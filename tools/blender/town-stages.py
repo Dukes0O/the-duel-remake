@@ -22,27 +22,15 @@ ids=['scaffold-1','scaffold-2','scaffold-3','scaffold-4']+[f'rubble-{i}' for i i
 def reset():
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
 def build():
-    reset(); mats=t.make_materials(); scene=bpy.context.scene
-    # The common base helper starts from high-frequency placeholder wear.
-    # Replace it with broad, deterministic value bands before export so the
-    # atlas compresses tightly and material wear reads at town-camera scale.
-    image=next(node.image for mat in mats.values() for node in mat.node_tree.nodes
+    reset()
+    texture_dir=OUT.parent/'textures'
+    mats=t.make_materials({'weathered-plank':texture_dir/'timber.jpg','rusted-steel':texture_dir/'tin.jpg',
+      'galvanised-tin':texture_dir/'tin.jpg','iron-dark':texture_dir/'charred-wood.jpg',
+      'salvaged-brick':texture_dir/'rubble.jpg'})
+    atlas=next(node.image for mat in mats.values() for node in mat.node_tree.nodes
                if node.type=='TEX_IMAGE' and node.image is not None)
-    import numpy as np
-    pixels=np.ones((1024,1024,4),dtype=np.float32)
-    for index,(name,(rgb,_metal)) in enumerate(t.PALETTE.items()):
-      col=index%4;row=index//4;y0=row*256;x0=col*256
-      for iy in range(256):
-        fade=.88+.20*(1-iy/255)
-        base=np.array(rgb,dtype=np.float32)*fade
-        pixels[y0+iy,x0:x0+256,:3]=base
-      if name in ('rusted-steel','galvanised-tin'):
-        oxide=np.array((.30,.105,.038),dtype=np.float32)
-        for iy in range(256):
-          band=max(0,min(.72,(iy/256-.36)*1.2))
-          pixels[y0+iy,x0:x0+256,:3]=pixels[y0+iy,x0:x0+256,:3]*(1-band)+oxide*band
-        for xx in (38,96,164,218):pixels[y0+42:y0+236,x0+xx:x0+xx+4,:3]=oxide
-    image.pixels.foreach_set(pixels.ravel());image.pack()
+    atlas.scale(384,384);atlas.pack()
+    scene=bpy.context.scene
     scene.render.engine='CYCLES';scene.cycles.samples=24
     scene.render.resolution_x=900;scene.render.resolution_y=620;scene.render.resolution_percentage=100
     scene.world.color=(.62,.62,.62)
@@ -53,6 +41,19 @@ def build():
     def beam(n,a,b,w,m):return t.beam(n,a,b,w,m)
     def scaffold(prefix,w,d,h,stage):
         start=set(scene.objects)
+        # Each early stage tells a different point in the build sequence.
+        if stage == 1:
+          for side in (-1,1):
+            beam(prefix+':foundation-trench',(-w*.40,.04,side*d*.40),(w*.40,.04,side*d*.40),.42,mats['iron-dark'])
+          for x in (-w*.42,w*.42):
+            for z in (-d*.42,d*.42):
+              cube(prefix+':layout-peg',(x,.24,z),(.10,.48,.10),mats['weathered-plank'])
+              beam(prefix+':layout-string',(x,.42,z),(-x,.42,-z),.018,mats['patched-canvas'])
+        else:
+          # Visible masonry pads lift every standard clear of the dirt.
+          for x in (-w*.47,w*.47):
+            for z in (-d*.47,d*.47):
+              cube(prefix+':base-block',(x,.18,z),(.48,.36,.48),mats['cracked-concrete'],.035)
         # timber standards, steel ledgers, cross braces and real plank walkways
         for x in (-w*.47,w*.47):
           for z in (-d*.47,d*.47):beam(prefix+':post',(x,.08,z),(x,h,z),.13,mats['weathered-plank'])
@@ -69,10 +70,14 @@ def build():
             px=-w*.44+plank*.44
             cube(prefix+':walkway-plank',(px,y+.07,-d*.28),(.42,.12,.78),mats['weathered-plank'],.012)
         # exposed half-wall of pressed tin and rough infill varies by stage
-        if stage>=2:
+        if stage>=3:
           for x in (-w*.25,w*.25):
             t.corrugated_sheet(prefix+':wall-panel',(x,h*.44,-d*.49),w*.42,h*.67,mats,bent=.025*(1 if x>0 else -1))
           beam(prefix+':ridge-pole',(-w*.48,h*.94,0),(w*.48,h*.94,0),.12,mats['rusted-steel'])
+        if stage == 4:
+          for x in (-w*.33,w*.33):
+            sheet=t.corrugated_sheet(prefix+':removed-sheet',(x,.85,-d*.62),w*.28,1.5,mats,bent=.08,turn=.48)
+            sheet.rotation_euler[0]=-.28
         # ladder, rope and bucket hoist distinguish the construction silhouette
         lx=w*.31;beam(prefix+':ladder-left',(lx,.1,-d*.58),(lx-.25,h*.78,-d*.58),.075,mats['weathered-plank']);beam(prefix+':ladder-right',(lx+.42,.1,-d*.58),(lx+.17,h*.78,-d*.58),.075,mats['weathered-plank'])
         for k in range(6):beam(prefix+':ladder-rung',(lx-.2+k*.003,.25+k*h*.085,-d*.58),(lx+.36+k*.003,.25+k*h*.085,-d*.58),.045,mats['weathered-plank'])
@@ -135,7 +140,9 @@ def build():
       if o.type=='MESH' and o.parent is None:
         match=next((r for r in roots if o.name.startswith(r.name+':')),None)
         if match:o.parent=match
-    OUT.parent.mkdir(parents=True,exist_ok=True);t.export_glb(OUT)
+    OUT.parent.mkdir(parents=True,exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(OUT),export_format='GLB',export_yup=True,
+      export_apply=True,export_materials='EXPORT',export_image_format='JPEG',export_image_quality=65)
     # bright overcast rendered proof: a broad family lineup on a sand stage
     # Close three-quarter proof of the representative scaffold, framed large
     # enough to judge its 8 m proportions and construction details.
@@ -146,7 +153,7 @@ def build():
       obj.hide_render=(obj.type=='MESH' and ancestor is not visible_root and obj.name!='render-only sand')
     visible_root.hide_render=False
     floor=cube('render-only sand',(0,0,-.12),(19,.2,19),mats['sand'])
-    bpy.ops.object.camera_add(location=(12,-21,13));cam=bpy.context.object;cam.rotation_euler=(Vector((0,-0,2.4))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.lens=48;scene.camera=cam
+    bpy.ops.object.camera_add(location=(27,-37,23));cam=bpy.context.object;cam.rotation_euler=(Vector((0,-0,2.5))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.lens=50;scene.camera=cam
     bpy.ops.object.light_add(type='AREA',location=(1,-9,18));bpy.context.object.data.energy=25000;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=12
     scene.render.image_settings.file_format='PNG';scene.render.filepath=str(EVIDENCE/'family-overview.png');EVIDENCE.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
 if __name__=='__main__':build()
