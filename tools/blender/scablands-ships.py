@@ -89,6 +89,13 @@ wood = materials['weathered-plank']
 paint = materials['faded-hand-paint']
 glass = materials['dirty-glass']
 sand = materials['sand']
+def matte_material(name,color,roughness=.88):
+    mat=bpy.data.materials.new(name); mat.diffuse_color=(*color,1); mat.use_nodes=True
+    bsdf=mat.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Base Color'].default_value=(*color,1); bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=roughness
+    return mat
+name_paint=matte_material('Ship name / faded chalk paint',(.78,.70,.55))
+boat_paint=matte_material('Pilot boat / maintained warm cream enamel',(.68,.66,.59))
 lamp = bpy.data.materials.new('Lighthouse / lit Fresnel lantern')
 lamp.use_nodes = True
 lamp_nodes=lamp.node_tree.nodes; lamp_nodes.clear()
@@ -204,13 +211,14 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
                 rivet=cylinder(f'{name}-patch-rivet-{index}-{side}-{k}',(x-w*.4+k*w*.2,y-h*.38,side*(width*.444+.04)),.045,.07,iron,root.name,8,'Z')
                 parent(rivet,root)
     # Text on the bow, in large, readable weathered paint.
-    label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.28; label.resolution_u=3; label.bevel_resolution=1; label.extrude=.008; label.bevel_depth=.004
-    for side in (-1,1):
-        obj=bpy.data.objects.new(name+' bow name '+str(side),label); scene.collection.objects.link(obj)
-        obj.location=gv((length*.30,deck-2.05,side*(width*.448)))
-        obj.rotation_euler=(math.pi/2 if side>0 else -math.pi/2,0,0)
-        label.materials.clear(); label.materials.append(paint)
-        obj['part']=root.name; parent(obj,root)
+    if side_label:
+        label=bpy.data.curves.new(name+' painted bow name','FONT'); label.body=side_label; label.size=1.28; label.resolution_u=3; label.bevel_resolution=1; label.extrude=.008; label.bevel_depth=.004
+        for side in (-1,1):
+            obj=bpy.data.objects.new(name+' bow name '+str(side),label); scene.collection.objects.link(obj)
+            obj.location=gv((length*.30,deck-2.05,side*(width*.448)))
+            obj.rotation_euler=(math.pi/2 if side>0 else -math.pi/2,0,0)
+            label.materials.clear(); label.materials.append(name_paint)
+            obj['part']=root.name; parent(obj,root)
     # Three genuinely walkable deck levels with narrow ladders between them.
     for level,height in enumerate((deck,deck+3.2,deck+6.3)):
         for side in (-1,1):
@@ -224,12 +232,13 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             for k in range(1,round((high-low)/.34)):
                 y=low+k*.34; beam(f'{name}-ladder-rung-{side}-{low}-{k}',(x-.35,y,z),(x+.35,y,z),.055,iron,root.name)
     # A chart room with a tall door and glazing, distinct from the decks.
-    cabin=cube(name+'-chart-room',(0,deck+3.8,0),(8,4.1,5.4),wood,root.name,.20); parent(cabin,root)
-    roof=cube(name+'-chart-room-roof',(0,deck+6.0,0),(9,.28,6.1),rust,root.name,.10); parent(roof,root)
+    chart_x=-22
+    cabin=cube(name+'-chart-room',(chart_x,deck+3.8,0),(8,4.1,5.4),steel,root.name,.20); parent(cabin,root)
+    roof=cube(name+'-chart-room-roof',(chart_x,deck+6.0,0),(9,.28,6.1),rust,root.name,.10); parent(roof,root)
     for side in (-1,1):
         for i in range(5):
-            win=cube(f'{name}-chart-window-{side}-{i}',(-3.1+i*1.55,deck+4.0,side*2.72),(1.05,1.0,.08),glass,root.name,.05); parent(win,root)
-    door=cube(name+'-chart-door',(4.05,deck+3.55,-1.1),(.10,2.4,1.0),iron,root.name,.05); parent(door,root)
+            win=cube(f'{name}-chart-window-{side}-{i}',(chart_x-3.1+i*1.55,deck+4.0,side*2.72),(1.05,1.0,.08),glass,root.name,.05); parent(win,root)
+    door=cube(name+'-chart-door',(chart_x+4.05,deck+3.55,-1.1),(.10,2.4,1.0),iron,root.name,.05); parent(door,root)
     return
 
 ships=[
@@ -239,14 +248,14 @@ ships=[
 ]
 roots={}
 for ident,loc,label,length,width,deck,keel,lean in ships:
-    r=root_obj(ident,(loc[0],0,loc[1]),ident); roots[ident]=r
+    r=root_obj(ident,(loc[0]+22,0,loc[1]),ident); roots[ident]=r
     photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
     # Distinct cargo-deck clutter, kept low and joined to the ship.
     for i,x in enumerate((-20,-10,8,20)):
         crate=cube(f'{ident}-cargo-{i}',(x,deck+.55,(-1)**i*2.6),(3,1.1,2.2),rust if i%2 else steel,ident,.12); parent(crate,r)
     # Each anchor chain has its own named detachable part and rests on the bed.
     for side in (-1,1):
-        cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0],-1.5,loc[1]),f'{ident}:anchor-chain')
+        cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0]+22,0,loc[1]),f'{ident}:anchor-chain')
         for i in range(12):
             x=length*.43+i*.48; z=side*(width*.52+i*.12)
             link=torus(f'{ident}-anchor-link-{side}-{i}',(x,-1.8,z),.21,.045,iron,f'{ident}:anchor-chain','Z',8,4); parent(link,cr)
@@ -271,7 +280,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,shaft_root)
 
 # Patience's mast, platform and bell: 14 m above the main deck.
-pat=roots['ship-patience']; mastx=7; mastz=8; platform_y=19
+pat=roots['ship-patience']; mastx=-15; mastz=8; platform_y=19
 mast_root=root_obj('ship-patience:mast',(0,0,0),'ship-patience:mast'); parent(mast_root,pat)
 bell_root=root_obj('ship-patience:bell',(0,0,0),'ship-patience:bell'); parent(bell_root,mast_root)
 for dx in (-.72,.72):
@@ -341,19 +350,24 @@ lightpart=root_obj('lighthouse:beam',(0,0,0),'lighthouse:beam'); parent(lightpar
 beam_obj=cube('lighthouse rotating beam',(0,27.2,-5),(1.0,.16,44),lamp,'lighthouse:beam',.03); parent(beam_obj,lightpart)
 
 # The ridiculous forty-foot pilot boat remains a real, buoyant hull.
-boat=root_obj('pilot-boat',(230,-2,-430),'pilot-boat')
+boat=root_obj('pilot-boat',(230,-.8,-430),'pilot-boat')
 boat_dims=(12.2,3.9,2.5,-1.2)
-photo_hull('pilot-boat-floatable-hull',boat,(12.2,3.9,2.5,-1.2),pilot_photo,'PILOT BOAT')
+photo_hull('pilot-boat-floatable-hull',boat,(12.2,3.9,2.5,-1.2),pilot_photo,'')
 boat_hull=bpy.data.objects.get('pilot-boat-floatable-hull')
 # The hull projection crop uses the workboat profile; a pale upper strake keeps its shape readable.
 for side in (-1,1):
     upper=cube(f'pilot-boat-sheer-strake-{side}',(0,1.7,side*1.62),(10.2,.20,.12),steel,'pilot-boat',.05); parent(upper,boat)
     for i in range(7):
-        win=cube(f'pilot-boat-cabin-window-{side}-{i}',(-1.8+i*.6,3.25,side*1.72),(.42,.5,.09),glass,'pilot-boat',.06); parent(win,boat)
-cabin=cube('pilot-boat-pilot-house',(0,2.65,0),(5.7,2.2,3.2),wood,'pilot-boat',.18); parent(cabin,boat)
-roof=cube('pilot-boat-cabin-roof',(0,3.83,0),(6.2,.25,3.5),steel,'pilot-boat',.1); parent(roof,boat)
-for x in (-3.0,3.0):
-    beam(f'pilot-boat-rail-{x}',(x,2.1,-1.72),(x,3.5,-1.72),.09,steel,'pilot-boat')
+        win=cube(f'pilot-boat-cabin-window-{side}-{i}',(-1.8+i*.6,3.05,side*1.41),(.42,.55,.06),glass,'pilot-boat',.04); parent(win,boat)
+house_vertices=[(-2.6,1.65,-1.5),(2.6,1.65,-1.5),(2.6,1.65,1.5),(-2.6,1.65,1.5),
+                (-2.2,3.65,-1.32),(2.0,3.65,-1.32),(2.0,3.65,1.32),(-2.2,3.65,1.32)]
+house_faces=[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
+house_mesh=bpy.data.meshes.new('sloped pilot-house panels'); house_mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); house_mesh.materials.append(boat_paint); house_mesh.update()
+cabin=bpy.data.objects.new('pilot-boat-pilot-house',house_mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
+roof=cube('pilot-boat-cabin-roof',(0,3.72,0),(5.7,.25,3.0),steel,'pilot-boat',.1); parent(roof,boat)
+for side in (-1,1):
+    beam(f'pilot-boat-rail-{side}',(-2.8,2.1,side*1.72),(3.8,2.1,side*1.72),.09,steel,'pilot-boat')
+windshield=cube('pilot-boat-forward-windscreen',(2.02,3.05,0),(.07,.78,2.25),glass,'pilot-boat',.06); parent(windshield,boat)
 # A heavy 14 m trailer with eight complete road wheels and spring packs.
 trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
 for z in (-1.45,1.45): beam(f'pilot-trailer-long-rail-{z}',(-8,.3,z),(7,.3,z),.28,rust,'pilot-boat')
@@ -362,11 +376,11 @@ hitch=beam('pilot-trailer-hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat:hitch
 for side in (-1,1):
     for i,x in enumerate((-4,-1,2,5)):
         z=side*1.72
-        tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.62,z),.72,.24,iron,'pilot-boat','Z')
+        tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.14,z),.72,.24,iron,'pilot-boat','Z')
         for k in range(8):
             a=k*2*math.pi/8
-            lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.62+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
-        hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.62,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
+            lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.14+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
+        hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.14,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
         for spring in range(3):
             beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
 
@@ -431,9 +445,9 @@ def render_imported_review():
     review_ground.data.materials.append(review_material)
     # Render view and light objects are created only after GLB import.
     add_lighting()
-    targets=[((-45,8,-375),(-45,5,-415),18),((170,16,-425),(170,12,-395),80),((230,9,-390),(230,0,-430),90)]
+    targets=[((-23,8,-375),(-23,5,-415),18),((170,13,-425),(170,13,-395),24),((230,5,-390),(230,0,-430),90)]
     view_sizes=((1600,320),(512,1024),(1536,512))
-    target_ids=('ship-good-hope','lighthouse','pilot-boat')
+    target_ids=(('ship-good-hope',),('lighthouse',),('pilot-boat','pilot-trailer','pilot-wheel','pilot-leaf','pilot-tyre'))
     for index,(loc,target,lens) in enumerate(targets):
         for obj in scene.objects:
             if obj.type=='MESH' and obj is not review_ground:
@@ -444,7 +458,7 @@ def render_imported_review():
     for obj in scene.objects:
         if obj.type=='MESH' and obj is not review_ground: obj.hide_render=False
     # Context at car height, 40 m away, and a top-down map view.
-    for index,(loc,target,lens) in enumerate((((-45,8,-375),(-45,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
+    for index,(loc,target,lens) in enumerate((((-23,8,-375),(-23,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
         scene.render.resolution_x,scene.render.resolution_y=(1200,600)
         if index==2:
             scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.045,.055,.085,1)
