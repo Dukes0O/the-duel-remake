@@ -2,6 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
+import {sampleIronLine} from '../../world/iron-line.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -66,6 +67,21 @@ function applyStepLoan(duel, worldJob) {
       state.footWeapons.selected = worldJob.originalFootWeaponSelected;
     initializeCrewGear(duel);
   }
+  const stepCrew=worldJob.job.steps[worldJob.job.stepIndex]?.lentCrew;
+  if(stepCrew&&state.crewId!==stepCrew) {state.crewId=stepCrew;initializeCrewGear(duel);}
+}
+
+export function prepareWorldJobControls(duel) {
+  const worldJob=duel.state.arena?.mode==='world-job'?duel.state.arena.worldJob:null;
+  if(!worldJob)return false;
+  const step=worldJob?.job.steps[worldJob.job.stepIndex];
+  const input=duel.state.input??{};
+  worldJob.controls={whistle:input.boost===true||duel.state.fighterInput?.jump===true};
+  if(step?.kind!=='drivetrain') return false;
+  Object.assign(worldJob.controls,{throttle:input.throttle??0,brake:input.brake??0});
+  input.throttle=0;input.brake=0;input.steer=0;input.boost=false;
+  duel.state.speedMph=0;duel.state.pushVelocity=0;
+  return true;
 }
 
 function updateJobActors(worldJob, dt) {
@@ -141,6 +157,23 @@ function applyRequests(duel, worldJob, requests) {
     }
     else if (request.type === 'follow') worldJob.follow = {...request,
       actorId: request.actorId ?? worldJob.job.steps[worldJob.job.stepIndex]?.targetId};
+    else if(request.type==='train') {
+      let actor=worldJob.actors.find(item=>item.id===request.actorId);
+      if(!actor) {actor={id:request.actorId,health:9999,renderCar:'falcone_heritage'};worldJob.actors.push(actor);}
+      actor.renderCar??='falcone_heritage';
+      Object.assign(actor,{position:{...request.position},pathProgress:request.progress??actor.pathProgress??0,
+        speed:request.speed??0,train:true});
+      const path=request.path??worldJob.job.steps[worldJob.job.stepIndex]?.path;
+      const metres=request.metres??0;
+      actor.roofPlates=(request.roofPlates??['tank-wagon-2','tank-wagon-1']).map(id=>{
+        const behind=id==='tank-wagon-2'?42:22;
+        const sample=sampleIronLine(path,Math.max(0,metres-behind));
+        return {id,position:sample??actor.position,radius:4};
+      });
+      const cab=sampleIronLine(path,Math.max(0,metres-8))??actor.position;
+      actor.coupling={x:cab.x-Math.sin(cab.heading??0)*4,y:cab.y+1,z:cab.z-Math.cos(cab.heading??0)*4};
+      actor.trainLength=request.pathLength??0;
+    }
     else if (request.type === 'spawnWave') {
       const key = `${worldJob.job.stepIndex}:${worldJob.job.stepState.wave ?? 0}`;
       spawnWave(duel, worldJob, request, key);
@@ -231,7 +264,9 @@ export function stepWorldJob(duel, dt) {
     thingsHit,
     carrying: worldJob.carrying, inventory: worldJob.inventory ?? [], lamps: worldJob.job.steps[worldJob.job.stepIndex]?.lamps ?? [],
     places: worldJob.places ?? {}, placeHealth: worldJob.placeHealth,
-    difficulty: state.cpuDifficulty,
+    difficulty: state.cpuDifficulty, controls:worldJob.controls??{}, interact:state.input?.interact===true,
+    grapple:(state.crewGear?.id==='grapple'&&state.footWeapons?.selected===state.crewGear.id)||state.input?.interact===true,
+    train:worldJob.actors.find(actor=>actor.train),
     contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
@@ -276,6 +311,13 @@ export function stepWorldJob(duel, dt) {
     }
   }
   applyRequests(duel, worldJob, next.requests);
+  worldJob.controls=null;
+  const train=worldJob.actors.find(actor=>actor.train);
+  if(train&&!state.onFoot) {
+    const nearest=duel.course.nearest(train.position.x,train.position.z,state.s);
+    state.s=state.prevS=nearest.s;state.lateral=state.prevLateral=nearest.lateral;
+    state.headingError=0;state.speedMph=train.speed*2.236936;
+  }
   return null;
 }
 
