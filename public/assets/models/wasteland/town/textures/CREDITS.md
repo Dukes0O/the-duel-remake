@@ -250,3 +250,25 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+- `power-windmill-reference.jpg`: original photo reference generated with
+  OpenAI ImageGen for TOWN-ART-POWER round 3. The windmill head, blades, tail
+  vane, utility pole and transformer are measured from this picture by
+  `tools/blender/photo_model.py`.
+- `generator-{side,front,rear,overhead}.jpg`: crops of a generated four-view
+  photo for the truck-engine generator; `solar-{side,front,rear,overhead}.jpg`:
+  crops of a generated four-view photo for the salvaged rack; and
+  `fuel-{side,front,rear,overhead}.jpg`: crops of a generated four-view photo
+  for the tank depot. All were generated with OpenAI ImageGen for
+  TOWN-ART-POWER round 3 and measured through `photo_model.py` and
+  `hull_model.py` in `tools/blender/town-power.py`.
+
+  Prompts: generator—"One old truck engine on a skid in left-side, front, rear
+  and overhead orthographic views; visible inline-six block, manifold, radiator,
+  alternator, exhaust stack and fuel drums; faded gray paint, dark rust and
+  soot, pale seamless background." Solar rack—"One salvaged 4 m by 3 m steel
+  rack with six mismatched solar panels, some cracked, in side, front, rear and
+  overhead orthographic views on a pale seamless background." Fuel depot—"Two
+  rusted horizontal steel tanks, pump, valves, pipes and a faded hazard-striped
+  concrete bund, in side, front, rear and overhead orthographic views on a pale
+  seamless background."
