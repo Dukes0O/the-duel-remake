@@ -660,6 +660,10 @@ try {
         assert.ok(names.has('the-2-15-engine'), 'named dug-out engine node');
         assert.ok(names.has('the-2-15-drift'), 'separate named salt drift node');
         assert.ok(names.has('the-2-15-van'), 'separate named guard van node');
+        assert.ok(names.has('wednesday'), 'separate named Wednesday engine node');
+        for (const heap of ['coal-heap-full', 'coal-heap-half', 'coal-heap-low']) {
+          assert.ok(names.has(heap), `separate named ${heap} node`);
+        }
         const binaryOffset = 20 + jsonLength + 8;
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
