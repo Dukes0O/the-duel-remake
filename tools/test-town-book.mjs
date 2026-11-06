@@ -23,4 +23,14 @@ assert.deepEqual(townBookPages(loaded), townBookPages(town));
 const duplicate = createTown(94021, 'Dry Creek', Array.from({length:12},(_,index)=>({name:`Founder ${index + 1}`})));
 for (let tick = 0; tick < Number(year * 30n - 1n); tick++) stepTown(duplicate);
 assert.deepEqual(townBookPages(duplicate), townBookPages(town));
+{
+  // A busy year keeps every note in the Book, though its page sentence stays short.
+  const busy=createTown(77,'Busy',Array.from({length:12},(_,index)=>({name:`Founder ${index + 1}`})));
+  stepTown(busy);
+  busy.book=busy.book||[];
+  for(let i=0;i<12;i++)busy.book.push({type:'first',text:`First number ${i}.`,tick:0n});
+  while(townBookPages(busy).length<2)stepTown(busy);
+  const noted=townBookPages(busy).flatMap(page=>page.entries||[]).filter(note=>note.startsWith('First number'));
+  assert.equal(noted.length,12,'nothing in a busy year is dropped');
+}
 console.log('TOWN-BOOK passed: thirty years, founder page, short annual pages, saved history, and repeatable output.');

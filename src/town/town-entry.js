@@ -24,7 +24,9 @@ export async function startTown({app,onExit=()=>{}}={}) {
   const leave=async()=>{if(await save('leaving'))dispose();};
   const paint=()=>{if(closed||!town)return;renderTownScreen(ui,town,{speed,next:message||'Nothing needs your attention. Make a plan.'});ui.querySelector('[data-town-action="yard"]')?.addEventListener('click',leave);};
   const pointers=readTownPointer();
-  if(pointers.length){const loaded=await store.load(pointers[0]);if(!loaded.town){host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>${loaded.message}</p><button type="button" data-close>THE YARD</button></section>`;host.querySelector('[data-close]').onclick=dispose;return{stop:dispose,host};}town=loaded.town;message=loaded.message||'';}
+  if(pointers.length){const loaded=await store.load(pointers[0]);if(!loaded.town){host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>${loaded.message}</p><button type="button" data-close>THE YARD</button></section>`;host.querySelector('[data-close]').onclick=dispose;return{stop:dispose,host};}town=loaded.town;message=loaded.message||'';
+    // One town on this laptop, shared by whoever plays (docs/WASTELAND_TOWN.md section 13): opening it makes you a mayor.
+    if(app?.player?.id&&!town.mayors?.includes(app.player.id))town.mayors=[...(town.mayors||[]),app.player.id];}
   else{
     host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>Driver, people keep turning up at the gate.</p><p>I keep a gate. I do not keep a town. There is flat ground all round the Dome. You build it.</p><p>Hollis</p><form><label for="town-name">Name your town</label><br><input id="town-name" name="name" value="Tin Flat" maxlength="48" required><button type="submit">START THE TOWN</button></form></section>`;
     await new Promise(resolve=>host.querySelector('form').addEventListener('submit',event=>{event.preventDefault();const seed=(Number(app.getMenuSeed?.())||1989)>>>0||1;town=createTown(seed,host.querySelector('[name=name]').value,[]);town.mayors=[app.player?.id].filter(Boolean);resolve();},{once:true}));

@@ -20,3 +20,7 @@
 ## Removed
 
 Removed the screen-percentage placement formula, the automatic camera zoom rise, and the attempt to move the renderer canvas into the map panel. No lane files or runtime assets were removed.
+
+## Claude's review notes (5 November 2026)
+
+Independent review, three findings. (1) The change to the base colour in `groundColour` applies only to edited ground, and released Scablands jobs have none, so nothing changes for a player; left as is. (2) One town pointer on the laptop means one town: `docs/WASTELAND_TOWN.md` section 13 allows it to belong to one player or be shared, so whoever opens it becomes a mayor. Kyle was asked whether he wants a shared town or one each; this is the shared answer, and it changes easily. (3) The Book kept at most eight notes a year and lost the rest; it now keeps every note, and the page's sentence stays short. A test covers it.

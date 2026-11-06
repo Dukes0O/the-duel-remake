@@ -77,7 +77,7 @@ export function stepTownBook(town, tick = town.tick) {
   const notes = annualNotes(town, state);
   const base = townBookSentence(Number((currentYear - 2n) % BigInt(TOWN_BOOK_FORMS.length)));
   const text = notes.length ? `${base} ${notes.slice(0, 3).join(' ')}` : base;
-  town.bookPages.push({year:currentYear, tick:asTick(tick), text, entries:notes.slice(0, 8)});
+  town.bookPages.push({year:currentYear, tick:asTick(tick), text, entries:notes});
 }
 
 registerTownSystem('town-book', 90, TOWN_TIME.ticksPerDay, ({town,tick}) => stepTownBook(town,tick));
