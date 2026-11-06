@@ -22,6 +22,7 @@ export {TOWN_MONEY_PRICES, townLedger} from './town-money.js';
 export {groundWaterAt} from './town-ground.js';
 export {townFoodSummary} from './town-food.js';
 export {stepTownWeather} from './town-weather.js';
+export {townDispatchChance, townDispatchChanceWords, townDispatchRecords} from './town-dispatch.js';
 export {answerReport, raiseTownReport, townReports} from './town-reports.js';
 export {TOWN_NEIGHBOURS, OUTPOST_CHAPTERS} from './content/neighbours.js';
 export {townNeighbourStanding, changeTownNeighbourStanding, completeTownNeighbourTrade, setTownOutpostProtection, townOutpostProtectionIncome} from './town-outposts.js';
