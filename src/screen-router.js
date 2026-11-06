@@ -328,6 +328,12 @@ root.addEventListener('click',e => {
         .catch(error=>{garageMessage='The machine yard could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);console.warn('THE DIG failed to open:',error?.message||error);});
       return;
     }
+    case 'yard-the-town': {
+      if(!app.isYardHomeActive?.()||app._switches().enabled('wasteland-town')!==true)return;
+      void import('./town/town-entry.js').then(({startTown})=>startTown({app,onExit:()=>{lastScreen=null;renderState(app.duel.state);}}))
+        .catch(error=>{garageMessage=error?.message||'The town could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);});
+      return;
+    }
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';

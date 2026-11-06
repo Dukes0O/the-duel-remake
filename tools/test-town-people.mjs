@@ -41,6 +41,8 @@ first.peopleConditions.paintedHomePlaces = 10_000;
 second.peopleConditions.paintedHomePlaces = 10_000;
 first.buildings.push({id:'school-1', buildingId:'school', state:'complete'});
 second.buildings.push({id:'school-1', buildingId:'school', state:'complete'});
+// A well-kept town has latrines. TOWN-HEALTH makes a town with none sick, and sick people have few children.
+for (const town2 of [first, second]) for (let index = 0; index < 600; index++) town2.buildings.push({id:`latrine-${index}`, buildingId:'latrine', state:'complete'});
 for (let day = 0; day < TOWN_TIME.daysPerMonth * TOWN_TIME.monthsPerYear * 30; day++) { stepDay(first); stepDay(second); }
 same(serializeTown(first), serializeTown(second), 'the same seed and years produce the same people history');
 check(first.people.some(person => person.generation >= 2), 'thirty years include children of the founders who become parents');

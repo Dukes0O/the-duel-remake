@@ -4,6 +4,8 @@ import './town-power.js';
 import './town-treatment.js';
 import './town-ground.js';
 import './town-events.js';
+import './town-book.js';
+import './town-health.js';
 export {bucketWaterCost, checkTownLatrine, completeTownUtilityRoute, ensureUtilityState, solveTownSewers, solveTownWater, treatTownWater, MIN_PERSON_WATER_LITRES_DAY, PIPE_SIZES, PERSON_WATER_LITRES_DAY, TAP_LITRES_MINUTE} from './town-pipes.js';
 export {solveTownPower} from './town-power.js';
 export {runTownTreatment} from './town-treatment.js';
@@ -11,6 +13,7 @@ export {BUILDINGS, GOODS, buildingById, goodById, validateTownContent} from './c
 export {createTown, serializeTown, deserializeTown} from './town-state.js';
 export {TOWN_MIGRATIONS, TOWN_SAVE_VERSION, migrateTownData} from './town-migrate.js';
 export {townCalendarAt, TOWN_TIME} from './town-calendar.js';
+export {townBookPages, stepTownBook} from './town-book.js';
 export {dispatchTownCommand, registerTownCommand, townBuildingCatalog, TOWN_WORK_STATES} from './town-commands.js';
 export {stepTown, registerTownSystem, registeredTownSystems} from './town-sim.js';
 export {createWorkOrder, createBuildingWorkOrder, createRouteWorkOrder, advanceWork, workOrderScaffold, prioritizeWorkOrders, workStageMinutes} from './town-work.js';
