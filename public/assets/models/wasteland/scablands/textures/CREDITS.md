@@ -88,10 +88,12 @@ source photo; a cyan-background edit was used only to make his outline mask.
 The piano front is perspective-warped from its original photograph.
 
 - `ww-gerald-photo.jpg`: original overhead image of a desert lizard on dusty
-  ground, cropped to the full animal from nose to tail. Prompt: realistic desert
-  lizard, side and overhead photographs, plain dusty ground, overcast daylight.
+  ground, cropped to the full animal from nose to tail and reduced to 1200 x 476
+  for the review-sized texture. Prompt: realistic desert lizard, side and
+  overhead photographs, plain dusty ground, overcast daylight.
 - `ww-harpoon-photo.jpg`: Codex ImageGen photograph of a complete historic
-  whaling harpoon, dead side-on and level on a flat pale background. Prompt:
+  whaling harpoon, dead side-on and level on a flat pale background, reduced to
+  1700 x 567. Prompt:
   Photographic reference image of one complete historic whaling harpoon, seen
   precisely dead side-on at eye-level with no perspective tilt, arranged
   horizontally across a plain pale grey studio ground. The entire object is in
@@ -106,5 +108,6 @@ The piano front is perspective-warped from its original photograph.
   table, no hands, no text, no labels, no other objects. Wide landscape
   composition, highest available resolution.
 - `ww-piano-photo.jpg`: original old upright piano photograph, perspective
-  warped to a 1500 x 1300 front view. Prompt: battered upright piano with its
+  warped to a 1500 x 1300 front view and reduced to 1200 x 1040. Prompt:
+  battered upright piano with its
   action exposed, photographed in even neutral daylight.

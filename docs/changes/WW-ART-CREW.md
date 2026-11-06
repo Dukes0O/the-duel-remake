@@ -7,28 +7,35 @@
   nose-to-hip span is 0.30 m, the spine reaches 45 mm, and joint bumps lift the
   elbows and knees by 15 mm.
 - Replaced the round 3 harpoon with a 120-column, 12-sided outline lathe from a
-  new level side-on photograph. The piano's measured slab model is still
-  pending in this staged change.
-- The current committed sheet contains the Gerald views and harpoon side view.
+  new level side-on photograph.
+- Rebuilt the piano from measured, unrounded slabs at the specified depths.
+  Its front faces use their own picture regions; wood returns use two-dimensional
+  photo crops, and the opening sides use darkened wood.
+- Completed the three-row comparison sheet from matched renders of the
+  exported and reimported GLB.
 
 ## Checks
 
-- Gerald Blender export, GLB reimport and matched renders: passed; 16,328
-  triangles, 805,084 bytes. Render brightness: overhead 121.7 vs photo 130.0;
-  side 120.4 vs photo 127.8.
-- Harpoon Blender export, GLB reimport and matched render: passed; combined
-  model has 19,206 triangles and is 1,118,632 bytes. Brightness: 87.3 vs
-  photo 80.5. A pale silhouette rim remains for Claude's review.
+- Blender 4.5 recipe rebuild, GLB reimport and matched renders: passed;
+  19,386 triangles, 1,676,328 bytes across all three props.
+- `node tools/test-blender-output.mjs`: passed, 258 checks.
+- `node tools/test-repo-hygiene.mjs`: passed; size advisories only.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: failed in the
+  unrelated Eifel audio loudness check. Its same-commit rerun also failed.
+  FFmpeg is unavailable in this session, so that check could not measure the
+  audio. No test assertions changed.
+- `npm run build`: passed.
+- Browser checks: not run; no browser check is named on this card.
+- Claude's final look verdict: pending. The harpoon's light silhouette rim and
+  Gerald's shallow side profile remain called out for review.
 - Visual self-check: Gerald's overhead reads as a real lizard relief. Its
   shallow side profile reads thin because the specified spine height is 45 mm.
-  The harpoon silhouette matches its reference, with a light rim to review.
-- `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs`: pending the
-  complete model.
-- Browser checks: not run; Claude owns browser and look checks.
+  The harpoon silhouette matches its reference, with a light rim to review. The
+  piano's front reads as an old upright with exposed action and no white edges.
 - Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- Removed Gerald's separate body/head/tail and straight leg geometry. Round 3
-  sheet and note are replaced by round 4.
+- Removed Gerald's separate body/head/tail and straight leg geometry and the
+  round 3 piano/harpoon shapes. Round 3 sheet and note are replaced by round 4.
 - No unrelated favours were added.

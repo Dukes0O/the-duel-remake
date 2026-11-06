@@ -9,15 +9,20 @@ from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--stage',choices=('gerald','harpoon','piano','all'),default='all')
+parser.add_argument('--paths-only',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:]); root=Path(args.root).resolve()
+out=root/'public/assets/models/wasteland/scablands/crew-favours.glb'
+blend=root/'art-build/crew-favours/crew-favours.blend'
+if args.paths_only:
+    print(json.dumps({'blend':[str(blend)],'glb':[str(out)]}))
+    raise SystemExit(0)
 all_stages=('gerald','harpoon','piano')
 stages=all_stages if args.stage=='all' else all_stages[:all_stages.index(args.stage)+1]
 import bpy, numpy as np
-from mathutils import Vector
+from mathutils import Vector, Matrix
 sys.path.insert(0,str(root/'tools/blender')); import town_base as town
 texture_dir=root/'public/assets/models/wasteland/scablands/textures'
 paths={'gerald':texture_dir/'ww-gerald-photo.jpg', 'harpoon':texture_dir/'ww-harpoon-photo.jpg', 'piano':texture_dir/'ww-piano-photo.jpg'}
-out=root/'public/assets/models/wasteland/scablands/crew-favours.glb'
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; root_obj=bpy.data.objects.new('crew-favours',None); scene.collection.objects.link(root_obj)
 _base=town.make_materials()
@@ -44,6 +49,12 @@ def make_obj(name,verts,faces,uvs,mat,smooth=False):
         for li in poly.loop_indices: uv.data[li].uv=uvs[mesh.loops[li].vertex_index]
     obj=bpy.data.objects.new(name,mesh); scene.collection.objects.link(obj); obj.parent=root_obj
     mesh.materials.append(mat); obj['part']=name.split('-')[0]; return obj
+
+def aim_camera(camera,target,up_hint):
+    direction=(Vector(target)-camera.location).normalized()
+    up_hint=Vector(up_hint).normalized(); right=direction.cross(up_hint).normalized()
+    up=right.cross(direction).normalized(); back=-direction
+    camera.rotation_euler=Matrix((right,up,back)).transposed().to_euler()
 
 def distance_map(binary):
     # Two-pass 8-neighbour chamfer transform, adequate to the regular photo grid.
@@ -88,7 +99,7 @@ def build_gerald():
         for col in range(nx):
             px,py=X[row,col],Y[row,col]; z=-(px-cx)*scale; x=(py-cy)*scale
             # Photo's long axis maps to world X, its width to world Z.
-            gx=(px-cx)*scale; gz=-(py-cy)*scale
+            gx=(px-cx)*scale; gz=(py-cy)*scale
             ht=float(upper[row,col]) if inside[row,col] else 0.0
             vtop.append((gx,ht,gz)); vbot.append((gx,-.002,gz)); uvtop.append((px/w,1-py/h))
     top_faces=[]; bottom_faces=[]; edge_counts={}
@@ -141,16 +152,16 @@ def build_harpoon():
 
 # Piano rectangles are measured in the rectified 1500 x 1300 front image.
 PIANO_RECTS=[
- ('lid',(0,0,1500,62),.60,.075),('upper-panel',(220,75,1280,270),.48,.05),
- ('fall-board',(165,305,1340,425),.50,.055),('key-bed',(250,425,1260,505),.62,.06),
+ ('lid',(0,0,1500,62),.60,.075),('upper-panel',(220,62,1280,300),.48,.05),
+ ('fall-board',(165,305,1340,425),.50,.055),('key-bed',(205,425,1295,620),.62,.06),
  ('left-arm',(0,300,205,630),.64,.08),('right-arm',(1295,300,1500,630),.64,.08),
- ('action-opening',(205,620,1295,900),.28,.06),('lower-opening',(205,905,1295,1170),.20,.06),
- ('left-post',(0,60,165,1170),.50,.10),('right-post',(1335,60,1500,1170),.50,.10),
+ ('action-opening',(205,620,1295,905),.28,.06),('lower-opening',(205,900,1295,1170),.20,.06),
+ ('left-post',(0,62,220,1170),.50,.10),('right-post',(1280,62,1500,1170),.50,.10),
  ('plinth',(0,1165,1500,1300),.56,.11),('left-foot',(0,1240,220,1300),.60,.10),
  ('right-foot',(1280,1240,1500,1300),.60,.10),('pedal-left',(570,1245,720,1300),.66,.025),
  ('pedal-right',(780,1245,930,1300),.66,.025)]
 
-def piano_box(name,rect,depth,thickness,mat,inner=False):
+def piano_box(name,rect,depth,thickness,mat,return_mat=None):
     x0,y0,x1,y1=rect; W,H=1500,1300
     # In front view the photo rectangle fills the box's front face exactly.
     left=(x0/W-0.5)*1.5; right=(x1/W-0.5)*1.5
@@ -165,18 +176,13 @@ def piano_box(name,rect,depth,thickness,mat,inner=False):
     for i in range(8):
         px,py=((x0,y1),(x1,y1),(x1,y0),(x0,y0),(x0,y1),(x1,y1),(x1,y0),(x0,y0))[i]
         uv.append((px/W,1-py/H))
-    # For each return, select a compact patch from the lower left wood grain.
-    patch=(10,520,175,1160)
-    for fi in range(1,6):
-        ids=faces[fi]
-        for vi in ids:
-            # 165 x 640 photo pixels represent 0.165 x 0.64 m at the photo scale.
-            if fi in (1,): uv[vi]=(.02,.56)
-            elif fi in (2,3): uv[vi]=(.02,.56)
-            else: uv[vi]=(.02,.56)
-    # Separate per-loop UVs avoid a stretched front-edge line; map returns to
-    # a substantial, repeatable wood region from the piano's left outer strip.
+    # Separate per-loop UVs map every return over a two-dimensional patch.
+    # At the photo's front scale, 1000 pixels represent one metre. The patch
+    # comes from the piano's left wood strip, not from a one-pixel front edge.
     mesh=bpy.data.meshes.new('piano '+name+' box'); mesh.from_pydata([tuple(town.game_vector(v)) for v in verts],[],faces); mesh.update()
+    mesh.materials.append(mat)
+    if return_mat:
+        mesh.materials.append(return_mat)
     layer=mesh.uv_layers.new(name='UVMap')
     for poly in mesh.polygons:
         for li in poly.loop_indices:
@@ -184,17 +190,22 @@ def piano_box(name,rect,depth,thickness,mat,inner=False):
             if poly.index==0: uvcoord=uv[vi]
             else:
                 vx,vy,vz=verts[vi]
-                patch_u=.02+max(0,min(1,(vx-left)/max(.001,right-left)))*.11
-                patch_v=.40+max(0,min(1,(vy-bottom)/max(.001,top-bottom)))*.45
-                uvcoord=(patch_u,patch_v)
+                if poly.index in (1,):
+                    uvcoord=(.02+(vx-left)/1.5,.38+(vy-bottom)/1.3)
+                elif poly.index in (2,3):
+                    uvcoord=(.02+(vz-zf)/1.5,.38+(vy-bottom)/1.3)
+                else:
+                    uvcoord=(.02+(vx-left)/1.5,.38+(vz-zf)/1.3)
             layer.data[li].uv=uvcoord
+        if return_mat and poly.index>0: poly.material_index=1
     obj=bpy.data.objects.new('piano-upright-'+name,mesh); scene.collection.objects.link(obj); obj.parent=root_obj
-    mesh.materials.append(mat); return obj
+    return obj
 
 def build_piano():
     photo=photo_material('Piano / rectified front photo',paths['piano']); dark=photo_material('Piano / dark inner wood',paths['piano'],1/3)
     for name,rect,depth,thick in PIANO_RECTS:
-        piano_box(name,rect,depth,thick,dark if 'opening' in name else photo,'opening' in name)
+        is_opening='opening' in name
+        piano_box(name,rect,depth,thick,photo,dark if is_opening else None)
 
 for stage in stages:
     if stage=='gerald': build_gerald()
@@ -211,6 +222,8 @@ for mat in bpy.data.materials:
         bsdf=mat.node_tree.nodes.get('Principled BSDF')
         if bsdf: bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=.85
 town.export_glb(out)
+blend.parent.mkdir(parents=True,exist_ok=True)
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 
 # Reload the asset into an empty scene before every render.
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(out))
@@ -238,15 +251,15 @@ for stage in stages:
     bpy.ops.object.camera_add(location=center+Vector((0,2,-5))); cam_obj=bpy.context.object; scene.camera=cam_obj; cam_obj.data.type='ORTHO'
     if stage=='gerald':
         scene.render.resolution_x=1200; scene.render.resolution_y=480
-        cam_obj.location=center+Vector((0,0,2.5)); cam_obj.rotation_euler=(center-cam_obj.location).to_track_quat('-Z','Y').to_euler(); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*2.5)*1.10
+        cam_obj.location=center+Vector((0,0,2.5)); aim_camera(cam_obj,center,(0,1,0)); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.y-lo.y)*2.5)*1.10
         scene.render.filepath=str(root/'.qa-dist'/'render-gerald-top.png'); bpy.ops.render.render(write_still=True)
         scene.render.resolution_x=1200; scene.render.resolution_y=240
-        cam_obj.location=center+Vector((0,-2.8,0)); cam_obj.rotation_euler=(center-cam_obj.location).to_track_quat('-Z','Z').to_euler(); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*1.5)*1.15
+        cam_obj.location=center+Vector((0,-2.8,0)); aim_camera(cam_obj,center,(0,0,1)); cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*5)*1.15
         scene.render.filepath=str(root/'.qa-dist'/'render-gerald-side.png'); bpy.ops.render.render(write_still=True)
     else:
         if stage=='piano': scene.render.resolution_x=900; scene.render.resolution_y=780
         else: scene.render.resolution_x=1200; scene.render.resolution_y=400
-        cam_obj.location=center+Vector((0,4 if stage=='piano' else -4,0)); cam_obj.rotation_euler=(center-cam_obj.location).to_track_quat('-Z','Z').to_euler()
+        cam_obj.location=center+Vector((0,4 if stage=='piano' else -4,0)); aim_camera(cam_obj,center,(0,0,1))
         aspect=scene.render.resolution_x/scene.render.resolution_y
         cam_obj.data.ortho_scale=max(hi.x-lo.x,(hi.z-lo.z)*aspect)*1.10
         scene.render.filepath=str(root/'.qa-dist'/f'render-{stage}.png'); bpy.ops.render.render(write_still=True)

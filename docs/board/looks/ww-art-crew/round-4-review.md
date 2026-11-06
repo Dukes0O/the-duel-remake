@@ -2,7 +2,7 @@
 
 Date: 6 November 2026
 Sheet: `round-4.jpg`
-Status: **Gerald and harpoon rendered; piano still pending.**
+Status: **All three models rendered from the exported and reimported GLB.**
 
 Gerald is one photo-mapped relief made from the overhead mask. It includes the
 head, four feet, toes and tail. Nose-to-hip measures 0.30 m; the tail is about
@@ -26,4 +26,13 @@ detail is in the right place. Render brightness is 87.3 vs photo 80.5. The
 render has a light rim along parts of the silhouette; Claude should check
 whether it reads as an unwanted edge. I would not mistake the harpoon for a toy.
 
-The sheet now contains Gerald and the harpoon. The piano row is still pending.
+The piano is built as unrounded depth slabs from the rectified front picture.
+The keyboard, exposed action and lower opening line up with the photograph, and
+the action back wall uses its own image region. Render brightness is 70.8 vs
+photo 79.9. I would not mistake it for a toy from the front. The box seams are
+visible at the fallboard, key bed and openings, as expected from the specified
+plain slabs.
+
+The final sheet contains all three comparisons. Gerald is paired overhead and
+from the low side; the harpoon is dead side-on; the piano is straight-on at
+photo height.
