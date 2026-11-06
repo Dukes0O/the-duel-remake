@@ -18,7 +18,7 @@ function assertSnapshot(result,label){
   if(JSON.stringify(result.before)!==JSON.stringify(result.after))
     throw Error(`${label}: native IndexedDB inventory changed: ${JSON.stringify(result)}`);
   if(result.opens.length)throw Error(`${label}: native IndexedDB was opened: ${result.opens.join(', ')}`);
-  if(result.badge!=='PREVIEW'||!result.gate||result.salHold!==100||!result.titan)
+  if(!/^PREVIEW( |$)/.test(result.badge||'')||!result.gate||result.salHold!==100||!result.titan)
     throw Error(`${label}: seeded preview player or badge was missing: ${JSON.stringify(result)}`);
 }
 

@@ -9,6 +9,7 @@ import { createEnzoVehicle, ENZO_VEHICLE_DIMENSIONS } from './enzo-vehicle.js';
 import { createMclarenF1Vehicle, MCLAREN_F1_VEHICLE_DIMENSIONS } from './mclaren-f1-vehicle.js';
 import { createBolideVehicle, BOLIDE_VEHICLE_DIMENSIONS } from './bolide-vehicle.js';
 import { createSirenaVehicle, SIRENA_VEHICLE_DIMENSIONS } from './sirena-vehicle.js';
+import {createVascaVehicle, VASCA_VEHICLE_DIMENSIONS} from './vasca-vehicle.js';
 import { loadHeroVehicle } from './hero-vehicle.js';
 import { loadSpeirlingVehicle } from './speirling-vehicle.js';
 
@@ -22,8 +23,10 @@ export function createVehicleAssets({ loadSkyline = loadSkylineVehicle, loadHero
   let speirling, fanPending, fanFailed = false;
   let wreck, wreckPending, wreckFailed = false;
   const isWreck = (key, options) => key === 'falcone_sirena' && options?.finish === 'sea-wreck';
-  const earnedFactories = { ferrari_enzo: createEnzoVehicle, mclaren_f1: createMclarenF1Vehicle, bugatti_bolide: createBolideVehicle, falcone_sirena: createSirenaVehicle };
-  const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS };
+  const earnedFactories = { ferrari_enzo: createEnzoVehicle, mclaren_f1: createMclarenF1Vehicle, bugatti_bolide: createBolideVehicle, falcone_sirena: createSirenaVehicle,
+    ...(flags.enabled('deep-vasca') ? {falcone_vasca:createVascaVehicle} : {}) };
+  const earnedDimensions = { ...ENZO_VEHICLE_DIMENSIONS, ...MCLAREN_F1_VEHICLE_DIMENSIONS, ...BOLIDE_VEHICLE_DIMENSIONS, ...SIRENA_VEHICLE_DIMENSIONS,
+    ...(flags.enabled('deep-vasca') ? VASCA_VEHICLE_DIMENSIONS : {}) };
   const licensedKinds = { falcone_heritage: 'sport', aurora_gt: 'gt' };
   const source = key => key === 'nissan_skyline_gtr_r34' ? (flags.enabled('nissan-skyline') ? 'skyline' : null) : key === 'mcmurtry_speirling' ? 'speirling' : Object.hasOwn(CLASSIC_VEHICLE_DIMENSIONS,key) ? 'classic' : Object.hasOwn(UNLOCK_VEHICLE_DIMENSIONS,key) ? 'unlock' : Object.hasOwn(KOENIGSEGG_VEHICLE_DIMENSIONS,key) ? 'ultimate' : Object.hasOwn(earnedDimensions,key) ? 'earned' : Object.hasOwn(licensedKinds,key) ? 'licensed' : null;
   function status(key, options) {
