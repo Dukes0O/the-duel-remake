@@ -25,7 +25,7 @@ export const DEEP_CREATURES = Object.freeze(Object.fromEntries([
   ['ray', 'Bat ray', 'Bat rays dig clams out of the sand by flapping their wings over it.'],
   ['manta', 'Manta', 'The biggest mantas are 7 m across, wider than a car is long, yet they feed mostly on plankton.'],
   ['sea-lion', 'California sea lion', 'Sea lions can turn their back flippers forward and walk on land. Seals cannot.'],
-  ['otter', 'Sea otter', 'Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears.'],
+  ['otter', 'Sea otter', 'Otters eat sea urchins. With too few otters, urchins can eat a kelp forest bare.'],
   ['crab', 'Kelp crab', "A kelp crab grips the kelp with hooked tips on its legs, and its shell takes on the colour of the seaweed it eats."],
   ['moray', 'Moray', 'A moray has a second set of jaws in its throat that pulls food down.'],
   ['grouper', 'Grouper', 'A big grouper opens its mouth so fast that water rushes in and carries a fish with it.'],
@@ -164,8 +164,8 @@ export function recordLogged(profile, creature, {enabled = false} = {}) {
 }
 
 // Records a pearl in profile.deep.pearls and pays 150 the first time. `pearlWhite`
-// is true when this was the ninth: the pearl-white finish (src/paint-presets.js)
-// is earned from the save itself.
+// is true when this completed the Kelp Coast's three: the pearl-white finish
+// (src/paint-presets.js) is earned from the save itself.
 export function recordPearl(profile, pearl, {enabled = false} = {}) {
   const same = ok => ({profile, ok, recorded: false, paid: 0, pearlWhite: false});
   if (enabled !== true || !DEEP_PEARLS.includes(pearl)) return same(false);
@@ -173,10 +173,11 @@ export function recordPearl(profile, pearl, {enabled = false} = {}) {
   if (before.includes(pearl)) return same(true);
   const pearls = add(before, pearl, id => DEEP_PEARLS.includes(id));
   const {credits, paid} = payTo(profile, DEEP_LOG_PAY.pearl);
-  return {profile: {...profile, credits, deep: {...deep, pearls}}, ok: true, recorded: true, paid,
-    pearlWhite: DEEP_PEARLS.every(id => pearls.includes(id))};
+  const pearlWhite = DEEP_LOG_PAGES[0].pearls.every(id => pearls.includes(id)) &&
+    !DEEP_LOG_PAGES[0].pearls.every(id => before.includes(id));
+  return {profile: {...profile, credits, deep: {...deep, pearls}}, ok: true, recorded: true, paid, pearlWhite};
 }
-export const hasAllPearls = profile => DEEP_PEARLS.every(id => (normalizeDeep(profile?.deep).pearls ?? []).includes(id));
+export const hasAllPearls = profile => DEEP_LOG_PAGES[0].pearls.every(id => (normalizeDeep(profile?.deep).pearls ?? []).includes(id));
 
 // Ana's lines for a log event and what recordLogged or recordPearl returned
 // (6.7): the otter line the first time an otter is logged, the log line for the
@@ -199,10 +200,12 @@ export function phoneLineFor(event, result) {
 export function logPage(profile) {
   const deep = normalizeDeep(profile?.deep), logged = deep.logged ?? [], pearls = deep.pearls ?? [];
   const found = deep.found ?? [];
-  return {rows: DEEP_LOG_PAGES.filter(page => found.includes(page.coast)).map(page => ({coast: page.coast, name: page.name,
+  const availablePages = DEEP_LOG_PAGES.filter(page => found.includes(page.coast));
+  return {rows: availablePages.map(page => ({coast: page.coast, name: page.name,
     complete: pageDone(page, logged), creatures: page.creatures.map(id => ({...DEEP_CREATURES[id], found: logged.includes(id),
       picture: logPicture(id)})), pearls: page.pearls.filter(id => pearls.includes(id)).length, pearlTotal: page.pearls.length})),
-  pearls: DEEP_PEARLS.filter(id => pearls.includes(id)).length, pearlTotal: DEEP_PEARLS.length};
+  pearls: availablePages.reduce((total, page) => total + page.pearls.filter(id => pearls.includes(id)).length, 0),
+  pearlTotal: availablePages.reduce((total, page) => total + page.pearls.length, 0)};
 }
 
 // One picture card, for the garage page and for the card that slides in during a

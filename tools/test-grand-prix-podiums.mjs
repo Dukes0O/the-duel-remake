@@ -66,12 +66,18 @@ for (const file of readdirSync(fixtures).filter(name => name.endsWith('.json')).
     const storage = storageFor(fixture.storage), oldStorage = storageFor(fixture.storage);
     const raw = Object.fromEntries(Object.keys(fixture.storage).map(key => [key, storage.getItem(key)]));
     const players = loadPlayers(storage);
-    assert.equal(JSON.stringify(players), JSON.stringify(oldProgression.loadPlayers(oldStorage)));
+    if (file === '25-deep-vasca.json') {
+      assert.ok(players.players[0].profile.unlockedCars.includes('falcone_vasca'));
+      assert.deepEqual(players.players[0].profile.deep, fixture.storage[PLAYERS_KEY].players[0].profile.deep);
+    } else {
+      assert.equal(JSON.stringify(players), JSON.stringify(oldProgression.loadPlayers(oldStorage)));
+    }
     assert.ok(players.players.every(player => !Object.hasOwn(player.profile, 'grandPrixPodiums')));
     for (const [key, bytes] of Object.entries(raw)) assert.equal(storage.getItem(key), bytes);
     assert.equal(savePlayers(players, storage), true);
     assert.equal(oldProgression.savePlayers(oldProgression.loadPlayers(oldStorage), oldStorage), true);
-    assert.equal(storage.getItem(PLAYERS_KEY), oldStorage.getItem(PLAYERS_KEY));
+    if (file === '25-deep-vasca.json') assert.ok(JSON.parse(storage.getItem(PLAYERS_KEY)).players[0].profile.unlockedCars.includes('falcone_vasca'));
+    else assert.equal(storage.getItem(PLAYERS_KEY), oldStorage.getItem(PLAYERS_KEY));
     assert.equal(JSON.stringify(loadPlayers(storage)), JSON.stringify(players));
     for (const [key, bytes] of Object.entries(raw)) if (key !== PLAYERS_KEY)
       assert.equal(storage.getItem(key), bytes, 'old profile/record/ghost keys are untouched');

@@ -72,7 +72,7 @@ function crewAdmitted(profile,id,options){
   if (id === 'vesper') return crewRoster(profile,options).includes(VESPER);
   if (!CREW[id]) return false;
   if (CREW[id].rank <= crewRank(profile)) return true;
-  return id === 'tusk' && profile?.wasteland?.version === 1 &&
+  return ['tusk','cinder','jax'].includes(id) && profile?.wasteland?.version === 1 &&
     Array.isArray(profile.wasteland.crew?.unlocked) && profile.wasteland.crew.unlocked.includes(id);
 }
 export function availableCrew(profile,options){

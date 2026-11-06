@@ -1,5 +1,6 @@
 import {GOODS} from './content/goods.js';
 import {RECIPES} from './content/recipes.js';
+import {hasTownDeedPerk} from './town-deeds.js';
 
 const definitions = new Map(GOODS.map(good=>[good.id,good]));
 const placeKey = ({regionId='scablands',x,z}) => {
@@ -36,14 +37,19 @@ export function stockMassKg(town,cell) {
   return Object.entries(goods).reduce((sum,[id,amount])=>sum+amount*definitions.get(id).kgPerUnit,0);
 }
 
-export function priceForGood(town,goodId) {
+export function priceForGood(town,goodId,{direction='buy'}={}) {
+  if(!['buy','sell'].includes(direction)) throw new TypeError('Choose whether the town buys or sells the good.');
   const good=definitions.get(goodId);
   if (!good) throw new TypeError('That good is not in the town list.');
   let amount=0;
   for(const stock of Object.values(town.goods?.stockpiles||{})) amount+=stock.goods[goodId]||0;
   // Base prices follow the documented scrap economy; stock moves the market
   // smoothly from half to twice the listed price around a 1,000-unit supply.
-  return good.price*Math.max(0.5,Math.min(2,1000/(1000+amount)));
+  let price=good.price*Math.max(0.5,Math.min(2,1000/(1000+amount)));
+  if(direction==='buy'&&goodId==='timber'&&hasTownDeedPerk(town,'timber-cost')) price*=0.8;
+  if(direction==='buy'&&goodId==='fuel'&&hasTownDeedPerk(town,'fuel-cost')) price*=0.8;
+  if(direction==='sell'&&hasTownDeedPerk(town,'trade-income')) price*=1.1;
+  return price;
 }
 
 export function runTownRecipe(town,building,recipeId,{staffPresent=building?.staff||0}={}) {
