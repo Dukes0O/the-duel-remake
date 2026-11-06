@@ -107,13 +107,13 @@ vehicle['round'] = 8
 # One thick, measured side silhouette closes the cab, bonnet, wings and bed as
 # a continuous volume. Its measured wheel arches and side-photo UVs prevent the
 # intersecting, shredded panel strips from round 7.
-body = Mesh()
 body_loops = trace(side_solid, (28, 100, side.w - 20, 790), tolerance=1.1, min_area=130)
 if not body_loops:
     raise RuntimeError('No closed Rattler body outline in the side photograph')
-slab(body, 'side', side, body_loops, side_point, -.96, .96, wall_scale=SIDE_Y)
-body_obj = body.finish('rattler body closed side shell', materials)
-body_obj.parent = vehicle
+for label, d0, d1 in (('left', .94, .99), ('right', -.99, -.94)):
+    body = Mesh()
+    slab(body, 'side', side, body_loops, side_point, d0, d1, wall_scale=S)
+    body.finish(f'rattler body closed {label} side skin', materials).parent = vehicle
 
 # The photo-measured end skins meet the side shell and close the full body at
 # both bumpers. Wheel openings remain real holes, not flat pictures.
