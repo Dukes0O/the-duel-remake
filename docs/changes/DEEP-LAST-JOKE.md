@@ -54,3 +54,7 @@ Removed `deepHints().bubbles`, its old second garage tip and the nine-pearl unlo
 ## Claude's browser and look check
 
 `deep-vasca` passes in the test browser, 5 November 2026: squeak ping, duck on its chain, lift, bath rising, title card, car in the garage and a race. Sheet and verdict: `docs/board/looks/vasca/round-1.jpg`. The browser check found two faults that the headless suites missed, both fixed here: missing wheel rest positions (`src/vasca-vehicle.js`), and new lines not fitted to the phone's level (`src/deep/deep-phone-lines.js`). Two takes over the peak limit were lowered with `ffmpeg` and their hashes updated; no new credits were spent. The scenario now holds keys for 150 ms like a person, parks 3 m from the duck and starts a real race.
+
+## More changed assertions (Claude's review, rule 18)
+
+The pinned sound checks gain one exclusion each, as every earlier added car and cue did: `deep.squeak` in `tools/test-p4-audio.mjs` and `falcone_vasca` in `tools/test-arsenal-wave1-audio.mjs`. Every earlier cue still has to match its hash exactly, so nothing is loosened. `tools/test-blender-output.mjs` lists `skin-waste-sheet.py` as a review helper. `src/town/systems/index.js` now uses plain imports, so the rule against top-level waiting holds again; `tools/test-manifest-await.mjs` is unchanged.

@@ -109,6 +109,7 @@ const nativeGenerators = [
 // Circuit kits plan directories rather than one editable Blend per model.
 const kitGenerators = [{ script: 'tools/blender/p4-kits.py', round: 3 }];
 const reviewHelpers = [
+  {script:'tools/blender/skin-waste-sheet.py',args:[],render:false,summary:['docs','board','looks','skin-waste','round-1.jpg']},
   {script:'tools/blender/town-sheet.py',args:[],render:false,summary:['docs','board','looks','town-art-base','round-3.jpg']},
   {script:'tools/blender/deep-art-sheet.py',args:[],render:false,summary:['docs','board','looks','deep-art','round-2.jpg']},
   {script:'tools/blender/kit-review.py', args:['--','--car','falcone_f42'], render:true},
