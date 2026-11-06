@@ -1,25 +1,34 @@
-# TOWN-ART-STAGES round 4
+# TOWN-ART-STAGES — round 5
 
 ## Changed
 
-- Kept the round 3 `scaffold-2` frame and added the requested deck wear: darker stain patches, scattered planks and a small tool pile. Added foundation trenching, spare blocks and spoil at ground level.
-- Made `scaffold-1` a pegged and strung plot, `scaffold-3` an open framed building with scaffold, and `scaffold-4` a partly clad building with patched tin roofing and a scaffold bay coming down. All sit within their cell footprints and have no ground plate.
-- Reworked the rubble and burned families with larger debris fields, fallen tin and collapsed members. Reused the credited town photos in `public/assets/models/wasteland/town/textures/`; no new runtime picture was added.
-- Added individual street prop renders and retained each required named root and emissive `:lamp`/`:ember` part.
-- Normalized recipe UV layer names to `UVMap`. The test now reads UV float data from the exported GLB and checks that every material primitive has only `TEXCOORD_0` with values spanning both axes.
-- Added `round-4.jpg` (265,526 bytes). Its model images were rendered from the exported GLB imported into an empty Blender scene. The sheet includes the round 3 construction photo beside the stage views and the charred timber photo tile beside the ruin.
-- Final family GLB: 1,964,028 bytes and 59,444 triangles; below the 3 MB and 60,000 triangle limits.
+- Rebuilt the four construction stages around fixed 3.5 m bays, with consistent 22 cm posts, 17 cm beams and 10 cm braces. Stages 1 and 2 show survey and foundation work without a frame; stages 3 and 4 share the same frame, with full cladding and roof added across the 4-by-4 site.
+- Added a taller debris mound and collapsed tin to the burned ruins. Improved the street lamp head, barrel fire, washing line, sandbag wall and junk pile.
+- Kept square timber members and reduced bevels and redundant rivets to meet the per-ID triangle budgets. All parts export only `TEXCOORD_0`; the embedded texture materials use metallic values at or below 0.3.
+- Added the round 5 sheet with road and elevated views from the exported GLB. Existing credited runtime material pictures are reused. The generated construction reference appears only as a crop on the sheet; its prompt is recorded in the review note.
+- Updated the Blender-output check entry to point at round 5.
 
 ## Checks
 
-- Blender recipe, GLB export and review renders: passed.
-- `node tools/test-blender-output.mjs`: passed, 238 checks. Includes ids, family size, triangle budget and UV checks.
-- Two earlier exports exceeded the 60,000-triangle cap; optional tin and debris were trimmed until the final GLB passed at 59,444 triangles.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets remain advisory.
-- Browser and in-game look checks: not run in this lane. Claude should review: whether the 1-to-4 stages read as a clear progression; the stage 3 and 4 frame thickness; the ruin's charred darkness and rubble density; each street prop at town scale; and the mayor view's deck contrast and clutter.
-- Changed assertions: none were weakened. Added a GLB UV-range assertion that reads the binary accessor values because this Blender export omits accessor `min`/`max` metadata. No race or simulation code changed; race fingerprints are unchanged.
+- Blender export and empty-scene GLB render: passed.
+- `node tools/test-blender-output.mjs`: passed, 238 checks; 37,560 family triangles, 1,627,236-byte GLB. Largest IDs: `scaffold-4` 13,424 triangles; `scaffold-3` 3,472; `scaffold-1` 1,672; `burnt-1` 1,536.
+- `node tools/test-repo-hygiene.mjs`: passed. Its repository size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed. One check expected `round-1.jpg`, which this task required removing. The audio evidence subtest could not launch `ffmpeg` (`spawnSync ffmpeg EPERM`). No assertions were changed.
+- No lane tier or build was run, as directed. No browser or game look check was run; Claude owns the look review. No race code or fingerprints changed.
+
+## Claude review
+
+Review the four-stage progression, especially the repeated large-site bays and the broad roof from the 60 m mayor view. Check that the burned rubble and collapsed tin read as a ruin. Review the road and elevated views of all street props and their fit inside a town cell.
+
+## Changed assertions
+
+None.
+
+## Race fingerprints
+
+Unchanged; no simulation or race files were edited.
 
 ## Removed
 
-- Replaced the prior candidate `stages.glb` in place; kept no backup.
-- Removed this run's raw Blender renders, test logs and sheet-building scratch file after creating the review sheet. No game code, player data or credited texture source was removed.
+- Removed round 1, round 2 and round 4 sheets and review notes as instructed; retained round 3 and added round 5.
+- Recycled this run's Blender captures, temporary composition and inspection scripts, logs, and Python cache files after use.
