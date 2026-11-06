@@ -26,7 +26,7 @@ if args.paths_only:
 
 import bpy
 import numpy as np
-from mathutils import Matrix, Vector
+from mathutils import Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
 from photo_model import Mesh, Photo, box, lathe, rect_loop, shrink, slab, tidy, trace
@@ -311,37 +311,28 @@ slab(regret_door_mesh, 'door', regret_door_photo, door_loops, door_world, -.025,
      wall_scale=DOOR_SCALE * 3)
 finish(regret_door_mesh, 'regret-door', {'door': regret_door_photo.material()})
 
-# --- regret-wheel: copy the Falcone F42's separated front wheel with its materials --------
-donor_path = root / 'public/assets/models/classics/falcone_f42.glb'
-before_donor = set(scene.objects)
-bpy.ops.import_scene.gltf(filepath=str(donor_path))
-imported_donor = set(scene.objects) - before_donor
-donor_pivot = next(o for o in scene.objects if 'WheelPivot_0_front' in o.name)
-def donor_tree(obj):
-    yield obj
-    for child in obj.children:
-        yield from donor_tree(child)
-donor_spin = next(o for o in donor_pivot.children if 'WheelSpin_0' in o.name)
-donor_descendants = list(donor_tree(donor_spin))
-wheel_root = bpy.data.objects.new('regret-wheel', None)
-scene.collection.objects.link(wheel_root)
-wheel_root.parent = root_object
-# Imported glTF is converted into Blender's Z-up scene, so place the wheel at Z=.4 m.
-wheel_root.location = (0, 0, .4)
-for source_obj in donor_descendants:
-    if source_obj.type != 'MESH':
-        continue
-    copied = source_obj.copy()
-    copied.data = source_obj.data
-    scene.collection.objects.link(copied)
-    copied.name = 'regret-wheel-' + source_obj.name
-    copied.parent = wheel_root
-    # Mesh positions are already centered at each wheel pivot. Strip the car's
-    # body placement and retain the donor's geometry/materials as one loose wheel.
-    copied.matrix_parent_inverse = Matrix.Identity(4)
-    copied.matrix_basis = Matrix.Identity(4)
-for source_obj in imported_donor:
-    bpy.data.objects.remove(source_obj, do_unlink=True)
+# --- regret-wheel: old steel wheel measured from its own dead-on photo -------------------
+wheel_photo = Photo(textures / 'ww-regret-wheel-photo.jpg')
+wheel_solid = tidy(~wheel_photo.sky([(8, 8), (1014, 8), (8, 1014)], grey=26))
+wheel_photo.bleed(shrink(wheel_solid, 3), passes=28)
+WHEEL_CX, WHEEL_CY = 512, 512
+WHEEL_RADIUS_PX = max(WHEEL_CX - np.nonzero(wheel_solid[WHEEL_CY])[0][0],
+                      np.nonzero(wheel_solid[:, WHEEL_CX])[0][-1] - WHEEL_CY)
+WHEEL_SCALE = .31 / WHEEL_RADIUS_PX
+def wheel_face_uv(angle, fraction):
+    return wheel_photo.uv(WHEEL_CX - math.cos(angle) * WHEEL_RADIUS_PX * fraction * .94,
+                          WHEEL_CY - math.sin(angle) * WHEEL_RADIUS_PX * fraction * .94)
+def wheel_tread_uv(index, distance, radius, angle):
+    # Wrap a measured tyre rectangle around the roughly 1.95 m circumference.
+    around = ((angle % (2 * math.pi)) / (2 * math.pi) * 8.5) % 1
+    radial = min(1, max(0, (radius - .29) / .02))
+    return wheel_photo.uv(320 + around * 380, 24 + radial * 112)
+wheel_mesh = Mesh()
+lathe(wheel_mesh, 'wheel', (0, .40, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+      [(-.11, .31), (-.085, .31), (-.055, .30), (.055, .30), (.085, .31), (.11, .31)],
+      wheel_tread_uv, sides=32,
+      cap_start=('wheel', wheel_face_uv), cap_end=('wheel', wheel_face_uv))
+finish(wheel_mesh, 'regret-wheel', {'wheel': wheel_photo.material()})
 
 
 print('TRIANGLES=' + json.dumps(triangles))

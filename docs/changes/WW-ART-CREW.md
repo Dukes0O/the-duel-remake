@@ -7,6 +7,11 @@ Card still open: the harpoon, piano and Gerald remain as Claude passed them.
 - Fixed `ash-hat`'s crown cap UVs to stay within the crown in the side photo,
   and bled colours inward from a shrunken mask. Rebuilt the GLB and inspected
   its three-quarter render; the pale background patch is gone.
+- Replaced the modern Falcone wheel with `regret-wheel`, a 62 cm photo-measured
+  steel wheel lathed from the new 1024 px reference. The wheel has the old
+  cracked tyre, rusty stamped rim and dented hubcap. Its three-quarter render
+  matches the reference face; the tread band is visibly striped at close view,
+  so Claude should judge it on the sheet.
 - Added `gerald-box`, a 40 cm photo-built carrier with photographed holes.
   Its front and three-quarter views were rendered from the exported GLB and
   inspected beside the front reference. It reads as a small weathered wooden

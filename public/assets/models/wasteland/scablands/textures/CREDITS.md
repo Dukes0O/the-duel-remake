@@ -104,6 +104,12 @@ edges. No objects, gear, pool, scene, text, or watermark.
   car door. Prompt: “A side-on weathered sun-faded red compact-car door on a
   plain pale ground, with its window opening empty; chipped red paint, dusty
   dark rust, no logos or other objects.”
+- `ww-regret-wheel-photo.jpg`: Codex ImageGen photograph of an old steel car
+  wheel, straight-on, with a cracked tyre, rusty rim and dented hubcap, reduced
+  to 1024 × 1024. Prompt: “One old steel car wheel, centered and complete,
+  face-on: perished dusty black tyre, rusty stamped steel rim, dented faded
+  hubcap. Plain pale grey background, bright flat overcast daylight, crisp
+  realistic wear. No people, text, logos or extra objects.”
 
 
 All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
