@@ -57,7 +57,7 @@ export async function run(context){
   await context.waitFor(`Math.abs(document.querySelector('.town-entry').__townCameraState().target.x-${mapBefore.target.x})+Math.abs(document.querySelector('.town-entry').__townCameraState().target.z-${mapBefore.target.z})>1`,'marker camera flight',10_000);
   const visibleMarkers=await context.evaluate(`document.querySelectorAll('.town-map-pin:not([hidden])').length`);
   if(!visibleMarkers)throw new Error('The Scablands zoom showed no map markers.');
-  await context.evaluate(`(() => {const host=document.querySelector('.town-entry'),target=host.__townCameraState().target;host.__town.reports.push({id:'qa-map-report',what:'A report on the map.',where:'Town',unanswered:true,priority:9,x:target.x,z:target.z,answers:[{id:'help',label:'Help'}]});host.__townCommand({type:'setSpeed',speed:4});})()`);
+  await context.evaluate(`(() => {const host=document.querySelector('.town-entry'),target=host.__townCameraState().target;(host.__town.reports||=[]).push({id:'qa-map-report',what:'A report on the map.',where:'Town',unanswered:true,priority:9,x:target.x,z:target.z,answers:[{id:'help',label:'Help'}]});host.__townCommand({type:'setSpeed',speed:4});})()`);
   await context.waitFor(`!!document.querySelector('[data-marker-id="report:qa-map-report"]:not([hidden])')`,'report pin with saved coordinates',15_000);
   await context.evaluate(`document.querySelector('[data-marker-id="report:qa-map-report"]').click()`);
   await context.waitFor(`!!document.querySelector('[data-town-report="qa-map-report"].is-selected')`,'selected report panel item',5_000);
