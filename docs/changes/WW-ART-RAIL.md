@@ -32,3 +32,7 @@ None. The model is not wired into a playable scene.
 
 - Removed this run's temporary renders, test logs, and inspection scripts. Kept only the recipe, current GLB, source textures, change note and the card's existing review sheets.
 - Kept `round-3`, `round-4`, and `round-6` sheets and review notes unchanged; round 7 is withheld.
+
+## Wednesday and the coal heap
+
+`wednesday` (hull, wheels, axles, rods and cab nodes) and `coal-heap-full`, `coal-heap-half` and `coal-heap-low` pass; see `docs/board/looks/ww-art-rail/round-7-review.md`. `docs/ASSET_PIPELINE.md` gains the lessons. Removed: round 6's sheet and note.
