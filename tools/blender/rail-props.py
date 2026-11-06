@@ -194,9 +194,9 @@ def build_sand_drag():
 
     # The track ends against a heavy crosswise stop block at the front of the
     # ridge. Each member has true thickness and uses a measured picture crop.
-    timber_rect = (826, 136, 875, 246)
-    rail_rect = (350, 169, 540, 205)
-    sleeper_rect = (290, 190, 420, 240)
+    timber_rect = (700, 150, 760, 220)
+    rail_rect = (350, 192, 540, 204)
+    sleeper_rect = (350, 200, 540, 216)
     track = Mesh()
     for z in (7.2,6.6,6.0,5.4,4.8):
         for x in (-.72, .72):
