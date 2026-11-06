@@ -32,7 +32,7 @@ import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(recipe.parent))
 import town_base as town
-from photo_model import Mesh, Photo, box, fill, inside, lathe, slab, tidy, trace
+from photo_model import Mesh, Photo, box, lathe, slab, tidy, trace
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
@@ -43,7 +43,6 @@ platform_end = Photo(textures / 'whites-platform-end.jpg', frame=(1024, 683))
 clock_photo = Photo(textures / 'whites-clock.jpg')
 salt_wall = Photo(textures / 'whites-salt-wall.jpg', frame=(1024, 341))
 salt_crust = Photo(textures / 'whites-cracked-salt.jpg')
-heap_photo = Photo(textures / 'whites-salt-heap.jpg', frame=(1024, 341))
 
 # The kit supplies a photo-backed, non-metallic salt surface for the pan crust
 # and the heap's cut faces. Its tiled UV scale is two metres per repeat.
@@ -292,93 +291,48 @@ def build_pan():
     bpy.context.collection.objects.link(crust)
 
 def build_heap():
-    mesh = Mesh()
-    # Read the mound's broad, uneven side profile from its own photograph.
-    # The same camera plane drives UVs, so the exported face keeps the measured
-    # outline and the photo detail without tiled swatches.
-    pixels = heap_photo.rgb().astype(np.float32)
-    luminance = pixels.mean(axis=2)
-    horizontal_kernel = np.ones(9, dtype=np.float32) / 9
-    horizontal = np.stack([
-        np.convolve(np.pad(luminance[y], (4, 4), mode='edge'), horizontal_kernel, mode='valid')
-        for y in range(heap_photo.h)
-    ])
-    blurred = np.stack([
-        np.convolve(np.pad(horizontal[:, x], (3, 3), mode='edge'),
-                    np.ones(7, dtype=np.float32) / 7, mode='valid')
-        for x in range(heap_photo.w)
-    ], axis=1)
-    baseline = 238
-    background = np.median(blurred[20:55], axis=0)
-    top_rows = np.full(heap_photo.w, baseline, dtype=np.float32)
-    for x in range(heap_photo.w):
-        foreground = np.flatnonzero(np.abs(blurred[55:baseline, x] - background[x]) > 10)
-        if foreground.size:
-            top_rows[x] = foreground[0] + 55
-    raw_top_rows = top_rows.copy()
-    for x in range(heap_photo.w):
-        top_rows[x] = np.median(raw_top_rows[max(0, x - 15):min(heap_photo.w, x + 16)])
+    # A radial heightfield makes a full 14 m mound rather than a projected
+    # front face. Its edge falls to ground level with no raised rim.
+    radius, height = 7.0, 5.0
+    radial_steps, segments = 36, 96
+    verts = [(0, height, 0)]
+    for ring in range(1, radial_steps + 1):
+        fraction = ring / radial_steps
+        for segment in range(segments):
+            angle = math.tau * segment / segments
+            angular_lump = (math.sin(3 * angle + fraction * 4.1)
+                            + .55 * math.sin(7 * angle - fraction * 6.3)
+                            + .30 * math.cos(11 * angle + fraction * 2.7))
+            radial_lump = 1 + .055 * angular_lump * math.sin(math.pi * fraction)
+            falloff = max(0, 1 - fraction * fraction) ** .82
+            y = height * falloff * radial_lump
+            x = radius * fraction * math.cos(angle)
+            z = radius * fraction * math.sin(angle)
+            verts.append((x, y, z))
 
-    # The mound spans about four-fifths of this 18 m photo frame, matching
-    # the 14 m width named in its reference prompt.
-    photo_width = 18.0
-    metres_per_pixel = photo_width / heap_photo.w
-    outline = [(0, baseline)]
-    outline.extend((x, float(top_rows[x])) for x in range(0, heap_photo.w, 6))
-    outline.append((heap_photo.w - 1, baseline))
+    faces = []
+    for segment in range(segments):
+        faces.append((0, 1 + (segment + 1) % segments, 1 + segment))
+    for ring in range(1, radial_steps):
+        inner = 1 + (ring - 1) * segments
+        outer = 1 + ring * segments
+        for segment in range(segments):
+            next_segment = (segment + 1) % segments
+            faces.append((inner + segment, inner + next_segment,
+                          outer + next_segment, outer + segment))
 
-    def place(px, py, depth):
-        x = (px - heap_photo.w / 2) * metres_per_pixel
-        y = (baseline - py) * metres_per_pixel
-        return (x, y, depth)
-
-    # Keep the measured photo projection on the front. Each rear outline sits
-    # lower and narrower, so the cut edges form a sloped heap in quarter view.
-    layers = []
-    for depth, width_scale, height_scale in (
-        (3.2, 1.0, 1.0), (1.2, .94, .82), (-.8, .82, .62),
-        (-2.4, .67, .42), (-3.2, .55, .24),
-    ):
-        layer = []
-        for px, py in outline:
-            x = (px - heap_photo.w / 2) * metres_per_pixel * width_scale
-            y = (baseline - py) * metres_per_pixel * height_scale
-            layer.append(mesh.vertex((x, y, depth)))
-        layers.append((depth, width_scale, height_scale, layer))
-
-    for triangle in fill([outline]):
-        points = [place(px, py, layers[0][0]) for px, py in triangle]
-        mesh.face(points, [heap_photo.uv(px, py) for px, py in triangle],
-                  'heap-photo', Vector((0, 0, 1)))
-        back_points = []
-        for px, py in triangle:
-            x = (px - heap_photo.w / 2) * metres_per_pixel * layers[-1][1]
-            y = (baseline - py) * metres_per_pixel * layers[-1][2]
-            back_points.append((x, y, layers[-1][0]))
-        back_uvs = [(point[0] / 2, point[1] / 2) for point in back_points]
-        mesh.face(back_points, back_uvs, 'salt', Vector((0, 0, -1)))
-
-    for near, far in zip(layers, layers[1:]):
-        near_ring, far_ring = near[3], far[3]
-        for edge_index, (a, b) in enumerate(zip(outline, outline[1:] + outline[:1])):
-            dx, dy = b[0] - a[0], b[1] - a[1]
-            length = math.hypot(dx, dy)
-            if length == 0:
-                continue
-            nx, ny = -dy / length, dx / length
-            mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
-            if not inside((mid[0] + nx * .6, mid[1] + ny * .6), [outline]):
-                nx, ny = -nx, -ny
-            outward = Vector(place(mid[0] - nx, mid[1] - ny, near[0])) - Vector(
-                place(mid[0], mid[1], near[0]))
-            next_index = (edge_index + 1) % len(outline)
-            face_indices = (near_ring[edge_index], near_ring[next_index],
-                            far_ring[next_index], far_ring[edge_index])
-            salt_uvs = [(mesh.verts[index][2] / 2, mesh.verts[index][1] / 2)
-                        for index in face_indices]
-            mesh.indexed(face_indices, salt_uvs, 'salt', outward)
-    mesh.finish('salt-heap', {'salt': surface_material, 'heap-photo': heap_photo.material()})
-    objects['salt-heap'] = mesh
+    mesh_data = bpy.data.meshes.new('wind-worn cracked salt heap')
+    mesh_data.from_pydata([town.game_vector(vertex) for vertex in verts], [], faces)
+    uv_layer = mesh_data.uv_layers.new(name='UVMap')
+    for poly in mesh_data.polygons:
+        for loop_index in poly.loop_indices:
+            vertex = verts[mesh_data.loops[loop_index].vertex_index]
+            uv_layer.data[loop_index].uv = (vertex[0] / 2, vertex[2] / 2)
+        poly.use_smooth = True
+    mesh_data.materials.append(surface_material)
+    mesh_data.update()
+    mound = bpy.data.objects.new('salt-heap', mesh_data)
+    bpy.context.collection.objects.link(mound)
 
 build_platform()
 if last_stage >= 1:
