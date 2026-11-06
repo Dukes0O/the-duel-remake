@@ -173,8 +173,8 @@ def build_sand_drag():
             height = drift_height(x, z)
             index = sand.vertex((x, height, z))
             # The measured sand region in the source image fills the terrain.
-            uv = photo.uv(590 + (x - x0) / width * 420,
-                          185 + (z - z0) / length * 135)
+            uv = photo.uv(800 + (x - x0) / width * 224,
+                          175 + (z - z0) / length * 50)
             row.append((index, uv))
         rows.append(row)
     for i in range(nx):
@@ -195,21 +195,26 @@ def build_sand_drag():
     rail_rect = (350, 169, 540, 205)
     sleeper_rect = (290, 190, 420, 240)
     track = Mesh()
-    for x in (-.72, .72):
-        sand_drag_box(track, 'rail', (x,.12,4.0), (.10,.16,7.3), photo, rail_rect)
+    for z in (7.2,6.6,6.0,5.4,4.8):
+        for x in (-.72, .72):
+            rail_y = drift_height(0,z) + .06
+            sand_drag_box(track, 'rail', (x,rail_y,z), (.10,.12,.64), photo, rail_rect)
     track_obj = track.finish('sand-drag-rails', {'source': material})
     track_obj.parent = root
     components.append(track_obj)
 
     sleepers = Mesh()
-    for z in (6.8,6.2,5.6,5.0,4.4,3.8,3.2,2.6,2.0,1.4,.8,.2):
-        sand_drag_box(sleepers, 'sleeper', (0,.065,z), (1.75,.13,.22), photo, sleeper_rect)
+    for z in (7.2,6.6,6.0,5.4,4.8):
+        sleeper_y = drift_height(0,z) + .06
+        sand_drag_box(sleepers, 'sleeper', (0,sleeper_y,z), (1.75,.13,.22), photo, sleeper_rect)
     sleeper_obj = sleepers.finish('sand-drag-sleepers', {'source': material})
     sleeper_obj.parent = root
     components.append(sleeper_obj)
 
     stop = Mesh()
-    sand_drag_box(stop, 'stop-block', (0,.25,-.02), (2.0,.50,.42), photo, timber_rect)
+    stop_z = 4.35
+    stop_y = drift_height(0,stop_z) + .25
+    sand_drag_box(stop, 'stop-block', (0,stop_y,stop_z), (2.0,.50,.42), photo, timber_rect)
     stop_obj = stop.finish('sand-drag-stop-block', {'source': material})
     stop_obj.parent = root
     components.append(stop_obj)
