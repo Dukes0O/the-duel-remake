@@ -29,6 +29,8 @@ const westWildlife = [
 // Its recipe stays for a later card; its GLB stays out of public/.
 const artCandidates = new Set(['wildcat']);
 const generators = [
+  {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
+    glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
@@ -560,6 +562,42 @@ try {
     }
     for (const alley of ['main-alley','cross-alley','forge-court']) {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
+    }
+  });
+
+  check('TOWN-ART-HOMES exports every named home, lamp and per-plot budget in one 1K atlas', () => {
+    const path=join(root,'public/assets/models/wasteland/town/homes.glb');const bytes=readFileSync(path);
+    assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
+    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds 3 MB`);
+    const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));const nodes=gltf.nodes||[];
+    assert.equal(gltf.images?.length,1,'one shared embedded atlas');
+    const binStart=28+bytes.readUInt32LE(12);const imageView=gltf.bufferViews[gltf.images[0].bufferView];
+    const imageStart=binStart+(imageView.byteOffset||0);let imageWidth=0,imageHeight=0;
+    if(gltf.images[0].mimeType==='image/png'){
+      imageWidth=bytes.readUInt32BE(imageStart+16);imageHeight=bytes.readUInt32BE(imageStart+20);
+    }else if(gltf.images[0].mimeType==='image/jpeg'){
+      let offset=imageStart+2;
+      while(offset+9<bytes.length){
+        if(bytes[offset]!==0xff){offset++;continue;}
+        const marker=bytes[offset+1];const length=bytes.readUInt16BE(offset+2);
+        if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+          imageHeight=bytes.readUInt16BE(offset+5);imageWidth=bytes.readUInt16BE(offset+7);break;
+        }
+        if(length<2)break;offset+=2+length;
+      }
+    }
+    assert.ok(imageWidth>0&&imageHeight>0&&imageWidth<=1024&&imageHeight<=1024,'atlas must fit 1K');
+    const names=nodes.map(node=>node.name||'');assert.ok(names.includes('town-homes'),'named family root');
+    const ids=['tent-a','tent-b','shack-a','shack-b','shack-c','stack-a','stack-b','block-a','block-b','terrace-a'];
+    const parent=new Map();nodes.forEach((node,index)=>(node.children||[]).forEach(child=>parent.set(child,index)));
+    const find=id=>nodes.findIndex(node=>node.name===id);const familyRoot=find('town-homes');
+    for(const id of ids){
+      const home=find(id),lamp=find(`${id}:lamp`);assert.ok(home>=0,`missing ${id}`);assert.ok(lamp>=0,`missing named lamp ${id}`);
+      assert.equal(parent.get(home),familyRoot,`${id} must be a direct family child`);assert.equal(parent.get(lamp),home,`${id}:lamp must be a direct home child`);
+      const descendants=[];const visit=index=>{descendants.push(index);for(const child of nodes[index].children||[])visit(child);};visit(home);
+      const triangles=descendants.reduce((sum,index)=>{const mesh=nodes[index].mesh;if(mesh===undefined)return sum;return sum+gltf.meshes[mesh].primitives.reduce((n,primitive)=>n+gltf.accessors[primitive.indices].count/3,0);},0);
+      const budget=id.startsWith('block-')||id==='terrace-a'?5000:1800;
+      assert.ok(triangles>100&&triangles<=budget,`${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
     }
   });
 
