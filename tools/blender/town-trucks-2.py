@@ -136,10 +136,6 @@ def clear_of_wheels(x, y, z):
     outside = np.abs(x) > TRACK_X - TYRE_HALF - .04
     for axle in WHEEL_Z:
         keep &= ~(outside & ((z - axle) ** 2 + (y - WHEEL_R) ** 2 < (WHEEL_R + .06) ** 2))
-    # The cab windows are actual openings; the glazing is added as separate
-    # thin planes, leaving the interior open through both sides of the cab.
-    cab = (y > 1.68) & (y < 3.12) & (z > .04) & (z < .92) & (np.abs(x) < 1.34)
-    keep &= ~cab
     return keep
 
 body_views = [side, far_side, front, rear, overhead]
@@ -173,8 +169,6 @@ rubber = solid_material('Dozer / dusty black rubber', (.045, .047, .043), .96)
 lug_rubber = solid_material('Dozer / worn tread rubber', (.070, .072, .065), .98)
 iron = solid_material('Dozer / dark welded iron', (.105, .094, .075), .9, .24)
 bare_steel = solid_material('Dozer / rubbed cutting steel', (.36, .34, .29), .76, .28)
-glass = solid_material('Dozer / smoked dusty glazing', (.045, .075, .078), .32, .05)
-lamp_mat = solid_material('Dozer / amber work lamps', (.52, .34, .12), .36, .02)
 
 def game_vector(point):
     return Vector((point[0], -point[2], point[1]))
@@ -214,16 +208,16 @@ def beam(name, a, b, size, material):
 family = pivot('town-trucks-2', (0, 0, 0))
 dozer = pivot('dozer', (0, 0, 0))
 attach(dozer, family)
-body = carve_hull('dozer:body', body_views, photo_materials, solid, xs, ys, zs, .035, 5200)
+body = carve_hull('dozer:body', body_views, photo_materials, solid, xs, ys, zs, .035, 4200)
 attach(body, dozer)
 
 # A curved, rolled steel blade is measured from the dedicated front photograph.
 # It is its own movable part, with real depth and ribs welded across the back.
-BLADE_CENTER = (0, .82, -1.95)
+BLADE_CENTER = (0, .60, -1.95)
 blade_root = pivot('dozer:blade', (0, 0, 0))
 attach(blade_root, dozer, BLADE_CENTER)
 blade_mesh = bpy.data.meshes.new('dozer curved blade shell')
-blade_verts, blade_faces, blade_uvs = [], [], []
+blade_verts, surface_faces, blade_uvs = [], [], []
 segments, levels = 18, 5
 for row in range(levels):
     t = row / (levels - 1)
@@ -241,7 +235,22 @@ for row in range(levels):
 for row in range(levels - 1):
     for i in range(segments):
         a = row * (segments + 1) + i
-        blade_faces.append((a, a + 1, a + segments + 2, a + segments + 1))
+        surface_faces.append((a, a + 1, a + segments + 2, a + segments + 1))
+front_vertex_count = len(blade_verts)
+back_verts = [(x, y - .08, z) for x, y, z in blade_verts]
+blade_verts.extend(back_verts)
+blade_uvs.extend(blade_uvs.copy())
+blade_faces = list(surface_faces)
+blade_faces.extend(tuple(index + front_vertex_count for index in reversed(face)) for face in surface_faces)
+for i in range(segments):
+    blade_faces.append((i, i+1, front_vertex_count+i+1, front_vertex_count+i))
+    top = (levels-1)*(segments+1)+i
+    blade_faces.append((top, front_vertex_count+top, front_vertex_count+top+1, top+1))
+for row in range(levels-1):
+    left = row*(segments+1)
+    right = left+segments
+    blade_faces.append((left, front_vertex_count+left, front_vertex_count+left+segments+1, left+segments+1))
+    blade_faces.append((right, right+1, front_vertex_count+right+1, front_vertex_count+right))
 blade_mesh.from_pydata(blade_verts, [], blade_faces)
 blade_mesh.materials.append(front_photo.material())
 blade_mesh.update()
@@ -260,25 +269,23 @@ def parent_at(obj, parent, point):
 # Reinforced back ribs, top roll and replaceable cutting edge. Each is a real
 # thick member joined to the blade root, not a painted stripe.
 for index, x in enumerate((-1.30, -.78, -.25, .25, .78, 1.30)):
-    rib_center = (x, (.24 + 1.39) * .5, (-2.52 - 2.05) * .5)
+    rib_center = (x, (.10 + 1.17) * .5, (-2.70 - 2.08) * .5)
     beam_obj = beam(f'dozer:blade:rear-rib-{index+1}',
-                    (x, .24, -2.52), (x, 1.39, -2.05), .095, iron)
+                    (x, .10, -2.70), (x, 1.17, -2.08), .095, iron)
     parent_at(beam_obj, blade_root, rib_center)
-edge = beam('dozer:blade:bolted-cutting-edge', (-1.57, .23, -2.57),
-            (1.57, .23, -2.57), .13, bare_steel)
-parent_at(edge, blade_root, (0, .23, -2.57))
+edge = beam('dozer:blade:bolted-cutting-edge', (-1.57, .07, -2.84),
+            (1.57, .07, -2.84), .13, bare_steel)
+parent_at(edge, blade_root, (0, .07, -2.84))
 for x in (-1.34, -1.02, -.68, -.34, 0, .34, .68, 1.02, 1.34):
-    bolt = bpy.data.objects.new('dozer:blade:cutting-edge-bolt', bpy.data.meshes.new('bolt'))
-    bpy.context.collection.objects.link(bolt)
     # A low-poly rounded bolt face sits proud of the steel lip.
     bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=4, radius=.035,
-                                         location=game_vector((x, .23, -2.65)))
+                                         location=game_vector((x, .13, -2.91)))
     bolt = bpy.context.object
     bolt.name = 'dozer:blade:cutting-edge-bolt'
     bolt.scale = (1, .7, .55)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     bolt.data.materials.append(iron)
-    parent_at(bolt, blade_root, (x, .23, -2.65))
+    parent_at(bolt, blade_root, (x, .13, -2.91))
 
 # Two heavy lift arms and hydraulic rams connect the chassis to the blade.
 for side_sign, label in ((-1, 'left'), (1, 'right')):
@@ -314,49 +321,9 @@ for side_sign, label in ((-1, 'left'), (1, 'right')):
                     (.18, .055, .47), iron, .01)
         attach(foot, dozer, (side_sign*1.09, y, .25))
 
-# Cab glass sits in the real apertures cut from the photo-carved shell.
-def pane(name, vertices):
-    data = bpy.data.meshes.new(name)
-    # glTF coordinates become Blender (x, -z, y).
-    points = [game_vector(v) for v in vertices]
-    data.from_pydata(points, [], [(0, 1, 2, 3)])
-    data.materials.append(glass)
-    data.update()
-    mesh = bpy.data.objects.new(name, data)
-    bpy.context.collection.objects.link(mesh)
-    return mesh
-for side_sign, label in ((-1, 'left'), (1, 'right')):
-    pane_obj = pane(f'dozer:cab:side-glass-{label}',
-        [(side_sign*.94, 1.80, .10), (side_sign*.94, 3.06, .10),
-         (side_sign*.94, 3.06, .78), (side_sign*.94, 1.80, .78)])
-    attach(pane_obj, dozer)
-front_pane = pane('dozer:cab:front-windscreen',
-    [(-.82, 1.82, .00), (-.82, 3.04, .00), (.82, 3.04, .00), (.82, 1.82, .00)])
-attach(front_pane, dozer)
-
-# Exhaust stack and roof work lamps follow their measured photographed places.
-def lathe_object(name, center, axis, e1, e2, profile, material, parent):
-    geo = PhotoMesh()
-    def neutral_uv(index, distance, radius, angle):
-        return ((index % 2) * .5 + .25 + math.cos(angle) * .15,
-                .5 + math.sin(angle) * .15)
-    lathe(geo, 'solid', (0, 0, 0), axis, e1, e2, profile, neutral_uv, sides=16)
-    obj = geo.finish(name, {'solid': material})
-    attach(obj, parent, center)
-    return obj
-exhaust = lathe_object('dozer:exhaust', (.80, 2.48, 2.15), (0, 1, 0), (1, 0, 0), (0, 0, 1),
-                       [(0, .09), (.12, .09), (.62, .075), (.68, .105)], iron, dozer)
-for side_sign, label in ((-1, 'left'), (1, 'right')):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=6, radius=.10,
-                                         location=game_vector((side_sign*.84, 3.15, -.05)))
-    lamp = bpy.context.object
-    lamp.name = f'dozer:lamp:{label}'
-    lamp.data.materials.append(lamp_mat)
-    attach(lamp, dozer, (side_sign*.84, 3.15, -.05))
-
 # Four grounded wheels use a photo-measured 720 mm radius. The sidewall photo
 # follows the real circumference; raised chevrons give the tire actual relief.
-def make_tread_blocks(name, width, radius, count=28, across=3):
+def make_tread_blocks(name, width, radius, count=28, across=2):
     verts, faces = [], []
     arc_step = 2 * math.pi / count
     for i in range(count):
@@ -366,7 +333,7 @@ def make_tread_blocks(name, width, radius, count=28, across=3):
             tangent = Vector((0, -math.sin(a), math.cos(a)))
             center = radial * (radius + .005)
             half_width = width / (across*2) - .008
-            half_length = radius * arc_step * .34
+            half_length = radius * arc_step * .44
             half_height = .068
             # Small alternating skew across the tread forms a joined chevron.
             skew = (band - (across-1)/2) * .022
@@ -381,6 +348,12 @@ def make_tread_blocks(name, width, radius, count=28, across=3):
     mesh.from_pydata(verts, [], faces)
     mesh.materials.append(lug_rubber)
     mesh.update()
+    uv = mesh.uv_layers.new(name='UVMap')
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vertex = mesh.vertices[mesh.loops[loop_index].vertex_index].co
+            angle = (math.atan2(vertex.z, vertex.y) / (2 * math.pi)) % 1.0
+            uv.data[loop_index].uv = (vertex.x / width + .5, angle)
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     return obj
@@ -410,7 +383,7 @@ for axle_name, axle, px in (('front', WHEEL_Z[0], wheel_x_px[0]), ('rear', WHEEL
         for face_sign in (-1, 1):
             outer, inner = face_sign * (TYRE_HALF+.002), face_sign * TYRE_HALF*.81
             lathe(wheel_mesh, 'side', (0,0,0), (1,0,0), (0,0,1), (0,1,0),
-                  [(outer, WHEEL_R*.68), (inner, WHEEL_R*.72)],
+                  [(outer, WHEEL_R*.98), (inner, WHEEL_R*.98)],
                   lambda i,d,r,a: face_uv(a, r/WHEEL_R), sides=32,
                   cap_start=('side', lambda a,f: face_uv(a, f*.96)))
         wheel = wheel_mesh.finish(f'dozer:wheel-{suffix}', {'rubber': rubber, 'side': side_photo.material()})
@@ -486,6 +459,7 @@ shot('side', (11,1.65,0), (0,1.65,0), 7.4, (1200,700))
 shot('front', (0,1.65,-12), (0,1.65,-.1), 4.3, (820,820))
 shot('rear', (0,1.65,12), (0,1.65,.1), 4.3, (820,820))
 shot('mayor-overhead', (8,9,-8), (0,1.2,0), 10.0, (1200,780))
+shot('overhead-topdown', (0,14,0), (0,0,0), 6.8, (1100,800))
 shot('driver-height', (8,2.1,-9), (0,1.4,-.2), 8.0, (1200,780))
 
 def object_triangles(obj):
