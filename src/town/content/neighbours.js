@@ -3,7 +3,7 @@
 export const TOWN_NEIGHBOURS = Object.freeze([
   Object.freeze({id:'dot', name:'Dot', place:'Boneyard road', opensYear:3, standing:0, tradeGood:'food', tradeAmount:10, rewardGood:'pie', rewardAmount:10, routeKm:8, monthlyProtection:12}),
   Object.freeze({id:'quill', name:'Miss Quill', place:'School airliner', opensYear:5, standing:0, tradeGood:'tin', tradeAmount:1, rewardGood:'food', rewardAmount:5, routeKm:18, monthlyProtection:0}),
-  Object.freeze({id:'tam', name:'Old Tam', place:'The Ridge', opensYear:6, standing:0, tradeGood:'food', tradeAmount:20, rewardGood:'food', rewardAmount:10, routeKm:35, monthlyProtection:0}),
+  Object.freeze({id:'tam', name:'Old Tam', place:'The Ridge', placeId:'ridge', opensYear:6, standing:0, tradeGood:'food', tradeAmount:20, rewardGood:'food', rewardAmount:10, routeKm:35, monthlyProtection:0}),
   Object.freeze({id:'imre', name:'Captain Imre', place:'Deck Town', opensYear:7, standing:0, tradeGood:'fuel', tradeAmount:20, rewardGood:'food', rewardAmount:20, routeKm:55, monthlyProtection:0}),
   Object.freeze({id:'pim', name:'Pim', place:'Rail Halt', opensYear:7, standing:0, tradeGood:'pipe', tradeAmount:1, rewardGood:'salvage', rewardAmount:10, routeKm:22, monthlyProtection:0}),
 ]);

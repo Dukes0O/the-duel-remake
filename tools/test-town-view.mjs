@@ -15,7 +15,7 @@ assert.ok(camera.position.distanceTo(camera.userData.townView.target)>streetDist
 assert.ok(camera.userData.townView.target.x!==10 || camera.userData.townView.target.z!==-4);
 assert.ok(camera.userData.townView.zoom>.49 && camera.userData.townView.zoom<.51);
 assert.equal(TOWN_ZOOM.street,28);
-const mayorCamera=createTownCamera({width:800,height:600,target:{x:0,y:0,z:0},zoom:62/(1450-28)});
+const mayorCamera=createTownCamera({width:800,height:600,target:{x:0,y:0,z:0},zoom:62/(TOWN_ZOOM.scablands-TOWN_ZOOM.street)});
 assert.ok(Math.abs(mayorCamera.position.distanceTo(mayorCamera.userData.townView.target)-90)<.01,'the mayor camera starts 90 m from the ground target');
 assert.ok(Math.abs(Math.atan2(mayorCamera.position.y,Math.hypot(mayorCamera.position.x,mayorCamera.position.z))*180/Math.PI-45)<.01,'the mayor camera looks down at 45 degrees');
 resizeTownCamera(camera,400,400); assert.equal(camera.aspect,1);
@@ -51,6 +51,11 @@ plane.geometry.dispose(); plane.material.dispose();
 const sceneTown={...town,buildings:[]};
 const sceneView=createTownScene({town:sceneTown,width:800,height:600,now:new Date('2026-01-01T20:00:00'),loadModel:async()=>new THREE.Group()});
 assert.ok(sceneView.scene.isScene); assert.ok(sceneView.camera.isPerspectiveCamera);
+const farGround=sceneView.scene.getObjectByName('Scablands far ground');
+assert.ok(farGround&&!farGround.visible,'the coarse Scablands mesh starts hidden at street zoom');
+assert.equal(farGround.geometry.attributes.position.count,129*129,'the far terrain is a single 128 by 128 grid');
+assert.ok(farGround.children.some(object=>object.name==='Scablands road')&&farGround.children.filter(object=>object.name.startsWith('Scablands place mark ')).length===8,
+  'the far terrain includes its road and every named place');
 assert.ok(sceneView.ground === undefined || sceneView.state.ground.children.length>0);
 const groundMesh=sceneView.state.ground.children[0];
 assert.ok(groundMesh.geometry.getAttribute('color')&&groundMesh.geometry.getAttribute('uv'),'town ground carries The Dig colour and texture coordinates');
@@ -71,6 +76,12 @@ const terrainChunk=sceneView.state.ground.children.find(chunk=>chunk.userData.ch
 assert.ok(terrainChunk,'the scene has a rebuilt terrain chunk after an edit-layer change');
 assert.ok(Array.from(terrainChunk.geometry.attributes.position.array).some((value,index,array)=>index%3===1&&array[index]<-1),
   'town terrain uses the edited surface height');
+const farGeometry=farGround.geometry;sceneView.camera.userData.townView.zoom=1;sceneView.step(0);
+assert.equal(farGround.visible,true,'the low-resolution Scablands mesh appears at far zoom');
+assert.equal(farGround.geometry,farGeometry,'camera movement does not rebuild the far terrain mesh');
+assert.ok(sceneView.scene.fog.far>260,'fog clears as the camera moves out');
+assert.ok(sceneView.state.buildings.children.some(group=>group.children.some(mesh=>mesh.isInstancedMesh&&mesh.count===1)),
+  'the player town buildings remain visible in the far view');
 resetScablandsGroundEdit();
 sceneView.setUnderground(true);
 const utilityTown={...town,buildings:[],utilities:{pipes:[{from:{x:0,z:0},to:{x:24,z:0}}],
