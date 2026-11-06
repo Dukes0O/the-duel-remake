@@ -56,8 +56,8 @@ function tripPoint(trip, tick) {
 /** Build uncapped, read-only Scablands marker records from coordinates already in town data. */
 export function buildTownMapMarkers(town, {places = SCABLANDS_PLACES, neighbours = TOWN_NEIGHBOURS} = {}) {
   if (!town || typeof town !== 'object') throw new TypeError('Choose a town to map first.');
-  const markers = places.map(place => ({id: `place:${place.id}`, kind: 'place', label: place.name,
-    x: place.x, z: place.z, target: {x: place.x, z: place.z}}));
+  const markers = [{id:'town',kind:'town',label:town.name||'Your town',x:0,z:0,target:{x:0,z:0}},...places.map(place => ({id: `place:${place.id}`, kind: 'place', label: place.name,
+    x: place.x, z: place.z, target: {x: place.x, z: place.z}}))];
   const buildings = Array.isArray(town.buildings) ? town.buildings : [];
   const outposts = town.outposts || {};
   for (const neighbour of neighbours) {
@@ -104,8 +104,8 @@ export function layoutTownMapMarkers(markers, camera, {width, height, clip, zoom
   const fade = Math.max(0, Math.min(1, (zoom - .48) / .34));
   if (!fade || !camera || width <= 0 || height <= 0) return [];
   camera.updateMatrixWorld();
-  const sorted = [...markers].sort((a,b) => (b.priorityScore ?? (b.kind==='report'?100+(b.priority||0):b.kind==='truck'?80:b.kind==='outpost'?60:40))
-    - (a.priorityScore ?? (a.kind==='report'?100+(a.priority||0):a.kind==='truck'?80:a.kind==='outpost'?60:40)) || a.id.localeCompare(b.id));
+  const sorted = [...markers].sort((a,b) => (b.priorityScore ?? (b.kind==='report'?100+(b.priority||0):b.kind==='truck'?80:b.kind==='outpost'?60:b.kind==='town'?50:40))
+    - (a.priorityScore ?? (a.kind==='report'?100+(a.priority||0):a.kind==='truck'?80:a.kind==='outpost'?60:a.kind==='town'?50:40)) || a.id.localeCompare(b.id));
   const occupied = new Set(), result = [];
   for (const marker of sorted) {
     const projected = new THREE.Vector3(marker.x, scablandsSurfaceHeightAt(marker.x,marker.z)+4, marker.z).project(camera);
@@ -117,7 +117,7 @@ export function layoutTownMapMarkers(markers, camera, {width, height, clip, zoom
     const cells = [];
     if (visible) for (let cx=Math.floor(left/36);cx<=Math.floor((left+labelWidth)/36);cx++) for(let cy=Math.floor(top/28);cy<=Math.floor((top+labelHeight)/28);cy++) cells.push(`${cx}:${cy}`);
     const overlaps = cells.some(cell => occupied.has(cell));
-    const shown = visible && !overlaps;
+    const shown = visible && (!overlaps || zoom >= .98 && marker.kind === 'place');
     if (shown) cells.forEach(cell => occupied.add(cell));
     result.push({id:marker.id,x,y,opacity:fade,visible:shown});
   }

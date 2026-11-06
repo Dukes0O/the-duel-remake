@@ -51,7 +51,7 @@ export async function run(context){
   await picture(context,'town-return');
   await context.evaluate(`(() => {const canvas=document.querySelector('.town-entry>canvas');for(let i=0;i<48;i++)canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:120,cancelable:true}));})()`);
   await context.waitFor(`document.querySelectorAll('.town-map-pin:not([hidden])').length>0`,'Scablands map markers after zooming out',15_000);
-  await picture(context,'town-map-markers');
+  await picture(context,'town-map-far');
   const mapBefore=await context.evaluate(`document.querySelector('.town-entry').__townCameraState()`);
   await context.evaluate(`document.querySelector('.town-map-pin:not([hidden])').click()`);
   await context.waitFor(`Math.abs(document.querySelector('.town-entry').__townCameraState().target.x-${mapBefore.target.x})+Math.abs(document.querySelector('.town-entry').__townCameraState().target.z-${mapBefore.target.z})>1`,'marker camera flight',10_000);

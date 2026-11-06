@@ -3,6 +3,7 @@ import {createTown, stepTown, buildingById} from './index.js';
 import {cellIsReserved, getTownChunk} from './town-world-data.js';
 import {createTownStore, readTownPointer, saveTown, backupTownFile} from './town-store.js';
 import {createTownScene} from './view/town-scene.js';
+import {TOWN_ZOOM} from './view/town-camera.js';
 import {renderTownScreen} from './ui/town-screen.js';
 import {bindTownInput} from './ui/town-input.js';
 import {townReportsPanelMarkup, townReportsPanelModel} from './ui/town-reports-panel.js';
@@ -39,7 +40,7 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   if(townId){if(returnTownSnapshot&&!visiting)town=returnTownSnapshot;else{const loaded=await store.load(townId,{readOnly:visiting});if(!loaded.town){host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>${loaded.message}</p><button type="button" data-close>RETURN</button></section>`;host.querySelector('[data-close]').onclick=async()=>{dispose(false);if(returnTownSnapshot){await saveTown(returnTownSnapshot,{store,reason:'leaving visit'});void startTown({app,onExit,townId:returnTownSnapshot.id,returnTownSnapshot});}else if(owned)void startTown({app,onExit,townId:owned.id});else onExit();};return{stop:dispose,host};}town=loaded.town;message=loaded.message||'';}}
   else if(owned){const loaded=await store.load(owned.id);if(!loaded.town){host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>${loaded.message}</p><button type="button" data-close>THE YARD</button></section>`;host.querySelector('[data-close]').onclick=dispose;return{stop:dispose,host};}town=loaded.town;message=loaded.message||'';}
   else{
-    host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>Driver, people keep turning up at the gate.</p><p>I keep a gate. I do not keep a town. There is flat ground all round the Dome. You build it.</p><p>Hollis</p>${unclaimed.map(record=>`<p>${safeText(record.town?.name||'An old town')} has no mayor.</p><button type="button" data-takeover="${safeText(record.id)}">Take over this town</button>`).join('')}<form><label for="town-name">Name your town</label><br><input id="town-name" name="name" value="Tin Flat" maxlength="48" required><button type="submit">START THE TOWN</button></form>${pointers.length?'<button type="button" data-onboard-visits>THE BOOK: VISIT</button>':''}</section>`;
+  host.innerHTML=`<style>${css}</style><section class="town-onboard"><p>Driver, people keep turning up at the gate.</p><p>I keep a gate. I do not keep a town. There is flat ground all round the Dome. You build it.</p><p>Hollis</p>${unclaimed.map(record=>`<p>${safeText(record.town?.name||'An old town')} has no mayor.</p><button type="button" data-takeover="${safeText(record.id)}">Take over this town</button>`).join('')}<form><label for="town-name">Name your town</label><br><input id="town-name" name="name" value="Tin Flat" maxlength="48" required><button type="submit">START THE TOWN</button></form>${pointers.length?'<button type="button" data-onboard-visits>VISIT</button>':''}</section>`;
     let finishOnboarding,tookOver=false;
     host.querySelectorAll('[data-takeover]').forEach(button=>button.addEventListener('click',async()=>{const id=button.dataset.takeover,loaded=await store.load(id);if(!loaded.town){button.insertAdjacentText('beforebegin',loaded.message);return;}town=loaded.town;town.mayors=[playerId].filter(Boolean);await saveTown(town,{store,reason:'owner assigned'});tookOver=true;finishOnboarding();}));
     host.querySelector('[data-onboard-visits]')?.addEventListener('click',showVisits);
@@ -50,13 +51,14 @@ export async function startTown({app,onExit=()=>{},townId=null,returnTownId=null
   host.__town=town;
   canvas=document.createElement('canvas');canvas.setAttribute('aria-label','The town map');host.append(canvas);
   renderer=new THREE.WebGLRenderer({canvas,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(host.clientWidth,host.clientHeight,false);renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
-  sceneView=createTownScene({town,width:host.clientWidth,height:host.clientHeight});const view=sceneView.camera.userData.townView;view.zoom=62/(1450-28);view.target.set(0,view.target.y,0);sceneView.step(0);
+  sceneView=createTownScene({town,width:host.clientWidth,height:host.clientHeight});const view=sceneView.camera.userData.townView;view.zoom=62/(TOWN_ZOOM.scablands-TOWN_ZOOM.street);view.target.set(0,view.target.y,0);sceneView.step(0);
   if(qa)host.__townCameraState=()=>({target:{x:view.target.x,z:view.target.z},zoom:view.zoom,heading:view.heading});
   markerLayer=document.createElement('div');markerLayer.className='town-map-markers';markerLayer.setAttribute('aria-label','Scablands map markers');host.append(markerLayer);
   let markerRecords=sceneView.mapMarkers(),lastMarkerTick=String(town.tick),lastCameraKey='',markerRefreshes=0;
   const renderMarkers=refresh=>{
     if(refresh){markerRecords=sceneView.mapMarkers();const ids=new Set(markerRecords.map(row=>row.id));for(const [id,node] of markerNodes)if(!ids.has(id)){node.remove();markerNodes.delete(id);}for(const marker of markerRecords){let node=markerNodes.get(marker.id);if(!node){node=document.createElement('button');node.type='button';node.className='town-map-pin';node.dataset.markerId=marker.id;node.dataset.markerKind=marker.kind;node.setAttribute('aria-label',`${marker.kind}: ${marker.label}. Click to fly there.`);node.textContent=marker.label;markerLayer.append(node);markerNodes.set(marker.id,node);}}}
     markerLayer.classList.toggle('is-placing',Boolean(input?.getPlacement().buildingId));
+    ui.querySelector('.town-map-hint')?.toggleAttribute('hidden',sceneView.camera.userData.townView.zoom>=.52);
     const mapRect=ui.querySelector('.town-map')?.getBoundingClientRect(),hostRect=host.getBoundingClientRect();if(!mapRect)return;
     const positions=sceneView.layoutMarkers({markers:markerRecords,width:host.clientWidth,height:host.clientHeight,zoom:sceneView.camera.userData.townView.zoom,
       clip:{left:mapRect.left-hostRect.left,right:mapRect.right-hostRect.left,top:mapRect.top-hostRect.top,bottom:mapRect.bottom-hostRect.top}}),byId=new Map(positions.map(row=>[row.id,row]));
