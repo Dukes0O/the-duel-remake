@@ -160,6 +160,19 @@ def cube(name, center, dims, material, part, bevel=.04):
     o=bpy.context.object; o.dimensions=(dims[0],dims[2],dims[1])
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     o.data.materials.append(material)
+    uv=o.data.uv_layers.active or o.data.uv_layers.new(name='UVMap')
+    uv.name='UVMap'
+    for polygon in o.data.polygons:
+        normal=polygon.normal
+        for loop_index in polygon.loop_indices:
+            vertex=o.data.vertices[o.data.loops[loop_index].vertex_index].co
+            if abs(normal.x)>=abs(normal.y) and abs(normal.x)>=abs(normal.z):
+                u,v=vertex.y,vertex.z
+            elif abs(normal.y)>=abs(normal.z):
+                u,v=vertex.x,vertex.z
+            else:
+                u,v=vertex.x,vertex.y
+            uv.data[loop_index].uv=(u/2,v/2)
     if bevel:
         mod=o.modifiers.new('rolled plate edges','BEVEL'); mod.width=bevel; mod.segments=2
         o.modifiers.new('weighted worn normals','WEIGHTED_NORMAL')
@@ -283,10 +296,10 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             station=vi//section_size; section=vi%section_size
             co=rings[station][section]
             # One camera-like side projection shared by both long plates.
-            u=.02 + ((co[0]/length)+.5)*.96
+            u=.03 + ((co[0]/length)+.5)*.90
             # This source image is a hull-only crop with its deck edge at the top.
             # The white bridge, deck fittings and rigging are real geometry above it.
-            v=.11 + min(1,max(0,(co[1]-keel)/(deck-keel)))*.73
+            v=.11 + min(1,max(0,(co[1]-keel)/(deck-keel)))*.69
             uv.data[li].uv=(u,v)
     parent(obj,root)
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
@@ -584,7 +597,7 @@ if args.stage == 'family':
                 beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
-ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.34,.31,.26),.97)
+ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.28,.23,.17),.97)
 for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ((27,-470,55,22),)):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.
@@ -595,7 +608,7 @@ for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,
         r=ring/rings
         for i in range(segments):
             a=2*math.pi*i/segments; wobble=1+rng.uniform(-.055,.055)
-            rise=max(0,.62*math.sin(math.pi*r)**.82+rng.uniform(-.025,.025)*(1-r))
+            rise=max(0,.82*math.sin(math.pi*r)**.82+rng.uniform(-.06,.06)*(1-r))
             verts.append(gv((x+math.cos(a)*rx*r*wobble,-2.0+rise,z+math.sin(a)*rz*r*wobble)))
     for i in range(segments): faces.append((0,1+(i+1)%segments,1+i))
     for ring in range(rings-1):
@@ -721,8 +734,8 @@ def render_imported_review():
                         max(p.z for p in placed_points)-min(p.z for p in placed_points))
     bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0,-2.0,-440)))
     review_ground=bpy.context.object; review_ground.name='review-only mid-tone lake bed'
-    review_material=bpy.data.materials.new('Review ground / neutral lake-bed earth'); review_material.diffuse_color=(.34,.31,.26,1)
-    review_material.use_nodes=True; review_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.34,.31,.26,1)
+    review_material=bpy.data.materials.new('Review ground / neutral lake-bed earth'); review_material.diffuse_color=(.28,.23,.17,1)
+    review_material.use_nodes=True; review_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.28,.23,.17,1)
     review_material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
     review_ground.data.materials.append(review_material)
     # Render view and light objects are created only after GLB import.
