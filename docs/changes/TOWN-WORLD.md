@@ -24,3 +24,9 @@
 ## Removed
 
 - No files, tests, or behavior were removed.
+
+## Changed test input (Claude's review, rule 18)
+
+`tools/test-town-hooks.mjs` placed its first road at cell (20, 20). That cell now lies on the reserved old road from the safe house to the Everburn, so the game rightly refuses it. The test now places at (19, -12), clear of every reserved road. The assertion is unchanged and nothing is loosened.
+
+`tools/test-review-evidence.mjs` failed in this lane tier on evidence-folder dates, as it does on integration at night. No file here touches it.
