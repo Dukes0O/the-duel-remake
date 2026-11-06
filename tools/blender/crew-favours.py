@@ -138,7 +138,7 @@ def build_harpoon():
         for j in range(sides):
             a=2*math.pi*j/sides; py=c-radius*span/2.5*math.cos(a)
             gx=-1.25+2.5*i/(n-1); gy=(h/2-py)*2.5/span; gz=radius*factor*math.sin(a)
-            verts.append((gx,gy,gz)); uvs.append((px/w,1-py/h))
+            verts.append((gx,gy,gz)); photo_y=c+(py-c)*.86; uvs.append((px/w,1-photo_y/h))
     for i in range(n-1):
         for j in range(sides):
             a=i*sides+j; b=i*sides+(j+1)%sides; faces.append((a,b,b+sides,a+sides))
