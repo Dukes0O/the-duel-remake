@@ -2,8 +2,8 @@
 
 ## Status
 
-Follow-up pass in progress. This commit fixes report history only; population
-timing, home-ground cost and plot/build conflicts remain for the next commits.
+Follow-up pass in progress. Report history and home-ground cost are fixed;
+plot/build conflicts and pace tuning remain for the next commits.
 
 ## Settled design
 
@@ -13,6 +13,8 @@ timing, home-ground cost and plot/build conflicts remain for the next commits.
   unanswered reports, non-routine reports and reports held by the Book.
 - Old saves trim routine report history during the first daily report step.
   The Book itself is not trimmed.
+- Home-ground work builds family-to-people and occupied-family maps once in
+  its scheduled daily step. Family selection follows people order.
 
 ## Evidence
 
@@ -24,6 +26,11 @@ timing, home-ground cost and plot/build conflicts remain for the next commits.
   saves ranged from 255,403 to 273,659 bytes. The run then failed the existing
   10,000-person/5,000-building timing check at 38.43 ms; step 2 addresses that.
 - `node tools/test-town-reports.mjs`: 75 checks passed.
+- `node tools/test-town-people-support.mjs`: 23 checks passed; the warmed
+  10,000-person/5,000-plot day took 26.02 ms.
+- `node tools/test-town-people.mjs`: its 10,000-person/5,000-building timing
+  assertion failed at 34.84 ms. Its fixture has no home plots, so this lane's
+  home-ground indexing does not affect that measurement.
 - Browser check: Claude runs it. Please check that report updates keep the
   current place and detail, and that resolved report history stays readable.
 - Race fingerprints: none recorded; this slice changes town reports only.
@@ -39,6 +46,8 @@ timing, home-ground cost and plot/build conflicts remain for the next commits.
   reports of the same kind may now be open at different places.
 - The former no-duplicate assertion now checks that a same-kind, same-place
   report refreshes in place, and a separate-place case checks that both remain.
+- Added a daily-spacing assertion and a warmed 10,000-person/5,000-plot
+  performance assertion. The existing 30 ms limit is unchanged.
 
 ## Removed
 

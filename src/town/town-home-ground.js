@@ -5,7 +5,6 @@ import {TOWN_HOME_TYPES} from './content/homes.js';
 import {stockpileAt, takeGood} from './town-goods.js';
 import {raiseTownReport} from './town-reports.js';
 
-const DAY = 24;
 export function ensureHomeGround(town) { if (!Array.isArray(town.homePlots)) town.homePlots=[]; return town.homePlots; }
 function plotKey(plot) { return `${plot.regionId}:${plot.x}:${plot.z}`; }
 function validCell(cell) { return cell && Number.isSafeInteger(cell.x) && Number.isSafeInteger(cell.z); }
@@ -40,14 +39,23 @@ function storeCell(town,plot) {
     .sort((a,b)=>Math.abs(a.x-plot.x)+Math.abs(a.z-plot.z)-Math.abs(b.x-plot.x)-Math.abs(b.z-plot.z));
   return stores.find(item=>Object.entries(item.stock?.goods||{}).every(([good,amount])=>(amount||0)>=(TOWN_HOME_TYPES[plot.tier+1]?.goods?.[good]||0)))||stores[0]||null;
 }
-function findHousehold(town,plot) {
-  const families=new Map();
-  for(const person of town.people||[]) if(String(person.homeType||'canvas').toLowerCase().includes('canvas')) {
-    const list=families.get(person.family)||[];list.push(person);families.set(person.family,list);
+function homeGroundIndexes(town,plots) {
+  const peopleByFamily=new Map(),canvasFamilies=[],canvasFamilySet=new Set();
+  for(const person of town.people||[]) {
+    if(!peopleByFamily.has(person.family)) peopleByFamily.set(person.family,[]);
+    peopleByFamily.get(person.family).push(person);
+    if(String(person.homeType||'canvas').toLowerCase().includes('canvas')&&!canvasFamilySet.has(person.family)) {
+      canvasFamilySet.add(person.family);
+      canvasFamilies.push({family:person.family});
+    }
   }
-  return [...families.entries()].find(([family])=>!town.homePlots.some(p=>p.household===family))||null;
+  return {peopleByFamily,canvasFamilies,assignedFamilies:new Set(plots.map(plot=>plot.household).filter(Boolean))};
 }
-function startConstruction(town,plot,next,family) {
+function nextHousehold(indexes,cursor) {
+  while(cursor.index<indexes.canvasFamilies.length&&indexes.assignedFamilies.has(indexes.canvasFamilies[cursor.index].family)) cursor.index++;
+  return indexes.canvasFamilies[cursor.index]||null;
+}
+function startConstruction(town,plot,next,family,peopleByFamily) {
   const store=storeCell(town,plot);
   if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;reportShortage(town,plot,next);return;}
   for(const [good,amount] of Object.entries(next.goods)) if((stockpileAt(town,{regionId:store.regionId,x:store.x,z:store.z})[good]||0)<amount) {
@@ -55,7 +63,7 @@ function startConstruction(town,plot,next,family) {
   }
   for(const [good,amount] of Object.entries(next.goods)) takeGood(town,{regionId:store.regionId,x:store.x,z:store.z},good,amount);
   plot.household=family; plot.family=family; plot.progressDays=0; plot.building=true; plot.waitingGood=null;
-  for(const person of town.people) if(person.family===plot.family) {person.home=plot.id;person.homeType='Under construction';}
+  for(const person of peopleByFamily.get(family)||[]) {person.home=plot.id;person.homeType='Under construction';}
 }
 function reportShortage(town,plot,type) {
   const count=(town.homePlots||[]).filter(item=>item.tier===plot.tier&&item.waitingGood).length;
@@ -63,23 +71,30 @@ function reportShortage(town,plot,type) {
   raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,where:`${plot.regionId} ${plot.x}, ${plot.z}`,
     detail:`${label} going up, ${count} of ${(town.homePlots||[]).length}. Short of ${plot.waitingGood}.`});
 }
-export function stepTownHomeGround({town,tick}) {
-  const plots=ensureHomeGround(town); if(BigInt(tick)%BigInt(DAY)!==0n) return;
+export function stepTownHomeGround({town}) {
+  const plots=ensureHomeGround(town),indexes=homeGroundIndexes(town,plots),cursor={index:0};
   for(const plot of plots) {
     if(plot.burning) continue;
-    if(!plot.household) {const family=findHousehold(town,plot);if(family)startConstruction(town,plot,TOWN_HOME_TYPES[plot.tier+1],family[0]);continue;}
+    if(!plot.household) {
+      const family=nextHousehold(indexes,cursor);
+      if(family) {
+        startConstruction(town,plot,TOWN_HOME_TYPES[plot.tier+1],family.family,indexes.peopleByFamily);
+        if(plot.household) indexes.assignedFamilies.add(family.family);
+      }
+      continue;
+    }
     const next=TOWN_HOME_TYPES[plot.tier+1]; if(!next) continue;
     if(plot.building) plot.progressDays++;
     else {
-      const household=(town.people||[]).filter(person=>person.family===plot.family);
+      const household=indexes.peopleByFamily.get(plot.family)||[];
       const supported=household.length&&household.every(person=>person.mood>=50&&person.needs?.shelter!==false&&person.needs?.waterLitres>=person.needs?.waterNeedLitres&&person.needs?.foodCalories>=2100);
       plot.goodDays=supported?(plot.goodDays||0)+1:0;
-      if(plot.goodDays>=180) {plot.goodDays=0;startConstruction(town,plot,next,plot.household);}
+      if(plot.goodDays>=180) {plot.goodDays=0;startConstruction(town,plot,next,plot.household,indexes.peopleByFamily);}
       continue;
     }
     if(plot.progressDays>=next.days) {
       plot.tier++;
-      for(const person of town.people) if(person.family===plot.family) {
+      for(const person of indexes.peopleByFamily.get(plot.family)||[]) {
         person.home=plot.id;person.homeType=next.label;person.homeTier=plot.tier;
       }
       plot.progressDays=0; plot.building=false; plot.waitingGood=null;

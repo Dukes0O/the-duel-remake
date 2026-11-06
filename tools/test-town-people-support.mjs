@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {createTown, deserializeTown, serializeTown, stepTown, dispatchTownCommand, TOWN_TIME} from '../src/town/index.js';
+import {performance} from 'node:perf_hooks';
+import {createTown, deserializeTown, serializeTown, stepTown, dispatchTownCommand, registeredTownSystems, TOWN_TIME} from '../src/town/index.js';
 
 let checks=0;function check(value,message){assert.ok(value,message);checks++;}
 function days(town,count){for(let day=0;day<count;day++)for(let hour=0;hour<TOWN_TIME.ticksPerDay;hour++)stepTown(town);}
@@ -9,6 +10,8 @@ function paint(town,cells){const result=dispatchTownCommand(town,{type:'paintHom
 
 const empty=createTown(1989,'No plots');days(empty,1);
 check(empty.people.length===12,'a town without painted plots keeps its twelve founders');
+check(registeredTownSystems().some(system=>system.name==='home-ground'&&system.everyTicks===TOWN_TIME.ticksPerDay),
+  'home plots keep their daily system spacing');
 check(empty.peopleConditions.shelterPlaces===12&&empty.peopleConditions.paintedHomePlaces===0,'founders stay in their canvas camp without painted home places');
 check(!empty.book.some(entry=>entry.type==='arrival'),'no newcomers arrive without finished plots');
 
@@ -44,4 +47,18 @@ check(old.people.length===1&&old.people[0].name==='Saved person'&&Array.isArray(
 
 const before=serializeTown(growing);const support={...growing.peopleConditions};
 check(support.shelterPlaces===growing.peopleConditions.shelterPlaces&&serializeTown(growing)===before,'reading support does not change town state');
-console.log(`Town people support: ${checks} checks passed.`);
+
+const large=createTown(20261106,'Large home-ground timing');
+large.people=Array.from({length:10_000},(_,index)=>({id:`person-${index+1}`,name:`Person ${index+1}`,
+  born:0n,nextBirthday:1_000_000n,family:`family-${Math.floor(index/2)}`,home:`home-${Math.floor(index/2)}`,
+  homeType:'Shack',homeTier:1,age:16,
+  job:'townhand',skills:{building:0},health:100,mood:70,
+  needs:{waterLitres:50,waterNeedLitres:15,foodCalories:2100,shelter:true},history:[],generation:0,thought:'The day is calm.'}));
+large.peopleIdsReady=true;
+large.homePlots=Array.from({length:5_000},(_,index)=>({id:`plot-${index}`,regionId:'scablands',x:index,z:0,
+  tier:1,progressDays:0,household:`family-${index}`,family:`family-${index}`,burning:false,building:false,goodDays:0}));
+days(large,1);
+const largeStart=performance.now();days(large,1);const largeDayMs=performance.now()-largeStart;
+check(large.people.length===10_000&&large.homePlots.length===5_000,'the large timing town keeps all people and plots');
+check(largeDayMs<30,`10,000 people and 5,000 plots simulate a day under 30 ms (saw ${largeDayMs.toFixed(2)} ms)`);
+console.log(`Town people support: ${checks} checks passed; 10,000-person/5,000-plot day ${largeDayMs.toFixed(2)} ms.`);
