@@ -1,51 +1,112 @@
 import {ironLineLength, nearestIronLineDistance, sampleIronLine} from '../../iron-line.js';
 
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const CONSIST_TONNES=Object.freeze({'iron-mule-cab':70,'the-2-15':160,'wednesday':30,'iron-mule-wagon':30});
 
-export function stepDrivetrain(step, state, view, dt) {
-  const path=step.path??[], length=ironLineLength(path);
-  if(length<=0) return {state,complete:false,requests:[]};
-  const tractive=step.tractiveKn??80, brake=step.brakeKn??100, mass=step.massTonnes??100;
-  const acceleration=tractive/mass, deceleration=brake/mass;
-  let metres=clamp(state.metres??0,0,length), speed=Math.max(0,state.speed??0), gatePassed=state.gatePassed??false;
-  const controls=view.controls??{};
-  if(controls.throttle>0) speed=Math.min(step.maxSpeed??26,speed+acceleration*dt);
-  else if(controls.brake>0) speed=Math.max(0,speed-deceleration*dt);
-  else speed=Math.max(0,speed-deceleration*.12*dt);
-  const previous=metres, proposed=metres+speed*dt;
-  if(step.stopAtEnd&&proposed>=length) {metres=length;speed=Math.min(speed,1.5);}
+function gradeAcceleration(grade,path,metres) {
+  if(!grade?.from||!grade?.to||!Number.isFinite(grade.ratio))return 0;
+  const from=nearestIronLineDistance(path,grade.from).metres,to=nearestIronLineDistance(path,grade.to).metres;
+  if(metres<Math.min(from,to)||metres>Math.max(from,to))return 0;
+  return -9.81*grade.ratio;
+}
+
+export function stepDrivetrain(step,state,view,dt) {
+  const path=step.path??[],length=ironLineLength(path);
+  if(length<=0)return {state,complete:false,requests:[]};
+  const consistMass=step.consist?.reduce((sum,id)=>sum+(CONSIST_TONNES[id]??0),0)??0;
+  const mass=consistMass||(step.massTonnes??100),tractive=step.tractiveKn??80,brake=step.brakeKn??100;
+  const acceleration=tractive/mass,deceleration=brake/mass;
+  let metres=clamp(state.metres??0,0,length),speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
+  const controls=view.controls??{}, previous=metres, requests=[], events=[];
+  const tokenLocked=!!step.tokenSwap&&!view.hasToken&&!state.tokenSwapped;
+  const tokenMetres=step.tokenSwap?nearestIronLineDistance(path,step.tokenSwap.place).metres:Infinity;
+  const waitingForSwap=!!step.tokenSwap&&view.hasToken&&!state.tokenSwapped&&metres>=tokenMetres;
+  const targetStop=step.rideAlong?.stopsOnMarkExactly&&step.stopMark
+    ?nearestIronLineDistance(path,step.stopMark.place).metres
+    :step.rideAlong?.copiesPlayerStop?clamp(length+(view.playerStopMetres??0),0,length):length;
+  const rideBraking=!!step.rideAlong&&(state.rideStopped||targetStop-metres<=speed*speed/(2*Math.max(.001,deceleration)));
+  const throttle=step.rideAlong?(rideBraking?0:1):(controls.throttle>0&&!tokenLocked&&!waitingForSwap?1:0);
+  const braking=step.rideAlong?rideBraking:waitingForSwap||controls.brake>0;
+  const drag=braking?deceleration:deceleration*.12;
+  const nextSpeed=speed+(throttle*acceleration-drag+gradeAcceleration(step.grade,path,metres))*dt;
+  speed=Math.max(0,throttle?Math.min(step.maxSpeed??26,nextSpeed):nextSpeed);
+  const proposed=metres+speed*dt;
+  if(step.rideAlong&&proposed>=targetStop&&rideBraking){metres=targetStop;speed=0;state={...state,rideStopped:true};}
+  else if(step.stopAtEnd&&proposed>=length&&(!step.sandDrag||speed<=(step.sandDrag.overMs??0))){metres=length;speed=Math.min(speed,1.5);}
   else metres=clamp(proposed,0,length);
-  let events=[],requests=[];
+
+  if(step.otherTrain?.path?.length) {
+    const otherLength=ironLineLength(step.otherTrain.path);
+    const waitAt=step.otherTrain.waitAt??step.tokenSwap?.place;
+    const waitMetres=waitAt?nearestIronLineDistance(step.otherTrain.path,waitAt).metres:otherLength;
+    const otherLimit=state.tokenSwapped?otherLength:waitMetres;
+    const otherMetres=Math.min(otherLimit,(state.otherTrainMetres??0)+Math.max(0,step.otherTrain.speed??0)*dt);
+    requests.push({type:'train',actorId:step.otherTrain.id,position:sampleIronLine(step.otherTrain.path,otherMetres),
+      progress:otherLength?otherMetres/otherLength:1,speed:otherMetres>=otherLength?0:step.otherTrain.speed??0,
+      metres:otherMetres,path:step.otherTrain.path,pathLength:otherLength,model:step.otherTrain.model});
+    state={...state,otherTrainMetres:otherMetres};
+  }
+
+  if(step.stopMark&&metres>=length-.01&&speed<=.05&&!state.stopMarkRecorded) {
+    const mark=nearestIronLineDistance(path,step.stopMark.place).metres,error=Math.abs(metres-mark);
+    const band=(step.stopMark.bands??[]).findIndex(limit=>error<=limit);
+    const lineId=step.stopMark.lineIds?.[band<0?step.stopMark.lineIds.length-1:band];
+    requests.push({type:'stopMark',id:step.stopMark.place?.id??null,metres:metres-mark,error,lineId});
+    state={...state,stopMarkRecorded:true,playerStopMetres:metres-mark};
+  }
+
+  if(step.tokenSwap&&!state.tokenSwapped&&metres>=tokenMetres) {
+    if(!view.hasToken){if(!state.noTokenWarned){state={...state,noTokenWarned:true};requests.push({type:'say',lineId:step.tokenSwap.noTokenLineId});}}
+    else if(speed<=.05&&(state.tokenHold??0)+dt>=step.tokenSwap.seconds) {
+      state={...state,tokenSwapped:true};requests.push({type:'say',lineId:step.tokenSwap.swapLineId},{type:'tokenSwap'});
+    } else if(speed<=.05)state={...state,tokenHold:(state.tokenHold??0)+dt};
+  }
+  if(step.tokenHoop&&!state.tokenHoopPassed) {
+    const hoop=nearestIronLineDistance(path,step.tokenHoop.place).metres;
+    const easy=view.difficulty==='easy',window=easy?(step.tokenHoop.easyWindowMetres??step.tokenHoop.windowMetres):step.tokenHoop.windowMetres;
+    const limit=(easy?(step.tokenHoop.easyKmh??step.tokenHoop.kmh):step.tokenHoop.kmh)/3.6;
+    if(Math.abs(metres-hoop)<=window/2&&(controls.interact||view.interact)&&speed<=limit) {
+      state={...state,tokenHoopPassed:true};requests.push({type:'tokenHoop'});
+    } else if(metres>hoop+window/2) {
+      const wasFast=speed>limit;metres=Math.max(0,metres-(step.tokenHoop.backMetres??300));speed=0;
+      requests.push({type:'say',lineId:wasFast?step.tokenHoop.fastLineId:step.tokenHoop.missLineId});
+    }
+  }
+
   if(step.gate&&!gatePassed) {
     const gate=nearestIronLineDistance(path,step.gate.place).metres;
     if(previous<=gate&&metres>=gate) {
-      const minimumSpeed=view.difficulty==='easy'?(step.gate.easySpeed??step.gate.speed??20):(step.gate.speed??20);
-      if(speed<minimumSpeed) {
-        metres=Math.max(0,gate-300); speed=0;
-        requests.push({type:'say',lineId:step.gate.tooSlowLineId});
-        events.push({type:'gateBounced'});
-      } else {
-        gatePassed=true;
-        requests.push({type:'say',lineId:step.gate.throughLineId});
-        events.push({type:'gateBroken'});
-      }
+      const minimum=view.difficulty==='easy'?(step.gate.easySpeed??step.gate.speed??20):(step.gate.speed??20);
+      if(speed<minimum){metres=Math.max(0,gate-300);speed=0;requests.push({type:'say',lineId:step.gate.tooSlowLineId});events.push({type:'gateBounced'});}
+      else{gatePassed=true;requests.push({type:'say',lineId:step.gate.throughLineId});events.push({type:'gateBroken'});}
     }
   }
   const crushed=new Set(state.crushedPickups??[]);
-  for(const pickup of step.crushOnTrack??[]) {
-    if(!crushed.has(pickup.id)&&previous/length<pickup.progress&&metres/length>=pickup.progress) {
-      crushed.add(pickup.id);speed=Math.max(0,speed-2);events.push({type:'pickupCrushed',id:pickup.id});
+  for(const pickup of step.crushOnTrack??[])if(!crushed.has(pickup.id)&&previous/length<pickup.progress&&metres/length>=pickup.progress){
+    crushed.add(pickup.id);speed=Math.max(0,speed-2);events.push({type:'pickupCrushed',id:pickup.id});
+  }
+  const sayAt=step.sayAt??[],said=new Set(state.said??[]);
+  for(const cue of sayAt)if(!said.has(cue.lineId)&&previous/length<cue.progress&&metres/length>=cue.progress){said.add(cue.lineId);requests.push({type:'say',lineId:cue.lineId});}
+  if(step.apprentice&&step.taughtLineId&&metres/length>=(step.teachAt??.5)&&!state.apprenticeTaught){
+    state={...state,apprenticeTaught:true};requests.push({type:'say',lineId:step.taughtLineId},{type:'apprenticeTaught',person:step.apprentice,kind:'driving'});
+  }
+  const atEnd=metres>=length-.01;
+  let complete=step.stopAtEnd?atEnd&&speed<=.05:atEnd&&(!step.gate||gatePassed);
+  if(step.rideAlong&&complete&&step.rideAlong.copiesPlayerStop&&view.playerStopMetres!=null&&!state.copiedStop){
+    requests.push({type:'say',lineId:Math.abs(view.playerStopMetres)<=(step.goodStopMetres??3)?step.rideAlong.goodLineId:step.rideAlong.badLineId});
+    state={...state,copiedStop:true,copiedStopMetres:view.playerStopMetres};
+  }
+  if(step.sandDrag) {
+    const dragPlace=step.sandDrag.place??step.sandDrag,drag=nearestIronLineDistance(path,dragPlace).metres;
+    const threshold=typeof step.sandDrag==='object'?(step.sandDrag.overMs??0):0;
+    if(metres>=drag&&speed>threshold){
+      metres=step.sandDrag.backTo?nearestIronLineDistance(path,step.sandDrag.backTo).metres:0;speed=0;
+      state={...state,sandDragged:true};requests.push({type:'say',lineId:step.sandDrag.lineId??step.dragLineId},{type:'sandDrag',place:dragPlace});
     }
   }
+  complete=!state.sandDragged&&complete;
   const place=sampleIronLine(path,metres);
-  requests.push({type:'train', actorId:step.actorId??'iron-mule', position:place, progress:metres/length, speed,
-    metres,path,pathLength:length,roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1']});
-  const sayAt=step.sayAt??[];
-  const said=new Set(state.said??[]);
-  for(const cue of sayAt) if(!said.has(cue.lineId)&&previous/length<cue.progress&&metres/length>=cue.progress) {
-    said.add(cue.lineId); requests.push({type:'say',lineId:cue.lineId});
-  }
-  const atEnd=metres>=length-0.01;
-  const complete=step.stopAtEnd?atEnd&&speed<=0.05:atEnd&&(!step.gate||gatePassed);
-  return {state:{metres,speed,gatePassed,said:[...said],crushedPickups:[...crushed]},complete,events,requests};
+  requests.push({type:'train',actorId:step.actorId??'iron-mule',position:place,progress:metres/length,speed,metres,path,pathLength:length,
+    roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1']});
+  return {state:{...state,metres,speed,gatePassed,said:[...said],crushedPickups:[...crushed]},complete,events,requests};
 }
