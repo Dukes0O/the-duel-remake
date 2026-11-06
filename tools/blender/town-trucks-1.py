@@ -74,10 +74,10 @@ for image in list(bpy.data.images):
 materials = dict(shared)
 
 PAINT_FILES = {
-    'fire-truck': ('fire-engine-paint.jpg', (.30, .055, .032, 1)),
-    'water-tanker': ('water-tanker-paint.jpg', (.13, .16, .17, 1)),
-    'supply-truck': ('supply-truck-paint.jpg', (.18, .19, .10, 1)),
-    'tow-rig': ('tow-rig-paint.jpg', (.20, .12, .045, 1)),
+    'fire-truck': ('fire-engine-projection.jpg', (.30, .055, .032, 1)),
+    'water-tanker': ('water-tanker-projection.jpg', (.13, .16, .17, 1)),
+    'supply-truck': ('supply-truck-projection.jpg', (.18, .19, .10, 1)),
+    'tow-rig': ('tow-rig-projection.jpg', (.20, .12, .045, 1)),
 }
 for identifier, (filename, color) in PAINT_FILES.items():
     material = shared['faded-hand-paint'].copy()
@@ -88,13 +88,13 @@ for identifier, (filename, color) in PAINT_FILES.items():
     bsdf.inputs['Metallic'].default_value = .12
     bsdf.inputs['Roughness'].default_value = .88
     image = bpy.data.images.load(str(textures / filename), check_existing=False)
-    image.name = identifier + ' own repeating paint photograph'
+    image.name = identifier + ' camera projected photo'
     image.file_format = 'JPEG'
     image.pack()
     texture = material.node_tree.nodes.new('ShaderNodeTexImage')
     texture.image = image
     texture.interpolation = 'Linear'
-    texture.extension = 'REPEAT'
+    texture.extension = 'CLIP'
     # glTF keeps a plain image-to-color link reliably; the photo is graded on
     # disk so the exported model and the Blender source share the same paint.
     bsdf.inputs['Base Color'].default_value=(1,1,1,1)
@@ -109,9 +109,14 @@ wood = materials['weathered-plank']
 canvas = materials['patched-canvas']
 tanker_steel = bpy.data.materials.new('Tanker / rusted bare steel')
 tanker_steel.use_nodes=True
-tanker_steel.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.27,.17,.12,1)
+tanker_steel.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(1,1,1,1)
 tanker_steel.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=.18
 tanker_steel.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.91
+tanker_photo=bpy.data.images.get('water-tanker camera projected photo')
+if tanker_photo:
+    photo_node=tanker_steel.node_tree.nodes.new('ShaderNodeTexImage')
+    photo_node.image=tanker_photo;photo_node.extension='CLIP'
+    tanker_steel.node_tree.links.new(photo_node.outputs['Color'],tanker_steel.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
 lamp = bpy.data.materials.new('Aged amber lamp lens')
 lamp.use_nodes=True
 lamp.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.62,.59,.48,1)
@@ -239,6 +244,43 @@ def export_glb(path):
 # branch's JPEG settings while this lane's older town_base still writes PNG.
 town.export_glb=export_glb
 
+def project_paint_from_camera(root_obj, material, camera):
+    """Project the matched reference camera onto each truck's paint surfaces."""
+    selected=material if isinstance(material,(list,tuple)) else (material,)
+    selected_names={item.name for item in selected}
+    bpy.context.view_layer.update()
+    frame=camera.data.view_frame(scene=scene)
+    frame_width=max(v.x for v in frame)-min(v.x for v in frame)
+    frame_height=max(v.y for v in frame)-min(v.y for v in frame)
+    world_to_camera=camera.matrix_world.inverted()
+    for obj in [root_obj]+list(root_obj.children_recursive):
+        if obj.type!='MESH' or not selected_names.intersection(item.name for item in obj.data.materials):
+            continue
+        while obj.data.uv_layers:
+            obj.data.uv_layers.remove(obj.data.uv_layers[0])
+        uv=obj.data.uv_layers.new(name='UVMap')
+        obj.data.uv_layers.active_index=0
+        uv.active_render=True
+        for loop in obj.data.loops:
+            world=obj.matrix_world @ obj.data.vertices[loop.vertex_index].co
+            if world.x>0.05:
+                world.x=-world.x
+            p=world_to_camera @ world
+            if p.z>=-0.01:
+                uv.data[loop.index].uv=(.5,.5)
+                continue
+            uv.data[loop.index].uv=(.5+p.x/(-p.z*frame_width), .5+p.y/(-p.z*frame_height))
+
+def set_photo_camera(camera, target=(0,0,1.65)):
+    camera.location=(-10.5,12.0,5.4)
+    camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+    camera.data.lens=48
+
+projection_camera_data=bpy.data.cameras.new('reference projection camera')
+projection_camera=bpy.data.objects.new('reference projection camera',projection_camera_data)
+scene.collection.objects.link(projection_camera)
+projection_camera.data.lens=48
+
 def make_wheel(identifier, x, z, rear=False, dual=False):
     center=(x,.56,z); r=.55
     suffix=':dual' if dual else ''
@@ -299,17 +341,11 @@ def build_truck(identifier, length, axle_z, paint, kind):
             elif kind in ('tanker','supply','tow'):
                 twin=make_wheel(identifier,side*1.34,z,rear=True,dual=True)
 
-    # Rounded pressed-steel bonnet, closed cab shell and slightly overhanging roof.
-    rounded_body(identifier+':rounded pressed bonnet',[
-        (-3.70,1.56,.30,1.02),(-3.65,1.78,.43,1.06),(-3.48,1.91,.51,1.12),
-        (-3.22,1.94,.58,1.16),(-2.74,1.91,.62,1.17),(-2.23,1.82,.58,1.16),
-        (-1.82,1.75,.50,1.14)],paint)
-    rounded_body(identifier+':closed cab shell',[
-        (-1.96,2.04,.76,1.31),(-1.77,2.20,1.14,1.48),(-1.42,2.23,1.27,1.62),
-        (-.76,2.23,1.29,1.63),(-.20,2.22,1.25,1.62),(.08,2.13,1.04,1.48)],paint)
-    rounded_body(identifier+':rolled overhanging cab roof',[
-        (-1.53,2.30,.18,2.56),(-1.38,2.40,.20,2.60),(-.34,2.40,.20,2.60),
-        (-.18,2.30,.18,2.56)],paint)
+    # Pressed, square-shouldered cab and broad bonnet match the camera reference.
+    box(identifier+':pressed flat bonnet',(0,1.15,-2.78),(1.90,.62,1.88),paint,.14)
+    box(identifier+':square shouldered cab',(0,1.92,-.92),(2.16,1.44,1.86),paint,.075)
+    box(identifier+':seated cab roof',(0,2.675,-.92),(2.30,.18,1.92),paint,.045)
+    # The roof overlaps the cab crown by 6 cm; there is no floating roof edge.
     # A visible crown seam and short pressed louvres set into both bonnet sides.
     bar(identifier+':bonnet centre crease',(0,1.40,-3.42),(0,1.47,-2.04),.026,tin)
     for side in (-1,1):
@@ -516,6 +552,10 @@ specs=(('fire-truck',7.5,(-2.45,2.23),'fire'),
        ('tow-rig',7.0,(-2.15,1.95),'tow'))
 for identifier,length,axles,kind in specs:
     build_truck(identifier,length,axles,materials[identifier+'-paint'],kind)
+    set_photo_camera(projection_camera, target=(0,0,1.65))
+    projected=[materials[identifier+'-paint']]
+    if identifier=='water-tanker': projected.append(tanker_steel)
+    project_paint_from_camera(TRUCKS[identifier],projected,projection_camera)
 for truck in TRUCKS.values(): merge_static_meshes(truck)
 
 family=pivot('town-trucks-1',(0,0,0))
@@ -541,7 +581,7 @@ for identifier,_,_,_ in specs:
         'triangles':sum(mesh_triangles(obj,depsgraph) for obj in truck_meshes),
         'paintImage':PAINT_FILES[identifier][0],
         'paintImageBytes':(textures/PAINT_FILES[identifier][0]).stat().st_size,
-        'paintImageDimensions':list(bpy.data.images[identifier+' own repeating paint photograph'].size),
+        'paintImageDimensions':list(bpy.data.images[identifier+' camera projected photo'].size),
     }
 triangles=sum(item['triangles'] for item in truck_metrics.values())
 if any(item['triangles']>12000 for item in truck_metrics.values()):
@@ -585,7 +625,15 @@ for identifier,_,_,_ in specs:
             hidden=other.name!=identifier
             other.hide_render=hidden
             for child in other.children_recursive: child.hide_render=hidden
-    scene.render.filepath=str(evidence/(identifier+'.png'))
+    length=next(spec[1] for spec in specs if spec[0]==identifier)
+    camera.location=(-length*1.18, length*1.36, max(4.7,length*.64))
+    camera.rotation_euler=(Vector((0,0,1.55))-camera.location).to_track_quat('-Z','Y').to_euler()
+    camera.data.lens=48
+    scene.render.filepath=str(evidence/(identifier+'-photo-match.png'))
+    bpy.ops.render.render(write_still=True)
+    camera.location=(length*1.15, -length*1.2, max(5.0,length*.72))
+    camera.rotation_euler=(Vector((0,0,1.45))-camera.location).to_track_quat('-Z','Y').to_euler()
+    scene.render.filepath=str(evidence/(identifier+'-far-side-rear.png'))
     bpy.ops.render.render(write_still=True)
 print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
                   'trucks':truck_metrics,

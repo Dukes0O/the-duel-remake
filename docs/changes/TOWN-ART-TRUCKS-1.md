@@ -1,50 +1,27 @@
-# TOWN-ART-TRUCKS-1 | Round 5
+# TOWN-ART-TRUCKS-1, round 6
 
-5 November 2026. Candidate art for Claude's look review; no game loader or
-selection logic changed. The round 5 sheet is in
-`docs/board/looks/town-art-trucks-1/round-5.jpg`.
+## Changed
 
-## What changed
+- Replaced the four tiled paint inputs with four generated, 1024-square truck photographs. The recipe applies camera-projected UV coordinates, mirrors the far side, and renders the exported GLB reimported into an empty scene from matched and alternate cameras.
+- Rebuilt the cab with square shoulders and a seated roof, and retained the 1.1 m tyres, connected bumper and working beds/equipment.
+- Added the round 6 comparison sheet and review. The review records that the projection is visibly offset and that the result does not pass visual acceptance.
 
-- Rebuilt the four 1950s work trucks in `tools/blender/town-trucks-1.py` with
-  smooth lofted pressed-steel cab and bonnet sections, thicker folded arches,
-  single-bar bumpers, headlights, side steps and darker road tyres. The fire
-  truck now has nested hose coils and a single rear axle. Tanker, supply and
-  tow rigs use dual rear wheels. Their tank, slatted cargo bed, sacks and tow
-  lattice gained photo-specific equipment details.
-- Darkened and color-balanced the four existing 512 by 512 paint photographs.
-  The tanker cab is blue-grey, supply body olive and tow body ochre. The recipe
-  uses direct image-to-color links and `town_base.make_materials` plus
-  `town_base.export_glb`; no atlas is embedded.
-- Kept the model at the card's public path. In
-  `tools/test-blender-output.mjs`, changed the truck's candidate guard from an
-  absence check to the existing GLB triangle and byte budget check. This is
-  the card-directed guard change for Claude to review; no budget was loosened.
+The Blender bake experiment smeared the camera projection across overlapping surfaces. I removed that bake stage and restored the direct photo textures, which render more clearly. The final JPEGs are the photo sources on camera-projected UVs; they are not baked into non-overlapping UV layouts. This is a known shortfall against the card's bake request.
 
-The exported GLB is 2,779,784 bytes. Triangles: fire 8,699; tanker 11,853;
-supply 9,797; tow 9,651. The recipe rendered all four images after reimporting
-the exported GLB into an empty scene. Means from one painted photo panel and
-the matching rendered panel are fire (127, 71, 70) / (133, 75, 72), tanker
-(107, 86, 72) / (104, 85, 73), supply (139, 124, 108) / (138, 130, 111), and
-tow (162, 147, 137) / (141, 129, 118). Every channel is within 15%.
+Final rendered GLB: 2,816,116 bytes. Triangles: fire 8,021; tanker 11,173; supply 9,119; tow 8,973. The four embedded JPEGs are 1024 x 1024. No metallic value exceeds 0.3.
 
-## Review and checks
+## Checks
 
-- Visual review: round 5 remains a candidate, not a visual pass. The sheet
-  shows smoother bodies and more distinct jobs, but cab proportions, the fire
-  reel, tanker wear and boom detail still need Claude's look review.
-- Blender render: passed; four exported-GLB renders produced.
-- `node tools/test-blender-output.mjs`: passed, 239 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
-- Browser and game checks: not run; the trucks are not wired into the game.
-  Claude should review the cab/bonnet silhouettes, hose loops, tanker wear,
-  sacks and tow boom on the round 5 sheet.
-- Lane tier and build: not run, as directed for this art task.
-- Changed assertions: none. The truck's guard now reads the public GLB and
-  applies the existing byte and triangle limits. No race fingerprints changed.
+- `node tools/test-blender-output.mjs` — passed, 239 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs` — passed. Repository placement passed; the tool reported existing advisory size targets only.
+- `node tools/test-review-evidence.mjs` — failed 3 of 9 subtests. One uses a fixed 5 November crew evidence path while this lane uses 6 November; one expects `round-4.jpg`, which this task explicitly required deleting; one could not spawn `ffmpeg` (`EPERM`). No test assertions were changed.
+- Lane tier and build — not run, per the art-card instruction.
+- Browser checks: not run in this lane. Claude should judge the round 6 sheet, focusing on cab/bonnet alignment and image streaking, source-to-model frame size, far-side/rear finish, and whether the fire reel, tanker, supply load and tow boom read from the driver view.
+- Changed assertions: none.
+- Race fingerprints: not applicable; this art-only change does not touch race simulation.
 
 ## Removed
 
-- Deleted the round 3 sheet and review note; round 5 replaces that evidence.
-- Removed generated intermediate renders, the editable Blender scene, and
-  scratch output after the final sheet was made.
+- Removed the old tiled paint photographs after replacing them with the camera-projection photos.
+- Removed round 4 and round 5 sheets and review notes as requested.
+- Removed bake code that produced stretched, smeared projections.

@@ -1,64 +1,28 @@
-# Town truck paint textures
+# Town truck projection photographs
 
-These four original photographs were made with OpenAI's built-in image
-generation tool on 5 November 2026, then resized to 512 by 512 and saved as
-JPEG for the town truck GLB. No third-party photographs, models or textures
-are included.
+Four original vehicle reference photographs were generated with OpenAI's
+built-in image generation tool on 6 November 2026. The four 1024-square JPEGs
+are the isolated quadrants of one camera-matched reference sheet. The Blender
+recipe projects each truck's photograph onto its visible painted surfaces.
 
-## `fire-engine-paint.jpg`
+Prompt: "Use case: photorealistic-natural. Asset type: original photographic
+references for four game vehicle models and camera projection. A clean 2 by 2
+contact sheet, four isolated full trucks with exact equal quadrants and no
+separators, each same low front-left three-quarter camera, nose toward lower
+left, same size and focal length, plain light neutral gray studio background,
+broad soft daylight. Top-left: 1940s fire engine, faded dusty brick-red,
+square cab, flat windshield and roof firmly seated on cab walls, vertical
+grille, rounded fenders, heavy bumper, road tires, clearly visible large rear
+hose reel and plumbing. Top-right: 1940s water tanker, square cab and long
+rusted riveted cylindrical steel tank with pipes below. Bottom-left: surplus
+supply truck with faded olive square cab, stake-sided flatbed and dusty canvas
+sacks lashed in. Bottom-right: industrial tow truck with square worn mustard
+cab, flatbed and practical tall triangulated lattice boom, winch. The trucks
+should look like real photographs of weathered working vehicles. Full truck
+visible in each quadrant. No people, text, logos, props, strong shadows or
+perspective differences."
 
-Prompt: "Use case: photorealistic-natural. Asset type: square seamless
-repeating albedo texture for a realistic 3D game truck. Primary request: a
-flat macro photograph of old deep red fire-engine enamel paint on steel, worn
-and dusty. Fill the frame only with the continuous painted surface: many small
-irregular chips of dark brown rust, fine scratches, worn edges, subtle dust.
-No panel seams, no rivets, no straight lines, no large objects. The exact left
-edge must visually continue into the right edge and the top edge into the
-bottom. Uniform diffuse overcast daylight, natural subdued color, sharp fine
-detail, no glare, no text, logos or watermark."
-
-## `water-tanker-paint.jpg`
-
-Prompt: "Use case: photorealistic-natural. Asset type: square seamless
-repeating albedo texture for a realistic 3D game truck. Primary request: a
-flat macro photograph of faded grey-green industrial paint on old tanker
-steel. Fill the frame only with continuous painted surface, with many small
-irregular chips showing dark brown oxidation, tiny scratches, soft dusty film
-and a few subtle rivet-sized marks. No panel seams, no lines, no large rust
-patches or focal feature. Opposite edges must continue seamlessly in both
-directions. Uniform diffuse overcast daylight, muted grey-green, sharp detail,
-no glare, no text, logos or watermark."
-
-## `supply-truck-paint.jpg`
-
-Prompt: "Use case: photorealistic-natural. Asset type: square seamless
-repeating albedo texture for a realistic 3D game truck. Primary request: a
-flat macro photograph of faded olive drab enamel on old supply truck steel.
-Continuous painted surface, small scattered irregular chips to dark brown
-rust, fine scratches, faint sun fade and low dust. No panel seams, rivets,
-lines, big objects or large rust islands. The left edge must continue into the
-right, and the top into the bottom without a visible boundary. Uniform
-overcast daylight, subdued olive, crisp photographic detail, no glare, no
-text, logos or watermark."
-
-## `tow-rig-paint.jpg`
-
-Prompt: "Use case: photorealistic-natural. Asset type: square seamless
-repeating albedo texture for a realistic 3D game truck. Primary request: a
-flat macro photograph of muted rust-yellow ochre paint on old heavy tow-truck
-steel. Continuous painted surface with numerous small irregular dark brown
-edge chips, fine scratches and thin patches of bare dark steel, light dust.
-Keep the color mustard ochre, low saturation, never pink or orange. No panel
-seams, no rivets, no straight lines, no large objects. Opposite edges continue
-naturally in both directions, no visible tile boundary. Uniform diffuse
-overcast daylight, sharp photographic detail, no glare, no text, logos or
-watermark."
-
-## Round 5 surface grade
-
-The four photographs above remain the original image sources. For this round,
-their RGB levels were adjusted in the recipe inputs to make the fire red less
-saturated, the tanker cab blue-grey, the supply paint darker olive and the tow
-paint darker ochre. Their photographic chips and scratches remain; each image
-is still 512 by 512 and is embedded as its own JPEG. The model uses direct
-image-to-color links in glTF and no atlas.
+The isolated truck remains photographic; edge-connected neutral studio
+background was flood-filled to each truck's paint tint before projection. The
+opposite side mirrors the camera projection. No third-party photography,
+models, logos or textures are included.
