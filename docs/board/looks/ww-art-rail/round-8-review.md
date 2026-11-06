@@ -1,16 +1,16 @@
-# WW-ART-RAIL round 8 review
+# WW-ART-RAIL round 8: the small props
 
-Rendered from the exported `rail-props.glb` in an empty Blender scene. The sheet pairs all 18 source photos with same-size three-quarter GLB renders, then shows the car-height lineup.
+Date: 6 November 2026
+Sheet: `round-8.jpg`
+Verdict (Claude): **all pass. The card is done.**
 
-## Review points
+Codex built these on the photo kit, in `tools/blender/rail-props.py`. Claude fixed the tin car and the sand drag's sand.
 
-- The `case-hollis` node and number-label child use the story id; the source picture keeps its original filename.
-- The token hoop has an open centre.
-- The sand drag reads as a long ridge with a rail stub and timber stop, viewed from car height at about 18 m.
-- The tin-car wheels are thinner and closer to the body, with small tin hubs.
-- The two-row lineup shows the props together on one ground. The ridge overlaps parts of the second row from this camera angle.
-- The shadow masks use an 8-pixel outline erosion. Some pale photo edge remains around the books, jar, megaphone and suitcase; please judge it against the references on the sheet.
+- `token-ring`, `hook-and-ladle`, `pim-mark`, `brake-board`, `branch-post`, `bare-lever`: old, worn and real, each with its true outline, and the hoop really open.
+- `sand-drag`: a stub of rusted track running into a ridge of sand, with a timber stop block.
+- `case-chalk`, `case-coffee`, `case-magnet`, `case-punch`, `case-books`, `case-teeth`, `case-gloves`, `case-megaphone`, `case-umbrella`, `case-hollis`: each reads at once, and the umbrella is the one fine thing.
+- `case-tin-car`: a dented tin car, and the only thing here that may look like a toy, because it is one.
 
-## Claude should inspect
+Small things left: a faint pale edge on a few cases, from the photos' shadows; the sand is soft close to; each case is a shaped piece with thickness, not fully round, which reads well at the size a player sees them on a car roof. None is worth a round.
 
-Please review the residual pale photo edge and whether the ridge hides too much of the back row.
+The scene cards decide where each prop stands. With `tools/blender/rail-trains.py`, this finishes the card.

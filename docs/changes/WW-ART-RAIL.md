@@ -37,3 +37,7 @@ Date: 6 November 2026
 - The faint pale edge at the base of the books, tooth jar, megaphone and suitcase.
 - Whether the sand ridge overlaps too much of the second prop row in the lineup.
 - The tin-car wheel placement and open token-ring centre.
+
+## The small props
+
+The card is finished. `tools/blender/rail-props.py` and `public/assets/models/wasteland/rail/rail-props.glb` join the card's file list, because `rail-trains.glb` is near its limit. All pass; see `docs/board/looks/ww-art-rail/round-8-review.md`. Removed: the separate props from any earlier recipe, none of which had shipped.

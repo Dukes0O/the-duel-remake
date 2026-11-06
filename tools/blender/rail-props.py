@@ -167,9 +167,10 @@ def build_sand_drag():
             z = z0 + length * j / nz
             height = drift_height(x, z)
             index = sand.vertex((x, height, z))
-            # The measured sand region in the source image fills the terrain.
-            uv = photo.uv(800 + (x - x0) / width * 224,
-                          175 + (z - z0) / length * 50)
+            # The photo's sand, mirrored every 8 m or so, so that no pattern shows.
+            def wave(value):
+                return abs((value % 2) - 1)
+            uv = photo.uv(790 + wave(x / 7.0 + .13) * 205, 170 + wave(z / 9.0 + .31) * 44)
             row.append((index, uv))
         rows.append(row)
     for i in range(nx):
@@ -252,16 +253,19 @@ def full_seeds(photo):
 car_views = []
 side = View('side', car_photos['side'], full_seeds(car_photos['side']),
     lambda x,y,z: (18 + (x + .31) / .62 * 988, 479 - y / .27 * 410), (0,0,1))
+far_side = View('far-side', car_photos['side'], full_seeds(car_photos['side']),
+    lambda x,y,z: (18 + (x + .31) / .62 * 988, 479 - y / .27 * 410), (0,0,-1))
+# The end photos look along the car, so their width is the car's width (world Z).
 front = View('front', car_photos['front'], full_seeds(car_photos['front']),
-    lambda x,y,z: (512 + x / .28 * 930, 964 - y / .27 * 900), (0,0,1))
+    lambda x,y,z: (512 - z / .14 * 465, 964 - y / .27 * 900), (1,0,0))
 rear = View('rear', car_photos['rear'], full_seeds(car_photos['rear']),
-    lambda x,y,z: (512 + x / .28 * 930, 964 - y / .27 * 900), (0,0,-1))
+    lambda x,y,z: (512 + z / .14 * 465, 964 - y / .27 * 900), (-1,0,0))
 top = View('top', car_photos['top'], full_seeds(car_photos['top']),
     # The overhead photo's body is 450 pixels wide, while the side photo's
     # length is about 988 pixels. Photo horizontal is vehicle width (world Z),
     # and photo vertical is vehicle length (world X).
     lambda x,y,z: (512 + z / .28 * 450, 512 - x / .62 * 900), (0,1,0))
-car_views.extend((side, front, rear, top))
+car_views.extend((side, far_side, front, rear, top))
 car_bounds = ((-.31,.31),(0,.27),(-.14,.14))
 car_solid, car_xs, car_ys, car_zs = occupancy(
     car_bounds, .012, [view.covers for view in car_views])
@@ -271,10 +275,10 @@ car = carve_hull('case-tin-car', car_views, car_materials, car_solid,
                  car_xs, car_ys, car_zs, .012, 4200)
 car.parent = root_obj
 parts['case-tin-car'] = car
-for x in (-.18, .18):
+for x in (-.183, .198):
     for z in (-.125, .125):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.035, depth=.012,
-            location=(x, -math.copysign(.105, z), .043), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.054, depth=.03,
+            location=(x, -math.copysign(.122, z), .054), rotation=(math.pi/2, 0, 0))
         wheel = bpy.context.object
         wheel.name = 'case-tin-car-wheel'
         wheel.parent = car
@@ -284,8 +288,8 @@ for x in (-.18, .18):
         rubber.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.045,.04,.035,1)
         rubber.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .92
         wheel.data.materials.append(rubber)
-        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.014, depth=.012,
-            location=(x, -math.copysign(.105, z), .043), rotation=(math.pi/2, 0, 0))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.016, depth=.034,
+            location=(x, -math.copysign(.122, z), .054), rotation=(math.pi/2, 0, 0))
         hub = bpy.context.object
         hub.name = 'case-tin-car-hub'
         hub.parent = car
