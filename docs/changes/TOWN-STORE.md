@@ -26,3 +26,6 @@
 ## Removed
 
 Removed the static town-store import from career backup so town code stays unloaded when the career has no town pointer. No existing save data or user-facing save path was removed.
+
+
+Claude, 5 November 2026: third review. Once the career is committed, a recovery marker that will not clear no longer rolls anything back: the next load keeps the new town by its `restoreId`. A two-town test covers it.

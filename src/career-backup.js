@@ -441,8 +441,6 @@ async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIn
     applyEntries(source, entries);
     await onRestoreStep('after-apply-entries');
     installCareerArchive(source,record.archives);
-    if(record.townRecords?.length)for(const town of record.townRecords)await towns.store.finishInstallRecovery(town.id);
-    await onRestoreStep('after-finish-recovery');
   }catch(error){
     if(error?.simulatedCrash) throw error;
     try{
@@ -455,6 +453,13 @@ async function restoreCareerBackupUnlocked(id, { storage, backupStore = createIn
     }
     throw new Error('Career restore failed; the previous career was restored. '+error.message,{cause:error});
   }
+  // The career is committed, so the restore stands. A marker left behind is harmless:
+  // its restoreId matches the career's pointer, and the next load keeps the new town.
+  for(const town of record.townRecords??[]){
+    try{await towns.store.finishInstallRecovery(town.id);}
+    catch(error){if(error?.simulatedCrash)throw error;}
+  }
+  await onRestoreStep('after-finish-recovery');
   return record;
 }
 export function restoreCareerBackup(id, options = {}) {

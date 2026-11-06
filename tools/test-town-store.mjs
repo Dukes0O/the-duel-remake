@@ -153,4 +153,22 @@ const yearExport = await yearStore.exportTown('soak-town');
 const yearImport = createTownStore({ memoryOnly: true });
 await yearImport.importTown(yearExport);
 assert.equal((await yearImport.load('soak-town')).town.year, 30, 'Year 30 town survives real store export and import');
+// Two towns: once the career is committed, a marker that will not clear must not undo anything.
+{
+  const durable = { towns: new Map(), copies: new Map() };
+  const current = storage({ 'the-duel-profile-v1': JSON.stringify({ version: 1, credits: 1 }), [TOWN_POINTER_KEY]: JSON.stringify({ version: 1, ids: ['town-a', 'town-b'] }) });
+  const seed = createTownStore({ memoryOnly: true, memory: durable, storage: current });
+  const townRecord = (id, year) => ({ ...intact, id, town: { ...first, id, year } });
+  await seed.install([townRecord('town-a', 4), townRecord('town-b', 5)]);
+  const newA = townRecord('town-a', 30), newB = townRecord('town-b', 31);
+  const backups = new Map([['two-towns', { id: 'two-towns', entries: { 'the-duel-profile-v1': JSON.stringify({ version: 1, credits: 7 }), [TOWN_POINTER_KEY]: JSON.stringify({ version: 1, ids: ['town-a', 'town-b'] }) }, townRecords: [newA, newB] }]]);
+  const backupStore = { async load(id) { return structuredClone(backups.get(id)); }, async save(record) { backups.set(record.id, structuredClone(record)); } };
+  const real = createTownStore({ memoryOnly: true, memory: durable, storage: current });
+  const stubborn = { ...real, async finishInstallRecovery(id) { if (id === 'town-b') throw new Error('cannot clear'); return real.finishInstallRecovery(id); } };
+  await restoreCareerBackup('two-towns', { storage: current, backupStore, townStore: stubborn });
+  const again = createTownStore({ memoryOnly: true, memory: durable, storage: current });
+  assert.equal((await again.load('town-a')).town.year, 30, 'the first restored town stands');
+  assert.equal((await again.load('town-b')).town.year, 31, 'the second restored town stands, though its marker did not clear');
+  assert.ok(JSON.parse(current.getItem(TOWN_POINTER_KEY)).restoreId, 'the career keeps the restored pointer');
+}
 console.log('town store: byte-safe legacy career, isolated writes, rolling fallback, durable restore recovery, complete export/import, and Year 30 store roundtrip passed');
