@@ -79,3 +79,29 @@ Prompt: Square macro photograph of dark charcoal-brown wet reservoir clay, soft
 irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
+
+## WW-ART-CREW photographs (2026-11-06)
+
+All three are embedded in `crew-favours.glb` as direct colour pictures; none repeats.
+
+- `ww-gerald-cutout.jpg`: Codex ImageGen, an original desert lizard seen from the side and from directly above, edited onto a flat colour so that its outline can be read by script. Prompt: realistic desert lizard, side and overhead views, the same animal in both. The recipe replaces the flat colour before export, so it never reaches the model.
+- `ww-harpoon-photo.jpg`: Codex ImageGen photograph of a complete historic
+  whaling harpoon, dead side-on and level on a flat pale background, reduced to
+  1700 x 567. Prompt:
+  Photographic reference image of one complete historic whaling harpoon, seen
+  precisely dead side-on at eye-level with no perspective tilt, arranged
+  horizontally across a plain pale grey studio ground. The entire object is in
+  frame from the rounded butt of its long straight dark oak pole to the sharp
+  point of its forged iron head. Real proportions: overall 2.5 metres long;
+  slim wooden shaft, rope binding around the iron socket, heavy pitted dark iron
+  socket and shank, one large flat barbed harpoon head with distinct
+  backward-pointing barbs. Very old, weathered, dusty, muted dark brown oak,
+  deep brown-black pitted iron with subdued rust; realistic fine grain,
+  scratches and corrosion. Soft flat overcast daylight, crisp silhouette,
+  uniform pure pale neutral background, no cast shadow crossing the object, no
+  table, no hands, no text, no labels, no other objects. Wide landscape
+  composition, highest available resolution.
+- `ww-piano-photo.jpg`: original old upright piano photograph, perspective
+  warped to a 1500 x 1300 front view and reduced to 1200 x 1040. Prompt:
+  battered upright piano with its
+  action exposed, photographed in even neutral daylight.

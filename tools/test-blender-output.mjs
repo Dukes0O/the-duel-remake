@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, rmdirSync, symlinkSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -52,6 +53,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
+  {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:8000000},
   {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-STAGES/round-5',
     glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
 
@@ -80,6 +83,8 @@ const generators = [
   { script: 'tools/blender/scrapdome-yard.py', args: ['--round', '1'], glb: ['public/assets/models/wasteland/scrapdome/yard.glb'] },
   { script: 'tools/blender/scablands-tintown.py', args: [], glb: ['public/assets/models/wasteland/scablands/tintown.glb'], budget: 60000 },
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
+  { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 2*1024*1024,
+    glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
@@ -376,7 +381,7 @@ function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false,
   return call;
 }
 check('all Blender asset generators are covered', () => {
-  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py'].includes(name))
+  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py','hull_model.py'].includes(name))
     .map(name => `tools/blender/${name}`);
   assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators, ...kitGenerators].map(item => item.script).sort());
 });
@@ -804,6 +809,108 @@ try {
       const jpeg = bytes.subarray(binStart + view.byteOffset, binStart + view.byteOffset + view.byteLength);
       assert.equal(jpeg[0], 0xff, `${image.name || 'picture'} JPEG start`);
       assert.equal(jpeg[1], 0xd8, `${image.name || 'picture'} JPEG marker`);
+    }
+  });
+  check('TOWN-ART-TRUCKS-1 reads back four named work trucks, movable parts and per-truck budgets', () => {
+    const candidateSuffix = `-readback-${process.pid}-${randomUUID()}`;
+    const modelPath = join(root, '.qa-dist/art-candidates', `town-trucks-1${candidateSuffix}.glb`);
+    try {
+      const blender = process.env.BLENDER_BIN ||
+        'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+      const build = spawnSync(blender, ['-b', '--python-exit-code', '1', '--python',
+        join(root, 'tools/blender/town-trucks-1.py'), '--', '--root', root, '--export-only',
+        `--candidate-suffix=${candidateSuffix}`],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
+      assert.equal(build.error, undefined, build.error?.message);
+      assert.equal(build.status, 0, `truck candidate build failed: ${(build.stderr || build.stdout || '').slice(-4000)}`);
+      assert.ok(existsSync(modelPath), 'fresh truck candidate build must produce the GLB before readback');
+    const bytes = readFileSync(modelPath);
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 8_000_000, `${bytes.length} bytes exceeds 8 MB`);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    const names = gltf.nodes.map(node => node.name || '');
+    for (const name of ['town-trucks-1', 'fire-truck', 'water-tanker', 'supply-truck', 'tow-rig',
+      'fire-truck:cannon', 'supply-truck:load', 'tow-rig:hook',
+      'fire-truck:spin-front-left', 'fire-truck:steer-front-left',
+      'fire-truck:lamp', 'water-tanker:lamp', 'supply-truck:lamp', 'tow-rig:lamp']) {
+      assert.ok(names.includes(name), `missing named truck part ${name}`);
+    }
+    const parentByIndex = new Map();
+    gltf.nodes.forEach((node, parent) => (node.children || []).forEach(child => parentByIndex.set(child, parent)));
+    const byName = new Map(names.map((name, index) => [name, index]));
+    const lampMaterial = gltf.materials.find(material => material.name === 'Aged amber lamp lens');
+    assert.ok(lampMaterial?.emissiveFactor?.some(value => value > 0), 'lamp lens material must emit light');
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      const group = gltf.nodes[byName.get(`${id}:lamp`)];
+      const children = (group.children || []).map(index => names[index]);
+      assert.deepEqual(children.sort(), [`${id}:headlamp-left`, `${id}:headlamp-right`]);
+    }
+    assert.ok(gltf.images?.length >= 4, 'four measured fire-engine views are embedded');
+    assert.ok(gltf.images.every(image => image.mimeType === 'image/jpeg'), 'photo sources embed as JPEG');
+    const materialNames = new Set(gltf.materials.map(material => material.name));
+    for (const view of ['side','front','rear','overhead']) {
+      assert.ok([...materialNames].some(name => name.includes(`fire-engine-${view}`)), `embedded ${view} photo material`);
+    }
+    const remainingPaints = gltf.materials.filter(material => material.name?.endsWith('/ photo paint'));
+    assert.equal(remainingPaints.length, 3, 'the three not-yet-replaced trucks keep their current photo materials');
+    const remainingPhotoIds = remainingPaints.map(material =>
+      gltf.textures[material.pbrMetallicRoughness.baseColorTexture.index].source);
+    assert.equal(new Set(remainingPhotoIds).size, 3, 'each unchanged truck keeps its own photo source');
+    for (const material of gltf.materials) {
+      assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
+        `${material.name || 'material'} metallic factor exceeds 0.3`);
+    }
+    const jsonLength = bytes.readUInt32LE(12);
+    const binaryOffset = 28 + jsonLength;
+    for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+      const texCoords = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+      assert.deepEqual(texCoords, ['TEXCOORD_0'], `${mesh.name} has only TEXCOORD_0`);
+      const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+      assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV coordinates are float pairs');
+      const view = gltf.bufferViews[uv.bufferView], stride = view.byteStride ?? 8;
+      const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+      const min=[Infinity,Infinity], max=[-Infinity,-Infinity];
+      for (let i=0;i<uv.count;i++) for (let axis=0;axis<2;axis++) {
+        const value=bytes.readFloatLE(start+i*stride+axis*4);
+        min[axis]=Math.min(min[axis],value); max[axis]=Math.max(max[axis],value);
+      }
+      assert.ok(min[0]<max[0] && min[1]<max[1], `${mesh.name} UVs do not cover a range`);
+    }
+    const familyIndex = byName.get('town-trucks-1');
+    const familyChildren = (gltf.nodes[familyIndex].children || []).map(index => names[index]);
+    assert.deepEqual(familyChildren.sort(), ['fire-truck', 'supply-truck', 'tow-rig', 'water-tanker']);
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      for (const side of ['left', 'right']) {
+        const spinName = `${id}:spin-front-${side}`;
+        const steerName = `${id}:steer-front-${side}`;
+        const spinIndex = byName.get(spinName);
+        const steerIndex = byName.get(steerName);
+        assert.ok(Number.isInteger(spinIndex) && Number.isInteger(steerIndex), `${id} ${side} steering pivots`);
+        assert.equal(parentByIndex.get(spinIndex), steerIndex, `${spinName} follows its steering pivot`);
+        const localPosition = gltf.nodes[spinIndex].translation || [0, 0, 0];
+        assert.ok(localPosition.every(value => Math.abs(value) <= 0.001), `${spinName} stays at its steering pivot`);
+      }
+    }
+    const countTruck = id => {
+      let total = 0;
+      const visit = index => {
+        const node = gltf.nodes[index];
+        if (Number.isInteger(node.mesh)) {
+          total += gltf.meshes[node.mesh].primitives.reduce((sum, primitive) =>
+            sum + gltf.accessors[primitive.indices].count / 3, 0);
+        }
+        for (const child of node.children || []) visit(child);
+      };
+      visit(byName.get(id));
+      return total;
+    };
+    for (const id of ['fire-truck', 'water-tanker', 'supply-truck', 'tow-rig']) {
+      const triangles = countTruck(id);
+      assert.ok(triangles > 500 && triangles <= 12_000, `${id}: ${triangles} triangles`);
+    }
+    } finally {
+      rmSync(modelPath, { force: true });
     }
   });
   check('scablands-tintown exports its bounded named walkable town model', () => {
