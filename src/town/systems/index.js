@@ -4,3 +4,4 @@ import '../town-money.js';
 import '../town-fire.js';
 import '../town-weather.js';
 import '../town-food.js';
+import '../town-outposts.js';

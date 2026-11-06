@@ -1,10 +1,11 @@
 import {BUILDINGS} from './content/registry.js';
 import {registerTownCommand} from './town-commands.js';
 import {registerTownSystem} from './town-sim.js';
+import {townOutpostProtectionIncome} from './town-outposts.js';
 
 const GRANT = 1_500n;
 const INTEREST_BASIS_POINTS = 100n;
-const ACCOUNT_NAMES = Object.freeze(['cash','grant-income','opening-equity','rent-income','shop-income','ticket-income','scrap-in','scrap-out','levy-income','wages-expense','upkeep-expense','interest-expense','loan-payable']);
+const ACCOUNT_NAMES = Object.freeze(['cash','grant-income','opening-equity','rent-income','shop-income','ticket-income','protection-income','scrap-in','scrap-out','levy-income','wages-expense','upkeep-expense','interest-expense','loan-payable']);
 const RENT_BY_TIER = Object.freeze({tent:6,canvas:6,shack:10,tin:14,container:16,brick:20});
 export const TOWN_MONEY_PRICES = Object.freeze({ticket:Object.freeze({Cheap:2,Fair:5,Dear:10}),shop:Object.freeze({Cheap:2,Fair:5,Dear:10})});
 const PRICE_TIERS = new Set(['Cheap','Fair','Dear']);
@@ -119,6 +120,7 @@ function settleMonth(town,calendar) {
   bookIncome(town,'rent-income',income.rent);
   bookIncome(town,'shop-income',income.shops);
   bookIncome(town,'ticket-income',income.tickets);
+  bookIncome(town,'protection-income',townOutpostProtectionIncome(town));
   const demand=upkeep+wages;
   const interest=(money.loans*INTEREST_BASIS_POINTS+9_999n)/10_000n;
   if(interest) post(town,'interest-expense','loan-payable',interest,'monthly-interest',calendar);
