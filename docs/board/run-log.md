@@ -1576,3 +1576,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 6 November: story page `docs/story/there-is-no-2-15.md` and 11 RAIL cards added (Claude). Pim's railway, the buried works train and Old Tam, who drove it.
 - 6 Nov early: full check on 7712ae7d (no frame step, screens not set up): full tier 631/631, combat balance pass, browser 188/201. Failures being rerun once; frame-based convoy-frames, deep-frames and fire-view not counted.
 - 6 Nov: merged FIX-HUD-LOAN-SLOT (combat-hud, arsenal-core, arsenal-wave1 fail on a hidden fifth bar button since 43955ec4; lane 27/27, three browser checks, build, one review pass).
+- RAIL-LINES merged: the railway story's 158 lines; lane tier 25/25 and build passed on 0dd1aca1.
