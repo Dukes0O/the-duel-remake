@@ -7,11 +7,15 @@ import {scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablan
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 
-// The bucket reaches four metres from the tracks. The bed is 4.6 m to the
-// right, and the heap is 4.6 m to the left, so either swing fits at rest.
-const YARD = Object.freeze({excavator:{x:0,z:34}, dumpTruck:{x:4.6,z:34}, trencher:{x:10,z:34}});
+// The bucket reaches about 8.6 m from the excavator. The truck's
+// bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
+export const DIG_REACH_M = 8.6;
+const YARD = Object.freeze({excavator:{x:0,z:18}, dumpTruck:{x:DIG_REACH_M,z:18.7}, trencher:{x:24,z:10}});
+export const DIG_HEAP = Object.freeze({x:-DIG_REACH_M,z:18});
 const RESERVATIONS = Object.freeze([
-  {x:0,z:0,radius:24,sentence:'The Dome is built here. Dig around it.'},
+  {x:0,z:120,radius:78,sentence:'The Dome is built here. Dig around it.'},
+  {x:-90,z:120,radius:62,sentence:'The Dome is built here. Dig around it.'},
+  {x:90,z:120,radius:62,sentence:'The Dome is built here. Dig around it.'},
   {x:0,z:1120,radius:18,sentence:'The gate is protected ground. Dig around it.'},
   ...SCABLANDS_PLACES.map(place=>({x:place.x,z:place.z,radius:place.flatRadius,
     sentence:`${place.name} is a story place. Dig around it.`})),
@@ -39,20 +43,20 @@ export function createDigSandbox({seed = 1, ground = null} = {}) {
   }
   // TOWN-STORE replaces this page-lifetime memory save; career storage is never used.
   if (!ground && !loaded) {
-    for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:-4.6,z:34,radius},'topsoil',volume);
+    for(const [radius,volume] of [[0.8,4],[1.6,7],[2.6,11]])edit.fill({x:DIG_HEAP.x,z:DIG_HEAP.z,radius},'topsoil',volume);
     globalThis.__theDigGroundMemory=edit.toSave();
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
   return {ground:edit,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
-    cameraIndex:0,mode:'drive',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
+    cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
 
 export function switchDigMachine(sim) {
   const ids=['excavator','dumpTruck','trencher'];
-  return {...sim,activeMachine:ids[(ids.indexOf(sim.activeMachine)+1)%ids.length],mode:'drive',
-    cameraIndex:sim.activeMachine==='excavator'?1:0};
+  const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
+  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
 }
 
 export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%3}; }
@@ -66,6 +70,11 @@ function fixedStep(sim,input) {
   } else {
     const haul={...sim.haul,activeMachine:sim.activeMachine};
     let advanced=stepMachineHaul(haul,input.controls,STEP);
+    // The bed lifts while Space is held and settles back after; the load slides once it is high enough.
+    const truck=advanced.machines.dumpTruck,tipping=input.action==='tip'&&machineLoadVolume(truck)>1e-6;
+    const bedAngle=Math.max(0,Math.min(.85,(truck.bedAngle??0)+(tipping?.6:-.5)*STEP));
+    advanced={...advanced,machines:{...advanced.machines,dumpTruck:{...truck,bedAngle}}};
+    if(input.action==='tip'&&bedAngle<.4)return {...next,haul:{...advanced,activeMachine:'excavator'},events};
     if(input.action==='dig'||input.action==='load'||input.action==='tip'){
       if(input.action==='dig'){
         const machine=haul.machines.excavator,tip=machineToolPosition(machineDefinition('excavator'),machine,'bucket');
@@ -90,7 +99,7 @@ function fixedStep(sim,input) {
         events.push({type:'dirt-plume',x:position.x,y:position.y,z:position.z,volumeM3:operation.movedVolumeM3,
           material:Object.keys(advanced.machines.excavator.load).at(-1)||'topsoil'});
       }
-      if(input.action==='tip'&&operation?.movedVolumeM3>0){const truck=advanced.machines.dumpTruck;events.push({type:'tip',x:truck.x,y:0,z:truck.z,volumeM3:operation.movedVolumeM3});}
+      if(input.action==='tip'&&operation?.movedVolumeM3>0){const rear=machineToolPosition(machineDefinition('dumpTruck'),advanced.machines.dumpTruck,'bed');events.push({type:'tip',x:rear.x,y:rear.y,z:rear.z,volumeM3:operation.movedVolumeM3});}
       if(operation?.missed){const tip=machineToolPosition(machineDefinition('excavator'),advanced.machines.excavator,'bucket');events.push({type:'spill',...tip,volumeM3:operation.spilledVolumeM3});}
       if(operation?.message)next={...next,lastMessage:operation.message};
     }

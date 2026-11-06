@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 
 const SIDE = 32;
+export const GROUND_UV = 1 / 11;
+
+/** Soft, wide patches of colour; freshly turned earth is darker. Same answer for every ground mesh. */
+export function groundColour(x, z, turned = 0) {
+  const patch = Math.sin(x * .031 + 1.3) * Math.sin(z * .027 + .4) * .5 + Math.sin(x * .083 + z * .061) * .3 + Math.sin(x * .19 - z * .17) * .2;
+  return new THREE.Color(0xc8b596).multiplyScalar((.9 + patch * .12) * (1 - turned * .42));
+}
 
 function makeChunk(row, heightAt) {
   const positions = [], colours = [], uvs = [], indices = [];
@@ -13,11 +20,10 @@ function makeChunk(row, heightAt) {
       const sz=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,x)+dx));
       turned+=Math.min(1,Math.abs(row.delta[sz*SIDE+sx])*1.5)/9;
     }
-    const variation=.86+(((Math.imul(Math.floor(wx+300),73856093)^Math.imul(Math.floor(wz+300),19349663))>>>0)%1000)/7000;
-    const colour = new THREE.Color(0x887255).multiplyScalar(variation*(1-turned*.38));
+    const colour = groundColour(wx, wz, turned);
     positions.push(wx, heightAt(wx, wz) + .035, wz);
     colours.push(colour.r, colour.g, colour.b);
-    uvs.push(wx/10,wz/10);
+    uvs.push(wx*GROUND_UV,wz*GROUND_UV);
     if (x < SIDE && z < SIDE) {
       const a = z * (SIDE + 1) + x, b = a + 1, c = a + SIDE + 1, d = c + 1;
       indices.push(a, c, b, b, c, d);

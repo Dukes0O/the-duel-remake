@@ -6,7 +6,7 @@ import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
-import {createGroundView} from '../world/ground-view.js';
+import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {machineToolPosition} from './machine.js';
@@ -19,36 +19,39 @@ const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher'};
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
-function staticYard(scene,sim,groundMaterial){
-  const floorGeometry=new THREE.PlaneGeometry(600,600,300,300);floorGeometry.rotateX(-Math.PI/2);
-  const position=floorGeometry.attributes.position;
+function staticYard(scene,groundMaterial){
+  const floorGeometry=new THREE.PlaneGeometry(800,800,400,400);floorGeometry.rotateX(-Math.PI/2);
+  const position=floorGeometry.attributes.position,uv=floorGeometry.attributes.uv;
   floorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
   for(let i=0;i<position.count;i++){
     const x=position.getX(i),z=position.getZ(i);
-    position.setY(i,scablandsNaturalHeightAt(x,z));
-    const variation=.86+(((Math.imul(Math.floor(x+300),73856093)^Math.imul(Math.floor(z+300),19349663))>>>0)%1000)/7000;
-    const color=new THREE.Color(0x887255).multiplyScalar(variation);floorGeometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
+    position.setY(i,scablandsNaturalHeightAt(x,z));uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
+    const color=groundColour(x,z,0);floorGeometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
   }
   floorGeometry.computeVertexNormals();const floor=new THREE.Mesh(floorGeometry,groundMaterial);floor.name='Scablands natural ground';floor.receiveShadow=true;scene.add(floor);
   const yard=new THREE.Group();yard.name='Machine yard props';
-  const pipeMaterial=material(0x66706a,.7);
-  for(let i=0;i<4;i++){
-    const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,5,12),pipeMaterial);
-    pipe.rotation.x=Math.PI/2;pipe.position.set(-11+i*.4,.6,36);yard.add(pipe);
-  }
-  const postMaterial=material(0x5e5040);
-  for(let i=0;i<16;i++){
-    const a=i/16*Math.PI*2,post=new THREE.Mesh(new THREE.BoxGeometry(.35,1.8,.35),postMaterial);
-    post.position.set(Math.cos(a)*24,.9,Math.sin(a)*24);yard.add(post);
+  const pipeMaterial=material(0x4c4a44,.7);
+  for(let i=0;i<7;i++){
+    const row=i<4?0:i<6?1:2,along=row===0?i:row===1?i-4+.5:1.5;
+    const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,6,12,1,true),pipeMaterial);
+    pipe.rotation.x=Math.PI/2;pipe.position.set(-20+along*.46,scablandsNaturalHeightAt(-20,4)+.24+row*.4,4);pipe.castShadow=true;yard.add(pipe);
   }
   scene.add(yard);
+}
+
+// With no surroundings to reflect, full metal draws black. Keep the paint and rust visible.
+function dullMetal(node){
+  for(const mat of [].concat(node.material||[]))if(mat.metalness>.3){mat.metalness=.3;mat.roughness=Math.max(mat.roughness,.6);}
 }
 
 function machineRoot(asset,id){
   const modelId=id==='dumpTruck'?'dump-truck':id;
   const source=asset.scene.getObjectByName(modelId);
   if(!source)return null;
-  const root=source.clone(true);root.name=`${modelId} display`;return root;
+  // The family file lays machines out in a row; the machine itself starts at its own origin.
+  const root=source.clone(true);root.name=`${modelId} display`;root.position.set(0,0,0);
+  root.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;dullMetal(node);}});
+  return root;
 }
 
 function disposeScene(group){
@@ -64,20 +67,21 @@ function disposeScene(group){
 
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
 export async function startTheDig({app,onExit=()=>{}}={}){
-  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">WASD drives. Tab changes to work. Q changes machine. C changes camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls">${machineControlsView({mode:'work'})}<p>A / D swings. W / S moves the boom. I / K moves the arm. J / L moves the bucket. Space digs. E loads the truck.</p><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
+  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox(),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
   let shownMessage='',messageUntil=0;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
-  scene.add(new THREE.HemisphereLight(0xf7e9ce,0x534333,2));
-  const sun=new THREE.DirectionalLight(0xffe3b4,3.1);sun.position.set(-30,55,-20);sun.castShadow=true;scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
+  const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:180});scene.add(sun,sun.target);
   const camera=new THREE.PerspectiveCamera(55,1,.1,900);
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   const world=new THREE.Group();scene.add(world);
-  const dirtTexture=new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.repeat.set(60,60);
+  const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const groundMaterial=new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1});
-  staticYard(world,sim,groundMaterial);
+  staticYard(world,groundMaterial);
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const effects=createDigFx({group:world,seed:1});
@@ -94,7 +98,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     modelAsset=machineAsset;
     const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
-    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(14,0,34);world.add(parkedDozer);}
+    if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
     for(const id of MACHINE_IDS){
       const root=machineRoot(machineAsset,id);
       if(!root)throw new Error(`The machine model is missing ${id}.`);
@@ -151,12 +155,14 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
-      if(view){view.update(state,elapsed,id===sim.activeMachine?frameEvents:[]);view.root.visible=true;}
+      if(view){view.update({...state,y:sim.ground.heightAt(state.x,state.z)},elapsed,id===sim.activeMachine?frameEvents:[]);view.root.visible=true;}
     }
-    if(modelAsset){const view=machineViews.get(sim.activeMachine);if(view){
-      if(sim.cameraIndex===0&&sim.activeMachine==='excavator'){camera.position.set(0,18,88);camera.lookAt(0,2,17);camera.updateMatrixWorld();}
-      else updateMachineCamera(camera,definition,active,MODES[sim.cameraIndex]||'chase');
-    }}
+    if(modelAsset){
+      const y=sim.ground.heightAt(active.x,active.z),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
+      const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
+      updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});
+      sun.position.set(active.x-30,y+55,active.z-20);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
+    }
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
@@ -171,8 +177,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else if(!failed&&sim.activeMachine==='excavator'){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
-      message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'Swing over the heap and hold Space to dig.';
-    } else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with WASD. Press Tab, then hold Space to tip the load.':'Drive with WASD. Hold Space to cut a ditch.';
+      message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
+    } else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);requestAnimationFrame(frame);
   }

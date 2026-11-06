@@ -46,7 +46,7 @@ export function operateMachineHaul(haul, {action, dtSeconds = 0, targetHeight = 
     const definition = machineDefinition('excavator');
     const tip = machineToolPosition(definition, excavator, 'bucket');
     const dx=tip.x-truck.x,dz=tip.z-truck.z,c=Math.cos(truck.heading),s=Math.sin(truck.heading);
-    const localX=dx*c-dz*s,localZ=dx*s+dz*c;
+    const localX=dx*c-dz*s,localZ=dx*s+dz*c-(machineDefinition('dumpTruck').tools.bed.centerZ??0);
     const contents = {...excavator.load};
     const bed=machineDefinition('dumpTruck').tools.bed;
     if (Math.abs(localX)<=bed.widthM/2&&Math.abs(localZ)<=bed.lengthM/2) {

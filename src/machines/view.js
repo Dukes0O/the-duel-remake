@@ -18,13 +18,17 @@ export function createMachineView({model, definition, parent = null, onSound = n
   root.add(body);
   const nodes = new Map();
   body.traverse(node => { if (node.name) nodes.set(node.name, node); });
+  // GLTFLoader removes ':' and other reserved marks from node names when it loads a model.
+  const findNode = name => name ? nodes.get(name) ?? nodes.get(name.replace(/[\[\]\.:\/]/g, '')) : undefined;
   const joints = definition.joints.map(joint => ({joint,
-    node:nodes.get(`${definition.id}:${joint.name}`) ?? nodes.get(joint.modelNode ?? joint.name)}));
+    node:findNode(joint.modelNode) ?? findNode(`${definition.id}:${joint.name}`) ?? findNode(joint.name)}));
   const warnings = joints.filter(entry => !entry.node).map(entry => `Missing model node: ${definition.id}:${entry.joint.name}`);
-  const bed = nodes.get(`${definition.id}:bed`) ?? nodes.get(`${definition.id}:bucket`) ??
-    nodes.get('Bed') ?? nodes.get('Bucket') ?? nodes.get('bed') ?? nodes.get('bucket');
-  const load = bed ? new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 8), material(0x65503a)) : null;
-  if (load) { load.name = 'machine-load'; bed.add(load); load.position.set(0, 0.45, 0); load.visible = false; }
+  const bed = findNode(`${definition.id}:bed`) ?? findNode(`${definition.id}:bucket`);
+  const modelLoad = findNode(`${definition.id}:load`) ?? null;
+  const load = modelLoad || (bed ? new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 8), material(0x4a3524)) : null);
+  if (load && !modelLoad) { load.name = 'machine-load'; bed.add(load); load.position.set(0, -0.3, 0.3); }
+  if (load) load.visible = false;
+  const bedNode = findNode(`${definition.id}:bed`) ?? null;
 
   const dustMaterial = material(0x7b6a54, 1, true);
   const dust = Array.from({length:8}, (_, index) => {
@@ -65,17 +69,19 @@ export function createMachineView({model, definition, parent = null, onSound = n
       node.rotation.set(0, 0, 0);
       node.quaternion.setFromAxisAngle(new THREE.Vector3(...joint.axis), angle);
     }
+    if (bedNode) bedNode.rotation.x = -(state.bedAngle ?? 0);
     if(events.some(event=>event?.type==='dirt-plume'))biteTimer=.2;
     biteTimer=Math.max(0,biteTimer-dtSeconds);
     root.position.y+=(biteTimer>0?Math.sin((state.timeSeconds||0)*90)*.025:0);
-    const bucketNode=nodes.get('excavator:bucket')??nodes.get('Bucket');
-    if(bucketNode&&biteTimer>0)bucketNode.rotation.z+=Math.sin((state.timeSeconds||0)*110)*.035;
+    const bucketNode=findNode('excavator:bucket');
+    if(bucketNode&&biteTimer>0)bucketNode.rotateY(Math.sin((state.timeSeconds||0)*110)*.035);
     const amounts = Object.values(state.load ?? {}).filter(Number.isFinite);
     const volume = amounts.reduce((sum, amount) => sum + Math.max(0, amount), 0);
     if (load) {
       load.visible = volume > 1e-4;
       const fill = Math.max(0.08, Math.min(1, volume / (definition.tools?.bucket?.capacityM3 ?? definition.tools?.bed?.capacityM3 ?? 8)));
-      load.scale.set(0.55 * Math.sqrt(fill), 0.3 * fill, 0.55 * Math.sqrt(fill));
+      if (modelLoad) modelLoad.scale.set(Math.sqrt(fill), Math.max(0.15, fill), Math.sqrt(fill));
+      else load.scale.set(0.9 * Math.sqrt(fill), 0.7 * fill, 0.9 * Math.sqrt(fill));
     }
     if (bed && load) load.visible = volume > 1e-4;
 
@@ -126,7 +132,7 @@ export function createMachineView({model, definition, parent = null, onSound = n
     }
     const working=Object.values(state.jointSpeeds??{}).some(value=>Math.abs(value)>.08)||events.some(event=>event?.type==='dirt-plume');
     if (speed > 0.05||working) onSound?.(MACHINE_SOUND_CUES.engine, {speedMps:speed,working});
-    if (state.jointAngles && Object.values(state.jointAngles).some(angle => Math.abs(angle) > 0.01))
+    if (Object.values(state.jointSpeeds ?? {}).some(value => Math.abs(value) > 0.05))
       onSound?.(MACHINE_SOUND_CUES.hydraulic, {joints:state.jointAngles});
     lastState = {x:state.x, z:state.z};
     root.updateMatrixWorld(true);

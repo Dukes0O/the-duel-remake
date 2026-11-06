@@ -45,12 +45,12 @@ assert.ok(reservedState.cutVolumeM3>0,'the trench still cuts beside a reserved r
 assert.ok(Math.abs(afterVolume-beforeVolume)<1e-5,'cut and deposited material conserve total ground volume beside a reserved area');
 
 const blockedGround=createGroundEdit({region:{id:'blocked-ridges',editable:true},naturalHeight:()=>0,
-  reservedShapes:[{x:1.4,z:1,radius:0.8},{x:-1.4,z:1,radius:0.8}]});
+  reservedShapes:[{x:1.4,z:-2,radius:0.8},{x:-1.4,z:-2,radius:0.8}]});
 const blockedStep=stepTrencher(createTrencherState(),{forward:1,chainDown:true},2,blockedGround);
 assert.equal(blockedStep.cutVolumeM3,0,'the trencher stops before cutting when both ridge sides are reserved');
 assert.equal(blockedStep.events[0]?.reason,'Both sides are blocked, so the trencher stopped without removing soil.',
   'the stopped cut gives a plain reason');
-assert.equal(blockedGround.heightAt(0,1),0,'a refused ridge placement moves no soil at all');
+assert.equal(blockedGround.heightAt(0,-2),0,'a refused ridge placement moves no soil at all');
 assert.ok(blockedStep.state.machine.z<=1+1e-9,'the machine stops at the refused spot');
 assert.equal(blockedStep.state.machine.speedMps,0,'the machine has no speed left at the refused spot');
 const blockedAgain=stepTrencher(blockedStep.state,{forward:1,chainDown:true},1,blockedGround);

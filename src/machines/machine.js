@@ -8,7 +8,7 @@ const loadMass = load => Object.entries(load ?? {}).reduce((sum, [material, volu
 export function createMachineState(definition, {x = 0, z = 0, heading = 0} = {}) {
   if (!definition || !finite(x) || !finite(z) || !finite(heading)) throw new TypeError('A machine and finite start position are required.');
   return {x, z, heading, speedMps:0, timeSeconds:0,
-    jointAngles:Object.fromEntries((definition.joints ?? []).map(joint => [joint.name, 0])),
+    jointAngles:Object.fromEntries((definition.joints ?? []).map(joint => [joint.name, definition.startAngles?.[joint.name] ?? 0])),
     jointSpeeds:Object.fromEntries((definition.joints ?? []).map(joint => [joint.name, 0])),
     load:{}, toolVolumes:{}};
 }
@@ -22,8 +22,8 @@ export function stepMachine(definition, state, controls = {}, dtSeconds = 0) {
   let speed = 0, turnRate = 0;
   if (definition.driveKind === 'tracks') {
     const forward = control(controls, 'forward'), steer = control(controls, 'steer');
-    const left = finite(controls.leftTrack) ? control(controls, 'leftTrack') : clamp(forward - steer, -1, 1);
-    const right = finite(controls.rightTrack) ? control(controls, 'rightTrack') : clamp(forward + steer, -1, 1);
+    const left = finite(controls.leftTrack) ? control(controls, 'leftTrack') : clamp(forward + steer, -1, 1);
+    const right = finite(controls.rightTrack) ? control(controls, 'rightTrack') : clamp(forward - steer, -1, 1);
     const target = (left + right) / 2 * definition.maxSpeedMps * loadFactor;
     const acceleration = target === 0 || Math.sign(target) !== Math.sign(state.speedMps) ? 3.2 : 1.25;
     const eased = state.speedMps + clamp(target-state.speedMps,-acceleration*dtSeconds,acceleration*dtSeconds);
@@ -36,7 +36,7 @@ export function stepMachine(definition, state, controls = {}, dtSeconds = 0) {
     const target=control(controls,'forward')*definition.maxSpeedMps*loadFactor;
     const acceleration=target===0||Math.sign(target)!==Math.sign(state.speedMps)?3.2:1.5;
     speed=state.speedMps+clamp(target-state.speedMps,-acceleration*dtSeconds,acceleration*dtSeconds);
-    turnRate=control(controls,'steer')*(definition.turnRateRadPerSecond??.7)*Math.min(1,Math.abs(speed)/1.5);
+    turnRate=-control(controls,'steer')*(definition.turnRateRadPerSecond??.7)*Math.min(1,Math.abs(speed)/1.5);
   }
   const deltaHeading = turnRate * dtSeconds;
   let x = state.x, z = state.z;

@@ -4,10 +4,12 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {createMachineState} from '../src/machines/machine.js';
 import {createMachineView, MACHINE_SOUND_CUES} from '../src/machines/view.js';
 import {MACHINE_CAMERA_MODES, updateMachineCamera} from '../src/machines/camera.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 
 const definition = machineDefinition('excavator');
 const model = new THREE.Group();
-for (const name of ['House', 'Boom', 'Arm', 'Bucket']) {
+// GLTFLoader removes ':' from names, as a loaded model has them.
+for (const name of ['excavatorcab', 'excavatorboom', 'excavatorarm', 'excavatorbucket']) {
   const node = new THREE.Group(); node.name = name; model.add(node);
 }
 const soundEvents = [];
@@ -18,21 +20,24 @@ const before = structuredClone(state);
 state.jointAngles.house = 0.5;
 state.speedMps = 1;
 state.load.gravel = 0.3;
+state.jointSpeeds.boom = 0.4;
 const frame = view.update(state, 1 / 60, [{type:'dirt-plume', x:4, z:8}]);
 assert.equal(view.root.position.x, 4);
 assert.equal(view.root.position.z, 8);
-assert.equal(view.body.getObjectByName('House').quaternion.y, Math.sin(0.25));
+assert.equal(-view.body.getObjectByName('excavatorcab').quaternion.y, Math.sin(0.25));
 assert.equal(view.root.rotation.y, Math.PI / 2, 'model heading follows the simulation forward axis');
 assert.ok(frame.toolPositions.bucket);
 assert.equal(view.root.getObjectByName('machine-load').visible, true);
 assert.ok(view.root.getObjectByName('machine-exhaust').visible);
 assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.dig));
 assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.engine));
+assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.hydraulic), 'a moving joint is heard');
+for (const cue of Object.values(MACHINE_SOUND_CUES)) assert.ok(SOUND_BANK[cue], `${cue} exists in the sound bank, so playing it cannot stop the game`);
 state.x += 0.5;
 view.update(state, 1 / 60);
 assert.ok(scene.getObjectByName('machine-track-marks').children.some(mark => mark.visible), 'moving tracks leave marks on the ground');
 assert.deepEqual(MACHINE_SOUND_CUES, {engine:'machine.engine', hydraulic:'machine.hydraulic', dig:'machine.dig', tip:'machine.tip'});
-assert.deepEqual(before.jointAngles, Object.fromEntries(Object.keys(before.jointAngles).map(key => [key, 0])), 'view reads state and never writes simulation state');
+assert.deepEqual(before.jointAngles, createMachineState(definition, {x:4, z:8, heading:Math.PI / 2}).jointAngles, 'view reads state and never writes simulation state');
 
 const camera = new THREE.PerspectiveCamera();
 for (const mode of MACHINE_CAMERA_MODES) {
