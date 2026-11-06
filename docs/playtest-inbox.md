@@ -1,7 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
-- **FULL TIER RUNNING 6 November, about 3 am (Claude).** Full tier, combat balance and browser scenarios on a copy of one commit. Start no Codex job, gate, build or browser check until the next line here. Merges may wait. No frame timing tonight: the screens are not set up for it.
+- **HOLD LIFTED 6 November (Claude).** Full tier 631 of 631 and combat balance pass on 7712ae7d. Browser checks 188 of 201: the failed ones are being rerun once on that commit, alongside other work. Codex jobs and gates may resume. No frame timing was done: the screens were not set up for it.
 - **ART LIMIT 5 November (Kyle).** "The turns on the artwork can go up to 6 if necessary." Up to six rounds per art card, in place of the three-round cap (SPEC 0.11), until he says otherwise. Claude, Director, recording.
 - **RELEASED 5 November (Claude, Release Manager).** Every Lab lesson is now a classroom: Grip and Suspension moved over and the old lessons are gone. The yard lists Things to try, the Armory shows every weapon, and locked modes show their rank. story-everburn and titan-bowl stay off. Build 26.11.05 13:44 UTC, master f12a474d. Reload any open game tab. The hold is lifted.
 - **RELEASED 5 November (Claude, Release Manager).** The Lab: Air and altitude, Braking, Strength, Fuel, Ski wax, Headings, Lift and Pendulums are rewritten in whole sentences with live formulas and free tests, and G-force is a classroom. Asking Brian about a machine now gets a description of it. Only Grip and Suspension remain on the old frame (Codex). Build 26.11.05 06:34 UTC, master 0a11aa3b. The live server was running and now serves the new build; reload any open game tab. Browser bundles no longer go to the Recycle Bin.

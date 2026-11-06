@@ -1574,3 +1574,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: TOWN-ART-SANITATION merged; verdict on its card.
 - 5 Nov: TOWN-ART-STAGES merged at round 5 of 6; verdict on its card.
 - 6 November: story page `docs/story/there-is-no-2-15.md` and 11 RAIL cards added (Claude). Pim's railway, the buried works train and Old Tam, who drove it.
+- 6 Nov early: full check on 7712ae7d (no frame step, screens not set up): full tier 631/631, combat balance pass, browser 188/201. Failures being rerun once; frame-based convoy-frames, deep-frames and fire-view not counted.
