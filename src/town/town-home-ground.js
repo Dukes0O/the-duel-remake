@@ -62,28 +62,25 @@ function nextHousehold(indexes,cursor) {
 }
 function startConstruction(town,plot,next,family,peopleByFamily) {
   const store=storeCell(town,plot);
-  if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;reportShortage(town,plot,next);return;}
+  if(!store){plot.waitingGood=Object.keys(next.goods)[0]||null;return;}
   for(const [good,amount] of Object.entries(next.goods)) if((stockpileAt(town,{regionId:store.regionId,x:store.x,z:store.z})[good]||0)<amount) {
-    plot.waitingGood=good;reportShortage(town,plot,next);return;
+    plot.waitingGood=good;return;
   }
   for(const [good,amount] of Object.entries(next.goods)) takeGood(town,{regionId:store.regionId,x:store.x,z:store.z},good,amount);
-  plot.household=family; plot.family=family; plot.progressDays=0; plot.building=true; plot.waitingGood=null;
+  plot.household=family; plot.family=family; plot.progressDays=0; plot.building=true; plot.waitingGood=null;plot.burnt=false;
   for(const person of peopleByFamily.get(family)||[]) {person.home=plot.id;person.homeType='Under construction';}
-}
-function reportShortage(town,plot,type) {
-  const count=(town.homePlots||[]).filter(item=>item.tier===plot.tier&&item.waitingGood).length;
-  const label=type.label.endsWith('s')?type.label:`${type.label}s`;
-  raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,where:`${plot.regionId} ${plot.x}, ${plot.z}`,
-    detail:`${label} going up, ${count} of ${(town.homePlots||[]).length}. Short of ${plot.waitingGood}.`});
 }
 export function stepTownHomeGround({town}) {
   const plots=ensureHomeGround(town),indexes=homeGroundIndexes(town,plots),cursor={index:0};
+  const shortages=new Map();
   for(const plot of plots) {
     if(plot.burning) continue;
     if(!plot.household) {
       const family=nextHousehold(indexes,cursor);
       if(family) {
-        startConstruction(town,plot,TOWN_HOME_TYPES[plot.tier+1],family.family,indexes.peopleByFamily);
+        const homeType=TOWN_HOME_TYPES[plot.tier+1];
+        startConstruction(town,plot,homeType,family.family,indexes.peopleByFamily);
+        if(!plot.household&&plot.waitingGood) shortages.set(plot.waitingGood,(shortages.get(plot.waitingGood)||0)+1);
         if(plot.household) indexes.assignedFamilies.add(family.family);
       }
       continue;
@@ -104,6 +101,12 @@ export function stepTownHomeGround({town}) {
       }
       plot.progressDays=0; plot.building=false; plot.waitingGood=null;
     }
+  }
+  for(const [good,count] of shortages) {
+    const type=TOWN_HOME_TYPES.find(item=>item.goods?.[good])||TOWN_HOME_TYPES[1];
+    const label=type.label.endsWith('s')?type.label:`${type.label}s`;
+    raiseTownReport(town,'home-goods-shortage',{homeGoodsShortage:true,where:`Home plots: ${good}`,
+      detail:`${label} going up, ${count} of ${plots.length}. Short of ${good}.`});
   }
 }
 registerTownSystem('home-ground',11,24,stepTownHomeGround);

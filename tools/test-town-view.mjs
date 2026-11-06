@@ -20,7 +20,7 @@ assert.ok(Math.abs(mayorCamera.position.distanceTo(mayorCamera.userData.townView
 assert.ok(Math.abs(Math.atan2(mayorCamera.position.y,Math.hypot(mayorCamera.position.x,mayorCamera.position.z))*180/Math.PI-45)<.01,'the mayor camera looks down at 45 degrees');
 resizeTownCamera(camera,400,400); assert.equal(camera.aspect,1);
 
-const town={regions:{scablands:{chunks:{'0:0':{x:0,z:0,cells:{}}}}},buildings:[],people:Array.from({length:10000},(_,id)=>({id}))};
+const town={regions:{scablands:{chunks:{'0:0':{x:0,z:0,cells:{}}}}},buildings:[],homePlots:[{id:'burnt-plot',regionId:'scablands',x:3,z:3,tier:0,burning:false,burnt:true}],people:Array.from({length:10000},(_,id)=>({id}))};
 for(let i=0;i<10000;i++) town.buildings.push({id:`building-${i}`,buildingId:i%2?'road-dirt':'hand-well',regionId:'scablands',x:i%100,z:Math.floor(i/100),width:1,depth:1,state:'finished',groundY:0});
 const snapshot=JSON.stringify(town);
 const chunks=visibleTownChunks(town,camera,{radius:1});
@@ -30,6 +30,8 @@ assert.equal(townChunkLod(camera,chunks[0]),'near');
 const meshes=buildTownChunkInstances(town,{x:0,z:0},'near');
 assert.ok(meshes.length>0 && meshes.every(mesh=>mesh.isInstancedMesh));
 assert.ok(meshes.reduce((sum,mesh)=>sum+mesh.count,0)>0);
+assert.ok(meshes.some(mesh=>mesh.userData.townItems?.some(item=>item.buildingId==='burnt-home'&&item.state==='ruined')),
+  'an extinguished burned plot shows charred remains until rebuilding starts');
 assert.equal(JSON.stringify(town),snapshot,'building the view only reads town data');
 
 const valid=createTownPlacementGhost({valid:true});

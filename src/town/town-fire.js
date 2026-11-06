@@ -109,6 +109,9 @@ export function stepTownFire({town,rng,tick,calendar}) {
         plot.household=null;plot.family=null;
       }
     }
+    if(!town.buildings.some(building=>building.fireStage)) for(const plot of town.homePlots||[]) if(plot.burning) {
+      plot.burning=false;plot.burnt=true;plot.tier=0;plot.progressDays=0;plot.building=false;plot.waitingGood=null;
+    }
     return;
   }
 

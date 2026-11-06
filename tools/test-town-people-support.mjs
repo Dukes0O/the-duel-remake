@@ -56,7 +56,16 @@ for(const [id,x,z] of [['fire-west',-1,0],['fire-east',1,0],['fire-north',0,-1],
   check(dispatchTownCommand(burned,{type:'igniteTownFire',buildingId:id}).ok,'the fire command can light a finished site');
 }
 for(let hour=0;hour<72&&!plot.burning;hour++)stepTown(burned);
-check(plot.tier===0&&plot.household===null&&burned.people.filter(person=>person.family===family).every(person=>person.home!==plot.id),'a burned plot gives no places and returns its family to canvas');
+for(let hour=0;hour<72&&plot.burning;hour++)stepTown(burned);
+check(plot.tier===0&&!plot.burning&&plot.burnt&&plot.household===null&&burned.people.filter(person=>person.family===family).every(person=>person.home!==plot.id),
+  'an extinguished plot becomes a tier-zero ruin, gives no places, and returns its family to canvas');
+days(burned,3);
+check(plot.tier===1&&!plot.burnt&&plot.household&&burned.people.some(person=>person.family===plot.family&&person.home===plot.id),
+  'a canvas family can rebuild the ruin and regain shelter places');
+const clearable={...plot,id:'burnt-empty',x:20,z:20,tier:0,household:null,family:null,burning:false,burnt:true,building:false,progressDays:0};
+burned.homePlots.push(clearable);
+const clearedRuin=dispatchTownCommand(burned,{type:'clearHomeGround',cells:[{x:20,z:20}]});
+check(clearedRuin.ok&&!burned.homePlots.includes(clearable),'an empty burned ruin can be cleared');
 
 const dry=createTown(86,'Dry well');addWell(dry,0);days(dry,1);
 check(dry.peopleConditions.waterLitresPerPerson===0,'a dry well measures no water per person');

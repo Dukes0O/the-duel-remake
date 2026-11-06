@@ -55,6 +55,7 @@ export function buildTownChunkInstances(town, chunk, lod = townChunkLod({positio
   for(const plot of town.homePlots||[]) {
     if(plot.regionId!=='scablands'||Math.floor(plot.x/16)!==chunk.x||Math.floor(plot.z/16)!==chunk.z) continue;
     const y=plot.groundY??0,x=(plot.x+.5)*TOWN_CELL_METRES,z=(plot.z+.5)*TOWN_CELL_METRES;
+    if(plot.burnt&&!plot.burning) meshes.push(makeInstances([{buildingId:'burnt-home',state:'ruined',x:plot.x,z:plot.z,groundY:y,width:1,depth:1,height:1.5}],lod,COLORS.ruined));
     if(plot.tier>0&&!plot.burning) {
       const names=[['tent-a','tent-b'],['shack-a','shack-b','shack-c'],['stack-a','stack-b'],['block-a','block-b'],['terrace-a']];
       const options=names[Math.min(4,plot.tier-1)]||[];
@@ -64,7 +65,7 @@ export function buildTownChunkInstances(town, chunk, lod = townChunkLod({positio
       const stage=Math.max(1,Math.min(4,Math.ceil(((plot.progressDays||0)+1)/Math.max(1,(plot.nextDays||2)/4))));
       const model=homeAssets.stages?.getObjectByName(`scaffold-${stage}`);
       if(model){const clone=model.clone(true);clone.position.set(x,y,z);clone.userData.sharedTownAsset=true;meshes.push(clone);}
-    } else if(!plot.burning) {
+    } else if(!plot.burning&&!plot.burnt) {
       const pegs=new THREE.Group();pegs.userData.sharedTownAsset=true;
       const wood=new THREE.MeshStandardMaterial({color:0x786748,roughness:1}),string=new THREE.MeshBasicMaterial({color:0xc7b78e});
       for(const [dx,dz] of [[-3.45,-3.45],[3.45,-3.45],[-3.45,3.45],[3.45,3.45]]){const peg=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,.38,5),wood);peg.position.set(x+dx,y+.19,z+dz);pegs.add(peg);}
