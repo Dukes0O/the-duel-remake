@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt} from './scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsTownLayout} from './scablands-ground.js';
+import {createGroundView} from './ground-view.js';
+import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
+import {oldSmokeGlowingVent} from './jobs/old-smoke.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -40,11 +43,11 @@ const placeAssets={
 const vehiclePart={'boneyard':'Big Bess gas truck','everburn':"Old Smoke's rolling furnace"};
 const detailCounts=Object.freeze({near:30,far:10});
 
-function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0){
+function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
   const positions=[],uv=[],indices=[];
   for(let iz=0;iz<=segments;iz++)for(let ix=0;ix<=segments;ix++){
     const x=-width/2+width*ix/segments,z=-depth/2+depth*iz/segments;
-    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ)+.025,z);uv.push(ix/segments*12,iz/segments*12);
+    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025,z);uv.push(ix/segments*12,iz/segments*12);
     if(ix<segments&&iz<segments){const a=iz*(segments+1)+ix,b=a+1,c=a+segments+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
@@ -96,27 +99,54 @@ function addMallRubble(group,place){
   group.add(rubble);
 }
 
-function addFurnaceFire(group,place){
+function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
   const flame=new THREE.MeshStandardMaterial({color:0xff6a18,emissive:0xc33508,emissiveIntensity:1.4,roughness:.6});
   const core=new THREE.MeshStandardMaterial({color:0xffd36b,emissive:0xf08014,emissiveIntensity:1.7,roughness:.5});
   const soot=new THREE.MeshStandardMaterial({color:0x302c28,transparent:true,opacity:.48,roughness:1,depthWrite:false});
   for(let door=0;door<3;door++){
-    const x=place.x+15+door*2.2,z=place.z-7;
-    const outer=new THREE.Mesh(new THREE.ConeGeometry(.8,2.8,6),flame);outer.position.set(x,1.7,z);outer.rotation.z=Math.PI;
-    const inner=new THREE.Mesh(new THREE.ConeGeometry(.38,1.65,6),core);inner.position.set(x,.95,z-.18);inner.rotation.z=Math.PI;
+    const x=(door-1)*.88*scale,z=.48*scale,y=2.3;
+    const outer=new THREE.Mesh(new THREE.ConeGeometry(.55,1.85,6),flame);outer.position.set(x,y,z);outer.rotation.x=Math.PI/2;
+    const inner=new THREE.Mesh(new THREE.ConeGeometry(.27,1.1,6),core);inner.position.set(x,y-.18,z+.035);inner.rotation.x=Math.PI/2;
     effects.add(outer,inner);
   }
+  const chimney={x:.62*scale,z:-1.18*scale};
   for(let puff=0;puff<5;puff++){
-    const cloud=new THREE.Mesh(new THREE.SphereGeometry(2.1+puff*.55,7,5),soot);
-    cloud.position.set(place.x+22+(puff%2),10+puff*5,place.z-7);cloud.scale.y=1.5;effects.add(cloud);
+    const cloud=new THREE.Mesh(new THREE.SphereGeometry(1.15+puff*.35,7,5),soot);
+    cloud.position.set(chimney.x,6.7+puff*3.4,chimney.z);cloud.scale.y=1.5;effects.add(cloud);
   }
-  group.add(effects);
+  parent.add(effects);
+  return {effects, flames:[...effects.children.slice(0,6)], smoke:[...effects.children.slice(6)],
+    chimneyX:chimney.x, chimneyY:6.7, chimneyZ:chimney.z};
 }
 
 export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().loadAsync(path)}={}){
   const group=new THREE.Group();group.name='The Scablands';
   let retired=false;
+  let townDraw=null;
+  const townLayout=getScablandsTownLayout();
+  const addTown=async()=>{
+    if(!townLayout)return;
+    const {buildTownChunkInstances}=await import('../town/view/town-instances.js');
+    if(retired)return;
+    const town={regions:{scablands:{}},buildings:townLayout.buildings||[],zones:[]};
+    const chunks=new Set();
+    for(const building of town.buildings)if(building.regionId==='scablands')chunks.add(`${Math.floor(building.x/16)}:${Math.floor(building.z/16)}`);
+    const root=new THREE.Group();root.name='Town roads, sites and buildings';
+    for(const key of chunks){const [x,z]=key.split(':').map(Number);for(const mesh of buildTownChunkInstances(town,{x,z},'near'))root.add(mesh);}
+    const roadMat=new THREE.MeshStandardMaterial({color:0x756b59,roughness:1});
+    for(const road of townLayout.roads||[]){
+      const dx=road.b.x-road.a.x,dz=road.b.z-road.a.z,length=Math.hypot(dx,dz);
+      if(!length)continue;
+      const mesh=new THREE.Mesh(new THREE.BoxGeometry(length,.16,road.halfWidth*2),roadMat);
+      const x=(road.a.x+road.b.x)/2,z=(road.a.z+road.b.z)/2;
+      mesh.position.set(x,scablandsSurfaceHeightAt(x,z)+.12,z);mesh.rotation.y=-Math.atan2(dz,dx);mesh.name=`Town road ${road.id}`;root.add(mesh);
+    }
+    group.add(root);townDraw=root;
+  };
+  void addTown();
+  const furnaceVents=[];
+  let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
   const roadMaterial=new THREE.MeshStandardMaterial({color:0x594b39,roughness:1});
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
@@ -127,6 +157,10 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
     tile.position.set(x*700+350,0,z*500+250);ground.add(tile);
   }
   const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
+  const editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+  const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
+  if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
+  const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
   // A broad gravel ribbon follows the stable oval frame used by driving and
   // never changes the shared terrain height function.
   const roadPoints=[];
@@ -154,8 +188,23 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
         const source=key==='vehicles'?asset.scene.getObjectByName(vehiclePart[place.id]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         const model=source.clone(true);tintArt(model,place.id);
+        if(key==='vehicles'&&place.id==='everburn'){
+          model.traverse(node=>{
+            const ventMatch=node.name.match(/old-smoke-vent-(\d+)-glow|Flank vent [+-]?1 (\d+) ember/i);
+            if(!node.isMesh||!ventMatch)return;
+            node.material=Array.isArray(node.material)?node.material.map(material=>material.clone()):node.material.clone();
+            furnaceVents.push({index:Number(ventMatch[1]??ventMatch[2])-1,material:node.material});
+          });
+          furnacePlace=place;
+          furnaceRig=new THREE.Group();furnaceRig.name="Old Smoke's moving furnace rig";
+          furnaceRig.position.set(place.x+18,scablandsSurfaceHeightAt(place.x,place.z),place.z);
+          furnaceRig.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
+          model.position.x=0;model.rotation.y=0;model.scale.setScalar(1.5);
+          furnaceModel=model;furnaceRig.add(model);group.add(furnaceRig);
+          furnaceEffects=addFurnaceFire(furnaceRig,place,1.5);
+          return;
+        }
         model.position.x=index?18:0;model.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
-        if(key==='vehicles'&&place.id==='everburn')model.scale.setScalar(1.5);
         full.add(model);
       });
       const distant=new THREE.Mesh(new THREE.BoxGeometry(32,12,24),new THREE.MeshStandardMaterial({color:0x4c4236,roughness:1}));
@@ -163,19 +212,66 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
       lod.addLevel(full,0);lod.addLevel(distant,280);
       lod.position.set(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z);group.add(lod);
       if(place.id==='dead-mall')addMallRubble(group,place);
-      if(place.id==='everburn')addFurnaceFire(group,place);
     }));
     group.userData.assetStatus='ready';return true;
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));}return false;});
+  registerSceneSystem(group,{
+    animate(seconds){
+      if(!furnaceEffects)return;
+      furnaceEffects.smoke.forEach((puff,index)=>{puff.position.y=furnaceEffects.chimneyY+index*3.4+Math.sin(seconds*.42+index)*.7;
+        puff.position.x=furnaceEffects.chimneyX+Math.sin(seconds*.19+index)*.9;
+        puff.position.z=furnaceEffects.chimneyZ+Math.cos(seconds*.17+index)*.35;});
+      furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=.86+(.14*Math.sin(seconds*7+index));});
+    },
+    sync(state){
+      const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      const chasing=worldJob?.definition?.storyId==='everburn'&&worldJob.job?.steps?.[worldJob.job.stepIndex]?.kind==='chase';
+      const actor=chasing?worldJob.actors?.find(item=>item.id==='old-smoke-furnace'):null;
+      if(furnaceRig&&furnaceModel&&furnacePlace){
+        if(actor){
+          furnaceRig.position.set(actor.position?.x??furnacePlace.x,actor.position?.y??0,actor.position?.z??furnacePlace.z);
+          const path=worldJob.job.steps[worldJob.job.stepIndex]?.path||[];
+          const next=path[Math.min((actor.pathIndex??0)+1,path.length-1)];
+          const target=next?.position??next;
+          const heading=Number.isFinite(actor.heading)?actor.heading:target&&actor.position
+            ?Math.atan2(target.x-actor.position.x,target.z-actor.position.z):furnaceRig.rotation.y;
+          furnaceRig.rotation.y=heading;furnaceModel.position.x=0;
+        }else{
+          furnaceRig.position.set(furnacePlace.x+18,scablandsSurfaceHeightAt(furnacePlace.x,furnacePlace.z),furnacePlace.z);
+          furnaceRig.rotation.y=(SCABLANDS_PLACES.indexOf(furnacePlace)%4)*Math.PI/2;furnaceModel.position.x=0;
+        }
+      }
+      if(!actor)return;
+      const glowing=oldSmokeGlowingVent(Math.max(0,worldJob.clockSec-actor.startedAtSec));
+      for(const vent of furnaceVents){
+        const active=vent.index===glowing;
+        const materials=Array.isArray(vent.material)?vent.material:[vent.material];
+        for(const material of materials){
+          if(material.emissive)material.emissive.set(active?0xff7020:0x160904);
+          if('emissiveIntensity' in material)material.emissiveIntensity=active?2.8:.15;
+          if(material.color)material.color.set(active?0xffad46:0x241a14);
+        }
+      }
+    },
+  });
   function dispose(){
     if(retired)return;retired=true;
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
     for(const material of materials)material.dispose();
-    group.clear();group.userData.assetStatus='retired';
+    group.clear();group.userData.assetStatus='retired';townDraw=null;
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
+  // Call after a work order commits its edits. The same height layer drives
+  // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
+  group.userData.updateGroundView=()=>{
+    const changed=editedGround.update();
+    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
+    return changed;
+  };
+  group.userData.digFx=digFx;
   return {group,ready,solids:SCABLANDS_SOLIDS,dispose};
 }

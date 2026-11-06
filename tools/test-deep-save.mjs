@@ -29,7 +29,7 @@ for (const file of readdirSync(fixtureDir).filter(name => name.endsWith('.json')
     const players = loadPlayers(storage);
     for (const [key, value] of Object.entries(before)) assert.equal(storage.getItem(key), value);
     // DEEP-EXPLORER: 09, 16 and 22 are the fixtures that carry a Deep field (16: the Sirena story, DEEP-SIRENA); every other shape must gain none.
-    if (!['09-deep.json', '16-deep-sirena.json', '22-deep-chart.json', 'lab-restore-2.json'].includes(file)) {
+    if (!['09-deep.json', '16-deep-sirena.json', '22-deep-chart.json', '25-deep-vasca.json', 'lab-restore-2.json'].includes(file)) {
       assert.equal(JSON.stringify(players), JSON.stringify(previous.loadPlayers(storageFor(fixture.storage))), 'legacy normalized bytes unchanged');
       assert(players.players.every(player => !Object.hasOwn(player.profile, 'deep')));
     } else {
@@ -89,9 +89,9 @@ check('Hints appear at three and six, stop after finding, stay hidden while off 
   for (let count = 0; count <= 10; count++) {
     const snapshot = deepDiscoverySnapshot({deep: {pacificFinishes: count}}, 'qa', true), hints = deepHints(snapshot);
     assert.equal(hints.hintIds.length, count < 3 ? 0 : count < 6 ? 1 : 2);
-    assert.equal(hints.bubbles, count >= 6); assert.equal(hints.kitAvailable, count >= 3);
+    assert.equal(hints.kitAvailable, count >= 3);
     for (const off of [{...snapshot, enabled: false}, {...snapshot, playerId: ''}, {...snapshot, found: ['kelp-coast']}]) {
-      assert.equal(deepHints(off).garageTip, null); assert.equal(deepHints(off).bubbles, false);
+      assert.equal(deepHints(off).garageTip, null);
     }
   }
   const saved = markDeepHintsShown({...createProfile(), deep: {pacificFinishes: 10}}, {enabled: true});

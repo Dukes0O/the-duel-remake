@@ -400,8 +400,8 @@ Kyle's town may be years old. On 28 October a full disk let Chrome clear careers
 
 - **Its own store.** Each town is an IndexedDB record, as `career-archives.js` does for ghosts, with a pointer key in `CAREER_KEYS`, so that `createCompleteCareerExport`
   and import include it. Target under 5 MB at Year 30, tested by the soak run. The career stays small and unaffected.
-- **Town ids and mayors.** A town has an id and a list of players who can open it (`mayors`), so it can belong to one player or be shared. Links (warlords beaten) read
-  whoever is playing, and a shared town counts the best of its mayors.
+- **Town ids and mayors.** Each player has a town of their own (Kyle, 5 November 2026), and its id and seed include the player's id. `mayors` holds the owner. Links (warlords beaten) read
+  whoever is playing. A player can **visit** another player's town on this laptop: look-only, and the visited town never advances or saves (TOWN-VISITS).
 - **Rolling copies.** Saved on leaving, each game month and before each mission. It keeps the last 3 saves and one copy from the start of each real week for 8 weeks,
   all in the same store.
 - **A file on the disk.** A BACK UP button, and a monthly reminder from the Vultures, write the town to a file the player chooses (File System Access API where the browser

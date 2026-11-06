@@ -12,6 +12,40 @@ The intake check reports planned images that are still absent; it fails when a
 present image has invalid dimensions, missing transparency, an excessive file
 size, or incomplete provenance.
 
+## `public/assets/models/wasteland/scablands/textures/dam-concrete.jpg`
+
+Date: 2026-11-05  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating concrete albedo for the Dry Dam's concrete shoulders,
+arches and supporting structures. The wall's main front uses a photo projection.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a 3D dam model. Primary request: a square, tileable close photograph of weathered grey poured concrete from an old hydroelectric dam. Subject: cool neutral-grey concrete with fine aggregate, subtle horizontal lift-joint traces, sparse hairline cracks and dark mineral damp stains; photographic detail, realistic scale for a 2 metre repeat. Style/medium: sharp macro surface photography. Composition: flat orthographic surface filling the square, seamless on all four edges, no perspective. Lighting/mood: bright even overcast daylight, no cast shadows or glare. Materials/textures: specific concrete grain and worn cement, controlled contrast, no blur or noise-only pattern. Constraints: no writing, no border, no objects, no landscape, no recognizable large crack, no orange rust, no sandy color, no illustration, no watermark.
+
+## `public/assets/models/wasteland/scablands/textures/dam-salt-crust.jpg`
+
+Date: 2026-11-05  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating wet concrete and salt-crust albedo for the filling
+hall's back wall and localized marks.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: repeating albedo texture for the back wall of an abandoned dam filling hall. Primary request: a square close photograph of wet, salt-encrusted grey concrete, with unmistakable dark water running down and thick chalky white mineral crust. Subject: aged concrete, deep charcoal wet vertical streaks 5 to 20 cm wide, layered pale white salt deposits and crystals along the streak edges, damp olive-grey shadow at the bottom; no painted stripes. Style/medium: realistic macro surface photography, sharp detail at real scale. Composition: flat-on crop with even physical scale and seamless repeating edges, no perspective. Lighting/mood: bright even overcast daylight. Materials/textures: wet dark concrete and brittle white efflorescence, no blur, no noise-only effect. Constraints: no text, no objects, no landscape, no saturated green, no pink, no orange rust, no illustration, no watermark.
+
+## `public/assets/models/wasteland/scablands/textures/dam-face-projection.jpg`
+
+Date: 2026-11-05  
+Tool: Blender photo projection and JPEG bake from the original Codex ImageGen
+reference supplied with WW-ART-DAM round 3  
+Use: 2048 x 750 projection on the dam's broad front face, preserving its lift
+joints, waterline and dark wet stains. The original reference remains outside
+the repository at `~/.codex/generated_images/wasteland-dam-reference.png`.
+
+The reference source prompt was not carried with the round 3 asset. This image
+is a crop and bake from that reference, not a new generated picture.
+
 ## Fitting existing models (Claude, 30 September 2026)
 
 Rules for every card that turns a picked CC0 source into game art (SPEC 0.11).
@@ -359,3 +393,64 @@ Prompt (full procedural art brief):
 ## HELI-LOGBOOK rank paint credits
 
 `rank-student.png`, `rank-private.png`, `rank-commercial.png`, `rank-mountain.png`, and `rank-chief.png`: original procedural paint textures for The Duel, 26 October 2026. Blender 4.5.13 LTS and NumPy, recipe `tools/blender/heli-logbook-paints.py`. No external source art or licensed marks. Original kestrel silhouettes are polygon coordinates in the recipe; the airframe is Claude's original Kestrel One. Round 2 candidates; Claude's paint review is pending. The Commercial and Chief kestrels moved to the tail boom at Claude's direction; the skid scuffs are original object-space shader marks, generated without external source art. Credits are recorded here because the game does not load a separate credits document from the texture folder.
+
+
+## `public/assets/models/wasteland/town/textures/town-water-timber.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating timber albedo for the tower legs, braces and platform.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of weathered sun-bleached grey-brown timber planks from a desert water tower brace; faded grain, dust in grain, worn edges, irregular small chips, dark nail marks at true hand scale. Flat orthographic surface, seamless square edges. Bright diffuse overcast daylight, even exposure. Avoid blur, noise-only pattern, objects, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-tin.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating albedo for the smooth tank shell and cap.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a realistic game model. Sharp close photograph of the smooth curved galvanized steel wall of a neglected desert water tank, muted dusty zinc-grey sheet metal, broad riveted horizontal lap seams at realistic 2 metre scale, rows of small 2 cm rivets, restrained dark brown rust streaks below some fasteners, scratched and sun-worn edges. Flat orthographic surface view filling the square, seamless repeating edges, no perspective. Bright diffuse overcast daylight without glare. Avoid corrugations or ribs, white flat panels, orange saturation, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-corrugated.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating corrugated tin albedo for the pump shed walls and roof.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of galvanized corrugated steel from a neglected desert water tank; dusty muted zinc-grey, clear 10 cm corrugations, rivet heads every 20 cm, restrained dark brown rust streaks below some rivets, scratched and worn edges. Orthographic macro, seamless edges, real scale. Bright diffuse overcast light without glare. Avoid white panels, orange saturation, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-concrete.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating concrete albedo for open treatment basins and the well surround.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close photograph of old rough poured concrete from a rural settling basin, mid grey-brown cement, sharp exposed small aggregate, pores, irregular damp mineral stains and a waterline mark. Flat orthographic, seamless edges, realistic scale. Bright even overcast daylight. Avoid white concrete, smooth flat wall, large crack, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-earth.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating compacted soil albedo for reservoir banks and yard dirt.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Macro photograph of compacted dark umber soil from a hand-built reservoir bank; earthy clods, gritty gravel, compressed shovel marks, naturally darker damp patches, realistic scale. Top-down orthographic tile, seamless edges, diffuse overcast light, no hard shadows. Avoid sand-colored flat surface, plants, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating murky water albedo for the reservoir and settling stages.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close top-down photograph of still murky reservoir water, deep olive-brown translucent water with small wind ripples, suspended sediment, subtle sky reflections, irregular natural color and sharp fine detail. Seamless square tile, soft bright overcast light. Avoid blue pool water, flat color, shores, objects, blur, text, border, watermark.

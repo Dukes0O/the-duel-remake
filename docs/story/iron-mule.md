@@ -355,17 +355,20 @@ he is already available in the crew, and so does `story.iron.6.jax`.
 - **`board`.** Three stages on one step: get on (Jax's grapple under 90 km/h, as in
   `docs/CREW.md` section 2), walk the roof plates in order, hold F on the coupling, then get
   15 m clear. Fall off, and you stay at the plate you had reached. Press F by the wagon again
-  to climb on at any time. A guard can push you off and never hurts you. On Easy there are no
-  guards. The train stops at its buffers at the end of the path and waits, so there is
-  nothing to miss.
+  to climb on at any time. While aboard, the train carries you at roof height and your walking
+  movement adds to its motion. A step off the roof drops you onto the ground beside the wagon,
+  without injury. The walk between wagon markers stays on the roof; moving 25 m from the current
+  marker counts as stepping off. A guard can push you off and never hurts you. On Easy there are no guards.
+  The train stops at its buffers at the end of the path and waits, so there is nothing to miss.
 - **`drivetrain`.** The player sits in the cab, with the car's own view. W and S change speed by
   force divided by weight (`tractiveKn`, `brakeKn`, `massTonnes`; section 2's table), so she feels
-  heavy, and more so when full. The step tracks how far along the path the train is. Overrunning
-  a stop is never a failure: she bumps the buffers at walking pace, and Pim is cross. With a `gate`, reaching it below
-  the speed bounces the train back 150 m and says the line; at speed the gate breaks. Pickups
-  on the track are crushed with a bang and take 2 m/s off. With `stopAtEnd`, the step finishes
-  when the train stops in the last place's ring. At full throttle a test driver always clears
-  the gate, even from the slowest start.
+  heavy, and more so when full. The step tracks how far along the path the train is. A step
+  without `stopAtEnd` finishes when the train reaches the end of its path; if it has a `gate`,
+  the gate must be passed first. With `stopAtEnd`, she bumps the buffers at walking pace and
+  waits there. With a `gate`, reaching it below the required speed puts the stopped train 300 m
+  before it and says the line; at speed the gate breaks. Pickups on the track are crushed with a
+  bang, take 2 m/s off, and crush only once even after a bounce and retry. At full throttle a
+  test driver clears the gate from the 300 m setback, even from a standing start.
 - **`opensWhen`.** Read by the chapter graph (`src/town/town-chapters.js`) from the town and the
   story marks: `chapterDone`, `jobDone`, `yearAtLeast`, `workDone`, `workPercent`. `IRON_WORK` rows use
   the town's own dispatches and sites, so the steel has to be there and the people have to be free.
@@ -373,7 +376,9 @@ he is already available in the crew, and so does `story.iron.6.jax`.
   undone the same way at the end of the job. The save never changes.
 - **Lines on a step.** One small player for both stories, `src/world/jobs/step-lines.js`. `opening`
   and `closing` play in order as captions, with the step held until they finish or the player
-  presses Space. `startLineId`, `afterStartLineId`, `wonLineId`, `sayAt`, `sayNear`, `sayOnce`,
+  presses Space. Every other line plays in order while its step keeps running; Space only skips
+  a line while an `opening` or `closing` holds the step. `startLineId`, `afterStartLineId`,
+  `wonLineId`, `sayAt`, `sayNear`, `sayOnce`,
   `peopleLineIds`, `afterFirstLineId`, `nearLineId`, `contactLineId`, a wave's `lineId`, and a
   place's `lineId` and `thenLineId` play as the player gets there. A job's `nextVisit` lines play
   on the next town visit.

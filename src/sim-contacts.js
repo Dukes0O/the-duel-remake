@@ -224,6 +224,11 @@ export function _collisions() {
 
 export function _obstacles(fromS, toS) {
   if (this.course.obstaclesNear) {
+    const townLayout=this.state.arena?.worldJob?.definition?.layout??null;
+    if(this._townObstacleLayout!==townLayout){
+      this._townObstacleLayout=townLayout;
+      this._obstacleQueryCache.clear();
+    }
     const hollowObstacles = this.course.muddyHollow?.obstacles;
     if (this._obstacleArray !== this.course.features.obstacles ||
         this._muddyHollowObstacleArray !== hollowObstacles) {
@@ -233,7 +238,7 @@ export function _obstacles(fromS, toS) {
     }
     const first = Math.floor((Math.min(fromS, toS) - 10) / 64), last = Math.floor((Math.max(fromS, toS) + 10) / 64), key = `${first}:${last}`;
     if (!this._obstacleQueryCache.has(key)) {
-      const obstacles = this.course.obstaclesNear(fromS, toS);
+      const obstacles = this.course.obstaclesNear(fromS, toS,townLayout);
       if (this.course.muddyHollow?.obstaclesNear)
         obstacles.push(...this.course.muddyHollow.obstaclesNear(
           first * 64, (last + 1) * 64));
