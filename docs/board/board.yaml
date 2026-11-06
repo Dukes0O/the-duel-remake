@@ -803,6 +803,7 @@ tasks:
     lane: "ART"
     size: "M"
     status: "ready"
+    waiting_on: "kyle"
     needs: []
     locks: []
     flag: "wasteland-town"
