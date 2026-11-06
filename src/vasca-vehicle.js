@@ -43,7 +43,7 @@ export function createVascaVehicle({tethered=false,color=0xf1ede2,accent=0x9c121
   // Claw feet, exposed wire wheels, axles and small leaf brackets.
   const wheelPivots=[],wheels=[];
   for(const z of [1.12,-1.12])for(const x of [-.78,.78]){
-    const pivot=new THREE.Group();pivot.position.set(x,.25,z);vehicle.add(pivot);wheelPivots.push(pivot);
+    const pivot=new THREE.Group();pivot.position.set(x,.25,z);pivot.userData.front=z>0;pivot.userData.restPosition=pivot.position.clone();vehicle.add(pivot);wheelPivots.push(pivot);
     const tire=new THREE.Mesh(new THREE.TorusGeometry(.18,.045,8,16),iron);tire.rotation.y=Math.PI/2;pivot.add(tire);wheels.push(tire);
     const hub=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.11,12),chrome);hub.rotation.z=Math.PI/2;pivot.add(hub);
     for(let spoke=0;spoke<8;spoke++){const angle=spoke*Math.PI/4;const wire=new THREE.Mesh(new THREE.BoxGeometry(.008,.3,.008),chrome);wire.rotation.x=angle;wire.position.y=.25;pivot.add(wire);}

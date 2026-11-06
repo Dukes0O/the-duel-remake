@@ -29,13 +29,16 @@ export async function run(context){
   await context.waitFor(`window.__qaApp.duel.state.deepJourney?.phase==='underwater'&&!!window.__qaApp.duel.deepStory`,'underwater story',60000);
   await context.waitFor(`window.__qaApp.duel.deepStory.sirena.squeak===true`,'squeak mission',15000);
   const duck=await context.evaluate(`window.__vascaQa.find('falcone-vasca')`);
-  await context.evaluate(`window.__vascaQa.park(${duck.x},${duck.z},window.__qaApp.duel.deepRuntime.ramp.heading)`);
-  await key(context,'KeyR','keyDown');await key(context,'KeyR','keyUp');await pause(500);
+  const heading=await context.evaluate('window.__qaApp.duel.deepRuntime.ramp.heading');
+  // Stop short of the duck, as a player does, so the rising bath is in front of the car and not under it.
+  await context.evaluate(`window.__vascaQa.park(${duck.x-Math.sin(heading)*3},${duck.z-Math.cos(heading)*3},${heading})`);
+  await key(context,'KeyR','keyDown');await pause(150);await key(context,'KeyR','keyUp');await pause(500);
   report.captures.push(await context.screenshot('vasca-squeak-ping'));
   report.captures.push(await context.screenshot('vasca-duck-chain'));
-  await key(context,'KeyF','keyDown');await key(context,'KeyF','keyUp');
+  await key(context,'KeyF','keyDown');await pause(150);await key(context,'KeyF','keyUp');
   await context.waitFor(`window.__qaApp.duel.deepStory.sirena.lift?.find==='falcone-vasca'`,'four-bag lift',15000);
-  await pause(12000);report.captures.push(await context.screenshot('vasca-rising'));
+  await pause(12000);report.captures.push(await context.screenshot('vasca-rising-start'));
+  await pause(7000);report.captures.push(await context.screenshot('vasca-rising'));
   await context.waitFor(`window.__qaApp.profile.deep?.raised?.includes('falcone-vasca')`,'bath raised and car granted',60000);
   await context.waitFor(`document.querySelector('.sirena-title')?.hidden===false`,'reveal title card',60000);
   report.captures.push(await context.screenshot('vasca-title'));
@@ -47,7 +50,10 @@ export async function run(context){
   report.captures.push(await context.screenshot('vasca-garage'));
   await context.evaluate(`document.querySelector('[data-garage-car="falcone_vasca"]')?.click();document.querySelector('[data-action="garage-select"]')?.click()`);
   await context.waitFor(`window.__qaApp.duel.state.car==='falcone_vasca'||window.__qaApp.car==='falcone_vasca'`,'race starts with Vasca',30000);
-  report.captures.push(await context.screenshot('vasca-race-start'));
+  report.captures.push(await context.screenshot('vasca-menu'));
+  await context.evaluate(`window.__qaApp.startCampaign({mode:'duel',seed:1989,opponentCount:1,startStage:0,car:'falcone_vasca'})`);
+  await context.waitFor(`window.__qaApp.duel.state.status==='racing'||window.__qaApp.duel.state.status==='countdown'`,'race with the Vasca',60000);
+  await pause(6000);report.captures.push(await context.screenshot('vasca-race-start'));
   await writeFile(join(context.outputDir,'deep-vasca.json'),JSON.stringify(report,null,2)+'\n');
   return report;
 }
