@@ -603,6 +603,13 @@ drift_object = next(o for o in bpy.data.objects if o.name.startswith('the-2-15-d
 
 def shot(name, eye, target, width, height, ortho=None, lens=35, show_drift=False):
     # eye and target in glTF metres.
+    subject = ('the-2-15-engine' if name in ('side', 'front', 'rear', 'quarter', 'quarter-rear', 'buried', 'buried-windward')
+               else 'the-2-15-carriage' if name.startswith('carriage-') else 'the-2-15-van')
+    for obj in scene.objects:
+        if obj.type == 'MESH' and obj.name != subject:
+            obj.hide_render = True
+        elif obj.type == 'MESH':
+            obj.hide_render = False
     drift_object.hide_render = not show_drift
     scene.render.resolution_x, scene.render.resolution_y = width, height
     eye_v, target_v = Vector((eye[0], -eye[2], eye[1])), Vector((target[0], -target[2], target[1]))
