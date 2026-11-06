@@ -1,6 +1,7 @@
 import {TOWN_REGIONS} from './town-world-data.js';
+import {TOWN_HOME_TYPES} from './content/homes.js';
 
-export const TOWN_SAVE_VERSION = 1;
+export const TOWN_SAVE_VERSION = 2;
 
 // Keep every old step in this list. A town created by the first public build
 // starts at version 1; version 0 is reserved for pre-release development data.
@@ -21,6 +22,35 @@ export const TOWN_MIGRATIONS = Object.freeze([
     data.version = 1;
     return data;
   }}),
+  Object.freeze({version:2, migrate(data) {
+    if (Array.isArray(data.homePlots) && data.homePlots.length) return data;
+    const groups=new Map();
+    for(const person of data.people||[]) {
+      const home=String(person.home||'');
+      if(!home||home.toLowerCase().includes('canvas')) continue;
+      const key=home;
+      if(!groups.has(key)) groups.set(key,[]);
+      groups.get(key).push(person);
+    }
+    const plots=[];
+    let x=1000,z=1000;
+    for(const [home,people] of groups) {
+      while(data.homePlots?.some(plot=>plot.regionId==='scablands'&&plot.x===x&&plot.z===z)) x++;
+      const person=people[0], tier=Math.max(1,Math.min(TOWN_HOME_TYPES.length-1,
+        Number.isSafeInteger(person.homeTier)?person.homeTier:(TOWN_HOME_TYPES.findIndex(item=>item.label.toLowerCase()===String(person.homeType||'').toLowerCase())||1)));
+      const id=`legacy-home-${plots.length+1}`;
+      plots.push({id,regionId:'scablands',x,z,groundY:TOWN_REGIONS.get('scablands').groundHeightAt((x+.5)*8,(z+.5)*8),
+        tier,progressDays:0,household:person.family||`legacy-family-${plots.length+1}`,family:person.family||`legacy-family-${plots.length+1}`,
+        burning:false,building:false,waitingGood:null});
+      for(const member of people){member.home=id;member.homeTier=tier;member.homeType=TOWN_HOME_TYPES[tier].label;}
+      x++;
+    }
+    data.homePlots=plots;
+    const housed=new Set(plots.map(plot=>plot.family));
+    const housedCount=(data.people||[]).filter(person=>housed.has(person.family)).length;
+    data.campPlaces=Math.max(12,(data.people||[]).length-housedCount);
+    return data;
+  }}),
 ]);
 
 export function migrateTownData(input, {clone=true}={}) {
@@ -29,6 +59,7 @@ export function migrateTownData(input, {clone=true}={}) {
   for (const migration of TOWN_MIGRATIONS) if (version < migration.version) migration.migrate(data);
   if (!data.regions || typeof data.regions !== 'object') data.regions={};
   if (!Array.isArray(data.homePlots)) data.homePlots=[];
+  if(!Number.isSafeInteger(data.campPlaces)||data.campPlaces<12) data.campPlaces=12;
   for(const id of TOWN_REGIONS.keys()) {
     if(!data.regions[id]||typeof data.regions[id]!=='object') data.regions[id]={chunks:{}};
     if(!data.regions[id].chunks||typeof data.regions[id].chunks!=='object') data.regions[id].chunks={};

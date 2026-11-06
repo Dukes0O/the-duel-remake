@@ -65,6 +65,17 @@ const oldPeople=[{id:'person-1',name:'Saved person',family:'Saved',born:0,home:'
 const old=deserializeTown(JSON.stringify({version:1,id:'town-old',name:'Old save',seed:4,tick:0,people:oldPeople,buildings:[]}));
 check(old.people.length===1&&old.people[0].name==='Saved person'&&Array.isArray(old.homePlots)&&old.homePlots.length===0,'a legacy save keeps its person and gains an empty plot store');
 
+const savedPeople=Array.from({length:20},(_,index)=>({id:`saved-${index}`,name:`Saved ${index}`,family:`saved-family-${Math.floor(index/2)}`,
+  born:0,home:`saved-home-${Math.floor(index/2)}`,homeTier:1,homeType:'Tent',health:73,mood:60,skills:{},needs:{shelter:true,waterLitres:50,waterNeedLitres:15,foodCalories:2100},history:[]}));
+const migrated=deserializeTown(JSON.stringify({version:1,id:'town-many',name:'Twenty saved people',seed:94,tick:0,people:savedPeople,buildings:[]}));
+check(migrated.people.length===20&&migrated.homePlots.length===10&&migrated.homePlots.every(plot=>plot.tier===1&&plot.household),
+  'a legacy town restores a finished plot and household for every saved home');
+check(migrated.people.every(person=>person.health===73)&&migrated.peopleConditions===undefined,
+  'migration preserves saved health without inventing measured support');
+days(migrated,90);
+check(migrated.people.length===20&&migrated.people.every(person=>person.health>0),
+  'three months of play do not strand saved people without shelter');
+
 const before=serializeTown(growing);const support={...growing.peopleConditions};
 check(support.shelterPlaces===growing.peopleConditions.shelterPlaces&&serializeTown(growing)===before,'reading support does not change town state');
 

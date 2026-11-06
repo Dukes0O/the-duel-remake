@@ -1,7 +1,7 @@
 import {TOWN_HOME_TYPES} from './content/homes.js';
 
 function homePlaces(town) {
-  let places = 12;
+  let places = Math.max(12,Number.isSafeInteger(town.campPlaces)?town.campPlaces:12);
   let painted = 0;
   for (const plot of town.homePlots || []) {
     const home = TOWN_HOME_TYPES[plot.tier];
