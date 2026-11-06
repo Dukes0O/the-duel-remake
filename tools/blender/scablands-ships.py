@@ -28,7 +28,7 @@ if args.paths_only:
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Vector, Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 
@@ -112,10 +112,8 @@ def root_obj(name, location, part):
     return obj
 
 def parent(obj, root_obj_):
-    world = obj.matrix_world.copy()
     obj.parent = root_obj_
-    obj.matrix_parent_inverse = root_obj_.matrix_world.inverted()
-    obj.matrix_world = world
+    obj.matrix_parent_inverse = Matrix.Identity(4)
     return obj
 
 def cube(name, center, dims, material, part, bevel=.04):
@@ -257,29 +255,34 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             for i in range(5):
                 x=-length*.29+i*length*.08
                 if side<0 and i>2: continue
-                beam(f'marigold-surviving-rail-{side}-{i}',(x,deck+.92,side*width*.34),(x+.05,deck+1.15,side*width*.34),.07,steel,ident)
+                rail_obj=beam(f'marigold-surviving-rail-{side}-{i}',(x,deck+.92,side*width*.34),(x+.05,deck+1.15,side*width*.34),.07,steel,ident)
+                parent(rail_obj,r)
         # Exposed, removable 18 m propeller shaft at her stern.
-        shaft=cylinder('ship-marigold:shaft',( -length*.47,deck-3.9,0),.22,18,steel,'ship-marigold:shaft',20,'X'); parent(shaft,r)
-        prop=torus('ship-marigold-propeller-ring',(-length*.47,deck-3.9,0),1.45,.12,rust,'ship-marigold:shaft','X'); parent(prop,r)
+        shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
+        shaft=cylinder('marigold-removable-18m-shaft',(-length*.47,deck-3.9,0),.22,18,steel,'ship-marigold:shaft',20,'X'); parent(shaft,shaft_root)
+        prop=torus('ship-marigold-propeller-ring',(-length*.47,deck-3.9,0),1.45,.12,rust,'ship-marigold:shaft','X'); parent(prop,shaft_root)
         for blade in range(4):
             a=blade*math.pi/2
-            b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,r)
+            b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,shaft_root)
 
 # Patience's mast, platform and bell: 14 m above the main deck.
 pat=roots['ship-patience']; mastx=7; mastz=8; platform_y=19
+mast_root=root_obj('ship-patience:mast',(0,0,0),'ship-patience:mast'); parent(mast_root,pat)
+bell_root=root_obj('ship-patience:bell',(0,0,0),'ship-patience:bell'); parent(bell_root,mast_root)
 for dx in (-.72,.72):
-    beam(f'patience-mast-leg-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y+1,mastz),.15,steel,'ship-patience:mast')
-    beam(f'patience-mast-crossbar-{dx}',(mastx+dx,9,mastz),(mastx-dx,9,mastz),.10,iron,'ship-patience:mast')
-platform=cube('ship-patience:mast-platform',(mastx,platform_y,mastz),(3.3,.26,3.3),wood,'ship-patience:mast',.08); parent(platform,pat)
+    beamobj=beam(f'patience-mast-leg-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y+1,mastz),.15,steel,'ship-patience:mast'); parent(beamobj,mast_root)
+    cross=beam(f'patience-mast-crossbar-{dx}',(mastx+dx,9,mastz),(mastx-dx,9,mastz),.10,iron,'ship-patience:mast'); parent(cross,mast_root)
+platform=cube('ship-patience:mast-platform',(mastx,platform_y,mastz),(3.3,.26,3.3),steel,'ship-patience:mast',.08); parent(platform,mast_root)
 for side in (-1,1):
-    beam(f'patience-mast-platform-rail-{side}',(mastx-1.65,platform_y+1,mastz+side*1.5),(mastx+1.65,platform_y+1,mastz+side*1.5),.07,iron,'ship-patience:mast')
+    rail_obj=beam(f'patience-mast-platform-rail-{side}',(mastx-1.65,platform_y+1,mastz+side*1.5),(mastx+1.65,platform_y+1,mastz+side*1.5),.07,iron,'ship-patience:mast'); parent(rail_obj,mast_root)
 for level in range(1,42):
     y=5+level*.34
-    beam(f'patience-mast-ladder-rung-{level}',(mastx-.72,y,mastz),(mastx+.72,y,mastz),.055,iron,'ship-patience:mast')
-for dx in (-.72,.72): beam(f'patience-mast-ladder-side-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y,mastz),.065,steel,'ship-patience:mast')
-bell=cylinder('ship-patience:bell',(mastx,platform_y+1.15,mastz),.42,.7,steel,'ship-patience:bell',24)
+    rung=beam(f'patience-mast-ladder-rung-{level}',(mastx-.72,y,mastz),(mastx+.72,y,mastz),.055,iron,'ship-patience:mast'); parent(rung,mast_root)
+for dx in (-.72,.72):
+    side=beam(f'patience-mast-ladder-side-{dx}',(mastx+dx,5,mastz),(mastx+dx,platform_y,mastz),.065,steel,'ship-patience:mast'); parent(side,mast_root)
+bell=cylinder('patience-bell-metal',(mastx,platform_y+1.15,mastz),.42,.7,steel,'ship-patience:bell',24)
 clapper=beam('patience-bell-clapper',(mastx,platform_y+.72,mastz),(mastx,platform_y+.26,mastz),.10,iron,'ship-patience:bell')
-for o in (bell,clapper): parent(o,pat)
+for o in (bell,clapper): parent(o,bell_root)
 
 # The lighthouse is a tapered, photo-projected tower, with access at all three story landings.
 light_root=root_obj('lighthouse',(170,0,-395),'lighthouse')
@@ -322,12 +325,12 @@ for i in range(5):
 letters=cube('lighthouse-box-of-letters',(1.6,17,-3.15),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
 lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),1.9,2.7,glass,'lighthouse:lamp',40)
 for poly in lamp_mesh.data.polygons: poly.use_smooth=True
-parent(lamp_mesh,light_root)
+lamp_root=root_obj('lighthouse:lamp',(0,0,0),'lighthouse:lamp'); parent(lamp_root,light_root); parent(lamp_mesh,lamp_root)
 for i in range(8):
     a=i*math.pi/4
     b=beam(f'lighthouse-lantern-mullion-{i}',(math.cos(a)*1.9,25.6,math.sin(a)*1.9),(math.cos(a)*1.9,28.4,math.sin(a)*1.9),.08,iron,'lighthouse:lamp')
-    parent(b,light_root)
-lightpart=root_obj('lighthouse:beam',(170,-2,-395),'lighthouse:beam')
+    parent(b,lamp_root)
+lightpart=root_obj('lighthouse:beam',(0,0,0),'lighthouse:beam'); parent(lightpart,light_root)
 beam_obj=cube('lighthouse rotating beam',(0,27.2,-5),(1.0,.16,44),lamp,'lighthouse:beam',.03); parent(beam_obj,lightpart)
 
 # The ridiculous forty-foot pilot boat remains a real, buoyant hull.
@@ -345,9 +348,10 @@ roof=cube('pilot-boat-cabin-roof',(0,3.83,0),(6.2,.25,3.5),steel,'pilot-boat',.1
 for x in (-3.0,3.0):
     beam(f'pilot-boat-rail-{x}',(x,2.1,-1.72),(x,3.5,-1.72),.09,steel,'pilot-boat')
 # A heavy 14 m trailer with eight complete road wheels and spring packs.
+trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
 for z in (-1.45,1.45): beam(f'pilot-trailer-long-rail-{z}',(-8,.3,z),(7,.3,z),.28,rust,'pilot-boat')
 for x in (-6,-2,2,6): beam(f'pilot-trailer-crossmember-{x}',(x,.18,-1.55),(x,.18,1.55),.22,steel,'pilot-boat')
-beam('pilot-boat:hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat')
+hitch=beam('pilot-trailer-hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
 for side in (-1,1):
     for i,x in enumerate((-4,-1,2,5)):
         z=side*1.72
@@ -369,6 +373,23 @@ world_root=root_obj('wasteland-ships-root',(0,0,0),'wasteland-ships')
 for child in list(scene.objects):
     if child is not world_root and child.parent is None:
         parent(child,world_root)
+
+def merge_meshes_by_story_part():
+    groups={}
+    for obj in scene.objects:
+        if obj.type!='MESH': continue
+        part=obj.get('part','')
+        groups.setdefault((part,obj.parent.name if obj.parent else ''),[]).append(obj)
+    for (part,parent_name),objects in groups.items():
+        if len(objects)<2: continue
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in objects: obj.select_set(True)
+        active=objects[0]; bpy.context.view_layer.objects.active=active
+        bpy.ops.object.join()
+        active.name=(part or 'lake-bed')+' geometry'
+        if part: active['part']=part
+
+merge_meshes_by_story_part()
 
 # One neutral mid-tone floor supports review only; it is never exported.
 
@@ -403,36 +424,22 @@ def render_imported_review():
     review_ground.data.materials.append(review_material)
     # Render view and light objects are created only after GLB import.
     add_lighting()
-    from PIL import Image, ImageDraw, ImageFont
-    references=[photos['ships-hull-photo'],photos['lighthouse-stone-photo'],photos['pilot-boat-photo']]
-    targets=[((-5,8,-423),(-45,5,-415),18),((170,16,-425),(170,12,-395),52),((245,9,-465),(230,0,-430),56)]
-    images=[]
+    targets=[((-5,8,-423),(-45,5,-415),18),((170,16,-425),(170,12,-395),80),((245,9,-465),(230,0,-430),90)]
+    view_sizes=((1600,320),(512,1024),(1536,512))
     for index,(loc,target,lens) in enumerate(targets):
         cam=camera(f'review-camera-{index}',loc,target,lens)
+        scene.render.resolution_x,scene.render.resolution_y=view_sizes[index]
         scene.camera=cam; scene.render.filepath=str(raw/f'model-{index}.jpg'); bpy.ops.render.render(write_still=True)
-        images.append(Image.open(raw/f'model-{index}.jpg').convert('RGB'))
     # Context at car height, 40 m away, and a top-down map view.
     for index,(loc,target,lens) in enumerate((((-5,8,-423),(-45,5,-415),18),((115,155,-445),(90,0,-440),45),((180,35,-455),(170,11,-395),46))):
+        scene.render.resolution_x,scene.render.resolution_y=(1200,600)
         if index==2:
             scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.045,.055,.085,1)
             scene.world.node_tree.nodes['Background'].inputs[1].default_value=.16
             for obj in scene.objects:
                 if obj.type=='LIGHT': obj.data.energy=5500
         cam=camera(f'context-camera-{index}',loc,target,lens); scene.camera=cam; scene.render.filepath=str(raw/f'context-{index}.jpg'); bpy.ops.render.render(write_still=True)
-        images.append(Image.open(raw/f'context-{index}.jpg').convert('RGB'))
-    # Each hero has its own photo beside its exported-model view.
-    canvas=Image.new('RGB',(1600,2020),(94,96,91)); draw=ImageDraw.Draw(canvas); font=ImageFont.load_default()
-    labels=['GOOD HOPE · photo / exported GLB','LIGHTHOUSE · photo / exported GLB','PILOT BOAT · photo / exported GLB','40 m car-height context','Deck Town and lighthouse · above','Dusk · lighthouse lamp lit']
-    for i in range(3):
-        y=12+i*340; draw.text((16,y+3),labels[i],font=font,fill=(245,245,238))
-        photo=Image.open(references[i]).convert('RGB').resize((620,300),Image.Resampling.LANCZOS)
-        model=images[i].resize((940,300),Image.Resampling.LANCZOS)
-        canvas.paste(photo,(16,y+24)); canvas.paste(model,(644,y+24))
-    for i in range(3):
-        y=1040+i*320; draw.text((16,y),labels[i+3],font=font,fill=(245,245,238)); canvas.paste(images[i+3].resize((1568,286),Image.Resampling.LANCZOS),(16,y+22))
-    sheet.parent.mkdir(parents=True,exist_ok=True); canvas.save(sheet,'JPEG',quality=86,optimize=True)
     print(f'GLB: {out} ({out.stat().st_size} bytes)')
-    print(f'Sheet: {sheet} ({sheet.stat().st_size} bytes)')
     print(f'Triangles: {sum(len(p.vertices) for o in bpy.data.objects if o.type=="MESH" for p in [o.data])}')
 
 # A real +Y-up, metre-scale scene, with one named root per story place.
