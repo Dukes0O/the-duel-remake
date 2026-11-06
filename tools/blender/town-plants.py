@@ -18,7 +18,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
-mats=town.make_materials({'rusted-steel':tex/'machine-wear.jpg','galvanised-tin':tex/'rusted-corrugated-tin.jpg',
+mats=town.make_materials({'rusted-steel':tex/'faded-yellow-steel.jpg','galvanised-tin':tex/'rusted-corrugated-tin.jpg',
  'faded-hand-paint':tex/'yellow-green-paint.jpg','sand':tex/'wet-brown-earth.jpg','iron-dark':tex/'tire-rubber.jpg'})
 for material in mats.values():
  material.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=min(.29,material.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value)
@@ -84,6 +84,32 @@ box('jaw-plate',(0,2.10,-1.02),(1.35,.82,.10),tin,.025,jaw)
 for x in (-.47,.47):
  pipe('jaw-hydraulic-cylinder',[(x,1.50,-.55),(x,1.95,-.80)],.09,steel,jaw)
  pipe('jaw-hydraulic-rod',[(x,1.90,-.79),(x,2.42,-1.02)],.035,tin,jaw)
+# The side wheels are the visual signature of this older jaw mechanism.  Their
+# crank hubs sit on the housing; the rims have real thickness and open spokes.
+for x in (-1.34,1.34):
+ bpy.ops.mesh.primitive_torus_add(major_radius=.91,minor_radius=.095,major_segments=40,minor_segments=10,location=town.game_vector((x,2.22,-.40)))
+ wheel=bpy.context.object;wheel.name='crusher-flywheel-rim';wheel.data.materials.append(paint);wheel.parent=crusher;parts.append(wheel)
+ bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.19,depth=.23,location=town.game_vector((x,2.22,-.40)))
+ hub=bpy.context.object;hub.name='crusher-flywheel-hub';hub.data.materials.append(dark);hub.rotation_euler[1]=math.pi/2;hub.parent=crusher;parts.append(hub)
+ for spoke in range(6):
+  angle=math.tau*spoke/6
+  beam('crusher-flywheel-spoke',(x,2.22+math.sin(angle)*.18,-.40+math.cos(angle)*.18),
+       (x,2.22+math.sin(angle)*.82,-.40+math.cos(angle)*.82),.095,paint)
+# Extend the delivery belt well beyond the jaw box.  Its raised head and
+# separate braced legs remain visible from the mayor's camera.
+for x in (-.62,.62):
+ beam('conveyor-truss-extension',(x,3.18,3.35),(x,5.45,7.75),.10,paint,belt_parent)
+ beam('conveyor-support-leg',(x,4.05,5.10),(x,.12,5.10),.12,steel,belt_parent)
+ beam('conveyor-support-foot',(x-.34,.12,5.10),(x+.34,.12,5.10),.11,dark,belt_parent)
+ for i in range(6):
+  z=3.65+i*.70;y=3.34+i*.36
+  beam('conveyor-extension-cross',(x,y,z),(-x,y,z),.06,steel,belt_parent)
+  if i<5:beam('conveyor-extension-diagonal',(x,y,z),(-x,y+.34,z+.70),.045,steel,belt_parent)
+ beam('conveyor-extension-handrail',(x,3.46,3.52),(x,5.72,7.92),.055,tin,belt_parent)
+beam('crusher:belt-bed-extension',(-.78,4.25,3.18),(.78,6.40,7.65),.17,dark,belt_parent)
+for i in range(11):
+ t=i/10;z=3.25+t*4.35;y=3.27+t*2.16
+ pipe('conveyor-extension-roller',[(-.60,y,z),(.60,y,z)],.045,dark,belt_parent)
 # Drive pack, cooling fins, exhaust, fuel tank and narrow access ladder.
 box('crusher-diesel-skid',(1.38,1.12,1.0),(.9,.46,1.22),dark,.07)
 box('crusher-engine-block',(1.38,1.62,1.0),(.72,.60,.88),steel,.08)
@@ -96,8 +122,9 @@ for x in (-1.39,-.96):beam('crusher-access-ladder-rail',(x,.16,-.12),(x,1.52,3.1
 box('crusher-discharge-chute',(0,.78,2.28),(1.18,.66,.8),steel,.07).rotation_euler[0]=-.38
 import random
 rng=random.Random(917)
-for i in range(34):
- x=rng.uniform(-1.25,1.25);z=rng.uniform(1.5,3.0);y=rng.uniform(.05,.24);r=rng.uniform(.06,.17)
+for i in range(72):
+ x=rng.uniform(-1.8,1.8);z=rng.uniform(7.1,8.7);ridge=max(0,1-abs(x)/2.2)
+ y=rng.uniform(.08,.24)+ridge*max(0,1-abs(z-7.95)/1.05)*.45;r=rng.uniform(.09,.23)
  bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=r,location=town.game_vector((x,y,z)))
  o=bpy.context.object;o.name='crusher-gravel';o.scale=(1.35,.72,.68);o.data.materials.append(sand);o.parent=crusher;parts.append(o)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -107,8 +134,9 @@ if a.render:
  bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
  scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1100;scene.render.resolution_y=850;scene.render.resolution_percentage=100
  scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.world=bpy.data.worlds.new('bright overcast');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.64,.66,.62,1)
- bpy.ops.mesh.primitive_plane_add(size=14,location=town.game_vector((0,-.14,0)));floor=bpy.context.object;floor.name='review-only ground'
+ bpy.ops.mesh.primitive_plane_add(size=100,location=town.game_vector((0,-.14,0)));floor=bpy.context.object;floor.name='review-only ground'
  ground=bpy.data.materials.new('Review ground');ground.diffuse_color=(.24,.20,.15,1);floor.data.materials.append(ground)
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=1800;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=14
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target in [('above-45',(10,12,-14),(0,1.5,0)),('driver-seat',(6,2.5,-8),(0,2.2,0)),('side',(10,5,2),(0,2,0))]:
