@@ -52,10 +52,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
-<<<<<<< HEAD
   {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-STAGES/round-5',
     glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
-=======
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
@@ -66,7 +64,6 @@ const generators = [
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
 
->>>>>>> integration/wasteland
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -621,7 +618,6 @@ try {
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
-<<<<<<< HEAD
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
       if (generator.id === 'town-stages') {
@@ -649,12 +645,6 @@ try {
           assert.ok(min[0] < max[0] && min[1] < max[1], 'town UVs cover a range of values');
         }
       }
-=======
-      const byteBudget = generator.maxBytes || 2_500_000;
-      assert.ok(bytes.length <= byteBudget, `${bytes.length} bytes exceeds ${byteBudget} bytes`);
-      const maxBytes = generator.maxBytes ?? 2_500_000;
-      assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} byte budget`);
->>>>>>> integration/wasteland
     });
   }
   check('TOWN-ART-WATER family exports six grounded nodes and its per-material photos', () => {

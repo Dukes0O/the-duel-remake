@@ -178,3 +178,4 @@ compression, no green plants. Neutral diffuse overcast daylight, camera
 perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
+- `stages-rusted-steel.jpg`: the building stages' own rusted steel picture, generated for TOWN-ART-STAGES.

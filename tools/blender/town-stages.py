@@ -51,20 +51,20 @@ def build():
     texture_dir=OUT.parent/'textures'
     textures={
       'weathered-plank':('timber.jpg',(.68,.57,.43),0),
-      'rusted-steel':('rusted-steel.jpg',(.78,.72,.65),.25),
+      'rusted-steel':('stages-rusted-steel.jpg',(.78,.72,.65),.25),
       'galvanised-tin':('tin.jpg',(.30,.23,.17),.20),
-      'iron-dark':('rusted-steel.jpg',(.39,.36,.32),.25),
+      'iron-dark':('stages-rusted-steel.jpg',(.39,.36,.32),.25),
       'salvaged-brick':('rubble.jpg',(.77,.72,.62),0),
       'cracked-concrete':('rubble.jpg',(.63,.59,.51),0),
       'patched-canvas':('timber.jpg',(.54,.47,.38),0),
-      'faded-hand-paint':('rusted-steel.jpg',(.48,.37,.27),0),
+      'faded-hand-paint':('stages-rusted-steel.jpg',(.48,.37,.27),0),
       'sand':('rubble.jpg',(.53,.45,.35),0),
     }
     mats={key:photo_material('Town / '+key,texture_dir/filename,tint,metal)
           for key,(filename,tint,metal) in textures.items()}
     timber_variants=[photo_material(f'Town / scaffold timber {i+1}',texture_dir/'timber.jpg',tint)
                      for i,tint in enumerate(((.32,.25,.18),(.42,.32,.23),(.50,.39,.28),(.38,.30,.23)))]
-    steel_variants=[photo_material(f'Town / scaffold steel {i+1}',texture_dir/'rusted-steel.jpg',tint,.25)
+    steel_variants=[photo_material(f'Town / scaffold steel {i+1}',texture_dir/'stages-rusted-steel.jpg',tint,.25)
                     for i,tint in enumerate(((.54,.50,.45),(.70,.63,.54),(.82,.74,.62)))]
     tin_variants=[photo_material(f'Town / scaffold tin {i+1}',texture_dir/'tin.jpg',tint,.18)
                   for i,tint in enumerate(((.20,.15,.11),(.28,.21,.15),(.36,.27,.19)))]
@@ -303,7 +303,7 @@ def build():
           sack=bpy.context.object;sack.name=f'{prefix}:dusty-sack-{i}';sack.scale=(.46,.25,.34);sack.data.materials.append(mats['patched-canvas']);sack.parent=root
         # The upper deck dominates the mayor's view. Darken it with uneven
         # site wear and break the regular plank grid with loose boards/tools.
-        stainmat=photo_material(prefix+' / deck stain',texture_dir/'rusted-steel.jpg',(.32,.29,.25),.12)
+        stainmat=photo_material(prefix+' / deck stain',texture_dir/'stages-rusted-steel.jpg',(.32,.29,.25),.12)
         for i,(x,z,sx,sz) in enumerate(((-4.6,-3.9,1.8,.72),(-2.0,4.8,1.35,.62),(3.7,2.1,.9,.52))):
           stain=cube(f'{prefix}:deck-oil-stain-{i}',(x,6.061,z),(sx,.012,sz),stainmat,.025);stain.parent=root
         for i in range(8):
