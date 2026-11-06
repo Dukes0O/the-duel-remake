@@ -1573,3 +1573,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: CAR-ART-RATTLER stopped at round 6 of 6, not merged; branch kept.
 - 5 Nov: TOWN-ART-SANITATION merged; verdict on its card.
 - 5 Nov: TOWN-ART-STAGES merged at round 5 of 6; verdict on its card.
+- 6 November: story page `docs/story/there-is-no-2-15.md` and 11 RAIL cards added (Claude). Pim's railway, the buried works train and Old Tam, who drove it.

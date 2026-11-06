@@ -1131,6 +1131,124 @@ tasks:
     locks: []
     details: "docs/board/cards/BOARD-FINISH.md"
 
+  - id: RAIL-LINES
+    title: "There Is No 2:15: every line"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/RAIL-LINES.md"
+
+  - id: WW-ART-RAIL
+    title: "Art: the 2:15, Wednesday and the things on the railway"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/WW-ART-RAIL.md"
+
+  - id: WW-ART-WHITES
+    title: "Art: the Whites, the salt plateau and the Far Workings"
+    owner: "codex"
+    lane: "ART"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/WW-ART-WHITES.md"
+
+  - id: RAIL-STEPS
+    title: "Railway engine: marks, gradient, token, runaway, sand drag, ride-along, dig and whistle"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["RAIL-LINES"]
+    locks: []
+    details: "docs/board/cards/RAIL-STEPS.md"
+
+  - id: RAIL-JOBS-1
+    title: "A railway: Satisfactory, Fireman, the Coal Heap, Passing Place, the Wagons"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["RAIL-STEPS","MULE-JOBS","WW-ART-RAIL"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-JOBS-1.md"
+
+  - id: RAIL-REGION
+    title: "The Whites: a new region up a bank, and the salt storm"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["WW-ART-WHITES"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-REGION.md"
+
+  - id: RAIL-JOBS-2
+    title: "The 2:15: the letter, the Drift and the Whites"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["RAIL-JOBS-1","RAIL-REGION"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-JOBS-2.md"
+
+  - id: RAIL-PROPERTY
+    title: "Lost Property: eleven deliveries and the Office at the Halt"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["RAIL-JOBS-2"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-PROPERTY.md"
+
+  - id: RAIL-JOBS-3
+    title: "Nobody Asked, Downhill and Eleven Minutes"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: ["RAIL-PROPERTY"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-JOBS-3.md"
+
+  - id: RAIL-TIMETABLE
+    title: "The Timetable: run trains you have taught people to drive"
+    owner: "codex"
+    lane: "UI"
+    size: "L"
+    status: "ready"
+    needs: ["RAIL-JOBS-3"]
+    locks: []
+    flag: "wasteland-town"
+    details: "docs/board/cards/RAIL-TIMETABLE.md"
+
+  - id: RAIL-FINISH
+    title: "Claude plays There Is No 2:15"
+    owner: "claude"
+    lane: "FINISH"
+    size: "S"
+    status: "ready"
+    needs: ["RAIL-JOBS-3","RAIL-TIMETABLE","MULE-FINISH"]
+    locks: []
+    details: "docs/board/cards/RAIL-FINISH.md"
+
   - id: WW-ART-DAM-2
     title: "Art: the dam's gantry wheels, silt and spillway, for Act 5"
     owner: "codex"
