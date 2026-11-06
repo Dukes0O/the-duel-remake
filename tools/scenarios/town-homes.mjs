@@ -21,7 +21,9 @@ export async function run(context){
   await context.waitFor(`!!document.querySelector('.town-onboard form')`,'Hollis note',30_000);
   await context.evaluate(`document.querySelector('#town-name').value='Home Plot QA';document.querySelector('.town-onboard form button').click()`);
   await context.waitFor(`!!document.querySelector('.town-screen')`,'the new town',30_000);
-  await context.evaluate(`document.querySelector('[data-town-tab="homes"]').click();document.querySelector('[data-town-home-tool="paint"]').click()`);
+  await context.evaluate(`document.querySelector('[data-town-tab="homes"]').click()`);
+  await context.waitFor(`!!document.querySelector('[data-town-home-tool="paint"]')`,'the plot paint tool in Homes and Shops',10_000);
+  await context.evaluate(`document.querySelector('[data-town-home-tool="paint"]').click()`);
   const points=await context.evaluate(`(() => {const host=document.querySelector('.town-entry'),canvas=host.querySelector(':scope>canvas'),r=canvas.getBoundingClientRect();return {from:{x:r.left+r.width*.43,y:r.top+r.height*.52},to:{x:r.left+r.width*.47,y:r.top+r.height*.52}};})()`);
   if(!points.from||!points.to)throw new Error('The town map is not ready for a plot drag.');
   await drag(context,points.from,points.to);
