@@ -49,7 +49,7 @@ const generators = [
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
 
-  {id:'town-water',script:'tools/blender/town-water.py',args:['--round','3'],candidate:true,
+  {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
@@ -620,6 +620,20 @@ try {
     assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the card\'s 3 MB limit`);
     const jsonLength = bytes.readUInt32LE(12);
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+      const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+      assert.deepEqual(coordinates, ['TEXCOORD_0'], `${mesh.name} has one exported picture-coordinate set`);
+      const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+      const view = gltf.bufferViews[uv.bufferView];
+      const stride = view.byteStride ?? 8;
+      const start = 28 + jsonLength + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+      const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+      for (let vertex = 0; vertex < uv.count; vertex++) for (let axis = 0; axis < 2; axis++) {
+        const value = bytes.readFloatLE(start + vertex * stride + axis * 4);
+        min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+      }
+      assert.ok(max.some((value, axis) => value > min[axis]), `${mesh.name} TEXCOORD_0 covers a range`);
+    }
     const nodes = new Set(gltf.nodes.map(node => node.name));
     for (const name of ['town-water','hand-well','standpipe','water-tower','pump-house','treatment-plant','reservoir',
       'water-tower:fill-1','water-tower:fill-2','water-tower:fill-3','pump-house:flywheel',

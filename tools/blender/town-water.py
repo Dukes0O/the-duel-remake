@@ -7,16 +7,16 @@ from pathlib import Path
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
-p.add_argument('--round', type=int, default=3)
+p.add_argument('--round', type=int, default=4)
 p.add_argument('--paths-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
-if a.round != 3:
-    p.error('this card submits round 3 only')
-evidence = root / '.evidence/2026-11-05/town-art-water/round-3'
+if a.round != 4:
+    p.error('this card submits round 4 only')
+evidence = root / '.evidence/2026-11-06/town-art-water/round-4'
 out = root / 'public/assets/models/wasteland/town/water.glb'
 blend = root / 'art-build/town/water.blend'
-sheet = root / 'docs/board/looks/town-art-water/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-water/round-4.jpg'
 if a.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -35,9 +35,23 @@ materials = town.make_materials({
     'sand': root / 'public/assets/models/wasteland/town/textures/town-water-earth.jpg',
 })
 mat = materials
+# Tower framing gets a separate darkened copy; the well keeps its round-3 wood.
+dark_timber = mat['weathered-plank'].copy()
+dark_timber.name = 'Town / dark structural water-tower timber'
+dark_timber_image = mat['weathered-plank'].node_tree.nodes.get('Image Texture').image.copy()
+dark_timber_image.name = 'Town tile / dark structural timber'
+dark_timber_pixels = __import__('numpy').empty(len(dark_timber_image.pixels), dtype='float32')
+dark_timber_image.pixels.foreach_get(dark_timber_pixels)
+dark_timber_pixels[0::4] *= .56; dark_timber_pixels[1::4] *= .50; dark_timber_pixels[2::4] *= .43
+dark_timber_image.pixels.foreach_set(dark_timber_pixels); dark_timber_image.pack()
+dark_timber.node_tree.nodes.get('Image Texture').image = dark_timber_image
 # Keep one sharp tin photo for both galvanized sheets and worn steel fittings.
 rust_material = mat['rusted-steel']
 rust_image = bpy.data.images.load(str(root / 'public/assets/models/wasteland/town/textures/town-water-tin.jpg'), check_existing=False)
+rust_pixels = __import__('numpy').empty(len(rust_image.pixels), dtype='float32')
+rust_image.pixels.foreach_get(rust_pixels)
+rust_pixels[0::4] *= .62; rust_pixels[1::4] *= .43; rust_pixels[2::4] *= .30
+rust_image.pixels.foreach_set(rust_pixels)
 rust_image.file_format = 'JPEG'; rust_image.pack()
 rust_nodes = rust_material.node_tree.nodes
 rust_tex = rust_nodes.new('ShaderNodeTexImage'); rust_tex.image = rust_image; rust_tex.extension = 'REPEAT'
@@ -55,15 +69,22 @@ def solid(name, color, roughness=.88, metallic=0):
     bsdf.inputs['Metallic'].default_value = metallic
     return material
 mat['dirty-water'] = solid('Town / dirty brown water',(.20,.105,.045),.34,.08)
-mat['reservoir-water'] = solid('Town / dark reservoir water',(.055,.115,.105),.62,.12)
+mat['reservoir-water'] = solid('Town / dark reservoir water',(.035,.065,.055),.18,.08)
 water_image = bpy.data.images.load(str(root / 'public/assets/models/wasteland/town/textures/town-water.jpg'), check_existing=False)
+water_image.scale(512,512)
+water_pixels = __import__('numpy').empty(len(water_image.pixels), dtype='float32')
+water_image.pixels.foreach_get(water_pixels)
+water_pixels[0::4] *= .48; water_pixels[1::4] *= .47; water_pixels[2::4] *= .43
+water_image.pixels.foreach_set(water_pixels)
 water_image.file_format = 'JPEG'; water_image.pack()
 water_nodes = mat['reservoir-water'].node_tree.nodes
 water_tex = water_nodes.new('ShaderNodeTexImage'); water_tex.image = water_image; water_tex.extension = 'REPEAT'
 mat['reservoir-water'].node_tree.links.new(water_tex.outputs['Color'], water_nodes.get('Principled BSDF').inputs['Base Color'])
 mat['dirty-water'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .08
 mat['filter-sand'] = solid('Town / pale filter sand',(.56,.44,.27),.92)
-mat['clean-water'] = solid('Town / clean-water green enamel',(.20,.34,.29),.46,.18)
+mat['clean-water'] = rust_material.copy()
+mat['clean-water'].name='Town / faded painted steel with rust'
+mat['clean-water'].node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.74
 mat['chalk-stone'] = materials['cracked-concrete']
 mat['well-stone-light'] = materials['salvaged-brick']
 mat['sandbag-canvas'] = solid('Town / sandbag canvas',(.43,.35,.25),.96)
@@ -218,27 +239,32 @@ for i,x in enumerate((-1.18,-.52,.14),1):
 current = add_root('water-tower', OFFSETS['water-tower'])
 base_half, top_half = 2.85, 2.05
 platform_y, roof_y = 8.0, 11.72
-# Four 250 mm square splayed timber posts.
+# Four heavy 280 mm square splayed timber posts.
 for sx in (-1,1):
     for sz in (-1,1):
         beam(f'water-tower:leg-{sx}-{sz}',
              local('water-tower',sx*base_half,.10,sz*base_half),
-             local('water-tower',sx*top_half,platform_y,sz*top_half),.25,mat['weathered-plank'])
+             local('water-tower',sx*top_half,platform_y,sz*top_half),.28,dark_timber)
 # Two complete X-braced storeys on all four faces.
 for low, high in ((.24,4.0),(4.0,7.82)):
     for side in (-1,1):
         z=side*base_half
-        beam(f'water-tower:brace-front-a-{low}',local('water-tower',-base_half,low,z),local('water-tower',base_half,high,z),.14,mat['weathered-plank'])
-        beam(f'water-tower:brace-front-b-{low}',local('water-tower',base_half,low,z),local('water-tower',-base_half,high,z),.14,mat['weathered-plank'])
+        beam(f'water-tower:brace-front-a-{low}',local('water-tower',-base_half,low,z),local('water-tower',base_half,high,z),.25,dark_timber)
+        beam(f'water-tower:brace-front-b-{low}',local('water-tower',base_half,low,z),local('water-tower',-base_half,high,z),.25,dark_timber)
         x=side*base_half
-        beam(f'water-tower:brace-side-a-{low}',local('water-tower',x,low,-base_half),local('water-tower',x,high,base_half),.14,mat['weathered-plank'])
-        beam(f'water-tower:brace-side-b-{low}',local('water-tower',x,low,base_half),local('water-tower',x,high,-base_half),.14,mat['weathered-plank'])
+        beam(f'water-tower:brace-side-a-{low}',local('water-tower',x,low,-base_half),local('water-tower',x,high,base_half),.25,dark_timber)
+        beam(f'water-tower:brace-side-b-{low}',local('water-tower',x,low,base_half),local('water-tower',x,high,-base_half),.25,dark_timber)
 # Plank deck and perimeter rail, joined to the four post heads.
 for i in range(9):
     x=-2.15+i*.54
-    box(f'water-tower:platform-plank-{i+1}',local('water-tower',x,platform_y,0),(.51,.18,5.5),mat['weathered-plank'],.025)
+    box(f'water-tower:platform-plank-{i+1}',local('water-tower',x,platform_y,0),(.51,.30,5.5),dark_timber,.025)
 for z in (-2.7,2.7):
     beam(f'water-tower:platform-girder-{z}',local('water-tower',-2.25,7.88,z),local('water-tower',2.25,7.88,z),.16,mat['rusted-steel'])
+# Dark iron through-bolts make the timber joints read as load-bearing.
+for y in (.35,3.94,4.12,7.72):
+    for sx in (-1,1):
+        box(f'water-tower:joint-bolt-front-{y}-{sx}',local('water-tower',sx*2.8,y,-2.99),(.10,.10,.05),mat['iron-dark'],.005)
+        box(f'water-tower:joint-bolt-back-{y}-{sx}',local('water-tower',sx*2.8,y,2.99),(.10,.10,.05),mat['iron-dark'],.005)
 # Riveted 3.5 m diameter cylindrical tank, 2.25 m high, with a low conical cap.
 cylinder('water-tower:main-tank',local('water-tower',0,9.30,0),1.75,2.35,mat['rusted-steel'],40)
 torus('water-tower:lower-tank-seam',local('water-tower',0,8.22,0),1.75,.055,mat['rusted-steel'])
@@ -277,15 +303,13 @@ current = add_root('pump-house', OFFSETS['pump-house'])
 box('pump-house:raised-slab',local('pump-house',0,.16,0),(7.0,.3,6.4),mat['cracked-concrete'])
 for x in (-3.0,3.0):
     for z in (-2.7,2.7): beam(f'pump-house:post-{x}-{z}',local('pump-house',x,.3,z),local('pump-house',x,3.8,z),.16,mat['rusted-steel'])
-for side in (-1,1):
-    before = set(bpy.context.scene.objects)
-    tin=town.corrugated_sheet(f'pump-house:roof-sheet-{side}',local('pump-house',0,4.0,side*.95),6.7,3.7,mat,bent=side*.08,turn=0)
-    tin.rotation_euler[0] = math.pi/2
-    parent_since(current,before)
-    beam(f'pump-house:roof-purlin-{side}',local('pump-house',-3.3,3.55,side*1.9),local('pump-house',3.3,3.55,side*1.9),.11,mat['weathered-plank'])
-before=set(bpy.context.scene.objects)
-town.pitched_roof('pump-house:pitched-roof',local('pump-house',0,4.1,0),6.8,6.0,mat)
+# One overhanging, fine-rib roof keeps the shed open and the engine visible.
+before = set(bpy.context.scene.objects)
+roof = town.corrugated_sheet('pump-house:overhanging-tin-roof',local('pump-house',0,4.0,0),7.5,7.0,mat,bent=.025)
+roof.rotation_euler[0] = math.pi/2
 parent_since(current,before)
+for side in (-1,1):
+    beam(f'pump-house:roof-purlin-{side}',local('pump-house',-3.4,3.65,side*2.65),local('pump-house',3.4,3.65,side*2.65),.15,dark_timber)
 box('pump-house:engine-block',local('pump-house',-.75,1.18,-1.35),(2.2,1.45,1.55),mat['iron-dark'],.18)
 for i in range(5):
     cylinder(f'pump-house:cooling-fin-{i+1}',local('pump-house',-.75,1.2,-1.90+i*.27),.52,.09,mat['iron-dark'],16)
@@ -306,10 +330,6 @@ for side in (-1,1):
     wall=town.corrugated_sheet(f'pump-house:side-wall-{side}',local('pump-house',side*3.0,2.05,.1),3.4,3.45,mat,bent=side*.025)
     wall.rotation_euler[2]=math.pi/2
     parent_since(current,before)
-for side in (-1,1):
-    before=set(bpy.context.scene.objects)
-    wall=town.corrugated_sheet(f'pump-house:front-wall-{side}',local('pump-house',side*2.15,2.05,-2.75),1.8,3.45,mat,bent=side*.025)
-    parent_since(current,before)
 beam('pump-house:door-header',local('pump-house',-1.25,3.85,-2.78),local('pump-house',1.25,3.85,-2.78),.18,mat['weathered-plank'])
 for side in (-1,1):
     beam(f'pump-house:door-jamb-{side}',local('pump-house',side*1.25,.3,-2.78),local('pump-house',side*1.25,3.85,-2.78),.16,mat['weathered-plank'])
@@ -319,10 +339,17 @@ for part in [obj for obj in list(export_objects) if obj.name.startswith('pump-ho
     part.matrix_world = world
 tube('pump-house:manifold', [local('pump-house',1.9,.75,1),local('pump-house',2.5,.75,1),local('pump-house',2.5,2.7,1)],.10,mat['galvanised-tin'])
 cylinder('pump-house:exhaust',local('pump-house',-1.4,3.4,.4),.12,.95,mat['iron-dark'],12)
-for side in (-1,1):
-    box(f'pump-house:folded-door-{side}',local('pump-house',side*.95,1.55,-2.84),(.16,2.35,.22),mat['galvanised-tin'],.06)
 box('pump-house:engine-fuel-tank',local('pump-house',-.8,2.12,-1.10),(1.5,.45,.8),mat['faded-hand-paint'],.12)
-box('pump-house:inspection-sill',local('pump-house',0,.42,-3.20),(2.7,.16,.26),mat['cracked-concrete'],.04)
+# A low uneven sandbag course carries the pump shed above dusty runoff.
+for i in range(7):
+    for side in (-1,1):
+        bag=low_sandbag(f'pump-house:base-sandbag-{i}-{side}',local('pump-house',-2.65+i*.88,.39,side*2.5),(.92,.50,.68),mat['sandbag-canvas'])
+        bag.rotation_euler[1]=(.035 if i%2 else -.04)
+for i in range(3):
+    bag=low_sandbag(f'pump-house:front-sandbag-{i}',local('pump-house',-1.2+i*1.2,.38,-2.92),(.95,.48,.42),mat['sandbag-canvas'])
+box('pump-house:engine-cylinder-head',local('pump-house',-.75,2.0,-1.45),(1.35,.42,1.15),mat['rusted-steel'],.10)
+for i in range(3):
+    tube(f'pump-house:engine-fuel-line-{i}',[local('pump-house',-.5+i*.38,2.18,-.9),local('pump-house',-.5+i*.38,2.48,-.55),local('pump-house',-.5+i*.38,2.15,-.2)],.035,mat['galvanised-tin'])
 
 # Treatment process: real stages laid left-to-right inside 31.5 x 23.5 m.
 current = add_root('treatment-plant', OFFSETS['treatment-plant'])
@@ -377,7 +404,7 @@ beam('treatment-plant:clean-tap-post',local('treatment-plant',-13.7,1.45,-4.25),
 beam('treatment-plant:clean-tap-spout',local('treatment-plant',-13.7,2.12,-4.25),local('treatment-plant',-14.3,2.12,-4.25),.10,mat['faded-hand-paint'])
 for i in range(3):
     x=12.0-i*8.1
-    tube(f'treatment-plant:process-pipe-{i+1}',[local('treatment-plant',x,2.25,2.3),local('treatment-plant',x,3.25,2.3),local('treatment-plant',x-8.1,3.25,2.3),local('treatment-plant',x-8.1,1.7,2.3)],.13,mat['rusted-steel'])
+    tube(f'treatment-plant:process-pipe-{i+1}',[local('treatment-plant',x,2.25,2.3),local('treatment-plant',x,3.25,2.3),local('treatment-plant',x-8.1,3.25,2.3),local('treatment-plant',x-8.1,1.7,2.3)],.21,mat['rusted-steel'])
 for i,x in enumerate((12.2,4.0,-4.2,-12.4)):
     current = plant_root
     beam(f'treatment-plant:pipe-saddle-{i}',local('treatment-plant',x,.25,2.3),local('treatment-plant',x,3.35,2.3),.065,mat['weathered-plank'])
@@ -385,41 +412,58 @@ for side in (-1,1):
     current = plant_root
     rx,rz=side*8.5,7.8
     for x in (-13,-4,5,13):
-        beam(f'treatment-plant:roof-post-{side}-{x}',local('treatment-plant',x,.2,rz),local('treatment-plant',x,4.5,rz),.12,mat['weathered-plank'])
+        beam(f'treatment-plant:roof-post-{side}-{x}',local('treatment-plant',x,.2,rz),local('treatment-plant',x,3.35,rz),.18,dark_timber)
     # Two separate lean-to roof runs preserve daylight over each open process stage.
     for x in (-8.5,0.0,9.5):
-        panel=box(f'treatment-plant:roof-salvage-{side}-{x}',local('treatment-plant',x,4.6,rz+side*.9),(8.8,.13,2.4),mat['galvanised-tin'],.04)
+        panel=box(f'treatment-plant:roof-salvage-{side}-{x}',local('treatment-plant',x,3.48,rz+side*.9),(8.8,.20,2.4),mat['rusted-steel'],.04)
         panel.rotation_euler[0]=side*.18
 
-# Lined reservoir basin, chunky uneven sandbag bank and dedicated water plane.
+# Dug reservoir: irregular outer bank, exposed sloping earth and low water.
 current = add_root('reservoir', OFFSETS['reservoir'])
-box('reservoir:excavated-bed',local('reservoir',0,.05,0),(29,.18,27),mat['sand'],.14)
-box('reservoir:earth-bank-north',local('reservoir',0,.75,13.0),(28,.90,2.2),mat['sand'],.22)
-box('reservoir:earth-bank-south',local('reservoir',0,.75,-13.0),(28,.90,2.2),mat['sand'],.22)
-box('reservoir:earth-bank-east',local('reservoir',14.0,.75,0),(2.2,.90,24),mat['sand'],.22)
-box('reservoir:earth-bank-west',local('reservoir',-14.0,.75,0),(2.2,.90,24),mat['sand'],.22)
-box('reservoir:stained-rim-north',local('reservoir',0,.64,11.4),(25,.18,.32),mat['cracked-concrete'],.08)
-box('reservoir:stained-rim-south',local('reservoir',0,.64,-11.4),(25,.18,.32),mat['cracked-concrete'],.08)
-box('reservoir:stained-rim-east',local('reservoir',12.4,.64,0),(.32,.18,22.8),mat['cracked-concrete'],.08)
-box('reservoir:stained-rim-west',local('reservoir',-12.4,.64,0),(.32,.18,22.8),mat['cracked-concrete'],.08)
-water = box('reservoir:water',local('reservoir',0,.48,0),(22.8,.035,21.3),mat['reservoir-water'],.01)
-water['part'] = 'flat scoop surface'
-for side in (-1,1):
-    for i in range(35):
-        x=-13.3+i*.78
-        z=side*(12.1+(.08 if i%3==0 else 0))
-        bag=low_sandbag(f'reservoir:sandbag-long-{side}-{i}',local('reservoir',x,.60,z),(1.2,.42,.58),mat['sandbag-canvas'])
-        bag.rotation_euler[1]=(.035 if i%2 else -.04)
-    for i in range(31):
-        z=-11.8+i*.80;x=side*13.5
-        bag=low_sandbag(f'reservoir:sandbag-end-{side}-{i}',local('reservoir',x,.60,z),(.58,.42,1.2),mat['sandbag-canvas'])
-        bag.rotation_euler[2]=math.pi/2
+def bank_point(index, count, rx, rz, y, phase=0.0):
+    angle=math.tau*index/count+phase
+    wobble=1+.055*math.sin(3*angle+.4)+.032*math.sin(7*angle+1.1)+.018*math.sin(11*angle)
+    return (rx*wobble*math.cos(angle),y+.045*math.sin(5*angle),rz*wobble*math.sin(angle))
+def make_ring(name, rings, material):
+    count=48; verts=[]; faces=[]
+    for rx,rz,y,phase in rings:
+        verts.extend(town.game_vector(bank_point(i,count,rx,rz,y,phase)) for i in range(count))
+    for ring in range(len(rings)-1):
+        for i in range(count):
+            a=ring*count+i;b=ring*count+(i+1)%count
+            c=(ring+1)*count+(i+1)%count;d=(ring+1)*count+i
+            faces.append((d,c,b,a))
+    mesh=bpy.data.meshes.new(name+' irregular sloped earth');mesh.from_pydata(verts,[],faces);mesh.update()
+    uv=mesh.uv_layers.new(name='UVMap')
+    for polygon in mesh.polygons:
+        for loop in polygon.loop_indices:
+            co=verts[mesh.loops[loop].vertex_index]
+            uv.data[loop].uv=(co.x/2,co.y/2)
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);obj.data.materials.append(material)
+    obj.location=town.game_vector(OFFSETS['reservoir'])
+    return keep(obj,current)
+make_ring('reservoir:eroded-outer-bank',[(14.5,13.8,.08,0),(13.7,13.0,.82,.025),(10.8,10.1,.30,.04)],mat['sand'])
+count=48; water_verts=[town.game_vector((0,.30,0))]
+water_verts.extend(town.game_vector(bank_point(i,count,10.75,10.0,.30,.04)) for i in range(count))
+water_faces=[(0,1+(i+1)%count,1+i) for i in range(count)]
+water_mesh=bpy.data.meshes.new('reservoir dark water irregular shore');water_mesh.from_pydata(water_verts,[],water_faces);water_mesh.update()
+water_uv=water_mesh.uv_layers.new(name='UVMap')
+for polygon in water_mesh.polygons:
+    for loop in polygon.loop_indices:
+        co=water_verts[water_mesh.loops[loop].vertex_index]
+        water_uv.data[loop].uv=(co.x/2,co.y/2)
+water_obj=bpy.data.objects.new('reservoir:water',water_mesh);bpy.context.collection.objects.link(water_obj);water_obj.data.materials.append(mat['reservoir-water']);water_obj.location=town.game_vector(OFFSETS['reservoir']);keep(water_obj,current)
+water_obj['part']='flat scoop surface below the bank'
+for i in range(48):
+    x,y,z=bank_point(i,48,12.0,11.2,.49,.04)
+    bag=low_sandbag(f'reservoir:sandbag-bank-{i+1}',local('reservoir',x,y,z),(.95,.42,.62),mat['sandbag-canvas'])
+    bag.rotation_euler[1]=.08*math.sin(i*2.1);bag.rotation_euler[2]=math.tau*i/48
 for i in range(4):
     x=-1.2+i*.8
-    beam(f'reservoir:pump-skid-{i}',local('reservoir',x,.75,-14.0),local('reservoir',x,1.0,-16.0),.13,mat['weathered-plank'])
-box('reservoir:outlet-pump-body',local('reservoir',0,1.22,-14.7),(2.7,1.0,1.8),mat['rusted-steel'],.14)
-for x in (-1.2,1.2): cylinder(f'reservoir:pump-gauge-{x}',local('reservoir',x,1.9,-14.72),.20,.14,mat['galvanised-tin'],16)
-tube('reservoir:outlet-pipe',[local('reservoir',0,1.3,-14),local('reservoir',0,1.3,-11),local('reservoir',0,3.2,-11),local('reservoir',0,3.2,-8)],.18,mat['galvanised-tin'])
+    beam(f'reservoir:pump-skid-{i}',local('reservoir',x,.45,-12.5),local('reservoir',x,.62,-14.1),.13,mat['weathered-plank'])
+box('reservoir:outlet-pump-body',local('reservoir',0,.82,-13.2),(2.7,1.0,1.8),mat['rusted-steel'],.14)
+for x in (-1.2,1.2): cylinder(f'reservoir:pump-gauge-{x}',local('reservoir',x,1.50,-13.22),.20,.14,mat['galvanised-tin'],16)
+tube('reservoir:outlet-pipe',[local('reservoir',0,.42,-9.7),local('reservoir',0,.62,-11.5),local('reservoir',0,.82,-12.4)],.20,mat['galvanised-tin'])
 
 # Keep the authored family meshes intact. The earlier draft overlaid donor
 # meshes at incompatible scales and deleted these fitted well, tank and pump
@@ -472,7 +516,7 @@ centers = {
     'water-tower': (0,8,0, (15,23,-18), 30),
     'pump-house': (0,2.0,0, (9,8,-12), 32),
     'treatment-plant': (0,2.5,0, (0,28,-28), 46),
-    'reservoir': (0,0,0, (18,22,-23), 32),
+    'reservoir': (0,0,-2, (30,27,-34), 31),
 }
 def set_tree_render(obj, visible):
     obj.hide_render = not visible
@@ -507,6 +551,18 @@ def join_meshes(meshes, name):
         if meshes: meshes[0].name = name
         return
     for obj in meshes:
+        layers = obj.data.uv_layers
+        if not layers:
+            layer = layers.new(name='UVMap')
+            for polygon in obj.data.polygons:
+                for loop_index in polygon.loop_indices:
+                    vertex = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+                    layer.data[loop_index].uv = (vertex.x / 2, vertex.y / 2)
+        else:
+            active = layers.active or layers[0]
+            for layer in list(layers):
+                if layer != active: layers.remove(layer)
+            active.name = 'UVMap'
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True);bpy.context.view_layer.objects.active=obj
         for modifier in list(obj.modifiers):
@@ -579,14 +635,19 @@ render_camera('water-tower-photo-angle.png',
     (OFFSETS['water-tower'][0]+9,6.5,OFFSETS['water-tower'][2]-12),
     (OFFSETS['water-tower'][0],5.6,OFFSETS['water-tower'][2]),25)
 for obj in roots.values(): hide_tree(obj,False)
-render_camera('site-mayor.png',(43,57,-52),(0,4,0),45)
-render_camera('site-road.png',(1.5,1.65,-34),(5,5,-5),35)
+scene.render.resolution_x=1700; scene.render.resolution_y=950
+render_camera('site-mayor.png',(40,69,54),(-4,4,0),55)
+scene.render.resolution_x=1120; scene.render.resolution_y=760
+render_camera('site-road.png',(8,1.65,-28),(12,5,-9),30)
 for ident,base,above_lens in [
  ('hand-well',OFFSETS['hand-well'],52),('standpipe',OFFSETS['standpipe'],52),
  ('water-tower',OFFSETS['water-tower'],47),('pump-house',OFFSETS['pump-house'],45),
  ('treatment-plant',OFFSETS['treatment-plant'],27),('reservoir',OFFSETS['reservoir'],32)]:
     for name,obj in roots.items(): hide_tree(obj,name!=ident)
     span=8 if ident in ('hand-well','standpipe') else 15 if ident in ('water-tower','pump-house') else 29
-    render_camera(f'{ident}-mayor.png',(base[0]+span,base[1]+span*.9,base[2]-span),(base[0],base[1]+(5.3 if ident=='water-tower' else 2),base[2]),above_lens)
+    if ident=='reservoir':
+        render_camera(f'{ident}-mayor.png',(base[0]+30,base[1]+27,base[2]-34),(base[0],base[1],base[2]-2),31)
+    else:
+        render_camera(f'{ident}-mayor.png',(base[0]+span,base[1]+span*.9,base[2]-span),(base[0],base[1]+(5.3 if ident=='water-tower' else 2),base[2]),above_lens)
     render_camera(f'{ident}-road.png',(base[0]+.4,base[1]+1.7,base[2]-span),(base[0],base[1]+(4.8 if ident=='water-tower' else 2.2),base[2]),30 if span>12 else 43)
 for obj in roots.values(): hide_tree(obj,False)

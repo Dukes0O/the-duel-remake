@@ -1,48 +1,65 @@
-# TOWN-ART-WATER
+# TOWN-ART-WATER — round 4
 
-## Design
+Updated the water-tower, pump-house, treatment plant and reservoir in the
+exported town family. The well and standpipe geometry remain as submitted in
+round 3. Replaced the corrugated-tin picture with a dark, finer-ribbed photo
+texture and credited its prompt in the town texture `CREDITS.md`.
 
-Round 3 uses the card's six original water buildings and the shared town
-material helpers. The raised tower must read as a braced timber structure from
-the mayor view, with a riveted tank, three fill markers and a reachable ladder.
-The treatment works show four linked stages from brown settling water through
-filter sand and a boiler to the covered clean-water tank. The exported GLB is
-the source for every review image, so the sheet checks the same materials and
-axis conversion the game receives. Preserve the card's named moving parts and
-footprints.
+The tower now has dark 28 cm timber legs and 25 cm braces, bolted joints, a
+thicker plank deck, a dark rusted tank and a ladder that reaches it. The pond
+has an irregular eroded earth slope, lower dark water, sandbags and an outlet
+pump joined into its bank. The pump house is open at the front, with an
+overhanging fine-rib roof, engine block, flywheel, piping and sandbag base. The
+treatment works have brown settling water, a faded rusted-steel clean tank,
+thicker linked pipes and lower rusted roofs on posts.
 
-## Checks and evidence
+The recipe standardizes joined mesh UV layers to `UVMap` before export. The
+round 4 sheet renders the exported GLB after importing it into an empty Blender
+scene. It places the generated reference photo beside the road-height view,
+then shows the mayor view and separate building details. The source reference
+photo stays outside the repository; only its crop is on the sheet.
 
-- Round 3 rebuilt the Blender source and GLB. The exported family is
-  2,048,140 bytes and 26,596 triangles. The six per-building budgets, embedded
-  image checks and overall file budget pass. The compressed review sheet is
-  277,042 bytes.
-- `node tools/test-blender-output.mjs`: 251 checks passed.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing size targets remain
-  advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests pass, on both runs.
-  The audio-analysis subtest cannot launch `ffmpeg` (`spawnSync ffmpeg EPERM`).
-  The review JPG publication check passes.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: stopped at
-  `tools/test-audio.mjs`; it reports that eleven runtime recordings did not
-  load. The broad pre-existing worktree changes selected 507 suites, so the
-  lane did not reach the town checks. No audio runtime code or audio tests were
-  changed by this card; the worktree has unrelated staged runtime audio files.
-- `npm.cmd run build`: passed. Vite reported its existing large-chunk and
-  ineffective dynamic-import warnings.
-- No race or game code changes; replay fingerprints and browser checks do not
-  apply. No frame timing is required for art.
-- No test assertions or tolerances are changed.
+## Checks and review
 
-The recipe currently reads five source photos from
-`public/assets/models/wasteland/town/textures/`. Those new files are source
-inputs, not runtime files. Their path must be settled before this card can
-integrate; see the pending scope question. The lane tier and review-evidence
-suite also remain red for the unrelated failures above.
+- `node tools/test-blender-output.mjs`: passed, 251 checks and no failures. It
+  confirms the six named buildings and moving parts, per-building triangle
+  limits, the 3 MB family limit, embedded JPEGs, metallic factors at or below
+  0.3, and one ranged `TEXCOORD_0` on every primitive.
+- `node tools/test-repo-hygiene.mjs`: passed. Repository placement is clean;
+  the tool reports existing repository size targets as advisory.
+- No lane tier or build was run; this art card uses its named checks only.
+- No browser or in-game look check was run. Claude should review
+  `docs/board/looks/town-art-water/round-4.jpg`, especially the tank and bolted
+  frame, the pump-house engine, the treatment pipe connections, the pond bank
+  and outlet, and the full mayor view. Browser checks are outside this lane.
+- No race rules, saves, tests of gameplay or replay fingerprints changed.
+  The UV range assertion is new; no existing assertion was loosened.
+
+Reference image prompt (built-in ImageGen):
+
+> Photorealistic documentary modeling reference, wide landscape, plain bright
+> overcast daylight: a dusty improvised desert town waterworks. A tall dark
+> rusted cylindrical steel water tank sits on heavy weathered square timber
+> legs with bolted joints, substantial cross braces, thick plank platform and
+> a ladder reaching the tank. Nearby is an open-front pump shed with a shallow
+> overhanging finely ribbed rust-streaked corrugated tin roof; show the diesel
+> engine block, large flywheel and connected pipes inside on a sandbag base.
+> Foreground: an irregular dug pond with a real sloping eroded earth bank,
+> uneven sandbags, muddy lip and dark water reflecting a little cloudy sky; an
+> outlet pipe visibly joins the bank. Beside it, linked treatment stages:
+> brown settling water inside thick stained concrete walls with timber
+> walkways, a sand filter, a compact rusted boiler, then a covered weathered
+> painted-steel clean tank; thick pipes join the sequence. Real proportions,
+> gritty hand-built construction, rich but muted dark brown rust and dusty
+> earth, no pale aqua, saturated orange or toy appearance. Eye-level
+> three-quarter documentary camera, 35 mm lens, tower and pump shed prominent,
+> pond and treatment process readable, even bright light, crisp surface
+> detail. No people, labels, text, watermark or fantasy elements.
 
 ## Removed
 
-- Superseded round 1 and round 2 remain as iteration evidence; round 3 is the
-  current submission. Raw Blender renders and the `.blend` are temporary
-  review evidence and stay until the look verdict is recorded.
-- No current player asset or save data is removed.
+- Deleted the round 1 and round 2 sheets and their review notes, as superseded
+  by the round 4 submission. Round 3 remains as prior review evidence.
+- Removed the pump-house front panels and raised block reservoir edges. The
+  replacement forms use an open front and a sloped bank.
+- No player data, game rules or saves were removed.
