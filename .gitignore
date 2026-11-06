@@ -40,3 +40,4 @@ docs/board/looks/**/*.png
 docs/board/looks/**/*.webm
 docs/board/looks/**/*.wav
 docs/board/looks/**/*.mp4
+__pycache__/

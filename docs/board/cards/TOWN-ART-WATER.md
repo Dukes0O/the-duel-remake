@@ -29,3 +29,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `reservoir` 4x4: a lined pond with sandbag banks and a pump outlet; part `reservoir:water` is a flat surface a helicopter could scoop from.
 
 ## Claude answers
+
+Round 4 of 6 (Kyle's limit is six). Merged as the working set: the tower, open pump house, well and standpipe read well at both heights. The treatment roofs are plain brown plates, and the reservoir's sandbags read as white dots from above; both can improve in a later pass. Test changes reviewed (rule 18): atlas check replaced by separate pictures with the same budgets, because `town_base.py` removed the atlas. Nothing is loosened.

@@ -137,7 +137,7 @@ test('through the real race settlement: the cup rides on a valid finish, once, a
 
 test('helicopter: the Sirena is air-only, first set down at Pacific Canyon, and a light car for the hook', () => {
   assert.ok(AIR_ONLY_CARS.includes(SIRENA_CAR) && isAirOnlyCar(SIRENA_CAR));
-  assert.deepEqual(FIRST_PLACE, {falcone_sirena: 'pacific-canyon'});
+  assert.deepEqual(FIRST_PLACE, {falcone_sirena: 'pacific-canyon', falcone_vasca: 'pacific-canyon'});
   const profile = restored();
   assert.equal(carAt(profile, SIRENA_CAR), 'pacific-canyon', 'before the helicopter has moved it, it stands at Pacific Canyon');
   assert.equal(carAt(profile, 'koenigsegg_jesko'), 'tremblant-woods', 'the Jesko keeps its default helicopter position');

@@ -1,0 +1,98 @@
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {createTownCamera,moveTownCamera,resizeTownCamera,TOWN_ZOOM} from '../src/town/view/town-camera.js';
+import {visibleTownChunks,townChunkLod} from '../src/town/view/town-chunks.js';
+import {buildTownChunkInstances,createTownPlacementGhost} from '../src/town/view/town-instances.js';
+import {pickTownGround, pickTownItem} from '../src/town/view/town-pick.js';
+import {createTownScene} from '../src/town/view/town-scene.js';
+import {createGroundEdit} from '../src/world/ground-edit.js';
+import {setScablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
+
+const camera=createTownCamera({width:800,height:600,target:{x:10,y:2,z:-4},zoom:0});
+const streetDistance=camera.position.distanceTo(camera.userData.townView.target);
+moveTownCamera(camera,{zoom:.5,forward:1,turn:1,delta:1});
+assert.ok(camera.position.distanceTo(camera.userData.townView.target)>streetDistance);
+assert.ok(camera.userData.townView.target.x!==10 || camera.userData.townView.target.z!==-4);
+assert.ok(camera.userData.townView.zoom>.49 && camera.userData.townView.zoom<.51);
+assert.equal(TOWN_ZOOM.street,28);
+const mayorCamera=createTownCamera({width:800,height:600,target:{x:0,y:0,z:0},zoom:62/(TOWN_ZOOM.scablands-TOWN_ZOOM.street)});
+assert.ok(Math.abs(mayorCamera.position.distanceTo(mayorCamera.userData.townView.target)-90)<.01,'the mayor camera starts 90 m from the ground target');
+assert.ok(Math.abs(Math.atan2(mayorCamera.position.y,Math.hypot(mayorCamera.position.x,mayorCamera.position.z))*180/Math.PI-45)<.01,'the mayor camera looks down at 45 degrees');
+resizeTownCamera(camera,400,400); assert.equal(camera.aspect,1);
+
+const town={regions:{scablands:{chunks:{'0:0':{x:0,z:0,cells:{}}}}},buildings:[],people:Array.from({length:10000},(_,id)=>({id}))};
+for(let i=0;i<10000;i++) town.buildings.push({id:`building-${i}`,buildingId:i%2?'road-dirt':'hand-well',regionId:'scablands',x:i%100,z:Math.floor(i/100),width:1,depth:1,state:'finished',groundY:0});
+const snapshot=JSON.stringify(town);
+const chunks=visibleTownChunks(town,camera,{radius:1});
+assert.ok(chunks.length>1,'the view adds ground chunks around sparse town data');
+assert.ok(chunks.length<289,'chunk culling keeps the street view local');
+assert.equal(townChunkLod(camera,chunks[0]),'near');
+const meshes=buildTownChunkInstances(town,{x:0,z:0},'near');
+assert.ok(meshes.length>0 && meshes.every(mesh=>mesh.isInstancedMesh));
+assert.ok(meshes.reduce((sum,mesh)=>sum+mesh.count,0)>0);
+assert.equal(JSON.stringify(town),snapshot,'building the view only reads town data');
+
+const valid=createTownPlacementGhost({valid:true});
+const invalid=createTownPlacementGhost({valid:false});
+assert.equal(valid.userData.placementValid,true); assert.equal(invalid.userData.placementValid,false);
+valid.geometry.dispose(); valid.material.dispose(); invalid.geometry.dispose(); invalid.material.dispose();
+
+const targetCamera=createTownCamera({width:800,height:600,target:{x:0,y:0,z:0},zoom:.25});
+const plane=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+plane.rotation.x=-Math.PI/2; plane.userData.townGround=true;
+targetCamera.position.set(0,10,10); targetCamera.lookAt(0,0,0); targetCamera.updateMatrixWorld();
+const selected=pickTownItem(targetCamera,[plane],400,300,{left:0,top:0,width:800,height:600});
+assert.equal(selected?.type,'ground');
+plane.userData.townGround=true;
+const groundCell=pickTownGround(targetCamera,[plane],400,300,{left:0,top:0,width:800,height:600});
+assert.deepEqual({x:groundCell?.x,z:groundCell?.z},{x:0,z:0},'ground picking maps the ray hit to an 8 m town cell');
+plane.geometry.dispose(); plane.material.dispose();
+
+const sceneTown={...town,buildings:[]};
+const sceneView=createTownScene({town:sceneTown,width:800,height:600,now:new Date('2026-01-01T20:00:00'),loadModel:async()=>new THREE.Group()});
+assert.ok(sceneView.scene.isScene); assert.ok(sceneView.camera.isPerspectiveCamera);
+const farGround=sceneView.scene.getObjectByName('Scablands far ground');
+assert.ok(farGround&&!farGround.visible,'the coarse Scablands mesh starts hidden at street zoom');
+assert.equal(farGround.geometry.attributes.position.count,129*129,'the far terrain is a single 128 by 128 grid');
+assert.ok(farGround.children.some(object=>object.name==='Scablands road')&&farGround.children.filter(object=>object.name.startsWith('Scablands place mark ')).length===8,
+  'the far terrain includes its road and every named place');
+assert.ok(sceneView.ground === undefined || sceneView.state.ground.children.length>0);
+const groundMesh=sceneView.state.ground.children[0];
+assert.ok(groundMesh.geometry.getAttribute('color')&&groundMesh.geometry.getAttribute('uv'),'town ground carries The Dig colour and texture coordinates');
+sceneTown.buildings.push({id:'plan-1',buildingId:'road-dirt',regionId:'scablands',x:0,z:0,width:1,depth:1,state:'plan',groundY:0});
+sceneView.update();
+assert.ok(sceneView.state.buildings.children.some(group=>group.children.some(mesh=>mesh.isInstancedMesh&&mesh.count===1)),'a newly placed plan appears when the scene updates');
+const roadMesh=sceneView.state.buildings.children.flatMap(group=>group.children).find(mesh=>mesh.isInstancedMesh&&mesh.count===1);
+const roadPose=new THREE.Matrix4();roadMesh.getMatrixAt(0,roadPose);
+assert.ok(new THREE.Vector3().setFromMatrixPosition(roadPose).y>0,'the new road marking sits above the ground');
+sceneView.setPlacement(1,2,{valid:false,width:2,depth:1});
+assert.equal(sceneView.state.ghost.visible,true); assert.equal(sceneView.state.ghost.userData.placementValid,false);
+sceneView.setUnderground(true); assert.equal(sceneView.state.overlays.visible,true);
+const editLayer=createGroundEdit({region:{id:'view-edit',editable:true},naturalHeight:()=>0});
+editLayer.cut({x:0,z:0,radius:1},-2);
+setScablandsGroundEdit(editLayer);
+sceneView.update();
+const terrainChunk=sceneView.state.ground.children.find(chunk=>chunk.userData.chunkKey==='0:0');
+assert.ok(terrainChunk,'the scene has a rebuilt terrain chunk after an edit-layer change');
+assert.ok(Array.from(terrainChunk.geometry.attributes.position.array).some((value,index,array)=>index%3===1&&array[index]<-1),
+  'town terrain uses the edited surface height');
+const farGeometry=farGround.geometry;sceneView.camera.userData.townView.zoom=1;sceneView.step(0);
+assert.equal(farGround.visible,true,'the low-resolution Scablands mesh appears at far zoom');
+assert.equal(farGround.geometry,farGeometry,'camera movement does not rebuild the far terrain mesh');
+assert.ok(sceneView.scene.fog.far>260,'fog clears as the camera moves out');
+assert.ok(sceneView.state.buildings.children.some(group=>group.children.some(mesh=>mesh.isInstancedMesh&&mesh.count===1)),
+  'the player town buildings remain visible in the far view');
+resetScablandsGroundEdit();
+sceneView.setUnderground(true);
+const utilityTown={...town,buildings:[],utilities:{pipes:[{from:{x:0,z:0},to:{x:24,z:0}}],
+  sewers:[{from:{x:0,z:8},to:{x:24,z:8}}],wires:[{from:{x:0,z:16},to:{x:24,z:16}}]}};
+const utilityView=createTownScene({town:utilityTown,width:800,height:600,loadModel:async()=>new THREE.Group()});
+utilityView.setUnderground(true);
+assert.equal(utilityView.state.overlays.children.length,3,'underground view draws utility routes without matching buildings');
+assert.deepEqual(utilityView.state.overlays.children.map(route=>route.material.color.getHex()),[0x377e9d,0x775343,0xd5b754],
+  'pipes, sewers and wires keep their established colors');
+utilityView.dispose();
+sceneView.setCalendar({season:'winter'},{hour:21}); assert.equal(sceneView.state.lights.visible,true);
+sceneView.dispose();
+
+console.log('Town view checks passed: camera, chunk culling, instanced buildings, picking, placement, underground, calendar, and 10,000-person read-only town.');

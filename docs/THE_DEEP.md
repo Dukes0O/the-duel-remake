@@ -153,7 +153,7 @@ log (section 6.4) carries the one true fact in the last column.
 | Bat ray (`ray`) | Ramp Shallows | Rests on the sand and lifts off | Bat rays dig clams out of the sand by flapping their wings over it. |
 | Manta (`manta`) | Manta Point | Glides in wide loops | The biggest mantas are 7 m across, wider than a car is long, yet they feed mostly on plankton. |
 | California sea lion (`sea-lion`) | The Kelp Forest | Fast twisting passes | Sea lions can turn their back flippers forward and walk on land. Seals cannot. |
-| Sea otter (`otter`) | The Kelp Forest, at the surface | Floats on its back, wrapped in kelp | Otters eat sea urchins. Without otters, urchins eat the kelp and the forest disappears. |
+| Sea otter (`otter`) | The Kelp Forest, at the surface | Floats on its back, wrapped in kelp | Otters eat sea urchins. With too few otters, urchins can eat a kelp forest bare. |
 | Kelp crab (`crab`) | Sand, rocks, the harbour wall | Scuttles sideways out of the way | A kelp crab grips the kelp with hooked tips on its legs, and its shell takes on the colour of the seaweed it eats. |
 | Moray (`moray`) | Coral Garden | Watches from a crack | A moray has a second set of jaws in its throat that pulls food down. |
 | Grouper (`grouper`) | The Wreck | Hangs in the hold | A big grouper opens its mouth so fast that water rushes in and carries a fish with it. |
@@ -224,6 +224,10 @@ your first part is raised.
 6. **The Coast Cup.** Finish any race on Pacific Canyon in the Sirena. A title
    card reads "Coast Cup, 1966 to 2026: finished", Ana passes on her
    grandmother's thanks, and a plaque goes on the Sirena's garage page.
+7. **The Squeak (optional, with `deep-vasca` on).** From the next dive after
+   the Sirena is raised, Ana's sonar squeaks. Follow it to a rubber duck on a
+   chain in the Ramp Shallows. Four bags lift what is buried below: Nino's
+   bath with wheels. It joins the garage at no cost.
 
 Every step can be done on any dive, in any order the sonar allows, and both
 players keep their own progress (each named player has a save).
@@ -255,12 +259,12 @@ green turtle, bat ray, sea lion, sea otter, kelp crab and gray whale.
 
 ### 6.5 Pearls
 
-Three pearls per place, nine in all. Drive within 3 m of one under
+Three pearls on the Kelp Coast. Drive within 3 m of one under
 15 km/h for 1 s to collect it. On the Kelp Coast they come from red
 abalone on the reef rocks (true: abalone very rarely make pearls, in blues
-and greens); Wreck Reef's come from giant clams and the Night Harbour's
-from oysters. All nine give the pearl-white paint finish for any car (as
-settled with Kyle on 11 October).
+and greens). The three Kelp Coast pearls give the pearl-white paint finish
+for any car. Wreck Reef's giant-clam pearls and the Night Harbour's oyster
+pearls remain data for those later coasts.
 
 ### 6.6 Rewards (once per player)
 
@@ -273,7 +277,8 @@ settled with Kyle on 11 October).
 | The Sirena raised | 500 credits |
 | The Coast Cup finished in the Sirena | 1,000 credits and the plaque |
 
-The whole Kelp Coast pays about 3,000 credits, a little more than two Hard
+All three Kelp Coast pearls earn Pearl White for every owned car. The other
+coasts' pearls are data for those later places. The whole Kelp Coast pays about 3,000 credits, a little more than two Hard
 wins, and the Sirena costs 2,500 to restore: the reward is the car and the
 story, not money.
 
@@ -303,11 +308,22 @@ Matilda is already Odessa on the crew.
 | `deep.ana.log` | That's one for the survey. Thank you. |
 | `deep.ana.page` | That's every animal on the Kelp Coast. That page is done. |
 | `deep.ana.pearl` | A pearl! Abalone hardly ever make them. Keep it safe. |
-| `deep.ana.otter` | See the otters? They eat the sea urchins. No otters, no kelp forest. |
+| `deep.ana.otter` | See the otters? They eat the sea urchins that eat the kelp. |
+| `deep.ana.squeak` | Oh good, it's you. Something's wrong with my sonar. It's stopped pinging. Now it squeaks. Press R and tell me I'm not going mad. |
+| `deep.ana.whale` | There! You heard that. That's no whale. Whales don't squeak. I asked one. |
+| `deep.ana.duck` | Hold on. Is that a duck? That's a rubber duck. On a chain. Why is it on a chain? Stop right beside it and press F. I have to know what's on the other end. |
+| `deep.ana.heavy` | Four bags? For a duck? That is one very heavy duck. |
+| `deep.ana.maybe` | The sand's moving. There's something big under there. Something Falcone lost that night. Could it be another race car? |
+| `deep.ana.reveal` | Here it comes. Sixty years in the dark. The lost treasure of the Falcone team is... |
+| `deep.ana.bath` | It's a bath. |
+| `deep.ana.wheels` | It's a bath with wheels. |
+| `deep.ana.nino` | Hold on, that's Grandma on the other line. Oh no. She says that's Nino's. Nino was the team's mechanic. He hated getting out of the bath, so one day he just didn't. |
+| `deep.ana.towel` | He raced it once, down the coast road, in a towel. He came fourth. Grandma says the towel came third. |
+| `deep.ana.yours` | She says it's yours now. The duck comes with it. She was very firm about the duck. |
 
 The otter line plays once, the first time an otter is logged; `deep.ana.log`
 plays for the others. `deep.ana.norseman` plays once on the way back up the
-ramp after the first part is raised.
+ramp after the first part is raised, including when the player surfaces with U.
 
 ### 6.8 Toys along the loop
 

@@ -20,10 +20,35 @@ import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {buildBowlFeatures} from './bowl/bowl-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const angleDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+const townObstacleCache=new WeakMap();
+const TOWN_COLLISION_PAD=3;
+
+function townObstacleBuckets(course,layout){
+  let byCourse=townObstacleCache.get(layout);
+  if(!byCourse){byCourse=new Map();townObstacleCache.set(layout,byCourse);}
+  const key=`${course.def.id}:${course.seed}:${course.length}`;
+  let buckets=byCourse.get(key);
+  if(buckets)return buckets;
+  buckets=new Map();
+  for(const solid of [...layout.solids].sort((a,b)=>String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0)){
+    const cos=Math.abs(Math.cos(solid.heading??0)),sin=Math.abs(Math.sin(solid.heading??0));
+    const reachX=cos*(solid.halfX??0)+sin*(solid.halfZ??0)+TOWN_COLLISION_PAD;
+    const reachZ=sin*(solid.halfX??0)+cos*(solid.halfZ??0)+TOWN_COLLISION_PAD;
+    for(let cellX=Math.floor((solid.x-reachX)/8);cellX<=Math.floor((solid.x+reachX)/8);cellX++)
+      for(let cellZ=Math.floor((solid.z-reachZ)/8);cellZ<=Math.floor((solid.z+reachZ)/8);cellZ++){
+        const key=`${cellX}:${cellZ}`;
+        if(!buckets.has(key))buckets.set(key,[]);
+        buckets.get(key).push(solid);
+      }
+  }
+  byCourse.set(key,buckets);
+  return buckets;
+}
 
 // Broad, authored landforms use lap fractions so the road, terrain and scenery
 // share the same crests. Compact cosine shoulders meet the original ground
@@ -141,6 +166,9 @@ export class Course {
     else if(this.def.saltFlats){
       this.saltFlatsGeometry=saltFlatsPhysicalGeometry(this);
       f.ramps.push(...this.saltFlatsGeometry.ramps);
+    }
+    else if(this.def.bowl){
+      buildBowlFeatures(this);
     }
     else if(this.def.scrapdome&&!this.def.scablands){
       // The Scrapdome venue (src/arena/venues.js); Titan Monster Arena below is unchanged.
@@ -412,8 +440,25 @@ export class Course {
       for(let b=Math.floor((o.s-reach)/64);b<=Math.floor((o.s+reach)/64);b++){const key=((b%buckets)+buckets)%buckets;if(!this.obstacleBuckets.has(key))this.obstacleBuckets.set(key,[]);this.obstacleBuckets.get(key).push(o);}}
     for(const r of f.rocks){const key=Math.floor(r.s/64);if(!this.rockBuckets.has(key))this.rockBuckets.set(key,[]);this.rockBuckets.get(key).push(r);}
   }
-  obstaclesNear(from,to=from){const found=new Set(),span=Math.min(this.length,Math.abs(to-from)+40),start=this.phase(Math.min(from,to)-20);
-    for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}return [...found];}
+  obstaclesNear(from,to=from,townLayout=this.townLayout){const found=new Set(),span=Math.min(this.length,Math.abs(to-from)+40),start=this.phase(Math.min(from,to)-20);
+    for(let d=0;d<=span+64;d+=32){const b=Math.floor(this.phase(start+d)/64);for(const o of this.obstacleBuckets.get(b)||[])found.add(o);}
+    if(this.def.scablands){
+      const layout=townLayout;
+      if(layout){
+        const townBuckets=townObstacleBuckets(this,layout);
+        const townFound=new Map();
+        for(let d=0;d<=span+32;d+=16){
+          const s=this.phase(start+d),frame=this.worldAt(s),cx=Math.floor(frame.x/8),cz=Math.floor(frame.z/8);
+          const solids=new Set();
+          for(let x=cx-1;x<=cx+1;x++)for(let z=cz-1;z<=cz+1;z++)for(const solid of townBuckets.get(`${x}:${z}`)??[])solids.add(solid);
+          for(const solid of solids){
+            if(!townFound.has(solid))townFound.set(solid,{...solid,s,off:Math.hypot(solid.x-frame.x,solid.z-frame.z),kind:'building',theme:'arena'});
+          }
+        }
+        for(const obstacle of townFound.values())found.add(obstacle);
+      }
+    }
+    return [...found];}
   rocksNear(from,to=from){return this.obstaclesNear(from,to).filter(o=>o.kind==='rock').map(o=>o.source);}
   at(s){if(this.def.pit)return pitFrame(this,s);
     const frame=this._frame(s);frame.tunnel=!!this.tunnelAt(s);return frame;}
