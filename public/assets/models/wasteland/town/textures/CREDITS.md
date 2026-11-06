@@ -183,7 +183,7 @@ text, no border, no watermark.
 
 ## TOWN-ART-TRUCKS-1, round 7: fire-engine photo sources
 
-Generated with OpenAI built-in image generation on 6 November 2026. The four source photographs are retained under `.evidence/town-art-trucks-1/` and embedded as JPEG pictures in `trucks-1.glb`. The original fire-engine design uses no third-party photography, logos or maker names.
+Generated with OpenAI built-in image generation on 6 November 2026. These four source photographs are also committed in this texture folder, read by the Blender recipe and embedded as JPEG pictures in `trucks-1.glb`. The original fire-engine design uses no third-party photography, logos or maker names.
 
 Side-view prompt:
 
@@ -208,3 +208,10 @@ Overhead-view prompt:
 ```text
 Use case: photorealistic-natural. Asset type: single orthographic modeling reference photograph. Preserve the same original 1950s fire engine from the reference image with identical faded patched brick-red paint, proportions, roof ladder, tank, hose reels and roof cannon. Show exactly one whole vehicle from a perfectly straight vertical overhead camera looking directly down, a true top plan view, no perspective or visible sides. Nose points toward the top of the image, rear at bottom. Center the complete truck with ample margin on a plain pale warm-gray seamless floor. Clear readable top outline: curved bonnet, cab roof and windows, ladder rails and rungs, cylinder tank, hose reels, cannon and rear deck. Crisp realistic photo, bright flat overcast light, very soft shadow. No other angles, no additional truck, no people, words, logos, names, watermark or crop.
 ```
+
+## TOWN-ART-TRUCKS-1, round 8
+
+Reuses the four round 7 fire-engine photographs above. They were moved from
+`.evidence/town-art-trucks-1/` into this runtime texture folder so the model
+recipe can rebuild from committed source images. No new runtime picture was
+generated for this round.

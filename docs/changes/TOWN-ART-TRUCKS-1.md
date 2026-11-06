@@ -1,24 +1,21 @@
-# TOWN-ART-TRUCKS-1, round 7
+# TOWN-ART-TRUCKS-1
 
-## Changed
+## Design
 
-- Merged current `integration/wasteland` at `e0fe3c95c`; resolved the Blender output test conflict by retaining integration checks and restoring this card's truck checks. `node --check tools/test-blender-output.mjs` passed.
-- Rebuilt only `fire-truck` from four generated dead-on photos with `Photo.sky(grey=26)`, `trace`, `slab`, `box` and `lathe`. The measured rectangles and widths live in the recipe. The other three truck builders remain as before.
-- Added four source photos, credits, round 7 comparison sheet and review. The final family GLB is 3,999,832 bytes (about 3.81 MiB); the sheet is 155,819 bytes. Triangle counts: fire 8,107; tanker 11,173; supply 9,119; tow 8,973.
-- The builder does not judge this a visual pass: the direct views are readable, while wheels are pale and the three-quarter views show separated flat pieces. Claude should judge before further truck work.
+Continue the fire truck from the measured-photo method in `tools/blender/photo_model.py`. The side shell is one full-width traced extrusion. Wheel centers use the width measured from the front photo; wheel-face picture rectangles stay inside the tyre image. The four committed source photos now live beside the other town textures. Round 8 is a review attempt and does not pass visual acceptance.
 
 ## Checks
 
-- `node --check tools/test-blender-output.mjs` - passed after conflict resolution and after the card check update.
-- `node tools/test-blender-output.mjs` - passed, 280 checks and 0 failures. The first run found a scratch-path mismatch and a metallic value rounded above 0.3; both were fixed before the passing run.
-- `node tools/test-repo-hygiene.mjs` - passed. It reported existing advisory size targets only.
-- Blender recipe - passed; exported the GLB, imported it into an empty scene, used the Standard view transform, and rendered all eight review views.
-- Lane tier and build - not run, per the art-card instructions.
-- Browser checks - not run. Claude should inspect all four direct photo comparisons, both three-quarter views, mayor-height view, driver-height view at 20 m, wheel grounding, the cab shell, the ladder and the cannon pivot.
-- Changed assertions: updated the family size ceiling from 3 MB to the task's 8 MB. Replaced the four-paint-image assumption with checks for four measured fire-engine views and the three remaining trucks' separate photo materials. Added TEXCOORD_0 range, metallic, named part and per-truck triangle checks. The source recipe caps metallic at 0.29 to avoid a 0.3 float rounding over the limit. These changes match the approved family budget and keep every triangle and UV bound intact.
-- Race fingerprints: not applicable; simulation code did not change.
+- Blender recipe and imported GLB render: passed; 3,878,000-byte family file. Per-truck triangle counts: fire truck 6,683, tanker 11,173, supply 9,119, tow rig 8,973.
+- `node tools/test-blender-output.mjs`: passed, 280 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed. Size targets remain advisory; the report lists existing oversized files outside this card.
+- Browser checks: not run here; Claude should review the sheet and model at merge.
+- Lane tier and build: not run, as directed for this art card.
+- Changed assertions: none.
+- Race fingerprints: not applicable to this art-only change.
 
 ## Removed
 
-- Removed the round 6 sheet and review note as requested.
-- No truck id or prior model builder was removed.
+- Removed the round 7 review sheet and note.
+- Moved the four fire-engine source photos from `.evidence/town-art-trucks-1/` to `public/assets/models/wasteland/town/textures/`; the recipe now reads those committed source files.
+- Removed temporary renders and masks after assembling the review sheet.

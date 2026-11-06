@@ -551,7 +551,7 @@ def merge_static_meshes(root_obj):
 from photo_model import Photo, Mesh as PhotoMesh, trace, tidy, slab, box as photo_box, lathe
 import numpy as np
 
-PHOTO_ROOT = root / '.evidence/town-art-trucks-1'
+PHOTO_ROOT = textures
 fire_photos = {name: Photo(PHOTO_ROOT / f'fire-engine-{name}.jpg')
                for name in ('side','front','rear','overhead')}
 FIRE_PARTS = {
@@ -574,7 +574,7 @@ def save_photo_mask(name, mask):
     image=bpy.data.images.new('review mask '+name, mask.shape[1], mask.shape[0], alpha=False)
     grey=mask[::-1].astype(np.float32)
     image.pixels.foreach_set(np.dstack((grey,grey,grey,np.ones_like(grey))).ravel())
-    image.filepath_raw=str(PHOTO_ROOT / ('mask-'+name+'.png'))
+    image.filepath_raw=str(evidence / ('mask-'+name+'.png'))
     image.file_format='PNG'; image.save()
 
 # The generated warm/blue-gray studio floor needs the photo kit's wider grey cut.
@@ -598,15 +598,12 @@ save_photo_mask('side-wheel-openings',side_mask)
 body_mesh=PhotoMesh()
 def side_point(px,py,x):
     return (x,(780-py)*FIRE_S,(px-78)*FIRE_S-3.45)
-for name in ('bonnet','cab','equipment-body','chassis'):
-    part=FIRE_PARTS[name]; photo=fire_photos['side']
-    loops=trace(side_mask,part['rect'],tolerance=1.2,min_area=120)
-    if not loops: raise RuntimeError(f'{name}: Photo.sky found no outline in {part["rect"]}')
-    for sign in (-1,1):
-        half=part['half_width']
-        slab(body_mesh,'side',photo,loops,
-             lambda px,py,d,sign=sign:side_point(px,py,sign*d),
-             half-.055,half,wall_scale=FIRE_S)
+side_loops=trace(side_mask,(72,135,1715,790),tolerance=1.0,min_area=90)
+if not side_loops: raise RuntimeError('fire-truck: no complete measured side outline')
+# One continuous, closed extrusion makes the cab, bonnet, equipment body and
+# chassis meet. Both outside faces use the measured side photo.
+slab(body_mesh,'side',fire_photos['side'],side_loops,
+     lambda px,py,d:side_point(px,py,d),-1.17,1.17,wall_scale=FIRE_S)
 
 # Front and rear shells keep their photographed opaque cab glass and close the body.
 for name in ('front-face','rear-face'):
@@ -649,8 +646,10 @@ for cx,cy in ((333,675),(1375,675)):
 # Photo-derived tyres and rims stand at the measured 0.49 m radius and ground height.
 for cx,cy,suffix in ((333,675,'front-left'),(333,675,'front-right'),
                      (1375,675,'rear-left'),(1375,675,'rear-right')):
-    x=1.09 if suffix.endswith('left') else -1.09
-    centre=(x,(780-cy)*FIRE_S,(cx-78)*FIRE_S-3.45)
+    # Front photo puts the tyre centres at x=+/-0.80 m. At 0.49 m radius,
+    # their outer faces stay just within the 1.41 m wing outline.
+    x=.80 if suffix.endswith('left') else -.80
+    centre=(x,.49,(cx-78)*FIRE_S-3.45)
     steer=None
     if suffix.startswith('front'):
         steer=pivot('fire-truck:steer-'+suffix,centre); parent_keep_world(steer,fire_root)
@@ -660,7 +659,7 @@ for cx,cy,suffix in ((333,675,'front-left'),(333,675,'front-right'),
     lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
           [(-.13,.38),(-.12,.49),(.12,.49),(.13,.38)],side_radial(photo,cx,cy,112),sides=28,
           cap_start=('side',tire_cap),cap_end=('side',tire_cap))
-    cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*52*f,cy-math.sin(a)*52*f)
+    cap=lambda a,f,cx=cx,cy=cy:photo.uv(cx-math.cos(a)*52*.85*f,cy-math.sin(a)*52*.85*f)
     lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.14,.24),(.14,.24)],
           side_radial(photo,cx,cy,55),sides=24,cap_start=('side',cap),cap_end=('side',cap))
     wheel_obj=wheel.finish('fire-truck:'+suffix,{'side':photo.material()})
@@ -767,17 +766,17 @@ scene.cycles.samples=24; scene.cycles.use_denoising=True
 scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'
 scene.render.resolution_percentage=100; scene.render.resolution_x=900; scene.render.resolution_y=600
 scene.world=bpy.data.worlds.new('flat pale overcast review'); scene.world.use_nodes=True
-scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.72,.72,.70,1)
+scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.43,.43,.43,1)
 scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.8
 bpy.ops.import_scene.gltf(filepath=str(output))
 # Blender is Z-up after import; the road plane lies in XY at Z=0.
 bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,0))
 floor=bpy.context.object; floor.name='plain pale review ground'
 floor_mat=bpy.data.materials.new('plain pale review ground'); floor_mat.use_nodes=True
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.58,.58,.56,1)
+floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.38,.38,.38,1)
 floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.98
 floor.data.materials.append(floor_mat)
-for loc,power,size in [((4,1,9),1100,8),((-5,-4,6),700,7)]:
+for loc,power,size in [((4,1,9),1100,8)]:
     bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object
     light.data.energy=power; light.data.shape='DISK'; light.data.size=size
     light.rotation_euler=(Vector((0,0,1.35))-light.location).to_track_quat('-Z','Y').to_euler()
@@ -797,7 +796,7 @@ def render_view(name, location, target=(0,0,1.35), width=8.4, resolution=(900,60
     camera.location=location
     camera.rotation_euler=(Vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
     camera.data.ortho_scale=width
-    scene.render.filepath=str(evidence/('round-7-'+name+'.png'))
+    scene.render.filepath=str(evidence/('round-8-'+name+'.png'))
     bpy.ops.render.render(write_still=True)
 
 # Dead-on photos use the same orthographic camera directions and scale.
@@ -806,6 +805,8 @@ render_view('front-render',(0,10,1.4),width=4.8,resolution=(720,600))
 render_view('rear-render',(0,-10,1.4),width=4.8,resolution=(720,600))
 render_view('overhead-render',(0,0,14),target=(0,0,0),width=8.1,resolution=(600,900))
 # Two three-quarter views, then the mayor's high view and the driver's 20 m view.
+moving_cannon=bpy.data.objects.get('fire-truck:cannon')
+if moving_cannon: moving_cannon.rotation_euler[2]=math.radians(38)
 render_view('three-quarter-front',(-9,9,5.5),width=8.6)
 render_view('three-quarter-rear',(9,-9,5.2),width=8.6)
 render_view('mayor-height',(12,15,13),width=20)
