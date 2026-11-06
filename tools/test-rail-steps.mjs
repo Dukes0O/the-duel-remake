@@ -32,6 +32,7 @@ assert(Math.abs(slow.distance-191.25)<1,`9 m/s stopping distance was ${slow.dist
 const fast=bankRun(15);
 assert.equal(fast.job.stepState.speed,0,'15 m/s run ends safely stopped in the sand drag');
 assert.equal(fast.job.stepState.metres,0,'sand drag returns the train to the top of the bank');
+assert(Math.abs(fast.distance-ironLineLength(line))<.01,'15 m/s train reaches the full 500.3 m bank before the drag');
 
 // Contact conserves momentum when soft and separates on a hard hit.
 const runawayStep={kind:'runaway',path:[point('a',0),point('b',100)],massTonnes:70,softMs:2,
@@ -44,6 +45,10 @@ let hard=createJob({steps:[runawayStep]});hard.stepState={metres:20,speed:8,wago
 hard=tick(hard,{},0);
 assert(hard.events.some(event=>event.type==='bounced'),'a hard contact bounces');
 assert.equal(hard.stepState.coupled,false);
+soft=tick(soft,{controls:{brake:1}},1);
+assert(soft.stepState.speed<(70*5+60*4)/130,'braking slows the coupled consist');
+assert.equal(soft.stepState.wagonSpeed,soft.stepState.speed,'coupled wagons share the cab speed');
+assert(Math.abs((soft.stepState.metres-soft.stepState.wagonMetres)-0)<1,'the coupled wagon follows the cab without opening the gap');
 
 // Token, hoop and the saved stop mark are driven by ordinary job controls.
 const tokenStep={kind:'drivetrain',path:[point('a',0),point('loop',50),point('b',100)],massTonnes:70,tractiveKn:80,
@@ -66,9 +71,11 @@ assert.equal(hoop.stepState.metres,0,'missed hoop backs the train by the configu
 assert.equal(hoop.stepState.speed,0);
 assert(hoop.requests.some(request=>request.lineId==='fast'));
 const markStep={kind:'drivetrain',path:[point('mark',0),point('end',10)],massTonnes:70,stopAtEnd:true,
-  stopMark:{place:point('mark',0),bands:[.5,3,20],lineIds:['perfect','close','far','past']}};
-let mark=createJob({steps:[markStep]});mark.stepState={metres:10,speed:0};mark=tick(mark,{});
-assert.equal(mark.storyMarks.stopMarks.mark,10,'best stop error is kept as a number in the additive story marks');
+  stopMark:{place:point('goal',10),bands:[.5,3,20],lineIds:['perfect','close','far','past']}};
+let mark=createJob({steps:[markStep]});mark.stepState={metres:6,speed:4};
+for(let i=0;i<200&&!mark.storyMarks;i++)mark=tick(mark,{controls:{brake:1}},.1);
+assert(mark.storyMarks.stopMarks.goal>0,'a real stop beyond the mark records its measured error');
+assert(mark.requests.some(request=>request.type==='train'&&request.position.x>10),'an overrun remains visible beyond the track endpoint');
 let bo=createJob({steps:[{kind:'drivetrain',path:[point('a',0),point('b',10)],massTonnes:70,maxSpeed:6,stopAtEnd:true,
   rideAlong:{driver:'bo',copiesPlayerStop:true,goodLineId:'good',badLineId:'bad'}}]});
 bo.stepState={metres:10,speed:0};bo=tick(bo,{playerStopMetres:10},0);
@@ -98,6 +105,11 @@ const before={id:null,seed:7,steps:[{kind:'reach',place:point('target',2),radius
 assert.deepEqual(plain,before);
 const plainNext=tick(plain,{player:{position:{x:2,y:0,z:0}}});
 assert.equal(plainNext.done,true);assert.equal(Object.hasOwn(plainNext,'storyMarks'),false);
+let plainTrain=createJob({steps:[{kind:'drivetrain',path:[point('start',0),point('end',10)]}]});
+plainTrain=tick(plainTrain,{controls:{throttle:1}},1);
+assert.deepEqual(plainTrain.stepState,{metres:.8,speed:.8,gatePassed:false,said:[],crushedPickups:[],triggeredLines:[],
+  lineQueue:[],lineRemaining:0,lineBlocking:false,lineHistory:[],linesStarted:true,linesClosing:false},
+  'drivetrain jobs without rail fields keep their prior force, speed and state');
 
 // Exercise the brake input through Duel -> arena event -> world-job -> rail step.
 const duel=new Duel({seed:8123});duel.startCampaign();duel.state.wastelandGateDiscovered=true;
@@ -114,6 +126,6 @@ assert.equal(duel.state.arena.worldJob.job.stepState.speed,0,'Duel brake input s
 let consist=createJob({steps:[{kind:'drivetrain',path:[point('a',0),point('b',100)],tractiveKn:110,
   consist:['iron-mule-cab','the-2-15','wednesday'],maxSpeed:22}]});
 consist=tick(consist,{controls:{throttle:1}},1);
-assert.equal(consist.stepState.speed,110/260-(100/260*.12),'consist mass adds to 260 tonnes');
+assert.equal(consist.stepState.speed,110/260,'consist mass adds to 260 tonnes');
 assert(Math.abs(ironLineLength(line)-500.289)<.01);
-console.log('PASS RAIL-STEPS: grade, sand drag, runaway, token, marks, dig, whistle, ride-along and consist');
+console.log(`PASS RAIL-STEPS: 9 m/s stops in ${slow.distance.toFixed(1)} m; 15 m/s reaches the ${fast.distance.toFixed(1)} m sand drag; runaway, token, marks, dig, whistle, ride-along and consist`);

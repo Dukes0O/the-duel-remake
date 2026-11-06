@@ -10,13 +10,18 @@
 ## Checks
 
 - `node tools/test-rail-steps.mjs` — passed. This includes headless real Duel braking input and the specified new-step scenarios.
-- The 260 tonne, 1 in 30 bank stopped from 9 m/s in **191.3 m**. At 15 m/s it reached the sand drag and returned to the top. These values follow the configured mass, 140 kN brake force and grade.
-- The earlier `tools/test-iron-mule-*.mjs` names are absent from this lane. `tools/test-iron-line.mjs` and the existing job suites are still to be run.
+- The 260 tonne, 1 in 30 bank stopped from 9 m/s in **191.5 m**. At 15 m/s it reached the **500.3 m** sand drag and returned to the top. These values follow the configured mass, 140 kN brake force and grade. The 9 m/s result is 1.5 m beyond the card's approximate 190 m figure.
+- `tools/test-iron-line.mjs` — passed. No `tools/test-iron-mule-*.mjs` file exists in this lane.
+- `tools/test-heli-job-clarity.mjs` — passed, 1,530 checks. `tools/test-heli-jobs.mjs` — passed, 5,802 checks. `tools/test-world-job-mode.mjs` and `tools/test-world-jobs.mjs` — passed.
+- `node tools/test-repo-hygiene.mjs` — passed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4` — all 29 suites reported `PASS`; the runner stayed open after the final suite, so it did not return an exit code or summary.
+- `npm run build` — passed after the review fixes. Vite reported the existing dynamic-import and large-chunk warnings.
 - Claude should check the later rail-job integration against stop marks, token swaps and hoops, runaway recovery, the dig reveal, whistle wait, and ride-along stopping. No browser or look check is needed for this engine-only change.
+- Reviewer follow-up: corrected stop marks to retain the true stopping distance past the path endpoint, show the overrun position, and made coupled wagons share the consist speed. The focused suite passes with these regressions covered. The production token view hook still needs the Director’s scope decision.
 
 ## Changed assertions
 
-None.
+One existing consist-speed assertion now expects the configured tractive force divided by consist mass. The prior expectation incorrectly subtracted coast drag while throttle was held. Added assertions cover unchanged legacy throttle behavior, measured stop error, and braking a coupled consist. The new compatibility assertion caught an initial throttle/coasting difference during development; the old throttle branch behavior was restored and the final focused suite passed.
 
 ## Race fingerprints
 

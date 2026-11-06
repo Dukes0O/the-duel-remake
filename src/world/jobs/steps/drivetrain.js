@@ -3,6 +3,17 @@ import {ironLineLength, nearestIronLineDistance, sampleIronLine} from '../../iro
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const CONSIST_TONNES=Object.freeze({'iron-mule-cab':70,'the-2-15':160,'wednesday':30,'iron-mule-wagon':30});
 
+function trainPosition(path,metres,length) {
+  const sample=sampleIronLine(path,metres);
+  if(metres<=length||path.length<2)return sample;
+  const last=path.at(-1)?.position??path.at(-1),previous=path.at(-2)?.position??path.at(-2);
+  const dx=last.x-previous.x,dy=last.y-previous.y,dz=last.z-previous.z,segment=Math.hypot(dx,dy,dz);
+  if(!segment)return sample;
+  const overrun=metres-length;
+  return {...sample,x:last.x+dx/segment*overrun,y:last.y+dy/segment*overrun,z:last.z+dz/segment*overrun,
+    heading:Math.atan2(dx,dz),distance:metres};
+}
+
 function gradeAcceleration(grade,path,metres) {
   if(!grade?.from||!grade?.to||!Number.isFinite(grade.ratio))return 0;
   const from=nearestIronLineDistance(path,grade.from).metres,to=nearestIronLineDistance(path,grade.to).metres;
@@ -16,7 +27,7 @@ export function stepDrivetrain(step,state,view,dt) {
   const consistMass=step.consist?.reduce((sum,id)=>sum+(CONSIST_TONNES[id]??0),0)??0;
   const mass=consistMass||(step.massTonnes??100),tractive=step.tractiveKn??80,brake=step.brakeKn??100;
   const acceleration=tractive/mass,deceleration=brake/mass;
-  let metres=clamp(state.metres??0,0,length),speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
+  let metres=step.stopMark&&step.stopAtEnd?Math.max(0,state.metres??0):clamp(state.metres??0,0,length),speed=Math.max(0,state.speed??0),gatePassed=state.gatePassed??false;
   const controls=view.controls??{}, previous=metres, requests=[], events=[];
   const tokenLocked=!!step.tokenSwap&&!view.hasToken&&!state.tokenSwapped;
   const tokenMetres=step.tokenSwap?nearestIronLineDistance(path,step.tokenSwap.place).metres:Infinity;
@@ -25,15 +36,19 @@ export function stepDrivetrain(step,state,view,dt) {
     ?nearestIronLineDistance(path,step.stopMark.place).metres
     :step.rideAlong?.copiesPlayerStop?clamp(length+(view.playerStopMetres??0),0,length):length;
   const rideBraking=!!step.rideAlong&&(state.rideStopped||targetStop-metres<=speed*speed/(2*Math.max(.001,deceleration)));
-  const throttle=step.rideAlong?(rideBraking?0:1):(controls.throttle>0&&!tokenLocked&&!waitingForSwap?1:0);
-  const braking=step.rideAlong?rideBraking:waitingForSwap||controls.brake>0;
-  const drag=braking?deceleration:deceleration*.12;
-  const nextSpeed=speed+(throttle*acceleration-drag+gradeAcceleration(step.grade,path,metres))*dt;
-  speed=Math.max(0,throttle?Math.min(step.maxSpeed??26,nextSpeed):nextSpeed);
+  const grade=gradeAcceleration(step.grade,path,metres);
+  if(step.rideAlong) {
+    const throttle=rideBraking?0:1,braking=rideBraking;
+    speed=Math.max(0,Math.min(step.maxSpeed??26,speed+(throttle*acceleration-(braking?deceleration:0)+grade)*dt));
+  } else if(controls.throttle>0&&!tokenLocked&&!waitingForSwap)
+    speed=Math.min(step.maxSpeed??26,Math.max(0,speed+(acceleration+grade)*dt));
+  else if(controls.brake>0||waitingForSwap)
+    speed=Math.max(0,speed+(-deceleration+grade)*dt);
+  else speed=Math.max(0,speed+(-deceleration*.12+grade)*dt);
   const proposed=metres+speed*dt;
   if(step.rideAlong&&proposed>=targetStop&&rideBraking){metres=targetStop;speed=0;state={...state,rideStopped:true};}
-  else if(step.stopAtEnd&&proposed>=length&&(!step.sandDrag||speed<=(step.sandDrag.overMs??0))){metres=length;speed=Math.min(speed,1.5);}
-  else metres=clamp(proposed,0,length);
+  else if(step.stopAtEnd&&proposed>=length&&(!step.sandDrag||speed<=(step.sandDrag.overMs??0))&&!step.stopMark){metres=length;speed=Math.min(speed,1.5);}
+  else metres=step.stopMark&&step.stopAtEnd?Math.max(0,proposed):clamp(proposed,0,length);
 
   if(step.otherTrain?.path?.length) {
     const otherLength=ironLineLength(step.otherTrain.path);
@@ -47,7 +62,7 @@ export function stepDrivetrain(step,state,view,dt) {
     state={...state,otherTrainMetres:otherMetres};
   }
 
-  if(step.stopMark&&metres>=length-.01&&speed<=.05&&!state.stopMarkRecorded) {
+  if(step.stopMark&&step.stopAtEnd&&metres>=length-.01&&speed<=.05&&!state.stopMarkRecorded) {
     const mark=nearestIronLineDistance(path,step.stopMark.place).metres,error=Math.abs(metres-mark);
     const band=(step.stopMark.bands??[]).findIndex(limit=>error<=limit);
     const lineId=step.stopMark.lineIds?.[band<0?step.stopMark.lineIds.length-1:band];
@@ -105,7 +120,7 @@ export function stepDrivetrain(step,state,view,dt) {
     }
   }
   complete=!state.sandDragged&&complete;
-  const place=sampleIronLine(path,metres);
+  const place=trainPosition(path,metres,length);
   requests.push({type:'train',actorId:step.actorId??'iron-mule',position:place,progress:metres/length,speed,metres,path,pathLength:length,
     roofPlates:step.roofPlates??['tank-wagon-2','tank-wagon-1']});
   return {state:{...state,metres,speed,gatePassed,said:[...said],crushedPickups:[...crushed]},complete,events,requests};
