@@ -1,22 +1,32 @@
-# TOWN-ART-BORER
+# TOWN-ART-BORER round 2
 
-Status: one art round submitted for Claude's review; not a look pass.
+Reworked the cutter face with eight forged spokes, separate round cutter discs
+and housings, hollow scoop cheeks, a deeper rim, and larger flange bolts. The
+head pivot is placed on the cutter axis and turned 12 degrees. Changed the
+machine material sources to worn yellow steel and dark rusted steel, removing
+the explicit blue paint source. Added the generated documentary photo reference
+and its credit, and kept the reference crop beside the exported model on the
+sheet.
 
-## Design and work
+The model is 37,304 triangles and 2,714,308 bytes. It remains below the card's
+40,000 triangle and 4 MB limits. Blender exported and re-imported the GLB for
+the round-2 render. `node tools/test-blender-output.mjs` passed 297 checks after
+adding assertions that every borer primitive exposes only TEXCOORD_0 with a
+non-degenerate UV range read from the exported binary. This is a stricter
+acceptance check, not a loosened assertion. `node tools/test-repo-hygiene.mjs`
+passed. No lane tier or build was run, as required for art cards.
 
-Built the borer family recipe and GLB. The borer has a named rotating cutter pivot, shield, gripper shoes, service frame, cab, conveyor pivot, ladder and lamps. The family also contains tunnel-ring and portal nodes. It reuses `town_base` materials and exports with JPEG materials. The submitted view is imported from the GLB in a fresh Blender scene.
+**Claude should look at:** `docs/board/looks/town-art-borer/round-2.jpg` and
+the exported GLB, especially the cutter visibility, pink face smear, and
+disconnected gantry. The sheet does not include the requested side, overhead,
+portal or tunnel-ring views. Self-review verdict: fail; this round is an
+incomplete recovery and does not claim visual acceptance.
 
-The borer is 15,032 triangles and the GLB is 1,214,056 bytes. The output stays within the card's 40,000 triangle and 4 MB family limits. The sheet scores the art 2/5 overall. The pale, smooth shield and weak assembly relationship do not match the photographic reference; the sheet lacks the reference crop. Claude should review the proportions, material and assembly before treating this art as accepted.
-
-## Checks
-
-- Blender recipe and exported-model render: completed. The Blender process exited cleanly on the final render; render and GLB evidence are in `.evidence/` until this commit.
-- `node tools/test-blender-output.mjs`: passed, 276 checks.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing advisory size reports remain unrelated.
-- `node tools/test-review-evidence.mjs`: 8/9 subtests passed; the JPG publication subtest passed. The audio analysis subtest failed twice because launching `ffmpeg` returned `EPERM`; no game code changed between runs.
-- Browser/look checks: not run here. Claude should review `docs/board/looks/town-art-borer/round-1.jpg`, especially the shield material, cutter-to-shield proportions, cab and conveyor composition, and compare against the photographic target.
-- No race fingerprint or assertion was changed.
+Changed assertions: added borer TEXCOORD_0 and UV range checks. No replay
+fingerprints or race rules changed. Browser checks and game look checks were
+not run because this card is not wired into the game.
 
 ## Removed
 
-No existing model or recipe was replaced. Temporary renders and check logs were removed before commit.
+- Removed the round-1 look sheet and its review note.
+- Replaced the borer's blue paint texture source with worn yellow steel.

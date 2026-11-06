@@ -9,11 +9,14 @@ import { stepDefend } from './steps/defend.js';
 import { stepExplore } from './steps/explore.js';
 import { stepBoard } from './steps/board.js';
 import { stepDrivetrain } from './steps/drivetrain.js';
+import { stepRunaway } from './steps/runaway.js';
+import { stepDig } from './steps/dig.js';
+import { stepWhistle } from './steps/whistle.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 
 const runners = { reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
-  board: stepBoard, drivetrain: stepDrivetrain };
+  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);
@@ -46,12 +49,21 @@ export function stepJob(job, view = {}, dt = 0) {
     result.stepState=held.state??result.stepState;result.requests=held.requests??[];
     return result;
   }
-  const outcome = runners[step.kind](step, result.stepState, view, dt, result.seed);
+  const stepView=result.storyMarks?.lastStopMetres!==undefined&&view.playerStopMetres===undefined
+    ?{...view,playerStopMetres:result.storyMarks.lastStopMetres}:view;
+  const outcome = runners[step.kind](step, result.stepState, stepView, dt, result.seed);
   const triggered = stepLineTriggers(step, result.stepState, view, outcome);
   const lined = stepLines(step, result.stepState, view, dt, triggered);
   result.stepState = lined.state ?? result.stepState;
   result.events = lined.events ?? [];
   result.requests = lined.requests ?? [];
+  const stopRequest=result.requests.find(request=>request.type==='stopMark');
+  if(stopRequest) {
+    const marks={...(result.storyMarks?.stopMarks??{})},previous=marks[stopRequest.id];
+    const error=Math.abs(stopRequest.metres);
+    if(previous===undefined||error<previous)marks[stopRequest.id]=error;
+    result.storyMarks={...(result.storyMarks??{}),stopMarks:marks,lastStopMetres:stopRequest.metres};
+  }
   result.lineId = lined.lineId ?? step.lineId ?? result.lineId;
   if (lined.restart) {
     result.stepState = lined.state ?? {};

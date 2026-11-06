@@ -10,7 +10,7 @@
 - `node tools/test-rail-lines.mjs`: passed; 158 table lines and 152 job references.
 - `node tools/test-repo-hygiene.mjs`: passed; repository placement passed.
 - Browser/look check: not run here. Claude should check the story captions in the railway jobs.
-- `npm run build`: not run; committed-memory headroom remained below the required 5 GB (4.41 GB at the final check), despite waiting 90 seconds.
+- `npm run build` and the lane tier (25 of 25): passed, run by Claude on 0dd1aca1, as committed memory was too tight during the job.
 
 ## Changed assertions
 

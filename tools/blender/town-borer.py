@@ -13,7 +13,7 @@ from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent)); import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
-m=town.make_materials({'rusted-steel':tex/'machine-wear.jpg','galvanised-tin':tex/'rusted-steel.jpg','faded-hand-paint':tex/'paint-blue.jpg','iron-dark':tex/'tire-rubber.jpg','sand':tex/'dirt.jpg'})
+m=town.make_materials({'rusted-steel':tex/'stages-rusted-steel.jpg','galvanised-tin':tex/'faded-yellow-steel.jpg','faded-hand-paint':tex/'faded-yellow-steel.jpg','iron-dark':tex/'tire-rubber.jpg','sand':tex/'dirt.jpg'})
 steel=m['rusted-steel']; tin=m['galvanised-tin']; paint=m['faded-hand-paint']; dark=m['iron-dark']; glass=m['dirty-glass']; sand=m['sand']
 for mat in m.values(): mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=min(.3,mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value)
 def parent_keep(o,par): o.parent=par; o.matrix_parent_inverse.identity()
@@ -40,23 +40,32 @@ def torus(name,c,major,minor,mat,par=None):
  return o
 
 # Main borer: cutter head, 12 m diameter, with a true articulated hub pivot.
-family=empty('town-borer',(0,0,0)); borer=empty('borer',(0,0,0),family); head=empty('borer:head',(0,0,-8.0),borer)
+family=empty('town-borer',(0,0,0)); borer=empty('borer',(0,0,0),family); head=empty('borer:head',(0,0,-13.0),borer)
+head.rotation_euler[1]=math.radians(12)  # a turned working pose, with its axis origin preserved
 # Local geometry around the pivot: massive steel disk, hub, raised ribs and picks.
-cyl('Cutter forged plate',(0,0,0),5.75,.52,steel,'z',64,head)
-torus('Outer rolled cutting rim',(0,0,0),5.72,.20,tin,head)
-cyl('Propeller shaft flange',(0,0,.42),1.18,.62,steel,'z',48,head)
-cyl('Propeller shaft boss',(0,0,.90),.72,1.1,tin,'z',40,head)
-cyl('Shaft end cap',(0,0,1.52),.42,.24,steel,'z',32,head)
-for i in range(16):
+cyl('Recessed cutter plate',(0,0,0),5.58,.30,dark,'z',64,head)
+torus('Deep rolled cutting rim',(0,0,0),5.72,.30,steel,head)
+torus('Inner raised rim',(0,0,.17),5.35,.075,tin,head)
+cyl('Propeller shaft flange',(0,0,.34),1.28,.70,steel,'z',48,head)
+cyl('Propeller shaft boss',(0,0,.82),.82,1.12,tin,'z',40,head)
+cyl('Shaft end cap',(0,0,1.43),.53,.30,steel,'z',32,head)
+for i in range(8):
  ang=math.tau*i/16; co,si=math.cos(ang),math.sin(ang)
- # Heavy radial box ribs overlap the disk and rim; all remain attached.
- rib=cube(f'Radial forged rib {i+1:02}',(co*2.75,si*2.75,.35),(0.48,5.35,.32),tin,.09,head); rib.rotation_euler[1]=ang
- cyl(f'Carbide tooth socket {i+1:02}',(co*5.46,si*5.46,.18),.16,.34,dark,'z',12,head)
- cyl(f'Carbide pick {i+1:02}',(co*5.46,si*5.46,.44),.095,.25,tin,'z',8,head)
- # paired scoops sit just inboard of each rim section
- scoop=cube(f'Spoil scoop {i+1:02}',(co*4.57,si*4.57,.54),(.38,.78,.42),steel,.12,head); scoop.rotation_euler[1]=ang
+ # Massive forged spoke arms bridge the recessed face and raised rim.
+ spoke=beam(f'Forged cutter spoke {i+1:02}',(co*1.0,si*1.0,.31),(co*5.38,si*5.38,.31),.46,tin,head)
+ # Each spoke carries paired round disc cutters in separate thick housings.
+ for j,radius in enumerate((2.15,3.28,4.40)):
+  px,py=co*radius,si*radius
+  cyl(f'Carbide disc housing {i+1:02}-{j+1}',(px,py,.47),.35,.38,steel,'z',20,head)
+  cyl(f'Round carbide cutter {i+1:02}-{j+1}',(px,py,.70),.235,.28,dark,'z',24,head)
+  torus(f'Cutter retaining ring {i+1:02}-{j+1}',(px,py,.78),.22,.045,tin,head)
+ # Raised, hollow spoil scoop: two cheeks and a lip leave an open throat.
+ px,py=co*4.72,si*4.72
+ beam(f'Scoop cheek A {i+1:02}',(co*3.75-si*.30,si*3.75+co*.30,.32),(px-si*.30,py+co*.30,.62),.16,steel,head)
+ beam(f'Scoop cheek B {i+1:02}',(co*3.75+si*.30,si*3.75-co*.30,.32),(px+si*.30,py-co*.30,.62),.16,steel,head)
+ beam(f'Scoop cutting lip {i+1:02}',(px-si*.30,py+co*.30,.62),(px+si*.30,py-co*.30,.62),.14,tin,head)
 for i in range(24):
- ang=math.tau*i/24; cyl(f'Hub bolt {i+1:02}',(math.cos(ang)*1.03,math.sin(ang)*1.03,.78),.065,.18,dark,'z',8,head)
+ ang=math.tau*i/24; cyl(f'Fist-sized propeller flange bolt {i+1:02}',(math.cos(ang)*1.13,math.sin(ang)*1.13,.78),.105,.24,dark,'z',10,head)
 
 # Long 10 m shield tube and the articulated gripper ring behind the cutter.
 cyl('Shield barrel',(0,0,-6.7),4.82,9.8,paint,'z',64,borer)
@@ -141,7 +150,7 @@ if a.render:
  def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
  for obj in scene.objects:
   if obj.name.startswith(('tunnel-ring','portal')): obj.hide_render=True
- bpy.ops.object.camera_add(location=town.game_vector((17,15,-24))); camera=bpy.context.object; aim(camera,town.game_vector((0,2,-10))); scene.camera=camera; camera.data.lens=46
+ bpy.ops.object.camera_add(location=town.game_vector((12,15,-31))); camera=bpy.context.object; aim(camera,town.game_vector((0,2,-9))); scene.camera=camera; camera.data.lens=46
  for loc,power,size in [((8,17,-18),7000,14),((-14,12,-8),5500,12),((0,15,4),4000,10)]:
   bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,2,-8)))
  evidence.mkdir(parents=True,exist_ok=True); scene.render.filepath=str(evidence/'borer-three-quarter.png'); bpy.ops.render.render(write_still=True)
