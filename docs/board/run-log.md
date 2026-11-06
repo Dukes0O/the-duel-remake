@@ -1567,3 +1567,4 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov: TOWN-WORLD merged. DRIVE from the town starts a drive in the Scablands with the town drawn and solid; the gate leads to the Scrapdome. Lane 223/224: `test-review-evidence` date failure only. Replays and world signatures unchanged. Off for players.
 - 5 Nov: TOWN-ART-TRUCKS-1 stopped at round 6 of 6, not merged; branch kept. Next step needs Kyle's word on a download (card).
 - 5 Nov: TOWN-ART-DOME merged at round 6 of 6 as the working set; what is short is on its card.
+- 6 Nov: merged BOARD-LINES, The Notice Board's 91 lines (lane 25/25 on the branch, build).
