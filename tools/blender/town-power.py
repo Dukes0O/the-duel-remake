@@ -143,7 +143,7 @@ for sx in (-1,1):
     for sz in (-1,1):
         x,z=sx*.69,sz*.69
         town.cube('bolted mast foot plate',(x,.34,z),(.34,.08,.34),mat['rusted-steel'],0).parent=windmill
-        for dx in (-.105,.105):
+        for dx in (-.105,):
             cylinder('foot plate hex bolt',(x+dx,.405,z),.026,.055,mat['galvanised-tin'],5,windmill)
 
 # The whole rotor head and vane are traced from the dead-on photo. The mast
@@ -158,7 +158,7 @@ def photo_point(px, py, depth):
             (PHOTO_GROUND_Y - py) * PHOTO_SCALE - axle[1], depth - axle[2])
 
 def traced_part(mesh, label, rect, near=-.50, far=-.455, min_area=36):
-    loops = trace(photo_solid, rect, tolerance=1.4, min_area=max(120,min_area))
+    loops = trace(photo_solid, rect, tolerance=2.2, min_area=max(180,min_area))
     if not loops:
         raise RuntimeError(f'photo has no traced outline for {label}: {rect}')
     slab(mesh, 'reference', reference, loops, photo_point, far, near, wall_scale=.008)
@@ -234,10 +234,17 @@ pole=bpy.data.objects.new('power-pole',None); bpy.context.scene.collection.objec
 POLE_CX, POLE_GROUND = 610, PHOTO_GROUND_Y
 POLE_RADIUS = 34 * PHOTO_SCALE
 pole_photo = Photo(textures / 'power-pole-wood.jpg')
+pole_pixels = np.empty(pole_photo.image_w * pole_photo.image_h * 4, dtype=np.float32)
+pole_photo.image.pixels.foreach_get(pole_pixels)
+pole_pixels = pole_pixels.reshape(pole_photo.image_h, pole_photo.image_w, 4)
+pole_pixels[:, :, :3] *= np.array((.58, .52, .45), dtype=np.float32)[None, None, :]
+pole_photo.image.pixels.foreach_set(pole_pixels.ravel())
+pole_photo.image.update()
+pole_photo.image.pack()
 pole_wood_mat = pole_photo.material(.94)
 POLE_PHOTO_CX, POLE_PHOTO_GROUND = pole_photo.w*.50, pole_photo.h-7
 def pole_uv(index, distance, radius, angle):
-    px = POLE_PHOTO_CX + math.cos(angle) * min(5,radius / PHOTO_SCALE * .15)
+    px = POLE_PHOTO_CX + math.cos(angle) * min(16,radius / PHOTO_SCALE * .60)
     py = POLE_PHOTO_GROUND - distance / PHOTO_SCALE
     return pole_photo.uv(px, py)
 def pole_cap_uv(y):
@@ -248,29 +255,46 @@ lathe(pole_mesh, 'pole-wood', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
       [(0, POLE_RADIUS * 1.15), (3.0, POLE_RADIUS), (6.0, POLE_RADIUS * .72)],
       pole_uv, sides=16,cap_start=('pole-wood',pole_cap_uv(POLE_PHOTO_GROUND)),
       cap_end=('pole-wood',pole_cap_uv(POLE_PHOTO_GROUND-6/PHOTO_SCALE)))
+pole_mesh.verts = [(x + .03 * math.sin(y * .7) + .25 * y / 6, y, z)
+                   for x, y, z in pole_mesh.verts]
 pole_obj = pole_mesh.finish('round photo-lathed weathered utility pole', {'pole-wood': pole_wood_mat})
 pole_obj.parent = pole
 beam('crossarm',(-.90,5.7,.02),(.24,5.72,.02),(.14,.12),mat['rusted-steel'],pole)
 for y in (.6,1.45,2.3,3.15):
     beam('pole climbing step',(-.03,y,-.09),(.14,y,-.09),(.04,.035),mat['rusted-steel'],pole)
-TRANSFORMER_CENTER, TRANSFORMER_CY = (0, 5.50, 0), 185
-TRANSFORMER_R = 43 * PHOTO_SCALE
+TRANSFORMER_CENTER, TRANSFORMER_CY = (.20, 5.22, -.36), 185
+TRANSFORMER_R = 24 * PHOTO_SCALE
 transformer_photo = Photo(textures / 'power-transformer-can.jpg')
+transformer_pixels = np.empty(transformer_photo.image_w * transformer_photo.image_h * 4, dtype=np.float32)
+transformer_photo.image.pixels.foreach_get(transformer_pixels)
+transformer_pixels = transformer_pixels.reshape(transformer_photo.image_h, transformer_photo.image_w, 4)
+transformer_pixels[:, :, :3] *= np.array((.62, .56, .48), dtype=np.float32)[None, None, :]
+transformer_photo.image.pixels.foreach_set(transformer_pixels.ravel())
+transformer_photo.image.update()
+transformer_photo.image.pack()
 transformer_mat = transformer_photo.material(.92)
-TRANSFORMER_U, TRANSFORMER_SCALE = transformer_photo.w*.50, .58/(transformer_photo.h-20)
+TRANSFORMER_U, TRANSFORMER_SCALE = transformer_photo.w*.73, .010
+TRANSFORMER_PHOTO_GROUND = transformer_photo.h*.70
 def transformer_uv(index, distance, radius, angle):
-    px = TRANSFORMER_U + math.cos(angle) * min(5,radius / PHOTO_SCALE * .15)
-    py = transformer_photo.h-10 - distance/TRANSFORMER_SCALE
+    px = TRANSFORMER_U + math.cos(angle) * min(24,radius / PHOTO_SCALE * .85)
+    py = TRANSFORMER_PHOTO_GROUND - distance/TRANSFORMER_SCALE
     return transformer_photo.uv(px, py)
+def transformer_cap_uv(angle, fraction):
+    return transformer_photo.uv(TRANSFORMER_U + math.cos(angle)*fraction*20,
+                                TRANSFORMER_PHOTO_GROUND - .29/TRANSFORMER_SCALE
+                                + math.sin(angle)*fraction*20)
 transformer_mesh = Mesh()
 lathe(transformer_mesh, 'reference', TRANSFORMER_CENTER, (0, 1, 0), (1, 0, 0), (0, 0, 1),
       [(0, TRANSFORMER_R * .75), (.52, TRANSFORMER_R), (.58, TRANSFORMER_R * .9)],
-      transformer_uv, sides=16)
+      transformer_uv, sides=16,
+      cap_start=('reference', transformer_cap_uv), cap_end=('reference', transformer_cap_uv))
 transformer_obj = transformer_mesh.finish('photo-lathed transformer can', {'reference': transformer_mat})
 transformer_obj.parent = pole
-for x in (-.90,-.33,.24):
+beam('transformer lower mounting arm',(.23,5.30,0),(.20,5.30,-.28),(.07,.06),mat['rusted-steel'],pole)
+beam('transformer upper mounting arm',(.25,5.70,0),(.20,5.70,-.28),(.07,.06),mat['rusted-steel'],pole)
+for x in (-.90,-.33,1.02):
     cylinder('ceramic insulator',(x,5.98,.02),.095,.18,mat['cracked-concrete'],8,pole)
-for start,end,high in [((-.90,5.98,.02),(-1.28,5.82,.02),5.98),((.24,5.98,.02),(.65,5.78,.02),6.0)]:
+for start,end,high in [((-.90,5.98,.02),(-1.28,5.82,.02),5.98),((1.02,5.98,.02),(1.42,5.78,.02),6.0)]:
     points=[]
     for step in range(9):
         t=step/8
@@ -335,7 +359,8 @@ def engine_top_world(px,py,d):
 slab(engine_side,'overhead',top,top_loops,engine_top_world,3.14,3.20,wall_scale=.007)
 engine_obj=engine_side.finish('generator:photo-carved truck engine and skid',engine_materials)
 engine_obj.parent=generator
-# The shelter keeps the photographed engine visible from the road and overhead.
+# The shelter keeps the photographed engine visible from the road and through
+# a central roof opening in the mayor's overhead view.
 town.cube('generator skid bearer left',(-1.10,.16,0),(.18,.32,4.1),mat['rusted-steel'],.03).parent=generator
 town.cube('generator skid bearer right',(1.10,.16,0),(.18,.32,4.1),mat['rusted-steel'],.03).parent=generator
 for x in (-2.05,2.05):
@@ -343,10 +368,12 @@ for x in (-2.05,2.05):
         town.beam('generator shelter post',(x,.25,z),(x,3.65,z),.10,mat['rusted-steel']).parent=generator
 for z in (-1.85,1.85):
     town.beam('generator shelter eave',(-2.05,3.45,z),(2.05,3.45,z),.10,mat['galvanised-tin']).parent=generator
-roof=town.cube('generator patched tin shelter roof',(0,3.72,0),(4.55,.10,4.30),mat['galvanised-tin'],.02);roof.parent=generator
-for x in (-1.25,0,1.25):
-    town.cube('generator roof patch',(x,3.79,.18),(1.20,.035,3.95),mat['rusted-steel'],.015).parent=generator
-stain=town.cube('generator black exhaust stain',(1.02,3.80,-.85),(.65,.025,1.18),mat['iron-dark'],.01);stain.parent=generator
+for z in (-1.43,1.43):
+    panel=town.cube('generator patched tin shelter roof',(0,3.72,z),(4.55,.10,1.32),mat['galvanised-tin'],.02)
+    panel.parent=generator
+    for x in (-1.25,1.25):
+        town.cube('generator rusted roof repair',(x,3.79,z),(1.18,.035,1.18),mat['rusted-steel'],.015).parent=generator
+stain=town.cube('generator black exhaust stain',(1.02,3.80,-1.43),(.65,.025,.86),mat['iron-dark'],.01);stain.parent=generator
 town.beam('generator exhaust stack',(1.02,2.2,-.80),(1.02,4.25,-.80),.12,mat['iron-dark']).parent=generator
 town.beam('generator exhaust bend',(1.02,4.10,-.80),(1.02,4.10,-.20),.10,mat['iron-dark']).parent=generator
 
@@ -394,7 +421,7 @@ bpy.context.scene.collection.objects.link(fuel)
 fuel.parent = family
 fuel_photos={name:Photo(textures/f'fuel-{name}.jpg') for name in ('side','front','rear','overhead')}
 fuel_side,fuel_front,fuel_rear,fuel_top=(fuel_photos[name] for name in ('side','front','rear','overhead'))
-for photo in fuel_photos.values(): darken_photo(photo,(.66,.59,.50))
+for photo in fuel_photos.values(): darken_photo(photo,(.48,.42,.35))
 fuel_mats={name:photo.material(.90) for name,photo in fuel_photos.items()}
 FUEL_SIDE_CX,FUEL_SIDE_CY,FUEL_S=300,230,.012
 def tank_side_uv(index,distance,radius,angle):
@@ -433,6 +460,99 @@ for index in range(16):
     material=mat['faded-hand-paint'] if index%2==0 else mat['iron-dark']
     town.beam('diagonal depot warning stripe',(x-.15,.15,-3.42),(x+.15,.70,-3.42),.12,material).parent=fuel
 
+def pack_town_atlas():
+    """Put every material picture in the family's single 1024px atlas."""
+    import numpy as np
+
+    used_materials = sorted({material for obj in bpy.context.scene.objects
+                             if obj.type == 'MESH' for material in obj.data.materials},
+                            key=lambda material: material.name)
+    material_images = {}
+    images = {}
+    for material in used_materials:
+        image_nodes = [node for node in material.node_tree.nodes
+                       if node.type == 'TEX_IMAGE' and node.image]
+        if not image_nodes:
+            continue
+        source = image_nodes[0].image
+        images[source.name] = source
+        material_images[material.name] = source.name
+
+    fixed_boxes = {
+        'power-windmill-reference.jpg': (0, 0, 512, 512),
+        'generator-side.jpg': (512, 0, 512, 256),
+        'solar-overhead.jpg': (512, 256, 512, 256),
+        'fuel-side.jpg': (512, 512, 512, 256),
+        'generator-overhead.jpg': (0, 512, 256, 256),
+        'fuel-overhead.jpg': (256, 512, 256, 256),
+        'power-pole-wood.jpg': (0, 768, 256, 256),
+    }
+    free_cells = [(x, y, 128, 128)
+                  for y in (768, 896) for x in (256, 384, 512, 640, 768, 896)]
+    remaining = [name for name in sorted(images) if name not in fixed_boxes]
+    if len(remaining) > len(free_cells):
+        raise RuntimeError(f'{len(remaining)} detail images do not fit the single 1K town atlas: {sorted(images)}')
+    atlas_pixels = np.ones((1024, 1024, 4), dtype=np.float32)
+    regions = {}
+    atlas_boxes = dict(fixed_boxes)
+    atlas_boxes.update({name: free_cells[index] for index, name in enumerate(remaining)})
+    for source_name in sorted(images):
+        source = images[source_name]
+        width, height = source.size
+        box_x, box_y, box_width, box_height = atlas_boxes[source_name]
+        gutter = 4
+        scale = min((box_width-2*gutter)/width, (box_height-2*gutter)/height)
+        dest_width = max(1, round(width*scale))
+        dest_height = max(1, round(height*scale))
+        resized = source.copy()
+        resized.scale(dest_width, dest_height)
+        pixels = np.empty(dest_width*dest_height*4, dtype=np.float32)
+        resized.pixels.foreach_get(pixels)
+        pixels = pixels.reshape(dest_height, dest_width, 4)
+        x0, y0 = box_x+gutter, box_y+gutter
+        x1, y1 = x0+dest_width, y0+dest_height
+        atlas_pixels[y0:y1, x0:x1] = pixels
+        atlas_pixels[y0:y1, x0-gutter:x0] = pixels[:, :1]
+        atlas_pixels[y0:y1, x1:x1+gutter] = pixels[:, -1:]
+        atlas_pixels[y0-gutter:y0, x0-gutter:x1+gutter] = atlas_pixels[y0:y0+1, x0-gutter:x1+gutter]
+        atlas_pixels[y1:y1+gutter, x0-gutter:x1+gutter] = atlas_pixels[y1-1:y1, x0-gutter:x1+gutter]
+        regions[source.name] = (x0, y0, dest_width, dest_height)
+        bpy.data.images.remove(resized)
+
+    atlas = bpy.data.images.new('town-power-1k-atlas', width=1024, height=1024, alpha=False)
+    atlas.pixels.foreach_set(atlas_pixels.reshape(-1))
+    atlas.file_format = 'JPEG'
+    atlas.pack()
+    for material in used_materials:
+        if material.name not in material_images:
+            continue
+        source_name = material_images[material.name]
+        for node in material.node_tree.nodes:
+            if node.type == 'TEX_IMAGE' and node.image:
+                node.image = atlas
+                node.extension = 'CLIP'
+        for obj in bpy.context.scene.objects:
+            if obj.type != 'MESH' or material.name not in obj.data.materials:
+                continue
+            uv_layer = obj.data.uv_layers.active
+            if uv_layer is None:
+                continue
+            x0, y0, width, height = regions[source_name]
+            for polygon in obj.data.polygons:
+                if obj.data.materials[polygon.material_index] != material:
+                    continue
+                for loop_index in polygon.loop_indices:
+                    uv = uv_layer.data[loop_index].uv
+                    u = uv.x % 1.0
+                    v = uv.y % 1.0
+                    if abs(u) < 1e-6 and uv.x > 0:
+                        u = 1.0
+                    if abs(v) < 1e-6 and uv.y > 0:
+                        v = 1.0
+                    uv.x = (x0 + u*width) / 1024
+                    uv.y = (y0 + v*height) / 1024
+    print(f'TOWN_ATLAS_IMAGES={len(images)}; size=1024x1024')
+
 # Export, then reimport in an empty scene for every judgment render.
 evidence.mkdir(parents=True,exist_ok=True)
 for obj in bpy.context.scene.objects:
@@ -440,6 +560,7 @@ for obj in bpy.context.scene.objects:
         for layer in obj.data.uv_layers:
             layer.name='UVMap'
 bpy.context.view_layer.update()
+pack_town_atlas()
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 bpy.ops.wm.read_factory_settings(use_empty=True)

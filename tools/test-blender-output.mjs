@@ -651,8 +651,28 @@ try {
           assert.ok(buildingTriangles > 100 && buildingTriangles <= budget,
             `${id}: ${buildingTriangles} triangles exceeds its ${budget} triangle building budget`);
         }
-        assert.ok(triangles <= generator.budget * 2, `${triangles} triangles across two 1x1 buildings`);
+        assert.ok(triangles <= generator.budget, `${triangles} triangles exceeds the summed per-building budget of ${generator.budget}`);
+        assert.equal(gltf.images?.length, 1, 'town-power uses one embedded atlas image');
+        assert.equal(new Set((gltf.textures || []).map(texture => texture.source)).size, 1,
+          'all town-power materials use the shared atlas image');
         const binaryOffset = 20 + jsonLength + 8;
+        const atlasView = gltf.bufferViews[gltf.images[0].bufferView];
+        const atlasStart = binaryOffset + (atlasView.byteOffset ?? 0);
+        let atlasWidth = 0, atlasHeight = 0, atlasOffset = atlasStart + 2;
+        while (atlasOffset + 9 < atlasStart + atlasView.byteLength) {
+          if (bytes[atlasOffset] !== 0xff) { atlasOffset++; continue; }
+          const marker = bytes[atlasOffset + 1];
+          const length = bytes.readUInt16BE(atlasOffset + 2);
+          if ([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)) {
+            atlasHeight = bytes.readUInt16BE(atlasOffset + 5);
+            atlasWidth = bytes.readUInt16BE(atlasOffset + 7);
+            break;
+          }
+          if (length < 2) break;
+          atlasOffset += 2 + length;
+        }
+        assert.equal(atlasWidth, 1024, `town-power atlas width is ${atlasWidth}px`);
+        assert.equal(atlasHeight, 1024, `town-power atlas height is ${atlasHeight}px`);
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
           assert.deepEqual(coordinates, ['TEXCOORD_0'], `${primitive.material} has only TEXCOORD_0`);

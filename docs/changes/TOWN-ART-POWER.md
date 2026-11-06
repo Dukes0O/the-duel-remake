@@ -1,28 +1,33 @@
-# TOWN-ART-POWER — round 2
+# TOWN-ART-POWER round 3
+
+## Design choices
+
+- Use measured photo shapes for the windmill, pole, generator, solar rack and fuel depot. This is the final submission round allowed by the card.
+- Pack the family into one 1024 x 1024 texture atlas. Keep each building within its listed triangle budget and the GLB under 3 MB.
+- Keep the generator sheltered, with two roof panels and a center opening so the engine reads from the mayor's overhead view. Keep the soot stain on a roof panel.
+- Map the full measured pole-photo width around the pole and move the transformer clear of the post. This fixes the narrow-strip UV mapping that made the wood look striped.
+- Use generated images only as photo references and textures. Keep the models' own silhouettes and construction readable.
 
 ## Changed
 
-- Rebuilt the windmill mast with four splayed corner legs, four closed horizontal rings and X bracing. Printed endpoint checks show a maximum brace-to-leg distance of 0.00 m (limit 0.05 m).
-- Made `windmill:rotor` pivot at the axle. Exported and reimported a second GLB with the rotor turned 37°; the front render shows the blades turning around the hub.
-- Added three tapered spring-steel blades, a bolted hub, alternator cooling ribs, tail arm and vane, a clipped and clamped cable, a shaped concrete slab and bolted foot plates.
-- Added the crooked power pole, transformer, insulators and sagging wire stubs. The card's other three buildings remain unstarted pending the windmill and pole look review.
-- Replaced the round 1 recipe and GLB, updated the town-power output assertion, and added the round 2 comparison sheet and review.
+- Completed round 3 models for the windmill, power pole, generator, solar rack and fuel depot in `power.glb`, with one packed 1024 x 1024 atlas.
+- Added the shelter roof opening, photo-shaped parts and atlas checks described above.
+- Simplified traced photo contours to meet the existing triangle budgets, kept one anchor bolt per mast foot plate, and increased the pole's top offset to show its lean.
+- The independent visual review did not accept the result. The round 3 sheet is the card's third submitted round; no fourth round is allowed by this card.
 
 ## Checks and review
 
-- `tools/test-blender-output.mjs`: passed, 275 checks, 0 failed. The exported family is 2,600 triangles; windmill 1,788 and power pole 812, each under the 1,800 triangle 1x1 limit.
-- `tools/test-repo-hygiene.mjs`: passed; the size targets remain advisory.
-- `tools/test-review-evidence.mjs`: 8 of 9 subtests passed. One unrelated audio-analysis subtest could not launch `ffmpeg` (`spawnSync ffmpeg EPERM`).
-- Blender export/reimport and model and turned-rotor renders: passed. The endpoint print is 0.00 m maximum.
-- Chrome, browser and in-game look checks: not run here. Claude should compare the round 2 sheet as listed in `round-2-review.md`.
-- Changed assertions: the output check now requires `power-pole` and still excludes `generator`, `solar-rack` and `fuel-depot`. Its old single-asset 1,800-triangle total is now two descendant checks (windmill and pole, 1,800 each) plus their combined 3,600 limit. This applies the existing per-building budget to the two requested 1x1 assets in one family file; no per-building limit was raised. Claude's written review is required before merge.
-- Race fingerprints: not applicable; art only.
-
-## Limits for Claude's look review
-
-The pole's repeated wood texture still looks striped, the tail vane does not yet read as cream paint, and the head and blades remain more geometric than the photo. The model has the requested parts and dimensions, but this note does not call the look accepted.
+- `tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `tools/test-board.mjs`: passed, 680 checks. `node tools/build-status.mjs` updated `docs/board/STATUS.md`; it reports the full tier stale for the lane's source commit.
+- `tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The unrelated audio-analysis subtest could not launch `ffmpeg` (`spawnSync ffmpeg EPERM`).
+- `tools/test-blender-output.mjs`: passed, 296 checks, 0 failed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: stopped at `tools/test-circuit-eifel.mjs`; 12 suites passed, 1 failed, 34 not run. The failure is an unrelated FFmpeg loudness measurement error. One same-source rerun of `node tools/test-circuit-eifel.mjs` failed at the same measurement.
+- `npm run build` was blocked by PowerShell's script policy; `npm.cmd run build` passed.
+- Independent code review found no concrete issue in the Blender recipe, atlas packing, output assertions, budgets or ownership.
+- Independent visual review: not accepted. The windmill is cropped; the generator's shelter, soot stain and fuel drums are unclear; the rack reads as four matching panels; and the depot's pump, pipework, valves and bund are unclear. See `round-3-review.md`.
+- No browser or frame check applies because this model is not wired into the game. Race fingerprints are not applicable; art only.
+- Changed assertions: the output check now applies each building's own triangle budget and the summed budget, and checks that the exported GLB embeds one 1024 x 1024 image used by its materials. These checks do not raise the per-building limits.
 
 ## Removed
 
-- Replaced the round 1 windmill recipe and `power.glb` in place. The round 1 sheet and review remain as prior review evidence.
-- No runtime textures or dependencies added. Temporary Blender renders, the trial rotated GLB, reference copy and logs are scratch evidence and will be removed before commit.
+- Replaced the round 2 recipe, GLB and test scope in place. Earlier round sheets and reviews remain as submitted evidence.
