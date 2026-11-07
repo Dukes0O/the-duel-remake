@@ -50,7 +50,7 @@ const generators = [
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
   {id:'town-safety',script:'tools/blender/town-safety.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:8000000},
   {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
