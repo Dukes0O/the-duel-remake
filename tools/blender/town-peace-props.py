@@ -673,6 +673,7 @@ tank_details = {key: Photo(textures / f'peace-dust-tanker-{key}.jpg')
 tanker = root_part('dust-tanker')
 t_side, t_front = tank_photos['side'], tank_photos['front']
 t_rear, t_top = tank_photos['rear'], tank_photos['overhead']
+t_cab_side = Photo(textures / 'peace-dust-tanker-side.jpg')
 T_SIDE_X0, T_SIDE_X1, T_GROUND = 20, 900, 428
 T_SCALE = 11.2 / (T_SIDE_X1 - T_SIDE_X0)
 T_Z0 = -5.6
@@ -710,7 +711,7 @@ def tank_cab_trim_front(mask):
     return mask
 
 tank_views = [
-    View('side', t_side, seed_points(t_side), tank_side_pick, (-1, 0, 0),
+    View('side', t_cab_side, seed_points(t_cab_side), tank_side_pick, (-1, 0, 0),
          solid=tank_cab_trim_side, grey=20, tolerance=20),
     View('front', t_front, seed_points(t_front), tank_front_pick, (0, 0, -1),
          solid=tank_cab_trim_front, grey=20, tolerance=20),
@@ -749,7 +750,6 @@ if len(tank_stations) < 8:
 T_TANK_CENTER_Y = (T_GROUND - (T_TANK_TOP + T_TANK_BOTTOM) / 2) * T_SCALE
 profile = [(distance, radius) for distance, radius in tank_stations]
 profile.insert(0, (profile[0][0] - .10, .20))
-profile.append((profile[-1][0] + .10, .18))
 t_side.bleed(tank_mask)
 t_side_mat = t_side.material(.58)
 
@@ -767,6 +767,7 @@ def tank_cap_uv(photo, cx, cy, radius_px):
 tank_body = Mesh()
 lathe(tank_body, 'side', (0, T_TANK_CENTER_Y, T_Z0), (0, 0, 1), (1, 0, 0),
       (0, 1, 0), profile, tank_body_uv, sides=48,
+      cap_start=('side', tank_cap_uv(t_side, 376, T_TANK_CX, 18)),
       cap_end=('rear', tank_cap_uv(t_rear, 286, 240, 151)))
 own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
                      {'side': t_side_mat, 'rear': t_rear.material(.58)}),
@@ -775,11 +776,14 @@ own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
 # The tarp outline is traced from the visible cloth, not from the hidden tank.
 # Two thin photo slabs sit just outside the tank walls and follow the same folds.
 tarp_photo = Photo(textures / 'peace-dust-tanker-side.jpg')
-tarp_outline = ((358, 92), (404, 66), (475, 71), (522, 83), (600, 68),
-                (690, 76), (762, 70), (822, 89), (871, 83), (890, 121),
-                (880, 190), (862, 218), (817, 201), (769, 215), (712, 199),
-                (650, 218), (588, 205), (527, 224), (466, 207), (417, 222),
-                (375, 203), (355, 165))
+tarp_outline = ((358, 92), (382, 72), (415, 64), (454, 72), (488, 82),
+                (528, 78), (562, 68), (602, 72), (640, 79), (682, 72),
+                (721, 68), (759, 72), (795, 82), (826, 88), (858, 79),
+                (881, 91), (890, 120), (884, 157), (879, 190), (866, 218),
+                (838, 214), (810, 207), (781, 216), (748, 215), (718, 208),
+                (684, 217), (650, 219), (616, 212), (585, 219), (552, 221),
+                (520, 216), (488, 222), (456, 220), (424, 214), (394, 220),
+                (371, 210), (355, 181))
 gx = np.arange(tarp_photo.w)[None, :]
 gy = np.arange(tarp_photo.h)[:, None]
 tarp_solid = np.zeros((tarp_photo.h, tarp_photo.w), dtype=bool)
@@ -975,7 +979,7 @@ def tanker_shot(name, eye, target, resolution=(1200, 666), ortho=None, lens=43):
     bpy.ops.render.render(write_still=True)
 
 if args.round6_only:
-    tanker_shot('side', (0, 1.55, 15), (0, 1.55, 0), ortho=12.2)
+    tanker_shot('side', (15, 1.55, 0), (0, 1.55, 0), ortho=12.2)
     tanker_shot('three-quarter-front', (-10.6, 1.55, -10.6), (0, 1.45, 0))
     tanker_shot('three-quarter-rear', (10.6, 1.55, 10.6), (0, 1.45, 0))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
