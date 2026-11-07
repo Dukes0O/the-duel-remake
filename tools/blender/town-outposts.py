@@ -307,9 +307,9 @@ def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.01
 
 # Rectangles are measured on the side and plan grids; edits stay inside each pane.
 SIDE_WINDOWS = [
-    (166, 117, 278, 198), (430, 117, 527, 198),
-    (550, 116, 649, 198), (673, 116, 779, 198), (796, 118, 860, 197),
-    (298, 114, 396, 260),  # the door opening is dark behind the sill and frame
+    (174, 123, 270, 193), (438, 124, 519, 191),
+    (558, 123, 641, 191), (681, 123, 771, 191), (804, 124, 852, 190),
+    (306, 120, 388, 254),  # the door opening is dark behind the sill and frame
 ]
 SIDE_PAINTED = painted_school_photo(
     'plane-school-side.jpg', 'plane-school-side-painted.png', SIDE_WINDOWS,
@@ -317,10 +317,10 @@ SIDE_PAINTED = painted_school_photo(
             (3, .34, .56, .18, (.27, .58, .68))),
 )
 TOP_WINDOWS = [
-    (238, 51, 299, 74), (319, 51, 382, 74), (405, 51, 481, 74),
-    (507, 51, 581, 74), (609, 51, 678, 74), (703, 51, 781, 74),
-    (232, 204, 300, 230), (316, 204, 384, 230), (402, 204, 482, 230),
-    (505, 204, 581, 230), (610, 204, 679, 230), (703, 204, 782, 230),
+    (244, 55, 293, 68), (325, 55, 375, 68), (411, 55, 475, 68),
+    (514, 55, 575, 68), (616, 55, 672, 68), (710, 55, 775, 68),
+    (230, 210, 294, 231), (314, 210, 382, 231), (410, 210, 482, 231),
+    (511, 210, 581, 231), (614, 210, 682, 231), (708, 210, 778, 231),
 ]
 TOP_PAINTED = painted_school_photo(
     'plane-school-top.jpg', 'plane-school-top-painted.png', TOP_WINDOWS,
@@ -385,7 +385,8 @@ for index, px in enumerate((160, 760), 1):
 # The small landing touches the high door sill; a sloped bed runs down to ground.
 yellow = material('school slide yellow', (.88, .61, .08))
 red = material('school slide red rails', (.72, .055, .035))
-door_z = school_z(255)
+# The door opening is centred near x=345 on the measured side photo.
+door_z = school_z(345)
 door_sill_y = (SCHOOL_GROUND - SCHOOL_DOOR_SILL) * SCHOOL_SCALE
 slide_inner_x, slide_outer_x = -1.20, -3.35
 slide_outer_y = -1.58
@@ -409,9 +410,14 @@ for hand in (-1, 1):
 for index in range(7):
     rise = (index + 1) * (1.48 / 7)
     tread = town.cube(f'plane-school:step-{index + 1}',
-                      (-1.42 - index * .115, -1.50 + rise, door_z + .88),
+                      (-2.55 + index * .20, -1.50 + rise, door_z + .88),
                       (.42, .12, .82), timber, .018)
     tread.parent = school
+for hand in (-1, 1):
+    stair_rail = town.beam(f'plane-school:step-rail-{"road" if hand < 0 else "far"}',
+                           (-2.62, -1.20, door_z + .88 + hand * .49),
+                           (-1.12, .18, door_z + .88 + hand * .49), .09, timber)
+    stair_rail.parent = school
 
 # One thin picture slab on each curved wall, directly below the windows.
 letter_photo = Photo(textures / 'plane-school-letters.jpg')
@@ -421,6 +427,7 @@ wall_radius = body_dimensions[0] / 2
 wall_center_y = body_dimensions[2] / 2
 panel_low, panel_high = .46, .88
 panel_half_length = 1.5
+panel_center_z = .85
 slab_depth = .035
 
 def wall_x(y):
@@ -441,8 +448,10 @@ def sign_slab(hand):
         y1 = panel_low + (panel_high - panel_low) * (index + 1) / rows
         x0 = hand * (wall_x(y0) + wall_clearance)
         x1 = hand * (wall_x(y1) + wall_clearance)
-        front = [(x0, y0, -panel_half_length), (x0, y0, panel_half_length),
-                 (x1, y1, panel_half_length), (x1, y1, -panel_half_length)]
+        front = [(x0, y0, panel_center_z - panel_half_length),
+                 (x0, y0, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z - panel_half_length)]
         back = [(x - hand * slab_depth, y, z) for x, y, z in front]
         v0 = letter_photo.uv(0, image_h - image_h * index / rows)[1]
         v1 = letter_photo.uv(0, image_h - image_h * (index + 1) / rows)[1]
@@ -519,9 +528,9 @@ shot('model-side', (-44, 3.5, 0), (-.8, 2.3, 0), 16)
 shot('model-front', (0, 3.3, -40), (-.7, 1.5, 0), 9)
 shot('model-rear', (0, 3.3, 40), (-.7, 1.5, 0), 9)
 shot('model-far', (44, 3.5, 0), (.8, 2.3, 0), 16)
-shot('model-above', (0, 58, 0), (-1.2, 2.0, 0), 16)
-shot('model-road', (-24, 13, -22), (-1.8, 2.0, 0), 17)
-shot('model-back', (24, 13, 22), (0, 2.0, 0), 16)
-shot('model-mayor', (-42, 62, -42), (-2.0, 2.1, 0), 22)
+shot('model-above', (0, 58, 0), (-1.2, 2.0, 0), 14)
+shot('model-road', (-24, 13, -22), (-1.8, 2.0, 0), 14)
+shot('model-back', (24, 13, 22), (0, 2.0, 0), 14)
+shot('model-mayor', (-42, 62, -42), (-2.0, 2.1, 0), 16)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))
