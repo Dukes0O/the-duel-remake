@@ -24,3 +24,7 @@ three-quarters? **Yes**, the frame, load, wheels and tow connection read as one
 rig. The cut-end photo plates and pale edge on one trailer wheel remain visible
 at close inspection; Claude should judge whether they read cleanly at play
 scale.
+
+## Claude's verdict
+
+**`sal-pipe-trailer` passes.** The load sags as the photo does, its cut ends are bright, and it is funny at a glance. Claude darkened the tyre treads, whose picture caught pale rims. Small things left: a few small dark marks on the frame, and the back of the cab wears the pipe ends from the rear photo, which the trailer hides from nearly every view. Neither is worth a round.

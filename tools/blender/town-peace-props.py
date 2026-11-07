@@ -491,7 +491,8 @@ def tire_material(photo, cx, cy, radius_px, stem):
     image = bpy.data.images.new(f'{stem} tread tile', width=patch_w, height=half_h * 2,
                                 alpha=True)
     rgba = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)
-    rgba[:, :, :3] = rgb[::-1].astype(np.float32) / 255
+    # Rubber is dark: anything pale in the patch is a rim or the sky, so it is held down.
+    rgba[:, :, :3] = np.minimum(rgb[::-1].astype(np.float32), 62) / 255
     image.pixels.foreach_set(rgba.ravel())
     image.pack()
     material = bpy.data.materials.new(f'{stem} rectangular tyre tread')
@@ -554,7 +555,7 @@ for rail_x, side_name in ((-.95, 'left'), (.95, 'right')):
 for index, z in enumerate((-1.0, .2, 1.5, 2.8, 4.2, 5.65), 1):
     sag = .79 - .20 * math.sin(math.pi * (z + 1.0) / 6.65)
     beam_box(f'sal-pipe-trailer:frame-crossmember-{index}', (0, sag, z), (2.02, .14, .12),
-             (429, 244, 474, 266))
+             (404, 242, 473, 265))
 
 # Trace the whole pipe stack from the measured side image. Flooded sky is
 # removed before tracing, then bled from a dedicated copy of the photo.
