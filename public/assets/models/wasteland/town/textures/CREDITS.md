@@ -443,3 +443,7 @@ The image views were generated separately to avoid overlapping panels.
 The side sheet photo includes the pump, valves, hose and bund; the model builds
 these as joined geometric parts. Other power-family photos are unchanged from
 round 3.
+
+## WW-ART-PEACE Mirage camp, 7 November 2026
+
+Generated with OpenAI image generation as seven original product-photo references: a matching tent side, front and true overhead view, plus straight side views of a folding chair, a camp stove with kettle, a water can, and a crate with tin mug. The tent images share the same tent identity. Flat pale studio backgrounds, no labels, brands or third-party material.

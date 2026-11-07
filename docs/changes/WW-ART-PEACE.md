@@ -58,3 +58,23 @@ The ground, wheel, tow bar and end-photo numbers were measured again on a grid. 
 ### Removed
 
 The primitive dummy hidden inside the body, the primitive jack and the pale tow bar traced from the overhead photo.
+
+## Mirage camp, round 9
+
+- Added seven original generated reference photos for the tent and four small objects; credited them in the town texture folder.
+- Added the separate `mirage-camp` root with a photo-carved tent, folding chair, stove, lathed kettle and water can, crate table and tin mug. The existing caravan recipe is unchanged.
+- Measured the tent side ground at row 775 and ridge at 164; the front ground is row 945 and ridge at 112. The side sets its 1.5 m height, and that shared height sets the end-photo scale. The open front is carved with a `keep` box.
+- Added the unlabelled round 9 comparison sheet at `docs/board/looks/ww-art-peace/round-9.jpg` (1600 x 1520, 164,204 bytes).
+- Exported GLB readback: 17,836 triangles, 1,973,492 bytes.
+- Blender recipe export and four renders from the exported model: passed. Inspected all four views.
+- `node tools/test-blender-output.mjs`: passed, 324 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement clean, size targets advisory.
+- Changed assertions: none. The candidate triangle and byte budgets were raised to 17,836 and 2,000,000 to cover the measured asset. Race fingerprints: not applicable to this art-only asset.
+
+### Visual review
+
+The muted tent and plain camp objects read as a private place without a sign. Two horizontal streaks remain across the tent side, the water can's cap still reads too pale, and the props crowd the entrance in the front three-quarter view. The two allowed adjustment passes are complete. Claude should judge those details on the round 9 sheet.
+
+### Removed
+
+The photo grids, carving masks, render captures, Blender working file and test logs made for this round were removed. No existing art or prior round sheet was replaced.
