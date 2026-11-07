@@ -1604,3 +1604,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 6 Nov: TOWN-ART-TRUCKS-2 merged; verdict on its card.
 - 7 Nov night check on b9f58aed (art jobs alongside, no frame step): full tier 637/638 (test-town-core passes alone: QA-TIMING-UNDER-LOAD); combat balance pass; town soak 10 towns x 30 years correct, last timing check 60.85 ms vs 30 under load (same card); browser 191/203, water-road passes alone (QA-WATER-ROAD-AUTOPILOT), the rest are existing QA cards or frame and sound checks that need a quiet laptop.
 - - 7 Nov: WW-ART-DAM-2 merged: the dam's hoist wheels, the old gear in its silt, and a deep spillway against the wall with its wrecks as one part. Lane tier 47/47 and build on afa2b6a04.
+- - 7 Nov: WW-ART-SEA merged: the gears, harbour wall, causeway, gate, ramp and arch, the Mule's gear wagon, the works camp, Mrs Vane, Magnus's big magnet and the water front. Lane tier 47/47 and build on 9d03f886e.

@@ -172,6 +172,14 @@ All three are embedded in `crew-favours.glb` as direct colour pictures; none rep
 
 ## WW-ART-SEA photographs
 
+`sea-magnet-big-timber.jpg` and `sea-magnet-big-prop.jpg` are original
+Codex ImageGen product photographs created on 2026-11-07. The first shows a
+side-on crib of weathered railway sleepers; the second shows a side-on raking
+steel prop with its screw jack. Both were converted from the generated PNGs to
+JPEGs for measured `photo_model.py` tracing in `sea-magnet-big.py`. The original
+generated PNGs remain in the Codex generated-images folder. No existing source
+photo was replaced.
+
 `sea-old-gear.jpg` is an original Codex ImageGen
 photographs made 2026-11-06. They are the isolated face and rim panels of one
 paired reference image: a seven metre silted, rotten dam gear with open spokes,
@@ -223,3 +231,40 @@ dam-hoist-wheel-side.png and dam-hoist-wheel-end-on.png are original Codex Image
   wet river silt fading into pale dry ground. It textures the old gear's silt
   heap; the source file stays full size and is reduced only in the recipe's
   memory. The old gear itself reuses `sea-old-gear.jpg`, credited above.
+`sea-mule-wagon-side.jpg`, `sea-mule-wagon-end.jpg` and
+`sea-mule-wagon-overhead.jpg` are original Codex ImageGen reference photos
+made 2026-11-06: one empty, weathered flat wagon, from matched side, end and
+dead-overhead views. The side photo anchors the end and overhead views.
+
+`sea-camp-hut-side.jpg`, `sea-camp-hut-end.jpg` and `sea-camp-hut-top.jpg`,
+`sea-camp-kitchen-side.jpg`, `sea-camp-kitchen-end.jpg` and
+`sea-camp-kitchen-top.jpg`, plus `sea-camp-stilt-frame.jpg`,
+`sea-camp-ladder.jpg` and `sea-camp-washing-line.jpg` are original Codex
+ImageGen modeling-reference photos created on 2026-11-07. The hut and kitchen
+views show the unraised buildings on a pale studio floor; the frame, ladder and
+laundry references are also isolated on pale backgrounds. These JPEGs are
+converted project copies of the tool's PNG outputs; the generated originals
+remain in the Codex generated-images folder. No existing source photo was
+replaced.
+
+## Mrs Vane reference photographs
+
+`sea-mrs-vane-coat-front.jpg`, `sea-mrs-vane-coat-side.jpg`,
+`sea-mrs-vane-coat-back.jpg` and `sea-mrs-vane-coat-top.jpg` are crops from one
+original Codex ImageGen studio turnaround generated on 2026-11-07 and edited once
+so that her coat is one continuous closed coat-dress. They show the same older
+woman in matched front, right profile, back and overhead views, in a white coat
+and gloves, holding one pale envelope, on a uniform mid-grey ground. No existing
+photograph was replaced.
+
+## Sea water front photographs
+
+`sea-water-front-face.jpg` and `sea-water-front-spray.jpg` are original
+Codex ImageGen pictures created 2026-11-07 for the flood-surge model. The face
+is a straight-on, edge-to-edge photograph of dirty brown-grey turbulent water,
+foam and small floating debris with no sky or ground. Its opposite edge bands
+were blended in memory in both directions before JPEG export so the texture
+repeats across X and V. The spray is an isolated dirty foam burst composited on
+charcoal for JPEG storage; the recipe derives a soft alpha mask from its dark
+background for the embedded GLB texture. Neither picture uses outside source
+art.

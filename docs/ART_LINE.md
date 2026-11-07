@@ -47,6 +47,14 @@ stop adjusting and change the method.
 
 ### Photos and masks
 
+- **Studio background below the sky threshold.** `Photo.sky()` refuses an edge
+  seed darker than 185 average grey. A warm grey background then becomes a solid
+  slab when traced. Brighten only the temporary mask pixels and restore the
+  photo's real colors before building its material.
+- **A scaled photo reused for later masks.** `Photo.rgb()` reads the image at
+  its original dimensions. If a recipe downsamples a cached image before all
+  masks are made, later reads fail or use the wrong grid. Finish every mask
+  first; downsample the packed image copies only before export.
 - **Background walled in by the subject** (Kyle, 6 November). The flood from the
   frame's edge cannot reach a patch between a person's legs, a window, the gap
   under a truck or the space inside a frame, and it may not match the studio's
@@ -83,6 +91,9 @@ stop adjusting and change the method.
   up to 40 pixels out. Measure them on a grid.
 - **An axle's end** pokes through a wheel face if it runs the full track. Stop it
   inside the tyre.
+- When wheels on opposite sides share one `lathe` axis direction, the far wheel
+  can shift inboard and sit on the wrong side of its rail. Put each wheel's
+  stations outward from the track centre and cap the face that points outward.
 - **Lamps** (Kyle, 6 November). A lamp carved on a curved surface wears two photos
   and garbles. Use `headlamp`. If it shows doubled, the front photo's centre or
   scale is wrong.
@@ -139,6 +150,10 @@ stop adjusting and change the method.
 
 ### Placement and export
 
+- **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
+  Blender render scene is Z-up. Convert camera positions and targets with the
+  same game-to-Blender transform as the model before judging framing; inspect
+  one whole-object shot before assembling the sheet. (WW-ART-SEA, 7 November.)
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
@@ -150,6 +165,9 @@ stop adjusting and change the method.
   stayed in the road instead of under the gate header. Place each child at its
   true world point before attaching it, put the empty at the real hinge, then
   render both closed and rotated poses from the exported GLB.
+- **Shared mesh instance moved on the wrong up axis.** `Mesh.finish` converts
+  Y-up vertices into Blender's Z-up coordinates. Convert an instance's Y-up
+  translation too: `(x, -z, y)`. Otherwise a reused load can float above its deck.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.
