@@ -17,6 +17,7 @@ if args.paths_only:
     raise SystemExit(0)
 
 import bpy
+import numpy as np
 sys.path.insert(0, str(root / 'tools/blender'))
 from photo_carve import carve_object
 
@@ -139,6 +140,75 @@ for index, px in enumerate((430, 900, 1370, 1840), 1):
         beam_between(f'magnus-crane:boom-cross-{index}-{chord}', (-.5,y,z), (.5,y,z), .045, steel, boom_root)
 
 
+
+# Cable and oversized round roof magnet. The boom tip is 16 m from its pin at 50 degrees.
+tip_y = 5.2 + 16 * math.sin(math.radians(50))
+tip_z = LENGTH/2-.45 + 16 * math.cos(math.radians(50))
+magnet_game = (0, tip_y-3.5, tip_z+.12)
+beam_between('magnus-crane:cable', (0,tip_y,tip_z), (0,magnet_game[1]+.40,magnet_game[2]), .055, cable_mat, crane)
+magnet = bpy.data.objects.new('magnus-crane:magnet', None)
+magnet.empty_display_type = 'PLAIN_AXES'
+bpy.context.collection.objects.link(magnet)
+magnet.parent = crane
+magnet.location = game_to_blender(magnet_game)
+magnet['part'] = 'magnus-crane:magnet'
+
+def magnet_cylinder(name, radius, depth, local_z, material, sides=40):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=sides, radius=radius, depth=depth, location=(0,0,local_z))
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(material)
+    obj.parent = magnet
+    obj['part'] = name
+    return obj
+magnet_cylinder('magnus-crane:magnet-shell', 1.5, .62, 0, paint, 48)
+magnet_cylinder('magnus-crane:magnet-rim', 1.48, .11, -.34, steel, 48)
+magnet_cylinder('magnus-crane:magnet-pole', 1.29, .08, -.405, glow, 48)
+for index, radius in enumerate((1.37,1.20,1.03),1):
+    bpy.ops.mesh.primitive_torus_add(major_radius=radius, minor_radius=.045, major_segments=40, minor_segments=8, location=(0,0,.33))
+    obj = bpy.context.object
+    obj.name = f'magnus-crane:magnet-coil-{index}'
+    obj.data.materials.append(copper)
+    obj.parent = magnet
+    obj['part'] = obj.name
+for hand in (-1,1):
+    beam_between(f'magnus-crane:magnet-lift-eye-{hand}', (hand*.95,.40,0), (hand*.55,.40,0), .055, iron, magnet)
+
+# A thin corrugated roof slab with three real nail holes. The prototype's top edge
+# midpoint is its origin; six instances share the same mesh and sit at odd angles.
+roof_photo = Photo(textures / 'peace-magnus-crane-roof.jpg')
+rx0, ry0, rx1, ry1 = 160, 18, 1380, 1010
+roof_mask = np.zeros((roof_photo.h, roof_photo.w), dtype=bool)
+roof_mask[ry0:ry1, rx0:rx1] = True
+yy, xx = np.ogrid[:roof_photo.h, :roof_photo.w]
+for cx, cy, radius in ((260,470,11),(760,930,11),(1290,500,10)):
+    roof_mask &= (xx-cx)**2 + (yy-cy)**2 >= radius**2
+roof_loops = trace(roof_mask, (rx0-2,ry0-2,rx1+2,ry1+2), tolerance=1.5, min_area=20)
+SHEET_SCALE = 2.4/(rx1-rx0)
+def sheet_world(px, py, depth):
+    return ((px-(rx0+rx1)/2)*SHEET_SCALE, -(py-ry0)*SHEET_SCALE, depth)
+roof_mesh = Mesh()
+slab(roof_mesh, 'tin', roof_photo, roof_loops, sheet_world, -.018, .018, wall_scale=SHEET_SCALE)
+tin = roof_photo.material(.9)
+tin.name = 'magnus-roof-tin'
+loose_root = bpy.data.objects.new('magnus-roof', None)
+loose_root.empty_display_type = 'PLAIN_AXES'
+bpy.context.collection.objects.link(loose_root)
+loose_sheet = roof_mesh.finish('magnus-roof:sheet', {'tin': tin})
+loose_sheet['part'] = 'magnus-roof:sheet'
+loose_sheet.parent = loose_root
+loose_sheet['pivot'] = 'midpoint of top edge'
+for index, (offset, rotation) in enumerate((((-.9,-.35,-.1),(.3,.2,.5)),((.85,-.6,.15),(-.2,.4,-.7)),
+    ((-1.1,.45,.2),(.7,-.3,1.0)),((1.05,.35,-.2),(-.5,.1,.3)),((0,-.8,.25),(.2,.6,1.4)),((.2,.7,-.3),(-.8,.2,-.4))),1):
+    obj = bpy.data.objects.new(f'magnus-crane:stuck-roof-{index}', roof_mesh.finish(
+        f'magnus-crane:stuck-roof-{index}', {'tin':tin}).data)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = crane
+    obj.location = game_to_blender(tuple(magnet_game[i]+offset[i] for i in range(3)))
+    obj.rotation_euler = (rotation[0], rotation[2], rotation[1])
+    obj['part'] = obj.name
+
+
 out.parent.mkdir(parents=True, exist_ok=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -148,3 +218,4 @@ bpy.ops.export_scene.gltf(filepath=str(out), export_format='GLB', use_selection=
                           export_lights=False, export_image_format='AUTO')
 print('peace-crane body dimensions:', LENGTH, WIDTH, HEIGHT)
 print('peace-crane glb bytes:', out.stat().st_size)
+print('peace-crane triangle estimate:', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))
