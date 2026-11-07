@@ -531,22 +531,72 @@ for index, z in enumerate((-1.0, .2, 1.5, 2.8, 4.2, 5.65), 1):
     beam_box(f'sal-pipe-trailer:frame-crossmember-{index}', (0, sag, z), (2.02, .14, .12),
              (429, 244, 474, 266))
 
-# A box load carries the clean bright pipe cut faces from the rear photograph.
+# Trace the whole pipe stack from the measured side image. Flooded sky is
+# removed before tracing, then bled from a dedicated copy of the photo.
+pipe_photo = Photo(textures / 'peace-sal-pipe-trailer-side.jpg')
+pipe_solid = ~pipe_photo.sky(seed_points(pipe_photo), tolerance=24, grey=20)
+pipe_region = np.zeros_like(pipe_solid)
+pipe_region[198:312, 398:988] = pipe_solid[198:312, 398:988]
+pipe_solid &= pipe_region
+pipe_loops = trace(pipe_solid, (398, 198, 988, 312), tolerance=1.1, min_area=18)
+pipe_photo.bleed(pipe_solid)
 pipe_load = Mesh()
-rear_end_rect = (65, 132, 450, 390)
-side_load_rect = (401, 205, 982, 289)
-photo_box(pipe_load, -.91, .91, .84, 2.08, -1.0, 5.78, {
-    '+z': ('ends', sal_details['rear'], rear_end_rect),
-    '-z': ('side', sal_details['side'], side_load_rect),
-    '+x': ('side', sal_details['side'], side_load_rect),
-    '-x': ('side', sal_details['side'], side_load_rect),
-    '+y': ('side', sal_details['side'], (410, 206, 980, 250)),
-    '-y': ('side', sal_details['side'], (410, 252, 980, 286)),
-})
+def pipe_side_point(px, py, depth):
+    return (depth, (SAL_GROUND - py) * SAL_SCALE,
+            SAL_Z0 + (px - SAL_SIDE_X0) * SAL_SCALE)
+slab(pipe_load, 'side', pipe_photo, pipe_loops, pipe_side_point,
+     -.80, .80, wall_scale=SAL_SCALE)
 own(pipe_load.finish('sal-pipe-trailer:photographed-pipe-stack',
-                     {'ends': sal_details['rear'].material(.9),
-                      'side': sal_details['side'].material(.9)}),
+                     {'side': pipe_photo.material(.9)}),
     sal, 'sal-pipe-trailer:photographed-pipe-stack')
+
+# The overhead surface uses the actual top photograph at its measured scale,
+# following the traced top edge rather than stretching a side-photo strip.
+pipe_top = Mesh()
+top_photo = sal_details['overhead']
+top_rows = []
+for index in range(65):
+    px = 408 + (979 - 408) * index / 64
+    ix = min(pipe_solid.shape[1] - 1, max(0, round(px)))
+    ys = np.flatnonzero(pipe_solid[198:312, ix])
+    if not len(ys):
+        continue
+    py = 198 + int(ys.min())
+    z = SAL_Z0 + (px - SAL_SIDE_X0) * SAL_SCALE
+    y = (SAL_GROUND - py) * SAL_SCALE
+    left = pipe_top.vertex((-.80, y, z))
+    right = pipe_top.vertex((.80, y, z))
+    u = SAL_TOP_X0 + (z - SAL_Z0) / SAL_TOP_SCALE
+    v0 = SAL_TOP_MID - .80 / SAL_TOP_X_SCALE
+    v1 = SAL_TOP_MID + .80 / SAL_TOP_X_SCALE
+    top_rows.append(((left, top_photo.uv(u, v0)), (right, top_photo.uv(u, v1))))
+for a, b in zip(top_rows, top_rows[1:]):
+    pipe_top.indexed((a[0][0], a[1][0], b[1][0], b[0][0]),
+                     (a[0][1], a[1][1], b[1][1], b[0][1]),
+                     'top', (0, 1, 0))
+own(pipe_top.finish('sal-pipe-trailer:pipe-stack-top', {'top': top_photo.material(.9)}),
+    sal, 'sal-pipe-trailer:pipe-stack-top')
+
+# Both exposed ends are traced from the clean cut-pipe photograph. Bleeding
+# removes its pale background before the outlined face is extruded in place.
+end_photo = Photo(textures / 'peace-sal-pipe-trailer-rear.jpg')
+end_solid = ~end_photo.sky(seed_points(end_photo), tolerance=22, grey=20)
+end_region = np.zeros_like(end_solid)
+end_region[128:327, 88:454] = end_solid[128:327, 88:454]
+end_solid &= end_region
+end_loops = trace(end_solid, (88, 128, 454, 327), tolerance=1.1, min_area=12)
+end_photo.bleed(end_solid)
+for end_name, z, sign in (('front', -1.43, -1), ('rear', 5.96, 1)):
+    end_mesh = Mesh()
+    def end_point(px, py, depth, z=z):
+        x = (px - 271) * (1.60 / (454 - 88))
+        y = 1.98 - (py - 128) * (1.12 / (327 - 128))
+        return (x, y, z + depth)
+    slab(end_mesh, 'ends', end_photo, end_loops, end_point,
+         -sign * .018, sign * .018, wall_scale=.004)
+    own(end_mesh.finish(f'sal-pipe-trailer:pipe-cut-ends-{end_name}',
+                        {'ends': end_photo.material(.6)}),
+        sal, f'sal-pipe-trailer:pipe-cut-ends-{end_name}')
 
 # Trailer tandem wheels and simple photo-kit hitch, separate from the frame.
 for axle_index, z in enumerate((3.65, 4.45), 1):

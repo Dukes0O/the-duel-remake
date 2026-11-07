@@ -93,6 +93,17 @@ The exported `peace-props.glb` was re-imported into an empty Blender scene for t
 
 Checks run: Blender export, GLB re-import and three review renders succeeded; `node tools/test-blender-output.mjs` passed (304 checks, 0 failed); `node tools/test-repo-hygiene.mjs` passed. The test added named-root and named-part assertions for the new vehicle; no assertion was changed or removed. Browser checks and in-game look checks were not run here; Claude should judge the sheet, with attention to the simplified trailer tires and flatter photo-box sides. Race fingerprints: not applicable; no simulation files changed.
 
+### Round 5, point 2: sagging photographed pipe stack
+
+Replaced the box with a side-photo `Photo.sky` mask and traced 1.6 m slab.
+The traced silhouette follows the real sag. The side image is bled on its own
+copy so the load has no sky at its edge. A curved top surface uses the
+overhead photo at measured scale; both exposed ends use a traced, bled crop of
+the bright cut-pipe photograph.
+
+Export and mask inspection are pending. No assertions changed. Claude should
+judge pipe readability and the end faces in the round-5 three-quarter views.
+
 ### Removed
 
 - No files or behavior removed.
