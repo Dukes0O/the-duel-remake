@@ -1,7 +1,7 @@
-# WW-ART-PEACE round 10: Magnus steals roofs
+# WW-ART-PEACE round 10: Magnus's crane and a roof
 
-The side and front comparisons and both whole-crane views are renders from the exported `peace-crane.glb`, imported into an empty scene with the Standard view transform. The full views use a car-height camera about 35 m away and keep the boom tip and magnet inside frame.
+Claude's verdict: **passes.** The body closely matches its photos from the side and front, and from a distance the crane is plainly an old working machine with a magnet full of other people's roofs.
 
-The side photo puts the cab at the right, so the carving table maps its front pixel from the right edge. The cab door measures 274 px at 1.9 m. The ground is the row where the tracks meet the floor. `carve_object` returns one body mesh, so the upper house and tracks are one piece. The 16 m traced boom has two open lattice frames, is about 50 degrees up, and has cross ties. The magnet is 3 m across. Six rusty roof sheets share one thin mesh; `magnus-roof` carries another copy from the midpoint of its top edge.
+Claude moved the boom from the engine's end to the cab's end, lengthened it to 22 m, hung the magnet 7 m clear of the tip, made it 4 m across and darkened its paint. The body is a very clean yellow beside the rest of the wasteland, which suits a man who is proud of his crane.
 
-Self-review: yes, it reads as an old crane that has been stealing roofs. The roof sheets make the joke clear from the whole views. The round magnet is partly covered by those sheets, so its lifting face is less obvious than intended. The body stays a single carved piece and cannot turn separately from its tracks. Claude should judge that compromise on this sheet.
+The upper body and the tracks are one piece, so the upper cannot turn on the tracks. If a scene needs that, it is a new card.

@@ -100,7 +100,7 @@ const generators = [
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
   { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
-  { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 17836, maxBytes: 2_000_000,
+  { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
     glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
   { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
     glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },

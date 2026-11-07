@@ -102,3 +102,11 @@ Nothing replaced by this piece.
 
 - Removed the six extra, unparented roof mesh copies after GLB readback exposed them; the six named stuck roofs now share the loose roof sheet mesh.
 - Temporary grid images, masks, render captures, Blender working file and QA logs created for this round are removed before handoff.
+
+## Magnus's crane, corrected by Claude
+
+`magnus-crane` and `magnus-roof` live in `peace-crane.glb`. The boom pivots at `magnus-crane:boom`, on the cab's end at -Z, and `magnus-roof`'s origin is at the middle of its top edge. The upper body and tracks are one piece. `town-peace-camp.py`'s triangle limit went from 17836 to 20000, as that limit was set from the job's own first count and Claude's corrections added 450 triangles.
+
+### Removed
+
+Nothing replaced by these pieces.

@@ -75,15 +75,15 @@ if args.render_only:
     for name, photo in (('body-side','peace-magnus-crane-side.jpg'),('body-front','peace-magnus-crane-front.jpg')):
         if name=='body-front':
             scene.render.resolution_y=540
-            cam.location=(0,-24,3); cam.rotation_euler=(Vector((0,0,3))-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.ortho_scale=10.2
+            cam.location=(0,24,3); cam.rotation_euler=(Vector((0,0,3))-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.ortho_scale=10.2
         scene.render.filepath=str(review_dir/f'{name}.png')
         bpy.ops.render.render(write_still=True)
     scene.render.resolution_y=450
     for obj in scene.objects:
         obj.hide_render=False
-    for index, location in enumerate(((23,-27,1.6),(-23,-27,1.6)),1):
-        cam.location=location; cam.data.type='PERSP'; cam.data.lens=28
-        cam.rotation_euler=(Vector((0,0,8))-cam.location).to_track_quat('-Z','Y').to_euler()
+    for index, location in enumerate(((-30,34,1.6),(34,-12,1.6)),1):
+        cam.location=location; cam.data.type='PERSP'; cam.data.lens=24
+        cam.rotation_euler=(Vector((0,8,9))-cam.location).to_track_quat('-Z','Y').to_euler()
         scene.render.filepath=str(review_dir/f'whole-{index}.png')
         bpy.ops.render.render(write_still=True)
     raise SystemExit(0)
@@ -144,7 +144,7 @@ def plain(name, color, metallic, roughness):
     bsdf.inputs['Metallic'].default_value = metallic
     bsdf.inputs['Roughness'].default_value = roughness
     return mat
-paint = plain('magnus-magnet-paint', (.74,.54,.07), .35, .90)
+paint = plain('magnus-magnet-paint', (.30,.21,.05), .3, .92)
 steel = plain('magnus-magnet-steel', (.15, .155, .16), .34, .75)
 iron = plain('magnus-magnet-iron', (.045, .036, .03), .62, .72)
 cable_mat = plain('magnus-magnet-cable', (.012, .012, .013), 0, .9)
@@ -184,10 +184,11 @@ boom_root = bpy.data.objects.new('magnus-crane:boom', None)
 boom_root.empty_display_type = 'PLAIN_AXES'
 bpy.context.collection.objects.link(boom_root)
 boom_root.parent = crane
-boom_root.location = game_to_blender((0, 5.2, LENGTH/2-.45))
-boom_root.rotation_euler[0] = math.radians(-50)
+BOOM_PIN_Y, BOOM_PIN_Z, BOOM_LENGTH = 3.0, -LENGTH/2+.9, 22
+boom_root.location = game_to_blender((0, BOOM_PIN_Y, BOOM_PIN_Z))
+boom_root.rotation_euler = (math.radians(-50), 0, math.pi)
 boom_root['part'] = 'magnus-crane:boom'
-BOOM_SCALE = 16 / (2142 - 29)
+BOOM_SCALE = BOOM_LENGTH / (2142 - 29)
 BOOM_CY = (166 + 438) / 2
 
 def boom_world(px, py, depth):
@@ -205,16 +206,18 @@ for index, px in enumerate((430, 900, 1370, 1840), 1):
 
 
 
-# Cable and oversized round roof magnet. The boom tip is 16 m from its pin at 50 degrees.
-tip_y = 5.2 + 16 * math.sin(math.radians(50))
-tip_z = LENGTH/2-.45 + 16 * math.cos(math.radians(50))
-magnet_game = (0, tip_y-3.5, tip_z+.12)
-beam_between('magnus-crane:cable', (0,tip_y,tip_z), (0,magnet_game[1]+.40,magnet_game[2]), .055, cable_mat, crane)
+# Cable and oversized round roof magnet, hanging 7 m below the boom's tip.
+tip_y = BOOM_PIN_Y + BOOM_LENGTH * math.sin(math.radians(50))
+tip_z = BOOM_PIN_Z - BOOM_LENGTH * math.cos(math.radians(50))
+magnet_game = (0, tip_y-7, tip_z)
+MAGNET_SIZE = 1.35
+beam_between('magnus-crane:cable', (0,tip_y,tip_z), (0,magnet_game[1]+.40*MAGNET_SIZE,magnet_game[2]), .055, cable_mat, crane)
 magnet = bpy.data.objects.new('magnus-crane:magnet', None)
 magnet.empty_display_type = 'PLAIN_AXES'
 bpy.context.collection.objects.link(magnet)
 magnet.parent = crane
 magnet.location = game_to_blender(magnet_game)
+magnet.scale = (MAGNET_SIZE, MAGNET_SIZE, MAGNET_SIZE)
 magnet['part'] = 'magnus-crane:magnet'
 
 def magnet_cylinder(name, radius, depth, local_z, material, sides=40):
@@ -267,7 +270,7 @@ for index, (offset, rotation) in enumerate((((-.9,-.35,-.1),(.3,.2,.5)),((.85,-.
     obj = bpy.data.objects.new(f'magnus-crane:stuck-roof-{index}', loose_sheet.data)
     bpy.context.collection.objects.link(obj)
     obj.parent = crane
-    obj.location = game_to_blender(tuple(magnet_game[i]+offset[i] for i in range(3)))
+    obj.location = game_to_blender(tuple(magnet_game[i]+offset[i]*MAGNET_SIZE for i in range(3)))
     obj.rotation_euler = (rotation[0], rotation[2], rotation[1])
     obj['part'] = obj.name
 
