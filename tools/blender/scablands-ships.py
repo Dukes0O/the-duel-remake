@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Patience funnel dimensions and pixel landmarks, read from
 # .evidence/grid-funnel-{side,front,top}.png (generated source dimensions vary).
-# Side (700x800): ends x=69/609, ground y=778; 540 px = 3.5 m; top y=18.
+# Side (467x800): body ends x=62/430, ground y=780; 368 px = 3.5 m; top y=20.
 # Front (667x800): centre x=333, ground y=780, top y=12; 768 px = 6 m.
 # Top (800x571): front/rear x=30/773, centre y=286; width spans y=38..533.
 # Patience upperworks dimensions and pixel landmarks, read from
@@ -107,20 +107,6 @@ if args.render_view:
     scene.camera = bpy.data.objects[f'review-camera-{args.render_view}']
     reference_plane = bpy.data.objects['review-only side photograph']
     reference_plane.hide_render = args.render_view != 'comparison'
-    if args.render_view == 'deck':
-        deck_camera = scene.camera
-        deck_camera.location = Vector((22.4, 475, 7.35))
-        deck_target = Vector((7.4, 470, 10.5))
-        deck_camera.data.type = 'PERSP'
-        deck_camera.data.lens = 85
-        deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
-    if args.render_view == 'funnel':
-        funnel_camera = scene.camera
-        funnel_camera.location = Vector((-15, 463, 17))
-        funnel_target = Vector((-6.3, 466.7, 13.7))
-        funnel_camera.data.type = 'PERSP'
-        funnel_camera.data.lens = 40
-        funnel_camera.rotation_euler = (funnel_target - funnel_camera.location).to_track_quat('-Z', 'Y').to_euler()
     if args.render_view == 'above':
         scene.camera.data.type = 'PERSP'
     if args.render_view == 'comparison':
@@ -592,7 +578,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                        'top': 'patience-funnel-top.jpg'},
             'length': 3.5, 'width': 2.5, 'height': 6.0,
             'side_front_on_left': True,
-            'side': {'start': 69, 'end': 609, 'ground': 778},
+            'side': {'start': 62, 'end': 430, 'ground': 780},
             'front': {'centre': 333, 'ground': 780, 'top': 12, 'top_height': 6.0},
             'rear': {'centre': 333, 'ground': 780, 'top': 12, 'top_height': 6.0},
             'top': {'front': 30, 'rear': 773, 'centre': 286, 'along': 'x',
@@ -603,6 +589,9 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         }
         patience_funnel = carve_object('ship-patience:funnel', tex, funnel_table)
         patience_funnel.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
+        # The isolated side photo's silhouette is a little taller than the
+        # specified six metres at the shared 3.5 m length scale.
+        patience_funnel.scale.z = .83
         patience_funnel.location = gv((funnel_x, roof_y, 0))
         parent(patience_funnel, r)
 
@@ -1028,9 +1017,13 @@ def render_imported_review():
     add_camera('review-camera-above', (27, 150, -470), (27, 6, -470), 98, (1200, 900))
     review_scene.objects['review-camera-above'].data.lens = 45
     add_camera('review-camera-comparison', (10.3, 15.2, -430), (10.3, 15.2, -470), 40, (1400, 600))
-    add_camera('review-camera-deck', (-2, 12.7, -455), (-2, 18.5, -470), 23, (1200, 900))
-    add_camera('review-camera-funnel', (-15, 22, -462), (-6, 20, -470), 23, (1200, 900))
-    review_scene.objects['review-camera-funnel'].data.lens = 24
+    # View (e): eye-level, on the centreline, 15 m ahead of the bridge face,
+    # looking level aft so the bridge front and foredeck share the frame.
+    add_camera('review-camera-deck', (22.4, 5.7, -470), (7.4, 5.7, -470), 35, (1200, 900))
+    # View (f): from deck height, 15 m ahead of the funnel and aimed above its roof.
+    add_camera('review-camera-funnel', (-21.5, 5.7, -470), (-6.5, 13.8, -470), 35, (1200, 900))
+    review_scene.objects['review-camera-deck'].data.lens = 35
+    review_scene.objects['review-camera-funnel'].data.lens = 35
 
     # A flat reference plane shares the comparison camera and the measured
     # 23 m horizontal scale; its photographed background remains visible.
