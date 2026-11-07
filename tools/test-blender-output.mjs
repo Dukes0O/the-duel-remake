@@ -107,6 +107,12 @@ const generators = [
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
+  { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
+    glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
+  { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
+    glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
+  { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
+    glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },
   { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
@@ -705,6 +711,26 @@ try {
       }
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
+      if (generator.script === 'tools/blender/town-peace-props.py') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        for (const root of ['toll-cabinet', 'bound-sign', 'bound-stone',
+          'mirage-decoy-tent', 'mirage-decoy-oasis', 'sal-pipe-trailer', 'dust-tanker']) {
+          assert.ok(names.has(root), `missing named prop root ${root}`);
+        }
+        for (const part of ['toll-cabinet:open-drawer-box', 'bound-sign:hand-painted-board',
+          'bound-stone:smiley-crossed-tools-marker', 'mirage-decoy-tent:smaller-rear-board',
+          'mirage-decoy-oasis:traced-thin-tarpaulin', 'mirage-decoy-oasis:lifted-corner-1',
+          'mirage-decoy-oasis:rusty-peg-1', 'mirage-decoy-oasis:guy-line-1',
+          'sal-pipe-trailer:pickup-body', 'sal-pipe-trailer:photographed-pipe-stack',
+          'sal-pipe-trailer:frame-rail-left-1', 'sal-pipe-trailer:pickup-wheel-front-left',
+          'sal-pipe-trailer:trailer-wheel-1-left',
+          'dust-tanker:photo-carved-cab', 'dust-tanker:photo-turned-fuel-tank',
+          'dust-tanker:tied-tarpaulin-left', 'dust-tanker:tied-tarpaulin-right',
+          'dust-tanker:wheel-front-left', 'dust-tanker:wheel-rear-right',
+          'dust-tanker:traced-frame-rail-left']) {
+          assert.ok(names.has(part), `missing named prop part ${part}`);
+        }
+      }
       if (generator.id === 'town-stages') {
         const names = gltf.nodes.map(node => node.name || '');
         assert.ok(names.includes('town-stages'), 'named family root');
@@ -1712,3 +1738,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
+

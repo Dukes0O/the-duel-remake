@@ -94,6 +94,15 @@ stop adjusting and change the method.
   column; check the crop against the source photo before carving. A swapped
   crop can turn a mirror or the background into floating geometry.
 
+- **A tank under a tied cloth** (Dust's tanker, 6 November). Turn the tank and dress it with the side
+  photo laid straight on, so that it shows bare metal where the canvas stops. Build the cloth as one
+  draped surface from its hanging edge up to the crown, drawn in to the tank at that edge. Close the
+  ends with the end photos as thin traced plates. Flat slabs of cloth standing beside a tank fail from
+  every angle. See `town-peace-props.py`.
+- **Choosing a vehicle's size.** Measure the same height on the side and front photos. Their ratio
+  gives the width that goes with a length. The tanker's invented 11.2 m made its end photos 40% too
+  narrow for its height, which squashed the goggles and tilted the look of everything.
+
 ### Buildings
 
 - **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.

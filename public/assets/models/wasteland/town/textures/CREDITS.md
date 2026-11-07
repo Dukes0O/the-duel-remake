@@ -398,6 +398,43 @@ Prompt: A photographic orthographic 2x2 reference sheet of one original 24 by 24
 Generated with Codex Image Generation on 6 November 2026. The compressed front and overhead views are cropped from one four-view reference. The front is traced into the open-bay face; the overhead view covers the roof-facing view. Original output remains outside the repository.
 
 Prompt: Photorealistic orthographic 2x2 reference sheet of one original 24m wide by 16m deep desert repair workshop, same building in all views: front elevation top left, right side top right, rear bottom left, straight-down overhead plan bottom right. Dead-on views, even pale background. Low long industrial shed built from dark stained timber and mismatched rusted corrugated tin, three open bays, strong steel roof trusses, bent gutters, visible clerestory panels and several irregular roof repairs. In the central bay a worn red 1970s utility car sits on a real two-post lift with wheels just off the ground; black dusty tyres stacked beside the wall, tool benches and a hanging work lamp. Realistic thin beams, bracing and open doors, no giant blank panels. Faded paint under dark brown rust, grime low down and dusty sand. Bright flat overcast daylight, natural photographic details. Whole subject inside every panel, no text, logos, labels, or people.
+# WW-ART-PEACE photo references
+
+## WW-ART-PEACE vehicles, 6 November 2026
+
+Generated with OpenAI built-in image generation as four-view orthographic
+turnarounds of original fictional vehicles. Each view was cropped from its
+matching generated turnaround and saved as a JPEG source for the Blender recipe.
+
+- `peace-sal-pipe-trailer-side.jpg`, `peace-sal-pipe-trailer-front.jpg`,
+  `peace-sal-pipe-trailer-rear.jpg`, `peace-sal-pipe-trailer-overhead.jpg` —
+  rusty pickup and sagging pipe trailer, clean bright pipe ends.
+- `peace-dust-tanker-side.jpg`, `peace-dust-tanker-front.jpg`,
+  `peace-dust-tanker-rear.jpg`, `peace-dust-tanker-overhead.jpg` — battered
+  tanker with painted goggles and a tied tarp.
+- `peace-mirage-caravan-side.jpg`, `peace-mirage-caravan-front.jpg`,
+  `peace-mirage-caravan-rear.jpg`, `peace-mirage-caravan-overhead.jpg` — old
+  caravan with a dummy in a large hat at its window.
+
+No third-party photographs, marks, brands or logos were used.
+
+Generated with the built-in OpenAI image generator on 6 November 2026. The originals remain in the Codex generated-images library; the game sources below are compressed JPEG copies.
+
+- `peace-toll-cabinet-front.jpg`, `peace-toll-cabinet-side.jpg` — dead-on front and left-side photos of a dented steel filing cabinet with one drawer open and stuffed with old folders. Generated for the Toll cabinet; no people, brands or third-party material.
+- `peace-bound-sign-front.jpg` — dead-on hand-painted warning sign with the exact words `DO NOT DIG HERE` on three lines. Generated as an original desert prop photo; no third-party material.
+- `peace-bound-stone-front.jpg`, `peace-bound-stone-side.jpg` — dead-on front and side photos of a squat, layered desert boundary stone. The front has a carved smiley above crossed digging tools; the back and side are unmarked stone.
+- `peace-decoy-tent-front.jpg` — a painted full-frame scene of a large army tent on a plain board. Generated as original art for the Mirage decoy; no people, lettering, brands or third-party material.
+- `peace-decoy-oasis-overhead.jpg` — dead-on overhead photo of a blue, patched tarp with four pegs, guy lines, lifted corners and an amateur painted palm. Generated as an original prop reference; no third-party material.
+
+- `peace-billboard-front.jpg` — professional painted Treatment Plant billboard, frontal view. Prompt: straight-on full-frame photograph of an 8 m by 3 m roadside wooden billboard carrying a beautiful hand-painted public works illustration of blue water tanks, white pipes and green lawn, flat overcast light, pale background, no words.
+- `peace-billboard-back.jpg` — rough timber back and two poles of an 8 m by 3 m billboard. Prompt: straight-on full-frame back view, rough dark aged battens, nails, braces, splintered ends and dust, plain pale background, overcast light.
+- `peace-billboard-side.jpg` — exact edge-on side photo of the same billboard, showing the thin sign and poles. Prompt: strict side elevation of an 8 m by 2.65 m board, 15 cm deep, with two rough poles, entire 4.7 m structure in frame, plain pale background and flat overcast light.
+- `peace-turret-side.jpg`, `peace-turret-top.jpg` — three views cropped from one generated contact sheet. Prompt: same pristine polished silver turret on circular base with three oversized bolts, side/front/overhead triptych, pale background, overcast light.
+- `peace-rock-scarred.jpg` — natural 3 m granite boulder with bullet scars on the visible side. Prompt: realistic gray-brown fractured granite, several impact pits and chips on one broad side, full object, straight-on, pale background, flat overcast light.
+- `peace-rock-untouched.jpg` — opposite-side reference of a matching untouched granite boulder. Prompt: same-sized natural gray-brown granite boulder, untouched side, full object, straight-on, pale background, flat overcast light.
+- `peace-chair-side.jpg` — four views cropped from one generated contact sheet. Prompt: the exact same dentist chair in four strict orthographic directions, side/front/rear/overhead; nearly vertical padded backrest, horizontal seat, steel hydraulic pedestal, rusty truck fender legs, thin articulated drill arm on viewer's right, round overhead lamp; 3 m high, fully in frame; pale background and flat overcast light.
+
+Images are generated original artwork. No external source material was used.
 ## TOWN-ART-WALKERS, round 3
 
 The following four small photo sets are original OpenAI ImageGen turnarounds,
@@ -612,3 +649,17 @@ Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after the in
 
 - `hermit-hut-front-gable-v2.jpg`
 - `hermit-hut-rear-gable-v2.jpg`
+## WW-ART-PEACE Mirage camp, 7 November 2026
+
+Generated with OpenAI image generation as seven original product-photo references: a matching tent side, front and true overhead view, plus straight side views of a folding chair, a camp stove with kettle, a water can, and a crate with tin mug. The tent images share the same tent identity. Flat pale studio backgrounds, no labels, brands or third-party material.
+
+## WW-ART-PEACE Magnus crane references, 7 November 2026
+
+Generated with OpenAI built-in image generation as six original documentary-style product photo references: crawler crane body side, front, rear and overhead views; one detached lattice boom side view; and one rusty corrugated roof sheet. Original PNG outputs remain in the generated-images folder. The six JPEGs below are converted copies; no external source photos were used.
+
+- `peace-magnus-crane-side.jpg` — the boomless crawler crane body, true side view.
+- `peace-magnus-crane-front.jpg` — the same type of body, front end view.
+- `peace-magnus-crane-rear.jpg` — rear end view.
+- `peace-magnus-crane-top.jpg` — directly overhead body view.
+- `peace-magnus-crane-boom.jpg` — detached open lattice boom, side view.
+- `peace-magnus-crane-roof.jpg` — one rusty corrugated tin sheet, overhead view.
