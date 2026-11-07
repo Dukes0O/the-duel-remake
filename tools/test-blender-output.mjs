@@ -791,7 +791,9 @@ try {
           'wall-scrap-straight','wall-scrap-corner','wall-scrap-end',
           'wall-steel-straight','wall-steel-corner','wall-steel-end',
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
-          'searchlight','searchlight:beam','fire-station','clinic','hydrant',
+          'searchlight','searchlight:post','searchlight:head','searchlight:beam',
+          'fire-station','clinic','hydrant','hydrant-standpipe','hydrant-hose-reel-side',
+          'hydrant-wound-rubber-hose',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
@@ -799,6 +801,12 @@ try {
         for (const id of ['guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier']) {
           const part=nodeIndex.get(id);
           assert.notEqual(part,undefined, `${id} named model piece exists`);
+          assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
+        }
+        for (const id of ['searchlight:post','searchlight:head','searchlight:beam',
+          'hydrant-standpipe','hydrant-hose-reel-side','hydrant-wound-rubber-hose']) {
+          const part=nodeIndex.get(id);
+          assert.notEqual(part,undefined, `${id} named prop part exists`);
           assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
         }
         const children = gltf.nodes.map(node => node.children || []);
