@@ -100,6 +100,8 @@ const generators = [
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
   { script: 'tools/blender/sea-works.py', args: ['--through', 'iron-mule-gear'], candidate: true, budget: 50000, maxBytes: 3_400_000,
     glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { script: 'tools/blender/sea-camp.py', args: [], candidate: true, budget: 25000, maxBytes: 2*1024*1024,
+    glb: ['public/assets/models/wasteland/scablands/sea-camp.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
