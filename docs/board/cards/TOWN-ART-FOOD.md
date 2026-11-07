@@ -33,3 +33,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 ## Claude answers
 
 Soup kitchen, 7 November (Claude): **passes, merged.** It holds together from every side, with an open bay you can look into, a real pot over its fire, benches and a pitched roof that reads from the mayor's view. Short of the photo: the flames are simple cones, and the wall is softer than its photo. The six rounds count per building; the canteen, stall, shopfront, market hall and greenhouse remain.
+
+Market hall, 7 November (Claude): **round 2 passes, merged.** The patched tin roof on its steel frame, the floor, the corner store and the rows of stalls read as a market from the road and from the mayor's view. Short of the photo: the stalls sit dark and small under the roof, and the dark roof bars are heavier than the photo's. The canteen, stall, shopfront and greenhouse remain.

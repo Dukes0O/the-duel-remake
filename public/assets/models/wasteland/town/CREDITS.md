@@ -55,6 +55,32 @@ Prompt:
 - `broken-glass.jpg`: dark broken bus glazing.
 - `tire-rubber.jpg`: worn tire rubber from the bus wheels.
 
+# Market hall art credits
+
+The market hall reference photos were generated with OpenAI image generation
+on 7 November 2026. They depict an original fictional structure. No third-party
+images, real-world brands, logos or marks are used.
+
+- `textures/market-hall-side.jpg`: long-side elevation, with the 2 m storage
+  door used to set the model scale.
+- `textures/market-hall-front.jpg` and `market-hall-rear.jpg`: matching empty
+  gable-end elevations, with roof-top pixel rows recorded in the recipe.
+- `textures/market-hall-top.jpg`: straight-down roof view.
+- `textures/market-hall-front-stalls.jpg`: matching front view with five
+  separate stalls and goods, used for the stall and goods pieces.
+
+The same five references are retained as full-resolution PNG originals beside
+these JPEG recipe copies. They were generated from the same prompt set above.
+
+Prompt set: one original open-sided salvage market hall with a broad shallow
+gable roof, mismatched rusty red and grey corrugated sheets, a faded blue panel,
+patched canvas, welded steel posts and braces, and an attached corrugated store
+with one standard 2 m metal door. The side, front, rear and plan photos are
+dead-on orthographic references on a plain mid-grey floor in flat overcast
+light. A second front photo keeps the same camera and hall, adding five
+ground-standing stalls selling fruit, vegetables, ironware, pottery and dry
+goods. No people or other foreground objects.
+
 ## Generated rusted steel material
 
 Prompt:
