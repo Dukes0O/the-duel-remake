@@ -1,5 +1,13 @@
 // Every report and choice is a complete sentence a player can understand.
 export const REPORT_TEXT = Object.freeze({
+  'home-goods-shortage': {
+    who: 'Hollis', what: 'Home building has stopped.', priority: 55, bad: false,
+    requires: {homeGoodsShortage: true},
+    answers: [
+      {id:'bring-goods',label:'Bring the missing goods to the nearest store.',outcome:'The household will keep building when its missing goods arrive.'},
+      {id:'leave',label:'The household waits for the missing goods.',outcome:'The household waits for the missing goods.'},
+    ],
+  },
   'fire-at-site': {
     who: 'Odessa', what: 'A fire has started.', priority: 100, bad: true,
     requires: {fire: true},

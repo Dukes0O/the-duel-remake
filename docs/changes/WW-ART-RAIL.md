@@ -1,35 +1,47 @@
-# WW-ART-RAIL: carriage and guard van, round 4
+# WW-ART-RAIL: small props and last touches
 
 Date: 6 November 2026
 
 ## Changed
 
-- Rebuilt `rail-trains.glb` from the Blender recipe and rendered review views by importing that GLB into an empty Blender scene.
-- Thickened the carriage and guard-van underframes with photo-traced frames, central tanks and round truss rods. Kept the guard van's photographed single axle pair.
-- Added the guard-van cargo floor and refined its lookout, end panels and roof edge. Adjusted the carriage roof edge and underframe details.
-- Published `docs/board/looks/ww-art-rail/round-4.jpg` and its review note. The engine and drift remain accepted from the previous art review; this round works on the carriage and guard van.
+- Kept the Hollis suitcase model id and label child as `case-hollis`; retained the source image name `case-fourteen.jpg`. Review shots now use `case-hollis`.
+- Tightened the book, tooth-jar, megaphone and suitcase outlines by 8 pixels to reduce the photo shadow fringe. A faint pale edge remains and is called out for Claude's look review.
+- Kept the token-ring mask seed in the hoop centre; the exported render shows a real open hole.
+- Kept the 15 m sand drag as a 1.5 m feathered heightfield with rail stub and thick timber stop. Its two car-height views are at about 18 m and frame the ridge across its length.
+- Reduced tin-car wheel radius to 35 mm and width to 12 mm, moved them nearer the body, and reduced hub size.
+- Kept the 1.20 m lever and small case dimensions. Tightened the two-row lineup and moved the sand ridge behind the props.
+- Added `rail-props.py` and its GLB budget to the Blender output coverage list. This adds generator coverage only; no existing assertion was weakened.
+- Added the round 8 comparison sheet. No new reference pictures were added; existing source pictures remain credited in `CREDITS.md`.
 
 ## Checks
 
-- Blender 4.5.13 rebuilt and exported the GLB, then imported it into an empty scene for the renders.
-- `node tools/test-blender-output.mjs`: passed, 284 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; the current `round-4` sheet is 447,163 bytes and stays below the 500 KB cap.
-- No lane tier, build, browser check or frame timing; the card says this art is not wired into the game.
-- Art verdict is pending Claude's review. Round 4 improves the visible underframes; the review note calls out the remaining roof and lookout joins for a final decision.
+- Blender recipe: passed; imported the exported GLB into an empty scene for every prop and the lineup. No `SKY seed` warnings or Blender errors. GLB readback: 20,336 triangles, 2,428,476 bytes, and only `TEXCOORD_0`; metallic factors are at or under 0.3.
+- `node tools/test-blender-output.mjs`: passed, 296 checks, 0 failures. First run exposed the missing `rail-props.py` coverage entry; added the entry and reran.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- Browser and look checks: not run in this job; Claude should inspect `docs/board/looks/ww-art-rail/round-8.jpg`.
 
 ## Changed assertions
 
-None.
+- Added one expected generator entry to the existing coverage list because `rail-props.py` produces a committed Blender asset. No assertion was removed or loosened.
 
 ## Race fingerprints
 
-None. This asset is not wired into a playable scene.
+- None. The model is not wired into a playable scene.
 
 ## Removed
 
-- Removed the superseded carriage/van round 2 sheet and review note, and the earlier engine round 3 sheet and review note after carrying forward their verdicts and useful findings here.
-- Removed temporary Blender renders, masks, the sheet-making scratch script, and the generated `.blend` file after making the review sheet.
+- None.
 
-## Merge note, carriage and van
+## Claude should inspect
 
-Lane tier: 46 of 47, with `test-blender-output.mjs` timing out on a busy laptop and passing when rerun alone; `npm run build` passed. All on 0b669912.
+- The faint pale edge at the base of the books, tooth jar, megaphone and suitcase.
+- Whether the sand ridge overlaps too much of the second prop row in the lineup.
+- The tin-car wheel placement and open token-ring centre.
+
+## The small props
+
+The card is finished. `tools/blender/rail-props.py` and `public/assets/models/wasteland/rail/rail-props.glb` join the card's file list, because `rail-trains.glb` is near its limit. All pass; see `docs/board/looks/ww-art-rail/round-8-review.md`. Removed: the separate props from any earlier recipe, none of which had shipped.
+
+## Merge note, small props
+
+Lane tier and `npm run build`: passed on f6761be4.
