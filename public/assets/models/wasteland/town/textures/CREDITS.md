@@ -706,3 +706,7 @@ Generated with OpenAI built-in image generation as six original documentary-styl
 - `peace-magnus-crane-top.jpg` — directly overhead body view.
 - `peace-magnus-crane-boom.jpg` — detached open lattice boom, side view.
 - `peace-magnus-crane-roof.jpg` — one rusty corrugated tin sheet, overhead view.
+
+## TOWN-ART-SAFETY fire station references
+
+Original single-view orthographic photo references generated with OpenAI ImageGen on 7 November 2026. They show the same weathered red scrap-metal fire station on a plain grey studio ground; none includes the hose tower. Each is one view, not a panel sheet. ire-station-side.jpg is side elevation, ire-station-front.jpg front elevation, ire-station-rear.jpg rear elevation, and ire-station-top.jpg a straight-down roof view. Prompts requested a complete building with margins, diffuse flat light, rusty red patched corrugated metal, and no text, logos, people or vehicles. The existing 	own-safety-fire-station.jpg is retained separately as the source for tracing the hose tower and bell.
