@@ -29,7 +29,7 @@ choose which one to read; they do not override the spec or current board.
 
 | Area | Pages |
 | --- | --- |
-| Architecture and assets | [Architecture](ARCHITECTURE.md), [asset pipeline](ASSET_PIPELINE.md), [graphics](GRAPHICS_ITERATION.md), [performance](PERFORMANCE_PASS.md) |
+| Architecture and assets | [Architecture](ARCHITECTURE.md), [art line](ART_LINE.md), [asset pipeline](ASSET_PIPELINE.md), [graphics](GRAPHICS_ITERATION.md), [performance](PERFORMANCE_PASS.md) |
 | Courses and driving | [Course expansion](COURSE_EXPANSION.md), [course access](COURSE_ACCESS.md), [route landforms](ROUTE_LANDFORMS.md), [shortcut pace](SHORTCUT_PACE_AUDIT.md), [physics](PHYSICS_EXPANSION.md), [freestyle](FREESTYLE_EXPANSION.md), [stunt trial](STUNT_TRIAL.md) |
 | Arena and warlords | [Scrapdome](SCRAPDOME.md): play design, architecture and the handoff cards |
 | The Wasteland world | [Wasteland world](WASTELAND_WORLD.md): the Scablands, the Everburn and later stories, job kinds, the Bowl, and their cards |
