@@ -535,17 +535,43 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         for polygon in upperworks.data.polygons:
             if polygon.normal.z > .9 and polygon.center.z >= UPPER_HEIGHT - .15:
                 polygon.material_index = roof_slot
-        # The studio reference is brighter than the game's overcast world. Keep
-        # its salt-white paint from clipping under the broad review softboxes.
+        # Darken the studio paint in material, then lay broken rust runoff over
+        # the photo. The multiplier follows the yard's worn-steel treatment;
+        # elongated noise and a restrained oxide tint follow the tanker streaks.
         for photo in upper_table['_photos'].values():
             photo_material = photo.material()
-            bsdf = photo_material.node_tree.nodes.get('Principled BSDF')
-            texture = next(node for node in photo_material.node_tree.nodes
-                           if node.type == 'TEX_IMAGE')
-            tone = photo_material.node_tree.nodes.new('ShaderNodeHueSaturation')
-            tone.inputs['Value'].default_value = .78
-            photo_material.node_tree.links.new(texture.outputs['Color'], tone.inputs['Color'])
-            photo_material.node_tree.links.new(tone.outputs['Color'], bsdf.inputs['Base Color'])
+            nodes, links = photo_material.node_tree.nodes, photo_material.node_tree.links
+            bsdf = nodes.get('Principled BSDF')
+            texture = next(node for node in nodes if node.type == 'TEX_IMAGE')
+            output = nodes.get('Material Output')
+            darken = nodes.new('ShaderNodeMixRGB')
+            darken.name = 'Worn cabin paint multiply'
+            darken.blend_type = 'MULTIPLY'
+            darken.inputs['Fac'].default_value = 1.0
+            darken.inputs[2].default_value = (.62, .60, .56, 1)
+            links.new(texture.outputs['Color'], darken.inputs[1])
+            texcoord = nodes.new('ShaderNodeTexCoord')
+            stretched = nodes.new('ShaderNodeVectorMath')
+            stretched.operation = 'MULTIPLY'
+            stretched.inputs[1].default_value = (16, 2, 4)
+            links.new(texcoord.outputs['Generated'], stretched.inputs[0])
+            noise = nodes.new('ShaderNodeTexNoise')
+            noise.inputs['Scale'].default_value = 3.0
+            noise.inputs['Detail'].default_value = 2.0
+            links.new(stretched.outputs['Vector'], noise.inputs['Vector'])
+            ramp = nodes.new('ShaderNodeValToRGB')
+            ramp.color_ramp.elements[0].position = .60
+            ramp.color_ramp.elements[0].color = (0, 0, 0, 1)
+            ramp.color_ramp.elements[1].position = .74
+            ramp.color_ramp.elements[1].color = (.19, .12, .075, 1)
+            links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
+            rust_layer = nodes.new('ShaderNodeMixRGB')
+            rust_layer.name = 'Tanker-style broken rust runoff'
+            rust_layer.blend_type = 'ADD'
+            rust_layer.inputs['Fac'].default_value = .42
+            links.new(darken.outputs['Color'], rust_layer.inputs[1])
+            links.new(ramp.outputs['Color'], rust_layer.inputs[2])
+            links.new(rust_layer.outputs['Color'], bsdf.inputs['Base Color'])
         upper_bounds = tuple(float(v) for v in upperworks.dimensions)
         upper_root = bpy.data.objects.new('ship-patience:upperworks-root', None)
         scene.collection.objects.link(upper_root)
