@@ -777,6 +777,10 @@ try {
         assert.ok(names.has('hermit-camp:dish-pole'), 'leaning dish pole');
         assert.ok(names.has('hermit-camp:chair-seat'), 'separate chair seat');
         assert.ok(names.has('deck-town'), 'named stranded-deck town building root');
+        assert.ok(names.has('deck-town:deck'), 'ship deck is carved from its own photos');
+        for (const index of [1, 2, 3, 4]) {
+          assert.ok(names.has(`deck-town:home-${index}:body`), `home ${index} reuses the photo-carved tin home`);
+        }
         assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
@@ -1824,4 +1828,3 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
-

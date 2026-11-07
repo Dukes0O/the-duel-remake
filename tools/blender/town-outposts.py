@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-1')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-12')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-11.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-12.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -790,8 +790,8 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     home = bpy.data.objects.new(prefix, None)
     bpy.context.collection.objects.link(home)
     home.parent = deck_town
-    home.location = (x, DECK_Y + .12, z)
-    home.rotation_euler[1] = angle
+    home.location = town.game_vector((x, DECK_Y + .12, z))
+    home.rotation_euler[2] = angle
     home.scale = (scale, scale, scale)
     body = home_source.copy()
     body.data = home_source.data
@@ -819,7 +819,7 @@ bpy.data.objects.remove(home_source, do_unlink=True)
 for i, (a, b) in enumerate((((-1.65,-4.2),(1.65,-3.9)), ((-1.65,2.9),(1.65,3.3)), ((0,-3.9),(0,2.9)))):
     beam_obj = deck_piece(f'walkway-{i+1}', ((a[0]+b[0])/2,DECK_Y+.10,(a[1]+b[1])/2),
                           (math.dist(a,b),.12,.72), materials['weathered-plank'], .02)
-    beam_obj.rotation_euler[1] = -math.atan2(b[1]-a[1], b[0]-a[0])
+    beam_obj.rotation_euler[2] = math.atan2(-(b[1]-a[1]), b[0]-a[0])
 for i, (x,z) in enumerate(((-1.6,-4.2),(-1.6,3.2))):
     line = town.beam(f'deck-town:washing-line-{i+1}', (x,DECK_Y+2.15,z), (x+3.5,DECK_Y+2.15,z+.3), .025, materials['iron-dark'])
     line.parent=deck_town; deck_parts.append(line)
@@ -869,8 +869,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 12, 25), 3600, 20)
-area('open fill', (-16, -16, 14), 1900, 15)
+area('soft sky', (0, 12, 25), 6200, 20)
+area('open fill', (-16, -16, 14), 3600, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -882,6 +882,10 @@ def shot(name, eye, target, ortho):
     camera.data.ortho_scale = ortho
     if name == 'model-side':
         scene.render.resolution_x, scene.render.resolution_y = 1000, 500
+    elif name == 'deck-match-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 341
+    elif name == 'home-match-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 512
     elif name in ('model-front', 'model-rear', 'model-above'):
         scene.render.resolution_x, scene.render.resolution_y = 700, 700
     else:
@@ -916,14 +920,76 @@ def show_deck_town_only():
         if node.type == 'MESH':
             node.hide_render = not node.name.startswith('deck-town:') and node.name != ground.name
 
+def show_deck_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = node.name != 'deck-town:deck' and node.name != ground.name
+
+def show_home_one_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = node.name != 'deck-town:home-1:body' and node.name != ground.name
+
 show_deck_town_only()
-deck_centre = (0, 1.7, 0)
-shot('deck-side', (19, 2.5, 0), deck_centre, 18)
-shot('deck-front', (0, 2.5, -18), deck_centre, 14)
-shot('deck-rear', (0, 2.5, 18), deck_centre, 14)
+deck_centre = (0, DECK_Y + 1.5, 0)
+show_deck_only()
+shot('deck-match-side', (19, DECK_Y + 1.5, 0), deck_centre, 14.8)
+show_home_one_only()
+home_centre = (-1.65, DECK_Y + HOME_HEIGHT / 2, -4.2)
+shot('home-match-side', (13, home_centre[1], -4.2), home_centre, 6.0)
+show_deck_town_only()
+shot('deck-side', (19, DECK_Y + 1.5, 0), deck_centre, 18)
+shot('deck-front', (0, DECK_Y + 1.5, -18), deck_centre, 14)
+shot('deck-rear', (0, DECK_Y + 1.5, 18), deck_centre, 14)
 shot('deck-above', (0, 32, 0), deck_centre, 18)
-shot('deck-road', (-12, 3, -18), deck_centre, 21)
-shot('deck-far', (19, 3, 0), deck_centre, 21)
-shot('deck-mayor', (-44, 63.3, -44), deck_centre, 22)
+shot('deck-road', (-12, 8, -18), deck_centre, 15)
+shot('deck-far', (12, 8, 18), deck_centre, 15)
+shot('deck-mayor', (-44, 63.3, -44), deck_centre, 19)
+
+# A compact comparison sheet: two matched source/model pairs, two town angles,
+# and the mayor's 45-degree view. The reference images keep their full 1024 px.
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+sheet.parent.mkdir(parents=True, exist_ok=True)
+W, H = 1600, 2430
+page = Image.new('RGB', (W, H), (31, 33, 31))
+draw = ImageDraw.Draw(page)
+font_dir = Path('C:/Windows/Fonts')
+title_font = ImageFont.truetype(str(font_dir / 'segoeuib.ttf'), 34)
+label_font = ImageFont.truetype(str(font_dir / 'segoeuib.ttf'), 23)
+body_font = ImageFont.truetype(str(font_dir / 'segoeui.ttf'), 18)
+draw.text((34, 20), 'DECK TOWN | ROUND 12', font=title_font, fill=(242, 227, 199))
+draw.text((34, 66), 'Photo-carved ship deck and patched tin homes | warm daylight', font=body_font, fill=(221, 209, 184))
+
+def panel(image_path, rect, caption):
+    x, y, w, h = rect
+    image = Image.open(image_path).convert('RGB')
+    image = ImageOps.fit(image, (w, h), method=Image.Resampling.LANCZOS)
+    page.paste(image, (x, y))
+    draw.rectangle((x + 8, y + 8, x + min(w - 8, 310), y + 36), fill=(23, 25, 23))
+    draw.text((x + 16, y + 9), caption, font=body_font, fill=(245, 231, 202))
+
+def row_label(y, caption):
+    draw.text((34, y), caption, font=label_font, fill=(233, 190, 126))
+
+row_label(112, 'DECK | SIDE PHOTO AND MATCHED MODEL VIEW')
+panel(textures / 'deck-town-deck-side.jpg', (34, 148, 748, 249), 'SOURCE PHOTO')
+panel(render / 'deck-match-side.png', (818, 148, 748, 249), 'CARVED MODEL')
+row_label(426, 'ONE HOME | SIDE PHOTO AND MATCHED MODEL VIEW')
+panel(textures / 'deck-town-home-side.jpg', (34, 462, 748, 374), 'SOURCE PHOTO')
+panel(render / 'home-match-side.png', (818, 462, 748, 374), 'CARVED MODEL')
+row_label(866, 'TOWN | ROAD-SIDE AND FAR-SIDE THREE-QUARTER VIEWS')
+panel(render / 'deck-road.png', (34, 902, 748, 516), 'ROAD SIDE')
+panel(render / 'deck-far.png', (818, 902, 748, 516), 'FAR SIDE')
+row_label(1448, 'MAYOR | 45 DEGREES DOWN, 88 METRES AWAY')
+panel(render / 'deck-mayor.png', (34, 1484, 1532, 906), 'MAYOR VIEW')
+draw.text((34, 2402), 'Generated reference photographs: OpenAI image generation, 7 November 2026.',
+          font=body_font, fill=(221, 209, 184))
+for quality in (78, 74, 70, 66, 62, 58, 54):
+    page.save(sheet, 'JPEG', quality=quality, optimize=True, progressive=True)
+    if sheet.stat().st_size <= 500_000:
+        break
+if sheet.stat().st_size > 500_000:
+    raise RuntimeError(f'round-12 sheet is {sheet.stat().st_size} bytes; limit 500 KB')
+print(json.dumps({'sheet': str(sheet), 'sheet_bytes': sheet.stat().st_size}))
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('*.png'))]}))
