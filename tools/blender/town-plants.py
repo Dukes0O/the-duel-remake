@@ -106,13 +106,14 @@ belt_mask=dark_pixels.copy();belt_mask[:105,:]=False;belt_mask[420:,:]=False
 belt_mask[:,:440]=False;belt_mask[:,976:]=False
 upper=324-.356*(xx-448)-24;lower=414-.253*(xx-448)+24
 between_rails=(yy>=upper)&(yy<=lower)
-support_legs=(((xx>=675)&(xx<=720)&(yy>=350)&(yy<=480))|
-              ((xx>=890)&(xx<=935)&(yy>=270)&(yy<=480)))
+# The photo has one leg under the conveyor; the second box held the gravel fall and cone.
+support_legs=((xx>=675)&(xx<=720)&(yy>=350)&(yy<=480))
 belt_mask &= between_rails|support_legs
 # The side reference has two hanging chain runs below the head pulley. They
 # are not part of the conveyor frame or belt; gravel is rebuilt as separate
 # stones below, so keep the trace clear of those chain pixels.
 belt_mask &= ~((xx>=900)&(xx<=976)&(yy>=170)&(yy<=345))
+belt_mask &= ~((xx>=780)&(yy>=300))   # the cone's top
 belt_loops=trace(belt_mask,(438,100,980,422),tolerance=1.1,min_area=90)
 belt_mesh=PhotoMesh()
 slab(belt_mesh,'side',side_photo,belt_loops,side_world,-.35,-.27,wall_scale=scale)
@@ -120,14 +121,15 @@ frame=belt_mesh.finish('crusher:belt:side-frame',{'side':side_photo.material()})
 frame_far=frame.copy();frame_far.data=frame.data.copy();frame_far.name='crusher:belt:far-side-frame';bpy.context.collection.objects.link(frame_far);frame_far.parent=belt_parent;frame_far.location.x=.70
 # One dark rubber plane follows the measured slope between the two open frames.
 belt_pts=[side_world(448,329,d) for d in (-.31,.31)]+[side_world(950,157,d) for d in (-.31,.31)]+[side_world(950,174,d) for d in (-.31,.31)]+[side_world(448,346,d) for d in (-.31,.31)]
-verts=[(x,y,z) for x,y,z in belt_pts]
+# side_world gives glTF axes (Y up); Blender's mesh data is Z up.
+verts=[(x,-z,y) for x,y,z in belt_pts]
 faces=[(0,2,4,6),(1,7,5,3),(0,1,3,2),(2,3,7,6),(6,7,5,4),(4,5,1,0)]
 mesh=bpy.data.meshes.new('crusher rubber belt mesh');mesh.from_pydata(verts,[],faces);mesh.update()
 uv_layer=mesh.uv_layers.new(name='UVMap')
 for polygon in mesh.polygons:
  for loop_index in polygon.loop_indices:
   vertex=mesh.vertices[mesh.loops[loop_index].vertex_index].co
-  uv_layer.data[loop_index].uv=((vertex.x+.31)/.62,(vertex.z+3.7)/7.4)
+  uv_layer.data[loop_index].uv=((vertex.x+.31)/.62,(-vertex.y+3.7)/7.4)
 rubber=bpy.data.objects.new('crusher:belt:rubber-surface',mesh);bpy.context.collection.objects.link(rubber);rubber.parent=belt_parent
 rubber.data.materials.append(dark)
 # The trailer is two traced copies of the same measured side frame. Four tyres
@@ -166,11 +168,7 @@ for side,name in ((-.54,'near'),(.58,'far')):
 # crank hubs sit on the housing; the rims have real thickness and open spokes.
 # Flywheels are retained in the carved side and end views so their axes agree.
 # Body details are already in the carve; do not leave detached ladders or pipes.
-# The discharge chute is an open frame beneath the belt head. The gravel cone
-# wears only the measured pile crop from the overhead photograph.
-for x in (-.48,.48):
- beam('crusher-discharge-chute-side',(x,.78,2.25),(x,.40,2.82),.10,steel)
-beam('crusher-discharge-chute-lip',(-.48,.40,2.82),(.48,.40,2.82),.10,steel)
+# The gravel cone wears only the measured pile crop from the overhead photograph.
 over_photo=Photo(tex/'crusher-overhead.jpg')
 over_rgb=over_photo.rgb();oy,ox=np.ogrid[:over_photo.h,:over_photo.w]
 pile_mask=((ox-903)/112)**2+((oy-315)/126)**2<=1

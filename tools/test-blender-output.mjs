@@ -934,7 +934,7 @@ try {
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name), ['crusher'], 'one named piece in round 1');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
-      'crusher-gravel-cone', 'crusher-discharge-chute-lip']) {
+      'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
     }
     assert.ok(!names.some(name => ['crusher-hopper-back', 'crusher-chassis', 'crusher-jaw-housing'].includes(name)),
