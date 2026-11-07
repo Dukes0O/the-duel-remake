@@ -20,7 +20,7 @@
 
 Rendered from the exported GLB in an empty Blender scene. Checked the supply truck and tow rig from the side, three-quarter, and mayor-height views, and checked the tanker crown from above. The floaters are gone; the tank hatch remains. Round 13 is 221,936 bytes.
 
-Claude should review [round-13.jpg](../board/looks/town-art-trucks-1/round-13.jpg), focusing on the supply bed and cargo from side and above, the tanker hatch and bare crown, and the tow hook, tail, and boom openings. No in-game browser check was run in this art lane.
+Claude should review [round-13.jpg](round-13.jpg), focusing on the supply bed and cargo from side and above, the tanker hatch and bare crown, and the tow hook, tail, and boom openings. No in-game browser check was run in this art lane.
 
 ## Checks
 
@@ -36,5 +36,4 @@ Claude should review [round-13.jpg](../board/looks/town-art-trucks-1/round-13.jp
 - Deleted `round-12.jpg` and `round-12-review.md`; retained round 9.
 - Removed the twin tanker walkway boxes and the duplicated hoist pixels from the tow photo mask.
 - Temporary captures, bounds dump, sheet script and Blender logs will be removed before commit.
-
 
