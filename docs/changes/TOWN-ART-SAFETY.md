@@ -19,3 +19,28 @@
 ## Removed
 
 - Removed the obsolete gate facade photo overlay and the old duplicate planks and car-door boxes from the gate recipe.
+
+## Round 9: searchlight and hydrant
+
+### Changed
+
+- Added a baked faded-red hydrant enamel texture from the existing oxide texture.
+- Replaced thin reel rings with a continuous thick rubber hose coil. Simplified the coil mesh and reel rims to keep the hydrant below 1,800 triangles.
+- Added an exported-node assertion for the named hose mesh.
+- Added credits for the hydrant orthographic references and the baked enamel texture.
+- Added the matched Round 9 contact sheet and self-review. The candidate awaits Claude's art verdict.
+
+### Checks
+
+- Blender recipe export and GLB readback: **pass**. Searchlight: 720 triangles; hydrant: 1,696 triangles. The Round 9 sheet is 181,738 bytes.
+- `tools/test-blender-output.mjs`: **pass**, 377 checks, 0 failures.
+- `tools/test-repo-hygiene.mjs`: **pass**; size targets are advisory.
+- `npm.cmd run build`: **pass**.
+- Lane tier (`--changed --jobs 4`): **13 passed, 1 failed, 33 not run**. The unrelated Eifel circuit suite failed its FFmpeg loudness measurement on the lane run and on one same-commit rerun; no art assertion failed.
+- `tools/test-review-evidence.mjs`: **7 passed, 2 failed** on two runs. The failures are an unrelated missing Round 15 Town Outposts review note and `spawnSync ffmpeg EPERM` in audio analysis.
+- Changed assertions: added one named-mesh check; no assertion was loosened.
+- Race fingerprints: not applicable to art-only work.
+
+### Removed
+
+- Removed the three thin torus rings that read as bare wire, replacing them with the continuous hose mesh.

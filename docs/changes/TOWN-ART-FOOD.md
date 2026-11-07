@@ -132,3 +132,79 @@
 - Removed the temporary photo grid, renders, mask captures, Blender source and
   test logs after recording this review. Kept the source photos, current model,
   round 9 sheet and notes.
+
+## Follow-up: three market stalls
+
+The market stalls now have shared patched awnings, clearer tool shapes and lower-poly tyre rings with separate hubs. The family GLB is 1,993,096 bytes. Blender counted 1,074 triangles for stall-a, 522 for stall-b and 921 for stall-c. Every piece printed its bounds and passed the one-cell footprint/contact check.
+
+Checks:
+
+- Blender recipe build passed and rendered isolated model views for each stall.
+- `node tools/test-blender-output.mjs` passed: 377 checks, 0 failed. Its first run caught over-budget tyre and family totals; reducing ring and hub segments fixed them. No assertions changed.
+- Browser and in-game look checks were not run; Claude should review round 10.
+- Race fingerprints do not apply.
+
+Generated orthographic reference photos could not be saved into the lane after the image tool returned inline data and the shell rejected the transfer command as too long. No photo credits or photo-to-model comparisons are present. The round-10 sheet is model-only and calls out this limitation for Claude. No previously accepted building or earlier sheet was removed.
+
+### Removed
+
+No previously accepted model, source photo or review sheet was removed.
+
+
+## Round 11: tyre goods and budget fit
+
+### Design
+
+The card gives the buildings, footprints, goods and shared model contract. No open design question remains. This round adds three stacked tyre rings to the tyre stall. The traced outlines were simplified slightly to meet the existing one-cell and family triangle budgets without changing their silhouette at town scale. The food photos are exported at 224 px maximum so the combined embedded images stay under the card's 1K pixel limit.
+
+### Changed
+
+- Added three tyre-shaped goods to stall-c in tools/blender/town-food.py.
+- Reduced trace density on the three market stalls while preserving the visible outline.
+- Downsampled material and photo images for export only; source references remain full resolution.
+- Rebuilt public/assets/models/wasteland/town/food.glb and added the round 11 comparison sheet and review note.
+
+### Checks
+
+- Blender recipe export: passed; 29,506 triangles, 2,049,168 bytes and 907,360 embedded image pixels.
+- tools/test-repo-hygiene.mjs: passed.
+- tools/test-review-evidence.mjs: the round sheet publication check passed; the suite also reports an existing missing note for town-art-outposts/round-15.jpg and ffmpeg spawnSync EPERM, both outside this card's files.
+- `tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
+- Lane tier: 13 suites passed, then `tools/test-circuit-panorama.mjs` failed and
+  stopped the remaining 33. Its one permitted rerun passed all 19 checks. This
+  unreliable-suite report belongs on the board for the Director to card; board
+  files are outside this lane's ownership.
+- Production build via npm.cmd run build: passed.
+- No browser or in-game check; this model is not wired into the game. No race fingerprints apply.
+
+### Removed
+
+- None. Replaced only the exported food-family GLB with the reproducible Blender output.
+## Round 12: market stalls
+
+Claude approved the revised food family allowance of 8 MB and 4,194,304 embedded texture pixels (2048 by 2048) for this round. The recipe keeps the stall front and side references, the market hall's front stall reference, and the soup kitchen wall photo at their full source resolution. Other mapped images remain compact so the complete family can stay inside the reviewed total pixel limit.
+
+The stall frame follows the rusted pipes in the front and side photos with traced, slabbed pieces. The counter keeps its plank grain from the side photo. The canopy uses the front photo across a sagging draped mesh, a traced torn hem, and a traced side profile. Fruit crates, hanging tools and tyre rings remain separate goods displays.
+
+## Checks
+
+- Blender 4.5 export: passed. `food.glb` is 2,608,820 bytes. Read-back stall triangle counts are 1,768 (A), 1,568 (B) and 1,132 (C), each under 1,800. The export printed bounds and passed the stall footprint and contact checks.
+- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures, including the 8 MB and 4,194,304-pixel food limits. The first run found over-budget stall and texture totals; the final export clears both.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7 of 9 suite tests passed, including round-sheet publication. Its other failures are the checker still expecting the round-11 JPG that this task requires removing, and `spawnSync ffmpeg EPERM` in audio analysis. No test assertions were changed.
+- No lane tier, game build, browser check or race was run. The model is not wired into the game and the brief assigns browser and in-game look checks to Claude. No race fingerprints apply.
+
+The food output check now uses Claude's reviewed 8 MB byte ceiling, 2048 px per-image ceiling, and 4,194,304 total pixel ceiling. The generator entry's `maxBytes` changed from 3 MB to 8 MB. No unrelated assertions changed.
+
+## Claude should inspect
+
+- The matched front and side photos beside stall-a.
+- Rust and pipe joints, the plank counter top and front, and the sag, patches and torn canvas hem.
+- The three-quarter views for the fruit, tools and tyres displays, plus the mayor view with all three stalls.
+- Whether the frame texture and goods remain clear at town scale and in the market context.
+
+## Removed
+
+- Removed the failed round-11 sheet and review note as superseded by round 12.
+- Replaced the round-11 food GLB with the round-12 export.
+- Removed the flat-color counter and awning materials; the photo-mapped surfaces replace them.
