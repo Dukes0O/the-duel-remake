@@ -601,16 +601,16 @@ def market_stall(building, offset, kind):
                 sphere(f'{building}:produce-{crate_index}-{fruit_index+1}',
                        (x,1.46,z),(.105,.12,.105),color,8,4)
     elif kind=='tools':
-        # A wood rail hangs five distinct, rusted hand tools over the counter.
+        # Three oversized hand tools stay readable below the cloth hem.
         beam(f'{building}:tool-rack',(-.78,1.84,-.48),(.78,1.84,-.48),.065,mat['weathered-plank'])
         for support_index,x in enumerate((-.78,.78),1):
             beam(f'{building}:tool-rack-support-{support_index}',(x,1.83,-.48),(x,2.38,-.48),.055,mat['rusted-steel'])
-        for index,x in enumerate((-.62,-.31,0,.31,.62),1):
+        for index,x in enumerate((-.48,0,.48),1):
             beam(f'{building}:tool-hanger-{index}',(x,1.83,-.48),(x,1.75,-.48),.025,mat['rusted-steel'])
             beam(f'{building}:hanging-tool-{index}-handle',(x,1.28,-.48),(x,1.77,-.48),.045,mat['weathered-plank'])
-            if index==2:
+            if index==1:
                 beam(f'{building}:hanging-tool-{index}-hammer-head',(x-.12,1.68,-.48),(x+.12,1.68,-.48),.085,mat['rusted-steel'])
-            elif index==3:
+            elif index==2:
                 beam(f'{building}:hanging-tool-{index}-pliers-left',(x-.07,1.70,-.48),(x,1.78,-.48),.035,mat['rusted-steel'])
                 beam(f'{building}:hanging-tool-{index}-pliers-right',(x+.07,1.70,-.48),(x,1.78,-.48),.035,mat['rusted-steel'])
             else:
