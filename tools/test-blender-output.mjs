@@ -60,6 +60,9 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.qa-dist/town-art-power-round-4',
+    glb:['public/assets/models/wasteland/town/power.glb'],budget:22600,
+    budgets:{windmill:1800,'power-pole':1800,generator:5000,'solar-rack':5000,'fuel-depot':9000},maxBytes:3000000},
   {id:'town-vane',script:'tools/blender/town-vane.py',args:['--round','3'],candidate:true,
     glb:['public/assets/models/wasteland/town/vane.glb'],budget:40000,maxBytes:3000000},
   {id:'town-sanitation',script:'tools/blender/town-sanitation.py',args:['--round','2'],candidate:true,recipeOnly:true,
@@ -390,7 +393,7 @@ function beaverPlanCall(fixtureRoot, output, model = 'beaver', viewOnly = false,
   return call;
 }
 check('all Blender asset generators are covered', () => {
-  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py','hull_model.py'].includes(name))
+  const actual = readdirSync(join(root, 'tools/blender')).filter(name => name.endsWith('.py') && !['fidelity-sheet.py','town_base.py','photo_model.py','hull_model.py','photo_carve.py'].includes(name))
     .map(name => `tools/blender/${name}`);
   assert.deepEqual(actual.sort(), [...generators.filter(item => item.script.startsWith('tools/blender/')), ...reviewHelpers, ...privateGenerators, ...nativeGenerators, ...kitGenerators].map(item => item.script).sort());
 });
@@ -633,7 +636,60 @@ try {
       const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
       const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-      assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      if (generator.id === 'town-power') {
+        for (const id of ['windmill','power-pole','generator','solar-rack','fuel-depot']) {
+          const rootIndex = gltf.nodes.findIndex(node => node.name === id);
+          assert.ok(rootIndex >= 0, `missing building ${id}`);
+          const pending = [rootIndex], visited = new Set();
+          let buildingTriangles = 0;
+          while (pending.length) {
+            const index = pending.pop();
+            if (visited.has(index)) continue;
+            visited.add(index);
+            const node = gltf.nodes[index];
+            if (node.mesh !== undefined) {
+              buildingTriangles += gltf.meshes[node.mesh].primitives
+                .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+            }
+            pending.push(...(node.children || []));
+          }
+          const budget = generator.budgets[id] ?? generator.budget;
+          assert.ok(buildingTriangles > 100 && buildingTriangles <= budget,
+            `${id}: ${buildingTriangles} triangles exceeds its ${budget} triangle building budget`);
+        }
+        assert.ok(triangles <= generator.budget, `${triangles} triangles exceeds the summed per-building budget of ${generator.budget}`);
+        assert.ok(gltf.images?.length > 1, 'town-power keeps separate material pictures');
+        assert.ok(new Set((gltf.textures || []).map(texture => texture.source)).size > 1,
+          'town-power materials do not share one atlas image');
+        assert.ok(!gltf.images.some(image => /atlas/i.test(image.name || image.uri || '')),
+          'town-power exports no atlas image');
+        for (const material of gltf.materials || []) {
+          const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+          assert.ok(metallic <= 0.3, `${material.name || 'material'} metallicFactor ${metallic} exceeds 0.3`);
+        }
+        const binaryOffset = 20 + jsonLength + 8;
+        for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
+          const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+          assert.deepEqual(coordinates, ['TEXCOORD_0'], `${primitive.material} has only TEXCOORD_0`);
+          const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+          assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UV accessor uses float pairs');
+          const view = gltf.bufferViews[uv.bufferView];
+          const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+          const stride = view.byteStride ?? 8;
+          const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+          for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+            const value = bytes.readFloatLE(start + i * stride + axis * 4);
+            min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+          }
+          assert.ok(min[0] < max[0] && min[1] < max[1], 'TEXCOORD_0 covers a range');
+        }
+        for (const material of gltf.materials) {
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
+            `${material.name} metallicFactor exceeds 0.3`);
+        }
+      } else {
+        assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
+      }
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
       if (generator.id === 'town-stages') {
