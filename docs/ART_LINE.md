@@ -101,6 +101,7 @@ stop adjusting and change the method.
 - **An overhead photo at a slant** shows side windows on the roof. Ask for a true plan view with no wall showing.
 - **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
 - **Wide thin parts cannot be carved.** An aeroplane's wings fill the front photo's silhouette, and the carve fills that width along the whole length (the plane school, round 6). Photograph the body without them. Trace wings and fins as their own `slab`, or leave them out if the card does not ask for them.
+- **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
 - **Two bodies joined end to end** (an aircraft nose and a bus) come out with the wider one's shape along the whole length. Set `ends_split`.
 - **A windscreen pieced together from three photos** on a curved nose: set `front_favour` to 3 so that the nose wears its front photo further round.
 - **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
