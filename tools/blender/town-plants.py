@@ -3,7 +3,7 @@
 Builds the exported candidate and review renders from that GLB. Coordinates
 use town_base's metre API: +Y up, front -Z.
 """
-import argparse, sys
+import argparse, math, sys
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
@@ -55,8 +55,15 @@ body_table={
   'front':[(340,350,684,548)],
   'rear':[],
   # Remove the belt and gravel silhouettes from the overhead projection.
-  'top':[(610,80,1024,545)],
+  # Exclude the overhead photo's view down the jaw throat: its ribbed roller
+  # is already described by the side and end views, and otherwise extrudes
+  # as a false plate above the open hopper.
+  'top':[(250,185,330,335),(610,80,1024,545)],
  },
+ # The hopper mouth is open. Remove the narrow false plate that the end/top
+ # projections fused into its centre above the rim; the measured side and end
+ # photos show clear space there.
+ 'keep':lambda x,y,z:~((np.abs(x)<.70)&(y>2.65)&(z>-2.65)&(z<-1.70)),
  'underside':(480-417)*(7.4/(970-30)),
  'grey':28,'tolerance':34,'bleed_tolerance':40,'voxel':.05,'target':6500,
  'mask_dir':str(evidence/'masks') if a.render else None,
@@ -102,6 +109,10 @@ between_rails=(yy>=upper)&(yy<=lower)
 support_legs=(((xx>=675)&(xx<=720)&(yy>=350)&(yy<=480))|
               ((xx>=890)&(xx<=935)&(yy>=270)&(yy<=480)))
 belt_mask &= between_rails|support_legs
+# The side reference has two hanging chain runs below the head pulley. They
+# are not part of the conveyor frame or belt; gravel is rebuilt as separate
+# stones below, so keep the trace clear of those chain pixels.
+belt_mask &= ~((xx>=900)&(xx<=976)&(yy>=170)&(yy<=345))
 belt_loops=trace(belt_mask,(438,100,980,422),tolerance=1.1,min_area=90)
 belt_mesh=PhotoMesh()
 slab(belt_mesh,'side',side_photo,belt_loops,side_world,-.35,-.27,wall_scale=scale)
@@ -133,6 +144,13 @@ far=rail.copy();far.data=rail.data.copy();far.name='crusher:trailer:far-frame';b
 for px in (120,380,550):
  z=side_world(px,ground_px,0)[2]
  beam('crusher:trailer:cross-member',(-.48,.47,z),(.56,.47,z),.10,dark)
+# The A-frame drawbar closes the open nose between both rails and meets the
+# measured hitch point. The jack is fixed to the nose cross-member and reaches
+# the ground; neither is a loose strip beside the trailer.
+beam('crusher:trailer:drawbar-near',(-.48,.47,-3.00),(0,.47,-3.72),.09,dark)
+beam('crusher:trailer:drawbar-far',(.56,.47,-3.00),(0,.47,-3.72),.09,dark)
+beam('crusher:trailer:jack',(.04,.47,-2.82),(.04,.09,-2.82),.08,dark)
+town.cube('crusher:trailer:jack-foot',(.04,.07,-2.82),(.28,.06,.22),dark,bevel=.01).parent=crusher
 for cx in (325,432):
  axle_z=side_world(cx,ground_px,0)[2]
  beam('crusher:trailer:axle',(-.63,.29,axle_z),(.63,.29,axle_z),.09,dark)
@@ -166,6 +184,29 @@ for polygon in gravel.data.polygons:
   u=.92+(vert.x*.14);v=.62-(vert.y*.25)
   uv_layer.data[loop_index].uv=over_photo.uv(u*over_photo.w,v*over_photo.h)
 gravel.parent=crusher;parts.append(gravel)
+# A narrow falling stream follows the short arc from the head pulley to the
+# cone. Separate low-poly stones replace the photo's flat chain silhouettes.
+stone_materials=[]
+for index,color in enumerate(((.24,.235,.215,1),(.31,.30,.275,1),(.37,.35,.31,1))):
+ material=bpy.data.materials.new(f'crusher gravel stone {index+1}');material.diffuse_color=color;material.use_nodes=True
+ bsdf=material.node_tree.nodes.get('Principled BSDF');bsdf.inputs['Base Color'].default_value=color;bsdf.inputs['Roughness'].default_value=.94
+ stone_materials.append(material)
+head=side_world(950,157,0)
+cone_top=(0,.31+.62/2,side_world(950,ground_px,0)[2]-.55)
+stone_count=38
+for index in range(stone_count):
+ t=(index+.5)/stone_count
+ # A slight forward bend keeps the fall visibly curved while remaining narrow.
+ x=.075*math.sin(t*math.pi)+.025*math.sin(index*2.17)
+ y=head[1]+(cone_top[1]-head[1])*t
+ z=head[2]+(cone_top[2]-head[2])*t+.12*math.sin(t*math.pi)
+ bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=1,location=town.game_vector((x,y,z)))
+ stone=bpy.context.object;stone.name=f'crusher:gravel-fall:stone:{index+1:02d}'
+ size=.045+(.018*((index*7)%5)/4)
+ stone.scale=(size*1.25,size*.78,size)
+ stone.rotation_euler=(index*.71,index*.43,index*.89)
+ stone.data.materials.append(stone_materials[index%len(stone_materials)])
+ stone.parent=crusher;parts.append(stone)
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
