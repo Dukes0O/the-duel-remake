@@ -748,3 +748,5 @@ Original single-view orthographic photo references generated with OpenAI ImageGe
 ## TOWN-ART-SAFETY guard post references
 
 Original single-view orthographic photos generated with OpenAI ImageGen on 7 November 2026. guard-post-side.jpg, guard-post-front.jpg, guard-post-rear.jpg and guard-post-top.jpg show the guard post without the brazier, on plain grey studio ground. guard-post-wall-side.jpg, guard-post-wall-front.jpg, guard-post-wall-rear.jpg and guard-post-wall-top.jpg show the sandbag wall alone for carving. All are individual views, resized to no more than 1024 pixels wide, and converted to JPEG from the original generated PNG files. No third-party source photos were used.
+
+guard-post-brazier.jpg is a single dead-on orthographic product photo of the brazier used for its lathed geometry. Generated with OpenAI ImageGen on 7 November 2026, converted from the original PNG, with no third-party source material.
