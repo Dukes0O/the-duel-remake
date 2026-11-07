@@ -111,6 +111,8 @@ const generators = [
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
   { script: 'tools/blender/sea-works.py', args: ['--through', 'iron-mule-gear'], candidate: true, budget: 50000, maxBytes: 3_400_000,
     glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { script: 'tools/blender/sea-magnet-big.py', args: [], candidate: true, budget: 30000, maxBytes: 2_500_000,
+    glb: ['public/assets/models/wasteland/scablands/sea-magnet-big.glb'] },
   { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
   { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
@@ -1827,4 +1829,3 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
-

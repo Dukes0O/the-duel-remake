@@ -172,6 +172,14 @@ All three are embedded in `crew-favours.glb` as direct colour pictures; none rep
 
 ## WW-ART-SEA photographs
 
+`sea-magnet-big-timber.jpg` and `sea-magnet-big-prop.jpg` are original
+Codex ImageGen product photographs created on 2026-11-07. The first shows a
+side-on crib of weathered railway sleepers; the second shows a side-on raking
+steel prop with its screw jack. Both were converted from the generated PNGs to
+JPEGs for measured `photo_model.py` tracing in `sea-magnet-big.py`. The original
+generated PNGs remain in the Codex generated-images folder. No existing source
+photo was replaced.
+
 `sea-old-gear.jpg` is an original Codex ImageGen
 photographs made 2026-11-06. They are the isolated face and rim panels of one
 paired reference image: a seven metre silted, rotten dam gear with open spokes,

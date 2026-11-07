@@ -142,6 +142,10 @@ stop adjusting and change the method.
 
 ### Placement and export
 
+- **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
+  Blender render scene is Z-up. Convert camera positions and targets with the
+  same game-to-Blender transform as the model before judging framing; inspect
+  one whole-object shot before assembling the sheet. (WW-ART-SEA, 7 November.)
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
