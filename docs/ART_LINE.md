@@ -17,20 +17,24 @@ show no improvement, stop adjusting and change the method.
    light on a plain pale background with an even floor. Parts stand clearly
    apart. No logos or real makers' names. Keep them in the model's `textures`
    folder, credited: `.evidence` is deleted when the lane closes.
-3. **Measure on a grid.** Draw a grid over each photo and read off the ground,
-   the ends, the centre line, each wheel's centre and radius, and each lamp. Do
-   not read numbers by eye. All of an object's photos should share one scale.
+3. **Measure on a grid.** Run `python tools/photo_grid.py photo.jpg .evidence/grid.png`
+   for each photo and read off the ground, the ends, the centre line, each wheel's
+   centre and radius, and each lamp. Do not read numbers by eye. All of an
+   object's photos should share one scale.
 4. **Choose the kit by the shape:**
 
    | Subject | Kit | Worked example |
    | --- | --- | --- |
-   | Vehicles, buildings, people, anything that curves every way | `hull_model.py`, carving | `town-trucks-1.py`, `rattler-photo.py`, `town-walkers.py` |
+   | Vehicles, buildings, anything that curves every way | **`carve_object` in `photo_carve.py`: fill in a table, write no carving code** | the table at the top of `photo_carve.py` |
+   | People, and anything `carve_object` cannot reach | `hull_model.py` directly | `town-walkers.py`, `rattler-photo.py` |
    | Lattices, booms, masts, anything with open holes | `trace` and `slab` in `photo_model.py` | the tow rig's boom in `town-trucks-1.py` |
    | Plate-work, planks, drums, a steam engine | `photo_model.py` flat parts and lathes | `rail-trains.py` |
    | Wheels, lamps, reels, cannon | `tyre`, `headlamp` and `lathe` | `town-trucks-1.py` |
 
 5. **One piece first, then the family.** A job with a long list adjusts old
-   recipes and fails. A job with few pieces and an example passes.
+   recipes and fails. A job with few pieces and an example passes. Jobs asked to
+   copy carving code kept going back to shapes made by eye, so the code is one
+   call now: if you find yourself writing boxes, stop and fill in the table.
 6. **Moving parts are their own pieces,** with their origin on their true pivot.
 7. **Render from the exported model,** imported into an empty scene, beside the
    photo at the same camera, in flat light with the Standard view transform.
@@ -53,6 +57,8 @@ show no improvement, stop adjusting and change the method.
   takes in the ground shadow, so the studio's colour cannot show.
 - **A photo cropped or off-centre.** Measure each photo's own centre line. A
   face its best photo does not show uses the next best.
+- **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
+- **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
   people). Generate a real photo set for a new colour.
 
