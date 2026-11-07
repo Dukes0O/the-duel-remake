@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 8: keep Dot's Diner; rebuild plane-school from four views.
+"""TOWN-ART-OUTPOSTS round 9: keep Dot's Diner; repair plane-school glass.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,13 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-8')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-9')
 p.add_argument('--body-check-only', action='store_true')
+p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-8.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-9.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -269,7 +270,7 @@ SCHOOL_WIDTH = SCHOOL_FRONT_WIDTH * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - S
 
 
 def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.012, .022, .032)):
-    """Paint measured glass rectangles and paper cut-outs into a derived photo."""
+    """Replace only the flat-grey component inside each measured pane."""
     import numpy as np
     source = bpy.data.images.load(str(textures / source_name), check_existing=False)
     width, height = source.size
@@ -277,23 +278,79 @@ def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.01
     source.pixels.foreach_get(pixels)
     pixels = pixels.reshape(height, width, 4)[::-1].copy()
 
+    masks = []
     for x0, y0, x1, y1 in windows:
-        pixels[y0:y1, x0:x1, :3] = dark
-        # A restrained blue-grey reflection keeps the pane recognisably glass.
-        band = x0 + max(2, int((x1 - x0) * .16))
-        pixels[y0 + 3:y1 - 3, band:band + 2, :3] = (.10, .15, .18)
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        seed = pixels[cy, cx, :3].copy()
+        # Flood through the connected studio-grey patch only; the frame and wall
+        # stop the fill even when their pixels lie inside the measurement box.
+        component = np.zeros((height, width), dtype=bool)
+        seen = np.zeros((height, width), dtype=bool)
+        stack = [(cx, cy)]
+        seen[cy, cx] = True
+        while stack:
+            x, y = stack.pop()
+            if x < x0 or x >= x1 or y < y0 or y >= y1:
+                continue
+            if np.max(np.abs(pixels[y, x, :3] - seed)) > 18 / 255:
+                continue
+            component[y, x] = True
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if x0 <= nx < x1 and y0 <= ny < y1 and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((nx, ny))
+        if not component.any():
+            raise RuntimeError(f'No studio-grey pane component at ({cx}, {cy}) in {source_name}')
+        masks.append(component)
+        yy, xx = np.nonzero(component)
+        # Narrow blue-grey streaks vary gently across each glass surface.
+        streak = ((xx * 13 + yy * 3 + (xx // 7) * 5) % 19) / 2550
+        pixels[yy, xx, :3] = np.array(dark, dtype=np.float32) + streak[:, None] * np.array((.55, .8, 1.0))
 
-    for window_index, fraction_x, fraction_y, scale, color in papers:
-        x0, y0, x1, y1 = windows[window_index]
-        cx, cy = x0 + int((x1 - x0) * fraction_x), y0 + int((y1 - y0) * fraction_y)
-        radius = max(2, int(min(x1 - x0, y1 - y0) * scale))
-        yy, xx = np.ogrid[max(y0, cy - radius):min(y1, cy + radius + 1),
-                          max(x0, cx - radius):min(x1, cx + radius + 1)]
-        # A small diamond of coloured paper, clearly distinct from the dark pane.
-        mask = (np.abs(xx - cx) / radius + np.abs(yy - cy) / radius) <= 1
-        patch = pixels[max(y0, cy - radius):min(y1, cy + radius + 1),
-                       max(x0, cx - radius):min(x1, cx + radius + 1), :3]
-        patch[mask] = color
+    for window_index, shape_name, color in papers:
+        pane = masks[window_index]
+        yy0, xx0 = np.nonzero(pane)
+        x0, x1, y0, y1 = xx0.min(), xx0.max() + 1, yy0.min(), yy0.max() + 1
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        sx, sy = max(2, (x1 - x0) // 5), max(2, (y1 - y0) // 5)
+        if shape_name == 'sun':
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.ogrid[y0:y1, x0:x1]
+            dx, dy = xx - cx, yy - cy
+            shape[y0:y1, x0:x1] = (dx * dx + dy * dy <= min(sx, sy) ** 2)
+            for angle in range(0, 360, 45):
+                rad = math.radians(angle)
+                rx, ry = int(math.cos(rad) * sx * 1.75), int(math.sin(rad) * sy * 1.75)
+                for step in np.linspace(.65, 1.75, 8):
+                    px, py = cx + int(math.cos(rad) * sx * step), cy + int(math.sin(rad) * sy * step)
+                    if 0 <= py < height and 0 <= px < width:
+                        shape[max(0, py-1):py+2, max(0, px-1):px+2] = True
+        elif shape_name == 'star':
+            vertices = [(cx + int(math.cos(math.pi * i / 5 - math.pi / 2) * sx * (1 if i % 2 == 0 else .44)),
+                         cy + int(math.sin(math.pi * i / 5 - math.pi / 2) * sy * (1 if i % 2 == 0 else .44))) for i in range(10)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        else:  # house silhouette
+            vertices = [(cx, cy-sy), (cx+sx, cy), (cx+sx, cy+sy),
+                        (cx-sx, cy+sy), (cx-sx, cy), (cx, cy-sy)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        paper = pane & shape
+        py, px = np.nonzero(paper)
+        if len(px):
+            pixels[py, px, :3] = color
 
     image = bpy.data.images.new(output_name, width, height, alpha=False)
     image.pixels.foreach_set(pixels[::-1].ravel())
@@ -313,8 +370,8 @@ SIDE_WINDOWS = [
 ]
 SIDE_PAINTED = painted_school_photo(
     'plane-school-side.jpg', 'plane-school-side-painted.png', SIDE_WINDOWS,
-    papers=((1, .68, .54, .20, (.76, .52, .17)),
-            (3, .34, .56, .18, (.27, .58, .68))),
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27))),
 )
 TOP_WINDOWS = [
     (244, 55, 293, 68), (325, 55, 375, 68), (411, 55, 475, 68),
@@ -324,10 +381,13 @@ TOP_WINDOWS = [
 ]
 TOP_PAINTED = painted_school_photo(
     'plane-school-top.jpg', 'plane-school-top-painted.png', TOP_WINDOWS,
-    papers=((2, .50, .54, .34, (.78, .53, .17)),
-            (8, .49, .52, .32, (.28, .59, .67)),
-            (11, .52, .52, .31, (.72, .34, .31))),
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27)), (6, 'star', (.28, .66, .78)),
+            (8, 'house', (.83, .46, .27)), (10, 'sun', (.94, .60, .16))),
 )
+if a.photos_only:
+    print(json.dumps({'side_photo': SIDE_PAINTED, 'top_photo': TOP_PAINTED}))
+    raise SystemExit(0)
 school_table = {
     'photos': {'side': SIDE_PAINTED, 'front': 'plane-school-front.jpg',
                'rear': 'plane-school-rear.jpg', 'top': TOP_PAINTED},
