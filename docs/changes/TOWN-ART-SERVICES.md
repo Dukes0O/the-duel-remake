@@ -2,21 +2,19 @@
 
 ## What changed
 
-Added one 3×2 motor-pool building to `services.glb`, with a photo-carved tin shed, an open front, dark interior, floor, inspection pit, tool racks and four fuel drums. Added four generated orthographic JPG references and the round-5 comparison sheet.
+Rebuilt the motor pool as a long open-front service shed across its 4×2 plot. The carve keeps the long back wall and the two closed ends; the -Z road face stays open. The roof uses two thin pitched planes with the straight-down patched-tin photo and a ridge. Timber posts and braces frame four bays. Concrete floor sections surround the recessed inspection pit, with racks and fuel drums inside.
 
-The four photos were generated with OpenAI image generation and credited in `round-5-review.md`. Earlier accepted buildings' recipes were left untouched. The service family is re-exported from the existing recipe.
+The exported motor-pool meshes total 13,260 triangles, within the 14,000 limit. The four motor-pool source photos were retained. The Town Hall, Forge, Workshop and scrapyard were not edited in the recipe.
 
 ## Checks
 
-- Blender 4.5.13 recipe and export render: passed. Bounds were printed for every motor-pool mesh. The post-fit plot assertion and piece contact audit passed.
-- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 567 checks, 8 passed and 1 failed. The unrelated audio-analysis check failed twice with `spawnSync ffmpeg EPERM`; the image and review-sheet checks passed.
-- Browser check: not run; Claude owns browser and look checks for this art card. See `round-5-review.md` for the specific look questions.
-- Changed assertions: none. Replay fingerprints: not applicable; no race code changed.
+- Blender 4.5.13 recipe/export and printed per-piece bounds: passed. Plot and ground/contact audit passed.
+- `node --test --test-name-pattern="TOWN-ART-SERVICES" tools/test-blender-output.mjs`: passed, 377 checks, 0 failed. The first run found 17,260 motor-pool triangles; the carve target was lowered and the rerun passed.
+- `node tools/test-repo-hygiene.mjs`: passed; reported pre-existing advisory size targets only.
+- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed; rerun gave the same result. Failures: missing `docs/board/looks/town-art-outposts/round-15-review.md` (other card) and `spawnSync ffmpeg EPERM`. Round-7 image publication checks passed. No unrelated file was changed.
+- Browser and game look checks: Claude runs. Review the road-facing opening, side and end orientation, pitched roof and overhang, straight-down roof, pit and floor, and the three-quarter/mayor silhouette in `round-7.jpg`.
+- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
 
 ## Removed
 
-None.
-
-
+Deleted the superseded round-5 sheet and review note as directed. No source photos were removed.
