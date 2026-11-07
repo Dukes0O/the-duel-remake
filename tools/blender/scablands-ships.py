@@ -5,6 +5,11 @@ import json
 import sys
 from pathlib import Path
 
+# Patience funnel dimensions and pixel landmarks, read from
+# .evidence/grid-funnel-{side,front,top}.png (generated source dimensions vary).
+# Side (700x800): ends x=69/609, ground y=778; 540 px = 3.5 m; top y=18.
+# Front (667x800): centre x=333, ground y=780, top y=12; 768 px = 6 m.
+# Top (800x571): front/rear x=30/773, centre y=286; width spans y=38..533.
 # Patience upperworks dimensions and pixel landmarks, read from
 # .qa-dist/grid-{side,front,rear,top}.png (each source crop is 768 x 512 px).
 # Side: aft/front ends x=40/720, deck y=460. Front: centre x=384, deck y=460,
@@ -147,7 +152,6 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
 scene = bpy.context.scene
 # Isolated detail crops come from the measured side photograph, not painted panels.
-funnel_crop_path = tex / 'patience-funnel-side.png'
 mast_crop_path = tex / 'patience-bridge-mast-side.png'
 source_image = bpy.data.images.load(str((tex / 'patience-upperworks-side.jpg').resolve()))
 source_pixels = np.empty(source_image.size[0] * source_image.size[1] * 4, dtype=np.float32)
@@ -162,7 +166,6 @@ def save_photo_crop(path, box):
     image.file_format = 'PNG'
     image.save()
     bpy.data.images.remove(image)
-save_photo_crop(funnel_crop_path, (125, 25, 245, 150))
 save_photo_crop(mast_crop_path, (405, 8, 490, 145))
 bpy.data.images.remove(source_image)
 scene.unit_settings.system = 'METRIC'
@@ -508,7 +511,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'cut': {'front': [(108, 228, 157, 302), (611, 228, 661, 302)]},
             'keep': keep_upperworks,
             'grey': 26, 'tolerance': 34, 'bleed_tolerance': 24,
-            'voxel': .10, 'target': 10000,
+            'voxel': .10, 'target': 6500,
             'mask_dir': str(raw / 'masks'),
         }
         upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
@@ -553,46 +556,29 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         parent(upperworks, upper_root)
         print('Patience upperworks carved bounds (Blender XYZ):', json.dumps(upper_bounds))
 
-        # Rounded rectangular stack; its full-height side image is mapped once
-        # around the four long faces, with its dark crown at the top.
-        detail_photo = DetailPhoto(funnel_crop_path)
-        detail_mesh = DetailMesh()
+        # The measured oval funnel stands where the old photographed box stood.
         funnel_x = -37 + ((125 + 60) - 40) * UPPER_SCALE
         roof_y = deck + UPPER_HEIGHT
-        funnel_levels = ((0, 1.14, .88), (.25, 1.30, 1.0), (3.0, 1.07, .82))
-        for level in range(len(funnel_levels) - 1):
-            y0, half_x0, half_z0 = funnel_levels[level]
-            y1, half_x1, half_z1 = funnel_levels[level + 1]
-            corners0 = ((-half_x0, -half_z0), (half_x0, -half_z0),
-                        (half_x0, half_z0), (-half_x0, half_z0))
-            corners1 = ((-half_x1, -half_z1), (half_x1, -half_z1),
-                        (half_x1, half_z1), (-half_x1, half_z1))
-            for side in range(4):
-                nxt = (side + 1) % 4
-                pts = [(funnel_x + corners0[side][0], roof_y + y0, corners0[side][1]),
-                       (funnel_x + corners0[nxt][0], roof_y + y0, corners0[nxt][1]),
-                       (funnel_x + corners1[nxt][0], roof_y + y1, corners1[nxt][1]),
-                       (funnel_x + corners1[side][0], roof_y + y1, corners1[side][1])]
-                u0, u1 = side / 4, (side + 1) / 4
-                v0, v1 = (1 - y0 / 3), (1 - y1 / 3)
-                detail_mesh.face(pts, ((u0,v0),(u1,v0),(u1,v1),(u0,v1)), 'funnel-photo')
-        detail_mesh.face([(funnel_x + x, roof_y + 3, z) for x,z in
-                          ((-.82,-.82),(.82,-.82),(.82,.82),(-.82,.82))],
-                         ((0,0),(1,0),(1,1),(0,1)), 'funnel-photo')
-        funnel_obj = detail_mesh.finish('ship-patience:funnel-shell', {'funnel-photo': detail_photo.material()})
-        funnel_obj['part'] = 'ship-patience:funnel'
-        parent(funnel_obj, r)
-        for index, dx in enumerate((-.55, 0, .55)):
-            pipe_mesh = DetailMesh()
-            px = funnel_x + dx
-            points = [(px, roof_y + 3.0, -.48 + index*.46),
-                      (px, roof_y + 3.42, -.48 + index*.46),
-                      (px + .16, roof_y + 3.70, -.48 + index*.46),
-                      (px + .38, roof_y + 3.70, -.48 + index*.46)]
-            for segment, (a,b) in enumerate(zip(points, points[1:])):
-                pipe_obj = rail(f'patience-funnel-exhaust-{index}-{segment}', a, b, .115,
-                                iron, 'ship-patience:funnel')
-                parent(pipe_obj, r)
+        funnel_table = {
+            'photos': {'side': 'patience-funnel-side.jpg',
+                       'front': 'patience-funnel-front.jpg',
+                       'rear': 'patience-funnel-front.jpg',
+                       'top': 'patience-funnel-top.jpg'},
+            'length': 3.5, 'width': 2.5, 'height': 6.0,
+            'side_front_on_left': True,
+            'side': {'start': 69, 'end': 609, 'ground': 778},
+            'front': {'centre': 333, 'ground': 780, 'top': 12, 'top_height': 6.0},
+            'rear': {'centre': 333, 'ground': 780, 'top': 12, 'top_height': 6.0},
+            'top': {'front': 30, 'rear': 773, 'centre': 286, 'along': 'x',
+                    'x_scale': 2.5 / (533 - 38)},
+            'round': 2.8, 'grey': 28, 'tolerance': 36, 'bleed_tolerance': 24,
+            'voxel': .12, 'target': 4500,
+            'mask_dir': str(raw / 'masks'),
+        }
+        patience_funnel = carve_object('ship-patience:funnel', tex, funnel_table)
+        patience_funnel.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
+        patience_funnel.location = gv((funnel_x, roof_y, 0))
+        parent(patience_funnel, r)
 
         # Trace the bridge mast as a thin slab; explicit clear cells preserve its openings.
         mast_photo = DetailPhoto(mast_crop_path)

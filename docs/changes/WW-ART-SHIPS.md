@@ -179,3 +179,12 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-10.jpg` and `round-10-review.md`; round 11 is the current sheet and review.
 - Removed this round's temporary renders, Blender review file and logs from `.qa-dist/`; retained the supplied task briefs.
 
+## Round 12 — Patience funnel, cabins and drifts (7 November 2026)
+
+- Added three measured, dead-on funnel reference photos and replaced the box shell and separate pipes with one oval `carve_object` named `ship-patience:funnel`. The old funnel crop is removed. Reduced only the accommodation carve target to keep the hull untouched and stay within the triangle budget.
+- Funnel-stage GLB read-back: 49,648 triangles and 2,873,984 bytes. Final six-view sheet and remaining round changes will be recorded here after review.
+- Changed assertions: none. Race fingerprints: none; art only. Browser and review checks: Claude should inspect the final six-view sheet, especially the funnel and drift edges.
+
+## Removed
+
+- Removed `patience-funnel-side.png` and its round-8 crop credit; replaced it with three round-12 measured source photos. Removed the hand-built box funnel and three loose exhaust-pipe segments.
