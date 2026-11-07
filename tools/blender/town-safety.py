@@ -302,7 +302,7 @@ wall=carve_object('guard-post:sandbag-wall',tex,wall_table)
 # Reorient those local axes into town X,Y,Z, keeping the measured photos intact.
 for vertex in wall.data.vertices:
     px,py,pz=vertex.co.copy()
-    vertex.co=(pz,-px,py)
+    vertex.co=(py,-px,pz)
 wall.data.update()
 wall.location=town.game_vector((0,0,-2.72));attach(wall)
 # Six weathered timber columns run from ground to the eaves, joined by purlins.
