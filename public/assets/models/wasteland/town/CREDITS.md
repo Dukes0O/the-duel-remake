@@ -69,6 +69,9 @@ images, real-world brands, logos or marks are used.
 - `textures/market-hall-front-stalls.jpg`: matching front view with five
   separate stalls and goods, used for the stall and goods pieces.
 
+The same five references are retained as full-resolution PNG originals beside
+these JPEG recipe copies. They were generated from the same prompt set above.
+
 Prompt set: one original open-sided salvage market hall with a broad shallow
 gable roof, mismatched rusty red and grey corrugated sheets, a faded blue panel,
 patched canvas, welded steel posts and braces, and an attached corrugated store
