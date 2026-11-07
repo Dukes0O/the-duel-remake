@@ -227,3 +227,14 @@ laundry references are also isolated on pale backgrounds. These JPEGs are
 converted project copies of the tool's PNG outputs; the generated originals
 remain in the Codex generated-images folder. No existing source photo was
 replaced.
+
+## Mrs Vane reference photographs
+
+`sea-mrs-vane-front.jpg`, `sea-mrs-vane-side.jpg`, `sea-mrs-vane-back.jpg`,
+and `sea-mrs-vane-top.jpg` are crops from one original Codex ImageGen studio
+turnaround generated on 2026-11-07. The image shows the same older woman in
+matched orthographic front, right profile, back and overhead views, wearing a
+closed white coat and gloves and holding one pale envelope, against a uniform
+mid-grey floor and background. Each crop is a new source file; no existing
+photograph was replaced. The recipe measures the panels directly and uses them
+as photo-carving inputs.
