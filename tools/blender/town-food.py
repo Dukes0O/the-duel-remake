@@ -475,6 +475,14 @@ stall_side_pieces=[
 stall_counter_mask=photo_mask(stall_side_photo,[
     [(257,595),(679,593),(685,616),(665,637),(282,641),(259,621)],
 ])
+stall_side_awning_mask=photo_mask(stall_side_photo,[
+    [(246,104),(274,112),(318,124),(365,138),(412,151),(458,167),(504,183),
+     (550,199),(596,215),(640,232),(666,250),(671,269),(657,283),(646,301),
+     (633,316),(620,300),(606,298),(594,309),(578,295),(560,293),(547,305),
+     (529,287),(510,284),(497,297),(478,278),(459,275),(444,286),(425,269),
+     (404,266),(388,278),(369,257),(347,253),(331,264),(311,245),(290,240),
+     (276,250),(259,229),(247,217)],
+])
 stall_awning_mask=photo_mask(stall_front_photo,[
     # The stitched tarp's real scalloped sag and torn lower edge are kept open below.
     [(44,74),(51,49),(71,23),(102,29),(152,42),(217,36),(285,53),(355,67),
@@ -554,6 +562,18 @@ def market_stall(building, offset, kind):
             awning.indexed(list(reversed(underside)),list(reversed(top_uvs)),'canvas',(0,-1,0))
     keep(awning.finish(f'{building}:traced-sagging-patched-canvas-awning',{
         'canvas':stall_front_photo.material()}))
+
+    # A side-photo traced profile makes the measured sag and torn hem readable
+    # from the stall's end while keeping the canopy's top as one draped sheet.
+    side_awning_loops=trace(stall_side_awning_mask,(235,95,681,325),tolerance=1.8,min_area=24)
+    for side_x,side_label in ((-1.04,'left'),(1.04,'right')):
+        side_awning=PhotoMesh()
+        def side_awning_world(px,py,d,side_x=side_x):
+            return (side_x+d,(975-py)*.00292,-1.10+(px-205)*.00455)
+        slab(side_awning,'side-canvas',stall_side_photo,side_awning_loops,
+             side_awning_world,-.018,.018,wall_scale=.00455)
+        keep(side_awning.finish(f'{building}:photo-traced-{side_label}-sagging-awning-profile',
+                                {'side-canvas':stall_side_photo.material()}))
 
     if kind=='fruit':
         # Two deep plank crates and small photo-colored produce sit on the counter.
