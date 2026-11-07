@@ -19,3 +19,11 @@ The source photos remain full resolution beside the dam textures. The recipe sca
 ## Removed
 
 Removed the old thin torus wheels, narrow hubs and ten delicate spoke beams. Replaced the previous gantry legs and light braces with a heavier cross-braced frame and traced wheel support plates. No unrelated dam parts or files were removed.
+
+## Round 2: the old gear and its silt, finished by Claude
+
+The silt is one heap laid out in rings round the gear, about 14 m across, highest against the gear, with a ragged round edge at ground height and no straight edge. The gear is now traced from `sea-old-gear.jpg`, the old gear that passed on WW-ART-SEA, 7 m across, tilted and sunk with its centre 1.05 m below the ground. About one tooth in four is broken off at its own depth, and the rim is eaten unevenly. Its embedded copy is 320 px. The file reads back at 3,128,212 bytes, under the card's 3 MiB.
+
+### Removed
+
+The six smooth silt blobs, the regular ring gear with its separate tooth blocks, and the rotten-tooth picture, which the traced gear does not need.

@@ -215,3 +215,11 @@ traces the true opening and rebuilds the dark inside, sleepers and rails at
 ## WW-ART-DAM-2 hoist wheel photos (2026-11-07)
 
 dam-hoist-wheel-side.png and dam-hoist-wheel-end-on.png are original Codex ImageGen studio reference photographs generated on 2026-11-07. They show one rusted riveted dam-gate hoist wheel in its braced steel frame: a dead-on side view and a dead-on axle-end view. They are measured source images for the gantry wheel and frame recipe; the exported GLB embeds compressed copies.
+
+## WW-ART-DAM-2 silt photo (2026-11-07)
+
+- `dam-wet-silt-round2.png` is an original Codex ImageGen studio reference
+  photograph generated 2026-11-07: a straight-down patch of rippled, cracked
+  wet river silt fading into pale dry ground. It textures the old gear's silt
+  heap; the source file stays full size and is reduced only in the recipe's
+  memory. The old gear itself reuses `sea-old-gear.jpg`, credited above.

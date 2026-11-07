@@ -22,6 +22,7 @@ projection = texture_dir / 'dam-face-projection.jpg'
 salt_photo = texture_dir / 'dam-salt-wall-photo.jpg'
 stone_photo = texture_dir / 'dam-gatehouse-stone.jpg'
 silt_photo = texture_dir / 'dam-wet-silt.jpg'
+new_silt_photo = texture_dir / 'dam-wet-silt-round2.png'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(raw)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -58,7 +59,7 @@ import numpy as np
 from mathutils import Vector, Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, lathe as photo_lathe
+from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, lathe as photo_lathe, trace
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -113,6 +114,33 @@ silt_pixels = silt_pixels.reshape((-1, 4))
 silt_pixels[:, :3] *= .55
 silt_image.pixels.foreach_set(silt_pixels.ravel())
 silt_image.update()
+silt_pixels[:, :3] *= .55
+silt_image.pixels.foreach_set(silt_pixels.ravel())
+silt_image.update()
+gear_silt_image = bpy.data.images.load(str(new_silt_photo.resolve()), check_existing=False)
+gear_silt_pixels = np.empty(len(gear_silt_image.pixels), dtype=np.float32)
+gear_silt_image.pixels.foreach_get(gear_silt_pixels)
+gear_silt_pixels = gear_silt_pixels.reshape((-1, 4))
+gear_silt_height, gear_silt_width = gear_silt_image.size[1], gear_silt_image.size[0]
+gear_silt_y, gear_silt_x = np.mgrid[0:gear_silt_height, 0:gear_silt_width]
+gear_silt_radius = np.sqrt(((gear_silt_x - (gear_silt_width - 1) / 2) / (gear_silt_width * .5)) ** 2
+                           + ((gear_silt_y - (gear_silt_height - 1) / 2) / (gear_silt_height * .5)) ** 2)
+gear_silt_fade = np.clip((1 - gear_silt_radius) * 9, 0, 1)
+gear_silt_pixels[:, :3] *= .55
+gear_silt_pixels[:, 3] *= gear_silt_fade.ravel()
+gear_silt_image.pixels.foreach_set(gear_silt_pixels.ravel())
+gear_silt_image.update()
+gear_silt_material = bpy.data.materials.new('Dam / dark wet gear silt photograph')
+gear_silt_material.use_nodes = True
+gear_silt_bsdf = gear_silt_material.node_tree.nodes.get('Principled BSDF')
+gear_silt_bsdf.inputs['Metallic'].default_value = 0
+gear_silt_bsdf.inputs['Roughness'].default_value = .98
+gear_silt_tex = gear_silt_material.node_tree.nodes.new('ShaderNodeTexImage')
+gear_silt_tex.image = gear_silt_image
+gear_silt_tex.extension = 'EXTEND'
+gear_silt_material.node_tree.links.new(gear_silt_tex.outputs['Color'], gear_silt_bsdf.inputs['Base Color'])
+gear_silt_material.node_tree.links.new(gear_silt_tex.outputs['Alpha'], gear_silt_bsdf.inputs['Alpha'])
+gear_silt_material.surface_render_method = 'DITHERED'
 stone_image = bpy.data.images.load(str(stone_photo.resolve()), check_existing=False)
 stone_material = bpy.data.materials.new('Gatehouse / weathered stone photograph')
 stone_material.use_nodes = True
@@ -252,7 +280,8 @@ def mesh(name, vertices, faces, mat, part, uv_scale=2):
             uv.data[loop].uv = (co.x / uv_scale, co.z / uv_scale)
     return attach(obj, name, part)
 
-def ring_gear(name, center, radius, thickness, mat, part, teeth=28):
+def ring_gear(name, center, radius, thickness, mat, part, teeth=28,
+              worn=False, tooth_mat=None):
     """A forged ring with real open centre, thick web and individual tooth roots."""
     cx, cy, cz = center
     verts, faces = [], []
@@ -261,7 +290,11 @@ def ring_gear(name, center, radius, thickness, mat, part, teeth=28):
         for i in range(steps):
             a = 2 * math.pi * i / steps
             tooth = i % 4 in (1, 2)
-            r = radius + (0.34 if tooth else 0)
+            tooth_number = i // 4
+            broken = worn and tooth and tooth_number % 4 == 1
+            tooth_length = ((.10 + .05 * ((tooth_number * 3) % 5)) if broken else
+                            (.20 + .07 * ((tooth_number * 7) % 4)) if worn and tooth else .34)
+            r = radius + (0 if broken else tooth_length if tooth else 0)
             verts.extend(((cx + r * math.cos(a), cy + r * math.sin(a), cz + z_offset),
                           (cx + (radius - .72) * math.cos(a), cy + (radius - .72) * math.sin(a), cz + z_offset)))
     stride = steps * 2
@@ -274,7 +307,30 @@ def ring_gear(name, center, radius, thickness, mat, part, teeth=28):
         n = (i + 1) % steps
         faces.append((i * 2, n * 2, stride + n * 2, stride + i * 2))
         faces.append((i * 2 + 1, n * 2 + 1, stride + n * 2 + 1, stride + i * 2 + 1))
-    return mesh(name, verts, faces, mat, part, 2)
+    obj = mesh(name, verts, faces, mat, part, 2)
+    if worn and tooth_mat is not None:
+        obj.data.materials.append(tooth_mat)
+        # The upper ring skin is the face seen from the basin. Apply the rotten
+        # tooth photo only to surviving tooth sections, leaving the hub and web
+        # as rusted iron. The four-quad pitch makes each tooth visibly irregular.
+        for tooth_number in range(teeth):
+            if tooth_number % 4 == 1:
+                continue
+            for step in (tooth_number * 4 + 1, tooth_number * 4 + 2):
+                polygon = obj.data.polygons[step]
+                polygon.material_index = 1
+                for loop_index in polygon.loop_indices:
+                    vertex = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+                    uv = obj.data.uv_layers.active.data[loop_index].uv
+                    # Each wedge samples one narrow horizontal strip and the
+                    # complete vertical profile of the isolated tooth photo.
+                    angle = math.atan2(vertex.y + cz, vertex.x - cx)
+                    tooth_center = (tooth_number + .5) * (2 * math.pi / teeth)
+                    angle_delta = (angle - tooth_center + math.pi) % (2 * math.pi) - math.pi
+                    uv.x = min(1, max(0, .5 + angle_delta / (math.pi / teeth)))
+                    radial = math.hypot(vertex.x - cx, vertex.y + cz)
+                    uv.y = min(1, max(0, (radial - radius + .72) / .95))
+    return obj
 
 # Main wall: a straight, sloped, thick concrete gravity dam.
 # The rail gate is the separate entrance at the origin; the concrete face stands
@@ -544,28 +600,92 @@ for z in (-65.2, -58.8):
 ring_gear('dam-gearbox-empty-seven-metre-seat', (7, 32.4, -62), 3.5, .28,
           materials['galvanised-tin'], 'dam:gearbox', 24)
 
-# Rotten original gear, about seven metres across, buried more than halfway in
-# an irregular heap that spreads into the basin floor.
-old = ring_gear('dam:gear-old', (13, 1.05, 8), 3.5, .42, materials['rusted-steel'], 'dam:gear-old', 28)
-gear_pivot = town.game_vector((13, 1.05, 8))
-gear_tilt = Matrix.Rotation(.62, 4, 'X')
+# Rotten original gear, seven metres across, sunk deep and tilted in an irregular
+# heap of silt. It is traced from the old-gear photo that passed for WW-ART-SEA:
+# 930 px across 7 m, centred at (512, 512). About one tooth in four is broken off,
+# each at its own depth, and the rim is eaten unevenly.
+gear_photo = Photo(texture_dir / 'sea-old-gear.jpg')
+gear_seeds = [(5, 5), (990, 5), (5, 990), (300, 245), (700, 245), (300, 775), (700, 775), (195, 512), (830, 512)]
+gear_solid = ~gear_photo.sky(gear_seeds, grey=20)
+gear_scale = 7 / 930
+yy, xx = np.mgrid[0:gear_photo.h, 0:gear_photo.w]
+gear_radius = np.hypot(xx - 512, yy - 512) * gear_scale
+gear_angle = np.degrees(np.arctan2(512 - yy, xx - 512)) % 360
+rot = np.random.default_rng(7)
+for start in range(0, 360, 26):
+    if rot.random() < .3:
+        depth = 3.5 - rot.uniform(.12, .42)
+        gear_solid &= ~((gear_angle >= start) & (gear_angle < start + rot.uniform(7, 15)) & (gear_radius > depth))
+eaten = 3.38 + .09 * np.sin(np.radians(gear_angle) * 7) + .06 * np.sin(np.radians(gear_angle) * 17 + 1.3)
+gear_solid &= gear_radius < np.maximum(eaten, 3.2) + .2
+gear_loops = trace(gear_solid, (40, 20, 990, 1000), tolerance=3.5, min_area=200)
+gear_photo.bleed(gear_solid)
+
+def gear_point(px, py, depth):
+    return ((px - 512) * gear_scale, (512 - py) * gear_scale, depth)
+
+gear_mesh = PhotoMesh()
+photo_slab(gear_mesh, 'gear-face', gear_photo, gear_loops, gear_point, -.23, .23, wall_scale=.03)
+hub_scale = 1 / gear_scale
+photo_lathe(gear_mesh, 'gear-face', (0, 0, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+            [(.02, .82), (.1, .78), (.34, .62), (.48, .55)],
+            lambda i, d, r, a: gear_photo.uv(512 + math.cos(a) * r * hub_scale, 512 - math.sin(a) * r * hub_scale),
+            sides=16,
+            cap_end=('gear-face', lambda a, f: gear_photo.uv(512 + math.cos(a) * f * .55 * hub_scale,
+                                                           512 - math.sin(a) * f * .55 * hub_scale)))
+gear_rust = gear_photo.material(.9)
+old = attach(gear_mesh.finish('dam:gear-old', {'gear-face': gear_rust}), 'dam:gear-old', 'dam:gear-old')
+gear_pivot = town.game_vector((13, -1.05, 8))
+gear_tilt = Matrix.Rotation(.62, 4, 'X') @ Matrix.Rotation(.2, 4, 'Z')
 for vertex in old.data.vertices:
-    vertex.co = gear_pivot + gear_tilt @ (vertex.co - gear_pivot)
-# Overlapping wet-clay lobes make an irregular heap instead of a flat plate.
-for index, (dx, dz, rx, rz, ry) in enumerate((
-    (-4.0, -1.6, 4.0, 3.3, 1.05), (-1.1, 1.8, 4.1, 3.4, 1.3),
-    (2.8, -1.4, 3.6, 3.7, 1.1), (4.8, 1.5, 2.3, 2.9, .72),
-    (-5.5, 2.5, 2.1, 2.6, .62), (0.0, 0.0, 4.8, 3.8, .7),
-)):
-    center = (13 + dx, .28 + ry * .48, 8 + dz)
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1,
-                                         location=town.game_vector(center))
-    lobe = bpy.context.object
-    lobe.name = f'dam-old-gear-wet-silt-lobe-{index}'
-    lobe.scale = (rx, rz, ry)
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-    lobe.data.materials.append(silt_material)
-    attach(lobe, lobe.name, 'dam:gear-old')
+    vertex.co = gear_pivot + gear_tilt @ vertex.co
+old.data.update()
+# Only the embedded copy shrinks, after the trace and UVs are done.
+gear_photo.image.scale(320, 320)
+gear_photo.image.file_format = 'JPEG'
+gear_photo.image.pack()
+# The silt is laid out in rings round the gear, so its outer edge is a ragged
+# circle about 7 m out, at exactly ground height, and no straight edge shows.
+# It is highest against the gear and lumpy, and falls away in long tongues.
+silt_vertices, silt_faces = [(13, .55, 8)], []
+rings, sectors = 18, 56
+for ring in range(1, rings + 1):
+    fraction = ring / rings
+    for sector in range(sectors):
+        angle = 2 * math.pi * sector / sectors
+        reach = 7.0 * (1 + .16 * math.sin(angle * 3 + .4) + .08 * math.sin(angle * 7 + 1.9))
+        x = math.cos(angle) * reach * fraction
+        z = math.sin(angle) * reach * fraction
+        falloff = max(0.0, 1 - fraction ** 1.8)
+        lobe = math.exp(-(((x - .45) / 2.4) ** 2 + ((z + .15) / 3.0) ** 2))
+        lumps = (.10 * math.sin(x * 1.15 + z * .36) + .07 * math.sin(z * 2.0 - x * .52)
+                 + .06 * math.sin(angle * 11 + ring * 1.7))
+        height = 0.0 if ring == rings else max(0.0, falloff * (.12 + .95 * lobe + lumps))
+        silt_vertices.append((13 + x, height, 8 + z))
+for sector in range(sectors):
+    silt_faces.append((0, 1 + sector, 1 + (sector + 1) % sectors))
+for ring in range(rings - 1):
+    for sector in range(sectors):
+        a = 1 + ring * sectors + sector
+        b = 1 + ring * sectors + (sector + 1) % sectors
+        silt_faces.append((a, b, b + sectors, a + sectors))
+silt_mesh = mesh('dam-old-gear-silt-heap', silt_vertices, silt_faces,
+                 gear_silt_material, 'dam:gear-old', uv_scale=14)
+silt_mesh.data.polygons.foreach_set('use_smooth', [True] * len(silt_mesh.data.polygons))
+for polygon in silt_mesh.data.polygons:
+    for loop_index in polygon.loop_indices:
+        vertex = silt_mesh.data.vertices[silt_mesh.data.loops[loop_index].vertex_index].co
+        uv = silt_mesh.data.uv_layers.active.data[loop_index].uv
+        uv.x = (vertex.x - 6) / 14
+        uv.y = (-vertex.y - 1) / 14
+# Scale only embedded photo copies, after their UV maps are finalized; source
+# photos on disk remain full-resolution references.
+for picture in (gear_silt_image,):
+    width, height = picture.size
+    factor = min(256 / max(width, height), 1)
+    if factor < 1:
+        picture.scale(round(width * factor), round(height * factor))
+    picture.pack()
 # Boiler room outside the shed, in the specified east-side position.
 for i, x in enumerate((21.8, 27.3)):
     cylinder('dam:boilers' if i == 0 else f'dam-boiler-{i}', (x, 3.4, 5), 2.25, 6.8, materials['rusted-steel'], 'dam:boilers', 'Y', 48)
@@ -796,7 +916,7 @@ views = [
     ('spillway', (104, 30, 60), (85, 18, 20), 42),
     ('wrecks', (111, 36, 35), (85, 15, 20), 50),
     ('gatehouse', (53, 34, -35), (45, 32, -48), 52),
-    ('gear-old', (22, 9, 27), (13, 1.35, 8), 60),
+    ('gear-old', (13, 2.0, 28), (13, 1.2, 8), 40),
 ]
 captures = []
 for name, location, target, focal in views:
@@ -814,6 +934,11 @@ for name, location, target, focal in views:
             if obj.type == 'MESH':
                 obj.hide_render = (obj.name != 'review ground only'
                     and not obj.name.startswith(visible_prefixes))
+    elif name == 'gear-old':
+        for obj in imported:
+            if obj.type == 'MESH':
+                obj.hide_render = (obj.name != 'review ground only'
+                    and not obj.name.startswith(('dam:gear-old', 'dam-old-gear-silt-heap')))
     elif name == 'gatehouse':
         for obj in imported:
             obj.hide_render = (obj.name != 'review ground only'
@@ -845,40 +970,37 @@ def render_detail(name, location, target, prefixes, ortho=None, focal=50, size=(
             obj.hide_render = False
     return Path(scene.render.filepath)
 
-wheel_view = ((7.5, 60.3, -50), (7.5, 60.3, -62.75))
-model_side = render_detail('hoist-wheel-side', *wheel_view,
-    ('dam-hoist-lift-wheel-7.5', 'dam-hoist-lift-frame-7.5', 'dam-hoist-lift-cross-braces-7.5'),
-    ortho=12.5)
-gantry_view = render_detail('hoist-gantry-crest', (0, 31, -95), (0, 44, -62.75),
-    ('dam-hoist-',), ortho=65)
-dam_view = render_detail('dam-context-60m', (40, 60, -10), (0, 25, -45), ('',), ortho=185)
+gear_view = render_detail('gear-old-opposite', (13, 2.0, -12), (13, 1.2, 8),
+    ('dam:gear-old', 'dam-old-gear-silt-heap'), focal=40, size=(800,450))
+dam_view = render_detail('dam-context-60m', (35, 73, -10), (0, 40, -45), ('',), ortho=350,
+    size=(1600,450))
 
-def load_panel(path, contain=False):
+def load_panel(path, contain=False, target=(800,450)):
     image = bpy.data.images.load(str(path), check_existing=False)
     width, height = image.size
     rgba = np.empty(width * height * 4, dtype=np.float32)
     image.pixels.foreach_get(rgba)
     pixels = (rgba.reshape(height, width, 4)[::-1, :, :3] * 255).astype(np.uint8)
     bpy.data.images.remove(image)
-    scale = min(800 / width, 450 / height) if contain else max(800 / width, 450 / height)
+    target_w, target_h = target
+    scale = min(target_w / width, target_h / height) if contain else max(target_w / width, target_h / height)
     out_w, out_h = max(1, round(width * scale)), max(1, round(height * scale))
     xs = np.minimum((np.arange(out_w) * width / out_w).astype(int), width - 1)
     ys = np.minimum((np.arange(out_h) * height / out_h).astype(int), height - 1)
     resized = pixels[ys[:, None], xs[None, :]]
-    panel = np.full((450, 800, 3), 218 if contain else 90, dtype=np.uint8)
-    x0, y0 = (800 - out_w) // 2, (450 - out_h) // 2
+    panel = np.full((target_h, target_w, 3), 218 if contain else 90, dtype=np.uint8)
+    x0, y0 = (target_w - out_w) // 2, (target_h - out_h) // 2
     if not contain:
         x0 = y0 = 0
-        resized = resized[(out_h-450)//2:(out_h+450)//2, (out_w-800)//2:(out_w+800)//2]
-        out_w, out_h = 800, 450
+        resized = resized[(out_h-target_h)//2:(out_h+target_h)//2, (out_w-target_w)//2:(out_w+target_w)//2]
+        out_w, out_h = target_w, target_h
     panel[y0:y0+out_h, x0:x0+out_w] = resized
     return panel
 
 sheet_pixels = np.empty((900,1600,3), dtype=np.uint8)
-sheet_pixels[:450,:800] = load_panel(texture_dir / 'dam-hoist-wheel-side.png', contain=True)
-sheet_pixels[:450,800:] = load_panel(model_side)
-sheet_pixels[450:,:800] = load_panel(gantry_view)
-sheet_pixels[450:,800:] = load_panel(dam_view)
+sheet_pixels[:450,:800] = load_panel(raw / 'gear-old.jpg')
+sheet_pixels[:450,800:] = load_panel(gear_view)
+sheet_pixels[450:,:] = load_panel(dam_view, target=(1600,450))
 sheet_rgba = np.concatenate((sheet_pixels, np.full((900,1600,1),255,dtype=np.uint8)), axis=2)
 sheet_image = bpy.data.images.new('WW-ART-DAM-2 review sheet', width=1600, height=900, alpha=False)
 sheet_image.pixels.foreach_set(np.flipud(sheet_rgba.astype(np.float32) / 255).ravel())
