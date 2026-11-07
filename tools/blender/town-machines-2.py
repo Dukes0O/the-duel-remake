@@ -450,10 +450,10 @@ for mat in bpy.data.materials:
   if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:node.image.scale(192,192)
  blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
 if a.render:
- bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='AgX';scene.world=bpy.data.worlds.new('Overcast loader daylight');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.54,.56,.55,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.78
+ bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
  lights=[]
  for loc,power,size in [((7,-8,12),2600,9),((-6,-2,7),1100,8)]:bpy.ops.object.light_add(type='AREA',location=loc);l=bpy.context.object;l.data.energy=power;l.data.shape='DISK';l.data.size=size;lights.append((l,Vector(loc)))
- bpy.ops.mesh.primitive_plane_add(size=500,location=(0,0,-.06));g=bpy.context.object;g.name='temporary floor';mat=bpy.data.materials.new('dust ground');mat.diffuse_color=(.24,.23,.20,1);g.data.materials.append(mat)
+ bpy.ops.mesh.primitive_plane_add(size=500,location=(0,0,-.06));g=bpy.context.object;g.name='temporary floor';mat=bpy.data.materials.new('plain mid-grey ground');mat.diffuse_color=(.38,.38,.38,1);mat.use_nodes=True;mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.38,.38,1);mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;g.data.materials.append(mat)
  def hide(node,v):node.hide_render=v;[hide(c,v) for c in node.children]
  ev.mkdir(parents=True,exist_ok=True)
  machine_names=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck']
@@ -483,6 +483,6 @@ if a.render:
    target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
    for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
    view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
-   bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=43;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+   bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=70;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  print('Rendered all seven machines at rest and work poses from imported GLB')
 print('exported',glb,glb.stat().st_size)
