@@ -56,7 +56,7 @@ const generators = [
   {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:8000000},
   {id:'town-trucks-2',script:'tools/blender/town-trucks-2.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/trucks-2.glb'],budget:12000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/trucks-2.glb'],budget:48000,maxBytes:3000000},
   {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-STAGES/round-5',
     glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
 
