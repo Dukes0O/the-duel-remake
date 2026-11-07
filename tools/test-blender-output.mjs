@@ -1134,10 +1134,12 @@ try {
     assert.ok(countTriangles('wellhead') > 100 && countTriangles('wellhead') <= 1_800,
       `${countTriangles('wellhead')} triangles exceeds the one-cell wellhead budget`);
     assert.ok(names.includes('wellhead:beam-surface'), 'the rocking beam has a separate traced surface');
-    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface', 'radar:dish-rim',
-      'radar:tower-side-frame-road', 'radar:tower-end-frame-road', 'radar:turntable-crossbar']) {
+    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface',
+      'radar:side-x-brace-left-1', 'radar:tower-end-frame-road', 'radar:platform-deck',
+      'radar:platform-railing-road', 'radar:ladder', 'radar:turntable-crossbar']) {
       assert.ok(names.includes(name), `${name} node is missing`);
     }
+    assert.ok(!names.includes('radar:dish-rim'), 'the photo-built dish has no separate red rim');
     assert.ok(countTriangles('radar') > 100 && countTriangles('radar') <= 1_800,
       `${countTriangles('radar')} triangles exceeds the one-cell radar budget`);
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
