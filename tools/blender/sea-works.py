@@ -142,33 +142,31 @@ def build_harbour_gate():
 def build_harbour_ramp():
  wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-ramp.jpg')
  ramp_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~ramp_sky); scaled_photos.append(p)
- depth=1.5; face=(0,55,wall.w,300); stone_face=(0,0,stone.w,stone.h)
- m=Mesh()
- for x0,x1,front in [(-10,-4,(0,55,wall.w*.15,300)),(4,10,(wall.w*.85,55,wall.w,300))]:
-  box(m,x0,x1,0,5.55,-depth,depth,{'+z':('wall',wall,front),'-z':('wall',wall,front),'+x':('wall',wall,front),'-x':('wall',wall,front),'+y':('wall',wall,front),'-y':('wall',wall,front)})
- lintel=(wall.w*.4,55,wall.w*.6,300)
- box(m,-4,4,5.15,5.55,-depth,depth,{k:('wall',wall,lintel) for k in ['+x','-x','+y','-y','+z','-z']})
- finish(m,'harbour-ramp-frame',{'wall':wall.material()})
- cap=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
- box(cap,-10.1,10.1,5.55,6,-1.6,1.6,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
- finish(cap,'harbour-ramp-coping',{'stone':stone.material()})
- # A solid eight-metre slipway falls 1.8 m toward the seaward (+Z) side.
- deck=Mesh(); x0,x1=-4,4; z0,z1=-8,8; y0,y1=.2,-1.6; thick=.24
+ # Two 6 m high, 3 m thick, 16 m long wall sections flank an 8 m clear opening.
+ walls=Mesh(); run_crop=(0,55,wall.w*.4,300); end_crop=(0,55,wall.w*.075,300)
+ for x0,x1 in ((-7,-4),(4,7)):
+  box(walls,x0,x1,0,5.55,-8,8,
+      {'+x':('wall',wall,run_crop),'-x':('wall',wall,run_crop),
+       '+z':('wall',wall,end_crop),'-z':('wall',wall,end_crop),
+       '+y':('stone',stone,(0,0,stone.w*80,stone.h*6)),
+       '-y':('stone',stone,(0,0,stone.w*80,stone.h*6))})
+ finish(walls,'harbour-ramp-walls',{'wall':wall.material(),'stone':stone.material()})
+ # One uninterrupted cobbled face runs landward to seaward: +Z is downhill.
+ deck=Mesh(); x0,x1=-4,4; z0,z1=-8,8; y0,y1=1.5,0; thick=.24
  corners=[(x0,y0,z0),(x1,y0,z0),(x1,y1,z1),(x0,y1,z1)]
  uvs=[p.uv(410,258),p.uv(620,258),p.uv(730,520),p.uv(275,520)]
  deck.face(corners,uvs,'ramp',(0,1,0))
  underside=[(x0,y0-thick,z0),(x1,y0-thick,z0),(x1,y1-thick,z1),(x0,y1-thick,z1)]
  deck.face(underside,uvs,'wall',(0,-1,0))
  for a,b,c,d in [(corners[0],corners[3],underside[3],underside[0]),(corners[1],corners[2],underside[2],underside[1]),(corners[0],corners[1],underside[1],underside[0]),(corners[3],corners[2],underside[2],underside[3])]:
-  deck.face([a,b,c,d],[wall.uv(0,205),wall.uv(wall.w,205),wall.uv(wall.w,300),wall.uv(0,300)],'wall',(0,0,1))
+  deck.face([a,b,c,d],[wall.uv(0,205),wall.uv(wall.w*.4,205),wall.uv(wall.w*.4,300),wall.uv(0,300)],'wall',(0,0,1))
  finish(deck,'harbour-ramp',{'ramp':p.material(),'wall':wall.material()})
- # Short stone reveals line the passage, following the descending road surface.
- linings=Mesh()
- for x in (-4,4):
-  band=(0 if x<0 else wall.w*.85,55,wall.w*.15 if x<0 else wall.w,270)
-  linings.face([(x,0,-1.5),(x,5.15,-1.5),(x,5.15,1.5),(x,-.2,1.5)],
-               [wall.uv(band[0],band[3]),wall.uv(band[0],band[1]),wall.uv(band[2],band[1]),wall.uv(band[2],band[3])],'stone',(1 if x<0 else -1,0,0))
- finish(linings,'harbour-ramp-reveals',{'stone':wall.material()})
+ # The wall photo's lower course carries the weed across both passage faces.
+ linings=Mesh(); band=(0,210,wall.w*.4,300)
+ for x,normal in ((-4,(1,0,0)),(4,(-1,0,0))):
+  linings.face([(x,0,-8),(x,2,-8),(x,2,8),(x,0,8)],
+               [wall.uv(band[0],band[3]),wall.uv(band[0],band[1]),wall.uv(band[2],band[1]),wall.uv(band[2],band[3])],'weed',normal)
+ finish(linings,'harbour-ramp-weed',{'weed':wall.material()})
 def build_causeway_arch():
  p=photo('sea-causeway-arch.jpg'); rail=photo('sea-rails.jpg'); dark=photo('dam-wet-silt.jpg')
  cx=512; half=175; crown=405; spring=470; floor=545; top=64

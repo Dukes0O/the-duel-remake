@@ -30,6 +30,7 @@
 
 - Point 1: gave the gate and ramp coping the same dam gatehouse stone photo and UV scale as the harbour wall coping. Both remain at y = 5.55–6 m for a continuous top course.
 - Point 2: the gate leaf mesh origins are already on their outer hinge lines; changed the open pose to a 90-degree swing about the vertical hinge axis, toward seaward, so both leaves remain visible against the frame sides.
+- Point 3: replaced the ramp's lintelled frame with an open-sky passage between two 6 m high, 3 m thick, 16 m long wall sections, leaving an 8 m clear width. Added one 16 m slope from 1.5 m landward to ground at the seaward end; the inner walls retain the photographed lower weed band.
 
 ## Removed
 
