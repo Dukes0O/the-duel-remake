@@ -7,9 +7,10 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-9'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-10'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-9.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-10.jpg'
+textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -110,6 +111,43 @@ if '--review-only' in args:
         scene.render.resolution_x=900; scene.render.resolution_y=600
         scene.render.filepath=str(evidence/f'big-wheel-{name}.png'); bpy.ops.render.render(write_still=True)
         print(f'rendered big wheel {name}')
+    drive_root=bpy.data.objects.get('drive-in')
+    if drive_root is None: raise RuntimeError('exported drive-in is missing')
+    drive_tree={drive_root,*drive_root.children_recursive}
+    for node in scene.objects:
+        if node.type=='MESH' and node.name!='Review ground':
+            node.hide_render=node not in drive_tree
+    drive_centre=Vector((0,0,0))
+    # The four matches show the photographed screen by itself; the remaining
+    # views show both rows of wrecks in the full footprint.
+    drive_views=[
+        ('match-side',(1,0,0),'drive-in-side.jpg',True),
+        ('match-front',(0,1,0),'drive-in-front.jpg',True),
+        ('match-rear',(0,-1,0),'drive-in-rear.jpg',True),
+        ('match-above',(0,0,1),'drive-in-above.jpg',True),
+        ('three-quarter-road',(1,1,.48),None,False),
+        ('three-quarter-yard',(-1,1,.48),None,False),
+        ('mayor',(1,1,1),None,False),
+    ]
+    for name,direction,photo_name,screen_only in drive_views:
+        for obj in drive_root.children_recursive:
+            if obj.type=='MESH' and obj.name.startswith('drive-in:wreck-'):
+                obj.hide_render=screen_only
+        direction=Vector(direction).normalized()
+        if photo_name:
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            width,height=ref.size
+            bpy.data.images.remove(ref)
+            scene.render.resolution_x=width; scene.render.resolution_y=height
+            ortho=9 if name=='match-side' else 23
+        else:
+            scene.render.resolution_x=1000; scene.render.resolution_y=700
+            ortho=32
+        target=Vector((0,8.75,3.7)) if name in ('match-side','match-above') else Vector((0,0,3.7))
+        camera.location=target+direction*42; aim(camera,target); camera.data.ortho_scale=ortho
+        scene.render.filepath=str(evidence/f'drive-in-{name}.png')
+        bpy.ops.render.render(write_still=True)
+        print(f'rendered drive-in {name}')
     raise SystemExit(0)
 
 sys.path.insert(0, str(root / 'tools/blender'))
@@ -148,8 +186,8 @@ mat['lamp'] = bpy.data.materials.new('Town Fun / cinema phosphor')
 mat['lamp'].use_nodes = True
 mat['lamp'].node_tree.nodes.clear()
 emit = mat['lamp'].node_tree.nodes.new('ShaderNodeEmission')
-emit.inputs['Color'].default_value = (.82, .52, .20, 1)
-emit.inputs['Strength'].default_value = 1.8
+emit.inputs['Color'].default_value = (.62, .36, .14, 1)
+emit.inputs['Strength'].default_value = 1.0
 outnode = mat['lamp'].node_tree.nodes.new('ShaderNodeOutputMaterial')
 mat['lamp'].node_tree.links.new(emit.outputs[0], outnode.inputs['Surface'])
 for material in bpy.data.materials:
@@ -316,17 +354,123 @@ touches=all(truck_bounds[i][0] <= tavern_bounds[i][1]+.03 and tavern_bounds[i][0
 print('truck intersects tavern bounds:',touches)
 if not touches:
     raise RuntimeError('tavern truck does not touch the tavern')
-# Drive-in screen and rows of battered cars, aimed toward the road-facing screen.
+# The billboard face and open frame are traced separately from the generated
+# orthographic views. The screen face is its own emissive, replaceable piece.
 building_root('drive-in','4x3')
-for x in (-8,8):
-    beam(f'drive-in:screen-leg-{x}',(x,.25,-10),(x,10,-10),.30,'weathered-plank')
-for y in (1,9.4): beam(f'drive-in:screen-frame-{y}',(-9,y,-10),(9,y,-10),.28,'rusted-steel')
-for x in range(-8,9,2): box(f'drive-in:screen-sheet-{x}',(x,5.1,-9.93),(1.9,7.6,.12),'galvanised-tin',.035)
-box('drive-in:screen',(0,5.15,-9.82),(12.4,5.9,.045),'lamp',.005)
-for row,z in enumerate((-4,1,6),1):
-    for col,x in enumerate((-8,-4,0,4,8),1):
-        car(f'drive-in:wreck-{row}-{col}',(x,.02,z),.72,('rusted-steel','faded-hand-paint','galvanised-tin')[(row+col)%3])
-for x in (-10,10): beam(f'drive-in:perimeter-post-{x}',(x,.1,-9),(x,1.8,-9),.12,'rusted-steel')
+drive_photos={name:Photo(tex/f'drive-in-{name}.jpg') for name in ('front','rear','side')}
+def edge_seeds(photo):
+    return [(8,8),(photo.w-9,8),(8,photo.h-9),(photo.w-9,photo.h-9),
+            *((x,8) for x in range(80,photo.w-8,120)),
+            *((x,photo.h-9) for x in range(80,photo.w-8,120))]
+for photo in drive_photos.values(): lift_if_dark(photo)
+front_photo=drive_photos['front']; rear_photo=drive_photos['rear']; side_photo=drive_photos['side']
+front_mask=~front_photo.sky(edge_seeds(front_photo),tolerance=32,grey=24)
+rear_mask=~rear_photo.sky(edge_seeds(rear_photo),tolerance=32,grey=24)
+# Grid-normalized billboard rectangle: its emissive panel sits inside the
+# perimeter rails. Clearing it leaves the open frame and its braces.
+def cut_display(mask):
+    h,w=mask.shape
+    mask[int(h*.16):int(h*.57),int(w*.12):int(w*.88)]=False
+cut_display(front_mask); cut_display(rear_mask)
+side_mask=~side_photo.sky(edge_seeds(side_photo),tolerance=32,grey=24)
+for photo,mask in ((front_photo,~front_photo.sky(edge_seeds(front_photo),tolerance=32,grey=24)),
+                   (rear_photo,~rear_photo.sky(edge_seeds(rear_photo),tolerance=32,grey=24)),
+                   (side_photo,side_mask)):
+    photo.bleed(mask)
+front_scale_x=18.0/(front_photo.w*.85)
+front_ground=front_photo.h*.93
+front_top=front_photo.h*.08
+front_scale_y=7.8/(front_ground-front_top)
+frame_mesh=PhotoMesh()
+def front_point(px,py,depth):
+    return ((px-front_photo.w/2)*front_scale_x,
+            (front_ground-py)*front_scale_y,-8.75+depth)
+frame_loops=trace(front_mask,(0,0,front_photo.w,front_photo.h),tolerance=1.3,min_area=28)
+if not frame_loops: raise RuntimeError('drive-in front photo did not trace a frame')
+slab(frame_mesh,'photo',front_photo,frame_loops,front_point,-.10,.10,wall_scale=.002)
+front_frame=frame_mesh.finish('drive-in:traced-front-frame',{'photo':front_photo.material()})
+keep(front_frame)
+rear_mesh=PhotoMesh()
+rear_scale_x=18.0/(rear_photo.w*.85)
+rear_ground=rear_photo.h*.93
+rear_scale_y=7.8/(rear_ground-rear_photo.h*.08)
+def rear_point(px,py,depth):
+    return ((px-rear_photo.w/2)*rear_scale_x,
+            (rear_ground-py)*rear_scale_y,-8.48+depth)
+rear_loops=trace(rear_mask,(0,0,rear_photo.w,rear_photo.h),tolerance=1.3,min_area=28)
+if not rear_loops: raise RuntimeError('drive-in rear photo did not trace a frame')
+slab(rear_mesh,'photo',rear_photo,rear_loops,rear_point,-.10,.10,wall_scale=.002)
+rear_frame=rear_mesh.finish('drive-in:traced-rear-frame',{'photo':rear_photo.material()})
+keep(rear_frame)
+# The side photograph traces each end truss. Its narrow depth runs from the
+# display face toward the rear braces; duplicate the measured profile at both ends.
+side_bounds=np.where(side_mask)
+side_x0,side_x1=int(side_bounds[1].min()),int(side_bounds[1].max())
+side_y0,side_y1=int(side_bounds[0].min()),int(side_bounds[0].max())
+side_ground=side_photo.h*.93
+side_s=7.8/(side_ground-side_y0)
+side_centre=(side_x0+side_x1)/2
+side_loops=trace(side_mask,(side_x0,side_y0,side_x1+1,int(side_ground)),tolerance=1.4,min_area=24)
+if not side_loops: raise RuntimeError('drive-in side photo did not trace a side truss')
+for side_x in (-8.85,8.85):
+    side_mesh=PhotoMesh()
+    def side_point(px,py,depth,root_x=side_x):
+        return (root_x+depth,(side_ground-py)*side_s,-9.0+(px-side_centre)*side_s)
+    slab(side_mesh,'photo',side_photo,side_loops,side_point,-.30,.30,wall_scale=.002)
+    side_obj=side_mesh.finish(f'drive-in:traced-side-truss-{side_x}',{'photo':side_photo.material()})
+    keep(side_obj)
+# Emissive screen, slightly ahead of the photo-traced billboard skin.
+box('drive-in:screen',(0,5.16,-8.89),(16.1,3.78,.12),'lamp',.012)
+
+# Each wreck is the traced side silhouette from the scrapyard car photo, extruded
+# across its width. The original front end is at the right of the photograph,
+# so that end faces the billboard at negative Z.
+car_photo=Photo(tex/'scrapyard-car-blue-side.jpg')
+lift_if_dark(car_photo)
+car_mask=~car_photo.sky(edge_seeds(car_photo),tolerance=32,grey=26)
+car_rows,car_cols=np.where(car_mask)
+car_ground=int(car_rows.max())
+car_x0,car_x1=int(car_cols.min()),int(car_cols.max())
+car_y0=int(car_rows.min())
+car_height=1.62; car_scale=car_height/(car_ground-car_y0)
+car_length=(car_x1-car_x0)*car_scale
+car_photo.bleed(car_mask)
+wreck_loops=trace(car_mask,(car_x0,car_y0,car_x1+1,car_ground+1),tolerance=2.2,min_area=55)
+if not wreck_loops: raise RuntimeError('scrapyard wreck side photo did not trace')
+for row,z_center in enumerate((1.65,7.05),1):
+    for col,x_center in enumerate((-9.4,-4.7,0,4.7,9.4),1):
+        wreck_mesh=PhotoMesh()
+        def wreck_point(px,py,depth,centre_x=x_center,centre_z=z_center):
+            return (centre_x+depth,(car_ground-py)*car_scale,
+                    centre_z+(car_x1-px)*car_scale-car_length/2)
+        slab(wreck_mesh,'photo',car_photo,wreck_loops,wreck_point,-.92,.92,wall_scale=.002)
+        wreck=wreck_mesh.finish(f'drive-in:wreck-{row}-{col}',{'photo':car_photo.material()})
+        keep(wreck)
+
+def drive_game_bounds(obj):
+    points=[obj.matrix_world @ Vector(vertex.co) for vertex in obj.data.vertices]
+    return [(min(p[axis] for p in points),max(p[axis] for p in points)) for axis in (0,2,1)]
+drive_pieces=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('drive-in:')]
+for piece in drive_pieces:
+    bounds=drive_game_bounds(piece)
+    bounds[2]=(-bounds[2][1],-bounds[2][0])
+    report={'min':[round(bounds[0][0],3),round(bounds[1][0],3),round(bounds[2][0],3)],
+            'max':[round(bounds[0][1],3),round(bounds[1][1],3),round(bounds[2][1],3)]}
+    print('DRIVE-IN BOUNDS',piece.name,json.dumps(report))
+    if bounds[0][0]<-15.5 or bounds[0][1]>15.5 or bounds[2][0]<-11.5 or bounds[2][1]>11.5:
+        raise RuntimeError(f'{piece.name} exceeds the 4x3 footprint: {report}')
+    if bounds[1][0]<-.06:
+        raise RuntimeError(f'{piece.name} extends below ground: {report}')
+def drive_overlap(a,b,padding=.025):
+    return all(a[i][0]<=b[i][1]+padding and b[i][0]<=a[i][1]+padding for i in range(3))
+for piece in drive_pieces:
+    bounds=drive_game_bounds(piece); bounds[2]=(-bounds[2][1],-bounds[2][0])
+    grounded=bounds[1][0]<=.025
+    touches=grounded or any(other is not piece and drive_overlap(bounds,
+        (lambda other_bounds: [other_bounds[0],other_bounds[1],(-other_bounds[2][1],-other_bounds[2][0])])(drive_game_bounds(other)))
+        for other in drive_pieces)
+    print('DRIVE-IN CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
 # Four shell bumper cars inside a bank of real tyres, each a separately movable node.
 building_root('wreck-ring','3x3')
@@ -555,7 +699,8 @@ for obj in bpy.data.objects:
         obj.data.uv_layers.active.name='UVMap'
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
-        image.scale(256,256)
+        if not Path(image.filepath).name.startswith('drive-in-'):
+            image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
     export_apply=True,export_materials='EXPORT',export_image_format='JPEG',export_image_quality=64)
