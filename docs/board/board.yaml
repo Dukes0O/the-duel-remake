@@ -423,6 +423,24 @@ tasks:
     details: "docs/board/cards/QA-SKI-FINISH-TIMEOUT.md"
 
 
+  - id: QA-TIMING-UNDER-LOAD
+    title: "Town timing checks fail when art jobs run beside them"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-TIMING-UNDER-LOAD.md"
+
+  - id: QA-WATER-ROAD-AUTOPILOT
+    title: "water-road scenario: Sal's road autopilot sometimes misses Easy within three tries"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-WATER-ROAD-AUTOPILOT.md"
+
   - id: WW-BOSS
     title: "Old Smoke's furnace chase"
     owner: "codex"
