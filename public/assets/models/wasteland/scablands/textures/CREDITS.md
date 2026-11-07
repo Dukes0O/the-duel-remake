@@ -216,3 +216,14 @@ traces the true opening and rebuilds the dark inside, sleepers and rails at
 `sea-mule-wagon-overhead.jpg` are original Codex ImageGen reference photos
 made 2026-11-06: one empty, weathered flat wagon, from matched side, end and
 dead-overhead views. The side photo anchors the end and overhead views.
+
+`sea-camp-hut-side.jpg`, `sea-camp-hut-end.jpg` and `sea-camp-hut-top.jpg`,
+`sea-camp-kitchen-side.jpg`, `sea-camp-kitchen-end.jpg` and
+`sea-camp-kitchen-top.jpg`, plus `sea-camp-stilt-frame.jpg`,
+`sea-camp-ladder.jpg` and `sea-camp-washing-line.jpg` are original Codex
+ImageGen modeling-reference photos created on 2026-11-07. The hut and kitchen
+views show the unraised buildings on a pale studio floor; the frame, ladder and
+laundry references are also isolated on pale backgrounds. These JPEGs are
+converted project copies of the tool's PNG outputs; the generated originals
+remain in the Codex generated-images folder. No existing source photo was
+replaced.
