@@ -117,7 +117,6 @@ const generators = [
     glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
   { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
     glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },
-  { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
   { id: 'sea-vane', script: 'tools/blender/sea-vane.py', args: [], candidate: true,
     budget: 9000, maxBytes: 1_500_000,
     glb: ['public/assets/models/wasteland/scablands/mrs-vane.glb'] },
