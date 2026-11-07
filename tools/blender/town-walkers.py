@@ -101,6 +101,10 @@ def views_for(photo_set, height, kind):
         photo = photos[name]
         view = View(name, photo, frame_seeds(photo), pick, normal, grey=28, tolerance=34)
         result.append(view)
+    # Carry garment colour beyond the silhouette so texture filtering never
+    # pulls pale studio backdrop onto coat edges or boots.
+    for view in result:
+        view.photo.bleed(view.mask, passes=12)
     return result, scale, centre, ground, hips, world_height
 
 def look_any(view, x, y, z):
@@ -115,6 +119,9 @@ def add_actor(person, index):
         material.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = 0
 
     hip_y = (ground - hips_px) * scale
+    long_skirt = outfit in ('dust coat', 'patched long coat', 'long coat and loaded pack',
+                            'poncho', 'hooded poncho')
+    hem_y = .25 if long_skirt else hip_y
     half_x = .47 if kind == 'adult' else .39
     body_bounds = ((-half_x, half_x), (0, height + .10), (-.38, .38))
     leg_bounds = ((-.34, .34), (0, hip_y + .06), (-.30, .30))
@@ -123,16 +130,13 @@ def add_actor(person, index):
     actor.parent = root_node
 
     def upper_keep(x, y, z):
-        # The coat/apron photographed below the hip stays with the torso;
-        # the two leg hulls sit behind its open split and swing at the hip.
-        if outfit in ('dust coat', 'patched long coat', 'long coat and loaded pack',
-                      'welding apron', 'work apron', 'poncho', 'hooded poncho'):
-            return (y >= hip_y) | (np.abs(x) >= .12)
-        return y >= hip_y
+        # Long outerwear remains a continuous photo-carved skirt to the knee;
+        # legs begin at its hem instead of making coat panels read as legs.
+        return y >= hem_y
     def left_keep(x, y, z):
-        return (y < hip_y + .015) & (x <= .012)
+        return (y < hem_y + .015) & (x <= .012)
     def right_keep(x, y, z):
-        return (y < hip_y + .015) & (x >= -.012)
+        return (y < hem_y + .015) & (x >= -.012)
 
     # An upright body has no 1.7 m ground-plane footprint. The overhead image
     # is measured and used to paint upward-facing surfaces, while the front,
@@ -162,9 +166,12 @@ def add_actor(person, index):
             pivot = bpy.data.objects.new(f'{ident}:{label}', None)
             scene.collection.objects.link(pivot)
             pivot.parent = actor
-            pivot.location = (-.095 if side == 'l' else .095, 0, hip_y)
+            pivot.location = (-.095 if side == 'l' else .095, 0, hem_y)
             pivot['swing_axis'] = 'X'
-            mesh.location = (0, 0, -hip_y)
+            # Carved vertices already carry their measured world x. Cancel
+            # the pivot's lateral offset so the feet stay under the hips.
+            pivot_x = -.095 if side == 'l' else .095
+            mesh.location = (-pivot_x, 0, -hem_y)
             mesh.parent = pivot
             parts.append(mesh)
 
