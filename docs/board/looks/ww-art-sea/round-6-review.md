@@ -1,16 +1,5 @@
-# WW-ART-SEA round 6
+# WW-ART-SEA round 6: the works camp
 
-The final sheet is 1600 × 800 pixels and 162,170 bytes. The top row compares
-the bare hut photo with the exported hut from the same side camera. The lower
-row shows the whole camp from two car-height angles at about 25 metres.
+Claude's verdict: **passes.** The tin huts and long kitchen are real-looking buildings standing far too high on braced legs, with ladders up and dark flood marks low on every leg, so the camp says plainly that everyone there knows what is coming. The washing line gives it its life.
 
-The camp reads as deliberately raised: the huts and kitchen stand three metres
-above the ground on repeated X-braced timber frames. The dark flood marks and
-weed are visible at the feet, and ladders reach each door. A line of grey work
-clothes hangs between the huts. The empty space beneath the buildings carries
-the flood warning without signs or writing.
-
-The bare hut keeps the measured tin silhouette and weathered surface. The
-angled views show all three buildings, the ladders and the line in one frame.
-This is a photo-carved candidate for Claude's look verdict; it is not yet wired
-into the game.
+The stilts are flat traced frames, which suits a group this busy at the distance a player sees it. The sheet's top row shows the hut's photo, then the hut on its legs.
