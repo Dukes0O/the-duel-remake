@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-3.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-3/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-4.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-4/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -241,11 +241,22 @@ for n in ids:
   def crushed_car(name, paint_id):
    side=Photo(tex/f'scrapyard-car-{paint_id}-side.jpg')
    top=Photo(tex/f'scrapyard-car-{paint_id}-top.jpg')
-   x0,x1,roof,ground=((8,1492,76,423) if paint_id=='red' else (8,1492,83,423))
+   # Pixel ranges come from the round-4 grids. Clip the floor shadow below
+   # the tyres before tracing so it cannot become a white band on the model.
+   side_bounds={
+    'red':(10,20,2162,660),
+    'brown':(10,45,2162,657),
+    'blue':(80,2,2092,690),
+   }
+   x0,roof,x1,ground=side_bounds[paint_id]
    sky=side.sky([(2,2),(side.w-3,2),(2,side.h-3),(side.w-3,side.h-3)],tolerance=27,grey=26)
+   rgb=side.rgb();value=rgb.mean(axis=2);chroma=rgb.max(axis=2)-rgb.min(axis=2)
+   # Remove pale studio patches trapped between the crushed body and tyres;
+   # the edge flood cannot reach those pockets through the wreck silhouette.
    solid=~sky
    solid[ground:,:]=False
-   loops=photo_trace(solid,(x0,roof,x1,ground),tolerance=3.2,min_area=100)
+   side.bleed(solid&~((value>100)&(chroma<60)))
+   loops=photo_trace(solid,(x0,roof,x1,ground),tolerance=6.0,min_area=100)
    if not loops:raise RuntimeError(f'No traced side silhouette for {name}')
    # Windows and dents remain in the photographed surface, not cut through it.
    silhouette=[max(loops,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1]))))]
@@ -257,7 +268,14 @@ for n in ids:
    photo_slab(mesh,'side',side,silhouette,side_point,-.9,.9,wall_scale=1.8)
    tx0,tx1,ty0,ty1=((20,1475,25,650) if paint_id=='red' else (15,1478,24,620))
    top_sky=top.sky([(2,2),(top.w-3,2),(2,top.h-3),(top.w-3,top.h-3)],tolerance=27,grey=26)
-   top_loops=photo_trace(~top_sky,(tx0,ty0,tx1,ty1),tolerance=3.2,min_area=100)
+   rgb=top.rgb();value=rgb.mean(axis=2);chroma=rgb.max(axis=2)-rgb.min(axis=2)
+   top_solid=~top_sky
+   top_color_solid=top_solid&~((value>100)&(chroma<60))
+   top.bleed(top_color_solid)
+   top_rows,top_cols=np.where(top_solid)
+   tx0,tx1=int(top_cols.min()),int(top_cols.max()+1)
+   ty0,ty1=int(top_rows.min()),int(top_rows.max()+1)
+   top_loops=photo_trace(top_solid,(tx0,ty0,tx1,ty1),tolerance=6.0,min_area=100)
    if not top_loops:raise RuntimeError(f'No traced plan silhouette for {name}')
    top_outline=[max(top_loops,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1]))))]
    def top_point(px,py):
@@ -268,11 +286,11 @@ for n in ids:
    for triangle in photo_fill(top_outline):
     mesh.face([top_point(*point) for point in triangle],[top.uv(*point) for point in triangle],'top',(0,1,0))
    return mesh.finish(name,{'side':side.material(),'top':top.material()})
-  car_meshes={paint_id:crushed_car(f'scrapyard:car-source-{paint_id}',paint_id) for paint_id in ('red','blue')}
+  car_meshes={paint_id:crushed_car(f'scrapyard:car-source-{paint_id}',paint_id) for paint_id in ('red','brown','blue')}
   # Five and four cars reach the reference's measured 40% and 50% of the
   # nine-metre gantry. Each flat car is .9 m high, 4.2 m long and 1.8 m wide.
-  stacks=[('a',-5.15,0.0,5,['red','blue','red','blue','red']),
-          ('b',5.15,0.0,4,['blue','red','blue','red'])]
+  stacks=[('a',-5.15,0.0,5,['red','brown','blue','red','brown']),
+          ('b',5.15,0.0,4,['blue','red','brown','blue'])]
   for label,cx,cz,count,paints in stacks:
    stack_top=0
    for layer,paint_id in enumerate(paints):
