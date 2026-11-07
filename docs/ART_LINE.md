@@ -162,3 +162,5 @@ stop adjusting and change the method.
   `.qa-dist/YOUR-TASK.md` and carries on.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
+
+- **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
