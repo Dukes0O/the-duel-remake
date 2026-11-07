@@ -63,6 +63,11 @@ stop adjusting and change the method.
   panel shorter or narrower than its side and end panels. Normalize the crop
   to the shared feature scale before carving, and check roof and centre-line
   landmarks on a grid.
+- **A single generated picture contains several views.** The generator may
+  return a four-panel perspective sheet despite a multi-view request. It is not
+  a dead-on reference: request each side, end and plan view in its own call,
+  inspect it, and regenerate any picture that contains a second view or
+  perspective.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
@@ -118,6 +123,7 @@ stop adjusting and change the method.
 - **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
 - **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
 - **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
+- **A named texture is not necessarily a material swatch.** `corrugated-tin.jpg` is a useful roof/detail photo but includes diner imagery; using it as a repeating whole-wall material puts unrelated photographic fragments across every tin panel. Inspect a proposed tile and use a clean standalone corrugated-tin swatch for broad surfaces.
 - **Dark studio pixels are rejected as sky.** `Photo.sky` ignores seeds whose mean is below 185. Use `lift_if_dark` on the measuring photo before flood-filling, and inspect the saved mask; this changes only the in-memory mask copy, not the packed source photo. Without it, a tower traced from the original fire-station composite includes the grey studio as a solid plate.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
@@ -168,3 +174,5 @@ stop adjusting and change the method.
   `.qa-dist/YOUR-TASK.md` and carries on.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
+
+- **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.

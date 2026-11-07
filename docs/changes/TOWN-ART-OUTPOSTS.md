@@ -1,32 +1,24 @@
-# TOWN-ART-OUTPOSTS
+﻿# TOWN-ART-OUTPOSTS
 
-## Design
-
-Built the hermit camp from the existing Wasteland town brief. The hut door faces the road at -Z. Its side photo has the front at the right, and the measured endpoint order follows that view. The hut is 6.07 m long, 3.51 m wide and 3.14 m high from its 2 m door. The goat shed is a separate photo-carve. A rusty car bonnet forms the satellite dish. The chair faces out from the hut.
+Status: deck-town round 14 model and review sheet ready for Claude.
 
 ## Changed
 
-- Added the hermit hut, goat shed, bonnet dish, leaning pole and chair under `hermit-camp`, a direct child of `town-outposts`.
-- Printed and checked the world bounds for each camp part and the full camp. The 3 by 3 cell footprint remains clear.
-- Added a family-root test and a 9,000-triangle hermit-camp budget. The outpost family budget is 30,000 triangles.
-- Added the Hermit Camp round 1 sheet and this review note. Kept the diner and school geometry unchanged.
+Scaled the traced rails to 1.1 m from the deck. The two side runs and two end runs meet at the corners and stay within the deck edges. Seeded the trapped pale background inside the rail openings so it is removed from the trace.
 
-## Checks
+Capped the home carve at the measured wall height, removed the source roof band from the wall mask and seated the four homes on the deck. Added two thin gable slopes per home with 0.2 m overhang and the side photo's red roof strip repeated in bounded UV sections about every 3 m. The roof uses a fresh source-photo instance so the carve's background bleed does not replace its pixels. Kept ladders, washing and the bell.
 
-- Blender 4.5.13 recipe/export/render: passed. The run printed hut, shed, dish, chair and camp bounds. GLB size: 4,019,808 bytes.
-- `tools/test-blender-output.mjs`: pending.
-- `tools/test-repo-hygiene.mjs`: pending.
-- `tools/test-review-evidence.mjs`: pending.
-- Browser checks and frame timing were not run. This is an art-only asset that is not wired into the game. Race fingerprints do not apply.
-- Changed assertion: added the requirement that `dot-diner`, `plane-school` and `hermit-camp` are direct children of `town-outposts`; no assertion was weakened.
+The family GLB is 4,923,392 bytes, within the 5 MB budget. The deck town bounds are X -4.075 to 4.075 m, Y 0 to 3.773 m, Z -7.4 to 7.4 m.
 
-## Claude should inspect
+## Checks and review
 
-Check the four hut photo comparisons, the side-to-gable seams, the bonnet dish connection, the chair's direction, and the 88 m mayor view. The sheet records the visible differences.
-
-The art card's 3 MB family-file target is exceeded. The existing diner and school GLB was 2,865,604 bytes before the camp; the required four-view hut and shed textures add about 1.15 MB. The current output remains below the task test's 5 MB family cap. Review whether the town family's target should change or whether a separate texture-budget card is needed. The accepted diner and school were not altered to reduce their textures.
+- Blender 4.5.13 exported and re-imported the GLB, rendered the review views, and printed every deck-town piece's bounds.
+- Geometry checks passed: all four rails are 1.100 m tall from y=0, and all four roofs touch their wall tops within 2.5 cm. The deck rails stay within its 14.8 by 7.4 m outline.
+- `round-14.jpg`: 194,083 bytes, below 500 KB. It includes the whole-town side view.
+- No lane tier, build, browser check or game look check was run. This is an art-only lane; Claude should inspect the roof strip seams, wall contact, rail corners and pale gaps in the whole-town and mayor views.
+- No test assertions changed. Race fingerprints are not applicable to this art-only model change.
 
 ## Removed
 
-- Removed the unsubmitted generic `round-1.jpg` draft and replaced it with `hermit-round-1.jpg`, so the accepted diner round 4 and school round 9 sheets remain intact.
-- No runtime code path was removed.
+Removed `round-13.jpg`; no matching round-13 review note was present. Kept rounds 4, 9 and 10. Temporary renders, Blender output and scratch logs are removed before handoff.
+
