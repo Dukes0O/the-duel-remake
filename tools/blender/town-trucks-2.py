@@ -1,8 +1,7 @@
-"""Build the first measured vehicle in the second Wasteland town-truck family.
+"""Build four measured vehicles for the second Wasteland town-truck family.
 
-This first art round is the dozer. The card's other three vehicles follow only
-after this photo-carved shape is judged. Every render is made from the exported
-GLB imported into an empty scene. Coordinates are metres, +Y up, front -Z.
+Every body is carved from measured photo views and reviewed from an imported
+GLB. Coordinates are metres, +Y up, front -Z.
 """
 import argparse
 import json
@@ -15,6 +14,7 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--export-only', action='store_true')
 parser.add_argument('--candidate-suffix', default='')
+parser.add_argument('--through', choices=('dozer','ambulance','vane-truck','vane-escort'), default='vane-escort')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 if args.candidate_suffix and (not args.candidate_suffix.startswith('-') or
@@ -24,7 +24,7 @@ if args.candidate_suffix and (not args.candidate_suffix.startswith('-') or
 output = (root / '.qa-dist/art-candidates' / f'town-trucks-2{args.candidate_suffix}.glb'
           if args.export_only else root / 'public/assets/models/wasteland/town/trucks-2.glb')
 blend = root / 'art-build/town-trucks-2.blend'
-evidence = root / '.evidence/2026-11-06/TOWN-ART-TRUCKS-2/round-1'
+evidence = root / '.evidence/2026-11-06/TOWN-ART-TRUCKS-2/round-2'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(output)], 'evidence': [str(evidence)]}))
@@ -73,8 +73,8 @@ Z0, SIDE_LEFT, SIDE_RIGHT = -2.9, 15, 750
 SIDE_GROUND, SIDE_ROOF = 378, 21
 SZ = LENGTH / (SIDE_RIGHT - SIDE_LEFT)
 SY = HEIGHT / (SIDE_GROUND - SIDE_ROOF)
-TOP_LEFT, TOP_RIGHT = 93, 879
-TOP_CX, TOP_FRONT, TOP_REAR = 263, 67, 461
+TOP_LEFT, TOP_RIGHT = 43, 741
+TOP_CX, TOP_FRONT, TOP_REAR = 220, 56, 385
 TX = WIDTH / (TOP_REAR - TOP_FRONT)
 TZ = LENGTH / (TOP_RIGHT - TOP_LEFT)
 FRONT_CX, FRONT_GROUND = 318, 470
@@ -91,6 +91,11 @@ def side_pick(x, y, z):
 
 def front_pick(x, y, z):
     return FRONT_CX - x / FX, FRONT_GROUND - y / FY
+
+def front_body_pick(x, y, z):
+    # The blade scale is deliberately tighter; the hull's full cab height uses
+    # the actual roof in the front photograph instead of clipping at the blade.
+    return FRONT_CX - x / FX, FRONT_GROUND - y / (HEIGHT / (FRONT_GROUND - 14))
 
 def rear_pick(x, y, z):
     return REAR_CX + x / RX, REAR_GROUND - y / RY
@@ -120,7 +125,7 @@ top_seeds = [(5, 5), (TW - 6, 5), (5, TH - 6), (TW - 6, TH - 6)]
 side = View('side', side_photo, side_seeds, side_pick, (-1, 0, 0), trim_side, grey=30, tolerance=26)
 far_side = View('side', side_photo, [(5, 5)], side_pick, (1, 0, 0), trim_side, grey=30, tolerance=26)
 far_side.mask = side.mask
-front = View('front', front_photo, front_seeds, front_pick, (0, 0, -1), trim_end(FRONT_GROUND), grey=30, tolerance=26)
+front = View('front', front_photo, front_seeds, front_body_pick, (0, 0, -1), trim_end(FRONT_GROUND), grey=26, tolerance=26)
 rear = View('rear', rear_photo, rear_seeds, rear_pick, (0, 0, 1), trim_end(REAR_GROUND), grey=30, tolerance=26)
 overhead = View('overhead', top_photo, top_seeds, top_pick, (0, 1, 0), grey=30, tolerance=26)
 
@@ -146,12 +151,12 @@ solid, xs, ys, zs = occupancy(((-1.42, 1.42), (0, HEIGHT), (-1.18, 2.93)), .035,
 solid = largest_part(solid)
 
 def body_only(view, photo, seeds):
-    return view.mask & ~photo.sky(seeds, tolerance=55, grey=32)
+    return view.mask & ~photo.sky(seeds, tolerance=28, grey=26)
 
-side_photo.bleed(body_only(side, side_photo, side_seeds))
-front_photo.bleed(body_only(front, front_photo, front_seeds))
-rear_photo.bleed(body_only(rear, rear_photo, rear_seeds))
-top_photo.bleed(body_only(overhead, top_photo, top_seeds))
+side_photo.bleed(body_only(side, side_photo, side_seeds), passes=32)
+front_photo.bleed(body_only(front, front_photo, front_seeds), passes=32)
+rear_photo.bleed(body_only(rear, rear_photo, rear_seeds), passes=32)
+top_photo.bleed(body_only(overhead, top_photo, top_seeds), passes=32)
 photo_materials = {'side': side_photo.material(), 'front': front_photo.material(),
                    'rear': rear_photo.material(), 'overhead': top_photo.material()}
 
@@ -169,6 +174,7 @@ rubber = solid_material('Dozer / dusty black rubber', (.045, .047, .043), .96)
 lug_rubber = solid_material('Dozer / worn tread rubber', (.070, .072, .065), .98)
 iron = solid_material('Dozer / dark welded iron', (.105, .094, .075), .9, .24)
 bare_steel = solid_material('Dozer / rubbed cutting steel', (.36, .34, .29), .76, .28)
+dozer_yellow = solid_material('Dozer / faded ochre lift arms', (.43, .32, .12), .82, .12)
 
 def game_vector(point):
     return Vector((point[0], -point[2], point[1]))
@@ -205,6 +211,15 @@ def beam(name, a, b, size, material):
     obj.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
     return obj
 
+def pipe_join(name, points, radius, material, parent, side_name=''):
+    """Photo-measured thick tube members, parented to the named vehicle."""
+    for i,(a,b) in enumerate(zip(points,points[1:])):
+        va,vb=game_vector(a),game_vector(b); d=vb-va
+        bpy.ops.mesh.primitive_cylinder_add(vertices=16,radius=radius,depth=d.length,location=(va+vb)*.5)
+        obj=bpy.context.object; obj.name=f'{name}-{i+1}'
+        obj.rotation_euler=d.to_track_quat('Z','Y').to_euler(); obj.data.materials.append(material)
+        attach(obj,parent,tuple((a[k]+b[k])*.5 for k in range(3)))
+
 family = pivot('town-trucks-2', (0, 0, 0))
 dozer = pivot('dozer', (0, 0, 0))
 attach(dozer, family)
@@ -216,6 +231,7 @@ attach(body, dozer)
 BLADE_CENTER = (0, .60, -1.95)
 blade_root = pivot('dozer:blade', (0, 0, 0))
 attach(blade_root, dozer, BLADE_CENTER)
+blade_root.rotation_euler[0] = -.13
 blade_mesh = bpy.data.meshes.new('dozer curved blade shell')
 blade_verts, surface_faces, blade_uvs = [], [], []
 segments, levels = 18, 5
@@ -290,7 +306,7 @@ for x in (-1.34, -1.02, -.68, -.34, 0, .34, .68, 1.02, 1.34):
 # Two heavy lift arms and hydraulic rams connect the chassis to the blade.
 for side_sign, label in ((-1, 'left'), (1, 'right')):
     x = side_sign * .96
-    a = beam(f'dozer:loader-arm-{label}', (x, .92, -1.14), (x, 1.05, -2.28), .20, iron)
+    a = beam(f'dozer:loader-arm-{label}', (x, .92, -1.14), (x, 1.05, -2.28), (.30, .22), dozer_yellow)
     attach(a, dozer, (x, ( .92 + 1.05) * .5, (-1.14 - 2.28) * .5))
     shoulder = bpy.data.objects.new(f'dozer:loader-arm-pivot-{label}', bpy.data.meshes.new('shoulder'))
     bpy.context.collection.objects.link(shoulder)
@@ -306,6 +322,17 @@ for side_sign, label in ((-1, 'left'), (1, 'right')):
     ram = beam(f'dozer:blade-hydraulic-rod-{label}', (side_sign*.78, 1.12, -1.75),
                (side_sign*.78, 1.17, -2.30), .048, bare_steel)
     attach(ram, dozer, (side_sign*.78, (1.12+1.17)*.5, (-1.75-2.30)*.5))
+
+# The exhaust is a real upright pipe, beside the cab roof as in the source.
+bpy.ops.mesh.primitive_cylinder_add(vertices=20, radius=.075, depth=.88,
+                                     location=game_vector((-.78, 2.55, .70)))
+exhaust = bpy.context.object
+exhaust.name = 'dozer:exhaust-stack'
+exhaust.data.materials.append(iron)
+exhaust_bevel = exhaust.modifiers.new('rolled exhaust lip', 'BEVEL')
+exhaust_bevel.width = .025
+exhaust_bevel.segments = 2
+attach(exhaust, dozer, (-.78, 2.55, .70))
 
 # Chassis crossmembers and a deep belly pan make the machine read as heavy.
 for z in (-1.02, .02, 1.20, 2.52):
@@ -403,6 +430,108 @@ for axle_name, axle, px in (('front', WHEEL_Z[0], wheel_x_px[0]), ('rear', WHEEL
             obj = hub.finish(f'dozer:hub-{suffix}', {'side': side_photo.material()})
             attach(obj, spin, center)
 
+def build_photo_van(ident, size, anchors, colour):
+    """Carve one complete van from its own four measured orthographic photos."""
+    length, width, height = size
+    photos = {view: Photo(textures / f'town-trucks-2-{ident}-{view}.jpg')
+              for view in ('side', 'front', 'rear', 'overhead')}
+    s, f, r, top = (photos[key] for key in ('side', 'front', 'rear', 'overhead'))
+    # Anchor tuples are measured against each source crop: side x/ground/roof,
+    # front and rear centre/outer edge/ground/roof, overhead nose/tail/cross-axis.
+    side_a, front_a, rear_a, top_a = anchors
+    z0 = -length / 2
+    side_px_per_m = (side_a[1] - side_a[0]) / length
+    side_py_per_m = (side_a[2] - side_a[3]) / height
+    def side_pick(x, y, z):
+        return side_a[0] + (z-z0)*side_px_per_m, side_a[2] - y*side_py_per_m
+    def edge_seeds(photo):
+        points=[]
+        for x in range(4,photo.w-3,64): points.extend(((x,4),(x,photo.h-5)))
+        for y in range(4,photo.h-3,64): points.extend(((4,y),(photo.w-5,y)))
+        return points
+    side_seeds=edge_seeds(s); front_seeds=edge_seeds(f)
+    rear_seeds=edge_seeds(r); top_seeds=edge_seeds(top)
+    far = View('side', s, side_seeds, side_pick, (1,0,0), grey=26, tolerance=30)
+    near = View('side', s, side_seeds, side_pick, (-1,0,0), grey=26, tolerance=30)
+    near.mask = far.mask
+    def front_pick(x,y,z):
+        return front_a[0] - x * width / (front_a[1]-front_a[0]), front_a[2] - y * height/(front_a[2]-front_a[3])
+    def rear_pick(x,y,z):
+        return rear_a[0] + x * width / (rear_a[1]-rear_a[0]), rear_a[2] - y * height/(rear_a[2]-rear_a[3])
+    def top_pick(x,y,z):
+        return top_a[0] + (z-z0) * top_a[2] / length, top_a[1] + x * top_a[3] / width
+    side = View('side', s, side_seeds, side_pick, (-1,0,0), grey=26, tolerance=30)
+    front = View('front', f, front_seeds, front_pick, (0,0,-1), grey=26, tolerance=30)
+    rear = View('rear', r, rear_seeds, rear_pick, (0,0,1), grey=26, tolerance=30)
+    overhead = View('overhead', top, top_seeds, top_pick, (0,1,0), grey=26, tolerance=30)
+    # Bleed well beyond the hull edge so pale studio pixels cannot become white
+    # stripes on doors or cab roofs.
+    for photo, mask in ((s, side.mask), (f, front.mask), (r, rear.mask), (top, overhead.mask)):
+        photo.bleed(mask, passes=32)
+    views = [side, far, front, rear, overhead]
+    materials = {'side': s.material(), 'front': f.material(),
+                 'rear': r.material(), 'overhead': top.material()}
+    vehicle = pivot(ident, (0,0,0)); attach(vehicle, family)
+    hull, hx, hy, hz = occupancy(((-width/2,width/2), (0,height), (z0,-z0)), .045,
+        [side.covers, overhead.covers,
+         lambda x,y,z: front.covers(x,y,z) | rear.covers(x,y,z)])
+    hull = largest_part(hull)
+    body = carve_hull(f'{ident}:body', views, materials, hull, hx, hy, hz, .045, 4200)
+    attach(body, vehicle)
+    rubber_mat = solid_material(f'{ident} / dusty rubber', (.035,.037,.034), .98, 0)
+    hub_mat = solid_material(f'{ident} / wheel steel', (.11,.105,.09), .88, .18)
+    axle_px, ground, roof = side_a[4], side_a[2], side_a[3]
+    # Two axle centres come from their visible circles in the side photograph.
+    wheel_centres_px = side_a[5]
+    radius = side_a[6] * height / (ground-roof)
+    wheel_y = radius
+    track = width * .405
+    for axle_index, wheel_px in enumerate(wheel_centres_px):
+        wheel_z = z0 + (wheel_px-side_a[0]) / side_px_per_m
+        for sign, flank in ((-1,'left'),(1,'right')):
+            center=(sign*track,wheel_y,wheel_z)
+            steer=pivot(f'{ident}:steer-front-{flank}',(0,0,0)) if axle_index == 0 else None
+            if steer: attach(steer, vehicle, center)
+            spin=pivot(f'{ident}:spin-{("front" if axle_index==0 else "rear")}-{flank}',(0,0,0))
+            attach(spin, steer or vehicle, center)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=width*.19,
+                location=game_vector(center), rotation=(0,math.pi/2,0))
+            tire=bpy.context.object; tire.name=f'{ident}:wheel-{axle_index}-{flank}'
+            tire.data.materials.append(rubber_mat)
+            bevel=tire.modifiers.new('rounded tyre shoulders','BEVEL'); bevel.width=.10*radius; bevel.segments=2
+            tire.modifiers.new('weighted tyre normals','WEIGHTED_NORMAL')
+            attach(tire,spin,center)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=radius*.42, depth=width*.205,
+                location=game_vector((sign*(track+.01),wheel_y,wheel_z)), rotation=(0,math.pi/2,0))
+            hub=bpy.context.object; hub.name=f'{ident}:hub-{axle_index}-{flank}'; hub.data.materials.append(hub_mat)
+            attach(hub,spin,center)
+    if ident == 'ambulance':
+        # Rounded stretcher rack is attached to the curved roof and visible above it.
+        for x in (-.70,.70):
+            pipe_join(f'{ident}:rack-rail',[(x,2.42,-1.65),(x,2.68,-1.65),(x,2.68,1.65),(x,2.42,1.65)],.035,iron,vehicle)
+        for z in (-1.5,-.5,.5,1.5):
+            beam(f'{ident}:rack-crossbar',(-.72,2.68,z),(.72,2.68,z),.045,iron)
+    elif ident == 'vane-escort':
+        # Blue beacons and the clean roof gun stay separate, nameable parts.
+        lamp_mat=solid_material('Vane escort / blue lamp lens',(.012,.12,.8),.3,0)
+        for x in (-.72,.72):
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.12,location=game_vector((x,2.04,-.05)))
+            lamp=bpy.context.object; lamp.name=f'{ident}:lamp'; lamp.data.materials.append(lamp_mat); attach(lamp,vehicle,(x,2.04,-.05))
+        gun=beam(f'{ident}:roof-gun-barrel',(0,2.25,.04),(0,2.25,.72),.09,iron); attach(gun,vehicle,(0,2.25,.38))
+        mount=cube(f'{ident}:roof-gun-mount',(0,2.12,-.05),(.48,.16,.36),iron,.04); attach(mount,vehicle,(0,2.12,-.05))
+    return vehicle
+
+# The crops are measured independently: one source set and one mask per truck.
+if args.through in ('ambulance','vane-truck','vane-escort'):
+    build_photo_van('ambulance',(5.2,2.0,2.5),
+        ((38,884,477,24,480,(165,680),73),(304,510,480,82),(354,555,480,80),(35,267,750,354)),(.8,.8,.8))
+if args.through in ('vane-truck','vane-escort'):
+    build_photo_van('vane-truck',(6.2,2.3,3.2),
+        ((32,904,468,58,480,(184,725),65),(306,511,480,66),(354,565,480,58),(35,258,750,352)),(.9,.9,.9))
+if args.through == 'vane-escort':
+    build_photo_van('vane-escort',(5.1,2.1,2.0),
+        ((35,862,473,72,490,(205,646),92),(300,510,480,80),(353,560,480,78),(38,265,748,350)),(.9,.9,.9))
+
 def export_glb(path):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -455,12 +584,28 @@ def shot(name, eye, target, ortho, size=(1100,720)):
     scene.render.filepath = str(evidence / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('side', (11,1.65,0), (0,1.65,0), 7.4, (1200,700))
-shot('front', (0,1.65,-12), (0,1.65,-.1), 4.3, (820,820))
-shot('rear', (0,1.65,12), (0,1.65,.1), 4.3, (820,820))
-shot('mayor-overhead', (8,9,-8), (0,1.2,0), 10.0, (1200,780))
-shot('overhead-topdown', (0,14,0), (0,0,0), 6.8, (1100,800))
-shot('driver-height', (8,2.1,-9), (0,1.4,-.2), 8.0, (1200,780))
+truck_sizes={'dozer':(5.8,2.8,3.25),'ambulance':(5.2,2.0,2.5),
+             'vane-truck':(6.2,2.3,3.2),'vane-escort':(5.1,2.1,2.0)}
+def show_only(ident):
+    for name in truck_sizes:
+        root_obj=bpy.data.objects.get(name)
+        if root_obj:
+            for obj in [root_obj,*root_obj.children_recursive]:
+                obj.hide_render=(name != ident)
+for ident,(length,width,height) in truck_sizes.items():
+    if not bpy.data.objects.get(ident):
+        continue
+    show_only(ident)
+    # Blender's orthographic scale is the frame width, not its height.
+    side_scale=length/0.82
+    end_scale=max(height,width)*1.10
+    top_scale=length*1.10
+    shot(f'{ident}-side',(-12,height*.52,0),(0,height*.52,0),side_scale,(1200,700))
+    shot(f'{ident}-front',(0,height*.52,-12),(0,height*.52,0),end_scale,(820,820))
+    shot(f'{ident}-rear',(0,height*.52,12),(0,height*.52,0),end_scale,(820,820))
+    shot(f'{ident}-overhead',(0,14,0),(0,0,0),top_scale,(900,900))
+    shot(f'{ident}-mayor',(8,height+7,-8),(0,height*.35,0),top_scale*1.35,(1200,780))
+    shot(f'{ident}-driver',(8,height*.75,-9),(0,height*.42,0),side_scale*1.08,(1200,780))
 
 def object_triangles(obj):
     if obj.type != 'MESH':

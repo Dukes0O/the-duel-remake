@@ -979,7 +979,7 @@ try {
       rmSync(modelPath, { force: true });
     }
   });
-  check('TOWN-ART-TRUCKS-2 round 1 reads back the measured dozer, lifting blade and grounded wheel pivots', () => {
+  check('TOWN-ART-TRUCKS-2 round 2 reads back all four photo-carved trucks and their named parts', () => {
     const candidateSuffix = `-readback-${process.pid}-${randomUUID()}`;
     const modelPath = join(root, '.qa-dist/art-candidates', `town-trucks-2${candidateSuffix}.glb`);
     try {
@@ -990,7 +990,7 @@ try {
         `--candidate-suffix=${candidateSuffix}`],
       { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
       assert.equal(build.error, undefined, build.error?.message);
-      assert.equal(build.status, 0, `dozer candidate build failed: ${(build.stderr || build.stdout || '').slice(-4000)}`);
+      assert.equal(build.status, 0, `town-trucks-2 candidate build failed: ${(build.stderr || build.stdout || '').slice(-4000)}`);
       assert.ok(existsSync(modelPath), 'fresh dozer candidate build must produce the GLB before readback');
       const bytes = readFileSync(modelPath);
       assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
@@ -1003,17 +1003,30 @@ try {
         'dozer:steer-front-right', 'dozer:spin-rear-left', 'dozer:spin-rear-right']) {
         assert.ok(names.includes(name), `missing dozer part ${name}`);
       }
+      for (const name of ['ambulance', 'ambulance:body', 'ambulance:spin-front-left',
+        'ambulance:steer-front-left', 'ambulance:spin-rear-right', 'ambulance:rack-rail-1',
+        'vane-truck', 'vane-truck:body', 'vane-truck:spin-front-left', 'vane-truck:spin-rear-right',
+        'vane-escort', 'vane-escort:body', 'vane-escort:lamp', 'vane-escort:roof-gun-mount',
+        'vane-escort:spin-front-left', 'vane-escort:spin-rear-right']) {
+        assert.ok(names.includes(name), `missing truck part ${name}`);
+      }
       const familyIndex = names.indexOf('town-trucks-2');
-      assert.deepEqual((gltf.nodes[familyIndex].children || []).map(index => names[index]), ['dozer'],
-        'one complete vehicle is the only direct child in this first round');
+      assert.deepEqual((gltf.nodes[familyIndex].children || []).map(index => names[index]).sort(),
+        ['ambulance', 'dozer', 'vane-escort', 'vane-truck'],
+        'the family root owns all four complete vehicles');
       const bladeIndex = names.indexOf('dozer:blade');
       const bladeChildren = gltf.nodes[bladeIndex].children || [];
       assert.ok(bladeChildren.some(index => names[index].includes(':blade:curved-welded-face')),
         'lifting blade pivot owns its curved photo-painted face');
-      const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      const triangleCount = meshIndex => gltf.meshes[meshIndex].primitives
         .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-      assert.ok(triangles > 1000 && triangles <= 12000, `${triangles} triangles`);
-      assert.ok(gltf.images?.length >= 4, 'all four measured photo views are embedded');
+      for (const id of ['dozer', 'ambulance', 'vane-truck', 'vane-escort']) {
+        const meshIds = new Set(gltf.nodes.filter(node => (node.name || '').startsWith(`${id}:`) && node.mesh !== undefined)
+          .map(node => node.mesh));
+        const triangles = [...meshIds].reduce((sum, meshId) => sum + triangleCount(meshId), 0);
+        assert.ok(triangles > 500 && triangles <= 12000, `${id}: ${triangles} triangles`);
+      }
+      assert.ok(gltf.images?.length >= 16, 'each truck embeds its own four measured photo views');
       assert.ok(gltf.images.every(image => image.mimeType === 'image/jpeg'), 'photo sources embed as JPEG');
       for (const material of gltf.materials) {
         assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,

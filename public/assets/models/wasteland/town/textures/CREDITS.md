@@ -280,3 +280,17 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+## TOWN-ART-TRUCKS-2, round 2: ambulance and Mrs Vane's trucks
+
+Generated with OpenAI built-in image generation on 6 November 2026. Each truck's four orthographic crops are retained in this folder and embedded in `trucks-2.glb` as its photo-carving and projection sources. The source sheets remain outside the repository. All designs are original and have no manufacturer branding.
+
+- Ambulance crops: `town-trucks-2-ambulance-side.jpg`, `town-trucks-2-ambulance-front.jpg`, `town-trucks-2-ambulance-rear.jpg`, `town-trucks-2-ambulance-overhead.jpg`.
+- Vane truck crops: `town-trucks-2-vane-truck-side.jpg`, `town-trucks-2-vane-truck-front.jpg`, `town-trucks-2-vane-truck-rear.jpg`, `town-trucks-2-vane-truck-overhead.jpg`.
+- Vane escort crops: `town-trucks-2-vane-escort-side.jpg`, `town-trucks-2-vane-escort-front.jpg`, `town-trucks-2-vane-escort-rear.jpg`, `town-trucks-2-vane-escort-overhead.jpg`.
+
+Ambulance prompt: "Create one clean 2x2 contact sheet showing the exact same entire original 1970s high-roof ambulance van in four dead-on orthographic views: left side, front, rear, overhead with nose toward top. About 5.2 m long, 2.0 m wide, 2.5 m high; rounded metal body, curved hood and roof, realistic cab windows and rear box, four large road tires, roof rack with stretcher rails, one mismatched side door, hand-painted white body with a faded red stripe and small red cross emblem. Plain pale neutral gray seamless floor/background, bright flat overcast daylight, realistic dusty paint, rust around seams, dark rubber and glass. Same coherent vehicle and proportions in every view. No perspective, no other objects, no people, no labels, no brand names, no watermark, no crops."
+
+Vane truck prompt: "Create one photorealistic orthographic 2x2 modeling reference sheet showing the exact same original spotless white medium delivery box truck in left side, front, rear, and true overhead views, nose toward top. About 6.2 m long, 2.3 m wide, 3.2 m high, curved-corner cab and cargo box, four road wheels, clean white panels, one large cobalt-blue water droplet emblem on the box side only, no words or logos. Lower 40 cm has subtle sandblasted matte wear; upper paint remains pristine white. Plain pale neutral gray seamless floor, bright even flat overcast light. No perspective, extra objects, people, text, watermark."
+
+Vane escort prompt: "Create one photorealistic modeling contact sheet in a clean 2x2 grid with the exact same original white armored escort pickup in four dead-on orthographic views: left side, front, rear, true overhead with front toward top. Entire 5.1 m long, 2.1 m wide, 2.0 m high rugged crew-cab pickup; rounded white armored doors and fenders, four large off-road tires, blue emergency beacons on roof, clean compact roof gun on a small fixed mount, no people and no visible ammunition. White paint, crisp blue lamps, slight dust low on rocker panels, dark window glass, realistic metal seams, no logo or writing. Plain pale neutral gray studio floor/background, bright even overcast light. No perspective, extra objects, text, watermark."
