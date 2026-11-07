@@ -119,3 +119,20 @@ The primitive spoked wheels, the bent side sills and the tall column of castings
 ### Removed
 
 The 320-byte export proof from step 1 was replaced by the completed camp model. No other built asset was removed or changed.
+
+## WW-ART-SEA point 4: Mrs Vane
+
+- Added the `mrs-vane` root to `public/assets/models/wasteland/scablands/mrs-vane.glb`, built by `tools/blender/sea-vane.py`. It uses the walkers' `upper`, `leg-l` and `leg-r` carved pieces, with the matching leg pivots `mrs-vane:leg-l` and `mrs-vane:leg-r`; the coat remains one closed skirt above the hem. Added the separate front-photo slab `mrs-vane:envelope` and named gloves.
+- The leg pivots sit at x = -0.095 m and +0.095 m, y = 0 m, at the measured 0.267 m coat hem. Foot readback passed: world ground z = -0.007 m for both soles; world x = -0.082 m and +0.073 m against photo centres -0.044 m and +0.044 m, within the recipe's 0.07 m tolerance.
+- Blender export and GLB readback passed: 8,748 triangles and 389,108 bytes. The exported model stays below the 9,000-triangle and 1.5 MB candidate limits.
+- The recipe now supports the test suite's Blender-free `--paths-only` mode. The first Blender output suite run found this omission (321 checks, one failure); after adding it, the rerun passed (324 checks, zero failures). No test assertions changed.
+- Removed: the unfinished earlier model export was replaced with the final `mrs-vane.glb`; the broken round-7 sheet was replaced by the final comparison sheet. No other built asset was changed.
+
+## WW-ART-SEA point 5: look and checks
+
+- Rendered front, side and back comparisons beside their photos at matching orthographic cameras, plus a face close-up, a three-quarter view from about 6 m at car height and a size comparison beside `walker-a`. All shots came from the exported model in an empty Standard-view scene. I inspected the renders and built the edge-to-edge `docs/board/looks/ww-art-sea/round-7.jpg` sheet (1600 x 1500, under 500 KB).
+- The front-facing surfaces select the front reference photo with the walker-style `carve_hull` method. I tried a targeted UV override for the face, saw it make the close view worse, and removed it. The face is legible and calm, though the head outline remains faceted; the white coat is smooth and heavy, and the shallow envelope slab projects away from the coat in profile. These are called out for Claude's look review.
+- `node tools/test-blender-output.mjs`: passed, 324 checks and 0 failures on rerun. `node tools/test-repo-hygiene.mjs`: passed placement; size targets are advisory.
+- Browser checks and browser look review: not run in this lane. Claude should review the face, profile envelope placement, coat silhouette and crew scale from the round-7 sheet.
+- Changed assertions: none. Race fingerprints: not applicable; model-only art.
+- Removed: this continuation's Blender renders and logs under `.qa-dist/ww-art-sea/` were removed after making the sheet and recording results. `.qa-dist/task.md` was preserved.
