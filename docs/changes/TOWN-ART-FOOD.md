@@ -221,3 +221,34 @@ Four original reference photographs generated with OpenAI image generation on 7 
 Image credit: OpenAI image generation; prompts authored for TOWN-ART-FOOD. No external images used.
 
 Claude should compare the model against each photo at matching orthographic cameras, plus both three-quarter views and the mayor's view. Check clear frame openings, readable salvaged windshields, pale translucent plastic, green rows, grounding and the 3×2-cell footprint.
+
+# Greenhouse, round 11
+
+The sheet compares the generated side, front, rear and overhead photos beside the exported greenhouse from matching orthographic cameras. The bottom row shows two three-quarter views and the mayor's view. It is 1000×1734 pixels and 159,977 bytes.
+
+## Review
+
+The gabled silhouette, rusty frame, translucent panes and three green growing rows read as a greenhouse. The road-side silhouette is close to the side reference, and the roof shape reads clearly from above and from the mayor's view. The frame and translucent panels stay separate, and the gable ends are closed with traced panes. The generated photos show more irregular windshield outlines, cracks and varied plastic patches than the model; the model uses simplified rounded panes and broad translucent sheets. Claude should judge whether those differences need another art round, and check pane transparency and plant visibility at town scale.
+
+## Build and checks
+
+- Blender 4.5 export: passed; `food.glb` is 2,713,948 bytes. The recipe printed 129 greenhouse piece bounds and passed its footprint/contact checks. The greenhouse has 4,964 triangles; the complete family has 29,434, under the 30,000 family limit and 9,000 greenhouse limit.
+- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures. An earlier run caught the 33,962-triangle family total; the recipe was simplified without changing assertions, and the final run passed.
+- No lane tier or build run. Browser checks and in-game look review are for Claude; this model is not wired into the game. No race fingerprints apply.
+
+## Claude should inspect
+
+- Each photo/model pair for matching silhouette and pane placement.
+- The two three-quarter views for see-through panes, pale plastic sheets, rust contrast and interior rows.
+- The mayor's view for the roof, footprint and legibility of the greenhouse from above.
+- Whether the remaining simpler panel shapes and plant clumps are enough for the game view.
+
+## Removed
+
+- Replaced the greenhouse's former generic frame, solid roof panels, small separate beds, single windscreen and water butt. No other food-family building or prior look sheet was changed.
+
+Additional checks for greenhouse round 11:
+
+- `node tools/test-repo-hygiene.mjs`: passed. Repository placement passed; size targets were advisory.
+- `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed. The unrelated failures were the existing missing `docs/board/looks/town-art-outposts/round-15-review.md` and `spawnSync ffmpeg EPERM`. Round-11 sheet publication passed. No assertion changed.
+- Browser checks and an in-game look check were not run; this art lane assigns them to Claude. No lane tier or build was run. No race fingerprints apply.

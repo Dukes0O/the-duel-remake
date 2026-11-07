@@ -209,3 +209,5 @@ stop adjusting and change the method.
 - Never stop processes by matching a folder name: name each job's own process.
 
 - **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
+
+- **Isolated render sets can inherit hidden objects.** When rendering several buildings from one imported family scene, visibility flags left by a previous building can hide every piece of the next one and produce an empty grey view. Before each isolated render, explicitly show the selected root's descendants, hide other buildings, and show the review ground.
