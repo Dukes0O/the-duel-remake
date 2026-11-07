@@ -376,6 +376,9 @@ def build_photo_truck(identifier, spec):
             # Keep the cab and flatbed; the separate named load is built below.
             mask[:235,420:]=False
             mask[55:185,850:]=False
+            # The source frame includes a fragment of the next vehicle at its
+            # far right. Its mirror stalk falls below the upper crop above.
+            mask[:,955:]=False
         if identifier=='tow-rig':
             mask[:275,430:]=False
         return mask
@@ -499,9 +502,9 @@ def build_photo_truck(identifier, spec):
             load_rear_pick,(0,0,1),lambda mask: mask & (np.indices(mask.shape)[0]>=65) &
             (np.indices(mask.shape)[0]<=270))
         load_top=View('overhead',loaded['overhead'],[(5,5),(922,5),(5,507),(922,507)],
-            load_top_pick,(0,1,0),lambda mask: mask & (np.indices(mask.shape)[1]>=90) &
-            (np.indices(mask.shape)[1]<=390) & (np.indices(mask.shape)[0]>=380) &
-            (np.indices(mask.shape)[0]<=860))
+            load_top_pick,(0,1,0),lambda mask: mask & (np.indices(mask.shape)[1]>=380) &
+            (np.indices(mask.shape)[1]<=875) & (np.indices(mask.shape)[0]>=85) &
+            (np.indices(mask.shape)[0]<=410))
         side_seeds=[(5,5),(1078,5),(5,495)]
         front_seeds=[(5,5),(438,5),(5,495)]
         rear_seeds=[(5,5),(594,5),(5,507)]
@@ -552,12 +555,8 @@ def build_photo_truck(identifier, spec):
                  (distance+.035,tank_radius*1.015)],tank_uv,sides=32)
         tank_obj=tank_mesh.finish(identifier+':tank-drum',{'side':side_photo.material(),'rear':rear_photo.material()})
         attach(tank_obj,root_obj)
-        # Keep the top access details as separate, visible hardware above the
-        # drum: a narrow pair of walkway strips and the inspection hatch.
+        # The photo has no walkway. Keep its crown clear and retain the hatch.
         crown=tank_y+tank_radius*.98
-        for side in (-1,1):
-            box(identifier+':tank-walkway',(side*.22,crown+.025,(tank_z0+tank_z1)/2),
-                (.15,.045,tank_z1-tank_z0-.30),dark_metal,bevel=.01)
         hatch_z=z0+(748-front_px)*side_scale
         cylinder(identifier+':tank-hatch',(0,crown+.08,hatch_z),.26,.12,dark_metal,'Y',32)
         cylinder(identifier+':tank-hatch-lid',(0,crown+.15,hatch_z),.22,.035,paint_rust,'Y',32)
@@ -573,14 +572,16 @@ def build_photo_truck(identifier, spec):
         # Save the original mask before background bleeding changes its pale
         # pixels; tracing the bled image would mistake its painted fill for steel.
         crane_mask=tow_lattice_mask.copy()
-        crane_mask[38:178,962:986]=False  # the hoist line is a separate part
+        # Remove the photo's hoist cable and hook block at the tip: the real
+        # cable and hook are separate named parts built below.
+        crane_mask[24:230,955:1008]=False
         # This masked patch is studio background enclosed by the boom's
         # diagonal members; flood fill from the photo edge cannot reach it.
         yy,xx=np.ogrid[:crane_mask.shape[0],:crane_mask.shape[1]]
         triangle=((xx>=520)&(xx<=978)&(yy>=78)&
                   (yy>(280-(xx-470)*.50))&(yy<(280-(xx-470)*.04)))
         crane_mask[triangle]=False
-        loops=trace(crane_mask,tow_roi,tolerance=1.0,min_area=5)
+        loops=trace(crane_mask,tow_roi,tolerance=1.0,min_area=35)
         crane_mesh=PhotoMesh()
         def crane_world(px,py,d):
             return (d,(ground-py)*side_scale,z0+(px-front_px)*side_scale)
@@ -599,6 +600,12 @@ def build_photo_truck(identifier, spec):
             (0,hook_y-.16,tip_z),(.07,hook_y-.30,tip_z),(.18,hook_y-.27,tip_z),
             (.21,hook_y-.15,tip_z)],.035,tin)
         for obj in forged if isinstance(forged,list) else [forged]: parent_keep_world(obj,hook)
+    # A few fittings are built directly at their world coordinates. Keep them
+    # under their own truck root so a hidden truck cannot leak parts into the
+    # other truck's review render.
+    for obj in list(scene.objects):
+        if obj is not root_obj and obj.parent is None and obj.name.startswith(identifier+':'):
+            parent_keep_world(obj,root_obj)
     return root_obj
 
 for truck_id,truck_spec in TRUCK_TABLES.items():
@@ -653,15 +660,18 @@ scene.cycles.samples=24; scene.cycles.use_denoising=True
 scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'
 scene.render.resolution_percentage=100; scene.render.resolution_x=900; scene.render.resolution_y=600
 scene.world=bpy.data.worlds.new('flat pale overcast review'); scene.world.use_nodes=True
-scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(1,1,1,1)
+scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.38,.38,.38,1)
 scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=1
 bpy.ops.import_scene.gltf(filepath=str(output))
 # Blender is Z-up after import; the road plane lies in XY at Z=0.
 bpy.ops.mesh.primitive_plane_add(size=2000,location=(0,0,0))
 floor=bpy.context.object; floor.name='plain pale review ground'
-floor_mat=bpy.data.materials.new('plain pale review ground'); floor_mat.use_nodes=True
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.38,.38,.38,1)
-floor_mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.98
+floor_mat=bpy.data.materials.new('plain grey review ground'); floor_mat.use_nodes=True
+floor_mat.node_tree.nodes.clear()
+floor_output=floor_mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
+floor_grey=floor_mat.node_tree.nodes.new('ShaderNodeEmission')
+floor_grey.inputs['Color'].default_value=(.08,.08,.08,1)
+floor_mat.node_tree.links.new(floor_grey.outputs['Emission'],floor_output.inputs['Surface'])
 floor.data.materials.append(floor_mat)
 for loc,power,size in []:
     bpy.ops.object.light_add(type='AREA',location=loc); light=bpy.context.object
@@ -690,7 +700,7 @@ for identifier,_,_,_ in specs:
     width={'fire-truck':2.65,'water-tanker':2.62,'supply-truck':2.55,'tow-rig':2.55}[identifier]
     height={'fire-truck':2.95,'water-tanker':3.30,'supply-truck':3.55,'tow-rig':2.95}[identifier]
     target_y=min(height,2.0)
-    render_view(identifier,'side',(-length*1.5,0,target_y),target=(0,0,target_y),width=length*1.18,resolution=(1000,500))
+    render_view(identifier,'side',(-length*1.5,0,target_y+length*.16),target=(0,0,target_y),width=length*1.18,resolution=(1000,500))
     render_view(identifier,'front',(0,width*4,target_y),target=(0,0,target_y),width=width*1.8,resolution=(720,720))
     render_view(identifier,'rear',(0,-width*4,target_y),target=(0,0,target_y),width=width*1.8,resolution=(720,720))
     render_view(identifier,'three-quarter-front',(-length*1.3,length*1.3,height*1.4),width=length*1.35,resolution=(900,630))
@@ -698,7 +708,7 @@ for identifier,_,_,_ in specs:
     render_view(identifier,'mayor-height',(length*1.5,length*1.5,length*2.0),target=(0,0,0),width=length*1.65)
     # Round 9's driver-height side camera shows the entire truck at its ground
     # line, without the clipped view and pale band from the old angled camera.
-    render_view(identifier,'road-view',(-length*1.5,0,1.9),target=(0,0,1.5),
+    render_view(identifier,'road-view',(-length*1.5,0,2.8),target=(0,0,1.5),
                 width=length*1.18,resolution=(1100,700))
     # A matching close front view keeps the wheel and headlamp legible on the
     # family sheet, as required for every vehicle review.

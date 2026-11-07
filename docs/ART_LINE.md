@@ -78,6 +78,15 @@ show no improvement, stop adjusting and change the method.
 - **Bits that stand beside a wheel.** The overhead photo's tyres can reach further
   than the side photo's. Keep only wings near a wheel outside the body's width.
 - **A thin boom vanishes in a carve.** Trace it, so that its holes stay open.
+- **A detail appears on every vehicle in a family render.** World-positioned
+  fittings left outside their vehicle root stay visible when the other roots
+  are hidden. Parent each named part to its vehicle root.
+- **Photo parts float after carving.** Remove photo details that are built as
+  separate geometry (such as a hook or mirror) from that view's mask, or the
+  carve makes a second copy.
+- **A mask crop selects the wrong picture area.** Array masks are row, then
+  column; check the crop against the source photo before carving. A swapped
+  crop can turn a mirror or the background into floating geometry.
 
 ### Buildings
 

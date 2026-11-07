@@ -2,31 +2,23 @@
 
 ## Changed
 
-- Built the tanker drum from its measured side and rear photos with a lathe,
-  raised bands, a walkway and hatch; narrowed tanker background tolerance to
-  48 to retain silver paint.
-- Rescaled and cropped the supply load to fit the 6.6 m truck. Rendering with
-  `supply-truck:load` hidden showed the empty bed remains readable.
-- Removed the tow truck's isolated rear mask splinters and opened the enclosed
-  background under the boom cable.
-- Added a front wheel and lamp close-up for each truck to round 12.
+- Removed the water tanker's two black raised walkway strips. The hatch stays on the tank, and tanker fittings are now parented to the tanker root so they do not appear in other truck renders.
+- Corrected the supply cargo overhead mask crop, excluded the neighboring vehicle edge from the body mask, and kept all family fittings under their own truck roots.
+- Removed the photographed hook block and hoist line from the tow boom mask, leaving the separately built named hook and cable. Small disconnected photo-mask flecks under 35 pixels are ignored.
+- Added three new mask and parenting lessons to `docs/ART_LINE.md`.
 
 ## Checks
 
-- Blender render from the exported GLB: passed; family 3,348,300 bytes; each
-  truck under 12,000 triangles.
-- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed.
-- Browser checks: not applicable; Claude owns the look review.
-- Changed assertions: none. Race fingerprints: not applicable to this art card.
-
-Claude should inspect the tanker shell, pale edges, hatch and walkway; the
-supply load from overhead and three-quarter views plus the empty bed; and the
-tow boom opening, remaining lattice, rear deck, cable and hook. See
-`docs/board/looks/town-art-trucks-1/round-12-review.md`.
+- Blender render from imported GLB: passed; 40,882 total triangles. Family GLB: 3,289,624 bytes. Review sheet: 221,936 bytes.
+- `tools/test-blender-output.mjs`: passed, 312 checks.
+- `tools/test-repo-hygiene.mjs`: passed.
+- `tools/test-review-evidence.mjs`: 7/9 subtests passed; one older `town-art-power/round-4.jpg` note is missing, and the audio subtest cannot start `ffmpeg` (`EPERM`). Both failed again on the single rerun. Its round JPG publication check passed.
+- Browser and in-game look checks: Claude should judge round 13; no browser run in this art lane.
+- Changed assertions: none. Race fingerprints: not applicable; static art only.
 
 ## Removed
 
-- Replaced `round-11.jpg` and its review note with `round-12.jpg` and this
-  round's review note. Kept `round-9.jpg` unchanged.
-- No test assertions, old game paths or runtime files were removed.
+- Round 12 sheet and note are removed. Round 9 is retained.
+- The tanker walkway boxes and duplicated tow hook pixels are removed from the recipe.
+
+
