@@ -165,16 +165,21 @@ def traced_part(mesh, label, rect, near=-.50, far=-.455, min_area=36):
     slab(mesh, 'reference', reference, loops, photo_point, far, near, wall_scale=.008)
 
 rotor_mesh = Mesh()
+fixed_head_mesh = Mesh()
 for label, rect in (
     ('upper steel blade', (220, 0, 315, 278)),
     ('left steel blade', (0, 300, 275, 548)),
     ('lower-right steel blade', (238, 300, 455, 610)),
+):
+    traced_part(rotor_mesh, label, rect)
+for label, rect in (
     ('finned alternator', (300, 240, 422, 395)),
     ('tail arm and welded brackets', (410, 285, 790, 365)),
     ('peeling cream tail vane', (735, 238, 1018, 398)),
 ):
-    traced_part(rotor_mesh, label, rect)
-rotor_obj = rotor_mesh.finish('photo-carved windmill head and blades', {'reference': refmat})
+    traced_part(fixed_head_mesh, label, rect)
+rotor_obj = rotor_mesh.finish('photo-carved steel rotor blades', {'reference': refmat})
+fixed_head_obj = fixed_head_mesh.finish('photo-carved alternator boom and tail vane', {'reference': refmat})
 
 # Round hub and alternator pulley: lathed to the photo's measured 52 px hub
 # radius. The front cap samples the photo centre; the 0.85 arc avoids its edge.
@@ -212,6 +217,8 @@ rotor.location = town.game_vector(axle)
 rotor.parent = windmill
 rotor_obj.parent = rotor
 rotor_obj.location = (0, 0, 0)
+fixed_head_obj.parent = windmill
+fixed_head_obj.location = town.game_vector(axle)
 hub_obj.parent = rotor
 hub_obj.location = (0, 0, 0)
 for index in range(8):
@@ -532,8 +539,8 @@ def isolate(active):
         hide_tree(building_id,building_id != active)
 
 isolate('windmill')
-render('windmill-driver',(7,8,-11),(0,2.7,0),34)
-render('windmill-above-45',(7,10,-9),(0,2.7,0),30)
+render('windmill-driver',(-7,8,-11),(0,2.7,0),34)
+render('windmill-above-45',(-7,10,-9),(0,2.7,0),30)
 render('windmill-rotor-front',(0,6.6,-10),(-.35,4.5,-.35),62)
 isolate('power-pole')
 render('power-pole-driver',(-5,8,-7),(0,2.8,0),40)
@@ -559,5 +566,5 @@ scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform
 groundmat=town.make_materials({'sand':root/'public/assets/models/wasteland/town/textures/town-water-earth.jpg'})['sand']
 lamp_data=bpy.data.lights.new('rotor turn light','AREA');lamp=bpy.data.objects.new('rotor turn light',lamp_data);scene.collection.objects.link(lamp);lamp.location=town.game_vector((3,7,-7));lamp_data.energy=2200;lamp_data.size=8
 bpy.ops.mesh.primitive_plane_add(size=24,location=town.game_vector((0,-.08,0)));bpy.context.object.data.materials.append(groundmat)
-data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((0,5.8,-8));data.lens=70;aim(cam,town.game_vector((0,4.95,-.35)));scene.camera=cam
+data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((-7,8,-11));data.lens=34;aim(cam,town.game_vector((0,2.7,0)));scene.camera=cam
 scene.render.filepath=str(evidence/'windmill-rotor-turned.png');bpy.ops.render.render(write_still=True)
