@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 9: keep Dot's Diner; repair plane-school glass.
+"""TOWN-ART-OUTPOSTS hermit-camp round 1.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-9')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-1')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-9.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-10.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -544,6 +544,169 @@ def sign_slab(hand):
 sign_slab(-1)
 sign_slab(1)
 
+# Hermit's camp: the hut and goat shed are each carved from their own four-view
+# photo sets. The hut door is 271 px tall, so 2 m sets its scale.
+HUT_START, HUT_END, HUT_GROUND = 99, 921, 470
+HUT_SCALE = 2.0 / (447 - 176)
+HUT_LENGTH = (HUT_END - HUT_START) * HUT_SCALE
+HUT_HEIGHT = (HUT_GROUND - 44) * HUT_SCALE
+HUT_FRONT = {'centre': 512, 'ground': 852, 'top': 105}
+HUT_REAR = {'centre': 512, 'ground': 812, 'top': 135}
+HUT_WIDTH = 834 * HUT_HEIGHT / (HUT_FRONT['ground'] - HUT_FRONT['top'])
+hut_table = {
+    'photos': {'side': 'hermit-hut-side.jpg', 'front': 'hermit-hut-front-gable-v2.jpg',
+               'rear': 'hermit-hut-rear-gable-v2.jpg', 'top': 'hermit-hut-overhead-v2.jpg'},
+    'length': HUT_LENGTH, 'width': HUT_WIDTH, 'height': HUT_HEIGHT,
+    # The photo's front is at the right, so its measured endpoints are reversed.
+    'side_front_on_left': False,
+    'side': {'start': HUT_END, 'end': HUT_START, 'ground': HUT_GROUND},
+    'front': HUT_FRONT, 'rear': HUT_REAR,
+    # The straight-down roof image is portrait; the small door threshold is at
+    # the far end. Its width and length scales come from the roof edges.
+    'top': {'front': 100, 'rear': 930, 'centre': 468, 'x_scale': HUT_WIDTH / 465},
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
+    'voxel': .065, 'target': 3800,
+    'mask_dir': str(render / 'masks'),
+}
+hut_body = carve_object('hermit-camp:hut-body', textures, hut_table)
+hut_raw = tuple(float(value) for value in hut_body.dimensions)
+hut_body.dimensions = (HUT_WIDTH, HUT_LENGTH, HUT_HEIGHT)
+bpy.context.view_layer.update()
+hut_dims = {'width': float(hut_body.dimensions.x), 'length': float(hut_body.dimensions.y),
+            'height': float(hut_body.dimensions.z)}
+print('hermit-camp hut raw carve bounds (m; Blender XYZ):', json.dumps(hut_raw))
+print('hermit-camp hut measured bounds (m; Blender XYZ):', json.dumps(hut_dims, sort_keys=True))
+for axis, expected_value in (('width', HUT_WIDTH), ('length', HUT_LENGTH), ('height', HUT_HEIGHT)):
+    actual = hut_dims[axis]
+    if abs(actual - expected_value) / expected_value > .05:
+        raise RuntimeError(f'hermit-camp hut {axis} bound differs from its photo table by more than 5%')
+
+# The shed is its own small carve. Its doorway is removed by measured rectangles
+# in both end views and the side view, so the dark studio gap stays open.
+SHED_START, SHED_END, SHED_GROUND = 125, 886, 560
+SHED_SCALE = .8 / (550 - 340)
+SHED_LENGTH = (SHED_END - SHED_START) * SHED_SCALE
+SHED_HEIGHT = (SHED_GROUND - 145) * SHED_SCALE
+SHED_FRONT = {'centre': 512, 'ground': 582, 'top': 142}
+SHED_REAR = {'centre': 512, 'ground': 582, 'top': 122}
+SHED_WIDTH = SHED_LENGTH * (338 / 650)
+shed_table = {
+    'photos': {'side': 'hermit-goat-shed-side.jpg', 'front': 'hermit-goat-shed-front.jpg',
+               'rear': 'hermit-goat-shed-rear.jpg', 'top': 'hermit-goat-shed-overhead-v2.jpg'},
+    'length': SHED_LENGTH, 'width': SHED_WIDTH, 'height': SHED_HEIGHT,
+    'side_front_on_left': False,
+    'side': {'start': SHED_END, 'end': SHED_START, 'ground': SHED_GROUND},
+    'front': SHED_FRONT, 'rear': SHED_REAR,
+    'top': {'front': 190, 'rear': 840, 'centre': 338, 'along': 'x',
+            'x_scale': SHED_WIDTH / 332},
+    'cut': {'side': [(625, 340, 782, 550)], 'front': [(252, 351, 429, 579)]},
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
+    'voxel': .055, 'target': 1400,
+    'mask_dir': str(render / 'masks'),
+}
+shed_body = carve_object('hermit-camp:goat-shed', textures, shed_table)
+shed_raw = tuple(float(value) for value in shed_body.dimensions)
+shed_body.dimensions = (SHED_WIDTH, SHED_LENGTH, SHED_HEIGHT)
+bpy.context.view_layer.update()
+shed_dims = {'width': float(shed_body.dimensions.x), 'length': float(shed_body.dimensions.y),
+             'height': float(shed_body.dimensions.z)}
+print('hermit-camp goat shed raw carve bounds (m; Blender XYZ):', json.dumps(shed_raw))
+print('hermit-camp goat shed measured bounds (m; Blender XYZ):', json.dumps(shed_dims, sort_keys=True))
+for axis, expected_value in (('width', SHED_WIDTH), ('length', SHED_LENGTH), ('height', SHED_HEIGHT)):
+    actual = shed_dims[axis]
+    if abs(actual - expected_value) / expected_value > .05:
+        raise RuntimeError(f'hermit-camp goat shed {axis} bound differs from its photo table by more than 5%')
+
+hermit = bpy.data.objects.new('hermit-camp', None)
+bpy.context.collection.objects.link(hermit)
+hermit.empty_display_type = 'CUBE'
+hermit.parent = family
+hut_body.parent = hermit
+hut_body.location = (-2.5, -2.5, 0)
+shed_body.parent = hermit
+shed_body.location = (3.8, 0, 0)
+
+# A salvaged bonnet forms the dish. The pole leans into the hut wall; the dish
+# rises from its top and points toward the road and sky.
+pole_base = (-1.3, .06, -.45)
+pole_head = (-.95, 2.68, -1.25)
+wood = material('hermit dish pole timber', (.26, .19, .12))
+pole = town.beam('hermit-camp:dish-pole', pole_base, pole_head, .12, wood)
+pole.parent = hermit
+bonnet = Photo(textures / 'hermit-car-bonnet.jpg')
+dish = Mesh()
+dish_axis = Vector((.30, .86, -.42)).normalized()
+dish_e1 = Vector((1, 0, 0)) - dish_axis * dish_axis.x
+dish_e1.normalize()
+dish_e2 = dish_axis.cross(dish_e1).normalized()
+dish_origin = Vector(pole_head) - dish_axis * .19
+dish_stations = [(0, .70), (.035, .58), (.12, .30), (.19, .02)]
+def bonnet_uv(index, distance, radius, angle):
+    fraction = min(radius / .70, 1)
+    return bonnet.uv(512 + 475 * math.cos(angle) * fraction,
+                     342 - 318 * math.sin(angle) * fraction)
+lathe(dish, 'bonnet', dish_origin, dish_axis, dish_e1, dish_e2,
+      dish_stations, bonnet_uv, sides=20)
+dish_obj = dish.finish('hermit-camp:bonnet-dish', {'bonnet': bonnet.material()})
+dish_obj.parent = hermit
+
+# One real chair faces the road view, away from the hut. Four thin legs meet the ground.
+chair_wood = material('hermit chair sun-worn wood', (.31, .24, .16))
+def chair_cube(name, center, size):
+    obj = town.cube('hermit-camp:' + name, center, size, chair_wood, .006)
+    obj.parent = hermit
+    return obj
+seat_x, seat_y, seat_z = -4.2, .48, -2.2
+chair_cube('chair-seat', (seat_x, seat_y, seat_z), (.62, .07, .56))
+for x_side in (-1, 1):
+    for z_side in (-1, 1):
+        leg = town.beam(f'hermit-camp:chair-leg-{x_side}-{z_side}',
+                        (seat_x + x_side * .25, 0, seat_z + z_side * .22),
+                        (seat_x + x_side * .25, seat_y - .02, seat_z + z_side * .22), .045, chair_wood)
+        leg.parent = hermit
+    back = town.beam(f'hermit-camp:chair-back-upright-{x_side}',
+                     (seat_x + x_side * .25, seat_y, seat_z + .24),
+                     (seat_x + x_side * .25, 1.25, seat_z + .24), .045, chair_wood)
+    back.parent = hermit
+chair_back = town.beam('hermit-camp:chair-back-rail',
+                       (seat_x - .28, 1.12, seat_z + .24),
+                       (seat_x + .28, 1.12, seat_z + .24), .045, chair_wood)
+chair_back.parent = hermit
+
+def object_bounds(objects):
+    bpy.context.view_layer.update()
+    points = [obj.matrix_world @ Vector(corner) for obj in objects if obj.type == 'MESH'
+              for corner in obj.bound_box]
+    if not points:
+        raise RuntimeError('cannot check an empty camp piece')
+    game = [(point.x, point.z, -point.y) for point in points]
+    return {'min': [round(min(point[i] for point in game), 3) for i in range(3)],
+            'max': [round(max(point[i] for point in game), 3) for i in range(3)]}
+
+hut_bounds = object_bounds([hut_body])
+shed_bounds = object_bounds([shed_body])
+dish_bounds = object_bounds([pole, dish_obj])
+chair_parts = [obj for obj in hermit.children if obj.name.startswith('hermit-camp:chair-')]
+chair_bounds = object_bounds(chair_parts)
+chair_leg_parts = [obj for obj in chair_parts if obj.name.startswith('hermit-camp:chair-leg-')]
+chair_leg_bounds = object_bounds(chair_leg_parts)
+camp_bounds = object_bounds(list(hermit.children))
+for label, bounds in (('hut', hut_bounds), ('goat shed', shed_bounds),
+                      ('dish and leaning pole', dish_bounds), ('chair', chair_bounds),
+                      ('chair legs', chair_leg_bounds),
+                      ('whole camp', camp_bounds)):
+    print(f'hermit-camp {label} bounds (game X,Y,Z):', json.dumps(bounds, sort_keys=True))
+for label, bounds in (('hut', hut_bounds), ('goat shed', shed_bounds),
+                      ('dish and leaning pole', dish_bounds), ('chair legs', chair_leg_bounds)):
+    if bounds['min'][1] < -.03 or bounds['min'][1] > .08:
+        raise RuntimeError(f'hermit-camp {label} does not touch the ground')
+    if any(value < -11.5 or value > 11.5 for axis in (0, 2)
+           for value in (bounds['min'][axis], bounds['max'][axis])):
+        raise RuntimeError(f'hermit-camp {label} leaves its 3 x 3 cell footprint')
+if any(value < -11.5 or value > 11.5 for axis in (0, 2)
+       for value in (camp_bounds['min'][axis], camp_bounds['max'][axis])):
+    raise RuntimeError('hermit-camp whole footprint exceeds 3 x 3 cells')
+
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
@@ -556,13 +719,15 @@ scene.render.image_settings.color_mode = 'RGB'
 scene.view_settings.view_transform = 'Standard'
 scene.view_settings.look = 'Medium High Contrast'
 scene.render.resolution_percentage = 100
-scene.render.resolution_x, scene.render.resolution_y = 820, 600
+scene.render.resolution_x, scene.render.resolution_y = 900, 620
 scene.world = bpy.data.worlds.new('flat neutral studio')
 scene.world.color = (.42, .42, .42)
 scene.render.film_transparent = False
-for node in bpy.data.objects:
-    if node.name == 'dot-diner' or node.name.startswith('dot-diner:'):
-        node.hide_render = True
+ground_mat = material('review ground neutral grey', (.40, .40, .40))
+bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.018))
+ground = bpy.context.object
+ground.name = 'review-only grey ground'
+ground.data.materials.append(ground_mat)
 
 def area(name, loc, energy, size):
     data = bpy.data.lights.new(name, 'AREA')
@@ -572,8 +737,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 25, -12), 3600, 20)
-area('open fill', (-16, 14, 16), 1900, 15)
+area('soft sky', (0, 12, 25), 3600, 20)
+area('open fill', (-16, -16, 14), 1900, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -583,16 +748,36 @@ def shot(name, eye, target, ortho):
     camera.rotation_euler = (Vector((target[0], -target[2], target[1])) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     camera.data.type = 'ORTHO'
     camera.data.ortho_scale = ortho
+    if name == 'model-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1000, 500
+    elif name in ('model-front', 'model-rear', 'model-above'):
+        scene.render.resolution_x, scene.render.resolution_y = 700, 700
+    else:
+        scene.render.resolution_x, scene.render.resolution_y = 900, 620
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-side', (-44, 3.5, 0), (-.8, 2.3, 0), 16)
-shot('model-front', (0, 3.3, -40), (-.7, 1.5, 0), 9)
-shot('model-rear', (0, 3.3, 40), (-.7, 1.5, 0), 9)
-shot('model-far', (44, 3.5, 0), (.8, 2.3, 0), 16)
-shot('model-above', (0, 58, 0), (-1.2, 2.0, 0), 14)
-shot('model-road', (-24, 13, -22), (-1.8, 2.0, 0), 14)
-shot('model-back', (24, 13, 22), (0, 2.0, 0), 14)
-shot('model-mayor', (-42, 62, -42), (-2.0, 2.1, 0), 16)
+def show_hut_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not node.name.startswith('hermit-camp:hut-body') and node.name != ground.name
+
+def show_camp_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not node.name.startswith('hermit-camp:') and node.name != ground.name
+
+show_hut_only()
+hut_centre = (-2.5, 1.57, 2.5)
+shot('model-side', (15, 2.1, 2.5), hut_centre, 7.5)
+shot('model-front', (-2.5, 2.1, -12), hut_centre, 4.32)
+shot('model-rear', (-2.5, 2.1, 17), hut_centre, 4.75)
+shot('model-above', (-2.5, 28, 2.5), hut_centre, 7.5)
+show_camp_only()
+camp_centre = (0, 1.3, -.3)
+shot('model-road', (-11, 2.2, -16), camp_centre, 14.5)
+shot('model-far', (18, 2.2, -.3), camp_centre, 18)
+# The mayor's camera is 45 degrees down from about 88 m away, as in town.
+shot('model-mayor', (-44, 63.3, -44), camp_centre, 20)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))
