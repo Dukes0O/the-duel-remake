@@ -342,8 +342,22 @@ def market_stall(building, offset, kind):
     for x in (-.65,.65):
         beam(f'{building}:awning-arm-{x}',(x,1.7,-1.1),(x,2.18,-.22),.055,mat['rusted-steel'])
     awning_material={'fruit':'fruit-yellow','tools':'weathered-plank','tyres':'patched-canvas'}[kind]
-    awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat[awning_material],.035)
-    awning.rotation_euler[0]=-.10
+    if kind == 'fruit':
+        # Fruit stall canvas sags between its rails rather than forming a box.
+        verts=[];faces=[];n=10
+        for row,z in enumerate((-.96,-.30)):
+            for i in range(n+1):
+                x=-1.4+2.8*i/n
+                y=2.14-.10*(1-(x/1.4)**2)+(0.035 if row else 0)
+                verts.append((x,y,z))
+        for i in range(n): faces.append((i,i+1,n+2+i,n+1+i))
+        awning=mesh_object(f'{building}:patched-awning',verts,faces,mat[awning_material],'canvas')
+        beam(f'{building}:awning-front-hem',(-1.4,2.11,-.96),(1.4,2.11,-.96),.055,mat['rusted-steel'])
+        for x in (-1.1,1.1):
+            box(f'{building}:fruit-sack-{x}',(x,1.25,.42),(.62,.30,.45),mat['patched-canvas'],.07)
+    else:
+        awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat[awning_material],.035)
+        awning.rotation_euler[0]=-.10
     box(f'{building}:display-counter',(0,.91,-.24),(2.18,.20,.83),mat['weathered-plank'],.04)
     for x in (-.85,.85): beam(f'{building}:counter-leg-{x}',(x,.12,-.24),(x,.84,-.24),.08,mat['rusted-steel'])
     if kind=='fruit':
