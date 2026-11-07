@@ -48,7 +48,7 @@ parser.add_argument('--round', type=int, default=1)
 parser.add_argument('--stage', choices=('patience', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
-parser.add_argument('--render-view', choices=('whole', 'dusk', 'above', 'comparison', 'deck'), default=None)
+parser.add_argument('--render-view', choices=('whole', 'bow', 'dusk', 'above', 'comparison', 'deck', 'funnel'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -69,12 +69,12 @@ if args.paths_only:
     raise SystemExit(0)
 if args.compose_sheet:
     from PIL import Image, ImageOps
-    names = ('whole', 'dusk', 'above', 'comparison', 'deck')
+    names = ('whole', 'bow', 'dusk', 'above', 'deck', 'funnel')
     images = {name: Image.open(raw / f'{name}.jpg').convert('RGB') for name in names}
-    canvas = Image.new('RGB', (1600, 1750))
-    layout = {'whole': (0, 0, 800, 450), 'dusk': (800, 0, 800, 450),
-              'above': (0, 450, 500, 500), 'comparison': (500, 450, 1100, 500),
-              'deck': (0, 950, 1600, 800)}
+    canvas = Image.new('RGB', (1600, 1800))
+    layout = {'whole': (0, 0, 800, 600), 'bow': (800, 0, 800, 600),
+              'dusk': (0, 600, 800, 600), 'above': (800, 600, 800, 600),
+              'deck': (0, 1200, 800, 600), 'funnel': (800, 1200, 800, 600)}
     for name, (x, y, w, h) in layout.items():
         canvas.paste(ImageOps.fit(images[name], (w, h), Image.Resampling.LANCZOS), (x, y))
     canvas.save(sheet, 'JPEG', quality=83, optimize=True, progressive=True)
@@ -93,11 +93,20 @@ if args.render_view:
     reference_plane.hide_render = args.render_view != 'comparison'
     if args.render_view == 'deck':
         deck_camera = scene.camera
-        deck_camera.location = Vector((26.6, 455, 12.7))
-        deck_target = Vector((11.6, 470, 15.3))
+        deck_camera.location = Vector((-2, 455, 12.7))
+        deck_target = Vector((-2, 470, 18.5))
         deck_camera.data.type = 'PERSP'
-        deck_camera.data.lens = 45
+        deck_camera.data.lens = 50
         deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
+    if args.render_view == 'funnel':
+        funnel_camera = scene.camera
+        funnel_camera.location = Vector((-15, 462, 22))
+        funnel_target = Vector((-6, 470, 20))
+        funnel_camera.data.type = 'PERSP'
+        funnel_camera.data.lens = 24
+        funnel_camera.rotation_euler = (Vector((-6, 470, 20)) - funnel_camera.location).to_track_quat('-Z', 'Y').to_euler()
+    if args.render_view == 'above':
+        scene.camera.data.type = 'PERSP'
     if args.render_view == 'comparison':
         for obj in scene.objects:
             if obj.type == 'MESH':
@@ -773,7 +782,34 @@ if args.stage == 'family':
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
 ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.28,.23,.17),.97)
-for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ((27,-470,55,22),)):
+if args.stage == 'patience':
+    # Separate sand banks lap over the hull sides, then feather out 8 m to bed.
+    # The mesh uses the lake bed sand material at world scale and follows the
+    # entire 72 m hull, with irregular crests higher on port and at the bow.
+    rng = __import__('random').Random(10410)
+    verts=[]; faces=[]; stations=73; rows=7
+    for side in (-1, 1):
+        base=len(verts)
+        for i in range(stations):
+            t=i/(stations-1); along=-36 + 72*t
+            bow=max(0,(t-.72)/.28); stern=max(0,(.16-t)/.16)
+            crest=1.05 + .62*bow + .18*stern + .23*math.sin(t*31) + .14*math.sin(t*79) + rng.uniform(-.09,.09)
+            if side < 0: crest += .48
+            for row in range(rows):
+                u=row/(rows-1)
+                lateral=side*(5.72 + 8.0*u)
+                edge=max(0,min(1,t*10,(1-t)*10))
+                y=-2 + (crest+2)*(math.sin(u*math.pi/2)**1.18)*edge
+                verts.append(gv((27+along,y,-470+lateral)))
+        for i in range(stations-1):
+            for row in range(rows-1):
+                a=base+i*rows+row; b=a+rows
+                faces.append((a,b,b+1,a+1) if side > 0 else (a,a+1,b+1,b))
+    drift_mesh=bpy.data.meshes.new('ship-patience drifts mesh')
+    drift_mesh.from_pydata(verts,[],faces); drift_mesh.materials.append(sand); drift_mesh.update()
+    drift=bpy.data.objects.new('ship-patience:drifts',drift_mesh); scene.collection.objects.link(drift)
+    drift['part']='ship-patience:drifts'
+for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ()):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.
     import random
@@ -905,19 +941,26 @@ def render_imported_review():
         review_scene.collection.objects.link(cam)
         cam.location = gv(eye)
         cam.rotation_euler = (gv(target) - cam.location).to_track_quat('-Z', 'Y').to_euler()
-        data.type = 'PERSP' if name in ('review-camera-whole', 'review-camera-dusk', 'review-camera-deck') else 'ORTHO'
+        data.type = 'PERSP'
         if data.type == 'PERSP':
-            data.lens = 24 if name in ('review-camera-whole', 'review-camera-dusk') else 42
+            data.lens = 35 if name in ('review-camera-whole', 'review-camera-dusk') else 45
         else:
             data.ortho_scale = scale
         review_scene.render.resolution_x, review_scene.render.resolution_y = resolution
         return cam
 
-    add_camera('review-camera-whole', (27, 1.2, -510), (27, 5, -470), 96, (1200, 760))
-    add_camera('review-camera-dusk', (27, 1.2, -510), (27, 5, -470), 96, (1200, 760))
-    add_camera('review-camera-above', (25, 92, -470), (25, 9, -470), 98, (900, 900))
+    add_camera('review-camera-whole', (27, 1.2, -590), (27, 10, -470), 96, (1200, 900))
+    review_scene.objects['review-camera-whole'].data.lens = 35
+    add_camera('review-camera-bow', (91, 1.2, -497), (46, 12, -470), 96, (1200, 900))
+    review_scene.objects['review-camera-bow'].data.lens = 24
+    add_camera('review-camera-dusk', (27, 1.2, -590), (27, 10, -470), 96, (1200, 900))
+    review_scene.objects['review-camera-dusk'].data.lens = 35
+    add_camera('review-camera-above', (27, 150, -470), (27, 6, -470), 98, (1200, 900))
+    review_scene.objects['review-camera-above'].data.lens = 45
     add_camera('review-camera-comparison', (10.3, 15.2, -430), (10.3, 15.2, -470), 40, (1400, 600))
-    add_camera('review-camera-deck', (26.6, 12.7, -455), (11.6, 15.3, -470), 23, (1200, 600))
+    add_camera('review-camera-deck', (-2, 12.7, -455), (-2, 18.5, -470), 23, (1200, 900))
+    add_camera('review-camera-funnel', (-15, 22, -462), (-6, 20, -470), 23, (1200, 900))
+    review_scene.objects['review-camera-funnel'].data.lens = 24
 
     # A flat reference plane shares the comparison camera and the measured
     # 23 m horizontal scale; its photographed background remains visible.
@@ -949,7 +992,7 @@ def render_imported_review():
     review_scene.camera = review_scene.objects['review-camera-whole']
     bpy.ops.wm.save_as_mainfile(filepath=str(raw / 'review.blend'))
     print(json.dumps({'glb': str(out), 'glb_bytes': glb_bytes,
-                      'triangles': triangle_count, 'views_ready': 5,
+                      'triangles': triangle_count, 'views_ready': 6,
                       'review_file': str(raw / 'review.blend')}))
 
 # A real +Y-up, metre-scale scene, with one named root per story place.
