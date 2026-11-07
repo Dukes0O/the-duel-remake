@@ -1,28 +1,13 @@
-import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
+import {scablandsHeightAt} from './scablands-height.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
-
-function scablandsHeightAt(x,z){
-  const nx=x/SCABLANDS_LAYOUT.halfWidth,nz=z/SCABLANDS_LAYOUT.halfDepth,edge=Math.hypot(nx,nz);
-  const rolling=2.1*Math.sin(x*.007+z*.002)*Math.cos(z*.009-x*.003);
-  const ridge=smooth((edge-SCABLANDS_LAYOUT.ridgeStart)/.1)*
-    (1-smooth((edge-SCABLANDS_LAYOUT.ridgeCrest)/.16))*108;
-  const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
-  let height=rolling+ridge+wall;
-  for(const place of SCABLANDS_PLACES){
-    const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
-    height+=(place.height-height)*weight;
-  }
-  return height;
-}
-
 const WHITES_ORIGIN=Object.freeze({x:1500,z:0});
 const WHITES_BOUNDS=Object.freeze({minX:-500,maxX:500,minZ:-500,maxZ:500});
+export const WHITES_BASE=scablandsHeightAt(560,-120);
 const WHITES_FOOT_X=-480;
 const WHITES_TOP_X=20;
 const WHITES_HEIGHT=17;
-const WHITES_BASE=scablandsHeightAt(WHITES_ORIGIN.x+WHITES_FOOT_X,WHITES_ORIGIN.z);
 
 function isOpen(openMarks,mark){
   if(openMarks instanceof Set)return openMarks.has(mark);
@@ -34,8 +19,61 @@ function withinBounds(x,z,bounds){
   return x>=bounds.minX&&x<=bounds.maxX&&z>=bounds.minZ&&z<=bounds.maxZ;
 }
 
+function distanceToSegment(x,z,a,b){
+  const dx=b.x-a.x,dz=b.z-a.z,lengthSquared=dx*dx+dz*dz;
+  const t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(lengthSquared||1));
+  return {distance:Math.hypot(x-a.x-dx*t,z-a.z-dz*t),t};
+}
+
+function distanceAlongPolyline(point,points){
+  let best={distance:Infinity,along:0};
+  let travelled=0;
+  for(let index=1;index<points.length;index++){
+    const a=points[index-1],b=points[index],length=Math.hypot(b.x-a.x,b.z-a.z);
+    const nearest=distanceToSegment(point.x,point.z,a,b);
+    if(nearest.distance<best.distance)best={distance:nearest.distance,along:travelled+length*nearest.t};
+    travelled+=length;
+  }
+  return {...best,total:travelled};
+}
+
+const branchPoints=Object.freeze([
+  Object.freeze({x:560,z:-120}),Object.freeze({x:610,z:-190}),
+  Object.freeze({x:650,z:-225}),Object.freeze({x:690,z:-250}),
+]);
+const whitesPoints=Object.freeze([branchPoints.at(-1),Object.freeze({x:1020,z:0})]);
+
+export const CUTS=Object.freeze([
+  Object.freeze({id:'branch-cut',points:branchPoints,floorAtStart:scablandsHeightAt(560,-120),
+    floorHeight:WHITES_BASE,floorHalfWidth:12,shoulder:45,opensWith:'branch-points',grade:true}),
+  Object.freeze({id:'whites-cut',points:whitesPoints,floorHeight:WHITES_BASE,
+    floorHalfWidth:12,shoulder:45,opensWith:'branch-open'}),
+]);
+
+function cutHeight(height,x,z,openMarks){
+  for(const cut of CUTS){
+    if(!isOpen(openMarks,cut.opensWith))continue;
+    const nearest=distanceAlongPolyline({x,z},cut.points);
+    const weight=1-smooth((nearest.distance-cut.floorHalfWidth)/cut.shoulder);
+    if(weight<=0)continue;
+    const floor=cut.grade?cut.floorAtStart+(cut.floorHeight-cut.floorAtStart)*nearest.along/nearest.total:cut.floorHeight;
+    height+=(floor-height)*weight;
+  }
+  return height;
+}
+
+export function cutAt(worldX,worldZ,openMarks=[]){
+  for(const cut of CUTS){
+    if(!isOpen(openMarks,cut.opensWith))continue;
+    if(distanceAlongPolyline({x:worldX,z:worldZ},cut.points).distance<=cut.floorHalfWidth+cut.shoulder)
+      return cut;
+  }
+  return null;
+}
+
 function whitesHeightAt(x,z){
-  const bank=clamp((x-WHITES_FOOT_X)/(WHITES_TOP_X-WHITES_FOOT_X))*WHITES_HEIGHT;
+  const bankDistance=clamp((x-WHITES_FOOT_X)/(WHITES_TOP_X-WHITES_FOOT_X))*500;
+  const bank=bankDistance<=65?0:(bankDistance-65)*WHITES_HEIGHT/(500-65);
   const ripple=x>WHITES_TOP_X?0.035*Math.sin(x*.031+z*.017)*Math.cos(z*.027):0;
   const edgeDistance=Math.min(z-WHITES_BOUNDS.minZ,WHITES_BOUNDS.maxZ-z);
   const edgeBlend=Math.min(smooth(edgeDistance/55),smooth((x-WHITES_BOUNDS.minX)/20),
@@ -46,21 +84,10 @@ function whitesHeightAt(x,z){
 }
 
 export const REGIONS=Object.freeze([
-  Object.freeze({
-    id:'the-whites',
-    origin:WHITES_ORIGIN,
-    bounds:WHITES_BOUNDS,
-    opensWith:'branch-open',
-    heightAt:whitesHeightAt,
-    join:Object.freeze({
-      id:'whites-west-mesa-join',
-      kind:'road-and-rail',
-      from:'scablands-east-mesa',
-      to:'the-whites-bank-foot',
-      opensWith:'branch-open',
-      roadStatus:'named-join-only; ring-road integration belongs to RAIL-JOBS-2',
-    }),
-  }),
+  Object.freeze({id:'the-whites',origin:WHITES_ORIGIN,bounds:WHITES_BOUNDS,
+    opensWith:'branch-open',heightAt:whitesHeightAt,
+    join:Object.freeze({id:'whites-west-mesa-join',kind:'road-and-rail',from:'scablands-east-mesa',
+      to:'the-whites-bank-foot',opensWith:'branch-open',roadStatus:'open through the whites-cut alongside the rail'})}),
 ]);
 
 export function regionAt(worldX,worldZ,openMarks=[]){
@@ -74,8 +101,8 @@ export function regionAt(worldX,worldZ,openMarks=[]){
 
 export function regionNaturalHeightAt(worldX,worldZ,openMarks=[]){
   const region=regionAt(worldX,worldZ,openMarks);
-  if(!region)return scablandsHeightAt(worldX,worldZ);
-  return region.heightAt(worldX-region.origin.x,worldZ-region.origin.z);
+  const height=region?region.heightAt(worldX-region.origin.x,worldZ-region.origin.z):scablandsHeightAt(worldX,worldZ);
+  return cutHeight(height,worldX,worldZ,openMarks);
 }
 
 export function placeToWorld(place){

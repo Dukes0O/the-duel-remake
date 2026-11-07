@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from '../src/world/scablands.js';
-import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {REGIONS,regionAt,regionNaturalHeightAt,placeToWorld} from '../src/world/regions.js';
+import {getScablandsOpenMarks,resetScablandsGroundEdit,scablandsGroundEdit,scablandsNaturalHeightAt,
+  scablandsSurfaceAt,scablandsSurfaceHeightAt,setScablandsOpenMarks} from '../src/world/scablands-ground.js';
+import {CUTS,REGIONS,WHITES_BASE,regionAt,regionNaturalHeightAt,placeToWorld} from '../src/world/regions.js';
+import {Duel} from '../src/game.js';
 import {applySaltStormFog,saltStormActive,THE_WHITES_NODES,createTheWhitesScene} from '../src/world/the-whites-scene.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
@@ -21,6 +23,12 @@ function originalScablandsHeightAt(x,z){
   return height;
 }
 const openMarks=new Set(['branch-open']);
+const branchPlaces=[
+  {id:'rail-east-run',x:560,z:-120},{id:'branch-post-1',x:610,z:-190},
+  {id:'branch-post-2',x:650,z:-225},{id:'drift-foot',x:690,z:-250},
+  {id:'bank-foot',x:1020,z:0},{id:'bank-top',x:1520,z:0},
+];
+const heightsByMarks={};
 const whites=REGIONS.find(region=>region.id==='the-whites');
 const check=(condition,message)=>assert.ok(condition,message);
 const near=(actual,expected,tolerance,message)=>assert.ok(Math.abs(actual-expected)<=tolerance,
@@ -42,8 +50,9 @@ check(regionNaturalHeightAt(whites.origin.x,whites.origin.z,[])===
   originalScablandsHeightAt(whites.origin.x,whites.origin.z),'closed region lookup preserves Scablands height');
 
 const foot=whites.heightAt(-480,0),top=whites.heightAt(20,0);
-near((top-foot)/500,1/30,.02/30+1e-12,'bank grade is within two percent of 1 in 30');
-near(top-foot,17,.01,'bank top is 17 m above the foot');
+near(foot,1,0.1,'bank foot starts at the Scablands floor');
+near(top-foot,17,.34,'bank top is 17 m above the foot within two percent');
+check(foot<25&&top<25,'the bank stays below 25 m');
 let plateauLow=Infinity,plateauHigh=-Infinity;
 for(let x=30;x<=400;x+=20)for(let z=-100;z<=100;z+=20){
   const height=whites.heightAt(x,z);
@@ -70,8 +79,86 @@ for(const place of namedPlaces){
   near(world.position.y,whites.heightAt(place.position.x,place.position.z),.5,`${place.id} lies on the ground`);
   assert.equal(world.region,place.region,`${place.id} keeps its region id`);
 }
+check(CUTS.length===2&&CUTS[0].floorHalfWidth===12&&CUTS[0].shoulder===45,
+  'the branch and Whites have authored 12 m floors and 45 m shoulders');
+check(CUTS[1].floorHalfWidth===12&&CUTS[1].shoulder===45,'both cut shoulders keep the specified width');
+check(CUTS[0].opensWith==='branch-points'&&CUTS[1].opensWith==='branch-open',
+  'each cutting opens at its story mark');
+assert.deepEqual(CUTS[0].points.map(({x,z})=>[x,z]),[[560,-120],[610,-190],[650,-225],[690,-250]],
+  'branch-cut follows the rail and branch story places');
+assert.deepEqual(CUTS[1].points.map(({x,z})=>[x,z]),[[690,-250],[1020,0]],
+  'whites-cut runs from drift-foot to bank-foot');
+near(CUTS[0].floorHeight,WHITES_BASE,.001,'branch-cut grades to the Whites base');
+near(CUTS[1].floorHeight,WHITES_BASE,.001,'whites-cut uses the Whites base as its floor');
+assert.match(whites.join.roadStatus,/whites-cut/,'the road join names its cutting');
+check(whites.heightAt(0,500)>100,'the natural wall remains around the pale plateau');
 const ordinaryPlace={id:'unchanged',position:{x:1,y:2,z:3}};
 assert.equal(placeToWorld(ordinaryPlace),ordinaryPlace,'places without a region are returned unchanged');
+
+setScablandsOpenMarks(['branch-points']);
+assert.deepEqual([...getScablandsOpenMarks()],['branch-points'],'open marks are kept by the ground');
+check(regionAt(1020,0,getScablandsOpenMarks())===null,'branch-points alone do not open the Whites');
+near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,
+  'the wall remains untouched past drift-foot until branch-open');
+heightsByMarks.branchPoints=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
+setScablandsOpenMarks(['branch-points','branch-open']);
+heightsByMarks.both=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
+check(regionAt(1020,0,getScablandsOpenMarks())===whites,'both marks open the Whites');
+assert.equal(scablandsSurfaceAt(1500,0).gripKind,'salt','the Whites use a salt surface');
+assert.equal(scablandsSurfaceAt(850,-125).gripKind,'salt','the whites-cut uses a salt surface');
+check(scablandsSurfaceAt(850,-125).road,'the whites-cut is the road and rail join');
+check(scablandsSurfaceAt(650,-225).road,'the opened branch-cut carries the road too');
+near(WHITES_BASE,scablandsSurfaceHeightAt(560,-120),.1,'the bank uses the rail-east-run ground height');
+
+const cutRoute=[{x:560,z:-120},...CUTS[0].points.slice(1),...CUTS[1].points.slice(1)];
+const sampleRoute=(points,maxSlope,label)=>{
+  for(let index=1;index<points.length;index++){
+    const a=points[index-1],b=points[index],length=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.ceil(length/2);
+    let previous=scablandsSurfaceHeightAt(a.x,a.z);
+    for(let step=1;step<=steps;step++){
+      const t=step/steps,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t;
+      const height=scablandsSurfaceHeightAt(x,z);
+      const slope=Math.abs(height-previous)/Math.hypot(x-(a.x+(b.x-a.x)*(step-1)/steps),
+        z-(a.z+(b.z-a.z)*(step-1)/steps));
+      check(slope<=maxSlope+1e-8,`${label} slope stays below 1 in ${1/maxSlope}; got ${slope} at ${x.toFixed(1)}, ${z.toFixed(1)}`);
+      previous=height;
+    }
+  }
+};
+sampleRoute(cutRoute,1/12,'cut');
+const bankTop={x:1520,z:0};
+sampleRoute([{x:1020,z:0},bankTop,{x:1820,z:0}],1/25,'bank and plateau');
+const bankFoot=scablandsSurfaceHeightAt(1020,0),bankTopHeight=scablandsSurfaceHeightAt(bankTop.x,bankTop.z);
+near(bankFoot,1,.1,'reachable bank foot height');
+near(bankTopHeight-bankFoot,17,.34,'reachable bank rise');
+const driftHeight=scablandsSurfaceHeightAt(690,-250);
+check(scablandsSurfaceHeightAt(560,-120)<25&&driftHeight<25,'branch route remains below 25 m');
+
+const beforeFill=scablandsGroundEdit.heightAt(560,-120);
+scablandsGroundEdit.fill({x:560,z:-120,radius:2},'rock',50);
+const filledHeight=scablandsGroundEdit.heightAt(560,-120);
+check(filledHeight>beforeFill,'ground edit raises the rail approach');
+near(scablandsSurfaceHeightAt(560,-120),filledHeight,.001,'the shared surface reads the edited approach');
+setScablandsOpenMarks(['branch-points']);
+near(scablandsGroundEdit.heightAt(560,-120)-scablandsNaturalHeightAt(560,-120),filledHeight-beforeFill,.001,
+  'changing marks rebuilds natural ground while keeping edits');
+setScablandsOpenMarks(['branch-points','branch-open']);
+resetScablandsGroundEdit();
+assert.deepEqual([...getScablandsOpenMarks()],[],'ground reset clears story marks');
+heightsByMarks.none=branchPlaces.map(place=>scablandsSurfaceHeightAt(place.x,place.z));
+near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,'reset restores the closed-world wall');
+setScablandsOpenMarks(['branch-points','branch-open']);
+const race=new Duel({seed:1989,featureFlags:{}});
+race.startCampaign({mode:'duel',startStage:0,seed:1989});
+assert.deepEqual([...getScablandsOpenMarks()],[],'starting a race clears story marks');
+near(scablandsSurfaceHeightAt(1020,0),originalScablandsHeightAt(1020,0),.001,
+  'a race starts on the closed-world ground after story marks were set');
+
+console.log('Branch place ground heights (m):');
+console.log(`| Place | No marks | branch-points | both marks |`);
+console.log(`| --- | ---: | ---: | ---: |`);
+branchPlaces.forEach((place,index)=>console.log(`| ${place.id} | ${heightsByMarks.none[index].toFixed(2)} | ${heightsByMarks.branchPoints[index].toFixed(2)} | ${heightsByMarks.both[index].toFixed(2)} |`));
+console.log(`Both marks: bank-foot ${bankFoot.toFixed(2)} m, bank-top ${bankTopHeight.toFixed(2)} m, drift-foot ${driftHeight.toFixed(2)} m`);
 
 let closedLoads=0;
 assert.equal(createTheWhitesScene({openMarks:[],loadAsset:()=>{closedLoads++;}}),null,

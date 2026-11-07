@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsTownLayout} from './scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
+  onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
@@ -121,11 +122,14 @@ function addFurnaceFire(parent,place,scale=1.5){
     chimneyX:chimney.x, chimneyY:6.7, chimneyZ:chimney.z};
 }
 
-export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().loadAsync(path),openMarks=course.def.openMarks??[]}={}){
+export function createScablandsScene(course,options={}){
+  const loadAsset=options.loadAsset??(path=>new GLTFLoader().loadAsync(path));
+  const followsOpenMarks=!Object.hasOwn(options,'openMarks');
+  let openMarks=options.openMarks??getScablandsOpenMarks();
   const group=new THREE.Group();group.name='The Scablands';
   let retired=false;
   let townDraw=null;
-  const whites=createTheWhitesScene({openMarks,loadAsset});
+  let whites=createTheWhitesScene({openMarks,loadAsset});
   if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
   const addTown=async()=>{
@@ -155,12 +159,13 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
   // Four near tiles carry the shared physics height at a fine grid; the single
   // distant mesh uses a coarser grid to keep the horizon inexpensive.
+  const nearTiles=[];
   for(let z=-1;z<=0;z++)for(let x=-1;x<=0;x++){
     const tile=makeGround(700,500,detailCounts.near,groundMaterial,true,x*700+350,z*500+250);
-    tile.position.set(x*700+350,0,z*500+250);ground.add(tile);
+    tile.position.set(x*700+350,0,z*500+250);ground.add(tile);nearTiles.push(tile);
   }
   const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
-  const editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+  let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
   const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
@@ -169,8 +174,11 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   const roadPoints=[];
   for(let i=0;i<=192;i++){const a=i/192*Math.PI*2,x=Math.cos(a)*SCABLANDS_LAYOUT.frameRadiusX,z=Math.sin(a)*SCABLANDS_LAYOUT.frameRadiusZ;
     roadPoints.push(new THREE.Vector3(x,scablandsSurfaceHeightAt(x,z)+.12,z));}
-  const curve=new THREE.CatmullRomCurve3(roadPoints,true,'centripetal');
-  const road=new THREE.Mesh(new THREE.TubeGeometry(curve,384,SCABLANDS_LAYOUT.roadHalfWidth,6,true),roadMaterial);
+  const roadGeometry=()=>{
+    const curve=new THREE.CatmullRomCurve3(roadPoints,true,'centripetal');
+    return new THREE.TubeGeometry(curve,384,SCABLANDS_LAYOUT.roadHalfWidth,6,true);
+  };
+  const road=new THREE.Mesh(roadGeometry(),roadMaterial);
   road.name='Scablands dirt road';road.receiveShadow=true;ground.add(road);
   mastAndSmoke(group);
 
@@ -259,6 +267,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   });
   function dispose(){
     if(retired)return;retired=true;
+    stopOpenMarkWatch();
     editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
@@ -275,6 +284,26 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
     if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
     return changed;
   };
+  const refreshOpenMarks=marks=>{
+    if(retired||!followsOpenMarks)return;
+    openMarks=marks;
+    for(const tile of [...nearTiles,far]){
+      const offsetX=tile.position.x,offsetZ=tile.position.z;
+      const geometry=tile===far?makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry:
+        makeGround(700,500,detailCounts.near,groundMaterial,true,offsetX-350,offsetZ-250,scablandsGroundEdit).geometry;
+      const previous=tile.geometry;tile.geometry=geometry;previous.dispose();
+    }
+    editedGround.dispose();
+    editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+    editedGround.update();
+    for(const point of roadPoints)point.y=scablandsSurfaceHeightAt(point.x,point.z)+.12;
+    const previousRoad=road.geometry;road.geometry=roadGeometry();previousRoad.dispose();
+    whites?.dispose();
+    if(whites?.group.parent)whites.group.parent.remove(whites.group);
+    whites=createTheWhitesScene({openMarks,loadAsset});
+    if(whites)group.add(whites.group);
+  };
+  const stopOpenMarkWatch=followsOpenMarks?onScablandsOpenMarksChanged(refreshOpenMarks):()=>{};
   group.userData.digFx=digFx;
   return {group,ready,solids:SCABLANDS_SOLIDS,dispose};
 }

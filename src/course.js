@@ -239,7 +239,7 @@ export class Course {
     return{a:turns(.003),b:turns(.007),c:turns(.012),d:turns(.004),e:turns(.13),f:turns(.038)};}
   _relief(s,off){
     if(this.def.pit)return pitRampHeight(this,s,off);
-    if(this.def.scablands){const p=this.worldAt(s,off);return scablandsSurfaceHeightAt(p.x,p.z,undefined,this.def.openMarks??[])-p.y;}
+    if(this.def.scablands){const p=this.worldAt(s,off);return scablandsSurfaceHeightAt(p.x,p.z)-p.y;}
     if(this.def.practice){const p=this.worldAt(s,off);return freestyleSurfaceHeightAt(this,p.x,p.z);}
     if(this.def.saltFlats){const p=this.worldAt(s,off);return saltFlatsRampHeight(this.features.ramps,p.x,p.z);}
     if(this.def.arena)return Math.abs(off)<=15?this.jumpAt(s):0;
