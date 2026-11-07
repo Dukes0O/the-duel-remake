@@ -117,7 +117,7 @@ def trace_photo(filename):
     return TRACE_PHOTOS[filename]
 
 hut = attach_carve('works-camp:hut-1', HUT, (-5.5, 3, -1))
-hut2 = attach_carve('works-camp:hut-2', HUT, (5.5, 3, -1), math.pi / 2, reuse=hut)
+hut2 = attach_carve('works-camp:hut-2', HUT, (7.5, 3, -1), math.pi / 2, reuse=hut)
 kitchen = attach_carve('works-camp:kitchen', KITCHEN, (0, 3, 8))
 
 def traced_part(name, parent, photo_name, mask_fn, rect, mapper, depth=.06, wall_scale=None):
@@ -232,11 +232,11 @@ add_ladder(kitchen, door_offset(KITCHEN, 38, 470), KITCHEN['width'], 'kitchen')
 laundry = trace_photo('sea-camp-washing-line.jpg')
 laundry_solid = frame_mask(laundry)
 laundry_scale_y = 3 / (860 - 20)
-laundry_scale_x = 7.4 / (1615 - 140)
+laundry_scale_x = 8.7 / (1615 - 140)
 washing_line = traced_part('works-camp:washing-line', camp,
     'sea-camp-washing-line.jpg', lambda _p: laundry_solid,
     (120, 15, 1640, 870),
-    lambda px, py, d: ((px - (140 + 1615) / 2) * laundry_scale_x,
+    lambda px, py, d: (.35 + (px - (140 + 1615) / 2) * laundry_scale_x,
                        (860 - py) * laundry_scale_y, -1 + d),
     depth=.045, wall_scale=.006)
 
@@ -286,14 +286,14 @@ def shot(name, eye, target, ortho=None, resolution=(800, 400)):
     if ortho:
         camera.data.ortho_scale = ortho
     else:
-        camera.data.lens = 50
+        camera.data.lens = 28
     scene.render.resolution_x, scene.render.resolution_y = resolution
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-hut-side', (-25, 3.0, -1), (-5.5, 3, -1), ortho=14.4)
-shot('camp-quarter-a', (-18, 1.6, -17), (0, 2.0, 3), resolution=(800, 400))
-shot('camp-quarter-b', (18, 1.6, -15), (0, 2.0, 3), resolution=(800, 400))
+shot('model-hut-side', (-16, 3.0, -1), (-5.5, 3, -1), ortho=14.4)
+shot('camp-quarter-a', (-18, 1.6, -17), (0, 2.6, 3), resolution=(800, 400))
+shot('camp-quarter-b', (18, 1.6, -15), (0, 2.6, 3), resolution=(800, 400))
 
 def read_pixels(path, width, height):
     image = bpy.data.images.load(str(path), check_existing=False)
