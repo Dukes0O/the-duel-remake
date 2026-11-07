@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 2: Dot's Diner, measured and carved from four views.
+"""TOWN-ART-OUTPOSTS round 3: Dot's Diner, measured and carved from four views.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,12 +13,12 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-2')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-3')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-3.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -39,9 +39,9 @@ bpy.context.preferences.filepaths.save_version = 0
 blend.parent.mkdir(parents=True, exist_ok=True)
 render.mkdir(parents=True, exist_ok=True)
 
-# Pixel measures from photo_grid.py overlays. Side: nose x=15, tail x=1011,
-# floor y=558. Top: front x=12, rear x=1012, centre line y=161. Front nose:
-# width x=160..1056, ground y=1112. Rear bus: x=205..1024, ground y=1120.
+# Pixel measures from photo_grid.py overlays. Front/rear scales are derived
+# from the shared side scale; the generated end views are proportionally
+# normalized in the pick functions below instead of assigning new metre scales.
 # The new rear reference includes the damaged airframe above the bus; the table
 # removes that unreachable patch instead of letting it widen the carved hull.
 table = {
@@ -49,8 +49,8 @@ table = {
                'rear': 'dot-diner-rear.jpg', 'top': 'dot-diner-overhead.jpg'},
     'length': 29.0, 'width': 8.2, 'height': 8.1,
     'side': {'start': 15, 'end': 1011, 'ground': 558},
-    'front': {'centre': 656, 'ground': 1112, 'scale': 8.2 / (1056 - 160)},
-    'rear': {'centre': 615, 'ground': 1120, 'scale': 8.2 / (1024 - 205)},
+    'front': {'centre': 656, 'ground': 1112},
+    'rear': {'centre': 615, 'ground': 1120},
     'top': {'front': 12, 'rear': 1012, 'centre': 161, 'along': 'x', 'x_scale': 8.2 / (222 - 82)},
     'cut': {
         # The side porch sits below and outside the continuous fuselage/bus body.
