@@ -782,6 +782,7 @@ try {
           'wall-steel-straight','wall-steel-corner','wall-steel-end',
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
           'searchlight','searchlight:beam','fire-station','clinic','hydrant',
+          'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
         for (const id of expected) assert.ok(names.includes(id), `missing ${id}`);
         const children = gltf.nodes.map(node => node.children || []);
