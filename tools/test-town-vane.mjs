@@ -51,7 +51,12 @@ for(let tick=0;tick<100*360*24;tick++) stepTown(centuryTown);
 assert.ok(centuryTown.calendar.year>=100);
 assert.ok(centuryTown.reports.filter(report=>report.facts?.source==='town-vane').length<=3,
   'Vane reports reuse their stable panel keys instead of growing with years');
-assert.equal(townVaneState(centuryTown).letters.length,0,'the town letter archive is not trimmed with report rows');
+const centuryLetters=townVaneState(centuryTown).letters;
+assert.ok(centuryLetters.length>=90,'a quiet town receives yearly letters after Year 7');
+assert.ok(centuryLetters.every((letter,index)=>typeof letter.text==='string'
+  &&(!index||letter.id!==centuryLetters[index-1].id)),
+'the full letter archive stays readable and alternates its yearly letters');
+assert.equal(centuryTown.vane.letters.length,centuryLetters.length,'every letter remains in the saved town archive');
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
 

@@ -89,6 +89,11 @@ function addCrispReport(town,state,month) {
   townReport(town,'Mr Crisp','Mr Crisp visited and left a neat report: “So sorry, I was passing. Mrs Vane asked me to see how you were getting on.”','Town gate','crisp-visit','annual');
   state.lastVisitMonth=month;
 }
+function recordYearlyLetter(town,calendar) {
+  if(calendar.year<=7||calendar.month!==1) return;
+  const condition=(calendar.year-8)%2===0?'quiet-yearly-visit':'quiet-yearly-no-reply';
+  recordTownVaneEvent(town,condition,{year:calendar.year});
+}
 function updateVane({town,calendar}) {
   const state=writableState(town),month=monthNumber(calendar);
   if(!state.started) {
@@ -98,6 +103,7 @@ function updateVane({town,calendar}) {
     if(calendar.year<7||!chapter16Done) return;
     state.started=true;state.startedAt=month;state.chapterFacts[ACT3_CHAPTERS[0].id]=true;
   }
+  recordYearlyLetter(town,calendar);
   detectConditions(town,state,calendar);
   const vaneDeeds=Object.values(town.deeds?.items??{}).filter(item=>item?.ownerId==='vane').length;
   if(vaneDeeds>=12) {
