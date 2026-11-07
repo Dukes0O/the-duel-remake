@@ -542,11 +542,22 @@ def radar_attach(obj,parent=radar):obj.parent=parent;radar_parts.append(obj);ret
 side_rgb=radar_side.rgb();side_spread=side_rgb.max(axis=2)-side_rgb.min(axis=2);side_grey=side_rgb.mean(axis=2)
 side_mask=((side_spread>12)&(side_grey<205))|((side_grey<86)&(side_spread<14))
 side_mask[:590,:]=False;side_mask[1490:,:]=False;side_mask[:,:280]=False;side_mask[:,750:]=False
+# The side reference includes the photographed dish and its drive. Those are
+# represented by the moving lathe and bearing pieces below; remove their
+# silhouettes from the tower trace so they are not copied as flat plates.
+side_y,side_x=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
+side_mask &= ~(((side_x-445)/118)**2+((side_y-330)/330)**2<1.0)
+side_mask &= ~((side_x>490)&(side_x<690)&(side_y>330)&(side_y<625))
 side_loops=trace(side_mask,(280,590,750,1490),tolerance=29.0,min_area=3000)
 if not side_loops:raise RuntimeError('radar side lattice trace is empty')
 front_rgb=radar_front.rgb();front_spread=front_rgb.max(axis=2)-front_rgb.min(axis=2);front_grey=front_rgb.mean(axis=2)
 front_mask=((front_spread>12)&(front_grey<205))|((front_grey<86)&(front_spread<14))
 front_mask[:575,:]=False;front_mask[1490:,:]=False;front_mask[:,:265]=False;front_mask[:,770:]=False
+# Keep the reflector itself exclusively on the rotating lathe. Its lower rim
+# overlaps the tower platform in the photo, so cut the circular face while
+# retaining the platform and mast below it.
+front_y,front_x=np.ogrid[:front_mask.shape[0],:front_mask.shape[1]]
+front_mask &= ~((((front_x-512)/305)**2+((front_y-320)/305)**2<1.0)&(front_y<650))
 front_loops=trace(front_mask,(265,575,770,1490),tolerance=29.0,min_area=3000)
 if not front_loops:raise RuntimeError('radar front lattice trace is empty')
 for depth,label in ((-1.05,'road'),(1.05,'far')):
