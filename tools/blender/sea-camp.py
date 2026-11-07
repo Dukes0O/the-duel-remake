@@ -108,6 +108,8 @@ def attach_carve(name, table, location, yaw=0, reuse=None):
     return body
 
 TRACE_PHOTOS = {}
+STILT_DATA = None
+LADDER_DATA = None
 
 def trace_photo(filename):
     if filename not in TRACE_PHOTOS:
@@ -121,7 +123,7 @@ kitchen = attach_carve('works-camp:kitchen', KITCHEN, (0, 3, 8))
 def traced_part(name, parent, photo_name, mask_fn, rect, mapper, depth=.06, wall_scale=None):
     photo = trace_photo(photo_name)
     solid = mask_fn(photo)
-    loops = trace(solid, rect, tolerance=1.2, min_area=70)
+    loops = trace(solid, rect, tolerance=3.5, min_area=120)
     if not getattr(photo, '_sea_camp_bled', False):
         photo.bleed(solid)
         photo._sea_camp_bled = True
@@ -136,17 +138,20 @@ def frame_mask(photo):
     seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9),
              (photo.w - 9, photo.h - 9)]
     original = photo.rgb()
+    spread = original.max(axis=2) - original.min(axis=2)
+    enclosed_studio = (original.mean(axis=2) > 210) & (spread < 38)
     corners = np.concatenate([original[4:14, 4:14].reshape(-1, 3),
                               original[4:14, -14:-4].reshape(-1, 3)])
     shade = corners.mean()
     if shade < 185:
         photo._rgb = np.clip(original + int(205 - shade), 0, 255).astype(np.int16)
-        mask = ~photo.sky(seeds, tolerance=30, grey=30)
+        mask = ~(photo.sky(seeds, tolerance=30, grey=30) | enclosed_studio)
         photo._rgb = original
         return mask
-    return ~photo.sky(seeds, tolerance=30, grey=30)
+    return ~(photo.sky(seeds, tolerance=30, grey=30) | enclosed_studio)
 
 def add_stilts(body, length, width):
+    global STILT_DATA
     frame = trace_photo('sea-camp-stilt-frame.jpg')
     # Grid: 1024 x 1536; timber feet meet floor at row 1510, top row 20,
     # and outer legs span x=145..878. 3 m / 1490 px = 0.002013 m/px.
@@ -158,16 +163,30 @@ def add_stilts(body, length, width):
         positions.append(positions[-1] + 4)
     if length / 2 - positions[-1] > .05:
         positions.append(length / 2)
+    if STILT_DATA is None:
+        loops = trace(solid, (120, 18, 900, 1515), tolerance=5.0, min_area=220)
+        if not getattr(frame, '_sea_camp_bled', False):
+            frame.bleed(solid)
+            frame._sea_camp_bled = True
+        mesh = Mesh()
+        slab(mesh, 'stilt-frame', frame, loops,
+             lambda px, py, d: (d, (1510 - py) * frame_scale - 3,
+                                (px - frame_x) * frame_scale),
+             -.05, .05, wall_scale=frame_scale)
+        template = mesh.finish('works-camp:stilt-frame-template', {'stilt-frame': frame.material()})
+        STILT_DATA = template.data
+        bpy.data.objects.remove(template, do_unlink=True)
     for station, z in enumerate(positions):
         for edge, x in enumerate((-width / 2, width / 2)):
-            traced_part(f'{body.name}:stilt-{station + 1}-{edge + 1}', body,
-                'sea-camp-stilt-frame.jpg', lambda _p, s=solid: s,
-                (120, 18, 900, 1515),
-                lambda px, py, d, x=x: (x + d, (1510 - py) * frame_scale - 3,
-                                         z + (px - frame_x) * frame_scale),
-                depth=.10, wall_scale=frame_scale)
+            name = f'{body.name}:stilt-{station + 1}-{edge + 1}'
+            obj = bpy.data.objects.new(name, STILT_DATA)
+            scene.collection.objects.link(obj)
+            obj.parent = body
+            obj.location = to_blender((x, 0, z))
+            obj['part'] = name
 
 def add_ladder(body, door_z, width, suffix):
+    global LADDER_DATA
     ladder = trace_photo('sea-camp-ladder.jpg')
     # Grid: 1024 x 1536; feet touch floor at row 1510, rails reach row 30.
     # The upper rail tips are near x=880; the floor feet are near x=160.
@@ -175,13 +194,26 @@ def add_ladder(body, door_z, width, suffix):
     vertical_scale = 3 / (ladder_ground - ladder_top)
     top_x = 880
     horizontal_scale = 1.1 / (880 - 160)
-    solid = frame_mask(ladder)
-    traced_part(f'{body.name}:ladder-{suffix}', body, 'sea-camp-ladder.jpg',
-        lambda _p, s=solid: s, (140, 20, 900, 1515),
-        lambda px, py, d: (width / 2 + .11 + d,
-                           (ladder_ground - py) * vertical_scale - 3,
-                           door_z + (px - top_x) * horizontal_scale),
-        depth=.055, wall_scale=.006)
+    if LADDER_DATA is None:
+        solid = frame_mask(ladder)
+        loops = trace(solid, (140, 20, 900, 1515), tolerance=5.0, min_area=180)
+        if not getattr(ladder, '_sea_camp_bled', False):
+            ladder.bleed(solid)
+            ladder._sea_camp_bled = True
+        mesh = Mesh()
+        slab(mesh, 'ladder', ladder, loops,
+             lambda px, py, d: (d, (ladder_ground - py) * vertical_scale - 3,
+                                (px - top_x) * horizontal_scale),
+             -.03, .03, wall_scale=.006)
+        template = mesh.finish('works-camp:ladder-template', {'ladder': ladder.material()})
+        LADDER_DATA = template.data
+        bpy.data.objects.remove(template, do_unlink=True)
+    name = f'{body.name}:ladder-{suffix}'
+    obj = bpy.data.objects.new(name, LADDER_DATA)
+    scene.collection.objects.link(obj)
+    obj.parent = body
+    obj.location = to_blender((width / 2 + .11, 0, door_z))
+    obj['part'] = name
 
 def door_offset(table, side_start, door_center):
     side_scale = table['length'] / abs(table['side']['end'] - side_start)
