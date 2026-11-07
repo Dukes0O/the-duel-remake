@@ -67,7 +67,7 @@ const generators = [
   {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
     glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:3000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
-    glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/food.glb'],budget:30000,maxBytes:3000000},
   {id:'town-borer',script:'tools/blender/town-borer.py',args:[],candidate:true,
@@ -1068,16 +1068,17 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS round 4 exports the photo-carved crusher with named moving parts and photo materials', () => {
+  check('TOWN-ART-PLANTS keeps the passed crusher and exports the photo-built batch plant', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
     assert.equal(bytes.readUInt32LE(8), bytes.length);
-    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the family limit`);
+    assert.ok(bytes.length <= 8_000_000, `${bytes.length} bytes exceeds the family limit`);
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
-    assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name), ['crusher'], 'one named piece in round 1');
+    assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
+      ['batch-plant', 'crusher'], 'the passed crusher and new batch plant stay separate buildings');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1086,9 +1087,21 @@ try {
       'the former box-built body pieces are removed');
     const bodyNode = gltf.nodes[names.indexOf('crusher:body')];
     assert.ok(Number.isInteger(bodyNode.mesh), 'the carved crusher body is an exported mesh');
+    const descendants = index => [index, ...(gltf.nodes[index].children || []).flatMap(descendants)];
+    const countTriangles = id => descendants(names.indexOf(id)).reduce((sum, index) => {
+      const meshIndex = gltf.nodes[index].mesh;
+      return sum + (meshIndex === undefined ? 0 : gltf.meshes[meshIndex].primitives
+        .reduce((meshSum, primitive) => meshSum + gltf.accessors[primitive.indices].count / 3, 0));
+    }, 0);
+    assert.ok(countTriangles('crusher') > 100 && countTriangles('crusher') <= 14_000,
+      `${countTriangles('crusher')} triangles exceeds the crusher budget`);
+    for (const name of ['batch-plant', 'batch-plant:silo-shell', 'batch-plant:aggregate-bins',
+      'batch-plant:mixing-tower', 'batch-plant:truck-chute', 'batch-plant:silo:traced-legs-road']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('batch-plant') > 100 && countTriangles('batch-plant') <= 14_000,
+      `${countTriangles('batch-plant')} triangles exceeds the batch plant budget`);
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
-    const triangles = primitives.reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-    assert.ok(triangles > 100 && triangles <= 14_000, `${triangles} triangles exceeds the crusher family budget`);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
         ['TEXCOORD_0'], 'each crusher part has one UV channel');
