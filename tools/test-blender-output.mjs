@@ -78,8 +78,8 @@ const generators = [
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:30000,
-    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:44000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000},maxBytes:5000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -748,12 +748,14 @@ try {
         assert.ok(names.has('hermit-camp:bonnet-dish'), 'bonnet-textured shallow dish');
         assert.ok(names.has('hermit-camp:dish-pole'), 'leaning dish pole');
         assert.ok(names.has('hermit-camp:chair-seat'), 'separate chair seat');
+        assert.ok(names.has('deck-town'), 'named stranded-deck town building root');
+        assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
         assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
-          ['dot-diner', 'hermit-camp', 'plane-school'],
+          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school'],
           'each outpost building is a direct child of the family root');
-        for (const id of ['dot-diner', 'plane-school', 'hermit-camp']) {
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;

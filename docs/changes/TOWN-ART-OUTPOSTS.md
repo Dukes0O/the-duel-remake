@@ -1,32 +1,23 @@
 # TOWN-ART-OUTPOSTS
 
-## Design
-
-Built the hermit camp from the existing Wasteland town brief. The hut door faces the road at -Z. Its side photo has the front at the right, and the measured endpoint order follows that view. The hut is 6.07 m long, 3.51 m wide and 3.14 m high from its 2 m door. The goat shed is a separate photo-carve. A rusty car bonnet forms the satellite dish. The chair faces out from the hut.
+Status: deck-town model and round-11 review sheet committed for Claude's review.
 
 ## Changed
 
-- Added the hermit hut, goat shed, bonnet dish, leaning pole and chair under `hermit-camp`, a direct child of `town-outposts`.
-- Printed and checked the world bounds for each camp part and the full camp. The 3 by 3 cell footprint remains clear.
-- Added a family-root test and a 9,000-triangle hermit-camp budget. The outpost family budget is 30,000 triangles.
-- Added the Hermit Camp round 1 sheet and this review note. Kept the diner and school geometry unchanged.
+Added a 4 by 4 stranded-ship-deck outpost to `outposts.glb`: shallow deck plate, rails, hatch plates, bollards, four varied copies of one tin-home construction, plank walkways, ladders, washing, and `deck-town:bell`. Added per-piece bounds output and a footprint check. The model is code-built rather than photo-carved because the requested source photographs were not retained; the round-11 sheet makes that limitation explicit. The family file is 4,818,712 bytes. Its triangle allowance rose from 30,000 to 44,000, with 14,000 allocated to deck-town.
 
-## Checks
+Added the texture fault to `docs/ART_LINE.md`: the shared `corrugated-tin.jpg` contains diner imagery, so it should not be tiled across broad tin walls. The new home panels use the standalone corrugated-tin texture. Dot's Diner and the plane school were not changed.
 
-- Blender 4.5.13 recipe/export/render: passed. The run printed hut, shed, dish, chair and camp bounds. GLB size: 4,019,808 bytes.
-- `tools/test-blender-output.mjs`: pending.
-- `tools/test-repo-hygiene.mjs`: pending.
-- `tools/test-review-evidence.mjs`: pending.
-- Browser checks and frame timing were not run. This is an art-only asset that is not wired into the game. Race fingerprints do not apply.
-- Changed assertion: added the requirement that `dot-diner`, `plane-school` and `hermit-camp` are direct children of `town-outposts`; no assertion was weakened.
+## Checks and review
 
-## Claude should inspect
-
-Check the four hut photo comparisons, the side-to-gable seams, the bonnet dish connection, the chair's direction, and the 88 m mayor view. The sheet records the visible differences.
-
-The art card's 3 MB family-file target is exceeded. The existing diner and school GLB was 2,865,604 bytes before the camp; the required four-view hut and shed textures add about 1.15 MB. The current output remains below the task test's 5 MB family cap. Review whether the town family's target should change or whether a separate texture-budget card is needed. The accepted diner and school were not altered to reduce their textures.
+- Blender export and model renders passed; bounds were printed for every deck-town piece and the complete town stayed in the 4 by 4 footprint.
+- `node tools/test-blender-output.mjs`: 335 checks passed.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- `node tools/test-review-evidence.mjs`: 8 passed; 1 failed because its fixture could not start `ffmpeg` (`EPERM`).
+- No lane tier or build was run, as directed. Browser and game look checks are for Claude.
+- Claude should inspect deck side/front/rear/above, road/far/mayor renders, bounds and connections, and the sheet. Photo-to-model comparisons still need the requested generated reference photos.
+- Race fingerprints: not applicable. Assertions were only extended with deck-town presence and its named bell, direct-child and budget checks.
 
 ## Removed
 
-- Removed the unsubmitted generic `round-1.jpg` draft and replaced it with `hermit-round-1.jpg`, so the accepted diner round 4 and school round 9 sheets remain intact.
-- No runtime code path was removed.
+Nothing removed. `round-4.jpg`, `round-9.jpg` and `round-10.jpg` remain.
