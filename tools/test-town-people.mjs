@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
 await import('../src/town/systems/modules/people.js');
-const {createTown, stepTown, serializeTown, deserializeTown, registeredTownSystems, TOWN_TIME} = await import('../src/town/index.js');
+const {createTown, stepTown, dispatchTownCommand, serializeTown, deserializeTown, registeredTownSystems, TOWN_TIME} = await import('../src/town/index.js');
 import {TOWN_THOUGHTS, TOWN_SEASON_THOUGHTS} from '../src/town/content/thoughts.js';
 import {storeGood} from '../src/town/town-goods.js';
 
@@ -12,9 +12,20 @@ const fedTowns = new WeakSet();
 function stepDay(town) {
   // A well-fed town: TOWN-FARM now works out each day's food from what is in the stores.
   if (town.name === 'Repeatable' || fedTowns.has(town)) storeGood(town, {x:0, z:0}, 'food', (town.people?.length || 0) * 2100 / 3600 + 1);
+  const fixtureWell=town.keepFixtureWellFull?town.regions?.scablands?.groundWater?.wells?.fixture:null;
+  if(fixtureWell){fixtureWell.yieldLitresPerDay=Math.max(600,(town.people?.length||12)*50);fixtureWell.waterLitres=Math.max(fixtureWell.waterLitres||0,fixtureWell.yieldLitresPerDay);}
   const startTick=BigInt(town.tick);
   for (let hour = 0; hour < TOWN_TIME.ticksPerDay; hour++) stepTown(town);
   return BigInt(town.tick)-startTick;
+}
+function setMeasuredHousing(town,capacity,waterLitresPerDay) {
+  const count=Math.ceil(capacity/8),cells=Array.from({length:count},(_,index)=>({x:100+index,z:100}));
+  const result=dispatchTownCommand(town,{type:'paintHomeGround',cells});assert.equal(result.ok,true,result.message);
+  town.homePlots.forEach((plot,index)=>{plot.tier=5;plot.household=`fixture-household-${index}`;plot.family=plot.household;});
+  town.regions.scablands.groundWater={pits:{},wellJobs:{},wells:{fixture:{x:0,z:0,yieldLitresPerDay:waterLitresPerDay,waterLitres:waterLitresPerDay,drawdownLitres:0}},droughtDays:0};
+  town.keepFixtureWellFull=true;
+  storeGood(town,{x:0,z:0},'food',1_000_000);
+  stepDay(town); // Let real support measurements reach each person's daily record.
 }
 
 check(registeredTownSystems().some(system => system.name === 'town-people' && system.everyTicks === 1), 'people work is scheduled every town tick');
@@ -37,10 +48,8 @@ check(town.people.filter(person => person.job === 'school').length === 3, 'compl
 
 const first = createTown(42, 'Repeatable');
 const second = createTown(42, 'Repeatable');
-first.peopleConditions = {waterLitresPerPerson:50, foodCaloriesPerPerson:2100, shelterPlaces:10_000};
-second.peopleConditions = {waterLitresPerPerson:50, foodCaloriesPerPerson:2100, shelterPlaces:10_000};
-first.peopleConditions.paintedHomePlaces = 10_000;
-second.peopleConditions.paintedHomePlaces = 10_000;
+setMeasuredHousing(first,10_000,1_000_000);
+setMeasuredHousing(second,10_000,1_000_000);
 first.buildings.push({id:'school-1', buildingId:'school', state:'complete'});
 second.buildings.push({id:'school-1', buildingId:'school', state:'complete'});
 // A well-kept town has latrines. TOWN-HEALTH makes a town with none sick, and sick people have few children.
@@ -54,7 +63,7 @@ check(first.people.some(person => person.retired), 'older people retire');
 check(first.people.some(person => person.skills.learning > 0), 'school years build children\'s skills');
 
 const supported = createTown(23, 'Room to Grow');
-supported.peopleConditions = {waterLitresPerPerson:50, foodCaloriesPerPerson:2100, shelterPlaces:1000};
+setMeasuredHousing(supported,1000,600);
 fedTowns.add(supported);
 stepDay(supported);
 const originalPopulation = supported.people.length;
@@ -62,7 +71,6 @@ check(supported.people.every(person => person.workHours === 8), 'adults work eig
 for (let day = 0; day < 360; day++) stepDay(supported);
 check(supported.people.length > originalPopulation, 'supported town receives arrivals and grows without a fixed people cap');
 check(supported.people.every(person => person.needs.waterLitres === 50 && person.needs.foodCalories === 2100), 'people track measured water and food needs');
-supported.peopleConditions.paintedHomePlaces = 1000;
 for (let day = 0; day < 180; day++) stepDay(supported);
 check(supported.people.some(person => person.homeTier > 0), 'homes improve over time on painted ground');
 check(supported.homes.every(home => Number.isInteger(home.tier) && home.id), 'homes keep their own saved records');
@@ -70,18 +78,19 @@ const saved = deserializeTown(serializeTown(supported));
 same(saved.people, supported.people, 'people survive a save and load round trip');
 const homeToWatch = supported.homes.find(home => home.tier > 0);
 const previousHomeTier = homeToWatch.tier;
-supported.peopleConditions = {waterLitresPerPerson:0, foodCaloriesPerPerson:0, shelterPlaces:0, paintedHomePlaces:1000};
+supported.keepFixtureWellFull=false;
+supported.regions.scablands.groundWater.wells.fixture.waterLitres=0;
+supported.regions.scablands.groundWater.wells.fixture.yieldLitresPerDay=0;
 for (let day = 0; day < 360; day++) stepDay(supported);
 check(homeToWatch.tier < previousHomeTier, 'homes step back slowly after support is lost');
 
 const challenged = createTown(7, 'Hard Times');
 stepDay(challenged);
-challenged.peopleConditions = {waterLitresPerPerson:0, foodCaloriesPerPerson:0, shelterPlaces:0};
 for (const person of challenged.people) person.health = 1;
 const starting = challenged.people.length;
 for (let day = 0; day < TOWN_TIME.daysPerMonth * TOWN_TIME.monthsPerYear; day++) stepDay(challenged);
 check(challenged.people.length < starting, 'unmet needs can reduce the living population');
-challenged.peopleConditions = {waterLitresPerPerson:50, foodCaloriesPerPerson:2100, shelterPlaces:100};
+setMeasuredHousing(challenged,100,10_000);
 for (let day = 0; day < 360; day++) stepDay(challenged);
 check(challenged.people.length > 0 && challenged.people.some(person => person.health > 1), 'restored water, food and shelter let the population recover');
 

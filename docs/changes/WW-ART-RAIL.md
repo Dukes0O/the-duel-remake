@@ -1,38 +1,47 @@
-# WW-ART-RAIL: Wednesday and the coal heap
+# WW-ART-RAIL: small props and last touches
 
 Date: 6 November 2026
 
 ## Changed
 
-- Added the separate `wednesday` locomotive node and the `coal-heap-full`, `coal-heap-half` and `coal-heap-low` heightfield nodes to `rail-trains.glb`. The heaps use `town_base.make_materials`; export uses `town_base.export_glb`.
-- Added three generated reference photographs and one generated sand-and-coal texture under `public/assets/models/wasteland/rail/textures/`, with prompts and credits.
-- Added node-presence assertions for Wednesday and the three heap states. Existing assertions were not loosened.
-- The round 6 sheet remains in place. It is not replaced because the new three-quarter render does not pass the card's look check.
-- Rebuilt Wednesday's body with `hull_model.View`, `occupancy`, `largest_part` and `carve_hull`. Added measured side and end photo mapping, mirrored far-side projection, wheel arches, four wheels, axles and rods. Reduced the three photo textures to fit the 3.8 MB file target.
-- Doubled the coal texture repeat so the lumps read smaller and moved the heap cameras back to show the full shapes.
-- The passed 2:15 engine, track, drift, carriage and van geometry in the Blender recipe was left untouched. The resulting GLB retains their prior node triangle counts.
+- Kept the Hollis suitcase model id and label child as `case-hollis`; retained the source image name `case-fourteen.jpg`. Review shots now use `case-hollis`.
+- Tightened the book, tooth-jar, megaphone and suitcase outlines by 8 pixels to reduce the photo shadow fringe. A faint pale edge remains and is called out for Claude's look review.
+- Kept the token-ring mask seed in the hoop centre; the exported render shows a real open hole.
+- Kept the 15 m sand drag as a 1.5 m feathered heightfield with rail stub and thick timber stop. Its two car-height views are at about 18 m and frame the ridge across its length.
+- Reduced tin-car wheel radius to 35 mm and width to 12 mm, moved them nearer the body, and reduced hub size.
+- Kept the 1.20 m lever and small case dimensions. Tightened the two-row lineup and moved the sand ridge behind the props.
+- Added `rail-props.py` and its GLB budget to the Blender output coverage list. This adds generator coverage only; no existing assertion was weakened.
+- Added the round 8 comparison sheet. No new reference pictures were added; existing source pictures remain credited in `CREDITS.md`.
 
 ## Checks
 
-- Blender 4.5.13: rebuilt and exported, imported the GLB into an empty scene, set Standard view transform, and rendered to `.qa-dist`. Export completed. Reading the GLB gives 46,574 triangles total: Wednesday hull 9,000, wheels 768, axles 48, rods 4, and each heap 4,480. GLB size is 3,774,044 bytes, under the 3.8 MB target.
-- `node tools/test-blender-output.mjs`: passed, 292 checks, 0 failed after fixing the exported node name and axle UV range. Its first run caught both issues; no assertions changed.
-- `node tools/test-repo-hygiene.mjs`: passed; no oversized look sheets.
-- No lane tier or build, as required for an art card. No browser check was run. Claude should inspect the existing round 6 sheet and this best-candidate GLB; no round 7 sheet is submitted because it fails visual acceptance.
-- Art acceptance is not met. The side render has the corrected small-engine proportions and four wheels, but the three-quarter render still has distorted end-photo patches and visible seams. A person would read it as a toy-like photo mock-up, not a finished real engine. Stop here rather than replace the prior sheet with a failed round.
+- Blender recipe: passed; imported the exported GLB into an empty scene for every prop and the lineup. No `SKY seed` warnings or Blender errors. GLB readback: 20,336 triangles, 2,428,476 bytes, and only `TEXCOORD_0`; metallic factors are at or under 0.3.
+- `node tools/test-blender-output.mjs`: passed, 296 checks, 0 failures. First run exposed the missing `rail-props.py` coverage entry; added the entry and reran.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- Browser and look checks: not run in this job; Claude should inspect `docs/board/looks/ww-art-rail/round-8.jpg`.
 
 ## Changed assertions
 
-The existing four node-name assertions are unchanged. No assertion or tolerance changed.
+- Added one expected generator entry to the existing coverage list because `rail-props.py` produces a committed Blender asset. No assertion was removed or loosened.
 
 ## Race fingerprints
 
-None. The model is not wired into a playable scene.
+- None. The model is not wired into a playable scene.
 
 ## Removed
 
-- Removed this run's temporary renders, test logs, and inspection scripts. Kept only the recipe, current GLB, source textures, change note and the card's existing review sheets.
-- Kept `round-3`, `round-4`, and `round-6` sheets and review notes unchanged; round 7 is withheld.
+- None.
 
-## Wednesday and the coal heap
+## Claude should inspect
 
-`wednesday` (hull, wheels, axles, rods and cab nodes) and `coal-heap-full`, `coal-heap-half` and `coal-heap-low` pass; see `docs/board/looks/ww-art-rail/round-7-review.md`. `docs/ASSET_PIPELINE.md` gains the lessons. Removed: round 6's sheet and note.
+- The faint pale edge at the base of the books, tooth jar, megaphone and suitcase.
+- Whether the sand ridge overlaps too much of the second prop row in the lineup.
+- The tin-car wheel placement and open token-ring centre.
+
+## The small props
+
+The card is finished. `tools/blender/rail-props.py` and `public/assets/models/wasteland/rail/rail-props.glb` join the card's file list, because `rail-trains.glb` is near its limit. All pass; see `docs/board/looks/ww-art-rail/round-8-review.md`. Removed: the separate props from any earlier recipe, none of which had shipped.
+
+## Merge note, small props
+
+Lane tier and `npm run build`: passed on f6761be4.

@@ -1,5 +1,5 @@
 import {registerTownSystem} from './town-sim.js';
-import {TOWN_REGIONS} from './town-world-data.js';
+import {TOWN_CELL_METRES,TOWN_REGIONS} from './town-world-data.js';
 
 const PIPE_SIZES = Object.freeze({50:0.05,100:0.1,200:0.2});
 const MIN_PERSON_WATER_LITRES_DAY = 15;
@@ -9,6 +9,27 @@ const LATrine_FILL_DAYS = 730;
 const finite = Number.isFinite;
 const pointKey = point => `${point.x},${point.z}`;
 const distance = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
+const PAINTED_HOME_MESSAGE='That ground is painted for homes. Clear the plot first.';
+
+function segmentTouchesCell(from,to,cellX,cellZ) {
+  const minX=cellX*TOWN_CELL_METRES,maxX=minX+TOWN_CELL_METRES;
+  const minZ=cellZ*TOWN_CELL_METRES,maxZ=minZ+TOWN_CELL_METRES;
+  const dx=to.x-from.x,dz=to.z-from.z;
+  let low=0,high=1;
+  for(const [p,q] of [[-dx,from.x-minX],[dx,maxX-from.x],[-dz,from.z-minZ],[dz,maxZ-from.z]]) {
+    if(p===0) {if(q<0)return false;continue;}
+    const t=q/p;
+    if(p<0) low=Math.max(low,t); else high=Math.min(high,t);
+    if(low>high)return false;
+  }
+  return true;
+}
+
+function routeTouchesHomePlot(town,route,regionId) {
+  const points=route.points;
+  return (town.homePlots||[]).some(plot=>plot.regionId===regionId&&points.some((point,index)=>index>0
+    &&segmentTouchesCell(points[index-1],point,plot.x,plot.z)));
+}
 
 function ensureUtilityState(town) {
   if (!town.utilities || typeof town.utilities !== 'object') town.utilities = {};
@@ -74,6 +95,8 @@ export function completeTownUtilityRoute(town,route,sizeMm,workOrder) {
   const kind=route.kind??workOrder.kind;
   if(!['pipe','sewer','wire'].includes(kind)) throw new TypeError('Choose a pipe, sewer or wire route.');
   if(kind==='pipe'&&!Object.hasOwn(PIPE_SIZES,Number(sizeMm))) throw new TypeError('Pipe size must be 50, 100 or 200 mm.');
+  const regionId=route.regionId||workOrder.regionId||'scablands';
+  if(routeTouchesHomePlot(town,route,regionId)) return {ok:false,message:PAINTED_HOME_MESSAGE};
   const utilities=ensureUtilityState(town),layer=kind==='pipe'?utilities.pipes:kind==='sewer'?utilities.sewers:utilities.wires;
   if(layer.some(item=>item.routeId===route.id)) return {ok:false,message:'That route is already connected.'};
   const segments=[];
