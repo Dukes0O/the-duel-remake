@@ -26,6 +26,10 @@
 - Browser checks: not run in this lane. Claude should review the gate's shut and open poses and pivots, the wall joins in each three-quarter view, the ramp slope, and the arch opening and rail gauge.
 - Changed assertions: none. Race fingerprints: not applicable; art-only card.
 
+## Round 4 work
+
+- Point 1: gave the gate and ramp coping the same dam gatehouse stone photo and UV scale as the harbour wall coping. Both remain at y = 5.55–6 m for a continuous top course.
+
 ## Removed
 
 - Round 1's sheet and note were removed in round 2. This task kept round 2 evidence and the passed wall and causeway art.

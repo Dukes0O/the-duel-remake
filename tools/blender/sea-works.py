@@ -113,7 +113,7 @@ def build_causeway():
   box(m,x-.07,x+.07,4.36,4.55,-20,20,{k:('rail',rail,(0,34,rail.w,52)) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(m,'causeway',{'stone':p.material(),'rail':rail.material()})
 def build_harbour_gate():
- wall=photo('sea-harbour-wall.jpg'); p=photo('sea-harbour-gate.jpg')
+ wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-gate.jpg')
  gate_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~gate_sky); scaled_photos.append(p)
  H=6; depth=1.5
  m=Mesh()
@@ -123,9 +123,9 @@ def build_harbour_gate():
  lintel_side=(wall.w*.4625,55,wall.w*.5375,300)
  box(m,-3.72,3.72,5.15,5.55,-depth,depth,{'+z':('gate',p,(152,95,875,127)),'-z':('gate',p,(152,95,875,127)), '+x':('wall',wall,lintel_side),'-x':('wall',wall,lintel_side),'+y':('wall',wall,lintel_side),'-y':('wall',wall,lintel_side)})
  finish(m,'harbour-gate-frame',frame_mats)
- cap=Mesh(); top_course=(0,8,wall.w,46)
- box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',wall,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
- finish(cap,'harbour-gate-coping',{'stone':wall.material()})
+ cap=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
+ box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(cap,'harbour-gate-coping',{'stone':stone.material()})
  # Each slab's local origin is its real outer hinge; its photo crop ends at the meeting stile.
  crops=[('harbour-gate-left',(152,127,510,701),-3.72,1),('harbour-gate-right',(514,127,875,701),3.72,-1)]
  for name,(x0,y0,x1,y1),pivot,direction in crops:
@@ -149,9 +149,9 @@ def build_harbour_ramp():
  lintel=(wall.w*.4,55,wall.w*.6,300)
  box(m,-4,4,5.15,5.55,-depth,depth,{k:('wall',wall,lintel) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(m,'harbour-ramp-frame',{'wall':wall.material()})
- cap=Mesh(); top_course=(0,8,wall.w,46)
- box(cap,-10.1,10.1,5.55,6,-1.6,1.6,{k:('stone',wall,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
- finish(cap,'harbour-ramp-coping',{'stone':wall.material()})
+ cap=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
+ box(cap,-10.1,10.1,5.55,6,-1.6,1.6,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(cap,'harbour-ramp-coping',{'stone':stone.material()})
  # A solid eight-metre slipway falls 1.8 m toward the seaward (+Z) side.
  deck=Mesh(); x0,x1=-4,4; z0,z1=-8,8; y0,y1=.2,-1.6; thick=.24
  corners=[(x0,y0,z0),(x1,y0,z0),(x1,y1,z1),(x0,y1,z1)]
