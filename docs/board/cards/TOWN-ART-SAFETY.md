@@ -31,3 +31,5 @@ Fences and walls come in pieces one cell long that must join cleanly at the cell
 - `hydrant` under 1x1: a standpipe with a hose reel.
 
 ## Claude answers
+
+Round 4, 7 November (Claude): **the watchtower and the clinic pass, merged.** The watchtower is its photo from every side; the clinic has its patched roof and red cross from the mayor's view. Not yet: the fire station's and guard post's roofs are plain dark sheets, the gate's door is a small panel in its frame, and the fences and walls are flat stripes. Six rounds count per building; the fire station comes next, carved as the diner was.

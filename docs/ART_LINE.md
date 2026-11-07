@@ -140,6 +140,11 @@ stop adjusting and change the method.
 - **A horizontal beam turns upright.** `to_track_quat('Z', 'Y')` is ambiguous
   when the beam points along Blender Y. Use an axis-aligned box or a different
   non-parallel up axis, then print and check its bounds.
+- **Moving parts can sit away from their parent.** A gate leaf was parented to a
+  hinge empty after its planks were made at world origin, so the exported leaf
+  stayed in the road instead of under the gate header. Place each child at its
+  true world point before attaching it, put the empty at the real hinge, then
+  render both closed and rotated poses from the exported GLB.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.
