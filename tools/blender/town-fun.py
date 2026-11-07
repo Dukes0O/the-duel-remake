@@ -380,10 +380,13 @@ for side,depth in enumerate((-.5,.5),1):
     wheel_obj.parent=wheel_pivot
     wheel_obj.location=(0,0,0)
 hub_mesh=PhotoMesh()
-lathe(hub_mesh,'wheel',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.32,.34),(.32,.34)],
+lathe(hub_mesh,'wheel',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.58,.34),(.58,.34)],
     lambda i,d,r,a: wheel_photo.uv(768+math.cos(a)*24,438+math.sin(a)*24),sides=20)
 hub=hub_mesh.finish('big-wheel:short-lathe-hub',{'wheel':wheel_photo.material()}); hub.parent=wheel_pivot
 hub.location=town.game_vector((0,0,0))
+for i in range(12):
+    a=math.tau*i/12; y=math.sin(a)*wheel_radius*wheel_scale; z=math.cos(a)*wheel_radius*wheel_scale
+    beam(f'big-wheel:rim-depth-tie-{i+1}',(-.5,wheel_center_y+y,z),(.5,wheel_center_y+y,z),.10,'rusted-steel',wheel_pivot)
 
 # The seat is an individual carved/photo-traced piece at each rim pivot.
 seat_photo=Photo(tex/'big-wheel-round8-seat-front.png')

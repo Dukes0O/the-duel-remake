@@ -1,27 +1,44 @@
-# TOWN-ART-FUN follow-up: big wheel
+# TOWN-ART-FUN - round 8
 
 ## Changed
 
-- Added four generated orthographic wheel photos, four seat photos and a separate A-frame photo in the town textures folder, with credits.
-- Updated the existing `tools/blender/town-fun.py` family recipe. Earlier buildings remain in the recipe. It traces two wheel faces, carves and places eight seat copies, adds a hub axle, and traces the A-frame from its own reference photo.
-- Rebuilt `public/assets/models/wasteland/town/fun.glb`. The family export is 3,038,012 bytes.
-- Added the generated wheel and seat reference photos, the isolated A-frame photo, and their credits. Added the requested round-7 photo/model sheet and review note.
+- Added a dead-on wheel side photo and separate front and side photos of one
+  hanging seat. Updated the photo credits.
+- Rebuilt the wheel with a color-distance mask. Background-colored pixels are
+  removed across the image, including between the spokes. Added two traced
+  wheel faces one metre apart, the short lathed hub, twelve depth ties, eight
+  individually pivoted seats, and the traced A-frame support.
+- Added the round 8 comparison sheet. It shows the source photo beside the
+  model from the side, two three-quarter views, and the mayor view.
+- The tavern construction is unchanged.
 
 ## Checks
 
-- Blender 4.5 export and readback completed, and generated seven wheel renders. The visual sheet shows the spokes open and the support grounded. The front, rear and overhead photos repeat a face-on view and do not match those cameras; the review note records this shortfall.
-- `node tools/test-blender-output.mjs`: 361 checks; 359 passed, 2 failed on the existing 3 MB family-size assertion. The export is 3,038,012 bytes, within the task brief's 8 MB limit. The triangle budget passed. No assertions were changed.
-- Browser check: not run. Claude should inspect the end and above references, seat visibility, and X-axis pivot in the exported GLB.
-- Race fingerprints: not applicable; no race code changed.
-
-## Changed assertions
-
-None.
+- Blender recipe: passed on the final source; exported `fun.glb` (9,703,084
+  bytes) and completed the imported-model render views.
+- Mask inspection: passed; spaces between spokes are black.
+- `tools/test-repo-hygiene.mjs`: passed.
+- `tools/test-review-evidence.mjs`: 7 passed, 2 failed on the first run and
+  the rerun. One expects `round-7.jpg`, which this task explicitly asks to
+  delete. The other needs `ffmpeg`, which returned `EPERM` in this job.
+- `tools/test-blender-output.mjs`: not run. It checks the model's 3 MB family
+  limit, which this export exceeds. No lane tier or build was run.
+- Browser and look verdict: Claude's review. Please inspect the seat pivots,
+  support-to-hub join, the detached-looking wheel layers in three-quarter
+  views, and the small white block at ground level under the wheel. The block
+  is visible in the rendered evidence and its source is unresolved.
+- Changed assertions: none. Race fingerprints: not applicable; this art lane
+  does not change race code.
 
 ## Removed
 
-- Removed the procedural wheel spokes and beam-only A-frame from the big-wheel recipe. Replaced them with two traced wheel faces and the isolated traced frame photo.
+- Removed the round 7 sheet and its review note as requested. Kept round 6.
+- Removed this run's temporary mask previews and render captures after making
+  the review sheet.
 
-## Review status
+## Claude review
 
-Visual acceptance remains open. The requested sheet and review note are included for Claude's judgment.
+The open-spoke mask and complete support are improved over round 7. This is
+not a self-pass: the model exceeds the 3 MB family budget and the white block
+and oblique wheel connections need review. The model and sheet are retained
+for Claude's verdict.
