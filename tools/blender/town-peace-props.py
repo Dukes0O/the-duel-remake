@@ -994,7 +994,7 @@ def tanker_shot(name, eye, target, resolution=(1200, 666), ortho=None, lens=43):
 
 if args.round6_only:
     tanker_shot('side', (-15, 1.55, 0), (0, 1.55, 0), ortho=12.2)
-    tanker_shot('three-quarter-front', (-10.6, 1.55, -10.6), (0, 1.45, 0))
-    tanker_shot('three-quarter-rear', (10.6, 1.55, 10.6), (0, 1.45, 0))
+    tanker_shot('three-quarter-front', (-6.5, 1.55, -13.5), (0, 1.45, 0), lens=48)
+    tanker_shot('three-quarter-rear', (6.5, 1.55, 13.5), (0, 1.45, 0), lens=48)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
                   'newAsset':'dust-tanker' if args.round6_only else 'sal-pipe-trailer'}))
