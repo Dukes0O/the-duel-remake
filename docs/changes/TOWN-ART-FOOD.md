@@ -1,22 +1,20 @@
-# TOWN-ART-FOOD round 5
+# TOWN-ART-FOOD round 6
 
 ## Changed
 
-- Opened the soup-kitchen bay, reversed the front-photo projection, and kept its photo-backed tin, shelf, cans and pans on a rear wall. Added separate posts, benches, a curved awning, a photo-profiled pot, stones and the small emissive fire.
-- Added the bus driver's windscreen, destination board, grille, lamps and four low-poly mounted wheels to the canteen.
-- Changed stall-a's fruit awning to a curved sheet and added produce sacks.
-- Made shopfront-a's FOOD sign a separate thin slab with larger front-facing lettering.
-- Added two sagged canvas roof patches to the open market hall and a curved salvaged windscreen to the greenhouse.
-- The family GLB is 1,782,476 bytes, below the 8 MB round-5 limit. The review sheet is 188,564 bytes, below 500 KB.
-
-The requested `docs/ART_LINE.md`, `tools/blender/photo_carve.py`, and `tools/photo_grid.py` are absent in this lane. I used the available `tools/blender/photo_model.py` and `hull_model.py`. The canteen has bus reference images in the texture folder, but this pass added to its existing shell instead of carving from those images; stall-a, shopfront-a, market-hall and greenhouse also use their existing recipe shapes. Claude should decide whether these five need another photo-based pass.
+- Rebuilt the soup kitchen only. The other food buildings keep their round-5 geometry.
+- Added `soup-kitchen-wall.jpg`, a matching 712×532 clean front photo of the tin wall, posts and earth, with the roof, awning, shelf and cooking pieces removed.
+- Replaced the kitchen's joined photo carve and small rear card with one full rear wall, four ground-standing posts, a pitched tin roof with overhang, traced sagging front awning, and the side curtain on its post.
+- Made the shelf deep and separate, with photo-wearing cans and pans. Turned the open pot from its front-photo profile, with a dark soup surface and separate rim. Added a grounded ring of cylindrical logs, small embers and several flame blades. Bench legs reach the earth.
+- Exported and reviewed the GLB. It is 1,928,036 bytes. The round-6 comparison sheet is 132,838 bytes, below 500 KB.
 
 ## Checks
 
-- Blender 4.5.13 rebuilt and reimported the exported GLB; five review views rendered.
-- `node tools/test-blender-output.mjs`: passed, 305 checks, 0 failures. The first run found the canteen at 6,017 triangles against its 5,000 plot limit. Removed redundant spare tires and reduced mounted-wheel segments; the rebuilt model passed.
-- `node tools/test-repo-hygiene.mjs`: passed. Its output lists advisory size targets only; no placement failure.
-- No lane tier or build was run, as directed for art cards. No browser check was run. Claude should inspect the submitted sheet and the named building views at driver and mayor heights.
+- Blender 4.5.13 rebuilt and reimported the exported family GLB; front, both three-quarter views, bay view and mayor view rendered. I inspected the renders and the submitted sheet.
+- `node --test --test-name-pattern="TOWN-ART-FOOD keeps every food plot selectable inside its footprint budgets" tools/test-blender-output.mjs`: passed, 321 checks. The first run caught oversized embedded photos; the recipe now packs 256×192 copies while keeping the source photos full resolution.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: failed 3 of 9 checks. Two unrelated checks still expect 6 November paths and the deleted round-5 sheet; one audio check could not start `ffmpeg` (`EPERM`). The review-JPG publication check passed. No assertions were changed.
+- No lane tier, game build, browser check or game race ran. Claude should inspect the front photo/model pair, both three-quarter views, the bay, and the mayor view on the round-6 sheet.
 
 ## Changed assertions
 
@@ -28,6 +26,6 @@ None. This art-only change does not touch simulation code.
 
 ## Removed
 
-- Removed the round-4 sheet and review note after replacing them with round 5.
-- Removed the four mounted-as-spares tire meshes from the canteen; the bus now has four fitted wheels.
-- Removed this round's temporary renders and test logs after making the review sheet.
+- Replaced the round-5 soup-kitchen carve, flat rear card, and curved sheet awning with the measured, separate pieces above.
+- Recycled `round-5.jpg` and `round-5-review.md` after submitting round 6.
+- Removed this round's temporary photo grids, render images, sheet-builder scratch and test logs after making the review sheet.
