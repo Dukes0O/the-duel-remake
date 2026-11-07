@@ -32,3 +32,21 @@ Every tanker number was measured again on the photos with a grid: the side photo
 ### Removed
 
 The separate tarpaulin slabs, the overhead shell, the extra photo copies, the old tread patch for this truck, and `round-6.jpg`.
+
+## Mirage caravan, round 8
+
+- Added `tools/blender/town-peace-camp.py` and registered its candidate output. The new `peace-camp.glb` contains the `mirage-caravan` root, carved shell, wheels, traced tow bar, jockey wheel and dummy. The caravan and the three pieces still to come live in `peace-camp.glb`.
+- Measured all four supplied photos on grids. The 299-pixel door sets the caravan scale to 1.9 m. The end-photo scale follows the side/front height ratio.
+- Added the unlabelled round 8 review sheet at `docs/board/looks/ww-art-peace/round-8.jpg` (1600 x 900, 141,074 bytes).
+- Blender recipe export and render from the exported GLB: passed. One early run exposed that Pillow is unavailable inside Blender; the hitch trace now uses NumPy.
+- `node tools/test-blender-output.mjs`: passed, 324 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed. Browser checks are Claude's; see the sheet and review note.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only asset.
+
+### Visual review
+
+The roadside view reads as a parked caravan with someone in its window. Close up, the rigid figure and X eyes reveal the dummy. The hitch is too pale, and its end is cropped in the side comparison; the front wheels are hard to read. Claude should judge those points in the round 8 sheet.
+
+### Removed
+
+Replaced the initial empty export with the measured caravan model. Temporary grids, masks, renders, Blender file and test logs are removed before handoff.
