@@ -1592,3 +1592,10 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - WW-ART-RAIL merged, card done: the 2:15, carriage, van, Wednesday, coal heap and small props pass; lane tier and build passed on f6761be4.
 - WW-ART-WHITES merged, card done: all eight pieces pass (round 4), on the photo kit; lane tier and build passed on b7b1f2d9; one conflict in the output test's list, both entries kept, that suite rerun.
 - 6 Nov: merged TOWN-PEOPLE-SUPPORT and TOWN-PACE: home plots painted by the player, families build from store goods, homes and water bring newcomers, Build tabs now work (nothing handled the click before), reports bounded. Real-play pace: first winter 36 to 40 people, Year 2 98 to 135; 2-seed soak 5,402 and 6,012 at Year 30 (the 10-seed default takes over 20 minutes, to run in the next full check). Lane 46/47 (test-town-people passed alone on rerun, rule 3), browser town-homes, town-opens, town-wmap, build; reviews: three real faults fixed. Switch still off.
+- 6 Nov: merged tyres, lamps and one true scale for the town trucks and Rattler, from Kyle's eye (tyre, wheel_well and headlamp in hull_model.py; 300-odd art checks, hygiene, build, one review).
+- RAIL-REGION merged: the Whites, the two cuttings and the salt storm, closed until the story opens them; lane tier and build passed on d41607c4.
+- 6 Nov: TOWN-ART-POWER merged; verdict on its card.
+- 6 Nov: merged TOWN-VANE: Mrs Vane plays against a real town from Year 7, with 35 letters (lane 42/44: test-town-people and test-town-core pass alone, timing under load, rule 3; build; reviews: yearly letters that never fired, growing saved rows and big year numbers all fixed). Switch still off.
+- 6 Nov: TOWN-ART-WALKERS merged; verdict on its card.
+- 6 Nov: TOWN-ART-TRUCKS-1 merged; verdict on its card.
+- 6 Nov: WW-ART-SEA pieces so far merged (gears, wall, causeway, gate, ramp, arch); card stays open for the rest.
