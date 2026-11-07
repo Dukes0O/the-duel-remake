@@ -4,6 +4,8 @@ import {stepTown,registeredTownSystems} from '../src/town/town-sim.js';
 import {townVaneState,setTownVaneBrownStreets,recordTownVaneEvent,ACT3_CHAPTERS,VANE_LETTERS} from '../src/town/town-vane.js';
 import {ACT3_CAPTIONS} from '../src/town/content/lines-act3.js';
 import {captionText} from '../src/story/story-lines.js';
+import {TOWN_DEEDS} from '../src/town/content/deeds.js';
+import {placeTownDeedBid,townDeedState} from '../src/town/town-deeds.js';
 
 assert.equal(registeredTownSystems().some(row=>row.name==='town-vane'),true);
 assert.equal(VANE_LETTERS.length,35);
@@ -66,17 +68,46 @@ assert.equal(Object.hasOwn(oldSave,'vane'),false);
 for(let i=0;i<30;i++)stepTown(oldSave);
 assert.equal(Object.hasOwn(oldSave,'vane'),true,'monthly simulation initializes old saves');
 
-// Long-run deterministic towns remain playable while Vane's existing deed
-// rules can press deeds. No system removes the town hall or all residents.
+// An attentive player beats every bid and cleans each street for thirty years.
 for(let seed=1;seed<=10;seed++) {
   const longTown=createTown(seed,'Long Town');
   longTown.people=Array.from({length:12},(_,index)=>({id:`p-${index}`,name:`Person ${index}`,health:50}));
   longTown.buildings.push({id:'hall-1',buildingId:'town-hall',finished:true});
   longTown.story={completed:{16:true}};
+  longTown.money={balances:{},entries:[],months:{},years:{}};
+  longTown.till=1_000_000_000_000_000n;
+  townDeedState(longTown);
+  for(const deed of TOWN_DEEDS) {
+    longTown.deeds.items[deed.id].ownerId='player';
+    longTown.deeds.items[deed.id].guarded=true;
+  }
+  const streetIds=['east-road','west-road','south-road'];
+  longTown.utilities={waterResult:{taps:streetIds.map(id=>({id,litresPerDay:500,quality:{turbidity:10}}))}};
+  let outbidCount=0;
   // Roll one whole town year at a time; real stepTown calls keep every
   // registered system and its normal seeded inputs in the loop.
-  for(let tick=0;tick<30*360*24;tick++)stepTown(longTown);
+  for(let tick=0;tick<30*360*24;tick++) {
+    for(const deed of TOWN_DEEDS) {
+      const state=longTown.deeds.items[deed.id];
+      if(state.bid) {
+        const result=placeTownDeedBid(longTown,deed.id,BigInt(state.bid.amount)+1n);
+        assert.equal(result.ok,true,`seed ${seed}: the player beats ${deed.name}'s bid`);
+        outbidCount++;
+      }
+    }
+    stepTown(longTown);
+    if(townVaneState(longTown).kiosks.some(kiosk=>kiosk.open)) {
+      for(const tap of longTown.utilities.waterResult.taps) tap.quality.turbidity=0;
+    }
+  }
   assert.ok(longTown.people.length>0,`seed ${seed}: Vane never removes the town's people`);
   assert.ok(longTown.buildings.some(row=>(row.buildingId??row.id).includes('town-hall')),`seed ${seed}: Vane never removes Town Hall`);
   assert.ok(townVaneState(longTown).started,`seed ${seed}: Vane remains present`);
+  assert.ok(outbidCount>0,`seed ${seed}: the player had bids to beat`);
+  assert.ok(townVaneState(longTown).kiosks.length>0,`seed ${seed}: Vane opened kiosks`);
+  assert.ok(townVaneState(longTown).kiosks.every(kiosk=>!kiosk.open),`seed ${seed}: clean streets close her kiosks`);
+  const letters=townVaneState(longTown).letters;
+  assert.ok(letters.length>=25,`seed ${seed}: Vane keeps writing after repeated losses`);
+  assert.ok(letters.every(letter=>letter.text.startsWith('Dear Neighbour,')&&letter.text.endsWith('Kind regards.')),
+    `seed ${seed}: Vane stays polite`);
 }
