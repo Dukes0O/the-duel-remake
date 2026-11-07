@@ -322,7 +322,7 @@ for x in (-6.45,0,6.45):
 
 # One joined two-slope sheet; real corrugation follows the slope and the top
 # wears the straight-down generated roof photo.
-roof_photo=Photo(tex/'guard-post-top.jpg')
+roof_photo=Photo(tex/'guard-post-side.jpg')
 roof=PhotoMesh()
 for side in (-1,1):
     zs=[side*(3.18-i*3.18/40) for i in range(41)]
@@ -332,8 +332,10 @@ for side in (-1,1):
         y0=3.12+(3.78-3.12)*(1-abs(z0)/3.18)+w0
         y1=3.12+(3.78-3.12)*(1-abs(z1)/3.18)+w1
         pts=[(-7.18,y0,z0),(7.18,y0,z0),(7.18,y1,z1),(-7.18,y1,z1)]
-        px0,px1=70,954
-        py0,py1=(92,451) if side<0 else (451,812)
+        px0,px1=16,1008
+        # Map the worn roof surface from the side reference, excluding its
+        # timber eave and the sandbag wall below it.
+        py0,py1=65,166
         uvs=[roof_photo.uv(px0,py0),roof_photo.uv(px1,py0),roof_photo.uv(px1,py1),roof_photo.uv(px0,py1)]
         roof.face(pts,uvs,'photo',(0,1,0))
         underside=[(x,y-.025,z) for x,y,z in pts]
@@ -706,7 +708,7 @@ def guard_shot(name,offset,ortho):
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
 render_dir=guard_evidence;render_dir.mkdir(parents=True,exist_ok=True)
-guard_shot('side',(18,0,0),8.8)
+guard_shot('side',(18,5,0),8.8)
 guard_shot('front',(0,22,0),14.8)
 guard_shot('rear',(0,-22,0),14.8)
 guard_shot('above',(0,0,24),16.3)
