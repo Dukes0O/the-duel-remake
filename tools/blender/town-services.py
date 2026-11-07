@@ -339,6 +339,7 @@ for n in ids:
   for x in (-3.65,3.65):
    beam('trading-post:sign-bracket',(x,5.25,z0+.12),(x,5.42,sign_z),.13,steel,b)
   font=bpy.data.curves.new('TRADING POST hand painted lettering','FONT');font.body='TRADING POST';font.size=.75;font.extrude=.012
+  font.resolution_u=3;font.render_resolution_u=3
   lettering=bpy.data.objects.new('trading-post:sign-lettering',font);bpy.context.collection.objects.link(lettering)
   # Bake the glyph coordinates into the road-facing X/Y plane explicitly.
   # This avoids Blender's text local axes being mistaken for game ground axes.
@@ -363,7 +364,7 @@ for n in ids:
   for i,(x,z,on_deck) in enumerate(((-4.0,porch_front+1.9,True),(4.0,porch_front+1.9,True),(7.7,porch_front+1.9,False))):
    # Torus bounds include major plus minor radius; lift its centre by 0.57 m.
    y=.36+.57 if on_deck else .57
-   tyre=tube(f'trading-post:goods-tyre-{i+1}',(x,y,z),.43,.14,dark,b,20,8);tyre.rotation_euler[1]=math.pi/2
+   tyre=tube(f'trading-post:goods-tyre-{i+1}',(x,y,z),.43,.14,dark,b,18,8);tyre.rotation_euler[1]=math.pi/2
   # Bounds are in game axes (X, Y up, Z); every piece must fit the 3x3 plot
   # and touch either ground or another piece.
   bpy.context.view_layer.update();pieces=[o for o in bpy.data.objects if o.type in {'MESH','CURVE'}]
