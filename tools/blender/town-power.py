@@ -463,7 +463,7 @@ fuel_views=[
 fuel_bounds=((-1.17,1.17),(.75,3.10),(-3.30,3.30))
 fuel_solid,fuel_xs,fuel_ys,fuel_zs=occupancy(fuel_bounds,.10,[view.covers for view in fuel_views])
 fuel_body=carve_hull('fuel-depot:photo-carved storage tank',fuel_views,fuel_mats,
-    fuel_solid,fuel_xs,fuel_ys,fuel_zs,.10,7200)
+    fuel_solid,fuel_xs,fuel_ys,fuel_zs,.10,6400)
 fuel_body.parent=fuel
 town.cube('fuel depot bund floor',(0,.16,0),(8.5,.32,7.4),mat['cracked-concrete'],.08).parent=fuel
 for z in (-3.65,3.65):
