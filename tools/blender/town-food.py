@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-9'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-10'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-9.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-10.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -437,7 +437,7 @@ def market_stall(building, offset, kind):
     beam(f'{building}:rear-lintel',(-1.25,1.85,1.0),(1.25,1.85,1.0),.075,mat['weathered-plank'])
     for x in (-.65,.65):
         beam(f'{building}:awning-arm-{x}',(x,1.7,-1.1),(x,2.18,-.22),.055,mat['rusted-steel'])
-    awning_material={'fruit':'fruit-yellow','tools':'weathered-plank','tyres':'patched-canvas'}[kind]
+    awning_material={'fruit':'fruit-yellow','tools':'rusted-steel','tyres':'patched-canvas'}[kind]
     if kind == 'fruit':
         # Fruit stall canvas sags between its rails rather than forming a box.
         verts=[];faces=[];n=10
@@ -452,8 +452,19 @@ def market_stall(building, offset, kind):
         for x in (-1.1,1.1):
             box(f'{building}:fruit-sack-{x}',(x,1.25,.42),(.62,.30,.45),mat['patched-canvas'],.07)
     else:
-        awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat[awning_material],.035)
-        awning.rotation_euler[0]=-.10
+        # Ribbed, sagging salvage canvas and alternating roof patches make each
+        # market shade read as repaired fabric from above, not a clean slab.
+        verts=[];faces=[];steps=12
+        for row,z in enumerate((-.97,-.30)):
+            for i in range(steps+1):
+                x=-1.4+2.8*i/steps
+                y=2.14-.08*(1-(x/1.4)**2)+(0.025 if row else 0)
+                verts.append((x,y,z))
+        for i in range(steps): faces.append((i,i+1,steps+2+i,steps+1+i))
+        awning=mesh_object(f'{building}:patched-awning',verts,faces,mat[awning_material],'canvas')
+        for x in (-.94,-.47,0,.47,.94):
+            box(f'{building}:awning-repair-{x}',(x,2.13,-.63),(.24,.025,.63),
+                mat['weathered-plank'] if kind=='tools' else mat['rusted-steel'],.008)
     box(f'{building}:display-counter',(0,.91,-.24),(2.18,.20,.83),mat['weathered-plank'],.04)
     for x in (-.85,.85): beam(f'{building}:counter-leg-{x}',(x,.12,-.24),(x,.84,-.24),.08,mat['rusted-steel'])
     if kind=='fruit':
@@ -464,18 +475,24 @@ def market_stall(building, offset, kind):
                 x=-.72+j*.29; color=mat['fruit-red'] if (j+row)%2 else mat['fruit-yellow']
                 sphere(f'{building}:produce-{row}-{j+1}',(x,1.40,z),(.115,.11,.12),color,8,5)
     elif kind=='tools':
+        # Tool heads, wooden handles and dented bins sit as separate pieces on
+        # the counter; each silhouette remains visible from the road.
         for x in (-.60,-.2,.2,.6):
-            beam(f'{building}:tool-shaft-{x}',(x,1.22,-.48),(x+.10,1.58,-.48),.045,mat['iron-dark'])
-            beam(f'{building}:tool-cross-head-{x}',(x-.12,1.52,-.48),(x+.22,1.52,-.48),.055,mat['rusted-steel'])
+            beam(f'{building}:tool-shaft-{x}',(x,1.18,-.48),(x+.04,1.62,-.48),.038,mat['weathered-plank'])
+            beam(f'{building}:tool-cross-head-{x}',(x-.13,1.57,-.48),(x+.19,1.57,-.48),.06,mat['rusted-steel'])
+            box(f'{building}:tool-blade-{x}',(x+.06,1.63,-.48),(.16,.12,.09),mat['iron-dark'],.014)
         for x in (-.65,.15,.72):
-            box(f'{building}:small-tool-box-{x}',(x,1.29,.18),(.42,.18,.38),mat['rusted-steel'],.035)
+            box(f'{building}:small-tool-box-{x}',(x,1.10,.18),(.42,.18,.38),mat['rusted-steel'],.035)
     else:
         for i in range(4):
             x=-.72+(i%2)*1.44
-            y=.46+(i//2)*.52
-            bpy.ops.mesh.primitive_torus_add(major_radius=.38,minor_radius=.12,major_segments=16,minor_segments=6,
+            y=1.13+(i//2)*.52
+            bpy.ops.mesh.primitive_torus_add(major_radius=.38,minor_radius=.12,major_segments=12,minor_segments=5,
                                                location=town.game_vector((x,y,.12)))
             obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{i+1}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
+            # A small rusted hub is nested within the opening, so the tyre reads
+            # as a salvaged wheel rather than a featureless rubber ring.
+            cylinder(f'{building}:tyre-hub-{i+1}',(x,y,.12),.105,.035,mat['rusted-steel'],8,axis='Z')
     sign(building,(0,1.88,-1.16),'FRUIT' if kind=='fruit' else 'TOOLS' if kind=='tools' else 'TYRES',1.15)
 
 market_stall('stall-a',(20,0,2),'fruit')
@@ -871,6 +888,38 @@ for index in range(1,4):
     if len(feet)!=4 or any(abs(bounds[2])>.02 for bounds in feet):
         raise RuntimeError(f'canteen road stool {index} feet do not stand on the ground')
 
+# Each 1 x 1 market stall prints its own piece bounds and stays within the
+# town's 8 m cell with the required 0.5 m margin.  Every piece must meet the
+# ground or another piece by its measured AABB; counts are per named building.
+for stall_id in ('stall-a','stall-b','stall-c'):
+    root_obj=building_roots[stall_id]
+    parts=[obj for obj in export_objects if obj.type=='MESH' and obj.parent is root_obj]
+    bounds_by_name={}
+    triangles=0
+    for obj in parts:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        bounds_by_name[obj.name]=b
+        count=sum(len(poly.vertices)-2 for poly in obj.data.polygons)
+        triangles+=count
+        print('stall piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)],'triangles':count},sort_keys=True))
+        if b[0]<-3.5 or b[1]>3.5 or b[4]<-3.5 or b[5]>3.5 or b[2]<-.02:
+            raise RuntimeError(f'{obj.name} lies outside the stall footprint or below ground: {b}')
+    if triangles>1800:
+        raise RuntimeError(f'{stall_id} has {triangles} triangles; budget is 1800')
+    for name,b in bounds_by_name.items():
+        if abs(b[2])<=.02: continue
+        joined=False
+        for other_name,other in bounds_by_name.items():
+            if other_name==name: continue
+            overlap=all(max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.025 for axis in range(3))
+            if overlap: joined=True;break
+        if not joined: raise RuntimeError(f'{name} does not touch ground or another stall piece')
+    print(f'{stall_id} total triangles:',triangles)
+
 out.parent.mkdir(parents=True,exist_ok=True)
 blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.object.select_all(action='DESELECT')
@@ -946,6 +995,27 @@ render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
 render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
 render_match('market-mayor',target+Vector((0,19,13)),Vector((0,0,1)),16)
+# Isolated references for each one-cell stall; the accepted market hall and
+# canteen stay hidden so unrelated family geometry cannot enter this review.
+for stall_id in ('stall-a','stall-b','stall-c'):
+    stall_root=next(obj for obj in scene.objects if obj.name==stall_id)
+    for obj in scene.objects:
+        if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
+            obj.hide_render=not under(obj,stall_root)
+    members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,stall_root)]
+    points=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+    lo_stall=Vector((min(p.x for p in points),min(p.y for p in points),min(p.z for p in points)))
+    hi_stall=Vector((max(p.x for p in points),max(p.y for p in points),max(p.z for p in points)))
+    target=(lo_stall+hi_stall)*.5
+    scene.render.resolution_x=800;scene.render.resolution_y=640
+    prefix=stall_id+'-'
+    render_match(prefix+'front',target+Vector((0,-8,1.3)),Vector((0,0,1)),4.2)
+    render_match(prefix+'side',target+Vector((8,0,1.3)),Vector((0,0,1)),4.2)
+    render_match(prefix+'rear',target+Vector((0,8,1.3)),Vector((0,0,1)),4.2)
+    render_match(prefix+'above',target+Vector((0,0,9)),Vector((0,1,0)),4.2)
+    render_match(prefix+'three-left',target+Vector((-6,-7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'three-right',target+Vector((6,-7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'mayor',target+Vector((-12,-12,12)),Vector((0,0,1)),6.0)
 canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):

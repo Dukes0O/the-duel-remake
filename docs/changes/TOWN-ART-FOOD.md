@@ -132,3 +132,20 @@
 - Removed the temporary photo grid, renders, mask captures, Blender source and
   test logs after recording this review. Kept the source photos, current model,
   round 9 sheet and notes.
+
+## Follow-up: three market stalls
+
+The market stalls now have shared patched awnings, clearer tool shapes and lower-poly tyre rings with separate hubs. The family GLB is 1,993,096 bytes. Blender counted 1,074 triangles for stall-a, 522 for stall-b and 921 for stall-c. Every piece printed its bounds and passed the one-cell footprint/contact check.
+
+Checks:
+
+- Blender recipe build passed and rendered isolated model views for each stall.
+- `node tools/test-blender-output.mjs` passed: 377 checks, 0 failed. Its first run caught over-budget tyre and family totals; reducing ring and hub segments fixed them. No assertions changed.
+- Browser and in-game look checks were not run; Claude should review round 10.
+- Race fingerprints do not apply.
+
+Generated orthographic reference photos could not be saved into the lane after the image tool returned inline data and the shell rejected the transfer command as too long. No photo credits or photo-to-model comparisons are present. The round-10 sheet is model-only and calls out this limitation for Claude. No previously accepted building or earlier sheet was removed.
+
+### Removed
+
+No previously accepted model, source photo or review sheet was removed.
