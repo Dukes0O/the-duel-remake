@@ -502,17 +502,27 @@ def build_photo_van(ident, size, anchors, colour):
         lamp_mat_blue = solid_material('Vane escort / blue beacon', (.012, .12, .8), .3, 0)
         lamp_mat_blue.node_tree.nodes['Principled BSDF'].inputs['Emission Color'].default_value = (.012, .12, .8, 1)
         lamp_mat_blue.node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value = 2.0
-        beacon_y = height + .10
+        # The table's height includes the photo's roof kit, so the cab roof is lower:
+        # read it from the carved body's own surface under each piece.
+        roof_points = [v.co.copy() for v in body.data.vertices]
+        def roof_at(x, z):
+            for reach in (.15, .3, .5, .8):
+                near = [p.z for p in roof_points if abs(p.x - x) < reach and abs(-p.y - z) < reach * 2]
+                if near:
+                    return max(near)
+            return height
         for x in (-width*.30, width*.30):
+            beacon_y = roof_at(x, -.05) + .1
             bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=.12,
                 location=game_vector((x, beacon_y, -.05)))
             beacon = bpy.context.object; beacon.name = f'{ident}:lamp-blue-beacon'
             beacon.data.materials.append(lamp_mat_blue); attach(beacon, lamp_group, (x, beacon_y, -.05))
-        gun_y = height + .18
+        roof_middle = roof_at(0, -.05)
+        gun_y = roof_middle + .26
         gun = beam(f'{ident}:roof-gun-barrel', (0, gun_y, .04), (0, gun_y, .72), .09, iron)
         attach(gun, vehicle, (0, gun_y, .38))
-        mount = cube(f'{ident}:roof-gun-mount', (0, height+.08, -.05), (.48, .16, .36), iron, .04)
-        attach(mount, vehicle, (0, height+.08, -.05))
+        mount = cube(f'{ident}:roof-gun-mount', (0, roof_middle+.08, -.05), (.48, .16, .36), iron, .04)
+        attach(mount, vehicle, (0, roof_middle+.08, -.05))
     return vehicle
 
 if args.through in ('ambulance', 'vane-truck', 'vane-escort'):
