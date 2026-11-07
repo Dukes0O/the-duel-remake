@@ -713,6 +713,8 @@ def tank_cab_trim_front(mask):
 tank_views = [
     View('side', t_cab_side, seed_points(t_cab_side), tank_side_pick, (-1, 0, 0),
          solid=tank_cab_trim_side, grey=20, tolerance=20),
+    View('side-far', t_cab_side, seed_points(t_cab_side), tank_side_pick, (1, 0, 0),
+         solid=tank_cab_trim_side, grey=20, tolerance=20),
     View('front', t_front, seed_points(t_front), tank_front_pick, (0, 0, -1),
          solid=tank_cab_trim_front, grey=20, tolerance=20),
     View('overhead', t_top, seed_points(t_top), tank_top_pick, (0, 1, 0),
@@ -755,8 +757,8 @@ t_side_mat = t_side.material(.58)
 
 def tank_body_uv(index, distance, radius, angle):
     arc = math.degrees(math.asin(math.sin(angle))) / 90
-    px = T_SIDE_X0 + distance / T_SCALE + radius / T_SCALE * .84 * arc
-    py = T_GROUND - T_TANK_CENTER_Y / T_SCALE - math.sin(angle) * radius / T_SCALE * .84
+    px = T_SIDE_X0 + distance / T_SCALE
+    py = T_GROUND - T_TANK_CENTER_Y / T_SCALE - arc * radius / T_SCALE * .84
     return t_side.uv(px, py)
 
 def tank_cap_uv(photo, cx, cy, radius_px):
@@ -768,7 +770,7 @@ tank_body = Mesh()
 lathe(tank_body, 'side', (0, T_TANK_CENTER_Y, T_Z0), (0, 0, 1), (1, 0, 0),
       (0, 1, 0), profile, tank_body_uv, sides=48,
       cap_start=('side', tank_cap_uv(t_side, 376, T_TANK_CX, 18)),
-      cap_end=('rear', tank_cap_uv(t_rear, 286, 240, 151)))
+      cap_end=('rear', tank_cap_uv(t_rear, 286, 240, 135)))
 own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
                      {'side': t_side_mat, 'rear': t_rear.material(.58)}),
     tanker, 'dust-tanker:photo-turned-fuel-tank')
@@ -979,7 +981,7 @@ def tanker_shot(name, eye, target, resolution=(1200, 666), ortho=None, lens=43):
     bpy.ops.render.render(write_still=True)
 
 if args.round6_only:
-    tanker_shot('side', (15, 1.55, 0), (0, 1.55, 0), ortho=12.2)
+    tanker_shot('side', (-15, 1.55, 0), (0, 1.55, 0), ortho=12.2)
     tanker_shot('three-quarter-front', (-10.6, 1.55, -10.6), (0, 1.45, 0))
     tanker_shot('three-quarter-rear', (10.6, 1.55, 10.6), (0, 1.45, 0))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
