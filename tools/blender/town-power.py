@@ -430,44 +430,44 @@ def photo_window(photo, rect):
         return mask & keep
     return trim
 def side_pick(x,y,z):
-    return 384-z*122, 337-(y-.72)*111
+    return 938-z*257, 717-(y-.75)*250
 def front_pick(x,y,z):
-    return 267+x*140, 429-(y-.72)*139
+    return 764+x*372, 987-(y-.75)*372
 def rear_pick(x,y,z):
-    return 768-x*286, 820-(y-.72)*286
+    return 767-x*372, 990-(y-.75)*372
 def overhead_pick(x,y,z):
-    return 384-z*106, 258+x*130
+    return 938-z*264, 416+x*249
 fuel_views=[
-    View('side',fuel_side,[(8,8),(760,8),(8,500),(760,500)],side_pick,(1,0,0),
-         solid=photo_window(fuel_side,(24,34,758,365)),grey=26,tolerance=24),
-    View('front',fuel_front,[(8,8),(760,8),(8,500),(760,500)],front_pick,(0,0,-1),
-         solid=photo_window(fuel_front,(42,48,510,462)),grey=26,tolerance=24),
+    View('side',fuel_side,[(8,8),(1873,8),(8,828),(1873,828)],side_pick,(1,0,0),
+         solid=photo_window(fuel_side,(74,128,1804,724)),grey=26,tolerance=24),
+    View('front',fuel_front,[(8,8),(1528,8),(8,1016),(1528,1016)],front_pick,(0,0,-1),
+         solid=photo_window(fuel_front,(300,78,1232,1010)),grey=26,tolerance=24),
     View('rear',fuel_rear,[(8,8),(1528,8),(8,1016),(1528,1016)],rear_pick,(0,0,1),
-         solid=photo_window(fuel_rear,(150,28,1380,966)),grey=26,tolerance=24),
-    View('overhead',fuel_top,[(8,8),(760,8),(8,500),(760,500)],overhead_pick,(0,1,0),
-         solid=photo_window(fuel_top,(42,38,758,450)),grey=26,tolerance=24),
+         solid=photo_window(fuel_rear,(300,72,1240,1014)),grey=26,tolerance=24),
+    View('overhead',fuel_top,[(8,8),(1873,8),(8,828),(1873,828)],overhead_pick,(0,1,0),
+         solid=photo_window(fuel_top,(48,104,1832,724)),grey=26,tolerance=24),
 ]
-fuel_bounds=((-1.30,1.30),(.72,3.32),(-2.72,2.72))
+fuel_bounds=((-1.17,1.17),(.75,3.10),(-3.30,3.30))
 fuel_solid,fuel_xs,fuel_ys,fuel_zs=occupancy(fuel_bounds,.10,[view.covers for view in fuel_views])
 fuel_body=carve_hull('fuel-depot:photo-carved storage tank',fuel_views,fuel_mats,
     fuel_solid,fuel_xs,fuel_ys,fuel_zs,.10,7200)
 fuel_body.parent=fuel
-town.cube('fuel depot bund floor',(0,.16,0),(6.9,.32,5.8),mat['cracked-concrete'],.08).parent=fuel
-for z in (-2.72,2.72):
-    town.cube('fuel depot bund wall',(0,.50,z),(6.9,.68,.30),mat['cracked-concrete'],.05).parent=fuel
-for x in (-3.30,3.30):
-    town.cube('fuel depot bund wall',(x,.50,0),(.30,.68,5.2),mat['cracked-concrete'],.05).parent=fuel
+town.cube('fuel depot bund floor',(0,.16,0),(8.5,.32,7.4),mat['cracked-concrete'],.08).parent=fuel
+for z in (-3.65,3.65):
+    town.cube('fuel depot bund wall',(0,.50,z),(8.5,.68,.30),mat['cracked-concrete'],.05).parent=fuel
+for x in (-4.10,4.10):
+    town.cube('fuel depot bund wall',(x,.50,0),(.30,.68,7.1),mat['cracked-concrete'],.05).parent=fuel
 for x in (-.88,.88):
     for z in (-1.85,1.85):
         town.beam('tank saddle crossbeam',(x-.48,.76,z),(x+.48,.76,z),.15,mat['rusted-steel']).parent=fuel
         town.beam('tank saddle upright',(x,.50,z),(x,.91,z),.14,mat['rusted-steel']).parent=fuel
 # A connected manifold runs along the tank, with elbows, valve wheels and a
 # separate hand pump at the road end. Every pipe has a real round section.
-pipe=[(-1.08,2.34,-2.20),(-1.08,2.62,-2.20),(-1.08,2.62,2.12),(-.74,2.62,2.42),
+pipe=[(1.08,2.34,-2.20),(1.08,2.62,-2.20),(1.08,2.62,2.12),(1.08,2.62,2.42),
       (1.02,2.62,2.42),(1.02,2.16,2.42),(1.02,1.28,2.42),(1.02,.92,2.12)]
 for index,(start,end) in enumerate(zip(pipe,pipe[1:])):
     thin_run(f'fuel transfer pipe {index+1}',(start,end),.067,mat['rusted-steel'],fuel)
-for index,(x,z) in enumerate(((-1.08,-1.42),(-1.08,.62),(1.02,1.72))):
+for index,(x,z) in enumerate(((1.08,-1.42),(1.08,.62),(1.02,1.72))):
     cylinder(f'fuel valve body {index+1}',(x,2.62,z),.15,.23,mat['galvanised-tin'],12,fuel)
     town.beam(f'fuel valve cross handle {index+1}',(x-.23,2.82,z),(x+.23,2.82,z),.045,mat['rusted-steel']).parent=fuel
     town.beam(f'fuel valve stem {index+1}',(x,2.62,z),(x,2.82,z),.045,mat['rusted-steel']).parent=fuel
@@ -483,9 +483,9 @@ town.beam('hose hanging run',(1.65,.75,-2.20),(1.65,.35,-2.20),.045,mat['iron-da
 town.beam('hose return run',(1.65,.35,-2.20),(1.30,.30,-2.20),.045,mat['iron-dark']).parent=fuel
 # Faded yellow and black diagonal hazards are real painted bands on the curb.
 for index in range(18):
-    x=-3.05+index*.36
+    x=-3.65+index*.36
     material=mat['faded-hand-paint'] if index%2==0 else mat['iron-dark']
-    town.beam('chipped bund hazard stripe',(x-.14,.20,-2.89),(x+.14,.78,-2.89),.11,material).parent=fuel
+    town.beam('chipped bund hazard stripe',(x-.14,.20,-3.82),(x+.14,.78,-3.82),.11,material).parent=fuel
 
 # Export, then reimport in an empty scene for every judgment render.
 evidence.mkdir(parents=True,exist_ok=True)
@@ -525,8 +525,8 @@ def isolate(active):
         hide_tree(building_id,building_id != active)
 
 isolate('windmill')
-render('windmill-driver',(11,9,-15),(0,2.7,0),32)
-render('windmill-above-45',(10,14,-12),(0,2.7,0),28)
+render('windmill-driver',(7,8,-11),(0,2.7,0),34)
+render('windmill-above-45',(7,10,-9),(0,2.7,0),30)
 render('windmill-rotor-front',(0,6.6,-10),(-.35,4.5,-.35),62)
 isolate('power-pole')
 render('power-pole-driver',(-5,8,-7),(0,2.8,0),40)
@@ -554,4 +554,3 @@ lamp_data=bpy.data.lights.new('rotor turn light','AREA');lamp=bpy.data.objects.n
 bpy.ops.mesh.primitive_plane_add(size=24,location=town.game_vector((0,-.08,0)));bpy.context.object.data.materials.append(groundmat)
 data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((0,5.8,-8));data.lens=70;aim(cam,town.game_vector((0,4.95,-.35)));scene.camera=cam
 scene.render.filepath=str(evidence/'windmill-rotor-turned.png');bpy.ops.render.render(write_still=True)
-
