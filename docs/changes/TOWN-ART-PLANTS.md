@@ -1,27 +1,23 @@
-# TOWN-ART-PLANTS round 4
+# TOWN-ART-PLANTS round 5
 
 ## Changed
-- Replaced the crusher's box-built chassis, hopper and body with one measured four-photo `carve_object` table. The carved body uses the existing side, front, rear and overhead references, with measured cuts for the detached belt and trapped background.
-- Kept the rising belt photo-traced. Its mask follows measured steel rails and lattice strokes, with the white studio patch removed; added ground-reaching trestles and body ties. The jaw is its own carved mesh under `crusher:jaw`, with the node origin at the measured pivot.
-- Replaced the plain gravel cone material with a cone wearing a crop from the overhead gravel photo. The exported model is 1,052,184 bytes and 12,242 triangles. Materials stay at metallic 0.3 or less.
-- Added the round 4 review sheet with the source side photo, exported-model side view, both three-quarter views and the mayor view on mid-grey ground.
-- Updated the art readback assertion for the new body, jaw, belt, gravel and chute nodes. Added the 14,000-triangle, UV-channel and UV-range checks.
-
-**Self scores:** silhouette 3/5; material read 3/5; construction detail 3/5; family coverage 1/5.
-
-**Visual note:** The body is carved and no longer assembled from box parts. The belt mask removes the enclosed white background patch and leaves lattice openings. Some side texture and silhouette transitions around the belt and lower body still look rough in the renders; Claude should judge those alongside the jaw pivot and mayor view. This round covers only the crusher, as requested.
+- Rebuilt the conveyor as two traced side frames from the crusher side photo, each 0.08 m thick and 0.7 m apart. Each trace includes its legs. Added a plain dark rubber surface between the frames.
+- Replaced the old trailer underbody with two photo-traced side frames, cross-members, two axles and four `tyre` meshes at measured wheel centres.
+- Kept the accepted hopper, flywheel and jaw. Limited the body carve with `underside` at the trailer frame top. Repositioned the gravel cone under the head-pulley fall and corrected its overhead-photo crop.
+- Printed world bounds for every mesh piece during export. Crusher GLB: 1,426,944 bytes; `test-blender-output.mjs` confirms the 14,000-triangle limit and UV requirements.
+- Added the round 5 comparison sheet and review note. Sheet size: 156,404 bytes.
 
 ## Checks
-- `node tools/test-blender-output.mjs`: passed, 330 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; placement is clean. The tool reports existing size targets as advisory.
-- `node tools/test-review-evidence.mjs`: 6 passed, 3 failed. One failure expects the removed `round-3.jpg` that this task explicitly required deleting. One reports an existing date mismatch (`2026-11-06` vs `2026-11-07`); one cannot spawn `ffmpeg` (`EPERM`). The review-sheet size/publication check passed.
-- Blender 4.5.13 export and fresh-GLB renders completed: side photo comparison, front and rear three-quarter, and mayor view.
-- Lane tier and build: not run, per the art-card instruction.
-- Browser checks: not run. Claude should inspect the full round 4 sheet and GLB, especially the carved silhouette, belt openings and supports, `crusher:jaw` pivot, gravel crop, UVs and material values.
-- Changed assertions: replaced obsolete required box-piece names with the carved body, jaw mesh, gravel cone and chute lip; added budget and UV checks for this exported model. These assertions check the new card contract and are not loosened.
-- Race fingerprints: not applicable to this art-only change.
+- Blender 4.5.13 export and fresh-GLB renders completed for side, front and rear three-quarter, and mayor views. No Blender errors.
+- `node tools/test-blender-output.mjs`: passed, 335 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement is clean. Existing size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed. The review-JPG publication check passed. One failure expects `round-4.jpg`, which this task explicitly required removing. The other failed because the sandbox could not start `ffmpeg` (`EPERM`).
+- Browser and in-game look checks: not run here. Claude should judge the sheet and the town-view asset, especially the trailer and axle contact, pale patches around the gravel cone, the brown bar above the hopper, and the side-frame connection to the belt.
+- Lane tier and build: not run, per the art-card instruction. Race fingerprints: not applicable to this art-only change.
+- Changed assertions: none. No test assertion was changed.
 
 ## Removed
-- Removed the box-built chassis, hopper plates, jaw housing and engine blocks from the crusher recipe.
-- Removed the previous round 3 JPG sheet after producing round 4. Kept its review note as prior-round context.
-- Removed temporary Blender renders, masks and test logs from `.qa-dist` after recording results.
+- Removed the shredded conveyor mask and its hand-drawn lattice strokes, separate supports and rollers, and obsolete underbody beams.
+- Removed the old trailer underbody from the photo carve; the traced side frames, cross-members, axles and tyres now supply it.
+- Removed `round-4.jpg` and `round-4-review.md` as requested.
+- Removed temporary renders, masks, Blender logs and sheet-builder scratch files after review. The `.blend` output is scratch and is not kept.

@@ -15,9 +15,11 @@ if a.paths_only:
  import json;print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)] if a.render else []}));raise SystemExit(0)
 import bpy
 import numpy as np
+from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, trace, slab
 from photo_carve import carve_object, save_mask
+from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
@@ -41,7 +43,8 @@ def pipe(name,points,radius,mat=dark,parent=crusher):
 body_table={
  'photos':{'side':'crusher-side.jpg','front':'crusher-front.jpg','rear':'crusher-rear.jpg','top':'crusher-overhead.jpg'},
  'length':7.4,'width':2.42,'height':3.10,
- 'side':{'start':30,'end':970,'ground':474},
+ 'side':{'start':30,'end':970,'ground':480},
+ 'side_front_on_left':True,
  'front':{'centre':512,'ground':735,'top':62},
  'rear':{'centre':512,'ground':755,'top':76},
  'top':{'front':105,'rear':963,'centre':260,'along':'x','x_scale':2.42/320},
@@ -54,7 +57,8 @@ body_table={
   # Remove the belt and gravel silhouettes from the overhead projection.
   'top':[(610,80,1024,545)],
  },
- 'grey':28,'tolerance':34,'bleed_tolerance':40,'voxel':.05,'target':8500,
+ 'underside':(480-417)*(7.4/(970-30)),
+ 'grey':28,'tolerance':34,'bleed_tolerance':40,'voxel':.05,'target':6500,
  'mask_dir':str(evidence/'masks') if a.render else None,
 }
 body=carve_object('crusher:body',tex,body_table);body.parent=crusher;parts.append(body)
@@ -78,55 +82,68 @@ jaw_mesh=carve_object('crusher:jaw-surface',tex,jaw_table)
 for vertex in jaw_mesh.data.vertices:
  vertex.co.x-=jaw_pivot[0];vertex.co.y-=jaw_pivot[1];vertex.co.z-=jaw_pivot[2]
 jaw_mesh.parent=jaw;jaw.location=jaw_pivot
-# The conveyor is traced from the side photograph. The flood mask leaves the
-# truss openings empty; slab adds thickness without closing those openings.
+# Rebuild the underbody from one measured side silhouette. The photo maps with
+# its front on the left, so increasing photo X runs toward world -Z.
 belt_parent=bpy.data.objects.new('crusher:belt',None);bpy.context.collection.objects.link(belt_parent);belt_parent.parent=crusher
 side_photo=Photo(tex/'crusher-side.jpg')
 rgb=side_photo.rgb()
 spread=rgb.max(axis=2)-rgb.min(axis=2)
-dark_pixels=(rgb.mean(axis=2)<155)|((spread>24)&(rgb.mean(axis=2)<205))
-truss_mask=np.zeros((side_photo.h,side_photo.w),dtype=bool)
+dark_pixels=(rgb.mean(axis=2)<165)|((spread>24)&(rgb.mean(axis=2)<208))
 yy,xx=np.ogrid[:side_photo.h,:side_photo.w]
-def photo_stroke(a,b,width=8):
- ax,ay=a;bx,by=b;dx,dy=bx-ax,by-ay
- amount=np.clip(((xx-ax)*dx+(yy-ay)*dy)/(dx*dx+dy*dy),0,1)
- distance=np.sqrt((xx-(ax+amount*dx))**2+(yy-(ay+amount*dy))**2)
- truss_mask[:] |= (distance<=width/2)&dark_pixels
-# Parallel belt rails and the measured open triangular lattice.
-photo_stroke((448,324),(950,145),12);photo_stroke((448,414),(950,287),12)
-photo_stroke((448,344),(950,180),9);photo_stroke((448,395),(950,262),9)
-for px in range(468,930,58):
- t=(px-448)/(950-448)
- upper=324+(145-324)*t;lower=414+(287-414)*t
- photo_stroke((px,upper),(px+58,lower),8)
- photo_stroke((px,lower),(px+58,upper-20),8)
-# Belt-end drums and side plates, still cut from their exact photo pixels.
-photo_stroke((448,324),(448,414),10);photo_stroke((950,145),(950,287),10)
-if a.render:save_mask(truss_mask,evidence/'belt-mask.png')
-# Bleed the measured steel edges across every removed backdrop pixel. The slab's
-# edge UVs cannot then pick up the photo studio as a pale stripe.
-side_photo.bleed(truss_mask)
-truss_loops=trace(truss_mask,(448,105,970,418),tolerance=2.0,min_area=16)
-truss_mesh=PhotoMesh()
+scale=7.4/(970-30);ground_px=480
 def side_world(px,py,depth):
- scale=7.4/(970-30)
- return (depth,(482-py)*scale,-3.7+(px-30)*scale)
-slab(truss_mesh,'side',side_photo,truss_loops,side_world,-.68,.68,wall_scale=7.4/(970-30))
-truss=truss_mesh.finish('crusher:belt:photo-traced-lattice',{'side':side_photo.material()})
-truss.parent=belt_parent
-# Two narrow belt lips and cross rollers follow the measured photo slope.
-for x in (-.70,.70):
- beam('crusher-belt-edge',(x,.50,-.18),(x,2.72,3.52),.055,dark,belt_parent)
-for i in range(8):
- t=i/7;z=-.1+t*3.48;y=.58+t*2.12
- pipe('crusher-belt-roller',[(-.63,y,z),(.63,y,z)],.035,dark,belt_parent)
-# The trestle has feet on the ground, and two braces tie it back into the body.
-for z,y in ((1.25,1.35),(2.95,2.38)):
- for x in (-.66,.66):
-  beam('crusher-belt-support',(x,.04,z),(x,y,z+.20),.11,steel,belt_parent)
- beam('crusher-belt-cross-brace',(-.66,.20,z+.12),(.66,.20,z+.12),.075,dark,belt_parent)
-beam('crusher-belt-body-tie',(-.58,.98,-.12),(-.58,1.33,.78),.09,steel,belt_parent)
-beam('crusher-belt-body-tie',(.58,.98,-.12),(.58,1.33,.78),.09,steel,belt_parent)
+ return (depth,(ground_px-py)*scale,-3.7+(px-30)*scale)
+# Dark pixels inside each photo rectangle preserve the lattice openings and
+# capture each frame and its legs as a single trace from the same image.
+belt_mask=dark_pixels.copy();belt_mask[:105,:]=False;belt_mask[420:,:]=False
+belt_mask[:,:440]=False;belt_mask[:,976:]=False
+upper=324-.356*(xx-448)-24;lower=414-.253*(xx-448)+24
+between_rails=(yy>=upper)&(yy<=lower)
+support_legs=(((xx>=675)&(xx<=720)&(yy>=350)&(yy<=480))|
+              ((xx>=890)&(xx<=935)&(yy>=270)&(yy<=480)))
+belt_mask &= between_rails|support_legs
+belt_loops=trace(belt_mask,(438,100,980,422),tolerance=1.1,min_area=90)
+belt_mesh=PhotoMesh()
+slab(belt_mesh,'side',side_photo,belt_loops,side_world,-.35,-.27,wall_scale=scale)
+frame=belt_mesh.finish('crusher:belt:side-frame',{'side':side_photo.material()});frame.parent=belt_parent
+frame_far=frame.copy();frame_far.data=frame.data.copy();frame_far.name='crusher:belt:far-side-frame';bpy.context.collection.objects.link(frame_far);frame_far.parent=belt_parent;frame_far.location.x=.70
+# One dark rubber plane follows the measured slope between the two open frames.
+belt_pts=[side_world(448,329,d) for d in (-.31,.31)]+[side_world(950,157,d) for d in (-.31,.31)]+[side_world(950,174,d) for d in (-.31,.31)]+[side_world(448,346,d) for d in (-.31,.31)]
+verts=[(x,y,z) for x,y,z in belt_pts]
+faces=[(0,2,4,6),(1,7,5,3),(0,1,3,2),(2,3,7,6),(6,7,5,4),(4,5,1,0)]
+mesh=bpy.data.meshes.new('crusher rubber belt mesh');mesh.from_pydata(verts,[],faces);mesh.update()
+uv_layer=mesh.uv_layers.new(name='UVMap')
+for polygon in mesh.polygons:
+ for loop_index in polygon.loop_indices:
+  vertex=mesh.vertices[mesh.loops[loop_index].vertex_index].co
+  uv_layer.data[loop_index].uv=((vertex.x+.31)/.62,(vertex.z+3.7)/7.4)
+rubber=bpy.data.objects.new('crusher:belt:rubber-surface',mesh);bpy.context.collection.objects.link(rubber);rubber.parent=belt_parent
+rubber.data.materials.append(dark)
+# The trailer is two traced copies of the same measured side frame. Four tyres
+# use measured wheel centres; the axle and cross-members join the rails.
+trailer_mask=dark_pixels.copy();trailer_mask[:364,:]=False;trailer_mask[447:,:]=False
+trailer_mask[:,:30]=False;trailer_mask[:,610:]=False
+for cx in (325,432): trailer_mask[(xx-cx)**2+(yy-437)**2 < 54**2]=False
+trailer_loops=trace(trailer_mask,(22,360,620,450),tolerance=1.1,min_area=45)
+trailer_mesh=PhotoMesh()
+side_photo.bleed(belt_mask|trailer_mask)
+slab(trailer_mesh,'side',side_photo,trailer_loops,side_world,-.52,-.44,wall_scale=scale)
+rail=trailer_mesh.finish('crusher:trailer:near-frame',{'side':side_photo.material()});rail.parent=crusher
+far=rail.copy();far.data=rail.data.copy();far.name='crusher:trailer:far-frame';bpy.context.collection.objects.link(far);far.parent=crusher;far.location.x=1.04
+for px in (120,380,550):
+ z=side_world(px,ground_px,0)[2]
+ beam('crusher:trailer:cross-member',(-.48,.47,z),(.56,.47,z),.10,dark)
+for cx in (325,432):
+ axle_z=side_world(cx,ground_px,0)[2]
+ beam('crusher:trailer:axle',(-.63,.29,axle_z),(.63,.29,axle_z),.09,dark)
+front_photo=Photo(tex/'crusher-front.jpg')
+wheel_side_photo=Photo(tex/'crusher-side.jpg')
+for side,name in ((-.54,'near'),(.58,'far')):
+ for cx,axle_name in ((325,'front-axle'),(432,'rear-axle')):
+  wheel_mesh=PhotoMesh()
+  tyre(wheel_mesh,'side',wheel_side_photo,cx,437,44,44*scale,.10,'tread',front_photo,512,48,603,720,sides=32)
+  wheel=wheel_mesh.finish(f'crusher:trailer:{name}-tyre:{axle_name}',{'side':wheel_side_photo.material(),'tread':front_photo.material()})
+  wheel.parent=crusher;wheel.location=town.game_vector((side,(ground_px-437)*scale,-3.7+(cx-30)*scale))
 # The side wheels are the visual signature of this older jaw mechanism.  Their
 # crank hubs sit on the housing; the rims have real thickness and open spokes.
 # Flywheels are retained in the carved side and end views so their axes agree.
@@ -137,15 +154,31 @@ for x in (-.48,.48):
  beam('crusher-discharge-chute-side',(x,.78,2.25),(x,.40,2.82),.10,steel)
 beam('crusher-discharge-chute-lip',(-.48,.40,2.82),(.48,.40,2.82),.10,steel)
 over_photo=Photo(tex/'crusher-overhead.jpg')
-bpy.ops.mesh.primitive_cone_add(vertices=32,radius1=.82,radius2=.035,depth=.62,location=town.game_vector((0,.34,3.32)))
+over_rgb=over_photo.rgb();oy,ox=np.ogrid[:over_photo.h,:over_photo.w]
+pile_mask=((ox-903)/112)**2+((oy-315)/126)**2<=1
+over_photo.bleed(pile_mask)
+bpy.ops.mesh.primitive_cone_add(vertices=32,radius1=.82,radius2=.035,depth=.62,location=town.game_vector((0,.31,side_world(950,ground_px,0)[2]-.55)))
 gravel=bpy.context.object;gravel.name='crusher-gravel-cone';gravel.scale=(1.0,1.0,1.16);gravel.data.materials.append(over_photo.material())
 uv_layer=gravel.data.uv_layers.active or gravel.data.uv_layers.new(name='Gravel crop UV')
 for polygon in gravel.data.polygons:
  for loop_index in polygon.loop_indices:
   vert=gravel.data.vertices[gravel.data.loops[loop_index].vertex_index].co
-  u=.88+(vert.x*.10);v=.59-(vert.y*.32)
+  u=.92+(vert.x*.14);v=.62-(vert.y*.25)
   uv_layer.data[loop_index].uv=over_photo.uv(u*over_photo.w,v*over_photo.h)
 gravel.parent=crusher;parts.append(gravel)
+# Report every exported mesh piece's world bounds for the round review.
+bpy.context.view_layer.update()
+def owned_mesh(obj):
+ parent=obj.parent
+ while parent:
+  if parent in (crusher,belt_parent):return True
+  parent=parent.parent
+ return False
+for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
+ corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+ corners=[(p.x,p.y,p.z) for p in corners]
+ low=[min(p[i] for p in corners) for i in range(3)];high=[max(p[i] for p in corners) for i in range(3)]
+ print(f'PIECE BOUNDS {obj.name}: X[{low[0]:.3f},{high[0]:.3f}] Y[{low[1]:.3f},{high[1]:.3f}] Z[{low[2]:.3f},{high[2]:.3f}]')
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:
@@ -161,5 +194,5 @@ if a.render:
  bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=1800;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=14
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
- for name,loc,target,lens in [('side-photo-match',(14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
+ for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
   cam=camera(name,loc,target,lens);scene.camera=cam;scene.render.filepath=str(evidence/(name+'.png'));evidence.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
