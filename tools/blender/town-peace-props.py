@@ -485,7 +485,7 @@ def tire_material(photo, cx, cy, radius_px, stem):
     # tread tile. The UVs repeat it around the measured circumference.
     half_h = max(8, round(radius_px * .28))
     patch_w = max(5, round(radius_px * .15))
-    start_x = round(cx + radius_px * .78)
+    start_x = round(cx + radius_px * .82)
     start_y = round(cy - half_h)
     rgb = photo.rgb()[start_y:start_y + half_h * 2, start_x:start_x + patch_w]
     image = bpy.data.images.new(f'{stem} tread tile', width=patch_w, height=half_h * 2,
@@ -592,8 +592,8 @@ for index in range(65):
     left = pipe_top.vertex((-.80, y, z))
     right = pipe_top.vertex((.80, y, z))
     u = SAL_TOP_X0 + (z - SAL_Z0) / SAL_TOP_SCALE
-    v0 = SAL_TOP_MID - .80 / SAL_TOP_X_SCALE
-    v1 = SAL_TOP_MID + .80 / SAL_TOP_X_SCALE
+    # The load is 1.6 m across, matching this 106 px band in the overhead view.
+    v0, v1 = 181, 287
     top_rows.append(((left, top_photo.uv(u, v0)), (right, top_photo.uv(u, v1))))
 for a, b in zip(top_rows, top_rows[1:]):
     pipe_top.indexed((a[0][0], a[1][0], b[1][0], b[0][0]),
@@ -607,15 +607,15 @@ own(pipe_top.finish('sal-pipe-trailer:pipe-stack-top', {'top': top_photo.materia
 end_photo = Photo(textures / 'peace-sal-pipe-trailer-rear.jpg')
 end_solid = ~end_photo.sky(seed_points(end_photo), tolerance=22, grey=20)
 end_region = np.zeros_like(end_solid)
-end_region[128:327, 88:454] = end_solid[128:327, 88:454]
+end_region[136:296, 105:439] = end_solid[136:296, 105:439]
 end_solid &= end_region
-end_loops = trace(end_solid, (88, 128, 454, 327), tolerance=1.1, min_area=12)
+end_loops = trace(end_solid, (105, 136, 439, 296), tolerance=1.1, min_area=12)
 end_photo.bleed(end_solid)
 for end_name, z, end_direction in (('front', -1.43, -1), ('rear', 5.96, 1)):
     end_mesh = Mesh()
     def end_point(px, py, depth, z=z):
-        x = (px - 271) * (1.60 / (454 - 88))
-        y = 1.98 - (py - 128) * (1.12 / (327 - 128))
+        x = (px - 272) * (1.60 / (439 - 105))
+        y = 1.58 - (py - 136) * (.88 / (296 - 136))
         return (x, y, z + depth)
     slab(end_mesh, 'ends', end_photo, end_loops, end_point,
          -end_direction * .018, end_direction * .018, wall_scale=.004)
@@ -643,7 +643,7 @@ for axle_index, (px, cy, radius_px) in enumerate(((795, 312, 35), (861, 312, 34)
               cap_start=('side', lambda a, f: face_uv(a, f*.9)),
               cap_end=('side', lambda a, f: face_uv(a, f*.9)))
         own(trailer_wheel.finish(f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}',
-                                 {'side': sal_side.material(.86), 'tread': tread_mat}), sal,
+                                 {'side': sal_details['side'].material(.86), 'tread': tread_mat}), sal,
             f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}')
 for name, center, size in (
     ('front-headboard', (0, .95, -1.0), (1.92, .46, .12)),
@@ -763,7 +763,7 @@ def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
     bpy.ops.render.render(write_still=True)
 
 sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1400, 690), ortho=13.4)
-sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 756), lens=38)
-sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 756), lens=38)
+sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 756), lens=50)
+sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 756), lens=50)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
                   'newAsset':'sal-pipe-trailer'}))
