@@ -1,22 +1,13 @@
-﻿# TOWN-ART-OUTPOSTS — Round 3 change note
+﻿# TOWN-ART-OUTPOSTS round 5
 
-## Changed
+Added `plane-school` from generated orthographic references, carved its fuselage through `carve_object`, and added its slide as a separate photo-textured mesh. Kept Dot's Diner in the family GLB without changing its recipe. Added source credits and a note to `docs/ART_LINE.md` about generated photo-board panels having different scales. Raised the family triangle ceiling by 7,000 to 21,000 and added per-building checks at 14,000 each.
 
-- Kept the four-view `carve_object` recipe and changed the front and rear mappings to use the side photo's derived metre scale rather than separate end-view scales.
-- Kept the two-sided DOT'S sign and removed the rear wing/side-wall silhouette through the existing measured rear-mask cuts.
-- Exported and re-imported the family GLB; it is 933,368 bytes. The town family remains below the 8 MB limit. The model parts retain their named UV coordinate set and material metallic limit through the output check.
-- Added the round 3 comparison sheet (132,427 bytes) and review. Removed the round 2 sheet as requested.
+**Checks:** Blender 4.5 recipe run completed and exported/read back the 1.92 MB GLB. Read-back measurements: 17,368 family triangles; diner 10,364; school 7,004. `node tools/test-blender-output.mjs`: 312 checks passed, 0 failed. `node tools/test-repo-hygiene.mjs`: passed. `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed; unrelated failures: an existing missing `town-art-power/round-4-review.md`, and `spawnSync ffmpeg EPERM`. The 50 px photo grids were inspected; the clean side and overhead views align to their original fuselage landmarks after plan-view scale normalization. No browser or game look check is run in this lane.
 
-## Checks
+**Claude look checks:** inspect the seven model views in `round-5.jpg`, especially school end textures, the tail roof gap, slide projection, windscreen joins, and lettering on both sides. For road, far-side and mayor views, the sheet labels the nearest orthographic photo reference; this round did not generate matching oblique photos. The model's end views remain visibly rough and are not claimed as a pass.
 
-- Blender export and empty-scene import/render: passed; five views generated. GLB 933,368 bytes.
-- `node tools/test-blender-output.mjs`: passed, 308 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed. Reported repository-wide size target overages are advisory and unrelated to this family.
-- Browser/look check: not run here. Claude should inspect the matched views, front nose against its photo, the two sign faces, porch contact and tail projection.
-- Race fingerprints: not applicable; no simulation code changed.
-- Changed assertions: none.
+**Changed assertions:** added named school body/slide checks, per-building triangle limits, and a summed family ceiling. Existing assertions and tolerances were not loosened.
 
-## Removed
+**Race fingerprints:** not applicable; this is an unconnected art asset.
 
-- Removed `docs/board/looks/town-art-outposts/round-2.jpg` per this round's instruction. No test or assertion was removed or weakened.
-- Removed this round's temporary renders and test logs after review. Kept only the requested sheet, review, model, and task files.
+**Removed:** none.

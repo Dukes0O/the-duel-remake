@@ -70,7 +70,8 @@ const generators = [
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:14000,maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:21000,
+    budgets:{'dot-diner':14000,'plane-school':14000},maxBytes:5000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -724,6 +725,27 @@ try {
         assert.ok(names.has('town-outposts'), 'named family root');
         assert.ok(names.has('dot-diner'), 'round 1 building root');
         assert.ok(names.has('dot-diner:body'), 'photo-built diner mesh');
+        assert.ok(names.has('plane-school'), 'round 5 building root');
+        assert.ok(names.has('plane-school:body'), 'photo-built plane-school fuselage');
+        assert.ok(names.has('plane-school:slide'), 'slide stays a separate photo piece');
+        for (const id of ['dot-diner', 'plane-school']) {
+          const rootIndex = gltf.nodes.findIndex(node => node.name === id);
+          const pending = [rootIndex], visited = new Set();
+          let buildingTriangles = 0;
+          while (pending.length) {
+            const index = pending.pop();
+            if (visited.has(index)) continue;
+            visited.add(index);
+            const node = gltf.nodes[index];
+            if (node.mesh !== undefined) buildingTriangles += gltf.meshes[node.mesh].primitives
+              .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+            pending.push(...(node.children || []));
+          }
+          assert.ok(buildingTriangles > 100 && buildingTriangles <= generator.budgets[id],
+            `${id}: ${buildingTriangles} triangles exceeds its ${generator.budgets[id]} triangle building budget`);
+        }
+        assert.ok(triangles <= generator.budget,
+          `${triangles} triangles exceeds the summed outpost building budget of ${generator.budget}`);
         const binaryOffset = 20 + jsonLength + 8;
         for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
           assert.deepEqual(Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_')),

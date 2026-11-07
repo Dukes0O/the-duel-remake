@@ -13,12 +13,12 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-4')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-5')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-4.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-5.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -252,6 +252,62 @@ for i, (px, top_py) in enumerate(((407, 225), (677, 225), (538, 318), (735, 318)
     foot = HEIGHT - .25
     cube(f'sign-post-{i + 1}', (sx1 + .05, (py_y(top_py) + foot) / 2, px_z(px)), (.1, py_y(top_py) - foot, .1), rust)
 
+
+# Plane-school: the clean side and overhead photographs remove the slide from
+# the fuselage carve. The source photo's doorway is 56 px wide; treating that
+# salvaged opening as a 1.0 m door sets this object's scale and length.
+SCHOOL_START, SCHOOL_END, SCHOOL_GROUND = 12, 631, 483
+SCHOOL_DOOR_WIDTH_PX = 56
+SCHOOL_SCALE = 1.0 / SCHOOL_DOOR_WIDTH_PX  # door width fixes the side-photo scale
+SCHOOL_LENGTH = (SCHOOL_END - SCHOOL_START) * SCHOOL_SCALE
+SCHOOL_HEIGHT = (SCHOOL_GROUND - 252) * SCHOOL_SCALE
+SCHOOL_FRONT = {'centre': 172, 'ground': 485, 'top': 211}
+SCHOOL_REAR = {'centre': 205, 'ground': 486, 'top': 210}
+SCHOOL_WIDTH = 208 * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - SCHOOL_FRONT['top']))
+school_table = {
+    'photos': {'side': 'plane-school-side-wall.jpg', 'front': 'plane-school-front.jpg',
+               'rear': 'plane-school-rear.jpg', 'top': 'plane-school-overhead-wall.jpg'},
+    'length': SCHOOL_LENGTH, 'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT,
+    'side': {'start': SCHOOL_START, 'end': SCHOOL_END, 'ground': SCHOOL_GROUND},
+    'front': SCHOOL_FRONT, 'rear': SCHOOL_REAR,
+    # The generated plan panel was 11.5% shorter and 16% narrower than the
+    # side/end grids. Its clean photo is normalized to the shared door scale.
+    'top': {'front': 125, 'rear': 742, 'centre': 430, 'along': 'x', 'x_scale': SCHOOL_WIDTH / 210},
+    'cut': {'side': [(0, SCHOOL_GROUND, 644, 724)]},
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 42,
+    'voxel': .06, 'target': 7000,
+    'mask_dir': str(render / 'masks'),
+}
+school_body = carve_object('plane-school:body', textures, school_table)
+school = bpy.data.objects.new('plane-school', None)
+bpy.context.collection.objects.link(school)
+school.empty_display_type = 'CUBE'
+school.parent = family
+school_body.parent = school
+
+# The slide is a separate panel assembly, wearing its unedited side-photo pixels.
+school_side = Photo(textures / 'plane-school-side.jpg')
+slide = Mesh()
+def school_z(px):
+    return -SCHOOL_LENGTH / 2 + (px - SCHOOL_START) * SCHOOL_SCALE
+def school_y(py):
+    return (SCHOOL_GROUND - py) * SCHOOL_SCALE
+def slide_face(points, pixels, normal):
+    slide.face(points, [school_side.uv(x, y) for x, y in pixels], 'side', normal)
+# The slide's broad face follows the photo from the doorway sill to the landing.
+slide_face([(-SCHOOL_WIDTH/2 - .12, school_y(444), school_z(157)),
+            (-SCHOOL_WIDTH/2 - .12, .08, school_z(116)),
+            (-SCHOOL_WIDTH/2 - .12, .08, school_z(151)),
+            (-SCHOOL_WIDTH/2 - .12, school_y(444), school_z(178))],
+           [(156, 444), (116, 479), (151, 479), (178, 444)], (-1, 0, 0))
+slide_face([(-SCHOOL_WIDTH/2 - .1, school_y(444), school_z(157)),
+            (-SCHOOL_WIDTH/2 - .1, .08, school_z(116)),
+            (-SCHOOL_WIDTH/2 - .1, .08, school_z(151)),
+            (-SCHOOL_WIDTH/2 - .1, school_y(444), school_z(178))],
+           [(156, 444), (116, 479), (151, 479), (178, 444)], (1, 0, 0))
+slide_obj = slide.finish('plane-school:slide', {'side': school_side.material()})
+slide_obj.parent = school
+
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
@@ -268,6 +324,9 @@ scene.render.resolution_x, scene.render.resolution_y = 820, 600
 scene.world = bpy.data.worlds.new('flat neutral studio')
 scene.world.color = (.42, .42, .42)
 scene.render.film_transparent = False
+for node in bpy.data.objects:
+    if node.name == 'dot-diner' or node.name.startswith('dot-diner:'):
+        node.hide_render = True
 
 def area(name, loc, energy, size):
     data = bpy.data.lights.new(name, 'AREA')
@@ -291,13 +350,13 @@ def shot(name, eye, target, ortho):
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-side', (-44, 3, 0), (0, 2.6, 0), 19)
-shot('model-front', (0, 2.6, -40), (0, 2.6, 0), 11)
-shot('model-rear', (0, 2.6, 40), (0, 2.6, 0), 11)
-shot('model-far', (44, 3, 0), (0, 2.6, 0), 19)
-shot('model-above', (0, 58, 0), (-1, 1.8, 0), 25)
-shot('model-road', (-24, 13, -22), (-1, 2, 0), 22)
-shot('model-back', (24, 13, 22), (0, 2, 0), 22)
-shot('model-mayor', (-42, 62, -42), (-1, 1.5, 0), 26)
+shot('model-side', (-44, 3, 0), (0, 2.6, 0), 14)
+shot('model-front', (0, 2.6, -40), (0, 2.6, 0), 8)
+shot('model-rear', (0, 2.6, 40), (0, 2.6, 0), 8)
+shot('model-far', (44, 3, 0), (0, 2.6, 0), 14)
+shot('model-above', (0, 58, 0), (-1, 1.8, 0), 14)
+shot('model-road', (-24, 13, -22), (-1, 2, 0), 14)
+shot('model-back', (24, 13, 22), (0, 2, 0), 14)
+shot('model-mayor', (-42, 62, -42), (-1, 1.5, 0), 18)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))

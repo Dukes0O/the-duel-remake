@@ -57,6 +57,11 @@ show no improvement, stop adjusting and change the method.
   takes in the ground shadow, so the studio's colour cannot show.
 - **A photo cropped or off-centre.** Measure each photo's own centre line. A
   face its best photo does not show uses the next best.
+- **Panels in a generated view board at different scales.** Measure a shared
+  door or other feature in each crop. A multi-view board can make its overhead
+  panel shorter or narrower than its side and end panels. Normalize the crop
+  to the shared feature scale before carving, and check roof and centre-line
+  landmarks on a grid.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
