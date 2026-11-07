@@ -9,6 +9,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render-dir', default='.qa-dist/ww-art-peace')
+parser.add_argument('--round4-only', action='store_true',
+                    help='render only the new sal-pipe-trailer review frames')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -408,7 +410,173 @@ for index, (sx, sz) in enumerate(((-1.55, -1.28), (1.55, -1.28),
                      (sx, .08, sz), .014, rope_mat)
     own(line, oasis, f'mirage-decoy-oasis:guy-line-{index}')
 
-for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent,oasis):
+# Sal's pickup and sagging pipe trailer. The body is the only solid carved
+# hull; the frame, hitch, wheels and photographed pipe box remain distinct.
+sal_photos = {key: measured_photo(f'sal-pipe-trailer-{key}')
+              for key in ('side', 'front', 'rear', 'overhead')}
+# Hull bleeding changes only these copies; fine parts keep untouched photos.
+sal_details = {key: Photo(textures / f'peace-sal-pipe-trailer-{key}.jpg')
+               for key in ('side', 'front', 'rear', 'overhead')}
+sal = root_part('sal-pipe-trailer')
+sal_side, sal_front = sal_photos['side'], sal_photos['front']
+sal_rear, sal_top = sal_photos['rear'], sal_photos['overhead']
+SAL_LENGTH = 12.0
+SAL_SIDE_X0, SAL_SIDE_X1, SAL_GROUND = 38, 986, 334
+SAL_SCALE = SAL_LENGTH / (SAL_SIDE_X1 - SAL_SIDE_X0)
+SAL_Z0 = -SAL_LENGTH / 2
+SAL_WIDTH = 2.55
+SAL_HEIGHT = 2.55
+SAL_END_CX, SAL_END_GROUND, SAL_END_SPAN = 253, 435, 345
+SAL_END_SCALE = SAL_WIDTH / SAL_END_SPAN
+SAL_TOP_X0, SAL_TOP_X1, SAL_TOP_MID, SAL_TOP_WIDTH = 47, 968, 248, 342
+SAL_TOP_SCALE = SAL_LENGTH / (SAL_TOP_X1 - SAL_TOP_X0)
+SAL_TOP_X_SCALE = SAL_WIDTH / SAL_TOP_WIDTH
+
+def sal_side_pick(x, y, z):
+    return SAL_SIDE_X0 + (z - SAL_Z0) / SAL_SCALE, SAL_GROUND - y / SAL_SCALE
+
+def sal_front_pick(x, y, z):
+    return SAL_END_CX + x / SAL_END_SCALE, SAL_END_GROUND - y / SAL_END_SCALE
+
+def sal_rear_pick(x, y, z):
+    # The rear turnaround shows the clean pipe mouths at the trailer end.
+    return sal_rear.w / 2 + x / SAL_END_SCALE, 435 - y / SAL_END_SCALE
+
+def sal_top_pick(x, y, z):
+    return SAL_TOP_X0 + (z - SAL_Z0) / SAL_TOP_SCALE, SAL_TOP_MID - x / SAL_TOP_X_SCALE
+
+def sal_trim_side(mask):
+    mask = mask.copy()
+    mask[SAL_GROUND:, :] = False
+    mask[:, 392:] = False  # trailer and hitch are separate photo-kit parts
+    return mask
+
+def sal_trim_end(mask):
+    mask = mask.copy()
+    mask[435:, :] = False
+    return mask
+
+sal_views = [
+    View('side', sal_side, seed_points(sal_side), sal_side_pick, (-1, 0, 0),
+         solid=sal_trim_side, grey=20, tolerance=20),
+    View('front', sal_front, seed_points(sal_front), sal_front_pick, (0, 0, -1),
+         solid=sal_trim_end, grey=20, tolerance=20),
+    View('rear', sal_rear, seed_points(sal_rear), sal_rear_pick, (0, 0, 1),
+         solid=sal_trim_end, grey=20, tolerance=20),
+    View('overhead', sal_top, seed_points(sal_top), sal_top_pick, (0, 1, 0), grey=20, tolerance=20),
+]
+sal_bounds = ((-SAL_WIDTH / 2, SAL_WIDTH / 2), (0, SAL_HEIGHT), (-6.05, -1.45))
+sal_voxel = .035
+sal_solid, sal_xs, sal_ys, sal_zs = occupancy(sal_bounds, sal_voxel,
+                                               [view.covers for view in sal_views])
+sal_solid = largest_part(sal_solid)
+for view in sal_views:
+    view.photo.bleed(view.mask)
+sal_materials = {view.name: view.photo.material(.86) for view in sal_views}
+sal_body = carve_hull('sal-pipe-trailer:pickup-body', sal_views, sal_materials,
+                      sal_solid, sal_xs, sal_ys, sal_zs, sal_voxel, 1900)
+own(sal_body, sal, 'sal-pipe-trailer:pickup-body')
+
+# Measured wheel centres from the left-side photo. The far-side pick uses the
+# same pixels, matching the symmetry of the photographed pickup.
+SAL_WHEEL_R = 47 * SAL_SCALE
+SAL_TRACK = .79
+for axle_name, px in (('front', 95), ('rear', 314)):
+    axle_z = SAL_Z0 + (px - SAL_SIDE_X0) * SAL_SCALE
+    for side_name, x in (('left', -SAL_TRACK), ('right', SAL_TRACK)):
+        wheel = Mesh()
+        cx, cy = px, 302
+        tread_uv = lambda i, d, r, a, cx=cx, cy=cy: sal_details['side'].uv(
+            cx - math.cos(a) * 42 * .86, cy - math.sin(a) * 42 * .86)
+        disc_uv = lambda a, f, cx=cx, cy=cy: sal_details['side'].uv(
+            cx - math.cos(a) * 40 * f * .82, cy - math.sin(a) * 40 * f * .82)
+        lathe(wheel, 'side', (x, SAL_WHEEL_R, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+              [(-.15, SAL_WHEEL_R * .9), (-.12, SAL_WHEEL_R),
+              (.12, SAL_WHEEL_R), (.15, SAL_WHEEL_R * .9)], tread_uv, sides=16,
+              cap_start=('side', lambda a, f: disc_uv(a, f * .9)),
+              cap_end=('side', lambda a, f: disc_uv(a, f * .9)))
+        own(wheel.finish(f'sal-pipe-trailer:pickup-wheel-{axle_name}-{side_name}',
+                         {'side': sal_details['side'].material(.86)}), sal,
+            f'sal-pipe-trailer:pickup-wheel-{axle_name}-{side_name}')
+
+# One separate trailer frame, measured to the sag of its side rails. Each beam
+# takes real rust from the vehicle photograph, with no atlas edge stretching.
+frame_photo = sal_details['side']
+frame_mat = frame_photo.material(.9)
+frame = Mesh()
+def beam_box(name, center, size, photo_rect):
+    x, y, z = center
+    sx, sy, sz = size
+    px0, py0, px1, py1 = photo_rect
+    mesh = Mesh()
+    photo_box(mesh, x-sx/2, x+sx/2, y-sy/2, y+sy/2, z-sz/2, z+sz/2, {
+        '+z': ('rust', frame_photo, (px0, py0, px1, py1)),
+        '-z': ('rust', frame_photo, (px0, py0, px1, py1)),
+        '+x': ('rust', frame_photo, (px0, py0, px1, py1)),
+        '-x': ('rust', frame_photo, (px0, py0, px1, py1)),
+        '+y': ('rust', frame_photo, (px0, py0, px1, py1)),
+        '-y': ('rust', frame_photo, (px0, py0, px1, py1)),
+    })
+    own(mesh.finish(name, {'rust': frame_mat}), sal, name)
+
+for rail_x, side_name in ((-.95, 'left'), (.95, 'right')):
+    # Three segments make the sag plain from either long side.
+    for segment, (z0, z1, y0, y1) in enumerate(((-1.0, 1.2, .79, .65),
+                                                  (1.2, 3.5, .65, .57),
+                                                  (3.5, 5.85, .57, .70)), 1):
+        beam_box(f'sal-pipe-trailer:frame-rail-{side_name}-{segment}',
+                 (rail_x, (y0+y1)/2, (z0+z1)/2), (.12, .14, z1-z0), (404, 242, 473, 265))
+for index, z in enumerate((-1.0, .2, 1.5, 2.8, 4.2, 5.65), 1):
+    sag = .79 - .20 * math.sin(math.pi * (z + 1.0) / 6.65)
+    beam_box(f'sal-pipe-trailer:frame-crossmember-{index}', (0, sag, z), (2.02, .14, .12),
+             (429, 244, 474, 266))
+
+# A box load carries the clean bright pipe cut faces from the rear photograph.
+pipe_load = Mesh()
+rear_end_rect = (65, 132, 450, 390)
+side_load_rect = (401, 205, 982, 289)
+photo_box(pipe_load, -.91, .91, .84, 2.08, -1.0, 5.78, {
+    '+z': ('ends', sal_details['rear'], rear_end_rect),
+    '-z': ('side', sal_details['side'], side_load_rect),
+    '+x': ('side', sal_details['side'], side_load_rect),
+    '-x': ('side', sal_details['side'], side_load_rect),
+    '+y': ('side', sal_details['side'], (410, 206, 980, 250)),
+    '-y': ('side', sal_details['side'], (410, 252, 980, 286)),
+})
+own(pipe_load.finish('sal-pipe-trailer:photographed-pipe-stack',
+                     {'ends': sal_details['rear'].material(.9),
+                      'side': sal_details['side'].material(.9)}),
+    sal, 'sal-pipe-trailer:photographed-pipe-stack')
+
+# Trailer tandem wheels and simple photo-kit hitch, separate from the frame.
+for axle_index, z in enumerate((3.65, 4.45), 1):
+    for side_name, x in (('left', -1.06), ('right', 1.06)):
+        trailer_wheel = Mesh()
+        tire_uv = lambda i, d, r, a: sal_details['side'].uv(800 - math.cos(a)*34*.88, 312-math.sin(a)*34*.88)
+        face_uv = lambda a, f: sal_details['side'].uv(800-math.cos(a)*32*f*.88, 312-math.sin(a)*32*f*.88)
+        radius = .48
+        lathe(trailer_wheel, 'side', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+              [(-.14, radius*.9), (-.11, radius), (.11, radius), (.14, radius*.9)],
+              tire_uv, sides=14,
+              cap_start=('side', lambda a, f: face_uv(a, f*.9)),
+              cap_end=('side', lambda a, f: face_uv(a, f*.9)))
+        own(trailer_wheel.finish(f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}',
+                                 {'side': sal_side.material(.86)}), sal,
+            f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}')
+for name, center, size in (
+    ('hitch-tongue', (0, .56, -1.38), (.16, .14, .9)),
+    ('hitch-crossbar', (0, .56, -1.05), (1.2, .14, .14)),
+    ('front-headboard', (0, .95, -1.0), (1.92, .46, .12)),
+    ('rear-tailbar', (0, .67, 5.84), (1.92, .18, .12)),
+):
+    beam_box(f'sal-pipe-trailer:{name}', center, size, (404, 242, 473, 265))
+
+for part in sal.children_recursive:
+    if part.type == 'MESH':
+        part['part'] = part.name
+sal['assetRoot'] = True
+
+for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent,oasis,sal):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -420,9 +588,14 @@ for image_name, scale in {
         'bound-stone-front': .25, 'bound-stone-side': .25,
         'decoy-tent-front': .5,
         'decoy-oasis-overhead': .375,
+        'sal-pipe-trailer-side': .25, 'sal-pipe-trailer-front': .25,
+        'sal-pipe-trailer-rear': .25, 'sal-pipe-trailer-overhead': .25,
 }.items():
-    image = LOADED_PHOTOS[image_name].image
-    image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
+    images = [LOADED_PHOTOS[image_name].image]
+    if image_name.startswith('sal-pipe-trailer-'):
+        images.append(sal_details[image_name.removeprefix('sal-pipe-trailer-')].image)
+    for image in images:
+        image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
 town.export_glb(glb)
 
 # Review renders always come from the exported GLB after a fresh empty scene.
@@ -455,30 +628,54 @@ def show(identifier,loc,target,scale,resolution=(700,500)):
         if obj.type=='MESH': obj.hide_render=not obj.name.startswith(identifier)
     shot(identifier+'-three-quarter',loc,target,scale,resolution)
 
-show('mirage-billboard',(8.5,1.35,8.5),(0,2.7,0),10.5,(1200,400))
-shot('mirage-billboard-front',(0,3.2,12),(0,3.2,0),9.2,(1200,400))
-shot('mirage-billboard-side',(12,3.2,0),(0,2.7,0),7,(600,900))
-show('gunn-turret',(-7.2,1.3,8.1),(-.4,1.3,0),5.4,(700,700))
-shot('gunn-turret-side',(-.5,1.4,12),(-.5,1.4,0),5.4,(700,700))
-shot('gunn-turret-barrel',(-12,1.4,0),(0,1.4,0),4.2,(700,700))
-shot('gunn-turret-overhead',(0,12,0),(0,1,0),4.4,(700,700))
-show('gunn-rock',(7.2,1.3,8.1),(0,.68,0),3.9,(1000,562))
-shot('gunn-rock-side',(0,1.5,12),(0,.68,0),3.8,(1000,562))
-shot('gunn-rock-untouched',(0,1.5,-12),(0,.68,0),3.8,(1000,562))
-show('kettles-chair',(6.5,1.5,8.1),(0,1.6,0),3.8,(700,700))
-shot('kettles-chair-side',(0,1.6,12),(0,1.6,0),3.6,(700,700))
-shot('kettles-chair-front',(12,1.6,0),(0,1.6,0),3.6,(700,700))
-show('toll-cabinet',(6.8,2.2,7.6),(.2,.95,.2),2.7,(700,900))
-shot('toll-cabinet-front',(0,.95,7),(0,.95,0),2.3,(700,900))
-shot('toll-cabinet-side',(7,.95,0),(0,.95,0),2.3,(700,900))
-show('bound-sign',(6.6,2.6,7.5),(0,1.2,0),2.25,(964,1024))
-shot('bound-sign-front',(0,1.2,8),(0,1.2,0),2.25,(964,1024))
-show('bound-stone',(7,2.0,7),(0,.5,0),2.0,(900,700))
-shot('bound-stone-front',(0,.5,8),(0,.5,0),1.8,(900,700))
-shot('bound-stone-side',(8,.5,0),(0,.5,0),1.5,(900,700))
-show('mirage-decoy-tent',(7,2.5,7),(1.5,2.4,-.1),8.0,(1200,800))
-shot('mirage-decoy-tent-front',(0,2.5,12),(0,2.5,0),7.2,(1200,800))
-shot('mirage-decoy-tent-side',(12,2.5,0),(1.5,2.4,-.1),5.0,(800,800))
-show('mirage-decoy-oasis',(7,3,7),(0,.05,0),3.25,(1000,833))
-shot('mirage-decoy-oasis-overhead',(0,10,0),(0,0,0),3.25,(1000,833))
-print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))
+if not args.round4_only:
+    show('mirage-billboard',(8.5,1.35,8.5),(0,2.7,0),10.5,(1200,400))
+    shot('mirage-billboard-front',(0,3.2,12),(0,3.2,0),9.2,(1200,400))
+    shot('mirage-billboard-side',(12,3.2,0),(0,2.7,0),7,(600,900))
+    show('gunn-turret',(-7.2,1.3,8.1),(-.4,1.3,0),5.4,(700,700))
+    shot('gunn-turret-side',(-.5,1.4,12),(-.5,1.4,0),5.4,(700,700))
+    shot('gunn-turret-barrel',(-12,1.4,0),(0,1.4,0),4.2,(700,700))
+    shot('gunn-turret-overhead',(0,12,0),(0,1,0),4.4,(700,700))
+    show('gunn-rock',(7.2,1.3,8.1),(0,.68,0),3.9,(1000,562))
+    shot('gunn-rock-side',(0,1.5,12),(0,.68,0),3.8,(1000,562))
+    shot('gunn-rock-untouched',(0,1.5,-12),(0,.68,0),3.8,(1000,562))
+    show('kettles-chair',(6.5,1.5,8.1),(0,1.6,0),3.8,(700,700))
+    shot('kettles-chair-side',(0,1.6,12),(0,1.6,0),3.6,(700,700))
+    shot('kettles-chair-front',(12,1.6,0),(0,1.6,0),3.6,(700,700))
+    show('toll-cabinet',(6.8,2.2,7.6),(.2,.95,.2),2.7,(700,900))
+    shot('toll-cabinet-front',(0,.95,7),(0,.95,0),2.3,(700,900))
+    shot('toll-cabinet-side',(7,.95,0),(0,.95,0),2.3,(700,900))
+    show('bound-sign',(6.6,2.6,7.5),(0,1.2,0),2.25,(964,1024))
+    shot('bound-sign-front',(0,1.2,8),(0,1.2,0),2.25,(964,1024))
+    show('bound-stone',(7,2.0,7),(0,.5,0),2.0,(900,700))
+    shot('bound-stone-front',(0,.5,8),(0,.5,0),1.8,(900,700))
+    shot('bound-stone-side',(8,.5,0),(0,.5,0),1.5,(900,700))
+    show('mirage-decoy-tent',(7,2.5,7),(1.5,2.4,-.1),8.0,(1200,800))
+    shot('mirage-decoy-tent-front',(0,2.5,12),(0,2.5,0),7.2,(1200,800))
+    shot('mirage-decoy-tent-side',(12,2.5,0),(1.5,2.4,-.1),5.0,(800,800))
+    show('mirage-decoy-oasis',(7,3,7),(0,.05,0),3.25,(1000,833))
+    shot('mirage-decoy-oasis-overhead',(0,10,0),(0,0,0),3.25,(1000,833))
+
+# Round 4 contains only Sal's rig. Each frame is from the imported GLB in the
+# empty review scene; the side photo and render share identical dimensions.
+def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
+    for obj in scene.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = not obj.name.startswith('sal-pipe-trailer')
+    scene.render.resolution_x, scene.render.resolution_y = resolution
+    camera.location = game_vector(eye)
+    camera.rotation_euler = (game_vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+    if ortho:
+        camera.data.type = 'ORTHO'
+        camera.data.ortho_scale = ortho
+    else:
+        camera.data.type = 'PERSP'
+        camera.data.lens = lens
+    scene.render.filepath = str(render_dir / f'sal-pipe-trailer-{name}.png')
+    bpy.ops.render.render(write_still=True)
+
+sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1024, 504), ortho=13.4)
+sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (800, 504), lens=38)
+sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (800, 504), lens=38)
+print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
+                  'newAsset':'sal-pipe-trailer'}))

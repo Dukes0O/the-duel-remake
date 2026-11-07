@@ -639,13 +639,16 @@ try {
       if (generator.script === 'tools/blender/town-peace-props.py') {
         const names = new Set(gltf.nodes.map(node => node.name || ''));
         for (const root of ['toll-cabinet', 'bound-sign', 'bound-stone',
-          'mirage-decoy-tent', 'mirage-decoy-oasis']) {
+          'mirage-decoy-tent', 'mirage-decoy-oasis', 'sal-pipe-trailer']) {
           assert.ok(names.has(root), `missing named prop root ${root}`);
         }
         for (const part of ['toll-cabinet:open-drawer-box', 'bound-sign:hand-painted-board',
           'bound-stone:smiley-crossed-tools-marker', 'mirage-decoy-tent:smaller-rear-board',
           'mirage-decoy-oasis:traced-thin-tarpaulin', 'mirage-decoy-oasis:lifted-corner-1',
-          'mirage-decoy-oasis:rusty-peg-1', 'mirage-decoy-oasis:guy-line-1']) {
+          'mirage-decoy-oasis:rusty-peg-1', 'mirage-decoy-oasis:guy-line-1',
+          'sal-pipe-trailer:pickup-body', 'sal-pipe-trailer:photographed-pipe-stack',
+          'sal-pipe-trailer:frame-rail-left-1', 'sal-pipe-trailer:pickup-wheel-front-left',
+          'sal-pipe-trailer:trailer-wheel-1-left']) {
           assert.ok(names.has(part), `missing named prop part ${part}`);
         }
       }

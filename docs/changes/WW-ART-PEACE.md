@@ -49,16 +49,13 @@ shows the full sheet from about 10 m away.
 
 ## Checks
 
-- Blender export and GLB re-import/render succeeded. The front reference and
-  exported front render were compared at matching size; the three-quarter view
-  shows the open drawer as a box.
-- `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs`: pending
-  until all five requested props are in the candidate.
-- Browser and in-game look checks: Claude should review the round-3 sheet after
-  it is assembled. This art lane does not run Chrome.
-- Added named-root and named-part assertions for the five new props to the
-  existing Blender candidate check. No existing assertion was weakened or
-  removed. Race fingerprints: not applicable; no race rules changed.
+- Blender export and GLB re-import/render results are recorded under each
+  round below.
+- The art lane does not run browser or in-game look checks; Claude reviews each
+  submitted sheet.
+- Added named-root and named-part assertions to the existing Blender candidate
+  check. No existing assertion was weakened or removed. Race fingerprints are
+  not applicable; no race rules changed.
 
 ## Removed
 
@@ -67,3 +64,15 @@ shows the full sheet from about 10 m away.
 ## Round 3
 
 Five flat props pass; see `docs/board/looks/ww-art-peace/round-3-review.md`. Removed: nothing.
+
+## Round 4 partial: Sal's pipe trailer
+
+Added only `sal-pipe-trailer`, using the committed four-view photos. Its pickup body is carved from the side, front, rear and overhead views. The separate trailer has a sagging photo-kit frame, a box carrying the photographed pipe stack and bright cut ends, and lathed wheels. The source photographs were not changed. The previous nine props and round-3 sheet remain in place.
+
+The exported `peace-props.glb` was re-imported into an empty Blender scene for the side and two three-quarter renders. The comparison sheet is `docs/board/looks/ww-art-peace/round-4.jpg` (1600 by 788 pixels, 67,793 bytes). Readback: 24,352 triangles and 1,994,940 bytes, within the 40,000-triangle and 2,000,000-byte budgets.
+
+Checks run: Blender export, GLB re-import and three review renders succeeded; `node tools/test-blender-output.mjs` passed (304 checks, 0 failed); `node tools/test-repo-hygiene.mjs` passed. The test added named-root and named-part assertions for the new vehicle; no assertion was changed or removed. Browser checks and in-game look checks were not run here; Claude should judge the sheet, with attention to the simplified trailer tires and flatter photo-box sides. Race fingerprints: not applicable; no simulation files changed.
+
+### Removed
+
+- No files or behavior removed.
