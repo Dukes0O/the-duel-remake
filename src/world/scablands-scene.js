@@ -6,6 +6,7 @@ import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {oldSmokeGlowingVent} from './jobs/old-smoke.js';
+import {createTheWhitesScene} from './the-whites-scene.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -120,10 +121,12 @@ function addFurnaceFire(parent,place,scale=1.5){
     chimneyX:chimney.x, chimneyY:6.7, chimneyZ:chimney.z};
 }
 
-export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().loadAsync(path)}={}){
+export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().loadAsync(path),openMarks=course.def.openMarks??[]}={}){
   const group=new THREE.Group();group.name='The Scablands';
   let retired=false;
   let townDraw=null;
+  const whites=createTheWhitesScene({openMarks,loadAsset});
+  if(whites)group.add(whites.group);
   const townLayout=getScablandsTownLayout();
   const addTown=async()=>{
     if(!townLayout)return;
@@ -256,7 +259,7 @@ export function createScablandsScene(course,{loadAsset=path=>new GLTFLoader().lo
   });
   function dispose(){
     if(retired)return;retired=true;
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
