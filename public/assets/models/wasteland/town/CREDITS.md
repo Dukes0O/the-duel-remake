@@ -116,6 +116,28 @@ Prompt:
 
 - `rusted-steel.jpg`: compressed 384 x 384 repeat texture for the sign backing, steel work and welded salvage.
 
+## Town safety fence and wall references
+
+The four town safety elevations below were generated with OpenAI image
+generation on 7 November 2026. Each is one dead-on view of an original
+fictional 8 m run on plain grey ground. The generated photos are retained as
+compressed JPEGs and traced into the corresponding modular models.
+
+- `textures/town-safety-fence-wood.jpg`: weathered timber post-and-rail fence.
+- `textures/town-safety-fence-chain.jpg`: sagging chain-link mesh on rusted
+  posts.
+- `textures/town-safety-fence-chain-alpha.png`: transparent, downsampled
+  derivative of the chain-link photo for the see-through mesh surface.
+- `textures/town-safety-wall-scrap.jpg`: salvaged sheet metal, car panels and
+  doors assembled into a wall.
+- `textures/town-safety-wall-steel.jpg`: corrugated steel sheets on a frame.
+
+Prompt set: one straight 8 m timber fence run, one straight 8 m sagging
+chain-link fence run, one straight 8 m wall of salvaged sheet and car parts,
+and one straight 8 m corrugated steel wall. Each is photographed exactly
+side-on as a single orthographic elevation, in flat diffuse light on a plain
+neutral grey ground. No people, labels, logos, or extra views.
+
 ## Earlier accepted material crops retained for this model
 
 These pictures were generated for round 2 and remain credited to OpenAI image
