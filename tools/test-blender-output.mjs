@@ -60,6 +60,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-borer',script:'tools/blender/town-borer.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/borer.glb'],budget:40000,maxBytes:4000000},
   {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.qa-dist/town-art-power-round-4',
     glb:['public/assets/models/wasteland/town/power.glb'],budget:22600,
     budgets:{windmill:1800,'power-pole':1800,generator:5000,'solar-rack':5000,'fuel-depot':9000},maxBytes:3000000},
@@ -827,6 +829,38 @@ try {
       }
     });
   }
+  check('TOWN-ART-BORER family exports its articulated cutter and tunnel nodes within the card budget', () => {
+    const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/borer.glb'));
+    assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+    assert.equal(bytes.readUInt32LE(8), bytes.length);
+    assert.ok(bytes.length <= 4_000_000, `${bytes.length} bytes exceeds the card's 4 MB limit`);
+    const jsonLength = bytes.readUInt32LE(12);
+    const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
+    const names = new Set(gltf.nodes.map(node => node.name));
+    for (const name of ['town-borer','borer','borer:head','borer:belt','borer:lamp',
+      'tunnel-ring','tunnel-ring:lamp','portal']) assert.ok(names.has(name), `missing scene node ${name}`);
+    const triangles = gltf.meshes.flatMap(mesh => mesh.primitives)
+      .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 1000 && triangles <= 40_000, `${triangles} triangles`);
+    for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+      const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+      assert.deepEqual(coordinates, ['TEXCOORD_0'], 'borer primitive keeps only TEXCOORD_0');
+      const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+      assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'borer UV accessor uses float pairs');
+      const view = gltf.bufferViews[uv.bufferView];
+      const binaryOffset = 20 + jsonLength + 8;
+      const start = binaryOffset + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+      const stride = view.byteStride ?? 8;
+      const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+      for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+        const value = bytes.readFloatLE(start + i * stride + axis * 4);
+        min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+      }
+      assert.ok(min[0] < max[0] && min[1] < max[1], 'borer TEXCOORD_0 covers a range');
+    }
+    for (const material of gltf.materials) assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .300001,
+      `${material.name} metallic factor exceeds .3`);
+  });
   check('TOWN-ART-WATER family exports six grounded nodes and its per-material photos', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/water.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
