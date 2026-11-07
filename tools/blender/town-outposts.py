@@ -39,9 +39,8 @@ bpy.context.preferences.filepaths.save_version = 0
 blend.parent.mkdir(parents=True, exist_ok=True)
 render.mkdir(parents=True, exist_ok=True)
 
-# Pixel measures from photo_grid.py overlays. Front/rear scales are derived
-# from the shared side scale; the generated end views are proportionally
-# normalized in the pick functions below instead of assigning new metre scales.
+# Pixel measures from photo_grid.py overlays. Front/rear projections use the
+# side view's shared metre scale rather than independent end-view scales.
 # The new rear reference includes the damaged airframe above the bus; the table
 # removes that unreachable patch instead of letting it widen the carved hull.
 table = {
