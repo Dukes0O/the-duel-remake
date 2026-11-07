@@ -27,3 +27,11 @@ The silt is one heap laid out in rings round the gear, about 14 m across, highes
 ### Removed
 
 The six smooth silt blobs, the regular ring gear with its separate tooth blocks, and the rotten-tooth picture, which the traced gear does not need.
+
+## Round 3: the spillway, built by Claude
+
+The chute stands against the dam's east face between the piers at x = 46 and x = 67: 12 m wide, its floor a metre proud of the face from the crest to the foot, then a flat apron out to z = -30. Its walls are 1.4 m thick and 4.2 m high on the face, broken along their tops, and 1.6 m kerbs along the apron. Fifteen copies of the Bowl's crushed van, bus and RV are heaped at its foot as one part, `dam:spillway-wrecks`, which SEA-JOBS-2 hides. The file reads back at 3,024,876 bytes and 50,781 triangles.
+
+### Removed
+
+The old spillway ramp, which stood about 60 m out in the basin, its eighteen wrecks along the slope, and its six silt blobs.

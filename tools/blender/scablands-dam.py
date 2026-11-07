@@ -704,21 +704,67 @@ for x in (22, 27):
     beam(f'dam-boiler-steam-riser-{x}', (x, 4.8, 1.6), (x, 8.6, 1.6), .22,
          materials['rusted-steel'], 'dam:boilers')
 
-# Spillway down the east side, blocked by a layered pile of rusted wrecks.
-spill_x, spill_z = 85, 25
-spill_top_y, spill_end_z = 42, 35
-mesh('dam:spillway', [(spill_x - 7, spill_top_y, 5), (spill_x + 7, spill_top_y, 5),
-     (spill_x + 7, .3, spill_end_z), (spill_x - 7, .3, spill_end_z)], [(0, 1, 2, 3)],
-     materials['cracked-concrete'], 'dam:spillway', uv_scale=5)
-for side in (-1, 1):
-    wall_vertices = [(spill_x + side * 6.8, spill_top_y, 5), (spill_x + side * 9.2, spill_top_y, 5),
-                     (spill_x + side * 11, .3, spill_end_z), (spill_x + side * 6.8, .3, spill_end_z)]
-    mesh(f'dam-spillway-retaining-wall-{side}', wall_vertices, [(0, 1, 2, 3)],
-         materials['cracked-concrete'], 'dam:spillway', uv_scale=5)
-    beam(f'dam-spillway-retaining-cap-{side}', wall_vertices[1], wall_vertices[2], .38,
-         materials['galvanised-tin'], 'dam:spillway')
-# Reuse the game's actual crushed van, bus and RV from the Bowl debris model.
-# These have joined bodies, frames and wheels; place twelve through the chute.
+# Spillway: a deep concrete chute down the dam's east face, between the piers at
+# x = 46 and x = 67, as on the reference photo's right side. Its floor stands a
+# metre proud of the sloping face from the crest to the foot, then turns out
+# across the basin floor as a flat apron. Raised side walls, broken along their
+# tops, run its whole length. Floor, walls and apron wear the cracked concrete,
+# which reads apart from the photographed face around it.
+SPILL_X0, SPILL_X1 = 50.0, 62.0
+SPILL_WALL = 1.4
+SPILL_DEPTH = 4.2
+SPILL_APRON_END = -30.0
+
+def spill_floor_point(t):
+    """t from 0 at the crest to 1 at the apron's far end: (height, z)."""
+    if t <= .7:
+        height = 53 * (1 - t / .7)
+        return height, -54 - .15 * height + 1.0
+    run = (t - .7) / .3
+    return .25, -53 + (SPILL_APRON_END + 53) * run
+
+spill_rows = [i / 24 for i in range(25)]
+spill_floor = []
+for t in spill_rows:
+    height, z = spill_floor_point(t)
+    spill_floor.append(((SPILL_X0, height, z), (SPILL_X1, height, z)))
+floor_vertices = [p for pair in spill_floor for p in pair]
+floor_faces = [(2 * i, 2 * i + 2, 2 * i + 3, 2 * i + 1) for i in range(len(spill_rows) - 1)]
+spill = mesh('dam:spillway', floor_vertices, floor_faces, materials['cracked-concrete'], 'dam:spillway', uv_scale=5)
+# Dress the floor along its length, down the face and out over the apron alike.
+spill_uv = spill.data.uv_layers.active
+for loop in spill.data.loops:
+    co = spill.data.vertices[loop.vertex_index].co
+    spill_uv.data[loop.index].uv = (co.x / 5, (co.z - co.y) / 5)
+
+rng_wall = np.random.default_rng(11)
+for side, x_in in ((-1, SPILL_X0), (1, SPILL_X1)):
+    x_out = x_in + side * SPILL_WALL
+    vertices, faces = [], []
+    for index, t in enumerate(spill_rows):
+        height, z = spill_floor_point(t)
+        # Along the apron the walls are low kerbs, so the heap stands above them.
+        depth = SPILL_DEPTH if t <= .7 else 1.6
+        broken = depth - (rng_wall.uniform(.3, 1.2) if rng_wall.random() < .3 else rng_wall.uniform(0, .2))
+        top = height + broken
+        vertices += [(x_in, height - .3, z), (x_in, top, z), (x_out, top, z), (x_out, height - .3, z)]
+    for index in range(len(spill_rows) - 1):
+        a, b = 4 * index, 4 * (index + 1)
+        faces += [(a, b, b + 1, a + 1), (a + 1, b + 1, b + 2, a + 2), (a + 2, b + 2, b + 3, a + 3)]
+    last = 4 * (len(spill_rows) - 1)
+    faces += [(0, 1, 2, 3), (last + 3, last + 2, last + 1, last)]
+    wall = mesh(f'dam-spillway-wall-{side}', vertices, faces, materials['cracked-concrete'], 'dam:spillway', uv_scale=4)
+    wall_uv = wall.data.uv_layers.active
+    for polygon in wall.data.polygons:
+        if abs(polygon.normal.x) > .6:
+            for loop_index in polygon.loop_indices:
+                co = wall.data.vertices[wall.data.loops[loop_index].vertex_index].co
+                wall_uv.data[loop_index].uv = (-co.y / 4, co.z / 4)
+
+# The wrecks are the game's own crushed van, bus and RV from the Bowl's debris
+# model, rusted dark, heaped from wall to wall at the foot of the chute and up
+# its last stretch of slope. They are one part, `dam:spillway-wrecks`, which
+# SEA-JOBS-2 hides when it brings its own solid cars.
 crush_path = root / 'public/assets/models/wasteland/bowl/crush.glb'
 before_import = set(scene.objects)
 bpy.ops.import_scene.gltf(filepath=str(crush_path))
@@ -726,8 +772,7 @@ imported = set(scene.objects) - before_import
 imported_names = {obj.name for obj in imported}
 families = {}
 for kind in ('van', 'bus', 'rv'):
-    prefix = f'{kind}-crushed-'
-    family = [obj for obj in imported if obj.name.startswith(prefix)]
+    family = [obj for obj in imported if obj.name.startswith(f'{kind}-crushed-')]
     if not family:
         raise RuntimeError(f'Missing Bowl crushed vehicle source: {kind}')
     families[kind] = family
@@ -736,18 +781,6 @@ for kind in ('van', 'bus', 'rv'):
             replacement = materials['iron-dark'] if 'wheel' in obj.name else materials['rusted-steel']
             obj.data.materials.clear()
             obj.data.materials.append(replacement)
-for obj in imported:
-    if not any(obj in family for family in families.values()):
-        bpy.data.objects.remove(obj, do_unlink=True)
-
-placements = [
-    (81.0, 7.5, .2), (85.0, 8.0, 1.0), (89.0, 8.8, .5),
-    (88.5, 12.0, .8), (84.5, 12.8, .1), (80.8, 13.5, 1.1),
-    (81.0, 17.0, .7), (85.2, 17.8, 1.3), (89.0, 18.5, .2),
-    (88.7, 22.0, 1.2), (84.8, 22.8, .3), (80.8, 23.5, .8),
-    (81.0, 27.0, .1), (85.1, 27.8, .9), (89.0, 28.5, .4),
-    (88.5, 32.0, 1.0), (84.5, 32.8, .2), (80.8, 33.5, .7),
-]
 templates = {}
 for kind, family in families.items():
     marker = next(obj for obj in family if obj.name == f'{kind}-crushed-assembly')
@@ -755,21 +788,31 @@ for kind, family in families.items():
         'center': marker.matrix_world.translation.copy(),
         'meshes': [(obj, obj.matrix_world.copy()) for obj in family if obj.type == 'MESH'],
     }
-for index, (x, z, stack_y) in enumerate(placements):
+wrecks_root = bpy.data.objects.new('dam:spillway-wrecks', None)
+scene.collection.objects.link(wrecks_root)
+wrecks_root.parent = root_obj
+wrecks_root['part'] = 'dam:spillway-wrecks'
+parts.append(wrecks_root)
+bpy.context.view_layer.update()
+# (x, z, lift above the apron, yaw, tilt): nothing could stay on the chute's
+# steep face, so every wreck lies at its foot, packed from wall to wall against
+# the dam and spilling out over the apron, three deep at the wall.
+placements = [
+    (52.4, -51.8, .2, -.5, .12), (56.0, -51.4, .1, .9, -.2), (59.8, -52.0, .3, .2, .3),
+    (52.8, -47.2, .1, 1.3, -.1), (56.4, -46.6, .2, -.3, .25), (60.2, -47.6, .1, .6, -.3),
+    (52.6, -42.6, .1, -1.1, .2), (56.8, -42.0, .1, 1.6, .1), (60.0, -43.0, .2, .1, -.2),
+    (54.2, -50.2, 2.0, .4, .5), (58.0, -49.6, 2.2, -1.0, -.4), (55.0, -45.0, 1.7, .9, -.3),
+    (59.0, -44.8, 1.6, -.6, .4), (55.8, -51.2, 3.9, .3, -.6), (57.6, -38.6, .2, 2.2, .3),
+]
+for index, (x, z, lift, yaw, tilt) in enumerate(placements):
     kind = ('van', 'bus', 'rv')[index % 3]
-    y = spill_top_y - (z - 5) * ((spill_top_y - .3) / (spill_end_z - 5)) + .12 + stack_y
-    wreck_root = bpy.data.objects.new(f'dam-spillway-wreck-{index}-{kind}', None)
-    scene.collection.objects.link(wreck_root)
-    wreck_root.parent = root_obj
-    wreck_root.location = town.game_vector((x, y, z))
-    wreck_root['part'] = 'dam:spillway'
+    height = .25
+    target = town.game_vector((x, height + lift, z))
     template = templates[kind]
-    target = town.game_vector((x, y, z))
-    yaw = (-.72, .38, -.18, .92, -.42, .16)[index % 6]
-    tilt = (.18, -.24, .36, -.12)[index % 4]
     source_points = [world @ Vector(corner) for source, world in template['meshes'] for corner in source.bound_box]
-    source_extent = max(max(point[axis] for point in source_points) - min(point[axis] for point in source_points) for axis in range(3))
-    scale = 6.5 / max(source_extent, .01)
+    source_extent = max(max(point[axis] for point in source_points) - min(point[axis] for point in source_points)
+                        for axis in range(3))
+    scale = 6.4 / max(source_extent, .01)
     rotation = Matrix.Rotation(yaw, 4, 'Z') @ Matrix.Rotation(tilt, 4, 'X')
     transform = Matrix.Translation(target) @ rotation @ Matrix.Scale(scale, 4) @ Matrix.Translation(-template['center'])
     for source, source_world in template['meshes']:
@@ -777,26 +820,13 @@ for index, (x, z, stack_y) in enumerate(placements):
         duplicate.data = source.data
         duplicate.name = f'dam-spillway-wreck-{index}-{source.name}'
         scene.collection.objects.link(duplicate)
-        duplicate.parent = root_obj
+        duplicate.parent = wrecks_root
         duplicate.matrix_parent_inverse = Matrix.Identity(4)
         duplicate.matrix_world = transform @ source_world
 for object_name in imported_names:
     obj = bpy.data.objects.get(object_name)
     if obj is not None:
         bpy.data.objects.remove(obj, do_unlink=True)
-
-# Wet silt packs into the remaining gaps and softens the exposed chute edges.
-for index, (x, z, radius) in enumerate(((80, 12, .8), (90, 13, .65), (84, 18, .72),
-                                        (80, 24, .65), (91, 27, .85), (84, 31, .7))):
-    y = spill_top_y - (z - 5) * ((spill_top_y - .3) / (spill_end_z - 5)) + .12
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1,
-                                         location=town.game_vector((x, y, z)))
-    patch = bpy.context.object
-    patch.name = f'dam-spillway-wet-silt-{index}'
-    patch.scale = (radius * 2.0, radius * .8, radius * .22)
-    patch.rotation_euler[0] = math.radians(54)
-    patch.data.materials.append(silt_material)
-    attach(patch, patch.name, 'dam:spillway')
 
 # The gatehouse stands on its own raised pad, well above the bed.
 gx, gy, gz = 45, 30, -48
@@ -913,8 +943,8 @@ views = [
     ('dam-match', (0, 27, 220), (0, 27, -57), 38),
     ('dam-context', (159, 79, 128), (12, 20, -25), 36),
     ('filling-shed-interior', (-17, 4.0, -5), (-17, 5.5, -37), 35),
-    ('spillway', (104, 30, 60), (85, 18, 20), 42),
-    ('wrecks', (111, 36, 35), (85, 15, 20), 50),
+    ('spillway', (64, 7, -14), (56, 6, -50), 30),
+    ('wrecks', (70, 1.6, -30), (56, 2, -48), 40),
     ('gatehouse', (53, 34, -35), (45, 32, -48), 52),
     ('gear-old', (13, 2.0, 28), (13, 1.2, 8), 40),
 ]
@@ -998,8 +1028,10 @@ def load_panel(path, contain=False, target=(800,450)):
     return panel
 
 sheet_pixels = np.empty((900,1600,3), dtype=np.uint8)
-sheet_pixels[:450,:800] = load_panel(raw / 'gear-old.jpg')
-sheet_pixels[:450,800:] = load_panel(gear_view)
+chute_view = render_detail('spillway-without-wrecks', (64, 7, -14), (56, 6, -50),
+    ('dam:face', 'dam-buttress-', 'dam:spillway', 'dam-spillway-wall'), focal=30, size=(800,450))
+sheet_pixels[:450,:800] = load_panel(raw / 'spillway.jpg')
+sheet_pixels[:450,800:] = load_panel(chute_view)
 sheet_pixels[450:,:] = load_panel(dam_view, target=(1600,450))
 sheet_rgba = np.concatenate((sheet_pixels, np.full((900,1600,1),255,dtype=np.uint8)), axis=2)
 sheet_image = bpy.data.images.new('WW-ART-DAM-2 review sheet', width=1600, height=900, alpha=False)
