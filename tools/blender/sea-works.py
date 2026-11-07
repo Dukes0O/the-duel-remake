@@ -263,10 +263,10 @@ shot('causeway',['causeway'],(70,2.4,0),(0,2.4,0),(1000,420),ortho=26)
 shot('causeway-quarter',['causeway'],(14,1.3,20),(0,3,-8),(1200,520),lens=28)
 shot('causeway-top',['causeway'],(5,7,14),(0,4,-4),(1200,520),lens=35)
 def gate_open(opened):
- for name,angle in (('harbour-gate-left',math.radians(-82)),('harbour-gate-right',math.radians(82))):
+ for name,angle in (('harbour-gate-left',math.radians(-90)),('harbour-gate-right',math.radians(90))):
   ob=next((o for o in scene.objects if o.name.startswith(name)),None)
   if ob:
-   ob.rotation_mode='XYZ'; ob.rotation_euler[2]=angle if opened else 0
+   ob.rotation_mode='XYZ'; ob.rotation_euler[1]=angle if opened else 0
  scene.view_layers.update()
 shot('harbour-gate-shut',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9)
 gate_open(True);shot('harbour-gate-open',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9);gate_open(False)

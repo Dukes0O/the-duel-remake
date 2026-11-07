@@ -29,6 +29,7 @@
 ## Round 4 work
 
 - Point 1: gave the gate and ramp coping the same dam gatehouse stone photo and UV scale as the harbour wall coping. Both remain at y = 5.55–6 m for a continuous top course.
+- Point 2: the gate leaf mesh origins are already on their outer hinge lines; changed the open pose to a 90-degree swing about the vertical hinge axis, toward seaward, so both leaves remain visible against the frame sides.
 
 ## Removed
 
