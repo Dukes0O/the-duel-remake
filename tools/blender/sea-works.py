@@ -33,6 +33,16 @@ def blend_repeat_edges(p):
  rgba=np.concatenate((rgb/255,np.ones((p.h,p.w,1),dtype=np.float32)),axis=2)[::-1].copy()
  image=bpy.data.images.new('sea-repeat-edge-photo',width=p.w,height=p.h,alpha=False)
  image.pixels.foreach_set(rgba.ravel());image.pack();p.image=image;p._rgb=rgb.astype(np.int16);p._material=None
+# Iron Mule wagon photo measurements (side/end/overhead grids are under .evidence).
+# Rail line is y=0; the Mule recipe places its rails at x=+/-0.83 m (1.66 m
+# gauge) and its named coupling axis at y=0.80 m. This wagon uses the same
+# gauge and coupling height. Side photo: ground/rail line about row 550, deck
+# top about row 250, deck ends about columns 145 and 2025. Scaled to the Mule
+# wagon's 7.0 m frame length, the deck runs x=-3.5..+3.5 m and its top is
+# y=1.12 m; the photo's two visible wheel centres are about columns 430 and
+# 1635, row 460, with radius about 90 px, giving x=-2.44 and +2.09 m,
+# y=0.34 m and r=0.34 m. The two wheels on each axle sit at z=+/-0.83 m.
+# End and overhead grids confirm the paired wheels, deck edges and end beams.
 def build_gear():
  p=photo('sea-old-gear.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(990,5),(5,990),(300,245),(700,245),(300,775),(700,775),(195,512),(830,512)],grey=20))
  loops=trace(solid,(40,20,990,1000),tolerance=1)

@@ -67,3 +67,10 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 
 - Added matched side, end and overhead reference photos for one empty, weathered flat wagon. The side view anchors the two companion views. Credited in the sea texture folder.
 - Removed: none.
+
+## WW-ART-SEA point 2: measured wagon layout
+
+- Measured all three generated views with `tools/photo_grid.py` and saved the grids under `.evidence/` for review.
+- The wagon follows the Mule recipe in commit `146ede6f`: 1.66 m rail gauge (rails at x = +/-0.83 m) and 0.80 m coupling height. Side measurements place the 7 m deck at x = -3.5 to +3.5 m, y = 1.12 m, and its two visible wheel centres near x = -2.44 and +2.09 m, y = 0.34 m, radius 0.34 m; each axle has wheels at z = +/-0.83 m. The measurement comment is in the sea recipe.
+- The named source file is absent from this branch working tree; its lane commit is readable in Git history. No source file was copied or changed.
+- Removed: none.
