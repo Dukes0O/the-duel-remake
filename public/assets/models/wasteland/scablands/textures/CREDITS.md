@@ -206,3 +206,8 @@ existing seawall stone and coping material.
 2026-11-06: an 8 metre stone slipway descends through an old harbour wall. The
 model has a real opening, a sloped deck, stone reveals and the raised seawall
 course.
+
+`sea-causeway-arch.jpg` is an original Codex ImageGen reference photograph
+made 2026-11-06: a low stone railway arch with daylight beyond it. The recipe
+traces the true opening and rebuilds the dark inside, sleepers and rails at
+0.87 metre centers.

@@ -19,6 +19,7 @@ from photo_model import Mesh,Photo,slab,trace,tidy,lathe,box
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; parent=bpy.data.objects.new('sea-works',None); scene.collection.objects.link(parent)
 triangles={}
+scaled_photos=[]
 def finish(mesh,name,mats):
  o=mesh.finish(name,mats);o.parent=parent;o['part']=name;triangles[name]=mesh.triangles();return o
 def photo(file):
@@ -112,16 +113,19 @@ def build_causeway():
   box(m,x-.07,x+.07,4.36,4.55,-20,20,{k:('rail',rail,(0,34,rail.w,52)) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(m,'causeway',{'stone':p.material(),'rail':rail.material()})
 def build_harbour_gate():
- wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-gate.jpg')
- H=6; depth=1.5; face=(0,55,wall.w,300); stone_face=(0,0,stone.w,stone.h)
+ wall=photo('sea-harbour-wall.jpg'); p=photo('sea-harbour-gate.jpg')
+ gate_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~gate_sky); scaled_photos.append(p)
+ H=6; depth=1.5
  m=Mesh()
  frame_mats={'wall':wall.material(),'gate':p.material()}
- for x0,x1,texture_rect in [(-4,-3.72,(118,127,152,701)),(3.72,4,(875,127,910,701))]:
-  box(m,x0,x1,0,5.55,-depth,depth,{'+z':('gate',p,texture_rect),'-z':('gate',p,texture_rect),'+x':('wall',wall,face),'-x':('wall',wall,face),'+y':('wall',wall,face),'-y':('wall',wall,face)})
- box(m,-3.72,3.72,5.15,5.55,-depth,depth,{'+z':('gate',p,(152,95,875,127)),'-z':('gate',p,(152,95,875,127)), '+x':('wall',wall,face),'-x':('wall',wall,face),'+y':('wall',wall,face),'-y':('wall',wall,face)})
+ for x0,x1,texture_rect,side in [(-4,-3.72,(118,127,152,701),(0,55,wall.w*.075,300)),(3.72,4,(875,127,910,701),(wall.w*.925,55,wall.w,300))]:
+  box(m,x0,x1,0,5.55,-depth,depth,{'+z':('gate',p,texture_rect),'-z':('gate',p,texture_rect),'+x':('wall',wall,side),'-x':('wall',wall,side),'+y':('wall',wall,side),'-y':('wall',wall,side)})
+ lintel_side=(wall.w*.4625,55,wall.w*.5375,300)
+ box(m,-3.72,3.72,5.15,5.55,-depth,depth,{'+z':('gate',p,(152,95,875,127)),'-z':('gate',p,(152,95,875,127)), '+x':('wall',wall,lintel_side),'-x':('wall',wall,lintel_side),'+y':('wall',wall,lintel_side),'-y':('wall',wall,lintel_side)})
  finish(m,'harbour-gate-frame',frame_mats)
- cap=Mesh(); box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',stone,stone_face) for k in ['+x','-x','+y','-y','+z','-z']})
- finish(cap,'harbour-gate-coping',{'stone':stone.material()})
+ cap=Mesh(); top_course=(0,8,wall.w,46)
+ box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',wall,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(cap,'harbour-gate-coping',{'stone':wall.material()})
  # Each slab's local origin is its real outer hinge; its photo crop ends at the meeting stile.
  crops=[('harbour-gate-left',(152,127,510,701),-3.72,1),('harbour-gate-right',(514,127,875,701),3.72,-1)]
  for name,(x0,y0,x1,y1),pivot,direction in crops:
@@ -137,6 +141,7 @@ def build_harbour_gate():
   ob=finish(leaf,name,{'steel':p.material()}); ob.location.x=pivot
 def build_harbour_ramp():
  wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-ramp.jpg')
+ ramp_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~ramp_sky); scaled_photos.append(p)
  depth=1.5; face=(0,55,wall.w,300); stone_face=(0,0,stone.w,stone.h)
  m=Mesh()
  for x0,x1,front in [(-10,-4,(0,55,wall.w*.15,300)),(4,10,(wall.w*.85,55,wall.w,300))]:
@@ -164,10 +169,46 @@ def build_harbour_ramp():
   linings.face([(x,0,-1.5),(x,5.15,-1.5),(x,5.15,1.5),(x,-.2,1.5)],
                [wall.uv(band[0],band[3]),wall.uv(band[0],band[1]),wall.uv(band[2],band[1]),wall.uv(band[2],band[3])],'stone',(1 if x<0 else -1,0,0))
  finish(linings,'harbour-ramp-reveals',{'stone':wall.material()})
-steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp)]
+def build_causeway_arch():
+ p=photo('sea-causeway-arch.jpg'); rail=photo('sea-rails.jpg'); dark=photo('dam-wet-silt.jpg')
+ cx=512; half=175; crown=405; spring=470; floor=545; top=64
+ yy,xx=np.ogrid[:p.h,:p.w]
+ t=np.clip((yy-crown)/(spring-crown),0,1)
+ radius=np.where(yy<crown,0,half*np.sqrt(np.maximum(0,1-(1-t)**2)))
+ radius=np.where(yy>spring,half,radius)
+ opening=(yy>=crown)&(yy<=floor)&(np.abs(xx-cx)<=radius)
+ solid=~p.sky([(8,8),(p.w-8,8),(8,p.h-8),(p.w-8,p.h-8)],tolerance=20,grey=20)
+ solid &= ~opening
+ solid[floor:,:]=False
+ def vertical(y):
+  if y>=crown:return (floor-y)*1.6/(floor-crown)
+  return 1.6+(crown-y)*4.4/(crown-top)
+ xscale=4/(2*half)
+ def pos(x,y,d): return (d,vertical(y),(x-cx)*xscale)
+ loops=trace(solid,(24,top,p.w-24,floor),tolerance=1.4,min_area=80)
+ p.bleed(solid)
+ scaled_photos.append(p)
+ arch=Mesh(); slab(arch,'stone',p,loops,pos,-1.5,1.5,wall_scale=.011)
+ finish(arch,'causeway-arch',{'stone':p.material()})
+ # A dark stone barrel follows the opening through the full wall thickness.
+ inner=Mesh(); profile=[(-2,0),(-2,.48),(-1.86,.92),(-1.55,1.27),(-1.02,1.52),(0,1.6),(1.02,1.52),(1.55,1.27),(1.86,.92),(2,.48),(2,0)]
+ for (z0,y0),(z1,y1) in zip(profile,profile[1:]):
+  inner.face([(-1.5,y0,z0),(1.5,y0,z0),(1.5,y1,z1),(-1.5,y1,z1)],
+             [dark.uv(20,20),dark.uv(dark.w-20,20),dark.uv(dark.w-20,dark.h-20),dark.uv(20,dark.h-20)],'inside',(0,0,1))
+ finish(inner,'causeway-arch-inside',{'inside':dark.material()})
+ track=Mesh(); rail_crop=(0,34,rail.w,52); sleeper_crop=(52,16,82,145)
+ for x in np.arange(-3.8,4.0,.65):
+  box(track,x-.12,x+.12,0,.12,-1.25,1.25,{k:('rail',rail,sleeper_crop) for k in ['+x','-x','+y','-y','+z','-z']})
+ for z in (-.87,.87):
+  box(track,-4,4,.12,.27,z-.07,z+.07,{k:('rail',rail,rail_crop) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(track,'causeway-arch-rails',{'rail':rail.material()})
+steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch)]
 for name,fn in steps:
  fn()
  if name==args.through: break
+for p in scaled_photos:
+ width,height=p.image.size; factor=768/max(width,height)
+ p.image.scale(round(width*factor),round(height*factor)); p.image.pack()
 glb.parent.mkdir(parents=True,exist_ok=True); bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True)
 print('SEA_WORKS_PART_TRIANGLES',triangles)
 
@@ -195,6 +236,11 @@ for prefix,axis in (('harbour',0),('causeway',1)):
  for o in selected:
   for step in steps:
    c=o.copy();c.location[axis]+=step;scene.collection.objects.link(c);c.name=o.name+'-extra';extras.append(c)
+if any(o.name.startswith('causeway-arch') for o in meshes):
+ for o in [o for o in meshes if o.name in ('harbour-wall','harbour-coping','harbour-rings')]:
+  for step in (-25,25):
+   c=o.copy();c.rotation_mode='XYZ';c.rotation_euler[2]=math.pi/2;c.location.y-=step
+   scene.collection.objects.link(c);c.name=o.name+'-arch-extra';extras.append(c)
 meshes=[o for o in scene.objects if o.type=='MESH']
 def shot(name,prefixes,eye,target,size,ortho=None,lens=35):
  for o in meshes:o.hide_render=not any(o.name.startswith(p) for p in prefixes)
@@ -224,6 +270,8 @@ def gate_open(opened):
  scene.view_layers.update()
 shot('harbour-gate-shut',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9)
 gate_open(True);shot('harbour-gate-open',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9);gate_open(False)
-shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(20,1.55,20),(0,2.6,0),(1200,700),lens=28)
+shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(10,1.55,17),(0,2.6,0),(1200,700),lens=28)
 shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp','harbour-wall-extra'],(12,1.55,16),(0,.3,0),(1200,700),lens=28)
+shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
+shot('causeway-arch-three-quarter',['causeway-arch','harbour-wall-arch-extra'],(16,1.55,12),(0,1,0),(1200,700),lens=28)

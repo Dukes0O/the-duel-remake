@@ -94,7 +94,7 @@ const generators = [
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
-  { script: 'tools/blender/sea-works.py', args: ['--through', 'harbour-ramp'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
+  { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
