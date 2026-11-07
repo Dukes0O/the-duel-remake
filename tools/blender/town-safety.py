@@ -300,7 +300,10 @@ wall_table={
 wall=carve_object('guard-post:sandbag-wall',tex,wall_table)
 # carve_object stores its calibrated body in photo axes (width,height,length).
 # Reorient those local axes into town X,Y,Z, keeping the measured photos intact.
-wall.data.transform(Matrix(((0,0,1,0),(-1,0,0,0),(0,1,0,0),(0,0,0,1))))
+for vertex in wall.data.vertices:
+    px,py,pz=vertex.co.copy()
+    vertex.co=(pz,-px,py)
+wall.data.update()
 wall.location=town.game_vector((0,0,-2.72));attach(wall)
 # Six weathered timber columns run from ground to the eaves, joined by purlins.
 for ix,x in enumerate((-6.45,0,6.45)):
@@ -525,8 +528,6 @@ def photo_facade(name, image_path, crop, world_x, world_width, world_height, fro
 photo_root=root/'public/assets/models/wasteland/town/textures'
 photo_facade('clinic-photo-facade',photo_root/'town-safety-clinic.jpg',
              (60,190,970,820),-6.3,12.6,6.6,-6.72,parent=BUILDINGS['clinic'],floor_px=820)
-photo_facade('guard-post-photo-facade',photo_root/'town-safety-guard-post.jpg',
-             (0,25,1024,500),-6.3,12.6,3.4,-2.43,parent=BUILDINGS['guard-post'],floor_px=500)
 photo_facade('gate-scrap-photo-door',photo_root/'town-safety-gate.jpg',
              (245,155,780,508),-2.7,5.4,3.4,-3.52,parent=door,floor_px=508)
 
