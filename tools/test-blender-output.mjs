@@ -64,6 +64,8 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
+  {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
+    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:3000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
     glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:3000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
@@ -1023,6 +1025,32 @@ try {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= 0.3,
         `${material.name} metallic factor exceeds the reflection limit`);
     }
+  });
+  check('TOWN-ART-FUN exports every named building within its footprint triangle budget', () => {
+    const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/fun.glb'));
+    assert.equal(bytes.toString('ascii',0,4),'glTF');
+    assert.equal(bytes.readUInt32LE(8),bytes.length);
+    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds the family limit`);
+    const jsonLength=bytes.readUInt32LE(12); const gltf=JSON.parse(bytes.toString('utf8',20,20+jsonLength));
+    const names=new Set(gltf.nodes.map(node=>node.name));
+    const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];
+    for(const id of ids) assert.ok(names.has(id),`missing building ${id}`);
+    for(const id of ['drive-in:screen','wreck-ring:car-1','wreck-ring:car-2','wreck-ring:car-3','wreck-ring:car-4',
+      'big-wheel:wheel','scrap-coaster:train','fountain:water']) assert.ok(names.has(id),`missing named part ${id}`);
+    const budgets={'tavern':5000,'drive-in':14000,'wreck-ring':9000,'big-wheel':9000,'scrap-coaster':14000,
+      'mud-pit':14000,'fun-stall-a':1800,'fun-stall-b':1800,'fountain':1800,'statue':1800};
+    const triangles=Object.fromEntries(ids.map(id=>[id,0]));
+    for(const node of gltf.nodes){
+      if(!Number.isInteger(node.mesh)) continue;
+      const id=node.name.split(':')[0];
+      if(triangles[id]!==undefined) triangles[id]+=gltf.meshes[node.mesh].primitives.reduce((sum,p)=>sum+gltf.accessors[p.indices].count/3,0);
+      for(const primitive of gltf.meshes[node.mesh].primitives){
+        const coordinates=Object.keys(primitive.attributes).filter(name=>name.startsWith('TEXCOORD_'));
+        assert.deepEqual(coordinates,['TEXCOORD_0'],`${node.name} must export one shared UV layer`);
+      }
+    }
+    for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
+    for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
   check('TOWN-ART-PLANTS round 4 exports the photo-carved crusher with named moving parts and photo materials', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));

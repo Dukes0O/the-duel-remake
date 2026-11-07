@@ -33,3 +33,5 @@ Fun, because it is what makes a town worth looking at. All built from junk and s
 - `statue` 1x1: a stern scrap figure with one arm raised and a blank plaque.
 
 ## Claude answers
+
+Tavern, 7 November (Claude): **round 6 passes, merged.** The tavern matches its photos from every side, and the crashed truck now has its cab, bonnet, open bed and four tyres, lying side-on with its nose in the tavern's corner as in the photo (Claude turned it). Short of the photo: the bed's floor shows two dark holes from the cut. The fountain and the big wheel remain, each with its own six rounds.
