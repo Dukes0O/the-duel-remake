@@ -40,3 +40,7 @@ shows the full sheet from about 10 m away.
 ## Removed
 
 - No files or behavior removed.
+
+## Round 3
+
+Five flat props pass; see `docs/board/looks/ww-art-peace/round-3-review.md`. Removed: nothing.
