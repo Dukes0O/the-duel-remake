@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-06/TOWN-ART-FUN/round-3'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-4'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-4.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -106,6 +106,8 @@ print(f'{dest} {dest.stat().st_size}')
 
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
+from photo_carve import carve_object
+from photo_model import Mesh as PhotoMesh, Photo, slab, trace
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -196,79 +198,34 @@ def car(name, center, scale=1.0, material='faded-hand-paint', parent=None):
     beam(name+':front-bumper',(x-.92*scale,y+.54*scale,z-1.92*scale),(x+.92*scale,y+.54*scale,z-1.92*scale),.12*scale,'galvanised-tin',p)
     beam(name+':rear-bumper',(x-.92*scale,y+.51*scale,z+1.92*scale),(x+.92*scale,y+.51*scale,z+1.92*scale),.12*scale,'rusted-steel',p)
 
-# First build: a bent, dished bonnet basin with three connected exhaust arches.
+# Photo-carved bonnet basin from measured side, end and plan grids.
 building_root('fountain','1x1')
-rows=[]; cols=16; row_count=8
-for j in range(row_count):
-    row=[]; v=j/(row_count-1)
-    for i in range(cols+1):
-        u=i/cols; x=(u-.5)*3.05*(1-.13*(abs(v-.5)*2)**1.7)
-        z=(v-.5)*2.75
-        rim=.035 + .29*(abs(u-.5)*2)**2 + .23*(abs(v-.5)*2)**2
-        y=1.08 + rim - .19*math.exp(-(((u-.5)/.28)**2+((v-.49)/.32)**2))
-        row.append((x,y,z))
-    rows.append(row)
-verts=[town.game_vector(p) for row in rows for p in row]; faces=[]
-for j in range(row_count-1):
-    for i in range(cols):
-        a=j*(cols+1)+i; faces.append((a,a+cols+1,a+cols+2,a+1))
-mesh=bpy.data.meshes.new('fountain bonnet pressed and shallow dished'); mesh.from_pydata(verts,[],faces); mesh.update()
-uv=mesh.uv_layers.new(name='UVMap')
-for poly in mesh.polygons:
-    for li in poly.loop_indices:
-        vi=mesh.loops[li].vertex_index; uv.data[li].uv=((vi%(cols+1))/cols,(vi//(cols+1))/(row_count-1))
-bonnet=bpy.data.objects.new('fountain:car-bonnet-basin',mesh); bpy.context.collection.objects.link(bonnet)
-bonnet.data.materials.append(mat['rusted-steel'])
-for polygon in mesh.polygons: polygon.use_smooth=True
-thickness=bonnet.modifiers.new('folded bonnet skin','SOLIDIFY'); thickness.thickness=.075
-keep(bonnet)
-# Folded basin lip, three bent exhaust pipes, rolled collars, and four battered feet.
-for s in (-1,1):
-    beam(f'fountain:rolled-side-edge-{s}',(-1.55,1.39,s*1.46),(1.55,1.39,s*1.46),.09,'rusted-steel')
-for i,x in enumerate((-.92,0,.92),1):
-    if i==2:
-        points=[(0,.62,.10),(0,1.05,.10),(0,1.70,.10),(0,2.48,.10),(0,2.79,.05),(.05,2.91,-.25)]
-        mouth=(.05,2.91,-.25)
-    else:
-        side=-1 if x<0 else 1
-        points=[(x,.62,.28),(x,1.18,.20),(x,1.62,.12),(x-side*.2,1.82,-.20),(x-side*.42,1.48,-.34)]
-        mouth=points[-1]
-    pipe(f'fountain:exhaust-jet-{i}',points,.15 if i==2 else .12,'rusted-steel')
-    cyl(f'fountain:exhaust-collar-{i}',(x,1.36,.12),.14,.075,'galvanised-tin',8)
-    cyl(f'fountain:pipe-mouth-{i}',mouth,.15 if i==2 else .12,.045,'galvanised-tin',8)
-    cyl(f'fountain:dark-open-mouth-{i}',mouth,.085 if i==2 else .068,.05,'iron-dark',8)
-    # A narrow still stream falls from the open spout into the basin.
-    pipe(f'fountain:water-stream-{i}',[mouth,(mouth[0],1.44,mouth[2]),(mouth[0],1.10,mouth[2])],.018,'water')
-for x in (-1.15,1.15):
-    for z in (-.95,.95):
-        beam(f'fountain:mounting-leg-{x}-{z}',(x,.12,z),(x*.82,.82,z*.80),.15,'rusted-steel')
-cyl('fountain:old-differential-pedestal',(0,.48,0),.52,.88,'rusted-steel',20)
-water=cyl('fountain:water',(0,1.10,0),.73,.028,'water',24)
-water.scale.x=1.05; water.scale.y=.92
-bpy.ops.object.select_all(action='DESELECT'); water.select_set(True); bpy.context.view_layer.objects.active=water
-bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-
-# Tavern: two uneven tin storeys, slumped posts, signboard, and a kept truck through the wall.
+fountain=carve_object('fountain:bonnet',mat,{
+    'photos':{'side':tex/'fountain-side.jpg','front':tex/'fountain-front.jpg',
+              'rear':tex/'fountain-front.jpg','top':tex/'fountain-above.jpg'},
+    'length':6.8,'width':6.8,'height':6.6,
+    'side':{'start':130,'end':640,'ground':650},
+    'front':{'centre':355,'ground':650,'top':40},
+    'rear':{'centre':355,'ground':650,'top':40},
+    'top':{'front':620,'rear':80,'centre':355},
+    'mask_dir':str(evidence/'masks'),'voxel':.055,'target':1650,
+})
+keep(fountain)
+water=cyl('fountain:water',(0,1.05,0),1.25,.025,'water',32)
+water['emissive']=True
+# Photo-carved tavern; the only supplied elevation is reused as measured input.
 building_root('tavern','2x2')
-for x in (-5.1,5.1):
-    beam(f'tavern:lean-post-{x}',(x,.15,-3.8),(x+(.4 if x<0 else -.25),6.5,-3.8),.22,'weathered-plank')
-for y in (.2,3.65,6.8):
-    for side in (-1,1): beam(f'tavern:front-girt-{y}-{side}',(-5,y,-5),(5,y,-5),.22,'rusted-steel')
-for x in (-4.7,-2.5,0,2.8,4.8):
-    box(f'tavern:patched-front-{x}',(x,2.0,-4.97),(1.65,3.55,.16),'galvanised-tin',.025)
-    box(f'tavern:upper-patch-{x}',(x+(.25 if x%2 else -.2),5.15,-4.75),(1.55,2.5,.15),'rusted-steel',.025)
-for z in (-4.7,0,4.7):
-    for x in (-4.8,0,4.8): beam(f'tavern:side-post-{x}-{z}',(x,.1,z),(x+(0.2 if z>0 else -.25),6.2,z),.20,'weathered-plank')
-for x in (-4,0,4): beam(f'tavern:roof-rafter-{x}',(x,6.55,-5.4),(x+.5,7.55,4.9),.23,'weathered-plank')
-for i in range(5):
-    panel=box(f'tavern:roof-salvage-{i}',(i*2-4,7.2,.1),(1.95,.13,10.1),'galvanised-tin',.02)
-    panel.rotation_euler[2]=-.045+(i*.018)
-box('tavern:hand-painted-sign',(0,5.65,-5.35),(6.1,1.45,.18),'weathered-plank',.06)
-beam('tavern:sign-bracket-left',(-3.5,5.4,-5.3),(-4.1,6.55,-5.3),.09,'rusted-steel')
-beam('tavern:sign-bracket-right',(3.5,5.4,-5.3),(4.1,6.55,-5.3),.09,'rusted-steel')
-for x in (-3.8,3.8): beam(f'tavern:truck-axle-{x}',(x,.35,-1),(x,.35,1),.16,'rusted-steel')
-car('tavern:kept-truck',(0,.05,-.75),1.16,'faded-hand-paint')
-
+tavern_photo=tex/'tavern.jpg'
+tavern=carve_object('tavern:body',mat,{
+    'photos':{'side':tavern_photo,'front':tavern_photo,'rear':tavern_photo,'top':tavern_photo},
+    'length':14.0,'width':14.0,'height':9.2,
+    'side':{'start':45,'end':885,'ground':590},
+    'front':{'centre':460,'ground':590,'top':15},
+    'rear':{'centre':460,'ground':590,'top':15},
+    'top':{'front':50,'rear':590,'centre':460},
+    'mask_dir':str(evidence/'masks'),'voxel':.08,'target':4600,
+})
+keep(tavern)
 # Drive-in screen and rows of battered cars, aimed toward the road-facing screen.
 building_root('drive-in','4x3')
 for x in (-8,8):
@@ -291,26 +248,25 @@ for i,a in enumerate((.25,1.82,3.40,4.95),1):
     p=bpy.data.objects.new(f'wreck-ring:car-{i}',None); bpy.context.collection.objects.link(p); p.parent=current
     car(f'wreck-ring:bumper-car-{i}',(4.1*math.cos(a),.12,4.1*math.sin(a)),.76,('faded-hand-paint','galvanised-tin','rusted-steel','patched-canvas')[i-1],p)
 
-# Big wheel: the complete rim/spokes/cars ride on the exact named rotation pivot.
+# Big wheel: trace the open photo silhouette and its spokes as a slab on its true hub.
 building_root('big-wheel','3x3')
-wheel_pivot=bpy.data.objects.new('big-wheel:wheel',None); bpy.context.collection.objects.link(wheel_pivot); wheel_pivot.parent=current
-wheel_pivot.location=town.game_vector((0,11.4,0))
-# Render and export the named moving part visibly turned around its true axle.
-wheel_pivot.rotation_euler[1]=math.radians(18)
 for side in (-1,1):
     beam(f'big-wheel:A-frame-{side}-left',(-7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
     beam(f'big-wheel:A-frame-{side}-right',(7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
     beam(f'big-wheel:axle-{side}',(0,11.4,side*.72),(0,11.4,side*1.32),.48,'galvanised-tin')
-torus('big-wheel:outer-rim',(0,11.4,0),7.1,.24,'rusted-steel',wheel_pivot)
-torus('big-wheel:inner-rim',(0,11.4,0),6.72,.105,'galvanised-tin',wheel_pivot)
-for i in range(12):
-    a=math.tau*i/12
-    beam(f'big-wheel:spoke-{i+1}',(0,11.4,0),(6.95*math.sin(a),11.4+6.95*math.cos(a),0),.19,'rusted-steel',wheel_pivot)
-    x=7.1*math.sin(a); y=11.4+7.1*math.cos(a)
-    g=bpy.data.objects.new(f'big-wheel:seat-{i+1}',None); bpy.context.collection.objects.link(g);g.parent=wheel_pivot;g.location=town.game_vector((x,y,0))
-    box(f'big-wheel:seat-pan-{i+1}',(x,y-1.02,0),(1.0,.14,.70),'faded-hand-paint',.04,g)
-    for s in (-1,1): beam(f'big-wheel:seat-hanger-{i+1}-{s}',(x+s*.32,y-.12,0),(x+s*.32,y-.94,0),.07,'galvanised-tin',g)
-
+wheel_pivot=bpy.data.objects.new('big-wheel:wheel',None); bpy.context.collection.objects.link(wheel_pivot); wheel_pivot.parent=current
+wheel_pivot.location=town.game_vector((0,11.4,0)); wheel_pivot.rotation_euler[1]=math.radians(18)
+wheel_photo=Photo(tex/'big-wheel.jpg')
+wheel_sky=wheel_photo.sky([(8,8),(891,8),(8,658),(891,658),
+    (120,220),(190,125),(300,80),(515,80),(680,130),(790,220),
+    (820,345),(770,460),(680,535),(545,580),(365,580),(230,545),(130,460)],tolerance=24,grey=20)
+loops=trace(~wheel_sky,(45,10,890,650),tolerance=2.2,min_area=95)
+def wheel_point(px,py,depth):
+    return ((px-450)*.0228, (638-py)*.0228, depth)
+wheel_mesh=PhotoMesh()
+slab(wheel_mesh,'wheel',wheel_photo,loops,wheel_point,-.11,.11,wall_scale=.0228)
+wheel_obj=wheel_mesh.finish('big-wheel:photo-traced-wheel',{'wheel':wheel_photo.material()})
+keep(wheel_obj,wheel_pivot)
 # Compact coaster: welded tower, inclined lead-in, broad loop, steep return drop, and movable train.
 building_root('scrap-coaster','6x4')
 for x in (-18,-12,-6,0,6,12,18):
