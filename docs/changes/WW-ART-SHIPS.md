@@ -266,3 +266,12 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed this run's check render, Blender review file, logs, and test output from `.qa-dist/` after inspection. Kept the supplied task briefs and the generated cabin source photos named by the card.
+
+## Round 13, point 1 — Hull-following decks (7 November 2026)
+
+- Replaced all three rectangular deck plates with flat plates built from the hull's tapered deck outline, inset 0.3 m from the plating. Moved the Patience's outer rails, forecastle, stairs and deck fittings inward; narrowed the Marigold's surviving rail line. Read-back bounds show each plate inside its hull. Rendered the fleet overhead and each ship from a car-height bow quarter; the hull is visible beneath the plate edge, though the narrow lip is still noticeable at the low camera angle. Claude should judge `.qa-dist/check-ships-above.png`, `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`.
+- Blender 4.5.13 read-back: 26,300 triangles and 1,605,836 bytes for the family. `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets remain advisory. Browser checks do not apply; lane tier and build were not run for this art card. Changed assertions: none. Race fingerprints: none.
+
+### Removed
+
+- Removed the three rectangular deck plates. The user-provided stray root render `.evidence-good-hope-bow-round13.png` was deleted.

@@ -65,7 +65,7 @@ parser.add_argument('--round', type=int, default=1)
 parser.add_argument('--stage', choices=('patience', 'fleet', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
-parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'above', 'deck-good-hope', 'deck-marigold'), default=None)
+parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -105,6 +105,27 @@ if args.render_view:
     bpy.ops.wm.open_mainfile(filepath=str(review_scene))
     scene = bpy.context.scene
     scene.camera = bpy.data.objects[f'review-camera-{args.render_view}']
+    def set_tree_visibility(name, visible):
+        root_obj = scene.objects.get(name)
+        if root_obj is None:
+            return
+        stack = [root_obj]
+        while stack:
+            obj = stack.pop()
+            obj.hide_render = not visible
+            stack.extend(obj.children)
+    set_tree_visibility('lighthouse', False)
+    set_tree_visibility('pilot-boat', False)
+    close_subject = {
+        'hope': 'ship-good-hope',
+        'marigold': 'ship-marigold',
+        'patience': 'ship-patience',
+        'deck-good-hope': 'ship-good-hope',
+        'deck-marigold': 'ship-marigold',
+    }.get(args.render_view)
+    if close_subject:
+        for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
+            set_tree_visibility(name, name == close_subject)
     if args.render_view == 'whole':
         scene.camera.location = Vector((-35, 330, 1.2))
         scene.camera.rotation_euler = (
@@ -122,6 +143,12 @@ if args.render_view:
     elif args.render_view == 'marigold':
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(root / '.qa-dist/check-marigold.png')
+    elif args.render_view == 'patience':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / '.qa-dist/check-patience.png')
+    elif args.render_view == 'above':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / '.qa-dist/check-ships-above.png')
     else:
         scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
@@ -418,11 +445,9 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             v=.11 + min(1,max(0,(co[1]-keel)/(deck-keel)))*.69
             uv.data[li].uv=(u,v)
     parent(obj,root)
-    # Deck is a real thick deck plate at the map's 5 m walkway datum.
-    # Leave a real inset inside the hull's flared sheer, especially at the
-    # tapered bow and stern. The parent root applies the same list to both.
-    deck_mesh=cube(name+'-weather-deck',(0,deck-.10,0),(length*.90,.36,width*.90),rust,root.name+':deck',.12)
-    parent(deck_mesh,root)
+    # Fill the hull's sampled top outline, inset 0.3 m from the plating. A
+    # rectangle bridges the bow and stern taper and reads as a shelf.
+    deck_plate(root, name+'-weather-deck', length, width, deck)
     # The projection carries repair patches and seam wear; avoid floating
     # overlays that hide the hull's curve.
     # Text on the bow, in large, readable weathered paint.
@@ -444,10 +469,10 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     for side in (-1,1):
         if root.name == 'ship-marigold' and side < 0:
             continue
-        rail(name+'-main-deck-rail',(-length*.40,deck+.92,side*width*.34),(length*.25,deck+.92,side*width*.34),.055,iron,root.name)
+        rail(name+'-main-deck-rail',(-length*.40,deck+.92,side*width*.29),(length*.25,deck+.92,side*width*.29),.055,iron,root.name)
         for i in range(8):
             x=-length*.39+i*length*.08
-            post=beam(f'{name}-rail-stanchion-{side}-{i}',(x,deck,side*width*.34),(x,deck+.92,side*width*.34),.07,steel,root.name)
+            post=beam(f'{name}-rail-stanchion-{side}-{i}',(x,deck,side*width*.29),(x,deck+.92,side*width*.29),.07,steel,root.name)
             parent(post,root)
     for side in (-1,1):
         for low,high,x in ((-1.8,deck,-length*.13),):
@@ -466,6 +491,32 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
                 win=cube(f'{name}-chart-window-{side}-{i}',(chart_x-3.1+i*1.55,deck+4.0,side*2.72),(1.05,1.0,.08),glass,root.name,.05); parent(win,root)
         door=cube(name+'-chart-door',(chart_x+4.05,deck+3.55,-1.1),(.10,2.4,1.0),iron,root.name,.05); parent(door,root)
     return
+
+def deck_plate(root, name, length, width, deck):
+    stations=[(-.50,.22),(-.485,.42),(-.46,.62),(-.43,.78),(-.39,.89),(-.34,.95),
+              (-.28,.98),(-.20,1.0),(-.10,1.0),(0,.995),(.12,.99),(.23,.97),
+              (.32,.94),(.39,.90),(.44,.84),(.475,.62),(.49,.34),(.50,.06)]
+    left=[]; right=[]
+    for index,(t,breadth) in enumerate(stations):
+        if index == 0 or index == len(stations)-1:
+            continue
+        x=t*length
+        flare=1.0+max(0,t)*.22
+        half=width*breadth*.47*flare-.30
+        stem=max(0,(t-.34)/.16)
+        x-=1.42*stem
+        left.append((x,deck-.10,-half))
+        right.append((x,deck-.10,half))
+    outline=left+right[::-1]
+    verts=[gv(point) for point in outline]
+    faces=[]
+    for index in range(1,len(outline)-1):
+        faces.append((0,index,index+1))
+    mesh=bpy.data.meshes.new(name+' hull-outline plate mesh')
+    mesh.from_pydata(verts,[],faces); mesh.materials.append(rust); mesh.update()
+    plate=bpy.data.objects.new(name,mesh); scene.collection.objects.link(plate)
+    plate['part']=root.name+':deck'; parent(plate,root)
+    return plate
 
 ships=[
     ('ship-patience',(5,-470),'PATIENCE',HULL_LENGTH,HULL_WIDTH,4.0,-4.0,0.07),
@@ -498,8 +549,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         patience_hull['part'] = 'ship-patience:hull'
         parent(patience_hull,r)
         shared_hull_mesh = patience_hull.data
-        hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience:deck',.04)
-        parent(hull_deck,r)
+        hull_deck = deck_plate(r, 'ship-patience:weather-deck', HULL_LENGTH, HULL_WIDTH, deck)
         # The high-side letters sit on the bow plating and face out on both sides.
         for side in (-1,1):
             label_curve=bpy.data.curves.new(f'Patience bow name {side}','FONT')
@@ -805,26 +855,26 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         parent(mast_obj, r)
         # Long, thin working rails follow both sheer lines and close around the bow.
         for side in (-1,1):
-            z=side*width*.45
-            rail(f'patience-main-railing-top-{side}',(-35,6.1,z),(35,6.1,z),.045,rust,ident)
-            rail(f'patience-main-railing-mid-{side}',(-35,5.63,z),(35,5.63,z),.032,rust,ident)
+            z=side*width*.39
+            rail(f'patience-main-railing-top-{side}',(-28,6.1,z),(28,6.1,z),.045,rust,ident)
+            rail(f'patience-main-railing-mid-{side}',(-28,5.63,z),(28,5.63,z),.032,rust,ident)
             for i in range(29):
-                x=-35+i*2.5
+                x=-28+i*2.0
                 post=beam(f'patience-rail-stanchion-{side}-{i}',(x,5.05,z),(x,6.1,z),.045,rust,ident); parent(post,r)
             for i in range(8):
-                x=31+i*.68; z2=side*(width*.38-i*.38)
+                x=30+i*.58; z2=side*(width*.34-i*.34)
                 if z2*side<.25: break
                 post=beam(f'patience-bow-rail-stanchion-{side}-{i}',(x,5.0,z2),(x,6.1,z2),.065,steel,ident); parent(post,r)
                 rail(f'patience-bow-rail-top-{side}-{i}',(x,6.1,z2),(x+.75,6.1,z2-side*.38),.055,steel,ident)
-        rail('patience-stern-rail-top',(-35,6.1,-width*.45),(-35,6.1,width*.45),.045,rust,ident)
+        rail('patience-stern-rail-top',(-28,6.1,-width*.39),(-28,6.1,width*.39),.045,rust,ident)
         for i in range(5):
-            z=-width*.45+i*width*.225
-            post=beam(f'patience-stern-rail-post-{i}',(-35,5.05,z),(-35,6.1,z),.045,rust,ident); parent(post,r)
+            z=-width*.39+i*width*.195
+            post=beam(f'patience-stern-rail-post-{i}',(-28,5.05,z),(-28,6.1,z),.045,rust,ident); parent(post,r)
         # Raised forecastle, with short stairs and a hatch forward of the windlass.
-        forecastle=cube('patience-raised-forecastle',(26,5.54,0),(15,.42,11.0),rust,ident,.11); parent(forecastle,r)
+        forecastle=cube('patience-raised-forecastle',(26,5.54,0),(15,.42,9.2),rust,ident,.11); parent(forecastle,r)
         for side in (-1,1):
             for step in range(9):
-                stair=cube(f'patience-forecastle-step-{side}-{step}',(16.0+step*.43,5.12+step*.05,side*5.0),(.58,.13,2.2),rust,ident,.025); parent(stair,r)
+                stair=cube(f'patience-forecastle-step-{side}-{step}',(16.0+step*.43,5.12+step*.05,side*3.5),(.58,.13,2.2),rust,ident,.025); parent(stair,r)
         for i,x in enumerate((-3,7,17)):
             z=(-2.5,2.5,-2.5)[i]
             hatch=cube(f'patience-hatch-cover-{i}',(x,5.30,z),(6.4,.38,7.0),rust,ident,.12); parent(hatch,r)
@@ -834,20 +884,20 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             for j in range(5):
                 seam=beam(f'patience-hatch-seam-{i}-{j}',(x-2.7+j*1.35,5.50,z-3.2),(x-2.7+j*1.35,5.50,z+3.2),.035,rust,ident); parent(seam,r)
         # Winches, vents, and bollards are connected to the deck with visible feet.
-        for i,(x,z) in enumerate(((-6,-5.7),(12,5.7),(30,0))):
+        for i,(x,z) in enumerate(((-6,-4.0),(12,4.0),(30,0))):
             base=cube(f'patience-winch-bed-{i}',(x,5.29,z),(3.0,.42,1.8),rust,ident,.12); parent(base,r)
             drum=cylinder(f'patience-winch-drum-{i}',(x,6.05,z),.52,1.8,iron,ident,20,'X'); parent(drum,r)
             for side in (-1,1):
                 cheek=cylinder(f'patience-winch-cheek-{i}-{side}',(x,6.05,z+side*.94),.82,.20,steel,ident,24,'X'); parent(cheek,r)
                 foot=beam(f'patience-winch-foot-{i}-{side}',(x-.95,5.55,z+side*.65),(x+.95,5.55,z+side*.65),.18,rust,ident,.22); parent(foot,r)
-        for i,(x,z) in enumerate(((-27,-5.3),(-17,5.4),(2,5.4),(21,-5.4))):
+        for i,(x,z) in enumerate(((-27,-4.2),(-17,4.2),(2,4.2),(21,-4.2))):
             riser=cylinder(f'patience-vent-riser-{i}',(x,5.85,z),.42,1.3,rust,ident,20); parent(riser,r)
             cowl=cylinder(f'patience-vent-cowl-{i}',(x,6.55,z),.67,.18,steel,ident,20); parent(cowl,r)
             hood=beam(f'patience-vent-hood-{i}',(x,6.78,z),(x+.62,6.78,z),.16,rust,ident,.55); parent(hood,r)
         for side in (-1,1):
             for x in (-31,-12,8,29):
-                bollard=cylinder(f'patience-bollard-{side}-{x}',(x,5.48,side*5.25),.20,.60,rust,ident,20); parent(bollard,r)
-                cap=cylinder(f'patience-bollard-cap-{side}-{x}',(x,5.80,side*5.25),.28,.08,iron,ident,20); parent(cap,r)
+                bollard=cylinder(f'patience-bollard-{side}-{x}',(x,5.48,side*4.5),.20,.60,rust,ident,20); parent(bollard,r)
+                cap=cylinder(f'patience-bollard-cap-{side}-{x}',(x,5.80,side*4.5),.28,.08,iron,ident,20); parent(cap,r)
         # Two braced cargo derricks stand on their own feet, with cables and hooks.
         for i,(x,z,lean_side) in enumerate(((-4,-2.2,-1),(15,2.2,1))):
             base=cube(f'patience-derrick-pedestal-{i}',(x,5.36,z),(3.2,.45,2.6),rust,ident,.1); parent(base,r)
@@ -907,7 +957,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         # The missing half of the rail exposes the old working deck.
         for i in range(5):
             x=-length*.29+i*length*.08
-            rail_obj=beam(f'marigold-surviving-rail-{i}',(x,deck+.92,width*.34),(x+.05,deck+1.15,width*.34),.07,steel,ident)
+            rail_obj=beam(f'marigold-surviving-rail-{i}',(x,deck+.92,width*.29),(x+.05,deck+1.15,width*.29),.07,steel,ident)
             parent(rail_obj,r)
         # Exposed, removable 18 m propeller shaft at her stern.
         shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
@@ -1283,11 +1333,12 @@ def render_imported_review():
 
     add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
     review_scene.objects['review-camera-whole'].data.lens = 24
-    add_camera('review-camera-hope', (-73, 10, -444), (-45, 9, -415), 40, (1200, 900))
-    add_camera('review-camera-marigold', (17, 13, -410), (45, 9, -440), 40, (1200, 900))
+    add_camera('review-camera-hope', (-73, 1.2, -444), (-45, 8, -415), 40, (1200, 900))
+    add_camera('review-camera-marigold', (17, 1.2, -410), (45, 6, -440), 40, (1200, 900))
+    add_camera('review-camera-patience', (-23, 1.2, -500), (5, 7, -470), 40, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
-    add_camera('review-camera-deck-good-hope', (-22.5, 5.7, -415), (-37.5, 12.0, -415), 35, (1200, 900))
-    add_camera('review-camera-deck-marigold', (68.5, 5.7, -440), (53.5, 8.3, -440), 35, (1200, 900))
+    add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 11.5, -415), 32, (1200, 900))
+    add_camera('review-camera-deck-marigold', (45, 5.7, -455), (45, 8.5, -440), 32, (1200, 900))
 
     raw.mkdir(parents=True, exist_ok=True)
     review_scene.camera = review_scene.objects['review-camera-whole']
