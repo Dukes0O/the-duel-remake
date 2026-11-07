@@ -1,0 +1,124 @@
+import assert from 'node:assert/strict';
+import {performance} from 'node:perf_hooks';
+import {createTown, dispatchTownCommand, deserializeTown, serializeTown, stepTown, TOWN_TIME} from '../src/town/index.js';
+import {groundWaterAt} from '../src/town/town-ground.js';
+
+const DAYS_PER_YEAR=TOWN_TIME.daysPerMonth*TOWN_TIME.monthsPerYear;
+const TICKS_PER_YEAR=DAYS_PER_YEAR*TOWN_TIME.ticksPerDay;
+const SOAK_YEARS=30;
+const seedFlagIndex=process.argv.indexOf('--seeds');
+const requestedSeedCount=seedFlagIndex<0?10:Number(process.argv[seedFlagIndex+1]);
+if(!Number.isInteger(requestedSeedCount)||requestedSeedCount<1){
+  throw new Error('Use --seeds followed by a positive whole number.');
+}
+const SOAK_SEEDS=Array.from({length:requestedSeedCount},(_,index)=>5101+index*6151);
+const SIM_DAY_TARGET_MS=30;
+const PLOTS_PER_BATCH=25;
+const WELLS_PER_BATCH=10;
+function playerCommand(town,command){
+  const result=dispatchTownCommand(town,command);
+  if(!result.ok) throw new Error(`The soak player could not ${command.type}: ${result.message}`);
+  return result;
+}
+function addPlayerPlots(town,player){
+  if(player.plots>=1500) return;
+  const cells=Array.from({length:PLOTS_PER_BATCH},(_,index)=>{
+    const plotIndex=player.plots+index;
+    return {x:1000+plotIndex%50,z:1000+Math.floor(plotIndex/50)};
+  });
+  playerCommand(town,{type:'paintHomeGround',cells});
+  player.plots+=cells.length;
+  player.wellsToBuild+=WELLS_PER_BATCH;
+}
+function advancePlayerWellWork(town,player){
+  const active=player.activeWell;
+  if(active){
+    const field=groundWaterAt(town,active.x,active.z);
+    const state=town.regions.scablands.groundWater;
+    const key=`${active.x}:${active.z}`;
+    if(active.stage==='pit'&&field.known){
+      playerCommand(town,{type:'buildWell',x:active.x,z:active.z});
+      active.stage='well';
+    }else if(active.stage==='well'&&state.wells[key]){
+      player.activeWell=null;
+      player.wellsToBuild--;
+    }
+  }
+  if(!player.activeWell&&player.wellsToBuild>0){
+    const wellIndex=player.nextWell++;
+    const site={x:-1000-wellIndex,z:-1000};
+    playerCommand(town,{type:'digTestPit',...site});
+    player.activeWell={...site,stage:'pit'};
+  }
+}
+function stepDay(town,player=null){
+  if(player&&player.days%180===0&&player.plots<1500) addPlayerPlots(town,player);
+  const goods={food:Math.max(1,town.people.length*2100/3600+1)};
+  if(player&&player.days%30===0) goods.canvas=1000;
+  playerCommand(town,{type:'deliverTownGoods',cell:{x:0,z:0},goods});
+  if(player) advancePlayerWellWork(town,player);
+  for(let hour=0;hour<TOWN_TIME.ticksPerDay;hour++) stepTown(town);
+  if(player) player.days++;
+}
+function compactJsonBytes(town){return Buffer.byteLength(serializeTown(town));}
+
+let checks=0;
+function check(value,message){assert.ok(value,message);checks++;}
+const rows=[];
+for(const seed of SOAK_SEEDS){
+  let town=createTown(seed,`Thirty year town ${seed}`);
+  const player={days:0,plots:0,wellsToBuild:0,nextWell:0,activeWell:null};
+  let elapsedMs=0,previousPeople=0;
+  for(let year=1;year<=SOAK_YEARS;year++){
+    const start=performance.now();
+    for(let day=0;day<DAYS_PER_YEAR;day++) stepDay(town,player);
+    const yearElapsedMs=performance.now()-start;
+    elapsedMs+=yearElapsedMs;
+    const records=town.people.length+town.buildings.length+town.book.length+town.oldGround.length;
+    const saveBytes=compactJsonBytes(town);
+    const wells=Object.values(town.regions.scablands.groundWater?.wells||{});
+    const snapshot={seed,year,people:town.people.length,buildings:town.buildings.length,paintedPlots:player.plots,
+      completedHomePlots:town.homePlots.filter(plot=>plot.tier>0&&!plot.burning).length,
+      shelterPlaces:town.peopleConditions?.shelterPlaces||0,
+      waterLitresPerPerson:Number((town.peopleConditions?.waterLitresPerPerson||0).toFixed(2)),
+      wells:wells.length,totalWellYield:wells.reduce((sum,well)=>sum+well.yieldLitresPerDay,0),
+      bookEntries:town.book.length,oldGroundEntries:town.oldGround.length,
+      saveBytes,saveBytesPerRecord:Number((saveBytes/Math.max(1,records)).toFixed(1)),
+      yearElapsedMs:Number(yearElapsedMs.toFixed(1)),elapsedMs:Number(elapsedMs.toFixed(1)),
+      yearMsPerAveragePerson:Number((yearElapsedMs/Math.max(1,(previousPeople+town.people.length)/2)).toFixed(4))};
+    rows.push(snapshot);
+    previousPeople=town.people.length;
+    town=deserializeTown(serializeTown(town));
+  }
+  const firstYear=rows.find(row=>row.seed===seed&&row.year===1);
+  const lastYear=rows.at(-1);
+  console.log(`Town soak seed ${seed}: Year 1 ${firstYear.saveBytes} bytes/${firstYear.people} people/${firstYear.bookEntries} pages; Year 30 ${lastYear.saveBytes} bytes/${lastYear.people} people/${lastYear.bookEntries} pages, ${lastYear.paintedPlots} plots/${lastYear.completedHomePlots} finished/${lastYear.shelterPlaces} places, ${lastYear.wells} wells/${lastYear.totalWellYield} L/day/${lastYear.waterLitresPerPerson} L/person/day.`);
+  check(town.calendar.year===SOAK_YEARS+1,`seed ${seed}: the town reaches game year ${SOAK_YEARS+1}`);
+  check(town.people.length>0,`seed ${seed}: the town remains alive after ${SOAK_YEARS} years`);
+  check(rows.at(-1).saveBytes>0,`seed ${seed}: the town keeps a readable save`);
+  check(lastYear.saveBytesPerRecord<=firstYear.saveBytesPerRecord*2,
+    `seed ${seed}: save bytes per retained record stay within 2 times Year 1`);
+  check(lastYear.people>firstYear.people,`seed ${seed}: the town grows after the player builds support (${firstYear.people} to ${lastYear.people})`);
+  check(lastYear.completedHomePlots>0&&lastYear.wells>0&&lastYear.waterLitresPerPerson>=15,
+    `seed ${seed}: player-built homes and wells keep delivering support (${lastYear.completedHomePlots} homes, ${lastYear.wells} wells, ${lastYear.waterLitresPerPerson} L/person/day)`);
+  check(lastYear.yearMsPerAveragePerson<=firstYear.yearMsPerAveragePerson*4,
+    `seed ${seed}: yearly sim time per resident stays within 4 times Year 1`);
+}
+
+const large=createTown(20261106,'Ten thousand person timing');
+large.people=Array.from({length:10_000},(_,index)=>({id:`person-${index+1}`,name:`Person ${index+1}`,
+  born:0,family:`family-${Math.floor(index/4)}`,home:`home-${Math.floor(index/4)}`,
+  job:'townhand',skills:{building:0},health:100,mood:70,
+  needs:{waterLitres:50,waterNeedLitres:15,foodCalories:2100,shelter:true},
+  history:['Came to make a home in the town.'],generation:0,thought:'The morning is quiet.'}));
+large.peopleConditions={waterLitresPerPerson:50,foodCaloriesPerPerson:2100,shelterPlaces:12_000,paintedHomePlaces:12_000};
+large.buildings=Array.from({length:5_000},(_,index)=>({id:`latrine-${index}`,buildingId:'latrine',state:'complete'}));
+stepDay(large);
+const dayStart=performance.now();
+stepDay(large);
+const largeTownDayMs=performance.now()-dayStart;
+check(large.people.length===10_000,`10,000-person timing town keeps every resident`);
+check(largeTownDayMs<SIM_DAY_TARGET_MS,`10,000 people and 5,000 buildings simulate a day under ${SIM_DAY_TARGET_MS} ms (saw ${largeTownDayMs.toFixed(2)} ms)`);
+
+for(const row of rows) console.log(JSON.stringify(row));
+console.log(`Town soak: ${checks} checks passed; ${SOAK_SEEDS.length} seeds x ${SOAK_YEARS} years; largest saved town ${Math.max(...rows.map(row=>row.saveBytes))} bytes; 10,000-person day ${largeTownDayMs.toFixed(2)} ms.`);
