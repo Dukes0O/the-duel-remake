@@ -56,11 +56,16 @@ if '--review-only' in args:
         if fountain_root is None: raise RuntimeError('exported fountain is missing')
         for child in family.children: hide_tree(child,child!=fountain_root)
         hide_tree(fountain_root,False)
-        target=Vector((0,.9,0))
-        views=[('side',(1,0,0),'fountain-side.jpg',6.8),('front',(0,0,-1),'fountain-front.jpg',5.0),
-               ('rear',(0,0,1),'fountain-rear.jpg',5.0),('above',(0,1,0),'fountain-above.jpg',6.8),
-               ('three-quarter-a',(1,.75,-1),None,8.0),('three-quarter-b',(-1,.75,1),None,8.0),
-               ('mayor',(1,1,-1),None,8.0)]
+        # Several town buildings share world origin. Some helper meshes are
+        # exported as siblings of their root, so hide by the named family too.
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('fountain:')
+        target=Vector((0,0,.9))
+        views=[('side',(1,0,.03),'fountain-side.jpg',6.8),('front',(0,1,0),'fountain-front.jpg',7.0),
+               ('rear',(0,-1,0),'fountain-rear.jpg',7.0),('above',(0,0,1),'fountain-above.jpg',8.0),
+               ('three-quarter-a',(1,.75,.65),None,8.0),('three-quarter-b',(-1,-.75,.65),None,8.0),
+               ('mayor',(1,1,1),None,8.0)]
         for name,direction,photo_name,ortho in views:
             if photo_name:
                 ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
@@ -175,15 +180,15 @@ if '--review-only' in args:
     if fountain_root is None: raise RuntimeError('exported fountain is missing')
     for child in family.children: hide_tree(child,child!=fountain_root)
     hide_tree(fountain_root,False)
-    fountain_target=Vector((0,.9,0))
+    fountain_target=Vector((0,0,.9))
     fountain_views=[
-        ('side',(1,0,0),'fountain-side.jpg',6.8),
-        ('front',(0,0,-1),'fountain-front.jpg',5.0),
-        ('rear',(0,0,1),'fountain-rear.jpg',5.0),
-        ('above',(0,1,0),'fountain-above.jpg',6.8),
-        ('three-quarter-a',(1,.75,-1),None,8.0),
-        ('three-quarter-b',(-1,.75,1),None,8.0),
-        ('mayor',(1,1,-1),None,8.0),
+        ('side',(1,0,.03),'fountain-side.jpg',6.8),
+        ('front',(0,1,0),'fountain-front.jpg',7.0),
+        ('rear',(0,-1,0),'fountain-rear.jpg',7.0),
+        ('above',(0,0,1),'fountain-above.jpg',8.0),
+        ('three-quarter-a',(1,1,.65),None,8.0),
+        ('three-quarter-b',(-1,-1,.65),None,8.0),
+        ('mayor',(1,1,1),None,8.0),
     ]
     for name,direction,photo_name,ortho in fountain_views:
         direction=Vector(direction).normalized()
@@ -224,14 +229,6 @@ mat['tire'].diffuse_color = (.045, .047, .042, 1)
 bs = mat['tire'].node_tree.nodes.get('Principled BSDF')
 bs.inputs['Base Color'].default_value = (.045, .047, .042, 1)
 bs.inputs['Roughness'].default_value = .94
-mat['water'] = bpy.data.materials.new('Town Fun / brown-green water')
-mat['water'].use_nodes = True
-mat['water'].diffuse_color = (.035, .055, .04, 1)
-mat['water'].node_tree.nodes.clear()
-water_emit=mat['water'].node_tree.nodes.new('ShaderNodeEmission')
-water_emit.inputs['Color'].default_value=(.035,.05,.04,1); water_emit.inputs['Strength'].default_value=.75
-water_out=mat['water'].node_tree.nodes.new('ShaderNodeOutputMaterial')
-mat['water'].node_tree.links.new(water_emit.outputs[0],water_out.inputs['Surface'])
 mat['lamp'] = bpy.data.materials.new('Town Fun / cinema phosphor')
 mat['lamp'].use_nodes = True
 mat['lamp'].node_tree.nodes.clear()
@@ -314,19 +311,19 @@ fountain_recipe={
               'rear':'fountain-rear.jpg','top':'fountain-above.jpg'},
     'length':5.8,'width':4.0,'height':1.25,
     'side':{'start':22,'end':988,'ground':632},
-    'front':{'centre':512,'ground':602,'top':284},
+    'front':{'centre':512,'ground':660,'top':330},
     'rear':{'centre':512,'ground':602,'top':284},
     'top':{'front':40,'rear':700,'centre':512,'x_scale':4.0/835},
     # Clear the photographed exhausts and the inconsistent front-photo stand:
     # both are modeled separately or intentionally absent from the bonnet.
     'cut':{
         'side':[(588,140,988,466)],
-        'front':[(205,90,390,305),(624,90,812,305),(115,532,265,682),(720,532,890,682)],
+        'front':[(130,90,380,332),(640,90,895,332)],
         'rear':[(218,105,402,304),(618,105,808,304)],
-        'top':[(396,0,626,215)],
+        'top':[(420,0,495,215),(530,0,605,215)],
     },
     # Leave a shallow floor and clear the volume above it for the water surface.
-    'keep':lambda x,y,z: ~((abs(x)<1.48)&(abs(z)<2.18)&(y>.28)),
+    'keep':lambda x,y,z: ~((abs(x)<1.70)&(abs(z)<1.65)&(y>.28)),
     'grey':26,'tolerance':38,'bleed_tolerance':48,
     'mask_dir':str(evidence/'masks'),'voxel':.055,'target':1150,
 }
@@ -339,23 +336,28 @@ side_photo=fountain_recipe['_photos']['side']
 top_photo=fountain_recipe['_photos']['top']
 if '--fountain-body-only' not in args:
     pipe_mesh=PhotoMesh()
-    def fountain_lathed_pipe(x, z, radius, photo_x):
-        path=[(x,.92,z),(x,1.46,z),(x,2.06,z),(x,2.48,z-.16),
-              (x,2.57,z-.48),(x,2.48,z-.73),(x,2.25,z-.91)]
+    def fountain_lathed_pipe(x, z, radius, photo_x, crown):
+        inward=.36 if x<0 else -.36
+        path=[(x,.92,z),(x,1.42,z),(x,crown*.78,z),
+              (x+inward*.20,crown*.91,z+.15),(x+inward*.55,crown,z+.38),
+              (x+inward*.88,crown*.98,z+.62),(x+inward,crown*.88,z+.82),
+              (x+inward,crown*.76,z+.96)]
         for segment,(start,end) in enumerate(zip(path,path[1:])):
             direction=Vector(end)-Vector(start)
             length=direction.length
             axis=direction.normalized()
             e1=axis.cross(Vector((1,0,0))).normalized()
             e2=axis.cross(e1).normalized()
-            stations=[(0,radius*.90),(.06,radius),(length-.06,radius),(length,radius*.84)]
+            overlap=.11 if segment>0 else 0
+            extend=.11 if segment<len(path)-2 else 0
+            stations=[(-overlap,radius),(length+extend,radius)]
             def pipe_uv(index,distance,ring_radius,angle):
                 px=max(1,min(side_photo.w-2,photo_x+angle*8))
                 py=max(1,min(side_photo.h-2,360-segment*22-index*7))
                 return side_photo.uv(px,py)
-            lathe(pipe_mesh,'side',start,axis,e1,e2,stations,pipe_uv,sides=10)
-    fountain_lathed_pipe(-.78,2.43,.17,790)
-    fountain_lathed_pipe(.78,2.23,.20,680)
+            lathe(pipe_mesh,'side',start,axis,e1,e2,stations,pipe_uv,sides=16)
+    fountain_lathed_pipe(-.78,-2.43,.17,790,2.50)
+    fountain_lathed_pipe(.78,-1.63,.20,680,3.08)
     pipes=pipe_mesh.finish('fountain:exhaust-pipes',{'side':side_photo.material()})
     keep(pipes)
 
@@ -363,15 +365,17 @@ if '--fountain-body-only' not in args:
 # hollow basin and touching its rim at the true waterline.
 if '--fountain-body-only' not in args and '--fountain-no-water' not in args:
     water_mesh=PhotoMesh()
-    water_outline=[(-1.36,.88,-1.94),(-1.20,.88,-2.08),(1.20,.88,-2.08),(1.36,.88,-1.94),
-                   (1.36,.88,1.58),(1.20,.88,1.74),(-1.20,.88,1.74),(-1.36,.88,1.58)]
+    water_outline=[(-1.62,.88,-1.65),(-1.42,.88,-1.82),(1.42,.88,-1.82),(1.62,.88,-1.65),
+                   (1.62,.88,1.65),(1.42,.88,1.82),(-1.42,.88,1.82),(-1.62,.88,1.65)]
     def overhead_uv(point):
         x,_,z=point
-        px=512-x/(4.0/835)
-        py=40+(z+2.9)/(5.8/660)
+        # Stay within the photographed pool. The top view also contains the
+        # exhausts; sampling that area would print a second pair on the water.
+        px=500+x*71
+        py=500+z*60
         return top_photo.uv(px,py)
     water_mesh.face(water_outline,[overhead_uv(point) for point in water_outline],'water',(0,1,0))
-    water=water_mesh.finish('fountain:water',{'water':mat['water']})
+    water=water_mesh.finish('fountain:water',{'water':top_photo.material()})
     keep(water)
     water['emissive']=False
 
