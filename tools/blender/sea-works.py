@@ -291,6 +291,6 @@ gate_open(True);shot('harbour-gate-open',['harbour-gate'],(9,3,18),(0,3,0),(700,
 shot('harbour-gate-open-three-quarter',['harbour-gate','harbour-wall-extra'],(10,1.55,17),(0,2.6,0),(1200,700),lens=28);gate_open(False)
 shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(10,1.55,17),(0,2.6,0),(1200,700),lens=28)
 shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
-shot('harbour-ramp-three-quarter',['harbour-ramp'],(12,1.55,16),(0,.3,0),(1200,700),lens=28)
+shot('harbour-ramp-three-quarter',['harbour-ramp'],(3,1.55,-19),(0,.8,0),(1200,700),lens=28)
 shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
 shot('causeway-arch-three-quarter',['causeway-arch','harbour-wall-arch-extra'],(16,1.55,12),(0,1,0),(1200,700),lens=28)

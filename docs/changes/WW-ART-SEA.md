@@ -34,6 +34,7 @@
 - Point 4: preserved the arch photo and ring while blending only the upper stone's outer 5% toward the harbour wall photo at both ends. Raised the arch sleepers and rails to the causeway's 4.18–4.55 m track level.
 - Point 3 follow-up: added the same dam-stone coping course at y = 5.55–6 m to both ramp walls so they meet the harbour wall's full six-metre height.
 - Render follow-up: added a three-quarter open-gate view and kept the ramp shot to its two ramp walls; distant wall copies intersected the ramp and obscured its shape.
+- Camera follow-up: moved the ramp's car-height three-quarter view to the landward approach so the cobbled slope reads between the walls.
 
 ## Removed
 
