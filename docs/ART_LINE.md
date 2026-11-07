@@ -188,6 +188,9 @@ stop adjusting and change the method.
 
 ### Sheets
 
+- **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).
+- **Triangles run away in traces and rings.** A traced seat at a fine tolerance cost 4,880 triangles and a ring of 128 by 12 steps 6,144 (the big wheel). Count each piece's triangles before submitting, and coarsen what the mayor's camera cannot see.
+
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - The whole subject in every frame, on plain mid-grey ground, in one even light,
   with labels off the pictures and no white gaps.

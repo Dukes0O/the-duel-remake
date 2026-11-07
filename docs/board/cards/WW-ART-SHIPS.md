@@ -22,6 +22,8 @@ Budget: 50,000 triangles, 3 MB, read back from the glb. Original shapes only, gr
 
 ## Claude answers
 
+**A fresh six rounds (Kyle, 7 November: "yes").** Kyle saw the round 6 sheet and allowed six more rounds, counted per ship and per piece. Claude runs them in the lane `ww-art-ships` from branch `codex/ww-art-ships`, so no other job starts this card. The method changes: each piece is carved from its own measured photos with `carve_object` (`docs/ART_LINE.md`), starting with the Patience's superstructure as its own piece, then her deck, mast and ground, then the other ships.
+
 **Stopped at Kyle's six-round limit (Claude, 6 November).** The work is on branch `codex/ww-art-ships` at 0dbfd306, not merged, because the card is not met and this is not a finished thing. Its sheet is `docs/board/looks/ww-art-ships/round-6.jpg` on that branch. Only the Patience exists. Her hull, seen from car height at the bow, now reads as a real rusted ship, and the method works. Her upperworks do not: blocky, freckled, and with no real openings from the deck. The Good Hope, the Marigold, the lighthouse and the pilot boat were not started.
 
 **Kyle's call, and Claude's pick:** allow a fresh limit on this card, because six rounds went on one ship and the family has had none. If so, start from the branch, with the superstructure as its own piece: its own photo of a real ship's accommodation block from the deck, real recessed windows and doors, and then the others.

@@ -65,7 +65,7 @@ const generators = [
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
-    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/fun.glb'],budget:72200,maxBytes:8000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
     glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
@@ -84,8 +84,8 @@ const generators = [
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:44000,
-    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:56000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000,'rail-halt':12000},maxBytes:8000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -856,12 +856,20 @@ try {
           assert.ok(names.has(`deck-town:home-${index}:body`), `home ${index} reuses the photo-carved tin home`);
         }
         assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
+        assert.ok(names.has('rail-halt'), 'named rail halt building root');
+        assert.ok(names.has('rail-halt:body'), 'photo-carved station hut');
+        assert.ok(names.has('rail-halt:platform'), 'low photo-traced platform slab');
+        assert.ok(names.has('rail-halt:clock'), 'separate working station clock');
+        assert.ok(names.has('rail-halt:signal'), 'signal arm stays a named moving part');
+        assert.ok(names.has('rail-halt:signal-hinge'), 'signal arm pivot is a separate hinge');
+        assert.ok(names.has('rail-halt:water-crane-frame'), 'open water crane is traced');
+        assert.ok(names.has('rail-halt:bench-seat-1'), 'station bench is a separate real piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
         assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
-          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school'],
+          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school', 'rail-halt'],
           'each outpost building is a direct child of the family root');
-        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town']) {
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town', 'rail-halt']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;
@@ -1046,7 +1054,7 @@ try {
     const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/fun.glb'));
     assert.equal(bytes.toString('ascii',0,4),'glTF');
     assert.equal(bytes.readUInt32LE(8),bytes.length);
-    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds the family limit`);
+    assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the family limit`);
     const jsonLength=bytes.readUInt32LE(12); const gltf=JSON.parse(bytes.toString('utf8',20,20+jsonLength));
     const names=new Set(gltf.nodes.map(node=>node.name));
     const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];

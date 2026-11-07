@@ -7,14 +7,15 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-6'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-9'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-6.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-9.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
 
 import bpy
+import numpy as np
 from mathutils import Vector
 
 if '--review-only' in args:
@@ -95,12 +96,26 @@ if '--review-only' in args:
         camera.location=target+direction*30; aim(camera,target); camera.data.ortho_scale=11.5
         scene.render.filepath=str(evidence/f'tavern-{name}.png'); bpy.ops.render.render(write_still=True)
         print(f'rendered tavern {name}')
+    wheel_root=bpy.data.objects.get('big-wheel')
+    if wheel_root is None: raise RuntimeError('exported big-wheel is missing')
+    for child in family.children: hide_tree(child,child!=wheel_root)
+    hide_tree(wheel_root,False)
+    wheel_views=[('side',(1,0,0),'big-wheel-side.jpg'),('front',(0,-1,0),'big-wheel-front.jpg'),
+        ('rear',(0,1,0),'big-wheel-rear.jpg'),('above',(0,0,1),'big-wheel-top.jpg'),
+        ('three-quarter-a',(1,-1,.65),None),('three-quarter-b',(-1,1,.65),None),
+        ('mayor',(-1,-1,1),None)]
+    for name,direction,_photo_name in wheel_views:
+        direction=Vector(direction).normalized(); target=Vector((0,0,5.8))
+        camera.location=target+direction*30; aim(camera,target); camera.data.ortho_scale=20
+        scene.render.resolution_x=900; scene.render.resolution_y=600
+        scene.render.filepath=str(evidence/f'big-wheel-{name}.png'); bpy.ops.render.render(write_still=True)
+        print(f'rendered big wheel {name}')
     raise SystemExit(0)
 
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
-from photo_carve import carve_object
-from photo_model import Mesh as PhotoMesh, Photo, slab, trace
+from photo_carve import carve_object, lift_if_dark
+from photo_model import Mesh as PhotoMesh, Photo, lathe, slab, trace
 from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -323,25 +338,148 @@ for i,a in enumerate((.25,1.82,3.40,4.95),1):
     p=bpy.data.objects.new(f'wreck-ring:car-{i}',None); bpy.context.collection.objects.link(p); p.parent=current
     car(f'wreck-ring:bumper-car-{i}',(4.1*math.cos(a),.12,4.1*math.sin(a)),.76,('faded-hand-paint','galvanised-tin','rusted-steel','patched-canvas')[i-1],p)
 
-# Big wheel: trace the open photo silhouette and its spokes as a slab on its true hub.
+# Big wheel: retain open photo-carved spokes, but make the two rims complete
+# torus rings. The round-8 white box was studio background enclosed by the
+# A-frame legs and crossbar, accidentally retained by the photo mask.
 building_root('big-wheel','3x3')
-for side in (-1,1):
-    beam(f'big-wheel:A-frame-{side}-left',(-7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
-    beam(f'big-wheel:A-frame-{side}-right',(7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
-    beam(f'big-wheel:axle-{side}',(0,11.4,side*.72),(0,11.4,side*1.32),.48,'galvanised-tin')
+wheel_photo=Photo(tex/'big-wheel-round8-side.png')
+wheel_rgb=wheel_photo.rgb()
+wheel_bg=np.median(np.concatenate((wheel_rgb[:24,:24].reshape(-1,3),wheel_rgb[:24,-24:].reshape(-1,3),wheel_rgb[-24:,:24].reshape(-1,3),wheel_rgb[-24:,-24:].reshape(-1,3))),axis=0)
+wheel_mask=np.abs(wheel_rgb-wheel_bg).max(axis=2)>24
+wheel_cx,wheel_cy,wheel_radius_px=768,438,430
+# Grid measurement: wheel centre (768,438), outer radius 430 px, ground y=1012.
+# The seat spans 120 px; at 1.4 m this gives 0.01167 m/px.
+wheel_scale=1.4/120; wheel_radius=wheel_radius_px*wheel_scale
+wheel_center_y=(1012-wheel_cy)*wheel_scale
+# The support photo and seat silhouettes are separate pieces. Exclude their
+# measured image regions from the disk mask; the spokes remain open at the hub.
+yy,xx=np.indices(wheel_mask.shape)
+wheel_rpx=np.sqrt((xx-wheel_cx)**2+(yy-wheel_cy)**2)
+wheel_mask &= wheel_rpx < wheel_radius_px-5
+wheel_mask &= np.abs(wheel_rpx-wheel_radius_px)>18
+for x0,y0,x1,y1 in ((680,88,850,188),(392,190,536,318),(1000,190,1135,318),
+                    (250,475,410,590),(1120,475,1285,590),(350,735,510,865),
+                    (1030,735,1195,865),(680,900,850,1010)):
+    wheel_mask[y0:y1,x0:x1]=False
+# Remove the measured A-frame wedge from the wheel mask, including its crossbar.
+support_region=(yy>405)&(yy<870)&(xx>625-(yy-405)*.29)&(xx<911+(yy-405)*.29)
+wheel_mask &= ~support_region
+wheel_loops=trace(wheel_mask,(330,0,1205,870),tolerance=1.0,min_area=35)
+if not wheel_loops: raise RuntimeError('big-wheel side photo has no traced steel')
+evidence.mkdir(parents=True,exist_ok=True)
+def save_mask(name, mask):
+    image=bpy.data.images.new(name,width=mask.shape[1],height=mask.shape[0],alpha=False)
+    pixels=np.empty((mask.shape[0],mask.shape[1],4),dtype=np.float32)
+    pixels[:,:,:3]=mask[::-1,:,None].astype(np.float32); pixels[:,:,3]=1
+    image.pixels.foreach_set(pixels.ravel()); image.filepath_raw=str(evidence/name); image.file_format='PNG'; image.save()
+    bpy.data.images.remove(image)
+save_mask('big-wheel-wheel-mask.png',wheel_mask)
 wheel_pivot=bpy.data.objects.new('big-wheel:wheel',None); bpy.context.collection.objects.link(wheel_pivot); wheel_pivot.parent=current
-wheel_pivot.location=town.game_vector((0,11.4,0)); wheel_pivot.rotation_euler[1]=math.radians(18)
-wheel_photo=Photo(tex/'big-wheel.jpg')
-wheel_sky=wheel_photo.sky([(8,8),(813,8),(8,891),(813,891),
-    (125,270),(195,175),(300,105),(520,105),(665,175),(710,280),
-    (710,520),(650,650),(535,710),(300,710),(165,650),(100,520)],tolerance=24,grey=20)
-loops=trace(~wheel_sky,(20,10,815,890),tolerance=2.2,min_area=95)
-def wheel_point(px,py,depth):
-    return ((px-411)*.0174, (418-py)*.0174, depth)
-wheel_mesh=PhotoMesh()
-slab(wheel_mesh,'wheel',wheel_photo,loops,wheel_point,-.11,.11,wall_scale=.0174)
-wheel_obj=wheel_mesh.finish('big-wheel:photo-traced-wheel',{'wheel':wheel_photo.material()})
-keep(wheel_obj,wheel_pivot)
+wheel_pivot.location=town.game_vector((0,wheel_center_y,0)); wheel_pivot.rotation_euler[0]=0
+def wheel_point(px,py,depth): return (depth,(wheel_cy-py)*wheel_scale,(px-wheel_cx)*wheel_scale)
+wheel_photo.bleed(wheel_mask)
+def torus_rim(name,depth):
+    mesh=PhotoMesh(); circumference=64; tube_steps=6; tube=.075
+    for j in range(tube_steps):
+        phi=math.tau*j/tube_steps; next_phi=math.tau*(j+1)/tube_steps
+        for i in range(circumference):
+            theta=math.tau*i/circumference; next_theta=math.tau*(i+1)/circumference
+            indices=[]; uvs=[]
+            for angle,section in ((theta,phi),(next_theta,phi),(next_theta,next_phi),(theta,next_phi)):
+                radial=wheel_radius+tube*math.sin(section)
+                px=wheel_cx+(radial/wheel_scale)*math.sin(angle)
+                py=wheel_cy-(radial/wheel_scale)*math.cos(angle)
+                indices.append(mesh.vertex((depth+tube*math.cos(section),
+                    radial*math.cos(angle),radial*math.sin(angle))))
+                uvs.append(wheel_photo.uv(px,py))
+            mid=theta+math.pi/circumference
+            mesh.indexed(indices,uvs,'wheel',(math.cos(mid)*math.cos(phi),
+                math.sin(phi)*math.cos(mid),math.sin(mid)),True)
+    obj=mesh.finish(name,{'wheel':wheel_photo.material()}); obj.parent=wheel_pivot
+    obj.location=(0,0,0); return obj
+for side,depth in enumerate((-.5,.5),1): torus_rim(f'big-wheel:complete-rim-{side}',depth)
+hub_mesh=PhotoMesh()
+lathe(hub_mesh,'wheel',(0,0,0),(1,0,0),(0,0,1),(0,1,0),[(-.58,.34),(.58,.34)],
+    lambda i,d,r,a: wheel_photo.uv(768+math.cos(a)*24,438+math.sin(a)*24),sides=20)
+hub=hub_mesh.finish('big-wheel:short-lathe-hub',{'wheel':wheel_photo.material()}); hub.parent=wheel_pivot
+hub.location=town.game_vector((0,0,0))
+for i in range(12):
+    a=math.tau*i/12; y=wheel_center_y+math.cos(a)*wheel_radius; z=math.sin(a)*wheel_radius
+    beam(f'big-wheel:rim-depth-tie-{i+1}',(-.5,y,z),(.5,y,z),.10,'rusted-steel',wheel_pivot)
+for side in (-.46,.46):
+    for i in range(12):
+        angle=math.tau*i/12
+        start=(side,wheel_center_y+.34*math.cos(angle),.34*math.sin(angle))
+        end=(side,wheel_center_y+(wheel_radius-.10)*math.cos(angle),(wheel_radius-.10)*math.sin(angle))
+        beam(f'big-wheel:spoke-{side}-{i+1}',start,end,.045,'rusted-steel')
+
+# The seat is an individual carved/photo-traced piece at each rim pivot.
+seat_photo=Photo(tex/'big-wheel-round8-seat-front.png')
+seat_rgb=seat_photo.rgb(); seat_bg=np.median(np.concatenate((seat_rgb[:20,:20].reshape(-1,3),seat_rgb[:20,-20:].reshape(-1,3),seat_rgb[-20:,:20].reshape(-1,3),seat_rgb[-20:,-20:].reshape(-1,3))),axis=0)
+seat_mask=np.abs(seat_rgb-seat_bg).max(axis=2)>24
+seat_mask[:625,:]=False  # remove the generated hanging rods; build straight ones below
+seat_mask[1000:,:]=False  # remove the enclosed pale background beneath the carriage
+seat_loops=trace(seat_mask,(210,10,1100,1160),tolerance=12.0,min_area=600)
+save_mask('big-wheel-seat-mask.png',seat_mask)
+seat_photo.bleed(seat_mask)
+seat_cx,seat_ground=656,1154; seat_scale=1.4/760
+def seat_point(px,py,depth): return (depth,-(py-18)*seat_scale,(px-seat_cx)*seat_scale)
+seat_mesh=PhotoMesh(); slab(seat_mesh,'seat',seat_photo,seat_loops,seat_point,-.31,.31,wall_scale=.003)
+seat=seat_mesh.finish('big-wheel:seat-source',{'seat':seat_photo.material()})
+for i in range(8):
+    angle=math.tau*i/8; pivot_z=math.sin(angle)*wheel_radius; pivot_y=wheel_center_y+math.cos(angle)*wheel_radius
+    chair=bpy.data.objects.new(f'big-wheel:seat-{i+1}',None); bpy.context.collection.objects.link(chair)
+    chair.parent=current; chair.location=town.game_vector((0,pivot_y,pivot_z))
+    # A level seat is deliberately not rotated with the wheel.
+    copy=seat.copy(); copy.data=seat.data.copy(); bpy.context.collection.objects.link(copy)
+    copy.name=f'big-wheel:seat-{i+1}-carriage'; copy.parent=chair; copy.location=(0,0,.50)
+bpy.data.objects.remove(seat,do_unlink=True)
+
+# Place the two straight hangers between each rim pivot and the measured seat.
+bpy.context.view_layer.update()
+for i in range(8):
+    angle=math.tau*i/8; pivot_y=wheel_center_y+math.cos(angle)*wheel_radius; pivot_z=math.sin(angle)*wheel_radius
+    for hanger,offset in enumerate((-.54,.54),1):
+        beam(f'big-wheel:seat-{i+1}-hanger-{hanger}',
+             (0,pivot_y-.03,pivot_z+offset),(0,pivot_y-1.18,pivot_z+offset),.055,'rusted-steel')
+
+# Trace the supports from the same photograph using the same color key.
+frame_mask=(np.abs(wheel_rgb-wheel_bg).max(axis=2)>24)&support_region
+frame_opening=(yy>520)&(yy<1005)&(xx>665-(yy-735)*.35)&(xx<871+(yy-735)*.35)
+frame_mask &= ~frame_opening
+save_mask('big-wheel-frame-mask.png',frame_mask)
+frame_loops=trace(frame_mask,(470,395,1065,1020),tolerance=1.2,min_area=50)
+frame_photo=Photo(tex/'big-wheel-round8-side.png'); frame_scale=wheel_scale; frame_ground=1012; frame_cx=768
+def frame_point(px,py,depth): return (depth,(frame_ground-py)*frame_scale,(px-frame_cx)*frame_scale)
+frame_mesh=PhotoMesh(); slab(frame_mesh,'frame',frame_photo,frame_loops,frame_point,-.38,.38,wall_scale=.004)
+frame_obj=frame_mesh.finish('big-wheel:traced-a-frame',{'frame':frame_photo.material()}); keep(frame_obj)
+
+# Report every wheel piece in game axes (X, horizontal depth, Y up, Z horizontal).
+wheel_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('big-wheel:')]
+for piece in wheel_pieces:
+    points=[piece.matrix_world @ Vector(corner) for corner in piece.bound_box]
+    game_bounds={'min':[round(min(p[0] for p in points),3),round(min(p[2] for p in points),3),round(min(-p[1] for p in points),3)],
+                 'max':[round(max(p[0] for p in points),3),round(max(p[2] for p in points),3),round(max(-p[1] for p in points),3)]}
+    print('BIG-WHEEL BOUNDS',piece.name,json.dumps(game_bounds))
+    if max(abs(game_bounds['min'][0]),abs(game_bounds['max'][0]),abs(game_bounds['min'][2]),abs(game_bounds['max'][2]))>11.5:
+        raise RuntimeError(f'{piece.name} leaves the 3x3 footprint')
+    if game_bounds['min'][1]<-.08 and piece.parent is None:
+        raise RuntimeError(f'{piece.name} floats below the ground without a support parent')
+for i in range(8):
+    seat_obj=bpy.data.objects[f'big-wheel:seat-{i+1}-carriage']
+    seat_points=[seat_obj.matrix_world @ Vector(corner) for corner in seat_obj.bound_box]
+    seat_bounds=[(min(p[a] for p in seat_points),max(p[a] for p in seat_points)) for a in range(3)]
+    game_seat={'min':[round(seat_bounds[0][0],3),round(seat_bounds[2][0],3),round(-seat_bounds[1][1],3)],
+               'max':[round(seat_bounds[0][1],3),round(seat_bounds[2][1],3),round(-seat_bounds[1][0],3)]}
+    rods=[bpy.data.objects[f'big-wheel:seat-{i+1}-hanger-{j}'] for j in (1,2)]
+    def overlap(a,b): return all(a[k][0] <= b[k][1]+.025 and b[k][0] <= a[k][1]+.025 for k in range(3))
+    hanger_bounds=[]
+    for rod in rods:
+        points=[rod.matrix_world @ Vector(corner) for corner in rod.bound_box]
+        hanger_bounds.append([(min(p[a] for p in points),max(p[a] for p in points)) for a in range(3)])
+    touching=any(overlap(seat_bounds,rb) for rb in hanger_bounds)
+    print(f'BIG-WHEEL SEAT {i+1} BOUNDS',json.dumps(game_seat),'touches hanger:',touching)
+    if not touching: raise RuntimeError(f'big wheel seat {i+1} misses its hangers')
 # Compact coaster: welded tower, inclined lead-in, broad loop, steep return drop, and movable train.
 building_root('scrap-coaster','6x4')
 for x in (-18,-12,-6,0,6,12,18):
