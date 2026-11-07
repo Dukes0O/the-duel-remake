@@ -169,3 +169,45 @@ All three are embedded in `crew-favours.glb` as direct colour pictures; none rep
   battered upright piano with its
   action exposed, photographed in even neutral daylight.
 - `ww-dune-ladder.jpg`, `ww-dune-bedroll.jpg`, `ww-dune-stove.jpg`, `ww-dune-watercan.jpg`: Codex ImageGen, 6 November 2026. Prompts: one old, worn, real object each, dead-on in flat overcast light on a plain background: a hand-made wooden ladder, a rolled canvas bedroll with two straps, a small iron camp stove, a dented water can. Used for `dune-ladder` and `dune-camp`.
+
+## WW-ART-SEA photographs
+
+`sea-old-gear.jpg` is an original Codex ImageGen
+photographs made 2026-11-06. They are the isolated face and rim panels of one
+paired reference image: a seven metre silted, rotten dam gear with open spokes,
+flat overcast light and a pale studio ground. The face photo is traced for the
+thick slab; the rim photo supplies the hub and rim material reference.
+
+`sea-gear-section.jpg` is an original Codex ImageGen product photograph made
+2026-11-06: a clean machined curved iron casting with bolt holes on a pale
+studio ground under flat light. The source was scaled in memory and its 15-degree
+casting slice is traced into the repeated gear.
+
+`sea-harbour-wall.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: one 40 metre weathered stone sea wall with a pale raised coping
+course, iron mooring rings and dried weed, in flat overcast light. Its recipe
+blends the first and last two metres in memory for a repeatable face. The top
+uses `dam-gatehouse-stone.jpg` at a half-metre tile scale.
+
+`sea-causeway.jpg` and `sea-rails.jpg` are original Codex ImageGen photo
+references made 2026-11-06: a straight stone railway bank with rails and wooden
+sleepers, plus a close strip of its track. The source is flat-lit on a pale
+studio ground. The 40 metre stone face uses the lower photo crop; the rail kit
+uses separate measured rail and sleeper crops. The recipe blends the face's
+first and last two metres in memory for repeatable joins.
+`sea-gear-hub.png` is an original Codex ImageGen product photograph made 2026-11-06: a clean machined iron hub with six open spokes and a capped central boss, dead-on against a pale studio ground. The recipe traces the spokes and scales the packed GLB copy in memory.
+
+`sea-harbour-gate.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: a closed pair of large riveted steel harbour gates in a weathered
+stone frame. The recipe uses separate left and right leaf pivots and reuses the
+existing seawall stone and coping material.
+
+`sea-harbour-ramp.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: an 8 metre stone slipway descends through an old harbour wall. The
+model has a real opening, a sloped deck, stone reveals and the raised seawall
+course.
+
+`sea-causeway-arch.jpg` is an original Codex ImageGen reference photograph
+made 2026-11-06: a low stone railway arch with daylight beyond it. The recipe
+traces the true opening and rebuilds the dark inside, sleepers and rails at
+0.87 metre centers.

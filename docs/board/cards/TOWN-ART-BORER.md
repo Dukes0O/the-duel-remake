@@ -29,3 +29,5 @@ The biggest machine in the game, and worth every triangle: up to 40,000, 4 MB.
 - `portal`: the mouth of a tunnel, concrete and salvaged plate, set into a hillside.
 
 ## Claude answers
+
+**Round 6 verdict (Claude, 7 November 2026): passes, merged; its last round.** It reads as the great rusty tunnelling machine of its photos, with its rounded tube, its cutter and hub, and the gantry behind it. Short of the photos: the tube's flanks show cut-outs where the photo's gripper legs stand, and the shoes are plainer than the photo's. The grey posts in the sheet's views are the tunnel portal, a separate piece the game places elsewhere, standing at the origin only for the sheet.
