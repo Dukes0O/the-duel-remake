@@ -250,3 +250,17 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+# WW-ART-PEACE photo references
+
+Generated with the built-in OpenAI image generator on 6 November 2026. The originals remain in the Codex generated-images library; the game sources below are compressed JPEG copies.
+
+- `peace-billboard-front.jpg` — professional painted Treatment Plant billboard, frontal view. Prompt: straight-on full-frame photograph of an 8 m by 3 m roadside wooden billboard carrying a beautiful hand-painted public works illustration of blue water tanks, white pipes and green lawn, flat overcast light, pale background, no words.
+- `peace-billboard-back.jpg` — rough timber back and two poles of an 8 m by 3 m billboard. Prompt: straight-on full-frame back view, rough dark aged battens, nails, braces, splintered ends and dust, plain pale background, overcast light.
+- `peace-billboard-side.jpg` — exact edge-on side photo of the same billboard, showing the thin sign and poles. Prompt: strict side elevation of an 8 m by 2.65 m board, 15 cm deep, with two rough poles, entire 4.7 m structure in frame, plain pale background and flat overcast light.
+- `peace-turret-side.jpg`, `peace-turret-front.jpg`, `peace-turret-top.jpg` — three views cropped from one generated contact sheet. Prompt: same pristine polished silver turret on circular base with three oversized bolts, side/front/overhead triptych, pale background, overcast light.
+- `peace-rock-scarred.jpg` — natural 3 m granite boulder with bullet scars on the visible side. Prompt: realistic gray-brown fractured granite, several impact pits and chips on one broad side, full object, straight-on, pale background, flat overcast light.
+- `peace-rock-untouched.jpg` — opposite-side reference of a matching untouched granite boulder. Prompt: same-sized natural gray-brown granite boulder, untouched side, full object, straight-on, pale background, flat overcast light.
+- `peace-chair-side.jpg`, `peace-chair-front.jpg`, `peace-chair-rear.jpg`, `peace-chair-top.jpg` — four views cropped from one generated contact sheet. Prompt: the exact same dentist chair in four strict orthographic directions, side/front/rear/overhead; nearly vertical padded backrest, horizontal seat, steel hydraulic pedestal, rusty truck fender legs, thin articulated drill arm on viewer's right, round overhead lamp; 3 m high, fully in frame; pale background and flat overcast light.
+
+Images are generated original artwork. No external source material was used.
