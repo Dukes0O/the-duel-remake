@@ -262,3 +262,4 @@ background, no perspective, no labels, no people or logos, no watermark."
 Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
 
 - `machines2-mixer-truck-views.jpg`: three-axle concrete mixer, tilted drum, ladder and chute.
+- `machines2-crane-truck-views.jpg`: articulated lattice recovery crane with open triangular boom.
