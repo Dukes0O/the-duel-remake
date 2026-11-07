@@ -1,25 +1,31 @@
-# TOWN-ART-FUN - big wheel round 9
+# TOWN-ART-FUN change note
 
 ## Changed
 
-- Replaced the broken photo-traced rim edges with two complete torus rims. The measured radius is 5.02 m; each rim has a 0.15 m tube and samples a rusted strip from the side photo.
-- Kept the open photo-carved spokes and added thin steel spokes on both wheel faces, with short depth ties.
-- Rebuilt all eight seats at the measured 1.4 m width. Each stays level, hangs from two straight rods, and has printed bounds plus a hanger-contact check.
-- Kept the photo-traced A-frame with flat feet and its photographed base beam. Removed the extra beam that rendered detached in front of the feet.
-- The pale block under the wheel remains visible in the assembled views. The measured opening was removed from the A-frame mask. Isolated renders of the frame, seat 5, and base beam do not show it alone; its source remains unresolved. Claude must inspect it before judging the art.
-- Kept all source photos. The exported family is 6,600,716 bytes, above the card's 3 MB budget.
+Built only the 4x3 drive-in. Its billboard frame uses traced, slabbed front,
+rear and side photographs with open bracing; `drive-in:screen` is a separate
+emissive piece. Ten cars use traced side-photo silhouettes extruded into two
+rows facing the screen. Added four credited 1024-pixel-or-smaller orthographic
+reference JPGs, the exported family model and the round-10 comparison sheet.
+Earlier buildings and earlier sheets remain unchanged.
 
-## Checks
+## Checks and review
 
-- Blender recipe and imported-GLB renders: completed. All eight seat checks report hanger contact. The two rim bounds show full circles from y=1.605 m to 11.788 m and z=-5.092 m to 5.092 m. The Blender log printed bounds for every big-wheel mesh and each seat.
-- `tools/test-repo-hygiene.mjs`: passed; placement passed and size targets were reported as advisory.
-- `tools/test-review-evidence.mjs`: 7 passed, 2 failed. One expects the round-8 JPG this task required deleting. The other failed because spawning `ffmpeg` returned `EPERM`.
-- `tools/test-blender-output.mjs`: not run; this export is over the 3 MB family budget.
-- Lane tier, build, browser checks and Claude's look review: not run here. Claude should inspect the photo/model side match, complete rims and ties, spoke openness, seat scale/orientation/hangers, A-frame feet/base, and unresolved pale block.
-- Changed assertions: none. Race fingerprints: not applicable; this art lane does not change race code.
+- Blender 4.5 build and imported-GLB review renders completed. Bounds printed
+  for all 15 drive-in meshes; every piece is within the footprint and grounded
+  or touching another piece.
+- First `node tools/test-blender-output.mjs` run: 377 checks, 1 failure. The
+  drive-in was 14,016 triangles, 16 over its 14,000 limit. Removing the tiny
+  bevel from the flat screen face kept the panel flat and reduced the count.
+- Rerun `node tools/test-blender-output.mjs`: **377 checks, 0 failures**.
+- Browser checks were not run in this art lane. Claude should assess the
+  round-10 sheet, especially the amber emissive face versus its patchwork
+  reference, the open truss silhouette, car spacing/facing and above view.
+- Changed assertions: none. Race fingerprints: not applicable to this art
+  change.
 
 ## Removed
 
-- Removed the round-8 traced rim faces and seat-side geometry, replacing them with continuous rings and photo-scaled seats. Kept all round-8 source photos.
-- Removed the detached added base beam; retained the source-photo base beam.
-- Removed the round-8 JPG and review note as requested. Kept round 6.
+Replaced the drive-in's box screen panels and box-built cars with the traced
+frame and wreck meshes. No previously accepted building or review sheet was
+removed.

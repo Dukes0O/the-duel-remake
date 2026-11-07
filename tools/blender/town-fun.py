@@ -420,7 +420,7 @@ for side_x in (-8.85,8.85):
     side_obj=side_mesh.finish(f'drive-in:traced-side-truss-{side_x}',{'photo':side_photo.material()})
     keep(side_obj)
 # Emissive screen, slightly ahead of the photo-traced billboard skin.
-box('drive-in:screen',(0,5.16,-8.89),(16.1,3.78,.12),'lamp',.012)
+box('drive-in:screen',(0,5.16,-8.89),(16.1,3.78,.12),'lamp',0)
 
 # Each wreck is the traced side silhouette from the scrapyard car photo, extruded
 # across its width. The original front end is at the right of the photograph,
