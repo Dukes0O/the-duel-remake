@@ -6,6 +6,10 @@ Added the `toll-cabinet` root with a traced front photo, steel case and a real
 projecting open-drawer box. The cabinet stands 1.8 m high. Its generated front
 and side photos are compressed to JPGs in the town texture folder and credited.
 
+Added the `bound-sign` root as a traced, thick board and a separate post. The
+render keeps the three hand-painted lines right-reading and spelled exactly
+`DO NOT DIG HERE`.
+
 ## Checks
 
 - Blender export and GLB re-import/render succeeded. The front reference and

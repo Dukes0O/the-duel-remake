@@ -261,7 +261,34 @@ photo_box(drawer, -.39, .39, cab_y(952), cab_y(695), .34, .88, {
 own(drawer.finish('toll-cabinet:open-drawer-box', {'front': cab_front_mat, 'steel': cab_side_mat}),
     cabinet, 'toll-cabinet:open-drawer-box')
 
-for root_obj in (billboard,turret,rock,chair,cabinet):
+# 6. Bound's rough warning, with its deliberately hand-painted words intact.
+sign_photo = measured_photo('bound-sign-front')
+sign_solid = ~sign_photo.sky(seed_points(sign_photo), tolerance=20, grey=22)
+sign_photo.bleed(sign_solid, passes=24)
+sign = root_part('bound-sign')
+sign_mat = sign_photo.material(.9)
+SIGN_X = 1.35 / (820 - 150)
+SIGN_Y = 2.15 / (1004 - 17)
+def sign_world(px, py, d):
+    return ((px - 486) * SIGN_X, (1004 - py) * SIGN_Y, d)
+sign_mesh = Mesh()
+sign_outline = trace(sign_solid, (150, 84, 820, 550), tolerance=1.2, min_area=30)
+slab(sign_mesh, 'paint', sign_photo, sign_outline, sign_world, .025, .095, wall_scale=.01)
+own(sign_mesh.finish('bound-sign:hand-painted-board', {'paint': sign_mat}), sign,
+    'bound-sign:hand-painted-board')
+post = Mesh()
+wood_crop = (430, 700, 515, 995)
+photo_box(post, -.105, .105, 0, 2.15, -.09, .02, {
+    '+z': ('wood', sign_photo, wood_crop),
+    '-z': ('wood', sign_photo, wood_crop),
+    '+x': ('wood', sign_photo, wood_crop),
+    '-x': ('wood', sign_photo, wood_crop),
+    '+y': ('wood', sign_photo, wood_crop),
+    '-y': ('wood', sign_photo, wood_crop),
+})
+own(post.finish('bound-sign:crooked-post', {'wood': sign_mat}), sign, 'bound-sign:crooked-post')
+
+for root_obj in (billboard,turret,rock,chair,cabinet,sign):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -313,4 +340,6 @@ shot('kettles-chair-front',(12,1.6,0),(0,1.6,0),3.6,(700,700))
 show('toll-cabinet',(6.8,2.2,7.6),(0,.9,0),2.4,(700,700))
 shot('toll-cabinet-front',(0,.9,7),(0,.9,0),2.0,(600,900))
 shot('toll-cabinet-side',(7,.9,0),(0,.9,0),2.0,(600,900))
+show('bound-sign',(6.6,2.6,7.5),(0,1.2,0),3.0,(700,700))
+shot('bound-sign-front',(0,1.2,8),(0,1.2,0),2.9,(600,900))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))
