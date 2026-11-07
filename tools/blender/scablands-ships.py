@@ -5,12 +5,49 @@ import json
 import sys
 from pathlib import Path
 
+# Patience upperworks dimensions and pixel landmarks, read from
+# .qa-dist/grid-{side,front,rear,top}.png (each source crop is 768 x 512 px).
+# Side: aft/front ends x=40/710, deck y=460. Front and rear: centre x=384,
+# deck y=460, roof y=163/174. Plan: bow/stern x=638/100, centre y=245;
+# bridge-wing span y=54..436. Window and door boxes below are pixel rectangles
+# read from those same grids, not estimated from the rendered mesh.
+UPPER_LENGTH = 23.0
+UPPER_DECK_WIDTH = 9.3
+UPPER_WING_WIDTH = 12.0
+UPPER_HEIGHT = 8.4
+UPPER_SIDE_START, UPPER_SIDE_END, UPPER_SIDE_GROUND = 710, 40, 460
+UPPER_FRONT = {'centre': 384, 'ground': 460, 'top': 163, 'top_height': UPPER_HEIGHT}
+UPPER_REAR = {'centre': 384, 'ground': 460, 'top': 174, 'top_height': UPPER_HEIGHT}
+UPPER_TOP = {'front': 145, 'rear': 675, 'centre': 245, 'along': 'x',
+             'x_scale': UPPER_WING_WIDTH / (436 - 54)}
+UPPER_SIDE_SCALE = UPPER_LENGTH / (UPPER_SIDE_START - UPPER_SIDE_END)
+UPPER_SIDE_WINDOWS = (
+    (230, 268, 248, 300), (279, 265, 300, 300), (411, 258, 439, 300),
+    (475, 255, 499, 292), (501, 255, 530, 293),
+)
+UPPER_SIDE_PORTHOLES = tuple((x - 9, 370, x + 9, 390)
+                             for x in (197, 352, 434, 508, 553, 594, 672))
+UPPER_SIDE_DOORS = ((500, 365, 531, 457), (310, 365, 338, 457))
+UPPER_FRONT_BRIDGE_WINDOWS = tuple((x0, 164, x1, 202) for x0, x1 in (
+    (202, 244), (246, 286), (288, 330), (332, 374), (376, 418),
+    (420, 462), (464, 506), (508, 550), (552, 600),
+))
+UPPER_FRONT_WINDOWS = ((245, 245, 288, 270), (327, 245, 353, 271),
+                       (511, 245, 557, 272))
+UPPER_FRONT_PORTHOLES = tuple((x - 9, 369, x + 9, 389)
+                              for x in (255, 327, 435, 533))
+UPPER_FRONT_DOORS = ((363, 363, 399, 457),)
+UPPER_REAR_PORTHOLES = tuple((x - 9, 370, x + 9, 390)
+                             for x in (246, 302, 468, 518))
+UPPER_REAR_DOORS = ((274, 370, 314, 458), (452, 370, 492, 458))
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--round', type=int, default=1)
 parser.add_argument('--stage', choices=('patience', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
+parser.add_argument('--render-view', choices=('whole', 'dusk', 'above', 'comparison', 'deck'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -25,44 +62,59 @@ inputs = {
 photos = {name: tex / f'{name}.jpg' for name in ('ships-hull-photo', 'lighthouse-stone-photo', 'pilot-boat-photo')}
 photos['ships-hull-photo'] = tex / 'patience-hull-projection.jpg'
 ship_photo_full=tex/'ships-hull-photo.jpg'
-patience_paint_tile=tex/'patience-white-painted-steel.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(root / 'art-build/wasteland-ships/ships.blend')],
                       'glb': [str(out)], 'evidence': [str(raw)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
 if args.compose_sheet:
-    from PIL import Image, ImageDraw, ImageFont
-    source = root / 'public/assets/models/wasteland/scablands/textures/ships-hull-photo.jpg'
-    panels = [Image.open(raw / name).convert('RGB') for name in
-              ('reference.jpg', 'broadside.jpg', 'three-quarter.jpg', 'deck-aft.jpg')]
-    canvas = Image.new('RGB', (2400, 1450), (91, 91, 87))
-    draw = ImageDraw.Draw(canvas)
-    try:
-        font = ImageFont.truetype('arial.ttf', 24)
-        title_font = ImageFont.truetype('arial.ttf', 28)
-    except OSError:
-        font = ImageFont.load_default()
-        title_font = font
-    draw.text((42, 20), f'WW-ART-SHIPS | Patience | round {args.round} | exported GLB reimport', fill=(245, 244, 236), font=title_font)
-    frames = ((42, 84, 1150, 500), (1208, 84, 1150, 500),
-              (42, 650, 1150, 740), (1208, 650, 1150, 740))
-    labels = ('Photographic reference | side view', 'Patience | same side angle and scale',
-              'Three-quarter from bow | car for scale', 'On deck at eye height | looking aft')
-    for image, (x, y, w, h), label in zip(panels, frames, labels):
-        draw.text((x, y - 34), label, fill=(238, 237, 228), font=font)
-        image.thumbnail((w, h), Image.Resampling.LANCZOS)
-        canvas.paste(image, (x + (w - image.width) // 2, y + (h - image.height) // 2))
-    canvas.save(sheet, 'JPEG', quality=87, optimize=True, progressive=True)
-    print(f'Sheet: {sheet} ({sheet.stat().st_size} bytes)')
+    from PIL import Image, ImageOps
+    names = ('whole', 'dusk', 'above', 'comparison', 'deck')
+    images = {name: Image.open(raw / f'{name}.jpg').convert('RGB') for name in names}
+    canvas = Image.new('RGB', (1600, 1750))
+    layout = {'whole': (0, 0, 800, 450), 'dusk': (800, 0, 800, 450),
+              'above': (0, 450, 500, 500), 'comparison': (500, 450, 1100, 500),
+              'deck': (0, 950, 1600, 800)}
+    for name, (x, y, w, h) in layout.items():
+        canvas.paste(ImageOps.fit(images[name], (w, h), Image.Resampling.LANCZOS), (x, y))
+    canvas.save(sheet, 'JPEG', quality=83, optimize=True, progressive=True)
+    print(f'Sheet: {sheet} ({sheet.stat().st_size} bytes; {canvas.width} x {canvas.height})')
     raise SystemExit(0)
 
 import bpy
 import numpy as np
 from mathutils import Vector, Matrix
+if args.render_view:
+    review_scene = root / f'.qa-dist/ships-round-{args.round}/review.blend'
+    bpy.ops.wm.open_mainfile(filepath=str(review_scene))
+    scene = bpy.context.scene
+    scene.camera = bpy.data.objects[f'review-camera-{args.render_view}']
+    reference_plane = bpy.data.objects['review-only side photograph']
+    reference_plane.hide_render = args.render_view != 'comparison'
+    if args.render_view == 'deck':
+        deck_camera = scene.camera
+        deck_camera.location = Vector((28, 466.5, 12.7))
+        deck_target = Vector((13, 470, 17.7))
+        deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
+    if args.render_view == 'comparison':
+        for obj in scene.objects:
+            if obj.type == 'MESH':
+                obj.hide_render = (obj != reference_plane and
+                                   'ship-patience:upperworks' not in obj.name)
+    if args.render_view == 'dusk':
+        world = scene.world.node_tree.nodes.get('Background')
+        world.inputs[0].default_value = (.025, .035, .06, 1)
+        world.inputs[1].default_value = .22
+        bpy.data.objects['review-softbox'].data.energy = 22000
+        bpy.data.objects['review-fill'].data.energy = 7000
+    scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
+    bpy.ops.render.render(write_still=True)
+    print(f'Rendered {args.render_view}: {scene.render.filepath}')
+    raise SystemExit(0)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
+from photo_carve import carve_object
 
-missing = [str(p) for p in [*inputs.values(), *photos.values(), ship_photo_full, patience_paint_tile] if not p.is_file()]
+missing = [str(p) for p in [*inputs.values(), *photos.values(), ship_photo_full] if not p.is_file()]
 if missing:
     raise FileNotFoundError('Ship source photographs are missing: ' + ', '.join(missing))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -110,8 +162,6 @@ def photo_material(name, path, metallic=0, roughness=.9, emission=False):
     return mat
 
 hull_photo = photo_material('Ship hull / projected freighter photograph', photos['ships-hull-photo'])
-upper_photo = photo_material('Ship upperworks / matching freighter photograph', ship_photo_full)
-painted_white = photo_material('Patience / worn white painted steel tile', patience_paint_tile, metallic=0, roughness=.94)
 stone_photo = photo_material('Lighthouse / projected local stonework', photos['lighthouse-stone-photo'])
 pilot_photo = photo_material('Pilot boat / projected workboat photograph', photos['pilot-boat-photo'])
 rust = materials['rusted-steel']
@@ -198,45 +248,6 @@ def rail(name,a,b,radius,material,part):
     bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=radius,depth=d.length,location=(va+vb)*.5)
     o=bpy.context.object; o.rotation_euler=d.to_track_quat('Z','Y').to_euler(); o.data.materials.append(material)
     return attach(o,name,part)
-
-def photo_box(name, center, dims, part, deck=5.0, roof=True):
-    """A thick, tiered ship block with the same side photograph mapped on both sides."""
-    x,y,z=center; lx,hy,wz=dims
-    x0,x1=x-lx/2,x+lx/2; y0,y1=y-hy/2,y+hy/2; z0,z1=z-wz/2,z+wz/2
-    corners=[(x0,y0,z0),(x1,y0,z0),(x1,y0,z1),(x0,y0,z1),
-             (x0,y1,z0),(x1,y1,z0),(x1,y1,z1),(x0,y1,z1)]
-    faces=[(0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
-    mesh=bpy.data.meshes.new(name+' thick photographic panels'); mesh.from_pydata([gv(v) for v in corners],[],faces)
-    mesh.materials.append(upper_photo); mesh.materials.append(painted_white); mesh.update()
-    uv=mesh.uv_layers.new(name='UVMap'); uv.active_render=True; mesh.uv_layers.active_index=0
-    for poly in mesh.polygons:
-        for li in poly.loop_indices:
-            px,py,pz=corners[mesh.loops[li].vertex_index]
-            if poly.index in (2,4):
-                u=min(.995,max(.005,(px+37.0)/74.0))
-                row=min(120.0,max(0.0,(deck+7.2-py)*15.4))
-                v=1.0-row/384.0
-                poly.material_index=0
-            else:
-                # Off-camera end, roof and deck surfaces use close photographed paint.
-                if poly.index in (0,1):
-                    u=(px-x0)/2.5
-                    v=(pz-z0)/2.5
-                else:
-                    u=(pz-z0)/2.5
-                    v=(py-y0)/2.5
-                if not roof and poly.index in (0,1):
-                    poly.material_index=0
-                    u=min(.995,max(.005,(px+37.0)/74.0))
-                    row=min(120.0,max(0.0,(deck+7.2-py)*15.4))
-                    v=1.0-row/384.0
-                else:
-                    poly.material_index=1
-            uv.data[li].uv=(u,v)
-    obj=bpy.data.objects.new(name,mesh); scene.collection.objects.link(obj); obj['part']=part
-    bevel=obj.modifiers.new('soft rolled superstructure seams','BEVEL'); bevel.width=.045; bevel.segments=2
-    obj.modifiers.new('weighted panel normals','WEIGHTED_NORMAL')
-    return obj
 
 def torus_local(name, center, major, minor, material, part, axis='Y', major_segments=24, minor_segments=8):
     o=torus(name,center,major,minor,material,part,axis,major_segments,minor_segments)
@@ -335,14 +346,16 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             for dx in (-.35,.35): beam(f'{name}-ladder-rail-{side}-{low}-{dx}',(x+dx,low,z),(x+dx,high,z),.065,steel,root.name)
             for k in range(1,round((high-low)/.34)):
                 y=low+k*.34; beam(f'{name}-ladder-rung-{side}-{low}-{k}',(x-.35,y,z),(x+.35,y,z),.055,iron,root.name)
-    # A chart room with a tall door and glazing, distinct from the decks.
-    chart_x=-22
-    cabin=cube(name+'-chart-room',(chart_x,deck+3.8,0),(8,4.1,5.4),steel,root.name,.20); parent(cabin,root)
-    roof=cube(name+'-chart-room-roof',(chart_x,deck+6.0,0),(9,.28,6.1),rust,root.name,.10); parent(roof,root)
-    for side in (-1,1):
-        for i in range(5):
-            win=cube(f'{name}-chart-window-{side}-{i}',(chart_x-3.1+i*1.55,deck+4.0,side*2.72),(1.05,1.0,.08),glass,root.name,.05); parent(win,root)
-    door=cube(name+'-chart-door',(chart_x+4.05,deck+3.55,-1.1),(.10,2.4,1.0),iron,root.name,.05); parent(door,root)
+    # This simple box remains for the other two ships. Patience now owns the
+    # one photo-carved superstructure added below.
+    if root.name != 'ship-patience':
+        chart_x=-22
+        cabin=cube(name+'-chart-room',(chart_x,deck+3.8,0),(8,4.1,5.4),steel,root.name,.20); parent(cabin,root)
+        roof=cube(name+'-chart-room-roof',(chart_x,deck+6.0,0),(9,.28,6.1),rust,root.name,.10); parent(roof,root)
+        for side in (-1,1):
+            for i in range(5):
+                win=cube(f'{name}-chart-window-{side}-{i}',(chart_x-3.1+i*1.55,deck+4.0,side*2.72),(1.05,1.0,.08),glass,root.name,.05); parent(win,root)
+        door=cube(name+'-chart-door',(chart_x+4.05,deck+3.55,-1.1),(.10,2.4,1.0),iron,root.name,.05); parent(door,root)
     return
 
 ships=[
@@ -357,31 +370,90 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
     r=root_obj(ident,(loc[0]+22,6,loc[1]),ident); roots[ident]=r
     photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
     if ident=='ship-patience':
-        # The aft bridge is three real, walkable tiers. Its side faces share the
-        # photo's x/y projection; the doors, window frames and rails have depth.
-        for tier,center,dims in (
-            ('aft-deckhouse',(-25.5,6.9,0),(23.0,3.4,9.3)),
-            ('chart-room',(-23.0,9.75,0),(20.0,3.2,8.1)),
-            ('wheelhouse',(-22.0,12.25,0),(13.0,2.0,6.9)),
-            ('chart-room-roof',(-22.0,13.36,0),(14.2,.26,7.7)),
-        ):
-            cabin=photo_box('patience-'+tier,center,dims,ident+':upperworks',deck)
-            parent(cabin,r)
-        for side in (-1,1):
-            z=side*4.12
-            # The real window positions already live in the full ship photo.
-            # Mapping both broad faces to that image avoids floating dark panes.
-            for x in (-31,-26,-21,-16,-11):
-                rail(f'patience-chart-balcony-{side}-{x}',(x,8.45,z),(x+4.2,8.45,z),.045,iron,ident)
-                for postx in (x,x+2.1,x+4.2):
-                    post=beam(f'patience-chart-balcony-post-{side}-{x}-{postx}',(postx,7.9,z),(postx,8.45,z),.045,steel,ident); parent(post,r)
-            door=cube(f'patience-chart-door-{side}',(-13.0,9.3,side*4.15),(1.05,2.25,.11),rust,ident,.04); parent(door,r)
-            for step in range(12):
-                x=-10.3-step*.52; y=5.25+step*.28
-                tread=cube(f'patience-chart-stair-{side}-{step}',(x,y,side*3.45),(.82,.14,1.5),steel,ident,.025); parent(tread,r)
-            for railside in (-1,1):
-                z=side*3.45+railside*.62
-                rail(f'patience-chart-stair-handrail-{side}-{railside}',(-10.5,8.3,z),(-16.7,5.45,z),.055,iron,ident)
+        # Dot's Diner pattern: one measured carve table, followed by a named
+        # root and one fitted body. The bridge front points bowward (+X); its
+        # aft edge is local x=-37, so the block centre is local x=-25.5.
+        side_scale = UPPER_LENGTH / abs(UPPER_SIDE_END - UPPER_SIDE_START)
+        front_scale = UPPER_FRONT['top_height'] / (UPPER_FRONT['ground'] - UPPER_FRONT['top'])
+        rear_scale = UPPER_REAR['top_height'] / (UPPER_REAR['ground'] - UPPER_REAR['top'])
+
+        def side_boxes(rectangles):
+            boxes = []
+            for px0, py0, px1, py1 in rectangles:
+                z0 = (UPPER_SIDE_START - px1) * side_scale - UPPER_LENGTH / 2
+                z1 = (UPPER_SIDE_START - px0) * side_scale - UPPER_LENGTH / 2
+                y0 = (UPPER_SIDE_GROUND - py1) * side_scale
+                y1 = (UPPER_SIDE_GROUND - py0) * side_scale
+                boxes.append((z0, z1, y0, y1))
+            return boxes
+
+        side_recesses = side_boxes((*UPPER_SIDE_WINDOWS, *UPPER_SIDE_PORTHOLES, *UPPER_SIDE_DOORS))
+        front_recesses = []
+        for px0, py0, px1, py1 in (*UPPER_FRONT_BRIDGE_WINDOWS, *UPPER_FRONT_WINDOWS,
+                                   *UPPER_FRONT_PORTHOLES, *UPPER_FRONT_DOORS):
+            front_recesses.append(((UPPER_FRONT['centre'] - px1) * front_scale,
+                                   (UPPER_FRONT['centre'] - px0) * front_scale,
+                                   (UPPER_FRONT['ground'] - py1) * front_scale,
+                                   (UPPER_FRONT['ground'] - py0) * front_scale))
+        rear_recesses = []
+        for px0, py0, px1, py1 in (*UPPER_REAR_PORTHOLES, *UPPER_REAR_DOORS):
+            rear_recesses.append(((px0 - UPPER_REAR['centre']) * rear_scale,
+                                  (px1 - UPPER_REAR['centre']) * rear_scale,
+                                  (UPPER_REAR['ground'] - py1) * rear_scale,
+                                  (UPPER_REAR['ground'] - py0) * rear_scale))
+
+        def keep_upperworks(x, y, z):
+            # Window, porthole and door pockets stop 0.30 m inside each face.
+            remove = np.zeros_like(y, dtype=bool)
+            for z0, z1, y0, y1 in side_recesses:
+                remove |= ((np.abs(x) >= UPPER_WING_WIDTH / 2 - .30) &
+                           (z >= z0) & (z <= z1) & (y >= y0) & (y <= y1))
+            for x0, x1, y0, y1 in front_recesses:
+                remove |= ((z <= -UPPER_LENGTH / 2 + .30) & (x >= x0) & (x <= x1) &
+                           (y >= y0) & (y <= y1))
+            for x0, x1, y0, y1 in rear_recesses:
+                remove |= ((z >= UPPER_LENGTH / 2 - .30) & (x >= x0) & (x <= x1) &
+                           (y >= y0) & (y <= y1))
+            return (y <= UPPER_HEIGHT) & ~remove
+
+        # The front photo encloses pale background under both projecting wings.
+        upper_table = {
+            'photos': {'side': 'patience-upperworks-side.jpg',
+                       'front': 'patience-upperworks-front.jpg',
+                       'rear': 'patience-upperworks-rear.jpg',
+                       'top': 'patience-upperworks-top.jpg'},
+            'length': UPPER_LENGTH, 'width': UPPER_WING_WIDTH, 'height': UPPER_HEIGHT,
+            'side_front_on_left': False,
+            'side': {'start': UPPER_SIDE_START, 'end': UPPER_SIDE_END,
+                     'ground': UPPER_SIDE_GROUND},
+            'front': UPPER_FRONT, 'rear': UPPER_REAR, 'top': UPPER_TOP,
+            'cut': {'front': [(108, 228, 157, 302), (611, 228, 661, 302)]},
+            'keep': keep_upperworks,
+            'grey': 26, 'tolerance': 34, 'bleed_tolerance': 24,
+            'voxel': .10, 'target': 14000,
+            'mask_dir': str(raw / 'masks'),
+        }
+        upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
+        # The studio reference is brighter than the game's overcast world. Keep
+        # its salt-white paint from clipping under the broad review softboxes.
+        for photo in upper_table['_photos'].values():
+            photo_material = photo.material()
+            bsdf = photo_material.node_tree.nodes.get('Principled BSDF')
+            texture = next(node for node in photo_material.node_tree.nodes
+                           if node.type == 'TEX_IMAGE')
+            tone = photo_material.node_tree.nodes.new('ShaderNodeHueSaturation')
+            tone.inputs['Value'].default_value = .78
+            photo_material.node_tree.links.new(texture.outputs['Color'], tone.inputs['Color'])
+            photo_material.node_tree.links.new(tone.outputs['Color'], bsdf.inputs['Base Color'])
+        upper_bounds = tuple(float(v) for v in upperworks.dimensions)
+        upper_root = bpy.data.objects.new('ship-patience:upperworks-root', None)
+        scene.collection.objects.link(upper_root)
+        upper_root['part'] = 'ship-patience:upperworks'
+        upper_root.parent = r
+        upper_root.location = gv((-25.5, deck, 0))
+        upper_root.rotation_euler[2] = -math.pi / 2
+        parent(upperworks, upper_root)
+        print('Patience upperworks carved bounds (Blender XYZ):', json.dumps(upper_bounds))
         # Long, thin working rails follow both sheer lines and close around the bow.
         for side in (-1,1):
             z=side*width*.45
@@ -674,97 +746,100 @@ def add_lighting():
     light_obj.location=gv((95,110,-410)); data.energy=100000; data.shape='DISK'; data.size=120
 
 def render_imported_review():
-    global scene
-    raw.mkdir(parents=True,exist_ok=True)
-    # Export first, clear every authored mesh, then import the exact GLB being delivered.
+    # Export first, clear the authored scene, then import exactly the GLB under review.
     town.export_glb(out)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'; scene.render.resolution_x=1000; scene.render.resolution_y=700; scene.render.resolution_percentage=100
-    scene.render.image_settings.file_format='JPEG'; scene.render.image_settings.quality=90; scene.render.film_transparent=False
-    scene.render.resolution_percentage=100
-    scene.world=bpy.data.worlds.new('mid-tone overcast') if not bpy.data.worlds else bpy.data.worlds[0]
-    scene.world.use_nodes=True; scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.52,.53,.52,1); scene.world.node_tree.nodes['Background'].inputs[1].default_value=.8
+    review_scene = bpy.context.scene
+    review_scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    review_scene.render.resolution_x, review_scene.render.resolution_y = (960, 600)
+    review_scene.render.resolution_percentage = 100
+    review_scene.render.image_settings.file_format = 'JPEG'
+    review_scene.render.image_settings.quality = 88
+    review_scene.render.film_transparent = False
+    review_scene.view_settings.view_transform = 'Standard'
+    review_scene.view_settings.look = 'Medium High Contrast'
+    review_scene.view_settings.exposure = 0
+    review_scene.view_settings.gamma = 1
+    review_scene.world = bpy.data.worlds.new('flat overcast review sky')
+    review_scene.world.use_nodes = True
+    review_scene.world.node_tree.nodes['Background'].inputs[0].default_value = (.48, .50, .52, 1)
+    review_scene.world.node_tree.nodes['Background'].inputs[1].default_value = .65
     bpy.ops.import_scene.gltf(filepath=str(out))
-    exported_objects=list(bpy.context.scene.objects)
-    exported_meshes=[obj for obj in exported_objects if obj.type=='MESH']
-    triangle_count=sum(len(poly.vertices)-2 for obj in exported_meshes for poly in obj.data.polygons)
-    glb_bytes=out.stat().st_size
-    # The side-by-side car is review-only. Place an existing game car at 4.5 m long.
-    car_path=root/'public/assets/models/unlocks/viper_proto.glb'
-    before_car=set(scene.objects)
-    bpy.ops.import_scene.gltf(filepath=str(car_path))
-    car_objects=list(set(scene.objects)-before_car)
-    car_meshes=[obj for obj in car_objects if obj.type=='MESH']
-    car_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
-    low=Vector((min(p.x for p in car_points),min(p.y for p in car_points),min(p.z for p in car_points)))
-    high=Vector((max(p.x for p in car_points),max(p.y for p in car_points),max(p.z for p in car_points)))
-    center=(low+high)*.5
-    source_length=max(high.x-low.x,high.y-low.y,high.z-low.z)
-    car_scale=4.5/max(source_length,.01)
-    car_target=gv((5.0,-.90,-456.0))
-    car_transform=(Matrix.Translation(car_target) @ Matrix.Rotation(math.pi/2,4,'Z')
-                   @ Matrix.Scale(car_scale,4) @ Matrix.Translation(-center))
-    for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
-        obj.matrix_world=car_transform @ obj.matrix_world
-    bpy.context.view_layer.update()
-    for obj in car_objects:
-        obj.hide_render=False
-    placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
-    car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
-                    max(p.y for p in placed_points)-min(p.y for p in placed_points),
-                    max(p.z for p in placed_points)-min(p.z for p in placed_points))
-    car_fit=Matrix.Translation(car_target) @ Matrix.Scale(4.5/max(car_dimensions),4) @ Matrix.Translation(-car_target)
-    for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
-        obj.matrix_world=car_fit @ obj.matrix_world
-    bpy.context.view_layer.update()
-    placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
-    car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
-                    max(p.y for p in placed_points)-min(p.y for p in placed_points),
-                    max(p.z for p in placed_points)-min(p.z for p in placed_points))
-    correction=4.5/max(car_dimensions)
-    if abs(max(car_dimensions)-4.5)>.01:
-        correction_matrix=(Matrix.Translation(car_target) @ Matrix.Scale(correction,4)
-                           @ Matrix.Translation(-car_target))
-        for obj in [obj for obj in car_objects if obj.parent not in car_objects]:
-            obj.matrix_world=correction_matrix @ obj.matrix_world
-        bpy.context.view_layer.update()
-        placed_points=[obj.matrix_world @ Vector(corner) for obj in car_meshes for corner in obj.bound_box]
-        car_dimensions=(max(p.x for p in placed_points)-min(p.x for p in placed_points),
-                        max(p.y for p in placed_points)-min(p.y for p in placed_points),
-                        max(p.z for p in placed_points)-min(p.z for p in placed_points))
-    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0,-2.0,-440)))
-    review_ground=bpy.context.object; review_ground.name='review-only mid-tone lake bed'
-    review_material=bpy.data.materials.new('Review ground / neutral lake-bed earth'); review_material.diffuse_color=(.28,.23,.17,1)
-    review_material.use_nodes=True; review_material.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.28,.23,.17,1)
-    review_material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
-    review_ground.data.materials.append(review_material)
-    # Render view and light objects are created only after GLB import.
-    add_lighting()
-    # Preserve the source photograph unchanged; compare at the same broadside
-    # angle and horizontal world scale, then show the ship on foot and at car height.
-    import shutil
-    shutil.copyfile(ship_photo_full,raw/'reference.jpg')
-    for obj in car_objects:
-        obj.hide_render=False
-    for obj in exported_objects:
-        if obj.type=='MESH': obj.hide_render=False
-    side_cam=camera('review broadside', (29,9,-320), (29,9,-470), 50)
-    side_cam.data.type='ORTHO'; side_cam.data.ortho_scale=82
-    scene.camera=side_cam; scene.render.resolution_x,scene.render.resolution_y=(2048,900)
-    scene.render.filepath=str(raw/'broadside.jpg'); bpy.ops.render.render(write_still=True)
-    for obj in exported_objects:
-        if obj.type=='MESH': obj.hide_render=False
-    quarter_cam=camera('review bow three-quarter', (74,-1.15,-426), (27,5,-470), 25)
-    scene.camera=quarter_cam; scene.render.resolution_x,scene.render.resolution_y=(1200,760)
-    scene.render.filepath=str(raw/'three-quarter.jpg'); bpy.ops.render.render(write_still=True)
-    for obj in car_objects:
-        obj.hide_render=True
-    deck_cam=camera('review deck looking aft', (39,12.75,-464), (-8,13.2,-470), 43)
-    scene.camera=deck_cam; scene.render.resolution_x,scene.render.resolution_y=(1200,760)
-    scene.render.filepath=str(raw/'deck-aft.jpg'); bpy.ops.render.render(write_still=True)
-    print(json.dumps({'glb':str(out),'glb_bytes':glb_bytes,'triangles':triangle_count,
-                      'materials_metallic_max':.28,'side_scale_metres':78,
-                      'review_car_dimensions':car_dimensions,'views':3}))
+    exported_objects = list(review_scene.objects)
+    exported_meshes = [obj for obj in exported_objects if obj.type == 'MESH']
+    triangle_count = sum(len(poly.vertices) - 2 for obj in exported_meshes for poly in obj.data.polygons)
+    glb_bytes = out.stat().st_size
+
+    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0, -2.0, -440)))
+    ground = bpy.context.object
+    ground.name = 'review-only neutral lake bed'
+    ground_mat = bpy.data.materials.new('Review ground / flat neutral earth')
+    ground_mat.use_nodes = True
+    ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.32, .29, .25, 1)
+    ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .98
+    ground.data.materials.append(ground_mat)
+
+    def area(name, game_location, energy, size):
+        data = bpy.data.lights.new(name, 'AREA')
+        data.energy, data.shape, data.size = energy, 'DISK', size
+        obj = bpy.data.objects.new(name, data)
+        review_scene.collection.objects.link(obj)
+        obj.location = gv(game_location)
+        obj.rotation_euler = (gv((0, 4, -465)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
+        return obj
+
+    key = area('review-softbox', (5, 44, -430), 44000, 55)
+    fill = area('review-fill', (65, 26, -510), 26000, 45)
+
+    def add_camera(name, eye, target, scale, resolution=(1000, 700)):
+        data = bpy.data.cameras.new(name)
+        cam = bpy.data.objects.new(name, data)
+        review_scene.collection.objects.link(cam)
+        cam.location = gv(eye)
+        cam.rotation_euler = (gv(target) - cam.location).to_track_quat('-Z', 'Y').to_euler()
+        data.type = 'ORTHO'
+        data.ortho_scale = scale
+        review_scene.render.resolution_x, review_scene.render.resolution_y = resolution
+        return cam
+
+    add_camera('review-camera-whole', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
+    add_camera('review-camera-dusk', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
+    add_camera('review-camera-above', (25, 92, -470), (25, 9, -470), 98, (900, 900))
+    add_camera('review-camera-comparison', (13.5, 15.2, -430), (13.5, 15.2, -470), 49, (1400, 600))
+    add_camera('review-camera-deck', (28, 12.7, -466.5), (13, 17.7, -470), 23, (1200, 600))
+
+    # A flat reference plane shares the comparison camera and the measured
+    # 23 m horizontal scale; its photographed background remains visible.
+    ref_image = bpy.data.images.load(str(tex / 'patience-upperworks-side.jpg'), check_existing=False)
+    ref_mat = bpy.data.materials.new('Review-only measured side photograph')
+    ref_mat.use_nodes = True
+    ref_nodes = ref_mat.node_tree.nodes
+    ref_nodes.clear()
+    ref_out = ref_nodes.new('ShaderNodeOutputMaterial')
+    ref_emission = ref_nodes.new('ShaderNodeEmission')
+    ref_tex = ref_nodes.new('ShaderNodeTexImage')
+    ref_tex.image = ref_image
+    ref_mat.node_tree.links.new(ref_tex.outputs['Color'], ref_emission.inputs['Color'])
+    ref_mat.node_tree.links.new(ref_emission.outputs[0], ref_out.inputs['Surface'])
+    x0, x1 = 14.0, 37.0
+    y0, y1 = 11.0, 19.4
+    z = -475.0
+    verts = [gv((x0,y0,z)), gv((x1,y0,z)), gv((x1,y1,z)), gv((x0,y1,z))]
+    mesh = bpy.data.meshes.new('review photo comparison plane')
+    mesh.from_pydata(verts, [], [(0,1,2,3)])
+    mesh.materials.append(ref_mat)
+    uv = mesh.uv_layers.new(name='UVMap')
+    for li, coord in zip(mesh.polygons[0].loop_indices, ((0,0),(1,0),(1,1),(0,1))):
+        uv.data[li].uv = coord
+    plane = bpy.data.objects.new('review-only side photograph', mesh)
+    review_scene.collection.objects.link(plane)
+
+    raw.mkdir(parents=True, exist_ok=True)
+    review_scene.camera = review_scene.objects['review-camera-whole']
+    bpy.ops.wm.save_as_mainfile(filepath=str(raw / 'review.blend'))
+    print(json.dumps({'glb': str(out), 'glb_bytes': glb_bytes,
+                      'triangles': triangle_count, 'views_ready': 5,
+                      'review_file': str(raw / 'review.blend')}))
 
 # A real +Y-up, metre-scale scene, with one named root per story place.
 scene.camera=None

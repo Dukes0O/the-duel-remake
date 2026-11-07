@@ -54,3 +54,22 @@ boat remain unbuilt because Patience did not pass the photo comparison.
   Recycle Bin; round 6 is the only retained sheet and review note.
 - Removed this run's temporary round 4, 5 and 6 render inputs, composition
   attempt and logs from `.qa-dist/`. Kept the named `.qa-dist/task.md` brief.
+
+## Round 7 ? Patience upperworks (7 November 2026)
+
+- Added four cropped, credited studio views for the same accommodation block. `photo_grid.py` grids supplied the side ends and deck line (x=40/710, y=460), front and rear centre/deck/roof (x=384, y=460, y=163/174), plan bow/stern (x=145/675), centre (y=245) and bridge-wing span (y=54..436). The plan crop is mirrored to follow the required front-at-minus-Z convention. Constants and measured window/door rectangles are at the top of `tools/blender/scablands-ships.py`.
+- Replaced the stacked Patience box tiers with one `carve_object('ship-patience:upperworks', ...)` at 23 m long and 8.4 m high, with a measured maximum 12 m bridge-wing span and 0.30 m recess pockets. The carved Blender bounds read 12.50 x 23.49 x 8.40 m including voxel margins. The 9.3 m deck width is the target for the lower deck-house silhouette; the photo-derived overall bound includes bridge wings.
+- Exported GLB read-back: 29,788 triangles and 1,702,368 bytes (1.63 MiB).
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0.
+- `tools/test-repo-hygiene.mjs`: passed; exit 0. Size targets are advisory.
+- `tools/test-review-evidence.mjs`: 7/9 subtests passed; two runs both failed the same two checks. One still sees the deleted round 6 sheet through the unchanged Git index because the lane cannot stage or commit here; the other cannot spawn `ffmpeg` (`EPERM`). The JPG bound and review-note subtest passed.
+- Browser checks: none; Claude should inspect `docs/board/looks/ww-art-ships/round-7.jpg`, especially the bridge-front and deck-height panels.
+- Changed assertions: added a GLB check for the single named Patience upperworks node and absence of the four former tier names. No existing assertion was changed or weakened.
+- Race fingerprints: none; art only.
+- Self-look: the deck-height view shows the bridge window row, steel doors and portholes, with the usual deck equipment crossing the foreground.
+
+## Removed
+
+- Removed the four `photo_box` cabin tiers, their separate chart-room door, balcony rails/posts, stair treads and stair handrails, and the duplicate generic Patience chart-room boxes/roof/windows/door. The ship's hull, deck, main rails, mast and derricks remain.
+- Removed the now-unused `patience-white-painted-steel.jpg` tile and its credit entry; the carved photo set supplies the superstructure finish.
+- Removed the superseded round 6 look sheet and review note; round 7 is the single retained sheet.

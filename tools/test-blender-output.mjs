@@ -723,6 +723,13 @@ try {
           assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
             `${material.name} metallicFactor exceeds 0.3`);
         }
+      } else if (generator.id === 'ww-art-ships') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        assert.ok(names.has('ship-patience:upperworks'), 'Patience has one named photo-carved upperworks piece');
+        for (const oldTier of ['patience-aft-deckhouse', 'patience-chart-room',
+          'patience-wheelhouse', 'patience-chart-room-roof']) {
+          assert.ok(!names.has(oldTier), `${oldTier} was replaced by the single carved piece`);
+        }
       } else {
         assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
       }
