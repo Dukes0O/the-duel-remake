@@ -3,6 +3,7 @@ Machine axis: Z. Cutter/front: -Z. Tracks sit on the ground at Y=0.
 Game space is +Y up; all placed parts use this one coordinate frame.
 """
 import argparse, json, math, sys
+import numpy as np
 from pathlib import Path
 
 p=argparse.ArgumentParser(); p.add_argument('--root',required=True); p.add_argument('--render',default=''); p.add_argument('--paths-only',action='store_true')
@@ -69,7 +70,8 @@ body_table={
  'rear':{'centre':640,'ground':1256,'top':20},
  'top':{'front':12,'rear':1228,'centre':352,'along':'x','x_scale':.0253},
  'grey':28,'tolerance':42,'bleed_tolerance':48,'voxel':.14,'target':9000,
- 'mask_dir':str(root/'.evidence/round5/masks')}
+ 'round':2.2,
+ 'mask_dir':str(root/'.evidence/round6/masks')}
 shield=carve_object('Shield tube carved',tex,body_table)
 shield.parent=borer; shield.location=(0,0,0); shield.rotation_euler[0]=math.pi; shield.scale[2]=-1.15
 
@@ -80,6 +82,15 @@ lift_if_dark(cutter_photo)
 cutter_sky=cutter_photo.sky([(8,8),(cutter_photo.w-9,8),(8,cutter_photo.h-9),(cutter_photo.w-9,cutter_photo.h-9)],tolerance=30,grey=28)
 cutter_mask=(~cutter_sky)&(cutter_photo.rgb().mean(axis=2)>42)
 cutter_mask[int(cutter_photo.h*.98):,:]=False
+# The photo contains a dark curved mark over the shaft hub. Remove its centre
+# from the photo slab; the separate forged flange and boss provide the hub.
+cy,cx=np.ogrid[:cutter_photo.h,:cutter_photo.w]
+hub_radius_px=int(.95/TUBE_DIAMETER*cutter_photo.w/.92)
+cutter_mask[(cx-cutter_photo.w/2)**2+(cy-cutter_photo.h/2)**2<hub_radius_px**2]=False
+# The traced silhouette can include pale studio wedges around the cutter.
+# Keep the photo slab inside the forged outer rim so no background sheet floats.
+rim_radius_px=int(5.10/TUBE_DIAMETER*cutter_photo.w/.92)
+cutter_mask[(cx-cutter_photo.w/2)**2+(cy-cutter_photo.h/2)**2>rim_radius_px**2]=False
 cutter_loops=trace(cutter_mask,(0,0,cutter_photo.w,cutter_photo.h),tolerance=7.0,min_area=400)
 cutter_mesh=Mesh()
 def cutter_world(px,py,depth):
@@ -120,6 +131,9 @@ part_torus('Cutter inner bearing rim',head,(0,0,.12),5.28,.085,tin)
 part_cylinder('Ship propeller shaft flange',head,(0,0,.24),1.28,.62,steel,'z',48)
 part_cylinder('Propeller shaft boss',head,(0,0,.65),.78,.82,tin,'z',40)
 part_cylinder('Shaft end cap',head,(0,0,1.12),.48,.28,steel,'z',32)
+# A broad shallow cap sits forward of the photo slab and keeps the shaft hub
+# legible even where the source photograph's central shadows are deep.
+part_cylinder('Propeller hub face',head,(0,0,-.34),.72,.18,tin,'z',40)
 for i in range(8):
  ang=math.tau*i/8; co,si=math.cos(ang),math.sin(ang)
  part_beam(f'Forged cutter spoke {i+1:02}',head,(co*1.0,si*1.0,.20),(co*5.35,si*5.35,.20),.30,tin)
@@ -151,6 +165,7 @@ for i,z in enumerate((-7.2,-1.8,3.6,8.7)):
 gantry=empty('borer:gantry',(0,0,0),borer)
 for side in (-1,1):
  x=side*4.5
+ # The rails sit on the same Y=0 plane as the tube's four gripper feet.
  part_cube(f'Gantry ground rail {side:+}',gantry,(x,.20,23.0),(.52,.40,16.0),dark,.05)
  part_cube(f'Gantry upper rail cap {side:+}',gantry,(x,.43,23.0),(.62,.10,16.0),tin,.025)
  for i,z in enumerate((16.0,20.5,25.0,30.0)):
@@ -289,9 +304,9 @@ if a.render:
  for loc,power,size in [((12,24,-18),6500,18),((-18,16,24),4200,16),((4,28,8),3000,20)]:
   bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,5,8)))
  evidence.mkdir(parents=True,exist_ok=True)
- views=[('side',(48,20,8),(0,5.9,8),88,math.pi/2),('front',(0,18,-42),(0,6,-15.45),18,0),
-        ('rear',(0,18,44),(0,6,27),18,0),('above',(0,68,8),(0,0,8),88,math.pi/2),
-        ('road',(36,16,-30),(0,5.8,8),82,math.pi/2),('mayor',(-48,62,-42),(0,5.8,8),92,math.pi/2)]
+ views=[('side',(48,20,8),(0,5.9,8),60,math.pi/2),('front',(0,18,-42),(0,6,-15.45),18,0),
+        ('rear',(0,18,44),(0,6,27),18,0),('above',(0,68,8),(0,0,8),58,math.pi/2),
+        ('road',(36,16,-30),(0,5.8,8),68,math.pi/2),('mayor',(-48,62,-42),(0,5.8,8),76,math.pi/2)]
  for name,loc,target,scale,roll in views:
   bpy.ops.object.camera_add(location=town.game_vector(loc)); camera=bpy.context.object; aim(camera,town.game_vector(target)); camera.data.type='ORTHO'; camera.data.ortho_scale=scale; scene.camera=camera
   if roll: camera.rotation_euler.rotate_axis('Z',roll)
