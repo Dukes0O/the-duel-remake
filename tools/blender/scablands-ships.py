@@ -12,18 +12,17 @@ from pathlib import Path
 # bridge-wing span y=54..436. Window and door boxes below are pixel rectangles
 # read from those same grids, not estimated from the rendered mesh.
 # Patience hull measurements from .qa-dist/grid-hull-{side,bow,stern,top}.png.
-# Side: crop x=0..2010; keel y=223; midships deck edge y=0..20 and bow edge y=0.
-# Its 2010 px span sets 72 m; the cropped profile is normalized to 8 m depth.
-# Bow: crop x=0..1268, centre=634; deck y=0, keel y=845; 12 m beam.
-# Stern: crop x=0..1140, centre=570; deck y=0, keel y=760; rudder/propeller below.
-# Top: bow/stern y=0/2070, centre x=172; beam edges x=0..345.
+# Side: hull ends x=11/1011; midships deck y=45, keel y=155 (110 px = 8 m).
+# Bow: 12 m beam spans x=10..645; centre=328; deck/keel y=20/431 (411 px = 8 m).
+# Stern: 12 m beam spans x=70..680; centre=384; deck/keel y=41/450 (409 px = 8 m).
+# Top: bow/stern y=0/1024; centre x=179; beam spans x=90..260 (170 px = 12 m).
 HULL_LENGTH = 72.0
 HULL_WIDTH = 12.0
 HULL_HEIGHT = 8.0
-HULL_SIDE = {'start': 0, 'end': 2010, 'ground': 223}
-HULL_BOW = {'centre': 634, 'ground': 845, 'top': 0}
-HULL_STERN = {'centre': 570, 'ground': 760, 'top': 0}
-HULL_TOP = {'front': 0, 'rear': 2070, 'centre': 172, 'along': 'x', 'x_scale': 12.0 / 345}
+HULL_SIDE = {'start': 11, 'end': 1011, 'ground': 155}
+HULL_BOW = {'centre': 328, 'ground': 431, 'top': 20}
+HULL_STERN = {'centre': 384, 'ground': 450, 'top': 41}
+HULL_TOP = {'front': 0, 'rear': 1024, 'centre': 179, 'x_scale': 12.0 / 170}
 UPPER_SCALE = .0244
 UPPER_LENGTH = (720 - 40) * UPPER_SCALE
 UPPER_DECK_WIDTH = (600 - 190) * UPPER_SCALE
@@ -74,7 +73,6 @@ inputs = {
     'weathered-plank': tex / 'dam-gatehouse-stone.jpg',
 }
 photos = {name: tex / f'{name}.jpg' for name in ('ships-hull-photo', 'lighthouse-stone-photo', 'pilot-boat-photo')}
-photos['ships-hull-photo'] = tex / 'patience-hull-projection.jpg'
 ship_photo_full=tex/'ships-hull-photo.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(root / 'art-build/wasteland-ships/ships.blend')],
@@ -106,18 +104,18 @@ if args.render_view:
     reference_plane.hide_render = args.render_view != 'comparison'
     if args.render_view == 'deck':
         deck_camera = scene.camera
-        deck_camera.location = Vector((-2, 455, 12.7))
-        deck_target = Vector((-2, 470, 18.5))
+        deck_camera.location = Vector((22.4, 475, 7.35))
+        deck_target = Vector((7.4, 470, 10.5))
         deck_camera.data.type = 'PERSP'
-        deck_camera.data.lens = 50
+        deck_camera.data.lens = 85
         deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
     if args.render_view == 'funnel':
         funnel_camera = scene.camera
-        funnel_camera.location = Vector((-15, 462, 22))
-        funnel_target = Vector((-6, 470, 20))
+        funnel_camera.location = Vector((-15, 463, 17))
+        funnel_target = Vector((-6.3, 466.7, 13.7))
         funnel_camera.data.type = 'PERSP'
-        funnel_camera.data.lens = 24
-        funnel_camera.rotation_euler = (Vector((-6, 470, 20)) - funnel_camera.location).to_track_quat('-Z', 'Y').to_euler()
+        funnel_camera.data.lens = 40
+        funnel_camera.rotation_euler = (funnel_target - funnel_camera.location).to_track_quat('-Z', 'Y').to_euler()
     if args.render_view == 'above':
         scene.camera.data.type = 'PERSP'
     if args.render_view == 'comparison':
@@ -140,7 +138,9 @@ import town_base as town
 from photo_carve import carve_object
 from photo_model import Photo as DetailPhoto, Mesh as DetailMesh, trace, slab, lathe
 
-missing = [str(p) for p in [*inputs.values(), *photos.values(), ship_photo_full] if not p.is_file()]
+missing = [str(p) for p in [*photos.values(), ship_photo_full,
+                           tex / 'patience-hull-side.jpg', tex / 'patience-hull-bow.jpg',
+                           tex / 'patience-hull-stern.jpg', tex / 'patience-hull-top.jpg'] if not p.is_file()]
 if missing:
     raise FileNotFoundError('Ship source photographs are missing: ' + ', '.join(missing))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -221,7 +221,7 @@ def matte_material(name,color,roughness=.88):
     bsdf=mat.node_tree.nodes.get('Principled BSDF')
     bsdf.inputs['Base Color'].default_value=(*color,1); bsdf.inputs['Metallic'].default_value=0; bsdf.inputs['Roughness'].default_value=roughness
     return mat
-name_paint=matte_material('Ship name / faded chalk paint',(.42,.36,.27))
+name_paint=matte_material('Ship name / faded chalk paint',(.70,.66,.55))
 boat_paint=matte_material('Pilot boat / maintained warm cream enamel',(.68,.66,.59))
 lamp = bpy.data.materials.new('Lighthouse / lit Fresnel lantern')
 lamp.use_nodes = True
@@ -406,14 +406,47 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
 ships=[
     ('ship-good-hope',(-45,-415),'GOOD HOPE',72,16.5,5.0,-12.2,0.12),
     ('ship-marigold',(45,-440),'MARIGOLD',67,16.0,5.0,-12.0,-0.09),
-    ('ship-patience',(5,-470),'PATIENCE',72,12.0,5.0,-12.2,0.07),
+    ('ship-patience',(5,-470),'PATIENCE',HULL_LENGTH,HULL_WIDTH,4.0,-4.0,0.07),
 ]
 if args.stage == 'patience':
     ships=[ship for ship in ships if ship[0]=='ship-patience']
 roots={}
 for ident,loc,label,length,width,deck,keel,lean in ships:
-    r=root_obj(ident,(loc[0]+22,6,loc[1]),ident); roots[ident]=r
-    photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
+    root_y = 0 if ident == 'ship-patience' else 6
+    r=root_obj(ident,(loc[0]+22,root_y,loc[1]),ident); roots[ident]=r
+    if ident == 'ship-patience':
+        hull_table = {
+            'photos': {'side':'patience-hull-side.jpg','front':'patience-hull-bow.jpg',
+                       'rear':'patience-hull-stern.jpg','top':'patience-hull-top.jpg'},
+            'length':HULL_LENGTH, 'width':HULL_WIDTH, 'height':HULL_HEIGHT,
+            'forward':1, 'side_front_on_left':True,
+            'side':HULL_SIDE, 'front':HULL_BOW, 'rear':HULL_STERN, 'top':HULL_TOP,
+            'ends_split':0, 'front_favour':3, 'rear_favour':3, 'round':2.4,
+            'grey':30, 'tolerance':42, 'bleed_tolerance':32,
+            'voxel':.20, 'target':1500,
+            'mask_dir':str(raw / 'masks'),
+        }
+        patience_hull = carve_object('ship-patience:hull', tex, hull_table)
+        # photo_carve returns beam and length in the horizontal plane, with
+        # length along local Y. Turn that axis to the ship's +X direction.
+        patience_hull.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
+        patience_hull.location = gv((0,-4,0))
+        parent(patience_hull,r)
+        hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience',.04)
+        parent(hull_deck,r)
+        # The high-side letters sit on the bow plating and face out on both sides.
+        for side in (-1,1):
+            label_curve=bpy.data.curves.new(f'Patience bow name {side}','FONT')
+            label_curve.body='PATIENCE'; label_curve.size=1.65; label_curve.resolution_u=3
+            label_curve.bevel_resolution=1; label_curve.extrude=.006
+            name_obj=bpy.data.objects.new(f'Patience bow name {side}',label_curve)
+            scene.collection.objects.link(name_obj)
+            name_obj.location=gv((18.5,1.8,side*6.2))
+            name_obj.rotation_euler=(math.pi/2,0,0) if side>0 else (math.pi/2,0,math.pi)
+            label_curve.materials.append(name_paint); name_obj['part']='ship-patience'
+            parent(name_obj,r)
+    else:
+        photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
     if ident=='ship-patience':
         # Dot's Diner pattern: one measured carve table, followed by a named
         # root and one fitted body. The bridge front points bowward (+X); its
@@ -475,7 +508,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'cut': {'front': [(108, 228, 157, 302), (611, 228, 661, 302)]},
             'keep': keep_upperworks,
             'grey': 26, 'tolerance': 34, 'bleed_tolerance': 24,
-            'voxel': .10, 'target': 14000,
+            'voxel': .10, 'target': 10000,
             'mask_dir': str(raw / 'masks'),
         }
         upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
@@ -638,26 +671,26 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
     for side in (-1,1):
         cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0]+22,0,loc[1]),f'{ident}:anchor-chain')
         if ident=='ship-patience':
-            pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,8.25,side*5.7),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
-        for i in range(20):
-            x=length*.43+i*.48
-            y=8.15-min(10.15,i*1.27) if i<9 else -2.0
-            z=side*(width*.45+min(1.8,i*.11))
-            link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.22,.055,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',10,6); parent(link,cr)
-        anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+11,-2.1,side*(width*.44+2.7)),.42,.18,rust,f'{ident}:anchor-chain',12)
-        parent(anchor,cr)
+            pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,3.2,side*5.7),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
+            for i in range(20):
+                x=length*.43+i*.48
+                y=2.8-min(4.8,i*.60) if i<9 else -2.0
+                z=side*(width*.45+min(1.8,i*.11))
+                link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.22,.055,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',8,4); parent(link,cr)
+            anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+11,-2.1,side*(width*.44+2.7)),.42,.18,rust,f'{ident}:anchor-chain',12)
+            parent(anchor,cr)
     if ident=='ship-patience':
         # A visible stern shaft, four-blade wheel and hanging rudder complete the hull.
         shaft_root=root_obj('ship-patience:propeller',(0,0,0),'ship-patience:propeller'); parent(shaft_root,r)
-        shaft=cylinder('patience-stern-propeller-shaft',(-35,-8.15,0),.32,7.2,steel,'ship-patience:propeller',24,'X'); parent(shaft,shaft_root)
-        hub=cylinder('patience-propeller-hub',(-39,-8.15,0),.67,.9,iron,'ship-patience:propeller',20,'X'); parent(hub,shaft_root)
+        shaft=cylinder('patience-stern-propeller-shaft',(-35,-4.15,0),.32,7.2,steel,'ship-patience:propeller',24,'X'); parent(shaft,shaft_root)
+        hub=cylinder('patience-propeller-hub',(-39,-4.15,0),.67,.9,iron,'ship-patience:propeller',20,'X'); parent(hub,shaft_root)
         for blade in range(4):
             a=blade*math.pi/2+.2
-            start=(-39.2,-8.15+math.sin(a)*.38,math.cos(a)*.38)
-            end=(-39.2,-8.15+math.sin(a)*1.38,math.cos(a)*1.38)
+            start=(-39.2,-4.15+math.sin(a)*.38,math.cos(a)*.38)
+            end=(-39.2,-4.15+math.sin(a)*1.38,math.cos(a)*1.38)
             propblade=beam(f'patience-propeller-blade-{blade}',start,end,.72,steel,'ship-patience:propeller',.18); parent(propblade,shaft_root)
-        rudder=cube('patience-stern-rudder',(-34.4,-7.45,0),(1.0,4.4,3.8),rust,'ship-patience:rudder',.28); parent(rudder,r)
-        stock=cylinder('patience-rudder-stock',(-34.2,-7.4,0),.28,4.8,steel,'ship-patience:rudder',18); parent(stock,r)
+        rudder=cube('patience-stern-rudder',(-34.4,-3.45,0),(1.0,4.4,3.8),rust,'ship-patience:rudder',.28); parent(rudder,r)
+        stock=cylinder('patience-rudder-stock',(-34.2,-3.4,0),.28,4.8,steel,'ship-patience:rudder',18); parent(stock,r)
     # Slightly different lean about each grounded centre line.
     r.rotation_euler[2]=lean
     if ident == 'ship-patience':
@@ -681,7 +714,14 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
 # Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
 # the main deck is y=11 and the platform is y=25.
 pat=roots['ship-patience']; mastx=-15; mastz=6; platform_y=19
+# The hand-built deck hardware remains at its former deck-relative heights.
+# Move just those direct Patience parts down with the corrected deck line.
+for obj in scene.objects:
+    if (obj.parent == pat and obj.get('part') == 'ship-patience'
+            and not obj.name.startswith(('Patience bow name', 'ship-patience:weather-deck'))):
+        obj.location += gv((0,-1,0))
 mast_root=root_obj('ship-patience:mast',(0,0,0),'ship-patience:mast'); parent(mast_root,pat)
+mast_root.location = gv((0,-1,0))
 bell_root=root_obj('ship-patience:bell',(0,0,0),'ship-patience:bell'); parent(bell_root,mast_root)
 mast=cylinder('patience-mast-main-spar',(mastx,12.3,mastz),.38,14.6,steel,'ship-patience:mast',24); parent(mast,mast_root)
 for dx in (-2.4,2.4):
@@ -796,30 +836,32 @@ if args.stage == 'family':
 # Low sandy approach merges into the buried hulls instead of a raised display base.
 ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.28,.23,.17),.97)
 if args.stage == 'patience':
-    # Separate sand banks lap over the hull sides, then feather out 8 m to bed.
-    # The mesh uses the lake bed sand material at world scale and follows the
-    # entire 72 m hull, with irregular crests higher on port and at the bow.
+    # One softly banked height field laps over the plating and fades 9 m outward.
+    # Its crest lies beside the hull; port and bow rise higher than the far side.
     rng = __import__('random').Random(10410)
-    verts=[]; faces=[]; stations=73; rows=7
+    verts=[]; faces=[]; stations=145; rows=9
     for side in (-1, 1):
         base=len(verts)
         for i in range(stations):
             t=i/(stations-1); along=-36 + 72*t
-            bow=max(0,(t-.72)/.28); stern=max(0,(.16-t)/.16)
-            crest=1.05 + .62*bow + .18*stern + .23*math.sin(t*31) + .14*math.sin(t*79) + rng.uniform(-.09,.09)
-            if side < 0: crest += .48
+            end_fade=max(0,min(1,t*8,(1-t)*8))
+            bow=max(0,(t-.70)/.30); stern=max(0,(.18-t)/.18)
+            crest=-.65 + .92*bow + .18*stern + .22*math.sin(t*23) + .12*math.sin(t*61) + rng.uniform(-.10,.10)
+            if side < 0: crest += .55
             for row in range(rows):
                 u=row/(rows-1)
-                lateral=side*(5.72 + 8.0*u)
-                edge=max(0,min(1,t*10,(1-t)*10))
-                y=-2 + (crest+2)*(math.sin(u*math.pi/2)**1.18)*edge
-                verts.append(gv((27+along,y,-470+lateral)))
+                lateral=side*(5.15 + 9.0*u + (1.35*math.sin(t*37+u*5)+.42*math.sin(t*73-u*9))*u)
+                along_wobble=u*(1.8*math.sin(t*7)+.65*math.sin(t*29))
+                ripple=.24*math.sin(t*71+u*11)+.13*math.sin(t*137-u*17)
+                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**1.55)*end_fade
+                verts.append(gv((27+along+along_wobble,y,-470+lateral)))
         for i in range(stations-1):
             for row in range(rows-1):
                 a=base+i*rows+row; b=a+rows
                 faces.append((a,b,b+1,a+1) if side > 0 else (a,a+1,b+1,b))
     drift_mesh=bpy.data.meshes.new('ship-patience drifts mesh')
     drift_mesh.from_pydata(verts,[],faces); drift_mesh.materials.append(sand); drift_mesh.update()
+    for polygon in drift_mesh.polygons: polygon.use_smooth=True
     drift=bpy.data.objects.new('ship-patience:drifts',drift_mesh); scene.collection.objects.link(drift)
     drift['part']='ship-patience:drifts'
 for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ()):

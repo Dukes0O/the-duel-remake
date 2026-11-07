@@ -725,6 +725,7 @@ try {
         }
       } else if (generator.id === 'ww-art-ships') {
         const names = new Set(gltf.nodes.map(node => node.name || ''));
+        assert.ok(names.has('ship-patience:hull'), 'Patience hull is carved from its four measured views');
         assert.ok(names.has('ship-patience:upperworks'), 'Patience has one named photo-carved upperworks piece');
         assert.ok(names.has('ship-patience:bridge-mast-lattice'), 'Patience has a separate traced bridge mast');
         assert.ok(names.has('ship-patience:funnel geometry'), 'Patience has a separate funnel with its exhausts');

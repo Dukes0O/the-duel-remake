@@ -131,15 +131,6 @@ Bright even overcast light, realistic human scale, plain mid-tone dusty
 ground, no water, no people, no text or labels, no illustration, no toy
 appearance.
 
-### `patience-hull-projection.jpg`
-
-Use: hull-only side projection for Patience in WW-ART-SHIPS. The crop uses
-rows 160 to 336 of the 2048 x 384 source photo, below the deck line. The
-bridge, gear and rails are modeled above it. Derived from the original Codex
-ImageGen photo `ships-hull-photo.jpg` above, 2026-11-05. No third-party source
-art is used.
-
-
 ## WW-ART-CREW photographs (2026-11-06)
 
 - `ww-gerald-box.jpg`: Codex ImageGen original product photograph of a
