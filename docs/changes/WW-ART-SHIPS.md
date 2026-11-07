@@ -183,6 +183,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 
 - Added three measured, dead-on funnel reference photos and replaced the box shell and separate pipes with one oval `carve_object` named `ship-patience:funnel`. The old funnel crop is removed. Reduced only the accommodation carve target to keep the hull untouched and stay within the triangle budget.
 - Added a material multiply darkening and a broken, vertically stretched oxide streak layer over all four accommodation photos. The existing photos remain unchanged; the hull is unchanged.
+- Rebuilt the two-sided drift with seeded phase shifts across four wavelengths. Port is wider and higher, the bow bank rises, and the stern tapers. The inner row overlaps the hull; the outer row sits at y=-2 and shares the bed's sand material. Looked at the exported model from above and car height.
 - Funnel-stage GLB read-back: 49,648 triangles and 2,873,984 bytes. Final six-view sheet and remaining round changes will be recorded here after review.
 - Changed assertions: none. Race fingerprints: none; art only. Browser and review checks: Claude should inspect the final six-view sheet, especially the funnel and drift edges.
 

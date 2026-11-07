@@ -846,26 +846,36 @@ if args.stage == 'family':
                 beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
-ship_ground=matte_material('Patience / dead-sea ground matched to the lake bed',(.28,.23,.17),.97)
+ship_ground=sand
 if args.stage == 'patience':
-    # One softly banked height field laps over the plating and fades 9 m outward.
-    # Its crest lies beside the hull; port and bow rise higher than the far side.
+    # Side-specific phase-shifted wavelengths roughen the edge. The outer row
+    # lies on the shared bed; the inner row overlaps the plating.
     rng = __import__('random').Random(10410)
     verts=[]; faces=[]; stations=145; rows=9
     for side in (-1, 1):
         base=len(verts)
+        phases=[rng.uniform(0, 2*math.pi) for _ in range(6)]
         for i in range(stations):
             t=i/(stations-1); along=-36 + 72*t
-            end_fade=max(0,min(1,t*8,(1-t)*8))
             bow=max(0,(t-.70)/.30); stern=max(0,(.18-t)/.18)
-            crest=-.65 + .92*bow + .18*stern + .22*math.sin(t*23) + .12*math.sin(t*61) + rng.uniform(-.10,.10)
-            if side < 0: crest += .55
+            edge_noise=(.42*math.sin(t*2*math.pi*72/29+phases[0])
+                        +.25*math.sin(t*2*math.pi*72/13+phases[1])
+                        +.13*math.sin(t*2*math.pi*72/5.5+phases[2])
+                        +.10*math.sin(t*2*math.pi*72/2.4+phases[3]))
+            crest=-.70 + 1.05*bow + .22*stern + edge_noise
+            if side < 0: crest += .60
+            drift_width=6.0 + 5.0*bow - 2.1*stern + (3.0 if side < 0 else 0)
             for row in range(rows):
                 u=row/(rows-1)
-                lateral=side*(5.15 + 9.0*u + (1.35*math.sin(t*37+u*5)+.42*math.sin(t*73-u*9))*u)
-                along_wobble=u*(1.8*math.sin(t*7)+.65*math.sin(t*29))
-                ripple=.24*math.sin(t*71+u*11)+.13*math.sin(t*137-u*17)
-                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**1.55)*end_fade
+                lateral=side*(5.35 + drift_width*u + u*(
+                    .55*math.sin(t*2*math.pi*72/21+phases[2])
+                    +.28*math.sin(t*2*math.pi*72/7.5+phases[4])
+                    +.16*math.sin(t*2*math.pi*72/3.2+phases[5])))
+                along_wobble=u*(.8*math.sin(t*2*math.pi*72/27+phases[1])
+                                +.35*math.sin(t*2*math.pi*72/8+phases[3]))
+                ripple=.20*math.sin(t*2*math.pi*72/9+u*4+phases[4])
+                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**1.55)
+                if row == rows-1: y=-2.0
                 verts.append(gv((27+along+along_wobble,y,-470+lateral)))
         for i in range(stations-1):
             for row in range(rows-1):
@@ -979,15 +989,8 @@ def render_imported_review():
     bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0, -2.0, -440)))
     ground = bpy.context.object
     ground.name = 'review-only neutral lake bed'
-    ground_mat = bpy.data.materials.new('Review ground / flat neutral earth')
-    ground_mat.use_nodes = True
-    ground_mat.node_tree.nodes.clear()
-    ground_out = ground_mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
-    ground_emission = ground_mat.node_tree.nodes.new('ShaderNodeEmission')
-    ground_emission.inputs['Color'].default_value = (.28, .23, .17, 1)
-    ground_emission.inputs['Strength'].default_value = .8
-    ground_mat.node_tree.links.new(ground_emission.outputs[0], ground_out.inputs['Surface'])
-    ground.data.materials.append(ground_mat)
+    ground.data.materials.append(next(mat for mat in bpy.data.materials
+                                      if mat.name.startswith('Town / sand')))
 
     def area(name, game_location, energy, size):
         data = bpy.data.lights.new(name, 'AREA')
