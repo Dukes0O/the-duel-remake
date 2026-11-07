@@ -79,6 +79,7 @@ if yellow_bsdf.inputs.get('Emission Color'):
 mat['leaf'] = simple('Town / dusty greens', (.12, .205, .105), .94)
 mat['fruit-red'] = simple('Town / bruised red fruit', (.38, .12, .075), .84)
 mat['fruit-yellow'] = simple('Town / dried yellow fruit', (.47, .34, .12), .86)
+mat['fruit-orange'] = simple('Town / dusty citrus orange',(.58,.245,.045),.88)
 mat['crate'] = mat['weathered-plank']
 mat['wire'] = simple('Town / dark wire', (.12, .13, .115), .78, .14)
 mat['rubber'] = simple('Town / dusty tire rubber', (.075, .078, .071), .95)
@@ -561,7 +562,24 @@ def market_stall(building, offset, kind):
         'canvas':mat['stall-canopy'],'rust':mat['stall-canopy-rust-patch'],
         'faded':mat['stall-canopy-faded-patch'],'under':mat['stall-canopy-under']}))
 
-    # Goods are added as separate counter pieces in the following commits.
+    if kind=='fruit':
+        # Two deep plank crates and small photo-colored produce sit on the counter.
+        colors=(mat['fruit-red'],mat['fruit-yellow'],mat['fruit-orange'])
+        for crate_index,cx in enumerate((-.43,.43),1):
+            cz=-.20
+            box(f'{building}:fruit-crate-{crate_index}-base',(cx,1.17,cz),(.70,.12,.52),mat['weathered-plank'],.025)
+            box(f'{building}:fruit-crate-{crate_index}-bed',(cx,1.31,cz),(.60,.16,.38),mat['crate'],.018)
+            for side in (-1,1):
+                box(f'{building}:fruit-crate-{crate_index}-long-board-{side}',
+                    (cx,1.34,cz+side*.235),(.70,.20,.045),mat['weathered-plank'],.012)
+                box(f'{building}:fruit-crate-{crate_index}-end-board-{side}',
+                    (cx+side*.33,1.34,cz),(.045,.20,.52),mat['weathered-plank'],.012)
+            for fruit_index in range(3):
+                x=cx-.18+fruit_index*.18
+                z=cz
+                color=colors[(fruit_index+crate_index)%len(colors)]
+                sphere(f'{building}:produce-{crate_index}-{fruit_index+1}',
+                       (x,1.46,z),(.105,.12,.105),color,8,4)
 
 market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
