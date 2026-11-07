@@ -13,12 +13,12 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
 guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-8'
-prop_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-9'
+prop_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-10'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
 sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
 guard_sheet = root / 'docs/board/looks/town-art-safety/round-8.jpg'
-prop_sheet = root / 'docs/board/looks/town-art-safety/round-9.jpg'
+prop_sheet = root / 'docs/board/looks/town-art-safety/round-10.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(prop_evidence)],'summary':str(prop_sheet)}))
     raise SystemExit(0)
@@ -655,32 +655,45 @@ nozzle.data.materials.append(materials['galvanised-tin']);attach(nozzle)
 bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.095,depth=.10,location=town.game_vector((0,.58,-.20)))
 nozzle_dark=bpy.context.object;nozzle_dark.name='hydrant-nozzle-dark-mouth';nozzle_dark.rotation_euler[0]=math.pi/2
 nozzle_dark.data.materials.append(materials['iron-dark']);attach(nozzle_dark)
-pipe('hydrant-hose-reel-axle',(-.30,.97,-.02),(-.30,.97,.42),.045,materials['iron-dark'])
-for z in (-.02,.42):
-    bpy.ops.mesh.primitive_torus_add(major_radius=.27,minor_radius=.035,major_segments=8,minor_segments=3,location=town.game_vector((-.30,.97,z)))
-    wheel=bpy.context.object;wheel.name='hydrant-hose-reel-side';wheel.rotation_euler[0]=math.pi/2;wheel.data.materials.append(materials['rusted-steel']);attach(wheel)
-for i in range(4):
-    angle=i*math.pi/2
-    pipe('hydrant-reel-spoke',(-.30,.97,-.02),(-.30+math.sin(angle)*.24,.97+math.cos(angle)*.24,-.02),.025,materials['galvanised-tin'],sides=6)
-# The dark hose drum sits between the side hoops; a short crank remains visible.
-bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.205,depth=.30,location=town.game_vector((-.30,.97,.20)))
-drum=bpy.context.object;drum.name='hydrant-hose-drum';drum.rotation_euler[0]=math.pi/2;drum.data.materials.append(materials['iron-dark']);attach(drum)
-# One broad hose winds continuously around the reel drum. Its thick rubber
-# section and closely spaced turns read as a usable hose, not bare wire.
+pipe('hydrant-reel-bracket-upper',(.12,.63,0),(.31,.63,0),.045,materials['rusted-steel'])
+pipe('hydrant-reel-bracket-lower',(.12,.38,0),(.31,.38,0),.045,materials['rusted-steel'])
+pipe('hydrant-reel-bracket-post',(.29,.37,0),(.29,.64,0),.04,materials['rusted-steel'])
+pipe('hydrant-reel-bracket-diagonal',(.13,.39,0),(.29,.63,0),.035,materials['rusted-steel'])
+for y in (.60,):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=4,radius=.036,location=town.game_vector((.13,y,0)))
+    bolt=bpy.context.object;bolt.name='hydrant-reel-bracket-bolt';bolt.data.materials.append(materials['galvanised-tin']);attach(bolt)
+
+# Lathe the drum and its two flanges on an axle that runs across the pipe.
+def hydrant_reel_lathe(name, x0, profile, material, sides=24):
+    mesh=PhotoMesh()
+    lathe(mesh,'photo',(x0,.63,0),(1,0,0),(0,1,0),(0,0,1),profile,
+          lambda index,distance,radius,angle:(.5+math.cos(angle)*.4,.5+math.sin(angle)*.4),
+          sides=sides,
+          cap_start=('photo',lambda angle,fraction:(.5+math.cos(angle)*fraction*.4,.5+math.sin(angle)*fraction*.4)),
+          cap_end=('photo',lambda angle,fraction:(.5+math.cos(angle)*fraction*.4,.5+math.sin(angle)*fraction*.4)))
+    obj=mesh.finish(name,{'photo':materials[material]})
+    return attach(obj)
+
+hydrant_reel_lathe('hydrant-hose-reel-inner-side-plate',.30,[(0,.265),(.035,.265)],'hydrant-red',12)
+hydrant_reel_lathe('hydrant-hose-drum',.335,[(0,.202),(.36,.202)],'iron-dark',12)
+hydrant_reel_lathe('hydrant-hose-reel-outer-side-plate',.695,[(0,.265),(.035,.265)],'hydrant-red',12)
+pipe('hydrant-hose-reel-axle',(.285,.63,0),(.79,.63,0),.045,materials['iron-dark'])
+
+# A continuous, close-spaced rubber hose spirals around the drum.
 hose_curve=bpy.data.curves.new('hydrant wound hose path','CURVE');hose_curve.dimensions='3D'
-hose_curve.resolution_u=1;hose_curve.bevel_depth=.052;hose_curve.bevel_resolution=1;hose_curve.use_fill_caps=True
+hose_curve.resolution_u=1;hose_curve.bevel_depth=.021;hose_curve.bevel_resolution=0;hose_curve.use_fill_caps=True
 hose_spline=hose_curve.splines.new('POLY');turns=4;steps=turns*6+1
 hose_spline.points.add(steps-1)
 for i,point in enumerate(hose_spline.points):
     t=i/(steps-1);angle=t*turns*2*math.pi
-    x=-.30+math.cos(angle)*.205;y=.97+math.sin(angle)*.205;z=-.005+t*.41
+    x=.36+t*.31;y=.63+math.cos(angle)*.218;z=math.sin(angle)*.218
     co=town.game_vector((x,y,z));point.co=(*co,1)
 hose=bpy.data.objects.new('hydrant-wound-rubber-hose',hose_curve);bpy.context.collection.objects.link(hose)
 hose.data.materials.append(materials['hydrant-hose']);attach(hose)
 bpy.context.view_layer.objects.active=hose;hose.select_set(True);bpy.ops.object.convert(target='MESH');hose=bpy.context.object
 for uv_layer in hose.data.uv_layers: uv_layer.name='UVMap'
-pipe('hydrant-crank-arm',(-.30,1.16,.43),(-.48,1.16,.43),.035,materials['galvanised-tin'])
-pipe('hydrant-crank-grip',(-.48,1.16,.43),(-.48,1.30,.43),.04,materials['iron-dark'])
+pipe('hydrant-crank-arm',(.73,.63,0),(.73,.63,-.19),.03,materials['galvanised-tin'])
+pipe('hydrant-crank-grip',(.73,.63,-.19),(.73,.74,-.19),.035,materials['iron-dark'])
 # Trace building fronts from their generated photo references. These shallow
 # photo slabs keep the measured silhouette and holes while the side, roof,
 # tower, tanks and opening depth stay real modeled geometry.
@@ -921,7 +934,7 @@ print(f'GATE ROUND 8 SHEET: {out.stat().st_size} bytes')
 if not gate_sheet.exists():
     subprocess.run(['python','-c',sheet_code,str(root),str(gate_sheet)],check=True)
 
-# Round 9: compare only the two new exported props against their own photos.
+# Round 10: compare the revised hydrant against its photos.
 prop_evidence.mkdir(parents=True,exist_ok=True)
 scene.view_settings.view_transform='Standard'
 scene.view_settings.look='Medium High Contrast'
@@ -930,14 +943,14 @@ scene.view_settings.gamma=1
 scene.render.image_settings.file_format='PNG'
 scene.render.image_settings.color_mode='RGB'
 scene.render.resolution_percentage=100
-studio=bpy.data.materials.new('round 9 plain grey floor')
+studio=bpy.data.materials.new('round 10 plain grey floor')
 studio.diffuse_color=(.38,.39,.39,1);studio.use_nodes=True
 studio.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.39,.39,1)
 studio.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
 bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.025))
-prop_ground=bpy.context.object;prop_ground.name='round-9 review grey ground';prop_ground.data.materials.append(studio)
-light_data=bpy.data.lights.new('round-9 broad softbox','AREA');light_data.energy=320;light_data.shape='DISK';light_data.size=8
-softbox=bpy.data.objects.new('round-9 broad softbox',light_data);scene.collection.objects.link(softbox)
+prop_ground=bpy.context.object;prop_ground.name='round-10 review grey ground';prop_ground.data.materials.append(studio)
+light_data=bpy.data.lights.new('round-10 broad softbox','AREA');light_data.energy=320;light_data.shape='DISK';light_data.size=8
+softbox=bpy.data.objects.new('round-10 broad softbox',light_data);scene.collection.objects.link(softbox)
 softbox.location=town.game_vector((5,7,-6));aim_z(softbox,town.game_vector((0,1.8,0)))
 
 def prop_game_bounds(objects):
@@ -1011,23 +1024,23 @@ def render_prop(prop_name, photo_stem, max_scale, expected_parts):
     return {'prop':prop_name,'photo':photo_stem,'views':rendered}
 
 prop_results=[]
-searchlight_result=render_prop('searchlight','searchlight',5.25,
-                               ('searchlight:post','searchlight:head','searchlight:beam'))
-if searchlight_result: prop_results.append(searchlight_result)
-hydrant_result=render_prop('hydrant','hydrant',1.68,('hydrant-standpipe','hydrant-hose-reel-side'))
+hydrant_result=render_prop('hydrant','hydrant',1.68,
+                            ('hydrant-standpipe','hydrant-hose-reel-inner-side-plate',
+                             'hydrant-hose-reel-outer-side-plate','hydrant-hose-drum',
+                             'hydrant-wound-rubber-hose','hydrant-reel-bracket-upper'))
 if hydrant_result: prop_results.append(hydrant_result)
 
-if len(prop_results)==2:
+if len(prop_results)==1:
     sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
 from pathlib import Path
 import sys
-root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-9'
-props=[('SEARCHLIGHT','searchlight'),('HYDRANT','hydrant')]
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-10'
+props=[('HYDRANT','hydrant')]
 pairs=[('SIDE','side'),('FRONT','front'),('REAR','rear'),('STRAIGHT DOWN','above')]
 extras=[('THREE-QUARTER LEFT','three-quarter-left'),('THREE-QUARTER RIGHT','three-quarter-right'),("MAYOR'S VIEW",'mayor')]
-W,H=1600,2570;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+W,H=1600,1260;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
 title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),16);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
-d.text((24,12),'TOWN SAFETY | ROUND 9 | SEARCHLIGHT + HYDRANT',font=title,fill=(240,228,205))
+d.text((24,12),'TOWN SAFETY | ROUND 10 | HYDRANT HOSE REEL',font=title,fill=(240,228,205))
 def fit(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(125,127,127));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
 row_h=225;y=48
@@ -1043,10 +1056,10 @@ for building,stem in props:
   x=18+i*528;d.rounded_rectangle((x,y,x+510,y+218),radius=8,fill=(78,76,69));d.text((x+12,y+5),caption,font=small,fill=(240,194,125));page.paste(fit(ev/f'{stem}-{view}.png',(480,180)),(x+15,y+29))
  y+=224
 out.parent.mkdir(parents=True,exist_ok=True)
-for quality in (78,74,70,66,62,58):
+for quality in (80,76,72,68,64,60):
  page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
  if out.stat().st_size<=500000:break
-if out.stat().st_size>500000:raise RuntimeError(f'round 9 sheet exceeds 500 KB: {out.stat().st_size}')
-print(f'ROUND 9 SHEET: {out.stat().st_size} bytes')
+if out.stat().st_size>500000:raise RuntimeError(f'round 10 sheet exceeds 500 KB: {out.stat().st_size}')
+print(f'ROUND 10 SHEET: {out.stat().st_size} bytes')
 '''
     subprocess.run(['python','-c',sheet_code,str(root),str(prop_sheet)],check=True)
