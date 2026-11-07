@@ -72,23 +72,25 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
   const lights=new THREE.Group(); lights.name='Town lamps'; scene.add(lights);
   const assets=new THREE.Group(); assets.name='Scablands landmarks'; scene.add(assets);
   const ghost=createTownPlacementGhost(); ghost.visible=false; scene.add(ghost);
-  const state={camera,scene,ground,buildings,overlays,lights,assets,ghost,selected:null,underground:false,disposed:false,season:String(town.calendar?.season || 'spring').toLowerCase(),timeOfDay:town.calendar?.hour??now.getHours()+now.getMinutes()/60,loadModel,lastLampHour:null,lastLampBuildingCount:-1,lastRenderedBuildingCount:town.buildings?.length??0};
+  const state={camera,scene,ground,buildings,overlays,lights,assets,ghost,selected:null,underground:false,disposed:false,season:String(town.calendar?.season || 'spring').toLowerCase(),timeOfDay:town.calendar?.hour??now.getHours()+now.getMinutes()/60,loadModel,homeAssets:{},lastPlotSignature:'',lastLampHour:null,lastLampBuildingCount:-1,lastRenderedBuildingCount:town.buildings?.length??0};
   const update=()=>{
     if(state.disposed) return;
     const distance=camera.position.distanceTo(camera.userData.townView.target);
     scene.fog.near=Math.max(90,distance*.78);scene.fog.far=Math.max(260,distance*1.35);
     farGround.visible=camera.userData.townView.zoom>=.4;
     const currentBuildingCount=town.buildings?.length??0;
-    if(currentBuildingCount!==state.lastRenderedBuildingCount){
-      for(const group of [...buildings.children]){group.traverse(object=>{object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(material=>material.dispose());else object.material?.dispose?.();});buildings.remove(group);}
+    const plotSignature=(town.homePlots||[]).map(plot=>`${plot.id}:${plot.tier}:${plot.progressDays}:${plot.household}:${plot.burning}`).join('|');
+    if(currentBuildingCount!==state.lastRenderedBuildingCount||plotSignature!==state.lastPlotSignature){
+      for(const group of [...buildings.children]){group.traverse(object=>{if(object.userData.sharedTownAsset)return;object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(material=>material.dispose());else object.material?.dispose?.();});buildings.remove(group);}
       state.lastRenderedBuildingCount=currentBuildingCount;
+      state.lastPlotSignature=plotSignature;
     }
     const wanted=visibleTownChunks(town,{position:camera.userData.townView.target,userData:camera.userData},{radius:2}), keys=new Set(wanted.map(c=>`${c.x}:${c.z}`));
     for(const group of [ground,buildings]) for(const child of [...group.children]) if(!keys.has(child.userData.chunkKey)){group.remove(child);child.geometry?.dispose?.();child.material?.dispose?.();}
     for(const chunk of wanted){const key=`${chunk.x}:${chunk.z}`;
       const oldGround=ground.children.find(child=>child.userData.chunkKey===key);
       if(!oldGround||terrainChunkChanged(oldGround,chunk)){if(oldGround){ground.remove(oldGround);oldGround.geometry.dispose();}const mesh=terrainChunk(chunk,groundMaterial);mesh.userData.chunkKey=key;ground.add(mesh);}
-      if(!buildings.children.some(child=>child.userData.chunkKey===key)){const group=new THREE.Group();group.userData.chunkKey=key;group.name=`Town chunk ${key} ${townChunkLod(camera,chunk)}`;buildTownChunkInstances(town,chunk,townChunkLod(camera,chunk)).forEach(mesh=>group.add(mesh));buildings.add(group);}
+      if(!buildings.children.some(child=>child.userData.chunkKey===key)){const group=new THREE.Group();group.userData.chunkKey=key;group.name=`Town chunk ${key} ${townChunkLod(camera,chunk)}`;buildTownChunkInstances(town,chunk,townChunkLod(camera,chunk),state.homeAssets).forEach(mesh=>group.add(mesh));buildings.add(group);}
     }
     const lampHour=Math.floor(state.timeOfDay),buildingCount=currentBuildingCount;
     if(lampHour!==state.lastLampHour||buildingCount!==state.lastLampBuildingCount){
@@ -101,6 +103,9 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
       }
     }
     overlays.visible=state.underground;
+  };
+  const loadHomeAssets=async()=>{
+    try{const [homes,stages]=await Promise.all([loadModel('/assets/models/wasteland/town/homes.glb'),loadModel('/assets/models/wasteland/town/stages.glb')]);if(state.disposed)return;state.homeAssets={homes,stages};state.lastPlotSignature='';update();}catch{/* Plots remain playable if optional town models fail to load. */}
   };
   const addLandmarks=async()=>{
     for(const [id,url] of [['dome','/assets/models/wasteland/scrapdome/yard.glb'],['tin-town','/assets/models/wasteland/scablands/tintown.glb']]){
@@ -123,8 +128,8 @@ export function createTownScene({town, loadModel=url=>new GLTFLoader().loadAsync
     for(const building of town.buildings||[])if(/pipe|sewer|wire/.test(building.buildingId||'')){const material=new THREE.MeshBasicMaterial({color:building.buildingId.startsWith('wire')?0xd5b754:building.buildingId.startsWith('sewer')?0x775343:0x377e9d});const line=new THREE.Mesh(new THREE.BoxGeometry(4,.25,4),material);line.position.set((building.x+.5)*8,(building.groundY??0)-1,(building.z+.5)*8);overlays.add(line);}
   }update();};
   const setCalendar=(calendar,{hour=calendar?.hour??state.timeOfDay}={})=>{state.season=String(calendar?.season||state.season).toLowerCase();state.timeOfDay=hour;sun.color.set(state.season==='winter'?0xc7dcff:0xffe4b6);update();};
-  const dispose=()=>{state.disposed=true;for(const root of [ground,buildings,overlays,lights,assets,ghost,farGround])root.traverse(object=>{object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(m=>m.dispose());else object.material?.dispose?.();});groundMaterial.dispose();dirtTexture?.dispose?.();};
-  update(); void addLandmarks();
+  const dispose=()=>{state.disposed=true;for(const root of [ground,buildings,overlays,lights,assets,ghost,farGround,...Object.values(state.homeAssets)])root.traverse(object=>{if(object.userData.sharedTownAsset&&root===buildings)return;object.geometry?.dispose?.();if(Array.isArray(object.material))object.material.forEach(m=>m.dispose());else object.material?.dispose?.();});groundMaterial.dispose();dirtTexture?.dispose?.();};
+  update(); void addLandmarks(); void loadHomeAssets();
   return {scene,camera,state,update,move:input=>moveTownCamera(camera,input),resize:(w,h)=>resizeTownCamera(camera,w,h),step:delta=>{updateTownCamera(camera,delta);update();},
     mapMarkers:()=>buildTownMapMarkers(town),layoutMarkers:(options={})=>layoutTownMapMarkers(options.markers||buildTownMapMarkers(town),camera,options),
     pick:pointer,pickGround,setPlacement,setUnderground,setCalendar,dispose};

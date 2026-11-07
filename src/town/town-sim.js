@@ -19,9 +19,9 @@ function townRng(town) {
     random:{float(){draws++;return rng.float();},int(min,max){draws++;return rng.int(min,max);},chance(p){draws++;return rng.chance(p);},pick(items){draws++;return rng.pick(items);},range(min,max){draws++;return rng.range(min,max);}}};
 }
 
-export function stepTown(town, commands=[]) {
+export function stepTown(town, commands=[], context) {
   const inputs=Array.isArray(commands)?commands:(commands==null?[]:[commands]);
-  const answers=inputs.map(command=>dispatchTownCommand(town,command));
+  const answers=inputs.map(command=>dispatchTownCommand(town,command,context));
   const nextTick=BigInt(town.tick)+1n;
   const nextCalendar=townCalendarAt(nextTick);
   town.tick=nextTick;
