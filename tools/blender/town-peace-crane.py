@@ -1,6 +1,7 @@
 """Photo-carved Magnus crane base for WW-ART-PEACE."""
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -62,6 +63,81 @@ body['part'] = 'magnus-crane:body'
 body['cab_door_height_m'] = 1.9
 body['table_length_m'] = LENGTH
 body['table_width_m'] = WIDTH
+
+
+from mathutils import Vector
+from photo_model import Mesh, Photo, slab, trace
+
+side_photo = body_table['_photos']['side']
+paint = side_photo.material(.92)
+paint.name = 'magnus-magnet-paint'
+def plain(name, color, metallic, roughness):
+    mat = bpy.data.materials.new(name)
+    mat.diffuse_color = (*color, 1)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes['Principled BSDF']
+    bsdf.inputs['Base Color'].default_value = (*color, 1)
+    bsdf.inputs['Metallic'].default_value = metallic
+    bsdf.inputs['Roughness'].default_value = roughness
+    return mat
+steel = plain('magnus-magnet-steel', (.15, .155, .16), .34, .75)
+iron = plain('magnus-magnet-iron', (.045, .036, .03), .62, .72)
+cable_mat = plain('magnus-magnet-cable', (.012, .012, .013), 0, .9)
+copper = plain('magnus-magnet-copper', (.55, .22, .08), .85, .42)
+glow = plain('magnus-magnet-glow', (.028, .034, .046), .5, .42)
+glow.node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value = 0
+
+def game_to_blender(point):
+    return Vector((point[0], -point[2], point[1]))
+
+def beam_between(name, a, b, radius, material, parent_obj):
+    start, end = game_to_blender(a), game_to_blender(b)
+    delta = end - start
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=radius, depth=delta.length, location=(start+end)/2)
+    obj = bpy.context.object
+    obj.name = name
+    obj.rotation_mode = 'QUATERNION'
+    obj.rotation_quaternion = delta.to_track_quat('Z', 'Y')
+    obj.data.materials.append(material)
+    obj.parent = parent_obj
+    obj['part'] = name
+    return obj
+
+# Trace both open side frames from the measured side-on boom photo. Explicit pale
+# seeds preserve every enclosed lattice bay as a hole in the mask.
+boom_photo = Photo(textures / 'peace-magnus-crane-boom.jpg')
+boom_seeds = [(8, 8), (boom_photo.w-9, 8), (8, boom_photo.h-9), (boom_photo.w-9, boom_photo.h-9)]
+rgb = boom_photo.rgb()
+spread = rgb.max(axis=2)-rgb.min(axis=2)
+boom_seeds += [(x,y) for y in range(250,470,32) for x in range(50,2120,48)
+               if rgb[y,x].mean()>200 and spread[y,x]<20]
+boom_solid = ~boom_photo.sky(boom_seeds, tolerance=34, grey=20)
+boom_loops = trace(boom_solid, (20, 150, boom_photo.w-20, 455), tolerance=2.5, min_area=28)
+if not boom_loops:
+    raise RuntimeError('No lattice boom outlines found in boom photo')
+boom_root = bpy.data.objects.new('magnus-crane:boom', None)
+boom_root.empty_display_type = 'PLAIN_AXES'
+bpy.context.collection.objects.link(boom_root)
+boom_root.parent = crane
+boom_root.location = game_to_blender((0, 5.2, LENGTH/2-.45))
+boom_root.rotation_euler[0] = math.radians(-50)
+boom_root['part'] = 'magnus-crane:boom'
+BOOM_SCALE = 16 / (2142 - 29)
+BOOM_CY = (166 + 438) / 2
+
+def boom_world(px, py, depth):
+    return (depth, (BOOM_CY-py)*BOOM_SCALE, (px-29)*BOOM_SCALE)
+for hand, label in ((-.5, 'near'), (.5, 'far')):
+    mesh = Mesh()
+    slab(mesh, 'paint', boom_photo, boom_loops, boom_world, hand-.022, hand+.022, wall_scale=BOOM_SCALE)
+    frame = mesh.finish(f'magnus-crane:boom-frame-{label}', {'paint': paint})
+    frame.parent = boom_root
+    frame['part'] = f'magnus-crane:boom-frame-{label}'
+for index, px in enumerate((430, 900, 1370, 1840), 1):
+    for py, chord in ((190, 'upper'), (425, 'lower')):
+        _, y, z = boom_world(px, py, 0)
+        beam_between(f'magnus-crane:boom-cross-{index}-{chord}', (-.5,y,z), (.5,y,z), .045, steel, boom_root)
+
 
 out.parent.mkdir(parents=True, exist_ok=True)
 blend.parent.mkdir(parents=True, exist_ok=True)
