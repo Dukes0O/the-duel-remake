@@ -921,7 +921,7 @@ try {
         `${material.name} metallic factor exceeds the reflection limit`);
     }
   });
-  check('TOWN-ART-PLANTS round 1 exports the crusher with named working parts and photo materials', () => {
+  check('TOWN-ART-PLANTS round 4 exports the photo-carved crusher with named moving parts and photo materials', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
@@ -931,8 +931,29 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name), ['crusher'], 'one named piece in round 1');
-    for (const name of ['crusher:jaw', 'crusher:belt', 'crusher-discharge-chute', 'crusher-hopper-back', 'crusher-diesel-skid']) {
+    for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
+      'crusher-gravel-cone', 'crusher-discharge-chute-lip']) {
       assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(!names.some(name => ['crusher-hopper-back', 'crusher-chassis', 'crusher-jaw-housing'].includes(name)),
+      'the former box-built body pieces are removed');
+    const bodyNode = gltf.nodes[names.indexOf('crusher:body')];
+    assert.ok(Number.isInteger(bodyNode.mesh), 'the carved crusher body is an exported mesh');
+    const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
+    const triangles = primitives.reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+    assert.ok(triangles > 100 && triangles <= 14_000, `${triangles} triangles exceeds the crusher family budget`);
+    for (const primitive of primitives) {
+      assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
+        ['TEXCOORD_0'], 'each crusher part has one UV channel');
+      const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+      assert.ok(uv && uv.type === 'VEC2' && uv.componentType === 5126, 'UVs are float pairs');
+      const view = gltf.bufferViews[uv.bufferView], start = 28 + bytes.readUInt32LE(12) + (view.byteOffset ?? 0) + (uv.byteOffset ?? 0);
+      const stride = view.byteStride ?? 8, min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+      for (let i = 0; i < uv.count; i++) for (let axis = 0; axis < 2; axis++) {
+        const value = bytes.readFloatLE(start + i * stride + axis * 4);
+        min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+      }
+      assert.ok(max.some((value, axis) => value - min[axis] > .01), 'UVs cover a texture range');
     }
     assert.ok(gltf.images?.length >= 3, 'distinct embedded photo materials');
     for (const material of gltf.materials) assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 1) <= .3, 'metallic finish must stay at or below 0.3');

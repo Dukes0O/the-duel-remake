@@ -1,21 +1,27 @@
-﻿# TOWN-ART-PLANTS round 3
+# TOWN-ART-PLANTS round 4
 
 ## Changed
-- Added generated crusher reference views and 1024 px measured crops with grids and a credit note.
-- Replaced the old beam-built conveyor lattice with a side-photo trace and slab. The lattice holes remain open. Retained separate `crusher:belt` and `crusher:jaw` groups and replaced the scattered gravel spheres with a separate cone.
-- Exported `public/assets/models/wasteland/town/plants.glb` (1,021,000 bytes) and added the round 3 comparison sheet and review.
+- Replaced the crusher's box-built chassis, hopper and body with one measured four-photo `carve_object` table. The carved body uses the existing side, front, rear and overhead references, with measured cuts for the detached belt and trapped background.
+- Kept the rising belt photo-traced. Its mask follows measured steel rails and lattice strokes, with the white studio patch removed; added ground-reaching trestles and body ties. The jaw is its own carved mesh under `crusher:jaw`, with the node origin at the measured pivot.
+- Replaced the plain gravel cone material with a cone wearing a crop from the overhead gravel photo. The exported model is 1,052,184 bytes and 12,242 triangles. Materials stay at metallic 0.3 or less.
+- Added the round 4 review sheet with the source side photo, exported-model side view, both three-quarter views and the mayor view on mid-grey ground.
+- Updated the art readback assertion for the new body, jaw, belt, gravel and chute nodes. Added the 14,000-triangle, UV-channel and UV-range checks.
 
-The crusher does not meet acceptance. The body remains box-built instead of carved with `carve_hull`; the traced belt has a white photo-background patch and the supports do not join cleanly; gravel is not photo-derived. The other seven family items are not built. The review records a fail and asks Claude to judge this partial round.
+**Self scores:** silhouette 3/5; material read 3/5; construction detail 3/5; family coverage 1/5.
+
+**Visual note:** The body is carved and no longer assembled from box parts. The belt mask removes the enclosed white background patch and leaves lattice openings. Some side texture and silhouette transitions around the belt and lower body still look rough in the renders; Claude should judge those alongside the jaw pivot and mayor view. This round covers only the crusher, as requested.
 
 ## Checks
-- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; no placement failures.
-- Blender export and reimport/render completed. The visual review failed as detailed above.
-- Browser/look checks: not run here. Claude should inspect the crusher sheet and GLB, especially side silhouette, white patch, support joins, `crusher:jaw` pivot and `crusher:belt` openings.
-- Changed assertions: none.
+- `node tools/test-blender-output.mjs`: passed, 330 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement is clean. The tool reports existing size targets as advisory.
+- `node tools/test-review-evidence.mjs`: 6 passed, 3 failed. One failure expects the removed `round-3.jpg` that this task explicitly required deleting. One reports an existing date mismatch (`2026-11-06` vs `2026-11-07`); one cannot spawn `ffmpeg` (`EPERM`). The review-sheet size/publication check passed.
+- Blender 4.5.13 export and fresh-GLB renders completed: side photo comparison, front and rear three-quarter, and mayor view.
+- Lane tier and build: not run, per the art-card instruction.
+- Browser checks: not run. Claude should inspect the full round 4 sheet and GLB, especially the carved silhouette, belt openings and supports, `crusher:jaw` pivot, gravel crop, UVs and material values.
+- Changed assertions: replaced obsolete required box-piece names with the carved body, jaw mesh, gravel cone and chute lip; added budget and UV checks for this exported model. These assertions check the new card contract and are not loosened.
 - Race fingerprints: not applicable to this art-only change.
 
 ## Removed
-- Removed the round 2 sheet and review after replacing that evidence with round 3.
-- Removed the old extended box-and-beam conveyor code and old gravel-sphere recipe where replaced. The prior box-built hopper/body remains and is called out as unfinished.
-- Removed temporary Blender renders and check logs from `.qa-dist` after recording their results.
+- Removed the box-built chassis, hopper plates, jaw housing and engine blocks from the crusher recipe.
+- Removed the previous round 3 JPG sheet after producing round 4. Kept its review note as prior-round context.
+- Removed temporary Blender renders, masks and test logs from `.qa-dist` after recording results.
