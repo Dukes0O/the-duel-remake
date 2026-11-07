@@ -12,13 +12,13 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-6.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-6/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-4.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-4/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, tidy as photo_tidy, trace as photo_trace
+from photo_model import Mesh as PhotoMesh, Photo, fill as photo_fill, slab as photo_slab, tidy as photo_tidy, trace as photo_trace
 from photo_carve import carve_object
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
@@ -100,6 +100,43 @@ def gable(name,x0,x1,z0,z1,eave,ridge,mat,parent):
 building_roots={}
 def make(name,foot):
  o=empty(name,root_obj,foot);building_roots[name]=o;return o
+def scrapyard_piece_bounds(obj):
+ corners=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+ points=[(p.x,p.z,-p.y) for p in corners]
+ return tuple((min(p[i] for p in points),max(p[i] for p in points)) for i in range(3))
+def audit_scrapyard_pieces():
+ target=building_roots['scrapyard'];pieces=[]
+ for obj in bpy.data.objects:
+  parent=obj
+  while parent and parent!=target:parent=parent.parent
+  if parent==target and obj.type=='MESH':pieces.append(obj)
+ bpy.context.view_layer.update();bounds={obj:scrapyard_piece_bounds(obj) for obj in pieces}
+ for obj,box3 in bounds.items():
+  (x0,x1),(y0,y1),(z0,z1)=box3
+  if min(x0+11.0,11.0-x1,z0+11.0,11.0-z1)<-0.03:
+   raise RuntimeError(f'{obj.name} exceeds the scrapyard footprint: {box3}')
+  grounded=y0<=.035 and y0>=-.035
+  touching=grounded
+  if not touching:
+   for other,other_box in bounds.items():
+    if other==obj:continue
+    gaps=[max(0,other_box[i][0]-box3[i][1],box3[i][0]-other_box[i][1]) for i in range(3)]
+    if max(gaps)<=.04:touching=True;break
+  print(f'SCRAPYARD PIECE {obj.name} bounds x={x0:.3f}..{x1:.3f} y={y0:.3f}..{y1:.3f} z={z0:.3f}..{z1:.3f} ground_or_contact={"pass" if touching else "FAIL"}')
+  if not touching:raise RuntimeError(f'{obj.name} floats: no ground or piece contact')
+ cars={obj.name:box3 for obj,box3 in bounds.items() if obj.name.startswith('scrapyard:car-')}
+ for name,box3 in cars.items():
+  stack,layer=name.rsplit('-',1);layer=int(layer)
+  (x0,x1),(y0,y1),(z0,z1)=box3
+  if layer==1:
+   assert abs(y0)<=.025, f'{name} does not rest on the ground: {y0:.3f}'
+   continue
+  below=cars[f'{stack}-{layer-1}']
+  (bx0,bx1),(by0,by1),(bz0,bz1)=below
+  overlap_x=min(x1,bx1)-max(x0,bx0);overlap_z=min(z1,bz1)-max(z0,bz0)
+  gap=y0-by1
+  print(f'SCRAPYARD CAR CONTACT {name} -> {stack}-{layer-1}: vertical_gap={gap:.3f} xz_overlap={overlap_x:.3f}x{overlap_z:.3f} pass={abs(gap)<=.02 and overlap_x>0 and overlap_z>0}')
+  assert abs(gap)<=.02 and overlap_x>0 and overlap_z>0, f'{name} does not touch the car below'
 
 # Town Hall: the measured four-view carve is its full fixed mass. The face
 # cut-outs leave the photographed car-wheel clock and flags to their own
@@ -109,7 +146,7 @@ hall_table={
  'photos':{'side':'town-hall-side.jpg','front':'town-hall-front.jpg','rear':'town-hall-rear.jpg','top':'town-hall-roof.jpg'},
  'length':22.0,'width':22.0,'height':12.2,
  'side':{'start':14,'end':749,'ground':414},
- 'front':{'centre':384,'ground':419},'rear':{'centre':384,'ground':420},
+ 'front':{'centre':384,'ground':419,'top':20},'rear':{'centre':384,'ground':420,'top':20},
  'top':{'front':8,'rear':504,'centre':384},
  'cut':{'front':[(366,145,435,211),(7,140,62,211),(707,140,761,211)]},
  'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
@@ -199,16 +236,192 @@ for n in ids:
    box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
    if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
  if n=='scrapyard':
-  # Uneven connected pressed-car shells are stacked into sculptural ridges.
-  for j,(x,z,yaw,col) in enumerate([(-5,-3,-.2,paint),(-2,-4,.17,steel),(1,-3,-.11,tin),(4,-4,.28,paint),(-4,-.3,.19,tin),(0,.1,-.23,steel),(4,.2,.1,paint)]):
-   shellob=box('Crushed car shell '+str(j),(x,1.35,z),(4.2,1.1,2.1),col,.35,b);shellob.rotation_euler[1]=yaw
-   for dx in (-1.25,1.25):tube('Exposed car wheel',(x+dx,.62,z-1.02),.47,.17,dark,b,10,4)
-   for side in (-1,1):beam('Bent car roof rail',(x-1.5,2,z+side*.65),(x+1.5,2,z+side*.65),.10,steel,b)
-  # Working crane gantry, mast, cantilever and suspended magnet.
-  for x in (-w*.36,w*.36):beam('Crane leg',(x,.25,-1),(x,9,-1),.34,steel,b);beam('Crane foot',(x-1,.28,-1),(x+1,.28,-1),.35,dark,b)
-  beam('Crane top beam',(-w*.42,9,-1),(w*.42,9,-1),.42,steel,b)
-  for x in (-w*.39,w*.39):beam('Crane diagonal',(x,5,-1),(x,9,-1),.16,tin,b)
-  beam('Magnet cable',(1.4,8.9,-1),(1.4,3.2,-1),.055,dark,b);cyl('Scrap magnet',(1.4,3,-1),.8,.45,steel,16,b);tube('Magnet coil',(1.4,3,-1),.57,.10,paint,b)
+  # Trace each crushed car's side outline, then extrude the real 1.8 m width.
+  # The side photo dresses both faces; a separate plan photo covers the roof.
+  def crushed_car(name, paint_id):
+   side=Photo(tex/f'scrapyard-car-{paint_id}-side.jpg')
+   top=Photo(tex/f'scrapyard-car-{paint_id}-top.jpg')
+   # Pixel ranges come from the round-4 grids. Clip the floor shadow below
+   # the tyres before tracing so it cannot become a white band on the model.
+   side_bounds={
+    'red':(10,20,2162,660),
+    'brown':(10,45,2162,657),
+    'blue':(80,2,2092,690),
+   }
+   x0,roof,x1,ground=side_bounds[paint_id]
+   sky=side.sky([(2,2),(side.w-3,2),(2,side.h-3),(side.w-3,side.h-3)],tolerance=27,grey=26)
+   rgb=side.rgb();value=rgb.mean(axis=2);chroma=rgb.max(axis=2)-rgb.min(axis=2)
+   # Remove pale studio patches trapped between the crushed body and tyres;
+   # the edge flood cannot reach those pockets through the wreck silhouette.
+   solid=~sky
+   solid[ground:,:]=False
+   side.bleed(solid&~((value>100)&(chroma<60)))
+   loops=photo_trace(solid,(x0,roof,x1,ground),tolerance=6.0,min_area=100)
+   if not loops:raise RuntimeError(f'No traced side silhouette for {name}')
+   # Windows and dents remain in the photographed surface, not cut through it.
+   silhouette=[max(loops,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1]))))]
+   side_scale=4.2/(x1-x0)
+   side_roof=np.where(solid.any(axis=0),np.argmax(solid,axis=0),ground)
+   def side_point(px,py,depth):
+    return ((px-(x0+x1)/2)*side_scale,(ground-py)*(.9/(ground-roof)),depth)
+   mesh=PhotoMesh()
+   photo_slab(mesh,'side',side,silhouette,side_point,-.9,.9,wall_scale=1.8)
+   tx0,tx1,ty0,ty1=((20,1475,25,650) if paint_id=='red' else (15,1478,24,620))
+   top_sky=top.sky([(2,2),(top.w-3,2),(2,top.h-3),(top.w-3,top.h-3)],tolerance=27,grey=26)
+   rgb=top.rgb();value=rgb.mean(axis=2);chroma=rgb.max(axis=2)-rgb.min(axis=2)
+   top_solid=~top_sky
+   top_color_solid=top_solid&~((value>100)&(chroma<60))
+   top.bleed(top_color_solid)
+   top_rows,top_cols=np.where(top_solid)
+   tx0,tx1=int(top_cols.min()),int(top_cols.max()+1)
+   ty0,ty1=int(top_rows.min()),int(top_rows.max()+1)
+   top_loops=photo_trace(top_solid,(tx0,ty0,tx1,ty1),tolerance=6.0,min_area=100)
+   if not top_loops:raise RuntimeError(f'No traced plan silhouette for {name}')
+   top_outline=[max(top_loops,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1]))))]
+   def top_point(px,py):
+    world_x=(px-(tx0+tx1)/2)*(4.2/(tx1-tx0))
+    side_px=int(np.clip(round(x0+(world_x/4.2+.5)*(x1-x0)),x0,x1-1))
+    world_y=float(np.clip((ground-side_roof[side_px])*(.9/(ground-roof)),0,.9))
+    return (world_x,world_y,(py-(ty0+ty1)/2)*(1.8/(ty1-ty0)))
+   for triangle in photo_fill(top_outline):
+    mesh.face([top_point(*point) for point in triangle],[top.uv(*point) for point in triangle],'top',(0,1,0))
+   return mesh.finish(name,{'side':side.material(),'top':top.material()})
+  car_meshes={paint_id:crushed_car(f'scrapyard:car-source-{paint_id}',paint_id) for paint_id in ('red','brown','blue')}
+  # Five and four cars reach the reference's measured 40% and 50% of the
+  # nine-metre gantry. Each flat car is .9 m high, 4.2 m long and 1.8 m wide.
+  stacks=[('a',-5.15,0.0,5,['red','brown','blue','red','brown']),
+          ('b',5.15,0.0,4,['blue','red','brown','blue'])]
+  for label,cx,cz,count,paints in stacks:
+   stack_top=0
+   for layer,paint_id in enumerate(paints):
+    source=car_meshes[paint_id]
+    car=source.copy();car.data=source.data;car.name=f'scrapyard:car-{label}-{layer+1}'
+    bpy.context.collection.objects.link(car);parent_keep(car,b)
+    source_bottom,source_top=scrapyard_piece_bounds(source)[1]
+    car.location=town.game_vector((cx+((-1)**layer)*.55,stack_top-source_bottom,cz+((layer%3)-1)*.12))
+    car.rotation_euler[2]=(.035 if layer%2 else -.035)
+    stack_top+=source_top-source_bottom
+    print(f'SCRAPYARD CAR {car.name}: source={paint_id}, resting layer={layer+1}')
+  for source in car_meshes.values():bpy.data.objects.remove(source,do_unlink=True)
+
+  # Trace the open crane frame from the yard's road-facing photo. The pale
+  # connected background remains open through each lattice bay.
+  crane_photo=Photo(tex/'scrapyard-front.jpg')
+  crane_seeds=[(4,4),(507,4),(4,251),(507,251),(255,4),
+               (78,70),(78,97),(78,125),(78,150),(78,177),(78,202),
+               (458,67),(458,88),(458,115),(458,145),(458,170),(458,195)]
+  crane_sky=crane_photo.sky(crane_seeds,tolerance=38,grey=34)
+  crane_rgb=crane_photo.rgb()
+  crane_mask=(~crane_sky)&(crane_rgb.mean(axis=2)<220)
+  crane_mesh=PhotoMesh()
+  photo_ground,photo_top=212,18
+  px_scale,py_scale=22.0/512,9.0/(photo_ground-photo_top)
+  def crane_point(px,py,depth):
+   return ((px-256)*px_scale,(photo_ground-py)*py_scale,depth)
+  for name,rect in [('left-leg',(24,16,82,212)),('right-leg',(426,16,482,212)),('top-beam',(56,16,461,66))]:
+   loops=photo_trace(crane_mask,rect,tolerance=1.15,min_area=6)
+   if not loops:raise RuntimeError(f'No traced scrapyard gantry loops in {name}')
+   print(f'SCRAPYARD traced gantry {name}: {len(loops)} loops from {rect}')
+   photo_slab(crane_mesh,'crane',crane_photo,loops,crane_point,-1.20,-.88,wall_scale=px_scale)
+  crane_frame=crane_mesh.finish('scrapyard:gantry-frame',{'crane':crane_photo.material()})
+  parent_keep(crane_frame,b)
+  # The measured photo feet stop just above the dirt line. Welded shoes bridge
+  # that last gap and give both traced legs a visible ground contact.
+  for side,x in (('left',-8.7),('right',8.6)):
+   shoe=box(f'scrapyard:gantry-foot-{side}',(x,.26,-1.04),(1.25,.52,.95),dark,.035,b)
+  # The hanging equipment is a separate node whose origin is the trolley pin.
+  trolley_x=(280-256)*px_scale
+  hook_group=empty('scrapyard:hook-magnet',b)
+  hook_group.location=town.game_vector((trolley_x,8.0,-1.04))
+  # The open air around the chain is enclosed by nearby car roofs in the full
+  # photo, so the edge flood cannot reach it. A measured luminance cut keeps
+  # that pale patch out of the hanging-part silhouette.
+  hook_mask=crane_mask&(crane_rgb.mean(axis=2)<215)
+  hook_loops=photo_trace(hook_mask,(258,46,312,169),tolerance=.9,min_area=8)
+  if hook_loops:
+   hook_mesh=PhotoMesh()
+   def hook_point(px,py,depth):
+    world=crane_point(px,py,depth)
+    return (world[0]-trolley_x,world[1]-8.0,world[2]+1.04)
+   photo_slab(hook_mesh,'crane',crane_photo,hook_loops,hook_point,-1.19,-.87,wall_scale=px_scale)
+   hook_photo=hook_mesh.finish('scrapyard:hook-magnet-photo',{'crane':crane_photo.material()})
+   hook_photo.parent=hook_group
+  else:
+   cable=beam('scrapyard:hook-cable',(trolley_x,7.55,-1.02),(trolley_x,5.05,-1.02),.075,dark,b)
+   parent_keep(cable,hook_group)
+   magnet=cyl('scrapyard:magnet',(trolley_x,4.78,-1.02),.85,.5,steel,24,b)
+   parent_keep(magnet,hook_group)
+   coil=tube('scrapyard:magnet-coil',(trolley_x,4.78,-1.30),.62,.12,paint,hook_group,24,8)
+  crane_photo.bleed(crane_mask)
+  # The source's low-chroma galvanized steel reads too pale beside the town
+  # family. Warm and darken only its bright neutral pixels; keep rust and paint.
+  rgba=np.empty(crane_photo.image_w*crane_photo.image_h*4,dtype=np.float32)
+  crane_photo.image.pixels.foreach_get(rgba);rgba=rgba.reshape(crane_photo.image_h,crane_photo.image_w,4)
+  pixels=rgba[::-1,:,:3].copy()*255
+  value=pixels.mean(axis=2);chroma=pixels.max(axis=2)-pixels.min(axis=2)
+  pale=(chroma<45)&(value>95);mix=np.clip((value-95)/135,0,.62)
+  weathered=np.array([74,52,34],dtype=np.float32)
+  pixels[pale]=(pixels*(1-mix[...,None])+weathered*mix[...,None])[pale]
+  rgba[::-1,:,:3]=pixels/255
+  crane_photo.image.pixels.foreach_set(rgba.ravel());crane_photo.image.update();crane_photo.image.pack();crane_photo._rgb=None
+  # A low, open wire fence with a broad road gate; its posts are planted at
+  # the plot edge and every wire meets a post.
+  edge=10.72;fence_y=1.28
+  def fence_run(label,points):
+   for index,(p0,p1) in enumerate(zip(points,points[1:])):
+    dx,dz=p1[0]-p0[0],p1[1]-p0[1]
+    for level,mat,thickness in ((.48,dark,.045),(fence_y,steel,.055)):
+     if abs(dx)>abs(dz):size=(abs(dx)+.14,thickness,thickness)
+     else:size=(thickness,thickness,abs(dz)+.14)
+     bar=box(f'scrapyard:fence-{label}-wire-{index+1}-low' if level<1 else f'scrapyard:fence-{label}-wire-{index+1}-high',
+             ((p0[0]+p1[0])/2,level,(p0[1]+p1[1])/2),size,mat,0,b)
+  back_x=[-edge+i*(edge*2/8) for i in range(9)]
+  front_x=[x for x in back_x if abs(x)>2.4]
+  side_z=[-edge+i*(edge*2/8) for i in range(9)]
+  for label,xs,z in [('back',back_x,edge),('front',front_x,-edge)]:
+   for index,x in enumerate(xs):
+    box(f'scrapyard:fence-{label}-post-{index+1}',(x,(fence_y+.12)/2,z),(.12,fence_y+.12,.12),steel,0,b)
+   fence_run(label,[(x,z) for x in xs])
+  for side,x in [('left',-edge),('right',edge)]:
+   for index,z in enumerate(side_z):
+    box(f'scrapyard:fence-{side}-post-{index+1}',(x,(fence_y+.12)/2,z),(.12,fence_y+.12,.12),steel,0,b)
+   fence_run(side,[(x,z) for z in side_z])
+
+  # Broken stone and clinker sit directly on the ground around the piles and
+  # fence, as the yard photo shows.
+  rubble_spots=[(-9.2,-8.8,.45),(-7.6,-8.5,.62),(7.2,-8.8,.52),(9.3,-7.1,.40),
+                (-9.0,5.6,.56),(8.9,6.8,.48),(-3.5,8.6,.36),(4.5,8.5,.42),
+                (-7.1,-3.5,.35),(7.7,3.8,.37)]
+  # Heavy litter gathers at the stacks' feet: old tyres and broken bricks sit
+  # on the dirt as separate objects, with loose metal mixed into the rubble.
+  for index,(x,z,lean) in enumerate([(-7.25,2.9,0),(7.15,2.8,0),(-7.0,-3.0,0)],1):
+   tyre=tube(f'scrapyard:rubble-tyre-{index}',(x,.14,z),.43,.14,dark,b,20,8)
+   tyre.rotation_euler[0]=lean
+  for index,(x,z,turn) in enumerate([(-7.35,-2.9,.10),(-6.8,-3.4,-.16),(7.25,-2.8,.20),(6.8,-3.3,-.08)],1):
+   brick_piece=box(f'scrapyard:rubble-brick-{index}',(x,.15,z),(.46,.30,.25),brick,.035,b)
+   brick_piece.rotation_euler[2]=turn
+  for index,(x,z) in enumerate([(-4.1,3.0),(4.1,-3.0)],1):
+   scrap=box(f'scrapyard:rubble-sheet-{index}',(x,.10,z),(.65,.18,.38),steel,.06,b)
+   scrap.rotation_euler[2]=(-1 if index==1 else 1)*.22
+  for index,(x,z,radius) in enumerate(rubble_spots,1):
+   sides=6;low=[];high=[]
+   for side in range(sides):
+    angle=math.tau*side/sides+index*.19
+    spread=radius*(.78+.22*((side+index)%3)/2)
+    low.append((x+math.cos(angle)*spread,0,z+math.sin(angle)*spread))
+    high.append((x+math.cos(angle)*spread*.72,radius*(.26+.28*((side+index)%4)/3),z+math.sin(angle)*spread*.72))
+   verts=low+high;faces=[tuple(reversed(range(sides))),tuple(range(sides,2*sides))]
+   for side in range(sides):faces.append((side,(side+1)%sides,(side+1)%sides+sides,side+sides))
+   mesh=bpy.data.meshes.new(f'scrapyard rubble {index:02d}');mesh.from_pydata([town.game_vector(v) for v in verts],[],faces)
+   uv=mesh.uv_layers.new(name='UVMap')
+   for poly in mesh.polygons:
+    for loop_index in poly.loop_indices:
+     vertex=verts[mesh.loops[loop_index].vertex_index]
+     uv.data[loop_index].uv=((vertex[0]-x)/(2*radius)+.5,(vertex[2]-z)/(2*radius)+.5)
+   mesh.materials.append(dark if index%3 else steel);mesh.update()
+   stone=bpy.data.objects.new(f'scrapyard:rubble-{index:02d}',mesh);bpy.context.collection.objects.link(stone);parent_keep(stone,b)
+
+  continue
  if n=='motor-pool':
   for bay in range(4):
    x=-w*.37+bay*(w*.74/3);beam('Numbered bay divider',(x,.1,z0),(x,4.9,z0),.17,steel,b)
@@ -393,14 +606,15 @@ for building_id, building_root in building_roots.items():
    obj.data.update()
 
 # One durable shared root; separate named children keep in-game placement addressable.
+audit_scrapyard_pieces()
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
  review_output.mkdir(parents=True,exist_ok=True);bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
  # Capture a matched close view and the roof-heavy mayor view from the exported model.
- def render(name,loc,target,lens=54):
+ def render(name,loc,target,lens=54,resolution=(1000,760)):
   camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens;bpy.context.scene.camera=cam
-  scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=1000;scene.render.resolution_y=760;scene.render.resolution_percentage=100
+  scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.resolution_percentage=100
   scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
   if scene.world is None:scene.world=bpy.data.worlds.new('neutral overcast review daylight')
   scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.27,.25,.22,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
@@ -442,9 +656,11 @@ if a.review:
  render('forge-mayor.png',(6,42,-42),(0,0,0),48)
  scrap=next(o for o in bpy.data.objects if o.name.split('.')[0]=='scrapyard')
  for obj in bpy.data.objects:obj.hide_render=not within(obj,scrap)
- render('scrapyard-front.png',(0,8,-50),(0,5,0),39)
- render('scrapyard-driver.png',(4,1.8,-36),(0,3,0),34)
- render('scrapyard-mayor.png',(8,50,-50),(0,0,0),46)
+ render('scrapyard-photo-match.png',(0,8,-50),(0,5,0),80,(1024,512))
+ render('scrapyard-three-quarter-left.png',(13,12,-23),(0,3.5,0),38)
+ render('scrapyard-three-quarter-right.png',(-13,12,-23),(0,3.5,0),38)
+ render('scrapyard-road.png',(0,1.8,-30),(0,3.5,0),36)
+ render('scrapyard-mayor.png',(28,50,-35),(0,0,0),75)
  workshop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='workshop')
  for obj in bpy.data.objects:obj.hide_render=not within(obj,workshop)
  render('workshop-front.png',(0,8,-31),(0,4,0),46)

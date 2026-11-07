@@ -45,6 +45,12 @@ stop adjusting and change the method.
 
 ## What to watch for
 
+### Flat photographed shapes
+
+- **Smoothing turns flat things into cushions.** A carve rounds the edge of a
+  flat crushed car into a pillow. Trace the side-photo silhouette and extrude
+  it with `trace` and `slab`; keep the faces flat and do not smooth them.
+
 ### Photos and masks
 
 - **Studio background below the sky threshold.** `Photo.sky()` refuses an edge
@@ -160,6 +166,9 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **A horizontal beam turns upright.** `to_track_quat('Z', 'Y')` is ambiguous
+  when the beam points along Blender Y. Use an axis-aligned box or a different
+  non-parallel up axis, then print and check its bounds.
 - **Moving parts can sit away from their parent.** A gate leaf was parented to a
   hinge empty after its planks were made at world origin, so the exported leaf
   stayed in the road instead of under the gate header. Place each child at its
