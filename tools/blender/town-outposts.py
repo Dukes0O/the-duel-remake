@@ -799,7 +799,7 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     bpy.context.collection.objects.link(body)
     body.parent = home
     home_objects.append(body)
-    deck_parts.extend([home, body])
+    deck_parts.append(body)
 
     # The ladder leans onto the photographed side wall and its last rung meets the sill.
     ladder = town.beam(prefix + ':ladder-left', (1.52, .04, -1.30), (1.52, 1.54, -1.30), .075, materials['weathered-plank'])
