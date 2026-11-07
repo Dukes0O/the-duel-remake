@@ -138,6 +138,11 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **Moving parts can sit away from their parent.** A gate leaf was parented to a
+  hinge empty after its planks were made at world origin, so the exported leaf
+  stayed in the road instead of under the gate header. Place each child at its
+  true world point before attaching it, put the empty at the real hinge, then
+  render both closed and rotated poses from the exported GLB.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.
