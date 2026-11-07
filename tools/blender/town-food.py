@@ -42,14 +42,14 @@ mat = town.make_materials({
 # Town base darkens rusted steel for general utility work. This family uses
 # the unfiltered food-specific photograph to keep worn red-brown oxide legible.
 steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_existing=False)
-steel_photo.scale(224, 224); steel_photo.file_format='JPEG'; steel_photo.pack()
+steel_photo.scale(192, 192); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
 # Compact utility swatches stay small. The source photographs below keep enough
 # detail for their mapped pipework, boards, patched canvas and market structure.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
-    image.scale(224, 224)
+    image.scale(192, 192)
     image.pack()
 
 def simple(name, color, roughness=.88, metallic=0):
@@ -908,9 +908,9 @@ for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_sid
     else:
         ratio = photo.w / photo.h
         if ratio >= 1:
-            size = (224, round(224 / ratio))
+            size = (192, round(192 / ratio))
         else:
-            size = (round(224 * ratio), 224)
+            size = (round(192 * ratio), 192)
         photo.image.scale(*size)
     photo.image.pack()
 
