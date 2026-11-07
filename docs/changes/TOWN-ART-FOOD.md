@@ -252,3 +252,25 @@ Additional checks for greenhouse round 11:
 - `node tools/test-repo-hygiene.mjs`: passed. Repository placement passed; size targets were advisory.
 - `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed. The unrelated failures were the existing missing `docs/board/looks/town-art-outposts/round-15-review.md` and `spawnSync ffmpeg EPERM`. Round-11 sheet publication passed. No assertion changed.
 - Browser checks and an in-game look check were not run; this art lane assigns them to Claude. No lane tier or build was run. No race fingerprints apply.
+# TOWN-ART-FOOD greenhouse round 13
+
+The greenhouse is now one opaque `carve_object` shell, textured from the measured side, front, rear and overhead photos. The separate copper frame, panes, plastic patches and plant rows were removed; the glass, rust, plastic patches, door and interior rows come from the photos. The long side span and end-view door set the dimensions. Utility swatches were reduced to 128 px and the four packed greenhouse images to 256×171 to stay within the family texture budget. No test assertions changed.
+
+## Review
+
+The four photo/model pairs and the three-quarter views are on `round-13.jpg` (1000×1690, under 500 KB). The photos differ in apparent scale despite the grid: the front door is about 305 px tall, the side body about 400 px tall, and the overhead plan has a different length-to-width ratio. The model uses the door as 2 m for the end views and scales the side span from the side photo. The carve keeps the rusty frame, windshields, plastic patches and green rows visible, with opaque walls.
+
+The front and rear silhouettes still look flatter and darker than their references, and the overhead image has a small cutout matching a hole in its source photo. Claude should judge whether these differences pass, and inspect the door height, the opaque photo texture at town scale, the side and end projections, the roof plan and mayor view.
+
+## Build and checks
+
+- Blender 4.5 export passed. `food.glb` is 2,481,676 bytes. The greenhouse body bounds fit its 3×2-cell plot.
+- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures, including the family triangle, file and texture budgets.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7 of 9 tests passed. Sheet publication passed. One test still requires `round-11.jpg`, which this task explicitly removes; the audio-analysis test failed with `spawnSync ffmpeg EPERM`.
+- No lane tier, build, browser check or race was run. Art cards skip the lane tier and build; browser and in-game look checks belong to Claude. No race fingerprints apply.
+
+## Removed
+
+- Removed the superseded round-11 review sheet and note as requested.
+- Replaced the greenhouse frame, separate pane and plant geometry with one photo-carved mesh. Other buildings and retained rounds 6, 7, 9 and 12 are unchanged.
