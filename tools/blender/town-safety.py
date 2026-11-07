@@ -11,12 +11,14 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
+evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
+guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-6.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
+guard_sheet = root / 'docs/board/looks/town-art-safety/round-6.jpg'
 if args.paths_only:
-    print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
+    print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(guard_evidence)],'summary':str(guard_sheet)}))
     raise SystemExit(0)
 
 import bpy
@@ -293,7 +295,7 @@ wall_table={
     'rear':{'centre':512,'ground':1393,'top':292},
     'top':{'front':28,'rear':996,'centre':170,'along':'x','x_scale':.82/89},
     'grey':26,'tolerance':38,'bleed_tolerance':34,'voxel':.045,'target':2500,
-    'mask_dir':str(evidence/'masks'),
+    'mask_dir':str(guard_evidence/'masks'),
 }
 wall=carve_object('guard-post:sandbag-wall',tex,wall_table)
 # carve_object stores its calibrated body in photo axes (width,height,length).
@@ -384,7 +386,7 @@ station_table={
     # Preserve both measured door frames and headers; cut only the clear openings.
     'keep': lambda x,y,z: ~(((x>=-6.5)&(x<=-1.15)|(x>=1.15)&(x<=6.5)) & (y>=0)&(y<=4.5)),
     'grey':26,'tolerance':32,'bleed_tolerance':42,'voxel':.09,'target':7800,
-    'mask_dir':str(evidence/'masks'),
+    'mask_dir':str(guard_evidence/'masks'),
 }
 station_body=carve_object('fire-station:body',photo_root,station_table)
 station_body.parent=b
@@ -654,7 +656,7 @@ for i,(name,model) in enumerate(extras):
 d.text((24,2586),'Two clear drive-through bays, open traced hose lattice and bell, patched roof photo from straight above.',font=small,fill=(232,226,210))
 out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,optimize=True,progressive=True)
 '''
-subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)
+subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
 
 
 # Round 6: inspect only the exported guard post and verify each authored piece.
@@ -702,7 +704,7 @@ def guard_shot(name,offset,ortho):
     scene.render.filepath=str(render_dir/f'guard-post-{name}.png')
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
-render_dir=evidence;render_dir.mkdir(parents=True,exist_ok=True)
+render_dir=guard_evidence;render_dir.mkdir(parents=True,exist_ok=True)
 guard_shot('side',(18,0,0),8.8)
 guard_shot('front',(0,22,0),18.4)
 guard_shot('rear',(0,-22,0),18.4)
@@ -737,4 +739,4 @@ for quality in (78,74,70,66,62,58):
 if out.stat().st_size>500000:raise RuntimeError(f'guard-post sheet exceeds 500 KB: {out.stat().st_size}')
 print(f'GUARD-POST ROUND 6 SHEET: {out.stat().st_size} bytes')
 '''
-subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)
+subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
