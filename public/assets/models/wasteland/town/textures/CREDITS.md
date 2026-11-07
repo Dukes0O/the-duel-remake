@@ -455,3 +455,9 @@ Generated with the built-in OpenAI ImageGen tool on 7 November 2026. One origina
 - `hermit-goat-shed-front.jpg`
 - `hermit-goat-shed-rear.jpg`
 - `hermit-goat-shed-top.jpg`
+
+## hermit-camp corrected overhead reference
+
+Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after inspection showed the first top-view picture was a raised front angle. This corrected photograph shows the full hut roof from a plumb, straight-down camera with no facade, on plain grey ground. It is used for the hut's top carve view. Resized to 1024 px maximum edge and saved as JPEG.
+
+- `hermit-hut-overhead-v2.jpg`
