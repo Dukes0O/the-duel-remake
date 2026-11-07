@@ -140,6 +140,8 @@ function updateVane({town,calendar}) {
       const year=calendar.year;
       const letter={id:content.id,year,month:calendar.month,text:content.text.replaceAll('{year}',String(year)),context:pending.context};
       state.letters.push(letter);
+      town.book??=[];
+      town.book.push({type:'vane-letter',tick:BigInt(town.tick),text:letter.text});
       townReport(town,'Mrs Vane (letter)',letter.text,'Town post','letter','latest');
       state.lastLetterMonth=month;
     }

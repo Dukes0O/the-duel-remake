@@ -1,12 +1,12 @@
-# TOWN-VANE, second pass
+# TOWN-VANE, third pass
 
 ## Changed
 
-- `updateVane` now reads current water quality from the town's tap results each month. Kiosks close when their own tap no longer has brown water. A report identifies each new kiosk and its street; letters also arrive as readable town reports.
-- State inspection is read-only. Old saves gain Vane state when the monthly system first runs. Commands and the monthly update remain the only writers.
-- The letter content rows now include their detection source. Detectors cover finished service buildings, drought weather, population marks, deed ownership and deed sets. Mr Crisp leaves a readable town report once a year. The existing deed system makes one bid at a time on its four-month rhythm; after twelve Vane-owned deeds, new bids are paused for two years.
-- Chapter 18 opens after two kiosks. Chapters 19 and 20 follow saved story facts, and chapter 21 checks Year 11, chapter 19, a tanker and Dot standing.
-- Added ten seeded 30-year `stepTown` runs. They assert that Vane starts and does not remove every resident or the Town Hall.
+- Crisp, kiosk and letter reports use stable Vane report keys. Their panel rows update in place rather than growing each year. The full letter archive remains in `town.vane.letters`.
+- Every delivered letter also becomes a full-text Town Book entry. The 100-year test checks that each saved letter appears in the Book view and that the report panel stays bounded.
+- From Year 8, `updateVane` records `quiet-yearly-visit` and `quiet-yearly-no-reply` in alternating years. This fixed turn-taking needs no random choice. The 100-year test checks that letters arrive yearly and do not repeat back to back.
+- Ten seeded 30-year tests now outbid every deed bid and clean each street after Vane opens kiosks. They check that kiosks close, she stays polite, letters continue and her state remains active.
+- Added a test-only unregister/restore function to compare the six-year save with the Vane system registered and skipped. After removing `town.vane` from the registered save, all other saved data matches.
 
 ## Waiting conditions for Claude
 
@@ -16,15 +16,15 @@ Chapter conditions also depend on town story fields (`tollkeeperArrived`, `settl
 
 ## Checks
 
-- `node tools/test-town-vane.mjs`: passed, including 10 seeds over 30 years each, read-only state inspection and old-save initialization.
+- `node tools/test-town-vane.mjs`: passed. Includes the 100-year archive and bounded-report check, the 10-seed 30-year adversarial run, and the Year 1–6 save comparison.
 - `node tools/test-town-visits.mjs`: passed.
-- No other `test-town-*.mjs` imports the changed Vane modules.
-- `npm.cmd run build`: passed. Vite reported the existing dynamic import and large-chunk warnings.
+- `node tools/test-town-deeds.mjs`: passed.
+- `npm.cmd run build`: passed. Vite reported its existing dynamic-import and large-chunk warnings.
 - Lane tier: not run; Claude runs it as requested.
-- Browser and look checks: not run. Claude should inspect Year 7 activation, real tap-driven kiosks and closure, kiosk and letter reports, Crisp's annual report, 18-21 chapter progression, and the deed pause after twelve Vane deeds.
-- Changed assertions: no assertions were weakened or changed. The existing kiosk test fixture now supplies water-system tap results instead of relying on manual street injection.
-- Race fingerprints: no before-Year-7 on/off fingerprint comparison was available in the lane. Vane retains order 82 and one-tick spacing and consumes no random numbers. This should leave other systems' pre-Year-7 results unchanged.
+- Browser and look checks: not run. Claude should inspect the Book's full Vane letters, the latest-in-place report rows, Year 7 activation, yearly letter order, kiosk closure, Crisp's annual visit, chapter progression and deed pause after twelve Vane deeds.
+- Changed assertions: none were changed or weakened. New assertions cover this pass's acceptance points.
+- Race fingerprints: no race code or fingerprints changed. The new Year 1–6 save fingerprint matches outside `town.vane`.
 
 ## Removed
 
-- Removed state writes from `townVaneState`; no feature behavior was removed.
+- No files or game behavior were removed. The earlier passive long-run assertions were replaced by the requested stronger adversarial checks.

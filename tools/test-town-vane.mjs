@@ -6,6 +6,7 @@ import {ACT3_CAPTIONS} from '../src/town/content/lines-act3.js';
 import {captionText} from '../src/story/story-lines.js';
 import {TOWN_DEEDS} from '../src/town/content/deeds.js';
 import {placeTownDeedBid,townDeedState} from '../src/town/town-deeds.js';
+import {townBookViewModel} from '../src/town/ui/town-book-view.js';
 
 assert.equal(registeredTownSystems().some(row=>row.name==='town-vane'),true);
 assert.equal(VANE_LETTERS.length,35);
@@ -59,6 +60,8 @@ assert.ok(centuryLetters.every((letter,index)=>typeof letter.text==='string'
   &&(!index||letter.id!==centuryLetters[index-1].id)),
 'the full letter archive stays readable and alternates its yearly letters');
 assert.equal(centuryTown.vane.letters.length,centuryLetters.length,'every letter remains in the saved town archive');
+const bookLetters=townBookViewModel(centuryTown).pages.flatMap(page=>page.chronicle);
+for(const letter of centuryLetters) assert.ok(bookLetters.includes(letter.text),`the Book shows ${letter.id}`);
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
 
