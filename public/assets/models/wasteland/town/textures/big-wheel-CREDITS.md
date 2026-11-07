@@ -1,14 +1,11 @@
-# Big wheel reference photos
+﻿# Big wheel reference photos
 
 Generated with OpenAI image generation for TOWN-ART-FUN, 7 November 2026.
-Each image is a separate single-view orthographic reference. The wheel photos
-show the bare wheel frame. The seat photos show one seat from four views. The
-separate A-frame photo shows the support alone.
+The wheel source is one dead-on side photograph with open spokes, hanging
+seats and grounded A-frame supports on a plain mid-grey studio background.
+The seat sources are separate front and side orthographic views of the same
+single hanging bench seat, also on mid-grey.
 
-Wheel: `big-wheel-side.jpg`, `big-wheel-front.jpg`, `big-wheel-rear.jpg`,
-`big-wheel-top.jpg`.
-
-Support: `big-wheel-frame.jpg`.
-
-Seat: `big-wheel-seat-side.jpg`, `big-wheel-seat-front.jpg`,
-`big-wheel-seat-rear.jpg`, `big-wheel-seat-top.jpg`.
+- `big-wheel-round8-side.png`: whole wheel, supports and seats.
+- `big-wheel-round8-seat-front.png`: one seat, front.
+- `big-wheel-round8-seat-side.png`: one seat, side.
