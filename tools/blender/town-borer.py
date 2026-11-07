@@ -11,10 +11,11 @@ if a.paths_only:
 import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent)); import town_base as town
+from photo_model import Mesh, Photo, slab, trace
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
 m=town.make_materials({'rusted-steel':tex/'stages-rusted-steel.jpg','galvanised-tin':tex/'faded-yellow-steel.jpg','faded-hand-paint':tex/'faded-yellow-steel.jpg','iron-dark':tex/'tire-rubber.jpg','sand':tex/'dirt.jpg'})
-steel=m['rusted-steel']; tin=m['galvanised-tin']; paint=m['faded-hand-paint']; dark=m['iron-dark']; glass=m['dirty-glass']; sand=m['sand']
+steel=m['rusted-steel']; tin=m['galvanised-tin']; paint=m['rusted-steel']; dark=m['iron-dark']; glass=m['dirty-glass']; sand=m['sand']
 for mat in m.values(): mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=min(.3,mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value)
 def parent_keep(o,par): o.parent=par; o.matrix_parent_inverse.identity()
 def empty(name,loc,par=None):
@@ -42,6 +43,16 @@ def torus(name,c,major,minor,mat,par=None):
 # Main borer: cutter head, 12 m diameter, with a true articulated hub pivot.
 family=empty('town-borer',(0,0,0)); borer=empty('borer',(0,0,0),family); head=empty('borer:head',(0,0,-13.0),borer)
 head.rotation_euler[1]=math.radians(12)  # a turned working pose, with its axis origin preserved
+# Trace the cutter face silhouette and open slots from the generated front photo.
+cutter_photo=Photo(tex/'borer-round3-head-front.png')
+cutter_sky=cutter_photo.sky([(8,8),(cutter_photo.w-9,8),(8,cutter_photo.h-9),(cutter_photo.w-9,cutter_photo.h-9)],tolerance=28,grey=22)
+cutter_rgb=cutter_photo.rgb(); cutter_mask=(~cutter_sky)&(cutter_rgb.mean(axis=2)>42)
+cutter_loops=trace(cutter_mask,(0,0,cutter_photo.w,cutter_photo.h),tolerance=2.2,min_area=180)
+cutter_mesh=Mesh()
+def cutter_world(px,py,depth): return ((px-cutter_photo.w/2)*12/cutter_photo.w,(cutter_photo.h/2-py)*12/cutter_photo.h,depth)
+slab(cutter_mesh,'face',cutter_photo,cutter_loops,cutter_world,-.2,0.0,wall_scale=12/cutter_photo.w)
+cutter_face=cutter_mesh.finish('Cutter head photo slab',{'face':cutter_photo.material()})
+parent_keep(cutter_face,head)
 # Local geometry around the pivot: massive steel disk, hub, raised ribs and picks.
 cyl('Recessed cutter plate',(0,0,0),5.58,.30,dark,'z',64,head)
 torus('Deep rolled cutting rim',(0,0,0),5.72,.30,steel,head)
@@ -68,7 +79,13 @@ for i in range(24):
  ang=math.tau*i/24; cyl(f'Fist-sized propeller flange bolt {i+1:02}',(math.cos(ang)*1.13,math.sin(ang)*1.13,.78),.105,.24,dark,'z',10,head)
 
 # Long 10 m shield tube and the articulated gripper ring behind the cutter.
-cyl('Shield barrel',(0,0,-6.7),4.82,9.8,paint,'z',64,borer)
+shield=cyl('Shield barrel',(0,0,-6.7),4.82,9.8,paint,'z',64,borer)
+# The cutter must be visible through the shield's open front, not hidden by a cap.
+import bmesh
+bm=bmesh.new(); bm.from_mesh(shield.data)
+for face in list(bm.faces):
+ if abs(face.normal.z) > .9: bm.faces.remove(face)
+bm.to_mesh(shield.data); bm.free()
 for z in (-2.0,-5.0,-8.0,-11.0):
  torus(f'Shield welded hoop {z}',(0,0,z),4.78,.12,steel,borer)
 for i in range(8):
@@ -141,6 +158,10 @@ for x in range(-4,5): beam(f'Portal crown repair seam {x}',(x,5.45,-.65),(x+.3,6
 for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.data.uv_layers:
   for layer in obj.data.uv_layers: layer.name='UVMap'
+for obj in bpy.context.scene.objects:
+ if obj.type=='MESH' and obj.name!='Cutter head photo slab':
+  mod=obj.modifiers.new('fit the 40000 triangle family budget','DECIMATE'); mod.ratio=.78
+  bpy.context.view_layer.objects.active=obj; obj.select_set(True); bpy.ops.object.modifier_apply(modifier=mod.name); obj.select_set(False)
 town.export_glb(glb)
 if a.render:
  # Exported file is imported in a clean scene for the submitted views.
@@ -150,7 +171,7 @@ if a.render:
  def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
  for obj in scene.objects:
   if obj.name.startswith(('tunnel-ring','portal')): obj.hide_render=True
- bpy.ops.object.camera_add(location=town.game_vector((12,15,-31))); camera=bpy.context.object; aim(camera,town.game_vector((0,2,-9))); scene.camera=camera; camera.data.lens=46
+ bpy.ops.object.camera_add(location=town.game_vector((15,23,-42))); camera=bpy.context.object; aim(camera,town.game_vector((0,2,-11))); scene.camera=camera; camera.data.lens=28
  for loc,power,size in [((8,17,-18),7000,14),((-14,12,-8),5500,12),((0,15,4),4000,10)]:
   bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,2,-8)))
  evidence.mkdir(parents=True,exist_ok=True); scene.render.filepath=str(evidence/'borer-three-quarter.png'); bpy.ops.render.render(write_still=True)
