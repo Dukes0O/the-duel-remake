@@ -26,6 +26,18 @@ photography, crisp, realistic scale, no people, no text, no logos, no
 watermark, entire machine in frame.” It is a reference image and is not
 embedded as a game texture.
 
+## TOWN-ART-BORER round 5 shell photos
+
+The side, front, rear and overhead photos of the same original yellow-ochre
+tunnel-boring machine were generated with OpenAI ImageGen on 6 November 2026.
+They were used to carve the shield tube and the round cutter face. Prompt:
+“A crisp industrial documentary photograph of the same original tunnel boring
+machine, isolated on a plain pale studio background in flat even light. Show
+the full yellow-ochre rusted steel shield tube with welded rings, gripper shoes
+and dark steel wear. Make a true side, end, or straight-down overhead view as
+requested. No logos, text or props.” These are original game textures and
+contain no third-party marks.
+
 ## TOWN-ART-WATER materials
 
 Generated with OpenAI ImageGen for the town waterworks. Each repeating source

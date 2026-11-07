@@ -1,4 +1,7 @@
-"""Original tunnel borer family. Game space is +Y up, road/front is -Z."""
+"""Original tunnel borer family.
+Machine axis: Z. Cutter/front: -Z. Tracks sit on the ground at Y=0.
+Game space is +Y up; all placed parts use this one coordinate frame.
+"""
 import argparse, json, math, sys
 from pathlib import Path
 
@@ -12,7 +15,7 @@ import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent)); import town_base as town
 from photo_model import Mesh, Photo, slab, trace
-from photo_carve import carve_object
+from photo_carve import carve_object, lift_if_dark
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
 m=town.make_materials({'rusted-steel':tex/'stages-rusted-steel.jpg','galvanised-tin':tex/'faded-yellow-steel.jpg','faded-hand-paint':tex/'faded-yellow-steel.jpg','iron-dark':tex/'tire-rubber.jpg','sand':tex/'dirt.jpg'})
@@ -41,100 +44,157 @@ def torus(name,c,major,minor,mat,par=None):
  if par: parent_keep(o,par)
  return o
 
-# Main borer: cutter head, 12 m diameter, with a true articulated hub pivot.
-family=empty('town-borer',(0,0,0)); borer=empty('borer',(0,0,0),family); head=empty('borer:head',(0,0,-13.0),borer)
-head.rotation_euler[1]=math.radians(12)  # a turned working pose, with its axis origin preserved
-# Trace the cutter face silhouette and open slots from the generated front photo.
-cutter_photo=Photo(tex/'borer-round3-head-front.png')
-cutter_sky=cutter_photo.sky([(8,8),(cutter_photo.w-9,8),(8,cutter_photo.h-9),(cutter_photo.w-9,cutter_photo.h-9)],tolerance=28,grey=22)
-cutter_rgb=cutter_photo.rgb(); cutter_mask=(~cutter_sky)&(cutter_rgb.mean(axis=2)>42)
-cutter_loops=trace(cutter_mask,(0,0,cutter_photo.w,cutter_photo.h),tolerance=2.2,min_area=180)
-cutter_mesh=Mesh()
-def cutter_world(px,py,depth): return ((px-cutter_photo.w/2)*12/cutter_photo.w,(cutter_photo.h/2-py)*12/cutter_photo.h,depth)
-slab(cutter_mesh,'face',cutter_photo,cutter_loops,cutter_world,-.2,0.0,wall_scale=12/cutter_photo.w)
-cutter_face=cutter_mesh.finish('Cutter head photo slab',{'face':cutter_photo.material()})
-parent_keep(cutter_face,head)
-# Local geometry around the pivot: massive steel disk, hub, raised ribs and picks.
-cyl('Plain dark cutter backing disc',(0,0,.25),5.52,.34,dark,'z',64,head)
-torus('Deep rolled cutting rim',(0,0,0),5.72,.30,steel,head)
-torus('Inner raised rim',(0,0,.17),5.35,.075,tin,head)
-cyl('Propeller shaft flange',(0,0,.34),1.28,.70,steel,'z',48,head)
-cyl('Propeller shaft boss',(0,0,.82),.82,1.12,tin,'z',40,head)
-cyl('Shaft end cap',(0,0,1.43),.53,.30,steel,'z',32,head)
-for i in range(8):
- ang=math.tau*i/16; co,si=math.cos(ang),math.sin(ang)
- # Massive forged spoke arms bridge the recessed face and raised rim.
- spoke=beam(f'Forged cutter spoke {i+1:02}',(co*1.0,si*1.0,.31),(co*5.38,si*5.38,.31),.46,tin,head)
- # Each spoke carries paired round disc cutters in separate thick housings.
- for j,radius in enumerate((2.15,3.28,4.40)):
-  px,py=co*radius,si*radius
-  cyl(f'Carbide disc housing {i+1:02}-{j+1}',(px,py,.47),.35,.38,steel,'z',20,head)
-  cyl(f'Round carbide cutter {i+1:02}-{j+1}',(px,py,.70),.235,.28,dark,'z',24,head)
-  torus(f'Cutter retaining ring {i+1:02}-{j+1}',(px,py,.78),.22,.045,tin,head)
- # Raised, hollow spoil scoop: two cheeks and a lip leave an open throat.
- px,py=co*4.72,si*4.72
- beam(f'Scoop cheek A {i+1:02}',(co*3.75-si*.30,si*3.75+co*.30,.32),(px-si*.30,py+co*.30,.62),.16,steel,head)
- beam(f'Scoop cheek B {i+1:02}',(co*3.75+si*.30,si*3.75-co*.30,.32),(px+si*.30,py-co*.30,.62),.16,steel,head)
- beam(f'Scoop cutting lip {i+1:02}',(px-si*.30,py+co*.30,.62),(px+si*.30,py-co*.30,.62),.14,tin,head)
-for i in range(24):
- ang=math.tau*i/24; cyl(f'Fist-sized propeller flange bolt {i+1:02}',(math.cos(ang)*1.13,math.sin(ang)*1.13,.78),.105,.24,dark,'z',10,head)
+# The tube is the measured core. Its longest dimension is Z, with the cutter
+# pivot exactly at its -Z front end. `carve_object` builds Y-up photo geometry;
+# the Blender-to-glTF axis mapping below maps that geometry into the same
+# game-space frame as town_base before the glTF Y-up export.
+TUBE_LENGTH = 30.0
+TUBE_DIAMETER = 11.8
+TUBE_RADIUS = TUBE_DIAMETER / 2
+TUBE_FRONT = -15.45
+TUBE_REAR = TUBE_LENGTH / 2
+TUBE_CENTER_Y = 6.06
+family=empty('town-borer',(0,0,0)); borer=empty('borer',(0,0,0),family)
+head=empty('borer:head',(0,TUBE_CENTER_Y,TUBE_FRONT),borer)
+head.rotation_euler[1]=math.radians(8)  # turning on the Z shaft axis, with its origin at the bearing
 
-# Long 10 m shield tube and the articulated gripper ring behind the cutter.
-# Built-in image tool references: generated dead-on front and rear end views of
-# this same yellow-ochre/rust machine on pale neutral studio backgrounds.
+# Clean photo set for the shell only. The full-machine images are left untouched
+# for the gantry reference and for the side, rear, above, road and mayor pictures.
 body_table={
- 'photos': {'side':'borer-round3-machine-side.png','front':'borer-round4-head-front.png',
-            'rear':'borer-round4-machine-rear.png','top':'borer-round3-machine-top.png'},
- 'length':20.0,'width':11.2,'height':11.2,
- 'side':{'start':28,'end':1080,'ground':600},
- 'front':{'centre':768,'ground':1110,'scale':.0102},
- 'rear':{'centre':768,'ground':850,'scale':.0134},
- 'top':{'front':20,'rear':825,'centre':342,'along':'x'},
- 'grey':30,'tolerance':42,'bleed_tolerance':42,'voxel':.12,'target':10500,
- 'keep':lambda x,y,z: ((x*x+(y-5.6)*(y-5.6) <= 5.65*5.65) & (z >= -10.1) & (z <= 10.1)),
- 'mask_dir':str(root/'.evidence/round4/masks')}
-shield=carve_object('Shield body',tex,body_table)
-parent_keep(shield,borer); shield.rotation_euler[0]=math.pi/2
-shield.location=town.game_vector((0,-5.55,-23.0))
-# The cutter must be visible through the shield's open front, not hidden by a cap.
-for z in (-15.0,-18.0,-21.0):
- torus(f'Shield welded hoop {z}',(0,0,z),4.78,.12,steel,borer)
-for i in range(8):
- ang=math.tau*i/8; x,y=math.cos(ang),math.sin(ang)
- shoe=empty(f'Gripper shoe {i+1:02}',(x*4.83,y*4.83,-22.0),borer)
- plate=cube(f'Gripper forged pad {i+1:02}',(0,0,0),(1.18,2.8,.58),tin,.12,shoe); plate.rotation_euler[2]=ang
- beam(f'Gripper ram {i+1:02}',(x*4.35,y*4.35,-20.8),(x*5.18,y*5.18,-22.0),.20,steel,borer)
- cube(f'Ram polished rod {i+1:02}',(x*4.78,y*4.78,-21.45),(.20,.20,1.15),dark,.04,borer)
+ 'photos': {'side':'borer-round5-tube-side.png','front':'borer-round5-tube-front.png',
+            'rear':'borer-round5-tube-rear.png','top':'borer-round5-tube-top.png'},
+ 'length':TUBE_LENGTH,'width':TUBE_DIAMETER,'height':TUBE_DIAMETER,
+ 'side':{'start':126,'end':1940,'ground':650},
+ 'front':{'centre':640,'ground':1256,'top':20},
+ 'rear':{'centre':640,'ground':1256,'top':20},
+ 'top':{'front':12,'rear':1228,'centre':352,'along':'x','x_scale':.0253},
+ 'grey':28,'tolerance':42,'bleed_tolerance':48,'voxel':.14,'target':9000,
+ 'mask_dir':str(root/'.evidence/round5/masks')}
+shield=carve_object('Shield tube carved',tex,body_table)
+shield.parent=borer; shield.location=(0,0,0); shield.rotation_euler[0]=math.pi; shield.scale[2]=-1.15
 
-# One connected gantry assembly: solid deck, rails and cab welded into one mesh.
-gantry_parts=[cube('Gantry deck',(0,1.55,-38.0),(6.6,.82,10.2),steel,.08,borer)]
-for x in (-3.05,3.05): gantry_parts.append(cube(f'Gantry rail {x}',(x,.55,-38.0),(.48,.62,11.2),tin,.08,borer))
-gantry_parts.append(cube('Gantry control cab',(0,3.25,-36.7),(3.2,2.8,3.2),paint,.16,borer))
-bpy.ops.object.select_all(action='DESELECT')
-for obj in gantry_parts: obj.select_set(True)
-bpy.context.view_layer.objects.active=gantry_parts[0]; bpy.ops.object.join()
-gantry=gantry_parts[0]; gantry.name='Gantry solid deck and rails'
-remesh=gantry.modifiers.new('Fuse touching gantry structure','REMESH'); remesh.mode='VOXEL'; remesh.voxel_size=.11
-bpy.context.view_layer.objects.active=gantry; bpy.ops.object.modifier_apply(modifier=remesh.name)
-for poly in gantry.data.polygons: poly.use_smooth=False
-uv_layer=gantry.data.uv_layers.new(name='UVMap')
-coords=[v.co for v in gantry.data.vertices]
-mins=[min(v[axis] for v in coords) for axis in range(3)]
-maxs=[max(v[axis] for v in coords) for axis in range(3)]
-for poly in gantry.data.polygons:
- normal=poly.normal; axes=(1,2) if abs(normal.x)>.5 else (0,2) if abs(normal.y)>.5 else (0,1)
- for loop_index in poly.loop_indices:
-  vertex=gantry.data.vertices[gantry.data.loops[loop_index].vertex_index].co
-  uv_layer.data[loop_index].uv=tuple((vertex[axis]-mins[axis])/max(1e-6,maxs[axis]-mins[axis]) for axis in axes)
-parent_keep(gantry,borer)
-belt=empty('borer:belt',(0,2.1,-38.0),borer)
-cube('Conveyor trough',(0,0,0),(2.5,.28,6.4),dark,.08,belt)
-for x in (-1.24,1.24): beam(f'Conveyor raised edge {x}',(x,.20,-3.1),(x,.20,3.1),.12,tin,belt)
-for i in range(11): cyl(f'Belt roller {i+1:02}',(0,-.22,-2.8+i*.56),.11,2.35,steel,'x',12,belt)
-for x in (-2.3,2.3):
- lamp=empty('borer:lamp',(x,2.8,-37.4),borer)
- cube('Flood lamp housing',(0,0,0),(.48,.38,.28),dark,.04,lamp)
- cube('Flood lamp lens',(0,-.03,-.16),(.32,.24,.04),tin,.015,lamp)
+# Measured face photo on the cutter pivot, backed by a deep steel rim and
+# individual forged spokes, carbide discs and spoil scoops.
+cutter_photo=Photo(tex/'borer-round5-tube-front.png')
+lift_if_dark(cutter_photo)
+cutter_sky=cutter_photo.sky([(8,8),(cutter_photo.w-9,8),(8,cutter_photo.h-9),(cutter_photo.w-9,cutter_photo.h-9)],tolerance=30,grey=28)
+cutter_mask=(~cutter_sky)&(cutter_photo.rgb().mean(axis=2)>42)
+cutter_mask[int(cutter_photo.h*.98):,:]=False
+cutter_loops=trace(cutter_mask,(0,0,cutter_photo.w,cutter_photo.h),tolerance=7.0,min_area=400)
+cutter_mesh=Mesh()
+def cutter_world(px,py,depth):
+ return ((px-cutter_photo.w/2)*TUBE_DIAMETER/cutter_photo.w*.92,
+         (cutter_photo.h/2-py)*TUBE_DIAMETER/cutter_photo.h*.92,depth)
+slab(cutter_mesh,'face',cutter_photo,cutter_loops,cutter_world,-.22,-.12,wall_scale=TUBE_DIAMETER/cutter_photo.w)
+cutter_face=cutter_mesh.finish('Cutter face photo',{'face':cutter_photo.material()})
+cutter_face.parent=head; cutter_face.matrix_parent_inverse.identity(); cutter_face.location=(0,0,0)
+
+def child(o, parent, loc, rotation=None):
+ o.parent=parent; o.matrix_parent_inverse.identity(); o.location=town.game_vector(loc)
+ if rotation is not None: o.rotation_euler=rotation
+ return o
+
+def part_cube(name, parent, center, size, mat, bevel=.04):
+ return child(town.cube(name,(0,0,0),size,mat,bevel),parent,center)
+
+def part_beam(name, parent, start, end, width, mat):
+ mid=tuple((a+b)/2 for a,b in zip(start,end))
+ return child(town.beam(name,(0,0,0),(end[0]-start[0],end[1]-start[1],end[2]-start[2]),width,mat),parent,mid)
+
+def part_cylinder(name, parent, center, radius, depth, mat, axis='z', verts=24):
+ bpy.ops.mesh.primitive_cylinder_add(vertices=verts,radius=radius,depth=depth,location=(0,0,0))
+ o=bpy.context.object; o.name=name; o.data.materials.append(mat)
+ if axis=='x': o.rotation_euler[1]=math.pi/2
+ elif axis=='y': o.rotation_euler[0]=math.pi/2
+ return child(o,parent,center)
+
+def part_torus(name, parent, center, major, minor, mat):
+ bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=16,minor_segments=6,location=(0,0,0),rotation=(math.pi/2,0,0))
+ o=bpy.context.object; o.name=name; o.data.materials.append(mat)
+ return child(o,parent,center)
+
+# A ship-shaft bearing, rolled rims, and raised radial cutters give the head
+# real depth behind the photo-cut openings.
+part_torus('Cutter outer rolled rim',head,(0,0,-.05),5.1,.16,steel)
+part_torus('Cutter inner bearing rim',head,(0,0,.12),5.28,.085,tin)
+part_cylinder('Ship propeller shaft flange',head,(0,0,.24),1.28,.62,steel,'z',48)
+part_cylinder('Propeller shaft boss',head,(0,0,.65),.78,.82,tin,'z',40)
+part_cylinder('Shaft end cap',head,(0,0,1.12),.48,.28,steel,'z',32)
+for i in range(8):
+ ang=math.tau*i/8; co,si=math.cos(ang),math.sin(ang)
+ part_beam(f'Forged cutter spoke {i+1:02}',head,(co*1.0,si*1.0,.20),(co*5.35,si*5.35,.20),.30,tin)
+ for j,radius in enumerate((2.35,4.30)):
+  x,y=co*radius,si*radius
+  part_cylinder(f'Carbide housing {i+1:02}-{j+1}',head,(x,y,.44),.29,.34,steel,'z',16)
+  part_cylinder(f'Carbide cutter {i+1:02}-{j+1}',head,(x,y,.66),.19,.18,dark,'z',20)
+  part_torus(f'Cutter retaining ring {i+1:02}-{j+1}',head,(x,y,.77),.19,.035,tin)
+ # Open scoop cheeks and a bridged cutting lip.
+ x,y=co*4.88,si*4.88
+ part_beam(f'Spoil scoop cheek A {i+1:02}',head,(co*3.9-si*.28,si*3.9+co*.28,.3),(x-si*.28,y+co*.28,.55),.12,steel)
+ part_beam(f'Spoil scoop cheek B {i+1:02}',head,(co*3.9+si*.28,si*3.9-co*.28,.3),(x+si*.28,y-co*.28,.55),.12,steel)
+ part_beam(f'Spoil scoop lip {i+1:02}',head,(x-si*.28,y+co*.28,.55),(x+si*.28,y-co*.28,.55),.11,tin)
+for i in range(16):
+ ang=math.tau*i/16
+ part_cylinder(f'Propeller flange bolt {i+1:02}',head,(math.cos(ang)*1.12,math.sin(ang)*1.12,.62),.075,.16,dark,'z',8)
+
+# Separate forged gripper shoes brace the lower tube, with paired hydraulic rams.
+for i,z in enumerate((-7.2,-1.8,3.6,8.7)):
+ for side in (-1,1):
+  x=side*4.75
+  shoe=part_cube(f'Gripper shoe {i+1:02} {side:+}',borer,(x,2.20,z),(1.30,.82,1.65),steel,.10)
+  part_cube(f'Gripper contact pad {i+1:02} {side:+}',borer,(x,2.64,z),(1.24,.20,1.58),tin,.05)
+  part_beam(f'Gripper hydraulic ram {i+1:02} {side:+}',borer,(x,2.82,z-.34),(side*5.35,4.0,z-.34),.18,dark)
+  part_cylinder(f'Ram pin {i+1:02} {side:+}',borer,(x,2.82,z-.34),.18,.34,tin,'x',12)
+
+# Gantry: paired ground rails and crawler wheels, uprights, then a deck whose
+# front edge meets the tube's rear end at Z=+15 m.
+gantry=empty('borer:gantry',(0,0,0),borer)
+for side in (-1,1):
+ x=side*4.5
+ part_cube(f'Gantry ground rail {side:+}',gantry,(x,.20,23.0),(.52,.40,16.0),dark,.05)
+ part_cube(f'Gantry upper rail cap {side:+}',gantry,(x,.43,23.0),(.62,.10,16.0),tin,.025)
+ for i,z in enumerate((16.0,20.5,25.0,30.0)):
+  part_cylinder(f'Gantry crawler wheel {side:+}-{i+1}',gantry,(x,.40,z),.36,.20,steel,'x',20)
+  part_cylinder(f'Gantry wheel hub {side:+}-{i+1}',gantry,(x-side*.12,.40,z),.14,.08,tin,'x',12)
+ for z in (16.0,21.0,27.0):
+  part_beam(f'Gantry upright {side:+}-{z}',gantry,(x,.52,z),(side*4.2,5.65,z),.26,steel)
+  part_beam(f'Gantry diagonal brace {side:+}-{z}',gantry,(x,.55,z-.8),(side*4.2,5.4,z+.8),.13,tin)
+part_cube('Gantry deck',gantry,(0,5.85,21.2),(9.0,.46,12.8),steel,.09)
+part_cube('Gantry front coupling plate',gantry,(0,5.85,14.42),(8.4,.72,1.10),tin,.04)
+for x in (-4.25,4.25):
+ part_beam(f'Deck side girder {x:+}',gantry,(x,6.15,14.3),(x,6.15,27.3),.28,steel)
+ part_beam(f'Deck diagonal truss {x:+}',gantry,(x,5.8,17.0),(x,6.6,21.0),.16,tin)
+ part_beam(f'Deck diagonal truss rear {x:+}',gantry,(x,5.8,23.0),(x,6.6,27.0),.16,tin)
+# A compact battered control cab and glazed windows sit over the deck.
+part_cube('Gantry cab shell',gantry,(0,8.05,19.2),(3.7,3.8,3.5),paint,.16)
+for side in (-1,1):
+ part_cube(f'Cab front glass {side:+}',gantry,(side*.94,8.15,17.42),(1.36,1.8,.08),glass,.025)
+ part_cube(f'Cab side glass {side:+}',gantry,(side*1.91,8.15,19.25),(.08,1.8,1.62),glass,.025)
+ part_beam(f'Cab window frame {side:+}',gantry,(side*.02,7.18,17.35),(side*.02,9.10,17.35),.09,tin)
+# Ladder on the road-facing side, with real open rungs.
+for z in (17.4,20.1): part_beam(f'Gantry ladder stile {z}',gantry,(-4.72,1.0,z),(-4.72,5.6,z),.09,tin)
+for i in range(11):
+ y=1.12+i*.42
+ part_beam(f'Gantry ladder rung {i+1:02}',gantry,(-4.72,y,17.4),(-4.72,y,20.1),.07,steel)
+
+# The conveyor is a separately named moving assembly on its rear pivot.
+belt=empty('borer:belt',(0,6.65,23.7),borer)
+part_cube('Conveyor trough',belt,(0,0,0),(2.6,.34,12.8),steel,.06)
+for side in (-1,1):
+ x=side*1.32
+ part_beam(f'Conveyor raised lip {side:+}',belt,(x,.22,-6.1),(x,.22,6.1),.13,tin)
+ for i in range(13):
+  z=-5.8+i*.96
+  part_cylinder(f'Conveyor roller {side:+}-{i+1:02}',belt,(0,-.22,z),.095,2.42,steel,'x',12)
+for i,z in enumerate((-5.7,-2.0,2.0,5.7)):
+ part_beam(f'Conveyor support leg {i+1}',belt,(-1.1,-.8,z),(1.1,-.8,z),.12,steel)
+# Floodlights belong to one separately named part for the night-light hook.
+lamps=empty('borer:lamp',(0,0,0),borer)
+for side in (-1,1):
+ x=side*3.7
+ part_beam(f'Floodlight mast {side:+}',lamps,(x,6.55,19.0),(x,10.1,19.0),.11,steel)
+ part_cube(f'Floodlight housing {side:+}',lamps,(x,10.1,19.0),(.56,.42,.68),dark,.06)
+ part_cube(f'Floodlight lens {side:+}',lamps,(x,10.0,18.64),(.34,.25,.10),tin,.02)
 
 # Repeating interior lining section with a believable service route and lights.
 ring=empty('tunnel-ring',(0,0,0),family)
@@ -167,11 +227,49 @@ for x in range(-4,5): beam(f'Portal crown repair seam {x}',(x,5.45,-.65),(x+.3,6
 for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.data.uv_layers:
   for layer in obj.data.uv_layers: layer.name='UVMap'
+# Count the evaluated family once. Avoid per-object decimation: it can erase
+# small braced parts and corrupt the authored silhouettes.
+graph=bpy.context.evaluated_depsgraph_get()
+triangles=0
+counts=[]
 for obj in bpy.context.scene.objects:
- if obj.type=='MESH' and obj.name!='Cutter head photo slab':
-  mod=obj.modifiers.new('fit the 40000 triangle family budget','DECIMATE'); mod.ratio=.28
-  bpy.context.view_layer.objects.active=obj; obj.select_set(True); bpy.ops.object.modifier_apply(modifier=mod.name); obj.select_set(False)
+ if obj.type=='MESH':
+  evaluated=obj.evaluated_get(graph); mesh=evaluated.to_mesh(); mesh.calc_loop_triangles(); count=len(mesh.loop_triangles); triangles+=count; counts.append((count,obj.name)); evaluated.to_mesh_clear()
+print(json.dumps({'triangle_count':triangles,'largest_meshes':sorted(counts,reverse=True)[:18]}))
+if triangles>40000: raise RuntimeError(f'family triangle budget exceeded: {triangles} > 40000')
 town.export_glb(glb)
+# Read the exported GLB back and verify the true Y-up game-space bounds first.
+bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(glb))
+scene=bpy.context.scene
+
+def game_bounds(obj):
+ points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+ xs=[p.x for p in points]; ys=[p.z for p in points]; zs=[-p.y for p in points]
+ return ([min(xs),min(ys),min(zs)],[max(xs),max(ys),max(zs)])
+
+def is_borer_part(obj):
+ parent=obj.parent
+ while parent:
+  if parent.name=='borer' or parent.name.startswith('borer:'): return True
+  parent=parent.parent
+ return False
+
+bounds={}
+for obj in scene.objects:
+ if obj.type=='MESH' and is_borer_part(obj):
+  lo,hi=game_bounds(obj); bounds[obj.name]=(lo,hi)
+  print(json.dumps({'part':obj.name,'min':lo,'max':hi}))
+tube=next((b for n,b in bounds.items() if n.startswith('Shield tube carved')),None)
+if tube is None: raise RuntimeError('placement gate: carved tube missing after GLB readback')
+extents=[tube[1][i]-tube[0][i] for i in range(3)]
+if not (extents[2]>extents[0] and extents[2]>extents[1]): raise RuntimeError(f'placement gate: tube longest axis is not Z: {extents}')
+head_node=next((obj for obj in scene.objects if obj.name=='borer:head'),None)
+if head_node is None: raise RuntimeError('placement gate: cutter pivot node missing')
+head_z_game=-head_node.matrix_world.translation.y
+if abs(head_z_game-tube[0][2])>.08: raise RuntimeError(f'placement gate: cutter centre Z {head_z_game:.3f} != tube front {tube[0][2]:.3f}')
+for name,(lo,hi) in bounds.items():
+ if lo[1]<-.01: raise RuntimeError(f'placement gate: {name} stands below ground Y=0 ({lo[1]:.3f})')
+print(json.dumps({'placement_gate':'passed','tube_extents_xyz':extents,'tube_front_z':tube[0][2],'cutter_center_z':head_z_game,'mesh_parts':len(bounds)}))
 if a.render:
  # Exported file is imported in a clean scene for the submitted views.
  bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(glb))
@@ -184,11 +282,18 @@ if a.render:
   obj.rotation_euler=direction.to_track_quat('-Z',up).to_euler()
  for obj in scene.objects:
   if obj.name.startswith(('tunnel-ring','portal')): obj.hide_render=True
- for loc,power,size in [((8,17,-18),7000,14),((-14,12,-8),5500,12),((0,15,4),4000,10)]:
-  bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,2,-8)))
+ ground=bpy.data.materials.new('Plain grey photo ground'); ground.diffuse_color=(.38,.38,.38,1); ground.use_nodes=True
+ ground.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.38,.38,1)
+ ground.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.94
+ bpy.ops.mesh.primitive_plane_add(size=1000,location=(0,0,0)); bpy.context.object.name='Plain grey ground'; bpy.context.object.data.materials.append(ground)
+ for loc,power,size in [((12,24,-18),6500,18),((-18,16,24),4200,16),((4,28,8),3000,20)]:
+  bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,5,8)))
  evidence.mkdir(parents=True,exist_ok=True)
- views=[('front',(0,10,-82),(0,2,-13)),('side',(74,22,-28),(0,2,-28)),('above',(0,74,-28),(0,1,-28))]
- for name,loc,target in views:
-  bpy.ops.object.camera_add(location=town.game_vector(loc)); camera=bpy.context.object; aim(camera,town.game_vector(target)); camera.data.lens=35; scene.camera=camera
+ views=[('side',(48,20,8),(0,5.9,8),88,math.pi/2),('front',(0,18,-42),(0,6,-15.45),18,0),
+        ('rear',(0,18,44),(0,6,27),18,0),('above',(0,68,8),(0,0,8),88,math.pi/2),
+        ('road',(36,16,-30),(0,5.8,8),82,math.pi/2),('mayor',(-48,62,-42),(0,5.8,8),92,math.pi/2)]
+ for name,loc,target,scale,roll in views:
+  bpy.ops.object.camera_add(location=town.game_vector(loc)); camera=bpy.context.object; aim(camera,town.game_vector(target)); camera.data.type='ORTHO'; camera.data.ortho_scale=scale; scene.camera=camera
+  if roll: camera.rotation_euler.rotate_axis('Z',roll)
   scene.render.filepath=str(evidence/f'borer-{name}.png'); bpy.ops.render.render(write_still=True)
  print(json.dumps({'glb':str(glb),'triangles':sum(len(p.vertices)-2 for o in bpy.context.scene.objects if o.type=='MESH' for p in o.data.polygons),'bytes':glb.stat().st_size}))

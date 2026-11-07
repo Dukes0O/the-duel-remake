@@ -1,13 +1,34 @@
-# TOWN-ART-BORER round 4 change note
+# TOWN-ART-BORER — round 5
 
-Replaced the old barrel mesh with `carve_object` and a photo table measured from the gridded side, front, rear and overhead references. Removed the old barrel code and open-cap edit. Added a plain dark disc behind the cutter face openings while keeping the traced cutter-face slab. Replaced the loose gantry framework with a fused deck-and-rails mesh; kept the conveyor as `borer:belt` and gave the fused mesh a ranged `UVMap`. Reduced exported geometry to fit the card budget.
+Status: candidate ready for art review. Kind: art. Flag: none; the machine is
+not wired into the game.
 
-The exported GLB has 34,575 triangles and is 3,914,600 bytes. `node tools/test-blender-output.mjs`: passed, 309 checks, 0 failed. `node tools/test-repo-hygiene.mjs`: passed placement; repository-wide size targets remain advisory. `node tools/test-review-evidence.mjs`: 7 passed, 2 failed after the round-4 note was added. The failures are an unrelated missing review note for `town-art-power/round-4.jpg` and `spawnSync ffmpeg EPERM` in the audio-analysis subtest. No test assertions changed. No race fingerprints changed; this art-only export does not touch race code.
+## Settled design
 
-No lane tier or build was run. No browser or in-game look check was run. Claude should inspect the front, side and overhead views, check whether pink remains in the cutter openings, verify that the tube meets the gantry on its rails, and check that every machine part touches another. The self-review failed on visible gantry separation and grounding; the machine needs Claude's art verdict.
+- Carve the 30 m shield tube from clean, matching side, front, rear and overhead
+  photos. Keep the cutter face on its rotating `borer:head` pivot.
+- Join the rear gantry to the tube with an overlapping coupling plate and side
+  girders. Keep `borer:belt` and `borer:lamp` as separate named assemblies.
+- Use the card's 40,000 triangle and 4 MB family limits. No frame timing applies
+  to this art round.
+
+## Evidence and checks
+
+- Blender built and re-imported the GLB. It reports 31,014 triangles and
+  3,489,492 bytes. The export script's ground and cutter-pivot checks passed.
+- The comparison sheet is `docs/board/looks/town-art-borer/round-5.jpg`
+  (137,371 bytes); its scores and visual verdict are beside it.
+- `node tools/test-blender-output.mjs`: passed, 317 checks.
+- `node tools/test-repo-hygiene.mjs`: passed placement checks; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7/9 passed; the same two unrelated failures reproduced on rerun. The existing town-art-power round-4 JPG lacks its matching note, and audio analysis cannot launch `ffmpeg` (`EPERM`). The round-5 JPG publication check passed.
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 13 suites passed, 1 failed, 33 not run. The run stopped on its first failure; its failing suite name was not captured in the returned log.
+- `npm.cmd run build`: passed (746 modules). Existing large-chunk and mixed dynamic/static import warnings remain.
+- `node tools/build-status.mjs`: wrote the session status snapshot; full tier remains stale for this candidate.
+- No test assertions or replay fingerprints changed. No browser or game look
+  check applies to this un-wired art asset.
 
 ## Removed
 
-- Removed the old `Shield barrel` cylinder and its end-face removal code.
-- Removed the loose gantry legs, rails, cross beams, cab framing, ladders and handrails.
-- Removed the round-2 and round-3 JPG sheets after creating the round-4 sheet.
+- Replaced the round-4 borer GLB with the round-5 export. The prior binary is
+  retained only in Git history.
+- No old recipe, runtime path, or test behavior was removed.
