@@ -842,7 +842,7 @@ home_table = {
     # The wall body stops exactly at the eaves; the separate pitched roof owns
     # the ridge and overhang.
     'keep': lambda x, y, z: y <= HOME_HEIGHT,
-    'voxel': .07, 'target': 1600,
+    'voxel': .07, 'target': 1540,
     'mask_dir': str(render / 'masks'),
 }
 home_source = carve_object('deck-town:home-source', textures, home_table)
