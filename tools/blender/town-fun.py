@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-13'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-14'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-13.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-14.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -335,7 +335,6 @@ bpy.context.view_layer.update()
 side_photo=fountain_recipe['_photos']['side']
 top_photo=fountain_recipe['_photos']['top']
 if '--fountain-body-only' not in args:
-    pipe_mesh=PhotoMesh()
     def fountain_sweep(mesh, points, radius, sides, uv_at, subdivisions=2, radius_at=None, material='side'):
         controls=[Vector(point) for point in points]
         path=[]
@@ -373,29 +372,26 @@ if '--fountain-body-only' not in args:
                 midpoint=(Vector(mesh.verts[a])+Vector(mesh.verts[b])+Vector(mesh.verts[c])+Vector(mesh.verts[d]))*.25
                 mesh.indexed((a,b,c,d),(ua,ub,uc,ud),material,midpoint-centre-tangent*.02,True)
 
-    def fountain_pipe_path(x, z, crown):
-        inward=.36 if x<0 else -.36
-        if crown>2.8:
-            # The taller exhaust bends in a broad, swept arc like the reference.
-            offsets=(0,.18,.55,.95,1.35,1.55)
-        else:
-            # The shorter exhaust turns over with a tighter elbow.
-            offsets=(0,.06,.16,.32,.46,.55)
-        path=[(x,.92,z),(x,1.42,z),(x,crown*.78,z),
-              (x+inward*.20,crown*.91,z+offsets[1]),
-              (x+inward*.55,crown,z+offsets[2]),
-              (x+inward*.88,crown*.98,z+offsets[3]),
-              (x+inward,crown*.88,z+offsets[4]),
-              (x+inward,crown*.76,z+offsets[5])]
-        return path,inward
-
-    for x,z,radius,crown in ((-.78,-2.43,.17,2.50),(.78,-1.63,.20,3.08)):
-        path,_=fountain_pipe_path(x,z,crown)
+    rear_edge=-2.40
+    for side,x in (('left',-.68),('right',.68)):
+        pipe_mesh=PhotoMesh()
+        inward=.24 if side=='left' else -.24
+        # Both rises share the same back-edge line and spacing across the width.
+        # Each elbow bends forward over the pool, then turns its mouth down.
+        path=[(x,.96,rear_edge),(x,1.28,rear_edge),(x,2.05,rear_edge),
+              (x+inward*.12,2.42,rear_edge+.04),(x+inward*.42,2.64,rear_edge+.18),
+              (x+inward*.82,2.68,rear_edge+.48),(x+inward,2.58,rear_edge+.72),
+              (x+inward,2.34,rear_edge+.86),(x+inward,2.05,rear_edge+.86)]
         def pipe_uv(t,angle):
             return (angle/math.tau*1.5,t*2.2)
-        fountain_sweep(pipe_mesh,path,radius,8,pipe_uv,subdivisions=2,material='rust')
-    pipes=pipe_mesh.finish('fountain:exhaust-pipes',{'rust':mat['rusted-steel']})
-    keep(pipes)
+        fountain_sweep(pipe_mesh,path,.155,8,pipe_uv,subdivisions=2,
+                       radius_at=lambda t:.155-.018*t,material='rust')
+        # A stepped lathe flange rises directly from the bonnet's back rim.
+        lathe(pipe_mesh,'rust',(x,.91,rear_edge),(0,1,0),(1,0,0),(0,0,1),
+              [(0,.255),(.035,.255),(.055,.19),(.14,.19)],
+              lambda i,d,r,a:(a/math.tau,d*2),sides=12)
+        obj=pipe_mesh.finish(f'fountain:exhaust-{side}',{'rust':mat['rusted-steel']})
+        keep(obj)
 
 # A rounded surface uses the measured overhead water patch, sitting inside the
 # hollow basin and touching its rim at the true waterline.
@@ -411,27 +407,33 @@ if '--fountain-body-only' not in args and '--fountain-no-water' not in args:
         py=500+z*60
         return top_photo.uv(px,py)
     water_mesh.face(water_outline,[overhead_uv(point) for point in water_outline],'water',(0,1,0))
-    # Two narrow falling streams make the bonnet fountain read as the working
-    # object in its side view. They stay in the single named water part.
-    def falling_stream(x,z,crown,inward,mouth_offset,photo_x):
-        mouth=(x+inward,crown*.76,z+mouth_offset)
-        landing_z=mouth[2]+(.82 if crown<2.8 else 1.00)
-        points=[mouth,
-                (mouth[0]+inward*.08,mouth[1]-.20,mouth[2]+.18),
-                (mouth[0]+inward*.12,1.17,mouth[2]+.58),
-                (mouth[0]+inward*.16,.90,landing_z)]
-        def stream_uv(t,angle):
-            return (t,angle/math.tau)
-        fountain_sweep(water_mesh,points,.060,5,stream_uv,subdivisions=3,
-                       radius_at=lambda t:.060*(1-.38*t),material='stream')
-    falling_stream(-.78,-2.43,2.50,.36,.55,735)
-    falling_stream(.78,-1.63,3.08,-.36,1.55,610)
+    # Thin, partly transparent streams fall straight down. One small ring at
+    # each impact suggests a ripple without turning the water into a solid rod.
+    def stream_uv(t,angle):
+        return (t,angle/math.tau)
+    for x,z,mouth_y in ((-.44,-1.54,2.05),(.44,-1.54,2.05)):
+        points=[(x,mouth_y,z),(x,1.52,z),(x,1.05,z),(x,.90,z)]
+        fountain_sweep(water_mesh,points,.026,6,stream_uv,subdivisions=2,
+                       radius_at=lambda t:.026*(1-.12*t),material='stream')
+        radius=.16
+        inner=radius-.018
+        for k in range(12):
+            a=math.tau*k/12; b=math.tau*(k+1)/12
+            outer_a=(x+math.cos(a)*radius,.905,z+math.sin(a)*radius)
+            inner_a=(x+math.cos(a)*inner,.905,z+math.sin(a)*inner)
+            inner_b=(x+math.cos(b)*inner,.905,z+math.sin(b)*inner)
+            outer_b=(x+math.cos(b)*radius,.905,z+math.sin(b)*radius)
+            water_mesh.face((outer_a,inner_a,inner_b,outer_b),
+                            ((0,0),(.5,0),(.5,1),(0,1)),
+                            'stream',(0,1,0),True)
     stream_material=bpy.data.materials.new('Fountain / falling water')
     stream_material.use_nodes=True
     stream_bsdf=stream_material.node_tree.nodes.get('Principled BSDF')
-    stream_bsdf.inputs['Base Color'].default_value=(.64,.72,.66,1)
+    stream_bsdf.inputs['Base Color'].default_value=(.72,.88,1.0,1)
+    stream_bsdf.inputs['Alpha'].default_value=.48
     stream_bsdf.inputs['Roughness'].default_value=.28
     stream_bsdf.inputs['Metallic'].default_value=0
+    stream_material.diffuse_color=(.72,.88,1.0,.48)
     water=water_mesh.finish('fountain:water',{'water':top_photo.material(),'stream':stream_material})
     keep(water)
     water['emissive']=False
