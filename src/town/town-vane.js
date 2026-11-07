@@ -67,18 +67,27 @@ function detectConditions(town,state,calendar) {
   if(previous.length===0&&dirty.length) recordTownVaneEvent(town,'water-brown-again');
   state.brownStreets=dirty;
 }
+function townReport(town,who,what,where='Town',kind='note',key=kind) {
+  town.reports??=[];town.nextReportNumber??=1;
+  const facts={source:'town-vane',kind,key};
+  const existing=town.reports.find(report=>report.facts?.source==='town-vane'
+    &&report.facts.kind===kind&&report.facts.key===key);
+  if(existing) {
+    existing.who=who;existing.what=what;existing.where=where;existing.createdTick=BigInt(town.tick);
+    existing.expiresTick=BigInt(town.tick);existing.unanswered=false;existing.answers=[];existing.outcome='Read';existing.facts=facts;
+    return existing;
+  }
+  const report={id:`report-${town.nextReportNumber++}`,who,what,where,priority:1,bad:false,createdTick:BigInt(town.tick),expiresTick:BigInt(town.tick),unanswered:false,answers:[],outcome:'Read',facts};
+  town.reports.push(report);
+  return report;
+}
 function addCrispReport(town,state,month) {
   if(state.lastVisitMonth===month) return;
   const visitMonths=month-(state.startedAt??month);
   if(visitMonths<12||visitMonths%12!==0||state.events[`crisp:${Math.floor(visitMonths/12)}`]) return;
   state.events[`crisp:${Math.floor(visitMonths/12)}`]=true;
-  town.reports??=[];town.nextReportNumber??=1;
-  town.reports.push({id:`report-${town.nextReportNumber++}`,who:'Mr Crisp',what:'Mr Crisp visited and left a neat report: “So sorry, I was passing. Mrs Vane asked me to see how you were getting on.”',where:'Town gate',priority:1,bad:false,createdTick:BigInt(town.tick),expiresTick:BigInt(town.tick)+BigInt(24*7),unanswered:false,answers:[],outcome:'Filed for you to read.',facts:{source:'town-vane'}});
+  townReport(town,'Mr Crisp','Mr Crisp visited and left a neat report: “So sorry, I was passing. Mrs Vane asked me to see how you were getting on.”','Town gate','crisp-visit','annual');
   state.lastVisitMonth=month;
-}
-function townReport(town,who,what,where='Town') {
-  town.reports??=[];town.nextReportNumber??=1;
-  town.reports.push({id:`report-${town.nextReportNumber++}`,who,what,where,priority:1,bad:false,createdTick:BigInt(town.tick),expiresTick:BigInt(town.tick),unanswered:false,answers:[],outcome:'Read',facts:{source:'town-vane'}});
 }
 function updateVane({town,calendar}) {
   const state=writableState(town),month=monthNumber(calendar);
@@ -113,7 +122,7 @@ function updateVane({town,calendar}) {
     const streetId=state.brownStreets.find(id=>!occupied.has(id));
     if(streetId) {
       state.kiosks.push({id:`vane-kiosk-${state.kiosks.length+1}`,streetId,openedMonth:month,open:true});
-      townReport(town,'Odessa',`A white Vane water kiosk opened on ${streetId}. The water there is still brown.`,streetId);
+      townReport(town,'Odessa',`A white Vane water kiosk opened on ${streetId}. The water there is still brown.`,streetId,'kiosk','latest');
     }
   }
   for(const kiosk of state.kiosks) if(kiosk.open&& !state.brownStreets.includes(kiosk.streetId)) kiosk.open=false;
@@ -125,7 +134,7 @@ function updateVane({town,calendar}) {
       const year=calendar.year;
       const letter={id:content.id,year,month:calendar.month,text:content.text.replaceAll('{year}',String(year)),context:pending.context};
       state.letters.push(letter);
-      townReport(town,'Mrs Vane (letter)',letter.text,'Town post');
+      townReport(town,'Mrs Vane (letter)',letter.text,'Town post','letter','latest');
       state.lastLetterMonth=month;
     }
   }

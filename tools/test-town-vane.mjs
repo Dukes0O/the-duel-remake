@@ -40,6 +40,18 @@ assert.equal(state.kiosks.length,1);
 assert.equal(state.kiosks[0].streetId,'east-road');
 stepTown(town);
 assert.equal(townVaneState(town).letters.length,1);
+assert.equal(town.reports.filter(report=>report.facts?.source==='town-vane'&&report.facts?.kind==='letter').length,1);
+
+// Long-running annual reports replace their panel row while the town keeps
+// its separate letter archive intact.
+const centuryTown=createTown(100,'Century Town');
+centuryTown.story={completed:{16:true}};
+centuryTown.vane={version:1,started:true,startedAt:72,kiosks:[],brownStreets:[],letters:[],pendingLetters:[],lastLetterMonth:null,lastVisitMonth:null,events:{},chapterFacts:{}};
+for(let tick=0;tick<100*360*24;tick++) stepTown(centuryTown);
+assert.ok(centuryTown.calendar.year>=100);
+assert.ok(centuryTown.reports.filter(report=>report.facts?.source==='town-vane').length<=3,
+  'Vane reports reuse their stable panel keys instead of growing with years');
+assert.equal(townVaneState(centuryTown).letters.length,0,'the town letter archive is not trimmed with report rows');
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
 
