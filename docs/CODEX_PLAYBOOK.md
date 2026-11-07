@@ -3,7 +3,7 @@
 Read SPEC section 0, AGENTS.md and docs/FACTORY.md first. Factory rules 11–15
 win over older gate, queue and lane instructions. Use docs/README.md and the
 current board to find a card. Kyle sets direction and says “go live”; Claude
-chooses art and sound within the three-round cap.
+chooses art and sound within the six-round limit.
 
 ## 1. The short version
 
