@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-12')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-13')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-12.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-13.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -715,6 +715,7 @@ DECK_START, DECK_END, DECK_GROUND, DECK_TOP = 25, 1001, 261, 62
 DECK_LENGTH = 14.8
 DECK_SCALE = DECK_LENGTH / (DECK_END - DECK_START)
 DECK_HEIGHT = (DECK_GROUND - DECK_TOP) * DECK_SCALE
+DECK_Y = 1.42
 DECK_FRONT = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
 DECK_REAR = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
 DECK_WIDTH = 7.4
@@ -726,6 +727,14 @@ deck_table = {
     'front': DECK_FRONT, 'rear': DECK_REAR,
     'top': {'front': 42, 'rear': 980, 'centre': 256, 'along': 'x',
             'x_scale': DECK_WIDTH / 448},
+    # Keep only the flat deck in the carve. Rail openings are traced below.
+    'cut': {
+        'side': [(0, 0, 1024, 170)],
+        'front': [(0, 0, 1024, 378)],
+        'rear': [(0, 0, 1024, 378)],
+        'top': [(0, 0, 1024, 72), (0, 459, 1024, 512),
+                (0, 72, 64, 459), (958, 72, 1024, 459)],
+    },
     'grey': 26, 'tolerance': 32, 'bleed_tolerance': 28,
     'voxel': .09, 'target': 4000,
     'mask_dir': str(render / 'masks'),
@@ -747,13 +756,44 @@ deck_body = carve_object('deck-town:deck', textures, deck_table)
 deck_body.parent = deck_town
 deck_parts.append(deck_body)
 
+# Trace the rail silhouette from the side and front reference photos. Flooded
+# studio gaps stay open, unlike a four-view carve of the entire railing.
+rail_side = Photo(textures / 'deck-town-deck-side.jpg')
+rail_front = Photo(textures / 'deck-town-deck-front.jpg')
+side_mask = ~rail_side.sky([(8, 8), (1015, 8), (8, 332), (1015, 332)], tolerance=32, grey=26)
+side_mask[170:, :] = False
+side_loops = trace(side_mask, (8, 42, 1016, 170))
+def side_rail_world(px, py, depth):
+    return (depth, (DECK_GROUND - py) * DECK_SCALE, -DECK_LENGTH / 2 + (px - DECK_START) * DECK_SCALE)
+for side, x in enumerate((-DECK_WIDTH / 2 + .06, DECK_WIDTH / 2 - .06), 1):
+    rail = Mesh()
+    slab(rail, 'side', rail_side, side_loops, lambda px, py, d, x=x: side_rail_world(px, py, x + d), -.055, .055)
+    rail_obj = rail.finish(f'deck-town:rail-long-{side}', {'side': rail_side.material()})
+    rail_obj.parent = deck_town
+    deck_parts.append(rail_obj)
+
+front_mask = ~rail_front.sky([(8, 8), (1015, 8), (8, 674), (1015, 674)], tolerance=32, grey=26)
+front_mask[378:, :] = False
+# Flooding cannot enter the white pockets enclosed by the stanchions. Remove
+# those measured openings so slab() carries only the rails and posts.
+front_mask[124:214, 210:820] = False
+front_mask[254:360, 210:820] = False
+front_loops = trace(front_mask, (165, 80, 860, 378))
+def end_rail_world(px, py, depth):
+    return ((px - 512) * DECK_WIDTH / 700, (580 - py) * DECK_SCALE, depth)
+for end, z in enumerate((-DECK_LENGTH / 2 + .06, DECK_LENGTH / 2 - .06), 1):
+    rail = Mesh()
+    slab(rail, 'front', rail_front, front_loops, lambda px, py, d, z=z: end_rail_world(px, py, z + d), -.055, .055)
+    rail_obj = rail.finish(f'deck-town:rail-end-{end}', {'front': rail_front.material()})
+    rail_obj.parent = deck_town
+    deck_parts.append(rail_obj)
+
 def deck_piece(name, center, size, mat, bevel=.02):
     obj = town.cube('deck-town:' + name, center, size, mat, bevel)
     obj.parent = deck_town
     deck_parts.append(obj)
     return obj
 
-DECK_Y = 1.42
 for index, x in enumerate((-3.5, 0, 3.5), 1):
     hatch = deck_piece(f'hatch-{index}', (x, DECK_Y + .10, .3), (1.15, .07, 1.35), materials['iron-dark'], .025)
 
@@ -774,6 +814,9 @@ home_table = {
     'front': HOME_FRONT, 'rear': HOME_REAR,
     'top': {'front': 52, 'rear': 970, 'centre': 256, 'along': 'x',
             'x_scale': HOME_WIDTH / 410},
+    # The top reference is a straight-down rectangle; discard its pale margin.
+    'cut': {'top': [(0, 0, 1024, 52), (0, 460, 1024, 512),
+                    (0, 52, 28, 460), (996, 52, 1024, 460)]},
     'grey': 26, 'tolerance': 34, 'bleed_tolerance': 28,
     'voxel': .065, 'target': 2000,
     'mask_dir': str(render / 'masks'),
@@ -785,6 +828,7 @@ print('deck-town carved home bounds (Blender XYZ):', json.dumps(home_bounds_dime
 home_layout = [(-1.65, -4.2, 0.0, 1.0), (1.65, -3.9, .10, .94),
                (-1.65, 2.9, -.12, 1.04), (1.65, 3.3, .16, .91)]
 home_objects = []
+home_side_photo = home_table['_photos']['side']
 for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     prefix = f'deck-town:home-{index}'
     home = bpy.data.objects.new(prefix, None)
@@ -801,8 +845,23 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     home_objects.append(body)
     deck_parts.append(body)
 
-    # The ladder leans onto the photographed side wall and its last rung meets the sill.
-    ladder = town.beam(prefix + ':ladder-left', (1.27, .04, -1.50), (1.27, 1.54, -1.50), .075, materials['weathered-plank'])
+    # A thin roof skin uses the home's existing red roof photo. It sits on the
+    # clean rectangular top mask and keeps the same measured roof dimensions.
+    roof = Mesh()
+    roof.face([(-HOME_WIDTH / 2, HOME_HEIGHT + .008, -HOME_LENGTH / 2),
+               (HOME_WIDTH / 2, HOME_HEIGHT + .008, -HOME_LENGTH / 2),
+               (HOME_WIDTH / 2, HOME_HEIGHT + .008, HOME_LENGTH / 2),
+               (-HOME_WIDTH / 2, HOME_HEIGHT + .008, HOME_LENGTH / 2)],
+              [home_side_photo.uv(HOME_START, HOME_TOP + 1),
+               home_side_photo.uv(HOME_END, HOME_TOP + 1),
+               home_side_photo.uv(HOME_END, HOME_TOP + 58),
+               home_side_photo.uv(HOME_START, HOME_TOP + 58)], 'side', (0, 1, 0))
+    roof_obj = roof.finish(prefix + ':roof', {'side': home_side_photo.material()})
+    roof_obj.parent = home
+    deck_parts.append(roof_obj)
+
+    # The ladder starts on the deck and reaches the raised door sill.
+    ladder = town.beam(prefix + ':ladder-left', (1.27, -.12, -1.50), (1.27, 1.54, -1.50), .075, materials['weathered-plank'])
     ladder.parent = home
     for rung in range(1, 7):
         y = rung * .20
