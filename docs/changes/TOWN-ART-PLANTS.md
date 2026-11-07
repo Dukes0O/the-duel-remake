@@ -1,39 +1,21 @@
-# TOWN-ART-PLANTS — follow-up
+# TOWN-ART-PLANTS follow-up: radar
 
 ## Changed
 
-- Added only `batch-plant` to the existing plants family. The accepted crusher
-  remains its own child and its recipe stays in place.
-- The cement silo is a photo-textured lathe with photo-traced legs. The two
-  aggregate bins and mixing tower use `carve_object`; the tower has a `keep`
-  cut for its drive-under bay. The discharge chute is a separate named piece.
-- Added four generated reference JPGs and the round-7 comparison sheet. The
-  family GLB is 2,379,956 bytes; the review sheet is 277,877 bytes.
-- Updated the Blender-output assertion to keep the crusher and batch plant as
-  separate children and check each building's triangle budget independently.
-  No test tolerance or expected gameplay number was loosened.
+Finished the radar model begun in the prior lane commits. Kept the four credited single-view reference photos and the separate `radar:dish` pivot. Tightened the side and front tower trace masks to exclude the separately modeled dish and drive assembly. Added an art-line note about removing moving photographed assemblies from static trace masks. The family model is 2,518,448 bytes; the radar is 1,688 triangles. The regenerated export shifted five valve-detail transforms on the separately owned wellhead, so I restored their exact prior node records from the committed family model; crusher, batch-plant and wellhead node records now match that baseline. The dish is a vertical-axis moving node at its centre.
+
+Added the round-10 comparison sheet and review. The visual review found remaining side-view fragments, a red strip at the dish edge, and inconsistent top-view reference details. Claude should review these points and decide if another visual round is needed.
 
 ## Checks
 
-- Blender recipe and exported-GLB render: passed. The recipe printed bounds for
-  each mesh and checked ground contact or contact with another piece, plus the
-  4 by 4 footprint.
-- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed; the report listed existing
-  advisory size targets, with no placement errors.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio
-  analysis subtest failed twice because `spawnSync ffmpeg` returned `EPERM`.
-  Its sheet publication subtest passed.
-- Lane tier and build: not run; this is an art card.
-- Browser checks and in-game look: not run; Claude owns them. Claude should
-  review the end-view match, chute visibility, and drive-under opening.
-- Changed assertions: the plants-family child list now includes the new
-  building; triangle counts are checked per building. No assertions were
-  weakened.
-- Race fingerprints: not applicable; no race code changed.
+- Blender recipe/export and renders: completed. Piece bounds, footprint checks, ground/contact checks and radar triangle count printed in `.qa-dist/town-art-plants-radar-blender.log`.
+- `node tools/test-blender-output.mjs`: 377 checks, 0 failed.
+- Browser checks and in-game look review: not run here; Claude should inspect the round-10 sheet and exported model.
+- Lane tier and build: not run, as directed for this art card.
+- Changed assertions: none in this follow-up. The previous radar registration in `tools/test-blender-output.mjs` was inherited from commit `c694c4e44`.
+- Race fingerprints: not applicable; town art is not wired into race simulation.
 
 ## Removed
 
-- No accepted building or crusher part was removed. Temporary renders and
-  source-generation scratch files were sent to the Recycle Bin after review;
-  the four required JPG references remain.
+No prior passed building or model was removed. Scratch renders and logs will be cleaned from `.qa-dist` after the evidence is committed.
+

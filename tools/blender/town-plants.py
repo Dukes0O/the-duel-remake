@@ -3,7 +3,7 @@
 Builds the exported candidate and review renders from that GLB. Coordinates
 use town_base's metre API: +Y up, front -Z.
 """
-import argparse, math, sys
+import argparse, hashlib, math, sys
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
@@ -15,7 +15,7 @@ if a.paths_only:
  import json;print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)] if a.render else []}));raise SystemExit(0)
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe
 from photo_carve import carve_object, save_mask
@@ -343,15 +343,296 @@ for x in (-.72,.72):
 transfer=town.beam('batch-plant:silo-transfer-pipe',(0,3.1,SILO_CZ+1.85),(0,3.1,-4.05),.22,dark)
 attach_piece(transfer)
 
+# A one-cell drilled wellhead. The side photo supplies the long open pump-jack
+# frame and the moving beam; the front and rear photos set its cross-width.
+# Side pixels 66..944 span the 6.2 m working length, and the measured ground
+# line is y=649. The end photos put the outer feet at x=238..780, or 2.9 m.
+wellhead=bpy.data.objects.new('wellhead',None);bpy.context.collection.objects.link(wellhead);wellhead.parent=rootobj
+wellhead_parts=[]
+well_side=Photo(tex/'wellhead-side.jpg')
+well_front=Photo(tex/'wellhead-front.jpg')
+well_rear=Photo(tex/'wellhead-rear.jpg')
+well_top=Photo(tex/'wellhead-top.jpg')
+WELL_START,WELL_END,WELL_GROUND=66,944,649
+WELL_LENGTH=6.2
+WELL_SCALE=WELL_LENGTH/(WELL_END-WELL_START)
+WELL_Z0=-WELL_LENGTH/2
+WELL_WIDTH=2.9
+WELL_HALF=WELL_WIDTH/2
+def well_z(px):return WELL_Z0+(px-WELL_START)*WELL_SCALE
+def well_side_world(px,py,depth):
+ y=(WELL_GROUND-py)*WELL_SCALE
+ taper=max(.55,min(1.0,1.0-.45*y/((WELL_GROUND-204)*WELL_SCALE)))
+ return (depth*taper,y,well_z(px))
+def well_attach(obj,parent=wellhead):obj.parent=parent;wellhead_parts.append(obj);return obj
+def well_beam(name,a,b,width,mat):
+ obj=town.beam(name,a,b,width,mat)
+ # The glTF exporter bakes bevel modifiers into every cube. Keep repeated
+ # support bars flat-edged so the final exported count stays inside budget.
+ for modifier in list(obj.modifiers):
+  if modifier.type in {'BEVEL','WEIGHTED_NORMAL'}:obj.modifiers.remove(modifier)
+ return well_attach(obj)
+
+side_rgb=well_side.rgb()
+# Remove the neutral studio-grey by colour everywhere, not only where it can
+# flood in from an edge. This clears the grey caught inside the A-frame and
+# along the beam beside the horse-head. Keep the image itself untouched.
+studio_samples=np.concatenate((side_rgb[8:48,8:48].reshape(-1,3),
+                               side_rgb[8:48,-48:-8].reshape(-1,3),
+                               side_rgb[-48:-8,8:48].reshape(-1,3),
+                               side_rgb[-48:-8,-48:-8].reshape(-1,3)))
+studio_grey=np.median(studio_samples,axis=0)
+studio_distance=np.abs(side_rgb-studio_grey).max(axis=2)
+studio_chroma=side_rgb.max(axis=2)-side_rgb.min(axis=2)
+side_background=(studio_distance<34)&(studio_chroma<20)
+if a.render:
+ save_mask(~side_background,evidence/'masks'/'wellhead-side-subject.png')
+side_sky=side_background
+yy,xx=np.ogrid[:well_side.h,:well_side.w]
+# Paint-worn steel stays within the actual diagonal members; the center bays
+# remain open. Separate rectangular bands preserve the measured cross-ties.
+left_rail=(yy>=204)&(yy<=612)&(xx>=425+(612-yy)*.17)&(xx<=462+(612-yy)*.16)
+right_rail=(yy>=204)&(yy<=612)&(xx>=644-(612-yy)*.19)&(xx<=687-(612-yy)*.14)
+base_rail=(yy>=604)&(yy<=649)&(xx>=65)&(xx<=946)
+frame_mask=(~side_sky)&(left_rail|right_rail|base_rail)
+frame_loops=trace(frame_mask,(55,190,955,655),tolerance=4.2,min_area=90)
+if not frame_loops:raise RuntimeError('wellhead frame trace is empty')
+for side_name,d0,d1 in (('road',-1.34,-1.20),('far',1.20,1.34)):
+ frame_mesh=PhotoMesh();slab(frame_mesh,'side',well_side,frame_loops,well_side_world,d0,d1,wall_scale=WELL_SCALE)
+ frame_obj=frame_mesh.finish(f'wellhead:frame-{side_name}',{'side':well_side.material()})
+ well_attach(frame_obj)
+
+# The beam and horsehead are their own traced slab, recentered at the measured
+# bearing (photo pixel 552,153). Its parent origin is the actual rocking axis.
+beam_region=(((yy>=18)&(yy<=232)&(xx>=263)&(xx<=846))|
+             ((yy>=228)&(yy<=441)&(xx>=793)&(xx<=845))|
+             ((yy>=205)&(yy<=428)&(xx>=294)&(xx<=365)))
+beam_mask=(~side_sky)&beam_region
+beam_loops=trace(beam_mask,(258,10,850,445),tolerance=4.4,min_area=110)
+if not beam_loops:raise RuntimeError('wellhead beam trace is empty')
+BEARING_Y=(WELL_GROUND-153)*WELL_SCALE
+BEARING_Z=well_z(552)
+beam_mesh=PhotoMesh();slab(beam_mesh,'side',well_side,beam_loops,well_side_world,-.20,.20,wall_scale=WELL_SCALE)
+beam_mesh.verts=[(vertex[0],vertex[1]-BEARING_Y,vertex[2]-BEARING_Z) for vertex in beam_mesh.verts]
+beam_obj=beam_mesh.finish('wellhead:beam-surface',{'side':well_side.material()})
+beam_pivot=bpy.data.objects.new('wellhead:beam',None);bpy.context.collection.objects.link(beam_pivot)
+beam_pivot.parent=wellhead;beam_pivot.location=town.game_vector((0,BEARING_Y,BEARING_Z));beam_obj.parent=beam_pivot
+wellhead_parts.append(beam_obj)
+
+# The motor is a compact, photo-traced housing. Turning a generic drum made
+# its pale end cap dominate the side and front views; the silhouette and both
+# broad faces now wear the actual motor in the side photograph.
+motor_mask=(~side_background)&(xx>=82)&(xx<=182)&(yy>=448)&(yy<=556)
+motor_loops=trace(motor_mask,(78,444,186,560),tolerance=4.0,min_area=75)
+if not motor_loops:raise RuntimeError('wellhead motor trace is empty')
+motor_mesh=PhotoMesh();slab(motor_mesh,'side',well_side,motor_loops,well_side_world,-.28,.28,wall_scale=WELL_SCALE)
+motor_obj=motor_mesh.finish('wellhead:motor',{'side':well_side.material()});well_attach(motor_obj)
+
+# Tie the two traced side frames at their feet, shoulders and bearing. These
+# cross-members leave the A-frame's triangular openings clear.
+for z_px,y_px,width in ((438,624,2.45),(563,416,2.05),(552,286,1.70),(508,207,1.44)):
+ y=(WELL_GROUND-y_px)*WELL_SCALE;z=well_z(z_px)
+ well_beam('wellhead:frame-cross-tie',( -width/2,y,z),(width/2,y,z),.105,steel)
+# The side photograph's three inner crossbars run in the long profile plane.
+# Build them on both faces; the matching cross-width ties join their ends.
+for depth,face in ((-1.27,'road'),(1.27,'far')):
+ for index,(px0,px1,py) in enumerate(((500,625,286),(465,660,416),(438,678,538))):
+  y=(WELL_GROUND-py)*WELL_SCALE
+  taper=max(.55,min(1.0,1.0-.45*y/((WELL_GROUND-204)*WELL_SCALE)))
+  well_beam(f'wellhead:frame-profile-crossbar-{face}-{index+1}',
+            (depth*taper,y,well_z(px0)),(depth*taper,y,well_z(px1)),.10,steel)
+for z in (well_z(77),well_z(932)):
+ well_beam('wellhead:base-cross-member',(-1.20,.17,z),(1.20,.17,z),.12,dark)
+
+# The flywheel is a measured annulus with four spokes, not a floating hub ring.
+# Its centre follows the side photograph's crank at pixels (310,455).
+def side_uv(i,distance,radius,angle):
+ return well_side.uv(310+math.cos(angle)*radius/WELL_SCALE,
+                     455+math.sin(angle)*radius/WELL_SCALE)
+hub=PhotoMesh()
+FLYWHEEL_Y=(WELL_GROUND-455)*WELL_SCALE
+FLYWHEEL_Z=well_z(310)
+lathe(hub,'side',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(1,0,0),(0,1,0),(0,0,1),
+      [(-.07,.60),(-.07,.67),(.07,.67),(.07,.60)],side_uv,sides=10)
+hub_obj=hub.finish('wellhead:flywheel-rim',{'side':dark});well_attach(hub_obj)
+hub_center=PhotoMesh()
+lathe(hub_center,'side',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(1,0,0),(0,1,0),(0,0,1),
+      [(-.10,.06),(.10,.06)],side_uv,sides=10,
+      cap_start=('side',lambda a,f:well_side.uv(310+math.cos(a)*f*18,455+math.sin(a)*f*18)),
+      cap_end=('side',lambda a,f:well_side.uv(310+math.cos(a)*f*18,455+math.sin(a)*f*18)))
+hub_center_obj=hub_center.finish('wellhead:flywheel-hub',{'side':dark});well_attach(hub_center_obj)
+for index in range(8):
+ angle=index*math.pi/4
+ end_y=FLYWHEEL_Y+math.sin(angle)*.58;end_z=FLYWHEEL_Z+math.cos(angle)*.58
+ well_beam(f'wellhead:flywheel-spoke-{index+1}',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(-.78,end_y,end_z),.065,dark)
+well_beam('wellhead:motor-stand',(0,.08,well_z(172)),(0,.92,well_z(172)),.14,dark)
+
+# The casing and valve are turned profiles, not boxes. The casing reaches the
+# ground and its crown joins the polished rod; a lathed handwheel and spokes
+# sit beside its branch pipe.
+CASING_Z=well_z(814)
+casing=PhotoMesh()
+lathe(casing,'side',(0,0,CASING_Z),(0,1,0),(1,0,0),(0,0,1),
+      [(.06,.34),(.10,.39),(.18,.39),(.24,.30),(.98,.30),(1.07,.35),(1.13,.35),(1.18,.26)],
+      lambda i,d,r,a:well_side.uv(814+math.sin(a)*r/WELL_SCALE,WELL_GROUND-d/WELL_SCALE),sides=12,
+      cap_start=('side',lambda a,f:well_side.uv(814+math.cos(a)*f*44,630)),
+      cap_end=('side',lambda a,f:well_side.uv(814+math.cos(a)*f*31,480)))
+casing_obj=casing.finish('wellhead:casing',{'side':well_side.material()});well_attach(casing_obj)
+valve=PhotoMesh()
+lathe(valve,'side',(0,1.34,CASING_Z-.30),(0,0,1),(1,0,0),(0,1,0),
+      [(-.20,.14),(-.15,.23),(-.07,.23),(.12,.16),(.25,.12),(.36,.12),(.42,.18),(.49,.18)],
+      lambda i,d,r,a:well_side.uv(814+d/WELL_SCALE,WELL_GROUND-(1.34+math.sin(a)*r)/WELL_SCALE),sides=8)
+valve_obj=valve.finish('wellhead:valve',{'side':well_side.material()});well_attach(valve_obj)
+well_beam('wellhead:valve-stem',(-.18,1.40,well_z(880)),(-.56,1.40,well_z(894)),.07,dark)
+wheel=PhotoMesh()
+lathe(wheel,'side',(-.56,1.40,well_z(894)),(1,0,0),(0,1,0),(0,0,1),
+      [(-.035,.18),(-.02,.24),(.02,.24),(.035,.18)],
+      lambda i,d,r,a:well_side.uv(894+math.sin(a)*r/WELL_SCALE,446+math.cos(a)*r/WELL_SCALE),sides=8)
+wheel_obj=wheel.finish('wellhead:valve-handwheel',{'side':well_side.material()});well_attach(wheel_obj)
+for index in range(4):
+ angle=index*math.pi/2
+ y=1.40+math.cos(angle)*.205;z=well_z(894)+math.sin(angle)*.205
+ well_beam(f'wellhead:valve-spoke-{index+1}',(-.56,1.40,well_z(894)),(-.56,y,z),.035,dark)
+
+# The pale hand-painted 07 is physical ink over the casing, readable from the
+# side. Its face points toward -X; the baseline follows the casing's height.
+number_data=bpy.data.curves.new('wellhead hand-painted number','FONT')
+number_data.body='07';number_data.size=.24;number_data.align_x='CENTER';number_data.align_y='CENTER'
+number_data.extrude=.0015;number_data.resolution_u=3
+number_obj=bpy.data.objects.new('wellhead:hand-painted-07',number_data);bpy.context.collection.objects.link(number_obj)
+number_obj.location=town.game_vector((-.365,.74,CASING_Z))
+number_obj.rotation_euler=Matrix(((0,0,-1),(-1,0,0),(0,1,0))).to_euler()
+number_obj.parent=wellhead
+number_mat=bpy.data.materials.new('worn cream hand paint');number_mat.diffuse_color=(.66,.58,.40,1);number_mat.use_nodes=True
+number_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.66,.58,.40,1)
+number_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
+number_data.materials.append(number_mat)
+bpy.ops.object.select_all(action='DESELECT');number_obj.select_set(True);bpy.context.view_layer.objects.active=number_obj
+bpy.ops.object.convert(target='MESH');number_obj=bpy.context.object;number_obj.name='wellhead:hand-painted-07'
+wellhead_parts.append(number_obj)
+
+# End-view rails and feet follow the front and rear photo widths, keeping the
+# model inside its 7 m usable footprint while joining the side-frame slabs.
+for z,name,photo in ((-3.02,'front',well_front),(3.02,'rear',well_rear)):
+ for x in (-1.17,1.17):
+  well_beam(f'wellhead:{name}-foot',(x,.13,z-.22),(x,.13,z+.22),.16,dark)
+
+
+# One-cell salvaged airliner radar. The lower silhouettes are traced from the
+# photos on four planes so the tower remains an open lattice. The dish is a
+# separate photo-backed lathe on a true-centre vertical turntable.
+radar=bpy.data.objects.new('radar',None);bpy.context.collection.objects.link(radar);radar.parent=rootobj
+radar_parts=[]
+radar_side=Photo(tex/'radar-side.jpg');radar_front=Photo(tex/'radar-front.jpg')
+radar_rear=Photo(tex/'radar-rear.jpg');radar_top=Photo(tex/'radar-above.jpg')
+RADAR_GROUND=1490
+RADAR_SCALE=7.35/(RADAR_GROUND-55)
+RADAR_Z_START=-3.05
+RADAR_Z_SPAN=6.1
+RADAR_FRONT_CENTRE=512
+RADAR_FRONT_SCALE=2.9/390
+def radar_z(px):return RADAR_Z_START+(px-305)*RADAR_Z_SPAN/420
+def radar_side_world(px,py,depth):return (depth,(RADAR_GROUND-py)*RADAR_SCALE,radar_z(px))
+def radar_front_world(px,py,depth):
+ return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,(RADAR_GROUND-py)*RADAR_SCALE,depth)
+def radar_attach(obj,parent=radar):obj.parent=parent;radar_parts.append(obj);return obj
+
+# The studio ground is neutral grey. Keep the colored and dark steel pixels in
+# each lower silhouette; trace preserves the genuine open spaces in its frame.
+side_rgb=radar_side.rgb();side_spread=side_rgb.max(axis=2)-side_rgb.min(axis=2);side_grey=side_rgb.mean(axis=2)
+side_mask=((side_spread>12)&(side_grey<205))|((side_grey<86)&(side_spread<14))
+side_mask[:590,:]=False;side_mask[1490:,:]=False;side_mask[:,:280]=False;side_mask[:,750:]=False
+# The side reference includes the photographed dish and its drive. Those are
+# represented by the moving lathe and bearing pieces below; remove their
+# silhouettes from the tower trace so they are not copied as flat plates.
+side_y,side_x=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
+side_mask &= ~(((side_x-445)/118)**2+((side_y-330)/330)**2<1.0)
+side_mask &= ~((side_x>490)&(side_x<690)&(side_y>330)&(side_y<625))
+side_loops=trace(side_mask,(280,590,750,1490),tolerance=29.0,min_area=3000)
+if not side_loops:raise RuntimeError('radar side lattice trace is empty')
+front_rgb=radar_front.rgb();front_spread=front_rgb.max(axis=2)-front_rgb.min(axis=2);front_grey=front_rgb.mean(axis=2)
+front_mask=((front_spread>12)&(front_grey<205))|((front_grey<86)&(front_spread<14))
+front_mask[:575,:]=False;front_mask[1490:,:]=False;front_mask[:,:265]=False;front_mask[:,770:]=False
+# Keep the reflector itself exclusively on the rotating lathe. Its lower rim
+# overlaps the tower platform in the photo, so cut the circular face while
+# retaining the platform and mast below it.
+front_y,front_x=np.ogrid[:front_mask.shape[0],:front_mask.shape[1]]
+front_mask &= ~((((front_x-512)/305)**2+((front_y-320)/305)**2<1.0)&(front_y<650))
+front_loops=trace(front_mask,(265,575,770,1490),tolerance=29.0,min_area=3000)
+if not front_loops:raise RuntimeError('radar front lattice trace is empty')
+for depth,label in ((-1.05,'road'),(1.05,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_side,side_loops,radar_side_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+ obj=frame.finish(f'radar:tower-side-frame-{label}',{'photo':radar_side.material()});radar_attach(obj)
+for depth,label in ((-1.14,'road'),(1.14,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+ obj=frame.finish(f'radar:tower-end-frame-{label}',{'photo':radar_front.material()});radar_attach(obj)
+
+# Cross-ties at each landing and diagonal braces close the four-sided tower.
+for z in (-1.95,1.95):
+ for y in (.18,1.65,3.05,4.18):
+  radar_attach(town.beam('radar:lattice-tie',(-1.0,y,z),(1.0,y,z),.085,steel))
+for y in (1.03,2.40,3.64):
+ for x in (-.74,.74):
+  for z0,z1 in ((-1.05,1.05),(1.05,-1.05)):
+   radar_attach(town.beam('radar:lattice-cross-brace',(x,y-.67,z0),(x,y+.67,z1),.070,dark))
+for x in (-.88,.88):
+ for z in (-2.62,2.62):
+  radar_attach(town.cube('radar:base-foot',(x,.075,z),(.40,.15,.48),dark,.012))
+
+# The dish is centred at its real vertical turn axis. Its photo face points
+# toward the road; UVs sample the photographed reflector, not its background.
+RADAR_DISH_Y=(RADAR_GROUND-330)*RADAR_SCALE
+turn=bpy.data.objects.new('radar:dish',None);bpy.context.collection.objects.link(turn);turn.parent=radar
+turn.location=town.game_vector((0,RADAR_DISH_Y,0));radar_parts.append(turn)
+def dish_uv(index,distance,radius,angle):
+ fraction=min(.86,radius/1.58*.86)
+ return radar_front.uv(512+292*fraction*math.cos(angle),320-292*fraction*math.sin(angle))
+def rear_dish_uv(index,distance,radius,angle):
+ fraction=min(.86,radius/1.58*.86)
+ return radar_rear.uv(512+296*fraction*math.cos(angle),300-296*fraction*math.sin(angle))
+dish=PhotoMesh()
+lathe(dish,'photo',(0,0,0),(0,0,1),(1,0,0),(0,1,0),
+      [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
+      dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_front.uv(512+52*f*math.cos(angle),320-52*f*math.sin(angle))))
+dish_obj=dish.finish('radar:dish-surface',{'photo':radar_front.material()});dish_obj.parent=turn;radar_parts.append(dish_obj)
+# The rear skin wears the back photo, including its radial bracing; the drive
+# motor sits behind it. Both skins and motor rotate together with the true centre.
+rear_dish=PhotoMesh()
+lathe(rear_dish,'photo',(0,0,.48),(0,0,1),(1,0,0),(0,1,0),
+      [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
+      rear_dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_rear.uv(512+52*f*math.cos(angle),300-52*f*math.sin(angle))))
+rear_obj=rear_dish.finish('radar:dish-rear-surface',{'photo':radar_rear.material()});rear_obj.parent=turn;radar_parts.append(rear_obj)
+# A narrow steel ring joins the reflector skins as one shallow dish body.
+rim=PhotoMesh()
+lathe(rim,'rim',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(-.16,1.58),(.32,1.58)],
+      lambda index,distance,radius,angle:(float(index),angle/(2*math.pi)),sides=20)
+rim_obj=rim.finish('radar:dish-rim',{'rim':dark});rim_obj.parent=turn;radar_parts.append(rim_obj)
+motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,1.04),(.44,.44,.40),dark,.025)
+world=motor.matrix_world.copy();motor.parent=turn;motor.matrix_world=world;radar_parts.append(motor)
+# A fixed bearing yoke joins the lattice at the dish's lower edge.
+for x in (-.68,.68):
+ radar_attach(town.beam('radar:turntable-bearing',(x,4.20,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
+radar_attach(town.beam('radar:turntable-crossbar',(-.75,4.20,0),(.75,4.20,0),.13,steel))
+
+# The small lattice and foot boxes read from their photographed edges at town
+# scale; their bevel modifiers multiply the exported count without changing
+# that silhouette. Keep the traced photo edges and budget the actual GLB.
+for obj in bpy.context.scene.objects:
+ if obj.type=='MESH' and obj.name.startswith('radar:'):
+  for modifier in tuple(obj.modifiers):
+   if modifier.type=='BEVEL':obj.modifiers.remove(modifier)
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent,plant):return True
+  if parent in (crusher,belt_parent,plant,wellhead,radar,turn):return True
   parent=parent.parent
  return False
 plant_bounds={}
+wellhead_bounds={}
+radar_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
  # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
@@ -362,6 +643,14 @@ for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and ow
   plant_bounds[obj.name]=(low,high)
   if low[1]<-.08 or low[0]<-15.5 or high[0]>15.5 or low[2]<-15.5 or high[2]>15.5:
    raise RuntimeError(f'{obj.name} leaves the 4 x 4 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('wellhead:'):
+  wellhead_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
+   raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('radar:'):
+  radar_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
+   raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
 for name,(low,high) in plant_bounds.items():
  grounded=low[1]<=.13
  touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
@@ -370,6 +659,59 @@ for name,(low,high) in plant_bounds.items():
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another batch plant piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for name,(low,high) in radar_bounds.items():
+ grounded=low[1]<=.10
+ touching=any(other!=name and all(radar_bounds[other][0][axis]<=high[axis]+.12 and
+                                    radar_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in radar_bounds)
+ if not (grounded or touching):raise RuntimeError(f'{name} touches neither ground nor another radar piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for name,(low,high) in wellhead_bounds.items():
+ grounded=low[1]<=.10
+ touching=any(other!=name and all(wellhead_bounds[other][0][axis]<=high[axis]+.10 and
+                                    wellhead_bounds[other][1][axis]>=low[axis]-.10 for axis in range(3))
+              for other in wellhead_bounds)
+ if not (grounded or touching):
+  raise RuntimeError(f'{name} touches neither ground nor another wellhead piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for obj in sorted((obj for obj in bpy.context.scene.objects
+                   if obj.type=='MESH' and obj.name.startswith('wellhead:')),key=lambda obj:obj.name):
+ print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
+wellhead_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                        if obj.type=='MESH' and obj.name.startswith('wellhead:')
+                        for poly in obj.data.polygons)
+print(f'WELLHEAD TRIANGLES {wellhead_triangles}')
+if wellhead_triangles>1800:raise RuntimeError(f'wellhead has {wellhead_triangles} triangles; budget 1800')
+radar_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                    if obj.type=='MESH' and obj.name.startswith('radar:') for poly in obj.data.polygons)
+print(f'RADAR TRIANGLES {radar_triangles}')
+for obj in sorted((obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('radar:')),key=lambda obj:obj.name):
+ print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
+if radar_triangles>1800:raise RuntimeError(f'radar has {radar_triangles} triangles; budget 1800')
+# Several photo-carve calls open the same source again before their separate
+# edge bleeds. Reuse only byte-identical final images; different bleeds stay
+# distinct, so this reduces the GLB without changing any rendered pixels.
+image_versions={};deduplicated=0
+for material in bpy.data.materials:
+ if not material.use_nodes:continue
+ for node in material.node_tree.nodes:
+  if node.type!='TEX_IMAGE' or not node.image:continue
+  image=node.image;width,height=image.size
+  pixels=np.empty(width*height*4,dtype=np.float32);image.pixels.foreach_get(pixels)
+  key=(width,height,hashlib.sha256(pixels.tobytes()).digest())
+  previous=image_versions.get(key)
+  if previous is None:image_versions[key]=image
+  elif previous!=image:node.image=previous;deduplicated+=1
+print(f'IDENTICAL TEXTURE IMAGES REUSED {deduplicated}')
+# Keep the family GLB within its 3 MB card budget. Full-resolution source
+# photos stay in textures/; only the embedded copies are resampled slightly.
+embedded_images={node.image for material in bpy.data.materials if material.use_nodes
+                 for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image}
+for image in embedded_images:
+ width,height=image.size
+ if max(width,height)>600:
+  image.scale(max(1,round(width*.85)),max(1,round(height*.85)))
+print(f'EMBEDDED PHOTO COPIES SCALED TO 85 PERCENT: {sum(max(image.size)>600 for image in embedded_images)}')
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:
@@ -387,9 +729,7 @@ if a.render:
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
   cam=camera(name,loc,target,lens);scene.camera=cam;scene.render.filepath=str(evidence/(name+'.png'));evidence.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
- # Batch-plant review: the first four model views use the reference cameras
- # as true orthographic projections, then both ground-level corners and the
- # town mayor's aerial view.
+ # Building-only renders use the generated photos' orthographic cameras.
  for node in scene.objects:
   if node.type=='MESH':node.hide_render=not (node.name.startswith('batch-plant') or node.name=='review-only ground')
  def ortho_shot(name,game_eye,game_target,scale,size,roll=0):
@@ -410,3 +750,33 @@ if a.render:
   cam=camera('batch-plant-'+name,loc,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
   scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=1000,700
   scene.render.filepath=str(evidence/('batch-plant-'+name+'.png'));bpy.ops.render.render(write_still=True)
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('wellhead:') or node.name=='review-only ground')
+ def well_shot(name,eye,target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('wellhead-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('wellhead-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ well_shot('side',(-24,2.3,0),(0,2.3,0),7.4,(1024,683))
+ well_shot('front',(0,2.3,-28),(0,2.3,0),5.0,(1024,936))
+ well_shot('rear',(0,2.3,28),(0,2.3,0),5.0,(1024,936))
+ well_shot('above',(0,30,0),(0,0,0),7.4,(1024,1024),-math.pi/2)
+ well_shot('three-quarter-road',(12,8,-14),(0,2.2,0),7.2,(1000,750))
+ well_shot('three-quarter-rear',(-12,8,14),(0,2.2,0),7.2,(1000,750))
+ well_shot('mayor',(52,70,-52),(0,2.0,0),10.5,(1000,750))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('radar:') or node.name=='review-only ground')
+ def radar_shot(name,eye,target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('radar-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('radar-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ radar_shot('side',(26,3.8,0),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('front',(0,3.8,-28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('rear',(0,3.8,28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('above',(0,28,0),(0,0,0),7.4,(1024,1024),-math.pi/2)
+ radar_shot('three-quarter-road',(13,8,-15),(0,3.8,0),12.0,(1000,750))
+ radar_shot('three-quarter-rear',(-13,8,15),(0,3.8,0),12.0,(1000,750))
+ radar_shot('mayor',(46,67,-46),(0,3.8,0),14.5,(1000,750))

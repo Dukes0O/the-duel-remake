@@ -209,3 +209,4 @@ stop adjusting and change the method.
 - Never stop processes by matching a folder name: name each job's own process.
 
 - **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
+- **A separately modeled moving assembly is duplicated in a tower trace.** Remove its measured silhouette from each static photo mask before 	race; otherwise dish faces and drive housings become fixed flat plates beside the real moving part. Check side and end masks against their photos.
