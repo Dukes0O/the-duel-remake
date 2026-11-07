@@ -35,3 +35,5 @@ Reuse first: Kenney's industrial and factory kits in `C:/Users/kyleb/dev/art-lib
 ## Claude answers
 
 Crusher, 7 November (Claude): **passes, merged; its six rounds are used.** The hopper, flywheel, jaw, open conveyor, leg, trailer, tyres and falling gravel all read like the photo. Claude removed the last strays by hand: the rubber belt stood on end through the hopper (its corners were written in glTF axes into Blender's mesh), a second conveyor leg was traced from the gravel fall, and two old chute bars stood by the cone. Test change reviewed: `crusher-discharge-chute-lip` leaves the list of required parts because the chute was removed; no other check changes. The other plants on this card remain.
+
+Batch plant, 7 November (Claude): **round 7 passes, merged.** The silo on its legs, the two aggregate bins and the mixing house with its drum match the side and straight-down photos, and read well from the road and the mayor's view. Short of the photos: the end photos show a tall tower the side photo does not, so the ends are a compromise between them. The conveyor pieces, formwork, wellhead, pump station, radar and machine yard remain.
