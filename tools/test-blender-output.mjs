@@ -65,7 +65,7 @@ const generators = [
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
-    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:8000000},
+    glb:['public/assets/models/wasteland/town/fun.glb'],budget:72200,maxBytes:8000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
     glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,

@@ -379,7 +379,7 @@ wheel_pivot.location=town.game_vector((0,wheel_center_y,0)); wheel_pivot.rotatio
 def wheel_point(px,py,depth): return (depth,(wheel_cy-py)*wheel_scale,(px-wheel_cx)*wheel_scale)
 wheel_photo.bleed(wheel_mask)
 def torus_rim(name,depth):
-    mesh=PhotoMesh(); circumference=128; tube_steps=12; tube=.075
+    mesh=PhotoMesh(); circumference=64; tube_steps=6; tube=.075
     for j in range(tube_steps):
         phi=math.tau*j/tube_steps; next_phi=math.tau*(j+1)/tube_steps
         for i in range(circumference):
@@ -419,7 +419,7 @@ seat_rgb=seat_photo.rgb(); seat_bg=np.median(np.concatenate((seat_rgb[:20,:20].r
 seat_mask=np.abs(seat_rgb-seat_bg).max(axis=2)>24
 seat_mask[:625,:]=False  # remove the generated hanging rods; build straight ones below
 seat_mask[1000:,:]=False  # remove the enclosed pale background beneath the carriage
-seat_loops=trace(seat_mask,(210,10,1100,1160),tolerance=1.3,min_area=45)
+seat_loops=trace(seat_mask,(210,10,1100,1160),tolerance=12.0,min_area=600)
 save_mask('big-wheel-seat-mask.png',seat_mask)
 seat_photo.bleed(seat_mask)
 seat_cx,seat_ground=656,1154; seat_scale=1.4/760
