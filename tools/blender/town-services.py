@@ -246,6 +246,49 @@ for n in ids:
   stack_copy.location=town.game_vector((5.3,0,0.2));stack_copy.rotation_euler[2]=math.pi/2
   print('SCRAPYARD stack dimensions (glTF X,Y,Z):',json.dumps({'a':[round(v,3) for v in stack.dimensions],
         'b':[round(v,3) for v in stack_copy.dimensions]},sort_keys=True))
+
+  # Trace the open crane frame from the yard's road-facing photo. The pale
+  # connected background remains open through each lattice bay.
+  crane_photo=Photo(tex/'scrapyard-front.jpg')
+  crane_sky=crane_photo.sky([(4,4),(507,4),(4,251),(507,251),(255,4)],tolerance=38,grey=34)
+  crane_mask=~crane_sky
+  crane_mesh=PhotoMesh()
+  photo_ground,photo_top=212,18
+  px_scale,py_scale=22.0/512,9.0/(photo_ground-photo_top)
+  def crane_point(px,py,depth):
+   return ((px-256)*px_scale,(photo_ground-py)*py_scale,depth)
+  for name,rect in [('left-leg',(24,16,82,212)),('right-leg',(426,16,482,212)),('top-beam',(56,16,461,66))]:
+   loops=photo_trace(crane_mask,rect,tolerance=1.15,min_area=6)
+   if not loops:raise RuntimeError(f'No traced scrapyard gantry loops in {name}')
+   print(f'SCRAPYARD traced gantry {name}: {len(loops)} loops from {rect}')
+   photo_slab(crane_mesh,'crane',crane_photo,loops,crane_point,-1.20,-.88,wall_scale=px_scale)
+  crane_frame=crane_mesh.finish('scrapyard:gantry-frame',{'crane':crane_photo.material()})
+  parent_keep(crane_frame,b)
+  # The measured photo feet stop just above the dirt line. Welded shoes bridge
+  # that last gap and give both traced legs a visible ground contact.
+  for side,x in (('left',-8.7),('right',8.6)):
+   shoe=box(f'scrapyard:gantry-foot-{side}',(x,.26,-1.04),(1.25,.52,.95),dark,.035,b)
+  # The hanging equipment is a separate node whose origin is the trolley pin.
+  trolley_x=(280-256)*px_scale
+  hook_group=empty('scrapyard:hook-magnet',b)
+  hook_group.location=town.game_vector((trolley_x,8.0,-1.04))
+  hook_loops=photo_trace(crane_mask,(258,46,312,169),tolerance=.9,min_area=8)
+  if hook_loops:
+   hook_mesh=PhotoMesh()
+   def hook_point(px,py,depth):
+    world=crane_point(px,py,depth)
+    return (world[0]-trolley_x,world[1]-8.0,world[2]+1.04)
+   photo_slab(hook_mesh,'crane',crane_photo,hook_loops,hook_point,-1.19,-.87,wall_scale=px_scale)
+   hook_photo=hook_mesh.finish('scrapyard:hook-magnet-photo',{'crane':crane_photo.material()})
+   hook_photo.parent=hook_group
+  else:
+   cable=beam('scrapyard:hook-cable',(trolley_x,7.55,-1.02),(trolley_x,5.05,-1.02),.075,dark,b)
+   parent_keep(cable,hook_group)
+   magnet=cyl('scrapyard:magnet',(trolley_x,4.78,-1.02),.85,.5,steel,24,b)
+   parent_keep(magnet,hook_group)
+   coil=tube('scrapyard:magnet-coil',(trolley_x,4.78,-1.30),.62,.12,paint,hook_group,24,8)
+  crane_photo.bleed(~crane_sky)
+
   continue
  if n=='motor-pool':
   for bay in range(4):
