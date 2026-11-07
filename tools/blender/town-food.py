@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-10'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-11'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-10.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-11.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -25,7 +25,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
-from photo_carve import carve_object
+from photo_carve import carve_object, lift_if_dark
 from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -428,72 +428,140 @@ box('chicken-run:nest-box',(0,.32,-.90),(.98,.42,.48),mat['weathered-plank'],.05
 for x in (-.25,.25): sphere(f'chicken-run:egg-{x}',(x,.56,-.88),(.10,.07,.08),mat['faded-hand-paint'],8,5)
 box('chicken-run:feed-tray',(0,.16,1.05),(.85,.19,.30),mat['galvanised-tin'],.045)
 
+stall_front_photo=Photo(textures/'stall-front.jpg')
+stall_side_photo=Photo(textures/'stall-side.jpg')
+stall_rear_photo=Photo(textures/'stall-rear.jpg')
+stall_front_b_photo=Photo(textures/'stall-front-b.jpg')
+for photo in (stall_front_photo,stall_side_photo,stall_rear_photo,stall_front_b_photo):
+    lift_if_dark(photo)
+
+def photo_mask(photo, polygons):
+    """Rasterize measured photo outlines before the shared trace/slab step."""
+    mask=np.zeros((photo.h,photo.w),dtype=bool)
+    for polygon in polygons:
+        x0=max(0,int(min(p[0] for p in polygon)));x1=min(photo.w,int(max(p[0] for p in polygon))+1)
+        y0=max(0,int(min(p[1] for p in polygon)));y1=min(photo.h,int(max(p[1] for p in polygon))+1)
+        yy,xx=np.mgrid[y0:y1,x0:x1]
+        hit=np.zeros(xx.shape,dtype=bool)
+        for (ax,ay),(bx,by) in zip(polygon,polygon[1:]+polygon[:1]):
+            crossing=((ay>yy)!=(by>yy)) & (xx < (bx-ax)*(yy-ay)/(by-ay+1e-12)+ax)
+            hit ^= crossing
+        mask[y0:y1,x0:x1]|=hit
+    return mask
+
+stall_front_pieces=[
+    # Four open uprights, the narrow crown rail, counter apron and table braces.
+    ('front-left-outer-post',[(42,70),(76,27),(105,40),(121,917),(80,922),(49,904)]),
+    ('front-left-inner-post',[(96,106),(123,118),(125,917),(102,917)]),
+    ('front-right-inner-post',[(896,110),(922,101),(922,918),(899,917)]),
+    ('front-right-outer-post',[(927,36),(961,19),(984,908),(944,923)]),
+    ('front-crown-rail',[(93,63),(930,57),(931,84),(95,95)]),
+    ('counter-apron',[(69,523),(956,522),(957,579),(70,580)]),
+    ('counter-left-brace',[(72,580),(135,580),(143,644),(86,644)]),
+    ('counter-right-brace',[(881,580),(948,578),(937,645),(871,644)]),
+]
+stall_side_pieces=[
+    # The side photo supplies depth rails, rear uprights and diagonal braces.
+    ('side-front-post',[(204,51),(232,38),(258,970),(222,977)]),
+    ('side-inner-front-post',[(239,111),(263,115),(267,970),(240,970)]),
+    ('side-rear-post',[(633,225),(659,211),(683,970),(646,974)]),
+    ('side-inner-rear-post',[(657,315),(681,315),(679,970),(655,970)]),
+    ('side-canopy-rail',[(233,70),(252,67),(670,222),(658,247)]),
+    ('side-counter-rail',[(243,597),(674,592),(677,619),(243,626)]),
+    ('side-left-brace',[(248,619),(279,624),(326,685),(310,699)]),
+    ('side-right-brace',[(674,619),(649,625),(594,688),(577,675)]),
+]
+stall_counter_mask=photo_mask(stall_side_photo,[
+    [(257,595),(679,593),(685,616),(665,637),(282,641),(259,621)],
+])
+stall_awning_mask=photo_mask(stall_front_photo,[
+    # The stitched tarp's real scalloped sag and torn lower edge are kept open below.
+    [(44,74),(51,49),(71,23),(102,29),(152,42),(217,36),(285,53),(355,67),
+     (441,78),(511,73),(590,65),(674,61),(748,43),(823,36),(897,34),(944,47),
+     (974,82),(987,125),(966,154),(945,170),(917,180),(894,189),(864,190),(842,199),
+     (815,197),(789,205),(760,204),(731,214),(700,213),(671,222),(641,217),(612,225),
+     (580,220),(550,226),(520,219),(488,226),(457,219),(425,223),(394,212),(364,215),
+     (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
+     (116,136),(94,130),(75,116),(58,101)],
+])
+mat['stall-counter-wood'] = simple('Town / stall counter, sun-darkened timber',(.34,.245,.145),.92)
+mat['stall-canopy'] = simple('Town / dust and sun on stall canvas',(.31,.245,.17),.96)
+mat['stall-canopy-rust-patch'] = simple('Town / rust-red stitched stall patch',(.24,.095,.055),.96)
+mat['stall-canopy-faded-patch'] = simple('Town / faded grey-green stall patch',(.22,.23,.19),.97)
+mat['stall-canopy-under'] = simple('Town / shaded stall canvas underside',(.20,.15,.095),.97)
+
 def market_stall(building, offset, kind):
     add_building(building,offset)
-    for x in (-1.15,1.15):
-        beam(f'{building}:post-{x}',(x,.12,-1.08),(x,2.18,-1.08),.085,mat['rusted-steel'])
-        beam(f'{building}:rear-post-{x}',(x,.12,1.0),(x,1.85,1.0),.075,mat['weathered-plank'])
-    beam(f'{building}:front-lintel',(-1.25,2.12,-1.08),(1.25,2.12,-1.08),.09,mat['rusted-steel'])
-    beam(f'{building}:rear-lintel',(-1.25,1.85,1.0),(1.25,1.85,1.0),.075,mat['weathered-plank'])
-    for x in (-.65,.65):
-        beam(f'{building}:awning-arm-{x}',(x,1.7,-1.1),(x,2.18,-.22),.055,mat['rusted-steel'])
-    awning_material={'fruit':'fruit-yellow','tools':'rusted-steel','tyres':'patched-canvas'}[kind]
-    if kind == 'fruit':
-        # Fruit stall canvas sags between its rails rather than forming a box.
-        verts=[];faces=[];n=10
-        for row,z in enumerate((-.96,-.30)):
-            for i in range(n+1):
-                x=-1.4+2.8*i/n
-                y=2.14-.10*(1-(x/1.4)**2)+(0.035 if row else 0)
-                verts.append((x,y,z))
-        for i in range(n): faces.append((i,i+1,n+2+i,n+1+i))
-        awning=mesh_object(f'{building}:patched-awning',verts,faces,mat[awning_material],'canvas')
-        beam(f'{building}:awning-front-hem',(-1.4,2.11,-.96),(1.4,2.11,-.96),.055,mat['rusted-steel'])
-        for x in (-1.1,1.1):
-            box(f'{building}:fruit-sack-{x}',(x,1.25,.42),(.62,.30,.45),mat['patched-canvas'],.07)
-    else:
-        # Ribbed, sagging salvage canvas and alternating roof patches make each
-        # market shade read as repaired fabric from above, not a clean slab.
-        verts=[];faces=[];steps=12
-        for row,z in enumerate((-.97,-.30)):
-            for i in range(steps+1):
-                x=-1.4+2.8*i/steps
-                y=2.14-.08*(1-(x/1.4)**2)+(0.025 if row else 0)
-                verts.append((x,y,z))
-        for i in range(steps): faces.append((i,i+1,steps+2+i,steps+1+i))
-        awning=mesh_object(f'{building}:patched-awning',verts,faces,mat[awning_material],'canvas')
-        for x in (-.94,-.47,0,.47,.94):
-            box(f'{building}:awning-repair-{x}',(x,2.13,-.63),(.24,.025,.63),
-                mat['weathered-plank'] if kind=='tools' else mat['rusted-steel'],.008)
-    box(f'{building}:display-counter',(0,.91,-.24),(2.18,.20,.83),mat['weathered-plank'],.04)
-    for x in (-.85,.85): beam(f'{building}:counter-leg-{x}',(x,.12,-.24),(x,.84,-.24),.08,mat['rusted-steel'])
-    if kind=='fruit':
-        for row,z in enumerate((-.45,.05),1):
-            crate=box(f'{building}:fruit-crate-{row}',(0,1.14,z),(1.85,.34,.52),mat['weathered-plank'],.04)
-            crate.rotation_euler[2]=(-.12 if row==1 else .16)
-            for j in range(6):
-                x=-.72+j*.29; color=mat['fruit-red'] if (j+row)%2 else mat['fruit-yellow']
-                sphere(f'{building}:produce-{row}-{j+1}',(x,1.40,z),(.115,.11,.12),color,8,5)
-    elif kind=='tools':
-        # Tool heads, wooden handles and dented bins sit as separate pieces on
-        # the counter; each silhouette remains visible from the road.
-        for x in (-.60,-.2,.2,.6):
-            beam(f'{building}:tool-shaft-{x}',(x,1.18,-.48),(x+.04,1.62,-.48),.038,mat['weathered-plank'])
-            beam(f'{building}:tool-cross-head-{x}',(x-.13,1.57,-.48),(x+.19,1.57,-.48),.06,mat['rusted-steel'])
-            box(f'{building}:tool-blade-{x}',(x+.06,1.63,-.48),(.16,.12,.09),mat['iron-dark'],.014)
-        for x in (-.65,.15,.72):
-            box(f'{building}:small-tool-box-{x}',(x,1.10,.18),(.42,.18,.38),mat['rusted-steel'],.035)
-    else:
-        for i in range(4):
-            x=-.72+(i%2)*1.44
-            y=1.13+(i//2)*.52
-            bpy.ops.mesh.primitive_torus_add(major_radius=.38,minor_radius=.12,major_segments=12,minor_segments=5,
-                                               location=town.game_vector((x,y,.12)))
-            obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{i+1}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
-            # A small rusted hub is nested within the opening, so the tyre reads
-            # as a salvaged wheel rather than a featureless rubber ring.
-            cylinder(f'{building}:tyre-hub-{i+1}',(x,y,.12),.105,.035,mat['rusted-steel'],8,axis='Z')
-    sign(building,(0,1.88,-1.16),'FRUIT' if kind=='fruit' else 'TOOLS' if kind=='tools' else 'TYRES',1.15)
+    def front_world(px,py,d):
+        return ((px-512)*.00305,(920-py)*.00302,-1.10+d)
+    for part_name,polygon in stall_front_pieces:
+        front_frame=PhotoMesh()
+        mask=photo_mask(stall_front_photo,[polygon])
+        front_loops=trace(mask,(38,18,990,930),tolerance=1.5,min_area=20)
+        slab(front_frame,'front',stall_front_photo,front_loops,front_world,0,.075,wall_scale=.00305)
+        keep(front_frame.finish(f'{building}:photo-traced-{part_name}',{'front':stall_front_photo.material()}))
+
+    def side_world(px,py,d):
+        return (d,(975-py)*.00292,-1.10+(px-205)*.00455)
+    for frame_x,side_label in ((-1.12,'left'),(1.12,'right')):
+        def side_frame_world(px,py,d,frame_x=frame_x):
+            return (frame_x+d,(975-py)*.00292,-1.10+(px-205)*.00455)
+        for part_name,polygon in stall_side_pieces:
+            side_frame=PhotoMesh()
+            mask=photo_mask(stall_side_photo,[polygon])
+            side_loops=trace(mask,(195,32,690,986),tolerance=1.2,min_area=18)
+            slab(side_frame,'side',stall_side_photo,side_loops,side_frame_world,-.07,.07,wall_scale=.00455)
+            keep(side_frame.finish(f'{building}:photo-traced-{side_label}-{part_name}',{'side':stall_side_photo.material()}))
+
+    # A traced side-profile slab gives the counter its photographed depth and
+    # a thick, closed top. Its front edge meets the apron and both support posts.
+    counter=PhotoMesh()
+    counter_loops=trace(stall_counter_mask,(250,588,691,647),tolerance=.8,min_area=20)
+    slab(counter,'counter',stall_side_photo,counter_loops,side_world,-1.08,1.08,wall_scale=.00455)
+    counter_obj=counter.finish(f'{building}:deep-photo-traced-counter',{'counter':stall_side_photo.material()})
+    counter_obj.data.materials.clear();counter_obj.data.materials.append(mat['stall-counter-wood'])
+    keep(counter_obj)
+
+    # The photographic front hem stays a thin, traced slab. A small mesh follows
+    # its measured sag across the width and the side-photo pitch over the depth.
+    awning_front=PhotoMesh()
+    awning_loops=trace(stall_awning_mask,(38,18,992,232),tolerance=1.8,min_area=30)
+    slab(awning_front,'canvas',stall_front_photo,awning_loops,front_world,0,.06,wall_scale=100000)
+    keep(awning_front.finish(f'{building}:traced-front-awning-hem',{'canvas':stall_front_photo.material()}))
+    awning=PhotoMesh()
+    columns=[]
+    for px in range(55,977,58):
+        rows=np.flatnonzero(stall_awning_mask[:,px])
+        if len(rows)<2: continue
+        top,bottom=int(rows.min()),int(rows.max())
+        profile=top+.64*(bottom-top)
+        x=(px-512)*.00305
+        profile_y=(920-profile)*.00302
+        column=[]
+        for depth_step in range(3):
+            t=depth_step/2
+            y=profile_y-.47*t
+            z=-1.04+1.95*t
+            py=min(bottom-3,int(profile+10*t))
+            uv=stall_front_photo.uv(px,py)
+            column.append((awning.vertex((x,y,z)),uv))
+        columns.append(column)
+    for left,right in zip(columns,columns[1:]):
+        for depth_step in range(2):
+            a,ua=left[depth_step];b,ub=right[depth_step]
+            c,uc=right[depth_step+1];d,ud=left[depth_step+1]
+            top_points=[a,b,c,d];top_uvs=[ua,ub,uc,ud]
+            px=(stall_front_photo.w*(ua[0]+ub[0])*.5)
+            repair='rust' if 120<px<245 else 'faded' if 720<px<850 else 'canvas'
+            awning.indexed(top_points,top_uvs,repair,(0,1,0))
+            underside=[awning.vertex((awning.verts[index][0],awning.verts[index][1]-.018,awning.verts[index][2]))
+                       for index in (a,b,c,d)]
+            awning.indexed(list(reversed(underside)),list(reversed(top_uvs)),'under',(0,-1,0))
+    keep(awning.finish(f'{building}:traced-sagging-patched-canvas-awning',{
+        'canvas':mat['stall-canopy'],'rust':mat['stall-canopy-rust-patch'],
+        'faded':mat['stall-canopy-faded-patch'],'under':mat['stall-canopy-under']}))
+
+    # Goods are added as separate counter pieces in the following commits.
 
 market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
@@ -908,6 +976,8 @@ for stall_id in ('stall-a','stall-b','stall-c'):
             'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)],'triangles':count},sort_keys=True))
         if b[0]<-3.5 or b[1]>3.5 or b[4]<-3.5 or b[5]>3.5 or b[2]<-.02:
             raise RuntimeError(f'{obj.name} lies outside the stall footprint or below ground: {b}')
+        if 'post' in obj.name and abs(b[2])>.02:
+            raise RuntimeError(f'{obj.name} does not reach the ground: {b}')
     if triangles>1800:
         raise RuntimeError(f'{stall_id} has {triangles} triangles; budget is 1800')
     for name,b in bounds_by_name.items():
@@ -987,9 +1057,9 @@ def render_match(name, camera_loc, up, ortho, look_at=None):
     true_up=right.cross(direction).normalized()
     camera.rotation_euler=Matrix((right,true_up,-direction)).transposed().to_quaternion().to_euler();scene.camera=camera
     scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
-render_match('model-front',target+Vector((0,18,3)),Vector((0,0,1)),13)
-render_match('model-side',target+Vector((18,0,3)),Vector((0,0,1)),13)
-render_match('model-rear',target+Vector((0,-18,3)),Vector((0,0,1)),13)
+render_match('model-front',target+Vector((0,18,0)),Vector((0,0,1)),13)
+render_match('model-side',target+Vector((18,0,0)),Vector((0,0,1)),13)
+render_match('model-rear',target+Vector((0,-18,0)),Vector((0,0,1)),13)
 render_match('model-top',target+Vector((0,0,18)),Vector((0,1,0)),13)
 render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
@@ -1009,9 +1079,9 @@ for stall_id in ('stall-a','stall-b','stall-c'):
     target=(lo_stall+hi_stall)*.5
     scene.render.resolution_x=800;scene.render.resolution_y=640
     prefix=stall_id+'-'
-    render_match(prefix+'front',target+Vector((0,-8,1.3)),Vector((0,0,1)),4.2)
-    render_match(prefix+'side',target+Vector((8,0,1.3)),Vector((0,0,1)),4.2)
-    render_match(prefix+'rear',target+Vector((0,8,1.3)),Vector((0,0,1)),4.2)
+    render_match(prefix+'front',target+Vector((0,8,0)),Vector((0,0,1)),4.2)
+    render_match(prefix+'side',target+Vector((8,0,0)),Vector((0,0,1)),4.2)
+    render_match(prefix+'rear',target+Vector((0,-8,0)),Vector((0,0,1)),4.2)
     render_match(prefix+'above',target+Vector((0,0,9)),Vector((0,1,0)),4.2)
     render_match(prefix+'three-left',target+Vector((-6,-7,4)),Vector((0,0,1)),5.2)
     render_match(prefix+'three-right',target+Vector((6,-7,4)),Vector((0,0,1)),5.2)
