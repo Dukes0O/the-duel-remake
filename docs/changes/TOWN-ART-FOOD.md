@@ -60,3 +60,29 @@
 
 - Removed the previous hand-built 3x3 market hall roof, frame and stall
   geometry from `tools/blender/town-food.py`.
+
+## Market hall round 2
+
+- Rescaled the photo-carved hall to a 9.45 m by 9.45 m plan while keeping the
+  source side-photo height scale and the accepted patched roof.
+- Built a rusted steel frame with five bays along each side and posts across
+  the front and rear. Sloped rafters meet the roof at its eaves and ridge.
+- Added earth under the full roof, a one-bay galvanized store with a timber
+  door at the road-side corner, and six deep stalls in two facing rows. Each
+  stall has separate photo-wearing goods and base faces, a counter, shelf,
+  steel legs, and a projecting canvas awning.
+- Printed every market piece's bounds and checked footprint containment,
+  floor contact, post height and awning-arm connections.
+- Blender 4.5.13 exported and reimported `food.glb` at 2,018,328 bytes.
+  The complete food family is 29,452 triangles. `round-7.jpg` is 155,422
+  bytes and shows six full-building views. `round-6.jpg` remains.
+- `node --test --test-name-pattern="TOWN-ART-FOOD keeps every food plot selectable inside its footprint budgets" tools/test-blender-output.mjs` passed: 331 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs` passed. `node tools/test-review-evidence.mjs` passed 8 of 9 checks on both runs; its audio-analysis check failed both times because spawning `ffmpeg` returned `EPERM`. The bounded review-JPG publication check passed.
+- No lane tier, game build, browser check or race ran. Claude should review the full-building views, roof framing, store and door, both stall rows, goods faces, awnings, clear aisle, and floor contact on the round-7 sheet.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
+
+### Market hall round 2 removed
+
+- Replaced the market hall's empty-bay carve supports and flat stall strips with the measured steel frame and deep stall modules.
+- Deleted the superseded `market-round-1.jpg` and `market-round-1-review.md`; kept `round-6.jpg`.
+- Removed this round's review renders, masks, Blender file and test logs after preparing the submitted sheet and model.
