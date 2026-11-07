@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-11'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-12'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-11.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-12.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -51,6 +51,29 @@ if '--review-only' in args:
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--fountain-only' in args:
+        fountain_root=bpy.data.objects.get('fountain')
+        if fountain_root is None: raise RuntimeError('exported fountain is missing')
+        for child in family.children: hide_tree(child,child!=fountain_root)
+        hide_tree(fountain_root,False)
+        target=Vector((0,.9,0))
+        views=[('side',(1,0,0),'fountain-side.jpg',6.8),('front',(0,0,-1),'fountain-front.jpg',5.0),
+               ('rear',(0,0,1),'fountain-rear.jpg',5.0),('above',(0,1,0),'fountain-above.jpg',6.8),
+               ('three-quarter-a',(1,.75,-1),None,8.0),('three-quarter-b',(-1,.75,1),None,8.0),
+               ('mayor',(1,1,-1),None,8.0)]
+        for name,direction,photo_name,ortho in views:
+            if photo_name:
+                ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+                scene.render.resolution_x,scene.render.resolution_y=ref.size
+                bpy.data.images.remove(ref)
+            else:
+                scene.render.resolution_x,scene.render.resolution_y=1000,700
+            direction=Vector(direction).normalized()
+            camera.location=target+direction*24; aim(camera,target); camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'fountain-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'rendered fountain {name}')
+        raise SystemExit(0)
     truck_bounds=[]
     for obj in truck_root.children_recursive:
         if obj.type=='MESH':
@@ -148,6 +171,33 @@ if '--review-only' in args:
         scene.render.filepath=str(evidence/f'drive-in-{name}.png')
         bpy.ops.render.render(write_still=True)
         print(f'rendered drive-in {name}')
+    fountain_root=bpy.data.objects.get('fountain')
+    if fountain_root is None: raise RuntimeError('exported fountain is missing')
+    for child in family.children: hide_tree(child,child!=fountain_root)
+    hide_tree(fountain_root,False)
+    fountain_target=Vector((0,.9,0))
+    fountain_views=[
+        ('side',(1,0,0),'fountain-side.jpg',6.8),
+        ('front',(0,0,-1),'fountain-front.jpg',5.0),
+        ('rear',(0,0,1),'fountain-rear.jpg',5.0),
+        ('above',(0,1,0),'fountain-above.jpg',6.8),
+        ('three-quarter-a',(1,.75,-1),None,8.0),
+        ('three-quarter-b',(-1,.75,1),None,8.0),
+        ('mayor',(1,1,-1),None,8.0),
+    ]
+    for name,direction,photo_name,ortho in fountain_views:
+        direction=Vector(direction).normalized()
+        if photo_name:
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            width,height=ref.size
+            bpy.data.images.remove(ref)
+            scene.render.resolution_x=width; scene.render.resolution_y=height
+        else:
+            scene.render.resolution_x=1000; scene.render.resolution_y=700
+        camera.location=fountain_target+direction*24; aim(camera,fountain_target); camera.data.ortho_scale=ortho
+        scene.render.filepath=str(evidence/f'fountain-{name}.png')
+        bpy.ops.render.render(write_still=True)
+        print(f'rendered fountain {name}')
     raise SystemExit(0)
 
 sys.path.insert(0, str(root / 'tools/blender'))
@@ -256,21 +306,96 @@ def car(name, center, scale=1.0, material='faded-hand-paint', parent=None):
     beam(name+':front-bumper',(x-.92*scale,y+.54*scale,z-1.92*scale),(x+.92*scale,y+.54*scale,z-1.92*scale),.12*scale,'galvanised-tin',p)
     beam(name+':rear-bumper',(x-.92*scale,y+.51*scale,z+1.92*scale),(x+.92*scale,y+.51*scale,z+1.92*scale),.12*scale,'rusted-steel',p)
 
-# Photo-carved bonnet basin from measured side, end and plan grids.
+# Photo-carved bonnet basin, hollowed above its floor. The four independent
+# grids agree on a 5.8 m long basin; the end photos set its 4.0 m width.
 building_root('fountain','1x1')
-fountain=carve_object('fountain:bonnet',tex,{
+fountain_recipe={
     'photos':{'side':'fountain-side.jpg','front':'fountain-front.jpg',
-              'rear':'fountain-front.jpg','top':'fountain-above.jpg'},
-    'length':6.8,'width':6.8,'height':6.6,
-    'side':{'start':130,'end':640,'ground':650},
-    'front':{'centre':355,'ground':650,'top':40},
-    'rear':{'centre':355,'ground':650,'top':40},
-    'top':{'front':620,'rear':80,'centre':355},
-    'mask_dir':str(evidence/'masks'),'voxel':.055,'target':1650,
-})
+              'rear':'fountain-rear.jpg','top':'fountain-above.jpg'},
+    'length':5.8,'width':4.0,'height':1.25,
+    'side':{'start':22,'end':988,'ground':632},
+    'front':{'centre':512,'ground':602,'top':284},
+    'rear':{'centre':512,'ground':602,'top':284},
+    'top':{'front':40,'rear':700,'centre':512,'x_scale':4.0/835},
+    # Clear the photographed exhausts and the inconsistent front-photo stand:
+    # both are modeled separately or intentionally absent from the bonnet.
+    'cut':{
+        'side':[(588,140,988,466)],
+        'front':[(205,90,390,305),(624,90,812,305),(115,532,265,682),(720,532,890,682)],
+        'rear':[(218,105,402,304),(618,105,808,304)],
+        'top':[(396,0,626,215)],
+    },
+    # Leave a shallow floor and clear the volume above it for the water surface.
+    'keep':lambda x,y,z: ~((abs(x)<1.48)&(abs(z)<2.18)&(y>.28)),
+    'grey':26,'tolerance':38,'bleed_tolerance':48,
+    'mask_dir':str(evidence/'masks'),'voxel':.055,'target':1150,
+}
+fountain=carve_object('fountain:bonnet',tex,fountain_recipe)
 keep(fountain)
-water=cyl('fountain:water',(0,1.05,0),1.25,.025,'water',32)
-water['emissive']=True
+# The voxel carve leaves a measured 27 mm gap; seat the bonnet on the ground.
+fountain.location.z-=.027
+bpy.context.view_layer.update()
+side_photo=fountain_recipe['_photos']['side']
+top_photo=fountain_recipe['_photos']['top']
+if '--fountain-body-only' not in args:
+    pipe_mesh=PhotoMesh()
+    def fountain_lathed_pipe(x, z, radius, photo_x):
+        path=[(x,.92,z),(x,1.46,z),(x,2.06,z),(x,2.48,z-.16),
+              (x,2.57,z-.48),(x,2.48,z-.73),(x,2.25,z-.91)]
+        for segment,(start,end) in enumerate(zip(path,path[1:])):
+            direction=Vector(end)-Vector(start)
+            length=direction.length
+            axis=direction.normalized()
+            e1=axis.cross(Vector((1,0,0))).normalized()
+            e2=axis.cross(e1).normalized()
+            stations=[(0,radius*.90),(.06,radius),(length-.06,radius),(length,radius*.84)]
+            def pipe_uv(index,distance,ring_radius,angle):
+                px=max(1,min(side_photo.w-2,photo_x+angle*8))
+                py=max(1,min(side_photo.h-2,360-segment*22-index*7))
+                return side_photo.uv(px,py)
+            lathe(pipe_mesh,'side',start,axis,e1,e2,stations,pipe_uv,sides=10)
+    fountain_lathed_pipe(-.78,2.43,.17,790)
+    fountain_lathed_pipe(.78,2.23,.20,680)
+    pipes=pipe_mesh.finish('fountain:exhaust-pipes',{'side':side_photo.material()})
+    keep(pipes)
+
+# A rounded surface uses the measured overhead water patch, sitting inside the
+# hollow basin and touching its rim at the true waterline.
+if '--fountain-body-only' not in args and '--fountain-no-water' not in args:
+    water_mesh=PhotoMesh()
+    water_outline=[(-1.36,.88,-1.94),(-1.20,.88,-2.08),(1.20,.88,-2.08),(1.36,.88,-1.94),
+                   (1.36,.88,1.58),(1.20,.88,1.74),(-1.20,.88,1.74),(-1.36,.88,1.58)]
+    def overhead_uv(point):
+        x,_,z=point
+        px=512-x/(4.0/835)
+        py=40+(z+2.9)/(5.8/660)
+        return top_photo.uv(px,py)
+    water_mesh.face(water_outline,[overhead_uv(point) for point in water_outline],'water',(0,1,0))
+    water=water_mesh.finish('fountain:water',{'water':mat['water']})
+    keep(water)
+    water['emissive']=False
+
+def fountain_bounds(obj):
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in points),max(p[i] for p in points)) for i in range(3)]
+fountain_pieces=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('fountain:')]
+for piece in fountain_pieces:
+    bounds=fountain_bounds(piece)
+    game_bounds={'min':[round(bounds[0][0],3),round(bounds[2][0],3),round(-bounds[1][1],3)],
+                 'max':[round(bounds[0][1],3),round(bounds[2][1],3),round(-bounds[1][0],3)]}
+    print('FOUNTAIN BOUNDS',piece.name,json.dumps(game_bounds))
+    if game_bounds['min'][0]<-3.5 or game_bounds['max'][0]>3.5 or game_bounds['min'][2]<-3.5 or game_bounds['max'][2]>3.5:
+        raise RuntimeError(f'{piece.name} leaves the 1x1 footprint: {game_bounds}')
+    if game_bounds['min'][1]<-.03:
+        raise RuntimeError(f'{piece.name} extends below ground: {game_bounds}')
+def fountain_touches(a,b,padding=.035):
+    return all(a[i][0]<=b[i][1]+padding and b[i][0]<=a[i][1]+padding for i in range(3))
+for piece in fountain_pieces:
+    bounds=fountain_bounds(piece)
+    grounded=bounds[2][0]<=.025
+    touches=grounded or any(other is not piece and fountain_touches(bounds,fountain_bounds(other)) for other in fountain_pieces)
+    print('FOUNTAIN CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} floats without contact')
 # Round 5 rebuild: four independent measured photos, scaled from its two-metre door.
 building_root('tavern','2x2')
 tavern_root=current
@@ -765,7 +890,8 @@ for obj in bpy.data.objects:
         obj.data.uv_layers.active.name='UVMap'
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
-        if not Path(image.filepath).name.startswith('drive-in-'):
+        image_name=Path(image.filepath).name
+        if not image_name.startswith(('drive-in-','fountain-')):
             image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
@@ -775,6 +901,6 @@ import subprocess
 blender=r'C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe'
 if '--build-only' not in args:
     with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
-        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
+        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--fountain-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
     if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))
