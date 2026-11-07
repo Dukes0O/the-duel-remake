@@ -1191,6 +1191,9 @@ try {
         }
         assert.ok(high[0] - low[0] > .01 || high[1] - low[1] > .01, 'food UV coordinates must span a range');
       }
+    }
+  });
+
   check('TOWN-ART-WALKERS exports all named people, swing legs and per-person budgets', () => {
     const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/walkers.glb'));
     assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
