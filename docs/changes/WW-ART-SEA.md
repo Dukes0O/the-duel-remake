@@ -19,3 +19,7 @@
 
 - Removed `round-1.jpg` and `round-1-review.md`, replaced by round 2 evidence.
 - Removed this run's temporary Blender renders, inspection scripts and logs under `.qa-dist/`; preserved the lane's `.qa-dist/task.md` brief.
+
+## Round 2, finished by Claude
+
+The old gear's hub wears its own picture; the whole wheel is 24 slices sharing one mesh, around spokes that reach the rim; the recipe renders its own shots. Verdict in `docs/board/looks/ww-art-sea/round-2-review.md`. Removed: `sea-old-gear-rim.jpg`, no longer used, and round 1's sheet and note.

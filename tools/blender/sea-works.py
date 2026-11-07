@@ -23,9 +23,6 @@ def finish(mesh,name,mats):
  o=mesh.finish(name,mats);o.parent=parent;o['part']=name;triangles[name]=mesh.triangles();return o
 def photo(file):
  p=Photo(textures/file)
- if file=='sea-gear-hub.png' and max(p.image.size)>640:
-  p.image.scale(640,round(p.image.size[1]*640/p.image.size[0]))
-  p.image_w,p.image_h=p.image.size;p.image.pack()
  return p
 def blend_repeat_edges(p):
  """Blend the first/last 2 m of a 40 m photo in memory for exact joins."""
@@ -36,18 +33,17 @@ def blend_repeat_edges(p):
  image=bpy.data.images.new('sea-repeat-edge-photo',width=p.w,height=p.h,alpha=False)
  image.pixels.foreach_set(rgba.ravel());image.pack();p.image=image;p._rgb=rgb.astype(np.int16);p._material=None
 def build_gear():
- p=photo('sea-old-gear.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(990,5),(5,990),(300,245),(700,245),(300,775),(700,775)],grey=20))
+ p=photo('sea-old-gear.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(990,5),(5,990),(300,245),(700,245),(300,775),(700,775),(195,512),(830,512)],grey=20))
  loops=trace(solid,(40,20,990,1000),tolerance=1)
  def pos(x,y,d): return ((x-512)*7/930,(512-y)*7/930,d)
  slab(m,'gear-face',p,loops,pos,-.23,.23,wall_scale=.03)
- # Photo-matched thick rim: dark edge rectangle rather than stretched face UVs.
- edge=photo('sea-old-gear-rim.jpg');
- # Hub is a true turned part with a compact image arc.
+ # The hub is turned and wears the photo's own hub, so nothing shows through it.
+ scale=930/7
  stations=[(0.02,.82),(.1,.78),(.34,.62),(.48,.55)]
- lathe(m,'hub',(0,0,0),(0,0,1),(1,0,0),(0,1,0),stations,
-       lambda i,d,r,a: edge.uv(512+math.cos(a)*r*350,512+math.sin(a)*r*350),sides=24,
-       cap_end=('hub',lambda a,f:edge.uv(512+math.cos(a)*f*190,512+math.sin(a)*f*190)))
- p.bleed(solid);finish(m,'old-gear',{'gear-face':p.material(),'hub':edge.material()})
+ lathe(m,'gear-face',(0,0,0),(0,0,1),(1,0,0),(0,1,0),stations,
+       lambda i,d,r,a:p.uv(512+math.cos(a)*r*scale,512-math.sin(a)*r*scale),sides=24,
+       cap_end=('gear-face',lambda a,f:p.uv(512+math.cos(a)*f*.55*scale,512-math.sin(a)*f*.55*scale)))
+ p.bleed(solid);finish(m,'old-gear',{'gear-face':p.material()})
 def build_new_gear():
  p=photo('sea-gear-section.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],grey=20))
  # The photo shows a broader casting. Keep a measured 15-degree arc from its
@@ -61,23 +57,27 @@ def build_new_gear():
  loops=trace(solid,(20,20,p.w-20,p.h-20),tolerance=1)
  def pos(x,y,d): return ((x-cx)*.00277,(cy-y)*.00277,d)
  slab(m,'casting',p,loops,pos,-.18,.18,wall_scale=.025)
- finish(m,'gear-section',{'casting':p.material()})
- # Whole is 24 linked duplicates of the same sector mesh around its centre.
- base=m.finish('gear-section',{'casting':p.material()}); base.parent=parent
+ section=finish(m,'gear-section',{'casting':p.material()})
+ # The whole wheel is 24 of the same slice, turned about its centre, sharing one mesh.
  for i in range(24):
-  ob=base if i==0 else base.copy(); ob.data=base.data; ob.name=f'gear-whole-section-{i+1:02d}'
-  if i: scene.collection.objects.link(ob)
-  ob.parent=parent;ob.rotation_euler[1]=i*math.tau/24
- # The photo is traced with the six open spoke gaps intact. A turned boss
- # closes the centre without adding a bright through-hole.
+  ob=bpy.data.objects.new(f'gear-whole-section-{i+1:02d}',section.data)
+  scene.collection.objects.link(ob)
+  ob.parent=parent;ob.rotation_euler=(0,i*math.tau/24,0)
+ # Six spokes reach from the turned boss out to the rim's inner edge.
  hp=photo('sea-gear-hub.png'); hs=tidy(~hp.sky([(8,8),(hp.w-8,8),(8,hp.h-8),(hp.w-8,hp.h-8)],grey=24))
- hc=(hp.w/2,hp.h/2); scale=1.95/(min(hp.w,hp.h)*.48)
+ hc=(hp.w/2,hp.h/2)
+ rows,cols=np.nonzero(hs)
+ reach=np.hypot(cols-hc[0],rows-hc[1]).max()
+ scale=2.62/reach
  hloops=trace(hs,(20,20,hp.w-20,hp.h-20),tolerance=2,min_area=200)
  def hpos(x,y,d): return ((x-hc[0])*scale,(hc[1]-y)*scale,d)
  hm=Mesh(); slab(hm,'spoked-hub',hp,hloops,hpos,-.20,.20,wall_scale=scale)
- hub_edge=photo('sea-old-gear-rim.jpg')
- lathe(hm,'boss',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(.02,.72),(.10,.68),(.20,.48)],lambda i,d,r,a:hub_edge.uv(512+math.cos(a)*r*260,512+math.sin(a)*r*260),sides=32)
- finish(hm,'gear-whole-hub',{'spoked-hub':hp.material(),'boss':hub_edge.material()})
+ lathe(hm,'spoked-hub',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(.02,.72),(.10,.68),(.26,.48)],
+       lambda i,d,r,a:hp.uv(hc[0]+math.cos(a)*r/scale,hc[1]-math.sin(a)*r/scale),sides=24,
+       cap_end=('spoked-hub',lambda a,f:hp.uv(hc[0]+math.cos(a)*f*.48/scale,hc[1]-math.sin(a)*f*.48/scale)))
+ hp.bleed(hs)
+ hp.image.scale(640,round(hp.image.size[1]*640/hp.image.size[0]));hp.image.pack()
+ finish(hm,'gear-whole-hub',{'spoked-hub':hp.material()})
  triangles['gear-whole']=triangles['gear-section']*24+triangles['gear-whole-hub']
 def build_wall():
  p=photo('sea-harbour-wall.jpg'); blend_repeat_edges(p); stone=photo('dam-gatehouse-stone.jpg'); m=Mesh(); H=6; L=40
@@ -117,3 +117,47 @@ for name,fn in steps:
  if name==args.through: break
 glb.parent.mkdir(parents=True,exist_ok=True); bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True)
 print('SEA_WORKS_PART_TRIANGLES',triangles)
+
+# Render from the exported file, in an empty scene.
+from mathutils import Vector
+render_dir=Path(args.render_dir); render_dir=render_dir if render_dir.is_absolute() else root/render_dir
+render_dir.mkdir(parents=True,exist_ok=True)
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(glb))
+scene=bpy.context.scene
+scene.render.engine='BLENDER_EEVEE_NEXT'
+scene.render.image_settings.file_format='PNG'
+scene.view_settings.view_transform='Standard'
+scene.world=bpy.data.worlds.new('flat overcast');scene.world.use_nodes=True
+scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.82,.82,.82,1)
+sun=bpy.data.objects.new('sun',bpy.data.lights.new('sun','SUN'));sun.data.energy=.6
+sun.rotation_euler=(math.radians(50),0,math.radians(30));scene.collection.objects.link(sun)
+camera=bpy.data.objects.new('camera',bpy.data.cameras.new('camera'));scene.collection.objects.link(camera);scene.camera=camera
+meshes=[o for o in scene.objects if o.type=='MESH']
+# Two more lengths of the wall and causeway, end to end, for the shots only.
+extras=[]
+for prefix,axis in (('harbour',0),('causeway',1)):
+ for o in [o for o in meshes if o.name.startswith(prefix)]:
+  for step in (-40,40):
+   c=o.copy();c.location[axis]+=step;scene.collection.objects.link(c);c.name=o.name+'-extra';extras.append(c)
+meshes=[o for o in scene.objects if o.type=='MESH']
+def shot(name,prefixes,eye,target,size,ortho=None,lens=35):
+ for o in meshes:o.hide_render=not any(o.name.startswith(p) for p in prefixes)
+ scene.render.resolution_x,scene.render.resolution_y=size
+ e=Vector((eye[0],-eye[2],eye[1]));t=Vector((target[0],-target[2],target[1]))
+ camera.location=e;camera.rotation_euler=(t-e).to_track_quat('-Z','Y').to_euler()
+ camera.data.type='ORTHO' if ortho else 'PERSP'
+ if ortho:camera.data.ortho_scale=ortho
+ else:camera.data.lens=lens
+ scene.render.filepath=str(render_dir/f'{name}.png');bpy.ops.render.render(write_still=True)
+shot('old-gear',['old-gear'],(0,0,20),(0,0,0),(800,800),ortho=7.6)
+shot('old-gear-quarter',['old-gear'],(7,.5,9),(0,0,0),(800,800),lens=35)
+shot('gear-section',['gear-section'],(0,3,10),(0,3,0),(800,800),ortho=1.6)
+shot('gear-section-quarter',['gear-section'],(2.5,3.4,4.5),(0,3,0),(800,800),lens=35)
+shot('gear-whole',['gear-whole'],(0,0,20),(0,0,0),(800,800),ortho=7.6)
+shot('gear-whole-quarter',['gear-whole'],(7,.5,9),(0,0,0),(800,800),lens=35)
+shot('harbour-wall',['harbour'],(0,3,60),(0,3,0),(1200,400),ortho=42)
+shot('harbour-wall-quarter',['harbour'],(14,1.3,17),(0,3,-3),(1200,520),lens=28)
+shot('causeway',['causeway'],(70,2.4,0),(0,2.4,0),(1000,420),ortho=26)
+shot('causeway-quarter',['causeway'],(14,1.3,20),(0,3,-8),(1200,520),lens=28)
+shot('causeway-top',['causeway'],(5,7,14),(0,4,-4),(1200,520),lens=35)

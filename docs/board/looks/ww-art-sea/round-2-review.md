@@ -1,13 +1,14 @@
-# WW-ART-SEA round 2 review
+# WW-ART-SEA round 2: the first pieces
 
-Sheet: `round-2.jpg` (1600 pixels wide, 240,046 bytes). Flat pale background; the renders come from the exported GLB imported into a new scene with Standard view transform. Claude should inspect the gear section close-up, old-gear hub face, wall height/rings, and the causeway rail visibility and joins. No browser or game integration check was run.
+Date: 6 November 2026
+Sheet: `round-2.jpg`, each row the photo, then the model.
+Verdict (Claude): **`old-gear`, `gear-section`, `gear-whole` and `harbour-wall` pass; `causeway` passes for now.**
 
-| Part | Would someone take it for a real thing? | Honest review |
-| --- | --- | --- |
-| `old-gear` | Yes, with a caveat. | The rotten wheel remains convincing and unchanged in overall shape. The bright center is still visible in the GLB render after adding a lathe cap, so the center needs another look. |
-| `gear-section` | No. | The wedge mask produces the section geometry, but its isolated exported-model shot did not frame the piece correctly. It is not ready to judge as a standalone casting. |
-| `gear-whole` | Yes. | It reads as a clean machined wheel with six spokes and a solid boss. The source photograph supports the shape, though the render is too bright to show surface wear. |
-| `harbour-wall` | Yes, at close range. | The stone and raised coping read as a real wall. The six rings are present, but remain small in the 20 m view; the full-height impression is weaker than intended. |
-| `causeway` | No. | The bank has the requested size and sloped sides, but the sheet does not prove the rails and sleepers read clearly at 20 m. The three-length view also shows a visible join. |
+Claude finished the gears: the old hub wears its own picture, and the whole wheel is 24 slices sharing one mesh, around six spokes that reach the rim.
 
-The car-height wall and causeway shots are included for Claude's review. The repeated runs are visual checks only; the joins are not yet clean enough to call seamless.
+- `old-gear`: rotten and dripping, with its six gaps open.
+- `gear-section`, `gear-whole`: the same wheel made new, clean and bright, with each slice bolted to the next.
+- `harbour-wall`: real height, a raised course of paler stone, and iron rings. Three lengths show no seam.
+- `causeway`: a stone bank with sleepers and rusted rails at the 2:15's gauge. Close to, its stone is soft, and a small pale patch shows at its far end in the shot. Look again at it when SEA-WORKS puts it on the ground.
+
+Still to come: `iron-mule-gear`, `harbour-gate`, `harbour-ramp`, `causeway-arch`, `works-camp`, `magnus-magnet-big`, `mrs-vane` and `water-front`.
