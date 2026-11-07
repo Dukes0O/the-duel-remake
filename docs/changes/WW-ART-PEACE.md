@@ -115,6 +115,16 @@ now repeat small rectangular rubber crops at their measured pixel scale.
 Export and arch-fit inspection are pending. No assertions changed. Claude
 should inspect the pickup wheel fit and trailer tread in round 5.
 
+### Round 5, point 4: connected tow bar
+
+Replaced the horizontal tow tongue with two sloped, photo-material arms. They
+start inside the low pickup hitch coupler and end inside the trailer front
+crossmember, so both joints overlap instead of stopping short.
+
+Export and three-quarter inspection are pending. No assertions changed.
+Claude should check that the pickup, coupler, tow bars and trailer read as one
+connected rig from both requested angles.
+
 ### Removed
 
 - No files or behavior removed.

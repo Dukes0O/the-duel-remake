@@ -646,12 +646,20 @@ for axle_index, (px, cy, radius_px) in enumerate(((795, 312, 35), (861, 312, 34)
                                  {'side': sal_side.material(.86), 'tread': tread_mat}), sal,
             f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}')
 for name, center, size in (
-    ('hitch-tongue', (0, .56, -1.38), (.16, .14, .9)),
-    ('hitch-crossbar', (0, .56, -1.05), (1.2, .14, .14)),
     ('front-headboard', (0, .95, -1.0), (1.92, .46, .12)),
     ('rear-tailbar', (0, .67, 5.84), (1.92, .18, .12)),
 ):
     beam_box(f'sal-pipe-trailer:{name}', center, size, (404, 242, 473, 265))
+
+# Two sloped tow-bar arms meet a low coupler at the truck hitch and climb into
+# the trailer's front crossmember; they overlap both endpoints by design.
+for side_name, side in (('left', -1), ('right', 1)):
+    towbar = town.beam(f'sal-pipe-trailer:tow-bar-{side_name}',
+                       (0, .23, -1.60), (side * .92, .73, -.91), .11, frame_mat)
+    own(towbar, sal, f'sal-pipe-trailer:tow-bar-{side_name}')
+coupler = town.cube('sal-pipe-trailer:pickup-hitch-coupler',
+                    (0, .24, -1.57), (.24, .16, .22), frame_mat, bevel=.025)
+own(coupler, sal, 'sal-pipe-trailer:pickup-hitch-coupler')
 
 for part in sal.children_recursive:
     if part.type == 'MESH':
