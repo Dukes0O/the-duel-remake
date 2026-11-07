@@ -36,6 +36,7 @@
 - Render follow-up: added a three-quarter open-gate view and kept the ramp shot to its two ramp walls; distant wall copies intersected the ramp and obscured its shape.
 - Camera follow-up: moved the ramp's car-height three-quarter view to the landward approach so the cobbled slope reads between the walls.
 - Export follow-up: scaled packed photos to 700 px maximum so the expanded ramp detail stays within the card's 3 MiB GLB budget.
+- Budget check follow-up: the first rebuilt GLB remained 3,225,140 bytes because several recipe photos were not in the scaling list. The recipe now scales every packed photo to 640 px maximum.
 
 ## Removed
 

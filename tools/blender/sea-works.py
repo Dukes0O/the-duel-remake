@@ -23,7 +23,7 @@ scaled_photos=[]
 def finish(mesh,name,mats):
  o=mesh.finish(name,mats);o.parent=parent;o['part']=name;triangles[name]=mesh.triangles();return o
 def photo(file):
- p=Photo(textures/file)
+ p=Photo(textures/file); scaled_photos.append(p)
  return p
 def blend_repeat_edges(p):
  """Blend the first/last 2 m of a 40 m photo in memory for exact joins."""
@@ -114,7 +114,7 @@ def build_causeway():
  finish(m,'causeway',{'stone':p.material(),'rail':rail.material()})
 def build_harbour_gate():
  wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-gate.jpg')
- gate_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~gate_sky); scaled_photos.append(p)
+ gate_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~gate_sky)
  H=6; depth=1.5
  m=Mesh()
  frame_mats={'wall':wall.material(),'gate':p.material()}
@@ -141,7 +141,7 @@ def build_harbour_gate():
   ob=finish(leaf,name,{'steel':p.material()}); ob.location.x=pivot
 def build_harbour_ramp():
  wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-ramp.jpg')
- ramp_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~ramp_sky); scaled_photos.append(p)
+ ramp_sky=p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],tolerance=20,grey=20); p.bleed(~ramp_sky)
  # Two 6 m high, 3 m thick, 16 m long wall sections flank an 8 m clear opening.
  walls=Mesh(); run_crop=(0,55,wall.w*.4,300); end_crop=(0,55,wall.w*.075,300)
  for x0,x1 in ((-7,-4),(4,7)):
@@ -204,7 +204,6 @@ def build_causeway_arch():
  image=bpy.data.images.new('sea-arch-wall-joined-photo',width=p.w,height=p.h,alpha=False)
  image.pixels.foreach_set(rgba.ravel());image.pack();p.image=image;p._rgb=rgb.astype(np.int16);p._material=None
  p.bleed(solid)
- scaled_photos.append(p)
  arch=Mesh(); slab(arch,'stone',p,loops,pos,-1.5,1.5,wall_scale=.011)
  finish(arch,'causeway-arch',{'stone':p.material()})
  # A dark stone barrel follows the opening through the full wall thickness.
@@ -224,7 +223,7 @@ for name,fn in steps:
  fn()
  if name==args.through: break
 for p in scaled_photos:
- width,height=p.image.size; factor=700/max(width,height)
+ width,height=p.image.size; factor=640/max(width,height)
  p.image.scale(round(width*factor),round(height*factor)); p.image.pack()
 glb.parent.mkdir(parents=True,exist_ok=True); bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True)
 print('SEA_WORKS_PART_TRIANGLES',triangles)
