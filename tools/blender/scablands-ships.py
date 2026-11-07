@@ -7,17 +7,18 @@ from pathlib import Path
 
 # Patience upperworks dimensions and pixel landmarks, read from
 # .qa-dist/grid-{side,front,rear,top}.png (each source crop is 768 x 512 px).
-# Side: aft/front ends x=40/710, deck y=460. Front and rear: centre x=384,
-# deck y=460, roof y=163/174. Plan: bow/stern x=638/100, centre y=245;
+# Side: aft/front ends x=40/720, deck y=460. Front: centre x=384, deck y=460,
+# roof y=140. Rear: centre x=384, deck y=476, roof y=130. Plan: bow/stern x=638/100, centre y=245;
 # bridge-wing span y=54..436. Window and door boxes below are pixel rectangles
 # read from those same grids, not estimated from the rendered mesh.
-UPPER_LENGTH = 23.0
-UPPER_DECK_WIDTH = 9.3
-UPPER_WING_WIDTH = 12.0
-UPPER_HEIGHT = 8.4
-UPPER_SIDE_START, UPPER_SIDE_END, UPPER_SIDE_GROUND = 710, 40, 460
-UPPER_FRONT = {'centre': 384, 'ground': 460, 'top': 163, 'top_height': UPPER_HEIGHT}
-UPPER_REAR = {'centre': 384, 'ground': 460, 'top': 174, 'top_height': UPPER_HEIGHT}
+UPPER_SCALE = .0244
+UPPER_LENGTH = (720 - 40) * UPPER_SCALE
+UPPER_DECK_WIDTH = (600 - 190) * UPPER_SCALE
+UPPER_WING_WIDTH = (683 - 108) * UPPER_SCALE
+UPPER_HEIGHT = (460 - 140) * UPPER_SCALE
+UPPER_SIDE_START, UPPER_SIDE_END, UPPER_SIDE_GROUND = 720, 40, 460
+UPPER_FRONT = {'centre': 384, 'ground': 460, 'top': 140, 'top_height': UPPER_HEIGHT}
+UPPER_REAR = {'centre': 384, 'ground': 476, 'top': 130, 'top_height': UPPER_HEIGHT}
 UPPER_TOP = {'front': 145, 'rear': 675, 'centre': 245, 'along': 'x',
              'x_scale': UPPER_WING_WIDTH / (436 - 54)}
 UPPER_SIDE_SCALE = UPPER_LENGTH / (UPPER_SIDE_START - UPPER_SIDE_END)
@@ -92,8 +93,9 @@ if args.render_view:
     reference_plane.hide_render = args.render_view != 'comparison'
     if args.render_view == 'deck':
         deck_camera = scene.camera
-        deck_camera.location = Vector((28, 466.5, 12.7))
-        deck_target = Vector((13, 470, 17.7))
+        deck_camera.location = Vector((21.6, 470, 13.2))
+        deck_target = Vector((6.6, 470, 15.3))
+        deck_camera.data.ortho_scale = 23
         deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
     if args.render_view == 'comparison':
         for obj in scene.objects:
@@ -103,9 +105,9 @@ if args.render_view:
     if args.render_view == 'dusk':
         world = scene.world.node_tree.nodes.get('Background')
         world.inputs[0].default_value = (.025, .035, .06, 1)
-        world.inputs[1].default_value = .22
-        bpy.data.objects['review-softbox'].data.energy = 22000
-        bpy.data.objects['review-fill'].data.energy = 7000
+        world.inputs[1].default_value = .40
+        bpy.data.objects['review-softbox'].data.energy = 85000
+        bpy.data.objects['review-fill'].data.energy = 60000
     scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
     print(f'Rendered {args.render_view}: {scene.render.filepath}')
@@ -113,6 +115,7 @@ if args.render_view:
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_carve import carve_object
+from photo_model import Photo as DetailPhoto, Mesh as DetailMesh, trace, slab, lathe
 
 missing = [str(p) for p in [*inputs.values(), *photos.values(), ship_photo_full] if not p.is_file()]
 if missing:
@@ -120,6 +123,25 @@ if missing:
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
 scene = bpy.context.scene
+# Isolated detail crops come from the measured side photograph, not painted panels.
+funnel_crop_path = tex / 'patience-funnel-side.png'
+mast_crop_path = tex / 'patience-bridge-mast-side.png'
+source_image = bpy.data.images.load(str((tex / 'patience-upperworks-side.jpg').resolve()))
+source_pixels = np.empty(source_image.size[0] * source_image.size[1] * 4, dtype=np.float32)
+source_image.pixels.foreach_get(source_pixels)
+source_pixels = source_pixels.reshape(source_image.size[1], source_image.size[0], 4)
+def save_photo_crop(path, box):
+    x0, y0, x1, y1 = box
+    cut = source_pixels[source_image.size[1] - y1:source_image.size[1] - y0, x0:x1]
+    image = bpy.data.images.new(path.stem, x1 - x0, y1 - y0, alpha=True)
+    image.pixels.foreach_set(cut.ravel())
+    image.filepath_raw = str(path)
+    image.file_format = 'PNG'
+    image.save()
+    bpy.data.images.remove(image)
+save_photo_crop(funnel_crop_path, (125, 25, 245, 150))
+save_photo_crop(mast_crop_path, (405, 8, 490, 145))
+bpy.data.images.remove(source_image)
 scene.unit_settings.system = 'METRIC'
 scene.render.engine = 'BLENDER_EEVEE_NEXT'
 scene.render.resolution_x = 1000
@@ -314,7 +336,7 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             uv.data[li].uv=(u,v)
     parent(obj,root)
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
-    deck_mesh=cube(name+'-weather-deck',(0,deck-.18,0),(length*.96,.36,width*.94),rust,root.name,.12)
+    deck_mesh=cube(name+'-weather-deck',(0,deck-.10,0),(length*.96,.36,width*.94),rust,root.name,.12)
     parent(deck_mesh,root)
     # The projection carries repair patches and seam wear; avoid floating
     # overlays that hide the hull's curve.
@@ -373,7 +395,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         # Dot's Diner pattern: one measured carve table, followed by a named
         # root and one fitted body. The bridge front points bowward (+X); its
         # aft edge is local x=-37, so the block centre is local x=-25.5.
-        side_scale = UPPER_LENGTH / abs(UPPER_SIDE_END - UPPER_SIDE_START)
+        side_scale = UPPER_SCALE
         front_scale = UPPER_FRONT['top_height'] / (UPPER_FRONT['ground'] - UPPER_FRONT['top'])
         rear_scale = UPPER_REAR['top_height'] / (UPPER_REAR['ground'] - UPPER_REAR['top'])
 
@@ -434,6 +456,13 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'mask_dir': str(raw / 'masks'),
         }
         upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
+        # The accommodation roof is exposed weather deck: one rust coat, while
+        # the raised hatch and antenna forms stay as separate photo-carved geometry.
+        roof_slot = len(upperworks.data.materials)
+        upperworks.data.materials.append(rust)
+        for polygon in upperworks.data.polygons:
+            if polygon.normal.z > .9 and polygon.center.z >= UPPER_HEIGHT - .15:
+                polygon.material_index = roof_slot
         # The studio reference is brighter than the game's overcast world. Keep
         # its salt-white paint from clipping under the broad review softboxes.
         for photo in upper_table['_photos'].values():
@@ -450,10 +479,61 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         scene.collection.objects.link(upper_root)
         upper_root['part'] = 'ship-patience:upperworks'
         upper_root.parent = r
-        upper_root.location = gv((-25.5, deck, 0))
-        upper_root.rotation_euler[2] = -math.pi / 2
+        upper_root.location = gv((-37 + UPPER_LENGTH / 2, deck, 0))
+        upper_root.rotation_euler[2] = math.pi / 2
         parent(upperworks, upper_root)
         print('Patience upperworks carved bounds (Blender XYZ):', json.dumps(upper_bounds))
+
+        # Rounded funnel shell, mapped with its own crop, and three turned exhausts.
+        detail_photo = DetailPhoto(funnel_crop_path)
+        detail_mesh = DetailMesh()
+        funnel_x = -37 + ((125 + 60) - 40) * UPPER_SCALE
+        roof_y = deck + UPPER_HEIGHT
+        funnel_uv = lambda i, distance, radius, angle: (i / 16, 1 - distance / 2.55)
+        lathe(detail_mesh, 'funnel-photo', (funnel_x, roof_y, 0), (0, 1, 0),
+              (1, 0, 0), (0, 0, 1),
+              [(0, 1.18), (.18, 1.26), (.45, 1.22), (1.55, 1.00),
+               (2.30, .94), (2.55, .96)], funnel_uv, sides=24,
+              cap_start=('funnel-photo', lambda angle, frac: (.5 + .5 * math.cos(angle) * frac,
+                                                               .5 + .5 * math.sin(angle) * frac)),
+              cap_end=('funnel-photo', lambda angle, frac: (.5 + .5 * math.cos(angle) * frac,
+                                                             .5 + .5 * math.sin(angle) * frac)))
+        funnel_obj = detail_mesh.finish('ship-patience:funnel-shell', {'funnel-photo': detail_photo.material()})
+        funnel_obj['part'] = 'ship-patience:funnel'
+        parent(funnel_obj, r)
+        for index, dx in enumerate((-.58, 0, .58)):
+            pipe_mesh = DetailMesh()
+            px = funnel_x + dx
+            pipe_uv = lambda i, distance, radius, angle: (i / 16, 1 - distance / .72)
+            lathe(pipe_mesh, 'pipe-metal', (px, roof_y + 2.20, -.46 + index * .46),
+                  (0, 1, 0), (1, 0, 0), (0, 0, 1),
+                  [(0, .20), (.12, .22), (.62, .22), (.72, .20)], pipe_uv,
+                  sides=12, cap_start=('pipe-metal', lambda a, f: (.5 + .5*math.cos(a)*f,
+                                                                     .5 + .5*math.sin(a)*f)),
+                  cap_end=('pipe-metal', lambda a, f: (.5 + .5*math.cos(a)*f,
+                                                       .5 + .5*math.sin(a)*f)))
+            pipe_obj = pipe_mesh.finish(f'patience-funnel-exhaust-{index}', {'pipe-metal': rust})
+            pipe_obj['part'] = 'ship-patience:funnel'
+            parent(pipe_obj, r)
+
+        # Trace the bridge mast as a thin slab; explicit clear cells preserve its openings.
+        mast_photo = DetailPhoto(mast_crop_path)
+        mast_mask = ~mast_photo.sky([(3, 3), (81, 3), (3, 132), (81, 132)], tolerance=34, grey=34)
+        for x0, y0, x1, y1 in ((35, 31, 56, 43), (37, 57, 63, 70),
+                                (41, 83, 67, 97), (44, 108, 70, 122)):
+            mast_mask[y0:y1, x0:x1] = False
+        mast_loops = trace(mast_mask, (0, 0, mast_photo.w, mast_photo.h), tolerance=1.5, min_area=12)
+        mast_mesh = DetailMesh()
+        mast_x0, mast_y0 = 405, 8
+        def mast_point(px, py, depth):
+            return (-37 + (mast_x0 + px - 40) * UPPER_SCALE,
+                    deck + (UPPER_SIDE_GROUND - (mast_y0 + py)) * UPPER_SCALE, depth)
+        slab(mast_mesh, 'mast-photo', mast_photo, mast_loops, mast_point,
+             -.45, .45, wall_scale=UPPER_SCALE)
+        mast_obj = mast_mesh.finish('ship-patience:bridge-mast-lattice',
+                                    {'mast-photo': mast_photo.material()})
+        mast_obj['part'] = 'ship-patience:bridge-mast'
+        parent(mast_obj, r)
         # Long, thin working rails follow both sheer lines and close around the bow.
         for side in (-1,1):
             z=side*width*.45
@@ -475,15 +555,15 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         forecastle=cube('patience-raised-forecastle',(26,5.54,0),(15,.42,11.0),rust,ident,.11); parent(forecastle,r)
         for side in (-1,1):
             for step in range(9):
-                stair=cube(f'patience-forecastle-step-{side}-{step}',(16.0+step*.43,5.12+step*.05,side*5.0),(.58,.13,2.2),steel,ident,.025); parent(stair,r)
+                stair=cube(f'patience-forecastle-step-{side}-{step}',(16.0+step*.43,5.12+step*.05,side*5.0),(.58,.13,2.2),rust,ident,.025); parent(stair,r)
         for i,x in enumerate((-3,7,17)):
             z=(-2.5,2.5,-2.5)[i]
-            hatch=cube(f'patience-hatch-cover-{i}',(x,5.30,z),(6.4,.38,7.0),rust if i%2==0 else steel,ident,.12); parent(hatch,r)
+            hatch=cube(f'patience-hatch-cover-{i}',(x,5.30,z),(6.4,.38,7.0),rust,ident,.12); parent(hatch,r)
             for side in (-1,1):
                 coam=beam(f'patience-hatch-coaming-{i}-{side}',(x-3.25,5.28,z+side*3.7),(x+3.25,5.28,z+side*3.7),.18,rust,ident,.20); parent(coam,r)
                 coam=beam(f'patience-hatch-coaming-end-{i}-{side}',(x+side*3.25,5.28,z-3.7),(x+side*3.25,5.28,z+3.7),.18,rust,ident,.20); parent(coam,r)
             for j in range(5):
-                seam=beam(f'patience-hatch-seam-{i}-{j}',(x-2.7+j*1.35,5.50,z-3.2),(x-2.7+j*1.35,5.50,z+3.2),.035,iron,ident); parent(seam,r)
+                seam=beam(f'patience-hatch-seam-{i}-{j}',(x-2.7+j*1.35,5.50,z-3.2),(x-2.7+j*1.35,5.50,z+3.2),.035,rust,ident); parent(seam,r)
         # Winches, vents, and bollards are connected to the deck with visible feet.
         for i,(x,z) in enumerate(((-6,-5.7),(12,5.7),(30,0))):
             base=cube(f'patience-winch-bed-{i}',(x,5.29,z),(3.0,.42,1.8),rust,ident,.12); parent(base,r)
@@ -770,18 +850,25 @@ def render_imported_review():
     triangle_count = sum(len(poly.vertices) - 2 for obj in exported_meshes for poly in obj.data.polygons)
     glb_bytes = out.stat().st_size
 
-    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0, -2.0, -440)))
+    bpy.ops.mesh.primitive_cube_add(size=1, location=gv((0, -12.0, -440)))
     ground = bpy.context.object
+    ground.dimensions = (1200, 1200, 20)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     ground.name = 'review-only neutral lake bed'
     ground_mat = bpy.data.materials.new('Review ground / flat neutral earth')
     ground_mat.use_nodes = True
-    ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.32, .29, .25, 1)
-    ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .98
+    ground_mat.node_tree.nodes.clear()
+    ground_out = ground_mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    ground_emission = ground_mat.node_tree.nodes.new('ShaderNodeEmission')
+    ground_emission.inputs['Color'].default_value = (.28, .23, .17, 1)
+    ground_emission.inputs['Strength'].default_value = .8
+    ground_mat.node_tree.links.new(ground_emission.outputs[0], ground_out.inputs['Surface'])
     ground.data.materials.append(ground_mat)
 
     def area(name, game_location, energy, size):
         data = bpy.data.lights.new(name, 'AREA')
         data.energy, data.shape, data.size = energy, 'DISK', size
+        data.use_shadow = False
         obj = bpy.data.objects.new(name, data)
         review_scene.collection.objects.link(obj)
         obj.location = gv(game_location)
@@ -805,8 +892,8 @@ def render_imported_review():
     add_camera('review-camera-whole', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
     add_camera('review-camera-dusk', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
     add_camera('review-camera-above', (25, 92, -470), (25, 9, -470), 98, (900, 900))
-    add_camera('review-camera-comparison', (13.5, 15.2, -430), (13.5, 15.2, -470), 49, (1400, 600))
-    add_camera('review-camera-deck', (28, 12.7, -466.5), (13, 17.7, -470), 23, (1200, 600))
+    add_camera('review-camera-comparison', (10.3, 15.2, -430), (10.3, 15.2, -470), 40, (1400, 600))
+    add_camera('review-camera-deck', (21.6, 13.2, -470), (6.6, 15.3, -470), 23, (1200, 600))
 
     # A flat reference plane shares the comparison camera and the measured
     # 23 m horizontal scale; its photographed background remains visible.
@@ -821,8 +908,8 @@ def render_imported_review():
     ref_tex.image = ref_image
     ref_mat.node_tree.links.new(ref_tex.outputs['Color'], ref_emission.inputs['Color'])
     ref_mat.node_tree.links.new(ref_emission.outputs[0], ref_out.inputs['Surface'])
-    x0, x1 = 14.0, 37.0
-    y0, y1 = 11.0, 19.4
+    x0, x1 = 14.0, 30.6
+    y0, y1 = 11.0, 22.0
     z = -475.0
     verts = [gv((x0,y0,z)), gv((x1,y0,z)), gv((x1,y1,z)), gv((x0,y1,z))]
     mesh = bpy.data.meshes.new('review photo comparison plane')

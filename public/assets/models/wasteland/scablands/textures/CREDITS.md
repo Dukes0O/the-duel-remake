@@ -331,3 +331,8 @@ art.
 ## Patience upperworks reference photos (2026-11-07)
 
 `patience-upperworks-side.jpg`, `-front.jpg`, `-rear.jpg` and `-top.jpg` are 768 x 512 crops from one Codex ImageGen turnaround of a maintained cargo-ship accommodation block. The plan crop is flipped to put the bow at the carve's front. They are measured references for `ship-patience:upperworks`; the generated source remains in Codex's generated image output folder. No existing source photo was replaced.
+
+`patience-funnel-side.png` and `patience-bridge-mast-side.png` are measured
+crops of `patience-upperworks-side.jpg`, created by the Blender recipe for
+round 8. They preserve the funnel and lattice mast from the same original
+Codex ImageGen photograph; no outside source art is used.

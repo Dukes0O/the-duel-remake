@@ -73,3 +73,45 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed the four `photo_box` cabin tiers, their separate chart-room door, balcony rails/posts, stair treads and stair handrails, and the duplicate generic Patience chart-room boxes/roof/windows/door. The ship's hull, deck, main rails, mast and derricks remain.
 - Removed the now-unused `patience-white-painted-steel.jpg` tile and its credit entry; the carved photo set supplies the superstructure finish.
 - Removed the superseded round 6 look sheet and review note; round 7 is the single retained sheet.
+
+## Round 8 — Patience upperworks (7 November 2026)
+
+- Re-measured the side and bow photos at 0.0244 m/px. The side grid's 680 px
+  span gives 16.59 m; the front grid gives 10.00 m walls, 14.03 m wings and
+  7.81 m to the bridge roof. These agree with Claude's 16.6/10.0/14.0/7.8 m
+  values. The rear grid uses its own 346 px roof-to-ground span for 7.8 m;
+  the plan grid's 530 px length and about 382 px wing span set its own axes.
+- Set the cabin aft edge at x = -37 in the ship root and turned its photo front
+  toward +X. Recomputed the window, door and porthole recesses from the updated
+  side, front and rear photo scales. The upper bridge deck and its window row
+  are now included.
+- Added `ship-patience:funnel` with the measured side-photo crop and three
+  lathed exhausts, and `ship-patience:bridge-mast` as a separately traced slab
+  with open lattice cells. The existing main mast, hull, rails and derricks
+  were not changed.
+- Applied the hull's rusted deck material across the weather deck, raised the
+  deck plate slightly to cover the grey hull top, and kept the existing hatches.
+  The accommodation roof also uses the rust deck finish.
+- Moved the deck camera to the deck at eye height, 15 m forward of the bridge
+  front. The lower bridge is visible, but a large dark foreground hull wedge
+  remains. The review ground is now a solid volume; a second dark hull shape
+  remains visible below the sand line in the side views.
+- Exported GLB read-back: 30,708 triangles and 1,774,544 bytes (1.69 MiB),
+  within the 50,000 triangle and 3 MB limits.
+- Sheet: `docs/board/looks/ww-art-ships/round-8.jpg`, 1600 x 1750, 223,974
+  bytes. Honest scores and remaining look failures are in `round-8-review.md`.
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0.
+  `tools/test-repo-hygiene.mjs`: passed; exit 0. Browser and look checks: Claude
+  should inspect the full
+  sheet, especially the side-view sand line, the deck-height wedge and the
+  bridge-front comparison. Review evidence test: Claude runs it at merge.
+- Changed assertions: added checks for the distinct bridge mast and funnel GLB
+  parts. No existing assertion was changed or weakened.
+- Race fingerprints: none; art only.
+
+## Removed
+
+- Removed `round-7.jpg` and `round-7-review.md`; round 8 is the current look
+  sheet and review.
+- Removed this round's generated renders, Blender review file and scratch logs
+  from `.qa-dist/`; kept the named task brief.
