@@ -8,21 +8,23 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
-parser.add_argument('--reference', default=r'C:/Users/kyleb/.codex/generated_images/01a1b133-66d4-72f1-99e8-b49f9c090c93/exec-a09fd17d-45d5-4f90-a98a-13420165421a.png')
+parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/TOWN-ART-SAFETY/round-2'
+evidence = root / '.evidence/2026-11-06/TOWN-ART-SAFETY/round-3'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-3.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
     raise SystemExit(0)
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
+from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, trace as photo_trace
+import numpy as np
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -58,6 +60,7 @@ family = bpy.data.objects.new('town-safety', None)
 bpy.context.collection.objects.link(family)
 family.empty_display_type = 'PLAIN_AXES'
 active = None
+BUILDINGS = {}
 
 def attach(obj, parent=None):
     parent = parent or active
@@ -74,6 +77,7 @@ def building(name, footprint=(1, 1)):
     bpy.context.collection.objects.link(active)
     active.parent = family
     active['footprint_cells'] = list(footprint)
+    BUILDINGS[name] = active
     return active
 
 def cube(name, center, size, mat, bevel=.025, parent=None):
@@ -263,22 +267,28 @@ for x in (-6.7,6.7):
     for y in (1.2,2.7,4.2): beam('gate-scrap-cross-tie',(x-.7,y,-3.2),(x+.7,y,-3.2),.16,materials['galvanised-tin'])
     tin('gate-scrap-tower-facing',(x,3.3,-3.39),1.5,2.9)
 beam('gate-scrap-header',(-6.7,5.45,-3.2),(6.7,5.45,-3.2),.42,materials['rusted-steel'])
-door=bpy.data.objects.new('gate-scrap:door',None);bpy.context.collection.objects.link(door);door.location=town.game_vector((0,2.25,-3.25));attach(door)
+door=bpy.data.objects.new('gate-scrap:door',None);bpy.context.collection.objects.link(door);door.location=town.game_vector((-2.7,0,-3.25));attach(door)
 for i in range(8):
     x=-2.6+i*.74
-    cube(f'gate-scrap-door-plank-{i+1}',(x,0,0),(.68,3.4,.13),materials['rusted-steel'],.035,door)
-for y in (-1.15,1.15): beam('gate-scrap-door-crossbar',(-2.7,y,-.08),(2.7,y,-.08),.13,materials['iron-dark'],door)
+    cube(f'gate-scrap-door-plank-{i+1}',(x,2.25,-3.25),(.68,3.4,.13),materials['rusted-steel'],.035,door)
+# Two donor-car door shells have window frames and handles; welded sheet fills
+# the gaps. All children are placed at the gate before joining the hinge node.
+for i,x in enumerate((-1.35,1.32)):
+    cube(f'gate-scrap-car-door-{i+1}',(x,1.55,-3.39),(2.25,1.55,.12),materials['galvanised-tin'],.07,door)
+    cube(f'gate-scrap-car-door-window-{i+1}',(x,2.78,-3.43),(1.34,.72,.045),materials['iron-dark'],.08,door)
+    cube(f'gate-scrap-car-door-handle-{i+1}',(x+.72,1.62,-3.48),(.20,.08,.035),materials['rusted-steel'],.025,door)
+for y in (1.10,3.40): beam('gate-scrap-door-crossbar',(-2.7,y,-3.38),(2.7,y,-3.38),.13,materials['iron-dark'],door)
 for x in (-2.3,2.3):
-    pipe('gate-scrap-door-hinge',(x,-1.55,-.22),(x,1.55,-.22),.09,materials['iron-dark'],door)
+    pipe('gate-scrap-door-hinge',(x,.70,-3.49),(x,3.80,-3.49),.09,materials['iron-dark'],door)
 
 # Guard post: low sandbag berm, bolted tin roof and a contained steel brazier.
 b=building('guard-post',(2,1))
 for i in range(10):
-    x=-5.7+i*1.27
-    for row in range(2):
-        z=-2.0+row*.45
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=6,radius=1,location=town.game_vector((x+(row%2)*.25,.34+row*.30,z)))
-        sack=bpy.context.object;sack.name=f'guard-post-sandbag-{i+1}-{row+1}';sack.scale=(.62,.22,.25);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);sack.data.materials.append(materials['patched-canvas']);attach(sack)
+    for row in range(3):
+        x=-5.7+i*1.27+(row%2)*.26
+        z=-2.05+row*.08
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=6,radius=1,location=town.game_vector((x,.30+row*.40,z)))
+        sack=bpy.context.object;sack.name=f'guard-post-sandbag-{i+1}-{row+1}';sack.scale=(.62,.22,.28);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);sack.data.materials.append(materials['patched-canvas']);attach(sack)
 for sx in (-5.8,5.8):
     for sz in (-2.2,2.2): beam('guard-post-roof-post',(sx,.65,sz),(sx,3.3,sz),.12,materials['weathered-plank'])
 for i in range(5):
@@ -386,6 +396,44 @@ for i in range(4):
     pipe('hydrant-reel-spoke',(.22,.94,.20),(.22+math.sin(angle)*.26,.94,.20+math.cos(angle)*.26),.025,materials['galvanised-tin'],sides=8)
 pipe('hydrant-coiled-hose',(0,.94,.22),(.34,.94,.22),.06,materials['iron-dark'])
 
+# Trace building fronts from their generated photo references. These shallow
+# photo slabs keep the measured silhouette and holes while the side, roof,
+# tower, tanks and opening depth stay real modeled geometry.
+def photo_facade(name, image_path, crop, world_x, world_width, world_height, front_z,
+                 holes=(), parent=None, floor_px=None):
+    photo=Photo(image_path)
+    x0,y0,x1,y1=crop
+    seeds=[(3,3),(photo.w-4,3)]
+    sky=photo.sky(seeds,tolerance=28,grey=42)
+    solid=~sky
+    clipped=np.zeros_like(solid)
+    clipped[y0:y1,x0:x1]=solid[y0:y1,x0:x1]
+    for hx0,hy0,hx1,hy1 in holes:
+        clipped[hy0:hy1,hx0:hx1]=False
+    loops=photo_trace(clipped,crop,tolerance=3.2,min_area=35)
+    if not loops: raise RuntimeError(f'{name}: reference photo produced no traced facade')
+    floor_px=floor_px if floor_px is not None else y1
+    mesh=PhotoMesh()
+    def to_world(px,py,depth):
+        x=world_x+(px-x0)/(x1-x0)*world_width
+        y=(floor_px-py)/(y1-y0)*world_height
+        return (x,y,front_z+depth)
+    photo_slab(mesh,'photo',photo,loops,to_world,0,.035)
+    result=mesh.finish(name,{'photo':photo.material()})
+    parent=parent or BUILDINGS[name.split('-photo-')[0]]
+    return attach(result,parent)
+
+photo_root=root/'public/assets/models/wasteland/town/textures'
+photo_facade('fire-station-photo-facade',photo_root/'town-safety-fire-station.jpg',
+             (20,188,934,465),-11.6,23.2,6.6,-6.72,
+             holes=((220,320,478,459),(500,320,790,459)),parent=BUILDINGS['fire-station'],floor_px=464)
+photo_facade('clinic-photo-facade',photo_root/'town-safety-clinic.jpg',
+             (60,190,970,820),-6.3,12.6,6.6,-6.72,parent=BUILDINGS['clinic'],floor_px=820)
+photo_facade('guard-post-photo-facade',photo_root/'town-safety-guard-post.jpg',
+             (0,25,1024,500),-6.3,12.6,3.4,-2.43,parent=BUILDINGS['guard-post'],floor_px=500)
+photo_facade('gate-scrap-photo-door',photo_root/'town-safety-gate.jpg',
+             (245,155,780,508),-2.7,5.4,3.4,-3.52,parent=door,floor_px=508)
+
 # Save an editable scene recipe output; render views only after GLB round-trip.
 blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -407,7 +455,7 @@ scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium H
 def aim(obj, point): obj.rotation_euler=(Vector(point)-obj.location).to_track_quat('-Z','Y').to_euler()
 def render(name, view, location, target, ortho):
     cam_data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,cam_data);scene.collection.objects.link(cam)
-    cam.location=town.game_vector(location);aim(cam,town.game_vector(target));cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
+    cam.location=Vector(location);aim(cam,Vector(target));cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
     scene.render.filepath=str(render_dir/f'{name}.png')
     scene.render.resolution_x=900;scene.render.resolution_y=720
     bpy.ops.render.render(write_still=True)
@@ -416,20 +464,29 @@ def render(name, view, location, target, ortho):
 watch=next(obj for obj in scene.objects if obj.name=='watchtower')
 for obj in scene.objects:
     obj.hide_render = not (obj==watch or obj.parent==watch or obj in watch.children_recursive)
+watch_meshes=[obj for obj in {watch,*watch.children_recursive} if obj.type=='MESH']
+watch_corners=[obj.matrix_world @ Vector(corner) for obj in watch_meshes for corner in obj.bound_box]
+watch_min=Vector(tuple(min(point[i] for point in watch_corners) for i in range(3)))
+watch_max=Vector(tuple(max(point[i] for point in watch_corners) for i in range(3)))
+watch_size=watch_max-watch_min
+if min(watch_size) <= .0001: raise RuntimeError(f'watchtower has zero bounds: {watch_min} .. {watch_max}')
+print(f'BOUNDS watchtower: min={tuple(round(v,3) for v in watch_min)} max={tuple(round(v,3) for v in watch_max)} size={tuple(round(v,3) for v in watch_size)}')
+watch_center=(watch_min+watch_max)*.5
+watch_frame=max(watch_size.x,watch_size.y,watch_size.z*1.25)*1.22
 ground=bpy.data.materials.new('Plain dusty ground')
 ground.diffuse_color=(.31,.27,.21,1);ground.use_nodes=True
 ground.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.31,.27,.21,1)
 ground.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
-bpy.ops.mesh.primitive_plane_add(size=36,location=(0,0,-.015))
+bpy.ops.mesh.primitive_plane_add(size=1000,location=(0,0,-.02))
 plane=bpy.context.object;plane.name='neutral dusty ground';plane.data.materials.append(ground)
 for name,loc,target,scale in (
-    ('watchtower-above',(20,28,-20),(0,4.8,0),12.2),
-    ('watchtower-driver-seat',(15,7,-19),(0,4.6,0),12.2),
+    ('watchtower-above',watch_center+Vector((1,1,1.414)).normalized()*watch_frame*1.6,watch_center,watch_frame),
+    ('watchtower-driver-seat',(watch_center.x,watch_max.y+watch_frame*1.8,1.55),watch_center,watch_frame),
 ):
     # Keep one large area light for overcast, readable surface color.
     if not any(o.type=='LIGHT' for o in scene.objects):
         ld=bpy.data.lights.new('overcast softbox','AREA');ld.energy=2100;ld.size=14
-        light=bpy.data.objects.new('overcast softbox',ld);scene.collection.objects.link(light);light.location=town.game_vector((2,18,-8));aim(light,town.game_vector((0,4,0)))
+        light=bpy.data.objects.new('overcast softbox',ld);scene.collection.objects.link(light);light.location=(2,-12,18);aim(light,(0,0,3))
     render(name,'',loc,target,scale)
 
 # One compact comparison sheet. Only its small reference crop is committed;
@@ -443,7 +500,7 @@ crop=ImageOps.fit(Image.open(reference).convert('RGB'),(430,570),method=Image.Re
 above=Image.open(above_path).convert('RGB');driver=Image.open(driver_path).convert('RGB')
 page=Image.new('RGB',(1280,900),(42,43,39));draw=ImageDraw.Draw(page)
 fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),26);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),19);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),16)
-draw.text((28,18),'TOWN SAFETY | ROUND 1 | WATCHTOWER',font=title,fill=(239,226,201))
+draw.text((28,18),'TOWN SAFETY | ROUND 3 | WATCHTOWER',font=title,fill=(239,226,201))
 draw.text((28,55),'Welded frame, raised lookout, patched roof | exported GLB reimported to an empty scene',font=small,fill=(211,202,180))
 for x,img,caption in ((28,crop,'PHOTOGRAPHIC TARGET'),(468,above,'EXPORTED GLB | 45° OVERHEAD'),(908,driver,'EXPORTED GLB | DRIVER VIEW')):
     draw.text((x,92),caption,font=label,fill=(231,189,126));page.paste(ImageOps.fit(img,(420,570),method=Image.Resampling.LANCZOS),(x,124))
@@ -456,14 +513,12 @@ sheet.parent.mkdir(parents=True,exist_ok=True)
 subprocess.run(['python','-c',sheet_code,args.reference,str(render_dir/'watchtower-above.png'),
                 str(render_dir/'watchtower-driver-seat.png'),str(sheet)],check=True)
 
-# Round two shows every member of the family from above and at driver height.
-ids=['watchtower','gate-scrap','guard-post','searchlight','fire-station','clinic','hydrant',
-     'fence-wood-straight','fence-wood-corner','fence-wood-end','fence-chain-straight',
-     'fence-chain-corner','fence-chain-end','wall-scrap-straight','wall-scrap-corner',
-     'wall-scrap-end','wall-steel-straight','wall-steel-corner','wall-steel-end']
+# Round three frames the family from the exported bounding boxes.
+ids=['watchtower','fire-station','clinic','guard-post','gate-scrap','searchlight','hydrant']
 by_name={obj.name:obj for obj in scene.objects}
 next(obj for obj in scene.objects if obj.name=='neutral dusty ground').hide_render=True
-captures=[]
+ground_plane=next(obj for obj in scene.objects if obj.name=='neutral dusty ground')
+captures={}
 for building_id in ids:
     root_obj=by_name[building_id];visible={root_obj,*root_obj.children_recursive}
     ancestor=root_obj.parent
@@ -473,27 +528,105 @@ for building_id in ids:
     bpy.context.view_layer.update()
     corners=[obj.matrix_world @ Vector(corner) for obj in visible if obj.type=='MESH' for corner in obj.bound_box]
     lo=[min(v[i] for v in corners) for i in range(3)];hi=[max(v[i] for v in corners) for i in range(3)]
-    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3));size=max(span*1.35,1.5)
+    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3));size=max(hi[0]-lo[0],hi[1]-lo[1],(hi[2]-lo[2])*1.25,1.5)*1.20
+    print(f'BOUNDS {building_id}: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(hi[i]-lo[i],3) for i in range(3))}')
     views=[]
-    for tag,direction in (('above',(1,1.2,-1)),('driver',(1,.35,-1))):
+    for tag,direction in (('mayor',(1,1,1.414)),('driver',(0,1,0))):
         data=bpy.data.cameras.new(f'{building_id}-{tag}');cam=bpy.data.objects.new(f'{building_id}-{tag}',data);scene.collection.objects.link(cam)
-        cam.location=center+Vector(direction).normalized()*span*2.5;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=size;scene.camera=cam
-        scene.render.resolution_x=480;scene.render.resolution_y=360
+        cam.location=(center+Vector(direction).normalized()*span*1.6 if tag=='mayor' else Vector((center.x,hi[1]+span*1.8,lo[2]+1.55)));aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=size;scene.camera=cam
+        ground_plane.hide_render=(tag=='driver')
+        scene.render.resolution_x=640;scene.render.resolution_y=480
         out=render_dir/f'{building_id}-{tag}.png';scene.render.filepath=str(out);bpy.ops.render.render(write_still=True);views.append(out)
-    captures.append((building_id,views))
+        bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
+        ground_plane.hide_render=False
+    captures[building_id]=views
+    if building_id=='gate-scrap':
+        door=by_name['gate-scrap:door'];door.rotation_euler=(0,0,0)
+        pivot=Vector((-2.7,3.25,0))
+        swing=Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(78),4,'Z') @ Matrix.Translation(-pivot)
+        leaf_parts=[obj for obj in scene.objects if obj.type=='MESH' and
+                    (obj.name.startswith('gate-scrap-door-') or obj.name.startswith('gate-scrap-car-door-') or obj.name.startswith('gate-scrap-photo-door'))]
+        print(f'GATE OPEN POSE: rotating {len(leaf_parts)} exported leaf meshes around hinge {tuple(pivot)}')
+        for obj in leaf_parts:obj.matrix_world=swing @ obj.matrix_world
+        bpy.context.view_layer.update()
+        visible={root_obj,*root_obj.children_recursive}
+        for obj in scene.objects:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
+        bpy.context.view_layer.update()
+        lo=[min((obj.matrix_world @ Vector(corner))[i] for obj in visible if obj.type=='MESH' for corner in obj.bound_box) for i in range(3)]
+        hi=[max((obj.matrix_world @ Vector(corner))[i] for obj in visible if obj.type=='MESH' for corner in obj.bound_box) for i in range(3)]
+        center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3))
+        data=bpy.data.cameras.new('gate-scrap-open');cam=bpy.data.objects.new('gate-scrap-open',data);scene.collection.objects.link(cam)
+        open_size=max(hi[0]-lo[0],hi[1]-lo[1],(hi[2]-lo[2])*1.25,1.5)*1.20
+        cam.location=center+Vector((1,1,1.414)).normalized()*span*1.6;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=open_size;scene.camera=cam
+        ground_plane.hide_render=True
+        scene.render.filepath=str(render_dir/'gate-scrap-open.png');bpy.ops.render.render(write_still=True)
+        ground_plane.hide_render=False
+        captures['gate-scrap-open']=[render_dir/'gate-scrap-open.png']
+        bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
+
+# Show three straight modules meeting at cell edges, one joined run per tier.
+for kind in ('fence-wood','fence-chain','wall-scrap','wall-steel'):
+    root_obj=by_name[f'{kind}-straight'];visible=set()
+    for index in range(3):
+        for original in {root_obj,*root_obj.children_recursive}:
+            if index==0:copy=original
+            else:
+                copy=original.copy()
+                if original.data:copy.data=original.data.copy()
+                scene.collection.objects.link(copy)
+                copy.parent=None
+                copy.matrix_world=original.matrix_world.copy()
+                copy.matrix_world.translation.x+=8*index
+            visible.add(copy)
+    for obj in scene.objects:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
+    bpy.context.view_layer.update()
+    corners=[obj.matrix_world @ Vector(corner) for obj in visible if obj.type=='MESH' for corner in obj.bound_box]
+    lo=[min(v[i] for v in corners) for i in range(3)];hi=[max(v[i] for v in corners) for i in range(3)]
+    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3))
+    print(f'BOUNDS {kind}-joined-run: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(hi[i]-lo[i],3) for i in range(3))}')
+    data=bpy.data.cameras.new(f'{kind}-joined-run');cam=bpy.data.objects.new(f'{kind}-joined-run',data);scene.collection.objects.link(cam)
+    cam.location=center+Vector((0,1,.2)).normalized()*span*1.5;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=3.8;scene.camera=cam
+    scene.render.resolution_x=1280;scene.render.resolution_y=200
+    ground_plane.hide_render=True
+    scene.render.filepath=str(render_dir/f'{kind}-joined-run.png');bpy.ops.render.render(write_still=True)
+    ground_plane.hide_render=False
+    captures[kind+'-joined-run']=[render_dir/f'{kind}-joined-run.png']
+    bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
 sheet_code=r'''from PIL import Image,ImageDraw,ImageFont,ImageOps
 from pathlib import Path
 import sys
-reference=Path(sys.argv[1]);paths=[Path(p) for p in sys.argv[2:-1]];out=Path(sys.argv[-1]);page=Image.new('RGB',(1600,2240),(117,110,96));d=ImageDraw.Draw(page)
-title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',24);label=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',15)
-d.text((30,20),'TOWN SAFETY | ROUND 2 | EXPORTED GLB',font=title,fill=(245,238,222))
-ref=ImageOps.fit(Image.open(reference).convert('RGB'),(190,160),method=Image.Resampling.LANCZOS)
-page.paste(ref,(1380,12));d.text((1380,174),'PHOTO TARGET',font=label,fill=(245,238,222))
-for i in range(0,len(paths),2):
- x=24+(i//2%4)*394;y=72+(i//2//4)*430;name=paths[i].stem.rsplit('-',1)[0]
- d.rounded_rectangle((x,y,x+380,y+408),radius=8,fill=(151,143,126));d.text((x+10,y+8),name.upper(),font=title,fill=(38,36,31))
- for j,p in enumerate(paths[i:i+2]):
-  im=ImageOps.fit(Image.open(p).convert('RGB'),(176,300),method=Image.Resampling.LANCZOS);page.paste(im,(x+10+j*184,y+54));d.text((x+10+j*184,y+360),('ABOVE' if j==0 else 'DRIVER'),font=label,fill=(38,36,31))
-out.parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',quality=82,optimize=True,progressive=True)
+args=sys.argv[1:-1];out=Path(sys.argv[-1]);page=Image.new('RGB',(1600,2820),(47,46,42));d=ImageDraw.Draw(page)
+title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',22);label=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',15);small=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',13)
+d.text((24,16),'TOWN SAFETY | ROUND 3 | EXPORTED GLB',font=title,fill=(245,238,222))
+def place(path,box):
+ im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS)
+ x=(box[0]-im.width)//2;y=(box[1]-im.height)//2
+ return im,x,y
+for i in range(5):
+ y=58+i*305;x=22;d.rounded_rectangle((x,y,x+1556,y+285),radius=8,fill=(88,83,73));name,path1,path2,photo=args[i*4:i*4+4]
+ d.text((x+12,y+8),name.upper().replace('-',' '),font=label,fill=(238,195,137))
+ for col,(caption,path) in enumerate((('PHOTO TARGET',photo),('MAYOR / ROOF',path1),('DRIVER / ROAD',path2))):
+  px=x+12+col*510;d.text((px,y+35),caption,font=small,fill=(238,230,210))
+  im,ix,iy=place(path,(490,220));page.paste(im,(px+ix,y+54+iy))
+items=list(zip(args[20::2],args[21::2]));small_items=[item for item in items if 'joined-run' not in item[0]];runs=[item for item in items if 'joined-run' in item[0]]
+for i in range(0,len(small_items),2):
+ for column,(name,path) in enumerate(small_items[i:i+2]):
+  y=1590+(i//2)*170;x=22+column*790
+  d.rounded_rectangle((x,y,x+770,y+154),radius=8,fill=(88,83,73));d.text((x+12,y+8),name.replace('-',' ').upper(),font=label,fill=(238,195,137))
+  im,ix,iy=place(path,(740,115));page.paste(im,(x+12+ix,y+32+iy))
+for index,(name,path) in enumerate(runs):
+ y=2100+index*175
+ d.rounded_rectangle((22,y,1578,y+160),radius=8,fill=(88,83,73));d.text((34,y+8),name.replace('-',' ').upper(),font=label,fill=(238,195,137))
+ im,ix,iy=place(path,(1520,118));page.paste(im,(30+ix,y+34+iy))
+out.parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',quality=80,optimize=True,progressive=True)
 '''
-subprocess.run(['python','-c',sheet_code,args.reference,*[str(path) for _,views in captures for path in views],str(sheet)],check=True)
+sheet_args=[]
+photo_paths={'watchtower':root/args.reference,'fire-station':root/'public/assets/models/wasteland/town/textures/town-safety-fire-station.jpg',
+ 'clinic':root/'public/assets/models/wasteland/town/textures/town-safety-clinic.jpg','guard-post':root/'public/assets/models/wasteland/town/textures/town-safety-guard-post.jpg',
+ 'gate-scrap':root/'public/assets/models/wasteland/town/textures/town-safety-gate.jpg'}
+for building_id in ids[:5]:sheet_args.extend([building_id,str(captures[building_id][0]),str(captures[building_id][1]),str(photo_paths[building_id])])
+for kind in ('searchlight','hydrant','gate-scrap-open','fence-wood-joined-run','fence-chain-joined-run','wall-scrap-joined-run','wall-steel-joined-run'):
+ actual=kind.replace('-joined-run','')+'-joined-run' if '-joined-run' in kind else kind
+ path=captures[actual][0] if actual in captures else captures[kind][0]
+ sheet_args.extend([kind,path])
+subprocess.run(['python','-c',sheet_code,*sheet_args,str(sheet)],check=True)

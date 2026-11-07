@@ -1,18 +1,26 @@
-# TOWN-ART-SAFETY — round 2
+# TOWN-ART-SAFETY — round 3
 
-Updated the watchtower recipe and exported family. The tower now has 25 cm splayed legs, a lower roofline, half-sunk timber feet and fewer ladder rungs to stay inside its 1,800 triangle budget. The recipe writes a two-view family sheet from a GLB re-import. It reuses the existing credited town materials; no runtime texture was added.
+**Status:** Built for Claude's look review. The family GLB is 2,638,012 bytes; the review sheet is 282,623 bytes.
 
-The submitted sheet is under 500 KB and includes the round-one watchtower photo crop. The model is under 3 MB. Claude should check the watchtower proportions, the open and shut gate, and the family render framing. Several exported family panels appear blank or only partly visible in the Blender sheet, so the family look is not confirmed by this round and needs Claude's review.
+## What changed
+
+- Fixed the review scene's Y-up/Z-up mix-up. It had put cameras below the exported buildings and turned the floor into a wall. The recipe now reads each building's exported mesh bounds, prints them, rejects zero bounds and aims separate mayor and driver cameras at each box.
+- Rebuilt the watchtower render from the exported GLB. The photo shows the open bracing, patched roof, lookout chair and lamp.
+- Added generated photo traces to the fire station, clinic, guard post and moving gate leaf. The fire station keeps two open bay holes. The clinic roof cross and tank remain modeled parts. The guard post keeps its individual sandbags. The gate leaf now sits at the hinge and uses two shaped car-door panels with salvage sheet steel around them.
+- Rendered the gate closed and swung open. The sheet shows one three-cell joined run for each fence and wall tier.
+- Added five generated source photos to the model texture folder. The GLB embeds the photo surfaces; the source files preserve the recipe inputs.
 
 ## Checks
 
-- Blender recipe/export and GLB re-import render: completed.
-- `node tools/test-blender-output.mjs`: passed, 296 checks, 0 failed after reducing ladder rungs. The earlier run was 1,816 triangles and failed the 1,800 watchtower budget; this assertion was not changed.
-- `node tools/test-repo-hygiene.mjs`: passed; repository placement clean, size targets advisory.
-- Browser/look check: not run here. Claude should review the round-two sheet and family readability.
-- Lane tier and build: not run; art-card instruction excludes them.
+- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory.
+- Blender recipe/export/re-import and sheet render: passed. All printed model bounds are nonzero.
+- Sheet: 282,623 bytes (under 500 KB). Family GLB: 2,638,012 bytes (under the card's 3 MB limit).
+- Browser/look check: not run here. Claude should review the tower's roof, chair and lamp; the red fire station's two open bays, hose tower and bell; the clinic roof cross; the guard post sandbags and brazier; the gate leaf in both poses; and the joined cell runs.
+- Lane tier and build: not run, as required for art cards.
 - Changed assertions: none. Race fingerprints: not applicable; no race code changed.
 
 ## Removed
 
-The superseded round-one sheet and review note remain because the Recycle Bin operation stalled and the safety review rejected permanent deletion. The existing texture files and their credits remain. Generated round-two render captures and check logs are still in `.evidence/` and `.qa-dist/` for the same cleanup block.
+- Recycled the round 1 and round 2 sheets and review notes as requested. The source photo inputs and current round 3 deliverables remain.
+- Removed this lane's temporary Blender renders and check logs after review; only the current model, sheet, notes, recipe and source photos remain.
