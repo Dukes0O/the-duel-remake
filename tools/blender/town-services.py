@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-4.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-4/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-7.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-7/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -187,6 +187,87 @@ for n in ids:
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
  if n in ('forge','workshop'):continue
+ if n=='motor-pool':
+  # Carve only the three closed walls. The side photo is the long back wall;
+  # the road-facing wall is removed before the shell is turned onto the plot.
+  side_photo=Photo(tex/'motor-pool-side.jpg')
+  front_photo=Photo(tex/'motor-pool-front.jpg')
+  rear_photo=Photo(tex/'motor-pool-rear.jpg')
+  top_photo=Photo(tex/'motor-pool-top.jpg')
+  table={'photos':{'side':'motor-pool-side.jpg','front':'motor-pool-front.jpg','rear':'motor-pool-rear.jpg','top':'motor-pool-top.jpg'},
+   'length':30.4,'width':14.4,'height':5.1,
+   'side':{'start':14,'end':1010,'ground':294},
+   'front':{'centre':512,'ground':283,'top':71},'rear':{'centre':512,'ground':283,'top':71},
+   'top':{'front':80,'rear':430,'centre':512,'x_scale':14.4/996},
+   'keep':lambda x,y,z: (y < 4.65) & ((x < -6.65) | (np.abs(z) > 14.6)),
+   'cut':{'side':[],'front':[(0,0,1,1)],'rear':[],'top':[]},
+   'grey':26,'tolerance':42,'bleed_tolerance':38,'voxel':.12,'target':8000,
+   'mask_dir':str(root/'.qa-dist/town-services/motor-pool-masks')}
+  body=carve_object('motor-pool:body',tex,table)
+  # Turn the long carved wall to the rear (+Z); the removed wall becomes the
+  # open front (-Z). Roof is built separately from thin pitched panels below.
+  for vertex in body.data.vertices:
+   vertex.co.x,vertex.co.y=-vertex.co.y,vertex.co.x
+   vertex.co.x=(vertex.co.x+5.18)*1.5
+  body.data.update()
+  parent_keep(body,b)
+  # Patched tin plan photo becomes two thin slopes with a raised ridge seam.
+  roof_mat=top_photo.material()
+  eave,ridge=4.65,5.8
+  for side in (-1,1):
+   edge_z=side*7.5
+   # Define the panel directly in game space, with no rounding or carve.
+   panel_coords=[(-15.5,eave,0),(15.5,eave,0),(15.5,eave,edge_z),(-15.5,eave,edge_z)]
+   panel=[town.game_vector((x,eave+(ridge-eave)*(1-abs(z)/7.5),z)) for x,_,z in panel_coords]
+   mesh=bpy.data.meshes.new(f'motor-pool patched roof slope {side}');mesh.from_pydata(panel,[],[(0,1,2,3)]);mesh.materials.append(roof_mat);mesh.update()
+   uv=mesh.uv_layers.new(name='UVMap')
+   for poly in mesh.polygons:
+    for li in poly.loop_indices:
+     x,_,z=panel_coords[mesh.loops[li].vertex_index];uv.data[li].uv=((x+15.5)/31,(z+7.5)/15)
+   obj=bpy.data.objects.new(f'motor-pool:roof-slope-{side}',mesh);bpy.context.collection.objects.link(obj);parent_keep(obj,b)
+  box('motor-pool:roof-ridge',(0,ridge+.04,0),(31.0,.13,.13),steel,.02,b)
+  # Concrete covers the whole shed; the dark inspection trench sits below it.
+  for x in (-8.7,8.7):
+   box('motor-pool:floor',(x,.10,0),(13.0,.20,14.4),m['cracked-concrete'],.025,b)
+  for z in (-5.35,5.35):
+   box('motor-pool:floor',(0,.10,z),(4.4,.20,3.7),m['cracked-concrete'],.025,b)
+  # Recessed inspection pit, with a dark floor and thick raised concrete lips.
+  box('motor-pool:inspection-pit',(0,.025,0),(2.0,.05,8.2),dark,.015,b)
+  for x in (-1.12,1.12):box('motor-pool:pit-lip',(x,.20,0),(.22,.32,8.6),m['cracked-concrete'],.025,b)
+  # Two tool racks stand inside against the back wall, with tools on their rails.
+  for x in (-12.3,12.3):
+   for y in (.65,1.65,2.65):box('motor-pool:tool-rack-rail',(x,y,6.9),(2.5,.11,.11),steel,.025,b)
+   for dx in (-1.1,-.45,.25,.95):beam('motor-pool:hand-tool',(x+dx,.55,6.8),(x+dx,1.55,6.8),.055,wood,b)
+   for dx in (-1.2,1.2):box('motor-pool:tool-rack-upright',(x+dx,1.62,6.9),(.09,2.75,.09),dark,.02,b)
+  # Fuel drums are grouped along the rear corners, clear of the inspection pit.
+  for i,(x,z) in enumerate(((-13.2,5.0),(-12.1,5.0),(13.2,5.0),(12.1,5.0))):
+   cyl(f'motor-pool:fuel-drum-{i+1}',(x,.62,z),.43,1.05,steel,20,b)
+   for y in (.3,.92):tube(f'motor-pool:drum-rim-{i+1}',(x,y,z),.43,.035,dark,b,20,6)
+  # Timber posts stand on the road-facing edge, with the braces shown in the photo.
+  for x in (-15.0,-7.5,0,7.5,15.0):
+   beam('motor-pool:front-post',(x,.15,-7.2),(x,4.55,-7.2),.22,wood,b)
+   for side in (-1,1):beam('motor-pool:front-brace',(x,3.45,-7.2),(x+side*.8,4.5,-7.2),.14,wood,b)
+  box('motor-pool:front-header',(0,4.55,-7.2),(30.4,.26,.26),steel,.035,b)
+  for bay in range(4):
+   x=-11.4+bay*7.6
+   plate=box(f'motor-pool:bay-number-{bay+1}',(x,4.15,-7.3),(1.0,.48,.08),wood,.02,b)
+   font=bpy.data.curves.new('bay numeral','FONT');font.body=str(bay+1);font.size=.34;font.extrude=.002
+   obj=bpy.data.objects.new(f'motor-pool:bay-numeral-{bay+1}',font);bpy.context.collection.objects.link(obj)
+   obj.location=town.game_vector((x-.1,4.08,-7.36));obj.rotation_euler=(-math.pi/2,0,0);font.materials.append(paint);parent_keep(obj,b)
+  # Each piece reports its bounds for the grounding/plot audit.
+  bpy.context.view_layer.update()
+  pieces=[o for o in b.children if o.type=='MESH'];piece_bounds=[]
+  for obj in pieces:
+   corners=[obj.matrix_world @ Vector(c) for c in obj.bound_box]
+   points=[(v.x,v.z,-v.y) for v in corners] # Blender Z-up -> town X/Y/Z
+   lo=[min(v[i] for v in points) for i in range(3)];hi=[max(v[i] for v in points) for i in range(3)]
+   piece_bounds.append((lo,hi))
+   print(f'MOTOR-POOL BOUNDS {obj.name}: x={lo[0]:.2f}..{hi[0]:.2f} y={lo[1]:.2f}..{hi[1]:.2f} z={lo[2]:.2f}..{hi[2]:.2f}')
+  for index,(lo,hi) in enumerate(piece_bounds):
+   grounded=lo[1]<=.16
+   joined=any(index!=other and all(max(0,alo[axis]-hi[axis],lo[axis]-ahi[axis])<=.16 for axis in range(3)) for other,(alo,ahi) in enumerate(piece_bounds))
+   assert grounded or joined, f'{pieces[index].name} does not touch ground or another piece'
+  continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -604,6 +685,13 @@ for building_id, building_root in building_roots.items():
     point.y=(point.y+center_z)*scale_z
     vertex.co=inverse @ point
    obj.data.update()
+  if building_root.name.split('.')[0]=='motor-pool':
+   bpy.context.view_layer.update()
+   for obj in meshes:
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    xs=[p.x for p in points];zs=[-p.y for p in points]
+    assert min(xs)>=-15.5 and max(xs)<=15.5 and min(zs)>=-7.5 and max(zs)<=7.5, f'{obj.name} exceeds the motor-pool plot'
+    print(f'MOTOR-POOL FINAL BOUNDS {obj.name}: X={min(xs):.2f}..{max(xs):.2f}, Y={min(p.z for p in points):.2f}..{max(p.z for p in points):.2f}, Z={min(zs):.2f}..{max(zs):.2f}')
 
 # One durable shared root; separate named children keep in-game placement addressable.
 audit_scrapyard_pieces()
@@ -666,6 +754,14 @@ if a.review:
  render('workshop-front.png',(0,8,-31),(0,4,0),46)
  render('workshop-driver.png',(9,2,-23),(0,4,0),43)
  render('workshop-mayor.png',(7,36,-42),(0,4,0),46)
+ motor=next(o for o in bpy.data.objects if o.name.split('.')[0]=='motor-pool')
+ for obj in bpy.data.objects:obj.hide_render=not within(obj,motor)
+ render('motor-pool-front.png',(0,8,-40),(0,3,0),46)
+ render('motor-pool-side.png',(0,8,40),(0,3,0),46)
+ render('motor-pool-end.png',(32,8,0),(0,3,0),46)
+ render('motor-pool-above.png',(2,40,-8),(0,2,0),48)
+ render('motor-pool-mayor.png',(18,28,-32),(0,2,0),44)
+ render('motor-pool-three-quarter-left.png',(20,15,-28),(0,3,0),44)
  # One clear three-quarter view of every named building, framed to its plot.
  footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
             'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),

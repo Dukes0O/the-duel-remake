@@ -1,25 +1,22 @@
-# TOWN-ART-FUN - big wheel round 9
+# TOWN-ART-FUN change note
 
 ## Changed
 
-- Replaced the broken photo-traced rim edges with two complete torus rims. The measured radius is 5.02 m; each rim has a 0.15 m tube and samples a rusted strip from the side photo.
-- Kept the open photo-carved spokes and added thin steel spokes on both wheel faces, with short depth ties.
-- Rebuilt all eight seats at the measured 1.4 m width. Each stays level, hangs from two straight rods, and has printed bounds plus a hanger-contact check.
-- Kept the photo-traced A-frame with flat feet and its photographed base beam. Removed the extra beam that rendered detached in front of the feet.
-- The pale block under the wheel remains visible in the assembled views. The measured opening was removed from the A-frame mask. Isolated renders of the frame, seat 5, and base beam do not show it alone; its source remains unresolved. Claude must inspect it before judging the art.
-- Kept all source photos. The exported family is 6,600,716 bytes, above the card's 3 MB budget.
+Round 11 rebuilds the drive-in only. The photo-traced billboard frame, legs and braces stay in place. The front face of `drive-in:screen` now wears an original faded desert film still and uses a dim emissive material. The screen sits in front of the complete rear photo, so the patched backing shows from behind.
 
-## Checks
+Ten photo-traced cars replace the repeated dark lumps. Five use the scrapyard's red, brown and blue wreck side photos; five use the new uncrushed rusty sedan photo. The cars face the screen in two shallow curved rows and all touch the ground. A small projector hut stands behind the rear row.
 
-- Blender recipe and imported-GLB renders: completed. All eight seat checks report hanger contact. The two rim bounds show full circles from y=1.605 m to 11.788 m and z=-5.092 m to 5.092 m. The Blender log printed bounds for every big-wheel mesh and each seat.
-- `tools/test-repo-hygiene.mjs`: passed; placement passed and size targets were reported as advisory.
-- `tools/test-review-evidence.mjs`: 7 passed, 2 failed. One expects the round-8 JPG this task required deleting. The other failed because spawning `ffmpeg` returned `EPERM`.
-- `tools/test-blender-output.mjs`: not run; this export is over the 3 MB family budget.
-- Lane tier, build, browser checks and Claude's look review: not run here. Claude should inspect the photo/model side match, complete rims and ties, spoke openness, seat scale/orientation/hangers, A-frame feet/base, and unresolved pale block.
-- Changed assertions: none. Race fingerprints: not applicable; this art lane does not change race code.
+Added and credited the generated still and sedan photo sources. The full family GLB is 3,510,540 bytes; the drive-in contains 4,758 triangles. Blender printed bounds for all 24 drive-in mesh pieces. Every piece keeps at least 0.5 m of clearance inside the 4x3 footprint; the hut roof ends at z=10.9 m; all cars have y=0. The round-11 comparison sheet is 397,709 bytes.
+
+## Checks and review
+
+- Blender export and imported-model renders completed. Bounds and contact checks passed.
+- `node tools/test-blender-output.mjs`: 377 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed. It found a missing matching review note for the unrelated town-art-outposts round-15 sheet, and the audio-analysis check could not spawn `ffmpeg` (`EPERM`).
+- Browser and look checks were not run by Codex. Claude should judge the screen's dusk brightness and rear visibility, backing photo, car variety and direction, the curved rows, grounding, and projector-hut placement.
+- Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- Removed the round-8 traced rim faces and seat-side geometry, replacing them with continuous rings and photo-scaled seats. Kept all round-8 source photos.
-- Removed the detached added base beam; retained the source-photo base beam.
-- Removed the round-8 JPG and review note as requested. Kept round 6.
+Replaced the flat orange screen and repeated blue wreck placement. Removed the round-10 sheet and note as requested. Kept rounds 6 and 9. No other building or source was removed.

@@ -1,22 +1,21 @@
-# TOWN-ART-SAFETY change note
+# TOWN-ART-SAFETY — gate-scrap follow-up
 
 ## Changed
 
-- Replaced the procedural fire-station beams and old combined facade with a `carve_object` body, two open bay cutouts, concrete floor slabs and dark interior panels.
-- Added side, front, rear and straight-down generated JPG references in `public/assets/models/wasteland/town/textures/`. The old combined station photo remains the tower and bell source. Credits are in the texture credit file.
-- Traced the hose tower and bell separately with `trace` and `slab`. The tower sits beside the station and reaches the ground.
-- Added the dark-sky-seed fault and fix to `docs/ART_LINE.md`.
-- Round 5 sheet: 329,115 bytes. Safety family GLB: 2,824,476 bytes.
+- Replaced the small box-and-plank leaf with a full-width moving node named `gate-scrap:door`, photo-traced from front and rear views with steel thickness. The hinge sits at the inner edge of the left tower.
+- Rebuilt the two towers and lintel from traced photo masks and slabs. Separate front and rear lattice faces, connected with depth ties, keep the tower openings visible while giving the frames real depth.
+- Added four generated orthographic photo references under `public/assets/models/wasteland/town/textures/`: side, front, rear and straight-down. Each is a JPEG at most 1024 pixels wide. Built-in image generation credit: OpenAI image generation, 7 November 2026; each view was generated as its own image. The first side prompt returned a front-like angle, so it was replaced with an explicit end-on side view.
+- Created `docs/board/looks/town-art-safety/round-8.jpg` and its review note. Earlier sheets and passed buildings are unchanged.
+- Added the `ART_LINE.md` fault note that a view label can be ignored by the image generator; verify the silhouette before tracing.
 
 ## Checks
 
-- Blender 4.5.13 export and GLB re-import completed. The run printed bounds for the body, both floors, both bay interiors and the tower. The body and tower meet the ground; both interiors meet their floors. Blender reported no script error on the final run.
-- No lane tier or build run, as this is an art card.
-- No browser checks. Claude should inspect all four photo/model pairs, bay darkness and floor visibility, tower lattice and bell, both three-quarter views, and the mayor roof view.
-- Changed assertions: none. Race fingerprints: not applicable; race code was not changed.
+- Blender recipe export and GLB readback: **pass**. Each gate mesh printed bounds; the contact check confirmed ground or adjoining-piece contact inside the 2 by 1 footprint. The review sheet is under 500 KB.
+- `node tools/test-blender-output.mjs`: **pass**, 377 checks, 0 failures.
+- Lane tier and build: not run, as required for art cards.
+- Browser check: Claude runs. Please inspect the side silhouette, tower depth, photo/model scale, leaf clearance under the lintel, and opening swing in the supplied renders.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
 
 ## Removed
 
-- Removed the old procedural fire-station geometry and its photo-facade use.
-- Removed the superseded round-4 sheet and review note, as requested.
-- Blender scene, evidence renders, masks and log are temporary outputs and are removed before handoff.
+- Removed the obsolete gate facade photo overlay and the old duplicate planks and car-door boxes from the gate recipe.

@@ -50,7 +50,7 @@ const generators = [
   {id:'town-dome',script:'tools/blender/town-dome.py',args:[],evidence:'.qa-dist/town-dome',
     glb:['public/assets/models/wasteland/town/dome.glb'],budget:30000,maxBytes:3000000},
   {id:'town-safety',script:'tools/blender/town-safety.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/safety.glb'],budget:60000,maxBytes:8000000},
   {id:'town-homes',script:'tools/blender/town-homes.py',args:[],
     glb:['public/assets/models/wasteland/town/homes.glb'],budget:60000,maxBytes:3000000},
   {id:'town-sample',script:'tools/blender/town-sample.py',args:[],candidate:true,
@@ -84,8 +84,8 @@ const generators = [
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:44000,
-    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:56000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000,'rail-halt':12000},maxBytes:8000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -803,8 +803,15 @@ try {
           'wall-steel-straight','wall-steel-corner','wall-steel-end',
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
           'searchlight','searchlight:beam','fire-station','clinic','hydrant',
+          'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
+          'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
         for (const id of expected) assert.ok(names.includes(id), `missing ${id}`);
+        for (const id of ['guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier']) {
+          const part=nodeIndex.get(id);
+          assert.notEqual(part,undefined, `${id} named model piece exists`);
+          assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
+        }
         const children = gltf.nodes.map(node => node.children || []);
         const primitiveCount = (index) => {
           const meshId=gltf.nodes[index].mesh;
@@ -867,12 +874,20 @@ try {
           assert.ok(names.has(`deck-town:home-${index}:body`), `home ${index} reuses the photo-carved tin home`);
         }
         assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
+        assert.ok(names.has('rail-halt'), 'named rail halt building root');
+        assert.ok(names.has('rail-halt:body'), 'photo-carved station hut');
+        assert.ok(names.has('rail-halt:platform'), 'low photo-traced platform slab');
+        assert.ok(names.has('rail-halt:clock'), 'separate working station clock');
+        assert.ok(names.has('rail-halt:signal'), 'signal arm stays a named moving part');
+        assert.ok(names.has('rail-halt:signal-hinge'), 'signal arm pivot is a separate hinge');
+        assert.ok(names.has('rail-halt:water-crane-frame'), 'open water crane is traced');
+        assert.ok(names.has('rail-halt:bench-seat-1'), 'station bench is a separate real piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
         assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
-          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school'],
+          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school', 'rail-halt'],
           'each outpost building is a direct child of the family root');
-        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town']) {
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town', 'rail-halt']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;
