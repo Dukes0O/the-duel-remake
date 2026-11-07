@@ -145,7 +145,7 @@ for n in ids:
  size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
- if n=='forge':continue
+ if n in ('forge','workshop'):continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -205,12 +205,6 @@ for n in ids:
   beam('Crane top beam',(-w*.42,9,-1),(w*.42,9,-1),.42,steel,b)
   for x in (-w*.39,w*.39):beam('Crane diagonal',(x,5,-1),(x,9,-1),.16,tin,b)
   beam('Magnet cable',(1.4,8.9,-1),(1.4,3.2,-1),.055,dark,b);cyl('Scrap magnet',(1.4,3,-1),.8,.45,steel,16,b);tube('Magnet coil',(1.4,3,-1),.57,.10,paint,b)
- if n=='workshop':
-  # Two post service lift and a recognizable low car silhouette inside the bay.
-  for x in (-3.6,3.6):beam('Lift column',(x,.25,-2),(x,3.8,-2),.2,steel,b);beam('Lift pad',(x,3.55,-2),(x,3.55,1.6),.18,tin,b)
-  body=box('Workshop car lower body',(0,1.8,0),(4.8,1.05,2.0),paint,.32,b)
-  cab=box('Workshop car cabin',(0,2.55,.1),(2.4,.9,1.7),steel,.32,b)
-  for x in (-1.5,1.5):tube('Workshop car tyre',(x,1.2,-.85),.38,.14,dark,b);tube('Workshop car tyre',(x,1.2,.85),.38,.14,dark,b)
  if n=='motor-pool':
   for bay in range(4):
    x=-w*.37+bay*(w*.74/3);beam('Numbered bay divider',(x,.1,z0),(x,4.9,z0),.17,steel,b)
@@ -277,22 +271,53 @@ fire_mesh.face([(-2.07,3.94,fire_z),(2.09,3.94,fire_z),(2.09,.67,fire_z),(-2.07,
 forge_lamp=fire_mesh.finish('forge:lamp',{'fire':forge_glow});parent_keep(forge_lamp,forge_root)
 # A dark inner arch sits behind the photo ember so the cut reads as an opening.
 box('Forge furnace inner shadow',(0,2.35,-5.35),(3.95,3.3,.14),dark,.12,forge_root)
-# The two flat photo slabs hid the gantry from the road and the yard from
-# above. The open welded frame, separate magnet and raised car stacks remain.
-
-# Workshop: the photo front remains over the deep bay, lift and car. Remove
-# its old roof-photo plate so the shaped roof framing reads from above.
-work_front=Photo(tex/'workshop-front.jpg')
-work_solid=photo_tidy(~work_front.sky([(12,12)],grey=26),2)
-work_loops=photo_trace(work_solid,(0,0,work_front.w,work_front.h),tolerance=2.2,min_area=90)
-if not work_loops:raise RuntimeError('photo outline missing for workshop')
-work_mesh=PhotoMesh()
-photo_slab(work_mesh,'workshop-front',work_front,work_loops,
- lambda px,py,d:((px-256)*.043,(270-py)*.037,d-7.5),-.06,.10,wall_scale=.03)
-work_front.bleed(work_solid,passes=5)
-work_mesh.finish('workshop photo-traced open bays',{'workshop-front':work_front.material()})
-for obj in bpy.context.scene.objects:
- if obj.name=='workshop photo-traced open bays':parent_keep(obj,building_roots['workshop'])
+# Workshop: carve the photographed shed with open bays. The lift car is a
+# separate photo piece inside the measured opening, with a restrained solid
+# body behind the side photograph to give it depth at three-quarter view.
+workshop_root=building_roots['workshop']
+def workshop_keep(x,y,z):
+ bay=(np.abs(x+4.0)<2.05)|(np.abs(x)<2.05)|(np.abs(x-4.0)<2.05)
+ return ~((bay)&(y<4.7))
+workshop_table={
+ 'photos':{'side':'workshop-side.jpg','front':'workshop-front.jpg','rear':'workshop-rear.jpg','top':'workshop-roof.jpg'},
+ 'length':15.0,'width':15.0,'height':5.9,
+ 'side':{'start':1940,'end':25,'ground':705},'side_front_on_left':False,
+ 'front':{'centre':256,'ground':228,'scale':15.0/490},
+ 'rear':{'centre':850,'ground':824,'scale':15.0/1380},
+ 'top':{'front':45,'rear':700,'centre':463,'x_scale':15.0/1145},
+ 'cut':{'front':[(30,104,180,228),(181,104,337,228),(338,104,488,228)]},
+ 'keep':workshop_keep,
+ 'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
+ 'voxel':.075,'target':5200}
+workshop_body=carve_object('workshop:body',tex,workshop_table);parent_keep(workshop_body,workshop_root)
+# Two lift posts and cross-pads remain inside the photographed open center bay.
+for x in (-1.15,1.15):
+ beam('Workshop lift post',(x,.18,-4.2),(x,4.15,-4.2),.14,steel,workshop_root)
+ beam('Workshop lift arm',(x,2.25,-4.2),(x,2.25,-2.3),.13,tin,workshop_root)
+# Car body and wheels follow the side photograph's measured position.
+car_z=-3.63
+car_body=box('Workshop car lower body',(0,2.72,car_z),(1.82,.55,3.35),paint,.20,workshop_root)
+car_cab=box('Workshop car roof',(0,3.25,car_z+.12),(1.48,.64,1.72),steel,.20,workshop_root)
+for side in (-1,1):
+ for offset in (-1.0,1.0):
+  tire=tube('Workshop car tyre',(side*.94,2.25,car_z+offset),.36,.14,dark,workshop_root,16,6)
+# Side photo crop forms the visible body side, as a separately named car part.
+work_car_photo=Photo(tex/'workshop-side.jpg');car_mesh=PhotoMesh()
+car_x0,car_y0,car_x1,car_y1=1225,263,1668,433
+car_scale=15.0/(1940-25)
+car_z0=(1940-car_x0)*car_scale-7.5
+car_z1=(1940-car_x1)*car_scale-7.5
+car_y0m=(705-car_y0)*car_scale;car_y1m=(705-car_y1)*car_scale
+car_mesh.face([(-.99,car_y0m,car_z0),(-.99,car_y0m,car_z1),(-.99,car_y1m,car_z1),(-.99,car_y1m,car_z0)],
+ [work_car_photo.uv(car_x0,car_y0),work_car_photo.uv(car_x1,car_y0),work_car_photo.uv(car_x1,car_y1),work_car_photo.uv(car_x0,car_y1)],'photo')
+car_photo_piece=car_mesh.finish('workshop:car-on-lift',{'photo':work_car_photo.material()});parent_keep(car_photo_piece,workshop_root)
+# The front photo contributes the car's face through the open center bay.
+work_front_photo=Photo(tex/'workshop-front.jpg');front_car=PhotoMesh()
+fx0,fy0,fx1,fy1=235,136,301,179;front_scale=15.0/490;front_z=-4.05
+front_car.face([((fx0-256)*front_scale,(228-fy0)*front_scale,front_z),((fx0-256)*front_scale,(228-fy1)*front_scale,front_z),
+                ((fx1-256)*front_scale,(228-fy1)*front_scale,front_z),((fx1-256)*front_scale,(228-fy0)*front_scale,front_z)],
+               [work_front_photo.uv(fx0,fy0),work_front_photo.uv(fx0,fy1),work_front_photo.uv(fx1,fy1),work_front_photo.uv(fx1,fy0)],'front')
+front_car_piece=front_car.finish('workshop:car-front',{'front':work_front_photo.material()});parent_keep(front_car_piece,workshop_root)
 
 # Join each building's fixed geometry before export. The building and lamp
 # nodes stay addressable, while hundreds of small Blender objects collapse
