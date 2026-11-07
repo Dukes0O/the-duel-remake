@@ -163,7 +163,7 @@ def merge_static_meshes(root_obj):
 # All four trucks use the same measured photo and hull pipeline. The fire engine
 # below remains the approved model; the three other silhouettes use the tables.
 from photo_model import Photo, Mesh as PhotoMesh, lathe, trace, slab
-from hull_model import View, occupancy, largest_part, carve_hull
+from hull_model import View, occupancy, largest_part, carve_hull, tyre, wheel_well, headlamp
 import numpy as np
 
 # Measured on the photos, in pixels.
@@ -261,7 +261,8 @@ def attach(obj, parent, gltf_point=(0, 0, 0)):
     obj.location = game_vector(gltf_point) - world_of(parent)
 
 hull = carve_hull('fire-truck:body', [left, right, front, rear, top], fire_materials,
-                  solid, xs, ys, zs, VOXEL, 9000)
+                  solid, xs, ys, zs, VOXEL, 9000,
+                  dark=wheel_well([(axle, WHEEL_R, TRACK_X - TYRE_HALF) for axle in (FRONT_AXLE, REAR_AXLE)]))
 attach(hull, fire_root)
 
 def disc_uv(photo, cx, cy, radius_px, spread=.92):
@@ -285,20 +286,16 @@ for side_name, x in (('left', -TRACK_X), ('right', TRACK_X)):
         spin = pivot('fire-truck:spin-' + suffix, (0, 0, 0))
         attach(spin, steer or fire_root, centre)
         wheel = PhotoMesh()
-        face = disc_uv(side_photo, cx, 665, side_face)
-        lathe(wheel, 'side', (0, 0, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
-              [(-TYRE_HALF, WHEEL_R * .90), (-TYRE_HALF * .8, WHEEL_R), (TYRE_HALF * .8, WHEEL_R), (TYRE_HALF, WHEEL_R * .90)],
-              tread_uv(side_photo, cx, 665, side_face), sides=32,
-              cap_start=('side', lambda a, f, face=face: face(a, f * .90)),
-              cap_end=('side', lambda a, f, face=face: face(a, f * .90)))
-        wheel_obj = wheel.finish('fire-truck:' + suffix, {'side': side_photo.material()})
+        tyre(wheel, 'side', side_photo, cx, 665, side_face, WHEEL_R, TYRE_HALF,
+             'front', front_photo, FRONT_CX - 326, 46, 850, 955)
+        wheel_obj = wheel.finish('fire-truck:' + suffix, {'side': side_photo.material(), 'front': front_photo.material()})
         attach(wheel_obj, spin, centre)
 
 # Axles join the wheels under the frame.
 axle_mesh = PhotoMesh()
 for axle in (FRONT_AXLE, REAR_AXLE):
     lathe(axle_mesh, 'side', (0, WHEEL_R, axle), (1, 0, 0), (0, 0, 1), (0, 1, 0),
-          [(-TRACK_X, .055), (TRACK_X, .055)], tread_uv(side_photo, 325, 665, 60), sides=12)
+          [(-TRACK_X + TYRE_HALF * .5, .055), (TRACK_X - TYRE_HALF * .5, .055)], tread_uv(side_photo, 325, 665, 60), sides=12)
 axle_obj = axle_mesh.finish('fire-truck:axles', {'side': side_photo.material()})
 attach(axle_obj, fire_root)
 
@@ -323,21 +320,19 @@ for lamp_side, px in (('left', 1028), ('right', 504)):
     lens = PhotoMesh()
     x = (FRONT_CX - px) * END_S
     y = (FRONT_GROUND - 610) * END_S
-    lathe(lens, 'lens', (0, 0, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0), [(.02, .118), (-.012, .125)],
-          lambda index, distance, radius, angle, px=px: front_photo.uv(px - math.cos(angle) * 46, 610 - math.sin(angle) * 46),
-          sides=20, cap_end=('lens', disc_uv(front_photo, px, 610, 46, 1)))
-    lens_obj = lens.finish('fire-truck:headlamp-' + lamp_side, {'lens': lamp})
-    attach(lens_obj, lamp_group, (x, y, Z0 + (168 - SIDE_FRONT) * SIDE_S))
+    headlamp(lens, 'front', 'bulb', front_photo, px, 610, 46, 46 * END_S)
+    lens_obj = lens.finish('fire-truck:headlamp-' + lamp_side, {'front': front_photo.material(), 'bulb': lamp})
+    attach(lens_obj, lamp_group, (x, y, Z0 + (140 - SIDE_FRONT) * SIDE_S))
 
 TRUCK_TABLES = {
     # Hand-measured from the side/end/top crops. Each row stores the pixel
     # landmarks first; metre values are derived below from the measured span.
-    'water-tanker': dict(length=9.0,width=2.62,height=3.30,side=(24,1045,458,[190,705,858],370,82),
-        front=(222,451,350),rear=(245,490,360),top=(50,895,257,330),dual=False,chassis_px=48,target=6800),
-    'supply-truck': dict(length=8.2,width=2.55,height=3.00,side=(28,930,450,[185,665,790],365,78),
-        front=(222,453,296),rear=(300,498,420),top=(50,900,255,320),dual=False,chassis_px=46,target=6800),
-    'tow-rig': dict(length=8.2,width=2.55,height=2.95,side=(28,965,456,[180,690,830],400,84),
-        front=(222,454,296),rear=(245,500,350),top=(50,900,255,320),dual=True,chassis_px=54,target=6000),
+    'water-tanker': dict(length=7.8,width=2.6,height=3.1,side=(26,1064,438,[154,767,905],363,75),
+        front=(228,441,336),rear=(245,490,360),top=(50,895,257,330),dual=False,chassis_px=48,target=6800,lamps=dict(left=(131,266,21),right=(328,266,21),x=.762,y=1.355,z=.21,radius=.155)),
+    'supply-truck': dict(length=6.6,width=2.65,height=3.0,side=(30,930,443,[166,657,795],370,73),
+        front=(158,466,362),rear=(300,498,420),top=(50,900,255,320),dual=False,chassis_px=46,target=6800,lamps=dict(left=(280,272,21),right=(280,272,21),x=.893,y=1.42,z=.35,radius=.155)),
+    'tow-rig': dict(length=6.9,width=2.68,height=3.5,side=(27,965,486,[168,689,841],408,78),
+        front=(192,493,365),rear=(245,500,350),top=(50,900,255,320),dual=True,chassis_px=54,target=6000,lamps=dict(left=(317,326,23),right=(71,326,23),x=.903,y=1.226,z=.23,radius=.169)),
 }
 
 def build_photo_truck(identifier, spec):
@@ -423,13 +418,14 @@ def build_photo_truck(identifier, spec):
     face_materials={'side':side_photo.material(),'front':front_photo.material(),
         'rear':rear_photo.material(),'overhead':top_photo.material()}
     root_obj=pivot(identifier,(0,0,0));TRUCKS[identifier]=root_obj
-    body=carve_hull(identifier+':body',hull_views,face_materials,solid,xs,ys,zs,voxel,spec['target'])
+    body=carve_hull(identifier+':body',hull_views,face_materials,solid,xs,ys,zs,voxel,spec['target'],
+        dark=wheel_well([(axle,wheel_r,track-tyre_half) for axle in axles]))
     attach(body,root_obj)
 
     # Round wheels are measured from the photo and placed at ground height.
     for axle_index,axle in enumerate(axles):
         axle_tag='front' if axle_index==0 else f'rear-{axle_index}'
-        cylinder(identifier+':axle-'+axle_tag,(0,wheel_r,axle),.07,track*2+tyre_half*2,dark_metal,'X',20)
+        cylinder(identifier+':axle-'+axle_tag,(0,wheel_r,axle),.07,track*2-tyre_half,dark_metal,'X',20)
         for side,label in ((-1,'left'),(1,'right')):
             x=side*track
             positions=[x]
@@ -445,22 +441,22 @@ def build_photo_truck(identifier, spec):
                 else:
                     attach(spin,root_obj,center)
                 wheel=PhotoMesh()
-                face=disc_uv(side_photo,axle_px[axle_index],wheel_y,wheel_r_px,.84)
-                tread=lambda index,distance,radius,angle,cx=axle_px[axle_index]: side_photo.uv(
-                    cx-math.cos(angle)*wheel_r_px*.84,wheel_y-math.sin(angle)*wheel_r_px*.84)
-                lathe(wheel,'side',(0,0,0),(1,0,0),(0,0,1),(0,1,0),
-                    [(-tyre_half,wheel_r*.90),(-tyre_half*.8,wheel_r),
-                     (tyre_half*.8,wheel_r),(tyre_half,wheel_r*.90)],tread,sides=32,
-                    cap_start=('side',lambda a,f,face=face:face(a,f*.90)),
-                    cap_end=('side',lambda a,f,face=face:face(a,f*.90)))
-                tire=wheel.finish(f'{identifier}:wheel-{axle_tag}-{label}',{'side':side_photo.material()})
+                # The nearest tyre in the end photo, head on: only its lower part, below the bumper.
+                tyre(wheel,'side',side_photo,axle_px[axle_index],wheel_y,wheel_r_px,wheel_r,tyre_half*(.72 if len(positions)>1 else 1),
+                     'front',front_photo,end_cx-track/end_scale,tyre_half/end_scale*.9,
+                     end_ground-wheel_r/end_scale*.9,end_ground-wheel_r/end_scale*.08)
+                tire=wheel.finish(f'{identifier}:wheel-{axle_tag}-{label}'+(f'-dual-{dual_index}' if len(positions)>1 else ''),
+                                  {'side':side_photo.material(),'front':front_photo.material()})
                 attach(tire,spin,center)
 
     lamp_group=pivot(identifier+':lamp',(0,0,0));attach(lamp_group,root_obj)
-    lamp_x=track*.82; lamp_y=max(.85,wheel_r*1.48); lamp_z=z0+.15
+    lamps=spec['lamps']
     for side,label in ((-1,'left'),(1,'right')):
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.12,location=game_vector((side*lamp_x,lamp_y,lamp_z)))
-        lens=bpy.context.object;lens.name=identifier+':headlamp-'+label;lens.data.materials.append(lamp);parent_keep_world(lens,lamp_group)
+        px,py,radius_px=lamps[label]
+        lens=PhotoMesh()
+        headlamp(lens,'front','bulb',front_photo,px,py,radius_px,lamps['radius'])
+        lens_obj=lens.finish(identifier+':headlamp-'+label,{'front':front_photo.material(),'bulb':lamp})
+        attach(lens_obj,lamp_group,(side*lamps['x'],lamps['y'],z0+lamps['z']-.03))
 
     if identifier=='supply-truck':
         # The loaded truck is carved from its own four measured views. Its

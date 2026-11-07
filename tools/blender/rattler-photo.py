@@ -31,7 +31,7 @@ import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(script.parent))
 from photo_model import Mesh, Photo, lathe
-from hull_model import View, occupancy, largest_part, carve_hull
+from hull_model import View, occupancy, largest_part, carve_hull, wheel_well
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -151,7 +151,8 @@ vehicle['units'] = 'metres'
 vehicle['forward'] = '+Z'
 vehicle['up'] = '+Y'
 
-body = carve_hull('rattler body', [side_a, side_b, front_v, rear_v, top_v], materials, solid, xs, ys, zs, VOXEL, 19000)
+body = carve_hull('rattler body', [side_a, side_b, front_v, rear_v, top_v], materials, solid, xs, ys, zs, VOXEL, 19000,
+                  dark=wheel_well([(FRONT_AXLE, FRONT_R, FRONT_X - FRONT_W / 2), (REAR_AXLE, REAR_R, REAR_X - REAR_W / 2)]))
 body.parent = vehicle
 
 def disc(cx, cy, radius_px):

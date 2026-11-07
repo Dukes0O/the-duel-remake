@@ -1,6 +1,7 @@
 import {GOODS} from './content/goods.js';
 import {RECIPES} from './content/recipes.js';
 import {hasTownDeedPerk} from './town-deeds.js';
+import {registerTownCommand} from './town-commands.js';
 
 const definitions = new Map(GOODS.map(good=>[good.id,good]));
 const placeKey = ({regionId='scablands',x,z}) => {
@@ -22,6 +23,12 @@ export function storeGood(town,cell,goodId,amount) {
   stock.goods[goodId]=(stock.goods[goodId]||0)+amount;
   return {ok:true,amount:stock.goods[goodId]};
 }
+registerTownCommand('deliverTownGoods',(town,command)=>{
+  if(!command.cell||!command.goods||typeof command.goods!=='object'||Array.isArray(command.goods))return {ok:false,message:'Choose a store and list the goods being delivered.'};
+  for(const [id,amount] of Object.entries(command.goods)) if(!definitions.has(id)||!Number.isFinite(amount)||amount<=0)return {ok:false,message:'A delivery needs known goods and amounts above zero.'};
+  for(const [id,amount] of Object.entries(command.goods))storeGood(town,command.cell,id,amount);
+  return {ok:true,message:'The goods have been delivered to the store.'};
+});
 
 export function takeGood(town,cell,goodId,amount) {
   if (!definitions.has(goodId)||!Number.isFinite(amount)||amount<=0) return {ok:false,message:'Choose a known good and an amount above zero.'};

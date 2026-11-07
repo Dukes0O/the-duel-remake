@@ -35,6 +35,7 @@ export function townBuildMenuModel({buildings=BUILDINGS, tab='roads', unlockedBu
 
 export function townBuildMenuMarkup(model) {
   const tabs=model.tabs.map(tab=>`<button type="button" role="tab" aria-selected="${tab.selected}" data-town-tab="${tab.id}">${tab.label}</button>`).join('');
+  const homeTool=model.tab==='homes'?'<section class="town-home-tool"><h3>Paint home plots</h3><p>Paint a plot to invite a household to build a home there with goods from the nearest store.</p><button type="button" data-town-home-tool="paint">Paint ground for homes</button><button type="button" data-town-home-tool="clear">Clear an empty plot</button></section>':'';
   const entries=model.entries.map(entry=>`<button type="button" class="town-build-entry${entry.locked?' is-locked':''}" data-town-build="${entry.id}" ${entry.locked?'disabled aria-disabled="true"':''}><strong>${entry.name}</strong><span>Needs: ${entry.needs}</span><span>${entry.does}</span>${entry.reason?`<span class="town-build-reason">${entry.reason}</span>`:''}</button>`).join('');
-  return `<nav class="town-build-tabs" role="tablist" aria-label="Build plans">${tabs}</nav><div class="town-build-list">${entries}</div>`;
+  return `<nav class="town-build-tabs" role="tablist" aria-label="Build plans">${tabs}</nav>${homeTool}<div class="town-build-list">${entries}</div>`;
 }
