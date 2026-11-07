@@ -288,6 +288,46 @@ for n in ids:
    parent_keep(magnet,hook_group)
    coil=tube('scrapyard:magnet-coil',(trolley_x,4.78,-1.30),.62,.12,paint,hook_group,24,8)
   crane_photo.bleed(~crane_sky)
+  # A low, open wire fence with a broad road gate; its posts are planted at
+  # the plot edge and every wire meets a post.
+  edge=10.72;fence_y=1.28
+  def fence_run(label,points):
+   for index,(p0,p1) in enumerate(zip(points,points[1:])):
+    dx,dz=p1[0]-p0[0],p1[1]-p0[1]
+    for level,mat,thickness in ((.48,dark,.045),(fence_y,steel,.055)):
+     if abs(dx)>abs(dz):size=(abs(dx)+.14,thickness,thickness)
+     else:size=(thickness,thickness,abs(dz)+.14)
+     bar=box(f'scrapyard:fence-{label}-wire-{index+1}-low' if level<1 else f'scrapyard:fence-{label}-wire-{index+1}-high',
+             ((p0[0]+p1[0])/2,level,(p0[1]+p1[1])/2),size,mat,.008,b)
+  back_x=[-edge+i*(edge*2/8) for i in range(9)]
+  front_x=[x for x in back_x if abs(x)>2.4]
+  side_z=[-edge+i*(edge*2/8) for i in range(9)]
+  for label,xs,z in [('back',back_x,edge),('front',front_x,-edge)]:
+   for index,x in enumerate(xs):
+    box(f'scrapyard:fence-{label}-post-{index+1}',(x,(fence_y+.12)/2,z),(.12,fence_y+.12,.12),steel,.012,b)
+   fence_run(label,[(x,z) for x in xs])
+  for side,x in [('left',-edge),('right',edge)]:
+   for index,z in enumerate(side_z):
+    box(f'scrapyard:fence-{side}-post-{index+1}',(x,(fence_y+.12)/2,z),(.12,fence_y+.12,.12),steel,.012,b)
+   fence_run(side,[(x,z) for z in side_z])
+
+  # Broken stone and clinker sit directly on the ground around the piles and
+  # fence, as the yard photo shows.
+  rubble_spots=[(-9.2,-8.8,.45),(-7.6,-8.5,.62),(7.2,-8.8,.52),(9.3,-7.1,.40),
+                (-9.0,5.6,.56),(8.9,6.8,.48),(-3.5,8.6,.36),(4.5,8.5,.42),
+                (-7.1,-3.5,.35),(7.7,3.8,.37)]
+  for index,(x,z,radius) in enumerate(rubble_spots,1):
+   sides=6;low=[];high=[]
+   for side in range(sides):
+    angle=math.tau*side/sides+index*.19
+    spread=radius*(.78+.22*((side+index)%3)/2)
+    low.append((x+math.cos(angle)*spread,0,z+math.sin(angle)*spread))
+    high.append((x+math.cos(angle)*spread*.72,radius*(.26+.28*((side+index)%4)/3),z+math.sin(angle)*spread*.72))
+   verts=low+high;faces=[tuple(reversed(range(sides))),tuple(range(sides,2*sides))]
+   for side in range(sides):faces.append((side,(side+1)%sides,(side+1)%sides+sides,side+sides))
+   mesh=bpy.data.meshes.new(f'scrapyard rubble {index:02d}');mesh.from_pydata([town.game_vector(v) for v in verts],[],faces)
+   mesh.materials.append(dark if index%3 else steel);mesh.update()
+   stone=bpy.data.objects.new(f'scrapyard:rubble-{index:02d}',mesh);bpy.context.collection.objects.link(stone);parent_keep(stone,b)
 
   continue
  if n=='motor-pool':

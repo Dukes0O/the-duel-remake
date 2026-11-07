@@ -124,6 +124,9 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **A horizontal beam turns upright.** `to_track_quat('Z', 'Y')` is ambiguous
+  when the beam points along Blender Y. Use an axis-aligned box or a different
+  non-parallel up axis, then print and check its bounds.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.
