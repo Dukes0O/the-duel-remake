@@ -759,13 +759,13 @@ for index, x in enumerate((-3.5, 0, 3.5), 1):
 
 # Carve one photo-built home, then make four linked, slightly varied copies.
 # Its door and window stay in the photographs; the ladder is a separate part.
-HOME_START, HOME_END, HOME_GROUND, HOME_TOP = 42, 979, 480, 25
+HOME_START, HOME_END, HOME_GROUND, HOME_TOP = 42, 979, 462, 80
 HOME_LENGTH = 6.0
 HOME_SCALE = HOME_LENGTH / (HOME_END - HOME_START)
 HOME_HEIGHT = (HOME_GROUND - HOME_TOP) * HOME_SCALE
-HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 28}
-HOME_REAR = {'centre': 512, 'ground': 650, 'top': 28}
-HOME_WIDTH = 3.0
+HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 28, 'top_height': HOME_HEIGHT}
+HOME_REAR = {'centre': 512, 'ground': 650, 'top': 28, 'top_height': HOME_HEIGHT}
+HOME_WIDTH = 2.5
 home_table = {
     'photos': {'side': 'deck-town-home-side.jpg', 'front': 'deck-town-home-front.jpg',
                'rear': 'deck-town-home-rear.jpg', 'top': 'deck-town-home-top.jpg'},
@@ -802,11 +802,11 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     deck_parts.append(body)
 
     # The ladder leans onto the photographed side wall and its last rung meets the sill.
-    ladder = town.beam(prefix + ':ladder-left', (1.52, .04, -1.30), (1.52, 1.54, -1.30), .075, materials['weathered-plank'])
+    ladder = town.beam(prefix + ':ladder-left', (1.27, .04, -1.50), (1.27, 1.54, -1.50), .075, materials['weathered-plank'])
     ladder.parent = home
     for rung in range(1, 7):
         y = rung * .20
-        rung_obj = town.beam(prefix + f':ladder-rung-{rung}', (1.52, y, -1.52), (1.52, y, -1.08), .045, materials['rusted-steel'])
+        rung_obj = town.beam(prefix + f':ladder-rung-{rung}', (1.27, y, -1.72), (1.27, y, -1.28), .045, materials['rusted-steel'])
         rung_obj.parent = home
         deck_parts.append(rung_obj)
     deck_parts.append(ladder)
