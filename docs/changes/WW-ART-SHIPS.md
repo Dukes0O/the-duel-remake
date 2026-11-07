@@ -220,6 +220,19 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 
 - No prior hull or cabin sources were removed; the cabin photo sets are committed for the next point.
 
+## Round 13, step 4 — Sister cabins (7 November 2026)
+
+Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold's 15 x 10 x 6 m two-deck block from their measured four-view photos. The Good Hope reads as a closed, weathered dark wheelhouse with its mast on the roof; the Marigold reads as a rusted two-deck block with boarded windows, though her open bridge-wing gaps and texture transitions remain coarse in the close render. From the exported fleet GLB, the Patience is 12,436 triangles, the Good Hope 9,364, the Marigold 8,959, and the fleet total is 30,759 triangles; the file is 1,836,072 bytes.
+
+- Retained `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png` for Claude's look review. Both use car-height cameras about 40 m from the cabin, three-quarter from the bow and stern respectively.
+- `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. An initial run against the family export missed the fleet drift part; rebuilding with `--stage fleet` restored it, and the final run passed.
+- `tools/test-repo-hygiene.mjs`: passed; size targets remain advisory. Lane tier, build, browser checks and race fingerprints were not run for this art-only change. Changed assertions: none. Race fingerprints: none. Claude should review the bridge-wing openings, cabin texture transitions, and mast placement in both retained renders.
+
+### Removed
+
+- Removed the Good Hope's and the Marigold's generic chart-room cubes, roofs, windows and doors; replaced them with their single photo-carved `upperworks` parts.
+- Kept the source photographs at full resolution. The packed review export caps photo projections at 512 px and cabin images at 320 px to stay below the whole-file budget.
+
 ## Round 13, step 3 — Grounded fleet (7 November 2026)
 
 - Set each root at its map x/z place. Added the Good Hope's 4-degree starboard list and 0.5 m bow drop, and the Marigold's 6-degree port list and 1 m stern drop. Each ship has its own trailing anchor chains and banked sand drift. The Marigold has an exposed 18 m shaft and propeller and half her rail is gone.

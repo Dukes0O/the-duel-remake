@@ -116,6 +116,12 @@ if args.render_view:
     if args.render_view == 'whole':
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(root / '.qa-dist/check-fleet.png')
+    elif args.render_view == 'hope':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / '.qa-dist/check-good-hope.png')
+    elif args.render_view == 'marigold':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / '.qa-dist/check-marigold.png')
     else:
         scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
@@ -466,29 +472,37 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 image_node.image=bpy.data.images.load(str(recoloured),check_existing=True)
             sister_hull.material_slots[slot_index].link='OBJECT'
             sister_hull.material_slots[slot_index].material=tint
-        if args.stage != 'fleet':
-            for obj in list(scene.objects):
-                if obj.parent==r and any(key in obj.name for key in (
-                    'chart-room','chart-window','chart-door')):
-                    bpy.data.objects.remove(obj,do_unlink=True)
+        for obj in list(scene.objects):
+            if obj.parent==r and any(key in obj.name for key in (
+                'chart-room','chart-window','chart-door')):
+                bpy.data.objects.remove(obj,do_unlink=True)
         def sister_cabin_table(ship):
             prefix='good-hope' if ship=='ship-good-hope' else 'marigold'
             if prefix=='good-hope':
-                length_px=(33,604); ground=411; roof=126
-                front=(320,623,126); rear=(320,624,123)
-                top=(16,625,213,10.0/310.0)
-                cabin_height=9.0
+                # Grid measurements from .qa-dist/grid-good-hope-*.png.
+                # Side (640x427): body x=31..589, deck y=411, bridge roof y=96.
+                # Bow: centre=320, deck=624, roof=166. Stern: centre=320, deck=624, roof=105.
+                # Plan (427x640): bow/stern y=52/621, centre x=213; beam x=112..313.
+                length_px=(31,589); ground=411
+                front=(320,624,166); rear=(320,624,105)
+                top=(52,621,213,9.0/(313-112))
+                cabin_length=14.0; cabin_width=9.0; cabin_height=9.0
             else:
-                length_px=(12,620); ground=208; roof=39
-                front=(320,339,18); rear=(320,306,18)
-                top=(15,627,290,10.0/380.0)
-                cabin_height=5.5
+                # Grid measurements from .qa-dist/grid-marigold-*.png.
+                # Side (640x213): body x=12..624, deck y=205, bridge roof y=43.
+                # Bow (640x352): centre=320, deck=337, roof=83. Stern (640x320):
+                # centre=320, deck=301, roof=65. Plan (581x640): bow/stern
+                # y=51/610, centre x=290; beam x=160..420.
+                length_px=(12,624); ground=205
+                front=(320,337,83); rear=(320,301,65)
+                top=(51,610,290,10.0/(420-160))
+                cabin_length=15.0; cabin_width=10.0; cabin_height=6.0
             return {
                 'photos': {'side':f'{prefix}-upperworks-side.jpg',
                            'front':f'{prefix}-upperworks-bow.jpg',
                            'rear':f'{prefix}-upperworks-stern.jpg',
                            'top':f'{prefix}-upperworks-top.jpg'},
-                'length':16.6,'width':10.0,'height':cabin_height,
+                'length':cabin_length,'width':cabin_width,'height':cabin_height,
                 'forward':-1,'side_front_on_left':True,
                 'side':{'start':length_px[0],'end':length_px[1],'ground':ground},
                 'front':{'centre':front[0],'ground':front[1],'top':front[2],
@@ -497,25 +511,38 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                         'top_height':cabin_height},
                 'top':{'front':top[0],'rear':top[1],'centre':top[2],
                        'x_scale':top[3]},
+                # The end photos show open bridge-wing bays beside the cabin.
+                'cut': ({'front':[(0,175,95,315),(545,175,640,315)],
+                         'rear':[(0,145,75,250),(565,145,640,250)]}
+                        if prefix=='marigold' else {}),
                 'grey':26,'tolerance':36,'bleed_tolerance':24,
                 'voxel':.14,'target':2600,
                 'mask_dir':str(raw/'masks'/prefix),
             }
-        if args.stage != 'fleet':
-            table=sister_cabin_table(ident)
-            cabin=carve_object(ident+':upperworks',tex,table)
-            cabin.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
-            cabin.location=gv((-25.5,deck,0)); cabin['part']=ident+':upperworks'
-            parent(cabin,r)
+        table=sister_cabin_table(ident)
+        cabin=carve_object(ident+':upperworks',tex,table)
+        # Four measured photographs per cabin are enough at this scale;
+        # keep source JPEGs intact and pack 320 px working copies.
+        for photo in table['_photos'].values():
+            image=photo.image
+            scale=min(1.0,320/max(image.size))
+            if scale < 1:
+                image.scale(max(1,round(image.size[0]*scale)),
+                            max(1,round(image.size[1]*scale)))
+                image.pack()
+        cabin.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
+        cabin.location=gv((-25.5,deck,0)); cabin['part']=ident+':upperworks'
+        parent(cabin,r)
         if args.stage != 'fleet' and ident=='ship-good-hope':
             funnel=cylinder('good-hope-rusted-funnel',(-29,13.1,0),1.05,4.2,rust,ident,16)
             parent(funnel,r)
             cap=cylinder('good-hope-funnel-cap',(-29,15.25,0),1.18,.20,iron,ident,16)
             parent(cap,r)
-            mast=cylinder('good-hope-short-mast',(-17,13.5,0),.09,3.2,steel,ident,8)
+        if ident=='ship-good-hope':
+            mast=cylinder('good-hope-short-mast',(-25.5,14.6,-6.5),.09,3.2,steel,ident,8)
             parent(mast,r)
             for side in (-1,1):
-                stay=beam(f'good-hope-mast-stay-{side}',(-17,12.2,0),(-18,15.0,side*1.6),.045,iron,ident)
+                stay=beam(f'good-hope-mast-stay-{side}',(-25.5,13.0,-6.5),(-25.5,16.0,-6.5+side*1.6),.045,iron,ident)
                 parent(stay,r)
         elif args.stage != 'fleet':
             funnel=cylinder('marigold-weathered-funnel',(-29,10.9,0),.95,3.0,rust,ident,16)
@@ -1122,6 +1149,14 @@ def add_lighting():
 
 def render_imported_review():
     # Export first, clear the authored scene, then import exactly the GLB under review.
+    # The distant review view needs no projection above 512 px, which keeps the
+    # complete family within the packed GLB budget.
+    for image in bpy.data.images:
+        if image.source == 'FILE' and max(image.size) > 512:
+            scale=512/max(image.size)
+            image.scale(max(1,round(image.size[0]*scale)),
+                        max(1,round(image.size[1]*scale)))
+            image.pack()
     town.export_glb(out)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     review_scene = bpy.context.scene
@@ -1171,8 +1206,8 @@ def render_imported_review():
 
     add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
     review_scene.objects['review-camera-whole'].data.lens = 24
-    add_camera('review-camera-hope', (16, 1.2, -435), (-23, 4, -415), 40, (1200, 900))
-    add_camera('review-camera-marigold', (27, 1.2, -417), (67, 4, -440), 40, (1200, 900))
+    add_camera('review-camera-hope', (-73, 10, -418), (-45, 9, -389.5), 40, (1200, 900))
+    add_camera('review-camera-marigold', (17, 13, -443), (45, 9, -414.5), 40, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
     add_camera('review-camera-deck-good-hope', (-22.5, 5.7, -415), (-37.5, 12.0, -415), 35, (1200, 900))
     add_camera('review-camera-deck-marigold', (68.5, 5.7, -440), (53.5, 8.3, -440), 35, (1200, 900))
