@@ -266,3 +266,4 @@ Generated with OpenAI image generation on 6 November 2026. Each image shows one 
 - `machines2-pipe-truck-views.jpg`: flatbed pipe carrier with an unloading frame.
 - `machines2-roller-views.jpg`: single-drum road roller with rear tires.
 - `machines2-loader-views.jpg`: articulated wheel loader with raised arms and scoop.
+- `machines2-paver-views.jpg`: tracked asphalt paver with front hopper and rear screed.
