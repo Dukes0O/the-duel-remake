@@ -1,34 +1,44 @@
-# TOWN-ART-BORER — round 5
+﻿# TOWN-ART-BORER — round 6
 
-Status: candidate ready for art review. Kind: art. Flag: none; the machine is
-not wired into the game.
+Status: round 6 candidate committed for Claude's art review. Kind: art. The
+machine is not wired into the game.
 
-## Settled design
+## Changes
 
-- Carve the 30 m shield tube from clean, matching side, front, rear and overhead
-  photos. Keep the cutter face on its rotating `borer:head` pivot.
-- Join the rear gantry to the tube with an overlapping coupling plate and side
-  girders. Keep `borer:belt` and `borer:lamp` as separate named assemblies.
-- Use the card's 40,000 triangle and 4 MB family limits. No frame timing applies
-  to this art round.
+- Rounded the carved tube with `round: 2.2` and constrained the cutter face
+  photo to its forged rim. Restored the shadowed central hub region after the
+  photo's background flood reached it through the cutter pockets.
+- Removed the separate shaft boss and flange cylinders that obscured the photo
+  hub. Raised the gripper shoes and contact pads onto the tube shell.
+- Kept the tube and cutter placement. The gantry rails sit on Y=0, matching the
+  tube feet; the front coupling plate overlaps the tube end.
+- The dark post in the side view was the low gripper shoe at the tube's lower
+  quadrant. Its assembly was moved up against the shell. The pale sheet at the
+  cutter rim was traced studio background beyond the cutter's forged rim; the
+  radial mask clips it. The dark central curved shape came from the separate
+  shaft cylinders crossing the photographed hub; those cylinders were removed.
 
 ## Evidence and checks
 
-- Blender built and re-imported the GLB. It reports 31,014 triangles and
-  3,489,492 bytes. The export script's ground and cutter-pivot checks passed.
-- The comparison sheet is `docs/board/looks/town-art-borer/round-5.jpg`
-  (137,371 bytes); its scores and visual verdict are beside it.
+- Blender built and re-imported the GLB. Its internal placement checks passed:
+  tube longest axis is Z, cutter pivot aligns to the tube front, and no mesh
+  falls below Y=0. Export reports 30,146 triangles and 3,434,992 bytes.
 - `node tools/test-blender-output.mjs`: passed, 317 checks.
-- `node tools/test-repo-hygiene.mjs`: passed placement checks; size targets are advisory.
-- `node tools/test-review-evidence.mjs`: 7/9 passed; the same two unrelated failures reproduced on rerun. The existing town-art-power round-4 JPG lacks its matching note, and audio analysis cannot launch `ffmpeg` (`EPERM`). The round-5 JPG publication check passed.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 13 suites passed, 1 failed, 33 not run. The run stopped on its first failure; its failing suite name was not captured in the returned log.
-- `npm.cmd run build`: passed (746 modules). Existing large-chunk and mixed dynamic/static import warnings remain.
-- `node tools/build-status.mjs`: wrote the session status snapshot; full tier remains stale for this candidate.
-- No test assertions or replay fingerprints changed. No browser or game look
-  check applies to this un-wired art asset.
+- `node tools/test-repo-hygiene.mjs`: passed placement; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed, repeated once.
+  The retained-size subtest expects the deleted `round-5.jpg` and fails with
+  ENOENT. The audio subtest cannot start `ffmpeg` (`EPERM`). The round-6 JPG
+  publication check passed both runs. No assertion was changed.
+- Review sheet: `docs/board/looks/town-art-borer/round-6.jpg` (356,589 bytes).
+- Claude should inspect the cutter's front silhouette and hub, the gripper shoes
+  from the side, and the rail height and coupling contact. Browser and game-look
+  checks do not apply because the asset is not wired into the game.
+- No lane tier or build run, per the art-card instructions. No race fingerprint
+  applies.
 
 ## Removed
 
-- Replaced the round-4 borer GLB with the round-5 export. The prior binary is
-  retained only in Git history.
-- No old recipe, runtime path, or test behavior was removed.
+- Replaced the round 5 GLB and review sheet with the round 6 versions; deleted
+  `round-5.jpg` and `round-5-review.md` as requested.
+- Removed the separate photo-obscuring shaft boss and flange meshes. No old
+  runtime path or test behavior was removed.

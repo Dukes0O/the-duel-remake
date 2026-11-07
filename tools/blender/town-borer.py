@@ -82,11 +82,11 @@ lift_if_dark(cutter_photo)
 cutter_sky=cutter_photo.sky([(8,8),(cutter_photo.w-9,8),(8,cutter_photo.h-9),(cutter_photo.w-9,cutter_photo.h-9)],tolerance=30,grey=28)
 cutter_mask=(~cutter_sky)&(cutter_photo.rgb().mean(axis=2)>42)
 cutter_mask[int(cutter_photo.h*.98):,:]=False
-# The photo contains a dark curved mark over the shaft hub. Remove its centre
-# from the photo slab; the separate forged flange and boss provide the hub.
 cy,cx=np.ogrid[:cutter_photo.h,:cutter_photo.w]
-hub_radius_px=int(.95/TUBE_DIAMETER*cutter_photo.w/.92)
-cutter_mask[(cx-cutter_photo.w/2)**2+(cy-cutter_photo.h/2)**2<hub_radius_px**2]=False
+# Restore the shadowed central hub, which the edge flood can reach through the
+# deep cutter pockets in the generated photo.
+hub_radius_px=int(.72/TUBE_DIAMETER*cutter_photo.w/.92)
+cutter_mask[(cx-cutter_photo.w/2)**2+(cy-cutter_photo.h/2)**2<hub_radius_px**2]=True
 # The traced silhouette can include pale studio wedges around the cutter.
 # Keep the photo slab inside the forged outer rim so no background sheet floats.
 rim_radius_px=int(5.10/TUBE_DIAMETER*cutter_photo.w/.92)
@@ -128,12 +128,6 @@ def part_torus(name, parent, center, major, minor, mat):
 # real depth behind the photo-cut openings.
 part_torus('Cutter outer rolled rim',head,(0,0,-.05),5.1,.16,steel)
 part_torus('Cutter inner bearing rim',head,(0,0,.12),5.28,.085,tin)
-part_cylinder('Ship propeller shaft flange',head,(0,0,.24),1.28,.62,steel,'z',48)
-part_cylinder('Propeller shaft boss',head,(0,0,.65),.78,.82,tin,'z',40)
-part_cylinder('Shaft end cap',head,(0,0,1.12),.48,.28,steel,'z',32)
-# A broad shallow cap sits forward of the photo slab and keeps the shaft hub
-# legible even where the source photograph's central shadows are deep.
-part_cylinder('Propeller hub face',head,(0,0,-.34),.72,.18,tin,'z',40)
 for i in range(8):
  ang=math.tau*i/8; co,si=math.cos(ang),math.sin(ang)
  part_beam(f'Forged cutter spoke {i+1:02}',head,(co*1.0,si*1.0,.20),(co*5.35,si*5.35,.20),.30,tin)
@@ -155,10 +149,10 @@ for i in range(16):
 for i,z in enumerate((-7.2,-1.8,3.6,8.7)):
  for side in (-1,1):
   x=side*4.75
-  shoe=part_cube(f'Gripper shoe {i+1:02} {side:+}',borer,(x,2.20,z),(1.30,.82,1.65),steel,.10)
-  part_cube(f'Gripper contact pad {i+1:02} {side:+}',borer,(x,2.64,z),(1.24,.20,1.58),tin,.05)
-  part_beam(f'Gripper hydraulic ram {i+1:02} {side:+}',borer,(x,2.82,z-.34),(side*5.35,4.0,z-.34),.18,dark)
-  part_cylinder(f'Ram pin {i+1:02} {side:+}',borer,(x,2.82,z-.34),.18,.34,tin,'x',12)
+  shoe=part_cube(f'Gripper shoe {i+1:02} {side:+}',borer,(x,4.55,z),(1.30,.82,1.65),steel,.10)
+  part_cube(f'Gripper contact pad {i+1:02} {side:+}',borer,(x,4.99,z),(1.24,.20,1.58),tin,.05)
+  part_beam(f'Gripper hydraulic ram {i+1:02} {side:+}',borer,(x,5.17,z-.34),(side*5.35,5.7,z-.34),.18,dark)
+  part_cylinder(f'Ram pin {i+1:02} {side:+}',borer,(x,5.17,z-.34),.18,.34,tin,'x',12)
 
 # Gantry: paired ground rails and crawler wheels, uprights, then a deck whose
 # front edge meets the tube's rear end at Z=+15 m.
