@@ -11,6 +11,7 @@ export function registerTownCommand(name, handler) {
 }
 
 function result(ok, message) { return {ok, message}; }
+const PAINTED_HOME_MESSAGE='That ground is painted for homes. Clear the plot first.';
 function commandDraft(root, journal) {
   const cache=new WeakMap(), rawByProxy=new WeakMap();
   function wrap(target) {
@@ -45,6 +46,8 @@ function placeBuilding(town, command, options) {
   if (!region || !Number.isSafeInteger(command.x) || !Number.isSafeInteger(command.z)) return result(false, 'Choose a place on the map first.');
   if (cellIsReserved(regionId, command.x, command.z, row.width, row.depth)) return result(false, 'That ground is kept clear.');
   for (let dx=0; dx<row.width; dx++) for (let dz=0; dz<row.depth; dz++) {
+    if((town.homePlots||[]).some(plot=>plot.regionId===regionId&&plot.x===command.x+dx&&plot.z===command.z+dz))
+      return result(false,PAINTED_HOME_MESSAGE);
     const found=getTownChunk(regionState,command.x+dx,command.z+dz);
     if (found?.cell.buildingId||found?.cell.roadId) return result(false, 'Something is already built there.');
   }

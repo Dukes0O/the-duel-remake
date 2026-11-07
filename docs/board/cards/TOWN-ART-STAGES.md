@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-stages.py`, `public/assets/models/wasteland/town/stages.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -27,3 +27,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - Street things, each under one cell: `street-lamp` (with `:lamp`), `barrel-fire` (with `:lamp`), `crate-stack`, `barrels`, `washing-line`, `bench`, `bin`, `signpost`, `sandbags`, `junk-pile`, `dead-tree`.
 
 ## Claude answers
+
+Round 5 of 6 (Kyle's limit is six). Merged as the working set: one site now clearly grows from pegs to foundations, frame and cladding, with real timbers on a fixed 3.5 m bay, and the scaffold is the town's best art. Still short: the "nearly done" stage is a very plain box with a flat roof, the foundations lack a deep trench, the barrel fire's flames are cartoonish and the dead tree is stiff. A later pass can improve these.

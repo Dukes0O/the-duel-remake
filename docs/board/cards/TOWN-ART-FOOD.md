@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-food.py`, `public/assets/models/wasteland/town/food.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -31,3 +31,9 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `market-hall` 3x3: a big roof of mismatched tin on steel posts, stalls under it.
 
 ## Claude answers
+
+Soup kitchen, 7 November (Claude): **passes, merged.** It holds together from every side, with an open bay you can look into, a real pot over its fire, benches and a pitched roof that reads from the mayor's view. Short of the photo: the flames are simple cones, and the wall is softer than its photo. The six rounds count per building; the canteen, stall, shopfront, market hall and greenhouse remain.
+
+Market hall, 7 November (Claude): **round 2 passes, merged.** The patched tin roof on its steel frame, the floor, the corner store and the rows of stalls read as a market from the road and from the mayor's view. Short of the photo: the stalls sit dark and small under the roof, and the dark roof bars are heavier than the photo's. The canteen, stall, shopfront and greenhouse remain.
+
+Canteen, 7 November (Claude): **round 9 passes, merged.** A rusty bus, square from the front and true to its side photo, with a serving hatch, a canvas awning on the wall above it and stools beside it. Short of the brief: it has no hand-painted sign yet. The stalls, shopfronts, greenhouse, goat pen and chicken run remain.

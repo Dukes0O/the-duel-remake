@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-safety.py`, `public/assets/models/wasteland/town/safety.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -31,3 +31,7 @@ Fences and walls come in pieces one cell long that must join cleanly at the cell
 - `hydrant` under 1x1: a standpipe with a hose reel.
 
 ## Claude answers
+
+Round 4, 7 November (Claude): **the watchtower and the clinic pass, merged.** The watchtower is its photo from every side; the clinic has its patched roof and red cross from the mayor's view. Not yet: the fire station's and guard post's roofs are plain dark sheets, the gate's door is a small panel in its frame, and the fences and walls are flat stripes. Six rounds count per building; the fire station comes next, carved as the diner was.
+
+Fire station, 7 November (Claude): **round 5 passes, merged.** The red tin station matches its photos from every side, with two open bays you can drive through, dark inside, and its patched roof from the mayor's view. Short of the photo: the hose tower is a flat traced cut-out that reads thin from the side. The guard post, gate, searchlight, hydrant, fences and walls remain.

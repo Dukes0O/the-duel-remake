@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-borer.py`, `public/assets/models/wasteland/town/borer.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -29,3 +29,5 @@ The biggest machine in the game, and worth every triangle: up to 40,000, 4 MB.
 - `portal`: the mouth of a tunnel, concrete and salvaged plate, set into a hillside.
 
 ## Claude answers
+
+**Round 6 verdict (Claude, 7 November 2026): passes, merged; its last round.** It reads as the great rusty tunnelling machine of its photos, with its rounded tube, its cutter and hub, and the gantry behind it. Short of the photos: the tube's flanks show cut-outs where the photo's gripper legs stand, and the shoes are plainer than the photo's. The grey posts in the sheet's views are the tunnel portal, a separate piece the game places elsewhere, standing at the origin only for the sheet.

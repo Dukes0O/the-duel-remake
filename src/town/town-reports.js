@@ -1,6 +1,8 @@
 import {TOWN_EVENT_BY_ID, townEventMatches} from './content/events.js';
 
 const ANSWER_TICKS = 24 * 7;
+const MAX_RESOLVED_REPORTS = 24;
+const MAX_REPORT_EFFECTS = 24;
 
 function reportsFor(town) {
   if (!Array.isArray(town.reports)) town.reports = [];
@@ -18,20 +20,51 @@ export function raiseTownReport(town, eventId, facts = {}) {
   const event = TOWN_EVENT_BY_ID.get(eventId);
   if (!event || !townEventMatches(event, facts)) return {ok: false, message: 'That event does not match the town.'};
   const reports = reportsFor(town);
-  if (reports.some(report => report.unanswered && report.eventId === eventId)) return {ok: false, message: 'That report is already waiting for an answer.'};
+  const where = typeof facts.where === 'string' && facts.where.trim() ? facts.where.trim() : 'Town';
+  const existing = reports.find(report => report.unanswered && report.eventId === eventId
+    && String(report.where || 'Town').trim().toLowerCase() === where.toLowerCase());
+  if (existing) {
+    existing.what = `${event.what} ${typeof facts.detail === 'string' ? facts.detail.trim() : ''}`.trim();
+    existing.where = where;
+    existing.priority = event.priority;
+    existing.bad = event.bad;
+    existing.expiresTick = BigInt(town.tick) + BigInt(ANSWER_TICKS);
+    existing.updatedTick = BigInt(town.tick);
+    existing.facts = {...facts};
+    existing.answers = event.answers.map(answer => ({...answer, effect:{type:eventId, answerId:answer.id, facts:{...facts}}}));
+    return {ok: true, report: existing, updated: true};
+  }
   if (event.bad && reports.filter(report => report.unanswered && report.bad).length >= 3)
     return {ok: false, message: 'Three urgent reports are already waiting for an answer.'};
 
   const report = {
     id: `report-${town.nextReportNumber++}`, eventId, who: event.who,
     what: `${event.what} ${typeof facts.detail === 'string' ? facts.detail.trim() : ''}`.trim(),
-    where: typeof facts.where === 'string' && facts.where.trim() ? facts.where.trim() : 'Town',
+    where,
     priority: event.priority, bad: event.bad, createdTick: BigInt(town.tick),
     expiresTick: BigInt(town.tick) + BigInt(ANSWER_TICKS), unanswered: true,
     answers: event.answers.map(answer => ({...answer, effect:{type:eventId, answerId:answer.id, facts:{...facts}}})), outcome: null, facts: {...facts},
   };
   reports.push(report);
+  trimTownReportHistory(town);
   return {ok: true, report};
+}
+
+function bookHoldsReport(town, report) {
+  if (report.book === true || report.bookEntry === true || report.keepInBook === true) return true;
+  return [...(town.book || []), ...(town.bookPages || [])]
+    .some(entry => entry && typeof entry === 'object' && (entry.reportId === report.id || entry.id === report.id));
+}
+
+export function trimTownReportHistory(town) {
+  const reports = reportsFor(town);
+  const resolvedRoutine = reports.filter(report => !report.unanswered
+    && TOWN_EVENT_BY_ID.has(report.eventId) && !bookHoldsReport(town, report));
+  const retained = new Set(resolvedRoutine.slice(-MAX_RESOLVED_REPORTS));
+  town.reports = reports.filter(report => report.unanswered || !TOWN_EVENT_BY_ID.has(report.eventId)
+    || bookHoldsReport(town, report) || retained.has(report));
+  if (Array.isArray(town.reportEffects) && town.reportEffects.length > MAX_REPORT_EFFECTS)
+    town.reportEffects = town.reportEffects.slice(-MAX_REPORT_EFFECTS);
 }
 
 export function answerReport(town, reportId, answerId) {
@@ -47,6 +80,7 @@ export function answerReport(town, reportId, answerId) {
   report.answerId = answer.id;
   report.outcome = answer.outcome;
   report.effect = effect;
+  trimTownReportHistory(town);
   return {ok: true, report, message: answer.outcome};
 }
 
@@ -80,4 +114,5 @@ export function settleIgnoredReports(town) {
   for (const report of reportsFor(town)) {
     if (report.unanswered && tick >= BigInt(report.expiresTick)) answerReport(town, report.id, 'leave');
   }
+  trimTownReportHistory(town);
 }

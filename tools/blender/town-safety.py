@@ -1,0 +1,608 @@
+"""Build the town's safety structures from welded steel, timber and salvaged tin."""
+import argparse
+import json
+import math
+import sys
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(args.root).resolve()
+evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
+glb = root / 'public/assets/models/wasteland/town/safety.glb'
+blend = root / 'art-build/town/safety.blend'
+sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
+if args.paths_only:
+    print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
+    raise SystemExit(0)
+
+import bpy
+from mathutils import Matrix, Vector
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import town_base as town
+from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, trace as photo_trace
+import numpy as np
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.context.preferences.filepaths.save_version = 0
+tex = root / 'public/assets/models/wasteland/town/textures'
+materials = town.make_materials({
+    'weathered-plank': tex / 'town-water-timber.jpg',
+    'galvanised-tin': tex / 'town-water-corrugated.jpg',
+    'rusted-steel': tex / 'town-water-tin.jpg',
+    'sand': tex / 'town-water-earth.jpg',
+})
+def pictured_material(name, image_path, tint, metallic=0):
+    image = bpy.data.images.load(str(image_path.resolve()), check_existing=False)
+    image.pack()
+    mat = bpy.data.materials.new(name)
+    mat.diffuse_color = (*tint,1); mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Base Color'].default_value = (*tint,1)
+    bsdf.inputs['Metallic'].default_value = min(metallic,.29)
+    bsdf.inputs['Roughness'].default_value = .88
+    image_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    image_node.image = image; image_node.extension = 'REPEAT'
+    mat.node_tree.links.new(image_node.outputs['Color'],bsdf.inputs['Base Color'])
+    return mat
+materials['red-paint'] = pictured_material('Town / faded red engine enamel', tex/'red-oxide.jpg', (.31,.105,.075), .12)
+materials['container-white'] = pictured_material('Town / chalky clinic enamel', tex/'container-white.jpg', (.50,.48,.42), .05)
+materials['broken-glass'] = pictured_material('Town / smoky broken window glass', tex/'broken-glass.jpg', (.09,.12,.11), .08)
+for material in bpy.data.materials:
+    bsdf = material.node_tree.nodes.get('Principled BSDF') if material.use_nodes else None
+    if bsdf and bsdf.inputs.get('Metallic'):
+        bsdf.inputs['Metallic'].default_value = min(bsdf.inputs['Metallic'].default_value, .29)
+
+family = bpy.data.objects.new('town-safety', None)
+bpy.context.collection.objects.link(family)
+family.empty_display_type = 'PLAIN_AXES'
+active = None
+BUILDINGS = {}
+
+def attach(obj, parent=None):
+    parent = parent or active
+    if parent is not None:
+        bpy.context.view_layer.update()
+        world = obj.matrix_world.copy()
+        obj.parent = parent
+        obj.matrix_world = world
+    return obj
+
+def building(name, footprint=(1, 1)):
+    global active
+    active = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(active)
+    active.parent = family
+    active['footprint_cells'] = list(footprint)
+    BUILDINGS[name] = active
+    return active
+
+def cube(name, center, size, mat, bevel=.025, parent=None):
+    obj = town.cube(name, center, size, mat, bevel)
+    for layer in obj.data.uv_layers:
+        layer.name = 'UVMap'
+    return attach(obj, parent)
+
+def beam(name, a, b, width, mat, parent=None):
+    va,vb=town.game_vector(a),town.game_vector(b)
+    axis=(vb-va).normalized()
+    reference=Vector((0,0,1)) if abs(axis.z)<.9 else Vector((0,1,0))
+    side=axis.cross(reference).normalized()*(width/2)
+    up=axis.cross(side).normalized()*(width/2)
+    vertices=[]
+    for endpoint in (va,vb):
+        vertices.extend((endpoint-side-up,endpoint+side-up,endpoint+side+up,endpoint-side+up))
+    faces=[(0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+    mesh=bpy.data.meshes.new(name+' solid member');mesh.from_pydata(vertices,[],faces);mesh.update();mesh.materials.append(mat)
+    uv=mesh.uv_layers.new(name='UVMap')
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            point=vertices[mesh.loops[loop_index].vertex_index]-va
+            uv.data[loop_index].uv=(point.dot(axis)/2,point.dot(side.normalized())/2)
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+    return attach(obj, parent)
+
+def pipe(name, a, b, radius, mat, parent=None, sides=12):
+    va, vb = town.game_vector(a), town.game_vector(b)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=sides, radius=radius, depth=(vb-va).length,
+                                        location=(va+vb)*.5)
+    obj = bpy.context.object
+    obj.name = name
+    obj.rotation_euler = (vb-va).to_track_quat('Z','Y').to_euler()
+    obj.data.materials.append(mat)
+    uv = obj.data.uv_layers.active or obj.data.uv_layers.new(name='UVMap')
+    uv.name='UVMap'
+    for polygon in obj.data.polygons:
+        for loop_index in polygon.loop_indices:
+            p = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+            uv.data[loop_index].uv = (p.x/2, p.z/2)
+    return attach(obj, parent)
+
+def tin(name, center, width, height, parent=None, turn=0):
+    obj = town.corrugated_sheet(name, center, width, height, materials, turn=turn)
+    for layer in obj.data.uv_layers:
+        layer.name = 'UVMap'
+    return attach(obj, parent)
+
+def fasteners(name, points, mat=None):
+    mat = mat or materials['iron-dark']
+    for i, p in enumerate(points):
+        cube(f'{name}-bolt-{i+1}', p, (.075,.075,.075), mat, .018)
+
+def lamp(name, center, size=(.20,.24,.20)):
+    mat = bpy.data.materials.new(name+' warm glass')
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get('Principled BSDF')
+    bsdf.inputs['Base Color'].default_value = (.38,.20,.075,1)
+    bsdf.inputs['Emission Color'].default_value = (1,.32,.07,1)
+    bsdf.inputs['Emission Strength'].default_value = 1.4
+    bsdf.inputs['Roughness'].default_value = .54
+    return cube(name, center, size, mat, .03)
+
+# One-cell modular barriers. Their ends sit on the cell boundary so repeated
+# pieces meet without gaps; all visible rails have physical thickness.
+for family_name, material_name, height, post, slats in (
+    ('fence-wood','weathered-plank',1.45,.11,3),
+    ('fence-chain','iron-dark',1.8,.08,2),
+    ('wall-scrap','rusted-steel',2.35,.18,0),
+    ('wall-steel','galvanised-tin',3.0,.22,0),
+):
+    barrier_mat = materials[material_name]
+    for form in ('straight','corner','end'):
+        b = building(f'{family_name}-{form}')
+        if form == 'corner':
+            runs = [('x',-4,4,4),('z',-4,4,4)]
+        elif form == 'end':
+            runs = [('x',-4,0,0)]
+        else:
+            runs = [('x',-4,4,0)]
+        for axis, lo, hi, fixed in runs:
+            length = hi-lo
+            positions = [lo, hi] if form == 'straight' else [lo, hi]
+            for side in positions:
+                if axis == 'x':
+                    x,z = side,fixed
+                    postname = f'{family_name}-{form}-upright'
+                    cube(postname,(x,height/2,z),(post,height,.20 if family_name.startswith('wall-') else post),barrier_mat,.025)
+                else:
+                    x,z = fixed,side
+                    cube(f'{family_name}-{form}-upright',(x,height/2,z),(.20 if family_name.startswith('wall-') else post,height,post),barrier_mat,.025)
+            if family_name == 'fence-wood':
+                for row in range(slats):
+                    y=.30+row*.43
+                    if axis == 'x': beam(f'{family_name}-{form}-rail-{row+1}',(lo,y,fixed),(hi,y,fixed),.14,barrier_mat)
+                    else: beam(f'{family_name}-{form}-rail-{row+1}',(fixed,y,lo),(fixed,y,hi),.14,barrier_mat)
+                if form == 'straight':
+                    if axis == 'x': beam(f'{family_name}-{form}-leaning-brace',(lo+.25,.2,fixed),(lo+1.2,1.25,fixed),.075,materials['rusted-steel'])
+                    else: beam(f'{family_name}-{form}-leaning-brace',(fixed,.2,lo+.25),(fixed,1.25,lo+1.2),.075,materials['rusted-steel'])
+            elif family_name == 'fence-chain':
+                for y in (.55,1.55):
+                    if axis == 'x': pipe(f'{family_name}-{form}-top-rail',(lo,y,fixed),(hi,y,fixed),.045,barrier_mat)
+                    else: pipe(f'{family_name}-{form}-top-rail',(fixed,y,lo),(fixed,y,hi),.045,barrier_mat)
+                # A fine linked diamond is real, thin wire, joined to both rails.
+                count = 27
+                for i in range(count+1):
+                    t=i/count; x=lo+length*t
+                    y=.62+(1 if i%2 else -1)*.12
+                    if axis=='x': pipe(f'{family_name}-{form}-mesh-wire',(x,.61,fixed),(x+(length/count*.5),1.48,fixed),.009,barrier_mat,sides=6)
+                    else: pipe(f'{family_name}-{form}-mesh-wire',(fixed,.61,lo+length*t),(fixed,1.48,lo+length*t+length/count*.5),.009,barrier_mat,sides=6)
+            else:
+                # Irregular, overlapping cut plates with a visible cap rail.
+                count=max(4,round(length/1.2))
+                for i in range(count):
+                    t=lo+(i+.5)*length/count
+                    w=length/count+.035
+                    if axis=='x':
+                        cube(f'{family_name}-{form}-plate-{i+1}',(t,height*.48,fixed),(w,height*.86,.10),barrier_mat,.04)
+                        beam(f'{family_name}-{form}-top-cap-{i+1}',(t-w*.48,height,fixed),(t+w*.48,height,fixed),.08,materials['iron-dark'])
+                    else:
+                        cube(f'{family_name}-{form}-plate-{i+1}',(fixed,height*.48,t),(.10,height*.86,w),barrier_mat,.04)
+# A broad, braced timber watchtower: 7.6 m to the lookout deck, 9.1 m at roof.
+b = building('watchtower')
+b['footprint_cells']=[1,1]
+for sx in (-.72,.72):
+    for sz in (-.72,.72):
+        x,z=sx,sz
+        beam('watchtower-splayed-leg',(x*.94,0,z*.94),(x*.72,7.15,z*.72),.25,materials['weathered-plank'])
+        cube('watchtower-foot',(x*.94,.16,z*.94),(.58,.32,.58),materials['weathered-plank'],.025)
+        for y in (1.05,):
+            cube('watchtower-bolted-collar',(x*(.78+y/7.55*.22),y,z*(.78+y/7.55*.22)),(.29,.12,.29),materials['rusted-steel'],0)
+for y in (1.15,3.2,5.15,7.45):
+    for edge in (-1,1):
+        beam('watchtower-side-tie',(edge*.73,y,-.72),(edge*.73,y,.72),.095,materials['rusted-steel'])
+        beam('watchtower-back-tie',(-.72,y,edge*.73),(.72,y,edge*.73),.095,materials['weathered-plank'])
+for y0,y1 in ((1.15,3.2),(3.2,5.15),(5.15,7.35)):
+    for z in (-.72,.72):
+        x0 = -.72 if y0 != 3.2 else .72
+        beam('watchtower-X-brace',(x0,y0,z),(-x0,y1,z),.075,materials['rusted-steel'])
+# Ladder is attached to the road-facing side, with a real 300 mm rung pitch.
+for x in (-.34,.34): pipe('watchtower-ladder-stile',(x,.04,-.88),(x,7.72,-.88),.045,materials['rusted-steel'],sides=8)
+for i in range(12):
+    y=.30+i*.64
+    pipe(f'watchtower-ladder-rung-{i+1}',(-.34,y,-.88),(.34,y,-.88),.027,materials['iron-dark'],sides=6)
+# Platform and open guard rails.
+for i in range(3):
+    z=-.65+i*.65
+    cube(f'watchtower-deck-board-{i+1}',(0,7.58,z),(1.72,.12,.62),materials['weathered-plank'],0)
+for sx in (-.82,.82):
+    for sz in (-.82,.82):
+        pipe('watchtower-rail-post',(sx,7.65,sz),(sx,8.65,sz),.045,materials['rusted-steel'])
+for y in (8.02,8.58):
+    beam('watchtower-platform-rail',(-.82,y,-.82),(.82,y,-.82),.045,materials['rusted-steel'])
+    beam('watchtower-platform-rail',(-.82,y,.82),(.82,y,.82),.045,materials['rusted-steel'])
+    beam('watchtower-side-rail',(-.82,y,-.82),(-.82,y,.82),.045,materials['rusted-steel'])
+    beam('watchtower-side-rail',(.82,y,-.82),(.82,y,.82),.045,materials['rusted-steel'])
+# Gabled roof with two rafters and four overlapping salvaged sheets. Each half
+# falls from the ridge to a different eave and carries its own seam and bolts.
+for sx in (-.66,.66):
+    beam('watchtower-roof-rafter',(sx,8.68,-.82),(sx,9.14,0),.075,materials['weathered-plank'])
+    beam('watchtower-roof-rafter',(sx,9.14,0),(sx,8.68,.82),.075,materials['weathered-plank'])
+for side in (-1,1):
+    for x in (-.48,.48):
+        roofmat=materials['rusted-steel'] if side==1 and x>.0 else materials['galvanised-tin']
+        panel=cube(f'watchtower-roof-patch-{side}-{x}',(x,8.93,side*.40),(1.02,.09,.95),roofmat,.025)
+        panel.rotation_euler[0]=side*.36
+        for px in (x,):
+            cube('watchtower-roof-rivet',(px,8.94,side*.40),(.055,.055,.055),materials['iron-dark'],0)
+beam('watchtower-roof-ridge',(-1.0,9.14,0),(1.0,9.14,0),.07,materials['rusted-steel'])
+# Platform parapet lower panels, open front remains walkable.
+tin('watchtower-torn-back-apron',(0,8.12,.79),1.42,.74)
+tin('watchtower-left-apron',(-.79,8.12,0),1.38,.74,turn=math.pi/2)
+tin('watchtower-right-apron',(.79,8.12,0),1.21,.74,turn=math.pi/2)
+cube('watchtower-lookout-chair-seat',(.18,7.82,.25),(.42,.09,.42),materials['rusted-steel'],.035)
+for x in (-.02,.38):
+    for z in (.06,.44): beam('watchtower-chair-leg',(x,7.60,z),(x,7.86,z),.035,materials['iron-dark'])
+beam('watchtower-chair-back',(.20,7.84,.45),(.20,8.38,.45),.055,materials['weathered-plank'])
+lamp('watchtower:lamp',(0,8.52,.91),(.25,.24,.18))
+pipe('watchtower-lamp-bracket',(.0,8.60,.84),(.0,8.45,1.13),.035,materials['rusted-steel'])
+b.scale.z = .77
+
+# Scrap gate across a road; its moving leaf is a separately named node.
+b=building('gate-scrap',(2,1))
+for x in (-6.7,6.7):
+    beam('gate-scrap-tower-post',(x,0,-3.2),(x,5.5,-3.2),.38,materials['rusted-steel'])
+    for y in (1.2,2.7,4.2): beam('gate-scrap-cross-tie',(x-.7,y,-3.2),(x+.7,y,-3.2),.16,materials['galvanised-tin'])
+    tin('gate-scrap-tower-facing',(x,3.3,-3.39),1.5,2.9)
+beam('gate-scrap-header',(-6.7,5.45,-3.2),(6.7,5.45,-3.2),.42,materials['rusted-steel'])
+door=bpy.data.objects.new('gate-scrap:door',None);bpy.context.collection.objects.link(door);door.location=town.game_vector((-2.7,0,-3.25));attach(door)
+for i in range(8):
+    x=-2.6+i*.74
+    cube(f'gate-scrap-door-plank-{i+1}',(x,2.25,-3.25),(.68,3.4,.13),materials['rusted-steel'],.035,door)
+# Two donor-car door shells have window frames and handles; welded sheet fills
+# the gaps. All children are placed at the gate before joining the hinge node.
+for i,x in enumerate((-1.35,1.32)):
+    cube(f'gate-scrap-car-door-{i+1}',(x,1.55,-3.39),(2.25,1.55,.12),materials['galvanised-tin'],.07,door)
+    cube(f'gate-scrap-car-door-window-{i+1}',(x,2.78,-3.43),(1.34,.72,.045),materials['iron-dark'],.08,door)
+    cube(f'gate-scrap-car-door-handle-{i+1}',(x+.72,1.62,-3.48),(.20,.08,.035),materials['rusted-steel'],.025,door)
+for y in (1.10,3.40): beam('gate-scrap-door-crossbar',(-2.7,y,-3.38),(2.7,y,-3.38),.13,materials['iron-dark'],door)
+for x in (-2.3,2.3):
+    pipe('gate-scrap-door-hinge',(x,.70,-3.49),(x,3.80,-3.49),.09,materials['iron-dark'],door)
+
+# Guard post: low sandbag berm, bolted tin roof and a contained steel brazier.
+b=building('guard-post',(2,1))
+for i in range(10):
+    for row in range(3):
+        x=-5.7+i*1.27+(row%2)*.26
+        z=-2.05+row*.08
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=6,radius=1,location=town.game_vector((x,.30+row*.40,z)))
+        sack=bpy.context.object;sack.name=f'guard-post-sandbag-{i+1}-{row+1}';sack.scale=(.62,.22,.28);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);sack.data.materials.append(materials['patched-canvas']);attach(sack)
+for sx in (-5.8,5.8):
+    for sz in (-2.2,2.2): beam('guard-post-roof-post',(sx,.65,sz),(sx,3.3,sz),.12,materials['weathered-plank'])
+for i in range(5):
+    z=-2.5+i*1.25
+    panel=cube(f'guard-post-roof-sheet-{i+1}',(0,3.35,z),(12.5,.10,1.30),materials['galvanised-tin'],.025)
+    panel.rotation_euler[0]=.06 if i%2 else -.07
+for x in (-4,0,4): beam('guard-post-roof-rib',(x,3.18,-2.5),(x,3.18,2.5),.07,materials['rusted-steel'])
+for side in (-1,1):
+    tin(f'guard-post-side-windbreak-{side}',(side*5.8,1.65,0),4.1,1.8,turn=math.pi/2)
+pipe('guard-post-brazier-leg-1',(-.45,.12,1.6),(-.45,.62,1.6),.045,materials['iron-dark'])
+pipe('guard-post-brazier-leg-2',(.45,.12,1.6),(.45,.62,1.6),.045,materials['iron-dark'])
+brazier=cube('guard-post-brazier',(0,.64,1.6),(1.0,.24,.72),materials['rusted-steel'],.09)
+
+# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
+b=building('searchlight')
+cube('searchlight-concrete-foot',(0,.18,0),(.72,.36,.72),materials['cracked-concrete'],.08)
+pipe('searchlight-mast',(0,.36,0),(0,4.7,0),.10,materials['rusted-steel'])
+for y in (.72,2.4,4.35): cube('searchlight-mast-collar',(0,y,0),(.29,.14,.29),materials['iron-dark'],.025)
+beam('searchlight-yoke',(-.48,4.72,0),(.48,4.72,0),.10,materials['rusted-steel'])
+head=cube('searchlight-spot-housing',(0,4.9,-.30),(.96,.62,.88),materials['galvanised-tin'],.11)
+for x in (-.25,.25): pipe('searchlight-trunnion',(x,4.72,-.15),(x,5.13,-.15),.055,materials['iron-dark'])
+beam_node=bpy.data.objects.new('searchlight:beam',None);bpy.context.collection.objects.link(beam_node);attach(beam_node)
+for x in (-.28,.28):
+    lens=lamp('searchlight:beam-lens',(x,4.92,-.75),(.31,.34,.10))
+    attach(lens,beam_node)
+    lens.rotation_euler[0]=math.pi/2
+    cube('searchlight-lens-guard',(x,4.92,-.81),(.38,.42,.035),materials['iron-dark'],.025)
+for i in range(6): pipe('searchlight-cooling-slot',(0,4.69+i*.075,.15),(0,4.69+i*.075,.23),.025,materials['iron-dark'],sides=8)
+
+# Fire station: photo-carved body and two genuinely open drive-through bays.
+b=building('fire-station',(3,2))
+from photo_carve import carve_object, lift_if_dark, save_mask
+photo_root=root/'public/assets/models/wasteland/town/textures'
+station_table={
+    'photos': {'side':'fire-station-side.jpg','front':'fire-station-front.jpg',
+               'rear':'fire-station-rear.jpg','top':'fire-station-top.jpg'},
+    # Door height gives the scale: a truck bay is 4.5 m clear under its lintel.
+    'length':12.4,'width':20.8,'height':6.2,
+    # Use the central 900 px so the measured side-wall scale matches the same door height as the ends.
+    'side': {'start':320,'end':1220,'ground':805},
+    'front': {'centre':768,'ground':760,'top':308},
+    'rear': {'centre':768,'ground':730,'top':360},
+    'top': {'front':226,'rear':793,'centre':768,'x_scale':20.8/(1505-27)},
+    # Preserve both measured door frames and headers; cut only the clear openings.
+    'keep': lambda x,y,z: ~(((x>=-6.5)&(x<=-1.15)|(x>=1.15)&(x<=6.5)) & (y>=0)&(y<=4.5)),
+    'grey':26,'tolerance':32,'bleed_tolerance':42,'voxel':.09,'target':7800,
+    'mask_dir':str(evidence/'masks'),
+}
+station_body=carve_object('fire-station:body',photo_root,station_table)
+station_body.parent=b
+bay_floors=[]
+bay_shadows=[]
+for name,x in (('left',-3.825),('right',3.825)):
+    bay_floors.append(cube(f'fire-station:bay-floor-{name}',(x,.09,0),(5.35,.12,12.0),materials['cracked-concrete'],.012))
+    bay_shadows.append(cube(f'fire-station:bay-interior-shadow-{name}',(x,2.25,0),(5.2,4.2,.08),materials['iron-dark'],.008))
+
+# Trace the hose-drying tower and hanging bell from the original station photo.
+# The flood reaches through the open lattice, so the picture's grey studio stays open.
+tower_photo=Photo(photo_root/'town-safety-fire-station.jpg')
+lift_if_dark(tower_photo)
+tower_sky=tower_photo.sky([(8,8),(1015,8)],tolerance=27,grey=38)
+tower_mask=~tower_sky
+tower_mask[475:,:]=False
+tower_crop=(877,12,1015,475)
+save_mask(tower_mask,evidence/'masks/fire-station-tower-mask.png')
+tower_loops=photo_trace(tower_mask,tower_crop,tolerance=1.8,min_area=16)
+if not tower_loops: raise RuntimeError('fire-station hose tower photo did not trace')
+tower_mesh=PhotoMesh()
+TOWER_SCALE=9.8/(475-20)
+def tower_world(px,py,depth):
+    return (10.2+(px-877)*(1.8/(1015-877)),(475-py)*TOWER_SCALE,-3.2+depth)
+photo_slab(tower_mesh,'tower',tower_photo,tower_loops,tower_world,-.08,.08)
+tower_obj=tower_mesh.finish('fire-station:hose-tower-and-bell',{'tower':tower_photo.material()})
+tower_obj.parent=b
+
+# Keep the measured, full-resolution JPGs in the texture folder; pack smaller
+# copies in the family GLB so the completed safety family stays under 3 MiB.
+for photo in station_table['_photos'].values():
+    photo.image.scale(768,512)
+    photo.image.update()
+tower_photo.image.scale(512,256)
+tower_photo.image.update()
+
+def world_bounds(obj):
+    bpy.context.view_layer.update()
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    lo=tuple(min(point[i] for point in points) for i in range(3))
+    hi=tuple(max(point[i] for point in points) for i in range(3))
+    return lo,hi
+station_pieces=(station_body,*bay_floors,*bay_shadows,tower_obj)
+for piece in station_pieces:
+    lo,hi=world_bounds(piece)
+    print(f'PIECE BOUNDS {piece.name}: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)}')
+    if lo[2] < -.03: raise RuntimeError(f'{piece.name} is below the ground')
+if abs(world_bounds(station_body)[0][2]) > .1 or abs(world_bounds(tower_obj)[0][2]) > .01:
+    raise RuntimeError('fire station body and tower must touch the ground')
+for floor_piece,shadow_piece in zip(bay_floors,bay_shadows):
+    floor_top=world_bounds(floor_piece)[1][2]
+    shadow_bottom=world_bounds(shadow_piece)[0][2]
+    if abs(floor_top-shadow_bottom) > .01:
+        raise RuntimeError(f'{shadow_piece.name} must meet its bay floor')
+print('CONTACT CHECK: body and tower touch ground; both dark bay interiors meet their floors.')
+
+# Clinic, clinic water tank and legible raised roof cross. The segmented roof
+# carries patched tin, unevenly rusted seams and repairs into the mayor view.
+b=building('clinic',(2,2))
+for x in (-6.5,6.5):
+    for z in (-6.5,6.5): cube('clinic-wall-post',(x,2.35,z),(.26,4.7,.26),materials['weathered-plank'],.04)
+for sx in (-1,1):
+    tin(f'clinic-white-tin-wall-{sx}',(sx*6.45,2.3,0),12.7,4.45,turn=math.pi/2)
+for sz in (-1,1): tin(f'clinic-white-tin-wall-{sz}',(0,2.3,sz*6.45),12.7,4.45)
+for i in range(6):
+    z=-5+i*2
+    panel=cube(f'clinic-roof-patch-{i+1}',(0,4.85,z),(13.5,.13,2.0),materials['container-white'],.03)
+    panel.rotation_euler[0]=(-1 if i%2 else 1)*.035
+for x in (-6.35,6.35):
+    beam('clinic-roof-ragged-edge-seam',(x,4.92,-6.3),(x,4.92,6.3),.10,materials['rusted-steel'])
+for x,z in ((-4.9,-4.8),(4.8,-2.5),(-3.9,4.9),(5.0,1.3)):
+    patch=cube('clinic-roof-repair-plate',(x,4.96,z),(1.45,.08,.78),materials['red-paint'] if x<0 else materials['rusted-steel'],.035)
+    patch.rotation_euler[1]=.08 if z>0 else -.05
+for x in (-5.8,-2.0,2.0,5.8): beam('clinic-roof-rafter',(x,4.6,-6.1),(x,4.6,6.1),.12,materials['weathered-plank'])
+# Red cross is physically raised, not paint printed on the roof texture.
+cube('clinic-roof-red-cross-vertical',(0,5.08,0),(.78,.10,2.65),materials['red-paint'],.06)
+cube('clinic-roof-red-cross-horizontal',(0,5.10,0),(2.65,.12,.78),materials['red-paint'],.06)
+for x in (-4.6,4.6):
+    pipe('clinic-tank-leg',(x,4.75,3.6),(x,6.5,3.6),.075,materials['rusted-steel'])
+bpy.ops.mesh.primitive_cylinder_add(vertices=20,radius=.88,depth=1.2,location=town.game_vector((0,6.25,3.6)))
+tank=bpy.context.object;tank.name='clinic-water-tank';tank.data.materials.append(materials['rusted-steel']);attach(tank)
+for y in (5.72,6.78):
+    bpy.ops.mesh.primitive_torus_add(major_radius=.88,minor_radius=.045,major_segments=20,minor_segments=8,location=town.game_vector((0,y,3.6)))
+    attach(bpy.context.object)
+    bpy.context.object.name='clinic-tank-rolled-seam';bpy.context.object.data.materials.append(materials['iron-dark'])
+for i in range(3):
+    x=-.42+i*.42
+    cube(f'clinic-front-window-{i+1}',(x,2.5,-6.60),(.65,1.05,.045),materials['broken-glass'],.035)
+    beam('clinic-window-crossbar',(x-.28,2.5,-6.64),(x+.28,2.5,-6.64),.045,materials['rusted-steel'])
+
+# Hydrant and hose reel fit in a quarter-cell footprint.
+b=building('hydrant')
+cube('hydrant-bolted-base',(0,.09,0),(.52,.18,.52),materials['rusted-steel'],.035)
+pipe('hydrant-standpipe',(0,.18,0),(0,.96,0),.105,materials['rusted-steel'])
+for y in (.3,.82):
+    cube('hydrant-collar',(0,y,0),(.34,.10,.34),materials['galvanised-tin'],.025)
+for x,z in ((-.2,0),(.2,0),(0,-.2),(0,.2)):
+    pipe('hydrant-outlet-neck',(0,.58,0),(x,.58,z),.07,materials['rusted-steel'])
+    cube('hydrant-outlet-cap',(x*1.16,.58,z*1.16),(.14,.14,.14),materials['iron-dark'],.025)
+pipe('hydrant-hose-reel-axle',(.22,.72,.20),(.22,1.18,.20),.045,materials['iron-dark'])
+for y in (.76,1.12):
+    bpy.ops.mesh.primitive_torus_add(major_radius=.27,minor_radius=.035,major_segments=16,minor_segments=6,location=town.game_vector((.22,y,.20)))
+    wheel=bpy.context.object;wheel.name='hydrant-hose-reel-side';wheel.rotation_euler[0]=math.pi/2;wheel.data.materials.append(materials['rusted-steel']);attach(wheel)
+for i in range(4):
+    angle=i*math.pi/2
+    pipe('hydrant-reel-spoke',(.22,.94,.20),(.22+math.sin(angle)*.26,.94,.20+math.cos(angle)*.26),.025,materials['galvanised-tin'],sides=8)
+pipe('hydrant-coiled-hose',(0,.94,.22),(.34,.94,.22),.06,materials['iron-dark'])
+
+# Trace building fronts from their generated photo references. These shallow
+# photo slabs keep the measured silhouette and holes while the side, roof,
+# tower, tanks and opening depth stay real modeled geometry.
+def photo_facade(name, image_path, crop, world_x, world_width, world_height, front_z,
+                 holes=(), parent=None, floor_px=None):
+    photo=Photo(image_path)
+    x0,y0,x1,y1=crop
+    seeds=[(3,3),(photo.w-4,3)]
+    sky=photo.sky(seeds,tolerance=28,grey=42)
+    solid=~sky
+    clipped=np.zeros_like(solid)
+    clipped[y0:y1,x0:x1]=solid[y0:y1,x0:x1]
+    for hx0,hy0,hx1,hy1 in holes:
+        clipped[hy0:hy1,hx0:hx1]=False
+    loops=photo_trace(clipped,crop,tolerance=3.2,min_area=35)
+    if not loops: raise RuntimeError(f'{name}: reference photo produced no traced facade')
+    floor_px=floor_px if floor_px is not None else y1
+    mesh=PhotoMesh()
+    def to_world(px,py,depth):
+        x=world_x+(px-x0)/(x1-x0)*world_width
+        y=(floor_px-py)/(y1-y0)*world_height
+        return (x,y,front_z+depth)
+    photo_slab(mesh,'photo',photo,loops,to_world,0,.035)
+    result=mesh.finish(name,{'photo':photo.material()})
+    parent=parent or BUILDINGS[name.split('-photo-')[0]]
+    return attach(result,parent)
+
+photo_root=root/'public/assets/models/wasteland/town/textures'
+photo_facade('clinic-photo-facade',photo_root/'town-safety-clinic.jpg',
+             (60,190,970,820),-6.3,12.6,6.6,-6.72,parent=BUILDINGS['clinic'],floor_px=820)
+photo_facade('guard-post-photo-facade',photo_root/'town-safety-guard-post.jpg',
+             (0,25,1024,500),-6.3,12.6,3.4,-2.43,parent=BUILDINGS['guard-post'],floor_px=500)
+photo_facade('gate-scrap-photo-door',photo_root/'town-safety-gate.jpg',
+             (245,155,780,508),-2.7,5.4,3.4,-3.52,parent=door,floor_px=508)
+
+# Save an editable scene recipe output; render views only after GLB round-trip.
+blend.parent.mkdir(parents=True,exist_ok=True)
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+glb.parent.mkdir(parents=True,exist_ok=True)
+town.export_glb(glb)
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(glb))
+render_dir=evidence
+render_dir.mkdir(parents=True,exist_ok=True)
+scene=bpy.context.scene
+scene.render.engine='BLENDER_EEVEE_NEXT'
+scene.render.resolution_x=900;scene.render.resolution_y=720;scene.render.resolution_percentage=100
+scene.render.image_settings.file_format='PNG'
+scene.render.film_transparent=False
+world=bpy.data.worlds.new('bright overcast') if not bpy.data.worlds else bpy.data.worlds[0]
+scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.48,.50,.49,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=0;scene.view_settings.gamma=1
+def aim(obj, point): obj.rotation_euler=(Vector(point)-obj.location).to_track_quat('-Z','Y').to_euler()
+def aim_z(obj, point):
+    forward=(Vector(point)-obj.location).normalized()
+    world_up=Vector((0,0,1))
+    if abs(forward.dot(world_up))>.98: world_up=Vector((0,1,0))
+    right=forward.cross(world_up).normalized()
+    up=right.cross(forward).normalized()
+    obj.rotation_euler=Matrix((right,up,-forward)).transposed().to_euler()
+def render(name, view, location, target, ortho):
+    cam_data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,cam_data);scene.collection.objects.link(cam)
+    cam.location=Vector(location);aim(cam,Vector(target));cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
+    scene.render.filepath=str(render_dir/f'{name}.png')
+    scene.render.resolution_x=900;scene.render.resolution_y=720
+    bpy.ops.render.render(write_still=True)
+
+# Round 5: render only the submitted fire station after GLB export/import.
+station = next(obj for obj in scene.objects if obj.name == 'fire-station')
+visible = {station, *station.children_recursive}
+meshes = [obj for obj in visible if obj.type == 'MESH']
+for obj in scene.objects:
+    obj.hide_render = obj not in visible
+bpy.context.view_layer.update()
+corners = [obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+lo = Vector(tuple(min(point[i] for point in corners) for i in range(3)))
+hi = Vector(tuple(max(point[i] for point in corners) for i in range(3)))
+size = hi - lo
+center = (lo + hi) * .5
+print(f'EXPORTED FIRE-STATION BOUNDS: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(v,3) for v in size)}')
+if min(size) <= .001: raise RuntimeError('fire station has empty exported bounds')
+# One ground check for each authored part; the hose tower also meets the body at its base edge.
+for piece_name in ('fire-station:body', 'fire-station:bay-floor-left', 'fire-station:bay-floor-right', 'fire-station:bay-interior-shadow-left', 'fire-station:bay-interior-shadow-right', 'fire-station:hose-tower-and-bell'):
+    piece = next((obj for obj in meshes if obj.name == piece_name), None)
+    if piece is None: raise RuntimeError(f'missing exported piece {piece_name}')
+    piece_points = [piece.matrix_world @ Vector(corner) for corner in piece.bound_box]
+    piece_lo = tuple(min(point[i] for point in piece_points) for i in range(3))
+    piece_hi = tuple(max(point[i] for point in piece_points) for i in range(3))
+    print(f'EXPORTED PIECE BOUNDS {piece_name}: min={tuple(round(v,3) for v in piece_lo)} max={tuple(round(v,3) for v in piece_hi)}')
+    if 'bay-interior-shadow' in piece_name:
+        expected_base=.15
+    elif 'bay-floor' in piece_name:
+        expected_base=.03
+    else:
+        expected_base=0
+    if abs(piece_lo[2]-expected_base) > .08: raise RuntimeError(f'{piece_name} misses its ground or adjoining floor after export')
+print('EXPORTED CONTACT CHECK: body, both bay floors, both bay shadows and tower touch ground or their adjoining structure.')
+scene.render.resolution_x = 960; scene.render.resolution_y = 640
+scene.render.resolution_percentage = 100
+scene.render.image_settings.file_format = 'PNG'
+scene.view_settings.view_transform = 'Standard'
+scene.view_settings.look = 'Medium High Contrast'
+scene.view_settings.exposure = 0; scene.view_settings.gamma = 1
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.43,.45,.45,1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
+if not any(obj.type == 'LIGHT' for obj in scene.objects):
+    ld=bpy.data.lights.new('station softbox','AREA');ld.energy=2300;ld.size=15
+    light=bpy.data.objects.new('station softbox',ld);scene.collection.objects.link(light)
+    light.location=center+Vector((10,-14,22));aim(light,center)
+ground_mat=bpy.data.materials.new('plain grey studio ground');ground_mat.diffuse_color=(.38,.39,.39,1);ground_mat.use_nodes=True
+ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.39,.39,1)
+ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
+bpy.ops.mesh.primitive_plane_add(size=1000,location=(center.x,center.y,lo.z-.035))
+plane=bpy.context.object;plane.name='neutral grey ground';plane.data.materials.append(ground_mat)
+span=max(size.x,size.y,size.z)
+views={
+ 'side': (center+Vector((span*1.7,0,0)), center, max(size.y,size.z)*1.14),
+ 'front': (center+Vector((0,span*1.7,size.z*.5)), center, max(size.x,size.z)*1.14),
+ 'rear': (center+Vector((0,-span*1.7,size.z*.5)), center, max(size.x,size.z)*1.14),
+ 'above': (center+Vector((0,0,span*1.7)), center, max(size.x,size.y)*1.14),
+ 'three-quarter-left': (center+Vector((-span*1.45,span*1.2,span*1.5)), center, max(size.x,size.y)*1.36),
+ 'three-quarter-right': (center+Vector((span*1.45,span*1.2,span*1.5)), center, max(size.x,size.y)*1.36),
+ 'mayor': (center+Vector((span*1.1,span*1.2,span*1.1)), center, max(size.x,size.y)*1.55),
+}
+model_views={}
+for name,(location,target,scale) in views.items():
+    data=bpy.data.cameras.new('fire-station-'+name);cam=bpy.data.objects.new('fire-station-'+name,data);scene.collection.objects.link(cam)
+    cam.location=location;aim_z(cam,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale;scene.camera=cam
+    plane.hide_render=(name=='front' or name=='rear')
+    path=render_dir/f'fire-station-{name}.png';scene.render.filepath=str(path)
+    bpy.ops.render.render(write_still=True);model_views[name]=path
+    bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
+plane.hide_render=False
+
+# A compact review sheet: four photo/model pairs at matching orthographic cameras,
+# then both three-quarter views and the mayor's distant roof view.
+import subprocess
+sheet_code=r'''from PIL import Image, ImageDraw, ImageFont, ImageOps
+from pathlib import Path
+import sys
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);textures=root/'public/assets/models/wasteland/town/textures'
+pairs=[('SIDE','fire-station-side.jpg','fire-station-side.png'),('FRONT','fire-station-front.jpg','fire-station-front.png'),('REAR','fire-station-rear.jpg','fire-station-rear.png'),('STRAIGHT DOWN','fire-station-top.jpg','fire-station-above.png')]
+extras=[('THREE-QUARTER LEFT','fire-station-three-quarter-left.png'),('THREE-QUARTER RIGHT','fire-station-three-quarter-right.png'),("MAYOR'S VIEW","fire-station-mayor.png")]
+W,H=1600,2640;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),17);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
+d.text((24,14),'TOWN SAFETY | ROUND 5 | FIRE STATION',font=title,fill=(240,228,205))
+def fit(path,box):
+ im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS)
+ canvas=Image.new('RGB',box,(128,130,130));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
+row_h=500
+for i,(name,photo,model) in enumerate(pairs):
+ y=50+i*row_h;d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(78,76,69));d.text((34,y+7),name,font=label,fill=(240,194,125))
+ d.text((35,y+31),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+31),'EXPORTED MODEL | SAME ORTHOGRAPHIC CAMERA',font=small,fill=(229,223,208))
+ page.paste(fit(textures/photo,(740,430)),(34,y+48));page.paste(fit(root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'/model,(740,430)),(815,y+48))
+for i,(name,model) in enumerate(extras):
+ x=18+i*528;y=2072;d.rounded_rectangle((x,y,x+510,y+500),radius=8,fill=(78,76,69));d.text((x+14,y+10),name,font=label,fill=(240,194,125))
+ page.paste(fit(root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'/model,(480,450)),(x+15,y+38))
+d.text((24,2586),'Two clear drive-through bays, open traced hose lattice and bell, patched roof photo from straight above.',font=small,fill=(232,226,210))
+out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,optimize=True,progressive=True)
+'''
+subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)

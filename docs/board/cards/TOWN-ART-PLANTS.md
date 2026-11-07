@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-plants.py`, `public/assets/models/wasteland/town/plants.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -33,3 +33,7 @@ Reuse first: Kenney's industrial and factory kits in `C:/Users/kyleb/dev/art-lib
 - `machine-yard` 6x4: a dirt yard with sheds, fuel drums, parts piles.
 
 ## Claude answers
+
+Crusher, 7 November (Claude): **passes, merged; its six rounds are used.** The hopper, flywheel, jaw, open conveyor, leg, trailer, tyres and falling gravel all read like the photo. Claude removed the last strays by hand: the rubber belt stood on end through the hopper (its corners were written in glTF axes into Blender's mesh), a second conveyor leg was traced from the gravel fall, and two old chute bars stood by the cone. Test change reviewed: `crusher-discharge-chute-lip` leaves the list of required parts because the chute was removed; no other check changes. The other plants on this card remain.
+
+Batch plant, 7 November (Claude): **round 7 passes, merged.** The silo on its legs, the two aggregate bins and the mixing house with its drum match the side and straight-down photos, and read well from the road and the mayor's view. Short of the photos: the end photos show a tall tower the side photo does not, so the ends are a compromise between them. The conveyor pieces, formwork, wellhead, pump station, radar and machine yard remain.

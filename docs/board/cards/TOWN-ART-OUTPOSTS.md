@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-outposts.py`, `public/assets/models/wasteland/town/outposts.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -29,3 +29,7 @@ People who live out in the Wasteland, each one a place worth driving to.
 - `rail-halt` 4x2: a tiny station with a clock that works, a signal arm (`rail-halt:signal`), a bench, a water crane.
 
 ## Claude answers
+
+Hermit camp, 7 November (Claude): **round 1 passes, merged.** The stone hut matches its photos from every side, with its door, slate roof and ridge beam; the goat shed, bonnet dish on its leaning pole and the lone chair stand where they should. Round 2 shrank every picture to 192 pixels to fit a 3 MB limit and blurred the hut, so Claude put round 1 back: this family's file limit stays 5 MB (it is 4.0 MB). Its sheet is renamed `round-10.jpg` to fit the repository's names. The deck town and the rail halt remain.
+
+Deck town, 7 November (Claude): **round 14 passes, merged.** Four patched tin homes stand on a ship's deck inside 1.1 m rails, with ladders, washing and the bell, and read from the road and the mayor's view. Short of the photos: the roofs are a streaky pinkish red, paler than the photo's rusty red. The rail halt remains.

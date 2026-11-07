@@ -14,9 +14,9 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
-**Files you own:** `tools/blender/town-dome.py`, `public/assets/models/wasteland/town/dome.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
+**Files you own:** `tools/blender/town-dome.py`, `public/assets/models/wasteland/town/dome.glb`, `public/assets/models/wasteland/town/textures/*.jpg`, `public/assets/models/wasteland/town/textures/CREDITS.md`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
 **Checks:** `tools/test-blender-output.mjs` for this recipe (it reads back budgets and that every id below exists), `tools/test-repo-hygiene.mjs`, `tools/test-review-evidence.mjs`. No frame timing on art. Not wired into the game here. No Chrome. No new dependency, network request or key.
 
@@ -27,3 +27,5 @@ Today the Scrapdome is only ever seen from inside. The town is built around it, 
 Budget 30,000 triangles, 3 MB. This one is the town's landmark: from the driver's seat it should fill the sky.
 
 ## Claude answers
+
+Round 6 of 6 (Kyle's limit, 5 November). Merged as the working set: the bowl, the Heap and the stacked-wreck wall pass, seen from the mayor's height. Still short of the photo: the gate's buses are small and their long sides are plain, and the wall's mirrored picture shows its symmetry close up. The true cause of earlier flat colours was lost picture coordinates (ART LESSON 10); `test-blender-output.mjs` now checks for it on this family. Its atlas check is replaced by separate-picture and metallic checks, because `town_base.py` removed the atlas; that is reviewed here and nothing is loosened (rule 18).

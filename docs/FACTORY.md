@@ -168,6 +168,15 @@ flowchart LR
 - Art, simulation, saves and sound are separate lanes with separate files.
 - Each coast is a course-line run inside the world, reusing the course DAG.
 
+### Art line
+
+Models that have to look real are built by [ART_LINE.md](ART_LINE.md): the
+method, which kit suits which shape, and what to watch for. Every art job reads
+it first. **The list grows:** whoever finds a new kind of fault, Kyle, Claude or
+a job, adds it there in the same commit as the fix. Claude adds a verdict's new
+fault before sending the next round. Tasks stay short, with one piece first and
+a worked example, because long lists failed.
+
 ## 4. The factory build order (FAC cards)
 
 ```mermaid

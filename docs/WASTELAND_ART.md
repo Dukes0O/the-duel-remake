@@ -405,3 +405,74 @@ Prompt (full procedural art brief):
 ## HELI-LOGBOOK rank paint credits
 
 `rank-student.png`, `rank-private.png`, `rank-commercial.png`, `rank-mountain.png`, and `rank-chief.png`: original procedural paint textures for The Duel, 26 October 2026. Blender 4.5.13 LTS and NumPy, recipe `tools/blender/heli-logbook-paints.py`. No external source art or licensed marks. Original kestrel silhouettes are polygon coordinates in the recipe; the airframe is Claude's original Kestrel One. Round 2 candidates; Claude's paint review is pending. The Commercial and Chief kestrels moved to the tail boom at Claude's direction; the skid scuffs are original object-space shader marks, generated without external source art. Credits are recorded here because the game does not load a separate credits document from the texture folder.
+
+
+## `public/assets/models/wasteland/town/textures/town-water-timber.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating timber albedo for the tower legs, braces and platform.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of weathered sun-bleached grey-brown timber planks from a desert water tower brace; faded grain, dust in grain, worn edges, irregular small chips, dark nail marks at true hand scale. Flat orthographic surface, seamless square edges. Bright diffuse overcast daylight, even exposure. Avoid blur, noise-only pattern, objects, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-tin.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating albedo for the smooth tank shell and cap.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a realistic game model. Sharp close photograph of the smooth curved galvanized steel wall of a neglected desert water tank, muted dusty zinc-grey sheet metal, broad riveted horizontal lap seams at realistic 2 metre scale, rows of small 2 cm rivets, restrained dark brown rust streaks below some fasteners, scratched and sun-worn edges. Flat orthographic surface view filling the square, seamless repeating edges, no perspective. Bright diffuse overcast daylight without glare. Avoid corrugations or ribs, white flat panels, orange saturation, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-corrugated.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating corrugated tin albedo for the pump shed walls and roof.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Sharp close-up photograph of galvanized corrugated steel from a neglected desert water tank; dusty muted zinc-grey, clear 10 cm corrugations, rivet heads every 20 cm, restrained dark brown rust streaks below some rivets, scratched and worn edges. Orthographic macro, seamless edges, real scale. Bright diffuse overcast light without glare. Avoid white panels, orange saturation, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-concrete.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating concrete albedo for open treatment basins and the well surround.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close photograph of old rough poured concrete from a rural settling basin, mid grey-brown cement, sharp exposed small aggregate, pores, irregular damp mineral stains and a waterline mark. Flat orthographic, seamless edges, realistic scale. Bright even overcast daylight. Avoid white concrete, smooth flat wall, large crack, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water-earth.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating compacted soil albedo for reservoir banks and yard dirt.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Macro photograph of compacted dark umber soil from a hand-built reservoir bank; earthy clods, gritty gravel, compressed shovel marks, naturally darker damp patches, realistic scale. Top-down orthographic tile, seamless edges, diffuse overcast light, no hard shadows. Avoid sand-colored flat surface, plants, blur, text, border, watermark.
+
+## `public/assets/models/wasteland/town/textures/town-water.jpg`
+
+Date: 2026-11-06  
+Tool: Codex ImageGen  
+Use: 512 x 512 repeating murky water albedo for the reservoir and settling stages.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close top-down photograph of still murky reservoir water, deep olive-brown translucent water with small wind ripples, suspended sediment, subtle sky reflections, irregular natural color and sharp fine detail. Seamless square tile, soft bright overcast light. Avoid blue pool water, flat color, shores, objects, blur, text, border, watermark.
+
+## public/assets/models/wasteland/town/textures/town-services-brick.jpg
+
+Date: 2026-11-06
+Tool: Codex ImageGen
+Use: 512 x 512 repeating brick albedo for the Town Hall walls and gable.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless close-up albedo texture for a 3D game building. Sharp, straight-on close photograph of old red-brown fired brick masonry from a remote desert civic building. Real individual bricks at approximately 22 cm long by 7 cm tall, clear horizontal mortar joints, irregular faded brick faces, rubbed corners, fine dust caught in mortar, a few small chipped edges, mild soot and darker weathering near the lower edge. Natural muted brick reds and dark brown mortar, high detail, matte, no strong perspective, no dramatic shadows, no labels or writing. Make the four tile edges blend seamlessly. Avoid rubble, piles of broken bricks, orange saturation, smooth stone, uniform noise, blur, text, logos, watermark.

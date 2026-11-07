@@ -3,6 +3,7 @@ import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {applySaltStormFog} from './world/the-whites-scene.js';
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
@@ -805,6 +806,8 @@ export function attachRenderer(host, app) {
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
+    const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
+    applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.

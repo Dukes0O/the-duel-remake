@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-services.py`, `public/assets/models/wasteland/town/services.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -35,3 +35,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `notice-board` under 1x1.
 
 ## Claude answers
+
+Round 6, 7 November (Claude): **the Town Hall and the Forge pass, and the Workshop will do for now.** The Town Hall is the best carve of the family. The Forge's fire stands proud of its wall as a block; the Workshop's roof is plain grey. The scrapyard and the other eight buildings remain. The six rounds count per building. Test change reviewed: this family's file limit rises from 3 MB to 8 MB, as every photo-carved family has, because each building now carries its own photos; no check of shape, parts or triangles is loosened. Size targets are advisory, and 4.14 MB is fine.
+
+Scrapyard, 7 November (Claude): **round 4 passes, merged.** The traced gantry crane with its hook and magnet stands over two piles of separate crushed wrecks, dark and rusty in three kinds, inside the fence with scrap on the ground. Short of the photo: the piles are a little neat, with the cars lying flatter and squarer than the photo's tumbled heap. The motor pool, paint shop, trading post, toll bank, school, radio mast, helipad and notice board remain.

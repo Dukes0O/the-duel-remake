@@ -37,14 +37,20 @@ export async function run(context) {
   fact(await context.evaluate(`/BACK GATE/.test(document.body.innerText) && /DRIVE THE SCABLANDS/.test(document.body.innerText)`), 'the yard offers the back gate and free driving');
   fact(await context.evaluate(`/Next up: Hot Delivery/.test(document.body.innerText)`), 'the yard names Hot Delivery as Next up');
   await shot('everburn-yard-next-up');
+  // The QA panel on the test page sits over the yard's buttons, and a real click would land on it.
+  await context.evaluate(`(() => { for(const panel of document.querySelectorAll('details'))if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.open=false; return true; })()`);
   await click('[data-action="yard-cards"]');
   await context.waitFor(`!!document.querySelector('.ember-wall')`, 'the Everburn Story Wall', 15_000);
   fact(await context.evaluate(`document.querySelectorAll('.ember-wall [data-ember-step]').length === 1`), 'the Story Wall has one next job button');
   await shot('everburn-story-wall');
   await app(`(() => { const p=structuredClone(app.profile); p.story={...p.story,ember:{read:true,jobs:['hot-delivery','get-out-and-walk']}}; app.profile=p; app._saveProfile(); return true; })()`);
   await context.reload();
-  await context.waitFor(ready, 'the yard after story progress', 90_000);
+  await context.waitFor(ready, 'the menu after story progress', 90_000);
+  await click('[data-action="wasteland-visit"]');
+  await context.waitFor(`window.__qaApp.isYardHomeActive()`, 'the yard after story progress', 120_000);
+  await context.evaluate(`(() => { for(const panel of document.querySelectorAll('details'))if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.open=false; return true; })()`);
   await click('[data-action="yard-cards"]');
+  await context.waitFor(`!!document.querySelector('.ember-wall')`, 'the Story Wall after story progress', 15_000);
   fact(await context.evaluate(`/TIN TOWN NOTICE BOARD/.test(document.body.innerText) && /Lost Prospector/.test(document.body.innerText)`), 'job 2 opens the notice board side jobs');
   await shot('everburn-notice-board');
   fact(await context.evaluate(`typeof window.__qaApp.storyResultLine === 'function'`), 'the hooks expose the Everburn result tick');

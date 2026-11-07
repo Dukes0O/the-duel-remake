@@ -1564,3 +1564,44 @@ Janitor sweep (separate): final branch/status inventory reviewed; no files or br
 - 5 Nov night: merged WW-ART-DAM round 9, the Dry Dam's face from a projected photo, gates, salt wall and gatehouse (Blender output and hygiene passed; Claude's verdict: passed for the Iron Mule and Ships). Wrecks, gantry wheels and silt carded as WW-ART-DAM-2.
 - 5 Nov: TOWN-MAP-VIEW merged. Lane 38/39: `test-review-evidence` fails at night (seen 23:20 local, UTC-8): the browser plan and another plan name their evidence folder by different dates; not map code. Card to follow. Trade trucks show no pin until trips have real routes.
 - 5 Nov: TOWN-ART-HOMES merged at round 6 of 6 as the working set; what is short is on its card.
+- 5 Nov: TOWN-WORLD merged. DRIVE from the town starts a drive in the Scablands with the town drawn and solid; the gate leads to the Scrapdome. Lane 223/224: `test-review-evidence` date failure only. Replays and world signatures unchanged. Off for players.
+- 5 Nov: TOWN-ART-TRUCKS-1 stopped at round 6 of 6, not merged; branch kept. Next step needs Kyle's word on a download (card).
+- 5 Nov: TOWN-ART-DOME merged at round 6 of 6 as the working set; what is short is on its card.
+- 6 Nov: merged BOARD-LINES, The Notice Board's 91 lines (lane 25/25 on the branch, build).
+- 5 Nov: TOWN-ART-WATER merged at round 4 of 6; verdict on its card.
+- 5 Nov: CAR-ART-LONGHAUL merged; verdict on its card.
+- 5 Nov: CAR-ART-RATTLER stopped at round 6 of 6, not merged; branch kept.
+- 5 Nov: TOWN-ART-SANITATION merged; verdict on its card.
+- 5 Nov: TOWN-ART-STAGES merged at round 5 of 6; verdict on its card.
+- 6 November: story page `docs/story/there-is-no-2-15.md` and 11 RAIL cards added (Claude). Pim's railway, the buried works train and Old Tam, who drove it.
+- 6 Nov early: full check on 7712ae7d (no frame step, screens not set up): full tier 631/631, combat balance pass, browser 188/201. Failures being rerun once; frame-based convoy-frames, deep-frames and fire-view not counted.
+- 6 Nov: merged FIX-HUD-LOAN-SLOT (combat-hud, arsenal-core, arsenal-wave1 fail on a hidden fifth bar button since 43955ec4; lane 27/27, three browser checks, build, one review pass).
+- RAIL-LINES merged: the railway story's 158 lines; lane tier 25/25 and build passed on 0dd1aca1.
+- 6 Nov: merged FIX-EVERBURN-CARD (the card's buttons named a function that does not exist; lane, build, one review with one real fault fixed; everburn check reaches its end, two open facts on QA-EVERBURN-SCREENS, switch still off). Full check on 7712ae7d, final: 188/201 browser, then 3 fixed by FIX-HUD-LOAN-SLOT, arsenal-core-audio passes on rerun; arsenal-wave1-audio and p4-audio fail on rerun; arena-shove, drive-lesson-run, ski-finish on their cards; convoy-frames, deep-frames, fire-view are frame checks, not valid here.
+WW-ART-RAIL engine merged, card still open: the 2:15's engine and drift pass (round 3), on the new photo-model kit (tools/blender/photo_model.py; method in ASSET_PIPELINE); lane tier and build passed on 6689d50a.
+WW-ART-CREW props merged, card still open: the harpoon, piano and Gerald pass (round 5), rewritten by Claude on the photo kit, which gains Photo.bleed and shrink; lane tier 47/47 and build passed on ab36be8e.
+- 6 Nov: merged the fire engine (TOWN-ART-TRUCKS-1 round 9, past six rounds with Kyle's approval): carved from four photos by the new tools/blender/hull_model.py; 284 art checks, hygiene, build. Tanker, supply truck and tow rig still open.
+- 5 Nov: TOWN-ART-VANE merged; verdict on its card.
+- 6 Nov: merged the Rattler (CAR-ART-RATTLER round 9, past six rounds with Kyle's approval), carved from four photos; 292 art checks, hygiene, build. TOWN-ART-VANE's line above is also 6 Nov.
+WW-ART-RAIL carriage and van merged, card still open: both pass (round 4), built by Codex on the photo kit; lane tier and build passed on 0b669912 (one timeout, passed on its rerun alone).
+- RAIL-STEPS merged: the railway engine, with marks, gradient, token, hoop, sand drag, ride-along, runaway, dig and whistle; lane tier and build passed on f854505c.
+- 6 Nov: TOWN-ART-TRUCKS-1 merged; verdict on its card.
+- WW-ART-CREW merged, card done: every prop passes (round 6), on the photo and hull kits; lane tier and build passed on e8562557.
+WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (round 7); lane tier and build passed on 946dc4d8.
+- 6 Nov: merged TOWN-WMAP-UI: the Wasteland map past the town's far zoom, deed buying and bids, and the Ledger's till buttons that nothing called before (lane 40/40, browser town-wmap and town-opens, money, visits, build; two reviews: one wording of the command route fixed by giving stepTown an optional context, one save fault fixed). Switch still off.
+- WW-ART-RAIL merged, card done: the 2:15, carriage, van, Wednesday, coal heap and small props pass; lane tier and build passed on f6761be4.
+- WW-ART-WHITES merged, card done: all eight pieces pass (round 4), on the photo kit; lane tier and build passed on b7b1f2d9; one conflict in the output test's list, both entries kept, that suite rerun.
+- 6 Nov: merged TOWN-PEOPLE-SUPPORT and TOWN-PACE: home plots painted by the player, families build from store goods, homes and water bring newcomers, Build tabs now work (nothing handled the click before), reports bounded. Real-play pace: first winter 36 to 40 people, Year 2 98 to 135; 2-seed soak 5,402 and 6,012 at Year 30 (the 10-seed default takes over 20 minutes, to run in the next full check). Lane 46/47 (test-town-people passed alone on rerun, rule 3), browser town-homes, town-opens, town-wmap, build; reviews: three real faults fixed. Switch still off.
+- 6 Nov: merged tyres, lamps and one true scale for the town trucks and Rattler, from Kyle's eye (tyre, wheel_well and headlamp in hull_model.py; 300-odd art checks, hygiene, build, one review).
+- RAIL-REGION merged: the Whites, the two cuttings and the salt storm, closed until the story opens them; lane tier and build passed on d41607c4.
+- 6 Nov: TOWN-ART-POWER merged; verdict on its card.
+- 6 Nov: merged TOWN-VANE: Mrs Vane plays against a real town from Year 7, with 35 letters (lane 42/44: test-town-people and test-town-core pass alone, timing under load, rule 3; build; reviews: yearly letters that never fired, growing saved rows and big year numbers all fixed). Switch still off.
+- 6 Nov: TOWN-ART-WALKERS merged; verdict on its card.
+- 6 Nov: TOWN-ART-TRUCKS-1 merged; verdict on its card.
+- 6 Nov: WW-ART-SEA pieces so far merged (gears, wall, causeway, gate, ramp, arch); card stays open for the rest.
+- 6 Nov: TOWN-ART-BORER merged; verdict on its card.
+- - 7 Nov: WW-ART-PEACE merged: Mirage's decoys, caravan and camp, Gunn's turret and rock, Kettle's chair, the toll cabinet, the bound sign and stone, Sal's trailer, Dust's tanker, Magnus's crane and roof. Lane tier 47/47 and build on d8241ce34.
+- 6 Nov: TOWN-ART-TRUCKS-2 merged; verdict on its card.
+- 7 Nov night check on b9f58aed (art jobs alongside, no frame step): full tier 637/638 (test-town-core passes alone: QA-TIMING-UNDER-LOAD); combat balance pass; town soak 10 towns x 30 years correct, last timing check 60.85 ms vs 30 under load (same card); browser 191/203, water-road passes alone (QA-WATER-ROAD-AUTOPILOT), the rest are existing QA cards or frame and sound checks that need a quiet laptop.
+- - 7 Nov: WW-ART-DAM-2 merged: the dam's hoist wheels, the old gear in its silt, and a deep spillway against the wall with its wrecks as one part. Lane tier 47/47 and build on afa2b6a04.
+- - 7 Nov: WW-ART-SEA merged: the gears, harbour wall, causeway, gate, ramp and arch, the Mule's gear wagon, the works camp, Mrs Vane, Magnus's big magnet and the water front. Lane tier 47/47 and build on 9d03f886e.
