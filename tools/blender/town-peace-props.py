@@ -11,6 +11,8 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render-dir', default='.qa-dist/ww-art-peace')
 parser.add_argument('--round4-only', action='store_true',
                     help='render only the new sal-pipe-trailer review frames')
+parser.add_argument('--round6-only', action='store_true',
+                    help='render only the new dust-tanker review frames')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -662,12 +664,195 @@ coupler = town.cube('sal-pipe-trailer:pickup-hitch-coupler',
                     (0, .24, -1.57), (.24, .16, .22), frame_mat, bevel=.025)
 own(coupler, sal, 'sal-pipe-trailer:pickup-hitch-coupler')
 
+# Dust's tanker: carve only the cab. The rear turnaround belongs to the tank,
+# so it is reserved for the tank's circular end cap and never enters the hull.
+tank_photos = {key: measured_photo(f'dust-tanker-{key}')
+               for key in ('side', 'front', 'rear', 'overhead')}
+tank_details = {key: Photo(textures / f'peace-dust-tanker-{key}.jpg')
+                for key in ('side', 'front', 'rear', 'overhead')}
+tanker = root_part('dust-tanker')
+t_side, t_front = tank_photos['side'], tank_photos['front']
+t_rear, t_top = tank_photos['rear'], tank_photos['overhead']
+T_SIDE_X0, T_SIDE_X1, T_GROUND = 20, 900, 428
+T_SCALE = 11.2 / (T_SIDE_X1 - T_SIDE_X0)
+T_Z0 = -5.6
+T_WIDTH = 2.75
+T_FRONT_CX, T_FRONT_GROUND = 306, 430
+T_END_SPAN = 410
+T_END_SCALE = T_WIDTH / T_END_SPAN
+T_TOP_X0, T_TOP_X1, T_TOP_MID, T_TOP_SPAN = 24, 930, 252, 332
+T_TOP_SCALE = 11.2 / (T_TOP_X1 - T_TOP_X0)
+T_TOP_WIDTH_SCALE = T_WIDTH / T_TOP_SPAN
+
+def tank_side_pick(x, y, z):
+    return T_SIDE_X0 + (z - T_Z0) / T_SCALE, T_GROUND - y / T_SCALE
+
+def tank_front_pick(x, y, z):
+    return T_FRONT_CX + x / T_END_SCALE, T_FRONT_GROUND - y / T_SCALE
+
+def tank_top_pick(x, y, z):
+    return T_TOP_X0 + (z - T_Z0) / T_TOP_SCALE, T_TOP_MID - x / T_TOP_WIDTH_SCALE
+
+def tank_cab_trim_side(mask):
+    mask = mask.copy()
+    mask[T_GROUND:, :] = False
+    mask[:, 374:] = False  # tank, tarp and chassis are separate photo parts
+    return mask
+
+def tank_cab_trim_top(mask):
+    mask = mask.copy()
+    mask[:, 370:] = False
+    return mask
+
+def tank_cab_trim_front(mask):
+    mask = mask.copy()
+    mask[:108, :] = False  # the higher silhouette belongs to the tank's canvas
+    return mask
+
+tank_views = [
+    View('side', t_side, seed_points(t_side), tank_side_pick, (-1, 0, 0),
+         solid=tank_cab_trim_side, grey=20, tolerance=20),
+    View('front', t_front, seed_points(t_front), tank_front_pick, (0, 0, -1),
+         solid=tank_cab_trim_front, grey=20, tolerance=20),
+    View('overhead', t_top, seed_points(t_top), tank_top_pick, (0, 1, 0),
+         solid=tank_cab_trim_top, grey=20, tolerance=20),
+]
+tank_bounds = ((-T_WIDTH / 2, T_WIDTH / 2), (0, 4.4), (-5.65, -1.05))
+tank_voxel = .035
+tank_solid, tank_xs, tank_ys, tank_zs = occupancy(
+    tank_bounds, tank_voxel, [view.covers for view in tank_views])
+tank_solid = largest_part(tank_solid)
+for view in tank_views:
+    view.photo.bleed(view.mask)
+tank_cab = carve_hull('dust-tanker:photo-carved-cab', tank_views,
+                      {view.name: view.photo.material(.86) for view in tank_views},
+                      tank_solid, tank_xs, tank_ys, tank_zs, tank_voxel, 2200)
+own(tank_cab, tanker, 'dust-tanker:photo-carved-cab')
+
+# The stainless tank is turned along the truck's length. Its upper silhouette
+# follows the metal visible below the canvas; lower radii come from the side
+# silhouette mask at each measured station. Arc-scaled UVs avoid outline pixels.
+tank_mask = ~t_side.sky(seed_points(t_side), tolerance=20, grey=20)
+T_TANK_CX, T_TANK_TOP, T_TANK_BOTTOM = 202, 112, 300
+tank_stations = []
+for px in range(370, 885, 12):
+    rows = np.flatnonzero(tank_mask[276:308, px])
+    if not len(rows):
+        continue
+    lower = 276 + int(rows[-1])
+    # The side-photo mask gives the lower silhouette; the covered top edge
+    # follows the same measured radius about the tank's visible centreline.
+    radius_px = max(70, min(100, lower - T_TANK_CX))
+    tank_stations.append(((px - T_SIDE_X0) * T_SCALE, radius_px * T_SCALE))
+if len(tank_stations) < 8:
+    raise RuntimeError(f'dust-tanker tank silhouette has only {len(tank_stations)} stations')
+T_TANK_CENTER_Y = (T_GROUND - (T_TANK_TOP + T_TANK_BOTTOM) / 2) * T_SCALE
+profile = [(distance, radius) for distance, radius in tank_stations]
+profile.insert(0, (profile[0][0] - .10, .20))
+profile.append((profile[-1][0] + .10, .18))
+t_side.bleed(tank_mask)
+t_side_mat = t_side.material(.58)
+
+def tank_body_uv(index, distance, radius, angle):
+    arc = math.degrees(math.asin(math.sin(angle))) / 90
+    px = T_SIDE_X0 + distance / T_SCALE + radius / T_SCALE * .84 * arc
+    py = T_GROUND - T_TANK_CENTER_Y / T_SCALE - math.sin(angle) * radius / T_SCALE * .84
+    return t_side.uv(px, py)
+
+def tank_cap_uv(photo, cx, cy, radius_px):
+    return lambda angle, fraction: photo.uv(
+        cx + math.cos(angle) * fraction * radius_px * .87,
+        cy + math.sin(angle) * fraction * radius_px * .87)
+
+tank_body = Mesh()
+lathe(tank_body, 'side', (0, T_TANK_CENTER_Y, T_Z0), (0, 0, 1), (1, 0, 0),
+      (0, 1, 0), profile, tank_body_uv, sides=48,
+      cap_end=('rear', tank_cap_uv(t_rear, 286, 240, 151)))
+own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
+                     {'side': t_side_mat, 'rear': t_rear.material(.58)}),
+    tanker, 'dust-tanker:photo-turned-fuel-tank')
+
+# The tarp outline is traced from the visible cloth, not from the hidden tank.
+# Two thin photo slabs sit just outside the tank walls and follow the same folds.
+tarp_photo = Photo(textures / 'peace-dust-tanker-side.jpg')
+tarp_outline = ((358, 92), (404, 66), (475, 71), (522, 83), (600, 68),
+                (690, 76), (762, 70), (822, 89), (871, 83), (890, 121),
+                (880, 190), (862, 218), (817, 201), (769, 215), (712, 199),
+                (650, 218), (588, 205), (527, 224), (466, 207), (417, 222),
+                (375, 203), (355, 165))
+gx = np.arange(tarp_photo.w)[None, :]
+gy = np.arange(tarp_photo.h)[:, None]
+tarp_solid = np.zeros((tarp_photo.h, tarp_photo.w), dtype=bool)
+for i, (x0, y0) in enumerate(tarp_outline):
+    x1, y1 = tarp_outline[(i + 1) % len(tarp_outline)]
+    crossing = ((y0 > gy) != (y1 > gy)) & \
+        (gx < (x1 - x0) * (gy - y0) / (y1 - y0 or 1) + x0)
+    tarp_solid ^= crossing
+tarp_photo.bleed(tarp_solid, passes=24)
+tarp_mat = tarp_photo.material(.94)
+tarp_loops = trace(tarp_solid, (348, 58, 900, 232), tolerance=1.2, min_area=30)
+def tarp_world(px, py, depth):
+    return (depth, (T_GROUND - py) * T_SCALE,
+            T_Z0 + (px - T_SIDE_X0) * T_SCALE)
+for depth, side_name in ((-1.39, 'left'), (1.39, 'right')):
+    tarp_mesh = Mesh()
+    slab(tarp_mesh, 'cloth', tarp_photo, tarp_loops, tarp_world,
+         depth - .018, depth + .018, wall_scale=T_SCALE)
+    own(tarp_mesh.finish(f'dust-tanker:tied-tarpaulin-{side_name}',
+                         {'cloth': tarp_mat}), tanker,
+        f'dust-tanker:tied-tarpaulin-{side_name}')
+
+# Axles and tyres use the measured wheel centres and each wheel's own photo.
+T_TRACK = .91
+for axle_name, px, cy, radius_px in (('front', 116, 339, 79), ('rear', 690, 339, 78)):
+    radius = radius_px * T_SCALE
+    axle_z = T_Z0 + (px - T_SIDE_X0) * T_SCALE
+    tread_mat, tread_width_px = tire_material(tank_details['side'], px, cy,
+                                               radius_px, f'Dust tanker {axle_name}')
+    for side_name, x in (('left', -T_TRACK), ('right', T_TRACK)):
+        wheel = Mesh()
+        tread_uv = lambda i, d, r, a, radius=radius, radius_px=radius_px, tread_width_px=tread_width_px: (
+            a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * T_SCALE)), i / 3)
+        disc_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: tank_details['side'].uv(
+            cx - math.cos(a) * radius_px * f * .66,
+            cy - math.sin(a) * radius_px * f * .66)
+        lathe(wheel, 'tread', (x, radius, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+              [(-.16, radius * .9), (-.13, radius), (.13, radius), (.16, radius * .9)],
+              tread_uv, sides=24,
+              cap_start=('side', lambda a, f: disc_uv(a, f * .9)),
+              cap_end=('side', lambda a, f: disc_uv(a, f * .9)))
+        own(wheel.finish(f'dust-tanker:wheel-{axle_name}-{side_name}',
+                         {'side': tank_details['side'].material(.86), 'tread': tread_mat}),
+            tanker, f'dust-tanker:wheel-{axle_name}-{side_name}')
+
+# Two traced frame rails follow the photographed chassis. No repeated dark
+# patches are used: the rail itself wears the continuous side-photo rectangle.
+frame_solid = np.zeros_like(tank_mask)
+frame_solid[294:359, 30:897] = tank_mask[294:359, 30:897]
+for cx, cy, radius in ((116, 339, 86), (690, 339, 85)):
+    yy, xx = np.ogrid[:t_side.h, :t_side.w]
+    frame_solid &= (xx - cx) ** 2 + (yy - cy) ** 2 >= radius ** 2
+frame_loops = trace(frame_solid, (28, 292, 899, 361), tolerance=1.4, min_area=18)
+frame_photo = Photo(textures / 'peace-dust-tanker-side.jpg')
+frame_photo.bleed(frame_solid, passes=8)
+frame_mat = frame_photo.material(.9)
+def tanker_frame_world(px, py, depth):
+    return (depth, (T_GROUND - py) * T_SCALE,
+            T_Z0 + (px - T_SIDE_X0) * T_SCALE)
+for depth, side_name in ((-.79, 'left'), (.79, 'right')):
+    frame_mesh = Mesh()
+    slab(frame_mesh, 'rust', frame_photo, frame_loops, tanker_frame_world,
+         depth - .035, depth + .035, wall_scale=T_SCALE)
+    own(frame_mesh.finish(f'dust-tanker:traced-frame-rail-{side_name}',
+                          {'rust': frame_mat}), tanker,
+        f'dust-tanker:traced-frame-rail-{side_name}')
+
 for part in sal.children_recursive:
     if part.type == 'MESH':
         part['part'] = part.name
 sal['assetRoot'] = True
 
-for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent,oasis,sal):
+for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent,oasis,sal,tanker):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -685,6 +870,11 @@ for image_name, scale in {
         images.append(sal_details[image_name.removeprefix('sal-pipe-trailer-')].image)
     for image in images:
         image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
+# Keep each tanker view whole and bring the authored widths to the 1024 px
+# ceiling without cropping; the source JPEGs themselves remain untouched.
+for photo in tank_details.values():
+    if photo.image.size[0] < 1024:
+        photo.image.scale(1024, max(1, round(photo.image.size[1] * 1024 / photo.image.size[0])))
 town.export_glb(glb)
 
 # Review renders always come from the exported GLB after a fresh empty scene.
@@ -717,7 +907,7 @@ def show(identifier,loc,target,scale,resolution=(700,500)):
         if obj.type=='MESH': obj.hide_render=not obj.name.startswith(identifier)
     shot(identifier+'-three-quarter',loc,target,scale,resolution)
 
-if not args.round4_only:
+if not args.round4_only and not args.round6_only:
     show('mirage-billboard',(8.5,1.35,8.5),(0,2.7,0),10.5,(1200,400))
     shot('mirage-billboard-front',(0,3.2,12),(0,3.2,0),9.2,(1200,400))
     shot('mirage-billboard-side',(12,3.2,0),(0,2.7,0),7,(600,900))
@@ -763,8 +953,30 @@ def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
     scene.render.filepath = str(render_dir / f'sal-pipe-trailer-{name}.png')
     bpy.ops.render.render(write_still=True)
 
-sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1400, 690), ortho=13.4)
-sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 650), lens=43)
-sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 650), lens=43)
+if not args.round6_only:
+    sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1400, 690), ortho=13.4)
+    sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 650), lens=43)
+    sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 650), lens=43)
+
+def tanker_shot(name, eye, target, resolution=(1200, 666), ortho=None, lens=43):
+    for obj in scene.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = not obj.name.startswith('dust-tanker')
+    scene.render.resolution_x, scene.render.resolution_y = resolution
+    camera.location = game_vector(eye)
+    camera.rotation_euler = (game_vector(target)-camera.location).to_track_quat('-Z','Y').to_euler()
+    if ortho:
+        camera.data.type = 'ORTHO'
+        camera.data.ortho_scale = ortho
+    else:
+        camera.data.type = 'PERSP'
+        camera.data.lens = lens
+    scene.render.filepath = str(render_dir / f'dust-tanker-{name}.png')
+    bpy.ops.render.render(write_still=True)
+
+if args.round6_only:
+    tanker_shot('side', (0, 1.55, 15), (0, 1.55, 0), ortho=12.2)
+    tanker_shot('three-quarter-front', (-10.6, 1.55, -10.6), (0, 1.45, 0))
+    tanker_shot('three-quarter-rear', (10.6, 1.55, 10.6), (0, 1.45, 0))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
-                  'newAsset':'sal-pipe-trailer'}))
+                  'newAsset':'dust-tanker' if args.round6_only else 'sal-pipe-trailer'}))
