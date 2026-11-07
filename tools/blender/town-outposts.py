@@ -841,6 +841,12 @@ if any(v < -15.5 or v > 15.5 for axis in (0,2) for v in (deck_bounds['min'][axis
     raise RuntimeError('deck-town exceeds 4 x 4 cell footprint')
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+# Keep the credited 1024px source photographs intact in `textures`, and use a
+# moderate 768px copy in the family GLB so its 5 MB budget remains available.
+for image in bpy.data.images:
+    if Path(image.filepath).name.startswith('deck-town-') and image.size[0] > 768:
+        image.scale(768, round(image.size[1] * 768 / image.size[0]))
+        image.pack()
 town.export_glb(out)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=str(out))
@@ -869,8 +875,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 12, 25), 6200, 20)
-area('open fill', (-16, -16, 14), 3600, 15)
+area('soft sky', (0, 12, 25), 3600, 20)
+area('open fill', (-16, -16, 14), 1900, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -946,50 +952,5 @@ shot('deck-road', (-12, 8, -18), deck_centre, 15)
 shot('deck-far', (12, 8, 18), deck_centre, 15)
 shot('deck-mayor', (-44, 63.3, -44), deck_centre, 19)
 
-# A compact comparison sheet: two matched source/model pairs, two town angles,
-# and the mayor's 45-degree view. The reference images keep their full 1024 px.
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-sheet.parent.mkdir(parents=True, exist_ok=True)
-W, H = 1600, 2430
-page = Image.new('RGB', (W, H), (31, 33, 31))
-draw = ImageDraw.Draw(page)
-font_dir = Path('C:/Windows/Fonts')
-title_font = ImageFont.truetype(str(font_dir / 'segoeuib.ttf'), 34)
-label_font = ImageFont.truetype(str(font_dir / 'segoeuib.ttf'), 23)
-body_font = ImageFont.truetype(str(font_dir / 'segoeui.ttf'), 18)
-draw.text((34, 20), 'DECK TOWN | ROUND 12', font=title_font, fill=(242, 227, 199))
-draw.text((34, 66), 'Photo-carved ship deck and patched tin homes | warm daylight', font=body_font, fill=(221, 209, 184))
-
-def panel(image_path, rect, caption):
-    x, y, w, h = rect
-    image = Image.open(image_path).convert('RGB')
-    image = ImageOps.fit(image, (w, h), method=Image.Resampling.LANCZOS)
-    page.paste(image, (x, y))
-    draw.rectangle((x + 8, y + 8, x + min(w - 8, 310), y + 36), fill=(23, 25, 23))
-    draw.text((x + 16, y + 9), caption, font=body_font, fill=(245, 231, 202))
-
-def row_label(y, caption):
-    draw.text((34, y), caption, font=label_font, fill=(233, 190, 126))
-
-row_label(112, 'DECK | SIDE PHOTO AND MATCHED MODEL VIEW')
-panel(textures / 'deck-town-deck-side.jpg', (34, 148, 748, 249), 'SOURCE PHOTO')
-panel(render / 'deck-match-side.png', (818, 148, 748, 249), 'CARVED MODEL')
-row_label(426, 'ONE HOME | SIDE PHOTO AND MATCHED MODEL VIEW')
-panel(textures / 'deck-town-home-side.jpg', (34, 462, 748, 374), 'SOURCE PHOTO')
-panel(render / 'home-match-side.png', (818, 462, 748, 374), 'CARVED MODEL')
-row_label(866, 'TOWN | ROAD-SIDE AND FAR-SIDE THREE-QUARTER VIEWS')
-panel(render / 'deck-road.png', (34, 902, 748, 516), 'ROAD SIDE')
-panel(render / 'deck-far.png', (818, 902, 748, 516), 'FAR SIDE')
-row_label(1448, 'MAYOR | 45 DEGREES DOWN, 88 METRES AWAY')
-panel(render / 'deck-mayor.png', (34, 1484, 1532, 906), 'MAYOR VIEW')
-draw.text((34, 2402), 'Generated reference photographs: OpenAI image generation, 7 November 2026.',
-          font=body_font, fill=(221, 209, 184))
-for quality in (78, 74, 70, 66, 62, 58, 54):
-    page.save(sheet, 'JPEG', quality=quality, optimize=True, progressive=True)
-    if sheet.stat().st_size <= 500_000:
-        break
-if sheet.stat().st_size > 500_000:
-    raise RuntimeError(f'round-12 sheet is {sheet.stat().st_size} bytes; limit 500 KB')
-print(json.dumps({'sheet': str(sheet), 'sheet_bytes': sheet.stat().st_size}))
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('*.png'))]}))
