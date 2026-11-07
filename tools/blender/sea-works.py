@@ -1,7 +1,6 @@
 """WW-ART-SEA first pieces. Photo measured parts, metres, X right, Y up."""
 import argparse, json, math, sys
 from pathlib import Path
-from mathutils import Vector
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
@@ -15,6 +14,7 @@ if args.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)]}))
  raise SystemExit(0)
 import bpy, numpy as np
+from mathutils import Vector
 sys.path.insert(0,str(root/'tools/blender'))
 from photo_model import Mesh,Photo,slab,trace,tidy,lathe,box
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -121,16 +121,31 @@ def build_iron_mule_gear():
  # Turn four square wheels at the side-photo centres. The wheel radius is
  # 90 px at the 7 m side scale; each axle follows the Mule rails at z=+/-0.83.
  wheel_centres=(-2.44,2.09);radius=.34
+ wheel_material=bpy.data.materials.new('Mule wagon dark rusted wheel iron')
+ wheel_material.diffuse_color=(.105,.055,.032,1);wheel_material.use_nodes=True
+ wheel_shader=wheel_material.node_tree.nodes.get('Principled BSDF')
+ wheel_shader.inputs['Base Color'].default_value=(.105,.055,.032,1)
+ wheel_shader.inputs['Metallic'].default_value=.25;wheel_shader.inputs['Roughness'].default_value=.9
  for cx in wheel_centres:
   for zc in (-.83,.83):
-   wheel_origin=(cx,radius,zc-(.16 if zc>0 else 0))
-   face=lambda a,f,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*74*f,460-math.sin(a)*74*f)
-   tread=lambda i,d,r,a,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+82+i*10,460+abs(math.sin(a))*18)
-   lathe(m,'side',wheel_origin,(0,0,1),(1,0,0),(0,1,0),[(0,radius),(.16,radius)],tread,sides=24,
-         cap_start=('side',face) if zc<0 else None,cap_end=('side',face) if zc>0 else None)
-   lathe(m,'side',(cx,radius,zc+(.16 if zc>0 else -.16)),(0,0,1),(1,0,0),(0,1,0),
-         [(0,.11),(.055,.11)],lambda i,d,r,a,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*24,460-math.sin(a)*24),sides=12,
-         cap_start=('side',lambda a,f,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*20*f,460-math.sin(a)*20*f)))
+   zstart=zc-(.16 if zc>0 else 0);zmid=zstart+.08
+   uv=lambda *args:(0,0)
+   lathe(m,'wheel',(cx,radius,zstart),(0,0,1),(1,0,0),(0,1,0),[(0,radius),(.16,radius)],uv,sides=24)
+   for face_z,out in ((zstart,(0,0,-1)),(zstart+.16,(0,0,1))):
+    for edge in range(24):
+     a0=math.tau*edge/24;a1=math.tau*(edge+1)/24
+     points=[(cx+math.cos(a0)*radius,radius+math.sin(a0)*radius,face_z),
+             (cx+math.cos(a1)*radius,radius+math.sin(a1)*radius,face_z),
+             (cx+math.cos(a1)*.27,radius+math.sin(a1)*.27,face_z),
+             (cx+math.cos(a0)*.27,radius+math.sin(a0)*.27,face_z)]
+     m.face(points,[(0,0),(.1,0),(.1,1),(0,1)],'wheel',out)
+   lathe(m,'wheel',(cx,radius,zstart),(0,0,1),(1,0,0),(0,1,0),[(0,.09),(.16,.09)],uv,sides=16,
+         cap_start=('wheel',uv),cap_end=('wheel',uv))
+   for spoke in range(6):
+    angle=math.tau*spoke/6;axis=(math.cos(angle),math.sin(angle),0)
+    start=(cx+math.cos(angle)*.085,radius+math.sin(angle)*.085,zmid)
+    lathe(m,'wheel',start,axis,(0,0,1),(-math.sin(angle),math.cos(angle),0),[(0,.035),(.22,.035)],uv,sides=8,
+          cap_start=('wheel',uv),cap_end=('wheel',uv))
  # Buffers and the named screw-coupling stems sit at the Mule's measured 0.80 m.
  for direction in (-1,1):
   for zc in (-.56,.56):
@@ -195,7 +210,7 @@ def build_iron_mule_gear():
   for x0,x1,low in ((-3.45,-1.18,.60),(-1.20,1.20,.49),(1.18,3.45,.60)):
    box(sag,x0,x1,low,low+.18,z0,z1,{k:steel for k in ('+x','-x','+y','-y','+z','-z')})
  finish(sag,'iron-mule-gear-sag',{'side':side.material()},root_obj)
- finish(m,'iron-mule-gear-frame',{'side':side.material(),'end':end.material(),'deck':top.material()},root_obj)
+ finish(m,'iron-mule-gear-frame',{'side':side.material(),'end':end.material(),'deck':top.material(),'wheel':wheel_material},root_obj)
 def build_wall():
  p=photo('sea-harbour-wall.jpg'); blend_repeat_edges(p); stone=photo('dam-gatehouse-stone.jpg'); m=Mesh(); H=6; L=40
  front=(0,55,p.w,300)

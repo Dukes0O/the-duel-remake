@@ -88,3 +88,13 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 - Added a render-only length of track at the Mule's 1.66 m gauge for the two loaded quarter views. It is not included in the exported wagon model.
 - Blender export and Standard-view empty-scene renders completed. Looked at all four wagon views; the load now rests on the deck, and the sheet uses empty side/end views beside the photos plus both loaded track views.
 - Removed: none.
+
+## WW-ART-SEA point 5: final look and checks
+
+- Rendered side and end views from the exported GLB in an empty Standard-view scene beside their matching photos. Rendered two full-wagon quarter views from about 20 m at car height, with a render-only rail segment at the Mule gauge. Looked at all five render files. The final sheet is edge-to-edge, 1600 px wide, and below 500 KB.
+- Review note records the visible end-photo mismatch: its wheel faces point at the camera, unlike the correct edge-on wheel orientation in the model. The source was not overwritten.
+- Final GLB readback: 32,228 expanded scene triangles (19,908 unique mesh triangles; 11,672 in `iron-mule-gear`), 2,937,916 bytes. Tightened the candidate GLB `maxBytes` from 3 MiB to the measured 2,937,916 bytes; the limit is now the exact committed asset size.
+- `node tools/test-blender-output.mjs`: first run failed the Blender-free `--paths-only` assertion because `mathutils.Vector` was imported before the Blender-only guard. Moved it below the guard; rerun passed, 316 checks and 0 failed. No assertion logic was loosened.
+- `node tools/test-repo-hygiene.mjs`: passed file placement; reported size targets as advisory.
+- Browser checks: not run in this lane; Claude owns browser and look review. Race fingerprints: not applicable, art-only change.
+- Removed: temporary photo grids, render PNGs and test logs under `.evidence/` and `.qa-dist/`; preserved `.qa-dist/task.md`.
