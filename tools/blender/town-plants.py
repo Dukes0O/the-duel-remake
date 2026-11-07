@@ -518,70 +518,107 @@ for z,name,photo in ((-3.02,'front',well_front),(3.02,'rear',well_rear)):
   well_beam(f'wellhead:{name}-foot',(x,.13,z-.22),(x,.13,z+.22),.16,dark)
 
 
-# One-cell salvaged airliner radar. The lower silhouettes are traced from the
-# photos on four planes so the tower remains an open lattice. The dish is a
-# separate photo-backed lathe on a true-centre vertical turntable.
+# One-cell salvaged airliner radar. The front elevation sets the tower height
+# and width on its own 100 px grid: the open face is about 7.1 m tall and
+# 2.45 m wide (2.9:1). Two traced front faces carry its real openings; traced
+# side-photo braces join them. The independently traced ladder and railing
+# stay clear of the static tower masks. The front and rear dish skins turn as
+# one vertical-axis lathe above the platform.
 radar=bpy.data.objects.new('radar',None);bpy.context.collection.objects.link(radar);radar.parent=rootobj
 radar_parts=[]
 radar_side=Photo(tex/'radar-side.jpg');radar_front=Photo(tex/'radar-front.jpg')
 radar_rear=Photo(tex/'radar-rear.jpg');radar_top=Photo(tex/'radar-above.jpg')
 RADAR_GROUND=1490
-RADAR_SCALE=7.35/(RADAR_GROUND-55)
-RADAR_Z_START=-3.05
-RADAR_Z_SPAN=6.1
+RADAR_TOWER_TOP=805
+RADAR_TOWER_HEIGHT=7.10
+RADAR_Y_SCALE=RADAR_TOWER_HEIGHT/(RADAR_GROUND-RADAR_TOWER_TOP)
 RADAR_FRONT_CENTRE=512
-RADAR_FRONT_SCALE=2.9/390
-def radar_z(px):return RADAR_Z_START+(px-305)*RADAR_Z_SPAN/420
-def radar_side_world(px,py,depth):return (depth,(RADAR_GROUND-py)*RADAR_SCALE,radar_z(px))
+RADAR_FRONT_WIDTH=2.45
+RADAR_FRONT_PIXELS=236
+RADAR_FRONT_SCALE=RADAR_FRONT_WIDTH/RADAR_FRONT_PIXELS
+RADAR_DEPTH=2.25
+RADAR_SIDE_CENTRE=512
+RADAR_SIDE_WIDTH=RADAR_DEPTH
+RADAR_SIDE_PIXELS=236
+RADAR_SIDE_SCALE=RADAR_SIDE_WIDTH/RADAR_SIDE_PIXELS
 def radar_front_world(px,py,depth):
- return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,(RADAR_GROUND-py)*RADAR_SCALE,depth)
+ return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,
+         (RADAR_GROUND-py)*RADAR_Y_SCALE,depth)
+def radar_side_world(px,py,depth):
+ return (depth,(RADAR_GROUND-py)*RADAR_Y_SCALE,
+         (px-RADAR_SIDE_CENTRE)*RADAR_SIDE_SCALE)
 def radar_attach(obj,parent=radar):obj.parent=parent;radar_parts.append(obj);return obj
+def radar_colour_mask(rgb):
+ spread=rgb.max(axis=2)-rgb.min(axis=2);grey=rgb.mean(axis=2)
+ raw=((spread>12)&(grey<205))|((grey<86)&(spread<14))
+ # Rust texture otherwise breaks each bar into many polygons. A majority
+ # filter joins its color flecks while keeping the large grey openings clear.
+ padded=np.pad(raw.astype(np.uint8),1)
+ votes=sum(padded[dy:dy+raw.shape[0],dx:dx+raw.shape[1]]
+           for dy in range(3) for dx in range(3))
+ return votes>=4
 
-# The studio ground is neutral grey. Keep the colored and dark steel pixels in
-# each lower silhouette; trace preserves the genuine open spaces in its frame.
-side_rgb=radar_side.rgb();side_spread=side_rgb.max(axis=2)-side_rgb.min(axis=2);side_grey=side_rgb.mean(axis=2)
-side_mask=((side_spread>12)&(side_grey<205))|((side_grey<86)&(side_spread<14))
-side_mask[:590,:]=False;side_mask[1490:,:]=False;side_mask[:,:280]=False;side_mask[:,750:]=False
-# The side reference includes the photographed dish and its drive. Those are
-# represented by the moving lathe and bearing pieces below; remove their
-# silhouettes from the tower trace so they are not copied as flat plates.
-side_y,side_x=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
-side_mask &= ~(((side_x-445)/118)**2+((side_y-330)/330)**2<1.0)
-side_mask &= ~((side_x>490)&(side_x<690)&(side_y>330)&(side_y<625))
-side_loops=trace(side_mask,(280,590,750,1490),tolerance=29.0,min_area=3000)
-if not side_loops:raise RuntimeError('radar side lattice trace is empty')
-front_rgb=radar_front.rgb();front_spread=front_rgb.max(axis=2)-front_rgb.min(axis=2);front_grey=front_rgb.mean(axis=2)
-front_mask=((front_spread>12)&(front_grey<205))|((front_grey<86)&(front_spread<14))
-front_mask[:575,:]=False;front_mask[1490:,:]=False;front_mask[:,:265]=False;front_mask[:,770:]=False
-# Keep the reflector itself exclusively on the rotating lathe. Its lower rim
-# overlaps the tower platform in the photo, so cut the circular face while
-# retaining the platform and mast below it.
+# The grey studio remains background even inside the lattice cells. Select
+# only colored rust/steel and very dark steel pixels, then trace the open face
+# from the photo. Avoid the photographed dish and keep the platform, ladder
+# and railing out of the tower panel so those parts have their own geometry.
+side_rgb=radar_side.rgb();side_mask=radar_colour_mask(side_rgb)
+front_rgb=radar_front.rgb();front_mask=radar_colour_mask(front_rgb)
+# Only the central tower and foot structure is baked into the two face slabs.
+# The excluded neutral pixels are the photo's studio, including every opening
+# inside the lattice, so there are no filled grey sheets behind the braces.
+front_mask[:RADAR_TOWER_TOP,:]=False;front_mask[RADAR_GROUND:,:]=False
+front_mask[:,:394]=False;front_mask[:,630:]=False
 front_y,front_x=np.ogrid[:front_mask.shape[0],:front_mask.shape[1]]
-front_mask &= ~((((front_x-512)/305)**2+((front_y-320)/305)**2<1.0)&(front_y<650))
-front_loops=trace(front_mask,(265,575,770,1490),tolerance=29.0,min_area=3000)
+# The straight central ladder is a separately traced face. Leave room for its
+# rails and rungs instead of baking it into each copy of the tower.
+ladder_cut=(front_x>=486)&(front_x<=538)&(front_y>=RADAR_TOWER_TOP)&(front_y<RADAR_GROUND)
+front_mask &= ~ladder_cut
+front_loops=trace(front_mask,(394,RADAR_TOWER_TOP,630,RADAR_GROUND),tolerance=26.0,min_area=120)
 if not front_loops:raise RuntimeError('radar front lattice trace is empty')
-for depth,label in ((-1.05,'road'),(1.05,'far')):
- frame=PhotoMesh();slab(frame,'photo',radar_side,side_loops,radar_side_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
- obj=frame.finish(f'radar:tower-side-frame-{label}',{'photo':radar_side.material()});radar_attach(obj)
-for depth,label in ((-1.14,'road'),(1.14,'far')):
- frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+for depth,label in ((-RADAR_DEPTH/2,'road'),(RADAR_DEPTH/2,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.045,depth+.045,wall_scale=RADAR_Y_SCALE)
  obj=frame.finish(f'radar:tower-end-frame-{label}',{'photo':radar_front.material()});radar_attach(obj)
 
-# Cross-ties at each landing and diagonal braces close the four-sided tower.
-for z in (-1.95,1.95):
- for y in (.18,1.65,3.05,4.18):
-  radar_attach(town.beam('radar:lattice-tie',(-1.0,y,z),(1.0,y,z),.085,steel))
-for y in (1.03,2.40,3.64):
- for x in (-.74,.74):
-  for z0,z1 in ((-1.05,1.05),(1.05,-1.05)):
-   radar_attach(town.beam('radar:lattice-cross-brace',(x,y-.67,z0),(x,y+.67,z1),.070,dark))
-for x in (-.88,.88):
- for z in (-2.62,2.62):
-  radar_attach(town.cube('radar:base-foot',(x,.075,z),(.40,.15,.48),dark,.012))
+# Measured on the side photo's 100 px grid, its three open X bays meet near
+# y=1.2, 3.7 and 6.2 m. Real diagonal and cross beams join the front/back
+# traced faces without putting a filled photo sheet across the open side.
+for x,label in ((-RADAR_FRONT_WIDTH/2,'left'),(RADAR_FRONT_WIDTH/2,'right')):
+ for index,(low,high) in enumerate(((.12,1.2),(1.2,3.7),(3.7,6.2),(6.2,7.08)),1):
+  for z0,z1 in ((-RADAR_DEPTH/2,RADAR_DEPTH/2),(RADAR_DEPTH/2,-RADAR_DEPTH/2)):
+   brace=town.beam(f'radar:side-x-brace-{label}-{index}',(x,low,z0),(x,high,z1),.075,steel)
+   radar_attach(brace)
+ for index,y in enumerate((.12,1.2,3.7,6.2,7.08),1):
+  tie=town.beam(f'radar:side-tie-{label}-{index}',(x,y,-RADAR_DEPTH/2),(x,y,RADAR_DEPTH/2),.075,dark)
+  radar_attach(tie)
 
-# The dish is centred at its real vertical turn axis. Its photo face points
-# toward the road; UVs sample the photographed reflector, not its background.
-RADAR_DISH_Y=(RADAR_GROUND-330)*RADAR_SCALE
+# Thin platform and separately traced railing sit at the tower head. The deck
+# is plain salvaged steel; the front and side rail profiles retain photo wear.
+platform_y=(RADAR_GROUND-RADAR_TOWER_TOP)*RADAR_Y_SCALE
+deck=town.cube('radar:platform-deck',(0,platform_y+.08,0),(3.70,.20,3.20),steel,.025)
+radar_attach(deck)
+rail_front_mask=radar_colour_mask(front_rgb)
+rail_front_mask[:650,:]=False;rail_front_mask[790:,:]=False
+rail_front_mask[:,:320]=False;rail_front_mask[:,704:]=False
+# Keep reflector surfaces out of the photographed rail and head support.
+rail_front_loops=trace(rail_front_mask,(320,650,704,790),tolerance=24.0,min_area=100)
+if not rail_front_loops:raise RuntimeError('radar front platform railing trace is empty')
+for depth,label in ((-1.56,'road'),(1.56,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,rail_front_loops,radar_front_world,depth-.025,depth+.025,wall_scale=RADAR_Y_SCALE)
+ obj=frame.finish(f'radar:platform-railing-{label}',{'photo':radar_front.material()});radar_attach(obj)
+
+# Ladder trace from the front photo, with its original openings between rungs.
+ladder_mask=radar_colour_mask(front_rgb)
+ladder_mask[:RADAR_TOWER_TOP,:]=False;ladder_mask[RADAR_GROUND:,:]=False
+ladder_mask &= (front_x>=486)&(front_x<=538)
+ladder_loops=trace(ladder_mask,(486,RADAR_TOWER_TOP,538,RADAR_GROUND),tolerance=24.0,min_area=30)
+if not ladder_loops:raise RuntimeError('radar ladder trace is empty')
+ladder_mesh=PhotoMesh();slab(ladder_mesh,'photo',radar_front,ladder_loops,radar_front_world,-1.25,-1.19,wall_scale=RADAR_Y_SCALE)
+ladder_obj=ladder_mesh.finish('radar:ladder',{'photo':radar_front.material()});radar_attach(ladder_obj)
+
+# The dish turns on a head over the platform. Its face is unchanged from the
+# accepted round; the rear wears the grey plate photo and the red rim is gone.
+RADAR_DISH_Y=9.70
 turn=bpy.data.objects.new('radar:dish',None);bpy.context.collection.objects.link(turn);turn.parent=radar
 turn.location=town.game_vector((0,RADAR_DISH_Y,0));radar_parts.append(turn)
 def dish_uv(index,distance,radius,angle):
@@ -598,21 +635,16 @@ dish_obj=dish.finish('radar:dish-surface',{'photo':radar_front.material()});dish
 # The rear skin wears the back photo, including its radial bracing; the drive
 # motor sits behind it. Both skins and motor rotate together with the true centre.
 rear_dish=PhotoMesh()
-lathe(rear_dish,'photo',(0,0,.48),(0,0,1),(1,0,0),(0,1,0),
+lathe(rear_dish,'photo',(0,0,.28),(0,0,1),(1,0,0),(0,1,0),
       [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
       rear_dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_rear.uv(512+52*f*math.cos(angle),300-52*f*math.sin(angle))))
 rear_obj=rear_dish.finish('radar:dish-rear-surface',{'photo':radar_rear.material()});rear_obj.parent=turn;radar_parts.append(rear_obj)
-# A narrow steel ring joins the reflector skins as one shallow dish body.
-rim=PhotoMesh()
-lathe(rim,'rim',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(-.16,1.58),(.32,1.58)],
-      lambda index,distance,radius,angle:(float(index),angle/(2*math.pi)),sides=20)
-rim_obj=rim.finish('radar:dish-rim',{'rim':dark});rim_obj.parent=turn;radar_parts.append(rim_obj)
-motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,1.04),(.44,.44,.40),dark,.025)
+motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,.46),(.44,.44,.40),dark,.025)
 world=motor.matrix_world.copy();motor.parent=turn;motor.matrix_world=world;radar_parts.append(motor)
 # A fixed bearing yoke joins the lattice at the dish's lower edge.
 for x in (-.68,.68):
- radar_attach(town.beam('radar:turntable-bearing',(x,4.20,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
-radar_attach(town.beam('radar:turntable-crossbar',(-.75,4.20,0),(.75,4.20,0),.13,steel))
+ radar_attach(town.beam('radar:turntable-bearing',(x,platform_y+.02,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
+radar_attach(town.beam('radar:turntable-crossbar',(-.75,platform_y+.02,0),(.75,platform_y+.02,0),.13,steel))
 
 # The small lattice and foot boxes read from their photographed edges at town
 # scale; their bevel modifiers multiply the exported count without changing
@@ -773,10 +805,10 @@ if a.render:
   if roll:cam.rotation_euler.rotate_axis('Z',roll)
   scene.camera=cam;scene.render.filepath=str(evidence/('radar-'+name+'.png'))
   bpy.ops.render.render(write_still=True)
- radar_shot('side',(26,3.8,0),(0,3.8,0),9.4,(1024,1536))
- radar_shot('front',(0,3.8,-28),(0,3.8,0),9.4,(1024,1536))
- radar_shot('rear',(0,3.8,28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('side',(26,5.8,0),(0,5.8,0),13.0,(1024,1536))
+ radar_shot('front',(0,5.8,-28),(0,5.8,0),13.0,(1024,1536))
+ radar_shot('rear',(0,5.8,28),(0,5.8,0),13.0,(1024,1536))
  radar_shot('above',(0,28,0),(0,0,0),7.4,(1024,1024),-math.pi/2)
- radar_shot('three-quarter-road',(13,8,-15),(0,3.8,0),12.0,(1000,750))
- radar_shot('three-quarter-rear',(-13,8,15),(0,3.8,0),12.0,(1000,750))
- radar_shot('mayor',(46,67,-46),(0,3.8,0),14.5,(1000,750))
+ radar_shot('three-quarter-road',(13,11,-15),(0,5.8,0),15.0,(1000,750))
+ radar_shot('three-quarter-rear',(-13,11,15),(0,5.8,0),15.0,(1000,750))
+ radar_shot('mayor',(46,67,-46),(0,5.8,0),16.0,(1000,750))
