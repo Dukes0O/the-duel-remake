@@ -201,3 +201,8 @@ first and last two metres in memory for repeatable joins.
 2026-11-06: a closed pair of large riveted steel harbour gates in a weathered
 stone frame. The recipe uses separate left and right leaf pivots and reuses the
 existing seawall stone and coping material.
+
+`sea-harbour-ramp.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: an 8 metre stone slipway descends through an old harbour wall. The
+model has a real opening, a sloped deck, stone reveals and the raised seawall
+course.
