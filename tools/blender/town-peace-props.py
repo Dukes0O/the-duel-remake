@@ -217,7 +217,51 @@ def pedestal_uv(index, distance, radius, angle):
 lathe(chair_mesh, 'side', (CX(302), 0, 0), (0, 1, 0), (0, 0, 1), (1, 0, 0), pedestal_rows, pedestal_uv, sides=20)
 own(chair_mesh.finish('kettles-chair:body', {'side': cs.material(.72)}), chair, 'kettles-chair:body')
 
-for root_obj in (billboard,turret,rock,chair):
+# 5. Toll's filing cabinet, mapped from dead-on front and side photographs.
+cab_front, cab_side = measured_photo('toll-cabinet-front'), measured_photo('toll-cabinet-side')
+cabinet = root_part('toll-cabinet')
+front_solid = ~cab_front.sky(seed_points(cab_front), tolerance=20, grey=22)
+side_solid = ~cab_side.sky(seed_points(cab_side), tolerance=20, grey=22)
+cab_front.bleed(front_solid, passes=32)
+cab_side.bleed(side_solid, passes=32)
+cabinet_mesh = Mesh()
+cab_front_mat, cab_side_mat = cab_front.material(.86), cab_side.material(.86)
+# A true 1.8 m high cabinet, with the photographed outline traced into a thin
+# front shell. The case carries real depth and the drawer is a second box.
+cab_width = .80
+cab_scale = cab_width / (519 - 173)
+cab_y = lambda py: (1006 - py) * 1.8 / (1006 - 16)
+cab_x = lambda px: (px - 346) * cab_scale
+front_loops = trace(front_solid, (171, 15, 520, 1010), tolerance=1.3, min_area=30)
+slab(cabinet_mesh, 'front', cab_front, front_loops,
+     lambda px, py, d: (cab_x(px), cab_y(py), d), .355, .395, wall_scale=.01)
+own(cabinet_mesh.finish('toll-cabinet:photographed-front', {'front': cab_front_mat}),
+    cabinet, 'toll-cabinet:photographed-front')
+case = Mesh()
+# Sample only steel from the side photograph; no background pixels reach a side.
+photo_box(case, -.39, .39, 0, 1.8, -.34, .34, {
+    '-z': ('steel', cab_side, (240, 260, 465, 800)),
+    '+x': ('steel', cab_side, (240, 260, 465, 800)),
+    '-x': ('steel', cab_side, (240, 260, 465, 800)),
+    '+y': ('steel', cab_side, (250, 30, 465, 55)),
+    '-y': ('steel', cab_side, (250, 980, 465, 1010)),
+})
+own(case.finish('toll-cabinet:steel-case', {'steel': cab_side_mat}), cabinet,
+    'toll-cabinet:steel-case')
+# The open drawer stands out from the traced opening as an unmistakable box.
+drawer = Mesh()
+photo_box(drawer, -.39, .39, cab_y(952), cab_y(695), .34, .88, {
+    '+z': ('front', cab_front, (173, 463, 519, 635)),
+    '-z': ('steel', cab_side, (560, 440, 810, 620)),
+    '+x': ('steel', cab_side, (560, 440, 810, 620)),
+    '-x': ('steel', cab_side, (560, 440, 810, 620)),
+    '+y': ('steel', cab_side, (560, 430, 810, 455)),
+    '-y': ('steel', cab_side, (560, 605, 810, 625)),
+})
+own(drawer.finish('toll-cabinet:open-drawer-box', {'front': cab_front_mat, 'steel': cab_side_mat}),
+    cabinet, 'toll-cabinet:open-drawer-box')
+
+for root_obj in (billboard,turret,rock,chair,cabinet):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -266,4 +310,7 @@ shot('gunn-rock-untouched',(0,1.5,-12),(0,.68,0),3.8,(1000,562))
 show('kettles-chair',(6.5,1.5,8.1),(0,1.6,0),3.8,(700,700))
 shot('kettles-chair-side',(0,1.6,12),(0,1.6,0),3.6,(700,700))
 shot('kettles-chair-front',(12,1.6,0),(0,1.6,0),3.6,(700,700))
+show('toll-cabinet',(6.8,2.2,7.6),(0,.9,0),2.4,(700,700))
+shot('toll-cabinet-front',(0,.9,7),(0,.9,0),2.0,(600,900))
+shot('toll-cabinet-side',(7,.9,0),(0,.9,0),2.0,(600,900))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))

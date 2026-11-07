@@ -255,6 +255,8 @@ background, no perspective, no labels, no people or logos, no watermark."
 
 Generated with the built-in OpenAI image generator on 6 November 2026. The originals remain in the Codex generated-images library; the game sources below are compressed JPEG copies.
 
+- `peace-toll-cabinet-front.jpg`, `peace-toll-cabinet-side.jpg` — dead-on front and left-side photos of a dented steel filing cabinet with one drawer open and stuffed with old folders. Generated for the Toll cabinet; no people, brands or third-party material.
+
 - `peace-billboard-front.jpg` — professional painted Treatment Plant billboard, frontal view. Prompt: straight-on full-frame photograph of an 8 m by 3 m roadside wooden billboard carrying a beautiful hand-painted public works illustration of blue water tanks, white pipes and green lawn, flat overcast light, pale background, no words.
 - `peace-billboard-back.jpg` — rough timber back and two poles of an 8 m by 3 m billboard. Prompt: straight-on full-frame back view, rough dark aged battens, nails, braces, splintered ends and dust, plain pale background, overcast light.
 - `peace-billboard-side.jpg` — exact edge-on side photo of the same billboard, showing the thin sign and poles. Prompt: strict side elevation of an 8 m by 2.65 m board, 15 cm deep, with two rough poles, entire 4.7 m structure in frame, plain pale background and flat overcast light.
