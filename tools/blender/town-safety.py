@@ -12,11 +12,11 @@ parser.add_argument('--reference', default='public/assets/models/wasteland/town/
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
-guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-7'
+guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-8'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
 sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
-guard_sheet = root / 'docs/board/looks/town-art-safety/round-7.jpg'
+guard_sheet = root / 'docs/board/looks/town-art-safety/round-8.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(guard_evidence)],'summary':str(guard_sheet)}))
     raise SystemExit(0)
@@ -26,7 +26,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace
-from photo_carve import carve_object
+from photo_carve import carve_object, lift_if_dark
 import numpy as np
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -263,26 +263,52 @@ lamp('watchtower:lamp',(0,8.52,.91),(.25,.24,.18))
 pipe('watchtower-lamp-bracket',(.0,8.60,.84),(.0,8.45,1.13),.035,materials['rusted-steel'])
 b.scale.z = .77
 
-# Scrap gate across a road; its moving leaf is a separately named node.
+# Scrap gate across the road, measured and traced from individual photos.
 b=building('gate-scrap',(2,1))
-for x in (-6.7,6.7):
-    beam('gate-scrap-tower-post',(x,0,-3.2),(x,5.5,-3.2),.38,materials['rusted-steel'])
-    for y in (1.2,2.7,4.2): beam('gate-scrap-cross-tie',(x-.7,y,-3.2),(x+.7,y,-3.2),.16,materials['galvanised-tin'])
-    tin('gate-scrap-tower-facing',(x,3.3,-3.39),1.5,2.9)
-beam('gate-scrap-header',(-6.7,5.45,-3.2),(6.7,5.45,-3.2),.42,materials['rusted-steel'])
-door=bpy.data.objects.new('gate-scrap:door',None);bpy.context.collection.objects.link(door);door.location=town.game_vector((-2.7,0,-3.25));attach(door)
-for i in range(8):
-    x=-2.6+i*.74
-    cube(f'gate-scrap-door-plank-{i+1}',(x,2.25,-3.25),(.68,3.4,.13),materials['rusted-steel'],.035,door)
-# Two donor-car door shells have window frames and handles; welded sheet fills
-# the gaps. All children are placed at the gate before joining the hinge node.
-for i,x in enumerate((-1.35,1.32)):
-    cube(f'gate-scrap-car-door-{i+1}',(x,1.55,-3.39),(2.25,1.55,.12),materials['galvanised-tin'],.07,door)
-    cube(f'gate-scrap-car-door-window-{i+1}',(x,2.78,-3.43),(1.34,.72,.045),materials['iron-dark'],.08,door)
-    cube(f'gate-scrap-car-door-handle-{i+1}',(x+.72,1.62,-3.48),(.20,.08,.035),materials['rusted-steel'],.025,door)
-for y in (1.10,3.40): beam('gate-scrap-door-crossbar',(-2.7,y,-3.38),(2.7,y,-3.38),.13,materials['iron-dark'],door)
-for x in (-2.3,2.3):
-    pipe('gate-scrap-door-hinge',(x,.70,-3.49),(x,3.80,-3.49),.09,materials['iron-dark'],door)
+gate_photo_root=tex
+front=Photo(gate_photo_root/'town-safety-gate-front.jpg')
+def measured_mask(photo):
+    lift_if_dark(photo)  # brightens only the measuring copy, not its source image
+    return ~photo.sky([(8,8),(photo.w-9,8),(8,photo.h-9),(photo.w-9,photo.h-9)],tolerance=46,grey=72)
+front_solid=measured_mask(front)
+def gate_world(px,py,d,z_offset=0): return ((px-511.5)*(13.4/967),(645-py)*(5.5/617),-3.2+z_offset+d)
+def traced_gate_piece(name,photo,solid,crop,to_world,depth):
+    loops=photo_trace(solid,crop,tolerance=1.9,min_area=20)
+    if not loops: raise RuntimeError(f'{name}: no photo contours in {crop}')
+    mesh=PhotoMesh();photo_slab(mesh,'photo',photo,loops,to_world,-depth/2,depth/2)
+    obj=mesh.finish(name,{'photo':photo.material()});attach(obj);return obj
+for suffix,crop in [('left',(20,22,146,648)),('right',(876,22,1004,648))]:
+    traced_gate_piece(f'gate-scrap:tower-{suffix}-road',front,front_solid,crop,gate_world,.26)
+    traced_gate_piece(f'gate-scrap:tower-{suffix}-inside',front,front_solid,crop,
+                      lambda px,py,d:gate_world(px,py,d,1.4),.26)
+traced_gate_piece('gate-scrap:lintel-road',front,front_solid,(128,202,899,256),gate_world,.36)
+traced_gate_piece('gate-scrap:lintel-inside',front,front_solid,(128,202,899,256),
+                  lambda px,py,d:gate_world(px,py,d,1.4),.36)
+# Depth ties connect both traced lattice faces, keeping real open space inside.
+for x in (-6.45,-5.35,5.35,6.45):
+    for y in (0.12,1.45,2.78,4.12,5.38):
+        beam('gate-scrap:tower-depth-tie',(x,y,-3.2),(x,y,-1.8),.12,materials['rusted-steel'])
+for y in (.28,1.6,2.92,4.25):
+    beam('gate-scrap:tower-depth-cross-brace',(-6.45,y,-3.2),(-5.35,y+1.0,-1.8),.095,materials['galvanised-tin'])
+    beam('gate-scrap:tower-depth-cross-brace',(5.35,y,-1.8),(6.45,y+1.0,-3.2),.095,materials['galvanised-tin'])
+for x in (-5.2,5.2):
+    beam('gate-scrap:lintel-depth-tie',(x,3.72,-3.2),(x,3.72,-1.8),.16,materials['rusted-steel'])
+door=bpy.data.objects.new('gate-scrap:door',None);bpy.context.collection.objects.link(door);door.location=town.game_vector((-5.0,0,-3.2));attach(door)
+for face,photo,crop,z,flip in (
+    ('road',Photo(gate_photo_root/'town-safety-gate-front.jpg'),(145,286,881,644),-3.34,False),
+    ('town',Photo(gate_photo_root/'town-safety-gate-rear.jpg'),(144,285,882,645),-3.06,True),
+):
+    solid=measured_mask(photo);loops=photo_trace(solid,crop,tolerance=1.7,min_area=20)
+    if not loops: raise RuntimeError(f'gate door {face}: no photo patchwork contours')
+    def door_world(px,py,d,photo=photo,z=z,flip=flip):
+        x0,x1,ground,roof=(145,881,644,286) if face=='road' else (144,882,645,285)
+        dx=x1-px if flip else px-x0
+        return (-5.0+dx*(10.0/(x1-x0)),(ground-py)*(3.45/(ground-roof)),z+d)
+    mesh=PhotoMesh();photo_slab(mesh,'photo',photo,loops,door_world,-.07,.07)
+    leaf=mesh.finish('gate-scrap:door-'+face,{'photo':photo.material()});attach(leaf,door)
+pipe('gate-scrap:hinge-barrel',(-5.0,.08,-3.24),(-5.0,3.04,-3.24),.10,materials['iron-dark'])
+beam('gate-scrap:hinge-top-pin',(-5.0,2.95,-3.24),(-4.7,2.95,-3.24),.13,materials['rusted-steel'])
+beam('gate-scrap:hinge-bottom-pin',(-5.0,.16,-3.24),(-4.7,.16,-3.24),.13,materials['rusted-steel'])
 
 # Guard post: compact 6 m by 4 m hut measured from the front and side grids.
 # Every wall is a separate photo carve; the road wall is split around a door.
@@ -545,8 +571,6 @@ def photo_facade(name, image_path, crop, world_x, world_width, world_height, fro
 photo_root=root/'public/assets/models/wasteland/town/textures'
 photo_facade('clinic-photo-facade',photo_root/'town-safety-clinic.jpg',
              (60,190,970,820),-6.3,12.6,6.6,-6.72,parent=BUILDINGS['clinic'],floor_px=820)
-photo_facade('gate-scrap-photo-door',photo_root/'town-safety-gate.jpg',
-             (245,155,780,508),-2.7,5.4,3.4,-3.52,parent=door,floor_px=508)
 
 # Save an editable scene recipe output; render views only after GLB round-trip.
 blend.parent.mkdir(parents=True,exist_ok=True)
@@ -684,83 +708,66 @@ out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,opt
 subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
 
 
-# Round 7: inspect only the exported guard post and verify each authored piece.
-guard=next(obj for obj in scene.objects if obj.name=='guard-post')
-guard_visible={guard,*guard.children_recursive}
-guard_meshes=[obj for obj in guard_visible if obj.type=='MESH']
-for obj in scene.objects:
-    obj.hide_render=obj not in guard_visible and obj.name!='neutral grey ground' and obj.type not in ('LIGHT',)
-scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast'
-scene.view_settings.exposure=0;scene.view_settings.gamma=1
-scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
-scene.render.resolution_x=1000;scene.render.resolution_y=680;scene.render.resolution_percentage=100
+# Round 8: inspect only the exported gate after GLB round-trip.
+gate=next(obj for obj in scene.objects if obj.name=='gate-scrap')
+gate_visible={gate,*gate.children_recursive};gate_meshes=[obj for obj in gate_visible if obj.type=='MESH']
+for obj in scene.objects: obj.hide_render=obj not in gate_visible and obj.name!='neutral grey ground' and obj.type not in ('LIGHT',)
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=0;scene.view_settings.gamma=1
+scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB';scene.render.resolution_x=1000;scene.render.resolution_y=680;scene.render.resolution_percentage=100
 bpy.context.view_layer.update()
 def bounds_of(objects):
     pts=[obj.matrix_world @ Vector(c) for obj in objects for c in obj.bound_box]
-    if not pts: raise RuntimeError('empty guard-post piece group')
+    if not pts: raise RuntimeError('empty gate piece group')
     game=[(p.x,p.z,-p.y) for p in pts]
     return {'min':[min(p[i] for p in game) for i in range(3)],'max':[max(p[i] for p in game) for i in range(3)]}
-piece_groups={
- 'four sandbag walls':[o for o in guard_meshes if o.name.startswith('guard-post:sandbag-wall-')],
- 'timber':[o for o in guard_meshes if ':timber-' in o.name],
- 'pitched tin roof':[o for o in guard_meshes if o.name=='guard-post:tin-roof' or ':rusted-eave-' in o.name or o.name=='guard-post:ridge-cap'],
- 'brazier':[o for o in guard_meshes if ':brazier' in o.name],
-}
-for label,objects in piece_groups.items():
-    box=bounds_of(objects)
-    print(f'EXPORTED GUARD-POST BOUNDS {label}:',json.dumps({k:[round(v,3) for v in vals] for k,vals in box.items()},sort_keys=True))
-for obj in guard_meshes:
-    box=bounds_of([obj]); lo,hi=box['min'],box['max']
-    print(f'EXPORTED GUARD-POST PIECE {obj.name}:',json.dumps({k:[round(v,3) for v in vals] for k,vals in box.items()},sort_keys=True))
-    if lo[0]<-7.5 or hi[0]>7.5 or lo[2]<-3.5 or hi[2]>3.5:
-        raise RuntimeError(f'{obj.name} exceeds guard-post footprint with 0.5 m clearance')
-    if lo[1]<=.08: continue
-    touches=any(other is not obj and all(box['min'][axis]<=bounds_of([other])['max'][axis]+.14 and bounds_of([other])['min'][axis]<=box['max'][axis]+.14 for axis in range(3)) for other in guard_meshes)
-    if not touches: raise RuntimeError(f'{obj.name} touches neither ground nor another piece')
-print('EXPORTED GUARD-POST CONTACT CHECK: every part touches ground or another piece and stays in the footprint.')
-all_box=bounds_of(guard_meshes)
-render_points=[obj.matrix_world @ Vector(c) for obj in guard_meshes for c in obj.bound_box]
-centre=Vector(tuple((min(point[i] for point in render_points)+max(point[i] for point in render_points))/2 for i in range(3)))
-# X/Y/Z here are Blender coordinates; the imported GLB is Z-up in Blender.
-def guard_shot(name,offset,ortho):
-    data=bpy.data.cameras.new('guard-post-'+name);cam=bpy.data.objects.new('guard-post-'+name,data);scene.collection.objects.link(cam)
+for obj in gate_meshes:
+    box=bounds_of([obj]);lo,hi=box['min'],box['max']
+    print(f'EXPORTED GATE PIECE {obj.name}:',json.dumps({k:[round(v,3) for v in vals] for k,vals in box.items()},sort_keys=True))
+    if lo[0]<-7.5 or hi[0]>7.5 or lo[2]<-3.5 or hi[2]>3.5: raise RuntimeError(f'{obj.name} exceeds gate footprint with 0.5 m clearance')
+    if lo[1]>.08:
+        for other in gate_meshes:
+            if other is obj: continue
+            ob=bounds_of([other])
+            if all(box['min'][axis]<=ob['max'][axis]+.12 and ob['min'][axis]<=box['max'][axis]+.12 for axis in range(3)): break
+        else: raise RuntimeError(f'{obj.name} touches neither ground nor another gate piece')
+required=('gate-scrap:tower-left-road','gate-scrap:tower-right-road','gate-scrap:lintel-road','gate-scrap:door-road','gate-scrap:door-town')
+for name in required:
+    if not any(obj.name==name for obj in gate_meshes): raise RuntimeError(f'missing exported gate piece {name}')
+door_node=next(obj for obj in scene.objects if obj.name=='gate-scrap:door')
+if not door_node.children: raise RuntimeError('hinged door has no exported geometry')
+print('EXPORTED GATE CONTACT CHECK: every mesh touches ground or another piece inside the 2 by 1 footprint.')
+points=[obj.matrix_world @ Vector(c) for obj in gate_meshes for c in obj.bound_box]
+centre=Vector(tuple((min(p[i] for p in points)+max(p[i] for p in points))/2 for i in range(3)))
+def gate_shot(name,offset,ortho):
+    data=bpy.data.cameras.new('gate-scrap-'+name);cam=bpy.data.objects.new('gate-scrap-'+name,data);scene.collection.objects.link(cam)
     cam.location=centre+Vector(offset);aim_z(cam,centre);cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
-    scene.render.filepath=str(render_dir/f'guard-post-{name}.png')
-    bpy.ops.render.render(write_still=True)
+    scene.render.filepath=str(guard_evidence/f'gate-scrap-{name}.png');bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
-render_dir=guard_evidence;render_dir.mkdir(parents=True,exist_ok=True)
-guard_shot('side',(18,5,0),7.8)
-guard_shot('front',(0,22,0),7.8)
-guard_shot('rear',(0,-22,0),7.8)
-guard_shot('above',(0,0,24),8.8)
-guard_shot('three-quarter-left',(-21,22,17),10.2)
-guard_shot('three-quarter-right',(21,22,17),10.2)
-guard_shot('mayor',(48,48,48),11.2)
-
-# Four matched photo/model pairs, then the two three-quarter views and mayor view.
+guard_evidence.mkdir(parents=True,exist_ok=True)
+gate_shot('side',(22,0,0),8.0);gate_shot('front',(0,24,0),13.0);gate_shot('rear',(0,-24,0),13.0);gate_shot('above',(0,0,25),13.0)
+gate_shot('three-quarter-left',(-23,24,18),15.0);gate_shot('three-quarter-right',(23,24,18),15.0);gate_shot('mayor',(48,48,48),17.0)
+door_node.rotation_euler[2]=math.radians(-78);bpy.context.view_layer.update();gate_shot('open-three-quarter',(-23,24,18),17.2)
 import subprocess
+gate_sheet=root/'docs/board/looks/town-art-safety/round-8.jpg'
 sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
 from pathlib import Path
 import sys
-root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-7'
-pairs=[('SIDE / GABLE END','guard-post-front.jpg','guard-post-side.png'),('FRONT / ROAD WALL','guard-post-side.jpg','guard-post-front.png'),('REAR','guard-post-rear.jpg','guard-post-rear.png'),('STRAIGHT DOWN','guard-post-top.jpg','guard-post-above.png')]
-extras=[('THREE-QUARTER LEFT','guard-post-three-quarter-left.png'),('THREE-QUARTER RIGHT','guard-post-three-quarter-right.png'),("MAYOR\'S VIEW",'guard-post-mayor.png')]
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-8'
+pairs=[('SIDE','town-safety-gate-side.jpg','gate-scrap-side.png'),('FRONT','town-safety-gate-front.jpg','gate-scrap-front.png'),('REAR','town-safety-gate-rear.jpg','gate-scrap-rear.png'),('STRAIGHT DOWN','town-safety-gate-top.jpg','gate-scrap-above.png')]
+extras=[('THREE-QUARTER LEFT','gate-scrap-three-quarter-left.png'),('THREE-QUARTER RIGHT','gate-scrap-three-quarter-right.png'),("MAYOR'S VIEW",'gate-scrap-mayor.png')]
 W,H=1600,2640;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),17);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
-d.text((24,14),'TOWN SAFETY | ROUND 7 | GUARD POST',font=title,fill=(240,228,205))
+d.text((24,14),'TOWN SAFETY | ROUND 8 | SCRAP ROAD GATE',font=title,fill=(240,228,205))
 def fit(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(128,130,130));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
-row_h=480
 for i,(name,photo,model) in enumerate(pairs):
- y=50+i*row_h;d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(78,76,69));d.text((34,y+7),name,font=label,fill=(240,194,125));d.text((35,y+31),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+31),'EXPORTED MODEL | SAME ORTHOGRAPHIC CAMERA',font=small,fill=(229,223,208))
- page.paste(fit(tex/photo,(740,410)),(34,y+48));page.paste(fit(ev/model,(740,410)),(815,y+48))
+ y=50+i*480;d.rounded_rectangle((18,y,W-18,y+472),radius=8,fill=(78,76,69));d.text((34,y+7),name,font=label,fill=(240,194,125));d.text((35,y+31),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+31),'EXPORTED MODEL | MATCHED CAMERA',font=small,fill=(229,223,208));page.paste(fit(tex/photo,(740,410)),(34,y+48));page.paste(fit(ev/model,(740,410)),(815,y+48))
 for i,(name,model) in enumerate(extras):
  x=18+i*528;y=1980;d.rounded_rectangle((x,y,x+510,y+510),radius=8,fill=(78,76,69));d.text((x+14,y+10),name,font=label,fill=(240,194,125));page.paste(fit(ev/model,(480,450)),(x+15,y+42))
-d.text((24,2530),'Four photo-carved waist-high walls, a clear road door, corner and side posts, patched pitched roof, grounded brazier.',font=small,fill=(232,226,210))
-out.parent.mkdir(parents=True,exist_ok=True)
-for quality in (78,74,70,66,62,58):
+d.text((24,2530),'Open traced steel lattices, full-width photo-traced car-door leaf, continuous road lintel.',font=small,fill=(232,226,210));out.parent.mkdir(parents=True,exist_ok=True)
+for quality in (80,76,72,68,64,60):
  page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
  if out.stat().st_size<=500000:break
-if out.stat().st_size>500000:raise RuntimeError(f'guard-post sheet exceeds 500 KB: {out.stat().st_size}')
-print(f'GUARD-POST ROUND 7 SHEET: {out.stat().st_size} bytes')
+if out.stat().st_size>500000:raise RuntimeError(f'gate sheet exceeds 500 KB: {out.stat().st_size}')
+print(f'GATE ROUND 8 SHEET: {out.stat().st_size} bytes')
 '''
-subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
+subprocess.run(['python','-c',sheet_code,str(root),str(gate_sheet)],check=True)

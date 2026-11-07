@@ -82,6 +82,9 @@ stop adjusting and change the method.
   a dead-on reference: request each side, end and plan view in its own call,
   inspect it, and regenerate any picture that contains a second view or
   perspective.
+- **A view label can be ignored.** A separate prompt for a side view may still
+  return the front elevation. Check the projected silhouette and depth against
+  the named camera before tracing; regenerate until the camera is correct.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.

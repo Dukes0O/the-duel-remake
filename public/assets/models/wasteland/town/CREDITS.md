@@ -31,6 +31,33 @@ Cutout prompt:
 - `textures/sanitation-reed-clump.png`: 512 px alpha cutout for the crossed reed
   cards; transparent pixels use a 50% alpha threshold to remove edge fringe.
 
+# Drive-in screen photo references
+
+Generated with OpenAI image generation on 7 November 2026. Each JPG is one
+orthographic camera view of the same original screen structure, on a plain grey
+studio ground. The source PNGs remain in the generated-images folder; these
+project copies are resized to at most 1024 pixels wide and saved as JPEGs.
+No third-party images, brands or marks are used.
+
+Prompts:
+
+- `drive-in-side.jpg`: one single original improvised drive-in cinema billboard
+  screen structure seen exactly dead-on from its side, showing the shallow side
+  depth of the billboard skin, open rear-side truss and grounded steel legs.
+- `drive-in-front.jpg`: one single original improvised drive-in cinema screen
+  and open support frame seen dead-on from the front, made from welded salvaged
+  panels and braced steel.
+- `drive-in-rear.jpg`: one single original improvised drive-in cinema screen
+  and open support frame seen dead-on from the rear, with patchwork back skin,
+  exposed bracing and legs.
+- `drive-in-above.jpg`: one single drive-in billboard screen with open support
+  structure seen straight down from directly overhead, as a true orthographic
+  plan view.
+
+All four prompts specified a plain mid-grey ground, full object with margin,
+neutral diffuse light, no foreground objects, no text or logos, no collage,
+grid, perspective or additional views.
+
 # Town dome art credits
 
 The Scraptown exterior reference and material pictures were generated with
