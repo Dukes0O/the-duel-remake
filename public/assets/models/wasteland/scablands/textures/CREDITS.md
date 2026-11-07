@@ -169,3 +169,11 @@ All three are embedded in `crew-favours.glb` as direct colour pictures; none rep
   battered upright piano with its
   action exposed, photographed in even neutral daylight.
 - `ww-dune-ladder.jpg`, `ww-dune-bedroll.jpg`, `ww-dune-stove.jpg`, `ww-dune-watercan.jpg`: Codex ImageGen, 6 November 2026. Prompts: one old, worn, real object each, dead-on in flat overcast light on a plain background: a hand-made wooden ladder, a rolled canvas bedroll with two straps, a small iron camp stove, a dented water can. Used for `dune-ladder` and `dune-camp`.
+
+## WW-ART-SEA photographs
+
+`sea-old-gear.jpg` and `sea-old-gear-rim.jpg` are original Codex ImageGen
+photographs made 2026-11-06. They are the isolated face and rim panels of one
+paired reference image: a seven metre silted, rotten dam gear with open spokes,
+flat overcast light and a pale studio ground. The face photo is traced for the
+thick slab; the rim photo supplies the hub and rim material reference.
