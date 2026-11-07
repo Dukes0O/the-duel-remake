@@ -29,7 +29,7 @@
   entries both state their measured roof `top`; the open bay uses a keep box.
 - Added five separate stall fronts, goods panels, counters, posts and awnings.
   The Blender recipe prints and checks bounds for the market pieces.
-- Exported `food.glb` at 1,946,716 bytes. Added `market-round-1.jpg` (196,269
+- Exported `food.glb` at 1,946,716 bytes. Added `market-round-1.jpg` (196,452
   bytes) and its review. The prior `round-6.jpg` remains in place.
 - Retained the generated PNG reference originals from the earlier uncommitted
   work and credited them alongside the JPEG recipe copies.

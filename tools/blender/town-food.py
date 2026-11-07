@@ -662,13 +662,13 @@ for index, (px0, px1) in enumerate(STALL_RECTS, 1):
     rear_z = market_face_z + .72
     for side, x in (('left', stall_x0 + .04), ('right', stall_x1 - .04)):
         beam(f'market-hall:stall-{index}-{side}-front-post',
-             (x,.03,market_face_z+.08),(x,2.20,market_face_z+.08),.07,mat['rusted-steel'])
+             (x,0,market_face_z+.08),(x,2.20,market_face_z+.08),.07,mat['rusted-steel'])
         beam(f'market-hall:stall-{index}-{side}-rear-post',
-             (x,.03,rear_z),(x,2.20,rear_z),.07,mat['rusted-steel'])
+             (x,0,rear_z),(x,2.20,rear_z),.07,mat['rusted-steel'])
         beam(f'market-hall:stall-{index}-{side}-awning-arm',
              (x,2.18,market_face_z+.08),(x,2.08,rear_z),.045,mat['rusted-steel'])
     box(f'market-hall:stall-{index}-counter',
-        (stall_mid_x,1.037,market_face_z+.40),(stall_width,.10,.72),mat['weathered-plank'],.025)
+        (stall_mid_x,1.037,market_face_z+.345),(stall_width,.10,.72),mat['weathered-plank'],.025)
     box(f'market-hall:stall-{index}-awning',
         (stall_mid_x,2.13,market_face_z+.40),(stall_width+.06,.08,.78),mat['patched-canvas'],.025)
 
@@ -718,10 +718,19 @@ for obj in market_parts:
             f'market-hall:stall-{index}' for index in range(1,6)}:
         if min(ys) > .05:
             raise RuntimeError(f"{obj.name} does not touch the ground")
+    if obj.name.endswith('-post') and min(ys) > .05:
+        raise RuntimeError(f"{obj.name} does not touch the ground")
     if obj.name.startswith('market-hall:goods-'):
         counter_top = 1.037 + .05
         if abs(min(ys) - counter_top) > .025:
             raise RuntimeError(f"{obj.name} does not touch its stall counter")
+        stall_index = obj.name.rsplit('-', 1)[1]
+        counter = next(part for part in market_parts
+                       if part.name == f'market-hall:stall-{stall_index}-counter')
+        counter_corners = [counter.matrix_world @ Vector(corner) for corner in counter.bound_box]
+        counter_front = min(-(point.y - market_root.location.y) for point in counter_corners)
+        if abs(min(zs) - counter_front) > .005:
+            raise RuntimeError(f"{obj.name} does not touch its stall counter edge")
     market_bounds.append(bounds)
 
 out.parent.mkdir(parents=True,exist_ok=True)

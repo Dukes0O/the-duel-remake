@@ -2,7 +2,7 @@
 
 This is the first market hall round. The sheet compares the stall-front photo
 and exported model, then shows both three-quarter angles, the road view and the
-mayor view. The sheet is 196,269 bytes.
+mayor view. The final sheet is 196,452 bytes.
 
 The source set is credited in `public/assets/models/wasteland/town/CREDITS.md`.
 It includes the clean side, front, rear and plan views, plus the same front
