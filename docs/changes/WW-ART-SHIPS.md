@@ -130,3 +130,36 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 
 - Removed `round-8.jpg` and `round-8-review.md`; round 9 is the current look sheet and review.
 - Removed this round's generated renders, Blender review file and scratch logs from `.qa-dist/`; kept the named task brief.
+
+## Round 10 — Patience drift and review views (7 November 2026)
+
+- Added `ship-patience:drifts` as a separate mesh using the existing lake-bed
+  sand material. It runs along both hull sides, overlaps the plating, rises to
+  an uneven crest and feathers about 8 m into the bed. Port and bow are higher.
+- Changed the exported-model review to six perspective views: abeam at car
+  height with the whole ship, bow quarter, dusk, overhead, deck, and funnel.
+  The deck camera clears the main mast but still sees a cabin side rather than
+  the bridge front. The bow-quarter view shows loose chain details; see the
+  review sheet.
+- Exported GLB read-back: 31,410 triangles and 1,887,128 bytes, within the
+  50,000 triangle and 3 MB limits.
+- Sheet: `docs/board/looks/ww-art-ships/round-10.jpg`, 1600 x 1800,
+  156,439 bytes. Scores and the remaining failures are in `round-10-review.md`.
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0 on rerun.
+  The first run caught my incorrect expected node suffix; I corrected that
+  assertion to match the exported `ship-patience:drifts` name. No existing
+  assertion changed or weakened. `tools/test-repo-hygiene.mjs`: passed; exit 0.
+  `tools/test-review-evidence.mjs`: not run; Claude runs it at merge. Browser
+  checks: Claude handles them.
+- Changed assertions: added a check for the separate named Patience drift
+  part. No existing assertion changed or weakened. Race fingerprints: none;
+  art only.
+- Self-look: the ship reads clearly from the side, with the whole bridge and
+  mast in frame. The deck view misses the bridge front, and the sand bank does
+  not yet convincingly bury the hull.
+
+## Removed
+
+- Removed `round-9.jpg` and `round-9-review.md`; round 10 is the current sheet.
+- Removed this round's renders, Blender review file and logs from `.qa-dist/`;
+  kept the task brief.
