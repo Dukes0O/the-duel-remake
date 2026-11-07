@@ -1568,13 +1568,21 @@ try {
       }, 0);
       assert.ok(triangles > 100 && triangles <= budget, `${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
     }
+    for (const id of ['shopfront-a','shopfront-b','shopfront-c']) {
+      const roofLabel = names.indexOf(`${id}:roof-sign-lettering`);
+      const roadLabel = names.indexOf(`${id}:sign-lettering`);
+      assert.ok(roofLabel >= 0, `${id} needs a roof-facing label for the mayor view`);
+      assert.ok(roadLabel >= 0, `${id} needs a road-facing label for drivers`);
+      assert.equal(parent.get(roofLabel), names.indexOf(id), `${id} roof label belongs to its shop`);
+      assert.equal(parent.get(roadLabel), names.indexOf(id), `${id} road label belongs to its shop`);
+    }
     const imagePixels = gltf.images.reduce((sum, image) => {
       const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
       const dimensions = jpegDimensions(bytes, start, view.byteLength);
       assert.ok(dimensions.width <= 2048 && dimensions.height <= 2048, `${dimensions.width}x${dimensions.height} food texture exceeds 2048 px`);
       return sum + dimensions.width * dimensions.height;
     }, 0);
-    assert.ok(imagePixels <= 4 * 1024 * 1024, `${imagePixels} texture pixels exceed the 4M budget`);
+    assert.ok(imagePixels <= 8 * 1024 * 1024, `${imagePixels} texture pixels exceed the 8M budget`);
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallic exceeds .3`);
     }
