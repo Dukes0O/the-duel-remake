@@ -41,3 +41,42 @@
 ### Removed
 
 Nothing replaced by this piece.
+
+## Water front (final piece)
+
+### Changed
+
+- Added the `water-front` surge to
+  `public/assets/models/wasteland/scablands/sea-water-front.glb`. It is one
+  60 m segment with a steep muddy face, uneven forward-leaning crest, long back
+  slope and crossed dirty spray cards at the crest and foot.
+- Added the face and spray pictures in
+  `public/assets/models/wasteland/scablands/textures/` and credited them in
+  `CREDITS.md`. The recipe blends the face picture's edge bands in memory on
+  both axes. The root exports `scrollV: 0.18` in picture-heights per second.
+  A scene makes the face churn by offsetting only the surge material's V
+  texture coordinate over time; it should leave U and the mesh unchanged.
+- Added the recipe to `tools/test-blender-output.mjs` as a candidate with a
+  20,000 triangle budget and a 2 MiB file limit. No previous sea asset was
+  changed.
+- Added three Standard-view look shots from the exported GLB and the round 9
+  review sheet.
+
+### Checks
+
+- Blender export and GLB readback: passed; 11,040 triangles and 1,157,480 bytes.
+- `node tools/test-blender-output.mjs`: passed, 368 checks, zero failures.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- Browser and in-game checks: not run; Claude owns them for this art card.
+- Changed assertions: none.
+- Race fingerprints: not applicable; this art recipe does not change race code.
+
+### Claude should review
+
+- The 25 m and 80 m views for water readability, spray amount and segment joins.
+- The profile view's steep leading face and long trailing slope.
+- Whether a scene's V-only offset at `scrollV` makes the face churn as intended.
+
+### Removed
+
+- No existing model or source asset was removed or replaced.

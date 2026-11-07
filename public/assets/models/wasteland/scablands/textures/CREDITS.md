@@ -245,3 +245,15 @@ so that her coat is one continuous closed coat-dress. They show the same older
 woman in matched front, right profile, back and overhead views, in a white coat
 and gloves, holding one pale envelope, on a uniform mid-grey ground. No existing
 photograph was replaced.
+
+## Sea water front photographs
+
+`sea-water-front-face.jpg` and `sea-water-front-spray.jpg` are original
+Codex ImageGen pictures created 2026-11-07 for the flood-surge model. The face
+is a straight-on, edge-to-edge photograph of dirty brown-grey turbulent water,
+foam and small floating debris with no sky or ground. Its opposite edge bands
+were blended in memory in both directions before JPEG export so the texture
+repeats across X and V. The spray is an isolated dirty foam burst composited on
+charcoal for JPEG storage; the recipe derives a soft alpha mask from its dark
+background for the embedded GLB texture. Neither picture uses outside source
+art.
