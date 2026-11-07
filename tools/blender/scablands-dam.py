@@ -15,7 +15,7 @@ root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/dam.glb'
 blend = root / 'art-build/wasteland-dam/dam.blend'
 raw = root / f'.qa-dist/dam-round-{args.round}'
-sheet = root / f'docs/board/looks/ww-art-dam/round-{args.round}.jpg'
+sheet = root / f'docs/board/looks/ww-art-dam-2/round-{args.round}.jpg'
 texture_dir = root / 'public/assets/models/wasteland/scablands/textures'
 ref = Path.home() / '.codex/generated_images/wasteland-dam-reference.png'
 projection = texture_dir / 'dam-face-projection.jpg'
@@ -58,6 +58,7 @@ import numpy as np
 from mathutils import Vector, Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
+from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, lathe as photo_lathe
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -434,31 +435,86 @@ for y in (29.1, 29.7):
     beam(f'dam-crest-rail-{y}', (-17, y, -62.5), (17, y, -62.5), .07,
          materials['galvanised-tin'], 'dam:sea-gate')
 
-# Open hoist gantry and a pair of big iron lift wheels stand above the shut gate.
-for x in (-13, 13):
-    for z in (-65.0, -60.5):
-        beam(f'dam-hoist-gantry-leg-{x}-{z}', (x, 28.2, z), (x, 57, z), .38,
-             materials['rusted-steel'], 'dam:sea-gate', .035)
-        beam(f'dam-hoist-gantry-brace-{x}-{z}', (x, 34, z), (x + (1.5 if x < 0 else -1.5), 38, z), .22,
-             materials['galvanised-tin'], 'dam:sea-gate', .02)
-    beam(f'dam-hoist-gantry-cross-{x}', (x, 57, -65), (x, 57, -60.5), .38,
-         materials['rusted-steel'], 'dam:sea-gate', .035)
-beam('dam-hoist-gantry-top', (-13, 57, -62.75), (13, 57, -62.75), .5,
-     materials['rusted-steel'], 'dam:sea-gate', .04)
+# Measured hoist assemblies replace the former light open gantry and bicycle wheels.
+# Side-photo grid: wheel centre (656, 560), outer radius 550 px. Its steel-frame
+# corners are (108,1168), (1206,1170), (838,474), (476,474). Mapping 550 px to
+# the existing 3.15 m radius keeps both wheel centres and their 6.30 m diameter.
+# End-photo grid: edge-on wheel centreline x=704, y=450, outer radius 450 px,
+# rim width 100 px; frame corners (180,1008), (1232,1008), (900,286), (580,286).
+# A 100 px rim maps to .59 m, preserving the existing axle span and wheel spacing.
+side_photo = Photo(texture_dir / 'dam-hoist-wheel-side.png')
+end_photo = Photo(texture_dir / 'dam-hoist-wheel-end-on.png')
+wheel_scale = 3.15 / 550
+side_centre = (656, 560)
+end_centre = (700, 450)
+
+def wheel_position(px, py, depth):
+    return ((px - side_centre[0]) * wheel_scale,
+            (side_centre[1] - py) * wheel_scale, depth)
+
+def wheel_uv(index, distance, radius, angle):
+    # The rim turns through the end-on photo; distance crosses its measured width.
+    return end_photo.uv(end_centre[0] + distance / .59 * 100,
+                        end_centre[1] - math.sin(angle) * radius / 3.15 * 450)
+
+def wheel_cap(angle, fraction):
+    return side_photo.uv(side_centre[0] + math.cos(angle) * fraction * 550,
+                         side_centre[1] - math.sin(angle) * fraction * 550)
+
 for x in (-7.5, 7.5):
-    torus(f'dam-hoist-lift-wheel-{x}', (x, 60.3, -62.75), 3.15, .20,
-          materials['rusted-steel'], 'dam:sea-gate', 'Z', 48, 8)
-    cylinder(f'dam-hoist-lift-hub-{x}', (x, 60.3, -62.75), .58, .75,
-             materials['galvanised-tin'], 'dam:sea-gate', 'Z', 24)
-    for spoke in range(10):
-        a = spoke * math.tau / 10
-        beam(f'dam-hoist-lift-spoke-{x}-{spoke}',
-             (x + .4 * math.cos(a), 60.3 + .4 * math.sin(a), -62.35),
-             (x + 2.95 * math.cos(a), 60.3 + 2.95 * math.sin(a), -62.35), .12,
-             materials['galvanised-tin'], 'dam:sea-gate')
+    wheel = PhotoMesh()
+    photo_lathe(wheel, 'rim', (0, 0, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+        [(-.295, .58), (-.255, .78), (-.205, 2.92), (-.16, 3.15),
+         (.16, 3.15), (.205, 2.92), (.255, .78), (.295, .58)], wheel_uv,
+        sides=64,
+        cap_start=('face', wheel_cap), cap_end=('face', wheel_cap))
+    obj = wheel.finish(f'dam-hoist-lift-wheel-{x}', {'rim': end_photo.material(), 'face': side_photo.material()})
+    obj.location = town.game_vector((x, 60.3, -62.75))
+    attach(obj, obj.name, 'dam:sea-gate')
+
+    # The side plates trace the photographed frame silhouette around the measured wheel opening.
+    frame = PhotoMesh()
+    frame_outline = [(108,1168),(148,1110),(364,600),(476,474),(838,474),
+                     (952,600),(1168,1110),(1206,1170),(108,1168)]
+    wheel_hole = [(656 + math.cos(a) * 552, 560 + math.sin(a) * 552)
+                  for a in [math.tau * i / 64 for i in reversed(range(64))]]
+    photo_slab(frame, 'steel', side_photo, [frame_outline, wheel_hole], wheel_position,
+               -.43, -.31, wall_scale=wheel_scale)
+    photo_slab(frame, 'steel', side_photo, [frame_outline, wheel_hole], wheel_position,
+               .31, .43, wall_scale=wheel_scale)
+    frame_obj = frame.finish(f'dam-hoist-lift-frame-{x}', {'steel': side_photo.material()})
+    frame_obj.location = town.game_vector((x, 60.3, -62.75))
+    attach(frame_obj, frame_obj.name, 'dam:sea-gate')
+
+    # Measured diagonal and horizontal cross braces are separate traced plates.
+    braces = PhotoMesh()
+    for brace in ([(318,1080),(352,1060),(628,790),(608,770)],
+                  [(994,1080),(960,1060),(684,790),(704,770)],
+                  [(352,1060),(960,1060),(960,1100),(352,1100)]):
+        photo_slab(braces, 'steel', side_photo, [brace], wheel_position,
+                   -.30, .30, wall_scale=wheel_scale)
+    brace_obj = braces.finish(f'dam-hoist-lift-cross-braces-{x}', {'steel': side_photo.material()})
+    brace_obj.location = town.game_vector((x, 60.3, -62.75))
+    attach(brace_obj, brace_obj.name, 'dam:sea-gate')
+
     for y in (47.5, 36.8):
         beam(f'dam-hoist-chain-{x}-{y}', (x, y, -62.75), (x, y + 2.0, -62.75), .14,
              materials['iron-dark'], 'dam:sea-gate')
+
+# Crest-set main frame: paired legs, cross members and X bracing carry the two hoists.
+for x in (-13, 13):
+    for z in (-65.0, -60.5):
+        beam(f'dam-hoist-gantry-leg-{x}-{z}', (x, 28.2, z), (x, 57, z), .46,
+             materials['rusted-steel'], 'dam:sea-gate', .035)
+    beam(f'dam-hoist-gantry-cross-{x}', (x, 57, -65), (x, 57, -60.5), .46,
+         materials['rusted-steel'], 'dam:sea-gate', .035)
+    for y in (35, 46):
+        beam(f'dam-hoist-gantry-brace-{x}-{y}-a', (x, y, -65), (x, y + 5, -60.5), .24,
+             materials['rusted-steel'], 'dam:sea-gate', .02)
+        beam(f'dam-hoist-gantry-brace-{x}-{y}-b', (x, y, -60.5), (x, y + 5, -65), .24,
+             materials['rusted-steel'], 'dam:sea-gate', .02)
+beam('dam-hoist-gantry-top', (-13, 57, -62.75), (13, 57, -62.75), .55,
+     materials['rusted-steel'], 'dam:sea-gate', .04)
 
 # The walkway control wheel is taller than a person; it sits beside its open gearbox.
 torus('dam:sea-wheel', (0, 32.2, -62), 3.5, .17, materials['rusted-steel'], 'dam:sea-wheel', 'Z', 56, 8)
@@ -683,7 +739,7 @@ scene.render.film_transparent = False
 scene.render.image_settings.color_mode = 'RGB'
 scene.world = bpy.data.worlds.new('Overcast dam review')
 scene.world.color = (.48, .49, .47)
-scene.view_settings.view_transform = 'AgX'
+scene.view_settings.view_transform = 'Standard'
 raw.mkdir(parents=True, exist_ok=True)
 sheet.parent.mkdir(parents=True, exist_ok=True)
 
@@ -761,5 +817,48 @@ for name, location, target, focal in views:
         if obj.type == 'MESH':
             obj.hide_render = False
     captures.append(path)
+
+# The requested art sheet uses only GLB re-imports. Two top panels share one
+# side camera and scale; the lower panels show the crest structure and dam context.
+from PIL import Image, ImageOps
+round_dir = root / 'docs/board/looks/ww-art-dam-2'
+round_dir.mkdir(parents=True, exist_ok=True)
+def render_detail(name, location, target, prefixes, ortho=None, focal=50, size=(800,450)):
+    camera(name, location, target, focal)
+    scene.camera.data.type = 'ORTHO' if ortho else 'PERSP'
+    if ortho:
+        scene.camera.data.ortho_scale = ortho
+    scene.render.resolution_x, scene.render.resolution_y = size
+    scene.render.filepath = str(raw / f'{name}.jpg')
+    for obj in imported:
+        if obj.type == 'MESH':
+            obj.hide_render = (obj.name != 'review ground only'
+                               and not obj.name.startswith(prefixes))
+    bpy.ops.render.render(write_still=True)
+    for obj in imported:
+        if obj.type == 'MESH':
+            obj.hide_render = False
+    return Path(scene.render.filepath)
+
+wheel_view = ((7.5, 60.3, -50), (7.5, 60.3, -62.75))
+model_side = render_detail('hoist-wheel-side', *wheel_view,
+    ('dam-hoist-lift-wheel-7.5', 'dam-hoist-lift-frame-7.5', 'dam-hoist-lift-cross-braces-7.5'),
+    ortho=8.4)
+gantry_view = render_detail('hoist-gantry-crest', (0, 31, -48), (0, 49, -62.75),
+    ('dam-hoist-',), focal=42)
+dam_view = render_detail('dam-context-60m', (112, 84, 50), (0, 25, -45), ('',), focal=38)
+
+photo_image = Image.open(texture_dir / 'dam-hoist-wheel-side.png').convert('RGB')
+photo_panel = Image.new('RGB', (800,450), (218,218,215))
+photo_fit = ImageOps.contain(photo_image, (800,450), method=Image.Resampling.LANCZOS)
+photo_panel.paste(photo_fit, ((800-photo_fit.width)//2, (450-photo_fit.height)//2))
+model_panel = ImageOps.fit(Image.open(model_side).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
+gantry_panel = ImageOps.fit(Image.open(gantry_view).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
+dam_panel = ImageOps.fit(Image.open(dam_view).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
+sheet_image = Image.new('RGB', (1600,900))
+sheet_image.paste(photo_panel, (0,0)); sheet_image.paste(model_panel, (800,0))
+sheet_image.paste(gantry_panel, (0,450)); sheet_image.paste(dam_panel, (800,450))
+sheet_image.save(sheet, 'JPEG', quality=88, optimize=True)
+print(f'WW-ART-DAM-2 sheet: {sheet} ({sheet.stat().st_size} bytes)')
 
 print('GLB reimport review renders completed.')
