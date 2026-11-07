@@ -23,3 +23,9 @@
 - Removed the prior wall-clean and overhead-clean school photos, and the previous overhead photo. Replaced the side, front and rear references with the new generated set.
 - Removed the old photo-textured slide geometry and raised font lettering from the school recipe.
 - Removed `round-6.jpg` and `round-6-review.md`; kept `round-4.jpg` unchanged.
+
+## Remaining
+
+- The current model contains Dot's Diner and Plane School. Hermit Camp, Deck Town and Rail Halt are not built, so the card is incomplete.
+- The latest submitted sheet is round 7. SPEC 0.11 caps an art card at six rounds and permits extra rounds only with Kyle's agreement. Stop here; do not submit another round without that agreement.
+- Kyle's decision needed: authorize extra rounds for this card, or re-scope the three unfinished buildings into separate cards. The round-7 art verdict and review of the changed assertions also remain with Claude.

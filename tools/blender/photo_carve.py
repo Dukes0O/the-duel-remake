@@ -24,7 +24,10 @@ By default a cross-section is what either end photo allows. 'ends_split' (a z in
 metres) makes the front photo shape only what lies ahead of it and the rear photo
 only what lies behind, for two different bodies joined end to end. 'front_favour'
 makes a curved nose wear its front photo further round, so a windscreen is not
-pieced together from three photos: 3 suits a rounded nose. It needs 'ends_split'.
+pieced together from three photos: 3 suits a rounded nose. 'rear_favour' does the
+same behind. Both need 'ends_split'. 'round' makes every cross-section along Z an
+ellipse within its own width and height, for a tube: 2 is a true ellipse, 3 a
+rounder box. Without it a tapered tube comes out square.
 
 Options: 'forward' is -1 for a town object (front at -Z, the default) or 1 for a
 car. 'side_front_on_left' is True unless the side photo shows the front at the
@@ -153,6 +156,8 @@ def carve_object(name, textures, table):
 
     if table.get('front_favour') and table.get('ends_split') is not None:
         front.favour = lambda point: table['front_favour'] if forward * (point[2] - table['ends_split']) > 0 else 1
+    if table.get('rear_favour') and table.get('ends_split') is not None:
+        rear.favour = lambda point: table['rear_favour'] if forward * (point[2] - table['ends_split']) <= 0 else 1
 
     wheels = table.get('wheels', [])
 
@@ -176,6 +181,18 @@ def carve_object(name, textures, table):
     margin = voxel * 2
     bounds = ((-width / 2 - margin, width / 2 + margin), (0, height + margin), (-length / 2 - margin, length / 2 + margin))
     solid, xs, ys, zs = occupancy(bounds, voxel, [left.covers, top.covers, ends], keep)
+    if table.get('round'):
+        # Side and top photos alone leave a square section wherever the body tapers.
+        grid_x, grid_y = np.meshgrid(xs, ys, indexing='ij')
+        for k in range(solid.shape[2]):
+            cut = solid[:, :, k]
+            if not cut.any():
+                continue
+            across = xs[cut.any(axis=1)]
+            up = ys[cut.any(axis=0)]
+            a, b = (across[-1] - across[0]) / 2 + voxel / 2, (up[-1] - up[0]) / 2 + voxel / 2
+            cx, cy = (across[-1] + across[0]) / 2, (up[-1] + up[0]) / 2
+            solid[:, :, k] = cut & (np.abs((grid_x - cx) / a) ** table['round'] + np.abs((grid_y - cy) / b) ** table['round'] <= 1)
     solid = largest_part(solid)
     if not solid.any():
         raise RuntimeError(f'{name}: nothing left after carving. Check the measurements and the masks in {mask_dir}.')
