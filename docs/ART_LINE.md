@@ -45,6 +45,12 @@ stop adjusting and change the method.
 
 ## What to watch for
 
+### Flat photographed shapes
+
+- **Smoothing turns flat things into cushions.** A carve rounds the edge of a
+  flat crushed car into a pillow. Trace the side-photo silhouette and extrude
+  it with `trace` and `slab`; keep the faces flat and do not smooth them.
+
 ### Photos and masks
 
 - **Background walled in by the subject** (Kyle, 6 November). The flood from the
