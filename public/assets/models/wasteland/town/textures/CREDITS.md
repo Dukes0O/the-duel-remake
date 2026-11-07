@@ -207,6 +207,73 @@ perfectly perpendicular, flat even illumination, no perspective, no cast
 shadows, tileable edges, physically plausible, high detail, no objects, no
 text, no border, no watermark.
 
+## TOWN-ART-FOOD materials
+
+Generated with OpenAI ImageGen for the soup-kitchen photo and material study.
+The Blender recipe embeds each texture separately as a 256 px JPEG in
+`food.glb`. The complete reference photo stays outside the repository; its
+small comparison crop appears on the round sheet.
+
+- `town-food-steel.jpg`: Crop from this generated image: "Straight-on close
+  photograph of battered desert-cookhouse materials: one large central
+  field of dark brown oxidized steel plate with dusty faded charcoal paint
+  and irregular 2 to 15 cm chips exposing dark brown rust and rubbed grey
+  metal edges, sparse rivet heads and sharp vertical rust trails beneath
+  them; a smaller distinct area of bleached grey-brown plank grain and
+  patched dirty beige canvas edge visible near the border. True scale, flat
+  orthographic, bright diffuse daylight, sharp detail; no orange rust, text
+  or watermark."
+- `town-food-plank.jpg`: 512 px resize of a generated square tile. Prompt:
+  "Use case: photorealistic-natural. Asset type: seamless square repeating
+  albedo texture for a realistic Wasteland game model. Sharp close-up
+  photograph of one weather-beaten grey-brown plank from a desert market
+  bench: elongated straight wood grain, aged nail holes, split fibers,
+  rubbed lighter edges and compacted dust in grooves; muted deep grey-brown
+  tone, not orange and not pale. The grain runs vertically through the
+  square, plank material fills the entire tile, flat orthographic macro, no
+  perspective, bright diffuse overcast daylight, seamless on all four edges.
+  Real scale detail, avoid steel, canvas, objects, text, blur, noise-only
+  pattern, border, watermark."
+- `town-food-canvas.jpg`: 512 px resize of a generated square tile. Prompt:
+  "Use case: photorealistic-natural. Asset type: seamless square repeating
+  albedo texture for a realistic Wasteland game model. Sharp close-up
+  photograph of a single weather-beaten desert cookhouse canvas awning
+  material: dirty muted beige-grey heavy cotton canvas, visible woven threads
+  at true scale, faded soot shadows, uneven sun bleaching, small frayed 2 to
+  15 cm tears and stitched repair seams with dark thread. One material only
+  fills the full square; flat orthographic macro, no perspective, evenly lit
+  bright overcast daylight, seamless edges on all four sides. Avoid steel,
+  wood, objects, text, orange/brown saturation, blur, noise-only texture,
+  border, watermark."
+- `town-food-corrugated.jpg`: 512 px resize of a generated square tile.
+  Prompt: "Use case: photorealistic-natural. Asset type: seamless square
+  repeating albedo texture for a realistic desert-market game model. One
+  close orthographic photograph of weathered corrugated galvanized roofing
+  tin at true scale, about 10 cm ridges. Dark muted charcoal-zinc steel,
+  dusty brown-grey patina, irregular deep umber rust streaks below small nail
+  heads, scuffed edges with a little rubbed dull silver, some old faded brown
+  paint still visible; uneven wear, not a flat color. Crisp small surface
+  scratches and dust, bright diffuse overcast daylight, no glare, no
+  perspective, no cast shadows, material fills the square and tiles
+  seamlessly on every edge. Avoid bright silver, blue-grey, saturated orange,
+  repeated stripes painted flat, blur, noise-only, objects, text, border,
+  logos, watermark."
+
+Soup-kitchen photo reference prompt: "Use case: photorealistic-natural.
+Asset type: real-world production reference for a Wasteland town Blender
+model. Documentary photograph of a small roadside soup kitchen built by hand
+from salvaged materials in a dusty desert settlement, viewed at eye level in
+bright overcast daylight against a plain mid-grey yard. A 2 m by 4 m
+open-sided cook shelter with a faded patched canvas awning, thin welded
+rusted steel posts and braces, corrugated tin roof panels, a big
+soot-blackened iron soup pot over a contained wood fire on a low stone hearth,
+two rough plank benches, dented water cans and stacked bowls. Real human-scale
+proportions, sharp dark-brown rust under fasteners, rubbed bare steel corners,
+soot around pot and fire, dusty weathering low down, sun-faded canvas with
+stitched repairs, battered timber grain. One whole shelter fills the frame in
+a three-quarter front view with no people. Avoid logos, signs, text, watermark,
+toy-like shapes, clean new materials, illustration or franchise references."
+The reference and uncropped material study stay outside the repository.
 ## Town walker photo cloth (TOWN-ART-WALKERS)
 
 `walker-coat-reference.jpg` is a crop from the generated photographic reference used on the first town walker sheet. OpenAI ImageGen, 5 November 2026. Prompt: documentary-style full-body photograph of an adult survivor in a worn patched dust coat and work overalls, standing on dusty ground in bright overcast daylight; muted brown fabric, visible repairs, natural human proportions. The original full-size source is not retained. `walker-*-cloth.jpg` are 256 px crops derived from that coat patch and gently tinted for each outfit. They are the only walker textile pictures; the model recipe uses each image on its corresponding reduced Quaternius body.
@@ -289,6 +356,25 @@ background, no perspective, no labels, no people or logos, no watermark."
   inputs.
 
 Crusher reference views generated with OpenAI image generation on 6 November 2026 from an original prompt written for TOWN-ART-PLANTS round 3. The fictional unbranded portable jaw crusher is used only as a modelling reference; four 1024 px crops and measured grid versions are included here.
+## TOWN-ART-FOOD soup kitchen photo references
+
+Generated with OpenAI ImageGen on 6 November 2026. The four 712 × 532 JPEG crops are the recipe's measured source photos; the GLB embeds compact 256 × 192 copies.
+
+- `town-food-soup-front.jpg`, `town-food-soup-left.jpg`, `town-food-soup-rear.jpg`, and `town-food-soup-overhead.jpg` are crops from the same four-panel source image at `C:/Users/kyleb/.codex/generated_images/01a1b3f5-90cc-7872-8aec-da2a7366dbd4/exec-04cac48c-f574-4d7d-b93a-0007bca6fe14.png`.
+- Prompt:
+
+  ```text
+  Use case: photorealistic-natural
+  Asset type: four orthographic reference photographs for a 3D game building model
+  Primary request: one image arranged as four equal borderless photographic panels, each panel showing the exact same small improvised soup kitchen from a different dead-on view: upper left front elevation, upper right left side elevation, lower left rear elevation, lower right perfectly straight-down roof plan.
+  Scene/backdrop: plain pale warm grey studio sweep in every panel, no horizon and no cast shadow, flat neutral daylight.
+  Subject: a 4 m wide, 3 m deep, 2.7 m high open-front desert soup kitchen assembled from weathered canvas and salvaged tin. Same object and exact layout in all four panels: low central dark round iron cooking pot with rolled lip over a small wood fire at floor center; one rough timber bench on each side of pot; rear wall has three corrugated tin panels, a long shelf with exactly three dented cans and two pans; pale patched canvas awning spans the front opening and wraps down only the left side; right and front remain open; roof is two unequal pitched sheets. Four slim rusted steel corner posts and diagonal braces.
+  Style/medium: natural documentary product photography, crisp realistic worn materials, not illustration, not a render, no people.
+  Composition/framing: true orthographic camera, centered whole structure, identical scale across panels, generous blank margin around all edges; front means the open serving side; clearly distinct straight front, left end, closed rear and overhead plan.
+  Lighting/mood: bright even flat overcast daylight, no directional shadows.
+  Materials/textures: faded dusty canvas with visible stitched patches, dark brown rust, scratched grey galvanized corrugation, soot-blackened iron pot, weathered grey-brown timber, subdued coal ember.
+  Constraints: exact same structure, pot, two benches, three rear sheets, shelf contents and canvas arrangement in all views; keep openings visibly open; no lettering, labels, border, extra props, people or watermark.
+  ```
 ## Town Hall orthographic reference views (round 2)
 
 Generated with Codex Image Generation on 6 November 2026. The four compressed views are cropped from one generated orthographic reference sheet. The original remains outside the repository. The front view is traced and embedded in `services.glb`; the side, rear and overhead views are measurement references for the recipe.
