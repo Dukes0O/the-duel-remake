@@ -73,6 +73,11 @@ show no improvement, stop adjusting and change the method.
   than the side photo's. Keep only wings near a wheel outside the body's width.
 - **A thin boom vanishes in a carve.** Trace it, so that its holes stay open.
 
+### Buildings
+
+- **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.
+- **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
+
 ### People
 
 - **Legs shifted out from the hips, wide stance** (Kyle, 6 November). A leg pivot's
