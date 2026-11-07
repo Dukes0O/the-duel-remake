@@ -38,6 +38,7 @@
 - Export follow-up: scaled packed photos to 700 px maximum so the expanded ramp detail stays within the card's 3 MiB GLB budget.
 - Budget check follow-up: the first rebuilt GLB remained 3,225,140 bytes because several recipe photos were not in the scaling list. The recipe now scales every packed photo to 640 px maximum.
 - Coping follow-up: matched each gate and ramp coping face's UV span to the shorter piece length and the wall coping's stone density, so the texture reads as stone instead of a pale, over-tiled strip.
+- Arch follow-up: raised the opening floor to the causeway's 4 m deck, added the embankment base below it, and lifted the dark inner barrel to the same opening. The 1.6 m arch clear height now admits the aligned 4.36–4.55 m rails.
 
 ## Removed
 

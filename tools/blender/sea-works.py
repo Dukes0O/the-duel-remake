@@ -191,8 +191,8 @@ def build_causeway_arch():
  solid &= ~opening
  solid[floor:,:]=False
  def vertical(y):
-  if y>=crown:return (floor-y)*1.6/(floor-crown)
-  return 1.6+(crown-y)*4.4/(crown-top)
+  if y>=crown:return 4+(floor-y)*1.6/(floor-crown)
+  return 5.6+(crown-y)*.4/(crown-top)
  xscale=4/(2*half)
  def pos(x,y,d): return (d,vertical(y),(x-cx)*xscale)
  loops=trace(solid,(24,top,p.w-24,floor),tolerance=1.4,min_area=80)
@@ -213,9 +213,18 @@ def build_causeway_arch():
  p.bleed(solid)
  arch=Mesh(); slab(arch,'stone',p,loops,pos,-1.5,1.5,wall_scale=.011)
  finish(arch,'causeway-arch',{'stone':p.material()})
+ # The photo arch sits above the same four-metre embankment as the causeway;
+ # its floor is the causeway deck, so the rails pass through the actual hole.
+ base=Mesh(); base_faces={
+  '+x':('wall',wall,(0,55,wall.w*.2,300)), '-x':('wall',wall,(0,55,wall.w*.2,300)),
+  '+z':('wall',wall,(0,55,wall.w*.075,300)), '-z':('wall',wall,(0,55,wall.w*.075,300)),
+  '+y':('wall',wall,(0,55,wall.w*.2,300)), '-y':('wall',wall,(0,55,wall.w*.2,300))}
+ box(base,-1.5,1.5,0,4,-4,4,base_faces)
+ finish(base,'causeway-arch-base',{'wall':wall.material()})
  # A dark stone barrel follows the opening through the full wall thickness.
  inner=Mesh(); profile=[(-2,0),(-2,.48),(-1.86,.92),(-1.55,1.27),(-1.02,1.52),(0,1.6),(1.02,1.52),(1.55,1.27),(1.86,.92),(2,.48),(2,0)]
  for (z0,y0),(z1,y1) in zip(profile,profile[1:]):
+  y0+=4; y1+=4
   inner.face([(-1.5,y0,z0),(1.5,y0,z0),(1.5,y1,z1),(-1.5,y1,z1)],
              [dark.uv(20,20),dark.uv(dark.w-20,20),dark.uv(dark.w-20,dark.h-20),dark.uv(20,dark.h-20)],'inside',(0,0,1))
  finish(inner,'causeway-arch-inside',{'inside':dark.material()})
