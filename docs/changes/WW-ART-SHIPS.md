@@ -233,6 +233,18 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 - Removed the Good Hope's and the Marigold's generic chart-room cubes, roofs, windows and doors; replaced them with their single photo-carved `upperworks` parts.
 - Kept the source photographs at full resolution. The packed review export caps photo projections at 512 px and cabin images at 320 px to stay below the whole-file budget.
 
+## Round 13, point 1 — Sister ship fit (7 November 2026)
+
+- Kept each hull, deck plate, cabin, and deck fitting under its ship root so the root's list and pitch carry them together. Gave each deck plate its own `ship-*:deck` story part for measured bounds.
+- Inset the sister deck plates to 64.8 x 10.8 m, inside the 72 x 12 m hull. Moved both cabin blocks to midships, where the hull keeps its beam; moved their funnels and mast with them. Updated the two 40 m check cameras to face the moved cabins.
+- Wrote post-fix world-space bounds for each hull, deck plate, and cabin to `.qa-dist/fit.txt`. Rendered and inspected `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`; the cabins now stand over the deck and do not reach the stern. The long plate edge remains visually prominent and needs Claude's review.
+- Blender 4.5.13 family export completed: 38,599 triangles, 2,701,700 bytes read back from `ships.glb`. No lane tier or build run, per art-card rules. Browser checks are not applicable; Claude should inspect both retained check renders for deck alignment and cabin fit.
+- Changed assertions: none. Race fingerprints: none; art-only.
+
+### Removed
+
+- Removed the sister ships' off-midship cabin placement and the former oversized deck-plate footprint. No Patience geometry was changed.
+
 ## Round 13, step 3 — Grounded fleet (7 November 2026)
 
 - Set each root at its map x/z place. Added the Good Hope's 4-degree starboard list and 0.5 m bow drop, and the Marigold's 6-degree port list and 1 m stern drop. Each ship has its own trailing anchor chains and banked sand drift. The Marigold has an exposed 18 m shaft and propeller and half her rail is gone.

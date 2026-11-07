@@ -354,7 +354,9 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
             uv.data[li].uv=(u,v)
     parent(obj,root)
     # Deck is a real thick deck plate at the map's 5 m walkway datum.
-    deck_mesh=cube(name+'-weather-deck',(0,deck-.10,0),(length*.96,.36,width*.94),rust,root.name,.12)
+    # Leave a real inset inside the hull's flared sheer, especially at the
+    # tapered bow and stern. The parent root applies the same list to both.
+    deck_mesh=cube(name+'-weather-deck',(0,deck-.10,0),(length*.90,.36,width*.90),rust,root.name+':deck',.12)
     parent(deck_mesh,root)
     # The projection carries repair patches and seam wear; avoid floating
     # overlays that hide the hull's curve.
@@ -431,7 +433,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         patience_hull['part'] = 'ship-patience:hull'
         parent(patience_hull,r)
         shared_hull_mesh = patience_hull.data
-        hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience',.04)
+        hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience:deck',.04)
         parent(hull_deck,r)
         # The high-side letters sit on the bow plating and face out on both sides.
         for side in (-1,1):
@@ -531,23 +533,26 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                             max(1,round(image.size[1]*scale)))
                 image.pack()
         cabin.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
-        cabin.location=gv((-25.5,deck,0)); cabin['part']=ident+':upperworks'
+        # The old -25.5 m local-X offset became a 25.5 m map-Z shift when the
+        # ship root turned to its map heading. Center the cabin over the broad
+        # midship deck instead of hanging it over the tapered stern.
+        cabin.location=gv((0,deck,0)); cabin['part']=ident+':upperworks'
         parent(cabin,r)
         if args.stage != 'fleet' and ident=='ship-good-hope':
-            funnel=cylinder('good-hope-rusted-funnel',(-29,13.1,0),1.05,4.2,rust,ident,16)
+            funnel=cylinder('good-hope-rusted-funnel',(-3.5,13.1,0),1.05,4.2,rust,ident,16)
             parent(funnel,r)
-            cap=cylinder('good-hope-funnel-cap',(-29,15.25,0),1.18,.20,iron,ident,16)
+            cap=cylinder('good-hope-funnel-cap',(-3.5,15.25,0),1.18,.20,iron,ident,16)
             parent(cap,r)
         if ident=='ship-good-hope':
-            mast=cylinder('good-hope-short-mast',(-25.5,14.6,-6.5),.09,3.2,steel,ident,8)
+            mast=cylinder('good-hope-short-mast',(0,14.6,-6.5),.09,3.2,steel,ident,8)
             parent(mast,r)
             for side in (-1,1):
-                stay=beam(f'good-hope-mast-stay-{side}',(-25.5,13.0,-6.5),(-25.5,16.0,-6.5+side*1.6),.045,iron,ident)
+                stay=beam(f'good-hope-mast-stay-{side}',(0,13.0,-6.5),(0,16.0,-6.5+side*1.6),.045,iron,ident)
                 parent(stay,r)
         elif args.stage != 'fleet':
-            funnel=cylinder('marigold-weathered-funnel',(-29,10.9,0),.95,3.0,rust,ident,16)
+            funnel=cylinder('marigold-weathered-funnel',(-3.5,10.9,0),.95,3.0,rust,ident,16)
             parent(funnel,r)
-            cap=cylinder('marigold-funnel-cap',(-29,12.45,0),1.05,.18,iron,ident,16)
+            cap=cylinder('marigold-funnel-cap',(-3.5,12.45,0),1.05,.18,iron,ident,16)
             parent(cap,r)
     if ident=='ship-patience':
         # Dot's Diner pattern: one measured carve table, followed by a named
@@ -1206,8 +1211,8 @@ def render_imported_review():
 
     add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
     review_scene.objects['review-camera-whole'].data.lens = 24
-    add_camera('review-camera-hope', (-73, 10, -418), (-45, 9, -389.5), 40, (1200, 900))
-    add_camera('review-camera-marigold', (17, 13, -443), (45, 9, -414.5), 40, (1200, 900))
+    add_camera('review-camera-hope', (-73, 10, -444), (-45, 9, -415), 40, (1200, 900))
+    add_camera('review-camera-marigold', (17, 13, -410), (45, 9, -440), 40, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
     add_camera('review-camera-deck-good-hope', (-22.5, 5.7, -415), (-37.5, 12.0, -415), 35, (1200, 900))
     add_camera('review-camera-deck-marigold', (68.5, 5.7, -440), (53.5, 8.3, -440), 35, (1200, 900))
@@ -1219,6 +1224,36 @@ def render_imported_review():
                       'triangles': triangle_count, 'views_ready': 6,
                       'review_file': str(raw / 'review.blend')}))
 
+def write_ship_fit():
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    records = []
+    for ident in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
+        candidates = {
+            'hull': bpy.data.objects.get(ident + ':hull'),
+            'deck plate': next((obj for obj in scene.objects
+                                if obj.get('part') == ident + ':deck'), None),
+            'cabins': bpy.data.objects.get(ident + ':upperworks'),
+        }
+        if ident == 'ship-patience':
+            candidates['hull'] = bpy.data.objects.get('ship-patience:hull')
+            candidates['deck plate'] = next((obj for obj in scene.objects
+                                             if obj.get('part') == ident + ':deck'), None)
+        records.append(ident)
+        for label, obj in candidates.items():
+            if obj is None:
+                records.append(f'  {label}: not present in this stage')
+                continue
+            evaluated = obj.evaluated_get(depsgraph)
+            points = [evaluated.matrix_world @ Vector(corner) for corner in evaluated.bound_box]
+            game_points = [(p.x, p.z, -p.y) for p in points]
+            minimum = tuple(min(p[i] for p in game_points) for i in range(3))
+            maximum = tuple(max(p[i] for p in game_points) for i in range(3))
+            records.append(f'  {label}: min={minimum!r} max={maximum!r}')
+    fit_path = root / '.qa-dist/fit.txt'
+    fit_path.write_text('\n'.join(records) + '\n', encoding='utf-8', newline='\n')
+    print(f'Wrote evaluated ship bounds: {fit_path}')
+
 # A real +Y-up, metre-scale scene, with one named root per story place.
 scene.camera=None
+write_ship_fit()
 render_imported_review()
