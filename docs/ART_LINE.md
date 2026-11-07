@@ -65,6 +65,7 @@ stop adjusting and change the method.
   landmarks on a grid.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
+- **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
   people). Generate a real photo set for a new colour.
 

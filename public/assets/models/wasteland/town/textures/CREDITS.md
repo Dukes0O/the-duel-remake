@@ -385,6 +385,16 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
 
+## TOWN-ART-FUN round 2 references
+
+Generated with the built-in ImageGen tool, 6 November 2026. Original development references; compressed JPEGs are stored here for recipe rebuilds and the review sheet.
+
+- `fountain-front.jpg`, `fountain-side.jpg`, `fountain-above.jpg`: three-panel prompt based on the round-1 fountain reference: ìSame improvised bonnet fountain, strict front, side and overhead views, plain pale background, flat overcast light; rusted faded green car bonnet with true pressed outline and curved dip, exhaust outlets and central can, dark reflective water and thin bright streams; every part connected.î
+- `big-wheel.jpg`: ìTall precarious steel big wheel assembled from truck axles and welded salvage, twelve worn car seats hanging on paired steel hangers; central axle, spokes, inner and outer rim; rotated with seats hanging down; plain pale studio background, flat overcast documentary photo.î
+- `tavern.jpg`: ìTall leaning two-storey roadside tavern from rusted corrugated panels, timber, truck doors and salvage signs; large sign, damaged entrance, pickup crashed through the right wall and visibly interlocked; front view, plain pale background, flat overcast documentary photo.î
+- `scrap-coaster.jpg`: ìWelded scaffold roller coaster with thick steel beams meeting at joints, one steep drop and an improbable full vertical loop; three-car scrap train at the drop; whole ride, plain pale background, flat overcast documentary photo.î
+
+Credit: OpenAI built-in image generation. No outside image source or runtime service is used.
 ## TOWN-ART-TRUCKS-2, round 2: ambulance and Mrs Vane's trucks
 
 Generated with OpenAI built-in image generation on 6 November 2026. Each truck's four orthographic crops are retained in this folder and embedded in `trucks-2.glb` as its photo-carving and projection sources. The source sheets remain outside the repository. All designs are original and have no manufacturer branding.
@@ -652,6 +662,28 @@ used.
 - workshop-roof.jpg: overhead roof plan of the same workshop, patched
   corrugated sheets and raised ridge, pale studio floor.
 - Borer round 3 cutter front and machine side/top references: OpenAI image generation, 6 November 2026; original concept art generated for this project. [borer-round3-head-front.png, borer-round3-machine-side.png, borer-round3-machine-top.png].
+
+## Tavern and crashed truck references (TOWN-ART-FUN round 5)
+
+Generated with OpenAI ImageGen on 7 November 2026. Original PNGs are held outside the repository; these JPEG crops are the measured modeling references. No external source material was used.
+
+- `tavern-side.jpg`, `tavern-front.jpg`, `tavern-rear.jpg` and `tavern-top.jpg` are crops of one generated four-view board. They show one original leaning two-storey corrugated-metal tavern with an open front doorway. The views are dead-on side, front, rear and plan. Prompt: ‚ÄúOne original weathered two-storey wasteland tavern from dark rust-red corrugated metal and reclaimed timber, leaning upper storey, patched roof and open dark doorway; same building in a 2x2 board, exact orthographic side, front, rear and true overhead views, plain grey studio floor and background, even light, no truck, people or text.‚Äù
+- `tavern-front-with-truck.jpg` is a generated straight-on orthographic front photo of the tavern with an original battered utility truck crashed into the lower right wall, wheels on the ground, doorway clear. Prompt: ‚ÄúThe same tavern as the reference board, full front elevation with an original old utility pickup nose-first through the lower wall, full vehicle and building, level orthographic camera, plain grey studio ground, no logos or people.‚Äù
+- `tavern-truck-side.jpg`, `tavern-truck-front.jpg`, `tavern-truck-rear.jpg` and `tavern-truck-top.jpg` are crops of a separate generated four-view board of one original battered utility pickup. They are used to carve the truck as its own piece. Prompt: ‚ÄúOne original 1940s-style utility pickup, same truck in orthographic side, front, rear and true overhead views, full vehicle, distinct wheels, plain grey ground and background, even light, no logos, text or people.‚Äù
+
+## Crashed truck references (TOWN-ART-FUN round 5)
+
+Generated with OpenAI ImageGen on 7 November 2026. These are original source images; no external source material was used.
+- `tavern-front-with-truck.jpg` is the dead-on orthographic tavern front with a battered utility pickup nose-first in its lower right wall. The central doorway stays visible.
+- `tavern-truck-side.jpg`, `tavern-truck-front.jpg`, `tavern-truck-rear.jpg` and `tavern-truck-top.jpg` are measured crops of a separate consistent four-view pickup board, used as the truck carve photos. Prompt: ‚ÄúOne original 1940s-style utility pickup, same truck in orthographic side, front, rear and true overhead views, full vehicle, distinct wheels, plain grey ground and background, even light, no logos, text or people.‚Äù
+
+## Tavern and crashed truck references (TOWN-ART-FUN round 5)
+
+Generated with OpenAI ImageGen on 7 November 2026. The JPEG crops below are the measured modeling references. No external source material was used.
+
+- `tavern-side.jpg`, `tavern-front.jpg`, `tavern-rear.jpg` and `tavern-top.jpg` are crops of one four-view board showing the same original leaning two-storey wasteland tavern, with no truck. Prompt: "One weathered two-storey tavern from rust-red corrugated metal and reclaimed timber, leaning upper storey, patched roof and open dark doorway; same building in exact orthographic side, front, rear and overhead plan views; full object, plain grey studio floor and background, even light, no truck, people or text."
+- `tavern-front-with-truck.jpg` is a straight-on front view of the same tavern with a battered original utility pickup nose-first into its lower right wall, doorway clear. Prompt: "The same tavern as the reference board, full front elevation with an original old utility pickup nose-first through the lower wall, full vehicle and building, level orthographic camera, plain grey studio ground, no logos or people."
+- `tavern-truck-side.jpg`, `tavern-truck-front.jpg`, `tavern-truck-rear.jpg` and `tavern-truck-top.jpg` are crops of a separate four-view board of one original battered utility pickup, used to carve the truck as its own piece. Prompt: "One original 1940s-style utility pickup, same truck in orthographic side, front, rear and true overhead views, full vehicle, distinct wheels, plain grey ground and background, even light, no logos, text or people."
 
 ## hermit-camp reference photos
 
