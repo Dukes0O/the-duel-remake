@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-4'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-5'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-4.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-5.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -213,18 +213,29 @@ fountain=carve_object('fountain:bonnet',tex,{
 keep(fountain)
 water=cyl('fountain:water',(0,1.05,0),1.25,.025,'water',32)
 water['emissive']=True
-# Photo-carved tavern; the only supplied elevation is reused as measured input.
+# Round 5 rebuild: four independent measured photos, scaled from its two-metre door.
 building_root('tavern','2x2')
 tavern=carve_object('tavern:body',tex,{
-    'photos':{'side':'tavern.jpg','front':'tavern.jpg','rear':'tavern.jpg','top':'tavern.jpg'},
-    'length':14.0,'width':14.0,'height':9.2,
-    'side':{'start':45,'end':885,'ground':590},
-    'front':{'centre':460,'ground':590,'top':15},
-    'rear':{'centre':460,'ground':590,'top':15},
-    'top':{'front':50,'rear':590,'centre':460},
-    'mask_dir':str(evidence/'masks'),'voxel':.08,'target':4600,
+    'photos':{'side':'tavern-side.jpg','front':'tavern-front.jpg',
+              'rear':'tavern-rear.jpg','top':'tavern-top.jpg'},
+    'length':6.2,'width':7.4,'height':6.9,
+    'side':{'start':100,'end':540,'ground':535},
+    'front':{'centre':320,'ground':530,'top':52},
+    'rear':{'centre':327,'ground':522,'top':58},
+    'top':{'front':515,'rear':45,'centre':320},
+    'keep':lambda x,y,z: ~((abs(x)<.96)&(y<2.05)&(z < -6.2/2+.42)),
+    'cut':{'front':[(235,380,410,535)]},
+    'grey':26,'tolerance':40,'bleed_tolerance':48,
+    'mask_dir':str(evidence/'masks'),'voxel':.045,'target':5000,
 })
 keep(tavern)
+door_dark=bpy.data.materials.new('tavern dark doorway')
+door_dark.diffuse_color=(.012,.010,.008,1)
+door_dark.use_nodes=True
+door_dark.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.012,.010,.008,1)
+door_dark.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
+mat['door-dark']=door_dark
+box('tavern:doorway-interior',(0,1.03,-2.78),(1.82,2.0,.035),'door-dark',.005)
 # Drive-in screen and rows of battered cars, aimed toward the road-facing screen.
 building_root('drive-in','4x3')
 for x in (-8,8):

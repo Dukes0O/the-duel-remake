@@ -583,3 +583,11 @@ used.
   corrugated sheets and raised ridge, pale studio floor.
 - Borer round 3 cutter front and machine side/top references: OpenAI image generation, 6 November 2026; original concept art generated for this project. [borer-round3-head-front.png, borer-round3-machine-side.png, borer-round3-machine-top.png].
 >>>>>>> integration/wasteland
+
+## Tavern and crashed truck references (TOWN-ART-FUN round 5)
+
+Generated with OpenAI ImageGen on 7 November 2026. Original PNGs are held outside the repository; these JPEG crops are the measured modeling references. No external source material was used.
+
+- `tavern-side.jpg`, `tavern-front.jpg`, `tavern-rear.jpg` and `tavern-top.jpg` are crops of one generated four-view board. They show one original leaning two-storey corrugated-metal tavern with an open front doorway. The views are dead-on side, front, rear and plan. Prompt: “One original weathered two-storey wasteland tavern from dark rust-red corrugated metal and reclaimed timber, leaning upper storey, patched roof and open dark doorway; same building in a 2x2 board, exact orthographic side, front, rear and true overhead views, plain grey studio floor and background, even light, no truck, people or text.”
+- `tavern-front-with-truck.jpg` is a generated straight-on orthographic front photo of the tavern with an original battered utility truck crashed into the lower right wall, wheels on the ground, doorway clear. Prompt: “The same tavern as the reference board, full front elevation with an original old utility pickup nose-first through the lower wall, full vehicle and building, level orthographic camera, plain grey studio ground, no logos or people.”
+- `tavern-truck-side.jpg`, `tavern-truck-front.jpg`, `tavern-truck-rear.jpg` and `tavern-truck-top.jpg` are crops of a separate generated four-view board of one original battered utility pickup. They are used to carve the truck as its own piece. Prompt: “One original 1940s-style utility pickup, same truck in orthographic side, front, rear and true overhead views, full vehicle, distinct wheels, plain grey ground and background, even light, no logos, text or people.”
