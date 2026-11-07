@@ -297,6 +297,69 @@ for n in ids:
   box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
  heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4,'toll-bank':4.4,'school':5.2}
  ht=heights.get(n,5.0);mat=brick if n=='toll-bank' else wood if n=='school' else tin
+ if n=='paint-shop':
+  # One measured four-view carve forms the patched workshop shell. Its raised
+  # roller door is a real keep cut, so the dark spray booth reads as depth.
+  paint_table={
+   'photos':{'side':'paint-shop-side.jpg','front':'paint-shop-front.jpg',
+             'rear':'paint-shop-rear.jpg','top':'paint-shop-top.jpg'},
+   'length':14.8,'width':12.1,'height':10.8,
+   'side':{'start':41,'end':977,'ground':857},
+   'front':{'centre':512,'ground':868,'top':65},
+   'rear':{'centre':512,'ground':910,'top':98},
+   'top':{'front':80,'rear':934,'centre':514,'x_scale':12.1/829},
+   'cut':{'front':[(229,418,802,868)]},
+   'keep':lambda x,y,z: (np.abs(x)>=3.86) | (y>=6.05) | (z>=-6.55),
+   'grey':26,'tolerance':38,'bleed_tolerance':30,'voxel':.13,'target':3650,
+   'mask_dir':str(root/'.evidence/2026-11-07/TOWN-ART-SERVICES/paint-shop/masks')}
+  body=carve_object('paint-shop:body',tex,paint_table);parent_keep(body,b)
+  # The recessed black booth wall sits at the back of the cut. Tracks and the
+  # roller cross the threshold, while the photographed lintel and vent remain.
+  booth_back=box('paint-shop:booth-dark-interior',(0,3.0,-6.55),(7.7,6.0,.12),dark,0,b)
+  for x in (-3.92,3.92):
+   box('paint-shop:booth-door-guide',(x,3.05,-7.18),(.15,6.1,.18),steel,0,b)
+  box('paint-shop:booth-door-roller',(0,6.13,-7.18),(7.95,.19,.22),dark,0,b)
+  for i in range(4):
+   y=6.25+i*.14
+   box(f'paint-shop:raised-door-slat-{i+1}',(0,y,-7.18),(7.48,.105,.12),tin if i%2 else steel,0,b)
+  # Four separate salvaged paint drums stand on the ground outside the corners.
+  def drum_paint(name,color):
+   material=bpy.data.materials.new(name);material.diffuse_color=(*color,1);material.use_nodes=True
+   shader=material.node_tree.nodes.get('Principled BSDF');shader.inputs['Base Color'].default_value=(*color,1)
+   shader.inputs['Metallic'].default_value=.12;shader.inputs['Roughness'].default_value=.84
+   return material
+  drum_colors=[drum_paint('faded red drum enamel',(.40,.065,.025)),
+               drum_paint('faded blue drum enamel',(.035,.12,.30)),
+               drum_paint('faded yellow drum enamel',(.48,.29,.035)),
+               drum_paint('faded green drum enamel',(.045,.23,.085))]
+  for index,(x,z) in enumerate(((-6.50,-7.05),(6.50,-7.05),(-6.50,7.05),(6.50,7.05))):
+   center=(x,.48,z);color=drum_colors[index]
+   cyl(f'paint-shop:paint-drum-{index+1}',center,.34,.96,color,16,b)
+   for y in (.10,.86):tube(f'paint-shop:drum-rim-{index+1}',(x,y,z),.34,.035,dark,b,10,4)
+   cyl(f'paint-shop:drum-bung-{index+1}',(x,.976,z),.075,.032,steel,8,b)
+   # A small contrasting paint swatch faces the road on each drum.
+   label_mat=drum_colors[(index+1)%len(drum_colors)]
+   box(f'paint-shop:drum-colour-mark-{index+1}',(x,.49,z-.335),(.16,.38,.025),label_mat,0,b)
+  bpy.context.view_layer.update()
+  owned=[]
+  for obj in bpy.data.objects:
+   p=obj
+   while p and p!=b:p=p.parent
+   if p==b and obj.type=='MESH':owned.append(obj)
+  measured=[]
+  for obj in owned:
+   corners=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+   points=[(q.x,q.z,-q.y) for q in corners]
+   lo=[min(q[i] for q in points) for i in range(3)];hi=[max(q[i] for q in points) for i in range(3)]
+   measured.append((lo,hi))
+   print(f'PAINT-SHOP BOUNDS {obj.name}: x={lo[0]:.2f}..{hi[0]:.2f} y={lo[1]:.2f}..{hi[1]:.2f} z={lo[2]:.2f}..{hi[2]:.2f}')
+  for i,(lo,hi) in enumerate(measured):
+   assert lo[0]>=-7.5 and hi[0]<=7.5 and lo[2]>=-7.5 and hi[2]<=7.5, f'{owned[i].name} outside the paint-shop plot margin'
+   grounded=abs(lo[1])<=.035
+   touching=any(i!=j and all(max(0,lo[k]-other_hi[k],other_lo[k]-hi[k])<=.08 for k in range(3)) for j,(other_lo,other_hi) in enumerate(measured))
+   print(f'PAINT-SHOP CONTACT {owned[i].name}: {"ground" if grounded else "another piece" if touching else "FAIL"}')
+   assert grounded or touching, f'{owned[i].name} floats without ground or piece contact'
+  continue
  if n=='trading-post':
   # Four independently generated orthographic references carve only the store
   # body. The deep porch, sign and merchandise remain separate meshes.
@@ -790,7 +853,7 @@ if a.review:
  # Capture a matched close view and the roof-heavy mayor view from the exported model.
  def render(name,loc,target,lens=54,resolution=(1000,760)):
   camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens
-  if name.startswith('trading-post-model-'):camdata.type='ORTHO';camdata.ortho_scale=lens
+  if name.startswith('trading-post-model-') or name.startswith('paint-shop-model-'):camdata.type='ORTHO';camdata.ortho_scale=lens
   bpy.context.scene.camera=cam
   scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.resolution_percentage=100
   scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
@@ -864,16 +927,28 @@ if a.review:
    else:obj.hide_render=not within(obj,target)
   distance=max(fw,fd)*16+18;height=distance*.68
   render(building_id+'-three-quarter.png',(distance*.63,height,-distance*.72),(0,height*.12,0),44)
-  if building_id=='trading-post':
-   for name,loc,target,angle in [
-    ('trading-post-model-side.png',(31,7.5,0),(0,3.7,0),18),
-    ('trading-post-model-front.png',(0,7.5,-31),(0,3.7,0),16),
-    ('trading-post-model-rear.png',(0,7.5,31),(0,3.7,0),16),
-    ('trading-post-model-above.png',(0,38,-1),(0,3.7,-1),28),
-    ('trading-post-three-quarter-left.png',(24,18,-27),(0,3,0),48),
-    ('trading-post-three-quarter-right.png',(-24,18,-27),(0,3,0),48),
-    ('trading-post-mayor.png',(48,68,-48),(0,0,0),140)]:
-    render(name,loc,target,angle,(900,640))
+ paint_shop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='paint-shop')
+ for obj in bpy.data.objects:obj.hide_render=not within(obj,paint_shop)
+ # Orthographic model views align with the four generated photo cameras.
+ for name,loc,target,scale in [
+  ('paint-shop-model-side.png',(35,5,0),(0,5,0),18),
+  ('paint-shop-model-front.png',(0,5,-35),(0,5,0),17.5),
+  ('paint-shop-model-rear.png',(0,5,35),(0,5,0),17.5),
+  ('paint-shop-model-above.png',(0,35,0),(0,0,0),17.5)]:
+  render(name,loc,target,scale,(1000,1000) if name.endswith('above.png') else (1000,760))
+ render('paint-shop-three-quarter-left.png',(-22,13,-24),(0,4,0),44,(1000,760))
+ render('paint-shop-three-quarter-right.png',(22,13,-24),(0,4,0),44,(1000,760))
+ render('paint-shop-mayor.png',(24,46,-35),(0,1.5,0),60,(1000,760))
+ if building_id=='trading-post':
+  for name,loc,target,angle in [
+   ('trading-post-model-side.png',(31,7.5,0),(0,3.7,0),18),
+   ('trading-post-model-front.png',(0,7.5,-31),(0,3.7,0),16),
+   ('trading-post-model-rear.png',(0,7.5,31),(0,3.7,0),16),
+   ('trading-post-model-above.png',(0,38,-1),(0,3.7,-1),28),
+   ('trading-post-three-quarter-left.png',(24,18,-27),(0,3,0),48),
+   ('trading-post-three-quarter-right.png',(-24,18,-27),(0,3,0),48),
+   ('trading-post-mayor.png',(48,68,-48),(0,0,0),140)]:
+   render(name,loc,target,angle,(900,640))
  # Build a clean overview by spatially arranging the imported building groups.
  for obj in bpy.data.objects:obj.hide_render=False
  buildings=[o for o in bpy.data.objects if o.type=='EMPTY' and o.name.split('.')[0] in ['town-hall']+ids]
