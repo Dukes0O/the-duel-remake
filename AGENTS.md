@@ -220,6 +220,10 @@ and any card, playbook or SPEC text that asks for Kyle's word or a repeated run.
     card with no task, name the card in a task's notes or add a task
     (Kyle, 12 October 2026; merged 25 October).
 
+20. **The factory learns (Kyle, 6 November 2026).** What we learn goes where the
+    next job will read it, not in a chat or a private brief. Art: `docs/ART_LINE.md`.
+    Whoever finds a new kind of fault adds it there in the same commit as the fix.
+
 ## Gates (SPEC 0.5)
 
 Right-sized checks (Kyle, 24 October 2026; replaces "lane tier before every

@@ -1,0 +1,112 @@
+# The art line: what works and what to watch for
+
+Every art job reads this before it starts. Whoever finds a new kind of fault
+(Kyle, Claude or a job) adds it here in the same commit as the fix, so that no
+job has to learn it twice. The kits' own instructions are in
+[ASSET_PIPELINE.md](ASSET_PIPELINE.md).
+
+## The method
+
+Six rounds per card is the limit (Kyle, 6 November 2026). If two rounds in a row
+show no improvement, stop adjusting and change the method.
+
+1. **Start from what already passed.** Read the recipe nearest your subject, and
+   copy its structure.
+2. **Get photos first.** Generate dead-on photos of one original object from the
+   side, front, rear and straight above, all showing the same object, in flat
+   light on a plain pale background with an even floor. Parts stand clearly
+   apart. No logos or real makers' names. Keep them in the model's `textures`
+   folder, credited: `.evidence` is deleted when the lane closes.
+3. **Measure on a grid.** Draw a grid over each photo and read off the ground,
+   the ends, the centre line, each wheel's centre and radius, and each lamp. Do
+   not read numbers by eye. All of an object's photos should share one scale.
+4. **Choose the kit by the shape:**
+
+   | Subject | Kit | Worked example |
+   | --- | --- | --- |
+   | Vehicles, buildings, people, anything that curves every way | `hull_model.py`, carving | `town-trucks-1.py`, `rattler-photo.py`, `town-walkers.py` |
+   | Lattices, booms, masts, anything with open holes | `trace` and `slab` in `photo_model.py` | the tow rig's boom in `town-trucks-1.py` |
+   | Plate-work, planks, drums, a steam engine | `photo_model.py` flat parts and lathes | `rail-trains.py` |
+   | Wheels, lamps, reels, cannon | `tyre`, `headlamp` and `lathe` | `town-trucks-1.py` |
+
+5. **One piece first, then the family.** A job with a long list adjusts old
+   recipes and fails. A job with few pieces and an example passes.
+6. **Moving parts are their own pieces,** with their origin on their true pivot.
+7. **Render from the exported model,** imported into an empty scene, beside the
+   photo at the same camera, in flat light with the Standard view transform.
+8. **Look at it yourself before you submit.** Then commit, including a poor
+   result with honest scores. Never delete work because it falls short: Claude
+   judges. Commit after every piece.
+
+## What to watch for
+
+### Photos and masks
+
+- **Background walled in by the subject** (Kyle, 6 November). The flood from the
+  frame's edge cannot reach a patch between a person's legs, a window, the gap
+  under a truck or the space inside a frame, and it may not match the studio's
+  colour, so the carve keeps it as part of the subject. Look at every mask beside
+  its photo. Take each patch out by a measured shape.
+- **Ground stains and shadows** carve as a block under feet or tyres. Trim each
+  mask below the ground line.
+- **Background on an edge.** Bleed each photo using a wider colour match that
+  takes in the ground shadow, so the studio's colour cannot show.
+- **A photo cropped or off-centre.** Measure each photo's own centre line. A
+  face its best photo does not show uses the next best.
+- **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
+  people). Generate a real photo set for a new colour.
+
+### Vehicles
+
+- **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
+  arch's wall wears a ghost of the photo's tyre, the tread shows the background,
+  and the tread smears into stripes.
+- **Wheels that sit wrong in their cutouts** came from wheel numbers read by eye,
+  up to 40 pixels out. Measure them on a grid.
+- **An axle's end** pokes through a wheel face if it runs the full track. Stop it
+  inside the tyre.
+- **Lamps** (Kyle, 6 November). A lamp carved on a curved surface wears two photos
+  and garbles. Use `headlamp`. If it shows doubled, the front photo's centre or
+  scale is wrong.
+- **A body that comes apart at an angle** means it was built from flat parts. Carve it.
+- **Bits that stand beside a wheel.** The overhead photo's tyres can reach further
+  than the side photo's. Keep only wings near a wheel outside the body's width.
+- **A thin boom vanishes in a carve.** Trace it, so that its holes stay open.
+
+### People
+
+- **Legs shifted out from the hips, wide stance** (Kyle, 6 November). A leg pivot's
+  offset was counted twice. Check each foot's world position against the photo.
+- **Four legs** (Kyle, 6 November). A coat's sides kept below the hip read as extra
+  legs. A coat is one closed skirt.
+- **Hats that float, or shards behind a head:** photos that do not show the same
+  person, or a part not joined. Use `largest_part` and check all views.
+
+### Placement and export
+
+- **Double-counted positions.** Set a child's position from its true world point,
+  as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
+  box before modelling. A model that lies on its side, or a side view running
+  backwards, is this.
+- **Flat colour where a picture should be:** lost picture coordinates. Every
+  layer is named `UVMap`, and each primitive has only `TEXCOORD_0`, with a range.
+- **Text reads backwards** on a far side, whose coordinates run the other way.
+  A sign is its own `slab`.
+- `metallicFactor` at most 0.3, since nothing is there to reflect.
+
+### Sheets
+
+- Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
+- The whole subject in every frame, on plain mid-grey ground, in one even light,
+  with labels off the pictures and no white gaps.
+- Photo beside model at the same camera, three-quarter views, the mayor's view
+  and the view from the road. A close-up of wheels and lamps on any vehicle.
+- A sheet you can see is empty or cropped is not a round.
+
+### Keeping the work
+
+- A job that loses its task after its memory is compacted reads
+  `.qa-dist/YOUR-TASK.md` and carries on.
+- Never edit a script a running queue is reading.
+- Never stop processes by matching a folder name: name each job's own process.
