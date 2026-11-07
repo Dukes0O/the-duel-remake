@@ -1,44 +1,24 @@
-# TOWN-ART-FUN - round 8
+﻿# TOWN-ART-FUN - big wheel round 9
 
 ## Changed
 
-- Added a dead-on wheel side photo and separate front and side photos of one
-  hanging seat. Updated the photo credits.
-- Rebuilt the wheel with a color-distance mask. Background-colored pixels are
-  removed across the image, including between the spokes. Added two traced
-  wheel faces one metre apart, the short lathed hub, twelve depth ties, eight
-  individually pivoted seats, and the traced A-frame support.
-- Added the round 8 comparison sheet. It shows the source photo beside the
-  model from the side, two three-quarter views, and the mayor view.
-- The tavern construction is unchanged.
+- Replaced the broken photo-traced rim edges with two complete torus rims. The measured radius is 5.02 m; each rim has a 0.15 m tube and samples the rusted rim strip in the side photo.
+- Kept the photo-carved open spokes and added thin steel spokes across both wheel faces, with short depth ties.
+- Rebuilt all eight seats at the measured 1.4 m width. Each remains level, hangs from two straight rods, and has printed bounds plus a hanger-contact check.
+- Kept the photo-traced A-frame, whose feet meet the ground. Removed the extra beam that rendered detached in front of the feet; the photo already contains the base beam.
+- The pale block under the wheel remains visible in the assembled renders. I removed the enclosed pale opening from the A-frame mask and isolated the frame, seat 5 and base beam; none shows the block alone. The assembled view still shows it, so its source remains unresolved. Claude must inspect it before treating the art as passed.
+- Kept the source photos. The exported family is 6,600,716 bytes, above the card's 3 MB budget.
 
 ## Checks
 
-- Blender recipe: passed on the final source; exported `fun.glb` (9,703,084
-  bytes) and completed the imported-model render views.
-- Mask inspection: passed; spaces between spokes are black.
-- `tools/test-repo-hygiene.mjs`: passed.
-- `tools/test-review-evidence.mjs`: 7 passed, 2 failed on the first run and
-  the rerun. One expects `round-7.jpg`, which this task explicitly asks to
-  delete. The other needs `ffmpeg`, which returned `EPERM` in this job.
-- `tools/test-blender-output.mjs`: not run. It checks the model's 3 MB family
-  limit, which this export exceeds. No lane tier or build was run.
-- Browser and look verdict: Claude's review. Please inspect the seat pivots,
-  support-to-hub join, the detached-looking wheel layers in three-quarter
-  views, and the small white block at ground level under the wheel. The block
-  is visible in the rendered evidence and its source is unresolved.
-- Changed assertions: none. Race fingerprints: not applicable; this art lane
-  does not change race code.
+- Blender recipe and imported-GLB renders: completed. All eight seat checks report hanger contact. Rim bounds show full circles from y=1.605 m to 11.788 m and z=-5.092 m to 5.092 m.
+- `tools/test-blender-output.mjs`: not run; this export is over its 3 MB family budget.
+- `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: pending final run.
+- Lane tier, build, browser checks and game look review: not run here. Claude should inspect the photo/model side match, complete rims and ties, spoke openness, seat scale/orientation/hangers, A-frame feet/base, and the unresolved pale block.
+- Changed assertions: none. Race fingerprints: not applicable; this art lane does not change race code.
 
 ## Removed
 
-- Removed the round 7 sheet and its review note as requested. Kept round 6.
-- Removed this run's temporary mask previews and render captures after making
-  the review sheet.
-
-## Claude review
-
-The open-spoke mask and complete support are improved over round 7. This is
-not a self-pass: the model exceeds the 3 MB family budget and the white block
-and oblique wheel connections need review. The model and sheet are retained
-for Claude's verdict.
+- Removed the round-8 traced rim faces and seat-side geometry, replacing them with continuous rings and photo-scaled seats. Kept all round-8 source photos.
+- Removed the detached added base beam; retained the source-photo base beam.
+- Round-8 review sheet and note are removed with the round-9 sheet commit. Round 6 remains.
