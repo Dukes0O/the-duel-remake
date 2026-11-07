@@ -23,3 +23,7 @@ Rows: gate shut, gate open, harbour ramp, causeway arch. The open-gate row reuse
 - Whether the gate coping now matches the harbour wall coping in height and stone scale.
 - Whether the 90-degree open leaves and the 16 m ramp read clearly from the supplied views.
 - Whether the raised arch opening and its side joins are acceptable; the arch look is the known weak point in this round.
+
+## Claude's verdict
+
+**`harbour-gate` and `harbour-ramp` pass; `causeway-arch` passes for now.** The gate reads shut and open, with its leaves pivoting on their hinges. The ramp's slope is shallow from low down, but it reads as a slipway. The arch sits at causeway height, so it floats in these shots: SEA-WORKS checks it with the causeway under it. The gate's top course is a little darker than the wall's. Still to come on this card: `iron-mule-gear`, `works-camp`, `magnus-magnet-big`, `mrs-vane` and `water-front`.
