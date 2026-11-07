@@ -1,65 +1,43 @@
-# TOWN-ART-SERVICES change note
+# TOWN-ART-SERVICES - scrapyard round 4
 
-Status: round 6 is a visual candidate, not ready for handoff. The Workshop
-mayor view still hides its car. The current card says the family must stay
-under 3 MB, while the existing test and prior change note use an 8 MB cap.
-That mismatch needs Claude's written decision before this card can pass.
-Kind: art. Flag: candidate asset; not wired into the game.
+## Design settled before code
 
-## Design settled
-
-- Keep one `town-services` family with a direct child for each named building.
-- Build the Hall and Forge from measured four-view photo carves. Keep the Hall's
-  wheel clock and flags separate, and make the Forge fire a separate emissive
-  part.
-- Carve the Workshop as an open shed. Cut only the measured three front bays,
-  keep their posts and transom, and open the photographed side bay so it does
-  not repeat its car on an interior wall.
-- Use one named lift-car assembly with a photographed front, solid body, wheels,
-  hubs and side windows. Keep tyre piles inside the outer bays.
-- Round 6 adds a pitched roof with a measured front-photo gable and enlarges the
-  lift car in the central bay. The roof stays closed in the mayor view; judge
-  the car through the front and three-quarter openings.
+Keep the accepted crane, magnet, fence, yard scrap and the measured five-car and four-car piles. Replace the clean, pastel-looking wrecks with three generated crushed-car references: dark red/rust sedan, brown coupe and dull navy hatchback. Trace side and overhead views, remove pale studio color trapped in the photos, and alternate types so adjacent wrecks differ. Keep the 4.2 m length, 1.8 m width, 0.9 m height, footprint and building budgets.
 
 ## Changed
 
-- Replaced the Hall's hand-built mass and roof patches with a measured carve;
-  added its separate clock, clock face, flags and poles.
-- Replaced the Forge facade trace with a measured carve and a cut furnace
-  opening with a photo-based emissive `forge:lamp`.
-- Replaced the Workshop blockout with a measured open-shed carve, a separate
-  lift-car assembly and tyre stacks. Round 6 adds pitched roof planes, a gable
-  photo and a larger lift car.
-- Added credited Forge and Workshop photo views in the town texture folder.
-- The rebuilt GLB is 4,136,944 bytes. It meets the current 8 MB test threshold
-  but exceeds the 3 MB limit still written on the card.
+- Added six generated orthographic photo references and a provenance note in the town texture folder. Rotated the overhead views to align their car length with the side views.
+- Replaced the two-color stack pattern with three distinct crushed wrecks: red/rust, brown and dull navy.
+- Kept the silhouette mask separate from the texture bleed mask. Pale neutral studio pixels trapped inside a wreck are replaced before tracing; the complete car outline remains.
+- Exported the 12-building family GLB at 5,667,920 bytes, within the card's 8 MB limit. The round-4 review sheet is 252,175 bytes.
+
+## Builder review
+
+| Measure | Score | Note |
+| --- | ---: | --- |
+| Reference resemblance | 4 | Three dark, crushed wreck types replace the toy-like pastel cars; the crane and two distinct piles remain. |
+| Proportions | 4 | Car sizes and stack heights remain within the measured scrapyard composition. |
+| Materials | 4 | Rust, faded red, brown and navy are distinct; the photos retain dents and torn panels. |
+| Color | 4 | Pale studio color no longer remains on the traced car edges. |
+| Detail | 4 | Collapsed roofs, empty windows, wheels and damaged panels read from both camera views. |
+| Wear | 4 | Paint is faded and patchy, with dark rust and grime. |
+| Road and mayor readability | 4 | The piles remain readable from both viewpoints. |
+| Grounding | 5 | Both base cars rest on the ground and all seven upper cars touch the layer below. |
+| Frame cost | Not measured | Art-only family, not wired into a reachable scene. |
+
+Claude should inspect the generated views, the neutral-background bleed, mixed stack colors, stack contacts and roof treatment in `round-4.jpg`.
 
 ## Checks
 
-- Blender export and imported-model review renders completed on 7 November.
-- Round-6 comparison sheet: 270,182 bytes, under the 500 KB limit.
-- `node tools/test-blender-output.mjs`: passed, 309 checks, 0 failures, on the
-  current 8 MB assertion.
-- `node tools/test-repo-hygiene.mjs`: passed; placement passed and size targets
-  are advisory.
-- `node tools/test-review-evidence.mjs`: 6 passed, 3 failed. Two failures
-  report an existing 6 November versus 7 November crew evidence-path mismatch;
-  audio analysis could not start FFmpeg (`EPERM`). The suite was run twice.
-- Lane tier (`--changed --jobs 4`): 14 passed, 1 failed, 33 not run. Its same-
-  commit Eifel rerun passed 17 checks and failed the FFmpeg loudness measurement
-  again. The Eifel failure is unrelated to this art card.
-- `npm.cmd run build`: passed. The build reports existing chunk-size and
-  dynamic-import warnings.
-- Browser and in-game look checks were not run; this asset is not wired into
-  the game. Claude's art review is still needed.
-- The local test diff widens the family cap from 3 MB to 8 MB and adds named
-  part assertions. No Claude review of those assertion changes is present in
-  this card yet.
-- Race fingerprints: none; no race or simulation code changed.
+- Blender recipe export and review renders: passed. All scrapyard footprint and ground/contact audits passed; all seven stacked-car contact checks passed.
+- `node tools/test-blender-output.mjs`: passed, 361 checks and 0 failures. The first two runs found 11,344 and then 9,127 scrapyard triangles against the unchanged 9,000 limit. Raising photo-outline tolerance to 6 px brought the scrapyard under budget; no assertion or model dimensions changed.
+- `node tools/test-repo-hygiene.mjs`: passed. Repository placement is clean; reported size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: final run passed all 9 subtests and 549 checks. The earlier attempt hit `ffmpeg EPERM`; it passed on the permitted same-state rerun. No game code changed between attempts.
+- Lane tier and build: not run; this art card excludes them. No browser check or frame timing applies.
+- Changed assertions: none. Race fingerprints: not applicable; this art is not wired into a race.
 
 ## Removed
 
-- Removed the old Hall mass and roof patches, Forge traced facade, and Workshop
-  blockout and photo facade path.
-- Removed the round-3 JPG when round 4 replaced it. Round 4 and round 5 sheets
-  remain beside their review notes; round 6 is the current candidate.
+- Removed `round-3.jpg` and `round-3-review.md`; kept `round-6.jpg` and `round-6-review.md` as instructed.
+- Replaced the four round-3 car photos with the six round-4 photos. The crane, fence and yard scrap photos and geometry remain.
+- Recycled temporary grids, renders, Blender project, logs and sheet-making scratch output after the checks. No game code, test assertion or runtime dependency changed.
