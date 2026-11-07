@@ -412,7 +412,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'side':HULL_SIDE, 'front':HULL_BOW, 'rear':HULL_STERN, 'top':HULL_TOP,
             'ends_split':0, 'front_favour':3, 'rear_favour':3, 'round':2.4,
             'grey':30, 'tolerance':42, 'bleed_tolerance':32,
-            'voxel':.20, 'target':1500,
+            'voxel':.24, 'target':800,
             'mask_dir':str(raw / 'masks'),
         }
         patience_hull = carve_object('ship-patience:hull', tex, hull_table)
@@ -498,7 +498,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'cut': {'front': [(108, 228, 157, 302), (611, 228, 661, 302)]},
             'keep': keep_upperworks,
             'grey': 26, 'tolerance': 34, 'bleed_tolerance': 24,
-            'voxel': .10, 'target': 6500,
+            'voxel': .12, 'target': 2600,
             'mask_dir': str(raw / 'masks'),
         }
         upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
@@ -585,7 +585,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'top': {'front': 30, 'rear': 773, 'centre': 286, 'along': 'x',
                     'x_scale': 2.5 / (533 - 38)},
             'round': 2.8, 'grey': 28, 'tolerance': 36, 'bleed_tolerance': 24,
-            'voxel': .12, 'target': 4500,
+            'voxel': .16, 'target': 900,
             'mask_dir': str(raw / 'masks'),
         }
         patience_funnel = carve_object('ship-patience:funnel', tex, funnel_table)
@@ -674,8 +674,8 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0]+22,0,loc[1]),f'{ident}:anchor-chain')
         if ident=='ship-patience':
             pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,3.2,side*5.7),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
-            for i in range(20):
-                x=length*.43+i*.48
+            for i in range(16):
+                x=length*.43+i*.62
                 y=2.8-min(4.8,i*.60) if i<9 else -2.0
                 z=side*(width*.45+min(1.8,i*.11))
                 link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.22,.055,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',8,4); parent(link,cr)
@@ -935,8 +935,37 @@ def merge_meshes_by_story_part():
         active.name=(part or 'lake-bed')+' geometry'
         if part: active['part']=part
 
+def trim_patience_detail():
+    # The round-12 silhouette is carried by the carved hull and upperworks.
+    # Collapse only dense fittings, chains and sand after they have been joined
+    # by story part, keeping the photo-carved surfaces at their own targets.
+    ratios = {
+        'ship-patience': .18,
+        'ship-patience:anchor-chain': .38,
+        'ship-patience:drifts': .12,
+        'ship-patience:mast': .45,
+        'ship-patience:propeller': .48,
+        'ship-patience:rudder': .55,
+        'ship-patience:bell': .55,
+    }
+    for obj in scene.objects:
+        if obj.type != 'MESH':
+            continue
+        part = obj.get('part', '')
+        ratio = ratios.get(part)
+        if ratio is None or not part.startswith('ship-patience'):
+            continue
+        modifier = obj.modifiers.new('round-12 detail budget', 'DECIMATE')
+        modifier.decimate_type = 'COLLAPSE'
+        modifier.ratio = ratio
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+        obj.select_set(False)
+
 normalize_picture_coordinates()
 merge_meshes_by_story_part()
+trim_patience_detail()
 
 # One neutral mid-tone floor supports review only; it is never exported.
 

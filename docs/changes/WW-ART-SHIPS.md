@@ -196,3 +196,16 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `patience-funnel-side.png` and its round-8 crop credit; replaced it with three round-12 measured source photos. Removed the hand-built box funnel and three loose exhaust-pipe segments.
 - Removed `round-11.jpg` and `round-11-review.md`; round 12 is the current sheet and review.
 - Removed round-12 render images, the Blender review file, masks, grids, inspection scratch files and test logs from `.qa-dist/` and `.evidence/`; retained the two supplied task briefs.
+
+## Round 13, step 1 — Patience triangle trim (7 November 2026)
+
+- Recorded the pre-trim GLB triangle counts by named Patience mesh in `.qa-dist/patience-triangles.txt` before changing the recipe. The model had 49,648 triangles and 2,853,084 bytes; dense detail included 26,300 triangles in merged ship fittings, 6,500 in upperworks, 4,500 in the funnel, 4,608 in drifts, and 3,288 in anchor links.
+- Lowered the Patience hull, upperworks and funnel carve targets to 800, 2,600 and 900; simplified chain link count and decimated joined rails, deck fittings, masts, propeller, and sand drift within their story-part meshes.
+- Rebuilt and read back the GLB in Blender 4.5.13. The Patience is 12,651 triangles; GLB size is 1,409,144 bytes.
+- Rendered and inspected the side and bow views from the exported GLB. The ship's silhouette, bridge, funnel and bow name remain legible and visually consistent with round 12. Browser checks are not applicable; Claude should judge the final six-view sheet.
+- `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs`: pending until the three-ship GLB is complete. Lane tier, build and browser checks are not run for this art card. Changed assertions: none. Race fingerprints: none.
+
+### Removed
+
+- Removed redundant triangles from joined Patience deck fittings, rails, mast hardware, chains and drifts through the recipe's applied decimation pass; no named story part was dropped.
+- Removed this step's temporary Blender renders and logs after review; round-13 scratch renders remain temporarily while the sheet is assembled.
