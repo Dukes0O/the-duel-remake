@@ -71,6 +71,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/outposts.glb'],budget:14000,maxBytes:5000000},
+  {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
+    glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:80000,maxBytes:5000000},
   {id:'ww-art-rail-props',script:'tools/blender/rail-props.py',args:[],candidate:true,
@@ -1123,6 +1125,38 @@ try {
       const triangles=descendants.reduce((sum,index)=>{const mesh=nodes[index].mesh;if(mesh===undefined)return sum;return sum+gltf.meshes[mesh].primitives.reduce((n,primitive)=>n+gltf.accessors[primitive.indices].count/3,0);},0);
       const budget=id.startsWith('block-')||id==='terrace-a'?5000:1800;
       assert.ok(triangles>100&&triangles<=budget,`${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
+    }
+  });
+
+  check('TOWN-ART-WALKERS exports all named people, swing legs and per-person budgets', () => {
+    const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/walkers.glb'));
+    assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
+    assert.ok(bytes.length<=1_000_000,`${bytes.length} bytes exceeds 1 MB`);
+    const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));const nodes=gltf.nodes||[];const names=nodes.map(node=>node.name||'');
+    const ids=['walker-a','walker-b','walker-c','walker-d','walker-e','walker-f','walker-g','walker-h','walker-kid-a','walker-kid-b','walker-guard','walker-trader','walker-vane'];
+    const parent=new Map();nodes.forEach((node,index)=>(node.children||[]).forEach(child=>parent.set(child,index)));
+    const familyRoot=nodes.findIndex(node=>node.name==='town-walkers');assert.ok(familyRoot>=0,'family root missing');
+    for(const id of ids){
+      const actor=nodes.findIndex(node=>node.name===id);assert.ok(actor>=0,`missing ${id}`);assert.equal(parent.get(actor),familyRoot,`${id} must be direct child of family root`);
+      for(const leg of ['leg-l','leg-r'])assert.ok(names.includes(`${id}:${leg}`),`missing ${id}:${leg}`);
+      const visit=index=>[index,...(nodes[index].children||[]).flatMap(visit)];const descendants=visit(actor);
+      const triangles=descendants.reduce((sum,index)=>{const mesh=nodes[index].mesh;if(mesh===undefined)return sum;return sum+gltf.meshes[mesh].primitives.reduce((n,primitive)=>n+gltf.accessors[primitive.indices].count/3,0);},0);
+      assert.ok(triangles>30&&triangles<=450,`${id}: ${triangles} triangles exceeds its 450 limit`);
+    }
+    assert.ok(names.includes('walker-trader pack main'),'trader pack missing');assert.ok(names.includes('walker-vane blue drop'),'Vane mark missing');
+    for(const material of gltf.materials||[])assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic above .3`);
+    for(const node of nodes.filter(node=>node.name==='walker-a head'||node.name==='walker-vane blue drop')){
+      const primitive=gltf.meshes[node.mesh].primitives[0];const position=gltf.accessors[primitive.attributes.POSITION];
+      assert.ok(Math.max(...position.max.map(Math.abs))<=.13,`${node.name} mesh size was not baked before GLB export`);
+    }
+    const binaryStart=28+bytes.readUInt32LE(12);
+    for(const mesh of gltf.meshes||[])for(const primitive of mesh.primitives){
+      assert.ok(primitive.attributes.TEXCOORD_0!==undefined,'walker material UV missing');
+      assert.deepEqual(Object.keys(primitive.attributes).filter(key=>key.startsWith('TEXCOORD_')),['TEXCOORD_0'],'every walker material must use the primary UV layer');
+      const uv=gltf.accessors[primitive.attributes.TEXCOORD_0],view=gltf.bufferViews[uv.bufferView];
+      const offset=binaryStart+(view.byteOffset||0)+(uv.byteOffset||0),stride=view.byteStride||8;let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity;
+      for(let i=0;i<uv.count;i++){const at=offset+i*stride,u=bytes.readFloatLE(at),v=bytes.readFloatLE(at+4);minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);}
+      assert.ok(maxU>minU&&maxV>minV,'walker material UVs must span a range');
     }
   });
 

@@ -21,3 +21,6 @@ review evidence.
   no horizon, flat overcast light.
 
 These are generated modeling references, not external scans or licensed photos.
+
+- `dot-diner-wall.jpg`: the same diner and camera with the porch, sign and pump removed, for the carved walls.
+- `dot-diner-roof.jpg`: the same diner from straight above with them removed, for the carved roof.
