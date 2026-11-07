@@ -98,3 +98,11 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 - `node tools/test-repo-hygiene.mjs`: passed file placement; reported size targets as advisory.
 - Browser checks: not run in this lane; Claude owns browser and look review. Race fingerprints: not applicable, art-only change.
 - Removed: temporary photo grids, render PNGs and test logs under `.evidence/` and `.qa-dist/`; preserved `.qa-dist/task.md`.
+
+## The Mule's gear wagon, rebuilt by Claude
+
+`iron-mule-gear` is 6.8 m long on the Mule's 1.66 m gauge, with couplings at 0.80 m. The frame is one traced picture on each side. Six castings stand in two rows and a seventh lies on top, all sharing the `gear-section` mesh. The check in `tools/test-blender-output.mjs` now builds through `iron-mule-gear`, and the file's limit is 3.4 MB, because the wagon adds three photos.
+
+### Removed
+
+The primitive spoked wheels, the bent side sills and the tall column of castings.
