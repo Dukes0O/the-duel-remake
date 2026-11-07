@@ -51,8 +51,11 @@ def own(obj, parent, part):
     obj['part'] = part
     return obj
 
+LOADED_PHOTOS = {}
 def measured_photo(name):
-    return Photo(textures / f'peace-{name}.jpg')
+    photo = Photo(textures / f'peace-{name}.jpg')
+    LOADED_PHOTOS[name] = photo
+    return photo
 
 def seed_points(photo):
     return [(3, 3), (photo.w-4, 3), (3, photo.h-4), (photo.w-4, photo.h-4)]
@@ -288,10 +291,34 @@ photo_box(post, -.105, .105, 0, 2.15, -.09, .02, {
 })
 own(post.finish('bound-sign:crooked-post', {'wood': sign_mat}), sign, 'bound-sign:crooked-post')
 
-for root_obj in (billboard,turret,rock,chair,cabinet,sign):
+# 7. Bound's squat one-metre marker, carved from its front and side photos.
+stone_front, stone_side = measured_photo('bound-stone-front'), measured_photo('bound-stone-side')
+stone = root_part('bound-stone')
+def stone_front_pick(x, y, z):
+    return (stone_front.w / 2 + x / 1.2 * stone_front.w * .90,
+            812 - y * (812 - 22),)
+def stone_side_pick(x, y, z):
+    return (stone_side.w / 2 + z / .7 * stone_side.w * .90,
+            812 - y * (812 - 22),)
+stone_mesh = carve('bound-stone:smiley-crossed-tools-marker',
+    {'front': 'bound-stone-front', 'side': 'bound-stone-side'},
+    ((-.6, .6), (0, 1.0), (-.35, .35)), .05,
+    {'front': (stone_front_pick, (0, 0, 1)), 'side': (stone_side_pick, (1, 0, 0))}, 7000)
+own(stone_mesh, stone, 'bound-stone:smiley-crossed-tools-marker')
+
+for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
+# The full measured JPGs remain the source. Downsample only the five new
+# props' embedded GLB images after masks, bleed and UVs are complete.
+for image_name, scale in {
+        'toll-cabinet-front': .25, 'toll-cabinet-side': .25,
+        'bound-sign-front': .5,
+        'bound-stone-front': .25, 'bound-stone-side': .25,
+}.items():
+    image = LOADED_PHOTOS[image_name].image
+    image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
 town.export_glb(glb)
 
 # Review renders always come from the exported GLB after a fresh empty scene.
@@ -342,4 +369,7 @@ shot('toll-cabinet-front',(0,.9,7),(0,.9,0),2.0,(600,900))
 shot('toll-cabinet-side',(7,.9,0),(0,.9,0),2.0,(600,900))
 show('bound-sign',(6.6,2.6,7.5),(0,1.2,0),3.0,(700,700))
 shot('bound-sign-front',(0,1.2,8),(0,1.2,0),2.9,(600,900))
+show('bound-stone',(7,2.0,7),(0,.5,0),2.0,(900,700))
+shot('bound-stone-front',(0,.5,8),(0,.5,0),1.8,(900,700))
+shot('bound-stone-side',(8,.5,0),(0,.5,0),1.5,(900,700))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))

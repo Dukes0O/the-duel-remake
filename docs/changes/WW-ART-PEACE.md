@@ -10,6 +10,10 @@ Added the `bound-sign` root as a traced, thick board and a separate post. The
 render keeps the three hand-painted lines right-reading and spelled exactly
 `DO NOT DIG HERE`.
 
+Added the `bound-stone` root, carved to 1 m from the front and side photos. Its
+front carries a shallow crossed-tools mark with a smiley. The full-size JPGs are
+kept as sources; only these new photos are downsampled in Blender for the GLB.
+
 ## Checks
 
 - Blender export and GLB re-import/render succeeded. The front reference and
