@@ -180,3 +180,31 @@ The card gives the buildings, footprints, goods and shared model contract. No op
 ### Removed
 
 - None. Replaced only the exported food-family GLB with the reproducible Blender output.
+## Round 12: market stalls
+
+Claude approved the revised food family allowance of 8 MB and 4,194,304 embedded texture pixels (2048 by 2048) for this round. The recipe keeps the stall front and side references, the market hall's front stall reference, and the soup kitchen wall photo at their full source resolution. Other mapped images remain compact so the complete family can stay inside the reviewed total pixel limit.
+
+The stall frame follows the rusted pipes in the front and side photos with traced, slabbed pieces. The counter keeps its plank grain from the side photo. The canopy uses the front photo across a sagging draped mesh, a traced torn hem, and a traced side profile. Fruit crates, hanging tools and tyre rings remain separate goods displays.
+
+## Checks
+
+- Blender 4.5 export: passed. `food.glb` is 2,608,820 bytes. Read-back stall triangle counts are 1,768 (A), 1,568 (B) and 1,132 (C), each under 1,800. The export printed bounds and passed the stall footprint and contact checks.
+- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures, including the 8 MB and 4,194,304-pixel food limits. The first run found over-budget stall and texture totals; the final export clears both.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7 of 9 suite tests passed, including round-sheet publication. Its other failures are the checker still expecting the round-11 JPG that this task requires removing, and `spawnSync ffmpeg EPERM` in audio analysis. No test assertions were changed.
+- No lane tier, game build, browser check or race was run. The model is not wired into the game and the brief assigns browser and in-game look checks to Claude. No race fingerprints apply.
+
+The food output check now uses Claude's reviewed 8 MB byte ceiling, 2048 px per-image ceiling, and 4,194,304 total pixel ceiling. The generator entry's `maxBytes` changed from 3 MB to 8 MB. No unrelated assertions changed.
+
+## Claude should inspect
+
+- The matched front and side photos beside stall-a.
+- Rust and pipe joints, the plank counter top and front, and the sag, patches and torn canvas hem.
+- The three-quarter views for the fruit, tools and tyres displays, plus the mayor view with all three stalls.
+- Whether the frame texture and goods remain clear at town scale and in the market context.
+
+## Removed
+
+- Removed the failed round-11 sheet and review note as superseded by round 12.
+- Replaced the round-11 food GLB with the round-12 export.
+- Removed the flat-color counter and awning materials; the photo-mapped surfaces replace them.
