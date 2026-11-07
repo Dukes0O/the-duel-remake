@@ -1,3 +1,4 @@
+import {townCalendarAt} from '../src/town/town-calendar.js';
 import assert from 'node:assert/strict';
 import {createTown,serializeTown} from '../src/town/town-state.js';
 import {stepTown,registeredTownSystems} from '../src/town/town-sim.js';
@@ -62,6 +63,19 @@ assert.ok(centuryLetters.every((letter,index)=>typeof letter.text==='string'
 assert.equal(centuryTown.vane.letters.length,centuryLetters.length,'every letter remains in the saved town archive');
 const bookLetters=townBookViewModel(centuryTown).pages.flatMap(page=>page.chronicle);
 for(const letter of centuryLetters) assert.ok(bookLetters.includes(letter.text),`the Book shows ${letter.id}`);
+
+// Saved marks stay few however long she writes, and a calendar past safe integers does not stop her.
+{
+  const long=createTown(77,'Long Letters');
+  for(let year=8;year<=200;year++) recordTownVaneEvent(long,'quiet-yearly-visit',{year});
+  const marks=Object.keys(long.vane.events).filter(key=>key.startsWith('quiet-yearly-visit:'));
+  assert.equal(marks.length,1,'a yearly letter keeps one saved mark');
+  const huge=createTown(78,'Huge Year');
+  huge.tick=BigInt(Number.MAX_SAFE_INTEGER)*8640n;
+  huge.calendar=townCalendarAt(huge.tick);
+  stepTown(huge);
+  assert.equal(huge.calendar.year,townCalendarAt(huge.tick).year,'a very large year still steps');
+}
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
 

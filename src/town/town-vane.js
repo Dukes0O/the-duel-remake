@@ -6,7 +6,8 @@ import {registerTownSystem} from './town-sim.js';
 const records=value=>value&&typeof value==='object'&&!Array.isArray(value);
 const emptyState=()=>({started:false,startedAt:null,kiosks:[],brownStreets:[],letters:[],pendingLetters:[],lastLetterMonth:null,lastVisitMonth:null,events:{},chapterFacts:{}});
 const stateFor=town=>records(town?.vane)?town.vane:emptyState();
-const monthNumber=calendar=>(calendar.year-1)*12+calendar.month;
+// Years have no ceiling and may be big integers; her schedule only needs months since she began.
+const monthNumber=calendar=>Number(BigInt(calendar.year)-1n)*12+Number(calendar.month);
 
 export function townVaneState(town) {
   const state=stateFor(town);
@@ -39,6 +40,8 @@ export function recordTownVaneEvent(town,condition,context={}) {
   const letter=VANE_LETTERS.find(row=>row.condition===condition);
   const eventKey=letter?.repeatable?`${condition}:${context?.year??town.calendar?.year??1}`:condition;
   if(state.events[eventKey]) return {ok:true,added:false};
+  // A yearly letter keeps only this year's mark, so saved rows do not grow with the years.
+  if(letter?.repeatable) for(const key of Object.keys(state.events)) if(key.startsWith(`${condition}:`)) delete state.events[key];
   state.events[eventKey]=true;
   if(letter) state.pendingLetters.push({id:letter.id,context:records(context)?{...context}:{}});
   return {ok:true,added:Boolean(letter)};
@@ -84,8 +87,8 @@ function townReport(town,who,what,where='Town',kind='note',key=kind) {
 function addCrispReport(town,state,month) {
   if(state.lastVisitMonth===month) return;
   const visitMonths=month-(state.startedAt??month);
-  if(visitMonths<12||visitMonths%12!==0||state.events[`crisp:${Math.floor(visitMonths/12)}`]) return;
-  state.events[`crisp:${Math.floor(visitMonths/12)}`]=true;
+  if(visitMonths<12||visitMonths%12!==0||state.lastCrispMonth===month) return;
+  state.lastCrispMonth=month;
   townReport(town,'Mr Crisp','Mr Crisp visited and left a neat report: “So sorry, I was passing. Mrs Vane asked me to see how you were getting on.”','Town gate','crisp-visit','annual');
   state.lastVisitMonth=month;
 }
