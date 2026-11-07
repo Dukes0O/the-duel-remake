@@ -47,6 +47,10 @@ stop adjusting and change the method.
 
 ### Photos and masks
 
+- **Studio background below the sky threshold.** `Photo.sky()` refuses an edge
+  seed darker than 185 average grey. A warm grey background then becomes a solid
+  slab when traced. Brighten only the temporary mask pixels and restore the
+  photo's real colors before building its material.
 - **A scaled photo reused for later masks.** `Photo.rgb()` reads the image at
   its original dimensions. If a recipe downsamples a cached image before all
   masks are made, later reads fail or use the wrong grid. Finish every mask

@@ -133,8 +133,18 @@ def traced_part(name, parent, photo_name, mask_fn, rect, mapper, depth=.06, wall
     return obj
 
 def frame_mask(photo):
-    return ~photo.sky([(8, 8), (photo.w - 9, 8), (8, photo.h - 9),
-                       (photo.w - 9, photo.h - 9)], tolerance=30, grey=30)
+    seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9),
+             (photo.w - 9, photo.h - 9)]
+    original = photo.rgb()
+    corners = np.concatenate([original[4:14, 4:14].reshape(-1, 3),
+                              original[4:14, -14:-4].reshape(-1, 3)])
+    shade = corners.mean()
+    if shade < 185:
+        photo._rgb = np.clip(original + int(205 - shade), 0, 255).astype(np.int16)
+        mask = ~photo.sky(seeds, tolerance=30, grey=30)
+        photo._rgb = original
+        return mask
+    return ~photo.sky(seeds, tolerance=30, grey=30)
 
 def add_stilts(body, length, width):
     frame = trace_photo('sea-camp-stilt-frame.jpg')
@@ -240,6 +250,7 @@ def shot(name, eye, target, ortho=None, resolution=(800, 400)):
     camera.location = to_blender(eye)
     camera.rotation_euler = (Vector(to_blender(target)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     camera.data.type = 'ORTHO' if ortho else 'PERSP'
+    camera.data.clip_end = 12 if name == 'model-hut-side' else 1000
     if ortho:
         camera.data.ortho_scale = ortho
     else:
@@ -252,17 +263,27 @@ shot('model-hut-side', (-25, 3.0, -1), (-5.5, 3, -1), ortho=14.4)
 shot('camp-quarter-a', (-18, 1.6, -17), (0, 2.0, 3), resolution=(800, 400))
 shot('camp-quarter-b', (18, 1.6, -15), (0, 2.0, 3), resolution=(800, 400))
 
-from PIL import Image
-photo = Image.open(textures / HUT['photos']['side']).convert('RGB').resize((800, 400), Image.Resampling.LANCZOS)
-model = Image.open(render / 'model-hut-side.png').convert('RGB').resize((800, 400), Image.Resampling.LANCZOS)
-camp_a = Image.open(render / 'camp-quarter-a.png').convert('RGB')
-camp_b = Image.open(render / 'camp-quarter-b.png').convert('RGB')
-sheet = Image.new('RGB', (1600, 800))
-sheet.paste(photo, (0, 0)); sheet.paste(model, (800, 0))
-sheet.paste(camp_a, (0, 400)); sheet.paste(camp_b, (800, 400))
+def read_pixels(path, width, height):
+    image = bpy.data.images.load(str(path), check_existing=False)
+    image.scale(width, height)
+    pixels = np.empty(width * height * 4, dtype=np.float32)
+    image.pixels.foreach_get(pixels)
+    return (pixels.reshape(height, width, 4)[::-1, :, :3] * 255).clip(0, 255).astype(np.uint8)
+
+sheet_pixels = np.zeros((800, 1600, 3), dtype=np.uint8)
+sheet_pixels[:400, :800] = read_pixels(textures / HUT['photos']['side'], 800, 400)
+sheet_pixels[:400, 800:] = read_pixels(render / 'model-hut-side.png', 800, 400)
+sheet_pixels[400:, :800] = read_pixels(render / 'camp-quarter-a.png', 800, 400)
+sheet_pixels[400:, 800:] = read_pixels(render / 'camp-quarter-b.png', 800, 400)
+sheet_image = bpy.data.images.new('round-6-review-sheet', 1600, 800, alpha=False)
+rgba = np.concatenate((sheet_pixels[::-1].astype(np.float32) / 255,
+                       np.ones((800, 1600, 1), dtype=np.float32)), axis=2)
+sheet_image.pixels.foreach_set(rgba.ravel())
 sheet_path = root / 'docs/board/looks/ww-art-sea/round-6.jpg'
 sheet_path.parent.mkdir(parents=True, exist_ok=True)
-sheet.save(sheet_path, 'JPEG', quality=88, optimize=True)
+sheet_image.filepath_raw = str(sheet_path)
+sheet_image.file_format = 'JPEG'
+sheet_image.save()
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=str(out))
