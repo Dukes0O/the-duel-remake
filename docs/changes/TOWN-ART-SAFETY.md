@@ -101,3 +101,30 @@
 ### Removed
 
 - Removed the procedural wood rails, chain strands and repeating wall plates from the four barrier families. Replaced them with the photo-traced parts; no accepted building was removed.
+
+## Round 12: timber mask and chain-link visibility
+
+### Changed
+
+- Built the timber fence mask from colour: pixels within 12 RGB levels of the neutral studio grey are background across the full image, so enclosed rail gaps trace open. The sheet places the mask beside its source photo.
+- Tinted the packed chain-link wire pixels faint grey and expanded the existing alpha coverage by two pixels. The source photo is unchanged; the mesh now reads in the mayor view.
+- Rebuilt `public/assets/models/wasteland/town/safety.glb` (4,409,384 bytes) and added the round 12 sheet and self-review (220,777 bytes).
+
+### Checks
+
+- Blender export and rendered review from the exported GLB: **pass**. The timber openings are clear; the faint chain mesh is visible from the mayor view. All twelve barrier roots rendered; family file is under the 8 MB limit.
+- `node tools/test-blender-output.mjs`: **377 checks passed; 0 failed**.
+- `node tools/test-repo-hygiene.mjs`: **passed**; placement is valid and sizes are advisory.
+- `node tools/test-review-evidence.mjs`: **8 passed, 1 failed**. The JPG publication check passed. The audio-analysis case failed with `spawnSync ffmpeg EPERM`; the same-commit rerun had the same failure.
+- Lane tier and build: not run, as instructed for this art card. Browser and in-game check: Claude to run.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
+
+### Claude should inspect
+
+- Compare the timber mask with its photo and confirm the gaps between rails are open.
+- Confirm the chain-link remains visible from the mayor view at game scale; the review render only checks the exported prop scene.
+- Scrap and steel walls were not changed and passed Claude's round 11 verdict.
+
+### Removed
+
+- Removed the superseded round-11 sheet and self-review as requested. Temporary round-12 render captures and logs were recycled after assembling the submitted sheet.

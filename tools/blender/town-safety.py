@@ -14,6 +14,7 @@ root = Path(args.root).resolve()
 evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
 guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-8'
 prop_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-10'
+barrier_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-12'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
 sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
@@ -191,6 +192,7 @@ for family_name, (photo_name, height, rect) in barrier_sources.items():
     photo.h = round(photo.image_h * 700 / photo.image_w)
     photo._rgb = None
     rect = tuple(round(value * trace_scale) for value in rect)
+    original_rgb = photo.rgb().copy() if family_name == 'fence-wood' else None
     lift_if_dark(photo)
     x0, y0, x1, floor_px = rect
     sky = photo.sky([(5, 5), (photo.w - 6, 5)], tolerance=20, grey=24)
@@ -198,6 +200,18 @@ for family_name, (photo_name, height, rect) in barrier_sources.items():
     solid = ~sky
     clipped = np.zeros_like(solid)
     clipped[y0:floor_px, x0:x1] = solid[y0:floor_px, x0:x1]
+    if family_name == 'fence-wood':
+        # The studio grey is a fixed neutral swatch (#7f7f7f). Remove it
+        # everywhere, including enclosed rail gaps that an edge flood misses.
+        studio_grey = np.max(np.abs(original_rgb - np.array([127, 127, 127])), axis=2) <= 12
+        clipped &= ~studio_grey
+        barrier_evidence.mkdir(parents=True, exist_ok=True)
+        mask_image = bpy.data.images.new('Round 12 timber fence colour mask', photo.w, photo.h, alpha=False)
+        mask_pixels = clipped.astype(np.float32)[::-1]
+        mask_image.pixels.foreach_set(np.dstack((mask_pixels, mask_pixels, mask_pixels, np.ones_like(mask_pixels))).ravel())
+        mask_image.filepath_raw = str(barrier_evidence / 'fence-wood-colour-mask.png')
+        mask_image.file_format = 'PNG'
+        mask_image.save()
     if family_name == 'fence-chain':
         # The alpha photo carries the fine diamond wires; keep the sheet's
         # traced outer profile simple and build the rusted support posts solid.
@@ -214,10 +228,31 @@ for family_name, (photo_name, height, rect) in barrier_sources.items():
     corner_right = photo_trace(clipped, right_rect, tolerance=1.8, min_area=min_loop_area)
     photo_material = photo.material()
     if family_name == 'fence-chain':
+        # Give the photographed wire a soft grey tint and preserve a little
+        # coverage when its fine strands shrink below a pixel in the mayor view.
+        pixels = np.empty(photo.image_w * photo.image_h * 4, dtype=np.float32)
+        photo.image.pixels.foreach_get(pixels)
+        rgba = pixels.reshape(photo.image_h, photo.image_w, 4)
+        wire = rgba[:, :, 3] > .03
+        visible_wire = wire.copy()
+        for _ in range(2):
+            visible_wire |= np.roll(visible_wire, 1, 0) | np.roll(visible_wire, -1, 0)
+            visible_wire |= np.roll(visible_wire, 1, 1) | np.roll(visible_wire, -1, 1)
+        rgba[visible_wire, :3] = .58
+        rgba[visible_wire, 3] = .78
+        photo.image.pixels.foreach_set(rgba.ravel())
+        photo.image.update()
         bsdf = photo_material.node_tree.nodes.get('Principled BSDF')
         image_node = next(node for node in photo_material.node_tree.nodes if node.type == 'TEX_IMAGE')
         photo_material.node_tree.links.new(image_node.outputs['Alpha'], bsdf.inputs['Alpha'])
-        photo_material.alpha_threshold = .5
+        mesh_tint = photo_material.node_tree.nodes.new('ShaderNodeMixRGB')
+        mesh_tint.blend_type = 'MIX'
+        mesh_tint.inputs['Fac'].default_value = .42
+        mesh_tint.inputs['Color2'].default_value = (.70, .70, .70, 1)
+        photo_material.node_tree.links.new(image_node.outputs['Color'], mesh_tint.inputs['Color1'])
+        photo_material.node_tree.links.new(mesh_tint.outputs['Color'], bsdf.inputs['Base Color'])
+        photo_material.diffuse_color = (.52, .52, .52, 1)
+        photo_material.alpha_threshold = .05
         if hasattr(photo_material, 'surface_render_method'):
             photo_material.surface_render_method = 'BLENDED'
         elif hasattr(photo_material, 'blend_method'):
@@ -1088,16 +1123,16 @@ print(f'ROUND 10 SHEET: {out.stat().st_size} bytes')
     subprocess.run(['python','-c',sheet_code,str(root),str(prop_sheet)],check=True)
 
 # Round 11: render the exported barrier pieces, not the source Blender meshes.
-round11_evidence=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-11'
-round11_sheet=root/'docs/board/looks/town-art-safety/round-11.jpg'
-round11_evidence.mkdir(parents=True,exist_ok=True)
+round12_evidence=barrier_evidence
+round12_sheet=root/'docs/board/looks/town-art-safety/round-12.jpg'
+round12_evidence.mkdir(parents=True,exist_ok=True)
 barrier_names=('fence-wood','fence-chain','wall-scrap','wall-steel')
 barrier_roots={obj.name:obj for obj in scene.objects if obj.name in {
     f'{family}-{form}' for family in barrier_names for form in ('straight','corner','end')}}
 for family in barrier_names:
     for form in ('straight','corner','end'):
         if f'{family}-{form}' not in barrier_roots:
-            raise RuntimeError(f'round 11: exported GLB is missing {family}-{form}')
+            raise RuntimeError(f'round 12: exported GLB is missing {family}-{form}')
 barrier_groups={name:{obj,*obj.children_recursive} for name,obj in barrier_roots.items()}
 
 def clone_barrier(root_obj,suffix):
@@ -1129,7 +1164,7 @@ def render_barrier_frame(family,view,roots,camera_args):
     for obj in scene.objects:obj.hide_render=obj not in visible and obj not in (prop_ground,softbox)
     prop_ground.hide_render=False;softbox.hide_render=False
     camera,data=review_camera(f'{family}-{view}',*camera_args)
-    path=round11_evidence/f'{family}-{view}.png';scene.render.filepath=str(path)
+    path=round12_evidence/f'{family}-{view}.png';scene.render.filepath=str(path)
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera,do_unlink=True);bpy.data.cameras.remove(data)
     return path
@@ -1153,7 +1188,7 @@ for family in barrier_names:
     prop_ground.hide_render=False;softbox.hide_render=False
     height=barrier_sources[family][1]
     camera,data=review_camera(f'{family}-straight-side',(0,height*.55,-13),(0,height*.55,0),10.2,1200,400)
-    path=round11_evidence/f'{family}-straight.png';scene.render.filepath=str(path)
+    path=round12_evidence/f'{family}-straight.png';scene.render.filepath=str(path)
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera,do_unlink=True);bpy.data.cameras.remove(data)
     for obj in barrier_roots.values():
@@ -1168,27 +1203,31 @@ for family in barrier_names:
     for obj in barrier_roots.values():
         place_barrier(obj,(0,0,0))
 
-round11_sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
+round12_sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
 from pathlib import Path
 import sys
-root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-11'
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-12'
 families=[('fence-wood','WEATHERED TIMBER FENCE'),('fence-chain','SAGGING CHAIN-LINK FENCE'),('wall-scrap','SALVAGED SHEET AND CAR-DOOR WALL'),('wall-steel','CORRUGATED STEEL WALL')]
-W,H=1600,2170;page=Image.new('RGB',(W,H),(34,35,33));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+W,H=1600,2360;page=Image.new('RGB',(W,H),(34,35,33));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
 title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),28);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),18);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),14)
 def fit(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(125,127,127));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
-d.text((26,13),'TOWN SAFETY | ROUND 11 | PHOTO-TRACED FENCES AND WALLS',font=title,fill=(240,228,205));row_h=526;y=54
+d.text((26,13),'TOWN SAFETY | ROUND 12 | FENCE MASK AND WALLS',font=title,fill=(240,228,205));row_h=574;y=54
 for family,caption in families:
  d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(74,72,66));d.text((32,y+7),caption,font=label,fill=(240,194,125))
  d.text((34,y+35),'GENERATED PHOTO | STRAIGHT-ON',font=small,fill=(229,223,208));d.text((820,y+35),'EXPORTED GLB | SAME SIDE CAMERA',font=small,fill=(229,223,208))
  page.paste(fit(tex/f'town-safety-{family}.jpg',(730,155)),(34,y+56));page.paste(fit(ev/f'{family}-straight.png',(730,155)),(820,y+56))
  d.text((34,y+222),'LAYOUT | THREE-QUARTER',font=small,fill=(229,223,208));d.text((820,y+222),'LAYOUT | MAYOR VIEW',font=small,fill=(229,223,208))
- page.paste(fit(ev/f'{family}-layout-three-quarter.png',(730,260)),(34,y+243));page.paste(fit(ev/f'{family}-layout-mayor.png',(730,260)),(820,y+243));y+=row_h
-d.text((27,H-34),'Each 8 m straight ends at the cell edge. Corner arms share a post and turn 90 degrees. Chain mesh openings remain open.',font=small,fill=(222,215,196));out.parent.mkdir(parents=True,exist_ok=True)
+ page.paste(fit(ev/f'{family}-layout-three-quarter.png',(730,225)),(34,y+243));page.paste(fit(ev/f'{family}-layout-mayor.png',(730,225)),(820,y+243))
+ if family=='fence-wood':
+  d.text((34,y+471),'COLOUR MASK | GREY BACKGROUND REMOVED EVERYWHERE',font=small,fill=(229,223,208))
+  page.paste(fit(tex/'town-safety-fence-wood.jpg',(730,72)),(34,y+490));page.paste(fit(ev/'fence-wood-colour-mask.png',(730,72)),(820,y+490))
+ y+=row_h
+d.text((27,H-34),'Colour mask removes the neutral studio grey. Chain-link mesh remains visible in the mayor view.',font=small,fill=(222,215,196));out.parent.mkdir(parents=True,exist_ok=True)
 for quality in (82,78,74,70,66,62,58):
  page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
  if out.stat().st_size<=500000:break
 if out.stat().st_size>500000:raise RuntimeError(f'round 11 sheet exceeds 500 KB: {out.stat().st_size}')
-print(f'ROUND 11 SHEET: {out.stat().st_size} bytes')
+print(f'ROUND 12 SHEET: {out.stat().st_size} bytes')
 '''
-subprocess.run(['python','-c',round11_sheet_code,str(root),str(round11_sheet)],check=True)
+subprocess.run(['python','-c',round12_sheet_code,str(root),str(round12_sheet)],check=True)
