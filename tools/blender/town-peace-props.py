@@ -688,6 +688,10 @@ T_TOP_WIDTH_SCALE = T_WIDTH / T_TOP_SPAN
 def tank_side_pick(x, y, z):
     return T_SIDE_X0 + (z - T_Z0) / T_SCALE, T_GROUND - y / T_SCALE
 
+def tank_side_world(px, py):
+    """Use the side view's measured scale for a point read from its photo."""
+    return T_Z0 + (px - T_SIDE_X0) * T_SCALE, (T_GROUND - py) * T_SCALE
+
 def tank_front_pick(x, y, z):
     return T_FRONT_CX + x / T_END_SCALE, T_FRONT_GROUND - y / T_SCALE
 
@@ -814,11 +818,13 @@ for depth, side_name in ((-1.39, 'left'), (1.39, 'right')):
                          {'cloth': tarp_mat}), tanker,
         f'dust-tanker:tied-tarpaulin-{side_name}')
 
-# Axles and tyres use the measured wheel centres and each wheel's own photo.
+# Axles and tyres use the measured outer tyre circles from the side photo.
+# Pixel centres/radii are read at the tyre edge, then share the cab's one scale.
 T_TRACK = .91
-for axle_name, px, cy, radius_px in (('front', 116, 339, 79), ('rear', 690, 339, 78)):
+T_WHEELS = (('front', 116, 339, 74), ('rear', 690, 339, 77))
+for axle_name, px, cy, radius_px in T_WHEELS:
     radius = radius_px * T_SCALE
-    axle_z = T_Z0 + (px - T_SIDE_X0) * T_SCALE
+    axle_z, axle_y = tank_side_world(px, cy)
     tread_mat, tread_width_px = tire_material(tank_details['side'], px, cy,
                                                radius_px, f'Dust tanker {axle_name}')
     for side_name, x in (('left', -T_TRACK), ('right', T_TRACK)):
@@ -828,7 +834,7 @@ for axle_name, px, cy, radius_px in (('front', 116, 339, 79), ('rear', 690, 339,
         disc_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: tank_details['side'].uv(
             cx - math.cos(a) * radius_px * f * .66,
             cy - math.sin(a) * radius_px * f * .66)
-        lathe(wheel, 'tread', (x, radius, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+        lathe(wheel, 'tread', (x, axle_y, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.16, radius * .9), (-.13, radius), (.13, radius), (.16, radius * .9)],
               tread_uv, sides=24,
               cap_start=('side', lambda a, f: disc_uv(a, f * .9)),
