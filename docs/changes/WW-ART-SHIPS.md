@@ -185,9 +185,14 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Added a material multiply darkening and a broken, vertically stretched oxide streak layer over all four accommodation photos. The existing photos remain unchanged; the hull is unchanged.
 - Rebuilt the two-sided drift with seeded phase shifts across four wavelengths. Port is wider and higher, the bow bank rises, and the stern tapers. The inner row overlaps the hull; the outer row sits at y=-2 and shares the bed's sand material. Looked at the exported model from above and car height.
 - Set view (e) at deck eye height, 15 m ahead of the bridge face, looking level aft at 35 mm; set view (f) at deck eye height, 15 m aft of the funnel, framing the whole stack and roof at 35 mm. Both views were rendered and inspected from the exported GLB.
-- Funnel-stage GLB read-back: 49,648 triangles and 2,873,984 bytes. Final six-view sheet and remaining round changes will be recorded here after review.
-- Changed assertions: none. Race fingerprints: none; art only. Browser and review checks: Claude should inspect the final six-view sheet, especially the funnel and drift edges.
+- Final GLB read-back: 49,648 triangles and 2,853,084 bytes, within the 50,000 triangle and 3 MB limits.
+- Sheet: `docs/board/looks/ww-art-ships/round-12.jpg`, 1600 x 1800, 164,531 bytes. Scores and limits are in `round-12-review.md`.
+- `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; existing size targets remain advisory. `tools/test-review-evidence.mjs` was not run; Claude runs it at merge. Browser checks are not applicable to this art-only lane.
+- Changed assertion: updated the funnel node check from the retired merged shell name to the requested single carved `ship-patience:funnel` name. This keeps the exact part check and does not loosen it. The hull was given its own named GLB part to satisfy the existing hull assertion. Race fingerprints: none; art only.
+- Self-look: the hull and funnel read as a rusted freighter. The six views show the ship small in the whole-ship panels; the cabins remain paler than the hull, and I am not convinced the whole scene reads as thirty years stranded. Claude should review the cabin tone, drift shape from above and funnel profile.
 
 ## Removed
 
 - Removed `patience-funnel-side.png` and its round-8 crop credit; replaced it with three round-12 measured source photos. Removed the hand-built box funnel and three loose exhaust-pipe segments.
+- Removed `round-11.jpg` and `round-11-review.md`; round 12 is the current sheet and review.
+- Removed round-12 render images, the Blender review file, masks, grids, inspection scratch files and test logs from `.qa-dist/` and `.evidence/`; retained the two supplied task briefs.

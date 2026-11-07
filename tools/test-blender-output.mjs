@@ -728,7 +728,7 @@ try {
         assert.ok(names.has('ship-patience:hull'), 'Patience hull is carved from its four measured views');
         assert.ok(names.has('ship-patience:upperworks'), 'Patience has one named photo-carved upperworks piece');
         assert.ok(names.has('ship-patience:bridge-mast-lattice'), 'Patience has a separate traced bridge mast');
-        assert.ok(names.has('ship-patience:funnel geometry'), 'Patience has a separate funnel with its exhausts');
+        assert.ok(names.has('ship-patience:funnel'), 'Patience has one separately carved funnel part');
         assert.ok(names.has('ship-patience:drifts'), 'Patience has a separate sand drift part');
         for (const oldTier of ['patience-aft-deckhouse', 'patience-chart-room',
           'patience-wheelhouse', 'patience-chart-room-roof']) {

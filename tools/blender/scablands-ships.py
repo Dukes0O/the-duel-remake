@@ -420,6 +420,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         # length along local Y. Turn that axis to the ship's +X direction.
         patience_hull.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
         patience_hull.location = gv((0,-4,0))
+        patience_hull['part'] = 'ship-patience:hull'
         parent(patience_hull,r)
         hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience',.04)
         parent(hull_deck,r)
