@@ -211,3 +211,8 @@ course.
 made 2026-11-06: a low stone railway arch with daylight beyond it. The recipe
 traces the true opening and rebuilds the dark inside, sleepers and rails at
 0.87 metre centers.
+
+`sea-mule-wagon-side.jpg`, `sea-mule-wagon-end.jpg` and
+`sea-mule-wagon-overhead.jpg` are original Codex ImageGen reference photos
+made 2026-11-06: one empty, weathered flat wagon, from matched side, end and
+dead-overhead views. The side photo anchors the end and overhead views.

@@ -62,3 +62,8 @@ The old gear's hub wears its own picture; the whole wheel is 24 slices sharing o
 ## Merged so far
 
 Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-review-evidence`, names `docs/board/looks/town-art-power/round-4.jpg`, another card's sheet with no review note, not this card. The card stays open for the iron mule's gear, the works camp, the big magnet, Mrs Vane and the water front.
+
+## WW-ART-SEA point 1: wagon photos
+
+- Added matched side, end and overhead reference photos for one empty, weathered flat wagon. The side view anchors the two companion views. Credited in the sea texture folder.
+- Removed: none.
