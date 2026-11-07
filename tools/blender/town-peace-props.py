@@ -306,7 +306,47 @@ stone_mesh = carve('bound-stone:smiley-crossed-tools-marker',
     {'front': (stone_front_pick, (0, 0, 1)), 'side': (stone_side_pick, (1, 0, 0))}, 7000)
 own(stone_mesh, stone, 'bound-stone:smiley-crossed-tools-marker')
 
-for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone):
+# 8. Mirage's painted army tent: two rigid boards reveal the trick in profile.
+tent_photo = measured_photo('decoy-tent-front')
+tent_photo.bleed(np.ones((tent_photo.h, tent_photo.w), dtype=bool), passes=1)
+tent = root_part('mirage-decoy-tent')
+tent_paint = tent_photo.material(.9)
+tent_board_mesh = Mesh()
+photo_box(tent_board_mesh, -3.2, 3.2, .45, 4.65, -.08, .08, {
+    '+z': ('paint', tent_photo, (0, 0, tent_photo.w, tent_photo.h)),
+    '-z': ('timber', back, (40, 42, 984, 288)),
+    '+x': ('timber', back, (868, 64, 882, 285)),
+    '-x': ('timber', back, (128, 64, 142, 285)),
+    '+y': ('timber', back, (40, 42, 984, 60)),
+    '-y': ('timber', back, (40, 270, 984, 288)),
+})
+own(tent_board_mesh.finish('mirage-decoy-tent:large-painted-board',
+    {'paint': tent_paint, 'timber': backmat}), tent, 'mirage-decoy-tent:large-painted-board')
+small_board = Mesh()
+photo_box(small_board, 2.5, 6.0, .85, 3.15, -.34, -.20, {
+    '+z': ('paint', tent_photo, (565, 84, 1024, 615)),
+    '-z': ('timber', back, (40, 42, 984, 288)),
+    '+x': ('timber', back, (868, 64, 882, 285)),
+    '-x': ('timber', back, (128, 64, 142, 285)),
+    '+y': ('timber', back, (40, 42, 984, 60)),
+    '-y': ('timber', back, (40, 270, 984, 288)),
+})
+own(small_board.finish('mirage-decoy-tent:smaller-rear-board',
+    {'paint': tent_paint, 'timber': backmat}), tent, 'mirage-decoy-tent:smaller-rear-board')
+for side, cx, px in (('left', -3.05, 134), ('right', 3.05, 874)):
+    pole = Mesh()
+    photo_box(pole, cx-.13, cx+.13, 0, 4.75, -.22, -.08, {
+        '+z': ('timber', back, (px-12, 70, px+12, 285)),
+        '-z': ('timber', back, (px-12, 70, px+12, 285)),
+        '+x': ('timber', back, (px-5, 70, px+5, 285)),
+        '-x': ('timber', back, (px-5, 70, px+5, 285)),
+        '+y': ('timber', back, (px-8, 48, px+8, 70)),
+        '-y': ('timber', back, (px-8, 270, px+8, 288)),
+    })
+    own(pole.finish(f'mirage-decoy-tent:rough-pole-{side}', {'timber': backmat}), tent,
+        f'mirage-decoy-tent:rough-pole-{side}')
+
+for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -316,6 +356,7 @@ for image_name, scale in {
         'toll-cabinet-front': .25, 'toll-cabinet-side': .25,
         'bound-sign-front': .5,
         'bound-stone-front': .25, 'bound-stone-side': .25,
+        'decoy-tent-front': .5,
 }.items():
     image = LOADED_PHOTOS[image_name].image
     image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
@@ -372,4 +413,7 @@ shot('bound-sign-front',(0,1.2,8),(0,1.2,0),2.9,(600,900))
 show('bound-stone',(7,2.0,7),(0,.5,0),2.0,(900,700))
 shot('bound-stone-front',(0,.5,8),(0,.5,0),1.8,(900,700))
 shot('bound-stone-side',(8,.5,0),(0,.5,0),1.5,(900,700))
+show('mirage-decoy-tent',(7,2.5,7),(1.5,2.4,-.1),8.0,(1200,800))
+shot('mirage-decoy-tent-front',(0,2.5,12),(0,2.5,0),7.2,(1200,800))
+shot('mirage-decoy-tent-side',(12,2.5,0),(1.5,2.4,-.1),5.0,(800,800))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))

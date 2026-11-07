@@ -258,6 +258,7 @@ Generated with the built-in OpenAI image generator on 6 November 2026. The origi
 - `peace-toll-cabinet-front.jpg`, `peace-toll-cabinet-side.jpg` — dead-on front and left-side photos of a dented steel filing cabinet with one drawer open and stuffed with old folders. Generated for the Toll cabinet; no people, brands or third-party material.
 - `peace-bound-sign-front.jpg` — dead-on hand-painted warning sign with the exact words `DO NOT DIG HERE` on three lines. Generated as an original desert prop photo; no third-party material.
 - `peace-bound-stone-front.jpg`, `peace-bound-stone-side.jpg` — dead-on front and side photos of a squat, layered desert boundary stone. The front has a carved smiley above crossed digging tools; the back and side are unmarked stone.
+- `peace-decoy-tent-front.jpg` — a painted full-frame scene of a large army tent on a plain board. Generated as original art for the Mirage decoy; no people, lettering, brands or third-party material.
 
 - `peace-billboard-front.jpg` — professional painted Treatment Plant billboard, frontal view. Prompt: straight-on full-frame photograph of an 8 m by 3 m roadside wooden billboard carrying a beautiful hand-painted public works illustration of blue water tanks, white pipes and green lawn, flat overcast light, pale background, no words.
 - `peace-billboard-back.jpg` — rough timber back and two poles of an 8 m by 3 m billboard. Prompt: straight-on full-frame back view, rough dark aged battens, nails, braces, splintered ends and dust, plain pale background, overcast light.

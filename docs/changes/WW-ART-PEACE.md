@@ -14,6 +14,11 @@ Added the `bound-stone` root, carved to 1 m from the front and side photos. Its
 front carries a shallow crossed-tools mark with a smiley. The full-size JPGs are
 kept as sources; only these new photos are downsampled in Blender for the GLB.
 
+Added `mirage-decoy-tent` with a large painted front, a smaller offset rear
+board and support poles hidden behind the painting. Its exported side view
+shows both flat boards. The painting and exported front were compared at the
+same size.
+
 ## Checks
 
 - Blender export and GLB re-import/render succeeded. The front reference and
