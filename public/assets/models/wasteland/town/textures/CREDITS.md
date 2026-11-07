@@ -369,3 +369,26 @@ The image views were generated separately to avoid overlapping panels.
 The side sheet photo includes the pump, valves, hose and bund; the model builds
 these as joined geometric parts. Other power-family photos are unchanged from
 round 3.
+
+## Town service reference photos (TOWN-ART-SERVICES round 4)
+
+The Forge's side, rear and overhead roof views, and the Workshop's side, rear
+and overhead roof views were generated with the built-in OpenAI image tool on
+6 November 2026, then saved as compressed JPEG carve inputs. These are original
+reference photos, not runtime dependencies. No external source material was
+used.
+
+- forge-side.jpg: compact soot-dark brick forge side elevation, same brick
+  chimney, irregular rust-and-silver corrugated roof, furnace opening and
+  side pipework, pale flat studio background.
+- forge-rear.jpg: matching compact brick forge rear elevation, centered
+  chimney, same patched low roof, pale flat studio background.
+- forge-roof.jpg: exact overhead roof plan of the forge, long patched
+  corrugated roof, chimney structure and small ventilator, pale studio floor.
+- workshop-side.jpg: side elevation of the timber and corrugated-steel
+  repair workshop, same faded red vintage car raised on its two-post lift
+  inside an open bay.
+- workshop-rear.jpg: rear elevation of the same gable-roof workshop, pale
+  flat studio background.
+- workshop-roof.jpg: overhead roof plan of the same workshop, patched
+  corrugated sheets and raised ridge, pale studio floor.

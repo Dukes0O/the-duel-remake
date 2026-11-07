@@ -5,6 +5,7 @@ family GLB and renders its review only after importing that GLB into a clean
 scene, so the submitted view matches the exported material and UV data.
 """
 import argparse, json, math, sys
+import numpy as np
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--evidence',default='.qa-dist/town-services');p.add_argument('--review',action='store_true');p.add_argument('--paths-only',action='store_true')
@@ -144,6 +145,7 @@ for n in ids:
  size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
+ if n=='forge':continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -172,9 +174,9 @@ for n in ids:
   for x in (-2.4,2.4):beam('Notice post',(x,.1,-2),(x,2.7,-2),.15,wood,b)
   box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
  heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4,'toll-bank':4.4,'school':5.2}
- ht=heights.get(n,5.0);mat=brick if n in ('forge','toll-bank') else wood if n=='school' else tin
+ ht=heights.get(n,5.0);mat=brick if n=='toll-bank' else wood if n=='school' else tin
  if n!='scrapyard':shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
- if n in ('forge','school'):
+ if n=='school':
   # Brick gable edges and pitch roof with exposed purlins.
   for side in (-1,1):
    z=z0+1 if side<0 else z1-1
@@ -250,36 +252,31 @@ for n in ids:
    for z in (z0+.5,z1-.5):box(n+' base footplate',(x,.30,z),(.36,.12,.36),dark,.025,b)
   for x in (x0+.7,x1-.7):beam(n+' front eave beam',(x0+.5,ht+.05,z0+.45),(x1-.5,ht+.05,z0+.45),.13,wood,b)
 
-# Forge: a traced photo skin is coupled to the separate furnace, real ember
-# glow, anvil, chimney and tools already built from their measured places.
-forge_photo=Photo(tex/'forge-front.jpg')
-forge_solid=photo_tidy(~forge_photo.sky([(12,12)],grey=26),2)
-forge_loops=photo_trace(forge_solid,(0,0,forge_photo.w,forge_photo.h),tolerance=2.4,min_area=120)
-if not forge_loops:raise RuntimeError('photo outline missing for forge')
-forge_mesh=PhotoMesh()
-photo_slab(forge_mesh,'forge-front',forge_photo,forge_loops,
- lambda px,py,d:((px-350)*.0207,(675-py)*.0157,d-7.55),-.06,.10,wall_scale=.025)
-forge_photo.bleed(forge_solid,passes=5)
-forge_mesh.finish('forge photo-traced facade',{'forge-front':forge_photo.material()})
-for obj in bpy.context.scene.objects:
- if obj.name=='forge photo-traced facade':parent_keep(obj,building_roots['forge'])
-# A small emissive photo cutout follows the fire in the measured facade. It is
-# the named in-game lamp, and its image keeps the glow photographic rather than
-# a flat orange square.
-forge_glow=forge_photo.material().copy();forge_glow.name='Forge actual ember glow'
-glow_bsdf=forge_glow.node_tree.nodes.get('Principled BSDF')
-glow_image=next(n for n in forge_glow.node_tree.nodes if n.type=='TEX_IMAGE')
-forge_glow.node_tree.links.new(glow_image.outputs['Color'],glow_bsdf.inputs['Emission Color'])
-glow_bsdf.inputs['Emission Strength'].default_value=1.25
-px0,py0,px1,py1=260,535,440,600;zglow=-7.85
-lamp_mesh=PhotoMesh()
-lamp_mesh.face([( (px0-350)*.0207,(675-py0)*.0157,zglow),((px1-350)*.0207,(675-py0)*.0157,zglow),
-                ((px1-350)*.0207,(675-py1)*.0157,zglow),((px0-350)*.0207,(675-py1)*.0157,zglow)],
-               [forge_photo.uv(px0,py0),forge_photo.uv(px1,py0),forge_photo.uv(px1,py1),forge_photo.uv(px0,py1)],'glow')
-lamp_mesh.finish('forge:lamp',{'glow':forge_glow})
-for obj in bpy.context.scene.objects:
- if obj.name=='forge:lamp':parent_keep(obj,building_roots['forge'])
-
+# Forge: carve the same compact furnace from its four photographs. The front
+# opening is a measured cut; its living ember is a separate emissive photo piece.
+forge_root=building_roots['forge']
+forge_table={
+ 'photos':{'side':'forge-side.jpg','front':'forge-front.jpg','rear':'forge-rear.jpg','top':'forge-roof.jpg'},
+ 'length':14.0,'width':14.0,'height':14.5,
+ 'side':{'start':1088,'end':60,'ground':1196},'side_front_on_left':False,
+ 'front':{'centre':350,'ground':646,'scale':14.0/690},
+ 'rear':{'centre':850,'ground':820,'scale':14.0/1515},
+ 'top':{'front':25,'rear':820,'centre':887,'x_scale':14.0/1640},
+ 'cut':{'front':[(247,450,453,613)]},
+ 'keep':lambda x,y,z:~((np.abs(x)<2.2)&(y>.45)&(y<4.2)&(z<-5.5)),
+ 'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
+ 'voxel':.075,'target':3800}
+forge_body=carve_object('forge:body',tex,forge_table);parent_keep(forge_body,forge_root)
+# Preserve the actual photographed fire pixels on its own small emissive panel.
+forge_fire=Photo(tex/'forge-front.jpg');forge_glow=forge_fire.material().copy();forge_glow.name='Forge living ember photo'
+forge_bsdf=forge_glow.node_tree.nodes.get('Principled BSDF');forge_tex=next(n for n in forge_glow.node_tree.nodes if n.type=='TEX_IMAGE')
+forge_glow.node_tree.links.new(forge_tex.outputs['Color'],forge_bsdf.inputs['Emission Color']);forge_bsdf.inputs['Emission Strength'].default_value=1.8
+fire_mesh=PhotoMesh();fx0,fy0,fx1,fy1=248,452,453,613;fire_z=-7.35
+fire_mesh.face([(-2.07,3.94,fire_z),(2.09,3.94,fire_z),(2.09,.67,fire_z),(-2.07,.67,fire_z)],
+ [forge_fire.uv(fx0,fy0),forge_fire.uv(fx1,fy0),forge_fire.uv(fx1,fy1),forge_fire.uv(fx0,fy1)],'fire')
+forge_lamp=fire_mesh.finish('forge:lamp',{'fire':forge_glow});parent_keep(forge_lamp,forge_root)
+# A dark inner arch sits behind the photo ember so the cut reads as an opening.
+box('Forge furnace inner shadow',(0,2.35,-5.35),(3.95,3.3,.14),dark,.12,forge_root)
 # The two flat photo slabs hid the gantry from the road and the yard from
 # above. The open welded frame, separate magnet and raised car stacks remain.
 
