@@ -707,12 +707,12 @@ def guard_shot(name,offset,ortho):
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
 render_dir=guard_evidence;render_dir.mkdir(parents=True,exist_ok=True)
 guard_shot('side',(18,0,0),8.8)
-guard_shot('front',(0,22,0),18.4)
-guard_shot('rear',(0,-22,0),18.4)
-guard_shot('above',(0,0,24),18.4)
-guard_shot('three-quarter-left',(-21,22,17),21)
-guard_shot('three-quarter-right',(21,22,17),21)
-guard_shot('mayor',(48,48,48),24)
+guard_shot('front',(0,22,0),14.8)
+guard_shot('rear',(0,-22,0),14.8)
+guard_shot('above',(0,0,24),16.3)
+guard_shot('three-quarter-left',(-21,22,17),18.5)
+guard_shot('three-quarter-right',(21,22,17),18.5)
+guard_shot('mayor',(48,48,48),19.5)
 
 # Four matched photo/model pairs, then the two three-quarter views and mayor view.
 import subprocess
