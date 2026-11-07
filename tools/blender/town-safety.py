@@ -11,10 +11,10 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
+evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-6.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
     raise SystemExit(0)
@@ -23,7 +23,7 @@ import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, slab as photo_slab, trace as photo_trace
+from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace`nfrom photo_carve import carve_object
 import numpy as np
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -281,28 +281,70 @@ for y in (1.10,3.40): beam('gate-scrap-door-crossbar',(-2.7,y,-3.38),(2.7,y,-3.3
 for x in (-2.3,2.3):
     pipe('gate-scrap-door-hinge',(x,.70,-3.49),(x,3.80,-3.49),.09,materials['iron-dark'],door)
 
-# Guard post: low sandbag berm, bolted tin roof and a contained steel brazier.
+# Guard post: a carved sandbag wall, timber shelter, pitched photo-roof and lathed brazier.
 b=building('guard-post',(2,1))
-for i in range(10):
-    for row in range(3):
-        x=-5.7+i*1.27+(row%2)*.26
-        z=-2.05+row*.08
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=6,radius=1,location=town.game_vector((x,.30+row*.40,z)))
-        sack=bpy.context.object;sack.name=f'guard-post-sandbag-{i+1}-{row+1}';sack.scale=(.62,.22,.28);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);sack.data.materials.append(materials['patched-canvas']);attach(sack)
-for sx in (-5.8,5.8):
-    for sz in (-2.2,2.2): beam('guard-post-roof-post',(sx,.65,sz),(sx,3.3,sz),.12,materials['weathered-plank'])
-for i in range(5):
-    z=-2.5+i*1.25
-    panel=cube(f'guard-post-roof-sheet-{i+1}',(0,3.35,z),(12.5,.10,1.30),materials['galvanised-tin'],.025)
-    panel.rotation_euler[0]=.06 if i%2 else -.07
-for x in (-4,0,4): beam('guard-post-roof-rib',(x,3.18,-2.5),(x,3.18,2.5),.07,materials['rusted-steel'])
-for side in (-1,1):
-    tin(f'guard-post-side-windbreak-{side}',(side*5.8,1.65,0),4.1,1.8,turn=math.pi/2)
-pipe('guard-post-brazier-leg-1',(-.45,.12,1.6),(-.45,.62,1.6),.045,materials['iron-dark'])
-pipe('guard-post-brazier-leg-2',(.45,.12,1.6),(.45,.62,1.6),.045,materials['iron-dark'])
-brazier=cube('guard-post-brazier',(0,.64,1.6),(1.0,.24,.72),materials['rusted-steel'],.09)
+wall_table={
+    'photos':{'side':'guard-post-wall-side.jpg','front':'guard-post-wall-front.jpg',
+              'rear':'guard-post-wall-rear.jpg','top':'guard-post-wall-top.jpg'},
+    'length':12.5,'width':.82,'height':1.72,
+    'side':{'start':18,'end':1006,'ground':278},
+    'front':{'centre':443,'ground':1662,'top':292},
+    'rear':{'centre':512,'ground':1393,'top':292},
+    'top':{'front':28,'rear':996,'centre':170,'along':'x','x_scale':.82/89},
+    'grey':26,'tolerance':38,'bleed_tolerance':34,'voxel':.045,'target':2500,
+    'mask_dir':str(evidence/'masks'),
+}
+wall=carve_object('guard-post:sandbag-wall',tex,wall_table)
+# carve_object stores its calibrated body in photo axes (width,height,length).
+# Reorient those local axes into town X,Y,Z, keeping the measured photos intact.
+wall.data.transform(Matrix(((0,0,1,0),(-1,0,0,0),(0,1,0,0),(0,0,0,1))))
+wall.location=town.game_vector((0,0,-2.72));attach(wall)
+# Six weathered timber columns run from ground to the eaves, joined by purlins.
+for ix,x in enumerate((-6.45,0,6.45)):
+    for iz,z in enumerate((-2.72,2.72)):
+        beam(f'guard-post:timber-post-{ix+1}-{iz+1}',(x,.09,z),(x,3.02,z),.18,materials['weathered-plank'])
+for z in (-2.72,0,2.72):
+    y=3.00 if z else 3.66
+    beam(f'guard-post:timber-purlin-{z}',(-7.0,y,z),(7.0,y,z),.20,materials['weathered-plank'])
+for x in (-6.45,0,6.45):
+    for side in (-1,1):
+        beam(f'guard-post:timber-knee-{x}-{side}',(x,2.18,side*2.72),(x,3.0,side*2.05),.12,materials['weathered-plank'])
 
-# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
+# One joined two-slope sheet; real corrugation follows the slope and the top
+# wears the straight-down generated roof photo.
+roof_photo=Photo(tex/'guard-post-top.jpg')
+roof=PhotoMesh()
+for side in (-1,1):
+    zs=[side*(3.18-i*3.18/40) for i in range(41)]
+    for i in range(40):
+        z0,z1=zs[i],zs[i+1]
+        w0=math.sin(i*math.pi/2)*.018;w1=math.sin((i+1)*math.pi/2)*.018
+        y0=3.12+(3.78-3.12)*(1-abs(z0)/3.18)+w0
+        y1=3.12+(3.78-3.12)*(1-abs(z1)/3.18)+w1
+        pts=[(-7.18,y0,z0),(7.18,y0,z0),(7.18,y1,z1),(-7.18,y1,z1)]
+        px0,px1=70,954
+        py0,py1=(92,451) if side<0 else (451,812)
+        uvs=[roof_photo.uv(px0,py0),roof_photo.uv(px1,py0),roof_photo.uv(px1,py1),roof_photo.uv(px0,py1)]
+        roof.face(pts,uvs,'photo',(0,1,0))
+        roof.face(list(reversed(pts)),[(.02,.02)]*4,'tin',(0,-1,0))
+roof_obj=roof.finish('guard-post:tin-roof',{'photo':roof_photo.material(),'tin':materials['galvanised-tin']})
+attach(roof_obj)
+# A ridge cap and ragged eave edges are physical sheet-metal strips.
+for side in (-1,1):
+    beam(f'guard-post:rusted-eave-{side}',(-7.18,3.12,side*3.18),(7.18,3.12,side*3.18),.045,materials['rusted-steel'])
+beam('guard-post:ridge-cap',(-7.18,3.79,0),(7.18,3.79,0),.11,materials['rusted-steel'])
+
+# Lathe the brazier bowl from its own photo; three iron feet meet the ground.
+brazier_photo=Photo(tex/'guard-post-brazier.jpg')
+bowl=PhotoMesh()
+uv_profile=lambda i,d,r,a:brazier_photo.uv(890+math.cos(a)*720*r/.61,220+min(1,d/.58)*390)
+lathe(bowl,'photo',(0,.48,1.08),(0,1,0),(1,0,0),(0,0,1),
+      [(0,.34),(.10,.42),(.38,.54),(.55,.61),(.60,.58)],uv_profile,sides=32,
+      cap_start=('iron',lambda a,f:(.5+.5*math.cos(a)*f,.5+.5*math.sin(a)*f)))
+bowl_obj=bowl.finish('guard-post:brazier',{'photo':brazier_photo.material(),'iron':materials['iron-dark']});attach(bowl_obj)
+for i,angle in enumerate((0,2*math.pi/3,4*math.pi/3)):
+    foot_x=math.cos(angle)*.38;foot_z=1.08+math.sin(angle)*.38
+    beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.08,foot_z),(foot_x*.92,.53,1.08+math.sin(angle)*.52),.075,materials['rusted-steel'])# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
 b=building('searchlight')
 cube('searchlight-concrete-foot',(0,.18,0),(.72,.36,.72),materials['cracked-concrete'],.08)
 pipe('searchlight-mast',(0,.36,0),(0,4.7,0),.10,materials['rusted-steel'])
