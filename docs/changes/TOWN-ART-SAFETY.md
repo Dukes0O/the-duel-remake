@@ -1,24 +1,21 @@
-# TOWN-ART-SAFETY — guard post, round 7
+# TOWN-ART-SAFETY — gate-scrap follow-up
 
 ## Changed
 
-- Replaced the single long sandbag bar with a 6 m by 4 m hut. Four photo-carved waist-high wall runs enclose the building; two front sections leave a 1.4 m road-side doorway.
-- Added timber supports at the corners and intermediate points on all sides, including door jambs.
-- Rebuilt the roof as two pitched slopes meeting at a ridge, with a 0.3 m overhang. The top faces use the straight-down patched tin photo. The underside uses a valid tin UV range.
-- Kept the photo-carved brazier inside and grounded its feet. Packed lower-resolution copies of the two tall wall photos to keep the complete safety family GLB under 3 MB; the carving photos stay full resolution.
-- Round 7 sheet: `docs/board/looks/town-art-safety/round-7.jpg` (333,379 bytes). Exported model: `public/assets/models/wasteland/town/safety.glb` (2,983,396 bytes; 3,704 guard-post triangles).
+- Replaced the small box-and-plank leaf with a full-width moving node named `gate-scrap:door`, photo-traced from front and rear views with steel thickness. The hinge sits at the inner edge of the left tower.
+- Rebuilt the two towers and lintel from traced photo masks and slabs. Separate front and rear lattice faces, connected with depth ties, keep the tower openings visible while giving the frames real depth.
+- Added four generated orthographic photo references under `public/assets/models/wasteland/town/textures/`: side, front, rear and straight-down. Each is a JPEG at most 1024 pixels wide. Built-in image generation credit: OpenAI image generation, 7 November 2026; each view was generated as its own image. The first side prompt returned a front-like angle, so it was replaced with an explicit end-on side view.
+- Created `docs/board/looks/town-art-safety/round-8.jpg` and its review note. Earlier sheets and passed buildings are unchanged.
+- Added the `ART_LINE.md` fault note that a view label can be ignored by the image generator; verify the silhouette before tracing.
 
 ## Checks
 
-- `python -m py_compile tools/blender/town-safety.py` — passed.
-- Blender recipe and GLB round-trip — passed. It printed each piece's bounds and checked footprint clearance and contact.
-- `node tools/test-blender-output.mjs` — passed, 377 checks, 0 failed on the final GLB.
-- `node tools/test-repo-hygiene.mjs` — passed; reported existing repository size targets as advisory.
-- `node tools/test-review-evidence.mjs` — 7 of 9 subtests passed. Two unrelated failures: town-art-outposts round 15 is missing its review note, and the audio analysis test could not launch `ffmpeg` (`EPERM`). The round-7 JPG publisher check passed.
-- Browser and look review — Claude's check. Inspect the matched gable, road-side wall, rear and roof views; all four walls and the doorway; the posts on each side; and the brazier position.
-- Changed assertions: none. Lane tier and build: not run, as directed.
-- Race fingerprints: no race code or state changed.
+- Blender recipe export and GLB readback: **pass**. Each gate mesh printed bounds; the contact check confirmed ground or adjoining-piece contact inside the 2 by 1 footprint. The review sheet is under 500 KB.
+- `node tools/test-blender-output.mjs`: **pass**, 377 checks, 0 failures.
+- Lane tier and build: not run, as required for art cards.
+- Browser check: Claude runs. Please inspect the side silhouette, tower depth, photo/model scale, leaf clearance under the lintel, and opening swing in the supplied renders.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
 
 ## Removed
 
-- Removed the superseded `round-6.jpg` and `round-6-review.md`. Deleted this round's temporary grids, renders, masks and logs before handoff.
+- Removed the obsolete gate facade photo overlay and the old duplicate planks and car-door boxes from the gate recipe.
