@@ -4,7 +4,7 @@ from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
-parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway'],default='causeway')
+parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway','harbour-gate','harbour-ramp','causeway-arch'],default='causeway-arch')
 parser.add_argument('--paths-only',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root).resolve(); textures=root/'public/assets/models/wasteland/scablands/textures'
@@ -111,7 +111,31 @@ def build_causeway():
   # The rail head is a narrow strip from the photographed rail, not edge UVs.
   box(m,x-.07,x+.07,4.36,4.55,-20,20,{k:('rail',rail,(0,34,rail.w,52)) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(m,'causeway',{'stone':p.material(),'rail':rail.material()})
-steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway)]
+def build_harbour_gate():
+ wall=photo('sea-harbour-wall.jpg'); stone=photo('dam-gatehouse-stone.jpg'); p=photo('sea-harbour-gate.jpg')
+ H=6; depth=1.5; face=(0,55,wall.w,300); stone_face=(0,0,stone.w,stone.h)
+ m=Mesh()
+ frame_mats={'wall':wall.material(),'gate':p.material()}
+ for x0,x1,texture_rect in [(-4,-3.72,(118,127,152,701)),(3.72,4,(875,127,910,701))]:
+  box(m,x0,x1,0,5.55,-depth,depth,{'+z':('gate',p,texture_rect),'-z':('gate',p,texture_rect),'+x':('wall',wall,face),'-x':('wall',wall,face),'+y':('wall',wall,face),'-y':('wall',wall,face)})
+ box(m,-3.72,3.72,5.15,5.55,-depth,depth,{'+z':('gate',p,(152,95,875,127)),'-z':('gate',p,(152,95,875,127)), '+x':('wall',wall,face),'-x':('wall',wall,face),'+y':('wall',wall,face),'-y':('wall',wall,face)})
+ finish(m,'harbour-gate-frame',frame_mats)
+ cap=Mesh(); box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',stone,stone_face) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(cap,'harbour-gate-coping',{'stone':stone.material()})
+ # Each slab's local origin is its real outer hinge; its photo crop ends at the meeting stile.
+ crops=[('harbour-gate-left',(152,127,510,701),-3.72,1),('harbour-gate-right',(514,127,875,701),3.72,-1)]
+ for name,(x0,y0,x1,y1),pivot,direction in crops:
+  leaf=Mesh(); width=3.72; height=5.25
+  if direction>0:
+   def pos(x,y,d): return ((x-x0)*width/(x1-x0),(y1-y)*height/(y1-y0),d)
+  else:
+   def pos(x,y,d): return ((x-x1)*width/(x1-x0),(y1-y)*height/(y1-y0),d)
+  slab(leaf,'steel',p,[[(x0,y0),(x1,y0),(x1,y1),(x0,y1)]],pos,-.10,.10,wall_scale=.006)
+  # Three short barrel hinges are modelled at the pivot edge, not painted onto the leaf.
+  for y in (.45,2.55,4.65):
+   lathe(leaf,'steel',(0,y,.01),(0,1,0),(1,0,0),(0,0,1),[(0,.11),(.34,.11)],lambda i,d,r,a:p.uv(x0 if direction>0 else x1,y0),sides=12)
+  ob=finish(leaf,name,{'steel':p.material()}); ob.location.x=pivot
+steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate)]
 for name,fn in steps:
  fn()
  if name==args.through: break
@@ -137,8 +161,9 @@ meshes=[o for o in scene.objects if o.type=='MESH']
 # Two more lengths of the wall and causeway, end to end, for the shots only.
 extras=[]
 for prefix,axis in (('harbour',0),('causeway',1)):
- for o in [o for o in meshes if o.name.startswith(prefix)]:
-  for step in (-40,40):
+ selected=[o for o in meshes if (o.name in ('harbour-wall','harbour-coping','harbour-rings') if prefix=='harbour' else o.name=='causeway')]
+ for o in selected:
+  for step in ((-24,24) if prefix=='harbour' else (-40,40)):
    c=o.copy();c.location[axis]+=step;scene.collection.objects.link(c);c.name=o.name+'-extra';extras.append(c)
 meshes=[o for o in scene.objects if o.type=='MESH']
 def shot(name,prefixes,eye,target,size,ortho=None,lens=35):
@@ -161,3 +186,12 @@ shot('harbour-wall-quarter',['harbour'],(14,1.3,17),(0,3,-3),(1200,520),lens=28)
 shot('causeway',['causeway'],(70,2.4,0),(0,2.4,0),(1000,420),ortho=26)
 shot('causeway-quarter',['causeway'],(14,1.3,20),(0,3,-8),(1200,520),lens=28)
 shot('causeway-top',['causeway'],(5,7,14),(0,4,-4),(1200,520),lens=35)
+def gate_open(opened):
+ for name,angle in (('harbour-gate-left',math.radians(-82)),('harbour-gate-right',math.radians(82))):
+  ob=next((o for o in scene.objects if o.name.startswith(name)),None)
+  if ob:
+   ob.rotation_mode='XYZ'; ob.rotation_euler[2]=angle if opened else 0
+ scene.view_layers.update()
+shot('harbour-gate-shut',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9)
+gate_open(True);shot('harbour-gate-open',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9);gate_open(False)
+shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(20,1.55,20),(0,2.6,0),(1200,700),lens=28)

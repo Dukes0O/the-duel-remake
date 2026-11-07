@@ -196,3 +196,8 @@ studio ground. The 40 metre stone face uses the lower photo crop; the rail kit
 uses separate measured rail and sleeper crops. The recipe blends the face's
 first and last two metres in memory for repeatable joins.
 `sea-gear-hub.png` is an original Codex ImageGen product photograph made 2026-11-06: a clean machined iron hub with six open spokes and a capped central boss, dead-on against a pale studio ground. The recipe traces the spokes and scales the packed GLB copy in memory.
+
+`sea-harbour-gate.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: a closed pair of large riveted steel harbour gates in a weathered
+stone frame. The recipe uses separate left and right leaf pivots and reuses the
+existing seawall stone and coping material.
