@@ -127,10 +127,6 @@ def traced_part(name, parent, photo_name, mask_fn, rect, mapper, depth=.06, wall
         photo._sea_camp_bled = True
     mesh = Mesh()
     slab(mesh, name, photo, loops, mapper, -depth / 2, depth / 2, wall_scale=wall_scale)
-    # Downsample only the packed material copy; measurements and traced UVs stay
-    # in the original photo grid. This keeps the embedded textures within budget.
-    if photo.image.size[0] > 768:
-        photo.image.scale(768, max(1, round(photo.image.size[1] * 768 / photo.image.size[0])))
     obj = mesh.finish(name, {name: photo.material()})
     obj.parent = parent
     obj['part'] = name
@@ -201,6 +197,12 @@ washing_line = traced_part('works-camp:washing-line', camp,
     lambda px, py, d: ((px - (140 + 1615) / 2) * laundry_scale_x,
                        (860 - py) * laundry_scale_y, -1 + d),
     depth=.045, wall_scale=.006)
+
+# Downsample only after all masks have read the full-resolution photos. Traced
+# UVs keep their source-grid coordinates; the compressed copies stay in budget.
+for photo in TRACE_PHOTOS.values():
+    if photo.image.size[0] > 768:
+        photo.image.scale(768, max(1, round(photo.image.size[1] * 768 / photo.image.size[0])))
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 export_glb(out)

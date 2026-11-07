@@ -47,6 +47,10 @@ stop adjusting and change the method.
 
 ### Photos and masks
 
+- **A scaled photo reused for later masks.** `Photo.rgb()` reads the image at
+  its original dimensions. If a recipe downsamples a cached image before all
+  masks are made, later reads fail or use the wrong grid. Finish every mask
+  first; downsample the packed image copies only before export.
 - **Background walled in by the subject** (Kyle, 6 November). The flood from the
   frame's edge cannot reach a patch between a person's legs, a window, the gap
   under a truck or the space inside a frame, and it may not match the studio's
