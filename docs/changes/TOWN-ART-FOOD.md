@@ -1,4 +1,4 @@
-﻿# TOWN-ART-FOOD: soup kitchen round 6 and market hall round 1
+# TOWN-ART-FOOD: soup kitchen round 6 and market hall round 1
 
 ## Soup kitchen round 6
 
@@ -102,3 +102,33 @@
 - Replaced the previous primitive bus body, flat canvas board and oversized photo-carved shell with the measured hull and separate service parts.
 - Removed the unused four-view source collage after retaining its individual side, front and rear views and the corrected overhead view.
 - Removed the scratch sheet builder, raw render and mask captures, temporary Blender outputs and test logs after recording the review evidence.
+
+## Canteen round 9
+
+- Measured the front body from the photo grid: x=418–766, centre 592, roof row
+  95, ground 516. At 3 m roof height, the measured 348 px span sets the body
+  width to 2.48 m. The overhead photo centre was corrected to row 348.
+- Removed the rounded cross-section so the bus keeps its boxy front.
+- Cut the serving hatch into the road-side shell. The sloping awning begins at
+  the wall, the tyres finish flush with the body sides, and three stools stand
+  beside the serving window on the ground.
+- Blender prints every canteen piece's bounds and checks body width, awning
+  contact, tyre alignment and stool ground contact.
+- Added the round 9 sheet with the front reference beside the exported model
+  from the same orthographic camera. The side reference remains unchanged.
+- Blender export and internal bounds/contact checks passed. Blender output
+  passed 361 checks; repository placement passed.
+- Review evidence passed 8 of 9 subtests. Audio analysis failed twice on the
+  same unchanged code because `spawnSync ffmpeg` returned `EPERM`; eight other
+  subtests passed both times. This is outside the art change.
+- Browser and in-game look checks were not run here. Claude should inspect the
+  front match, serving hatch and awning contact, tyre flushness, and stools in
+  the three-quarter and mayor views. Changed assertions: none. Race fingerprints
+  do not apply to this art change.
+
+### Canteen round 8 removed
+
+- Replaced the round 8 review sheet and note with round 9. Rounds 6 and 7 stay.
+- Removed the temporary photo grid, renders, mask captures, Blender source and
+  test logs after recording this review. Kept the source photos, current model,
+  round 9 sheet and notes.
