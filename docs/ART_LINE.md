@@ -7,8 +7,9 @@ job has to learn it twice. The kits' own instructions are in
 
 ## The method
 
-Six rounds per card is the limit (Kyle, 6 November 2026). If two rounds in a row
-show no improvement, stop adjusting and change the method.
+Six rounds per card is the limit (Kyle, 6 November 2026), counted per building or
+vehicle on a card that holds several. If two rounds in a row show no improvement,
+stop adjusting and change the method.
 
 1. **Start from what already passed.** Read the recipe nearest your subject, and
    copy its structure.
@@ -83,6 +84,15 @@ show no improvement, stop adjusting and change the method.
 - **Bits that stand beside a wheel.** The overhead photo's tyres can reach further
   than the side photo's. Keep only wings near a wheel outside the body's width.
 - **A thin boom vanishes in a carve.** Trace it, so that its holes stay open.
+- **A detail appears on every vehicle in a family render.** World-positioned
+  fittings left outside their vehicle root stay visible when the other roots
+  are hidden. Parent each named part to its vehicle root.
+- **Photo parts float after carving.** Remove photo details that are built as
+  separate geometry (such as a hook or mirror) from that view's mask, or the
+  carve makes a second copy.
+- **A mask crop selects the wrong picture area.** Array masks are row, then
+  column; check the crop against the source photo before carving. A swapped
+  crop can turn a mirror or the background into floating geometry.
 
 ### Buildings
 
@@ -90,6 +100,7 @@ show no improvement, stop adjusting and change the method.
 - **Anything standing in front of a wall or roof** (a porch, a sign, a pump) gets painted flat on the wall, and on the far wall too, since both sides wear one photo. No mask can separate it, because the wall is behind it. Generate the same object again, same camera, with those things removed (Dot's Diner: `dot-diner-wall.jpg`, `dot-diner-roof.jpg`), and carve from those. The removed things are their own pieces, wearing the full photo. A generated clean photo lined up within a few pixels of its reference.
 - **An overhead photo at a slant** shows side windows on the roof. Ask for a true plan view with no wall showing.
 - **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
+- **Wide thin parts cannot be carved.** An aeroplane's wings fill the front photo's silhouette, and the carve fills that width along the whole length (the plane school, round 6). Photograph the body without them. Trace wings and fins as their own `slab`, or leave them out if the card does not ask for them.
 - **Two bodies joined end to end** (an aircraft nose and a bus) come out with the wider one's shape along the whole length. Set `ends_split`.
 - **A windscreen pieced together from three photos** on a curved nose: set `front_favour` to 3 so that the nose wears its front photo further round.
 - **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
