@@ -30,14 +30,26 @@ def build_gear():
        lambda i,d,r,a: edge.uv(512+math.cos(a)*r*350,512+math.sin(a)*r*350),sides=24)
  p.bleed(solid);finish(m,'old-gear',{'gear-face':p.material(),'hub':edge.material()})
 def build_new_gear():
- p=photo('sea-gear-section.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5)],grey=20)); loops=trace(solid,(20,20,1000,1000),tolerance=1)
- def pos(x,y,d): return ((x-512)*7/930,(512-y)*7/930,d)
+ p=photo('sea-gear-section.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(p.w-5,5),(5,p.h-5),(510,115),(310,205),(710,205),(400,420),(650,420)],grey=20))
+ # The photo shows a broader casting. Keep a measured 15-degree arc from its
+ # centre, so this traced slab is one of 24 sections around a 7 m wheel.
+ cx,cy=p.w/2,p.h*.70
+ yy,xx=np.ogrid[:p.h,:p.w]
+ angle=np.arctan2(cy-yy,xx-cx)
+ delta=np.angle(np.exp(1j*(angle-math.pi/2)))
+ solid &= np.abs(delta)<=math.pi/24
+ loops=trace(solid,(20,20,p.w-20,p.h-20),tolerance=1)
+ def pos(x,y,d): return ((x-cx)*.008,(cy-y)*.008,d)
  slab(m,'casting',p,loops,pos,-.18,.18,wall_scale=.025)
  finish(m,'gear-section',{'casting':p.material()})
  # Whole is 24 linked duplicates of the same sector mesh around its centre.
  base=m.finish('section-instance',{'casting':p.material()}); base.parent=parent
  for i in range(24):
-  ob=base if i==0 else base.copy(); ob.data=base.data; ob.name=f'gear-whole-section-{i+1:02d}';scene.collection.objects.link(ob);ob.parent=parent;ob.rotation_euler[2]=i*math.tau/24
+  ob=base if i==0 else base.copy(); ob.data=base.data; ob.name=f'gear-whole-section-{i+1:02d}'
+  if i: scene.collection.objects.link(ob)
+  # The face lies in Blender XZ after the helper's Y-up conversion; its true
+  # axle is Blender Y, so rotate around that centre line.
+  ob.parent=parent;ob.rotation_euler[1]=i*math.tau/24
  hubm=Mesh(); lathe(hubm,'hub',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(.05,.9),(.18,.76),(.44,.48)],lambda i,d,r,a:p.uv(512+math.cos(a)*r*250,512+math.sin(a)*r*250),sides=24);finish(hubm,'gear-whole-hub',{'hub':p.material()})
  triangles['gear-whole']=triangles.pop('gear-section')*24+triangles['gear-whole-hub']
 def build_wall():

@@ -177,3 +177,8 @@ photographs made 2026-11-06. They are the isolated face and rim panels of one
 paired reference image: a seven metre silted, rotten dam gear with open spokes,
 flat overcast light and a pale studio ground. The face photo is traced for the
 thick slab; the rim photo supplies the hub and rim material reference.
+
+`sea-gear-section.jpg` is an original Codex ImageGen product photograph made
+2026-11-06: a clean machined curved iron casting with bolt holes on a pale
+studio ground under flat light. The source was scaled in memory and its 15-degree
+casting slice is traced into the repeated gear.
