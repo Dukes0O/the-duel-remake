@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-8.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-8/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-9.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-9/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -315,26 +315,55 @@ for n in ids:
   # The end and plan references give the carved store body a 13.9 m depth;
   # porch props are laid out from that wall, not from the plot edge.
   z0=-6.9
-  # Deep road-facing porch: posts land on the ground and rafters meet the body.
-  porch_z=z0-2.0
-  for x in (-7.4,0,7.4):
-   beam('trading-post:porch-post',(x,.08,porch_z),(x,3.45,porch_z),.22,wood,b)
-  for x in (-8,0,8):beam('trading-post:porch-rafter',(x,3.35,z0+.4),(x,3.05,porch_z),.16,steel,b)
-  box('trading-post:porch-roof',(0,3.35,(z0+porch_z)/2),(17.5,.18,3.0),tin,.04,b)
-  box('trading-post:loading-dock',(0,.42,z0-.8),(17,.84,1.6),wood,.08,b)
-  # The large hand-painted sign is a separate, front-facing board and lettering.
-  sign_z=z0+.9
-  box('trading-post:sign',(0,7.35,sign_z),(10.8,.16,1.65),wood,.06,b)
-  for x in (-2.25,2.25):beam('trading-post:sign-bracket',(x,6.55,sign_z),(x,7.25,sign_z),.13,steel,b)
-  font=bpy.data.curves.new('TRADING POST hand painted lettering','FONT');font.body='TRADING POST';font.size=1.12;font.extrude=.008
+  # Road-facing porch is the same width as the measured store front. Its deck
+  # meets the wall; the single roof plane falls from the eave to the outer posts.
+  porch_front=z0-2.5
+  box('trading-post:porch-deck',(0,.18,(z0+porch_front)/2),(10.0,.36,2.5),wood,.035,b)
+  for x in (-4.72,4.72):
+   beam('trading-post:porch-post',(x,.12,porch_front),(x,3.10,porch_front),.18,wood,b)
+   beam('trading-post:porch-rafter',(x,5.18,z0+.02),(x,3.16,porch_front),.13,steel,b)
+  # Corrugated lean-to roof slopes visibly down from just below the store eave.
+  roof_coords=[(-5.02,5.20,z0-.03),(5.02,5.20,z0-.03),(5.02,3.18,porch_front),(-5.02,3.18,porch_front)]
+  roof_mesh=bpy.data.meshes.new('trading-post attached porch sloping roof');roof_mesh.from_pydata([town.game_vector(q) for q in roof_coords],[],[(0,1,2,3)]);roof_mesh.materials.append(tin);roof_mesh.update()
+  roof_uv=roof_mesh.uv_layers.new(name='UVMap')
+  for poly in roof_mesh.polygons:
+   for li in poly.loop_indices:
+    q=roof_coords[roof_mesh.loops[li].vertex_index];roof_uv.data[li].uv=((q[0]+5.02)/10,(q[2]-porch_front)/2.5)
+  porch_roof=bpy.data.objects.new('trading-post:porch-roof',roof_mesh);bpy.context.collection.objects.link(porch_roof);parent_keep(porch_roof,b)
+  for x in (-4.7,-2.35,0,2.35,4.7):
+   beam('trading-post:porch-roof-rib',(x,5.24,z0-.04),(x,3.22,porch_front),.045,dark,b)
+  # One weathered board sits on the road-facing roof edge; raised lettering is
+  # painted on its vertical face and faces -Z, toward the road.
+  sign_z=z0-.08
+  box('trading-post:sign',(0,5.88,sign_z),(8.7,1.05,.18),wood,.05,b)
+  for x in (-3.65,3.65):
+   beam('trading-post:sign-bracket',(x,5.25,z0+.12),(x,5.42,sign_z),.13,steel,b)
+  font=bpy.data.curves.new('TRADING POST hand painted lettering','FONT');font.body='TRADING POST';font.size=.75;font.extrude=.012
   lettering=bpy.data.objects.new('trading-post:sign-lettering',font);bpy.context.collection.objects.link(lettering)
-  lettering.location=town.game_vector((-4.65,7.45,sign_z+.72));font.materials.append(paint);parent_keep(lettering,b)
-  # Goods sit on the ground or dock, clear of the walls and porch posts.
-  for i,(x,z,s) in enumerate(((-6.0,z0-2.2,1.7),(-3.5,z0-2.35,1.5),(3.0,z0-2.3,1.65),(5.4,z0-2.2,1.4))):
-   crate=box(f'trading-post:goods-crate-{i+1}',(x,.55,z),(s,1.1,s),wood,.045,b)
-   for yy in (.20,.88):box(f'trading-post:crate-band-{i+1}',(x,yy,z),(s+.025,.07,s+.025),dark,.01,b)
-  for i,(x,z) in enumerate(((-7.4,z0-3.6),(7.4,z0-3.5))):
-   cyl(f'trading-post:goods-barrel-{i+1}',(x,.58,z),.48,1.05,steel,16,b)
+  # Bake the glyph coordinates into the road-facing X/Y plane explicitly.
+  # This avoids Blender's text local axes being mistaken for game ground axes.
+  lettering.data.align_x='CENTER';lettering.data.align_y='CENTER'
+  lettering.location=(0,0,0);font.materials.append(paint)
+  bpy.context.view_layer.objects.active=lettering;lettering.select_set(True);bpy.ops.object.convert(target='MESH')
+  for vertex in lettering.data.vertices:
+   u,v,w=vertex.co.copy()
+   # The road camera sees the front face from Blender +Y, so reverse the
+   # glyph winding horizontally to keep the painted words left-to-right.
+   vertex.co=(-u,-(sign_z-.12)+w,5.88+v)
+  lettering.name='trading-post:sign-lettering';lettering.parent=b
+  # Each crate, drum and tyre is its own piece, resting on the deck or ground.
+  for i,(x,z,s,on_deck) in enumerate(((-3.25,porch_front+.72,1.25,True),(-1.65,porch_front+.72,1.15,True),(1.75,porch_front+.72,1.3,True),(3.3,porch_front+.72,1.1,True),(-6.7,porch_front+.55,1.25,False),(6.55,porch_front+.55,1.2,False))):
+   bottom=.36 if on_deck else 0
+   box(f'trading-post:goods-crate-{i+1}',(x,bottom+s/2,z),(s,s,s),wood,.045,b)
+   for yy in (bottom+.12,bottom+s-.12):box(f'trading-post:crate-band-{i+1}',(x,yy,z),(s+.025,.06,s+.025),dark,.01,b)
+  for i,(x,z,on_deck) in enumerate(((-4.05,porch_front+.48,True),(4.05,porch_front+.48,True),(-7.55,porch_front+.5,False))):
+   y=.36+.53 if on_deck else .53
+   cyl(f'trading-post:goods-barrel-{i+1}',(x,y,z),.38,1.0,steel,18,b)
+   for yy in (y-.34,y+.34):tube(f'trading-post:barrel-rim-{i+1}',(x,yy,z),.38,.035,dark,b,18,6)
+  for i,(x,z,on_deck) in enumerate(((-4.0,porch_front+1.9,True),(4.0,porch_front+1.9,True),(7.7,porch_front+1.9,False))):
+   # Torus bounds include major plus minor radius; lift its centre by 0.57 m.
+   y=.36+.57 if on_deck else .57
+   tyre=tube(f'trading-post:goods-tyre-{i+1}',(x,y,z),.43,.14,dark,b,20,8);tyre.rotation_euler[1]=math.pi/2
   # Bounds are in game axes (X, Y up, Z); every piece must fit the 3x3 plot
   # and touch either ground or another piece.
   bpy.context.view_layer.update();pieces=[o for o in bpy.data.objects if o.type in {'MESH','CURVE'}]
