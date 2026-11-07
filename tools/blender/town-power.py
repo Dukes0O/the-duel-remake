@@ -539,8 +539,8 @@ def isolate(active):
         hide_tree(building_id,building_id != active)
 
 isolate('windmill')
-render('windmill-driver',(-7,8,-11),(0,2.7,0),34)
-render('windmill-above-45',(-7,10,-9),(0,2.7,0),30)
+render('windmill-driver',(0,8,-12),(0,2.7,0),34)
+render('windmill-above-45',(0,10,-10),(0,2.7,0),30)
 render('windmill-rotor-front',(0,6.6,-10),(-.35,4.5,-.35),62)
 isolate('power-pole')
 render('power-pole-driver',(-5,8,-7),(0,2.8,0),40)
@@ -563,8 +563,9 @@ turn_glb=evidence/'rotor-turned.glb';town.export_glb(turn_glb)
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(turn_glb))
 scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=920;scene.render.resolution_y=1000
 scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX';scene.world=bpy.data.worlds.new('bright overcast 2');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.72,.75,.78,1)
+isolate('windmill')
 groundmat=town.make_materials({'sand':root/'public/assets/models/wasteland/town/textures/town-water-earth.jpg'})['sand']
 lamp_data=bpy.data.lights.new('rotor turn light','AREA');lamp=bpy.data.objects.new('rotor turn light',lamp_data);scene.collection.objects.link(lamp);lamp.location=town.game_vector((3,7,-7));lamp_data.energy=2200;lamp_data.size=8
 bpy.ops.mesh.primitive_plane_add(size=24,location=town.game_vector((0,-.08,0)));bpy.context.object.data.materials.append(groundmat)
-data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((-7,8,-11));data.lens=34;aim(cam,town.game_vector((0,2.7,0)));scene.camera=cam
+data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((0,8,-12));data.lens=34;aim(cam,town.game_vector((0,2.7,0)));scene.camera=cam
 scene.render.filepath=str(evidence/'windmill-rotor-turned.png');bpy.ops.render.render(write_still=True)
