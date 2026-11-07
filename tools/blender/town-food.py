@@ -172,10 +172,26 @@ def tin_wall(name, x, y, z, width, height):
 
 def sign(name, center, text, width=1.3):
     x,y,z=center
-    board=box(name+':sign-board',(x,y,z),(width,.42,.085),mat['weathered-plank'],.025)
-    font=bpy.data.curves.new(name+' hand lettering','FONT');font.body=text;font.size=.23;font.extrude=0;font.resolution_u=4
+    if name == 'shopfront-a':
+        # This shop's large hand-painted board is a thin, independent slab.
+        slab_verts=[(x-width/2,y-.24,z-.045),(x-width/2,y+.24,z-.045),
+                    (x+width/2,y+.24,z-.045),(x+width/2,y-.24,z-.045),
+                    (x-width/2,y-.24,z+.045),(x-width/2,y+.24,z+.045),
+                    (x+width/2,y+.24,z+.045),(x+width/2,y-.24,z+.045)]
+        slab_faces=[(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+        board=mesh_object(name+':hand-painted-sign-slab',slab_verts,slab_faces,mat['weathered-plank'],'wall')
+    else:
+        board=box(name+':sign-board',(x,y,z),(width,.42,.085),mat['weathered-plank'],.025)
+    font=bpy.data.curves.new(name+' hand lettering','FONT');font.body=text
+    font.size=.31 if name == 'shopfront-a' else .23;font.extrude=0;font.resolution_u=4
     obj=bpy.data.objects.new(name+':sign-lettering',font);bpy.context.collection.objects.link(obj)
-    obj.location=town.game_vector((x-width*.44,y-.105,z+.05)); obj.rotation_euler=(-math.pi/2,0,0)
+    obj.location=town.game_vector((x-width*.44,y-.105,z-.052))
+    if name == 'shopfront-a':
+        # Turn the lettering toward the road and undo the X reversal from the
+        # 180-degree face turn so FOOD reads normally from the front.
+        obj.rotation_euler=(0,math.pi,0);obj.scale.x=-1
+    else:
+        obj.rotation_euler=(-math.pi/2,0,0)
     font.materials.append(mat['letter-paint']); bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
     bpy.ops.object.convert(target='MESH');keep(bpy.context.object)
     return board
