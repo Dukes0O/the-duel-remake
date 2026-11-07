@@ -1,46 +1,51 @@
-# WW-ART-PEACE round 5: Sal pipe trailer
+# WW-ART-PEACE round 6: dust tanker
 
-Changed `sal-pipe-trailer` only. The pickup body and other props were not
-changed.
+Changed `dust-tanker` only. The earlier look sheets and the four committed
+source photos remain in place.
 
 ## Changes
 
-- Kept all four vehicle photos at their authored sizes. Raised this
-  candidate's maximum from 2 MiB to 3 MiB, the allowed 1 MiB increase, so the
-  full-size photos fit without reducing any other prop's images.
-- Built the pipe load from a sky-flooded side-photo mask and traced 1.6 m slab.
-  The slab follows the real sag. Bled the dedicated side image. The top surface
-  uses the overhead image at measured scale; both ends use traced, bled cut
-  pipe imagery.
-- Measured pickup wheel centers at (95, 302) and (314, 302), radii 47 and
-  46 px. Measured trailer wheel centers at (795, 312) and (861, 312), radii
-  35 and 34 px. All four lathe wheels stand on Y=0, use their own side-photo
-  wheel image, and have rectangular tyre tread tiles at measured scale.
-- Replaced the old horizontal tongue with two sloped tow-bar arms that overlap
-  the pickup coupler and trailer crossmember.
-- Replaced round 4's sheet and review with
-  `docs/board/looks/ww-art-peace/round-5.jpg` and `round-5-review.md`.
-  The sheet is 1600 x 397 px and 104,647 bytes.
+- Carved only the cab with `hull_model.py`, using side, front and overhead
+  masks trimmed at the cab boundary. The rear tanker photo does not enter the
+  cab hull.
+- Built the fuel tank as a lengthwise lathe. Its side profile comes from the
+  side-photo mask, the side photo wraps by height with arc scaling, and the
+  rear photo fills a circular end cap. Separate traced slabs form the tarp on
+  both sides. Four measured photo wheels sit on the ground plane with dark
+  photo-derived treads; two traced side slabs form the frame rails.
+- Kept source JPEGs untouched. Each embedded tanker photo copy is whole and
+  scaled to 1024 px wide, with no crop.
+- Added the named tanker root and parts to the existing Blender-output test.
+  No assertion was loosened. No race fingerprints apply.
+- Added `docs/board/looks/ww-art-peace/round-6.jpg` (1600 x 888 px,
+  216,303 bytes). The top row pairs the complete side source photo and a
+  same-sized side render. The bottom row shows front and rear three-quarter
+  views at 15 m and car height. All views came from the exported GLB imported
+  into an empty scene, with other meshes hidden and the Standard view transform.
 
 ## Checks
 
-- Blender export, GLB import into an empty scene, and the three 1200 px or
-  wider review renders: passed. Render view transform: Standard.
-- `node tools/test-blender-output.mjs`: passed, 304 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed; no placement faults.
-- Browser and in-game look checks were not run here. Claude should review the
-  side comparison, sag, cut pipe ends, wheel fit, tow connection and both
-  three-quarter views. A pale edge remains on one trailer wheel in the sheet.
-- No changed test assertions. The candidate maximum increased by exactly
-  1 MiB; no threshold was reduced. No race fingerprints apply.
+- Blender export and GLB import/render: passed. Readback: 33,340 triangles;
+  3,003,984 bytes.
+- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement clean.
+- Browser and in-game look checks were not run here. Claude should judge the
+  goggle visibility from the front three-quarter view, cab and tank seams,
+  tarp edges, wheel fit, frame rails and rear cap. The goggles read clearly
+  head-on, but they are partly lost at the three-quarter angle. White photo
+  edges and seams remain around the cab and tank ends in the review renders.
+- No lane tier or build was run; the art brief reserves those checks for Claude.
 
-## Readback
+## Self-review
 
-- GLB: 2,339,944 bytes.
-- Triangles: 25,444, independently counted from the GLB indices.
+Would a child laugh? **Yes, head-on: the oversized painted goggles are clear
+and silly.** From the submitted three-quarter angles they are less obvious.
+Does it hold together from three-quarters? **It reads as one tanker with its
+load, cab and wheels, but visible photo edges and seams keep the model from
+looking fully clean.** Claude should make the final art call.
 
 ## Removed
 
-- Removed round-4 sheet and review when replacing them with round 5.
-- Removed the Sal-photo downscales from the export recipe.
-- No other prop, model or behavior was removed.
+- No tracked source files or earlier round sheets were removed.
+- Temporary renders, debug captures, and test logs from this lane are deleted
+  after recording this note.
