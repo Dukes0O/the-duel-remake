@@ -396,10 +396,10 @@ def look_render():
         copies[source].location = offset
     for i in range(40):
         source = people[i % len(people)]
-        clone_actor(source, ((i % 8 - 3.5) * 1.0, (i // 8) * 1.0, 0))
-    bpy.ops.object.camera_add(location=(0, -60, 60))
+        clone_actor(source, ((i % 8 - 3.5) * 4.0, (i // 8) * 4.0, 0))
+    bpy.ops.object.camera_add(location=(0, -42.4, 42.4))
     camera = bpy.context.object
-    camera.data.lens = 55
+    camera.data.lens = 65
     camera.rotation_euler = (Vector((0, 0, 0)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     scene.camera = camera
     scene.render.resolution_x = 1400
