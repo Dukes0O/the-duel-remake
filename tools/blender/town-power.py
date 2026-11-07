@@ -26,7 +26,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Mesh, Photo, lathe, slab, tidy, trace
-from hull_model import View, carve_hull
+from hull_model import View, occupancy, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -447,8 +447,10 @@ fuel_views=[
     View('overhead',fuel_top,[(8,8),(760,8),(8,500),(760,500)],overhead_pick,(0,1,0),
          solid=photo_window(fuel_top,(42,38,758,450)),grey=26,tolerance=24),
 ]
+fuel_bounds=((-1.30,1.30),(.72,3.32),(-2.72,2.72))
+fuel_solid,fuel_xs,fuel_ys,fuel_zs=occupancy(fuel_bounds,.10,[view.covers for view in fuel_views])
 fuel_body=carve_hull('fuel-depot:photo-carved storage tank',fuel_views,fuel_mats,
-    ((-1.30,1.30),(.72,3.32),(-2.72,2.72)),.10,7200)
+    fuel_solid,fuel_xs,fuel_ys,fuel_zs,.10,7200)
 fuel_body.parent=fuel
 town.cube('fuel depot bund floor',(0,.16,0),(6.9,.32,5.8),mat['cracked-concrete'],.08).parent=fuel
 for z in (-2.72,2.72):
