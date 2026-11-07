@@ -424,12 +424,17 @@ fuel_photos={name:Photo(textures/f'fuel-{name}.jpg') for name in ('side','front'
 fuel_side,fuel_front,fuel_rear,fuel_top=(fuel_photos[name] for name in ('side','front','rear','overhead'))
 for photo in fuel_photos.values(): darken_photo(photo,(.78,.72,.62))
 fuel_mats={name:photo.material(.90) for name,photo in fuel_photos.items()}
-def photo_window(photo, rect):
-    x0,y0,x1,y1=rect
-    def trim(mask):
-        keep=np.zeros_like(mask);keep[y0:y1,x0:x1]=True
-        return mask & keep
-    return trim
+def capsule_window(photo,cx,cy,rx,ry):
+    yy,xx=np.ogrid[:photo.h,:photo.w]
+    left=cx-rx+ry;right=cx+rx-ry
+    silhouette=(np.abs(yy-cy)<=ry)&(xx>=left)&(xx<=right)
+    silhouette|=((xx-left)**2+(yy-cy)**2<=ry**2)
+    silhouette|=((xx-right)**2+(yy-cy)**2<=ry**2)
+    return lambda mask: mask & silhouette
+def ellipse_window(photo,cx,cy,rx,ry):
+    yy,xx=np.ogrid[:photo.h,:photo.w]
+    silhouette=((xx-cx)/rx)**2+((yy-cy)/ry)**2<=1
+    return lambda mask: mask & silhouette
 def side_pick(x,y,z):
     return 938-z*257, 717-(y-.75)*240
 def front_pick(x,y,z):
@@ -440,13 +445,13 @@ def overhead_pick(x,y,z):
     return 938-z*264, 416+x*249
 fuel_views=[
     View('side',fuel_side,[(8,8),(1873,8),(8,828),(1873,828)],side_pick,(1,0,0),
-         solid=photo_window(fuel_side,(74,128,1804,724)),grey=26,tolerance=24),
+         solid=capsule_window(fuel_side,938,431,848,286),grey=26,tolerance=24),
     View('front',fuel_front,[(8,8),(1528,8),(8,1016),(1528,1016)],front_pick,(0,0,-1),
-         solid=photo_window(fuel_front,(300,78,1232,1010)),grey=26,tolerance=24),
+         solid=ellipse_window(fuel_front,764,576,436,410),grey=26,tolerance=24),
     View('rear',fuel_rear,[(8,8),(1528,8),(8,1016),(1528,1016)],rear_pick,(0,0,1),
-         solid=photo_window(fuel_rear,(300,72,1240,1014)),grey=26,tolerance=24),
+         solid=ellipse_window(fuel_rear,767,555,440,435),grey=26,tolerance=24),
     View('overhead',fuel_top,[(8,8),(1873,8),(8,828),(1873,828)],overhead_pick,(0,1,0),
-         solid=photo_window(fuel_top,(48,104,1832,724)),grey=26,tolerance=24),
+         solid=capsule_window(fuel_top,938,416,873,293),grey=26,tolerance=24),
 ]
 fuel_bounds=((-1.17,1.17),(.75,3.10),(-3.30,3.30))
 fuel_solid,fuel_xs,fuel_ys,fuel_zs=occupancy(fuel_bounds,.10,[view.covers for view in fuel_views])
