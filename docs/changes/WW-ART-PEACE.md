@@ -50,3 +50,11 @@ The roadside view reads as a parked caravan with someone in its window. Close up
 ### Removed
 
 Replaced the initial empty export with the measured caravan model. Temporary grids, masks, renders, Blender file and test logs are removed before handoff.
+
+## Mirage's caravan, corrected by Claude
+
+The ground, wheel, tow bar and end-photo numbers were measured again on a grid. The tow bar and jack are now one traced picture from the side photo, on two rusty arms. `mirage-caravan` and the three pieces still to come live in `peace-camp.glb`, so the scene that places them must load that file.
+
+### Removed
+
+The primitive dummy hidden inside the body, the primitive jack and the pale tow bar traced from the overhead photo.

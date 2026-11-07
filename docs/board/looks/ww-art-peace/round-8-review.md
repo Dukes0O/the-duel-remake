@@ -1,7 +1,7 @@
-# WW-ART-PEACE round 8 review
+# WW-ART-PEACE round 8: Mirage's caravan
 
-The side view reads as a tired, parked caravan. The hat and face sit in the window and read as a dummy up close. The end views and three-quarter views show a rounded shell, wheels and a separate hitch.
+Claude's verdict: **passes.** The photos on the left and the model on the right of the top two rows match closely, and the caravan holds together from both three-quarter views. The dummy in the big hat is plain at the window and would pass for a person from the road.
 
-The traced hitch is too pale in the render, and its far end is cropped in the side comparison. The front wheels are less clear than the side wheel. These are visible limits for Claude to judge.
+Claude corrected the job's measurements, as it had taken the body's sill for the ground, which shrank the wheel and sank it into the arch. The wheel, tow bar and small jack wheel now come from their true places in the side photo.
 
-**Roadside verdict:** Yes, I think a child could believe someone is sitting inside from the road. Close up, the painted X eyes and stiff figure make the dummy clear.
+The body's surface shows slight ripples, which suit an old tin caravan and were left as they are.
