@@ -736,7 +736,7 @@ deck_table = {
                 (0, 72, 64, 459), (958, 72, 1024, 459)],
     },
     'grey': 26, 'tolerance': 32, 'bleed_tolerance': 28,
-    'voxel': .09, 'target': 4000,
+    'voxel': .10, 'target': 4000,
     'mask_dir': str(render / 'masks'),
 }
 
@@ -818,7 +818,7 @@ home_table = {
     'cut': {'top': [(0, 0, 1024, 52), (0, 460, 1024, 512),
                     (0, 52, 28, 460), (996, 52, 1024, 460)]},
     'grey': 26, 'tolerance': 34, 'bleed_tolerance': 28,
-    'voxel': .065, 'target': 2000,
+    'voxel': .07, 'target': 1600,
     'mask_dir': str(render / 'masks'),
 }
 home_source = carve_object('deck-town:home-source', textures, home_table)
@@ -988,12 +988,12 @@ def show_deck_town_only():
 def show_deck_only():
     for node in scene.objects:
         if node.type == 'MESH':
-            node.hide_render = node.name != 'deck-town:deck' and node.name != ground.name
+            node.hide_render = not (node.name == 'deck-town:deck' or node.name.startswith('deck-town:rail-')) and node.name != ground.name
 
 def show_home_one_only():
     for node in scene.objects:
         if node.type == 'MESH':
-            node.hide_render = node.name != 'deck-town:home-1:body' and node.name != ground.name
+            node.hide_render = node.name not in ('deck-town:home-1:body', 'deck-town:home-1:roof') and node.name != ground.name
 
 show_deck_town_only()
 deck_centre = (0, DECK_Y + 1.5, 0)
