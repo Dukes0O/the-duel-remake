@@ -304,7 +304,7 @@ for vertex in wall.data.vertices:
     px,py,pz=vertex.co.copy()
     vertex.co=(py,-px,pz)
 wall.data.update()
-wall.location=town.game_vector((0,0,-2.72));attach(wall)
+wall.location=town.game_vector((0,-.158,-2.72));attach(wall)
 # Six weathered timber columns run from ground to the eaves, joined by purlins.
 for ix,x in enumerate((-6.45,0,6.45)):
     for iz,z in enumerate((-2.72,2.72)):
@@ -336,7 +336,8 @@ for side in (-1,1):
         py0,py1=(92,451) if side<0 else (451,812)
         uvs=[roof_photo.uv(px0,py0),roof_photo.uv(px1,py0),roof_photo.uv(px1,py1),roof_photo.uv(px0,py1)]
         roof.face(pts,uvs,'photo',(0,1,0))
-        roof.face(list(reversed(pts)),[(.02,.02)]*4,'tin',(0,-1,0))
+        underside=[(x,y-.025,z) for x,y,z in pts]
+        roof.face(list(reversed(underside)),[(.02,.02)]*4,'tin',(0,-1,0))
 roof_obj=roof.finish('guard-post:tin-roof',{'photo':roof_photo.material(),'tin':materials['galvanised-tin']})
 attach(roof_obj)
 # A ridge cap and ragged eave edges are physical sheet-metal strips.
@@ -695,9 +696,8 @@ for obj in guard_meshes:
     if not touches: raise RuntimeError(f'{obj.name} touches neither ground nor another piece')
 print('EXPORTED GUARD-POST CONTACT CHECK: every part touches ground or another piece and stays in the footprint.')
 all_box=bounds_of(guard_meshes)
-lo=Vector((all_box['min'][0],all_box['min'][2],-all_box['max'][1]))
-hi=Vector((all_box['max'][0],all_box['max'][2],-all_box['min'][1]))
-centre=Vector(((lo.x+hi.x)/2,(lo.y+hi.y)/2,(lo.z+hi.z)/2))
+render_points=[obj.matrix_world @ Vector(c) for obj in guard_meshes for c in obj.bound_box]
+centre=Vector(tuple((min(point[i] for point in render_points)+max(point[i] for point in render_points))/2 for i in range(3)))
 # X/Y/Z here are Blender coordinates; the imported GLB is Z-up in Blender.
 def guard_shot(name,offset,ortho):
     data=bpy.data.cameras.new('guard-post-'+name);cam=bpy.data.objects.new('guard-post-'+name,data);scene.collection.objects.link(cam)
