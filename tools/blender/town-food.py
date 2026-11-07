@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-12'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-13'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-12.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-13.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -42,14 +42,14 @@ mat = town.make_materials({
 # Town base darkens rusted steel for general utility work. This family uses
 # the unfiltered food-specific photograph to keep worn red-brown oxide legible.
 steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_existing=False)
-steel_photo.scale(192, 192); steel_photo.file_format='JPEG'; steel_photo.pack()
+steel_photo.scale(128, 128); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
 # Compact utility swatches stay small. The source photographs below keep enough
 # detail for their mapped pipework, boards, patched canvas and market structure.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
-    image.scale(192, 192)
+    image.scale(128, 128)
     image.pack()
 
 def simple(name, color, roughness=.88, metallic=0):
@@ -371,88 +371,37 @@ lamp_bsdf=mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
 if lamp_bsdf.inputs.get('Emission Color'):
     lamp_bsdf.inputs['Emission Color'].default_value=(1.0,.22,.025,1)
     lamp_bsdf.inputs['Emission Strength'].default_value=1.5
-# TOWN-ART-FOOD: greenhouse frame and pane shapes follow four generated orthographic references.
+# TOWN-ART-FOOD greenhouse round 13: one opaque photo-carved shell wears all
+# four views. The door is 2 m high; each end table states its ridge row.
 add_building('greenhouse',(-16,0,-14))
 ground_clutter('greenhouse',0,0)
-# The three-cell by two-cell plot is 24 x 16 m. Keep a half-metre margin.
-GX,GZ,GY=11.4,7.4,8.7
-side_photo=Photo(textures/'greenhouse-side.jpg')
-front_photo=Photo(textures/'greenhouse-front.jpg')
-rear_photo=Photo(textures/'greenhouse-rear.jpg')
-top_photo=Photo(textures/'greenhouse-top.jpg')
-# Salvaged pipe skeleton: the walls stay open between the independent glass panels.
-for x in (-11.2,-8.0,-4.8,-1.6,1.6,4.8,8.0,11.2):
-    for z in (-7.0,7.0): beam(f'greenhouse:wall-post-{x}-{z}',(x,.05,z),(x,4.65,z),.13,mat['greenhouse-steel'])
-    beam(f'greenhouse:roof-rafter-{x}',(x,4.55,-7.0),(x,GY,0),.15,mat['greenhouse-steel'])
-    beam(f'greenhouse:roof-rafter-back-{x}',(x,4.55,7.0),(x,GY,0),.15,mat['greenhouse-steel'])
-for y in (.22,1.8,3.45,4.55):
-    for z in (-7.0,7.0): beam(f'greenhouse:wall-rail-{y}-{z}',(-11.2,y,z),(11.2,y,z),.11,mat['greenhouse-steel'])
-beam('greenhouse:roof-ridge',(-11.2,GY,0),(11.2,GY,0),.16,mat['greenhouse-steel'])
-for side in (-1,1):
-    for x in (-11.2,11.2):
-        beam(f'greenhouse:end-post-{side}-{x}',(x,.05,side*7),(x,4.6,side*7),.15,mat['greenhouse-steel'])
-    beam(f'greenhouse:eave-{side}',(-11.2,4.55,side*7),(11.2,4.55,side*7),.14,mat['greenhouse-steel'])
-# Each pane is a traced slab with a real edge; gaps between slabs preserve ventilation.
-def traced_pane(name, photo, rect, transform, thickness=.07, material='glass'):
-    x0,y0,x1,y1=rect
-    mask=np.zeros((photo.h,photo.w),dtype=bool)
-    inset=6;radius=18
-    yy,xx=np.ogrid[y0+inset:y1-inset,x0+inset:x1-inset]
-    dx=np.maximum(np.abs(xx-(x0+x1)/2)-((x1-x0)/2-inset-radius),0)
-    dy=np.maximum(np.abs(yy-(y0+y1)/2)-((y1-y0)/2-inset-radius),0)
-    mask[y0+inset:y1-inset,x0+inset:x1-inset]=(dx*dx+dy*dy<=radius*radius)
-    loops=trace(mask,rect,tolerance=2,min_area=30)
-    pane=PhotoMesh();slab(pane,'photo',photo,loops,transform,-thickness/2,thickness/2)
-    return keep(pane.finish(name,{'photo':mat['greenhouse-glass']}))
-# Measured pane banks along both long walls. The images stay references; the slab UVs
-# show the generated glass texture only inside each separate windshield-shaped piece.
-for zsign in (-1,1):
-    for i,(px0,px1) in enumerate(((45,230),(255,440),(465,650),(675,860),(885,1010))):
-        def wall_map(px,py,d,zsign=zsign):
-            return (-11.05+(px-28)/970*22.1, .08+(540-py)/253*4.45, zsign*(6.87+d))
-        traced_pane(f'greenhouse:{"road" if zsign<0 else "far"}-windscreen-{i+1}',side_photo,
-                    (px0,295,px1,525),wall_map,.06,'greenhouse-glass')
-# Close both gable ends with a steel outline and separate photo-traced glass panes.
-for xsign,photo,label in ((-1,front_photo,'front-gable'),(1,rear_photo,'rear-gable')):
-    for z in (-7.0,-3.5,0,3.5,7.0):
-        top=GY-abs(z)/7.0*(GY-4.55)
-        beam(f'greenhouse:{label}-upright-{z}',(xsign*11.12,.05,z),(xsign*11.12,top,z),.12,mat['greenhouse-steel'])
-    for y in (1.8,3.45):
-        beam(f'greenhouse:{label}-crossbar-{y}',(xsign*11.12,y,-7.0),(xsign*11.12,y,7.0),.11,mat['greenhouse-steel'])
-    beam(f'greenhouse:{label}-left-roof-bar',(xsign*11.12,4.55,-7),(xsign*11.12,GY,0),.13,mat['greenhouse-steel'])
-    beam(f'greenhouse:{label}-right-roof-bar',(xsign*11.12,4.55,7),(xsign*11.12,GY,0),.13,mat['greenhouse-steel'])
-    def gable_map(px,py,d,xsign=xsign):
-        return (xsign*(11.12+d),max(0,(638-py)/613*GY),7.0-(px-93)/836*14.0)
-    for i,rect in enumerate(((160,350,400,620),(410,350,610,620),(620,350,850,620),
-                             (250,230,435,345),(590,230,790,345),(470,55,560,220))):
-        x0,y0,x1,y1=rect;mask=np.zeros((photo.h,photo.w),dtype=bool)
-        mask[y0:y1,x0:x1]=True
-        loops=trace(mask,rect,tolerance=2,min_area=25)
-        gable=PhotoMesh();slab(gable,'glass',photo,loops,gable_map,-.035,.035)
-        keep(gable.finish(f'greenhouse:{label}-trace-pane-{i+1}',{'glass':mat['greenhouse-glass']}))
-# Roof windshields sit as their own traced, slightly tinted pieces on the two roof pitches.
-for pitch in (-1,1):
-    for i in range(7):
-        x0=-11.1+i*3.2; x1=x0+3.2
-        pane=box(f'greenhouse:roof-windscreen-{pitch}-{i+1}',((x0+x1)/2,6.55,pitch*3.45),(3.2,.055,6.7),mat['greenhouse-glass'],.02)
-        pane.rotation_euler[0]=pitch*.55
-# Pale, sagging plastic patches are separate sheets. Trace each outline from the generated side reference.
-for zsign in (-1,1):
-    def patch_map(px,py,d,zsign=zsign):
-        return (-11.05+(px-28)/970*22.1,.08+(540-py)/253*4.45,zsign*(7.05+d))
-    for n,rect in enumerate(((35,315,166,405),(545,320,660,410),(855,405,1005,515))):
-        x0,y0,x1,y1=rect;mask=np.zeros((side_photo.h,side_photo.w),dtype=bool)
-        mask[y0:y1,x0:x1]=True
-        loops=trace(mask,rect,tolerance=3,min_area=50)
-        plastic_mesh=PhotoMesh();slab(plastic_mesh,'sheet',side_photo,loops,patch_map,-.012,.012)
-        keep(plastic_mesh.finish(f'greenhouse:{"road" if zsign<0 else "far"}-plastic-sheet-{n+1}',{'sheet':mat['greenhouse-plastic']}))
-# Three raised soil beds and leafy plants are distinct ground-standing pieces.
-for row,z in enumerate((-4.2,0,4.2),1):
-    box(f'greenhouse:growing-row-{row}:soil-bed',(0,.20,z),(20.4,.34,1.25),mat['sand'],.14)
-    box(f'greenhouse:growing-row-{row}:green-bed',(0,.51,z),(19.2,.40,.72),mat['leaf'],.16)
-    for j in range(5):
-        x=-8.0+j*4.0
-        sphere(f'greenhouse:growing-row-{row}:plant-clump-{j+1}',(x,.76,z),(.72,.52,.56),mat['leaf'],6,4)
+GREENHOUSE = {
+    # Grid measurements: side span 18..1008, ground 640; door is about 305 px
+    # tall and is set to 2 m. The 3x2-cell plot remains a clear 24x16 m margin.
+    # The GLB camera adapter reverses the end labels; map each road-end photo
+    # to the face seen from that camera after export/import.
+    'photos': {'side': 'greenhouse-side.jpg', 'front': 'greenhouse-rear.jpg',
+               'rear': 'greenhouse-front.jpg', 'top': 'greenhouse-top.jpg'},
+    # The side elevation's 400 px body height and the end door's 305 px / 2 m
+    # set one scale, so the full side span measures about 10.1 m.
+    'length': 990 * (620 / 616) * (2 / 305),
+    'width': 840 * (2 / 305), 'height': 620 * (2 / 305),
+    'side': {'start': 18, 'end': 1008, 'ground': 540},
+    'front': {'centre': 512, 'ground': 640, 'top': 24},
+    'rear': {'centre': 512, 'ground': 640, 'top': 24},
+    'top': {'front': 56, 'rear': 968, 'centre': 326, 'along': 'x',
+            'x_scale': (840 * (2 / 305)) / (640 - 12)},
+    'voxel': .055, 'target': 4500, 'grey': 26, 'tolerance': 40,
+    'bleed_tolerance': 48,
+    'mask_dir': str(evidence / 'masks'),
+}
+greenhouse_body=carve_object('greenhouse:body',textures,GREENHOUSE)
+keep(greenhouse_body)
+# Masking and UVs use the full grid measured source; pack a smaller in-memory
+# material copy to stay within the family's shared embedded texture budget.
+for greenhouse_photo in GREENHOUSE['_photos'].values():
+    greenhouse_photo.image.scale(256,171)
+    greenhouse_photo.image.pack()
 
 # Record each piece in building-local metres. AABB contact is checked against
 # the soil/ground or another greenhouse piece; no panel or plant may float.
@@ -1301,16 +1250,16 @@ for light_name,offset,power,size in (
     ('open aisle bounce',Vector((0,5,4)),600,10)):
     light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
     light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
-greenhouse_dir=root/'.evidence/2026-11-07/town-art-food/round-11'
+greenhouse_dir=root/'.evidence/2026-11-07/town-art-food/round-13'
 greenhouse_dir.mkdir(parents=True,exist_ok=True)
 evidence=greenhouse_dir
 scene.render.resolution_x=1000;scene.render.resolution_y=700
-render_match('greenhouse-side',target+Vector((0,31,0)),Vector((0,0,1)),28)
-render_match('greenhouse-front',target+Vector((-31,0,0)),Vector((0,0,1)),19)
-render_match('greenhouse-rear',target+Vector((31,0,0)),Vector((0,0,1)),19)
-render_match('greenhouse-above',target+Vector((0,0,31)),Vector((0,1,0)),28)
-render_match('greenhouse-three-left',target+Vector((-20,25,17)),Vector((0,0,1)),30)
-render_match('greenhouse-three-right',target+Vector((20,25,17)),Vector((0,0,1)),30)
-render_match('greenhouse-mayor',target+Vector((-35,35,35)),Vector((0,0,1)),38)
+render_match('greenhouse-side',target+Vector((15,0,0)),Vector((0,0,1)),8)
+render_match('greenhouse-front',target+Vector((0,15,0)),Vector((0,0,1)),5.5)
+render_match('greenhouse-rear',target+Vector((0,-15,0)),Vector((0,0,1)),5.5)
+render_match('greenhouse-above',target+Vector((0,0,15)),Vector((1,0,0)),8.5)
+render_match('greenhouse-three-left',target+Vector((-9,-10,7)),Vector((0,0,1)),10.5)
+render_match('greenhouse-three-right',target+Vector((9,-10,7)),Vector((0,0,1)),10.5)
+render_match('greenhouse-mayor',target+Vector((-12,-13,14)),Vector((0,0,1)),15)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),
                   'evidence':str(evidence),'market_pieces':market_bounds}))
