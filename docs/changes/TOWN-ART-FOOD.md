@@ -86,3 +86,19 @@
 - Replaced the market hall's empty-bay carve supports and flat stall strips with the measured steel frame and deep stall modules.
 - Deleted the superseded `market-round-1.jpg` and `market-round-1-review.md`; kept `round-6.jpg`.
 - Removed this round's review renders, masks, Blender file and test logs after preparing the submitted sheet and model.
+
+## Canteen round 8
+
+- Replaced the primitive canteen bus with a rounded body carved from measured side, front, rear and true overhead roof photos. The earlier slanted roof reference showed side windows; the true overhead reference removes that roof distortion.
+- Added the road-side hatch recess, serving counter, patched canvas awning, wheels and benches as separate parts. Reduced shell and wheel detail to keep the 2 by 1 plot within its 5,000-triangle budget.
+- Blender 4.5.13 exported and reimported the family GLB at 1,897,688 bytes. The canteen is 3,352 triangles; the family has 28,675 triangles. The round-8 sheet is 141,634 bytes.
+- `node tools/test-blender-output.mjs`: passed 361 checks, 0 failed on the final run. Its first run caught the canteen photos exceeding the per-image 256 px bound; the recipe now packs 256 px copies and the rerun passed.
+- `node tools/test-repo-hygiene.mjs`: passed. `node tools/test-review-evidence.mjs`: failed 1 of 9 checks on both runs because spawning `ffmpeg` returned `EPERM`; the review-JPG publication check passed. No assertions changed.
+- No lane tier, build, browser check or in-game look check ran. Claude should inspect the body match, the awning and counter attachment, the wheel wells and the roof from above on the round-8 sheet.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
+
+### Canteen round 8 removed
+
+- Replaced the previous primitive bus body, flat canvas board and oversized photo-carved shell with the measured hull and separate service parts.
+- Removed the unused four-view source collage after retaining its individual side, front and rear views and the corrected overhead view.
+- Removed the scratch sheet builder, raw render and mask captures, temporary Blender outputs and test logs after recording the review evidence.

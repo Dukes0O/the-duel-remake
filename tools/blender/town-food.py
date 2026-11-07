@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-7'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-8'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-7.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-8.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
 from photo_carve import carve_object
+from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -84,6 +85,7 @@ mat['rubber'] = simple('Town / dusty tire rubber', (.075, .078, .071), .95)
 mat['glass'] = simple('Town / dirty greenhouse glass', (.22, .28, .245), .32, .05)
 mat['brick'] = mat['salvaged-brick']
 mat['letter-paint'] = simple('Town / muted ochre hand lettering', (.42, .29, .15), .92)
+mat['canteen-canvas'] = simple('Town / soot-dulled serving canvas', (.09, .055, .028), .96)
 
 family = bpy.data.objects.new('town-food', None)
 bpy.context.collection.objects.link(family)
@@ -515,60 +517,63 @@ shopfront('shopfront-a',(20,0,12),'FOOD')
 shopfront('shopfront-b',(28,0,12),'TOOLS')
 shopfront('shopfront-c',(36,0,12),'FIX-IT')
 
-# Bus canteen: bent sheet-metal shell with rounded front and wheel arches.
+# Bus canteen: carve the shell from one measured four-view reference. The side
+# photo contains the windows and sheet-metal patches, while its serving hatch,
+# counter and canvas are separate physical pieces below.
 add_building('canteen',(8,0,12))
-# Four mounted wheels establish the real bus stance; keep their mesh light
-# enough for the two-by-one town plot budget.
-# A continuous curved roofline and rounded bonnet make this read as a bus body.
-xs=(-3.25,-2.85,-1.95,1.95,2.85,3.25)
-roofline=((1.35,1.60),(2.25,2.42),(2.65,2.78),(2.65,2.78),(2.25,2.42),(1.35,1.60))
-for zi,z in enumerate((-1.50,1.50)):
-    verts=[]
-    for x,(low,high) in zip(xs,roofline):
-        verts.extend(((x,low,z),(x,high,z)))
-    faces=[]
-    for i in range(len(xs)-1): faces.append((i*2,i*2+1,i*2+3,i*2+2))
-    panel=mesh_object(f'canteen:curved-bus-side-{zi+1}',verts,faces,mat['rusted-steel'])
-    for i,x in enumerate(xs): beam(f'canteen:side-pillar-{zi+1}-{i+1}',(x,roofline[i][0],z),(x,roofline[i][1],z),.095,mat['rusted-steel'])
-for z in (-1.50,1.50): beam(f'canteen:roof-rim-{z}',(-3.15,2.55,z),(3.15,2.55,z),.09,mat['galvanised-tin'])
-# The bus has a real driver's end at -X: a broad split windscreen, destination
-# board, lamps, grille and bumper. These marks make the salvaged vehicle read
-# as a bus even when the diner counters are viewed from the road.
-box('canteen:front-windscreen-left',(-3.285,2.08,-.48),(.045,.77,.78),mat['glass'],.045)
-box('canteen:front-windscreen-right',(-3.285,2.08,.48),(.045,.77,.78),mat['glass'],.045)
-beam('canteen:front-windscreen-divider',(-3.32,1.67,0),(-3.32,2.49,0),.06,mat['rusted-steel'])
-box('canteen:destination-board',(-3.30,2.60,0),(.10,.22,.88),mat['weathered-plank'],.025)
-box('canteen:front-grille',(-3.30,.98,0),(.06,.38,.66),mat['iron-dark'],.025)
-for z in (-.98,.98):
-    sphere(f'canteen:headlamp-{z}',(-3.34,1.15,z),(.10,.15,.16),mat['faded-hand-paint'],10,6)
-    beam(f'canteen:front-bumper-arm-{z}',(-3.18,.53,z),(-3.50,.53,z),.10,mat['rusted-steel'])
-for x in (-2.45,2.45):
-    for z in (-1.48,1.48):
-        bpy.ops.mesh.primitive_torus_add(major_segments=12,minor_segments=6,major_radius=.43,minor_radius=.15,
-                                         location=town.game_vector((x,.58,z)))
-        wheel=bpy.context.object;wheel.name=f'canteen:bus-wheel-{x}-{z}';wheel.data.materials.append(mat['rubber']);keep(wheel)
-for i,x in enumerate((-2.35,-1.35,-.35,.65,1.65,2.48),1):
-    box(f'canteen:dark-window-{i}',(x,2.02,-1.535),(.78,.86,.04),mat['glass'],.07)
-    box(f'canteen:window-frame-{i}',(x,2.02,-1.565),(.84,.92,.035),mat['weathered-plank'],.05)
-    box(f'canteen:far-side-window-{i}',(x,2.02,1.535),(.78,.86,.04),mat['glass'],.07)
-    box(f'canteen:far-side-window-frame-{i}',(x,2.02,1.565),(.84,.92,.035),mat['weathered-plank'],.05)
-box('canteen:serving-apron',(0,1.39,-1.57),(3.7,.20,.07),mat['faded-hand-paint'],.04)
-box('canteen:serving-counter',(0,1.25,-1.95),(3.55,.13,.68),mat['weathered-plank'],.04)
-tin_roof('canteen:roof-panels',0,2.67,0,6.2,3.05,.025)
-for x in (-2.6,-1.3,0,1.3,2.6):
-    beam(f'canteen:serving-awning-arm-{x}',(x,1.58,-1.55),(x,2.18,-2.10),.055,mat['rusted-steel'])
-box('canteen:canvas-serving-awning',(0,2.16,-1.94),(5.6,.09,.82),mat['patched-canvas'],.06)
-box('canteen:far-side-serving-apron',(0,1.39,1.57),(3.7,.20,.07),mat['faded-hand-paint'],.04)
-box('canteen:far-side-serving-counter',(0,1.25,1.95),(3.55,.13,.68),mat['weathered-plank'],.04)
-box('canteen:far-side-canvas-awning',(0,2.16,1.94),(5.6,.09,.82),mat['patched-canvas'],.06)
-for x in (-1.2,1.2):
-    for z in (-.7,.7): beam(f'canteen:diner-table-leg-{x}-{z}',(x,.12,z),(x,.74,z),.055,mat['rusted-steel'])
-box('canteen:interior-dining-table',(0,.78,.52),(2.5,.14,.76),mat['weathered-plank'],.04)
-for z in (-1.05,.85):
-    box(f'canteen:bench-{z}',(0,.5,z),(2.45,.12,.38),mat['weathered-plank'],.04)
-    for x in (-.82,.82): beam(f'canteen:stool-leg-{z}-{x}',(x,.10,z),(x,.44,z),.09,mat['rusted-steel'])
-for x in (-1.8,1.8): beam(f'canteen:front-bumper-{x}',(x,.47,-1.57),(x,.47,-1.95),.085,mat['rusted-steel'])
-sign('canteen',(0,2.42,-1.63),'CANTEEN',2.0)
+CAN_LEN, CAN_W, CAN_H = 6.4, 2.48, 2.68
+CAN_START, CAN_END, CAN_GROUND, CAN_TOP = 84, 1116, 516, 83
+CAN_SCALE = CAN_LEN / (CAN_END-CAN_START)
+CAN_WHEEL_CENTRES = (300, 900)
+CAN_WHEEL_PY, CAN_WHEEL_RPX = 430, 82
+CAN_WHEEL_R = CAN_WHEEL_RPX * CAN_SCALE
+CAN_AXLES = [(-CAN_LEN/2 + (px-CAN_START)*CAN_SCALE, px) for px in CAN_WHEEL_CENTRES]
+canteen_table = {
+    'photos': {'side':'town-food-canteen-side.jpg','front':'town-food-canteen-front.jpg',
+               'rear':'town-food-canteen-rear.jpg','top':'town-food-canteen-top.jpg'},
+    'length':CAN_LEN,'width':CAN_W,'height':CAN_H,
+    'side':{'start':CAN_START,'end':CAN_END,'ground':CAN_GROUND},
+    'front':{'centre':600,'ground':516,'top':83},
+    'rear':{'centre':600,'ground':516,'top':83},
+    'top':{'front':58,'rear':1988,'centre':512,'along':'x','x_scale':CAN_W/432},
+    'wheels':[(z,CAN_WHEEL_R,CAN_W/2-.25) for z,_ in CAN_AXLES],
+    'underside':.08,'round':2,'voxel':.045,'target':2200,
+    'grey':26,'tolerance':38,'bleed_tolerance':44,
+    'mask_dir':str(evidence/'canteen-masks'),
+}
+canteen_body=carve_object('canteen:body',textures,canteen_table)
+keep(canteen_body)
+canteen_side=canteen_table['_photos']['side']
+canteen_front=canteen_table['_photos']['front']
+for axle_index,(axle_z,side_px) in enumerate(CAN_AXLES,1):
+    for hand in (-1,1):
+        wheel_mesh=PhotoMesh()
+        tyre(wheel_mesh,'side',canteen_side,side_px,CAN_WHEEL_PY,CAN_WHEEL_RPX,CAN_WHEEL_R,.17,
+             'front',canteen_front,600,34,478,514,sides=24)
+        wheel=wheel_mesh.finish(f'canteen:wheel-{axle_index}-{"road" if hand<0 else "far"}',
+                                {'side':canteen_side.material(),'front':canteen_front.material()})
+        wheel.location=town.game_vector((hand*(CAN_W/2-.17),CAN_WHEEL_R,axle_z))
+        keep(wheel)
+
+# The road-facing serving hatch is a dark recess under a bent canvas awning;
+# the inside keeps a narrow shelf and two visible benches.
+box('canteen:serving-recess',(-CAN_W/2-.012,1.46,0),(.035,.66,2.15),mat['iron-dark'],.025)
+box('canteen:serving-counter',(-1.65,1.08,0),(.48,.13,2.55),mat['weathered-plank'],.035)
+awning_vertices=[]
+for z in (-1.48,-.74,0,.74,1.48):
+    for x in range(5):
+        t=x/4
+        y=1.96-.24*t + (.045 if x in (1,3) else 0) + (.025 if z in (-.74,.74) else 0)
+        awning_vertices.append((-CAN_W/2 + (-2.12+CAN_W/2)*t,y,z))
+awning_faces=[]
+for row in range(4):
+    for col in range(4):
+        a=row*5+col
+        awning_faces.append((a,a+1,a+6,a+5))
+mesh_object('canteen:patched-serving-awning',awning_vertices,awning_faces,mat['canteen-canvas'])
+for x in (.30,1.00):
+    box(f'canteen:bench-{x}',(x,.48,0),(.38,.11,2.15),mat['weathered-plank'],.03)
+    for z in (-.82,.82): beam(f'canteen:bench-leg-{x}-{z}',(x,.04,z),(x,.43,z),.055,mat['rusted-steel'])
 
 # Market hall: keep the accepted patchwork roof, shorten the hall to its gable
 # span, and build the open steel frame, store, floor and two real stall rows.
@@ -731,7 +736,7 @@ for material in bpy.data.materials:
 for photo in (front,left,overhead,wall_photo):
     photo.image.scale(256,192)
     photo.image.pack()
-for photo in (*market_photos.values(), stall_photo):
+for photo in (*market_photos.values(), stall_photo, *canteen_table['_photos'].values()):
     ratio = photo.w / photo.h
     if ratio >= 1:
         size = (256, round(256 / ratio))
@@ -886,5 +891,29 @@ render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
 render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
 render_match('market-mayor',target+Vector((0,19,13)),Vector((0,0,1)),16)
+canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
+        obj.hide_render=not under(obj,canteen_root)
+c_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,canteen_root)]
+c_corners=[obj.matrix_world @ Vector(corner) for obj in c_members for corner in obj.bound_box]
+c_lo=Vector((min(p.x for p in c_corners),min(p.y for p in c_corners),min(p.z for p in c_corners)))
+c_hi=Vector((max(p.x for p in c_corners),max(p.y for p in c_corners),max(p.z for p in c_corners)))
+target=(c_lo+c_hi)*.5
+cground_data=bpy.data.meshes.new('canteen review ground mesh')
+cground_data.from_pydata(((c_lo.x-20,c_lo.y-20,c_lo.z-.08),(c_hi.x+20,c_lo.y-20,c_lo.z-.08),
+                          (c_hi.x+20,c_hi.y+20,c_lo.z-.08),(c_lo.x-20,c_hi.y+20,c_lo.z-.08)),[],[(0,1,2,3)])
+cground_data.materials.append(ground_material)
+cground=bpy.data.objects.new('canteen review ground',cground_data);scene.collection.objects.link(cground)
+for light_name,offset,energy,size in (
+    ('bright overcast key',Vector((-7,10,12)),850,14),
+    ('soft sky fill',Vector((8,5,7)),650,18),
+    ('open aisle bounce',Vector((0,4,2)),350,6)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=energy;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+render_match('canteen-three-left',target+Vector((-8,9,5)),Vector((0,0,1)),9.5)
+render_match('canteen-road',target+Vector((0,12,1)),Vector((0,0,1)),7)
+render_match('canteen-side',target+Vector((12,0,3)),Vector((0,0,1)),8.5)
+render_match('canteen-mayor',target+Vector((8,12,11)),Vector((0,0,1)),10.5)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),
                   'evidence':str(evidence),'market_pieces':market_bounds}))
