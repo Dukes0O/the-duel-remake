@@ -529,7 +529,7 @@ in `tools/blender/` is the recipe; a downloaded asset is recorded in
 changed) and cached outside the repository in `C:\Users\kyleb\dev\art-library\`;
 only the finished runtime model ships in `public/`. Credits appear in game.
 
-**Quota guard.** At most three rounds per art card per run. If two rounds in a
+**Round limit (Kyle, 6 November 2026).** At most six rounds per art card. Art generally needs more than three, and a round that was stopped short taught nothing. A new method can earn more rounds on a card that ran out, if Kyle agrees. If two rounds in a
 row do not raise the score, stop, record the gap, and propose a different
 starting asset instead of continuing. No more ten-round loops.
 

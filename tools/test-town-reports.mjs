@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import {
   TOWN_EVENTS, answerReport, createTown, deserializeTown, raiseTownReport,
-  serializeTown, stepTown, townReports,
+  serializeTown, stepTown, TOWN_TIME, townReports,
 } from '../src/town/index.js';
 
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
 
 const town = createTown(481, 'Report Test');
-check(TOWN_EVENTS.length === 10, 'the event data includes the ten town report kinds');
+check(TOWN_EVENTS.length === 11, 'the event data includes the eleven town report kinds');
 for (const event of TOWN_EVENTS) {
   check(event.answers.length <= 3 && event.answers.length > 0, `${event.id} has up to three answers`);
-  check(event.answers.every(answer => /[.!?]$/.test(answer.label) && answer.label === answer.outcome), `${event.id} tells what each answer will do`);
+  check(event.answers.every(answer => /^[A-Z].*[.!?]$/.test(answer.label)
+    && /^[A-Z].*[.!?]$/.test(answer.outcome)), `${event.id} shows a full sentence for each choice and outcome`);
   const sample = createTown(900 + checks, `Effect ${event.id}`);
   sample.people = [{id:'sick-1',health:40}];
   sample.goods = {stockpiles:{'scablands:0:0':{goods:{salvage:20}}}};
@@ -28,12 +29,19 @@ check(!raiseTownReport(town, 'fire-at-site').ok, 'events need their stated facts
 const fire = raiseTownReport(town, 'fire-at-site', {fire: true, where: "Moss's garage"});
 check(fire.ok && fire.report.who === 'Odessa' && fire.report.where === "Moss's garage", 'a matching event makes a report with who and where');
 check(fire.report.what === 'A fire has started.' && fire.report.unanswered, 'reports include what happened and wait for an answer');
-check(!raiseTownReport(town, 'fire-at-site', {fire: true}).ok, 'the same event cannot stack while one report is unanswered');
+const refreshedFire=raiseTownReport(town,'fire-at-site',{fire:true,where:"Moss's garage",detail:'The crew is on its way.'});
+check(refreshedFire.ok&&refreshedFire.updated&&refreshedFire.report.id===fire.report.id
+  &&town.reports.length===1&&refreshedFire.report.what.includes('The crew is on its way.'),
+'an open report of the same kind and place updates in place');
+const otherPlaceTown=createTown(482,'Reports in two places');
+check(raiseTownReport(otherPlaceTown,'fire-at-site',{fire:true,where:'Garage'}).ok
+  &&raiseTownReport(otherPlaceTown,'fire-at-site',{fire:true,where:'Tin Town'}).ok,
+  'the same kind of report can stay open at another place');
 
 const quiet = raiseTownReport(town, 'child-drawing', {childDrawing: true});
 const sickness = raiseTownReport(town, 'sickness-in-town', {sickness: true});
 check(quiet.ok && sickness.ok, 'good and bad reports can arrive together');
-check(townReports(town)[0].id === fire.report.id, 'the worst unanswered report sorts first');
+check(townReports(town)[0].priority === 100 && townReports(town)[0].eventId === 'fire-at-site', 'the worst unanswered report sorts first');
 const raid = raiseTownReport(town, 'road-rat-raid', {roadRatRaid: true});
 const drought = raiseTownReport(town, 'drought-warning', {droughtWarning: true});
 check(raid.ok && !drought.ok, 'no more than three unanswered bad reports can wait at once');
@@ -54,5 +62,17 @@ const ignoredReport = raiseTownReport(ignored, 'fire-at-site', {fire: true});
 for (let tick = 0; tick < 24 * 7; tick++) stepTown(ignored);
 check(!ignoredReport.report.unanswered && ignoredReport.report.answerId === 'leave', 'an ignored report resolves to its written leave outcome after seven days');
 check(ignoredReport.report.outcome === 'The fire spreads to the nearby site.', 'an ignored report plays the outcome it promised');
+
+const oldReports=createTown(13,'Saved report history');
+oldReports.reports=Array.from({length:40},(_,index)=>({id:`old-report-${index}`,eventId:'child-drawing',who:'Miss Quill',
+  what:'A child sent a drawing.',where:`Place ${index}`,priority:25,bad:false,createdTick:0n,expiresTick:0n,
+  unanswered:false,answers:[],facts:{childDrawing:true}}));
+oldReports.reports[0].book=true;
+const loadedReports=deserializeTown(serializeTown(oldReports));
+check(loadedReports.reports.length===40,'an earlier save keeps report history when it loads');
+for(let hour=0;hour<TOWN_TIME.ticksPerDay;hour++)stepTown(loadedReports);
+check(loadedReports.reports.length===25&&loadedReports.reports.some(report=>report.book===true),
+  'the first month trims old routine reports while keeping the report held by the Book');
+check((loadedReports.reportEffects||[]).length<=24,'resolved routine report effects also keep bounded history');
 
 console.log(`Town reports: ${checks} checks passed.`);
