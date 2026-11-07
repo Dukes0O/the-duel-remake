@@ -3,7 +3,7 @@
 Builds the exported candidate and review renders from that GLB. Coordinates
 use town_base's metre API: +Y up, front -Z.
 """
-import argparse, math, sys
+import argparse, hashlib, math, sys
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
@@ -374,13 +374,20 @@ def well_beam(name,a,b,width,mat):
  return well_attach(obj)
 
 side_rgb=well_side.rgb()
-# The generated studio grey is below Photo.sky's 185 edge-seed threshold.
-# Brighten a temporary RGB mask only, then restore the real photo pixels.
-original_side_rgb=well_side._rgb
-temporary_mask_rgb=np.clip(side_rgb.astype(np.int16)+46,0,255).astype(np.int16)
-well_side._rgb=temporary_mask_rgb
-side_sky=well_side.sky([(8,8),(1015,8),(8,674),(1015,674)],tolerance=28,grey=24)
-well_side._rgb=original_side_rgb
+# Remove the neutral studio-grey by colour everywhere, not only where it can
+# flood in from an edge. This clears the grey caught inside the A-frame and
+# along the beam beside the horse-head. Keep the image itself untouched.
+studio_samples=np.concatenate((side_rgb[8:48,8:48].reshape(-1,3),
+                               side_rgb[8:48,-48:-8].reshape(-1,3),
+                               side_rgb[-48:-8,8:48].reshape(-1,3),
+                               side_rgb[-48:-8,-48:-8].reshape(-1,3)))
+studio_grey=np.median(studio_samples,axis=0)
+studio_distance=np.abs(side_rgb-studio_grey).max(axis=2)
+studio_chroma=side_rgb.max(axis=2)-side_rgb.min(axis=2)
+side_background=(studio_distance<34)&(studio_chroma<20)
+if a.render:
+ save_mask(~side_background,evidence/'masks'/'wellhead-side-subject.png')
+side_sky=side_background
 yy,xx=np.ogrid[:well_side.h,:well_side.w]
 # Paint-worn steel stays within the actual diagonal members; the center bays
 # remain open. Separate rectangular bands preserve the measured cross-ties.
@@ -388,7 +395,7 @@ left_rail=(yy>=204)&(yy<=612)&(xx>=425+(612-yy)*.17)&(xx<=462+(612-yy)*.16)
 right_rail=(yy>=204)&(yy<=612)&(xx>=644-(612-yy)*.19)&(xx<=687-(612-yy)*.14)
 base_rail=(yy>=604)&(yy<=649)&(xx>=65)&(xx<=946)
 frame_mask=(~side_sky)&(left_rail|right_rail|base_rail)
-frame_loops=trace(frame_mask,(55,190,955,655),tolerance=2.8,min_area=75)
+frame_loops=trace(frame_mask,(55,190,955,655),tolerance=4.2,min_area=90)
 if not frame_loops:raise RuntimeError('wellhead frame trace is empty')
 for side_name,d0,d1 in (('road',-1.34,-1.20),('far',1.20,1.34)):
  frame_mesh=PhotoMesh();slab(frame_mesh,'side',well_side,frame_loops,well_side_world,d0,d1,wall_scale=WELL_SCALE)
@@ -401,7 +408,7 @@ beam_region=(((yy>=18)&(yy<=232)&(xx>=263)&(xx<=846))|
              ((yy>=228)&(yy<=441)&(xx>=793)&(xx<=845))|
              ((yy>=205)&(yy<=428)&(xx>=294)&(xx<=365)))
 beam_mask=(~side_sky)&beam_region
-beam_loops=trace(beam_mask,(258,10,850,445),tolerance=2.4,min_area=90)
+beam_loops=trace(beam_mask,(258,10,850,445),tolerance=4.4,min_area=110)
 if not beam_loops:raise RuntimeError('wellhead beam trace is empty')
 BEARING_Y=(WELL_GROUND-153)*WELL_SCALE
 BEARING_Z=well_z(552)
@@ -411,6 +418,15 @@ beam_obj=beam_mesh.finish('wellhead:beam-surface',{'side':well_side.material()})
 beam_pivot=bpy.data.objects.new('wellhead:beam',None);bpy.context.collection.objects.link(beam_pivot)
 beam_pivot.parent=wellhead;beam_pivot.location=town.game_vector((0,BEARING_Y,BEARING_Z));beam_obj.parent=beam_pivot
 wellhead_parts.append(beam_obj)
+
+# The motor is a compact, photo-traced housing. Turning a generic drum made
+# its pale end cap dominate the side and front views; the silhouette and both
+# broad faces now wear the actual motor in the side photograph.
+motor_mask=(~side_background)&(xx>=82)&(xx<=182)&(yy>=448)&(yy<=556)
+motor_loops=trace(motor_mask,(78,444,186,560),tolerance=4.0,min_area=75)
+if not motor_loops:raise RuntimeError('wellhead motor trace is empty')
+motor_mesh=PhotoMesh();slab(motor_mesh,'side',well_side,motor_loops,well_side_world,-.28,.28,wall_scale=WELL_SCALE)
+motor_obj=motor_mesh.finish('wellhead:motor',{'side':well_side.material()});well_attach(motor_obj)
 
 # Tie the two traced side frames at their feet, shoulders and bearing. These
 # cross-members leave the A-frame's triangular openings clear.
@@ -437,11 +453,11 @@ hub=PhotoMesh()
 FLYWHEEL_Y=(WELL_GROUND-455)*WELL_SCALE
 FLYWHEEL_Z=well_z(310)
 lathe(hub,'side',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(1,0,0),(0,1,0),(0,0,1),
-      [(-.07,.60),(-.07,.67),(.07,.67),(.07,.60)],side_uv,sides=12)
+      [(-.07,.60),(-.07,.67),(.07,.67),(.07,.60)],side_uv,sides=10)
 hub_obj=hub.finish('wellhead:flywheel-rim',{'side':dark});well_attach(hub_obj)
 hub_center=PhotoMesh()
 lathe(hub_center,'side',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(1,0,0),(0,1,0),(0,0,1),
-      [(-.10,.06),(.10,.06)],side_uv,sides=12,
+      [(-.10,.06),(.10,.06)],side_uv,sides=10,
       cap_start=('side',lambda a,f:well_side.uv(310+math.cos(a)*f*18,455+math.sin(a)*f*18)),
       cap_end=('side',lambda a,f:well_side.uv(310+math.cos(a)*f*18,455+math.sin(a)*f*18)))
 hub_center_obj=hub_center.finish('wellhead:flywheel-hub',{'side':dark});well_attach(hub_center_obj)
@@ -449,13 +465,6 @@ for index in range(8):
  angle=index*math.pi/4
  end_y=FLYWHEEL_Y+math.sin(angle)*.58;end_z=FLYWHEEL_Z+math.cos(angle)*.58
  well_beam(f'wellhead:flywheel-spoke-{index+1}',(-.78,FLYWHEEL_Y,FLYWHEEL_Z),(-.78,end_y,end_z),.065,dark)
-motor=PhotoMesh()
-lathe(motor,'side',(0,.78,well_z(172)),(0,1,0),(1,0,0),(0,0,1),
-      [(0,.24),(.08,.34),(.70,.34),(.80,.25)],
-      lambda i,d,r,ang:well_side.uv(160+math.cos(ang)*r/WELL_SCALE,535-d/WELL_SCALE),sides=12,
-      cap_start=('side',lambda a,f:well_side.uv(160+math.cos(a)*f*32,535)),
-      cap_end=('side',lambda a,f:well_side.uv(160+math.cos(a)*f*32,470)))
-motor_obj=motor.finish('wellhead:motor',{'side':well_side.material()});well_attach(motor_obj)
 well_beam('wellhead:motor-stand',(0,.08,well_z(172)),(0,.92,well_z(172)),.14,dark)
 
 # The casing and valve are turned profiles, not boxes. The casing reaches the
@@ -465,25 +474,25 @@ CASING_Z=well_z(814)
 casing=PhotoMesh()
 lathe(casing,'side',(0,0,CASING_Z),(0,1,0),(1,0,0),(0,0,1),
       [(.06,.34),(.10,.39),(.18,.39),(.24,.30),(.98,.30),(1.07,.35),(1.13,.35),(1.18,.26)],
-      lambda i,d,r,a:well_side.uv(850+(math.cos(a)+math.sin(a))*r/(math.sqrt(2)*WELL_SCALE),WELL_GROUND-d/WELL_SCALE),sides=16,
+      lambda i,d,r,a:well_side.uv(814+math.sin(a)*r/WELL_SCALE,WELL_GROUND-d/WELL_SCALE),sides=12,
       cap_start=('side',lambda a,f:well_side.uv(814+math.cos(a)*f*44,630)),
       cap_end=('side',lambda a,f:well_side.uv(814+math.cos(a)*f*31,480)))
 casing_obj=casing.finish('wellhead:casing',{'side':well_side.material()});well_attach(casing_obj)
 valve=PhotoMesh()
-lathe(valve,'side',(0,.90,CASING_Z-.30),(0,0,1),(1,0,0),(0,1,0),
+lathe(valve,'side',(0,1.34,CASING_Z-.30),(0,0,1),(1,0,0),(0,1,0),
       [(-.20,.14),(-.15,.23),(-.07,.23),(.12,.16),(.25,.12),(.36,.12),(.42,.18),(.49,.18)],
-      lambda i,d,r,a:well_side.uv(814+math.cos(a)*r/WELL_SCALE,WELL_GROUND-(.90+math.sin(a)*r)/WELL_SCALE),sides=12)
+      lambda i,d,r,a:well_side.uv(814+d/WELL_SCALE,WELL_GROUND-(1.34+math.sin(a)*r)/WELL_SCALE),sides=8)
 valve_obj=valve.finish('wellhead:valve',{'side':well_side.material()});well_attach(valve_obj)
-well_beam('wellhead:valve-stem',(-.18,1.04,CASING_Z-.02),(-.56,1.04,CASING_Z-.02),.07,dark)
+well_beam('wellhead:valve-stem',(-.18,1.40,well_z(880)),(-.56,1.40,well_z(894)),.07,dark)
 wheel=PhotoMesh()
-lathe(wheel,'side',(-.56,1.04,CASING_Z-.02),(1,0,0),(0,1,0),(0,0,1),
+lathe(wheel,'side',(-.56,1.40,well_z(894)),(1,0,0),(0,1,0),(0,0,1),
       [(-.035,.18),(-.02,.24),(.02,.24),(.035,.18)],
-      lambda i,d,r,a:well_side.uv(894+math.cos(a)*r/WELL_SCALE,446+math.sin(a)*r/WELL_SCALE),sides=12)
+      lambda i,d,r,a:well_side.uv(894+math.sin(a)*r/WELL_SCALE,446+math.cos(a)*r/WELL_SCALE),sides=8)
 wheel_obj=wheel.finish('wellhead:valve-handwheel',{'side':well_side.material()});well_attach(wheel_obj)
 for index in range(4):
  angle=index*math.pi/2
- y=1.04+math.sin(angle)*.205;z=CASING_Z-.02+math.cos(angle)*.205
- well_beam(f'wellhead:valve-spoke-{index+1}',(-.56,1.04,CASING_Z-.02),(-.56,y,z),.035,dark)
+ y=1.40+math.cos(angle)*.205;z=well_z(894)+math.sin(angle)*.205
+ well_beam(f'wellhead:valve-spoke-{index+1}',(-.56,1.40,well_z(894)),(-.56,y,z),.035,dark)
 
 # The pale hand-painted 07 is physical ink over the casing, readable from the
 # side. Its face points toward -X; the baseline follows the casing's height.
@@ -668,6 +677,30 @@ print(f'RADAR TRIANGLES {radar_triangles}')
 for obj in sorted((obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('radar:')),key=lambda obj:obj.name):
  print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
 if radar_triangles>1800:raise RuntimeError(f'radar has {radar_triangles} triangles; budget 1800')
+# Several photo-carve calls open the same source again before their separate
+# edge bleeds. Reuse only byte-identical final images; different bleeds stay
+# distinct, so this reduces the GLB without changing any rendered pixels.
+image_versions={};deduplicated=0
+for material in bpy.data.materials:
+ if not material.use_nodes:continue
+ for node in material.node_tree.nodes:
+  if node.type!='TEX_IMAGE' or not node.image:continue
+  image=node.image;width,height=image.size
+  pixels=np.empty(width*height*4,dtype=np.float32);image.pixels.foreach_get(pixels)
+  key=(width,height,hashlib.sha256(pixels.tobytes()).digest())
+  previous=image_versions.get(key)
+  if previous is None:image_versions[key]=image
+  elif previous!=image:node.image=previous;deduplicated+=1
+print(f'IDENTICAL TEXTURE IMAGES REUSED {deduplicated}')
+# Keep the family GLB within its 3 MB card budget. Full-resolution source
+# photos stay in textures/; only the embedded copies are resampled slightly.
+embedded_images={node.image for material in bpy.data.materials if material.use_nodes
+                 for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image}
+for image in embedded_images:
+ width,height=image.size
+ if max(width,height)>600:
+  image.scale(max(1,round(width*.85)),max(1,round(height*.85)))
+print(f'EMBEDDED PHOTO COPIES SCALED TO 85 PERCENT: {sum(max(image.size)>600 for image in embedded_images)}')
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:

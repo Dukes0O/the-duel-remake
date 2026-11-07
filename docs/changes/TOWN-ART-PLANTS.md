@@ -1,24 +1,24 @@
-# TOWN-ART-PLANTS — follow-up
+# TOWN-ART-PLANTS - wellhead - round 9 follow-up
 
 ## Changed
 
-- Added only `wellhead` to the plants family. The accepted crusher and batch plant remain separate children, with their recipes intact.
-- Added four separate orthographic reference photos for the wellhead (side, front, rear and straight above) and their credits.
-- Traced the open side frames and moving beam with `trace` and `slab`. `wellhead:beam` pivots at its measured bearing. The casing, valve and flywheel use turned profiles.
-- Added a visible worn-cream `07` mesh on the casing and an eight-spoke flywheel. The recipe prints each mesh's bounds and contact check and enforces the one-cell footprint and 1,800-triangle budget.
-- Added the round-8 comparison sheet: four matched photo/model views, two three-quarter views and the mayor view. The wellhead uses 1,552 triangles. The family GLB is 2,630,984 bytes; the sheet is 282,226 bytes.
+- Replaced the flood-only side-photo mask with a global neutral-grey color mask. The A-frame openings and the gap under the beam are cut wherever the studio grey appears.
+- Replaced the smooth motor lathe with a traced motor slab wearing the side photo. Corrected the casing, valve and handwheel photo mapping and placed the valve wheel beside the casing.
+- Kept the beam, horse-head, A-frame, base and flywheel from round 8. The wellhead uses 1,716 triangles, below its 1,800 limit.
+- Reused only byte-identical embedded photos (none were duplicates) and resampled embedded photo copies to 85% to bring the family GLB under its 3 MB budget. The original source photos are unchanged. The family GLB is 2,514,888 bytes.
+- Added the round-9 sheet (205,601 bytes) and review note. Rounds 6 and 7 remain.
 
 ## Checks
 
-- Blender recipe and exported-model renders: passed; each wellhead piece passed its contact and footprint checks.
+- Blender recipe, GLB export and exported-model renders: passed. The side mask was inspected beside its photo; the frame gaps are black.
 - `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed; placement is clean and size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed. One unrelated check found the missing `town-art-outposts/round-15-review.md`; audio analysis failed because `spawnSync ffmpeg` returned `EPERM`. The round-8 sheet publication check passed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement is clean and size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed, including the round-9 sheet check. The audio-analysis subtest failed on `spawnSync ffmpeg EPERM`; its one rerun failed the same way.
 - Lane tier and build: not run; art-card instructions exclude them.
-- Browser and in-game look checks: not run; Claude owns them. Claude should review the overhead width against the front and rear photos, the valve and flywheel details, and the full mayor view.
-- Changed assertions: the plants-family child list now includes `wellhead`; checks cover the named rocking beam and hand-painted number and the 1,800-triangle limit. No existing assertion was weakened.
-- Race fingerprints: not applicable; no race code changed.
+- Browser and in-game look checks: not run; Claude owns them. Claude should inspect the side mask and open frame, motor photo match, dark rusty casing and valve, readable `07`, and mayor view.
+- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
 
 ## Removed
 
-- No earlier building, recipe, model or round sheet was removed. Temporary renders, grids, draft sheets and logs were removed. The four required reference JPGs, credits, exported family model and round-8 sheet stay.
+- Removed the former generic motor lathe and the round-8 sheet and note, as requested.
+- No source reference photo or accepted building was removed. Temporary renders, masks, sheet scripts and logs are removed after checks.
