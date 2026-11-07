@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-1.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-1/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-2.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-2/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -124,6 +124,19 @@ def audit_scrapyard_pieces():
     if max(gaps)<=.04:touching=True;break
   print(f'SCRAPYARD PIECE {obj.name} bounds x={x0:.3f}..{x1:.3f} y={y0:.3f}..{y1:.3f} z={z0:.3f}..{z1:.3f} ground_or_contact={"pass" if touching else "FAIL"}')
   if not touching:raise RuntimeError(f'{obj.name} floats: no ground or piece contact')
+ cars={obj.name:box3 for obj,box3 in bounds.items() if obj.name.startswith('scrapyard:car-')}
+ for name,box3 in cars.items():
+  stack,layer=name.rsplit('-',1);layer=int(layer)
+  (x0,x1),(y0,y1),(z0,z1)=box3
+  if layer==1:
+   assert abs(y0)<=.025, f'{name} does not rest on the ground: {y0:.3f}'
+   continue
+  below=cars[f'{stack}-{layer-1}']
+  (bx0,bx1),(by0,by1),(bz0,bz1)=below
+  overlap_x=min(x1,bx1)-max(x0,bx0);overlap_z=min(z1,bz1)-max(z0,bz0)
+  gap=y0-by1
+  print(f'SCRAPYARD CAR CONTACT {name} -> {stack}-{layer-1}: vertical_gap={gap:.3f} xz_overlap={overlap_x:.3f}x{overlap_z:.3f} pass={abs(gap)<=.02 and overlap_x>0 and overlap_z>0}')
+  assert abs(gap)<=.02 and overlap_x>0 and overlap_z>0, f'{name} does not touch the car below'
 
 # Town Hall: the measured four-view carve is its full fixed mass. The face
 # cut-outs leave the photographed car-wheel clock and flags to their own
@@ -223,29 +236,45 @@ for n in ids:
    box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
    if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
  if n=='scrapyard':
-  # The stack is one photo-carved object, then instanced at the two measured
-  # places from the overhead reference. The end views state their own top row.
-  stack_table={
-   'photos':{'side':'scrapyard-stack-side.jpg','front':'scrapyard-stack-front.jpg',
-             'rear':'scrapyard-stack-rear.jpg','top':'scrapyard-stack-top.jpg'},
-   'length':4.6,'width':2.8,'height':3.0,
-   'side':{'start':42,'end':974,'ground':656},
-   'front':{'centre':466,'ground':1006,'top':20},
-   'rear':{'centre':464,'ground':1000,'top':20},
-   'top':{'front':18,'rear':998,'centre':166},
-   'cut':{'side':[],'front':[],'rear':[],'top':[]},
-   'grey':26,'tolerance':35,'bleed_tolerance':34,
-   'voxel':.045,'target':2000,
-   'mask_dir':root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-1/masks',
+  # Each crushed car is carved from its own four-view photo set. The source
+  # photographs show cars lying on their sides, so the top view runs along X.
+  car_views={
+   'blue':{'photos':{'side':'scrapyard-car-blue-side.jpg','front':'scrapyard-car-blue-front.jpg',
+                     'rear':'scrapyard-car-blue-rear.jpg','top':'scrapyard-car-blue-top.jpg'},
+           'side':{'start':22,'end':860,'ground':210},'front':{'centre':440,'ground':276,'top':76,'scale':1.8/600},
+           'rear':{'centre':440,'ground':281,'top':83,'scale':1.8/660},
+           'top':{'front':25,'rear':858,'centre':220,'along':'x','x_scale':1.8/300}},
+   'ochre':{'photos':{'side':'scrapyard-car-ochre-side.jpg','front':'scrapyard-car-ochre-front.jpg',
+                      'rear':'scrapyard-car-ochre-rear.jpg','top':'scrapyard-car-ochre-top.jpg'},
+            'side':{'start':30,'end':981,'ground':221},'front':{'centre':378,'ground':238,'top':78,'scale':1.8/470},
+            'rear':{'centre':418,'ground':248,'top':69,'scale':1.8/530},
+            'top':{'front':10,'rear':925,'centre':220,'along':'x','x_scale':1.8/330}},
   }
-  stack=carve_object('scrapyard:car-stack-a',tex,stack_table)
-  parent_keep(stack,b)
-  stack.location=town.game_vector((-5.3,0,0.2))
-  stack_copy=stack.copy();stack_copy.data=stack.data;stack_copy.name='scrapyard:car-stack-b'
-  bpy.context.collection.objects.link(stack_copy);parent_keep(stack_copy,b)
-  stack_copy.location=town.game_vector((5.3,0,0.2));stack_copy.rotation_euler[2]=math.pi/2
-  print('SCRAPYARD stack dimensions (glTF X,Y,Z):',json.dumps({'a':[round(v,3) for v in stack.dimensions],
-        'b':[round(v,3) for v in stack_copy.dimensions]},sort_keys=True))
+  car_meshes={}
+  for paint_id,views in car_views.items():
+   table={'photos':views['photos'],'length':4.2,'width':1.8,'height':.6,'forward':1,
+          'side_front_on_left':True,'side':views['side'],
+          'front':views['front'],'rear':views['rear'],
+          'top':views['top'],'cut':{'side':[],'front':[],'rear':[],'top':[]},
+          'grey':22,'tolerance':38,'bleed_tolerance':30,'voxel':.12,'target':330,
+          'mask_dir':root/f'.evidence/2026-11-07/TOWN-ART-SERVICES/round-2/masks/{paint_id}'}
+   car_meshes[paint_id]=carve_object(f'scrapyard:car-source-{paint_id}',tex,table)
+  # Five cars on the left and four on the right; slight alternating shifts
+  # keep each recognizable silhouette visible while every layer stays flat.
+  stacks=[('a',-5.15,0.0,5,['blue','ochre','blue','ochre','blue']),
+          ('b',5.15,0.0,4,['ochre','blue','ochre','blue'])]
+  for label,cx,cz,count,paints in stacks:
+   stack_top=0
+   for layer,paint_id in enumerate(paints):
+    source=car_meshes[paint_id]
+    car=source.copy();car.data=source.data;car.name=f'scrapyard:car-{label}-{layer+1}'
+    bpy.context.collection.objects.link(car);parent_keep(car,b)
+    source_bottom,source_top=scrapyard_piece_bounds(source)[1]
+    car.location=town.game_vector((cx+((-1)**layer)*.12,stack_top-source_bottom,cz+((layer%3)-1)*.11))
+    car.rotation_euler[2]=(layer%2)*.018
+    stack_top+=source_top-source_bottom
+    print(f'SCRAPYARD CAR {car.name}: source={paint_id}, resting layer={layer+1}')
+  for source in car_meshes.values():bpy.data.objects.remove(source,do_unlink=True)
 
   # Trace the open crane frame from the yard's road-facing photo. The pale
   # connected background remains open through each lattice bay.
@@ -335,6 +364,17 @@ for n in ids:
   rubble_spots=[(-9.2,-8.8,.45),(-7.6,-8.5,.62),(7.2,-8.8,.52),(9.3,-7.1,.40),
                 (-9.0,5.6,.56),(8.9,6.8,.48),(-3.5,8.6,.36),(4.5,8.5,.42),
                 (-7.1,-3.5,.35),(7.7,3.8,.37)]
+  # Heavy litter gathers at the stacks' feet: old tyres and broken bricks sit
+  # on the dirt as separate objects, with loose metal mixed into the rubble.
+  for index,(x,z,lean) in enumerate([(-7.25,2.9,0),(7.15,2.8,0),(-7.0,-3.0,0)],1):
+   tyre=tube(f'scrapyard:rubble-tyre-{index}',(x,.14,z),.43,.14,dark,b,20,8)
+   tyre.rotation_euler[0]=lean
+  for index,(x,z,turn) in enumerate([(-7.35,-2.9,.10),(-6.8,-3.4,-.16),(7.25,-2.8,.20),(6.8,-3.3,-.08)],1):
+   brick_piece=box(f'scrapyard:rubble-brick-{index}',(x,.15,z),(.46,.30,.25),brick,.035,b)
+   brick_piece.rotation_euler[2]=turn
+  for index,(x,z) in enumerate([(-4.1,3.0),(4.1,-3.0)],1):
+   scrap=box(f'scrapyard:rubble-sheet-{index}',(x,.10,z),(.65,.18,.38),steel,.06,b)
+   scrap.rotation_euler[2]=(-1 if index==1 else 1)*.22
   for index,(x,z,radius) in enumerate(rubble_spots,1):
    sides=6;low=[];high=[]
    for side in range(sides):
