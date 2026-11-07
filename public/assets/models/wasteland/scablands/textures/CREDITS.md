@@ -182,3 +182,9 @@ thick slab; the rim photo supplies the hub and rim material reference.
 2026-11-06: a clean machined curved iron casting with bolt holes on a pale
 studio ground under flat light. The source was scaled in memory and its 15-degree
 casting slice is traced into the repeated gear.
+
+`sea-harbour-wall.jpg` is an original Codex ImageGen reference photograph made
+2026-11-06: one 40 metre weathered stone sea wall with a pale raised coping
+course, iron mooring rings and dried weed, in flat overcast light. Its recipe
+blends the first and last two metres in memory for a repeatable face. The top
+uses `dam-gatehouse-stone.jpg` at a half-metre tile scale.
