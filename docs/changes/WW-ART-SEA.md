@@ -45,6 +45,15 @@
 
 - Round 1's sheet and note were removed in round 2. This task kept round 2 evidence and the passed wall and causeway art.
 - Deleted this task's Blender renders, comparison images and test logs under `.qa-dist/ww-art-sea/`; preserved `.qa-dist/task.md`.
+- Round 4 replaced round 3's sheet and review note. Its temporary render images, montage helper and test logs were deleted from `.qa-dist/ww-art-sea/` after review.
+
+## Round 4 checks
+
+- Blender export and empty-scene Standard renders: passed. Final GLB readback: 20,556 scene-node triangles (9,996 unique mesh triangles), 2,181,244 bytes; 44 nodes and 19 meshes.
+- `node tools/test-blender-output.mjs`: passed, 308 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed placement; size targets are advisory.
+- Browser and look verdict: Claude's review is requested in `docs/board/looks/ww-art-sea/round-4-review.md`; browser checks were not run in the lane.
+- Changed assertions: none. Race fingerprints: not applicable; art-only card.
 
 ## Round 2, finished by Claude
 
