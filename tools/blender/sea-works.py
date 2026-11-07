@@ -308,4 +308,4 @@ shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(10,1.55
 shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp'],(3,1.55,-19),(0,.8,0),(1200,700),lens=28)
 shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
-shot('causeway-arch-three-quarter',['causeway-arch','harbour-wall-arch-extra'],(16,1.55,12),(0,1,0),(1200,700),lens=28)
+shot('causeway-arch-three-quarter',['causeway-arch'],(16,1.55,12),(0,1,0),(1200,700),lens=28)
