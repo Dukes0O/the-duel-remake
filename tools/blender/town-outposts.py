@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 4: Dot's Diner, measured and carved from four views.
+"""TOWN-ART-OUTPOSTS round 9: keep Dot's Diner; repair plane-school glass.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,12 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-4')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-9')
+p.add_argument('--body-check-only', action='store_true')
+p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-4.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-9.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -252,6 +254,296 @@ for i, (px, top_py) in enumerate(((407, 225), (677, 225), (538, 318), (735, 318)
     foot = HEIGHT - .25
     cube(f'sign-post-{i + 1}', (sx1 + .05, (py_y(top_py) + foot) / 2, px_z(px)), (.1, py_y(top_py) - foot, .1), rust)
 
+
+# Plane-school: copy the diner's table, changing its measured values only.
+# The 158 px door is about 2 m tall, setting the common side-photo scale.
+SCHOOL_START, SCHOOL_END, SCHOOL_GROUND = 19, 932, 271
+SCHOOL_DOOR_TOP, SCHOOL_DOOR_SILL = 107, 266
+SCHOOL_SCALE = 2.0 / (SCHOOL_DOOR_SILL - SCHOOL_DOOR_TOP)
+SCHOOL_LENGTH = abs(SCHOOL_END - SCHOOL_START) * SCHOOL_SCALE
+SCHOOL_TOP = 70
+SCHOOL_HEIGHT = (SCHOOL_GROUND - SCHOOL_TOP) * SCHOOL_SCALE
+SCHOOL_FRONT = {'centre': 204, 'ground': 390, 'top': 103}
+SCHOOL_REAR = {'centre': 182, 'ground': 330, 'top': 53}
+SCHOOL_FRONT_WIDTH = 270
+SCHOOL_WIDTH = SCHOOL_FRONT_WIDTH * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - SCHOOL_FRONT['top']))
+
+
+def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.012, .022, .032)):
+    """Replace only the flat-grey component inside each measured pane."""
+    import numpy as np
+    source = bpy.data.images.load(str(textures / source_name), check_existing=False)
+    width, height = source.size
+    pixels = np.empty(width * height * 4, dtype=np.float32)
+    source.pixels.foreach_get(pixels)
+    pixels = pixels.reshape(height, width, 4)[::-1].copy()
+
+    masks = []
+    for x0, y0, x1, y1 in windows:
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        seed = pixels[cy, cx, :3].copy()
+        # The measured box only gives the pane's middle; the frame is what stops the fill.
+        x0, y0, x1, y1 = max(x0 - 12, 0), max(y0 - 12, 0), min(x1 + 12, width), min(y1 + 12, height)
+        # Flood through the connected studio-grey patch only; the frame and wall
+        # stop the fill even when their pixels lie inside the measurement box.
+        component = np.zeros((height, width), dtype=bool)
+        seen = np.zeros((height, width), dtype=bool)
+        stack = [(cx, cy)]
+        seen[cy, cx] = True
+        while stack:
+            x, y = stack.pop()
+            if x < x0 or x >= x1 or y < y0 or y >= y1:
+                continue
+            if np.max(np.abs(pixels[y, x, :3] - seed)) > 30 / 255:
+                continue
+            component[y, x] = True
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if x0 <= nx < x1 and y0 <= ny < y1 and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((nx, ny))
+        if not component.any():
+            raise RuntimeError(f'No studio-grey pane component at ({cx}, {cy}) in {source_name}')
+        masks.append(component)
+        yy, xx = np.nonzero(component)
+        # Narrow blue-grey streaks vary gently across each glass surface.
+        streak = ((xx * 13 + yy * 3 + (xx // 7) * 5) % 19) / 2550
+        pixels[yy, xx, :3] = np.array(dark, dtype=np.float32) + streak[:, None] * np.array((.55, .8, 1.0))
+
+    for window_index, shape_name, color in papers:
+        pane = masks[window_index]
+        yy0, xx0 = np.nonzero(pane)
+        x0, x1, y0, y1 = xx0.min(), xx0.max() + 1, yy0.min(), yy0.max() + 1
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        sx, sy = max(2, (x1 - x0) // 5), max(2, (y1 - y0) // 5)
+        if shape_name == 'sun':
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.ogrid[y0:y1, x0:x1]
+            dx, dy = xx - cx, yy - cy
+            shape[y0:y1, x0:x1] = (dx * dx + dy * dy <= min(sx, sy) ** 2)
+            for angle in range(0, 360, 45):
+                rad = math.radians(angle)
+                rx, ry = int(math.cos(rad) * sx * 1.75), int(math.sin(rad) * sy * 1.75)
+                for step in np.linspace(.65, 1.75, 8):
+                    px, py = cx + int(math.cos(rad) * sx * step), cy + int(math.sin(rad) * sy * step)
+                    if 0 <= py < height and 0 <= px < width:
+                        shape[max(0, py-1):py+2, max(0, px-1):px+2] = True
+        elif shape_name == 'star':
+            vertices = [(cx + int(math.cos(math.pi * i / 5 - math.pi / 2) * sx * (1 if i % 2 == 0 else .44)),
+                         cy + int(math.sin(math.pi * i / 5 - math.pi / 2) * sy * (1 if i % 2 == 0 else .44))) for i in range(10)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        else:  # house silhouette
+            vertices = [(cx, cy-sy), (cx+sx, cy), (cx+sx, cy+sy),
+                        (cx-sx, cy+sy), (cx-sx, cy), (cx, cy-sy)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        paper = pane & shape
+        py, px = np.nonzero(paper)
+        if len(px):
+            pixels[py, px, :3] = color
+
+    image = bpy.data.images.new(output_name, width, height, alpha=False)
+    image.pixels.foreach_set(pixels[::-1].ravel())
+    image.filepath_raw = str(render / output_name)
+    image.file_format = 'PNG'
+    image.save()
+    bpy.data.images.remove(image)
+    bpy.data.images.remove(source)
+    return str(render / output_name)
+
+
+# Rectangles are measured on the side and plan grids; edits stay inside each pane.
+SIDE_WINDOWS = [
+    (187, 120, 277, 200), (407, 114, 497, 198),
+    (519, 115, 612, 200), (635, 118, 725, 200), (750, 118, 832, 198),
+    (311, 120, 380, 262),  # the door opening is dark behind the sill and frame
+]
+SIDE_PAINTED = painted_school_photo(
+    'plane-school-side.jpg', 'plane-school-side-painted.png', SIDE_WINDOWS,
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27))),
+)
+TOP_WINDOWS = [
+    (244, 55, 293, 68), (325, 55, 375, 68), (411, 55, 475, 68),
+    (514, 55, 575, 68), (616, 55, 672, 68), (710, 55, 775, 68),
+    (230, 210, 294, 231), (314, 210, 382, 231), (410, 210, 482, 231),
+    (511, 210, 581, 231), (614, 210, 682, 231), (708, 210, 778, 231),
+]
+TOP_PAINTED = painted_school_photo(
+    'plane-school-top.jpg', 'plane-school-top-painted.png', TOP_WINDOWS,
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27)), (6, 'star', (.28, .66, .78)),
+            (8, 'house', (.83, .46, .27)), (10, 'sun', (.94, .60, .16))),
+)
+if a.photos_only:
+    print(json.dumps({'side_photo': SIDE_PAINTED, 'top_photo': TOP_PAINTED}))
+    raise SystemExit(0)
+school_table = {
+    'photos': {'side': SIDE_PAINTED, 'front': 'plane-school-front.jpg',
+               'rear': 'plane-school-rear.jpg', 'top': TOP_PAINTED},
+    'length': SCHOOL_LENGTH, 'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT,
+    'side': {'start': SCHOOL_START, 'end': SCHOOL_END, 'ground': SCHOOL_GROUND},
+    'front': SCHOOL_FRONT, 'rear': SCHOOL_REAR,
+    'top': {'front': 19, 'rear': 926, 'centre': 140, 'along': 'x', 'x_scale': SCHOOL_WIDTH / 178},
+    'cut': {'side': [], 'front': [], 'rear': [], 'top': []},
+    'round': 2.4, 'ends_split': 0, 'front_favour': 3, 'rear_favour': 3,
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 42,
+    'voxel': .04, 'target': 7000,
+    'mask_dir': str(render / 'masks'),
+}
+school_body = carve_object('plane-school:body', textures, school_table)
+body_dimensions = tuple(float(value) for value in school_body.dimensions)
+measured = {'width': body_dimensions[0], 'height': body_dimensions[2], 'length': body_dimensions[1]}
+expected = {'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT, 'length': SCHOOL_LENGTH}
+print('plane-school body bounds (glTF axes; length along Z):', json.dumps(measured, sort_keys=True))
+print('plane-school table dimensions:', json.dumps(expected, sort_keys=True))
+for axis in expected:
+    error = abs(measured[axis] - expected[axis]) / expected[axis]
+    if error > .05:
+        raise RuntimeError(f'plane-school {axis} bound differs from its table by {error:.1%}')
+if a.body_check_only:
+    print(json.dumps({'body_check': 'passed', 'errors': {axis: abs(measured[axis]-expected[axis])/expected[axis] for axis in expected}}))
+    raise SystemExit(0)
+school = bpy.data.objects.new('plane-school', None)
+bpy.context.collection.objects.link(school)
+school.empty_display_type = 'CUBE'
+school.parent = family
+school.location.y = 1.6
+school_body.parent = school
+
+def school_z(px):
+    return -SCHOOL_LENGTH / 2 + (px - SCHOOL_START) * SCHOOL_SCALE
+
+
+# Heavy timber trestles carry the raised fuselage all the way to the ground.
+timber = material('school support timber', (.23, .17, .10))
+for index, px in enumerate((160, 760), 1):
+    z = school_z(px)
+    for hand in (-1, 1):
+        for end in (-1, 1):
+            leg = town.beam(f'plane-school:trestle-{index}-leg-{hand}-{end}',
+                            (hand * .72, -1.58, z + end * .29),
+                            (hand * .29, -.04, z + end * .29), .16, timber)
+            leg.parent = school
+    crossbar = town.cube(f'plane-school:trestle-{index}-crossbar',
+                         (0, -.05, z), (1.05, .16, .72), timber, .025)
+    crossbar.parent = school
+    brace = town.beam(f'plane-school:trestle-{index}-brace',
+                      (-.58, -.82, z - .28), (.58, -.82, z + .28), .09, timber)
+    brace.parent = school
+
+# The small landing touches the high door sill; a sloped bed runs down to ground.
+yellow = material('school slide yellow', (.88, .61, .08))
+red = material('school slide red rails', (.72, .055, .035))
+# The door opening is centred near x=345 on the measured side photo.
+door_z = school_z(345)
+door_sill_y = (SCHOOL_GROUND - SCHOOL_DOOR_SILL) * SCHOOL_SCALE
+slide_inner_x, slide_outer_x = -1.20, -3.35
+slide_outer_y = -1.58
+slide_mid_x, slide_mid_y = (slide_inner_x + slide_outer_x) / 2, (door_sill_y + slide_outer_y) / 2
+slide_length = math.hypot(slide_outer_x - slide_inner_x, slide_outer_y - door_sill_y)
+slide_angle = -math.atan2(door_sill_y - slide_outer_y, abs(slide_outer_x - slide_inner_x))
+landing = town.cube('plane-school:slide-landing', (-.87, door_sill_y - .08, door_z),
+                    (.78, .16, 1.35), yellow, .025)
+landing.parent = school
+bed = town.cube('plane-school:slide-bed', (slide_mid_x, slide_mid_y, door_z),
+                (slide_length, .08, 1.2), yellow, .018)
+bed.rotation_euler[1] = slide_angle
+bed.parent = school
+for hand in (-1, 1):
+    rail = town.beam(f'plane-school:slide-rail-{"road" if hand < 0 else "far"}',
+                     (slide_inner_x, door_sill_y + .20, door_z + hand * .55),
+                     (slide_outer_x, slide_outer_y + .13, door_z + hand * .55), .14, red)
+    rail.parent = school
+
+# Seven broad timber treads climb from the ground to the landing at its far end.
+for index in range(7):
+    rise = (index + 1) * (1.48 / 7)
+    tread = town.cube(f'plane-school:step-{index + 1}',
+                      (-2.55 + index * .20, -1.50 + rise, door_z + .88),
+                      (.42, .12, .82), timber, .018)
+    tread.parent = school
+for hand in (-1, 1):
+    stair_rail = town.beam(f'plane-school:step-rail-{"road" if hand < 0 else "far"}',
+                           (-2.62, -1.20, door_z + .88 + hand * .49),
+                           (-1.12, .18, door_z + .88 + hand * .49), .09, timber)
+    stair_rail.parent = school
+
+# One thin picture slab on each curved wall, directly below the windows.
+letter_photo = Photo(textures / 'plane-school-letters.jpg')
+letter_material = letter_photo.material()
+edge_material = material('school sign slab edge', (.25, .09, .035), .12)
+wall_radius = body_dimensions[0] / 2
+wall_center_y = body_dimensions[2] / 2
+panel_low, panel_high = .46, .88
+panel_half_length = 1.5
+panel_center_z = .85
+slab_depth = .035
+
+def wall_x(y):
+    circular_flank = math.sqrt(max(.01, wall_radius ** 2 - (y - wall_center_y) ** 2))
+    return max(wall_radius - .09, circular_flank)
+
+
+def sign_slab(hand):
+    image_w, image_h = letter_photo.w, letter_photo.h
+    u0, u1 = ((image_w, 0) if hand > 0 else (0, image_w))
+    wall_clearance = .13 if hand < 0 else .025
+    mesh = Mesh()
+    rows = 8
+    front_bands = []
+    back_bands = []
+    for index in range(rows):
+        y0 = panel_low + (panel_high - panel_low) * index / rows
+        y1 = panel_low + (panel_high - panel_low) * (index + 1) / rows
+        x0 = hand * (wall_x(y0) + wall_clearance)
+        x1 = hand * (wall_x(y1) + wall_clearance)
+        front = [(x0, y0, panel_center_z - panel_half_length),
+                 (x0, y0, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z - panel_half_length)]
+        back = [(x - hand * slab_depth, y, z) for x, y, z in front]
+        v0 = letter_photo.uv(0, image_h - image_h * index / rows)[1]
+        v1 = letter_photo.uv(0, image_h - image_h * (index + 1) / rows)[1]
+        uv_band = [(u0 / image_w, v0), (u1 / image_w, v0),
+                   (u1 / image_w, v1), (u0 / image_w, v1)]
+        mesh.face(front, uv_band, 'letters', (hand, 0, 0))
+        mesh.face(list(reversed(front)), list(reversed(uv_band)), 'letters')
+        mesh.face(list(reversed(back)), list(reversed(uv_band)), 'edge')
+        front_bands.append(front)
+        back_bands.append(back)
+        for z_side in (-1, 1):
+            edge = [front[0 if z_side < 0 else 1], front[3 if z_side < 0 else 2],
+                    back[3 if z_side < 0 else 2], back[0 if z_side < 0 else 1]]
+            mesh.face(edge, [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                             letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    for band in (0, rows - 1):
+        front, back = front_bands[band], back_bands[band]
+        pairs = ((0, 1), (3, 2))
+        for first, second in pairs:
+            mesh.face([front[first], front[second], back[second], back[first]],
+                      [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                       letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    obj = mesh.finish(f"plane-school:sign-{'road' if hand < 0 else 'far'}",
+                      {'letters': letter_material, 'edge': edge_material})
+    obj.parent = school
+
+
+sign_slab(-1)
+sign_slab(1)
+
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
@@ -268,6 +560,9 @@ scene.render.resolution_x, scene.render.resolution_y = 820, 600
 scene.world = bpy.data.worlds.new('flat neutral studio')
 scene.world.color = (.42, .42, .42)
 scene.render.film_transparent = False
+for node in bpy.data.objects:
+    if node.name == 'dot-diner' or node.name.startswith('dot-diner:'):
+        node.hide_render = True
 
 def area(name, loc, energy, size):
     data = bpy.data.lights.new(name, 'AREA')
@@ -291,13 +586,13 @@ def shot(name, eye, target, ortho):
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-side', (-44, 3, 0), (0, 2.6, 0), 19)
-shot('model-front', (0, 2.6, -40), (0, 2.6, 0), 11)
-shot('model-rear', (0, 2.6, 40), (0, 2.6, 0), 11)
-shot('model-far', (44, 3, 0), (0, 2.6, 0), 19)
-shot('model-above', (0, 58, 0), (-1, 1.8, 0), 25)
-shot('model-road', (-24, 13, -22), (-1, 2, 0), 22)
-shot('model-back', (24, 13, 22), (0, 2, 0), 22)
-shot('model-mayor', (-42, 62, -42), (-1, 1.5, 0), 26)
+shot('model-side', (-44, 3.5, 0), (-.8, 2.3, 0), 16)
+shot('model-front', (0, 3.3, -40), (-.7, 1.5, 0), 9)
+shot('model-rear', (0, 3.3, 40), (-.7, 1.5, 0), 9)
+shot('model-far', (44, 3.5, 0), (.8, 2.3, 0), 16)
+shot('model-above', (0, 58, 0), (-1.2, 2.0, 0), 14)
+shot('model-road', (-24, 13, -22), (-1.8, 2.0, 0), 14)
+shot('model-back', (24, 13, 22), (0, 2.0, 0), 14)
+shot('model-mayor', (-42, 62, -42), (-2.0, 2.1, 0), 16)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))
