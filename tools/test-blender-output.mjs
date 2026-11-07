@@ -636,6 +636,19 @@ try {
       assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
+      if (generator.script === 'tools/blender/town-peace-props.py') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        for (const root of ['toll-cabinet', 'bound-sign', 'bound-stone',
+          'mirage-decoy-tent', 'mirage-decoy-oasis']) {
+          assert.ok(names.has(root), `missing named prop root ${root}`);
+        }
+        for (const part of ['toll-cabinet:open-drawer-box', 'bound-sign:hand-painted-board',
+          'bound-stone:smiley-crossed-tools-marker', 'mirage-decoy-tent:smaller-rear-board',
+          'mirage-decoy-oasis:traced-thin-tarpaulin', 'mirage-decoy-oasis:lifted-corner-1',
+          'mirage-decoy-oasis:rusty-peg-1', 'mirage-decoy-oasis:guy-line-1']) {
+          assert.ok(names.has(part), `missing named prop part ${part}`);
+        }
+      }
       if (generator.id === 'town-stages') {
         const names = gltf.nodes.map(node => node.name || '');
         assert.ok(names.includes('town-stages'), 'named family root');

@@ -346,7 +346,69 @@ for side, cx, px in (('left', -3.05, 134), ('right', 3.05, 874)):
     own(pole.finish(f'mirage-decoy-tent:rough-pole-{side}', {'timber': backmat}), tent,
         f'mirage-decoy-tent:rough-pole-{side}')
 
-for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent):
+# 9. Mirage's badly drawn oasis on a thin, pegged blue tarp.
+tarp_photo = measured_photo('decoy-oasis-overhead')
+tarp_outline = ((88, 112), (145, 119), (230, 112), (340, 115), (480, 113),
+                (620, 111), (755, 104), (870, 105), (915, 116), (920, 190),
+                (916, 285), (922, 385), (918, 500), (923, 615), (916, 705),
+                (900, 735), (820, 743), (710, 740), (600, 748), (480, 751),
+                (350, 745), (230, 751), (140, 743), (95, 735), (82, 700),
+                (87, 600), (82, 500), (86, 400), (80, 300), (84, 210))
+grid_x = np.arange(tarp_photo.w)[None, :]
+grid_y = np.arange(tarp_photo.h)[:, None]
+tarp_solid = np.zeros((tarp_photo.h, tarp_photo.w), dtype=bool)
+for i, (x0, y0) in enumerate(tarp_outline):
+    x1, y1 = tarp_outline[(i + 1) % len(tarp_outline)]
+    cross = ((y0 > grid_y) != (y1 > grid_y)) & \
+            (grid_x < (x1 - x0) * (grid_y - y0) / (y1 - y0 or 1) + x0)
+    tarp_solid ^= cross
+tarp_photo.bleed(tarp_solid, passes=32)
+oasis = root_part('mirage-decoy-oasis')
+tarp_mat = tarp_photo.material(.92)
+TARP_X = 2.8 / (925 - 80)
+TARP_Z = 2.15 / (755 - 95)
+def tarp_world(px, py, height):
+    return ((px - 502.5) * TARP_X, height, (425 - py) * TARP_Z)
+tarp_mesh = Mesh()
+tarp_loops = trace(tarp_solid, (70, 85, 940, 770), tolerance=1.8, min_area=80)
+slab(tarp_mesh, 'blue-paint', tarp_photo, tarp_loops, tarp_world, .008, .026, wall_scale=.004)
+own(tarp_mesh.finish('mirage-decoy-oasis:traced-thin-tarpaulin', {'blue-paint': tarp_mat}),
+    oasis, 'mirage-decoy-oasis:traced-thin-tarpaulin')
+# Small triangular folds lift the photographed corners off the sand.
+folds = (
+    ((110, 130), (220, 155), (135, 235)),
+    ((900, 128), (800, 155), (882, 235)),
+    ((900, 722), (800, 695), (875, 620)),
+    ((108, 722), (210, 695), (130, 620)),
+)
+for index, points in enumerate(folds, 1):
+    fold = Mesh()
+    vertices = [tarp_world(*points[0], .12)] + [tarp_world(*point, .025) for point in points[1:]]
+    fold.face(vertices, [tarp_photo.uv(*point) for point in points], 'paint', (0, 1, 0))
+    own(fold.finish(f'mirage-decoy-oasis:lifted-corner-{index}', {'paint': tarp_mat}), oasis,
+        f'mirage-decoy-oasis:lifted-corner-{index}')
+stake_mat = bpy.data.materials.new('Mirage / rusty tent stakes')
+stake_mat.diffuse_color = (.23, .19, .14, 1)
+stake_mat.use_nodes = True
+stake_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.12, .10, .075, 1)
+stake_mat.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value = .55
+stake_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .82
+rope_mat = bpy.data.materials.new('Mirage / dusty guy line')
+rope_mat.diffuse_color = (.53, .43, .30, 1)
+rope_mat.use_nodes = True
+rope_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.38, .28, .17, 1)
+rope_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .95
+for index, (sx, sz) in enumerate(((-1.55, -1.28), (1.55, -1.28),
+                                  (1.55, 1.28), (-1.55, 1.28)), 1):
+    peg = town.cube(f'mirage-decoy-oasis:rusty-peg-{index}', (sx, .05, sz),
+                    (.04, .08, .04), stake_mat, bevel=0)
+    own(peg, oasis, f'mirage-decoy-oasis:rusty-peg-{index}')
+    corner = (math.copysign(1.4, sx), .025, math.copysign(1.075, sz))
+    line = town.beam(f'mirage-decoy-oasis:guy-line-{index}', corner,
+                     (sx, .08, sz), .014, rope_mat)
+    own(line, oasis, f'mirage-decoy-oasis:guy-line-{index}')
+
+for root_obj in (billboard,turret,rock,chair,cabinet,sign,stone,tent,oasis):
     root_obj['assetRoot']=True
 
 glb.parent.mkdir(parents=True,exist_ok=True)
@@ -357,6 +419,7 @@ for image_name, scale in {
         'bound-sign-front': .5,
         'bound-stone-front': .25, 'bound-stone-side': .25,
         'decoy-tent-front': .5,
+        'decoy-oasis-overhead': .375,
 }.items():
     image = LOADED_PHOTOS[image_name].image
     image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
@@ -416,4 +479,6 @@ shot('bound-stone-side',(8,.5,0),(0,.5,0),1.5,(900,700))
 show('mirage-decoy-tent',(7,2.5,7),(1.5,2.4,-.1),8.0,(1200,800))
 shot('mirage-decoy-tent-front',(0,2.5,12),(0,2.5,0),7.2,(1200,800))
 shot('mirage-decoy-tent-side',(12,2.5,0),(1.5,2.4,-.1),5.0,(800,800))
+show('mirage-decoy-oasis',(7,3,7),(0,.05,0),3.5,(1000,700))
+shot('mirage-decoy-oasis-overhead',(0,10,0),(0,0,0),3.25,(1000,700))
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir)}))

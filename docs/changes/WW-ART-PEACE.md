@@ -19,6 +19,11 @@ board and support poles hidden behind the painting. Its exported side view
 shows both flat boards. The painting and exported front were compared at the
 same size.
 
+Added `mirage-decoy-oasis` with a traced thin tarp, four lifted corner folds,
+stakes and guy lines. Its palm is hand-painted on the blue tarp. The overhead
+photo was compared to the exported overhead render, and the car-height view
+shows the full sheet from about 10 m away.
+
 ## Checks
 
 - Blender export and GLB re-import/render succeeded. The front reference and
@@ -28,8 +33,9 @@ same size.
   until all five requested props are in the candidate.
 - Browser and in-game look checks: Claude should review the round-3 sheet after
   it is assembled. This art lane does not run Chrome.
-- Changed assertions: none. Race fingerprints: not applicable; no race rules
-  changed.
+- Added named-root and named-part assertions for the five new props to the
+  existing Blender candidate check. No existing assertion was weakened or
+  removed. Race fingerprints: not applicable; no race rules changed.
 
 ## Removed
 
