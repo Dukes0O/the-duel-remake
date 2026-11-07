@@ -1,43 +1,36 @@
-# TOWN-ART-OUTPOSTS — Round 1
+﻿# TOWN-ART-OUTPOSTS — Round 2
 
 ## Changed
 
-- Merged `integration/wasteland` into `codex/town-art-outposts` before building. That merge supplied `tools/blender/photo_model.py` and the rail-train example.
-- Added `tools/blender/town-outposts.py` and a photo-built Dot's Diner candidate in `public/assets/models/wasteland/town/outposts.glb`.
-- Saved generated side, front and overhead source photos in the ignored lane evidence folder, then added compressed JPEG recipe inputs and credits under `public/assets/models/wasteland/town/textures/`.
-- Added `docs/board/looks/town-art-outposts/round-1.jpg` and its review with honest scores.
-- Added a readback entry for the outposts GLB in `tools/test-blender-output.mjs`.
+- Replaced the flat side/top sheet construction with one `carve_object` call from `photo_carve.py`, using the four-view workflow and `hull_model.py` through the shared kit.
+- Added generated front and rear reference JPEGs and their source notes. The measured pixel anchors are in `tools/blender/town-outposts.py`; grid overlays were reviewed during modelling.
+- Added a continuous photo-carved fuselage and bus shell. Rebuilt the porch as placed geometry with ground-contact posts, connected deck, tables with legs and a canopy that meets the shell. Placed the pump at the porch end on a ground plate.
+- Rebuilt DOT'S as a thick sign slab with separate front/back UV direction so the wording reads correctly on both sides.
+- Added the round-2 photo/model sheet and review. Removed round-1 sheet and review.
 
-## Measured parts
+## Measurements and budgets
 
-| Part | Source photo | Measured outline or stations | Model method |
-| --- | --- | --- | --- |
-| Aircraft fuselage | Side and front | Side silhouette stations at x=25, 60, 120, 205, 300, 400, 500 and 605 px; rounded front radius checked against the front photo | `photo_model.lathe` |
-| Bus body | Side | Photo mask within x=420–1435, y=455–760 px | `photo_model.trace` + `photo_model.slab` |
-| Roof | Overhead | Photo mask within x=18–2055, y=132–455 px | `photo_model.trace` + `photo_model.slab` |
-| DOT'S sign | Front | Photo mask within x=550–1225, y=20–192 px | `photo_model.trace` + `photo_model.slab` |
-| Porch and pump | Side/front | Porch x=345–1255 px, depth 3.1 m; pump x=70–119 px | `photo_model.box` |
-
-Scale anchor: 1,420 side-photo pixels map to 29.0 m. The diner footprint target
-is 4×3 cells (32×24 m); the rendered shell is inside it. Dot's current GLB is
-567,108 bytes. The family GLB budget is 5 MB; this round uses one model. The
-three JPEG recipe inputs total 322,288 bytes.
+- Side: 1024 × 768 px; nose 15 px, tail 1011 px, ground 558 px; 29 m length.
+- Front: 1312 × 1199 px; centre 656 px, ground 1112 px; hull width 8.2 m mapped over 896 px.
+- Rear: 1312 × 1199 px; centre 615 px, ground 1120 px; hull width 8.2 m mapped over 819 px. Extra aircraft wings are cut from the rear mask.
+- Overhead: 1024 × 341 px; front 12 px, rear 1012 px, centre line 161 px. Porch and sign are cut from the hull mask and built as placed pieces.
+- GLB size: 929,960 bytes. Triangle budget: 14,000. Metallic factor target: at most 0.3. Sheet: 165,236 bytes (limit 500 KB).
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: passed, 296 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed. The existing oversized-file and review-directory notices are advisory targets.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; the audio-analysis subtest failed twice because this job cannot start `ffmpeg` (`spawnSync ffmpeg EPERM`). This test does not inspect this card's art.
-- Blender export and empty-scene import succeeded. Rendered mayor, driver, side and overhead views.
-- Browser/scene look check: not run here; Claude should inspect the mayor and road-side driver views in the sheet and GLB.
+- `node tools/test-blender-output.mjs`: passed, 308 checks and 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed. The size-target report lists repository-wide advisory overages; no placement check failed.
+- `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed on both runs. The first run and same-worktree rerun fail because this repository test still stats the explicitly removed `round-1.jpg`, and the unrelated audio subtest cannot launch `ffmpeg` (`spawnSync ffmpeg EPERM`). Assertions were not changed. The round-1 check needs a Claude-reviewed update to match this card's delete-old-round instruction.
+- Blender export and empty-scene import: passed; five review angles rendered.
+- Browser/look check: not run here. Claude should inspect the sheet's three matched views, both three-quarter views, both sign faces, porch contact and remaining photo seams.
 - Race fingerprints: not applicable; no race code or simulation rules changed.
 - Changed assertions: none.
 
 ## Removed
 
-- No prior recipe, model, test, or asset was replaced.
+- Removed `round-1.jpg` and `round-1-review.md` as requested. The old flat-sheet recipe and GLB were replaced by this round's carve and model.
+- No tests or assertions were removed or weakened.
 
-## Missing
+## Not built
 
-- `plane-school`, `rail-halt`, `deck-town`, and `hermit-camp` are not in this submission.
-- Dot's needs substantial shape and surface work. Round 1 has duplicated photo surfaces in the mayor view, a detached pump, and a poorly joined aircraft/bus silhouette. Scores and fixes are in the round review.
+- `plane-school`, `rail-halt`, `deck-town` and `hermit-camp` remain for later rounds.

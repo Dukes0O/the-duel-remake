@@ -1,13 +1,23 @@
-# Dot's Diner photo sources
+﻿# Dot's Diner photo sources
 
-Original photo references generated with Codex built-in image generation on 6
-November 2026. The three compressed JPEGs below are the recipe inputs. Raw
-reference PNGs were used to make the review sheet, then removed from lane
-evidence during cleanup. The image generator retains its originals outside the
-repository.
+Original reference photos made with Codex built-in image generation on 6
+November 2026. These JPEGs are the recipe inputs. Raw PNG originals remain in
+Codex's generated-images collection; lane render and grid captures are temporary
+review evidence.
 
-- `dot-diner-side.jpg` prompt: “Use case: product-mockup. Asset type: dead-on side photograph used as a 3D modeling reference. Subject: the same original dusty roadside diner: nose of an old wrecked passenger airliner joined to a long old bus body, low narrow porch on the road-facing side, outdoor tables visible, one old fuel pump, and a large hand-painted roof sign reading exactly DOT'S. Match a grounded plausible 4x3-cell footprint, about 30 m long. Backdrop: plain pale warm-grey seamless background and floor, no environment. Composition: strict orthographic left-side elevation, camera level and square to the side, no perspective, full building centered and filling most of the frame with generous margins. Show rounded aircraft nose at left, bus body continuing to the right. Keep the ground line level. No additional views or collage. Lighting: bright flat overcast daylight, soft contact shadow only. Materials: realistic faded cream and muted red aircraft skin, dusty faded blue-green bus paint, dark rust streaks and broken panel seams, timber porch and sun-bleached sign board. Text: DOT'S, exactly, on sign only. No logos, airline name, other words, people, vehicles, watermark, plants or scenery. Real-world reference photography, not a render.”
-- `dot-diner-front.jpg` prompt: “Use case: product-mockup. Asset type: dead-on front photograph used as a 3D modeling reference. Subject: the exact same original roadside diner concept: a wrecked passenger-airliner nose is the front end, with an old bus body extending straight back, plus a side porch, several outdoor tables, one old fuel pump, and a high rooftop sign reading exactly DOT'S. Backdrop: plain pale warm-grey seamless studio background and floor. Composition: strict orthographic front elevation looking squarely at the rounded aircraft nose and entrance front, camera centered at ground level, no perspective. Show the complete front width, roof, full sign and pump; keep the entire object visible with margins. No additional views or collage. Lighting: bright flat overcast daylight, soft contact shadow. Materials: same faded cream and muted red aircraft skin, dusty blue-green and off-white bus paint, scratched windows, rust streaks, worn porch timber, sun-faded sign. Text: DOT'S on the sign only. No logos, airline names, other words, people, vehicles, watermark, plants or scenery. Real-world reference photography, not a render.”
-- `dot-diner-overhead.jpg` prompt: “Use case: product-mockup. Asset type: dead-on overhead photograph used as a 3D modeling reference. Subject: the exact same original dusty roadside diner, a long wrecked passenger-airliner body joined to an old bus, with a narrow wooden porch along one side, several small outdoor tables, one old fuel pump, and a large rooftop sign reading exactly DOT'S. Same layout as a grounded roadside building about 30 m long. Backdrop: plain pale warm-grey seamless studio background and floor. Composition: perfectly vertical 90-degree top-down orthographic plan view, camera looking straight down, no perspective or visible horizon. Show the entire footprint, nose, bus, porch, tables, pump and rooftop sign; centered and filling most of the frame with margins. No additional views or collage. Lighting: bright neutral flat overcast studio daylight, soft slight contact shadows. Materials: faded cream and muted red aircraft skin, dusty off-white bus roof, rust-stained sheet metal, rough weathered brown porch, worn painted sign. Text: DOT'S on the rooftop sign only. No logos, airline names, other words, people, vehicles, watermark, plants or scenery. Real-world reference photography, not a render.”
+- `dot-diner-side.jpg`: dead-on side reference of the same original roadside
+  diner, with rounded wrecked-airliner nose, long weathered bus, timber porch,
+  tables, fuel pump and a hand-painted DOT'S sign; pale studio sweep, level
+  orthographic camera, full subject, overcast light.
+- `dot-diner-front.jpg`: regenerated square-on front reference. Camera looks
+  along the diner length at the rounded aircraft nose; porch and pump appear at
+  the viewer's left edge. Orthographic view, plain pale studio, flat light.
+- `dot-diner-rear.jpg`: rear reference of the blue-green bus tail, with the
+  damaged aircraft extending away behind it; orthographic view on a plain pale
+  studio floor. The generated source includes extra wing structure; the carve
+  table cuts that unreachable area from the rear mask.
+- `dot-diner-overhead.jpg`: vertical overhead plan reference of the same
+  aircraft-and-bus diner, porch, tables, pump and roof sign; plain pale studio,
+  no horizon, flat overcast light.
 
 These are generated modeling references, not external scans or licensed photos.
