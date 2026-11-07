@@ -792,8 +792,9 @@ try {
           'wall-steel-straight','wall-steel-corner','wall-steel-end',
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
           'searchlight','searchlight:post','searchlight:head','searchlight:beam',
-          'fire-station','clinic','hydrant','hydrant-standpipe','hydrant-hose-reel-side',
-          'hydrant-wound-rubber-hose',
+          'fire-station','clinic','hydrant','hydrant-standpipe',
+          'hydrant-hose-reel-inner-side-plate','hydrant-hose-reel-outer-side-plate',
+          'hydrant-hose-drum','hydrant-reel-bracket-upper','hydrant-wound-rubber-hose',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
@@ -804,7 +805,9 @@ try {
           assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
         }
         for (const id of ['searchlight:post','searchlight:head','searchlight:beam',
-          'hydrant-standpipe','hydrant-hose-reel-side','hydrant-wound-rubber-hose']) {
+          'hydrant-standpipe','hydrant-hose-reel-inner-side-plate',
+          'hydrant-hose-reel-outer-side-plate','hydrant-hose-drum',
+          'hydrant-reel-bracket-upper','hydrant-wound-rubber-hose']) {
           const part=nodeIndex.get(id);
           assert.notEqual(part,undefined, `${id} named prop part exists`);
           assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
