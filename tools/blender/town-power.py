@@ -564,7 +564,8 @@ bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filep
 scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=920;scene.render.resolution_y=1000
 scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX';scene.world=bpy.data.worlds.new('bright overcast 2');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.72,.75,.78,1)
 isolate('windmill')
-groundmat=town.make_materials({'sand':root/'public/assets/models/wasteland/town/textures/town-water-earth.jpg'})['sand']
+groundmat=bpy.data.materials.new('plain mid grey-brown review ground');groundmat.diffuse_color=(.28,.27,.24,1);groundmat.use_nodes=True
+groundmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.28,.27,.24,1)
 lamp_data=bpy.data.lights.new('rotor turn light','AREA');lamp=bpy.data.objects.new('rotor turn light',lamp_data);scene.collection.objects.link(lamp);lamp.location=town.game_vector((3,7,-7));lamp_data.energy=2200;lamp_data.size=8
 bpy.ops.mesh.primitive_plane_add(size=24,location=town.game_vector((0,-.08,0)));bpy.context.object.data.materials.append(groundmat)
 data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((0,8,-12));data.lens=34;aim(cam,town.game_vector((0,2.7,0)));scene.camera=cam
