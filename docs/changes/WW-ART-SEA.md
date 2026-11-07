@@ -106,3 +106,16 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 ### Removed
 
 The primitive spoked wheels, the bent side sills and the tall column of castings.
+
+## WW-ART-SEA works-camp
+
+- Added `works-camp` to `public/assets/models/wasteland/scablands/sea-camp.glb`, built by `tools/blender/sea-camp.py`. The model has one root, two differently turned huts sharing one carved hut mesh, a long kitchen, linked traced ladders and stilt frames, and a traced washing line. The floors stand 3 m above ground. Dark flood marks and weed sit at the timber feet. Nine generated, measured source photos are credited in the scablands texture folder.
+- Final GLB readback: 15,942 triangles across unique mesh definitions (31,088 for all placed instances) and 998,376 bytes. The candidate budget check counts the unique GLB mesh definitions. The review sheet is `docs/board/looks/ww-art-sea/round-6.jpg` (1600 × 800, 162,170 bytes).
+- `tools/test-blender-output.mjs`: passed, 320 checks and 0 failures. `tools/test-repo-hygiene.mjs`: passed; reported size targets are advisory.
+- Blender exported and reimported the GLB, then rendered the side comparison and two full-camp views with the Standard view transform. Browser checks were not run in this art lane; Claude should review the hut/photo comparison and both camp views in the sheet.
+- Changed assertions: none. Race fingerprints: not applicable; this is model-only art.
+- Visual verdict: yes, the tall braced legs, old tide marks, weed, ladders and laundry make the camp look prepared for the water.
+
+### Removed
+
+The 320-byte export proof from step 1 was replaced by the completed camp model. No other built asset was removed or changed.
