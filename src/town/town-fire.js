@@ -1,5 +1,7 @@
 import {buildingById} from './content/registry.js';
 import {registerTownSystem} from './town-sim.js';
+import {registerTownCommand} from './town-commands.js';
+import {ensureHomeGround} from './town-home-ground.js';
 
 const HOURS_PER_YEAR = 360 * 24;
 const BUILDING_FUEL = Object.freeze({timber:24, canvas:8, fuel:1});
@@ -30,6 +32,8 @@ export function igniteTownFire(town,buildingId) {
   building.fireStartedTick=tick;
   return true;
 }
+registerTownCommand('igniteTownFire',(town,command)=>igniteTownFire(town,command.buildingId)
+  ?{ok:true,message:'The site is burning.'}:{ok:false,message:'That site cannot catch fire.'});
 
 // Reports the amount one hose can deliver in the current game hour. It does
 // not alter the town; callers decide how to apply the water and spend it.
@@ -96,6 +100,17 @@ export function stepTownFire({town,rng,tick,calendar}) {
         target.fireStage=1;
         target.fireStartedTick=tick;
       }
+      const plot=ensureHomeGround(town).find(item=>item.regionId===fire.regionId&&item.x===fire.x+wx&&item.z===fire.z+wz&&!item.burning);
+      if(plot&&rng.chance(Math.min(0.8,0.2*wind))) {
+        plot.burning=true;plot.burningDays=0;plot.tier=0;plot.progressDays=0;plot.waitingGood=null;
+        for(const person of town.people||[]) if(person.home===plot.id) {
+          person.home=`canvas-${person.family}`;person.homeTier=0;person.homeType='Canvas';
+        }
+        plot.household=null;plot.family=null;
+      }
+    }
+    if(!town.buildings.some(building=>building.fireStage)) for(const plot of town.homePlots||[]) if(plot.burning) {
+      plot.burning=false;plot.burnt=true;plot.tier=0;plot.progressDays=0;plot.building=false;plot.waitingGood=null;
     }
     return;
   }

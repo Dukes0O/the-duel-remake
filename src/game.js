@@ -35,6 +35,7 @@ import {grandPrixCourse, courseForGrandPrix, initializeField, stepStartSequence,
 
 import { CARS, DEFAULT_CAR, DIFFICULTY, DEFAULT_DIFFICULTY, CPU_DIFFICULTY, DEFAULT_CPU_DIFFICULTY, COURSE, LIVES, DRIVE, SCORING } from './config.js';
 import { Course } from './course.js';
+import {setScablandsOpenMarks} from './world/scablands-ground.js';
 import { onHiddenRoad } from './hidden-road.js';
 import {initializeHiddenRoadJourney, checkHiddenRoadDeparture, stepHiddenRoadJourney,
   queueHiddenRoadChoice, hiddenRoadColliders, prepareHiddenRoadVisit} from './hidden-road-journey.js';
@@ -316,6 +317,7 @@ export class Duel {
   }
 
   _loadStage(idx) {
+    setScablandsOpenMarks([]);
     clearDeepJourney(this);
     clearArsenalState(this);
     const s = this.state;
@@ -548,6 +550,7 @@ export class Duel {
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
         opponents.length < (ambush || mode === 'world-job' ? 0 : 1) || opponents.length > maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
+    setScablandsOpenMarks([]);
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];
     const s = this.state;
