@@ -882,9 +882,15 @@ for image_name, scale in {
         images.append(sal_details[image_name.removeprefix('sal-pipe-trailer-')].image)
     for image in images:
         image.scale(max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
-# Keep each tanker view whole and bring the authored widths to the 1024 px
-# ceiling without cropping; the source JPEGs themselves remain untouched.
-for photo in tank_details.values():
+# Keep every tanker photo whole and bring its embedded copy to the 1024 px
+# ceiling without cropping; source JPEGs on disk remain untouched.
+tank_export_photos = list(tank_photos.values()) + list(tank_details.values()) + [t_cab_side, tarp_photo, frame_photo]
+seen_images = set()
+for photo in tank_export_photos:
+    image_id = photo.image.as_pointer()
+    if image_id in seen_images:
+        continue
+    seen_images.add(image_id)
     if photo.image.size[0] < 1024:
         photo.image.scale(1024, max(1, round(photo.image.size[1] * 1024 / photo.image.size[0])))
 town.export_glb(glb)
