@@ -1,24 +1,20 @@
-# TOWN-ART-PLANTS - wellhead - round 9 follow-up
+﻿# TOWN-ART-PLANTS follow-up: radar
 
 ## Changed
 
-- Replaced the flood-only side-photo mask with a global neutral-grey color mask. The A-frame openings and the gap under the beam are cut wherever the studio grey appears.
-- Replaced the smooth motor lathe with a traced motor slab wearing the side photo. Corrected the casing, valve and handwheel photo mapping and placed the valve wheel beside the casing.
-- Kept the beam, horse-head, A-frame, base and flywheel from round 8. The wellhead uses 1,716 triangles, below its 1,800 limit.
-- Reused only byte-identical embedded photos (none were duplicates) and resampled embedded photo copies to 85% to bring the family GLB under its 3 MB budget. The original source photos are unchanged. The family GLB is 2,514,888 bytes.
-- Added the round-9 sheet (205,601 bytes) and review note. Rounds 6 and 7 remain.
+Finished the radar model begun in the prior lane commits. Kept the four credited single-view reference photos and the separate `radar:dish` pivot. Tightened the side and front tower trace masks to exclude the separately modeled dish and drive assembly. Added an art-line note about removing moving photographed assemblies from static trace masks. The family model is 2,518,540 bytes; the radar is 1,688 triangles. The dish is a vertical-axis moving node at its centre.
+
+Added the round-10 comparison sheet and review. The visual review found remaining side-view fragments, a red strip at the dish edge, and inconsistent top-view reference details. Claude should review these points and decide if another visual round is needed.
 
 ## Checks
 
-- Blender recipe, GLB export and exported-model renders: passed. The side mask was inspected beside its photo; the frame gaps are black.
-- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed; placement is clean and size targets are advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed, including the round-9 sheet check. The audio-analysis subtest failed on `spawnSync ffmpeg EPERM`; its one rerun failed the same way.
-- Lane tier and build: not run; art-card instructions exclude them.
-- Browser and in-game look checks: not run; Claude owns them. Claude should inspect the side mask and open frame, motor photo match, dark rusty casing and valve, readable `07`, and mayor view.
-- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
+- Blender recipe/export and renders: completed. Piece bounds, footprint checks, ground/contact checks and radar triangle count printed in `.qa-dist/town-art-plants-radar-blender.log`.
+- `node tools/test-blender-output.mjs`: 377 checks, 0 failed.
+- Browser checks and in-game look review: not run here; Claude should inspect the round-10 sheet and exported model.
+- Lane tier and build: not run, as directed for this art card.
+- Changed assertions: none in this follow-up. The previous radar registration in `tools/test-blender-output.mjs` was inherited from commit `c694c4e44`.
+- Race fingerprints: not applicable; town art is not wired into race simulation.
 
 ## Removed
 
-- Removed the former generic motor lathe and the round-8 sheet and note, as requested.
-- No source reference photo or accepted building was removed. Temporary renders, masks, sheet scripts and logs are removed after checks.
+No prior passed building or model was removed. Scratch renders and logs will be cleaned from `.qa-dist` after the evidence is committed.
