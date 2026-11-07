@@ -1,5 +1,23 @@
 # WW-ART-PEACE round 3
 
+## Vehicle photo sources — incomplete work in progress
+
+Generated and cropped four-view photo references for `sal-pipe-trailer`,
+`dust-tanker` and `mirage-caravan`. Added the twelve JPEG sources to the town
+texture folder and credited them. Each image is under 1024 px on its long side.
+
+This does not complete the vehicle card. The Blender recipe has not yet been
+extended, the vehicles have not been modeled or rendered, and no round-4 sheet
+has been assembled. No Blender or repository checks were run. Claude should not
+review these photos as a finished round.
+
+The requested `docs/ART_LINE.md` was not present in this checkout; the current
+hull and photo method was read from the end of `docs/ASSET_PIPELINE.md`.
+
+### Removed
+
+- No files or behavior removed.
+
 Date: 6 November 2026
 
 Added the `toll-cabinet` root with a traced front photo, steel case and a real

@@ -253,6 +253,24 @@ background, no perspective, no labels, no people or logos, no watermark."
 
 # WW-ART-PEACE photo references
 
+## WW-ART-PEACE vehicles, 6 November 2026
+
+Generated with OpenAI built-in image generation as four-view orthographic
+turnarounds of original fictional vehicles. Each view was cropped from its
+matching generated turnaround and saved as a JPEG source for the Blender recipe.
+
+- `peace-sal-pipe-trailer-side.jpg`, `peace-sal-pipe-trailer-front.jpg`,
+  `peace-sal-pipe-trailer-rear.jpg`, `peace-sal-pipe-trailer-overhead.jpg` —
+  rusty pickup and sagging pipe trailer, clean bright pipe ends.
+- `peace-dust-tanker-side.jpg`, `peace-dust-tanker-front.jpg`,
+  `peace-dust-tanker-rear.jpg`, `peace-dust-tanker-overhead.jpg` — battered
+  tanker with painted goggles and a tied tarp.
+- `peace-mirage-caravan-side.jpg`, `peace-mirage-caravan-front.jpg`,
+  `peace-mirage-caravan-rear.jpg`, `peace-mirage-caravan-overhead.jpg` — old
+  caravan with a dummy in a large hat at its window.
+
+No third-party photographs, marks, brands or logos were used.
+
 Generated with the built-in OpenAI image generator on 6 November 2026. The originals remain in the Codex generated-images library; the game sources below are compressed JPEG copies.
 
 - `peace-toll-cabinet-front.jpg`, `peace-toll-cabinet-side.jpg` — dead-on front and left-side photos of a dented steel filing cabinet with one drawer open and stuffed with old folders. Generated for the Toll cabinet; no people, brands or third-party material.
