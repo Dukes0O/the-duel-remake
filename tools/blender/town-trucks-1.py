@@ -401,6 +401,16 @@ def build_photo_truck(identifier, spec):
     def ends_allow(x,y,z): return front.covers(x,y,z)|rear.covers(x,y,z)
     def clear_of_wheels(x,y,z):
         keep=y>=chassis_y
+        if identifier=='water-tanker':
+            # The measured drum replaces the tank pixels in the carve. Keep
+            # the lower chassis and fittings, with a small clearance below it.
+            tank_z0=z0+(390-front_px)*side_scale
+            tank_z1=z0+(1035-front_px)*side_scale
+            keep &= ~((y>1.26)&(y<2.58)&(z>tank_z0)&(z<tank_z1))
+        if identifier=='tow-rig':
+            # Isolated photo-mask splinters above the rear deck are not truck
+            # hardware; the real crane and hook are separate traced parts.
+            keep &= ~((y>1.34)&(z>1.55))
         outside=np.abs(x)>track-tyre_half-.04
         for axle in axles:
             keep &= ~(outside & ((z-axle)**2+(y-wheel_r)**2<(wheel_r+.055)**2))
@@ -411,10 +421,11 @@ def build_photo_truck(identifier, spec):
     solid,xs,ys,zs=occupancy(((-width/2-.08,width/2+.08),(0,height),(z0-.08,-z0+.08)),
         voxel,occupancy_views,clear_of_wheels)
     solid=largest_part(solid)
-    side_photo.bleed(left.mask & ~side_photo.sky([(5,5),(side_photo.w-6,5),(5,side_photo.h-6)],tolerance=70,grey=30))
-    front_photo.bleed(front.mask & ~front_photo.sky([(5,5),(front_photo.w-6,5),(5,front_photo.h-6)],tolerance=70,grey=30))
-    rear_photo.bleed(rear.mask & ~rear_photo.sky([(5,5),(rear_photo.w-6,5),(5,rear_photo.h-6)],tolerance=70,grey=30))
-    top_photo.bleed(top.mask & ~top_photo.sky([(5,5),(top_photo.w-6,5),(5,top_photo.h-6),(top_photo.w-6,top_photo.h-6)],tolerance=70,grey=30))
+    bleed_tolerance=48 if identifier=='water-tanker' else 70
+    side_photo.bleed(left.mask & ~side_photo.sky([(5,5),(side_photo.w-6,5),(5,side_photo.h-6)],tolerance=bleed_tolerance,grey=30))
+    front_photo.bleed(front.mask & ~front_photo.sky([(5,5),(front_photo.w-6,5),(5,front_photo.h-6)],tolerance=bleed_tolerance,grey=30))
+    rear_photo.bleed(rear.mask & ~rear_photo.sky([(5,5),(rear_photo.w-6,5),(5,rear_photo.h-6)],tolerance=bleed_tolerance,grey=30))
+    top_photo.bleed(top.mask & ~top_photo.sky([(5,5),(top_photo.w-6,5),(5,top_photo.h-6),(top_photo.w-6,top_photo.h-6)],tolerance=bleed_tolerance,grey=30))
     face_materials={'side':side_photo.material(),'front':front_photo.material(),
         'rear':rear_photo.material(),'overhead':top_photo.material()}
     root_obj=pivot(identifier,(0,0,0));TRUCKS[identifier]=root_obj
@@ -465,26 +476,32 @@ def build_photo_truck(identifier, spec):
         loaded={view:Photo(textures/f'supply-load-{view}.jpg')
                 for view in ('side','front','rear','overhead')}
         side_ground,side_front,side_rear=449,104,954
-        load_scale=8.2/(side_rear-side_front)
-        load_z0=-4.1
+        load_scale=3.0/(side_rear-side_front)
+        load_z0=-1.5
         def load_side_pick(x,y,z):
-            return side_front+(z-load_z0)/load_scale, side_ground-y/load_scale
+            return side_front+(z-load_z0)/load_scale, 258-(y-1.53)/.0039
         def load_front_pick(x,y,z):
             return 222-x/.0105,397-y/.0105
         def load_rear_pick(x,y,z):
             return 300+x/.00955,402-y/.00955
         def load_top_pick(x,y,z):
-            return 72+(z-load_z0)*762/8.2,230+x/.00948
+            return 390+(z-load_z0)*460/3.0,230+x/.00948
         load_left=View('side',loaded['side'],[(5,5),(1078,5),(5,495)],
-            load_side_pick,(-1,0,0))
+            load_side_pick,(-1,0,0),lambda mask: mask & (np.indices(mask.shape)[1]>=435) &
+            (np.indices(mask.shape)[1]<=950) & (np.indices(mask.shape)[0]>=65) &
+            (np.indices(mask.shape)[0]<=270))
         load_right=View('side',loaded['side'],[(5,5)],load_side_pick,(1,0,0))
         load_right.mask=load_left.mask
         load_front=View('front',loaded['front'],[(5,5),(438,5),(5,495)],
-            load_front_pick,(0,0,-1))
+            load_front_pick,(0,0,-1),lambda mask: mask & (np.indices(mask.shape)[0]>=75) &
+            (np.indices(mask.shape)[0]<=270))
         load_rear=View('rear',loaded['rear'],[(5,5),(594,5),(5,507)],
-            load_rear_pick,(0,0,1))
+            load_rear_pick,(0,0,1),lambda mask: mask & (np.indices(mask.shape)[0]>=65) &
+            (np.indices(mask.shape)[0]<=270))
         load_top=View('overhead',loaded['overhead'],[(5,5),(922,5),(5,507),(922,507)],
-            load_top_pick,(0,1,0))
+            load_top_pick,(0,1,0),lambda mask: mask & (np.indices(mask.shape)[1]>=90) &
+            (np.indices(mask.shape)[1]<=390) & (np.indices(mask.shape)[0]>=380) &
+            (np.indices(mask.shape)[0]<=860))
         side_seeds=[(5,5),(1078,5),(5,495)]
         front_seeds=[(5,5),(438,5),(5,495)]
         rear_seeds=[(5,5),(594,5),(5,507)]
@@ -496,7 +513,7 @@ def build_photo_truck(identifier, spec):
         def load_ends_allow(x,y,z):
             return load_front.covers(x,y,z)|load_rear.covers(x,y,z)
         voxel=.035
-        load_solid,lxs,lys,lzs=occupancy(((-1.16,1.16),(1.53,3.85),(-.72,4.12)),voxel,
+        load_solid,lxs,lys,lzs=occupancy(((-1.16,1.16),(1.53,2.25),(-1.52,1.52)),voxel,
             [load_left.covers,load_top.covers,load_ends_allow])
         load_solid=largest_part(load_solid)
         load_materials={name:photo.material() for name,photo in loaded.items()}
@@ -505,6 +522,45 @@ def build_photo_truck(identifier, spec):
             load_solid,lxs,lys,lzs,voxel,2000)
         attach(cargo,load)
     elif identifier=='water-tanker':
+        # Lathed from the measured side and rear silhouettes. The side picture
+        # supplies the rolled shell; the rear picture supplies the end cap.
+        tank_z0=z0+(390-front_px)*side_scale
+        tank_z1=z0+(1035-front_px)*side_scale
+        tank_bottom=(ground-261)*side_scale
+        tank_top=(ground-104)*side_scale
+        tank_radius=(tank_top-tank_bottom)/2
+        tank_y=(tank_top+tank_bottom)/2
+        tank_mesh=PhotoMesh()
+        def tank_uv(index,distance,radius,angle):
+            px=390+distance/side_scale
+            py=ground-(tank_y+radius*math.sin(angle)*.85)/side_scale
+            return side_photo.uv(px,py)
+        stations=[(0,tank_radius*.86),(.12,tank_radius),(.24,tank_radius),
+            (tank_z1-tank_z0-.24,tank_radius),(tank_z1-tank_z0-.12,tank_radius),
+            (tank_z1-tank_z0,tank_radius*.86)]
+        lathe(tank_mesh,'side',(0,tank_y,tank_z0),(0,0,1),(1,0,0),(0,1,0),
+              stations,tank_uv,sides=32,
+              cap_start=('rear',lambda a,f: rear_photo.uv(rear_cx-math.cos(a)*f*165,
+                  rear_ground-(tank_y+math.sin(a)*f*tank_radius)/rear_scale)),
+              cap_end=('rear',lambda a,f: rear_photo.uv(rear_cx+math.cos(a)*f*165,
+                  rear_ground-(tank_y+math.sin(a)*f*tank_radius)/rear_scale)))
+        # Raised circumferential bands follow the photo's riveted seam lines.
+        for px in (438,686,964):
+            distance=(px-390)*side_scale
+            lathe(tank_mesh,'side',(0,tank_y,tank_z0),(0,0,1),(1,0,0),(0,1,0),
+                [(distance-.035,tank_radius*1.015),(distance,tank_radius*1.04),
+                 (distance+.035,tank_radius*1.015)],tank_uv,sides=32)
+        tank_obj=tank_mesh.finish(identifier+':tank-drum',{'side':side_photo.material(),'rear':rear_photo.material()})
+        attach(tank_obj,root_obj)
+        # Keep the top access details as separate, visible hardware above the
+        # drum: a narrow pair of walkway strips and the inspection hatch.
+        crown=tank_y+tank_radius*.98
+        for side in (-1,1):
+            box(identifier+':tank-walkway',(side*.22,crown+.025,(tank_z0+tank_z1)/2),
+                (.15,.045,tank_z1-tank_z0-.30),dark_metal,bevel=.01)
+        hatch_z=z0+(748-front_px)*side_scale
+        cylinder(identifier+':tank-hatch',(0,crown+.08,hatch_z),.26,.12,dark_metal,'Y',32)
+        cylinder(identifier+':tank-hatch-lid',(0,crown+.15,hatch_z),.22,.035,paint_rust,'Y',32)
         for side in (-1,1):
             pipe(identifier+':valve-drain',[(side*.78,1.1,.25),(side*.91,.67,.25),(side*.76,.67,1.1)],.035,dark_metal)
             cylinder(identifier+':valve-wheel',(side*.91,.68,1.1),.16,.06,paint_rust,'X',20)
@@ -518,6 +574,12 @@ def build_photo_truck(identifier, spec):
         # pixels; tracing the bled image would mistake its painted fill for steel.
         crane_mask=tow_lattice_mask.copy()
         crane_mask[38:178,962:986]=False  # the hoist line is a separate part
+        # This masked patch is studio background enclosed by the boom's
+        # diagonal members; flood fill from the photo edge cannot reach it.
+        yy,xx=np.ogrid[:crane_mask.shape[0],:crane_mask.shape[1]]
+        triangle=((xx>=520)&(xx<=978)&(yy>=78)&
+                  (yy>(280-(xx-470)*.50))&(yy<(280-(xx-470)*.04)))
+        crane_mask[triangle]=False
         loops=trace(crane_mask,tow_roi,tolerance=1.0,min_area=5)
         crane_mesh=PhotoMesh()
         def crane_world(px,py,d):
@@ -638,6 +700,10 @@ for identifier,_,_,_ in specs:
     # line, without the clipped view and pale band from the old angled camera.
     render_view(identifier,'road-view',(-length*1.5,0,1.9),target=(0,0,1.5),
                 width=length*1.18,resolution=(1100,700))
+    # A matching close front view keeps the wheel and headlamp legible on the
+    # family sheet, as required for every vehicle review.
+    render_view(identifier,'front-wheel-lamp',(0,width*2.4,1.1),target=(0,0,.85),
+                width=2.15,resolution=(720,540))
 print(json.dumps({'glb':str(output),'bytes':output.stat().st_size,'triangles':triangles,
                   'trucks':truck_metrics,'renderedFromImportedGlb':True,'viewTransform':'Standard',
                   'reviewViews':'seven per truck','evidence':str(evidence)}))
