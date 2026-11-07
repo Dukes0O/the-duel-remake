@@ -3,6 +3,15 @@ import json
 import sys
 from pathlib import Path
 
+# Photo-grid measurements (all source pixels, 100 px grid): side 1774x887,
+# tracks touch the floor at y=850; the cab door is 274 px high (1.9 m), so
+# side scale is 0.006934 m/px. The body runs x=65..1705 (11.38 m). The same
+# cab shell height is 500 px on the side and 510 px on the front: end scale
+# is side_scale*500/510. Rear shell height is 526 px: rear scale is
+# side_scale*500/526. Front ground y=1010, rear ground y=1000. Overhead body
+# spans y=70..1450 and x=170..880. The boom's visible outline runs x=29..2142,
+# y=166..438; at 16 m the tracing scale is 0.007572 m/px.
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
