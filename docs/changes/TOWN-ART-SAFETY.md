@@ -1,22 +1,24 @@
-# TOWN-ART-SAFETY change note
+# TOWN-ART-SAFETY — guard post, round 7
 
 ## Changed
 
-- Replaced the procedural fire-station beams and old combined facade with a `carve_object` body, two open bay cutouts, concrete floor slabs and dark interior panels.
-- Added side, front, rear and straight-down generated JPG references in `public/assets/models/wasteland/town/textures/`. The old combined station photo remains the tower and bell source. Credits are in the texture credit file.
-- Traced the hose tower and bell separately with `trace` and `slab`. The tower sits beside the station and reaches the ground.
-- Added the dark-sky-seed fault and fix to `docs/ART_LINE.md`.
-- Round 5 sheet: 329,115 bytes. Safety family GLB: 2,824,476 bytes.
+- Replaced the single long sandbag bar with a 6 m by 4 m hut. Four photo-carved waist-high wall runs enclose the building; two front sections leave a 1.4 m road-side doorway.
+- Added timber supports at the corners and intermediate points on all sides, including door jambs.
+- Rebuilt the roof as two pitched slopes meeting at a ridge, with a 0.3 m overhang. The top faces use the straight-down patched tin photo. The underside uses a valid tin UV range.
+- Kept the photo-carved brazier inside and grounded its feet. Packed lower-resolution copies of the two tall wall photos to keep the complete safety family GLB under 3 MB; the carving photos stay full resolution.
+- Round 7 sheet: `docs/board/looks/town-art-safety/round-7.jpg` (333,379 bytes). Exported model: `public/assets/models/wasteland/town/safety.glb` (2,983,396 bytes; 3,704 guard-post triangles).
 
 ## Checks
 
-- Blender 4.5.13 export and GLB re-import completed. The run printed bounds for the body, both floors, both bay interiors and the tower. The body and tower meet the ground; both interiors meet their floors. Blender reported no script error on the final run.
-- No lane tier or build run, as this is an art card.
-- No browser checks. Claude should inspect all four photo/model pairs, bay darkness and floor visibility, tower lattice and bell, both three-quarter views, and the mayor roof view.
-- Changed assertions: none. Race fingerprints: not applicable; race code was not changed.
+- `python -m py_compile tools/blender/town-safety.py` — passed.
+- Blender recipe and GLB round-trip — passed. It printed each piece's bounds and checked footprint clearance and contact.
+- `node tools/test-blender-output.mjs` — passed, 377 checks, 0 failed on the final GLB.
+- `node tools/test-repo-hygiene.mjs` — passed; reported existing repository size targets as advisory.
+- `node tools/test-review-evidence.mjs` — 7 of 9 subtests passed. Two unrelated failures: town-art-outposts round 15 is missing its review note, and the audio analysis test could not launch `ffmpeg` (`EPERM`). The round-7 JPG publisher check passed.
+- Browser and look review — Claude's check. Inspect the matched gable, road-side wall, rear and roof views; all four walls and the doorway; the posts on each side; and the brazier position.
+- Changed assertions: none. Lane tier and build: not run, as directed.
+- Race fingerprints: no race code or state changed.
 
 ## Removed
 
-- Removed the old procedural fire-station geometry and its photo-facade use.
-- Removed the superseded round-4 sheet and review note, as requested.
-- Blender scene, evidence renders, masks and log are temporary outputs and are removed before handoff.
+- Removed the superseded `round-6.jpg` and `round-6-review.md`. Deleted this round's temporary grids, renders, masks and logs before handoff.
