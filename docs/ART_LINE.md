@@ -72,6 +72,9 @@ stop adjusting and change the method.
   up to 40 pixels out. Measure them on a grid.
 - **An axle's end** pokes through a wheel face if it runs the full track. Stop it
   inside the tyre.
+- When wheels on opposite sides share one `lathe` axis direction, the far wheel
+  can shift inboard and sit on the wrong side of its rail. Put each wheel's
+  stations outward from the track centre and cap the face that points outward.
 - **Lamps** (Kyle, 6 November). A lamp carved on a curved surface wears two photos
   and garbles. Use `headlamp`. If it shows doubled, the front photo's centre or
   scale is wrong.

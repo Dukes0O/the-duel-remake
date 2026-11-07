@@ -4,7 +4,7 @@ from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
-parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway','harbour-gate','harbour-ramp','causeway-arch'],default='causeway-arch')
+parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway','harbour-gate','harbour-ramp','causeway-arch','iron-mule-gear'],default='causeway-arch')
 parser.add_argument('--paths-only',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root).resolve(); textures=root/'public/assets/models/wasteland/scablands/textures'
@@ -20,8 +20,8 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; parent=bpy.data.objects.new('sea-works',None); scene.collection.objects.link(parent)
 triangles={}
 scaled_photos=[]
-def finish(mesh,name,mats):
- o=mesh.finish(name,mats);o.parent=parent;o['part']=name;triangles[name]=mesh.triangles();return o
+def finish(mesh,name,mats,parent_to=None):
+ o=mesh.finish(name,mats);o.parent=parent_to or parent;o['part']=name;triangles[name]=mesh.triangles();return o
 def photo(file):
  p=Photo(textures/file); scaled_photos.append(p)
  return p
@@ -90,6 +90,53 @@ def build_new_gear():
  hp.image.scale(640,round(hp.image.size[1]*640/hp.image.size[0]));hp.image.pack()
  finish(hm,'gear-whole-hub',{'spoked-hub':hp.material()})
  triangles['gear-whole']=triangles['gear-section']*24+triangles['gear-whole-hub']
+def build_iron_mule_gear():
+ side=photo('sea-mule-wagon-side.jpg'); end=photo('sea-mule-wagon-end.jpg'); top=photo('sea-mule-wagon-overhead.jpg')
+ root_obj=bpy.data.objects.new('iron-mule-gear',None);scene.collection.objects.link(root_obj);root_obj.parent=parent
+ # Side and end photos use their own measured origins; x is wagon length, y is
+ # height above the 1.66 m gauge track, and z spans the 2.15 m deck.
+ scale=7.0/1880
+ def side_point(px,py,z):return ((px-1085)*scale,(550-py)*(1.12/300),z)
+ solid=tidy(~side.sky([(8,8),(side.w-8,8),(8,side.h-8),(side.w-8,side.h-8),
+                       (250,430),(1000,430),(1900,430)],grey=20))
+ side.bleed(solid)
+ m=Mesh()
+ # The worn timber deck is a single shallow box, wearing only the overhead
+ # photograph across its true plank surface.
+ box(m,-3.5,3.5,1.00,1.12,-1.075,1.075,
+     {'+y':('deck',top,(145,205,565,1815))})
+ # Side frames are traced above the measured wheel circles, then slabbed on
+ # both sides. Their open lower truss keeps the axle gaps visible.
+ frame=trace(solid,(105,305,2070,405),tolerance=1.2,min_area=80)
+ for sign in (-1,1):slab(m,'side',side,frame,side_point,sign*1.02,sign*1.08,wall_scale=scale)
+ # Long iron underframe and the two end beams are separate, heavy flat parts.
+ steel=('side',side,(520,322,1600,365))
+ box(m,-3.48,3.48,.72,.91,-.10,.10,{k:steel for k in ('+z','-z','-y')})
+ beam=('end',end,(205,365,1320,480))
+ for x in (-3.43,3.43):
+  box(m,x-.16,x+.16,.84,1.12,-1.075,1.075,{k:beam for k in ('+z','-z','+y','-y','+x','-x')})
+ # Turn four square wheels at the side-photo centres. The wheel radius is
+ # 90 px at the 7 m side scale; each axle follows the Mule rails at z=+/-0.83.
+ wheel_centres=(-2.44,2.09);radius=.34
+ for cx in wheel_centres:
+  for zc in (-.83,.83):
+   wheel_origin=(cx,radius,zc-(.16 if zc>0 else 0))
+   face=lambda a,f,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*74*f,460-math.sin(a)*74*f)
+   tread=lambda i,d,r,a,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+82+i*10,460+abs(math.sin(a))*18)
+   lathe(m,'side',wheel_origin,(0,0,1),(1,0,0),(0,1,0),[(0,radius),(.16,radius)],tread,sides=24,
+         cap_start=('side',face) if zc<0 else None,cap_end=('side',face) if zc>0 else None)
+   lathe(m,'side',(cx,radius,zc+(.16 if zc>0 else -.16)),(0,0,1),(1,0,0),(0,1,0),
+         [(0,.11),(.055,.11)],lambda i,d,r,a,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*24,460-math.sin(a)*24),sides=12,
+         cap_start=('side',lambda a,f,cx=cx:side.uv(430+(cx+2.44)/4.53*1205+math.cos(a)*20*f,460-math.sin(a)*20*f)))
+ # Buffers and the named screw-coupling stems sit at the Mule's measured 0.80 m.
+ for direction in (-1,1):
+  for zc in (-.56,.56):
+   lathe(m,'end',(direction*3.50,.80,zc),(direction,0,0),(0,0,1),(0,1,0),
+         [(0,.12),(.16,.17),(.22,.17)],lambda i,d,r,a:end.uv(420+math.cos(a)*72,430-math.sin(a)*72),sides=16,
+         cap_end=('end',lambda a,f:end.uv(420+math.cos(a)*62*f,430-math.sin(a)*62*f)))
+  lathe(m,'side',(direction*3.52,.80,0),(direction,0,0),(0,0,1),(0,1,0),
+        [(0,.075),(.24,.065)],lambda i,d,r,a:side.uv(85+i*22,340+math.sin(a)*16),sides=12)
+ finish(m,'iron-mule-gear-frame',{'side':side.material(),'end':end.material(),'deck':top.material()},root_obj)
 def build_wall():
  p=photo('sea-harbour-wall.jpg'); blend_repeat_edges(p); stone=photo('dam-gatehouse-stone.jpg'); m=Mesh(); H=6; L=40
  front=(0,55,p.w,300)
@@ -244,7 +291,7 @@ def build_causeway_arch():
  for z in (-.87,.87):
   box(track,-4,4,4.36,4.55,z-.07,z+.07,{k:('rail',rail,rail_crop) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(track,'causeway-arch-rails',{'rail':rail.material()})
-steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch)]
+steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch),('iron-mule-gear',build_iron_mule_gear)]
 for name,fn in steps:
  fn()
  if name==args.through: break
@@ -319,3 +366,7 @@ shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp'],(3,1.55,-19),(0,.8,0),(1200,700),lens=28)
 shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
 shot('causeway-arch-three-quarter',['causeway-arch'],(16,1.55,12),(0,1,0),(1200,700),lens=28)
+shot('iron-mule-wagon-side',['iron-mule-gear-'],(0,2.8,20),(0,1,0),(1200,430),ortho=14.5)
+shot('iron-mule-wagon-end',['iron-mule-gear-'],(18,2.8,0),(0,1,0),(700,700),ortho=4.6)
+shot('iron-mule-wagon-quarter',['iron-mule-gear-'],(9,2.4,10),(0,1,0),(1000,680),lens=32)
+shot('iron-mule-wagon-quarter-rear',['iron-mule-gear-'],(-9,2.4,10),(0,1,0),(1000,680),lens=32)

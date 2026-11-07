@@ -74,3 +74,9 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 - The wagon follows the Mule recipe in commit `146ede6f`: 1.66 m rail gauge (rails at x = +/-0.83 m) and 0.80 m coupling height. Side measurements place the 7 m deck at x = -3.5 to +3.5 m, y = 1.12 m, and its two visible wheel centres near x = -2.44 and +2.09 m, y = 0.34 m, radius 0.34 m; each axle has wheels at z = +/-0.83 m. The measurement comment is in the sea recipe.
 - The named source file is absent from this branch working tree; its lane commit is readable in Git history. No source file was copied or changed.
 - Removed: none.
+
+## WW-ART-SEA point 3: empty iron-mule-gear
+
+- Added the `iron-mule-gear` root with a photo-textured deck, two traced side frames, end beams, four lathe-turned wheels, buffers and coupling stems at the measured 0.80 m height and 1.66 m gauge.
+- Blender export and its Standard-view empty-scene side, end and quarter renders completed. The first look found the far wheels were offset inboard; the second export corrects the outward-facing wheel stations. That fault and fix are now in `docs/ART_LINE.md`.
+- Removed: none.
