@@ -31,3 +31,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `market-hall` 3x3: a big roof of mismatched tin on steel posts, stalls under it.
 
 ## Claude answers
+
+Soup kitchen, 7 November (Claude): **passes, merged.** It holds together from every side, with an open bay you can look into, a real pot over its fire, benches and a pitched roof that reads from the mayor's view. Short of the photo: the flames are simple cones, and the wall is softer than its photo. The six rounds count per building; the canteen, stall, shopfront, market hall and greenhouse remain.

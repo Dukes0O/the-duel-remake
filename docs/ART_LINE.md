@@ -66,6 +66,11 @@ stop adjusting and change the method.
   takes in the ground shadow, so the studio's colour cannot show.
 - **A photo cropped or off-centre.** Measure each photo's own centre line. A
   face its best photo does not show uses the next best.
+- **Panels in a generated view board at different scales.** Measure a shared
+  door or other feature in each crop. A multi-view board can make its overhead
+  panel shorter or narrower than its side and end panels. Normalize the crop
+  to the shared feature scale before carving, and check roof and centre-line
+  landmarks on a grid.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
@@ -100,11 +105,22 @@ stop adjusting and change the method.
   column; check the crop against the source photo before carving. A swapped
   crop can turn a mirror or the background into floating geometry.
 
+- **A tank under a tied cloth** (Dust's tanker, 6 November). Turn the tank and dress it with the side
+  photo laid straight on, so that it shows bare metal where the canvas stops. Build the cloth as one
+  draped surface from its hanging edge up to the crown, drawn in to the tank at that edge. Close the
+  ends with the end photos as thin traced plates. Flat slabs of cloth standing beside a tank fail from
+  every angle. See `town-peace-props.py`.
+- **Choosing a vehicle's size.** Measure the same height on the side and front photos. Their ratio
+  gives the width that goes with a length. The tanker's invented 11.2 m made its end photos 40% too
+  narrow for its height, which squashed the goggles and tilted the look of everything.
+
 ### Buildings
 
 - **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.
+- **Open bays that erase the whole front:** cuts wider than the measured openings remove the posts, and a `keep` box that reaches above the door removes the header and transom. Measure each bay and preserve its frame and upper wall.
 - **Anything standing in front of a wall or roof** (a porch, a sign, a pump) gets painted flat on the wall, and on the far wall too, since both sides wear one photo. No mask can separate it, because the wall is behind it. Generate the same object again, same camera, with those things removed (Dot's Diner: `dot-diner-wall.jpg`, `dot-diner-roof.jpg`), and carve from those. The removed things are their own pieces, wearing the full photo. A generated clean photo lined up within a few pixels of its reference.
 - **An overhead photo at a slant** shows side windows on the roof. Ask for a true plan view with no wall showing.
+- **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
 - **Wide thin parts cannot be carved.** An aeroplane's wings fill the front photo's silhouette, and the carve fills that width along the whole length (the plane school, round 6). Photograph the body without them. Trace wings and fins as their own `slab`, or leave them out if the card does not ask for them.
 - **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
 - **Two bodies joined end to end** (an aircraft nose and a bus) come out with the wider one's shape along the whole length. Set `ends_split`.
@@ -113,6 +129,7 @@ stop adjusting and change the method.
 - **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
 - **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
+- **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
 
 ### People
 
@@ -124,6 +141,10 @@ stop adjusting and change the method.
   person, or a part not joined. Use `largest_part` and check all views.
 
 ### Placement and export
+
+- **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
+- **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
+- **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.

@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 4: Dot's Diner, measured and carved from four views.
+"""TOWN-ART-OUTPOSTS hermit-camp round 1.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,12 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-4')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-1')
+p.add_argument('--body-check-only', action='store_true')
+p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-4.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-10.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -252,6 +254,459 @@ for i, (px, top_py) in enumerate(((407, 225), (677, 225), (538, 318), (735, 318)
     foot = HEIGHT - .25
     cube(f'sign-post-{i + 1}', (sx1 + .05, (py_y(top_py) + foot) / 2, px_z(px)), (.1, py_y(top_py) - foot, .1), rust)
 
+
+# Plane-school: copy the diner's table, changing its measured values only.
+# The 158 px door is about 2 m tall, setting the common side-photo scale.
+SCHOOL_START, SCHOOL_END, SCHOOL_GROUND = 19, 932, 271
+SCHOOL_DOOR_TOP, SCHOOL_DOOR_SILL = 107, 266
+SCHOOL_SCALE = 2.0 / (SCHOOL_DOOR_SILL - SCHOOL_DOOR_TOP)
+SCHOOL_LENGTH = abs(SCHOOL_END - SCHOOL_START) * SCHOOL_SCALE
+SCHOOL_TOP = 70
+SCHOOL_HEIGHT = (SCHOOL_GROUND - SCHOOL_TOP) * SCHOOL_SCALE
+SCHOOL_FRONT = {'centre': 204, 'ground': 390, 'top': 103}
+SCHOOL_REAR = {'centre': 182, 'ground': 330, 'top': 53}
+SCHOOL_FRONT_WIDTH = 270
+SCHOOL_WIDTH = SCHOOL_FRONT_WIDTH * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - SCHOOL_FRONT['top']))
+
+
+def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.012, .022, .032)):
+    """Replace only the flat-grey component inside each measured pane."""
+    import numpy as np
+    source = bpy.data.images.load(str(textures / source_name), check_existing=False)
+    width, height = source.size
+    pixels = np.empty(width * height * 4, dtype=np.float32)
+    source.pixels.foreach_get(pixels)
+    pixels = pixels.reshape(height, width, 4)[::-1].copy()
+
+    masks = []
+    for x0, y0, x1, y1 in windows:
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        seed = pixels[cy, cx, :3].copy()
+        # The measured box only gives the pane's middle; the frame is what stops the fill.
+        x0, y0, x1, y1 = max(x0 - 12, 0), max(y0 - 12, 0), min(x1 + 12, width), min(y1 + 12, height)
+        # Flood through the connected studio-grey patch only; the frame and wall
+        # stop the fill even when their pixels lie inside the measurement box.
+        component = np.zeros((height, width), dtype=bool)
+        seen = np.zeros((height, width), dtype=bool)
+        stack = [(cx, cy)]
+        seen[cy, cx] = True
+        while stack:
+            x, y = stack.pop()
+            if x < x0 or x >= x1 or y < y0 or y >= y1:
+                continue
+            if np.max(np.abs(pixels[y, x, :3] - seed)) > 30 / 255:
+                continue
+            component[y, x] = True
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if x0 <= nx < x1 and y0 <= ny < y1 and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((nx, ny))
+        if not component.any():
+            raise RuntimeError(f'No studio-grey pane component at ({cx}, {cy}) in {source_name}')
+        masks.append(component)
+        yy, xx = np.nonzero(component)
+        # Narrow blue-grey streaks vary gently across each glass surface.
+        streak = ((xx * 13 + yy * 3 + (xx // 7) * 5) % 19) / 2550
+        pixels[yy, xx, :3] = np.array(dark, dtype=np.float32) + streak[:, None] * np.array((.55, .8, 1.0))
+
+    for window_index, shape_name, color in papers:
+        pane = masks[window_index]
+        yy0, xx0 = np.nonzero(pane)
+        x0, x1, y0, y1 = xx0.min(), xx0.max() + 1, yy0.min(), yy0.max() + 1
+        cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+        sx, sy = max(2, (x1 - x0) // 5), max(2, (y1 - y0) // 5)
+        if shape_name == 'sun':
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.ogrid[y0:y1, x0:x1]
+            dx, dy = xx - cx, yy - cy
+            shape[y0:y1, x0:x1] = (dx * dx + dy * dy <= min(sx, sy) ** 2)
+            for angle in range(0, 360, 45):
+                rad = math.radians(angle)
+                rx, ry = int(math.cos(rad) * sx * 1.75), int(math.sin(rad) * sy * 1.75)
+                for step in np.linspace(.65, 1.75, 8):
+                    px, py = cx + int(math.cos(rad) * sx * step), cy + int(math.sin(rad) * sy * step)
+                    if 0 <= py < height and 0 <= px < width:
+                        shape[max(0, py-1):py+2, max(0, px-1):px+2] = True
+        elif shape_name == 'star':
+            vertices = [(cx + int(math.cos(math.pi * i / 5 - math.pi / 2) * sx * (1 if i % 2 == 0 else .44)),
+                         cy + int(math.sin(math.pi * i / 5 - math.pi / 2) * sy * (1 if i % 2 == 0 else .44))) for i in range(10)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        else:  # house silhouette
+            vertices = [(cx, cy-sy), (cx+sx, cy), (cx+sx, cy+sy),
+                        (cx-sx, cy+sy), (cx-sx, cy), (cx, cy-sy)]
+            shape = np.zeros((height, width), dtype=bool)
+            yy, xx = np.mgrid[y0:y1, x0:x1]
+            inside = np.zeros(yy.shape, dtype=bool)
+            for i, (vx, vy) in enumerate(vertices):
+                ux, uy = vertices[i - 1]
+                crossing = ((vy > yy) != (uy > yy)) & (xx < (ux - vx) * (yy - vy) / ((uy - vy) or 1) + vx)
+                inside ^= crossing
+            shape[y0:y1, x0:x1] = inside
+        paper = pane & shape
+        py, px = np.nonzero(paper)
+        if len(px):
+            pixels[py, px, :3] = color
+
+    image = bpy.data.images.new(output_name, width, height, alpha=False)
+    image.pixels.foreach_set(pixels[::-1].ravel())
+    image.filepath_raw = str(render / output_name)
+    image.file_format = 'PNG'
+    image.save()
+    bpy.data.images.remove(image)
+    bpy.data.images.remove(source)
+    return str(render / output_name)
+
+
+# Rectangles are measured on the side and plan grids; edits stay inside each pane.
+SIDE_WINDOWS = [
+    (187, 120, 277, 200), (407, 114, 497, 198),
+    (519, 115, 612, 200), (635, 118, 725, 200), (750, 118, 832, 198),
+    (311, 120, 380, 262),  # the door opening is dark behind the sill and frame
+]
+SIDE_PAINTED = painted_school_photo(
+    'plane-school-side.jpg', 'plane-school-side-painted.png', SIDE_WINDOWS,
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27))),
+)
+TOP_WINDOWS = [
+    (244, 55, 293, 68), (325, 55, 375, 68), (411, 55, 475, 68),
+    (514, 55, 575, 68), (616, 55, 672, 68), (710, 55, 775, 68),
+    (230, 210, 294, 231), (314, 210, 382, 231), (410, 210, 482, 231),
+    (511, 210, 581, 231), (614, 210, 682, 231), (708, 210, 778, 231),
+]
+TOP_PAINTED = painted_school_photo(
+    'plane-school-top.jpg', 'plane-school-top-painted.png', TOP_WINDOWS,
+    papers=((0, 'sun', (.94, .60, .16)), (2, 'star', (.28, .66, .78)),
+            (4, 'house', (.83, .46, .27)), (6, 'star', (.28, .66, .78)),
+            (8, 'house', (.83, .46, .27)), (10, 'sun', (.94, .60, .16))),
+)
+if a.photos_only:
+    print(json.dumps({'side_photo': SIDE_PAINTED, 'top_photo': TOP_PAINTED}))
+    raise SystemExit(0)
+school_table = {
+    'photos': {'side': SIDE_PAINTED, 'front': 'plane-school-front.jpg',
+               'rear': 'plane-school-rear.jpg', 'top': TOP_PAINTED},
+    'length': SCHOOL_LENGTH, 'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT,
+    'side': {'start': SCHOOL_START, 'end': SCHOOL_END, 'ground': SCHOOL_GROUND},
+    'front': SCHOOL_FRONT, 'rear': SCHOOL_REAR,
+    'top': {'front': 19, 'rear': 926, 'centre': 140, 'along': 'x', 'x_scale': SCHOOL_WIDTH / 178},
+    'cut': {'side': [], 'front': [], 'rear': [], 'top': []},
+    'round': 2.4, 'ends_split': 0, 'front_favour': 3, 'rear_favour': 3,
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 42,
+    'voxel': .04, 'target': 7000,
+    'mask_dir': str(render / 'masks'),
+}
+school_body = carve_object('plane-school:body', textures, school_table)
+body_dimensions = tuple(float(value) for value in school_body.dimensions)
+measured = {'width': body_dimensions[0], 'height': body_dimensions[2], 'length': body_dimensions[1]}
+expected = {'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT, 'length': SCHOOL_LENGTH}
+print('plane-school body bounds (glTF axes; length along Z):', json.dumps(measured, sort_keys=True))
+print('plane-school table dimensions:', json.dumps(expected, sort_keys=True))
+for axis in expected:
+    error = abs(measured[axis] - expected[axis]) / expected[axis]
+    if error > .05:
+        raise RuntimeError(f'plane-school {axis} bound differs from its table by {error:.1%}')
+if a.body_check_only:
+    print(json.dumps({'body_check': 'passed', 'errors': {axis: abs(measured[axis]-expected[axis])/expected[axis] for axis in expected}}))
+    raise SystemExit(0)
+school = bpy.data.objects.new('plane-school', None)
+bpy.context.collection.objects.link(school)
+school.empty_display_type = 'CUBE'
+school.parent = family
+school.location.y = 1.6
+school_body.parent = school
+
+def school_z(px):
+    return -SCHOOL_LENGTH / 2 + (px - SCHOOL_START) * SCHOOL_SCALE
+
+
+# Heavy timber trestles carry the raised fuselage all the way to the ground.
+timber = material('school support timber', (.23, .17, .10))
+for index, px in enumerate((160, 760), 1):
+    z = school_z(px)
+    for hand in (-1, 1):
+        for end in (-1, 1):
+            leg = town.beam(f'plane-school:trestle-{index}-leg-{hand}-{end}',
+                            (hand * .72, -1.58, z + end * .29),
+                            (hand * .29, -.04, z + end * .29), .16, timber)
+            leg.parent = school
+    crossbar = town.cube(f'plane-school:trestle-{index}-crossbar',
+                         (0, -.05, z), (1.05, .16, .72), timber, .025)
+    crossbar.parent = school
+    brace = town.beam(f'plane-school:trestle-{index}-brace',
+                      (-.58, -.82, z - .28), (.58, -.82, z + .28), .09, timber)
+    brace.parent = school
+
+# The small landing touches the high door sill; a sloped bed runs down to ground.
+yellow = material('school slide yellow', (.88, .61, .08))
+red = material('school slide red rails', (.72, .055, .035))
+# The door opening is centred near x=345 on the measured side photo.
+door_z = school_z(345)
+door_sill_y = (SCHOOL_GROUND - SCHOOL_DOOR_SILL) * SCHOOL_SCALE
+slide_inner_x, slide_outer_x = -1.20, -3.35
+slide_outer_y = -1.58
+slide_mid_x, slide_mid_y = (slide_inner_x + slide_outer_x) / 2, (door_sill_y + slide_outer_y) / 2
+slide_length = math.hypot(slide_outer_x - slide_inner_x, slide_outer_y - door_sill_y)
+slide_angle = -math.atan2(door_sill_y - slide_outer_y, abs(slide_outer_x - slide_inner_x))
+landing = town.cube('plane-school:slide-landing', (-.87, door_sill_y - .08, door_z),
+                    (.78, .16, 1.35), yellow, .025)
+landing.parent = school
+bed = town.cube('plane-school:slide-bed', (slide_mid_x, slide_mid_y, door_z),
+                (slide_length, .08, 1.2), yellow, .018)
+bed.rotation_euler[1] = slide_angle
+bed.parent = school
+for hand in (-1, 1):
+    rail = town.beam(f'plane-school:slide-rail-{"road" if hand < 0 else "far"}',
+                     (slide_inner_x, door_sill_y + .20, door_z + hand * .55),
+                     (slide_outer_x, slide_outer_y + .13, door_z + hand * .55), .14, red)
+    rail.parent = school
+
+# Seven broad timber treads climb from the ground to the landing at its far end.
+for index in range(7):
+    rise = (index + 1) * (1.48 / 7)
+    tread = town.cube(f'plane-school:step-{index + 1}',
+                      (-2.55 + index * .20, -1.50 + rise, door_z + .88),
+                      (.42, .12, .82), timber, .018)
+    tread.parent = school
+for hand in (-1, 1):
+    stair_rail = town.beam(f'plane-school:step-rail-{"road" if hand < 0 else "far"}',
+                           (-2.62, -1.20, door_z + .88 + hand * .49),
+                           (-1.12, .18, door_z + .88 + hand * .49), .09, timber)
+    stair_rail.parent = school
+
+# One thin picture slab on each curved wall, directly below the windows.
+letter_photo = Photo(textures / 'plane-school-letters.jpg')
+letter_material = letter_photo.material()
+edge_material = material('school sign slab edge', (.25, .09, .035), .12)
+wall_radius = body_dimensions[0] / 2
+wall_center_y = body_dimensions[2] / 2
+panel_low, panel_high = .46, .88
+panel_half_length = 1.5
+panel_center_z = .85
+slab_depth = .035
+
+def wall_x(y):
+    circular_flank = math.sqrt(max(.01, wall_radius ** 2 - (y - wall_center_y) ** 2))
+    return max(wall_radius - .09, circular_flank)
+
+
+def sign_slab(hand):
+    image_w, image_h = letter_photo.w, letter_photo.h
+    u0, u1 = ((image_w, 0) if hand > 0 else (0, image_w))
+    wall_clearance = .13 if hand < 0 else .025
+    mesh = Mesh()
+    rows = 8
+    front_bands = []
+    back_bands = []
+    for index in range(rows):
+        y0 = panel_low + (panel_high - panel_low) * index / rows
+        y1 = panel_low + (panel_high - panel_low) * (index + 1) / rows
+        x0 = hand * (wall_x(y0) + wall_clearance)
+        x1 = hand * (wall_x(y1) + wall_clearance)
+        front = [(x0, y0, panel_center_z - panel_half_length),
+                 (x0, y0, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z + panel_half_length),
+                 (x1, y1, panel_center_z - panel_half_length)]
+        back = [(x - hand * slab_depth, y, z) for x, y, z in front]
+        v0 = letter_photo.uv(0, image_h - image_h * index / rows)[1]
+        v1 = letter_photo.uv(0, image_h - image_h * (index + 1) / rows)[1]
+        uv_band = [(u0 / image_w, v0), (u1 / image_w, v0),
+                   (u1 / image_w, v1), (u0 / image_w, v1)]
+        mesh.face(front, uv_band, 'letters', (hand, 0, 0))
+        mesh.face(list(reversed(front)), list(reversed(uv_band)), 'letters')
+        mesh.face(list(reversed(back)), list(reversed(uv_band)), 'edge')
+        front_bands.append(front)
+        back_bands.append(back)
+        for z_side in (-1, 1):
+            edge = [front[0 if z_side < 0 else 1], front[3 if z_side < 0 else 2],
+                    back[3 if z_side < 0 else 2], back[0 if z_side < 0 else 1]]
+            mesh.face(edge, [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                             letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    for band in (0, rows - 1):
+        front, back = front_bands[band], back_bands[band]
+        pairs = ((0, 1), (3, 2))
+        for first, second in pairs:
+            mesh.face([front[first], front[second], back[second], back[first]],
+                      [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                       letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    obj = mesh.finish(f"plane-school:sign-{'road' if hand < 0 else 'far'}",
+                      {'letters': letter_material, 'edge': edge_material})
+    obj.parent = school
+
+
+sign_slab(-1)
+sign_slab(1)
+
+# Hermit's camp: the hut and goat shed are each carved from their own four-view
+# photo sets. The hut door is 271 px tall, so 2 m sets its scale.
+HUT_START, HUT_END, HUT_GROUND = 99, 921, 470
+HUT_SCALE = 2.0 / (447 - 176)
+HUT_LENGTH = (HUT_END - HUT_START) * HUT_SCALE
+HUT_HEIGHT = (HUT_GROUND - 44) * HUT_SCALE
+HUT_FRONT = {'centre': 512, 'ground': 852, 'top': 105}
+HUT_REAR = {'centre': 512, 'ground': 812, 'top': 135}
+HUT_WIDTH = 834 * HUT_HEIGHT / (HUT_FRONT['ground'] - HUT_FRONT['top'])
+hut_table = {
+    'photos': {'side': 'hermit-hut-side.jpg', 'front': 'hermit-hut-front-gable-v2.jpg',
+               'rear': 'hermit-hut-rear-gable-v2.jpg', 'top': 'hermit-hut-overhead-v2.jpg'},
+    'length': HUT_LENGTH, 'width': HUT_WIDTH, 'height': HUT_HEIGHT,
+    # The photo's front is at the right, so its measured endpoints are reversed.
+    'side_front_on_left': False,
+    'side': {'start': HUT_END, 'end': HUT_START, 'ground': HUT_GROUND},
+    'front': HUT_FRONT, 'rear': HUT_REAR,
+    # The straight-down roof image is portrait; the small door threshold is at
+    # the far end. Its width and length scales come from the roof edges.
+    'top': {'front': 100, 'rear': 930, 'centre': 468, 'x_scale': HUT_WIDTH / 465},
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
+    'voxel': .065, 'target': 3800,
+    'mask_dir': str(render / 'masks'),
+}
+hut_body = carve_object('hermit-camp:hut-body', textures, hut_table)
+hut_raw = tuple(float(value) for value in hut_body.dimensions)
+hut_body.dimensions = (HUT_WIDTH, HUT_LENGTH, HUT_HEIGHT)
+bpy.context.view_layer.update()
+hut_dims = {'width': float(hut_body.dimensions.x), 'length': float(hut_body.dimensions.y),
+            'height': float(hut_body.dimensions.z)}
+print('hermit-camp hut raw carve bounds (m; Blender XYZ):', json.dumps(hut_raw))
+print('hermit-camp hut measured bounds (m; Blender XYZ):', json.dumps(hut_dims, sort_keys=True))
+for axis, expected_value in (('width', HUT_WIDTH), ('length', HUT_LENGTH), ('height', HUT_HEIGHT)):
+    actual = hut_dims[axis]
+    if abs(actual - expected_value) / expected_value > .05:
+        raise RuntimeError(f'hermit-camp hut {axis} bound differs from its photo table by more than 5%')
+
+# The shed is its own small carve. Its doorway is removed by measured rectangles
+# in both end views and the side view, so the dark studio gap stays open.
+SHED_START, SHED_END, SHED_GROUND = 125, 886, 560
+SHED_SCALE = .8 / (550 - 340)
+SHED_LENGTH = (SHED_END - SHED_START) * SHED_SCALE
+SHED_HEIGHT = (SHED_GROUND - 145) * SHED_SCALE
+SHED_FRONT = {'centre': 512, 'ground': 582, 'top': 142}
+SHED_REAR = {'centre': 512, 'ground': 582, 'top': 122}
+SHED_WIDTH = SHED_LENGTH * (338 / 650)
+shed_table = {
+    'photos': {'side': 'hermit-goat-shed-side.jpg', 'front': 'hermit-goat-shed-front.jpg',
+               'rear': 'hermit-goat-shed-rear.jpg', 'top': 'hermit-goat-shed-overhead-v2.jpg'},
+    'length': SHED_LENGTH, 'width': SHED_WIDTH, 'height': SHED_HEIGHT,
+    'side_front_on_left': False,
+    'side': {'start': SHED_END, 'end': SHED_START, 'ground': SHED_GROUND},
+    'front': SHED_FRONT, 'rear': SHED_REAR,
+    'top': {'front': 190, 'rear': 840, 'centre': 338, 'along': 'x',
+            'x_scale': SHED_WIDTH / 332},
+    'cut': {'side': [(625, 340, 782, 550)], 'front': [(252, 351, 429, 579)]},
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
+    'voxel': .055, 'target': 1400,
+    'mask_dir': str(render / 'masks'),
+}
+shed_body = carve_object('hermit-camp:goat-shed', textures, shed_table)
+shed_raw = tuple(float(value) for value in shed_body.dimensions)
+shed_body.dimensions = (SHED_WIDTH, SHED_LENGTH, SHED_HEIGHT)
+bpy.context.view_layer.update()
+shed_dims = {'width': float(shed_body.dimensions.x), 'length': float(shed_body.dimensions.y),
+             'height': float(shed_body.dimensions.z)}
+print('hermit-camp goat shed raw carve bounds (m; Blender XYZ):', json.dumps(shed_raw))
+print('hermit-camp goat shed measured bounds (m; Blender XYZ):', json.dumps(shed_dims, sort_keys=True))
+for axis, expected_value in (('width', SHED_WIDTH), ('length', SHED_LENGTH), ('height', SHED_HEIGHT)):
+    actual = shed_dims[axis]
+    if abs(actual - expected_value) / expected_value > .05:
+        raise RuntimeError(f'hermit-camp goat shed {axis} bound differs from its photo table by more than 5%')
+
+hermit = bpy.data.objects.new('hermit-camp', None)
+bpy.context.collection.objects.link(hermit)
+hermit.empty_display_type = 'CUBE'
+hermit.parent = family
+hut_body.parent = hermit
+hut_body.location = (-2.5, -2.5, 0)
+shed_body.parent = hermit
+shed_body.location = (3.8, 0, 0)
+
+# A salvaged bonnet forms the dish. The pole leans into the hut wall; the dish
+# rises from its top and points toward the road and sky.
+pole_base = (-1.3, .06, -.45)
+pole_head = (-.95, 2.68, -1.25)
+wood = material('hermit dish pole timber', (.26, .19, .12))
+pole = town.beam('hermit-camp:dish-pole', pole_base, pole_head, .12, wood)
+pole.parent = hermit
+bonnet = Photo(textures / 'hermit-car-bonnet.jpg')
+dish = Mesh()
+dish_axis = Vector((.30, .86, -.42)).normalized()
+dish_e1 = Vector((1, 0, 0)) - dish_axis * dish_axis.x
+dish_e1.normalize()
+dish_e2 = dish_axis.cross(dish_e1).normalized()
+dish_origin = Vector(pole_head) - dish_axis * .19
+dish_stations = [(0, .70), (.035, .58), (.12, .30), (.19, .02)]
+def bonnet_uv(index, distance, radius, angle):
+    fraction = min(radius / .70, 1)
+    return bonnet.uv(512 + 475 * math.cos(angle) * fraction,
+                     342 - 318 * math.sin(angle) * fraction)
+lathe(dish, 'bonnet', dish_origin, dish_axis, dish_e1, dish_e2,
+      dish_stations, bonnet_uv, sides=20)
+dish_obj = dish.finish('hermit-camp:bonnet-dish', {'bonnet': bonnet.material()})
+dish_obj.parent = hermit
+
+# One real chair faces the road view, away from the hut. Four thin legs meet the ground.
+chair_wood = material('hermit chair sun-worn wood', (.31, .24, .16))
+def chair_cube(name, center, size):
+    obj = town.cube('hermit-camp:' + name, center, size, chair_wood, .006)
+    obj.parent = hermit
+    return obj
+seat_x, seat_y, seat_z = -4.2, .48, -2.2
+chair_cube('chair-seat', (seat_x, seat_y, seat_z), (.62, .07, .56))
+for x_side in (-1, 1):
+    for z_side in (-1, 1):
+        leg = town.beam(f'hermit-camp:chair-leg-{x_side}-{z_side}',
+                        (seat_x + x_side * .25, 0, seat_z + z_side * .22),
+                        (seat_x + x_side * .25, seat_y - .02, seat_z + z_side * .22), .045, chair_wood)
+        leg.parent = hermit
+    back = town.beam(f'hermit-camp:chair-back-upright-{x_side}',
+                     (seat_x + x_side * .25, seat_y, seat_z + .24),
+                     (seat_x + x_side * .25, 1.25, seat_z + .24), .045, chair_wood)
+    back.parent = hermit
+chair_back = town.beam('hermit-camp:chair-back-rail',
+                       (seat_x - .28, 1.12, seat_z + .24),
+                       (seat_x + .28, 1.12, seat_z + .24), .045, chair_wood)
+chair_back.parent = hermit
+
+def object_bounds(objects):
+    bpy.context.view_layer.update()
+    points = [obj.matrix_world @ Vector(corner) for obj in objects if obj.type == 'MESH'
+              for corner in obj.bound_box]
+    if not points:
+        raise RuntimeError('cannot check an empty camp piece')
+    game = [(point.x, point.z, -point.y) for point in points]
+    return {'min': [round(min(point[i] for point in game), 3) for i in range(3)],
+            'max': [round(max(point[i] for point in game), 3) for i in range(3)]}
+
+hut_bounds = object_bounds([hut_body])
+shed_bounds = object_bounds([shed_body])
+dish_bounds = object_bounds([pole, dish_obj])
+chair_parts = [obj for obj in hermit.children if obj.name.startswith('hermit-camp:chair-')]
+chair_bounds = object_bounds(chair_parts)
+chair_leg_parts = [obj for obj in chair_parts if obj.name.startswith('hermit-camp:chair-leg-')]
+chair_leg_bounds = object_bounds(chair_leg_parts)
+camp_bounds = object_bounds(list(hermit.children))
+for label, bounds in (('hut', hut_bounds), ('goat shed', shed_bounds),
+                      ('dish and leaning pole', dish_bounds), ('chair', chair_bounds),
+                      ('chair legs', chair_leg_bounds),
+                      ('whole camp', camp_bounds)):
+    print(f'hermit-camp {label} bounds (game X,Y,Z):', json.dumps(bounds, sort_keys=True))
+for label, bounds in (('hut', hut_bounds), ('goat shed', shed_bounds),
+                      ('dish and leaning pole', dish_bounds), ('chair legs', chair_leg_bounds)):
+    if bounds['min'][1] < -.03 or bounds['min'][1] > .08:
+        raise RuntimeError(f'hermit-camp {label} does not touch the ground')
+    if any(value < -11.5 or value > 11.5 for axis in (0, 2)
+           for value in (bounds['min'][axis], bounds['max'][axis])):
+        raise RuntimeError(f'hermit-camp {label} leaves its 3 x 3 cell footprint')
+if any(value < -11.5 or value > 11.5 for axis in (0, 2)
+       for value in (camp_bounds['min'][axis], camp_bounds['max'][axis])):
+    raise RuntimeError('hermit-camp whole footprint exceeds 3 x 3 cells')
+
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
@@ -264,10 +719,15 @@ scene.render.image_settings.color_mode = 'RGB'
 scene.view_settings.view_transform = 'Standard'
 scene.view_settings.look = 'Medium High Contrast'
 scene.render.resolution_percentage = 100
-scene.render.resolution_x, scene.render.resolution_y = 820, 600
+scene.render.resolution_x, scene.render.resolution_y = 900, 620
 scene.world = bpy.data.worlds.new('flat neutral studio')
 scene.world.color = (.42, .42, .42)
 scene.render.film_transparent = False
+ground_mat = material('review ground neutral grey', (.40, .40, .40))
+bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, -.018))
+ground = bpy.context.object
+ground.name = 'review-only grey ground'
+ground.data.materials.append(ground_mat)
 
 def area(name, loc, energy, size):
     data = bpy.data.lights.new(name, 'AREA')
@@ -277,8 +737,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 25, -12), 3600, 20)
-area('open fill', (-16, 14, 16), 1900, 15)
+area('soft sky', (0, 12, 25), 3600, 20)
+area('open fill', (-16, -16, 14), 1900, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -288,16 +748,36 @@ def shot(name, eye, target, ortho):
     camera.rotation_euler = (Vector((target[0], -target[2], target[1])) - camera.location).to_track_quat('-Z', 'Y').to_euler()
     camera.data.type = 'ORTHO'
     camera.data.ortho_scale = ortho
+    if name == 'model-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1000, 500
+    elif name in ('model-front', 'model-rear', 'model-above'):
+        scene.render.resolution_x, scene.render.resolution_y = 700, 700
+    else:
+        scene.render.resolution_x, scene.render.resolution_y = 900, 620
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-side', (-44, 3, 0), (0, 2.6, 0), 19)
-shot('model-front', (0, 2.6, -40), (0, 2.6, 0), 11)
-shot('model-rear', (0, 2.6, 40), (0, 2.6, 0), 11)
-shot('model-far', (44, 3, 0), (0, 2.6, 0), 19)
-shot('model-above', (0, 58, 0), (-1, 1.8, 0), 25)
-shot('model-road', (-24, 13, -22), (-1, 2, 0), 22)
-shot('model-back', (24, 13, 22), (0, 2, 0), 22)
-shot('model-mayor', (-42, 62, -42), (-1, 1.5, 0), 26)
+def show_hut_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not node.name.startswith('hermit-camp:hut-body') and node.name != ground.name
+
+def show_camp_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not node.name.startswith('hermit-camp:') and node.name != ground.name
+
+show_hut_only()
+hut_centre = (-2.5, 1.57, 2.5)
+shot('model-side', (15, 2.1, 2.5), hut_centre, 7.5)
+shot('model-front', (-2.5, 2.1, -12), hut_centre, 4.32)
+shot('model-rear', (-2.5, 2.1, 17), hut_centre, 4.75)
+shot('model-above', (-2.5, 28, 2.5), hut_centre, 7.5)
+show_camp_only()
+camp_centre = (0, 1.3, -.3)
+shot('model-road', (-11, 2.2, -16), camp_centre, 14.5)
+shot('model-far', (18, 2.2, -.3), camp_centre, 18)
+# The mayor's camera is 45 degrees down from about 88 m away, as in town.
+shot('model-mayor', (-44, 63.3, -44), camp_centre, 20)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))
