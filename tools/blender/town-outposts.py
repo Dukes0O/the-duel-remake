@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 3: Dot's Diner, measured and carved from four views.
+"""TOWN-ART-OUTPOSTS round 4: Dot's Diner, measured and carved from four views.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,12 +13,12 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-3')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-4')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-4.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -30,7 +30,8 @@ import bpy
 import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(root / 'tools/blender'))
-from photo_model import Mesh, Photo
+from hull_model import tyre
+from photo_model import Mesh, Photo, lathe, slab, trace
 from photo_carve import carve_object
 import town_base as town
 
@@ -39,32 +40,52 @@ bpy.context.preferences.filepaths.save_version = 0
 blend.parent.mkdir(parents=True, exist_ok=True)
 render.mkdir(parents=True, exist_ok=True)
 
-# Pixel measures from photo_grid.py overlays. Front/rear projections use the
-# side view's shared metre scale rather than independent end-view scales.
-# The new rear reference includes the damaged airframe above the bus; the table
-# removes that unreachable patch instead of letting it widen the carved hull.
+WALL = {'start': 15, 'end': 1012, 'ground': 555, 'roof': 328, 'underside': 23, 'join': 252,
+        'front_wheel': (228, 523, 36), 'rear_wheel': (940, 522, 35)}
+# Pixel measures from photo_grid.py overlays. The wall photo is the same diner
+# with its porch and sign removed, because a carve wears whatever its photo shows
+# and a porch in the side photo would be painted flat on both walls. The porch
+# and the sign are their own pieces, wearing the full side and overhead photos.
+# The roof photo is the same again from straight above, for the same reason.
+SCALE = 16.4 / 996                      # metres per side-photo pixel: door, chairs and wheels agree
+LENGTH = abs(WALL['end'] - WALL['start']) * SCALE
+HEIGHT = (WALL['ground'] - WALL['roof']) * SCALE
+REAR_S = HEIGHT / (1167 - 372)
+WIDTH = (1030 - 198) * REAR_S
 table = {
-    'photos': {'side': 'dot-diner-side.jpg', 'front': 'dot-diner-front.jpg',
-               'rear': 'dot-diner-rear.jpg', 'top': 'dot-diner-overhead.jpg'},
-    'length': 29.0, 'width': 8.2, 'height': 8.1,
-    'side': {'start': 15, 'end': 1011, 'ground': 558},
-    'front': {'centre': 656, 'ground': 1112},
-    'rear': {'centre': 615, 'ground': 1120},
-    'top': {'front': 12, 'rear': 1012, 'centre': 161, 'along': 'x', 'x_scale': 8.2 / (222 - 82)},
+    'photos': {'side': 'dot-diner-wall.jpg', 'front': 'dot-diner-front.jpg',
+               'rear': 'dot-diner-rear.jpg', 'top': 'dot-diner-roof.jpg'},
+    'length': LENGTH, 'width': WIDTH, 'height': HEIGHT,
+    'side': {'start': WALL['start'], 'end': WALL['end'], 'ground': WALL['ground']},
+    'front': {'centre': 655, 'ground': 1120, 'top': 300},
+    'rear': {'centre': 614, 'ground': 1167, 'top': 372},
+    'top': {'front': 15, 'rear': 1000, 'centre': 176, 'along': 'x', 'x_scale': WIDTH / 177},
+    # Both end photos show the porch on the other hand from the side photo.
+    'front_x_flip': True,
     'cut': {
-        # The side porch sits below and outside the continuous fuselage/bus body.
-        'side': [(115, 444, 890, 560)],
-        # The sign mast is not part of the airframe; keep its picture for the slab below.
-        'front': [(480, 0, 830, 300)],
-        # Remove wing and tailplane above the bus's rear silhouette.
-        'rear': [(0, 0, 1312, 390), (1020, 390, 1312, 1199)],
-        # Remove the side porch and roof sign from the top-down hull silhouette.
-        'top': [(0, 220, 1024, 341), (280, 0, 610, 82)],
+        'side': WALL.get('cut', []),
+        # Mast; porch, lamp and pump beside the nose.
+        'front': [(0, 0, 1312, 300), (0, 0, 258, 1199), (258, 540, 275, 640), (0, 1010, 320, 1199)],
+        # Wing above the bus, its struts, and the porch beside it.
+        'rear': [(0, 0, 1312, 372), (0, 372, 440, 392), (800, 372, 1312, 392), (0, 392, 400, 410), (860, 392, 1312, 410),
+                 (1032, 400, 1312, 1199)],
     },
-    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 48,
-    'voxel': .12, 'target': 10500,
+    'ends_split': -LENGTH / 2 + (WALL['join'] - WALL['start']) * SCALE,   # the aircraft nose ends and the bus begins
+    'front_favour': 3,
+    'underside': WALL['underside'] * SCALE,
+    'wheels': [],
+    'grey': 26, 'tolerance': 40, 'bleed_tolerance': 48, 'voxel': .07, 'target': 6500,
     'mask_dir': str(render / 'masks'),
 }
+
+
+def z_at(px):
+    return -LENGTH / 2 + (px - WALL['start']) * SCALE
+
+
+AXLES = [dict(z=z_at(w[0]), px=w[0], py=w[1], r_px=w[2], r=w[2] * SCALE) for w in (WALL['front_wheel'], WALL['rear_wheel'])]
+for axle in AXLES:
+    table['wheels'].append((axle['z'], axle['r'], WIDTH / 2 - .34))
 body = carve_object('dot-diner:body', textures, table)
 
 family = bpy.data.objects.new('town-outposts', None)
@@ -76,8 +97,106 @@ diner.empty_display_type = 'CUBE'
 diner.parent = family
 body.parent = diner
 
-# Simple, weathered salvage materials. Each box still has a measured UV map;
-# metallic values stay under the town art limit.
+wall_photo = table['_photos']['side']
+rear_photo = table['_photos']['rear']
+for index, axle in enumerate(AXLES):
+    for hand in (-1, 1):
+        wheel = Mesh()
+        tyre(wheel, 'side', wall_photo, axle['px'], axle['py'], axle['r_px'], axle['r'], .17,
+             'rear', rear_photo, 246, 36, 1095, 1160)
+        obj = wheel.finish(f"dot-diner:wheel-{index + 1}-{'road' if hand < 0 else 'far'}",
+                           {'side': wall_photo.material(), 'rear': rear_photo.material()})
+        obj.parent = diner
+        obj.location = (hand * (WIDTH / 2 - .17), -axle['z'], axle['r'])
+
+axles = Mesh()
+for axle in AXLES:
+    lathe(axles, 'side', (0, axle['r'], axle['z']), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+          [(-WIDTH / 2 + .34, .05), (WIDTH / 2 - .34, .05)], lambda i, d, r, a: wall_photo.uv(axle['px'], axle['py']), sides=10)
+axles_obj = axles.finish('dot-diner:axles', {'side': wall_photo.material()})
+axles_obj.parent = diner
+
+# The wings and tail the bus still wears on its roof, traced from the rear photo so their holes stay open.
+# This is a second copy of the photo: the carve has painted over everything outside the bus in the first.
+tail_photo = Photo(textures / 'dot-diner-rear.jpg')
+tail_mask = ~tail_photo.sky([(8, 8), (1303, 8), (8, 300), (1303, 300)], tolerance=30, grey=26)
+tail_mask[372:, :] = False
+tail_loops = trace(tail_mask, (70, 5, 1180, 372))
+TAIL_Z = (LENGTH / 2 - 2.6)
+def tail_world(px, py, d):
+    return (-(px - 620) * REAR_S, (1167 - py) * REAR_S - .04, TAIL_Z + d)
+tail = Mesh()
+slab(tail, 'rear', tail_photo, tail_loops, tail_world, -.07, .07)
+tail_obj = tail.finish('dot-diner:tail', {'rear': tail_photo.material()})
+tail_obj.parent = diner
+
+side = Photo(textures / 'dot-diner-side.jpg')
+over = Photo(textures / 'dot-diner-overhead.jpg')
+
+
+def px_z(px):
+    """A pixel along the full side photo, which spans the same body as the wall photo."""
+    return -LENGTH / 2 + (px - 15) * LENGTH / 996
+
+
+def py_y(py):
+    return (555 - py) * HEIGHT / 229
+
+
+def photo_box(mesh, x0, x1, y0, y1, z0, z1, near, round_all=False):
+    """A box whose long faces wear `near` (px0, py0, px1, py1) of the side photo.
+    The other faces read a sliver of the same part, so no background reaches them."""
+    px0, py0, px1, py1 = near
+    uv = side.uv
+    n = [uv(px0, py1), uv(px1, py1), uv(px1, py0), uv(px0, py0)]
+    mesh.face([(x0, y0, z0), (x0, y0, z1), (x0, y1, z1), (x0, y1, z0)], n, 'side', (-1, 0, 0))
+    mesh.face([(x1, y0, z1), (x1, y0, z0), (x1, y1, z0), (x1, y1, z1)], n, 'side', (1, 0, 0))
+    edge = n if round_all else [uv(px0, py1), uv(px0 + 2, py1), uv(px0 + 2, py0), uv(px0, py0)]
+    mesh.face([(x1, y0, z0), (x0, y0, z0), (x0, y1, z0), (x1, y1, z0)], edge, 'side', (0, 0, -1))
+    mesh.face([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], edge, 'side', (0, 0, 1))
+    t = [uv(px0, py0), uv(px0, py0 + 2), uv(px1, py0 + 2), uv(px1, py0)]
+    mesh.face([(x1, y1, z0), (x0, y1, z0), (x0, y1, z1), (x1, y1, z1)], t, 'side', (0, 1, 0))
+    mesh.face([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], t, 'side', (0, -1, 0))
+
+
+WALL_X = -WIDTH / 2 + .05       # the road side's wall
+DECK_Z0, DECK_Z1 = px_z(268), px_z(925)
+DECK_X = WALL_X - 2.3
+DECK_Y = py_y(527)
+
+porch = Mesh()
+# Deck: its top is the overhead photo's boards, its edge the side photo's.
+photo_box(porch, DECK_X, WALL_X, DECK_Y - .24, DECK_Y, DECK_Z0, DECK_Z1, (268, 527, 925, 544))
+porch.face([(WALL_X, DECK_Y + .012, DECK_Z0), (DECK_X, DECK_Y + .012, DECK_Z0), (DECK_X, DECK_Y + .012, DECK_Z1), (WALL_X, DECK_Y + .012, DECK_Z1)],
+           [over.uv(142, 232), over.uv(142, 298), over.uv(738, 298), over.uv(738, 232)], 'over', (0, 1, 0))
+# Canopy: a sloping sheet of tin, the overhead photo above and the side photo's fascia at its edge.
+c_near, c_far = py_y(347), py_y(370)
+cz0, cz1 = px_z(258), px_z(935)
+cx0, cx1 = WALL_X + .02, DECK_X - .16
+porch.face([(cx0, c_near, cz0), (cx1, c_far, cz0), (cx1, c_far, cz1), (cx0, c_near, cz1)],
+           [over.uv(186, 182), over.uv(186, 214), over.uv(725, 214), over.uv(725, 182)], 'over', (0, 1, 0))
+porch.face([(cx1, c_far - .05, cz0), (cx0, c_near - .05, cz0), (cx0, c_near - .05, cz1), (cx1, c_far - .05, cz1)],
+           [side.uv(300, 372), side.uv(300, 366), side.uv(900, 366), side.uv(900, 372)], 'side', (0, -1, 0))
+porch.face([(cx1, c_far - .1, cz0), (cx1, c_far - .1, cz1), (cx1, c_far, cz1), (cx1, c_far, cz0)],
+           [side.uv(258, 372), side.uv(935, 372), side.uv(935, 349), side.uv(258, 349)], 'side', (-1, 0, 0))
+# Posts stand on the deck and meet the canopy, each wearing its own post from the photo.
+for px in (282, 500, 766, 918):
+    z = px_z(px)
+    photo_box(porch, DECK_X + .02, DECK_X + .18, DECK_Y, c_far, z - .08, z + .08, (px - 4, 376, px + 4, 525))
+# Rails between the posts, on the road side, leaving the steps open.
+for px0, px1 in ((282, 500), (612, 766), (766, 918)):
+    photo_box(porch, DECK_X + .05, DECK_X + .15, py_y(480), py_y(474), px_z(px0), px_z(px1), (px0, 474, px1, 480))
+# Steps down to the ground, in the middle of the deck's road edge.
+for w, py0, py1 in ((.42, 528, 538), (.84, 538, 548), (1.26, 548, 556)):
+    photo_box(porch, DECK_X - w, DECK_X - w + .42, 0, py_y(py0), px_z(507), px_z(607), (507, py0, 607, py1))
+# Pump, at the nose end of the deck.
+pz = px_z(310)
+photo_box(porch, DECK_X + .55, DECK_X + 1.15, DECK_Y, py_y(417), pz - .33, pz + .33, (291, 417, 330, 524), round_all=True)
+porch_obj = porch.finish('dot-diner:porch', {'side': side.material(), 'over': over.material()})
+porch_obj.parent = diner
+
+
+# Simple, weathered salvage materials for what stands on the deck.
 def material(name, color, metallic=0.0, roughness=.9):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*color, 1)
@@ -88,61 +207,50 @@ def material(name, color, metallic=0.0, roughness=.9):
     shader.inputs['Roughness'].default_value = roughness
     return mat
 
-wood = material('sun-bleached porch timber', (.31, .22, .13))
-rust = material('rusted red steel', (.28, .095, .045), .25)
-dark = material('soot-dark iron', (.075, .073, .064), .22)
-paint = material('faded diner paint', (.34, .30, .22))
+
+rust = material('rusted steel', (.28, .095, .045), .25)
+chair_red = material('chipped chair paint', (.42, .10, .07))
+top_paint = material('worn table top', (.46, .41, .32))
+
 
 def cube(name, center, size, mat):
-    obj = town.cube('dot-diner:' + name, center, size, mat, .018)
+    obj = town.cube('dot-diner:' + name, center, size, mat, .012)
     obj.parent = diner
     return obj
 
-# Porch on the true road-side shoulder. Its posts start at the ground and meet
-# the deck; the tables stand on the deck, and each has legs to that same deck.
-porch_x = -1.6
-porch_z0, porch_z1 = -10.0, 11.0
-deck_y = .82
-cube('porch-deck', (porch_x, deck_y, (porch_z0 + porch_z1) / 2), (3.0, .26, porch_z1 - porch_z0), wood)
-for i, z in enumerate(np.linspace(porch_z0 + .18, porch_z1 - .18, 8)):
-    cube(f'porch-post-{i + 1}', (porch_x - 1.38, .42, float(z)), (.16, .84, .16), wood)
-    cube(f'porch-wall-bracket-{i + 1}', (porch_x + 1.35, 1.56, float(z)), (.14, 1.48, .14), rust)
-cube('porch-outer-rail', (porch_x - 1.38, 1.25, 0.5), (.13, .12, 20.7), wood)
-cube('porch-canopy', (porch_x, 3.12, .5), (3.05, .2, 21.8), rust)
-for i, z in enumerate((-7.6, -2.4, 2.8, 8.0)):
-    cube(f'table-{i + 1}-top', (porch_x - .15, 1.57, z), (1.45, .12, 1.2), paint)
-    for dx in (-.59, .59):
-        for dz in (-.46, .46):
-            cube(f'table-{i + 1}-leg-{dx}-{dz}', (porch_x - .15 + dx, 1.17, z + dz), (.07, .8, .07), dark)
 
-# Pump stands at the roadside end of the porch, its feet on the earth and its
-# body attached to the ground plate. Hose and nozzle are recognizable details.
-pump_x, pump_z = -2.55, -11.15
-cube('fuel-pump-foot', (pump_x, .10, pump_z), (.86, .20, .72), dark)
-cube('fuel-pump-body', (pump_x, 1.06, pump_z), (.68, 1.75, .62), rust)
-cube('fuel-pump-face', (pump_x, 1.51, pump_z - .321), (.46, .48, .025), paint)
-cube('fuel-pump-display', (pump_x, 1.57, pump_z - .34), (.29, .16, .025), dark)
+# Tables sit where the overhead photo's tables are printed on the deck.
+for i, p in enumerate((250, 367, 557, 663)):
+    tz = DECK_Z0 + (p - 142) / (738 - 142) * (DECK_Z1 - DECK_Z0)
+    tx = WALL_X - 1.0
+    cube(f'table-{i + 1}-top', (tx, DECK_Y + .74, tz), (.8, .05, .8), top_paint)
+    cube(f'table-{i + 1}-leg', (tx, DECK_Y + .37, tz), (.09, .72, .09), rust)
+    for hand in (-1, 1):
+        cz = tz + hand * .66
+        cube(f'chair-{i + 1}-{hand}-seat', (tx, DECK_Y + .46, cz), (.42, .05, .42), chair_red)
+        cube(f'chair-{i + 1}-{hand}-back', (tx, DECK_Y + .72, cz + hand * .19), (.42, .46, .04), chair_red)
+        for leg in (-1, 1):
+            cube(f'chair-{i + 1}-{hand}-frame-{leg}', (tx + leg * .18, DECK_Y + .22, cz), (.04, .44, .36), rust)
 
-# Sign: one thick slab on two real timber posts. Front and back use separate
-# UVs; the back reverses picture X so DOT'S reads correctly from either side.
-side = Photo(textures / 'dot-diner-side.jpg')
+# Sign: one thick slab on the roof, facing the road, with DOT'S reading correctly from both sides.
 sign = Mesh()
-x0, x1, y0, y1 = -4.0, 4.0, 6.55, 9.05
-z_front, z_back = -4.8, -4.98
-quad = [(x0, y0, z_front), (x1, y0, z_front), (x1, y1, z_front), (x0, y1, z_front)]
-uv = [side.uv(385, 322), side.uv(760, 322), side.uv(760, 238), side.uv(385, 238)]
-sign.face(quad, uv, 'sign')
-sign.face([(x1, y0, z_back), (x0, y0, z_back), (x0, y1, z_back), (x1, y1, z_back)],
-          [side.uv(385, 322), side.uv(760, 322), side.uv(760, 238), side.uv(385, 238)], 'sign')
-sign.face([(x0, y0, z_back), (x0, y0, z_front), (x0, y1, z_front), (x0, y1, z_back)],
-          [side.uv(385, 322)] * 4, 'sign')
-sign.face([(x1, y0, z_front), (x1, y0, z_back), (x1, y1, z_back), (x1, y1, z_front)],
-          [side.uv(760, 322)] * 4, 'sign')
+sx0, sx1 = -.09, .09
+sz0, sz1, sy0, sy1 = px_z(390), px_z(755), py_y(318), py_y(238)
+face_uv = [side.uv(390, 318), side.uv(755, 318), side.uv(755, 238), side.uv(390, 238)]
+sign.face([(sx0, sy0, sz0), (sx0, sy0, sz1), (sx0, sy1, sz1), (sx0, sy1, sz0)], face_uv, 'sign', (-1, 0, 0))
+sign.face([(sx1, sy0, sz1), (sx1, sy0, sz0), (sx1, sy1, sz0), (sx1, sy1, sz1)], face_uv, 'sign', (1, 0, 0))
+strip = [side.uv(390, 240), side.uv(390, 238), side.uv(755, 238), side.uv(755, 240)]
+sign.face([(sx1, sy1, sz0), (sx0, sy1, sz0), (sx0, sy1, sz1), (sx1, sy1, sz1)], strip, 'sign', (0, 1, 0))
+sign.face([(sx0, sy0, sz0), (sx1, sy0, sz0), (sx1, sy0, sz1), (sx0, sy0, sz1)], strip, 'sign', (0, -1, 0))
+end_uv = [side.uv(390, 318), side.uv(392, 318), side.uv(392, 238), side.uv(390, 238)]
+sign.face([(sx1, sy0, sz0), (sx0, sy0, sz0), (sx0, sy1, sz0), (sx1, sy1, sz0)], end_uv, 'sign', (0, 0, -1))
+sign.face([(sx0, sy0, sz1), (sx1, sy0, sz1), (sx1, sy1, sz1), (sx0, sy1, sz1)], end_uv, 'sign', (0, 0, 1))
 sign_obj = sign.finish('dot-diner:sign-slab', {'sign': side.material()})
 sign_obj.parent = diner
-for i, x in enumerate((-3.25, 3.25)):
-    cube(f'sign-post-{i + 1}', (x, 4.53, -4.88), (.18, 4.05, .2), wood)
-    cube(f'sign-cross-brace-{i + 1}', (x, 6.25, -4.88), (.11, .12, .32), dark)
+# Posts run from the roof up behind the slab: the side photo's two tall posts and two short feet.
+for i, (px, top_py) in enumerate(((407, 225), (677, 225), (538, 318), (735, 318))):
+    foot = HEIGHT - .25
+    cube(f'sign-post-{i + 1}', (sx1 + .05, (py_y(top_py) + foot) / 2, px_z(px)), (.1, py_y(top_py) - foot, .1), rust)
 
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
@@ -183,10 +291,13 @@ def shot(name, eye, target, ortho):
     scene.render.filepath = str(render / f'{name}.png')
     bpy.ops.render.render(write_still=True)
 
-shot('model-side', (-44, 9, 0), (0, 4.3, 0), 38)
-shot('model-front', (0, 9, -40), (0, 4.3, 0), 24)
-shot('model-above', (0, 58, 0), (0, 1.8, 0), 38)
-shot('model-three-quarter-road', (-24, 19, -29), (0, 4, 0), 38)
-shot('model-three-quarter-back', (24, 17, 27), (0, 4, 0), 38)
+shot('model-side', (-44, 3, 0), (0, 2.6, 0), 19)
+shot('model-front', (0, 2.6, -40), (0, 2.6, 0), 11)
+shot('model-rear', (0, 2.6, 40), (0, 2.6, 0), 11)
+shot('model-far', (44, 3, 0), (0, 2.6, 0), 19)
+shot('model-above', (0, 58, 0), (-1, 1.8, 0), 25)
+shot('model-road', (-24, 13, -22), (-1, 2, 0), 22)
+shot('model-back', (24, 13, 22), (0, 2, 0), 22)
+shot('model-mayor', (-42, 62, -42), (-1, 1.5, 0), 26)
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))

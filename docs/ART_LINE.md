@@ -25,7 +25,7 @@ show no improvement, stop adjusting and change the method.
 
    | Subject | Kit | Worked example |
    | --- | --- | --- |
-   | Vehicles, buildings, anything that curves every way | **`carve_object` in `photo_carve.py`: fill in a table, write no carving code** | the table at the top of `photo_carve.py` |
+   | Vehicles, buildings, anything that curves every way | **`carve_object` in `photo_carve.py`: fill in a table, write no carving code** | Dot's Diner in `town-outposts.py`; the table at the top of `photo_carve.py` |
    | People, and anything `carve_object` cannot reach | `hull_model.py` directly | `town-walkers.py`, `rattler-photo.py` |
    | Lattices, booms, masts, anything with open holes | `trace` and `slab` in `photo_model.py` | the tow rig's boom in `town-trucks-1.py` |
    | Plate-work, planks, drums, a steam engine | `photo_model.py` flat parts and lathes | `rail-trains.py` |
@@ -82,6 +82,13 @@ show no improvement, stop adjusting and change the method.
 ### Buildings
 
 - **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.
+- **Anything standing in front of a wall or roof** (a porch, a sign, a pump) gets painted flat on the wall, and on the far wall too, since both sides wear one photo. No mask can separate it, because the wall is behind it. Generate the same object again, same camera, with those things removed (Dot's Diner: `dot-diner-wall.jpg`, `dot-diner-roof.jpg`), and carve from those. The removed things are their own pieces, wearing the full photo. A generated clean photo lined up within a few pixels of its reference.
+- **An overhead photo at a slant** shows side windows on the roof. Ask for a true plan view with no wall showing.
+- **Two bodies joined end to end** (an aircraft nose and a bus) come out with the wider one's shape along the whole length. Set `ends_split`.
+- **A windscreen pieced together from three photos** on a curved nose: set `front_favour` to 3 so that the nose wears its front photo further round.
+- **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
+- **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
+- **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 
 ### People
