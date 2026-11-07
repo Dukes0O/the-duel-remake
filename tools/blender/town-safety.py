@@ -23,7 +23,8 @@ import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace`nfrom photo_carve import carve_object
+from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace
+from photo_carve import carve_object
 import numpy as np
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -302,7 +303,11 @@ wall.location=town.game_vector((0,0,-2.72));attach(wall)
 # Six weathered timber columns run from ground to the eaves, joined by purlins.
 for ix,x in enumerate((-6.45,0,6.45)):
     for iz,z in enumerate((-2.72,2.72)):
-        beam(f'guard-post:timber-post-{ix+1}-{iz+1}',(x,.09,z),(x,3.02,z),.18,materials['weathered-plank'])
+        top=3.68 if z==0 else 3.02
+        beam(f'guard-post:timber-post-{ix+1}-{iz+1}',(x,.09,z),(x,top,z),.18,materials['weathered-plank'])
+for x in (-6.45,0,6.45):
+    for side in (-1,1):
+        beam(f'guard-post:timber-rafter-{x}-{side}',(x,3.14,side*3.14),(x,3.75,0),.13,materials['weathered-plank'])
 for z in (-2.72,0,2.72):
     y=3.00 if z else 3.66
     beam(f'guard-post:timber-purlin-{z}',(-7.0,y,z),(7.0,y,z),.20,materials['weathered-plank'])
@@ -344,7 +349,9 @@ lathe(bowl,'photo',(0,.48,1.08),(0,1,0),(1,0,0),(0,0,1),
 bowl_obj=bowl.finish('guard-post:brazier',{'photo':brazier_photo.material(),'iron':materials['iron-dark']});attach(bowl_obj)
 for i,angle in enumerate((0,2*math.pi/3,4*math.pi/3)):
     foot_x=math.cos(angle)*.38;foot_z=1.08+math.sin(angle)*.38
-    beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.08,foot_z),(foot_x*.92,.53,1.08+math.sin(angle)*.52),.075,materials['rusted-steel'])# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
+    beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.08,foot_z),(foot_x*.92,.53,1.08+math.sin(angle)*.52),.075,materials['rusted-steel'])
+
+# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
 b=building('searchlight')
 cube('searchlight-concrete-foot',(0,.18,0),(.72,.36,.72),materials['cracked-concrete'],.08)
 pipe('searchlight-mast',(0,.36,0),(0,4.7,0),.10,materials['rusted-steel'])
