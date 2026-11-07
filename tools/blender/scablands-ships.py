@@ -11,6 +11,19 @@ from pathlib import Path
 # roof y=140. Rear: centre x=384, deck y=476, roof y=130. Plan: bow/stern x=638/100, centre y=245;
 # bridge-wing span y=54..436. Window and door boxes below are pixel rectangles
 # read from those same grids, not estimated from the rendered mesh.
+# Patience hull measurements from .qa-dist/grid-hull-{side,bow,stern,top}.png.
+# Side: crop x=0..2010; keel y=223; midships deck edge y=0..20 and bow edge y=0.
+# Its 2010 px span sets 72 m; the cropped profile is normalized to 8 m depth.
+# Bow: crop x=0..1268, centre=634; deck y=0, keel y=845; 12 m beam.
+# Stern: crop x=0..1140, centre=570; deck y=0, keel y=760; rudder/propeller below.
+# Top: bow/stern y=0/2070, centre x=172; beam edges x=0..345.
+HULL_LENGTH = 72.0
+HULL_WIDTH = 12.0
+HULL_HEIGHT = 8.0
+HULL_SIDE = {'start': 0, 'end': 2010, 'ground': 223}
+HULL_BOW = {'centre': 634, 'ground': 845, 'top': 0}
+HULL_STERN = {'centre': 570, 'ground': 760, 'top': 0}
+HULL_TOP = {'front': 0, 'rear': 2070, 'centre': 172, 'along': 'x', 'x_scale': 12.0 / 345}
 UPPER_SCALE = .0244
 UPPER_LENGTH = (720 - 40) * UPPER_SCALE
 UPPER_DECK_WIDTH = (600 - 190) * UPPER_SCALE

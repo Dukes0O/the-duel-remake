@@ -339,4 +339,4 @@ Codex ImageGen photograph; no outside source art is used.
 
 ## Patience bare-hull reference photos (WW-ART-SHIPS round 11, 2026-11-07)
 
-`patience-hull-side.jpg`, `-bow.jpg`, `-stern.jpg` and `-top.jpg` are Codex ImageGen outputs showing a maintained, weathered 72 m coaster hull in a dry dock from the side, bow, stern and overhead. They are original modeling references; their generated PNGs remain in Codex's generated-image folder. No outside source art is used.
+`patience-hull-side.jpg`, `-bow.jpg`, `-stern.jpg` and `-top.jpg` are cropped Codex ImageGen outputs showing a maintained, weathered coaster hull in a dry dock from the side, bow, stern and overhead. The side and end views were rescaled to the specified 72 x 12 x 8 m proportions. They are original modeling references; their generated PNGs remain in Codex's generated-image folder. No outside source art is used.
