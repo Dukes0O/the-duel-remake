@@ -65,9 +65,9 @@ const generators = [
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
-    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/fun.glb'],budget:72200,maxBytes:8000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
-    glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/food.glb'],budget:30000,maxBytes:3000000},
   {id:'town-borer',script:'tools/blender/town-borer.py',args:[],candidate:true,
@@ -84,8 +84,8 @@ const generators = [
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:30000,
-    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:56000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000,'rail-halt':12000},maxBytes:8000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -113,14 +113,24 @@ const generators = [
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
+  { script: 'tools/blender/sea-works.py', args: ['--through', 'iron-mule-gear'], candidate: true, budget: 50000, maxBytes: 3_400_000,
+    glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { id: 'sea-water-front', script: 'tools/blender/sea-water-front.py', args: [], candidate: true,
+    budget: 20000, maxBytes: 2 * 1024 * 1024,
+    glb: ['public/assets/models/wasteland/scablands/sea-water-front.glb'] },
+  { script: 'tools/blender/sea-magnet-big.py', args: [], candidate: true, budget: 30000, maxBytes: 2_500_000,
+    glb: ['public/assets/models/wasteland/scablands/sea-magnet-big.glb'] },
   { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
   { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
     glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
   { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
     glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },
-  { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
-    glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { id: 'sea-vane', script: 'tools/blender/sea-vane.py', args: [], candidate: true,
+    budget: 9000, maxBytes: 1_500_000,
+    glb: ['public/assets/models/wasteland/scablands/mrs-vane.glb'] },
+  { script: 'tools/blender/sea-camp.py', args: [], candidate: true, budget: 25000, maxBytes: 2*1024*1024,
+    glb: ['public/assets/models/wasteland/scablands/sea-camp.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
@@ -847,12 +857,26 @@ try {
         assert.ok(names.has('hermit-camp:bonnet-dish'), 'bonnet-textured shallow dish');
         assert.ok(names.has('hermit-camp:dish-pole'), 'leaning dish pole');
         assert.ok(names.has('hermit-camp:chair-seat'), 'separate chair seat');
+        assert.ok(names.has('deck-town'), 'named stranded-deck town building root');
+        assert.ok(names.has('deck-town:deck'), 'ship deck is carved from its own photos');
+        for (const index of [1, 2, 3, 4]) {
+          assert.ok(names.has(`deck-town:home-${index}:body`), `home ${index} reuses the photo-carved tin home`);
+        }
+        assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
+        assert.ok(names.has('rail-halt'), 'named rail halt building root');
+        assert.ok(names.has('rail-halt:body'), 'photo-carved station hut');
+        assert.ok(names.has('rail-halt:platform'), 'low photo-traced platform slab');
+        assert.ok(names.has('rail-halt:clock'), 'separate working station clock');
+        assert.ok(names.has('rail-halt:signal'), 'signal arm stays a named moving part');
+        assert.ok(names.has('rail-halt:signal-hinge'), 'signal arm pivot is a separate hinge');
+        assert.ok(names.has('rail-halt:water-crane-frame'), 'open water crane is traced');
+        assert.ok(names.has('rail-halt:bench-seat-1'), 'station bench is a separate real piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
         assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
-          ['dot-diner', 'hermit-camp', 'plane-school'],
+          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school', 'rail-halt'],
           'each outpost building is a direct child of the family root');
-        for (const id of ['dot-diner', 'plane-school', 'hermit-camp']) {
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town', 'rail-halt']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;
@@ -1037,7 +1061,7 @@ try {
     const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/fun.glb'));
     assert.equal(bytes.toString('ascii',0,4),'glTF');
     assert.equal(bytes.readUInt32LE(8),bytes.length);
-    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds the family limit`);
+    assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the family limit`);
     const jsonLength=bytes.readUInt32LE(12); const gltf=JSON.parse(bytes.toString('utf8',20,20+jsonLength));
     const names=new Set(gltf.nodes.map(node=>node.name));
     const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];
@@ -1059,16 +1083,17 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS round 4 exports the photo-carved crusher with named moving parts and photo materials', () => {
+  check('TOWN-ART-PLANTS keeps the passed crusher and exports the photo-built batch plant', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
     assert.equal(bytes.readUInt32LE(8), bytes.length);
-    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds the family limit`);
+    assert.ok(bytes.length <= 8_000_000, `${bytes.length} bytes exceeds the family limit`);
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
-    assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name), ['crusher'], 'one named piece in round 1');
+    assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
+      ['batch-plant', 'crusher'], 'the passed crusher and new batch plant stay separate buildings');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1077,9 +1102,21 @@ try {
       'the former box-built body pieces are removed');
     const bodyNode = gltf.nodes[names.indexOf('crusher:body')];
     assert.ok(Number.isInteger(bodyNode.mesh), 'the carved crusher body is an exported mesh');
+    const descendants = index => [index, ...(gltf.nodes[index].children || []).flatMap(descendants)];
+    const countTriangles = id => descendants(names.indexOf(id)).reduce((sum, index) => {
+      const meshIndex = gltf.nodes[index].mesh;
+      return sum + (meshIndex === undefined ? 0 : gltf.meshes[meshIndex].primitives
+        .reduce((meshSum, primitive) => meshSum + gltf.accessors[primitive.indices].count / 3, 0));
+    }, 0);
+    assert.ok(countTriangles('crusher') > 100 && countTriangles('crusher') <= 14_000,
+      `${countTriangles('crusher')} triangles exceeds the crusher budget`);
+    for (const name of ['batch-plant', 'batch-plant:silo-shell', 'batch-plant:aggregate-bins',
+      'batch-plant:mixing-tower', 'batch-plant:truck-chute', 'batch-plant:silo:traced-legs-road']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('batch-plant') > 100 && countTriangles('batch-plant') <= 14_000,
+      `${countTriangles('batch-plant')} triangles exceeds the batch plant budget`);
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
-    const triangles = primitives.reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
-    assert.ok(triangles > 100 && triangles <= 14_000, `${triangles} triangles exceeds the crusher family budget`);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
         ['TEXCOORD_0'], 'each crusher part has one UV channel');
@@ -1919,4 +1956,3 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
-

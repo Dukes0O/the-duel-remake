@@ -1,0 +1,331 @@
+"""Build the Scablands harbour crew's raised camp from measured photo kits."""
+import argparse
+import json
+import math
+import sys
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--root', required=True)
+parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--render-dir', default='.evidence/ww-art-sea')
+args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+root = Path(args.root).resolve()
+out = root / 'public/assets/models/wasteland/scablands/sea-camp.glb'
+blend = root / 'art-build/sea-camp/sea-camp.blend'
+textures = root / 'public/assets/models/wasteland/scablands/textures'
+render = Path(args.render_dir)
+render = render if render.is_absolute() else root / render
+if args.paths_only:
+    print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(render)]}))
+    raise SystemExit(0)
+
+import bpy
+import numpy as np
+from mathutils import Vector
+sys.path.insert(0, str(root / 'tools/blender'))
+from town_base import export_glb
+from photo_model import Mesh, Photo, slab, trace
+from photo_carve import carve_object
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+blend.parent.mkdir(parents=True, exist_ok=True)
+render.mkdir(parents=True, exist_ok=True)
+scene = bpy.context.scene
+camp = bpy.data.objects.new('works-camp', None)
+scene.collection.objects.link(camp)
+camp.empty_display_type = 'PLAIN_AXES'
+
+# Gridded photo measurements, in source pixels. The ground is the point where
+# the wall itself meets the floor, not a sill, shadow or lower edge.
+# Hut side (1774 x 887): x=45..1715, ground=833, roof=51. The door is
+# x=385..515, y=209..829: 620 px at 1.9 m, or 0.0030645 m/px.
+# Hut end (1310 x 1200): x=120..1195, ground=1105, roof=105.
+# Hut overhead (1536 x 1024): long axis x=142..1256, centre row=470,
+# width y=100..840. The floor contact is the hut wall line, not the roof eave.
+HUT = {
+    'photos': {'side': 'sea-camp-hut-side.jpg', 'front': 'sea-camp-hut-end.jpg',
+               'rear': 'sea-camp-hut-end.jpg', 'top': 'sea-camp-hut-top.jpg'},
+    'length': (1715 - 45) * (1.9 / (829 - 209)),
+    'width': ((1195 - 120) * ((833 - 51) * (1.9 / (829 - 209)) / (1105 - 105))),
+    'height': (833 - 51) * (1.9 / (829 - 209)),
+    'side': {'start': 45, 'end': 1715, 'ground': 833},
+    'front': {'centre': 655, 'ground': 1105, 'top': 105},
+    'rear': {'centre': 655, 'ground': 1105, 'top': 105},
+    'top': {'front': 142, 'rear': 1256, 'centre': 470, 'along': 'x',
+            'x_scale': ((1195 - 120) * ((833 - 51) * (1.9 / (829 - 209)) / (1105 - 105))) / (840 - 100)},
+    'voxel': .035, 'target': 6500, 'grey': 25, 'tolerance': 34,
+    'bleed_tolerance': 38, 'mask_dir': str(render / 'masks'),
+}
+# Kitchen side (1942 x 809): x=38..1904, ground=992, roof=204;
+# door x=404..536, y=432..982 (550 px at 1.9 m). Kitchen end
+# (1536 x 1024): x=90..1446, ground=902, roof=101. Overhead
+# (2172 x 724): along x=34..2140, centre row=337, width y=50..620.
+KITCHEN = {
+    'photos': {'side': 'sea-camp-kitchen-side.jpg', 'front': 'sea-camp-kitchen-end.jpg',
+               'rear': 'sea-camp-kitchen-end.jpg', 'top': 'sea-camp-kitchen-top.jpg'},
+    'length': (1904 - 38) * (1.9 / (982 - 432)),
+    'width': ((1446 - 90) * ((992 - 204) * (1.9 / (982 - 432)) / (902 - 101))),
+    'height': (992 - 204) * (1.9 / (982 - 432)),
+    'side': {'start': 38, 'end': 1904, 'ground': 992},
+    'front': {'centre': 768, 'ground': 902, 'top': 101},
+    'rear': {'centre': 768, 'ground': 902, 'top': 101},
+    'top': {'front': 34, 'rear': 2140, 'centre': 337, 'along': 'x',
+            'x_scale': ((1446 - 90) * ((992 - 204) * (1.9 / (982 - 432)) / (902 - 101))) / (620 - 50)},
+    'voxel': .04, 'target': 8000, 'grey': 25, 'tolerance': 34,
+    'bleed_tolerance': 38, 'mask_dir': str(render / 'masks'),
+}
+
+def to_blender(point):
+    """Convert a glTF/model point (X right, Y up, Z forward) to Blender XYZ."""
+    x, y, z = point
+    return (x, -z, y)
+
+def named_part(name, parent, location=(0, 0, 0), yaw=0):
+    obj = bpy.data.objects.new(name, None)
+    scene.collection.objects.link(obj)
+    obj.parent = parent
+    obj.location = to_blender(location)
+    obj.rotation_euler[2] = yaw
+    obj.empty_display_type = 'PLAIN_AXES'
+    obj['part'] = name
+    return obj
+
+def attach_carve(name, table, location, yaw=0, reuse=None):
+    if reuse is None:
+        body = carve_object(name, textures, table)
+        for photo in table['_photos'].values():
+            if photo.image.size[0] > 768:
+                photo.image.scale(768, max(1, round(photo.image.size[1] * 768 / photo.image.size[0])))
+    else:
+        body = bpy.data.objects.new(name, reuse.data)
+        scene.collection.objects.link(body)
+    body.name = name
+    body.parent = camp
+    body.location = to_blender(location)
+    body.rotation_euler[2] = yaw
+    body['part'] = name
+    return body
+
+TRACE_PHOTOS = {}
+STILT_DATA = None
+LADDER_DATA = None
+
+def trace_photo(filename):
+    if filename not in TRACE_PHOTOS:
+        TRACE_PHOTOS[filename] = Photo(textures / filename)
+    return TRACE_PHOTOS[filename]
+
+hut = attach_carve('works-camp:hut-1', HUT, (-5.5, 3, -1))
+hut2 = attach_carve('works-camp:hut-2', HUT, (7.5, 3, -1), math.pi / 2, reuse=hut)
+kitchen = attach_carve('works-camp:kitchen', KITCHEN, (0, 3, 8))
+
+def traced_part(name, parent, photo_name, mask_fn, rect, mapper, depth=.06, wall_scale=None):
+    photo = trace_photo(photo_name)
+    solid = mask_fn(photo)
+    loops = trace(solid, rect, tolerance=3.5, min_area=120)
+    if not getattr(photo, '_sea_camp_bled', False):
+        photo.bleed(solid)
+        photo._sea_camp_bled = True
+    mesh = Mesh()
+    slab(mesh, name, photo, loops, mapper, -depth / 2, depth / 2, wall_scale=wall_scale)
+    obj = mesh.finish(name, {name: photo.material()})
+    obj.parent = parent
+    obj['part'] = name
+    return obj
+
+def frame_mask(photo):
+    seeds = [(8, 8), (photo.w - 9, 8), (8, photo.h - 9),
+             (photo.w - 9, photo.h - 9)]
+    original = photo.rgb()
+    spread = original.max(axis=2) - original.min(axis=2)
+    enclosed_studio = (original.mean(axis=2) > 210) & (spread < 38)
+    corners = np.concatenate([original[4:14, 4:14].reshape(-1, 3),
+                              original[4:14, -14:-4].reshape(-1, 3)])
+    shade = corners.mean()
+    if shade < 185:
+        photo._rgb = np.clip(original + int(205 - shade), 0, 255).astype(np.int16)
+        mask = ~(photo.sky(seeds, tolerance=30, grey=30) | enclosed_studio)
+        photo._rgb = original
+        return mask
+    return ~(photo.sky(seeds, tolerance=30, grey=30) | enclosed_studio)
+
+def add_stilts(body, length, width):
+    global STILT_DATA
+    frame = trace_photo('sea-camp-stilt-frame.jpg')
+    # Grid: 1024 x 1536; timber feet meet floor at row 1510, top row 20,
+    # and outer legs span x=145..878. 3 m / 1490 px = 0.002013 m/px.
+    frame_scale = 3 / (1510 - 20)
+    frame_x = (145 + 878) / 2
+    solid = frame_mask(frame)
+    positions = [-length / 2]
+    while positions[-1] + 4 < length / 2:
+        positions.append(positions[-1] + 4)
+    if length / 2 - positions[-1] > .05:
+        positions.append(length / 2)
+    if STILT_DATA is None:
+        loops = trace(solid, (120, 18, 900, 1515), tolerance=5.0, min_area=220)
+        if not getattr(frame, '_sea_camp_bled', False):
+            frame.bleed(solid)
+            frame._sea_camp_bled = True
+        mesh = Mesh()
+        slab(mesh, 'stilt-frame', frame, loops,
+             lambda px, py, d: (d, (1510 - py) * frame_scale - 3,
+                                (px - frame_x) * frame_scale),
+             -.05, .05, wall_scale=frame_scale)
+        template = mesh.finish('works-camp:stilt-frame-template', {'stilt-frame': frame.material()})
+        STILT_DATA = template.data
+        bpy.data.objects.remove(template, do_unlink=True)
+    for station, z in enumerate(positions):
+        for edge, x in enumerate((-width / 2, width / 2)):
+            name = f'{body.name}:stilt-{station + 1}-{edge + 1}'
+            obj = bpy.data.objects.new(name, STILT_DATA)
+            scene.collection.objects.link(obj)
+            obj.parent = body
+            obj.location = to_blender((x, 0, z))
+            obj['part'] = name
+
+def add_ladder(body, door_z, width, suffix):
+    global LADDER_DATA
+    ladder = trace_photo('sea-camp-ladder.jpg')
+    # Grid: 1024 x 1536; feet touch floor at row 1510, rails reach row 30.
+    # The upper rail tips are near x=880; the floor feet are near x=160.
+    ladder_top, ladder_ground = 30, 1510
+    vertical_scale = 3 / (ladder_ground - ladder_top)
+    top_x = 880
+    horizontal_scale = 1.1 / (880 - 160)
+    if LADDER_DATA is None:
+        solid = frame_mask(ladder)
+        loops = trace(solid, (140, 20, 900, 1515), tolerance=5.0, min_area=180)
+        if not getattr(ladder, '_sea_camp_bled', False):
+            ladder.bleed(solid)
+            ladder._sea_camp_bled = True
+        mesh = Mesh()
+        slab(mesh, 'ladder', ladder, loops,
+             lambda px, py, d: (d, (ladder_ground - py) * vertical_scale - 3,
+                                (px - top_x) * horizontal_scale),
+             -.03, .03, wall_scale=.006)
+        template = mesh.finish('works-camp:ladder-template', {'ladder': ladder.material()})
+        LADDER_DATA = template.data
+        bpy.data.objects.remove(template, do_unlink=True)
+    name = f'{body.name}:ladder-{suffix}'
+    obj = bpy.data.objects.new(name, LADDER_DATA)
+    scene.collection.objects.link(obj)
+    obj.parent = body
+    obj.location = to_blender((width / 2 + .11, 0, door_z))
+    obj['part'] = name
+
+def door_offset(table, side_start, door_center):
+    side_scale = table['length'] / abs(table['side']['end'] - side_start)
+    return -table['length'] / 2 + (door_center - side_start) * side_scale
+
+add_stilts(hut, HUT['length'], HUT['width'])
+add_ladder(hut, door_offset(HUT, 45, 450), HUT['width'], '1')
+add_stilts(hut2, HUT['length'], HUT['width'])
+add_ladder(hut2, door_offset(HUT, 45, 450), HUT['width'], '2')
+add_stilts(kitchen, KITCHEN['length'], KITCHEN['width'])
+add_ladder(kitchen, door_offset(KITCHEN, 38, 470), KITCHEN['width'], 'kitchen')
+
+# The washing line's own image traces two poles, the line and a few grey clothes.
+# Pole tops are at row 20 and their floor contacts at row 860; the clothes hang
+# below the line. Stretch its horizontal dimension to the measured camp gap.
+laundry = trace_photo('sea-camp-washing-line.jpg')
+laundry_solid = frame_mask(laundry)
+laundry_scale_y = 3 / (860 - 20)
+laundry_scale_x = 8.7 / (1615 - 140)
+washing_line = traced_part('works-camp:washing-line', camp,
+    'sea-camp-washing-line.jpg', lambda _p: laundry_solid,
+    (120, 15, 1640, 870),
+    lambda px, py, d: (.35 + (px - (140 + 1615) / 2) * laundry_scale_x,
+                       (860 - py) * laundry_scale_y, -1 + d),
+    depth=.045, wall_scale=.006)
+
+# Downsample only after all masks have read the full-resolution photos. Traced
+# UVs keep their source-grid coordinates; the compressed copies stay in budget.
+for photo in TRACE_PHOTOS.values():
+    if photo.image.size[0] > 768:
+        photo.image.scale(768, max(1, round(photo.image.size[1] * 768 / photo.image.size[0])))
+
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+export_glb(out)
+
+# Render from the exported GLB in a fresh scene, with a neutral floorless studio.
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(out))
+scene = bpy.context.scene
+scene.render.engine = 'BLENDER_EEVEE_NEXT'
+scene.render.image_settings.file_format = 'PNG'
+scene.render.image_settings.color_mode = 'RGB'
+scene.view_settings.view_transform = 'Standard'
+scene.view_settings.look = 'Medium High Contrast'
+scene.render.resolution_percentage = 100
+scene.world = bpy.data.worlds.new('flat neutral studio')
+scene.world.color = (.43, .43, .43)
+scene.render.film_transparent = False
+
+def area(name, loc, energy, size):
+    data = bpy.data.lights.new(name, 'AREA')
+    data.energy, data.shape, data.size = energy, 'DISK', size
+    obj = bpy.data.objects.new(name, data)
+    scene.collection.objects.link(obj)
+    obj.location = to_blender(loc)
+    obj.rotation_euler = (Vector(to_blender((0, 2, 2))) - obj.location).to_track_quat('-Z', 'Y').to_euler()
+
+area('soft sky', (0, 23, -16), 3200, 18)
+area('open fill', (-18, 15, 16), 1700, 14)
+camera_data = bpy.data.cameras.new('review camera')
+camera = bpy.data.objects.new('review camera', camera_data)
+scene.collection.objects.link(camera)
+scene.camera = camera
+
+def shot(name, eye, target, ortho=None, resolution=(800, 400)):
+    camera.location = to_blender(eye)
+    camera.rotation_euler = (Vector(to_blender(target)) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    camera.data.type = 'ORTHO' if ortho else 'PERSP'
+    camera.data.clip_end = 12 if name == 'model-hut-side' else 1000
+    if ortho:
+        camera.data.ortho_scale = ortho
+    else:
+        camera.data.lens = 28
+    scene.render.resolution_x, scene.render.resolution_y = resolution
+    scene.render.filepath = str(render / f'{name}.png')
+    bpy.ops.render.render(write_still=True)
+
+shot('model-hut-side', (-16, 3.0, -1), (-5.5, 3, -1), ortho=14.4)
+shot('camp-quarter-a', (-18, 1.6, -17), (0, 2.6, 3), resolution=(800, 400))
+shot('camp-quarter-b', (18, 1.6, -15), (0, 2.6, 3), resolution=(800, 400))
+
+def read_pixels(path, width, height):
+    image = bpy.data.images.load(str(path), check_existing=False)
+    image.scale(width, height)
+    pixels = np.empty(width * height * 4, dtype=np.float32)
+    image.pixels.foreach_get(pixels)
+    return (pixels.reshape(height, width, 4)[::-1, :, :3] * 255).clip(0, 255).astype(np.uint8)
+
+sheet_pixels = np.zeros((800, 1600, 3), dtype=np.uint8)
+sheet_pixels[:400, :800] = read_pixels(textures / HUT['photos']['side'], 800, 400)
+sheet_pixels[:400, 800:] = read_pixels(render / 'model-hut-side.png', 800, 400)
+sheet_pixels[400:, :800] = read_pixels(render / 'camp-quarter-a.png', 800, 400)
+sheet_pixels[400:, 800:] = read_pixels(render / 'camp-quarter-b.png', 800, 400)
+sheet_image = bpy.data.images.new('round-6-review-sheet', 1600, 800, alpha=False)
+rgba = np.concatenate((sheet_pixels[::-1].astype(np.float32) / 255,
+                       np.ones((800, 1600, 1), dtype=np.float32)), axis=2)
+sheet_image.pixels.foreach_set(rgba.ravel())
+sheet_path = root / 'docs/board/looks/ww-art-sea/round-6.jpg'
+sheet_path.parent.mkdir(parents=True, exist_ok=True)
+sheet_image.filepath_raw = str(sheet_path)
+sheet_image.file_format = 'JPEG'
+sheet_image.save()
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=str(out))
+triangles = sum(sum(len(poly.vertices) - 2 for poly in obj.data.polygons)
+                for obj in bpy.context.scene.objects if obj.type == 'MESH')
+print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
+                  'triangles': triangles, 'sheet': str(sheet_path),
+                  'sheet_bytes': sheet_path.stat().st_size,
+                  'renders': [str(render / name) for name in
+                              ('model-hut-side.png', 'camp-quarter-a.png', 'camp-quarter-b.png')]}))
+bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+export_glb(out)
+print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size}))

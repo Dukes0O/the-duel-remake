@@ -17,7 +17,7 @@ import bpy
 import numpy as np
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
-from photo_model import Photo, Mesh as PhotoMesh, trace, slab
+from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe
 from photo_carve import carve_object, save_mask
 from hull_model import tyre
 
@@ -205,19 +205,171 @@ for index in range(stone_count):
  stone.rotation_euler=(index*.71,index*.43,index*.89)
  stone.data.materials.append(stone_materials[index%len(stone_materials)])
  stone.parent=crusher;parts.append(stone)
+
+# Batch plant, built as a separate town building so its rounds and budgets do
+# not change the crusher that already passed this card. Long-side pixel x maps
+# to plant Z; the silo is turned from its measured side-photo outline. The four
+# batch-plant reference JPGs were generated with OpenAI image generation on
+# 7 November 2026; no third-party images, brands or marks are used.
+plant=bpy.data.objects.new('batch-plant',None);bpy.context.collection.objects.link(plant);plant.parent=rootobj
+plant_parts=[]
+side_photo=Photo(tex/'batch-plant-side.jpg')
+front_photo=Photo(tex/'batch-plant-front.jpg')
+rear_photo=Photo(tex/'batch-plant-rear.jpg')
+top_photo=Photo(tex/'batch-plant-top.jpg')
+PLANT_START,PLANT_END,PLANT_GROUND=80,945,482
+PLANT_LENGTH=23.0
+PLANT_SCALE=PLANT_LENGTH/(PLANT_END-PLANT_START)
+PLANT_Z0=-PLANT_LENGTH/2
+def plant_z(px): return PLANT_Z0+(px-PLANT_START)*PLANT_SCALE
+def plant_side_world(px,py,depth): return (depth,(PLANT_GROUND-py)*PLANT_SCALE,plant_z(px))
+
+def attach_piece(obj,parent=plant):
+ obj.parent=parent;plant_parts.append(obj);return obj
+
+# The silo is a true lathe. Its ring stations and UVs follow the side photo's
+# vertical profile; the open lower hopper reaches the measured traced legs.
+silo=bpy.data.objects.new('batch-plant:silo',None);bpy.context.collection.objects.link(silo);silo.parent=plant
+SILO_CX=0.0
+SILO_CZ=plant_z(168)
+silo_mesh=PhotoMesh()
+silo_profile=[(2.65,.17),(2.85,.28),(3.05,.48),(3.60,1.48),(4.15,1.86),
+ (6.05,1.86),(8.30,1.86),(10.85,1.78),(11.20,1.68),(11.82,.38),(12.28,.20)]
+def silo_uv(i,distance,radius,angle):
+ px=168+math.cos(angle)*(radius/PLANT_SCALE)
+ py=PLANT_GROUND-distance/PLANT_SCALE
+ return side_photo.uv(px,py)
+lathe(silo_mesh,'side',(SILO_CX,0,SILO_CZ),(0,1,0),(0,0,1),(1,0,0),silo_profile,
+      silo_uv,sides=32,cap_start=('side',lambda angle,f:side_photo.uv(168+math.cos(angle)*f*55,380)),
+      cap_end=('side',lambda angle,f:side_photo.uv(168+math.cos(angle)*f*63,30)))
+silo_surface=silo_mesh.finish('batch-plant:silo-shell',{'side':side_photo.material()})
+silo_surface.parent=silo;plant_parts.append(silo_surface)
+silo_surface.data.materials[0].node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.08
+
+# Trace both visible steel legs from the real side pixels, then repeat the
+# same measured outline on the far face. Their feet are grounded.
+leg_mask=~side_photo.sky([(8,8),(1015,8),(8,503),(1015,503)],tolerance=34)
+leg_mask &= (side_photo.rgb().mean(axis=2)<195)
+leg_mask[PLANT_GROUND:,:]=False
+leg_loops=[]
+for rect in ((77,265,119,486),(211,265,249,486)):
+ leg_loops.extend(trace(leg_mask,rect,tolerance=1.0,min_area=22))
+legs=PhotoMesh()
+slab(legs,'side',side_photo,leg_loops,plant_side_world,-1.58,-1.40,wall_scale=PLANT_SCALE)
+leg_near=legs.finish('batch-plant:silo:traced-legs-road',{'side':side_photo.material()});leg_near.parent=plant;plant_parts.append(leg_near)
+legs_far=legs.finish('batch-plant:silo:traced-legs-far',{'side':side_photo.material()});legs_far.parent=plant;legs_far.location.x=3.0;plant_parts.append(legs_far)
+for side in (-1,1):
+ for zoff in (-1.52,1.52):
+  leg=town.cube('batch-plant:silo:leg-foot',(side*1.48,.20,SILO_CZ+zoff),(.46,.40,.46),dark,bevel=.025)
+  leg.parent=silo
+  plant_parts.append(leg)
+
+def outside_rect(width,height,rect):
+ x0,y0,x1,y1=rect
+ return [(0,0,width,y0),(0,y1,width,height),(0,y0,x0,y1),(x1,y0,width,y1)]
+
+# Two broad open-top aggregate bins are one separate carve, kept clear of the
+# silo and raised mixing tower. The end and plan photographs hold their width.
+bin_table={
+ 'photos':{'side':'batch-plant-side.jpg','front':'batch-plant-front.jpg','rear':'batch-plant-rear.jpg','top':'batch-plant-top.jpg'},
+ 'length':10.4,'width':15.0,'height':5.0,
+ 'side':{'start':247,'end':635,'ground':PLANT_GROUND},
+ 'front':{'centre':512,'ground':900,'top':627},
+ 'rear':{'centre':512,'ground':900,'top':630},
+ 'top':{'front':237,'rear':635,'centre':263,'along':'x','x_scale':15.0/232},
+ 'cut':{
+  'side':outside_rect(1024,512,(247,310,635,482)),
+  'front':outside_rect(1024,900,(72,625,951,900)),
+  'rear':outside_rect(1024,900,(78,625,949,900)),
+  'top':outside_rect(1024,512,(237,183,635,375)),
+ },
+ 'grey':29,'tolerance':34,'bleed_tolerance':38,'voxel':.12,'target':3200,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+bins_group=bpy.data.objects.new('batch-plant:aggregate-bins',None);bpy.context.collection.objects.link(bins_group);bins_group.parent=plant
+bins_body=carve_object('batch-plant:aggregate-bin-shells',tex,bin_table);bins_body.parent=bins_group
+bins_group.location=town.game_vector((0,0,plant_z(442)))
+plant_parts.append(bins_body)
+
+# The mixing tower is carved from the same four photos. A measured keep cut
+# removes its centre bay below the mixer, leaving a 4.6 m wide, 3.9 m high
+# passage for a truck to drive through from the road side.
+tower_length=8.2;tower_width=10.0;tower_height=10.5
+tower_table={
+ 'photos':{'side':'batch-plant-side.jpg','front':'batch-plant-front.jpg','rear':'batch-plant-rear.jpg','top':'batch-plant-top.jpg'},
+ 'length':tower_length,'width':tower_width,'height':tower_height,
+ 'side':{'start':666,'end':945,'ground':PLANT_GROUND},
+ 'front':{'centre':512,'ground':900,'top':468,'top_height':tower_height},
+ 'rear':{'centre':512,'ground':900,'top':472,'top_height':tower_height},
+ 'top':{'front':635,'rear':995,'centre':255,'along':'x','x_scale':tower_width/260},
+ 'cut':{
+  'side':outside_rect(1024,512,(666,82,945,482)),
+  # Clean end photos omit the separately rebuilt silo, so their wall silhouettes
+  # remain available to shape the tower and preserve the drive-under opening.
+  'front':outside_rect(1024,900,(300,466,733,900)),
+  'rear':outside_rect(1024,900,(300,468,735,900)),
+  'top':outside_rect(1024,512,(635,135,1000,375)),
+ },
+ 'keep':lambda x,y,z:~((abs(x)<2.30)&(y>.18)&(y<4.02)&(abs(z)<tower_length/2-.12)),
+ 'grey':29,'tolerance':34,'bleed_tolerance':38,'voxel':.105,'target':4800,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+tower=bpy.data.objects.new('batch-plant:mixing-tower',None);bpy.context.collection.objects.link(tower);tower.parent=plant
+tower_body=carve_object('batch-plant:mixing-tower-shell',tex,tower_table);tower_body.parent=tower
+tower.location=town.game_vector((0,0,plant_z(805)))
+plant_parts.append(tower_body)
+# Keep-cut edges become real open frame supports, set outside the truck lane.
+TOWER_CZ=plant_z(805)
+for x in (-2.72,2.72):
+ for z in (-3.55,3.55):
+  post=town.beam('batch-plant:mixing-tower:bay-post',(x,.10,TOWER_CZ+z),(x,4.08,TOWER_CZ+z),.24,steel)
+  attach_piece(post)
+  foot=town.cube('batch-plant:mixing-tower:footing',(x,.12,TOWER_CZ+z),(.66,.24,.66),sand,bevel=.035)
+  attach_piece(foot)
+
+# The separate steel chute sits above the drive-under aperture and projects
+# toward the road. Its trough bottom and two raised lips are distinct beams.
+chute=bpy.data.objects.new('batch-plant:truck-chute',None)
+bpy.context.collection.objects.link(chute);chute.parent=plant
+chute_z=TOWER_CZ-2.0
+for x in (-.72,0,.72):
+ rail=town.beam('batch-plant:truck-chute:trough',(x,4.52,chute_z+1.7),(x,3.35,chute_z-3.2),.14,dark)
+ attach_piece(rail,chute)
+for x in (-.72,.72):
+ side=town.beam('batch-plant:truck-chute:side-lip',(x,4.93,chute_z+1.7),(x,3.75,chute_z-3.2),.10,steel)
+ attach_piece(side,chute)
+
+# A short hooded outlet joins the lathed silo to the aggregate and mixer line.
+transfer=town.beam('batch-plant:silo-transfer-pipe',(0,3.1,SILO_CZ+1.85),(0,3.1,-4.05),.22,dark)
+attach_piece(transfer)
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent):return True
+  if parent in (crusher,belt_parent,plant):return True
   parent=parent.parent
  return False
+plant_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
- corners=[(p.x,p.y,p.z) for p in corners]
+ # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
+ corners=[(p.x,p.z,-p.y) for p in corners]
  low=[min(p[i] for p in corners) for i in range(3)];high=[max(p[i] for p in corners) for i in range(3)]
  print(f'PIECE BOUNDS {obj.name}: X[{low[0]:.3f},{high[0]:.3f}] Y[{low[1]:.3f},{high[1]:.3f}] Z[{low[2]:.3f},{high[2]:.3f}]')
+ if obj.name.startswith('batch-plant'):
+  plant_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-15.5 or high[0]>15.5 or low[2]<-15.5 or high[2]>15.5:
+   raise RuntimeError(f'{obj.name} leaves the 4 x 4 footprint or ground plane: {low}, {high}')
+for name,(low,high) in plant_bounds.items():
+ grounded=low[1]<=.13
+ touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
+                                    plant_bounds[other][1][axis]>=low[axis]-.14 for axis in range(3))
+              for other in plant_bounds)
+ if not (grounded or touching):
+  raise RuntimeError(f'{name} touches neither ground nor another batch plant piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:
@@ -235,3 +387,26 @@ if a.render:
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
   cam=camera(name,loc,target,lens);scene.camera=cam;scene.render.filepath=str(evidence/(name+'.png'));evidence.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
+ # Batch-plant review: the first four model views use the reference cameras
+ # as true orthographic projections, then both ground-level corners and the
+ # town mayor's aerial view.
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('batch-plant') or node.name=='review-only ground')
+ def ortho_shot(name,game_eye,game_target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('batch-plant-'+name,game_eye,game_target)
+  cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('batch-plant-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ ortho_shot('side', (-30,6,0), (0,6,0),31,(1024,512))
+ ortho_shot('front', (0,6,-32), (0,6,0),18,(1024,900))
+ ortho_shot('rear', (0,6,32), (0,6,0),18,(1024,900))
+ ortho_shot('above', (0,36,0), (0,0,0),31,(1024,512),-math.pi/2)
+ camera_specs=[('three-quarter-road',(22,9,-20),(0,5,0),27),
+               ('three-quarter-rear',(-20,9,20),(0,5,0),27),
+               ('mayor',(-38,53,-38),(0,5,0),42)]
+ for name,loc,target,scale in camera_specs:
+  cam=camera('batch-plant-'+name,loc,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=1000,700
+  scene.render.filepath=str(evidence/('batch-plant-'+name+'.png'));bpy.ops.render.render(write_still=True)

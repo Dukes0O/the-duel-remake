@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-1')
+p.add_argument('--render-dir', default='.qa-dist/town-art-outposts-round-15')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-10.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-15.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -30,7 +30,7 @@ if a.paths_only:
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 from hull_model import tyre
 from photo_model import Mesh, Photo, lathe, slab, trace
@@ -707,8 +707,463 @@ if any(value < -11.5 or value > 11.5 for axis in (0, 2)
        for value in (camp_bounds['min'][axis], camp_bounds['max'][axis])):
     raise RuntimeError('hermit-camp whole footprint exceeds 3 x 3 cells')
 
+# Rail halt: a one-room station and its own moving railway fittings.
+RAIL_LENGTH, RAIL_WIDTH, RAIL_HEIGHT = 8.0, 5.2, 4.45
+RAIL_START, RAIL_END, RAIL_GROUND, RAIL_TOP = 92, 920, 477, 27
+RAIL_SIDE_SCALE = RAIL_LENGTH / (RAIL_END - RAIL_START)
+RAIL_BODY_HEIGHT = (RAIL_GROUND - RAIL_TOP) * RAIL_SIDE_SCALE
+RAIL_FRONT = {'centre': 512, 'ground': 680, 'top': 30,
+              'top_height': RAIL_BODY_HEIGHT}
+RAIL_REAR = {'centre': 512, 'ground': 880, 'top': 45,
+             'top_height': RAIL_BODY_HEIGHT}
+rail_table = {
+    'photos': {'side': 'rail-halt-side.jpg', 'front': 'rail-halt-front.jpg',
+               'rear': 'rail-halt-rear.jpg', 'top': 'rail-halt-roof.jpg'},
+    'length': RAIL_LENGTH, 'width': RAIL_WIDTH, 'height': RAIL_BODY_HEIGHT,
+    'side': {'start': RAIL_START, 'end': RAIL_END, 'ground': RAIL_GROUND},
+    'front': RAIL_FRONT, 'rear': RAIL_REAR,
+    'top': {'front': 170, 'rear': 855, 'centre': 342, 'along': 'x',
+            'x_scale': RAIL_WIDTH / 450},
+    'grey': 25, 'tolerance': 32, 'bleed_tolerance': 28,
+    'voxel': .055, 'target': 6000,
+    'mask_dir': str(render / 'masks'),
+}
+rail_body = carve_object('rail-halt:body', textures, rail_table)
+rail = bpy.data.objects.new('rail-halt', None)
+bpy.context.collection.objects.link(rail)
+rail.parent = family
+rail_parts = [rail_body]
+rail_body.parent = rail
+rail_mat = town.make_materials({'rusted-steel': textures / 'rusted-steel.jpg'})['rusted-steel']
+rail_shader = rail_mat.node_tree.nodes.get('Principled BSDF')
+if rail_shader:
+    rail_shader.inputs['Metallic'].default_value = min(rail_shader.inputs['Metallic'].default_value, .29)
+wood_mat = material('rail halt bench worn plank', (.24, .17, .095))
+dark_mat = material('rail halt clock and iron', (.055, .05, .04), .25)
+side_photo = rail_table['_photos']['side']
+roof_photo = rail_table['_photos']['top']
+
+# Platform slab is traced from the roof photo outline and kept deliberately low.
+platform_mask = np.zeros((roof_photo.h, roof_photo.w), dtype=bool)
+platform_mask[260:430, 144:880] = True
+platform_loops = trace(platform_mask, (144, 260, 880, 430), min_area=250)
+platform_mesh = Mesh()
+def platform_world(px, py, y):
+    return ((py - 345) * .040, y, (px - 512) * .014)
+slab(platform_mesh, 'top', roof_photo, platform_loops,
+     lambda px, py, d: platform_world(px, py, .10 + d), -.10, .10)
+platform_obj = platform_mesh.finish('rail-halt:platform', {'top': roof_photo.material()})
+platform_obj.parent = rail
+rail_parts.append(platform_obj)
+
+# Clock face at the station wall: disk, twelve raised ticks, and working hands.
+clock_x, clock_y, clock_z = -2.14, 2.35, -.95
+bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=.43, depth=.10,
+                                    location=town.game_vector((clock_x, clock_y, clock_z)))
+clock_face = bpy.context.object
+clock_face.name = 'rail-halt:clock'
+clock_face.data.materials.append(dark_mat)
+clock_face.rotation_euler[1] = math.pi / 2
+clock_face.parent = rail
+rail_parts.append(clock_face)
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.34, depth=.11,
+                                    location=town.game_vector((clock_x - .12, clock_y, clock_z)))
+clock_dial = bpy.context.object
+clock_dial.name = 'rail-halt:clock-dial'
+clock_dial.data.materials.append(material('clock face faded ivory', (.50, .43, .31)))
+clock_dial.rotation_euler[1] = math.pi / 2
+clock_dial.parent = rail
+rail_parts.append(clock_dial)
+for tick in range(12):
+    angle = tick * math.tau / 12
+    y = clock_y + math.cos(angle) * .25
+    z = clock_z + math.sin(angle) * .25
+    t = town.cube(f'rail-halt:clock-tick-{tick + 1}', (clock_x - .20, y, z), (.035, .035, .045), dark_mat, .004)
+    t.parent = rail
+    rail_parts.append(t)
+minute = town.beam('rail-halt:clock-minute-hand', (clock_x - .20, clock_y, clock_z - .07),
+                   (clock_x - .20, clock_y + .22, clock_z - .07), .026, dark_mat)
+minute.parent = rail
+rail_parts.append(minute)
+hour = town.beam('rail-halt:clock-hour-hand', (clock_x - .20, clock_y, clock_z - .08),
+                 (clock_x - .20, clock_y + .08, clock_z - .21), .04, dark_mat)
+hour.parent = rail
+rail_parts.append(hour)
+
+# Signal post and perforated arm are traced silhouette plates. The arm origin
+# is the true hinge; its local Y rotation lifts the arm in game space.
+signal_mask = np.zeros((180, 180), dtype=bool)
+signal_mask[20:170, 76:91] = True
+signal_mask[22:38, 45:122] = True
+signal_loops = trace(signal_mask, (0, 0, 180, 180), min_area=12)
+signal_mesh = Mesh()
+def signal_world(px, py, d):
+    return (-5.4 + (px - 84) * .012, max(0, (170 - py) * .025), 1.1 + d)
+slab(signal_mesh, 'side', side_photo, signal_loops, signal_world, -.06, .06)
+signal_post = signal_mesh.finish('rail-halt:signal-post', {'side': rail_mat})
+signal_post.parent = rail
+rail_parts.append(signal_post)
+hinge = bpy.data.objects.new('rail-halt:signal-hinge', None)
+bpy.context.collection.objects.link(hinge)
+hinge.parent = rail
+hinge.location = town.game_vector((-5.4, 3.75, 1.1))
+hinge.empty_display_type = 'SPHERE'
+arm_mask = np.zeros((120, 380), dtype=bool)
+arm_mask[47:64, 8:365] = True
+arm_mask[38:73, 8:26] = True
+arm_mask[42:69, 338:366] = True
+arm_mask[51:60, 60:82] = False
+arm_mask[51:60, 130:152] = False
+arm_mask[51:60, 200:222] = False
+arm_loops = trace(arm_mask, (0, 0, 380, 120), min_area=8)
+arm_mesh = Mesh()
+def arm_world(px, py, d):
+    return ((px - 8) * .009, (60 - py) * .009, d)
+slab(arm_mesh, 'side', side_photo, arm_loops, arm_world, -.065, .065)
+signal_arm = arm_mesh.finish('rail-halt:signal', {'side': rail_mat})
+signal_arm.parent = hinge
+signal_arm.location = town.game_vector((0, 0, 0))
+rail_parts.append(signal_arm)
+for frame, rotation in ((1, 0), (32, 0), (48, 1.15), (64, 1.15), (80, 0)):
+    signal_arm.rotation_euler[1] = rotation
+    signal_arm.keyframe_insert(data_path='rotation_euler', index=1, frame=frame)
+
+# Backless plank bench with two real supports at each end.
+for i, z in enumerate((-4.43, -4.17), 1):
+    for side in (-1, 1):
+        leg = town.beam(f'rail-halt:bench-leg-{i}-{side}',
+                        (side * .33, 0, z), (side * .33, .48, z), .055, dark_mat)
+        leg.parent = rail
+        rail_parts.append(leg)
+    seat = town.cube(f'rail-halt:bench-seat-{i}', (0, .50, z), (.78, .10, .28), wood_mat, .015)
+    seat.parent = rail
+    rail_parts.append(seat)
+
+# Water crane is a traced open gantry with a real pipe and hanging delivery spout.
+crane_mask = np.zeros((300, 250), dtype=bool)
+crane_mask[36:52, 16:225] = True
+crane_mask[36:281, 27:44] = True
+crane_mask[36:281, 198:215] = True
+crane_mask[260:278, 27:215] = True
+crane_mask[64:242, 48:194] = False
+crane_loops = trace(crane_mask, (0, 0, 250, 300), min_area=10)
+crane_mesh = Mesh()
+def crane_world(px, py, d):
+    return (2.0 + (px - 120) * .012, (280 - py) * .015, -4.9 + d)
+slab(crane_mesh, 'side', side_photo, crane_loops, crane_world, -.07, .07)
+crane = crane_mesh.finish('rail-halt:water-crane-frame', {'side': rail_mat})
+crane.parent = rail
+rail_parts.append(crane)
+water_pipe_mat = material('rail halt water pipe galvanised iron', (.22, .22, .19), .25)
+for label, a, b, width in (
+    ('water-pipe', (.85, .20, -4.9), (.85, 3.66, -4.9), .10),
+    ('water-spout', (.85, 3.66, -4.9), (2.1, 3.66, -4.9), .08),
+    ('water-drop', (2.1, 3.66, -4.9), (2.1, 2.95, -4.9), .06),
+):
+    pipe = town.beam('rail-halt:' + label, a, b, width, water_pipe_mat)
+    pipe.parent = rail
+    rail_parts.append(pipe)
+
+rail_whole = object_bounds(rail_parts)
+print('rail-halt every named piece bounds (game X,Y,Z):')
+rail_piece_bounds = {}
+for obj in rail_parts:
+    bounds = object_bounds([obj])
+    rail_piece_bounds[obj.name] = bounds
+    print(obj.name, json.dumps(bounds, sort_keys=True))
+    if any(v < -15.5 or v > 15.5 for axis in (0, 2) for v in (bounds['min'][axis], bounds['max'][axis])):
+        raise RuntimeError(f'{obj.name} exceeds the 4 x 2 cell footprint')
+    if bounds['min'][1] < -.03 or bounds['min'][1] > .08:
+        print(f'{obj.name} contact check follows, minimum Y {bounds["min"][1]:.3f} m')
+for ground_piece in ('rail-halt:body', 'rail-halt:platform', 'rail-halt:signal-post',
+                     'rail-halt:bench-leg-1-1', 'rail-halt:bench-leg-1--1',
+                     'rail-halt:water-crane-frame'):
+    if abs(rail_piece_bounds[ground_piece]['min'][1]) > .04:
+        raise RuntimeError(f'{ground_piece} does not touch the ground')
+def boxes_touch(a, b, epsilon=.025):
+    return all(a['min'][axis] <= b['max'][axis] + epsilon and
+               b['min'][axis] <= a['max'][axis] + epsilon for axis in range(3))
+for first, second in (
+    ('rail-halt:platform', 'rail-halt:body'),
+    ('rail-halt:signal-post', 'rail-halt:signal'),
+    ('rail-halt:bench-seat-1', 'rail-halt:bench-leg-1-1'),
+    ('rail-halt:water-crane-frame', 'rail-halt:water-pipe'),
+    ('rail-halt:water-pipe', 'rail-halt:water-spout'),
+    ('rail-halt:water-spout', 'rail-halt:water-drop'),
+    ('rail-halt:clock', 'rail-halt:clock-dial'),
+    ('rail-halt:body', 'rail-halt:clock'),
+    ('rail-halt:bench-seat-2', 'rail-halt:bench-leg-2-1'),
+):
+    if not boxes_touch(rail_piece_bounds[first], rail_piece_bounds[second]):
+        raise RuntimeError(f'{first} does not touch {second}')
+    print(f'{first} touches {second}')
+for tick in range(1, 13):
+    name = f'rail-halt:clock-tick-{tick}'
+    if not boxes_touch(rail_piece_bounds[name], rail_piece_bounds['rail-halt:clock-dial']):
+        raise RuntimeError(f'{name} does not touch the clock dial')
+for name in ('rail-halt:clock-hour-hand', 'rail-halt:clock-minute-hand'):
+    if not boxes_touch(rail_piece_bounds[name], rail_piece_bounds['rail-halt:clock-dial']):
+        raise RuntimeError(f'{name} does not touch the clock dial')
+print('rail-halt whole bounds (game X,Y,Z):', json.dumps(rail_whole, sort_keys=True))
+
 # Export and read the exact GLB back before making review views.
+# Deck town: the ship hull is supplied by the world; carve only its deck.
+# The photo grid sets the long side to 14.8 m. The door-sized home reference
+# below sets the shared vertical scale for the deck and its rails.
+DECK_START, DECK_END, DECK_GROUND, DECK_TOP = 25, 1001, 261, 62
+DECK_LENGTH = 14.8
+DECK_SCALE = DECK_LENGTH / (DECK_END - DECK_START)
+DECK_HEIGHT = (DECK_GROUND - DECK_TOP) * DECK_SCALE
+DECK_Y = 1.42
+DECK_FRONT = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
+DECK_REAR = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
+DECK_WIDTH = 7.4
+deck_table = {
+    'photos': {'side': 'deck-town-deck-side.jpg', 'front': 'deck-town-deck-front.jpg',
+               'rear': 'deck-town-deck-rear.jpg', 'top': 'deck-town-deck-top.jpg'},
+    'length': DECK_LENGTH, 'width': DECK_WIDTH, 'height': DECK_HEIGHT,
+    'side': {'start': DECK_START, 'end': DECK_END, 'ground': DECK_GROUND},
+    'front': DECK_FRONT, 'rear': DECK_REAR,
+    'top': {'front': 42, 'rear': 980, 'centre': 256, 'along': 'x',
+            'x_scale': DECK_WIDTH / 448},
+    # Keep only the flat deck in the carve. Rail openings are traced below.
+    'cut': {
+        'side': [(0, 0, 1024, 170)],
+        'front': [(0, 0, 1024, 378)],
+        'rear': [(0, 0, 1024, 378)],
+        'top': [(0, 0, 1024, 72), (0, 459, 1024, 512),
+                (0, 72, 64, 459), (958, 72, 1024, 459)],
+    },
+    'grey': 26, 'tolerance': 32, 'bleed_tolerance': 28,
+    'voxel': .10, 'target': 4000,
+    'mask_dir': str(render / 'masks'),
+}
+
+materials = town.make_materials({'rusted-steel': textures / 'rusted-steel.jpg',
+                                'galvanised-tin': textures / 'rusted-corrugated-tin.jpg'})
+for mat in materials.values():
+    principled = mat.node_tree.nodes.get('Principled BSDF')
+    if principled:
+        principled.inputs['Metallic'].default_value = min(principled.inputs['Metallic'].default_value, .29)
+deck_town = bpy.data.objects.new('deck-town', None)
+bpy.context.collection.objects.link(deck_town)
+deck_town.parent = family
+deck_town.empty_display_type = 'CUBE'
+deck_parts = []
+
+deck_body = carve_object('deck-town:deck', textures, deck_table)
+deck_body.parent = deck_town
+deck_parts.append(deck_body)
+
+# Trace the rail silhouette from the side and front reference photos. Flooded
+# studio gaps stay open, unlike a four-view carve of the entire railing.
+rail_side = Photo(textures / 'deck-town-deck-side.jpg')
+rail_front = Photo(textures / 'deck-town-deck-front.jpg')
+side_mask = ~rail_side.sky(
+    [(8, 8), (1015, 8), (8, 332), (1015, 332),
+     # The white deck-view background is enclosed by the rails and stanchions.
+     (52, 96), (190, 96), (500, 96), (810, 96), (982, 96),
+     (52, 146), (190, 146), (500, 146), (810, 146), (982, 146)],
+    tolerance=32, grey=26)
+side_mask[170:, :] = False
+side_loops = trace(side_mask, (8, 42, 1016, 170))
+RAIL_HEIGHT = 1.1
+SIDE_RAIL_TOP, SIDE_RAIL_DECK = 70, 170
+def side_rail_world(px, py, depth):
+    y = min(RAIL_HEIGHT, max(0.0, (SIDE_RAIL_DECK - py) * RAIL_HEIGHT / (SIDE_RAIL_DECK - SIDE_RAIL_TOP)))
+    z = -DECK_LENGTH / 2 + (px - DECK_START) * DECK_SCALE
+    return (depth, y, max(-DECK_LENGTH / 2, min(DECK_LENGTH / 2, z)))
+for side, x in enumerate((-DECK_WIDTH / 2 + .06, DECK_WIDTH / 2 - .06), 1):
+    rail = Mesh()
+    slab(rail, 'side', rail_side, side_loops, lambda px, py, d, x=x: side_rail_world(px, py, x + d), -.055, .055)
+    rail_obj = rail.finish(f'deck-town:rail-long-{side}', {'side': rail_side.material()})
+    rail_obj.parent = deck_town
+    deck_parts.append(rail_obj)
+
+front_mask = ~rail_front.sky([(8, 8), (1015, 8), (8, 674), (1015, 674),
+                              (300, 150), (700, 150), (300, 300), (700, 300)],
+                             tolerance=32, grey=26)
+front_mask[378:, :] = False
+# Flooding cannot enter the white pockets enclosed by the stanchions. Remove
+# both measured openings, including their pale edge pixels, so no white strip
+# from the studio can be carried into the model.
+front_mask[91:218, 192:832] = False
+front_mask[238:369, 192:832] = False
+front_loops = trace(front_mask, (165, 80, 860, 378))
+END_RAIL_TOP, END_RAIL_DECK = 84, 378
+def end_rail_world(px, py, depth):
+    x = (px - 512) * DECK_WIDTH / 700
+    y = (END_RAIL_DECK - py) * RAIL_HEIGHT / (END_RAIL_DECK - END_RAIL_TOP)
+    return (max(-DECK_WIDTH / 2, min(DECK_WIDTH / 2, x)), y,
+            max(-DECK_LENGTH / 2, min(DECK_LENGTH / 2, depth)))
+for end, z in enumerate((-DECK_LENGTH / 2 + .06, DECK_LENGTH / 2 - .06), 1):
+    rail = Mesh()
+    slab(rail, 'front', rail_front, front_loops, lambda px, py, d, z=z: end_rail_world(px, py, z + d), -.055, .055)
+    rail_obj = rail.finish(f'deck-town:rail-end-{end}', {'front': rail_front.material()})
+    rail_obj.parent = deck_town
+    deck_parts.append(rail_obj)
+
+def deck_piece(name, center, size, mat, bevel=.02):
+    obj = town.cube('deck-town:' + name, center, size, mat, bevel)
+    obj.parent = deck_town
+    deck_parts.append(obj)
+    return obj
+
+for index, x in enumerate((-3.5, 0, 3.5), 1):
+    hatch = deck_piece(f'hatch-{index}', (x, DECK_Y + .10, .3), (1.15, .07, 1.35), materials['iron-dark'], .025)
+
+# Carve one photo-built home, then make four linked, slightly varied copies.
+# Its door and window stay in the photographs; the ladder is a separate part.
+HOME_START, HOME_END, HOME_GROUND, HOME_TOP = 42, 979, 462, 80
+HOME_LENGTH = 6.0
+HOME_SCALE = HOME_LENGTH / (HOME_END - HOME_START)
+HOME_WALL_TOP = 146  # measured lower edge of the side photo's roof strip
+HOME_HEIGHT = (HOME_GROUND - HOME_TOP) * HOME_SCALE
+HOME_WALL_HEIGHT = (HOME_GROUND - HOME_WALL_TOP) * HOME_SCALE
+HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 235, 'top_height': HOME_WALL_HEIGHT}
+HOME_REAR = {'centre': 512, 'ground': 650, 'top': 235, 'top_height': HOME_WALL_HEIGHT}
+HOME_WIDTH = 2.5
+home_table = {
+    'photos': {'side': 'deck-town-home-side.jpg', 'front': 'deck-town-home-front.jpg',
+               'rear': 'deck-town-home-rear.jpg', 'top': 'deck-town-home-top.jpg'},
+    'length': HOME_LENGTH, 'width': HOME_WIDTH, 'height': HOME_WALL_HEIGHT,
+    'side': {'start': HOME_START, 'end': HOME_END, 'ground': HOME_GROUND},
+    'front': HOME_FRONT, 'rear': HOME_REAR,
+    'top': {'front': 52, 'rear': 970, 'centre': 256, 'along': 'x',
+            'x_scale': HOME_WIDTH / 410},
+    # The top reference is a straight-down rectangle; discard its pale margin.
+    'cut': {'side': [(0, 0, 1024, HOME_WALL_TOP)],
+            'front': [(0, 0, 1024, 235)], 'rear': [(0, 0, 1024, 235)],
+            'top': [(0, 0, 1024, 52), (0, 460, 1024, 512),
+                    (0, 52, 28, 460), (996, 52, 1024, 460)]},
+    'keep': lambda x, y, z: y <= HOME_WALL_HEIGHT,
+    'grey': 26, 'tolerance': 34, 'bleed_tolerance': 28,
+    # The wall body stops exactly at the eaves; the separate pitched roof owns
+    # the ridge and overhang.
+    'keep': lambda x, y, z: y <= HOME_HEIGHT,
+    'voxel': .07, 'target': 1540,
+    'mask_dir': str(render / 'masks'),
+}
+home_source = carve_object('deck-town:home-source', textures, home_table)
+home_roof_photo = Photo(textures / 'deck-town-home-side.jpg')
+home_bounds_dimensions = (float(home_source.dimensions.x), float(home_source.dimensions.y), float(home_source.dimensions.z))
+print('deck-town carved home bounds (Blender XYZ):', json.dumps(home_bounds_dimensions))
+
+home_layout = [(-1.65, -4.2, 0.0, 1.0), (1.65, -3.9, .10, .94),
+               (-1.65, 2.9, -.12, 1.04), (1.65, 3.3, .16, .91)]
+home_objects = []
+home_side_photo = home_table['_photos']['side']
+for index, (x, z, angle, scale) in enumerate(home_layout, 1):
+    prefix = f'deck-town:home-{index}'
+    home = bpy.data.objects.new(prefix, None)
+    bpy.context.collection.objects.link(home)
+    home.parent = deck_town
+    # The carved body's measured lower edge is 3.5 cm above its origin; seat it
+    # on the deck surface at y=1.35 m.
+    home.location = town.game_vector((x, DECK_Y - .105, z))
+    home.rotation_euler[2] = angle
+    home.scale = (scale, scale, scale)
+    body = home_source.copy()
+    body.data = home_source.data
+    body.name = prefix + ':body'
+    bpy.context.collection.objects.link(body)
+    body.parent = home
+    home_objects.append(body)
+    deck_parts.append(body)
+
+    # Two thin pitched roof planes meet at a ridge. Eaves touch the wall tops,
+    # overhang by 0.2 m, and repeat one full side-photo roof strip per 3 m.
+    roof = Mesh()
+    roof_half_width = HOME_WIDTH / 2 + .2
+    roof_half_length = HOME_LENGTH / 2 + .2
+    ridge_y = HOME_WALL_HEIGHT + .34
+    roof_u0, roof_u1 = HOME_START, HOME_END
+    roof_v0, roof_v1 = HOME_TOP + 5, HOME_TOP + 53
+    # Repeat the photo strip in bounded UV sections; the image clamps outside
+    # 0..1, so a single extended range smears its edge colour.
+    u0, u1 = home_roof_photo.uv(roof_u0, roof_v0)[0], home_roof_photo.uv(roof_u1, roof_v0)[0]
+    v0, v1 = home_roof_photo.uv(roof_u0, roof_v0)[1], home_roof_photo.uv(roof_u0, roof_v1)[1]
+    # The photo carve's last wall voxel ends 3 cm below the table height.
+    # Lowering the eaves by that measured half-voxel makes the skin meet it.
+    wall_top = HOME_WALL_HEIGHT - .035
+    z0 = -roof_half_length
+    while z0 < roof_half_length - 1e-6:
+        z1 = min(z0 + 3.0, roof_half_length)
+        strip_u1 = u0 + (u1 - u0) * ((z1 - z0) / 3.0)
+        left_tex = [(u0, v0), (u0, v1), (strip_u1, v1), (strip_u1, v0)]
+        right_tex = [(u0, v1), (u0, v0), (strip_u1, v0), (strip_u1, v1)]
+        roof.face([(-roof_half_width, wall_top, z0), (0, ridge_y, z0),
+                   (0, ridge_y, z1), (-roof_half_width, wall_top, z1)],
+                  left_tex, 'side', (-1, 1, 0))
+        roof.face([(0, ridge_y, z0), (roof_half_width, wall_top, z0),
+                   (roof_half_width, wall_top, z1), (0, ridge_y, z1)],
+                  right_tex, 'side', (1, 1, 0))
+        z0 = z1
+    roof_obj = roof.finish(prefix + ':roof', {'side': home_roof_photo.material()})
+    roof_obj.parent = home
+    deck_parts.append(roof_obj)
+
+    # The ladder starts on the deck and reaches the raised door sill.
+    ladder = town.beam(prefix + ':ladder-left', (1.27, -.12, -1.50), (1.27, 1.54, -1.50), .075, materials['weathered-plank'])
+    ladder.parent = home
+    for rung in range(1, 7):
+        y = rung * .20
+        rung_obj = town.beam(prefix + f':ladder-rung-{rung}', (1.27, y, -1.72), (1.27, y, -1.28), .045, materials['rusted-steel'])
+        rung_obj.parent = home
+        deck_parts.append(rung_obj)
+    deck_parts.append(ladder)
+    home_objects.extend([ladder])
+    bpy.context.view_layer.update()
+bpy.data.objects.remove(home_source, do_unlink=True)
+
+# Walkways join the homes with visible plank spans; washing and bell frame are
+# named pieces in their own right for future animation/lighting hooks.
+for i, (a, b) in enumerate((((-1.65,-4.2),(1.65,-3.9)), ((-1.65,2.9),(1.65,3.3)), ((0,-3.9),(0,2.9)))):
+    beam_obj = deck_piece(f'walkway-{i+1}', ((a[0]+b[0])/2,DECK_Y+.10,(a[1]+b[1])/2),
+                          (math.dist(a,b),.12,.72), materials['weathered-plank'], .02)
+    beam_obj.rotation_euler[2] = math.atan2(-(b[1]-a[1]), b[0]-a[0])
+for i, (x,z) in enumerate(((-1.6,-4.2),(-1.6,3.2))):
+    line = town.beam(f'deck-town:washing-line-{i+1}', (x,DECK_Y+2.15,z), (x+3.5,DECK_Y+2.15,z+.3), .025, materials['iron-dark'])
+    line.parent=deck_town; deck_parts.append(line)
+    for j in range(3):
+        cloth = deck_piece(f'washing-{i+1}-{j+1}', (x+.35+j*.95,DECK_Y+1.76,z+.1+j*.1), (.38,.68,.035), materials['patched-canvas'], .006)
+        cloth.rotation_euler[1]=-.18
+bell_frame = deck_piece('bell-frame-post-left', (2.55,1.55,-6.7), (.12,2.0,.12), materials['weathered-plank'])
+deck_piece('bell-frame-post-right', (3.35,1.55,-6.7), (.12,2.0,.12), materials['weathered-plank'])
+deck_piece('bell-frame-top', (2.95,2.55,-6.7), (.95,.12,.12), materials['weathered-plank'])
+bell = deck_piece('bell', (2.95,2.25,-6.7), (.32,.34,.32), materials['iron-dark'], .045)
+bell.name = 'deck-town:bell'
+
+deck_bounds = object_bounds(deck_parts)
+print('deck-town every named piece bounds (game X,Y,Z):')
+for obj in deck_parts:
+    print(obj.name, json.dumps(object_bounds([obj]), sort_keys=True))
+print('deck-town whole bounds (game X,Y,Z):', json.dumps(deck_bounds, sort_keys=True))
+for rail_name in ('deck-town:rail-long-1', 'deck-town:rail-long-2',
+                  'deck-town:rail-end-1', 'deck-town:rail-end-2'):
+    rail_bounds = object_bounds([bpy.data.objects[rail_name]])
+    rail_top = rail_bounds['max'][1] - rail_bounds['min'][1]
+    if abs(rail_top - RAIL_HEIGHT) > .02:
+        raise RuntimeError(f'{rail_name} top is {rail_top:.3f} m, expected {RAIL_HEIGHT:.1f} m')
+    if abs(rail_bounds['min'][1]) > .02:
+        raise RuntimeError(f'{rail_name} does not stand on the deck: {rail_bounds}')
+    print(f'{rail_name} height check: {rail_top:.3f} m above deck')
+for index, body in enumerate(home_objects[::2], 1):
+    roof_bounds = object_bounds([bpy.data.objects[f'deck-town:home-{index}:roof']])
+    body_bounds = object_bounds([body])
+    if abs(roof_bounds['min'][1] - body_bounds['max'][1]) > .025:
+        raise RuntimeError(f'home-{index} roof/wall contact gap: {roof_bounds["min"][1]} vs {body_bounds["max"][1]}')
+    print(f'deck-town:home-{index}:roof touches wall top at {body_bounds["max"][1]:.3f} m')
+if any(v < -15.5 or v > 15.5 for axis in (0,2) for v in (deck_bounds['min'][axis], deck_bounds['max'][axis])):
+    raise RuntimeError('deck-town exceeds 4 x 4 cell footprint')
+
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
+# Keep the credited 1024px source photographs intact in `textures`, and use a
+# moderate 768px copy in the family GLB so its 5 MB budget remains available.
+for image in bpy.data.images:
+    if Path(image.filepath).name.startswith('deck-town-') and image.size[0] > 768:
+        image.scale(768, round(image.size[1] * 768 / image.size[0]))
+        image.pack()
 town.export_glb(out)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=str(out))
@@ -737,8 +1192,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 12, 25), 3600, 20)
-area('open fill', (-16, -16, 14), 1900, 15)
+area('soft sky', (0, 12, 25), 6200, 20)
+area('open fill', (-16, -16, 14), 3600, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -746,12 +1201,27 @@ scene.camera = camera
 def shot(name, eye, target, ortho):
     camera.location = (eye[0], -eye[2], eye[1])
     camera.rotation_euler = (Vector((target[0], -target[2], target[1])) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+    if name == 'rail-match-above':
+        camera.rotation_euler = (camera.rotation_euler.to_quaternion() @
+                                 Quaternion((0, 0, 1), math.pi / 2)).to_euler()
     camera.data.type = 'ORTHO'
     camera.data.ortho_scale = ortho
     if name == 'model-side':
         scene.render.resolution_x, scene.render.resolution_y = 1000, 500
+    elif name == 'deck-match-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 341
+    elif name == 'home-match-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 512
     elif name in ('model-front', 'model-rear', 'model-above'):
         scene.render.resolution_x, scene.render.resolution_y = 700, 700
+    elif name == 'rail-match-side':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 512
+    elif name == 'rail-match-front':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 683
+    elif name == 'rail-match-rear':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 936
+    elif name == 'rail-match-above':
+        scene.render.resolution_x, scene.render.resolution_y = 1024, 683
     else:
         scene.render.resolution_x, scene.render.resolution_y = 900, 620
     scene.render.filepath = str(render / f'{name}.png')
@@ -779,5 +1249,56 @@ shot('model-road', (-11, 2.2, -16), camp_centre, 14.5)
 shot('model-far', (18, 2.2, -.3), camp_centre, 18)
 # The mayor's camera is 45 degrees down from about 88 m away, as in town.
 shot('model-mayor', (-44, 63.3, -44), camp_centre, 20)
+def show_deck_town_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not node.name.startswith('deck-town:') and node.name != ground.name
+
+def show_deck_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not (node.name == 'deck-town:deck' or node.name.startswith('deck-town:rail-')) and node.name != ground.name
+
+def show_home_one_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = node.name not in ('deck-town:home-1:body', 'deck-town:home-1:roof') and node.name != ground.name
+
+show_deck_town_only()
+deck_centre = (0, DECK_Y + 1.5, 0)
+show_deck_only()
+shot('deck-match-side', (19, DECK_Y + 1.5, 0), deck_centre, 14.8)
+show_home_one_only()
+home_centre = (-1.65, DECK_Y + HOME_HEIGHT / 2, -4.2)
+shot('home-match-side', (-13, home_centre[1], -4.2), home_centre, 6.0)
+show_deck_town_only()
+shot('deck-side', (19, DECK_Y + 1.5, 0), deck_centre, 18)
+shot('deck-front', (0, DECK_Y + 1.5, -18), deck_centre, 14)
+shot('deck-rear', (0, DECK_Y + 1.5, 18), deck_centre, 14)
+shot('deck-above', (0, 32, 0), deck_centre, 18)
+shot('deck-road', (-12, 8, -18), deck_centre, 15)
+shot('deck-far', (12, 8, 18), deck_centre, 15)
+shot('deck-mayor', (-62, 90, -62), deck_centre, 27)
+shot('deck-whole-side', (24, DECK_Y + 2.3, 0), deck_centre, 21)
+
+def show_rail_halt_only():
+    for node in scene.objects:
+        if node.type == 'MESH':
+            node.hide_render = not (node.name.startswith('rail-halt:') or node.name == ground.name)
+
+show_rail_halt_only()
+rail_centre = (0, 2.2, 0)
+for node in scene.objects:
+    if node.type == 'MESH':
+        node.hide_render = not (node.name == 'rail-halt:body' or node.name == ground.name)
+shot('rail-match-side', (-18, 2.2, 0), rail_centre, 10)
+shot('rail-match-front', (0, 2.2, -18), rail_centre, 6.7)
+shot('rail-match-rear', (0, 2.2, 18), rail_centre, 5.7)
+shot('rail-match-above', (0, 26, 0), rail_centre, 10.5)
+show_rail_halt_only()
+shot('rail-three-quarter-road', (-12, 8, -12), rail_centre, 15)
+shot('rail-three-quarter-yard', (12, 8, 12), rail_centre, 15)
+shot('rail-mayor', (-52, 58, -52), rail_centre, 18)
+
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
-                  'renders': [str(p) for p in sorted(render.glob('model-*.png'))]}))
+                  'renders': [str(p) for p in sorted(render.glob('*.png'))]}))
