@@ -12,11 +12,11 @@ parser.add_argument('--reference', default='public/assets/models/wasteland/town/
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
-guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
+guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-7'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
 sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
-guard_sheet = root / 'docs/board/looks/town-art-safety/round-6.jpg'
+guard_sheet = root / 'docs/board/looks/town-art-safety/round-7.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(guard_evidence)],'summary':str(guard_sheet)}))
     raise SystemExit(0)
@@ -284,80 +284,94 @@ for y in (1.10,3.40): beam('gate-scrap-door-crossbar',(-2.7,y,-3.38),(2.7,y,-3.3
 for x in (-2.3,2.3):
     pipe('gate-scrap-door-hinge',(x,.70,-3.49),(x,3.80,-3.49),.09,materials['iron-dark'],door)
 
-# Guard post: a carved sandbag wall, timber shelter, pitched photo-roof and lathed brazier.
+# Guard post: compact 6 m by 4 m hut measured from the front and side grids.
+# Every wall is a separate photo carve; the road wall is split around a door.
 b=building('guard-post',(2,1))
-wall_table={
-    'photos':{'side':'guard-post-wall-side.jpg','front':'guard-post-wall-front.jpg',
-              'rear':'guard-post-wall-rear.jpg','top':'guard-post-wall-top.jpg'},
-    'length':12.5,'width':.82,'height':1.72,
-    'side':{'start':18,'end':1006,'ground':278},
-    'front':{'centre':443,'ground':1662,'top':292},
-    'rear':{'centre':512,'ground':1393,'top':292},
-    'top':{'front':28,'rear':996,'centre':170,'along':'x','x_scale':.82/89},
-    'grey':26,'tolerance':38,'bleed_tolerance':34,'voxel':.045,'target':2500,
-    'mask_dir':str(guard_evidence/'masks'),
-}
-wall=carve_object('guard-post:sandbag-wall',tex,wall_table)
-# carve_object stores its calibrated body in photo axes (width,height,length).
-# Reorient those local axes into town X,Y,Z, keeping the measured photos intact.
-for vertex in wall.data.vertices:
-    px,py,pz=vertex.co.copy()
-    vertex.co=(py,-px,pz)
-wall.data.update()
-wall.location=town.game_vector((0,-.158,-2.72));attach(wall)
-# Six weathered timber columns run from ground to the eaves, joined by purlins.
-for ix,x in enumerate((-6.45,0,6.45)):
-    for iz,z in enumerate((-2.72,2.72)):
-        top=3.68 if z==0 else 3.02
-        beam(f'guard-post:timber-post-{ix+1}-{iz+1}',(x,.09,z),(x,top,z),.18,materials['weathered-plank'])
-for x in (-6.45,0,6.45):
-    for side in (-1,1):
-        beam(f'guard-post:timber-rafter-{x}-{side}',(x,3.14,side*3.14),(x,3.75,0),.13,materials['weathered-plank'])
-for z in (-2.72,0,2.72):
-    y=3.00 if z else 3.66
-    beam(f'guard-post:timber-purlin-{z}',(-7.0,y,z),(7.0,y,z),.20,materials['weathered-plank'])
-for x in (-6.45,0,6.45):
-    for side in (-1,1):
-        beam(f'guard-post:timber-knee-{x}-{side}',(x,2.18,side*2.72),(x,3.0,side*2.05),.12,materials['weathered-plank'])
+wall_photos={'side':'guard-post-wall-side.jpg','front':'guard-post-wall-front.jpg',
+             'rear':'guard-post-wall-rear.jpg','top':'guard-post-wall-top.jpg'}
+def carved_wall(name,length):
+    table={
+        'photos':wall_photos,'length':length,'width':.38,'height':1.18,
+        'side':{'start':18,'end':1006,'ground':278},
+        'front':{'centre':443,'ground':1662,'top':292},
+        'rear':{'centre':512,'ground':1393,'top':292},
+        'top':{'front':28,'rear':996,'centre':170,'along':'x','x_scale':.38/89},
+        'grey':26,'tolerance':38,'bleed_tolerance':34,'voxel':.055,'target':600,
+        'mask_dir':str(guard_evidence/'masks'),
+    }
+    obj=carve_object(name,tex,table)
+    # Photo axes (width,height,length) become Blender X,Z,Y, then town X,Y,Z.
+    for vertex in obj.data.vertices:
+        px,py,pz=vertex.co.copy()
+        vertex.co=(py,-px,pz)
+    # The long-wall photo is a low row of bags. Keep its measured length but
+    # raise that carved profile to the waist-high 1.18 m end-photo scale.
+    low=min(v.co.z for v in obj.data.vertices)
+    high=max(v.co.z for v in obj.data.vertices)
+    for vertex in obj.data.vertices:
+        vertex.co.z=low+(vertex.co.z-low)*(1.18/(high-low))
+    obj.data.update()
+    return obj
+def place_wall(name,length,center,turn=0):
+    obj=carved_wall(name,length)
+    obj.location=town.game_vector(center)
+    obj.rotation_euler[2]=turn
+    attach(obj)
+    return obj
+place_wall('guard-post:sandbag-wall',6.0,(0,.02,1.81))
+place_wall('guard-post:sandbag-wall-left',4.0,(-2.81,.02,0),math.pi/2)
+place_wall('guard-post:sandbag-wall-right',4.0,(2.81,.02,0),math.pi/2)
+place_wall('guard-post:sandbag-wall-front-left',2.3,(-1.85,.02,-1.81))
+place_wall('guard-post:sandbag-wall-front-right',2.3,(1.85,.02,-1.81))
 
-# One joined two-slope sheet; real corrugation follows the slope and the top
-# wears the straight-down generated roof photo.
-roof_photo=Photo(tex/'guard-post-side.jpg')
+# Posts follow all four sides and hold the pitched roof at its eaves.
+for ix,x in enumerate((-2.91,0,2.91)):
+    for iz,z in enumerate((-1.91,1.91)):
+        if x == 0 and z < 0:
+            continue
+        beam(f'guard-post:timber-post-{ix+1}-{iz+1}',(x,.05,z),(x,2.35,z),.18,materials['weathered-plank'])
+for x in (-2.91,-.70,.70,2.91):
+    beam(f'guard-post:timber-door-post-{x}',(x,.05,-1.91),(x,2.35,-1.91),.17,materials['weathered-plank'])
+for x in (-2.91,2.91):
+    beam(f'guard-post:timber-side-mid-{x}',(x,.05,0),(x,2.35,0),.17,materials['weathered-plank'])
+for x in (-2.91,0,2.91):
+    for side in (-1,1):
+        beam(f'guard-post:timber-rafter-{x}-{side}',(x,2.35,side*2.0),(x,3.35,0),.14,materials['weathered-plank'])
+for z in (-1.91,0,1.91):
+    y=2.35 if z else 3.35
+    beam(f'guard-post:timber-purlin-{z}',(-3.0,y,z),(3.0,y,z),.19,materials['weathered-plank'])
+for x in (-2.91,0,2.91):
+    for side in (-1,1):
+        beam(f'guard-post:timber-knee-{x}-{side}',(x,1.75,side*1.91),(x,2.34,side*1.42),.12,materials['weathered-plank'])
+
+# Two slopes meet at the ridge. The straight-down image maps across both faces.
+roof_photo=Photo(tex/'guard-post-top.jpg')
 roof=PhotoMesh()
 for side in (-1,1):
-    zs=[side*(3.18-i*3.18/40) for i in range(41)]
-    for i in range(40):
-        z0,z1=zs[i],zs[i+1]
-        w0=math.sin(i*math.pi/2)*.018;w1=math.sin((i+1)*math.pi/2)*.018
-        y0=3.12+(3.78-3.12)*(1-abs(z0)/3.18)+w0
-        y1=3.12+(3.78-3.12)*(1-abs(z1)/3.18)+w1
-        pts=[(-7.18,y0,z0),(7.18,y0,z0),(7.18,y1,z1),(-7.18,y1,z1)]
-        px0,px1=16,1008
-        # Map the worn roof surface from the side reference, excluding its
-        # timber eave and the sandbag wall below it.
-        py0,py1=65,166
-        uvs=[roof_photo.uv(px0,py0),roof_photo.uv(px1,py0),roof_photo.uv(px1,py1),roof_photo.uv(px0,py1)]
-        roof.face(pts,uvs,'photo',(0,1,0))
-        underside=[(x,y-.025,z) for x,y,z in pts]
-        roof.face(list(reversed(underside)),[(.02,.02)]*4,'tin',(0,-1,0))
+    pts=[(-3.30,3.38,0),(3.30,3.38,0),(3.30,2.35,side*2.30),(-3.30,2.35,side*2.30)]
+    px0,px1=40,985
+    py_ridge,py_eave=(210,810) if side==1 else (810,210)
+    uvs=[roof_photo.uv(px0,py_ridge),roof_photo.uv(px1,py_ridge),roof_photo.uv(px1,py_eave),roof_photo.uv(px0,py_eave)]
+    roof.face(pts,uvs,'photo',(0,1,0))
+    underside=[(x,y-.035,z) for x,y,z in pts]
+    roof.face(list(reversed(underside)),[(.02,.02),(.02,.98),(.98,.98),(.98,.02)],'tin',(0,-1,0))
 roof_obj=roof.finish('guard-post:tin-roof',{'photo':roof_photo.material(),'tin':materials['galvanised-tin']})
 attach(roof_obj)
-# A ridge cap and ragged eave edges are physical sheet-metal strips.
 for side in (-1,1):
-    beam(f'guard-post:rusted-eave-{side}',(-7.18,3.12,side*3.18),(7.18,3.12,side*3.18),.045,materials['rusted-steel'])
-beam('guard-post:ridge-cap',(-7.18,3.79,0),(7.18,3.79,0),.11,materials['rusted-steel'])
+    beam(f'guard-post:rusted-eave-{side}',(-3.30,2.35,side*2.30),(3.30,2.35,side*2.30),.045,materials['rusted-steel'])
+beam('guard-post:ridge-cap',(-3.30,3.40,0),(3.30,3.40,0),.11,materials['rusted-steel'])
 
-# Lathe the brazier bowl from its own photo; three iron feet meet the ground.
+# The brazier stands inside, with its three feet planted on the ground.
 brazier_photo=Photo(tex/'guard-post-brazier.jpg')
 bowl=PhotoMesh()
-uv_profile=lambda i,d,r,a:brazier_photo.uv(890+math.cos(a)*720*r/.61,220+min(1,d/.58)*390)
-lathe(bowl,'photo',(0,.48,1.08),(0,1,0),(1,0,0),(0,0,1),
+uv_profile=lambda i,d,r,a:brazier_photo.uv(512+math.cos(a)*445*r/.61,340-min(1,d/.60)*220)
+lathe(bowl,'photo',(0,.48,.72),(0,1,0),(1,0,0),(0,0,1),
       [(0,.34),(.10,.42),(.38,.54),(.55,.61),(.60,.58)],uv_profile,sides=32,
       cap_start=('iron',lambda a,f:(.5+.5*math.cos(a)*f,.5+.5*math.sin(a)*f)))
 bowl_obj=bowl.finish('guard-post:brazier',{'photo':brazier_photo.material(),'iron':materials['iron-dark']});attach(bowl_obj)
 for i,angle in enumerate((0,2*math.pi/3,4*math.pi/3)):
-    foot_x=math.cos(angle)*.38;foot_z=1.08+math.sin(angle)*.38
-    beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.08,foot_z),(foot_x*.92,.53,1.08+math.sin(angle)*.52),.075,materials['rusted-steel'])
+    foot_x=math.cos(angle)*.38;foot_z=.72+math.sin(angle)*.38
+    beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.05,foot_z),(foot_x*.92,.53,.72+math.sin(angle)*.52),.075,materials['rusted-steel'])
 
 # Searchlight: bolted salvage head, trunnion and fully joined upright mast.
 b=building('searchlight')
@@ -538,6 +552,13 @@ photo_facade('gate-scrap-photo-door',photo_root/'town-safety-gate.jpg',
 blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 glb.parent.mkdir(parents=True,exist_ok=True)
+# The guard-wall source elevations are oversampled for the exported 6 m hut.
+# Keep their carving inputs full resolution, then pack 512 x 1024 copies for
+# runtime so the complete safety family stays within its 3 MB target.
+for image in bpy.data.images:
+    if image.name.startswith(('guard-post-wall-front','guard-post-wall-rear')) and image.size[0]*image.size[1] > 512*1024:
+        image.scale(512,1024)
+        image.pack()
 town.export_glb(glb)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -663,7 +684,7 @@ out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,opt
 subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
 
 
-# Round 6: inspect only the exported guard post and verify each authored piece.
+# Round 7: inspect only the exported guard post and verify each authored piece.
 guard=next(obj for obj in scene.objects if obj.name=='guard-post')
 guard_visible={guard,*guard.children_recursive}
 guard_meshes=[obj for obj in guard_visible if obj.type=='MESH']
@@ -680,7 +701,7 @@ def bounds_of(objects):
     game=[(p.x,p.z,-p.y) for p in pts]
     return {'min':[min(p[i] for p in game) for i in range(3)],'max':[max(p[i] for p in game) for i in range(3)]}
 piece_groups={
- 'sandbag wall':[o for o in guard_meshes if o.name=='guard-post:sandbag-wall'],
+ 'four sandbag walls':[o for o in guard_meshes if o.name.startswith('guard-post:sandbag-wall-')],
  'timber':[o for o in guard_meshes if ':timber-' in o.name],
  'pitched tin roof':[o for o in guard_meshes if o.name=='guard-post:tin-roof' or ':rusted-eave-' in o.name or o.name=='guard-post:ridge-cap'],
  'brazier':[o for o in guard_meshes if ':brazier' in o.name],
@@ -708,24 +729,24 @@ def guard_shot(name,offset,ortho):
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
 render_dir=guard_evidence;render_dir.mkdir(parents=True,exist_ok=True)
-guard_shot('side',(18,5,0),8.8)
-guard_shot('front',(0,22,0),14.8)
-guard_shot('rear',(0,-22,0),14.8)
-guard_shot('above',(0,0,24),16.3)
-guard_shot('three-quarter-left',(-21,22,17),18.5)
-guard_shot('three-quarter-right',(21,22,17),18.5)
-guard_shot('mayor',(48,48,48),19.5)
+guard_shot('side',(18,5,0),7.8)
+guard_shot('front',(0,22,0),7.8)
+guard_shot('rear',(0,-22,0),7.8)
+guard_shot('above',(0,0,24),8.8)
+guard_shot('three-quarter-left',(-21,22,17),10.2)
+guard_shot('three-quarter-right',(21,22,17),10.2)
+guard_shot('mayor',(48,48,48),11.2)
 
 # Four matched photo/model pairs, then the two three-quarter views and mayor view.
 import subprocess
 sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
 from pathlib import Path
 import sys
-root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-7'
 pairs=[('SIDE / GABLE END','guard-post-front.jpg','guard-post-side.png'),('FRONT / ROAD WALL','guard-post-side.jpg','guard-post-front.png'),('REAR','guard-post-rear.jpg','guard-post-rear.png'),('STRAIGHT DOWN','guard-post-top.jpg','guard-post-above.png')]
 extras=[('THREE-QUARTER LEFT','guard-post-three-quarter-left.png'),('THREE-QUARTER RIGHT','guard-post-three-quarter-right.png'),("MAYOR\'S VIEW",'guard-post-mayor.png')]
 W,H=1600,2640;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),17);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
-d.text((24,14),'TOWN SAFETY | ROUND 6 | GUARD POST',font=title,fill=(240,228,205))
+d.text((24,14),'TOWN SAFETY | ROUND 7 | GUARD POST',font=title,fill=(240,228,205))
 def fit(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(128,130,130));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
 row_h=480
@@ -734,12 +755,12 @@ for i,(name,photo,model) in enumerate(pairs):
  page.paste(fit(tex/photo,(740,410)),(34,y+48));page.paste(fit(ev/model,(740,410)),(815,y+48))
 for i,(name,model) in enumerate(extras):
  x=18+i*528;y=1980;d.rounded_rectangle((x,y,x+510,y+510),radius=8,fill=(78,76,69));d.text((x+14,y+10),name,font=label,fill=(240,194,125));page.paste(fit(ev/model,(480,450)),(x+15,y+42))
-d.text((24,2530),'Weathered sandbags carved alone; real posts and a pitched, photo-mapped tin roof shelter a lathed iron brazier.',font=small,fill=(232,226,210))
+d.text((24,2530),'Four photo-carved waist-high walls, a clear road door, corner and side posts, patched pitched roof, grounded brazier.',font=small,fill=(232,226,210))
 out.parent.mkdir(parents=True,exist_ok=True)
 for quality in (78,74,70,66,62,58):
  page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
  if out.stat().st_size<=500000:break
 if out.stat().st_size>500000:raise RuntimeError(f'guard-post sheet exceeds 500 KB: {out.stat().st_size}')
-print(f'GUARD-POST ROUND 6 SHEET: {out.stat().st_size} bytes')
+print(f'GUARD-POST ROUND 7 SHEET: {out.stat().st_size} bytes')
 '''
 subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
