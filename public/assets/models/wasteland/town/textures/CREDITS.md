@@ -272,3 +272,40 @@ background, no perspective, no labels, no people or logos, no watermark."
   rusted horizontal steel tanks, pump, valves, pipes and a faded hazard-striped
   concrete bund, in side, front, rear and overhead orthographic views on a pale
   seamless background."
+
+TOWN-ART-POWER round 4's `fuel-{side,front,rear,overhead}.jpg` are measured
+crops of one OpenAI ImageGen photograph sheet. The tank, pump, fittings, hose
+and bund came from this prompt:
+
+> Four-view modeling reference photograph for a hand-built wasteland fuel
+> depot. One clean 2 by 2 orthographic turnaround of the exact same single
+> fuel depot: left side, straight front, straight rear, true overhead. Every
+> complete view at matching scale with ample pale margin, no perspective. One
+> large horizontal cylindrical steel storage tank with rounded ends on
+> saddles; a compact hand lever pump on the front side connected by clearly
+> visible real pipes, elbows and distinct valves, plus one hanging hose loop.
+> A low rectangular concrete bund surrounds the tank, faded chipped yellow
+> and black diagonal hazard paint. Weathered dusty steel, restrained dark
+> brown rust, faded mustard paint under chips, grease near pump, dust low down,
+> realistic welds and bolts. Plain pale warm-gray seamless background, bright
+> diffuse flat daylight, soft contact shadow, crisp documentary product
+> photography. No people, labels, writing, logos, extra tanks or watermark.
+
+The round 4 side, front and overhead JPEGs are crops from the generated sheet.
+The rear JPEG is a separate matching end-on photograph made with this prompt:
+
+> Single orthographic modeling reference photograph, rear view completing a
+> four-view set of a fuel depot. Show one large horizontal weathered steel
+> tank with rounded end caps, on two short saddles inside a low rectangular
+> concrete bund with chipped faded yellow and black diagonal hazard paint.
+> Straight rear elevation looking directly at the tank's circular rear end,
+> camera level and centered, no perspective, complete depot visible with pale
+> margin. The rear has a bolted round service plate and short capped pipe; no
+> pump on this side. Dusty muted steel, dark brown rust, old welds, chipped
+> paint. Plain pale warm-gray seamless background, bright flat overcast
+> daylight, faint soft ground shadow, crisp realistic documentary photograph.
+> No text, labels, logos, people or watermark.
+
+The model carves its single tank from those views with `hull_model.py`; the
+generated originals are not runtime textures. Other power-family photo inputs
+are unchanged from round 3.

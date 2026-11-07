@@ -60,7 +60,7 @@ const generators = [
 
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
-  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.qa-dist/town-art-power-round-3',
+  {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.qa-dist/town-art-power-round-4',
     glb:['public/assets/models/wasteland/town/power.glb'],budget:22600,
     budgets:{windmill:1800,'power-pole':1800,generator:5000,'solar-rack':5000,'fuel-depot':9000},maxBytes:3000000},
   {id:'town-vane',script:'tools/blender/town-vane.py',args:['--round','3'],candidate:true,
@@ -656,27 +656,16 @@ try {
             `${id}: ${buildingTriangles} triangles exceeds its ${budget} triangle building budget`);
         }
         assert.ok(triangles <= generator.budget, `${triangles} triangles exceeds the summed per-building budget of ${generator.budget}`);
-        assert.equal(gltf.images?.length, 1, 'town-power uses one embedded atlas image');
-        assert.equal(new Set((gltf.textures || []).map(texture => texture.source)).size, 1,
-          'all town-power materials use the shared atlas image');
-        const binaryOffset = 20 + jsonLength + 8;
-        const atlasView = gltf.bufferViews[gltf.images[0].bufferView];
-        const atlasStart = binaryOffset + (atlasView.byteOffset ?? 0);
-        let atlasWidth = 0, atlasHeight = 0, atlasOffset = atlasStart + 2;
-        while (atlasOffset + 9 < atlasStart + atlasView.byteLength) {
-          if (bytes[atlasOffset] !== 0xff) { atlasOffset++; continue; }
-          const marker = bytes[atlasOffset + 1];
-          const length = bytes.readUInt16BE(atlasOffset + 2);
-          if ([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)) {
-            atlasHeight = bytes.readUInt16BE(atlasOffset + 5);
-            atlasWidth = bytes.readUInt16BE(atlasOffset + 7);
-            break;
-          }
-          if (length < 2) break;
-          atlasOffset += 2 + length;
+        assert.ok(gltf.images?.length > 1, 'town-power keeps separate material pictures');
+        assert.ok(new Set((gltf.textures || []).map(texture => texture.source)).size > 1,
+          'town-power materials do not share one atlas image');
+        assert.ok(!gltf.images.some(image => /atlas/i.test(image.name || image.uri || '')),
+          'town-power exports no atlas image');
+        for (const material of gltf.materials || []) {
+          const metallic = material.pbrMetallicRoughness?.metallicFactor ?? 1;
+          assert.ok(metallic <= 0.3, `${material.name || 'material'} metallicFactor ${metallic} exceeds 0.3`);
         }
-        assert.equal(atlasWidth, 1024, `town-power atlas width is ${atlasWidth}px`);
-        assert.equal(atlasHeight, 1024, `town-power atlas height is ${atlasHeight}px`);
+        const binaryOffset = 20 + jsonLength + 8;
         for (const primitive of gltf.meshes.flatMap(mesh => mesh.primitives)) {
           const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
           assert.deepEqual(coordinates, ['TEXCOORD_0'], `${primitive.material} has only TEXCOORD_0`);

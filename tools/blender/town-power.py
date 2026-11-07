@@ -7,7 +7,7 @@ from pathlib import Path
 
 p = argparse.ArgumentParser()
 p.add_argument('--root', default=str(Path(__file__).resolve().parents[2]))
-p.add_argument('--evidence', default='.qa-dist/town-art-power-round-3')
+p.add_argument('--evidence', default='.qa-dist/town-art-power-round-4')
 p.add_argument('--paths-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
@@ -15,7 +15,7 @@ evidence = Path(a.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
 blend = evidence / 'power.blend'
 glb = root / 'public/assets/models/wasteland/town/power.glb'
-sheet = root / 'docs/board/looks/town-art-power/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-power/round-4.jpg'
 if a.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(glb)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -26,6 +26,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Mesh, Photo, lathe, slab, tidy, trace
+from hull_model import View, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -413,145 +414,76 @@ for z in (-1.5,1.5):
 for x in (-1.9,-.65,.65,1.9):
     town.beam('solar rack panel rail',(x,1.53-1.5*.32,-1.5),(x,1.53+1.5*.32,1.5),.06,mat['rusted-steel']).parent=solar
 
-# Fuel depot: the two tank barrels are lathed from the side photo and their
-# round end plates read the matching front photo. Pumps and warning wall sit
-# inside the photographed bund footprint.
+# Fuel depot: one large tank is carved from its measured four-view photo set.
+# The pump, pipework and painted bund are separate parts so their real shape
+# survives the hull kit's connected-body pass.
 fuel = bpy.data.objects.new('fuel-depot', None)
 bpy.context.scene.collection.objects.link(fuel)
 fuel.parent = family
 fuel_photos={name:Photo(textures/f'fuel-{name}.jpg') for name in ('side','front','rear','overhead')}
 fuel_side,fuel_front,fuel_rear,fuel_top=(fuel_photos[name] for name in ('side','front','rear','overhead'))
-for photo in fuel_photos.values(): darken_photo(photo,(.48,.42,.35))
 fuel_mats={name:photo.material(.90) for name,photo in fuel_photos.items()}
-FUEL_SIDE_CX,FUEL_SIDE_CY,FUEL_S=300,230,.012
-def tank_side_uv(index,distance,radius,angle):
-    return fuel_side.uv(FUEL_SIDE_CX+distance/FUEL_S,
-        FUEL_SIDE_CY-radius/FUEL_S*.85*math.sin(angle))
-def end_uv(cx,cy,rpx):
-    return lambda angle,f: fuel_front.uv(cx+math.cos(angle)*f*rpx*.85,
-                                         cy-math.sin(angle)*f*rpx*.85)
-tank_end_centres=((202,245),(465,245))
-for index,x in enumerate((-1.45,1.45)):
-    tank_mesh=Mesh()
-    lathe(tank_mesh,'side',(x,1.68,0),(0,0,1),(1,0,0),(0,1,0),
-        [(-2.45,1.08),(-2.32,1.20),(2.30,1.20),(2.45,1.08)],tank_side_uv,
-        sides=24,cap_start=('front',end_uv(*tank_end_centres[index],105)),
-        cap_end=('rear',lambda a,f:fuel_rear.uv(300+math.cos(a)*f*100,240-math.sin(a)*f*100)))
-    tank_obj=tank_mesh.finish(f'fuel-depot:photo-lathed storage tank {index+1}',fuel_mats)
-    tank_obj.parent=fuel
-for z in (-3.25,3.25):
-    town.cube('fuel depot bund end wall',(0,.42,z),(7.1,.84,.30),mat['cracked-concrete'],.025).parent=fuel
-for x in (-3.4,3.4):
-    town.cube('fuel depot bund side wall',(x,.42,0),(.30,.84,6.7),mat['cracked-concrete'],.025).parent=fuel
-for x in (-1.45,1.45):
-    for z in (-2.0,2.0):
-        town.beam('fuel tank saddle',(x-.62,.74,z),(x+.62,.74,z),.12,mat['rusted-steel']).parent=fuel
-town.beam('fuel depot manifold',(2.7,1.0,-2.1),(2.7,1.0,2.5),.075,mat['rusted-steel']).parent=fuel
-for z in (-2.1,0,2.5):
-    town.beam('fuel depot tank branch',(2.7,1.0,z),(1.45,1.05,z),.06,mat['galvanised-tin']).parent=fuel
-    town.beam('fuel depot tank branch',(2.7,1.0,z),(-1.45,1.05,z),.06,mat['rusted-steel']).parent=fuel
-for x in (2.95,3.22):
-    town.cube('hand pump housing',(x,.88,2.85),(.30,1.35,.30),mat['rusted-steel'],.04).parent=fuel
-    cylinder('hand pump head',(x,1.60,2.85),.14,.25,mat['galvanised-tin'],12,fuel)
-    town.beam('fuel pump handle',(x,1.85,2.85),(x+.42,1.85,2.85),.04,mat['rusted-steel']).parent=fuel
-town.beam('fuel pump hose',(3.22,.55,2.85),(2.85,.26,2.25),.035,mat['iron-dark']).parent=fuel
-for index in range(16):
-    x=-3.15+index*.42
+def photo_window(photo, rect):
+    x0,y0,x1,y1=rect
+    def trim(mask):
+        keep=np.zeros_like(mask);keep[y0:y1,x0:x1]=True
+        return mask & keep
+    return trim
+def side_pick(x,y,z):
+    return 384-z*122, 337-(y-.72)*111
+def front_pick(x,y,z):
+    return 267+x*140, 429-(y-.72)*139
+def rear_pick(x,y,z):
+    return 768-x*286, 820-(y-.72)*286
+def overhead_pick(x,y,z):
+    return 384-z*106, 258+x*130
+fuel_views=[
+    View('side',fuel_side,[(8,8),(760,8),(8,500),(760,500)],side_pick,(1,0,0),
+         solid=photo_window(fuel_side,(24,34,758,365)),grey=26,tolerance=24),
+    View('front',fuel_front,[(8,8),(760,8),(8,500),(760,500)],front_pick,(0,0,-1),
+         solid=photo_window(fuel_front,(42,48,510,462)),grey=26,tolerance=24),
+    View('rear',fuel_rear,[(8,8),(1528,8),(8,1016),(1528,1016)],rear_pick,(0,0,1),
+         solid=photo_window(fuel_rear,(150,28,1380,966)),grey=26,tolerance=24),
+    View('overhead',fuel_top,[(8,8),(760,8),(8,500),(760,500)],overhead_pick,(0,1,0),
+         solid=photo_window(fuel_top,(42,38,758,450)),grey=26,tolerance=24),
+]
+fuel_body=carve_hull('fuel-depot:photo-carved storage tank',fuel_views,fuel_mats,
+    ((-1.30,1.30),(.72,3.32),(-2.72,2.72)),.10,7200)
+fuel_body.parent=fuel
+town.cube('fuel depot bund floor',(0,.16,0),(6.9,.32,5.8),mat['cracked-concrete'],.08).parent=fuel
+for z in (-2.72,2.72):
+    town.cube('fuel depot bund wall',(0,.50,z),(6.9,.68,.30),mat['cracked-concrete'],.05).parent=fuel
+for x in (-3.30,3.30):
+    town.cube('fuel depot bund wall',(x,.50,0),(.30,.68,5.2),mat['cracked-concrete'],.05).parent=fuel
+for x in (-.88,.88):
+    for z in (-1.85,1.85):
+        town.beam('tank saddle crossbeam',(x-.48,.76,z),(x+.48,.76,z),.15,mat['rusted-steel']).parent=fuel
+        town.beam('tank saddle upright',(x,.50,z),(x,.91,z),.14,mat['rusted-steel']).parent=fuel
+# A connected manifold runs along the tank, with elbows, valve wheels and a
+# separate hand pump at the road end. Every pipe has a real round section.
+pipe=[(-1.08,2.34,-2.20),(-1.08,2.62,-2.20),(-1.08,2.62,2.12),(-.74,2.62,2.42),
+      (1.02,2.62,2.42),(1.02,2.16,2.42),(1.02,1.28,2.42),(1.02,.92,2.12)]
+for index,(start,end) in enumerate(zip(pipe,pipe[1:])):
+    thin_run(f'fuel transfer pipe {index+1}',(start,end),.067,mat['rusted-steel'],fuel)
+for index,(x,z) in enumerate(((-1.08,-1.42),(-1.08,.62),(1.02,1.72))):
+    cylinder(f'fuel valve body {index+1}',(x,2.62,z),.15,.23,mat['galvanised-tin'],12,fuel)
+    town.beam(f'fuel valve cross handle {index+1}',(x-.23,2.82,z),(x+.23,2.82,z),.045,mat['rusted-steel']).parent=fuel
+    town.beam(f'fuel valve stem {index+1}',(x,2.62,z),(x,2.82,z),.045,mat['rusted-steel']).parent=fuel
+# Pump casing, lever linkage and hose remain visibly joined to the manifold.
+town.cube('hand pump foot',(1.02,.82,-2.20),(.54,.16,.50),mat['rusted-steel'],.04).parent=fuel
+town.cube('hand pump casing',(1.02,1.20,-2.20),(.34,.62,.34),mat['rusted-steel'],.06).parent=fuel
+cylinder('hand pump head',(1.02,1.58,-2.20),.18,.24,mat['galvanised-tin'],16,fuel)
+town.beam('hand pump lever',(1.02,1.76,-2.20),(1.48,2.08,-2.20),.055,mat['rusted-steel']).parent=fuel
+town.beam('hand pump grip',(1.42,2.08,-2.20),(1.64,2.08,-2.20),.07,mat['galvanised-tin']).parent=fuel
+town.beam('pump inlet pipe',(1.02,1.20,-2.20),(1.02,1.20,-2.42),.06,mat['galvanised-tin']).parent=fuel
+town.beam('hose upper run',(1.24,.94,-2.20),(1.65,.75,-2.20),.045,mat['iron-dark']).parent=fuel
+town.beam('hose hanging run',(1.65,.75,-2.20),(1.65,.35,-2.20),.045,mat['iron-dark']).parent=fuel
+town.beam('hose return run',(1.65,.35,-2.20),(1.30,.30,-2.20),.045,mat['iron-dark']).parent=fuel
+# Faded yellow and black diagonal hazards are real painted bands on the curb.
+for index in range(18):
+    x=-3.05+index*.36
     material=mat['faded-hand-paint'] if index%2==0 else mat['iron-dark']
-    town.beam('diagonal depot warning stripe',(x-.15,.15,-3.42),(x+.15,.70,-3.42),.12,material).parent=fuel
-
-def pack_town_atlas():
-    """Put every material picture in the family's single 1024px atlas."""
-    import numpy as np
-
-    used_materials = sorted({material for obj in bpy.context.scene.objects
-                             if obj.type == 'MESH' for material in obj.data.materials},
-                            key=lambda material: material.name)
-    material_images = {}
-    images = {}
-    for material in used_materials:
-        image_nodes = [node for node in material.node_tree.nodes
-                       if node.type == 'TEX_IMAGE' and node.image]
-        if not image_nodes:
-            continue
-        source = image_nodes[0].image
-        images[source.name] = source
-        material_images[material.name] = source.name
-
-    fixed_boxes = {
-        'power-windmill-reference.jpg': (0, 0, 512, 512),
-        'generator-side.jpg': (512, 0, 512, 256),
-        'solar-overhead.jpg': (512, 256, 512, 256),
-        'fuel-side.jpg': (512, 512, 512, 256),
-        'generator-overhead.jpg': (0, 512, 256, 256),
-        'fuel-overhead.jpg': (256, 512, 256, 256),
-        'power-pole-wood.jpg': (0, 768, 256, 256),
-    }
-    free_cells = [(x, y, 128, 128)
-                  for y in (768, 896) for x in (256, 384, 512, 640, 768, 896)]
-    remaining = [name for name in sorted(images) if name not in fixed_boxes]
-    if len(remaining) > len(free_cells):
-        raise RuntimeError(f'{len(remaining)} detail images do not fit the single 1K town atlas: {sorted(images)}')
-    atlas_pixels = np.ones((1024, 1024, 4), dtype=np.float32)
-    regions = {}
-    atlas_boxes = dict(fixed_boxes)
-    atlas_boxes.update({name: free_cells[index] for index, name in enumerate(remaining)})
-    for source_name in sorted(images):
-        source = images[source_name]
-        width, height = source.size
-        box_x, box_y, box_width, box_height = atlas_boxes[source_name]
-        gutter = 4
-        scale = min((box_width-2*gutter)/width, (box_height-2*gutter)/height)
-        dest_width = max(1, round(width*scale))
-        dest_height = max(1, round(height*scale))
-        resized = source.copy()
-        resized.scale(dest_width, dest_height)
-        pixels = np.empty(dest_width*dest_height*4, dtype=np.float32)
-        resized.pixels.foreach_get(pixels)
-        pixels = pixels.reshape(dest_height, dest_width, 4)
-        x0, y0 = box_x+gutter, box_y+gutter
-        x1, y1 = x0+dest_width, y0+dest_height
-        atlas_pixels[y0:y1, x0:x1] = pixels
-        atlas_pixels[y0:y1, x0-gutter:x0] = pixels[:, :1]
-        atlas_pixels[y0:y1, x1:x1+gutter] = pixels[:, -1:]
-        atlas_pixels[y0-gutter:y0, x0-gutter:x1+gutter] = atlas_pixels[y0:y0+1, x0-gutter:x1+gutter]
-        atlas_pixels[y1:y1+gutter, x0-gutter:x1+gutter] = atlas_pixels[y1-1:y1, x0-gutter:x1+gutter]
-        regions[source.name] = (x0, y0, dest_width, dest_height)
-        bpy.data.images.remove(resized)
-
-    atlas = bpy.data.images.new('town-power-1k-atlas', width=1024, height=1024, alpha=False)
-    atlas.pixels.foreach_set(atlas_pixels.reshape(-1))
-    atlas.file_format = 'JPEG'
-    atlas.pack()
-    for material in used_materials:
-        if material.name not in material_images:
-            continue
-        source_name = material_images[material.name]
-        for node in material.node_tree.nodes:
-            if node.type == 'TEX_IMAGE' and node.image:
-                node.image = atlas
-                node.extension = 'CLIP'
-        for obj in bpy.context.scene.objects:
-            if obj.type != 'MESH' or material.name not in obj.data.materials:
-                continue
-            uv_layer = obj.data.uv_layers.active
-            if uv_layer is None:
-                continue
-            x0, y0, width, height = regions[source_name]
-            for polygon in obj.data.polygons:
-                if obj.data.materials[polygon.material_index] != material:
-                    continue
-                for loop_index in polygon.loop_indices:
-                    uv = uv_layer.data[loop_index].uv
-                    u = uv.x % 1.0
-                    v = uv.y % 1.0
-                    if abs(u) < 1e-6 and uv.x > 0:
-                        u = 1.0
-                    if abs(v) < 1e-6 and uv.y > 0:
-                        v = 1.0
-                    uv.x = (x0 + u*width) / 1024
-                    uv.y = (y0 + v*height) / 1024
-    print(f'TOWN_ATLAS_IMAGES={len(images)}; size=1024x1024')
+    town.beam('chipped bund hazard stripe',(x-.14,.20,-2.89),(x+.14,.78,-2.89),.11,material).parent=fuel
 
 # Export, then reimport in an empty scene for every judgment render.
 evidence.mkdir(parents=True,exist_ok=True)
@@ -560,7 +492,6 @@ for obj in bpy.context.scene.objects:
         for layer in obj.data.uv_layers:
             layer.name='UVMap'
 bpy.context.view_layer.update()
-pack_town_atlas()
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -592,9 +523,9 @@ def isolate(active):
         hide_tree(building_id,building_id != active)
 
 isolate('windmill')
-render('windmill-driver',(5,7,-8),(0,2.8,0),42)
-render('windmill-above-45',(3.5,10,-3.5),(0,2.7,0),35)
-render('windmill-rotor-front',(0,6.6,-8),(-.84,4.68,-.5),70)
+render('windmill-driver',(11,9,-15),(0,2.7,0),32)
+render('windmill-above-45',(10,14,-12),(0,2.7,0),28)
+render('windmill-rotor-front',(0,6.6,-10),(-.35,4.5,-.35),62)
 isolate('power-pole')
 render('power-pole-driver',(-5,8,-7),(0,2.8,0),40)
 render('power-pole-above-45',(3,9,-4),(0,3.0,0),45)
@@ -605,8 +536,8 @@ isolate('solar-rack')
 render('solar-rack-driver',(6,5,-8),(0,1.35,0),40)
 render('solar-rack-above-45',(5,10,-5),(0,1.4,0),38)
 isolate('fuel-depot')
-render('fuel-depot-driver',(8,6,-10),(0,1.2,0),38)
-render('fuel-depot-above-45',(8,12,-8),(0,1.2,0),34)
+render('fuel-depot-driver',(9,6,-11),(0,1.35,0),38)
+render('fuel-depot-above-45',(9,11,-9),(0,1.25,0),34)
 isolate('windmill')
 # Turn the named rotor around its own axle, export and read back once more.
 rotor_obj=next(obj for obj in scene.objects if obj.name=='windmill:rotor')
@@ -621,3 +552,45 @@ lamp_data=bpy.data.lights.new('rotor turn light','AREA');lamp=bpy.data.objects.n
 bpy.ops.mesh.primitive_plane_add(size=24,location=town.game_vector((0,-.08,0)));bpy.context.object.data.materials.append(groundmat)
 data=bpy.data.cameras.new('windmill-rotor-turned');cam=bpy.data.objects.new('windmill-rotor-turned',data);scene.collection.objects.link(cam);cam.location=town.game_vector((0,5.8,-8));data.lens=70;aim(cam,town.game_vector((0,4.95,-.35)));scene.camera=cam
 scene.render.filepath=str(evidence/'windmill-rotor-turned.png');bpy.ops.render.render(write_still=True)
+
+# Assemble the five pieces into a plain-light sheet. Every panel uses the same
+# size and contain-fit so no object is clipped or padded with black bars.
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+sheet_image=Image.new('RGB',(1600,2190),(34,35,32))
+draw=ImageDraw.Draw(sheet_image)
+font_dir=Path('C:/Windows/Fonts')
+title_font=ImageFont.truetype(str(font_dir/'segoeuib.ttf'),34)
+label_font=ImageFont.truetype(str(font_dir/'segoeuib.ttf'),20)
+body_font=ImageFont.truetype(str(font_dir/'segoeui.ttf'),17)
+draw.text((34,20),'SCABLANDS TOWN | POWER AND FUEL | ROUND 4',font=title_font,fill=(239,226,201))
+draw.text((34,66),'Photo-carved tank and complete windmill | exported GLB reimport | bright overcast',font=body_font,fill=(218,208,183))
+rows=[
+ ('WINDMILL | 1 x 1','power-windmill-reference.jpg','windmill-above-45.png','windmill-driver.png',
+  'PHOTO REFERENCE','ABOVE 45 DEGREES','DRIVER SEAT'),
+ ('POWER POLE | UNDER 1 x 1','power-pole-wood.jpg','power-pole-above-45.png','power-pole-driver.png',
+  'PHOTO REFERENCE','ABOVE 45 DEGREES','DRIVER SEAT'),
+ ('GENERATOR | 2 x 1','generator-side.jpg','generator-above-45.png','generator-driver.png',
+  'PHOTO REFERENCE','ABOVE 45 DEGREES','DRIVER SEAT'),
+ ('SOLAR RACK | 2 x 2','solar-overhead.jpg','solar-rack-above-45.png','solar-rack-driver.png',
+  'PHOTO REFERENCE','ABOVE 45 DEGREES','DRIVER SEAT'),
+ ('FUEL DEPOT | 3 x 2','fuel-side.jpg','fuel-depot-above-45.png','fuel-depot-driver.png',
+  'PHOTO REFERENCE','ABOVE 45 DEGREES','DRIVER SEAT'),
+]
+for row_index,(caption,reference_name,above_name,driver_name,*labels) in enumerate(rows):
+    y=110+row_index*410
+    draw.text((34,y),caption,font=label_font,fill=(231,189,126))
+    for column,(filename,view_label) in enumerate(((reference_name,labels[0]),(above_name,labels[1]),(driver_name,labels[2]))):
+        x=34+column*512
+        draw.rectangle((x,y+30,x+488,y+382),fill=(65,64,57))
+        draw.text((x+12,y+36),view_label,font=body_font,fill=(241,229,203))
+        source=(root/'public/assets/models/wasteland/town/textures'/filename) if column==0 else (evidence/filename)
+        image=Image.open(source).convert('RGB')
+        image=ImageOps.contain(image,(460,300),method=Image.Resampling.LANCZOS)
+        sheet_image.paste(image,(x+(488-image.width)//2,y+72+(300-image.height)//2))
+sheet.parent.mkdir(parents=True,exist_ok=True)
+for quality in (78,74,70,66,62,58):
+    sheet_image.save(sheet,'JPEG',quality=quality,optimize=True,progressive=True)
+    if sheet.stat().st_size<=500_000:break
+if sheet.stat().st_size>500_000:
+    raise RuntimeError(f'round 4 sheet is {sheet.stat().st_size} bytes; limit is 500 KB')
+print(f'ROUND4_SHEET={sheet}; bytes={sheet.stat().st_size}')
