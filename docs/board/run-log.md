@@ -1599,3 +1599,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 6 Nov: TOWN-ART-WALKERS merged; verdict on its card.
 - 6 Nov: TOWN-ART-TRUCKS-1 merged; verdict on its card.
 - 6 Nov: WW-ART-SEA pieces so far merged (gears, wall, causeway, gate, ramp, arch); card stays open for the rest.
+- 6 Nov: TOWN-ART-BORER merged; verdict on its card.
