@@ -20,3 +20,7 @@ GLB readback: 20,928 triangles and 1,887,412 bytes. Round 2 sheet: `docs/board/l
 ## Removed
 
 Removed the previous photo-carved turret body and chair hull/frame geometry from the recipe. No earlier runtime model or photo was removed. Temporary renders and check logs are cleaned from `.qa-dist` before handoff.
+
+## Round 2, finished by Claude
+
+`gunn-turret` and `kettles-chair` were rebuilt on `photo_model.py`; see `docs/board/looks/ww-art-peace/round-2-review.md`. Removed: the hull recipes for both, and the unused `peace-turret-front.jpg`, `peace-chair-front.jpg`, `peace-chair-rear.jpg` and `peace-chair-top.jpg`.
