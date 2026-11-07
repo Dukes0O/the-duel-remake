@@ -446,3 +446,12 @@ Generated with the built-in OpenAI ImageGen tool on 7 November 2026 for TOWN-ART
 - `hermit-car-bonnet.jpg`, straight-down material photo: isolated rounded-rectangle old car bonnet, faded blue-grey paint and reddish rust; no badge or lettering. It is used as the image texture on the shallow dish.
 
 Prompt set: the exact prompts are recorded in the TOWN-ART-OUTPOSTS task transcript and preserved in the lane history.
+
+## hermit-camp goat shed reference photos
+
+Generated with the built-in OpenAI ImageGen tool on 7 November 2026. One original small, isolated Ridge goat shed in four orthographic views: side, front, rear, and directly overhead. The shed is patched weathered timber under a low rusty corrugated roof, with an empty low goat doorway on the front. Plain seamless mid-grey ground and background, soft even light. Resized to 1024 px maximum edge and saved as JPEG for the photo-carve materials.
+
+- `hermit-goat-shed-side.jpg`
+- `hermit-goat-shed-front.jpg`
+- `hermit-goat-shed-rear.jpg`
+- `hermit-goat-shed-top.jpg`
