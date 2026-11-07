@@ -224,7 +224,7 @@ for name,fn in steps:
  fn()
  if name==args.through: break
 for p in scaled_photos:
- width,height=p.image.size; factor=768/max(width,height)
+ width,height=p.image.size; factor=700/max(width,height)
  p.image.scale(round(width*factor),round(height*factor)); p.image.pack()
 glb.parent.mkdir(parents=True,exist_ok=True); bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True)
 print('SEA_WORKS_PART_TRIANGLES',triangles)
