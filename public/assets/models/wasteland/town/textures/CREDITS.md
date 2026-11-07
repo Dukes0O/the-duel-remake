@@ -771,3 +771,12 @@ guard-post-gable-rear.jpg retains the generated rear gable reference. guard-post
 =======
 >>>>>>> integration/wasteland
 >>>>>>> integration/wasteland
+
+
+## TOWN-ART-SAFETY searchlight references
+
+Four individual orthographic photographs, searchlight-side.jpg, searchlight-front.jpg, searchlight-rear.jpg and searchlight-top.jpg, generated with OpenAI ImageGen on 7 November 2026. Each shows the complete weathered dual-lamp searchlight on its post from one dead-on view on plain grey ground. The pictures are converted to JPEG and resized to at most 1024 pixels wide. No third-party source photographs were used.
+
+## TOWN-ART-SAFETY hydrant references
+
+Hydrant-side.jpg, hydrant-front.jpg, hydrant-rear.jpg and hydrant-top.jpg are individual orthographic product photographs generated with OpenAI ImageGen on 7 November 2026. The exported enamel texture is baked from the existing red-oxide image by the town-safety recipe; no third-party material was added.
