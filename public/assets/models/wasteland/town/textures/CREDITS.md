@@ -355,3 +355,5 @@ The image views were generated separately to avoid overlapping panels.
 The side sheet photo includes the pump, valves, hose and bund; the model builds
 these as joined geometric parts. Other power-family photos are unchanged from
 round 3.
+
+- Borer round 3 cutter front and machine side/top references: OpenAI image generation, 6 November 2026; original concept art generated for this project. [borer-round3-head-front.png, borer-round3-machine-side.png, borer-round3-machine-top.png].
