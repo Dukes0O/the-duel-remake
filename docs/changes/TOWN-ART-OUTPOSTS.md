@@ -2,30 +2,23 @@
 
 ## Changed
 
-- Replaced the old school photo and carve recipe with one four-view fuselage reference set and a copied `carve_object` measurement table. Dot's Diner's table and geometry were not changed.
-- Added measured body-bound output and a body-only check mode. The GLB body is 2.480 x 2.480 x 10.998 m (width x height x length); table values are 2.379 x 2.528 x 11.484 m. Width +4.3%, height -1.9%, length -4.2%.
-- Rebuilt the slide from a yellow bed and two red rails, and replaced raised type with two curved, textured, painted-letter slabs.
-- Added a round-7 photo/render sheet (200,850 bytes) and its look note. The comparison uses the same side, front, rear and overhead cameras, with three-quarter renders below.
+- Kept Dot's Diner in the family GLB and rebuilt only the plane school for round 8.
+- Set the school tube table to `round: 2.4`, `ends_split: 0`, `front_favour: 3`, and `rear_favour: 3`. The exported body is 2.480 x 2.480 x 10.998 m against table values 2.379 x 2.528 x 11.484 m; each axis is within 5%.
+- Raised the school 1.6 m and added timber trestles that reach the ground and belly. Added a sloped yellow slide with red rails, a door landing and short steps from the ground.
+- Moved the 3 m SCHOOL slab to the wall under the windows after the door, on both sides.
+- Edited measured pane and door rectangles in derived side and roof photo copies. The original photos remain intact. Dark glass and small children's paper shapes are embedded in the GLB.
+- Added the round-8 comparison sheet (182,896 bytes) and review note.
 
 ## Checks
 
-- Blender body-only carve: passed the 5% bounds check. Four masks were reviewed beside their photos; each forms one connected silhouette, with small edge notches on the end masks near ground shadow.
-- Blender full export and GLB re-import: passed. Final GLB 2,776,232 bytes. Eight flat-lit review renders completed. The front and three-quarter views show a round tube.
+- Blender full export, GLB re-import and eight flat-lit renders: passed. Final GLB is 2,862,904 bytes. The body bounds are within 5% of the measured table on all axes.
 - `node tools/test-blender-output.mjs`: passed, 312 checks.
-- `node tools/test-repo-hygiene.mjs`: passed. Existing size advisories remain, including the review directory total; the new sheet itself is 200,850 bytes.
-- `node tools/test-review-evidence.mjs`: the first run hit the unstaged round-6 deletion and sandbox ffmpeg spawn denial. After staging the deletion, the one allowed rerun passed the audio subtest but failed the existing `town-art-power/round-4.jpg` matching-note check. No town-art-power files were changed in this lane.
-- Browser checks: not run; this art task assigns them to Claude. Claude should inspect the round-7 sheet, especially body shape at the ends and three-quarter angles, slide-to-sill contact, and both SCHOOL slabs.
-- Changed assertions: replaced the obsolete single `plane-school:slide` photo-piece name check with names for the bed, both rails and both sign slabs. The checks match the requested three-box slide and two-wall signs; no budget or pass condition was loosened. Claude's written review of these assertion changes is still needed before merge.
-- Race fingerprints: not applicable; this art model is not wired into gameplay.
+- `node tools/test-repo-hygiene.mjs`: passed. Existing size advisories remain; the look-directory total is above its advisory target.
+- `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed. Two existing issues failed: `town-art-power/round-4.jpg` lacks its matching review note, and audio analysis could not spawn `ffmpeg` (`EPERM`). No assertions were changed.
+- Browser and game look checks: not run in this lane; Claude owns them. Claude should inspect the round-8 sheet for pane alignment, the sign's door clearance, trestle contacts, slide slope and ground contact, and whole-school framing from the mayor view.
+- Race fingerprints: not applicable; this model is not wired into gameplay.
 
 ## Removed
 
-- Removed the prior wall-clean and overhead-clean school photos, and the previous overhead photo. Replaced the side, front and rear references with the new generated set.
-- Removed the old photo-textured slide geometry and raised font lettering from the school recipe.
-- Removed `round-6.jpg` and `round-6-review.md`; kept `round-4.jpg` unchanged.
-
-## Remaining
-
-- The current model contains Dot's Diner and Plane School. Hermit Camp, Deck Town and Rail Halt are not built, so the card is incomplete.
-- The latest submitted sheet is round 7. SPEC 0.11 caps an art card at six rounds and permits extra rounds only with Kyle's agreement. Stop here; do not submit another round without that agreement.
-- Kyle's decision needed: authorize extra rounds for this card, or re-scope the three unfinished buildings into separate cards. The round-7 art verdict and review of the changed assertions also remain with Claude.
+- Removed `round-7.jpg` and `round-7-review.md` as requested. Kept `round-4.jpg` and its review note.
+- No original school reference photo was deleted or overwritten.
