@@ -147,6 +147,14 @@ function updateVane({town,calendar}) {
   state.lastVisitMonth=month;
 }
 
-registerTownSystem('town-vane',82,1,updateVane);
+const registerVaneSystem=()=>registerTownSystem('town-vane',82,1,updateVane);
+let unregisterVaneSystem=registerVaneSystem();
+
+// Lets the save fingerprint test compare the registered system with the same
+// simulation while this one system is absent, then restore the normal registry.
+export function unregisterTownVaneForTest() {
+  unregisterVaneSystem();
+  return ()=>{unregisterVaneSystem=registerVaneSystem();};
+}
 
 export {ACT3_CHAPTERS,VANE_LETTERS};

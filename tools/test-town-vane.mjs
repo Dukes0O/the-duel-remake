@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createTown,serializeTown} from '../src/town/town-state.js';
 import {stepTown,registeredTownSystems} from '../src/town/town-sim.js';
-import {townVaneState,setTownVaneBrownStreets,recordTownVaneEvent,ACT3_CHAPTERS,VANE_LETTERS} from '../src/town/town-vane.js';
+import {townVaneState,setTownVaneBrownStreets,recordTownVaneEvent,unregisterTownVaneForTest,ACT3_CHAPTERS,VANE_LETTERS} from '../src/town/town-vane.js';
 import {ACT3_CAPTIONS} from '../src/town/content/lines-act3.js';
 import {captionText} from '../src/story/story-lines.js';
 import {TOWN_DEEDS} from '../src/town/content/deeds.js';
@@ -61,6 +61,21 @@ assert.ok(centuryLetters.every((letter,index)=>typeof letter.text==='string'
 assert.equal(centuryTown.vane.letters.length,centuryLetters.length,'every letter remains in the saved town archive');
 
 console.log(`Town Vane passed: ${ACT3_CHAPTERS.length} chapters, ${Object.keys(ACT3_CAPTIONS).length} captions, ${VANE_LETTERS.length} letters.`);
+
+// Before Year 7, registering Vane changes only its own optional save field.
+const registeredTown=createTown(612,'Fingerprint Town');
+const skippedTown=createTown(612,'Fingerprint Town');
+for(let tick=0;tick<6*360*24;tick++) stepTown(registeredTown);
+const restoreVane=unregisterTownVaneForTest();
+try {
+  for(let tick=0;tick<6*360*24;tick++) stepTown(skippedTown);
+} finally {
+  restoreVane();
+}
+const registeredSave=JSON.parse(serializeTown(registeredTown));
+delete registeredSave.vane;
+assert.deepEqual(registeredSave,JSON.parse(serializeTown(skippedTown)),
+  'the registered Vane update leaves every other save value unchanged through Year 6');
 
 // Old saves acquire their optional Vane field on the first simulation month.
 const oldSave=createTown(901,'Old Save');delete oldSave.vane;
