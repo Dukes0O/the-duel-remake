@@ -53,6 +53,14 @@ stop adjusting and change the method.
 
 ### Photos and masks
 
+- **Studio background below the sky threshold.** `Photo.sky()` refuses an edge
+  seed darker than 185 average grey. A warm grey background then becomes a solid
+  slab when traced. Brighten only the temporary mask pixels and restore the
+  photo's real colors before building its material.
+- **A scaled photo reused for later masks.** `Photo.rgb()` reads the image at
+  its original dimensions. If a recipe downsamples a cached image before all
+  masks are made, later reads fail or use the wrong grid. Finish every mask
+  first; downsample the packed image copies only before export.
 - **Background walled in by the subject** (Kyle, 6 November). The flood from the
   frame's edge cannot reach a patch between a person's legs, a window, the gap
   under a truck or the space inside a frame, and it may not match the studio's
@@ -69,6 +77,11 @@ stop adjusting and change the method.
   panel shorter or narrower than its side and end panels. Normalize the crop
   to the shared feature scale before carving, and check roof and centre-line
   landmarks on a grid.
+- **A single generated picture contains several views.** The generator may
+  return a four-panel perspective sheet despite a multi-view request. It is not
+  a dead-on reference: request each side, end and plan view in its own call,
+  inspect it, and regenerate any picture that contains a second view or
+  perspective.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
@@ -84,6 +97,9 @@ stop adjusting and change the method.
   up to 40 pixels out. Measure them on a grid.
 - **An axle's end** pokes through a wheel face if it runs the full track. Stop it
   inside the tyre.
+- When wheels on opposite sides share one `lathe` axis direction, the far wheel
+  can shift inboard and sit on the wrong side of its rail. Put each wheel's
+  stations outward from the track centre and cap the face that points outward.
 - **Lamps** (Kyle, 6 November). A lamp carved on a curved surface wears two photos
   and garbles. Use `headlamp`. If it shows doubled, the front photo's centre or
   scale is wrong.
@@ -124,6 +140,7 @@ stop adjusting and change the method.
 - **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
 - **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
 - **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
+- **A named texture is not necessarily a material swatch.** `corrugated-tin.jpg` is a useful roof/detail photo but includes diner imagery; using it as a repeating whole-wall material puts unrelated photographic fragments across every tin panel. Inspect a proposed tile and use a clean standalone corrugated-tin swatch for broad surfaces.
 - **Dark studio pixels are rejected as sky.** `Photo.sky` ignores seeds whose mean is below 185. Use `lift_if_dark` on the measuring photo before flood-filling, and inspect the saved mask; this changes only the in-memory mask copy, not the packed source photo. Without it, a tower traced from the original fire-station composite includes the grey studio as a solid plate.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
@@ -139,6 +156,10 @@ stop adjusting and change the method.
 
 ### Placement and export
 
+- **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
+  Blender render scene is Z-up. Convert camera positions and targets with the
+  same game-to-Blender transform as the model before judging framing; inspect
+  one whole-object shot before assembling the sheet. (WW-ART-SEA, 7 November.)
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
@@ -153,6 +174,9 @@ stop adjusting and change the method.
   stayed in the road instead of under the gate header. Place each child at its
   true world point before attaching it, put the empty at the real hinge, then
   render both closed and rotated poses from the exported GLB.
+- **Shared mesh instance moved on the wrong up axis.** `Mesh.finish` converts
+  Y-up vertices into Blender's Z-up coordinates. Convert an instance's Y-up
+  translation too: `(x, -z, y)`. Otherwise a reused load can float above its deck.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.
@@ -177,3 +201,5 @@ stop adjusting and change the method.
   `.qa-dist/YOUR-TASK.md` and carries on.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
+
+- **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.

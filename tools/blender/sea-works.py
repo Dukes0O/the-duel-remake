@@ -4,7 +4,7 @@ from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
-parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway','harbour-gate','harbour-ramp','causeway-arch'],default='causeway-arch')
+parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway','harbour-gate','harbour-ramp','causeway-arch','iron-mule-gear'],default='causeway-arch')
 parser.add_argument('--paths-only',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root).resolve(); textures=root/'public/assets/models/wasteland/scablands/textures'
@@ -14,14 +14,16 @@ if args.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)]}))
  raise SystemExit(0)
 import bpy, numpy as np
+from mathutils import Vector
 sys.path.insert(0,str(root/'tools/blender'))
 from photo_model import Mesh,Photo,slab,trace,tidy,lathe,box
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; parent=bpy.data.objects.new('sea-works',None); scene.collection.objects.link(parent)
 triangles={}
+gear_section_object=None
 scaled_photos=[]
-def finish(mesh,name,mats):
- o=mesh.finish(name,mats);o.parent=parent;o['part']=name;triangles[name]=mesh.triangles();return o
+def finish(mesh,name,mats,parent_to=None):
+ o=mesh.finish(name,mats);o.parent=parent_to or parent;o['part']=name;triangles[name]=mesh.triangles();return o
 def photo(file):
  p=Photo(textures/file); scaled_photos.append(p)
  return p
@@ -46,6 +48,7 @@ def build_gear():
        cap_end=('gear-face',lambda a,f:p.uv(512+math.cos(a)*f*.55*scale,512-math.sin(a)*f*.55*scale)))
  p.bleed(solid);finish(m,'old-gear',{'gear-face':p.material()})
 def build_new_gear():
+ global gear_section_object
  p=photo('sea-gear-section.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],grey=20))
  # The photo shows a broader casting. Keep a measured 15-degree arc from its
  # centre, so this traced slab is one of 24 sections around a 7 m wheel.
@@ -58,7 +61,7 @@ def build_new_gear():
  loops=trace(solid,(20,20,p.w-20,p.h-20),tolerance=1)
  def pos(x,y,d): return ((x-cx)*.00277,(cy-y)*.00277,d)
  slab(m,'casting',p,loops,pos,-.18,.18,wall_scale=.025)
- section=finish(m,'gear-section',{'casting':p.material()})
+ section=finish(m,'gear-section',{'casting':p.material()});gear_section_object=section
  # The whole wheel is 24 of the same slice, turned about its centre, sharing one mesh.
  for i in range(24):
   ob=bpy.data.objects.new(f'gear-whole-section-{i+1:02d}',section.data)
@@ -80,6 +83,190 @@ def build_new_gear():
  hp.image.scale(640,round(hp.image.size[1]*640/hp.image.size[0]));hp.image.pack()
  finish(hm,'gear-whole-hub',{'spoked-hub':hp.material()})
  triangles['gear-whole']=triangles['gear-section']*24+triangles['gear-whole-hub']
+def build_iron_mule_gear():
+ """A flat wagon laid out along X. Numbers are measured on the photos' own grids.
+
+ Side photo, 2172 x 724: rail line row 589, deck top row 271, deck ends columns 147 and
+ 2024, wheels (437, 470) and (1733, 470), radius 118, buffers row 333. One scale, 3.6 mm a
+ pixel, gives 0.85 m wheels and a 6.8 m deck. The Mule's rails stand at x = +/-0.83 and its
+ couplings at y = 0.80 m, and this wagon's couplings and wheels match them.
+ End photo, 1536 x 1024: buffers (397, 426) and (1141, 426), radius 88; a wheel's tread
+ fills columns 382 to 472, rows 570 to 840.
+ Overhead photo, 724 x 2172: planks fill columns 180 to 545, rows 223 to 1875.
+ """
+ side=photo('sea-mule-wagon-side.jpg');end=photo('sea-mule-wagon-end.jpg');top=photo('sea-mule-wagon-overhead.jpg')
+ scaled_photos.remove(side)
+ root_obj=bpy.data.objects.new('iron-mule-gear',None);scene.collection.objects.link(root_obj);root_obj.parent=parent
+ scale=.0036
+ centre_px=1085.5
+ rail_row=589
+ half_width=1.075
+ deck_top=(rail_row-271)*scale
+ deck_end=(2024-147)/2*scale
+ gauge=.83
+ wheels=((437,470,118),(1733,470,118))
+ wheel_radius=118*scale
+ def side_point(px,py,z):
+  return ((px-centre_px)*scale,(rail_row-py)*scale,z)
+ # The ground between the wheels and the spokes' gaps are walled in, so the flood from
+ # the corners cannot reach them: anything pale and colourless is background here.
+ rgb=side.rgb()
+ pale=(rgb.mean(axis=2)>150)&(rgb.max(axis=2)-rgb.min(axis=2)<24)
+ pale[:392,:]=False
+ solid=tidy(~side.sky([(8,8),(side.w-8,8),(8,side.h-8),(side.w-8,side.h-8)],grey=20)&~pale)
+ solid[rail_row:,:]=False
+ frame_solid=solid.copy()
+ frame_solid[:265,:]=False
+ frame_solid[:,:147]=False
+ frame_solid[:,2025:]=False
+ frame_solid[527:,:]=False
+ # The frame stands outside its wheels: below the springs only the axle box is left.
+ yy,xx=np.ogrid[:side.h,:side.w]
+ for wheel_px,wheel_row,radius_px in wheels:
+  disc=(xx-wheel_px)**2+(yy-wheel_row)**2<=(radius_px+6)**2
+  disc[:450,:]=False
+  disc[450:525,wheel_px-48:wheel_px+48]=False
+  frame_solid&=~disc
+ hook_solid=solid.copy()
+ hook_solid[:395,:]=False
+ hook_solid[:,150:2022]=False
+ hook_solid[540:,:]=False
+ frame_loops=trace(frame_solid,(145,263,2027,rail_row+2),tolerance=2.2,min_area=140)
+ hook_loops=trace(hook_solid,(40,393,2130,rail_row+2),tolerance=1.2,min_area=40)
+ side.bleed(solid,passes=24)
+ top_solid=tidy(~top.sky([(8,8),(top.w-8,8),(8,top.h-8),(top.w-8,top.h-8)],grey=20))
+ top.bleed(top_solid)
+ end_solid=tidy(~end.sky([(8,8),(end.w-8,8)],grey=20))
+ end_rgb=end.rgb()
+ end_low=end_solid&~((end_rgb.mean(axis=2)>135)&(end_rgb.max(axis=2)-end_rgb.min(axis=2)<30))
+ end_low[:515,:]=False
+ end_low[650:,:]=False
+ end_low[:,:250]=False
+ end_low[:,1290:]=False
+ end_low[:,382:472]=False
+ end_low[:,1065:1160]=False
+ end_low_loops=trace(end_low,(248,513,1292,652),tolerance=2.5,min_area=120)
+ end.bleed(end_solid)
+ def end_low_point(px,py,x):
+  return (x,(845-py)*.00224,(px-770)*.00191)
+ m=Mesh()
+ # The planks, the overhead photo turned to lie along the wagon.
+ def plank_uv(x,z):
+  return top.uv(180+(z+half_width)/(2*half_width)*365,223+(x+deck_end)/(2*deck_end)*1652)
+ corners=[(-deck_end,-half_width),(deck_end,-half_width),(deck_end,half_width),(-deck_end,half_width)]
+ m.face([(x,deck_top,z) for x,z in corners],[plank_uv(x,z) for x,z in corners],'deck',(0,1,0))
+ # The body under the planks, closed on all sides.
+ steel=('side',side,(590,442,1597,468))
+ beam=('end',end,(219,373,1322,515))
+ box(m,-deck_end,deck_end,.74,deck_top-.005,-half_width+.02,half_width-.02,
+     {'-y':steel,'+x':beam,'-x':beam})
+ # A centre girder and the axles, which stop inside the wheels.
+ box(m,-2.0,2.0,.47,.74,-.09,.09,{'+z':steel,'-z':steel,'-y':steel})
+ # Both sides are the whole traced picture: planks' edge, side beam, springs, axle boxes, truss.
+ for sign in (-1,1):
+  slab(m,'side',side,frame_loops,side_point,sign*half_width-.025,sign*half_width+.025,wall_scale=scale)
+ # The hooks and chains hang at the wagon's centre line.
+ slab(m,'side',side,hook_loops,side_point,-.03,.03,wall_scale=scale)
+ for sign in (-1,1):
+  slab(m,'end',end,end_low_loops,end_low_point,sign*(deck_end-.14)-.015,sign*(deck_end-.14)+.015,wall_scale=.002)
+ # Flanged wheels, square to the track. Faces wear the side photo; the tread, the end photo.
+ def tread_uv(index,distance,radius,angle):
+  wave=abs(((angle*4/math.tau)%2)-1)
+  return end.uv(385+84*min(1,distance/.13),600+wave*200)
+ for wheel_px,wheel_row,radius_px in wheels:
+  wheel_x=(wheel_px-centre_px)*scale
+  wheel_y=(rail_row-wheel_row)*scale
+  def disc_uv(angle,fraction,wheel_px=wheel_px,wheel_row=wheel_row,radius_px=radius_px):
+   return side.uv(wheel_px+math.cos(angle)*radius_px*fraction*.97,wheel_row-math.sin(angle)*radius_px*fraction*.97)
+  for sign in (-1,1):
+   start=sign*gauge-.065
+   lathe(m,'end',(wheel_x,wheel_y,start),(0,0,1),(1,0,0),(0,1,0),
+         [(0,wheel_radius),(.1,wheel_radius),(.1,wheel_radius*1.08),(.13,wheel_radius*1.08)],
+         tread_uv,sides=20,cap_start=('side',disc_uv),cap_end=('side',disc_uv))
+  lathe(m,'side',(wheel_x,wheel_y,-gauge),(0,0,1),(1,0,0),(0,1,0),[(0,.055),(2*gauge,.055)],
+        lambda i,d,r,a:side.uv(600+d*40,452+math.sin(a)*12),sides=10)
+ # Buffers at the height the side photo shows them.
+ buffer_y=(rail_row-333)*scale
+ def buffer_uv(cx):
+  return lambda angle,fraction:end.uv(cx+math.cos(angle)*80*fraction,426-math.sin(angle)*80*fraction)
+ for direction in (-1,1):
+  for z,cx in ((-.71,397),(.71,1141)):
+   cap=buffer_uv(cx)
+   lathe(m,'end',(direction*deck_end,buffer_y,z),(direction,0,0),(0,0,1),(0,1,0),
+         [(0,.075),(.2,.075),(.22,.17),(.3,.17)],lambda i,d,r,a,cap=cap:cap(a,min(1,r/.17)),sides=14,cap_end=('end',cap))
+ materials={'side':side.material(),'end':end.material(),'deck':top.material()}
+ finish(m,'iron-mule-gear-frame',materials,root_obj)
+ # Couplings at the Mule's height, each its own part.
+ for direction,name in ((-1,'front'),(1,'rear')):
+  coupling=Mesh()
+  lathe(coupling,'side',(direction*deck_end,.80,0),(direction,0,0),(0,0,1),(0,1,0),[(0,.075),(.34,.065)],
+        lambda i,d,r,a:side.uv(600+d*200,452+math.sin(a)*12),sides=10,cap_end=('side',lambda a,f:side.uv(600,452)))
+  finish(coupling,f'iron-mule-gear-coupling-{name}',{'side':side.material()},root_obj)
+ # Six castings stand on edge in two rows, teeth up, far too many for one wagon, showing
+ # their faces to the road. A seventh is thrown flat on top and has slipped. One gear
+ # section mesh serves all: its origin is the great wheel's centre, 2.5 m below its foot.
+ section_foot=2.50
+ section_height=1.0
+ thickness=.36
+ count=0
+ def place_section(location,rotation=(0,0,0)):
+  nonlocal count
+  count+=1
+  load=bpy.data.objects.new(f'iron-mule-gear-section-{count}',gear_section_object.data)
+  scene.collection.objects.link(load);load.parent=root_obj
+  load.location=location;load.rotation_euler=rotation
+  load['part']=load.name
+  triangles[load.name]=triangles['gear-section']
+ for row_y,lean in ((-.2,0),(.2,0)):
+  for x in (-.86,0,.86):
+   place_section((x,row_y,deck_top-section_foot),(0,lean,0))
+ # Lying flat, a section's middle is 3 m from its origin, so the origin moves back.
+ flat_turn=math.radians(-21)
+ flat_mid=3.0
+ place_section((.22-math.sin(flat_turn)*flat_mid,.1+math.cos(flat_turn)*flat_mid,
+                deck_top+section_height+thickness/2),(math.pi/2,0,flat_turn))
+ # Chains run from the deck's edge over the load, pulled tight.
+ chain_material=bpy.data.materials.new('Iron Mule tie-down chain')
+ chain_material.diffuse_color=(.12,.075,.045,1);chain_material.use_nodes=True
+ shader=chain_material.node_tree.nodes.get('Principled BSDF')
+ shader.inputs['Base Color'].default_value=(.12,.075,.045,1)
+ shader.inputs['Metallic'].default_value=.25;shader.inputs['Roughness'].default_value=.86
+ row_top=deck_top+section_height
+ pile_top=row_top+thickness
+ chains=Mesh()
+ def chain_path(x,over):
+  return [(x,deck_top,-half_width),(x,over,-.42),(x,over+.02,0),(x,over,.42),(x,deck_top,half_width)]
+ def point_on_path(points,t):
+  lengths=[(Vector(b)-Vector(a)).length for a,b in zip(points,points[1:])]
+  total=sum(lengths);distance=t*total
+  for a,b,length in zip(points,points[1:],lengths):
+   if distance<=length:
+    return Vector(a).lerp(Vector(b),distance/length),total
+   distance-=length
+  return Vector(points[-1]),total
+ def chain_link(center,tangent,alternate):
+  tangent=Vector(tangent).normalized()
+  u=Vector((1,0,0)) if alternate else tangent.cross(Vector((1,0,0))).normalized()
+  normal=tangent.cross(u).normalized();major=.085;minor=.055;tube=.017;around=6;ring=4
+  coords=[]
+  for a in range(around):
+   angle=math.tau*a/around
+   ellipse=Vector(center)+tangent*(major*math.cos(angle))+u*(minor*math.sin(angle))
+   outward=(tangent*math.cos(angle)+u*math.sin(angle)).normalized()
+   coords.append([ellipse+tube*(outward*math.cos(math.tau*b/ring)+normal*math.sin(math.tau*b/ring)) for b in range(ring)])
+  for a in range(around):
+   for b in range(ring):
+    chains.face([coords[a][b],coords[(a+1)%around][b],coords[(a+1)%around][(b+1)%ring],coords[a][(b+1)%ring]],
+                [(0,0),(.2,0),(.2,1),(0,1)],'chain',coords[a][b]-Vector(center))
+ for x,over in ((-.95,row_top),(.3,pile_top),(.95,row_top)):
+  points=chain_path(x,over);_,length=point_on_path(points,0);links=round(length/.15)
+  for index in range(links+1):
+   t=index/links;center,_=point_on_path(points,t)
+   before,_=point_on_path(points,max(0,t-.01));after,_=point_on_path(points,min(1,t+.01))
+   chain_link(center,after-before,bool(index%2))
+ finish(chains,'iron-mule-gear-chains',{'chain':chain_material},root_obj)
+ # The side photo keeps more of its detail than the others, as it is what a player sees.
+ side.image.scale(800,round(side.image.size[1]*800/side.image.size[0]));side.image.pack()
 def build_wall():
  p=photo('sea-harbour-wall.jpg'); blend_repeat_edges(p); stone=photo('dam-gatehouse-stone.jpg'); m=Mesh(); H=6; L=40
  front=(0,55,p.w,300)
@@ -234,7 +421,7 @@ def build_causeway_arch():
  for z in (-.87,.87):
   box(track,-4,4,4.36,4.55,z-.07,z+.07,{k:('rail',rail,rail_crop) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(track,'causeway-arch-rails',{'rail':rail.material()})
-steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch)]
+steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch),('iron-mule-gear',build_iron_mule_gear)]
 for name,fn in steps:
  fn()
  if name==args.through: break
@@ -259,6 +446,15 @@ scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.82,.82,.82,1
 sun=bpy.data.objects.new('sun',bpy.data.lights.new('sun','SUN'));sun.data.energy=.6
 sun.rotation_euler=(math.radians(50),0,math.radians(30));scene.collection.objects.link(sun)
 camera=bpy.data.objects.new('camera',bpy.data.cameras.new('camera'));scene.collection.objects.link(camera);scene.camera=camera
+meshes=[o for o in scene.objects if o.type=='MESH']
+# Render-only track context uses the sea recipe's measured 1.66 m rail gauge.
+# It is not part of the exported wagon model.
+review_rail=Photo(textures/'sea-rails.jpg');review_track=Mesh()
+for x in np.arange(-5.0,5.01,.65):
+ box(review_track,x-.12,x+.12,.03,.14,-1.08,1.08,{k:('rail',review_rail,(52,16,82,145)) for k in ('+x','-x','+y','-y','+z','-z')})
+for z in (-.83,.83):
+ box(review_track,-5,5,.16,.35,z-.06,z+.06,{k:('rail',review_rail,(0,34,review_rail.w,52)) for k in ('+x','-x','+y','-y','+z','-z')})
+review_track.finish('review-track-context',{'rail':review_rail.material()})
 meshes=[o for o in scene.objects if o.type=='MESH']
 # Two more lengths of the wall and causeway, end to end, for the shots only.
 extras=[]
@@ -309,3 +505,7 @@ shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp'],(3,1.55,-19),(0,.8,0),(1200,700),lens=28)
 shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
 shot('causeway-arch-three-quarter',['causeway-arch'],(16,1.55,12),(0,1,0),(1200,700),lens=28)
+shot('iron-mule-wagon-side',['iron-mule-gear-frame','iron-mule-gear-coupling'],(0,.82,20),(0,.82,0),(1200,400),ortho=7.82)
+shot('iron-mule-wagon-end',['iron-mule-gear-frame','iron-mule-gear-coupling'],(18,.8,0),(0,.8,0),(700,467),ortho=3.6)
+shot('iron-mule-wagon-quarter',['iron-mule-gear-','review-track'],(13,1.5,22),(0,1.2,0),(1000,560),lens=85)
+shot('iron-mule-wagon-quarter-rear',['iron-mule-gear-','review-track'],(-13,1.5,22),(0,1.2,0),(1000,560),lens=85)

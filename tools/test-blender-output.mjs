@@ -84,8 +84,8 @@ const generators = [
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:30000,
-    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:44000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000},maxBytes:5000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -113,14 +113,24 @@ const generators = [
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
+  { script: 'tools/blender/sea-works.py', args: ['--through', 'iron-mule-gear'], candidate: true, budget: 50000, maxBytes: 3_400_000,
+    glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { id: 'sea-water-front', script: 'tools/blender/sea-water-front.py', args: [], candidate: true,
+    budget: 20000, maxBytes: 2 * 1024 * 1024,
+    glb: ['public/assets/models/wasteland/scablands/sea-water-front.glb'] },
+  { script: 'tools/blender/sea-magnet-big.py', args: [], candidate: true, budget: 30000, maxBytes: 2_500_000,
+    glb: ['public/assets/models/wasteland/scablands/sea-magnet-big.glb'] },
   { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
   { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
     glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
   { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
     glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },
-  { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
-    glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
+  { id: 'sea-vane', script: 'tools/blender/sea-vane.py', args: [], candidate: true,
+    budget: 9000, maxBytes: 1_500_000,
+    glb: ['public/assets/models/wasteland/scablands/mrs-vane.glb'] },
+  { script: 'tools/blender/sea-camp.py', args: [], candidate: true, budget: 25000, maxBytes: 2*1024*1024,
+    glb: ['public/assets/models/wasteland/scablands/sea-camp.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
   { script: 'tools/blender/scablands-everburn.py', args: [], glb: ['public/assets/models/wasteland/scablands/everburn.glb'] },
   { script: 'tools/blender/bowl-stadium.py', args: [], glb: ['public/assets/models/wasteland/bowl/stadium.glb'], budget: 80000 },
@@ -840,12 +850,18 @@ try {
         assert.ok(names.has('hermit-camp:bonnet-dish'), 'bonnet-textured shallow dish');
         assert.ok(names.has('hermit-camp:dish-pole'), 'leaning dish pole');
         assert.ok(names.has('hermit-camp:chair-seat'), 'separate chair seat');
+        assert.ok(names.has('deck-town'), 'named stranded-deck town building root');
+        assert.ok(names.has('deck-town:deck'), 'ship deck is carved from its own photos');
+        for (const index of [1, 2, 3, 4]) {
+          assert.ok(names.has(`deck-town:home-${index}:body`), `home ${index} reuses the photo-carved tin home`);
+        }
+        assert.ok(names.has('deck-town:bell'), 'bell is its own named piece');
         const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
         assert.ok(familyRoot, 'town-outposts family root exists');
         assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
-          ['dot-diner', 'hermit-camp', 'plane-school'],
+          ['deck-town', 'dot-diner', 'hermit-camp', 'plane-school'],
           'each outpost building is a direct child of the family root');
-        for (const id of ['dot-diner', 'plane-school', 'hermit-camp']) {
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp', 'deck-town']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;
@@ -1912,4 +1928,3 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
-
