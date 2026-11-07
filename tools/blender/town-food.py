@@ -537,7 +537,9 @@ def market_stall(building, offset, kind):
             t=depth_step/2
             y=profile_y-.47*t
             z=-1.04+1.95*t
-            py=min(bottom-3,int(profile+10*t))
+            # Spread the full measured canvas grain over the draped depth;
+            # a nearly fixed photo row turns into long stripes underneath.
+            py=min(stall_front_photo.h-1,int(72+105*t))
             uv=stall_front_photo.uv(px,py)
             column.append((awning.vertex((x,y,z)),uv))
         columns.append(column)
