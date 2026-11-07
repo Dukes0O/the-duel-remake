@@ -1595,3 +1595,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 6 Nov: merged tyres, lamps and one true scale for the town trucks and Rattler, from Kyle's eye (tyre, wheel_well and headlamp in hull_model.py; 300-odd art checks, hygiene, build, one review).
 - RAIL-REGION merged: the Whites, the two cuttings and the salt storm, closed until the story opens them; lane tier and build passed on d41607c4.
 - 6 Nov: TOWN-ART-POWER merged; verdict on its card.
+- 6 Nov: merged TOWN-VANE: Mrs Vane plays against a real town from Year 7, with 35 letters (lane 42/44: test-town-people and test-town-core pass alone, timing under load, rule 3; build; reviews: yearly letters that never fired, growing saved rows and big year numbers all fixed). Switch still off.
