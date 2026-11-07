@@ -574,14 +574,13 @@ def market_stall(building, offset, kind):
     # A side-photo traced profile makes the measured sag and torn hem readable
     # from the stall's end while keeping the canopy's top as one draped sheet.
     side_awning_loops=trace(stall_side_awning_mask,(235,95,681,325),tolerance=1.8,min_area=24)
-    for side_x,side_label in ((-1.04,'left'),(1.04,'right')):
-        side_awning=PhotoMesh()
-        def side_awning_world(px,py,d,side_x=side_x):
-            return (side_x+d,(975-py)*.00292,-1.10+(px-205)*.00455)
-        slab(side_awning,'side-canvas',stall_side_photo,side_awning_loops,
-             side_awning_world,-.018,.018,wall_scale=.00455)
-        keep(side_awning.finish(f'{building}:photo-traced-{side_label}-sagging-awning-profile',
-                                {'side-canvas':stall_side_photo.material()}))
+    side_awning=PhotoMesh()
+    def side_awning_world(px,py,d):
+        return (1.04+d,(975-py)*.00292,-1.10+(px-205)*.00455)
+    slab(side_awning,'side-canvas',stall_side_photo,side_awning_loops,
+         side_awning_world,-.018,.018,wall_scale=.00455)
+    keep(side_awning.finish(f'{building}:photo-traced-side-sagging-awning-profile',
+                            {'side-canvas':stall_side_photo.material()}))
 
     if kind=='fruit':
         # Two deep plank crates and small photo-colored produce sit on the counter.
@@ -620,7 +619,7 @@ def market_stall(building, offset, kind):
     else:
         for index,(x,y) in enumerate(((-.42,1.40),(.42,1.40),(0,1.68)),1):
             bpy.ops.mesh.primitive_torus_add(major_radius=.28,minor_radius=.07,
-                major_segments=12,minor_segments=4,location=town.game_vector((x,y,-.20)))
+                major_segments=10,minor_segments=3,location=town.game_vector((x,y,-.20)))
             obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{index}'
             obj.rotation_euler[0]=math.pi/2
             obj.data.materials.append(mat['rubber']);keep(obj)
