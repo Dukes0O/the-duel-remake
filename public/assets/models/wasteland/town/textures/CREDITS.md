@@ -447,3 +447,14 @@ round 3.
 ## WW-ART-PEACE Mirage camp, 7 November 2026
 
 Generated with OpenAI image generation as seven original product-photo references: a matching tent side, front and true overhead view, plus straight side views of a folding chair, a camp stove with kettle, a water can, and a crate with tin mug. The tent images share the same tent identity. Flat pale studio backgrounds, no labels, brands or third-party material.
+
+## WW-ART-PEACE Magnus crane references, 7 November 2026
+
+Generated with OpenAI built-in image generation as six original documentary-style product photo references: crawler crane body side, front, rear and overhead views; one detached lattice boom side view; and one rusty corrugated roof sheet. Original PNG outputs remain in the generated-images folder. The six JPEGs below are converted copies; no external source photos were used.
+
+- `peace-magnus-crane-side.jpg` — the boomless crawler crane body, true side view.
+- `peace-magnus-crane-front.jpg` — the same type of body, front end view.
+- `peace-magnus-crane-rear.jpg` — rear end view.
+- `peace-magnus-crane-top.jpg` — directly overhead body view.
+- `peace-magnus-crane-boom.jpg` — detached open lattice boom, side view.
+- `peace-magnus-crane-roof.jpg` — one rusty corrugated tin sheet, overhead view.
