@@ -79,6 +79,41 @@ if '--review-only' in args:
             bpy.ops.render.render(write_still=True)
             print(f'rendered fountain {name}')
         raise SystemExit(0)
+    if '--statue-only' in args:
+        statue_root=bpy.data.objects.get('statue')
+        if statue_root is None: raise RuntimeError('exported statue is missing')
+        for child in family.children: hide_tree(child,child!=statue_root)
+        hide_tree(statue_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('statue:')
+        scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100; scene.render.image_settings.file_format='PNG'
+        scene.render.image_settings.color_mode='RGB'; scene.render.film_transparent=False
+        scene.view_settings.view_transform='Standard'
+        world=bpy.data.worlds.new('Statue review grey'); world.use_nodes=True
+        world.node_tree.nodes['Background'].inputs['Color'].default_value=(.42,.42,.42,1)
+        world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8; scene.world=world
+        gm=bpy.data.materials.new('Statue review ground'); gm.diffuse_color=(.42,.42,.42,1); gm.use_nodes=True
+        gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.42,.42,.42,1)
+        bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.035)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(gm)
+        def aim_statue(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
+        for name,loc,power,size in [('key',(7,-8,13),1600,9),('fill',(-7,6,9),900,8)]:
+            ld=bpy.data.lights.new('Statue '+name,'AREA'); ld.energy=power; ld.shape='DISK'; ld.size=size
+            lo=bpy.data.objects.new('Statue '+name,ld); scene.collection.objects.link(lo); lo.location=loc; aim_statue(lo,(0,0,2.7))
+        camera=bpy.data.objects.new('Statue camera',bpy.data.cameras.new('Statue camera')); scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
+        evidence.mkdir(parents=True,exist_ok=True)
+        views=[('side',(1,0,0),'statue-side.jpg',6.0),('front',(0,1,0),'statue-front.jpg',6.0),
+               ('rear',(0,-1,0),'statue-rear.jpg',6.0),('above',(0,0,1),'statue-above.jpg',6.0),
+               ('three-quarter-a',(1,-1,.65),None,7.2),('three-quarter-b',(-1,1,.65),None,7.2),
+               ('mayor',(1,-1,1),None,7.2)]
+        for name,direction,photo_name,ortho in views:
+            target=Vector((0,-.15,2.8)); direction=Vector(direction).normalized()
+            camera.location=target+direction*24; aim_statue(camera,target); camera.data.ortho_scale=ortho
+            scene.render.resolution_x,scene.render.resolution_y=(1024,1536) if photo_name else (900,650)
+            scene.render.filepath=str(evidence/f'statue-{name}.png'); bpy.ops.render.render(write_still=True)
+            print('rendered statue',name)
+        raise SystemExit(0)
     truck_bounds=[]
     for obj in truck_root.children_recursive:
         if obj.type=='MESH':
@@ -930,22 +965,68 @@ for stall in ('fun-stall-a','fun-stall-b'):
             for i in range(4): cyl(f'{stall}:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
         for i in range(5): box(f'{stall}:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
 
-# First Wasteland scrap portrait: joined steel limbs with one raised arm and a blank plaque.
+# Round 15: one photo-carved closed figure and plinth. The generated plaque is
+# removed from the photographed masks so it remains its own blank board piece.
 building_root('statue','1x1')
-box('statue:plinth',(0,.48,.15),(2.8,.85,2.5),'cracked-concrete',.12)
-for i in range(4): box(f'statue:plinth-patch-{i}',(i*.55-1.0,.94,-.9),(.48,.08,.08),'galvanised-tin',.01)
-cyl('statue:waist-hub',(0,2.0,0),.58,.5,'rusted-steel',12)
-beam('statue:torso',(-.08,1.95,0),(.12,4.15,0),.52,'rusted-steel')
-cyl('statue:head',(.10,4.66,0),.62,.68,'galvanised-tin',12)
-beam('statue:neck',(.10,4.3,0),(.1,4.4,0),.25,'rusted-steel')
-for s in (-1,1):
-    beam(f'statue:leg-{s}',(-.12,2.05,0),(s*.48,1.08,-.02),.29,'rusted-steel')
-    box(f'statue:boot-{s}',(s*.50,.96,-.18),(.52,.2,.62),'galvanised-tin',.05)
-beam('statue:lower-arm-left',(-.28,3.55,0),(-1.0,2.7,0),.24,'rusted-steel')
-beam('statue:lower-arm-right',(.35,3.65,0),(1.15,4.55,0),.24,'rusted-steel')
-beam('statue:raised-forearm',(1.15,4.55,0),(1.25,5.55,0),.20,'galvanised-tin')
-for i in range(4): beam(f'statue:raised-finger-{i}',(1.25+i*.06,5.45,0),(1.22+i*.08,5.82,0),.07,'rusted-steel')
-box('statue:blank-plaque',(0,1.58,-1.18),(1.25,.8,.10),'weathered-plank',.04)
+statue_root=current
+statue_table={
+    'photos':{'side':'statue-side.jpg','front':'statue-front.jpg',
+              'rear':'statue-rear.jpg','top':'statue-above.jpg'},
+    'length':1.5,'width':1.8,'height':5.55,
+    'side':{'start':285,'end':690,'ground':1515},
+    'front':{'centre':512,'ground':1515,'top':22},
+    'rear':{'centre':512,'ground':1515,'top':22,'top_height':5.55},
+    'top':{'front':44,'rear':424,'centre':512,'x_scale':1.8/390},
+    'cut':{
+        'front':[(375,1370,650,1515)],
+        # The generated high-angle plan reference foreshortens the standing
+        # body. Use only the plinth footprint in this projection; the other
+        # three measured views define the figure's height and silhouette.
+        'top':[(0,0,1024,44),(0,424,1024,1024),(390,35,610,150)],
+    },
+    'grey':26,'tolerance':34,'bleed_tolerance':28,
+    'voxel':.085,'target':1700,
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-15/masks'),
+}
+statue_body=carve_object('statue:figure-plinth',textures,statue_table)
+keep(statue_body,statue_root)
+statue_body['source']='four generated orthographic photo references'
+statue_photo=statue_table['_photos']['front']
+plaque_mesh=PhotoMesh()
+plaque_loops=trace(
+    ~statue_photo.sky([(8,8),(1015,8),(8,1510),(1015,1510)],tolerance=34,grey=26),
+    (375,1370,650,1515))
+slab(
+    plaque_mesh,'front',statue_photo,plaque_loops,
+    lambda px,py,d: ((px-512)*(.00372),(1515-py)*(.00372),-.75+d),-.045,.045)
+plaque=plaque_mesh.finish('statue:blank-plaque',{'front':statue_photo.material()})
+keep(plaque,statue_root)
+plaque['blank']=True
+statue_root.location.z=.05
+bpy.context.view_layer.update()
+
+def statue_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+statue_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('statue:')]
+for piece in statue_pieces:
+    b=statue_bounds(piece)
+    gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+        'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+    print('STATUE BOUNDS',piece.name,json.dumps(gb))
+    if gb['min'][0]<-3.5 or gb['max'][0]>3.5 or gb['min'][2]<-3.5 or gb['max'][2]>3.5 or gb['min'][1]<-.03:
+        raise RuntimeError(f'{piece.name} leaves the 1x1 footprint or ground: {gb}')
+def statue_touch(a,b,p=.04):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in statue_pieces:
+    b=statue_bounds(piece)
+    grounded=b[2][0]<=.025
+    touches=grounded or any(o is not piece and statue_touch(b,statue_bounds(o)) for o in statue_pieces)
+    print('STATUE CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} floats without contact')
+statue_tris=sum(len(p.vertices)-2 for o in statue_pieces for p in o.data.polygons)
+print('STATUE TRIANGLES',statue_tris)
+if statue_tris>1800: raise RuntimeError(f'statue has {statue_tris} triangles (limit 1800)')
 
 # Assign every mesh the one shared picture-coordinate layer name before export.
 for obj in bpy.data.objects:
@@ -954,7 +1035,7 @@ for obj in bpy.data.objects:
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
         image_name=Path(image.filepath).name
-        if not image_name.startswith(('drive-in-','fountain-')):
+        if not image_name.startswith(('drive-in-','fountain-','statue-')):
             image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
@@ -964,6 +1045,6 @@ import subprocess
 blender=r'C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe'
 if '--build-only' not in args:
     with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
-        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--fountain-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
+        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--statue-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
     if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))

@@ -147,6 +147,7 @@ stop adjusting and change the method.
 - **Dark studio pixels are rejected as sky.** `Photo.sky` ignores seeds whose mean is below 185. Use `lift_if_dark` on the measuring photo before flood-filling, and inspect the saved mask; this changes only the in-memory mask copy, not the packed source photo. Without it, a tower traced from the original fire-station composite includes the grey studio as a solid plate.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
+- **Separate generated views can have different image sizes, framing and details.** A front photo with a taller canvas than the side photo can give the same figure two different measured heights; separate generations can also produce different faces and plate layouts. Use the first photo as an image reference for later views, check image dimensions and landmarks, scale each view to a shared physical landmark, and inspect the masks before carving.
 
 ### People
 
