@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-06/TOWN-ART-FUN/round-2'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-06/TOWN-ART-FUN/round-3'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-3.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -55,7 +55,7 @@ if '--review-only' in args:
                 if child.type=='MESH': members.append(child)
                 gather(child)
         if root_obj: gather(root_obj)
-        corners=[root_obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+        corners=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
         if corners:
             lo=Vector((min(v.x for v in corners),min(v.y for v in corners),min(v.z for v in corners)))
             hi=Vector((max(v.x for v in corners),max(v.y for v in corners),max(v.z for v in corners)))
@@ -81,7 +81,7 @@ if '--review-only' in args:
     helper=root/'.qa-dist/town-fun-sheet.py'
     helper.write_text(r'''from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-root=Path.cwd(); e=root/'.evidence/2026-11-06/TOWN-ART-FUN/round-2'; dest=root/'docs/board/looks/town-art-fun/round-2.jpg'
+root=Path.cwd(); e=root/'.evidence/2026-11-06/TOWN-ART-FUN/round-3'; dest=root/'docs/board/looks/town-art-fun/round-3.jpg'
 photo=Image.open(root/'public/assets/models/wasteland/town/textures/fountain-front.jpg').convert('RGB')
 page=Image.new('RGB',(1600,1390),(32,33,31)); draw=ImageDraw.Draw(page); fd=Path('C:/Windows/Fonts')
 title=ImageFont.truetype(str(fd/'segoeuib.ttf'),34); label=ImageFont.truetype(str(fd/'segoeuib.ttf'),23); body=ImageFont.truetype(str(fd/'segoeui.ttf'),18)
@@ -295,6 +295,8 @@ for i,a in enumerate((.25,1.82,3.40,4.95),1):
 building_root('big-wheel','3x3')
 wheel_pivot=bpy.data.objects.new('big-wheel:wheel',None); bpy.context.collection.objects.link(wheel_pivot); wheel_pivot.parent=current
 wheel_pivot.location=town.game_vector((0,11.4,0))
+# Render and export the named moving part visibly turned around its true axle.
+wheel_pivot.rotation_euler[1]=math.radians(18)
 for side in (-1,1):
     beam(f'big-wheel:A-frame-{side}-left',(-7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
     beam(f'big-wheel:A-frame-{side}-right',(7.2,.3,0),(0,11.4,0),.32,'rusted-steel')
