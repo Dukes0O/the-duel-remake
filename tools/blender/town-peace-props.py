@@ -611,14 +611,14 @@ end_region[128:327, 88:454] = end_solid[128:327, 88:454]
 end_solid &= end_region
 end_loops = trace(end_solid, (88, 128, 454, 327), tolerance=1.1, min_area=12)
 end_photo.bleed(end_solid)
-for end_name, z, sign in (('front', -1.43, -1), ('rear', 5.96, 1)):
+for end_name, z, end_direction in (('front', -1.43, -1), ('rear', 5.96, 1)):
     end_mesh = Mesh()
     def end_point(px, py, depth, z=z):
         x = (px - 271) * (1.60 / (454 - 88))
         y = 1.98 - (py - 128) * (1.12 / (327 - 128))
         return (x, y, z + depth)
     slab(end_mesh, 'ends', end_photo, end_loops, end_point,
-         -sign * .018, sign * .018, wall_scale=.004)
+         -end_direction * .018, end_direction * .018, wall_scale=.004)
     own(end_mesh.finish(f'sal-pipe-trailer:pipe-cut-ends-{end_name}',
                         {'ends': end_photo.material(.6)}),
         sal, f'sal-pipe-trailer:pipe-cut-ends-{end_name}')
