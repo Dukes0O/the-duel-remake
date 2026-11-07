@@ -653,9 +653,9 @@ for name, center, size in (
 
 # Two sloped tow-bar arms meet a low coupler at the truck hitch and climb into
 # the trailer's front crossmember; they overlap both endpoints by design.
-for side_name, side in (('left', -1), ('right', 1)):
+for side_name, side_sign in (('left', -1), ('right', 1)):
     towbar = town.beam(f'sal-pipe-trailer:tow-bar-{side_name}',
-                       (0, .23, -1.60), (side * .92, .73, -.91), .11, frame_mat)
+                       (0, .23, -1.60), (side_sign * .92, .73, -.91), .11, frame_mat)
     own(towbar, sal, f'sal-pipe-trailer:tow-bar-{side_name}')
 coupler = town.cube('sal-pipe-trailer:pickup-hitch-coupler',
                     (0, .24, -1.57), (.24, .16, .22), frame_mat, bevel=.025)
