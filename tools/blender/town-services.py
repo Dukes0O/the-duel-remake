@@ -183,10 +183,63 @@ for index,x in enumerate((-10.5,10.5)):
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
 ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
 for n in ids:
- size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
+ size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(3,2),'paint-shop':(2,2),'trading-post':(3,2),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
  if n in ('forge','workshop'):continue
+ if n=='motor-pool':
+  # Four view photo carve of the body. The open bay is cut as a keep volume;
+  # dark interior, floor, pit and service equipment remain separate pieces.
+  side_photo=Photo(tex/'motor-pool-side.jpg')
+  front_photo=Photo(tex/'motor-pool-front.jpg')
+  rear_photo=Photo(tex/'motor-pool-rear.jpg')
+  top_photo=Photo(tex/'motor-pool-top.jpg')
+  table={'photos':{'side':'motor-pool-side.jpg','front':'motor-pool-front.jpg','rear':'motor-pool-rear.jpg','top':'motor-pool-top.jpg'},
+   'length':21.4,'width':23.0,'height':5.1,
+   'side':{'start':14,'end':1010,'ground':294},
+   'front':{'centre':512,'ground':283,'top':71},'rear':{'centre':512,'ground':283,'top':71},
+   'top':{'front':80,'rear':430,'centre':512,'x_scale':23.0/996},
+   'keep':lambda x,y,z: ~((z < -5.0) & (y < 4.55) & (np.abs(x)<10.8)),
+   'cut':{'side':[],'front':[(0,0,1,1)],'rear':[],'top':[]},
+   'grey':26,'tolerance':42,'bleed_tolerance':38,'voxel':.10,'target':10500,
+   'mask_dir':str(root/'.qa-dist/town-services/motor-pool-masks')}
+  body=carve_object('motor-pool:body',tex,table)
+  # The side and plan references share the 21.4 m photo scale; the 3x2 town
+  # plot compresses only the short axis after carving, keeping the long bay face.
+  body.scale.y=15.0/21.4
+  parent_keep(body,b)
+  # Preserve the dark interior while keeping its open front clearly legible.
+  box('motor-pool:interior-dark',(0,2.55,1.8),(20.4,4.7,.12),dark,.02,b)
+  box('motor-pool:floor',(0,.08,0),(21.8,.16,13.8),dark,.025,b)
+  # Recessed inspection pit, with a dark floor and thick raised concrete lips.
+  box('motor-pool:inspection-pit',(0,.02,-1.2),(2.0,.06,7.8),dark,.015,b)
+  for x in (-1.12,1.12):box('motor-pool:pit-lip',(x,.14,-1.2),(.22,.24,8.2),m['cracked-concrete'],.025,b)
+  # Two tool racks stand inside against the back wall, with tools on their rails.
+  for x in (-8.7,8.7):
+   for y in (.65,1.65,2.65):box('motor-pool:tool-rack-rail',(x,y,5.85),(2.5,.11,.11),steel,.025,b)
+   for dx in (-1.1,-.45,.25,.95):beam('motor-pool:hand-tool',(x+dx,.55,5.75),(x+dx,1.55,5.75),.055,wood,b)
+   for dx in (-1.2,1.2):box('motor-pool:tool-rack-upright',(x+dx,1.62,5.85),(.09,2.75,.09),dark,.02,b)
+  # Fuel drums are grouped along the rear corners, clear of the inspection pit.
+  for i,(x,z) in enumerate(((-9.4,5.0),(-8.3,5.0),(9.4,5.0),(8.3,5.0))):
+   cyl(f'motor-pool:fuel-drum-{i+1}',(x,.62,z),.43,1.05,steel,20,b)
+   for y in (.3,.92):tube(f'motor-pool:drum-rim-{i+1}',(x,y,z),.43,.035,dark,b,20,6)
+  # Open front header and posts frame the bay without filling the opening.
+  for x in (-10.6,-5.3,0,5.3,10.6):beam('motor-pool:front-post',(x,.12,-6.8),(x,4.65,-6.8),.18,steel,b)
+  box('motor-pool:front-header',(0,4.65,-6.8),(21.4,.24,.24),steel,.035,b)
+  # Each piece reports its bounds for the grounding/plot audit.
+  bpy.context.view_layer.update()
+  pieces=[o for o in b.children if o.type=='MESH'];piece_bounds=[]
+  for obj in pieces:
+   corners=[obj.matrix_world @ Vector(c) for c in obj.bound_box]
+   points=[(v.x,v.z,-v.y) for v in corners] # Blender Z-up -> town X/Y/Z
+   lo=[min(v[i] for v in points) for i in range(3)];hi=[max(v[i] for v in points) for i in range(3)]
+   piece_bounds.append((lo,hi))
+   print(f'MOTOR-POOL BOUNDS {obj.name}: x={lo[0]:.2f}..{hi[0]:.2f} y={lo[1]:.2f}..{hi[1]:.2f} z={lo[2]:.2f}..{hi[2]:.2f}')
+  for index,(lo,hi) in enumerate(piece_bounds):
+   grounded=lo[1]<=.16
+   joined=any(index!=other and all(max(0,alo[axis]-hi[axis],lo[axis]-ahi[axis])<=.16 for axis in range(3)) for other,(alo,ahi) in enumerate(piece_bounds))
+   assert grounded or joined, f'{pieces[index].name} does not touch ground or another piece'
+  continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -604,6 +657,13 @@ for building_id, building_root in building_roots.items():
     point.y=(point.y+center_z)*scale_z
     vertex.co=inverse @ point
    obj.data.update()
+  if building_root.name.split('.')[0]=='motor-pool':
+   bpy.context.view_layer.update()
+   for obj in meshes:
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    xs=[p.x for p in points];zs=[-p.y for p in points]
+    assert min(xs)>=-11.5 and max(xs)<=11.5 and min(zs)>=-7.5 and max(zs)<=7.5, f'{obj.name} exceeds the motor-pool plot'
+    print(f'MOTOR-POOL FINAL BOUNDS {obj.name}: X={min(xs):.2f}..{max(xs):.2f}, Y={min(p.z for p in points):.2f}..{max(p.z for p in points):.2f}, Z={min(zs):.2f}..{max(zs):.2f}')
 
 # One durable shared root; separate named children keep in-game placement addressable.
 audit_scrapyard_pieces()
@@ -668,7 +728,7 @@ if a.review:
  render('workshop-mayor.png',(7,36,-42),(0,4,0),46)
  # One clear three-quarter view of every named building, framed to its plot.
  footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
-            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),
+            'motor-pool':(3,2),'paint-shop':(2,2),'trading-post':(3,2),
             'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),
             'helipad':(4,4),'notice-board':(1,1)}
  for building_id,(fw,fd) in footprint.items():
