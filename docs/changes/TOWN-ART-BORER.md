@@ -12,24 +12,25 @@ machine is not wired into the game.
   hub. Raised the gripper shoes and contact pads onto the tube shell.
 - Kept the tube and cutter placement. The gantry rails sit on Y=0, matching the
   tube feet; the front coupling plate overlaps the tube end.
-- The dark post in the side view was the low gripper shoe at the tube's lower
-  quadrant. Its assembly was moved up against the shell. The pale sheet at the
-  cutter rim was traced studio background beyond the cutter's forged rim; the
-  radial mask clips it. The dark central curved shape came from the separate
-  shaft cylinders crossing the photographed hub; those cylinders were removed.
+- The duplicate dark post came from the four feet in the side photo being
+  carved into the shell as well as modeled separately. The side mask now cuts
+  those feet out, and the separate gripper shoes sit higher against the shell.
+  The pale sheet at the cutter rim was traced studio background outside the
+  forged rim; the radial mask clips it. Shaft cylinders that obscured the hub
+  were removed so the photographed centre is visible.
 
 ## Evidence and checks
 
 - Blender built and re-imported the GLB. Its internal placement checks passed:
   tube longest axis is Z, cutter pivot aligns to the tube front, and no mesh
-  falls below Y=0. Export reports 30,146 triangles and 3,434,992 bytes.
+  falls below Y=0. Export reports 30,146 triangles and 3,432,024 bytes.
 - `node tools/test-blender-output.mjs`: passed, 317 checks.
 - `node tools/test-repo-hygiene.mjs`: passed placement; size targets are advisory.
 - `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed, repeated once.
   The retained-size subtest expects the deleted `round-5.jpg` and fails with
   ENOENT. The audio subtest cannot start `ffmpeg` (`EPERM`). The round-6 JPG
   publication check passed both runs. No assertion was changed.
-- Review sheet: `docs/board/looks/town-art-borer/round-6.jpg` (356,589 bytes).
+- Review sheet: `docs/board/looks/town-art-borer/round-6.jpg` (356,434 bytes).
 - Claude should inspect the cutter's front silhouette and hub, the gripper shoes
   from the side, and the rail height and coupling contact. Browser and game-look
   checks do not apply because the asset is not wired into the game.

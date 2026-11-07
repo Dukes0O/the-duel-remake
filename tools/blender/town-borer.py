@@ -71,6 +71,9 @@ body_table={
  'top':{'front':12,'rear':1228,'centre':352,'along':'x','x_scale':.0253},
  'grey':28,'tolerance':42,'bleed_tolerance':48,'voxel':.14,'target':9000,
  'round':2.2,
+ # The photo's four gripper feet are separate meshes below, so cut them from
+ # the tube carve instead of leaving a duplicated dark post on its side.
+ 'cut':{'side':[(580,540,710,650),(900,540,1050,650),(1280,540,1440,650),(1690,540,1840,650)]},
  'mask_dir':str(root/'.evidence/round6/masks')}
 shield=carve_object('Shield tube carved',tex,body_table)
 shield.parent=borer; shield.location=(0,0,0); shield.rotation_euler[0]=math.pi; shield.scale[2]=-1.15
