@@ -1,51 +1,26 @@
-# WW-ART-PEACE round 6: dust tanker
-
-Changed `dust-tanker` only. The earlier look sheets and the four committed
-source photos remain in place.
+# WW-ART-PEACE ? dust tanker round 7
 
 ## Changes
 
-- Carved only the cab with `hull_model.py`, using side, front and overhead
-  masks trimmed at the cab boundary. The rear tanker photo does not enter the
-  cab hull.
-- Built the fuel tank as a lengthwise lathe. Its side profile comes from the
-  side-photo mask, the side photo wraps by height with arc scaling, and the
-  rear photo fills a circular end cap. Separate traced slabs form the tarp on
-  both sides. Four measured photo wheels sit on the ground plane with dark
-  photo-derived treads; two traced side slabs form the frame rails.
-- Kept source JPEGs untouched. Each embedded tanker photo copy is whole and
-  scaled to 1024 px wide, with no crop.
-- Added the named tanker root and parts to the existing Blender-output test.
-  No assertion was loosened. No race fingerprints apply.
-- Added `docs/board/looks/ww-art-peace/round-6.jpg` (1600 x 888 px,
-  216,303 bytes). The top row pairs the complete side source photo and a
-  same-sized side render. The bottom row shows front and rear three-quarter
-  views at 15 m and car height. All views came from the exported GLB imported
-  into an empty scene, with other meshes hidden and the Standard view transform.
+- Re-measured wheel circles in the side photo: front centre (116, 339), radius 74 px; rear centre (690, 339), radius 77 px. Converted both with the cab's `T_SCALE`; axle centres share the side-view transform and both pairs stay level and square.
+- Trimmed front-view mask regions for the mirrors and reduced the front-side mask contamination. The rear photo remains excluded from the cab views. The existing front photo plainly shows the goggles, so it remains the cab-front source; no generated image was needed.
+- Mapped the tank lathe only to the bare-metal lower band. Added a separate overhead-photo shell over the top third of the tank turn and retained the traced ragged cloth side slabs. Tightened both cloth masks and applied `Photo.bleed`.
+- Replaced the round-6 look sheet with `docs/board/looks/ww-art-peace/round-7.jpg` (1600 ? 1558 px, 276,617 bytes). It pairs side photo/render and front photo/render, then shows both three-quarter views. All renders came from the exported GLB in an empty scene with Standard view transform and other props hidden.
+- Exported GLB readback: 10,104 dust-tanker triangles, 2,978,640 bytes.
+- No test assertions changed. No race fingerprints apply to this art-only change.
 
 ## Checks
 
-- Blender export and GLB import/render: passed. Readback: 33,340 triangles;
-  3,003,984 bytes.
+- Blender export and render: passed. The full prop GLB was imported into an empty scene and rendered.
 - `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failures.
 - `node tools/test-repo-hygiene.mjs`: passed; repository placement clean.
-- Browser and in-game look checks were not run here. Claude should judge the
-  goggle visibility from the front three-quarter view, cab and tank seams,
-  tarp edges, wheel fit, frame rails and rear cap. The goggles read clearly
-  head-on, but they are partly lost at the three-quarter angle. White photo
-  edges and seams remain around the cab and tank ends in the review renders.
-- No lane tier or build was run; the art brief reserves those checks for Claude.
+- No browser check was run. Claude should judge the whole sheet, especially the tank-end cap, tarp edge halos, and cab/tank separation from both three-quarter views.
 
 ## Self-review
 
-Would a child laugh? **Yes, head-on: the oversized painted goggles are clear
-and silly.** From the submitted three-quarter angles they are less obvious.
-Does it hold together from three-quarters? **It reads as one tanker with its
-load, cab and wheels, but visible photo edges and seams keep the model from
-looking fully clean.** Claude should make the final art call.
+The goggles are clear in the front view and remain visible from the front three-quarter angle. The model still does not hold together from three-quarters: the tank end cap shows a large mismatched photo area, pale edge halos remain around the tarp, and the cab exposes tank geometry behind it. This is submitted as the requested measured round, with those visible faults called out for Claude's review.
 
 ## Removed
 
-- No tracked source files or earlier round sheets were removed.
-- Temporary renders, debug captures, and test logs from this lane are deleted
-  after recording this note.
+- Replaced the round-6 review note with this round-7 review note; the round-6 comparison sheet remains as prior evidence.
+- Temporary Blender renders, source captures, and test logs created for this round are removed from `.qa-dist/` before handoff.

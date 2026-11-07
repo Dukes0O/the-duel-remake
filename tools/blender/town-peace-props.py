@@ -28,7 +28,7 @@ import bpy
 import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from photo_model import Mesh, Photo, box as photo_box, trace, slab, lathe
+from photo_model import Mesh, Photo, box as photo_box, trace, slab, lathe, shrink
 from hull_model import View, occupancy, largest_part, carve_hull
 import town_base as town
 
@@ -715,6 +715,8 @@ def tank_cab_trim_front(mask):
     mask = mask.copy()
     mask[:108, :] = False  # the higher silhouette belongs to the tank's canvas
     mask[396:, :] = False  # wheels and bumper are not part of the cab hull
+    mask[150:235, :145] = False  # mirror and stem
+    mask[150:235, 463:] = False  # mirror and stem
     yy, xx = np.ogrid[:t_front.h, :t_front.w]
     for cx in (102, 508):
         mask &= (xx - cx) ** 2 + (yy - 424) ** 2 >= 54 ** 2
@@ -768,7 +770,8 @@ t_side_mat = t_side.material(.58)
 def tank_body_uv(index, distance, radius, angle):
     arc = math.degrees(math.asin(math.sin(angle))) / 90
     px = T_SIDE_X0 + distance / T_SCALE
-    py = T_GROUND - T_TANK_CENTER_Y / T_SCALE - arc * radius / T_SCALE * .84
+    # The lathe is bare metal only: map every turn into the lower metal band.
+    py = 263 - arc * 30
     return t_side.uv(px, py)
 
 def tank_cap_uv(photo, cx, cy, radius_px):
@@ -780,9 +783,9 @@ tank_body = Mesh()
 lathe(tank_body, 'side', (0, T_TANK_CENTER_Y, T_Z0), (0, 0, 1), (1, 0, 0),
       (0, 1, 0), profile, tank_body_uv, sides=48,
       cap_start=('side', tank_cap_uv(t_side, 376, T_TANK_CX, 18)),
-      cap_end=('rear', tank_cap_uv(t_rear, 286, 240, 135)))
+      cap_end=('side', tank_cap_uv(t_side, 875, 263, 74)))
 own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
-                     {'side': t_side_mat, 'rear': t_rear.material(.58)}),
+                     {'side': t_side_mat}),
     tanker, 'dust-tanker:photo-turned-fuel-tank')
 
 # The tarp outline is traced from the visible cloth, not from the hidden tank.
@@ -804,6 +807,8 @@ for i, (x0, y0) in enumerate(tarp_outline):
     crossing = ((y0 > gy) != (y1 > gy)) & \
         (gx < (x1 - x0) * (gy - y0) / (y1 - y0 or 1) + x0)
     tarp_solid ^= crossing
+tarp_solid &= ~tarp_photo.sky(seed_points(tarp_photo), tolerance=20, grey=20)
+tarp_solid = shrink(tarp_solid, 1)
 tarp_photo.bleed(tarp_solid, passes=24)
 tarp_mat = tarp_photo.material(.94)
 tarp_loops = trace(tarp_solid, (348, 58, 900, 232), tolerance=1.2, min_area=30)
@@ -817,6 +822,39 @@ for depth, side_name in ((-1.39, 'left'), (1.39, 'right')):
     own(tarp_mesh.finish(f'dust-tanker:tied-tarpaulin-{side_name}',
                          {'cloth': tarp_mat}), tanker,
         f'dust-tanker:tied-tarpaulin-{side_name}')
+
+# A single cloth shell follows the upper third of the tank's turn. Its colour
+# comes from the overhead photograph; the mask removes sky from every sampled
+# edge before photo bleed fills the filtered pixels.
+t_top_mask = shrink(~t_top.sky(seed_points(t_top), tolerance=20, grey=20), 2)
+t_top.bleed(t_top_mask, passes=24)
+t_top_mat = t_top.material(.96)
+tarp_shell = Mesh()
+shell_angles = 24
+shell_rings = []
+for distance, radius in profile:
+    ring = []
+    for k in range(shell_angles + 1):
+        angle = math.radians(30 + 120 * k / shell_angles)
+        shell_radius = radius + .07
+        point = (shell_radius * math.cos(angle),
+                 T_TANK_CENTER_Y + shell_radius * math.sin(angle),
+                 T_Z0 + distance)
+        px, py = tank_top_pick(point[0], point[1], point[2])
+        ring.append((tarp_shell.vertex(point), t_top.uv(px, py), angle))
+    shell_rings.append(ring)
+for ri in range(len(shell_rings) - 1):
+    for k in range(shell_angles):
+        a, ua, aa = shell_rings[ri][k]
+        b, ub, _ = shell_rings[ri][k + 1]
+        c, uc, _ = shell_rings[ri + 1][k + 1]
+        d, ud, _ = shell_rings[ri + 1][k]
+        angle = (aa + shell_rings[ri][k + 1][2]) / 2
+        tarp_shell.indexed((a, b, c, d), (ua, ub, uc, ud), 'overhead',
+                           (math.cos(angle), math.sin(angle), 0), True)
+own(tarp_shell.finish('dust-tanker:overhead-canvas-shell',
+                      {'overhead': t_top_mat}), tanker,
+    'dust-tanker:overhead-canvas-shell')
 
 # Axles and tyres use the measured outer tyre circles from the side photo.
 # Pixel centres/radii are read at the tyre edge, then share the cab's one scale.
@@ -999,8 +1037,9 @@ def tanker_shot(name, eye, target, resolution=(1200, 666), ortho=None, lens=43):
     bpy.ops.render.render(write_still=True)
 
 if args.round6_only:
-    tanker_shot('side', (-15, 1.55, 0), (0, 1.55, 0), ortho=12.2)
-    tanker_shot('three-quarter-front', (-6.5, 1.55, -13.5), (0, 1.45, 0), lens=48)
-    tanker_shot('three-quarter-rear', (6.5, 1.55, 13.5), (0, 1.45, 0), lens=48)
+    tanker_shot('side', (-15, 1.55, 0), (0, 1.55, 0), resolution=(920, 510), ortho=12.2)
+    tanker_shot('front', (0, 2.0, -14), (0, 2.0, 0), resolution=(609, 510), ortho=5.3)
+    tanker_shot('three-quarter-front', (-5.8, 2.3, -15), (0, 2.0, 0), lens=42)
+    tanker_shot('three-quarter-rear', (5.8, 2.3, 15), (0, 2.0, 0), lens=42)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
                   'newAsset':'dust-tanker' if args.round6_only else 'sal-pipe-trailer'}))
