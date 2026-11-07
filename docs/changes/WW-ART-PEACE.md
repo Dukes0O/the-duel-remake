@@ -2,19 +2,21 @@
 
 ## Changed
 
-Built the first four peace props from generated, measured photo references with `photo_model.py` and `hull_model.py`: `mirage-billboard`, `gunn-turret`, `gunn-rock`, and `kettles-chair`. Added 11 compressed source photos and their credits, one Blender-output budget entry, and the round 1 comparison sheet. The recipe rebuilds `public/assets/models/wasteland/town/peace-props.glb`.
+Round 2 replaces the carved turret body with a photo-mapped turned dome, one turned barrel with a dark bore cap, and three turned bolts. The chair now uses traced side slabs on two planes, solid seat/back/footrest boxes, and a turned pedestal. The billboard and rock were left untouched. Added the round 2 comparison sheet.
 
-Read back from the GLB: 29,664 triangles and 1,905,116 bytes. The sheet is 210,539 bytes.
+The round is incomplete: the turret and chair still have visible three-quarter defects, and `toll-cabinet` and `bound-sign` were not built because generated reference images could not be transferred into the lane. See `docs/board/looks/ww-art-peace/round-2-review.md` for the honest visual verdict and next review points.
+
+GLB readback: 20,928 triangles and 1,887,412 bytes. Round 2 sheet: `docs/board/looks/ww-art-peace/round-2.jpg`, 128,069 bytes.
 
 ## Checks
 
-- Blender 4.5 export and imported-GLB review renders: passed. The exported model was reimported into an empty scene; renders use Standard.
-- `node tools/test-blender-output.mjs`: passed, 304 checks and 0 failures.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory.
-- Browser review: Claude should inspect the billboard edge-on, turret bolt count and shine, the rock's far face, and especially the chair's three-quarter view.
+- Blender 4.5.13 recipe build and imported-GLB renders: completed; export was 1,887,412 bytes.
+- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- Browser check: not run; Claude should inspect the round 2 sheet, especially the turret bolts and chair cutout edges.
 - Changed assertions: none.
-- Race fingerprints: not applicable; this art-only card does not touch race code.
+- Race fingerprints: not applicable; this is art-only work.
 
 ## Removed
 
-Removed the first inconsistent generated chair photo set when replacing it with a more consistent four-view set. No existing model, runtime asset, or test was removed.
+Removed the previous photo-carved turret body and chair hull/frame geometry from the recipe. No earlier runtime model or photo was removed. Temporary renders and check logs are cleaned from `.qa-dist` before handoff.
