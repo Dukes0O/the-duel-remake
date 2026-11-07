@@ -94,9 +94,19 @@ stop adjusting and change the method.
   column; check the crop against the source photo before carving. A swapped
   crop can turn a mirror or the background into floating geometry.
 
+- **A tank under a tied cloth** (Dust's tanker, 6 November). Turn the tank and dress it with the side
+  photo laid straight on, so that it shows bare metal where the canvas stops. Build the cloth as one
+  draped surface from its hanging edge up to the crown, drawn in to the tank at that edge. Close the
+  ends with the end photos as thin traced plates. Flat slabs of cloth standing beside a tank fail from
+  every angle. See `town-peace-props.py`.
+- **Choosing a vehicle's size.** Measure the same height on the side and front photos. Their ratio
+  gives the width that goes with a length. The tanker's invented 11.2 m made its end photos 40% too
+  narrow for its height, which squashed the goggles and tilted the look of everything.
+
 ### Buildings
 
 - **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.
+- **Open bays that erase the whole front:** cuts wider than the measured openings remove the posts, and a `keep` box that reaches above the door removes the header and transom. Measure each bay and preserve its frame and upper wall.
 - **Anything standing in front of a wall or roof** (a porch, a sign, a pump) gets painted flat on the wall, and on the far wall too, since both sides wear one photo. No mask can separate it, because the wall is behind it. Generate the same object again, same camera, with those things removed (Dot's Diner: `dot-diner-wall.jpg`, `dot-diner-roof.jpg`), and carve from those. The removed things are their own pieces, wearing the full photo. A generated clean photo lined up within a few pixels of its reference.
 - **An overhead photo at a slant** shows side windows on the roof. Ask for a true plan view with no wall showing.
 - **A round tube comes out square** wherever it tapers, because side and top photos alone cannot round a corner. Set `round` to 2 in the table.
