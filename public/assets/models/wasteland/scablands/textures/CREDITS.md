@@ -1,5 +1,30 @@
 # Dry Dam texture credits
 
+## Ships in the sand, sister cabin photo sets
+
+The eight Good Hope and Marigold cabin views are original Codex ImageGen
+outputs made 2026-11-07 for the measured cabin carves. The model sources are
+compressed JPEGs in this folder. Each view was generated as a separate,
+centered orthographic studio photograph, measured with `tools/photo_grid.py`,
+and resized to a common 640 px maximum edge without changing its aspect ratio.
+No external source art or recognizable ship branding is used.
+
+- `good-hope-upperworks-side.jpg`, `good-hope-upperworks-bow.jpg`,
+  `good-hope-upperworks-stern.jpg`, `good-hope-upperworks-top.jpg`: a tall,
+  narrow freighter block with a closed bridge, charcoal paint and brown rust.
+- `marigold-upperworks-side.jpg`, `marigold-upperworks-bow.jpg`,
+  `marigold-upperworks-stern.jpg`, `marigold-upperworks-top.jpg`: a low,
+  two-deck block with bridge wings, boarded windows, ochre paint and heavy rust.
+
+The Good Hope and Marigold hulls use recoloured derivatives of the four
+measured Patience hull views: `good-hope-hull-{side,bow,stern,top}.jpg` and
+`marigold-hull-{side,bow,stern,top}.jpg`. They preserve the originals' pixel
+dimensions and framing. Pillow's grayscale colour map paints the Good Hope
+charcoal and the Marigold sun-bleached ochre; the carved underside keeps its
+red-brown material. Blender's glTF exporter drops object-linked material
+overrides on linked mesh data, so the exporter receives per-ship mesh copies
+made from the one carved hull datablock. Their positions, shape and UVs match.
+
 The concrete, rust and galvanized-steel pictures below are original
 Codex ImageGen outputs created on 2026-11-05. They are 512 x 512 compressed
 JPEGs used as repeating material pictures. `dam-face-projection.jpg` is a

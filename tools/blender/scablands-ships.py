@@ -62,10 +62,10 @@ UPPER_REAR_DOORS = ((274, 370, 314, 458), (452, 370, 492, 458))
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--round', type=int, default=1)
-parser.add_argument('--stage', choices=('patience', 'family'), default='patience')
+parser.add_argument('--stage', choices=('patience', 'fleet', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
-parser.add_argument('--render-view', choices=('whole', 'bow', 'dusk', 'above', 'comparison', 'deck', 'funnel'), default=None)
+parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'above', 'deck-good-hope', 'deck-marigold'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -85,12 +85,12 @@ if args.paths_only:
     raise SystemExit(0)
 if args.compose_sheet:
     from PIL import Image, ImageOps
-    names = ('whole', 'bow', 'dusk', 'above', 'deck', 'funnel')
+    names = ('whole', 'hope', 'marigold', 'above', 'deck-good-hope', 'deck-marigold')
     images = {name: Image.open(raw / f'{name}.jpg').convert('RGB') for name in names}
     canvas = Image.new('RGB', (1600, 1800))
-    layout = {'whole': (0, 0, 800, 600), 'bow': (800, 0, 800, 600),
-              'dusk': (0, 600, 800, 600), 'above': (800, 600, 800, 600),
-              'deck': (0, 1200, 800, 600), 'funnel': (800, 1200, 800, 600)}
+    layout = {'whole': (0, 0, 800, 600), 'hope': (800, 0, 800, 600),
+              'marigold': (0, 600, 800, 600), 'above': (800, 600, 800, 600),
+              'deck-good-hope': (0, 1200, 800, 600), 'deck-marigold': (800, 1200, 800, 600)}
     for name, (x, y, w, h) in layout.items():
         canvas.paste(ImageOps.fit(images[name], (w, h), Image.Resampling.LANCZOS), (x, y))
     canvas.save(sheet, 'JPEG', quality=83, optimize=True, progressive=True)
@@ -105,22 +105,19 @@ if args.render_view:
     bpy.ops.wm.open_mainfile(filepath=str(review_scene))
     scene = bpy.context.scene
     scene.camera = bpy.data.objects[f'review-camera-{args.render_view}']
-    reference_plane = bpy.data.objects['review-only side photograph']
-    reference_plane.hide_render = args.render_view != 'comparison'
+    if args.render_view == 'whole':
+        scene.camera.location = Vector((-35, 330, 1.2))
+        scene.camera.rotation_euler = (
+            Vector((5, 440, 4)) - scene.camera.location
+        ).to_track_quat('-Z', 'Y').to_euler()
+        scene.camera.data.lens = 24
     if args.render_view == 'above':
         scene.camera.data.type = 'PERSP'
-    if args.render_view == 'comparison':
-        for obj in scene.objects:
-            if obj.type == 'MESH':
-                obj.hide_render = (obj != reference_plane and
-                                   'ship-patience:upperworks' not in obj.name)
-    if args.render_view == 'dusk':
-        world = scene.world.node_tree.nodes.get('Background')
-        world.inputs[0].default_value = (.025, .035, .06, 1)
-        world.inputs[1].default_value = .40
-        bpy.data.objects['review-softbox'].data.energy = 85000
-        bpy.data.objects['review-fill'].data.energy = 60000
-    scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
+    if args.render_view == 'whole':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / '.qa-dist/check-fleet.png')
+    else:
+        scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
     print(f'Rendered {args.render_view}: {scene.render.filepath}')
     raise SystemExit(0)
@@ -131,7 +128,10 @@ from photo_model import Photo as DetailPhoto, Mesh as DetailMesh, trace, slab, l
 
 missing = [str(p) for p in [*photos.values(), ship_photo_full,
                            tex / 'patience-hull-side.jpg', tex / 'patience-hull-bow.jpg',
-                           tex / 'patience-hull-stern.jpg', tex / 'patience-hull-top.jpg'] if not p.is_file()]
+                           tex / 'patience-hull-stern.jpg', tex / 'patience-hull-top.jpg',
+                           *[tex / f'{ship}-upperworks-{view}.jpg'
+                             for ship in ('good-hope','marigold')
+                             for view in ('side','bow','stern','top')]] if not p.is_file()]
 if missing:
     raise FileNotFoundError('Ship source photographs are missing: ' + ', '.join(missing))
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -369,6 +369,8 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     forecastle=cube(name+'-raised-forecastle',(length*.31,deck+.55,0),(length*.28,.34,width*.62),steel,root.name,.09)
     parent(forecastle,root)
     for side in (-1,1):
+        if root.name == 'ship-marigold' and side < 0:
+            continue
         rail(name+'-main-deck-rail',(-length*.40,deck+.92,side*width*.34),(length*.25,deck+.92,side*width*.34),.055,iron,root.name)
         for i in range(8):
             x=-length*.39+i*length*.08
@@ -393,16 +395,16 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     return
 
 ships=[
-    ('ship-good-hope',(-45,-415),'GOOD HOPE',72,16.5,5.0,-12.2,0.12),
-    ('ship-marigold',(45,-440),'MARIGOLD',67,16.0,5.0,-12.0,-0.09),
     ('ship-patience',(5,-470),'PATIENCE',HULL_LENGTH,HULL_WIDTH,4.0,-4.0,0.07),
+    ('ship-good-hope',(-45,-415),'GOOD HOPE',72.0,12.0,4.0,-4.0,0.0),
+    ('ship-marigold',(45,-440),'MARIGOLD',72.0,12.0,4.0,-4.0,0.0),
 ]
 if args.stage == 'patience':
     ships=[ship for ship in ships if ship[0]=='ship-patience']
 roots={}
+shared_hull_mesh = None
 for ident,loc,label,length,width,deck,keel,lean in ships:
-    root_y = 0 if ident == 'ship-patience' else 6
-    r=root_obj(ident,(loc[0]+22,root_y,loc[1]),ident); roots[ident]=r
+    r=root_obj(ident,(loc[0],0,loc[1]),ident); roots[ident]=r
     if ident == 'ship-patience':
         hull_table = {
             'photos': {'side':'patience-hull-side.jpg','front':'patience-hull-bow.jpg',
@@ -422,6 +424,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         patience_hull.location = gv((0,-4,0))
         patience_hull['part'] = 'ship-patience:hull'
         parent(patience_hull,r)
+        shared_hull_mesh = patience_hull.data
         hull_deck = cube('ship-patience:weather-deck',(0,3.88,0),(70,.24,10.8),rust,'ship-patience',.04)
         parent(hull_deck,r)
         # The high-side letters sit on the bow plating and face out on both sides.
@@ -436,7 +439,89 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             label_curve.materials.append(name_paint); name_obj['part']='ship-patience'
             parent(name_obj,r)
     else:
+        # Keep the established deck fittings, but replace its independent hull
+        # with a linked duplicate of the single measured Patience hull mesh.
         photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
+        old_hull=bpy.data.objects.get(ident+' hull')
+        if old_hull:
+            bpy.data.objects.remove(old_hull,do_unlink=True)
+        if shared_hull_mesh is None:
+            raise RuntimeError('The Patience hull must be carved before its sisters.')
+        # The Blender GLB exporter drops object-linked material overrides on a
+        # linked mesh. Copy only the mesh datablock so each sister can carry
+        # its recoloured photo materials while keeping the exact carved shape.
+        sister_hull=bpy.data.objects.new(ident+':hull',shared_hull_mesh.copy())
+        scene.collection.objects.link(sister_hull)
+        sister_hull['part']=ident+':hull'
+        sister_hull.location=gv((0,-4,0)); parent(sister_hull,r)
+        family='good-hope' if ident=='ship-good-hope' else 'marigold'
+        for slot_index,source in enumerate(shared_hull_mesh.materials):
+            tint=source.copy(); tint.name=ident+' hull paint '+str(slot_index)
+            nodes,links=tint.node_tree.nodes,tint.node_tree.links
+            image_node=next((node for node in nodes if node.type=='TEX_IMAGE'),None)
+            if image_node:
+                original=Path(bpy.path.abspath(image_node.image.filepath)).name
+                suffix=original.replace('patience-hull-','')
+                recoloured=tex/f'{family}-hull-{suffix}'
+                image_node.image=bpy.data.images.load(str(recoloured),check_existing=True)
+            sister_hull.material_slots[slot_index].link='OBJECT'
+            sister_hull.material_slots[slot_index].material=tint
+        if args.stage != 'fleet':
+            for obj in list(scene.objects):
+                if obj.parent==r and any(key in obj.name for key in (
+                    'chart-room','chart-window','chart-door')):
+                    bpy.data.objects.remove(obj,do_unlink=True)
+        def sister_cabin_table(ship):
+            prefix='good-hope' if ship=='ship-good-hope' else 'marigold'
+            if prefix=='good-hope':
+                length_px=(33,604); ground=411; roof=126
+                front=(320,623,126); rear=(320,624,123)
+                top=(16,625,213,10.0/310.0)
+                cabin_height=9.0
+            else:
+                length_px=(12,620); ground=208; roof=39
+                front=(320,339,18); rear=(320,306,18)
+                top=(15,627,290,10.0/380.0)
+                cabin_height=5.5
+            return {
+                'photos': {'side':f'{prefix}-upperworks-side.jpg',
+                           'front':f'{prefix}-upperworks-bow.jpg',
+                           'rear':f'{prefix}-upperworks-stern.jpg',
+                           'top':f'{prefix}-upperworks-top.jpg'},
+                'length':16.6,'width':10.0,'height':cabin_height,
+                'forward':-1,'side_front_on_left':True,
+                'side':{'start':length_px[0],'end':length_px[1],'ground':ground},
+                'front':{'centre':front[0],'ground':front[1],'top':front[2],
+                         'top_height':cabin_height},
+                'rear':{'centre':rear[0],'ground':rear[1],'top':rear[2],
+                        'top_height':cabin_height},
+                'top':{'front':top[0],'rear':top[1],'centre':top[2],
+                       'x_scale':top[3]},
+                'grey':26,'tolerance':36,'bleed_tolerance':24,
+                'voxel':.14,'target':2600,
+                'mask_dir':str(raw/'masks'/prefix),
+            }
+        if args.stage != 'fleet':
+            table=sister_cabin_table(ident)
+            cabin=carve_object(ident+':upperworks',tex,table)
+            cabin.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
+            cabin.location=gv((-25.5,deck,0)); cabin['part']=ident+':upperworks'
+            parent(cabin,r)
+        if args.stage != 'fleet' and ident=='ship-good-hope':
+            funnel=cylinder('good-hope-rusted-funnel',(-29,13.1,0),1.05,4.2,rust,ident,16)
+            parent(funnel,r)
+            cap=cylinder('good-hope-funnel-cap',(-29,15.25,0),1.18,.20,iron,ident,16)
+            parent(cap,r)
+            mast=cylinder('good-hope-short-mast',(-17,13.5,0),.09,3.2,steel,ident,8)
+            parent(mast,r)
+            for side in (-1,1):
+                stay=beam(f'good-hope-mast-stay-{side}',(-17,12.2,0),(-18,15.0,side*1.6),.045,iron,ident)
+                parent(stay,r)
+        elif args.stage != 'fleet':
+            funnel=cylinder('marigold-weathered-funnel',(-29,10.9,0),.95,3.0,rust,ident,16)
+            parent(funnel,r)
+            cap=cylinder('marigold-funnel-cap',(-29,12.45,0),1.05,.18,iron,ident,16)
+            parent(cap,r)
     if ident=='ship-patience':
         # Dot's Diner pattern: one measured carve table, followed by a named
         # root and one fitted body. The bridge front points bowward (+X); its
@@ -671,7 +756,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             hook=torus_local(f'patience-derrick-hook-{i}',(x+lean_side*4.8,8.55,z),.22,.055,iron,ident,'X',16,6); parent(hook,r)
     # Each anchor leaves a real bow hawsepipe, hangs to the bed, then trails away.
     for side in (-1,1):
-        cr=root_obj(f'{ident}:anchor-chain:{side}',(loc[0]+22,0,loc[1]),f'{ident}:anchor-chain')
+        cr=root_obj(f'{ident}:anchor-chain:{side}',(0,0,0),f'{ident}:anchor-chain'); parent(cr,r)
         if ident=='ship-patience':
             pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,3.2,side*5.7),.48,.14,steel,f'{ident}:anchor-chain','X',20,8); parent(pipe,cr)
             for i in range(16):
@@ -680,6 +765,15 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 z=side*(width*.45+min(1.8,i*.11))
                 link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.22,.055,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',8,4); parent(link,cr)
             anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+11,-2.1,side*(width*.44+2.7)),.42,.18,rust,f'{ident}:anchor-chain',12)
+            parent(anchor,cr)
+        else:
+            pipe=torus(f'{ident}-hawsepipe-{side}',(length*.43,3.1,side*5.6),.42,.11,steel,f'{ident}:anchor-chain','X',12,4); parent(pipe,cr)
+            for i in range(14):
+                x=length*.43+i*.58
+                y=2.7-min(4.7,i*.58) if i<9 else -2.0
+                z=side*(width*.45+min(1.6,i*.12))
+                link=torus(f'{ident}-anchor-link-{side}-{i}',(x,y,z),.19,.045,iron,f'{ident}:anchor-chain','Z' if i%2 else 'X',6,3); parent(link,cr)
+            anchor=cylinder(f'{ident}-anchor-{side}',(length*.43+9,-2.1,side*(width*.44+2.4)),.34,.16,rust,f'{ident}:anchor-chain',10)
             parent(anchor,cr)
     if ident=='ship-patience':
         # A visible stern shaft, four-blade wheel and hanging rudder complete the hull.
@@ -694,24 +788,30 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         rudder=cube('patience-stern-rudder',(-34.4,-3.45,0),(1.0,4.4,3.8),rust,'ship-patience:rudder',.28); parent(rudder,r)
         stock=cylinder('patience-rudder-stock',(-34.2,-3.4,0),.28,4.8,steel,'ship-patience:rudder',18); parent(stock,r)
     # Slightly different lean about each grounded centre line.
-    r.rotation_euler[2]=lean
     if ident == 'ship-patience':
         r.rotation_euler[0]=math.radians(4)
+        r.rotation_euler[2]=math.radians(90)
+    if ident=='ship-good-hope':
+        r.rotation_euler[0]=math.radians(4)
+        r.rotation_euler[1]=math.asin(.5/length)
+        r.rotation_euler[2]=math.radians(90)
     if ident=='ship-marigold':
+        r.rotation_euler[0]=math.radians(-6)
+        r.rotation_euler[1]=-math.asin(1.0/length)
+        r.rotation_euler[2]=math.radians(90)
         # The missing half of the rail exposes the old working deck.
-        for side in (-1,1):
-            for i in range(5):
-                x=-length*.29+i*length*.08
-                if side<0 and i>2: continue
-                rail_obj=beam(f'marigold-surviving-rail-{side}-{i}',(x,deck+.92,side*width*.34),(x+.05,deck+1.15,side*width*.34),.07,steel,ident)
-                parent(rail_obj,r)
+        for i in range(5):
+            x=-length*.29+i*length*.08
+            rail_obj=beam(f'marigold-surviving-rail-{i}',(x,deck+.92,width*.34),(x+.05,deck+1.15,width*.34),.07,steel,ident)
+            parent(rail_obj,r)
         # Exposed, removable 18 m propeller shaft at her stern.
         shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
-        shaft=cylinder('marigold-removable-18m-shaft',(-length*.47,deck-3.9,0),.22,18,steel,'ship-marigold:shaft',20,'X'); parent(shaft,shaft_root)
-        prop=torus('ship-marigold-propeller-ring',(-length*.47,deck-3.9,0),1.45,.12,rust,'ship-marigold:shaft','X'); parent(prop,shaft_root)
+        shaft=cylinder('marigold-removable-18m-shaft',(-41,-1.55,6.5),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
+        prop_root=root_obj('ship-marigold:propeller',(0,0,0),'ship-marigold:propeller'); parent(prop_root,r)
+        prop=torus('ship-marigold-propeller-ring',(-50,-1.55,6.5),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
         for blade in range(4):
             a=blade*math.pi/2
-            b=beam(f'marigold-propeller-blade-{blade}',(-length*.47,deck-3.9,0),(-length*.47+math.cos(a)*1.4,deck-3.9+math.sin(a)*1.4,0),.34,steel,'ship-marigold:shaft',.10); parent(b,shaft_root)
+            b=beam(f'marigold-propeller-blade-{blade}',(-50,-1.55,6.5),(-50,-1.55+math.sin(a)*1.3,6.5+math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
 
 # Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
 # the main deck is y=11 and the platform is y=25.
@@ -837,11 +937,11 @@ if args.stage == 'family':
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
 ship_ground=sand
-if args.stage == 'patience':
+if args.stage in ('patience','fleet'):
     # Side-specific phase-shifted wavelengths roughen the edge. The outer row
     # lies on the shared bed; the inner row overlaps the plating.
     rng = __import__('random').Random(10410)
-    verts=[]; faces=[]; stations=145; rows=9
+    verts=[]; faces=[]; stations=73; rows=5
     for side in (-1, 1):
         base=len(verts)
         phases=[rng.uniform(0, 2*math.pi) for _ in range(6)]
@@ -866,7 +966,7 @@ if args.stage == 'patience':
                 ripple=.20*math.sin(t*2*math.pi*72/9+u*4+phases[4])
                 y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**1.55)
                 if row == rows-1: y=-2.0
-                verts.append(gv((27+along+along_wobble,y,-470+lateral)))
+            verts.append(gv((5+lateral,y,-470+along+along_wobble)))
         for i in range(stations-1):
             for row in range(rows-1):
                 a=base+i*rows+row; b=a+rows
@@ -876,6 +976,33 @@ if args.stage == 'patience':
     for polygon in drift_mesh.polygons: polygon.use_smooth=True
     drift=bpy.data.objects.new('ship-patience:drifts',drift_mesh); scene.collection.objects.link(drift)
     drift['part']='ship-patience:drifts'
+    if args.stage=='fleet':
+        for ship_index,(ident,bank_side) in enumerate((('ship-good-hope',1),('ship-marigold',-1))):
+            ship_root=roots[ident]
+            vertices=[]; faces=[]; stations=49; rows=5
+            for side in (-1,1):
+                base=len(vertices)
+                for i in range(stations):
+                    t=i/(stations-1); along=-36+72*t
+                    edge=.24*math.sin(t*2*math.pi*72/13+ship_index)
+                    for row in range(rows):
+                        u=row/(rows-1)
+                        z=side*(5.25+11*u+edge*u)
+                        crest=.55+(.62 if side==bank_side else .12)*math.sin(math.pi*t)**.7
+                        if ship_index==1 and side>0 and t<.30:
+                            crest=-1.72+.12*(t/.30)
+                        y=-2+(crest+2)*(math.cos(u*math.pi/2)**1.5)
+                        if row==rows-1: y=-2
+                        vertices.append(gv((along,y,z)))
+                for i in range(stations-1):
+                    for row in range(rows-1):
+                        a=base+i*rows+row; b=a+rows
+                        faces.append((a,b,b+1,a+1) if side>0 else (a,a+1,b+1,b))
+            drift_mesh=bpy.data.meshes.new(ident+' wind-bank mesh')
+            drift_mesh.from_pydata(vertices,[],faces); drift_mesh.materials.append(sand); drift_mesh.update()
+            for polygon in drift_mesh.polygons: polygon.use_smooth=True
+            drift=bpy.data.objects.new(ident+':drifts',drift_mesh); scene.collection.objects.link(drift)
+            drift['part']=ident+':drifts'; parent(drift,ship_root)
 for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ()):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.
@@ -907,9 +1034,17 @@ def normalize_picture_coordinates():
         if obj.type != 'MESH':
             continue
         mesh = obj.data
+        if mesh.validate(verbose=False, clean_customdata=False):
+            print(f'Repaired invalid mesh data before UV export: {obj.name}')
+        mesh.update()
         if not mesh.uv_layers:
             uv = mesh.uv_layers.new(name='UVMap')
             for loop in mesh.loops:
+                if loop.vertex_index >= len(mesh.vertices):
+                    raise RuntimeError(
+                        f'{obj.name} has invalid loop {loop.index} vertex '
+                        f'{loop.vertex_index} for {len(mesh.vertices)} vertices'
+                    )
                 co = mesh.vertices[loop.vertex_index].co
                 uv.data[loop.index].uv = (co.x, co.y)
         primary = mesh.uv_layers.active or mesh.uv_layers[0]
@@ -942,18 +1077,21 @@ def trim_patience_detail():
     ratios = {
         'ship-patience': .18,
         'ship-patience:anchor-chain': .38,
-        'ship-patience:drifts': .12,
         'ship-patience:mast': .45,
         'ship-patience:propeller': .48,
         'ship-patience:rudder': .55,
         'ship-patience:bell': .55,
+        'ship-good-hope': .42,
+        'ship-good-hope:anchor-chain': .38,
+        'ship-marigold': .42,
+        'ship-marigold:anchor-chain': .38,
     }
     for obj in scene.objects:
         if obj.type != 'MESH':
             continue
         part = obj.get('part', '')
         ratio = ratios.get(part)
-        if ratio is None or not part.startswith('ship-patience'):
+        if ratio is None:
             continue
         modifier = obj.modifiers.new('round-12 detail budget', 'DECIMATE')
         modifier.decimate_type = 'COLLAPSE'
@@ -977,8 +1115,9 @@ def camera(name, location, target, lens=55):
 def add_lighting():
     world=bpy.data.worlds.new('bright overcast sky') if not bpy.data.worlds else bpy.data.worlds[0]
     world.use_nodes=True; world.node_tree.nodes['Background'].inputs[0].default_value=(.65,.68,.70,1); world.node_tree.nodes['Background'].inputs[1].default_value=.8; scene.world=world
-    data=bpy.data.lights.new('large overcast softbox','AREA'); light_obj=bpy.data.objects.new('large overcast softbox',data); scene.collection.objects.link(light_obj)
-    light_obj.location=gv((95,110,-410)); data.energy=100000; data.shape='DISK'; data.size=120
+    data=bpy.data.lights.new('even daylight','SUN'); light_obj=bpy.data.objects.new('even daylight',data); scene.collection.objects.link(light_obj)
+    light_obj.location=gv((20,70,-390)); data.energy=2.0; data.angle=math.radians(18)
+    light_obj.rotation_euler=(gv((0,-2,-440))-light_obj.location).to_track_quat('-Z','Y').to_euler()
 
 def render_imported_review():
     # Export first, clear the authored scene, then import exactly the GLB under review.
@@ -1011,18 +1150,12 @@ def render_imported_review():
     ground.data.materials.append(next(mat for mat in bpy.data.materials
                                       if mat.name.startswith('Town / sand')))
 
-    def area(name, game_location, energy, size):
-        data = bpy.data.lights.new(name, 'AREA')
-        data.energy, data.shape, data.size = energy, 'DISK', size
-        data.use_shadow = False
-        obj = bpy.data.objects.new(name, data)
-        review_scene.collection.objects.link(obj)
-        obj.location = gv(game_location)
-        obj.rotation_euler = (gv((0, 4, -465)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
-        return obj
-
-    key = area('review-softbox', (5, 44, -430), 44000, 55)
-    fill = area('review-fill', (65, 26, -510), 26000, 45)
+    sun_data = bpy.data.lights.new('even daylight', 'SUN')
+    sun_data.energy, sun_data.angle = 2.0, math.radians(18)
+    sun = bpy.data.objects.new('even daylight', sun_data)
+    review_scene.collection.objects.link(sun)
+    sun.location = gv((20, 70, -390))
+    sun.rotation_euler = (gv((0, -2, -440)) - sun.location).to_track_quat('-Z', 'Y').to_euler()
 
     def add_camera(name, eye, target, scale, resolution=(1000, 700)):
         data = bpy.data.cameras.new(name)
@@ -1031,55 +1164,17 @@ def render_imported_review():
         cam.location = gv(eye)
         cam.rotation_euler = (gv(target) - cam.location).to_track_quat('-Z', 'Y').to_euler()
         data.type = 'PERSP'
-        if data.type == 'PERSP':
-            data.lens = 35 if name in ('review-camera-whole', 'review-camera-dusk') else 45
-        else:
-            data.ortho_scale = scale
+        data.lens = 35
         review_scene.render.resolution_x, review_scene.render.resolution_y = resolution
         return cam
 
-    add_camera('review-camera-whole', (27, 1.2, -590), (27, 10, -470), 96, (1200, 900))
-    review_scene.objects['review-camera-whole'].data.lens = 35
-    add_camera('review-camera-bow', (91, 1.2, -497), (46, 12, -470), 96, (1200, 900))
-    review_scene.objects['review-camera-bow'].data.lens = 24
-    add_camera('review-camera-dusk', (27, 1.2, -590), (27, 10, -470), 96, (1200, 900))
-    review_scene.objects['review-camera-dusk'].data.lens = 35
-    add_camera('review-camera-above', (27, 150, -470), (27, 6, -470), 98, (1200, 900))
-    review_scene.objects['review-camera-above'].data.lens = 45
-    add_camera('review-camera-comparison', (10.3, 15.2, -430), (10.3, 15.2, -470), 40, (1400, 600))
-    # View (e): eye-level, on the centreline, 15 m ahead of the bridge face,
-    # looking level aft so the bridge front and foredeck share the frame.
-    add_camera('review-camera-deck', (22.4, 5.7, -470), (7.4, 5.7, -470), 35, (1200, 900))
-    # View (f): from deck height, 15 m ahead of the funnel and aimed above its roof.
-    add_camera('review-camera-funnel', (-21.5, 5.7, -470), (-6.5, 13.8, -470), 35, (1200, 900))
-    review_scene.objects['review-camera-deck'].data.lens = 35
-    review_scene.objects['review-camera-funnel'].data.lens = 35
-
-    # A flat reference plane shares the comparison camera and the measured
-    # 23 m horizontal scale; its photographed background remains visible.
-    ref_image = bpy.data.images.load(str(tex / 'patience-upperworks-side.jpg'), check_existing=False)
-    ref_mat = bpy.data.materials.new('Review-only measured side photograph')
-    ref_mat.use_nodes = True
-    ref_nodes = ref_mat.node_tree.nodes
-    ref_nodes.clear()
-    ref_out = ref_nodes.new('ShaderNodeOutputMaterial')
-    ref_emission = ref_nodes.new('ShaderNodeEmission')
-    ref_tex = ref_nodes.new('ShaderNodeTexImage')
-    ref_tex.image = ref_image
-    ref_mat.node_tree.links.new(ref_tex.outputs['Color'], ref_emission.inputs['Color'])
-    ref_mat.node_tree.links.new(ref_emission.outputs[0], ref_out.inputs['Surface'])
-    x0, x1 = 14.0, 30.6
-    y0, y1 = 11.0, 22.0
-    z = -475.0
-    verts = [gv((x0,y0,z)), gv((x1,y0,z)), gv((x1,y1,z)), gv((x0,y1,z))]
-    mesh = bpy.data.meshes.new('review photo comparison plane')
-    mesh.from_pydata(verts, [], [(0,1,2,3)])
-    mesh.materials.append(ref_mat)
-    uv = mesh.uv_layers.new(name='UVMap')
-    for li, coord in zip(mesh.polygons[0].loop_indices, ((0,0),(1,0),(1,1),(0,1))):
-        uv.data[li].uv = coord
-    plane = bpy.data.objects.new('review-only side photograph', mesh)
-    review_scene.collection.objects.link(plane)
+    add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
+    review_scene.objects['review-camera-whole'].data.lens = 24
+    add_camera('review-camera-hope', (16, 1.2, -435), (-23, 4, -415), 40, (1200, 900))
+    add_camera('review-camera-marigold', (27, 1.2, -417), (67, 4, -440), 40, (1200, 900))
+    add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
+    add_camera('review-camera-deck-good-hope', (-22.5, 5.7, -415), (-37.5, 12.0, -415), 35, (1200, 900))
+    add_camera('review-camera-deck-marigold', (68.5, 5.7, -440), (53.5, 8.3, -440), 35, (1200, 900))
 
     raw.mkdir(parents=True, exist_ok=True)
     review_scene.camera = review_scene.objects['review-camera-whole']

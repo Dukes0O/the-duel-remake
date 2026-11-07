@@ -209,3 +209,13 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 
 - Removed redundant triangles from joined Patience deck fittings, rails, mast hardware, chains and drifts through the recipe's applied decimation pass; no named story part was dropped.
 - Removed this step's temporary Blender renders and logs after review; round-13 scratch renders remain temporarily while the sheet is assembled.
+
+## Round 13, step 2 — Shared sister hull source (7 November 2026)
+
+- Added credited, recoloured four-view hull photos for the Good Hope and the Marigold. Committed the generated Good Hope and Marigold cabin photo sets and credits, without carving either cabin. The Marigold is set to 72 m in the ship list.
+- Reused the Patience carve as the sister hull source. Blender's GLB export does not retain object-linked material overrides on one shared mesh, so the sisters use copies of that mesh data with their own photo materials. The GLB therefore has three hull mesh records; this does not meet the card's one-mesh GLB requirement and needs Claude's decision before the next round.
+- GLB read-back is 2,132,300 bytes (2.03 MiB); the family stays below the 3 MB limit.
+
+### Removed
+
+- No prior hull or cabin sources were removed; the cabin photo sets are committed for the next point.
