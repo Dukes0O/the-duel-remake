@@ -151,6 +151,10 @@ def build_harbour_ramp():
        '+y':('stone',stone,(0,0,stone.w*80,stone.h*6)),
        '-y':('stone',stone,(0,0,stone.w*80,stone.h*6))})
  finish(walls,'harbour-ramp-walls',{'wall':wall.material(),'stone':stone.material()})
+ coping=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
+ for x0,x1 in ((-7,-4),(4,7)):
+  box(coping,x0,x1,5.55,6,-8,8,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+ finish(coping,'harbour-ramp-wall-coping',{'stone':stone.material()})
  # One uninterrupted cobbled face runs landward to seaward: +Z is downhill.
  deck=Mesh(); x0,x1=-4,4; z0,z1=-8,8; y0,y1=1.5,0; thick=.24
  corners=[(x0,y0,z0),(x1,y0,z0),(x1,y1,z1),(x0,y1,z1)]
@@ -279,10 +283,11 @@ def gate_open(opened):
  for name,angle in (('harbour-gate-left',math.radians(-90)),('harbour-gate-right',math.radians(90))):
   ob=next((o for o in scene.objects if o.name.startswith(name)),None)
   if ob:
-   ob.rotation_mode='XYZ'; ob.rotation_euler[1]=angle if opened else 0
+   # The GLB importer converts the model's Y-up hinge axis to Blender Z-up.
+   ob.rotation_mode='XYZ'; ob.rotation_euler[2]=angle if opened else 0
  scene.view_layers.update()
 shot('harbour-gate-shut',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9)
-gate_open(True);shot('harbour-gate-open',['harbour-gate'],(0,3,20),(0,3,0),(700,525),ortho=9);gate_open(False)
+gate_open(True);shot('harbour-gate-open',['harbour-gate'],(9,3,18),(0,3,0),(700,525),ortho=9);gate_open(False)
 shot('harbour-gate-three-quarter',['harbour-gate','harbour-wall-extra'],(10,1.55,17),(0,2.6,0),(1200,700),lens=28)
 shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp','harbour-wall-extra'],(12,1.55,16),(0,.3,0),(1200,700),lens=28)

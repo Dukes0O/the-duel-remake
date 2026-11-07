@@ -32,6 +32,7 @@
 - Point 2: the gate leaf mesh origins are already on their outer hinge lines; changed the open pose to a 90-degree swing about the vertical hinge axis, toward seaward, so both leaves remain visible against the frame sides.
 - Point 3: replaced the ramp's lintelled frame with an open-sky passage between two 6 m high, 3 m thick, 16 m long wall sections, leaving an 8 m clear width. Added one 16 m slope from 1.5 m landward to ground at the seaward end; the inner walls retain the photographed lower weed band.
 - Point 4: preserved the arch photo and ring while blending only the upper stone's outer 5% toward the harbour wall photo at both ends. Raised the arch sleepers and rails to the causeway's 4.18–4.55 m track level.
+- Point 3 follow-up: added the same dam-stone coping course at y = 5.55–6 m to both ramp walls so they meet the harbour wall's full six-metre height.
 
 ## Removed
 
