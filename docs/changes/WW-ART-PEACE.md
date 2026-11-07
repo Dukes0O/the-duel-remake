@@ -104,6 +104,17 @@ the bright cut-pipe photograph.
 Export and mask inspection are pending. No assertions changed. Claude should
 judge pipe readability and the end faces in the round-5 three-quarter views.
 
+### Round 5, point 3: measured wheels
+
+Measured the pickup wheel centres at side-photo x=95 and 314, y=302, with
+radii 47 and 46 px. Measured the trailer tandem centres at x=795 and 861,
+y=312, with radii 35 and 34 px. Each lathe is placed with its bottom on Y=0;
+the four photographed sidewalls remain specific to their own wheels. Treads
+now repeat small rectangular rubber crops at their measured pixel scale.
+
+Export and arch-fit inspection are pending. No assertions changed. Claude
+should inspect the pickup wheel fit and trailer tread in round 5.
+
 ### Removed
 
 - No files or behavior removed.

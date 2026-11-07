@@ -477,26 +477,51 @@ sal_body = carve_hull('sal-pipe-trailer:pickup-body', sal_views, sal_materials,
                       sal_solid, sal_xs, sal_ys, sal_zs, sal_voxel, 1900)
 own(sal_body, sal, 'sal-pipe-trailer:pickup-body')
 
-# Measured wheel centres from the left-side photo. The far-side pick uses the
-# same pixels, matching the symmetry of the photographed pickup.
-SAL_WHEEL_R = 47 * SAL_SCALE
+# Wheel centres and radii are measured from the left-side photo. The far-side
+# wheels mirror these positions across the chassis, as the photo shows.
 SAL_TRACK = .79
-for axle_name, px in (('front', 95), ('rear', 314)):
+def tire_material(photo, cx, cy, radius_px, stem):
+    # A small photo rectangle from the outer rubber band is one true-size
+    # tread tile. The UVs repeat it around the measured circumference.
+    half_h = max(8, round(radius_px * .28))
+    patch_w = max(5, round(radius_px * .15))
+    start_x = round(cx + radius_px * .78)
+    start_y = round(cy - half_h)
+    rgb = photo.rgb()[start_y:start_y + half_h * 2, start_x:start_x + patch_w]
+    image = bpy.data.images.new(f'{stem} tread tile', width=patch_w, height=half_h * 2,
+                                alpha=True)
+    rgba = np.ones((image.size[1], image.size[0], 4), dtype=np.float32)
+    rgba[:, :, :3] = rgb[::-1].astype(np.float32) / 255
+    image.pixels.foreach_set(rgba.ravel())
+    image.pack()
+    material = bpy.data.materials.new(f'{stem} rectangular tyre tread')
+    material.use_nodes = True
+    material.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .94
+    texture = material.node_tree.nodes.new('ShaderNodeTexImage')
+    texture.image = image
+    material.node_tree.links.new(texture.outputs['Color'],
+                                 material.node_tree.nodes['Principled BSDF'].inputs['Base Color'])
+    return material, patch_w
+
+for axle_name, px, cy, radius_px in (('front', 95, 302, 47), ('rear', 314, 302, 46)):
+    radius = radius_px * SAL_SCALE
     axle_z = SAL_Z0 + (px - SAL_SIDE_X0) * SAL_SCALE
+    tread_mat, tread_width_px = tire_material(sal_details['side'], px, cy,
+                                               radius_px, f'Sal pickup {axle_name}')
     for side_name, x in (('left', -SAL_TRACK), ('right', SAL_TRACK)):
         wheel = Mesh()
-        cx, cy = px, 302
-        tread_uv = lambda i, d, r, a, cx=cx, cy=cy: sal_details['side'].uv(
-            cx - math.cos(a) * 42 * .86, cy - math.sin(a) * 42 * .86)
-        disc_uv = lambda a, f, cx=cx, cy=cy: sal_details['side'].uv(
-            cx - math.cos(a) * 40 * f * .82, cy - math.sin(a) * 40 * f * .82)
-        lathe(wheel, 'side', (x, SAL_WHEEL_R, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
-              [(-.15, SAL_WHEEL_R * .9), (-.12, SAL_WHEEL_R),
-              (.12, SAL_WHEEL_R), (.15, SAL_WHEEL_R * .9)], tread_uv, sides=16,
+        tread_uv = lambda i, d, r, a, radius=radius, radius_px=radius_px, tread_width_px=tread_width_px: (
+            a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
+            i / 3)
+        disc_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
+            cx - math.cos(a) * radius_px * f * .84, cy - math.sin(a) * radius_px * f * .84)
+        lathe(wheel, 'tread', (x, radius, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+              [(-.15, radius * .9), (-.12, radius),
+              (.12, radius), (.15, radius * .9)], tread_uv, sides=20,
               cap_start=('side', lambda a, f: disc_uv(a, f * .9)),
               cap_end=('side', lambda a, f: disc_uv(a, f * .9)))
         own(wheel.finish(f'sal-pipe-trailer:pickup-wheel-{axle_name}-{side_name}',
-                         {'side': sal_details['side'].material(.86)}), sal,
+                         {'side': sal_details['side'].material(.86), 'tread': tread_mat}), sal,
             f'sal-pipe-trailer:pickup-wheel-{axle_name}-{side_name}')
 
 # One separate trailer frame, measured to the sag of its side rails. Each beam
@@ -598,20 +623,27 @@ for end_name, z, sign in (('front', -1.43, -1), ('rear', 5.96, 1)):
                         {'ends': end_photo.material(.6)}),
         sal, f'sal-pipe-trailer:pipe-cut-ends-{end_name}')
 
-# Trailer tandem wheels and simple photo-kit hitch, separate from the frame.
-for axle_index, z in enumerate((3.65, 4.45), 1):
+# Trailer tandem wheel centres and radii are measured separately from the
+# side photo; each axle has its own photographed sidewall and tread tile.
+for axle_index, (px, cy, radius_px) in enumerate(((795, 312, 35), (861, 312, 34)), 1):
+    z = SAL_Z0 + (px - SAL_SIDE_X0) * SAL_SCALE
+    radius = radius_px * SAL_SCALE
+    tread_mat, tread_width_px = tire_material(sal_details['side'], px, cy,
+                                               radius_px, f'Sal trailer axle {axle_index}')
     for side_name, x in (('left', -1.06), ('right', 1.06)):
         trailer_wheel = Mesh()
-        tire_uv = lambda i, d, r, a: sal_details['side'].uv(800 - math.cos(a)*34*.88, 312-math.sin(a)*34*.88)
-        face_uv = lambda a, f: sal_details['side'].uv(800-math.cos(a)*32*f*.88, 312-math.sin(a)*32*f*.88)
-        radius = .48
-        lathe(trailer_wheel, 'side', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+        tire_uv = lambda i, d, r, a, radius=radius, tread_width_px=tread_width_px: (
+            a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
+            i / 3)
+        face_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
+            cx-math.cos(a)*radius_px*f*.84, cy-math.sin(a)*radius_px*f*.84)
+        lathe(trailer_wheel, 'tread', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.14, radius*.9), (-.11, radius), (.11, radius), (.14, radius*.9)],
-              tire_uv, sides=14,
+              tire_uv, sides=18,
               cap_start=('side', lambda a, f: face_uv(a, f*.9)),
               cap_end=('side', lambda a, f: face_uv(a, f*.9)))
         own(trailer_wheel.finish(f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}',
-                                 {'side': sal_side.material(.86)}), sal,
+                                 {'side': sal_side.material(.86), 'tread': tread_mat}), sal,
             f'sal-pipe-trailer:trailer-wheel-{axle_index}-{side_name}')
 for name, center, size in (
     ('hitch-tongue', (0, .56, -1.38), (.16, .14, .9)),
