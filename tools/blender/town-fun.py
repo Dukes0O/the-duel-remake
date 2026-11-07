@@ -225,6 +225,14 @@ def measured_bounds(obj):
     points=[obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
     return tuple((min(p[i] for p in points),max(p[i] for p in points)) for i in range(3))
 
+# As in the photo, the truck lies along the road side of the tavern, seen side
+# on from the road, with its nose driven into the tavern's corner.
+import math as _math
+truck_root.rotation_euler=(0,0,_math.pi/2)
+_tavern=measured_bounds(tavern); _truck=measured_bounds(truck)
+truck_root.location.x+=(_tavern[0][0]+1.0)-_truck[0][1]
+truck_root.location.y+=(_tavern[1][1]-1.3)-(_truck[1][0]+_truck[1][1])/2
+
 for label,obj in (('tavern',tavern),('truck',truck)):
     bounds=measured_bounds(obj)
     print(f'{label} bounds Blender XYZ:',json.dumps(bounds))
