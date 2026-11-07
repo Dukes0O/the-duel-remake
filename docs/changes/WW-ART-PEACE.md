@@ -8,8 +8,13 @@ texture folder and credited them. Each image is under 1024 px on its long side.
 
 This does not complete the vehicle card. The Blender recipe has not yet been
 extended, the vehicles have not been modeled or rendered, and no round-4 sheet
-has been assembled. No Blender or repository checks were run. Claude should not
-review these photos as a finished round.
+has been assembled. Claude should not review these photos as a finished round.
+
+Checks run: `node tools/test-blender-output.mjs` passed (304 checks, 0 failed);
+`node tools/test-repo-hygiene.mjs` passed. No test assertions changed. Race
+fingerprints: not applicable; no simulation code changed. Browser and look
+checks: not run here; Claude should judge the vehicles after the model and
+round-4 sheet exist.
 
 The requested `docs/ART_LINE.md` was not present in this checkout; the current
 hull and photo method was read from the end of `docs/ASSET_PIPELINE.md`.
