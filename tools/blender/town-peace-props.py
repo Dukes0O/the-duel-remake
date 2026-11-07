@@ -483,9 +483,9 @@ SAL_TRACK = .79
 def tire_material(photo, cx, cy, radius_px, stem):
     # A small photo rectangle from the outer rubber band is one true-size
     # tread tile. The UVs repeat it around the measured circumference.
-    half_h = max(8, round(radius_px * .28))
-    patch_w = max(5, round(radius_px * .15))
-    start_x = round(cx + radius_px * .82)
+    half_h = max(8, round(radius_px * .25))
+    patch_w = max(3, round(radius_px * .08))
+    start_x = round(cx + radius_px * .72)
     start_y = round(cy - half_h)
     rgb = photo.rgb()[start_y:start_y + half_h * 2, start_x:start_x + patch_w]
     image = bpy.data.images.new(f'{stem} tread tile', width=patch_w, height=half_h * 2,
@@ -514,7 +514,7 @@ for axle_name, px, cy, radius_px in (('front', 95, 302, 47), ('rear', 314, 302, 
             a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
             i / 3)
         disc_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
-            cx - math.cos(a) * radius_px * f * .84, cy - math.sin(a) * radius_px * f * .84)
+            cx - math.cos(a) * radius_px * f * .80, cy - math.sin(a) * radius_px * f * .80)
         lathe(wheel, 'tread', (x, radius, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.15, radius * .9), (-.12, radius),
               (.12, radius), (.15, radius * .9)], tread_uv, sides=20,
@@ -636,7 +636,7 @@ for axle_index, (px, cy, radius_px) in enumerate(((795, 312, 35), (861, 312, 34)
             a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
             i / 3)
         face_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
-            cx-math.cos(a)*radius_px*f*.84, cy-math.sin(a)*radius_px*f*.84)
+            cx-math.cos(a)*radius_px*f*.80, cy-math.sin(a)*radius_px*f*.80)
         lathe(trailer_wheel, 'tread', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.14, radius*.9), (-.11, radius), (.11, radius), (.14, radius*.9)],
               tire_uv, sides=18,
@@ -763,7 +763,7 @@ def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
     bpy.ops.render.render(write_still=True)
 
 sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1400, 690), ortho=13.4)
-sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 756), lens=50)
-sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 756), lens=50)
+sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 650), lens=43)
+sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 650), lens=43)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
                   'newAsset':'sal-pipe-trailer'}))
