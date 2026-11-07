@@ -9,7 +9,7 @@
 - Added two sagged canvas roof patches to the open market hall and a curved salvaged windscreen to the greenhouse.
 - The family GLB is 1,782,476 bytes, below the 8 MB round-5 limit. The review sheet is 188,564 bytes, below 500 KB.
 
-The requested `docs/ART_LINE.md`, `tools/blender/photo_carve.py`, and `tools/photo_grid.py` are absent in this lane. I used the available `tools/blender/photo_model.py` and `hull_model.py`; the later five buildings use their existing recipe shapes because no measured photos for them are present in the family texture folder. Claude should decide whether those five need a further photo-based round.
+The requested `docs/ART_LINE.md`, `tools/blender/photo_carve.py`, and `tools/photo_grid.py` are absent in this lane. I used the available `tools/blender/photo_model.py` and `hull_model.py`. The canteen has bus reference images in the texture folder, but this pass added to its existing shell instead of carving from those images; stall-a, shopfront-a, market-hall and greenhouse also use their existing recipe shapes. Claude should decide whether these five need another photo-based pass.
 
 ## Checks
 
