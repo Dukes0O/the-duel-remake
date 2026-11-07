@@ -1,21 +1,22 @@
-# TOWN-ART-FOOD round 4
+# TOWN-ART-FOOD round 5
 
 ## Changed
 
-- Rebuilt `soup-kitchen` as a photo-carved hull using `Photo`, `View`, `occupancy`, `largest_part` and `carve_hull` from the shared Blender kits. The measured reference is 4.1 m wide, 3.2 m deep and 2.7 m high.
-- Added four 712 × 532 JPEG reference crops and their prompt and credit in the town texture credits. The GLB embeds 256 × 192 copies. Added a named `soup-kitchen:lamp` emissive node.
-- Left the other eleven food buildings unchanged. The family GLB is 1,831,388 bytes; the review sheet is 177,087 bytes.
+- Opened the soup-kitchen bay, reversed the front-photo projection, and kept its photo-backed tin, shelf, cans and pans on a rear wall. Added separate posts, benches, a curved awning, a photo-profiled pot, stones and the small emissive fire.
+- Added the bus driver's windscreen, destination board, grille, lamps and four low-poly mounted wheels to the canteen.
+- Changed stall-a's fruit awning to a curved sheet and added produce sacks.
+- Made shopfront-a's FOOD sign a separate thin slab with larger front-facing lettering.
+- Added two sagged canvas roof patches to the open market hall and a curved salvaged windscreen to the greenhouse.
+- The family GLB is 1,782,476 bytes, below the 8 MB round-5 limit. The review sheet is 188,564 bytes, below 500 KB.
+
+The requested `docs/ART_LINE.md`, `tools/blender/photo_carve.py`, and `tools/photo_grid.py` are absent in this lane. I used the available `tools/blender/photo_model.py` and `hull_model.py`; the later five buildings use their existing recipe shapes because no measured photos for them are present in the family texture folder. Claude should decide whether those five need a further photo-based round.
 
 ## Checks
 
-- `tools/test-blender-output.mjs`: passed, 305 checks, 0 failures. Read-back covers the family triangle and file budgets, material metallic values, and UV coordinate layers and ranges.
-- `tools/test-repo-hygiene.mjs`: passed. Its report lists pre-existing oversized files and advisory size totals; no placement failure.
-- `tools/test-review-evidence.mjs`: the first run passed 8 of 9 subtests; audio analysis failed because `ffmpeg` could not start (`spawnSync ffmpeg EPERM`). The required removal of round-3 evidence makes the suite's rerun fail one more subtest because it still hard-codes `round-3.jpg`; the audio failure repeats. Its bounded review-sheet subtest passed. This test is outside this card's owned files.
-- Blender build and exported-GLB read-back completed. No lane tier, build, browser check or gameplay run was performed, as directed for this art card.
-
-## Claude look check
-
-Inspect `docs/board/looks/town-art-food/round-4.jpg`, then view the soup kitchen at both game camera heights. Check oblique side and rear shape, visible openings, and the separate glow node. The new kitchen is the only revised building; the remaining eleven still need their photo-based turns.
+- Blender 4.5.13 rebuilt and reimported the exported GLB; five review views rendered.
+- `node tools/test-blender-output.mjs`: passed, 305 checks, 0 failures. The first run found the canteen at 6,017 triangles against its 5,000 plot limit. Removed redundant spare tires and reduced mounted-wheel segments; the rebuilt model passed.
+- `node tools/test-repo-hygiene.mjs`: passed. Its output lists advisory size targets only; no placement failure.
+- No lane tier or build was run, as directed for art cards. No browser check was run. Claude should inspect the submitted sheet and the named building views at driver and mayor heights.
 
 ## Changed assertions
 
@@ -27,5 +28,6 @@ None. This art-only change does not touch simulation code.
 
 ## Removed
 
-- Removed the previous soup-kitchen geometry-by-eye recipe from `tools/blender/town-food.py`.
-- Removed `docs/board/looks/town-art-food/round-3.jpg` and `round-3-review.md` after replacing them with the round-4 sheet and review.
+- Removed the round-4 sheet and review note after replacing them with round 5.
+- Removed the four mounted-as-spares tire meshes from the canteen; the bus now has four fitted wheels.
+- Removed this round's temporary renders and test logs after making the review sheet.

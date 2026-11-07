@@ -11,7 +11,7 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/town-art-food/round-4'
+evidence = root / '.evidence/2026-11-06/town-art-food/round-5'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
 sheet = root / 'docs/board/looks/town-art-food/round-4.jpg'
@@ -23,7 +23,7 @@ import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-from photo_model import Photo
+from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe
 from hull_model import View, occupancy, largest_part, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -251,6 +251,19 @@ solid = largest_part(solid)
 body = carve_hull('soup-kitchen:photo-carved-body', views, photo_materials,
                   solid, xs, ys, zs, voxel, 4200)
 keep(body)
+# The opening left by the cut needs a rear surface of its own. Put the tin,
+# shelf, cans and pans from the measured front photo on a wall at the back of
+# the bay, rather than leaving the player looking through the whole shelter.
+wall = bpy.data.meshes.new('soup-kitchen inner rear wall')
+wall_vertices=[(-1.55,.18,1.49),(-1.55,2.38,1.49),(1.55,2.38,1.49),(1.55,.18,1.49)]
+wall.from_pydata([town.game_vector(p) for p in wall_vertices],[],[(0,1,2,3)])
+wall.materials.append(photo_materials['front'])
+wall_uv=wall.uv_layers.new(name='UVMap')
+wall_coords=[photos['front'].uv(605,330),photos['front'].uv(605,112),
+             photos['front'].uv(107,112),photos['front'].uv(107,330)]
+for loop,uv in zip(wall.polygons[0].loop_indices,wall_coords): wall_uv.data[loop].uv=uv
+wall_obj=bpy.data.objects.new('soup-kitchen:photo-backed-rear-wall',wall)
+bpy.context.collection.objects.link(wall_obj);keep(wall_obj)
 
 # The posts, benches, pot and fire stand inside the bay at real depth. Their
 # simple geometry is separate from the photo-carved rear wall.
@@ -273,8 +286,17 @@ for x in (-1.70,1.70):
     box(f'soup-kitchen:bench-seat-{x}',(x,.72,-.42),(.58,.12,1.02),mat['weathered-plank'],.035)
     for z in (-.80,-.04):
         beam(f'soup-kitchen:bench-leg-{x}-{z}',(x,.12,z),(x,.67,z),.085,mat['rusted-steel'])
-# Round soot-blackened cauldron with a rolled rim, on a low three-stone fire.
-cylinder('soup-kitchen:pot-body',(0,.73,.0),.42,.48,mat['dark-steel'],24)
+# Round soot-blackened cauldron, turned from its outline in the front photo,
+# with its bottom above the three stones and the top left open.
+pot_mesh=PhotoMesh();photo_scale=4.1/712
+def pot_photo_uv(index,distance,radius,angle):
+    return photos['front'].uv(355+math.cos(angle)*radius/photo_scale,
+                              392-(distance-.50)/photo_scale)
+photo_lathe(pot_mesh,'pot', (0,0,0), (0,1,0), (1,0,0), (0,0,1),
+            [(.49,.21),(.53,.31),(.62,.40),(.84,.43),(.94,.42),(.97,.45)],
+            pot_photo_uv,sides=24,cap_start=('pot',lambda a,f: photos['front'].uv(355,392)),
+            cap_end=None)
+pot=pot_mesh.finish('soup-kitchen:photo-profiled-pot',{'pot':mat['dark-steel']});keep(pot)
 cylinder('soup-kitchen:pot-rim',(0,.98,.0),.45,.07,mat['dark-steel'],24)
 for x in (-.24,0,.24):
     sphere(f'soup-kitchen:fire-stone-{x}',(x,.16,-.02),(.13,.10,.13),mat['sand'],8,5)
@@ -282,9 +304,9 @@ for x in (-.24,0,.24):
 # A small dedicated emissive flame node remains individually addressable at night.
 lamp = bpy.data.objects.new('soup-kitchen:lamp', None)
 bpy.context.collection.objects.link(lamp); keep(lamp)
-lamp.location = town.game_vector((0, .78, -.1))
+lamp.location = town.game_vector((0, .32, -.1))
 lamp['emissive'] = True
-flame = sphere('soup-kitchen:lamp-glow', (0, .78, -.1), (.18, .28, .18), mat['fire-yellow'], 10, 6)
+flame = sphere('soup-kitchen:lamp-glow', (0, .32, -.1), (.075, .105, .075), mat['fire-yellow'], 10, 6)
 flame.parent = lamp; flame.location = (0, 0, 0)
 lamp_bsdf = mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
 if lamp_bsdf.inputs.get('Emission Color'):
@@ -309,6 +331,17 @@ for i in range(6):
 for z in (-2.15,0,2.15):
     panel=box(f'greenhouse:glazed-roof-panel-{z}',(0,2.43,z),(6.3,.045,.82),mat['glass'],.008)
     panel.rotation_euler[0]=.17 if z>0 else -.17
+# One salvaged car windscreen, retained with its curved pressed-glass profile,
+# replaces a missing roof sheet. The opening beside it lets warm air escape.
+windshield_verts=[];windshield_faces=[]
+for row,z in enumerate((-.64,.64)):
+    for i in range(13):
+        x=-1.0+2.0*i/12
+        y=2.40+.11*(1-(x/.98)**2)+(0.012 if row else 0)
+        windshield_verts.append((x,y,z))
+for i in range(12): windshield_faces.append((i,i+1,14+i,13+i))
+mesh_object('greenhouse:salvaged-windscreen',windshield_verts,windshield_faces,mat['glass'],'canvas')
+for z in (-.66,.66): beam(f'greenhouse:windscreen-rim-{z}',(-1,2.40,z),(1,2.40,z),.045,mat['rusted-steel'])
 for z in (-1.9,0,1.9): box(f'greenhouse:roof-patch-{z}',(2.65,2.49,z),(.72,.06,.8),mat['patched-canvas'],.02)
 box('greenhouse:water-butt',(2.45,.57,1.55),(.52,1.04,.52),mat['rusted-steel'],.1)
 
@@ -439,15 +472,8 @@ shopfront('shopfront-c',(36,0,12),'FIX-IT')
 
 # Bus canteen: bent sheet-metal shell with rounded front and wheel arches.
 add_building('canteen',(8,0,12))
-# Salvage blocks lift the bus body; the removed wheels sit aside as spare stock.
-for x in (-2.45,2.45):
-    for z in (-1.25,1.25):
-        box(f'canteen:axle-support-block-{x}-{z}',(x,.34,z),(.72,.38,.62),mat['cracked-concrete'],.06)
-for x in (-3.25,3.25):
-    for z in (-1.2,1.2):
-        bpy.ops.mesh.primitive_torus_add(major_segments=18,minor_segments=7,major_radius=.43,minor_radius=.13,
-                                         location=town.game_vector((x,.40,z)))
-        tyre=bpy.context.object;tyre.name=f'canteen:spare-tyre-{x}-{z}';tyre.data.materials.append(mat['rubber']);keep(tyre)
+# Four mounted wheels establish the real bus stance; keep their mesh light
+# enough for the two-by-one town plot budget.
 # A continuous curved roofline and rounded bonnet make this read as a bus body.
 xs=(-3.25,-2.85,-1.95,1.95,2.85,3.25)
 roofline=((1.35,1.60),(2.25,2.42),(2.65,2.78),(2.65,2.78),(2.25,2.42),(1.35,1.60))
@@ -473,7 +499,7 @@ for z in (-.98,.98):
     beam(f'canteen:front-bumper-arm-{z}',(-3.18,.53,z),(-3.50,.53,z),.10,mat['rusted-steel'])
 for x in (-2.45,2.45):
     for z in (-1.48,1.48):
-        bpy.ops.mesh.primitive_torus_add(major_segments=20,minor_segments=8,major_radius=.43,minor_radius=.15,
+        bpy.ops.mesh.primitive_torus_add(major_segments=12,minor_segments=6,major_radius=.43,minor_radius=.15,
                                          location=town.game_vector((x,.58,z)))
         wheel=bpy.context.object;wheel.name=f'canteen:bus-wheel-{x}-{z}';wheel.data.materials.append(mat['rubber']);keep(wheel)
 for i,x in enumerate((-2.35,-1.35,-.35,.65,1.65,2.48),1):
@@ -511,7 +537,17 @@ for z in (-5.8,0,5.8): beam(f'market-hall:ridge-{z}',(-6,4.22,z),(6,4.22,z),.13,
 for i in range(8):
     x=-5.25+i*1.5
     panel=tin_roof(f'market-hall:roof-bay-{i+1}',x,4.08,0,1.54,11.85,.015*(i%3-1))
-    panel.rotation_euler[0]=.04*((i%3)-1)
+    panel.rotation_euler[0]=.075*((i%3)-1)
+    if i in (1,6):
+        # A gust-caught patch of old canvas sags over one torn bay.
+        patch_verts=[];patch_faces=[];n=8
+        for row,z in enumerate((-4.9,-1.4)):
+            for j in range(n+1):
+                xx=x-.70+1.4*j/n
+                yy=4.13-.10*(1-((xx-x)/.70)**2)+(0.025 if row else 0)
+                patch_verts.append((xx,yy,z))
+        for j in range(n): patch_faces.append((j,j+1,n+2+j,n+1+j))
+        mesh_object(f'market-hall:wind-sagged-canvas-{i+1}',patch_verts,patch_faces,mat['patched-canvas'],'canvas')
 # Canvas repair strips, solar sheet, water drum, dangling task lights and marked stalls.
 for i,x in enumerate((-4.5,-1.5,2.7),1):
     box(f'market-hall:repair-patch-{i}',(x,4.17,-2.1+i*.8),(1.1,.06,1.3),mat['patched-canvas'],.03)
@@ -602,4 +638,7 @@ def render_match(name, camera_loc, up):
 # The photo references and exported GLB use the same straight-on and overhead cameras.
 render_match('soup-front-match',target+Vector((0,6.8,0)),Vector((0,0,1)))
 render_match('soup-overhead-match',target+Vector((0,0,7.2)),Vector((0,-1,0)))
+render_match('soup-three-quarter',target+Vector((-4.0,5.2,6.0)),Vector((0,0,1)))
+render_match('soup-look-into-bay',target+Vector((-1.0,4.0,2.1)),Vector((0,0,1)))
+render_match('soup-mayor-view',target+Vector((0,10.5,10.5)),Vector((0,0,1)))
 print(json.dumps({'glb':str(out),'evidence':str(evidence)}))
