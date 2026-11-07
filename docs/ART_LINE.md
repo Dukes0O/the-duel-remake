@@ -95,6 +95,7 @@ show no improvement, stop adjusting and change the method.
 - **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
 - **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
+- **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
 
 ### People
 

@@ -1,7 +1,0 @@
-﻿# TOWN-ART-OUTPOSTS round 5 review (Codex)
-
-Built `plane-school` beside the unchanged `dot-diner` in `outposts.glb`. The new school is photo-carved from clean side and overhead references, uses separate front/rear photos, and has a separate photo-textured slide mesh. The side and overhead photo crops align with their clean-wall versions on the 50 px grid after normalizing the plan crop against the 1 m doorway (56 px wide in the side view).
-
-The side render keeps the SCHOOL letters readable and the nose windscreen intact. The roof has an irregular gap near the tail; the slide reads as a small red wedge; and the end renders mix the end photos with other surfaces. The front view is the weakest. Do not treat these as a visual pass. The family sheet shows the original orthographic references beside the matching side/front/rear/above renders. For road, far-side and mayor angles it labels the nearest orthographic source as a reference, since this round's generated photos contain only the four required orthographic views.
-
-Please inspect the seven model cameras, especially the front and rear textures, the roof notch, the slide's projection off the wall, the windscreen joins and the SCHOOL lettering from both sides. The diner remains unchanged in source and render history. The exported file is 1.92 MB; the family has 17,368 triangles (diner 10,364; school 7,004), under 14,000 per building and 21,000 for the family.

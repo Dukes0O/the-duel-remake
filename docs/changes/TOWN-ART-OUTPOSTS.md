@@ -1,13 +1,13 @@
-﻿# TOWN-ART-OUTPOSTS round 5
+﻿# TOWN-ART-OUTPOSTS round 6
 
-Added `plane-school` from generated orthographic references, carved its fuselage through `carve_object`, and added its slide as a separate photo-textured mesh. Kept Dot's Diner in the family GLB without changing its recipe. Added source credits and a note to `docs/ART_LINE.md` about generated photo-board panels having different scales. Raised the family triangle ceiling by 7,000 to 21,000 and added per-building checks at 14,000 each.
+Replaced the plane-school source set with full-frame generated side, front, rear and overhead photos. Re-measured side landmarks and each end view on fresh 100 px grids. Updated the carve table, split SCHOOL into separate raised pieces on both walls, and rebuilt a broad photo-textured slide from the doorway to the ground. Dot's Diner's recipe and model geometry were not edited.
 
-**Checks:** Blender 4.5 recipe run completed and exported/read back the 1.92 MB GLB. Read-back measurements: 17,368 family triangles; diner 10,364; school 7,004. `node tools/test-blender-output.mjs`: 312 checks passed, 0 failed. `node tools/test-repo-hygiene.mjs`: passed. `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed; unrelated failures: an existing missing `town-art-power/round-4-review.md`, and `spawnSync ffmpeg EPERM`. The 50 px photo grids were inspected; the clean side and overhead views align to their original fuselage landmarks after plan-view scale normalization. No browser or game look check is run in this lane.
+**Checks:** Blender 4.5.13 completed the recipe, exported and re-imported `outposts.glb` (2,322,328 bytes), then rendered eight review views. `node tools/test-blender-output.mjs`: 312 checks passed, 0 failed. `node tools/test-repo-hygiene.mjs`: passed. `node tools/test-review-evidence.mjs`: 7 of 9 subtests passed, 2 existing failures (town-art-power lacks its matching round-4 note; ffmpeg could not start with EPERM). The side, front, rear, road, far-side and mayor views were inspected. The sheet pairs the four orthographic photos with corresponding exported-model renders and shows angled model views without photo references. Browser and in-game look checks were not run; Claude should inspect the front/rear body profile, broken wing/roof geometry in angled views, floating SCHOOL letters, and slide placement/width. No lane tier or build was run, per the art-card workflow.
 
-**Claude look checks:** inspect the seven model views in `round-5.jpg`, especially school end textures, the tail roof gap, slide projection, windscreen joins, and lettering on both sides. For road, far-side and mayor views, the sheet labels the nearest orthographic photo reference; this round did not generate matching oblique photos. The model's end views remain visibly rough and are not claimed as a pass.
+The round 6 result remains visibly poor and is not claimed as a pass. Independently generated end views do not match the side/plan aircraft well; this causes the thin, fragmented fuselage and roof. The separate text pieces also float away from the walls. The slide is wider and reaches down, but its opening alignment remains uncertain. Claude judges the result.
 
-**Changed assertions:** added named school body/slide checks, per-building triangle limits, and a summed family ceiling. Existing assertions and tolerances were not loosened.
+**Changed assertions:** none.
 
 **Race fingerprints:** not applicable; this is an unconnected art asset.
 
-**Removed:** none.
+**Removed:** deleted the superseded `round-5.jpg` and `round-5-review.md`; round 4 remains. Replaced the round 5 school photos with round 6 sources. Removed temporary grid images, model renders, Blender scratch file and test logs. Dot's Diner unchanged.
