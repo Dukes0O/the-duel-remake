@@ -126,6 +126,8 @@ compressed JPEGs and traced into the corresponding modular models.
 - `textures/town-safety-fence-wood.jpg`: weathered timber post-and-rail fence.
 - `textures/town-safety-fence-chain.jpg`: sagging chain-link mesh on rusted
   posts.
+- `textures/town-safety-fence-chain-alpha.png`: transparent, downsampled
+  derivative of the chain-link photo for the see-through mesh surface.
 - `textures/town-safety-wall-scrap.jpg`: salvaged sheet metal, car panels and
   doors assembled into a wall.
 - `textures/town-safety-wall-steel.jpg`: corrugated steel sheets on a frame.

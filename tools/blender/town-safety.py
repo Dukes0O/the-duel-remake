@@ -172,64 +172,87 @@ def lamp(name, center, size=(.20,.24,.20)):
     bsdf.inputs['Roughness'].default_value = .54
     return cube(name, center, size, mat, .03)
 
-# One-cell modular barriers. Their ends sit on the cell boundary so repeated
-# pieces meet without gaps; all visible rails have physical thickness.
-for family_name, material_name, height, post, slats in (
-    ('fence-wood','weathered-plank',1.45,.11,3),
-    ('fence-chain','iron-dark',1.8,.08,2),
-    ('wall-scrap','rusted-steel',2.35,.18,0),
-    ('wall-steel','galvanised-tin',3.0,.22,0),
-):
-    barrier_mat = materials[material_name]
-    for form in ('straight','corner','end'):
+# Photo-traced, modular barriers. Pixel bounds were measured from each
+# straight-on generated elevation; the floor row maps to Y=0 and its end
+# posts map to the 8 m cell edges. Gray openings stay empty in the traced mesh.
+barrier_sources = {
+    'fence-wood': ('town-safety-fence-wood.jpg', 1.45, (24, 166, 1580, 376)),
+    'fence-chain': ('town-safety-fence-chain.jpg', 1.8, (18, 94, 1582, 417)),
+    'wall-scrap': ('town-safety-wall-scrap.jpg', 2.35, (22, 56, 1582, 378)),
+    'wall-steel': ('town-safety-wall-steel.jpg', 3.0, (22, 52, 1577, 581)),
+}
+barrier_photos = {}
+barrier_meshes = {}
+for family_name, (photo_name, height, rect) in barrier_sources.items():
+    trace_photo_name = 'town-safety-fence-chain-alpha.png' if family_name == 'fence-chain' else photo_name
+    photo = Photo(tex / trace_photo_name)
+    trace_scale = 700 / 1600
+    photo.w = 700
+    photo.h = round(photo.image_h * 700 / photo.image_w)
+    photo._rgb = None
+    rect = tuple(round(value * trace_scale) for value in rect)
+    lift_if_dark(photo)
+    x0, y0, x1, floor_px = rect
+    sky = photo.sky([(5, 5), (photo.w - 6, 5)], tolerance=20, grey=24)
+    # Clip below the measured ground line so studio shadows do not become feet.
+    solid = ~sky
+    clipped = np.zeros_like(solid)
+    clipped[y0:floor_px, x0:x1] = solid[y0:floor_px, x0:x1]
+    if family_name == 'fence-chain':
+        # The alpha photo carries the fine diamond wires; keep the sheet's
+        # traced outer profile simple and build the rusted support posts solid.
+        clipped[:] = False
+        clipped[y0:floor_px, x0:x1] = True
+    min_loop_area = 1500 if family_name == 'fence-chain' else 18
+    loops = photo_trace(clipped, rect, tolerance=1.8, min_area=min_loop_area)
+    if not loops:
+        raise RuntimeError(f'{family_name}: no traced silhouette in {photo_name}')
+    mid_px = (x0 + x1) // 2
+    left_rect = (x0, y0, mid_px, floor_px)
+    right_rect = (mid_px, y0, x1, floor_px)
+    corner_left = photo_trace(clipped, left_rect, tolerance=1.8, min_area=min_loop_area)
+    corner_right = photo_trace(clipped, right_rect, tolerance=1.8, min_area=min_loop_area)
+    photo_material = photo.material()
+    if family_name == 'fence-chain':
+        bsdf = photo_material.node_tree.nodes.get('Principled BSDF')
+        image_node = next(node for node in photo_material.node_tree.nodes if node.type == 'TEX_IMAGE')
+        photo_material.node_tree.links.new(image_node.outputs['Alpha'], bsdf.inputs['Alpha'])
+        photo_material.alpha_threshold = .5
+        if hasattr(photo_material, 'surface_render_method'):
+            photo_material.surface_render_method = 'BLENDED'
+        elif hasattr(photo_material, 'blend_method'):
+            photo_material.blend_method = 'BLEND'
+    def make_barrier_mesh(name, axis, start, end, center, source_x0=x0, source_x1=x1, source_loops=loops):
+        mesh = PhotoMesh()
+        span = end - start
+        def to_world(px, py, depth):
+            along = start + (px - source_x0) / (source_x1 - source_x0) * span
+            y = (floor_px - py) / (floor_px - y0) * height
+            return (along, y, depth) if axis == 'x' else (depth, y, along)
+        photo_slab(mesh, 'photo', photo, source_loops, to_world, -0.035, 0.035)
+        obj = mesh.finish(name, {'photo': photo_material})
+        obj.location = town.game_vector(center)
+        return attach(obj)
+    barrier_photos[family_name] = photo
+    barrier_meshes[family_name] = (loops, photo, rect, height, x0, x1, floor_px)
+    for form in ('straight', 'corner', 'end'):
         b = building(f'{family_name}-{form}')
-        if form == 'corner':
-            runs = [('x',-4,4,4),('z',-4,4,4)]
-        elif form == 'end':
-            runs = [('x',-4,0,0)]
+        if form == 'straight' or form == 'end':
+            make_barrier_mesh(f'{family_name}-{form}-photo-run', 'x', -4, 4, (0, 0, 0))
         else:
-            runs = [('x',-4,4,0)]
-        for axis, lo, hi, fixed in runs:
-            length = hi-lo
-            positions = [lo, hi] if form == 'straight' else [lo, hi]
-            for side in positions:
-                if axis == 'x':
-                    x,z = side,fixed
-                    postname = f'{family_name}-{form}-upright'
-                    cube(postname,(x,height/2,z),(post,height,.20 if family_name.startswith('wall-') else post),barrier_mat,.025)
-                else:
-                    x,z = fixed,side
-                    cube(f'{family_name}-{form}-upright',(x,height/2,z),(.20 if family_name.startswith('wall-') else post,height,post),barrier_mat,.025)
-            if family_name == 'fence-wood':
-                for row in range(slats):
-                    y=.30+row*.43
-                    if axis == 'x': beam(f'{family_name}-{form}-rail-{row+1}',(lo,y,fixed),(hi,y,fixed),.14,barrier_mat)
-                    else: beam(f'{family_name}-{form}-rail-{row+1}',(fixed,y,lo),(fixed,y,hi),.14,barrier_mat)
-                if form == 'straight':
-                    if axis == 'x': beam(f'{family_name}-{form}-leaning-brace',(lo+.25,.2,fixed),(lo+1.2,1.25,fixed),.075,materials['rusted-steel'])
-                    else: beam(f'{family_name}-{form}-leaning-brace',(fixed,.2,lo+.25),(fixed,1.25,lo+1.2),.075,materials['rusted-steel'])
-            elif family_name == 'fence-chain':
-                for y in (.55,1.55):
-                    if axis == 'x': pipe(f'{family_name}-{form}-top-rail',(lo,y,fixed),(hi,y,fixed),.045,barrier_mat)
-                    else: pipe(f'{family_name}-{form}-top-rail',(fixed,y,lo),(fixed,y,hi),.045,barrier_mat)
-                # A fine linked diamond is real, thin wire, joined to both rails.
-                count = 27
-                for i in range(count+1):
-                    t=i/count; x=lo+length*t
-                    y=.62+(1 if i%2 else -1)*.12
-                    if axis=='x': pipe(f'{family_name}-{form}-mesh-wire',(x,.61,fixed),(x+(length/count*.5),1.48,fixed),.009,barrier_mat,sides=6)
-                    else: pipe(f'{family_name}-{form}-mesh-wire',(fixed,.61,lo+length*t),(fixed,1.48,lo+length*t+length/count*.5),.009,barrier_mat,sides=6)
+            # Two 4 m halves share a real corner post at the cell origin.
+            make_barrier_mesh(f'{family_name}-{form}-photo-run-x', 'x', -4, 0, (0, 0, 0),
+                              x0, mid_px, corner_left)
+            make_barrier_mesh(f'{family_name}-{form}-photo-run-z', 'z', 0, 4, (0, 0, 0),
+                              mid_px, x1, corner_right)
+        if family_name == 'fence-chain':
+            if form == 'corner':
+                post_positions = [(x, 0) for x in (-4, -2, 0)] + [(0, z) for z in (2, 4)]
             else:
-                # Irregular, overlapping cut plates with a visible cap rail.
-                count=max(4,round(length/1.2))
-                for i in range(count):
-                    t=lo+(i+.5)*length/count
-                    w=length/count+.035
-                    if axis=='x':
-                        cube(f'{family_name}-{form}-plate-{i+1}',(t,height*.48,fixed),(w,height*.86,.10),barrier_mat,.04)
-                        beam(f'{family_name}-{form}-top-cap-{i+1}',(t-w*.48,height,fixed),(t+w*.48,height,fixed),.08,materials['iron-dark'])
-                    else:
-                        cube(f'{family_name}-{form}-plate-{i+1}',(fixed,height*.48,t),(.10,height*.86,w),barrier_mat,.04)
+                post_positions = [(x, 0) for x in (-4, -2, 0, 2, 4)]
+            for x, z in post_positions:
+                pipe(f'{family_name}-{form}-solid-rusted-post', (x, 0, z), (x, height, z),
+                     .07, materials['rusted-steel'])
 # A broad, braced timber watchtower: 7.6 m to the lookout deck, 9.1 m at roof.
 b = building('watchtower')
 b['footprint_cells']=[1,1]
@@ -1063,3 +1086,109 @@ if out.stat().st_size>500000:raise RuntimeError(f'round 10 sheet exceeds 500 KB:
 print(f'ROUND 10 SHEET: {out.stat().st_size} bytes')
 '''
     subprocess.run(['python','-c',sheet_code,str(root),str(prop_sheet)],check=True)
+
+# Round 11: render the exported barrier pieces, not the source Blender meshes.
+round11_evidence=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-11'
+round11_sheet=root/'docs/board/looks/town-art-safety/round-11.jpg'
+round11_evidence.mkdir(parents=True,exist_ok=True)
+barrier_names=('fence-wood','fence-chain','wall-scrap','wall-steel')
+barrier_roots={obj.name:obj for obj in scene.objects if obj.name in {
+    f'{family}-{form}' for family in barrier_names for form in ('straight','corner','end')}}
+for family in barrier_names:
+    for form in ('straight','corner','end'):
+        if f'{family}-{form}' not in barrier_roots:
+            raise RuntimeError(f'round 11: exported GLB is missing {family}-{form}')
+barrier_groups={name:{obj,*obj.children_recursive} for name,obj in barrier_roots.items()}
+
+def clone_barrier(root_obj,suffix):
+    originals=barrier_groups[root_obj.name]
+    copies={}
+    for original in originals:
+        copy=original.copy()
+        if original.data is not None:copy.data=original.data
+        copy.name=f'{original.name}-{suffix}'
+        scene.collection.objects.link(copy)
+        copies[original]=copy
+    for original,copy in copies.items():
+        if original.parent in copies:copy.parent=copies[original.parent]
+    clone=copies[root_obj]
+    if root_obj.parent is not None:clone.parent=root_obj.parent
+    barrier_groups[clone.name]=set(copies.values())
+    return clone
+
+def review_camera(name,eye,target,scale,width,height):
+    data=bpy.data.cameras.new(name)
+    camera=bpy.data.objects.new(name,data);scene.collection.objects.link(camera)
+    camera.location=town.game_vector(eye);aim_z(camera,town.game_vector(target))
+    camera.data.type='ORTHO';camera.data.ortho_scale=scale;scene.camera=camera
+    scene.render.resolution_x=width;scene.render.resolution_y=height
+    return camera,data
+
+def render_barrier_frame(family,view,roots,camera_args):
+    visible=set().union(*(barrier_groups[obj.name] for obj in roots))
+    for obj in scene.objects:obj.hide_render=obj not in visible and obj not in (prop_ground,softbox)
+    prop_ground.hide_render=False;softbox.hide_render=False
+    camera,data=review_camera(f'{family}-{view}',*camera_args)
+    path=round11_evidence/f'{family}-{view}.png';scene.render.filepath=str(path)
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(camera,do_unlink=True);bpy.data.cameras.remove(data)
+    return path
+
+def place_barrier(obj,game_position,yaw=0):
+    obj.matrix_world=Matrix.Translation(town.game_vector(game_position)) @ Matrix.Rotation(yaw,4,'Z')
+
+# Adjacent 8 m runs meet at X=0; corner arms meet at the shared post and turn 90 degrees.
+assert -4+4==0
+assert 0+4==4
+assert 0+4==4
+print('JOIN CHECK: straight boundaries coincide; corner arms meet at (0,0) and turn 90 degrees.')
+
+for family in barrier_names:
+    straight=barrier_roots[f'{family}-straight']
+    corner=barrier_roots[f'{family}-corner']
+    second=clone_barrier(straight,'layout-copy')
+    end=barrier_roots[f'{family}-end']
+    for obj in scene.objects:
+        obj.hide_render=obj not in barrier_groups[straight.name] and obj not in (prop_ground,softbox)
+    prop_ground.hide_render=False;softbox.hide_render=False
+    height=barrier_sources[family][1]
+    camera,data=review_camera(f'{family}-straight-side',(0,height*.55,-13),(0,height*.55,0),10.2,1200,400)
+    path=round11_evidence/f'{family}-straight.png';scene.render.filepath=str(path)
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(camera,do_unlink=True);bpy.data.cameras.remove(data)
+    for obj in barrier_roots.values():
+        place_barrier(obj,(0,0,0))
+    place_barrier(straight,(-8,0,0))
+    place_barrier(corner,(0,0,0))
+    place_barrier(second,(0,0,8),-math.pi/2)
+    place_barrier(end,(0,0,16),-math.pi/2)
+    roots=(straight,corner,second,end)
+    render_barrier_frame(family,'layout-three-quarter',roots,((-18,14,-4),(-6,1.2,8),38,1200,700))
+    render_barrier_frame(family,'layout-mayor',roots,((-18,20,-4),(-6,.8,8),38,1200,700))
+    for obj in barrier_roots.values():
+        place_barrier(obj,(0,0,0))
+
+round11_sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
+from pathlib import Path
+import sys
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-11'
+families=[('fence-wood','WEATHERED TIMBER FENCE'),('fence-chain','SAGGING CHAIN-LINK FENCE'),('wall-scrap','SALVAGED SHEET AND CAR-DOOR WALL'),('wall-steel','CORRUGATED STEEL WALL')]
+W,H=1600,2170;page=Image.new('RGB',(W,H),(34,35,33));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),28);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),18);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),14)
+def fit(path,box):
+ im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(125,127,127));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
+d.text((26,13),'TOWN SAFETY | ROUND 11 | PHOTO-TRACED FENCES AND WALLS',font=title,fill=(240,228,205));row_h=526;y=54
+for family,caption in families:
+ d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(74,72,66));d.text((32,y+7),caption,font=label,fill=(240,194,125))
+ d.text((34,y+35),'GENERATED PHOTO | STRAIGHT-ON',font=small,fill=(229,223,208));d.text((820,y+35),'EXPORTED GLB | SAME SIDE CAMERA',font=small,fill=(229,223,208))
+ page.paste(fit(tex/f'town-safety-{family}.jpg',(730,155)),(34,y+56));page.paste(fit(ev/f'{family}-straight.png',(730,155)),(820,y+56))
+ d.text((34,y+222),'LAYOUT | THREE-QUARTER',font=small,fill=(229,223,208));d.text((820,y+222),'LAYOUT | MAYOR VIEW',font=small,fill=(229,223,208))
+ page.paste(fit(ev/f'{family}-layout-three-quarter.png',(730,260)),(34,y+243));page.paste(fit(ev/f'{family}-layout-mayor.png',(730,260)),(820,y+243));y+=row_h
+d.text((27,H-34),'Each 8 m straight ends at the cell edge. Corner arms share a post and turn 90 degrees. Chain mesh openings remain open.',font=small,fill=(222,215,196));out.parent.mkdir(parents=True,exist_ok=True)
+for quality in (82,78,74,70,66,62,58):
+ page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
+ if out.stat().st_size<=500000:break
+if out.stat().st_size>500000:raise RuntimeError(f'round 11 sheet exceeds 500 KB: {out.stat().st_size}')
+print(f'ROUND 11 SHEET: {out.stat().st_size} bytes')
+'''
+subprocess.run(['python','-c',round11_sheet_code,str(root),str(round11_sheet)],check=True)

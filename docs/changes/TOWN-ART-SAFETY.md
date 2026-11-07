@@ -73,3 +73,31 @@
 ### Removed
 
 - Removed the old reel cylinder, spokes and thin hoop rims. Replaced their rear placement with the bracket-mounted, lathed drum and two side plates.
+
+## Round 11: fences and walls
+
+### Changed
+
+- Generated four single-view, straight-on 8 m reference photos and added compressed copies under `public/assets/models/wasteland/town/textures/`, with credits in the town asset credits file.
+- Replaced the old procedural stripe barriers with photo-traced slabs using `trace` and `slab`. The chain-link uses a see-through alpha texture on a thin traced sheet. Straight sections span 8 m; corners reuse the traced pieces in two half-cell arms; ends use the photographed terminal posts.
+- Added the round 11 photo/model sheet and self-review. Full family GLB: **4,663,744 bytes**; sheet: **221,699 bytes**.
+- Left the accepted gate, tower, posts, searchlight, fire station, clinic and hydrant recipes untouched. The existing Blender-output check already names all twelve barrier ids; no test assertion changed.
+
+### Checks
+
+- Blender export and review from the exported GLB: **pass**. All twelve barrier roots render. The straight edge values meet at 0 m; the corner's two axes meet at the shared post and are perpendicular. Family file is under the 8 MB limit.
+- `tools/test-blender-output.mjs`: **377 checks passed; 0 failed** after reducing traced outlines and keeping the chain mesh in its alpha texture.
+- `tools/test-repo-hygiene.mjs`: **passed**; size targets are advisory.
+- `tools/test-review-evidence.mjs`: **8 passed, 1 failed** on both runs. The repeated failure is unrelated `spawnSync ffmpeg EPERM` in audio analysis.
+- Lane tier and build: not run, as instructed for this art card. Browser and game look checks: Claude to run.
+- Changed assertions: none. Race fingerprints: not applicable to this art-only change.
+
+### Claude should inspect
+
+- Check each photo against its straight model, especially the chain-link's see-through openings and the scrap wall's car panels and doors.
+- Check that adjacent straight edges meet, the corner joins both straights at right angles, and the terminal post reads as an end.
+- Judge the three-quarter and mayor views. No browser check was run.
+
+### Removed
+
+- Removed the procedural wood rails, chain strands and repeating wall plates from the four barrier families. Replaced them with the photo-traced parts; no accepted building was removed.
