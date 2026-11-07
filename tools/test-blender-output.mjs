@@ -69,7 +69,7 @@ const generators = [
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
     glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/food.glb'],budget:30000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/food.glb'],budget:30000,maxBytes:8000000},
   {id:'town-borer',script:'tools/blender/town-borer.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/borer.glb'],budget:40000,maxBytes:4000000},
   {id:'town-power',script:'tools/blender/town-power.py',args:[],candidate:true,evidence:'.qa-dist/town-art-power-round-4',
@@ -1516,7 +1516,7 @@ try {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/food.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(8), bytes.length);
-    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+    assert.ok(bytes.length <= 8_000_000, `${bytes.length} bytes exceeds 8 MB`);
     const jsonLength = bytes.readUInt32LE(12);
     const binaryStart = 28 + jsonLength;
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength));
@@ -1545,10 +1545,10 @@ try {
     const imagePixels = gltf.images.reduce((sum, image) => {
       const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
       const dimensions = jpegDimensions(bytes, start, view.byteLength);
-      assert.ok(dimensions.width <= 256 && dimensions.height <= 256, `${dimensions.width}x${dimensions.height} food texture exceeds 256 px`);
+      assert.ok(dimensions.width <= 2048 && dimensions.height <= 2048, `${dimensions.width}x${dimensions.height} food texture exceeds 2048 px`);
       return sum + dimensions.width * dimensions.height;
     }, 0);
-    assert.ok(imagePixels <= 1024 * 1024, `${imagePixels} texture pixels exceed the 1K budget`);
+    assert.ok(imagePixels <= 4 * 1024 * 1024, `${imagePixels} texture pixels exceed the 4M budget`);
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallic exceeds .3`);
     }

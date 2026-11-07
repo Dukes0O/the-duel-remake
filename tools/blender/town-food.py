@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-11'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-12'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-11.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-12.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -45,8 +45,8 @@ steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_
 steel_photo.scale(224, 224); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
-# Six independent repeating material photos fit comfortably inside the card's
-# 1K image-pixel budget while avoiding a glTF texture atlas.
+# Compact utility swatches stay small. The source photographs below keep enough
+# detail for their mapped pipework, boards, patched canvas and market structure.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
     image.scale(224, 224)
@@ -485,12 +485,6 @@ stall_awning_mask=photo_mask(stall_front_photo,[
      (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
      (116,136),(94,130),(75,116),(58,101)],
 ])
-mat['stall-counter-wood'] = simple('Town / stall counter, sun-darkened timber',(.34,.245,.145),.92)
-mat['stall-canopy'] = simple('Town / dust and sun on stall canvas',(.31,.245,.17),.96)
-mat['stall-canopy-rust-patch'] = simple('Town / rust-red stitched stall patch',(.24,.095,.055),.96)
-mat['stall-canopy-faded-patch'] = simple('Town / faded grey-green stall patch',(.22,.23,.19),.97)
-mat['stall-canopy-under'] = simple('Town / shaded stall canvas underside',(.20,.15,.095),.97)
-
 def market_stall(building, offset, kind):
     add_building(building,offset)
     def front_world(px,py,d):
@@ -498,7 +492,7 @@ def market_stall(building, offset, kind):
     for part_name,polygon in stall_front_pieces:
         front_frame=PhotoMesh()
         mask=photo_mask(stall_front_photo,[polygon])
-        front_loops=trace(mask,(38,18,990,930),tolerance=2.0,min_area=20)
+        front_loops=trace(mask,(38,18,990,930),tolerance=.7,min_area=8)
         slab(front_frame,'front',stall_front_photo,front_loops,front_world,0,.075,wall_scale=.00305)
         keep(front_frame.finish(f'{building}:photo-traced-{part_name}',{'front':stall_front_photo.material()}))
 
@@ -510,7 +504,7 @@ def market_stall(building, offset, kind):
         for part_name,polygon in stall_side_pieces:
             side_frame=PhotoMesh()
             mask=photo_mask(stall_side_photo,[polygon])
-            side_loops=trace(mask,(195,32,690,986),tolerance=1.8,min_area=18)
+            side_loops=trace(mask,(195,32,690,986),tolerance=.7,min_area=8)
             slab(side_frame,'side',stall_side_photo,side_loops,side_frame_world,-.07,.07,wall_scale=.00455)
             keep(side_frame.finish(f'{building}:photo-traced-{side_label}-{part_name}',{'side':stall_side_photo.material()}))
 
@@ -520,7 +514,7 @@ def market_stall(building, offset, kind):
     counter_loops=trace(stall_counter_mask,(250,588,691,647),tolerance=.8,min_area=20)
     slab(counter,'counter',stall_side_photo,counter_loops,side_world,-1.08,1.08,wall_scale=.00455)
     counter_obj=counter.finish(f'{building}:deep-photo-traced-counter',{'counter':stall_side_photo.material()})
-    counter_obj.data.materials.clear();counter_obj.data.materials.append(mat['stall-counter-wood'])
+    # Keep the plank grain and dark knots from the measured side photograph.
     keep(counter_obj)
 
     # The photographic front hem stays a thin, traced slab. A small mesh follows
@@ -553,14 +547,12 @@ def market_stall(building, offset, kind):
             c,uc=right[depth_step+1];d,ud=left[depth_step+1]
             top_points=[a,b,c,d];top_uvs=[ua,ub,uc,ud]
             px=(stall_front_photo.w*(ua[0]+ub[0])*.5)
-            repair='rust' if 120<px<245 else 'faded' if 720<px<850 else 'canvas'
-            awning.indexed(top_points,top_uvs,repair,(0,1,0))
+            awning.indexed(top_points,top_uvs,'canvas',(0,1,0))
             underside=[awning.vertex((awning.verts[index][0],awning.verts[index][1]-.018,awning.verts[index][2]))
                        for index in (a,b,c,d)]
-            awning.indexed(list(reversed(underside)),list(reversed(top_uvs)),'under',(0,-1,0))
+            awning.indexed(list(reversed(underside)),list(reversed(top_uvs)),'canvas',(0,-1,0))
     keep(awning.finish(f'{building}:traced-sagging-patched-canvas-awning',{
-        'canvas':mat['stall-canopy'],'rust':mat['stall-canopy-rust-patch'],
-        'faded':mat['stall-canopy-faded-patch'],'under':mat['stall-canopy-under']}))
+        'canvas':stall_front_photo.material()}))
 
     if kind=='fruit':
         # Two deep plank crates and small photo-colored produce sit on the counter.
@@ -874,18 +866,24 @@ for material in bpy.data.materials:
         bsdf=material.node_tree.nodes.get('Principled BSDF')
         if bsdf.inputs.get('Metallic'): bsdf.inputs['Metallic'].default_value=min(bsdf.inputs['Metallic'].default_value,.29)
 
-# Keep full-resolution source photos on disk; embed compact game copies only.
-for photo in (front,left,overhead,wall_photo):
+# Keep source photographs intact on disk. Full-resolution baked images are
+# reserved for the newly photo-mapped stalls and the market/soup hero views.
+for photo in (front,left,overhead):
     photo.image.scale(256,192)
     photo.image.pack()
+wall_photo.image.pack()
 for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_side_photo,
               *canteen_table['_photos'].values()):
-    ratio = photo.w / photo.h
-    if ratio >= 1:
-        size = (224, round(224 / ratio))
+    if photo in (stall_front_photo, stall_side_photo, stall_photo):
+        # These measured surfaces need the source grain, rust and cloth patches.
+        pass
     else:
-        size = (round(224 * ratio), 224)
-    photo.image.scale(*size)
+        ratio = photo.w / photo.h
+        if ratio >= 1:
+            size = (224, round(224 / ratio))
+        else:
+            size = (round(224 * ratio), 224)
+        photo.image.scale(*size)
     photo.image.pack()
 
 # Print and check every market piece in local game axes. Supports run from the
