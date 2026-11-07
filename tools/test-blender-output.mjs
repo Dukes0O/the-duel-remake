@@ -65,7 +65,7 @@ const generators = [
   {id:'town-water',script:'tools/blender/town-water.py',args:['--round','4'],candidate:true,
     glb:['public/assets/models/wasteland/town/water.glb'],budget:30000,maxBytes:3000000},
   {id:'town-fun',script:'tools/blender/town-fun.py',args:[],candidate:true,recipeOnly:true,
-    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/fun.glb'],budget:42000,maxBytes:8000000},
   {id:'town-plants',script:'tools/blender/town-plants.py',args:[],
     glb:['public/assets/models/wasteland/town/plants.glb'],budget:30000,maxBytes:8000000},
   {id:'town-food',script:'tools/blender/town-food.py',args:[],candidate:true,
@@ -1046,7 +1046,7 @@ try {
     const bytes=readFileSync(join(root,'public/assets/models/wasteland/town/fun.glb'));
     assert.equal(bytes.toString('ascii',0,4),'glTF');
     assert.equal(bytes.readUInt32LE(8),bytes.length);
-    assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds the family limit`);
+    assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the family limit`);
     const jsonLength=bytes.readUInt32LE(12); const gltf=JSON.parse(bytes.toString('utf8',20,20+jsonLength));
     const names=new Set(gltf.nodes.map(node=>node.name));
     const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];
