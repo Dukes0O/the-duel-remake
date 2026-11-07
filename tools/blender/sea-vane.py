@@ -111,10 +111,12 @@ def make_views():
     specs = [
         ('front', front_pick, (0, 0, -1)),
         ('side', side_pick, (-1, 0, 0)),
+        ('side-far', side_pick, (1, 0, 0)),
         ('back', back_pick, (0, 0, 1)),
         ('top', top_pick, (0, 1, 0)),
     ]
     views = []
+    photos['side-far'] = photos['side']
     for name, pick, normal in specs:
         photo = photos[name]
         subject = studio_subject(photo)
@@ -123,8 +125,17 @@ def make_views():
         photo.sky = lambda _seeds, tolerance=20, grey=13, subject=subject: ~subject
         view = View(name, photo, frame_seeds(photo), pick, normal)
         views.append(view)
+    collar = (850 - 150) * SCALE
+    views[0].favour = lambda middle: 2.6 if middle[1] > collar else 1.0
+    # Her profile would paint a second face beside the first, so the head's sides
+    # wear the front and back photos' hair at their edges instead.
+    for side_view in (views[1], views[2]):
+        side_view.favour = lambda middle: .05 if middle[1] > collar else 1.0
+    bled = set()
     for view in views:
-        view.photo.bleed(view.mask, passes=12)
+        if id(view.photo) not in bled:
+            view.photo.bleed(view.mask, passes=12)
+            bled.add(id(view.photo))
     return views
 
 def make_envelope(actor, front_view):
@@ -190,7 +201,7 @@ def exported_triangles(path, ident):
 def build():
     views = make_views()
     materials = make_materials(views)
-    front, side, back, top = views
+    front, side, side_far, back, top = views
     actor = bpy.data.objects.new('mrs-vane', None)
     scene.collection.objects.link(actor)
     actor['height_m'] = HEIGHT
@@ -403,7 +414,10 @@ def look_render():
     bpy.ops.render.render(write_still=True)
     bpy.data.objects.remove(camera, do_unlink=True)
 
-    # A three-quarter road-height view, six metres from her.
+    # A three-quarter road-height view, six metres from her, with nothing else in front.
+    for obj in scene.objects:
+        if obj.type == 'MESH' and obj != floor:
+            obj.hide_render = not under(obj, actor)
     camera = camera_at((-3.2, 5.0, .78), (0, 0, .82), lens=52)
     scene.render.resolution_x = 1200
     scene.render.resolution_y = 750

@@ -136,3 +136,11 @@ The 320-byte export proof from step 1 was replaced by the completed camp model. 
 - Browser checks and browser look review: not run in this lane. Claude should review the face, profile envelope placement, coat silhouette and crew scale from the round-7 sheet.
 - Changed assertions: none. Race fingerprints: not applicable; model-only art.
 - Removed: this continuation's Blender renders and logs under `.qa-dist/ww-art-sea/` were removed after making the sheet and recording results. `.qa-dist/task.md` was preserved.
+
+## Mrs Vane, finished by Claude
+
+`mrs-vane` lives in `mrs-vane.glb`: pieces `upper`, `leg-l` and `leg-r`, with leg pivots `mrs-vane:leg-l` and `mrs-vane:leg-r`, and `mrs-vane:envelope`. Her right side wears the side photo too, and her face reads from the front photo only.
+
+### Removed
+
+The first photo set, `sea-mrs-vane-{front,side,back,top}.jpg`, which nothing loads: the recipe uses the corrected `sea-mrs-vane-coat-*` set.

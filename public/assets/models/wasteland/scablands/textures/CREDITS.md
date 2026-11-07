@@ -230,17 +230,10 @@ replaced.
 
 ## Mrs Vane reference photographs
 
-`sea-mrs-vane-front.jpg`, `sea-mrs-vane-side.jpg`, `sea-mrs-vane-back.jpg`,
-and `sea-mrs-vane-top.jpg` are crops from one original Codex ImageGen studio
-turnaround generated on 2026-11-07. The image shows the same older woman in
-matched orthographic front, right profile, back and overhead views, wearing a
-closed white coat and gloves and holding one pale envelope, against a uniform
-mid-grey floor and background. Each crop is a new source file; no existing
-photograph was replaced. The recipe measures the panels directly and uses them
-as photo-carving inputs.
-
-A second, corrected turnaround set is kept as `sea-mrs-vane-coat-front.jpg`,
-`sea-mrs-vane-coat-side.jpg`, `sea-mrs-vane-coat-back.jpg`, and
-`sea-mrs-vane-coat-top.jpg`. These are crops from a single imagegen edit on
-2026-11-07 that changed only the coat to one continuous closed coat-dress.
-The earlier source set remains intact; the recipe uses this corrected set.
+`sea-mrs-vane-coat-front.jpg`, `sea-mrs-vane-coat-side.jpg`,
+`sea-mrs-vane-coat-back.jpg` and `sea-mrs-vane-coat-top.jpg` are crops from one
+original Codex ImageGen studio turnaround generated on 2026-11-07 and edited once
+so that her coat is one continuous closed coat-dress. They show the same older
+woman in matched front, right profile, back and overhead views, in a white coat
+and gloves, holding one pale envelope, on a uniform mid-grey ground. No existing
+photograph was replaced.
