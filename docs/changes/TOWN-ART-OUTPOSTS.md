@@ -2,31 +2,31 @@
 
 ## Design
 
-Built the hermit camp from the Wasteland town brief. The hut door faces the road at -Z. Its measured side view puts the front at the right. The hut is 6.07 m long, 3.51 m wide and 3.14 m high, scaled from its 2 m door. The goat shed is a separate carve. A rusty bonnet makes the satellite dish; the chair faces out from the hut.
+Built the hermit camp from the existing Wasteland town brief. The hut door faces the road at -Z. Its side photo has the front at the right, and the measured endpoint order follows that view. The hut is 6.07 m long, 3.51 m wide and 3.14 m high from its 2 m door. The goat shed is a separate photo-carve. A rusty car bonnet forms the satellite dish. The chair faces out from the hut.
 
 ## Changed
 
-- Added the hut, shed, dish, leaning pole and chair under `hermit-camp`, a direct child of `town-outposts`.
-- Printed and checked the world bounds of each camp piece. The full camp stays within its 3 by 3 cell footprint.
-- Added a 9,000-triangle hermit-camp budget. The family budget is 30,000 triangles.
-- Round 2 reduces only the new camp's photo textures to 192 px and its hut and shed mesh targets to 1,000 and 300 triangles. The diner and school are unchanged.
-- Added Hermit Camp round 1 and round 2 sheets and review notes.
+- Added the hermit hut, goat shed, bonnet dish, leaning pole and chair under `hermit-camp`, a direct child of `town-outposts`.
+- Printed and checked the world bounds for each camp part and the full camp. The 3 by 3 cell footprint remains clear.
+- Added a family-root test and a 9,000-triangle hermit-camp budget. The outpost family budget is 30,000 triangles.
+- Added the Hermit Camp round 1 sheet and this review note. Kept the diner and school geometry unchanged.
 
 ## Checks
 
-- Blender 4.5.13 recipe, GLB export, import and seven renders: passed. Round 2 GLB: 2,998,708 bytes.
-- `tools/test-blender-output.mjs`: passed, 321 checks.
-- `tools/test-repo-hygiene.mjs`: failed only on the required `hermit-round-1.jpg` and `hermit-round-2.jpg` names; its allow-list accepts `round-N.jpg` but not this card's building-prefixed names. The hygiene test is outside this card's owned files, so it was not changed.
-- `tools/test-review-evidence.mjs`: 8 of 9 checks passed on the first run and same-commit rerun. Both runs failed only on `spawnSync ffmpeg EPERM` in unrelated audio analysis. No assertions changed.
-- Browser checks and frame timing were not run. This art is not wired into the game. Race fingerprints do not apply.
-- Changed assertion: lowered the family GLB cap from 5,000,000 to the card's 3,000,000 bytes. This makes the test enforce the existing limit; no assertion was weakened.
+- Blender 4.5.13 recipe/export/render: passed. The run printed hut, shed, dish, chair and camp bounds. GLB size: 4,019,808 bytes.
+- `tools/test-blender-output.mjs`: pending.
+- `tools/test-repo-hygiene.mjs`: pending.
+- `tools/test-review-evidence.mjs`: pending.
+- Browser checks and frame timing were not run. This is an art-only asset that is not wired into the game. Race fingerprints do not apply.
+- Changed assertion: added the requirement that `dot-diner`, `plane-school` and `hermit-camp` are direct children of `town-outposts`; no assertion was weakened.
 
 ## Claude should inspect
 
-Compare all four hut views against their photos. Check the roof-to-wall seams, bonnet dish and pole from the road, the chair's direction, and the 88 m mayor view. The round 2 sheet shows the exported GLB imported into a fresh scene.
+Check the four hut photo comparisons, the side-to-gable seams, the bonnet dish connection, the chair's direction, and the 88 m mayor view. The sheet records the visible differences.
+
+The art card's 3 MB family-file target is exceeded. The existing diner and school GLB was 2,865,604 bytes before the camp; the required four-view hut and shed textures add about 1.15 MB. The current output remains below the task test's 5 MB family cap. Review whether the town family's target should change or whether a separate texture-budget card is needed. The accepted diner and school were not altered to reduce their textures.
 
 ## Removed
 
-- Removed the unsubmitted generic `round-1.jpg` draft and named the Hermit Camp sheet `hermit-round-1.jpg`; kept the accepted diner round 4 and school round 9 sheets.
-- Moved this task's raw Blender renders, masks, logs, temporary sheet script and generated Blend file to the Recycle Bin after review. Kept only the two review sheets, their notes and the family GLB.
+- Removed the unsubmitted generic `round-1.jpg` draft and replaced it with `hermit-round-1.jpg`, so the accepted diner round 4 and school round 9 sheets remain intact.
 - No runtime code path was removed.

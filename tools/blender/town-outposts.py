@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-2')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-1')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/hermit-round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/hermit-round-1.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -565,7 +565,7 @@ hut_table = {
     # the far end. Its width and length scales come from the roof edges.
     'top': {'front': 100, 'rear': 930, 'centre': 468, 'x_scale': HUT_WIDTH / 465},
     'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
-    'voxel': .065, 'target': 1000,
+    'voxel': .065, 'target': 3800,
     'mask_dir': str(render / 'masks'),
 }
 hut_body = carve_object('hermit-camp:hut-body', textures, hut_table)
@@ -601,7 +601,7 @@ shed_table = {
             'x_scale': SHED_WIDTH / 332},
     'cut': {'side': [(625, 340, 782, 550)], 'front': [(252, 351, 429, 579)]},
     'grey': 26, 'tolerance': 40, 'bleed_tolerance': 34,
-    'voxel': .055, 'target': 300,
+    'voxel': .055, 'target': 1400,
     'mask_dir': str(render / 'masks'),
 }
 shed_body = carve_object('hermit-camp:goat-shed', textures, shed_table)
@@ -707,23 +707,6 @@ if any(value < -11.5 or value > 11.5 for axis in (0, 2)
        for value in (camp_bounds['min'][axis], camp_bounds['max'][axis])):
     raise RuntimeError('hermit-camp whole footprint exceeds 3 x 3 cells')
 
-# Keep the new photo textures compact enough for the family file limit. At car
-# height, the camp remains readable with these embedded photo textures.
-hermit_texture_images = {}
-for obj in (hut_body, shed_body, dish_obj):
-    for slot in obj.material_slots:
-        if not slot.material or not slot.material.use_nodes:
-            continue
-        for node in slot.material.node_tree.nodes:
-            if node.type == 'TEX_IMAGE' and node.image:
-                hermit_texture_images[node.image.name] = node.image
-for image in hermit_texture_images.values():
-    if max(image.size) > 192:
-        image.scale(192, 192)
-        image.pack()
-print('hermit-camp embedded texture sizes (px):', json.dumps(
-    {name: list(image.size) for name, image in sorted(hermit_texture_images.items())}, sort_keys=True))
-
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
@@ -766,7 +749,7 @@ def shot(name, eye, target, ortho):
     camera.data.type = 'ORTHO'
     camera.data.ortho_scale = ortho
     if name == 'model-side':
-        scene.render.resolution_x, scene.render.resolution_y = 700, 700
+        scene.render.resolution_x, scene.render.resolution_y = 1000, 500
     elif name in ('model-front', 'model-rear', 'model-above'):
         scene.render.resolution_x, scene.render.resolution_y = 700, 700
     else:
