@@ -1,37 +1,24 @@
-﻿# TOWN-ART-SERVICES change note
+# TOWN-ART-SERVICES — trading post round 9
 
-## What changed
+## Changed
 
-Rebuilt the motor pool as a long open-front service shed across its 4×2 plot. The carve keeps the long back wall and the two closed ends; the -Z road face stays open. The roof uses two thin pitched planes with the straight-down patched-tin photo and a ridge. Timber posts and braces frame four bays. Concrete floor sections surround the recessed inspection pit, with racks and fuel drums inside.
-
-The exported motor-pool meshes total 13,260 triangles, within the 14,000 limit. The four motor-pool source photos were retained. The Town Hall, Forge, Workshop and scrapyard were not edited in the recipe.
+- Kept the accepted trading-post store body and photo references unchanged.
+- Rebuilt the porch as a 10 m wide, 2.5 m deep deck against the store's front wall, with a sloped roof from the eave to outer posts.
+- Moved hand-painted TRADING POST lettering onto a road-facing sign board above the porch roof edge.
+- Added separate crates, drums and tyres on the deck and beside it on the ground.
+- Printed bounds and checked the plot and ground/contact for each piece.
+- Exported family GLB: 6,971,992 bytes. Trading post: 8,990 triangles of the 9,000 limit.
 
 ## Checks
 
-- Blender 4.5.13 recipe/export and printed per-piece bounds: passed. Plot and ground/contact audit passed.
-- `node --test --test-name-pattern="TOWN-ART-SERVICES" tools/test-blender-output.mjs`: passed, 377 checks, 0 failed. The first run found 17,260 motor-pool triangles; the carve target was lowered and the rerun passed.
-- `node tools/test-repo-hygiene.mjs`: passed; reported pre-existing advisory size targets only.
-- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed; rerun gave the same result. Failures: missing `docs/board/looks/town-art-outposts/round-15-review.md` (other card) and `spawnSync ffmpeg EPERM`. Round-7 image publication checks passed. No unrelated file was changed.
-- Browser and game look checks: Claude runs. Review the road-facing opening, side and end orientation, pitched roof and overhang, straight-down roof, pit and floor, and the three-quarter/mayor silhouette in `round-7.jpg`.
-- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
+- Blender recipe export and exported-model review render: passed. All trading-post bounds fit the 3×3 footprint and every piece passed the ground/contact audit.
+- `node --test --test-name-pattern="TOWN-ART-SERVICES GLB exports the complete named family" tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory; no oversized look sheets.
+- `node --test tools/test-review-evidence.mjs`: 7 of 9 subtests passed. Rerun on the same source produced the same two unrelated failures: missing `docs/board/looks/town-art-outposts/round-15-review.md` for an existing round-15 sheet, and `spawnSync ffmpeg EPERM` in audio analysis. The review JPG publication check passed.
+- Browser and in-game look review: not run here; Claude should review the road and mayor views listed in the round-9 look note.
+- Changed assertions: none. Race fingerprints: not applicable; this art-only change does not touch race logic.
 
 ## Removed
 
-Deleted the superseded round-5 sheet and review note as directed. No source photos were removed.
-
-## Trading post, round 8
-
-Added a 3×3-cell trading post built from four retained JPG references. The carved body, deep porch, loading dock, goods, sign and brackets are distinct named pieces. The recipe prints each piece's bounds and checks that it stays within the plot and touches the ground or another piece. Other passed building recipe branches were not changed.
-
-The exported family is 6,865,036 bytes, below 8 MB. The trading post stayed within its 9,000-triangle limit after lowering only the new body's carve target. The initial output check found 10,568 triangles; the corrected run passed.
-
-### Checks
-
-- Blender 4.5.13 export and review renders: passed; trading post footprint and piece-contact audit passed.
-- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
-- Browser and in-game look checks: Claude runs. Please inspect the side/end carve match, the roof-metal plan reference, body width, and sign readability from above in `round-8.jpg`.
-- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
-
-### Removed
-
-- No earlier building models, sheets or review notes were removed.
+- Deleted the superseded round-8 comparison sheet and review note.
+- Replaced the ground-level lettering with raised lettering on the road-facing sign.
