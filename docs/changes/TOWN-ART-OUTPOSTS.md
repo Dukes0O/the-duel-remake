@@ -1,22 +1,32 @@
-# TOWN-ART-OUTPOSTS change note
+# TOWN-ART-OUTPOSTS
+
+## Design
+
+Built the hermit camp from the existing Wasteland town brief. The hut door faces the road at -Z. Its side photo has the front at the right, and the measured endpoint order follows that view. The hut is 6.07 m long, 3.51 m wide and 3.14 m high from its 2 m door. The goat shed is a separate photo-carve. A rusty car bonnet forms the satellite dish. The chair faces out from the hut.
 
 ## Changed
 
-- Replaced fixed pane rectangles with per-pane connected studio-grey floods (18-level RGB tolerance), seeded at each pane centre. Glass gets a very dark blue-grey streak variation; frames and wall pixels remain untouched.
-- Applied different sun, star and house paper shapes within about half the side and overhead window panes. The door opening uses the same flood method. Both overhead window strips are populated for the far-side read.
-- Kept the accepted round-8 fuselage, trestles, slide and sign geometry. Added the round-9 reference/model sheet and review.
+- Added the hermit hut, goat shed, bonnet dish, leaning pole and chair under `hermit-camp`, a direct child of `town-outposts`.
+- Printed and checked the world bounds for each camp part and the full camp. The 3 by 3 cell footprint remains clear.
+- Added a family-root test and a 9,000-triangle hermit-camp budget. The outpost family budget is 30,000 triangles.
+- Added the Hermit Camp round 1 sheet and this review note. Kept the diner and school geometry unchanged.
 
 ## Checks
 
-- Blender round-9 recipe and exported-model render: passed; GLB 2,865,524 bytes.
-- High-zoom side-photo comparison before rebuild: inspected. Pane fills follow the studio-grey interiors; frame rims and wall remain visible.
-- `node tools/test-blender-output.mjs`: passed, 316 checks; model output and size/readback validated.
-- `node tools/test-repo-hygiene.mjs`: passed; placement clean (repository size targets remain advisory).
-- `node tools/test-review-evidence.mjs`: 7/9 passed. One existing check requires the superseded `round-8.jpg`, which this task explicitly removes; another hit `spawnSync ffmpeg EPERM` while analyzing unrelated audio fixtures. Assertions were not changed.
-- Browser checks and game look checks: not run in this art lane; Claude should review the round-9 sheet.
-- Changed assertions: none. Race fingerprints: not applicable; no simulation code changed.
+- Blender 4.5.13 recipe/export/render: passed. The run printed hut, shed, dish, chair and camp bounds. GLB size: 4,019,808 bytes.
+- `tools/test-blender-output.mjs`: pending.
+- `tools/test-repo-hygiene.mjs`: pending.
+- `tools/test-review-evidence.mjs`: pending.
+- Browser checks and frame timing were not run. This is an art-only asset that is not wired into the game. Race fingerprints do not apply.
+- Changed assertion: added the requirement that `dot-diner`, `plane-school` and `hermit-camp` are direct children of `town-outposts`; no assertion was weakened.
+
+## Claude should inspect
+
+Check the four hut photo comparisons, the side-to-gable seams, the bonnet dish connection, the chair's direction, and the 88 m mayor view. The sheet records the visible differences.
+
+The art card's 3 MB family-file target is exceeded. The existing diner and school GLB was 2,865,604 bytes before the camp; the required four-view hut and shed textures add about 1.15 MB. The current output remains below the task test's 5 MB family cap. Review whether the town family's target should change or whether a separate texture-budget card is needed. The accepted diner and school were not altered to reduce their textures.
 
 ## Removed
 
-- Removed the superseded `round-8.jpg` and `round-8-review.md` as requested. Kept `round-4.jpg` and its review.
-- Temporary photo comparison and build logs are scratch outputs and will be cleaned before commit.
+- Removed the unsubmitted generic `round-1.jpg` draft and replaced it with `hermit-round-1.jpg`, so the accepted diner round 4 and school round 9 sheets remain intact.
+- No runtime code path was removed.

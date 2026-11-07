@@ -72,8 +72,8 @@ const generators = [
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
-    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:21000,
-    budgets:{'dot-diner':14000,'plane-school':14000},maxBytes:5000000},
+    glb:['public/assets/models/wasteland/town/outposts.glb'],budget:30000,
+    budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000},maxBytes:5000000},
   {id:'town-walkers',script:'tools/blender/town-walkers.py',args:[],
     glb:['public/assets/models/wasteland/town/walkers.glb'],budget:6000,maxBytes:1000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
@@ -736,7 +736,18 @@ try {
         assert.ok(names.has('plane-school:slide-rail-far'), 'far-side slide rail is named');
         assert.ok(names.has('plane-school:sign-road'), 'road-side painted sign slab is named');
         assert.ok(names.has('plane-school:sign-far'), 'far-side painted sign slab is named');
-        for (const id of ['dot-diner', 'plane-school']) {
+        assert.ok(names.has('hermit-camp'), 'named hermit camp building root');
+        assert.ok(names.has('hermit-camp:hut-body'), 'photo-carved stone hut');
+        assert.ok(names.has('hermit-camp:goat-shed'), 'separate photo-carved goat shed');
+        assert.ok(names.has('hermit-camp:bonnet-dish'), 'bonnet-textured shallow dish');
+        assert.ok(names.has('hermit-camp:dish-pole'), 'leaning dish pole');
+        assert.ok(names.has('hermit-camp:chair-seat'), 'separate chair seat');
+        const familyRoot = gltf.nodes.find(node => node.name === 'town-outposts');
+        assert.ok(familyRoot, 'town-outposts family root exists');
+        assert.deepEqual((familyRoot.children || []).map(index => gltf.nodes[index].name).sort(),
+          ['dot-diner', 'hermit-camp', 'plane-school'],
+          'each outpost building is a direct child of the family root');
+        for (const id of ['dot-diner', 'plane-school', 'hermit-camp']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();
           let buildingTriangles = 0;
