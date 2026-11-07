@@ -168,7 +168,8 @@ def build_harbour_ramp():
                [wall.uv(band[0],band[3]),wall.uv(band[0],band[1]),wall.uv(band[2],band[1]),wall.uv(band[2],band[3])],'weed',normal)
  finish(linings,'harbour-ramp-weed',{'weed':wall.material()})
 def build_causeway_arch():
- p=photo('sea-causeway-arch.jpg'); rail=photo('sea-rails.jpg'); dark=photo('dam-wet-silt.jpg')
+ p=photo('sea-causeway-arch.jpg'); wall=photo('sea-harbour-wall.jpg'); blend_repeat_edges(wall)
+ rail=photo('sea-rails.jpg'); dark=photo('dam-wet-silt.jpg')
  cx=512; half=175; crown=405; spring=470; floor=545; top=64
  yy,xx=np.ogrid[:p.h,:p.w]
  t=np.clip((yy-crown)/(spring-crown),0,1)
@@ -184,6 +185,20 @@ def build_causeway_arch():
  xscale=4/(2*half)
  def pos(x,y,d): return (d,vertical(y),(x-cx)*xscale)
  loops=trace(solid,(24,top,p.w-24,floor),tolerance=1.4,min_area=80)
+ # Keep the arch-ring photo intact; blend only the outer upper stone into the
+ # harbour wall's left and right edge colours over the outer 5 percent.
+ rgb=p.rgb().astype(np.float32); wall_rgb=wall.rgb().astype(np.float32)
+ edge=max(1,round(p.w*.05))
+ for y in range(crown):
+  wy=min(wall.h-1,round(y*(wall.h-1)/max(1,crown-1)))
+  for i in range(edge):
+   t=1-i/max(1,edge-1)
+   left=wall_rgb[wy,0]; right=wall_rgb[wy,-1]
+   rgb[y,i]=rgb[y,i]*(1-t)+left*t
+   rgb[y,-1-i]=rgb[y,-1-i]*(1-t)+right*t
+ rgba=np.concatenate((rgb/255,np.ones((p.h,p.w,1),dtype=np.float32)),axis=2)[::-1].copy()
+ image=bpy.data.images.new('sea-arch-wall-joined-photo',width=p.w,height=p.h,alpha=False)
+ image.pixels.foreach_set(rgba.ravel());image.pack();p.image=image;p._rgb=rgb.astype(np.int16);p._material=None
  p.bleed(solid)
  scaled_photos.append(p)
  arch=Mesh(); slab(arch,'stone',p,loops,pos,-1.5,1.5,wall_scale=.011)
@@ -196,9 +211,9 @@ def build_causeway_arch():
  finish(inner,'causeway-arch-inside',{'inside':dark.material()})
  track=Mesh(); rail_crop=(0,34,rail.w,52); sleeper_crop=(52,16,82,145)
  for x in np.arange(-3.8,4.0,.65):
-  box(track,x-.12,x+.12,0,.12,-1.25,1.25,{k:('rail',rail,sleeper_crop) for k in ['+x','-x','+y','-y','+z','-z']})
+  box(track,x-.12,x+.12,4.18,4.34,-1.25,1.25,{k:('rail',rail,sleeper_crop) for k in ['+x','-x','+y','-y','+z','-z']})
  for z in (-.87,.87):
-  box(track,-4,4,.12,.27,z-.07,z+.07,{k:('rail',rail,rail_crop) for k in ['+x','-x','+y','-y','+z','-z']})
+  box(track,-4,4,4.36,4.55,z-.07,z+.07,{k:('rail',rail,rail_crop) for k in ['+x','-x','+y','-y','+z','-z']})
  finish(track,'causeway-arch-rails',{'rail':rail.material()})
 steps=[('old-gear',build_gear),('gear-whole',build_new_gear),('harbour-wall',build_wall),('causeway',build_causeway),('harbour-gate',build_harbour_gate),('harbour-ramp',build_harbour_ramp),('causeway-arch',build_causeway_arch)]
 for name,fn in steps:
