@@ -1,21 +1,13 @@
-﻿# TOWN-ART-FUN round 3
+﻿# TOWN-ART-FUN round 4
 
-## Changed
+Replaced the fountain and tavern's hand-built body geometry with measured `carve_object` tables and removed their previous construction code in the same change. The fountain water is a separate thin `fountain:water` part. Replaced the big wheel's geometric rim/spokes/seats with photo `trace` and `slab` geometry, parented to the named `big-wheel:wheel` hub pivot. The model is `public/assets/models/wasteland/town/fun.glb`; the round-4 sheet is `docs/board/looks/town-art-fun/round-4.jpg` (146,457 bytes).
 
-- Re-exported `fun.glb` (2,608,832 bytes). The named `big-wheel:wheel` pivot is visibly turned 18 degrees around its axle.
-- Fixed individual review framing to compute bounds from each imported child mesh's world matrix. This prevents cameras from framing unrelated local bounds.
-- Added `round-3.jpg` (218,521 bytes) and the review note. The sheet compares the available fountain, tavern and wheel photos with exported driver and mayor views.
+**Art gaps for Claude:** the fountain's exported carve floats and has the wrong scale/contact. Tavern has only one oblique photo, which is repeated across its four carve views and visibly stretches; the truck remains part of that photo rather than separate geometry. The big wheel retains open spokes and a centre pivot but uses one oblique reference, and its traced circle sits small inside the support. Review the sheet and the exported close three-quarter/mayor renders. These are honest candidate results, not accepted likeness claims.
 
-## Checks
-
-- Blender export and imported-model render — completed.
-- `node tools/test-blender-output.mjs` — passed, 305 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs` — passed; size targets remain advisory.
-- Browser and in-game look checks — not run; Claude owns them. Claude should inspect photo/model fidelity for fountain, tavern, wheel, and the turned pivot.
-- No assertions changed. Race fingerprints: not applicable; art only.
-- **Acceptance gaps:** this round did not rebuild the fountain or tavern from multi-view photo masks, did not trace the wheel from a dead-on photo, and did not create measured grid overlays or the requested additional views. The only tavern photo is a front view, the wheel source is oblique, and the fountain set lacks rear. The sheet records the mismatch. Review note marks the result as failed so it is not mistaken for completion.
+**Checks:** Blender 4.5.13 export and imported-GLB render completed. `node tools/test-blender-output.mjs` passed (336 checks, 0 failed). `node tools/test-repo-hygiene.mjs` passed; size targets are advisory. No lane tier or build was run, as directed. Browser checks remain with Claude; Claude should inspect the photo/model comparisons and the art gaps listed above. No assertions changed. Race fingerprints: not applicable; art only.
 
 ## Removed
 
-- Removed the superseded `round-2.jpg` and `round-2-review.md` after writing round 3 evidence.
-- No runtime code or test behavior was removed.
+- Removed the former fountain bonnet/pipe construction and the former tavern beam/panel/truck construction when replacing their bodies.
+- Removed the round-3 sheet and review note after publishing round 4.
+- No runtime game code or test behavior was removed or changed.

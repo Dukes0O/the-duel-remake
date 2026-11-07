@@ -200,9 +200,9 @@ def car(name, center, scale=1.0, material='faded-hand-paint', parent=None):
 
 # Photo-carved bonnet basin from measured side, end and plan grids.
 building_root('fountain','1x1')
-fountain=carve_object('fountain:bonnet',mat,{
-    'photos':{'side':tex/'fountain-side.jpg','front':tex/'fountain-front.jpg',
-              'rear':tex/'fountain-front.jpg','top':tex/'fountain-above.jpg'},
+fountain=carve_object('fountain:bonnet',tex,{
+    'photos':{'side':'fountain-side.jpg','front':'fountain-front.jpg',
+              'rear':'fountain-front.jpg','top':'fountain-above.jpg'},
     'length':6.8,'width':6.8,'height':6.6,
     'side':{'start':130,'end':640,'ground':650},
     'front':{'centre':355,'ground':650,'top':40},
@@ -215,9 +215,8 @@ water=cyl('fountain:water',(0,1.05,0),1.25,.025,'water',32)
 water['emissive']=True
 # Photo-carved tavern; the only supplied elevation is reused as measured input.
 building_root('tavern','2x2')
-tavern_photo=tex/'tavern.jpg'
-tavern=carve_object('tavern:body',mat,{
-    'photos':{'side':tavern_photo,'front':tavern_photo,'rear':tavern_photo,'top':tavern_photo},
+tavern=carve_object('tavern:body',tex,{
+    'photos':{'side':'tavern.jpg','front':'tavern.jpg','rear':'tavern.jpg','top':'tavern.jpg'},
     'length':14.0,'width':14.0,'height':9.2,
     'side':{'start':45,'end':885,'ground':590},
     'front':{'centre':460,'ground':590,'top':15},
@@ -257,14 +256,14 @@ for side in (-1,1):
 wheel_pivot=bpy.data.objects.new('big-wheel:wheel',None); bpy.context.collection.objects.link(wheel_pivot); wheel_pivot.parent=current
 wheel_pivot.location=town.game_vector((0,11.4,0)); wheel_pivot.rotation_euler[1]=math.radians(18)
 wheel_photo=Photo(tex/'big-wheel.jpg')
-wheel_sky=wheel_photo.sky([(8,8),(891,8),(8,658),(891,658),
-    (120,220),(190,125),(300,80),(515,80),(680,130),(790,220),
-    (820,345),(770,460),(680,535),(545,580),(365,580),(230,545),(130,460)],tolerance=24,grey=20)
-loops=trace(~wheel_sky,(45,10,890,650),tolerance=2.2,min_area=95)
+wheel_sky=wheel_photo.sky([(8,8),(813,8),(8,891),(813,891),
+    (125,270),(195,175),(300,105),(520,105),(665,175),(710,280),
+    (710,520),(650,650),(535,710),(300,710),(165,650),(100,520)],tolerance=24,grey=20)
+loops=trace(~wheel_sky,(20,10,815,890),tolerance=2.2,min_area=95)
 def wheel_point(px,py,depth):
-    return ((px-450)*.0228, (638-py)*.0228, depth)
+    return ((px-411)*.0174, (418-py)*.0174, depth)
 wheel_mesh=PhotoMesh()
-slab(wheel_mesh,'wheel',wheel_photo,loops,wheel_point,-.11,.11,wall_scale=.0228)
+slab(wheel_mesh,'wheel',wheel_photo,loops,wheel_point,-.11,.11,wall_scale=.0174)
 wheel_obj=wheel_mesh.finish('big-wheel:photo-traced-wheel',{'wheel':wheel_photo.material()})
 keep(wheel_obj,wheel_pivot)
 # Compact coaster: welded tower, inclined lead-in, broad loop, steep return drop, and movable train.
