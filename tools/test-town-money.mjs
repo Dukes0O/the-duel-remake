@@ -10,6 +10,16 @@ same(TOWN_MONEY_PRICES.ticket,{Cheap:2,Fair:5,Dear:10},'ticket prices have three
 const town=createTown(1001,'Pay Day');
 stepTown(town);
 same(town.till,1500n,'Hollis adds the founding grant once');
+const routedTown=createTown(1002,'Routed Till');stepTown(routedTown);
+const routedProfile={wasteland:{scrap:350}};
+check(stepTown(routedTown,{type:'tillIn',amount:300},{profile:routedProfile})[0].ok,'stepTown passes its optional context to the command dispatcher');
+same(routedProfile.wasteland.scrap,50,"a routed deposit comes from the player's wallet exactly");
+same(routedTown.till,1800n,'a routed deposit reaches the town till exactly');
+const walletBefore=routedProfile.wasteland.scrap,tillBefore=routedTown.till;
+const routedRefusal=stepTown(routedTown,{type:'tillIn',amount:100},{profile:routedProfile})[0];
+check(!routedRefusal.ok,'stepTown refuses a deposit when the wallet is too small');
+same(routedProfile.wasteland.scrap,walletBefore,'a refused routed deposit leaves the wallet unchanged');
+same(routedTown.till,tillBefore,'a refused routed deposit leaves the till unchanged');
 const profile={wasteland:{scrap:700}};
 check(dispatchTownCommand(town,{type:'tillIn',amount:200},{profile}).ok,'the player can put scrap in the till');
 same(profile.wasteland.scrap,500,'a deposit comes from the player wallet');
