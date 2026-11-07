@@ -211,3 +211,7 @@ course.
 made 2026-11-06: a low stone railway arch with daylight beyond it. The recipe
 traces the true opening and rebuilds the dark inside, sleepers and rails at
 0.87 metre centers.
+
+## WW-ART-DAM-2 hoist wheel photos (2026-11-07)
+
+dam-hoist-wheel-side.png and dam-hoist-wheel-end-on.png are original Codex ImageGen studio reference photographs generated on 2026-11-07. They show one rusted riveted dam-gate hoist wheel in its braced steel frame: a dead-on side view and a dead-on axle-end view. They are measured source images for the gantry wheel and frame recipe; the exported GLB embeds compressed copies.
