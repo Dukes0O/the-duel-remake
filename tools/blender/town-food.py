@@ -492,7 +492,7 @@ def market_stall(building, offset, kind):
     for part_name,polygon in stall_front_pieces:
         front_frame=PhotoMesh()
         mask=photo_mask(stall_front_photo,[polygon])
-        front_loops=trace(mask,(38,18,990,930),tolerance=.7,min_area=8)
+        front_loops=trace(mask,(38,18,990,930),tolerance=2.0,min_area=20)
         slab(front_frame,'front',stall_front_photo,front_loops,front_world,0,.075,wall_scale=.00305)
         keep(front_frame.finish(f'{building}:photo-traced-{part_name}',{'front':stall_front_photo.material()}))
 
@@ -504,7 +504,7 @@ def market_stall(building, offset, kind):
         for part_name,polygon in stall_side_pieces:
             side_frame=PhotoMesh()
             mask=photo_mask(stall_side_photo,[polygon])
-            side_loops=trace(mask,(195,32,690,986),tolerance=.7,min_area=8)
+            side_loops=trace(mask,(195,32,690,986),tolerance=1.8,min_area=18)
             slab(side_frame,'side',stall_side_photo,side_loops,side_frame_world,-.07,.07,wall_scale=.00455)
             keep(side_frame.finish(f'{building}:photo-traced-{side_label}-{part_name}',{'side':stall_side_photo.material()}))
 
@@ -546,7 +546,6 @@ def market_stall(building, offset, kind):
             a,ua=left[depth_step];b,ub=right[depth_step]
             c,uc=right[depth_step+1];d,ud=left[depth_step+1]
             top_points=[a,b,c,d];top_uvs=[ua,ub,uc,ud]
-            px=(stall_front_photo.w*(ua[0]+ub[0])*.5)
             awning.indexed(top_points,top_uvs,'canvas',(0,1,0))
             underside=[awning.vertex((awning.verts[index][0],awning.verts[index][1]-.018,awning.verts[index][2]))
                        for index in (a,b,c,d)]
