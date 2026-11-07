@@ -404,4 +404,4 @@ Lessons from Wednesday, a small engine carved with the hull kit (Claude, 6 Novem
 - Keep the sky tolerance narrow, about 20. A wide one treats pale highlights on metal as sky and carves them away.
 - A top-facing view must read real material, never the photo's sky.
 - Scale pictures in memory. Never save over a source photo.
-
+6. Look at every mask beside its photo. Background walled in by the subject (between legs, inside a frame, under a body) is not reached by the flood from the frame's edge, may not match the studio's colour, and would be carved as if it were the subject. Take each patch out by a measured shape. (Kyle, 6 November.)
