@@ -163,3 +163,19 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-9.jpg` and `round-9-review.md`; round 10 is the current sheet.
 - Removed this round's renders, Blender review file and logs from `.qa-dist/`;
   kept the task brief.
+
+## Round 11 - Patience hull, name and sand (7 November 2026)
+
+- Replaced Patience's projected-photo hull with one four-view `carve_object` hull using the measured side, bow, stern and top references. Set the keel at y=-4 m and the walkable deck at y=4 m; the rounded, flared hull remains centred at its prior map location, with its bow toward +X. Moved the deck hardware and main mast assembly down with the deck. Both anchor-chain sides now include a hawsepipe and links.
+- Painted PATIENCE on both bow sides and checked renders from each side; both read left to right. Rebuilt the two banks as a smooth, irregular sand height-field that meets the hull and fades into the bed.
+- Exported GLB read-back: 48,918 triangles and 2,652,332 bytes (2.53 MiB), within the 50,000 triangle and 3 MB limits.
+- Sheet: `docs/board/looks/ww-art-ships/round-11.jpg`, 1600 x 1800, 165,085 bytes. Scores and honest limits are in `round-11-review.md`.
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0. `tools/test-repo-hygiene.mjs`: passed; exit 0. Size targets are advisory. Browser and look checks: Claude should inspect the sheet; browser checks are not applicable to this art-only lane. `tools/test-review-evidence.mjs` was not run; Claude runs it at merge. The deck and funnel close views were rendered from the exported GLB in an empty scene.
+- Changed assertions: added a GLB check for the named Patience hull. No existing assertion was changed or weakened. Race fingerprints: none; art only.
+
+## Removed
+
+- Removed Patience's former `photo_hull` call and the obsolete `patience-hull-projection.jpg` texture and credit entry. The shared `photo_hull` helper remains for the other ships and pilot boat.
+- Removed `round-10.jpg` and `round-10-review.md`; round 11 is the current sheet and review.
+- Removed this round's temporary renders, Blender review file and logs from `.qa-dist/`; retained the supplied task briefs.
+
