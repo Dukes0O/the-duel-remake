@@ -514,7 +514,7 @@ for axle_name, px, cy, radius_px in (('front', 95, 302, 47), ('rear', 314, 302, 
             a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
             i / 3)
         disc_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
-            cx - math.cos(a) * radius_px * f * .80, cy - math.sin(a) * radius_px * f * .80)
+            cx - math.cos(a) * radius_px * f * .68, cy - math.sin(a) * radius_px * f * .68)
         lathe(wheel, 'tread', (x, radius, axle_z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.15, radius * .9), (-.12, radius),
               (.12, radius), (.15, radius * .9)], tread_uv, sides=20,
@@ -636,7 +636,7 @@ for axle_index, (px, cy, radius_px) in enumerate(((795, 312, 35), (861, 312, 34)
             a / (2 * math.pi) * (2 * math.pi * radius / (tread_width_px * SAL_SCALE)),
             i / 3)
         face_uv = lambda a, f, cx=px, cy=cy, radius_px=radius_px: sal_details['side'].uv(
-            cx-math.cos(a)*radius_px*f*.80, cy-math.sin(a)*radius_px*f*.80)
+            cx-math.cos(a)*radius_px*f*.68, cy-math.sin(a)*radius_px*f*.68)
         lathe(trailer_wheel, 'tread', (x, radius, z), (1, 0, 0), (0, 0, 1), (0, 1, 0),
               [(-.14, radius*.9), (-.11, radius), (.11, radius), (.14, radius*.9)],
               tire_uv, sides=18,
