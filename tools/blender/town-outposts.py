@@ -708,12 +708,31 @@ if any(value < -11.5 or value > 11.5 for axis in (0, 2)
     raise RuntimeError('hermit-camp whole footprint exceeds 3 x 3 cells')
 
 # Export and read the exact GLB back before making review views.
-# Deck town: keep the hull out of this asset; it is supplied by the world.
-# The deck is a shallow raised plate so its top is visible from the mayor view.
+# Deck town: the ship hull is supplied by the world; carve only its deck.
+# The photo grid sets the long side to 14.8 m. The door-sized home reference
+# below sets the shared vertical scale for the deck and its rails.
+DECK_START, DECK_END, DECK_GROUND, DECK_TOP = 25, 1001, 261, 62
+DECK_LENGTH = 14.8
+DECK_SCALE = DECK_LENGTH / (DECK_END - DECK_START)
+DECK_HEIGHT = (DECK_GROUND - DECK_TOP) * DECK_SCALE
+DECK_FRONT = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
+DECK_REAR = {'centre': 512, 'ground': 580, 'top': 84, 'top_height': 5.08}
+DECK_WIDTH = 7.4
+deck_table = {
+    'photos': {'side': 'deck-town-deck-side.jpg', 'front': 'deck-town-deck-front.jpg',
+               'rear': 'deck-town-deck-rear.jpg', 'top': 'deck-town-deck-top.jpg'},
+    'length': DECK_LENGTH, 'width': DECK_WIDTH, 'height': DECK_HEIGHT,
+    'side': {'start': DECK_START, 'end': DECK_END, 'ground': DECK_GROUND},
+    'front': DECK_FRONT, 'rear': DECK_REAR,
+    'top': {'front': 42, 'rear': 980, 'centre': 256, 'along': 'x',
+            'x_scale': DECK_WIDTH / 448},
+    'grey': 26, 'tolerance': 32, 'bleed_tolerance': 28,
+    'voxel': .09, 'target': 4000,
+    'mask_dir': str(render / 'masks'),
+}
+
 materials = town.make_materials({'rusted-steel': textures / 'rusted-steel.jpg',
                                 'galvanised-tin': textures / 'rusted-corrugated-tin.jpg'})
-# Town art uses little real reflection; keep all newly added materials inside
-# the Wasteland art-line cap even where the shared palette is shinier.
 for mat in materials.values():
     principled = mat.node_tree.nodes.get('Principled BSDF')
     if principled:
@@ -723,80 +742,94 @@ bpy.context.collection.objects.link(deck_town)
 deck_town.parent = family
 deck_town.empty_display_type = 'CUBE'
 deck_parts = []
+
+deck_body = carve_object('deck-town:deck', textures, deck_table)
+deck_body.parent = deck_town
+deck_parts.append(deck_body)
+
 def deck_piece(name, center, size, mat, bevel=.02):
     obj = town.cube('deck-town:' + name, center, size, mat, bevel)
     obj.parent = deck_town
     deck_parts.append(obj)
     return obj
 
-deck_piece('deck', (0, .32, 0), (14.8, .42, 10.6), materials['rusted-steel'], .055)
-# Raised edge rail and regularly spaced bollards describe the salvaged ship deck.
-for side in (-1, 1):
-    x = side * 7.32
-    deck_piece(f'rail-side-{side}', (x, .75, 0), (.12, .42, 10.45), materials['rusted-steel'])
-    for i, z in enumerate((-4.6, -2.3, 0, 2.3, 4.6)):
-        deck_piece(f'bollard-side-{side}-{i}', (x - side*.12, .67, z), (.25, .48, .25), materials['iron-dark'], .035)
-for side in (-1, 1):
-    z = side * 5.2
-    deck_piece(f'rail-end-{side}', (0, .75, z), (14.6, .42, .12), materials['rusted-steel'])
-    for i, x in enumerate((-6.5, -3.25, 0, 3.25, 6.5)):
-        deck_piece(f'bollard-end-{side}-{i}', (x, .67, z - side*.12), (.25, .48, .25), materials['iron-dark'], .035)
-for i, x in enumerate((-4.7, 0, 4.7)):
-    deck_piece(f'hatch-{i}', (x, .55, 0), (1.3, .06, 1.7), materials['iron-dark'], .025)
+DECK_Y = 1.42
+for index, x in enumerate((-3.5, 0, 3.5), 1):
+    hatch = deck_piece(f'hatch-{index}', (x, DECK_Y + .10, .3), (1.15, .07, 1.35), materials['iron-dark'], .025)
 
-# Four related tin homes; the formed tin stays separate from the deck assembly.
-home_positions = [(-4.6, -2.8), (0, -2.8), (4.5, 2.5), (-1.0, 2.7)]
-home_angles = [0, .08, -.12, .16]
-home_scales = [1, .94, 1.04, .91]
+# Carve one photo-built home, then make four linked, slightly varied copies.
+# Its door and window stay in the photographs; the ladder is a separate part.
+HOME_START, HOME_END, HOME_GROUND, HOME_TOP = 42, 979, 480, 25
+HOME_LENGTH = 6.0
+HOME_SCALE = HOME_LENGTH / (HOME_END - HOME_START)
+HOME_HEIGHT = (HOME_GROUND - HOME_TOP) * HOME_SCALE
+HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 28}
+HOME_REAR = {'centre': 512, 'ground': 650, 'top': 28}
+HOME_WIDTH = 3.0
+home_table = {
+    'photos': {'side': 'deck-town-home-side.jpg', 'front': 'deck-town-home-front.jpg',
+               'rear': 'deck-town-home-rear.jpg', 'top': 'deck-town-home-top.jpg'},
+    'length': HOME_LENGTH, 'width': HOME_WIDTH, 'height': HOME_HEIGHT,
+    'side': {'start': HOME_START, 'end': HOME_END, 'ground': HOME_GROUND},
+    'front': HOME_FRONT, 'rear': HOME_REAR,
+    'top': {'front': 52, 'rear': 970, 'centre': 256, 'along': 'x',
+            'x_scale': HOME_WIDTH / 410},
+    'grey': 26, 'tolerance': 34, 'bleed_tolerance': 28,
+    'voxel': .065, 'target': 2000,
+    'mask_dir': str(render / 'masks'),
+}
+home_source = carve_object('deck-town:home-source', textures, home_table)
+home_bounds_dimensions = (float(home_source.dimensions.x), float(home_source.dimensions.y), float(home_source.dimensions.z))
+print('deck-town carved home bounds (Blender XYZ):', json.dumps(home_bounds_dimensions))
+
+home_layout = [(-1.65, -4.2, 0.0, 1.0), (1.65, -3.9, .10, .94),
+               (-1.65, 2.9, -.12, 1.04), (1.65, 3.3, .16, .91)]
 home_objects = []
-for index, ((x, z), angle, scale) in enumerate(zip(home_positions, home_angles, home_scales)):
-    prefix = f'deck-town:home-{index+1}'
-    # A built-up timber sill touches the deck; wall panels and a pitched roof
-    # keep the cluster legible at street and mayor scale.
-    sill = deck_piece(f'home-{index+1}-sill', (x, .63, z), (3.2*scale, .18, 2.45*scale), materials['weathered-plank'], .025)
-    for wall_name, dx, dz, sx, sz in (
-        ('front', 0, -1.16, 3.0, .09), ('rear', 0, 1.16, 3.0, .09),
-        ('left', -1.51, 0, .09, 2.3), ('right', 1.51, 0, .09, 2.3)):
-        before_wall = set(bpy.context.scene.objects)
-        wall = town.corrugated_sheet(prefix + ':' + wall_name, (x+dx*scale, 1.83*scale, z+dz*scale), sx*scale, 2.35*scale, materials)
-        wall.parent = deck_town
-        wall.rotation_euler[1] = angle
-        deck_parts.append(wall); home_objects.append(wall)
-        for extra in set(bpy.context.scene.objects) - before_wall - {wall}:
-            extra.parent = deck_town
-            deck_parts.append(extra); home_objects.append(extra)
-    roof_start = set(bpy.context.scene.objects)
-    town.pitched_roof(prefix + ':roof', (x, 3.08*scale, z), 3.35*scale, 2.9*scale, materials)
-    for obj in set(bpy.context.scene.objects) - roof_start:
-        obj.parent = deck_town
-        obj.rotation_euler[1] += angle
-        deck_parts.append(obj); home_objects.append(obj)
-    # A dark, simple doorway is reached by its own leaning ladder.
-    door = deck_piece(f'home-{index+1}-door', (x, 1.55*scale, z-1.22*scale), (.72*scale, 1.65*scale, .08), materials['iron-dark'], .01)
-    ladder = town.beam(prefix + ':ladder-left', (x-.58*scale, .58, z-1.72*scale), (x-.58*scale, 1.95*scale, z-1.22*scale), .075, materials['weathered-plank'])
-    ladder.parent = deck_town; deck_parts.append(ladder)
+for index, (x, z, angle, scale) in enumerate(home_layout, 1):
+    prefix = f'deck-town:home-{index}'
+    home = bpy.data.objects.new(prefix, None)
+    bpy.context.collection.objects.link(home)
+    home.parent = deck_town
+    home.location = (x, DECK_Y + .12, z)
+    home.rotation_euler[1] = angle
+    home.scale = (scale, scale, scale)
+    body = home_source.copy()
+    body.data = home_source.data
+    body.name = prefix + ':body'
+    bpy.context.collection.objects.link(body)
+    body.parent = home
+    home_objects.append(body)
+    deck_parts.extend([home, body])
+
+    # The ladder leans onto the photographed side wall and its last rung meets the sill.
+    ladder = town.beam(prefix + ':ladder-left', (1.52, .04, -1.30), (1.52, 1.54, -1.30), .075, materials['weathered-plank'])
+    ladder.parent = home
     for rung in range(1, 7):
-        y = .58 + rung*.19
-        rung_obj = town.beam(prefix + f':ladder-rung-{rung}', (x-.81*scale,y,z-1.61*scale), (x-.35*scale,y,z-1.61*scale), .045, materials['rusted-steel'])
-        rung_obj.parent = deck_town; deck_parts.append(rung_obj)
-    home_objects.append(door)
+        y = rung * .20
+        rung_obj = town.beam(prefix + f':ladder-rung-{rung}', (1.52, y, -1.52), (1.52, y, -1.08), .045, materials['rusted-steel'])
+        rung_obj.parent = home
+        deck_parts.append(rung_obj)
+    deck_parts.append(ladder)
+    home_objects.extend([ladder])
+    bpy.context.view_layer.update()
+bpy.data.objects.remove(home_source, do_unlink=True)
 
 # Walkways join the homes with visible plank spans; washing and bell frame are
 # named pieces in their own right for future animation/lighting hooks.
-for i, (a, b) in enumerate((((-4.6,-2.8),(0,-2.8)), ((0,-2.8),(-1,2.7)), ((-1,2.7),(4.5,2.5)))):
-    beam_obj = deck_piece(f'walkway-{i+1}', ((a[0]+b[0])/2,.65,(a[1]+b[1])/2),
+for i, (a, b) in enumerate((((-1.65,-4.2),(1.65,-3.9)), ((-1.65,2.9),(1.65,3.3)), ((0,-3.9),(0,2.9)))):
+    beam_obj = deck_piece(f'walkway-{i+1}', ((a[0]+b[0])/2,DECK_Y+.10,(a[1]+b[1])/2),
                           (math.dist(a,b),.12,.72), materials['weathered-plank'], .02)
     beam_obj.rotation_euler[1] = -math.atan2(b[1]-a[1], b[0]-a[0])
-for i, (x,z) in enumerate(((-2.3,-2.8),(1.5,0.0))):
-    line = town.beam(f'deck-town:washing-line-{i+1}', (x,3.0,z), (x+2.0,3.0,z+.5), .025, materials['iron-dark'])
+for i, (x,z) in enumerate(((-1.6,-4.2),(-1.6,3.2))):
+    line = town.beam(f'deck-town:washing-line-{i+1}', (x,DECK_Y+2.15,z), (x+3.5,DECK_Y+2.15,z+.3), .025, materials['iron-dark'])
     line.parent=deck_town; deck_parts.append(line)
     for j in range(3):
-        cloth = deck_piece(f'washing-{i+1}-{j+1}', (x+.35+j*.55,2.63,z+.1+j*.12), (.48,.68,.035), materials['patched-canvas'], .006)
+        cloth = deck_piece(f'washing-{i+1}-{j+1}', (x+.35+j*.95,DECK_Y+1.76,z+.1+j*.1), (.38,.68,.035), materials['patched-canvas'], .006)
         cloth.rotation_euler[1]=-.18
-bell_frame = deck_piece('bell-frame-post-left', (6.0,1.55,-3.6), (.12,2.0,.12), materials['weathered-plank'])
-deck_piece('bell-frame-post-right', (6.8,1.55,-3.6), (.12,2.0,.12), materials['weathered-plank'])
-deck_piece('bell-frame-top', (6.4,2.55,-3.6), (.95,.12,.12), materials['weathered-plank'])
-bell = deck_piece('bell', (6.4,2.25,-3.6), (.32,.34,.32), materials['iron-dark'], .045)
+bell_frame = deck_piece('bell-frame-post-left', (2.55,1.55,-6.7), (.12,2.0,.12), materials['weathered-plank'])
+deck_piece('bell-frame-post-right', (3.35,1.55,-6.7), (.12,2.0,.12), materials['weathered-plank'])
+deck_piece('bell-frame-top', (2.95,2.55,-6.7), (.95,.12,.12), materials['weathered-plank'])
+bell = deck_piece('bell', (2.95,2.25,-6.7), (.32,.34,.32), materials['iron-dark'], .045)
 bell.name = 'deck-town:bell'
 
 deck_bounds = object_bounds(deck_parts)
