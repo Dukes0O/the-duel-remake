@@ -123,8 +123,11 @@ def build_harbour_gate():
  lintel_side=(wall.w*.4625,55,wall.w*.5375,300)
  box(m,-3.72,3.72,5.15,5.55,-depth,depth,{'+z':('gate',p,(152,95,875,127)),'-z':('gate',p,(152,95,875,127)), '+x':('wall',wall,lintel_side),'-x':('wall',wall,lintel_side),'+y':('wall',wall,lintel_side),'-y':('wall',wall,lintel_side)})
  finish(m,'harbour-gate-frame',frame_mats)
- cap=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
- box(cap,-4.1,4.1,5.55,H,-1.6,1.6,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+ cap=Mesh(); gate_courses={
+  '+x':('stone',stone,(0,0,stone.w*6,stone.h*.9)), '-x':('stone',stone,(0,0,stone.w*6,stone.h*.9)),
+  '+y':('stone',stone,(0,0,stone.w*16,stone.h*6)), '-y':('stone',stone,(0,0,stone.w*16,stone.h*6)),
+  '+z':('stone',stone,(0,0,stone.w*16,stone.h*.9)), '-z':('stone',stone,(0,0,stone.w*16,stone.h*.9))}
+ box(cap,-4.1,4.1,5.55,H,-1.6,1.6,gate_courses)
  finish(cap,'harbour-gate-coping',{'stone':stone.material()})
  # Each slab's local origin is its real outer hinge; its photo crop ends at the meeting stile.
  crops=[('harbour-gate-left',(152,127,510,701),-3.72,1),('harbour-gate-right',(514,127,875,701),3.72,-1)]
@@ -151,9 +154,13 @@ def build_harbour_ramp():
        '+y':('stone',stone,(0,0,stone.w*80,stone.h*6)),
        '-y':('stone',stone,(0,0,stone.w*80,stone.h*6))})
  finish(walls,'harbour-ramp-walls',{'wall':wall.material(),'stone':stone.material()})
- coping=Mesh(); top_course=(0,0,stone.w*80,stone.h*6)
+ coping=Mesh()
  for x0,x1 in ((-7,-4),(4,7)):
-  box(coping,x0,x1,5.55,6,-8,8,{k:('stone',stone,top_course) for k in ['+x','-x','+y','-y','+z','-z']})
+  wall_courses={
+   '+x':('stone',stone,(0,0,stone.w*32,stone.h*.9)), '-x':('stone',stone,(0,0,stone.w*32,stone.h*.9)),
+   '+y':('stone',stone,(0,0,stone.w*6,stone.h*32)), '-y':('stone',stone,(0,0,stone.w*6,stone.h*32)),
+   '+z':('stone',stone,(0,0,stone.w*6,stone.h*.9)), '-z':('stone',stone,(0,0,stone.w*6,stone.h*.9))}
+  box(coping,x0,x1,5.55,6,-8,8,wall_courses)
  finish(coping,'harbour-ramp-wall-coping',{'stone':stone.material()})
  # One uninterrupted cobbled face runs landward to seaward: +Z is downhill.
  deck=Mesh(); x0,x1=-4,4; z0,z1=-8,8; y0,y1=1.5,0; thick=.24
