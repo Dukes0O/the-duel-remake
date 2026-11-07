@@ -77,6 +77,7 @@ check(old.people.length===1&&old.people[0].name==='Saved person'&&Array.isArray(
 const savedPeople=Array.from({length:20},(_,index)=>({id:`saved-${index}`,name:`Saved ${index}`,family:`saved-family-${Math.floor(index/2)}`,
   born:0,home:`saved-home-${Math.floor(index/2)}`,homeTier:1,homeType:'Tent',health:73,mood:60,skills:{},needs:{shelter:true,waterLitres:50,waterNeedLitres:15,foodCalories:2100},history:[]}));
 const migrated=deserializeTown(JSON.stringify({version:1,id:'town-many',name:'Twenty saved people',seed:94,tick:0,people:savedPeople,buildings:[]}));
+stock(migrated,{food:1_000_000});
 check(migrated.people.length===20&&migrated.homePlots.length===10&&migrated.homePlots.every(plot=>plot.tier===1&&plot.household),
   'a legacy town restores a finished plot and household for every saved home');
 check(migrated.people.every(person=>person.health===73)&&migrated.peopleConditions===undefined,

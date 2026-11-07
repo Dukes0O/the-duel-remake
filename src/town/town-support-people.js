@@ -29,11 +29,13 @@ function deliveredWater(town) {
 export function measureTownPeopleSupport(town) {
   const homes = homePlaces(town);
   const population = Math.max(1, town.people?.length || 0);
-  const waterLitresPerPerson = deliveredWater(town) / population;
+  const waterSources=Object.values(town.regions||{}).some(region=>Object.keys(region?.groundWater?.wells||{}).length>0);
+  const hasNetworkWater=Number(town.utilities?.waterResult?.sources)>0||Number(town.utilities?.sources?.length)>0;
+  const hasWaterMeasurement=hasNetworkWater||waterSources;
   return {
     shelterPlaces: homes.places,
     paintedHomePlaces: homes.painted,
-    waterLitresPerPerson,
+    ...(hasWaterMeasurement?{waterLitresPerPerson:deliveredWater(town)/population}:{}),
     waterNeedLitresPerPerson: Number.isFinite(town.weather?.waterLitresPerPerson)
       ? town.weather.waterLitresPerPerson : 15,
   };
