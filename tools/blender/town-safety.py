@@ -11,10 +11,10 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-4'
+evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-4.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
     raise SystemExit(0)
@@ -318,36 +318,79 @@ for x in (-.28,.28):
     cube('searchlight-lens-guard',(x,4.92,-.81),(.38,.42,.035),materials['iron-dark'],.025)
 for i in range(6): pipe('searchlight-cooling-slot',(0,4.69+i*.075,.15),(0,4.69+i*.075,.23),.025,materials['iron-dark'],sides=8)
 
-# Fire station at 3 x 2 cells: two real vehicle bays, raised hose tower and bell.
+# Fire station: photo-carved body and two genuinely open drive-through bays.
 b=building('fire-station',(3,2))
-for x in (-10.4,10.4):
-    for z in (-6.4,6.4): cube('fire-station-corner-post',(x,3.3,z),(.42,6.6,.42),materials['rusted-steel'],.06)
-for x in (-6,0,6):
-    cube('fire-station-red-pier',(x,3.0,-6.5),(.55,6.0,.38),materials['red-paint'],.055)
-    for y in (1.2,5.2): beam('fire-station-front-bay-beam',(x-.2,y,-6.65),(x+.2,y,-6.65),.14,materials['rusted-steel'])
-for x in (-5.9,5.9):
-    cube('fire-station-raised-bay-lintel',(x,6.1,-6.55),(11.4,.54,.50),materials['red-paint'],.08)
-for x in (-5.7,5.7):
-    for z in (-6.1,6.1): cube('fire-station-side-wall',(x,2.9,z),(.25,5.8,12.0),materials['red-paint'],.04)
-for i in range(7):
-    z=-6+i*2
-    panel=cube(f'fire-station-roof-panel-{i+1}',(0,6.35,z),(21.3,.14,2.0),materials['galvanised-tin'],.035)
-    panel.rotation_euler[0]=.055 if i%2 else -.055
-for x in (-9.7,-5.9,0,5.9,9.7): beam('fire-station-roof-rafter',(x,6.1,-6.4),(x,6.1,6.4),.16,materials['weathered-plank'])
-# Tower for drying canvas hoses; open steel lattice and hanging hose loops.
-for sx in (7.6,9.5):
-    for sz in (-5.6,-3.7):
-        beam('fire-station-hose-tower-leg',(sx,6.3,sz),(sx,12.8,sz),.18,materials['rusted-steel'])
-for y in (7.2,9.6,12.5):
-    for z in (-5.6,-3.7): beam('fire-station-tower-rung',(7.6,y,z),(9.5,y,z),.10,materials['galvanised-tin'])
-    for x in (7.6,9.5): beam('fire-station-tower-side-rail',(x,y,-5.6),(x,y,-3.7),.10,materials['rusted-steel'])
-for x in (8.0,8.5,9.0):
-    pipe(f'fire-station-hanging-hose-{x}',(x,12.0,-5.5),(x,8.1,-5.5),.065,materials['iron-dark'])
-for x in (7.6,9.5):
-    for z in (-5.6,-3.7): beam('fire-station-tower-diagonal',(x,7.2,z),(9.5 if x==7.6 else 7.6,9.6,z),.09,materials['rusted-steel'])
-bell=pipe('fire-station-bell-neck',(8.55,12.8,-4.65),(8.55,13.15,-4.65),.10,materials['iron-dark'])
-bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.28,location=town.game_vector((8.55,13.1,-4.65)))
-bobj=bpy.context.object;bobj.name='fire-station-bell';bobj.scale=(1,.65,1);bobj.data.materials.append(materials['rusted-steel']);attach(bobj)
+from photo_carve import carve_object, lift_if_dark, save_mask
+photo_root=root/'public/assets/models/wasteland/town/textures'
+station_table={
+    'photos': {'side':'fire-station-side.jpg','front':'fire-station-front.jpg',
+               'rear':'fire-station-rear.jpg','top':'fire-station-top.jpg'},
+    # Door height gives the scale: a truck bay is 4.5 m clear under its lintel.
+    'length':12.4,'width':20.8,'height':6.2,
+    # Use the central 900 px so the measured side-wall scale matches the same door height as the ends.
+    'side': {'start':320,'end':1220,'ground':805},
+    'front': {'centre':768,'ground':760,'top':308},
+    'rear': {'centre':768,'ground':730,'top':360},
+    'top': {'front':226,'rear':793,'centre':768,'x_scale':20.8/(1505-27)},
+    # Preserve both measured door frames and headers; cut only the clear openings.
+    'keep': lambda x,y,z: ~(((x>=-6.5)&(x<=-1.15)|(x>=1.15)&(x<=6.5)) & (y>=0)&(y<=4.5)),
+    'grey':26,'tolerance':32,'bleed_tolerance':42,'voxel':.09,'target':7800,
+    'mask_dir':str(evidence/'masks'),
+}
+station_body=carve_object('fire-station:body',photo_root,station_table)
+station_body.parent=b
+bay_floors=[]
+bay_shadows=[]
+for name,x in (('left',-3.825),('right',3.825)):
+    bay_floors.append(cube(f'fire-station:bay-floor-{name}',(x,.09,0),(5.35,.12,12.0),materials['cracked-concrete'],.012))
+    bay_shadows.append(cube(f'fire-station:bay-interior-shadow-{name}',(x,2.25,0),(5.2,4.2,.08),materials['iron-dark'],.008))
+
+# Trace the hose-drying tower and hanging bell from the original station photo.
+# The flood reaches through the open lattice, so the picture's grey studio stays open.
+tower_photo=Photo(photo_root/'town-safety-fire-station.jpg')
+lift_if_dark(tower_photo)
+tower_sky=tower_photo.sky([(8,8),(1015,8)],tolerance=27,grey=38)
+tower_mask=~tower_sky
+tower_mask[475:,:]=False
+tower_crop=(877,12,1015,475)
+save_mask(tower_mask,evidence/'masks/fire-station-tower-mask.png')
+tower_loops=photo_trace(tower_mask,tower_crop,tolerance=1.8,min_area=16)
+if not tower_loops: raise RuntimeError('fire-station hose tower photo did not trace')
+tower_mesh=PhotoMesh()
+TOWER_SCALE=9.8/(475-20)
+def tower_world(px,py,depth):
+    return (10.2+(px-877)*(1.8/(1015-877)),(475-py)*TOWER_SCALE,-3.2+depth)
+photo_slab(tower_mesh,'tower',tower_photo,tower_loops,tower_world,-.08,.08)
+tower_obj=tower_mesh.finish('fire-station:hose-tower-and-bell',{'tower':tower_photo.material()})
+tower_obj.parent=b
+
+# Keep the measured, full-resolution JPGs in the texture folder; pack smaller
+# copies in the family GLB so the completed safety family stays under 3 MiB.
+for photo in station_table['_photos'].values():
+    photo.image.scale(768,512)
+    photo.image.update()
+tower_photo.image.scale(512,256)
+tower_photo.image.update()
+
+def world_bounds(obj):
+    bpy.context.view_layer.update()
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    lo=tuple(min(point[i] for point in points) for i in range(3))
+    hi=tuple(max(point[i] for point in points) for i in range(3))
+    return lo,hi
+station_pieces=(station_body,*bay_floors,*bay_shadows,tower_obj)
+for piece in station_pieces:
+    lo,hi=world_bounds(piece)
+    print(f'PIECE BOUNDS {piece.name}: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)}')
+    if lo[2] < -.03: raise RuntimeError(f'{piece.name} is below the ground')
+if abs(world_bounds(station_body)[0][2]) > .1 or abs(world_bounds(tower_obj)[0][2]) > .01:
+    raise RuntimeError('fire station body and tower must touch the ground')
+for floor_piece,shadow_piece in zip(bay_floors,bay_shadows):
+    floor_top=world_bounds(floor_piece)[1][2]
+    shadow_bottom=world_bounds(shadow_piece)[0][2]
+    if abs(floor_top-shadow_bottom) > .01:
+        raise RuntimeError(f'{shadow_piece.name} must meet its bay floor')
+print('CONTACT CHECK: body and tower touch ground; both dark bay interiors meet their floors.')
 
 # Clinic, clinic water tank and legible raised roof cross. The segmented roof
 # carries patched tin, unevenly rusted seams and repairs into the mayor view.
@@ -429,9 +472,6 @@ def photo_facade(name, image_path, crop, world_x, world_width, world_height, fro
     return attach(result,parent)
 
 photo_root=root/'public/assets/models/wasteland/town/textures'
-photo_facade('fire-station-photo-facade',photo_root/'town-safety-fire-station.jpg',
-             (20,188,934,465),-11.6,23.2,6.6,-6.72,
-             holes=((220,320,478,459),(500,320,790,459)),parent=BUILDINGS['fire-station'],floor_px=464)
 photo_facade('clinic-photo-facade',photo_root/'town-safety-clinic.jpg',
              (60,190,970,820),-6.3,12.6,6.6,-6.72,parent=BUILDINGS['clinic'],floor_px=820)
 photo_facade('guard-post-photo-facade',photo_root/'town-safety-guard-post.jpg',
@@ -458,6 +498,13 @@ world=bpy.data.worlds.new('bright overcast') if not bpy.data.worlds else bpy.dat
 scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.48,.50,.49,1);world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
 scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=0;scene.view_settings.gamma=1
 def aim(obj, point): obj.rotation_euler=(Vector(point)-obj.location).to_track_quat('-Z','Y').to_euler()
+def aim_z(obj, point):
+    forward=(Vector(point)-obj.location).normalized()
+    world_up=Vector((0,0,1))
+    if abs(forward.dot(world_up))>.98: world_up=Vector((0,1,0))
+    right=forward.cross(world_up).normalized()
+    up=right.cross(forward).normalized()
+    obj.rotation_euler=Matrix((right,up,-forward)).transposed().to_euler()
 def render(name, view, location, target, ortho):
     cam_data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,cam_data);scene.collection.objects.link(cam)
     cam.location=Vector(location);aim(cam,Vector(target));cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
@@ -465,173 +512,97 @@ def render(name, view, location, target, ortho):
     scene.render.resolution_x=900;scene.render.resolution_y=720
     bpy.ops.render.render(write_still=True)
 
-# Hide other model parts so the comparison views have the same subject and scale.
-watch=next(obj for obj in scene.objects if obj.name=='watchtower')
+# Round 5: render only the submitted fire station after GLB export/import.
+station = next(obj for obj in scene.objects if obj.name == 'fire-station')
+visible = {station, *station.children_recursive}
+meshes = [obj for obj in visible if obj.type == 'MESH']
 for obj in scene.objects:
-    obj.hide_render = not (obj==watch or obj.parent==watch or obj in watch.children_recursive)
-watch_meshes=[obj for obj in {watch,*watch.children_recursive} if obj.type=='MESH']
-watch_corners=[obj.matrix_world @ Vector(corner) for obj in watch_meshes for corner in obj.bound_box]
-watch_min=Vector(tuple(min(point[i] for point in watch_corners) for i in range(3)))
-watch_max=Vector(tuple(max(point[i] for point in watch_corners) for i in range(3)))
-watch_size=watch_max-watch_min
-if min(watch_size) <= .0001: raise RuntimeError(f'watchtower has zero bounds: {watch_min} .. {watch_max}')
-print(f'BOUNDS watchtower: min={tuple(round(v,3) for v in watch_min)} max={tuple(round(v,3) for v in watch_max)} size={tuple(round(v,3) for v in watch_size)}')
-watch_center=(watch_min+watch_max)*.5
-watch_frame=max(watch_size.x,watch_size.y,watch_size.z*1.25)*1.22
-ground=bpy.data.materials.new('Plain dusty ground')
-ground.diffuse_color=(.31,.27,.21,1);ground.use_nodes=True
-ground.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.31,.27,.21,1)
-ground.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
-bpy.ops.mesh.primitive_plane_add(size=1000,location=(0,0,-.02))
-plane=bpy.context.object;plane.name='neutral dusty ground';plane.data.materials.append(ground)
-for name,loc,target,scale in (
-    ('watchtower-above',watch_center+Vector((1,1,1.414)).normalized()*watch_frame*1.6,watch_center,watch_frame),
-    ('watchtower-driver-seat',(watch_center.x,watch_max.y+watch_frame*1.8,1.55),watch_center,watch_frame),
-):
-    # Keep one large area light for overcast, readable surface color.
-    if not any(o.type=='LIGHT' for o in scene.objects):
-        ld=bpy.data.lights.new('overcast softbox','AREA');ld.energy=2100;ld.size=14
-        light=bpy.data.objects.new('overcast softbox',ld);scene.collection.objects.link(light);light.location=(2,-12,18);aim(light,(0,0,3))
-    render(name,'',loc,target,scale)
-
-# One compact comparison sheet. Only its small reference crop is committed;
-# the photographic source stays in Codex's generated-image store.
-import subprocess
-sheet_code = r'''from PIL import Image, ImageDraw, ImageFont, ImageOps
-from pathlib import Path
-import sys
-reference, above_path, driver_path, out = map(Path, sys.argv[1:])
-crop=ImageOps.fit(Image.open(reference).convert('RGB'),(430,570),method=Image.Resampling.LANCZOS,centering=(.5,.52))
-above=Image.open(above_path).convert('RGB');driver=Image.open(driver_path).convert('RGB')
-page=Image.new('RGB',(1280,900),(42,43,39));draw=ImageDraw.Draw(page)
-fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),26);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),19);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),16)
-draw.text((28,18),'TOWN SAFETY | ROUND 3 | WATCHTOWER',font=title,fill=(239,226,201))
-draw.text((28,55),'Welded frame, raised lookout, patched roof | exported GLB reimported to an empty scene',font=small,fill=(211,202,180))
-for x,img,caption in ((28,crop,'PHOTOGRAPHIC TARGET'),(468,above,'EXPORTED GLB | 45° OVERHEAD'),(908,driver,'EXPORTED GLB | DRIVER VIEW')):
-    draw.text((x,92),caption,font=label,fill=(231,189,126));page.paste(ImageOps.fit(img,(420,570),method=Image.Resampling.LANCZOS),(x,124))
-draw.text((28,720),'Construction read: braced timber and steel legs, bolted collars, ladder, open rails, chair, worn tin roof.',font=small,fill=(234,226,206))
-draw.text((28,752),'Surface gap: existing town textures are close; the photo has stronger board grain, bent seams and dirt variation.',font=small,fill=(234,226,206))
-draw.text((28,784),'Other card nodes are included in safety.glb. No runtime texture was added.',font=small,fill=(234,226,206))
-Path(out).parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',quality=84,optimize=True,progressive=True)
-'''
-sheet.parent.mkdir(parents=True,exist_ok=True)
-subprocess.run(['python','-c',sheet_code,args.reference,str(render_dir/'watchtower-above.png'),
-                str(render_dir/'watchtower-driver-seat.png'),str(sheet)],check=True)
-
-# Round three frames the family from the exported bounding boxes.
-ids=['watchtower','fire-station','clinic','guard-post','gate-scrap','searchlight','hydrant']
-by_name={obj.name:obj for obj in scene.objects}
-next(obj for obj in scene.objects if obj.name=='neutral dusty ground').hide_render=True
-ground_plane=next(obj for obj in scene.objects if obj.name=='neutral dusty ground')
-captures={}
-for building_id in ids:
-    root_obj=by_name[building_id];visible={root_obj,*root_obj.children_recursive}
-    ancestor=root_obj.parent
-    while ancestor is not None:visible.add(ancestor);ancestor=ancestor.parent
-    for obj in scene.objects:
-        if obj.type in {'MESH','EMPTY'}:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
-    bpy.context.view_layer.update()
-    corners=[obj.matrix_world @ Vector(corner) for obj in visible if obj.type=='MESH' for corner in obj.bound_box]
-    lo=[min(v[i] for v in corners) for i in range(3)];hi=[max(v[i] for v in corners) for i in range(3)]
-    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3));size=max(hi[0]-lo[0],hi[1]-lo[1],(hi[2]-lo[2])*1.25,1.5)*1.20
-    print(f'BOUNDS {building_id}: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(hi[i]-lo[i],3) for i in range(3))}')
-    views=[]
-    for tag,direction in (('mayor',(1,1,1.414)),('driver',(0,1,0))):
-        data=bpy.data.cameras.new(f'{building_id}-{tag}');cam=bpy.data.objects.new(f'{building_id}-{tag}',data);scene.collection.objects.link(cam)
-        cam.location=(center+Vector(direction).normalized()*span*1.6 if tag=='mayor' else Vector((center.x,hi[1]+span*1.8,lo[2]+1.55)));aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=size;scene.camera=cam
-        ground_plane.hide_render=(tag=='driver')
-        scene.render.resolution_x=640;scene.render.resolution_y=480
-        out=render_dir/f'{building_id}-{tag}.png';scene.render.filepath=str(out);bpy.ops.render.render(write_still=True);views.append(out)
-        bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
-        ground_plane.hide_render=False
-    captures[building_id]=views
-    if building_id=='gate-scrap':
-        door=by_name['gate-scrap:door'];door.rotation_euler=(0,0,0)
-        pivot=Vector((-2.7,3.25,0))
-        swing=Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(78),4,'Z') @ Matrix.Translation(-pivot)
-        leaf_parts=[obj for obj in scene.objects if obj.type=='MESH' and
-                    (obj.name.startswith('gate-scrap-door-') or obj.name.startswith('gate-scrap-car-door-') or obj.name.startswith('gate-scrap-photo-door'))]
-        print(f'GATE OPEN POSE: rotating {len(leaf_parts)} exported leaf meshes around hinge {tuple(pivot)}')
-        for obj in leaf_parts:obj.matrix_world=swing @ obj.matrix_world
-        bpy.context.view_layer.update()
-        visible={root_obj,*root_obj.children_recursive}
-        for obj in scene.objects:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
-        bpy.context.view_layer.update()
-        lo=[min((obj.matrix_world @ Vector(corner))[i] for obj in visible if obj.type=='MESH' for corner in obj.bound_box) for i in range(3)]
-        hi=[max((obj.matrix_world @ Vector(corner))[i] for obj in visible if obj.type=='MESH' for corner in obj.bound_box) for i in range(3)]
-        center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3))
-        data=bpy.data.cameras.new('gate-scrap-open');cam=bpy.data.objects.new('gate-scrap-open',data);scene.collection.objects.link(cam)
-        open_size=max(hi[0]-lo[0],hi[1]-lo[1],(hi[2]-lo[2])*1.25,1.5)*1.20
-        cam.location=center+Vector((1,1,1.414)).normalized()*span*1.6;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=open_size;scene.camera=cam
-        ground_plane.hide_render=True
-        scene.render.filepath=str(render_dir/'gate-scrap-open.png');bpy.ops.render.render(write_still=True)
-        ground_plane.hide_render=False
-        captures['gate-scrap-open']=[render_dir/'gate-scrap-open.png']
-        bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
-
-# Show three straight modules meeting at cell edges, one joined run per tier.
-for kind in ('fence-wood','fence-chain','wall-scrap','wall-steel'):
-    root_obj=by_name[f'{kind}-straight'];visible=set()
-    for index in range(3):
-        for original in {root_obj,*root_obj.children_recursive}:
-            if index==0:copy=original
-            else:
-                copy=original.copy()
-                if original.data:copy.data=original.data.copy()
-                scene.collection.objects.link(copy)
-                copy.parent=None
-                copy.matrix_world=original.matrix_world.copy()
-                copy.matrix_world.translation.x+=8*index
-            visible.add(copy)
-    for obj in scene.objects:obj.hide_render=(obj not in visible and obj.name!='neutral dusty ground')
-    bpy.context.view_layer.update()
-    corners=[obj.matrix_world @ Vector(corner) for obj in visible if obj.type=='MESH' for corner in obj.bound_box]
-    lo=[min(v[i] for v in corners) for i in range(3)];hi=[max(v[i] for v in corners) for i in range(3)]
-    center=Vector(tuple((lo[i]+hi[i])/2 for i in range(3)));span=max(hi[i]-lo[i] for i in range(3))
-    print(f'BOUNDS {kind}-joined-run: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(hi[i]-lo[i],3) for i in range(3))}')
-    data=bpy.data.cameras.new(f'{kind}-joined-run');cam=bpy.data.objects.new(f'{kind}-joined-run',data);scene.collection.objects.link(cam)
-    cam.location=center+Vector((0,1,.2)).normalized()*span*1.5;aim(cam,center);cam.data.type='ORTHO';cam.data.ortho_scale=3.8;scene.camera=cam
-    scene.render.resolution_x=1280;scene.render.resolution_y=200
-    ground_plane.hide_render=True
-    scene.render.filepath=str(render_dir/f'{kind}-joined-run.png');bpy.ops.render.render(write_still=True)
-    ground_plane.hide_render=False
-    captures[kind+'-joined-run']=[render_dir/f'{kind}-joined-run.png']
+    obj.hide_render = obj not in visible
+bpy.context.view_layer.update()
+corners = [obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+lo = Vector(tuple(min(point[i] for point in corners) for i in range(3)))
+hi = Vector(tuple(max(point[i] for point in corners) for i in range(3)))
+size = hi - lo
+center = (lo + hi) * .5
+print(f'EXPORTED FIRE-STATION BOUNDS: min={tuple(round(v,3) for v in lo)} max={tuple(round(v,3) for v in hi)} size={tuple(round(v,3) for v in size)}')
+if min(size) <= .001: raise RuntimeError('fire station has empty exported bounds')
+# One ground check for each authored part; the hose tower also meets the body at its base edge.
+for piece_name in ('fire-station:body', 'fire-station:bay-floor-left', 'fire-station:bay-floor-right', 'fire-station:bay-interior-shadow-left', 'fire-station:bay-interior-shadow-right', 'fire-station:hose-tower-and-bell'):
+    piece = next((obj for obj in meshes if obj.name == piece_name), None)
+    if piece is None: raise RuntimeError(f'missing exported piece {piece_name}')
+    piece_points = [piece.matrix_world @ Vector(corner) for corner in piece.bound_box]
+    piece_lo = tuple(min(point[i] for point in piece_points) for i in range(3))
+    piece_hi = tuple(max(point[i] for point in piece_points) for i in range(3))
+    print(f'EXPORTED PIECE BOUNDS {piece_name}: min={tuple(round(v,3) for v in piece_lo)} max={tuple(round(v,3) for v in piece_hi)}')
+    if 'bay-interior-shadow' in piece_name:
+        expected_base=.15
+    elif 'bay-floor' in piece_name:
+        expected_base=.03
+    else:
+        expected_base=0
+    if abs(piece_lo[2]-expected_base) > .08: raise RuntimeError(f'{piece_name} misses its ground or adjoining floor after export')
+print('EXPORTED CONTACT CHECK: body, both bay floors, both bay shadows and tower touch ground or their adjoining structure.')
+scene.render.resolution_x = 960; scene.render.resolution_y = 640
+scene.render.resolution_percentage = 100
+scene.render.image_settings.file_format = 'PNG'
+scene.view_settings.view_transform = 'Standard'
+scene.view_settings.look = 'Medium High Contrast'
+scene.view_settings.exposure = 0; scene.view_settings.gamma = 1
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.43,.45,.45,1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
+if not any(obj.type == 'LIGHT' for obj in scene.objects):
+    ld=bpy.data.lights.new('station softbox','AREA');ld.energy=2300;ld.size=15
+    light=bpy.data.objects.new('station softbox',ld);scene.collection.objects.link(light)
+    light.location=center+Vector((10,-14,22));aim(light,center)
+ground_mat=bpy.data.materials.new('plain grey studio ground');ground_mat.diffuse_color=(.38,.39,.39,1);ground_mat.use_nodes=True
+ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.39,.39,1)
+ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
+bpy.ops.mesh.primitive_plane_add(size=1000,location=(center.x,center.y,lo.z-.035))
+plane=bpy.context.object;plane.name='neutral grey ground';plane.data.materials.append(ground_mat)
+span=max(size.x,size.y,size.z)
+views={
+ 'side': (center+Vector((span*1.7,0,0)), center, max(size.y,size.z)*1.14),
+ 'front': (center+Vector((0,span*1.7,size.z*.5)), center, max(size.x,size.z)*1.14),
+ 'rear': (center+Vector((0,-span*1.7,size.z*.5)), center, max(size.x,size.z)*1.14),
+ 'above': (center+Vector((0,0,span*1.7)), center, max(size.x,size.y)*1.14),
+ 'three-quarter-left': (center+Vector((-span*1.45,span*1.2,span*1.5)), center, max(size.x,size.y)*1.36),
+ 'three-quarter-right': (center+Vector((span*1.45,span*1.2,span*1.5)), center, max(size.x,size.y)*1.36),
+ 'mayor': (center+Vector((span*1.1,span*1.2,span*1.1)), center, max(size.x,size.y)*1.55),
+}
+model_views={}
+for name,(location,target,scale) in views.items():
+    data=bpy.data.cameras.new('fire-station-'+name);cam=bpy.data.objects.new('fire-station-'+name,data);scene.collection.objects.link(cam)
+    cam.location=location;aim_z(cam,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale;scene.camera=cam
+    plane.hide_render=(name=='front' or name=='rear')
+    path=render_dir/f'fire-station-{name}.png';scene.render.filepath=str(path)
+    bpy.ops.render.render(write_still=True);model_views[name]=path
     bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
-sheet_code=r'''from PIL import Image,ImageDraw,ImageFont,ImageOps
+plane.hide_render=False
+
+# A compact review sheet: four photo/model pairs at matching orthographic cameras,
+# then both three-quarter views and the mayor's distant roof view.
+import subprocess
+sheet_code=r'''from PIL import Image, ImageDraw, ImageFont, ImageOps
 from pathlib import Path
 import sys
-args=sys.argv[1:-1];out=Path(sys.argv[-1]);page=Image.new('RGB',(1600,2820),(47,46,42));d=ImageDraw.Draw(page)
-title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',22);label=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',15);small=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',13)
-d.text((24,16),'TOWN SAFETY | ROUND 4 | EXPORTED GLB',font=title,fill=(245,238,222))
-def place(path,box):
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);textures=root/'public/assets/models/wasteland/town/textures'
+pairs=[('SIDE','fire-station-side.jpg','fire-station-side.png'),('FRONT','fire-station-front.jpg','fire-station-front.png'),('REAR','fire-station-rear.jpg','fire-station-rear.png'),('STRAIGHT DOWN','fire-station-top.jpg','fire-station-above.png')]
+extras=[('THREE-QUARTER LEFT','fire-station-three-quarter-left.png'),('THREE-QUARTER RIGHT','fire-station-three-quarter-right.png'),("MAYOR'S VIEW","fire-station-mayor.png")]
+W,H=1600,2640;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),17);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
+d.text((24,14),'TOWN SAFETY | ROUND 5 | FIRE STATION',font=title,fill=(240,228,205))
+def fit(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS)
- x=(box[0]-im.width)//2;y=(box[1]-im.height)//2
- return im,x,y
-for i in range(5):
- y=58+i*305;x=22;d.rounded_rectangle((x,y,x+1556,y+285),radius=8,fill=(88,83,73));name,path1,path2,photo=args[i*4:i*4+4]
- d.text((x+12,y+8),name.upper().replace('-',' '),font=label,fill=(238,195,137))
- for col,(caption,path) in enumerate((('PHOTO TARGET',photo),('MAYOR / ROOF',path1),('DRIVER / ROAD',path2))):
-  px=x+12+col*510;d.text((px,y+35),caption,font=small,fill=(238,230,210))
-  im,ix,iy=place(path,(490,220));page.paste(im,(px+ix,y+54+iy))
-items=list(zip(args[20::2],args[21::2]));small_items=[item for item in items if 'joined-run' not in item[0]];runs=[item for item in items if 'joined-run' in item[0]]
-for i in range(0,len(small_items),2):
- for column,(name,path) in enumerate(small_items[i:i+2]):
-  y=1590+(i//2)*170;x=22+column*790
-  d.rounded_rectangle((x,y,x+770,y+154),radius=8,fill=(88,83,73));d.text((x+12,y+8),name.replace('-',' ').upper(),font=label,fill=(238,195,137))
-  im,ix,iy=place(path,(740,115));page.paste(im,(x+12+ix,y+32+iy))
-for index,(name,path) in enumerate(runs):
- y=2100+index*175
- d.rounded_rectangle((22,y,1578,y+160),radius=8,fill=(88,83,73));d.text((34,y+8),name.replace('-',' ').upper(),font=label,fill=(238,195,137))
- im,ix,iy=place(path,(1520,118));page.paste(im,(30+ix,y+34+iy))
-out.parent.mkdir(parents=True,exist_ok=True);page.save(out,format='JPEG',quality=80,optimize=True,progressive=True)
+ canvas=Image.new('RGB',box,(128,130,130));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
+row_h=500
+for i,(name,photo,model) in enumerate(pairs):
+ y=50+i*row_h;d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(78,76,69));d.text((34,y+7),name,font=label,fill=(240,194,125))
+ d.text((35,y+31),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+31),'EXPORTED MODEL | SAME ORTHOGRAPHIC CAMERA',font=small,fill=(229,223,208))
+ page.paste(fit(textures/photo,(740,430)),(34,y+48));page.paste(fit(root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'/model,(740,430)),(815,y+48))
+for i,(name,model) in enumerate(extras):
+ x=18+i*528;y=2072;d.rounded_rectangle((x,y,x+510,y+500),radius=8,fill=(78,76,69));d.text((x+14,y+10),name,font=label,fill=(240,194,125))
+ page.paste(fit(root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'/model,(480,450)),(x+15,y+38))
+d.text((24,2586),'Two clear drive-through bays, open traced hose lattice and bell, patched roof photo from straight above.',font=small,fill=(232,226,210))
+out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,optimize=True,progressive=True)
 '''
-sheet_args=[]
-photo_paths={'watchtower':root/args.reference,'fire-station':root/'public/assets/models/wasteland/town/textures/town-safety-fire-station.jpg',
- 'clinic':root/'public/assets/models/wasteland/town/textures/town-safety-clinic.jpg','guard-post':root/'public/assets/models/wasteland/town/textures/town-safety-guard-post.jpg',
- 'gate-scrap':root/'public/assets/models/wasteland/town/textures/town-safety-gate.jpg'}
-for building_id in ids[:5]:sheet_args.extend([building_id,str(captures[building_id][0]),str(captures[building_id][1]),str(photo_paths[building_id])])
-for kind in ('searchlight','hydrant','gate-scrap-open','fence-wood-joined-run','fence-chain-joined-run','wall-scrap-joined-run','wall-steel-joined-run'):
- actual=kind.replace('-joined-run','')+'-joined-run' if '-joined-run' in kind else kind
- path=captures[actual][0] if actual in captures else captures[kind][0]
- sheet_args.extend([kind,path])
-subprocess.run(['python','-c',sheet_code,*sheet_args,str(sheet)],check=True)
+subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)
