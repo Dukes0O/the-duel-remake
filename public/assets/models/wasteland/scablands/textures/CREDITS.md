@@ -238,3 +238,9 @@ closed white coat and gloves and holding one pale envelope, against a uniform
 mid-grey floor and background. Each crop is a new source file; no existing
 photograph was replaced. The recipe measures the panels directly and uses them
 as photo-carving inputs.
+
+A second, corrected turnaround set is kept as `sea-mrs-vane-coat-front.jpg`,
+`sea-mrs-vane-coat-side.jpg`, `sea-mrs-vane-coat-back.jpg`, and
+`sea-mrs-vane-coat-top.jpg`. These are crops from a single imagegen edit on
+2026-11-07 that changed only the coat to one continuous closed coat-dress.
+The earlier source set remains intact; the recipe uses this corrected set.

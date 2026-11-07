@@ -41,6 +41,14 @@ eye = material('dark calm eyes', (.12, .10, .09))
 shoe = material('polished dark shoes', (.12, .11, .10))
 paper = material('pale sealed envelope', (.96, .92, .79))
 
+# Photo-grid measurements (each view's own pixel coordinates, origin top-left).
+# The matched standing photos all represent 1.58 m: crown y=20, shoe soles y=850.
+# At 830 px, scale is 0.0019036 m/px. Front: centre x=222, hips y=405,
+# shoulders y=140, coat hem y=710. Side: centre x=220, hips y=405, shoulders
+# y=135, hem y=710. Back: centre x=221, hips y=405, shoulders y=130, hem y=710.
+# Overhead: crown y=230, shoe soles y=595, centre x=212, hips y=410,
+# shoulders y=320; this view only paints top-facing surfaces and does not set height.
+
 root_node = bpy.data.objects.new('mrs-vane', None)
 scene.collection.objects.link(root_node)
 root_node['height_m'] = 1.58
