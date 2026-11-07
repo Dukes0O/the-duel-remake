@@ -1,26 +1,23 @@
-# TOWN-ART-SAFETY — round 3
+# TOWN-ART-SAFETY change note — round 4
 
-**Status:** Built for Claude's look review. The family GLB is 2,638,012 bytes; the review sheet is 282,623 bytes.
+Family GLB: 2,655,012 bytes (under the 8 MB card limit). Review sheet: 283,138 bytes (under 500 KB).
 
-## What changed
+## Changed
 
-- Fixed the review scene's Y-up/Z-up mix-up. It had put cameras below the exported buildings and turned the floor into a wall. The recipe now reads each building's exported mesh bounds, prints them, rejects zero bounds and aims separate mayor and driver cameras at each box.
-- Rebuilt the watchtower render from the exported GLB. The photo shows the open bracing, patched roof, lookout chair and lamp.
-- Added generated photo traces to the fire station, clinic, guard post and moving gate leaf. The fire station keeps two open bay holes. The clinic roof cross and tank remain modeled parts. The guard post keeps its individual sandbags. The gate leaf now sits at the hinge and uses two shaped car-door panels with salvage sheet steel around them.
-- Rendered the gate closed and swung open. The sheet shows one three-cell joined run for each fence and wall tier.
-- Added five generated source photos to the model texture folder. The GLB embeds the photo surfaces; the source files preserve the recipe inputs.
+- Added small roof repair plates and edge seams to the clinic. The raised red roof cross remains visible from the mayor view.
+- Regenerated `public/assets/models/wasteland/town/safety.glb` and the family review sheet. Added a generated four-view clinic reference sheet under the town texture folder.
+- Round 4 is a partial clinic-only pass. The clinic's side, rear and overhead photos have not been separated, grid-measured or used to replace the old facade code. The named `tools/photo_grid.py` and `tools/blender/photo_carve.py` are absent from this lane. Fire station, guard post, gate, fence and wall work remains for a later round.
 
 ## Checks
 
+- Blender family recipe: passed; the complete round 4 family rendered from the exported GLB. Bounds printed for each piece and barrier run.
 - `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory.
-- Blender recipe/export/re-import and sheet render: passed. All printed model bounds are nonzero.
-- Sheet: 282,623 bytes (under 500 KB). Family GLB: 2,638,012 bytes (under the card's 3 MB limit).
-- Browser/look check: not run here. Claude should review the tower's roof, chair and lamp; the red fire station's two open bays, hose tower and bell; the clinic roof cross; the guard post sandbags and brazier; the gate leaf in both poses; and the joined cell runs.
-- Lane tier and build: not run, as required for art cards.
-- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement passed, size targets advisory.
+- `node tools/test-review-evidence.mjs`: 8/9 passed on both attempts. The audio analysis subtest failed twice with `spawnSync ffmpeg EPERM`; no assertions changed.
+- Browser and in-game look checks: not run in this lane. Claude should inspect the round 4 sheet and clinic roof.
+- Race fingerprints: not applicable; no race code changed.
+- Changed assertions: none.
 
 ## Removed
 
-- Recycled the round 1 and round 2 sheets and review notes as requested. The source photo inputs and current round 3 deliverables remain.
-- Removed this lane's temporary Blender renders and check logs after review; only the current model, sheet, notes, recipe and source photos remain.
+- Deleted `docs/board/looks/town-art-safety/round-3.jpg` as directed. No recipe code was removed; the requested clinic facade replacement is still outstanding.

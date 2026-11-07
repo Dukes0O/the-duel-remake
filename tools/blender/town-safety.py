@@ -11,10 +11,10 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--reference', default='public/assets/models/wasteland/town/textures/town-safety-watchtower.jpg')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/TOWN-ART-SAFETY/round-3'
+evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-4'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
-sheet = root / 'docs/board/looks/town-art-safety/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-safety/round-4.jpg'
 if args.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)],'summary':str(sheet)}))
     raise SystemExit(0)
@@ -349,8 +349,8 @@ bell=pipe('fire-station-bell-neck',(8.55,12.8,-4.65),(8.55,13.15,-4.65),.10,mate
 bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.28,location=town.game_vector((8.55,13.1,-4.65)))
 bobj=bpy.context.object;bobj.name='fire-station-bell';bobj.scale=(1,.65,1);bobj.data.materials.append(materials['rusted-steel']);attach(bobj)
 
-# Clinic, clinic water tank and legible roof cross. Low roof hardware is visible
-# in the mayor's overhead view and the faded paint keeps a working hospital cue.
+# Clinic, clinic water tank and legible raised roof cross. The segmented roof
+# carries patched tin, unevenly rusted seams and repairs into the mayor view.
 b=building('clinic',(2,2))
 for x in (-6.5,6.5):
     for z in (-6.5,6.5): cube('clinic-wall-post',(x,2.35,z),(.26,4.7,.26),materials['weathered-plank'],.04)
@@ -361,6 +361,11 @@ for i in range(6):
     z=-5+i*2
     panel=cube(f'clinic-roof-patch-{i+1}',(0,4.85,z),(13.5,.13,2.0),materials['container-white'],.03)
     panel.rotation_euler[0]=(-1 if i%2 else 1)*.035
+for x in (-6.35,6.35):
+    beam('clinic-roof-ragged-edge-seam',(x,4.92,-6.3),(x,4.92,6.3),.10,materials['rusted-steel'])
+for x,z in ((-4.9,-4.8),(4.8,-2.5),(-3.9,4.9),(5.0,1.3)):
+    patch=cube('clinic-roof-repair-plate',(x,4.96,z),(1.45,.08,.78),materials['red-paint'] if x<0 else materials['rusted-steel'],.035)
+    patch.rotation_euler[1]=.08 if z>0 else -.05
 for x in (-5.8,-2.0,2.0,5.8): beam('clinic-roof-rafter',(x,4.6,-6.1),(x,4.6,6.1),.12,materials['weathered-plank'])
 # Red cross is physically raised, not paint printed on the roof texture.
 cube('clinic-roof-red-cross-vertical',(0,5.08,0),(.78,.10,2.65),materials['red-paint'],.06)
@@ -597,7 +602,7 @@ from pathlib import Path
 import sys
 args=sys.argv[1:-1];out=Path(sys.argv[-1]);page=Image.new('RGB',(1600,2820),(47,46,42));d=ImageDraw.Draw(page)
 title=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',22);label=ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf',15);small=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',13)
-d.text((24,16),'TOWN SAFETY | ROUND 3 | EXPORTED GLB',font=title,fill=(245,238,222))
+d.text((24,16),'TOWN SAFETY | ROUND 4 | EXPORTED GLB',font=title,fill=(245,238,222))
 def place(path,box):
  im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS)
  x=(box[0]-im.width)//2;y=(box[1]-im.height)//2
