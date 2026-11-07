@@ -1,23 +1,22 @@
-# TOWN-ART-SAFETY change note — round 4
-
-Family GLB: 2,655,012 bytes (under the 8 MB card limit). Review sheet: 283,138 bytes (under 500 KB).
+# TOWN-ART-SAFETY change note
 
 ## Changed
 
-- Added small roof repair plates and edge seams to the clinic. The raised red roof cross remains visible from the mayor view.
-- Regenerated `public/assets/models/wasteland/town/safety.glb` and the family review sheet. Added a generated four-view clinic reference sheet under the town texture folder.
-- Round 4 is a partial clinic-only pass. The clinic's side, rear and overhead photos have not been separated, grid-measured or used to replace the old facade code. The named `tools/photo_grid.py` and `tools/blender/photo_carve.py` are absent from this lane. Fire station, guard post, gate, fence and wall work remains for a later round.
+- Replaced the procedural fire-station beams and old combined facade with a `carve_object` body, two open bay cutouts, concrete floor slabs and dark interior panels.
+- Added side, front, rear and straight-down generated JPG references in `public/assets/models/wasteland/town/textures/`. The old combined station photo remains the tower and bell source. Credits are in the texture credit file.
+- Traced the hose tower and bell separately with `trace` and `slab`. The tower sits beside the station and reaches the ground.
+- Added the dark-sky-seed fault and fix to `docs/ART_LINE.md`.
+- Round 5 sheet: 329,115 bytes. Safety family GLB: 2,824,476 bytes.
 
 ## Checks
 
-- Blender family recipe: passed; the complete round 4 family rendered from the exported GLB. Bounds printed for each piece and barrier run.
-- `node tools/test-blender-output.mjs`: passed, 304 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; repository placement passed, size targets advisory.
-- `node tools/test-review-evidence.mjs`: 8/9 passed on both attempts. The audio analysis subtest failed twice with `spawnSync ffmpeg EPERM`; no assertions changed.
-- Browser and in-game look checks: not run in this lane. Claude should inspect the round 4 sheet and clinic roof.
-- Race fingerprints: not applicable; no race code changed.
-- Changed assertions: none.
+- Blender 4.5.13 export and GLB re-import completed. The run printed bounds for the body, both floors, both bay interiors and the tower. The body and tower meet the ground; both interiors meet their floors. Blender reported no script error on the final run.
+- No lane tier or build run, as this is an art card.
+- No browser checks. Claude should inspect all four photo/model pairs, bay darkness and floor visibility, tower lattice and bell, both three-quarter views, and the mayor roof view.
+- Changed assertions: none. Race fingerprints: not applicable; race code was not changed.
 
 ## Removed
 
-- Deleted `docs/board/looks/town-art-safety/round-3.jpg` as directed. No recipe code was removed; the requested clinic facade replacement is still outstanding.
+- Removed the old procedural fire-station geometry and its photo-facade use.
+- Removed the superseded round-4 sheet and review note, as requested.
+- Blender scene, evidence renders, masks and log are temporary outputs and are removed before handoff.

@@ -117,6 +117,7 @@ stop adjusting and change the method.
 - **End photos at a different scale** make a body far too wide, and it fails the eye before it fails a check. Each end photo now states its roof's pixel row as `top`, and the carve stops if it is missing. Choose the length from something you know in the photo: a door, a chair, a wheel.
 - **End photos mirrored** against the side photo: work out which hand the porch should be on from the side photo, and set `front_x_flip` if the end photos show it on the other.
 - **A photo the carve has used is painted over** outside the subject. Open a second copy for anything else traced from it (the diner's wings).
+- **Dark studio pixels are rejected as sky.** `Photo.sky` ignores seeds whose mean is below 185. Use `lift_if_dark` on the measuring photo before flood-filling, and inspect the saved mask; this changes only the in-memory mask copy, not the packed source photo. Without it, a tower traced from the original fire-station composite includes the grey studio as a solid plate.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
 
