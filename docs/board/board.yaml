@@ -741,8 +741,7 @@ tasks:
     owner: "codex"
     lane: "ART"
     size: "M"
-    status: "ready"
-    waiting_on: "kyle"
+    status: "building"
     needs: []
     locks: []
     flag: "wasteland-town"
