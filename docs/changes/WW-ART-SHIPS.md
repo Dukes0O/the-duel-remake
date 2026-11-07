@@ -245,6 +245,17 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the sister ships' off-midship cabin placement and the former oversized deck-plate footprint. No Patience geometry was changed.
 
+## Round 13, point 2 — Paint and bow photo (7 November 2026)
+
+- Retoned the Marigold's hull and cabin materials to a muted, chalky ochre. The recipe grades packed material images in memory so the GLB keeps the color treatment; the credited source photos on disk are unchanged. Rust streaks and patches remain visible.
+- Found the Good Hope's end-face material-slot error: the mesh has two side-photo slots before its front and rear slots. The bow and stern now use their measured, dead-on end photos and UV projection.
+- Rebuilt the exported family and rendered both 40 m check views again. I inspected `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`; the Marigold reads as faded tan and the Good Hope bow uses the correct end image. The bow's rail detail still bends with its carved surface; Claude should review that face.
+- Blender 4.5.13 family export completed: 38,599 triangles and the GLB remains within the 3 MB limit. Required art checks remain for the final sheet commit. Changed assertions: none. Race fingerprints: none; art-only.
+
+### Removed
+
+- Removed the incorrect Good Hope side-photo mapping from her cabin bow face and removed the Marigold's bright yellow material treatment. The source photos remain unchanged.
+
 ## Round 13, step 3 — Grounded fleet (7 November 2026)
 
 - Set each root at its map x/z place. Added the Good Hope's 4-degree starboard list and 0.5 m bow drop, and the Marigold's 6-degree port list and 1 m stern drop. Each ship has its own trailing anchor chains and banked sand drift. The Marigold has an exposed 18 m shaft and propeller and half her rail is gone.

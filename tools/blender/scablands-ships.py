@@ -201,6 +201,71 @@ def photo_material(name, path, metallic=0, roughness=.9, emission=False):
     mat.node_tree.links.new(shader.outputs['BSDF'], output.inputs['Surface'])
     return mat
 
+def retone_photo_material(mat):
+    """Make a material-owned faded copy; leave its credited source photo intact."""
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    texture = next((node for node in nodes if node.type == 'TEX_IMAGE'), None)
+    shader = next((node for node in nodes if node.type == 'BSDF_PRINCIPLED'), None)
+    if texture is None or shader is None or mat.get('marigold_material_grade'):
+        return
+    source = texture.image
+    if not source.get('marigold_material_grade'):
+        pixels = np.empty(source.size[0] * source.size[1] * 4, dtype=np.float32)
+        source.pixels.foreach_get(pixels)
+        pixels = pixels.reshape(source.size[1], source.size[0], 4)
+        rgb = pixels[:, :, :3].copy()
+        luminance = rgb @ np.array((.299, .587, .114), dtype=np.float32)
+        chalk = np.stack((luminance * 1.03, luminance * .92, luminance * .76), axis=-1)
+        pixels[:, :, :3] = np.clip((chalk * .72 + rgb * .28) * .78, 0, 1)
+        source.pixels.foreach_set(pixels.ravel())
+        source.update()
+        source.pack()
+        source['marigold_material_grade'] = 'chalky ochre with retained rust color variation'
+    base = shader.inputs['Base Color']
+    for link in list(base.links):
+        links.remove(link)
+    # The GLB exporter keeps the image map but drops Blender-only color nodes.
+    # This per-material copy therefore carries the same grade in the GLB.
+    base.default_value = (1, 1, 1, 1)
+    links.new(texture.outputs['Color'], base)
+    shader.inputs['Roughness'].default_value = .94
+    mat['marigold_material_grade'] = 'chalky ochre with retained rust color variation'
+
+def correct_end_face_photos(obj, table):
+    """Force the dead-on bow and stern references onto their matching faces."""
+    forward = table.get('forward', -1)
+    flip = -1 if table.get('front_x_flip') else 1
+    front_sign = -forward * -1 * flip
+    end_scale = {
+        key: table[key].get('scale', table[key].get('top_height', table['height']) /
+                            abs(table[key]['ground'] - table[key]['top']))
+        for key in ('front', 'rear')
+    }
+    front_photo, rear_photo = table['_photos']['front'], table['_photos']['rear']
+    uv_layer = obj.data.uv_layers.active
+    for polygon in obj.data.polygons:
+        if polygon.normal.y > .70:
+            # carve_hull's two-sided surface keeps duplicate side slots at 0/1;
+            # front and rear therefore occupy slots 2 and 3.
+            material_index, view, photo = 2, table['front'], front_photo
+            scale = end_scale['front']
+            for loop_index in polygon.loop_indices:
+                point = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+                px = view['centre'] + front_sign * point.x / scale
+                py = view['ground'] - point.z / scale
+                uv_layer.data[loop_index].uv = photo.uv(px, py)
+        elif polygon.normal.y < -.70:
+            material_index, view, photo = 3, table['rear'], rear_photo
+            scale = end_scale['rear']
+            for loop_index in polygon.loop_indices:
+                point = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+                px = view['centre'] - front_sign * point.x / scale
+                py = view['ground'] - point.z / scale
+                uv_layer.data[loop_index].uv = photo.uv(px, py)
+        else:
+            continue
+        polygon.material_index = material_index
+
 hull_photo = photo_material('Ship hull / projected freighter photograph', photos['ships-hull-photo'])
 stone_photo = photo_material('Lighthouse / projected local stonework', photos['lighthouse-stone-photo'])
 pilot_photo = photo_material('Pilot boat / projected workboat photograph', photos['pilot-boat-photo'])
@@ -472,6 +537,8 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 suffix=original.replace('patience-hull-','')
                 recoloured=tex/f'{family}-hull-{suffix}'
                 image_node.image=bpy.data.images.load(str(recoloured),check_existing=True)
+                if family == 'marigold':
+                    retone_photo_material(tint)
             sister_hull.material_slots[slot_index].link='OBJECT'
             sister_hull.material_slots[slot_index].material=tint
         for obj in list(scene.objects):
@@ -523,6 +590,11 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             }
         table=sister_cabin_table(ident)
         cabin=carve_object(ident+':upperworks',tex,table)
+        if ident == 'ship-good-hope':
+            correct_end_face_photos(cabin, table)
+        elif ident == 'ship-marigold':
+            for material in cabin.data.materials:
+                retone_photo_material(material)
         # Four measured photographs per cabin are enough at this scale;
         # keep source JPEGs intact and pack 320 px working copies.
         for photo in table['_photos'].values():
