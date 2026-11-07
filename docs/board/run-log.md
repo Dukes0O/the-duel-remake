@@ -1601,3 +1601,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 6 Nov: WW-ART-SEA pieces so far merged (gears, wall, causeway, gate, ramp, arch); card stays open for the rest.
 - 6 Nov: TOWN-ART-BORER merged; verdict on its card.
 - - 7 Nov: WW-ART-PEACE merged: Mirage's decoys, caravan and camp, Gunn's turret and rock, Kettle's chair, the toll cabinet, the bound sign and stone, Sal's trailer, Dust's tanker, Magnus's crane and roof. Lane tier 47/47 and build on d8241ce34.
+- 6 Nov: TOWN-ART-TRUCKS-2 merged; verdict on its card.
