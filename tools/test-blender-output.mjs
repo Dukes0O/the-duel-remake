@@ -70,7 +70,7 @@ const generators = [
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
-    glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'ww-art-rail',script:'tools/blender/rail-trains.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/rail/rail-trains.glb'],budget:80000,maxBytes:5000000},
   {id:'ww-art-rail-props',script:'tools/blender/rail-props.py',args:[],candidate:true,
@@ -1061,7 +1061,7 @@ try {
     const path=join(root,'public/assets/models/wasteland/town/services.glb');
     if(!existsSync(path))return; // Built and reviewed in its art lane before installation.
     const bytes=readFileSync(path);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);
-    assert.equal(bytes.readUInt32LE(8),bytes.length);assert.ok(bytes.length<=3_000_000,`${bytes.length} bytes exceeds 3 MB`);
+    assert.equal(bytes.readUInt32LE(8),bytes.length);assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the 8 MB art-card limit`);
     const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)).trim()),nodes=gltf.nodes||[];
     const ids=['town-hall','scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board'];
     const byName=new Map(nodes.map((node,index)=>[node.name,index]));
@@ -1070,6 +1070,7 @@ try {
     for(const id of ids){assert.ok(byName.has(id),`missing ${id}`);assert.ok(roots.has(byName.get(id)),`${id} is a direct family child`);}
     assert.ok(byName.has('radio-mast:lamp'),'radio-mast warning lamp has its own named node');
     assert.ok(byName.has('forge:lamp'),'forge glow has its own named node');
+    for(const part of ['town-hall:clock','town-hall:clock-face','town-hall:flag-1','town-hall:flag-2','town-hall:flag-pole-1','town-hall:flag-pole-2','workshop:car-on-lift','workshop:car-front'])assert.ok(byName.has(part),`${part} is a separate named art piece`);
     const visited=new Set();
     function trianglesUnder(index){if(visited.has(index))return 0;visited.add(index);const node=nodes[index];let total=0;
       if(node.mesh!==undefined){const mesh=gltf.meshes[node.mesh];for(const primitive of mesh.primitives){total+=(gltf.accessors[primitive.indices]?.count||0)/3;

@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-4.jpg';review_output=root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-6.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-6/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -137,7 +137,11 @@ for index,x in enumerate((-10.5,10.5)):
  beam(f'town-hall:flag-pole-{index+1}',(x,5.8,-8.8),(x,10.7,-8.8),.09,dark,h)
  direction=1 if index==0 else -1
  points=[(x,10.55,-8.8),(x+direction*1.8,10.35,-8.8),(x+direction*1.3,9.95,-8.8),(x+direction*1.7,9.55,-8.8),(x+direction*.55,9.75,-8.8),(x,9.65,-8.8)]
- mesh=bpy.data.meshes.new(f'Town Hall torn flag {index+1}');mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,5),(1,2,5),(2,4,5),(2,3,4)]);mesh.materials.append(canvas);mesh.update()
+ mesh=bpy.data.meshes.new(f'Town Hall torn flag {index+1}');mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,5),(1,2,5),(2,4,5),(2,3,4)]);mesh.materials.append(canvas);uv=mesh.uv_layers.new(name='UVMap')
+ for poly in mesh.polygons:
+  for li in poly.loop_indices:
+   v=mesh.vertices[mesh.loops[li].vertex_index].co;uv.data[li].uv=((v.x-x)*direction/1.8,v.z-9.55)
+ mesh.update()
  flag=bpy.data.objects.new(f'town-hall:flag-{index+1}',mesh);bpy.context.collection.objects.link(flag);parent_keep(flag,h)
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
 ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
@@ -276,8 +280,9 @@ box('Forge furnace inner shadow',(0,2.35,-5.35),(3.95,3.3,.14),dark,.12,forge_ro
 # body behind the side photograph to give it depth at three-quarter view.
 workshop_root=building_roots['workshop']
 def workshop_keep(x,y,z):
- bay=(np.abs(x+4.0)<2.05)|(np.abs(x)<2.05)|(np.abs(x-4.0)<2.05)
- return ~((bay)&(y<4.7))
+ bay=(np.abs(x+4.25)<1.6)|(np.abs(x)<1.9)|(np.abs(x-4.25)<1.6)
+ roofline=4.0+(5.85-4.0)*(1-np.abs(x)/7.15)
+ return ~((bay)&(y<3.4)) & (y<=roofline)
 workshop_table={
  'photos':{'side':'workshop-side.jpg','front':'workshop-front.jpg','rear':'workshop-rear.jpg','top':'workshop-roof.jpg'},
  'length':15.0,'width':15.0,'height':5.9,
@@ -285,39 +290,62 @@ workshop_table={
  'front':{'centre':256,'ground':228,'scale':15.0/490},
  'rear':{'centre':850,'ground':824,'scale':15.0/1380},
  'top':{'front':45,'rear':700,'centre':463,'x_scale':15.0/1145},
- 'cut':{'front':[(30,104,180,228),(181,104,337,228),(338,104,488,228)]},
+ 'cut':{'side':[(1058,383,1729,686)],'front':[(65,120,167,228),(192,120,319,228),(345,120,449,228)]},
  'keep':workshop_keep,
- 'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
- 'voxel':.075,'target':5200}
+ 'mask_dir':root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-6/masks',
+ 'voxel':.075,'target':3600}
 workshop_body=carve_object('workshop:body',tex,workshop_table);parent_keep(workshop_body,workshop_root)
-# Two lift posts and cross-pads remain inside the photographed open center bay.
-for x in (-1.15,1.15):
- beam('Workshop lift post',(x,.18,-4.2),(x,4.15,-4.2),.14,steel,workshop_root)
- beam('Workshop lift arm',(x,2.25,-4.2),(x,2.25,-2.3),.13,tin,workshop_root)
-# Car body and wheels follow the side photograph's measured position.
-car_z=-3.63
-car_body=box('Workshop car lower body',(0,2.72,car_z),(1.82,.55,3.35),paint,.20,workshop_root)
-car_cab=box('Workshop car roof',(0,3.25,car_z+.12),(1.48,.64,1.72),steel,.20,workshop_root)
+# A real gable frame restores the reference's pitched roof silhouette over the
+# carved shell. The corrugated sheets are divided into repairable lengths.
+roof_front,roof_back=-7.15,7.15
+roof_eave,roof_ridge=4.0,5.85
+def workshop_roof_panel(name,side,z0,z1):
+ from mathutils import Vector
+ corners=[(side*7.28,roof_eave,z0),(0,roof_ridge,z0),(0,roof_ridge,z1),(side*7.28,roof_eave,z1)]
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata([town.game_vector(p) for p in corners],[],[(0,1,2,3)]);mesh.materials.append(tin);mesh.update()
+ uv=mesh.uv_layers.new(name='UVMap')
+ for poly in mesh.polygons:
+  for li in poly.loop_indices:
+   p=corners[mesh.loops[li].vertex_index];uv.data[li].uv=(p[0]/2,p[2]/2)
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);parent_keep(obj,workshop_root)
+ solid=obj.modifiers.new('folded sheet edge','SOLIDIFY');solid.thickness=.06
 for side in (-1,1):
- for offset in (-1.0,1.0):
-  tire=tube('Workshop car tyre',(side*.94,2.25,car_z+offset),.36,.14,dark,workshop_root,16,6)
-# Side photo crop forms the visible body side, as a separately named car part.
-work_car_photo=Photo(tex/'workshop-side.jpg');car_mesh=PhotoMesh()
-car_x0,car_y0,car_x1,car_y1=1225,263,1668,433
-car_scale=15.0/(1940-25)
-car_z0=(1940-car_x0)*car_scale-7.5
-car_z1=(1940-car_x1)*car_scale-7.5
-car_y0m=(705-car_y0)*car_scale;car_y1m=(705-car_y1)*car_scale
-car_mesh.face([(-.99,car_y0m,car_z0),(-.99,car_y0m,car_z1),(-.99,car_y1m,car_z1),(-.99,car_y1m,car_z0)],
- [work_car_photo.uv(car_x0,car_y0),work_car_photo.uv(car_x1,car_y0),work_car_photo.uv(car_x1,car_y1),work_car_photo.uv(car_x0,car_y1)],'photo')
-car_photo_piece=car_mesh.finish('workshop:car-on-lift',{'photo':work_car_photo.material()});parent_keep(car_photo_piece,workshop_root)
+ for i in range(3):workshop_roof_panel(f'Workshop patched pitched roof {side} {i}',side,roof_front+i*4.76,roof_front+(i+1)*4.76)
+# A front-photo gable keeps the measured truss and glass readable at driver
+# height; the two roof planes carry its pitch back through the shed.
+gable_photo=Photo(tex/'workshop-front.jpg');gable_mesh=PhotoMesh();gable_z=-7.22
+gable_mesh.face([(-7.35,4.0,gable_z),(0,5.76,gable_z),(7.35,4.0,gable_z)],
+ [gable_photo.uv(16,98),gable_photo.uv(256,41),gable_photo.uv(496,98)],'gable')
+gable_piece=gable_mesh.finish('workshop:pitched-gable',{'gable':gable_photo.material()});parent_keep(gable_piece,workshop_root)
+
+# Two lift posts and cross-pads remain inside the photographed open center bay.
+for x in (-1.6,1.6):
+ beam('Workshop lift post',(x,.18,-4.2),(x,4.15,-4.2),.14,steel,workshop_root)
+ beam('Workshop lift arm',(x,2.5,-4.2),(x,2.5,-2.3),.13,tin,workshop_root)
+# Car body and wheels follow the side photograph's measured position.
+car_z=-3.55
+car_root=empty('workshop:car-on-lift',workshop_root)
+car_body=box('Workshop car lower body',(0,2.82,car_z),(2.34,.68,4.25),paint,.20,car_root)
+car_cab=box('Workshop car roof',(0,3.48,car_z+.12),(1.84,.78,2.05),paint,.20,car_root)
+for side in (-1,1):
+ for window_z in (car_z-.53,car_z+.64):
+  box('Workshop car side window',(side*1.15,3.50,window_z),(.05,.43,.82),glass,.04,car_root)
+ for offset in (-1.32,1.32):
+  tire=tube('Workshop car tyre',(side*1.27,2.35,car_z+offset),.42,.15,dark,car_root,16,6)
+  tire.rotation_euler[1]=math.pi/2
+  hub=cyl('Workshop car wheel hub',(side*1.40,2.35,car_z+offset),.23,.08,steel,16,car_root)
+  hub.rotation_euler[1]=math.pi/2
+# Three old tyre piles sit inside the outer bays, clear of the door posts.
+for x in (-1.65,1.65):
+ for index in range(4):
+  tube('Workshop stacked tyre',(x,.38+index*.34,-1.3),.42,.13,dark,workshop_root,20,8)
 # The front photo contributes the car's face through the open center bay.
 work_front_photo=Photo(tex/'workshop-front.jpg');front_car=PhotoMesh()
-fx0,fy0,fx1,fy1=235,136,301,179;front_scale=15.0/490;front_z=-4.05
+fx0,fy0,fx1,fy1=226,131,310,184;front_scale=15.0/490;front_z=car_z-2.18
 front_car.face([((fx0-256)*front_scale,(228-fy0)*front_scale,front_z),((fx0-256)*front_scale,(228-fy1)*front_scale,front_z),
                 ((fx1-256)*front_scale,(228-fy1)*front_scale,front_z),((fx1-256)*front_scale,(228-fy0)*front_scale,front_z)],
                [work_front_photo.uv(fx0,fy0),work_front_photo.uv(fx0,fy1),work_front_photo.uv(fx1,fy1),work_front_photo.uv(fx1,fy0)],'front')
-front_car_piece=front_car.finish('workshop:car-front',{'front':work_front_photo.material()});parent_keep(front_car_piece,workshop_root)
+front_car_piece=front_car.finish('workshop:car-front',{'front':work_front_photo.material()});parent_keep(front_car_piece,car_root)
 
 # Join each building's fixed geometry before export. The building and lamp
 # nodes stay addressable, while hundreds of small Blender objects collapse
@@ -340,6 +368,9 @@ for building_id, building_root in building_roots.items():
   bpy.ops.object.join()
   joined=bpy.context.object
   joined.name=f'{building_id}:structure'
+  if building_id=='workshop':
+   budget=joined.modifiers.new('Workshop structure triangle budget','DECIMATE');budget.ratio=.72
+   bpy.context.view_layer.objects.active=joined;bpy.ops.object.modifier_apply(modifier=budget.name)
 
  footprint=building_root.get('footprint_cells')
  meshes=[obj for obj in building_root.children if obj.type=='MESH']
@@ -416,9 +447,9 @@ if a.review:
  render('scrapyard-mayor.png',(8,50,-50),(0,0,0),46)
  workshop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='workshop')
  for obj in bpy.data.objects:obj.hide_render=not within(obj,workshop)
- render('workshop-front.png',(0,8,-50),(0,4,0),39)
- render('workshop-driver.png',(7,1.8,-35),(0,4,0),34)
- render('workshop-mayor.png',(7,42,-42),(0,0,0),46)
+ render('workshop-front.png',(0,8,-31),(0,4,0),46)
+ render('workshop-driver.png',(9,2,-23),(0,4,0),43)
+ render('workshop-mayor.png',(7,36,-42),(0,4,0),46)
  # One clear three-quarter view of every named building, framed to its plot.
  footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
             'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),
