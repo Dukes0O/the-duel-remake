@@ -434,3 +434,15 @@ these as joined geometric parts. Other power-family photos are unchanged from
 round 3.
 
 - Borer round 3 cutter front and machine side/top references: OpenAI image generation, 6 November 2026; original concept art generated for this project. [borer-round3-head-front.png, borer-round3-machine-side.png, borer-round3-machine-top.png].
+
+## hermit-camp reference photos
+
+Generated with the built-in OpenAI ImageGen tool on 7 November 2026 for TOWN-ART-OUTPOSTS. The four hut pictures show one original small Ridge stone hut, photographed straight-on from the side, front, rear, and directly above. The generated front view was selected to keep the wood door clear for scale. Door scale in the side and front views is set to 2 m. Source photographs are resized, cropped only to 1024 px maximum edge and saved as JPEG for the model's photo-carve materials.
+
+- `hermit-hut-side.jpg`, side orthographic: rough dark grey ridge stones, one long low uneven slate and timber roof, plain 2 m wooden door; plain grey studio ground, full hut in frame.
+- `hermit-hut-front.jpg`, front orthographic: same hut, same materials, central plain wood door, plain grey studio ground, full hut in frame.
+- `hermit-hut-rear.jpg`, rear orthographic: same hut without openings, plain grey studio ground, full hut in frame.
+- `hermit-hut-top.jpg`, straight-down overhead: same hut with roof and front door edge visible, plain grey studio ground, full hut in frame.
+- `hermit-car-bonnet.jpg`, straight-down material photo: isolated rounded-rectangle old car bonnet, faded blue-grey paint and reddish rust; no badge or lettering. It is used as the image texture on the shallow dish.
+
+Prompt set: the exact prompts are recorded in the TOWN-ART-OUTPOSTS task transcript and preserved in the lane history.
