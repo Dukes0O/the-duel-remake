@@ -1127,6 +1127,21 @@ for stall_id in ('stall-a','stall-b','stall-c'):
     render_match(prefix+'three-left',target+Vector((-6,-7,4)),Vector((0,0,1)),5.2)
     render_match(prefix+'three-right',target+Vector((6,-7,4)),Vector((0,0,1)),5.2)
     render_match(prefix+'mayor',target+Vector((-12,-12,12)),Vector((0,0,1)),6.0)
+# The mayor's view shows the three separately built market stalls together.
+stall_roots=[next(obj for obj in scene.objects if obj.name==name)
+             for name in ('stall-a','stall-b','stall-c')]
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
+        obj.hide_render=not any(under(obj,stall_root) for stall_root in stall_roots)
+stall_members=[obj for obj in scene.objects if obj.type=='MESH' and
+               any(under(obj,stall_root) for stall_root in stall_roots)]
+stall_points=[obj.matrix_world @ Vector(corner) for obj in stall_members for corner in obj.bound_box]
+stall_lo=Vector((min(p.x for p in stall_points),min(p.y for p in stall_points),min(p.z for p in stall_points)))
+stall_hi=Vector((max(p.x for p in stall_points),max(p.y for p in stall_points),max(p.z for p in stall_points)))
+target=(stall_lo+stall_hi)*.5
+scene.render.resolution_x=1200;scene.render.resolution_y=850
+render_match('stalls-three-quarter',target+Vector((-11,14,8)),Vector((0,0,1)),13)
+render_match('stalls-mayor',target+Vector((-5,10,12)),Vector((0,0,1)),14)
 canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
