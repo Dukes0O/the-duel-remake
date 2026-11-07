@@ -93,9 +93,10 @@ if args.render_view:
     reference_plane.hide_render = args.render_view != 'comparison'
     if args.render_view == 'deck':
         deck_camera = scene.camera
-        deck_camera.location = Vector((21.6, 470, 13.2))
-        deck_target = Vector((6.6, 470, 15.3))
-        deck_camera.data.ortho_scale = 23
+        deck_camera.location = Vector((26.6, 455, 12.7))
+        deck_target = Vector((11.6, 470, 15.3))
+        deck_camera.data.type = 'PERSP'
+        deck_camera.data.lens = 45
         deck_camera.rotation_euler = (deck_target - deck_camera.location).to_track_quat('-Z', 'Y').to_euler()
     if args.render_view == 'comparison':
         for obj in scene.objects:
@@ -456,6 +457,19 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             'mask_dir': str(raw / 'masks'),
         }
         upperworks = carve_object('ship-patience:upperworks', tex, upper_table)
+        # The projecting wings have no front-photo wrap on their sides or
+        # undersides. Use the cabin side image on the long side faces and
+        # painted steel below, so no foreground crop stretches into streaks.
+        cabin_side_material = upper_table['_photos']['side'].material()
+        side_photo_slot = len(upperworks.data.materials)
+        upperworks.data.materials.append(cabin_side_material)
+        steel_underwing_slot = len(upperworks.data.materials)
+        upperworks.data.materials.append(steel)
+        for polygon in upperworks.data.polygons:
+            if abs(polygon.normal.x) > .85:
+                polygon.material_index = side_photo_slot
+            elif polygon.normal.z < -.85:
+                polygon.material_index = steel_underwing_slot
         # The accommodation roof is exposed weather deck: one rust coat, while
         # the raised hatch and antenna forms stay as separate photo-carved geometry.
         roof_slot = len(upperworks.data.materials)
@@ -484,37 +498,46 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         parent(upperworks, upper_root)
         print('Patience upperworks carved bounds (Blender XYZ):', json.dumps(upper_bounds))
 
-        # Rounded funnel shell, mapped with its own crop, and three turned exhausts.
+        # Rounded rectangular stack; its full-height side image is mapped once
+        # around the four long faces, with its dark crown at the top.
         detail_photo = DetailPhoto(funnel_crop_path)
         detail_mesh = DetailMesh()
         funnel_x = -37 + ((125 + 60) - 40) * UPPER_SCALE
         roof_y = deck + UPPER_HEIGHT
-        funnel_uv = lambda i, distance, radius, angle: (i / 16, 1 - distance / 2.55)
-        lathe(detail_mesh, 'funnel-photo', (funnel_x, roof_y, 0), (0, 1, 0),
-              (1, 0, 0), (0, 0, 1),
-              [(0, 1.18), (.18, 1.26), (.45, 1.22), (1.55, 1.00),
-               (2.30, .94), (2.55, .96)], funnel_uv, sides=24,
-              cap_start=('funnel-photo', lambda angle, frac: (.5 + .5 * math.cos(angle) * frac,
-                                                               .5 + .5 * math.sin(angle) * frac)),
-              cap_end=('funnel-photo', lambda angle, frac: (.5 + .5 * math.cos(angle) * frac,
-                                                             .5 + .5 * math.sin(angle) * frac)))
+        funnel_levels = ((0, 1.14, .88), (.25, 1.30, 1.0), (3.0, 1.07, .82))
+        for level in range(len(funnel_levels) - 1):
+            y0, half_x0, half_z0 = funnel_levels[level]
+            y1, half_x1, half_z1 = funnel_levels[level + 1]
+            corners0 = ((-half_x0, -half_z0), (half_x0, -half_z0),
+                        (half_x0, half_z0), (-half_x0, half_z0))
+            corners1 = ((-half_x1, -half_z1), (half_x1, -half_z1),
+                        (half_x1, half_z1), (-half_x1, half_z1))
+            for side in range(4):
+                nxt = (side + 1) % 4
+                pts = [(funnel_x + corners0[side][0], roof_y + y0, corners0[side][1]),
+                       (funnel_x + corners0[nxt][0], roof_y + y0, corners0[nxt][1]),
+                       (funnel_x + corners1[nxt][0], roof_y + y1, corners1[nxt][1]),
+                       (funnel_x + corners1[side][0], roof_y + y1, corners1[side][1])]
+                u0, u1 = side / 4, (side + 1) / 4
+                v0, v1 = (1 - y0 / 3), (1 - y1 / 3)
+                detail_mesh.face(pts, ((u0,v0),(u1,v0),(u1,v1),(u0,v1)), 'funnel-photo')
+        detail_mesh.face([(funnel_x + x, roof_y + 3, z) for x,z in
+                          ((-.82,-.82),(.82,-.82),(.82,.82),(-.82,.82))],
+                         ((0,0),(1,0),(1,1),(0,1)), 'funnel-photo')
         funnel_obj = detail_mesh.finish('ship-patience:funnel-shell', {'funnel-photo': detail_photo.material()})
         funnel_obj['part'] = 'ship-patience:funnel'
         parent(funnel_obj, r)
-        for index, dx in enumerate((-.58, 0, .58)):
+        for index, dx in enumerate((-.55, 0, .55)):
             pipe_mesh = DetailMesh()
             px = funnel_x + dx
-            pipe_uv = lambda i, distance, radius, angle: (i / 16, 1 - distance / .72)
-            lathe(pipe_mesh, 'pipe-metal', (px, roof_y + 2.20, -.46 + index * .46),
-                  (0, 1, 0), (1, 0, 0), (0, 0, 1),
-                  [(0, .20), (.12, .22), (.62, .22), (.72, .20)], pipe_uv,
-                  sides=12, cap_start=('pipe-metal', lambda a, f: (.5 + .5*math.cos(a)*f,
-                                                                     .5 + .5*math.sin(a)*f)),
-                  cap_end=('pipe-metal', lambda a, f: (.5 + .5*math.cos(a)*f,
-                                                       .5 + .5*math.sin(a)*f)))
-            pipe_obj = pipe_mesh.finish(f'patience-funnel-exhaust-{index}', {'pipe-metal': rust})
-            pipe_obj['part'] = 'ship-patience:funnel'
-            parent(pipe_obj, r)
+            points = [(px, roof_y + 3.0, -.48 + index*.46),
+                      (px, roof_y + 3.42, -.48 + index*.46),
+                      (px + .16, roof_y + 3.70, -.48 + index*.46),
+                      (px + .38, roof_y + 3.70, -.48 + index*.46)]
+            for segment, (a,b) in enumerate(zip(points, points[1:])):
+                pipe_obj = rail(f'patience-funnel-exhaust-{index}-{segment}', a, b, .115,
+                                iron, 'ship-patience:funnel')
+                parent(pipe_obj, r)
 
         # Trace the bridge mast as a thin slab; explicit clear cells preserve its openings.
         mast_photo = DetailPhoto(mast_crop_path)
@@ -850,10 +873,8 @@ def render_imported_review():
     triangle_count = sum(len(poly.vertices) - 2 for obj in exported_meshes for poly in obj.data.polygons)
     glb_bytes = out.stat().st_size
 
-    bpy.ops.mesh.primitive_cube_add(size=1, location=gv((0, -12.0, -440)))
+    bpy.ops.mesh.primitive_plane_add(size=1200, location=gv((0, -2.0, -440)))
     ground = bpy.context.object
-    ground.dimensions = (1200, 1200, 20)
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     ground.name = 'review-only neutral lake bed'
     ground_mat = bpy.data.materials.new('Review ground / flat neutral earth')
     ground_mat.use_nodes = True
@@ -884,16 +905,19 @@ def render_imported_review():
         review_scene.collection.objects.link(cam)
         cam.location = gv(eye)
         cam.rotation_euler = (gv(target) - cam.location).to_track_quat('-Z', 'Y').to_euler()
-        data.type = 'ORTHO'
-        data.ortho_scale = scale
+        data.type = 'PERSP' if name in ('review-camera-whole', 'review-camera-dusk', 'review-camera-deck') else 'ORTHO'
+        if data.type == 'PERSP':
+            data.lens = 24 if name in ('review-camera-whole', 'review-camera-dusk') else 42
+        else:
+            data.ortho_scale = scale
         review_scene.render.resolution_x, review_scene.render.resolution_y = resolution
         return cam
 
-    add_camera('review-camera-whole', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
-    add_camera('review-camera-dusk', (25, 4.5, -430), (25, 10, -470), 96, (1200, 760))
+    add_camera('review-camera-whole', (27, 1.2, -510), (27, 5, -470), 96, (1200, 760))
+    add_camera('review-camera-dusk', (27, 1.2, -510), (27, 5, -470), 96, (1200, 760))
     add_camera('review-camera-above', (25, 92, -470), (25, 9, -470), 98, (900, 900))
     add_camera('review-camera-comparison', (10.3, 15.2, -430), (10.3, 15.2, -470), 40, (1400, 600))
-    add_camera('review-camera-deck', (21.6, 13.2, -470), (6.6, 15.3, -470), 23, (1200, 600))
+    add_camera('review-camera-deck', (26.6, 12.7, -455), (11.6, 15.3, -470), 23, (1200, 600))
 
     # A flat reference plane shares the comparison camera and the measured
     # 23 m horizontal scale; its photographed background remains visible.

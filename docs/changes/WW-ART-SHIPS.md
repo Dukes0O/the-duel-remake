@@ -115,3 +115,18 @@ boat remain unbuilt because Patience did not pass the photo comparison.
   sheet and review.
 - Removed this round's generated renders, Blender review file and scratch logs
   from `.qa-dist/`; kept the named task brief.
+
+## Round 9 ? Patience review views, funnel and bridge wings (7 November 2026)
+
+- Changed the whole and dusk review cameras to perspective, at car height and 40 m off the hull side, aimed at the ship's middle. Kept the overhead and photo comparison views orthographic. Set the deck camera to perspective at eye height and moved it sideways across the deck to improve the bridge sightline. Replaced the thick review cube with a plane at y = -2.
+- Rebuilt the Patience funnel as a tapered rounded rectangular stack, about 2.6 by 2.0 m in plan and 3 m tall, mapping its full crop from base to crown. Added three bent dark metal outlets. The bridge-wing side faces use the cabin side photo and undersides use painted steel.
+- Exported GLB read-back: 30,402 triangles and 1,816,060 bytes, within the 50,000 triangle and 3 MB limits.
+- Sheet: `docs/board/looks/ww-art-ships/round-9.jpg`, 1600 x 1750, 241,674 bytes. Scores and limits are in `round-9-review.md`.
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0. `tools/test-repo-hygiene.mjs`: passed; exit 0. `tools/test-review-evidence.mjs`: not run; Claude runs it at merge. Browser checks: not run; Claude handles them.
+- Changed assertions: none. Race fingerprints: none; art only.
+- Self-look: the hull is grounded and reads as a ship at 40 m. The bridge crops near the side-view frame edge, and the deck mast still overlaps part of the accommodation. Close detail of the funnel and bridge wings needs Claude's inspection.
+
+## Removed
+
+- Removed `round-8.jpg` and `round-8-review.md`; round 9 is the current look sheet and review.
+- Removed this round's generated renders, Blender review file and scratch logs from `.qa-dist/`; kept the named task brief.
