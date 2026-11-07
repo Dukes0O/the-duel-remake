@@ -654,17 +654,121 @@ for obj in bpy.context.scene.objects:
   for modifier in tuple(obj.modifiers):
    if modifier.type=='BEVEL':obj.modifiers.remove(modifier)
 
+# Pump station, built from its four isolated orthographic photographs. The
+# source photographs were generated with OpenAI image generation on 7 Nov 2026
+# and are credited here; the fence panel has its own generated photo. The body
+# photos contain no pipes or fence, so those remain real, separate geometry.
+pump_station=bpy.data.objects.new('pump-station',None);bpy.context.collection.objects.link(pump_station);pump_station.parent=rootobj
+pump_parts=[]
+pump_side=Photo(tex/'pump-station-side.jpg')
+pump_front=Photo(tex/'pump-station-front.jpg')
+pump_rear=Photo(tex/'pump-station-rear.jpg')
+pump_top=Photo(tex/'pump-station-top.jpg')
+PUMP_LENGTH=9.0
+PUMP_HEIGHT=5.75
+PUMP_WIDTH=9.0
+pump_table={
+ 'photos':{'side':'pump-station-side.jpg','front':'pump-station-front.jpg',
+           'rear':'pump-station-rear.jpg','top':'pump-station-top.jpg'},
+ 'length':PUMP_LENGTH,'width':PUMP_WIDTH,'height':PUMP_HEIGHT,
+ # Grid reads: side wall x=171..852, ground y=560; the two end walls are
+ # 798px wide against 530px of wall height. The plan view is near square.
+ 'side':{'start':171,'end':852,'ground':560},
+ 'front':{'centre':512,'ground':605,'top':75},
+ 'rear':{'centre':512,'ground':600,'top':75},
+ 'top':{'front':123,'rear':900,'centre':512,'x_scale':PUMP_WIDTH/(902-121)},
+ 'grey':28,'tolerance':38,'bleed_tolerance':48,'voxel':.105,'target':2000,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+pump_body=carve_object('pump-station:body',tex,pump_table)
+pump_body.parent=pump_station;pump_parts.append(pump_body)
+
+# Two flanged water mains are turned profiles. Their ends pass through the
+# photographed wall planes, remain inside the 2x2-cell compound, and are clear
+# of the service gate. This is a lathe, rather than a box or a tube primitive.
+pump_pipe_material=bpy.data.materials.new('Pump / worn dark steel')
+pump_pipe_material.use_nodes=True
+pump_pipe_bsdf=pump_pipe_material.node_tree.nodes['Principled BSDF']
+pump_pipe_bsdf.inputs['Base Color'].default_value=(.14,.105,.075,1)
+pump_pipe_bsdf.inputs['Metallic'].default_value=.22
+pump_pipe_bsdf.inputs['Roughness'].default_value=.88
+def pump_lathed_pipe(name,start_x,end_x,y,z,radius):
+ mesh=PhotoMesh();length=end_x-start_x
+ stations=[(0,radius*.78),(.05,radius),(.12,radius),(.20,radius*1.42),
+           (.34,radius*1.42),(.40,radius), (length-.10,radius), (length,radius)]
+ def uv(index,distance,r,angle):return (index/(len(stations)-1),angle/(2*math.pi))
+ cap=lambda angle,f:(.5+math.cos(angle)*f*.5,.5+math.sin(angle)*f*.5)
+ lathe(mesh,'pipe',(start_x,y,z),(1,0,0),(0,1,0),(0,0,1),stations,uv,
+       sides=10,cap_start=('pipe',cap),cap_end=('pipe',cap))
+ obj=mesh.finish(name,{'pipe':pump_pipe_material});obj.parent=pump_station;pump_parts.append(obj);return obj
+
+pump_lathed_pipe('pump-station:inlet-pipe',4.12,6.10,.92,-1.85,.24)
+pump_lathed_pipe('pump-station:outlet-pipe',4.12,6.10,1.55,1.85,.24)
+
+# Trace one open chain-link panel from its own photograph. A coarse pixel mask
+# keeps the diamond apertures open without carrying every stray wire splinter
+# into the 2x2-cell triangle budget. Reused mesh data gives each fence panel
+# the same true traced shape and photographic wear.
+fence_photo=Photo(tex/'pump-station-fence.jpg')
+fence_photo.rgb()  # Load and inspect the credited panel before tracing its open mesh.
+# The source has hundreds of broken wire ends. Trace its broad panel shape on
+# a low-resolution raster: three open diamond columns between the measured
+# posts and rails. This keeps the fence open and inside budget.
+trace_small=np.zeros((76,128),dtype=bool)
+def fence_line(a,b):
+ x0,y0=a;x1,y1=b;steps=max(abs(x1-x0),abs(y1-y0))
+ for step in range(steps+1):
+  x=round(x0+(x1-x0)*step/steps);y=round(y0+(y1-y0)*step/steps)
+  if 0<=x<128 and 0<=y<76:trace_small[y,x]=True
+trace_small[5:71,8:11]=True;trace_small[5:71,117:120]=True
+trace_small[10:12,10:118]=True;trace_small[66:68,10:118]=True
+for start in range(0,121,40):
+ fence_line((start,18),(start+40,58))
+ fence_line((start,58),(start+40,18))
+fence_mask=np.repeat(np.repeat(trace_small,8,axis=0),8,axis=1)
+fence_mask=np.pad(fence_mask,((0,fence_photo.h-fence_mask.shape[0]),(0,0)))
+if a.render:save_mask(fence_mask,evidence/'masks'/'pump-station-fence-trace.png')
+fence_loops=trace(fence_mask,(40,32,984,576),tolerance=14.0,min_area=80)
+if not fence_loops:raise RuntimeError('pump-station fence trace is empty')
+fence_photo.bleed(fence_mask)
+FENCE_GROUND,FENCE_START,FENCE_END,FENCE_TOP=565,44,976,43
+FENCE_SCALE=3.0/(FENCE_END-FENCE_START)
+FENCE_CENTRE=(FENCE_START+FENCE_END)/2
+def pump_fence_panel(label,centre,orientation,width=3.0):
+ scale=FENCE_SCALE*width/3.0
+ def panel_world(px,py,depth):
+  across=(px-FENCE_CENTRE)*scale
+  up=(FENCE_GROUND-py)*FENCE_SCALE
+  if orientation=='front':return (centre+across,up,-6.05+depth)
+  if orientation=='back':return (centre+across,up,6.05-depth)
+  if orientation=='left':return (-6.05-depth,up,centre+across)
+  return (6.05+depth,up,centre-across)
+ mesh=PhotoMesh();slab(mesh,'photo',fence_photo,fence_loops,panel_world,-.045,.045,wall_scale=FENCE_SCALE)
+ obj=mesh.finish(f'pump-station:fence-{label}',{'photo':fence_photo.material()})
+ obj.parent=pump_station;pump_parts.append(obj);return obj
+
+for centre in (-4.5,-1.5,1.5,4.5):pump_fence_panel(f'back-{centre:g}',centre,'back')
+for centre in (-4.5,-1.5,1.5,4.5):
+ pump_fence_panel(f'left-{centre:g}',centre,'left')
+ pump_fence_panel(f'right-{centre:g}',centre,'right')
+# Two shortened end panels leave a clear, three-metre-wide opening at the road.
+pump_fence_panel('front-left-long',-4.5,'front')
+pump_fence_panel('front-left-short',-2.25,'front',1.5)
+pump_fence_panel('front-right-short',2.25,'front',1.5)
+pump_fence_panel('front-right-long',4.5,'front')
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent,plant,wellhead,radar,turn):return True
+  if parent in (crusher,belt_parent,plant,wellhead,radar,turn,pump_station):return True
   parent=parent.parent
  return False
 plant_bounds={}
 wellhead_bounds={}
 radar_bounds={}
+pump_station_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
  # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
@@ -683,6 +787,10 @@ for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and ow
   radar_bounds[obj.name]=(low,high)
   if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
    raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('pump-station:'):
+  pump_station_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-7.5 or high[0]>7.5 or low[2]<-7.5 or high[2]>7.5:
+   raise RuntimeError(f'{obj.name} leaves the 2 x 2 footprint or ground plane: {low}, {high}')
 for name,(low,high) in plant_bounds.items():
  grounded=low[1]<=.13
  touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
@@ -706,6 +814,14 @@ for name,(low,high) in wellhead_bounds.items():
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another wellhead piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for name,(low,high) in pump_station_bounds.items():
+ grounded=low[1]<=.12
+ touching=any(other!=name and all(pump_station_bounds[other][0][axis]<=high[axis]+.12 and
+                                    pump_station_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in pump_station_bounds)
+ if not (grounded or touching):
+  raise RuntimeError(f'{name} touches neither ground nor another pump-station piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
 for obj in sorted((obj for obj in bpy.context.scene.objects
                    if obj.type=='MESH' and obj.name.startswith('wellhead:')),key=lambda obj:obj.name):
  print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
@@ -720,6 +836,14 @@ print(f'RADAR TRIANGLES {radar_triangles}')
 for obj in sorted((obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('radar:')),key=lambda obj:obj.name):
  print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
 if radar_triangles>1800:raise RuntimeError(f'radar has {radar_triangles} triangles; budget 1800')
+for obj in sorted((obj for obj in bpy.context.scene.objects
+                   if obj.type=='MESH' and obj.name.startswith('pump-station:')),key=lambda obj:obj.name):
+ print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
+pump_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                   if obj.type=='MESH' and obj.name.startswith('pump-station:')
+                   for poly in obj.data.polygons)
+print(f'PUMP STATION TRIANGLES {pump_triangles}')
+if pump_triangles>5000:raise RuntimeError(f'pump-station has {pump_triangles} triangles; budget 5000')
 # Several photo-carve calls open the same source again before their separate
 # edge bleeds. Reuse only byte-identical final images; different bleeds stay
 # distinct, so this reduces the GLB without changing any rendered pixels.
@@ -735,7 +859,7 @@ for material in bpy.data.materials:
   if previous is None:image_versions[key]=image
   elif previous!=image:node.image=previous;deduplicated+=1
 print(f'IDENTICAL TEXTURE IMAGES REUSED {deduplicated}')
-# Keep the family GLB within its 3 MB card budget. Full-resolution source
+# Keep the family GLB within its 8 MB card budget. Full-resolution source
 # photos stay in textures/; only the embedded copies are resampled slightly.
 embedded_images={node.image for material in bpy.data.materials if material.use_nodes
                  for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image}
@@ -756,7 +880,8 @@ if a.render:
  ground.node_tree.nodes.clear();ground_out=ground.node_tree.nodes.new('ShaderNodeOutputMaterial')
  ground_emission=ground.node_tree.nodes.new('ShaderNodeEmission');ground_emission.inputs['Color'].default_value=(.34,.34,.34,1)
  ground.node_tree.links.new(ground_emission.outputs['Emission'],ground_out.inputs['Surface']);floor.data.materials.append(ground)
- bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=1800;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=14
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=4400;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=16
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((-9,9,10)));bpy.context.object.data.energy=2600;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=18
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
@@ -812,3 +937,21 @@ if a.render:
  radar_shot('three-quarter-road',(13,11,-15),(0,5.8,0),15.0,(1000,750))
  radar_shot('three-quarter-rear',(-13,11,15),(0,5.8,0),15.0,(1000,750))
  radar_shot('mayor',(46,67,-46),(0,5.8,0),16.0,(1000,750))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name=='pump-station:body' or node.name=='review-only ground')
+ def pump_shot(name,eye,target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('pump-station-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('pump-station-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ # These four renders match the bare-body photos at the same orthographic cameras.
+ pump_shot('match-side',(24,2.875,0),(0,2.875,0),13.6,(1024,683))
+ pump_shot('match-front',(0,2.875,-24),(0,2.875,0),11.2,(1024,683))
+ pump_shot('match-rear',(0,2.875,24),(0,2.875,0),10.5,(1024,683))
+ pump_shot('match-above',(0,28,0),(0,0,0),12.0,(1024,1024))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('pump-station:') or node.name=='review-only ground')
+ pump_shot('three-quarter-road',(18,10,-22),(0,2.8,0),19.5,(1000,700))
+ pump_shot('three-quarter-yard',(-18,10,22),(0,2.8,0),19.5,(1000,700))
+ pump_shot('mayor',(36,56,-36),(0,2.8,0),22.0,(1000,700))
