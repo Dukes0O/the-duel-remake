@@ -2,15 +2,16 @@
 
 ## Changed
 
-- Added four generated orthographic wheel photos and four orthographic seat photos in the town textures folder, with credits.
-- Added `tools/blender/town-fun.py` to import the existing family GLB, retain the earlier buildings, trace two wheel faces, carve and place eight seats, add a hub axle, and trace the A-frame.
-- Rebuilt `public/assets/models/wasteland/town/fun.glb`. The big-wheel geometry is about 7,900 triangles, within the 3x3 building budget. The exported family is 3,219,328 bytes.
+- Added four generated orthographic wheel photos, four seat photos and a separate A-frame photo in the town textures folder, with credits.
+- Updated the existing `tools/blender/town-fun.py` family recipe. Earlier buildings remain in the recipe. It traces two wheel faces, carves and places eight seat copies, adds a hub axle, and traces the A-frame from its own reference photo.
+- Rebuilt `public/assets/models/wasteland/town/fun.glb`. The family export is 3,038,012 bytes.
+- Added the generated wheel and seat reference photos, the isolated A-frame photo, and their credits. Added the requested round-7 photo/model sheet and review note.
 
 ## Checks
 
-- Blender 4.5 export and readback completed. It printed bounds for each big-wheel mesh. The attached wheel and seat bounds stay within the 3x3 footprint; the wheel reaches the ground through its traced A-frame.
-- `node tools/test-blender-output.mjs`: 361 checks; 359 passed, 2 failed. The existing family test reports 44,437 total triangles against 42,000, and 3,219,328 bytes against 3,000,000. No assertions were changed. The task brief allows a family file up to 8 MB; the test's older 3 MB cap remains unchanged for Claude to reconcile.
-- Browser/look checks: not run. Claude should inspect the wheel from the four orthographic cameras, both three-quarter views and the mayor view, confirm the seat hang and rotation pivot, and decide whether the traced support matches the source.
+- Blender 4.5 export and readback completed, and generated seven wheel renders. The visual sheet shows the spokes open and the support grounded. The front, rear and overhead photos repeat a face-on view and do not match those cameras; the review note records this shortfall.
+- `node tools/test-blender-output.mjs`: 361 checks; 359 passed, 2 failed on the existing 3 MB family-size assertion. The export is 3,038,012 bytes, within the task brief's 8 MB limit. The triangle budget passed. No assertions were changed.
+- Browser check: not run. Claude should inspect the end and above references, seat visibility, and X-axis pivot in the exported GLB.
 - Race fingerprints: not applicable; no race code changed.
 
 ## Changed assertions
@@ -19,8 +20,8 @@ None.
 
 ## Removed
 
-None.
+- Removed the procedural wheel spokes and beam-only A-frame from the big-wheel recipe. Replaced them with two traced wheel faces and the isolated traced frame photo.
 
 ## Review status
 
-The source photos and candidate model are committed for review. This lane did not produce the requested `round-7.jpg` comparison sheet, so the visual acceptance remains open.
+Visual acceptance remains open. The requested sheet and review note are included for Claude's judgment.
