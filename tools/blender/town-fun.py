@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-5'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-6'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-5.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-6.jpg'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
     raise SystemExit(0)
@@ -49,6 +49,36 @@ if '--review-only' in args:
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    truck_bounds=[]
+    for obj in truck_root.children_recursive:
+        if obj.type=='MESH':
+            truck_bounds.extend(obj.matrix_world @ Vector(corner) for corner in obj.bound_box)
+    if not truck_bounds: raise RuntimeError('exported truck has no visible geometry')
+    truck_min=Vector(tuple(min(p[i] for p in truck_bounds) for i in range(3)))
+    truck_max=Vector(tuple(max(p[i] for p in truck_bounds) for i in range(3)))
+    truck_target=(truck_min+truck_max)*.5
+    truck_size=max(truck_max-truck_min)
+    truck_views=[
+        ('truck-side',(0,1,.10),'tavern-truck-side.jpg'),
+        ('truck-front',(1,0,.10),'tavern-truck-front.jpg'),
+        ('truck-rear',(-1,0,.10),'tavern-truck-rear.jpg'),
+        ('truck-top',(0,0,1),'tavern-truck-top.jpg'),
+        ('truck-three-quarter-road',(-.65,-.65,.45),None),
+        ('truck-three-quarter-rear',(.65,.65,.45),None),
+    ]
+    for name,direction,photo_name in truck_views:
+        # Show only the truck for direct comparison with its photo.
+        hide_tree(tavern_root,True)
+        hide_tree(truck_root,False)
+        direction=Vector(direction).normalized()
+        camera.location=truck_target+direction*(truck_size*3.1)
+        aim(camera,truck_target); camera.data.ortho_scale=truck_size*1.38
+        model_path=evidence/f'{name}.png'
+        scene.render.filepath=str(model_path); bpy.ops.render.render(write_still=True)
+    for child in family.children:
+        hide_tree(child,child!=tavern_root)
+    hide_tree(tavern_root,False)
+    hide_tree(truck_root,False)
     views=[
         ('side',(-1,0,.16),'tavern-side.jpg',False),
         ('front',(0,1,.16),'tavern-front.jpg',False),
@@ -71,6 +101,7 @@ sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
 from photo_carve import carve_object
 from photo_model import Mesh as PhotoMesh, Photo, slab, trace
+from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -210,15 +241,41 @@ truck=carve_object('tavern:truck-body',tex,{
     'photos':{'side':'tavern-truck-side.jpg','front':'tavern-truck-front.jpg',
               'rear':'tavern-truck-rear.jpg','top':'tavern-truck-top.jpg'},
     'length':5.5,'width':2.35,'height':2.7,
-    'side':{'start':25,'end':785,'ground':475},
+    'side':{'start':25,'end':785,'ground':465},
     'front':{'centre':244,'ground':482,'top':116},
     'rear':{'centre':247,'ground':490,'top':111},
-    'top':{'front':780,'rear':45,'centre':296,'along':'x','x_scale':2.35/420},
+    # The overhead reference lies across the frame: the bonnet is at x=45,
+    # the tailgate at x=765, and the body centreline is y=280.
+    'top':{'front':45,'rear':765,'centre':280,'along':'x','x_scale':2.35/(410-145)},
+    # Rear of the cab is the front wall of an open timber load bed. Preserve
+    # its floor while clearing the space between the side boards.
+    'keep':lambda x,y,z: ~((abs(x)<.87)&(y>.78)&(y<2.8)&(z<-.28)&(z>-2.58)),
+    'wheels':[(-1.56,.50,.72),(1.96,.50,.72)],
+    'cut':{
+        'side':[(0,465,809,541)],
+        'front':[(0,482,485,541)],
+        'rear':[(0,490,491,541)],
+    },
     'forward':1,'side_front_on_left':True,
     'grey':26,'tolerance':42,'bleed_tolerance':50,
     'mask_dir':str(evidence/'masks'),'voxel':.035,'target':1500,
 })
 truck.parent=truck_root
+
+# Four independent tyres wear the measured sidewall and end-view tread instead
+# of retaining the photographed wheels as flat patches on the carved body.
+_side_photo=Photo(tex/'tavern-truck-side.jpg')
+_front_photo=Photo(tex/'tavern-truck-front.jpg')
+_wheel_specs=((1.96,137,130),(1.96,137,350),(-1.56,622,142),(-1.56,622,350))
+for _z,_side_px,_end_px in _wheel_specs:
+    _x=-.72 if _end_px<240 else .72
+    _centre=(_x,.50,_z)
+    _wheel=PhotoMesh()
+    tyre(_wheel,'side',_side_photo,_side_px,400,69,.50,.26,
+         'front',_front_photo,_end_px,35,405,470,sides=14)
+    _wheel_obj=_wheel.finish(f'tavern:truck-wheel-{_z}-{_x}',
+        {'side':_side_photo.material(),'front':_front_photo.material()})
+    keep(_wheel_obj,truck_root).location=town.game_vector(_centre)
 
 def measured_bounds(obj):
     bpy.context.view_layer.update()
