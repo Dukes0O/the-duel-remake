@@ -1,13 +1,15 @@
-﻿# TOWN-ART-FUN round 4
+# TOWN-ART-FUN round 5
 
-Replaced the fountain and tavern's hand-built body geometry with measured `carve_object` tables and removed their previous construction code in the same change. The fountain water is a separate thin `fountain:water` part. Replaced the big wheel's geometric rim/spokes/seats with photo `trace` and `slab` geometry, parented to the named `big-wheel:wheel` hub pivot. The model is `public/assets/models/wasteland/town/fun.glb`; the round-4 sheet is `docs/board/looks/town-art-fun/round-4.jpg` (146,457 bytes).
+Rebuilt the tavern from the start using `carve_object` with separate side, front, rear and overhead photos. The two-metre doorway set the scale. A `keep` cut leaves the entry open, with a separate dark interior panel behind it. The crashed pickup is a second four-photo carve under `tavern:truck`; its bounds overlap the tavern and its wheels reach the ground. The rest of the family, including the fountain and big wheel, was left unchanged.
 
-**Art gaps for Claude:** the fountain's exported carve floats and has the wrong scale/contact. Tavern has only one oblique photo, which is repeated across its four carve views and visibly stretches; the truck remains part of that photo rather than separate geometry. The big wheel retains open spokes and a centre pivot but uses one oblique reference, and its traced circle sits small inside the support. Review the sheet and the exported close three-quarter/mayor renders. These are honest candidate results, not accepted likeness claims.
+The exported family GLB is 2,624,908 bytes. Bounds from Blender XYZ: tavern X -3.450 to 3.838 m, Y -3.080 to 3.065 m, Z 0.020 to 6.680 m; truck X -2.913 to -0.357 m, Y 0.482 to 6.188 m, Z -0.018 to 2.818 m. The truck overlaps the tavern bounds. Tavern ground contact is within half the 0.045 m carve voxel; truck contact is within the 0.035 m voxel.
 
-**Checks:** Blender 4.5.13 export and imported-GLB render completed. `node tools/test-blender-output.mjs` passed (336 checks, 0 failed). `node tools/test-repo-hygiene.mjs` passed; size targets are advisory. No lane tier or build was run, as directed. Browser checks remain with Claude; Claude should inspect the photo/model comparisons and the art gaps listed above. No assertions changed. Race fingerprints: not applicable; art only.
+The first Blender-output check found 8,044 tavern-family triangles against the 5,000 limit. Reduced the body and truck carve targets, regenerated the GLB, and reran the check successfully. No assertions changed. Added the top-view `forward` pixel-order fault to `docs/ART_LINE.md`.
+
+**Checks:** Blender 4.5.13 export and imported-GLB renders completed. `node tools/test-blender-output.mjs` passed, 336 checks, 0 failed after the triangle-budget correction. `node tools/test-repo-hygiene.mjs` passed; repository size targets are advisory. `node tools/test-review-evidence.mjs` failed twice at the unrelated audio-analysis case because `spawnSync ffmpeg` returned EPERM; the other 8 subtests passed each run. No lane tier or build ran, as directed. Browser checks were not run; Claude should inspect the round-5 sheet and the photo/model comparisons listed in its review note. No race fingerprints apply to this art-only change.
 
 ## Removed
 
-- Removed the former fountain bonnet/pipe construction and the former tavern beam/panel/truck construction when replacing their bodies.
-- Removed the round-3 sheet and review note after publishing round 4.
-- No runtime game code or test behavior was removed or changed.
+- Replaced the one-photo tavern carve table and removed its obsolete `tavern.jpg` source.
+- Deleted the round-4 sheet and its review note as requested.
+- No fountain, wheel, game runtime code or test assertions were removed or changed.

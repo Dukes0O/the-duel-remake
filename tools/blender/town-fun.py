@@ -19,89 +19,52 @@ from mathutils import Vector
 
 if '--review-only' in args:
     bpy.ops.import_scene.gltf(filepath=str(out))
-    imported=bpy.data.objects.get('town-fun')
-    if imported is None: raise RuntimeError('exported GLB lost town-fun family root')
-    placements={'fountain':(-29,0,0),'tavern':(-15,0,0),'drive-in':(5,0,0),'wreck-ring':(35,0,0),
-        'big-wheel':(-24,24,0),'scrap-coaster':(9,28,0),'mud-pit':(42,27,0),
-        'fun-stall-a':(-37,-19,0),'fun-stall-b':(-29,-19,0),'statue':(-20,-19,0)}
-    for obj in bpy.context.scene.objects:
-        if obj.parent==imported and obj.name in placements: obj.location+=Vector(placements[obj.name])
-    scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
-    scene.render.resolution_x=900; scene.render.resolution_y=700; scene.render.resolution_percentage=100
-    scene.render.image_settings.file_format='PNG'; scene.render.film_transparent=False
-    world=bpy.data.worlds.new('Overcast daylight'); world.use_nodes=True
-    world.node_tree.nodes['Background'].inputs['Color'].default_value=(.56,.58,.60,1)
+    scene=bpy.context.scene
+    family=bpy.data.objects.get('town-fun')
+    if family is None: raise RuntimeError('exported GLB lost town-fun family root')
+    tavern_root=bpy.data.objects.get('tavern')
+    truck_root=bpy.data.objects.get('tavern:truck')
+    if tavern_root is None or truck_root is None: raise RuntimeError('exported tavern or truck root is missing')
+    def hide_tree(obj,value):
+        obj.hide_render=value
+        for child in obj.children: hide_tree(child,value)
+    for child in family.children:
+        if child != tavern_root: hide_tree(child,True)
+    scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
+    scene.render.resolution_x=640; scene.render.resolution_y=480; scene.render.resolution_percentage=100
+    scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
+    scene.render.film_transparent=False; scene.view_settings.view_transform='Standard'
+    world=bpy.data.worlds.new('Tavern review grey'); world.use_nodes=True
+    world.node_tree.nodes['Background'].inputs['Color'].default_value=(.43,.43,.43,1)
     world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8; scene.world=world
-    groundmat=bpy.data.materials.new('Review ground / dark packed earth'); groundmat.use_nodes=True
-    groundmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.23,.20,.16,1)
-    groundmat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
-    bpy.ops.mesh.primitive_plane_add(size=180,location=(0,0,-.08)); ground=bpy.context.object; ground.name='Review ground'; ground.data.materials.append(groundmat)
+    groundmat=bpy.data.materials.new('Tavern review ground'); groundmat.diffuse_color=(.43,.43,.43,1)
+    groundmat.use_nodes=True; groundmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.43,.43,.43,1)
+    bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.04)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(groundmat)
     def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
-    def area(name,location,power,size):
+    def light(name,loc,power,size):
         data=bpy.data.lights.new(name,'AREA'); data.energy=power; data.shape='DISK'; data.size=size
-        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=location; aim(obj,(0,0,0))
-    area('large north sky',(12,-22,34),3400,22); area('west sky',(-26,-4,24),2100,18)
-    def camera(name,location,target,lens=52):
-        data=bpy.data.cameras.new(name); obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj)
-        obj.location=location; aim(obj,target); data.lens=lens; scene.camera=obj
+        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,3))
+    light('soft studio key',(8,12,17),1800,12); light('soft studio fill',(-10,-6,12),1100,10)
+    camera=bpy.data.objects.new('Tavern bounds camera',bpy.data.cameras.new('Tavern bounds camera'))
+    scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
-    # Frame all ten built pieces individually at both promised elevations.
-    # Imported GLB transforms are the review source, including the moving wheel.
-    for object_id, (px, py, pz) in placements.items():
-        root_obj=bpy.data.objects.get(object_id)
-        members=[]
-        def gather(parent):
-            for child in parent.children:
-                if child.type=='MESH': members.append(child)
-                gather(child)
-        if root_obj: gather(root_obj)
-        corners=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
-        if corners:
-            lo=Vector((min(v.x for v in corners),min(v.y for v in corners),min(v.z for v in corners)))
-            hi=Vector((max(v.x for v in corners),max(v.y for v in corners),max(v.z for v in corners)))
-            centre=(lo+hi)*.5; span=max(hi-lo); height=hi.z-lo.z
-        else:
-            centre=Vector((px,py,pz+2)); span=4; height=4
-        distance=max(span*1.7,7)
-        for view, camera_pos, target_pos in (
-            ('driver', (centre.x+span*.16,centre.y-distance,lo.z+height*.42), (centre.x,centre.y,lo.z+height*.42)),
-            ('mayor', (centre.x+span*.62,centre.y-distance*.9,hi.z+max(span*.22,3)), (centre.x,centre.y,centre.z))):
-            camera(f'{object_id} {view}', camera_pos, target_pos, 54)
-            scene.render.resolution_x=640; scene.render.resolution_y=480
-            scene.render.filepath=str(evidence/f'{object_id}-{view}.png')
-            bpy.ops.render.render(write_still=True)
-    camera('Fountain driver view',(placements['fountain'][0]+5,-8,2.2),(placements['fountain'][0],0,1.2),55)
-    scene.render.filepath=str(evidence/'fountain-driver.png'); bpy.ops.render.render(write_still=True)
-    camera('Fountain mayor view',(placements['fountain'][0]+7,-8,10),(placements['fountain'][0],0,0),55)
-    scene.render.filepath=str(evidence/'fountain-above.png'); bpy.ops.render.render(write_still=True)
-    camera('Mayor overview',(-8,-75,83),(2,0,13),46); scene.render.resolution_x=1600; scene.render.resolution_y=850
-    scene.render.filepath=str(evidence/'family-above.png'); bpy.ops.render.render(write_still=True)
-    camera('Driver overview',(0,-76,12),(0,0,5),34)
-    scene.render.filepath=str(evidence/'family-driver.png'); bpy.ops.render.render(write_still=True)
-    helper=root/'.qa-dist/town-fun-sheet.py'
-    helper.write_text(r'''from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-root=Path.cwd(); e=root/'.evidence/2026-11-06/TOWN-ART-FUN/round-3'; dest=root/'docs/board/looks/town-art-fun/round-3.jpg'
-photo=Image.open(root/'public/assets/models/wasteland/town/textures/fountain-front.jpg').convert('RGB')
-page=Image.new('RGB',(1600,1390),(32,33,31)); draw=ImageDraw.Draw(page); fd=Path('C:/Windows/Fonts')
-title=ImageFont.truetype(str(fd/'segoeuib.ttf'),34); label=ImageFont.truetype(str(fd/'segoeuib.ttf'),23); body=ImageFont.truetype(str(fd/'segoeui.ttf'),18)
-draw.text((32,18),'WASTELAND TOWN FUN | ROUND 2',font=title,fill=(238,225,198)); draw.text((32,62),'Pressed bonnet basin, measured pipework, and full family evidence',font=body,fill=(207,196,174))
-for i,(path,caption) in enumerate(((photo,'PHOTO REFERENCE'),(Image.open(e/'fountain-driver.png'),'IMPORTED GLB | DRIVER HEIGHT'))):
- x=32+i*768; draw.text((x,100),caption,font=label,fill=(220,178,117)); page.paste(ImageOps.fit(path.convert('RGB'),(748,530),method=Image.Resampling.LANCZOS),(x,134))
-for i,(path,caption) in enumerate((('fountain-above.png','IMPORTED GLB | MAYOR VIEW'),('fountain-driver.png','IMPORTED GLB | FRONT DETAIL'))):
- x=32+i*768; draw.text((x,720),caption,font=label,fill=(220,178,117)); page.paste(ImageOps.fit(Image.open(e/path).convert('RGB'),(748,530),method=Image.Resampling.LANCZOS),(x,754))
-draw.text((32,1320),'Reference crop and exported GLB views. Full family views are included below in the companion evidence set.',font=body,fill=(207,196,174))
-dest.parent.mkdir(parents=True,exist_ok=True)
-for quality in (82,76,70,64,58,54):
- page.save(dest,'JPEG',quality=quality,optimize=True,progressive=True)
- if dest.stat().st_size<=500000: break
-if dest.stat().st_size>500000: raise RuntimeError(f'sheet exceeds 500 KB: {dest.stat().st_size}')
-print(f'{dest} {dest.stat().st_size}')
-''',encoding='utf-8')
-    call=subprocess.run(['python',str(helper)],cwd=root,text=True,capture_output=True)
-    print(call.stdout,end='')
-    if call.returncode: raise RuntimeError(call.stderr)
-    helper.unlink()
+    textures=root/'public/assets/models/wasteland/town/textures'
+    views=[
+        ('side',(-1,0,.16),'tavern-side.jpg',False),
+        ('front',(0,1,.16),'tavern-front.jpg',False),
+        ('rear',(0,-1,.16),'tavern-rear.jpg',False),
+        ('above',(0,0,1),'tavern-top.jpg',False),
+        ('truck-wall',(0,1,.16),'tavern-front-with-truck.jpg',True),
+        ('three-quarter-road',(-.65,1,.58),None,True),
+        ('three-quarter-rear',(.65,-1,.58),None,True),
+        ('mayor',(-.5,1,.95),None,True),
+    ]
+    for name,direction,photo_name,show_truck in views:
+        hide_tree(truck_root,not show_truck)
+        target=Vector((0,0,3.35)); direction=Vector(direction).normalized()
+        camera.location=target+direction*30; aim(camera,target); camera.data.ortho_scale=11.5
+        scene.render.filepath=str(evidence/f'tavern-{name}.png'); bpy.ops.render.render(write_still=True)
+        print(f'rendered tavern {name}')
     raise SystemExit(0)
 
 sys.path.insert(0, str(root / 'tools/blender'))
@@ -215,6 +178,7 @@ water=cyl('fountain:water',(0,1.05,0),1.25,.025,'water',32)
 water['emissive']=True
 # Round 5 rebuild: four independent measured photos, scaled from its two-metre door.
 building_root('tavern','2x2')
+tavern_root=current
 tavern=carve_object('tavern:body',tex,{
     'photos':{'side':'tavern-side.jpg','front':'tavern-front.jpg',
               'rear':'tavern-rear.jpg','top':'tavern-top.jpg'},
@@ -222,11 +186,11 @@ tavern=carve_object('tavern:body',tex,{
     'side':{'start':100,'end':540,'ground':535},
     'front':{'centre':320,'ground':530,'top':52},
     'rear':{'centre':327,'ground':522,'top':58},
-    'top':{'front':515,'rear':45,'centre':320},
+    'top':{'front':45,'rear':515,'centre':320,'x_scale':7.4/520},
     'keep':lambda x,y,z: ~((abs(x)<.96)&(y<2.05)&(z < -6.2/2+.42)),
     'cut':{'front':[(235,380,410,535)]},
     'grey':26,'tolerance':40,'bleed_tolerance':48,
-    'mask_dir':str(evidence/'masks'),'voxel':.045,'target':5000,
+    'mask_dir':str(evidence/'masks'),'voxel':.045,'target':2700,
 })
 keep(tavern)
 door_dark=bpy.data.materials.new('tavern dark doorway')
@@ -236,6 +200,42 @@ door_dark.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=
 door_dark.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
 mat['door-dark']=door_dark
 box('tavern:doorway-interior',(0,1.03,-2.78),(1.82,2.0,.035),'door-dark',.005)
+# The truck is a separate four-photo carve. Its nose overlaps the tavern's
+# road-facing wall; the measured tyres reach the shared ground plane.
+truck_root=bpy.data.objects.new('tavern:truck',None)
+bpy.context.collection.objects.link(truck_root)
+truck_root.parent=tavern_root
+truck_root.location=town.game_vector((-1.65,0,-3.35))
+truck=carve_object('tavern:truck-body',tex,{
+    'photos':{'side':'tavern-truck-side.jpg','front':'tavern-truck-front.jpg',
+              'rear':'tavern-truck-rear.jpg','top':'tavern-truck-top.jpg'},
+    'length':5.5,'width':2.35,'height':2.7,
+    'side':{'start':25,'end':785,'ground':475},
+    'front':{'centre':244,'ground':482,'top':116},
+    'rear':{'centre':247,'ground':490,'top':111},
+    'top':{'front':780,'rear':45,'centre':296,'along':'x','x_scale':2.35/420},
+    'forward':1,'side_front_on_left':True,
+    'grey':26,'tolerance':42,'bleed_tolerance':50,
+    'mask_dir':str(evidence/'masks'),'voxel':.035,'target':1500,
+})
+truck.parent=truck_root
+
+def measured_bounds(obj):
+    bpy.context.view_layer.update()
+    points=[obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
+    return tuple((min(p[i] for p in points),max(p[i] for p in points)) for i in range(3))
+
+for label,obj in (('tavern',tavern),('truck',truck)):
+    bounds=measured_bounds(obj)
+    print(f'{label} bounds Blender XYZ:',json.dumps(bounds))
+    if bounds[2][0] < -.035 or bounds[2][0] > .035:
+        raise RuntimeError(f'{label} does not touch the ground: {bounds[2]}')
+tavern_bounds=measured_bounds(tavern)
+truck_bounds=measured_bounds(truck)
+touches=all(truck_bounds[i][0] <= tavern_bounds[i][1]+.03 and tavern_bounds[i][0] <= truck_bounds[i][1]+.03 for i in range(3))
+print('truck intersects tavern bounds:',touches)
+if not touches:
+    raise RuntimeError('tavern truck does not touch the tavern')
 # Drive-in screen and rows of battered cars, aimed toward the road-facing screen.
 building_root('drive-in','4x3')
 for x in (-8,8):
@@ -359,7 +359,8 @@ bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
 
 import subprocess
 blender=r'C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe'
-with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
-    result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
-if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
-print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),'sheet_bytes':sheet.stat().st_size}))
+if '--build-only' not in args:
+    with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
+        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
+    if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
+print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))
