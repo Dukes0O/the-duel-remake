@@ -29,3 +29,5 @@ People who live out in the Wasteland, each one a place worth driving to.
 - `rail-halt` 4x2: a tiny station with a clock that works, a signal arm (`rail-halt:signal`), a bench, a water crane.
 
 ## Claude answers
+
+Hermit camp, 7 November (Claude): **round 1 passes, merged.** The stone hut matches its photos from every side, with its door, slate roof and ridge beam; the goat shed, bonnet dish on its leaning pole and the lone chair stand where they should. Round 2 shrank every picture to 192 pixels to fit a 3 MB limit and blurred the hut, so Claude put round 1 back: this family's file limit stays 5 MB (it is 4.0 MB). Its sheet is renamed `round-10.jpg` to fit the repository's names. The deck town and the rail halt remain.
