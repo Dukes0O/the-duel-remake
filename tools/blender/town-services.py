@@ -1,4 +1,4 @@
-"""Hand-built Wasteland civic and service buildings, TOWN-ART-SERVICES.
+﻿"""Hand-built Wasteland civic and service buildings, TOWN-ART-SERVICES.
 
 Coordinates use game metres (+Y up, front -Z). The recipe writes the named
 family GLB and renders its review only after importing that GLB into a clean
@@ -11,7 +11,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-3.jpg';review_output=root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-3'
+sheet=root/'docs/board/looks/town-art-services/round-4.jpg';review_output=root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -100,99 +100,44 @@ building_roots={}
 def make(name,foot):
  o=empty(name,root_obj,foot);building_roots[name]=o;return o
 
-# 3x3 Town Hall: the deliberately detailed visual anchor for this family.
-h=make('town-hall',(3,3));shell('hall',-10.7,10.7,-10.7,10.7,5.5,brick,h)
-gable('hall',-10.9,10.9,-11,11,5.55,10.3,hall_roof_material,h)
-# Photo-material roof repairs follow the broad roof; vents and a cable break up
-# the silhouette without flat coloured patches.
-for x,z in [(-6,-4),(5,7)]:
- box('Roof vent collar',(x,8.4,z),(.9,.3,.9),steel,.06,h);cyl('Roof vent stack',(x,9.15,z),.24,1.35,dark,16,h);cyl('Vent rain cap',(x,9.86,z),.42,.12,steel,16,h)
-# Car-wheel clock: thick tyre ring, hub, spokes, hand-painted clock face.
-cyl('Clock face',(0,6.85,-11.02),1.34,.14,wood,32,h).rotation_euler[0]=math.pi/2
-wheel=tube('Car wheel clock tyre',(0,6.85,-11.10),1.28,.17,dark,h);wheel.rotation_euler[0]=math.pi/2
-cyl('Clock dial',(0,6.85,-11.15),.93,.035,paint,32,h).rotation_euler[0]=math.pi/2
-for i in range(12):
- angle=i*math.tau/12; x=math.sin(angle)*.78; y=6.85+math.cos(angle)*.78
- box('Clock hour marker',(x,y,-11.12),(.10,.19,.06),wood,.018,h).rotation_euler[2]=-angle
-for a0,a1 in [((0,6.85,-11.18),(0,7.48,-11.18)),((0,6.85,-11.2),(.48,6.58,-11.2))]:beam('Clock hand',a0,a1,.08,dark,h)
-cyl('Clock hub',(0,6.85,-11.26),.13,.08,steel,16,h).rotation_euler[0]=math.pi/2
-for x in (-7.3,-4.0,4.0,7.3):
- box('Hall recessed window',(x,3.55,-10.83),(1.55,1.85,.12),dark,.035,h)
- box('Hall dirty glass',(x,3.58,-10.93),(1.25,1.48,.05),glass,.025,h)
- beam('Window centre mullion',(x,2.86,-11.00),(x,4.3,-11.00),.075,wood,h)
- beam('Window stone sill',(x-.95,2.61,-10.98),(x+.95,2.61,-10.98),.10,brick,h)
-# Two narrow flags, guyed poles; canvas is visibly patched and does not read as a block.
-for i,x in enumerate((-7.7,7.7)):
- beam('Flag pole',(x,6.3,-6),(x,12,-6),.10,dark,h)
- for sx in (-1,1):beam('Flag guy',(x,5.4,-6),(x+sx*.75,.2,-6),.035,steel,h)
- flag_points=[(x,11.35,-6),(x+1.82,11.25,-6),(x+1.45,10.88,-6),(x+1.72,10.48,-6),(x+.84,10.67,-6),(x,10.55,-6)]
- flag_mesh=bpy.data.meshes.new('torn cloth flag mesh');flag_mesh.from_pydata([town.game_vector(p) for p in flag_points],[],[(0,1,5),(1,2,5),(2,4,5),(2,3,4)]);flag_mesh.materials.append(canvas);flag_mesh.update()
- cloth=bpy.data.objects.new('Torn patched town flag',flag_mesh);bpy.context.collection.objects.link(cloth);parent_keep(cloth,h)
- for q in (-.28,.3):beam('Flag repair seam',(x+.56,10.8+q,-6.04),(x+1.52,10.8+q,-6.04),.035,paint,h)
-# Raised roof monitor salvaged from an industrial clerestory, with its own
-# thick rafters, small pane divisions and visibly separate patch roof.
-box('Hall roof monitor body',(0,9.05,5.2),(6.8,2.2,4.0),wood,.045,h)
-for x in (-2.65,-1.35,0,1.35,2.65):
- box('Monitor dark glazing',(x,9.15,3.15),(.92,1.25,.08),glass,.02,h)
- beam('Monitor glazing mullion',(x,8.48,3.08),(x,9.82,3.08),.07,steel,h)
-for x in (-3.6,3.6):
- beam('Monitor gable rafter',(x,10.15,3.05),(0,11.3,5.2),.14,steel,h)
- beam('Monitor gable rafter',(0,11.3,5.2),(x,10.15,7.35),.14,steel,h)
-for side in (-1,1):
- roof=box('Monitor pressed roof panel',(0,10.82,5.2+side*1.0),(6.7,.12,2.35),tin,.025,h);roof.rotation_euler[0]=side*.28
-# Inset timber entry, simple steel handle and two broad worn approach steps.
-box('Hall timber entry door',(0,1.25,-10.88),(1.28,2.15,.13),wood,.035,h)
-for x in (-.38,.38):box('Hall door recessed panel',(x,1.28,-10.97),(.48,1.55,.035),steel,.025,h)
-sphere('Hall door handle',(.48,1.18,-11.02),.075,tin,h)
-box('Hall entry landing',(0,.28,-11.7),(4.4,.4,2.0),brick,.05,h)
-box('Hall entry step',(0,.12,-12.55),(5.0,.22,1.0),steel,.035,h)
-for x in (-1.9,1.9):beam('Entry canopy post',(x,.3,-12.2),(x,3.7,-12.2),.14,wood,h)
-beam('Entry canopy front beam',(-2.0,3.7,-12.3),(2.0,3.7,-12.3),.14,steel,h)
-box('Entry patched tin canopy',(0,3.9,-11.7),(4.7,.16,2.1),tin,.025,h)
-# Roof ridge welded ladder, chimney, vents, loose-but-attached salvage and aerial.
-for x in (-2.7,-1.6):beam('Roof ladder rail',(x,5.6,2),(x,8.3,2),.07,steel,h)
-for y in [5.9+i*.32 for i in range(8)]:beam('Roof ladder rung',(-2.78,y,2),(-1.52,y,2),.055,dark,h)
-beam('Roof aerial mast',(8.2,8.1,6),(8.2,11.7,6),.07,dark,h)
-for y in (9.0,10.0,11.0):beam('Roof aerial crossarm',(7.7,y,6),(8.7,y,6),.05,steel,h)
-# Hand-built freestanding notice board, braced legs, sloped weather hood and pinned notices.
-board_x=-6.8
-board=box('Notice board back',(board_x,1.65,-12.55),(3.5,2.05,.20),wood,.045,h)
-for dx in (-1.48,-.55,.45,1.35):box('Notice paper',(board_x+dx,1.68,-12.68),(.62,.72,.035),paint,.015,h)
-for dx in (-1.72,1.72):beam('Notice board post',(board_x+dx,2.8,-12.55),(board_x+dx,.12,-12.55),.14,steel,h)
-beam('Notice hood',(board_x-1.9,2.8,-12.75),(board_x+1.9,2.8,-12.75),.12,tin,h)
-for dx in (-1.35,1.35):beam('Notice diagonal brace',(board_x+dx,1.25,-12.55),(board_x+dx*.8,.25,-12.55),.09,wood,h)
-# The hall's measured elevations and roof plan carve its mass in one call.
-# Porch, clock, vents and chimney remain separate pieces with real depth.
-hall_body=carve_object('town-hall:carved-body',tex,{
+# Town Hall: the measured four-view carve is its full fixed mass. The face
+# cut-outs leave the photographed car-wheel clock and flags to their own
+# named pieces; porch posts and steps remain in the photographed front carve.
+h=make('town-hall',(3,3))
+hall_table={
  'photos':{'side':'town-hall-side.jpg','front':'town-hall-front.jpg','rear':'town-hall-rear.jpg','top':'town-hall-roof.jpg'},
  'length':22.0,'width':22.0,'height':12.2,
  'side':{'start':14,'end':749,'ground':414},
- 'front':{'centre':384,'ground':420},'rear':{'centre':384,'ground':420},
+ 'front':{'centre':384,'ground':419},'rear':{'centre':384,'ground':420},
  'top':{'front':8,'rear':504,'centre':384},
- 'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-3/masks',
- 'voxel':.09,'target':3000})
+ 'cut':{'front':[(366,145,435,211),(7,140,62,211),(707,140,761,211)]},
+ 'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
+ 'voxel':.075,'target':4500}
+hall_body=carve_object('town-hall:body',tex,hall_table)
 parent_keep(hall_body,h)
-# Salvaged sheets patch the biggest roof in town in different oxide colours.
-rust_patch=Photo(tex/'town-water-tin.jpg');oxide_patch=Photo(tex/'red-oxide.jpg')
-patch_mesh=PhotoMesh();patch_materials={'rust':rust_patch.material(),'oxide':oxide_patch.material()}
-for i,(cx,cz,kind,outline) in enumerate([
- (-5.5,-5.5,'rust',[(-3,-2.0),(1.8,-2.0),(3,-.8),(2.3,1.5),(.6,2.1),(-2.8,1.5),(-3.2,.1)]),
- (5.5,-5.5,'oxide',[(-2.3,-2.0),(2.4,-1.8),(3,0),(1.8,2.2),(-1.1,1.9),(-2.8,.6)]),
- (-5.5,5.5,'oxide',[(-2.6,-1.7),(1.9,-2.0),(2.8,-.1),(2.1,1.8),(-1.2,2.0),(-3,.4)]),
- (5.5,5.5,'rust',[(-1.8,-2.5),(1.7,-2.8),(2.4,-.8),(1.8,2.5),(-.4,2.7),(-2.2,1.0)])]):
- photo=rust_patch if kind=='rust' else oxide_patch
- points=[(cx+dx,10.3-abs(cz+dz)/11*4.75+.11,cz+dz) for dx,dz in outline]
- uvs=[photo.uv((dx+3.4)/6.8*photo.w,(dz+3.0)/6.0*photo.h) for dx,dz in outline]
- patch_mesh.face(points,uvs,kind,(0,1,0))
- for j,(p0,p1) in enumerate(zip(points,points[1:]+points[:1])):
-  beam('Hall roof repair rolled edge '+str(i+1),p0,p1,.035,dark,h)
-patch_mesh.finish('town-hall irregular photo rust repairs',patch_materials)
-for obj in bpy.context.scene.objects:
- if obj.name=='town-hall irregular photo rust repairs':parent_keep(obj,h)
-# The photographed wheel clock stays backed by a real tyre, spokes and hands.
-wheel=tube('Hall clock car tyre',(0,6.85,-11.55),1.28,.15,dark,h);wheel.rotation_euler[0]=math.pi/2
-for angle in range(0,360,45):
- ang=math.radians(angle);beam('Hall clock steel spoke',(0,6.85,-11.57),(.95*math.sin(ang),6.85+.95*math.cos(ang),-11.57),.055,steel,h)
+# True-depth clock wheel and hands sit on the gable where the front photo puts them.
+clock_c=(0,7.15,-11.2)
+clock=tube('town-hall:clock',clock_c,1.28,.16,dark,h,32,10);clock.rotation_euler[0]=math.pi/2
+# The actual wheel in the front photograph becomes the clock face, on a circular mesh.
+clock_photo=Photo(tex/'town-hall-front.jpg');clock_mesh=PhotoMesh();cx,cy,pr=400,177,36
+for i in range(32):
+ a0=math.tau*i/32;a1=math.tau*(i+1)/32
+ points=[(0,7.15,-11.37),(math.sin(a0)*1.07,7.15+math.cos(a0)*1.07,-11.37),(math.sin(a1)*1.07,7.15+math.cos(a1)*1.07,-11.37)]
+ uvs=[clock_photo.uv(cx,cy),clock_photo.uv(cx+math.sin(a0)*pr,cy-math.cos(a0)*pr),clock_photo.uv(cx+math.sin(a1)*pr,cy-math.cos(a1)*pr)]
+ clock_mesh.face(points,uvs,'photo')
+clock_face=clock_mesh.finish('town-hall:clock-face',{'photo':clock_photo.material()});parent_keep(clock_face,h)
+for i in range(12):
+ angle=i*math.tau/12;px=math.sin(angle)*.89;py=7.15+math.cos(angle)*.89
+ box('Clock salvaged hour mark',(px,py,-11.33),(.11,.17,.05),tin,.015,h)
+for p0,p1 in [((0,7.15,-11.36),(0,7.87,-11.36)),((0,7.15,-11.38),(.54,6.84,-11.38))]:beam('Clock hand',p0,p1,.075,dark,h)
+cyl('Clock hub',(0,7.15,-11.42),.13,.09,steel,16,h).rotation_euler[0]=math.pi/2
+# Two torn cloth flags and their poles are separate from the carved roof.
+for index,x in enumerate((-10.5,10.5)):
+ beam(f'town-hall:flag-pole-{index+1}',(x,5.8,-8.8),(x,10.7,-8.8),.09,dark,h)
+ direction=1 if index==0 else -1
+ points=[(x,10.55,-8.8),(x+direction*1.8,10.35,-8.8),(x+direction*1.3,9.95,-8.8),(x+direction*1.7,9.55,-8.8),(x+direction*.55,9.75,-8.8),(x,9.65,-8.8)]
+ mesh=bpy.data.meshes.new(f'Town Hall torn flag {index+1}');mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,5),(1,2,5),(2,4,5),(2,3,4)]);mesh.materials.append(canvas);mesh.update()
+ flag=bpy.data.objects.new(f'town-hall:flag-{index+1}',mesh);bpy.context.collection.objects.link(flag);parent_keep(flag,h)
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
 ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
 for n in ids:
@@ -358,7 +303,7 @@ for obj in bpy.context.scene.objects:
 for building_id, building_root in building_roots.items():
  objects=[]
  for obj in list(building_root.children):
-  if obj.name in (f'{building_id}:lamp',):
+  if obj.name.startswith(f'{building_id}:'):
    continue
   if obj.type not in {'MESH','CURVE'}:
    continue
