@@ -204,8 +204,13 @@ stop adjusting and change the method.
 ### Keeping the work
 
 - A job that loses its task after its memory is compacted reads
-  `.qa-dist/YOUR-TASK.md` and carries on.
+  `.qa-dist/YOUR-TASK.md` and carries on. In practice it often does not:
+  twice on 7 November a ships job reread only `AGENTS.md` after compaction
+  and stopped to ask. Size each job so it finishes before compaction (one or
+  two numbered points, about 55,000 log lines), commit after every point, and
+  resume a stopped job with a "where you are" note at the top of its brief.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
 
 - **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
+- **A separately modeled moving assembly is duplicated in a tower trace.** Remove its measured silhouette from each static photo mask before 	race; otherwise dish faces and drive housings become fixed flat plates beside the real moving part. Check side and end masks against their photos.

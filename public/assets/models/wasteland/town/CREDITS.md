@@ -147,3 +147,19 @@ generation. Their sources and prompts are recorded in the Wasteland art intake.
 - `corrugated-tin.jpg`: weathered sheet metal on the ticket booth and wall repairs.
 - `ticket-booth.jpg`: the battered booth face.
 - `dirt.jpg`: compacted tire-marked road and graded gate skirt.
+
+## Radar tower photos
+
+Generated with OpenAI image generation on 7 November 2026. Each JPEG is one
+orthographic view of the same fictional salvaged airliner radar installation,
+on a plain grey studio ground with no logos or other foreground objects. The
+copies are at most 1024 pixels wide. No third-party images or marks are used.
+
+- `radar-side.jpg`: exact side profile with the dish edge-on, open tower frame
+  and ladder.
+- `radar-front.jpg`: dish face and tower from the front.
+- `radar-rear.jpg`: back of the dish, its drive assembly and the tower.
+- `radar-above.jpg`: straight-down plan view of the dish and tower footprint.
+
+Each prompt requested only that single dead-on orthographic view, a full object
+inside the frame, even light, a plain grey background, and no text or watermark.
