@@ -119,6 +119,9 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **Shared mesh instance moved on the wrong up axis.** `Mesh.finish` converts
+  Y-up vertices into Blender's Z-up coordinates. Convert an instance's Y-up
+  translation too: `(x, -z, y)`. Otherwise a reused load can float above its deck.
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.

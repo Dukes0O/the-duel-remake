@@ -1,6 +1,7 @@
 """WW-ART-SEA first pieces. Photo measured parts, metres, X right, Y up."""
 import argparse, json, math, sys
 from pathlib import Path
+from mathutils import Vector
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
@@ -19,6 +20,7 @@ from photo_model import Mesh,Photo,slab,trace,tidy,lathe,box
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene=bpy.context.scene; parent=bpy.data.objects.new('sea-works',None); scene.collection.objects.link(parent)
 triangles={}
+gear_section_object=None
 scaled_photos=[]
 def finish(mesh,name,mats,parent_to=None):
  o=mesh.finish(name,mats);o.parent=parent_to or parent;o['part']=name;triangles[name]=mesh.triangles();return o
@@ -56,6 +58,7 @@ def build_gear():
        cap_end=('gear-face',lambda a,f:p.uv(512+math.cos(a)*f*.55*scale,512-math.sin(a)*f*.55*scale)))
  p.bleed(solid);finish(m,'old-gear',{'gear-face':p.material()})
 def build_new_gear():
+ global gear_section_object
  p=photo('sea-gear-section.jpg'); m=Mesh(); solid=tidy(~p.sky([(5,5),(p.w-5,5),(5,p.h-5),(p.w-5,p.h-5)],grey=20))
  # The photo shows a broader casting. Keep a measured 15-degree arc from its
  # centre, so this traced slab is one of 24 sections around a 7 m wheel.
@@ -68,7 +71,7 @@ def build_new_gear():
  loops=trace(solid,(20,20,p.w-20,p.h-20),tolerance=1)
  def pos(x,y,d): return ((x-cx)*.00277,(cy-y)*.00277,d)
  slab(m,'casting',p,loops,pos,-.18,.18,wall_scale=.025)
- section=finish(m,'gear-section',{'casting':p.material()})
+ section=finish(m,'gear-section',{'casting':p.material()});gear_section_object=section
  # The whole wheel is 24 of the same slice, turned about its centre, sharing one mesh.
  for i in range(24):
   ob=bpy.data.objects.new(f'gear-whole-section-{i+1:02d}',section.data)
@@ -136,6 +139,62 @@ def build_iron_mule_gear():
          cap_end=('end',lambda a,f:end.uv(420+math.cos(a)*62*f,430-math.sin(a)*62*f)))
   lathe(m,'side',(direction*3.52,.80,0),(direction,0,0),(0,0,1),(0,1,0),
         [(0,.075),(.24,.065)],lambda i,d,r,a:side.uv(85+i*22,340+math.sin(a)*16),sides=12)
+ # Four castings are instances of the existing gear-section mesh and material.
+ # They stand on edge on the 7 m deck; the top casting is displaced and tilted.
+ deck_y=1.12
+ section_bottom=2.50
+ for index in range(4):
+  load=bpy.data.objects.new(f'iron-mule-gear-section-{index+1}',gear_section_object.data)
+  scene.collection.objects.link(load);load.parent=root_obj
+  load.location=(.02 if index==3 else 0,-(.06 if index==3 else 0),deck_y+index*1.0-section_bottom)
+  if index==3:load.rotation_euler[1]=math.radians(6)
+  load['part']=f'iron-mule-gear-section-{index+1}'
+  triangles[load.name]=triangles['gear-section']
+ # Close, flat iron chain links, alternately turned, make two sagging tie-downs.
+ chain_material=bpy.data.materials.new('Iron Mule tie-down chain')
+ chain_material.diffuse_color=(.12,.075,.045,1);chain_material.use_nodes=True
+ shader=chain_material.node_tree.nodes.get('Principled BSDF')
+ shader.inputs['Base Color'].default_value=(.12,.075,.045,1)
+ shader.inputs['Metallic'].default_value=.25;shader.inputs['Roughness'].default_value=.86
+ chains=Mesh()
+ def chain_path(x):
+  return [(x,1.08,-1.075),(x,1.24,-.90),(x,2.05,-.62),(x,4.98,-.23),
+          (x,5.18,-.08),(x,5.14,.08),(x,4.98,.23),(x,2.05,.62),(x,1.24,.90),(x,1.08,1.075)]
+ def point_on_path(points,t):
+  lengths=[(Vector(b)-Vector(a)).length for a,b in zip(points,points[1:])]
+  total=sum(lengths);distance=t*total
+  for a,b,length in zip(points,points[1:],lengths):
+   if distance<=length:
+    return Vector(a).lerp(Vector(b),distance/length),total
+   distance-=length
+  return Vector(points[-1]),total
+ def chain_link(center,tangent,alternate):
+  tangent=Vector(tangent).normalized();u=Vector((1,0,0)) if alternate else tangent.cross(Vector((1,0,0))).normalized()
+  normal=tangent.cross(u).normalized();major=.070;minor=.048;tube=.014;around=8;ring=5
+  coords=[]
+  for a in range(around):
+   angle=math.tau*a/around
+   ellipse=Vector(center)+tangent*(major*math.cos(angle))+u*(minor*math.sin(angle))
+   outward=(-tangent*math.cos(angle)*(minor/major)+u*math.sin(angle)).normalized()
+   coords.append([ellipse+tube*(outward*math.cos(math.tau*b/ring)+normal*math.sin(math.tau*b/ring)) for b in range(ring)])
+  for a in range(around):
+   for b in range(ring):
+    chains.face([coords[a][b],coords[(a+1)%around][b],coords[(a+1)%around][(b+1)%ring],coords[a][(b+1)%ring]],
+                [(0,0),(.2,0),(.2,1),(0,1)],'chain',coords[a][b]-Vector(center))
+ for x in (-.52,.52):
+  points=chain_path(x);_,length=point_on_path(points,0);count=round(length/.19)
+  for index in range(count+1):
+   t=index/count;center,_=point_on_path(points,t)
+   before,_=point_on_path(points,max(0,t-.004));after,_=point_on_path(points,min(1,t+.004))
+   chain_link(center,after-before,bool(index%2))
+ finish(chains,'iron-mule-gear-chains',{'chain':chain_material},root_obj)
+ # The long side sills dip 0.11 m under the concentrated casting load.
+ sag=Mesh()
+ for sign in (-1,1):
+  z0,z1=(1.08,1.16) if sign>0 else (-1.16,-1.08)
+  for x0,x1,low in ((-3.45,-1.18,.60),(-1.20,1.20,.49),(1.18,3.45,.60)):
+   box(sag,x0,x1,low,low+.18,z0,z1,{k:steel for k in ('+x','-x','+y','-y','+z','-z')})
+ finish(sag,'iron-mule-gear-sag',{'side':side.material()},root_obj)
  finish(m,'iron-mule-gear-frame',{'side':side.material(),'end':end.material(),'deck':top.material()},root_obj)
 def build_wall():
  p=photo('sea-harbour-wall.jpg'); blend_repeat_edges(p); stone=photo('dam-gatehouse-stone.jpg'); m=Mesh(); H=6; L=40
@@ -317,6 +376,15 @@ sun=bpy.data.objects.new('sun',bpy.data.lights.new('sun','SUN'));sun.data.energy
 sun.rotation_euler=(math.radians(50),0,math.radians(30));scene.collection.objects.link(sun)
 camera=bpy.data.objects.new('camera',bpy.data.cameras.new('camera'));scene.collection.objects.link(camera);scene.camera=camera
 meshes=[o for o in scene.objects if o.type=='MESH']
+# Render-only track context uses the sea recipe's measured 1.66 m rail gauge.
+# It is not part of the exported wagon model.
+review_rail=Photo(textures/'sea-rails.jpg');review_track=Mesh()
+for x in np.arange(-5.0,5.01,.65):
+ box(review_track,x-.12,x+.12,.03,.14,-1.08,1.08,{k:('rail',review_rail,(52,16,82,145)) for k in ('+x','-x','+y','-y','+z','-z')})
+for z in (-.83,.83):
+ box(review_track,-5,5,.16,.35,z-.06,z+.06,{k:('rail',review_rail,(0,34,review_rail.w,52)) for k in ('+x','-x','+y','-y','+z','-z')})
+review_track.finish('review-track-context',{'rail':review_rail.material()})
+meshes=[o for o in scene.objects if o.type=='MESH']
 # Two more lengths of the wall and causeway, end to end, for the shots only.
 extras=[]
 for prefix,axis in (('harbour',0),('causeway',1)):
@@ -366,7 +434,7 @@ shot('harbour-ramp-front',['harbour-ramp'],(0,1,20),(0,1,0),(700,394),ortho=22)
 shot('harbour-ramp-three-quarter',['harbour-ramp'],(3,1.55,-19),(0,.8,0),(1200,700),lens=28)
 shot('causeway-arch-front',['causeway-arch'],(20,3,0),(0,3,0),(900,600),ortho=14.5)
 shot('causeway-arch-three-quarter',['causeway-arch'],(16,1.55,12),(0,1,0),(1200,700),lens=28)
-shot('iron-mule-wagon-side',['iron-mule-gear-'],(0,2.8,20),(0,1,0),(1200,430),ortho=14.5)
-shot('iron-mule-wagon-end',['iron-mule-gear-'],(18,2.8,0),(0,1,0),(700,700),ortho=4.6)
-shot('iron-mule-wagon-quarter',['iron-mule-gear-'],(9,2.4,10),(0,1,0),(1000,680),lens=32)
-shot('iron-mule-wagon-quarter-rear',['iron-mule-gear-'],(-9,2.4,10),(0,1,0),(1000,680),lens=32)
+shot('iron-mule-wagon-side',['iron-mule-gear-frame','iron-mule-gear-sag'],(0,.55,20),(0,.55,0),(1200,430),ortho=8.2)
+shot('iron-mule-wagon-end',['iron-mule-gear-frame','iron-mule-gear-sag'],(18,.55,0),(0,.55,0),(700,700),ortho=3.0)
+shot('iron-mule-wagon-quarter',['iron-mule-gear-','review-track'],(10,1.55,17.3),(0,1.2,0),(1000,680),lens=50)
+shot('iron-mule-wagon-quarter-rear',['iron-mule-gear-','review-track'],(-10,1.55,17.3),(0,1.2,0),(1000,680),lens=50)

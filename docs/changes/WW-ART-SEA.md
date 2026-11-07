@@ -80,3 +80,11 @@ Gate on 43ffa060: lane tier 46 of 47 and build passed. The one failure, `test-re
 - Added the `iron-mule-gear` root with a photo-textured deck, two traced side frames, end beams, four lathe-turned wheels, buffers and coupling stems at the measured 0.80 m height and 1.66 m gauge.
 - Blender export and its Standard-view empty-scene side, end and quarter renders completed. The first look found the far wheels were offset inboard; the second export corrects the outward-facing wheel stations. That fault and fix are now in `docs/ART_LINE.md`.
 - Removed: none.
+
+## WW-ART-SEA point 4: overloaded wagon
+
+- Reused the existing `gear-section` mesh and its material as four linked instances. They form a high stack with the top casting tilted. Added two interlinked iron tie-downs that pass over the load and sag slightly between their deck-edge anchors. The loaded side sills bow downward by 0.11 m.
+- The first loaded render showed the shared mesh instances offset on Blender's wrong up axis. Corrected the translation to the Z-up Blender transform and recorded the fault in `docs/ART_LINE.md`.
+- Added a render-only length of track at the Mule's 1.66 m gauge for the two loaded quarter views. It is not included in the exported wagon model.
+- Blender export and Standard-view empty-scene renders completed. Looked at all four wagon views; the load now rests on the deck, and the sheet uses empty side/end views beside the photos plus both loaded track views.
+- Removed: none.
