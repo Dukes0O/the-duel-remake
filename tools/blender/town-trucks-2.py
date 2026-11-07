@@ -400,7 +400,7 @@ def build_photo_van(ident, size, anchors, colour):
             'rear': {'centre': 354, 'ground': 480, 'top': 80},
             'top': {'front': 35, 'rear': 785, 'centre': 267, 'along': 'x', 'x_scale': width / 354},
             'wheels_px': [(165, 404, 73), (680, 404, 73)],
-            'front_wheels': [(175, 434, 45), (433, 434, 45)],
+            'front_wheels': [(180, 455, 22), (433, 455, 22)],
             'lamps': [(180, 300, 20), (403, 300, 20)],
         },
         'vane-truck': {
@@ -409,7 +409,7 @@ def build_photo_van(ident, size, anchors, colour):
             'rear': {'centre': 312, 'ground': 519, 'top': 105},
             'top': {'front': 9, 'rear': 595, 'centre': 312, 'along': 'x', 'x_scale': width / 280},
             'wheels_px': [(116, 440, 49), (472, 440, 49)],
-            'front_wheels': [(192, 484, 39), (432, 484, 39)],
+            'front_wheels': [(192, 484, 49), (432, 484, 49)],
             'lamps': [(190, 389, 20), (434, 389, 20)],
         },
         'vane-escort': {
@@ -418,7 +418,7 @@ def build_photo_van(ident, size, anchors, colour):
             'rear': {'centre': 312, 'ground': 519, 'top': 190},
             'top': {'front': 5, 'rear': 615, 'centre': 312, 'along': 'x', 'x_scale': width / 280},
             'wheels_px': [(129, 429, 56), (491, 429, 56)],
-            'front_wheels': [(183, 458, 49), (441, 458, 49)],
+            'front_wheels': [(183, 466, 50), (441, 466, 50)],
             'lamps': [(193, 345, 18), (430, 345, 18)],
             'cut': {'side': [(285, 165, 405, 210)], 'front': [(267, 104, 360, 189)],
                     'rear': [(267, 104, 360, 189)], 'top': [(280, 248, 372, 367)]},
@@ -426,11 +426,13 @@ def build_photo_van(ident, size, anchors, colour):
     }[ident]
     s = measured['side']
     side_scale = length / (s['end'] - s['start'])
+    tire_front_scale = height / abs(measured['front']['ground'] - measured['front']['top'])
+    tyre_half, track = width * .10, abs(measured['front']['centre'] - measured['front_wheels'][0][0]) * tire_front_scale
     side_wheel_data = []
     for px, py, radius_px in measured['wheels_px']:
         radius = (s['ground'] - py) * side_scale
         axle = -length / 2 + (px - s['start']) * side_scale
-        side_wheel_data.append((axle, radius, width * .405 - width * .10))
+        side_wheel_data.append((axle, radius, track - tyre_half))
     table = {
         'photos': {'side': f'town-trucks-2-{ident}-side.jpg',
                    'front': f'town-trucks-2-{ident}-front.jpg',
@@ -450,9 +452,7 @@ def build_photo_van(ident, size, anchors, colour):
     attach(body, vehicle)
     photos = table['_photos']
     side_photo, front_photo = photos['side'], photos['front']
-    tyre_half, track = width * .10, width * .405
     wheel_y = side_wheel_data[0][1]
-    tire_front_scale = height / abs(measured['front']['ground'] - measured['front']['top'])
     for axle_index, (side_measure, front_measure) in enumerate(zip(measured['wheels_px'], measured['front_wheels'])):
         px, py, radius_px = side_measure
         axle, radius, _ = side_wheel_data[axle_index]
@@ -514,6 +514,13 @@ def build_photo_van(ident, size, anchors, colour):
         mount = cube(f'{ident}:roof-gun-mount', (0, height+.08, -.05), (.48, .16, .36), iron, .04)
         attach(mount, vehicle, (0, height+.08, -.05))
     return vehicle
+
+if args.through in ('ambulance', 'vane-truck', 'vane-escort'):
+    build_photo_van('ambulance', (5.2, 2.2, 2.45), (), None)
+if args.through in ('vane-truck', 'vane-escort'):
+    build_photo_van('vane-truck', (6.2, 3.2, 4.3), (), None)
+if args.through == 'vane-escort':
+    build_photo_van('vane-escort', (5.1, 2.5, 2.85), (), None)
 
 
 def export_glb(path):
@@ -590,6 +597,12 @@ for ident,(length,width,height) in truck_sizes.items():
     shot(f'{ident}-overhead',(0,14,0),(0,0,0),top_scale,(900,900))
     shot(f'{ident}-mayor',(8,height+7,-8),(0,height*.35,0),top_scale*1.35,(1200,780))
     shot(f'{ident}-driver',(8,height*.75,-9),(0,height*.42,0),side_scale*1.08,(1200,780))
+    shot(f'{ident}-threequarter-front',(length*.88,height*.82,-length*.92),
+         (0,height*.48,0),length*1.42,(1200,780))
+    shot(f'{ident}-threequarter-rear',(length*.88,height*.82,length*.92),
+         (0,height*.48,0),length*1.42,(1200,780))
+    shot(f'{ident}-wheel-lamp-detail',(width*1.15,height*.72,-length*.72),
+         (width*.34,height*.48,-length*.39),width*.90,(900,700))
 
 def object_triangles(obj):
     if obj.type != 'MESH':
