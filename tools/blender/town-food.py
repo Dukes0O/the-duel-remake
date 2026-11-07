@@ -417,7 +417,7 @@ for x in (-3.25,3.25):
     for z in (-1.2,1.2):
         bpy.ops.mesh.primitive_torus_add(major_segments=18,minor_segments=7,major_radius=.43,minor_radius=.13,
                                          location=town.game_vector((x,.40,z)))
-        tyre=bpy.context.object;tyre.name=f'canteen:spare-tyre-{x}-{z}';tyre.rotation_euler[0]=math.pi/2;tyre.data.materials.append(mat['rubber']);keep(tyre)
+        tyre=bpy.context.object;tyre.name=f'canteen:spare-tyre-{x}-{z}';tyre.data.materials.append(mat['rubber']);keep(tyre)
 # A continuous curved roofline and rounded bonnet make this read as a bus body.
 xs=(-3.25,-2.85,-1.95,1.95,2.85,3.25)
 roofline=((1.35,1.60),(2.25,2.42),(2.65,2.78),(2.65,2.78),(2.25,2.42),(1.35,1.60))
@@ -430,6 +430,22 @@ for zi,z in enumerate((-1.50,1.50)):
     panel=mesh_object(f'canteen:curved-bus-side-{zi+1}',verts,faces,mat['rusted-steel'])
     for i,x in enumerate(xs): beam(f'canteen:side-pillar-{zi+1}-{i+1}',(x,roofline[i][0],z),(x,roofline[i][1],z),.095,mat['rusted-steel'])
 for z in (-1.50,1.50): beam(f'canteen:roof-rim-{z}',(-3.15,2.55,z),(3.15,2.55,z),.09,mat['galvanised-tin'])
+# The bus has a real driver's end at -X: a broad split windscreen, destination
+# board, lamps, grille and bumper. These marks make the salvaged vehicle read
+# as a bus even when the diner counters are viewed from the road.
+box('canteen:front-windscreen-left',(-3.285,2.08,-.48),(.045,.77,.78),mat['glass'],.045)
+box('canteen:front-windscreen-right',(-3.285,2.08,.48),(.045,.77,.78),mat['glass'],.045)
+beam('canteen:front-windscreen-divider',(-3.32,1.67,0),(-3.32,2.49,0),.06,mat['rusted-steel'])
+box('canteen:destination-board',(-3.30,2.60,0),(.10,.22,.88),mat['weathered-plank'],.025)
+box('canteen:front-grille',(-3.30,.98,0),(.06,.38,.66),mat['iron-dark'],.025)
+for z in (-.98,.98):
+    sphere(f'canteen:headlamp-{z}',(-3.34,1.15,z),(.10,.15,.16),mat['faded-hand-paint'],10,6)
+    beam(f'canteen:front-bumper-arm-{z}',(-3.18,.53,z),(-3.50,.53,z),.10,mat['rusted-steel'])
+for x in (-2.45,2.45):
+    for z in (-1.48,1.48):
+        bpy.ops.mesh.primitive_torus_add(major_segments=20,minor_segments=8,major_radius=.43,minor_radius=.15,
+                                         location=town.game_vector((x,.58,z)))
+        wheel=bpy.context.object;wheel.name=f'canteen:bus-wheel-{x}-{z}';wheel.data.materials.append(mat['rubber']);keep(wheel)
 for i,x in enumerate((-2.35,-1.35,-.35,.65,1.65,2.48),1):
     box(f'canteen:dark-window-{i}',(x,2.02,-1.535),(.78,.86,.04),mat['glass'],.07)
     box(f'canteen:window-frame-{i}',(x,2.02,-1.565),(.84,.92,.035),mat['weathered-plank'],.05)
