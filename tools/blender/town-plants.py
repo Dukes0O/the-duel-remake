@@ -509,16 +509,110 @@ for z,name,photo in ((-3.02,'front',well_front),(3.02,'rear',well_rear)):
   well_beam(f'wellhead:{name}-foot',(x,.13,z-.22),(x,.13,z+.22),.16,dark)
 
 
+# One-cell salvaged airliner radar. The lower silhouettes are traced from the
+# photos on four planes so the tower remains an open lattice. The dish is a
+# separate photo-backed lathe on a true-centre vertical turntable.
+radar=bpy.data.objects.new('radar',None);bpy.context.collection.objects.link(radar);radar.parent=rootobj
+radar_parts=[]
+radar_side=Photo(tex/'radar-side.jpg');radar_front=Photo(tex/'radar-front.jpg')
+radar_rear=Photo(tex/'radar-rear.jpg');radar_top=Photo(tex/'radar-above.jpg')
+RADAR_GROUND=1490
+RADAR_SCALE=7.35/(RADAR_GROUND-55)
+RADAR_Z_START=-3.05
+RADAR_Z_SPAN=6.1
+RADAR_FRONT_CENTRE=512
+RADAR_FRONT_SCALE=2.9/390
+def radar_z(px):return RADAR_Z_START+(px-305)*RADAR_Z_SPAN/420
+def radar_side_world(px,py,depth):return (depth,(RADAR_GROUND-py)*RADAR_SCALE,radar_z(px))
+def radar_front_world(px,py,depth):
+ return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,(RADAR_GROUND-py)*RADAR_SCALE,depth)
+def radar_attach(obj,parent=radar):obj.parent=parent;radar_parts.append(obj);return obj
+
+# The studio ground is neutral grey. Keep the colored and dark steel pixels in
+# each lower silhouette; trace preserves the genuine open spaces in its frame.
+side_rgb=radar_side.rgb();side_spread=side_rgb.max(axis=2)-side_rgb.min(axis=2);side_grey=side_rgb.mean(axis=2)
+side_mask=((side_spread>12)&(side_grey<205))|((side_grey<86)&(side_spread<14))
+side_mask[:590,:]=False;side_mask[1490:,:]=False;side_mask[:,:280]=False;side_mask[:,750:]=False
+side_loops=trace(side_mask,(280,590,750,1490),tolerance=29.0,min_area=3000)
+if not side_loops:raise RuntimeError('radar side lattice trace is empty')
+front_rgb=radar_front.rgb();front_spread=front_rgb.max(axis=2)-front_rgb.min(axis=2);front_grey=front_rgb.mean(axis=2)
+front_mask=((front_spread>12)&(front_grey<205))|((front_grey<86)&(front_spread<14))
+front_mask[:575,:]=False;front_mask[1490:,:]=False;front_mask[:,:265]=False;front_mask[:,770:]=False
+front_loops=trace(front_mask,(265,575,770,1490),tolerance=29.0,min_area=3000)
+if not front_loops:raise RuntimeError('radar front lattice trace is empty')
+for depth,label in ((-1.05,'road'),(1.05,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_side,side_loops,radar_side_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+ obj=frame.finish(f'radar:tower-side-frame-{label}',{'photo':radar_side.material()});radar_attach(obj)
+for depth,label in ((-1.14,'road'),(1.14,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+ obj=frame.finish(f'radar:tower-end-frame-{label}',{'photo':radar_front.material()});radar_attach(obj)
+
+# Cross-ties at each landing and diagonal braces close the four-sided tower.
+for z in (-1.95,1.95):
+ for y in (.18,1.65,3.05,4.18):
+  radar_attach(town.beam('radar:lattice-tie',(-1.0,y,z),(1.0,y,z),.085,steel))
+for y in (1.03,2.40,3.64):
+ for x in (-.74,.74):
+  for z0,z1 in ((-1.05,1.05),(1.05,-1.05)):
+   radar_attach(town.beam('radar:lattice-cross-brace',(x,y-.67,z0),(x,y+.67,z1),.070,dark))
+for x in (-.88,.88):
+ for z in (-2.62,2.62):
+  radar_attach(town.cube('radar:base-foot',(x,.075,z),(.40,.15,.48),dark,.012))
+
+# The dish is centred at its real vertical turn axis. Its photo face points
+# toward the road; UVs sample the photographed reflector, not its background.
+RADAR_DISH_Y=(RADAR_GROUND-330)*RADAR_SCALE
+turn=bpy.data.objects.new('radar:dish',None);bpy.context.collection.objects.link(turn);turn.parent=radar
+turn.location=town.game_vector((0,RADAR_DISH_Y,0));radar_parts.append(turn)
+def dish_uv(index,distance,radius,angle):
+ fraction=min(.86,radius/1.58*.86)
+ return radar_front.uv(512+292*fraction*math.cos(angle),320-292*fraction*math.sin(angle))
+def rear_dish_uv(index,distance,radius,angle):
+ fraction=min(.86,radius/1.58*.86)
+ return radar_rear.uv(512+296*fraction*math.cos(angle),300-296*fraction*math.sin(angle))
+dish=PhotoMesh()
+lathe(dish,'photo',(0,0,0),(0,0,1),(1,0,0),(0,1,0),
+      [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
+      dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_front.uv(512+52*f*math.cos(angle),320-52*f*math.sin(angle))))
+dish_obj=dish.finish('radar:dish-surface',{'photo':radar_front.material()});dish_obj.parent=turn;radar_parts.append(dish_obj)
+# The rear skin wears the back photo, including its radial bracing; the drive
+# motor sits behind it. Both skins and motor rotate together with the true centre.
+rear_dish=PhotoMesh()
+lathe(rear_dish,'photo',(0,0,.48),(0,0,1),(1,0,0),(0,1,0),
+      [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
+      rear_dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_rear.uv(512+52*f*math.cos(angle),300-52*f*math.sin(angle))))
+rear_obj=rear_dish.finish('radar:dish-rear-surface',{'photo':radar_rear.material()});rear_obj.parent=turn;radar_parts.append(rear_obj)
+# A narrow steel ring joins the reflector skins as one shallow dish body.
+rim=PhotoMesh()
+lathe(rim,'rim',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(-.16,1.58),(.32,1.58)],
+      lambda index,distance,radius,angle:(float(index),angle/(2*math.pi)),sides=20)
+rim_obj=rim.finish('radar:dish-rim',{'rim':dark});rim_obj.parent=turn;radar_parts.append(rim_obj)
+motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,1.04),(.44,.44,.40),dark,.025)
+world=motor.matrix_world.copy();motor.parent=turn;motor.matrix_world=world;radar_parts.append(motor)
+# A fixed bearing yoke joins the lattice at the dish's lower edge.
+for x in (-.68,.68):
+ radar_attach(town.beam('radar:turntable-bearing',(x,4.20,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
+radar_attach(town.beam('radar:turntable-crossbar',(-.75,4.20,0),(.75,4.20,0),.13,steel))
+
+# The small lattice and foot boxes read from their photographed edges at town
+# scale; their bevel modifiers multiply the exported count without changing
+# that silhouette. Keep the traced photo edges and budget the actual GLB.
+for obj in bpy.context.scene.objects:
+ if obj.type=='MESH' and obj.name.startswith('radar:'):
+  for modifier in tuple(obj.modifiers):
+   if modifier.type=='BEVEL':obj.modifiers.remove(modifier)
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent,plant,wellhead):return True
+  if parent in (crusher,belt_parent,plant,wellhead,radar,turn):return True
   parent=parent.parent
  return False
 plant_bounds={}
 wellhead_bounds={}
+radar_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
  # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
@@ -533,6 +627,10 @@ for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and ow
   wellhead_bounds[obj.name]=(low,high)
   if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
    raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('radar:'):
+  radar_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
+   raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
 for name,(low,high) in plant_bounds.items():
  grounded=low[1]<=.13
  touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
@@ -540,6 +638,13 @@ for name,(low,high) in plant_bounds.items():
               for other in plant_bounds)
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another batch plant piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for name,(low,high) in radar_bounds.items():
+ grounded=low[1]<=.10
+ touching=any(other!=name and all(radar_bounds[other][0][axis]<=high[axis]+.12 and
+                                    radar_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in radar_bounds)
+ if not (grounded or touching):raise RuntimeError(f'{name} touches neither ground nor another radar piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
 for name,(low,high) in wellhead_bounds.items():
  grounded=low[1]<=.10
@@ -557,6 +662,12 @@ wellhead_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
                         for poly in obj.data.polygons)
 print(f'WELLHEAD TRIANGLES {wellhead_triangles}')
 if wellhead_triangles>1800:raise RuntimeError(f'wellhead has {wellhead_triangles} triangles; budget 1800')
+radar_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                    if obj.type=='MESH' and obj.name.startswith('radar:') for poly in obj.data.polygons)
+print(f'RADAR TRIANGLES {radar_triangles}')
+for obj in sorted((obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('radar:')),key=lambda obj:obj.name):
+ print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
+if radar_triangles>1800:raise RuntimeError(f'radar has {radar_triangles} triangles; budget 1800')
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:
@@ -610,3 +721,18 @@ if a.render:
  well_shot('three-quarter-road',(12,8,-14),(0,2.2,0),7.2,(1000,750))
  well_shot('three-quarter-rear',(-12,8,14),(0,2.2,0),7.2,(1000,750))
  well_shot('mayor',(52,70,-52),(0,2.0,0),10.5,(1000,750))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('radar:') or node.name=='review-only ground')
+ def radar_shot(name,eye,target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('radar-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('radar-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ radar_shot('side',(26,3.8,0),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('front',(0,3.8,-28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('rear',(0,3.8,28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('above',(0,28,0),(0,0,0),7.4,(1024,1024),-math.pi/2)
+ radar_shot('three-quarter-road',(13,8,-15),(0,3.8,0),12.0,(1000,750))
+ radar_shot('three-quarter-rear',(-13,8,15),(0,3.8,0),12.0,(1000,750))
+ radar_shot('mayor',(46,67,-46),(0,3.8,0),14.5,(1000,750))

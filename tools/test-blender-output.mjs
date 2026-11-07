@@ -1083,7 +1083,7 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead', () => {
+  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead and radar', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
@@ -1093,7 +1093,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'crusher', 'wellhead'], 'the passed buildings and new wellhead stay separate');
+      ['batch-plant', 'crusher', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1123,6 +1123,12 @@ try {
     assert.ok(countTriangles('wellhead') > 100 && countTriangles('wellhead') <= 1_800,
       `${countTriangles('wellhead')} triangles exceeds the one-cell wellhead budget`);
     assert.ok(names.includes('wellhead:beam-surface'), 'the rocking beam has a separate traced surface');
+    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface', 'radar:dish-rim',
+      'radar:tower-side-frame-road', 'radar:tower-end-frame-road', 'radar:turntable-crossbar']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('radar') > 100 && countTriangles('radar') <= 1_800,
+      `${countTriangles('radar')} triangles exceeds the one-cell radar budget`);
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
