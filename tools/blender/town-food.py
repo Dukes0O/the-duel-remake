@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-13'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-14'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-13.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-14.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -371,27 +371,32 @@ lamp_bsdf=mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
 if lamp_bsdf.inputs.get('Emission Color'):
     lamp_bsdf.inputs['Emission Color'].default_value=(1.0,.22,.025,1)
     lamp_bsdf.inputs['Emission Strength'].default_value=1.5
-# TOWN-ART-FOOD greenhouse round 13: one opaque photo-carved shell wears all
-# four views. The door is 2 m high; each end table states its ridge row.
+# TOWN-ART-FOOD greenhouse round 14: one opaque photo-carved shell wears all
+# four views. Its side and end photos now agree on the ridge and eaves in metres.
 add_building('greenhouse',(-16,0,-14))
 ground_clutter('greenhouse',0,0)
+GREENHOUSE_HEIGHT = (640 - 24) * (2 / 305)
+GREENHOUSE_WIDTH = 840 * (2 / 305)
+GREENHOUSE_LENGTH = (956 - 150) * GREENHOUSE_HEIGHT / (560 - 76)
 GREENHOUSE = {
-    # Grid measurements: side span 18..1008, ground 640; door is about 305 px
-    # tall and is set to 2 m. The 3x2-cell plot remains a clear 24x16 m margin.
-    # The GLB camera adapter reverses the end labels; map each road-end photo
-    # to the face seen from that camera after export/import.
-    'photos': {'side': 'greenhouse-side.jpg', 'front': 'greenhouse-rear.jpg',
-               'rear': 'greenhouse-front.jpg', 'top': 'greenhouse-top.jpg'},
-    # The side elevation's 400 px body height and the end door's 305 px / 2 m
-    # set one scale, so the full side span measures about 10.1 m.
-    'length': 990 * (620 / 616) * (2 / 305),
-    'width': 840 * (2 / 305), 'height': 620 * (2 / 305),
-    'side': {'start': 18, 'end': 1008, 'ground': 540},
+    # Grid measurements: the front ridge is row 24 above ground row 640;
+    # 616 px / 305 px per 2 m gives the ridge height. The new side photo has
+    # ridge row 76 and ground row 560, across x=150..956. Calibrate its length
+    # from that same ridge height; its eaves then differ from the front by <2%.
+    'photos': {'side': 'greenhouse-side.jpg', 'front': 'greenhouse-front.jpg',
+               'rear': 'greenhouse-rear.jpg', 'top': 'greenhouse-top.jpg'},
+    'height': GREENHOUSE_HEIGHT,
+    'length': GREENHOUSE_LENGTH,
+    'width': GREENHOUSE_WIDTH,
+    'side': {'start': 150, 'end': 956, 'ground': 560},
     'front': {'centre': 512, 'ground': 640, 'top': 24},
-    'rear': {'centre': 512, 'ground': 640, 'top': 24},
+    'rear': {'centre': 512, 'ground': 640, 'top': 31},
     'top': {'front': 56, 'rear': 968, 'centre': 326, 'along': 'x',
-            'x_scale': (840 * (2 / 305)) / (640 - 12)},
-    'voxel': .055, 'target': 4500, 'grey': 26, 'tolerance': 40,
+            'x_scale': GREENHOUSE_WIDTH / (640 - 12)},
+    # The low-chroma glass patch near one roof corner nearly matches the studio
+    # grey. A narrower chroma gate keeps it in the roof mask; bleed still pulls
+    # the studio colour out beyond the model edge.
+    'voxel': .055, 'target': 4500, 'grey': 8, 'tolerance': 40,
     'bleed_tolerance': 48,
     'mask_dir': str(evidence / 'masks'),
 }
@@ -1250,7 +1255,14 @@ for light_name,offset,power,size in (
     ('open aisle bounce',Vector((0,5,4)),600,10)):
     light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
     light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
-greenhouse_dir=root/'.evidence/2026-11-07/town-art-food/round-13'
+# The rear orthographic comparison faces away from the original three lamps.
+# Add a soft studio fill behind it so front/rear texture colour is comparable.
+rear_fill_data=bpy.data.lights.new('greenhouse rear studio fill','AREA')
+rear_fill_data.energy=2200;rear_fill_data.shape='DISK';rear_fill_data.size=20
+rear_fill=bpy.data.objects.new('greenhouse rear studio fill',rear_fill_data)
+scene.collection.objects.link(rear_fill);rear_fill.location=target+Vector((0,-10,9))
+rear_fill.rotation_euler=(target-rear_fill.location).to_track_quat('-Z','Y').to_euler()
+greenhouse_dir=root/'.evidence/2026-11-07/town-art-food/round-14'
 greenhouse_dir.mkdir(parents=True,exist_ok=True)
 evidence=greenhouse_dir
 scene.render.resolution_x=1000;scene.render.resolution_y=700
