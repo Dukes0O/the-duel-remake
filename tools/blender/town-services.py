@@ -100,6 +100,30 @@ def gable(name,x0,x1,z0,z1,eave,ridge,mat,parent):
 building_roots={}
 def make(name,foot):
  o=empty(name,root_obj,foot);building_roots[name]=o;return o
+def scrapyard_piece_bounds(obj):
+ corners=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+ points=[(p.x,p.z,-p.y) for p in corners]
+ return tuple((min(p[i] for p in points),max(p[i] for p in points)) for i in range(3))
+def audit_scrapyard_pieces():
+ target=building_roots['scrapyard'];pieces=[]
+ for obj in bpy.data.objects:
+  parent=obj
+  while parent and parent!=target:parent=parent.parent
+  if parent==target and obj.type=='MESH':pieces.append(obj)
+ bpy.context.view_layer.update();bounds={obj:scrapyard_piece_bounds(obj) for obj in pieces}
+ for obj,box3 in bounds.items():
+  (x0,x1),(y0,y1),(z0,z1)=box3
+  if min(x0+11.0,11.0-x1,z0+11.0,11.0-z1)<-0.03:
+   raise RuntimeError(f'{obj.name} exceeds the scrapyard footprint: {box3}')
+  grounded=y0<=.035 and y0>=-.035
+  touching=grounded
+  if not touching:
+   for other,other_box in bounds.items():
+    if other==obj:continue
+    gaps=[max(0,other_box[i][0]-box3[i][1],box3[i][0]-other_box[i][1]) for i in range(3)]
+    if max(gaps)<=.04:touching=True;break
+  print(f'SCRAPYARD PIECE {obj.name} bounds x={x0:.3f}..{x1:.3f} y={y0:.3f}..{y1:.3f} z={z0:.3f}..{z1:.3f} ground_or_contact={"pass" if touching else "FAIL"}')
+  if not touching:raise RuntimeError(f'{obj.name} floats: no ground or piece contact')
 
 # Town Hall: the measured four-view carve is its full fixed mass. The face
 # cut-outs leave the photographed car-wheel clock and flags to their own
@@ -109,7 +133,7 @@ hall_table={
  'photos':{'side':'town-hall-side.jpg','front':'town-hall-front.jpg','rear':'town-hall-rear.jpg','top':'town-hall-roof.jpg'},
  'length':22.0,'width':22.0,'height':12.2,
  'side':{'start':14,'end':749,'ground':414},
- 'front':{'centre':384,'ground':419},'rear':{'centre':384,'ground':420},
+ 'front':{'centre':384,'ground':419,'top':20},'rear':{'centre':384,'ground':420,'top':20},
  'top':{'front':8,'rear':504,'centre':384},
  'cut':{'front':[(366,145,435,211),(7,140,62,211),(707,140,761,211)]},
  'mask_dir':root/'.evidence/2026-11-06/TOWN-ART-SERVICES/round-4/masks',
@@ -199,16 +223,30 @@ for n in ids:
    box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
    if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
  if n=='scrapyard':
-  # Uneven connected pressed-car shells are stacked into sculptural ridges.
-  for j,(x,z,yaw,col) in enumerate([(-5,-3,-.2,paint),(-2,-4,.17,steel),(1,-3,-.11,tin),(4,-4,.28,paint),(-4,-.3,.19,tin),(0,.1,-.23,steel),(4,.2,.1,paint)]):
-   shellob=box('Crushed car shell '+str(j),(x,1.35,z),(4.2,1.1,2.1),col,.35,b);shellob.rotation_euler[1]=yaw
-   for dx in (-1.25,1.25):tube('Exposed car wheel',(x+dx,.62,z-1.02),.47,.17,dark,b,10,4)
-   for side in (-1,1):beam('Bent car roof rail',(x-1.5,2,z+side*.65),(x+1.5,2,z+side*.65),.10,steel,b)
-  # Working crane gantry, mast, cantilever and suspended magnet.
-  for x in (-w*.36,w*.36):beam('Crane leg',(x,.25,-1),(x,9,-1),.34,steel,b);beam('Crane foot',(x-1,.28,-1),(x+1,.28,-1),.35,dark,b)
-  beam('Crane top beam',(-w*.42,9,-1),(w*.42,9,-1),.42,steel,b)
-  for x in (-w*.39,w*.39):beam('Crane diagonal',(x,5,-1),(x,9,-1),.16,tin,b)
-  beam('Magnet cable',(1.4,8.9,-1),(1.4,3.2,-1),.055,dark,b);cyl('Scrap magnet',(1.4,3,-1),.8,.45,steel,16,b);tube('Magnet coil',(1.4,3,-1),.57,.10,paint,b)
+  # The stack is one photo-carved object, then instanced at the two measured
+  # places from the overhead reference. The end views state their own top row.
+  stack_table={
+   'photos':{'side':'scrapyard-stack-side.jpg','front':'scrapyard-stack-front.jpg',
+             'rear':'scrapyard-stack-rear.jpg','top':'scrapyard-stack-top.jpg'},
+   'length':4.6,'width':2.8,'height':3.0,
+   'side':{'start':42,'end':974,'ground':656},
+   'front':{'centre':466,'ground':1006,'top':20},
+   'rear':{'centre':464,'ground':1000,'top':20},
+   'top':{'front':18,'rear':998,'centre':166},
+   'cut':{'side':[],'front':[],'rear':[],'top':[]},
+   'grey':26,'tolerance':35,'bleed_tolerance':34,
+   'voxel':.045,'target':2500,
+   'mask_dir':root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-1/masks',
+  }
+  stack=carve_object('scrapyard:car-stack-a',tex,stack_table)
+  parent_keep(stack,b)
+  stack.location=town.game_vector((-5.3,0,0.2))
+  stack_copy=stack.copy();stack_copy.data=stack.data;stack_copy.name='scrapyard:car-stack-b'
+  bpy.context.collection.objects.link(stack_copy);parent_keep(stack_copy,b)
+  stack_copy.location=town.game_vector((5.3,0,0.2));stack_copy.rotation_euler[2]=math.pi/2
+  print('SCRAPYARD stack dimensions (glTF X,Y,Z):',json.dumps({'a':[round(v,3) for v in stack.dimensions],
+        'b':[round(v,3) for v in stack_copy.dimensions]},sort_keys=True))
+  continue
  if n=='motor-pool':
   for bay in range(4):
    x=-w*.37+bay*(w*.74/3);beam('Numbered bay divider',(x,.1,z0),(x,4.9,z0),.17,steel,b)
@@ -393,6 +431,7 @@ for building_id, building_root in building_roots.items():
    obj.data.update()
 
 # One durable shared root; separate named children keep in-game placement addressable.
+audit_scrapyard_pieces()
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
