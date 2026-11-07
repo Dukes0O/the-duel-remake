@@ -263,3 +263,4 @@ Generated with OpenAI image generation on 6 November 2026. Each image shows one 
 
 - `machines2-mixer-truck-views.jpg`: three-axle concrete mixer, tilted drum, ladder and chute.
 - `machines2-crane-truck-views.jpg`: articulated lattice recovery crane with open triangular boom.
+- `machines2-pipe-truck-views.jpg`: flatbed pipe carrier with an unloading frame.
