@@ -308,8 +308,6 @@ for side_sign, label in ((-1, 'left'), (1, 'right')):
     x = side_sign * .96
     a = beam(f'dozer:loader-arm-{label}', (x, .92, -1.14), (x, 1.05, -2.28), (.30, .22), dozer_yellow)
     attach(a, dozer, (x, ( .92 + 1.05) * .5, (-1.14 - 2.28) * .5))
-    shoulder = bpy.data.objects.new(f'dozer:loader-arm-pivot-{label}', bpy.data.meshes.new('shoulder'))
-    bpy.context.collection.objects.link(shoulder)
     bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=.16,
                                          location=game_vector((x, 1.02, -1.14)))
     shoulder = bpy.context.object
@@ -510,7 +508,8 @@ def build_photo_van(ident, size, anchors, colour):
         for x in (-.70,.70):
             pipe_join(f'{ident}:rack-rail',[(x,2.42,-1.65),(x,2.68,-1.65),(x,2.68,1.65),(x,2.42,1.65)],.035,iron,vehicle)
         for z in (-1.5,-.5,.5,1.5):
-            beam(f'{ident}:rack-crossbar',(-.72,2.68,z),(.72,2.68,z),.045,iron)
+            crossbar=beam(f'{ident}:rack-crossbar',(-.72,2.68,z),(.72,2.68,z),.045,iron)
+            attach(crossbar,vehicle,(0,2.68,z))
     elif ident == 'vane-escort':
         # Blue beacons and the clean roof gun stay separate, nameable parts.
         lamp_mat=solid_material('Vane escort / blue lamp lens',(.012,.12,.8),.3,0)
