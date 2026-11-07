@@ -1,4 +1,4 @@
-"""Town food buildings: one hand-built soup kitchen anchors a market family."""
+"""Photo-carved soup kitchen and the rest of the town-food family."""
 import argparse
 import json
 import math
@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-06/town-art-food/round-3'
+evidence = root / '.evidence/2026-11-06/town-art-food/round-4'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-4.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -23,6 +23,8 @@ import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
+from photo_model import Photo
+from hull_model import View, occupancy, largest_part, carve_hull
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -182,123 +184,61 @@ def ground_clutter(name,x,z,material=mat['sand']):
     # Low irregular packed dirt that stays in the marked building footprint.
     box(name+':dirt-foot',(x,.06,z),(2.5,.12,2.4),material,.12)
 
-# Make the soup kitchen first: its 4 m canopy, fire, pot and benches anchor the family.
+# TOWN-ART-FOOD round 4: the kitchen's main body is the photo intersection.
+# Hand measurements use a 4.1 m front, 3.2 m depth and 2.7 m roof height.
 add_building('soup-kitchen',(30,0,-14))
-# Six welded uprights, three diagonal braces, front and rear lintels, all real stock.
-for x in (-1.85,0,1.85):
-    for z in (-1.55,1.55):
-        beam(f'soup-kitchen:steel-post-{x}-{z}',(x,.12,z),(x,2.68,z),.095,mat['rusted-steel'])
-for z in (-1.55,1.55):
-    beam(f'soup-kitchen:front-lintel-{z}',(-2.0,2.58,z),(2.0,2.58,z),.11,mat['rusted-steel'])
-for x in (-1.85,1.85):
-    beam(f'soup-kitchen:side-lintel-{x}',(x,2.58,-1.55),(x,2.58,1.55),.105,mat['rusted-steel'])
-for x in (-1.85,1.85):
-    beam(f'soup-kitchen:front-brace-{x}',(x,.68,-1.53),(x+.56,2.48,-1.53),.075,mat['rusted-steel'])
-# Roof is made of overlapping bent panels; the patched canvas skirts hang beneath it.
-tin_roof('soup-kitchen:roof-sheet-left',-.95,2.83,0,2.1,3.35,.055)
-tin_roof('soup-kitchen:roof-sheet-right',1.0,2.83,0,2.1,3.35,-.065)
-for x in (-.95,1.02):
-    for z in (-1.58,1.58):
-        beam(f'soup-kitchen:roof-rafter-{x}-{z}',(x,2.68,z),(x,2.83,0),.075,mat['rusted-steel'])
-# A continuous apron crosses the opening and falls down its left side. Soft
-# curves, irregular hems and folds give the canvas gravity and cloth thickness.
-def draped_canvas(name, start, end, width, top_y, sag, material):
-    verts=[];faces=[];steps=22;rows=3
-    dx=end[0]-start[0];dz=end[1]-start[1];length=max(.001,math.hypot(dx,dz))
-    nx,nz=dz/length,-dx/length
-    for row in range(rows):
-        t=row/(rows-1)
-        for i in range(steps+1):
-            u=i/steps
-            x=start[0]*(1-u)+end[0]*u;z=start[1]*(1-u)+end[1]*u
-            fold=(.045*math.sin(u*math.tau*6)+.018*math.sin(u*math.tau*13))*(.25+.75*t)
-            hem=(.07*math.sin(u*math.tau*4)+.025*math.sin(u*math.tau*11)) if row==rows-1 else 0
-            y=top_y-sag*t-fold-hem
-            verts.append((x+nx*width*(t-.5),y,z+nz*width*(t-.5)))
-    faces=[];stride=steps+1
-    for row in range(rows-1):
-        for i in range(steps):
-            a=row*stride+i;faces.append((a,a+1,a+stride+1,a+stride))
-    obj=mesh_object(name,verts,faces,material,'canvas')
-    obj.modifiers.new('stitched cloth thickness','SOLIDIFY').thickness=.018
-    return obj
-draped_canvas('soup-kitchen:continuous-patched-canvas-front',(-1.92,-1.59),(1.92,-1.59),.08,2.52,.34,mat['patched-canvas'])
-draped_canvas('soup-kitchen:canvas-down-left-side',(-1.90,-1.58),(-1.90,1.52),.54,2.52,2.08,mat['patched-canvas'])
-for i,x in enumerate((-1.58,-.65,.36,1.43),1):
-    beam(f'soup-kitchen:canvas-rope-loop-{i}',(x,2.45,-1.62),(x,2.62,-1.58),.025,mat['rusted-steel'])
-# The back wall is three separately lapped 100 mm corrugated sheets, not one block.
-for i,x in enumerate((-1.3,0,1.3),1):
-    tin_wall(f'soup-kitchen:rear-corrugated-panel-{i}',x,1.38,1.53,1.32,1.88)
-    for y in (.44,2.32): beam(f'soup-kitchen:rear-panel-edge-{i}-{y}',(x-.67,y,1.53),(x+.67,y,1.53),.045,mat['rusted-steel'])
-# Back shelf with rough brackets, dented pails, milk cans, pans and a crate.
-box('soup-kitchen:back-shelf-planks',(0,1.22,1.23),(2.85,.16,.40),mat['weathered-plank'],.035)
-for x in (-1.15,0,1.15): beam(f'soup-kitchen:shelf-bracket-{x}',(x,.35,1.45),(x,1.13,1.23),.09,mat['rusted-steel'])
-for i,x in enumerate((-.75,0,.75),1):
-    cylinder(f'soup-kitchen:shelf-milk-can-{i}',(x,1.56,1.22),.20 if i%2 else .16,.56,mat['galvanised-tin'],12)
-    cylinder(f'soup-kitchen:shelf-can-neck-{i}',(x,1.86,1.22),.095,.10,mat['rusted-steel'],12)
-for i,x in enumerate((-.65,.55),1):
-    cylinder(f'soup-kitchen:shelf-pan-{i}',(x,1.31,1.20),.22,.045,mat['dark-steel'],10)
-box('soup-kitchen:shelf-crate',(1.18,1.44,1.22),(.48,.43,.36),mat['weathered-plank'],.035)
-# A large curved sheet-metal cauldron, modelled from its belly profile.
-def lathe_pot(name, center, profile, material, segments=32):
-    verts=[];faces=[]
-    for radius,height in profile:
-        for i in range(segments):
-            angle=math.tau*i/segments
-            verts.append((center[0]+math.cos(angle)*radius,center[1]+height,center[2]+math.sin(angle)*radius))
-    for row in range(len(profile)-1):
-        for i in range(segments):
-            a=row*segments+i;b=row*segments+(i+1)%segments
-            faces.append((a,a+segments,b+segments,b))
-    obj=mesh_object(name,verts,faces,material,'round')
-    for poly in obj.data.polygons:poly.use_smooth=True
-    return obj
-lathe_pot('soup-kitchen:iron-soup-pot',(0,.66,-.12),((.32,.02),(.45,.08),(.59,.27),(.65,.49),(.62,.68),(.55,.83),(.51,.87)),mat['dark-steel'],24)
-bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=.51,minor_radius=.055,location=town.game_vector((0,1.53,-.12)))
-obj=bpy.context.object;obj.name='soup-kitchen:pot-rolled-rim';obj.data.materials.append(mat['rusted-steel']);keep(obj)
-for side in (-1,1):
-    beam(f'soup-kitchen:pot-handle-{side}',(side*.52,1.30,-.12),(side*.79,1.34,-.12),.075,mat['dark-steel'])
-    cylinder(f'soup-kitchen:pot-handle-grip-{side}',(side*.79,1.34,-.12),.075,.12,mat['dark-steel'],10,'X')
-for i,angle in enumerate((.35,2.45,4.55),1):
-    x,z=math.cos(angle)*.43,-.12+math.sin(angle)*.43
-    beam(f'soup-kitchen:pot-short-leg-{i}',(x,.40,z),(x,.69,z),.10,mat['dark-steel'])
-# Rough hearth with embedded stone and linked split wood, coal and a controlled flame cluster.
-rng=random.Random(205)
-for i in range(7):
-    a=math.tau*i/9; x=math.cos(a)*.82; z=-.12+math.sin(a)*.72
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=1,location=town.game_vector((x,.22,z)))
-    stone=bpy.context.object;stone.name=f'soup-kitchen:hearth-stone-{i+1}'
-    stone.scale=(.22+.025*(i%3),.16+.018*((i+1)%3),.20+.02*((i+2)%4))
-    stone.rotation_euler[1]=a*.37;stone.data.materials.append(mat['cracked-concrete'])
-    for poly in stone.data.polygons: poly.use_smooth=False
-    keep(stone)
-for i in range(4):
-    x=-.42+i*.26
-    beam(f'soup-kitchen:split-firewood-{i+1}',(x,.35,-.48),(x+.22,.39,.21),.12,mat['weathered-plank'])
-for i,(x,z,lean) in enumerate(((-.48,-.10,-.12),(.45,-.10,.12),(-.30,-.52,.10),(.32,-.52,-.10),(-.12,-.26,.04)),1):
-    verts=[]
-    for y,radius in ((.28,.105),(.53,.085)):
-        for angle in (0,math.pi/2,math.pi,math.pi*1.5):
-            verts.append((x+math.cos(angle)*radius,y,z+math.sin(angle)*radius))
-    verts.append((x+lean,.82,z-.015))
-    faces=[]
-    for side in range(4):
-        nxt=(side+1)%4
-        faces.append((side,nxt,nxt+4,side+4))
-        faces.append((side+4,nxt+4,8))
-    flame=mesh_object('soup-kitchen:lamp',verts,faces,mat['fire-yellow'] if i%2==0 else mat['fire'],'round')
-    flame.name=f'soup-kitchen:lamp-{i}'
-# Two joined trestle benches flank the fire; they are rough, thick timber, not plank planes.
-for side,z in enumerate((-.98,1.14),1):
-    for plank in range(3):
-        box(f'soup-kitchen:bench-{side}-split-seat-{plank+1}',(0,.55,z+(plank-1)*.16),(2.8,.13,.18),mat['weathered-plank'],.045)
-    for x in (-.98,.98):
-        for dz in (-.20,.20):beam(f'soup-kitchen:bench-{side}-trestle-{x}-{dz}',(x,.08,z+dz),(x,.49,z+dz),.12,mat['weathered-plank'])
-        beam(f'soup-kitchen:bench-{side}-trestle-foot-{x}',(x-.18,.16,z-.20),(x+.18,.16,z+.20),.09,mat['weathered-plank'])
-        beam(f'soup-kitchen:bench-{side}-crossbar-{x}',(x,.32,z-.22),(x,.32,z+.22),.075,mat['rusted-steel'])
-for i,x in enumerate((-1.73,-1.35),1):
-    cylinder(f'soup-kitchen:water-can-{i}',(x,.54,.72),.19,.72,mat['galvanised-tin'],10)
-    cylinder(f'soup-kitchen:can-neck-{i}',(x,.94,.72),.07,.12,mat['rusted-steel'],10)
+photo_paths = {
+    'front': textures / 'town-food-soup-front.jpg',
+    'left': textures / 'town-food-soup-left.jpg',
+    'rear': textures / 'town-food-soup-rear.jpg',
+    'overhead': textures / 'town-food-soup-overhead.jpg',
+}
+photos = {name: Photo(path) for name, path in photo_paths.items()}
+W, H = 712, 532
+def front_pick(x, y, z): return ((x + 2.05) * W / 4.1, (2.7 - y) * H / 2.7)
+def left_pick(x, y, z): return ((z + 1.6) * W / 3.2, (2.7 - y) * H / 2.7)
+def rear_pick(x, y, z): return ((2.05 - x) * W / 4.1, (2.7 - y) * H / 2.7)
+def overhead_pick(x, y, z): return ((x + 2.05) * W / 4.1, (1.6 - z) * H / 3.2)
+seed_set = [(5, 5), (W - 6, 5), (5, H - 6), (W - 6, H - 6)]
+views = [
+    View('front', photos['front'], seed_set, front_pick, (0, 0, -1), grey=30, tolerance=24),
+    View('left', photos['left'], seed_set, left_pick, (-1, 0, 0), grey=30, tolerance=24),
+    View('rear', photos['rear'], seed_set, rear_pick, (0, 0, 1), grey=30, tolerance=24),
+    View('overhead', photos['overhead'], seed_set, overhead_pick, (0, 1, 0), grey=30, tolerance=24),
+]
+for view in views:
+    # Bleed only the studio background so JPEG filtering cannot paint it on edges.
+    view.photo.bleed(view.mask, passes=10)
+    # Keep the measured reference crops beside the recipe; the game model embeds
+    # compact 256 px copies, matching the family's established texture budget.
+    view.photo.image.scale(256, 192)
+photo_materials = {view.name: view.photo.material(.86) for view in views}
+for photo_material in photo_materials.values():
+    nodes=photo_material.node_tree.nodes;links=photo_material.node_tree.links
+    texture=next(node for node in nodes if node.type=='TEX_IMAGE')
+    bsdf=next(node for node in nodes if node.type=='BSDF_PRINCIPLED')
+    if bsdf.inputs.get('Emission Color'):
+        links.new(texture.outputs['Color'],bsdf.inputs['Emission Color'])
+        bsdf.inputs['Emission Strength'].default_value=.2
+voxel = .055
+solid, xs, ys, zs = occupancy(((-2.05, 2.05), (0, 2.7), (-1.6, 1.6)), voxel,
+                              [view.covers for view in views])
+solid = largest_part(solid)
+body = carve_hull('soup-kitchen:photo-carved-body', views, photo_materials,
+                  solid, xs, ys, zs, voxel, 4200)
+keep(body)
+
+# A small dedicated emissive flame node remains individually addressable at night.
+lamp = bpy.data.objects.new('soup-kitchen:lamp', None)
+bpy.context.collection.objects.link(lamp); keep(lamp)
+lamp.location = town.game_vector((0, .78, -.1))
+lamp['emissive'] = True
+flame = sphere('soup-kitchen:lamp-glow', (0, .78, -.1), (.18, .28, .18), mat['fire-yellow'], 10, 6)
+flame.parent = lamp; flame.location = (0, 0, 0)
+lamp_bsdf = mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
+if lamp_bsdf.inputs.get('Emission Color'):
+    lamp_bsdf.inputs['Emission Color'].default_value = (1.0, .22, .025, 1)
+    lamp_bsdf.inputs['Emission Strength'].default_value = 1.5
 # Supporting food buildings use the same welded framing, separate materials and real-thickness parts.
 add_building('greenhouse',(-16,0,-14))
 ground_clutter('greenhouse',0,0)
@@ -530,12 +470,13 @@ bpy.ops.import_scene.gltf(filepath=str(out))
 evidence.mkdir(parents=True,exist_ok=True)
 scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=40
 scene.render.resolution_x=1280;scene.render.resolution_y=900;scene.render.resolution_percentage=100
+scene.view_settings.view_transform='Standard'
 scene.render.image_settings.file_format='PNG'
 scene.world=bpy.data.worlds.new('bright overcast review sky')
 scene.world.color=(.72,.72,.72)
 scene.render.film_transparent=False
-world=scene.world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.68,.70,.72,1)
-world.node_tree.nodes['Background'].inputs['Strength'].default_value=1.0
+world=scene.world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs['Color'].default_value=(.255,.245,.225,1)
+world.node_tree.nodes['Background'].inputs['Strength'].default_value=.7
 def area(name, loc, power, size):
     data=bpy.data.lights.new(name,'AREA');data.energy=power;data.shape='DISK';data.size=size
     obj=bpy.data.objects.new(name,data);scene.collection.objects.link(obj);obj.location=loc;obj.rotation_euler=(Vector((6,1,-1))-obj.location).to_track_quat('-Z','Y').to_euler()
@@ -546,16 +487,6 @@ ground_output=ground_nodes.new('ShaderNodeOutputMaterial');ground_emission=groun
 ground_emission.inputs['Color'].default_value=(.255,.245,.225,1);ground_emission.inputs['Strength'].default_value=.7
 ground_links.new(ground_emission.outputs[0],ground_output.inputs['Surface'])
 ground=town.cube('review ground',(5,-.16,0),(1000,.3,1000),ground_material,0)
-def render_view(name, target, camera_loc, focal=52):
-    camdata=bpy.data.cameras.new(name);camdata.lens=focal
-    cam=bpy.data.objects.new(name,camdata);scene.collection.objects.link(cam);cam.location=camera_loc
-    cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
-    scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
-def render_view_world(name,target,camera_loc,focal=52):
-    camdata=bpy.data.cameras.new(name);camdata.lens=focal
-    cam=bpy.data.objects.new(name,camdata);scene.collection.objects.link(cam);cam.location=camera_loc
-    cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler();scene.camera=cam
-    scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
 def under(obj, ancestor):
     while obj:
         if obj == ancestor: return True
@@ -565,34 +496,29 @@ soup_root = next(obj for obj in bpy.context.scene.objects if obj.name == 'soup-k
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name != 'review ground' and not under(obj,soup_root):
         obj.hide_render=True
-render_view('soup-overhead',(30,1.1,-14),(36,25,13),58)
-render_view('soup-driver-seat',(30,1.2,-14),(33,25,4.0),57)
-for obj in scene.objects: obj.hide_render=False
-render_view('family-mayor',(6,1.2,0),(6,70,60),47)
-render_view('family-driver',(6,1.0,0),(6,60,12),42)
-# Every shop and food building gets its own frame at road and mayor heights.
-building_ids=('greenhouse','goat-pen','chicken-run','soup-kitchen','stall-a','stall-b','stall-c',
-              'shopfront-a','shopfront-b','shopfront-c','canteen','market-hall')
-roots={o.name:o for o in scene.objects if o.type=='EMPTY' and o.name in building_ids}
-for building in building_ids:
-    root_obj=roots[building]
-    members=[o for o in scene.objects if o.type=='MESH' and under(o,root_obj)]
-    corners=[o.matrix_world @ Vector(corner) for o in members for corner in o.bound_box]
-    lo=Vector((min(p.x for p in corners),min(p.y for p in corners),min(p.z for p in corners)))
-    hi=Vector((max(p.x for p in corners),max(p.y for p in corners),max(p.z for p in corners)))
-    target=(lo+hi)*.5
-    extent=max(hi.x-lo.x,hi.y-lo.y,hi.z-lo.z)
-    driver_distance=max(9,extent*2.8)
-    mayor_distance=max(26,extent*7.5)
-    driver_camera=target+Vector((0,driver_distance,extent*.58))
-    mayor_camera=target+Vector((0,mayor_distance*.70,mayor_distance*.70))
-    mayor_lens=min(180,max(65,16*(mayor_camera-target).length/extent))
-    # Hide all family members except the one under review.
-    for candidate in roots.values():
-        for member in scene.objects:
-            if member==candidate or under(member,candidate):
-                member.hide_render=(candidate!=root_obj)
-    render_view_world(f'{building}-driver',target,driver_camera,52)
-    render_view_world(f'{building}-mayor',target,mayor_camera,mayor_lens)
-    for member in scene.objects: member.hide_render=False
+next(obj for obj in scene.objects if obj.name == 'review ground').hide_render=True
+members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,soup_root)]
+corners=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+lo=Vector((min(p.x for p in corners),min(p.y for p in corners),min(p.z for p in corners)))
+hi=Vector((max(p.x for p in corners),max(p.y for p in corners),max(p.z for p in corners)))
+target=(lo+hi)*.5
+key=scene.objects['bright overcast key'];key.location=target+Vector((-4,7,8));key.data.energy=500;key.data.size=20
+key.rotation_euler=(target-key.location).to_track_quat('-Z','Y').to_euler()
+fill=scene.objects['soft sky fill'];fill.location=target+Vector((6,4,6));fill.data.energy=450;fill.data.size=24
+fill.rotation_euler=(target-fill.location).to_track_quat('-Z','Y').to_euler()
+ground_data=bpy.data.meshes.new('soup kitchen review ground mesh')
+ground_data.from_pydata(((lo.x-30,lo.y-30,lo.z-.08),(hi.x+30,lo.y-30,lo.z-.08),
+                         (hi.x+30,hi.y+30,lo.z-.08),(lo.x-30,hi.y+30,lo.z-.08)),[],[(0,1,2,3)])
+ground_data.materials.append(ground_material)
+review_ground=bpy.data.objects.new('soup kitchen review ground',ground_data);scene.collection.objects.link(review_ground)
+def render_match(name, camera_loc, up):
+    camera_data=bpy.data.cameras.new(name);camera_data.lens=52
+    camera=bpy.data.objects.new(name,camera_data);scene.collection.objects.link(camera);camera.location=camera_loc
+    direction=(target-camera_loc).normalized();right=direction.cross(up).normalized()
+    true_up=right.cross(direction).normalized()
+    camera.rotation_euler=Matrix((right,true_up,-direction)).transposed().to_quaternion().to_euler();scene.camera=camera
+    scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
+# The photo references and exported GLB use the same straight-on and overhead cameras.
+render_match('soup-front-match',target+Vector((0,6.8,0)),Vector((0,0,1)))
+render_match('soup-overhead-match',target+Vector((0,0,7.2)),Vector((0,-1,0)))
 print(json.dumps({'glb':str(out),'evidence':str(evidence)}))

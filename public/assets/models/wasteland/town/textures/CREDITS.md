@@ -318,3 +318,23 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-load-overhead.jpg`: the four measured source views for
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
+
+## TOWN-ART-FOOD soup kitchen photo references
+
+Generated with OpenAI ImageGen on 6 November 2026. The four 712 × 532 JPEG crops are the recipe's measured source photos; the GLB embeds compact 256 × 192 copies.
+
+- `town-food-soup-front.jpg`, `town-food-soup-left.jpg`, `town-food-soup-rear.jpg`, and `town-food-soup-overhead.jpg` are crops from the same four-panel source image at `C:/Users/kyleb/.codex/generated_images/01a1b3f5-90cc-7872-8aec-da2a7366dbd4/exec-04cac48c-f574-4d7d-b93a-0007bca6fe14.png`.
+- Prompt:
+
+  ```text
+  Use case: photorealistic-natural
+  Asset type: four orthographic reference photographs for a 3D game building model
+  Primary request: one image arranged as four equal borderless photographic panels, each panel showing the exact same small improvised soup kitchen from a different dead-on view: upper left front elevation, upper right left side elevation, lower left rear elevation, lower right perfectly straight-down roof plan.
+  Scene/backdrop: plain pale warm grey studio sweep in every panel, no horizon and no cast shadow, flat neutral daylight.
+  Subject: a 4 m wide, 3 m deep, 2.7 m high open-front desert soup kitchen assembled from weathered canvas and salvaged tin. Same object and exact layout in all four panels: low central dark round iron cooking pot with rolled lip over a small wood fire at floor center; one rough timber bench on each side of pot; rear wall has three corrugated tin panels, a long shelf with exactly three dented cans and two pans; pale patched canvas awning spans the front opening and wraps down only the left side; right and front remain open; roof is two unequal pitched sheets. Four slim rusted steel corner posts and diagonal braces.
+  Style/medium: natural documentary product photography, crisp realistic worn materials, not illustration, not a render, no people.
+  Composition/framing: true orthographic camera, centered whole structure, identical scale across panels, generous blank margin around all edges; front means the open serving side; clearly distinct straight front, left end, closed rear and overhead plan.
+  Lighting/mood: bright even flat overcast daylight, no directional shadows.
+  Materials/textures: faded dusty canvas with visible stitched patches, dark brown rust, scratched grey galvanized corrugation, soot-blackened iron pot, weathered grey-brown timber, subdued coal ember.
+  Constraints: exact same structure, pot, two benches, three rear sheets, shelf contents and canvas arrangement in all views; keep openings visibly open; no lettering, labels, border, extra props, people or watermark.
+  ```
