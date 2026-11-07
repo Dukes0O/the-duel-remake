@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-10'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-11'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-10.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-11.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -118,8 +118,8 @@ if '--review-only' in args:
         if node.type=='MESH' and node.name!='Review ground':
             node.hide_render=node not in drive_tree
     drive_centre=Vector((0,0,0))
-    # The four matches show the photographed screen by itself; the remaining
-    # views show both rows of wrecks in the full footprint.
+    # The four matches show the billboard itself; the remaining views show the
+    # curved parking rows and projector hut inside the full footprint.
     drive_views=[
         ('match-side',(1,0,0),'drive-in-side.jpg',True),
         ('match-front',(0,1,0),'drive-in-front.jpg',True),
@@ -190,6 +190,17 @@ emit.inputs['Color'].default_value = (.62, .36, .14, 1)
 emit.inputs['Strength'].default_value = 1.0
 outnode = mat['lamp'].node_tree.nodes.new('ShaderNodeOutputMaterial')
 mat['lamp'].node_tree.links.new(emit.outputs[0], outnode.inputs['Surface'])
+film_photo=Photo(tex/'drive-in-film-still.jpg')
+film_material=bpy.data.materials.new('Drive-in / faded desert film still')
+film_material.use_nodes=True
+film_material.node_tree.nodes.clear()
+film_texture=film_material.node_tree.nodes.new('ShaderNodeTexImage')
+film_texture.image=film_photo.image
+film_emission=film_material.node_tree.nodes.new('ShaderNodeEmission')
+film_emission.inputs['Strength'].default_value=.24
+film_output=film_material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+film_material.node_tree.links.new(film_texture.outputs['Color'],film_emission.inputs['Color'])
+film_material.node_tree.links.new(film_emission.outputs[0],film_output.inputs['Surface'])
 for material in bpy.data.materials:
     bs = material.node_tree.nodes.get('Principled BSDF') if material.use_nodes else None
     if bs and bs.inputs.get('Metallic'):
@@ -371,7 +382,7 @@ rear_mask=~rear_photo.sky(edge_seeds(rear_photo),tolerance=32,grey=24)
 def cut_display(mask):
     h,w=mask.shape
     mask[int(h*.16):int(h*.57),int(w*.12):int(w*.88)]=False
-cut_display(front_mask); cut_display(rear_mask)
+cut_display(front_mask)
 side_mask=~side_photo.sky(edge_seeds(side_photo),tolerance=32,grey=24)
 for photo,mask in ((front_photo,~front_photo.sky(edge_seeds(front_photo),tolerance=32,grey=24)),
                    (rear_photo,~rear_photo.sky(edge_seeds(rear_photo),tolerance=32,grey=24)),
@@ -419,33 +430,87 @@ for side_x in (-8.85,8.85):
     slab(side_mesh,'photo',side_photo,side_loops,side_point,-.30,.30,wall_scale=.002)
     side_obj=side_mesh.finish(f'drive-in:traced-side-truss-{side_x}',{'photo':side_photo.material()})
     keep(side_obj)
-# Emissive screen, slightly ahead of the photo-traced billboard skin.
-box('drive-in:screen',(0,5.16,-8.89),(16.1,3.78,.12),'lamp',0)
+# A thin front-only film plane sits inside the traced face. Its panoramic crop
+# keeps the car and sunset in view; the unsplit rear photo remains behind it.
+screen_width=16.1; screen_height=3.78
+screen_low=5.16-screen_height/2; screen_high=5.16+screen_height/2
+screen_mesh=PhotoMesh()
+screen_points=[(-screen_width/2,screen_low,-8.60),(screen_width/2,screen_low,-8.60),
+               (screen_width/2,screen_high,-8.60),(-screen_width/2,screen_high,-8.60)]
+screen_uv=[film_photo.uv(0,film_photo.h*.75),film_photo.uv(film_photo.w,film_photo.h*.75),
+           film_photo.uv(film_photo.w,film_photo.h*.33),film_photo.uv(0,film_photo.h*.33)]
+screen_mesh.face(screen_points,screen_uv,'film',out=(0,0,-1))
+screen=screen_mesh.finish('drive-in:screen',{'film':film_material}); keep(screen)
+screen['emissive']=True
 
-# Each wreck is the traced side silhouette from the scrapyard car photo, extruded
-# across its width. The original front end is at the right of the photograph,
-# so that end faces the billboard at negative Z.
-car_photo=Photo(tex/'scrapyard-car-blue-side.jpg')
-lift_if_dark(car_photo)
-car_mask=~car_photo.sky(edge_seeds(car_photo),tolerance=32,grey=26)
-car_rows,car_cols=np.where(car_mask)
-car_ground=int(car_rows.max())
-car_x0,car_x1=int(car_cols.min()),int(car_cols.max())
-car_y0=int(car_rows.min())
-car_height=1.62; car_scale=car_height/(car_ground-car_y0)
-car_length=(car_x1-car_x0)*car_scale
-car_photo.bleed(car_mask)
-wreck_loops=trace(car_mask,(car_x0,car_y0,car_x1+1,car_ground+1),tolerance=2.2,min_area=55)
-if not wreck_loops: raise RuntimeError('scrapyard wreck side photo did not trace')
-for row,z_center in enumerate((1.65,7.05),1):
-    for col,x_center in enumerate((-9.4,-4.7,0,4.7,9.4),1):
-        wreck_mesh=PhotoMesh()
-        def wreck_point(px,py,depth,centre_x=x_center,centre_z=z_center):
-            return (centre_x+depth,(car_ground-py)*car_scale,
-                    centre_z+(car_x1-px)*car_scale-car_length/2)
-        slab(wreck_mesh,'photo',car_photo,wreck_loops,wreck_point,-.92,.92,wall_scale=.002)
-        wreck=wreck_mesh.finish(f'drive-in:wreck-{row}-{col}',{'photo':car_photo.material()})
-        keep(wreck)
+# Wrecks follow the scrapyard recipe: trace each side photo and extrude it to
+# the original 1.8 m width. Five cars keep their uncrushed roofs. Rows are
+# curved toward the screen; the nose points toward negative Z in every case.
+def make_drive_car(name, photo_name, x_center, z_center, kind):
+    photo=Photo(tex/photo_name)
+    if kind=='scrapyard':
+        lift_if_dark(photo)
+        mask=~photo.sky(edge_seeds(photo),tolerance=27,grey=26)
+        side_bounds={'red':(10,20,2162,660),'brown':(10,45,2162,657),
+                     'blue':(80,2,2092,690)}
+        paint_id=photo_name.split('scrapyard-car-')[1].split('-side')[0]
+        x0,top,x1,ground=side_bounds[paint_id]
+        rgb=photo.rgb(); value=rgb.mean(axis=2); chroma=rgb.max(axis=2)-rgb.min(axis=2)
+        mask[ground:,:]=False
+        photo.bleed(mask&~((value>100)&(chroma<60)))
+        loops=trace(mask,(x0,top,x1,ground),tolerance=6.0,min_area=100)
+        height=.9; scale=height/(ground-top); length=(x1-x0)*scale; front='right'
+        def point(px,py,depth):
+            z=(x1-px)*scale-length/2
+            return (x_center+depth,(ground-py)*scale,z_center+z)
+    else:
+        lift_if_dark(photo)
+        rgb=photo.rgb()
+        mask=~photo.sky(edge_seeds(photo),tolerance=27,grey=26)
+        x0,x1,top,ground=25,1372,221,581
+        mask[ground:,:]=False
+        photo.bleed(mask)
+        loops=trace(mask,(x0,top,x1,ground),tolerance=2.0,min_area=120)
+        height=1.62; scale=height/(ground-top); length=(x1-x0)*scale; front='left'
+        def point(px,py,depth):
+            z=(px-x0)*scale-length/2
+            return (x_center+depth,(ground-py)*scale,z_center+z)
+    if not loops: raise RuntimeError(f'{name} side photo did not trace')
+    # Use only the photographed car silhouette as the slab outline. Keep the
+    # measured width, length and ground contact for each photo's own scale.
+    silhouette=[max(loops,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1]
+                  for a,b in zip(loop,loop[1:]+loop[:1]))))]
+    mesh=PhotoMesh()
+    slab(mesh,'photo',photo,silhouette,point,-.92,.92,wall_scale=.002)
+    car=mesh.finish(name,{'photo':photo.material()}); keep(car)
+    car['photo']=photo_name; car['front_direction']='-Z'
+    return car
+
+paintings=[('red','scrapyard-car-red-side.jpg'),('sedan','drive-in-rusty-sedan.jpg'),
+           ('blue','scrapyard-car-blue-side.jpg'),('sedan','drive-in-rusty-sedan.jpg'),
+           ('brown','scrapyard-car-brown-side.jpg'),
+           ('sedan','drive-in-rusty-sedan.jpg'),('red','scrapyard-car-red-side.jpg'),
+           ('sedan','drive-in-rusty-sedan.jpg'),('blue','scrapyard-car-blue-side.jpg'),
+           ('sedan','drive-in-rusty-sedan.jpg')]
+x_centres=(-9.4,-4.7,0,4.7,9.4)
+for row,z_base in enumerate((.35,6.65),1):
+    for col,x_center in enumerate(x_centres):
+        label,photo_name=paintings[(row-1)*5+col]
+        curve=(abs(x_center)/9.4)**2
+        z_center=z_base+curve*1.0
+        make_drive_car(f'drive-in:wreck-{row}-{col+1}',photo_name,x_center,z_center,
+                       'sedan' if label=='sedan' else 'scrapyard')
+
+# The little operator hut stands behind the second arc on short salvaged legs.
+box('drive-in:projector-hut-platform',(0,2.3,10.2),(3.4,.18,1.9),'weathered-plank',.035)
+for x in (-1.45,1.45):
+    for z in (9.5,10.9):
+        beam(f'drive-in:projector-hut-leg-{x}-{z}',(x,.05,z),(x,2.25,z),.12,'rusted-steel')
+box('drive-in:projector-hut-body',(0,3.15,10.2),(3.1,1.55,1.65),'rusted-steel',.045)
+box('drive-in:projector-hut-tin-patch',(0,3.72,9.36),(2.6,.42,.06),'galvanised-tin',.015)
+box('drive-in:projector-hut-roof',(0,4.02,10.2),(3.55,.18,2.0),'patched-canvas',.025)
+box('drive-in:projector-hut-lens',(0,3.15,9.31),(.42,.32,.08),'dirty-glass',.02)
+box('drive-in:projector-hut-lamp',(1.3,3.95,10.1),(.18,.16,.18),'lamp',.01)
 
 def drive_game_bounds(obj):
     points=[obj.matrix_world @ Vector(vertex.co) for vertex in obj.data.vertices]
