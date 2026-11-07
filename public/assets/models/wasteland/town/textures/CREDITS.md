@@ -467,3 +467,10 @@ Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after inspec
 Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after inspection showed the first top-view picture included a wall face. This corrected photograph shows the full rusty corrugated roof from a plumb, straight-down camera with no facade, on plain grey ground. It is used for the goat shed's top carve view. Resized to 1024 px maximum edge and saved as JPEG.
 
 - `hermit-goat-shed-overhead-v2.jpg`
+
+## hermit-camp corrected hut end views
+
+Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after the initial end photos did not agree with the side and plan measurements. Both are orthographic gable-end views of the same 6 m long, 3.4 m wide and 3.1 m high hut. The front has a centered wooden door about 2 m tall; the rear has a solid wall. Plain mid-grey studio ground and background, full hut in frame, resized to 1024 px maximum edge and saved as JPEG.
+
+- `hermit-hut-front-gable-v2.jpg`
+- `hermit-hut-rear-gable-v2.jpg`
