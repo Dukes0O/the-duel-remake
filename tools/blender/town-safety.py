@@ -13,19 +13,21 @@ args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-5'
 guard_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-8'
+prop_evidence = root / '.evidence/2026-11-07/TOWN-ART-SAFETY/round-9'
 glb = root / 'public/assets/models/wasteland/town/safety.glb'
 blend = root / 'art-build/town/safety.blend'
 sheet = root / 'docs/board/looks/town-art-safety/round-5.jpg'
 guard_sheet = root / 'docs/board/looks/town-art-safety/round-8.jpg'
+prop_sheet = root / 'docs/board/looks/town-art-safety/round-9.jpg'
 if args.paths_only:
-    print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(guard_evidence)],'summary':str(guard_sheet)}))
+    print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(prop_evidence)],'summary':str(prop_sheet)}))
     raise SystemExit(0)
 
 import bpy
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace
+from photo_model import Mesh as PhotoMesh, Photo, lathe, slab as photo_slab, trace as photo_trace, fill as photo_fill
 from photo_carve import carve_object, lift_if_dark
 import numpy as np
 
@@ -52,6 +54,31 @@ def pictured_material(name, image_path, tint, metallic=0):
     mat.node_tree.links.new(image_node.outputs['Color'],bsdf.inputs['Base Color'])
     return mat
 materials['red-paint'] = pictured_material('Town / faded red engine enamel', tex/'red-oxide.jpg', (.31,.105,.075), .12)
+oxide_source=bpy.data.images.load(str((tex/'red-oxide.jpg').resolve()),check_existing=False)
+oxide_rgb=np.asarray(oxide_source.pixels[:],dtype=np.float32).reshape(oxide_source.size[1],oxide_source.size[0],4)[...,:3]
+oxide_luma=oxide_rgb.mean(axis=2)
+oxide_norm=np.clip((oxide_luma-np.percentile(oxide_luma,4))/(np.percentile(oxide_luma,96)-np.percentile(oxide_luma,4)),0,1)
+# Bake the oxide's streaks and pitting into a faded red enamel range so its
+# wear stays visible in the exported glTF instead of relying on a Blender-only node.
+hydrant_rgb=np.stack((.24+.48*oxide_norm,.055+.22*oxide_norm,.025+.17*oxide_norm),axis=2)
+hydrant_image=bpy.data.images.new('hydrant faded red enamel wear',width=oxide_source.size[0],height=oxide_source.size[1],alpha=False)
+hydrant_image.pixels.foreach_set(np.concatenate((hydrant_rgb,np.ones((*oxide_norm.shape,1),dtype=np.float32)),axis=2).ravel())
+hydrant_image.pack()
+materials['hydrant-red']=bpy.data.materials.new('Town / flaked red hydrant enamel')
+materials['hydrant-red'].diffuse_color=(.55,.16,.10,1);materials['hydrant-red'].use_nodes=True
+hydrant_bsdf=materials['hydrant-red'].node_tree.nodes.get('Principled BSDF')
+hydrant_bsdf.inputs['Metallic'].default_value=.04
+hydrant_bsdf.inputs['Roughness'].default_value=.96
+hydrant_image_node=materials['hydrant-red'].node_tree.nodes.new('ShaderNodeTexImage')
+hydrant_image_node.image=hydrant_image;hydrant_image_node.extension='REPEAT'
+materials['hydrant-red'].node_tree.links.new(hydrant_image_node.outputs['Color'],hydrant_bsdf.inputs['Base Color'])
+materials['hydrant-red'].node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
+materials['hydrant-hose'] = bpy.data.materials.new('Town / old black rubber hose')
+materials['hydrant-hose'].diffuse_color=(.075,.068,.057,1);materials['hydrant-hose'].use_nodes=True
+hydrant_hose_bsdf=materials['hydrant-hose'].node_tree.nodes.get('Principled BSDF')
+hydrant_hose_bsdf.inputs['Base Color'].default_value=(.075,.068,.057,1)
+hydrant_hose_bsdf.inputs['Metallic'].default_value=.0
+hydrant_hose_bsdf.inputs['Roughness'].default_value=.98
 materials['container-white'] = pictured_material('Town / chalky clinic enamel', tex/'container-white.jpg', (.50,.48,.42), .05)
 materials['broken-glass'] = pictured_material('Town / smoky broken window glass', tex/'broken-glass.jpg', (.09,.12,.11), .08)
 for material in bpy.data.materials:
@@ -399,21 +426,101 @@ for i,angle in enumerate((0,2*math.pi/3,4*math.pi/3)):
     foot_x=math.cos(angle)*.38;foot_z=.72+math.sin(angle)*.38
     beam(f'guard-post:brazier-foot-{i+1}',(foot_x,.05,foot_z),(foot_x*.92,.53,.72+math.sin(angle)*.52),.075,materials['rusted-steel'])
 
-# Searchlight: bolted salvage head, trunnion and fully joined upright mast.
+# Searchlight: its post follows the measured side-photo radius and the lamp
+# cluster is a traced photo slab on an exported head-height pivot.
 b=building('searchlight')
-cube('searchlight-concrete-foot',(0,.18,0),(.72,.36,.72),materials['cracked-concrete'],.08)
-pipe('searchlight-mast',(0,.36,0),(0,4.7,0),.10,materials['rusted-steel'])
-for y in (.72,2.4,4.35): cube('searchlight-mast-collar',(0,y,0),(.29,.14,.29),materials['iron-dark'],.025)
-beam('searchlight-yoke',(-.48,4.72,0),(.48,4.72,0),.10,materials['rusted-steel'])
-head=cube('searchlight-spot-housing',(0,4.9,-.30),(.96,.62,.88),materials['galvanised-tin'],.11)
-for x in (-.25,.25): pipe('searchlight-trunnion',(x,4.72,-.15),(x,5.13,-.15),.055,materials['iron-dark'])
-beam_node=bpy.data.objects.new('searchlight:beam',None);bpy.context.collection.objects.link(beam_node);attach(beam_node)
-for x in (-.28,.28):
-    lens=lamp('searchlight:beam-lens',(x,4.92,-.75),(.31,.34,.10))
-    attach(lens,beam_node)
-    lens.rotation_euler[0]=math.pi/2
-    cube('searchlight-lens-guard',(x,4.92,-.81),(.38,.42,.035),materials['iron-dark'],.025)
-for i in range(6): pipe('searchlight-cooling-slot',(0,4.69+i*.075,.15),(0,4.69+i*.075,.23),.025,materials['iron-dark'],sides=8)
+searchlight_side=Photo(tex/'searchlight-side.jpg')
+post_mesh=PhotoMesh()
+post_stations=[(0,.45),(.09,.45),(.16,.36),(.29,.18),(.43,.13),
+               (2.78,.13),(2.91,.18),(3.02,.17),(3.13,.12)]
+lathe(post_mesh,'side',(0,0,0),(0,1,0),(1,0,0),(0,0,1),post_stations,
+      lambda i,d,r,a:(.5+math.cos(a)*.018,.05+.87*d/3.13),sides=14,
+      cap_start=('side',lambda a,f:(.5+math.cos(a)*.018,.05)),
+      cap_end=('side',lambda a,f:(.5+math.cos(a)*.018,.92)))
+post=post_mesh.finish('searchlight:post',{'side':materials['rusted-steel']})
+attach(post)
+cube('searchlight:bolted-foot-plate',(0,.08,0),(.88,.16,.68),materials['rusted-steel'])
+for x in (-.34,.34):
+    for z in (-.24,.24):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.055,depth=.045,
+                                             location=town.game_vector((x,.18,z)))
+        bolt=bpy.context.object;bolt.name='searchlight:foot-bolt';bolt.data.materials.append(materials['galvanised-tin']);attach(bolt)
+head_front=Photo(tex/'searchlight-front.jpg')
+head_rear=Photo(tex/'searchlight-rear.jpg')
+lift_if_dark(head_front)
+head_solid=~head_front.sky([(8,8),(head_front.w-9,8),(8,head_front.h-9),(head_front.w-9,head_front.h-9)],
+                           tolerance=32,grey=30)
+# The measured lamp box and its U yoke end at row 270; this excludes the mast
+# which is modeled as the separate lathed post above.
+head_solid[270:,:]=False
+head_solid[:35,:]=False
+head_loops=photo_trace(head_solid,(165,35,520,270),tolerance=2.2,min_area=16)
+if not head_loops: raise RuntimeError('searchlight head photo produced no traced contour')
+HEAD_SCALE=4.20/950
+def searchlight_head_world(px,py,z):
+    # attach() preserves the world transform while parenting, so use measured
+    # world coordinates here; subtracting the pivot height drops the head.
+    return ((px-head_front.w/2)*HEAD_SCALE,(976-py)*HEAD_SCALE,z)
+head_mesh=PhotoMesh()
+head_front_z=-.22
+head_rear_z=.22
+for triangle in photo_fill(head_loops):
+    front_points=[searchlight_head_world(px,py,head_front_z) for px,py in triangle]
+    rear_points=[searchlight_head_world(px,py,head_rear_z) for px,py in reversed(triangle)]
+    head_mesh.face(front_points,[head_front.uv(px,py) for px,py in triangle],'front',(0,0,-1))
+    rear_uvs=[head_rear.uv(head_rear.w/2+(px-head_front.w/2)*head_rear.w/head_front.w,
+                           976+(py-976)*head_rear.h/head_front.h) for px,py in reversed(triangle)]
+    head_mesh.face(rear_points,rear_uvs,'rear',(0,0,1))
+for loop in head_loops:
+    for a,bp in zip(loop,loop[1:]+loop[:1]):
+        head_mesh.face((searchlight_head_world(*a,head_front_z),searchlight_head_world(*bp,head_front_z),
+                        searchlight_head_world(*bp,head_rear_z),searchlight_head_world(*a,head_rear_z)),
+                       (head_front.uv(*a),head_front.uv(*bp),head_rear.uv(*bp),head_rear.uv(*a)),'edge')
+head_obj=head_mesh.finish('searchlight:head',{'front':head_front.material(),'rear':head_rear.material(),
+                                              'edge':materials['rusted-steel']})
+housing_parts=[]
+for x in (-.37,.37):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=16,radius=.235,depth=.10,
+                                         location=town.game_vector((x,4.045,0)))
+    housing=bpy.context.object;housing.name='searchlight:lamp-roof-housing'
+    housing.data.materials.append(materials['rusted-steel']);attach(housing);housing_parts.append(housing)
+head_pivot=bpy.data.objects.new('searchlight:head-pivot',None)
+bpy.context.collection.objects.link(head_pivot)
+head_pivot.empty_display_type='SPHERE'
+head_pivot.location=town.game_vector((0,3.13,0))
+attach(head_pivot)
+attach(head_obj,head_pivot)
+for housing in housing_parts: attach(housing,head_pivot)
+
+# The pale translucent cone is its own lit, pivoted mesh for future control.
+beam_material=bpy.data.materials.new('Searchlight / pale glass beam')
+beam_material.use_nodes=True
+beam_bsdf=beam_material.node_tree.nodes.get('Principled BSDF')
+beam_bsdf.inputs['Base Color'].default_value=(.70,.82,.84,.12)
+beam_bsdf.inputs['Alpha'].default_value=.12
+beam_bsdf.inputs['Metallic'].default_value=0
+beam_bsdf.inputs['Roughness'].default_value=1
+beam_bsdf.inputs['Emission Color'].default_value=(.32,.52,.58,1)
+beam_bsdf.inputs['Emission Strength'].default_value=.12
+if hasattr(beam_material,'surface_render_method'):
+    try: beam_material.surface_render_method='BLENDED'
+    except Exception: pass
+cone_mesh=PhotoMesh()
+cone_tip=(0,3.55,-.22)
+cone_center=(0,2.90,-3.45)
+cone_radius=.73
+ring=[]
+for k in range(17):
+    angle=2*math.pi*k/16
+    ring.append((cone_center[0]+cone_radius*math.cos(angle),
+                 cone_center[1]+cone_radius*math.sin(angle),cone_center[2]))
+for k in range(16):
+    a=2*math.pi*k/16; bangle=2*math.pi*(k+1)/16
+    cone_mesh.face((cone_tip,ring[k],ring[k+1]),
+                   ((.5,.9),(.5+.49*math.cos(a),.49+.49*math.sin(a)),
+                    (.5+.49*math.cos(bangle),.49+.49*math.sin(bangle))), 'beam')
+cone_obj=cone_mesh.finish('searchlight:beam',{'beam':beam_material})
+attach(cone_obj,head_pivot)
 
 # Fire station: photo-carved body and two genuinely open drive-through bays.
 b=building('fire-station',(3,2))
@@ -525,22 +632,55 @@ for i in range(3):
 
 # Hydrant and hose reel fit in a quarter-cell footprint.
 b=building('hydrant')
-cube('hydrant-bolted-base',(0,.09,0),(.52,.18,.52),materials['rusted-steel'],.035)
-pipe('hydrant-standpipe',(0,.18,0),(0,.96,0),.105,materials['rusted-steel'])
-for y in (.3,.82):
-    cube('hydrant-collar',(0,y,0),(.34,.10,.34),materials['galvanised-tin'],.025)
+bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.29,depth=.15,location=town.game_vector((0,.09,0)))
+hydrant_flared_foot=bpy.context.object;hydrant_flared_foot.name='hydrant-flared-foot';hydrant_flared_foot.data.materials.append(materials['hydrant-red']);attach(hydrant_flared_foot)
+bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.18,depth=.15,location=town.game_vector((0,.21,0)))
+hydrant_foot_riser=bpy.context.object;hydrant_foot_riser.name='hydrant-foot-riser';hydrant_foot_riser.data.materials.append(materials['rusted-steel']);attach(hydrant_foot_riser)
+for x,z in ((-.22,0),(.22,0),(0,-.22),(0,.22)):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8,radius=.035,depth=.035,location=town.game_vector((x,.18,z)))
+    bolt=bpy.context.object;bolt.name='hydrant-anchor-bolt';bolt.data.materials.append(materials['galvanised-tin']);attach(bolt)
+pipe('hydrant-standpipe',(0,.24,0),(0,.98,0),.145,materials['hydrant-red'],sides=12)
+for y,radius in ((.28,.22),(.82,.20)):
+    bpy.ops.mesh.primitive_torus_add(major_radius=radius,minor_radius=.045,major_segments=12,minor_segments=4,location=town.game_vector((0,y,0)))
+    collar=bpy.context.object;collar.name='hydrant-rusted-collar';collar.data.materials.append(materials['rusted-steel']);attach(collar)
+bpy.ops.mesh.primitive_uv_sphere_add(segments=12,ring_count=6,radius=1,location=town.game_vector((0,.99,0)))
+hydrant_cap=bpy.context.object;hydrant_cap.name='hydrant-domed-red-cap';hydrant_cap.scale=(.16,.13,.16);hydrant_cap.data.materials.append(materials['hydrant-red']);attach(hydrant_cap)
 for x,z in ((-.2,0),(.2,0),(0,-.2),(0,.2)):
     pipe('hydrant-outlet-neck',(0,.58,0),(x,.58,z),.07,materials['rusted-steel'])
     cube('hydrant-outlet-cap',(x*1.16,.58,z*1.16),(.14,.14,.14),materials['iron-dark'],.025)
-pipe('hydrant-hose-reel-axle',(.22,.72,.20),(.22,1.18,.20),.045,materials['iron-dark'])
-for y in (.76,1.12):
-    bpy.ops.mesh.primitive_torus_add(major_radius=.27,minor_radius=.035,major_segments=16,minor_segments=6,location=town.game_vector((.22,y,.20)))
+bpy.ops.mesh.primitive_torus_add(major_radius=.13,minor_radius=.035,major_segments=12,minor_segments=4,
+                                 location=town.game_vector((0,.58,-.20)))
+nozzle=bpy.context.object;nozzle.name='hydrant-road-nozzle';nozzle.rotation_euler[0]=math.pi/2
+nozzle.data.materials.append(materials['galvanised-tin']);attach(nozzle)
+bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.095,depth=.10,location=town.game_vector((0,.58,-.20)))
+nozzle_dark=bpy.context.object;nozzle_dark.name='hydrant-nozzle-dark-mouth';nozzle_dark.rotation_euler[0]=math.pi/2
+nozzle_dark.data.materials.append(materials['iron-dark']);attach(nozzle_dark)
+pipe('hydrant-hose-reel-axle',(-.30,.97,-.02),(-.30,.97,.42),.045,materials['iron-dark'])
+for z in (-.02,.42):
+    bpy.ops.mesh.primitive_torus_add(major_radius=.27,minor_radius=.035,major_segments=8,minor_segments=3,location=town.game_vector((-.30,.97,z)))
     wheel=bpy.context.object;wheel.name='hydrant-hose-reel-side';wheel.rotation_euler[0]=math.pi/2;wheel.data.materials.append(materials['rusted-steel']);attach(wheel)
 for i in range(4):
     angle=i*math.pi/2
-    pipe('hydrant-reel-spoke',(.22,.94,.20),(.22+math.sin(angle)*.26,.94,.20+math.cos(angle)*.26),.025,materials['galvanised-tin'],sides=8)
-pipe('hydrant-coiled-hose',(0,.94,.22),(.34,.94,.22),.06,materials['iron-dark'])
-
+    pipe('hydrant-reel-spoke',(-.30,.97,-.02),(-.30+math.sin(angle)*.24,.97+math.cos(angle)*.24,-.02),.025,materials['galvanised-tin'],sides=6)
+# The dark hose drum sits between the side hoops; a short crank remains visible.
+bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.205,depth=.30,location=town.game_vector((-.30,.97,.20)))
+drum=bpy.context.object;drum.name='hydrant-hose-drum';drum.rotation_euler[0]=math.pi/2;drum.data.materials.append(materials['iron-dark']);attach(drum)
+# One broad hose winds continuously around the reel drum. Its thick rubber
+# section and closely spaced turns read as a usable hose, not bare wire.
+hose_curve=bpy.data.curves.new('hydrant wound hose path','CURVE');hose_curve.dimensions='3D'
+hose_curve.resolution_u=1;hose_curve.bevel_depth=.052;hose_curve.bevel_resolution=1;hose_curve.use_fill_caps=True
+hose_spline=hose_curve.splines.new('POLY');turns=4;steps=turns*6+1
+hose_spline.points.add(steps-1)
+for i,point in enumerate(hose_spline.points):
+    t=i/(steps-1);angle=t*turns*2*math.pi
+    x=-.30+math.cos(angle)*.205;y=.97+math.sin(angle)*.205;z=-.005+t*.41
+    co=town.game_vector((x,y,z));point.co=(*co,1)
+hose=bpy.data.objects.new('hydrant-wound-rubber-hose',hose_curve);bpy.context.collection.objects.link(hose)
+hose.data.materials.append(materials['hydrant-hose']);attach(hose)
+bpy.context.view_layer.objects.active=hose;hose.select_set(True);bpy.ops.object.convert(target='MESH');hose=bpy.context.object
+for uv_layer in hose.data.uv_layers: uv_layer.name='UVMap'
+pipe('hydrant-crank-arm',(-.30,1.16,.43),(-.48,1.16,.43),.035,materials['galvanised-tin'])
+pipe('hydrant-crank-grip',(-.48,1.16,.43),(-.48,1.30,.43),.04,materials['iron-dark'])
 # Trace building fronts from their generated photo references. These shallow
 # photo slabs keep the measured silhouette and holes while the side, roof,
 # tower, tanks and opening depth stay real modeled geometry.
@@ -582,6 +722,9 @@ glb.parent.mkdir(parents=True,exist_ok=True)
 for image in bpy.data.images:
     if image.name.startswith(('guard-post-wall-front','guard-post-wall-rear')) and image.size[0]*image.size[1] > 512*1024:
         image.scale(512,1024)
+        image.pack()
+    if image.name.startswith(('searchlight-side','searchlight-front','searchlight-rear','hydrant-side','hydrant-front')) and image.size[0] > 768:
+        image.scale(768, round(image.size[1] * 768 / image.size[0]))
         image.pack()
 town.export_glb(glb)
 
@@ -705,7 +848,10 @@ for i,(name,model) in enumerate(extras):
 d.text((24,2586),'Two clear drive-through bays, open traced hose lattice and bell, patched roof photo from straight above.',font=small,fill=(232,226,210))
 out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,optimize=True,progressive=True)
 '''
-subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
+# The accepted safety sheets stay exactly as reviewed. The station sheet is
+# only generated when preparing that earlier round for the first time.
+if not guard_sheet.exists():
+    subprocess.run(['python','-c',sheet_code,str(root),str(guard_sheet)],check=True)
 
 
 # Round 8: inspect only the exported gate after GLB round-trip.
@@ -770,4 +916,137 @@ for quality in (80,76,72,68,64,60):
 if out.stat().st_size>500000:raise RuntimeError(f'gate sheet exceeds 500 KB: {out.stat().st_size}')
 print(f'GATE ROUND 8 SHEET: {out.stat().st_size} bytes')
 '''
-subprocess.run(['python','-c',sheet_code,str(root),str(gate_sheet)],check=True)
+# Earlier accepted sheets are immutable; the committed gate sheet is evidence
+# from the last review and remains untouched when this family is rebuilt.
+if not gate_sheet.exists():
+    subprocess.run(['python','-c',sheet_code,str(root),str(gate_sheet)],check=True)
+
+# Round 9: compare only the two new exported props against their own photos.
+prop_evidence.mkdir(parents=True,exist_ok=True)
+scene.view_settings.view_transform='Standard'
+scene.view_settings.look='Medium High Contrast'
+scene.view_settings.exposure=0
+scene.view_settings.gamma=1
+scene.render.image_settings.file_format='PNG'
+scene.render.image_settings.color_mode='RGB'
+scene.render.resolution_percentage=100
+studio=bpy.data.materials.new('round 9 plain grey floor')
+studio.diffuse_color=(.38,.39,.39,1);studio.use_nodes=True
+studio.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.39,.39,1)
+studio.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.96
+bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.025))
+prop_ground=bpy.context.object;prop_ground.name='round-9 review grey ground';prop_ground.data.materials.append(studio)
+light_data=bpy.data.lights.new('round-9 broad softbox','AREA');light_data.energy=320;light_data.shape='DISK';light_data.size=8
+softbox=bpy.data.objects.new('round-9 broad softbox',light_data);scene.collection.objects.link(softbox)
+softbox.location=town.game_vector((5,7,-6));aim_z(softbox,town.game_vector((0,1.8,0)))
+
+def prop_game_bounds(objects):
+    points=[obj.matrix_world @ Vector(corner) for obj in objects if obj.type=='MESH' for corner in obj.bound_box]
+    if not points: raise RuntimeError('new town prop has no exported mesh bounds')
+    game=[(point.x,point.z,-point.y) for point in points]
+    return {'min':[min(point[i] for point in game) for i in range(3)],
+            'max':[max(point[i] for point in game) for i in range(3)]}
+
+def prop_triangles(objects):
+    return sum(poly.loop_total-2 for obj in objects if obj.type=='MESH' for poly in obj.data.polygons)
+
+def render_prop(prop_name, photo_stem, max_scale, expected_parts):
+    prop=next((obj for obj in scene.objects if obj.name==prop_name),None)
+    if prop is None: return None
+    visible={prop,*prop.children_recursive}
+    meshes=[obj for obj in visible if obj.type=='MESH']
+    for obj in scene.objects:
+        obj.hide_render=obj not in visible and obj not in (prop_ground,softbox)
+    prop_ground.hide_render=False;softbox.hide_render=False
+    boxes={}
+    for obj in meshes:
+        box=prop_game_bounds([obj]);boxes[obj.name]=box
+        low,high=box['min'],box['max']
+        print(f'EXPORTED PIECE BOUNDS {obj.name}:',json.dumps({key:[round(v,3) for v in values] for key,values in box.items()},sort_keys=True))
+        if low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
+            raise RuntimeError(f'{obj.name} exceeds its 1 by 1 footprint with 0.5 m clearance: {box}')
+        if low[1]<-.04: raise RuntimeError(f'{obj.name} extends below ground: {box}')
+    for name in expected_parts:
+        if name not in boxes: raise RuntimeError(f'missing exported piece {name}')
+    for obj in meshes:
+        box=boxes[obj.name]
+        if box['min'][1]<=.06: continue
+        for other in meshes:
+            if other is obj: continue
+            other_box=boxes[other.name]
+            if all(box['min'][axis]<=other_box['max'][axis]+.045 and
+                   other_box['min'][axis]<=box['max'][axis]+.045 for axis in range(3)):
+                break
+        else: raise RuntimeError(f'{obj.name} touches neither the ground nor another piece: {box}')
+    triangles=prop_triangles(meshes)
+    print(f'EXPORTED BUILDING BOUNDS {prop_name}:',json.dumps(prop_game_bounds(meshes),sort_keys=True))
+    print(f'EXPORTED TRIANGLES {prop_name}: {triangles}')
+    if not 0<triangles<=1800: raise RuntimeError(f'{prop_name}: {triangles} triangles exceeds the 1,800 triangle budget')
+    corners=[obj.matrix_world @ Vector(corner) for obj in meshes for corner in obj.bound_box]
+    game_corners=[Vector((point.x,point.z,-point.y)) for point in corners]
+    centre=Vector(tuple((min(point[i] for point in game_corners)+max(point[i] for point in game_corners))/2 for i in range(3)))
+    extent=max(max(point[i] for point in game_corners)-min(point[i] for point in game_corners) for i in range(3))
+    ortho=max_scale if max_scale else extent*1.22
+    views={
+      'side':((centre.x+extent*2.4,centre.y,centre.z),centre,ortho),
+      'front':((centre.x,centre.y,centre.z-extent*2.4),centre,ortho),
+      'rear':((centre.x,centre.y,centre.z+extent*2.4),centre,ortho),
+      'above':((centre.x,centre.y+extent*4,centre.z),centre,ortho),
+      'three-quarter-left':((centre.x-extent*1.55,centre.y+extent*.85,centre.z-extent*1.55),centre,extent*1.58),
+      'three-quarter-right':((centre.x+extent*1.55,centre.y+extent*.85,centre.z-extent*1.55),centre,extent*1.58),
+      'mayor':((centre.x+extent*1.55,centre.y+extent*1.55,centre.z-extent*1.55),centre,extent*1.68),
+    }
+    rendered={}
+    for view,(eye,target,scale) in views.items():
+        camera_data=bpy.data.cameras.new(f'{prop_name}-{view}')
+        camera=bpy.data.objects.new(f'{prop_name}-{view}',camera_data);scene.collection.objects.link(camera)
+        camera.location=town.game_vector(tuple(eye));aim_z(camera,town.game_vector(tuple(target)))
+        camera.data.type='ORTHO';camera.data.ortho_scale=scale;scene.camera=camera
+        scene.render.resolution_x=700;scene.render.resolution_y=700
+        beam_piece=next((item for item in meshes if item.name=='searchlight:beam'),None)
+        if beam_piece is not None: beam_piece.hide_render=(view in ('side','front','rear','above'))
+        path=prop_evidence/f'{prop_name}-{view}.png';scene.render.filepath=str(path)
+        bpy.ops.render.render(write_still=True);rendered[view]=path
+        bpy.data.objects.remove(camera,do_unlink=True);bpy.data.cameras.remove(camera_data)
+    return {'prop':prop_name,'photo':photo_stem,'views':rendered}
+
+prop_results=[]
+searchlight_result=render_prop('searchlight','searchlight',5.25,
+                               ('searchlight:post','searchlight:head','searchlight:beam'))
+if searchlight_result: prop_results.append(searchlight_result)
+hydrant_result=render_prop('hydrant','hydrant',1.68,('hydrant-standpipe','hydrant-hose-reel-side'))
+if hydrant_result: prop_results.append(hydrant_result)
+
+if len(prop_results)==2:
+    sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
+from pathlib import Path
+import sys
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-9'
+props=[('SEARCHLIGHT','searchlight'),('HYDRANT','hydrant')]
+pairs=[('SIDE','side'),('FRONT','front'),('REAR','rear'),('STRAIGHT DOWN','above')]
+extras=[('THREE-QUARTER LEFT','three-quarter-left'),('THREE-QUARTER RIGHT','three-quarter-right'),("MAYOR'S VIEW",'mayor')]
+W,H=1600,2570;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),16);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
+d.text((24,12),'TOWN SAFETY | ROUND 9 | SEARCHLIGHT + HYDRANT',font=title,fill=(240,228,205))
+def fit(path,box):
+ im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(125,127,127));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
+row_h=225;y=48
+for building,stem in props:
+ d.text((24,y),building,font=label,fill=(240,194,125));y+=22
+ for caption,view in pairs:
+  d.rounded_rectangle((18,y,W-18,y+row_h-5),radius=8,fill=(78,76,69));d.text((32,y+5),caption,font=label,fill=(240,194,125))
+  d.text((34,y+27),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+27),'EXPORTED GLB | MATCHED ORTHOGRAPHIC CAMERA',font=small,fill=(229,223,208))
+  page.paste(fit(tex/f'{stem}-{view if view != "above" else "top"}.jpg',(740,178)),(34,y+43))
+  page.paste(fit(ev/f'{stem}-{view}.png',(740,178)),(815,y+43));y+=row_h
+ d.text((24,y+2),building+' | THREE-QUARTER AND MAYOR VIEWS',font=small,fill=(240,194,125));y+=21
+ for i,(caption,view) in enumerate(extras):
+  x=18+i*528;d.rounded_rectangle((x,y,x+510,y+218),radius=8,fill=(78,76,69));d.text((x+12,y+5),caption,font=small,fill=(240,194,125));page.paste(fit(ev/f'{stem}-{view}.png',(480,180)),(x+15,y+29))
+ y+=224
+out.parent.mkdir(parents=True,exist_ok=True)
+for quality in (78,74,70,66,62,58):
+ page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
+ if out.stat().st_size<=500000:break
+if out.stat().st_size>500000:raise RuntimeError(f'round 9 sheet exceeds 500 KB: {out.stat().st_size}')
+print(f'ROUND 9 SHEET: {out.stat().st_size} bytes')
+'''
+    subprocess.run(['python','-c',sheet_code,str(root),str(prop_sheet)],check=True)

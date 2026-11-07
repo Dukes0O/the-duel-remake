@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-9'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-12'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-9.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-12.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -25,7 +25,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
-from photo_carve import carve_object
+from photo_carve import carve_object, lift_if_dark
 from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -42,14 +42,14 @@ mat = town.make_materials({
 # Town base darkens rusted steel for general utility work. This family uses
 # the unfiltered food-specific photograph to keep worn red-brown oxide legible.
 steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_existing=False)
-steel_photo.scale(256, 256); steel_photo.file_format='JPEG'; steel_photo.pack()
+steel_photo.scale(192, 192); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
-# Six independent repeating material photos fit comfortably inside the card's
-# 1K image-pixel budget while avoiding a glTF texture atlas.
+# Compact utility swatches stay small. The source photographs below keep enough
+# detail for their mapped pipework, boards, patched canvas and market structure.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
-    image.scale(256, 256)
+    image.scale(192, 192)
     image.pack()
 
 def simple(name, color, roughness=.88, metallic=0):
@@ -79,6 +79,7 @@ if yellow_bsdf.inputs.get('Emission Color'):
 mat['leaf'] = simple('Town / dusty greens', (.12, .205, .105), .94)
 mat['fruit-red'] = simple('Town / bruised red fruit', (.38, .12, .075), .84)
 mat['fruit-yellow'] = simple('Town / dried yellow fruit', (.47, .34, .12), .86)
+mat['fruit-orange'] = simple('Town / dusty citrus orange',(.58,.245,.045),.88)
 mat['crate'] = mat['weathered-plank']
 mat['wire'] = simple('Town / dark wire', (.12, .13, .115), .78, .14)
 mat['rubber'] = simple('Town / dusty tire rubber', (.075, .078, .071), .95)
@@ -428,55 +429,200 @@ box('chicken-run:nest-box',(0,.32,-.90),(.98,.42,.48),mat['weathered-plank'],.05
 for x in (-.25,.25): sphere(f'chicken-run:egg-{x}',(x,.56,-.88),(.10,.07,.08),mat['faded-hand-paint'],8,5)
 box('chicken-run:feed-tray',(0,.16,1.05),(.85,.19,.30),mat['galvanised-tin'],.045)
 
+stall_front_photo=Photo(textures/'stall-front.jpg')
+stall_side_photo=Photo(textures/'stall-side.jpg')
+stall_rear_photo=Photo(textures/'stall-rear.jpg')
+stall_front_b_photo=Photo(textures/'stall-front-b.jpg')
+for photo in (stall_front_photo,stall_side_photo,stall_rear_photo,stall_front_b_photo):
+    lift_if_dark(photo)
+
+def photo_mask(photo, polygons):
+    """Rasterize measured photo outlines before the shared trace/slab step."""
+    mask=np.zeros((photo.h,photo.w),dtype=bool)
+    for polygon in polygons:
+        x0=max(0,int(min(p[0] for p in polygon)));x1=min(photo.w,int(max(p[0] for p in polygon))+1)
+        y0=max(0,int(min(p[1] for p in polygon)));y1=min(photo.h,int(max(p[1] for p in polygon))+1)
+        yy,xx=np.mgrid[y0:y1,x0:x1]
+        hit=np.zeros(xx.shape,dtype=bool)
+        for (ax,ay),(bx,by) in zip(polygon,polygon[1:]+polygon[:1]):
+            crossing=((ay>yy)!=(by>yy)) & (xx < (bx-ax)*(yy-ay)/(by-ay+1e-12)+ax)
+            hit ^= crossing
+        mask[y0:y1,x0:x1]|=hit
+    return mask
+
+stall_front_pieces=[
+    # Four open uprights, the narrow crown rail, counter apron and table braces.
+    ('front-left-outer-post',[(42,70),(76,27),(105,40),(121,917),(80,922),(49,904)]),
+    ('front-left-inner-post',[(96,106),(123,118),(125,917),(102,917)]),
+    ('front-right-inner-post',[(896,110),(922,101),(922,918),(899,917)]),
+    ('front-right-outer-post',[(927,36),(961,19),(984,908),(944,923)]),
+    ('front-crown-rail',[(93,63),(930,57),(931,84),(95,95)]),
+    ('counter-apron',[(69,523),(956,522),(957,579),(70,580)]),
+    ('counter-left-brace',[(72,580),(135,580),(143,644),(86,644)]),
+    ('counter-right-brace',[(881,580),(948,578),(937,645),(871,644)]),
+]
+stall_side_pieces=[
+    # The side photo supplies depth rails, rear uprights and diagonal braces.
+    ('side-front-post',[(204,51),(232,38),(258,970),(222,977)]),
+    ('side-inner-front-post',[(239,111),(263,115),(267,970),(240,970)]),
+    ('side-rear-post',[(633,225),(659,211),(683,970),(646,974)]),
+    ('side-inner-rear-post',[(657,315),(681,315),(679,970),(655,970)]),
+    ('side-canopy-rail',[(233,70),(252,67),(670,222),(658,247)]),
+    ('side-counter-rail',[(243,597),(674,592),(677,619),(243,626)]),
+    ('side-left-brace',[(248,619),(279,624),(326,685),(310,699)]),
+    ('side-right-brace',[(674,619),(649,625),(594,688),(577,675)]),
+]
+stall_counter_mask=photo_mask(stall_side_photo,[
+    [(257,595),(679,593),(685,616),(665,637),(282,641),(259,621)],
+])
+stall_side_awning_mask=photo_mask(stall_side_photo,[
+    [(246,104),(274,112),(318,124),(365,138),(412,151),(458,167),(504,183),
+     (550,199),(596,215),(640,232),(666,250),(671,269),(657,283),(646,301),
+     (633,316),(620,300),(606,298),(594,309),(578,295),(560,293),(547,305),
+     (529,287),(510,284),(497,297),(478,278),(459,275),(444,286),(425,269),
+     (404,266),(388,278),(369,257),(347,253),(331,264),(311,245),(290,240),
+     (276,250),(259,229),(247,217)],
+])
+stall_awning_mask=photo_mask(stall_front_photo,[
+    # The stitched tarp's real scalloped sag and torn lower edge are kept open below.
+    [(44,74),(51,49),(71,23),(102,29),(152,42),(217,36),(285,53),(355,67),
+     (441,78),(511,73),(590,65),(674,61),(748,43),(823,36),(897,34),(944,47),
+     (974,82),(987,125),(966,154),(945,170),(917,180),(894,189),(864,190),(842,199),
+     (815,197),(789,205),(760,204),(731,214),(700,213),(671,222),(641,217),(612,225),
+     (580,220),(550,226),(520,219),(488,226),(457,219),(425,223),(394,212),(364,215),
+     (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
+     (116,136),(94,130),(75,116),(58,101)],
+])
+stall_awning_hem_edge=[(966,154),(945,170),(917,180),(894,189),(864,190),(842,199),
+    (815,197),(789,205),(760,204),(731,214),(700,213),(671,222),(641,217),(612,225),
+    (580,220),(550,226),(520,219),(488,226),(457,219),(425,223),(394,212),(364,215),
+    (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
+    (116,136),(94,130),(75,116),(58,101)]
+stall_awning_hem_mask=photo_mask(stall_front_photo,[
+    list(reversed([(x,y-14) for x,y in stall_awning_hem_edge]))+stall_awning_hem_edge,
+])
 def market_stall(building, offset, kind):
     add_building(building,offset)
-    for x in (-1.15,1.15):
-        beam(f'{building}:post-{x}',(x,.12,-1.08),(x,2.18,-1.08),.085,mat['rusted-steel'])
-        beam(f'{building}:rear-post-{x}',(x,.12,1.0),(x,1.85,1.0),.075,mat['weathered-plank'])
-    beam(f'{building}:front-lintel',(-1.25,2.12,-1.08),(1.25,2.12,-1.08),.09,mat['rusted-steel'])
-    beam(f'{building}:rear-lintel',(-1.25,1.85,1.0),(1.25,1.85,1.0),.075,mat['weathered-plank'])
-    for x in (-.65,.65):
-        beam(f'{building}:awning-arm-{x}',(x,1.7,-1.1),(x,2.18,-.22),.055,mat['rusted-steel'])
-    awning_material={'fruit':'fruit-yellow','tools':'weathered-plank','tyres':'patched-canvas'}[kind]
-    if kind == 'fruit':
-        # Fruit stall canvas sags between its rails rather than forming a box.
-        verts=[];faces=[];n=10
-        for row,z in enumerate((-.96,-.30)):
-            for i in range(n+1):
-                x=-1.4+2.8*i/n
-                y=2.14-.10*(1-(x/1.4)**2)+(0.035 if row else 0)
-                verts.append((x,y,z))
-        for i in range(n): faces.append((i,i+1,n+2+i,n+1+i))
-        awning=mesh_object(f'{building}:patched-awning',verts,faces,mat[awning_material],'canvas')
-        beam(f'{building}:awning-front-hem',(-1.4,2.11,-.96),(1.4,2.11,-.96),.055,mat['rusted-steel'])
-        for x in (-1.1,1.1):
-            box(f'{building}:fruit-sack-{x}',(x,1.25,.42),(.62,.30,.45),mat['patched-canvas'],.07)
-    else:
-        awning=box(f'{building}:patched-awning',(0,2.12,-.62),(2.8,.07,1.05),mat[awning_material],.035)
-        awning.rotation_euler[0]=-.10
-    box(f'{building}:display-counter',(0,.91,-.24),(2.18,.20,.83),mat['weathered-plank'],.04)
-    for x in (-.85,.85): beam(f'{building}:counter-leg-{x}',(x,.12,-.24),(x,.84,-.24),.08,mat['rusted-steel'])
+    def front_world(px,py,d):
+        return ((px-512)*.00305,(920-py)*.00302,-1.10+d)
+    for part_name,polygon in stall_front_pieces:
+        front_frame=PhotoMesh()
+        mask=photo_mask(stall_front_photo,[polygon])
+        front_loops=trace(mask,(38,18,990,930),tolerance=2.0,min_area=20)
+        slab(front_frame,'front',stall_front_photo,front_loops,front_world,0,.075,wall_scale=.00305)
+        keep(front_frame.finish(f'{building}:photo-traced-{part_name}',{'front':stall_front_photo.material()}))
+
+    def side_world(px,py,d):
+        return (d,(975-py)*.00292,-1.10+(px-205)*.00455)
+    for frame_x,side_label in ((-1.12,'left'),(1.12,'right')):
+        def side_frame_world(px,py,d,frame_x=frame_x):
+            return (frame_x+d,(975-py)*.00292,-1.10+(px-205)*.00455)
+        for part_name,polygon in stall_side_pieces:
+            side_frame=PhotoMesh()
+            mask=photo_mask(stall_side_photo,[polygon])
+            side_loops=trace(mask,(195,32,690,986),tolerance=1.8,min_area=18)
+            slab(side_frame,'side',stall_side_photo,side_loops,side_frame_world,-.07,.07,wall_scale=.00455)
+            keep(side_frame.finish(f'{building}:photo-traced-{side_label}-{part_name}',{'side':stall_side_photo.material()}))
+
+    # A traced side-profile slab gives the counter its photographed depth and
+    # a thick, closed top. Its front edge meets the apron and both support posts.
+    counter=PhotoMesh()
+    counter_loops=trace(stall_counter_mask,(250,588,691,647),tolerance=.8,min_area=20)
+    slab(counter,'counter',stall_side_photo,counter_loops,side_world,-1.08,1.08,wall_scale=.00455)
+    counter_obj=counter.finish(f'{building}:deep-photo-traced-counter',{'counter':stall_side_photo.material()})
+    # Keep the plank grain and dark knots from the measured side photograph.
+    keep(counter_obj)
+
+    # The photographic front hem stays a thin, traced slab. A small mesh follows
+    # its measured sag across the width and the side-photo pitch over the depth.
+    awning_front=PhotoMesh()
+    awning_loops=trace(stall_awning_hem_mask,(38,75,992,240),tolerance=1.8,min_area=16)
+    slab(awning_front,'canvas',stall_front_photo,awning_loops,front_world,0,.06,wall_scale=100000)
+    keep(awning_front.finish(f'{building}:traced-front-awning-hem',{'canvas':stall_front_photo.material()}))
+    awning=PhotoMesh()
+    columns=[]
+    for px in range(55,977,58):
+        rows=np.flatnonzero(stall_awning_mask[:,px])
+        if len(rows)<2: continue
+        top,bottom=int(rows.min()),int(rows.max())
+        profile=top+.64*(bottom-top)
+        x=(px-512)*.00305
+        profile_y=(920-profile)*.00302
+        column=[]
+        for depth_step in range(3):
+            t=depth_step/2
+            y=profile_y-.47*t
+            z=-1.04+1.95*t
+            # Spread the full measured canvas grain over the draped depth;
+            # a nearly fixed photo row turns into long stripes underneath.
+            py=min(stall_front_photo.h-1,int(72+105*t))
+            uv=stall_front_photo.uv(px,py)
+            column.append((awning.vertex((x,y,z)),uv))
+        columns.append(column)
+    for left,right in zip(columns,columns[1:]):
+        for depth_step in range(2):
+            a,ua=left[depth_step];b,ub=right[depth_step]
+            c,uc=right[depth_step+1];d,ud=left[depth_step+1]
+            top_points=[a,b,c,d];top_uvs=[ua,ub,uc,ud]
+            awning.indexed(top_points,top_uvs,'canvas',(0,1,0))
+            underside=[awning.vertex((awning.verts[index][0],awning.verts[index][1]-.018,awning.verts[index][2]))
+                       for index in (a,b,c,d)]
+            awning.indexed(list(reversed(underside)),list(reversed(top_uvs)),'canvas',(0,-1,0))
+    keep(awning.finish(f'{building}:traced-sagging-patched-canvas-awning',{
+        'canvas':stall_front_photo.material()}))
+
+    # A side-photo traced profile makes the measured sag and torn hem readable
+    # from the stall's end while keeping the canopy's top as one draped sheet.
+    side_awning_loops=trace(stall_side_awning_mask,(235,95,681,325),tolerance=1.8,min_area=24)
+    side_awning=PhotoMesh()
+    def side_awning_world(px,py,d):
+        return (1.04+d,(975-py)*.00292,-1.10+(px-205)*.00455)
+    slab(side_awning,'side-canvas',stall_side_photo,side_awning_loops,
+         side_awning_world,-.018,.018,wall_scale=.00455)
+    keep(side_awning.finish(f'{building}:photo-traced-side-sagging-awning-profile',
+                            {'side-canvas':stall_side_photo.material()}))
+
     if kind=='fruit':
-        for row,z in enumerate((-.45,.05),1):
-            crate=box(f'{building}:fruit-crate-{row}',(0,1.14,z),(1.85,.34,.52),mat['weathered-plank'],.04)
-            crate.rotation_euler[2]=(-.12 if row==1 else .16)
-            for j in range(6):
-                x=-.72+j*.29; color=mat['fruit-red'] if (j+row)%2 else mat['fruit-yellow']
-                sphere(f'{building}:produce-{row}-{j+1}',(x,1.40,z),(.115,.11,.12),color,8,5)
+        # Two deep plank crates and small photo-colored produce sit on the counter.
+        colors=(mat['fruit-red'],mat['fruit-yellow'],mat['fruit-orange'])
+        for crate_index,cx in enumerate((-.43,.43),1):
+            cz=-.20
+            box(f'{building}:fruit-crate-{crate_index}-base',(cx,1.17,cz),(.70,.12,.52),mat['weathered-plank'],.025)
+            box(f'{building}:fruit-crate-{crate_index}-bed',(cx,1.31,cz),(.60,.16,.38),mat['crate'],.018)
+            for side in (-1,1):
+                box(f'{building}:fruit-crate-{crate_index}-long-board-{side}',
+                    (cx,1.34,cz+side*.235),(.70,.20,.045),mat['weathered-plank'],.012)
+                box(f'{building}:fruit-crate-{crate_index}-end-board-{side}',
+                    (cx+side*.33,1.34,cz),(.045,.20,.52),mat['weathered-plank'],.012)
+            for fruit_index in range(3):
+                x=cx-.18+fruit_index*.18
+                z=cz
+                color=colors[(fruit_index+crate_index)%len(colors)]
+                sphere(f'{building}:produce-{crate_index}-{fruit_index+1}',
+                       (x,1.46,z),(.105,.12,.105),color,8,4)
     elif kind=='tools':
-        for x in (-.60,-.2,.2,.6):
-            beam(f'{building}:tool-shaft-{x}',(x,1.22,-.48),(x+.10,1.58,-.48),.045,mat['iron-dark'])
-            beam(f'{building}:tool-cross-head-{x}',(x-.12,1.52,-.48),(x+.22,1.52,-.48),.055,mat['rusted-steel'])
-        for x in (-.65,.15,.72):
-            box(f'{building}:small-tool-box-{x}',(x,1.29,.18),(.42,.18,.38),mat['rusted-steel'],.035)
+        # Three oversized hand tools stay readable below the cloth hem.
+        beam(f'{building}:tool-rack',(-.78,1.84,-.48),(.78,1.84,-.48),.065,mat['weathered-plank'])
+        for support_index,x in enumerate((-.78,.78),1):
+            beam(f'{building}:tool-rack-support-{support_index}',(x,1.83,-.48),(x,2.38,-.48),.055,mat['rusted-steel'])
+        for index,x in enumerate((-.48,0,.48),1):
+            beam(f'{building}:tool-hanger-{index}',(x,1.83,-.48),(x,1.75,-.48),.025,mat['rusted-steel'])
+            beam(f'{building}:hanging-tool-{index}-handle',(x,1.28,-.48),(x,1.77,-.48),.045,mat['weathered-plank'])
+            if index==1:
+                beam(f'{building}:hanging-tool-{index}-hammer-head',(x-.12,1.68,-.48),(x+.12,1.68,-.48),.085,mat['rusted-steel'])
+            elif index==2:
+                beam(f'{building}:hanging-tool-{index}-pliers-left',(x-.07,1.70,-.48),(x,1.78,-.48),.035,mat['rusted-steel'])
+                beam(f'{building}:hanging-tool-{index}-pliers-right',(x+.07,1.70,-.48),(x,1.78,-.48),.035,mat['rusted-steel'])
+            else:
+                beam(f'{building}:hanging-tool-{index}-spanner-jaw-left',(x-.08,1.68,-.48),(x-.03,1.78,-.48),.035,mat['rusted-steel'])
+                beam(f'{building}:hanging-tool-{index}-spanner-jaw-right',(x+.08,1.68,-.48),(x+.03,1.78,-.48),.035,mat['rusted-steel'])
     else:
-        for i in range(4):
-            x=-.72+(i%2)*1.44
-            y=.46+(i//2)*.52
-            bpy.ops.mesh.primitive_torus_add(major_radius=.38,minor_radius=.12,major_segments=16,minor_segments=6,
-                                               location=town.game_vector((x,y,.12)))
-            obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{i+1}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
-    sign(building,(0,1.88,-1.16),'FRUIT' if kind=='fruit' else 'TOOLS' if kind=='tools' else 'TYRES',1.15)
+        for index,(x,y) in enumerate(((-.42,1.40),(.42,1.40),(0,1.68)),1):
+            bpy.ops.mesh.primitive_torus_add(major_radius=.28,minor_radius=.07,
+                major_segments=10,minor_segments=3,location=town.game_vector((x,y,-.20)))
+            obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{index}'
+            obj.rotation_euler[0]=math.pi/2
+            obj.data.materials.append(mat['rubber']);keep(obj)
 
 market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
@@ -748,17 +894,24 @@ for material in bpy.data.materials:
         bsdf=material.node_tree.nodes.get('Principled BSDF')
         if bsdf.inputs.get('Metallic'): bsdf.inputs['Metallic'].default_value=min(bsdf.inputs['Metallic'].default_value,.29)
 
-# Keep full-resolution source photos on disk; embed compact game copies only.
-for photo in (front,left,overhead,wall_photo):
+# Keep source photographs intact on disk. Full-resolution baked images are
+# reserved for the newly photo-mapped stalls and the market/soup hero views.
+for photo in (front,left,overhead):
     photo.image.scale(256,192)
     photo.image.pack()
-for photo in (*market_photos.values(), stall_photo, *canteen_table['_photos'].values()):
-    ratio = photo.w / photo.h
-    if ratio >= 1:
-        size = (256, round(256 / ratio))
+wall_photo.image.pack()
+for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_side_photo,
+              *canteen_table['_photos'].values()):
+    if photo in (stall_front_photo, stall_side_photo, stall_photo):
+        # These measured surfaces need the source grain, rust and cloth patches.
+        pass
     else:
-        size = (round(256 * ratio), 256)
-    photo.image.scale(*size)
+        ratio = photo.w / photo.h
+        if ratio >= 1:
+            size = (192, round(192 / ratio))
+        else:
+            size = (round(192 * ratio), 192)
+        photo.image.scale(*size)
     photo.image.pack()
 
 # Print and check every market piece in local game axes. Supports run from the
@@ -871,6 +1024,40 @@ for index in range(1,4):
     if len(feet)!=4 or any(abs(bounds[2])>.02 for bounds in feet):
         raise RuntimeError(f'canteen road stool {index} feet do not stand on the ground')
 
+# Each 1 x 1 market stall prints its own piece bounds and stays within the
+# town's 8 m cell with the required 0.5 m margin.  Every piece must meet the
+# ground or another piece by its measured AABB; counts are per named building.
+for stall_id in ('stall-a','stall-b','stall-c'):
+    root_obj=building_roots[stall_id]
+    parts=[obj for obj in export_objects if obj.type=='MESH' and obj.parent is root_obj]
+    bounds_by_name={}
+    triangles=0
+    for obj in parts:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        bounds_by_name[obj.name]=b
+        count=sum(len(poly.vertices)-2 for poly in obj.data.polygons)
+        triangles+=count
+        print('stall piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)],'triangles':count},sort_keys=True))
+        if b[0]<-3.5 or b[1]>3.5 or b[4]<-3.5 or b[5]>3.5 or b[2]<-.02:
+            raise RuntimeError(f'{obj.name} lies outside the stall footprint or below ground: {b}')
+        if 'post' in obj.name and abs(b[2])>.02:
+            raise RuntimeError(f'{obj.name} does not reach the ground: {b}')
+    if triangles>1800:
+        raise RuntimeError(f'{stall_id} has {triangles} triangles; budget is 1800')
+    for name,b in bounds_by_name.items():
+        if abs(b[2])<=.02: continue
+        joined=False
+        for other_name,other in bounds_by_name.items():
+            if other_name==name: continue
+            overlap=all(max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.025 for axis in range(3))
+            if overlap: joined=True;break
+        if not joined: raise RuntimeError(f'{name} does not touch ground or another stall piece')
+    print(f'{stall_id} total triangles:',triangles)
+
 out.parent.mkdir(parents=True,exist_ok=True)
 blend.parent.mkdir(parents=True,exist_ok=True)
 bpy.ops.object.select_all(action='DESELECT')
@@ -938,14 +1125,50 @@ def render_match(name, camera_loc, up, ortho, look_at=None):
     true_up=right.cross(direction).normalized()
     camera.rotation_euler=Matrix((right,true_up,-direction)).transposed().to_quaternion().to_euler();scene.camera=camera
     scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
-render_match('model-front',target+Vector((0,18,3)),Vector((0,0,1)),13)
-render_match('model-side',target+Vector((18,0,3)),Vector((0,0,1)),13)
-render_match('model-rear',target+Vector((0,-18,3)),Vector((0,0,1)),13)
+render_match('model-front',target+Vector((0,18,0)),Vector((0,0,1)),13)
+render_match('model-side',target+Vector((18,0,0)),Vector((0,0,1)),13)
+render_match('model-rear',target+Vector((0,-18,0)),Vector((0,0,1)),13)
 render_match('model-top',target+Vector((0,0,18)),Vector((0,1,0)),13)
 render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
 render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
 render_match('market-mayor',target+Vector((0,19,13)),Vector((0,0,1)),16)
+# Isolated references for each one-cell stall; the accepted market hall and
+# canteen stay hidden so unrelated family geometry cannot enter this review.
+for stall_id in ('stall-a','stall-b','stall-c'):
+    stall_root=next(obj for obj in scene.objects if obj.name==stall_id)
+    for obj in scene.objects:
+        if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
+            obj.hide_render=not under(obj,stall_root)
+    members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,stall_root)]
+    points=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
+    lo_stall=Vector((min(p.x for p in points),min(p.y for p in points),min(p.z for p in points)))
+    hi_stall=Vector((max(p.x for p in points),max(p.y for p in points),max(p.z for p in points)))
+    target=(lo_stall+hi_stall)*.5
+    scene.render.resolution_x=800;scene.render.resolution_y=640
+    prefix=stall_id+'-'
+    render_match(prefix+'front',target+Vector((0,8,0)),Vector((0,0,1)),4.2)
+    render_match(prefix+'side',target+Vector((8,0,0)),Vector((0,0,1)),4.2)
+    render_match(prefix+'rear',target+Vector((0,-8,0)),Vector((0,0,1)),4.2)
+    render_match(prefix+'above',target+Vector((0,0,9)),Vector((0,1,0)),4.2)
+    render_match(prefix+'three-left',target+Vector((-6,7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'three-right',target+Vector((6,7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'mayor',target+Vector((-12,-12,12)),Vector((0,0,1)),6.0)
+# The mayor's view shows the three separately built market stalls together.
+stall_roots=[next(obj for obj in scene.objects if obj.name==name)
+             for name in ('stall-a','stall-b','stall-c')]
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
+        obj.hide_render=not any(under(obj,stall_root) for stall_root in stall_roots)
+stall_members=[obj for obj in scene.objects if obj.type=='MESH' and
+               any(under(obj,stall_root) for stall_root in stall_roots)]
+stall_points=[obj.matrix_world @ Vector(corner) for obj in stall_members for corner in obj.bound_box]
+stall_lo=Vector((min(p.x for p in stall_points),min(p.y for p in stall_points),min(p.z for p in stall_points)))
+stall_hi=Vector((max(p.x for p in stall_points),max(p.y for p in stall_points),max(p.z for p in stall_points)))
+target=(stall_lo+stall_hi)*.5
+scene.render.resolution_x=1200;scene.render.resolution_y=850
+render_match('stalls-three-quarter',target+Vector((-20,24,15)),Vector((0,0,1)),22)
+render_match('stalls-mayor',target+Vector((-8,18,25)),Vector((0,0,1)),22)
 canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
