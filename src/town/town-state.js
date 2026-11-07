@@ -19,6 +19,7 @@ export function createTown(seed, name, founders=[]) {
     version:TOWN_SAVE_VERSION, id:`town-${normalizedSeed}`, name:name.trim(), seed:normalizedSeed,
     rngState:normalizedSeed, tick:0n, calendar:townCalendarAt(0),
     founders:JSON.parse(JSON.stringify(founders)), people:[], buildings:[], nextBuildingNumber:1,
+    homePlots:[], campPlaces:12,
     regions:createTownRegions(),
   };
 }

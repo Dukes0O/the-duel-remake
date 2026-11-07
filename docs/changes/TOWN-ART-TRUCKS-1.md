@@ -27,3 +27,11 @@ The round 11 sheet uses larger comparisons and the round 9 side road camera.
 
 Removed the supply truck's plain crate boxes and sphere sacks, and the floating
 tow hook path. The round 10 sheet and review note are superseded by round 11.
+
+## Tyres (Claude, 6 November, from Kyle's eye)
+
+Kyle found the tyres wrong in their cutouts. Up close: the arch's wall still wore the photo's tyre, the tread showed the photo's background, an axle's end poked through the wheel face, and three trucks' wheel measurements were up to 40 pixels out. `hull_model.py` now has `tyre` and `wheel_well`; the wheel numbers were measured again from grids over the photos. The undersides are dark. Lamps: the pale blobs are gone, and the glowing lenses now sit inside the bodies until the night look is built.
+
+Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs`, build. No assertion changed.
+
+Removed: the old tread and wheel-face code.

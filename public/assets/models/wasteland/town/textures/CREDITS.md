@@ -279,3 +279,93 @@ Prompt: A photographic orthographic 2x2 reference sheet of one original 24 by 24
 Generated with Codex Image Generation on 6 November 2026. The compressed front and overhead views are cropped from one four-view reference. The front is traced into the open-bay face; the overhead view covers the roof-facing view. Original output remains outside the repository.
 
 Prompt: Photorealistic orthographic 2x2 reference sheet of one original 24m wide by 16m deep desert repair workshop, same building in all views: front elevation top left, right side top right, rear bottom left, straight-down overhead plan bottom right. Dead-on views, even pale background. Low long industrial shed built from dark stained timber and mismatched rusted corrugated tin, three open bays, strong steel roof trusses, bent gutters, visible clerestory panels and several irregular roof repairs. In the central bay a worn red 1970s utility car sits on a real two-post lift with wheels just off the ground; black dusty tyres stacked beside the wall, tool benches and a hanging work lamp. Realistic thin beams, bracing and open doors, no giant blank panels. Faded paint under dark brown rust, grime low down and dusty sand. Bright flat overcast daylight, natural photographic details. Whole subject inside every panel, no text, logos, labels, or people.
+- `power-windmill-reference.jpg`: original photo reference generated with
+  OpenAI ImageGen for TOWN-ART-POWER round 3. The windmill head, blades, tail
+  vane, utility pole and transformer are measured from this picture by
+  `tools/blender/photo_model.py`.
+- `generator-{side,front,rear,overhead}.jpg`: crops of a generated four-view
+  photo for the truck-engine generator; `solar-{side,front,rear,overhead}.jpg`:
+  crops of a generated four-view photo for the salvaged rack; and
+  `fuel-{side,front,rear,overhead}.jpg`: crops of a generated four-view photo
+  for the tank depot. All were generated with OpenAI ImageGen for
+  TOWN-ART-POWER round 3 and measured through `photo_model.py` and
+  `hull_model.py` in `tools/blender/town-power.py`.
+
+  Prompts: generator—"One old truck engine on a skid in left-side, front, rear
+  and overhead orthographic views; visible inline-six block, manifold, radiator,
+  alternator, exhaust stack and fuel drums; faded gray paint, dark rust and
+  soot, pale seamless background." Solar rack—"One salvaged 4 m by 3 m steel
+  rack with six mismatched solar panels, some cracked, in side, front, rear and
+  overhead orthographic views on a pale seamless background." Fuel depot—"Two
+  rusted horizontal steel tanks, pump, valves, pipes and a faded hazard-striped
+  concrete bund, in side, front, rear and overhead orthographic views on a pale
+  seamless background."
+
+TOWN-ART-POWER round 4 uses four OpenAI ImageGen tank photos for the
+photo-carved body and a fifth side photo for the round 4 sheet. The body photos
+are the measured rebuild inputs to `hull_model.py`.
+
+Shared tank description in all four body-photo prompts: one 6.6 m horizontal
+cylindrical tank, 2.35 m diameter, rounded dished ends, faded mustard yellow
+paint over gray-brown steel, restrained dark rust, chips and rolled seams.
+The image views were generated separately to avoid overlapping panels.
+
+- `fuel-side.jpg`: side body view. Prompt: "Orthographic 3D modeling reference
+  photograph of the tank body only, side elevation. One complete horizontal
+  cylindrical industrial steel tank, length about 2.3 times its diameter, with
+  smoothly rounded dished ends, a narrow rolled seam near each end and one
+  small bolted fill hatch on top. No saddles, bund, pipes, pump, hose or other
+  object. Exact level 90-degree side camera, orthographic, full tank end to end
+  centered with generous pale margin. Realistic muted gray-brown steel under
+  old faded mustard paint, restrained dark brown rust, uneven chips, weld
+  seams. Plain pale warm-gray seamless background, bright diffuse flat
+  daylight, subtle contact shadow, documentary industrial product photography.
+  No text, labels, logos, people or watermark."
+- `fuel-front.jpg`: straight front view. Prompt: "Orthographic 3D modeling
+  reference photograph, front end elevation of the same single horizontal
+  steel fuel tank as the matching side and overhead views. One horizontal
+  cylindrical vessel with a round dished front cap, muted faded mustard yellow
+  paint over gray-brown steel, matching rust, chips, rolled edge seam and small
+  raised bolted fill hatch centered on top. Tank body only: no saddles, bund,
+  pipes, pump, hose or second tank. Camera centered on the circular end, level,
+  true orthographic, no perspective. Show the whole outline with generous pale
+  margin. Plain pale warm-gray background, bright flat overcast daylight,
+  faint soft shadow, crisp documentary industrial product photography. No text,
+  labels, logos, people or watermark."
+- `fuel-rear.jpg`: straight rear view. Prompt: "Orthographic modeling reference
+  photo, rear end view of the same single horizontal steel fuel tank as the
+  matching side, front and overhead views. One 6.6 m long cylindrical vessel
+  with 2.35 m diameter, rounded dished rear cap, matching faded mustard-yellow
+  paint over gray-brown steel, dark rust, chips and rolled seam. Show the full
+  circular end centered, body only, with a simple bolted circular service plate
+  at its center. No bund, saddles, pump, pipes, hose or second tank. Camera
+  straight at the round end at center height, true orthographic, no perspective.
+  Ample pale background around the full circle. Bright diffuse overcast light,
+  subtle shadow, crisp documentary industrial product photography. No words,
+  labels, logos, people or watermark."
+- `fuel-overhead.jpg`: true top view. Prompt: "Orthographic 3D modeling
+  reference photograph, true overhead top view of the same single cylindrical
+  fuel tank shown in the side and end references: one long horizontal tank body
+  with rounded ends, length about 2.3 times its diameter, muted faded mustard
+  yellow paint over gray-brown steel, restrained dark rust, narrow rolled end
+  seams and small bolted fill hatch. Tank body only, no saddles, bund, pipes,
+  pump, hose or other object. Camera directly above, exact orthographic top
+  plan, no perspective, tank aligned horizontally across image, complete full
+  outline with ample pale margin. Plain pale warm-gray seamless background,
+  bright flat overcast daylight, faint soft shadow, crisp realistic documentary
+  product photography. No text, labels, logos, people or watermark."
+- `fuel-side-with-pump.jpg`: side photo shown on the review sheet. Prompt:
+  "Photorealistic orthographic modeling reference of a complete small wasteland
+  fuel depot, straight left side elevation. One 6.6 m horizontal cylindrical
+  tank, about 2.8 times its diameter, rounded ends, faded mustard-yellow paint
+  over gray-brown steel, dark rust and chips. Two steel saddles and a low
+  concrete bund with worn yellow and black diagonal hazard stripes. On the near
+  side, a hand pump with lever, connected steel pipes, two hand valves and one
+  dark hanging hose loop. Show every part whole with margin. Camera exactly
+  perpendicular and level, orthographic, no perspective. Plain pale gray
+  background, bright diffuse flat daylight, realistic documentary product
+  photography. No extra tank, people, text, labels, logos or watermark."
+
+The side sheet photo includes the pump, valves, hose and bund; the model builds
+these as joined geometric parts. Other power-family photos are unchanged from
+round 3.
