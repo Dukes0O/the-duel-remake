@@ -35,3 +35,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `notice-board` under 1x1.
 
 ## Claude answers
+
+Round 6, 7 November (Claude): **the Town Hall and the Forge pass, and the Workshop will do for now.** The Town Hall is the best carve of the family. The Forge's fire stands proud of its wall as a block; the Workshop's roof is plain grey. The scrapyard and the other eight buildings remain. The six rounds count per building. Test change reviewed: this family's file limit rises from 3 MB to 8 MB, as every photo-carved family has, because each building now carries its own photos; no check of shape, parts or triangles is loosened. Size targets are advisory, and 4.14 MB is fine.

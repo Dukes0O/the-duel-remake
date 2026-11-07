@@ -454,3 +454,13 @@ Use: 512 x 512 repeating murky water albedo for the reservoir and settling stage
 Prompt:
 
 > Use case: photorealistic-natural. Asset type: square seamless color texture for a game model. Close top-down photograph of still murky reservoir water, deep olive-brown translucent water with small wind ripples, suspended sediment, subtle sky reflections, irregular natural color and sharp fine detail. Seamless square tile, soft bright overcast light. Avoid blue pool water, flat color, shores, objects, blur, text, border, watermark.
+
+## public/assets/models/wasteland/town/textures/town-services-brick.jpg
+
+Date: 2026-11-06
+Tool: Codex ImageGen
+Use: 512 x 512 repeating brick albedo for the Town Hall walls and gable.
+
+Prompt:
+
+> Use case: photorealistic-natural. Asset type: square seamless close-up albedo texture for a 3D game building. Sharp, straight-on close photograph of old red-brown fired brick masonry from a remote desert civic building. Real individual bricks at approximately 22 cm long by 7 cm tall, clear horizontal mortar joints, irregular faded brick faces, rubbed corners, fine dust caught in mortar, a few small chipped edges, mild soot and darker weathering near the lower edge. Natural muted brick reds and dark brown mortar, high detail, matte, no strong perspective, no dramatic shadows, no labels or writing. Make the four tile edges blend seamlessly. Avoid rubble, piles of broken bricks, orange saturation, smooth stone, uniform noise, blur, text, logos, watermark.

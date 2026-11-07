@@ -33,3 +33,5 @@ Reuse first: Kenney's industrial and factory kits in `C:/Users/kyleb/dev/art-lib
 - `machine-yard` 6x4: a dirt yard with sheds, fuel drums, parts piles.
 
 ## Claude answers
+
+Crusher, 7 November (Claude): **passes, merged; its six rounds are used.** The hopper, flywheel, jaw, open conveyor, leg, trailer, tyres and falling gravel all read like the photo. Claude removed the last strays by hand: the rubber belt stood on end through the hopper (its corners were written in glTF axes into Blender's mesh), a second conveyor leg was traced from the gravel fall, and two old chute bars stood by the cone. Test change reviewed: `crusher-discharge-chute-lip` leaves the list of required parts because the chute was removed; no other check changes. The other plants on this card remain.
