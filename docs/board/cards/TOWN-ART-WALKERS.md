@@ -24,3 +24,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 Very cheap people, because a town shows up to 200 at once. Standing figures with a hand-built look: `walker-a` to `walker-h` (eight different builds and outfits: dust coats, overalls, a poncho, a welding apron, a hat), `walker-kid-a`, `walker-kid-b`, `walker-guard`, `walker-trader` (with a big pack), `walker-vane` (white overalls with a blue drop). Reuse shapes from `tools/blender/scablands-folk.py`. Each at most 450 triangles, legs as separate parts `<id>:leg-l` and `<id>:leg-r` so code can swing them. Family file at most 1 MB, sharing one small atlas. They are 1.7 m tall (kids 1.3 m) and must read as people from 60 m up: shoulders and hats matter most.
 
 ## Claude answers
+
+**Round 5 verdict (Claude, 6 November 2026): passes, merged.** Legs meet the hips, no extra legs, no background between the knees, natural skin in the new colours, and the family reads as separate people from the mayor's view. The trader's pack reads from every side. The sheet's crowded middle is only the source lineup standing together. These walkers are not yet in the game; TOWN-VIEW wires them in.

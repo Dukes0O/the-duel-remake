@@ -9,15 +9,25 @@
         'length': 11.0, 'width': 7.0, 'height': 8.0,
         # Pixels, read from a grid over each photo (tools/photo_grid.py).
         'side': {'start': 40, 'end': 980, 'ground': 610},   # start is the object's front
-        'front': {'centre': 512, 'ground': 700},
-        'rear': {'centre': 512, 'ground': 700},
+        'front': {'centre': 512, 'ground': 700, 'top': 120},   # 'top' is the roof's pixel row
+        'rear': {'centre': 512, 'ground': 700, 'top': 120},
         'top': {'front': 60, 'rear': 960, 'centre': 512},
         # Rectangles (x0, y0, x1, y1) of background walled in by the subject.
         'cut': {'front': [(450, 600, 560, 700)]},
     })
 
-One photo scale is worked out from `length` and each photo's measured span, so
-all of an object's photos must show it at their own true proportions.
+The side and top photos take their scale from `length` and their measured span.
+Each end photo takes its own from `height` and its 'top' (or 'scale', metres per
+pixel, or 'top_height' if its 'top' is not at `height`), since end photos are
+seldom at the side photo's scale. A top photo's 'x_scale' does the same across.
+By default a cross-section is what either end photo allows. 'ends_split' (a z in
+metres) makes the front photo shape only what lies ahead of it and the rear photo
+only what lies behind, for two different bodies joined end to end. 'front_favour'
+makes a curved nose wear its front photo further round, so a windscreen is not
+pieced together from three photos: 3 suits a rounded nose. 'rear_favour' does the
+same behind. Both need 'ends_split'. 'round' makes every cross-section along Z an
+ellipse within its own width and height, for a tube: 2 is a true ellipse, 3 a
+rounder box. Without it a tapered tube comes out square.
 
 Options: 'forward' is -1 for a town object (front at -Z, the default) or 1 for a
 car. 'side_front_on_left' is True unless the side photo shows the front at the
@@ -87,10 +97,17 @@ def carve_object(name, textures, table):
     def side_pick(x, y, z):
         return s['start'] + side_sign * (forward * (z_front - z)) / side_scale, s['ground'] - y / side_scale
 
-    # Each end photo's scale comes from the object's true width and the photo's own span if given.
+    # An end photo is rarely at the side photo's scale, so it must say what its own is:
+    # 'top' is the pixel row of the roof, which stands at `height` metres, or 'scale' is metres per pixel.
     end_scale = {}
     for key in ('front', 'rear'):
-        end_scale[key] = table[key].get('scale', side_scale)
+        end = table[key]
+        if 'scale' in end:
+            end_scale[key] = end['scale']
+        elif 'top' in end:
+            end_scale[key] = end.get('top_height', height) / abs(end['ground'] - end['top'])
+        else:
+            raise ValueError(f"{name}: the {key} photo needs 'top' (pixel row of the roof) or 'scale'.")
     f, r, t = table['front'], table['rear'], table['top']
     flip = -1 if table.get('front_x_flip') else 1
     # Seen from its front, an object's +X is on the viewer's left at forward -1 and right at forward +1.
@@ -137,6 +154,11 @@ def carve_object(name, textures, table):
         for key, view in (('side', left), ('front', front), ('rear', rear), ('top', top)):
             save_mask(view.mask, Path(mask_dir) / f'{name.replace(":", "-")}-{key}-mask.png')
 
+    if table.get('front_favour') and table.get('ends_split') is not None:
+        front.favour = lambda point: table['front_favour'] if forward * (point[2] - table['ends_split']) > 0 else 1
+    if table.get('rear_favour') and table.get('ends_split') is not None:
+        rear.favour = lambda point: table['rear_favour'] if forward * (point[2] - table['ends_split']) <= 0 else 1
+
     wheels = table.get('wheels', [])
 
     def keep(x, y, z):
@@ -147,13 +169,30 @@ def carve_object(name, textures, table):
             result &= ~((np.abs(x) > inner - .03) & ((z - axle) ** 2 + (y - radius) ** 2 < (radius + .05) ** 2))
         return result
 
+    split = table.get('ends_split')
+
     def ends(x, y, z):
-        return front.covers(x, y, z) | rear.covers(x, y, z)
+        if split is None:
+            return front.covers(x, y, z) | rear.covers(x, y, z)
+        # Two different bodies joined end to end: each end photo shapes only its own part.
+        return np.where(forward * (z - split) > 0, front.covers(x, y, z), rear.covers(x, y, z))
 
     voxel = table.get('voxel', max(length, width, height) / 250)
     margin = voxel * 2
     bounds = ((-width / 2 - margin, width / 2 + margin), (0, height + margin), (-length / 2 - margin, length / 2 + margin))
     solid, xs, ys, zs = occupancy(bounds, voxel, [left.covers, top.covers, ends], keep)
+    if table.get('round'):
+        # Side and top photos alone leave a square section wherever the body tapers.
+        grid_x, grid_y = np.meshgrid(xs, ys, indexing='ij')
+        for k in range(solid.shape[2]):
+            cut = solid[:, :, k]
+            if not cut.any():
+                continue
+            across = xs[cut.any(axis=1)]
+            up = ys[cut.any(axis=0)]
+            a, b = (across[-1] - across[0]) / 2 + voxel / 2, (up[-1] - up[0]) / 2 + voxel / 2
+            cx, cy = (across[-1] + across[0]) / 2, (up[-1] + up[0]) / 2
+            solid[:, :, k] = cut & (np.abs((grid_x - cx) / a) ** table['round'] + np.abs((grid_y - cy) / b) ** table['round'] <= 1)
     solid = largest_part(solid)
     if not solid.any():
         raise RuntimeError(f'{name}: nothing left after carving. Check the measurements and the masks in {mask_dir}.')
