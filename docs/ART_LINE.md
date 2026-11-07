@@ -204,7 +204,11 @@ stop adjusting and change the method.
 ### Keeping the work
 
 - A job that loses its task after its memory is compacted reads
-  `.qa-dist/YOUR-TASK.md` and carries on.
+  `.qa-dist/YOUR-TASK.md` and carries on. In practice it often does not:
+  twice on 7 November a ships job reread only `AGENTS.md` after compaction
+  and stopped to ask. Size each job so it finishes before compaction (one or
+  two numbered points, about 55,000 log lines), commit after every point, and
+  resume a stopped job with a "where you are" note at the top of its brief.
 - Never edit a script a running queue is reading.
 - Never stop processes by matching a folder name: name each job's own process.
 
