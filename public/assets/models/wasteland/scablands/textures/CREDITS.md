@@ -188,3 +188,10 @@ casting slice is traced into the repeated gear.
 course, iron mooring rings and dried weed, in flat overcast light. Its recipe
 blends the first and last two metres in memory for a repeatable face. The top
 uses `dam-gatehouse-stone.jpg` at a half-metre tile scale.
+
+`sea-causeway.jpg` and `sea-rails.jpg` are original Codex ImageGen photo
+references made 2026-11-06: a straight stone railway bank with rails and wooden
+sleepers, plus a close strip of its track. The source is flat-lit on a pale
+studio ground. The 40 metre stone face uses the lower photo crop; the rail kit
+uses separate measured rail and sleeper crops. The recipe blends the face's
+first and last two metres in memory for repeatable joins.

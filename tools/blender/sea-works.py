@@ -1,13 +1,18 @@
 """WW-ART-SEA first pieces. Photo measured parts, metres, X right, Y up."""
-import argparse, math, sys
+import argparse, json, math, sys
 from pathlib import Path
 parser=argparse.ArgumentParser()
 parser.add_argument('--root',required=True)
 parser.add_argument('--render-dir',default='.qa-dist/ww-art-sea')
 parser.add_argument('--through',choices=['old-gear','gear-whole','harbour-wall','causeway'],default='causeway')
+parser.add_argument('--paths-only',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 root=Path(args.root).resolve(); textures=root/'public/assets/models/wasteland/scablands/textures'
 glb=root/'public/assets/models/wasteland/scablands/sea-works.glb'
+blend=root/'art-build/sea-works/sea-works.blend'
+if args.paths_only:
+ print(json.dumps({'blend':[str(blend)],'glb':[str(glb)]}))
+ raise SystemExit(0)
 import bpy, numpy as np
 sys.path.insert(0,str(root/'tools/blender'))
 from photo_model import Mesh,Photo,slab,trace,tidy,lathe,box
