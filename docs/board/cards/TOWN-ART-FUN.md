@@ -35,3 +35,5 @@ Fun, because it is what makes a town worth looking at. All built from junk and s
 ## Claude answers
 
 Tavern, 7 November (Claude): **round 6 passes, merged.** The tavern matches its photos from every side, and the crashed truck now has its cab, bonnet, open bed and four tyres, lying side-on with its nose in the tavern's corner as in the photo (Claude turned it). Short of the photo: the bed's floor shows two dark holes from the cut. The fountain and the big wheel remain, each with its own six rounds.
+
+Big wheel, 7 November (Claude): **round 9 passes, merged.** Two whole rusted rims, open spokes, eight level seats on their hangers and the photo's A-frame, turning about its true centre. The pale block in the sheet's views is not part of the wheel: the drive-in and fountain stand at the same origin and the sheet did not hide them. Short of the photo: the A-frame's feet stand narrower than the photo's. The drive-in, wreck ring, coaster, mud pit, stalls, fountain and statue remain.
