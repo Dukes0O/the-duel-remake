@@ -1,8 +1,8 @@
-﻿# TOWN-ART-PLANTS follow-up: radar
+# TOWN-ART-PLANTS follow-up: radar
 
 ## Changed
 
-Finished the radar model begun in the prior lane commits. Kept the four credited single-view reference photos and the separate `radar:dish` pivot. Tightened the side and front tower trace masks to exclude the separately modeled dish and drive assembly. Added an art-line note about removing moving photographed assemblies from static trace masks. The family model is 2,518,540 bytes; the radar is 1,688 triangles. The dish is a vertical-axis moving node at its centre.
+Finished the radar model begun in the prior lane commits. Kept the four credited single-view reference photos and the separate `radar:dish` pivot. Tightened the side and front tower trace masks to exclude the separately modeled dish and drive assembly. Added an art-line note about removing moving photographed assemblies from static trace masks. The family model is 2,518,448 bytes; the radar is 1,688 triangles. The regenerated export shifted five valve-detail transforms on the separately owned wellhead, so I restored their exact prior node records from the committed family model; crusher, batch-plant and wellhead node records now match that baseline. The dish is a vertical-axis moving node at its centre.
 
 Added the round-10 comparison sheet and review. The visual review found remaining side-view fragments, a red strip at the dish edge, and inconsistent top-view reference details. Claude should review these points and decide if another visual round is needed.
 
@@ -18,3 +18,4 @@ Added the round-10 comparison sheet and review. The visual review found remainin
 ## Removed
 
 No prior passed building or model was removed. Scratch renders and logs will be cleaned from `.qa-dist` after the evidence is committed.
+

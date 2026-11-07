@@ -1,4 +1,4 @@
-﻿# Radar review, round 10
+# Radar review, round 10
 
 This sheet compares the four orthographic source photos and the exported GLB from their matching orthographic cameras, followed by both three-quarter views and the mayor view.
 
@@ -6,4 +6,5 @@ The open tower and central dish read as a radar installation, and the model stay
 
 The radar moving node is `radar:dish`; it rotates around the vertical axis through the dish centre. The moving assembly is independently parented and separate from the fixed tower.
 
-RADAR TRIANGLES: 1,688. Family GLB: 2,518,540 bytes.
+RADAR TRIANGLES: 1,688. Family GLB: 2,518,448 bytes.
+
