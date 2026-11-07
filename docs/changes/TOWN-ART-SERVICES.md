@@ -18,3 +18,20 @@ The exported motor-pool meshes total 13,260 triangles, within the 14,000 limit. 
 ## Removed
 
 Deleted the superseded round-5 sheet and review note as directed. No source photos were removed.
+
+## Trading post, round 8
+
+Added a 3×3-cell trading post built from four retained JPG references. The carved body, deep porch, loading dock, goods, sign and brackets are distinct named pieces. The recipe prints each piece's bounds and checks that it stays within the plot and touches the ground or another piece. Other passed building recipe branches were not changed.
+
+The exported family is 6,865,036 bytes, below 8 MB. The trading post stayed within its 9,000-triangle limit after lowering only the new body's carve target. The initial output check found 10,568 triangles; the corrected run passed.
+
+### Checks
+
+- Blender 4.5.13 export and review renders: passed; trading post footprint and piece-contact audit passed.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
+- Browser and in-game look checks: Claude runs. Please inspect the side/end carve match, the roof-metal plan reference, body width, and sign readability from above in `round-8.jpg`.
+- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
+
+### Removed
+
+- No earlier building models, sheets or review notes were removed.

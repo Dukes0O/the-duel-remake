@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services.glb';blend=Path(a.evidence)/'services.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-7.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-7/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-8.jpg';review_output=root/'.evidence/2026-11-07/TOWN-ART-SERVICES/round-8/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -183,7 +183,7 @@ for index,x in enumerate((-10.5,10.5)):
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
 ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
 for n in ids:
- size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
+ size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
  if n in ('forge','workshop'):continue
@@ -297,6 +297,64 @@ for n in ids:
   box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
  heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4,'toll-bank':4.4,'school':5.2}
  ht=heights.get(n,5.0);mat=brick if n=='toll-bank' else wood if n=='school' else tin
+ if n=='trading-post':
+  # Four independently generated orthographic references carve only the store
+  # body. The deep porch, sign and merchandise remain separate meshes.
+  table={'photos':{'side':'trading-post-side.jpg','front':'trading-post-front.jpg',
+                   'rear':'trading-post-rear.jpg','top':'trading-post-top.jpg'},
+   'length':14.0,'width':10.0,'height':6.7,
+   'side':{'start':90,'end':937,'ground':461},
+   'front':{'centre':512,'ground':618,'top':54,'top_height':6.7},
+   'rear':{'centre':512,'ground':618,'top':54,'top_height':6.7},
+   'top':{'front':116,'rear':566,'centre':341,'along':'x','x_scale':10.0/810},
+   'cut':{'side':[(0,0,1024,55)],'front':[(0,0,1024,54)],
+          'rear':[(0,0,1024,54)],'top':[(0,0,1024,116),(0,566,1024,683)]},
+   'grey':26,'tolerance':37,'bleed_tolerance':31,'voxel':.11,'target':4500,
+   'mask_dir':str(root/'.qa-dist/town-services/trading-post-masks')}
+  body=carve_object('trading-post:body',tex,table);parent_keep(body,b)
+  # The end and plan references give the carved store body a 13.9 m depth;
+  # porch props are laid out from that wall, not from the plot edge.
+  z0=-6.9
+  # Deep road-facing porch: posts land on the ground and rafters meet the body.
+  porch_z=z0-2.0
+  for x in (-7.4,0,7.4):
+   beam('trading-post:porch-post',(x,.08,porch_z),(x,3.45,porch_z),.22,wood,b)
+  for x in (-8,0,8):beam('trading-post:porch-rafter',(x,3.35,z0+.4),(x,3.05,porch_z),.16,steel,b)
+  box('trading-post:porch-roof',(0,3.35,(z0+porch_z)/2),(17.5,.18,3.0),tin,.04,b)
+  box('trading-post:loading-dock',(0,.42,z0-.8),(17,.84,1.6),wood,.08,b)
+  # The large hand-painted sign is a separate, front-facing board and lettering.
+  sign_z=z0+.9
+  box('trading-post:sign',(0,7.35,sign_z),(10.8,.16,1.65),wood,.06,b)
+  for x in (-2.25,2.25):beam('trading-post:sign-bracket',(x,6.55,sign_z),(x,7.25,sign_z),.13,steel,b)
+  font=bpy.data.curves.new('TRADING POST hand painted lettering','FONT');font.body='TRADING POST';font.size=1.12;font.extrude=.008
+  lettering=bpy.data.objects.new('trading-post:sign-lettering',font);bpy.context.collection.objects.link(lettering)
+  lettering.location=town.game_vector((-4.65,7.45,sign_z+.72));font.materials.append(paint);parent_keep(lettering,b)
+  # Goods sit on the ground or dock, clear of the walls and porch posts.
+  for i,(x,z,s) in enumerate(((-6.0,z0-2.2,1.7),(-3.5,z0-2.35,1.5),(3.0,z0-2.3,1.65),(5.4,z0-2.2,1.4))):
+   crate=box(f'trading-post:goods-crate-{i+1}',(x,.55,z),(s,1.1,s),wood,.045,b)
+   for yy in (.20,.88):box(f'trading-post:crate-band-{i+1}',(x,yy,z),(s+.025,.07,s+.025),dark,.01,b)
+  for i,(x,z) in enumerate(((-7.4,z0-3.6),(7.4,z0-3.5))):
+   cyl(f'trading-post:goods-barrel-{i+1}',(x,.58,z),.48,1.05,steel,16,b)
+  # Bounds are in game axes (X, Y up, Z); every piece must fit the 3x3 plot
+  # and touch either ground or another piece.
+  bpy.context.view_layer.update();pieces=[o for o in bpy.data.objects if o.type in {'MESH','CURVE'}]
+  owned=[]
+  for obj in pieces:
+   p=obj
+   while p and p!=b:p=p.parent
+   if p==b:owned.append(obj)
+  measured=[]
+  for obj in owned:
+   corners=[obj.matrix_world@Vector(c) for c in obj.bound_box];pts=[(q.x,q.z,-q.y) for q in corners]
+   lo=[min(q[i] for q in pts) for i in range(3)];hi=[max(q[i] for q in pts) for i in range(3)];measured.append((lo,hi))
+   print(f'TRADING-POST BOUNDS {obj.name}: x={lo[0]:.2f}..{hi[0]:.2f} y={lo[1]:.2f}..{hi[1]:.2f} z={lo[2]:.2f}..{hi[2]:.2f}')
+  for i,(lo,hi) in enumerate(measured):
+   assert lo[0]>=-11.5 and hi[0]<=11.5 and lo[2]>=-11.5 and hi[2]<=11.5, f'{owned[i].name} outside 3x3 footprint'
+   grounded=abs(lo[1])<=.12
+   touching=any(i!=j and all(max(0,lo[k]-other_hi[k],other_lo[k]-hi[k])<=.14 for k in range(3)) for j,(other_lo,other_hi) in enumerate(measured))
+   if not (grounded or touching):raise RuntimeError(f'{owned[i].name} floats without ground/contact')
+   print(f'TRADING-POST CONTACT {owned[i].name}: {"ground/contact pass" if grounded or touching else "FAIL"}')
+  continue
  if n!='scrapyard':shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
  if n=='school':
   # Brick gable edges and pitch roof with exposed purlins.
@@ -701,7 +759,9 @@ if a.review:
  review_output.mkdir(parents=True,exist_ok=True);bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
  # Capture a matched close view and the roof-heavy mayor view from the exported model.
  def render(name,loc,target,lens=54,resolution=(1000,760)):
-  camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens;bpy.context.scene.camera=cam
+  camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens
+  if name.startswith('trading-post-model-'):camdata.type='ORTHO';camdata.ortho_scale=lens
+  bpy.context.scene.camera=cam
   scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.resolution_percentage=100
   scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
   if scene.world is None:scene.world=bpy.data.worlds.new('neutral overcast review daylight')
@@ -764,14 +824,26 @@ if a.review:
  render('motor-pool-three-quarter-left.png',(20,15,-28),(0,3,0),44)
  # One clear three-quarter view of every named building, framed to its plot.
  footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
-            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,2),
+            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3),
             'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),
             'helipad':(4,4),'notice-board':(1,1)}
  for building_id,(fw,fd) in footprint.items():
   target=next(o for o in bpy.data.objects if o.name.split('.')[0]==building_id)
-  for obj in bpy.data.objects:obj.hide_render=not within(obj,target)
+  for obj in bpy.data.objects:
+   if building_id=='trading-post' and obj.type=='MESH':obj.hide_render=not obj.name.startswith('trading-post:')
+   else:obj.hide_render=not within(obj,target)
   distance=max(fw,fd)*16+18;height=distance*.68
   render(building_id+'-three-quarter.png',(distance*.63,height,-distance*.72),(0,height*.12,0),44)
+  if building_id=='trading-post':
+   for name,loc,target,angle in [
+    ('trading-post-model-side.png',(31,7.5,0),(0,3.7,0),18),
+    ('trading-post-model-front.png',(0,7.5,-31),(0,3.7,0),16),
+    ('trading-post-model-rear.png',(0,7.5,31),(0,3.7,0),16),
+    ('trading-post-model-above.png',(0,38,-1),(0,3.7,-1),28),
+    ('trading-post-three-quarter-left.png',(24,18,-27),(0,3,0),48),
+    ('trading-post-three-quarter-right.png',(-24,18,-27),(0,3,0),48),
+    ('trading-post-mayor.png',(48,68,-48),(0,0,0),140)]:
+    render(name,loc,target,angle,(900,640))
  # Build a clean overview by spatially arranging the imported building groups.
  for obj in bpy.data.objects:obj.hide_render=False
  buildings=[o for o in bpy.data.objects if o.type=='EMPTY' and o.name.split('.')[0] in ['town-hall']+ids]
