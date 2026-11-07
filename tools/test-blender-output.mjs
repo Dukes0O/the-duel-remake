@@ -783,8 +783,14 @@ try {
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
           'searchlight','searchlight:beam','fire-station','clinic','hydrant',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
+          'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
         for (const id of expected) assert.ok(names.includes(id), `missing ${id}`);
+        for (const id of ['guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier']) {
+          const part=nodeIndex.get(id);
+          assert.notEqual(part,undefined, `${id} named model piece exists`);
+          assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
+        }
         const children = gltf.nodes.map(node => node.children || []);
         const primitiveCount = (index) => {
           const meshId=gltf.nodes[index].mesh;
