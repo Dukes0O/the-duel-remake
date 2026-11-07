@@ -13,14 +13,14 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-13')
+p.add_argument('--render-dir', default='.evidence/2026-11-07/TOWN-ART-OUTPOSTS/round-14')
 p.add_argument('--body-check-only', action='store_true')
 p.add_argument('--photos-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-13.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-14.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -760,11 +760,20 @@ deck_parts.append(deck_body)
 # studio gaps stay open, unlike a four-view carve of the entire railing.
 rail_side = Photo(textures / 'deck-town-deck-side.jpg')
 rail_front = Photo(textures / 'deck-town-deck-front.jpg')
-side_mask = ~rail_side.sky([(8, 8), (1015, 8), (8, 332), (1015, 332)], tolerance=32, grey=26)
+side_mask = ~rail_side.sky(
+    [(8, 8), (1015, 8), (8, 332), (1015, 332),
+     # The white deck-view background is enclosed by the rails and stanchions.
+     (52, 96), (190, 96), (500, 96), (810, 96), (982, 96),
+     (52, 146), (190, 146), (500, 146), (810, 146), (982, 146)],
+    tolerance=32, grey=26)
 side_mask[170:, :] = False
 side_loops = trace(side_mask, (8, 42, 1016, 170))
+RAIL_HEIGHT = 1.1
+SIDE_RAIL_TOP, SIDE_RAIL_DECK = 70, 170
 def side_rail_world(px, py, depth):
-    return (depth, (DECK_GROUND - py) * DECK_SCALE, -DECK_LENGTH / 2 + (px - DECK_START) * DECK_SCALE)
+    y = min(RAIL_HEIGHT, max(0.0, (SIDE_RAIL_DECK - py) * RAIL_HEIGHT / (SIDE_RAIL_DECK - SIDE_RAIL_TOP)))
+    z = -DECK_LENGTH / 2 + (px - DECK_START) * DECK_SCALE
+    return (depth, y, max(-DECK_LENGTH / 2, min(DECK_LENGTH / 2, z)))
 for side, x in enumerate((-DECK_WIDTH / 2 + .06, DECK_WIDTH / 2 - .06), 1):
     rail = Mesh()
     slab(rail, 'side', rail_side, side_loops, lambda px, py, d, x=x: side_rail_world(px, py, x + d), -.055, .055)
@@ -772,15 +781,22 @@ for side, x in enumerate((-DECK_WIDTH / 2 + .06, DECK_WIDTH / 2 - .06), 1):
     rail_obj.parent = deck_town
     deck_parts.append(rail_obj)
 
-front_mask = ~rail_front.sky([(8, 8), (1015, 8), (8, 674), (1015, 674)], tolerance=32, grey=26)
+front_mask = ~rail_front.sky([(8, 8), (1015, 8), (8, 674), (1015, 674),
+                              (300, 150), (700, 150), (300, 300), (700, 300)],
+                             tolerance=32, grey=26)
 front_mask[378:, :] = False
 # Flooding cannot enter the white pockets enclosed by the stanchions. Remove
-# those measured openings so slab() carries only the rails and posts.
-front_mask[124:214, 210:820] = False
-front_mask[254:360, 210:820] = False
+# both measured openings, including their pale edge pixels, so no white strip
+# from the studio can be carried into the model.
+front_mask[91:218, 192:832] = False
+front_mask[238:369, 192:832] = False
 front_loops = trace(front_mask, (165, 80, 860, 378))
+END_RAIL_TOP, END_RAIL_DECK = 84, 378
 def end_rail_world(px, py, depth):
-    return ((px - 512) * DECK_WIDTH / 700, (580 - py) * DECK_SCALE, depth)
+    x = (px - 512) * DECK_WIDTH / 700
+    y = (END_RAIL_DECK - py) * RAIL_HEIGHT / (END_RAIL_DECK - END_RAIL_TOP)
+    return (max(-DECK_WIDTH / 2, min(DECK_WIDTH / 2, x)), y,
+            max(-DECK_LENGTH / 2, min(DECK_LENGTH / 2, depth)))
 for end, z in enumerate((-DECK_LENGTH / 2 + .06, DECK_LENGTH / 2 - .06), 1):
     rail = Mesh()
     slab(rail, 'front', rail_front, front_loops, lambda px, py, d, z=z: end_rail_world(px, py, z + d), -.055, .055)
@@ -802,26 +818,35 @@ for index, x in enumerate((-3.5, 0, 3.5), 1):
 HOME_START, HOME_END, HOME_GROUND, HOME_TOP = 42, 979, 462, 80
 HOME_LENGTH = 6.0
 HOME_SCALE = HOME_LENGTH / (HOME_END - HOME_START)
+HOME_WALL_TOP = 146  # measured lower edge of the side photo's roof strip
 HOME_HEIGHT = (HOME_GROUND - HOME_TOP) * HOME_SCALE
-HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 28, 'top_height': HOME_HEIGHT}
-HOME_REAR = {'centre': 512, 'ground': 650, 'top': 28, 'top_height': HOME_HEIGHT}
+HOME_WALL_HEIGHT = (HOME_GROUND - HOME_WALL_TOP) * HOME_SCALE
+HOME_FRONT = {'centre': 512, 'ground': 650, 'top': 235, 'top_height': HOME_WALL_HEIGHT}
+HOME_REAR = {'centre': 512, 'ground': 650, 'top': 235, 'top_height': HOME_WALL_HEIGHT}
 HOME_WIDTH = 2.5
 home_table = {
     'photos': {'side': 'deck-town-home-side.jpg', 'front': 'deck-town-home-front.jpg',
                'rear': 'deck-town-home-rear.jpg', 'top': 'deck-town-home-top.jpg'},
-    'length': HOME_LENGTH, 'width': HOME_WIDTH, 'height': HOME_HEIGHT,
+    'length': HOME_LENGTH, 'width': HOME_WIDTH, 'height': HOME_WALL_HEIGHT,
     'side': {'start': HOME_START, 'end': HOME_END, 'ground': HOME_GROUND},
     'front': HOME_FRONT, 'rear': HOME_REAR,
     'top': {'front': 52, 'rear': 970, 'centre': 256, 'along': 'x',
             'x_scale': HOME_WIDTH / 410},
     # The top reference is a straight-down rectangle; discard its pale margin.
-    'cut': {'top': [(0, 0, 1024, 52), (0, 460, 1024, 512),
+    'cut': {'side': [(0, 0, 1024, HOME_WALL_TOP)],
+            'front': [(0, 0, 1024, 235)], 'rear': [(0, 0, 1024, 235)],
+            'top': [(0, 0, 1024, 52), (0, 460, 1024, 512),
                     (0, 52, 28, 460), (996, 52, 1024, 460)]},
+    'keep': lambda x, y, z: y <= HOME_WALL_HEIGHT,
     'grey': 26, 'tolerance': 34, 'bleed_tolerance': 28,
+    # The wall body stops exactly at the eaves; the separate pitched roof owns
+    # the ridge and overhang.
+    'keep': lambda x, y, z: y <= HOME_HEIGHT,
     'voxel': .07, 'target': 1600,
     'mask_dir': str(render / 'masks'),
 }
 home_source = carve_object('deck-town:home-source', textures, home_table)
+home_roof_photo = Photo(textures / 'deck-town-home-side.jpg')
 home_bounds_dimensions = (float(home_source.dimensions.x), float(home_source.dimensions.y), float(home_source.dimensions.z))
 print('deck-town carved home bounds (Blender XYZ):', json.dumps(home_bounds_dimensions))
 
@@ -834,7 +859,9 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     home = bpy.data.objects.new(prefix, None)
     bpy.context.collection.objects.link(home)
     home.parent = deck_town
-    home.location = town.game_vector((x, DECK_Y + .12, z))
+    # The carved body's measured lower edge is 3.5 cm above its origin; seat it
+    # on the deck surface at y=1.35 m.
+    home.location = town.game_vector((x, DECK_Y - .105, z))
     home.rotation_euler[2] = angle
     home.scale = (scale, scale, scale)
     body = home_source.copy()
@@ -845,18 +872,35 @@ for index, (x, z, angle, scale) in enumerate(home_layout, 1):
     home_objects.append(body)
     deck_parts.append(body)
 
-    # A thin roof skin uses the home's existing red roof photo. It sits on the
-    # clean rectangular top mask and keeps the same measured roof dimensions.
+    # Two thin pitched roof planes meet at a ridge. Eaves touch the wall tops,
+    # overhang by 0.2 m, and repeat one full side-photo roof strip per 3 m.
     roof = Mesh()
-    roof.face([(-HOME_WIDTH / 2, HOME_HEIGHT + .008, -HOME_LENGTH / 2),
-               (HOME_WIDTH / 2, HOME_HEIGHT + .008, -HOME_LENGTH / 2),
-               (HOME_WIDTH / 2, HOME_HEIGHT + .008, HOME_LENGTH / 2),
-               (-HOME_WIDTH / 2, HOME_HEIGHT + .008, HOME_LENGTH / 2)],
-              [home_side_photo.uv(HOME_START, HOME_TOP + 1),
-               home_side_photo.uv(HOME_END, HOME_TOP + 1),
-               home_side_photo.uv(HOME_END, HOME_TOP + 58),
-               home_side_photo.uv(HOME_START, HOME_TOP + 58)], 'side', (0, 1, 0))
-    roof_obj = roof.finish(prefix + ':roof', {'side': home_side_photo.material()})
+    roof_half_width = HOME_WIDTH / 2 + .2
+    roof_half_length = HOME_LENGTH / 2 + .2
+    ridge_y = HOME_WALL_HEIGHT + .34
+    roof_u0, roof_u1 = HOME_START, HOME_END
+    roof_v0, roof_v1 = HOME_TOP + 5, HOME_TOP + 53
+    # Repeat the photo strip in bounded UV sections; the image clamps outside
+    # 0..1, so a single extended range smears its edge colour.
+    u0, u1 = home_roof_photo.uv(roof_u0, roof_v0)[0], home_roof_photo.uv(roof_u1, roof_v0)[0]
+    v0, v1 = home_roof_photo.uv(roof_u0, roof_v0)[1], home_roof_photo.uv(roof_u0, roof_v1)[1]
+    # The photo carve's last wall voxel ends 3 cm below the table height.
+    # Lowering the eaves by that measured half-voxel makes the skin meet it.
+    wall_top = HOME_WALL_HEIGHT - .035
+    z0 = -roof_half_length
+    while z0 < roof_half_length - 1e-6:
+        z1 = min(z0 + 3.0, roof_half_length)
+        strip_u1 = u0 + (u1 - u0) * ((z1 - z0) / 3.0)
+        left_tex = [(u0, v0), (u0, v1), (strip_u1, v1), (strip_u1, v0)]
+        right_tex = [(u0, v1), (u0, v0), (strip_u1, v0), (strip_u1, v1)]
+        roof.face([(-roof_half_width, wall_top, z0), (0, ridge_y, z0),
+                   (0, ridge_y, z1), (-roof_half_width, wall_top, z1)],
+                  left_tex, 'side', (-1, 1, 0))
+        roof.face([(0, ridge_y, z0), (roof_half_width, wall_top, z0),
+                   (roof_half_width, wall_top, z1), (0, ridge_y, z1)],
+                  right_tex, 'side', (1, 1, 0))
+        z0 = z1
+    roof_obj = roof.finish(prefix + ':roof', {'side': home_roof_photo.material()})
     roof_obj.parent = home
     deck_parts.append(roof_obj)
 
@@ -896,6 +940,21 @@ print('deck-town every named piece bounds (game X,Y,Z):')
 for obj in deck_parts:
     print(obj.name, json.dumps(object_bounds([obj]), sort_keys=True))
 print('deck-town whole bounds (game X,Y,Z):', json.dumps(deck_bounds, sort_keys=True))
+for rail_name in ('deck-town:rail-long-1', 'deck-town:rail-long-2',
+                  'deck-town:rail-end-1', 'deck-town:rail-end-2'):
+    rail_bounds = object_bounds([bpy.data.objects[rail_name]])
+    rail_top = rail_bounds['max'][1] - rail_bounds['min'][1]
+    if abs(rail_top - RAIL_HEIGHT) > .02:
+        raise RuntimeError(f'{rail_name} top is {rail_top:.3f} m, expected {RAIL_HEIGHT:.1f} m')
+    if abs(rail_bounds['min'][1]) > .02:
+        raise RuntimeError(f'{rail_name} does not stand on the deck: {rail_bounds}')
+    print(f'{rail_name} height check: {rail_top:.3f} m above deck')
+for index, body in enumerate(home_objects[::2], 1):
+    roof_bounds = object_bounds([bpy.data.objects[f'deck-town:home-{index}:roof']])
+    body_bounds = object_bounds([body])
+    if abs(roof_bounds['min'][1] - body_bounds['max'][1]) > .025:
+        raise RuntimeError(f'home-{index} roof/wall contact gap: {roof_bounds["min"][1]} vs {body_bounds["max"][1]}')
+    print(f'deck-town:home-{index}:roof touches wall top at {body_bounds["max"][1]:.3f} m')
 if any(v < -15.5 or v > 15.5 for axis in (0,2) for v in (deck_bounds['min'][axis], deck_bounds['max'][axis])):
     raise RuntimeError('deck-town exceeds 4 x 4 cell footprint')
 
@@ -1010,6 +1069,7 @@ shot('deck-above', (0, 32, 0), deck_centre, 18)
 shot('deck-road', (-12, 8, -18), deck_centre, 15)
 shot('deck-far', (12, 8, 18), deck_centre, 15)
 shot('deck-mayor', (-62, 90, -62), deck_centre, 27)
+shot('deck-whole-side', (24, DECK_Y + 2.3, 0), deck_centre, 21)
 
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('*.png'))]}))
