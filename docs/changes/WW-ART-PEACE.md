@@ -24,3 +24,11 @@ The goggles are clear in the front view and remain visible from the front three-
 
 - Replaced the round-6 review note with this round-7 review note; the round-6 comparison sheet remains as prior evidence.
 - Temporary Blender renders, source captures, and test logs created for this round are removed from `.qa-dist/` before handoff.
+
+## Dust's tanker, rebuilt by Claude
+
+Every tanker number was measured again on the photos with a grid: the side photo is 1 cm a pixel, the end photos 8.36 mm a pixel, so the truck is 8.6 m long, 2.77 m wide and 3.2 m to the cab roof. The tank is an ellipse, as the rear photo draws it. The cloth is one draped surface on each side, the end photos close it, and the rear axle has two tyres a side. Each photo now has one embedded copy.
+
+### Removed
+
+The separate tarpaulin slabs, the overhead shell, the extra photo copies, the old tread patch for this truck, and `round-6.jpg`.
