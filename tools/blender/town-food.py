@@ -11,19 +11,21 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-6'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-7'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-6.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-7.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
 
 import bpy
+import numpy as np
 from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
+from photo_carve import carve_object
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -568,43 +570,153 @@ for z in (-1.05,.85):
 for x in (-1.8,1.8): beam(f'canteen:front-bumper-{x}',(x,.47,-1.57),(x,.47,-1.95),.085,mat['rusted-steel'])
 sign('canteen',(0,2.42,-1.63),'CANTEEN',2.0)
 
-# Market hall: mismatched 3x3 shed roof, with individual food counters under it.
-add_building('market-hall',(-18,0,14));ground_clutter('market-hall',0,0)
-for x in (-5.8,-3,0,3,5.8):
-    for z in (-5.8,0,5.8):
-        beam(f'market-hall:steel-column-{x}-{z}',(x,.12,z),(x,4.1,z),.14,mat['rusted-steel'])
-for x in (-5.8,-3,0,3,5.8):
-    beam(f'market-hall:front-truss-{x}',(x,3.92,-5.8),(x,4.25,0),.11,mat['rusted-steel'])
-    beam(f'market-hall:back-truss-{x}',(x,4.25,0),(x,3.92,5.8),.11,mat['rusted-steel'])
-for z in (-5.8,0,5.8): beam(f'market-hall:ridge-{z}',(-6,4.22,z),(6,4.22,z),.13,mat['rusted-steel'])
-for i in range(8):
-    x=-5.25+i*1.5
-    panel=tin_roof(f'market-hall:roof-bay-{i+1}',x,4.08,0,1.54,11.85,.015*(i%3-1))
-    panel.rotation_euler[0]=.075*((i%3)-1)
-    if i in (1,6):
-        # A gust-caught patch of old canvas sags over one torn bay.
-        patch_verts=[];patch_faces=[];n=8
-        for row,z in enumerate((-4.9,-1.4)):
-            for j in range(n+1):
-                xx=x-.70+1.4*j/n
-                yy=4.13-.10*(1-((xx-x)/.70)**2)+(0.025 if row else 0)
-                patch_verts.append((xx,yy,z))
-        for j in range(n): patch_faces.append((j,j+1,n+2+j,n+1+j))
-        mesh_object(f'market-hall:wind-sagged-canvas-{i+1}',patch_verts,patch_faces,mat['patched-canvas'],'canvas')
-# Canvas repair strips, solar sheet, water drum, dangling task lights and marked stalls.
-for i,x in enumerate((-4.5,-1.5,2.7),1):
-    box(f'market-hall:repair-patch-{i}',(x,4.17,-2.1+i*.8),(1.1,.06,1.3),mat['patched-canvas'],.03)
-for x in (-4.0,4.0):
-    cylinder(f'market-hall:roof-water-drum-{x}',(x,4.63,3.9),.40,.8,mat['rusted-steel'],14)
-for x in (-3.8,0,3.8):
-    beam(f'market-hall:lamp-chain-{x}',(x,3.95,-.8),(x,3.28,-.8),.028,mat['wire'])
-    sphere(f'market-hall:lamp-{x}',(x,3.17,-.8),(.16,.18,.16),mat['faded-hand-paint'],8,5)
-for i,(x,z) in enumerate(((-3.7,-3.1),(0,-3.1),(3.7,-3.1),(-3.7,3.0),(3.7,3.0)),1):
-    box(f'market-hall:stall-counter-{i}',(x,.93,z),(2.65,.22,1.5),mat['weathered-plank'],.05)
-    beam(f'market-hall:stall-post-left-{i}',(x-1.15,1.0,z),(x-1.15,3.15,z),.07,mat['rusted-steel'])
-    beam(f'market-hall:stall-post-right-{i}',(x+1.15,1.0,z),(x+1.15,3.15,z),.07,mat['rusted-steel'])
-    box(f'market-hall:stall-awning-{i}',(x,3.1,z),(2.65,.07,1.65),mat['patched-canvas'],.025)
-    box(f'market-hall:stock-crate-{i}',(x,1.23,z+.18),(1.1,.38,.62),mat['rusted-steel'],.05)
+# Market hall: keep the accepted patchwork roof, shorten the hall to its gable
+# span, and build the open steel frame, store, floor and two real stall rows.
+add_building('market-hall',(-18,0,14))
+MARKET_LENGTH = 9.45
+MARKET_PHOTO_LENGTH = 19.0     # side/top photos use the hall's original long-axis scale
+MARKET_HEIGHT = 4.20                 # 136 px side-photo door = about 2 m
+MARKET_WIDTH = 9.45                  # 1340 px gable span at the end-photo scale
+FLOOR_HALF = MARKET_WIDTH / 2 - .50
+MARKET_POST_Z = (-FLOOR_HALF, -1.95, .70, 3.25, FLOOR_HALF)
+MARKET_EAVE = 3.18
+MARKET_RIDGE = MARKET_HEIGHT - .10
+print(f'market-hall measured plan: width={MARKET_WIDTH:.2f} m depth={MARKET_LENGTH:.2f} m')
+if abs(MARKET_WIDTH-MARKET_LENGTH) > .25:
+    raise RuntimeError('market hall depth must follow the measured gable span')
+MARKET_SIDE = {'start': 52, 'end': 1363, 'ground': 387}
+MARKET_FRONT = {'centre': 800, 'ground': 720, 'top': 125}
+MARKET_REAR = {'centre': 800, 'ground': 720, 'top': 125}
+
+def market_keep(x, y, z):
+    # Keep the roof's full photo silhouette and narrow side-post traces. The
+    # store is rebuilt as its own solid room below so a detached room cannot
+    # become the photo carver's largest connected island.
+    posts = np.zeros_like(x, dtype=bool)
+    for post_z in MARKET_POST_Z:
+        posts |= (np.abs(np.abs(x)-FLOOR_HALF) < .25) & (np.abs(z-post_z) < .24)
+    in_short_plan = np.abs(z) < MARKET_LENGTH/2 + .08
+    return ((y > 2.55) | posts) & in_short_plan
+
+market_table = {
+    'photos': {'side': 'market-hall-side.jpg', 'front': 'market-hall-front.jpg',
+               'rear': 'market-hall-rear.jpg', 'top': 'market-hall-top.jpg'},
+    'length': MARKET_PHOTO_LENGTH, 'width': MARKET_WIDTH, 'height': MARKET_HEIGHT,
+    'side': MARKET_SIDE,
+    # Both end photos state their own measured roof-top pixel row.
+    'front': MARKET_FRONT, 'rear': MARKET_REAR,
+    'top': {'front': 60, 'rear': 1290, 'centre': 450, 'along': 'x',
+            'x_scale': MARKET_WIDTH / 780},
+    'cut': {'side': [(115, 190, 1125, 386)],
+            'front': [(145, 410, 950, 718)],
+            'rear': [(520, 410, 1325, 718)]},
+    'keep': market_keep, 'voxel': .06, 'target': 3600,
+    'grey': 26, 'tolerance': 38, 'bleed_tolerance': 42,
+    'mask_dir': str(evidence / 'market-masks'),
+}
+market_body = carve_object('market-hall:body', textures, market_table)
+market_root = building_roots['market-hall']
+market_body.parent = market_root
+export_objects.add(market_body)
+def market_box(name, center, size, material):
+    return keep(town.cube(name, center, size, material, 0), market_root)
+
+def market_beam(name, a, b, width, material):
+    va=town.game_vector(a);vb=town.game_vector(b);delta=vb-va
+    obj=town.cube(name,((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2),
+                  (width,delta.length,width),material,0)
+    obj.rotation_euler=delta.to_track_quat('Z','Y').to_euler()
+    return keep(obj,market_root)
+
+market_photos = market_table['_photos']
+hall_world_front = -MARKET_LENGTH / 2
+market_face_z = hall_world_front + .55
+market_end_scale = MARKET_HEIGHT / (MARKET_FRONT['ground'] - MARKET_FRONT['top'])
+stall_photo = Photo(textures / 'market-hall-front-stalls.jpg')
+stall_photo_material = stall_photo.material(.9)
+
+def photo_point(px, py, z):
+    return ((MARKET_FRONT['centre'] - px) * market_end_scale,
+            (MARKET_FRONT['ground'] - py) * market_end_scale, z)
+
+def pictured_quad(mesh, px0, py0, px1, py1, z, material, normal=(0,0,-1)):
+    # Front-face order keeps +X on the left side of the photograph.
+    points = [photo_point(px0,py0,z), photo_point(px1,py0,z),
+              photo_point(px1,py1,z), photo_point(px0,py1,z)]
+    uvs = [stall_photo.uv(px0,py0), stall_photo.uv(px1,py0),
+           stall_photo.uv(px1,py1), stall_photo.uv(px0,py1)]
+    mesh.face(points, uvs, material, normal)
+
+# Build three substantial stalls in each row, facing across a clear walkway.
+# Each stall wears a distinct crop from the reference stalls photograph.
+STALL_RECTS = ((145,292),(305,459),(473,628),(643,799),(815,962))
+STALL_AWNING = (402, 455)
+STALL_GOODS = (455, 566)
+STALL_BASE = (566, 720)
+market_box('market-hall:earth-floor',(0,.025,0),(MARKET_WIDTH+.30,.05,MARKET_LENGTH+.30),mat['sand'])
+
+# Steel posts at the ends and middle bays on all four sides. Their caps overlap
+# the carved eave so no column appears to stop short of the roof.
+post_points = [(x,z) for x in (-FLOOR_HALF,FLOOR_HALF) for z in MARKET_POST_Z]
+post_points.extend((x,z) for x in (-FLOOR_HALF,0,FLOOR_HALF) for z in (-FLOOR_HALF,FLOOR_HALF)
+                   if abs(x) < FLOOR_HALF)
+for index,(x,z) in enumerate(post_points,1):
+    top=MARKET_RIDGE if abs(x)<.01 else MARKET_EAVE
+    market_beam(f'market-hall:frame-post-{index}',(x,.05,z),(x,top,z),.12,mat['rusted-steel'])
+    market_box(f'market-hall:post-foot-{index}',(x,.12,z),(.28,.14,.28),mat['rusted-steel'])
+    market_box(f'market-hall:post-cap-{index}',(x,top-.04,z),(.27,.20,.27),mat['rusted-steel'])
+for x,top in ((-FLOOR_HALF,MARKET_EAVE),(FLOOR_HALF,MARKET_EAVE),(0,MARKET_RIDGE)):
+    market_beam(f'market-hall:side-beam-{x}',(x,top,-FLOOR_HALF),(x,top,FLOOR_HALF),.09,mat['rusted-steel'])
+for z in MARKET_POST_Z:
+    market_beam(f'market-hall:rafter-left-{z}',(-FLOOR_HALF,MARKET_EAVE,z),(0,MARKET_RIDGE,z),.09,mat['rusted-steel'])
+    market_beam(f'market-hall:rafter-right-{z}',(0,MARKET_RIDGE,z),(FLOOR_HALF,MARKET_EAVE,z),.09,mat['rusted-steel'])
+
+# A real one-bay room occupies the road-side corner of the roof.
+market_box('market-hall:store-floor',(3.15,.09,-3.10),(2.15,.12,2.05),mat['cracked-concrete'])
+for x in (2.12,4.18):
+    market_box(f'market-hall:store-side-{x}',(x,1.55,-3.10),(.10,3.0,2.10),mat['galvanised-tin'])
+for z in (-2.08,-4.14):
+    market_box(f'market-hall:store-end-{z}',(3.15,1.55,z),(2.10,3.0,.10),mat['galvanised-tin'])
+market_box('market-hall:store-door',(3.13,1.11,-4.18),(.95,2.12,.09),mat['weathered-plank'])
+for x in (2.62,3.64): market_beam(f'market-hall:store-door-jamb-{x}',(x,.05,-4.10),(x,2.25,-4.10),.07,mat['rusted-steel'])
+market_beam('market-hall:store-door-lintel',(2.62,2.25,-4.10),(3.64,2.25,-4.10),.07,mat['rusted-steel'])
+
+for row, (x_center, facing) in enumerate(((-1.72,1),(1.72,-1)),1):
+    for position, z_center in enumerate((-1.0,1.1,3.2),1):
+        stall_index=(row-1)*3+position
+        px0,px1=STALL_RECTS[(position+row-2)%len(STALL_RECTS)]
+        stall_width=1.42; depth=1.10; height=2.25
+        front_x=x_center+facing*depth/2
+        back_x=x_center-facing*depth/2
+        # Textured face crops carry each stall's own goods. Counters, side
+        # cheeks, back shelves, support legs and awning are solid geometry.
+        def stall_photo_panel(label, py0, py1, bottom, top_y):
+            crop=PhotoMesh()
+            points=[(front_x,bottom,z_center-stall_width/2),(front_x,bottom,z_center+stall_width/2),
+                    (front_x,top_y,z_center+stall_width/2),(front_x,top_y,z_center-stall_width/2)]
+            if facing < 0: points=list(reversed(points))
+            crop.face(points,[stall_photo.uv(px0,py0),stall_photo.uv(px1,py0),
+                              stall_photo.uv(px1,py1),stall_photo.uv(px0,py1)],
+                      'photo',out=(facing,0,0))
+            face=crop.finish(f'market-hall:stall-{stall_index}-{label}',{'photo':stall_photo_material})
+            face.parent=market_root;export_objects.add(face)
+        stall_photo_panel('goods-face',STALL_GOODS[0],STALL_GOODS[1],1.09,2.16)
+        stall_photo_panel('base-face',STALL_BASE[0],STALL_BASE[1],.22,.97)
+        market_box(f'market-hall:stall-{stall_index}-counter',(x_center,1.03,z_center),(depth+.14,.12,stall_width+.08),mat['weathered-plank'])
+        market_box(f'market-hall:stall-{stall_index}-shelf',(back_x,1.52,z_center),( .12,.10,stall_width-.10),mat['weathered-plank'])
+        for side,z in (('left',z_center-stall_width/2+.06),('right',z_center+stall_width/2-.06)):
+            for end,x in (('front',front_x),('rear',back_x)):
+                market_beam(f'market-hall:stall-{stall_index}-{side}-{end}-leg',(x,0,z),(x,2.12,z),.06,mat['rusted-steel'])
+        # The canvas roof projects toward the central aisle and is carried by
+        # rusted arms. A reverse facing ensures the opposite row mirrors it.
+        awning_outer=x_center+facing*(depth/2+.78)
+        awning_inner=front_x
+        awning=market_box(f'market-hall:stall-{stall_index}-awning',
+                   ((awning_outer+awning_inner)/2,2.20,z_center),(abs(awning_outer-awning_inner),.09,stall_width+.12),
+                   mat['patched-canvas'])
+        for side,z in (('left',z_center-stall_width/2+.08),('right',z_center+stall_width/2-.08)):
+            market_beam(f'market-hall:stall-{stall_index}-{side}-awning-arm',
+                 (front_x,2.17,z),(awning_outer,2.11,z),.045,mat['rusted-steel'])
 
 # Normalize every picture coordinate layer before export: each mesh must be TEXCOORD_0 only.
 for obj in export_objects:
@@ -619,6 +731,86 @@ for material in bpy.data.materials:
 for photo in (front,left,overhead,wall_photo):
     photo.image.scale(256,192)
     photo.image.pack()
+for photo in (*market_photos.values(), stall_photo):
+    ratio = photo.w / photo.h
+    if ratio >= 1:
+        size = (256, round(256 / ratio))
+    else:
+        size = (round(256 * ratio), 256)
+    photo.image.scale(*size)
+    photo.image.pack()
+
+# Print and check every market piece in local game axes. Supports run from the
+# floor to the eaves, stalls stand on the concrete/earth and awnings touch arms.
+bpy.context.view_layer.update()
+market_parts = [obj for obj in export_objects
+                if obj.type == 'MESH' and obj.name.startswith('market-hall:')]
+market_bounds = []
+def market_world_bounds(obj):
+    corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    xs = [point.x - market_root.location.x for point in corners]
+    ys = [point.z - market_root.location.z for point in corners]
+    zs = [-(point.y - market_root.location.y) for point in corners]
+    return min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)
+market_bounds_by_name = {}
+for obj in market_parts:
+    min_x,max_x,min_y,max_y,min_z,max_z=market_world_bounds(obj)
+    bounds = {'piece': obj.name,
+              'x': [round(min_x,3),round(max_x,3)],
+              'y': [round(min_y,3),round(max_y,3)],
+              'z': [round(min_z,3),round(max_z,3)]}
+    print('market-hall piece bounds:', json.dumps(bounds, sort_keys=True))
+    if min_x < -11.5 or max_x > 11.5 or min_z < -11.5 or max_z > 11.5:
+        raise RuntimeError(f"{obj.name} lies outside its 3x3 footprint")
+    if min_y < -.10:
+        raise RuntimeError(f"{obj.name} falls below the ground")
+    if obj.name == 'market-hall:earth-floor' and abs(min_y) > .01:
+        raise RuntimeError('market-hall floor does not touch the ground')
+    if obj.name == 'market-hall:store-floor' and abs(min_y-.03) > .04:
+        raise RuntimeError('market store floor does not join the hall floor')
+    if 'stall-' in obj.name and obj.name.endswith('-leg'):
+        if abs(min_y) > .01:
+            raise RuntimeError(f"{obj.name} does not touch the hall floor")
+    market_bounds.append(bounds)
+    market_bounds_by_name[obj.name]=(min_x,max_x,min_y,max_y,min_z,max_z)
+
+# Explicit pair checks for the important physical joins.
+body_top=max(market_world_bounds(part)[3] for part in market_parts if part.name == 'market-hall:body')
+def bounds_touch(a,b,axis_tolerance=.002):
+    return all(max(a[axis*2],b[axis*2]) <= min(a[axis*2+1],b[axis*2+1])+axis_tolerance for axis in range(3))
+floor_bounds=market_bounds_by_name['market-hall:earth-floor']
+roof_bounds=market_bounds_by_name['market-hall:body']
+if floor_bounds[0] > roof_bounds[0] or floor_bounds[1] < roof_bounds[1] or floor_bounds[4] > roof_bounds[4] or floor_bounds[5] < roof_bounds[5]:
+    raise RuntimeError('market-hall earth floor does not cover the roof footprint')
+for index in range(1,13):
+    post=f'market-hall:frame-post-{index}'
+    if not bounds_touch(market_bounds_by_name[post],floor_bounds):
+        raise RuntimeError(f"{post} does not touch the floor")
+for part in market_parts:
+    if part.name.startswith('market-hall:store-') and part.name not in ('market-hall:store-floor','market-hall:store-door-lintel'):
+        if not bounds_touch(market_bounds_by_name[part.name],floor_bounds):
+            raise RuntimeError(f"{part.name} does not meet the hall floor")
+for index in range(1,7):
+    counter=market_bounds_by_name[f'market-hall:stall-{index}-counter']
+    legs=[part for part in market_parts if part.name.startswith(f'market-hall:stall-{index}-') and part.name.endswith('-leg')]
+    if len(legs)!=4 or any(not bounds_touch(market_bounds_by_name[part.name],counter) for part in legs):
+        raise RuntimeError(f'market-hall stall {index} counter does not meet all four legs')
+for obj in market_parts:
+    if obj.name.startswith('market-hall:frame-post-'):
+        mnx,mxx,mny,mxy,mnz,mxz=market_world_bounds(obj)
+        target_top=MARKET_RIDGE if abs((mnx+mxx)/2)<.1 else MARKET_EAVE
+        if mny > .10 or mxy < target_top-.05 or body_top < 3.8:
+            raise RuntimeError(f"{obj.name} does not bridge ground and roof")
+    if obj.name.endswith('-goods-face') or obj.name.endswith('-base-face'):
+        index=obj.name.split('-')[2]
+        counter=market_bounds_by_name[f'market-hall:stall-{index}-counter']
+        if not bounds_touch(market_bounds_by_name[obj.name],counter):
+            raise RuntimeError(f"{obj.name} does not touch its counter")
+    if obj.name.startswith('market-hall:stall-') and obj.name.endswith('-awning'):
+        index=obj.name.rsplit('-',2)[1]
+        arms=[part for part in market_parts if part.name.startswith(f'market-hall:stall-{index}-') and part.name.endswith('-awning-arm')]
+        if len(arms)!=2 or any(not bounds_touch(market_bounds_by_name[part.name],market_bounds_by_name[obj.name]) for part in arms):
+            raise RuntimeError(f"{obj.name} is not joined to both awning arms")
 
 out.parent.mkdir(parents=True,exist_ok=True)
 blend.parent.mkdir(parents=True,exist_ok=True)
@@ -646,6 +838,7 @@ def area(name, loc, power, size):
     data=bpy.data.lights.new(name,'AREA');data.energy=power;data.shape='DISK';data.size=size
     obj=bpy.data.objects.new(name,data);scene.collection.objects.link(obj);obj.location=loc;obj.rotation_euler=(Vector((6,1,-1))-obj.location).to_track_quat('-Z','Y').to_euler()
 area('bright overcast key',(3,18,9),750,48);area('soft sky fill',(-8,16,5),650,44)
+area('open aisle bounce',(0,8,5),450,8)
 ground_material=simple('review ground / neutral',(.255,.245,.225),.94)
 ground_nodes=ground_material.node_tree.nodes;ground_nodes.clear();ground_links=ground_material.node_tree.links
 ground_output=ground_nodes.new('ShaderNodeOutputMaterial');ground_emission=ground_nodes.new('ShaderNodeEmission')
@@ -657,25 +850,27 @@ def under(obj, ancestor):
         if obj == ancestor: return True
         obj = obj.parent
     return False
-soup_root = next(obj for obj in bpy.context.scene.objects if obj.name == 'soup-kitchen')
+market_root = next(obj for obj in bpy.context.scene.objects if obj.name == 'market-hall')
 for obj in scene.objects:
-    if obj.type not in ('CAMERA','LIGHT') and obj.name != 'review ground' and not under(obj,soup_root):
+    if obj.type not in ('CAMERA','LIGHT') and obj.name != 'review ground' and not under(obj,market_root):
         obj.hide_render=True
 next(obj for obj in scene.objects if obj.name == 'review ground').hide_render=True
-members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,soup_root)]
+members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,market_root)]
 corners=[obj.matrix_world @ Vector(corner) for obj in members for corner in obj.bound_box]
 lo=Vector((min(p.x for p in corners),min(p.y for p in corners),min(p.z for p in corners)))
 hi=Vector((max(p.x for p in corners),max(p.y for p in corners),max(p.z for p in corners)))
 target=(lo+hi)*.5
-key=scene.objects['bright overcast key'];key.location=target+Vector((-4,7,8));key.data.energy=500;key.data.size=20
+key=scene.objects['bright overcast key'];key.location=target+Vector((-5,9,12));key.data.energy=900;key.data.size=18
 key.rotation_euler=(target-key.location).to_track_quat('-Z','Y').to_euler()
-fill=scene.objects['soft sky fill'];fill.location=target+Vector((6,4,6));fill.data.energy=450;fill.data.size=24
+fill=scene.objects['soft sky fill'];fill.location=target+Vector((8,4,7));fill.data.energy=600;fill.data.size=24
 fill.rotation_euler=(target-fill.location).to_track_quat('-Z','Y').to_euler()
-ground_data=bpy.data.meshes.new('soup kitchen review ground mesh')
+aisle=scene.objects['open aisle bounce'];aisle.location=target+Vector((0,4,2));aisle.data.energy=450;aisle.data.size=7
+aisle.rotation_euler=(target-aisle.location).to_track_quat('-Z','Y').to_euler()
+ground_data=bpy.data.meshes.new('market hall review ground mesh')
 ground_data.from_pydata(((lo.x-30,lo.y-30,lo.z-.08),(hi.x+30,lo.y-30,lo.z-.08),
                          (hi.x+30,hi.y+30,lo.z-.08),(lo.x-30,hi.y+30,lo.z-.08)),[],[(0,1,2,3)])
 ground_data.materials.append(ground_material)
-review_ground=bpy.data.objects.new('soup kitchen review ground',ground_data);scene.collection.objects.link(review_ground)
+review_ground=bpy.data.objects.new('market hall review ground',ground_data);scene.collection.objects.link(review_ground)
 def render_match(name, camera_loc, up, ortho):
     camera_data=bpy.data.cameras.new(name);camera_data.type='ORTHO';camera_data.ortho_scale=ortho
     camera=bpy.data.objects.new(name,camera_data);scene.collection.objects.link(camera);camera.location=camera_loc
@@ -683,9 +878,13 @@ def render_match(name, camera_loc, up, ortho):
     true_up=right.cross(direction).normalized()
     camera.rotation_euler=Matrix((right,true_up,-direction)).transposed().to_quaternion().to_euler();scene.camera=camera
     scene.render.filepath=str(evidence/(name+'.png'));bpy.ops.render.render(write_still=True)
-render_match('soup-model-front',target+Vector((0,9,0)),Vector((0,0,1)),4.3)
-render_match('soup-left-three-quarter',target+Vector((-5,5,3.5)),Vector((0,0,1)),7.5)
-render_match('soup-right-three-quarter',target+Vector((5,5,3.5)),Vector((0,0,1)),7.5)
-render_match('soup-look-into-bay',target+Vector((-2.5,4,-.3)),Vector((0,0,1)),6.4)
-render_match('soup-mayor-view',target+Vector((0,9,9)),Vector((0,0,1)),8.0)
-print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),'evidence':str(evidence)}))
+render_match('model-front',target+Vector((0,18,3)),Vector((0,0,1)),13)
+render_match('model-side',target+Vector((18,0,3)),Vector((0,0,1)),13)
+render_match('model-rear',target+Vector((0,-18,3)),Vector((0,0,1)),13)
+render_match('model-top',target+Vector((0,0,18)),Vector((0,1,0)),13)
+render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
+render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
+render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
+render_match('market-mayor',target+Vector((0,19,13)),Vector((0,0,1)),16)
+print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),
+                  'evidence':str(evidence),'market_pieces':market_bounds}))

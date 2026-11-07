@@ -145,6 +145,36 @@ Blender-packed material picture derived from `canvas-patched-cream.jpg` above. T
 
 # Wasteland town machine texture credits
 
+## TOWN-ART-TRUCKS-2, dozer photo views (round 1)
+
+Generated with OpenAI built-in image generation on 6 November 2026. The four
+view crops below are original photo-style modeling references. Blender reads
+the measured views directly and embeds them as JPEG pictures in `trucks-2.glb`.
+They are not third-party photos or licensed scans.
+
+- `town-trucks-2-dozer-side.jpg`
+- `town-trucks-2-dozer-front.jpg`
+- `town-trucks-2-dozer-rear.jpg`
+- `town-trucks-2-dozer-overhead.jpg`
+
+Exact prompt: “Create a realistic photographic orthographic reference sheet
+for an original rugged wasteland wheeled bulldozer, photographed in flat bright
+overcast daylight on a seamless pale neutral grey studio ground, no labels or
+text. Four separate large orthographic views in a clean 2x2 grid, each showing
+the exact same machine: left side, front, rear, overhead. This is a real heavy
+construction machine about 5.8 m long, 2.6 m wide and 3.2 m tall. Four huge
+black rubber block-tread tires, two axles, a long low steel frame, tall closed
+cab with broad dark glazing and thin steel pillars, exhaust stack, front
+hydraulic arms and a very wide deeply curved welded steel dozer blade with
+thick rolled cutting edge and visible reinforcement ribs. The blade is dirty
+dark desaturated ochre paint over steel, chipped to deep brown rust on edges,
+rubbed bare metal cutting lip, dusty lower panels, streaks below welds and
+bolts. Cab and chassis are faded military olive drab with hand-repaired
+mismatched panels and real weld seams, no logos, no guns, no spikes. Real
+proportions and believable engineering, handmade repairs, used and dusty,
+absolutely photoreal materials, crisp visible outlines, evenly lit, no dramatic
+shadows, no perspective distortion, no toys, no illustration, no concept art.”
+
 ## dirt.jpg — TOWN-ART-DOME round 4
 
 Generated with OpenAI image generation on 6 November 2026 for the Scrapdome
@@ -355,6 +385,19 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
 
+## TOWN-ART-TRUCKS-2, round 2: ambulance and Mrs Vane's trucks
+
+Generated with OpenAI built-in image generation on 6 November 2026. Each truck's four orthographic crops are retained in this folder and embedded in `trucks-2.glb` as its photo-carving and projection sources. The source sheets remain outside the repository. All designs are original and have no manufacturer branding.
+
+- Ambulance crops: `town-trucks-2-ambulance-side.jpg`, `town-trucks-2-ambulance-front.jpg`, `town-trucks-2-ambulance-rear.jpg`, `town-trucks-2-ambulance-overhead.jpg`.
+- Vane truck crops: `town-trucks-2-vane-truck-side.jpg`, `town-trucks-2-vane-truck-front.jpg`, `town-trucks-2-vane-truck-rear.jpg`, `town-trucks-2-vane-truck-overhead.jpg`.
+- Vane escort crops: `town-trucks-2-vane-escort-side.jpg`, `town-trucks-2-vane-escort-front.jpg`, `town-trucks-2-vane-escort-rear.jpg`, `town-trucks-2-vane-escort-overhead.jpg`.
+
+Ambulance prompt: "Create one clean 2x2 contact sheet showing the exact same entire original 1970s high-roof ambulance van in four dead-on orthographic views: left side, front, rear, overhead with nose toward top. About 5.2 m long, 2.0 m wide, 2.5 m high; rounded metal body, curved hood and roof, realistic cab windows and rear box, four large road tires, roof rack with stretcher rails, one mismatched side door, hand-painted white body with a faded red stripe and small red cross emblem. Plain pale neutral gray seamless floor/background, bright flat overcast daylight, realistic dusty paint, rust around seams, dark rubber and glass. Same coherent vehicle and proportions in every view. No perspective, no other objects, no people, no labels, no brand names, no watermark, no crops."
+
+Vane truck prompt: "Create one photorealistic orthographic 2x2 modeling reference sheet showing the exact same original spotless white medium delivery box truck in left side, front, rear, and true overhead views, nose toward top. About 6.2 m long, 2.3 m wide, 3.2 m high, curved-corner cab and cargo box, four road wheels, clean white panels, one large cobalt-blue water droplet emblem on the box side only, no words or logos. Lower 40 cm has subtle sandblasted matte wear; upper paint remains pristine white. Plain pale neutral gray seamless floor, bright even flat overcast light. No perspective, extra objects, people, text, watermark."
+
+Vane escort prompt: "Create one photorealistic modeling contact sheet in a clean 2x2 grid with the exact same original white armored escort pickup in four dead-on orthographic views: left side, front, rear, true overhead with front toward top. Entire 5.1 m long, 2.1 m wide, 2.0 m high rugged crew-cab pickup; rounded white armored doors and fenders, four large off-road tires, blue emergency beacons on roof, clean compact roof gun on a small fixed mount, no people and no visible ammunition. White paint, crisp blue lamps, slight dust low on rocker panels, dark window glass, realistic metal seams, no logo or writing. Plain pale neutral gray studio floor/background, bright even overcast light. No perspective, extra objects, text, watermark."
 Crusher reference views generated with OpenAI image generation on 6 November 2026 from an original prompt written for TOWN-ART-PLANTS round 3. The fictional unbranded portable jaw crusher is used only as a modelling reference; four 1024 px crops and measured grid versions are included here.
 ## TOWN-ART-FOOD soup kitchen photo references
 
@@ -398,6 +441,43 @@ Prompt: A photographic orthographic 2x2 reference sheet of one original 24 by 24
 Generated with Codex Image Generation on 6 November 2026. The compressed front and overhead views are cropped from one four-view reference. The front is traced into the open-bay face; the overhead view covers the roof-facing view. Original output remains outside the repository.
 
 Prompt: Photorealistic orthographic 2x2 reference sheet of one original 24m wide by 16m deep desert repair workshop, same building in all views: front elevation top left, right side top right, rear bottom left, straight-down overhead plan bottom right. Dead-on views, even pale background. Low long industrial shed built from dark stained timber and mismatched rusted corrugated tin, three open bays, strong steel roof trusses, bent gutters, visible clerestory panels and several irregular roof repairs. In the central bay a worn red 1970s utility car sits on a real two-post lift with wheels just off the ground; black dusty tyres stacked beside the wall, tool benches and a hanging work lamp. Realistic thin beams, bracing and open doors, no giant blank panels. Faded paint under dark brown rust, grime low down and dusty sand. Bright flat overcast daylight, natural photographic details. Whole subject inside every panel, no text, logos, labels, or people.
+# WW-ART-PEACE photo references
+
+## WW-ART-PEACE vehicles, 6 November 2026
+
+Generated with OpenAI built-in image generation as four-view orthographic
+turnarounds of original fictional vehicles. Each view was cropped from its
+matching generated turnaround and saved as a JPEG source for the Blender recipe.
+
+- `peace-sal-pipe-trailer-side.jpg`, `peace-sal-pipe-trailer-front.jpg`,
+  `peace-sal-pipe-trailer-rear.jpg`, `peace-sal-pipe-trailer-overhead.jpg` —
+  rusty pickup and sagging pipe trailer, clean bright pipe ends.
+- `peace-dust-tanker-side.jpg`, `peace-dust-tanker-front.jpg`,
+  `peace-dust-tanker-rear.jpg`, `peace-dust-tanker-overhead.jpg` — battered
+  tanker with painted goggles and a tied tarp.
+- `peace-mirage-caravan-side.jpg`, `peace-mirage-caravan-front.jpg`,
+  `peace-mirage-caravan-rear.jpg`, `peace-mirage-caravan-overhead.jpg` — old
+  caravan with a dummy in a large hat at its window.
+
+No third-party photographs, marks, brands or logos were used.
+
+Generated with the built-in OpenAI image generator on 6 November 2026. The originals remain in the Codex generated-images library; the game sources below are compressed JPEG copies.
+
+- `peace-toll-cabinet-front.jpg`, `peace-toll-cabinet-side.jpg` — dead-on front and left-side photos of a dented steel filing cabinet with one drawer open and stuffed with old folders. Generated for the Toll cabinet; no people, brands or third-party material.
+- `peace-bound-sign-front.jpg` — dead-on hand-painted warning sign with the exact words `DO NOT DIG HERE` on three lines. Generated as an original desert prop photo; no third-party material.
+- `peace-bound-stone-front.jpg`, `peace-bound-stone-side.jpg` — dead-on front and side photos of a squat, layered desert boundary stone. The front has a carved smiley above crossed digging tools; the back and side are unmarked stone.
+- `peace-decoy-tent-front.jpg` — a painted full-frame scene of a large army tent on a plain board. Generated as original art for the Mirage decoy; no people, lettering, brands or third-party material.
+- `peace-decoy-oasis-overhead.jpg` — dead-on overhead photo of a blue, patched tarp with four pegs, guy lines, lifted corners and an amateur painted palm. Generated as an original prop reference; no third-party material.
+
+- `peace-billboard-front.jpg` — professional painted Treatment Plant billboard, frontal view. Prompt: straight-on full-frame photograph of an 8 m by 3 m roadside wooden billboard carrying a beautiful hand-painted public works illustration of blue water tanks, white pipes and green lawn, flat overcast light, pale background, no words.
+- `peace-billboard-back.jpg` — rough timber back and two poles of an 8 m by 3 m billboard. Prompt: straight-on full-frame back view, rough dark aged battens, nails, braces, splintered ends and dust, plain pale background, overcast light.
+- `peace-billboard-side.jpg` — exact edge-on side photo of the same billboard, showing the thin sign and poles. Prompt: strict side elevation of an 8 m by 2.65 m board, 15 cm deep, with two rough poles, entire 4.7 m structure in frame, plain pale background and flat overcast light.
+- `peace-turret-side.jpg`, `peace-turret-top.jpg` — three views cropped from one generated contact sheet. Prompt: same pristine polished silver turret on circular base with three oversized bolts, side/front/overhead triptych, pale background, overcast light.
+- `peace-rock-scarred.jpg` — natural 3 m granite boulder with bullet scars on the visible side. Prompt: realistic gray-brown fractured granite, several impact pits and chips on one broad side, full object, straight-on, pale background, flat overcast light.
+- `peace-rock-untouched.jpg` — opposite-side reference of a matching untouched granite boulder. Prompt: same-sized natural gray-brown granite boulder, untouched side, full object, straight-on, pale background, flat overcast light.
+- `peace-chair-side.jpg` — four views cropped from one generated contact sheet. Prompt: the exact same dentist chair in four strict orthographic directions, side/front/rear/overhead; nearly vertical padded backrest, horizontal seat, steel hydraulic pedestal, rusty truck fender legs, thin articulated drill arm on viewer's right, round overhead lamp; 3 m high, fully in frame; pale background and flat overcast light.
+
+Images are generated original artwork. No external source material was used.
 ## TOWN-ART-WALKERS, round 3
 
 The following four small photo sets are original OpenAI ImageGen turnarounds,
@@ -612,3 +692,17 @@ Generated with the built-in OpenAI ImageGen tool on 7 November 2026 after the in
 
 - `hermit-hut-front-gable-v2.jpg`
 - `hermit-hut-rear-gable-v2.jpg`
+## WW-ART-PEACE Mirage camp, 7 November 2026
+
+Generated with OpenAI image generation as seven original product-photo references: a matching tent side, front and true overhead view, plus straight side views of a folding chair, a camp stove with kettle, a water can, and a crate with tin mug. The tent images share the same tent identity. Flat pale studio backgrounds, no labels, brands or third-party material.
+
+## WW-ART-PEACE Magnus crane references, 7 November 2026
+
+Generated with OpenAI built-in image generation as six original documentary-style product photo references: crawler crane body side, front, rear and overhead views; one detached lattice boom side view; and one rusty corrugated roof sheet. Original PNG outputs remain in the generated-images folder. The six JPEGs below are converted copies; no external source photos were used.
+
+- `peace-magnus-crane-side.jpg` — the boomless crawler crane body, true side view.
+- `peace-magnus-crane-front.jpg` — the same type of body, front end view.
+- `peace-magnus-crane-rear.jpg` — rear end view.
+- `peace-magnus-crane-top.jpg` — directly overhead body view.
+- `peace-magnus-crane-boom.jpg` — detached open lattice boom, side view.
+- `peace-magnus-crane-roof.jpg` — one rusty corrugated tin sheet, overhead view.

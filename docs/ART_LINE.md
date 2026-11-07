@@ -94,6 +94,15 @@ stop adjusting and change the method.
   column; check the crop against the source photo before carving. A swapped
   crop can turn a mirror or the background into floating geometry.
 
+- **A tank under a tied cloth** (Dust's tanker, 6 November). Turn the tank and dress it with the side
+  photo laid straight on, so that it shows bare metal where the canvas stops. Build the cloth as one
+  draped surface from its hanging edge up to the crown, drawn in to the tank at that edge. Close the
+  ends with the end photos as thin traced plates. Flat slabs of cloth standing beside a tank fail from
+  every angle. See `town-peace-props.py`.
+- **Choosing a vehicle's size.** Measure the same height on the side and front photos. Their ratio
+  gives the width that goes with a length. The tanker's invented 11.2 m made its end photos 40% too
+  narrow for its height, which squashed the goggles and tilted the look of everything.
+
 ### Buildings
 
 - **A carve fills everything,** so an open building comes out a solid box with a picture on its front: it looks right head on and false from any angle. Cut the open bay out with a `keep` box and stand its contents in it as their own pieces.
@@ -122,6 +131,10 @@ stop adjusting and change the method.
   person, or a part not joined. Use `largest_part` and check all views.
 
 ### Placement and export
+
+- **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
+- **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
+- **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.

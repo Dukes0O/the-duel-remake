@@ -55,6 +55,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/sample.glb'],budget:15000,maxBytes:2500000},
   {id:'town-trucks-1',script:'tools/blender/town-trucks-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/trucks-1.glb'],budget:48000,maxBytes:8000000},
+  {id:'town-trucks-2',script:'tools/blender/town-trucks-2.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/town/trucks-2.glb'],budget:48000,maxBytes:3000000},
   {id:'town-stages',script:'tools/blender/town-stages.py',args:[],candidate:true,evidence:'.evidence/2026-11-06/TOWN-ART-STAGES/round-5',
     glb:['public/assets/models/wasteland/town/stages.glb'],budget:60000,maxBytes:3000000},
 
@@ -107,6 +109,12 @@ const generators = [
   { script: 'tools/blender/scablands-boneyard.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/boneyard.glb'] },
   { script: 'tools/blender/crew-favours.py', args: [], candidate: true, budget: 40000, maxBytes: 4*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/crew-favours.glb'] },
+  { script: 'tools/blender/town-peace-props.py', args: [], candidate: true, budget: 40000, maxBytes: 3*1024*1024,
+    glb: ['public/assets/models/wasteland/town/peace-props.glb'] },
+  { script: 'tools/blender/town-peace-camp.py', args: [], candidate: true, budget: 20000, maxBytes: 2_000_000,
+    glb: ['public/assets/models/wasteland/town/peace-camp.glb'] },
+  { script: 'tools/blender/town-peace-crane.py', args: [], candidate: true, budget: 25000, maxBytes: 2_500_000,
+    glb: ['public/assets/models/wasteland/town/peace-crane.glb'] },
   { script: 'tools/blender/sea-works.py', args: ['--through', 'causeway-arch'], candidate: true, budget: 50000, maxBytes: 3*1024*1024,
     glb: ['public/assets/models/wasteland/scablands/sea-works.glb'] },
   { script: 'tools/blender/scablands-folk.py', args: ['--round', '2'], glb: ['public/assets/models/wasteland/scablands/folk.glb'], budget: 56000 },
@@ -705,6 +713,26 @@ try {
       }
       const maxBytes = generator.maxBytes ?? 2_500_000;
       assert.ok(bytes.length <= maxBytes, `${bytes.length} bytes exceeds ${maxBytes} bytes`);
+      if (generator.script === 'tools/blender/town-peace-props.py') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        for (const root of ['toll-cabinet', 'bound-sign', 'bound-stone',
+          'mirage-decoy-tent', 'mirage-decoy-oasis', 'sal-pipe-trailer', 'dust-tanker']) {
+          assert.ok(names.has(root), `missing named prop root ${root}`);
+        }
+        for (const part of ['toll-cabinet:open-drawer-box', 'bound-sign:hand-painted-board',
+          'bound-stone:smiley-crossed-tools-marker', 'mirage-decoy-tent:smaller-rear-board',
+          'mirage-decoy-oasis:traced-thin-tarpaulin', 'mirage-decoy-oasis:lifted-corner-1',
+          'mirage-decoy-oasis:rusty-peg-1', 'mirage-decoy-oasis:guy-line-1',
+          'sal-pipe-trailer:pickup-body', 'sal-pipe-trailer:photographed-pipe-stack',
+          'sal-pipe-trailer:frame-rail-left-1', 'sal-pipe-trailer:pickup-wheel-front-left',
+          'sal-pipe-trailer:trailer-wheel-1-left',
+          'dust-tanker:photo-carved-cab', 'dust-tanker:photo-turned-fuel-tank',
+          'dust-tanker:tied-tarpaulin-left', 'dust-tanker:tied-tarpaulin-right',
+          'dust-tanker:wheel-front-left', 'dust-tanker:wheel-rear-right',
+          'dust-tanker:traced-frame-rail-left']) {
+          assert.ok(names.has(part), `missing named prop part ${part}`);
+        }
+      }
       if (generator.id === 'town-stages') {
         const names = gltf.nodes.map(node => node.name || '');
         assert.ok(names.includes('town-stages'), 'named family root');
@@ -1177,6 +1205,88 @@ try {
       const triangles = countTruck(id);
       assert.ok(triangles > 500 && triangles <= 12_000, `${id}: ${triangles} triangles`);
     }
+    } finally {
+      rmSync(modelPath, { force: true });
+    }
+  });
+  check('TOWN-ART-TRUCKS-2 round 2 reads back all four photo-carved trucks and their named parts', () => {
+    const candidateSuffix = `-readback-${process.pid}-${randomUUID()}`;
+    const modelPath = join(root, '.qa-dist/art-candidates', `town-trucks-2${candidateSuffix}.glb`);
+    try {
+      const blender = process.env.BLENDER_BIN ||
+        'C:/Users/kyleb/AppData/Local/Programs/Blender/current/blender.exe';
+      const build = spawnSync(blender, ['-b', '--python-exit-code', '1', '--python',
+        join(root, 'tools/blender/town-trucks-2.py'), '--', '--root', root, '--export-only',
+        `--candidate-suffix=${candidateSuffix}`],
+      { cwd: root, encoding: 'utf8', windowsHide: true, timeout: 300000, maxBuffer: 8 * 1024 * 1024 });
+      assert.equal(build.error, undefined, build.error?.message);
+      assert.equal(build.status, 0, `town-trucks-2 candidate build failed: ${(build.stderr || build.stdout || '').slice(-4000)}`);
+      assert.ok(existsSync(modelPath), 'fresh dozer candidate build must produce the GLB before readback');
+      const bytes = readFileSync(modelPath);
+      assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
+      assert.equal(bytes.readUInt32LE(8), bytes.length);
+      assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+      const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+      const names = gltf.nodes.map(node => node.name || '');
+      for (const name of ['town-trucks-2', 'dozer', 'dozer:body', 'dozer:blade',
+        'dozer:spin-front-left', 'dozer:steer-front-left', 'dozer:spin-front-right',
+        'dozer:steer-front-right', 'dozer:spin-rear-left', 'dozer:spin-rear-right']) {
+        assert.ok(names.includes(name), `missing dozer part ${name}`);
+      }
+      for (const name of ['ambulance', 'ambulance:body', 'ambulance:spin-front-left',
+        'ambulance:steer-front-left', 'ambulance:spin-rear-right', 'ambulance:rack-rail-1',
+        'vane-truck', 'vane-truck:body', 'vane-truck:spin-front-left', 'vane-truck:spin-rear-right',
+        'vane-escort', 'vane-escort:body', 'vane-escort:lamp', 'vane-escort:roof-gun-mount',
+        'vane-escort:spin-front-left', 'vane-escort:spin-rear-right']) {
+        assert.ok(names.includes(name), `missing truck part ${name}`);
+      }
+      const familyIndex = names.indexOf('town-trucks-2');
+      assert.deepEqual((gltf.nodes[familyIndex].children || []).map(index => names[index]).sort(),
+        ['ambulance', 'dozer', 'vane-escort', 'vane-truck'],
+        'the family root owns all four complete vehicles');
+      const bladeIndex = names.indexOf('dozer:blade');
+      const bladeChildren = gltf.nodes[bladeIndex].children || [];
+      assert.ok(bladeChildren.some(index => names[index].includes(':blade:curved-welded-face')),
+        'lifting blade pivot owns its curved photo-painted face');
+      const triangleCount = meshIndex => gltf.meshes[meshIndex].primitives
+        .reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0);
+      for (const id of ['dozer', 'ambulance', 'vane-truck', 'vane-escort']) {
+        const meshIds = new Set(gltf.nodes.filter(node => (node.name || '').startsWith(`${id}:`) && node.mesh !== undefined)
+          .map(node => node.mesh));
+        const triangles = [...meshIds].reduce((sum, meshId) => sum + triangleCount(meshId), 0);
+        assert.ok(triangles > 500 && triangles <= 12000, `${id}: ${triangles} triangles`);
+      }
+      assert.ok(gltf.images?.length >= 16, 'each truck embeds its own four measured photo views');
+      assert.ok(gltf.images.every(image => image.mimeType === 'image/jpeg'), 'photo sources embed as JPEG');
+      for (const material of gltf.materials) {
+        assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
+          `${material.name || 'material'} metallic factor exceeds 0.3`);
+      }
+      const parentByIndex = new Map();
+      gltf.nodes.forEach((node, parent) => (node.children || []).forEach(child => parentByIndex.set(child, parent)));
+      for (const side of ['left', 'right']) {
+        const spin = names.indexOf(`dozer:spin-front-${side}`);
+        const steer = names.indexOf(`dozer:steer-front-${side}`);
+        assert.equal(parentByIndex.get(spin), steer, 'front wheel spin follows the steering pivot');
+        assert.ok((gltf.nodes[spin].translation || [0,0,0]).every(value => Math.abs(value) <= .001),
+          'front wheel stays centered on its steering pivot');
+      }
+      const binaryOffset = 28 + bytes.readUInt32LE(12);
+      for (const mesh of gltf.meshes) for (const primitive of mesh.primitives) {
+        const coordinates = Object.keys(primitive.attributes).filter(name => name.startsWith('TEXCOORD_'));
+        assert.deepEqual(coordinates, ['TEXCOORD_0'], `${mesh.name} has only TEXCOORD_0`);
+        const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
+        assert.ok(uv?.count, `${mesh.name} has picture coordinates`);
+        const view = gltf.bufferViews[uv.bufferView];
+        const start = binaryOffset + (view.byteOffset || 0) + (uv.byteOffset || 0);
+        const stride = view.byteStride || 8;
+        const min = [Infinity, Infinity], max = [-Infinity, -Infinity];
+        for (let i=0;i<uv.count;i++) for (let axis=0;axis<2;axis++) {
+          const value = bytes.readFloatLE(start + i*stride + axis*4);
+          min[axis] = Math.min(min[axis], value); max[axis] = Math.max(max[axis], value);
+        }
+        assert.ok(min[0] < max[0] && min[1] < max[1], `${mesh.name} UVs have a range`);
+      }
     } finally {
       rmSync(modelPath, { force: true });
     }
@@ -1714,3 +1824,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`FAIL ${failure}`);
   process.exitCode = 1;
 }
+
