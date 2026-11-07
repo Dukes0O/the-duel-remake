@@ -163,7 +163,7 @@ body = carve_object('dozer:body', textures, {
             'along': 'x', 'x_scale': WIDTH / (TOP_REAR - TOP_FRONT)},
     'underside': CHASSIS_Y,
     'wheels': [(axle, WHEEL_R, TRACK_X - TYRE_HALF) for axle in WHEEL_Z],
-    'voxel': .035, 'target': 4200, 'tolerance': 25, 'bleed_tolerance': 25,
+    'voxel': .035, 'target': 3600, 'tolerance': 25, 'bleed_tolerance': 25,
     'mask_dir': str(evidence / 'masks'),
 })
 attach(body, dozer)
@@ -291,7 +291,7 @@ for side_sign, label in ((-1, 'left'), (1, 'right')):
 
 # Four grounded wheels use a photo-measured 720 mm radius. The sidewall photo
 # follows the real circumference; raised chevrons give the tire actual relief.
-def make_tread_blocks(name, width, radius, count=28, across=2):
+def make_tread_blocks(name, width, radius, count=20, across=2):
     verts, faces = [], []
     arc_step = 2 * math.pi / count
     for i in range(count):
