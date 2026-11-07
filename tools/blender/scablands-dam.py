@@ -439,11 +439,17 @@ for y in (29.1, 29.7):
 # Side-photo grid: wheel centre (656, 560), outer radius 550 px. Its steel-frame
 # corners are (108,1168), (1206,1170), (838,474), (476,474). Mapping 550 px to
 # the existing 3.15 m radius keeps both wheel centres and their 6.30 m diameter.
-# End-photo grid: edge-on wheel centreline x=704, y=450, outer radius 450 px,
+# End-photo grid: edge-on wheel centreline x=700, y=450, outer radius 450 px,
 # rim width 100 px; frame corners (180,1008), (1232,1008), (900,286), (580,286).
 # A 100 px rim maps to .59 m, preserving the existing axle span and wheel spacing.
 side_photo = Photo(texture_dir / 'dam-hoist-wheel-side.png')
 end_photo = Photo(texture_dir / 'dam-hoist-wheel-end-on.png')
+# Full source photos stay beside the recipe; only the embedded GLB copies shrink.
+for picture in (side_photo.image, end_photo.image):
+    width, height = picture.size
+    factor = 256 / max(width, height)
+    picture.scale(round(width * factor), round(height * factor))
+    picture.pack()
 wheel_scale = 3.15 / 550
 side_centre = (656, 560)
 end_centre = (700, 450)
@@ -464,8 +470,8 @@ def wheel_cap(angle, fraction):
 for x in (-7.5, 7.5):
     wheel = PhotoMesh()
     photo_lathe(wheel, 'rim', (0, 0, 0), (0, 0, 1), (1, 0, 0), (0, 1, 0),
-        [(-.295, .58), (-.255, .78), (-.205, 2.92), (-.16, 3.15),
-         (.16, 3.15), (.205, 2.92), (.255, .78), (.295, .58)], wheel_uv,
+        [(-.295, 3.00), (-.255, 3.15), (-.205, 3.15), (.205, 3.15),
+         (.255, 3.15), (.295, 3.00)], wheel_uv,
         sides=64,
         cap_start=('face', wheel_cap), cap_end=('face', wheel_cap))
     obj = wheel.finish(f'dam-hoist-lift-wheel-{x}', {'rim': end_photo.material(), 'face': side_photo.material()})
@@ -820,7 +826,6 @@ for name, location, target, focal in views:
 
 # The requested art sheet uses only GLB re-imports. Two top panels share one
 # side camera and scale; the lower panels show the crest structure and dam context.
-from PIL import Image, ImageOps
 round_dir = root / 'docs/board/looks/ww-art-dam-2'
 round_dir.mkdir(parents=True, exist_ok=True)
 def render_detail(name, location, target, prefixes, ortho=None, focal=50, size=(800,450)):
@@ -843,22 +848,45 @@ def render_detail(name, location, target, prefixes, ortho=None, focal=50, size=(
 wheel_view = ((7.5, 60.3, -50), (7.5, 60.3, -62.75))
 model_side = render_detail('hoist-wheel-side', *wheel_view,
     ('dam-hoist-lift-wheel-7.5', 'dam-hoist-lift-frame-7.5', 'dam-hoist-lift-cross-braces-7.5'),
-    ortho=8.4)
-gantry_view = render_detail('hoist-gantry-crest', (0, 31, -48), (0, 49, -62.75),
-    ('dam-hoist-',), focal=42)
-dam_view = render_detail('dam-context-60m', (112, 84, 50), (0, 25, -45), ('',), focal=38)
+    ortho=12.5)
+gantry_view = render_detail('hoist-gantry-crest', (0, 31, -95), (0, 44, -62.75),
+    ('dam-hoist-',), ortho=65)
+dam_view = render_detail('dam-context-60m', (40, 60, -10), (0, 25, -45), ('',), ortho=185)
 
-photo_image = Image.open(texture_dir / 'dam-hoist-wheel-side.png').convert('RGB')
-photo_panel = Image.new('RGB', (800,450), (218,218,215))
-photo_fit = ImageOps.contain(photo_image, (800,450), method=Image.Resampling.LANCZOS)
-photo_panel.paste(photo_fit, ((800-photo_fit.width)//2, (450-photo_fit.height)//2))
-model_panel = ImageOps.fit(Image.open(model_side).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
-gantry_panel = ImageOps.fit(Image.open(gantry_view).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
-dam_panel = ImageOps.fit(Image.open(dam_view).convert('RGB'), (800,450), method=Image.Resampling.LANCZOS)
-sheet_image = Image.new('RGB', (1600,900))
-sheet_image.paste(photo_panel, (0,0)); sheet_image.paste(model_panel, (800,0))
-sheet_image.paste(gantry_panel, (0,450)); sheet_image.paste(dam_panel, (800,450))
-sheet_image.save(sheet, 'JPEG', quality=88, optimize=True)
+def load_panel(path, contain=False):
+    image = bpy.data.images.load(str(path), check_existing=False)
+    width, height = image.size
+    rgba = np.empty(width * height * 4, dtype=np.float32)
+    image.pixels.foreach_get(rgba)
+    pixels = (rgba.reshape(height, width, 4)[::-1, :, :3] * 255).astype(np.uint8)
+    bpy.data.images.remove(image)
+    scale = min(800 / width, 450 / height) if contain else max(800 / width, 450 / height)
+    out_w, out_h = max(1, round(width * scale)), max(1, round(height * scale))
+    xs = np.minimum((np.arange(out_w) * width / out_w).astype(int), width - 1)
+    ys = np.minimum((np.arange(out_h) * height / out_h).astype(int), height - 1)
+    resized = pixels[ys[:, None], xs[None, :]]
+    panel = np.full((450, 800, 3), 218 if contain else 90, dtype=np.uint8)
+    x0, y0 = (800 - out_w) // 2, (450 - out_h) // 2
+    if not contain:
+        x0 = y0 = 0
+        resized = resized[(out_h-450)//2:(out_h+450)//2, (out_w-800)//2:(out_w+800)//2]
+        out_w, out_h = 800, 450
+    panel[y0:y0+out_h, x0:x0+out_w] = resized
+    return panel
+
+sheet_pixels = np.empty((900,1600,3), dtype=np.uint8)
+sheet_pixels[:450,:800] = load_panel(texture_dir / 'dam-hoist-wheel-side.png', contain=True)
+sheet_pixels[:450,800:] = load_panel(model_side)
+sheet_pixels[450:,:800] = load_panel(gantry_view)
+sheet_pixels[450:,800:] = load_panel(dam_view)
+sheet_rgba = np.concatenate((sheet_pixels, np.full((900,1600,1),255,dtype=np.uint8)), axis=2)
+sheet_image = bpy.data.images.new('WW-ART-DAM-2 review sheet', width=1600, height=900, alpha=False)
+sheet_image.pixels.foreach_set(np.flipud(sheet_rgba.astype(np.float32) / 255).ravel())
+sheet_image.filepath_raw = str(sheet)
+sheet_image.file_format = 'JPEG'
+scene.render.image_settings.quality = 82
+sheet_image.save()
+bpy.data.images.remove(sheet_image)
 print(f'WW-ART-DAM-2 sheet: {sheet} ({sheet.stat().st_size} bytes)')
 
 print('GLB reimport review renders completed.')
