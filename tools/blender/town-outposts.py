@@ -875,8 +875,8 @@ def area(name, loc, energy, size):
     obj.location = loc
     obj.rotation_euler = (Vector((0, 3, 0)) - obj.location).to_track_quat('-Z', 'Y').to_euler()
 
-area('soft sky', (0, 12, 25), 3600, 20)
-area('open fill', (-16, -16, 14), 1900, 15)
+area('soft sky', (0, 12, 25), 6200, 20)
+area('open fill', (-16, -16, 14), 3600, 15)
 camera = bpy.data.objects.new('review camera', bpy.data.cameras.new('review camera'))
 scene.collection.objects.link(camera)
 scene.camera = camera
@@ -950,7 +950,7 @@ shot('deck-rear', (0, DECK_Y + 1.5, 18), deck_centre, 14)
 shot('deck-above', (0, 32, 0), deck_centre, 18)
 shot('deck-road', (-12, 8, -18), deck_centre, 15)
 shot('deck-far', (12, 8, 18), deck_centre, 15)
-shot('deck-mayor', (-44, 63.3, -44), deck_centre, 19)
+shot('deck-mayor', (-62, 90, -62), deck_centre, 27)
 
 print(json.dumps({'glb': str(out), 'bytes': out.stat().st_size,
                   'renders': [str(p) for p in sorted(render.glob('*.png'))]}))

@@ -63,6 +63,11 @@ stop adjusting and change the method.
   panel shorter or narrower than its side and end panels. Normalize the crop
   to the shared feature scale before carving, and check roof and centre-line
   landmarks on a grid.
+- **A single generated picture contains several views.** The generator may
+  return a four-panel perspective sheet despite a multi-view request. It is not
+  a dead-on reference: request each side, end and plan view in its own call,
+  inspect it, and regenerate any picture that contains a second view or
+  perspective.
 - **Pale paint eaten by the background match.** Silver or white paint can match a wide colour test, and it comes out as flat blotches (the tanker's tank). Lower `bleed_tolerance`. White subjects need photos on a darker ground.
 - **A photo lying sideways.** Say so in the table with `'along': 'x'`. If only part of the object comes out, a top photo's direction is the first thing to check.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's

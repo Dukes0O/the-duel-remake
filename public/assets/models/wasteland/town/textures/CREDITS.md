@@ -706,3 +706,17 @@ Generated with OpenAI built-in image generation as six original documentary-styl
 - `peace-magnus-crane-top.jpg` — directly overhead body view.
 - `peace-magnus-crane-boom.jpg` — detached open lattice boom, side view.
 - `peace-magnus-crane-roof.jpg` — one rusty corrugated tin sheet, overhead view.
+
+## TOWN-ART-OUTPOSTS deck-town references
+
+Generated with OpenAI ImageGen on 7 November 2026 as eight separate original studio photographs: deck side, front, rear and directly overhead; one tin home side, front, rear and directly overhead. Each is a single view of one object, with no grid or other panels. The views use a pale neutral background and diffuse daylight. Kept at source resolution (1024 px maximum width) for carving.
+
+- `deck-town-deck-side.jpg`, `deck-town-deck-front.jpg`, `deck-town-deck-rear.jpg`, and `deck-town-deck-top.jpg`
+- `deck-town-home-side.jpg`, `deck-town-home-front.jpg`, `deck-town-home-rear.jpg`, and `deck-town-home-top.jpg`
+
+## TOWN-ART-OUTPOSTS deck-town references
+
+Generated with OpenAI ImageGen on 7 November 2026 as eight separate original studio photographs: deck side, front, rear and directly overhead; one tin home side, front, rear and directly overhead. Each file is a single view of one object, not a multi-panel sheet. The views use a pale neutral background and diffuse daylight. Source images are retained at their original size (1024 px maximum width) for carving.
+
+- `deck-town-deck-side.jpg`, `deck-town-deck-front.jpg`, `deck-town-deck-rear.jpg`, and `deck-town-deck-top.jpg`
+- `deck-town-home-side.jpg`, `deck-town-home-front.jpg`, `deck-town-home-rear.jpg`, and `deck-town-home-top.jpg`
