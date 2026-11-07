@@ -195,6 +195,9 @@ tent.parent = camp_root
 def photo_solid(photo, ground, rect, seeds=None, tolerance=22):
     seeds = seeds or [(8, 8), (photo.w - 9, 8), (8, photo.h - 9), (photo.w - 9, photo.h - 9)]
     solid = ~photo.sky(seeds, tolerance=tolerance, grey=22)
+    # The gaps between a crate's slats are walled in, so the flood cannot reach them.
+    rgb = photo.rgb()
+    solid &= ~((rgb.mean(axis=2) > 150) & (rgb.max(axis=2) - rgb.min(axis=2) < 24))
     solid[ground:, :] = False
     photo.bleed(solid, passes=8)
     return solid, trace(solid, rect, tolerance=1.6, min_area=35)
@@ -221,7 +224,7 @@ CHAIR_GROUND, CHAIR_SEAT, CHAIR_CENTRE = 1170, 510, 660
 CHAIR_SCALE = .45 / (CHAIR_GROUND - CHAIR_SEAT)
 chair_photo = stand_photo_slab('mirage-camp:chair', 'peace-mirage-camp-chair.jpg',
                                (235, 25, 1010, 1185), CHAIR_GROUND, CHAIR_CENTRE,
-                               CHAIR_SCALE, -1.05, -CAMP_LENGTH / 2 + .30, .035)
+                               CHAIR_SCALE, -.78, -CAMP_LENGTH / 2 - .85, .035)
 
 # Stove body from its lower photo region; the round kettle is turned separately.
 STOVE_GROUND, KETTLE_BOTTOM, KETTLE_TOP, KETTLE_CENTRE = 1172, 676, 248, 650
@@ -232,7 +235,7 @@ stove_mask = np.zeros((stove_photo.h, stove_photo.w), dtype=bool)
 stove_mask[676:STOVE_GROUND, :] = stove_solid[676:STOVE_GROUND, :]
 stove_loops = trace(stove_mask, (285, 676, 1100, 1174), tolerance=1.5, min_area=25)
 def stove_world(px, py, d):
-    return (.70 + (px - KETTLE_CENTRE) * KETTLE_SCALE, (STOVE_GROUND - py) * KETTLE_SCALE, -CAMP_LENGTH / 2 + .04 + d)
+    return (.72 + (px - KETTLE_CENTRE) * KETTLE_SCALE, (STOVE_GROUND - py) * KETTLE_SCALE, -CAMP_LENGTH / 2 - .75 + d)
 stove_mesh = Mesh()
 slab(stove_mesh, 'photo', stove_photo, stove_loops, stove_world, -.24, .24, wall_scale=KETTLE_SCALE)
 stove = stove_mesh.finish('mirage-camp:stove', {'photo': stove_photo.material()})
@@ -257,19 +260,19 @@ def round_photo_part(name, photo, centre_px, ground_px, scale, x, z, stations, r
 
 kettle_radius_px = 260
 kettle = round_photo_part('mirage-camp:kettle', stove_photo, KETTLE_CENTRE, KETTLE_BOTTOM,
-                          KETTLE_SCALE, .70, -CAMP_LENGTH / 2 + .04,
+                          KETTLE_SCALE, .72, -CAMP_LENGTH / 2 - .75,
                           [(0, .12), (.018, .125), (.065, .126), (.15, .11), (.20, .06), (.22, .045)],
                           kettle_radius_px, y_base=.25)
 
 # Water can: a compact turned steel vessel, read from the measured side photo.
 CAN_GROUND, CAN_TOP, CAN_CENTRE = 995, 70, 760
-CAN_SCALE = .52 / (CAN_GROUND - CAN_TOP)
+CAN_SCALE = .31 / (CAN_GROUND - CAN_TOP)
 can_photo = Photo(textures / 'peace-mirage-camp-water-can.jpg')
 can_solid, can_loops = photo_solid(can_photo, CAN_GROUND, (125, 20, 1410, 1000))
 can = round_photo_part('mirage-camp:water-can', can_photo, CAN_CENTRE, CAN_GROUND,
-                       CAN_SCALE, 1.20, -CAMP_LENGTH / 2 + .12,
-                       [(0, .31), (.02, .34), (.35, .34), (.40, .31), (.45, .22), (.49, .10), (.52, .06)], 600,
-                       cap_end_centre=1100, cap_end_row=120)
+                       CAN_SCALE, 1.18, -CAMP_LENGTH / 2 - .45,
+                       [(0, .185), (.012, .2), (.21, .2), (.24, .185), (.27, .13), (.29, .06), (.31, .036)], 600,
+                       cap_end_centre=760, cap_end_row=500)
 
 # Crate table and mug. The crate is traced without the mug; the mug is turned.
 CRATE_GROUND, CRATE_TOP, CRATE_CENTRE = 950, 320, 768
@@ -281,8 +284,8 @@ crate_mask = np.zeros((crate_photo.h, crate_photo.w), dtype=bool)
 crate_mask[CRATE_TOP:CRATE_GROUND, :] = crate_solid[CRATE_TOP:CRATE_GROUND, :]
 crate_loops = trace(crate_mask, (90, CRATE_TOP, 1430, CRATE_GROUND), tolerance=1.6, min_area=30)
 def crate_world(px, py, d):
-    return (-1.15 + (px - CRATE_CENTRE) * CRATE_X_SCALE, (CRATE_GROUND - py) * CRATE_SCALE,
-            -CAMP_LENGTH / 2 + .50 + d)
+    return (-1.28 + (px - CRATE_CENTRE) * CRATE_X_SCALE, (CRATE_GROUND - py) * CRATE_SCALE,
+            -CAMP_LENGTH / 2 - .55 + d)
 crate_mesh = Mesh()
 slab(crate_mesh, 'photo', crate_photo, crate_loops, crate_world, -.15, .15, wall_scale=CRATE_SCALE)
 crate = crate_mesh.finish('mirage-camp:crate', {'photo': crate_photo.material()})
@@ -291,7 +294,7 @@ crate.parent = camp_root
 MUG_BOTTOM, MUG_TOP, MUG_CENTRE = 320, 108, 694
 MUG_SCALE = .15 / (MUG_BOTTOM - MUG_TOP)
 round_photo_part('mirage-camp:mug', crate_photo, MUG_CENTRE, MUG_BOTTOM, MUG_SCALE,
-                 -1.15, -CAMP_LENGTH / 2 + .50,
+                 -1.28, -CAMP_LENGTH / 2 - .55,
                  [(0, .060), (.012, .065), (.13, .062), (.15, .058)], 90, y_base=.48)
 
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))

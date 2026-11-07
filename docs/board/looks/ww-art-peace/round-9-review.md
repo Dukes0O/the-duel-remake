@@ -1,7 +1,7 @@
-# WW-ART-PEACE round 9: Mirage camp
+# WW-ART-PEACE round 9: Mother Mirage's real camp
 
-My verdict: mostly. The small patched tent, dark open end, and plain gray-brown props read as a private place with no sales pitch. The scene has no sign, writing, painting, or bright colors.
+Claude's verdict: **passes.** After four decoys with big signs, this is one patched tent, a folding chair, a crate with a mug, and a stove with a kettle and water can. It has no sign, no writing and nothing colourful, and it looks lived in.
 
-The exported tent side has two thin horizontal streaks that are absent from its source photo. The water can also has a pale top that reads too much like a white cap. The chair, stove, can and crate are all present, but the front three-quarter view makes them feel crowded around the entrance. I used the two allowed visual adjustment passes; these remain for Claude to judge from the sheet.
+Claude moved the small things out from inside the tent's walls to the open ground in front of its door, cut the water can to a size a person could lift, and took walled-in background out of the crate's slats.
 
-Claude should inspect the top-row side comparison for the streaks, the second-row front comparison for the open entrance, and both lower three-quarter views for prop scale and placement. The caravan is hidden only in the review scene; its source recipe and exported geometry were left unchanged.
+Three thin pale lines cross the tent's side and door, where steps in the carve wear the overhead photo. They pass for tie cords from most views, so they were left rather than spending another round on them.

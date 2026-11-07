@@ -78,3 +78,11 @@ The muted tent and plain camp objects read as a private place without a sign. Tw
 ### Removed
 
 The photo grids, carving masks, render captures, Blender working file and test logs made for this round were removed. No existing art or prior round sheet was replaced.
+
+## Mother Mirage's camp, set out by Claude
+
+`mirage-camp` is in `peace-camp.glb`. The small things stand in front of the tent's door, and the water can is 0.31 m tall. Known and left: three thin pale lines across the tent's side and door.
+
+### Removed
+
+Nothing replaced by this piece.
