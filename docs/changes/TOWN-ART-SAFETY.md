@@ -44,3 +44,32 @@
 ### Removed
 
 - Removed the three thin torus rings that read as bare wire, replacing them with the continuous hose mesh.
+
+## Round 10: hydrant reel follow-up
+
+### Changed
+
+- Moved the hydrant reel beside the standpipe at waist height. Added a short welded bracket that touches the pipe, with a diagonal brace and fastening bolt.
+- Rebuilt the reel around an X-axis lathed drum with two lathed side plates. Wound four rubber hose turns around the drum and moved the crank to the outer side.
+- Kept the accepted standpipe and searchlight. Replaced the former rear-mounted reel, spokes and thin hoops.
+- Added the hydrant's four reference-photo comparisons, two three-quarter renders and mayor view to `docs/board/looks/town-art-safety/round-10.jpg` (106,300 bytes). Full family GLB: 3,738,348 bytes. Hydrant: 1,744 triangles.
+
+### Checks
+
+- Blender family export, GLB readback, contact and footprint checks: **pass**. First two render attempts stopped at the 1,800-triangle cap (4,024 and 1,940); the final model is 1,744 triangles and rendered all seven views.
+- `node tools/test-blender-output.mjs`: **pass**, 377 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: **pass**; placement is valid and sizes are advisory.
+- `node tools/test-review-evidence.mjs`: **7 passed, 2 failed**. Same-commit rerun: **7 passed, 2 failed**. Both runs report the unrelated missing Town Outposts round-15 note and `spawnSync ffmpeg EPERM` in audio analysis.
+- Lane tier and build: not run, as required for art cards. Browser review: Claude to run.
+- Changed assertions: replaced the old reel-side mesh assertion with required exported inner/outer side plates, drum, bracket and hose meshes; no assertion was loosened.
+- Race fingerprints: not applicable to art-only work.
+
+### Claude should inspect
+
+- Compare the front, side and overhead rows with the reference photos, including the reel's screen-side and the orthographic camera match.
+- Check that the bracket touches the pipe, the axle runs across the pipe, and the crank is on the outer side.
+- Judge the four hose turns, plate wear and reel readability in the three-quarter and mayor views. The photo has more and tighter wraps.
+
+### Removed
+
+- Removed the old reel cylinder, spokes and thin hoop rims. Replaced their rear placement with the bracket-mounted, lathed drum and two side plates.

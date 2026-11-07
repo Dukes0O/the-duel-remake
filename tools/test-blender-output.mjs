@@ -792,8 +792,9 @@ try {
           'wall-steel-straight','wall-steel-corner','wall-steel-end',
           'gate-scrap','gate-scrap:door','watchtower','watchtower:lamp','guard-post',
           'searchlight','searchlight:post','searchlight:head','searchlight:beam',
-          'fire-station','clinic','hydrant','hydrant-standpipe','hydrant-hose-reel-side',
-          'hydrant-wound-rubber-hose',
+          'fire-station','clinic','hydrant','hydrant-standpipe',
+          'hydrant-hose-reel-inner-side-plate','hydrant-hose-reel-outer-side-plate',
+          'hydrant-hose-drum','hydrant-reel-bracket-upper','hydrant-wound-rubber-hose',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
           'guard-post:sandbag-wall','guard-post:tin-roof','guard-post:brazier',
         ];
@@ -804,7 +805,9 @@ try {
           assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
         }
         for (const id of ['searchlight:post','searchlight:head','searchlight:beam',
-          'hydrant-standpipe','hydrant-hose-reel-side','hydrant-wound-rubber-hose']) {
+          'hydrant-standpipe','hydrant-hose-reel-inner-side-plate',
+          'hydrant-hose-reel-outer-side-plate','hydrant-hose-drum',
+          'hydrant-reel-bracket-upper','hydrant-wound-rubber-hose']) {
           const part=nodeIndex.get(id);
           assert.notEqual(part,undefined, `${id} named prop part exists`);
           assert.notEqual(gltf.nodes[part].mesh,undefined, `${id} has exported geometry`);
@@ -1091,7 +1094,7 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS keeps the passed crusher and exports the photo-built batch plant', () => {
+  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead and radar', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
@@ -1101,7 +1104,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'crusher'], 'the passed crusher and new batch plant stay separate buildings');
+      ['batch-plant', 'crusher', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1124,6 +1127,19 @@ try {
     }
     assert.ok(countTriangles('batch-plant') > 100 && countTriangles('batch-plant') <= 14_000,
       `${countTriangles('batch-plant')} triangles exceeds the batch plant budget`);
+    for (const name of ['wellhead', 'wellhead:frame-road', 'wellhead:frame-far',
+      'wellhead:beam', 'wellhead:casing', 'wellhead:valve', 'wellhead:hand-painted-07']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('wellhead') > 100 && countTriangles('wellhead') <= 1_800,
+      `${countTriangles('wellhead')} triangles exceeds the one-cell wellhead budget`);
+    assert.ok(names.includes('wellhead:beam-surface'), 'the rocking beam has a separate traced surface');
+    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface', 'radar:dish-rim',
+      'radar:tower-side-frame-road', 'radar:tower-end-frame-road', 'radar:turntable-crossbar']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('radar') > 100 && countTriangles('radar') <= 1_800,
+      `${countTriangles('radar')} triangles exceeds the one-cell radar budget`);
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
