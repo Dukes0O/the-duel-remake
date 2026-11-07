@@ -493,6 +493,14 @@ stall_awning_mask=photo_mask(stall_front_photo,[
      (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
      (116,136),(94,130),(75,116),(58,101)],
 ])
+stall_awning_hem_edge=[(966,154),(945,170),(917,180),(894,189),(864,190),(842,199),
+    (815,197),(789,205),(760,204),(731,214),(700,213),(671,222),(641,217),(612,225),
+    (580,220),(550,226),(520,219),(488,226),(457,219),(425,223),(394,212),(364,215),
+    (332,204),(302,202),(274,190),(245,185),(216,174),(188,165),(161,154),(137,148),
+    (116,136),(94,130),(75,116),(58,101)]
+stall_awning_hem_mask=photo_mask(stall_front_photo,[
+    list(reversed([(x,y-14) for x,y in stall_awning_hem_edge]))+stall_awning_hem_edge,
+])
 def market_stall(building, offset, kind):
     add_building(building,offset)
     def front_world(px,py,d):
@@ -528,7 +536,7 @@ def market_stall(building, offset, kind):
     # The photographic front hem stays a thin, traced slab. A small mesh follows
     # its measured sag across the width and the side-photo pitch over the depth.
     awning_front=PhotoMesh()
-    awning_loops=trace(stall_awning_mask,(38,18,992,232),tolerance=1.8,min_area=30)
+    awning_loops=trace(stall_awning_hem_mask,(38,75,992,240),tolerance=1.8,min_area=16)
     slab(awning_front,'canvas',stall_front_photo,awning_loops,front_world,0,.06,wall_scale=100000)
     keep(awning_front.finish(f'{building}:traced-front-awning-hem',{'canvas':stall_front_photo.material()}))
     awning=PhotoMesh()
