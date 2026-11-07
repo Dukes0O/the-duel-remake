@@ -696,8 +696,10 @@ def tank_top_pick(x, y, z):
 
 def tank_cab_trim_side(mask):
     mask = mask.copy()
-    mask[T_GROUND:, :] = False
+    mask[390:, :] = False  # wheels, frame and ground stay separate
     mask[:, 374:] = False  # tank, tarp and chassis are separate photo parts
+    yy, xx = np.ogrid[:t_side.h, :t_side.w]
+    mask &= (xx - 116) ** 2 + (yy - 339) ** 2 >= 84 ** 2
     return mask
 
 def tank_cab_trim_top(mask):
@@ -708,6 +710,10 @@ def tank_cab_trim_top(mask):
 def tank_cab_trim_front(mask):
     mask = mask.copy()
     mask[:108, :] = False  # the higher silhouette belongs to the tank's canvas
+    mask[396:, :] = False  # wheels and bumper are not part of the cab hull
+    yy, xx = np.ogrid[:t_front.h, :t_front.w]
+    for cx in (102, 508):
+        mask &= (xx - cx) ** 2 + (yy - 424) ** 2 >= 54 ** 2
     return mask
 
 tank_views = [
@@ -720,7 +726,7 @@ tank_views = [
     View('overhead', t_top, seed_points(t_top), tank_top_pick, (0, 1, 0),
          solid=tank_cab_trim_top, grey=20, tolerance=20),
 ]
-tank_bounds = ((-T_WIDTH / 2, T_WIDTH / 2), (0, 4.4), (-5.65, -1.05))
+tank_bounds = ((-T_WIDTH / 2, T_WIDTH / 2), (.30, 4.4), (-5.65, -1.08))
 tank_voxel = .035
 tank_solid, tank_xs, tank_ys, tank_zs = occupancy(
     tank_bounds, tank_voxel, [view.covers for view in tank_views])
@@ -778,14 +784,14 @@ own(tank_body.finish('dust-tanker:photo-turned-fuel-tank',
 # The tarp outline is traced from the visible cloth, not from the hidden tank.
 # Two thin photo slabs sit just outside the tank walls and follow the same folds.
 tarp_photo = Photo(textures / 'peace-dust-tanker-side.jpg')
-tarp_outline = ((358, 92), (382, 72), (415, 64), (454, 72), (488, 82),
-                (528, 78), (562, 68), (602, 72), (640, 79), (682, 72),
-                (721, 68), (759, 72), (795, 82), (826, 88), (858, 79),
-                (881, 91), (890, 120), (884, 157), (879, 190), (866, 218),
-                (838, 214), (810, 207), (781, 216), (748, 215), (718, 208),
-                (684, 217), (650, 219), (616, 212), (585, 219), (552, 221),
-                (520, 216), (488, 222), (456, 220), (424, 214), (394, 220),
-                (371, 210), (355, 181))
+tarp_outline = ((356, 135), (378, 104), (410, 78), (454, 67), (492, 79),
+                (530, 86), (574, 75), (618, 78), (663, 69), (708, 78),
+                (750, 70), (790, 78), (826, 88), (858, 89), (883, 103),
+                (894, 126), (887, 161), (877, 194), (863, 219), (844, 222),
+                (817, 211), (784, 221), (750, 216), (716, 226), (682, 216),
+                (650, 225), (617, 216), (584, 225), (551, 218), (520, 226),
+                (488, 216), (456, 223), (425, 215), (395, 228), (370, 215),
+                (354, 183))
 gx = np.arange(tarp_photo.w)[None, :]
 gy = np.arange(tarp_photo.h)[:, None]
 tarp_solid = np.zeros((tarp_photo.h, tarp_photo.w), dtype=bool)
