@@ -169,6 +169,7 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **A small bank becomes a ramp.** Blender Euler rotations take radians. Passing a value converted to degrees into a rotation field turned a half-metre ship bow slope into a steep ramp; keep the `asin` result in radians.
 - **A horizontal beam turns upright.** `to_track_quat('Z', 'Y')` is ambiguous
   when the beam points along Blender Y. Use an axis-aligned box or a different
   non-parallel up axis, then print and check its bounds.
@@ -193,6 +194,7 @@ stop adjusting and change the method.
 
 - **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).
 - **Triangles run away in traces and rings.** A traced seat at a fine tolerance cost 4,880 triangles and a ring of 128 by 12 steps 6,144 (the big wheel). Count each piece's triangles before submitting, and coarsen what the mayor's camera cannot see.
+- **Check open drift meshes before UV export.** In Blender 4.5.13, the joined two-sided ship sand bank had loops pointing beyond its vertex list. `mesh.validate()` repaired the mesh before export; use a coarser source grid for this broad surface and validate meshes before assigning UVs.
 
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - The whole subject in every frame, on plain mid-grey ground, in one even light,

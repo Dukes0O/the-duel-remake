@@ -219,3 +219,14 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 ### Removed
 
 - No prior hull or cabin sources were removed; the cabin photo sets are committed for the next point.
+
+## Round 13, step 3 — Grounded fleet (7 November 2026)
+
+- Set each root at its map x/z place. Added the Good Hope's 4-degree starboard list and 0.5 m bow drop, and the Marigold's 6-degree port list and 1 m stern drop. Each ship has its own trailing anchor chains and banked sand drift. The Marigold has an exposed 18 m shaft and propeller and half her rail is gone.
+- Blender read-back by ship root: Patience 12,080 triangles, Good Hope 6,760, Marigold 6,408; 25,896 triangles total including 648 triangles of ground pieces. The whole GLB is 2,132,300 bytes, within the 50,000 triangle and 3 MB limits.
+- `tools/test-blender-output.mjs`: passed, 381 checks; exit 0. `tools/test-repo-hygiene.mjs`: passed; exit 0. Lane tier and build were not run for this art card. Browser checks are not applicable; Claude should review the fleet's side-by-side placement, hull colors, listing angles, and named parts before the next round.
+- Rendered and inspected `.qa-dist/check-fleet.png` at car height from about 120 m. All three hull colors and positions read in the view; cabins remain the temporary generic blocks for the next point. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed this run's check render, Blender review file, logs, and test output from `.qa-dist/` after inspection. Kept the supplied task briefs and the generated cabin source photos named by the card.

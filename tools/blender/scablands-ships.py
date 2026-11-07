@@ -793,6 +793,7 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         r.rotation_euler[2]=math.radians(90)
     if ident=='ship-good-hope':
         r.rotation_euler[0]=math.radians(4)
+        # Blender Euler fields use radians; keep the half-metre slope in that unit.
         r.rotation_euler[1]=math.asin(.5/length)
         r.rotation_euler[2]=math.radians(90)
     if ident=='ship-marigold':
