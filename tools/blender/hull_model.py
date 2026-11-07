@@ -11,10 +11,12 @@ right from all sides. Each face then wears the photo it faces most directly.
 
 All coordinates are glTF metres, X right, Y up, Z towards the viewer, front -Z.
 """
+import math
+
 import bpy
 import numpy as np
 
-from photo_model import tidy
+from photo_model import lathe, tidy
 
 
 class View:
@@ -30,6 +32,7 @@ class View:
         self.photo = photo
         self.pick = pick
         self.normal = np.array(normal, dtype=np.float64)
+        self.favour = None       # favour(point) -> a multiplier: how readily faces there wear this photo
         mask = tidy(~photo.sky(seeds, tolerance=tolerance, grey=grey), 2)
         self.mask = solid(mask) if solid else mask
 
@@ -117,8 +120,90 @@ def voxel_surface(solid, xs, ys, zs, voxel):
     return verts, quads
 
 
-def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target):
-    """One smooth closed mesh from the voxels, each face wearing the photo it faces."""
+def wheel_well(wheels):
+    """Faces in a wheel's arch are dark: they must not wear the photo's picture of the tyre.
+
+    `wheels` is a list of (axle z, radius, inner x). Inside the cut every face is
+    the arch's own wall. Just beyond it only faces turned inward are, so the
+    wing's outer surface keeps its paint.
+    """
+    def dark(point, normal):
+        x, y, z = point
+        # A low underside faces the ground, and no photo shows it. A wing's lip higher up keeps its paint.
+        if normal[1] < -.6 and y < max(wheel[1] for wheel in wheels) * 1.3:
+            return True
+        for axle, radius, inner in wheels:
+            if abs(x) < inner - .08:
+                continue
+            distance = math.hypot(z - axle, y - radius)
+            if distance < radius + .07:
+                return True
+            if distance < radius + .16 and abs(normal[0]) < .75:
+                return True
+        return False
+    return dark
+
+
+def dark_material():
+    mat = bpy.data.materials.get('Wheel arch') or bpy.data.materials.new('Wheel arch')
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes['Principled BSDF']
+    bsdf.inputs['Base Color'].default_value = (.018, .017, .016, 1)
+    bsdf.inputs['Metallic'].default_value = 0
+    bsdf.inputs['Roughness'].default_value = .95
+    return mat
+
+
+def tyre(mesh, side_key, side_photo, cx, cy, radius_px, radius, half_width, tread_key, end_photo, end_cx, end_half_px, end_y0, end_y1, sides=36):
+    """One round wheel centred on its own origin, turning about X.
+
+    The faces wear the wheel as the side photo shows it, measured to its outer
+    edge. The tread wears the tyre as an end photo shows it, head on, running
+    back and forth round the wheel, so no picture of the background can reach it.
+    `mesh` faces need `side_key` and `tread_key` materials at `finish`.
+    """
+    scale = half_width / max(end_half_px, 1)
+
+    def tread(index, distance, ring_radius, angle):
+        wave = abs(((angle * 8 / (2 * math.pi)) % 2) - 1)
+        return end_photo.uv(end_cx + max(-end_half_px, min(end_half_px, distance / scale)) * .94,
+                            end_y0 + (end_y1 - end_y0) * wave)
+
+    def face(angle, fraction):
+        return side_photo.uv(cx - math.cos(angle) * radius_px * fraction * .97,
+                             cy - math.sin(angle) * radius_px * fraction * .97)
+
+    lathe(mesh, tread_key, (0, 0, 0), (1, 0, 0), (0, 0, 1), (0, 1, 0),
+          [(-half_width, radius * .972), (-half_width * .86, radius), (half_width * .86, radius), (half_width, radius * .972)],
+          tread, sides=sides, cap_start=(side_key, face), cap_end=(side_key, face))
+
+
+def headlamp(mesh, lens_key, bulb_key, photo, px, py, radius_px, radius, depth=.1, forward=-1):
+    """A lamp is a round part with its own picture, centred on its own origin.
+
+    On a carved surface half a lamp wears the front photo and half the side
+    photo, which garbles it. This one faces forward, wearing the lamp as the
+    front photo shows it, with a small bulb at its centre that can glow at night.
+    `forward` is -1 where the vehicle faces -Z and 1 where it faces +Z.
+    """
+    def rim(index, distance, ring_radius, angle):
+        return photo.uv(px + math.cos(angle) * radius_px * .96, py - math.sin(angle) * radius_px * .96)
+
+    def lens(angle, fraction):
+        return photo.uv(px + math.cos(angle) * radius_px * fraction * .96, py - math.sin(angle) * radius_px * fraction * .96)
+
+    axis = (0, 0, forward)
+    lathe(mesh, lens_key, (0, 0, 0), axis, (1, 0, 0), (0, 1, 0),
+          [(-depth, radius * .86), (0, radius)], rim, sides=24, cap_end=(lens_key, lens))
+    lathe(mesh, bulb_key, (0, 0, 0), axis, (1, 0, 0), (0, 1, 0),
+          [(0, radius * .16), (.006, radius * .16)], rim, sides=10, cap_end=(bulb_key, lambda angle, fraction: photo.uv(px, py)))
+
+
+def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target, dark=None):
+    """One smooth closed mesh from the voxels, each face wearing the photo it faces.
+
+    `dark(point, normal)`, if given, marks faces that take the dark arch material.
+    """
     verts, quads = voxel_surface(solid, xs, ys, zs, voxel)
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], quads)
@@ -152,6 +237,8 @@ def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target):
     mesh.materials.clear()
     for view in views:
         mesh.materials.append(materials[view.name])
+    if dark:
+        mesh.materials.append(dark_material())
     normals = np.array([view.normal for view in views])
     coords = np.empty(len(mesh.vertices) * 3, dtype=np.float64)
     mesh.vertices.foreach_get('co', coords)
@@ -163,6 +250,9 @@ def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target):
         facing = normals @ np.array((n.x, n.z, -n.y))
         chosen = gltf[list(polygon.vertices)]
         middle = chosen.mean(axis=0)[None, :]
+        for index, view in enumerate(views):
+            if view.favour is not None:
+                facing[index] *= view.favour(middle[0])
         # The photo this face looks at most, if that photo shows the subject here.
         # A wheel's wing can stand outside the end photo's own outline.
         pick = int(np.argmax(facing))
@@ -173,6 +263,8 @@ def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target):
         view = views[pick]
         polygon.material_index = pick
         polygon.use_smooth = True
+        if dark and dark(middle[0], (n.x, n.z, -n.y)):
+            polygon.material_index = len(views)
         px, py = view.pick(chosen[:, 0], chosen[:, 1], chosen[:, 2])
         for loop_index, u, v in zip(polygon.loop_indices, px, py):
             uv_layer.data[loop_index].uv = view.photo.uv(float(u), float(v))

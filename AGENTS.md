@@ -16,7 +16,7 @@ for the workflow, and `docs/board/board.yaml` for task ownership. Use
   look and feel reviews, releases prepared for Kyle); never start them.
 - Stop rule (Kyle): this is a game for one laptop, played by Kyle and his son.
   If a card cannot meet its acceptance with the tools we have (free services,
-  this laptop, SPEC 0.11's three-round art cap), stop, write why in the change
+  this laptop, SPEC 0.11's six-round art limit), stop, write why in the change
   note and ask Kyle. Never ship a placeholder or stub as the finished thing.
 - Cloud sessions (Kyle, 24 October 2026): `integration/wasteland` is GitHub's
   front branch, so a cloud session starts from it. Cards with
@@ -156,7 +156,7 @@ over rules 1, 2 and 7 above and over older playbook and SPEC text.
     the integration folder: an uncommitted shared file blocks every other
     merge.
 15. Kyle sets direction. Claude makes art and sound picks within the
-    three-round cap and decides go-live under rule 18; nothing waits on Kyle
+    six-round limit and decides go-live under rule 18; nothing waits on Kyle
     except rule 18's short list.
 16. Claude answers a card's question in that card's own file
     (`docs/board/cards/<id>.md`, section "Claude answers") and clears its
@@ -219,6 +219,10 @@ and any card, playbook or SPEC text that asks for Kyle's word or a repeated run.
     with the script's full path; it never blocks a merge. When it lists a
     card with no task, name the card in a task's notes or add a task
     (Kyle, 12 October 2026; merged 25 October).
+
+20. **The factory learns (Kyle, 6 November 2026).** What we learn goes where the
+    next job will read it, not in a chat or a private brief. Art: `docs/ART_LINE.md`.
+    Whoever finds a new kind of fault adds it there in the same commit as the fix.
 
 ## Gates (SPEC 0.5)
 

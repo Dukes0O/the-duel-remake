@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-power.py`, `public/assets/models/wasteland/town/power.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -28,3 +28,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `power-pole` under 1x1: a crooked pole with a transformer and sagging wire stubs.
 
 ## Claude answers
+
+Round 4, 6 November: **pass.** The windmill turns and stands up, with its worn blades and peeling vane, and the generator, solar rack and pole look like their photos. The fuel depot's tank and pump work. Short of the photos: the depot's base is a plain slab where the photo has a hazard-striped bund wall, the depot's flat hazard stripes are thin, and the generator's tin shelter floats a little. Worth another look once they stand in a town.
