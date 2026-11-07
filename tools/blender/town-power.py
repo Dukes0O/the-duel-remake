@@ -422,6 +422,7 @@ bpy.context.scene.collection.objects.link(fuel)
 fuel.parent = family
 fuel_photos={name:Photo(textures/f'fuel-{name}.jpg') for name in ('side','front','rear','overhead')}
 fuel_side,fuel_front,fuel_rear,fuel_top=(fuel_photos[name] for name in ('side','front','rear','overhead'))
+for photo in fuel_photos.values(): darken_photo(photo,(.78,.72,.62))
 fuel_mats={name:photo.material(.90) for name,photo in fuel_photos.items()}
 def photo_window(photo, rect):
     x0,y0,x1,y1=rect
@@ -430,11 +431,11 @@ def photo_window(photo, rect):
         return mask & keep
     return trim
 def side_pick(x,y,z):
-    return 938-z*257, 717-(y-.75)*250
+    return 938-z*257, 717-(y-.75)*240
 def front_pick(x,y,z):
-    return 764+x*372, 987-(y-.75)*372
+    return 764+x*372, 987-(y-.75)*350
 def rear_pick(x,y,z):
-    return 767-x*372, 990-(y-.75)*372
+    return 767-x*372, 990-(y-.75)*370
 def overhead_pick(x,y,z):
     return 938-z*264, 416+x*249
 fuel_views=[
@@ -463,24 +464,25 @@ for x in (-.88,.88):
         town.beam('tank saddle upright',(x,.50,z),(x,.91,z),.14,mat['rusted-steel']).parent=fuel
 # A connected manifold runs along the tank, with elbows, valve wheels and a
 # separate hand pump at the road end. Every pipe has a real round section.
-pipe=[(1.08,2.34,-2.20),(1.08,2.62,-2.20),(1.08,2.62,2.12),(1.08,2.62,2.42),
-      (1.02,2.62,2.42),(1.02,2.16,2.42),(1.02,1.28,2.42),(1.02,.92,2.12)]
+pipe=[(1.22,2.34,-2.20),(1.22,2.62,-2.20),(1.22,2.62,2.12),(1.22,2.62,2.42),
+      (1.22,2.62,2.42),(1.22,2.16,2.42),(1.22,1.28,2.42),(1.22,.92,2.12)]
 for index,(start,end) in enumerate(zip(pipe,pipe[1:])):
     thin_run(f'fuel transfer pipe {index+1}',(start,end),.067,mat['rusted-steel'],fuel)
-for index,(x,z) in enumerate(((1.08,-1.42),(1.08,.62),(1.02,1.72))):
+for index,(x,z) in enumerate(((1.22,-1.42),(1.22,.62),(1.22,1.72))):
     cylinder(f'fuel valve body {index+1}',(x,2.62,z),.15,.23,mat['galvanised-tin'],12,fuel)
     town.beam(f'fuel valve cross handle {index+1}',(x-.23,2.82,z),(x+.23,2.82,z),.045,mat['rusted-steel']).parent=fuel
     town.beam(f'fuel valve stem {index+1}',(x,2.62,z),(x,2.82,z),.045,mat['rusted-steel']).parent=fuel
 # Pump casing, lever linkage and hose remain visibly joined to the manifold.
-town.cube('hand pump foot',(1.02,.82,-2.20),(.54,.16,.50),mat['rusted-steel'],.04).parent=fuel
-town.cube('hand pump casing',(1.02,1.20,-2.20),(.34,.62,.34),mat['rusted-steel'],.06).parent=fuel
-cylinder('hand pump head',(1.02,1.58,-2.20),.18,.24,mat['galvanised-tin'],16,fuel)
-town.beam('hand pump lever',(1.02,1.76,-2.20),(1.48,2.08,-2.20),.055,mat['rusted-steel']).parent=fuel
-town.beam('hand pump grip',(1.42,2.08,-2.20),(1.64,2.08,-2.20),.07,mat['galvanised-tin']).parent=fuel
-town.beam('pump inlet pipe',(1.02,1.20,-2.20),(1.02,1.20,-2.42),.06,mat['galvanised-tin']).parent=fuel
-town.beam('hose upper run',(1.24,.94,-2.20),(1.65,.75,-2.20),.045,mat['iron-dark']).parent=fuel
-town.beam('hose hanging run',(1.65,.75,-2.20),(1.65,.35,-2.20),.045,mat['iron-dark']).parent=fuel
-town.beam('hose return run',(1.65,.35,-2.20),(1.30,.30,-2.20),.045,mat['iron-dark']).parent=fuel
+town.cube('hand pump foot',(1.53,.82,-2.20),(.60,.16,.54),mat['rusted-steel'],.04).parent=fuel
+town.cube('hand pump casing',(1.53,1.40,-2.20),(.42,1.04,.42),mat['rusted-steel'],.06).parent=fuel
+cylinder('hand pump head',(1.53,1.98,-2.20),.20,.27,mat['galvanised-tin'],16,fuel)
+town.beam('hand pump lever',(1.53,2.15,-2.20),(2.08,2.48,-2.20),.06,mat['rusted-steel']).parent=fuel
+town.beam('hand pump grip',(2.02,2.48,-2.20),(2.28,2.48,-2.20),.075,mat['galvanised-tin']).parent=fuel
+town.beam('pump inlet pipe',(1.22,1.20,-2.20),(1.34,1.20,-2.20),.065,mat['galvanised-tin']).parent=fuel
+town.beam('pump riser pipe',(1.34,1.20,-2.20),(1.34,1.92,-2.20),.065,mat['rusted-steel']).parent=fuel
+town.beam('pump head connection',(1.34,1.92,-2.20),(1.53,1.92,-2.20),.065,mat['galvanised-tin']).parent=fuel
+thin_run('hand pump hose',((1.72,.92,-2.22),(1.98,.75,-2.22),(2.05,.48,-2.22),
+    (1.94,.28,-2.22),(1.62,.28,-2.22),(1.55,.55,-2.22),(1.72,.92,-2.22)),.045,mat['iron-dark'],fuel)
 # Faded yellow and black diagonal hazards are real painted bands on the curb.
 for index in range(18):
     x=-3.65+index*.36
