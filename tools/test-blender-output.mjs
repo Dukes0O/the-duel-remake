@@ -727,7 +727,11 @@ try {
         assert.ok(names.has('dot-diner:body'), 'photo-built diner mesh');
         assert.ok(names.has('plane-school'), 'round 5 building root');
         assert.ok(names.has('plane-school:body'), 'photo-built plane-school fuselage');
-        assert.ok(names.has('plane-school:slide'), 'slide stays a separate photo piece');
+        assert.ok(names.has('plane-school:slide-bed'), 'slide bed stays a separate box');
+        assert.ok(names.has('plane-school:slide-rail-road'), 'road-side slide rail is named');
+        assert.ok(names.has('plane-school:slide-rail-far'), 'far-side slide rail is named');
+        assert.ok(names.has('plane-school:sign-road'), 'road-side painted sign slab is named');
+        assert.ok(names.has('plane-school:sign-far'), 'far-side painted sign slab is named');
         for (const id of ['dot-diner', 'plane-school']) {
           const rootIndex = gltf.nodes.findIndex(node => node.name === id);
           const pending = [rootIndex], visited = new Set();

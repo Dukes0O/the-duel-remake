@@ -1,4 +1,4 @@
-"""TOWN-ART-OUTPOSTS round 4: Dot's Diner, measured and carved from four views.
+"""TOWN-ART-OUTPOSTS round 7: keep Dot's Diner; rebuild plane-school from four views.
 
 Run with Blender 4.5:
   blender -b -t 4 --python-exit-code 1 --python tools/blender/town-outposts.py -- --root .
@@ -13,12 +13,13 @@ from pathlib import Path
 p = argparse.ArgumentParser()
 p.add_argument('--root', required=True)
 p.add_argument('--paths-only', action='store_true')
-p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-6')
+p.add_argument('--render-dir', default='.evidence/2026-11-06/TOWN-ART-OUTPOSTS/round-7')
+p.add_argument('--body-check-only', action='store_true')
 a = p.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(a.root).resolve()
 out = root / 'public/assets/models/wasteland/town/outposts.glb'
 blend = root / 'art-build/town/outposts.blend'
-sheet = root / 'docs/board/looks/town-art-outposts/round-6.jpg'
+sheet = root / 'docs/board/looks/town-art-outposts/round-7.jpg'
 render = Path(a.render_dir)
 render = render if render.is_absolute() else root / render
 textures = root / 'public/assets/models/wasteland/town/textures'
@@ -253,79 +254,137 @@ for i, (px, top_py) in enumerate(((407, 225), (677, 225), (538, 318), (735, 318)
     cube(f'sign-post-{i + 1}', (sx1 + .05, (py_y(top_py) + foot) / 2, px_z(px)), (.1, py_y(top_py) - foot, .1), rust)
 
 
-# Plane-school: the clean side and overhead photographs remove the slide from
-# the fuselage carve. The source photo's doorway is 56 px wide; treating that
-# salvaged opening as a 1.0 m door sets this object's scale and length.
-SCHOOL_START, SCHOOL_END, SCHOOL_GROUND = 18, 1940, 700
-SCHOOL_DOOR_WIDTH_PX = 100
-SCHOOL_SCALE = 1.0 / SCHOOL_DOOR_WIDTH_PX  # door width fixes the side-photo scale
-SCHOOL_LENGTH = (SCHOOL_END - SCHOOL_START) * SCHOOL_SCALE
-SCHOOL_HEIGHT = (SCHOOL_GROUND - 285) * SCHOOL_SCALE
-# Each end is measured from its own clean grid. The fuselage edges, not the
-# far-reaching wings, define the body centre and cross-section.
-SCHOOL_FRONT = {'centre': 700, 'ground': 500, 'top': 340}
-SCHOOL_REAR = {'centre': 700, 'ground': 505, 'top': 390}
-SCHOOL_WIDTH = 228 * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - SCHOOL_FRONT['top']))
+# Plane-school: copy the diner's table, changing its measured values only.
+# The 158 px door is about 2 m tall, setting the common side-photo scale.
+SCHOOL_START, SCHOOL_END, SCHOOL_GROUND = 19, 932, 271
+SCHOOL_DOOR_TOP, SCHOOL_DOOR_SILL = 107, 266
+SCHOOL_SCALE = 2.0 / (SCHOOL_DOOR_SILL - SCHOOL_DOOR_TOP)
+SCHOOL_LENGTH = abs(SCHOOL_END - SCHOOL_START) * SCHOOL_SCALE
+SCHOOL_TOP = 70
+SCHOOL_HEIGHT = (SCHOOL_GROUND - SCHOOL_TOP) * SCHOOL_SCALE
+SCHOOL_FRONT = {'centre': 204, 'ground': 390, 'top': 103}
+SCHOOL_REAR = {'centre': 182, 'ground': 330, 'top': 53}
+SCHOOL_FRONT_WIDTH = 270
+SCHOOL_WIDTH = SCHOOL_FRONT_WIDTH * (SCHOOL_HEIGHT / (SCHOOL_FRONT['ground'] - SCHOOL_FRONT['top']))
 school_table = {
-    'photos': {'side': 'plane-school-side-wall.jpg', 'front': 'plane-school-front.jpg',
-               'rear': 'plane-school-rear.jpg', 'top': 'plane-school-overhead-wall.jpg'},
+    'photos': {'side': 'plane-school-side.jpg', 'front': 'plane-school-front.jpg',
+               'rear': 'plane-school-rear.jpg', 'top': 'plane-school-top.jpg'},
     'length': SCHOOL_LENGTH, 'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT,
     'side': {'start': SCHOOL_START, 'end': SCHOOL_END, 'ground': SCHOOL_GROUND},
     'front': SCHOOL_FRONT, 'rear': SCHOOL_REAR,
-    # The generated plan panel was 11.5% shorter and 16% narrower than the
-    # side/end grids. Its clean photo is normalized to the shared door scale.
-    'top': {'front': 60, 'rear': 1240, 'centre': 600, 'along': 'x', 'x_scale': SCHOOL_WIDTH / 1030},
-    'cut': {'side': [(0, 600, 2200, 1023)]},
+    'top': {'front': 19, 'rear': 926, 'centre': 140, 'along': 'x', 'x_scale': SCHOOL_WIDTH / 178},
+    'cut': {'side': [], 'front': [], 'rear': [], 'top': []},
     'grey': 26, 'tolerance': 40, 'bleed_tolerance': 42,
-    'voxel': .06, 'target': 7000,
+    'voxel': .04, 'target': 7000,
     'mask_dir': str(render / 'masks'),
 }
 school_body = carve_object('plane-school:body', textures, school_table)
+body_dimensions = tuple(float(value) for value in school_body.dimensions)
+measured = {'width': body_dimensions[0], 'height': body_dimensions[2], 'length': body_dimensions[1]}
+expected = {'width': SCHOOL_WIDTH, 'height': SCHOOL_HEIGHT, 'length': SCHOOL_LENGTH}
+print('plane-school body bounds (glTF axes; length along Z):', json.dumps(measured, sort_keys=True))
+print('plane-school table dimensions:', json.dumps(expected, sort_keys=True))
+for axis in expected:
+    error = abs(measured[axis] - expected[axis]) / expected[axis]
+    if error > .05:
+        raise RuntimeError(f'plane-school {axis} bound differs from its table by {error:.1%}')
+if a.body_check_only:
+    print(json.dumps({'body_check': 'passed', 'errors': {axis: abs(measured[axis]-expected[axis])/expected[axis] for axis in expected}}))
+    raise SystemExit(0)
 school = bpy.data.objects.new('plane-school', None)
 bpy.context.collection.objects.link(school)
 school.empty_display_type = 'CUBE'
 school.parent = family
 school_body.parent = school
 
-# The slide is a separate panel assembly, wearing its unedited side-photo pixels.
-school_side = Photo(textures / 'plane-school-side.jpg')
-slide = Mesh()
 def school_z(px):
     return -SCHOOL_LENGTH / 2 + (px - SCHOOL_START) * SCHOOL_SCALE
-def school_y(py):
-    return (SCHOOL_GROUND - py) * SCHOOL_SCALE
-def slide_face(points, pixels, normal):
-    slide.face(points, [school_side.uv(x, y) for x, y in pixels], 'side', normal)
-# Full-width open chute runs from the real door sill to the ground. Its rear
-# plane is dark so the carved opening remains visibly open behind it.
-sx = SCHOOL_WIDTH * .72
-zs = [school_z(790), school_z(1020)]
-top_y, end_y = school_y(480), .06
-slide_face([(-sx/2, top_y, zs[0]), (-sx/2, end_y, zs[1]),
-            (-sx/2, end_y, zs[0]), (-sx/2, top_y, zs[0])],
-           [(538, 470), (470, 735), (680, 735), (638, 470)], (-1, 0, 0))
-slide_face([(sx/2, top_y, zs[0]), (sx/2, end_y, zs[1]),
-            (sx/2, end_y, zs[0]), (sx/2, top_y, zs[0])],
-           [(538, 470), (470, 735), (680, 735), (638, 470)], (1, 0, 0))
-# Tread with side rails makes the slide read across the body, not as a flat wedge.
-slide.face([(-sx/2, top_y, zs[0]), (sx/2, top_y, zs[0]),
-           (sx/2, end_y, zs[1]), (-sx/2, end_y, zs[1])],
-          [school_side.uv(538, 470), school_side.uv(638, 470),
-           school_side.uv(680, 735), school_side.uv(470, 735)], 'side', (0, 1, 0))
-slide_obj = slide.finish('plane-school:slide', {'side': school_side.material()})
-slide_obj.parent = school
 
-# The letters are separate raised pieces so both sides read correctly.
+
+# Low timber blocks are separate so the fuselage bounds stay true to its tube.
+timber = material('school support timber', (.23, .17, .10))
+for index, px in enumerate((160, 760), 1):
+    support = town.cube(f'plane-school:support-{index}', (0, .12, school_z(px)),
+                        (.62, .24, .82), timber, .025)
+    support.parent = school
+
+# Three painted boxes make a real road-side slide from the door sill to ground.
+yellow = material('school slide yellow', (.88, .61, .08))
+red = material('school slide red rails', (.72, .055, .035))
+door_z = school_z(255)
+slide_inner_x, slide_outer_x = -.92, -2.95
+slide_mid_x = (slide_inner_x + slide_outer_x) / 2
+slide_mid_y = .09
+slide_angle = -math.atan2(.12, abs(slide_outer_x - slide_inner_x))
+bed = town.cube('plane-school:slide-bed', (slide_mid_x, slide_mid_y, door_z),
+                (abs(slide_outer_x - slide_inner_x), .08, 1.2), yellow, .018)
+bed.rotation_euler[1] = slide_angle
+bed.parent = school
 for hand in (-1, 1):
-    curve = bpy.data.curves.new(f'plane-school:letters-{hand}', 'FONT')
-    curve.body = 'SCHOOL'
-    curve.size = .38
-    curve.extrude = .018
-    text_obj = bpy.data.objects.new(f'plane-school:letters-{hand}', curve)
-    bpy.context.collection.objects.link(text_obj)
-    text_obj.parent = school
-    text_obj.rotation_euler = (math.pi / 2, 0, hand * math.pi / 2)
-    text_obj.location = (hand * (SCHOOL_WIDTH / 2 + .04), 1.65, .0)
+    rail = town.beam(f'plane-school:slide-rail-{"road" if hand < 0 else "far"}',
+                     (slide_inner_x, .25, door_z + hand * .55),
+                     (slide_outer_x, .13, door_z + hand * .55), .14, red)
+    rail.parent = school
+
+# One thin picture slab on each curved wall, directly below the windows.
+letter_photo = Photo(textures / 'plane-school-letters.jpg')
+letter_material = letter_photo.material()
+edge_material = material('school sign slab edge', (.25, .09, .035), .12)
+wall_radius = body_dimensions[0] / 2
+wall_center_y = body_dimensions[2] / 2
+panel_low, panel_high = .46, .88
+panel_half_length = 1.25
+slab_depth = .035
+
+def wall_x(y):
+    circular_flank = math.sqrt(max(.01, wall_radius ** 2 - (y - wall_center_y) ** 2))
+    return max(wall_radius - .09, circular_flank)
+
+
+def sign_slab(hand):
+    image_w, image_h = letter_photo.w, letter_photo.h
+    u0, u1 = ((image_w, 0) if hand > 0 else (0, image_w))
+    wall_clearance = .13 if hand < 0 else .025
+    mesh = Mesh()
+    rows = 8
+    front_bands = []
+    back_bands = []
+    for index in range(rows):
+        y0 = panel_low + (panel_high - panel_low) * index / rows
+        y1 = panel_low + (panel_high - panel_low) * (index + 1) / rows
+        x0 = hand * (wall_x(y0) + wall_clearance)
+        x1 = hand * (wall_x(y1) + wall_clearance)
+        front = [(x0, y0, -panel_half_length), (x0, y0, panel_half_length),
+                 (x1, y1, panel_half_length), (x1, y1, -panel_half_length)]
+        back = [(x - hand * slab_depth, y, z) for x, y, z in front]
+        v0 = letter_photo.uv(0, image_h - image_h * index / rows)[1]
+        v1 = letter_photo.uv(0, image_h - image_h * (index + 1) / rows)[1]
+        uv_band = [(u0 / image_w, v0), (u1 / image_w, v0),
+                   (u1 / image_w, v1), (u0 / image_w, v1)]
+        mesh.face(front, uv_band, 'letters', (hand, 0, 0))
+        mesh.face(list(reversed(front)), list(reversed(uv_band)), 'letters')
+        mesh.face(list(reversed(back)), list(reversed(uv_band)), 'edge')
+        front_bands.append(front)
+        back_bands.append(back)
+        for z_side in (-1, 1):
+            edge = [front[0 if z_side < 0 else 1], front[3 if z_side < 0 else 2],
+                    back[3 if z_side < 0 else 2], back[0 if z_side < 0 else 1]]
+            mesh.face(edge, [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                             letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    for band in (0, rows - 1):
+        front, back = front_bands[band], back_bands[band]
+        pairs = ((0, 1), (3, 2))
+        for first, second in pairs:
+            mesh.face([front[first], front[second], back[second], back[first]],
+                      [letter_photo.uv(0, 0), letter_photo.uv(4, 0),
+                       letter_photo.uv(4, 4), letter_photo.uv(0, 4)], 'edge')
+    obj = mesh.finish(f"plane-school:sign-{'road' if hand < 0 else 'far'}",
+                      {'letters': letter_material, 'edge': edge_material})
+    obj.parent = school
+
+
+sign_slab(-1)
+sign_slab(1)
 
 # Export and read the exact GLB back before making review views.
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
