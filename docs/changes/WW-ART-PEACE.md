@@ -86,3 +86,19 @@ The photo grids, carving masks, render captures, Blender working file and test l
 ### Removed
 
 Nothing replaced by this piece.
+
+## Magnus crane and roof, round 10
+
+- Added `tools/blender/town-peace-crane.py` and its candidate generator entry. `peace-crane.glb` contains roots `magnus-crane` and `magnus-roof`.
+- Added six original generated photo references for the boomless crawler body (side, front, rear, overhead), detached lattice boom, and rusty roof sheet. Credited the JPEGs in the town texture folder; the generator originals remain outside the repository.
+- Grid measurements: side ground row 850; 274 px cab door = 1.9 m (0.006934 m/px); side span x=65..1705 gives 11.37 m. The same cab-shell height measured 500 px on side, 510 px front, 526 px rear; those ratios set the end-photo scales. Front ground row 1010, rear ground row 1000. Front width derives to 7.70 m. Boom outline x=29..2142 is scaled to 16 m.
+- The photo-carving kit yields one integrated body mesh, so the turning house and crawler tracks stay together. Separate nodes carry the boom, cable, oversized magnet and six shared-mesh roofs; the loose roof sheet has its pivot at the middle of the top edge.
+- Exported GLB readback: 14,460 triangles, 2,199,860 bytes (25,000 triangle and 2,500,000 byte candidate limits).
+- Review sheet: `docs/board/looks/ww-art-peace/round-10.jpg`, 1600 x 900, no text, 150,908 bytes. The model reads as a crane carrying stolen roofs; the sheets partly obscure the magnet's round face. The single-piece body cannot rotate separately on its tracks. Claude should judge both on the sheet.
+- Blender export and exported-model renders: passed. `node tools/test-blender-output.mjs`: 327 checks passed, 1 failed; the same failure repeated on the one allowed rerun. It is the existing `peace-camp.glb` candidate: readback is 18,286 triangles against its 17,836 limit. The new `peace-crane.glb` candidate passed; its entry and assertions were not weakened. `node tools/test-repo-hygiene.mjs`: passed. Browser/look checks are Claude's; no race fingerprints apply to this art-only asset.
+- Changed assertions: none. Race fingerprints: not applicable.
+
+### Removed
+
+- Removed the six extra, unparented roof mesh copies after GLB readback exposed them; the six named stuck roofs now share the loose roof sheet mesh.
+- Temporary grid images, masks, render captures, Blender working file and QA logs created for this round are removed before handoff.

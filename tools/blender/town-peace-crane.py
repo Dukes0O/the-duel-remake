@@ -8,6 +8,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
+parser.add_argument('--render-only', action='store_true', help='render the exported GLB into review captures')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/town/peace-crane.glb'
@@ -17,6 +18,7 @@ if args.paths_only:
     raise SystemExit(0)
 
 import bpy
+from mathutils import Vector
 import numpy as np
 sys.path.insert(0, str(root / 'tools/blender'))
 from photo_carve import carve_object
@@ -26,9 +28,70 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
 bpy.context.scene.unit_settings.system = 'METRIC'
 
+if args.render_only:
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.device = 'CPU'
+    scene.cycles.samples = 8
+    scene.cycles.use_denoising = True
+    scene.view_settings.view_transform = 'Standard'
+    bpy.ops.import_scene.gltf(filepath=str(out))
+    scene.render.resolution_x = 800
+    scene.render.resolution_y = 450
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = 'PNG'
+    scene.render.film_transparent = False
+    world = bpy.data.worlds.new('plain pale studio')
+    world.use_nodes = True
+    world.node_tree.nodes['Background'].inputs['Color'].default_value = (.78,.78,.78,1)
+    world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
+    scene.world = world
+    bpy.ops.mesh.primitive_plane_add(size=100, location=(0,0,-.03))
+    floor = bpy.context.object
+    floor.name = 'plain floor'
+    fm = bpy.data.materials.new('plain pale floor')
+    fm.diffuse_color = (.68,.68,.68,1)
+    floor.data.materials.append(fm)
+    for location, energy, size in (((12,-15,24),4200,18),((-15,-4,14),2200,14),((0,14,20),1800,12)):
+        bpy.ops.object.light_add(type='AREA', location=location)
+        light=bpy.context.object; light.data.energy=energy; light.data.shape='DISK'; light.data.size=size
+        light.rotation_euler=(Vector((0,-4,8))-light.location).to_track_quat('-Z','Y').to_euler()
+    def set_camera(location, target, ortho=None, lens=50):
+        bpy.ops.object.camera_add(location=location)
+        cam=bpy.context.object
+        cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler()
+        if ortho:
+            cam.data.type='ORTHO'; cam.data.ortho_scale=ortho
+        else:
+            cam.data.lens=lens
+        scene.camera=cam
+        return cam
+    review_dir=root/'.evidence/2026-11-07/WW-ART-PEACE/renders'
+    review_dir.mkdir(parents=True,exist_ok=True)
+    for obj in scene.objects:
+        if obj.type=='MESH' and not obj.name.startswith('magnus-crane:body'):
+            obj.hide_render=True
+    cam=set_camera((-24,0,3),(0,0,3),ortho=12)
+    for name, photo in (('body-side','peace-magnus-crane-side.jpg'),('body-front','peace-magnus-crane-front.jpg')):
+        if name=='body-front':
+            scene.render.resolution_y=540
+            cam.location=(0,-24,3); cam.rotation_euler=(Vector((0,0,3))-cam.location).to_track_quat('-Z','Y').to_euler(); cam.data.ortho_scale=10.2
+        scene.render.filepath=str(review_dir/f'{name}.png')
+        bpy.ops.render.render(write_still=True)
+    scene.render.resolution_y=450
+    for obj in scene.objects:
+        obj.hide_render=False
+    for index, location in enumerate(((23,-27,1.6),(-23,-27,1.6)),1):
+        cam.location=location; cam.data.type='PERSP'; cam.data.lens=28
+        cam.rotation_euler=(Vector((0,0,8))-cam.location).to_track_quat('-Z','Y').to_euler()
+        scene.render.filepath=str(review_dir/f'whole-{index}.png')
+        bpy.ops.render.render(write_still=True)
+    raise SystemExit(0)
+
 # Photo-grid measurements in source pixels. Tracks touch the floor at side y=850.
 # The cab door is 274 px high and 1.9 m: side scale = 0.006934 m/px.
-# Side body runs x=65..1705 (11.38 m); side cab shell is about 500 px high.
+# Side body runs x=65..1705 (11.38 m), with the cab/front at x=1705; the
+# table's start is the front pixel, so start=1705 and end=65. Cab shell is ~500 px.
 # The same cab-shell height is 510 px in front and 526 px at rear; end scales
 # use the side scale times each measured height ratio. Front ground is y=1010,
 # rear ground y=1000. Overhead body extent is y=70..1450 and x=170..880.
@@ -42,7 +105,7 @@ body_table = {
     'photos': {'side': 'peace-magnus-crane-side.jpg', 'front': 'peace-magnus-crane-front.jpg',
                'rear': 'peace-magnus-crane-rear.jpg', 'top': 'peace-magnus-crane-top.jpg'},
     'length': LENGTH, 'width': WIDTH, 'height': HEIGHT,
-    'side': {'start': 65, 'end': 1705, 'ground': 850},
+    'side': {'start': 1705, 'end': 65, 'ground': 850},
     'front': {'centre': 760, 'ground': 1010, 'scale': FRONT_SCALE},
     'rear': {'centre': 770, 'ground': 1000, 'scale': REAR_SCALE},
     'top': {'front': 70, 'rear': 1450, 'centre': 512},
@@ -70,8 +133,8 @@ from mathutils import Vector
 from photo_model import Mesh, Photo, slab, trace
 
 side_photo = body_table['_photos']['side']
-paint = side_photo.material(.92)
-paint.name = 'magnus-magnet-paint'
+photo_paint = side_photo.material(.92)
+photo_paint.name = 'magnus-crane-photo-paint'
 def plain(name, color, metallic, roughness):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*color, 1)
@@ -81,6 +144,7 @@ def plain(name, color, metallic, roughness):
     bsdf.inputs['Metallic'].default_value = metallic
     bsdf.inputs['Roughness'].default_value = roughness
     return mat
+paint = plain('magnus-magnet-paint', (.74,.54,.07), .35, .90)
 steel = plain('magnus-magnet-steel', (.15, .155, .16), .34, .75)
 iron = plain('magnus-magnet-iron', (.045, .036, .03), .62, .72)
 cable_mat = plain('magnus-magnet-cable', (.012, .012, .013), 0, .9)
@@ -131,7 +195,7 @@ def boom_world(px, py, depth):
 for hand, label in ((-.5, 'near'), (.5, 'far')):
     mesh = Mesh()
     slab(mesh, 'paint', boom_photo, boom_loops, boom_world, hand-.022, hand+.022, wall_scale=BOOM_SCALE)
-    frame = mesh.finish(f'magnus-crane:boom-frame-{label}', {'paint': paint})
+    frame = mesh.finish(f'magnus-crane:boom-frame-{label}', {'paint': photo_paint})
     frame.parent = boom_root
     frame['part'] = f'magnus-crane:boom-frame-{label}'
 for index, px in enumerate((430, 900, 1370, 1840), 1):
@@ -200,8 +264,7 @@ loose_sheet.parent = loose_root
 loose_sheet['pivot'] = 'midpoint of top edge'
 for index, (offset, rotation) in enumerate((((-.9,-.35,-.1),(.3,.2,.5)),((.85,-.6,.15),(-.2,.4,-.7)),
     ((-1.1,.45,.2),(.7,-.3,1.0)),((1.05,.35,-.2),(-.5,.1,.3)),((0,-.8,.25),(.2,.6,1.4)),((.2,.7,-.3),(-.8,.2,-.4))),1):
-    obj = bpy.data.objects.new(f'magnus-crane:stuck-roof-{index}', roof_mesh.finish(
-        f'magnus-crane:stuck-roof-{index}', {'tin':tin}).data)
+    obj = bpy.data.objects.new(f'magnus-crane:stuck-roof-{index}', loose_sheet.data)
     bpy.context.collection.objects.link(obj)
     obj.parent = crane
     obj.location = game_to_blender(tuple(magnet_game[i]+offset[i] for i in range(3)))
