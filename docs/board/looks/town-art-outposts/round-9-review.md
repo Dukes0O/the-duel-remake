@@ -17,3 +17,7 @@ The accepted round-8 fuselage, trestles, slide and SCHOOL sign geometry are unch
 Claude should inspect the side and roof pane boundaries at high zoom, confirm the far-side window strip reads correctly, and recheck the round tube, trestles, slide, sign and whole-school framing. Browser and in-game look checks were not run; this is an art-only lane.
 
 No tests or assertions changed. Race fingerprints are not applicable to this art-only model change. Blender recipe/render completed successfully. The card's model budget/readback, repo hygiene and review-evidence checks are recorded in the change note.
+
+## Claude's verdict
+
+Passes, 7 November 2026. The round tube, trestles, slide and sign hold together from every side. The window numbers were remeasured by Claude after the first fill stopped short: the pane list was read from a picture at a different size. The school is merged, and three buildings on this card remain.

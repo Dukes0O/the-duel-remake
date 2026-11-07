@@ -282,6 +282,8 @@ def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.01
     for x0, y0, x1, y1 in windows:
         cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
         seed = pixels[cy, cx, :3].copy()
+        # The measured box only gives the pane's middle; the frame is what stops the fill.
+        x0, y0, x1, y1 = max(x0 - 12, 0), max(y0 - 12, 0), min(x1 + 12, width), min(y1 + 12, height)
         # Flood through the connected studio-grey patch only; the frame and wall
         # stop the fill even when their pixels lie inside the measurement box.
         component = np.zeros((height, width), dtype=bool)
@@ -292,7 +294,7 @@ def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.01
             x, y = stack.pop()
             if x < x0 or x >= x1 or y < y0 or y >= y1:
                 continue
-            if np.max(np.abs(pixels[y, x, :3] - seed)) > 18 / 255:
+            if np.max(np.abs(pixels[y, x, :3] - seed)) > 30 / 255:
                 continue
             component[y, x] = True
             for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
@@ -364,9 +366,9 @@ def painted_school_photo(source_name, output_name, windows, papers=(), dark=(.01
 
 # Rectangles are measured on the side and plan grids; edits stay inside each pane.
 SIDE_WINDOWS = [
-    (174, 123, 270, 193), (438, 124, 519, 191),
-    (558, 123, 641, 191), (681, 123, 771, 191), (804, 124, 852, 190),
-    (306, 120, 388, 254),  # the door opening is dark behind the sill and frame
+    (187, 120, 277, 200), (407, 114, 497, 198),
+    (519, 115, 612, 200), (635, 118, 725, 200), (750, 118, 832, 198),
+    (311, 120, 380, 262),  # the door opening is dark behind the sill and frame
 ]
 SIDE_PAINTED = painted_school_photo(
     'plane-school-side.jpg', 'plane-school-side-painted.png', SIDE_WINDOWS,
