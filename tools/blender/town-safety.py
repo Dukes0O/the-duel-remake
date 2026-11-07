@@ -655,3 +655,86 @@ d.text((24,2586),'Two clear drive-through bays, open traced hose lattice and bel
 out.parent.mkdir(parents=True,exist_ok=True);page.save(out,'JPEG',quality=78,optimize=True,progressive=True)
 '''
 subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)
+
+
+# Round 6: inspect only the exported guard post and verify each authored piece.
+guard=next(obj for obj in scene.objects if obj.name=='guard-post')
+guard_visible={guard,*guard.children_recursive}
+guard_meshes=[obj for obj in guard_visible if obj.type=='MESH']
+for obj in scene.objects:
+    obj.hide_render=obj not in guard_visible and obj.name!='neutral grey ground' and obj.type not in ('LIGHT',)
+scene.view_settings.view_transform='Standard';scene.view_settings.look='Medium High Contrast'
+scene.view_settings.exposure=0;scene.view_settings.gamma=1
+scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
+scene.render.resolution_x=1000;scene.render.resolution_y=680;scene.render.resolution_percentage=100
+bpy.context.view_layer.update()
+def bounds_of(objects):
+    pts=[obj.matrix_world @ Vector(c) for obj in objects for c in obj.bound_box]
+    if not pts: raise RuntimeError('empty guard-post piece group')
+    game=[(p.x,p.z,-p.y) for p in pts]
+    return {'min':[min(p[i] for p in game) for i in range(3)],'max':[max(p[i] for p in game) for i in range(3)]}
+piece_groups={
+ 'sandbag wall':[o for o in guard_meshes if o.name=='guard-post:sandbag-wall'],
+ 'timber':[o for o in guard_meshes if ':timber-' in o.name],
+ 'pitched tin roof':[o for o in guard_meshes if o.name=='guard-post:tin-roof' or ':rusted-eave-' in o.name or o.name=='guard-post:ridge-cap'],
+ 'brazier':[o for o in guard_meshes if ':brazier' in o.name],
+}
+for label,objects in piece_groups.items():
+    box=bounds_of(objects)
+    print(f'EXPORTED GUARD-POST BOUNDS {label}:',json.dumps({k:[round(v,3) for v in vals] for k,vals in box.items()},sort_keys=True))
+for obj in guard_meshes:
+    box=bounds_of([obj]); lo,hi=box['min'],box['max']
+    print(f'EXPORTED GUARD-POST PIECE {obj.name}:',json.dumps({k:[round(v,3) for v in vals] for k,vals in box.items()},sort_keys=True))
+    if lo[0]<-7.5 or hi[0]>7.5 or lo[2]<-3.5 or hi[2]>3.5:
+        raise RuntimeError(f'{obj.name} exceeds guard-post footprint with 0.5 m clearance')
+    if lo[1]<=.08: continue
+    touches=any(other is not obj and all(box['min'][axis]<=bounds_of([other])['max'][axis]+.14 and bounds_of([other])['min'][axis]<=box['max'][axis]+.14 for axis in range(3)) for other in guard_meshes)
+    if not touches: raise RuntimeError(f'{obj.name} touches neither ground nor another piece')
+print('EXPORTED GUARD-POST CONTACT CHECK: every part touches ground or another piece and stays in the footprint.')
+all_box=bounds_of(guard_meshes)
+lo=Vector((all_box['min'][0],all_box['min'][2],-all_box['max'][1]))
+hi=Vector((all_box['max'][0],all_box['max'][2],-all_box['min'][1]))
+centre=Vector(((lo.x+hi.x)/2,(lo.y+hi.y)/2,(lo.z+hi.z)/2))
+# X/Y/Z here are Blender coordinates; the imported GLB is Z-up in Blender.
+def guard_shot(name,offset,ortho):
+    data=bpy.data.cameras.new('guard-post-'+name);cam=bpy.data.objects.new('guard-post-'+name,data);scene.collection.objects.link(cam)
+    cam.location=centre+Vector(offset);aim_z(cam,centre);cam.data.type='ORTHO';cam.data.ortho_scale=ortho;scene.camera=cam
+    scene.render.filepath=str(render_dir/f'guard-post-{name}.png')
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(cam,do_unlink=True);bpy.data.cameras.remove(data)
+render_dir=evidence;render_dir.mkdir(parents=True,exist_ok=True)
+guard_shot('side',(18,0,0),8.8)
+guard_shot('front',(0,22,0),18.4)
+guard_shot('rear',(0,-22,0),18.4)
+guard_shot('above',(0,0,24),18.4)
+guard_shot('three-quarter-left',(-21,22,17),21)
+guard_shot('three-quarter-right',(21,22,17),21)
+guard_shot('mayor',(48,48,48),24)
+
+# Four matched photo/model pairs, then the two three-quarter views and mayor view.
+import subprocess
+sheet_code=r'''from PIL import Image,ImageDraw,ImageFont
+from pathlib import Path
+import sys
+root=Path(sys.argv[1]);out=Path(sys.argv[2]);tex=root/'public/assets/models/wasteland/town/textures';ev=root/'.evidence/2026-11-07/TOWN-ART-SAFETY/round-6'
+pairs=[('SIDE / GABLE END','guard-post-front.jpg','guard-post-side.png'),('FRONT / ROAD WALL','guard-post-side.jpg','guard-post-front.png'),('REAR','guard-post-rear.jpg','guard-post-rear.png'),('STRAIGHT DOWN','guard-post-top.jpg','guard-post-above.png')]
+extras=[('THREE-QUARTER LEFT','guard-post-three-quarter-left.png'),('THREE-QUARTER RIGHT','guard-post-three-quarter-right.png'),("MAYOR\'S VIEW",'guard-post-mayor.png')]
+W,H=1600,2640;page=Image.new('RGB',(W,H),(43,43,40));d=ImageDraw.Draw(page);fonts=Path('C:/Windows/Fonts');title=ImageFont.truetype(str(fonts/'segoeuib.ttf'),25);label=ImageFont.truetype(str(fonts/'segoeuib.ttf'),17);small=ImageFont.truetype(str(fonts/'segoeui.ttf'),13)
+d.text((24,14),'TOWN SAFETY | ROUND 6 | GUARD POST',font=title,fill=(240,228,205))
+def fit(path,box):
+ im=Image.open(path).convert('RGB');im.thumbnail(box,Image.Resampling.LANCZOS);canvas=Image.new('RGB',box,(128,130,130));canvas.paste(im,((box[0]-im.width)//2,(box[1]-im.height)//2));return canvas
+row_h=480
+for i,(name,photo,model) in enumerate(pairs):
+ y=50+i*row_h;d.rounded_rectangle((18,y,W-18,y+row_h-8),radius=8,fill=(78,76,69));d.text((34,y+7),name,font=label,fill=(240,194,125));d.text((35,y+31),'PHOTO',font=small,fill=(229,223,208));d.text((815,y+31),'EXPORTED MODEL | SAME ORTHOGRAPHIC CAMERA',font=small,fill=(229,223,208))
+ page.paste(fit(tex/photo,(740,410)),(34,y+48));page.paste(fit(ev/model,(740,410)),(815,y+48))
+for i,(name,model) in enumerate(extras):
+ x=18+i*528;y=1980;d.rounded_rectangle((x,y,x+510,y+510),radius=8,fill=(78,76,69));d.text((x+14,y+10),name,font=label,fill=(240,194,125));page.paste(fit(ev/model,(480,450)),(x+15,y+42))
+d.text((24,2530),'Weathered sandbags carved alone; real posts and a pitched, photo-mapped tin roof shelter a lathed iron brazier.',font=small,fill=(232,226,210))
+out.parent.mkdir(parents=True,exist_ok=True)
+for quality in (78,74,70,66,62,58):
+ page.save(out,'JPEG',quality=quality,optimize=True,progressive=True)
+ if out.stat().st_size<=500000:break
+if out.stat().st_size>500000:raise RuntimeError(f'guard-post sheet exceeds 500 KB: {out.stat().st_size}')
+print(f'GUARD-POST ROUND 6 SHEET: {out.stat().st_size} bytes')
+'''
+subprocess.run(['python','-c',sheet_code,str(root),str(sheet)],check=True)
