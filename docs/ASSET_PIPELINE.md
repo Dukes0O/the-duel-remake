@@ -405,3 +405,4 @@ Lessons from Wednesday, a small engine carved with the hull kit (Claude, 6 Novem
 - A top-facing view must read real material, never the photo's sky.
 - Scale pictures in memory. Never save over a source photo.
 6. Look at every mask beside its photo. Background walled in by the subject (between legs, inside a frame, under a body) is not reached by the flood from the frame's edge, may not match the studio's colour, and would be carved as if it were the subject. Take each patch out by a measured shape. (Kyle, 6 November.)
+7. Wheels: use `tyre` and `wheel_well` from `tools/blender/hull_model.py`. Measure each wheel on a grid over the photo: its centre, its radius, and where the ground is. Numbers read by eye were 40 pixels out, and that is what made tyres sit wrong in their arches. The tread wears the end photo's tyre, and the arch's wall and the underside are dark. An axle stops inside the tyre.
