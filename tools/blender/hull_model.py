@@ -32,6 +32,7 @@ class View:
         self.photo = photo
         self.pick = pick
         self.normal = np.array(normal, dtype=np.float64)
+        self.favour = None       # favour(point) -> a multiplier: how readily faces there wear this photo
         mask = tidy(~photo.sky(seeds, tolerance=tolerance, grey=grey), 2)
         self.mask = solid(mask) if solid else mask
 
@@ -249,6 +250,9 @@ def carve_hull(name, views, materials, solid, xs, ys, zs, voxel, target, dark=No
         facing = normals @ np.array((n.x, n.z, -n.y))
         chosen = gltf[list(polygon.vertices)]
         middle = chosen.mean(axis=0)[None, :]
+        for index, view in enumerate(views):
+            if view.favour is not None:
+                facing[index] *= view.favour(middle[0])
         # The photo this face looks at most, if that photo shows the subject here.
         # A wheel's wing can stand outside the end photo's own outline.
         pick = int(np.argmax(facing))
