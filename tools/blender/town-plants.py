@@ -15,6 +15,7 @@ if a.paths_only:
  import json;print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[str(evidence)] if a.render else []}));raise SystemExit(0)
 import bpy
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
+from photo_model import Photo, Mesh as PhotoMesh, trace, slab
 
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
@@ -64,20 +65,30 @@ for x in (-1.0,1.0):
   box('crusher-bolt',(x,y,-1.29),(.09,.09,.05),dark,.035)
 box('crusher-inspection-door',(1.31,1.83,-.05),(.045,.78,.62),paint,.025)
 for y in (1.54,2.12):box('inspection-hinge',(1.35,y,-.05),(.08,.08,.19),dark,.025)
-# Conveyor: thick belt bed on triangular welded truss, with rollers and guard rails.
+# The conveyor is traced from the side photograph. The flood mask leaves the
+# truss openings empty; slab adds thickness without closing those openings.
 belt_parent=bpy.data.objects.new('crusher:belt',None);bpy.context.collection.objects.link(belt_parent);belt_parent.parent=crusher
-for x in (-.62,.62):
- beam('conveyor-truss-chord',(x,1.14,-1.0),(x,3.18,3.35),.09,steel,belt_parent)
- for i in range(7):
-  t=i/6;z=-.9+t*4.05;y=1.18+t*1.92
-  beam('conveyor-truss-cross',(x,y,z),(-x,y,z),.065,steel,belt_parent)
-  if i<6:beam('conveyor-diagonal',(x,y,z),(-x,y+.27,z+.66),.045,steel,belt_parent)
-beam('crusher:belt-bed',(-.79,2.21,-.98),(.79,4.18,3.12),.16,dark,belt_parent)
-for x in (-.73,.73):
- beam('conveyor-handrail',(x,2.53,-.91),(x,4.50,3.20),.055,tin,belt_parent)
-for i in range(9):
- t=i/8;z=-.85+t*3.95;y=1.28+t*1.91
- pipe('conveyor-roller',[( -.60,y,z),(.60,y,z)],.045,dark,belt_parent)
+side_photo=Photo(tex/'crusher-side.jpg')
+side_bg=side_photo.sky([(4,4),(1018,4),(4,562),(1018,562)],tolerance=34,grey=40)
+side_solid=~side_bg
+# Grid-measured photo coordinates: only the rising conveyor run, x=445..840,
+# y=155..420. The belt surface itself is retained as its own thin traced part.
+truss_mask=side_solid.copy();truss_mask[:145,:]=False;truss_mask[432:,:]=False
+truss_mask[:,:438]=False;truss_mask[:,850:]=False
+truss_loops=trace(truss_mask,(438,145,850,432),tolerance=2.0,min_area=16)
+truss_mesh=PhotoMesh()
+def side_world(px,py,depth):
+ scale=6.35/(846-28)
+ return (depth,(472-py)*scale,-3.175+(px-28)*scale)
+slab(truss_mesh,'side',side_photo,truss_loops,side_world,-.68,.68,wall_scale=6.35/(846-28))
+truss=truss_mesh.finish('crusher:belt:photo-traced-lattice',{'side':side_photo.material()})
+truss.parent=belt_parent
+# Two narrow belt lips and cross rollers follow the measured photo slope.
+for x in (-.70,.70):
+ beam('crusher-belt-edge',(x,.50,-.18),(x,2.38,2.84),.055,dark,belt_parent)
+for i in range(8):
+ t=i/7;z=-.1+t*2.88;y=.58+t*1.80
+ pipe('crusher-belt-roller',[(-.63,y,z),(.63,y,z)],.035,dark,belt_parent)
 # Hydraulic jaw pivots and hoses. Jaw remains a named movable node.
 jaw=bpy.data.objects.new('crusher:jaw',None);bpy.context.collection.objects.link(jaw);jaw.parent=crusher
 box('jaw-plate',(0,2.10,-1.02),(1.35,.82,.10),tin,.025,jaw)
@@ -95,21 +106,6 @@ for x in (-1.34,1.34):
   angle=math.tau*spoke/6
   beam('crusher-flywheel-spoke',(x,2.22+math.sin(angle)*.18,-.40+math.cos(angle)*.18),
        (x,2.22+math.sin(angle)*.82,-.40+math.cos(angle)*.82),.095,paint)
-# Extend the delivery belt well beyond the jaw box.  Its raised head and
-# separate braced legs remain visible from the mayor's camera.
-for x in (-.62,.62):
- beam('conveyor-truss-extension',(x,3.18,3.35),(x,5.45,7.75),.10,paint,belt_parent)
- beam('conveyor-support-leg',(x,4.05,5.10),(x,.12,5.10),.12,steel,belt_parent)
- beam('conveyor-support-foot',(x-.34,.12,5.10),(x+.34,.12,5.10),.11,dark,belt_parent)
- for i in range(6):
-  z=3.65+i*.70;y=3.34+i*.36
-  beam('conveyor-extension-cross',(x,y,z),(-x,y,z),.06,steel,belt_parent)
-  if i<5:beam('conveyor-extension-diagonal',(x,y,z),(-x,y+.34,z+.70),.045,steel,belt_parent)
- beam('conveyor-extension-handrail',(x,3.46,3.52),(x,5.72,7.92),.055,tin,belt_parent)
-beam('crusher:belt-bed-extension',(-.78,4.25,3.18),(.78,6.40,7.65),.17,dark,belt_parent)
-for i in range(11):
- t=i/10;z=3.25+t*4.35;y=3.27+t*2.16
- pipe('conveyor-extension-roller',[(-.60,y,z),(.60,y,z)],.045,dark,belt_parent)
 # Drive pack, cooling fins, exhaust, fuel tank and narrow access ladder.
 box('crusher-diesel-skid',(1.38,1.12,1.0),(.9,.46,1.22),dark,.07)
 box('crusher-engine-block',(1.38,1.62,1.0),(.72,.60,.88),steel,.08)
@@ -118,15 +114,10 @@ pipe('engine-exhaust',[(1.46,1.92,1.15),(1.46,2.48,1.15),(1.62,2.60,1.15)],.065,
 box('engine-fuel-tank',(1.36,2.05,1.68),(.72,.32,.64),paint,.09)
 for z in (-.05,.34,.73,1.12,1.51,1.90,2.29,2.68,3.07):beam('crusher-access-ladder-rung',(-1.39,.25,z),(-1.39,1.45,z),.045,tin)
 for x in (-1.39,-.96):beam('crusher-access-ladder-rail',(x,.16,-.12),(x,1.52,3.18),.06,steel)
-# Discharge chute and gravel spilled below the belt head.
+# Discharge chute and a separate, low gravel cone, keyed to the photograph.
 box('crusher-discharge-chute',(0,.78,2.28),(1.18,.66,.8),steel,.07).rotation_euler[0]=-.38
-import random
-rng=random.Random(917)
-for i in range(72):
- x=rng.uniform(-1.8,1.8);z=rng.uniform(7.1,8.7);ridge=max(0,1-abs(x)/2.2)
- y=rng.uniform(.08,.24)+ridge*max(0,1-abs(z-7.95)/1.05)*.45;r=rng.uniform(.09,.23)
- bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=r,location=town.game_vector((x,y,z)))
- o=bpy.context.object;o.name='crusher-gravel';o.scale=(1.35,.72,.68);o.data.materials.append(sand);o.parent=crusher;parts.append(o)
+bpy.ops.mesh.primitive_cone_add(vertices=24,radius1=1.05,radius2=.05,depth=.70,location=town.game_vector((0,.35,3.0)))
+gravel=bpy.context.object;gravel.name='crusher-gravel-cone';gravel.scale=(1.25,1.0,.86);gravel.data.materials.append(sand);gravel.parent=crusher;parts.append(gravel)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(glb)
 if a.render:
@@ -139,5 +130,5 @@ if a.render:
  bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=1800;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=14
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
- for name,loc,target in [('above-45',(10,12,-14),(0,1.5,0)),('driver-seat',(6,2.5,-8),(0,2.2,0)),('side',(10,5,2),(0,2,0))]:
-  cam=camera(name,loc,target);scene.camera=cam;scene.render.filepath=str(evidence/(name+'.png'));evidence.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
+ for name,loc,target,lens in [('above-45',(10,12,-14),(0,1.5,0),45),('driver-seat',(6,2.5,-8),(0,2.2,0),45),('side',(15,5,0),(0,2.2,0),30)]:
+  cam=camera(name,loc,target,lens);scene.camera=cam;scene.render.filepath=str(evidence/(name+'.png'));evidence.mkdir(parents=True,exist_ok=True);bpy.ops.render.render(write_still=True)
