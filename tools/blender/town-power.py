@@ -153,9 +153,9 @@ for sx in (-1,1):
 PHOTO_SCALE = .006
 PHOTO_MAST_CX, PHOTO_GROUND_Y = 400, 1100
 PHOTO_HUB_CX, PHOTO_HUB_CY = 260, 320
-axle = (-.84, 4.68, -.50)
+axle = (.84, 4.68, -.50)
 def photo_point(px, py, depth):
-    return ((px - PHOTO_MAST_CX) * PHOTO_SCALE - axle[0],
+    return (-(px - PHOTO_MAST_CX) * PHOTO_SCALE - axle[0],
             (PHOTO_GROUND_Y - py) * PHOTO_SCALE - axle[1], depth - axle[2])
 
 def traced_part(mesh, label, rect, near=-.50, far=-.455, min_area=36):
@@ -203,7 +203,7 @@ for index in range(8):
     angle = math.tau * index / 8
     px = PHOTO_HUB_CX + math.cos(angle) * 87
     py = PHOTO_HUB_CY + math.sin(angle) * 87
-    x, y = (px - PHOTO_MAST_CX) * PHOTO_SCALE, (PHOTO_GROUND_Y - py) * PHOTO_SCALE
+    x, y = -(px - PHOTO_MAST_CX) * PHOTO_SCALE, (PHOTO_GROUND_Y - py) * PHOTO_SCALE
     beam('alternator photo-measured cooling fin',
          (x, y, -.435),
          (x + math.cos(angle) * .07, y + math.sin(angle) * .07, -.435),
@@ -541,7 +541,7 @@ def isolate(active):
 isolate('windmill')
 render('windmill-driver',(0,8,-12),(0,2.7,0),34)
 render('windmill-above-45',(0,10,-10),(0,2.7,0),30)
-render('windmill-rotor-front',(0,6.6,-10),(-.35,4.5,-.35),62)
+render('windmill-rotor-front',(0,6.6,-10),(.84,4.68,-.35),62)
 isolate('power-pole')
 render('power-pole-driver',(-5,8,-7),(0,2.8,0),40)
 render('power-pole-above-45',(3,9,-4),(0,3.0,0),45)
