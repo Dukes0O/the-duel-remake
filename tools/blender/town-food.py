@@ -1140,8 +1140,8 @@ stall_lo=Vector((min(p.x for p in stall_points),min(p.y for p in stall_points),m
 stall_hi=Vector((max(p.x for p in stall_points),max(p.y for p in stall_points),max(p.z for p in stall_points)))
 target=(stall_lo+stall_hi)*.5
 scene.render.resolution_x=1200;scene.render.resolution_y=850
-render_match('stalls-three-quarter',target+Vector((-11,14,8)),Vector((0,0,1)),13)
-render_match('stalls-mayor',target+Vector((-5,10,12)),Vector((0,0,1)),14)
+render_match('stalls-three-quarter',target+Vector((-20,24,15)),Vector((0,0,1)),30)
+render_match('stalls-mayor',target+Vector((-8,18,25)),Vector((0,0,1)),30)
 canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
