@@ -195,7 +195,10 @@ photo_paths = {
 }
 photos = {name: Photo(path) for name, path in photo_paths.items()}
 W, H = 712, 532
-def front_pick(x, y, z): return ((x + 2.05) * W / 4.1, (2.7 - y) * H / 2.7)
+# The front photo faces the road (-Z). Its left edge is world +X, so this
+# projection is reversed when read from the road. Keep the shelf contents on
+# their photographed sides instead of mirroring the whole kitchen.
+def front_pick(x, y, z): return ((2.05 - x) * W / 4.1, (2.7 - y) * H / 2.7)
 def left_pick(x, y, z): return ((z + 1.6) * W / 3.2, (2.7 - y) * H / 2.7)
 def rear_pick(x, y, z): return ((2.05 - x) * W / 4.1, (2.7 - y) * H / 2.7)
 def overhead_pick(x, y, z): return ((x + 2.05) * W / 4.1, (1.6 - z) * H / 3.2)
@@ -221,12 +224,44 @@ for photo_material in photo_materials.values():
         links.new(texture.outputs['Color'],bsdf.inputs['Emission Color'])
         bsdf.inputs['Emission Strength'].default_value=.2
 voxel = .055
+def open_kitchen_bay(x, y, z):
+    # Walk-in space from the front posts to the rear tin wall. Preserve the
+    # measured wall at the back and the roof/awning above it.
+    return ~((-1.74 < x) & (x < 1.74) & (.15 < y) & (y < 2.48) & (z < 1.43))
+
 solid, xs, ys, zs = occupancy(((-2.05, 2.05), (0, 2.7), (-1.6, 1.6)), voxel,
-                              [view.covers for view in views])
+                              [view.covers for view in views], open_kitchen_bay)
 solid = largest_part(solid)
 body = carve_hull('soup-kitchen:photo-carved-body', views, photo_materials,
                   solid, xs, ys, zs, voxel, 4200)
 keep(body)
+
+# The posts, benches, pot and fire stand inside the bay at real depth. Their
+# simple geometry is separate from the photo-carved rear wall.
+for x in (-1.82, 1.82):
+    beam(f'soup-kitchen:front-post-{x}', (x,.08,-1.48), (x,2.58,-1.48), .12, mat['weathered-plank'])
+    beam(f'soup-kitchen:rear-post-{x}', (x,.08,1.28), (x,2.50,1.28), .10, mat['weathered-plank'])
+    beam(f'soup-kitchen:side-rail-{x}', (x,2.26,-1.43), (x,2.50,1.24), .075, mat['rusted-steel'])
+# A shallow curved awning sheet shades the open bay while leaving the rear
+# photo wall visible. The arc rises slightly toward the centre.
+awning_verts=[]; awning_faces=[]; segments=12
+for row, z in enumerate((-1.58,-.98)):
+    for i in range(segments+1):
+        x=-2.0+4.0*i/segments
+        y=2.57 + .10*(1-(x/2.0)**2) + (0.02 if row else 0)
+        awning_verts.append((x,y,z))
+for i in range(segments): awning_faces.append((i,i+1,segments+2+i,segments+1+i))
+mesh_object('soup-kitchen:curved-awning',awning_verts,awning_faces,mat['patched-canvas'],'canvas')
+for x in (-1.70,1.70):
+    # Two separate plank benches, clear of the central cooking space.
+    box(f'soup-kitchen:bench-seat-{x}',(x,.72,-.42),(.58,.12,1.02),mat['weathered-plank'],.035)
+    for z in (-.80,-.04):
+        beam(f'soup-kitchen:bench-leg-{x}-{z}',(x,.12,z),(x,.67,z),.085,mat['rusted-steel'])
+# Round soot-blackened cauldron with a rolled rim, on a low three-stone fire.
+cylinder('soup-kitchen:pot-body',(0,.73,.0),.42,.48,mat['dark-steel'],24)
+cylinder('soup-kitchen:pot-rim',(0,.98,.0),.45,.07,mat['dark-steel'],24)
+for x in (-.24,0,.24):
+    sphere(f'soup-kitchen:fire-stone-{x}',(x,.16,-.02),(.13,.10,.13),mat['sand'],8,5)
 
 # A small dedicated emissive flame node remains individually addressable at night.
 lamp = bpy.data.objects.new('soup-kitchen:lamp', None)
