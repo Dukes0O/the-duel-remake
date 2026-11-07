@@ -1,6 +1,6 @@
 # TOWN-ART-SERVICES change note
 
-Status: scrapyard round 1 is ready for Claude's visual review. The Town Hall and Forge remain at their passed round-6 art. The family limit is 8 MB, as settled on the card. The rebuilt family GLB is 5,058,828 bytes.
+Status: scrapyard round 1 is ready for Claude's visual review. The Town Hall and Forge remain at their passed round-6 art. The family limit is 8 MB, as settled on the card. The rebuilt family GLB is 5,047,384 bytes.
 Kind: art. Candidate asset; not wired into a reachable game scene.
 
 ## Design settled
@@ -18,7 +18,8 @@ Kind: art. Candidate asset; not wired into a reachable game scene.
 - Added per-piece world bounds output and ground/contact checks. All scrapyard pieces passed; each remains inside the plot margins.
 - Added matched photo/model, two three-quarter, road and mayor views to the round-1 review recipe.
 - Added `TEXCOORD_0` UVs to all ten rubble meshes. Lowered the two carved stack targets to 2,000 triangles each and removed bevels from the fine fence wires and posts; the scrapyard now totals 8,572 triangles under its 9,000 limit.
-- Renamed and refreshed the comparison sheet to the card's `round-1.jpg` path; the sheet is 211,264 bytes.
+- Warmed and darkened only bright neutral pixels in the crane photo texture, preserving its rust and painted details.
+- Renamed and refreshed the comparison sheet to the card's `round-1.jpg` path; the sheet is 203,423 bytes.
 - Added measured roof rows to the Town Hall end-photo table so the current carving API can rebuild its already-approved shape. The Forge recipe and both buildings' design are unchanged.
 - Recorded the horizontal beam tracking-axis fault in `docs/ART_LINE.md`; fence bars now use axis-aligned geometry.
 

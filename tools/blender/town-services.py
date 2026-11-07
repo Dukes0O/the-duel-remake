@@ -296,6 +296,17 @@ for n in ids:
    parent_keep(magnet,hook_group)
    coil=tube('scrapyard:magnet-coil',(trolley_x,4.78,-1.30),.62,.12,paint,hook_group,24,8)
   crane_photo.bleed(crane_mask)
+  # The source's low-chroma galvanized steel reads too pale beside the town
+  # family. Warm and darken only its bright neutral pixels; keep rust and paint.
+  rgba=np.empty(crane_photo.image_w*crane_photo.image_h*4,dtype=np.float32)
+  crane_photo.image.pixels.foreach_get(rgba);rgba=rgba.reshape(crane_photo.image_h,crane_photo.image_w,4)
+  pixels=rgba[::-1,:,:3].copy()*255
+  value=pixels.mean(axis=2);chroma=pixels.max(axis=2)-pixels.min(axis=2)
+  pale=(chroma<45)&(value>95);mix=np.clip((value-95)/135,0,.62)
+  weathered=np.array([74,52,34],dtype=np.float32)
+  pixels[pale]=(pixels*(1-mix[...,None])+weathered*mix[...,None])[pale]
+  rgba[::-1,:,:3]=pixels/255
+  crane_photo.image.pixels.foreach_set(rgba.ravel());crane_photo.image.update();crane_photo.image.pack();crane_photo._rgb=None
   # A low, open wire fence with a broad road gate; its posts are planted at
   # the plot edge and every wire meets a post.
   edge=10.72;fence_y=1.28
