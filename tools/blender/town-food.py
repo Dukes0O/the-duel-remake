@@ -1144,8 +1144,8 @@ for stall_id in ('stall-a','stall-b','stall-c'):
     render_match(prefix+'side',target+Vector((8,0,0)),Vector((0,0,1)),4.2)
     render_match(prefix+'rear',target+Vector((0,-8,0)),Vector((0,0,1)),4.2)
     render_match(prefix+'above',target+Vector((0,0,9)),Vector((0,1,0)),4.2)
-    render_match(prefix+'three-left',target+Vector((-6,-7,4)),Vector((0,0,1)),5.2)
-    render_match(prefix+'three-right',target+Vector((6,-7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'three-left',target+Vector((-6,7,4)),Vector((0,0,1)),5.2)
+    render_match(prefix+'three-right',target+Vector((6,7,4)),Vector((0,0,1)),5.2)
     render_match(prefix+'mayor',target+Vector((-12,-12,12)),Vector((0,0,1)),6.0)
 # The mayor's view shows the three separately built market stalls together.
 stall_roots=[next(obj for obj in scene.objects if obj.name==name)
@@ -1160,8 +1160,8 @@ stall_lo=Vector((min(p.x for p in stall_points),min(p.y for p in stall_points),m
 stall_hi=Vector((max(p.x for p in stall_points),max(p.y for p in stall_points),max(p.z for p in stall_points)))
 target=(stall_lo+stall_hi)*.5
 scene.render.resolution_x=1200;scene.render.resolution_y=850
-render_match('stalls-three-quarter',target+Vector((-20,24,15)),Vector((0,0,1)),30)
-render_match('stalls-mayor',target+Vector((-8,18,25)),Vector((0,0,1)),30)
+render_match('stalls-three-quarter',target+Vector((-20,24,15)),Vector((0,0,1)),22)
+render_match('stalls-mayor',target+Vector((-8,18,25)),Vector((0,0,1)),22)
 canteen_root=next(obj for obj in scene.objects if obj.name=='canteen')
 for obj in scene.objects:
     if obj.type not in ('CAMERA','LIGHT') and obj.name not in ('review ground','market hall review ground'):
