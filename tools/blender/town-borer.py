@@ -12,6 +12,7 @@ import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent)); import town_base as town
 from photo_model import Mesh, Photo, slab, trace
+from photo_carve import carve_object
 bpy.ops.wm.read_factory_settings(use_empty=True); bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
 m=town.make_materials({'rusted-steel':tex/'stages-rusted-steel.jpg','galvanised-tin':tex/'faded-yellow-steel.jpg','faded-hand-paint':tex/'faded-yellow-steel.jpg','iron-dark':tex/'tire-rubber.jpg','sand':tex/'dirt.jpg'})
@@ -54,7 +55,7 @@ slab(cutter_mesh,'face',cutter_photo,cutter_loops,cutter_world,-.2,0.0,wall_scal
 cutter_face=cutter_mesh.finish('Cutter head photo slab',{'face':cutter_photo.material()})
 parent_keep(cutter_face,head)
 # Local geometry around the pivot: massive steel disk, hub, raised ribs and picks.
-cyl('Recessed cutter plate',(0,0,0),5.58,.30,dark,'z',64,head)
+cyl('Plain dark cutter backing disc',(0,0,.25),5.52,.34,dark,'z',64,head)
 torus('Deep rolled cutting rim',(0,0,0),5.72,.30,steel,head)
 torus('Inner raised rim',(0,0,.17),5.35,.075,tin,head)
 cyl('Propeller shaft flange',(0,0,.34),1.28,.70,steel,'z',48,head)
@@ -79,53 +80,61 @@ for i in range(24):
  ang=math.tau*i/24; cyl(f'Fist-sized propeller flange bolt {i+1:02}',(math.cos(ang)*1.13,math.sin(ang)*1.13,.78),.105,.24,dark,'z',10,head)
 
 # Long 10 m shield tube and the articulated gripper ring behind the cutter.
-shield=cyl('Shield barrel',(0,0,-6.7),4.82,9.8,paint,'z',64,borer)
+# Built-in image tool references: generated dead-on front and rear end views of
+# this same yellow-ochre/rust machine on pale neutral studio backgrounds.
+body_table={
+ 'photos': {'side':'borer-round3-machine-side.png','front':'borer-round4-head-front.png',
+            'rear':'borer-round4-machine-rear.png','top':'borer-round3-machine-top.png'},
+ 'length':20.0,'width':11.2,'height':11.2,
+ 'side':{'start':28,'end':1080,'ground':600},
+ 'front':{'centre':768,'ground':1110,'scale':.0102},
+ 'rear':{'centre':768,'ground':850,'scale':.0134},
+ 'top':{'front':20,'rear':825,'centre':342,'along':'x'},
+ 'grey':30,'tolerance':42,'bleed_tolerance':42,'voxel':.12,'target':10500,
+ 'keep':lambda x,y,z: ((x*x+(y-5.6)*(y-5.6) <= 5.65*5.65) & (z >= -10.1) & (z <= 10.1)),
+ 'mask_dir':str(root/'.evidence/round4/masks')}
+shield=carve_object('Shield body',tex,body_table)
+parent_keep(shield,borer); shield.rotation_euler[0]=math.pi/2
+shield.location=town.game_vector((0,-5.55,-23.0))
 # The cutter must be visible through the shield's open front, not hidden by a cap.
-import bmesh
-bm=bmesh.new(); bm.from_mesh(shield.data)
-for face in list(bm.faces):
- if abs(face.normal.z) > .9: bm.faces.remove(face)
-bm.to_mesh(shield.data); bm.free()
-for z in (-2.0,-5.0,-8.0,-11.0):
+for z in (-15.0,-18.0,-21.0):
  torus(f'Shield welded hoop {z}',(0,0,z),4.78,.12,steel,borer)
 for i in range(8):
  ang=math.tau*i/8; x,y=math.cos(ang),math.sin(ang)
- shoe=empty(f'Gripper shoe {i+1:02}',(x*4.83,y*4.83,-8.2),borer)
+ shoe=empty(f'Gripper shoe {i+1:02}',(x*4.83,y*4.83,-22.0),borer)
  plate=cube(f'Gripper forged pad {i+1:02}',(0,0,0),(1.18,2.8,.58),tin,.12,shoe); plate.rotation_euler[2]=ang
- beam(f'Gripper ram {i+1:02}',(x*4.35,y*4.35,-6.4),(x*5.18,y*5.18,-8.0),.20,steel,borer)
- cube(f'Ram polished rod {i+1:02}',(x*4.78,y*4.78,-7.15),(.20,.20,1.55),dark,.04,borer)
+ beam(f'Gripper ram {i+1:02}',(x*4.35,y*4.35,-20.8),(x*5.18,y*5.18,-22.0),.20,steel,borer)
+ cube(f'Ram polished rod {i+1:02}',(x*4.78,y*4.78,-21.45),(.20,.20,1.15),dark,.04,borer)
 
-# Rear gantry with independently named conveyor joint and operator cab.
-for x in (-3.1,3.1):
- for z in (-14.3,-20.0):
-  beam(f'Gantry leg {x} {z}',(x,2.9,z),(x*.72,0.65,z),.24,steel,borer)
-  beam(f'Lower longitudinal rail {x} {z}',(x*.72,.65,-14.3),(x*.72,.65,-21),.22,tin,borer)
-for y in (.7,1.5,2.3): beam(f'Gantry cross beam {y}',(-2.7,y,-18.0),(2.7,y,-18.0),.18,steel,borer)
-belt=empty('borer:belt',(0,1.25,-17.2),borer)
+# One connected gantry assembly: solid deck, rails and cab welded into one mesh.
+gantry_parts=[cube('Gantry deck',(0,1.55,-38.0),(6.6,.82,10.2),steel,.08,borer)]
+for x in (-3.05,3.05): gantry_parts.append(cube(f'Gantry rail {x}',(x,.55,-38.0),(.48,.62,11.2),tin,.08,borer))
+gantry_parts.append(cube('Gantry control cab',(0,3.25,-36.7),(3.2,2.8,3.2),paint,.16,borer))
+bpy.ops.object.select_all(action='DESELECT')
+for obj in gantry_parts: obj.select_set(True)
+bpy.context.view_layer.objects.active=gantry_parts[0]; bpy.ops.object.join()
+gantry=gantry_parts[0]; gantry.name='Gantry solid deck and rails'
+remesh=gantry.modifiers.new('Fuse touching gantry structure','REMESH'); remesh.mode='VOXEL'; remesh.voxel_size=.11
+bpy.context.view_layer.objects.active=gantry; bpy.ops.object.modifier_apply(modifier=remesh.name)
+for poly in gantry.data.polygons: poly.use_smooth=False
+uv_layer=gantry.data.uv_layers.new(name='UVMap')
+coords=[v.co for v in gantry.data.vertices]
+mins=[min(v[axis] for v in coords) for axis in range(3)]
+maxs=[max(v[axis] for v in coords) for axis in range(3)]
+for poly in gantry.data.polygons:
+ normal=poly.normal; axes=(1,2) if abs(normal.x)>.5 else (0,2) if abs(normal.y)>.5 else (0,1)
+ for loop_index in poly.loop_indices:
+  vertex=gantry.data.vertices[gantry.data.loops[loop_index].vertex_index].co
+  uv_layer.data[loop_index].uv=tuple((vertex[axis]-mins[axis])/max(1e-6,maxs[axis]-mins[axis]) for axis in axes)
+parent_keep(gantry,borer)
+belt=empty('borer:belt',(0,2.1,-38.0),borer)
 cube('Conveyor trough',(0,0,0),(2.5,.28,6.4),dark,.08,belt)
 for x in (-1.24,1.24): beam(f'Conveyor raised edge {x}',(x,.20,-3.1),(x,.20,3.1),.12,tin,belt)
 for i in range(11): cyl(f'Belt roller {i+1:02}',(0,-.22,-2.8+i*.56),.11,2.35,steel,'x',12,belt)
-for x in (-1.05,1.05):
- beam(f'Conveyor hydraulic support {x}',(x,1.4,-14.5),(x,2.8,-18.2),.13,steel,borer)
-# Elevated cab: curved glass achieved with framed slanted, thick panels.
-cube('Cab floor',(0,3.25,-18.5),(3.4,.18,2.7),steel,.08,borer)
-for x in (-1.55,1.55):
- beam(f'Cab A post {x}',(x,3.35,-19.7),(x*.90,5.7,-19.2),.12,tin,borer)
- beam(f'Cab rear post {x}',(x,3.35,-17.2),(x,5.5,-17.25),.12,steel,borer)
- beam(f'Cab roof rail {x}',(x*.90,5.7,-19.2),(x,5.5,-17.25),.12,tin,borer)
-cube('Cab rear bulkhead',(0,4.4,-17.22),(3.0,2.1,.12),paint,.05,borer)
-for x in (-1.0,1.0): cube(f'Cab side window {x}',(x*1.54,4.45,-18.4),(.06,1.45,1.35),glass,.02,borer)
-# Real-thickness ladder and hand rails, service pipes, and work lights.
-for x in (-2.25,2.25): beam(f'Cab ladder stringer {x}',(x,0.7,-15.4),(x,3.25,-17.4),.075,tin,borer)
-for i in range(11): beam(f'Ladder rung {i+1:02}',(-2.27,.85+i*.23,-15.55-i*.18),(-1.78,.85+i*.23,-15.55-i*.18),.055,steel,borer)
 for x in (-2.3,2.3):
- lamp=empty(f'borer:lamp',(x,5.9,-18.7),borer)
+ lamp=empty('borer:lamp',(x,2.8,-37.4),borer)
  cube('Flood lamp housing',(0,0,0),(.48,.38,.28),dark,.04,lamp)
- cube('Flood lamp lens',(0,-.03,-.16),(.32,.24,.04),m['faded-hand-paint'],.015,lamp)
-for x in (-2.0,-1.0,0,1.0,2.0): beam(f'Access catwalk rail {x}',(x,1.15,-14),(x,1.15,-20.9),.055,tin,borer)
-for side in (-1,1):
- beam(f'Catwalk handrail upper {side}',(side*3.1,2.0,-14.3),(side*3.1,2.0,-20.8),.07,tin,borer)
- beam(f'Catwalk handrail lower {side}',(side*3.1,1.3,-14.3),(side*3.1,1.3,-20.8),.06,steel,borer)
+ cube('Flood lamp lens',(0,-.03,-.16),(.32,.24,.04),tin,.015,lamp)
 
 # Repeating interior lining section with a believable service route and lights.
 ring=empty('tunnel-ring',(0,0,0),family)
@@ -160,19 +169,26 @@ for obj in bpy.context.scene.objects:
   for layer in obj.data.uv_layers: layer.name='UVMap'
 for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.name!='Cutter head photo slab':
-  mod=obj.modifiers.new('fit the 40000 triangle family budget','DECIMATE'); mod.ratio=.78
+  mod=obj.modifiers.new('fit the 40000 triangle family budget','DECIMATE'); mod.ratio=.28
   bpy.context.view_layer.objects.active=obj; obj.select_set(True); bpy.ops.object.modifier_apply(modifier=mod.name); obj.select_set(False)
 town.export_glb(glb)
 if a.render:
  # Exported file is imported in a clean scene for the submitted views.
  bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=str(glb))
- scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'; scene.render.resolution_x=1100; scene.render.resolution_y=760; scene.render.resolution_percentage=100
+ scene=bpy.context.scene; scene.render.engine='BLENDER_EEVEE_NEXT'; scene.render.resolution_x=1000; scene.render.resolution_y=650; scene.render.resolution_percentage=100
+ scene.view_settings.view_transform='Standard'
  scene.render.image_settings.file_format='PNG'; scene.world=bpy.data.worlds.new('Overcast daylight'); scene.world.color=(.52,.52,.52)
- def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
+ def aim(obj,target):
+  direction=Vector(target)-obj.location
+  up='Y' if abs(direction.normalized().z)>.98 else 'Z'
+  obj.rotation_euler=direction.to_track_quat('-Z',up).to_euler()
  for obj in scene.objects:
   if obj.name.startswith(('tunnel-ring','portal')): obj.hide_render=True
- bpy.ops.object.camera_add(location=town.game_vector((15,23,-42))); camera=bpy.context.object; aim(camera,town.game_vector((0,2,-11))); scene.camera=camera; camera.data.lens=28
  for loc,power,size in [((8,17,-18),7000,14),((-14,12,-8),5500,12),((0,15,4),4000,10)]:
   bpy.ops.object.light_add(type='AREA',location=town.game_vector(loc)); light=bpy.context.object; light.data.energy=power; light.data.shape='DISK'; light.data.size=size; aim(light,town.game_vector((0,2,-8)))
- evidence.mkdir(parents=True,exist_ok=True); scene.render.filepath=str(evidence/'borer-three-quarter.png'); bpy.ops.render.render(write_still=True)
+ evidence.mkdir(parents=True,exist_ok=True)
+ views=[('front',(0,10,-82),(0,2,-13)),('side',(74,22,-28),(0,2,-28)),('above',(0,74,-28),(0,1,-28))]
+ for name,loc,target in views:
+  bpy.ops.object.camera_add(location=town.game_vector(loc)); camera=bpy.context.object; aim(camera,town.game_vector(target)); camera.data.lens=35; scene.camera=camera
+  scene.render.filepath=str(evidence/f'borer-{name}.png'); bpy.ops.render.render(write_still=True)
  print(json.dumps({'glb':str(glb),'triangles':sum(len(p.vertices)-2 for o in bpy.context.scene.objects if o.type=='MESH' for p in o.data.polygons),'bytes':glb.stat().st_size}))
