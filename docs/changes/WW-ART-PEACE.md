@@ -23,7 +23,27 @@ hull and photo method was read from the end of `docs/ASSET_PIPELINE.md`.
 
 - No files or behavior removed.
 
-Date: 6 November 2026
+## Round 5 work in progress
+
+### 1. Full-size images and review renders
+
+The Sal vehicle photos now stay at their authored sizes in the exported GLB;
+the side is 1024 pixels wide and the other views remain at their full source
+sizes. Each raw review render is at least 1200 pixels wide. The output limit
+for this card is 3 MiB, up from 2 MiB, to allow the four unshrunk vehicle
+photos while keeping the rest of the existing props intact.
+
+Checks: not run yet; the final two named checks will run after the remaining
+vehicle fixes. Blender export and the full-size GLB measurement are pending.
+Assertions changed: only the card's maximum file size, increased by exactly
+1 MiB; no threshold was lowered. Browser/look checks are for Claude; the
+round-5 sheet will show the imported GLB from the side and both three-quarter
+views. Race fingerprints: not applicable.
+
+### Removed
+
+- Removed the four Sal-only embedded image downscales; full source photos now
+  feed the vehicle material.
 
 Added the `toll-cabinet` root with a traced front photo, steel case and a real
 projecting open-drawer box. The cabinet stands 1.8 m high. Its generated front

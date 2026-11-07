@@ -588,8 +588,6 @@ for image_name, scale in {
         'bound-stone-front': .25, 'bound-stone-side': .25,
         'decoy-tent-front': .5,
         'decoy-oasis-overhead': .375,
-        'sal-pipe-trailer-side': .25, 'sal-pipe-trailer-front': .25,
-        'sal-pipe-trailer-rear': .25, 'sal-pipe-trailer-overhead': .25,
 }.items():
     images = [LOADED_PHOTOS[image_name].image]
     if image_name.startswith('sal-pipe-trailer-'):
@@ -656,7 +654,7 @@ if not args.round4_only:
     show('mirage-decoy-oasis',(7,3,7),(0,.05,0),3.25,(1000,833))
     shot('mirage-decoy-oasis-overhead',(0,10,0),(0,0,0),3.25,(1000,833))
 
-# Round 4 contains only Sal's rig. Each frame is from the imported GLB in the
+# Round 5 contains only Sal's rig. Each frame is from the imported GLB in the
 # empty review scene; the side photo and render share identical dimensions.
 def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
     for obj in scene.objects:
@@ -674,8 +672,8 @@ def sal_shot(name, eye, target, resolution, ortho=None, lens=35):
     scene.render.filepath = str(render_dir / f'sal-pipe-trailer-{name}.png')
     bpy.ops.render.render(write_still=True)
 
-sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1024, 504), ortho=13.4)
-sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (800, 504), lens=38)
-sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (800, 504), lens=38)
+sal_shot('side', (-15, 1.45, 0), (0, 1.35, 0), (1400, 690), ortho=13.4)
+sal_shot('three-quarter-front', (-10.6, 2.0, -10.6), (0, 1.15, 0), (1200, 756), lens=38)
+sal_shot('three-quarter-rear', (10.6, 2.0, 10.6), (0, 1.15, 0), (1200, 756), lens=38)
 print(json.dumps({'glb':str(glb),'bytes':glb.stat().st_size,'renders':str(render_dir),
                   'newAsset':'sal-pipe-trailer'}))
