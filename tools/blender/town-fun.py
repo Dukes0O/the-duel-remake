@@ -502,15 +502,16 @@ for row,z_base in enumerate((.35,6.65),1):
                        'sedan' if label=='sedan' else 'scrapyard')
 
 # The little operator hut stands behind the second arc on short salvaged legs.
-box('drive-in:projector-hut-platform',(0,2.3,10.2),(3.4,.18,1.9),'weathered-plank',.035)
+hut_shift=-.3
+box('drive-in:projector-hut-platform',(0,2.3,10.2+hut_shift),(3.4,.18,1.9),'weathered-plank',.035)
 for x in (-1.45,1.45):
     for z in (9.5,10.9):
-        beam(f'drive-in:projector-hut-leg-{x}-{z}',(x,.05,z),(x,2.25,z),.12,'rusted-steel')
-box('drive-in:projector-hut-body',(0,3.15,10.2),(3.1,1.55,1.65),'rusted-steel',.045)
-box('drive-in:projector-hut-tin-patch',(0,3.72,9.36),(2.6,.42,.06),'galvanised-tin',.015)
-box('drive-in:projector-hut-roof',(0,4.02,10.2),(3.55,.18,2.0),'patched-canvas',.025)
-box('drive-in:projector-hut-lens',(0,3.15,9.31),(.42,.32,.08),'dirty-glass',.02)
-box('drive-in:projector-hut-lamp',(1.3,3.95,10.1),(.18,.16,.18),'lamp',.01)
+        beam(f'drive-in:projector-hut-leg-{x}-{z}',(x,.05,z+hut_shift),(x,2.25,z+hut_shift),.12,'rusted-steel')
+box('drive-in:projector-hut-body',(0,3.15,10.2+hut_shift),(3.1,1.55,1.65),'rusted-steel',.045)
+box('drive-in:projector-hut-tin-patch',(0,3.72,9.36+hut_shift),(2.6,.42,.06),'galvanised-tin',.015)
+box('drive-in:projector-hut-roof',(0,4.02,10.2+hut_shift),(3.55,.18,2.0),'patched-canvas',.025)
+box('drive-in:projector-hut-lens',(0,3.15,9.31+hut_shift),(.42,.32,.08),'dirty-glass',.02)
+box('drive-in:projector-hut-lamp',(1.3,3.95,10.1+hut_shift),(.18,.16,.18),'lamp',.01)
 
 def drive_game_bounds(obj):
     points=[obj.matrix_world @ Vector(vertex.co) for vertex in obj.data.vertices]
@@ -522,8 +523,8 @@ for piece in drive_pieces:
     report={'min':[round(bounds[0][0],3),round(bounds[1][0],3),round(bounds[2][0],3)],
             'max':[round(bounds[0][1],3),round(bounds[1][1],3),round(bounds[2][1],3)]}
     print('DRIVE-IN BOUNDS',piece.name,json.dumps(report))
-    if bounds[0][0]<-15.5 or bounds[0][1]>15.5 or bounds[2][0]<-11.5 or bounds[2][1]>11.5:
-        raise RuntimeError(f'{piece.name} exceeds the 4x3 footprint: {report}')
+    if bounds[0][0]<-15.0 or bounds[0][1]>15.0 or bounds[2][0]<-11.0 or bounds[2][1]>11.0:
+        raise RuntimeError(f'{piece.name} leaves less than 0.5 m of clearance in the 4x3 footprint: {report}')
     if bounds[1][0]<-.06:
         raise RuntimeError(f'{piece.name} extends below ground: {report}')
 def drive_overlap(a,b,padding=.025):
