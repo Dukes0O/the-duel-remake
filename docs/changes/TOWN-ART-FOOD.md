@@ -149,3 +149,34 @@ Generated orthographic reference photos could not be saved into the lane after t
 ### Removed
 
 No previously accepted model, source photo or review sheet was removed.
+
+
+## Round 11: tyre goods and budget fit
+
+### Design
+
+The card gives the buildings, footprints, goods and shared model contract. No open design question remains. This round adds three stacked tyre rings to the tyre stall. The traced outlines were simplified slightly to meet the existing one-cell and family triangle budgets without changing their silhouette at town scale. The food photos are exported at 224 px maximum so the combined embedded images stay under the card's 1K pixel limit.
+
+### Changed
+
+- Added three tyre-shaped goods to stall-c in tools/blender/town-food.py.
+- Reduced trace density on the three market stalls while preserving the visible outline.
+- Downsampled material and photo images for export only; source references remain full resolution.
+- Rebuilt public/assets/models/wasteland/town/food.glb and added the round 11 comparison sheet and review note.
+
+### Checks
+
+- Blender recipe export: passed; 29,506 triangles, 2,049,168 bytes and 907,360 embedded image pixels.
+- tools/test-repo-hygiene.mjs: passed.
+- tools/test-review-evidence.mjs: the round sheet publication check passed; the suite also reports an existing missing note for town-art-outposts/round-15.jpg and ffmpeg spawnSync EPERM, both outside this card's files.
+- `tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
+- Lane tier: 13 suites passed, then `tools/test-circuit-panorama.mjs` failed and
+  stopped the remaining 33. Its one permitted rerun passed all 19 checks. This
+  unreliable-suite report belongs on the board for the Director to card; board
+  files are outside this lane's ownership.
+- Production build via npm.cmd run build: passed.
+- No browser or in-game check; this model is not wired into the game. No race fingerprints apply.
+
+### Removed
+
+- None. Replaced only the exported food-family GLB with the reproducible Blender output.

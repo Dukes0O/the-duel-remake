@@ -42,14 +42,14 @@ mat = town.make_materials({
 # Town base darkens rusted steel for general utility work. This family uses
 # the unfiltered food-specific photograph to keep worn red-brown oxide legible.
 steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_existing=False)
-steel_photo.scale(256, 256); steel_photo.file_format='JPEG'; steel_photo.pack()
+steel_photo.scale(224, 224); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
 # Six independent repeating material photos fit comfortably inside the card's
 # 1K image-pixel budget while avoiding a glTF texture atlas.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
-    image.scale(256, 256)
+    image.scale(224, 224)
     image.pack()
 
 def simple(name, color, roughness=.88, metallic=0):
@@ -498,7 +498,7 @@ def market_stall(building, offset, kind):
     for part_name,polygon in stall_front_pieces:
         front_frame=PhotoMesh()
         mask=photo_mask(stall_front_photo,[polygon])
-        front_loops=trace(mask,(38,18,990,930),tolerance=1.5,min_area=20)
+        front_loops=trace(mask,(38,18,990,930),tolerance=2.0,min_area=20)
         slab(front_frame,'front',stall_front_photo,front_loops,front_world,0,.075,wall_scale=.00305)
         keep(front_frame.finish(f'{building}:photo-traced-{part_name}',{'front':stall_front_photo.material()}))
 
@@ -510,7 +510,7 @@ def market_stall(building, offset, kind):
         for part_name,polygon in stall_side_pieces:
             side_frame=PhotoMesh()
             mask=photo_mask(stall_side_photo,[polygon])
-            side_loops=trace(mask,(195,32,690,986),tolerance=1.2,min_area=18)
+            side_loops=trace(mask,(195,32,690,986),tolerance=1.8,min_area=18)
             slab(side_frame,'side',stall_side_photo,side_loops,side_frame_world,-.07,.07,wall_scale=.00455)
             keep(side_frame.finish(f'{building}:photo-traced-{side_label}-{part_name}',{'side':stall_side_photo.material()}))
 
@@ -596,6 +596,13 @@ def market_stall(building, offset, kind):
             else:
                 beam(f'{building}:hanging-tool-{index}-spanner-jaw-left',(x-.08,1.68,-.48),(x-.03,1.78,-.48),.035,mat['rusted-steel'])
                 beam(f'{building}:hanging-tool-{index}-spanner-jaw-right',(x+.08,1.68,-.48),(x+.03,1.78,-.48),.035,mat['rusted-steel'])
+    else:
+        for index,(x,y) in enumerate(((-.42,1.40),(.42,1.40),(0,1.68)),1):
+            bpy.ops.mesh.primitive_torus_add(major_radius=.28,minor_radius=.07,
+                major_segments=12,minor_segments=4,location=town.game_vector((x,y,-.20)))
+            obj=bpy.context.object;obj.name=f'{building}:stacked-tyre-{index}'
+            obj.rotation_euler[0]=math.pi/2
+            obj.data.materials.append(mat['rubber']);keep(obj)
 
 market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
@@ -871,12 +878,13 @@ for material in bpy.data.materials:
 for photo in (front,left,overhead,wall_photo):
     photo.image.scale(256,192)
     photo.image.pack()
-for photo in (*market_photos.values(), stall_photo, *canteen_table['_photos'].values()):
+for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_side_photo,
+              *canteen_table['_photos'].values()):
     ratio = photo.w / photo.h
     if ratio >= 1:
-        size = (256, round(256 / ratio))
+        size = (224, round(224 / ratio))
     else:
-        size = (round(256 * ratio), 256)
+        size = (round(224 * ratio), 224)
     photo.image.scale(*size)
     photo.image.pack()
 
