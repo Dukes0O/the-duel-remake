@@ -1552,7 +1552,7 @@ if args.stage == 'family':
     for y, radius, depth in ((-1.75,5.34,.45),(24.65,3.04,.20),(24.90,3.25,.18),(25.12,3.48,.18)):
         band=cylinder(f'lighthouse-stone-course-{y}',(0,y,0),radius,depth,stone_photo,'lighthouse',10)
         parent(band,light_root)
-    gallery_stone=matte_material('Lighthouse / aged gallery stone',(.53,.49,.42),.94)
+    gallery_stone=matte_material('Lighthouse / aged gallery stone',(.30,.275,.235),.95)
     gallery=cylinder('lighthouse-gallery-deck',(0,25.42,0),3.62,.30,gallery_stone,'lighthouse',24)
     parent(gallery,light_root)
     for i in range(8):

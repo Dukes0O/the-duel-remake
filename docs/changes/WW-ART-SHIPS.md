@@ -547,3 +547,12 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the old nine broad landing boards and replaced them with narrow flat strips to preserve the board direction and gaps within the lighthouse budget.
 - No lighthouse parts were automatically decimated. Lowered only named detail counts on the stone bands, gallery rails and landing bulbs to fit the 6,000-triangle lighthouse limit.
+
+## Lighthouse round 3, sheet (Claude): round 19 (8 November 2026)
+
+- Darkened the gallery deck and supports' stone from (0.53, 0.49, 0.42) to (0.30, 0.275, 0.235). Sheet `docs/board/looks/ww-art-ships/round-19.jpg` (1600 x 1867): from the road, at dusk, the first landing, and from above. Review in `round-19-review.md`.
+- Final read-back: lighthouse 5,994 triangles; whole file 38,049 triangles and 2,928,272 bytes. `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: results in the review. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- `round-18.jpg` and `round-18-review.md`; round 19 is the single current sheet.
