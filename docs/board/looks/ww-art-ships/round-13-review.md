@@ -2,7 +2,7 @@
 
 Date: 7 November 2026  
 Build: Blender 4.5.13 LTS; all six views rendered from the exported GLB imported into an empty scene  
-Sheet: `round-13.jpg` (1600 x 1800, 115,134 bytes)
+Sheet: `round-13.jpg` (1600 x 1800, 109,673 bytes)
 
 ## Triangle counts
 

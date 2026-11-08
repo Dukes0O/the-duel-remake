@@ -1374,7 +1374,7 @@ def render_imported_review():
     add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
     review_scene.objects['review-camera-whole'].data.lens = 24
     add_camera('review-camera-hope', (-73, 1.2, -444), (-45, 8, -415), 40, (1200, 900))
-    add_camera('review-camera-marigold', (17, 1.2, -410), (45, 6, -440), 40, (1200, 900))
+    add_camera('review-camera-marigold', (70, 1.2, -365), (38, 4, -400), 40, (1200, 900))
     add_camera('review-camera-patience', (-23, 1.2, -500), (5, 7, -470), 40, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
     add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 8.5, -415), 32, (1200, 900))

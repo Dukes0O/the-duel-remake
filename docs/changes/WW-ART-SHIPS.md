@@ -305,7 +305,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 ## Round 13, sheet and review (7 November 2026)
 
-- Rendered six views from the exported GLB imported into an empty Blender scene, inspected each view, and made a 1600 x 1800 JPG sheet at 115,134 bytes. Updated only the whole-fleet review camera and the deck-view review camera in the Blender script; no ship geometry or materials changed. The camera work keeps all three ships in the fleet and overhead panels; close framing remains imperfect and is recorded for Claude.
+- Rendered six views from the exported GLB imported into an empty Blender scene, inspected each view, and made a 1600 x 1800 JPG sheet at 109,673 bytes. Updated only the whole-fleet, deck-view and Marigold stern review cameras in the Blender script; no ship geometry or materials changed. The camera work keeps all three ships in the fleet and overhead panels; the Marigold stern view now includes her shaft and propeller. Close framing remains imperfect and is recorded for Claude.
 - `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. No lane tier, build, browser check or frame check was run for this art-only task. Changed assertions: none. Race fingerprints: none.
 - Claude should judge all six views, especially the Good Hope bow angle and the pale cabin/smooth sand against the rusty hulls.
 
