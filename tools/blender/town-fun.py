@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-14'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-16'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-14.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-16.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -104,13 +104,18 @@ if '--review-only' in args:
         camera=bpy.data.objects.new('Statue camera',bpy.data.cameras.new('Statue camera')); scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
         evidence.mkdir(parents=True,exist_ok=True)
         views=[('side',(1,0,0),'statue-side.jpg',6.0),('front',(0,1,0),'statue-front.jpg',6.0),
-               ('rear',(0,-1,0),'statue-rear.jpg',6.0),('above',(0,0,1),'statue-above.jpg',6.0),
+               ('rear',(0,-1,0),'statue-rear.jpg',6.0),('above',(0,0,1),'statue-above-r16.jpg',6.0),
                ('three-quarter-a',(1,-1,.65),None,7.2),('three-quarter-b',(-1,1,.65),None,7.2),
                ('mayor',(1,-1,1),None,7.2)]
         for name,direction,photo_name,ortho in views:
             target=Vector((0,-.15,2.8)); direction=Vector(direction).normalized()
             camera.location=target+direction*24; aim_statue(camera,target); camera.data.ortho_scale=ortho
-            scene.render.resolution_x,scene.render.resolution_y=(1024,1536) if photo_name else (900,650)
+            if photo_name:
+                ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+                scene.render.resolution_x,scene.render.resolution_y=ref.size
+                bpy.data.images.remove(ref)
+            else:
+                scene.render.resolution_x,scene.render.resolution_y=900,650
             scene.render.filepath=str(evidence/f'statue-{name}.png'); bpy.ops.render.render(write_still=True)
             print('rendered statue',name)
         raise SystemExit(0)
@@ -242,6 +247,7 @@ if '--review-only' in args:
 
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
+import photo_carve
 from photo_carve import carve_object, lift_if_dark
 from photo_model import Mesh as PhotoMesh, Photo, lathe, slab, trace
 from hull_model import tyre
@@ -965,32 +971,65 @@ for stall in ('fun-stall-a','fun-stall-b'):
             for i in range(4): cyl(f'{stall}:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
         for i in range(5): box(f'{stall}:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
 
-# Round 15: one photo-carved closed figure and plinth. The generated plaque is
-# removed from the photographed masks so it remains its own blank board piece.
+# Round 16: carve background by its studio-grey colour, including enclosed
+# gaps between the legs and beneath the raised arm. This avoids treating the
+# unreachable pale patches as part of the statue.
 building_root('statue','1x1')
 statue_root=current
+class StatuePhoto(Photo):
+    def sky(self, seeds, tolerance=20, grey=13):
+        rgb=self.rgb()
+        h,w=rgb.shape[:2]
+        corners=np.concatenate((rgb[:48,:48].reshape(-1,3),rgb[:48,-48:].reshape(-1,3),
+                                rgb[-48:,:48].reshape(-1,3),rgb[-48:,-48:].reshape(-1,3)))
+        background=np.median(corners,axis=0)
+        chroma=rgb.max(axis=2)-rgb.min(axis=2)
+        return (np.max(np.abs(rgb-background),axis=2)<=24)&(chroma<=18)&(rgb.mean(axis=2)>=125)
+
+photo_carve.Photo=StatuePhoto
+_carve_hull=photo_carve.carve_hull
+def _statue_carve_hull(name,views,materials,solid,xs,ys,zs,voxel,target,dark=None):
+    # The straight photos are excellent but differ slightly at their seams.
+    # Let the matching end photo carry farther around diagonal faces, while a
+    # true side view still selects the side photo at its straight-on normal.
+    for view in views:
+        if view.name in ('front','rear'): view.normal*=2.0
+    return _carve_hull(name,views,materials,solid,xs,ys,zs,voxel,target,dark=dark)
+photo_carve.carve_hull=_statue_carve_hull
+_largest_part=photo_carve.largest_part
+def _statue_largest_part(solid):
+    # Let the plinth join to the statue only after selecting one upper body;
+    # otherwise two bodies that touch the same plinth look like one component.
+    base_layers=max(1,round(.70/.085))
+    body=solid.copy()
+    body[:,:base_layers,:]=False
+    body=_largest_part(body)
+    body[:,:base_layers,:]=solid[:,:base_layers,:]
+    return body
+photo_carve.largest_part=_statue_largest_part
 statue_table={
     'photos':{'side':'statue-side.jpg','front':'statue-front.jpg',
-              'rear':'statue-rear.jpg','top':'statue-above.jpg'},
+              'rear':'statue-rear.jpg','top':'statue-above-r16.jpg'},
     'length':1.5,'width':1.8,'height':5.55,
     'side':{'start':285,'end':690,'ground':1515},
     'front':{'centre':512,'ground':1515,'top':22},
     'rear':{'centre':512,'ground':1515,'top':22,'top_height':5.55},
-    'top':{'front':44,'rear':424,'centre':512,'x_scale':1.8/390},
+    # Grid landmarks on the straight-down view: plinth x=452..799, y=431..750.
+    # Town front (-Z) is the top edge of the plan photo (front precedes rear).
+    'top':{'front':431,'rear':750,'centre':625,'x_scale':1.8/347},
     'cut':{
         'front':[(375,1370,650,1515)],
-        # The generated high-angle plan reference foreshortens the standing
-        # body. Use only the plinth footprint in this projection; the other
-        # three measured views define the figure's height and silhouette.
-        'top':[(0,0,1024,44),(0,424,1024,1024),(390,35,610,150)],
     },
     'grey':26,'tolerance':34,'bleed_tolerance':28,
     'voxel':.085,'target':1700,
-    'mask_dir':str(root/'.qa-dist/town-art-fun-round-15/masks'),
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-16/masks'),
 }
 statue_body=carve_object('statue:figure-plinth',textures,statue_table)
+photo_carve.Photo=Photo
+photo_carve.carve_hull=_carve_hull
+photo_carve.largest_part=_largest_part
 keep(statue_body,statue_root)
-statue_body['source']='four generated orthographic photo references'
+statue_body['source']='three generated orthographic photos and one straight-down render reference'
 statue_photo=statue_table['_photos']['front']
 plaque_mesh=PhotoMesh()
 plaque_loops=trace(
