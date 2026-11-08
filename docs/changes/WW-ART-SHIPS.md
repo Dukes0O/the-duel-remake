@@ -517,3 +517,18 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the mirrored 0.8 m stone tile, the exposed white opening backings, and the capped beam mesh.
 - Removed the first-landing ring rail and the old loose crayon strokes when pinned filled drawings replaced them.
+## Lighthouse round 2, Claude's fixes and sheet: round 18 (8 November 2026)
+
+- The job's build ended with a blanket decimation of the whole lighthouse (ratio 0.62) to meet its 6,000-triangle share. It collapsed the tower into rows up to 7 m tall, stretched the stone, broke the windows into cage shapes and bent the drawings. Removed it; the share is now met by trimming named pieces: 20-sided landing floors and stone bands, four posts on each upper landing handrail, 16 gallery posts and rail lengths, smaller spheres for the bulbs, pins and ventilator ball, a flat disc for the drawn sun, a 16-sided dome and beam, and 24-sided lantern, eave and gallery deck.
+- The stone was a 32 x 40 pixel crop of the photo stretched over each tile. It is now laid block by block in a 4 m by 2 m tile of five 0.4 m courses: each block takes its colour from a block-sized patch of the reference tower's plain masonry, with noise grain, worn arrises, broken salt runs and lime mortar. Each 2 m band wraps a whole number of tiles round the tower and is offset from the band below, so seams fall on mortar lines. The tower is smooth shaded. The whitewashed inner wall uses the same stone at half size.
+- No window or door was ever a hole: each opening was narrower than one face of the 20-sided tower, so no face was left out, and the frames sat on solid wall. The tower is turned half a face so a face is centred on the front, and each opening leaves that whole face out of both walls. Reveals run through the full wall thickness. The first two windows moved up 1 m so they sit above their landings.
+- The door opening was 3.9 m tall round a 1.8 m door painted with the gatehouse stone photo. It is now 2.6 m tall, with a 2.3 m door of four painted boards, two ledges and an iron ring, set back on a stone step.
+- The beam is an open cone in four lengths, each fainter than the one before (strengths 1, 0.6, 0.32 and 0.12), with no end cap.
+- The box of letters stood outside the inner wall and showed through the tower as a cage; it now stands on the second landing. The landing camera stands at the back of the first landing with a 24 mm lens, and the floor boards are three shades.
+- Sheet `docs/board/looks/ww-art-ships/round-18.jpg` (1600 x 1778): from the road, at dusk, and the first landing. Review in `round-18-review.md`.
+- Final read-back: lighthouse 5,996 triangles before merging; whole file 38,051 triangles and 2,903,336 bytes. `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: results in the review. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- The blanket lighthouse decimation, the stretched photo stone tile, the stick-drawing strokes that were built and then deleted, the sphere sun and the old door slab.
+- `round-17.jpg` and `round-17-review.md`; round 18 is the single current sheet.
