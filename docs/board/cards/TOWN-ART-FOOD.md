@@ -43,3 +43,5 @@ Market stalls, 7 November (Claude): **round 12 passes, merged.** Three stalls of
 Greenhouse, 7 November (Claude): **round 14 passes, merged.** A pitched greenhouse of rusted frame, car windscreens and patched plastic, with rows of green plants seen through it, matching its photos from every side and lovely from the mayor's view. The goat pen, chicken run and shopfronts remain.
 
 Shopfronts, 7 November (Claude): **round 16 passes, merged.** One small patched tin shop, carved from its photos, made three ways: FOOD, TOOLS and FIX-IT, each with a hand-painted board facing the road and a second on its roof, readable from the mayor's view. Short of the photos: the roof comes out rounded where the photo's is pitched. The goat pen and chicken run remain.
+
+Goat pen, 7 November (Claude): **round 19 passes, merged.** A square pen of weathered pallet fencing with its gaps open, a timber shelter with a rusty tin roof in one corner and a trough, matching its photos from every side. The chicken run in the same file is still the box-built round 17 piece and goes round again.
