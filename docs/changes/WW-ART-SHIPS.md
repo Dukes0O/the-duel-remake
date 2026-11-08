@@ -581,3 +581,16 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the photo-box hull mapping, the six hollow torus tyres, the rectangular deck overlay, the old solid cabin sides, the straight deck-level strakes and the two diagonal strap pairs. No source photo or earlier ship or lighthouse part was removed.
+
+## Pilot boat round 1, Claude's fixes and sheet: round 20 (8 November 2026)
+
+- The hull was a straight-sided box: every section had its keel at the same height, so the stem was a vertical knife, and the bottom was nearly flat. Each section is now a deep vee with a hard chine, the sheer rises 0.55 m to the bow, and the keel runs level to 78% of the length before the raked stem climbs to the sheer. The photo's keel line follows the same stem, so no sky from beyond the photo's bow lands on the hull. The rubbing strake follows the rising sheer.
+- Straps run from the trailer frame up each side of the hull, following its section, and across the deck. Rails stand 0.9 m above the rising deck on posts.
+- The pilot house sides were rectangles that covered the raked front; they are trimmed to the rake. Four side windows and three front windows, each 0.7 m wide and 1.0 m tall, as in the photo.
+- Sheet `docs/board/looks/ww-art-ships/round-20.jpg` (1600 x 1400): front three-quarter from car height, side, and above. Review in `round-20-review.md`.
+- Final read-back: whole file 36,783 triangles and 2,813,172 bytes. `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: results in the review. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- The box hull sections, the straight straps that ran inside the hull, the fixed-height rails and the fifth side window.
+- `round-19.jpg` and `round-19-review.md`; round 20 is the single current sheet.
