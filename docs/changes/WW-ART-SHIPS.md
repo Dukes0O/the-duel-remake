@@ -425,3 +425,11 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the temporary round 16 renders, review Blend, detail crop and check logs after inspection. No source photos, prior review sheets or model parts were removed.
+
+## Round 16, sheet (Claude): the sisters are done (7 November 2026)
+
+- Rendered nine views from the round 16 model and composed `round-16.jpg` (1600 x 3004, 199,432 bytes) with `round-16-review.md`. Read-back: 35,115 triangles, 2,727,300 bytes. The Good Hope and the Marigold are done after their fourth round.
+
+### Removed
+
+- `round-15.jpg` and `round-15-review.md`; round 16 is the single current sheet.
