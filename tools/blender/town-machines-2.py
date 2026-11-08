@@ -304,7 +304,7 @@ def basic_family():
   return material
  mixer_yellow=mixer_material('Mixer truck / worn construction yellow',(.48,.30,.055),.84,.10)
  mixer_dark=mixer_material('Mixer truck / dark concrete and steel',(.16,.16,.14),.94,.06)
- mixer_steel=mixer_material('Mixer truck / exposed roller steel',(.24,.20,.15),.82,.24)
+ mixer_steel=m['rusted-steel']
  def mixer_game_box(name,center,size,material,par,bevel=.04):
   return box(name,game_vector(center),(size[0],size[2],size[1]),material,par,bevel)
  def mixer_game_beam(name,a,b,radius,material,par):
@@ -422,7 +422,7 @@ def basic_family():
    print('MIXER PIECE CONTACT',label,'ground')
   else:
    neighbours=[]
-   for other,other_bounds in [('mixer-truck:body',body_bounds),*measured_bounds.items()]:
+   for other,other_bounds in measured_bounds.items():
     if other!=label and bounds_touch(bounds,other_bounds):neighbours.append(other)
    if not neighbours:raise RuntimeError(f'{label} does not touch the ground or another mixer piece')
    print('MIXER PIECE CONTACT',label,', '.join(neighbours[:4]))
