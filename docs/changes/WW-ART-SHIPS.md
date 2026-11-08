@@ -532,3 +532,15 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - The blanket lighthouse decimation, the stretched photo stone tile, the stick-drawing strokes that were built and then deleted, the sphere sun and the old door slab.
 - `round-17.jpg` and `round-17-review.md`; round 18 is the single current sheet.
+
+## Lighthouse round 3 (8 November 2026)
+
+- Point 1: kept the existing course wrapping and tower openings. Masonry blocks now vary from 0.4 to 1.5 m, with one in eight deliberately lighter or darker. Added a separate translucent salt veil with a packed greyscale alpha texture, ragged tide edge and hanging runs under the gallery and window levels. The veil merges into the lighthouse part at 400 triangles; the tower part is 5,998 triangles.
+- Rebuilt the family GLB: 38,461 total triangles and 2,950,760 bytes read back. Both limits pass.
+- Rendered and inspected `.qa-dist/check-lighthouse-road.png` and `.qa-dist/check-lighthouse-dusk.png`. Road: block variation and pale salt strands are visible; the foot tide band remains subtle. Dusk: the lantern and beam read well, while the pale salt is fainter under the night lighting. Claude should judge salt visibility and stone contrast in both views.
+- Checks `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs` are scheduled after point 2. Browser/look checks are Claude's. Lane tier and build were not run, as required for art cards.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- No earlier lighthouse or ship parts removed in point 1.

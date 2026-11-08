@@ -602,14 +602,16 @@ for course in range(COURSES):
     start = int(stone_rng.integers(0, TILE_PX_W))
     lengths = []
     while sum(lengths) < TILE_PX_W - .5*px_per_m:
-        lengths.append(int(px_per_m*stone_rng.uniform(.55, 1.15)))
+        lengths.append(int(px_per_m*stone_rng.uniform(.4, 1.5)))
     lengths[-1] += TILE_PX_W - sum(lengths)
     x = start
     for length in lengths:
         mh, mw = masonry.shape[:2]
         ph = int(.4*PHOTO_PX_PER_M); pw = max(4, int(length/px_per_m*PHOTO_PX_PER_M))
         sy = int(stone_rng.integers(0, mh-ph)); sx = int(stone_rng.integers(0, mw-pw))
-        base = masonry[sy:sy+ph, sx:sx+pw].reshape(-1, 3).mean(axis=0) * stone_rng.uniform(.9, 1.08)
+        # One block in eight is deliberately out of the local stone range.
+        variation = stone_rng.uniform(.68, .82) if stone_rng.random() < .125 else stone_rng.uniform(.9, 1.08)
+        base = masonry[sy:sy+ph, sx:sx+pw].reshape(-1, 3).mean(axis=0) * variation
         # Each block weathers a little darker towards its foot and its worn arrises.
         yy = np.linspace(-1, 1, y1-y0)[:, None]; xx = np.linspace(-1, 1, length)[None, :]
         edge = np.clip(1-np.maximum(np.abs(yy)**6, np.abs(xx)**10), 0, 1)
@@ -1454,6 +1456,61 @@ if args.stage == 'family':
         for li,coord in zip(poly.loop_indices,coords): uv.data[li].uv=coord
         poly.use_smooth=True
     parent(tower,light_root)
+    # A separate, thin salt veil follows a coarse copy of the tower profile.
+    # 16 sides x 11 rows stays below 400 triangles even before opening skips.
+    salt_rows = sorted(set([-2.0, -1.0, -.2, .7, 2.0, 5.0, 8.0, 10.0, 13.0, 16.5, 18.0, 21.0, 23.3, 25.0]))
+    salt_image = bpy.data.images.new('Lighthouse salt alpha runs', width=256, height=256, alpha=False)
+    salt_pixels = np.zeros((256, 256, 4), dtype=np.float32)
+    salt_pixels[:, :, :3] = .0
+    salt_pixels[:, :, 3] = 1
+    salt_rng = np.random.default_rng(887)
+    xx = np.arange(256)[None, :]
+    yy = np.arange(256)[:, None]
+    # Tide band occupies the first metre with a broken, ragged upper edge.
+    tide_edge = 9 + (salt_rng.random((1, 256)) * 4)
+    tide = (yy < tide_edge).astype(np.float32) * .55
+    # Fine hanging threads, strongest under sills/gallery courses, fade by 3-6 m.
+    threads = np.zeros((256, 256), dtype=np.float32)
+    for k in range(50):
+        col = int(salt_rng.integers(0, 256)); width = 1
+        top = int(salt_rng.choice([12, 40, 85, 168, 183, 235]))
+        length = int(salt_rng.integers(28, 58))
+        for d in range(length):
+            c = (col + int(math.sin(d*.13+k)*1.2)) % 256
+            threads[min(255, top+d), max(0,c-width):min(256,c+width+1)] = max(threads[min(255,top+d),max(0,c-width):min(256,c+width+1)].max(initial=0), .34*(1-d/length)**.7)
+    alpha = np.maximum(tide, threads)
+    alpha *= (.84 + .16*salt_rng.random((256,256)))
+    salt_pixels[:, :, :3] = alpha[:, :, None]
+    salt_image.pixels[:] = salt_pixels[::-1].reshape(-1); salt_image.pack()
+    salt_mat = bpy.data.materials.new('Lighthouse / pale salt veil'); salt_mat.use_nodes=True
+    salt_nodes=salt_mat.node_tree.nodes; salt_links=salt_mat.node_tree.links
+    salt_shader=salt_nodes.get('Principled BSDF')
+    salt_shader.inputs['Base Color'].default_value=(.82,.81,.75,1)
+    salt_shader.inputs['Roughness'].default_value=.98
+    salt_shader.inputs['Alpha'].default_value=.72
+    salt_tex=salt_nodes.new('ShaderNodeTexImage'); salt_tex.image=salt_image
+    salt_links.new(salt_tex.outputs['Color'], salt_shader.inputs['Alpha'])
+    salt_mat.surface_render_method='DITHERED'
+    salt_verts=[]; salt_faces=[]; salt_uv=[]
+    SN=16
+    for y in salt_rows:
+        radius=light_radius(y)+.018
+        for i in range(SN):
+            a=(i+.5)*2*math.pi/SN
+            salt_verts.append(gv((math.cos(a)*radius,y,math.sin(a)*radius)))
+    for row,(y0,y1) in enumerate(zip(salt_rows,salt_rows[1:])):
+        for i in range(SN):
+            a0=(i+.5)*2*math.pi/SN; a1=(i+1.5)*2*math.pi/SN
+            mid=(y0+y1)/2
+            if in_light_opening(y0,y1,(a0+a1)/2): continue
+            salt_faces.append((row*SN+i,(row+1)*SN+i,(row+1)*SN+(i+1)%SN,row*SN+(i+1)%SN))
+            salt_uv.append(((i/SN,(y0+2)/27),(i/SN,(y1+2)/27),((i+1)/SN,(y1+2)/27),((i+1)/SN,(y0+2)/27)))
+    salt_mesh=bpy.data.meshes.new('lighthouse separate salt veil mesh'); salt_mesh.from_pydata(salt_verts,[],salt_faces); salt_mesh.materials.append(salt_mat); salt_mesh.update()
+    salt_obj=bpy.data.objects.new('lighthouse pale salt stains',salt_mesh); scene.collection.objects.link(salt_obj); salt_obj['part']='lighthouse'; salt_obj['triangles_budget']=400
+    salt_uv_layer=salt_mesh.uv_layers.new(name='Salt opacity runs')
+    for poly,coords in zip(salt_mesh.polygons,salt_uv):
+        for li,coord in zip(poly.loop_indices,coords): salt_uv_layer.data[li].uv=coord
+    parent(salt_obj,light_root)
     # Whitewashed inner face keeps every stair and landing detail behind stone.
     inner_stone = matte_material('Lighthouse / whitewashed inner stone',(.70,.68,.59),.96)
     inner_nodes=inner_stone.node_tree.nodes; inner_links=inner_stone.node_tree.links
