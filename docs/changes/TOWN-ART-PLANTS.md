@@ -78,3 +78,18 @@
 - `node tools/test-review-evidence.mjs`: 8/9 subtests passed. Audio analysis failed with `spawnSync ffmpeg EPERM`; the one rerun failed at the same ffmpeg launch. The JPG publication and 500 KB review-sheet check passed.
 - Browser/in-game look checks and frame timing: not run; Claude owns those checks, as directed. Lane tier and build: not run for this art card.
 - Changed assertions: added required corner-post and diagonal-brace node names. No existing assertion changed or loosened. Race fingerprints are not applicable.
+
+## Follow-up: machine yard, round 16
+
+- Added the 6 x 4-cell machine yard as a separate root child. It includes two photo-carved sheds, a photo-textured dirt pad, four lathed fuel drums, three turned salvage piles, and a traced fence run. The Blender recipe prints each mesh's bounds and rejects pieces outside the usable 47 x 31 m area or below ground.
+- Added machine-yard node and 14,000-triangle budget assertions. The round-16 sheet and review note are included; the review reports 11,520 triangles and scores resemblance 4/5, readability 4/5, grounding 5/5, and scene consistency 4/5. The family GLB is 5,092,976 bytes, within the task's existing 8 MB output check. The general 3 MB contract discrepancy remains as recorded in the formwork follow-up; Claude should settle it before additional buildings are added.
+- Review notes call out dark roof seams, open-bay visibility, salvage scale, and fuel-drum readability for Claude's art verdict. Browser, in-game, and frame checks remain with Claude.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures. `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory. The round-16 JPG is 168,424 bytes, below the 500 KB limit.
+- `node tools/test-review-evidence.mjs`: 7/9 subtests passed on both runs. The two failures repeat: a fixed 7 November evidence-date expectation differs from the current 8 November date, and audio analysis cannot start `ffmpeg` (`spawnSync ffmpeg EPERM`). No assertions were changed.
+- Lane tier: 13 suites passed, `tools/test-circuit-eifel.mjs` failed, and 33 suites did not run. Its one same-source rerun passed 17/18 checks; the remaining audio loudness check failed because FFmpeg measurement could not run. No game code changed. This is outside the art card; the unrelated suite issue remains for integration to route.
+- `npm.cmd run build`: passed. No browser, in-game, or frame check was run; Claude owns the visual verdict. Race fingerprints are not applicable.
+- Changed assertions add the machine-yard root and named yard parts, plus its triangle cap. No existing assertion was weakened. Race fingerprints are not applicable.
+
+## Removed
+
+- No accepted models, previous review sheets, source photos, or assertions were removed. Temporary renders, masks, and logs for round 16 are removed after the card checks.

@@ -30,6 +30,7 @@ for material in mats.values():
 steel=mats['rusted-steel'];paint=mats['faded-hand-paint'];tin=mats['galvanised-tin'];dark=mats['iron-dark'];sand=mats['sand']
 rootobj=bpy.data.objects.new('town-plants',None);bpy.context.collection.objects.link(rootobj)
 crusher=bpy.data.objects.new('crusher',None);bpy.context.collection.objects.link(crusher);crusher.parent=rootobj
+machine_yard=bpy.data.objects.new('machine-yard',None);bpy.context.collection.objects.link(machine_yard);machine_yard.parent=rootobj
 parts=[]
 def beam(name,a,b,width,mat=steel,parent=crusher):
  o=town.beam(name,a,b,width,mat);o.parent=parent;parts.append(o);return o
@@ -757,18 +758,128 @@ pump_fence_panel('front-left-short',-2.25,'front',1.5)
 pump_fence_panel('front-right-short',2.25,'front',1.5)
 pump_fence_panel('front-right-long',4.5,'front')
 
+# Machine yard: two photo-carved sheds, drums turned from a real circular
+# profile, three repeated salvage piles, a photo-wearing dirt pad and one
+# traced fence run. The 6 x 4 cell footprint is 48 x 32 m; all meshes keep a
+# 0.5 m margin inside it.
+yard_parts=[]
+def yard_part(obj):
+ obj.parent=machine_yard;yard_parts.append(obj);return obj
+
+yard_ground=Photo(tex/'machine-yard-ground.jpg')
+yard_slab=PhotoMesh()
+x0,x1,z0,z1=-23.5,23.5,-15.5,15.5
+yard_slab.face([(x0,.14,z0),(x1,.14,z0),(x1,.14,z1),(x0,.14,z1)],
+ [yard_ground.uv(0,0),yard_ground.uv(yard_ground.w,0),yard_ground.uv(yard_ground.w,yard_ground.h),yard_ground.uv(0,yard_ground.h)],'ground',(0,1,0))
+yard_slab.face([(x0,0,z1),(x1,0,z1),(x1,0,z0),(x0,0,z0)],
+ [yard_ground.uv(0,0),yard_ground.uv(yard_ground.w,0),yard_ground.uv(yard_ground.w,yard_ground.h),yard_ground.uv(0,yard_ground.h)],'ground',(0,-1,0))
+for points,uvs,outward in (
+ ([(x0,0,z0),(x1,0,z0),(x1,.14,z0),(x0,.14,z0)],[(0,0),(1024,0),(1024,6),(0,6)],(0,0,-1)),
+ ([(x1,0,z0),(x1,0,z1),(x1,.14,z1),(x1,.14,z0)],[(0,0),(1024,0),(1024,6),(0,6)],(1,0,0)),
+ ([(x1,0,z1),(x0,0,z1),(x0,.14,z1),(x1,.14,z1)],[(0,0),(1024,0),(1024,6),(0,6)],(0,0,1)),
+ ([(x0,0,z1),(x0,0,z0),(x0,.14,z0),(x0,.14,z1)],[(0,0),(1024,0),(1024,6),(0,6)],(-1,0,0))):
+ yard_slab.face(points,[yard_ground.uv(*uv) for uv in uvs],'ground',outward)
+yard_floor=yard_part(yard_slab.finish('machine-yard:dirt-yard',{'ground':yard_ground.material()}))
+
+open_shed_table={
+ 'photos':{'side':'machine-yard-open-side.jpg','front':'machine-yard-open-front.jpg',
+           'rear':'machine-yard-open-rear.jpg','top':'machine-yard-open-top.jpg'},
+ 'length':19.6,'width':11.1,'height':5.6,
+ 'side':{'start':20,'end':1000,'ground':313},
+ 'front':{'centre':512,'ground':477,'top':17},
+ 'rear':{'centre':512,'ground':481,'top':26},
+ 'top':{'front':32,'rear':993,'centre':391.5,'along':'x','x_scale':11.1/(664-119)},
+ 'keep':lambda x,y,z:~((np.abs(x)<4.05)&(y<3.55)&(z<8.2)),
+ 'grey':26,'tolerance':18,'bleed_tolerance':20,'voxel':.09,'target':4100,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+open_body=carve_object('machine-yard:open-shed:body',tex,open_shed_table)
+open_body.location=town.game_vector((-12,0,4.5));yard_part(open_body)
+
+closed_shed_table={
+ 'photos':{'side':'machine-yard-shed-side.jpg','front':'machine-yard-shed-front.jpg',
+           'rear':'machine-yard-shed-rear.jpg','top':'machine-yard-shed-top.jpg'},
+ 'length':10.0,'width':4.6,'height':4.0,
+ 'side':{'start':24,'end':1000,'ground':640},
+ 'front':{'centre':512,'ground':672,'top':58},
+ 'rear':{'centre':512,'ground':672,'top':58},
+ 'top':{'front':52,'rear':969,'centre':383,'along':'x','x_scale':4.6/(600-163)},
+ 'grey':26,'tolerance':22,'bleed_tolerance':26,'voxel':.075,'target':2800,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+closed_body=carve_object('machine-yard:store-shed:body',tex,closed_shed_table)
+closed_body.location=town.game_vector((11.4,0,5.0));yard_part(closed_body)
+
+# One measured parts pile is carved once and repeated with turned orientations.
+pile_table={
+ 'photos':{'side':'machine-yard-pile-side.jpg','front':'machine-yard-pile-front.jpg',
+           'rear':'machine-yard-pile-rear.jpg','top':'machine-yard-pile-top.jpg'},
+ 'length':4.6,'width':3.8,'height':2.55,
+ 'side':{'start':30,'end':990,'ground':649},
+ 'front':{'centre':512,'ground':700,'top':110},
+ 'rear':{'centre':512,'ground':700,'top':120},
+ 'top':{'front':102,'rear':921,'centre':512},
+ 'grey':26,'tolerance':24,'bleed_tolerance':30,'voxel':.07,'target':520,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+pile_body=carve_object('machine-yard:parts-pile-1',tex,pile_table)
+pile_body.location=town.game_vector((-1.0,0,-7.0));yard_part(pile_body)
+for index,(location,angle) in enumerate((((-1.3,0,-12.0),math.pi/2),((4.3,0,-7.6),-.3)),start=2):
+ duplicate=pile_body.copy();duplicate.data=pile_body.data.copy();duplicate.name=f'machine-yard:parts-pile-{index}'
+ bpy.context.collection.objects.link(duplicate);duplicate.parent=machine_yard
+ duplicate.location=town.game_vector(location);duplicate.rotation_euler[2]=angle;yard_parts.append(duplicate)
+
+# Four low-profile fuel drums. Each is a lathed steel barrel with rolled rims
+# and two raised courses, not a cylinder primitive.
+def yard_drum(index,x,z):
+ mesh=PhotoMesh();stations=[(0,.43),(.045,.48),(.09,.46),(.25,.46),(.29,.49),(.36,.46),(.74,.46),(.80,.49),(.86,.46),(1.12,.46),(1.16,.49),(1.20,.43)]
+ def drum_uv(i,d,r,angle):return (angle/(2*math.pi),d/1.2)
+ lathe(mesh,'steel',(x,0,z),(0,1,0),(1,0,0),(0,0,1),stations,drum_uv,sides=16)
+ drum=yard_part(mesh.finish(f'machine-yard:fuel-drum-{index}',{'steel':steel}))
+ return drum
+for index,position in enumerate(((-19,-8),(-17,-9.4),(-15.2,-8.6),(16,-8)),start=1):yard_drum(index,*position)
+
+# Reuse the town's credited chain-link reference, trace open diamonds and
+# repeat the panel only along the yard's east side.
+yard_fence_photo=Photo(tex/'pump-station-fence.jpg');yard_fence_photo.rgb()
+yard_trace=np.zeros((76,128),dtype=bool)
+def yard_fence_line(start,end):
+ x0,y0=start;x1,y1=end;steps=max(abs(x1-x0),abs(y1-y0))
+ for step in range(steps+1):
+  x=round(x0+(x1-x0)*step/steps);y=round(y0+(y1-y0)*step/steps)
+  if 0<=x<128 and 0<=y<76:yard_trace[y,x]=True
+yard_trace[5:71,8:11]=True;yard_trace[5:71,117:120]=True
+yard_trace[10:12,10:118]=True;yard_trace[66:68,10:118]=True
+for start in range(0,121,40):
+ yard_fence_line((start,18),(start+40,58));yard_fence_line((start,58),(start+40,18))
+yard_mask=np.repeat(np.repeat(yard_trace,8,axis=0),8,axis=1)
+yard_mask=np.pad(yard_mask,((0,yard_fence_photo.h-yard_mask.shape[0]),(0,0)))
+yard_fence_loops=trace(yard_mask,(40,32,984,576),tolerance=14.0,min_area=80)
+if not yard_fence_loops:raise RuntimeError('machine-yard fence trace is empty')
+yard_fence_photo.bleed(yard_mask)
+yard_fence_scale=3.0/(976-44);yard_fence_centre=(44+976)/2
+for panel,centre in enumerate((-13.5,-10.5,-7.5,-4.5,-1.5,1.5,4.5,7.5,10.5,13.5)):
+ def fence_world(px,py,depth,centre=centre):
+  across=(px-yard_fence_centre)*yard_fence_scale
+  up=(565-py)*yard_fence_scale
+  return (23.2+depth,up,centre+across)
+ mesh=PhotoMesh();slab(mesh,'photo',yard_fence_photo,yard_fence_loops,fence_world,-.035,.035,wall_scale=yard_fence_scale)
+ fence=yard_part(mesh.finish(f'machine-yard:fence-panel-{panel+1}',{'photo':yard_fence_photo.material()}))
+
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent,plant,wellhead,radar,turn,pump_station):return True
+  if parent in (crusher,belt_parent,plant,wellhead,radar,turn,pump_station,machine_yard):return True
   parent=parent.parent
  return False
 plant_bounds={}
 wellhead_bounds={}
 radar_bounds={}
 pump_station_bounds={}
+machine_yard_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
  # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
@@ -791,6 +902,10 @@ for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and ow
   pump_station_bounds[obj.name]=(low,high)
   if low[1]<-.08 or low[0]<-7.5 or high[0]>7.5 or low[2]<-7.5 or high[2]>7.5:
    raise RuntimeError(f'{obj.name} leaves the 2 x 2 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('machine-yard:'):
+  machine_yard_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-23.5 or high[0]>23.5 or low[2]<-15.5 or high[2]>15.5:
+   raise RuntimeError(f'{obj.name} leaves the 6 x 4 footprint or ground plane: {low}, {high}')
 for name,(low,high) in plant_bounds.items():
  grounded=low[1]<=.13
  touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
@@ -798,7 +913,18 @@ for name,(low,high) in plant_bounds.items():
               for other in plant_bounds)
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another batch plant piece: {low}, {high}')
+for name,(low,high) in machine_yard_bounds.items():
+ grounded=low[1]<=.16
+ touching=any(other!=name and all(machine_yard_bounds[other][0][axis]<=high[axis]+.12 and
+                                  machine_yard_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in machine_yard_bounds)
+ if not (grounded or touching):raise RuntimeError(f'{name} touches neither yard ground nor another piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+machine_yard_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                           if obj.type=='MESH' and obj.name.startswith('machine-yard:')
+                           for poly in obj.data.polygons)
+print(f'MACHINE YARD TRIANGLES {machine_yard_triangles} (limit 14000)')
+if machine_yard_triangles>14000:raise RuntimeError(f'machine-yard has {machine_yard_triangles} triangles; budget 14000')
 for name,(low,high) in radar_bounds.items():
  grounded=low[1]<=.10
  touching=any(other!=name and all(radar_bounds[other][0][axis]<=high[axis]+.12 and
@@ -1177,3 +1303,22 @@ if a.render:
    cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
    scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=1000,700
    scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
+ # Isolate the machine yard after import from the exported GLB. The four body
+ # matches use the same orthographic views as their source photos; the three
+ # scene views show the full yard with its buildings and loose pieces.
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name=='machine-yard:open-shed:body' or node.name=='review-only ground')
+ def yard_shot(name,eye,target,scale,size,roll=0):
+  cam=camera('machine-yard-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
+  scene.render.filepath=str(evidence/('machine-yard-'+name+'.png'));bpy.ops.render.render(write_still=True)
+ yard_shot('match-side',(-42,2.8,4.5),(-12,2.8,4.5),20.5,(1024,341))
+ yard_shot('match-front',(-12,2.8,-30),(-12,2.8,4.5),12.6,(1024,512))
+ yard_shot('match-rear',(-12,2.8,39),(-12,2.8,4.5),12.6,(1024,508))
+ yard_shot('match-above',( -12,35,4.5),(-12,0,4.5),20.8,(1024,781),-math.pi/2)
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('machine-yard:') or node.name=='review-only ground')
+ yard_shot('three-quarter-road',(29,24,-34),(0,1.6,0),54.0,(1000,700))
+ yard_shot('three-quarter-yard',(-31,23,31),(0,1.6,0),54.0,(1000,700))
+ yard_shot('mayor',(46,70,-48),(0,1.0,0),62.0,(1000,700))
