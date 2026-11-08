@@ -93,3 +93,15 @@
 ## Removed
 
 - No accepted models, previous review sheets, source photos, or assertions were removed. Temporary renders, masks, and logs for round 16 are removed after the card checks.
+
+## Follow-up: machine yard, round 17
+
+- Narrowed the open-shed `keep` cut to the bay below 3.0 m, within the measured side walls, from the front opening to 1 m before the rear wall. The roof is left continuous; front and rear views confirm the bay and rear wall remain.
+- Added the round-17 comparison sheet and review note. The sheet is 208,891 bytes. Blender's exported yard bounds and triangle count remain within the existing card limits. Claude should compare the side and overhead with the photos, check the open-bay depth, and confirm rear-wall continuity.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures. `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 7/9 subtests passed. The JPG inventory test still requires `round-16.jpg`, which this follow-up removes as explicitly requested; audio analysis failed because FFmpeg could not start (`spawnSync ffmpeg EPERM`). The round-17 bounded-sheet publisher check passed. No assertions were changed.
+- No browser, in-game, frame, lane-tier or build check was run; this art card excludes lane/build, and Claude owns visual/browser review. Race fingerprints are not applicable.
+
+## Removed
+
+- Deleted `round-16.jpg` and `round-16-review.md`; the round-16 verdict is retained above. Round-17 temporary renders and logs are removed after checks.

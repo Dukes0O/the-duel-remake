@@ -789,7 +789,9 @@ open_shed_table={
  'front':{'centre':512,'ground':477,'top':17},
  'rear':{'centre':512,'ground':481,'top':26},
  'top':{'front':32,'rear':993,'centre':391.5,'along':'x','x_scale':11.1/(664-119)},
- 'keep':lambda x,y,z:~((np.abs(x)<4.05)&(y<3.55)&(z<8.2)),
+ # Remove only the open bay: leave the roof above the eaves, side walls,
+ # front frame, and the final metre of rear wall intact.
+ 'keep':lambda x,y,z:~((np.abs(x)<4.05)&(y<3.0)&(z>-9.8)&(z<8.8)),
  'grey':26,'tolerance':18,'bleed_tolerance':20,'voxel':.09,'target':4100,
  'mask_dir':str(evidence/'masks') if a.render else None,
 }
