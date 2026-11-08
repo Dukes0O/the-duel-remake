@@ -433,3 +433,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - `round-15.jpg` and `round-15-review.md`; round 16 is the single current sheet.
+
+## Lighthouse round 1, point 1 — measured tower (7 November 2026)
+
+- Replaced the tapered placeholder with a 32-sided tower built from a measured 16-station radius profile read against a 50 px grid on `lighthouse-stone-photo.jpg`. The wall uses cylindrical photo projection and has real door and three landing-window voids with deep reveals. Added the flared foot, stone courses, three interior landings, the gallery deck and iron rail, glazed lantern room, mullions, domed cap and ventilator ball. Kept the stair, door, swept step, drawings, letter box and named lamp/beam parts; refit the stair and landing rails to the taper.
+- Blender 4.5.13 family export/read-back: 38,931 triangles and 2,976,300 bytes. Build log: `.qa-dist/lighthouse-point1-build.log`. The file is within the 50,000 triangle and 3,000,000 byte limits.
+- Checks for the completed two-point task will be recorded after point 2. Changed assertions: none. Race fingerprints: none; art only. Claude should inspect the three lighthouse check renders.
+
+### Removed
+
+- Removed the old `lighthouse tapered masonry` mesh and its unused `weathered-plank` material slot, including its five eye-set rings and broad photo UV fallback. Removed the old 48-sided landing slabs and outside-the-wall landing-post placement; replaced them with fitted landings and rails inside the new tower profile. No ship parts or earlier look sheets were changed.

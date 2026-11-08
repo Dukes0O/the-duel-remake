@@ -70,7 +70,8 @@ parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
 parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold',
                                                'port-good-hope', 'starboard-good-hope', 'port-marigold', 'starboard-marigold',
-                                               'port-patience', 'starboard-patience'), default=None)
+                                               'port-patience', 'starboard-patience', 'lighthouse-road',
+                                               'lighthouse-dusk', 'lighthouse-landing'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -123,6 +124,21 @@ if args.render_view:
             stack.extend(obj.children)
     set_tree_visibility('lighthouse', False)
     set_tree_visibility('pilot-boat', False)
+    if args.render_view.startswith('lighthouse-'):
+        set_tree_visibility('lighthouse', True)
+        for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
+            set_tree_visibility(name, False)
+        if args.render_view == 'lighthouse-dusk':
+            for light_obj in scene.objects:
+                if light_obj.type == 'LIGHT' and light_obj.data.type == 'SUN':
+                    light_obj.data.energy = .18
+                    light_obj.data.color = (1.0, .43, .22)
+            scene.world.node_tree.nodes['Background'].inputs[0].default_value = (.025, .035, .075, 1)
+            scene.world.node_tree.nodes['Background'].inputs[1].default_value = .22
+            glow_data = bpy.data.lights.new('lighthouse warm lantern bounce', 'POINT')
+            glow_data.energy = 1700; glow_data.color = (1.0, .40, .12); glow_data.shadow_soft_size = 2.0
+            glow_obj = bpy.data.objects.new('lighthouse warm lantern bounce', glow_data)
+            scene.collection.objects.link(glow_obj); glow_obj.location = gv((170, 27, -395))
     if args.render_view.startswith(('port-', 'starboard-')):
         side, ship_name = args.render_view.split('-', 1)
         subject_name = {'good-hope': 'ship-good-hope', 'marigold': 'ship-marigold',
@@ -195,6 +211,11 @@ if args.render_view:
         scene.render.image_settings.file_format = 'PNG'
         scene.render.resolution_x, scene.render.resolution_y = 1200, 900
         scene.render.filepath = str(root / '.qa-dist/check-good-hope-deck.png')
+    elif args.render_view.startswith('lighthouse-'):
+        scene.render.image_settings.file_format = 'PNG'
+        if args.render_view == 'lighthouse-landing': scene.render.resolution_x, scene.render.resolution_y = 900, 900
+        else: scene.render.resolution_x, scene.render.resolution_y = 900, 1200
+        scene.render.filepath = str(root / f'.qa-dist/check-{args.render_view}.png')
     else:
         scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
@@ -1292,53 +1313,108 @@ clapper=beam('patience-bell-clapper',(mastx,18.1,mastz),(mastx,17.65,mastz),.08,
 for o in (bell,clapper): parent(o,bell_root)
 
 if args.stage == 'family':
-    # The lighthouse is a tapered, photo-projected tower, with access at all three story landings.
+    # Lighthouse profile measured from lighthouse-stone-photo.jpg on a 50 px grid.
+    # The 1024 px tower height reads as about 27 m: radius is sampled at 15 heights.
     light_root=root_obj('lighthouse',(170,0,-395),'lighthouse')
-    N=48; verts=[]; faces=[]
-    for level,(y,radius) in enumerate(((-2,5.6),(6,4.8),(14,4.0),(22,3.2),(25.3,3.0))):
+    N=32
+    LIGHT_PROFILE = ((-2.0, 5.25), (-1.0, 5.20), (0.0, 5.05), (2.0, 4.78),
+                     (4.0, 4.51), (6.0, 4.25), (8.0, 4.03), (10.0, 3.82),
+                     (12.0, 3.61), (14.0, 3.42), (16.0, 3.26), (18.0, 3.12),
+                     (20.0, 3.00), (22.0, 2.90), (24.0, 2.82), (25.0, 2.78))
+    profile_y = sorted(set([y for y, _ in LIGHT_PROFILE] + [-.1, 1.9, 7.5, 9.0, 15.5, 17.0, 23.3, 24.8]))
+    def light_radius(y):
+        for (ya, ra), (yb, rb) in zip(LIGHT_PROFILE, LIGHT_PROFILE[1:]):
+            if ya <= y <= yb:
+                t = (y - ya) / (yb - ya)
+                return ra * (1-t) + rb * t
+        return LIGHT_PROFILE[0][1] if y < -2 else LIGHT_PROFILE[-1][1]
+    verts=[]; faces=[]; face_uv=[]
+    openings = ((-2.0, 1.9, 1.55), (7.5, 9.0, .88), (15.5, 17.0, .88), (23.3, 24.8, .82))
+    # Front faces are centred on -Z; omit the masonry quads to leave real voids.
+    def in_light_opening(y0, y1, angle):
+        front_delta = abs((angle + math.pi/2 + math.pi) % (2*math.pi) - math.pi)
+        for low, high, width in openings:
+            if y0 >= low - 1e-5 and y1 <= high + 1e-5 and front_delta < width / light_radius((y0+y1)/2) * .56:
+                return True
+        return False
+    for y in profile_y:
+        radius=light_radius(y)
         for i in range(N):
             a=i*2*math.pi/N
             verts.append(gv((math.cos(a)*radius,y,math.sin(a)*radius)))
-    for level in range(4):
-        for i in range(N): faces.append((level*N+i,level*N+(i+1)%N,(level+1)*N+(i+1)%N,(level+1)*N+i))
-    mesh=bpy.data.meshes.new('lighthouse tapered masonry'); mesh.from_pydata(verts,[],faces); mesh.materials.append(stone_photo); mesh.materials.append(materials['weathered-plank']); mesh.update()
-    tower=bpy.data.objects.new('lighthouse masonry tower',mesh); scene.collection.objects.link(tower); tower['part']='lighthouse'
-    uv=mesh.uv_layers.new(name='Photographic front projection')
-    for poly in mesh.polygons:
-        for li in poly.loop_indices:
-            vi=mesh.loops[li].vertex_index; level=vi//N; i=vi%N; x,y=math.cos(i*2*math.pi/N),math.sin(i*2*math.pi/N)
-            height=mesh.vertices[vi].co.z
-            angle=i*2*math.pi/N
-            if math.sin(angle)<-.62:
-                uv.data[li].uv=(.5+(x*5.8)/12.0,.02+((height+2)/27.3)*.94)
-                poly.material_index=0
-            else:
-                radius=((5.6,4.8,4.0,3.2,3.0)[level])
-                uv.data[li].uv=(angle*radius,.04+height/2)
-                poly.material_index=1
+    for row,(y0,y1) in enumerate(zip(profile_y,profile_y[1:])):
+        for i in range(N):
+            a0=i*2*math.pi/N; a1=(i+1)*2*math.pi/N
+            if in_light_opening(y0,y1,(a0+a1)/2): continue
+            faces.append((row*N+i,row*N+(i+1)%N,(row+1)*N+(i+1)%N,(row+1)*N+i))
+            face_uv.append(((i/N,(y0+2)/27),( (i+1)/N,(y0+2)/27),((i+1)/N,(y1+2)/27),(i/N,(y1+2)/27)))
+    mesh=bpy.data.meshes.new('lighthouse measured profile masonry'); mesh.from_pydata(verts,[],faces); mesh.materials.append(stone_photo); mesh.update()
+    tower=bpy.data.objects.new('lighthouse measured profile',mesh); scene.collection.objects.link(tower); tower['part']='lighthouse'
+    uv=mesh.uv_layers.new(name='Cylindrical stone photo projection')
+    for poly, coords in zip(mesh.polygons,face_uv):
+        for li,coord in zip(poly.loop_indices,coords): uv.data[li].uv=coord
     parent(tower,light_root)
-    for y,rad in ((8,4.9),(16,3.8),(24,3.05)):
-        floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad+.7,.28,steel,'lighthouse',48)
+    # Slightly flared plinth and corbelled stone band under the gallery.
+    for y, radius, depth in ((-1.75,5.34,.45),(24.65,3.04,.20),(24.90,3.25,.18),(25.12,3.48,.18)):
+        band=cylinder(f'lighthouse-stone-course-{y}',(0,y,0),radius,depth,stone_photo,'lighthouse',32)
+        parent(band,light_root)
+    gallery=cylinder('lighthouse-gallery-deck',(0,25.42,0),4.05,.30,steel,'lighthouse',32)
+    parent(gallery,light_root)
+    for i in range(32):
+        a=2*math.pi*i/32; x,z=3.84*math.cos(a),3.84*math.sin(a)
+        beam(f'lighthouse-gallery-rail-post-{i}',(x,25.55,z),(x,26.58,z),.055,iron,'lighthouse')
+    for y in (25.62,26.48):
+        for i in range(32):
+            a=2*math.pi*i/32; b=a+2*math.pi/32
+            beam(f'lighthouse-gallery-rail-{y}-{i}',(3.84*math.cos(a),y,3.84*math.sin(a)),
+                 (3.84*math.cos(b),y,3.84*math.sin(b)),.045,iron,'lighthouse')
+    # Glazed lantern room with iron mullions, domed cap and ventilator ball.
+    lantern_glass=matte_material('Lighthouse / lantern glazing',(.30,.39,.39),.24)
+    lantern=cylinder('lighthouse-lantern-glazing',(0,27.10,0),2.55,2.95,lantern_glass,'lighthouse:lamp',32)
+    parent(lantern,light_root)
+    cap=cylinder('lighthouse-lantern-roof-eave',(0,28.62,0),2.72,.18,iron,'lighthouse',32); parent(cap,light_root)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1, location=gv((0,29.15,0)))
+    dome=bpy.context.object; dome.name='lighthouse-lantern-domed-cap'; dome.scale=(2.65,.72,2.65); dome.data.materials.append(steel); dome['part']='lighthouse'; parent(dome,light_root)
+    ventilator=cylinder('lighthouse-ventilator-neck',(0,29.86,0),.26,.65,iron,'lighthouse',16); parent(ventilator,light_root)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=.42, location=gv((0,30.24,0)))
+    vent_ball=bpy.context.object; vent_ball.name='lighthouse-ventilator-ball'; vent_ball.data.materials.append(iron); vent_ball['part']='lighthouse'; parent(vent_ball,light_root)
+    # Deep window wells: dark inset backing sits 0.55 m behind the outer face;
+    # stone jambs, sills and heads bridge the reveal at each opening.
+    recess=matte_material('Lighthouse / deep window shadow',(.075,.085,.082))
+    for index,(low,high,width) in enumerate(openings):
+        rad=light_radius((low+high)/2)
+        if index == 0:
+            back=cube('lighthouse door recess',(0,.0,-(rad-.58)),(1.35,2.0,.05),recess,'lighthouse',0)
+            door=cube('lighthouse:door',(0,-.05,-(rad-.70)),(1.22,1.92,.10),wood,'lighthouse',.06); parent(door,light_root)
+            parent(back,light_root)
+            continue
+        backing=cube(f'lighthouse-window-{index}-deep-recess',(0,(low+high)/2,-(rad-.58)),(width-.20,high-low-.24,.05),recess,'lighthouse',0)
+        parent(backing,light_root)
+        for side in (-1,1):
+            jamb=cube(f'lighthouse-window-{index}-jamb-{side}',(side*width*.5,(low+high)/2,-(rad-.25)),(.18,high-low,.62),stone_photo,'lighthouse',.025); parent(jamb,light_root)
+        for y in (low+.08,high-.08):
+            sill=cube(f'lighthouse-window-{index}-reveal-{y}',(0,y,-(rad-.25)),(width,.16,.62),stone_photo,'lighthouse',.025); parent(sill,light_root)
+    for y,rad in ((8,light_radius(8)),(16,light_radius(16)),(24,light_radius(24))):
+        floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad-.30,.22,steel,'lighthouse',32)
         parent(floor,light_root)
         for i in range(24):
             a=i*2*math.pi/24
-            beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad+.55),y,math.sin(a)*(rad+.55)),(math.cos(a)*(rad+.55),y+.9,math.sin(a)*(rad+.55)),.055,iron,'lighthouse')
+            beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad-.36),y+.03,math.sin(a)*(rad-.36)),(math.cos(a)*(rad-.36),y+.95,math.sin(a)*(rad-.36)),.035,iron,'lighthouse')
     for i in range(66):
         y=-1.6+i*.38; a=-math.pi/2+i*.135; radius=4.8-(y+2)*.075
         x,z=math.cos(a)*radius,math.sin(a)*radius
         beam(f'lighthouse-spiral-stair-{i}',(x,y,z),(x+math.cos(a+.4)*1.0,y+.20,z+math.sin(a+.4)*1.0),.12,wood,'lighthouse',.8)
-    door=cube('lighthouse:door',(0,0,-5.54),(1.8,2.8,.16),wood,'lighthouse',.1); parent(door,light_root)
-    step=cube('lighthouse-swept-step',(0,-1.78,-6.1),(3.2,.25,1.1),steel,'lighthouse',.04); parent(step,light_root)
+    step=cube('lighthouse-swept-step',(0,-1.78,-5.65),(3.2,.25,1.1),steel,'lighthouse',.04); parent(step,light_root)
     # Bright drawings and a box on the requested interior landings.
     for i in range(5):
         board=cube(f'lighthouse-gate-drawing-{i}',(-1.8+i*.75,9.2,-4.25),(.58,.76,.04),paint,'lighthouse',.02); parent(board,light_root)
     letters=cube('lighthouse-box-of-letters',(1.6,17,-3.15),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
-    lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),1.9,2.7,glass,'lighthouse:lamp',40)
+    lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),.62,1.65,lamp,'lighthouse:lamp',24)
     for poly in lamp_mesh.data.polygons: poly.use_smooth=True
     lamp_root=root_obj('lighthouse:lamp',(0,0,0),'lighthouse:lamp'); parent(lamp_root,light_root); parent(lamp_mesh,lamp_root)
     for i in range(8):
         a=i*math.pi/4
-        b=beam(f'lighthouse-lantern-mullion-{i}',(math.cos(a)*1.9,25.6,math.sin(a)*1.9),(math.cos(a)*1.9,28.4,math.sin(a)*1.9),.08,iron,'lighthouse:lamp')
+        b=beam(f'lighthouse-lantern-mullion-{i}',(math.cos(a)*2.55,25.65,math.sin(a)*2.55),(math.cos(a)*2.55,28.48,math.sin(a)*2.55),.08,iron,'lighthouse:lamp')
         parent(b,lamp_root)
     lightpart=root_obj('lighthouse:beam',(0,0,0),'lighthouse:beam'); parent(lightpart,light_root)
     beam_obj=cube('lighthouse rotating beam',(0,27.2,-5),(1.0,.16,44),lamp,'lighthouse:beam',.03); parent(beam_obj,lightpart)
@@ -1603,6 +1679,9 @@ def render_imported_review():
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
     add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 8.5, -415), 32, (1200, 900))
     add_camera('review-camera-deck-marigold', (45, 5.7, -455), (45, 8.5, -440), 32, (1200, 900))
+    add_camera('review-camera-lighthouse-road', (194, 1.2, -426), (170, 13, -395), 40, (900, 1200))
+    add_camera('review-camera-lighthouse-dusk', (194, 1.2, -426), (170, 13, -395), 40, (900, 1200))
+    add_camera('review-camera-lighthouse-landing', (170, 8, -397), (170, 9.3, -399), 8, (900, 900))
 
     raw.mkdir(parents=True, exist_ok=True)
     review_scene.camera = review_scene.objects['review-camera-whole']
