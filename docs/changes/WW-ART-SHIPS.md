@@ -443,3 +443,12 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the old `lighthouse tapered masonry` mesh and its unused `weathered-plank` material slot, including its five eye-set rings and broad photo UV fallback. Removed the old 48-sided landing slabs and outside-the-wall landing-post placement; replaced them with fitted landings and rails inside the new tower profile. No ship parts or earlier look sheets were changed.
+
+## Lighthouse round 1, point 2 — render checks (7 November 2026)
+
+- Added `lighthouse-road`, `lighthouse-dusk` and `lighthouse-landing` to `--render-view`. Rendered and inspected `.qa-dist/check-lighthouse-road.png`, `.qa-dist/check-lighthouse-dusk.png` and `.qa-dist/check-lighthouse-landing.png` from the exported GLB. The road views frame the tower at car height from 40 m. The lantern glows in the dusk view and the rotating-beam part is visible. The road view reads as a tall tapering lighthouse with a flared foot, gallery, door and three recessed windows. Stone texture still stretches around the curved sides; Claude should judge it. The landing view is weak: the camera sees mostly the close inner wall and the drawings are not readable. Claude should judge the interior view and the tower finish before approving the look.
+- Final Blender 4.5.13 GLB read-back: 38,931 total triangles; 4,068 lighthouse triangles; 2,977,568 bytes. Both budgets pass. `tools/test-blender-output.mjs`: 381 checks passed, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. No assertion changes. Race fingerprints: none; art only. No lane tier, build, browser or look check was run; browser and art verdict remain Claude's.
+
+### Removed
+
+- Removed this round's temporary review Blend, source-photo grid and build/render/test logs from `.qa-dist/` and `.evidence/` after inspection. Kept the three requested lighthouse check PNGs for Claude. No previous ship review evidence was changed.
