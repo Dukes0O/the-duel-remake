@@ -396,6 +396,11 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
                 # Source side photographs show the bow at the left edge.
                 row = 155 - 110 * min(1.0, max(0.0, y / edge_y))
                 longitudinal = (.035 if station_index == 0 else .965 if station_index == len(section)-1 else 1-(t+.5))
+                # The upper bow flare reaches the pale studio edge of the side
+                # photo. Keep its side-plating projection on the darker painted
+                # hull, matching the adjacent station rather than sampling sky.
+                if t > .367:
+                    longitudinal = max(longitudinal, .12)
                 uv.data[loop_index].uv = (longitudinal, 1 - row / side_image.size[1])
             elif material_index == 1:
                 # Bow grid: 12 m beam x=10..645, centre=328; deck/keel y=20/431.
@@ -899,6 +904,30 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 stay=beam(f'good-hope-mast-stay-{side}',(22,13.0,-6.5),(22,16.0,-6.5+side*1.6),.045,iron,ident)
                 parent(stay,r)
         elif args.stage != 'fleet':
+            if ident == 'ship-marigold':
+                # Narrow rusted angle steel hides the white photo edge at the
+                # forward cabin corners and roof perimeter without changing
+                # either cabin end's own photograph.
+                for side in (-1, 1):
+                    corner = cube(f'marigold-cabin-forward-corner-{side}',
+                                  (22.0 + cabin_length * .5, deck + cabin_height * .5,
+                                   side * (cabin_width * .5 - .08)),
+                                  (.14, cabin_height, .20), rust,
+                                  ident + ':upperworks', .025)
+                    parent(corner, cabin_root)
+                roof_y = deck + cabin_height - .10
+                for side in (-1, 1):
+                    edge = cube(f'marigold-cabin-roof-edge-{side}',
+                                (22.0, roof_y, side * (cabin_width * .5 + .18)),
+                                (cabin_length + .8, .20, .28), rust,
+                                ident + ':upperworks', .025)
+                    parent(edge, cabin_root)
+                for fore in (-1, 1):
+                    edge = cube(f'marigold-cabin-roof-end-{fore}',
+                                (22.0 + fore * (cabin_length * .5 + .4), roof_y, 0),
+                                (.28, .20, cabin_width + .6), rust,
+                                ident + ':upperworks', .025)
+                    parent(edge, cabin_root)
             funnel=cylinder('marigold-weathered-funnel',(18.5,10.9,0),.95,3.0,rust,ident,16)
             parent(funnel,r)
             cap=cylinder('marigold-funnel-cap',(18.5,12.45,0),1.05,.18,iron,ident,16)

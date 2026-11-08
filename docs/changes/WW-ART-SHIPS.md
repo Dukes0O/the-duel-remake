@@ -404,3 +404,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - The stretched-strip mapping of the cabin end walls and the shrunken 0.55 m drift heaps.
+
+## Round 16, point 1 — bow plating and Marigold cabin edges (7 November 2026)
+
+- Kept the bow flare on each ship's own side-plating photo, sampling inward from its pale studio edge. Added narrow rusted steel corner and roof-edge trim to the Marigold's cabin, leaving its own end photos intact.
+- Point 1 source change is committed before the five point 2 renders and required checks. Claude should inspect the five named round 16 views for the bow flare and Marigold cabin corner/roof edges.
+- No assertion changes. Race fingerprints: none; art only. Browser and look checks are Claude's.
+
+### Removed
+
+- Removed no source parts, photos, assertions, or review sheets.
