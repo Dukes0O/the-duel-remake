@@ -1,4 +1,4 @@
-﻿# Machine yard photo credits
+# Machine yard photo credits
 
 Generated with OpenAI image generation (Codex), 7 November 2026. Each image is a separate single-view orthographic reference generated for the machine-yard model. Photos were reduced to 1024 pixels wide and saved as JPEGs.
 
@@ -10,3 +10,4 @@ Generated with OpenAI image generation (Codex), 7 November 2026. Each image is a
 The traced fence uses the already credited `pump-station-fence.jpg` reference.
 - The open shed overhead image was vertically normalized to match the 19.6 m by 11.1 m measured footprint.
 - The open shed rear image was vertically normalized to match the front elevation scale and 11.1 m width.
+- The open shed front and rear views were warped at the measured eaves so their 4.7 m wall height matches the side view.
