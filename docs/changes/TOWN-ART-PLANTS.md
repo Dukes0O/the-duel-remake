@@ -60,3 +60,21 @@
 ## Removed
 
 - No accepted models, prior sheets, source photos or assertions were removed. Temporary render images and logs from this run are removed after recording this comparison sheet.
+## Follow-up: formwork, round 15
+
+- Separated the concrete states. Each slab fills the complete inside opening with repeated UVs from only its wet or set region of the overhead source photo. Wet keeps roughness 0.28; set keeps 0.92.
+- Grounded and raised the photo-traced wall profile to 1.7 m. Extended both wall pairs to the footprint corners; added four timber corner posts and diagonal braces on every wall. Moved all four rebar rods to the inside corners. They start at the 0.93 m slab top, rise 0.6 m, and have no geometry below ground.
+- Added round 15's review sheet and note. Added assertions for corner posts and braces, and an art-line rule for cropping a photo that shows multiple material states. The Blender recipe printed bounds and contact for every piece. Family GLB: 3,614,464 bytes; formwork-1: 324 triangles, formwork-2: 372 triangles; both remain under the existing caps.
+- Blender 4.5.13 export and source-matched renders: passed. Isolated wet/set renders and a shallow side match were rendered from the exported GLB. (Full test results recorded below after the card checks.)
+- Claude should inspect the isolated states, side match, corner closures/braces, rod placement and height, and the mayor views of the larger forms. No browser, in-game or frame check was run; Claude owns those checks. No race code changed; fingerprints are not applicable. No assertions were loosened.
+
+## Removed
+
+- Deleted the superseded round-14 sheet and review note, as requested. Temporary round-14-internal and round-15 renders, the temporary Blender project, sheet-builder scripts, and logs are removed after card checks.
+## Round 15 check results
+
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: 8/9 subtests passed. Audio analysis failed with `spawnSync ffmpeg EPERM`; the one rerun failed at the same ffmpeg launch. The JPG publication and 500 KB review-sheet check passed.
+- Browser/in-game look checks and frame timing: not run; Claude owns those checks, as directed. Lane tier and build: not run for this art card.
+- Changed assertions: added required corner-post and diagonal-brace node names. No existing assertion changed or loosened. Race fingerprints are not applicable.

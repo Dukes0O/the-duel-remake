@@ -90,6 +90,10 @@ stop adjusting and change the method.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
   people). Generate a real photo set for a new colour.
+- **A photo shows two material states side by side.** Do not map that full
+  picture onto either state: both surfaces will show both materials. Crop the
+  requested state and repeat only that crop across its surface (formwork,
+  TOWN-ART-PLANTS, 7 November).
 
 ### Vehicles
 

@@ -886,6 +886,9 @@ fw_candidates=trace(fw_mask,(40,600,1000,990),tolerance=10.0,min_area=500)
 fw_loops=sorted(fw_candidates,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1]
   for a,b in zip(loop,loop[1:]+loop[:1]))),reverse=True)[:1]
 if not fw_loops: raise RuntimeError('formwork side photo trace is empty')
+fw_profile_top=min(py for loop in fw_loops for _,py in loop)
+fw_profile_ground=max(py for loop in fw_loops for _,py in loop)
+if fw_profile_ground<=fw_profile_top: raise RuntimeError('formwork side photo profile has no height')
 fw_side.bleed(fw_mask)
 fw_top_rgb=fw_top.rgb()
 form_roots=[]; form_pieces={}
@@ -899,44 +902,72 @@ def make_formwork(identifier,width,depth):
  for hand in (-1,1):
   mesh=PhotoMesh()
   def side_world(px,py,d,h=hand):
-   z=(px-520)*((depth-1.0)/960); y=max(.02,(990-py)*(board_h/390))
+   z=(px-520)*(depth/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
    return (h*(width/2-board_t/2)+d,y,z)
-  slab(mesh,'photo',fw_side,fw_loops,side_world,-.11,.11,wall_scale=board_h/390)
+  slab(mesh,'photo',fw_side,fw_loops,side_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
   add('timber-wall-'+str(hand),mesh,{'photo':fw_side.material()})
  # Close the end walls with the same measured profile, rotated across the footprint.
  for hand in (-1,1):
   mesh=PhotoMesh()
   def end_world(px,py,d,h=hand):
-   x=(px-520)*((width-1.0)/960); y=max(.02,(990-py)*(board_h/390))
+   x=(px-520)*(width/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
    return (x,y,h*(depth/2-board_t/2)+d)
-  slab(mesh,'photo',fw_side,fw_loops,end_world,-.11,.11,wall_scale=board_h/390)
+  slab(mesh,'photo',fw_side,fw_loops,end_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
   add('end-wall-'+str(hand),mesh,{'photo':fw_side.material()})
- # Distinct wet and set pads are traced from the overhead reference.
- wet_mask=np.zeros(fw_top_rgb.shape[:2],dtype=bool)
- set_mask=np.zeros(fw_top_rgb.shape[:2],dtype=bool)
- # Photo-grid plan reads the split at the centre; the ROI removes the board rim.
- wet_mask[90:930,90:510]=True
- set_mask[90:930,514:934]=True
- for label,mask in (('wet',wet_mask),('set',set_mask)):
-  mask[:75,:]=False;mask[950:,:]=False;mask[:,:75]=False;mask[:,950:]=False
-  loops=trace(mask,(75,75,950,950),tolerance=2.0,min_area=400)
-  if not loops: raise RuntimeError(f'formwork {label} top trace is empty')
-  def top_world(px,py,d):
-   # The source is 1024px square. Fit the inside opening, not the cropped
-   # photo's background margin, so the concrete stays behind the timber rim.
-   return ((px-512)*(inner_x/840),.82+d,-(py-512)*(inner_z/840))
-  mesh=PhotoMesh();slab(mesh,'photo',fw_top,loops,top_world,-.11,.11)
+ # Each concrete state uses only its own clean interior crop. Map that crop
+ # across small ground tiles, so every tile repeats real wet or set concrete
+ # rather than stretching the whole two-state overhead photo over one slab.
+ for label,crop,roughness in (
+   ('wet',(185,250,455,760),.28),('set',(565,180,825,850),.92)):
+  px0,py0,px1,py1=crop
+  mesh=PhotoMesh();tile=2.25;surface_y=.93
+  x=-inner_x/2
+  while x<inner_x/2-1e-5:
+   x1=min(x+tile,inner_x/2)
+   z=-inner_z/2
+   while z<inner_z/2-1e-5:
+    z1=min(z+tile,inner_z/2)
+    # A partial edge tile uses the same photo patch at its full scale.
+    u0,v0=fw_top.uv(px0,py0);u1,v1=fw_top.uv(px1,py1)
+    mesh.face(((x,surface_y,z),(x,surface_y,z1),(x1,surface_y,z1),(x1,surface_y,z)),
+      ((u0,v0),(u0,v1),(u1,v1),(u1,v0)),'photo',(0,1,0))
+    z=z1
+   x=x1
+  # The concrete is a shallow solid with a tiled photographed top and plain
+  # sides hidden behind the form walls.
+  add(label,mesh,{'photo':fw_top.material()})
   mat=fw_top.material(roughness=.9).copy();mat.name=f'Formwork {label} concrete'
-  mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=(.28 if label=='wet' else .92)
-  add(label,mesh,{'photo':mat})
- # Rebar stakes are thin lathed steel with their feet at the ground.
+  mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=roughness
+  mesh_obj=next(obj for obj in pieces if obj.name==f'{identifier}:{label}')
+  mesh_obj.data.materials.clear();mesh_obj.data.materials.append(mat)
+ # Four short bars sit just inside the form corners, from the slab surface up.
  rebar=PhotoMesh()
- for x in (-width*.39,width*.39):
-  for z in (-depth*.39,depth*.39):
-   lathe(rebar,'photo',(x,.035,z),(0,1,0),(1,0,0),(0,0,1),
-    [(0,.035),(.03,.03),(.10,.025),(2.85,.025),(3.15,.03)],
+ for x in (-width*.43,width*.43):
+  for z in (-depth*.43,depth*.43):
+   lathe(rebar,'photo',(x,surface_y,z),(0,1,0),(1,0,0),(0,0,1),
+    [(0,.025),(.58,.025),(.60,.03)],
     lambda i,d,r,angle:(.15+angle/(2*math.pi)*.72,.42),sides=6)
  add('steel-stakes',rebar,{'photo':fw_side.material()})
+ # Corner posts close the joints. Timber braces run diagonally across all four
+ # walls, matching the deep boxed form in the side photograph.
+ for sx in (-1,1):
+  for sz in (-1,1):
+   post=town.cube(f'{identifier}:corner-post-{sx}-{sz}',
+     (sx*(width/2-board_t/2),board_h*.5,sz*(depth/2-board_t/2)),
+     (.34,board_h,.34),mats['weathered-plank'],.018)
+   post.parent=parent;pieces.append(post)
+   for along_x in (True,False):
+    if along_x:
+     a=(sx*(width/2-.27),.10,sz*(depth/2-.52))
+     b=(sx*(width/2-.27),board_h*.78,sz*(depth/2-.12))
+    else:
+     a=(sx*(width/2-.52),.10,sz*(depth/2-.27))
+     b=(sx*(width/2-.12),board_h*.78,sz*(depth/2-.27))
+    brace=town.beam(f'{identifier}:corner-brace-{sx}-{sz}-'+('x' if along_x else 'z'),
+      a,b,.16,mats['weathered-plank'])
+    brace.parent=parent;pieces.append(brace)
  form_roots.append(parent);form_pieces[identifier]=pieces
 for identifier,width,depth in (('formwork-1',6.8,6.8),('formwork-2',6.8,14.8),
                                ('formwork-3',14.8,6.8),('formwork-4',14.8,14.8)):

@@ -1130,7 +1130,8 @@ try {
     for (const [id, limit] of [['formwork-1', 1_800], ['formwork-2', 5_000],
       ['formwork-3', 5_000], ['formwork-4', 5_000]]) {
       for (const part of ['wet', 'set', 'timber-wall--1', 'timber-wall-1',
-        'end-wall--1', 'end-wall-1', 'steel-stakes']) {
+        'end-wall--1', 'end-wall-1', 'steel-stakes', 'corner-post--1--1',
+        'corner-brace--1--1-x', 'corner-brace-1-1-z']) {
         assert.ok(names.includes(`${id}:${part}`), `${id}:${part} node is missing`);
       }
       assert.ok(countTriangles(id) > 100 && countTriangles(id) <= limit,
