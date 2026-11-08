@@ -204,7 +204,7 @@ for n in ids:
     'front':[(110,785,350,940),(670,785,920,940)],
     'rear':[(130,785,360,940),(670,785,900,940)],
    },
-   'grey':26,'tolerance':42,'bleed_tolerance':48,'voxel':.065,'target':6500,
+   'grey':26,'tolerance':42,'bleed_tolerance':48,'voxel':.065,'target':5200,
    'mask_dir':str(root/'.qa-dist/town-services-2/school-masks')}
   body=carve_object('school:body',tex,table);parent_keep(body,b)
   def school_beam(name,p0,p1,w,mat):
@@ -226,17 +226,15 @@ for n in ids:
     wheel=wheel_mesh.finish(f"school:wheel-{index+1}-{'road' if hand<0 else 'far'}",
                             {'side':side_photo.material(),'front':front_photo.material()})
     wheel.parent=b;wheel.location=(hand*(width/2-.15),-axle['z'],axle['r'])
-    # Keep the photo-built tyre geometry, but use real rubber on its sidewall
-    # where the source photo UV would otherwise flatten it into a brown disk.
-    wheel.data.materials.clear();wheel.data.materials.append(rubber);wheel.data.materials.append(rubber)
-    face_x=hand*(width/2-.15+.155)
+    # Keep the measured photo materials: the sidewall and tread carry the
+    # visible rust, rubber and tread detail from the bus references.
     wheel_x=hand*(width/2-.15)
-    hub=sphere(f"school:wheel-hub-{index+1}-{'road' if hand<0 else 'far'}",
-               (wheel_x,axle['r'],axle['z']),.14,steel,b)
-    for bolt_index in range(6):
-     angle=bolt_index*math.tau/6
-     sphere(f"school:wheel-bolt-{index+1}-{hand}-{bolt_index+1}",
-            (wheel_x,axle['r']+math.cos(angle)*.205,axle['z']+math.sin(angle)*.205),.025,dark,b)
+    shoulder=tube(f"school:wheel-rubber-shoulder-{index+1}-{'road' if hand<0 else 'far'}",
+                  (wheel_x+hand*.135,axle['r'],axle['z']),axle['r']*.78,.075,rubber,b,16,6)
+    shoulder.rotation_euler[1]=math.pi/2
+    hub_x=wheel_x+hand*.18
+    sphere(f"school:wheel-hub-{index+1}-{'road' if hand<0 else 'far'}",
+           (hub_x,axle['r'],axle['z']),.14,steel,b)
 
   # Lean-to ledger, four timber posts, one cross beam, and a continuous
   # corrugated sheet falling away from the bus onto the post line.
@@ -474,7 +472,7 @@ if a.review:
   ('model-side',(-30,1.45,.70),(0,1.45,.70),9.0,(1200,520),True),
   ('model-front',(1.36,1.50,-30),(1.36,1.50,.70),3.6,(1024,936),True),
   ('model-rear',(1.36,1.50,30),(1.36,1.50,.70),3.6,(1024,936),True),
-  ('model-above',(1.36,36,.70),(1.36,0,.70),6.2,(682,1024),True),
+  ('model-above',(1.36,36,.70),(1.36,0,.70),10.3,(682,1024),True),
   ('three-quarter-road',(18,9,-19),(0,1.5,0),13.0,(1024,768)),
   ('three-quarter-yard',(-18,9,19),(0,1.5,0),13.0,(1024,768)),
   ('mayor-view',(55,68,-55),(0,0,0),13.0,(1024,768)),

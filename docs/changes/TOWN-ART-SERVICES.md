@@ -114,3 +114,37 @@ and contact audit passed. Every piece is inside the 2-by-2 plot with at least
 - Replaced the undersized barrier and booth with the full lane gate and
   windowed booth.
 - No other assets or checks were removed.
+
+## School, round 13
+
+Compared the committed bus photos and draft sheet, then corrected the exported
+school model: retained the photo-mapped tyre materials, added low-poly raised
+rubber shoulders and visible hubs, and opened the straight-down camera so the
+whole bus fits. The final school uses 8,716 of its 9,000 triangle budget after
+reducing the carve target to 5,200 and omitting high-triangle lug bolts. The
+lean-to, chalkboard and passed toll bank remain in `services-2.glb`; the school
+remains within its 3 by 2 cell footprint. The family GLB is 1,747,864 bytes.
+
+Rendered the exported GLB in a clean scene and rebuilt
+`docs/board/looks/town-art-services/round-13.jpg` (1,600 by 1,600 pixels,
+245,894 bytes). It shows side, front, rear and above photo/model pairs at
+matched orthographic views, both three-quarter views and the mayor view, with
+other buildings hidden. Claude should review the front and rear silhouettes,
+wheel detail, lean-to attachment and chalkboard readability in the sheet.
+
+### Checks and review
+
+- Blender 4.5.13 export and all 34 school piece bounds/contact checks: passed.
+- `node tools/test-blender-output.mjs`: final run, 386 checks passed, 0 failed.
+  Earlier runs exceeded the unchanged school triangle budget (14,816 and
+  10,016); the final model is 8,716 triangles.
+- Browser and in-game checks were not run; Claude handles those checks.
+- Lane tier and build were not run, as required for art cards.
+- Changed assertions: none. Race fingerprints: not applicable; race code is
+  unchanged.
+
+### Removed
+
+- Removed the flat rubber material override that hid tyre-photo detail and
+  omitted high-triangle lug bolts from the final recipe.
+- No buildings, source photos or checks were removed.
