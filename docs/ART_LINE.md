@@ -88,6 +88,12 @@ stop adjusting and change the method.
   a dead-on reference: request each side, end and plan view in its own call,
   inspect it, and regenerate any picture that contains a second view or
   perspective.
+- **Separate orthographic pictures can disagree in shape.** Even when each
+  generated picture is a clean single view, roof heights or profiles can
+  conflict after scaling by a shared door. Compare the same landmark in every
+  view before carving; settle the unavoidable silhouette mismatch and record
+  which view controls it. The toll-bank front peak measured about 2.8 m while
+  its side profile limited the crown to about 2.4 m.
 - **A view label can be ignored.** A separate prompt for a side view may still
   return the front elevation. Check the projected silhouette and depth against
   the named camera before tracing; regenerate until the camera is correct.

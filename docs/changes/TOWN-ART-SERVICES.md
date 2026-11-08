@@ -1,50 +1,78 @@
-# TOWN-ART-SERVICES — trading post round 9
+# TOWN-ART-SERVICES change note
 
-## Changed
+## Split the service family
 
-- Kept the accepted trading-post store body and photo references unchanged.
-- Rebuilt the porch as a 10 m wide, 2.5 m deep deck against the store's front wall, with a sloped roof from the eave to outer posts.
-- Moved hand-painted TRADING POST lettering onto a road-facing sign board above the porch roof edge.
-- Added separate crates, drums and tyres on the deck and beside it on the ground.
-- Printed bounds and checked the plot and ground/contact for each piece.
-- Exported family GLB: 6,971,992 bytes. Trading post: 8,990 triangles of the 9,000 limit.
+Moved toll-bank, school, radio-mast, helipad and notice-board into
+`services-2.glb`, rooted at `town-services-2`. The original family now keeps
+the seven passed buildings. No assertions for those seven changed; only the
+five moved ids and their budgets moved to the new family check. Both family
+files retain the 8 MB cap.
 
-## Checks
+The original export was 7,726,444 bytes; the rebuilt seven-building export is
+7,323,756 bytes. Node names and triangle counts are unchanged:
 
-- Blender recipe export and exported-model review render: passed. All trading-post bounds fit the 3×3 footprint and every piece passed the ground/contact audit.
-- `node --test --test-name-pattern="TOWN-ART-SERVICES GLB exports the complete named family" tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory; no oversized look sheets.
-- `node --test tools/test-review-evidence.mjs`: 7 of 9 subtests passed. Rerun on the same source produced the same two unrelated failures: missing `docs/board/looks/town-art-outposts/round-15-review.md` for an existing round-15 sheet, and `spawnSync ffmpeg EPERM` in audio analysis. The review JPG publication check passed.
-- Browser and in-game look review: not run here; Claude should review the road and mayor views listed in the round-9 look note.
-- Changed assertions: none. Race fingerprints: not applicable; this art-only change does not touch race logic.
+| Building | Before | After |
+| --- | ---: | ---: |
+| town-hall | 6,008 | 6,008 |
+| scrapyard | 8,770 | 8,770 |
+| forge | 3,844 | 3,844 |
+| workshop | 8,895 | 8,895 |
+| motor-pool | 13,260 | 13,260 |
+| paint-shop | 4,784 | 4,784 |
+| trading-post | 8,990 | 8,990 |
+
+The final `services-2.glb` is 1,029,872 bytes. It has all five ids as direct
+children of `town-services-2`, including `radio-mast:lamp`. Their final counts
+are toll-bank 3,952, school 3,120, radio-mast 1,092, helipad 1,456 and
+notice-board 176.
+
+## Toll bank, round 11
+
+Built the toll bank from the four committed orthographic photos. `carve_object`
+shapes the strongroom; its door, wheel, hinges, roof plates, booth, porch,
+barrier arm, posts and striped bands are separate parts. The door sets the
+scale at about 2 m. The photo-carved shell is about 7.6 by 7.8 m and ends at
+the roof eave; the four photo-mapped roof plates meet the shell there. The
+strongroom crown is 2.4 m high. The roof and shell stay within the 2 by 2 cell
+plot, with at least 0.5 m clearance.
+
+The piece audit printed each piece's bounds and found every piece within the
+plot, touching the ground or another piece. The full toll bank uses 3,952
+triangles against its 5,000 limit. The model export is 1.03 MB. The final
+sheet is 2,048 by 4,528 pixels and 454,369 bytes; the source photos and model
+renders remain at their full 1,024-pixel width.
+
+The front photo's roof peak scales to about 2.8 m from its door, while the
+side profile limits the crown to about 2.4 m. The side profile controls the
+roof height so the shell and hipped roof stay continuous. The front pair in
+the sheet records the remaining difference for Claude's review.
+
+### Checks and review
+
+- Blender 4.5.13 exported `services-2.glb`; its piece bounds and contacts
+  passed.
+- `node tools/test-blender-output.mjs`: 386 checks passed, 0 failed. The
+  first run found 5,860 toll-bank triangles; reducing the carved shell target
+  and removing duplicate photo-baked rivets brought the final count under
+  budget. No assertion changed.
+- `node tools/test-repo-hygiene.mjs`: passed. It reported existing advisory
+  size targets; no placement error.
+- `node tools/test-review-evidence.mjs`: 635 checks passed, 0 failed across
+  9 subtests. Its in-sandbox audio subtest could not spawn `ffmpeg` (EPERM);
+  rerunning with the installed `FFMPEG_PATH` outside the sandbox passed.
+- The sheet shows the strongroom alone in four matched orthographic views,
+  then the full toll bank in both three-quarter views and the mayor view.
+- Browser checks were not run. Claude should review the front roof height
+  against the side profile, the door and barrier, and the booth and canopy in
+  both three-quarter views and from the mayor's view.
+- Changed assertions: none. Race fingerprints: not applicable; race code is
+  unchanged.
 
 ## Removed
 
-- Deleted the superseded round-8 comparison sheet and review note.
-- Replaced the ground-level lettering with raised lettering on the road-facing sign.
-
-## Paint shop — round 9 (7 November 2026)
-
-### Changed
-
-- Added four separate OpenAI ImageGen references of the same paint-shop body: side, front, rear and straight-down roof plan. Saved as 1024 px JPGs in `public/assets/models/wasteland/town/textures/` with `paint-shop-CREDITS.md`.
-- Carved `paint-shop:body` from those views, leaving a measured spray-booth opening with a dark recessed interior. Added door guides, raised slats and four separate colored paint drums outside.
-- Printed every paint-shop mesh bound and checked each piece against the 2×2 plot margin and ground/contact rule. All passed.
-- Exported `services.glb`: 7,728,892 bytes. Paint shop: 4,786 triangles of the 5,000 limit.
-- The photo/model sheet is `docs/board/looks/town-art-services/paint-shop/round-9.jpg` (289,495 bytes). The existing root `round-9.jpg` is the accepted trading-post sheet, so it remains intact.
-
-### Checks
-
-- Blender 4.5.13 family export and imported-GLB review renders: passed. The final paint-shop bounds/contact audit passed.
-- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failed.
-- Lane tier and build: not run, as directed for this art card. Browser checks: Claude's review.
-- Changed assertions: none. Race fingerprints: not applicable; race code is unchanged.
-
-### Claude review request
-
-Please compare all four orthographic photo/model pairs, especially the open booth against the closed-door reference and the small dark/colored patch on the left side of the roof plan. Check whether the roof and paint marks read as intentional repairs from both three-quarter views and the mayor view. Confirm the four drums read as separate paint drums and the full model stays legible at town zoom.
-
-### Removed
-
-- Removed the superseded procedural wall-drip, booth-interior and extraction-duct branch for paint shop; the carved body, dark opening and separate drums now supply those features.
-- No accepted building model or earlier review sheet was changed.
+- Removed the five moved building generators from `town-services.py` and
+  removed their nodes from `services.glb`.
+- Replaced the toll bank's simple block placeholder with the photo-carved
+  shell and its named pieces. Removed separately modeled wall rivets because
+  the carved photos already show them.
+- No other assets or checks were removed.
