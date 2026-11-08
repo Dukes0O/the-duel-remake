@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-15.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-15/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-16.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-16/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -44,6 +44,21 @@ def beam(name,p0,p1,w,mat=steel,parent=None):
  o=box(name,((p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2),(w,d.length,w),mat,.012)
  o.rotation_euler=d.to_track_quat('Z','Y').to_euler()
  return parent_keep(o,parent) if parent else o
+def cable(name,p0,p1,radius,mat,parent=None):
+ # Build the prism in world coordinates so a thin guy cable follows its full
+ # diagonal in the Y-up export, independent of the beam helper's axis remap.
+ start=town.game_vector(p0);end=town.game_vector(p1);direction=(end-start).normalized()
+ reference=Vector((0,1,0)) if abs(direction.dot(Vector((0,1,0))))<.95 else Vector((1,0,0))
+ u=direction.cross(reference).normalized()*radius;v=direction.cross(u).normalized()*radius
+ verts=[tuple(point+offset) for point in (start,end) for offset in (u,v,-u,-v)]
+ faces=[(0,1,3,2),(4,6,7,5),(0,4,5,1),(1,5,7,3),(3,7,6,2),(2,6,4,0)]
+ mesh=bpy.data.meshes.new(name+' mesh');mesh.from_pydata(verts,[],faces);mesh.materials.append(mat);mesh.update()
+ uv=mesh.uv_layers.new(name='Cable UV')
+ for polygon in mesh.polygons:
+  for corner,loop_index in enumerate(polygon.loop_indices):
+   uv.data[loop_index].uv=((0,0),(1,0),(1,1),(0,1))[corner]
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+ return parent_keep(obj,parent) if parent else obj
 def cyl(name,c,r,depth,mat=steel,verts=20,parent=None):
  bpy.ops.mesh.primitive_cylinder_add(vertices=verts,radius=r,depth=depth,location=town.game_vector(c));o=bpy.context.object;o.name=name;o.data.materials.append(mat)
  return parent_keep(o,parent) if parent else o
@@ -286,7 +301,7 @@ for n in ids:
   hutloops=photo_trace(hutmask,(580,846,744,1000),tolerance=2,min_area=80)
   # The photo facade is traced as a shallow, separate slab at the hut front.
   if hutloops:
-   photo_slab(hutmesh,'side',hut_photo,hutloops,lambda px,py,d:(1.80+(px-662)*.0118, max(0,(1000-py)*.0145), -2.79+d),-.025,.025)
+   photo_slab(hutmesh,'side',hut_photo,hutloops,lambda px,py,d:(1.80+(px-662)*.0118, max(0,(1000-py)*.0145), -2.86+d),-.025,.025)
    facade=hutmesh.finish('radio-mast:hut-photo-face',{'side':hut_photo.material()});parent_keep(facade,b)
   # Concrete stays have visible pale weathered tops and all sit 1 m inside
   # the one-cell plot edge. Cardinal placement leaves the hut unobstructed.
@@ -294,8 +309,10 @@ for n in ids:
   anchors=[(-2.75,0),(2.75,0),(0,-2.75),(0,2.75)]
   for i,(ax,az) in enumerate(anchors):
    box(f'radio-mast:anchor-{i}',(ax,.24,az),(.42,.48,.42),concrete,0,b)
-   stay=beam(f'radio-mast:guy-wire-{i}',(ax,.48,az),(0,18.2,0),.035,wire,b)
-   for modifier in list(stay.modifiers):stay.modifiers.remove(modifier)
+   # The real stays split between two collars. Keep every cable in its own
+   # cardinal plane so none crosses the hut in the south-east quadrant.
+   attachment_y=(17.2,19.2,17.2,19.2)[i]
+   cable(f'radio-mast:guy-wire-{i}',(ax,.48,az),(0,attachment_y,0),.025,wire,b)
   lamp=bpy.data.materials.new('Town service red warning lamp');lamp.use_nodes=True;bs=lamp.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.35,.012,.008,1);bs.inputs['Emission Color'].default_value=(1,.012,.004,1);bs.inputs['Emission Strength'].default_value=3
   box('radio-mast:lamp-spindle',(0,29.98,0),(.14,.70,.14),rust,.01,b)
   bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=5,radius=.18,location=town.game_vector((0,30.18,0)))

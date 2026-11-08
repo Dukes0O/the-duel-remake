@@ -110,6 +110,37 @@ the mayor view with the other family buildings hidden.
   hut facade and concrete anchors.
 - No passed building, reference photo, or check was removed.
 
+## Radio mast, round 16
+
+Adjusted only the radio mast's four guy wires and hut-facing detail. The cables
+are dark steel, 5 cm across, built between the four concrete anchors and two
+attachment heights on the mast. Their direct mesh construction preserves the
+full diagonal span in the Y-up GLB; the cable mesh has export UVs. The hut's
+photographed patched-tin facade now stands clear of its body face. Its placement
+keeps all four cardinal cable paths clear. The red lamp, traced mast, school,
+and toll bank recipe branches remain as before.
+
+The exported mast has 1,524 triangles. The 2,048 by 2,792 `round-16.jpg` sheet
+is 219,141 bytes and shows the four photo/model views plus the full mast from
+the road, yard, and mayor angles, with other buildings hidden.
+
+### Checks and review
+
+- Blender 4.5.13 export and radio-mast bounds/contact/triangle audit: passed.
+- `node tools/test-blender-output.mjs`: first run found missing cable UVs;
+  after adding cable UVs, **386 checks, 0 failed**.
+- Browser checks were not run. Claude should check that all four cables read
+  from the anchors to the two mast heights and that the hut's photographed
+  window, door, and patched tin read from the mayor and three-quarter views.
+- Changed assertions: none. Race fingerprints: not applicable; race code is
+  unchanged.
+
+## Removed
+
+- Replaced the four radio-mast beam stays with full-span cable meshes and
+  moved the photographed hut face forward so it is visible on the body.
+- No photos, passed buildings, or tests were removed.
+
 ## Toll bank, round 12
 
 The seven passed buildings in `services.glb` remain byte-for-byte unchanged.
