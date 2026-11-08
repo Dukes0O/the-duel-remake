@@ -1104,7 +1104,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'crusher', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
+      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1148,6 +1148,14 @@ try {
     }
     assert.ok(countTriangles('pump-station') > 100 && countTriangles('pump-station') <= 5_000,
       `${countTriangles('pump-station')} triangles exceeds the 2 x 2 pump-station budget`);
+    for (const name of ['conveyor', 'conveyor:frame-road', 'conveyor:frame-far', 'conveyor:rollers', 'conveyor:belt',
+      'conveyor-end', 'conveyor-end:frame-road', 'conveyor-end:frame-far', 'conveyor-end:rollers', 'conveyor-end:belt', 'conveyor-end:drum']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    for (const id of ['conveyor', 'conveyor-end']) {
+      assert.ok(countTriangles(id) > 100 && countTriangles(id) <= 1_800,
+        `${countTriangles(id)} triangles exceeds the one-cell ${id} budget`);
+    }
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
