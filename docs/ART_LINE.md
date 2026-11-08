@@ -151,6 +151,8 @@ stop adjusting and change the method.
 
 ### People
 
+- **A figure shows its face or arm twice from three-quarter views.** Flat views carve each limb square, and its corner faces wear the front and side photos at a slant. Set `round` to 2, and `ends_split` at the middle with `front_favour` and `rear_favour` at 3; carve a square plinth separately (the statue, 7 November).
+
 - **Legs shifted out from the hips, wide stance** (Kyle, 6 November). A leg pivot's
   offset was counted twice. Check each foot's world position against the photo.
 - **Four legs** (Kyle, 6 November). A coat's sides kept below the hip read as extra
