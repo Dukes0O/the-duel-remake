@@ -12,13 +12,14 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-12.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-12/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-13.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-13/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 from photo_model import Mesh as PhotoMesh, Photo, fill as photo_fill, slab as photo_slab, tidy as photo_tidy, trace as photo_trace
+from hull_model import tyre
 from photo_carve import carve_object
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 tex=root/'public/assets/models/wasteland/town/textures'
@@ -175,6 +176,90 @@ for n in ids:
   box('toll-bank:barrier-catcher',(arm_start,.43,pivot_z),(.22,.86,.22),steel,.03,b)
 
   continue
+ if n=='school':
+  # The 2.05 m passenger door sets the side-photo scale. Its 234 px height
+  # gives 8.51 m long by 2.90 m high; the end photos use their measured roof
+  # rows at that same physical height. Each end silhouette tapers, so round 3.
+  length=8.51;width=2.50;height=2.90
+  side_scale=length/(1000-29)
+  axle_pixels=((166,342,55),(785,342,55))
+  axles=[{'px':px,'py':py,'r_px':rpx,'r':rpx*side_scale,
+          'z':-length/2+(px-29)*side_scale} for px,py,rpx in axle_pixels]
+  table={
+   'photos':{'side':'school-bus-side.jpg','front':'school-bus-front.jpg',
+             'rear':'school-bus-rear.jpg','top':'school-bus-top.jpg'},
+   'length':length,'width':width,'height':height,
+   'side':{'start':29,'end':1000,'ground':391},
+   # The front and rear roof pixels are explicit; both are scaled from the
+   # same 2.90 m roof height set by the measured side door.
+   'front':{'centre':512,'ground':920,'top':60,'top_height':height},
+   'rear':{'centre':512,'ground':930,'top':55,'top_height':height},
+   'top':{'front':77,'rear':1450,'centre':512,'x_scale':width/478},
+   'round':3,
+   'wheels':[(axle['z'],axle['r'],width/2-.30) for axle in axles],
+   'cut':{
+    # Remove photographed mirror stalks and tyres; mirrors and wheels are
+    # separate geometry rather than paint on the carved body.
+    'side':[(145,104,202,191),(96,280,226,391),(712,280,852,391)],
+    'front':[(110,785,350,940),(670,785,920,940)],
+    'rear':[(130,785,360,940),(670,785,900,940)],
+   },
+   'grey':26,'tolerance':42,'bleed_tolerance':48,'voxel':.065,'target':6500,
+   'mask_dir':str(root/'.qa-dist/town-services-2/school-masks')}
+  body=carve_object('school:body',tex,table);parent_keep(body,b)
+  def school_beam(name,p0,p1,w,mat):
+   start=town.game_vector(p0);end=town.game_vector(p1);direction=end-start
+   o=box(name,((p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2),(w,direction.length,w),mat,.012,b)
+   up='Y' if abs(direction.normalized().dot(Vector((0,1,0))))<.95 else 'X'
+   o.rotation_euler=direction.to_track_quat('Z',up).to_euler()
+   return o
+  side_photo=table['_photos']['side'];front_photo=table['_photos']['front']
+  rubber=bpy.data.materials.new('school bus weathered black rubber');rubber.diffuse_color=(.035,.031,.026,1);rubber.use_nodes=True
+  rubber.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.035,.031,.026,1)
+  rubber.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.92
+  for index,axle in enumerate(axles):
+   for hand in (-1,1):
+    wheel_mesh=PhotoMesh()
+    tread_centre=245 if hand<0 else 778
+    tyre(wheel_mesh,'side',side_photo,axle['px'],axle['py'],axle['r_px'],axle['r'],.15,
+         'front',front_photo,tread_centre,36,834,879)
+    wheel=wheel_mesh.finish(f"school:wheel-{index+1}-{'road' if hand<0 else 'far'}",
+                            {'side':side_photo.material(),'front':front_photo.material()})
+    wheel.parent=b;wheel.location=(hand*(width/2-.15),-axle['z'],axle['r'])
+    # Keep the photo-built tyre geometry, but use real rubber on its sidewall
+    # where the source photo UV would otherwise flatten it into a brown disk.
+    wheel.data.materials.clear();wheel.data.materials.append(rubber);wheel.data.materials.append(rubber)
+    face_x=hand*(width/2-.15+.155)
+    wheel_x=hand*(width/2-.15)
+    hub=sphere(f"school:wheel-hub-{index+1}-{'road' if hand<0 else 'far'}",
+               (wheel_x,axle['r'],axle['z']),.14,steel,b)
+    for bolt_index in range(6):
+     angle=bolt_index*math.tau/6
+     sphere(f"school:wheel-bolt-{index+1}-{hand}-{bolt_index+1}",
+            (wheel_x,axle['r']+math.cos(angle)*.205,axle['z']+math.sin(angle)*.205),.025,dark,b)
+
+  # Lean-to ledger, four timber posts, one cross beam, and a continuous
+  # corrugated sheet falling away from the bus onto the post line.
+  outer_x=-4.12;inner_x=-1.10;roof_y=2.78;outer_y=2.15
+  post_z=(-3.35,-1.12,1.12,3.35)
+  for index,z in enumerate(post_z):
+   school_beam(f'school:lean-to-post-{index+1}',(outer_x,.025,z),(outer_x,outer_y,z),.16,wood)
+  school_beam('school:lean-to-outer-beam',(outer_x,outer_y,post_z[0]),(outer_x,outer_y,post_z[-1]),.18,wood)
+  school_beam('school:lean-to-wall-ledger',(inner_x,roof_y,post_z[0]),(inner_x,roof_y,post_z[-1]),.16,wood)
+  sheet=box('school:lean-to-tin-roof',((inner_x+outer_x)/2,(roof_y+outer_y)/2,0),
+            (inner_x-outer_x+.22,.11,7.35),tin,.025,b)
+  sheet.rotation_euler[1]=-math.atan2(roof_y-outer_y,inner_x-outer_x)
+  for index,z in enumerate((-3.20,-2.12,-1.04,.04,1.12,2.20,3.28)):
+   school_beam(f'school:lean-to-roof-rib-{index+1}',(outer_x-.06,outer_y+.04,z),(inner_x+.06,roof_y+.04,z),.055,steel)
+  # A front-facing chalkboard stands on two timber legs at the bus's nose.
+  board_z=-5.55
+  for x,label in ((-1.38,'left'),(1.38,'right')):
+   school_beam(f'school:chalkboard-leg-{label}',(x,.025,board_z),(x,2.05,board_z),.12,wood)
+  box('school:chalkboard-frame',(0,1.48,board_z),(3.05,1.38,.16),wood,.035,b)
+  box('school:chalkboard-face',(0,1.49,board_z-.105),(2.77,1.10,.035),dark,.01,b)
+  for index,(x0,x1,y) in enumerate(((-.88,-.20,1.70),(-.75,.62,1.47),(-.72,.24,1.25))):
+   school_beam(f'school:chalk-mark-{index+1}',(x0,y,board_z-.132),(x1,y,board_z-.132),.028,paint)
+  continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -321,6 +406,25 @@ def audit_toll_bank_pieces():
 
 audit_toll_bank_pieces()
 
+def audit_school_pieces():
+ target=building_roots['school'];pieces=[obj for obj in bpy.data.objects if obj.parent==target and obj.type=='MESH']
+ bpy.context.view_layer.update();bounds={}
+ for obj in pieces:
+  points=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  values=[(p.x,p.z,-p.y) for p in points]
+  lo=tuple(min(p[i] for p in values) for i in range(3));hi=tuple(max(p[i] for p in values) for i in range(3))
+  bounds[obj]=(lo,hi)
+ for obj,(lo,hi) in bounds.items():
+  assert lo[0]>=-11.4 and hi[0]<=11.4 and lo[2]>=-7.4 and hi[2]<=7.4, f'{obj.name} exceeds the 3x2 school footprint: {lo}..{hi}'
+  grounded=abs(lo[1])<=.045
+  touching=any(obj!=other and all(max(0,other_box[0][axis]-hi[axis],lo[axis]-other_box[1][axis])<=.07 for axis in range(3))
+               for other,other_box in bounds.items())
+  contact='ground' if grounded else 'another piece' if touching else 'FAIL'
+  print(f'SCHOOL PIECE {obj.name}: x={lo[0]:.3f}..{hi[0]:.3f} y={lo[1]:.3f}..{hi[1]:.3f} z={lo[2]:.3f}..{hi[2]:.3f} contact={contact}')
+  assert grounded or touching, f'{obj.name} floats without touching ground or another piece'
+
+audit_school_pieces()
+
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
@@ -336,14 +440,15 @@ if a.review:
  ground_mat=bpy.data.materials.new('plain grey review ground');ground_mat.diffuse_color=(.20,.20,.20,1);ground_mat.use_nodes=True
  ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.20,.20,.20,1)
  ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
- ground=town.cube('review-only neutral grey ground',(0,-.10,0),(500,.2,500),ground_mat,0)
+ bpy.ops.mesh.primitive_plane_add(size=20000,location=town.game_vector((0,-.10,0)))
+ ground=bpy.context.object;ground.name='review-only neutral grey ground';ground.data.materials.append(ground_mat)
  light_data=bpy.data.lights.new('large soft review light','AREA');light_data.energy=14000;light_data.shape='DISK';light_data.size=35
  light=bpy.data.objects.new('large soft review light',light_data);scene.collection.objects.link(light)
  light.location=town.game_vector((14,28,-24));light.rotation_euler=(town.game_vector((0,2,0))-light.location).to_track_quat('-Z','Y').to_euler()
  fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=5000;fill_data.shape='DISK';fill_data.size=30
  fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
  fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
- target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='toll-bank')
+ target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='school')
  def within(obj,target):
   parent=obj
   while parent:
@@ -358,21 +463,21 @@ if a.review:
   camera.location=town.game_vector(eye);camera.rotation_euler=(town.game_vector(look)-camera.location).to_track_quat('-Z','Y').to_euler()
   camera_data.type='ORTHO';camera_data.ortho_scale=scale
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
-  body_prefixes=('toll-bank:body','toll-bank:roof-panel-','toll-bank:roof-crown')
-  if name=='model-front':body_prefixes+=('toll-bank:door',)
+  body_prefixes=('school:body','school:wheel-')
   for obj in bpy.data.objects:
    if obj==ground or obj==light or obj==fill:continue
    is_body_piece=obj.name.startswith(body_prefixes)
    obj.hide_render=(not within(obj,target_root) or (body_only and not is_body_piece))
   bpy.ops.render.render(write_still=True)
  shots=[
-  ('model-side',(30,1.15,0),(0,1.15,0),9.8,(1024,512),True),
-  ('model-front',(0,1.15,-30),(0,1.15,0),9.8,(1024,512),True),
-  ('model-rear',(0,1.15,30),(0,1.15,0),9.8,(1024,512),True),
-  ('model-above',(0,36,0),(0,0,0),9.1,(1024,1024),True),
-  ('three-quarter-road',(20,12,-22),(0,2.5,0),14.0,(1024,768)),
-  ('three-quarter-yard',(-20,12,22),(0,2.5,0),14.0,(1024,768)),
-  ('mayor-view',(55,68,-55),(0,0,0),14.0,(1024,768)),
+  # Photo comparisons use the same orthographic cameras as their source views.
+  ('model-side',(-30,1.45,.70),(0,1.45,.70),9.0,(1200,520),True),
+  ('model-front',(1.36,1.50,-30),(1.36,1.50,.70),3.6,(1024,936),True),
+  ('model-rear',(1.36,1.50,30),(1.36,1.50,.70),3.6,(1024,936),True),
+  ('model-above',(1.36,36,.70),(1.36,0,.70),6.2,(682,1024),True),
+  ('three-quarter-road',(18,9,-19),(0,1.5,0),13.0,(1024,768)),
+  ('three-quarter-yard',(-18,9,19),(0,1.5,0),13.0,(1024,768)),
+  ('mayor-view',(55,68,-55),(0,0,0),13.0,(1024,768)),
  ]
  for shot in shots:render(*shot)
  print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))
