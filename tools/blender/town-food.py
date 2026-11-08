@@ -439,39 +439,102 @@ for name,b in greenhouse_bounds.items():
 
 add_building('goat-pen',(8,0,-14))
 ground_clutter('goat-pen',0,0)
-for x in (-1.9,0,1.9):
-    for z in (-1.9,1.9): beam(f'goat-pen:post-{x}-{z}',(x,.1,z),(x,1.35,z),.13,mat['weathered-plank'])
-for z in (-1.9,1.9):
-    for y in (.40,.85,1.25): beam(f'goat-pen:rail-{z}-{y}',(-1.9,y,z),(1.9,y,z),.095,mat['weathered-plank'])
-for x in (-1.9,1.9):
-    for y in (.4,.85): beam(f'goat-pen:side-rail-{x}-{y}',(x,y,-1.9),(x,y,1.9),.09,mat['weathered-plank'])
-# Pitched low shelter with salvaged roof plates, hay bedding and a trough.
-beam('goat-pen:shelter-ridge',(-1.0,2.05,.72),(1.0,2.05,.72),.10,mat['rusted-steel'])
+def pallet_fence_side(label, a, b, count, gate=False):
+    # Individual salvaged boards leave clear gaps instead of a solid rail wall.
+    direction=Vector((b[0]-a[0],0,b[2]-a[2])); length=direction.length
+    unit=direction.normalized()
+    for level, y in enumerate((.42,1.05)):
+        for i in range(count):
+            t=(i+.5)/count
+            if gate and .42<t<.63: continue
+            centre=(a[0]+direction.x*t,y,a[2]+direction.z*t)
+            width=length/count*.80
+            box(f'goat-pen:{label}-pallet-{level}-{i}',centre,
+                (width,.205,.075) if abs(unit.x)>.5 else (.075,.205,width),
+                mat['weathered-plank'],0)
+    for i in range(count+1):
+        t=i/count
+        x=a[0]+direction.x*t;z=a[2]+direction.z*t
+        beam(f'goat-pen:{label}-stake-{i}',(x,.02,z),(x,1.40,z),.10,mat['weathered-plank'])
+pallet_fence_side('front',(-2.8,0,-2.8),(2.8,0,-2.8),9,True)
+pallet_fence_side('rear',(-2.8,0,2.8),(2.8,0,2.8),9)
+pallet_fence_side('left',(-2.8,0,-2.8),(-2.8,0,2.8),9)
+pallet_fence_side('right',(2.8,0,-2.8),(2.8,0,2.8),9)
+# A narrow, separately built pallet gate hangs in the front opening.
+for i,y in enumerate((.28,.75,1.22)):
+    box(f'goat-pen:gate-pallet-{i}',(0,y,-2.78),(1.18,.205,.075),mat['weathered-plank'],0)
+beam('goat-pen:gate-top-rail',(-.66,1.36,-2.78),(.66,1.36,-2.78),.07,mat['rusted-steel'])
+beam('goat-pen:gate-bottom-rail',(-.66,.12,-2.78),(.66,.12,-2.78),.07,mat['rusted-steel'])
+beam('goat-pen:gate-diagonal',(-.58,.17,-2.73),(.58,1.31,-2.73),.065,mat['weathered-plank'])
+# A three-sided shelter with an open front and two mismatched roof sheets.
+for x in (-1.15,1.15): beam(f'goat-pen:shelter-front-post-{x}',(x,.02,-.10),(x,1.75,-.10),.12,mat['weathered-plank'])
+for x in (-1.15,1.15): beam(f'goat-pen:shelter-rear-post-{x}',(x,.02,1.65),(x,1.75,1.65),.12,mat['weathered-plank'])
+for y in (.42,.82,1.22,1.62):
+    for x in (-1.15,1.15): box(f'goat-pen:shelter-back-board-{x}-{y}',(x,y,1.65),(.98,.34,.085),mat['weathered-plank'],.02)
+beam('goat-pen:shelter-ridge',(-1.3,1.95,.74),(1.3,1.95,.74),.09,mat['rusted-steel'])
 for side in (-1,1):
-    p=box(f'goat-pen:shelter-roof-{side}',(0,1.86,.72+side*.45),(2.35,.08,1.08),mat['galvanised-tin'],.02)
+    p=box(f'goat-pen:shelter-roof-{side}',(0,1.76,.74+side*.47),(2.75,.075,1.12),mat['galvanised-tin'],.018)
     p.rotation_euler[0]=side*.30
-box('goat-pen:shelter-back',(0,1.0,1.18),(2.1,1.8,.08),mat['weathered-plank'],.03)
-box('goat-pen:hay-bale',(0,.22,.85),(1.3,.35,.75),mat['patched-canvas'],.10)
-box('goat-pen:feed-trough',(0,.38,-1.10),(2.2,.52,.55),mat['rusted-steel'],.09)
-for x in (-1.5,1.5): beam(f'goat-pen:gate-hinge-{x}',(x,.18,-1.91),(x,1.2,-1.91),.11,mat['iron-dark'])
-beam('goat-pen:gate-upper',(-1.45,1.05,-1.91),(1.35,1.05,-1.91),.10,mat['weathered-plank'])
-beam('goat-pen:gate-brace',(-1.35,.30,-1.91),(1.25,1.0,-1.91),.08,mat['rusted-steel'])
+box('goat-pen:hay-bale',(0,.20,1.05),(1.2,.35,.65),mat['patched-canvas'],.08)
+box('goat-pen:feed-trough-bottom',(0,.18,-1.10),(1.72,.07,.38),mat['iron-dark'],.015)
+for x in (-.86,.86):box(f'goat-pen:feed-trough-end-{x}',(x,.39,-1.10),(.07,.39,.38),mat['rusted-steel'],.02)
+for z in (-1.29,-.91):box(f'goat-pen:feed-trough-side-{z}',(0,.39,z),(1.72,.39,.06),mat['rusted-steel'],.02)
+for x in (-.68,.68): beam(f'goat-pen:feed-trough-leg-{x}',(x,.02,-1.10),(x,.19,-1.10),.065,mat['weathered-plank'])
 
 add_building('chicken-run',(20,0,-14))
-ground_clutter('chicken-run',0,0)
 for x in (-1.25,1.25):
-    for z in (-1.25,1.25): beam(f'chicken-run:frame-post-{x}-{z}',(x,.12,z),(x,1.65,z),.085,mat['rusted-steel'])
-for y in (.18,.58,1.0,1.42,1.62):
-    for z in (-1.25,1.25): beam(f'chicken-run:wire-rail-{y}-{z}',(-1.25,y,z),(1.25,y,z),.028,mat['wire'])
-    for x in (-1.25,1.25): beam(f'chicken-run:wire-rail-side-{y}-{x}',(x,y,-1.25),(x,y,1.25),.028,mat['wire'])
-# A hatchback tailgate shell becomes the coop, with curved roof and a low egg box.
-box('chicken-run:boot-shell',(0,.48,.42),(1.25,.72,.75),mat['rusted-steel'],.16)
-box('chicken-run:boot-roof',(0,.96,.42),(1.1,.10,.68),mat['galvanised-tin'],.06)
-box('chicken-run:coop-dark-opening',(0,.42,.035),(.68,.40,.035),mat['iron-dark'],.04)
-for x in (-.4,.4): beam(f'chicken-run:boot-hinge-{x}',(x,.78,.06),(x,1.2,.06),.045,mat['rusted-steel'])
-box('chicken-run:nest-box',(0,.32,-.90),(.98,.42,.48),mat['weathered-plank'],.055)
-for x in (-.25,.25): sphere(f'chicken-run:egg-{x}',(x,.56,-.88),(.10,.07,.08),mat['faded-hand-paint'],8,5)
-box('chicken-run:feed-tray',(0,.16,1.05),(.85,.19,.30),mat['galvanised-tin'],.045)
+    for z in (-1.25,1.25): beam(f'chicken-run:frame-post-{x}-{z}',(x,.02,z),(x,1.65,z),.065,mat['weathered-plank'])
+# Open wire panels: a measured rectangular lattice, with the gaps left empty.
+for y in (.18,1.58):
+    for z in (-1.25,1.25): beam(f'chicken-run:wire-rail-{y}-{z}',(-1.25,y,z),(1.25,y,z),.022,mat['rusted-steel'])
+    for x in (-1.25,1.25): beam(f'chicken-run:wire-rail-side-{y}-{x}',(x,y,-1.25),(x,y,1.25),.022,mat['rusted-steel'])
+for i in range(1,4):
+    x=-1.25+i*2.5/4
+    beam(f'chicken-run:wire-front-v-{i}',(x,.12,-1.25),(x,1.60,-1.25),.009,mat['wire'])
+    beam(f'chicken-run:wire-rear-v-{i}',(x,.12,1.25),(x,1.60,1.25),.009,mat['wire'])
+for i in range(1,3):
+    z=-1.25+i*2.5/3
+    for x in (-1.25,1.25): beam(f'chicken-run:wire-end-v-{i}-{x}',(x,.12,z),(x,1.60,z),.009,mat['wire'])
+# Salvaged hatchback body reads as a rounded boot shell, open at the tailgate.
+for x in (-.49,.49):
+    box(f'chicken-run:boot-quarter-{x}',(x,.56,.32),(.14,.72,.88),mat['rusted-steel'],.025)
+box('chicken-run:boot-floor',(0,.22,.32),(.96,.13,.90),mat['iron-dark'],.015)
+box('chicken-run:boot-roof',(0,.94,.35),(.93,.13,.80),mat['galvanised-tin'],.03)
+box('chicken-run:boot-windscreen',(0,.70,-.10),(.82,.40,.07),mat['dirty-glass'],.025)
+box('chicken-run:boot-tailgate',(0,.50,.79),(.92,.58,.12),mat['rusted-steel'],.025)
+box('chicken-run:coop-dark-opening',(0,.40,1.01),(.58,.37,.035),mat['iron-dark'],.01)
+# Rear hatch details identify the shell as a cut-down car boot at road scale.
+box('chicken-run:boot-rear-window',(0,.76,.862),(.54,.20,.025),mat['dirty-glass'],.01)
+for x in (-.34,.34):
+    box(f'chicken-run:boot-tail-lamp-{x}',(x,.47,.858),(.12,.18,.035),mat['faded-hand-paint'],.01)
+box('chicken-run:boot-bumper',(0,.23,.91),(1.02,.105,.10),mat['iron-dark'],.01)
+for x in (-.4,.4): beam(f'chicken-run:boot-hinge-{x}',(x,.78,.88),(x,1.2,.88),.035,mat['rusted-steel'])
+box('chicken-run:nest-box',(0,.32,-.90),(.78,.38,.42),mat['weathered-plank'],.02)
+for x in (-.29,.29): beam(f'chicken-run:nest-box-leg-{x}',(x,.02,-.90),(x,.15,-.90),.045,mat['weathered-plank'])
+box('chicken-run:feed-tray',(0,.16,1.05),(.70,.17,.24),mat['galvanised-tin'],.015)
+
+# Keep every named piece inside each plot and joined to soil or a neighbour.
+bpy.context.view_layer.update()
+for building_id, half_cell in (('goat-pen',7.5),('chicken-run',3.5)):
+    root_obj=building_roots[building_id]
+    members=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==root_obj]
+    measured={}
+    for obj in members:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        measured[obj.name]=b
+        print(f'{building_id} piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)]},sort_keys=True))
+        if b[0]<-half_cell+.5 or b[1]>half_cell-.5 or b[2]<-.03 or b[3]>4.0 or b[4]<-half_cell+.5 or b[5]>half_cell-.5:
+            raise RuntimeError(f'{obj.name} leaves the {building_id} footprint or falls below ground: {b}')
+    for name,b in measured.items():
+        if b[2]<=.035: continue
+        joined=any(other_name!=name and all(
+            max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.035
+            for axis in range(3)) for other_name,other in measured.items())
+        if not joined: raise RuntimeError(f'{name} does not touch ground or another {building_id} piece: {b}')
 
 stall_front_photo=Photo(textures/'stall-front.jpg')
 stall_side_photo=Photo(textures/'stall-side.jpg')
