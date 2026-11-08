@@ -362,23 +362,29 @@ def basic_family():
        lambda i,d,r,a:drum_photo.uv(512+d*(1002/4.27),310-r*math.sin(a)*(228/1.08)),sides=40,
        cap_end=('concrete',lambda a,f:drum_photo.uv(512-1.82*(1002/4.27),310-.27*f*math.sin(a)*(228/1.08))))
  inner=drum_inner.finish('mixer drum dark inner wall and closed nose',{'concrete':mixer_dark});mixer_attach(inner,drum)
- # Six individual photo-measured tyres, one at each of the three axle stations.
+ # Photo-width black rubber treads. The rear two axles carry dual tyres on
+ # each side; their inner and outer centres follow the measured end-view track.
  end_scales={'front':mixer_height/(1218-26),'rear':mixer_height/(1218-20)}
  for axle_index,((side_px,side_py),z) in enumerate(zip(axle_rows,axle_z)):
   end_key='front' if axle_index==0 else 'rear'
   end_photo=mixer_body_table['_photos'][end_key]
   end_centre=627;end_scale=end_scales[end_key]
-  for sx in (-1,1):
-   tire_mesh=PhotoMesh();end_cx=end_centre+sx*track/end_scale
-   tyre(tire_mesh,'side',side_photo,side_px,side_py,155,wheel_radius,wheel_half,
-        end_key,end_photo,end_cx,wheel_half/end_scale*.9,
+  tire_centres=([-track,track] if axle_index==0 else [-.98,-.68,.68,.98])
+  for tire_x in tire_centres:
+   tire_mesh=PhotoMesh()
+   tire_side=-1 if tire_x<0 else 1
+   end_cx=end_centre+tire_side*abs(tire_x)/end_scale
+   tire_half=.15
+   tyre(tire_mesh,'side',side_photo,side_px,side_py,155,wheel_radius,tire_half,
+        'rubber',end_photo,end_cx,tire_half/end_scale*.9,
         1218-wheel_radius/end_scale,
         1218-wheel_radius*.08/end_scale,sides=32)
-   wheel=tire_mesh.finish(f'mixer-truck:wheel-{axle_index+1}-{"left" if sx<0 else "right"}',
-       {'side':side_photo.material(),end_key:end_photo.material()})
-   mixer_attach(wheel,mixer,(sx*track,wheel_radius,z))
+   wheel=tire_mesh.finish(f'mixer-truck:wheel-{axle_index+1}-{"left" if tire_side<0 else "right"}',
+       {'side':side_photo.material(),'rubber':rubber})
+   wheel.name=f'mixer-truck:wheel-{axle_index+1}-{"left" if tire_side<0 else "right"}'+('-inner' if abs(tire_x)<.8 else '-outer' if axle_index>0 else '')
+   mixer_attach(wheel,mixer,(tire_x,wheel_radius,z))
    mixer_piece_roots.append((wheel.name,wheel))
-   print('MIXER WHEEL BOUNDS',axle_index+1,sx,round(sx*track-wheel_half,3),round(sx*track+wheel_half,3),0,round(2*wheel_radius,3),round(z,3))
+   print('MIXER WHEEL BOUNDS',axle_index+1,tire_x,round(tire_x-tire_half,3),round(tire_x+tire_half,3),0,round(2*wheel_radius,3),round(z,3))
 
  # Pedestals, support rollers, ladder and fenders remain in the truck carve.
 
@@ -631,7 +637,7 @@ if a.render:
  mixer_cam('side',(-7,0,2.05),(11,0,2.05),10.7,1600,640)
  mixer_cam('front',(11,15,2.0),(11,0,2.0),3.8,1024,1024)
  mixer_cam('rear',(11,-15,2.0),(11,0,2.0),3.8,1024,1024)
- mixer_cam('top',(11,0,18),(11,0,0),10.7,640,1600)
+ mixer_cam('top',(11,0,18),(11,0,0),3.2,640,1600)
  hide_tree(joints['mixer-truck:drum'],False)
  joints['mixer-truck:drum'].rotation_euler[2]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
  mixer_cam('three-quarter-rest',(23,-14,10),(11,0,1.9),10.5,1024,768,False)
