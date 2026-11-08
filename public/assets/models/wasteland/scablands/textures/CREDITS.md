@@ -359,3 +359,7 @@ the upperworks reference, created by the Blender recipe for round 8.
 ## Patience bare-hull reference photos (WW-ART-SHIPS round 11, 2026-11-07)
 
 `patience-hull-side.jpg`, `-bow.jpg`, `-stern.jpg` and `-top.jpg` are cropped Codex ImageGen outputs showing a maintained, weathered coaster hull in a dry dock from the side, bow, stern and overhead. The side and end views were rescaled to the specified 72 x 12 x 8 m proportions. They are original modeling references; their generated PNGs remain in Codex's generated-image folder. No outside source art is used.
+
+## Good Hope upperworks bow (WW-ART-SHIPS round 13, 2026-11-07)
+
+`good-hope-upperworks-bow-round13.png` is one original Codex ImageGen studio reference photograph of a closed, faded-black freighter wheelhouse end with a short mast. `photo_grid.py` measurements for `carve_object` are centre x=700, deck y=1050 and cabin roof y=232 in the 1448 x 1086 image. It replaces no existing source photograph; the side, stern and plan views are unchanged.

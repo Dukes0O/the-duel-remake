@@ -272,9 +272,9 @@ def correct_end_face_photos(obj, table):
     uv_layer = obj.data.uv_layers.active
     for polygon in obj.data.polygons:
         if polygon.normal.y > .70:
-            # carve_hull's two-sided surface keeps duplicate side slots at 0/1;
-            # front and rear therefore occupy slots 2 and 3.
-            material_index, view, photo = 2, table['front'], front_photo
+            # The GLB exporter deduplicates the two side-view slots, so front
+            # and rear are slots 1 and 2 after the side slot at index 0.
+            material_index, view, photo = 1, table['front'], front_photo
             scale = end_scale['front']
             for loop_index in polygon.loop_indices:
                 point = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
@@ -282,7 +282,7 @@ def correct_end_face_photos(obj, table):
                 py = view['ground'] - point.z / scale
                 uv_layer.data[loop_index].uv = photo.uv(px, py)
         elif polygon.normal.y < -.70:
-            material_index, view, photo = 3, table['rear'], rear_photo
+            material_index, view, photo = 2, table['rear'], rear_photo
             scale = end_scale['rear']
             for loop_index in polygon.loop_indices:
                 point = obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
@@ -598,12 +598,14 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         def sister_cabin_table(ship):
             prefix='good-hope' if ship=='ship-good-hope' else 'marigold'
             if prefix=='good-hope':
-                # Grid measurements from .qa-dist/grid-good-hope-*.png.
+                # Side and stern measurements are from the earlier grids;
+                # the bow uses the new dead-on round-13 end photograph.
                 # Side (640x427): body x=31..589, deck y=411, bridge roof y=96.
-                # Bow: centre=320, deck=624, roof=166. Stern: centre=320, deck=624, roof=105.
+                # Bow (1448x1086): centre=700, deck=1050, cabin roof=232.
+                # Stern: centre=320, deck=624, roof=105.
                 # Plan (427x640): bow/stern y=52/621, centre x=213; beam x=112..313.
                 length_px=(31,589); ground=411
-                front=(320,624,166); rear=(320,624,105)
+                front=(700,1050,232); rear=(320,624,105)
                 top=(52,621,213,9.0/(313-112))
                 cabin_length=14.0; cabin_width=9.0; cabin_height=9.0
             else:
@@ -616,9 +618,10 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 front=(320,337,83); rear=(320,301,65)
                 top=(51,610,290,10.0/(420-160))
                 cabin_length=15.0; cabin_width=10.0; cabin_height=6.0
-            return {
+            table = {
                 'photos': {'side':f'{prefix}-upperworks-side.jpg',
-                           'front':f'{prefix}-upperworks-bow.jpg',
+                           'front':('good-hope-upperworks-bow-round13.png'
+                                    if prefix=='good-hope' else f'{prefix}-upperworks-bow.jpg'),
                            'rear':f'{prefix}-upperworks-stern.jpg',
                            'top':f'{prefix}-upperworks-top.jpg'},
                 'length':cabin_length,'width':cabin_width,'height':cabin_height,
@@ -638,6 +641,11 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 'voxel':.14,'target':2600,
                 'mask_dir':str(raw/'masks'/prefix),
             }
+            if prefix == 'good-hope':
+                # Let the dead-on end photos own the rounded corners instead
+                # of dragging the long side projection around the bow.
+                table.update({'ends_split':0.0,'front_favour':10,'rear_favour':3})
+            return table
         table=sister_cabin_table(ident)
         cabin=carve_object(ident+':upperworks',tex,table)
         if ident == 'ship-good-hope':

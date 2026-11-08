@@ -275,3 +275,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the three rectangular deck plates. The user-provided stray root render `.evidence-good-hope-bow-round13.png` was deleted.
+
+## Round 13, point 2 — Good Hope bow photo (7 November 2026)
+
+- Added one measured dead-on front reference for the Good Hope's closed, faded-black cabin block. `photo_grid.py` measurements are x-centre 700, deck y=1050 and roof y=232 in a 1448 x 1086 image. Corrected the front/rear material slots in the end-face UV fix: the GLB exporter merges the duplicate side slots, so the bow had been using the rear slot. Added forward end-photo preference to keep the side image from wrapping as far around the bow.
+- Rendered `.qa-dist/check-good-hope.png` from the exported GLB at 40 m, car height and three-quarter from the bow, and inspected it. The bow now shows the new front photo and the former bright wavy streaks are gone; some image distortion remains at the curved corner. Claude should review that render and the new front reference. The side and stern source photos were not changed.
+- Blender 4.5.13 GLB read-back: Patience 7,864 triangles, Good Hope 9,126, Marigold 8,676; family 26,302 triangles and 1,599,572 bytes. Each ship is below 13,000 triangles; the family is below 50,000 triangles and 3 MB. `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets remain advisory. Browser checks do not apply; lane tier and build were not run for this art card. Changed assertions: none. Race fingerprints: none.
+
+### Removed
+
+- Removed the incorrect bow-to-rear material-slot assignment and the previous Good Hope front-photo mapping in the carve. The replaced source file is retained; it is no longer loaded by the Good Hope.
