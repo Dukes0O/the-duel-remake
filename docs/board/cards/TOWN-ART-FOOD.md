@@ -49,3 +49,5 @@ Goat pen, 7 November (Claude): **round 19 passes, merged.** A square pen of weat
 Chicken run, 7 November (Claude): **round 20 passes, merged; the card is done.** A timber-framed wire run with a coop made from the back of a rusty red hatchback, its boot lid up, matching its side photo. Short of the photos: the run's roof is flat where the photo's is pitched, and the wire is very faint. Every building on TOWN-ART-FOOD has now passed: soup kitchen, market hall, canteen, stalls, greenhouse, shopfronts, goat pen and chicken run.
 
 Test change reviewed (Claude, 7 November): the food check now reads the size of PNG pictures as well as JPEGs, for the chicken run's see-through wire, and checks the PNG signature; both kinds count against the same 2048 px and total-pixel limits. Nothing is loosened.
+
+Chicken run, 7 November (Claude): **round 20 passes, merged; the card is done.** A timber-framed wire run with a coop made from the back of a rusty red hatchback, its boot lid up, matching its side photo. Short of the photos: the run's roof is flat where the photo's is pitched, and the wire is very faint. Every building on TOWN-ART-FOOD has now passed.
