@@ -20,26 +20,30 @@ The straight views show one statue. Three-quarter A reads as one face and one ra
 
 - Removed the round-16 sheet as requested. No round-16 review note existed in the looks folder.
 - Removed round-16's combined figure-plinth carve and its temporary normal-weight override; replaced them with separate figure and square-plinth carves.
-# Wreck ring, round 18
+# Wreck ring, round 19
 
-**Candidate for Claude's review.** The family GLB now contains a 3 by 3 `wreck-ring`: a pair of overlapping stacked tyre courses, a dusty floor, and four individually named `wreck-ring:car-1` through `wreck-ring:car-4` roots. Each car uses a `carve_object` shell made from four generated views and a separate rubber bumper ring. The roots face four different directions.
+## Design and change
 
-The side, front, rear and overhead shell photos were generated one view at a time with the built-in image generator and saved as JPGs in the town texture folder. The original generated PNGs remain at the tool's generated-images location. These are generated concept-photo references, not photos of a real make or model.
+The wreck-ring wall now uses 42 photo-textured `tyre` pieces: 21 per course, laid flat with the axis vertical. Each tyre has a 16-sided round profile and a worn tread. The two courses are offset and touch around the ring. Their combined wall height is 0.70 m. The square floor and dark square patch are replaced with a circular sand floor inside the wall.
 
-The final Blender export is 4,199,208 bytes and the wreck-ring contributes 8,496 triangles against its 9,000 limit. The recipe printed bounds and contact results for each piece. Every part fits within the footprint and touches the ground or another piece. Each shell, floor and lower tyre row reaches the ground; the upper tyre row overlaps the lower row; bumpers overlap their shells. The side grid measured the shell span at about x=20 to 1003 pixels and ground at y=454 px; these values inform the side carve. Front/rear height and overhead length scales are estimated from their generated views and remain review points.
+The four photo-carved bumper cars are scaled to about 2 m by 1.3 m with their rubber bumpers. Each has its own named root, `wreck-ring:car-1` through `wreck-ring:car-4`, at a different angle inside the ring. Each has a separate seat, steering wheel and column; the orange shell remains photo-carved from the four retained reference views. The complete family GLB is 4,421,636 bytes; the wreck-ring uses 8,972 triangles against its 9,000 limit. All recipe bounds and contact checks passed.
 
-## Visual review
+## Review
 
-The exported GLB was imported into an empty Blender scene and rendered from side, front, rear, above, both three-quarter angles and the mayor view. The comparison sheet is `round-18.jpg` (238,417 bytes). The orthographic elevation views mostly show the tyre wall, as expected for a closed enclosure; the mayor and three-quarter views show all four cars and the ring. The overhead photo-to-model comparison shows the dusty arena and four separate shells. The floor reads as two visibly different dust patches. The cars are recognizable from above and the road-side silhouette is dominated by the tall wall. Claude should review the wall's continuity and height, shell likeness and visibility of all four cars at driver distance.
+The round-19 sheet is 243,716 bytes. It compares one car with the four references and shows the ring from above, the mayor view and both three-quarter views.
 
-## Checks
+Self-review: likeness 3/5; readability 4/5; grounding 4/5; scene consistency 3/5; triangle/file budget passed. Frame cost was not measured because the family is not wired into the game. Five visible differences remain: the photo-carved shell is faceted in the straight views; the steering wheel and seat are still small; tread faces show repeated photo seams; the cars form a tight cluster rather than a clear mid-bump; and the tyre wall reads as stacked sidewall discs from above. Claude should judge the car scale and cockpit details, tyre tread and roundness, and whether the side-height view leaves enough of the cars visible.
 
-- Blender recipe export and piece bounds/contact checks: passed.
-- `node tools/test-blender-output.mjs`: passed, 377 checks and 0 failures. Its first run found 14,880 triangles versus the 9,000 budget; wall torus resolution and shell carve grain were reduced before the passing rerun.
+- Blender recipe export and footprint/contact checks: passed.
+- Imported-GLB renders: completed for matched side, front, rear and above car views, plus two three-quarter, mayor and whole-ring overhead views.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 611 checks; 8 passed, 1 failed. The audio-analysis test could not spawn `ffmpeg` (`EPERM`). The same suite was rerun once with the same result. Its JPG publication checks passed; the final sheet is 243,716 bytes.
 - Lane tier and application build: not run, as directed for this art card.
-- Browser and game look checks: for Claude; the family is not wired into the game.
+- Browser and in-game look checks: Claude's review; not run here. The family is not wired into the game.
 - Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- Replaced the placeholder hand-built bumper cars in the `wreck-ring` block with four photo-carved shells, separate bumper rings, and the stacked tyre enclosure. Earlier accepted buildings and round sheets remain unchanged.
+- Removed the upright two-course torus wall, oversized shells and square floor patches; replaced them with flat treaded tyres, scaled photo-carved cars and a circular floor.
+- Removed `round-18.jpg` and its review note, superseded by the round-19 sheet and verdict request.

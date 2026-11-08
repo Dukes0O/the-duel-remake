@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-17'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-19'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-17.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-19.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -51,6 +51,49 @@ if '--review-only' in args:
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--wreck-only' in args:
+        wreck_root=bpy.data.objects.get('wreck-ring')
+        if wreck_root is None: raise RuntimeError('exported wreck-ring is missing')
+        for child in family.children: hide_tree(child,child!=wreck_root)
+        hide_tree(wreck_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('wreck-ring:')
+        car_root=bpy.data.objects.get('wreck-ring:car-1')
+        if car_root is None: raise RuntimeError('exported wreck-ring car-1 is missing')
+        for child in wreck_root.children: hide_tree(child,True)
+        hide_tree(car_root,False)
+        car_target=car_root.matrix_world.translation+Vector((0,.48,0))
+        match_views=[('match-side',(1,0,.03),'wreck-ring-shell-side.jpg',3.0),
+                     ('match-front',(0,-1,.03),'wreck-ring-shell-front.jpg',2.7),
+                     ('match-rear',(0,1,.03),'wreck-ring-shell-rear.jpg',2.7),
+                     ('match-above',(0,0,1),'wreck-ring-shell-above.jpg',3.0)]
+        for name,direction,photo_name,ortho in match_views:
+            direction=Vector(direction).normalized()
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size
+            bpy.data.images.remove(ref)
+            camera.location=car_target+direction*8; aim(camera,car_target); camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'wreck-ring-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'rendered wreck-ring {name}')
+        hide_tree(wreck_root,False)
+        scene.render.resolution_x,scene.render.resolution_y=1000,700
+        ring_views=[('three-quarter-a',(1,1,.65),10.2),
+                    ('three-quarter-b',(-1,-1,.65),10.2),
+                    ('mayor',(1,1,1),10.2),
+                    ('whole-above',(0,0,1),9.8)]
+        target=Vector((0,0,.4))
+        for name,direction,ortho in ring_views:
+            if name=='whole-above':
+                scene.render.resolution_x=900; scene.render.resolution_y=900
+                ortho=9.6
+            direction=Vector(direction).normalized()
+            camera.location=target+direction*18; aim(camera,target); camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'wreck-ring-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'rendered wreck-ring {name}')
+        raise SystemExit(0)
     if '--fountain-only' in args:
         fountain_root=bpy.data.objects.get('fountain')
         if fountain_root is None: raise RuntimeError('exported fountain is missing')
@@ -767,44 +810,57 @@ for piece in drive_pieces:
     print('DRIVE-IN CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
     if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
-# Wreck ring: a grounded two-course wall of salvaged tyres around four separate cars.
+# Wreck ring, round 19: two low courses of flat tyres around four bumper cars.
 building_root('wreck-ring','3x3')
 ring_root=current
-ring_radius=8.45
-for course,y in enumerate((1.03,2.99),1):
-    for i in range(36):
-        a=math.tau*i/36
-        # Each tyre overlaps its neighbours and the course above/below.
-        x=ring_radius*math.cos(a); z=ring_radius*math.sin(a)
-        tyre_obj=torus(f'wreck-ring:tyre-{course}-{i+1}',(x,y,z),.73,.30,'tire',ring_root,8,4)
-        tyre_obj.rotation_euler[0]=math.pi/2
-        tyre_obj['part']='stacked salvaged tyre'
+ring_count=21
+ring_radius=3.65
+ring_side=Photo(tex/'wreck-ring-shell-side.jpg')
+ring_end=Photo(tex/'wreck-ring-shell-front.jpg')
+tyre_courses=((.175,0),(.525,math.pi/ring_count))
+for course,(height,offset) in enumerate(tyre_courses,1):
+    for i in range(ring_count):
+        angle=math.tau*i/ring_count+offset
+        x=ring_radius*math.cos(angle); z=ring_radius*math.sin(angle)
+        tyre_mesh=PhotoMesh()
+        tyre(tyre_mesh,'side',ring_side,337,397,36,.55,.175,'tread',ring_end,
+             512,178,434,598,sides=16)
+        tyre_obj=tyre_mesh.finish(f'wreck-ring:tyre-{course}-{i+1}',
+                                  {'side':ring_side.material(),'tread':ring_end.material()})
+        tyre_obj.location=town.game_vector((x,height,z))
+        tyre_obj.rotation_euler[1]=math.pi/2
+        keep(tyre_obj,ring_root)
+        tyre_obj['part']='flat salvaged tyre with photo-worn tread'
 # Dust covers the arena floor, with a darker worn centre.
-box('wreck-ring:dusty-floor',(0,.055,0),(16.3,.11,16.3),'sand',.04,ring_root)
-box('wreck-ring:drifted-dust',(0,.115,0),(7.4,.05,7.4),'cracked-concrete',.04,ring_root)
+cyl('wreck-ring:dusty-floor',(0,.05,0),ring_radius-.36,.10,'sand',48,ring_root)
 
 # The same four generated shell photographs are measured at each view. The front
 # is +Z as for a vehicle; each shell is carved once, then receives a rubber ring.
 wreck_recipe={
     'photos':{'side':'wreck-ring-shell-side.jpg','front':'wreck-ring-shell-front.jpg',
               'rear':'wreck-ring-shell-rear.jpg','top':'wreck-ring-shell-above.jpg'},
-    'length':3.5,'width':2.45,'height':1.42,'forward':1,'round':2,
+    'length':1.70,'width':1.00,'height':.92,'forward':1,'round':2,
     'side':{'start':55,'end':963,'ground':454},
     'front':{'centre':512,'ground':590,'top':155},
     'rear':{'centre':512,'ground':590,'top':155},
-    'top':{'front':104,'rear':600,'centre':512,'x_scale':2.45/820},
-    'grey':8,'tolerance':30,'voxel':.07,'target':850,
+    'top':{'front':104,'rear':600,'centre':512,'x_scale':1.00/820},
+    'grey':8,'tolerance':30,'voxel':.07,'target':400,
     'mask_dir':str(root/'.qa-dist/wreck-ring-masks'),
 }
-car_slots=[(-3.9,-3.6,0),(3.9,-3.6,math.pi/2),(-3.9,3.6,-math.pi/2),(3.9,3.6,math.pi)]
+car_slots=[(-1.25,0,.20),(0,-1.25,1.83),(1.25,0,-1.17),(0,1.25,3.02)]
 for i,(x,z,turn) in enumerate(car_slots,1):
     car_root=bpy.data.objects.new(f'wreck-ring:car-{i}',None)
     bpy.context.collection.objects.link(car_root); car_root.parent=ring_root
     shell=carve_object(f'wreck-ring:car-{i}:shell',tex,wreck_recipe)
     keep(shell,car_root)
     # The bumper sits around the carved shell's perimeter, below its floor.
-    bumper=torus(f'wreck-ring:car-{i}:bumper',(0,.29,0),1.18,.16,'tire',car_root)
-    bumper.scale=(1.0,1.0,1.46)
+    bumper=torus(f'wreck-ring:car-{i}:bumper',(0,.12,0),.54,.12,'tire',car_root,16,6)
+    bumper.scale=(1.0,1.5,1.0)
+    box(f'wreck-ring:car-{i}:seat-cushion',(0,.31,-.23),(.38,.12,.36),'weathered-plank',0,car_root)
+    box(f'wreck-ring:car-{i}:seat-back',(0,.49,-.42),(.38,.34,.10),'patched-canvas',0,car_root)
+    steering_wheel=torus(f'wreck-ring:car-{i}:steering-wheel',(0,.66,.37),.14,.025,'rusted-steel',car_root,16,6)
+    steering_wheel.rotation_euler[0]=math.pi/2
+    beam(f'wreck-ring:car-{i}:steering-column',(0,.42,.21),(0,.64,.35),.035,'rusted-steel',car_root)
     car_root.location=town.game_vector((x,0,z)); car_root.rotation_euler[2]=turn
     shell['source']='four generated orthographic photos of one bumper-car shell'
     bumper['source']='continuous separate rubber bumper around the shell'
@@ -1130,6 +1186,6 @@ import subprocess
 blender=r'C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe'
 if '--build-only' not in args:
     with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
-        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--statue-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
-    if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
+        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--wreck-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
+    if result.returncode: raise RuntimeError('imported-GLB wreck-ring render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))
