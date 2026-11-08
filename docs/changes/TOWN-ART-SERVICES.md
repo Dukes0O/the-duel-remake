@@ -55,6 +55,11 @@ the sheet records the remaining difference for Claude's review.
   first run found 5,860 toll-bank triangles; reducing the carved shell target
   and removing duplicate photo-baked rivets brought the final count under
   budget. No assertion changed.
+- `node tools/test-repo-hygiene.mjs`: passed. It reported existing advisory
+  size targets; no placement error.
+- `node tools/test-review-evidence.mjs`: 635 checks passed, 0 failed across
+  9 subtests. Its in-sandbox audio subtest could not spawn `ffmpeg` (EPERM);
+  rerunning with the installed `FFMPEG_PATH` outside the sandbox passed.
 - The sheet shows the strongroom alone in four matched orthographic views,
   then the full toll bank in both three-quarter views and the mayor view.
 - Browser checks were not run. Claude should review the front roof height
