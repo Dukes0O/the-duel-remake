@@ -533,6 +533,17 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 - The blanket lighthouse decimation, the stretched photo stone tile, the stick-drawing strokes that were built and then deleted, the sphere sun and the old door slab.
 - `round-17.jpg` and `round-17-review.md`; round 18 is the single current sheet.
 
+## Pilot boat round 1, part 2 (8 November 2026)
+
+- Point 1: remapped the hull sides to the photo's measured band from sheer to keel; hull ends and deck now use plain paint. Raised the hull clear of the trailer ladder frame, with timber blocks and bunks between. Lengthened and lowered the pilot house to the deck with five side panes per side, three raked front panes, roof mast, searchlight, horn and radar dome. Replaced ring tyres with solid cylinders, steel rims and hubs, added the three dual-wheel axles and mudguards, routed four yellow straps over the deck, and hung the bolted `WIDE LOAD` board at the stern.
+- Family export read-back: pilot boat 4,162 triangles (4,084 for the boat assembly, 12 for the hitch and 66 for lettering); whole file 35,937 triangles and 2,754,376 bytes. The boat is within 5,000 triangles and the file is within both overall limits. No automatic triangle reduction was added.
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. No game tests, browser checks or race fingerprints apply to this art change. The three picture checks are point 2 and will be recorded below after inspection; Claude should look at the boat against the source photograph and judge the final art.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the photo-box hull mapping, the six hollow torus tyres and the two straight diagonal strap pairs. No source photo or earlier ship or lighthouse part was removed.
+
 ## Lighthouse round 3 (8 November 2026)
 
 - Point 1: kept the existing course wrapping and tower openings. Masonry blocks now vary from 0.4 to 1.5 m, with one in eight deliberately lighter or darker. Added a separate translucent salt veil with a packed greyscale alpha texture, ragged tide edge and hanging runs under the gallery and window levels. It stays within 400 triangles.
