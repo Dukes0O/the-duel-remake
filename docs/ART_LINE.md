@@ -46,6 +46,7 @@ stop adjusting and change the method.
 ## What to watch for
 
 - **A family export can omit special-stage geometry.** When a recipe conditionally adds shared ground or drift meshes, include the family/export stage as well as the review stages; the GLB check caught missing standalone ship drifts in `scablands-ships.py`.
+- **A named part can sit at the world origin.** Geometry helpers return independent objects; parent every piece that belongs to a place before family export. Otherwise local coordinates are read as map coordinates and can look like a stray prop on the horizon.
 
 ### Flat photographed shapes
 

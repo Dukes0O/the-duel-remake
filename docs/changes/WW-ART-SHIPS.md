@@ -187,18 +187,33 @@ boat remain unbuilt because Patience did not pass the photo comparison.
   the stray external spiral, reshaped the gallery deck and corbels, and made
   the lantern cap dark iron with a ventilator ball. Replaced the old beam bar
   with a translucent 14 m widening mesh on `lighthouse:beam`.
-- Blender family export succeeded: 39,787 total triangles and 2,986,824 bytes
-  read back from the GLB. Point 2, inspection renders and named checks remain.
-- Tests: not run yet; art card checks follow point 2. Lane tier and build are
-  not run, as required for art cards.
-- Browser checks: Claude handles them. Claude should inspect the three named
-  lighthouse check pictures after point 2.
+- Point 2: added whitewashed inner stone, warm amber sconces on all three
+  landings, and bright crayon pictures of a ship, house and sun. Moved the
+  landing camera to the first landing, 1.6 m above its floor, aimed across the
+  landing at the drawings. Attached every gallery and landing rail piece to
+  the lighthouse root so none remains at the world origin.
+- Final GLB read-back: 5,974 lighthouse triangles; 38,029 triangles total;
+  2,927,540 bytes. Both triangle budgets and the 3 MB family size limit pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed.
+  `tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- Rendered and inspected `.qa-dist/check-lighthouse-road.png`,
+  `.qa-dist/check-lighthouse-dusk.png` and
+  `.qa-dist/check-lighthouse-landing.png`. The road view reads as a tall,
+  tapering stone tower with the lantern room and gallery; the stone repeats
+  visibly. Dusk shows the warm lantern and widening beam. The landing view
+  shows all three drawings and an amber wall lamp; the iron ring rail sits
+  below the pictures. Claude should judge those three views and the repeated
+  stone finish.
+- Browser checks: Claude handles them. Lane tier and build were not run, as
+  required for art cards.
 - Changed assertions: none. Race fingerprints: none; art only.
 
 ## Removed
 
 - Removed the straight yellow beam cube and the exposed outer spiral stair.
-- Removed temporary point-one Blender build logs after the final commit.
+- Removed temporary Blender build/render/test logs, the fit report, generated
+  masks and exported-model review Blend from `.qa-dist/`. Kept the three named
+  check pictures and both supplied task briefs.
 
 ## Round 12 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Patience funnel, cabins and drifts (7 November 2026)
 
