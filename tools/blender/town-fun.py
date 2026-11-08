@@ -1,4 +1,4 @@
-"""Build and inspect the Wasteland town funground from welded salvage."""
+﻿"""Build and inspect the Wasteland town funground from welded salvage."""
 import json
 import math
 import subprocess
@@ -45,12 +45,40 @@ if '--review-only' in args:
     def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
     def light(name,loc,power,size):
         data=bpy.data.lights.new(name,'AREA'); data.energy=power; data.shape='DISK'; data.size=size
-        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,3))
+        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,1.6))
     light('soft studio key',(8,12,17),1800,12); light('soft studio fill',(-10,-6,12),1100,10)
     camera=bpy.data.objects.new('Tavern bounds camera',bpy.data.cameras.new('Tavern bounds camera'))
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--stalls-only' in args:
+        scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100;scene.render.resolution_x=1024;scene.render.resolution_y=1024
+        scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
+        scene.view_settings.view_transform='Standard'
+        camera.data.type='ORTHO';target=Vector((0,0,1.6))
+        views=[('side',(1,0,0)),('front',(0,1,0)),('rear',(0,-1,0)),('above',(0,0,1))]
+        for stall_id in ('fun-stall-a','fun-stall-b'):
+            for obj in scene.objects:
+                if obj.type not in ('CAMERA','LIGHT'):
+                    obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith(stall_id+':'))
+            for name,direction in views:
+                photo_name=f'{stall_id}-{name if name != "above" else "top"}.jpg'
+                source=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+                scene.render.resolution_x,scene.render.resolution_y=source.size
+                bpy.data.images.remove(source)
+                camera.location=target+Vector(direction)*10
+                up_axis='Y' if name=='above' else 'Z'
+                camera.rotation_euler=(target-camera.location).to_track_quat('-Z',up_axis).to_euler()
+                camera.data.ortho_scale=6.7
+                scene.render.filepath=str(evidence/f'{stall_id}-{name}-model.png');bpy.ops.render.render(write_still=True)
+            scene.render.resolution_x=1000;scene.render.resolution_y=720
+            for label,direction in [('three-left',(-1,-1,.65)),('three-right',(1,-1,.65)),('mayor',(1,1,1))]:
+                camera.location=target+Vector(direction).normalized()*20
+                camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Z').to_euler()
+                camera.data.ortho_scale=7.3
+                scene.render.filepath=str(evidence/f'{stall_id}-{label}.png');bpy.ops.render.render(write_still=True)
+        raise SystemExit(0)
     if '--wreck-only' in args:
         wreck_root=bpy.data.objects.get('wreck-ring')
         if wreck_root is None: raise RuntimeError('exported wreck-ring is missing')
@@ -1105,6 +1133,10 @@ def stall_cloth(name, x0, x1, z0, z1, y, material):
 
 def build_fun_stall(name, sweets=False):
     building_root(name,'1x1')
+    def stall_box(part,center,size,material,bevel=.025):
+        # Small repeated stall boards stay crisp; bevel modifiers multiply
+        # their exported triangle cost without changing the photo silhouette.
+        return box(part,center,size,material,0)
     # Four welded round-tube uprights and rails trace the photo's open frame.
     for x in (-2.35,2.35):
         for z in (-2.05,1.75):
@@ -1114,37 +1146,40 @@ def build_fun_stall(name, sweets=False):
     for x in (-2.35,2.35):
         pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,1.75),(x,2.72,-2.25)],.06,'rusted-steel')
     # Counter plank stack is its own grounded sales piece, with a dark kick plate.
-    box(f'{name}:counter-kick',(0,.52,-1.84),(4.45,.62,.18),'weathered-plank',.035)
-    for i in range(3): box(f'{name}:counter-plank-{i}',(0,.88+i*.14,-1.82),(4.7,.12,.48),'weathered-plank',.025)
+    stall_box(f'{name}:counter-kick',(0,.52,-1.84),(4.45,.62,.18),'weathered-plank',.035)
+    for i in range(3): stall_box(f'{name}:counter-plank-{i}',(0,.88+i*.14,-1.82),(4.7,.12,.48),'weathered-plank',.025)
     # Patched awning has a shallow fall toward the road and a ragged stitched hem.
     for i,material in enumerate(('patched-canvas','faded-hand-paint','patched-canvas','weathered-plank')):
         z0=-2.10+i*.98; z1=z0+.99
         stall_cloth(f'{name}:awning-patch-{i}',-2.38,2.38,z0,z1,2.78-(i*.06),material)
+        # A thin cloth-backed patch keeps the awning readable at grazing road
+        # cameras while the stitched surface supplies the shaped outer edge.
+        stall_box(f'{name}:awning-cloth-panel-{i}',(0,2.75-(i*.055),z0+.495),(4.68,.075,.97),material,.018)
     for i in range(9):
-        x=-2.34+i*.585; y=2.56+.11*math.sin(math.pi*i/8)
-        box(f'{name}:awning-hem-tab-{i}',(x,y,-2.14),(.51,.09,.13),'patched-canvas',.018)
+        x=-2.34+i*.585; y=2.75+.11*math.sin(math.pi*i/8)
+        stall_box(f'{name}:awning-hem-tab-{i}',(x,y,-2.14),(.51,.09,.13),'patched-canvas',.018)
     if not sweets:
         # A lower return shelf and a raised rear shelf carry the can target stack.
-        box(f'{name}:can-shelf-bracket-left',(-1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
-        box(f'{name}:can-shelf-bracket-right',(1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
-        box(f'{name}:can-shelf',(0,1.50,-.62),(3.35,.14,.70),'weathered-plank',.025)
+        stall_box(f'{name}:can-shelf-bracket-left',(-1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf-bracket-right',(1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf',(0,1.50,-.62),(3.35,.14,.70),'weathered-plank',.025)
         for row,count in enumerate((3,2,1)):
             for i in range(count):
                 x=(i-(count-1)/2)*.68; y=1.70+row*.39; z=-.65
                 cyl(f'{name}:stacked-tin-{row}-{i}',(x,y,z),.245,.34,'galvanised-tin',12)
-                cyl(f'{name}:can-lid-{row}-{i}',(x,y+.18,z),.222,.035,'rusted-steel',12)
+                cyl(f'{name}:can-lid-{row}-{i}',(x,y+.18,z),.222,.035,'rusted-steel',8)
     else:
         # Sweets are individually jarred; colored candy pieces remain visible above the counter.
         for i,x in enumerate((-1.72,-.86,0,.86,1.72)):
-            box(f'{name}:jar-base-{i}',(x,1.24,-1.45),(.67,.48,.56),'weathered-plank',.025)
-            cyl(f'{name}:glass-jar-{i}',(x,1.75,-1.45),.245,.62,'dirty-glass',16)
+            stall_box(f'{name}:jar-base-{i}',(x,1.24,-1.45),(.67,.48,.56),'weathered-plank',.025)
+            cyl(f'{name}:glass-jar-{i}',(x,1.75,-1.45),.245,.62,'dirty-glass',10)
             cyl(f'{name}:jar-candy-{i}',(x,1.75,-1.45),.205,.40,('faded-hand-paint','letter-paint','red-paint','ochre-paint','blue-paint')[i],12)
-            cyl(f'{name}:jar-lid-{i}',(x,2.09,-1.45),.26,.09,'rusted-steel',12)
-        box(f'{name}:rear-sweets-shelf',(0,2.34,1.22),(3.8,.13,.56),'weathered-plank',.025)
+            cyl(f'{name}:jar-lid-{i}',(x,2.09,-1.45),.26,.09,'rusted-steel',8)
+        stall_box(f'{name}:rear-sweets-shelf',(0,2.34,1.22),(3.8,.13,.56),'weathered-plank',.025)
         for i,x in enumerate((-1.35,0,1.35)):
-            cyl(f'{name}:shelf-sweets-jar-{i}',(x,2.67,1.22),.27,.53,'dirty-glass',14)
-            cyl(f'{name}:shelf-candy-{i}',(x,2.67,1.22),.225,.37,('ochre-paint','red-paint','letter-paint')[i],12)
-            cyl(f'{name}:shelf-lid-{i}',(x,2.97,1.22),.29,.08,'rusted-steel',12)
+            cyl(f'{name}:shelf-sweets-jar-{i}',(x,2.67,1.22),.27,.53,'dirty-glass',10)
+            cyl(f'{name}:shelf-candy-{i}',(x,2.67,1.22),.225,.37,('ochre-paint','red-paint','letter-paint')[i],8)
+            cyl(f'{name}:shelf-lid-{i}',(x,2.97,1.22),.29,.08,'rusted-steel',8)
     return current
 
 stall_a=build_fun_stall('fun-stall-a',False)
@@ -1171,7 +1206,12 @@ for stall_name in ('fun-stall-a','fun-stall-b'):
         touching=grounded or any(other is not piece and stall_touch(b,stall_bounds(other)) for other in pieces)
         print('STALL CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touching else 'NO CONTACT')
         if not touching: raise RuntimeError(f'{piece.name} floats without contact')
-    triangles=sum(len(poly.vertices)-2 for piece in pieces for poly in piece.data.polygons)
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    triangles=0
+    for piece in pieces:
+        evaluated=piece.evaluated_get(depsgraph);mesh=evaluated.to_mesh()
+        triangles+=sum(len(poly.vertices)-2 for poly in mesh.polygons)
+        evaluated.to_mesh_clear()
     print('STALL TRIANGLES',stall_name,triangles)
     if triangles>1800: raise RuntimeError(f'{stall_name} has {triangles} triangles (limit 1800)')
 
@@ -1282,3 +1322,4 @@ if '--build-only' not in args:
         result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--wreck-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
     if result.returncode: raise RuntimeError('imported-GLB wreck-ring render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))
+
