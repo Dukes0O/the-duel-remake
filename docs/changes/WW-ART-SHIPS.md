@@ -374,3 +374,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - The mirrored-scale and reversed-string handling of the port bow names, and the per-heap drift objects.
+
+## Round 15, part 2, point 1 — sand and cabin faces (7 November 2026)
+
+- Lowered the spread-sand centre to the review ground plane. Reshaped each ship's paired drift banks as smaller rounded heaps that taper back to the ground. Cabin end faces now map the painted side photo across the face, and roof edges use a darker band from that photo.
+- Rebuilt the family GLB with Blender 4.5.13 and rendered all six required port/starboard views. I inspected every image. Sand reads as small rounded mounds at the hull base, with no raised oval edge; cabin end faces carry plating texture instead of blank white panels. Claude should still review the remaining light photo trim around the cabin roofs.
+- GLB read-back: Patience 10,640 triangles, Good Hope 10,796, Marigold 10,751; 35,019 total triangles and 2,587,488 bytes. No assertion changes. Race fingerprints: none; art only. The two named asset tests and review-evidence check will be recorded with the sheet commit.
+
+### Removed
+
+- Removed the above-ground center vertex from each oval ground heap and replaced the long, taller side-bank profiles with short rounded profiles. Removed the former end-photo UV mapping from cabin end faces.

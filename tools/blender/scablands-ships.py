@@ -602,7 +602,9 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
     for poly in obj.data.polygons:
         n = poly.normal
         if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
-            mat_index = 1 if n.x > 0 else 2
+            # The end photos leave white edges on the compact cabin blocks.
+            # Continue the painted side plating over both end faces.
+            mat_index = 0
         elif abs(n.y) >= abs(n.z):
             mat_index = 0
         else:
@@ -612,12 +614,17 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
         image_w,image_h=images[mat_index].size
         for li in poly.loop_indices:
             co = obj.data.vertices[obj.data.loops[li].vertex_index].co
-            if mat_index == 0:
+            if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
+                across = co.y / width + .5
+                up = .12 + .72 * (co.z / height + .5)
+            elif mat_index == 0:
                 across, up = (co.x / length + .5), (co.z / height + .5)
             elif mat_index in (1, 2):
                 across, up = (co.y / width + .5), (co.z / height + .5)
             else:
                 across, up = (co.y / width + .5), (1 - (co.x / length + .5))
+            if name.endswith(':upperworks-deck') and mat_index == 0:
+                up = .30 + .42 * up
             px=px0+across*(px1-px0)
             py=py1-up*(py1-py0)
             uv.data[li].uv=(px/image_w,1-py/image_h)
@@ -1333,9 +1340,10 @@ for ident,_,_,length,width,_,_,_ in ships:
                 v=-1+2*ai/(along_steps-1)
                 for oi in range(out_steps):
                     u=oi/(out_steps-1)
-                    x=center_x+v*(4.0 if mound_index==0 else 3.0)
-                    z=side*(inner+8*u)
-                    y=-2+1.4*(math.cos(math.pi*u/2)**1.4)*(math.cos(math.pi*v/2)**1.6)
+                    x=center_x+v*(2.0 if mound_index==0 else 1.7)
+                    z=side*(inner+4*u)
+                    mound_shape=max(0.0,1-v*v)*max(0.0,1-(2*u-1)**2)
+                    y=-2+.55*math.sqrt(mound_shape)
                     verts.append(gv((x,y,z)))
             for ai in range(along_steps-1):
                 for oi in range(out_steps-1):
@@ -1352,7 +1360,7 @@ for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,
     # rather than ending as an oval slab at the hull.
     import random
     rng=random.Random(811+index)
-    segments=48; rings=8; verts=[gv((x,-1.78,z))]; faces=[]
+    segments=48; rings=8; verts=[gv((x,-2.0,z))]; faces=[]
     for ring in range(1,rings+1):
         r=ring/rings
         for i in range(segments):
