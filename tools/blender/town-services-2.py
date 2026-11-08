@@ -8,7 +8,7 @@ import argparse, json, math, sys
 import numpy as np
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--evidence',default='.qa-dist/town-services');p.add_argument('--review',action='store_true');p.add_argument('--paths-only',action='store_true')
+p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--evidence',default='.qa-dist/town-services-2');p.add_argument('--review',action='store_true');p.add_argument('--paths-only',action='store_true')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
@@ -68,6 +68,83 @@ for n in ids:
  size={'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
+ if n=='toll-bank':
+  # The vault is measured from the photographed long wall and its door. Its
+  # main front faces the road at -Z; the porch, booth and barrier stay separate.
+  body_table={
+   'photos':{'side':'toll-bank-side.jpg','front':'toll-bank-front.jpg',
+             'rear':'toll-bank-rear.jpg','top':'toll-bank-top.jpg'},
+   'length':12.6,'width':12.6,'height':5.2,
+   'side':{'start':39,'end':983,'ground':432},
+   'front':{'centre':512,'ground':438,'top':43,'top_height':5.2},
+   'rear':{'centre':512,'ground':418,'top':119,'top_height':4.05},
+   'top':{'front':61,'rear':961,'centre':512,'x_scale':12.6/900},
+   'grey':26,'tolerance':40,'bleed_tolerance':42,'voxel':.09,'target':2700,
+   'mask_dir':str(root/'.qa-dist/town-services-2/toll-bank-masks')}
+  body=carve_object('toll-bank:body',tex,body_table);parent_keep(body,b)
+
+  # A deep 2.4 m door sits over its photographed opening, with a real wheel,
+  # hinges and an uneven bolted frame.
+  front_z=-6.3
+  door=box('toll-bank:door',(0,1.45,front_z-.14),(2.85,2.55,.24),dark,.12,b)
+  box('toll-bank:door-face',(0,1.45,front_z-.28),(2.55,2.25,.06),steel,.055,b)
+  for x in (-1.55,1.55):box('toll-bank:door-frame',(x,1.48,front_z-.20),(.20,2.95,.22),tin,.04,b)
+  box('toll-bank:door-frame',(0,2.98,front_z-.20),(3.3,.20,.22),tin,.04,b)
+  wheel=tube('toll-bank:door-wheel',(0,1.52,front_z-.34),.43,.075,dark,b,24,8);wheel.rotation_euler[0]=math.pi/2
+  hub=cyl('toll-bank:door-wheel-hub',(0,1.52,front_z-.36),.12,.12,tin,12,b);hub.rotation_euler[0]=math.pi/2
+  box('toll-bank:door-wheel-spoke',(0,1.52,front_z-.405),(.70,.055,.055),tin,.015,b)
+  box('toll-bank:door-wheel-spoke',(0,1.52,front_z-.41),(.055,.70,.055),tin,.015,b)
+  for x in (-1.2,1.2):
+   for y in (.48,2.42):
+    hinge=box('toll-bank:door-hinge',(x,y,front_z-.36),(.24,.50,.16),dark,.04,b)
+    for dy in (-.14,.14):
+     rivet=cyl('toll-bank:door-hinge-rivet',(x,y+dy,front_z-.46),.055,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
+
+  # Raised roof plates sit directly on the carved roof; every sheet follows
+  # the photographed ridge and remains an addressable patch for later repairs.
+  ridge,eave=5.2,4.12
+  for side in (-1,1):
+   for section in range(3):
+    za=-6.15+section*4.1;zb=za+4.08
+    xa,xb=(0,6.05) if side>0 else (-6.05,0)
+    ya,yb=(ridge,eave) if side>0 else (eave,ridge)
+    points=[(xa,ya+.025,za),(xb,yb+.025,za),(xb,yb+.025,zb),(xa,ya+.025,zb)]
+    mesh=bpy.data.meshes.new('toll-bank roof repair sheet');mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,2,3)]);mesh.materials.append(tin if section%2 else steel);mesh.update()
+    uv=mesh.uv_layers.new(name='UVMap')
+    for poly in mesh.polygons:
+     for li in poly.loop_indices:
+      q=points[mesh.loops[li].vertex_index];uv.data[li].uv=((q[0]+6.05)/12.1,(q[2]+6.15)/12.3)
+    obj=bpy.data.objects.new(f'toll-bank:roof-panel-{side}-{section+1}',mesh);bpy.context.collection.objects.link(obj);parent_keep(obj,b)
+  box('toll-bank:roof-ridge',(0,ridge+.045,0),(.16,.12,12.5),dark,.025,b)
+
+  # The porch canopy meets the strongroom eave and rests on two steel posts.
+  box('toll-bank:porch-deck',(0,.15,-6.73),(6.4,.30,1.45),dark,.04,b)
+  for x in (-3.0,3.0):box('toll-bank:porch-post',(x,1.93,-7.34),(.16,3.86,.16),steel,.025,b)
+  box('toll-bank:porch-canopy',(0,3.82,-6.75),(6.6,.16,1.35),tin,.035,b)
+  for x in (-2.8,-1.4,0,1.4,2.8):box('toll-bank:canopy-rib',(x,3.91,-6.82),(.045,.045,1.28),dark,.008,b)
+
+  # A small booth sits beside the barrier. Its roof touches both side walls.
+  box('toll-bank:booth-body',(5.05,1.09,-5.40),(1.65,2.18,1.45),wood,.07,b)
+  box('toll-bank:booth-window',(5.05,1.72,-6.15),(1.14,.70,.035),glass,.035,b)
+  box('toll-bank:booth-sill',(5.05,1.31,-6.19),(1.34,.11,.12),steel,.015,b)
+  box('toll-bank:booth-roof',(5.05,2.28,-5.40),(1.95,.18,1.78),tin,.045,b)
+
+  # The striped arm pivots at the booth and rests on a low catcher at its tip.
+  box('toll-bank:barrier-post',(3.96,.82,-7.20),(.20,1.64,.20),steel,.025,b)
+  box('toll-bank:barrier-arm',(-.345,1.24,-7.20),(8.61,.18,.18),wood,.025,b)
+  for index,x in enumerate((-3.75,-2.25,-.75,.75,2.25,3.55)):
+   box('toll-bank:barrier-stripe',(x,1.24,-7.31),(.72,.20,.035),paint if index%2==0 else dark,.012,b)
+  box('toll-bank:barrier-catcher',(-4.65,.37,-7.20),(.18,.74,.18),steel,.025,b)
+
+  # Fastener heads add depth to the photographed plate seams without filling
+  # the door opening. The front and side carry their own rows.
+  for x in (-5.35,-3.45,3.45,5.35):
+   for y in (.52,1.05,3.62,4.02):
+    rivet=cyl('toll-bank:wall-rivet',(x,y,front_z-.015),.045,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
+  for z in (-5.3,-3.0,0,3.0,5.3):
+   for y in (.55,3.82):
+    rivet=cyl('toll-bank:side-rivet',(6.14,y,z),.045,.05,tin,8,b);rivet.rotation_euler[1]=math.pi/2
+  continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
   for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
@@ -139,8 +216,7 @@ for n in ids:
   for x in (x0+.7,x1-.7):beam(n+' front eave beam',(x0+.5,ht+.05,z0+.45),(x1-.5,ht+.05,z0+.45),.13,wood,b)
 
 # Join each building's fixed geometry before export. The building and lamp
-# nodes stay addressable, while hundreds of small Blender objects collapse
-# into one mesh per building and keep the family below the GLB size cap.
+# nodes stay addressable, while small Blender objects collapse into one mesh.
 for building_id, building_root in building_roots.items():
  objects=[]
  for obj in list(building_root.children):
@@ -162,6 +238,10 @@ for building_id, building_root in building_roots.items():
   if building_id=='workshop':
    budget=joined.modifiers.new('Workshop structure triangle budget','DECIMATE');budget.ratio=.72
    bpy.context.view_layer.objects.active=joined;bpy.ops.object.modifier_apply(modifier=budget.name)
+
+ if building_id=='toll-bank':
+  # Keep the ground origin at the strongroom footprint center, not the porch centroid.
+  continue
 
  footprint=building_root.get('footprint_cells')
  meshes=[obj for obj in building_root.children if obj.type=='MESH']
@@ -192,114 +272,72 @@ for building_id, building_root in building_roots.items():
 
 # One durable shared root; separate named children keep in-game placement addressable.
 
+def audit_toll_bank_pieces():
+ target=building_roots['toll-bank'];pieces=[obj for obj in bpy.data.objects if obj.parent==target and obj.type=='MESH']
+ bpy.context.view_layer.update();bounds={}
+ for obj in pieces:
+  points=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  values=[(p.x,p.z,-p.y) for p in points]
+  lo=tuple(min(p[i] for p in values) for i in range(3));hi=tuple(max(p[i] for p in values) for i in range(3))
+  bounds[obj]=(lo,hi)
+ for obj,(lo,hi) in bounds.items():
+  assert lo[0]>=-7.5 and hi[0]<=7.5 and lo[2]>=-7.5 and hi[2]<=7.5, f'{obj.name} exceeds the 2x2 toll-bank footprint: {lo}..{hi}'
+  grounded=abs(lo[1])<=.035
+  touching=any(obj!=other and all(max(0,other_box[0][axis]-hi[axis],lo[axis]-other_box[1][axis])<=.06 for axis in range(3))
+               for other,other_box in bounds.items())
+  contact='ground' if grounded else 'another piece' if touching else 'FAIL'
+  print(f'TOLL-BANK PIECE {obj.name}: x={lo[0]:.3f}..{hi[0]:.3f} y={lo[1]:.3f}..{hi[1]:.3f} z={lo[2]:.3f}..{hi[2]:.3f} contact={contact}')
+  assert grounded or touching, f'{obj.name} floats without touching ground or another piece'
+
+audit_toll_bank_pieces()
+
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
- review_output.mkdir(parents=True,exist_ok=True);bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb))
- # Capture a matched close view and the roof-heavy mayor view from the exported model.
- def render(name,loc,target,lens=54,resolution=(1000,760)):
-  camdata=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,camdata);bpy.context.collection.objects.link(cam);cam.location=town.game_vector(loc);look=town.game_vector(target);cam.rotation_euler=(look-cam.location).to_track_quat('-Z','Y').to_euler();camdata.lens=lens
-  if name.startswith('trading-post-model-') or name.startswith('paint-shop-model-'):camdata.type='ORTHO';camdata.ortho_scale=lens
-  bpy.context.scene.camera=cam
-  scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.resolution_percentage=100
-  scene.render.image_settings.file_format='PNG';scene.render.film_transparent=False
-  if scene.world is None:scene.world=bpy.data.worlds.new('neutral overcast review daylight')
-  scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.27,.25,.22,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
-  scene.view_settings.view_transform='Standard';scene.view_settings.look='None';scene.view_settings.exposure=1.0;scene.view_settings.gamma=1
-  # Broad area light and a plain mid-tone ground keep surfaces legible.
-  light_data=bpy.data.lights.new('bright overcast area','AREA');light_data.energy=24000;light_data.shape='DISK';light_data.size=45
-  light=bpy.data.objects.new('bright overcast area',light_data);bpy.context.collection.objects.link(light);light.location=town.game_vector((22,64,-34));light.rotation_euler=(Vector((0,0,0))-light.location).to_track_quat('-Z','Y').to_euler()
-  sun_data=bpy.data.lights.new('soft high desert sun','SUN');sun_data.energy=1.6;sun_data.angle=math.radians(28)
-  sun=bpy.data.objects.new('soft high desert sun',sun_data);bpy.context.collection.objects.link(sun);sun.location=town.game_vector((0,42,-25));sun.rotation_euler=(Vector((0,0,0))-sun.location).to_track_quat('-Z','Y').to_euler()
-  ground_mat=bpy.data.materials.new('review ground / muted earth');ground_mat.diffuse_color=(.23,.21,.18,1);ground_mat.use_nodes=True;ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.23,.21,.18,1);ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
-  ground=town.cube('neutral packed-earth review ground',(0,-.08,0),(1000,.16,1000),ground_mat,0)
-  scene.render.filepath=str(review_output/name);bpy.ops.render.render(write_still=True)
-  for transient in (cam,light,sun,ground):bpy.data.objects.remove(transient,do_unlink=True)
-  if ground_mat.users==0:bpy.data.materials.remove(ground_mat)
- # Locate imported children by hierarchy and center camera on the exported Hall.
- hall=next(o for o in bpy.data.objects if o.name.split('.')[0]=='town-hall')
- bpy.context.view_layer.update();center_blender=hall.matrix_world.translation;center=(center_blender.x,center_blender.z,-center_blender.y)
- # The family roots share one local origin in the asset. Isolate the Hall for
- # its matched detail views so the other in-place buildings do not occlude it.
- for obj in bpy.data.objects:
-  parent=obj;is_hall=False
-  while parent:
-   if parent.name.split('.')[0]=='town-hall':is_hall=True;break
-   parent=parent.parent
-  obj.hide_render=not is_hall
- # Render 3/4 driver view and 45-degree roof view.
- render('hall-front.png',(0,7,-46),(0,5,0),47)
- render('hall-driver.png',(center[0]+8,center[1]+2,center[2]-33),(center[0],center[1]+5,center[2]),39)
- render('hall-mayor.png',(center[0]+8,center[1]+45,center[2]-54),center,48)
- forge=next(o for o in bpy.data.objects if o.name.split('.')[0]=='forge')
+ review_output.mkdir(parents=True,exist_ok=True)
+ bpy.ops.wm.read_factory_settings(use_empty=True)
+ bpy.ops.import_scene.gltf(filepath=str(glb))
+ scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT'
+ scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB';scene.render.resolution_percentage=100
+ scene.view_settings.view_transform='Standard';scene.view_settings.look='None';scene.view_settings.exposure=0;scene.view_settings.gamma=1
+ scene.world=bpy.data.worlds.new('even neutral grey studio');scene.world.use_nodes=True
+ scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.34,.34,.34,1)
+ scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
+ ground_mat=bpy.data.materials.new('plain grey review ground');ground_mat.diffuse_color=(.34,.34,.34,1);ground_mat.use_nodes=True
+ ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.34,.34,.34,1)
+ ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
+ ground=town.cube('review-only neutral grey ground',(0,-.10,0),(500,.2,500),ground_mat,0)
+ light_data=bpy.data.lights.new('large soft review light','AREA');light_data.energy=36000;light_data.shape='DISK';light_data.size=35
+ light=bpy.data.objects.new('large soft review light',light_data);scene.collection.objects.link(light)
+ light.location=town.game_vector((14,28,-24));light.rotation_euler=(town.game_vector((0,2,0))-light.location).to_track_quat('-Z','Y').to_euler()
+ fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=15000;fill_data.shape='DISK';fill_data.size=30
+ fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
+ fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
+ target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='toll-bank')
  def within(obj,target):
-  while obj:
-   if obj==target:return True
-   obj=obj.parent
+  parent=obj
+  while parent:
+   if parent==target:return True
+   parent=parent.parent
   return False
- for obj in bpy.data.objects:obj.hide_render=not within(obj,forge)
- render('forge-front.png',(0,6,-34),(0,5,0),49)
- render('forge-driver.png',(8,2,-24),(0,4,0),42)
- render('forge-mayor.png',(6,42,-42),(0,0,0),48)
- scrap=next(o for o in bpy.data.objects if o.name.split('.')[0]=='scrapyard')
- for obj in bpy.data.objects:obj.hide_render=not within(obj,scrap)
- render('scrapyard-photo-match.png',(0,8,-50),(0,5,0),80,(1024,512))
- render('scrapyard-three-quarter-left.png',(13,12,-23),(0,3.5,0),38)
- render('scrapyard-three-quarter-right.png',(-13,12,-23),(0,3.5,0),38)
- render('scrapyard-road.png',(0,1.8,-30),(0,3.5,0),36)
- render('scrapyard-mayor.png',(28,50,-35),(0,0,0),75)
- workshop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='workshop')
- for obj in bpy.data.objects:obj.hide_render=not within(obj,workshop)
- render('workshop-front.png',(0,8,-31),(0,4,0),46)
- render('workshop-driver.png',(9,2,-23),(0,4,0),43)
- render('workshop-mayor.png',(7,36,-42),(0,4,0),46)
- motor=next(o for o in bpy.data.objects if o.name.split('.')[0]=='motor-pool')
- for obj in bpy.data.objects:obj.hide_render=not within(obj,motor)
- render('motor-pool-front.png',(0,8,-40),(0,3,0),46)
- render('motor-pool-side.png',(0,8,40),(0,3,0),46)
- render('motor-pool-end.png',(32,8,0),(0,3,0),46)
- render('motor-pool-above.png',(2,40,-8),(0,2,0),48)
- render('motor-pool-mayor.png',(18,28,-32),(0,2,0),44)
- render('motor-pool-three-quarter-left.png',(20,15,-28),(0,3,0),44)
- # One clear three-quarter view of every named building, framed to its plot.
- footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
-            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3),
-            'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),
-            'helipad':(4,4),'notice-board':(1,1)}
- for building_id,(fw,fd) in footprint.items():
-  target=next(o for o in bpy.data.objects if o.name.split('.')[0]==building_id)
-  for obj in bpy.data.objects:
-   if building_id=='trading-post' and obj.type=='MESH':obj.hide_render=not obj.name.startswith('trading-post:')
-   else:obj.hide_render=not within(obj,target)
-  distance=max(fw,fd)*16+18;height=distance*.68
-  render(building_id+'-three-quarter.png',(distance*.63,height,-distance*.72),(0,height*.12,0),44)
- paint_shop=next(o for o in bpy.data.objects if o.name.split('.')[0]=='paint-shop')
- for obj in bpy.data.objects:obj.hide_render=not within(obj,paint_shop)
- # Orthographic model views align with the four generated photo cameras.
- for name,loc,target,scale in [
-  ('paint-shop-model-side.png',(35,5,0),(0,5,0),18),
-  ('paint-shop-model-front.png',(0,5,-35),(0,5,0),17.5),
-  ('paint-shop-model-rear.png',(0,5,35),(0,5,0),17.5),
-  ('paint-shop-model-above.png',(0,35,0),(0,0,0),17.5)]:
-  render(name,loc,target,scale,(1000,1000) if name.endswith('above.png') else (1000,760))
- render('paint-shop-three-quarter-left.png',(-22,13,-24),(0,4,0),44,(1000,760))
- render('paint-shop-three-quarter-right.png',(22,13,-24),(0,4,0),44,(1000,760))
- render('paint-shop-mayor.png',(24,46,-35),(0,1.5,0),60,(1000,760))
- if building_id=='trading-post':
-  for name,loc,target,angle in [
-   ('trading-post-model-side.png',(31,7.5,0),(0,3.7,0),18),
-   ('trading-post-model-front.png',(0,7.5,-31),(0,3.7,0),16),
-   ('trading-post-model-rear.png',(0,7.5,31),(0,3.7,0),16),
-   ('trading-post-model-above.png',(0,38,-1),(0,3.7,-1),28),
-   ('trading-post-three-quarter-left.png',(24,18,-27),(0,3,0),48),
-   ('trading-post-three-quarter-right.png',(-24,18,-27),(0,3,0),48),
-   ('trading-post-mayor.png',(48,68,-48),(0,0,0),140)]:
-   render(name,loc,target,angle,(900,640))
- # Build a clean overview by spatially arranging the imported building groups.
- for obj in bpy.data.objects:obj.hide_render=False
- buildings=[o for o in bpy.data.objects if o.type=='EMPTY' and o.name.split('.')[0] in ['town-hall']+ids]
- for i,o in enumerate(buildings):
-  if o.name.split('.')[0]!='town-hall':o.location=town.game_vector(((i%4-1.5)*40,0,(i//4-1)*42))
- bpy.context.view_layer.update();render('family-overview.png',(0,115,-130),(0,0,0),44)
- print(json.dumps({'glb':str(glb),'evidence':str(review_output),'hall_triangles':sum(len(o.data.polygons) for o in bpy.data.objects if o.type=='MESH')}))
+ for obj in bpy.data.objects:
+  if obj==ground or obj==light or obj==fill:continue
+  obj.hide_render=not within(obj,target_root)
+ camera_data=bpy.data.cameras.new('orthographic matched review camera');camera=bpy.data.objects.new('orthographic matched review camera',camera_data);scene.collection.objects.link(camera);scene.camera=camera
+ def render(name,eye,look,scale,resolution):
+  camera.location=town.game_vector(eye);camera.rotation_euler=(town.game_vector(look)-camera.location).to_track_quat('-Z','Y').to_euler()
+  camera_data.type='ORTHO';camera_data.ortho_scale=scale
+  scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ shots=[
+  ('model-side',(30,2.6,0),(0,2.6,0),15.1,(1024,512)),
+  ('model-front',(0,2.6,-30),(0,2.6,0),15.1,(1024,512)),
+  ('model-rear',(0,2.6,30),(0,2.6,0),15.1,(1024,512)),
+  ('model-above',(0,36,0),(0,0,0),15.1,(1024,1024)),
+  ('three-quarter-road',(20,12,-22),(0,2.5,0),19.5,(1024,768)),
+  ('three-quarter-yard',(-20,12,22),(0,2.5,0),19.5,(1024,768)),
+  ('mayor-view',(55,68,-55),(0,0,0),20.0,(1024,768)),
+ ]
+ for shot in shots:render(*shot)
+ print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))
 else:print(json.dumps({'glb':str(glb),'blend':str(blend)}))
