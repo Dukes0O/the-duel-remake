@@ -81,6 +81,8 @@ const generators = [
     glb:['public/assets/models/wasteland/town/sanitation.glb'],budget:14000,maxBytes:3000000},
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
+  {id:'town-machines-2',script:'tools/blender/town-machines-2.py',args:[],
+    glb:['public/assets/models/wasteland/town/machines-2.glb'],budget:105000,maxBytes:8000000},
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:55000,maxBytes:8000000},
   {id:'town-services-2',script:'tools/blender/town-services-2.py',args:[],candidate:true,evidence:'.qa-dist/town-services-2',
@@ -568,6 +570,42 @@ try {
         const triangles = primitiveCount(nodeByName.get(id));
         assert.ok(triangles > 1000 && triangles <= 15000, `${id}: ${triangles} triangles`);
       }
+    });
+    if (generator.id === 'town-machines-2') check('TOWN-ART-MACHINES-2 exports all machine roots and articulated parts', () => {
+      const bytes=readFileSync(join(root,generator.glb[0]));
+      const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+      const names=gltf.nodes.map(node=>node.name||'');
+      const ids=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck'];
+      assert.ok(names.includes('town-machines-2'),'family root is missing');
+      for(const id of ids)assert.ok(names.includes(id),`${id} root is missing`);
+        for(const joint of ['loader:arms','loader:bucket','mixer-truck:drum','mixer-truck:chute','roller:drum','paver:screed','drill-rig:mast','drill-rig:string','crane-truck:boom','crane-truck:hook','pipe-truck:pipe-1','pipe-truck:pipe-2','pipe-truck:pipe-3','pipe-truck:pipe-4','pipe-truck:pipe-5'])
+        assert.ok(names.includes(joint),`${joint} pivot node is missing`);
+      const children=gltf.nodes.map(node=>node.children||[]);const ix=names.indexOf('town-machines-2');
+      assert.deepEqual(children[ix].map(i=>names[i]).sort(),ids.slice().sort(),'family root has one direct child per machine');
+      const familyX=ids.map(id=>gltf.nodes[names.indexOf(id)].translation?.[0]??0);
+      assert.equal(new Set(familyX).size,ids.length,'each machine has its own family-row position');
+      assert.ok(bytes.length<=8_000_000,'machine family exceeds 8 MB');
+      const descendants=index=>[index,...children[index].flatMap(descendants)];
+      for(const id of ids){
+        const machineIndex=names.indexOf(id);
+        const meshes=new Set(descendants(machineIndex).map(i=>gltf.nodes[i].mesh).filter(Number.isInteger));
+        const triangles=[...meshes].reduce((sum,mesh)=>sum+gltf.meshes[mesh].primitives.reduce((part,p)=>part+gltf.accessors[p.indices].count/3,0),0);
+          assert.ok(triangles>0&&triangles<=15_000,`${id} has ${triangles} triangles, outside the 1-15,000 range`);
+        }
+        const jsonLength=bytes.readUInt32LE(12),binaryStart=20+jsonLength+8;
+        const data=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+        for(const [meshIndex,mesh] of gltf.meshes.entries())for(const [primitiveIndex,primitive] of mesh.primitives.entries()){
+          const uvNames=Object.keys(primitive.attributes).filter(name=>name.startsWith('TEXCOORD_'));
+          assert.deepEqual(uvNames,['TEXCOORD_0'],`mesh ${meshIndex} primitive ${primitiveIndex} must have only TEXCOORD_0`);
+          const accessor=gltf.accessors[primitive.attributes.TEXCOORD_0],view=gltf.bufferViews[accessor.bufferView];
+          assert.equal(accessor.componentType,5126,`mesh ${meshIndex} UVs must be float coordinates`);
+          assert.equal(accessor.type,'VEC2',`mesh ${meshIndex} UVs must have two components`);
+          const stride=view.byteStride||8,start=binaryStart+view.byteOffset+(accessor.byteOffset||0);let minU=Infinity,minV=Infinity,maxU=-Infinity,maxV=-Infinity;
+          for(let i=0;i<accessor.count;i++){const u=data.getFloat32(start+i*stride,true),v=data.getFloat32(start+i*stride+4,true);minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);}
+          assert.ok(maxU-minU>1e-5&&maxV-minV>1e-5,`mesh ${meshIndex} UVs must cover a range on both axes`);
+        }
+        for(const [index,material] of gltf.materials.entries())
+          assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`material ${index} metallicFactor exceeds .3`);
     });
     if (artCandidates.has(generator.id)) {
       // Not passed: built only under the ignored .qa-dist (--candidate),

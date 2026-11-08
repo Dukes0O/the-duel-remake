@@ -309,11 +309,20 @@ The reference and uncropped material study stay outside the repository.
 `walker-coat-reference.jpg` is a crop from the generated photographic reference used on the first town walker sheet. OpenAI ImageGen, 5 November 2026. Prompt: documentary-style full-body photograph of an adult survivor in a worn patched dust coat and work overalls, standing on dusty ground in bright overcast daylight; muted brown fabric, visible repairs, natural human proportions. The original full-size source is not retained. `walker-*-cloth.jpg` are 256 px crops derived from that coat patch and gently tinted for each outfit. They are the only walker textile pictures; the model recipe uses each image on its corresponding reduced Quaternius body.
 - `stages-rusted-steel.jpg`: the building stages' own rusted steel picture, generated for TOWN-ART-STAGES.
 
+<<<<<<< HEAD
+## TOWN-ART-MACHINES-2 round 4
+
+Generated with Codex built-in image generation on 6 November 2026. The model embeds each as a separate 256 px JPEG tile; the original PNGs remain outside the repository.
+
+- `machines2-dusty-steel.jpg`: close-up photographic tile of salvaged galvanized steel plate, cool zinc-grey grain, small dents and scratches, subdued rust at fasteners, diffuse overcast light. Prompt: “Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for a realistic 3D construction-machine game model. A close straight-on material photograph of salvaged galvanized steel plate, muted cool charcoal and zinc-grey with fine grain, shallow scratches, small dents, a few subdued dark brown rust spots and narrow rust streaks below fasteners, a thin rubbed bright-metal edge here and there. The whole image is steel surface only, even scale, no object outline. Flat diffuse bright overcast illumination, no directional shadows or glare, seamless tile edges, realistic 10 cm scale, crisp detail, no text, logo, watermark, orange saturation or wood grain.”
+- `machines2-dusty-rubber.jpg`: close-up photographic tile of dusty black industrial tyre rubber, fine grain, shallow cracks, scuffs, embedded dust, matte finish. Prompt: “Use case: photorealistic-natural. Asset type: seamless repeating albedo texture for black industrial construction-machine tyres in a realistic 3D game. A straight-on macro photograph of dusty deep black tire rubber, subtle fine grain and tiny cracks, crisp raised chevron tread blocks partially visible near the edges, embedded grey-brown dust in the grooves, worn contact scuffs, no lettering or sidewall logos. Whole surface evenly sharp, true small scale, matte rubber, no strong highlights. Flat diffuse overcast light, no cast shadows, seamless square tile edges, no objects, no text, no watermark.”
+=======
 ## town-services-brick.jpg
 
 Generated with OpenAI image generation for TOWN-ART-SERVICES (6 November 2026). It supplies the small repeating brick picture for the Town Hall walls and gable.
 
 Prompt: Photorealistic seamless square close-up of old red-brown fired brick masonry from a remote desert civic building. Individual bricks about 22 cm long by 7 cm tall, clear horizontal mortar joints, irregular faded brick faces, rubbed corners, fine dust in mortar, small chips, mild soot and darker weathering low down. Muted brick reds and dark brown mortar, matte, no strong perspective, even diffuse daylight, no labels or writing. Tile edges blend seamlessly. Avoid rubble, piles of broken bricks, orange saturation, smooth stone, uniform noise, blur, logos, watermark.
+>>>>>>> integration/wasteland
 
 ## TOWN-ART-TRUCKS-1, round 7: fire-engine photo sources
 
@@ -385,6 +394,18 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
 
+<<<<<<< HEAD
+## TOWN-ART-MACHINES-2, round 6 reference photographs
+
+Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
+
+- `machines2-crane-truck-views.jpg`: articulated lattice recovery crane with open triangular boom.
+- `machines2-pipe-truck-views.jpg`: flatbed pipe carrier with an unloading frame.
+- `machines2-roller-views.jpg`: single-drum road roller with rear tires.
+- `machines2-loader-views.jpg`: articulated wheel loader with raised arms and scoop.
+- `machines2-paver-views.jpg`: tracked asphalt paver with front hopper and rear screed.
+- `machines2-drill-rig-views.jpg`: truck-mounted well rig with an open lattice mast.
+=======
 ## TOWN-ART-FUN round 2 references
 
 Generated with the built-in ImageGen tool, 6 November 2026. Original development references; compressed JPEGs are stored here for recipe rebuilds and the review sheet.
@@ -790,3 +811,4 @@ Hydrant-side.jpg, hydrant-front.jpg, hydrant-rear.jpg and hydrant-top.jpg are in
 ## TOWN-ART-PLANTS conveyor references (round 13)
 
 `conveyor-side.jpg`, `conveyor-front.jpg`, `conveyor-rear.jpg` and `conveyor-top.jpg` are individual orthographic reference photographs generated with OpenAI ImageGen on 7 November 2026. They show one weathered ground conveyor on plain grey ground. Each was saved as a JPEG at 1024 pixels wide. No third-party source photographs were used.
+>>>>>>> integration/wasteland
