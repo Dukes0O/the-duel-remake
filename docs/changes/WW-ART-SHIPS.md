@@ -594,3 +594,15 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - The box hull sections, the straight straps that ran inside the hull, the fixed-height rails and the fifth side window.
 - `round-19.jpg` and `round-19-review.md`; round 20 is the single current sheet.
+
+## Pilot boat round 2 (8 November 2026)
+
+- Raised the boat body 1.2 m above the trailer on four criss-crossed timber cribbing layers at three support points. This puts the keel about 2.8 m above the ground and the radar dome about 8.2 m high. The twelve-wheel trailer now has a long thin A-frame, a slight sag in its rails, a spare tyre with a chain, and a jerrycan.
+- Replaced four straps with three at photo x=110, 340 and 715, calculated through `hull_photo_uv`; each runs down past the cribbing to the trailer frame. Added the 0.15 m roof overhang, roof grab rails, horn, two deck lights, yardarm, paired aft vents, forward yellow WIDE LOAD sign in black lettering, and two orange bow flags. Hull stations, sections, UV mapping, rake, deck rails and named parts are unchanged.
+- Point 1 Blender family export completed: 37,667 triangles across the GLB, 2,870,776 bytes. Pilot-only read-back and required checks are pending after the three review renders.
+- Browser checks: not applicable to this art-only card. Claude should inspect `.qa-dist/check-pilot-boat-road.png`, `.qa-dist/check-pilot-boat-side.png` and `.qa-dist/check-pilot-boat-above.png`.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the four previous built straps and stern-mounted red WIDE LOAD sign. No ship, lighthouse, hull section, source photo, or prior review evidence was removed.
