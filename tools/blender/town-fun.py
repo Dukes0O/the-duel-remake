@@ -62,6 +62,8 @@ if '--review-only' in args:
             if obj.type=='MESH' and obj.name!='Review ground':obj.hide_render=not obj.name.startswith('mud-pit:')
         target=Vector((0,0,1.15));camera.data.type='ORTHO';camera.data.lens=50
         scene.render.resolution_percentage=100
+        for obj in scene.objects:
+            if obj.type=='MESH':obj.hide_render=obj.name not in ('mud-pit:earth-bowl','Review ground')
         views=[('side',(1,0,0),'mud-pit-side.jpg'),('front',(0,1,0),'mud-pit-front.jpg'),
                ('rear',(0,-1,0),'mud-pit-rear.jpg'),('above',(0,0,1),'mud-pit-top.jpg')]
         for name,direction,photo_name in views:
@@ -71,6 +73,8 @@ if '--review-only' in args:
             camera.data.ortho_scale=31.5
             scene.render.filepath=str(evidence/f'mud-pit-{name}-model.png');bpy.ops.render.render(write_still=True)
             print('rendered mud-pit',name)
+        for obj in scene.objects:
+            if obj.type=='MESH':obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith('mud-pit:'))
         scene.render.resolution_x,scene.render.resolution_y=1000,700
         for name,direction,ortho in [('three-quarter-a',(1,1,.72),34),('three-quarter-b',(-1,-1,.72),34),('mayor',(1,1,1),37)]:
             direction=Vector(direction).normalized();camera.location=target+direction*48;aim(camera,target)
@@ -1180,21 +1184,28 @@ for i in range(3):
 building_root('mud-pit','4x4')
 mud_photo=Photo(tex/'mud-pit-top.jpg')
 mud_photo.image['credit']='OpenAI image generation; original: C:/Users/kyleb/.codex/generated_images/01a1b9e1-3291-7a32-876e-9f29d2981d3c/exec-fccfe036-6b86-43b2-8b88-60f7fd570883.png'
+lift_if_dark(mud_photo)
+mud_solid=~mud_photo.sky(photo_carve.edge_seeds(mud_photo),tolerance=34,grey=30)
+mud_photo.bleed(mud_solid)
 mud_mesh=bpy.data.meshes.new('mud-pit concave earth and churned-mud photo surface')
 mud_verts=[];mud_uvs=[];mud_faces=[]
-grid=32;outer=14.2
+grid=48;outer=14.2
+rim_height=4.2
+def mud_surface(x,z):
+    d=max(abs(x),abs(z))
+    if d<=7.2:y=.12
+    elif d<=12.1:y=.12+(rim_height-.12)*(d-7.2)/(12.1-7.2)
+    else:y=rim_height*(outer-d)/(outer-12.1)
+    if 7.2<d<outer:y+=.04*math.sin(x*.83)*math.sin(z*.67)
+    if abs(x)<2.45 and abs(z)>7.2:
+        az=abs(z)
+        y=.12+(rim_height-.12)*(az-7.2)/(12.1-7.2) if az<=12.1 else rim_height*(outer-az)/(outer-12.1)
+    return y
 for j in range(grid+1):
     z=-outer+2*outer*j/grid
     for i in range(grid+1):
         x=-outer+2*outer*i/grid
-        d=max(abs(x),abs(z))
-        if d<=7.2:y=.12
-        elif d<=12.1:y=.12+(.91-.12)*(d-7.2)/(12.1-7.2)
-        else:y=.91*(outer-d)/(outer-12.1)
-        if 7.2<d<outer:y+=.025*math.sin(x*.83)*math.sin(z*.67)
-        if abs(x)<2.45 and abs(z)>7.2:
-            az=abs(z)
-            y=.12+.79*(az-7.2)/(12.1-7.2) if az<=12.1 else .91*(outer-az)/(outer-12.1)
+        y=mud_surface(x,z)
         mud_verts.append(tuple(town.game_vector((x,y,z))))
         mud_uvs.append(mud_photo.uv(512+x*(455/outer),512+z*(480/outer)))
 for j in range(grid):
@@ -1223,28 +1234,39 @@ stand_table={
     'side':{'start':34,'end':855,'ground':382},
     'front':{'centre':512,'ground':477,'top':74},
     'rear':{'centre':512,'ground':477,'top':74},
-    'top':{'front':70,'rear':444,'centre':256,'along':'x','x_scale':4.8/570},
+    'top':{'front':70,'rear':444,'centre':256,'x_scale':4.8/570},
     'side_front_on_left':False,
+    'cut':{
+        'side':[(120,164,900,184),(120,252,900,278),(120,338,900,370)],
+        'front':[(240,175,784,199),(240,235,784,258),(240,319,784,349),(230,358,794,420)],
+        'rear':[(220,151,800,179),(220,235,800,265),(220,312,800,349),(215,352,810,420)],
+        'top':[(120,218,900,252),(120,318,900,350)],
+    },
     'keep':lambda x,y,z: (abs(y-.68)<.14)|(abs(y-1.42)<.14)|(abs(y-2.16)<.14),
     'grey':28,'tolerance':38,'bleed_tolerance':38,
     'voxel':.075,'target':1800,'mask_dir':str(root/'.qa-dist/town-art-fun-round-23/masks'),
 }
-stand=carve_object('mud-pit:grandstand-seats-source',tex,stand_table)
-stand.location=town.game_vector((0,.10,8.4));stand.name='mud-pit:grandstand-seats';stand.parent=current
-stand_side=stand_table['_photos']['side'];lift_if_dark(stand_side)
-stand_mask=~stand_side.sky(photo_carve.edge_seeds(stand_side)+[(260,205),(495,205),(735,205),(270,325),(510,325),(755,325)],tolerance=38,grey=28)
-stand_mask[60:112,:]=False;stand_mask[185:237,:]=False;stand_mask[305:357,:]=False
+stand_rows=[]
+for row_index,seat_level in enumerate((.68,1.42,2.16),1):
+    row_table={**stand_table,'keep':lambda x,y,z,seat_level=seat_level:abs(y-seat_level)<.10,
+               'target':700,'mask_dir':str(root/f'.qa-dist/town-art-fun-round-23/masks/seat-{row_index}')}
+    seat=carve_object(f'mud-pit:grandstand-seat-row-{row_index}',tex,row_table)
+    seat.location=town.game_vector((0,mud_surface(0,11.5),11.5));seat.rotation_euler[2]=math.pi/2;seat.parent=current
+    stand_rows.append(seat)
+stand_side=row_table['_photos']['side'];lift_if_dark(stand_side)
+stand_mask=~stand_side.sky(photo_carve.edge_seeds(stand_side)+[(260,190),(495,190),(735,190),(270,278),(510,278),(755,278),(280,380),(530,380),(750,380)],tolerance=38,grey=28)
+stand_mask[132:173,:]=False;stand_mask[224:260,:]=False;stand_mask[304:342,:]=False
 stand_loops=trace(stand_mask,(28,112,870,383),tolerance=2.5,min_area=18)
 if not stand_loops:raise RuntimeError('mud-pit stand support photo did not trace')
 frame_photo_mesh=PhotoMesh()
-def stand_frame_point(px,py,depth):return (depth,(382-py)*(2.55/(382-64)),4.2+(855-px)*(8.2/(855-34)))
+def stand_frame_point(px,py,depth):return (-4.2+(855-px)*(8.2/(855-34)),mud_surface(0,11.5)+(382-py)*(2.55/(382-64)),11.5-depth)
 for side_x in (-2.35,2.35):
     slab(frame_photo_mesh,'side',stand_side,stand_loops,lambda px,py,d,side_x=side_x:stand_frame_point(px,py,side_x+d),-.09,.09,wall_scale=.002)
 stand_frame=frame_photo_mesh.finish('mud-pit:grandstand-traced-frame',{'side':stand_side.material()});keep(stand_frame)
 
 # Four old tyres mark two edges and sit flat on the soil.
 for i,(x,z) in enumerate(((-10,-3),(10,-3),(-10,3),(10,3)),1):
-    torus(f'mud-pit:edge-tyre-{i}',(x,.18,z),.48,.18,'tire',parent=current,major_segments=16,minor_segments=6)
+    torus(f'mud-pit:edge-tyre-{i}',(x,mud_surface(x,z)+.18,z),.48,.18,'tire',parent=current,major_segments=16,minor_segments=6)
 
 # TOWN-ART-FUN round 22: the stalls follow their own photographed canvas and
 # counter planks. The GLB read-back above proves game Y remains height.
