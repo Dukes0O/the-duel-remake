@@ -320,9 +320,9 @@ def cyl(name, c, radius, depth, material='rusted-steel', sides=16, parent=None):
     o=bpy.context.object; o.name=name; o.data.materials.append(mat[material]);
     for f in o.data.polygons: f.use_smooth = len(f.vertices)>4
     return keep(o, parent)
-def torus(name,c,major,minor,material='rusted-steel',parent=None):
-    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=10,
-        minor_segments=5, location=town.game_vector(c))
+def torus(name,c,major,minor,material='rusted-steel',parent=None,major_segments=10,minor_segments=5):
+    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=major_segments,
+        minor_segments=minor_segments, location=town.game_vector(c))
     o=bpy.context.object; o.name=name; o.data.materials.append(mat[material]); return keep(o,parent)
 def pipe(name, points, radius=.12, material='rusted-steel', parent=None):
     for i,(a,b) in enumerate(zip(points,points[1:])):
@@ -767,15 +767,70 @@ for piece in drive_pieces:
     print('DRIVE-IN CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
     if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
-# Four shell bumper cars inside a bank of real tyres, each a separately movable node.
+# Wreck ring: a grounded two-course wall of salvaged tyres around four separate cars.
 building_root('wreck-ring','3x3')
-for i in range(32):
-    a=math.tau*i/32; x=8.2*math.cos(a); z=8.2*math.sin(a)
-    wheel(f'wreck-ring:tyre-wall-{i+1}',(x,.72,z),.82,'tire')
-    wheel(f'wreck-ring:upper-tyre-{i+1}',(x,1.72,z),.82,'tire')
-for i,a in enumerate((.25,1.82,3.40,4.95),1):
-    p=bpy.data.objects.new(f'wreck-ring:car-{i}',None); bpy.context.collection.objects.link(p); p.parent=current
-    car(f'wreck-ring:bumper-car-{i}',(4.1*math.cos(a),.12,4.1*math.sin(a)),.76,('faded-hand-paint','galvanised-tin','rusted-steel','patched-canvas')[i-1],p)
+ring_root=current
+ring_radius=8.45
+for course,y in enumerate((1.03,2.99),1):
+    for i in range(36):
+        a=math.tau*i/36
+        # Each tyre overlaps its neighbours and the course above/below.
+        x=ring_radius*math.cos(a); z=ring_radius*math.sin(a)
+        tyre_obj=torus(f'wreck-ring:tyre-{course}-{i+1}',(x,y,z),.73,.30,'tire',ring_root,8,4)
+        tyre_obj.rotation_euler[0]=math.pi/2
+        tyre_obj['part']='stacked salvaged tyre'
+# Dust covers the arena floor, with a darker worn centre.
+box('wreck-ring:dusty-floor',(0,.055,0),(16.3,.11,16.3),'sand',.04,ring_root)
+box('wreck-ring:drifted-dust',(0,.115,0),(7.4,.05,7.4),'cracked-concrete',.04,ring_root)
+
+# The same four generated shell photographs are measured at each view. The front
+# is +Z as for a vehicle; each shell is carved once, then receives a rubber ring.
+wreck_recipe={
+    'photos':{'side':'wreck-ring-shell-side.jpg','front':'wreck-ring-shell-front.jpg',
+              'rear':'wreck-ring-shell-rear.jpg','top':'wreck-ring-shell-above.jpg'},
+    'length':3.5,'width':2.45,'height':1.42,'forward':1,'round':2,
+    'side':{'start':55,'end':963,'ground':454},
+    'front':{'centre':512,'ground':590,'top':155},
+    'rear':{'centre':512,'ground':590,'top':155},
+    'top':{'front':104,'rear':600,'centre':512,'x_scale':2.45/820},
+    'grey':8,'tolerance':30,'voxel':.07,'target':850,
+    'mask_dir':str(root/'.qa-dist/wreck-ring-masks'),
+}
+car_slots=[(-3.9,-3.6,0),(3.9,-3.6,math.pi/2),(-3.9,3.6,-math.pi/2),(3.9,3.6,math.pi)]
+for i,(x,z,turn) in enumerate(car_slots,1):
+    car_root=bpy.data.objects.new(f'wreck-ring:car-{i}',None)
+    bpy.context.collection.objects.link(car_root); car_root.parent=ring_root
+    shell=carve_object(f'wreck-ring:car-{i}:shell',tex,wreck_recipe)
+    keep(shell,car_root)
+    # The bumper sits around the carved shell's perimeter, below its floor.
+    bumper=torus(f'wreck-ring:car-{i}:bumper',(0,.29,0),1.18,.16,'tire',car_root)
+    bumper.scale=(1.0,1.0,1.46)
+    car_root.location=town.game_vector((x,0,z)); car_root.rotation_euler[2]=turn
+    shell['source']='four generated orthographic photos of one bumper-car shell'
+    bumper['source']='continuous separate rubber bumper around the shell'
+
+# Print every wreck-ring piece in game axes and prove it fits the 3x3 grid.
+bpy.context.view_layer.update()
+wreck_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('wreck-ring:')]
+def wreck_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return ((min(p.x for p in pts),max(p.x for p in pts)),
+            (min(p.z for p in pts),max(p.z for p in pts)),
+            (min(p.y for p in pts),max(p.y for p in pts)))
+def wreck_overlap(a,b,p=.04):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in wreck_pieces:
+    b=wreck_bounds(piece)
+    report={'x':list(map(lambda v:round(v,3),b[0])),
+            'y':list(map(lambda v:round(v,3),b[1])),
+            'z':list(map(lambda v:round(-v,3),reversed(b[2])))}
+    print('WRECK-RING BOUNDS',piece.name,json.dumps(report))
+    if b[0][0]<-11.5 or b[0][1]>11.5 or b[2][0]<-11.5 or b[2][1]>11.5 or b[1][0]<-.03:
+        raise RuntimeError(f'{piece.name} leaves the 3x3 footprint or extends below ground: {report}')
+    grounded=b[1][0]<=.04
+    touches=grounded or any(other is not piece and wreck_overlap(b,wreck_bounds(other)) for other in wreck_pieces)
+    print('WRECK-RING CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
 # Big wheel: retain open photo-carved spokes, but make the two rims complete
 # torus rings. The round-8 white box was studio background enclosed by the
