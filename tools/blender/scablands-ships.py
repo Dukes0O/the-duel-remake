@@ -595,11 +595,14 @@ def cube(name, center, dims, material, part, bevel=.04):
         o.modifiers.new('weighted worn normals','WEIGHTED_NORMAL')
     return attach(o,name,part)
 
-def photo_box(name, center, dims, side, bow, stern, top, part, crops):
+def photo_box(name, center, dims, side, bow, stern, top, part, crops,
+              rusted_edges=False):
     """A crisp photo-projected box; no carving, masks or rounded voxel walls."""
     obj = cube(name, center, dims, steel, part, 0)
     obj.data.materials.clear()
     mats = [side, bow, stern, top]
+    if rusted_edges:
+        mats.append(rust)
     for mat in mats:
         obj.data.materials.append(mat)
     uv = obj.data.uv_layers.active
@@ -608,6 +611,9 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
     for poly in obj.data.polygons:
         n = poly.normal
         roof_deck = name.endswith(':upperworks-deck')
+        if rusted_edges and roof_deck and abs(n.z) < .9:
+            poly.material_index = 4
+            continue
         if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
             # Each end wall keeps its own photo (windows, rails, ladders).
             mat_index = 1 if n.x > 0 else 2
@@ -872,18 +878,27 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                      if prefix=='good-hope' else
                      {'side':(12,43,624,205),'front':(80,45,560,337),
                       'rear':(55,45,585,301),'top':(116,0,466,633)})
+        block_photo_crops = dict(photo_crops)
+        if prefix == 'marigold':
+            # The side and bow photos include bright sky above the cabin wall.
+            # Start each projection on the painted wall, at its own scale.
+            block_photo_crops['side'] = (12, 74, 624, 205)
+            block_photo_crops['front'] = (80, 116, 560, 337)
+            block_photo_crops['rear'] = (55, 96, 585, 301)
         photo_crop_order=[photo_crops[v] for v in ('side','front','rear','top')]
+        block_photo_crop_order=[block_photo_crops[v] for v in ('side','front','rear','top')]
         cabin_root=root_obj(ident+':upperworks',(0,0,0),ident+':upperworks')
         parent(cabin_root,r)
         cabin=photo_box(ident+':upperworks-block',(0,0,0),
                         (cabin_length,cabin_height,cabin_width),
                         photo_mats['side'],photo_mats['front'],photo_mats['rear'],
-                        photo_mats['top'],ident+':upperworks',photo_crop_order)
+                        photo_mats['top'],ident+':upperworks',block_photo_crop_order)
         cabin.location=gv((22.0,deck+cabin_height*.5,0)); parent(cabin,cabin_root)
         roof=photo_box(ident+':upperworks-deck',(0,0,0),
                        (cabin_length+.8,.26,cabin_width+.6),photo_mats['side'],
                        photo_mats['front'],photo_mats['rear'],photo_mats['top'],
-                       ident+':upperworks',photo_crop_order)
+                       ident+':upperworks',photo_crop_order,
+                       rusted_edges=(prefix=='marigold'))
         roof.location=gv((22.0,deck+cabin_height-.10,0)); parent(roof,cabin_root)
         # Straight bridge wings continue the deck to the measured cabin width.
         for side in (-1,1):
@@ -910,22 +925,28 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 # either cabin end's own photograph.
                 for side in (-1, 1):
                     corner = cube(f'marigold-cabin-forward-corner-{side}',
-                                  (22.0 + cabin_length * .5, deck + cabin_height * .5,
-                                   side * (cabin_width * .5 - .08)),
-                                  (.14, cabin_height, .20), rust,
+                                  (22.0 + cabin_length * .5 - .02, deck + cabin_height * .5,
+                                   side * (cabin_width * .5 - .05)),
+                                  (.14, cabin_height, .36), rust,
                                   ident + ':upperworks', .025)
                     parent(corner, cabin_root)
-                roof_y = deck + cabin_height - .10
+                roof_y = deck + cabin_height - .28
+                for fore in (-1, 1):
+                    header = cube(f'marigold-cabin-roof-header-{fore}',
+                                  (22.0 + fore * (cabin_length * .5 - .05), roof_y, 0),
+                                  (.40, .55, cabin_width), rust,
+                                  ident + ':upperworks', .025)
+                    parent(header, cabin_root)
                 for side in (-1, 1):
                     edge = cube(f'marigold-cabin-roof-edge-{side}',
-                                (22.0, roof_y, side * (cabin_width * .5 + .18)),
-                                (cabin_length + .8, .20, .28), rust,
+                                (22.0, roof_y, side * (cabin_width * .5 - .05)),
+                                (cabin_length + .8, .55, .36), rust,
                                 ident + ':upperworks', .025)
                     parent(edge, cabin_root)
                 for fore in (-1, 1):
                     edge = cube(f'marigold-cabin-roof-end-{fore}',
-                                (22.0 + fore * (cabin_length * .5 + .4), roof_y, 0),
-                                (.28, .20, cabin_width + .6), rust,
+                                (22.0 + fore * (cabin_length * .5 - .05), roof_y, 0),
+                                (.36, .55, cabin_width + .6), rust,
                                 ident + ':upperworks', .025)
                     parent(edge, cabin_root)
             funnel=cylinder('marigold-weathered-funnel',(18.5,10.9,0),.95,3.0,rust,ident,16)

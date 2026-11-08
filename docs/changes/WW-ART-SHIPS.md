@@ -414,3 +414,14 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed no source parts, photos, assertions, or review sheets.
+
+## Round 16, point 2 — checked views (7 November 2026)
+
+- Rendered and inspected `port-patience`, `starboard-good-hope`, `port-marigold`, `starboard-marigold` and `deck-marigold` from the final export. The bow flares now sample darker adjacent side plating. The Marigold cabin's bright roof/photo edge is covered by its own upperworks crop and narrow rusted steel edge trim; its end walls still use their own photos.
+- Final GLB read-back: 35,115 triangles and 2,727,300 bytes. All ship triangle limits and the 50,000-triangle / 3 MB family limits pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. No assertion changes. Race fingerprints: none; art only. No browser check, lane tier or build applies.
+- Claude should judge those five views, especially the remaining paint balance where the bows turn into their stems and the Marigold's rusted roof edge.
+
+### Removed
+
+- Removed the temporary round 16 renders, review Blend, detail crop and check logs after inspection. No source photos, prior review sheets or model parts were removed.
