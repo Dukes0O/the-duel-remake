@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-19'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-20'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-19.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-20.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -307,6 +307,25 @@ mat = town.make_materials({
     'sand': tex / 'wet-brown-earth.jpg',
     'patched-canvas': tex / 'patched-canvas.jpg',
 })
+def flat_material(name, color, alpha=1.0, metallic=0.0):
+    material=bpy.data.materials.new(name); material.diffuse_color=(*color,alpha); material.use_nodes=True
+    shader=material.node_tree.nodes.get('Principled BSDF')
+    shader.inputs['Base Color'].default_value=(*color,alpha);shader.inputs['Roughness'].default_value=.84
+    shader.inputs['Metallic'].default_value=metallic
+    if alpha<1:
+        shader.inputs['Alpha'].default_value=alpha;material.surface_render_method='DITHERED'
+    return material
+mat['dirty-glass']=flat_material('Town Fun / soot-dulled jar glass',(.26,.32,.28),.55)
+mat['letter-paint']=flat_material('Town Fun / old cream paint',(.57,.39,.19))
+mat['red-paint']=flat_material('Town Fun / bruised red candy',(.46,.10,.06))
+mat['ochre-paint']=flat_material('Town Fun / faded yellow candy',(.65,.38,.08))
+mat['blue-paint']=flat_material('Town Fun / dull blue candy',(.10,.23,.27))
+stall_source_photos=[]
+for stall_id in ('fun-stall-a','fun-stall-b'):
+    for view in ('side','front','rear','top'):
+        photo=Photo(tex/f'{stall_id}-{view}.jpg')
+        photo.image['credit']='OpenAI image generation; prompt and source retained in town-fun.py'
+        stall_source_photos.append(photo)
 mat['tire'] = bpy.data.materials.new('Town Fun / worn rubber')
 mat['tire'].use_nodes = True
 mat['tire'].diffuse_color = (.045, .047, .042, 1)
@@ -1067,20 +1086,99 @@ box('mud-pit:grandstand-bench',(0,3.05,-13),(5.6,.18,2.5),'weathered-plank',.05)
 for y in (1.9,2.5): beam(f'mud-pit:grandstand-rail-{y}',(-2.5,y,-14),(2.5,y,-14),.09,'rusted-steel')
 for i in range(4): box(f'mud-pit:tyre-chicane-{i}',(-5+i*3,.28,2.2),(.95,.55,.72),'tire',.05)
 
-# Two roadside stalls: one hand-painted can target range, one patched sweets counter.
-for stall in ('fun-stall-a','fun-stall-b'):
-    building_root(stall,'1x1')
-    if stall.endswith('a'):
-        for x in (-2.3,2.3): beam(f'{stall}:lean-post-{x}',(x,.15,-2),(x+.15,3.4,-2),.12,'weathered-plank')
-        for i in range(3): box(f'{stall}:hit-can-{i}',(-1.35+i*.6,.28,-.4),(.28,.38,.28),'galvanised-tin',.025)
-        beam(f'{stall}:throw-line',(-2.5,.04,1.4),(2.5,.04,1.4),.08,'rusted-steel')
-        for x in (-1.5,0,1.5): box(f'{stall}:hand-painted-target-{x}',(x,1.4,-.15),(.8,.7,.05),'faded-hand-paint',.03)
+# TOWN-ART-FUN round 20: two independently built market stalls. Their source
+# elevations and plan photos are kept in textures; pieces follow measured
+# structural landmarks rather than projecting goods onto the stall body.
+def stall_cloth(name, x0, x1, z0, z1, y, material):
+    # Sagging, scalloped canvas surface built as individual stitched panels.
+    verts=[]; faces=[]; n=8
+    for row,z in enumerate((z0,(z0+z1)*.5,z1)):
+        for i in range(n+1):
+            x=x0+(x1-x0)*i/n
+            sag=.13*math.sin(math.pi*i/n) + (.07 if row==1 else 0)
+        verts.append(tuple(town.game_vector((x,y-sag,z))))
+    for row in range(2):
+        for i in range(n):
+            k=row*(n+1)+i; faces.append((k,k+1,k+n+2,k+n+1))
+    mesh=bpy.data.meshes.new(name+' stitched cloth'); mesh.from_pydata(verts,[],faces); mesh.materials.append(mat[material]);mesh.update()
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);return keep(obj)
+
+def build_fun_stall(name, sweets=False):
+    building_root(name,'1x1')
+    # Four welded round-tube uprights and rails trace the photo's open frame.
+    for x in (-2.35,2.35):
+        for z in (-2.05,1.75):
+            pipe(f'{name}:pipe-post-{x}-{z}',[(x,.05,z),(x,3.0,z)],.075,'rusted-steel')
+    for y,z in ((2.92,1.75),(2.82,-2.05),(1.55,-2.05),(1.45,1.75)):
+        pipe(f'{name}:pipe-rail-{y}-{z}',[(-2.35,y,z),(2.35,y,z)],.065,'rusted-steel')
+    for x in (-2.35,2.35):
+        pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,1.75),(x,2.72,-2.25)],.06,'rusted-steel')
+    # Counter plank stack is its own grounded sales piece, with a dark kick plate.
+    box(f'{name}:counter-kick',(0,.52,-1.84),(4.45,.62,.18),'weathered-plank',.035)
+    for i in range(3): box(f'{name}:counter-plank-{i}',(0,.88+i*.14,-1.82),(4.7,.12,.48),'weathered-plank',.025)
+    # Patched awning has a shallow fall toward the road and a ragged stitched hem.
+    for i,material in enumerate(('patched-canvas','faded-hand-paint','patched-canvas','weathered-plank')):
+        z0=-2.10+i*.98; z1=z0+.99
+        stall_cloth(f'{name}:awning-patch-{i}',-2.38,2.38,z0,z1,2.78-(i*.06),material)
+    for i in range(9):
+        x=-2.34+i*.585; y=2.56+.11*math.sin(math.pi*i/8)
+        box(f'{name}:awning-hem-tab-{i}',(x,y,-2.14),(.51,.09,.13),'patched-canvas',.018)
+    if not sweets:
+        # A lower return shelf and a raised rear shelf carry the can target stack.
+        box(f'{name}:can-shelf-bracket-left',(-1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
+        box(f'{name}:can-shelf-bracket-right',(1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
+        box(f'{name}:can-shelf',(0,1.50,-.62),(3.35,.14,.70),'weathered-plank',.025)
+        for row,count in enumerate((3,2,1)):
+            for i in range(count):
+                x=(i-(count-1)/2)*.68; y=1.70+row*.39; z=-.65
+                cyl(f'{name}:stacked-tin-{row}-{i}',(x,y,z),.245,.34,'galvanised-tin',12)
+                cyl(f'{name}:can-lid-{row}-{i}',(x,y+.18,z),.222,.035,'rusted-steel',12)
     else:
-        for x in (-2.4,2.4): beam(f'{stall}:awning-post-{x}',(x,.15,-2),(x,3.6,-2),.12,'rusted-steel')
-        for x in (-1.6,0,1.6):
-            box(f'{stall}:sweets-crate-{x}',(x,1.25,-.8),(1.25,.75,.8),'weathered-plank',.04)
-            for i in range(4): cyl(f'{stall}:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
-        for i in range(5): box(f'{stall}:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
+        # Sweets are individually jarred; colored candy pieces remain visible above the counter.
+        for i,x in enumerate((-1.72,-.86,0,.86,1.72)):
+            box(f'{name}:jar-base-{i}',(x,1.24,-1.45),(.67,.48,.56),'weathered-plank',.025)
+            cyl(f'{name}:glass-jar-{i}',(x,1.75,-1.45),.245,.62,'dirty-glass',16)
+            cyl(f'{name}:jar-candy-{i}',(x,1.75,-1.45),.205,.40,('faded-hand-paint','letter-paint','red-paint','ochre-paint','blue-paint')[i],12)
+            cyl(f'{name}:jar-lid-{i}',(x,2.09,-1.45),.26,.09,'rusted-steel',12)
+        box(f'{name}:rear-sweets-shelf',(0,2.34,1.22),(3.8,.13,.56),'weathered-plank',.025)
+        for i,x in enumerate((-1.35,0,1.35)):
+            cyl(f'{name}:shelf-sweets-jar-{i}',(x,2.67,1.22),.27,.53,'dirty-glass',14)
+            cyl(f'{name}:shelf-candy-{i}',(x,2.67,1.22),.225,.37,('ochre-paint','red-paint','letter-paint')[i],12)
+            cyl(f'{name}:shelf-lid-{i}',(x,2.97,1.22),.29,.08,'rusted-steel',12)
+    return current
+
+stall_a=build_fun_stall('fun-stall-a',False)
+building_root('fun-stall-b','1x1')
+for x in (-2.4,2.4): beam(f'fun-stall-b:awning-post-{x}',(x,.15,-2),(x,3.6,-2),.12,'rusted-steel')
+for x in (-1.6,0,1.6):
+    box(f'fun-stall-b:sweets-crate-{x}',(x,1.25,-.8),(1.25,.75,.8),'weathered-plank',.04)
+    for i in range(4): cyl(f'fun-stall-b:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
+for i in range(5): box(f'fun-stall-b:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
+
+def stall_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+def stall_touch(a,b,p=.035):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for stall_name in ('fun-stall-a','fun-stall-b'):
+    pieces=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith(stall_name+':')]
+    for piece in pieces:
+        b=stall_bounds(piece)
+        gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+            'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+        print('STALL BOUNDS',piece.name,json.dumps(gb))
+        if gb['min'][0]<-3.5 or gb['max'][0]>3.5 or gb['min'][2]<-3.5 or gb['max'][2]>3.5 or gb['min'][1]<-.03:
+            raise RuntimeError(f'{piece.name} leaves its 1x1-cell footprint or ground: {gb}')
+        if piece.data.uv_layers.active is None:
+            piece.data.uv_layers.new(name='UVMap')
+    for piece in pieces:
+        b=stall_bounds(piece);grounded=b[2][0]<=.025
+        touching=grounded or any(other is not piece and stall_touch(b,stall_bounds(other)) for other in pieces)
+        print('STALL CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touching else 'NO CONTACT')
+        if not touching: raise RuntimeError(f'{piece.name} floats without contact')
+    triangles=sum(len(poly.vertices)-2 for piece in pieces for poly in piece.data.polygons)
+    print('STALL TRIANGLES',stall_name,triangles)
+    if triangles>1800: raise RuntimeError(f'{stall_name} has {triangles} triangles (limit 1800)')
 
 # Round 17: round the figure's cross-sections and favour the front/rear views
 # on their respective halves. Keep the box-shaped plinth as a separate carve.
