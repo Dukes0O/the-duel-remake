@@ -16,7 +16,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
-**Files you own:** `tools/blender/town-services.py`, `public/assets/models/wasteland/town/services.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
+**Files you own:** `tools/blender/town-services.py`, `tools/blender/town-services-2.py`, `public/assets/models/wasteland/town/services.glb`, `public/assets/models/wasteland/town/services-2.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry per family in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
 **Checks:** `tools/test-blender-output.mjs` for this recipe (it reads back budgets and that every id below exists), `tools/test-repo-hygiene.mjs`, `tools/test-review-evidence.mjs`. No frame timing on art. Not wired into the game here. No Chrome. No new dependency, network request or key.
 

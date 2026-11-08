@@ -1,4 +1,4 @@
-﻿"""Hand-built Wasteland civic and service buildings, TOWN-ART-SERVICES.
+"""Hand-built Wasteland civic and service buildings, TOWN-ART-SERVICES.
 
 Coordinates use game metres (+Y up, front -Z). The recipe writes the named
 family GLB and renders its review only after importing that GLB into a clean
@@ -181,9 +181,9 @@ for index,x in enumerate((-10.5,10.5)):
  mesh.update()
  flag=bpy.data.objects.new(f'town-hall:flag-{index+1}',mesh);bpy.context.collection.objects.link(flag);parent_keep(flag,h)
 # Town service buildings: each has its own 8 m cell footprint and distinct roof silhouette.
-ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board']
+ids=['scrapyard','forge','workshop','motor-pool','paint-shop','trading-post']
 for n in ids:
- size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3),'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),'helipad':(4,4),'notice-board':(1,1)}[n]
+ size={'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3)}[n]
  w,d=size[0]*8-1,size[1]*8-1
  b=make(n,size);x0,x1=-w/2,w/2;z0,z1=-d/2,d/2
  if n in ('forge','workshop'):continue
@@ -268,35 +268,8 @@ for n in ids:
    joined=any(index!=other and all(max(0,alo[axis]-hi[axis],lo[axis]-ahi[axis])<=.16 for axis in range(3)) for other,(alo,ahi) in enumerate(piece_bounds))
    assert grounded or joined, f'{pieces[index].name} does not touch ground or another piece'
   continue
- if n=='radio-mast':
-  # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
-  levels=[1,7,13,17.8]
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:
-   beam('Mast leg',(x,.4,z),(0,18.5,0),.11,steel,b)
-  for y in levels:
-   rr=1.7*(1-y/19)
-   pts=[(-rr,y,-rr),(rr,y,-rr),(0,y,rr)]
-   for j in range(3):beam('Mast lattice brace',pts[j],pts[(j+1)%3],.045,dark,b)
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast guy wire',(x,.15,z),(0,12,0),.035,dark,b)
-  lamp=bpy.data.materials.new('Town service red warning lamp');lamp.use_nodes=True;bs=lamp.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.35,.035,.012,1);bs.inputs['Emission Color'].default_value=(1,.08,.015,1);bs.inputs['Emission Strength'].default_value=2
-  sphere('radio-mast:lamp',(0,19.0,0),.22,lamp,b);continue
- if n=='helipad':
-  box('Helipad earth plinth',(0,.15,0),(w,d,.3),sand,.08,b);box('Helipad welded steel deck',(0,.42,0),(w-1,d-1,.24),steel,.045,b)
-  for x in range(-int(w/2)+1,int(w/2),2):beam('Deck plate weld',(x,.56,-d/2+1),(x,.56,d/2-1),.035,tin,b)
-  # Bold letter H from real painted bars and perimeter stop rails.
-  for x in (-5,5):box('Landing H upright',(x,.58,0),(.85,.08,8),paint,.025,b)
-  box('Landing H crossbar',(0,.59,0),(10,.09,.85),paint,.025,b)
-  for x in (-w/2+1,w/2-1):beam('Pad perimeter rail',(x,.68,-d/2+1),(x,.68,d/2-1),.12,tin,b)
-  for x in (-w/2+2,w/2-2):
-   beam('Floodlight post',(x,.5,-d/2+1),(x,4,-d/2+1),.10,steel,b);box('Floodlight hood',(x,4,-d/2+1),(.45,.24,.7),dark,.03,b)
-  for x in (-6,6):cyl('Fuel drum',(x,.95,5),.37,.9,steel,20,b)
-  continue
- if n=='notice-board':
-  for x in (-2.4,2.4):beam('Notice post',(x,.1,-2),(x,2.7,-2),.15,wood,b)
-  box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
- heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4,'toll-bank':4.4,'school':5.2}
- ht=heights.get(n,5.0);mat=brick if n=='toll-bank' else wood if n=='school' else tin
+ heights={'scrapyard':5.8,'forge':5.5,'workshop':5.3,'motor-pool':5,'paint-shop':4.8,'trading-post':5.4}
+ ht=heights.get(n,5.0);mat=tin
  if n=='paint-shop':
   # One measured four-view carve forms the patched workshop shell. Its raised
   # roller door is a real keep cut, so the dark spray booth reads as depth.
@@ -449,13 +422,6 @@ for n in ids:
    print(f'TRADING-POST CONTACT {owned[i].name}: {"ground/contact pass" if grounded or touching else "FAIL"}')
   continue
  if n!='scrapyard':shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
- if n=='school':
-  # Brick gable edges and pitch roof with exposed purlins.
-  for side in (-1,1):
-   z=z0+1 if side<0 else z1-1
-   beam(n+' gable slope',(x0+.4,ht,z),(0,ht+2,z),.16,brick,b);beam(n+' gable slope',(0,ht+2,z),(x1-.4,ht,z),.16,brick,b)
-  for side in (-1,1):
-   roof=box(n+' pitched roof',(0,ht+1,side*d*.18),(w*.58,.14,d*.55),tin,.025,b);roof.rotation_euler[2]=side*.48
  elif n!='scrapyard':
   # Leanto roof with a true fall and thin ridge, patched with corrugated plates.
   for ix in range(4):
@@ -466,7 +432,7 @@ for n in ids:
  if n!='scrapyard':
   for i,x in enumerate([-w*.32,0,w*.32]):
    box(n+' facade patch',(x,ht*.52,z0+.02),(w*.18,ht*.48,.10),tin if i%2==0 else wood,.025,b)
-   if n in ('workshop','motor-pool','school') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
+   if n in ('workshop','motor-pool') and x!=0:box(n+' dirty window',(x,ht*.72,z0-.06),(1.2,.8,.08),glass,.025,b)
  if n=='scrapyard':
   # Trace each crushed car's side outline, then extrude the real 1.8 m width.
   # The side photo dresses both faces; a separate plan photo covers the roof.
@@ -666,22 +632,6 @@ for n in ids:
   # Large painted board has pictograms only; no fragile generated lettering.
   box('Trading sign board',(0,ht+.6,z0-.4),(w*.65,1.0,.16),wood,.04,b)
   for x in (-w*.17,0,w*.17):box('Trade sign glyph',(x,ht+.6,z0-.51),(.45,.38,.05),paint,.04,b)
- if n=='toll-bank':
-  # Thick strongroom door, ring wheel, and a real movable-looking hinged barrier arm.
-  box('Bank steel strongroom door',(0,2.15,z0-.2),(4.2,3.8,.5),steel,.12,b)
-  tube('Bank locking wheel',(0,2.2,z0-.55),.78,.08,dark,b);cyl('Bank wheel hub',(0,2.2,z0-.55),.17,.15,tin,20,b)
-  for ang in range(0,360,90):
-   x=math.cos(math.radians(ang))*.72;y=2.2+math.sin(math.radians(ang))*.72;beam('Bank wheel spoke',(0,2.2,z0-.65),(x,y,z0-.65),.075,tin,b)
-  beam('Barrier pivot',(0,.2,z0-4),(0,2.0,z0-4),.24,steel,b);beam('Toll barrier arm',(0,1.8,z0-4),(6,1.8,z0-4),.22,wood,b)
-  for x in (1,3,5):box('Barrier faded bands',(x,1.8,z0-4.14),(.55,.24,.05),paint,.01,b)
- if n=='school':
-  # Recognizable salvaged bus shell outside the lean-to, held up by its own axle wheels.
-  body=box('Old school bus body',(0,1.65,z0-2.3),(w*.64,2.65,4.2),paint,.35,b)
-  for x in (-w*.23,-w*.08,w*.08,w*.23):box('Bus dark window',(x,2.3,z0-4.46),(1.05,.78,.07),glass,.04,b)
-  for x in (-w*.2,w*.2):tube('Bus road tyre',(x,.72,z0-1),.55,.17,dark,b)
-  box('Chalk board',(0,1.7,z0-5),(3.6,1.8,.14),dark,.035,b)
-  beam('Bus lean-to front post',(0,.3,2.6),(0,4.2,2.6),.14,wood,b)
-  for x in (-4,4):beam('Bus lean-to roof',(x,4.1,2.6),(0,4.3,2.6),.13,steel,b)
  # Real sectional posts and corner plates visibly tie each facade to its roof frame.
  if n!='scrapyard':
   for x in (x0+.5,x1-.5):
@@ -911,9 +861,7 @@ if a.review:
  render('motor-pool-three-quarter-left.png',(20,15,-28),(0,3,0),44)
  # One clear three-quarter view of every named building, framed to its plot.
  footprint={'town-hall':(3,3),'scrapyard':(3,3),'forge':(2,2),'workshop':(3,2),
-            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3),
-            'toll-bank':(2,2),'school':(3,2),'radio-mast':(1,1),
-            'helipad':(4,4),'notice-board':(1,1)}
+            'motor-pool':(4,2),'paint-shop':(2,2),'trading-post':(3,3)}
  for building_id,(fw,fd) in footprint.items():
   target=next(o for o in bpy.data.objects if o.name.split('.')[0]==building_id)
   for obj in bpy.data.objects:

@@ -82,7 +82,10 @@ const generators = [
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
-    glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
+    glb:['public/assets/models/wasteland/town/services.glb'],budget:55000,maxBytes:8000000},
+  {id:'town-services-2',script:'tools/blender/town-services-2.py',args:[],candidate:true,evidence:'.qa-dist/town-services-2',
+    glb:['public/assets/models/wasteland/town/services-2.glb'],budget:31600,
+    budgets:{'toll-bank':5000,school:9000,'radio-mast':1800,helipad:14000,'notice-board':1800},maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/outposts.glb'],budget:56000,
     budgets:{'dot-diner':14000,'plane-school':14000,'hermit-camp':9000,'deck-town':14000,'rail-halt':12000},maxBytes:8000000},
@@ -1522,18 +1525,17 @@ try {
     }
   });
 
-  check('TOWN-ART-SERVICES GLB exports the complete named family with individual footprint budgets', () => {
+  check('TOWN-ART-SERVICES GLB exports the seven passed buildings with individual footprint budgets', () => {
     const path=join(root,'public/assets/models/wasteland/town/services.glb');
     if(!existsSync(path))return; // Built and reviewed in its art lane before installation.
     const bytes=readFileSync(path);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);
     assert.equal(bytes.readUInt32LE(8),bytes.length);assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the 8 MB art-card limit`);
     const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)).trim()),nodes=gltf.nodes||[];
-    const ids=['town-hall','scrapyard','forge','workshop','motor-pool','paint-shop','trading-post','toll-bank','school','radio-mast','helipad','notice-board'];
+    const ids=['town-hall','scrapyard','forge','workshop','motor-pool','paint-shop','trading-post'];
     const byName=new Map(nodes.map((node,index)=>[node.name,index]));
     const family=byName.get('town-services');assert.notEqual(family,undefined,'family root is named');
     const roots=new Set(nodes[family].children||[]);
     for(const id of ids){assert.ok(byName.has(id),`missing ${id}`);assert.ok(roots.has(byName.get(id)),`${id} is a direct family child`);}
-    assert.ok(byName.has('radio-mast:lamp'),'radio-mast warning lamp has its own named node');
     assert.ok(byName.has('forge:lamp'),'forge glow has its own named node');
     for(const part of ['town-hall:clock','town-hall:clock-face','town-hall:flag-1','town-hall:flag-2','town-hall:flag-pole-1','town-hall:flag-pole-2','workshop:car-on-lift','workshop:car-front'])assert.ok(byName.has(part),`${part} is a separate named art piece`);
     const visited=new Set();
@@ -1541,7 +1543,29 @@ try {
       if(node.mesh!==undefined){const mesh=gltf.meshes[node.mesh];for(const primitive of mesh.primitives){total+=(gltf.accessors[primitive.indices]?.count||0)/3;
         const uv=Object.keys(primitive.attributes||{}).filter(key=>key.startsWith('TEXCOORD_'));assert.deepEqual(uv,['TEXCOORD_0'],`${mesh.name||node.name} has only TEXCOORD_0`);}}
       for(const child of node.children||[])total+=trianglesUnder(child);return total;}
-    const budgets={'town-hall':9000,scrapyard:9000,forge:5000,workshop:9000,'motor-pool':14000,'paint-shop':5000,'trading-post':9000,'toll-bank':5000,school:9000,'radio-mast':1800,helipad:14000,'notice-board':1800};
+    const budgets={'town-hall':9000,scrapyard:9000,forge:5000,workshop:9000,'motor-pool':14000,'paint-shop':5000,'trading-post':9000};
+    for(const [id,budget] of Object.entries(budgets)){visited.clear();const count=trianglesUnder(byName.get(id));assert.ok(count>100&&count<=budget,`${id}: ${count} triangles exceeds ${budget}`);}
+    for(const material of gltf.materials||[])assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic factor exceeds .3`);
+  });
+
+  check('TOWN-ART-SERVICES-2 GLB exports the five remaining services with individual footprint budgets', () => {
+    const path=join(root,'public/assets/models/wasteland/town/services-2.glb');
+    if(!existsSync(path))return;
+    const bytes=readFileSync(path);assert.equal(bytes.toString('ascii',0,4),'glTF');assert.equal(bytes.readUInt32LE(4),2);
+    assert.equal(bytes.readUInt32LE(8),bytes.length);assert.ok(bytes.length<=8_000_000,`${bytes.length} bytes exceeds the 8 MB art-card limit`);
+    const gltf=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)).trim()),nodes=gltf.nodes||[];
+    const ids=['toll-bank','school','radio-mast','helipad','notice-board'];
+    const byName=new Map(nodes.map((node,index)=>[node.name,index]));
+    const family=byName.get('town-services-2');assert.notEqual(family,undefined,'town-services-2 family root is named');
+    const roots=new Set(nodes[family].children||[]);
+    for(const id of ids){assert.ok(byName.has(id),`missing ${id}`);assert.ok(roots.has(byName.get(id)),`${id} is a direct town-services-2 child`);}
+    assert.ok(byName.has('radio-mast:lamp'),'radio-mast warning lamp has its own named node');
+    const visited=new Set();
+    function trianglesUnder(index){if(visited.has(index))return 0;visited.add(index);const node=nodes[index];let total=0;
+      if(node.mesh!==undefined){const mesh=gltf.meshes[node.mesh];for(const primitive of mesh.primitives){total+=(gltf.accessors[primitive.indices]?.count||0)/3;
+        const uv=Object.keys(primitive.attributes||{}).filter(key=>key.startsWith('TEXCOORD_'));assert.deepEqual(uv,['TEXCOORD_0'],`${mesh.name||node.name} has only TEXCOORD_0`);}}
+      for(const child of node.children||[])total+=trianglesUnder(child);return total;}
+    const budgets={'toll-bank':5000,school:9000,'radio-mast':1800,helipad:14000,'notice-board':1800};
     for(const [id,budget] of Object.entries(budgets)){visited.clear();const count=trianglesUnder(byName.get(id));assert.ok(count>100&&count<=budget,`${id}: ${count} triangles exceeds ${budget}`);}
     for(const material of gltf.materials||[])assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic factor exceeds .3`);
   });
