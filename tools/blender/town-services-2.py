@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-13.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-13/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-14.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-14/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -259,18 +259,46 @@ for n in ids:
    school_beam(f'school:chalk-mark-{index+1}',(x0,y,board_z-.132),(x1,y,board_z-.132),.028,paint)
   continue
  if n=='radio-mast':
-  # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast foot',(x,.1,z),(x,1,z),.13,steel,b)
-  levels=[1,7,13,17.8]
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:
-   beam('Mast leg',(x,.4,z),(0,18.5,0),.11,steel,b)
-  for y in levels:
-   rr=1.7*(1-y/19)
-   pts=[(-rr,y,-rr),(rr,y,-rr),(0,y,rr)]
-   for j in range(3):beam('Mast lattice brace',pts[j],pts[(j+1)%3],.045,dark,b)
-  for x,z in [(-1.7,-1.7),(1.7,-1.7),(0,1.8)]:beam('Mast guy wire',(x,.15,z),(0,12,0),.035,dark,b)
-  lamp=bpy.data.materials.new('Town service red warning lamp');lamp.use_nodes=True;bs=lamp.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.35,.035,.012,1);bs.inputs['Emission Color'].default_value=(1,.08,.015,1);bs.inputs['Emission Strength'].default_value=2
-  sphere('radio-mast:lamp',(0,19.0,0),.22,lamp,b);continue
+  # Thirty metre salvaged lattice, guyed to anchors within the 1x1 plot.
+  # The crossed faces retain open bays; the cross-section turns 90 degrees
+  # between the front and side faces rather than becoming a solid mast.
+  rust=m['rusted-steel'];wire=m['iron-dark'];
+  def mast_beam(name,p0,p1,w,material):
+   a0=town.game_vector(p0);b0=town.game_vector(p1);direction=b0-a0
+   obj=box(name,((p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2),(w,direction.length,w),material,.008,b)
+   # Thin lattice bars need square, honest sections; bevel modifiers multiply
+   # their exported triangles without improving these subpixel edges.
+   for modifier in list(obj.modifiers):obj.modifiers.remove(modifier)
+   obj.rotation_euler=direction.to_track_quat('Z','Y').to_euler();return obj
+  levels=[.35,4.5,8.7,12.9,17.1,21.3,25.5,29.4]
+  def width_at(y):return .92-(.72*y/30)
+  for face in range(2):
+   ang=face*math.pi/2
+   c,sn=math.cos(ang),math.sin(ang)
+   def pt(u,y):return (u*c,y,u*sn)
+   # Two weathered legs on each open face.
+   for side in (-1,1):
+    for y0,y1 in zip(levels,levels[1:]):
+     mast_beam(f'radio-mast:leg-{face}-{side}-{y0}',pt(side*width_at(y0),y0),pt(side*width_at(y1),y1),.105,rust)
+   for low,high in zip(levels,levels[1:]):
+    w0,w1=width_at(low),width_at(high)
+    for side in (-1,1):
+     mast_beam(f'radio-mast:crossbar-{face}-{low}-{side}',pt(side*w0,low),pt(-side*w0,low),.075,steel)
+    mast_beam(f'radio-mast:brace-{face}-{low}-a',pt(-w0,low),pt(w1,high),.075,rust)
+    mast_beam(f'radio-mast:brace-{face}-{low}-b',pt(w0,low),pt(-w1,high),.075,rust)
+  mast_beam('radio-mast:lamp-spindle',(0,29.4,0),(0,30.0,0),.12,rust)
+  # Small independent corrugated hut at the rear edge of the base.
+  box('radio-mast:hut-body',(1.62,1.12,1.62),(1.55,2.24,1.5),tin,.035,b)
+  box('radio-mast:hut-door',(1.62,.95,.855),(.48,1.75,.035),wood,.02,b)
+  box('radio-mast:hut-window',(1.18,1.55,.825),(.48,.46,.035),glass,.02,b)
+  roof=box('radio-mast:hut-roof',(1.62,2.31,1.62),(1.8,.14,1.75),rust,.025,b);roof.rotation_euler[0]=.025
+  # Four stays use fine steel beams; anchor blocks and stay ends land on ground.
+  anchors=[(-2.70,-2.70),(2.70,-2.70),(-2.70,2.70),(2.70,2.70)]
+  for i,(ax,az) in enumerate(anchors):
+   box(f'radio-mast:anchor-{i}',(ax,.18,az),(.48,.36,.48),dark,.04,b)
+   mast_beam(f'radio-mast:guy-wire-{i}',(ax,.36,az),(0,22.4,0),.035,wire)
+  lamp=bpy.data.materials.new('Town service red warning lamp');lamp.use_nodes=True;bs=lamp.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.35,.012,.008,1);bs.inputs['Emission Color'].default_value=(1,.012,.004,1);bs.inputs['Emission Strength'].default_value=3
+  sphere('radio-mast:lamp',(0,30.18,0),.18,lamp,b);continue
  if n=='helipad':
   box('Helipad earth plinth',(0,.15,0),(w,d,.3),sand,.08,b);box('Helipad welded steel deck',(0,.42,0),(w-1,d-1,.24),steel,.045,b)
   for x in range(-int(w/2)+1,int(w/2),2):beam('Deck plate weld',(x,.56,-d/2+1),(x,.56,d/2-1),.035,tin,b)
@@ -423,6 +451,30 @@ def audit_school_pieces():
 
 audit_school_pieces()
 
+def audit_radio_mast_pieces():
+ target=building_roots['radio-mast'];pieces=[obj for obj in bpy.data.objects if obj.parent==target and obj.type=='MESH']
+ bpy.context.view_layer.update();bounds={}
+ for obj in pieces:
+  points=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  values=[(p.x,p.z,-p.y) for p in points]
+  lo=tuple(min(p[i] for p in values) for i in range(3));hi=tuple(max(p[i] for p in values) for i in range(3))
+  bounds[obj]=(lo,hi)
+ for obj,(lo,hi) in bounds.items():
+  assert lo[0]>=-3.0 and hi[0]<=3.0 and lo[2]>=-3.0 and hi[2]<=3.0, f'{obj.name} exceeds radio-mast plot with 0.5 m clearance: {lo}..{hi}'
+  grounded=abs(lo[1])<=.035
+  touching=any(obj!=other and all(max(0,other_box[0][axis]-hi[axis],lo[axis]-other_box[1][axis])<=.06 for axis in range(3))
+               for other,other_box in bounds.items())
+  contact='ground' if grounded else 'another piece' if touching else 'FAIL'
+  print(f'RADIO-MAST PIECE {obj.name}: x={lo[0]:.3f}..{hi[0]:.3f} y={lo[1]:.3f}..{hi[1]:.3f} z={lo[2]:.3f}..{hi[2]:.3f} contact={contact}')
+  assert grounded or touching, f'{obj.name} floats without touching ground or another piece'
+ triangles=0;depsgraph=bpy.context.evaluated_depsgraph_get()
+ for obj in pieces:
+  evaluated=obj.evaluated_get(depsgraph);mesh=evaluated.to_mesh();mesh.calc_loop_triangles();triangles+=len(mesh.loop_triangles);evaluated.to_mesh_clear()
+ print(f'RADIO-MAST TRIANGLES {triangles}')
+ assert triangles<=1800, f'radio-mast exceeds 1800 triangles: {triangles}'
+
+audit_radio_mast_pieces()
+
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
@@ -446,7 +498,7 @@ if a.review:
  fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=5000;fill_data.shape='DISK';fill_data.size=30
  fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
  fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
- target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='school')
+ target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='radio-mast')
  def within(obj,target):
   parent=obj
   while parent:
@@ -461,7 +513,7 @@ if a.review:
   camera.location=town.game_vector(eye);camera.rotation_euler=(town.game_vector(look)-camera.location).to_track_quat('-Z','Y').to_euler()
   camera_data.type='ORTHO';camera_data.ortho_scale=scale
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
-  body_prefixes=('school:body','school:wheel-')
+  body_prefixes=('radio-mast:')
   for obj in bpy.data.objects:
    if obj==ground or obj==light or obj==fill:continue
    is_body_piece=obj.name.startswith(body_prefixes)
@@ -469,13 +521,13 @@ if a.review:
   bpy.ops.render.render(write_still=True)
  shots=[
   # Photo comparisons use the same orthographic cameras as their source views.
-  ('model-side',(-30,1.45,.70),(0,1.45,.70),9.0,(1200,520),True),
-  ('model-front',(1.36,1.50,-30),(1.36,1.50,.70),3.6,(1024,936),True),
-  ('model-rear',(1.36,1.50,30),(1.36,1.50,.70),3.6,(1024,936),True),
-  ('model-above',(1.36,36,.70),(1.36,0,.70),10.3,(682,1024),True),
-  ('three-quarter-road',(18,9,-19),(0,1.5,0),13.0,(1024,768)),
-  ('three-quarter-yard',(-18,9,19),(0,1.5,0),13.0,(1024,768)),
-  ('mayor-view',(55,68,-55),(0,0,0),13.0,(1024,768)),
+  ('model-side',(-46,15,0),(0,15,0),34.0,(900,900),True),
+  ('model-front',(0,15,-46),(0,15,0),34.0,(900,900),True),
+  ('model-rear',(0,15,46),(0,15,0),34.0,(900,900),True),
+  ('model-above',(0,48,0),(0,0,0),8.2,(900,900),True),
+  ('three-quarter-road',(22,35,-32),(0,14,0),38.0,(900,900)),
+  ('three-quarter-yard',(-22,35,32),(0,14,0),38.0,(900,900)),
+  ('mayor-view',(48,65,-48),(0,12,0),38.0,(900,900)),
  ]
  for shot in shots:render(*shot)
  print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))

@@ -148,3 +148,21 @@ wheel detail, lean-to attachment and chalkboard readability in the sheet.
 - Removed the flat rubber material override that hid tyre-photo detail and
   omitted high-triangle lug bolts from the final recipe.
 - No buildings, source photos or checks were removed.
+
+## Radio mast, round 14
+
+Added four generated orthographic JPEG references and credits, and replaced the old 19 m simple mast with a 30 m open guyed lattice, a corrugated hut, four anchor blocks and a separate emissive `radio-mast:lamp`. The hut, stays and anchors fit inside the 1 by 1 cell plot with at least 0.5 m clearance. The in-recipe audit printed every mast-piece bound and contact; all pieces touch ground or another piece. The evaluated mast count is 1,588 triangles. The `services-2.glb` export is about 2 MB; toll bank and school recipe branches were not changed.
+
+The exported-model sheet is `docs/board/looks/town-art-services/round-14.jpg` (2,048 by 2,802 pixels, 155,612 bytes). It compares four elevation/plan references and exports, followed by both three-quarter views and the mayor view. Claude should inspect the reference-to-render scale, the front/rear bracing, guy-wire readability, hut placement and the lamp. The reference photos include guy wires and the hut; they are not isolated mast-only plates. The mast frame is assembled from low-poly beams, not a `trace`/`slab` photo silhouette; this remains a gap against the requested method and should be judged before merge.
+
+### Checks and review
+
+- Blender 4.5.13 export, per-piece bounds/contact checks and evaluated triangle budget: passed (1,588 triangles).
+- `node tools/test-blender-output.mjs`: first run failed because the exported mast was 4,436 triangles; after removing thin-bar bevel modifiers, rerun completed with 386 checks passed, 0 failed.
+- Lane tier, build and browser checks were not run, as required for art cards. Claude should inspect the listed views before merge.
+- Changed assertions: none. Race fingerprints: not applicable; race code is unchanged.
+
+### Removed
+
+- Removed the old 19 m simple triangular mast and its three guy stays. Replaced them with the lattice tower, hut, four plot-contained guy wires and anchors, and named warning lamp.
+- No passed building, source asset or test was removed.
