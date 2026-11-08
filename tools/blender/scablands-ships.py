@@ -1924,7 +1924,7 @@ if args.stage == 'family':
     lightmat=matte_material('Pilot boat / warm deck light glass',(1.0,.67,.28),.25)
     for x in (-.15,1.00):
         lamp=cube(f'pilot-boat-deck-light-{x}',(x,4.83,0),(.24,.18,.34),lightmat,'pilot-boat',.035); parent(lamp,boat)
-    for side in (-1,1): torus(f'pilot-boat-life-ring-{side}',(-4.8,2.65,side*.98),.28,.06,materials['faded-hand-paint'],'pilot-boat','Z',16,6)
+    for side in (-1,1): torus(f'pilot-boat-life-ring-{side}',(-4.8,2.65,side*.98),.28,.06,materials['faded-hand-paint'],'pilot-boat','Z',12,5)
     # The long, thin trailer frame sags slightly under its absurd load.
     for z in (-1.65,1.65):
         beam(f'pilot-trailer-ladder-rail-aft-{z}',(-7.0,0,z),(-.2,-.16,z),.13,rust,'pilot-boat',.12)
@@ -1935,10 +1935,10 @@ if args.stage == 'family':
         beam(f'pilot-trailer-timber-bunk-{side}',(-5.5,.38,side*1.12),(5.6,.38,side*1.12),.20,wood,'pilot-boat',.16)
         for axle,x in enumerate((-4.2,0,4.2)):
             z=side*1.78; wheel_y=-.675
-            tire=cylinder(f'pilot-trailer-solid-black-tyre-{side}-{axle}',(x,wheel_y,z),.525,.30,iron,'pilot-boat',24,'Y'); tire.rotation_euler[0]=math.pi/2
-            rim=cylinder(f'pilot-trailer-steel-rim-{side}-{axle}',(x,wheel_y,z+side*.16),.32,.04,steel,'pilot-boat',20,'Y'); rim.rotation_euler[0]=math.pi/2
-            hub=cylinder(f'pilot-trailer-hub-{side}-{axle}',(x,wheel_y,z+side*.19),.105,.06,steel,'pilot-boat',12,'Y'); hub.rotation_euler[0]=math.pi/2
-            inner=cylinder(f'pilot-trailer-inner-solid-tyre-{side}-{axle}',(x,wheel_y,z-side*.34),.525,.28,iron,'pilot-boat',24,'Y'); inner.rotation_euler[0]=math.pi/2
+            tire=cylinder(f'pilot-trailer-solid-black-tyre-{side}-{axle}',(x,wheel_y,z),.525,.30,iron,'pilot-boat',12,'Y'); tire.rotation_euler[0]=math.pi/2
+            rim=cylinder(f'pilot-trailer-steel-rim-{side}-{axle}',(x,wheel_y,z+side*.16),.32,.04,steel,'pilot-boat',16,'Y'); rim.rotation_euler[0]=math.pi/2
+            hub=cylinder(f'pilot-trailer-hub-{side}-{axle}',(x,wheel_y,z+side*.19),.105,.06,steel,'pilot-boat',8,'Y'); hub.rotation_euler[0]=math.pi/2
+            inner=cylinder(f'pilot-trailer-inner-solid-tyre-{side}-{axle}',(x,wheel_y,z-side*.34),.525,.28,iron,'pilot-boat',12,'Y'); inner.rotation_euler[0]=math.pi/2
             rail(f'pilot-trailer-axle-{side}-{axle}',(x,wheel_y,side*.85),(x,wheel_y,side*1.48),.085,steel,'pilot-boat')
             guard_verts=[]; guard_faces=[]; guard_segments=8
             for edge_z in (side*1.30,side*2.00):
@@ -1951,11 +1951,11 @@ if args.stage == 'family':
             guard_mesh=bpy.data.meshes.new(f'pilot trailer mudguard mesh {side} {axle}'); guard_mesh.from_pydata(guard_verts,[],guard_faces); guard_mesh.materials.append(rust); guard_mesh.update()
             guard=bpy.data.objects.new(f'pilot-trailer-mudguard-{side}-{axle}',guard_mesh); scene.collection.objects.link(guard); guard['part']='pilot-boat'; parent(guard,boat)
     for support,x in enumerate((-4.4,-.5,3.8)):
-        for layer in range(4):
-            y=.55+layer*.30
+        for layer in range(3):
+            y=.68+layer*.40
             across=(layer%2)==0
-            dims=(.42,.30,1.72) if across else (1.25,.30,.42)
-            block=cube(f'pilot-trailer-cribbing-{support}-{layer}',(x,y,0),dims,wood,'pilot-boat',.025); parent(block,boat)
+            dims=(.42,.40,1.72) if across else (1.25,.40,.42)
+            block=cube(f'pilot-trailer-cribbing-{support}-{layer}',(x,y,0),dims,wood,'pilot-boat',0); parent(block,boat)
     body_lift=bpy.data.objects.new('pilot-boat-elevated-cradle',None); scene.collection.objects.link(body_lift); body_lift.location=(0,0,1.2); body_lift['part']='pilot-boat'; parent(body_lift,boat)
     for i,photo_x in enumerate((110,340,715)):
         along=(photo_x-10)/1510; x=(along-.5)*12.2
@@ -1972,14 +1972,15 @@ if args.stage == 'family':
         beam(f'pilot-trailer-sign-frame-{z}',(7.12,.28,z),(7.12,2.55,z),.10,rust,'pilot-boat',.09)
     for z in (-1.08,1.08):
         bolt=cylinder(f'pilot-boat-sign-bolt-{z}',(7.22,2.12,z),.045,.045,steel,'pilot-boat',12,'X'); parent(bolt,boat)
-    text_data=bpy.data.curves.new('WIDE LOAD black lettering','FONT'); text_data.body='WIDE LOAD'; text_data.size=.43; text_data.extrude=.004; text_data.resolution_u=1
-    text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((7.19,1.94,0)); text_obj.rotation_euler=(math.pi/2,0,-math.pi/2); text_obj.data.materials.append(black); text_obj['part']='pilot-boat'; parent(text_obj,boat)
+    text_data=bpy.data.curves.new('WIDE LOAD black lettering','FONT'); text_data.body='WIDE LOAD'; text_data.size=.30; text_data.extrude=.004; text_data.resolution_u=1
+    text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((7.19,1.94,0)); text_obj.rotation_euler=(math.pi/2,0,math.pi/2); text_obj.data.materials.append(black); text_obj['part']='pilot-boat'; parent(text_obj,boat)
     orange=matte_material('Pilot boat / orange oversize flags',(.95,.19,.025),.45)
     for side in (-1,1):
-        rail(f'pilot-boat-oversize-flag-staff-{side}',(5.52,boat_deck(.46)+1.22,side*1.78),(5.52,boat_deck(.46)+2.10,side*1.78),.025,steel,'pilot-boat')
+        flag_x=4.15; flag_t=flag_x/12.2; flag_z=side*1.40; flag_y=boat_deck(flag_t)
+        rail(f'pilot-boat-oversize-flag-staff-{side}',(flag_x,flag_y,flag_z),(flag_x,flag_y+.88,flag_z),.025,steel,'pilot-boat')
         # Small triangular cloths are single-sided and point out from the bow.
         flag_mesh=bpy.data.meshes.new(f'oversize bow flag {side}')
-        coords=[gv((5.52,boat_deck(.46)+2.06,side*1.78)),gv((5.52,boat_deck(.46)+1.58,side*1.78)),gv((5.52,boat_deck(.46)+1.78,side*2.42))]
+        coords=[gv((flag_x,flag_y+.84,flag_z)),gv((flag_x,flag_y+.36,flag_z)),gv((flag_x,flag_y+.57,side*1.95))]
         flag_mesh.from_pydata(coords,[],[(0,1,2)]); flag_mesh.materials.append(orange)
         flag=bpy.data.objects.new(f'pilot-boat-oversize-flag-{side}',flag_mesh); scene.collection.objects.link(flag); flag['part']='pilot-boat'; parent(flag,boat)
     trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)

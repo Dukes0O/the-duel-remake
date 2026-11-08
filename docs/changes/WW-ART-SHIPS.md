@@ -599,8 +599,9 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Raised the boat body 1.2 m above the trailer on four criss-crossed timber cribbing layers at three support points. This puts the keel about 2.8 m above the ground and the radar dome about 8.2 m high. The twelve-wheel trailer now has a long thin A-frame, a slight sag in its rails, a spare tyre with a chain, and a jerrycan.
 - Replaced four straps with three at photo x=110, 340 and 715, calculated through `hull_photo_uv`; each runs down past the cribbing to the trailer frame. Added the 0.15 m roof overhang, roof grab rails, horn, two deck lights, yardarm, paired aft vents, forward yellow WIDE LOAD sign in black lettering, and two orange bow flags. Hull stations, sections, UV mapping, rake, deck rails and named parts are unchanged.
-- Point 1 Blender family export completed: 37,667 triangles across the GLB, 2,870,776 bytes. Pilot-only read-back and required checks are pending after the three review renders.
-- Browser checks: not applicable to this art-only card. Claude should inspect `.qa-dist/check-pilot-boat-road.png`, `.qa-dist/check-pilot-boat-side.png` and `.qa-dist/check-pilot-boat-above.png`.
+- The first GLB read-back exceeded the pilot-boat budget, so the trailer tyres, rims, hubs and life rings were rebuilt with lower fixed primitive segment counts. No Decimate modifier or automatic triangle reduction was used. Final GLB read-back: pilot boat 4,944 triangles; whole file 36,719 triangles and 2,820,548 bytes.
+- Rendered and inspected the road, side and above views. The taller boat fits all three cameras; the road view shows the black WIDE LOAD lettering facing the camera. Claude should review `.qa-dist/check-pilot-boat-road.png`, `.qa-dist/check-pilot-boat-side.png` and `.qa-dist/check-pilot-boat-above.png`.
+- `node tools/test-blender-output.mjs`: passed, 381 checks; 0 failed. `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory. Lane tier, build and browser checks were not run for this art-only card.
 - Changed assertions: none. Race fingerprints: none; art only.
 
 ### Removed
