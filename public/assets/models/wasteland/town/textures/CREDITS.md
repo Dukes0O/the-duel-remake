@@ -812,3 +812,7 @@ Hydrant-side.jpg, hydrant-front.jpg, hydrant-rear.jpg and hydrant-top.jpg are in
 
 `conveyor-side.jpg`, `conveyor-front.jpg`, `conveyor-rear.jpg` and `conveyor-top.jpg` are individual orthographic reference photographs generated with OpenAI ImageGen on 7 November 2026. They show one weathered ground conveyor on plain grey ground. Each was saved as a JPEG at 1024 pixels wide. No third-party source photographs were used.
 >>>>>>> integration/wasteland
+
+## TOWN-ART-MACHINES-2 crane-truck references (round 12)
+
+Four individual orthographic views, `crane-truck-side.jpg`, `crane-truck-front.jpg`, `crane-truck-rear.jpg` and `crane-truck-overhead.jpg`, were cropped from one OpenAI ImageGen contact sheet on 8 November 2026. They show the same worn yellow crane truck with its boom and hook removed, on a plain grey studio ground. `crane-truck-boom.jpg` is a separate generated side photograph of the lattice boom. The references are original and use no third-party source photographs.
