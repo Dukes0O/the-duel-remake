@@ -1,5 +1,30 @@
 # Dry Dam texture credits
 
+## Ships in the sand, sister cabin photo sets
+
+The eight Good Hope and Marigold cabin views are original Codex ImageGen
+outputs made 2026-11-07 for the measured cabin carves. The model sources are
+compressed JPEGs in this folder. Each view was generated as a separate,
+centered orthographic studio photograph, measured with `tools/photo_grid.py`,
+and resized to a common 640 px maximum edge without changing its aspect ratio.
+No external source art or recognizable ship branding is used.
+
+- `good-hope-upperworks-side.jpg`, `good-hope-upperworks-bow.jpg`,
+  `good-hope-upperworks-stern.jpg`, `good-hope-upperworks-top.jpg`: a tall,
+  narrow freighter block with a closed bridge, charcoal paint and brown rust.
+- `marigold-upperworks-side.jpg`, `marigold-upperworks-bow.jpg`,
+  `marigold-upperworks-stern.jpg`, `marigold-upperworks-top.jpg`: a low,
+  two-deck block with bridge wings, boarded windows, ochre paint and heavy rust.
+
+The Good Hope and Marigold hulls use recoloured derivatives of the four
+measured Patience hull views: `good-hope-hull-{side,bow,stern,top}.jpg` and
+`marigold-hull-{side,bow,stern,top}.jpg`. They preserve the originals' pixel
+dimensions and framing. Pillow's grayscale colour map paints the Good Hope
+charcoal and the Marigold sun-bleached ochre; the carved underside keeps its
+red-brown material. Blender's glTF exporter drops object-linked material
+overrides on linked mesh data, so the exporter receives per-ship mesh copies
+made from the one carved hull datablock. Their positions, shape and UVs match.
+
 The concrete, rust and galvanized-steel pictures below are original
 Codex ImageGen outputs created on 2026-11-05. They are 512 x 512 compressed
 JPEGs used as repeating material pictures. `dam-face-projection.jpg` is a
@@ -79,6 +104,57 @@ Prompt: Square macro photograph of dark charcoal-brown wet reservoir clay, soft
 irregular clods 2 to 15 cm across, small grit, and a slight moist sheen in the
 hollows. Crisp photographic detail, diffuse neutral overcast light, seamless
 edges. No objects, gear, pool, scene, text, or watermark.
+
+## Ships in the Sand photo projections
+
+The following three crops are original Codex ImageGen photographs made on
+2026-11-05. They are cropped and JPEG-compressed from the generated reference
+photographs. The model embeds them from this folder so its Blender recipe can
+rebuild the projection materials. No third-party source art is used.
+
+### `ships-hull-photo.jpg`
+
+Use: 2048 x 384 front-side photo projection on the hulls of the three
+maintained stranded freighters.
+
+Prompt: Photorealistic daylight modeling reference: a huge 70-metre rusted
+coastal freighter aground on a dry salt sea bed, low car-height three-quarter
+side view. Whole vessel fills frame: long narrow hull with true curved bow and
+stern, deep keel, visible propeller, three deck levels with ladders, aft chart
+room, large faded dark blue-grey paint patches over dark brown-black rust,
+distinct repair plates, trailing anchor chain. Old but maintained. Tiny
+ordinary car for scale, dusty mid-tone ground, bright overcast light, natural
+photographic proportions, no water, no broken hull, no illustration, no text,
+no watermark.
+
+### `lighthouse-stone-photo.jpg`
+
+Use: 512 x 1024 front-side photo projection on the stone lighthouse tower.
+
+Prompt: Photorealistic daylight modeling reference for a full-scale weathered
+coastal lighthouse standing alone on a dry inland salt flat. Old pale
+grey-brown stone tower about 28 metres tall with tapered round masonry, three
+distinct narrow landings and exterior windows, a working lantern room with a
+warm lit lamp, small swept stone step and maintained dark wooden door. Broad
+realistic proportions, salt stains, repaired mortar, crisp detail, low
+car-height three-quarter view from 35 metres, the complete lighthouse fills
+most of the frame. Bright even overcast daylight, mid-tone ground, no sea, no
+people, no text, no illustration, no toy look.
+
+### `pilot-boat-photo.jpg`
+
+Use: 1536 x 512 front-side photo projection on the pilot boat's hull.
+
+Prompt: Photorealistic daylight modeling reference: an absurdly oversized but
+genuine 40-foot coastal pilot boat secured on a heavy road trailer, parked on
+a dry desert salt flat. Three-quarter front-side view at car height, entire
+boat and trailer fill frame. Real afloatable deep V hull, broad stern, raised
+pilot cabin, windows, hand rails, bow cleat, faded off-white paint with a dark
+blue-green band, patched and maintained. Trailer has a long steel frame, four
+pairs of large dusty road wheels, leaf springs, hitch and safety chains.
+Bright even overcast light, realistic human scale, plain mid-tone dusty
+ground, no water, no people, no text or labels, no illustration, no toy
+appearance.
 
 ## WW-ART-CREW photographs (2026-11-06)
 
@@ -268,3 +344,22 @@ repeats across X and V. The spray is an isolated dirty foam burst composited on
 charcoal for JPEG storage; the recipe derives a soft alpha mask from its dark
 background for the embedded GLB texture. Neither picture uses outside source
 art.
+## Patience upperworks reference photos (2026-11-07)
+
+`patience-upperworks-side.jpg`, `-front.jpg`, `-rear.jpg` and `-top.jpg` are 768 x 512 crops from one Codex ImageGen turnaround of a maintained cargo-ship accommodation block. The plan crop is flipped to put the bow at the carve's front. They are measured references for `ship-patience:upperworks`; the generated source remains in Codex's generated image output folder. No existing source photo was replaced.
+
+`patience-funnel-side.jpg`, `patience-funnel-front.jpg` and
+`patience-funnel-top.jpg` are original Codex ImageGen studio photographs made
+on 2026-11-07 for round 12. They show one weathered coastal freighter funnel
+from side, front and overhead, for its measured `carve_object` model. The
+original generated PNGs remain in Codex's generated image folder; no outside
+source art is used. `patience-bridge-mast-side.png` remains a measured crop of
+the upperworks reference, created by the Blender recipe for round 8.
+
+## Patience bare-hull reference photos (WW-ART-SHIPS round 11, 2026-11-07)
+
+`patience-hull-side.jpg`, `-bow.jpg`, `-stern.jpg` and `-top.jpg` are cropped Codex ImageGen outputs showing a maintained, weathered coaster hull in a dry dock from the side, bow, stern and overhead. The side and end views were rescaled to the specified 72 x 12 x 8 m proportions. They are original modeling references; their generated PNGs remain in Codex's generated-image folder. No outside source art is used.
+
+## Good Hope upperworks bow (WW-ART-SHIPS round 13, 2026-11-07)
+
+`good-hope-upperworks-bow-round13.png` is one original Codex ImageGen studio reference photograph of a closed, faded-black freighter wheelhouse end with a short mast. `photo_grid.py` measurements for `carve_object` are centre x=700, deck y=1050 and cabin roof y=232 in the 1448 x 1086 image. It replaces no existing source photograph; the side, stern and plan views are unchanged.

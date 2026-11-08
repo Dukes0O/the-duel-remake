@@ -96,7 +96,8 @@ const generators = [
     glb:['public/assets/models/wasteland/rail/whites.glb'],budget:60000,maxBytes:5000000},
   {id:'ww-art-dam',script:'tools/blender/scablands-dam.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/scablands/dam.glb'],budget:60000,maxBytes:3*1024*1024},
-
+  {id:'ww-art-ships',script:'tools/blender/scablands-ships.py',args:[],candidate:true,
+    glb:['public/assets/models/wasteland/scablands/ships.glb'],budget:50000,maxBytes:3*1024*1024},
   {script:'tools/blender/lab-tunnel-parts.py',args:[],recipeOnly:true,glb:['public/assets/models/lab/tunnel-parts.glb']},
   {script:'tools/blender/summit-finish.py',args:[],recipeOnly:true,
     glb:['public/assets/models/circuits/kits/summit-finish.glb','public/assets/models/circuits/kits/summit-finish-lod.glb']},
@@ -721,6 +722,17 @@ try {
         for (const material of gltf.materials) {
           assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3,
             `${material.name} metallicFactor exceeds 0.3`);
+        }
+      } else if (generator.id === 'ww-art-ships') {
+        const names = new Set(gltf.nodes.map(node => node.name || ''));
+        assert.ok(names.has('ship-patience:hull'), 'Patience hull is carved from its four measured views');
+        assert.ok(names.has('ship-patience:upperworks'), 'Patience has one named photo-carved upperworks piece');
+        assert.ok(names.has('ship-patience:bridge-mast-lattice'), 'Patience has a separate traced bridge mast');
+        assert.ok(names.has('ship-patience:funnel'), 'Patience has one separately carved funnel part');
+        assert.ok(names.has('ship-patience:drifts'), 'Patience has a separate sand drift part');
+        for (const oldTier of ['patience-aft-deckhouse', 'patience-chart-room',
+          'patience-wheelhouse', 'patience-chart-room-roof']) {
+          assert.ok(!names.has(oldTier), `${oldTier} was replaced by the single carved piece`);
         }
       } else {
         assert.ok(triangles > 1000 && triangles <= generator.budget, `${triangles} triangles`);
