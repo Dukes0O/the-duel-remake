@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-14'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-16'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-14.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-16.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -185,31 +185,37 @@ def tin_wall(name, x, y, z, width, height):
         faces.extend((face,tuple(reversed(tuple(k+front for k in face)))))
     return mesh_object(name,verts,faces,mat['galvanised-tin'],'wall')
 
-def sign(name, center, text, width=1.3):
+def sign(name, center, text, width=2.35):
     x,y,z=center
-    if name == 'shopfront-a':
-        # This shop's large hand-painted board is a thin, independent slab.
-        slab_verts=[(x-width/2,y-.24,z-.045),(x-width/2,y+.24,z-.045),
-                    (x+width/2,y+.24,z-.045),(x+width/2,y-.24,z-.045),
-                    (x-width/2,y-.24,z+.045),(x-width/2,y+.24,z+.045),
-                    (x+width/2,y+.24,z+.045),(x+width/2,y-.24,z+.045)]
-        slab_faces=[(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
-        board=mesh_object(name+':hand-painted-sign-slab',slab_verts,slab_faces,mat['weathered-plank'],'wall')
-    else:
-        board=box(name+':sign-board',(x,y,z),(width,.42,.085),mat['weathered-plank'],.025)
+    board=box(name+':hand-painted-sign-board',(x,y,z),(width,.56,.095),mat['weathered-plank'],.018)
     font=bpy.data.curves.new(name+' hand lettering','FONT');font.body=text
-    font.size=.31 if name == 'shopfront-a' else .23;font.extrude=0;font.resolution_u=4
+    font.size=.39;font.extrude=.003;font.resolution_u=4
+    font.align_x='CENTER';font.align_y='CENTER'
     obj=bpy.data.objects.new(name+':sign-lettering',font);bpy.context.collection.objects.link(obj)
-    obj.location=town.game_vector((x-width*.44,y-.105,z-.052))
-    if name == 'shopfront-a':
-        # Turn the lettering toward the road and undo the X reversal from the
-        # 180-degree face turn so FOOD reads normally from the front.
-        obj.rotation_euler=(0,math.pi,0);obj.scale.x=-1
-    else:
-        obj.rotation_euler=(-math.pi/2,0,0)
+    # Face roadward, with glyphs upright and correctly ordered from the road.
+    obj.location=town.game_vector((x,y,z-.055))
+    obj.rotation_euler=Matrix(((-1,0,0),(0,0,1),(0,1,0))).to_euler()
     font.materials.append(mat['letter-paint']); bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
     bpy.ops.object.convert(target='MESH');keep(bpy.context.object)
     return board
+
+def roof_sign(name, text):
+    # This second, weathered label lies over the ridge so the mayor can read
+    # each shop from above. Four short legs sit on the pitched tin roof.
+    for x in (-.34,.34):
+        for z in (-1.62,1.62):
+            box(f'{name}:roof-sign-leg-{x}-{z}',(x,2.65,z),(.055,.20,.055),mat['rusted-steel'],0)
+    box(f'{name}:roof-facing-sign-board',(0,2.80,0),(.94,.10,3.8),mat['weathered-plank'],0)
+    font=bpy.data.curves.new(name+' roof lettering','FONT');font.body=text
+    font.size=.70 if len(text)<=5 else .62;font.extrude=0;font.resolution_u=2
+    font.align_x='CENTER';font.align_y='CENTER'
+    obj=bpy.data.objects.new(name+':roof-sign-lettering',font);bpy.context.collection.objects.link(obj)
+    obj.location=town.game_vector((0,2.856,0))
+    # Turn the baseline so the top-down view reads left to right.
+    obj.rotation_euler[2]=-math.pi/2
+    font.materials.append(mat['letter-paint']);bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
+    bpy.ops.object.convert(target='MESH');keep(bpy.context.object)
+    return obj
 
 def ground_clutter(name,x,z,material=mat['sand']):
     # Low irregular packed dirt that stays in the marked building footprint.
@@ -666,40 +672,78 @@ market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
 market_stall('stall-c',(36,0,2),'tyres')
 
-def shopfront(building, offset, label):
-    add_building(building,offset)
-    for x in (-1.12,1.12):
-        beam(f'{building}:corner-post-{x}',(x,.12,-.68),(x,2.5,-.68),.10,mat['rusted-steel'])
-        beam(f'{building}:rear-post-{x}',(x,.12,.72),(x,2.05,.72),.075,mat['weathered-plank'])
-    for y in (.18,1.26,2.12):
-        beam(f'{building}:back-wall-rail-{y}',(-1.1,y,.72),(1.1,y,.72),.07,mat['rusted-steel'])
-    for i in range(4):
-        box(f'{building}:patched-back-wall-{i+1}',(-.84+i*.56,1.26,.73),(.54,1.62,.045),mat['galvanised-tin'] if i%2 else mat['rusted-steel'],.015)
-    tin_roof(f'{building}:roof',0,2.48,.02,2.75,2.0,.10)
-    for x in (-.62,.62): beam(f'{building}:awning-arm-{x}',(x,2.2,-.60),(x,2.48,-.02),.05,mat['rusted-steel'])
-    box(f'{building}:front-awning',(0,2.42,-.36),(2.45,.065,.80),mat['patched-canvas'],.025)
-    box(f'{building}:serving-hatch',(0,1.5,.69),(1.18,.72,.08),mat['iron-dark'],.025)
-    for x in (-.35,.35): beam(f'{building}:hatch-shutter-chain-{x}',(x,1.94,.70),(x,2.18,.16),.025,mat['rusted-steel'])
-    sign(building,(0,2.12,-.72),label,1.85)
-    box(f'{building}:counter',(0,.98,-.90),(2.0,.18,.55),mat['weathered-plank'],.035)
-    if label=='FOOD':
-        for i,x in enumerate((-.58,.08,.62),1):
-            box(f'{building}:food-crate-{i}',(x,1.23,-.91),(.48,.32,.42),mat['weathered-plank'],.045)
-            for j in range(3):
-                sphere(f'{building}:root-veg-{i}-{j}',(x-.13+j*.13,1.44,-.90),(.09,.13,.09),mat['fruit-yellow'] if j%2 else mat['leaf'],8,5)
-    elif label=='TOOLS':
-        for i,x in enumerate((-.62,-.2,.25,.62),1):
-            beam(f'{building}:hanging-tool-shaft-{i}',(x,1.55,.60),(x+.08,1.96,.60),.045,mat['weathered-plank'])
-            beam(f'{building}:hanging-tool-head-{i}',(x-.10,1.90,.60),(x+.18,1.90,.60),.06,mat['rusted-steel'])
-    else:
-        for i,x in enumerate((-.55,.05,.61),1):
-            cylinder(f'{building}:repair-pipe-{i}',(x,1.33,-.91),.11,.58,mat['rusted-steel'],12)
-            bpy.ops.mesh.primitive_torus_add(major_segments=14,minor_segments=5,major_radius=.22,minor_radius=.06,location=town.game_vector((x,1.36,.62)))
-            obj=bpy.context.object;obj.name=f'{building}:repair-tyre-{i}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
+# TOWN-ART-FOOD round 15. OpenAI image generation created one orthographic
+# side/front/rear/plan photograph each on 7 November 2026. The unscaled 1024 px
+# references stay in textures; the same carved body is instanced for all signs.
+SHOP_START, SHOP_END, SHOP_GROUND, SHOP_ROOF = 28, 997, 620, 228
+SHOP_LEN=6.55
+SHOP_SCALE=SHOP_LEN/(SHOP_END-SHOP_START)
+SHOP_H=(SHOP_GROUND-SHOP_ROOF)*SHOP_SCALE
+SHOP_FRONT={'centre':511,'ground':670,'top':101}
+SHOP_REAR={'centre':511,'ground':670,'top':101}
+SHOP_W=SHOP_H*(840-180)/(670-101)
+SHOP_TABLE={
+    'photos':{'side':'shopfront-side.jpg','front':'shopfront-front.jpg',
+              'rear':'shopfront-rear.jpg','top':'shopfront-top.jpg'},
+    'length':SHOP_LEN,'width':SHOP_W,'height':SHOP_H,
+    'side':{'start':SHOP_START,'end':SHOP_END,'ground':SHOP_GROUND},
+    'front':SHOP_FRONT,'rear':SHOP_REAR,
+    'top':{'front':49,'rear':979,'centre':382,'along':'x','x_scale':SHOP_W/(580-184)},
+    # The studio is nearly neutral; lower chroma keeps cool silver roof panels
+    # from joining the background flood through their narrow colour range.
+    'voxel':.055,'target':1150,'grey':5,'tolerance':38,'bleed_tolerance':44,
+    'mask_dir':str(evidence/'shopfront-masks'),
+}
+shop_template=carve_object('shopfront:carved-body',textures,SHOP_TABLE)
+shop_photos=tuple(SHOP_TABLE['_photos'].values())
+for photo in shop_photos:
+    # The source references remain full size on disk; embedded copies share the
+    # family texture cap while staying detailed enough for a road-height view.
+    photo.image.scale(1024,768)
+    photo.image.pack()
 
-shopfront('shopfront-a',(20,0,12),'FOOD')
-shopfront('shopfront-b',(28,0,12),'TOOLS')
-shopfront('shopfront-c',(36,0,12),'FIX-IT')
+SHOP_LABELS=(('shopfront-a',(20,0,12),'FOOD'),
+             ('shopfront-b',(28,0,12),'TOOLS'),
+             ('shopfront-c',(36,0,12),'FIX-IT'))
+for index,(building,offset,label) in enumerate(SHOP_LABELS):
+    add_building(building,offset)
+    body=shop_template if index==0 else bpy.data.objects.new(f'{building}:body',shop_template.data)
+    if index: bpy.context.collection.objects.link(body)
+    body.name=f'{building}:body'
+    keep(body)
+    body.parent=current;body.matrix_parent_inverse=Matrix.Identity(4);body.location=(0,0,-.03)
+    # A broad board stands on the road-facing roof edge; lettering is a mesh
+    # painted on its front, so the word reads normally from the driver's seat.
+    sign(building,(0,2.20,-SHOP_LEN/2-.01),label)
+    roof_sign(building,label)
+
+SHOP_BOUNDS={}
+bpy.context.view_layer.update()
+for building,_,_ in SHOP_LABELS:
+    root_obj=building_roots[building]
+    parts=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==root_obj]
+    by_name={};triangles=0
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    for obj in parts:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        evaluated=obj.evaluated_get(depsgraph);evaluated_mesh=evaluated.to_mesh()
+        count=sum(len(poly.vertices)-2 for poly in evaluated_mesh.polygons);evaluated.to_mesh_clear()
+        triangles+=count;by_name[obj.name]=b
+        print('shopfront piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)],'triangles':count},sort_keys=True))
+        if b[0]<-3.5 or b[1]>3.5 or b[4]<-3.5 or b[5]>3.5 or b[2]<-.02:
+            raise RuntimeError(f'{obj.name} lies outside the shop footprint or below ground: {b}')
+    if triangles>1800: raise RuntimeError(f'{building} has {triangles} triangles; budget is 1800')
+    for name,b in by_name.items():
+        if b[2]<=.02: continue
+        joined=any(other_name!=name and all(max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.025 for axis in range(3))
+                   for other_name,other in by_name.items())
+        if not joined: raise RuntimeError(f'{name} does not touch the ground or another shopfront piece')
+    SHOP_BOUNDS[building]={'triangles':triangles,'pieces':len(parts)}
+    print(f'{building} total triangles:',triangles)
 
 # Bus canteen: keep the accepted side photo and measure the broad, boxy front
 # from its grid. The road-side hatch is cut into the carved shell; its counter
@@ -1273,5 +1317,66 @@ render_match('greenhouse-above',target+Vector((0,0,15)),Vector((1,0,0)),8.5)
 render_match('greenhouse-three-left',target+Vector((-9,-10,7)),Vector((0,0,1)),10.5)
 render_match('greenhouse-three-right',target+Vector((9,-10,7)),Vector((0,0,1)),10.5)
 render_match('greenhouse-mayor',target+Vector((-12,-13,14)),Vector((0,0,1)),15)
+# Isolated shop renders use the exported GLB and the exact orthographic cameras
+# needed for the four photo comparisons. Explicit visibility reset prevents a
+# previous building's hidden descendants from leaking into or hiding this view.
+evidence=root/'.evidence/2026-11-07/town-art-food/round-16'
+evidence.mkdir(parents=True,exist_ok=True)
+shop_root=next(obj for obj in scene.objects if obj.name=='shopfront-a')
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or obj.name=='shopfront-a' or obj.name.startswith('shopfront-a:'))
+scene.objects['review ground'].hide_render=False
+shop_members=[obj for obj in scene.objects if obj.type=='MESH' and obj.name.startswith('shopfront-a:')]
+shop_corners=[obj.matrix_world @ Vector(corner) for obj in shop_members for corner in obj.bound_box]
+shop_lo=Vector((min(p.x for p in shop_corners),min(p.y for p in shop_corners),min(p.z for p in shop_corners)))
+shop_hi=Vector((max(p.x for p in shop_corners),max(p.y for p in shop_corners),max(p.z for p in shop_corners)))
+target=(shop_lo+shop_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-5,8,9)),900,14),
+    ('soft sky fill',Vector((6,-8,7)),850,16),
+    ('open aisle bounce',Vector((0,0,9)),350,6)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=1000;scene.render.resolution_y=720
+render_match('shopfront-side',target+Vector((12,0,0)),Vector((0,0,1)),7.6)
+render_match('shopfront-front',target+Vector((0,12,0)),Vector((0,0,1)),4.3)
+render_match('shopfront-rear',target+Vector((0,-12,0)),Vector((0,0,1)),4.3)
+render_match('shopfront-above',target+Vector((0,0,12)),Vector((1,0,0)),7.4)
+render_match('shopfront-three-left',target+Vector((-8,9,6)),Vector((0,0,1)),8.2)
+render_match('shopfront-three-right',target+Vector((8,9,6)),Vector((0,0,1)),8.2)
+render_match('shopfront-mayor',target+Vector((-8,8,11.3)),Vector((0,0,1)),9.0)
+# Front views confirm each of the two remaining painted words independently.
+for building in ('shopfront-b','shopfront-c'):
+    variant_root=next(obj for obj in scene.objects if obj.name==building)
+    for obj in scene.objects:
+        if obj.type in ('CAMERA','LIGHT'): continue
+        obj.hide_render=not (obj.name=='review ground' or obj.name==building or obj.name.startswith(building+':'))
+    scene.objects['review ground'].hide_render=False
+    variant_members=[obj for obj in scene.objects if obj.type=='MESH' and obj.name.startswith(building+':')]
+    variant_corners=[obj.matrix_world @ Vector(corner) for obj in variant_members for corner in obj.bound_box]
+    v_lo=Vector((min(p.x for p in variant_corners),min(p.y for p in variant_corners),min(p.z for p in variant_corners)))
+    v_hi=Vector((max(p.x for p in variant_corners),max(p.y for p in variant_corners),max(p.z for p in variant_corners)))
+    target=(v_lo+v_hi)*.5
+    render_match(building+'-front',target+Vector((0,12,0)),Vector((0,0,1)),4.3)
+# Prove that the roof words stay readable at the nearest mayor-camera distance
+# named on the card: 60 m and 45 degrees down, with the 85 mm sheet lens.
+shop_roots=[next(obj for obj in scene.objects if obj.name==name)
+            for name in ('shopfront-a','shopfront-b','shopfront-c')]
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or any(under(obj,r) for r in shop_roots))
+scene.objects['review ground'].hide_render=False
+town_members=[obj for obj in scene.objects if obj.type=='MESH' and any(under(obj,r) for r in shop_roots)]
+town_corners=[obj.matrix_world @ Vector(corner) for obj in town_members for corner in obj.bound_box]
+town_lo=Vector((min(p.x for p in town_corners),min(p.y for p in town_corners),min(p.z for p in town_corners)))
+town_hi=Vector((max(p.x for p in town_corners),max(p.y for p in town_corners),max(p.z for p in town_corners)))
+target=(town_lo+town_hi)*.5
+camera_data=bpy.data.cameras.new('shopfront-mayor-60m');camera_data.type='PERSP';camera_data.lens=85
+camera=bpy.data.objects.new('shopfront-mayor-60m',camera_data);scene.collection.objects.link(camera)
+camera.location=target+Vector((-30,30,42.4264068712))
+camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler();scene.camera=camera
+scene.render.resolution_x=2000;scene.render.resolution_y=1400
+scene.render.filepath=str(evidence/'shopfront-mayor-60m.png');bpy.ops.render.render(write_still=True)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),
-                  'evidence':str(evidence),'market_pieces':market_bounds}))
+                  'evidence':str(evidence),'market_pieces':market_bounds,'shopfronts':SHOP_BOUNDS}))
