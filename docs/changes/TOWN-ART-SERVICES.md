@@ -76,3 +76,41 @@ the sheet records the remaining difference for Claude's review.
   shell and its named pieces. Removed separately modeled wall rivets because
   the carved photos already show them.
 - No other assets or checks were removed.
+
+## Toll bank, round 12
+
+The seven passed buildings in `services.glb` remain byte-for-byte unchanged.
+Updated only the toll bank inside `services-2.glb`: the separate door now wears
+the front photo's rounded door region, including its wheel, rivets and hinges,
+inside a heavy frame. Replaced the undersized toll scene with a long striped
+barrier across the road-side lane, a counterweighted post and a larger booth
+with a visible window and its own roof. The shell, roof and source photos that
+matched remain in place.
+
+The side, front and rear renders now frame the entire strongroom. The review
+sheet compares all four orthographic photo/render pairs, both three-quarter
+views and the mayor view with other buildings hidden. The sheet is
+`docs/board/looks/town-art-services/round-12.jpg` (312,084 bytes). The GLB is
+1,113,008 bytes; the toll bank uses 3,300 of 5,000 triangles. The piece bounds
+and contact audit passed. Every piece is inside the 2-by-2 plot with at least
+0.5 m spare and touches the ground or another piece.
+
+### Checks and review
+
+- Blender 4.5.13 export and piece bounds/contact audit: passed.
+- `node tools/test-blender-output.mjs`: 386 checks passed, 0 failed; run to
+  completion on this GLB.
+- Lane tier and build were not run, as required for art cards.
+- Browser and in-game checks were not run. Claude should check the door's
+  photo alignment and the booth, counterweight and striped barrier from both
+  three-quarter views and the mayor view.
+- Changed assertions: none. Race fingerprints: not applicable; race code is
+  unchanged.
+
+### Removed
+
+- Replaced the flat brown door panel with the photo-wearing door slab and
+  removed separately modeled wheel/hinge details already present in the photo.
+- Replaced the undersized barrier and booth with the full lane gate and
+  windowed booth.
+- No other assets or checks were removed.

@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-11.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-11/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-12.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-12/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -52,6 +52,30 @@ def sphere(name,c,r,mat,parent=None):
 def tube(name,c,major,minor,mat,parent=None,major_segments=24,minor_segments=8):
  bpy.ops.mesh.primitive_torus_add(major_radius=major,minor_radius=minor,major_segments=major_segments,minor_segments=minor_segments,location=town.game_vector(c));o=bpy.context.object;o.name=name;o.data.materials.append(mat)
  return parent_keep(o,parent) if parent else o
+def photographed_door(photo,parent):
+ # Trace a sturdy round-top door silhouette in the front reference's pixels.
+ # The face UVs stay on that exact photographed region, including its rivets,
+ # wheel and hinges; only the shallow edge is built from steel geometry.
+ pixel_outline=[(390,438),(390,285),(398,256),(414,232),(438,214),(466,202),(558,202),(586,210),(610,230),(628,256),(635,280),(635,438)]
+ verts=[]
+ for depth in (-4.20,-3.98):
+  for px,py in pixel_outline:
+   x=(px-512)*(8.0/944);y=max(0,(438-py)*(2.8/(438-93)))
+   verts.append(town.game_vector((x,y,depth)))
+ n=len(pixel_outline);faces=[tuple(range(n-1,-1,-1)),tuple(range(n,2*n))]
+ faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
+ mesh=bpy.data.meshes.new('photo-wearing round vault door');mesh.from_pydata(verts,[],faces);mesh.materials.append(photo.material());mesh.materials.append(steel);mesh.update()
+ uv=mesh.uv_layers.new(name='UVMap')
+ for poly in mesh.polygons:
+  for li in poly.loop_indices:
+   vertex=mesh.loops[li].vertex_index
+   if vertex<n:
+    px,py=pixel_outline[vertex];uv.data[li].uv=photo.uv(px,py)
+   elif vertex<2*n:
+    px,py=pixel_outline[vertex-n];uv.data[li].uv=photo.uv(px,py)
+   else:uv.data[li].uv=photo.uv(390,438)
+  poly.material_index=0 if poly.index==0 else 1
+ obj=bpy.data.objects.new('toll-bank:door',mesh);bpy.context.collection.objects.link(obj);return parent_keep(obj,parent)
 def shell(name,x0,x1,z0,z1,h,material,parent):
  box(name+' foundation',(0,.18,0),(x1-x0,.36,z1-z0),dark,.045,parent)
  box(name+' walls',(0,h/2,0),(x1-x0-.3,h,z1-z0-.3),material,.045,parent)
@@ -87,22 +111,12 @@ for n in ids:
    'mask_dir':str(root/'.qa-dist/town-services-2/toll-bank-masks')}
   body=carve_object('toll-bank:body',tex,body_table);parent_keep(body,b)
 
-  # A deep 2.4 m door sits over its photographed opening, with a real wheel,
-  # hinges and an uneven bolted frame.
-  front_z=-4.0
-  door=box('toll-bank:door',(0,1.12,front_z-.14),(2.4,2.12,.24),dark,.12,b)
-  box('toll-bank:door-face',(0,1.12,front_z-.28),(2.14,1.88,.06),steel,.055,b)
-  for x in (-1.35,1.35):box('toll-bank:door-frame',(x,1.22,front_z-.20),(.18,2.38,.22),tin,.04,b)
-  box('toll-bank:door-frame',(0,2.38,front_z-.20),(2.88,.18,.22),tin,.04,b)
-  wheel=tube('toll-bank:door-wheel',(0,1.12,front_z-.34),.34,.065,dark,b,24,8);wheel.rotation_euler[0]=math.pi/2
-  hub=cyl('toll-bank:door-wheel-hub',(0,1.12,front_z-.36),.10,.12,tin,12,b);hub.rotation_euler[0]=math.pi/2
-  box('toll-bank:door-wheel-spoke',(0,1.12,front_z-.405),(.57,.05,.05),tin,.015,b)
-  box('toll-bank:door-wheel-spoke',(0,1.12,front_z-.41),(.05,.57,.05),tin,.015,b)
-  for x in (-1.2,1.2):
-   for y in (.42,1.92):
-    hinge=box('toll-bank:door-hinge',(x,y,front_z-.36),(.24,.50,.16),dark,.04,b)
-    for dy in (-.14,.14):
-     rivet=cyl('toll-bank:door-hinge-rivet',(x,y+dy,front_z-.46),.055,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
+  # Its own shallow slab wears the photographed door, wheel, rivets and hinges.
+  front_photo=Photo(tex/'toll-bank-front.jpg')
+  photographed_door(front_photo,b)
+  front_z=-4.24
+  for x in (-1.28,1.28):box('toll-bank:door-heavy-frame',(x,1.02,front_z+.10),(.22,2.08,.34),tin,.055,b)
+  box('toll-bank:door-heavy-frame',(0,2.08,front_z+.10),(2.78,.24,.34),tin,.055,b)
 
   # Four roof plates follow the measured rise from the middle to every eave.
   # The side and end photographs both show a central crown, so this is a
@@ -136,18 +150,29 @@ for n in ids:
   box('toll-bank:porch-canopy',(0,2.30,-4.42),(5.95,.16,1.50),tin,.035,b)
   for x in (-2.5,-1.25,0,1.25,2.5):box('toll-bank:canopy-rib',(x,2.39,-4.48),(.045,.045,1.40),dark,.008,b)
 
-  # A small booth sits beside the barrier. Its roof touches both side walls.
-  box('toll-bank:booth-body',(3.05,.92,-3.10),(1.45,1.84,1.50),wood,.07,b)
-  box('toll-bank:booth-window',(3.05,1.34,-3.88),(1.02,.56,.035),glass,.035,b)
-  box('toll-bank:booth-sill',(3.05,1.04,-3.92),(1.22,.10,.12),steel,.015,b)
-  box('toll-bank:booth-roof',(3.05,1.98,-3.10),(1.75,.18,1.80),tin,.045,b)
+  # Roadside booth has a readable glazed opening and its own pitched cap.
+  booth_x,booth_z=4.8,-4.65
+  box('toll-bank:booth-body',(booth_x,1.08,booth_z),(2.1,2.16,2.15),wood,.08,b)
+  booth_front=booth_z-1.12
+  box('toll-bank:booth-window',(booth_x,1.48,booth_front-.025),(1.38,.72,.045),glass,.035,b)
+  for x in (booth_x-.76,booth_x+.76):box('toll-bank:booth-window-jamb',(x,1.48,booth_front-.08),(.12,.90,.12),steel,.02,b)
+  box('toll-bank:booth-window-sill',(booth_x,1.06,booth_front-.10),(1.62,.12,.16),steel,.02,b)
+  box('toll-bank:booth-roof',(booth_x,2.28,booth_z),(2.42,.20,2.42),tin,.05,b)
+  for x in (booth_x-1.0,booth_x+1.0):box('toll-bank:booth-roof-edge',(x,2.34,booth_z),(0.12,.16,2.32),dark,.02,b)
 
-  # The striped arm pivots at the booth and rests on a low catcher at its tip.
-  box('toll-bank:barrier-post',(2.45,.72,-5.18),(.20,1.44,.20),steel,.025,b)
-  box('toll-bank:barrier-arm',(-.70,1.10,-5.18),(6.50,.16,.16),wood,.025,b)
-  for index,x in enumerate((-3.30,-2.15,-1.0,.15,1.30,2.15)):
-   box('toll-bank:barrier-stripe',(x,1.10,-5.29),(.60,.18,.035),paint if index%2==0 else dark,.012,b)
-  box('toll-bank:barrier-catcher',(-4.05,.32,-5.18),(.18,.64,.18),steel,.025,b)
+  # A long striped arm closes the road lane. Its weighted pivot sits beside
+  # the booth and the counterweight balances the arm at the post.
+  pivot_x,pivot_z=3.35,-5.65
+  box('toll-bank:barrier-post',(pivot_x,.96,pivot_z),(.30,1.92,.30),steel,.035,b)
+  box('toll-bank:barrier-pivot-hub',(pivot_x,1.76,pivot_z-.18),(.62,.62,.28),dark,.08,b)
+  box('toll-bank:barrier-counterweight',(pivot_x+.48,1.76,pivot_z+.05),(.88,.48,.72),steel,.08,b)
+  arm_start,arm_end=-3.55,3.35;arm_y=1.78
+  box('toll-bank:barrier-arm',((arm_start+arm_end)/2,arm_y,pivot_z),(arm_end-arm_start,.19,.20),wood,.03,b)
+  span=(arm_end-arm_start)/7
+  for index in range(7):
+   x=arm_start+span*(index+.5)
+   box('toll-bank:barrier-stripe',(x,arm_y,pivot_z-.115),(span*.62,.205,.035),paint if index%2==0 else dark,.012,b)
+  box('toll-bank:barrier-catcher',(arm_start,.43,pivot_z),(.22,.86,.22),steel,.03,b)
 
   continue
  if n=='radio-mast':
@@ -341,9 +366,9 @@ if a.review:
    obj.hide_render=(not within(obj,target_root) or (body_only and not is_body_piece))
   bpy.ops.render.render(write_still=True)
  shots=[
-  ('model-side',(30,2.6,0),(0,2.6,0),8.7,(1024,512),True),
-  ('model-front',(0,2.6,-30),(0,2.6,0),8.7,(1024,512),True),
-  ('model-rear',(0,2.6,30),(0,2.6,0),8.7,(1024,512),True),
+  ('model-side',(30,1.15,0),(0,1.15,0),9.8,(1024,512),True),
+  ('model-front',(0,1.15,-30),(0,1.15,0),9.8,(1024,512),True),
+  ('model-rear',(0,1.15,30),(0,1.15,0),9.8,(1024,512),True),
   ('model-above',(0,36,0),(0,0,0),9.1,(1024,1024),True),
   ('three-quarter-road',(20,12,-22),(0,2.5,0),14.0,(1024,768)),
   ('three-quarter-yard',(-20,12,22),(0,2.5,0),14.0,(1024,768)),
