@@ -131,9 +131,9 @@ if args.render_view:
             set_tree_visibility(name, name == subject_name)
         subject = scene.objects[subject_name]
         rotation = subject.matrix_world.to_3x3()
-        bow = subject.matrix_world @ Vector((22.0, 1.0, 0.0))
+        bow = subject.matrix_world @ Vector((22.0, 0.0, 2.8))
         forward = rotation @ Vector((1, 0, 0))
-        outboard = rotation @ Vector((0, 0, 1)) * (1 if side == 'starboard' else -1)
+        outboard = rotation @ Vector((0, -1 if side == 'starboard' else 1, 0))
         scene.camera.location = bow + forward * 28.3 + outboard * 28.3
         scene.camera.location.z = -1.2
         scene.camera.rotation_euler = (bow - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
@@ -422,23 +422,71 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             _, factor = min(HULL_STATIONS, key=lambda station: abs(station[0] - t))
             label_obj = bpy.data.curves.new(name + ' bow name', 'FONT')
             label_obj.body = label
+            label_obj.align_x = 'CENTER'
             label_obj.size = 1.45; label_obj.resolution_u = 3
             label_obj.bevel_resolution = 1; label_obj.extrude = .006
             obj = bpy.data.objects.new(name + ' bow name ' + str(side), label_obj)
             scene.collection.objects.link(obj)
-            obj.location = gv((length * t, deck - 1.65, side * (width * factor * .5 + .025)))
-            # Keep the baseline pointing along the bow on both sides while
-            # turning the lettering outward from the hull.
-            base_rotation = Quaternion((1, 0, 0), math.pi / 2 if side > 0 else -math.pi / 2)
+            obj.location = gv((length * t, deck - 1.65,
+                               side * (width * factor * .5 + .025)))
+            # One rule for both sides: the lettering's face points outward
+            # (normal n), its up is the world up, and it reads along up x n,
+            # which is left to right for someone standing outside the hull.
+            # No mirrored scale and no reversed string.
+            normal = gv((0, 0, side)).normalized()
+            up = Vector((0, 0, 1))
+            reading = up.cross(normal)
             obj.rotation_mode = 'QUATERNION'
-            obj.rotation_quaternion = base_rotation
-            if side > 0:
-                # Mirror the far-side glyphs in their plane so both bows read
-                # left to right from outside the hull.
-                obj.scale.x = -1
-            label_obj.materials.append(name_paint); obj['part'] = name
+            obj.rotation_quaternion = Matrix((reading, up, normal)).transposed().to_quaternion()
+            label_obj.materials.append(name_paint)
+            obj = wrap_name_on_hull(obj, length, width, side)
+            obj['part'] = name
             parent(obj, root)
     return hull
+
+def hull_half_breadth(x, length, width):
+    """Half-breadth at the deck edge, interpolated between hull stations."""
+    t = x / length
+    stations = sorted(HULL_STATIONS)
+    if t <= stations[0][0]:
+        return width * stations[0][1] * .5
+    for (t0, f0), (t1, f1) in zip(stations, stations[1:]):
+        if t <= t1:
+            return width * (f0 + (f1 - f0) * (t - t0) / (t1 - t0)) * .5
+    return width * stations[-1][1] * .5
+
+def wrap_name_on_hull(obj, length, width, side, gap=.05):
+    """Turn the flat lettering into a mesh lying on the curved side plating.
+
+    The hull widens aft of the name, so a flat sheet of letters sinks into
+    the plating at one end. Each vertex is moved out to the hull's side at
+    its own position along the ship, keeping the letters' thickness."""
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    mesh = bpy.data.meshes.new_from_object(obj.evaluated_get(depsgraph))
+    if not mesh.materials:
+        mesh.materials.append(name_paint)
+    loc = obj.location.copy()
+    rot = obj.rotation_quaternion.to_matrix()
+    inv = rot.transposed()
+    for v in mesh.vertices:
+        p = loc + rot @ v.co
+        # Root-local Blender (bx, by, bz) is game (bx, bz, -by): side is -by.
+        x = p.x
+        p.y = -side * (hull_half_breadth(x, length, width) + gap + v.co.z)
+        v.co = inv @ (p - loc)
+    mesh.update()
+    name = obj.name
+    curve = obj.data
+    bpy.data.objects.remove(obj)
+    bpy.data.curves.remove(curve)
+    wrapped = bpy.data.objects.new(name, mesh)
+    mesh.name = name
+    scene.collection.objects.link(wrapped)
+    wrapped.location = loc
+    wrapped.rotation_mode = 'QUATERNION'
+    wrapped.rotation_quaternion = rot.to_quaternion()
+    return wrapped
 
 def correct_end_face_photos(obj, table):
     """Force the dead-on bow and stern references onto their matching faces."""
@@ -541,7 +589,7 @@ def cube(name, center, dims, material, part, bevel=.04):
         o.modifiers.new('weighted worn normals','WEIGHTED_NORMAL')
     return attach(o,name,part)
 
-def photo_box(name, center, dims, side, bow, stern, top, part):
+def photo_box(name, center, dims, side, bow, stern, top, part, crops):
     """A crisp photo-projected box; no carving, masks or rounded voxel walls."""
     obj = cube(name, center, dims, steel, part, 0)
     obj.data.materials.clear()
@@ -550,6 +598,7 @@ def photo_box(name, center, dims, side, bow, stern, top, part):
         obj.data.materials.append(mat)
     uv = obj.data.uv_layers.active
     length, height, width = dims
+    images=[next(n.image for n in mat.node_tree.nodes if n.type=='TEX_IMAGE') for mat in mats]
     for poly in obj.data.polygons:
         n = poly.normal
         if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
@@ -559,15 +608,19 @@ def photo_box(name, center, dims, side, bow, stern, top, part):
         else:
             mat_index = 3
         poly.material_index = mat_index
+        px0,py0,px1,py1=crops[mat_index]
+        image_w,image_h=images[mat_index].size
         for li in poly.loop_indices:
             co = obj.data.vertices[obj.data.loops[li].vertex_index].co
             if mat_index == 0:
-                u, v = (co.x / length + .5), (co.z / height + .5)
+                across, up = (co.x / length + .5), (co.z / height + .5)
             elif mat_index in (1, 2):
-                u, v = (co.y / width + .5), (co.z / height + .5)
+                across, up = (co.y / width + .5), (co.z / height + .5)
             else:
-                u, v = (co.x / length + .5), (co.y / width + .5)
-            uv.data[li].uv = (u, v)
+                across, up = (co.y / width + .5), (1 - (co.x / length + .5))
+            px=px0+across*(px1-px0)
+            py=py1-up*(py1-py0)
+            uv.data[li].uv=(px/image_w,1-py/image_h)
     return obj
 
 def beam(name,a,b,width,material,part,depth=None):
@@ -796,23 +849,29 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         prefix='good-hope' if ident=='ship-good-hope' else 'marigold'
         photo_mats={view:photo_material(f'{ident} upperworks / {view}',tex/file)
                     for view,file in table['photos'].items()}
+        photo_crops=({'side':(31,96,589,411),'front':(270,225,1180,1050),
+                      'rear':(38,95,602,624),'top':(34,14,400,624)}
+                     if prefix=='good-hope' else
+                     {'side':(12,43,624,205),'front':(80,45,560,337),
+                      'rear':(55,45,585,301),'top':(116,0,466,633)})
+        photo_crop_order=[photo_crops[v] for v in ('side','front','rear','top')]
         cabin_root=root_obj(ident+':upperworks',(0,0,0),ident+':upperworks')
         parent(cabin_root,r)
         cabin=photo_box(ident+':upperworks-block',(0,0,0),
                         (cabin_length,cabin_height,cabin_width),
                         photo_mats['side'],photo_mats['front'],photo_mats['rear'],
-                        photo_mats['top'],ident+':upperworks')
+                        photo_mats['top'],ident+':upperworks',photo_crop_order)
         cabin.location=gv((22.0,deck+cabin_height*.5,0)); parent(cabin,cabin_root)
         roof=photo_box(ident+':upperworks-deck',(0,0,0),
                        (cabin_length+.8,.26,cabin_width+.6),photo_mats['side'],
                        photo_mats['front'],photo_mats['rear'],photo_mats['top'],
-                       ident+':upperworks')
+                       ident+':upperworks',photo_crop_order)
         roof.location=gv((22.0,deck+cabin_height-.10,0)); parent(roof,cabin_root)
         # Straight bridge wings continue the deck to the measured cabin width.
         for side in (-1,1):
             wing=photo_box(f'{ident}:bridge-wing-{side}',(0,0,0),
                            (3.2,.22,2.0),photo_mats['side'],photo_mats['front'],
-                           photo_mats['rear'],photo_mats['top'],ident+':upperworks')
+                           photo_mats['rear'],photo_mats['top'],ident+':upperworks',photo_crop_order)
             wing.location=gv((22.0,deck+cabin_height*.58,side*(cabin_width*.5+.55)))
             parent(wing,cabin_root)
         if args.stage != 'fleet' and ident=='ship-good-hope':
@@ -1263,29 +1322,31 @@ for ident,_,_,length,width,_,_,_ in ships:
     if ident not in roots:
         continue
     ship_root=roots[ident]
+    verts=[]; faces=[]
     for mound_index,t in enumerate((.43,.25)):
         station_t, breadth = min(HULL_STATIONS, key=lambda row: abs(row[0]-t))
         center_x=length*t
         inner=width*breadth*.5+.12
         for side in (-1,1):
-            verts=[]; faces=[]; along_steps=13; out_steps=9
+            start=len(verts); along_steps=13; out_steps=9
             for ai in range(along_steps):
                 v=-1+2*ai/(along_steps-1)
                 for oi in range(out_steps):
                     u=oi/(out_steps-1)
-                    x=center_x+v*(8.5 if mound_index==0 else 6.5)
+                    x=center_x+v*(4.0 if mound_index==0 else 3.0)
                     z=side*(inner+8*u)
-                    y=-2+.72*(math.cos(math.pi*u/2)**1.4)*(math.cos(math.pi*v/2)**1.6)
+                    y=-2+1.4*(math.cos(math.pi*u/2)**1.4)*(math.cos(math.pi*v/2)**1.6)
                     verts.append(gv((x,y,z)))
             for ai in range(along_steps-1):
                 for oi in range(out_steps-1):
-                    a=ai*out_steps+oi; b=a+out_steps
+                    a=start+ai*out_steps+oi; b=a+out_steps
                     faces.append((a,b,b+1,a+1) if side>0 else (a,a+1,b+1,b))
-            mesh=bpy.data.meshes.new(f'{ident} sand mound {mound_index} {side}')
-            mesh.from_pydata(verts,[],faces); mesh.validate(); mesh.materials.append(sand); mesh.update()
-            for polygon in mesh.polygons: polygon.use_smooth=True
-            mound=bpy.data.objects.new(f'{ident}:drifts mound {mound_index} {side}',mesh)
-            scene.collection.objects.link(mound); mound['part']=ident+':drifts'; parent(mound,ship_root)
+    # All of one ship's heaps form one part, `<ship>:drifts`.
+    mesh=bpy.data.meshes.new(f'{ident} drifts mesh')
+    mesh.from_pydata(verts,[],faces); mesh.validate(); mesh.materials.append(sand); mesh.update()
+    for polygon in mesh.polygons: polygon.use_smooth=True
+    mound=bpy.data.objects.new(f'{ident}:drifts',mesh)
+    scene.collection.objects.link(mound); mound['part']=ident+':drifts'; parent(mound,ship_root)
 for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ()):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.

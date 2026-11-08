@@ -363,3 +363,14 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the continuous ship-side drift strips and the two sister ships' carved cabin meshes and their generated masks. No saved art sheet or source photo was removed.
+
+## Round 15, point 2 (Claude): names on both sides, drift part (7 November 2026)
+
+- The job's point 1 commit (9414d69ef) still mirrored the port names and split each ship's sand into separately named heaps, which failed `test-blender-output.mjs` ("Patience has a separate sand drift part"). Claude finished the point by hand.
+- Bow names: one rule for both sides. Each name's face points outward, its up is world up and it reads along up x outward, so it reads left to right from outside on both bows, with no mirrored scale and no reversed string. The flat lettering is then turned into a mesh and each vertex moved out to the hull side at its own station (`hull_half_breadth`, `wrap_name_on_hull`), because the hull widens aft of the name and half of each word sank into the plating.
+- Drifts: each ship's four heaps are one part again, `<ship>:drifts`.
+- Port and starboard check renders from car height read PATIENCE, MARIGOLD and GOOD HOPE whole and left to right. Family export: 35,019 triangles and 2,719,288 bytes read back. `tools/test-blender-output.mjs`: 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- The mirrored-scale and reversed-string handling of the port bow names, and the per-heap drift objects.
