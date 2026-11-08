@@ -179,42 +179,6 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-10.jpg` and `round-10-review.md`; round 11 is the current sheet and review.
 - Removed this round's temporary renders, Blender review file and logs from `.qa-dist/`; retained the supplied task briefs.
 
-## Lighthouse round 1 part 2 (7 November 2026)
-
-- Point 1: wrapped the measured stone photo around the full shaft using a
-  mirrored, embedded tile at about a 0.8 m repeat; made the stone matte.
-- Recessed the spiral stair and landing rails behind the inner wall, removed
-  the stray external spiral, reshaped the gallery deck and corbels, and made
-  the lantern cap dark iron with a ventilator ball. Replaced the old beam bar
-  with a translucent 14 m widening mesh on `lighthouse:beam`.
-- Point 2: added whitewashed inner stone, warm amber sconces on all three
-  landings, and bright crayon pictures of a ship, house and sun. Moved the
-  landing camera to the first landing, 1.6 m above its floor, aimed across the
-  landing at the drawings. Attached every gallery and landing rail piece to
-  the lighthouse root so none remains at the world origin.
-- Final GLB read-back: 5,974 lighthouse triangles; 38,029 triangles total;
-  2,927,540 bytes. Both triangle budgets and the 3 MB family size limit pass.
-- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed.
-  `tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
-- Rendered and inspected `.qa-dist/check-lighthouse-road.png`,
-  `.qa-dist/check-lighthouse-dusk.png` and
-  `.qa-dist/check-lighthouse-landing.png`. The road view reads as a tall,
-  tapering stone tower with the lantern room and gallery; the stone repeats
-  visibly. Dusk shows the warm lantern and widening beam. The landing view
-  shows all three drawings and an amber wall lamp; the iron ring rail sits
-  below the pictures. Claude should judge those three views and the repeated
-  stone finish.
-- Browser checks: Claude handles them. Lane tier and build were not run, as
-  required for art cards.
-- Changed assertions: none. Race fingerprints: none; art only.
-
-## Removed
-
-- Removed the straight yellow beam cube and the exposed outer spiral stair.
-- Removed temporary Blender build/render/test logs, the fit report, generated
-  masks and exported-model review Blend from `.qa-dist/`. Kept the three named
-  check pictures and both supplied task briefs.
-
 ## Round 12 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Patience funnel, cabins and drifts (7 November 2026)
 
 - Added three measured, dead-on funnel reference photos and replaced the box shell and separate pipes with one oval `carve_object` named `ship-patience:funnel`. The old funnel crop is removed. Reduced only the accommodation carve target to keep the hull untouched and stay within the triangle budget.
@@ -488,3 +452,49 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed this round's temporary review Blend, source-photo grid and build/render/test logs from `.qa-dist/` and `.evidence/` after inspection. Kept the three requested lighthouse check PNGs for Claude. No previous ship review evidence was changed.
+
+## Lighthouse round 1 part 2 (7 November 2026)
+
+- Point 1: wrapped the measured stone photo around the full shaft using a
+  mirrored, embedded tile at about a 0.8 m repeat; made the stone matte.
+- Recessed the spiral stair and landing rails behind the inner wall, removed
+  the stray external spiral, reshaped the gallery deck and corbels, and made
+  the lantern cap dark iron with a ventilator ball. Replaced the old beam bar
+  with a translucent 14 m widening mesh on `lighthouse:beam`.
+- Point 2: added whitewashed inner stone, warm amber sconces on all three
+  landings, and bright crayon pictures of a ship, house and sun. Moved the
+  landing camera to the first landing, 1.6 m above its floor, aimed across the
+  landing at the drawings. Attached every gallery and landing rail piece to
+  the lighthouse root so none remains at the world origin.
+- Final GLB read-back: 5,974 lighthouse triangles; 38,029 triangles total;
+  2,927,540 bytes. Both triangle budgets and the 3 MB family size limit pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed.
+  `tools/test-repo-hygiene.mjs`: passed; size targets are advisory.
+- Rendered and inspected `.qa-dist/check-lighthouse-road.png`,
+  `.qa-dist/check-lighthouse-dusk.png` and
+  `.qa-dist/check-lighthouse-landing.png`. The road view reads as a tall,
+  tapering stone tower with the lantern room and gallery; the stone repeats
+  visibly. Dusk shows the warm lantern and widening beam. The landing view
+  shows all three drawings and an amber wall lamp; the iron ring rail sits
+  below the pictures. Claude should judge those three views and the repeated
+  stone finish.
+- Browser checks: Claude handles them. Lane tier and build were not run, as
+  required for art cards.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the straight yellow beam cube and the exposed outer spiral stair.
+- Removed temporary Blender build/render/test logs, the fit report, generated
+  masks and exported-model review Blend from `.qa-dist/`. Kept the three named
+  check pictures and both supplied task briefs.
+
+## Lighthouse round 1, sheet (Claude): round 17 (7 November 2026)
+
+- Sheet `docs/board/looks/ww-art-ships/round-17.jpg` (1600 x 1778): the tower from the road at car height, at dusk with the lamp on, and the first landing inside. Review in `round-17-review.md`. This is the lighthouse's first of six rounds.
+- Verdict: the shape, gallery, dark iron dome and lantern are right and the stray spiral is gone. Still wrong: the stone shows as a mirrored repeating pattern with a pale streak down one side; the windows show white L shapes and the door a white slab; the beam reads as a solid capped pipe at dusk; the landing view shows a grey space with stick drawings and a floating rail.
+- `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: run by Claude, results in the review. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- `round-16.jpg` and `round-16-review.md`; round 17 is the single current sheet.
