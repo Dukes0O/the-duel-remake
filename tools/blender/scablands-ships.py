@@ -122,8 +122,6 @@ if args.render_view:
         'hope': 'ship-good-hope',
         'marigold': 'ship-marigold',
         'patience': 'ship-patience',
-        'deck-good-hope': 'ship-good-hope',
-        'deck-marigold': 'ship-marigold',
     }.get(args.render_view)
     if close_subject:
         for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
