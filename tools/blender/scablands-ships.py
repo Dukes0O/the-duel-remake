@@ -71,7 +71,8 @@ parser.add_argument('--compose-sheet', action='store_true')
 parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold',
                                                'port-good-hope', 'starboard-good-hope', 'port-marigold', 'starboard-marigold',
                                                'port-patience', 'starboard-patience', 'lighthouse-road',
-                                               'lighthouse-dusk', 'lighthouse-landing', 'lighthouse-above'), default=None)
+                                               'lighthouse-dusk', 'lighthouse-landing', 'lighthouse-above',
+                                               'pilot-boat-road', 'pilot-boat-side', 'pilot-boat-above'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -126,6 +127,29 @@ if args.render_view:
             stack.extend(obj.children)
     set_tree_visibility('lighthouse', False)
     set_tree_visibility('pilot-boat', False)
+    if args.render_view.startswith('pilot-boat-'):
+        set_tree_visibility('pilot-boat', True)
+        for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
+            set_tree_visibility(name, False)
+        for obj in scene.objects:
+            if obj.name == 'lake-bed geometry': obj.hide_render = True
+        target = Vector((230, 1.1, -430))
+        if args.render_view == 'pilot-boat-road':
+            scene.camera.location = Vector((246, -1.2, -446))
+            scene.camera.data.lens = 38
+        elif args.render_view == 'pilot-boat-side':
+            scene.camera.location = Vector((230, -1.2, -452))
+            scene.camera.data.lens = 45
+        else:
+            scene.camera.location = Vector((246, 20, -446))
+            scene.camera.data.lens = 38
+        scene.camera.rotation_euler = (target-scene.camera.location).to_track_quat('-Z','Y').to_euler()
+        scene.render.resolution_x, scene.render.resolution_y = 1200, 900
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.filepath = str(root / f'.qa-dist/check-pilot-boat-{args.render_view.removeprefix("pilot-boat-")}.png')
+        bpy.ops.render.render(write_still=True)
+        print(f'Rendered {args.render_view}: {scene.render.filepath}')
+        raise SystemExit(0)
     if args.render_view.startswith('lighthouse-'):
         set_tree_visibility('lighthouse', True)
         for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
@@ -1766,40 +1790,73 @@ if args.stage == 'family':
     beam_mesh.update()
     beam_obj=bpy.data.objects.new('lighthouse rotating beam',beam_mesh); scene.collection.objects.link(beam_obj); beam_obj['part']='lighthouse:beam'; parent(beam_obj,lightpart)
 
-    # The ridiculous forty-foot pilot boat remains a real, buoyant hull.
+    # Forty-foot pilot boat lofted from twelve measured stations. The vee
+    # closes below the waterline and the bow flares above the chine.
     boat=root_obj('pilot-boat',(230,-.8,-430),'pilot-boat')
-    boat_dims=(12.2,3.9,2.5,-1.2)
-    photo_hull('pilot-boat-floatable-hull',boat,(12.2,3.9,2.5,-1.2),pilot_photo,'')
-    boat_hull=bpy.data.objects.get('pilot-boat-floatable-hull')
-    # The hull projection crop uses the workboat profile; a pale upper strake keeps its shape readable.
+    boat_stripe=matte_material('Pilot boat / dark green boot stripe',(.035,.16,.105),.8)
+    strap_yellow=matte_material('Pilot boat / bright yellow ratchet webbing',(.95,.62,.035),.72)
+    stations=((-0.50,.10),(-.44,.43),(-.36,.72),(-.27,.88),(-.16,.96),(-.04,1),(.10,1),(.22,.97),(.32,.90),(.40,.76),(.46,.50),(.50,.03))
+    rings=[]
+    for t,b in stations:
+        hw=1.92*b
+        # underside keel, chine, flared topsides and narrow gunwale
+        rings.append([(t*12.2,-.50,0),(t*12.2,-.30,hw*.58),(t*12.2,.35,hw*.88),(t*12.2,1.35,hw*1.05),(t*12.2,1.58,hw*1.08),(t*12.2,1.58,-hw*1.08),(t*12.2,1.35,-hw*1.05),(t*12.2,.35,-hw*.88),(t*12.2,-.30,-hw*.58)])
+    verts=[gv(v) for ring in rings for v in ring]; faces=[]; uvs=[]
+    for i in range(len(rings)-1):
+        for j in range(9):
+            a=i*9+j; b=i*9+(j+1)%9
+            faces.append((a,b,b+9,a+9))
+            uvs.append(((stations[i][0]+.5, j/9),(stations[i][0]+.5,(j+1)/9),(stations[i+1][0]+.5,(j+1)/9),(stations[i+1][0]+.5,j/9)))
+    faces.extend((tuple(range(8,-1,-1)),tuple((len(rings)-1)*9+j for j in range(9))))
+    hull_mesh=bpy.data.meshes.new('twelve-station deep vee hull'); hull_mesh.from_pydata(verts,[],faces); hull_mesh.materials.append(pilot_photo); hull_mesh.update()
+    hull=bpy.data.objects.new('pilot-boat:floatable-hull',hull_mesh); scene.collection.objects.link(hull); hull['part']='pilot-boat'; parent(hull,boat)
+    uv=hull_mesh.uv_layers.new(name='UVMap')
+    for poly,coords in zip(hull_mesh.polygons,uvs):
+        for li,coord in zip(poly.loop_indices,coords): uv.data[li].uv=coord
+    # black rubbing strake and dark green boot stripe follow both sheer lines
     for side in (-1,1):
-        upper=cube(f'pilot-boat-sheer-strake-{side}',(0,1.7,side*1.62),(10.2,.20,.12),steel,'pilot-boat',.05); parent(upper,boat)
-        for i in range(7):
-            win=cube(f'pilot-boat-cabin-window-{side}-{i}',(-1.8+i*.6,3.05,side*1.41),(.42,.55,.06),glass,'pilot-boat',.04); parent(win,boat)
-    house_vertices=[(-2.6,1.65,-1.5),(2.6,1.65,-1.5),(2.6,1.65,1.5),(-2.6,1.65,1.5),
-                    (-2.2,3.65,-1.32),(2.0,3.65,-1.32),(2.0,3.65,1.32),(-2.2,3.65,1.32)]
-    house_faces=[(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]
-    house_mesh=bpy.data.meshes.new('sloped pilot-house panels'); house_mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); house_mesh.materials.append(boat_paint); house_mesh.update()
-    cabin=bpy.data.objects.new('pilot-boat-pilot-house',house_mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
-    roof=cube('pilot-boat-cabin-roof',(0,3.72,0),(5.7,.25,3.0),steel,'pilot-boat',.1); parent(roof,boat)
+        beam(f'pilot-boat-black-rubbing-strake-{side}',(-5.5,.83,side*1.72),(5.1,.83,side*1.72),.13,iron,'pilot-boat',.11)
+        beam(f'pilot-boat-green-boot-stripe-{side}',(-5.4,.02,side*1.38),(5.3,.02,side*1.38),.08,boat_stripe,'pilot-boat',.06)
+    # Faceted house shell with a raked bow; dark recessed glazing is separate.
+    house_vertices=[(-2.9,1.55,-1.34),(2.55,1.55,-1.34),(2.55,1.55,1.34),(-2.9,1.55,1.34),(-2.55,3.55,-1.20),(2.18,3.55,-1.20),(2.18,3.55,1.20),(-2.55,3.55,1.20)]
+    house_faces=((0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7))
+    mesh=bpy.data.meshes.new('raked pilot house'); mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); mesh.materials.append(boat_paint); mesh.update()
+    cabin=bpy.data.objects.new('pilot-boat-pilot-house',mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
+    roof=cube('pilot-boat-pilot-house-roof',(-.18,3.58,0),(5.0,.16,2.48),steel,'pilot-boat',.04); parent(roof,boat)
+    # side windows and forward raked panes set behind the painted house face
     for side in (-1,1):
-        beam(f'pilot-boat-rail-{side}',(-2.8,2.1,side*1.72),(3.8,2.1,side*1.72),.09,steel,'pilot-boat')
-    windshield=cube('pilot-boat-forward-windscreen',(2.02,3.05,0),(.07,.78,2.25),glass,'pilot-boat',.06); parent(windshield,boat)
-    # A heavy 14 m trailer with eight complete road wheels and spring packs.
+        for i,x in enumerate((-1.65,-.72,.22,1.18)):
+            pane=cube(f'pilot-boat-side-glass-{side}-{i}',(x,2.72,side*1.215),(.72,.48,.025),glass,'pilot-boat',.025); parent(pane,boat)
+        rail(f'pilot-boat-foredeck-rail-{side}',(3.4,1.92,side*1.3),(5.4,1.92,side*1.1),.035,steel,'pilot-boat')
+        rail(f'pilot-boat-aft-rail-{side}',(-5.8,1.92,side*1.15),(-3.25,1.92,side*1.30),.035,steel,'pilot-boat')
+        for x in (-5.8,-4.8,3.2,4.4): rail(f'pilot-boat-rail-post-{side}-{x}',(x,1.58,side*1.18),(x,1.92,side*1.18),.035,steel,'pilot-boat')
+    wind=cube('pilot-boat-raked-windscreen',(2.28,2.75,0),(.025,.68,2.16),glass,'pilot-boat',.01); wind.rotation_euler[2]=math.radians(-7); parent(wind,boat)
+    # mast, searchlight, horn and aft life rings
+    rail('pilot-boat-mast',(0,3.66,0),(0,4.72,0),.035,steel,'pilot-boat')
+    rail('pilot-boat-searchlight',(0,3.55,0),(0,3.78,.2),.12,iron,'pilot-boat')
+    for side in (-1,1): torus(f'pilot-boat-life-ring-{side}',(-4.8,1.98,side*.98),.28,.06,materials['faded-hand-paint'],'pilot-boat','Z',16,6)
+    # 14 m ladder frame with six road wheels (dual tyres on three axles),
+    # timber bunks, yellow straps, and an intentionally oversized A drawbar.
+    for z in (-1.65,1.65): beam(f'pilot-trailer-ladder-rail-{z}',(-7.0,-.02,z),(6.5,-.02,z),.20,rust,'pilot-boat',.16)
+    for x in (-6,-3,0,3,6): beam(f'pilot-trailer-crossmember-{x}',(x,-.12,-1.65),(x,-.12,1.65),.14,steel,'pilot-boat',.12)
+    for side in (-1,1):
+        beam(f'pilot-trailer-a-frame-{side}',(6.2,-.02,side*1.6),(10.7,-.05,0),.20,rust,'pilot-boat',.18)
+        beam(f'pilot-trailer-timber-bunk-{side}',(-5.5,.36,side*1.12),(5.6,.36,side*1.12),.20,wood,'pilot-boat',.16)
+        for axle,x in enumerate((-4.2,0,4.2)):
+            z=side*1.9; wheel_y=-.83
+            torus(f'pilot-trailer-road-tyre-{side}-{axle}',(x,wheel_y,z),.65,.22,iron,'pilot-boat','Y',20,8)
+            torus(f'pilot-trailer-inner-dual-{side}-{axle}',(x,wheel_y,z-side*.42),.65,.19,iron,'pilot-boat','Y',20,8)
+            cylinder(f'pilot-trailer-rim-{side}-{axle}',(x,wheel_y,z+side*.20),.38,.10,steel,'pilot-boat',16,'Z')
+    for x in (-4.8,-1.8,1.6,4.4):
+        # bright ratchet webbing arcs above the load and anchors to the frame
+        beam(f'pilot-boat-yellow-ratchet-strap-{x}',(x,-.02,-1.25),(x,2.85,0),.055,strap_yellow,'pilot-boat',.04)
+        beam(f'pilot-boat-yellow-ratchet-strap-return-{x}',(x,2.85,0),(x,-.02,1.25),.055,strap_yellow,'pilot-boat',.04)
+    sign=cube('pilot-trailer-wide-load-board',(-6.2,.52,0),(1.45,.68,2.5),wood,'pilot-boat',.03); parent(sign,boat)
+    signmat=matte_material('Pilot boat / sign lettering red',(.72,.08,.025))
+    text_data=bpy.data.curves.new('WIDE LOAD hand painted','FONT'); text_data.body='WIDE LOAD'; text_data.size=.28; text_data.extrude=.003
+    text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((-6.9,.56,0)); text_obj.rotation_euler=(math.pi/2,0,math.pi/2); text_obj.data.materials.append(signmat); text_obj['part']='pilot-boat'; parent(text_obj,boat)
     trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
-    for z in (-1.45,1.45): beam(f'pilot-trailer-long-rail-{z}',(-8,.3,z),(7,.3,z),.28,rust,'pilot-boat')
-    for x in (-6,-2,2,6): beam(f'pilot-trailer-crossmember-{x}',(x,.18,-1.55),(x,.18,1.55),.22,steel,'pilot-boat')
-    hitch=beam('pilot-trailer-hitch',(7,.48,0),(11,.5,0),.24,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
-    for side in (-1,1):
-        for i,x in enumerate((-4,-1,2,5)):
-            z=side*1.72
-            tor=torus(f'pilot-trailer-road-tyre-{side}-{i}',(x,-.14,z),.72,.24,iron,'pilot-boat','Z')
-            for k in range(8):
-                a=k*2*math.pi/8
-                lug=cube(f'pilot-tyre-lug-{side}-{i}-{k}',(x+.88*math.cos(a),-.14+.88*math.sin(a),z),(.23,.18,.55),iron,'pilot-boat',0)
-            hub=cylinder(f'pilot-wheel-hub-{side}-{i}',(x,-.14,z+side*.24),.30,.15,steel,'pilot-boat',20,'Z')
-            for spring in range(3):
-                beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
+    hitch=beam('pilot-trailer-hitch-coupler',(10.5,-.02,0),(11.4,-.02,0),.20,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
 
 # Separate heaps bank the bows and one quarter point on both sides. Each foot
 # reaches 8 m onto the ground; the gaps expose the hull against a flat bed.
