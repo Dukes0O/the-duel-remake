@@ -9,3 +9,4 @@ Generated with OpenAI image generation (Codex), 7 November 2026. Each image is a
 
 The traced fence uses the already credited `pump-station-fence.jpg` reference.
 - The open shed overhead image was vertically normalized to match the 19.6 m by 11.1 m measured footprint.
+- The open shed rear image was vertically normalized to match the front elevation scale and 11.1 m width.
