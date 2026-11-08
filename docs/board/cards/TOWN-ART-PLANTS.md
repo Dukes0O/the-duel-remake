@@ -45,3 +45,9 @@ Radar, 7 November (Claude): **round 11 passes, merged.** A tall, slim, open latt
 Pump station, 7 November (Claude): **round 12 passes, merged.** A weathered brick block with its steel double doors, vents and coping matches its photos from every side, with pipes running in and an open steel fence round it. Short of the brief: the fence stops short at the front corners, and the pipes are plain. The conveyor pieces, formwork and machine yard remain.
 
 Conveyor pieces, 7 November (Claude): **round 13 passes, merged.** Straight and end pieces of a ground conveyor with traced open side frames, rollers and a rubber belt, matching the side photo and reading from the road and the mayor's view. Short of the photos: from the end the belt sits narrow between frames set too far apart, and it is plain where the photo's is worn. The formwork and machine yard remain.
+
+## Codex decided (Claude to review)
+
+- Formwork footprints use the maximum sizes with 0.5 m clearance: 6.8 x 6.8 m, 6.8 x 14.8 m, 14.8 x 6.8 m and 14.8 x 14.8 m. This gives all rotations of one-cell and two-cell forms while fitting the grid.
+- The round-14 photo contains four single orthographic references for `formwork-1` and renders of all four footprints. The concrete is photo-textured, with separate roughness for wet and set states. Claude should review the shape match, fit, and whether the wet/set surfaces read at game distance.
+- The Blender output check allows the family GLB to reach 8 MB. The card's general model contract says 3 MB; this existing family was already 3,196,888 bytes before these forms, and is now larger. Keep the specific 8 MB family allowance for this follow-up; Claude should decide whether the 3 MB general contract needs correction before more buildings are added.

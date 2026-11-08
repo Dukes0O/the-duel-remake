@@ -41,3 +41,22 @@
 
 - No accepted buildings or earlier sheets were removed.
 - Temporary renders and logs from round 13 were removed after review and checks.
+
+## Design decision: formwork
+
+- The four forms use the largest footprints that preserve the required 0.5 m edge clearance: 1x1 cell is 6.8x6.8 m; 1x2 is 6.8x14.8 m; 2x1 is 14.8x6.8 m; and 2x2 is 14.8x14.8 m. This makes the four IDs useful as all rotations of the one-cell and two-cell forms while staying inside the town grid.
+- Each form is a low, four-sided braced timber mould with two distinct concrete states, `wet` and `set`, and visible steel stakes. The concrete surfaces sit inside the timber, at a height that keeps both states visible from the mayor and road views.
+- Round 14 is the first submitted formwork sheet. The earlier flat-colour and oversized-slab render was an internal iteration, replaced in this sheet. Claude's art verdict is pending.
+
+## Follow-up: formwork, round 14
+
+- Textured the wet and set concrete from the overhead photo and set separate material roughness. Fitted both slabs to the inside of the timber opening. Added the four generated orthographic references and the round-14 comparison sheet and review note.
+- Formwork footprints are 6.8 x 6.8 m, 6.8 x 14.8 m, 14.8 x 6.8 m and 14.8 x 14.8 m. Blender printed bounds, triangle counts and part contact checks.
+- The exported family is 3,448,256 bytes. This exceeds the general contract's 3 MB statement, but is below the specific 8 MB family limit in the requested task brief and the output test. The preceding family already measured 3,196,888 bytes. Claude should settle the discrepancy before more buildings are added.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures. `node tools/test-repo-hygiene.mjs`: passed; size targets are advisory. `node tools/test-review-evidence.mjs`: 8 of 9 passed twice; audio analysis failed both times because `ffmpeg` could not start (`spawnSync ffmpeg EPERM`).
+- The task brief says art cards do not run the lane tier or a build. The lane tier was run by mistake against the broader AGENTS gate and stopped after 13 suites passed, 1 failed and 33 were not run; the failure was the same ffmpeg audio-analysis issue. No build was run. No browser, in-game or frame check was run; Claude owns the look verdict.
+- Changed assertions add the four formwork roots, each wet/set and timber/stake child, and each footprint's triangle cap. No existing assertion was weakened. Race fingerprints are not applicable.
+
+## Removed
+
+- No accepted models, prior sheets, source photos or assertions were removed. Temporary render images and logs from this run are removed after recording this comparison sheet.
