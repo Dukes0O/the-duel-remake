@@ -74,7 +74,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed the now-unused `patience-white-painted-steel.jpg` tile and its credit entry; the carved photo set supplies the superstructure finish.
 - Removed the superseded round 6 look sheet and review note; round 7 is the single retained sheet.
 
-## Round 8 — Patience upperworks (7 November 2026)
+## Round 8 â€” Patience upperworks (7 November 2026)
 
 - Re-measured the side and bow photos at 0.0244 m/px. The side grid's 680 px
   span gives 16.59 m; the front grid gives 10.00 m walls, 14.03 m wings and
@@ -131,7 +131,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-8.jpg` and `round-8-review.md`; round 9 is the current look sheet and review.
 - Removed this round's generated renders, Blender review file and scratch logs from `.qa-dist/`; kept the named task brief.
 
-## Round 10 — Patience drift and review views (7 November 2026)
+## Round 10 â€” Patience drift and review views (7 November 2026)
 
 - Added `ship-patience:drifts` as a separate mesh using the existing lake-bed
   sand material. It runs along both hull sides, overlaps the plating, rises to
@@ -179,7 +179,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-10.jpg` and `round-10-review.md`; round 11 is the current sheet and review.
 - Removed this round's temporary renders, Blender review file and logs from `.qa-dist/`; retained the supplied task briefs.
 
-## Round 12 — Patience funnel, cabins and drifts (7 November 2026)
+## Round 12 â€” Patience funnel, cabins and drifts (7 November 2026)
 
 - Added three measured, dead-on funnel reference photos and replaced the box shell and separate pipes with one oval `carve_object` named `ship-patience:funnel`. The old funnel crop is removed. Reduced only the accommodation carve target to keep the hull untouched and stay within the triangle budget.
 - Added a material multiply darkening and a broken, vertically stretched oxide streak layer over all four accommodation photos. The existing photos remain unchanged; the hull is unchanged.
@@ -197,7 +197,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-11.jpg` and `round-11-review.md`; round 12 is the current sheet and review.
 - Removed round-12 render images, the Blender review file, masks, grids, inspection scratch files and test logs from `.qa-dist/` and `.evidence/`; retained the two supplied task briefs.
 
-## Round 13, step 1 — Patience triangle trim (7 November 2026)
+## Round 13, step 1 â€” Patience triangle trim (7 November 2026)
 
 - Recorded the pre-trim GLB triangle counts by named Patience mesh in `.qa-dist/patience-triangles.txt` before changing the recipe. The model had 49,648 triangles and 2,853,084 bytes; dense detail included 26,300 triangles in merged ship fittings, 6,500 in upperworks, 4,500 in the funnel, 4,608 in drifts, and 3,288 in anchor links.
 - Lowered the Patience hull, upperworks and funnel carve targets to 800, 2,600 and 900; simplified chain link count and decimated joined rails, deck fittings, masts, propeller, and sand drift within their story-part meshes.
@@ -210,7 +210,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed redundant triangles from joined Patience deck fittings, rails, mast hardware, chains and drifts through the recipe's applied decimation pass; no named story part was dropped.
 - Removed this step's temporary Blender renders and logs after review; round-13 scratch renders remain temporarily while the sheet is assembled.
 
-## Round 13, step 2 — Shared sister hull source (7 November 2026)
+## Round 13, step 2 â€” Shared sister hull source (7 November 2026)
 
 - Added credited, recoloured four-view hull photos for the Good Hope and the Marigold. Committed the generated Good Hope and Marigold cabin photo sets and credits, without carving either cabin. The Marigold is set to 72 m in the ship list.
 - Reused the Patience carve as the sister hull source. Blender's GLB export does not retain object-linked material overrides on one shared mesh, so the sisters use copies of that mesh data with their own photo materials. The GLB therefore has three hull mesh records; this does not meet the card's one-mesh GLB requirement and needs Claude's decision before the next round.
@@ -220,7 +220,7 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 
 - No prior hull or cabin sources were removed; the cabin photo sets are committed for the next point.
 
-## Round 13, step 4 — Sister cabins (7 November 2026)
+## Round 13, step 4 â€” Sister cabins (7 November 2026)
 
 Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold's 15 x 10 x 6 m two-deck block from their measured four-view photos. The Good Hope reads as a closed, weathered dark wheelhouse with its mast on the roof; the Marigold reads as a rusted two-deck block with boarded windows, though her open bridge-wing gaps and texture transitions remain coarse in the close render. From the exported fleet GLB, the Patience is 12,436 triangles, the Good Hope 9,364, the Marigold 8,959, and the fleet total is 30,759 triangles; the file is 1,836,072 bytes.
 
@@ -233,7 +233,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 - Removed the Good Hope's and the Marigold's generic chart-room cubes, roofs, windows and doors; replaced them with their single photo-carved `upperworks` parts.
 - Kept the source photographs at full resolution. The packed review export caps photo projections at 512 px and cabin images at 320 px to stay below the whole-file budget.
 
-## Round 13, point 1 — Sister ship fit (7 November 2026)
+## Round 13, point 1 â€” Sister ship fit (7 November 2026)
 
 - Kept each hull, deck plate, cabin, and deck fitting under its ship root so the root's list and pitch carry them together. Gave each deck plate its own `ship-*:deck` story part for measured bounds.
 - Inset the sister deck plates to 64.8 x 10.8 m, inside the 72 x 12 m hull. Moved both cabin blocks to midships, where the hull keeps its beam; moved their funnels and mast with them. Updated the two 40 m check cameras to face the moved cabins.
@@ -245,7 +245,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the sister ships' off-midship cabin placement and the former oversized deck-plate footprint. No Patience geometry was changed.
 
-## Round 13, point 2 — Paint and bow photo (7 November 2026)
+## Round 13, point 2 â€” Paint and bow photo (7 November 2026)
 
 - Retoned the Marigold's hull and cabin materials to a muted, chalky ochre. The recipe grades packed material images in memory so the GLB keeps the color treatment; the credited source photos on disk are unchanged. Rust streaks and patches remain visible.
 - Found the Good Hope's end-face material-slot error: the mesh has two side-photo slots before its front and rear slots. The bow and stern now use their measured, dead-on end photos and UV projection.
@@ -256,7 +256,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the incorrect Good Hope side-photo mapping from her cabin bow face and removed the Marigold's bright yellow material treatment. The source photos remain unchanged.
 
-## Round 13, step 3 — Grounded fleet (7 November 2026)
+## Round 13, step 3 â€” Grounded fleet (7 November 2026)
 
 - Set each root at its map x/z place. Added the Good Hope's 4-degree starboard list and 0.5 m bow drop, and the Marigold's 6-degree port list and 1 m stern drop. Each ship has its own trailing anchor chains and banked sand drift. The Marigold has an exposed 18 m shaft and propeller and half her rail is gone.
 - Blender read-back by ship root: Patience 12,080 triangles, Good Hope 6,760, Marigold 6,408; 25,896 triangles total including 648 triangles of ground pieces. The whole GLB is 2,132,300 bytes, within the 50,000 triangle and 3 MB limits.
@@ -267,7 +267,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed this run's check render, Blender review file, logs, and test output from `.qa-dist/` after inspection. Kept the supplied task briefs and the generated cabin source photos named by the card.
 
-## Round 13, point 1 — Hull-following decks (7 November 2026)
+## Round 13, point 1 â€” Hull-following decks (7 November 2026)
 
 - Replaced all three rectangular deck plates with flat plates built from the hull's tapered deck outline, inset 0.3 m from the plating. Moved the Patience's outer rails, forecastle, stairs and deck fittings inward; narrowed the Marigold's surviving rail line. Read-back bounds show each plate inside its hull. Rendered the fleet overhead and each ship from a car-height bow quarter; the hull is visible beneath the plate edge, though the narrow lip is still noticeable at the low camera angle. Claude should judge `.qa-dist/check-ships-above.png`, `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`.
 - Blender 4.5.13 read-back: 26,300 triangles and 1,605,836 bytes for the family. `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets remain advisory. Browser checks do not apply; lane tier and build were not run for this art card. Changed assertions: none. Race fingerprints: none.
@@ -276,7 +276,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the three rectangular deck plates. The user-provided stray root render `.evidence-good-hope-bow-round13.png` was deleted.
 
-## Round 13, point 2 — Good Hope bow photo (7 November 2026)
+## Round 13, point 2 â€” Good Hope bow photo (7 November 2026)
 
 - Added one measured dead-on front reference for the Good Hope's closed, faded-black cabin block. `photo_grid.py` measurements are x-centre 700, deck y=1050 and roof y=232 in a 1448 x 1086 image. Corrected the front/rear material slots in the end-face UV fix: the GLB exporter merges the duplicate side slots, so the bow had been using the rear slot. Added forward end-photo preference to keep the side image from wrapping as far around the bow.
 - Rendered `.qa-dist/check-good-hope.png` from the exported GLB at 40 m, car height and three-quarter from the bow, and inspected it. The bow now shows the new front photo and the former bright wavy streaks are gone; some image distortion remains at the curved corner. Claude should review that render and the new front reference. The side and stern source photos were not changed.
@@ -286,7 +286,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the incorrect bow-to-rear material-slot assignment and the previous Good Hope front-photo mapping in the carve. The replaced source file is retained; it is no longer loaded by the Good Hope.
 
-## Round 13, points 1 and 2 — heading and bulwarks (7 November 2026)
+## Round 13, points 1 and 2 â€” heading and bulwarks (7 November 2026)
 
 - Turned the Good Hope and Marigold 180 degrees at their existing map positions, moved their cabins, funnels and masts aft, and moved the Marigold's shaft and propeller to the stern. Lowered all three deck plates by 0.15 m and added hull-painted bulwarks with rounded caps. The above render shows northbound bows and aft cabins; the three 40 m close views show the hull edge rising to the cap, though the existing Good Hope rail remains visually prominent. Claude should inspect `.qa-dist/check-ships-above.png`, `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`. Blender 4.5.13 GLB read-back: Patience 8,568 triangles, Good Hope 10,064, Marigold 9,790; whole file 42,668 triangles and 2,770,512 bytes. `tools/test-blender-output.mjs`: 381 checks passed, 0 failed after restoring family-stage drift parts. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. Browser checks: Claude look review requested; no browser check run. Lane tier and build not run per art-card rules. Changed assertions: none. Race fingerprints: none; art only.
 
@@ -314,7 +314,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 - Removed `round-12.jpg` and `round-12-review.md`; round 13 is the current sheet and review.
 - Removed this task's render images, Blender review scene, temporary count script, test outputs and logs from `.qa-dist/`. The two supplied task briefs remain.
 
-## Round 14, point 1 — Station-built hulls (7 November 2026)
+## Round 14, point 1 â€” Station-built hulls (7 November 2026)
 
 - Replaced the three photo-carved ship hulls with one measured section builder using 31 stations sampled from the hull top grid. It makes the flat keel, 1.5 m bilge, parallel sides, raked bow, cruiser stern, and one-piece 1 m bulwark with a flat cap. The inset deck follows the same outline and sheer. Each ship uses its own side, bow and stern photos; names remain on both bow sides.
 - Blender 4.5.13 exported and read back the family GLB: Patience 10,528 triangles, Good Hope 8,764, Marigold 8,795; total 41,375 triangles and 2,922,096 bytes. All are inside the card budgets.
@@ -324,7 +324,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the hull's `carve_object` table and hull-mask output, obsolete Patience hull view constants, the separate deck-edge bulwark wall and rounded rail, and the unused shared hull-photo material. The old striped hull rail treatment is no longer generated. `photo_carve` stays for the cabins, funnel and other carved pieces; the pilot boat keeps its separate hull recipe.
 
-## Round 14, point 2 — exported-hull views (7 November 2026)
+## Round 14, point 2 â€” exported-hull views (7 November 2026)
 
 - Rendered the current family GLB into the four named check views from an empty Blender scene. Added a station at the cruiser stern, mapped the side and end photos against their own image sizes and measured grids, and made the deck plate follow the hull outline with adjoining quads. Adjusted the sister-ship sand banks to meet the wider lower hull. Moved all three bow names slightly aft so the far-side name no longer peeks beyond the stem, corrected the lettering to face outward on both sides, and moved the Marigold's removable 18 m shaft and propeller from beyond her bow to her stern. Reframed the car-height views around each ship's bow name.
 - The car-height views show straight hull sides, raked bows and readable names. Sand covers most of the keel line, as the scene requires; the hull remains straight and flat where it emerges. The Marigold shaft now sits at her stern instead of extending from the bow.
@@ -335,3 +335,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed no source or model parts. The superseded bow-name placement, reversed far-side lettering and misplaced Marigold shaft transform were replaced in the Blender recipe.
+
+## Round 14, point 1 — bows, drifts and Marigold propeller (7 November 2026)
+
+- Reused each hull's side photograph across both end caps and moved the projection slightly inside the image edge, so the bow and stern carry the hull's dark plating and rust tone. Kept the red-brown lower hull and bow lettering. Rebuilt drift cross sections with more rows, rounded profiles, higher inner mounds and tapered ends. Replaced the Marigold's propeller ring and beam spokes with a hub and four twisted, tapered plate blades at the end of its named shaft.
+- Rendered and inspected `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png`, `.qa-dist/check-marigold.png` and `.qa-dist/check-ships-above.png`. The end caps now read as dark hull plating. The drifts have curved slopes and tapered edges but still read as somewhat strip-like in the low side views; Claude should judge those views. The propeller now has four plate blades.
+- Blender 4.5.13 GLB read-back: 45,477 triangles, 2,853,904 bytes. `tools/test-blender-output.mjs`: 381 checks passed. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. `tools/test-review-evidence.mjs`: 8 passed, 1 failed twice; audio-analysis subtest cannot spawn `ffmpeg` (`spawnSync ffmpeg EPERM`). No browser check, lane tier, build or frame check applies to this art task. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the pale bow and stern end-photo material assignment, the Marigold's propeller ring and beam spokes, and the prior coarse drift cross sections. No earlier art sheet has been removed in this point.

@@ -337,11 +337,11 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             y1, z1 = section[i][(j + 1) % section_size]
             above_deck = min(y0, y1) >= deck_heights[i] - .01
             material_ids.append(3 if above_deck else 0)
-    # Bow and cruiser stern end plates use only their own measured end photos.
+    # Carry the side plating around the stems; the end-board photos read pale.
     faces.append(tuple(range(section_size - 1, -1, -1)))
-    material_ids.append(2)
+    material_ids.append(0)
     faces.append(tuple((len(section) - 1) * section_size + j for j in range(section_size)))
-    material_ids.append(1)
+    material_ids.append(0)
 
     mesh = bpy.data.meshes.new(name + ' station-faired hull')
     mesh.from_pydata(verts, [], faces)
@@ -363,7 +363,8 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             if material_index == 0:
                 # Source side photographs show the bow at the left edge.
                 row = 155 - 110 * min(1.0, max(0.0, y / edge_y))
-                uv.data[loop_index].uv = (1 - (t + .5), 1 - row / side_image.size[1])
+                longitudinal = (.035 if station_index == 0 else .965 if station_index == len(section)-1 else 1-(t+.5))
+                uv.data[loop_index].uv = (longitudinal, 1 - row / side_image.size[1])
             elif material_index == 1:
                 # Bow grid: 12 m beam x=10..645, centre=328; deck/keel y=20/431.
                 image_x = min(645, max(10, 328 + z * (635 / 12)))
@@ -1056,10 +1057,21 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
         shaft=cylinder('marigold-removable-18m-shaft',(-44,-1.55,0),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
         prop_root=root_obj('ship-marigold:propeller',(0,0,0),'ship-marigold:propeller'); parent(prop_root,r)
-        prop=torus('ship-marigold-propeller-ring',(-53,-1.55,0),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
+        hub=cylinder('marigold-propeller-hub',(-53,-1.55,0),.48,.9,iron,'ship-marigold:propeller',20,'X'); parent(hub,prop_root)
         for blade in range(4):
             a=blade*math.pi/2
-            b=beam(f'marigold-propeller-blade-{blade}',(-53,-1.55,0),(-53,-1.55+math.sin(a)*1.3,math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
+            vertices=[]
+            for radius,chord,sweep,twist in ((.34,.40,0,0),(1.12,.62,.10,.20),(1.75,.16,.28,.36)):
+                cy=-1.55+math.sin(a+twist)*radius
+                cz=math.cos(a+twist)*radius
+                half_y=math.cos(a+twist)*chord*.5
+                half_z=-math.sin(a+twist)*chord*.5
+                vertices.extend(((-53+sweep,cy-half_y,cz-half_z),(-53+sweep,cy+half_y,cz+half_z)))
+            faces=[(0,1,3,2),(2,3,5,4),(0,2,4),(1,5,3)]
+            blade_mesh=bpy.data.meshes.new(f'marigold-propeller-blade-{blade} mesh')
+            blade_mesh.from_pydata([gv(p) for p in vertices],[],faces); blade_mesh.materials.append(steel); blade_mesh.update()
+            blade_obj=bpy.data.objects.new(f'marigold-propeller-blade-{blade}',blade_mesh); scene.collection.objects.link(blade_obj)
+            blade_obj['part']='ship-marigold:propeller'; parent(blade_obj,prop_root)
 
 # Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
 # the main deck is y=11 and the platform is y=25.
@@ -1189,7 +1201,7 @@ if args.stage in ('patience','fleet','family'):
     # Side-specific phase-shifted wavelengths roughen the edge. The outer row
     # lies on the shared bed; the inner row overlaps the plating.
     rng = __import__('random').Random(10410)
-    verts=[]; faces=[]; stations=73; rows=5
+    verts=[]; faces=[]; stations=73; rows=15
     for side in (-1, 1):
         base=len(verts)
         phases=[rng.uniform(0, 2*math.pi) for _ in range(6)]
@@ -1200,9 +1212,10 @@ if args.stage in ('patience','fleet','family'):
                         +.25*math.sin(t*2*math.pi*72/13+phases[1])
                         +.13*math.sin(t*2*math.pi*72/5.5+phases[2])
                         +.10*math.sin(t*2*math.pi*72/2.4+phases[3]))
-            crest=-.70 + 1.05*bow + .22*stern + edge_noise
+            crest=-.45 + 1.35*bow + .28*stern + edge_noise
             if side < 0: crest += .60
-            drift_width=6.0 + 5.0*bow - 2.1*stern + (3.0 if side < 0 else 0)
+            crest *= math.sin(math.pi*t)**.28
+            drift_width=5.5 + 3.0*bow - 1.0*stern + (2.0 if side < 0 else 0)
             for row in range(rows):
                 u=row/(rows-1)
                 lateral=side*(5.35 + drift_width*u + u*(
@@ -1212,7 +1225,7 @@ if args.stage in ('patience','fleet','family'):
                 along_wobble=u*(.8*math.sin(t*2*math.pi*72/27+phases[1])
                                 +.35*math.sin(t*2*math.pi*72/8+phases[3]))
                 ripple=.20*math.sin(t*2*math.pi*72/9+u*4+phases[4])
-                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**1.55)
+                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**.82)
                 if row == rows-1: y=-2.0
             verts.append(gv((5+lateral,y,-470+along+along_wobble)))
         for i in range(stations-1):
@@ -1227,7 +1240,7 @@ if args.stage in ('patience','fleet','family'):
     if args.stage in ('fleet','family'):
         for ship_index,(ident,bank_side) in enumerate((('ship-good-hope',1),('ship-marigold',-1))):
             ship_root=roots[ident]
-            vertices=[]; faces=[]; stations=49; rows=5
+            vertices=[]; faces=[]; stations=49; rows=15
             for side in (-1,1):
                 base=len(vertices)
                 for i in range(stations):
@@ -1236,10 +1249,12 @@ if args.stage in ('patience','fleet','family'):
                     for row in range(rows):
                         u=row/(rows-1)
                         z=side*(6.25+10*u+edge*u)
-                        crest=.55+(.62 if side==bank_side else .12)*math.sin(math.pi*t)**.7
+                        crest=.95+(.65 if side==bank_side else .20)*math.sin(math.pi*t)**.7
                         if ship_index==1 and side>0 and t<.30:
                             crest=-1.72+.12*(t/.30)
-                        y=-2+(crest+2)*(math.cos(u*math.pi/2)**1.5)
+                        crest *= math.sin(math.pi*t)**.28
+                        y=-2+(crest+2)*(math.cos(u*math.pi/2)**.82)
+                        y += .10*math.sin(t*2*math.pi*9+u*3+ship_index)*math.sin(u*math.pi)
                         if row==rows-1: y=-2
                         vertices.append(gv((along,y,z)))
                 for i in range(stations-1):
