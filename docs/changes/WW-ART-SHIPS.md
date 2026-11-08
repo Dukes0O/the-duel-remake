@@ -607,3 +607,15 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the four previous built straps and stern-mounted red WIDE LOAD sign. No ship, lighthouse, hull section, source photo, or prior review evidence was removed.
+
+## Pilot boat round 2, Claude's fixes and sheet: round 21 (8 November 2026)
+
+- The job raised the boat by moving pieces under a new parent with their parent links reset. Pieces made later never joined it: the rubbing strake and rails stayed at the old height and hung round the hull, and the pilot house shifted off the deck. Replaced with one rule: after every piece is built, each direct piece of the boat moves up `BOAT_LIFT` (1.2 m), except the trailer, straps, ratchets, sign bolts and hitch. The straps are built to the raised hull with the same constant.
+- The cribbing used the gatehouse stone photo and read as stone; it is now three shades of weathered timber.
+- Sheet `docs/board/looks/ww-art-ships/round-21.jpg` (1600 x 1400): front three-quarter from car height, side, and above. Review in `round-21-review.md`.
+- Final read-back: pilot boat 4,944 triangles; whole file 36,719 triangles and 2,820,348 bytes. `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs`: results in the review. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- The `pilot-boat-elevated-cradle` empty and the reparenting that went with it.
+- `round-20.jpg` and `round-20-review.md`; round 21 is the single current sheet.

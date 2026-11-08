@@ -1950,18 +1950,19 @@ if args.stage == 'family':
                 guard_faces.append((a,a+1,b+1,b))
             guard_mesh=bpy.data.meshes.new(f'pilot trailer mudguard mesh {side} {axle}'); guard_mesh.from_pydata(guard_verts,[],guard_faces); guard_mesh.materials.append(rust); guard_mesh.update()
             guard=bpy.data.objects.new(f'pilot-trailer-mudguard-{side}-{axle}',guard_mesh); scene.collection.objects.link(guard); guard['part']='pilot-boat'; parent(guard,boat)
+    crib_timbers=[matte_material(f'Pilot boat / weathered crib timber {k}',c,.95) for k,c in enumerate(((.33,.24,.15),(.27,.19,.11),(.38,.29,.18)))]
     for support,x in enumerate((-4.4,-.5,3.8)):
         for layer in range(3):
             y=.68+layer*.40
             across=(layer%2)==0
             dims=(.42,.40,1.72) if across else (1.25,.40,.42)
-            block=cube(f'pilot-trailer-cribbing-{support}-{layer}',(x,y,0),dims,wood,'pilot-boat',0); parent(block,boat)
-    body_lift=bpy.data.objects.new('pilot-boat-elevated-cradle',None); scene.collection.objects.link(body_lift); body_lift.location=(0,0,1.2); body_lift['part']='pilot-boat'; parent(body_lift,boat)
+            block=cube(f'pilot-trailer-cribbing-{support}-{layer}',(x,y,0),dims,crib_timbers[(support+layer)%3],'pilot-boat',.02); parent(block,boat)
+    BOAT_LIFT=1.2  # the boat rides this far up on the cribbing
     for i,photo_x in enumerate((110,340,715)):
         along=(photo_x-10)/1510; x=(along-.5)*12.2
         t,b=hull_station_at(x); sec=boat_section(t,b)
         for side in (-1,1):
-            path=[(x,.06,side*1.68)]+[(x,y+1.23,side*(w+.07)) for y,w in sec[1:]]+[(x,boat_deck(t)+1.23,0)]
+            path=[(x,.06,side*1.68)]+[(x,y+BOAT_LIFT+.03,side*(w+.07)) for y,w in sec[1:]]+[(x,boat_deck(t)+BOAT_LIFT+.03,0)]
             for k,(p0,p1) in enumerate(zip(path,path[1:])):
                 beam(f'pilot-boat-yellow-strap-{i}-{side}-{k}',p0,p1,.05,strap_yellow,'pilot-boat',.02)
         box=cube(f'pilot-boat-strap-ratchet-{i}',(x,.18,-1.70),(.18,.09,.12),steel,'pilot-boat',.01); parent(box,boat)
@@ -1991,20 +1992,17 @@ if args.stage == 'family':
     torus('pilot-trailer-spare-chain-loop',(9.00,.26,.45),.12,.025,steel,'pilot-boat','Y',10,5)
     can=cube('pilot-trailer-jerrycan',(9.10,.44,-.48),(.52,.70,.34),matte_material('Pilot boat / faded jerrycan',(.39,.32,.13),.45),'pilot-boat',.04); parent(can,boat)
     for offset in (-.14,0,.14): beam(f'pilot-trailer-jerrycan-rib-{offset}',(8.84,.35+offset,-.66),(8.84,.35+offset,-.30),.025,steel,'pilot-boat',.02)
-    # Move only boat body and fittings up; trailer remains low under the cribbing.
-    for obj in list(boat.children):
-        if obj is body_lift or obj.name.startswith(('pilot-trailer-', 'pilot-boat-yellow-strap-', 'pilot-boat-strap-ratchet-')) or obj.name == 'pilot-boat:hitch':
-            continue
-        obj.parent=body_lift; obj.matrix_parent_inverse=Matrix.Identity(4)
-    # Strap tops follow the raised hull, while their lower ends stay on the frame.
-    for obj in list(scene.objects):
-        if obj.name.startswith('pilot-boat-yellow-strap-'):
-            obj.parent=boat; obj.matrix_parent_inverse=Matrix.Identity(4)
     # Geometry helpers create world-scoped objects; keep every named fitting
     # under the boat root so the exported boat view carries its trailer along.
     for obj in list(scene.objects):
         if obj.name.startswith(('pilot-boat-', 'pilot-trailer-')) and obj.parent is None:
             parent(obj, boat)
+    # Lift the boat body onto its cribbing. The trailer, the straps (built to
+    # the raised hull), the hitch and the sign stay where they were built.
+    bpy.context.view_layer.update()
+    stay=('pilot-trailer-','pilot-boat-yellow-strap-','pilot-boat-strap-ratchet-','pilot-boat-sign-bolt-','pilot-boat:hitch')
+    for obj in [o for o in boat.children if not o.name.startswith(stay)]:
+        world=obj.matrix_world.copy(); world.translation.z+=BOAT_LIFT; obj.matrix_world=world
 
 # Separate heaps bank the bows and one quarter point on both sides. Each foot
 # reaches 8 m onto the ground; the gaps expose the hull against a flat bed.
