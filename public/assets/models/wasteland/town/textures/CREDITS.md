@@ -786,3 +786,7 @@ Hydrant-side.jpg, hydrant-front.jpg, hydrant-rear.jpg and hydrant-top.jpg are in
 `statue-side.jpg`, `statue-front.jpg`, `statue-rear.jpg` and `statue-above.jpg` were generated as separate original reference images with OpenAI ImageGen on 7 November 2026. Each reference shows the stern scrap figure and square plinth; the plaque is removed from the carved masks and modeled as a separate blank board. The above image was rotated 180 degrees to put the front edge at the top, matching `carve_object`'s plan-view convention. Side and rear images were resized to 1024 pixels wide; front and above are 1024 pixels wide. Original PNGs remain in the Codex generated-images collection. No third-party source material was used.
 
 `statue-above-r16.jpg` is a straight-down orthographic product render of the standing exported statue, used to replace the earlier high-angle generated plan photo. It was rendered from the round-16 candidate in Blender 4.5.13 and measured on a 100-pixel grid. The side, front and rear references are unchanged.
+
+## TOWN-ART-PLANTS conveyor references (round 13)
+
+`conveyor-side.jpg`, `conveyor-front.jpg`, `conveyor-rear.jpg` and `conveyor-top.jpg` are individual orthographic reference photographs generated with OpenAI ImageGen on 7 November 2026. They show one weathered ground conveyor on plain grey ground. Each was saved as a JPEG at 1024 pixels wide. No third-party source photographs were used.
