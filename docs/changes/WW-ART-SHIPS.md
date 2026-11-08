@@ -535,12 +535,15 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 ## Lighthouse round 3 (8 November 2026)
 
-- Point 1: kept the existing course wrapping and tower openings. Masonry blocks now vary from 0.4 to 1.5 m, with one in eight deliberately lighter or darker. Added a separate translucent salt veil with a packed greyscale alpha texture, ragged tide edge and hanging runs under the gallery and window levels. The veil merges into the lighthouse part at 400 triangles; the tower part is 5,998 triangles.
-- Rebuilt the family GLB: 38,461 total triangles and 2,950,760 bytes read back. Both limits pass.
-- Rendered and inspected `.qa-dist/check-lighthouse-road.png` and `.qa-dist/check-lighthouse-dusk.png`. Road: block variation and pale salt strands are visible; the foot tide band remains subtle. Dusk: the lantern and beam read well, while the pale salt is fainter under the night lighting. Claude should judge salt visibility and stone contrast in both views.
-- Checks `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs` are scheduled after point 2. Browser/look checks are Claude's. Lane tier and build were not run, as required for art cards.
+- Point 1: kept the existing course wrapping and tower openings. Masonry blocks now vary from 0.4 to 1.5 m, with one in eight deliberately lighter or darker. Added a separate translucent salt veil with a packed greyscale alpha texture, ragged tide edge and hanging runs under the gallery and window levels. It stays within 400 triangles.
+- Rendered and inspected `.qa-dist/check-lighthouse-road.png` and `.qa-dist/check-lighthouse-dusk.png`. Road: varied blocks and pale salt strands are visible; the foot band is subtle. Dusk: the lantern and beam read clearly, while the salt is fainter under night lighting. Claude should judge salt visibility and stone contrast in these two views.
+- Point 2: moved the first landing sconce to the wall right of the sun drawing, 1.9 m above the floor. Replaced broad boards with 0.17 m top strips, dark gaps and three wood shades, running from the window toward the camera. Added the 900 x 900 `lighthouse-above` view, 35 m from the tower at about 50 degrees down.
+- Rendered and inspected `.qa-dist/check-lighthouse-landing.png` and `.qa-dist/check-lighthouse-above.png`. The landing shows the drawings, warm sconce and narrow boards with visible seams. The above view shows the full tower, foot, gallery, lantern and dome. Claude should judge the sconce placement, board shades, and above framing. No sheet was made; Claude makes it.
+- Final GLB read-back: lighthouse assembly 5,994 triangles (tower mesh 5,586; glazing 92; beam 128; lantern lamp 188), whole file 38,061 triangles and 2,928,272 bytes. All budgets pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. Browser and look checks are Claude's. Lane tier and build were not run, as required for art cards.
 - Changed assertions: none. Race fingerprints: none; art only.
 
 ### Removed
 
-- No earlier lighthouse or ship parts removed in point 1.
+- Removed the old nine broad landing boards and replaced them with narrow flat strips to preserve the board direction and gaps within the lighthouse budget.
+- No lighthouse parts were automatically decimated. Lowered only named detail counts on the stone bands, gallery rails and landing bulbs to fit the 6,000-triangle lighthouse limit.

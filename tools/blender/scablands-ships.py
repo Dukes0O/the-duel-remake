@@ -71,7 +71,7 @@ parser.add_argument('--compose-sheet', action='store_true')
 parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold',
                                                'port-good-hope', 'starboard-good-hope', 'port-marigold', 'starboard-marigold',
                                                'port-patience', 'starboard-patience', 'lighthouse-road',
-                                               'lighthouse-dusk', 'lighthouse-landing'), default=None)
+                                               'lighthouse-dusk', 'lighthouse-landing', 'lighthouse-above'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -227,7 +227,7 @@ if args.render_view:
         scene.render.filepath = str(root / '.qa-dist/check-good-hope-deck.png')
     elif args.render_view.startswith('lighthouse-'):
         scene.render.image_settings.file_format = 'PNG'
-        if args.render_view == 'lighthouse-landing': scene.render.resolution_x, scene.render.resolution_y = 900, 900
+        if args.render_view in ('lighthouse-landing', 'lighthouse-above'): scene.render.resolution_x, scene.render.resolution_y = 900, 900
         else: scene.render.resolution_x, scene.render.resolution_y = 900, 1200
         scene.render.filepath = str(root / f'.qa-dist/check-{args.render_view}.png')
     else:
@@ -1468,7 +1468,7 @@ if args.stage == 'family':
     yy = np.arange(256)[:, None]
     # Tide band occupies the first metre with a broken, ragged upper edge.
     tide_edge = 9 + (salt_rng.random((1, 256)) * 4)
-    tide = (yy < tide_edge).astype(np.float32) * .55
+    tide = (yy < tide_edge).astype(np.float32) * .82
     # Fine hanging threads, strongest under sills/gallery courses, fade by 3-6 m.
     threads = np.zeros((256, 256), dtype=np.float32)
     for k in range(50):
@@ -1485,9 +1485,9 @@ if args.stage == 'family':
     salt_mat = bpy.data.materials.new('Lighthouse / pale salt veil'); salt_mat.use_nodes=True
     salt_nodes=salt_mat.node_tree.nodes; salt_links=salt_mat.node_tree.links
     salt_shader=salt_nodes.get('Principled BSDF')
-    salt_shader.inputs['Base Color'].default_value=(.82,.81,.75,1)
+    salt_shader.inputs['Base Color'].default_value=(.88,.86,.78,1)
     salt_shader.inputs['Roughness'].default_value=.98
-    salt_shader.inputs['Alpha'].default_value=.72
+    salt_shader.inputs['Alpha'].default_value=.85
     salt_tex=salt_nodes.new('ShaderNodeTexImage'); salt_tex.image=salt_image
     salt_links.new(salt_tex.outputs['Color'], salt_shader.inputs['Alpha'])
     salt_mat.surface_render_method='DITHERED'
@@ -1550,7 +1550,7 @@ if args.stage == 'family':
     inner_wall=bpy.data.objects.new('lighthouse whitewashed inner face',inner_mesh); scene.collection.objects.link(inner_wall); inner_wall['part']='lighthouse'; parent(inner_wall,light_root)
     # Slightly flared plinth and corbelled stone band under the gallery.
     for y, radius, depth in ((-1.75,5.34,.45),(24.65,3.04,.20),(24.90,3.25,.18),(25.12,3.48,.18)):
-        band=cylinder(f'lighthouse-stone-course-{y}',(0,y,0),radius,depth,stone_photo,'lighthouse',20)
+        band=cylinder(f'lighthouse-stone-course-{y}',(0,y,0),radius,depth,stone_photo,'lighthouse',10)
         parent(band,light_root)
     gallery_stone=matte_material('Lighthouse / aged gallery stone',(.53,.49,.42),.94)
     gallery=cylinder('lighthouse-gallery-deck',(0,25.42,0),3.62,.30,gallery_stone,'lighthouse',24)
@@ -1558,12 +1558,12 @@ if args.stage == 'family':
     for i in range(8):
         a=2*math.pi*i/8
         corbel=beam(f'lighthouse-gallery-corbels-{i}',(2.62*math.cos(a),25.05,2.62*math.sin(a)),(3.45*math.cos(a),25.23,3.45*math.sin(a)),.34,gallery_stone,'lighthouse',.28); parent(corbel,light_root)
-    for i in range(16):
-        a=2*math.pi*i/16; x,z=3.52*math.cos(a),3.52*math.sin(a)
+    for i in range(12):
+        a=2*math.pi*i/12; x,z=3.52*math.cos(a),3.52*math.sin(a)
         post=beam(f'lighthouse-gallery-rail-post-{i}',(x,25.55,z),(x,26.58,z),.055,iron,'lighthouse'); parent(post,light_root)
     for y in (25.62,26.48):
-        for i in range(16):
-            a=2*math.pi*i/16; b=a+2*math.pi/16
+        for i in range(12):
+            a=2*math.pi*i/12; b=a+2*math.pi/12
             rail_segment=beam(f'lighthouse-gallery-rail-{y}-{i}',(3.52*math.cos(a),y,3.52*math.sin(a)),
                  (3.52*math.cos(b),y,3.52*math.sin(b)),.045,iron,'lighthouse'); parent(rail_segment,light_root)
     # Glazed lantern room with iron mullions, domed cap and ventilator ball.
@@ -1650,12 +1650,21 @@ if args.stage == 'family':
         stair_rail=beam(f'lighthouse-stair-handrail-{i}',(2.02*math.cos(a0),y0,2.02*math.sin(a0)),
                         (2.02*math.cos(a1),y1,2.02*math.sin(a1)),.055,iron,'lighthouse'); parent(stair_rail,light_root)
     step=cube('lighthouse-swept-step',(0,-1.86,-5.7),(2.2,.28,1.0),frame_stone,'lighthouse',.04); parent(step,light_root)
-    # Worn timber boards make the first landing legible at the foot of the view.
+    # Dark backing makes the gaps read; narrow boards run from the window toward the camera.
     landing_woods=[matte_material(f'Lighthouse / worn landing boards {k}',c,.94)
                    for k,c in enumerate(((.30,.20,.11),(.24,.15,.08),(.34,.24,.14)))]
-    for i in range(9):
-        z=-2.9+i*.47
-        plank=cube(f'lighthouse-landing-plank-{i}',(0,8.17,z),(5.2,.07,.43),landing_woods[(i*2)%3],'lighthouse',.025); parent(plank,light_root)
+    gap_wood=matte_material('Lighthouse / dark board gaps',(.075,.052,.032),.98)
+    board_bed=cube('lighthouse-landing-board-gap-backing',(0,8.115,-.05),(3.55,.025,5.35),gap_wood,'lighthouse')
+    parent(board_bed,light_root)
+    plank_verts=[]; plank_faces=[]; plank_materials=[]
+    for i in range(18):
+        x=-1.615+i*.19; start=len(plank_verts)
+        plank_verts.extend(gv((px,8.17,pz)) for px,pz in ((x-.085,-2.65),(x+.085,-2.65),(x+.085,2.55),(x-.085,2.55)))
+        plank_faces.append((start,start+1,start+2,start+3)); plank_materials.append((i*2)%3)
+    plank_mesh=bpy.data.meshes.new('lighthouse narrow landing board strips'); plank_mesh.from_pydata(plank_verts,[],plank_faces); plank_mesh.update()
+    for material in landing_woods: plank_mesh.materials.append(material)
+    for poly,material_index in zip(plank_mesh.polygons,plank_materials): poly.material_index=material_index
+    plank_obj=bpy.data.objects.new('lighthouse landing planks',plank_mesh); scene.collection.objects.link(plank_obj); plank_obj['part']='lighthouse'; parent(plank_obj,light_root)
     # The box of letters stands on the second landing, inside the room.
     letters=cube('lighthouse-box-of-letters',(.9,16.45,-1.6),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
     warm_glow=bpy.data.materials.new('Lighthouse / warm landing glow'); warm_glow.use_nodes=True
@@ -1663,14 +1672,17 @@ if args.stage == 'family':
     warm_out=warm_nodes.new('ShaderNodeOutputMaterial'); warm_emission=warm_nodes.new('ShaderNodeEmission')
     warm_emission.inputs['Color'].default_value=(1.0,.18,.035,1); warm_emission.inputs['Strength'].default_value=.9; warm_glow.node_tree.links.new(warm_emission.outputs[0],warm_out.inputs['Surface'])
     for y in (8,16,24):
-        radius=light_radius(y)-.72; x=2.72; z=-math.sqrt(max(.1,radius*radius-x*x))+.08
-        plate=cube(f'lighthouse-landing-sconce-back-{y}',(x,y+1.15,z),(.18,.28,.10),iron,'lighthouse',.03); parent(plate,light_root)
-        globe=cube(f'lighthouse-landing-sconce-glow-{y}',(x,y+1.15,z+.12),(.12,.18,.11),warm_glow,'lighthouse',.045); parent(globe,light_root)
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=6, ring_count=4, radius=.09, location=gv((x,y+1.15,z+.20)))
+        radius=light_radius(y)-.72
+        x=1.95 if y == 8 else 2.72
+        z=-math.sqrt(max(.1,radius*radius-x*x))+.08
+        lamp_y=y+1.9 if y == 8 else y+1.15
+        plate=cube(f'lighthouse-landing-sconce-back-{y}',(x,lamp_y,z),(.18,.28,.10),iron,'lighthouse',.03); parent(plate,light_root)
+        globe=cube(f'lighthouse-landing-sconce-glow-{y}',(x,lamp_y,z+.12),(.12,.18,.11),warm_glow,'lighthouse',.045); parent(globe,light_root)
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=5, ring_count=3, radius=.09, location=gv((x,lamp_y,z+.20)))
         bulb=bpy.context.object; bulb.name=f'lighthouse-landing-warm-bulb-{y}'; bulb.data.materials.append(warm_glow); bulb['part']='lighthouse'; parent(bulb,light_root)
         for poly in bulb.data.polygons: poly.use_smooth=True
         light_data=bpy.data.lights.new(f'lighthouse warm landing light {y}','POINT'); light_data.energy=350; light_data.color=(1.0,.39,.15); light_data.shadow_soft_size=.75
-        light_obj=bpy.data.objects.new(f'lighthouse warm landing light {y}',light_data); scene.collection.objects.link(light_obj); light_obj.location=gv((x,y+1.15,z+.3)); parent(light_obj,light_root)
+        light_obj=bpy.data.objects.new(f'lighthouse warm landing light {y}',light_data); scene.collection.objects.link(light_obj); light_obj.location=gv((x,lamp_y,z+.3)); parent(light_obj,light_root)
     crayon_red=matte_material('Lighthouse / crayon rust red',(.88,.12,.07),.92)
     crayon_blue=matte_material('Lighthouse / crayon sea blue',(.08,.42,.88),.92)
     crayon_yellow=matte_material('Lighthouse / crayon sun yellow',(1.0,.68,.05),.92)
@@ -2019,6 +2031,8 @@ def render_imported_review():
     # From the back of the first landing, across the boards to the drawings and window.
     landing_camera=add_camera('review-camera-lighthouse-landing', (170.4, 9.6, -393.1), (169.85, 9.05, -398.2), 14, (900, 900))
     landing_camera.data.lens=24
+    above_camera=add_camera('review-camera-lighthouse-above',(192.5,40.3,-395),(170,13.5,-395),35,(900,900))
+    above_camera.data.lens=35
 
     raw.mkdir(parents=True, exist_ok=True)
     review_scene.camera = review_scene.objects['review-camera-whole']
