@@ -16,18 +16,21 @@ from pathlib import Path
 # roof y=140. Rear: centre x=384, deck y=476, roof y=130. Plan: bow/stern x=638/100, centre y=245;
 # bridge-wing span y=54..436. Window and door boxes below are pixel rectangles
 # read from those same grids, not estimated from the rendered mesh.
-# Patience hull measurements from .qa-dist/grid-hull-{side,bow,stern,top}.png.
-# Side: hull ends x=11/1011; midships deck y=45, keel y=155 (110 px = 8 m).
-# Bow: 12 m beam spans x=10..645; centre=328; deck/keel y=20/431 (411 px = 8 m).
-# Stern: 12 m beam spans x=70..680; centre=384; deck/keel y=41/450 (409 px = 8 m).
-# Top: bow/stern y=0/1024; centre x=179; beam spans x=90..260 (170 px = 12 m).
+# Hull stations are sampled along the outline in .qa-dist/grid-hull-top.png.
+# The side grid sets the 8 m midships depth (deck y=45, keel y=155); bow and
+# stern grids confirm that depth at the ends. Breadths are the measured top
+# outline, normalized to the 12 m maximum beam in the top grid.
 HULL_LENGTH = 72.0
 HULL_WIDTH = 12.0
-HULL_HEIGHT = 8.0
-HULL_SIDE = {'start': 11, 'end': 1011, 'ground': 155}
-HULL_BOW = {'centre': 328, 'ground': 431, 'top': 20}
-HULL_STERN = {'centre': 384, 'ground': 450, 'top': 41}
-HULL_TOP = {'front': 0, 'rear': 1024, 'centre': 179, 'x_scale': 12.0 / 170}
+HULL_STATIONS = (
+    (-.500, .035), (-.467, .42), (-.433, .65), (-.400, .79), (-.367, .88),
+    (-.333, .94), (-.300, .975), (-.267, .992), (-.233, 1.0), (-.200, 1.0),
+    (-.167, 1.0), (-.133, 1.0), (-.100, 1.0), (-.067, 1.0), (-.033, 1.0),
+    (0.000, 1.0), (.033, 1.0), (.067, .998), (.100, .994), (.133, .988),
+    (.167, .980), (.200, .970), (.233, .957), (.267, .940), (.300, .916),
+    (.333, .885), (.367, .840), (.400, .775), (.433, .675), (.467, .505),
+    (.500, .025),
+)
 UPPER_SCALE = .0244
 UPPER_LENGTH = (720 - 40) * UPPER_SCALE
 UPPER_DECK_WIDTH = (600 - 190) * UPPER_SCALE
@@ -77,8 +80,7 @@ inputs = {
     'galvanised-tin': tex / 'dam-steel.jpg',
     'weathered-plank': tex / 'dam-gatehouse-stone.jpg',
 }
-photos = {name: tex / f'{name}.jpg' for name in ('ships-hull-photo', 'lighthouse-stone-photo', 'pilot-boat-photo')}
-ship_photo_full=tex/'ships-hull-photo.jpg'
+photos = {name: tex / f'{name}.jpg' for name in ('lighthouse-stone-photo', 'pilot-boat-photo')}
 if args.paths_only:
     print(json.dumps({'blend': [str(root / 'art-build/wasteland-ships/ships.blend')],
                       'glb': [str(out)], 'evidence': [str(raw)], 'summary': [str(sheet)]}))
@@ -160,7 +162,7 @@ import town_base as town
 from photo_carve import carve_object
 from photo_model import Photo as DetailPhoto, Mesh as DetailMesh, trace, slab, lathe
 
-missing = [str(p) for p in [*photos.values(), ship_photo_full,
+missing = [str(p) for p in [*photos.values(),
                            tex / 'patience-hull-side.jpg', tex / 'patience-hull-bow.jpg',
                            tex / 'patience-hull-stern.jpg', tex / 'patience-hull-top.jpg',
                            *[tex / f'{ship}-upperworks-{view}.jpg'
@@ -259,6 +261,119 @@ def retone_photo_material(mat):
     shader.inputs['Roughness'].default_value = .94
     mat['marigold_material_grade'] = 'chalky ochre with retained rust color variation'
 
+def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
+    """Build the three sister hulls from one measured table of ship stations."""
+    section = []
+    deck_heights = []
+    for t, breadth_factor in HULL_STATIONS:
+        sheer = 2.0 * max(0.0, t) ** 2.1
+        edge_y = deck - keel + sheer
+        half = width * breadth_factor * .5
+        bilge_radius = 1.5
+        bottom_half = max(.05, half - bilge_radius)
+        ring = [(0.0, -bottom_half + 2 * bottom_half * i / 16)
+                for i in range(17)]
+        # A measured 1.5 m quarter-round bilge joins the flat bottom to the
+        # straight side. The forward stations flare through their table widths.
+        for step in range(1, 9):
+            angle = -math.pi / 2 + (math.pi / 2) * step / 8
+            y = bilge_radius + bilge_radius * math.sin(angle)
+            z = bottom_half + bilge_radius * math.cos(angle)
+            ring.append((y, z))
+        for step in range(1, 7):
+            ring.append((bilge_radius + (edge_y - bilge_radius) * step / 6, half))
+        ring.extend(((edge_y + .30, half), (edge_y + .70, half),
+                     (edge_y + 1.0, half), (edge_y + 1.0, half - .18),
+                     (edge_y - .25, half - .18)))
+        starboard_path = ring[17:]
+        # This cross-section span is the open deck; the inset deck plate is a
+        # separate named part that follows the same measured outline.
+        deck_start = len(ring) - 1
+        for step in range(1, 17):
+            ring.append((edge_y - .25, (half - .18) * (1 - 2 * step / 16)))
+        deck_end = len(ring) - 1
+        # Mirror the inside and outside plating around the flat keel.
+        ring.extend((y, -z) for y, z in reversed(starboard_path))
+        section.append(ring)
+        deck_heights.append(edge_y)
+
+    section_size = len(section[0])
+    verts = []
+    for station_index, ((t, breadth_factor), ring) in enumerate(zip(HULL_STATIONS, section)):
+        station_x = t * length
+        edge_y = deck_heights[station_index]
+        for y, z in ring:
+            rake = 0.0
+            if t > .30:
+                rake = -3.5 * max(0.0, 1 - y / edge_y) * min(1.0, (t - .30) / .20)
+            elif t < -.40:
+                rake = 1.6 * max(0.0, 1 - y / edge_y) * min(1.0, (-.40 - t) / .10)
+            verts.append(gv((station_x + rake, y, z)))
+
+    faces, material_ids = [], []
+    side_uv_points, end_uv_points = [], []
+    for i in range(len(section) - 1):
+        for j in range(section_size):
+            if deck_start <= j < deck_end:
+                continue
+            a, b = i * section_size + j, i * section_size + (j + 1) % section_size
+            faces.append((a, b, (i + 1) * section_size + (j + 1) % section_size,
+                          (i + 1) * section_size + j))
+            y0, z0 = section[i][j]
+            y1, z1 = section[i][(j + 1) % section_size]
+            above_deck = min(y0, y1) >= deck_heights[i] - .01
+            material_ids.append(3 if above_deck else 0)
+    # Bow and cruiser stern end plates use only their own measured end photos.
+    faces.append(tuple(range(section_size - 1, -1, -1)))
+    material_ids.append(2)
+    faces.append(tuple((len(section) - 1) * section_size + j for j in range(section_size)))
+    material_ids.append(1)
+
+    mesh = bpy.data.meshes.new(name + ' station-faired hull')
+    mesh.from_pydata(verts, [], faces)
+    side_mat = photo_material(name + ' hull / side photograph', tex / f'{photo_prefix}-hull-side.jpg')
+    bow_mat = photo_material(name + ' hull / bow photograph', tex / f'{photo_prefix}-hull-bow.jpg')
+    stern_mat = photo_material(name + ' hull / stern photograph', tex / f'{photo_prefix}-hull-stern.jpg')
+    for material in (side_mat, bow_mat, stern_mat, rust):
+        mesh.materials.append(material)
+    uv = mesh.uv_layers.new(name='Station hull photo projection')
+    for poly, material_index in zip(mesh.polygons, material_ids):
+        poly.material_index = material_index
+        for loop_index in poly.loop_indices:
+            vi = mesh.loops[loop_index].vertex_index
+            station_index, section_index = divmod(vi, section_size)
+            t = HULL_STATIONS[station_index][0]
+            y, z = section[station_index][section_index]
+            edge_y = deck_heights[station_index]
+            if material_index == 0:
+                # Source side photographs show the bow at the left edge.
+                row = 155 - 110 * min(1.0, max(0.0, y / edge_y))
+                uv.data[loop_index].uv = (1 - (t + .5), 1 - row / 213)
+            else:
+                uv.data[loop_index].uv = (.5 + z / width, min(1.0, y / (deck - keel + 2.0)))
+    mesh.update()
+    hull = bpy.data.objects.new(name + ':hull', mesh)
+    scene.collection.objects.link(hull)
+    hull['part'] = name + ':hull'
+    hull.location = gv((0, keel, 0))
+    parent(hull, root)
+
+    deck_plate(root, name + ':weather-deck', length, width, deck)
+    if label:
+        for side in (-1, 1):
+            t = .36
+            _, factor = min(HULL_STATIONS, key=lambda station: abs(station[0] - t))
+            label_obj = bpy.data.curves.new(name + ' bow name', 'FONT')
+            label_obj.body = label; label_obj.size = 1.45; label_obj.resolution_u = 3
+            label_obj.bevel_resolution = 1; label_obj.extrude = .006
+            obj = bpy.data.objects.new(name + ' bow name ' + str(side), label_obj)
+            scene.collection.objects.link(obj)
+            obj.location = gv((length * t, deck - 1.65, side * (width * factor * .5 + .025)))
+            obj.rotation_euler = (math.pi / 2 if side > 0 else -math.pi / 2, 0, 0)
+            label_obj.materials.append(name_paint); obj['part'] = name
+            parent(obj, root)
+    return hull
+
 def correct_end_face_photos(obj, table):
     """Force the dead-on bow and stern references onto their matching faces."""
     forward = table.get('forward', -1)
@@ -294,7 +409,6 @@ def correct_end_face_photos(obj, table):
             continue
         polygon.material_index = material_index
 
-hull_photo = photo_material('Ship hull / projected freighter photograph', photos['ships-hull-photo'])
 stone_photo = photo_material('Lighthouse / projected local stonework', photos['lighthouse-stone-photo'])
 pilot_photo = photo_material('Pilot boat / projected workboat photograph', photos['pilot-boat-photo'])
 rust = materials['rusted-steel']
@@ -494,20 +608,14 @@ def photo_hull(name, root, dimensions, material, side_label, hull_color=None):
     return
 
 def deck_plate(root, name, length, width, deck):
-    stations=[(-.50,.22),(-.485,.42),(-.46,.62),(-.43,.78),(-.39,.89),(-.34,.95),
-              (-.28,.98),(-.20,1.0),(-.10,1.0),(0,.995),(.12,.99),(.23,.97),
-              (.32,.94),(.39,.90),(.44,.84),(.475,.62),(.49,.34),(.50,.06)]
     left=[]; right=[]
-    for index,(t,breadth) in enumerate(stations):
-        if index == 0 or index == len(stations)-1:
-            continue
+    for t,breadth in HULL_STATIONS[1:-1]:
         x=t*length
-        flare=1.0+max(0,t)*.22
-        half=width*breadth*.47*flare-.30
-        stem=max(0,(t-.34)/.16)
-        x-=1.42*stem
-        left.append((x,deck-.25,-half))
-        right.append((x,deck-.25,half))
+        half=width*breadth*.5-.38
+        sheer=2.0*max(0.0,t)**2.1
+        rake=3.5*max(0.0,1-(deck+sheer+4.0)/10.0)*min(1.0,max(0.0,(t-.30)/.20))
+        left.append((x+rake,deck+sheer-.25,-half))
+        right.append((x+rake,deck+sheer-.25,half))
     outline=left+right[::-1]
     verts=[gv(point) for point in outline]
     faces=[]
@@ -517,32 +625,6 @@ def deck_plate(root, name, length, width, deck):
     mesh.from_pydata(verts,[],faces); mesh.materials.append(rust); mesh.update()
     plate=bpy.data.objects.new(name,mesh); scene.collection.objects.link(plate)
     plate['part']=root.name+':deck'; parent(plate,root)
-    hull = scene.objects.get(root.name + ':hull') or scene.objects.get(root.name + ' hull')
-    hull_paint = hull.data.materials[1] if hull and len(hull.data.materials) > 1 else rust
-    wall_bottom, wall_top = deck-.25, deck+.75
-    wall_vertices=[]; wall_faces=[]
-    for i, point in enumerate(outline):
-        nxt=outline[(i+1)%len(outline)]
-        side=1 if point[2]+nxt[2] >= 0 else -1
-        offset=.42*side
-        base=len(wall_vertices)
-        wall_vertices.extend(gv(p) for p in ((point[0],wall_bottom,point[2]+offset),
-                                              (nxt[0],wall_bottom,nxt[2]+offset),
-                                              (nxt[0],wall_top,nxt[2]+offset),
-                                              (point[0],wall_top,point[2]+offset)))
-        wall_faces.append((base,base+1,base+2,base+3))
-    wall_mesh=bpy.data.meshes.new(root.name+' bulwark plate mesh')
-    wall_mesh.from_pydata(wall_vertices,[],wall_faces); wall_mesh.materials.append(hull_paint); wall_mesh.update()
-    wall=bpy.data.objects.new(root.name+' painted bulwark',wall_mesh); scene.collection.objects.link(wall)
-    wall['part']=root.name+':bulwark'; parent(wall,root)
-    cap_data=bpy.data.curves.new(root.name+' rounded bulwark rail','CURVE')
-    cap_data.dimensions='3D'; cap_data.bevel_depth=.12; cap_data.bevel_resolution=3
-    spline=cap_data.splines.new('POLY'); spline.points.add(len(outline)-1)
-    for i,(x,y,z) in enumerate(outline):
-        spline.points[i].co=(*gv((x,wall_top,z+(.42 if z>=0 else -.42))),1)
-    spline.use_cyclic_u=True; cap_data.materials.append(hull_paint)
-    cap=bpy.data.objects.new(root.name+' rounded bulwark cap',cap_data); scene.collection.objects.link(cap)
-    cap['part']=root.name+':bulwark'; parent(cap,root)
     return plate
 
 ships=[
@@ -556,68 +638,10 @@ roots={}
 shared_hull_mesh = None
 for ident,loc,label,length,width,deck,keel,lean in ships:
     r=root_obj(ident,(loc[0],0,loc[1]),ident); roots[ident]=r
-    if ident == 'ship-patience':
-        hull_table = {
-            'photos': {'side':'patience-hull-side.jpg','front':'patience-hull-bow.jpg',
-                       'rear':'patience-hull-stern.jpg','top':'patience-hull-top.jpg'},
-            'length':HULL_LENGTH, 'width':HULL_WIDTH, 'height':HULL_HEIGHT,
-            'forward':1, 'side_front_on_left':True,
-            'side':HULL_SIDE, 'front':HULL_BOW, 'rear':HULL_STERN, 'top':HULL_TOP,
-            'ends_split':0, 'front_favour':3, 'rear_favour':3, 'round':2.4,
-            'grey':30, 'tolerance':42, 'bleed_tolerance':32,
-            'voxel':.24, 'target':800,
-            'mask_dir':str(raw / 'masks'),
-        }
-        patience_hull = carve_object('ship-patience:hull', tex, hull_table)
-        # photo_carve returns beam and length in the horizontal plane, with
-        # length along local Y. Turn that axis to the ship's +X direction.
-        patience_hull.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
-        patience_hull.location = gv((0,-4,0))
-        patience_hull['part'] = 'ship-patience:hull'
-        parent(patience_hull,r)
-        shared_hull_mesh = patience_hull.data
-        hull_deck = deck_plate(r, 'ship-patience:weather-deck', HULL_LENGTH, HULL_WIDTH, deck)
-        # The high-side letters sit on the bow plating and face out on both sides.
-        for side in (-1,1):
-            label_curve=bpy.data.curves.new(f'Patience bow name {side}','FONT')
-            label_curve.body='PATIENCE'; label_curve.size=1.65; label_curve.resolution_u=3
-            label_curve.bevel_resolution=1; label_curve.extrude=.006
-            name_obj=bpy.data.objects.new(f'Patience bow name {side}',label_curve)
-            scene.collection.objects.link(name_obj)
-            name_obj.location=gv((18.5,1.8,side*6.2))
-            name_obj.rotation_euler=(math.pi/2,0,0) if side>0 else (math.pi/2,0,math.pi)
-            label_curve.materials.append(name_paint); name_obj['part']='ship-patience'
-            parent(name_obj,r)
-    else:
-        # Keep the established deck fittings, but replace its independent hull
-        # with a linked duplicate of the single measured Patience hull mesh.
-        photo_hull(ident+' hull',r,(length,width,deck,keel),hull_photo,label)
-        old_hull=bpy.data.objects.get(ident+' hull')
-        if old_hull:
-            bpy.data.objects.remove(old_hull,do_unlink=True)
-        if shared_hull_mesh is None:
-            raise RuntimeError('The Patience hull must be carved before its sisters.')
-        # The Blender GLB exporter drops object-linked material overrides on a
-        # linked mesh. Copy only the mesh datablock so each sister can carry
-        # its recoloured photo materials while keeping the exact carved shape.
-        sister_hull=bpy.data.objects.new(ident+':hull',shared_hull_mesh.copy())
-        scene.collection.objects.link(sister_hull)
-        sister_hull['part']=ident+':hull'
-        sister_hull.location=gv((0,-4,0)); parent(sister_hull,r)
-        family='good-hope' if ident=='ship-good-hope' else 'marigold'
-        for slot_index,source in enumerate(shared_hull_mesh.materials):
-            tint=source.copy(); tint.name=ident+' hull paint '+str(slot_index)
-            nodes,links=tint.node_tree.nodes,tint.node_tree.links
-            image_node=next((node for node in nodes if node.type=='TEX_IMAGE'),None)
-            if image_node:
-                original=Path(bpy.path.abspath(image_node.image.filepath)).name
-                suffix=original.replace('patience-hull-','')
-                recoloured=tex/f'{family}-hull-{suffix}'
-                image_node.image=bpy.data.images.load(str(recoloured),check_existing=True)
-                if family == 'marigold':
-                    retone_photo_material(tint)
-            sister_hull.material_slots[slot_index].link='OBJECT'
-            sister_hull.material_slots[slot_index].material=tint
+    photo_prefix = ident.replace('ship-', '')
+    shared_hull_mesh = faired_hull(ident, r, length, width, deck, keel,
+                                    photo_prefix, label)
+    if ident != 'ship-patience':
         for obj in list(scene.objects):
             if obj.parent==r and any(key in obj.name for key in (
                 'chart-room','chart-window','chart-door')):
@@ -805,8 +829,8 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         # the photo. The multiplier follows the yard's worn-steel treatment;
         # elongated noise and a restrained oxide tint follow the tanker streaks.
         for photo in upper_table['_photos'].values():
-            photo_material = photo.material()
-            nodes, links = photo_material.node_tree.nodes, photo_material.node_tree.links
+            carved_photo_material = photo.material()
+            nodes, links = carved_photo_material.node_tree.nodes, carved_photo_material.node_tree.links
             bsdf = nodes.get('Principled BSDF')
             texture = next(node for node in nodes if node.type == 'TEX_IMAGE')
             output = nodes.get('Material Output')

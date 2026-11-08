@@ -313,3 +313,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed `round-12.jpg` and `round-12-review.md`; round 13 is the current sheet and review.
 - Removed this task's render images, Blender review scene, temporary count script, test outputs and logs from `.qa-dist/`. The two supplied task briefs remain.
+
+## Round 14, point 1 — Station-built hulls (7 November 2026)
+
+- Replaced the three photo-carved ship hulls with one measured section builder using 31 stations sampled from the hull top grid. It makes the flat keel, 1.5 m bilge, parallel sides, raked bow, cruiser stern, and one-piece 1 m bulwark with a flat cap. The inset deck follows the same outline and sheer. Each ship uses its own side, bow and stern photos; names remain on both bow sides.
+- Blender 4.5.13 exported and read back the family GLB: Patience 10,528 triangles, Good Hope 8,764, Marigold 8,795; total 41,375 triangles and 2,922,096 bytes. All are inside the card budgets.
+- `tools/test-blender-output.mjs`: passed, 381 checks and 0 failures. `tools/test-repo-hygiene.mjs`: passed; repository size targets remain advisory. No changed assertions. Race fingerprints: none; art only. No browser or look verdict yet; point 2 renders follow in this run.
+
+### Removed
+
+- Removed the hull's `carve_object` table and hull-mask output, obsolete Patience hull view constants, the separate deck-edge bulwark wall and rounded rail, and the unused shared hull-photo material. The old striped hull rail treatment is no longer generated. `photo_carve` stays for the cabins, funnel and other carved pieces; the pilot boat keeps its separate hull recipe.
